@@ -14,11 +14,12 @@ interface UserContextValue {
   loading: boolean
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
+  updateProfile: (updates: Partial<Profile>) => void
 }
 
 const UserContext = createContext<UserContextValue>({
   user: null, profile: null, loading: true,
-  signOut: async () => {}, refreshProfile: async () => {},
+  signOut: async () => {}, refreshProfile: async () => {}, updateProfile: () => {},
 })
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
@@ -31,16 +32,21 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   // Profile fetch is fire-and-forget: never blocks auth loading state
   const fetchProfile = useCallback((userId: string) => {
-    const query = supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single()
-
-    Promise.resolve(query).then(({ data }) => {
+    // Wrap in Promise.resolve so we get a proper Promise (with .catch) instead of PromiseLike
+    Promise.resolve(
+      supabase.from('profiles').select('*').eq('id', userId).single()
+    ).then(({ data, error }) => {
+      if (error) console.error('[Sintera] Perfil não carregado:', error.message, '| code:', error.code)
       setProfile((data as Profile | null) ?? null)
-    }).catch(() => setProfile(null))
+    }).catch((err: unknown) => {
+      console.error('[Sintera] Erro inesperado ao buscar perfil:', err)
+      setProfile(null)
+    })
   }, [supabase])
+
+  const updateProfile = useCallback((updates: Partial<Profile>) => {
+    setProfile(prev => prev ? { ...prev, ...updates } : null)
+  }, [])
 
   const refreshProfile = useCallback(async () => {
     if (user) fetchProfile(user.id)
@@ -89,7 +95,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <UserContext.Provider value={{ user, profile, loading, signOut, refreshProfile }}>
+    <UserContext.Provider value={{ user, profile, loading, signOut, refreshProfile, updateProfile }}>
       {children}
     </UserContext.Provider>
   )
