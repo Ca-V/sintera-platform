@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Upload, FileText, Clock, CheckCircle, AlertCircle, Plus, X } from 'lucide-react'
+import { Upload, FileText, Clock, CheckCircle, AlertCircle, Plus, X, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import type { Database } from '@/lib/supabase/types'
@@ -13,11 +13,12 @@ const STATUS_CONFIG: Record<string, {
   label: string
   color: string
   bg: string
-  icon: React.ComponentType<{ size: number }>
+  icon: React.ComponentType<{ size: number; className?: string }>
 }> = {
-  processed: { label: 'Analisado',   color: 'text-sage',    bg: 'bg-sage-light', icon: CheckCircle },
-  pending:   { label: 'Processando', color: 'text-gold',    bg: 'bg-warm',       icon: Clock       },
-  error:     { label: 'Erro',        color: 'text-red-400', bg: 'bg-red-50',     icon: AlertCircle },
+  processed:  { label: 'Analisado',   color: 'text-sage',    bg: 'bg-sage-light', icon: CheckCircle },
+  processing: { label: 'Processando', color: 'text-lavender',bg: 'bg-lavender-light', icon: Loader2  },
+  pending:    { label: 'Aguardando',  color: 'text-gold',    bg: 'bg-warm',       icon: Clock       },
+  error:      { label: 'Erro',        color: 'text-red-400', bg: 'bg-red-50',     icon: AlertCircle },
 }
 
 const ACCEPTED_MIME = ['application/pdf', 'image/jpeg', 'image/png']
@@ -33,16 +34,13 @@ export default function ExamsPage() {
   const [uploading, setUploading]       = useState(false)
   const [uploadError, setUploadError]   = useState<string | null>(null)
 
-  // Kept only for resetting the value after selection (allows re-picking the same file)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const loadExams = useCallback(async () => {
     if (!user) return
     setLoadingExams(true)
     const { data, error } = await supabase
-      .from('exams')
-      .select('*')
-      .eq('user_id', user.id)
+      .from('exams').select('*').eq('user_id', user.id)
       .order('created_at', { ascending: false })
     if (error) console.error('[Sintera] exams fetch:', error.message)
     else setExams((data ?? []) as Exam[])
@@ -67,32 +65,46 @@ export default function ExamsPage() {
     setUploading(true)
 
     try {
+      // ── 1. Upload file to Supabase Storage ──────────────────────────────
       const ext = file.name.split('.').pop() ?? 'bin'
       const storagePath = `${user.id}/${crypto.randomUUID()}.${ext}`
 
       const { error: storageErr } = await supabase.storage
-        .from('exams')
-        .upload(storagePath, file, { contentType: file.type, upsert: false })
-
+        .from('exams').upload(storagePath, file, { contentType: file.type, upsert: false })
       if (storageErr) throw new Error(storageErr.message)
 
       const { data: signedData, error: signedErr } = await supabase.storage
-        .from('exams')
-        .createSignedUrl(storagePath, 60 * 60 * 24 * 365)
-
+        .from('exams').createSignedUrl(storagePath, 60 * 60 * 24 * 365)
       if (signedErr) throw new Error(signedErr.message)
 
+      // ── 2. Create exam record with pre-generated ID ──────────────────────
+      // Using a client-generated UUID so we have the ID before the DB round-trip
+      const examId = crypto.randomUUID()
       const examName = file.name.replace(/\.[^.]+$/, '')
-      // @supabase/ssr 0.10.x resolves insert() to 'never' in strict TS — double-cast required
+
+      // @supabase/ssr 0.10.x resolves insert() to 'never' in strict TS
       const { error: dbErr } = await supabase.from('exams').insert({
+        id: examId,
         user_id: user.id,
         type: examName,
         file_url: signedData.signedUrl,
         status: 'pending',
       } as unknown as never)
-
       if (dbErr) throw new Error(dbErr.message)
 
+      // Show the exam immediately as "pending" while processing runs
+      await loadExams()
+
+      // ── 3. Trigger processing pipeline ──────────────────────────────────
+      // This is synchronous: pending → processing → processed (or error)
+      const res = await fetch(`/api/exams/${examId}/process`, { method: 'POST' })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        console.error('[Sintera] processing error:', body)
+        // Don't throw — exam is in the DB, user can see it with "error" status
+      }
+
+      // Reload to reflect final status (processed / error)
       await loadExams()
     } catch (err: unknown) {
       setUploadError(err instanceof Error ? err.message : 'Erro ao enviar arquivo.')
@@ -104,7 +116,6 @@ export default function ExamsPage() {
   const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) processFile(file)
-    // Reset so the same file can be re-selected on the next interaction
     e.target.value = ''
   }
 
@@ -133,19 +144,10 @@ export default function ExamsPage() {
 
       {/*
         Drop zone as <motion.label>.
-
-        WHY LABEL instead of DIV + programmatic .click():
-        Browsers (Chrome, Firefox, Safari) block input[type=file].click()
-        when the input has display:none — even when called from a trusted
-        user-gesture handler. This is an explicit browser security policy.
-
-        Using a <label> that wraps the <input> bypasses this entirely:
-        clicking anywhere inside the label activates the input natively,
-        with no JavaScript and no security restrictions.
-
-        The <input> uses "sr-only" (position:absolute; width:1px; …)
-        instead of "hidden" (display:none) so the browser can still
-        interact with it through the label.
+        <input type="file"> usa "sr-only" em vez de "hidden" (display:none).
+        Browsers bloqueiam .click() em inputs com display:none mesmo dentro
+        de user-gesture handlers. sr-only esconde visualmente sem ocultar
+        do modelo de interação — a label ativa o input nativamente.
       */}
       <motion.label
         initial={{ opacity: 0, y: 16 }}
@@ -162,11 +164,6 @@ export default function ExamsPage() {
           uploading ? 'opacity-60 pointer-events-none select-none' : '',
         ].join(' ')}
       >
-        {/*
-          sr-only positions the element off-screen (not display:none).
-          The label's native click behaviour activates it directly.
-          disabled={uploading} prevents the picker from opening mid-upload.
-        */}
         <input
           ref={fileInputRef}
           type="file"
@@ -181,7 +178,10 @@ export default function ExamsPage() {
         </div>
 
         {uploading ? (
-          <p className="font-display text-lg font-semibold text-onyx">Enviando…</p>
+          <div className="flex flex-col items-center gap-2">
+            <p className="font-display text-lg font-semibold text-onyx">Enviando e processando…</p>
+            <p className="font-body text-xs text-mauve">Extraindo biomarcadores e calculando scores</p>
+          </div>
         ) : (
           <>
             <p className="font-display text-lg font-semibold text-onyx mb-1">
@@ -191,12 +191,6 @@ export default function ExamsPage() {
               ou clique para selecionar um arquivo
             </p>
             <p className="text-xs font-body text-mauve/60 mb-5">PDF, JPG ou PNG · Até 10 MB</p>
-
-            {/*
-              <span> styled as button — <button> inside <label> can cause
-              double-activation in some browsers. A <span> is inert and
-              lets the label handle the click naturally.
-            */}
             <span className="inline-flex items-center gap-2 gradient-sintera text-white font-body text-sm font-medium px-6 py-2.5 rounded-full hover:opacity-90 transition-opacity shadow-sm">
               <Plus size={15} /> Selecionar arquivo
             </span>
@@ -204,7 +198,6 @@ export default function ExamsPage() {
         )}
       </motion.label>
 
-      {/* Upload error banner */}
       {uploadError && (
         <motion.div
           initial={{ opacity: 0, y: -8 }}
@@ -213,18 +206,13 @@ export default function ExamsPage() {
         >
           <AlertCircle size={16} className="text-red-400 flex-shrink-0" />
           <p className="font-body text-sm text-red-600 flex-1">{uploadError}</p>
-          <button
-            type="button"
-            onClick={() => setUploadError(null)}
-            className="text-red-300 hover:text-red-400 transition-colors"
-            aria-label="Fechar"
-          >
+          <button type="button" onClick={() => setUploadError(null)}
+            className="text-red-300 hover:text-red-400 transition-colors" aria-label="Fechar">
             <X size={15} />
           </button>
         </motion.div>
       )}
 
-      {/* Exam history */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-body text-sm font-semibold text-onyx/60 uppercase tracking-widest">
@@ -238,11 +226,8 @@ export default function ExamsPage() {
         {loadingExams ? (
           <div className="flex flex-col gap-3">
             {[1, 2, 3].map(i => (
-              <div
-                key={i}
-                className="card-premium h-[72px] rounded-2xl animate-pulse"
-                style={{ background: '#F2EDE8' }}
-              />
+              <div key={i} className="card-premium h-[72px] rounded-2xl animate-pulse"
+                style={{ background: '#F2EDE8' }} />
             ))}
           </div>
         ) : exams.length === 0 ? (
@@ -258,11 +243,10 @@ export default function ExamsPage() {
             {exams.map((exam, i) => {
               const cfg = STATUS_CONFIG[exam.status] ?? STATUS_CONFIG.pending
               const Icon = cfg.icon
+              const isSpinning = exam.status === 'processing'
               return (
-                <motion.div
-                  key={exam.id}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
+                <motion.div key={exam.id}
+                  initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 + i * 0.07 }}
                   className="card-premium p-5 flex items-center gap-4 hover:shadow-md transition-all cursor-pointer group"
                 >
@@ -275,10 +259,8 @@ export default function ExamsPage() {
                     </p>
                     <p className="font-body text-xs text-mauve">{formatDate(exam.created_at)}</p>
                   </div>
-                  <span
-                    className={`inline-flex items-center gap-1.5 text-xs font-body font-medium px-3 py-1 rounded-full flex-shrink-0 ${cfg.bg} ${cfg.color}`}
-                  >
-                    <Icon size={11} /> {cfg.label}
+                  <span className={`inline-flex items-center gap-1.5 text-xs font-body font-medium px-3 py-1 rounded-full flex-shrink-0 ${cfg.bg} ${cfg.color}`}>
+                    <Icon size={11} className={isSpinning ? 'animate-spin' : ''} /> {cfg.label}
                   </span>
                 </motion.div>
               )
@@ -287,23 +269,19 @@ export default function ExamsPage() {
         )}
       </div>
 
-      {/* Info banner */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.4 }}
-        className="card-dark p-5 flex items-start gap-4"
-      >
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
+        className="card-dark p-5 flex items-start gap-4">
         <div className="w-8 h-8 rounded-lg bg-petal/20 flex items-center justify-center flex-shrink-0 mt-0.5">
           <span className="text-sm">🧬</span>
         </div>
         <div>
           <p className="font-body text-sm font-semibold text-white mb-1">
-            IA de Interpretação — Em breve
+            Extração automática de biomarcadores
           </p>
           <p className="font-body text-xs text-white/50 leading-relaxed">
-            Nossa IA irá extrair automaticamente os biomarcadores dos seus exames via OCR, interpretar os
-            valores com base em faixas de referência e gerar insights preventivos personalizados.
+            Ao enviar um exame, a IA detecta o tipo (hemograma, hormonal, tireoide, metabolismo…),
+            extrai os biomarcadores, calcula seu score biológico em 8 dimensões e gera insights
+            personalizados — tudo automaticamente.
           </p>
         </div>
       </motion.div>
