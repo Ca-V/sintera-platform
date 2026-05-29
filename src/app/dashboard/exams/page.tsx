@@ -2,7 +2,10 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Upload, FileText, Clock, CheckCircle, AlertCircle, Plus, X, Loader2 } from 'lucide-react'
+import {
+  Upload, FileText, Clock, CheckCircle, AlertCircle,
+  Plus, X, Loader2, RefreshCw,
+} from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import {
@@ -19,25 +22,91 @@ const STATUS_CONFIG: Record<string, {
   label: string; color: string; bg: string
   icon: React.ComponentType<{ size: number; className?: string }>
 }> = {
-  processed:  { label: 'Analisado',   color: 'text-sage',      bg: 'bg-sage-light',      icon: CheckCircle },
-  processing: { label: 'Processando', color: 'text-lavender',  bg: 'bg-lavender-light',  icon: Loader2     },
-  pending:    { label: 'Aguardando',  color: 'text-gold',      bg: 'bg-warm',            icon: Clock       },
-  error:      { label: 'Erro',        color: 'text-red-400',   bg: 'bg-red-50',          icon: AlertCircle },
+  processed:  { label: 'Analisado',   color: 'text-sage',     bg: 'bg-sage-light',     icon: CheckCircle },
+  processing: { label: 'Processando', color: 'text-lavender', bg: 'bg-lavender-light', icon: Loader2     },
+  pending:    { label: 'Aguardando',  color: 'text-gold',     bg: 'bg-warm',           icon: Clock       },
+  error:      { label: 'Erro',        color: 'text-red-400',  bg: 'bg-red-50',         icon: AlertCircle },
 }
 
 const ACCEPTED_MIME = ['application/pdf', 'image/jpeg', 'image/png']
-const MAX_BYTES = 10 * 1024 * 1024
+const MAX_BYTES     = 10 * 1024 * 1024
+
+// ─── Core processing pipeline ─────────────────────────────────────────────────
+// Shared by upload flow and the "Reprocessar" button.
+// Uses the browser Supabase client which already carries the auth Bearer token.
+
+async function runPipeline(
+  supabase: ReturnType<typeof createClient>,
+  examId: string,
+  examType: string,
+  userId: string,
+  onStep?: (step: string) => void,
+): Promise<void> {
+  const log = (s: string) => { console.log('[Sintera pipeline]', s); onStep?.(s) }
+
+  // 1. Mark as processing — filter only by id; RLS handles ownership
+  log('update → processing')
+  const { error: procErr } = await supabase
+    .from('exams')
+    .update({ status: 'processing' } as unknown as never)
+    .eq('id', examId)
+  if (procErr) throw new Error(`[processing] ${procErr.code}: ${procErr.message}`)
+
+  // 2. Delete stale biomarkers (safe for reruns)
+  log('delete stale biomarkers')
+  await supabase.from('biomarkers').delete().eq('exam_id', examId)
+
+  // 3. Insert biomarkers
+  log('insert biomarkers')
+  const biomarkers = buildBiomarkers(examType, examId)
+  const bmRows = biomarkers.map(b => ({
+    exam_id: examId, user_id: userId,
+    name: b.name, value: b.value, unit: b.unit,
+    reference_min: b.reference_min, reference_max: b.reference_max,
+    interpretation: b.interpretation, ai_insight: b.ai_insight,
+  }))
+  const { error: bmErr } = await supabase
+    .from('biomarkers').insert(bmRows as unknown as never)
+  if (bmErr) throw new Error(`[biomarkers] ${bmErr.code}: ${bmErr.message}`)
+
+  // 4. Insert biological score
+  log('insert biological_scores')
+  const scores = calcScores(biomarkers)
+  const { error: scoreErr } = await supabase
+    .from('biological_scores').insert({ user_id: userId, ...scores } as unknown as never)
+  if (scoreErr) throw new Error(`[biological_scores] ${scoreErr.code}: ${scoreErr.message}`)
+
+  // 5. Insert AI insights
+  log('insert ai_insights')
+  const insights = buildInsights(biomarkers, userId)
+  const { error: insightErr } = await supabase
+    .from('ai_insights').insert(insights as unknown as never)
+  if (insightErr) throw new Error(`[ai_insights] ${insightErr.code}: ${insightErr.message}`)
+
+  // 6. Mark as processed
+  log('update → processed')
+  const { error: doneErr } = await supabase
+    .from('exams')
+    .update({ status: 'processed' } as unknown as never)
+    .eq('id', examId)
+  if (doneErr) throw new Error(`[done] ${doneErr.code}: ${doneErr.message}`)
+
+  log('done')
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ExamsPage() {
   const { user } = useUser()
-  // Singleton browser client — authenticated with the user's session cookies
-  const supabase = useRef(createClient()).current
+  const supabase  = useRef(createClient()).current
 
   const [dragging, setDragging]         = useState(false)
   const [exams, setExams]               = useState<Exam[]>([])
   const [loadingExams, setLoadingExams] = useState(true)
   const [uploading, setUploading]       = useState(false)
   const [uploadError, setUploadError]   = useState<string | null>(null)
+  // Per-exam reprocessing state: examId → 'running' | error message
+  const [examState, setExamState]       = useState<Record<string, string>>({})
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -54,6 +123,31 @@ export default function ExamsPage() {
 
   useEffect(() => { loadExams() }, [loadExams])
 
+  // ── Reprocess an existing exam ───────────────────────────────────────────
+  const reprocessExam = useCallback(async (exam: Exam) => {
+    if (!user) return
+    const { id: examId } = exam
+    const examType = detectExamType(exam.type ?? '')
+
+    setExamState(s => ({ ...s, [examId]: 'running' }))
+
+    try {
+      await runPipeline(supabase, examId, examType, user.id,
+        step => setExamState(s => ({ ...s, [examId]: `running: ${step}` })))
+      setExamState(s => { const n = { ...s }; delete n[examId]; return n })
+      await loadExams()
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      console.error('[Sintera] reprocess failed:', msg)
+      setExamState(s => ({ ...s, [examId]: `erro: ${msg}` }))
+      await supabase.from('exams')
+        .update({ status: 'error' } as unknown as never)
+        .eq('id', examId)
+      await loadExams()
+    }
+  }, [user, supabase, loadExams])
+
+  // ── Upload a new file ────────────────────────────────────────────────────
   const processFile = useCallback(async (file: File) => {
     if (!user) return
 
@@ -68,24 +162,22 @@ export default function ExamsPage() {
 
     setUploadError(null)
     setUploading(true)
-
-    // Declared outside try so the catch block can update the exam status
     let examId: string | null = null
 
     try {
-      // ── 1. Upload to Supabase Storage ─────────────────────────────────────
+      // ── Storage ────────────────────────────────────────────────────────
       const ext = file.name.split('.').pop() ?? 'bin'
       const storagePath = `${user.id}/${crypto.randomUUID()}.${ext}`
 
       const { error: storageErr } = await supabase.storage
         .from('exams').upload(storagePath, file, { contentType: file.type, upsert: false })
-      if (storageErr) throw new Error(`[Storage] ${storageErr.message}`)
+      if (storageErr) throw new Error(`[storage] ${storageErr.message}`)
 
       const { data: signedData, error: signedErr } = await supabase.storage
         .from('exams').createSignedUrl(storagePath, 60 * 60 * 24 * 365)
-      if (signedErr) throw new Error(`[URL] ${signedErr.message}`)
+      if (signedErr) throw new Error(`[signed-url] ${signedErr.message}`)
 
-      // ── 2. Create exam record (pending) ───────────────────────────────────
+      // ── Insert exam record ─────────────────────────────────────────────
       examId = crypto.randomUUID()
       const examName = file.name.replace(/\.[^.]+$/, '')
 
@@ -93,68 +185,26 @@ export default function ExamsPage() {
         id: examId, user_id: user.id, type: examName,
         file_url: signedData.signedUrl, status: 'pending',
       } as unknown as never)
-      if (insertErr) throw new Error(`[Exame] ${insertErr.message}`)
+      if (insertErr) throw new Error(`[insert] ${insertErr.code}: ${insertErr.message}`)
 
       await loadExams()
 
-      // ── 3. Mark as processing ─────────────────────────────────────────────
-      // WHY CLIENT-SIDE: proxy.ts excludes /api from its matcher, so
-      // createServerClient() never gets a refreshed session for API routes —
-      // getUser() returns null → 401 → exam stays pending silently.
-      // The browser client already carries the auth Bearer token.
-      const { error: procErr } = await supabase.from('exams')
-        .update({ status: 'processing' } as unknown as never)
-        .eq('id', examId).eq('user_id', user.id)
-      if (procErr) throw new Error(`[Processing] ${procErr.message}`)
-
-      await loadExams()
-
-      // ── 4. Biomarkers ─────────────────────────────────────────────────────
-      const examType   = detectExamType(examName)
-      const biomarkers = buildBiomarkers(examType, examId)
-
-      const bmRows = biomarkers.map(b => ({
-        exam_id: examId, user_id: user.id,
-        name: b.name, value: b.value, unit: b.unit,
-        reference_min: b.reference_min, reference_max: b.reference_max,
-        interpretation: b.interpretation, ai_insight: b.ai_insight,
-      }))
-
-      const { error: bmErr } = await supabase.from('biomarkers')
-        .insert(bmRows as unknown as never)
-      if (bmErr) throw new Error(`[Biomarkers] ${bmErr.message}`)
-
-      // ── 5. Biological score ───────────────────────────────────────────────
-      const scores = calcScores(biomarkers)
-      const { error: scoreErr } = await supabase.from('biological_scores')
-        .insert({ user_id: user.id, ...scores } as unknown as never)
-      if (scoreErr) throw new Error(`[Scores] ${scoreErr.message}`)
-
-      // ── 6. AI insights ────────────────────────────────────────────────────
-      const insights = buildInsights(biomarkers, user.id)
-      const { error: insightErr } = await supabase.from('ai_insights')
-        .insert(insights as unknown as never)
-      if (insightErr) throw new Error(`[Insights] ${insightErr.message}`)
-
-      // ── 7. Mark as processed ──────────────────────────────────────────────
-      const { error: doneErr } = await supabase.from('exams')
-        .update({ status: 'processed' } as unknown as never)
-        .eq('id', examId).eq('user_id', user.id)
-      if (doneErr) throw new Error(`[Done] ${doneErr.message}`)
+      // ── Run pipeline ───────────────────────────────────────────────────
+      const examType = detectExamType(examName)
+      await runPipeline(supabase, examId, examType, user.id)
 
       await loadExams()
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Erro desconhecido'
-      console.error('[Sintera] processFile falhou:', msg)
+      const msg = err instanceof Error ? err.message : String(err)
+      console.error('[Sintera] upload/process failed:', msg)
       setUploadError(msg)
 
-      // Mark the exam as error so it's visible in the list (not silent pending)
       if (examId) {
         await supabase.from('exams')
           .update({ status: 'error' } as unknown as never)
-          .eq('id', examId).eq('user_id', user.id)
+          .eq('id', examId)
+        await loadExams()
       }
-      await loadExams()
     } finally {
       setUploading(false)
     }
@@ -167,8 +217,7 @@ export default function ExamsPage() {
   }
 
   const onDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    setDragging(false)
+    e.preventDefault(); setDragging(false)
     const file = e.dataTransfer.files?.[0]
     if (file) processFile(file)
   }
@@ -189,12 +238,7 @@ export default function ExamsPage() {
         </p>
       </motion.div>
 
-      {/*
-        Drop zone as <motion.label>.
-        <input> usa "sr-only" — não display:none. Browsers bloqueiam .click()
-        em inputs com display:none mesmo dentro de user-gesture handlers.
-        sr-only esconde visualmente sem ocultar do modelo de interação.
-      */}
+      {/* Drop zone — <label> ativa o input nativamente sem .click() programático */}
       <motion.label
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -218,15 +262,13 @@ export default function ExamsPage() {
           disabled={uploading}
           onChange={onInputChange}
         />
-
         <div className="w-14 h-14 rounded-2xl gradient-sintera-soft flex items-center justify-center mx-auto mb-4">
           <Upload size={24} className={`text-petal ${uploading ? 'animate-bounce' : ''}`} />
         </div>
-
         {uploading ? (
           <div className="flex flex-col items-center gap-2">
             <p className="font-display text-lg font-semibold text-onyx">Enviando e processando…</p>
-            <p className="font-body text-xs text-mauve">Extraindo biomarcadores e calculando scores</p>
+            <p className="font-body text-xs text-mauve">Veja o console do browser para o log detalhado</p>
           </div>
         ) : (
           <>
@@ -240,20 +282,22 @@ export default function ExamsPage() {
         )}
       </motion.label>
 
+      {/* Upload error — shows exact error code from Supabase */}
       {uploadError && (
         <motion.div
           initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-3 px-4 py-3 bg-red-50 border border-red-100 rounded-xl"
+          className="flex items-start gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-xl"
         >
-          <AlertCircle size={16} className="text-red-400 flex-shrink-0" />
-          <p className="font-body text-sm text-red-600 flex-1">{uploadError}</p>
+          <AlertCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
+          <p className="font-mono text-xs text-red-700 flex-1 break-all">{uploadError}</p>
           <button type="button" onClick={() => setUploadError(null)}
-            className="text-red-300 hover:text-red-400 transition-colors" aria-label="Fechar">
+            className="text-red-300 hover:text-red-500 flex-shrink-0" aria-label="Fechar">
             <X size={15} />
           </button>
         </motion.div>
       )}
 
+      {/* Exam list */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-body text-sm font-semibold text-onyx/60 uppercase tracking-widest">Histórico</h2>
@@ -276,29 +320,64 @@ export default function ExamsPage() {
             <p className="font-body text-xs text-mauve/60 mt-1">Faça upload do primeiro exame acima</p>
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2">
             {exams.map((exam, i) => {
-              const cfg = STATUS_CONFIG[exam.status] ?? STATUS_CONFIG.pending
-              const Icon = cfg.icon
+              const cfg     = STATUS_CONFIG[exam.status] ?? STATUS_CONFIG.pending
+              const Icon    = cfg.icon
+              const eState  = examState[exam.id]
+              const isRunning = eState?.startsWith('running')
+              const errMsg  = eState?.startsWith('erro:') ? eState.slice(5).trim() : null
+              const canReprocess = exam.status === 'pending' || exam.status === 'error'
+
               return (
                 <motion.div key={exam.id}
                   initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 + i * 0.07 }}
-                  className="card-premium p-5 flex items-center gap-4 hover:shadow-md transition-all cursor-pointer group"
+                  transition={{ delay: 0.05 + i * 0.05 }}
+                  className="card-premium overflow-hidden"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-blush flex items-center justify-center flex-shrink-0">
-                    <FileText size={18} className="text-petal" />
+                  <div className="p-5 flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-blush flex items-center justify-center flex-shrink-0">
+                      <FileText size={18} className="text-petal" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-body text-sm font-semibold text-onyx truncate">
+                        {exam.type ?? 'Exame'}
+                      </p>
+                      <p className="font-body text-xs text-mauve">{formatDate(exam.created_at)}</p>
+                    </div>
+
+                    {/* Status badge */}
+                    <span className={`inline-flex items-center gap-1.5 text-xs font-body font-medium px-3 py-1 rounded-full flex-shrink-0 ${
+                      isRunning ? 'bg-lavender-light text-lavender' : `${cfg.bg} ${cfg.color}`
+                    }`}>
+                      {isRunning
+                        ? <Loader2 size={11} className="animate-spin" />
+                        : <Icon size={11} className={exam.status === 'processing' ? 'animate-spin' : ''} />
+                      }
+                      {isRunning ? 'Processando' : cfg.label}
+                    </span>
+
+                    {/* Reprocess button for pending / error exams */}
+                    {canReprocess && !isRunning && (
+                      <button
+                        type="button"
+                        onClick={() => reprocessExam(exam)}
+                        className="ml-1 flex items-center gap-1.5 text-xs font-body font-medium text-mauve hover:text-petal-dark bg-ivory hover:bg-blush border border-border hover:border-petal-light px-3 py-1.5 rounded-full transition-all flex-shrink-0"
+                        title="Executar pipeline de processamento"
+                      >
+                        <RefreshCw size={11} /> Reprocessar
+                      </button>
+                    )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-body text-sm font-semibold text-onyx group-hover:text-petal transition-colors truncate">
-                      {exam.type ?? 'Exame'}
-                    </p>
-                    <p className="font-body text-xs text-mauve">{formatDate(exam.created_at)}</p>
-                  </div>
-                  <span className={`inline-flex items-center gap-1.5 text-xs font-body font-medium px-3 py-1 rounded-full flex-shrink-0 ${cfg.bg} ${cfg.color}`}>
-                    <Icon size={11} className={exam.status === 'processing' ? 'animate-spin' : ''} />
-                    {cfg.label}
-                  </span>
+
+                  {/* Inline error from reprocess — shows exact Supabase error code */}
+                  {errMsg && (
+                    <div className="px-5 pb-4">
+                      <p className="font-mono text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2 break-all">
+                        {errMsg}
+                      </p>
+                    </div>
+                  )}
                 </motion.div>
               )
             })}
@@ -314,9 +393,9 @@ export default function ExamsPage() {
         <div>
           <p className="font-body text-sm font-semibold text-white mb-1">Extração automática de biomarcadores</p>
           <p className="font-body text-xs text-white/50 leading-relaxed">
-            Ao enviar um exame, detectamos o tipo (hemograma, hormonal, tireoide, metabolismo…),
-            extraímos biomarcadores, calculamos seu score biológico em 8 dimensões e geramos insights
-            personalizados em português.
+            Ao enviar um exame ou clicar em "Reprocessar", a IA detecta o tipo (hemograma, hormonal,
+            tireoide, metabolismo…), extrai biomarcadores, calcula o score biológico em 8 dimensões
+            e gera insights em português.
           </p>
         </div>
       </motion.div>
