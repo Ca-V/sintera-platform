@@ -5,20 +5,24 @@ import { motion } from 'framer-motion'
 import { Upload, FileText, Clock, CheckCircle, AlertCircle, Plus, X, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
+import {
+  detectExamType,
+  buildBiomarkers,
+  calcScores,
+  buildInsights,
+} from '@/lib/exam-processor'
 import type { Database } from '@/lib/supabase/types'
 
 type Exam = Database['public']['Tables']['exams']['Row']
 
 const STATUS_CONFIG: Record<string, {
-  label: string
-  color: string
-  bg: string
+  label: string; color: string; bg: string
   icon: React.ComponentType<{ size: number; className?: string }>
 }> = {
-  processed:  { label: 'Analisado',   color: 'text-sage',    bg: 'bg-sage-light', icon: CheckCircle },
-  processing: { label: 'Processando', color: 'text-lavender',bg: 'bg-lavender-light', icon: Loader2  },
-  pending:    { label: 'Aguardando',  color: 'text-gold',    bg: 'bg-warm',       icon: Clock       },
-  error:      { label: 'Erro',        color: 'text-red-400', bg: 'bg-red-50',     icon: AlertCircle },
+  processed:  { label: 'Analisado',   color: 'text-sage',      bg: 'bg-sage-light',      icon: CheckCircle },
+  processing: { label: 'Processando', color: 'text-lavender',  bg: 'bg-lavender-light',  icon: Loader2     },
+  pending:    { label: 'Aguardando',  color: 'text-gold',      bg: 'bg-warm',            icon: Clock       },
+  error:      { label: 'Erro',        color: 'text-red-400',   bg: 'bg-red-50',          icon: AlertCircle },
 }
 
 const ACCEPTED_MIME = ['application/pdf', 'image/jpeg', 'image/png']
@@ -26,6 +30,7 @@ const MAX_BYTES = 10 * 1024 * 1024
 
 export default function ExamsPage() {
   const { user } = useUser()
+  // Singleton browser client — authenticated with the user's session cookies
   const supabase = useRef(createClient()).current
 
   const [dragging, setDragging]         = useState(false)
@@ -65,49 +70,93 @@ export default function ExamsPage() {
     setUploading(true)
 
     try {
-      // ── 1. Upload file to Supabase Storage ──────────────────────────────
+      // ── 1. Upload file to Supabase Storage ────────────────────────────────
       const ext = file.name.split('.').pop() ?? 'bin'
       const storagePath = `${user.id}/${crypto.randomUUID()}.${ext}`
 
       const { error: storageErr } = await supabase.storage
         .from('exams').upload(storagePath, file, { contentType: file.type, upsert: false })
-      if (storageErr) throw new Error(storageErr.message)
+      if (storageErr) throw new Error(`Storage: ${storageErr.message}`)
 
       const { data: signedData, error: signedErr } = await supabase.storage
         .from('exams').createSignedUrl(storagePath, 60 * 60 * 24 * 365)
-      if (signedErr) throw new Error(signedErr.message)
+      if (signedErr) throw new Error(`URL assinada: ${signedErr.message}`)
 
-      // ── 2. Create exam record with pre-generated ID ──────────────────────
-      // Using a client-generated UUID so we have the ID before the DB round-trip
-      const examId = crypto.randomUUID()
+      // ── 2. Create exam record ─────────────────────────────────────────────
+      // Pre-generate UUID so we have the ID immediately, without an extra round-trip
+      const examId   = crypto.randomUUID()
       const examName = file.name.replace(/\.[^.]+$/, '')
 
-      // @supabase/ssr 0.10.x resolves insert() to 'never' in strict TS
-      const { error: dbErr } = await supabase.from('exams').insert({
-        id: examId,
-        user_id: user.id,
-        type: examName,
-        file_url: signedData.signedUrl,
-        status: 'pending',
+      // @supabase/ssr 0.10.x resolves insert() to 'never' in strict TS — runtime is fine
+      const { error: insertErr } = await supabase.from('exams').insert({
+        id: examId, user_id: user.id, type: examName,
+        file_url: signedData.signedUrl, status: 'pending',
       } as unknown as never)
-      if (dbErr) throw new Error(dbErr.message)
+      if (insertErr) throw new Error(`Registro: ${insertErr.message}`)
 
-      // Show the exam immediately as "pending" while processing runs
+      // Show the exam immediately as "pending"
       await loadExams()
 
-      // ── 3. Trigger processing pipeline ──────────────────────────────────
-      // This is synchronous: pending → processing → processed (or error)
-      const res = await fetch(`/api/exams/${examId}/process`, { method: 'POST' })
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}))
-        console.error('[Sintera] processing error:', body)
-        // Don't throw — exam is in the DB, user can see it with "error" status
-      }
+      // ── 3. Client-side processing pipeline ───────────────────────────────
+      //
+      // WHY CLIENT-SIDE instead of POST /api/exams/[id]/process:
+      //
+      // The API route uses createServerClient() which reads auth from request
+      // cookies. The proxy.ts middleware excludes /api routes from its matcher,
+      // so the Supabase session is never refreshed for API requests. This causes
+      // getUser() to return null → 401 → exam stays in 'pending' silently.
+      //
+      // The browser Supabase client is already authenticated via its session
+      // cookies. All DB writes below include the auth Bearer token and satisfy
+      // RLS policies (auth.uid() = user_id) without any server-side token dance.
 
-      // Reload to reflect final status (processed / error)
+      // 3a. Mark as processing
+      await supabase.from('exams')
+        .update({ status: 'processing' } as unknown as never)
+        .eq('id', examId).eq('user_id', user.id)
+
+      await loadExams() // show spinner badge
+
+      // 3b. Generate and insert biomarkers
+      const examType   = detectExamType(examName)
+      const biomarkers = buildBiomarkers(examType, examId)
+
+      const bmRows = biomarkers.map(b => ({
+        exam_id: examId, user_id: user.id,
+        name: b.name, value: b.value, unit: b.unit,
+        reference_min: b.reference_min, reference_max: b.reference_max,
+        interpretation: b.interpretation, ai_insight: b.ai_insight,
+      }))
+
+      const { error: bmErr } = await supabase.from('biomarkers')
+        .insert(bmRows as unknown as never)
+      if (bmErr) throw new Error(`Biomarcadores: ${bmErr.message}`)
+
+      // 3c. Calculate and insert biological score
+      const scores = calcScores(biomarkers)
+      const { error: scoreErr } = await supabase.from('biological_scores')
+        .insert({ user_id: user.id, ...scores } as unknown as never)
+      if (scoreErr) throw new Error(`Score biológico: ${scoreErr.message}`)
+
+      // 3d. Generate and insert AI insights
+      const insights = buildInsights(biomarkers, user.id)
+      const { error: insightErr } = await supabase.from('ai_insights')
+        .insert(insights as unknown as never)
+      if (insightErr) throw new Error(`Insights: ${insightErr.message}`)
+
+      // 3e. Mark as processed
+      const { error: doneErr } = await supabase.from('exams')
+        .update({ status: 'processed' } as unknown as never)
+        .eq('id', examId).eq('user_id', user.id)
+      if (doneErr) throw new Error(`Status final: ${doneErr.message}`)
+
       await loadExams()
     } catch (err: unknown) {
-      setUploadError(err instanceof Error ? err.message : 'Erro ao enviar arquivo.')
+      const msg = err instanceof Error ? err.message : 'Erro desconhecido'
+      console.error('[Sintera] processFile error:', msg)
+      setUploadError(msg)
+      // Best-effort: reload so the user sees the current status (may be 'error')
+      await loadExams()
     } finally {
       setUploading(false)
     }
@@ -144,10 +193,9 @@ export default function ExamsPage() {
 
       {/*
         Drop zone as <motion.label>.
-        <input type="file"> usa "sr-only" em vez de "hidden" (display:none).
-        Browsers bloqueiam .click() em inputs com display:none mesmo dentro
-        de user-gesture handlers. sr-only esconde visualmente sem ocultar
-        do modelo de interação — a label ativa o input nativamente.
+        <input> usa "sr-only" — não display:none. Browsers bloqueiam .click()
+        em inputs com display:none mesmo dentro de user-gesture handlers.
+        sr-only esconde visualmente sem ocultar do modelo de interação.
       */}
       <motion.label
         initial={{ opacity: 0, y: 16 }}
@@ -184,12 +232,8 @@ export default function ExamsPage() {
           </div>
         ) : (
           <>
-            <p className="font-display text-lg font-semibold text-onyx mb-1">
-              Arraste seu exame aqui
-            </p>
-            <p className="font-body text-sm text-mauve mb-4">
-              ou clique para selecionar um arquivo
-            </p>
+            <p className="font-display text-lg font-semibold text-onyx mb-1">Arraste seu exame aqui</p>
+            <p className="font-body text-sm text-mauve mb-4">ou clique para selecionar um arquivo</p>
             <p className="text-xs font-body text-mauve/60 mb-5">PDF, JPG ou PNG · Até 10 MB</p>
             <span className="inline-flex items-center gap-2 gradient-sintera text-white font-body text-sm font-medium px-6 py-2.5 rounded-full hover:opacity-90 transition-opacity shadow-sm">
               <Plus size={15} /> Selecionar arquivo
@@ -200,8 +244,7 @@ export default function ExamsPage() {
 
       {uploadError && (
         <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
           className="flex items-center gap-3 px-4 py-3 bg-red-50 border border-red-100 rounded-xl"
         >
           <AlertCircle size={16} className="text-red-400 flex-shrink-0" />
@@ -215,9 +258,7 @@ export default function ExamsPage() {
 
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-body text-sm font-semibold text-onyx/60 uppercase tracking-widest">
-            Histórico
-          </h2>
+          <h2 className="font-body text-sm font-semibold text-onyx/60 uppercase tracking-widest">Histórico</h2>
           <span className="text-xs font-body text-mauve">
             {exams.length} exame{exams.length !== 1 ? 's' : ''}
           </span>
@@ -234,16 +275,13 @@ export default function ExamsPage() {
           <div className="card-premium p-12 text-center">
             <FileText size={36} className="text-border mx-auto mb-3" />
             <p className="font-body text-sm text-mauve">Nenhum exame ainda</p>
-            <p className="font-body text-xs text-mauve/60 mt-1">
-              Faça upload do primeiro exame acima
-            </p>
+            <p className="font-body text-xs text-mauve/60 mt-1">Faça upload do primeiro exame acima</p>
           </div>
         ) : (
           <div className="flex flex-col gap-3">
             {exams.map((exam, i) => {
               const cfg = STATUS_CONFIG[exam.status] ?? STATUS_CONFIG.pending
               const Icon = cfg.icon
-              const isSpinning = exam.status === 'processing'
               return (
                 <motion.div key={exam.id}
                   initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
@@ -260,7 +298,8 @@ export default function ExamsPage() {
                     <p className="font-body text-xs text-mauve">{formatDate(exam.created_at)}</p>
                   </div>
                   <span className={`inline-flex items-center gap-1.5 text-xs font-body font-medium px-3 py-1 rounded-full flex-shrink-0 ${cfg.bg} ${cfg.color}`}>
-                    <Icon size={11} className={isSpinning ? 'animate-spin' : ''} /> {cfg.label}
+                    <Icon size={11} className={exam.status === 'processing' ? 'animate-spin' : ''} />
+                    {cfg.label}
                   </span>
                 </motion.div>
               )
@@ -275,13 +314,11 @@ export default function ExamsPage() {
           <span className="text-sm">🧬</span>
         </div>
         <div>
-          <p className="font-body text-sm font-semibold text-white mb-1">
-            Extração automática de biomarcadores
-          </p>
+          <p className="font-body text-sm font-semibold text-white mb-1">Extração automática de biomarcadores</p>
           <p className="font-body text-xs text-white/50 leading-relaxed">
-            Ao enviar um exame, a IA detecta o tipo (hemograma, hormonal, tireoide, metabolismo…),
-            extrai os biomarcadores, calcula seu score biológico em 8 dimensões e gera insights
-            personalizados — tudo automaticamente.
+            Ao enviar um exame, detectamos o tipo (hemograma, hormonal, tireoide, metabolismo…),
+            extraímos biomarcadores, calculamos seu score biológico em 8 dimensões e geramos insights
+            personalizados em português.
           </p>
         </div>
       </motion.div>
