@@ -3,6 +3,34 @@ export type Json = string | number | boolean | null | { [key: string]: Json } | 
 export interface Database {
   public: {
     Tables: {
+      exams: {
+        Row: {
+          id: string
+          user_id: string
+          type: string | null
+          exam_date: string | null
+          file_url: string | null
+          status: string
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          type?: string | null
+          exam_date?: string | null
+          file_url?: string | null
+          status?: string
+          notes?: string | null
+        }
+        Update: {
+          type?: string | null
+          exam_date?: string | null
+          file_url?: string | null
+          status?: string
+          notes?: string | null
+        }
+      }
       profiles: {
         Row: {
           id: string

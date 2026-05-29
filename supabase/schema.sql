@@ -67,6 +67,30 @@ create trigger profiles_updated_at
   for each row execute procedure public.set_updated_at();
 
 -- ============================================================
+-- Storage bucket para exames
+-- Execute no Supabase Dashboard → Storage → New bucket
+-- Nome: exams | Public: false
+-- Ou via SQL Editor:
+-- ============================================================
+
+insert into storage.buckets (id, name, public)
+values ('exams', 'exams', false)
+on conflict (id) do nothing;
+
+-- RLS para o bucket exams
+create policy "Usuária faz upload dos próprios exames"
+  on storage.objects for insert
+  with check (bucket_id = 'exams' and auth.uid()::text = (storage.foldername(name))[1]);
+
+create policy "Usuária vê os próprios exames"
+  on storage.objects for select
+  using (bucket_id = 'exams' and auth.uid()::text = (storage.foldername(name))[1]);
+
+create policy "Usuária deleta os próprios exames"
+  on storage.objects for delete
+  using (bucket_id = 'exams' and auth.uid()::text = (storage.foldername(name))[1]);
+
+-- ============================================================
 -- Tabelas futuras (Fase 2 do Master Plan)
 -- ============================================================
 
