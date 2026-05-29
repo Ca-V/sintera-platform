@@ -69,55 +69,47 @@ export default function ExamsPage() {
     setUploadError(null)
     setUploading(true)
 
+    // Declared outside try so the catch block can update the exam status
+    let examId: string | null = null
+
     try {
-      // ── 1. Upload file to Supabase Storage ────────────────────────────────
+      // ── 1. Upload to Supabase Storage ─────────────────────────────────────
       const ext = file.name.split('.').pop() ?? 'bin'
       const storagePath = `${user.id}/${crypto.randomUUID()}.${ext}`
 
       const { error: storageErr } = await supabase.storage
         .from('exams').upload(storagePath, file, { contentType: file.type, upsert: false })
-      if (storageErr) throw new Error(`Storage: ${storageErr.message}`)
+      if (storageErr) throw new Error(`[Storage] ${storageErr.message}`)
 
       const { data: signedData, error: signedErr } = await supabase.storage
         .from('exams').createSignedUrl(storagePath, 60 * 60 * 24 * 365)
-      if (signedErr) throw new Error(`URL assinada: ${signedErr.message}`)
+      if (signedErr) throw new Error(`[URL] ${signedErr.message}`)
 
-      // ── 2. Create exam record ─────────────────────────────────────────────
-      // Pre-generate UUID so we have the ID immediately, without an extra round-trip
-      const examId   = crypto.randomUUID()
+      // ── 2. Create exam record (pending) ───────────────────────────────────
+      examId = crypto.randomUUID()
       const examName = file.name.replace(/\.[^.]+$/, '')
 
-      // @supabase/ssr 0.10.x resolves insert() to 'never' in strict TS — runtime is fine
       const { error: insertErr } = await supabase.from('exams').insert({
         id: examId, user_id: user.id, type: examName,
         file_url: signedData.signedUrl, status: 'pending',
       } as unknown as never)
-      if (insertErr) throw new Error(`Registro: ${insertErr.message}`)
+      if (insertErr) throw new Error(`[Exame] ${insertErr.message}`)
 
-      // Show the exam immediately as "pending"
       await loadExams()
 
-      // ── 3. Client-side processing pipeline ───────────────────────────────
-      //
-      // WHY CLIENT-SIDE instead of POST /api/exams/[id]/process:
-      //
-      // The API route uses createServerClient() which reads auth from request
-      // cookies. The proxy.ts middleware excludes /api routes from its matcher,
-      // so the Supabase session is never refreshed for API requests. This causes
-      // getUser() to return null → 401 → exam stays in 'pending' silently.
-      //
-      // The browser Supabase client is already authenticated via its session
-      // cookies. All DB writes below include the auth Bearer token and satisfy
-      // RLS policies (auth.uid() = user_id) without any server-side token dance.
-
-      // 3a. Mark as processing
-      await supabase.from('exams')
+      // ── 3. Mark as processing ─────────────────────────────────────────────
+      // WHY CLIENT-SIDE: proxy.ts excludes /api from its matcher, so
+      // createServerClient() never gets a refreshed session for API routes —
+      // getUser() returns null → 401 → exam stays pending silently.
+      // The browser client already carries the auth Bearer token.
+      const { error: procErr } = await supabase.from('exams')
         .update({ status: 'processing' } as unknown as never)
         .eq('id', examId).eq('user_id', user.id)
+      if (procErr) throw new Error(`[Processing] ${procErr.message}`)
 
-      await loadExams() // show spinner badge
+      await loadExams()
 
-      // 3b. Generate and insert biomarkers
+      // ── 4. Biomarkers ─────────────────────────────────────────────────────
       const examType   = detectExamType(examName)
       const biomarkers = buildBiomarkers(examType, examId)
 
@@ -130,32 +122,38 @@ export default function ExamsPage() {
 
       const { error: bmErr } = await supabase.from('biomarkers')
         .insert(bmRows as unknown as never)
-      if (bmErr) throw new Error(`Biomarcadores: ${bmErr.message}`)
+      if (bmErr) throw new Error(`[Biomarkers] ${bmErr.message}`)
 
-      // 3c. Calculate and insert biological score
+      // ── 5. Biological score ───────────────────────────────────────────────
       const scores = calcScores(biomarkers)
       const { error: scoreErr } = await supabase.from('biological_scores')
         .insert({ user_id: user.id, ...scores } as unknown as never)
-      if (scoreErr) throw new Error(`Score biológico: ${scoreErr.message}`)
+      if (scoreErr) throw new Error(`[Scores] ${scoreErr.message}`)
 
-      // 3d. Generate and insert AI insights
+      // ── 6. AI insights ────────────────────────────────────────────────────
       const insights = buildInsights(biomarkers, user.id)
       const { error: insightErr } = await supabase.from('ai_insights')
         .insert(insights as unknown as never)
-      if (insightErr) throw new Error(`Insights: ${insightErr.message}`)
+      if (insightErr) throw new Error(`[Insights] ${insightErr.message}`)
 
-      // 3e. Mark as processed
+      // ── 7. Mark as processed ──────────────────────────────────────────────
       const { error: doneErr } = await supabase.from('exams')
         .update({ status: 'processed' } as unknown as never)
         .eq('id', examId).eq('user_id', user.id)
-      if (doneErr) throw new Error(`Status final: ${doneErr.message}`)
+      if (doneErr) throw new Error(`[Done] ${doneErr.message}`)
 
       await loadExams()
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Erro desconhecido'
-      console.error('[Sintera] processFile error:', msg)
+      console.error('[Sintera] processFile falhou:', msg)
       setUploadError(msg)
-      // Best-effort: reload so the user sees the current status (may be 'error')
+
+      // Mark the exam as error so it's visible in the list (not silent pending)
+      if (examId) {
+        await supabase.from('exams')
+          .update({ status: 'error' } as unknown as never)
+          .eq('id', examId).eq('user_id', user.id)
+      }
       await loadExams()
     } finally {
       setUploading(false)
