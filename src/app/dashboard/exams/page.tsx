@@ -21,20 +21,19 @@ const STATUS_CONFIG: Record<string, {
 }
 
 const ACCEPTED_MIME = ['application/pdf', 'image/jpeg', 'image/png']
-const MAX_BYTES = 10 * 1024 * 1024 // 10 MB
+const MAX_BYTES = 10 * 1024 * 1024
 
 export default function ExamsPage() {
   const { user } = useUser()
-  // Singleton browser client — avoids re-creating on every render
   const supabase = useRef(createClient()).current
 
-  const [dragging, setDragging]       = useState(false)
-  const [exams, setExams]             = useState<Exam[]>([])
+  const [dragging, setDragging]         = useState(false)
+  const [exams, setExams]               = useState<Exam[]>([])
   const [loadingExams, setLoadingExams] = useState(true)
-  const [uploading, setUploading]     = useState(false)
-  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [uploading, setUploading]       = useState(false)
+  const [uploadError, setUploadError]   = useState<string | null>(null)
 
-  // The hidden <input type="file"> — triggered programmatically
+  // Kept only for resetting the value after selection (allows re-picking the same file)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const loadExams = useCallback(async () => {
@@ -68,7 +67,6 @@ export default function ExamsPage() {
     setUploading(true)
 
     try {
-      // 1. Upload to Supabase Storage: bucket "exams", path "{userId}/{uuid}.ext"
       const ext = file.name.split('.').pop() ?? 'bin'
       const storagePath = `${user.id}/${crypto.randomUUID()}.${ext}`
 
@@ -78,16 +76,14 @@ export default function ExamsPage() {
 
       if (storageErr) throw new Error(storageErr.message)
 
-      // 2. Build the signed URL (private bucket → signed URL for access)
       const { data: signedData, error: signedErr } = await supabase.storage
         .from('exams')
-        .createSignedUrl(storagePath, 60 * 60 * 24 * 365) // 1-year expiry
+        .createSignedUrl(storagePath, 60 * 60 * 24 * 365)
 
       if (signedErr) throw new Error(signedErr.message)
 
-      // 3. Insert exam record
       const examName = file.name.replace(/\.[^.]+$/, '')
-      // @supabase/ssr 0.10.x resolves insert() param to 'never' in strict TS — double-cast required
+      // @supabase/ssr 0.10.x resolves insert() to 'never' in strict TS — double-cast required
       const { error: dbErr } = await supabase.from('exams').insert({
         user_id: user.id,
         type: examName,
@@ -108,7 +104,7 @@ export default function ExamsPage() {
   const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) processFile(file)
-    // Reset so the same file can be selected again
+    // Reset so the same file can be re-selected on the next interaction
     e.target.value = ''
   }
 
@@ -120,7 +116,6 @@ export default function ExamsPage() {
   }
 
   const onDragLeave = (e: React.DragEvent) => {
-    // Only clear dragging state when leaving the drop zone itself, not its children
     if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragging(false)
   }
 
@@ -136,31 +131,51 @@ export default function ExamsPage() {
         </p>
       </motion.div>
 
-      {/* Hidden native file picker — opened programmatically */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".pdf,.jpg,.jpeg,.png"
-        className="hidden"
-        onChange={onInputChange}
-        aria-hidden="true"
-      />
+      {/*
+        Drop zone as <motion.label>.
 
-      {/* Drop zone — also acts as a click target for the whole area */}
-      <motion.div
+        WHY LABEL instead of DIV + programmatic .click():
+        Browsers (Chrome, Firefox, Safari) block input[type=file].click()
+        when the input has display:none — even when called from a trusted
+        user-gesture handler. This is an explicit browser security policy.
+
+        Using a <label> that wraps the <input> bypasses this entirely:
+        clicking anywhere inside the label activates the input natively,
+        with no JavaScript and no security restrictions.
+
+        The <input> uses "sr-only" (position:absolute; width:1px; …)
+        instead of "hidden" (display:none) so the browser can still
+        interact with it through the label.
+      */}
+      <motion.label
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
         onDragOver={e => { e.preventDefault(); setDragging(true) }}
         onDragLeave={onDragLeave}
         onDrop={onDrop}
-        onClick={() => !uploading && fileInputRef.current?.click()}
         className={[
-          'border-2 border-dashed rounded-2xl p-10 text-center transition-all duration-200 cursor-pointer',
-          dragging  ? 'border-petal bg-blush'                          : 'border-border hover:border-petal/50 hover:bg-blush/30',
-          uploading ? 'opacity-60 pointer-events-none select-none'     : '',
+          'block border-2 border-dashed rounded-2xl p-10 text-center',
+          'transition-all duration-200 cursor-pointer',
+          dragging  ? 'border-petal bg-blush'
+                    : 'border-border hover:border-petal/50 hover:bg-blush/30',
+          uploading ? 'opacity-60 pointer-events-none select-none' : '',
         ].join(' ')}
       >
+        {/*
+          sr-only positions the element off-screen (not display:none).
+          The label's native click behaviour activates it directly.
+          disabled={uploading} prevents the picker from opening mid-upload.
+        */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".pdf,.jpg,.jpeg,.png"
+          className="sr-only"
+          disabled={uploading}
+          onChange={onInputChange}
+        />
+
         <div className="w-14 h-14 rounded-2xl gradient-sintera-soft flex items-center justify-center mx-auto mb-4">
           <Upload size={24} className={`text-petal ${uploading ? 'animate-bounce' : ''}`} />
         </div>
@@ -172,20 +187,22 @@ export default function ExamsPage() {
             <p className="font-display text-lg font-semibold text-onyx mb-1">
               Arraste seu exame aqui
             </p>
-            <p className="font-body text-sm text-mauve mb-4">ou clique para selecionar um arquivo</p>
+            <p className="font-body text-sm text-mauve mb-4">
+              ou clique para selecionar um arquivo
+            </p>
             <p className="text-xs font-body text-mauve/60 mb-5">PDF, JPG ou PNG · Até 10 MB</p>
 
-            {/* Button stops propagation so the div's onClick doesn't fire twice */}
-            <button
-              type="button"
-              onClick={e => { e.stopPropagation(); fileInputRef.current?.click() }}
-              className="inline-flex items-center gap-2 gradient-sintera text-white font-body text-sm font-medium px-6 py-2.5 rounded-full hover:opacity-90 transition-opacity shadow-sm"
-            >
+            {/*
+              <span> styled as button — <button> inside <label> can cause
+              double-activation in some browsers. A <span> is inert and
+              lets the label handle the click naturally.
+            */}
+            <span className="inline-flex items-center gap-2 gradient-sintera text-white font-body text-sm font-medium px-6 py-2.5 rounded-full hover:opacity-90 transition-opacity shadow-sm">
               <Plus size={15} /> Selecionar arquivo
-            </button>
+            </span>
           </>
         )}
-      </motion.div>
+      </motion.label>
 
       {/* Upload error banner */}
       {uploadError && (
@@ -219,7 +236,6 @@ export default function ExamsPage() {
         </div>
 
         {loadingExams ? (
-          /* Skeleton rows while fetching */
           <div className="flex flex-col gap-3">
             {[1, 2, 3].map(i => (
               <div
