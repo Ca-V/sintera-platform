@@ -1,10 +1,11 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   Upload, FileText, Clock, CheckCircle, AlertCircle,
-  Plus, X, Loader2, RefreshCw,
+  Plus, X, Loader2, RefreshCw, ChevronRight,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
@@ -98,6 +99,7 @@ async function runPipeline(
 
 export default function ExamsPage() {
   const { user } = useUser()
+  const router = useRouter()
   const supabase  = useRef(createClient()).current
 
   const [dragging, setDragging]         = useState(false)
