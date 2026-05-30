@@ -29,7 +29,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }),
   })
   if (!geminiRes.ok) {
-    return NextResponse.json({ error: 'Gemini error: ' + geminiRes.status }, { status: 500 })
+    const errBody = await geminiRes.text(); return NextResponse.json({ error: 'Gemini error: ' + geminiRes.status + ' - ' + errBody.slice(0, 300) }, { status: 500 })
   }
   const geminiData = await geminiRes.json()
   const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
