@@ -176,3 +176,8 @@ export interface Database {
 }
 
 export type Profile = Database['public']['Tables']['profiles']['Row']
+
+export type Exam = Database['public']['Tables']['exams']['Row']
+export type Biomarker = Database['public']['Tables']['biomarkers']['Row']
+export type AiInsight = Database['public']['Tables']['ai_insights']['Row']
+export type BiologicalScore = Database['public']['Tables']['biological_scores']['Row']
