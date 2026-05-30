@@ -44,7 +44,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: 'Nenhum biomarcador encontrado' }, { status: 422 })
   }
   const user = authData.user
-  await supabase.from('exams').update({ status: 'processing' } as any).eq('id', examId)
+  await supabase.from('exams').update({ status: 'processing' } as unknown as never).eq('id', examId)
   await supabase.from('biomarkers').delete().eq('exam_id', examId)
   const bmRows = parsed.biomarkers.map((b: any) => ({
     exam_id: examId, user_id: user.id,
@@ -52,16 +52,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     reference_min: b.reference_min, reference_max: b.reference_max,
     interpretation: b.interpretation, ai_insight: b.ai_insight,
   }))
-  const { error: bmErr } = await supabase.from('biomarkers').insert(bmRows as any)
+  const { error: bmErr } = await supabase.from('biomarkers').insert(bmRows as unknown as never[])
   if (bmErr) {
-    await supabase.from('exams').update({ status: 'error' } as any).eq('id', examId)
+    await supabase.from('exams').update({ status: 'error' } as unknown as never).eq('id', examId)
     return NextResponse.json({ error: bmErr.message }, { status: 500 })
   }
   const bm = parsed.biomarkers.map((b: any) => ({ ...b, category: 'metabolic' }))
   const scores = calcScores(bm)
-  await supabase.from('biological_scores').insert({ user_id: user.id, ...scores } as any)
+  await supabase.from('biological_scores').insert({ user_id: user.id, ...scores } as unknown as never)
   const insights = buildInsights(bm, user.id)
-  await supabase.from('ai_insights').insert(insights as any)
-  await supabase.from('exams').update({ status: 'processed', type: parsed.exam_type } as any).eq('id', examId)
+  await supabase.from('ai_insights').insert(insights as unknown as never[])
+  await supabase.from('exams').update({ status: 'processed', type: parsed.exam_type } as unknown as never).eq('id', examId)
   return NextResponse.json({ success: true, biomarkers: parsed.biomarkers.length, scores })
 }
