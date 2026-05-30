@@ -7,26 +7,25 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const supabase = await createClient()
   const { data: authData, error: authErr } = await supabase.auth.getUser()
   if (authErr || !authData.user) return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
-  const geminiKey = process.env.GEMINI_API_KEY
-  if (!geminiKey) return NextResponse.json({ error: 'GEMINI_API_KEY nao configurada' }, { status: 500 })
+  const groqKey = process.env.GROQ_API_KEY
+  if (!groqKey) return NextResponse.json({ error: 'GROQ_API_KEY nao configurada' }, { status: 500 })
   const body = await request.json()
   const examText = String(body.examText ?? '')
-  const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
-  const prompt = 'Analise este exame medico e extraia biomarcadores. Retorne APENAS JSON: {"biomarkers":[{"name":"string","value":0.0,"unit":"string","reference_min":0.0,"reference_max":0.0,"interpretation":"normal|low|high","ai_insight":"string ou null"}],"exam_type":"string"}. Texto: ' + examText.slice(0, 3000)
-  const geminiRes = await fetch(GEMINI_URL + '?key=' + geminiKey, {
+  const prompt = 'Analise este exame medico e extraia biomarcadores numericos. Retorne APENAS um objeto JSON valido, sem markdown, sem blocos de codigo. Formato: {"biomarkers":[{"name":"string","value":0.0,"unit":"string","reference_min":0.0,"reference_max":0.0,"interpretation":"normal|low|high","ai_insight":"string"}],"exam_type":"string"}. Texto do exame: ' + examText.slice(0, 4000)
+  const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + groqKey },
+    body: JSON.stringify({ model: 'llama-3.1-8b-instant', messages: [{ role: 'user', content: prompt }], temperature: 0.1 }),
   })
-  if (!geminiRes.ok) {
-    const errBody = await geminiRes.text()
-    return NextResponse.json({ error: 'Gemini ' + geminiRes.status + ': ' + errBody.slice(0, 500) }, { status: 500 })
+  if (!groqRes.ok) {
+    const errBody = await groqRes.text()
+    return NextResponse.json({ error: 'Groq ' + groqRes.status + ': ' + errBody.slice(0, 500) }, { status: 500 })
   }
-  const geminiData = await geminiRes.json()
-  const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
+  const groqData = await groqRes.json()
+  const rawText = groqData.choices?.[0]?.message?.content ?? ''
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let parsed: any
-  try { const m = rawText.match(/\{[\s\S]*\}/); parsed = JSON.parse(m?.[0] ?? rawText) }
+  try { const m = rawText.match(/{[sS]*}/); parsed = JSON.parse(m?.[0] ?? rawText) }
   catch { return NextResponse.json({ error: 'JSON invalido: ' + rawText.slice(0, 200) }, { status: 500 }) }
   if (!parsed.biomarkers?.length) return NextResponse.json({ error: 'Nenhum biomarcador' }, { status: 422 })
   const user = authData.user
