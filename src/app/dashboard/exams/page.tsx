@@ -335,7 +335,8 @@ export default function ExamsPage() {
                 <motion.div key={exam.id}
                   initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.05 + i * 0.05 }}
-                  className="card-premium overflow-hidden"
+                  className="card-premium overflow-hidden cursor-pointer"
+                  onClick={() => router.push("/dashboard/exams/" + exam.id)}
                 >
                   <div className="p-5 flex items-center gap-4">
                     <div className="w-10 h-10 rounded-xl bg-blush flex items-center justify-center flex-shrink-0">
