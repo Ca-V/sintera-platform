@@ -11,7 +11,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!geminiKey) return NextResponse.json({ error: 'GEMINI_API_KEY nao configurada' }, { status: 500 })
   const body = await request.json()
   const examText = String(body.examText ?? '')
-  const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent'
+  const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent'
   const prompt = 'Analise este exame medico e extraia biomarcadores. Retorne APENAS JSON: {"biomarkers":[{"name":"string","value":0.0,"unit":"string","reference_min":0.0,"reference_max":0.0,"interpretation":"normal|low|high","ai_insight":"string ou null"}],"exam_type":"string"}. Texto: ' + examText.slice(0, 3000)
   const geminiRes = await fetch(GEMINI_URL + '?key=' + geminiKey, {
     method: 'POST',
