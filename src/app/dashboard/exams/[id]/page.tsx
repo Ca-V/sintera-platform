@@ -1,174 +1,310 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { motion } from 'framer-motion'
+import { ArrowLeft, Brain, FileText, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react'
 
-function BarChart({ value, min, max }) {
-  if (value == null || min == null || max == null || max <= min) return null
-  const range = max - min
-  const lo = min - range * 0.5
-  const hi = max + range * 0.5
-  const total = hi - lo
-  const pct = Math.min(100, Math.max(0, ((value - lo) / total) * 100))
-  const refLeft = ((min - lo) / total) * 100
-  const refWidth = ((max - min) / total) * 100
-  return (
-    <div className="relative h-2 rounded-full bg-white/10 mt-2 mb-1">
-      <div className="absolute h-2 rounded-full bg-green-500/40" style={{ left: `${refLeft}%`, width: `${refWidth}%` }} />
-      <div className="absolute w-2 h-2 rounded-full bg-white border border-white/60 -translate-x-1/2" style={{ left: `${pct}%` }} />
-    </div>
-  )
+interface Biomarker {
+  id: string
+  name: string
+  value: number | null
+  unit: string | null
+  reference_min: number | null
+  reference_max: number | null
+  interpretation: string | null
+  ai_insight: string | null
 }
 
-function label(i) {
-  if (i === 'normal') return { text: 'Normal', cls: 'text-green-400' }
-  if (i === 'low') return { text: 'Baixo', cls: 'text-yellow-400' }
-  if (i === 'high') return { text: 'Alto', cls: 'text-yellow-400' }
-  if (i === 'critical') return { text: 'Critico', cls: 'text-red-600' }
-  return { text: 'â€”', cls: 'text-red-400' }
+interface AiInsight {
+  id: string
+  insight: string
+  category: string | null
+  priority: string
+}
+
+interface Exam {
+  id: string
+  type: string | null
+  exam_date: string | null
+  status: string
+  notes: string | null
+  file_url: string | null
 }
 
 export default function ExamDetailPage() {
-  const { id } = useParams()
+  const params = useParams()
   const router = useRouter()
-  const supabase = createClient()
-  const [exam, setExam] = useState(null)
-  const [biomarkers, setBiomarkers] = useState([])
-  const [insights, setInsights] = useState([])
-  const [score, setScore] = useState(null)
+  const examId = params.id as string
+
+  const [exam, setExam] = useState<Exam | null>(null)
+  const [biomarkers, setBiomarkers] = useState<Biomarker[]>([])
+  const [insights, setInsights] = useState<AiInsight[]>([])
   const [loading, setLoading] = useState(true)
   const [analyzing, setAnalyzing] = useState(false)
-  const [statusMsg, setStatusMsg] = useState('')
-  const [pdfReady, setPdfReady] = useState(false)
-  const scriptRef = useRef(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const supabase = createClient()
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    if (window.pdfjsLib) { setPdfReady(true); return }
-    const script = document.createElement('script')
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'
-    script.onload = () => {
-      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
-      setPdfReady(true)
-    }
-    document.head.appendChild(script)
-    scriptRef.current = script
-  }, [])
+    loadData()
+  }, [examId])
 
-  useEffect(() => {
-    async function load() {
-      const sb = supabase
-      const [er, bm, ins, sc] = await Promise.all([
-        sb.from('exams').select('*').eq('id', id).single(),
-        sb.from('biomarkers').select('*').eq('exam_id', id).order('name'),
-        sb.from('ai_insights').select('*').eq('exam_id', id).order('created_at', { ascending: false }),
-        sb.from('biological_scores').select('*').eq('exam_id', id).single(),
-      ])
-      setExam(er.data)
-      setBiomarkers(bm.data ?? [])
-      setInsights(ins.data ?? [])
-      setScore(sc.data ?? null)
+  async function loadData() {
+    setLoading(true)
+    try {
+      const { data: examData } = await supabase
+        .from('exams')
+        .select('*')
+        .eq('id', examId)
+        .single()
+
+      if (examData) setExam(examData)
+
+      const { data: bioData } = await supabase
+        .from('biomarkers')
+        .select('*')
+        .eq('exam_id', examId)
+
+      if (bioData) setBiomarkers(bioData)
+
+      const { data: insightData } = await supabase
+        .from('ai_insights')
+        .select('*')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id ?? '')
+        .order('created_at', { ascending: false })
+        .limit(5)
+
+      if (insightData) setInsights(insightData)
+    } catch (err) {
+      setError('Erro ao carregar dados do exame')
+    } finally {
       setLoading(false)
     }
-    load()
-  }, [id])
+  }
+
+  async function extractTextFromPDF(url: string): Promise<string> {
+    return new Promise((resolve) => {
+      const pdfjsLib = (window as any).pdfjsLib
+      if (!pdfjsLib) { resolve(''); return }
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
+      pdfjsLib.getDocument(url).promise.then(async (pdf: any) => {
+        let text = ''
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i)
+          const content = await page.getTextContent()
+          text += content.items.map((item: any) => item.str).join(' ') + '
+'
+        }
+        resolve(text)
+      }).catch(() => resolve(''))
+    })
+  }
 
   async function handleAnalyze() {
     if (!exam?.file_url) return
-    if (!pdfReady) { setStatusMsg('Carregando leitor de PDF...'); return }
     setAnalyzing(true)
-    setStatusMsg('Baixando PDF...')
+    setError(null)
     try {
-      const res = await fetch(exam.file_url)
-      const buf = await res.arrayBuffer()
-      setStatusMsg('Extraindo texto do PDF...')
-      const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise
-      let text = ''
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i)
-        const content = await page.getTextContent()
-        text += content.items.map(item => item.str).join(' ') + '\n'
+      if (!(window as any).pdfjsLib) {
+        await new Promise<void>((resolve, reject) => {
+          const script = document.createElement('script')
+          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'
+          script.onload = () => resolve()
+          script.onerror = () => reject()
+          document.head.appendChild(script)
+        })
       }
-      if (text.trim().length < 20) {
-        setStatusMsg('Nao foi possivel extrair o texto do PDF.')
-        setAnalyzing(false); return
-      }
-      setStatusMsg('Enviando para analise com IA...')
-      const r = await fetch(`/api/exams/${id}/analyze`, {
+      const examText = await extractTextFromPDF(exam.file_url)
+      const res = await fetch('/api/exams/' + examId + '/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ examText: text.slice(0, 8000) }),
+        body: JSON.stringify({ examText }),
       })
-      if (!r.ok) {
-        const err = await r.json()
-        setStatusMsg(`Erro: ${err.error}`)
-        setAnalyzing(false); return
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Erro na analise')
       }
-      setStatusMsg('Analise concluida! Recarregando...')
-      await new Promise(r => setTimeout(r, 1000))
-      window.location.reload()
-    } catch (e) {
-      setStatusMsg(`Erro inesperado: ${e.message}`)
+      await loadData()
+    } catch (err: any) {
+      setError(err.message || 'Erro ao analisar exame')
+    } finally {
       setAnalyzing(false)
     }
   }
 
-  if (loading) return <div className="flex items-center justify-center min-h-screen bg-[#0a0a14]"><p className="text-white/60 text-sm">Carregando...</p></div>
-  if (!exam) return <div className="flex items-center justify-center min-h-screen bg-[#0a0a14]"><p className="text-white/60 text-sm">Exame nao encontrado.</p></div>
+  function getStatusColor(interpretation: string | null) {
+    if (!interpretation) return 'text-gray-400'
+    if (interpretation === 'high' || interpretation === 'low') return 'text-red-400'
+    return 'text-green-400'
+  }
 
-  const abnormal = biomarkers.filter(b => b.interpretation !== 'normal')
+  function getPriorityColor(priority: string) {
+    if (priority === 'high') return 'border-red-500/50 bg-red-500/10'
+    if (priority === 'medium') return 'border-yellow-500/50 bg-yellow-500/10'
+    return 'border-green-500/50 bg-green-500/10'
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-purple-400" />
+      </div>
+    )
+  }
+
+  const abnormal = biomarkers.filter(b => b.interpretation === 'high' || b.interpretation === 'low')
   const normal = biomarkers.filter(b => b.interpretation === 'normal')
 
   return (
-    <div className="min-h-screen bg-[#0a0a14] text-white px-4 py-8 max-w-3x\ mx-auto">
-      <button onClick={() => router.back()} className="text-white/50 hover:text-white text-sm mb-6 flex items-center gap-1">
-        &#8592; Voltar
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      <button
+        onClick={() => router.back()}
+        className="flex items-center gap-2 text-gray-400 hover:text-white mb-6 transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Voltar
       </button>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">{exam.type ?? 'Exame'}</h1>
-        <p className="text-white/50 text-sm mt-1">
-          {exam.exam_date ? new Date(exam.exam_date).toLocaleDateString('pt-BR') : 'Data nao informada'}
-          &bull; Status: <span className={exam.status === 'processed' ? 'text-green-400' : exam.status === 'error' ? 'text-red-400' : 'text-yellow-400'}>{exam.status}</span>
-        </p>
-      </div>
-      {exam.status !== 'processed' && exam.file_url && (
-        <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-6">
-          <p className="text-sm text-white/70 mb-3">Este exame ainda nao foi analisado.</p>
-          <button onClick={handleAnalyze} disabled={analyzing} className="bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
-            {analyzing ? 'Analisando...' : 'Analisar com IA'}
-          </button>
-          {statusMsg && <p className="text-xs text-white/50 mt-2">{statusMsg}</p>}
-        </div>
-      )}
-      {score && (
-        <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-6">
-          <h2 className="text-sm font-semibold text-white/60 mb-3 uppercase tracking-wide">Scores de Saude</h2>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {[['Total', score.score_total],['Metabolico',score.score_metabolic],['Hormonal',score.score_hormonal],['Inflamatorio,'score.score_inflammatory],['Cardiovascular',score.score_cardiovascular],['Cognitivo',score.score_cognitive],['Performance',score.score_performance],['Longevidade',score.score_longevity]].map(([l,v]) => v != null && <div key={l} className="text-center"><div className="text-2xl font-bold text-violet-300">{v}</div><div className="text-xs text-white/50">{l}</div></div>)}
+
+      {exam && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="card-premium p-6 mb-6"
+        >
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <FileText className="w-6 h-6 text-purple-400" />
+                <h1 className="text-xl font-bold text-white">{exam.type || 'Exame'}</h1>
+              </div>
+              {exam.exam_date && (
+                <p className="text-gray-400 text-sm">
+                  {new Date(exam.exam_date).toLocaleDateString('pt-BR')}
+                </p>
+              )}
+              <span className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-medium ${
+                exam.status === 'processed' ? 'bg-green-500/20 text-green-400' :
+                exam.status === 'processing' ? 'bg-yellow-500/20 text-yellow-400' :
+                'bg-gray-500/20 text-gray-400'
+              }`}>
+                {exam.status === 'processed' ? 'Processado' :
+                 exam.status === 'processing' ? 'Processando...' : 'Pendente'}
+              </span>
+            </div>
+            {exam.file_url && exam.status !== 'processed' && (
+              <button
+                onClick={handleAnalyze}
+                disabled={analyzing}
+                className="btn-primary flex items-center gap-2"
+              >
+                {analyzing ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Analisando...</>
+                ) : (
+                  <><Brain className="w-4 h-4" /> Analisar com IA</>
+                )}
+              </button>
+            )}
           </div>
-        </div>
+          {error && (
+            <div className="mt-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-400 text-sm">
+              {error}
+            </div>
+          )}
+        </motion.div>
       )}
+
       {insights.length > 0 && (
-        <div className="bg-violet-900/20 border border-violet-500/20 rounded-xl p-4 mb-6">
-          <h2 className="text-sm font-semibold text-violet-300 mb-3 uppercase tracking-wide">Insights da IA</h2>
-          <ul className="space-y-2">
-            {insights.map(i => (
-              <li key={i.id} className="text-sm text-white/80 flex gap-2">
-                <span className={i.priority === 'high' ? 'text-red-400' : i.priority === 'medium' ? 'text-yellow-400' : 'text-green-400'}>â•Ÿ</span>
-                {i.insight}
-              </li>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="card-premium p-6 mb-6"
+        >
+          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <Brain className="w-5 h-5 text-purple-400" />
+            Insights da IA
+          </h2>
+          <div className="space-y-3">
+            {insights.map(insight => (
+              <div key={insight.id} className={`p-3 rounded-lg border ${getPriorityColor(insight.priority)}`}>
+                <p className="text-gray-300 text-sm">{insight.insight}</p>
+                {insight.category && (
+                  <span className="text-xs text-gray-500 mt-1 block">{insight.category}</span>
+                )}
+              </div>
             ))}
-          </ul>
+          </div>
+        </motion.div>
+      )}
+
+      {abnormal.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="card-premium p-6 mb-6"
+        >
+          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-red-400" />
+            Biomarcadores Alterados ({abnormal.length})
+          </h2>
+          <div className="space-y-3">
+            {abnormal.map(b => (
+              <div key={b.id} className="flex items-center justify-between p-3 bg-red-500/5 rounded-lg border border-red-500/20">
+                <div>
+                  <p className="text-white font-medium text-sm">{b.name}</p>
+                  {b.ai_insight && <p className="text-gray-400 text-xs mt-0.5">{b.ai_insight}</p>}
+                </div>
+                <div className="text-right">
+                  <p className={`font-bold ${getStatusColor(b.interpretation)}`}>
+                    {b.value} {b.unit}
+                  </p>
+                  {b.reference_min != null && b.reference_max != null && (
+                    <p className="text-gray-500 text-xs">Ref: {b.reference_min}-{b.reference_max}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
+      {normal.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="card-premium p-6"
+        >
+          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <CheckCircle className="w-5 h-5 text-green-400" />
+            Biomarcadores Normais ({normal.length})
+          </h2>
+          <div className="space-y-3">
+            {normal.map(b => (
+              <div key={b.id} className="flex items-center justify-between p-3 bg-green-500/5 rounded-lg border border-green-500/20">
+                <p className="text-white font-medium text-sm">{b.name}</p>
+                <div className="text-right">
+                  <p className="font-bold text-green-400">{b.value} {b.unit}</p>
+                  {b.reference_min != null && b.reference_max != null && (
+                    <p className="text-gray-500 text-xs">Ref: {b.reference_min}-{b.reference_max}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
+      {biomarkers.length === 0 && exam?.status !== 'processing' && (
+        <div className="text-center py-12 text-gray-500">
+          <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
+          <p>Nenhum biomarcador encontrado.</p>
+          {exam?.file_url && <p className="text-sm mt-1">Clique em "Analisar com IA" para extrair os dados.</p>}
         </div>
       )}
-      {abnormal.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-sm font-semibold text-white/60 mb-3 uppercase tracking-wide">Biomarcadores Alterados</h2>
-          <div className="space-y-3">
-            {abnormal.map(b => {
-              const { text, cls } = label(b.interpretation)
-              return (
-                <div key={b.id} className="bg-white/5 border border-white/10 rounded-xl p-4">
-                  <div className="flex justify-between items-start">
-                    <div><span className="font-medium">{bname}</span><span className="text-white/50 text-sm ml-2">{bgfÇVWÒ¶"çVæ—GÓÂ÷7ããÂöF—cà¢Ç7â6Æ74æÖS×¶FW‡B×‡2föçB×6VÖ–&öÆBG¶6Ç7ÖÓç·FW‡GÓÂ÷7ãà¢ÂöF—cà¢Ä&$6†'BfÇVS×¶"çfÇVWÒÖ–ã×¶"ç&VfW&Væ6UöÖ–çÒÖƒ×¶"ç&VfW&Væ6UöÖ‡Òóà¢ÆF—b6Æ74æÖSÒ'FW‡B×‡2FW‡B×v†—FRóC×BÓ#å&VfW&Væ6–¢¶"ç&VfW&Væ6UöÖ–çÒ¶"fæ'7·ÒÒ¶"ç&VfW&Væ6UöÖ‡Ò¶"çVæ—GÓÂöF—cà¢¶"æ•ö–ç6–v‡BbbÇ6Æ74æÖSÒ'FW‡B×‡2FW‡B×v†—FRós×BÓ"&÷&FW"×B&÷&FW"×v†—FRóBÓ"#ç¶"æ•ö–ç6–v‡GÓÂ÷çĞ¢ÂöF—cà¢¢Ò—Ğ¢ÂöF—cà¢ÂöF—cà¢—Ğ¢¶æ÷&ÖÂæÆVæwF‚âbb€¢ÆF—cà¢Æƒ"6Æ74æÖSÒ'FW‡B×6ÒföçB×6VÖ–&öÆBFW‡B×v†—FRócÖ"Ó2WW&66RG&6¶–ær×v–FR#ä&–öÖ&6F÷&W2æ÷&Ö—2‡¶æ÷&ÖÂæÆVæwF‡Ò“Âöƒ#à¢ÆF—b6Æ74æÖSÒ'76R×’Ó"#à¢¶æ÷&ÖÂæÖ†"Óâ€¢ÆF—b¶W“×¶"æ–GÒ6Æ74æÖSÒ&&r×v†—FRóR&÷&FW"&÷&FW"×v†—FRó&÷VæFVB×†Â‚ÓB’Ó2fÆW‚§W7F–g’Ö&WGvVVâ—FV×2Ö6VçFW"#à¢Ç7â6Æ74æÖSÒ'FW‡B×6Ò#ç¶"ææÖWÓÂ÷7ãà¢ÆF—b6Æ74æÖSÒ'FW‡B×&–v‡B#ãÇ7â6Æ74æÖSÒ'FW‡B×6ÒFW‡B×v†—FRós#ç¶"çfÇVWÒ¶"çVæ—GÓÂ÷7ããÇ7â6Æ74æÖSÒ'FW‡B×‡2FW‡BÖw&VVâÓCÖÂÓ"#äæ÷&ÖÃÂ÷7ããÂöF—cà¢ÂöF—cà¢’—Ğ¢ÂöF—cà¢ÂöF—cà¢—Ğ¢¶&–öÖ&¶W'2æÆVæwF‚ÓÓÒbbW†Òç7FGW2ÓÓÒw&ö6W76VBrbb€¢ÆF—b6Æ74æÖSÒ'FW‡B×v†—FRóCFW‡B×6ÒFW‡BÖ6VçFW"’Ó"#äæVæ‡VÒ&–öÖ&6F÷"æW7FRW†ÖRãÂöF—cà¢—Ğ¢ÂöF—cà¢§Ğ
+    </div>
+  )
+}
