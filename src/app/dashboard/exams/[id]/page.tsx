@@ -192,7 +192,7 @@ export default function ExamDetailPage() {
                  exam.status === 'processing' ? 'Processando...' : 'Pendente'}
               </span>
             </div>
-            {exam.file_url && exam.status !== 'processed' && (
+            {exam.file_url && (
               <button
                 onClick={handleAnalyze}
                 disabled={analyzing}
@@ -201,7 +201,7 @@ export default function ExamDetailPage() {
                 {analyzing ? (
                   <><Loader2 className="w-4 h-4 animate-spin" /> Analisando...</>
                 ) : (
-                  <><Brain className="w-4 h-4" /> Analisar com IA</>
+                  <><Brain className="w-4 h-4" /> {exam.status === "processed" ? "Reanalisar com IA" : "Analisar com IA"}</>
                 )}
               </button>
             )}
