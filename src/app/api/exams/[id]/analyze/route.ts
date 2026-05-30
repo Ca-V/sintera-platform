@@ -10,7 +10,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const geminiKey = process.env.GEMINI_API_KEY
   if (!geminiKey) return NextResponse.json({ error: 'GEMINI_API_KEY nao configurada' }, { status: 500 })
   const body = await request.json()
-  const examText = body.examText ?? ''
+  const examText = String(body.examText ?? '')
   const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent'
   const prompt = 'Analise este exame medico e extraia biomarcadores. Retorne APENAS JSON: {"biomarkers":[{"name":"string","value":0.0,"unit":"string","reference_min":0.0,"reference_max":0.0,"interpretation":"normal|low|high","ai_insight":"string ou null"}],"exam_type":"string"}. Texto: ' + examText.slice(0, 3000)
   const geminiRes = await fetch(GEMINI_URL + '?key=' + geminiKey, {
@@ -24,6 +24,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
   const geminiData = await geminiRes.json()
   const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let parsed: any
   try { const m = rawText.match(/\{[\s\S]*\}/); parsed = JSON.parse(m?.[0] ?? rawText) }
   catch { return NextResponse.json({ error: 'JSON invalido: ' + rawText.slice(0, 200) }, { status: 500 }) }
