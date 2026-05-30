@@ -11,7 +11,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!groqKey) return NextResponse.json({ error: 'GROQ_API_KEY nao configurada' }, { status: 500 })
   const body = await request.json()
   const examText = String(body.examText ?? '')
-  const prompt = 'Analise este exame medico e extraia biomarcadores numericos. Retorne APENAS um objeto JSON valido, sem markdown, sem blocos de codigo. Formato: {"biomarkers":[{"name":"string","value":0.0,"unit":"string","reference_min":0.0,"reference_max":0.0,"interpretation":"normal|low|high","ai_insight":"string"}],"exam_type":"string"}. Texto do exame: ' + examText.slice(0, 4000)
+  const prompt = 'Analise este exame medico e extraia biomarcadores numericos. Retorne APENAS um objeto JSON valido, sem markdown, sem blocos de codigo. Formato: {"biomarkers":[{"name":"string","value":0.0,"unit":"string","reference_min":0.0,"reference_max":0.0,"interpretation":"normal|low|high","ai_insight":"string"}],"exam_type":"string"}. Texto do exame: ' + examText.slice(0, 2000)
   const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + groqKey },
