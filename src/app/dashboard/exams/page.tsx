@@ -22,18 +22,27 @@ const STATUS_CONFIG: Record<string, {
   label: string; color: string; bg: string
   icon: React.ComponentType<{ size: number; className?: string }>
 }> = {
-  processed:  { label: 'Analisado',   color: 'text-sage',     bg: 'bg-sage-light',     icon: CheckCircle },
-  processing: { label: 'Processando', color: 'text-lavender', bg: 'bg-lavender-light', icon: Loader2     },
-  pending:    { label: 'Aguardando',  color: 'text-gold',     bg: 'bg-warm',           icon: Clock       },
-  error:      { label: 'Erro',        color: 'text-red-400',  bg: 'bg-red-50',         icon: AlertCircle },
+  processed:  { label: 'Analisado',  color: 'text-sage',    bg: 'bg-sage-light',   icon: CheckCircle },
+  pending:    { label: 'Aguardando', color: 'text-gold',    bg: 'bg-warm',         icon: Clock       },
+  error:      { label: 'Erro',       color: 'text-red-400', bg: 'bg-red-50',       icon: AlertCircle },
+  // 'processing' removed from DB flow — only used as transient local UI state
 }
 
 const ACCEPTED_MIME = ['application/pdf', 'image/jpeg', 'image/png']
 const MAX_BYTES     = 10 * 1024 * 1024
 
-// ─── Core processing pipeline ─────────────────────────────────────────────────
-// Shared by upload flow and the "Reprocessar" button.
-// Uses the browser Supabase client which already carries the auth Bearer token.
+// ─── Processing pipeline ──────────────────────────────────────────────────────
+//
+// DESIGN DECISION — no intermediate 'processing' DB status:
+//
+// Previously, runPipeline() set status='processing' in the DB as its first
+// step. If the user closed the browser tab or navigated away mid-pipeline,
+// the JS was killed and the exam was permanently stuck in 'processing'.
+//
+// Fix: the DB is only written once at the END — either 'processed' or 'error'.
+// While the pipeline runs, the UI uses local React state (examState) to show
+// the spinner without touching the DB. If the tab closes, the exam stays at
+// 'pending' and the user can click "Reprocessar" when they return.
 
 async function runPipeline(
   supabase: ReturnType<typeof createClient>,
@@ -42,21 +51,15 @@ async function runPipeline(
   userId: string,
   onStep?: (step: string) => void,
 ): Promise<void> {
-  const log = (s: string) => { console.log('[Sintera pipeline]', s); onStep?.(s) }
+  const log = (s: string) => { console.log('[Sintera]', s); onStep?.(s) }
 
-  // 1. Mark as processing — filter only by id; RLS handles ownership
-  log('update → processing')
-  const { error: procErr } = await supabase
-    .from('exams')
-    .update({ status: 'processing' } as unknown as never)
-    .eq('id', examId)
-  if (procErr) throw new Error(`[processing] ${procErr.code}: ${procErr.message}`)
-
-  // 2. Delete stale biomarkers (safe for reruns)
+  // Delete stale biomarkers so reruns are idempotent
   log('delete stale biomarkers')
   await supabase.from('biomarkers').delete().eq('exam_id', examId)
 
-  // 3. Insert biomarkers
+  // Build + insert biomarkers
+  // NOTE: no OCR / AI here — values are deterministic from the exam UUID.
+  // Plug a real OCR service (e.g. Google Vision, Anthropic) here in future.
   log('insert biomarkers')
   const biomarkers = buildBiomarkers(examType, examId)
   const bmRows = biomarkers.map(b => ({
@@ -69,21 +72,21 @@ async function runPipeline(
     .from('biomarkers').insert(bmRows as unknown as never)
   if (bmErr) throw new Error(`[biomarkers] ${bmErr.code}: ${bmErr.message}`)
 
-  // 4. Insert biological score
+  // Biological scores
   log('insert biological_scores')
   const scores = calcScores(biomarkers)
   const { error: scoreErr } = await supabase
     .from('biological_scores').insert({ user_id: userId, ...scores } as unknown as never)
   if (scoreErr) throw new Error(`[biological_scores] ${scoreErr.code}: ${scoreErr.message}`)
 
-  // 5. Insert AI insights
+  // AI insights (template-based, not real AI)
   log('insert ai_insights')
   const insights = buildInsights(biomarkers, userId)
   const { error: insightErr } = await supabase
     .from('ai_insights').insert(insights as unknown as never)
   if (insightErr) throw new Error(`[ai_insights] ${insightErr.code}: ${insightErr.message}`)
 
-  // 6. Mark as processed
+  // Mark as processed — only DB write that changes status
   log('update → processed')
   const { error: doneErr } = await supabase
     .from('exams')
@@ -91,7 +94,7 @@ async function runPipeline(
     .eq('id', examId)
   if (doneErr) throw new Error(`[done] ${doneErr.code}: ${doneErr.message}`)
 
-  log('done')
+  log('done ✓')
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -105,8 +108,10 @@ export default function ExamsPage() {
   const [loadingExams, setLoadingExams] = useState(true)
   const [uploading, setUploading]       = useState(false)
   const [uploadError, setUploadError]   = useState<string | null>(null)
-  // Per-exam reprocessing state: examId → 'running' | error message
-  const [examState, setExamState]       = useState<Record<string, string>>({})
+
+  // Local-only processing state — never stored in DB
+  // examId → 'running:<step>' | 'erro: <message>'
+  const [examState, setExamState] = useState<Record<string, string>>({})
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -123,7 +128,7 @@ export default function ExamsPage() {
 
   useEffect(() => { loadExams() }, [loadExams])
 
-  // ── Reprocess an existing exam ───────────────────────────────────────────
+  // ── Reprocess an existing pending/error exam ────────────────────────────
   const reprocessExam = useCallback(async (exam: Exam) => {
     if (!user) return
     const { id: examId } = exam
@@ -134,12 +139,15 @@ export default function ExamsPage() {
     try {
       await runPipeline(supabase, examId, examType, user.id,
         step => setExamState(s => ({ ...s, [examId]: `running: ${step}` })))
+
       setExamState(s => { const n = { ...s }; delete n[examId]; return n })
       await loadExams()
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
       console.error('[Sintera] reprocess failed:', msg)
       setExamState(s => ({ ...s, [examId]: `erro: ${msg}` }))
+
+      // Best-effort: mark as error in DB
       await supabase.from('exams')
         .update({ status: 'error' } as unknown as never)
         .eq('id', examId)
@@ -165,7 +173,7 @@ export default function ExamsPage() {
     let examId: string | null = null
 
     try {
-      // ── Storage ────────────────────────────────────────────────────────
+      // 1. Upload file
       const ext = file.name.split('.').pop() ?? 'bin'
       const storagePath = `${user.id}/${crypto.randomUUID()}.${ext}`
 
@@ -177,7 +185,7 @@ export default function ExamsPage() {
         .from('exams').createSignedUrl(storagePath, 60 * 60 * 24 * 365)
       if (signedErr) throw new Error(`[signed-url] ${signedErr.message}`)
 
-      // ── Insert exam record ─────────────────────────────────────────────
+      // 2. Insert exam record — status stays 'pending' until pipeline completes
       examId = crypto.randomUUID()
       const examName = file.name.replace(/\.[^.]+$/, '')
 
@@ -187,9 +195,10 @@ export default function ExamsPage() {
       } as unknown as never)
       if (insertErr) throw new Error(`[insert] ${insertErr.code}: ${insertErr.message}`)
 
+      // Show exam immediately as pending
       await loadExams()
 
-      // ── Run pipeline ───────────────────────────────────────────────────
+      // 3. Run pipeline — spinner is local state; DB only changes at the end
       const examType = detectExamType(examName)
       await runPipeline(supabase, examId, examType, user.id)
 
@@ -238,7 +247,7 @@ export default function ExamsPage() {
         </p>
       </motion.div>
 
-      {/* Drop zone — <label> ativa o input nativamente sem .click() programático */}
+      {/* Drop zone */}
       <motion.label
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -267,8 +276,8 @@ export default function ExamsPage() {
         </div>
         {uploading ? (
           <div className="flex flex-col items-center gap-2">
-            <p className="font-display text-lg font-semibold text-onyx">Enviando e processando…</p>
-            <p className="font-body text-xs text-mauve">Veja o console do browser para o log detalhado</p>
+            <p className="font-display text-lg font-semibold text-onyx">Processando exame…</p>
+            <p className="font-body text-xs text-mauve">Não feche esta aba até concluir</p>
           </div>
         ) : (
           <>
@@ -282,7 +291,7 @@ export default function ExamsPage() {
         )}
       </motion.label>
 
-      {/* Upload error — shows exact error code from Supabase */}
+      {/* Error banner — shows exact Supabase error code */}
       {uploadError && (
         <motion.div
           initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
@@ -291,9 +300,7 @@ export default function ExamsPage() {
           <AlertCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
           <p className="font-mono text-xs text-red-700 flex-1 break-all">{uploadError}</p>
           <button type="button" onClick={() => setUploadError(null)}
-            className="text-red-300 hover:text-red-500 flex-shrink-0" aria-label="Fechar">
-            <X size={15} />
-          </button>
+            className="text-red-300 hover:text-red-500 flex-shrink-0"><X size={15} /></button>
         </motion.div>
       )}
 
@@ -322,12 +329,16 @@ export default function ExamsPage() {
         ) : (
           <div className="flex flex-col gap-2">
             {exams.map((exam, i) => {
-              const cfg     = STATUS_CONFIG[exam.status] ?? STATUS_CONFIG.pending
-              const Icon    = cfg.icon
-              const eState  = examState[exam.id]
+              const eState    = examState[exam.id]
               const isRunning = eState?.startsWith('running')
-              const errMsg  = eState?.startsWith('erro:') ? eState.slice(5).trim() : null
-              const canReprocess = exam.status === 'pending' || exam.status === 'error'
+              const errMsg    = eState?.startsWith('erro:') ? eState.slice(5).trim() : null
+
+              // Derive display status: local running state overrides DB status
+              const displayStatus = isRunning ? 'processing' : exam.status
+              const cfg = STATUS_CONFIG[displayStatus] ?? STATUS_CONFIG.pending
+              const Icon = cfg.icon
+
+              const canReprocess = !isRunning && (exam.status === 'pending' || exam.status === 'error')
 
               return (
                 <motion.div key={exam.id}
@@ -339,6 +350,7 @@ export default function ExamsPage() {
                     <div className="w-10 h-10 rounded-xl bg-blush flex items-center justify-center flex-shrink-0">
                       <FileText size={18} className="text-petal" />
                     </div>
+
                     <div className="flex-1 min-w-0">
                       <p className="font-body text-sm font-semibold text-onyx truncate">
                         {exam.type ?? 'Exame'}
@@ -350,27 +362,23 @@ export default function ExamsPage() {
                     <span className={`inline-flex items-center gap-1.5 text-xs font-body font-medium px-3 py-1 rounded-full flex-shrink-0 ${
                       isRunning ? 'bg-lavender-light text-lavender' : `${cfg.bg} ${cfg.color}`
                     }`}>
-                      {isRunning
-                        ? <Loader2 size={11} className="animate-spin" />
-                        : <Icon size={11} className={exam.status === 'processing' ? 'animate-spin' : ''} />
-                      }
+                      <Icon size={11} className={isRunning ? 'animate-spin' : ''} />
                       {isRunning ? 'Processando' : cfg.label}
                     </span>
 
-                    {/* Reprocess button for pending / error exams */}
-                    {canReprocess && !isRunning && (
+                    {/* Reprocess button */}
+                    {canReprocess && (
                       <button
                         type="button"
                         onClick={() => reprocessExam(exam)}
                         className="ml-1 flex items-center gap-1.5 text-xs font-body font-medium text-mauve hover:text-petal-dark bg-ivory hover:bg-blush border border-border hover:border-petal-light px-3 py-1.5 rounded-full transition-all flex-shrink-0"
-                        title="Executar pipeline de processamento"
                       >
                         <RefreshCw size={11} /> Reprocessar
                       </button>
                     )}
                   </div>
 
-                  {/* Inline error from reprocess — shows exact Supabase error code */}
+                  {/* Inline error — shows exact Supabase error code */}
                   {errMsg && (
                     <div className="px-5 pb-4">
                       <p className="font-mono text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2 break-all">
@@ -391,11 +399,13 @@ export default function ExamsPage() {
           <span className="text-sm">🧬</span>
         </div>
         <div>
-          <p className="font-body text-sm font-semibold text-white mb-1">Extração automática de biomarcadores</p>
+          <p className="font-body text-sm font-semibold text-white mb-1">
+            Extração automática de biomarcadores
+          </p>
           <p className="font-body text-xs text-white/50 leading-relaxed">
-            Ao enviar um exame ou clicar em "Reprocessar", a IA detecta o tipo (hemograma, hormonal,
-            tireoide, metabolismo…), extrai biomarcadores, calcula o score biológico em 8 dimensões
-            e gera insights em português.
+            Ao enviar um exame, detectamos o tipo pelo nome do arquivo (hemograma, hormonal,
+            tireoide, metabolismo…), extraímos biomarcadores de referência, calculamos o score
+            biológico em 8 dimensões e geramos insights personalizados em português.
           </p>
         </div>
       </motion.div>
