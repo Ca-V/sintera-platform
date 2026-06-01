@@ -1,10 +1,11 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   Upload, FileText, Clock, CheckCircle, AlertCircle,
-  Plus, X, Loader2, RefreshCw,
+  Plus, X, Loader2, RefreshCw, ChevronRight,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
@@ -101,6 +102,7 @@ async function runPipeline(
 
 export default function ExamsPage() {
   const { user } = useUser()
+  const router = useRouter()
   const supabase  = useRef(createClient()).current
 
   const [dragging, setDragging]         = useState(false)
@@ -344,7 +346,8 @@ export default function ExamsPage() {
                 <motion.div key={exam.id}
                   initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.05 + i * 0.05 }}
-                  className="card-premium overflow-hidden"
+                  className="card-premium overflow-hidden cursor-pointer"
+                  onClick={() => router.push("/dashboard/exams/" + exam.id)}
                 >
                   <div className="p-5 flex items-center gap-4">
                     <div className="w-10 h-10 rounded-xl bg-blush flex items-center justify-center flex-shrink-0">
