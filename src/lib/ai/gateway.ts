@@ -91,9 +91,18 @@ function parseAIResponse(raw: string): {
 
 export async function extractBiomarkers(
   supabase: SupabaseClient,
-  params: { examText: string; examId: string; userId: string },
+  params: {
+    examId: string
+    userId: string
+    pdfQualityDetected: string
+    // Path A
+    examText?: string
+    // Path B
+    pdfBuffer?: Buffer
+  },
 ): Promise<GatewayReturn> {
-  const { examText, examId, userId } = params
+  const { examId, userId, examText, pdfBuffer, pdfQualityDetected } = params
+  const extractionPath: import('./types').ExtractionPath = pdfBuffer ? 'pdf_native' : 'text'
 
   // 1. Rate limit
   if (!checkRateLimit(userId)) {
@@ -108,7 +117,6 @@ export async function extractBiomarkers(
 
   // 3. Verificar integridade do prompt
   if (!verifyPromptIntegrity(prompt)) {
-    // Registrar como incidente — não é apenas warning
     console.error('[Gateway] PROMPT_INTEGRITY_VIOLATION — hash divergente detectado em runtime')
     return { code: 'PROMPT_INTEGRITY_VIOLATION', message: 'Falha de integridade do prompt.', httpStatus: 500 }
   }
@@ -117,15 +125,18 @@ export async function extractBiomarkers(
   const provider = new AnthropicProvider()
 
   // 5. Registrar início em ai_processing_log (status='processing')
+  const inputChars = examText?.length ?? 0
   const logStart = {
     exam_id: examId,
     user_id: userId,
     provider: provider.name,
     model: provider.model,
-    input_chars: examText.length,
-    full_text_chars: examText.length,
+    input_chars: inputChars,
+    full_text_chars: inputChars,
     truncated: false,
     status: 'processing',
+    extraction_path: extractionPath,
+    pdf_quality_detected: pdfQualityDetected,
   }
 
   const { data: logRow, error: logErr } = await supabase
@@ -146,6 +157,8 @@ export async function extractBiomarkers(
   try {
     providerResult = await provider.extractBiomarkers({
       examText,
+      pdfBuffer,
+      extractionPath,
       examId,
       userId,
       systemPrompt: prompt.systemPrompt,
@@ -217,5 +230,6 @@ export async function extractBiomarkers(
     durationMs: providerResult.durationMs,
     truncated: false,
     parsedOk: true,
+    extractionPath,
   }
 }

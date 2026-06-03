@@ -1,5 +1,7 @@
 // AI Gateway — tipos centrais
-// Referência DMEAV: Fase 1, F1-M1
+// DMEAV: Fase 1, F1-M1 (Gateway) + F1-M2 (Dual Pipeline)
+
+export type ExtractionPath = 'text' | 'pdf_native'
 
 export interface AIProvider {
   readonly name: string
@@ -8,13 +10,19 @@ export interface AIProvider {
 }
 
 export interface ExtractionInput {
-  examText: string           // texto completo do PDF — sem truncamento
   examId: string
   userId: string
-  systemPrompt: string       // injetado pelo Gateway via prompt_registry
-  userTemplate: string       // template com {{examText}}
+  systemPrompt: string
+  userTemplate: string
   temperature: number
   maxTokens: number
+  // Path A — texto extraído do PDF
+  examText?: string
+  // Path B — PDF nativo Anthropic (F1-M2)
+  // NOTA DMEAV: usa header beta 'anthropic-beta: pdfs-2024-09-25'
+  // Dependência externa sujeita a alteração pela Anthropic.
+  pdfBuffer?: Buffer
+  extractionPath: ExtractionPath
 }
 
 export interface ProviderResult {
@@ -31,18 +39,17 @@ export interface ExtractedBiomarker {
   unit: string | null
   referenceMin: number | null
   referenceMax: number | null
-  rangeExtracted: boolean       // true somente se min E max são números do laudo
-  referenceSource: 'laudo'      // sempre 'laudo' no Beta
-  rawText: string               // trecho exato do laudo (máx 200 chars)
-  confidence: number            // 0.0–1.0 — metadado informativo apenas
-  extractionNotes: string | null // ambiguidade deste biomarcador específico
+  rangeExtracted: boolean
+  referenceSource: 'laudo'
+  rawText: string
+  confidence: number
+  extractionNotes: string | null
 }
 
 export interface ExtractionResult {
   biomarkers: ExtractedBiomarker[]
   examType: string
-  extractionNotes: string | null  // ambiguidade do laudo inteiro
-  // Rastreabilidade
+  extractionNotes: string | null
   aiLogId: string
   model: string
   provider: string
@@ -50,8 +57,9 @@ export interface ExtractionResult {
   promptTokens: number
   completionTokens: number
   durationMs: number
-  truncated: false                // sempre false no Beta
+  truncated: false
   parsedOk: boolean
+  extractionPath: ExtractionPath
 }
 
 export type GatewayErrorCode =
@@ -70,7 +78,6 @@ export interface GatewayError {
   httpStatus: number
 }
 
-// Schema bruto retornado pela IA (antes de validação)
 export interface RawAIResponse {
   exam_type?: unknown
   biomarkers?: unknown[]

@@ -1,10 +1,16 @@
-// Epic 1.1 — Pipeline backend: Storage → extração PDF → IA
+// Epic F1-M2 — Dual Pipeline: Quality Assessment → Path A (texto) | Path B (PDF nativo)
 // URLs assinadas existem apenas em memória, nunca são persistidas.
 // Reprocessamento: replace_biomarkers() — atômico via RPC (DELETE + INSERT em transação).
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { extractBiomarkers, isGatewayError } from '@/lib/ai/gateway'
 import { extractTextFromPdf } from '@/lib/pdf/extractor'
+
+const ERROR_MESSAGES: Record<string, string> = {
+  password_protected: 'O PDF está protegido por senha e não pode ser processado.',
+  corrupted:          'O arquivo PDF está corrompido.',
+  too_large:          'O arquivo PDF excede o limite de 10 MB.',
+}
 
 export async function POST(
   _request: NextRequest,
@@ -45,88 +51,78 @@ export async function POST(
   }
 
   // 3. Marcar como processing
-  await supabase
-    .from('exams')
-    .update({ status: 'processing' } as never)
-    .eq('id', examId)
+  await supabase.from('exams').update({ status: 'processing' } as never).eq('id', examId)
 
   // 4. Baixar PDF via URL assinada (apenas em memória — não persistida)
-  // file_url é uma URL assinada com validade de 1 ano — fetch direto é mais seguro
-  // que reconverter para storage path, pois evita dependência do formato interno da URL.
   let pdfBuffer: Buffer
   try {
     const res = await fetch(exam.file_url)
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     pdfBuffer = Buffer.from(await res.arrayBuffer())
   } catch {
-    await supabase
-      .from('exams')
+    await supabase.from('exams')
       .update({ status: 'error', error_reason: 'storage_download_failed' } as never)
       .eq('id', examId)
     return NextResponse.json({ error: 'Falha ao baixar o arquivo PDF.', code: 'STORAGE_DOWNLOAD_FAILED' }, { status: 502 })
   }
 
-  // 5. Extrair texto do PDF
+  // 5. Quality Assessment — classifica o PDF e decide o caminho
   const extraction = await extractTextFromPdf(pdfBuffer)
 
   if (!extraction.ok) {
-    await supabase
-      .from('exams')
-      .update({ status: 'error', error_reason: extraction.reason } as never)
+    await supabase.from('exams')
+      .update({ status: 'error', error_reason: extraction.quality, pdf_quality: extraction.quality } as never)
       .eq('id', examId)
-
-    const messages: Record<string, string> = {
-      pdf_no_text_layer: 'Este PDF não possui camada de texto. PDFs escaneados não são suportados no momento.',
-      pdf_password_protected: 'Este PDF está protegido por senha e não pode ser processado.',
-      pdf_corrupted: 'O arquivo PDF está corrompido.',
-      pdf_too_large: 'O arquivo PDF excede o limite de 10 MB.',
-    }
     return NextResponse.json(
-      { error: messages[extraction.reason] ?? 'Falha na extração do texto.', code: extraction.reason.toUpperCase() },
+      { error: ERROR_MESSAGES[extraction.quality] ?? 'Falha na extração do texto.', code: extraction.quality.toUpperCase() },
       { status: 422 },
     )
   }
 
-  // 6. Salvar exam_text para auditoria e reprocessamento futuro
-  await supabase
-    .from('exams')
-    .update({ exam_text: extraction.text } as never)
-    .eq('id', examId)
+  // 6. Salvar exam_text (mesmo quando corrompido) + pdf_quality + page_count
+  // exam_text garante auditabilidade independente do caminho usado
+  await supabase.from('exams').update({
+    exam_text:   extraction.text,
+    pdf_quality: extraction.quality,
+    page_count:  extraction.pageCount,
+  } as never).eq('id', examId)
 
-  // Truncar texto para evitar overflow de tokens no modelo (~40k chars ≈ 10k tokens)
-  // PDFs com encoding corrompido podem gerar textos absurdamente longos
+  // 7. Roteamento: Path A (texto) vs Path B (PDF nativo)
+  //    good_text       → Path A
+  //    corrupted_text  → Path B
+  //    insufficient_text → Path B
+  const useNative = extraction.quality !== 'good_text'
   const MAX_EXAM_CHARS = 40_000
-  const examText = extraction.text.length > MAX_EXAM_CHARS
-    ? extraction.text.slice(0, MAX_EXAM_CHARS)
-    : extraction.text
 
-  // 7. Chamar o Gateway de IA
-  const result = await extractBiomarkers(supabase, {
-    examText,
-    examId,
-    userId,
-  })
+  const gatewayParams = useNative
+    ? { examId, userId, pdfBuffer, pdfQualityDetected: extraction.quality }
+    : {
+        examId, userId,
+        pdfQualityDetected: extraction.quality,
+        examText: extraction.text.length > MAX_EXAM_CHARS
+          ? extraction.text.slice(0, MAX_EXAM_CHARS)
+          : extraction.text,
+      }
+
+  // 8. Chamar o Gateway de IA
+  const result = await extractBiomarkers(supabase, gatewayParams)
 
   if (isGatewayError(result)) {
-    await supabase
-      .from('exams')
+    await supabase.from('exams')
       .update({ status: 'error', error_reason: result.code.toLowerCase() } as never)
       .eq('id', examId)
-    return NextResponse.json(
-      { error: result.message, code: result.code },
-      { status: result.httpStatus },
-    )
+    return NextResponse.json({ error: result.message, code: result.code }, { status: result.httpStatus })
   }
 
-  // 8. Salvar biomarcadores atomicamente via RPC (reprocessamento seguro)
+  // 9. Salvar biomarcadores atomicamente via RPC
   if (result.biomarkers.length > 0) {
     const bmRows = result.biomarkers.map(b => ({
-      name: b.name,
-      value: b.value,
-      unit: b.unit,
-      reference_min: b.referenceMin,
-      reference_max: b.referenceMax,
-      interpretation: b.value === null
+      name:             b.name,
+      value:            b.value,
+      unit:             b.unit,
+      reference_min:    b.referenceMin,
+      reference_max:    b.referenceMax,
+      interpretation:   b.value === null
         ? 'indisponivel'
         : b.referenceMin !== null && b.value < b.referenceMin
           ? 'abaixo_da_referencia'
@@ -135,36 +131,37 @@ export async function POST(
             : b.referenceMin !== null || b.referenceMax !== null
               ? 'dentro_da_referencia'
               : 'sem_referencia_identificada',
-      source: 'ai_extracted',
-      confidence: b.confidence,
-      raw_text: b.rawText,
-      range_extracted: b.rangeExtracted,
+      source:           'ai_extracted',
+      confidence:       b.confidence,
+      raw_text:         b.rawText,
+      range_extracted:  b.rangeExtracted,
       reference_source: b.referenceSource,
-      ai_log_id: result.aiLogId,
+      ai_log_id:        result.aiLogId,
     }))
 
     await supabase.rpc('replace_biomarkers' as never, {
-      p_exam_id: examId,
-      p_user_id: userId,
-      p_biomarkers: JSON.stringify(bmRows),
+      p_exam_id:        examId,
+      p_user_id:        userId,
+      p_biomarkers:     JSON.stringify(bmRows),
     } as never)
   }
 
-  // 9. Atualizar exame com tipo e status final
-  await supabase
-    .from('exams')
+  // 10. Atualizar exame com tipo e status final
+  await supabase.from('exams')
     .update({ status: 'processed', type: result.examType } as never)
     .eq('id', examId)
 
   return NextResponse.json({
-    success: true,
-    biomarkers: result.biomarkers.length,
-    examType: result.examType,
+    success:        true,
+    biomarkers:     result.biomarkers.length,
+    examType:       result.examType,
     rangeExtracted: result.biomarkers.filter(b => b.rangeExtracted).length,
-    aiLogId: result.aiLogId,
-    model: result.model,
-    promptVersion: result.promptVersion,
-    durationMs: result.durationMs,
-    pageCount: extraction.pageCount,
+    aiLogId:        result.aiLogId,
+    model:          result.model,
+    promptVersion:  result.promptVersion,
+    durationMs:     result.durationMs,
+    pageCount:      extraction.pageCount,
+    extractionPath: result.extractionPath,
+    pdfQuality:     extraction.quality,
   })
 }
