@@ -1,0 +1,221 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { AnthropicProvider } from './providers/anthropic'
+import { checkRateLimit } from './rate-limiter'
+import { loadActivePrompt, verifyPromptIntegrity } from './prompt-loader'
+import type {
+  ExtractionResult,
+  GatewayError,
+  ExtractedBiomarker,
+  RawAIResponse,
+  RawBiomarker,
+} from './types'
+
+type GatewayReturn = ExtractionResult | GatewayError
+
+export function isGatewayError(r: GatewayReturn): r is GatewayError {
+  return 'code' in r
+}
+
+// ── Validação e normalização do JSON bruto ────────────────────────────────────
+
+function toNumber(v: unknown): number | null {
+  if (v === null || v === undefined) return null
+  // converte string com vírgula decimal brasileira
+  if (typeof v === 'string') {
+    const normalized = v.replace(',', '.').replace(/\./g, (m, o, s) =>
+      s.indexOf('.') < o ? '' : m,
+    )
+    const n = parseFloat(normalized)
+    return isNaN(n) ? null : n
+  }
+  if (typeof v === 'number' && !isNaN(v)) return v
+  return null
+}
+
+function toStringOrNull(v: unknown): string | null {
+  if (v === null || v === undefined) return null
+  return typeof v === 'string' ? v.trim() || null : null
+}
+
+function toBoolean(v: unknown): boolean {
+  return v === true
+}
+
+function clamp01(v: unknown): number {
+  const n = typeof v === 'number' ? v : 0
+  return Math.min(1, Math.max(0, n))
+}
+
+function parseBiomarker(raw: RawBiomarker): ExtractedBiomarker | null {
+  const name = toStringOrNull(raw.name)
+  if (!name) return null
+
+  const refMin = toNumber(raw.reference_min)
+  const refMax = toNumber(raw.reference_max)
+  // range_extracted verdadeiro só quando ambos os limites são números (Prompt A4)
+  const rangeExtracted = refMin !== null && refMax !== null
+    ? true
+    : toBoolean(raw.range_extracted) && refMin !== null && refMax !== null
+
+  return {
+    name,
+    value: toNumber(raw.value),
+    unit: toStringOrNull(raw.unit),
+    referenceMin: refMin,
+    referenceMax: refMax,
+    rangeExtracted,
+    referenceSource: 'laudo',
+    rawText: toStringOrNull(raw.raw_text)?.slice(0, 200) ?? '',
+    confidence: clamp01(raw.confidence),  // informativo apenas (Ajuste A4 aprovado)
+    extractionNotes: toStringOrNull(raw.extraction_notes),
+  }
+}
+
+function parseAIResponse(raw: string): {
+  parsed: RawAIResponse | null
+  suspicious: boolean
+} {
+  const match = raw.match(/\{[\s\S]*\}/)
+  if (!match) return { parsed: null, suspicious: true }
+
+  try {
+    const obj = JSON.parse(match[0]) as RawAIResponse
+    const suspicious = !Array.isArray(obj.biomarkers)
+    return { parsed: obj, suspicious }
+  } catch {
+    return { parsed: null, suspicious: true }
+  }
+}
+
+// ── Gateway principal ─────────────────────────────────────────────────────────
+
+export async function extractBiomarkers(
+  supabase: SupabaseClient,
+  params: { examText: string; examId: string; userId: string },
+): Promise<GatewayReturn> {
+  const { examText, examId, userId } = params
+
+  // 1. Rate limit
+  if (!checkRateLimit(userId)) {
+    return { code: 'RATE_LIMIT_EXCEEDED', message: 'Limite de análises excedido. Aguarde 1 minuto.', httpStatus: 429 }
+  }
+
+  // 2. Carregar prompt ativo
+  const prompt = await loadActivePrompt('extraction')
+  if (!prompt) {
+    return { code: 'NO_ACTIVE_PROMPT', message: 'Nenhum prompt de extração ativo configurado.', httpStatus: 500 }
+  }
+
+  // 3. Verificar integridade do prompt
+  if (!verifyPromptIntegrity(prompt)) {
+    // Registrar como incidente — não é apenas warning
+    console.error('[Gateway] PROMPT_INTEGRITY_VIOLATION — hash divergente detectado em runtime')
+    return { code: 'PROMPT_INTEGRITY_VIOLATION', message: 'Falha de integridade do prompt.', httpStatus: 500 }
+  }
+
+  // 4. Instanciar provider
+  const provider = new AnthropicProvider()
+
+  // 5. Registrar início em ai_processing_log (status='processing')
+  const logStart = {
+    exam_id: examId,
+    user_id: userId,
+    provider: provider.name,
+    model: provider.model,
+    input_chars: examText.length,
+    full_text_chars: examText.length,
+    truncated: false,
+    status: 'processing',
+  }
+
+  const { data: logRow, error: logErr } = await supabase
+    .from('ai_processing_log')
+    .insert(logStart as never)
+    .select('id')
+    .single()
+
+  if (logErr || !logRow) {
+    return { code: 'PARSE_FAILED', message: 'Falha ao registrar log de IA.', httpStatus: 500 }
+  }
+
+  const aiLogId = (logRow as { id: string }).id
+  const startTime = Date.now()
+
+  // 6. Chamar provider
+  let providerResult
+  try {
+    providerResult = await provider.extractBiomarkers({
+      examText,
+      examId,
+      userId,
+      systemPrompt: prompt.systemPrompt,
+      userTemplate: prompt.userTemplate,
+      temperature: prompt.temperature,
+      maxTokens: prompt.maxTokens,
+    })
+  } catch (err: unknown) {
+    const isTimeout = err instanceof Error && err.message.includes('timeout')
+    const status = isTimeout ? 'timeout' : 'error'
+    const code = isTimeout ? 'PROVIDER_TIMEOUT' : 'PROVIDER_ERROR'
+
+    await supabase.from('ai_processing_log').update({
+      status,
+      parse_error: err instanceof Error ? err.message.slice(0, 500) : String(err),
+      completed_at: new Date().toISOString(),
+      duration_ms: Date.now() - startTime,
+    } as never).eq('id', aiLogId)
+
+    return { code, message: `Erro no provider: ${code}`, httpStatus: isTimeout ? 504 : 502 }
+  }
+
+  // 7. Parsear e validar JSON
+  const { parsed, suspicious } = parseAIResponse(providerResult.rawResponse)
+
+  if (!parsed || suspicious) {
+    await supabase.from('ai_processing_log').update({
+      status: 'error',
+      raw_response: providerResult.rawResponse.slice(0, 5000),
+      parsed_ok: false,
+      parse_error: 'Resposta da IA não é JSON válido ou schema inesperado.',
+      suspicious_output: true,
+      prompt_tokens: providerResult.promptTokens,
+      completion_tokens: providerResult.completionTokens,
+      completed_at: new Date().toISOString(),
+      duration_ms: providerResult.durationMs,
+    } as never).eq('id', aiLogId)
+
+    return { code: suspicious ? 'SCHEMA_INVALID' : 'PARSE_FAILED', message: 'Falha ao parsear resposta da IA.', httpStatus: 500 }
+  }
+
+  // 8. Normalizar biomarcadores
+  const biomarkers: ExtractedBiomarker[] = (parsed.biomarkers ?? [])
+    .map(b => parseBiomarker(b as RawBiomarker))
+    .filter((b): b is ExtractedBiomarker => b !== null)
+
+  // 9. Atualizar log com resultado completo (status='success')
+  await supabase.from('ai_processing_log').update({
+    status: 'success',
+    raw_response: providerResult.rawResponse.slice(0, 5000),
+    parsed_ok: true,
+    biomarkers_extracted: biomarkers.length,
+    prompt_tokens: providerResult.promptTokens,
+    completion_tokens: providerResult.completionTokens,
+    completed_at: new Date().toISOString(),
+    duration_ms: providerResult.durationMs,
+  } as never).eq('id', aiLogId)
+
+  return {
+    biomarkers,
+    examType: typeof parsed.exam_type === 'string' ? parsed.exam_type : 'indeterminado',
+    extractionNotes: toStringOrNull(parsed.extraction_notes),
+    aiLogId,
+    model: providerResult.model,
+    provider: provider.name,
+    promptVersion: prompt.version,
+    promptTokens: providerResult.promptTokens,
+    completionTokens: providerResult.completionTokens,
+    durationMs: providerResult.durationMs,
+    truncated: false,
+    parsedOk: true,
+  }
+}
