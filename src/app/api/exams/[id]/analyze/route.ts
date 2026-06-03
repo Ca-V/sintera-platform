@@ -93,9 +93,16 @@ export async function POST(
     .update({ exam_text: extraction.text } as never)
     .eq('id', examId)
 
+  // Truncar texto para evitar overflow de tokens no modelo (~40k chars ≈ 10k tokens)
+  // PDFs com encoding corrompido podem gerar textos absurdamente longos
+  const MAX_EXAM_CHARS = 40_000
+  const examText = extraction.text.length > MAX_EXAM_CHARS
+    ? extraction.text.slice(0, MAX_EXAM_CHARS)
+    : extraction.text
+
   // 7. Chamar o Gateway de IA
   const result = await extractBiomarkers(supabase, {
-    examText: extraction.text,
+    examText,
     examId,
     userId,
   })
