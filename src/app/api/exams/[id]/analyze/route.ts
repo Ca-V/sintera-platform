@@ -139,10 +139,13 @@ export async function POST(
       ai_log_id:        result.aiLogId,
     }))
 
+    // Passar bmRows diretamente — não usar JSON.stringify.
+    // O SDK Supabase serializa o array para JSON; JSON.stringify causaria dupla codificação
+    // e p_biomarkers chegaria ao Postgres como string, não como jsonb array.
     await supabase.rpc('replace_biomarkers' as never, {
       p_exam_id:        examId,
       p_user_id:        userId,
-      p_biomarkers:     JSON.stringify(bmRows),
+      p_biomarkers:     bmRows,
     } as never)
   }
 
