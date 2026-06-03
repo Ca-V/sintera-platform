@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
-import { buildBiomarkers, calcScores, buildInsights, detectExamType } from '@/lib/exam-processor'
 
 interface Row { label: string; ok: boolean; detail: string }
 
@@ -154,99 +153,37 @@ export default function DiagnosticoPage() {
       }
     }
 
-    // ── 10. Simulação completa do pipeline com exam fictício ───────────────
-    add({ label: '── Simulação de pipeline completo ──', ok: true, detail: '' })
-    const fakeExamId   = crypto.randomUUID()
-    const fakeExamName = 'hemograma_diagnostico'
-    let pipelineOk = true
-
-    // insert exam
+    // ── 10. Tabelas da Fase 0 — verificar existência ──────────────────────
+    add({ label: '── Tabelas Phase 0 (Beta) ──', ok: true, detail: '' })
     {
-      const { error } = await supabase.from('exams').insert({
-        id: fakeExamId, user_id: user.id, type: fakeExamName, status: 'pending',
-      } as unknown as never)
+      const { data, error } = await supabase
+        .from('ai_processing_log').select('id').limit(1)
       if (error) {
-        add({ label: '  [1] insert exam', ok: false, detail: `[${error.code}] ${error.message}` })
-        pipelineOk = false
+        add({ label: 'SELECT ai_processing_log', ok: false, detail: `[${error.code}] ${error.message}` })
       } else {
-        add({ label: '  [1] insert exam', ok: true, detail: fakeExamId })
+        add({ label: 'SELECT ai_processing_log', ok: true, detail: `${(data ?? []).length} registro(s) — tabela acessível` })
       }
     }
-
-    if (pipelineOk) {
-      // update processing
-      {
-        const { error } = await supabase.from('exams')
-          .update({ status: 'processing' } as unknown as never)
-          .eq('id', fakeExamId).eq('user_id', user.id)
-        if (error) {
-          add({ label: '  [2] update → processing', ok: false, detail: `[${error.code}] ${error.message}` })
-          pipelineOk = false
-        } else {
-          add({ label: '  [2] update → processing', ok: true, detail: 'OK' })
-        }
-      }
-    }
-
-    if (pipelineOk) {
-      const examType   = detectExamType(fakeExamName)
-      const biomarkers = buildBiomarkers(examType, fakeExamId)
-      const bmRows = biomarkers.map(b => ({
-        exam_id: fakeExamId, user_id: user.id,
-        name: b.name, value: b.value, unit: b.unit,
-        reference_min: b.reference_min, reference_max: b.reference_max,
-        interpretation: b.interpretation, ai_insight: b.ai_insight,
-      }))
-      const { error } = await supabase.from('biomarkers').insert(bmRows as unknown as never)
+    {
+      const { data, error } = await supabase
+        .from('audit_purge_log' as never).select('table_name, record_count, action').limit(10)
       if (error) {
-        add({ label: `  [3] insert biomarkers (${bmRows.length}x)`, ok: false, detail: `[${error.code}] ${error.message}` })
-        pipelineOk = false
+        add({ label: 'SELECT audit_purge_log', ok: false, detail: `[${(error as {code:string}).code}] ${(error as {message:string}).message}` })
       } else {
-        add({ label: `  [3] insert biomarkers (${bmRows.length}x)`, ok: true, detail: 'OK' })
+        const summary = (data as Array<{table_name:string;record_count:number;action:string}> ?? [])
+          .map(r => `${r.table_name}(${r.record_count}) ${r.action}`).join(' | ')
+        add({ label: 'SELECT audit_purge_log', ok: true, detail: summary || '— vazio' })
       }
     }
-
-    if (pipelineOk) {
-      const biomarkers = buildBiomarkers(detectExamType(fakeExamName), fakeExamId)
-      const scores = calcScores(biomarkers)
-      const { error } = await supabase.from('biological_scores')
-        .insert({ user_id: user.id, ...scores } as unknown as never)
+    {
+      const { data, error } = await supabase
+        .from('biomarkers').select('id').eq('user_id', user.id).eq('synthetic', true).limit(1)
       if (error) {
-        add({ label: '  [4] insert biological_scores', ok: false, detail: `[${error.code}] ${error.message}` })
-        pipelineOk = false
+        add({ label: 'SELECT biomarkers WHERE synthetic=true', ok: false, detail: `[${error.code}] ${error.message}` })
       } else {
-        add({ label: '  [4] insert biological_scores', ok: true, detail: `score_total=${scores.score_total}` })
+        add({ label: 'SELECT biomarkers WHERE synthetic=true', ok: true, detail: `${(data ?? []).length}+ registros arquivados` })
       }
     }
-
-    if (pipelineOk) {
-      const biomarkers = buildBiomarkers(detectExamType(fakeExamName), fakeExamId)
-      const insights = buildInsights(biomarkers, user.id)
-      const { error } = await supabase.from('ai_insights').insert(insights as unknown as never)
-      if (error) {
-        add({ label: `  [5] insert ai_insights (${insights.length}x)`, ok: false, detail: `[${error.code}] ${error.message}` })
-        pipelineOk = false
-      } else {
-        add({ label: `  [5] insert ai_insights (${insights.length}x)`, ok: true, detail: 'OK' })
-      }
-    }
-
-    if (pipelineOk) {
-      const { error } = await supabase.from('exams')
-        .update({ status: 'processed' } as unknown as never)
-        .eq('id', fakeExamId).eq('user_id', user.id)
-      if (error) {
-        add({ label: '  [6] update → processed', ok: false, detail: `[${error.code}] ${error.message}` })
-      } else {
-        add({ label: '  [6] update → processed', ok: true, detail: 'PIPELINE COMPLETO OK' })
-      }
-    }
-
-    // Limpa todos os registros de diagnóstico
-    await supabase.from('biomarkers').delete().eq('exam_id', fakeExamId)
-    if (!pipelineOk) await supabase.from('biological_scores').delete().eq('user_id', user.id).eq('score_total', 0)
-    await supabase.from('ai_insights').delete().eq('user_id', user.id).eq('category', 'general').eq('insight', 'Seus biomarcadores estão dentro das faixas de referência. Continue com seus hábitos saudáveis e repita os exames em 6–12 meses.')
-    await supabase.from('exams').delete().eq('id', fakeExamId)
 
     setRunning(false)
     setDone(true)
@@ -256,7 +193,7 @@ export default function DiagnosticoPage() {
     <div className="max-w-3xl mx-auto space-y-4 py-4">
       <div>
         <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Diagnóstico de Exames</h1>
-        <p className="font-body text-sm text-mauve">Testa cada etapa do pipeline diretamente no Supabase com seu usuário autenticado.</p>
+        <p className="font-body text-sm text-mauve">Verifica conectividade com Supabase e estado das tabelas da Fase 0 (Beta).</p>
       </div>
 
       {running && rows.length === 0 && (

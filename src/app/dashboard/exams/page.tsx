@@ -9,12 +9,6 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
-import {
-  detectExamType,
-  buildBiomarkers,
-  calcScores,
-  buildInsights,
-} from '@/lib/exam-processor'
 import type { Database } from '@/lib/supabase/types'
 
 type Exam = Database['public']['Tables']['exams']['Row']
@@ -32,71 +26,11 @@ const STATUS_CONFIG: Record<string, {
 const ACCEPTED_MIME = ['application/pdf', 'image/jpeg', 'image/png']
 const MAX_BYTES     = 10 * 1024 * 1024
 
-// ─── Processing pipeline ──────────────────────────────────────────────────────
+// ─── Processing note ─────────────────────────────────────────────────────────
 //
-// DESIGN DECISION — no intermediate 'processing' DB status:
-//
-// Previously, runPipeline() set status='processing' in the DB as its first
-// step. If the user closed the browser tab or navigated away mid-pipeline,
-// the JS was killed and the exam was permanently stuck in 'processing'.
-//
-// Fix: the DB is only written once at the END — either 'processed' or 'error'.
-// While the pipeline runs, the UI uses local React state (examState) to show
-// the spinner without touching the DB. If the tab closes, the exam stays at
-// 'pending' and the user can click "Reprocessar" when they return.
-
-async function runPipeline(
-  supabase: ReturnType<typeof createClient>,
-  examId: string,
-  examType: string,
-  userId: string,
-  onStep?: (step: string) => void,
-): Promise<void> {
-  const log = (s: string) => { console.log('[Sintera]', s); onStep?.(s) }
-
-  // Delete stale biomarkers so reruns are idempotent
-  log('delete stale biomarkers')
-  await supabase.from('biomarkers').delete().eq('exam_id', examId)
-
-  // Build + insert biomarkers
-  // NOTE: no OCR / AI here — values are deterministic from the exam UUID.
-  // Plug a real OCR service (e.g. Google Vision, Anthropic) here in future.
-  log('insert biomarkers')
-  const biomarkers = buildBiomarkers(examType, examId)
-  const bmRows = biomarkers.map(b => ({
-    exam_id: examId, user_id: userId,
-    name: b.name, value: b.value, unit: b.unit,
-    reference_min: b.reference_min, reference_max: b.reference_max,
-    interpretation: b.interpretation, ai_insight: b.ai_insight,
-  }))
-  const { error: bmErr } = await supabase
-    .from('biomarkers').insert(bmRows as unknown as never)
-  if (bmErr) throw new Error(`[biomarkers] ${bmErr.code}: ${bmErr.message}`)
-
-  // Biological scores
-  log('insert biological_scores')
-  const scores = calcScores(biomarkers)
-  const { error: scoreErr } = await supabase
-    .from('biological_scores').insert({ user_id: userId, ...scores } as unknown as never)
-  if (scoreErr) throw new Error(`[biological_scores] ${scoreErr.code}: ${scoreErr.message}`)
-
-  // AI insights (template-based, not real AI)
-  log('insert ai_insights')
-  const insights = buildInsights(biomarkers, userId)
-  const { error: insightErr } = await supabase
-    .from('ai_insights').insert(insights as unknown as never)
-  if (insightErr) throw new Error(`[ai_insights] ${insightErr.code}: ${insightErr.message}`)
-
-  // Mark as processed — only DB write that changes status
-  log('update → processed')
-  const { error: doneErr } = await supabase
-    .from('exams')
-    .update({ status: 'processed' } as unknown as never)
-    .eq('id', examId)
-  if (doneErr) throw new Error(`[done] ${doneErr.code}: ${doneErr.message}`)
-
-  log('done ✓')
-}
+// Phase 0 (Beta): The synthetic pipeline has been removed.
+// Exams are uploaded and stored with status='pending'.
+// AI extraction of real biomarkers from PDF will be implemented in Phase 1.
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -130,32 +64,10 @@ export default function ExamsPage() {
 
   useEffect(() => { loadExams() }, [loadExams])
 
-  // ── Reprocess an existing pending/error exam ────────────────────────────
-  const reprocessExam = useCallback(async (exam: Exam) => {
-    if (!user) return
-    const { id: examId } = exam
-    const examType = detectExamType(exam.type ?? '')
-
-    setExamState(s => ({ ...s, [examId]: 'running' }))
-
-    try {
-      await runPipeline(supabase, examId, examType, user.id,
-        step => setExamState(s => ({ ...s, [examId]: `running: ${step}` })))
-
-      setExamState(s => { const n = { ...s }; delete n[examId]; return n })
-      await loadExams()
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err)
-      console.error('[Sintera] reprocess failed:', msg)
-      setExamState(s => ({ ...s, [examId]: `erro: ${msg}` }))
-
-      // Best-effort: mark as error in DB
-      await supabase.from('exams')
-        .update({ status: 'error' } as unknown as never)
-        .eq('id', examId)
-      await loadExams()
-    }
-  }, [user, supabase, loadExams])
+  // ── Refresh exam status from DB ──────────────────────────────────────────
+  const reprocessExam = useCallback(async (_exam: Exam) => {
+    await loadExams()
+  }, [loadExams])
 
   // ── Upload a new file ────────────────────────────────────────────────────
   const processFile = useCallback(async (file: File) => {
@@ -197,13 +109,7 @@ export default function ExamsPage() {
       } as unknown as never)
       if (insertErr) throw new Error(`[insert] ${insertErr.code}: ${insertErr.message}`)
 
-      // Show exam immediately as pending
-      await loadExams()
-
-      // 3. Run pipeline — spinner is local state; DB only changes at the end
-      const examType = detectExamType(examName)
-      await runPipeline(supabase, examId, examType, user.id)
-
+      // Exam saved as pending — AI extraction will run in Phase 1
       await loadExams()
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
@@ -403,12 +309,11 @@ export default function ExamsPage() {
         </div>
         <div>
           <p className="font-body text-sm font-semibold text-white mb-1">
-            Extração automática de biomarcadores
+            Versão Beta — Extração por IA em implementação
           </p>
           <p className="font-body text-xs text-white/50 leading-relaxed">
-            Ao enviar um exame, detectamos o tipo pelo nome do arquivo (hemograma, hormonal,
-            tireoide, metabolismo…), extraímos biomarcadores de referência, calculamos o score
-            biológico em 8 dimensões e geramos insights personalizados em português.
+            Seus exames são armazenados com segurança. A extração automática de biomarcadores
+            por IA será ativada na próxima versão. Nenhum dado sintético é gerado.
           </p>
         </div>
       </motion.div>

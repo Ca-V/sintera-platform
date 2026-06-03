@@ -1,6 +1,9 @@
+// Phase 0 (Beta): synthetic pipeline removed.
+// This route extracts biomarkers via Groq and saves them.
+// Score calculation and insight generation will be implemented in Phase 1
+// using the real AI pipeline (ai_processing_log + Knowledge Base).
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { calcScores, buildInsights } from '@/lib/exam-processor'
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id: examId } = await params
@@ -11,7 +14,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!groqKey) return NextResponse.json({ error: 'GROQ_API_KEY nao configurada' }, { status: 500 })
   const body = await request.json()
   const examText = String(body.examText ?? '')
-  const prompt = 'Analise este exame medico e extraia biomarcadores numericos. Retorne APENAS um objeto JSON valido, sem markdown, sem blocos de codigo. Formato: {"biomarkers":[{"name":"string","value":0.0,"unit":"string","reference_min":0.0,"reference_max":0.0,"interpretation":"normal|low|high","ai_insight":"string"}],"exam_type":"string"}. Texto do exame: ' + examText.slice(0, 2000)
+  const prompt = 'Analise este exame medico e extraia biomarcadores numericos. Retorne APENAS um objeto JSON valido, sem markdown, sem blocos de codigo. Formato: {"biomarkers":[{"name":"string","value":0.0,"unit":"string","reference_min":0.0,"reference_max":0.0,"interpretation":"normal|low|high"}],"exam_type":"string"}. Texto do exame: ' + examText.slice(0, 2000)
   const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + groqKey },
@@ -25,18 +28,29 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const rawText = groqData.choices?.[0]?.message?.content ?? ''
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let parsed: any
-  try { const m = rawText.match(/{[sS]*}/); parsed = JSON.parse(m?.[0] ?? rawText) }
+  try { const m = rawText.match(/{[\s\S]*}/); parsed = JSON.parse(m?.[0] ?? rawText) }
   catch { return NextResponse.json({ error: 'JSON invalido: ' + rawText.slice(0, 200) }, { status: 500 }) }
   if (!parsed.biomarkers?.length) return NextResponse.json({ error: 'Nenhum biomarcador' }, { status: 422 })
   const user = authData.user
-  await supabase.from('exams').update({ status: 'processing' } as unknown as never).eq('id', examId)
+
+  // Verify ownership before any write
+  const { data: exam } = await supabase.from('exams').select('user_id').eq('id', examId).single()
+  if (!exam || exam.user_id !== user.id) return NextResponse.json({ error: 'Exame nao encontrado' }, { status: 404 })
+
   await supabase.from('biomarkers').delete().eq('exam_id', examId)
-  const bmRows = parsed.biomarkers.map((b: any) => ({ exam_id: examId, user_id: user.id, name: b.name, value: b.value, unit: b.unit, reference_min: b.reference_min, reference_max: b.reference_max, interpretation: b.interpretation, ai_insight: b.ai_insight }))
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const bmRows = parsed.biomarkers.map((b: any) => ({
+    exam_id: examId, user_id: user.id,
+    name: b.name, value: b.value, unit: b.unit,
+    reference_min: b.reference_min, reference_max: b.reference_max,
+    interpretation: b.interpretation,
+    source: 'ai_extracted',
+    range_extracted: b.reference_min != null && b.reference_max != null,
+    reference_source: 'laudo',
+  }))
   const { error: bmErr } = await supabase.from('biomarkers').insert(bmRows as unknown as never[])
   if (bmErr) return NextResponse.json({ error: bmErr.message }, { status: 500 })
-  const scores = calcScores(parsed.biomarkers.map((b: any) => ({ ...b, category: 'metabolic' })))
-  await supabase.from('biological_scores').insert({ user_id: user.id, ...scores } as unknown as never)
-  await supabase.from('ai_insights').insert(buildInsights(parsed.biomarkers, user.id) as unknown as never[])
+
   await supabase.from('exams').update({ status: 'processed', type: parsed.exam_type } as unknown as never).eq('id', examId)
   return NextResponse.json({ success: true, biomarkers: parsed.biomarkers.length })
 }
