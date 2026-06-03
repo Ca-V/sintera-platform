@@ -101,6 +101,7 @@ function extractJsonCandidate(raw: string): string | null {
 function parseAIResponse(raw: string): {
   parsed: RawAIResponse | null
   suspicious: boolean
+  parseError?: string
 } {
   const candidate = extractJsonCandidate(raw)
   if (!candidate) return { parsed: null, suspicious: true }
@@ -109,8 +110,10 @@ function parseAIResponse(raw: string): {
     const obj = JSON.parse(candidate) as RawAIResponse
     const suspicious = !Array.isArray(obj.biomarkers)
     return { parsed: obj, suspicious }
-  } catch {
-    return { parsed: null, suspicious: true }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('[Gateway] JSON.parse failed:', msg, '| candidate length:', candidate.length, '| candidate end:', candidate.slice(-200))
+    return { parsed: null, suspicious: true, parseError: msg }
   }
 }
 
@@ -209,14 +212,17 @@ export async function extractBiomarkers(
   }
 
   // 7. Parsear e validar JSON
-  const { parsed, suspicious } = parseAIResponse(providerResult.rawResponse)
+  const { parsed, suspicious, parseError } = parseAIResponse(providerResult.rawResponse)
 
   if (!parsed || suspicious) {
+    const rawLen = providerResult.rawResponse.length
     await supabase.from('ai_processing_log').update({
       status: 'error',
-      raw_response: providerResult.rawResponse.slice(0, 5000),
+      raw_response: providerResult.rawResponse.slice(0, 15000), // aumentado para diagnóstico
       parsed_ok: false,
-      parse_error: 'Resposta da IA não é JSON válido ou schema inesperado.',
+      parse_error: parseError
+        ? `parse_error: ${parseError} | raw_len: ${rawLen} | candidate_null: ${!extractJsonCandidate(providerResult.rawResponse)}`
+        : `suspicious_output | raw_len: ${rawLen}`,
       suspicious_output: true,
       prompt_tokens: providerResult.promptTokens,
       completion_tokens: providerResult.completionTokens,
