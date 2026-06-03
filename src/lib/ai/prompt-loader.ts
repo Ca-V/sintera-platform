@@ -22,13 +22,17 @@ export async function loadActivePrompt(operation: string): Promise<LoadedPrompt 
 
   if (error || !data) return null
 
+  // prompt_registry não está nos tipos gerados — cast necessário
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const row = data as any
+
   return {
-    version: data.version as string,
-    systemPrompt: data.system_prompt as string,
-    userTemplate: data.user_prompt_template as string,
-    temperature: Number(data.temperature),
-    maxTokens: data.max_tokens as number,
-    contentHash: data.content_hash as string,
+    version: row.version as string,
+    systemPrompt: row.system_prompt as string,
+    userTemplate: row.user_prompt_template as string,
+    temperature: Number(row.temperature),
+    maxTokens: row.max_tokens as number,
+    contentHash: row.content_hash as string,
   }
 }
 
