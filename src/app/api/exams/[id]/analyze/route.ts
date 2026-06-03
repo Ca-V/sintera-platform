@@ -1,66 +1,116 @@
-// Fase 1 (Beta): pipeline de IA real via AI Gateway.
-// Extrai biomarcadores e intervalos de referência do próprio laudo.
-// Sem interpretação clínica, sem Knowledge Base, sem scores.
+// Epic 1.1 — Pipeline backend: Storage → extração PDF → IA
+// URLs assinadas existem apenas em memória, nunca são persistidas.
+// Reprocessamento: replace_biomarkers() — atômico via RPC (DELETE + INSERT em transação).
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { extractBiomarkers, isGatewayError } from '@/lib/ai/gateway'
+import { extractTextFromPdf } from '@/lib/pdf/extractor'
 
 export async function POST(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id: examId } = await params
   const supabase = await createClient()
 
+  // 1. Auth
   const { data: authData, error: authErr } = await supabase.auth.getUser()
   if (authErr || !authData.user) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
   }
-  const user = authData.user
+  const userId = authData.user.id
 
-  const body = await request.json()
-  const examText = String(body.examText ?? '').trim()
-
-  if (examText.length < 50) {
-    return NextResponse.json(
-      { error: 'Texto do exame muito curto ou ausente.' },
-      { status: 400 },
-    )
-  }
-
-  // Verificar ownership
-  const { data: examOwner } = await supabase
+  // 2. Ownership + busca file_url
+  const { data: exam } = await supabase
     .from('exams')
-    .select('id')
+    .select('id, file_url, status')
     .eq('id', examId)
-    .eq('user_id', user.id)
-    .single()
+    .eq('user_id', userId)
+    .single() as { data: { id: string; file_url: string | null; status: string } | null }
 
-  if (!examOwner) {
+  if (!exam) {
     return NextResponse.json({ error: 'Exame não encontrado.' }, { status: 404 })
   }
 
-  // Chamar o Gateway
+  if (!exam.file_url) {
+    return NextResponse.json({ error: 'Arquivo PDF não encontrado para este exame.' }, { status: 422 })
+  }
+
+  // 3. Marcar como processing
+  await supabase
+    .from('exams')
+    .update({ status: 'processing' } as never)
+    .eq('id', examId)
+
+  // 4. Baixar PDF do Storage (URL assinada apenas em memória — não persistida)
+  let pdfBuffer: Buffer
+  try {
+    const storagePath = exam.file_url.split('/storage/v1/object/public/exams/')[1]
+    if (!storagePath) throw new Error('path inválido')
+
+    const { data: fileData, error: dlErr } = await supabase.storage
+      .from('exams')
+      .download(storagePath)
+
+    if (dlErr || !fileData) throw dlErr ?? new Error('download vazio')
+
+    pdfBuffer = Buffer.from(await fileData.arrayBuffer())
+  } catch {
+    await supabase
+      .from('exams')
+      .update({ status: 'error', error_reason: 'storage_download_failed' } as never)
+      .eq('id', examId)
+    return NextResponse.json({ error: 'Falha ao baixar o arquivo PDF.', code: 'STORAGE_DOWNLOAD_FAILED' }, { status: 502 })
+  }
+
+  // 5. Extrair texto do PDF
+  const extraction = await extractTextFromPdf(pdfBuffer)
+
+  if (!extraction.ok) {
+    await supabase
+      .from('exams')
+      .update({ status: 'error', error_reason: extraction.reason } as never)
+      .eq('id', examId)
+
+    const messages: Record<string, string> = {
+      pdf_no_text_layer: 'Este PDF não possui camada de texto. PDFs escaneados não são suportados no momento.',
+      pdf_password_protected: 'Este PDF está protegido por senha e não pode ser processado.',
+      pdf_corrupted: 'O arquivo PDF está corrompido.',
+      pdf_too_large: 'O arquivo PDF excede o limite de 10 MB.',
+    }
+    return NextResponse.json(
+      { error: messages[extraction.reason] ?? 'Falha na extração do texto.', code: extraction.reason.toUpperCase() },
+      { status: 422 },
+    )
+  }
+
+  // 6. Salvar exam_text para auditoria e reprocessamento futuro
+  await supabase
+    .from('exams')
+    .update({ exam_text: extraction.text } as never)
+    .eq('id', examId)
+
+  // 7. Chamar o Gateway de IA
   const result = await extractBiomarkers(supabase, {
-    examText,
+    examText: extraction.text,
     examId,
-    userId: user.id,
+    userId,
   })
 
   if (isGatewayError(result)) {
+    await supabase
+      .from('exams')
+      .update({ status: 'error', error_reason: result.code.toLowerCase() } as never)
+      .eq('id', examId)
     return NextResponse.json(
       { error: result.message, code: result.code },
       { status: result.httpStatus },
     )
   }
 
-  // Salvar biomarcadores com rastreabilidade completa
+  // 8. Salvar biomarcadores atomicamente via RPC (reprocessamento seguro)
   if (result.biomarkers.length > 0) {
-    await supabase.from('biomarkers').delete().eq('exam_id', examId)
-
     const bmRows = result.biomarkers.map(b => ({
-      exam_id: examId,
-      user_id: user.id,
       name: b.name,
       value: b.value,
       unit: b.unit,
@@ -81,16 +131,19 @@ export async function POST(
       range_extracted: b.rangeExtracted,
       reference_source: b.referenceSource,
       ai_log_id: result.aiLogId,
-      synthetic: false,
     }))
 
-    await supabase.from('biomarkers').insert(bmRows as unknown as never[])
+    await supabase.rpc('replace_biomarkers' as never, {
+      p_exam_id: examId,
+      p_user_id: userId,
+      p_biomarkers: JSON.stringify(bmRows),
+    } as never)
   }
 
-  // Atualizar exame com tipo e status
+  // 9. Atualizar exame com tipo e status final
   await supabase
     .from('exams')
-    .update({ status: 'processed', type: result.examType } as unknown as never)
+    .update({ status: 'processed', type: result.examType } as never)
     .eq('id', examId)
 
   return NextResponse.json({
@@ -102,5 +155,6 @@ export async function POST(
     model: result.model,
     promptVersion: result.promptVersion,
     durationMs: result.durationMs,
+    pageCount: extraction.pageCount,
   })
 }
