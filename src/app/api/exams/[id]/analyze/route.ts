@@ -114,9 +114,14 @@ export async function POST(
     return NextResponse.json({ error: result.message, code: result.code }, { status: result.httpStatus })
   }
 
-  // 9. Salvar biomarcadores atomicamente via RPC
+  // 9. Salvar biomarcadores — DELETE + INSERT direto (sem RPC)
   if (result.biomarkers.length > 0) {
+    // Remover biomarcadores anteriores deste exame
+    await supabase.from('biomarkers').delete().eq('exam_id', examId)
+
     const bmRows = result.biomarkers.map(b => ({
+      exam_id:          examId,
+      user_id:          userId,
       name:             b.name,
       value:            b.value,
       unit:             b.unit,
@@ -137,16 +142,10 @@ export async function POST(
       range_extracted:  b.rangeExtracted,
       reference_source: b.referenceSource,
       ai_log_id:        result.aiLogId,
+      synthetic:        false,
     }))
 
-    // Passar bmRows diretamente — não usar JSON.stringify.
-    // O SDK Supabase serializa o array para JSON; JSON.stringify causaria dupla codificação
-    // e p_biomarkers chegaria ao Postgres como string, não como jsonb array.
-    await supabase.rpc('replace_biomarkers' as never, {
-      p_exam_id:        examId,
-      p_user_id:        userId,
-      p_biomarkers:     bmRows,
-    } as never)
+    await supabase.from('biomarkers').insert(bmRows as unknown as never[])
   }
 
   // 10. Atualizar exame com tipo e status final
