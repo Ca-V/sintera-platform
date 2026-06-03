@@ -32,6 +32,14 @@ export async function POST(
     return NextResponse.json({ error: 'Exame não encontrado.' }, { status: 404 })
   }
 
+  // HTTP 409 — protege contra requisições duplicadas e chamadas diretas via DevTools
+  if (exam.status === 'processing') {
+    return NextResponse.json(
+      { error: 'Este exame já está sendo processado.', code: 'ALREADY_PROCESSING' },
+      { status: 409 },
+    )
+  }
+
   if (!exam.file_url) {
     return NextResponse.json({ error: 'Arquivo PDF não encontrado para este exame.' }, { status: 422 })
   }
