@@ -1,3 +1,4 @@
+import { jsonrepair } from 'jsonrepair'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { AnthropicProvider } from './providers/anthropic'
 import { checkRateLimit } from './rate-limiter'
@@ -106,14 +107,22 @@ function parseAIResponse(raw: string): {
   const candidate = extractJsonCandidate(raw)
   if (!candidate) return { parsed: null, suspicious: true }
 
+  // Tentativa 1: parse direto
   try {
     const obj = JSON.parse(candidate) as RawAIResponse
     const suspicious = !Array.isArray(obj.biomarkers)
     return { parsed: obj, suspicious }
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err)
-    console.error('[Gateway] JSON.parse failed:', msg, '| candidate length:', candidate.length, '| candidate end:', candidate.slice(-200))
-    return { parsed: null, suspicious: true, parseError: msg }
+  } catch {
+    // Tentativa 2: jsonrepair corrige aspas não escapadas e outros erros comuns de JSON
+    try {
+      const repaired = jsonrepair(candidate)
+      const obj = JSON.parse(repaired) as RawAIResponse
+      const suspicious = !Array.isArray(obj.biomarkers)
+      return { parsed: obj, suspicious }
+    } catch (err2) {
+      const msg = err2 instanceof Error ? err2.message : String(err2)
+      return { parsed: null, suspicious: true, parseError: msg }
+    }
   }
 }
 
