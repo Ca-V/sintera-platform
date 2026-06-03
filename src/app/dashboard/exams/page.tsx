@@ -91,16 +91,18 @@ export default function ExamsPage() {
           ...prev,
           [exam.id]: friendlyError(data.code, data.error),
         }))
+        await loadExams()
       } else {
-        setExamSuccess(prev => ({ ...prev, [exam.id]: data.biomarkers ?? 0 }))
+        // Análise concluída — navegar diretamente para a tela de resultado
+        router.push(`/dashboard/exams/${exam.id}`)
       }
     } catch {
       setExamErrors(prev => ({ ...prev, [exam.id]: 'Falha de conexão. Verifique sua internet.' }))
+      await loadExams()
     } finally {
       setAnalyzing(prev => { const n = { ...prev }; delete n[exam.id]; return n })
-      await loadExams()
     }
-  }, [analyzing, loadExams])
+  }, [analyzing, loadExams, router])
 
   // ── Upload ─────────────────────────────────────────────────────────────────
   const processFile = useCallback(async (file: File) => {
@@ -258,14 +260,13 @@ export default function ExamsPage() {
               const cfg  = STATUS_CONFIG[displayStatus] ?? STATUS_CONFIG.pending
               const Icon = cfg.icon
 
-              // Botão de análise: pending → "Analisar exame" | processed → "Reanalisar" | error → "Tentar novamente"
+              // Exame processed → botão "Ver análise" (navega para detalhe)
+              // Exame pending/error → botão "Analisar exame" / "Tentar novamente"
               const hasFile    = !!(exam as unknown as { file_url: string | null }).file_url
-              const canAnalyze = hasFile && !isRunning && exam.status !== 'processing'
-              const analyzeLabel =
-                exam.status === 'processed' ? 'Reanalisar' :
-                exam.status === 'error'     ? 'Tentar novamente' :
-                                              'Analisar exame'
-              const AnalyzeIcon = exam.status === 'processed' ? RefreshCw : Zap
+              const isProcessed = exam.status === 'processed'
+              const canAnalyze = hasFile && !isRunning && !isProcessed && exam.status !== 'processing'
+              const analyzeLabel = exam.status === 'error' ? 'Tentar novamente' : 'Analisar exame'
+              const AnalyzeIcon = Zap
 
               return (
                 <motion.div key={exam.id}
@@ -284,10 +285,8 @@ export default function ExamsPage() {
                     <div className="flex-1 min-w-0">
                       <p className="font-body text-sm font-semibold text-onyx truncate">{exam.type ?? 'Exame'}</p>
                       <p className="font-body text-xs text-mauve">{formatDate(exam.created_at)}</p>
-                      {successCount !== undefined && (
-                        <p className="font-body text-xs text-sage mt-0.5">
-                          {successCount} biomarcador{successCount !== 1 ? 'es' : ''} extraído{successCount !== 1 ? 's' : ''}
-                        </p>
+                      {isProcessed && !isRunning && (
+                        <p className="font-body text-xs text-sage mt-0.5">Análise disponível</p>
                       )}
                     </div>
 
@@ -298,6 +297,18 @@ export default function ExamsPage() {
                     </span>
 
                     {/* Botão de análise */}
+                    {/* Exame analisado → Ver análise */}
+                    {isProcessed && !isRunning && (
+                      <button
+                        type="button"
+                        onClick={e => { e.stopPropagation(); router.push('/dashboard/exams/' + exam.id) }}
+                        className="ml-1 flex items-center gap-1.5 text-xs font-body font-medium text-petal-dark bg-blush border border-petal/30 px-3 py-1.5 rounded-full hover:bg-petal/10 transition-colors flex-shrink-0"
+                      >
+                        Ver análise →
+                      </button>
+                    )}
+
+                    {/* Exame pendente/erro → Analisar */}
                     {canAnalyze && (
                       <button
                         type="button"
