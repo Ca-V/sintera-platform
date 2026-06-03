@@ -50,19 +50,14 @@ export async function POST(
     .update({ status: 'processing' } as never)
     .eq('id', examId)
 
-  // 4. Baixar PDF do Storage (URL assinada apenas em memória — não persistida)
+  // 4. Baixar PDF via URL assinada (apenas em memória — não persistida)
+  // file_url é uma URL assinada com validade de 1 ano — fetch direto é mais seguro
+  // que reconverter para storage path, pois evita dependência do formato interno da URL.
   let pdfBuffer: Buffer
   try {
-    const storagePath = exam.file_url.split('/storage/v1/object/public/exams/')[1]
-    if (!storagePath) throw new Error('path inválido')
-
-    const { data: fileData, error: dlErr } = await supabase.storage
-      .from('exams')
-      .download(storagePath)
-
-    if (dlErr || !fileData) throw dlErr ?? new Error('download vazio')
-
-    pdfBuffer = Buffer.from(await fileData.arrayBuffer())
+    const res = await fetch(exam.file_url)
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    pdfBuffer = Buffer.from(await res.arrayBuffer())
   } catch {
     await supabase
       .from('exams')
