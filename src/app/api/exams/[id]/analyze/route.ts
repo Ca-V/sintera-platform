@@ -33,9 +33,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!parsed.biomarkers?.length) return NextResponse.json({ error: 'Nenhum biomarcador' }, { status: 422 })
   const user = authData.user
 
-  // Verify ownership before any write
-  const { data: exam } = await supabase.from('exams').select('user_id').eq('id', examId).single()
-  if (!exam || exam.user_id !== user.id) return NextResponse.json({ error: 'Exame nao encontrado' }, { status: 404 })
+  // Verify ownership: query by id AND user_id — returns null if not found or not owned
+  const { data: examOwner } = await supabase
+    .from('exams').select('id').eq('id', examId).eq('user_id', user.id).single()
+  if (!examOwner) return NextResponse.json({ error: 'Exame nao encontrado' }, { status: 404 })
 
   await supabase.from('biomarkers').delete().eq('exam_id', examId)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
