@@ -1,3 +1,4 @@
+import { createHash } from 'crypto'
 import { jsonrepair } from 'jsonrepair'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { AnthropicProvider } from './providers/anthropic'
@@ -103,22 +104,36 @@ function parseAIResponse(raw: string): {
   parsed: RawAIResponse | null
   suspicious: boolean
   parseError?: string
+  rawHash?: string
+  repairedHash?: string
+  repaired?: boolean
+  parseErrorOriginal?: string
 } {
   const candidate = extractJsonCandidate(raw)
   if (!candidate) return { parsed: null, suspicious: true }
+
+  const sha256 = (s: string) => createHash('sha256').update(s, 'utf8').digest('hex')
 
   // Tentativa 1: parse direto
   try {
     const obj = JSON.parse(candidate) as RawAIResponse
     const suspicious = !Array.isArray(obj.biomarkers)
-    return { parsed: obj, suspicious }
-  } catch {
-    // Tentativa 2: jsonrepair corrige aspas não escapadas e outros erros comuns de JSON
+    return { parsed: obj, suspicious, rawHash: sha256(candidate) }
+  } catch (err1) {
+    const originalError = err1 instanceof Error ? err1.message : String(err1)
+    // Tentativa 2: jsonrepair — corrige aspas não escapadas e outros erros sintáticos
     try {
       const repaired = jsonrepair(candidate)
       const obj = JSON.parse(repaired) as RawAIResponse
       const suspicious = !Array.isArray(obj.biomarkers)
-      return { parsed: obj, suspicious }
+      return {
+        parsed: obj,
+        suspicious,
+        rawHash: sha256(candidate),
+        repairedHash: sha256(repaired),
+        repaired: true,
+        parseErrorOriginal: originalError,
+      }
     } catch (err2) {
       const msg = err2 instanceof Error ? err2.message : String(err2)
       return { parsed: null, suspicious: true, parseError: msg }
@@ -221,18 +236,19 @@ export async function extractBiomarkers(
   }
 
   // 7. Parsear e validar JSON
-  const { parsed, suspicious, parseError } = parseAIResponse(providerResult.rawResponse)
+  const { parsed, suspicious, parseError, rawHash, repairedHash, repaired, parseErrorOriginal } = parseAIResponse(providerResult.rawResponse)
 
   if (!parsed || suspicious) {
     const rawLen = providerResult.rawResponse.length
     await supabase.from('ai_processing_log').update({
       status: 'error',
-      raw_response: providerResult.rawResponse.slice(0, 15000), // aumentado para diagnóstico
+      raw_response: providerResult.rawResponse.slice(0, 15000),
       parsed_ok: false,
       parse_error: parseError
         ? `parse_error: ${parseError} | raw_len: ${rawLen} | candidate_null: ${!extractJsonCandidate(providerResult.rawResponse)}`
         : `suspicious_output | raw_len: ${rawLen}`,
       suspicious_output: true,
+      raw_response_hash: rawHash ?? null,
       prompt_tokens: providerResult.promptTokens,
       completion_tokens: providerResult.completionTokens,
       completed_at: new Date().toISOString(),
@@ -247,16 +263,22 @@ export async function extractBiomarkers(
     .map(b => parseBiomarker(b as RawBiomarker))
     .filter((b): b is ExtractedBiomarker => b !== null)
 
-  // 9. Atualizar log com resultado completo (status='success')
+  // 9. Atualizar log com resultado completo (status='success') + auditoria de reparo
   await supabase.from('ai_processing_log').update({
     status: 'success',
-    raw_response: providerResult.rawResponse.slice(0, 5000),
+    raw_response: providerResult.rawResponse.slice(0, 15000),
     parsed_ok: true,
     biomarkers_extracted: biomarkers.length,
     prompt_tokens: providerResult.promptTokens,
     completion_tokens: providerResult.completionTokens,
     completed_at: new Date().toISOString(),
     duration_ms: providerResult.durationMs,
+    // Auditoria de reparo sintático
+    parse_repaired: repaired ?? false,
+    parse_error_original: parseErrorOriginal ?? null,
+    repair_method: repaired ? 'jsonrepair_v1' : null,
+    raw_response_hash: rawHash ?? null,
+    repaired_response_hash: repairedHash ?? null,
   } as never).eq('id', aiLogId)
 
   return {
