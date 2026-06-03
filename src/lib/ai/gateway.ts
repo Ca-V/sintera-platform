@@ -71,15 +71,46 @@ function parseBiomarker(raw: RawBiomarker): ExtractedBiomarker | null {
   }
 }
 
+// Extrai o JSON da resposta da IA de forma robusta.
+// Estratégia 1: extrair de bloco markdown ```json...``` (evita o regex greedy capturar texto após o JSON).
+// Estratégia 2: extrair o primeiro objeto JSON completo via contagem de chaves balanceadas.
+function extractJsonCandidate(raw: string): string | null {
+  // Estratégia 1 — bloco markdown explícito
+  const fenceMatch = raw.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/)
+  if (fenceMatch) return fenceMatch[1]
+
+  // Estratégia 2 — primeiro objeto balanceado
+  const start = raw.indexOf('{')
+  if (start === -1) return null
+
+  let depth = 0
+  let inString = false
+  let escape = false
+
+  for (let i = start; i < raw.length; i++) {
+    const ch = raw[i]
+    if (escape) { escape = false; continue }
+    if (ch === '\\' && inString) { escape = true; continue }
+    if (ch === '"') { inString = !inString; continue }
+    if (inString) continue
+    if (ch === '{') depth++
+    else if (ch === '}') {
+      depth--
+      if (depth === 0) return raw.slice(start, i + 1)
+    }
+  }
+  return null
+}
+
 function parseAIResponse(raw: string): {
   parsed: RawAIResponse | null
   suspicious: boolean
 } {
-  const match = raw.match(/\{[\s\S]*\}/)
-  if (!match) return { parsed: null, suspicious: true }
+  const candidate = extractJsonCandidate(raw)
+  if (!candidate) return { parsed: null, suspicious: true }
 
   try {
-    const obj = JSON.parse(match[0]) as RawAIResponse
+    const obj = JSON.parse(candidate) as RawAIResponse
     const suspicious = !Array.isArray(obj.biomarkers)
     return { parsed: obj, suspicious }
   } catch {
