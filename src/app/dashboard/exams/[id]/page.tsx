@@ -51,11 +51,11 @@ const INTERP_ORDER: Record<string, number> = {
 }
 
 const INTERP_CONFIG: Record<string, { label: string; color: string; bg: string; Icon: React.ComponentType<{ size: number; className?: string }> }> = {
-  acima_da_referencia:       { label: 'Acima',     color: 'text-orange-500', bg: 'bg-orange-50 border-orange-200',  Icon: TrendingUp   },
-  abaixo_da_referencia:      { label: 'Abaixo',    color: 'text-blue-500',   bg: 'bg-blue-50 border-blue-200',      Icon: TrendingDown },
-  dentro_da_referencia:      { label: 'Normal',    color: 'text-sage',       bg: 'bg-sage-light border-sage/30',    Icon: Minus        },
-  sem_referencia_identificada: { label: 'Sem ref.', color: 'text-mauve',     bg: 'bg-ivory border-border',          Icon: HelpCircle   },
-  indisponivel:              { label: 'Indispon.', color: 'text-mauve/60',   bg: 'bg-ivory border-border',          Icon: HelpCircle   },
+  acima_da_referencia:         { label: 'Acima da ref.',    color: 'text-orange-500', bg: 'bg-orange-50 border-orange-200', Icon: TrendingUp   },
+  abaixo_da_referencia:        { label: 'Abaixo da ref.',   color: 'text-blue-500',   bg: 'bg-blue-50 border-blue-200',     Icon: TrendingDown },
+  dentro_da_referencia:        { label: 'Dentro da ref.',   color: 'text-sage',       bg: 'bg-sage-light border-sage/30',   Icon: Minus        },
+  sem_referencia_identificada: { label: 'Sem referência',   color: 'text-mauve',      bg: 'bg-ivory border-border',         Icon: HelpCircle   },
+  indisponivel:                { label: 'Sem valor',        color: 'text-mauve/60',   bg: 'bg-ivory border-border',         Icon: HelpCircle   },
 }
 
 function sortBiomarkers(bms: Biomarker[]): Biomarker[] {
