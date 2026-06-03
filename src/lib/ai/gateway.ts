@@ -71,15 +71,11 @@ function parseBiomarker(raw: RawBiomarker): ExtractedBiomarker | null {
   }
 }
 
-// Extrai o JSON da resposta da IA de forma robusta.
-// Estratégia 1: extrair de bloco markdown ```json...``` (evita o regex greedy capturar texto após o JSON).
-// Estratégia 2: extrair o primeiro objeto JSON completo via contagem de chaves balanceadas.
+// Extrai o primeiro objeto JSON completo da resposta da IA via contagem de chaves balanceadas.
+// Robusto para: markdown code fences, texto antes/depois do JSON, objetos aninhados.
+// A estratégia de regex não-greedy foi descartada: (\{[\s\S]*?\}) para no primeiro }
+// e extrai JSON incompleto. Contagem balanceada é O(n) e provadamente correta.
 function extractJsonCandidate(raw: string): string | null {
-  // Estratégia 1 — bloco markdown explícito
-  const fenceMatch = raw.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/)
-  if (fenceMatch) return fenceMatch[1]
-
-  // Estratégia 2 — primeiro objeto balanceado
   const start = raw.indexOf('{')
   if (start === -1) return null
 
