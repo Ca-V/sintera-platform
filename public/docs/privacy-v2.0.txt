@@ -1,4 +1,4 @@
-POLÍTICA DE PRIVACIDADE — SINCTERA
+POLÍTICA DE PRIVACIDADE — SINTERA
 Versão: 2.0
 Data de vigência: 04 de junho de 2026
 
@@ -6,7 +6,7 @@ Data de vigência: 04 de junho de 2026
 
 1. QUEM SOMOS
 
-A Sinctera é uma plataforma de saúde feminina que extrai e organiza biomarcadores de laudos laboratoriais por meio de inteligência artificial.
+A SINTERA é uma plataforma de saúde feminina que extrai e organiza biomarcadores de laudos laboratoriais por meio de inteligência artificial.
 
 Controladora dos dados pessoais:
 Nome: Carina Leite
@@ -52,7 +52,7 @@ Ao criar sua conta, você concede consentimento separado e destacado para o trat
 
 Os laudos enviados são processados por um modelo de linguagem (Claude Haiku, da Anthropic) para extração de biomarcadores. O processamento ocorre via API da Anthropic, com sede nos Estados Unidos. Não armazenamos os laudos nos servidores da Anthropic — o arquivo é enviado, processado e o resultado é retornado. A Anthropic opera como suboperadora nos termos de seu Data Processing Agreement.
 
-A extração é automatizada. A Sinctera não oferece interpretação clínica dos resultados. Os dados exibidos são apenas uma organização estruturada do que consta no laudo original.
+A extração é automatizada. A SINTERA não oferece interpretação clínica dos resultados. Os dados exibidos são apenas uma organização estruturada do que consta no laudo original.
 
 6. COMPARTILHAMENTO DE DADOS
 
