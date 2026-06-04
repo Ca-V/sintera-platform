@@ -19,6 +19,7 @@ interface Exam {
   page_count: number | null
   created_at: string
   error_reason: string | null
+  text_truncated: boolean | null
 }
 
 interface Biomarker {
@@ -160,7 +161,7 @@ export default function ExamDetailPage() {
   async function loadData() {
     setLoading(true)
     const [{ data: examData }, { data: bioData }, { data: logData }] = await Promise.all([
-      supabase.from('exams').select('id,type,status,pdf_quality,page_count,created_at,error_reason')
+      supabase.from('exams').select('id,type,status,pdf_quality,page_count,created_at,error_reason,text_truncated')
         .eq('id', examId).single(),
       supabase.from('biomarkers')
         .select('id,name,value,value_text,unit,reference_min,reference_max,interpretation,result_type,range_extracted,reference_source,source')
