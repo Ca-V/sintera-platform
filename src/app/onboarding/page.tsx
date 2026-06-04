@@ -377,6 +377,8 @@ export default function OnboardingPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [authError, setAuthError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [consentTerms, setConsentTerms] = useState(false)
+  const [consentHealth, setConsentHealth] = useState(false)
   const supabase = createClient()
 
   const toggleGoal = (id: GoalId) =>
@@ -414,6 +416,15 @@ export default function OnboardingPage() {
       })
     }
 
+    // 3. Record consent
+    if (data.user) {
+      await fetch('/api/consent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: data.user.id }),
+      })
+    }
+
     window.location.href = '/dashboard'
   }
 
@@ -423,7 +434,7 @@ export default function OnboardingPage() {
     step === 0 ? name.trim().length > 1 :
     step === 1 ? true :
     step === 2 ? selectedGoals.length > 0 :
-    email.includes('@') && password.length >= 6
+    email.includes('@') && password.length >= 6 && consentTerms && consentHealth
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row overflow-hidden" style={{ background: '#0F0B14' }}>
@@ -810,6 +821,43 @@ export default function OnboardingPage() {
                         {showPassword ? <EyeOff size={14}/> : <Eye size={14}/>}
                       </button>
                     </div>
+                  </div>
+
+                  {/* Consentimento — obrigatório */}
+                  <div className="flex flex-col gap-2.5">
+                    <p className="text-xs font-body text-mauve uppercase tracking-wider">Consentimento</p>
+
+                    <label className="flex items-start gap-3 p-3.5 bg-white border border-border rounded-xl cursor-pointer hover:border-petal/40 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={consentTerms}
+                        onChange={e => setConsentTerms(e.target.checked)}
+                        className="mt-0.5 w-4 h-4 rounded border-border accent-petal flex-shrink-0"
+                      />
+                      <p className="text-xs font-body text-onyx/80 leading-relaxed">
+                        Li e aceito os{' '}
+                        <a href="/termos" target="_blank" className="text-petal underline hover:text-petal-dark">
+                          Termos de Uso
+                        </a>{' '}
+                        (v2.0)
+                      </p>
+                    </label>
+
+                    <label className="flex items-start gap-3 p-3.5 bg-blush border border-petal/30 rounded-xl cursor-pointer hover:border-petal/60 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={consentHealth}
+                        onChange={e => setConsentHealth(e.target.checked)}
+                        className="mt-0.5 w-4 h-4 rounded border-petal accent-petal flex-shrink-0"
+                      />
+                      <p className="text-xs font-body text-petal-dark leading-relaxed">
+                        <strong>Consinto com o tratamento dos meus dados de saúde</strong> conforme a{' '}
+                        <a href="/privacidade" target="_blank" className="underline hover:opacity-80">
+                          Política de Privacidade
+                        </a>{' '}
+                        (v2.0). Entendo que laudos e biomarcadores são processados por IA.
+                      </p>
+                    </label>
                   </div>
 
                   {/* Preferences */}
