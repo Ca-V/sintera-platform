@@ -1,12 +1,44 @@
 'use client'
 
 import { useState } from 'react'
-import { Bell, Shield, Palette, Globe, ChevronRight } from 'lucide-react'
+import { Bell, Shield, Palette, Globe, ChevronRight, AlertTriangle, Eye, EyeOff } from 'lucide-react'
 import { useUser } from '@/context/UserContext'
 
 export default function ConfiguracoesPage() {
   const { signOut } = useUser()
   const [notifications, setNotifications] = useState({ daily: true, phase: true, email: false, weekly: true })
+
+  // Delete account modal state
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deletePassword, setDeletePassword] = useState('')
+  const [showDeletePassword, setShowDeletePassword] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
+
+  const handleDeleteAccount = async () => {
+    if (!deletePassword) return
+    setDeleteLoading(true)
+    setDeleteError('')
+
+    try {
+      const res = await fetch('/api/account', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: deletePassword }),
+      })
+
+      if (res.ok) {
+        window.location.href = '/'
+      } else {
+        const data = await res.json()
+        setDeleteError(data.error || 'Erro ao excluir conta')
+        setDeleteLoading(false)
+      }
+    } catch {
+      setDeleteError('Erro de conexão. Tente novamente.')
+      setDeleteLoading(false)
+    }
+  }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -52,14 +84,19 @@ export default function ConfiguracoesPage() {
         {[
           'Baixar meus dados',
           'Exportar histórico de saúde',
-          'Excluir minha conta',
         ].map(item => (
           <button key={item}
-            className={`w-full flex items-center justify-between py-3 border-b border-border last:border-0 text-sm font-body hover:text-petal transition-colors text-left ${item.includes('Excluir') ? 'text-red-400 hover:text-red-500' : 'text-onyx/70'}`}>
+            className="w-full flex items-center justify-between py-3 border-b border-border text-sm font-body text-onyx/70 hover:text-petal transition-colors text-left">
             {item}
             <ChevronRight size={15} className="text-border" />
           </button>
         ))}
+        <button
+          onClick={() => setShowDeleteModal(true)}
+          className="w-full flex items-center justify-between py-3 text-sm font-body text-red-400 hover:text-red-500 transition-colors text-left">
+          Excluir minha conta
+          <ChevronRight size={15} className="text-border" />
+        </button>
       </div>
 
       {/* Appearance */}
@@ -89,6 +126,70 @@ export default function ConfiguracoesPage() {
       </button>
 
       <p className="text-center text-xs font-body text-mauve/40">SINTERA v0.1.0 · Beta</p>
+
+      {/* Delete Account Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle size={18} className="text-red-400" />
+              </div>
+              <div>
+                <h3 className="font-body text-sm font-semibold text-onyx">Excluir conta permanentemente</h3>
+                <p className="font-body text-xs text-mauve">Esta ação é irreversível</p>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-red-50 border border-red-100">
+              <p className="text-xs font-body text-red-700 leading-relaxed">
+                Todos os seus laudos, biomarcadores e dados de saúde serão excluídos imediatamente.
+                Essa ação não pode ser desfeita.
+              </p>
+            </div>
+
+            {deleteError && (
+              <div className="p-3 rounded-xl bg-red-50 border border-red-200">
+                <p className="text-xs font-body text-red-600">{deleteError}</p>
+              </div>
+            )}
+
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-body font-medium text-mauve uppercase tracking-wider">
+                Confirme com sua senha
+              </label>
+              <div className="relative">
+                <input
+                  type={showDeletePassword ? 'text' : 'password'}
+                  value={deletePassword}
+                  onChange={e => setDeletePassword(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && deletePassword && handleDeleteAccount()}
+                  placeholder="Sua senha atual"
+                  className="w-full px-4 py-3 pr-10 rounded-xl border border-border bg-white text-sm font-body text-onyx placeholder:text-mauve/40 focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-300 transition-all"
+                />
+                <button type="button" onClick={() => setShowDeletePassword(!showDeletePassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-mauve hover:text-onyx transition-colors">
+                  {showDeletePassword ? <EyeOff size={14}/> : <Eye size={14}/>}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowDeleteModal(false); setDeletePassword(''); setDeleteError('') }}
+                className="flex-1 py-3 rounded-xl border border-border text-sm font-body text-mauve hover:border-petal/40 transition-colors">
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={!deletePassword || deleteLoading}
+                className="flex-1 py-3 rounded-xl bg-red-500 text-white text-sm font-body font-medium hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                {deleteLoading ? 'Excluindo...' : 'Excluir tudo'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
