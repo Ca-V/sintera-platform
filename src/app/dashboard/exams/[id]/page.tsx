@@ -44,6 +44,21 @@ interface LastLog {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+const ERROR_REASON_LABELS: Record<string, string> = {
+  password_protected:    'O PDF está protegido por senha. Remova a proteção e tente novamente.',
+  corrupted:             'O arquivo PDF está corrompido e não pode ser lido.',
+  too_large:             'O arquivo excede o limite de 10 MB.',
+  storage_download_failed: 'Não foi possível acessar o arquivo. Tente novamente em instantes.',
+  insufficient_text:     'O PDF não contém texto legível suficiente. Verifique se o arquivo não é uma imagem escaneada de baixa qualidade.',
+  parse_error:           'A IA não conseguiu interpretar o conteúdo. Tente reanalisar o exame.',
+  rate_limit_exceeded:   'Limite de análises atingido. Aguarde 1 minuto e tente novamente.',
+}
+
+function getErrorLabel(reason: string | null): string {
+  if (!reason) return 'Erro desconhecido. Tente novamente.'
+  return ERROR_REASON_LABELS[reason] ?? Erro: . Tente novamente.
+}
+
 const INTERP_ORDER: Record<string, number> = {
   acima_da_referencia:       1,
   abaixo_da_referencia:      2,
@@ -273,7 +288,13 @@ export default function ExamDetailPage() {
         {analyzeError && (
           <div className="mt-4 flex items-start gap-2 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
             <AlertCircle size={14} className="text-red-400 flex-shrink-0 mt-0.5" />
-            <p className="font-body text-xs text-red-700">{analyzeError}</p>
+            <p className="font-body text-xs text-red-700">
+            {analyzeError?.includes('rate') || analyzeError?.includes('429')
+              ? 'Limite de análises atingido. Aguarde 1 minuto e tente novamente.'
+              : analyzeError?.includes('fetch') || analyzeError?.includes('network') || analyzeError?.includes('Failed')
+              ? 'Falha de conexão. Verifique sua internet e tente novamente.'
+              : analyzeError}
+          </p>
           </div>
         )}
       </motion.div>
