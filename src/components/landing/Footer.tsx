@@ -1,10 +1,30 @@
 import Link from 'next/link'
 
 const links = {
-  Produto: ['Funcionalidades', 'Preços', 'Roadmap', 'Changelog'],
-  Empresa: ['Sobre nós', 'Blog', 'Carreiras', 'Imprensa'],
-  Suporte: ['Central de ajuda', 'Comunidade', 'Contato', 'Status'],
-  Legal: ['Privacidade', 'Termos de uso', 'Cookies', 'LGPD'],
+  Produto: [
+    { label: 'Funcionalidades', href: '#' },
+    { label: 'Preços', href: '#' },
+    { label: 'Roadmap', href: '#' },
+    { label: 'Changelog', href: '#' },
+  ],
+  Empresa: [
+    { label: 'Sobre nós', href: '#' },
+    { label: 'Blog', href: '#' },
+    { label: 'Carreiras', href: '#' },
+    { label: 'Imprensa', href: '#' },
+  ],
+  Suporte: [
+    { label: 'Central de ajuda', href: '#' },
+    { label: 'Comunidade', href: '#' },
+    { label: 'Contato', href: '#' },
+    { label: 'Status', href: '#' },
+  ],
+  Legal: [
+    { label: 'Privacidade', href: '/privacidade' },
+    { label: 'Termos de uso', href: '/termos' },
+    { label: 'Cookies', href: '#' },
+    { label: 'LGPD', href: '/privacidade' },
+  ],
 }
 
 export default function Footer() {
@@ -53,12 +73,12 @@ export default function Footer() {
               </p>
               <ul className="flex flex-col gap-2.5">
                 {items.map((item) => (
-                  <li key={item}>
+                  <li key={item.label}>
                     <Link
-                      href="#"
+                      href={item.href}
                       className="font-body text-sm text-white/40 hover:text-petal-light transition-colors duration-200"
                     >
-                      {item}
+                      {item.label}
                     </Link>
                   </li>
                 ))}
@@ -69,7 +89,7 @@ export default function Footer() {
 
         <div className="border-t border-white/8 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="font-body text-xs text-white/30">
-            © 2025 SINTERA. Todos os direitos reservados.
+            © 2026 SINTERA. Todos os direitos reservados.
           </p>
           <p className="font-body text-xs text-white/20">
             Feito com cuidado para mulheres extraordinárias. 🌸
