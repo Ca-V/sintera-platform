@@ -191,9 +191,10 @@ function TrendBadge({ trend, delta }: { trend: Trend; delta: number | null }) {
 export default function HistoricoPage() {
   const supabase = useRef(createClient()).current
   const { user } = useUser()
-  const [rows, setRows]       = useState<RawBiomarker[]>([])
-  const [loading, setLoading] = useState(true)
-  const [search, setSearch]   = useState('')
+  const [rows, setRows]           = useState<RawBiomarker[]>([])
+  const [examIndexes, setExamIndexes] = useState<{ date: string; pct: number; num: number; den: number }[]>([])
+  const [loading, setLoading]     = useState(true)
+  const [search, setSearch]       = useState('')
 
   useEffect(() => {
     if (!user) return
@@ -209,6 +210,26 @@ export default function HistoricoPage() {
       .eq('synthetic', false)
       .in('result_type', ['numeric', 'qualitative'])
     setRows((data ?? []) as RawBiomarker[])
+
+    // Calcular Índice Experimental por exame
+    const allNumeric = (data ?? []) as RawBiomarker[]
+    const byExam = new Map<string, { date: string; eligible: RawBiomarker[] }>()
+    for (const b of allNumeric) {
+      if (b.reference_source !== 'laudo' || b.result_type !== 'numeric' || b.interpretation === null) continue
+      const date = b.exams?.exam_date ?? ''
+      if (!byExam.has(b.exam_id)) byExam.set(b.exam_id, { date, eligible: [] })
+      byExam.get(b.exam_id)!.eligible.push(b)
+    }
+    const indexes = [...byExam.entries()]
+      .map(([, { date, eligible }]) => {
+        const den = eligible.length
+        const num = eligible.filter(b => b.interpretation === 'dentro_da_referencia').length
+        return { date, pct: Math.round((num / den) * 100), num, den }
+      })
+      .filter(x => x.den >= 5)
+      .sort((a, b) => a.date.localeCompare(b.date))
+    setExamIndexes(indexes)
+
     setLoading(false)
   }
 
@@ -267,6 +288,36 @@ export default function HistoricoPage() {
           <p className="font-body text-xs text-mauve">
             {search ? 'Tente outro termo de busca.' : 'Analise um exame para ver o histórico aqui.'}
           </p>
+        </motion.div>
+      )}
+
+      {/* Índice Experimental — evolução */}
+      {examIndexes.length > 0 && (
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+          className="card-premium overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-border/40 flex items-center gap-2">
+            <p className="font-body text-sm font-semibold text-onyx">Proporção dentro da referência</p>
+            <span className="font-body text-[10px] text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded-full border border-amber-200">Beta</span>
+          </div>
+          <div className="px-5 py-4 space-y-3">
+            {examIndexes.map((idx, i) => {
+              const barColor = idx.pct >= 80 ? 'bg-sage' : idx.pct >= 60 ? 'bg-amber-400' : 'bg-orange-400'
+              const textColor = idx.pct >= 80 ? 'text-sage' : idx.pct >= 60 ? 'text-amber-600' : 'text-orange-500'
+              return (
+                <div key={i} className="flex items-center gap-3">
+                  <span className="font-body text-xs text-mauve/60 w-14 flex-shrink-0">{idx.date ? formatDate(idx.date) : '—'}</span>
+                  <div className="flex-1 bg-border/30 rounded-full h-2">
+                    <div className={`h-2 rounded-full ${barColor}`} style={{ width: `${idx.pct}%` }} />
+                  </div>
+                  <span className={`font-body text-sm font-semibold ${textColor} w-10 text-right flex-shrink-0`}>{idx.pct}%</span>
+                  <span className="font-body text-xs text-mauve/50 flex-shrink-0">{idx.num}/{idx.den}</span>
+                </div>
+              )
+            })}
+            <p className="font-body text-[11px] text-mauve/40 pt-1">
+              Proporção de biomarcadores numéricos dentro das referências do laudo. Não representa diagnóstico ou estado de saúde.
+            </p>
+          </div>
         </motion.div>
       )}
 

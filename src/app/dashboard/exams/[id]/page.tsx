@@ -61,6 +61,43 @@ const INTERP_CONFIG: Record<string, { label: string; color: string; bg: string; 
   extraction_failed:           { label: 'Falha na extração',    color: 'text-red-500',    bg: 'bg-red-50 border-red-200',       Icon: AlertCircle  },
 }
 
+// ── Índice Experimental ───────────────────────────────────────────────────────
+
+const MIN_DENOMINATOR = 5
+
+function calcExperimentalIndex(bms: Biomarker[]): { numerator: number; denominator: number; pct: number } | null {
+  const eligible = bms.filter(
+    b => b.reference_source === 'laudo' && b.result_type === 'numeric' && b.interpretation !== null
+  )
+  const denominator = eligible.length
+  if (denominator < MIN_DENOMINATOR) return null
+  const numerator = eligible.filter(b => b.interpretation === 'dentro_da_referencia').length
+  return { numerator, denominator, pct: Math.round((numerator / denominator) * 100) }
+}
+
+function IndexCard({ index }: { index: { numerator: number; denominator: number; pct: number } }) {
+  const color = index.pct >= 80 ? 'text-sage' : index.pct >= 60 ? 'text-amber-600' : 'text-orange-500'
+  const bg    = index.pct >= 80 ? 'bg-sage-light border-sage/30' : index.pct >= 60 ? 'bg-amber-50 border-amber-200' : 'bg-orange-50 border-orange-200'
+  return (
+    <div className={`rounded-2xl border px-5 py-4 ${bg}`}>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Proporção dentro da referência</span>
+            <span className="font-body text-[10px] text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded-full border border-amber-200">Beta</span>
+          </div>
+          <p className={`font-display text-3xl font-bold ${color}`}>{index.pct}%</p>
+          <p className="font-body text-xs text-mauve/70 mt-0.5">{index.numerator} de {index.denominator} biomarcadores dentro da referência</p>
+        </div>
+      </div>
+      <p className="font-body text-[11px] text-mauve/50 mt-3 leading-relaxed">
+        Métrica informativa baseada apenas na proporção de resultados numéricos dentro das referências impressas neste laudo.
+        Não representa diagnóstico, risco ou estado geral de saúde. Não substitui avaliação médica.
+      </p>
+    </div>
+  )
+}
+
 function getInterpConfig(b: Biomarker) {
   if (b.interpretation === 'indisponivel') {
     if (b.result_type === 'extraction_failed') return INTERP_CONFIG.extraction_failed
@@ -240,6 +277,16 @@ export default function ExamDetailPage() {
           </div>
         )}
       </motion.div>
+
+      {/* Índice Experimental */}
+      {hasResults && (() => {
+        const idx = calcExperimentalIndex(biomarkers)
+        return idx ? (
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+            <IndexCard index={idx} />
+          </motion.div>
+        ) : null
+      })()}
 
       {/* Tabela de biomarcadores */}
       {hasResults ? (
