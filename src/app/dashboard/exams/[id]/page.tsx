@@ -25,10 +25,12 @@ interface Biomarker {
   id: string
   name: string
   value: number | null
+  value_text: string | null
   unit: string | null
   reference_min: number | null
   reference_max: number | null
   interpretation: string | null
+  result_type: string | null
   range_extracted: boolean
   reference_source: string | null
   source: string | null
@@ -51,11 +53,19 @@ const INTERP_ORDER: Record<string, number> = {
 }
 
 const INTERP_CONFIG: Record<string, { label: string; color: string; bg: string; Icon: React.ComponentType<{ size: number; className?: string }> }> = {
-  acima_da_referencia:         { label: 'Acima da ref.',    color: 'text-orange-500', bg: 'bg-orange-50 border-orange-200', Icon: TrendingUp   },
-  abaixo_da_referencia:        { label: 'Abaixo da ref.',   color: 'text-blue-500',   bg: 'bg-blue-50 border-blue-200',     Icon: TrendingDown },
-  dentro_da_referencia:        { label: 'Dentro da ref.',   color: 'text-sage',       bg: 'bg-sage-light border-sage/30',   Icon: Minus        },
-  sem_referencia_identificada: { label: 'Sem referência',   color: 'text-mauve',      bg: 'bg-ivory border-border',         Icon: HelpCircle   },
-  indisponivel:                { label: 'Sem valor',        color: 'text-mauve/60',   bg: 'bg-ivory border-border',         Icon: HelpCircle   },
+  acima_da_referencia:         { label: 'Acima da ref.',        color: 'text-orange-500', bg: 'bg-orange-50 border-orange-200', Icon: TrendingUp   },
+  abaixo_da_referencia:        { label: 'Abaixo da ref.',       color: 'text-blue-500',   bg: 'bg-blue-50 border-blue-200',     Icon: TrendingDown },
+  dentro_da_referencia:        { label: 'Dentro da ref.',       color: 'text-sage',       bg: 'bg-sage-light border-sage/30',   Icon: Minus        },
+  sem_referencia_identificada: { label: 'Ref. não informada',   color: 'text-amber-600',  bg: 'bg-amber-50 border-amber-200',   Icon: HelpCircle   },
+  indisponivel:                { label: 'Resultado ausente',    color: 'text-mauve/60',   bg: 'bg-ivory border-border',         Icon: HelpCircle   },
+  extraction_failed:           { label: 'Falha na extração',    color: 'text-red-500',    bg: 'bg-red-50 border-red-200',       Icon: AlertCircle  },
+}
+
+function getInterpConfig(b: Biomarker) {
+  if (b.interpretation === 'indisponivel') {
+    if (b.result_type === 'extraction_failed') return INTERP_CONFIG.extraction_failed
+  }
+  return INTERP_CONFIG[b.interpretation ?? ''] ?? INTERP_CONFIG.indisponivel
 }
 
 function sortBiomarkers(bms: Biomarker[]): Biomarker[] {
@@ -101,7 +111,7 @@ export default function ExamDetailPage() {
       supabase.from('exams').select('id,type,status,pdf_quality,page_count,created_at,error_reason')
         .eq('id', examId).single(),
       supabase.from('biomarkers')
-        .select('id,name,value,unit,reference_min,reference_max,interpretation,range_extracted,reference_source,source')
+        .select('id,name,value,value_text,unit,reference_min,reference_max,interpretation,result_type,range_extracted,reference_source,source')
         .eq('exam_id', examId),
       supabase.from('ai_processing_log')
         .select('started_at,parse_repaired,extraction_path')
@@ -248,8 +258,13 @@ export default function ExamDetailPage() {
 
           <div className="divide-y divide-border/30">
             {biomarkers.map((b, i) => {
-              const cfg = INTERP_CONFIG[b.interpretation ?? ''] ?? INTERP_CONFIG.indisponivel
+              const cfg  = getInterpConfig(b)
               const Icon = cfg.Icon
+              const isQualitative = b.result_type === 'qualitative'
+              const refLabel = b.reference_source === 'ausente'
+                ? 'Não informada'
+                : formatRef(b.reference_min, b.reference_max)
+
               return (
                 <motion.div key={b.id}
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.02 + i * 0.01 }}
@@ -260,14 +275,17 @@ export default function ExamDetailPage() {
 
                   {/* Resultado */}
                   <span className="font-body text-sm text-onyx">
-                    {b.value !== null ? `${b.value}` : '—'}
-                    {b.unit ? <span className="text-mauve text-xs ml-1">{b.unit}</span> : null}
+                    {isQualitative && b.value_text
+                      ? <span className="text-blue-600 font-medium">{b.value_text}</span>
+                      : b.value !== null
+                        ? <>{b.value}{b.unit ? <span className="text-mauve text-xs ml-1">{b.unit}</span> : null}</>
+                        : <span className="text-mauve/40">—</span>
+                    }
                   </span>
 
                   {/* Referência */}
-                  <span className="font-body text-sm text-mauve">
-                    {formatRef(b.reference_min, b.reference_max)}
-                    {!b.range_extracted && b.reference_min === null && b.reference_max === null && ''}
+                  <span className={`font-body text-sm ${b.reference_source === 'ausente' ? 'text-mauve/40 italic text-xs' : 'text-mauve'}`}>
+                    {refLabel}
                   </span>
 
                   {/* Classificação */}
