@@ -1,0 +1,369 @@
+'use client'
+
+import { useEffect, useState, useRef, useMemo } from 'react'
+import { motion } from 'framer-motion'
+import { TrendingUp, TrendingDown, Minus, Search, Loader2, FileText, AlertTriangle } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { useUser } from '@/context/UserContext'
+
+// ── Tipos ────────────────────────────────────────────────────────────────────
+
+interface RawBiomarker {
+  id: string
+  name: string
+  value: number | null
+  value_text: string | null
+  unit: string | null
+  result_type: string | null
+  reference_min: number | null
+  reference_max: number | null
+  reference_source: string | null
+  interpretation: string | null
+  synthetic: boolean
+  exam_id: string
+  exams: { exam_date: string | null; type: string | null } | null
+}
+
+type Trend = 'up' | 'down' | 'stable' | 'single' | 'unit_mismatch'
+
+interface Measurement {
+  examId: string
+  date: string
+  value: number
+  unit: string
+  interpretation: string | null
+  referenceMin: number | null
+  referenceMax: number | null
+}
+
+interface BiomarkerGroup {
+  canonicalName: string
+  displayName: string
+  unit: string
+  trend: Trend
+  deltaPercent: number | null
+  measurements: Measurement[]
+  qualitativeMeasurements: { date: string; valueText: string }[]
+  hasUnitMismatch: boolean
+  units: string[]
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function normalizeName(name: string): string {
+  return name.toLowerCase().replace(/\s+/g, ' ').trim()
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' })
+}
+
+function calcTrend(measurements: Measurement[]): { trend: Trend; deltaPercent: number | null } {
+  if (measurements.length < 2) return { trend: 'single', deltaPercent: null }
+
+  const last       = measurements[measurements.length - 1].value
+  const secondLast = measurements[measurements.length - 2].value
+
+  if (secondLast === 0) return { trend: 'stable', deltaPercent: null }
+
+  const delta = (last - secondLast) / Math.abs(secondLast)
+
+  if (delta > 0.05)  return { trend: 'up',     deltaPercent: Math.round(delta * 100) }
+  if (delta < -0.05) return { trend: 'down',   deltaPercent: Math.round(delta * 100) }
+  return { trend: 'stable', deltaPercent: Math.round(delta * 100) }
+}
+
+function groupBiomarkers(rows: RawBiomarker[]): BiomarkerGroup[] {
+  const map = new Map<string, { numeric: RawBiomarker[]; qualitative: RawBiomarker[] }>()
+
+  for (const b of rows) {
+    const key = normalizeName(b.name)
+    if (!map.has(key)) map.set(key, { numeric: [], qualitative: [] })
+    const g = map.get(key)!
+    if (b.result_type === 'numeric' && b.value !== null) {
+      g.numeric.push(b)
+    } else if (b.result_type === 'qualitative' && b.value_text) {
+      g.qualitative.push(b)
+    }
+  }
+
+  const groups: BiomarkerGroup[] = []
+
+  for (const [key, { numeric, qualitative }] of map.entries()) {
+    // Sort numeric by date ASC, then by created_at (via id as proxy)
+    const sortedNumeric = [...numeric].sort((a, b) => {
+      const da = a.exams?.exam_date ?? ''
+      const db = b.exams?.exam_date ?? ''
+      return da.localeCompare(db) || a.id.localeCompare(b.id)
+    })
+
+    const units = [...new Set(sortedNumeric.map(b => b.unit ?? ''))]
+    const hasUnitMismatch = units.length > 1
+    const primaryUnit = units[0] ?? ''
+
+    // Only build measurements for groups with consistent units
+    const validNumeric = hasUnitMismatch
+      ? sortedNumeric
+      : sortedNumeric.filter(b => (b.unit ?? '') === primaryUnit)
+
+    const measurements: Measurement[] = hasUnitMismatch
+      ? []
+      : validNumeric.map(b => ({
+          examId:       b.exam_id,
+          date:         b.exams?.exam_date ?? '',
+          value:        b.value!,
+          unit:         b.unit ?? '',
+          interpretation: b.interpretation,
+          referenceMin: b.reference_min,
+          referenceMax: b.reference_max,
+        }))
+
+    const qualitativeMeasurements = [...qualitative]
+      .sort((a, b) => (a.exams?.exam_date ?? '').localeCompare(b.exams?.exam_date ?? ''))
+      .map(b => ({ date: b.exams?.exam_date ?? '', valueText: b.value_text! }))
+
+    // Skip empty groups
+    if (measurements.length === 0 && qualitativeMeasurements.length === 0 && !hasUnitMismatch) continue
+
+    const { trend, deltaPercent } = hasUnitMismatch
+      ? { trend: 'unit_mismatch' as Trend, deltaPercent: null }
+      : calcTrend(measurements)
+
+    const displayName = numeric[0]?.name ?? qualitative[0]?.name ?? key
+
+    groups.push({
+      canonicalName: key,
+      displayName,
+      unit: primaryUnit,
+      trend,
+      deltaPercent,
+      measurements,
+      qualitativeMeasurements,
+      hasUnitMismatch,
+      units,
+    })
+  }
+
+  // Sort: up/down → stable → single → unit_mismatch → qualitative only
+  const ORDER: Record<Trend, number> = { up: 1, down: 2, stable: 3, single: 4, unit_mismatch: 5 }
+  return groups.sort((a, b) => {
+    const oa = a.measurements.length === 0 && a.qualitativeMeasurements.length > 0 ? 6 : ORDER[a.trend] ?? 6
+    const ob = b.measurements.length === 0 && b.qualitativeMeasurements.length > 0 ? 6 : ORDER[b.trend] ?? 6
+    if (oa !== ob) return oa - ob
+    return a.displayName.localeCompare(b.displayName, 'pt-BR')
+  })
+}
+
+// ── Config visual ─────────────────────────────────────────────────────────────
+
+const INTERP_COLORS: Record<string, string> = {
+  acima_da_referencia:         'text-orange-500',
+  abaixo_da_referencia:        'text-blue-500',
+  dentro_da_referencia:        'text-sage',
+  sem_referencia_identificada: 'text-mauve/60',
+  indisponivel:                'text-mauve/40',
+}
+
+const INTERP_LABELS: Record<string, string> = {
+  acima_da_referencia:         '▲',
+  abaixo_da_referencia:        '▼',
+  dentro_da_referencia:        '✓',
+  sem_referencia_identificada: '–',
+  indisponivel:                '–',
+}
+
+function TrendBadge({ trend, delta }: { trend: Trend; delta: number | null }) {
+  if (trend === 'up')
+    return <span className="flex items-center gap-1 text-orange-500 font-body text-xs font-semibold"><TrendingUp size={12}/> Subindo {delta !== null ? `${delta > 0 ? '+' : ''}${delta}%` : ''}</span>
+  if (trend === 'down')
+    return <span className="flex items-center gap-1 text-blue-500 font-body text-xs font-semibold"><TrendingDown size={12}/> Caindo {delta !== null ? `${delta}%` : ''}</span>
+  if (trend === 'stable')
+    return <span className="flex items-center gap-1 text-mauve font-body text-xs"><Minus size={12}/> Estável</span>
+  if (trend === 'single')
+    return <span className="font-body text-xs text-mauve/60">Primeira medição</span>
+  if (trend === 'unit_mismatch')
+    return <span className="flex items-center gap-1 text-amber-600 font-body text-xs"><AlertTriangle size={12}/> Unidades diferentes</span>
+  return null
+}
+
+// ── Componente principal ──────────────────────────────────────────────────────
+
+export default function HistoricoPage() {
+  const supabase = useRef(createClient()).current
+  const { user } = useUser()
+  const [rows, setRows]       = useState<RawBiomarker[]>([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch]   = useState('')
+
+  useEffect(() => {
+    if (!user) return
+    loadData()
+  }, [user])
+
+  async function loadData() {
+    setLoading(true)
+    const { data } = await supabase
+      .from('biomarkers')
+      .select('id,name,value,value_text,unit,result_type,reference_min,reference_max,reference_source,interpretation,synthetic,exam_id,exams(exam_date,type)')
+      .eq('user_id', user!.id)
+      .eq('synthetic', false)
+      .in('result_type', ['numeric', 'qualitative'])
+    setRows((data ?? []) as RawBiomarker[])
+    setLoading(false)
+  }
+
+  const groups = useMemo(() => groupBiomarkers(rows), [rows])
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) return groups
+    const q = search.toLowerCase()
+    return groups.filter(g => g.displayName.toLowerCase().includes(q))
+  }, [groups, search])
+
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <Loader2 size={28} className="animate-spin text-petal" />
+    </div>
+  )
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-5">
+      {/* Cabeçalho */}
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+        className="card-premium p-6">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-blush flex items-center justify-center flex-shrink-0">
+            <TrendingUp size={22} className="text-petal" />
+          </div>
+          <div>
+            <h1 className="font-display text-xl font-semibold text-onyx">Histórico de Biomarcadores</h1>
+            <p className="font-body text-sm text-mauve mt-0.5">
+              {groups.length} biomarcadores · {rows.length} medições
+            </p>
+          </div>
+        </div>
+
+        {/* Busca */}
+        <div className="relative mt-4">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-mauve/50" />
+          <input
+            type="text"
+            placeholder="Buscar biomarcador…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full pl-9 pr-4 py-2.5 bg-ivory border border-border rounded-xl font-body text-sm text-onyx placeholder-mauve/40 focus:outline-none focus:ring-1 focus:ring-petal/40"
+          />
+        </div>
+      </motion.div>
+
+      {/* Estado vazio */}
+      {filtered.length === 0 && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+          className="card-premium p-12 text-center">
+          <FileText size={40} className="text-border mx-auto mb-3" />
+          <p className="font-body text-sm font-semibold text-onyx mb-1">
+            {search ? 'Nenhum biomarcador encontrado' : 'Nenhum dado disponível'}
+          </p>
+          <p className="font-body text-xs text-mauve">
+            {search ? 'Tente outro termo de busca.' : 'Analise um exame para ver o histórico aqui.'}
+          </p>
+        </motion.div>
+      )}
+
+      {/* Lista de grupos */}
+      <div className="space-y-3">
+        {filtered.map((g, i) => (
+          <motion.div key={g.canonicalName}
+            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.02 + i * 0.015 }}
+            className="card-premium overflow-hidden">
+
+            {/* Header do grupo */}
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-border/40">
+              <div>
+                <p className="font-body text-sm font-semibold text-onyx">{g.displayName}</p>
+                <p className="font-body text-xs text-mauve/60 mt-0.5">
+                  {g.unit ? `${g.unit} · ` : ''}{g.measurements.length + g.qualitativeMeasurements.length} medição{g.measurements.length + g.qualitativeMeasurements.length !== 1 ? 'ões' : ''}
+                </p>
+              </div>
+              <TrendBadge trend={g.trend} delta={g.deltaPercent} />
+            </div>
+
+            {/* Aviso de unidades diferentes */}
+            {g.hasUnitMismatch && (
+              <div className="px-5 py-2.5 bg-amber-50 border-b border-amber-100">
+                <p className="font-body text-xs text-amber-700">
+                  Unidades diferentes entre exames ({g.units.join(', ')}) — tendência não calculada.
+                </p>
+                {/* Exibir todas as medições sem tendência */}
+                <div className="mt-2 space-y-1">
+                  {[...rows]
+                    .filter(b => normalizeName(b.name) === g.canonicalName && b.result_type === 'numeric' && b.value !== null)
+                    .sort((a, b) => (a.exams?.exam_date ?? '').localeCompare(b.exams?.exam_date ?? ''))
+                    .map(b => (
+                      <div key={b.id} className="flex items-center gap-3">
+                        <span className="font-body text-xs text-mauve/60 w-14">{b.exams?.exam_date ? formatDate(b.exams.exam_date) : '—'}</span>
+                        <span className="font-body text-sm text-onyx font-medium">{b.value}</span>
+                        <span className="font-body text-xs text-mauve">{b.unit}</span>
+                      </div>
+                    ))
+                  }
+                </div>
+              </div>
+            )}
+
+            {/* Medições numéricas */}
+            {!g.hasUnitMismatch && g.measurements.length > 0 && (
+              <div className="divide-y divide-border/20">
+                {g.measurements.map((m) => {
+                  const interpColor = INTERP_COLORS[m.interpretation ?? ''] ?? 'text-mauve/60'
+                  const interpLabel = INTERP_LABELS[m.interpretation ?? ''] ?? '–'
+                  return (
+                    <div key={`${m.examId}-${m.date}`}
+                      className="flex items-center gap-3 px-5 py-2.5 hover:bg-blush/10 transition-colors">
+                      <span className="font-body text-xs text-mauve/60 w-14 flex-shrink-0">{m.date ? formatDate(m.date) : '—'}</span>
+                      <span className="font-body text-sm font-semibold text-onyx">{m.value}</span>
+                      <span className="font-body text-xs text-mauve flex-shrink-0">{m.unit}</span>
+                      {(m.referenceMin !== null || m.referenceMax !== null) && (
+                        <span className="font-body text-xs text-mauve/40 ml-1">
+                          ref {m.referenceMin !== null && m.referenceMax !== null
+                            ? `${m.referenceMin}–${m.referenceMax}`
+                            : m.referenceMin !== null ? `>${m.referenceMin}` : `<${m.referenceMax}`}
+                        </span>
+                      )}
+                      <span className={`ml-auto font-body text-xs font-semibold ${interpColor}`}>{interpLabel}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {/* Medições qualitativas */}
+            {g.qualitativeMeasurements.length > 0 && (
+              <div className={g.measurements.length > 0 ? 'border-t border-border/40' : ''}>
+                {g.measurements.length === 0 && (
+                  <div className="px-5 pt-2.5 pb-1">
+                    <p className="font-body text-xs text-blue-500/80">Resultado qualitativo — histórico comparativo não disponível nesta versão</p>
+                  </div>
+                )}
+                {g.qualitativeMeasurements.map((m, idx) => (
+                  <div key={idx} className="flex items-center gap-3 px-5 py-2 hover:bg-blush/10 transition-colors">
+                    <span className="font-body text-xs text-mauve/60 w-14 flex-shrink-0">{m.date ? formatDate(m.date) : '—'}</span>
+                    <span className="font-body text-sm text-blue-600 font-medium">{m.valueText}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Nota de limitação */}
+      {groups.length > 0 && (
+        <p className="font-body text-xs text-mauve/40 text-center pb-4">
+          Biomarcadores com nomes diferentes entre laboratórios aparecem como entradas separadas nesta versão Beta.
+        </p>
+      )}
+    </div>
+  )
+}

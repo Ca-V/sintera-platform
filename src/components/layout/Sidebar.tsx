@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, Moon, Zap, BedDouble, Apple,
   BarChart3, Settings, X, LogOut, ChevronRight,
-  FileText, Sparkles, User,
+  FileText, Sparkles, User, TrendingUp,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUser } from '@/context/UserContext'
@@ -26,6 +26,7 @@ const navSections = [
     label: 'Dados & IA',
     items: [
       { href: '/dashboard/exams',      icon: FileText,        label: 'Exames',     dot: '#C9A97A' },
+      { href: '/dashboard/historico',  icon: TrendingUp,      label: 'Histórico',  dot: '#7DAF9E' },
       { href: '/dashboard/insights',   icon: Sparkles,        label: 'Insights',   dot: '#C2849A' },
       { href: '/dashboard/relatorios', icon: BarChart3,       label: 'Relatórios' },
     ],
