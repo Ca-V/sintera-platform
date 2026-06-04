@@ -33,14 +33,19 @@ export interface ProviderResult {
   durationMs: number
 }
 
+export type ResultType = 'numeric' | 'qualitative' | 'missing' | 'extraction_failed'
+export type ReferenceSource = 'laudo' | 'ausente' | 'documental'
+
 export interface ExtractedBiomarker {
   name: string
   value: number | null
+  valueText: string | null
   unit: string | null
   referenceMin: number | null
   referenceMax: number | null
   rangeExtracted: boolean
-  referenceSource: 'laudo'
+  referenceSource: ReferenceSource
+  resultType: ResultType
   rawText: string
   confidence: number
   extractionNotes: string | null
@@ -87,10 +92,13 @@ export interface RawAIResponse {
 export interface RawBiomarker {
   name?: unknown
   value?: unknown
+  value_text?: unknown
   unit?: unknown
   reference_min?: unknown
   reference_max?: unknown
   range_extracted?: unknown
+  reference_source?: unknown
+  result_type?: unknown
   raw_text?: unknown
   confidence?: unknown
   extraction_notes?: unknown

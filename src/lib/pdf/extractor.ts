@@ -1,6 +1,9 @@
 // pdf-parse é CommonJS — import via require para compatibilidade com ESM do Next.js
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParse = require('pdf-parse') as (buf: Buffer) => Promise<{ text: string; numpages: number }>
+const pdfParse = require('pdf-parse') as (
+  buf: Buffer,
+  options?: { pagerender?: (pageData: unknown) => Promise<string> }
+) => Promise<{ text: string; numpages: number }>
 
 export type PdfQuality =
   | 'good_text'          // texto limpo, Path A
@@ -11,8 +14,82 @@ export type PdfQuality =
   | 'too_large'          // erro — não processável
 
 export type PdfExtractionResult =
-  | { ok: true;  quality: 'good_text' | 'corrupted_text' | 'insufficient_text'; text: string; pageCount: number }
+  | { ok: true;  quality: 'good_text' | 'corrupted_text' | 'insufficient_text'; text: string; pageCount: number; pageTexts: string[] }
   | { ok: false; quality: 'password_protected' | 'corrupted' | 'too_large' }
+
+// ── Epic 1.4A — Filtro de conteúdo pré-IA ────────────────────────────────────
+
+const LAB_UNIT_PATTERN = /\b\d+[,.]?\d*\s*(g\/dL|mg\/dL|g\/L|ng\/mL|ng\/dL|pg\/mL|pg\/dL|mcg\/dL|µg\/dL|U\/L|U\/mL|UI\/L|UI\/mL|mUI\/mL|mIU\/mL|IU\/L|IU\/mL|kU\/L|mmol\/L|µmol\/L|nmol\/L|pmol\/L|mEq\/L|%|\/mm3|\/µL|cells\/µL|fl|fL|mg\/L|µg\/L|ng\/L|mOsm\/kg|mmHg|seg)\b/i
+
+const REF_RANGE_PATTERN = /(VR|Ref|Referência|Referencia|V\.R\.)\s*[:]\s*[\d,.]/i
+
+const QUALITATIVE_TERMS = [
+  'negativo', 'positivo', 'reagente', 'não reagente', 'nao reagente',
+  'reativo', 'não reativo', 'nao reativo', 'detectado', 'não detectado',
+  'nao detectado', 'detectável', 'detectavel', 'não detectável', 'nao detectavel',
+  'indetectável', 'indetectavel', 'ausente', 'presente', 'normal', 'alterado',
+  'elevado', 'baixo', 'traços', 'tracos', 'raro', 'escasso', 'moderado',
+  'intenso', 'inconclusivo',
+]
+
+const KNOWN_BIOMARKERS = [
+  'hemoglobina', 'hematócrito', 'hematocrito', 'leucócitos', 'leucocitos',
+  'plaquetas', 'hemácias', 'hemacias', 'vcm', 'hcm', 'chcm', 'rdw',
+  'neutrófilos', 'neutrofilos', 'linfócitos', 'linfocitos', 'monócitos',
+  'monocitos', 'eosinófilos', 'eosinofilos', 'basófilos', 'basofilos',
+  'glicose', 'insulina', 'hba1c', 'colesterol', 'ldl', 'hdl', 'vldl',
+  'triglicerídeos', 'triglicerideos', 'tsh', 't4 livre', 't3 livre', 't4', 't3',
+  'fsh', 'lh', 'estradiol', 'progesterona', 'prolactina', 'amh',
+  'testosterona', 'dhea', 'cortisol', 'ferritina', 'ferro', 'transferrina',
+  'vitamina d', 'vitamina b12', 'folato', 'ácido fólico', 'acido folico',
+  'creatinina', 'ureia', 'ácido úrico', 'acido urico', 'tgo', 'tgp', 'ggt',
+  'fosfatase alcalina', 'bilirrubina', 'albumina', 'proteína c reativa',
+  'proteina c reativa', 'pcr', 'vhs', 'beta-hcg', 'hcg', 'fan', 'psa',
+  'ige', 'iga', 'igg', 'igm', 'potássio', 'potassio', 'sódio', 'sodio',
+  'cálcio', 'calcio', 'magnésio', 'magnesio', 'fósforo', 'fosforo',
+]
+
+export interface PageFilterResult {
+  filteredText: string
+  pagesTotal:   number
+  pagesRelevant: number
+  pagesFiltered: number
+  fallbackUsed:  boolean
+  filterApplied: boolean
+}
+
+export function scorePageRelevance(pageText: string): { score: number; signals: string[] } {
+  const lower = pageText.toLowerCase()
+  const signals: string[] = []
+  let score = 0
+
+  if (LAB_UNIT_PATTERN.test(pageText)) { signals.push('lab_unit');    score += 2 }
+  if (REF_RANGE_PATTERN.test(pageText)) { signals.push('ref_range');   score += 2 }
+  if (QUALITATIVE_TERMS.some(t => lower.includes(t))) { signals.push('qualitative'); score += 2 }
+  if (KNOWN_BIOMARKERS.some(b => lower.includes(b)))  { signals.push('biomarker');   score += 3 }
+
+  return { score, signals }
+}
+
+export function filterRelevantPages(pageTexts: string[], threshold = 3): PageFilterResult {
+  const pagesTotal = pageTexts.length
+  if (pagesTotal === 0) {
+    return { filteredText: '', pagesTotal: 0, pagesRelevant: 0, pagesFiltered: 0, fallbackUsed: false, filterApplied: false }
+  }
+
+  const relevant = pageTexts.filter(pt => scorePageRelevance(pt).score >= threshold)
+  const fallbackUsed = relevant.length === 0
+  const finalPages   = fallbackUsed ? pageTexts : relevant
+
+  return {
+    filteredText:  finalPages.join('\n'),
+    pagesTotal,
+    pagesRelevant: fallbackUsed ? pagesTotal : relevant.length,
+    pagesFiltered: fallbackUsed ? 0 : pagesTotal - relevant.length,
+    fallbackUsed,
+    filterApplied: !fallbackUsed,
+  }
+}
 
 const MAX_PDF_BYTES  = 10 * 1024 * 1024 // 10 MB
 const MIN_USEFUL_CHARS = 200
@@ -64,9 +141,26 @@ export async function extractTextFromPdf(buffer: Buffer): Promise<PdfExtractionR
     return { ok: false, quality: 'too_large' }
   }
 
+  const pageTexts: string[] = []
+
+  const options = {
+    pagerender: async (pageData: unknown): Promise<string> => {
+      try {
+        const pd = pageData as { getTextContent: () => Promise<{ items: Array<{ str?: string }> }> }
+        const content = await pd.getTextContent()
+        const text = content.items.map(item => item.str ?? '').join(' ')
+        pageTexts.push(text)
+        return text
+      } catch {
+        pageTexts.push('')
+        return ''
+      }
+    },
+  }
+
   let parsed: { text: string; numpages: number }
   try {
-    parsed = await pdfParse(buffer)
+    parsed = await pdfParse(buffer, options)
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message.toLowerCase() : ''
     if (msg.includes('password') || msg.includes('encrypt')) {
@@ -75,8 +169,11 @@ export async function extractTextFromPdf(buffer: Buffer): Promise<PdfExtractionR
     return { ok: false, quality: 'corrupted' }
   }
 
+  // Fallback: se pagerender não foi chamado (versão sem suporte), tratar como página única
+  const finalPageTexts = pageTexts.length > 0 ? pageTexts : [parsed.text]
+
   const useful = parsed.text.replace(/\s+/g, ' ').trim()
   const quality = assessQuality(useful)
 
-  return { ok: true, quality, text: useful, pageCount: parsed.numpages }
+  return { ok: true, quality, text: useful, pageCount: parsed.numpages, pageTexts: finalPageTexts }
 }

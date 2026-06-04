@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { extractBiomarkers, isGatewayError } from '@/lib/ai/gateway'
-import { extractTextFromPdf } from '@/lib/pdf/extractor'
+import { extractTextFromPdf, filterRelevantPages } from '@/lib/pdf/extractor'
 
 const ERROR_MESSAGES: Record<string, string> = {
   password_protected: 'O PDF está protegido por senha e não pode ser processado.',
@@ -88,21 +88,28 @@ export async function POST(
     page_count:  extraction.pageCount,
   } as never).eq('id', examId)
 
-  // 7. Roteamento: Path A (texto) vs Path B (PDF nativo)
-  //    good_text       → Path A
-  //    corrupted_text  → Path B
-  //    insufficient_text → Path B
-  const useNative = extraction.quality !== 'good_text'
+  // 7. Filtro de páginas (Epic 1.4A) — remove conteúdo administrativo antes da IA
+  const filterResult = filterRelevantPages(extraction.pageTexts, 3)
+
+  // 7b. Roteamento: Path A (texto) vs Path B (PDF nativo)
+  //    good_text       → Path A (com texto filtrado)
+  //    corrupted_text  → Path B, salvo se > 20 páginas relevantes → Path A
+  //    insufficient_text → Path B, salvo se > 20 páginas relevantes → Path A
+  const useNative = extraction.quality !== 'good_text' && filterResult.pagesRelevant <= 20
   const MAX_EXAM_CHARS = 40_000
+
+  const filteredText = filterResult.filteredText.length > MAX_EXAM_CHARS
+    ? filterResult.filteredText.slice(0, MAX_EXAM_CHARS)
+    : filterResult.filteredText
 
   const gatewayParams = useNative
     ? { examId, userId, pdfBuffer, pdfQualityDetected: extraction.quality }
     : {
         examId, userId,
         pdfQualityDetected: extraction.quality,
-        examText: extraction.text.length > MAX_EXAM_CHARS
+        examText: filteredText || (extraction.text.length > MAX_EXAM_CHARS
           ? extraction.text.slice(0, MAX_EXAM_CHARS)
-          : extraction.text,
+          : extraction.text),
       }
 
   // 8. Chamar o Gateway de IA
@@ -125,7 +132,16 @@ export async function POST(
     return NextResponse.json({ error: result.message, code: result.code }, { status: result.httpStatus })
   }
 
-  // 9. Salvar biomarcadores — DELETE + INSERT direto (sem RPC)
+  // 9. Registrar campos do filtro no ai_processing_log
+  await supabase.from('ai_processing_log').update({
+    pages_total:     filterResult.pagesTotal,
+    pages_relevant:  filterResult.pagesRelevant,
+    pages_filtered:  filterResult.pagesFiltered,
+    filter_applied:  filterResult.filterApplied,
+    filter_fallback: filterResult.fallbackUsed,
+  } as never).eq('id', result.aiLogId)
+
+  // 10. Salvar biomarcadores — DELETE + INSERT direto (sem RPC)
   if (result.biomarkers.length > 0) {
     // Remover biomarcadores anteriores deste exame
     await supabase.from('biomarkers').delete().eq('exam_id', examId)
@@ -135,9 +151,11 @@ export async function POST(
       user_id:          userId,
       name:             b.name,
       value:            b.value,
+      value_text:       b.valueText,
       unit:             b.unit,
       reference_min:    b.referenceMin,
       reference_max:    b.referenceMax,
+      result_type:      b.resultType,
       interpretation:   b.value === null
         ? 'indisponivel'
         : b.referenceMin !== null && b.value < b.referenceMin

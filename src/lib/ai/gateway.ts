@@ -10,6 +10,8 @@ import type {
   ExtractedBiomarker,
   RawAIResponse,
   RawBiomarker,
+  ResultType,
+  ReferenceSource,
 } from './types'
 
 type GatewayReturn = ExtractionResult | GatewayError
@@ -48,6 +50,23 @@ function clamp01(v: unknown): number {
   return Math.min(1, Math.max(0, n))
 }
 
+const VALID_RESULT_TYPES = new Set<string>(['numeric', 'qualitative', 'missing', 'extraction_failed'])
+const VALID_REFERENCE_SOURCES = new Set<string>(['laudo', 'ausente', 'documental'])
+
+function toResultType(v: unknown, derivedValue: number | null, derivedValueText: string | null): ResultType {
+  if (typeof v === 'string' && VALID_RESULT_TYPES.has(v)) return v as ResultType
+  // Fallback heurístico — compatibilidade com prompt anterior (sem result_type)
+  if (derivedValue !== null) return 'numeric'
+  if (derivedValueText !== null) return 'qualitative'
+  return 'missing'
+}
+
+function toReferenceSource(v: unknown, refMin: number | null, refMax: number | null): ReferenceSource {
+  if (typeof v === 'string' && VALID_REFERENCE_SOURCES.has(v)) return v as ReferenceSource
+  // Fallback heurístico — compatibilidade com prompt anterior (sem reference_source)
+  return refMin !== null || refMax !== null ? 'laudo' : 'ausente'
+}
+
 function parseBiomarker(raw: RawBiomarker): ExtractedBiomarker | null {
   const name = toStringOrNull(raw.name)
   if (!name) return null
@@ -59,14 +78,21 @@ function parseBiomarker(raw: RawBiomarker): ExtractedBiomarker | null {
     ? true
     : toBoolean(raw.range_extracted) && refMin !== null && refMax !== null
 
+  const value = toNumber(raw.value)
+  const valueText = toStringOrNull(raw.value_text)?.slice(0, 200) ?? null
+  const resultType = toResultType(raw.result_type, value, valueText)
+  const referenceSource = toReferenceSource(raw.reference_source, refMin, refMax)
+
   return {
     name,
-    value: toNumber(raw.value),
+    value,
+    valueText,
     unit: toStringOrNull(raw.unit),
     referenceMin: refMin,
     referenceMax: refMax,
     rangeExtracted,
-    referenceSource: 'laudo',
+    referenceSource,
+    resultType,
     rawText: toStringOrNull(raw.raw_text)?.slice(0, 200) ?? '',
     confidence: clamp01(raw.confidence),  // informativo apenas (Ajuste A4 aprovado)
     extractionNotes: toStringOrNull(raw.extraction_notes),
