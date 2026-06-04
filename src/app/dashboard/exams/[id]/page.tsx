@@ -285,6 +285,17 @@ export default function ExamDetailPage() {
           </button>
         </div>
 
+        {/* Aviso de truncagem */}
+        {exam?.text_truncated && (
+          <div className="mt-4 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+            <AlertCircle size={14} className="text-amber-500 flex-shrink-0 mt-0.5" />
+            <p className="font-body text-xs text-amber-700 leading-relaxed">
+              <strong>Laudo extenso:</strong> o texto deste exame excedeu o limite de processamento e foi parcialmente analisado.
+              Alguns biomarcadores podem nao ter sido extraidos. Este e um limite tecnico da plataforma.
+            </p>
+          </div>
+        )}
+
         {/* Erro de análise */}
         {analyzeError && (
           <div className="mt-4 flex items-start gap-2 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
