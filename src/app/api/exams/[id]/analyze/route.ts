@@ -98,18 +98,18 @@ export async function POST(
   const useNative = extraction.quality !== 'good_text' && filterResult.pagesRelevant <= 20
   const MAX_EXAM_CHARS = 40_000
 
-  const filteredText = filterResult.filteredText.length > MAX_EXAM_CHARS
-    ? filterResult.filteredText.slice(0, MAX_EXAM_CHARS)
-    : filterResult.filteredText
+  const rawText = filterResult.filteredText || extraction.text
+  const textTruncated = rawText.length > MAX_EXAM_CHARS
+  const filteredText = textTruncated ? rawText.slice(0, MAX_EXAM_CHARS) : rawText
 
   const gatewayParams = useNative
     ? { examId, userId, pdfBuffer, pdfQualityDetected: extraction.quality }
     : {
         examId, userId,
         pdfQualityDetected: extraction.quality,
-        examText: filteredText || (extraction.text.length > MAX_EXAM_CHARS
-          ? extraction.text.slice(0, MAX_EXAM_CHARS)
-          : extraction.text),
+        examText: filteredText,
+
+
       }
 
   // 8. Chamar o Gateway de IA
@@ -179,7 +179,7 @@ export async function POST(
 
   // 10. Atualizar exame com tipo e status final
   await supabase.from('exams')
-    .update({ status: 'processed', type: result.examType } as never)
+    .update({ status: 'processed', type: result.examType, text_truncated: textTruncated } as never)
     .eq('id', examId)
 
   return NextResponse.json({
