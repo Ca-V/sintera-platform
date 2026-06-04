@@ -1,0 +1,122 @@
+POLÍTICA DE PRIVACIDADE — SINCTERA
+Versão: 2.0
+Data de vigência: 04 de junho de 2026
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. QUEM SOMOS
+
+A Sinctera é uma plataforma de saúde feminina que extrai e organiza biomarcadores de laudos laboratoriais por meio de inteligência artificial.
+
+Controladora dos dados pessoais:
+Nome: Carina Leite
+E-mail: carinaleite.br@gmail.com
+
+2. QUAIS DADOS COLETAMOS
+
+2.1 Dados de cadastro
+— Nome
+— Endereço de e-mail
+— Senha (armazenada em formato hash — nunca em texto simples)
+
+2.2 Dados de saúde (categoria especial — Art. 11 LGPD)
+— Arquivos de laudos laboratoriais enviados pela usuária (PDF, JPG ou PNG)
+— Biomarcadores extraídos automaticamente dos laudos pela IA (ex.: glicose, hemoglobina, hormônios)
+— Valores de referência informados pelo próprio laudo
+
+2.3 Dados de uso e técnicos
+— Endereço IP no momento do cadastro e do aceite de consentimento
+— User agent do navegador no momento do cadastro
+— Registros de data e hora das operações realizadas na plataforma
+
+3. PARA QUE USAMOS OS DADOS
+
+Finalidade                              Base legal (LGPD)
+─────────────────────────────────────── ─────────────────────────────────
+Criar e manter a conta da usuária       Execução de contrato (Art. 7, V)
+Processar laudos e extrair biomarcadores Consentimento (Art. 7, I; Art. 11, I)
+Exibir histórico longitudinal de exames Consentimento (Art. 7, I; Art. 11, I)
+Registrar aceite de termos e política   Obrigação legal (Art. 7, II)
+Enviar alertas operacionais à fundadora Legítimo interesse interno (Art. 7, IX)
+Cumprir obrigações legais e regulatórias Obrigação legal (Art. 7, II)
+
+Não utilizamos os dados para publicidade, venda a terceiros ou treinamento de modelos de IA externos.
+
+4. DADOS DE SAÚDE — CONSENTIMENTO ESPECÍFICO
+
+O tratamento de dados de saúde é uma categoria especial sob a LGPD (Art. 11) e requer consentimento específico, livre, informado e inequívoco.
+
+Ao criar sua conta, você concede consentimento separado e destacado para o tratamento dos seus dados de saúde. Você pode revogar esse consentimento a qualquer momento excluindo sua conta (seção 8).
+
+5. INTELIGÊNCIA ARTIFICIAL
+
+Os laudos enviados são processados por um modelo de linguagem (Claude Haiku, da Anthropic) para extração de biomarcadores. O processamento ocorre via API da Anthropic, com sede nos Estados Unidos. Não armazenamos os laudos nos servidores da Anthropic — o arquivo é enviado, processado e o resultado é retornado. A Anthropic opera como suboperadora nos termos de seu Data Processing Agreement.
+
+A extração é automatizada. A Sinctera não oferece interpretação clínica dos resultados. Os dados exibidos são apenas uma organização estruturada do que consta no laudo original.
+
+6. COMPARTILHAMENTO DE DADOS
+
+Compartilhamos dados apenas com:
+— Supabase Inc. (infraestrutura de banco de dados e armazenamento — EUA)
+— Anthropic PBC (processamento de IA — EUA)
+— Vercel Inc. (hospedagem da aplicação — EUA)
+
+Todas as transferências internacionais ocorrem com base em cláusulas contratuais padrão ou mecanismos equivalentes de proteção adequada.
+
+Não vendemos, alugamos ou cedemos dados pessoais a terceiros.
+
+7. RETENÇÃO DE DADOS
+
+Dado                        Retenção
+─────────────────────────── ────────────────────────────────────────────
+Conta e dados de saúde      Enquanto a conta estiver ativa
+Laudos (arquivos)           Enquanto a conta estiver ativa
+Registro de consentimento   Indefinidamente (anonimizado após exclusão da conta)
+Log de exclusão de conta    5 anos (obrigação legal)
+
+8. SEUS DIREITOS (LGPD — Art. 18 / GDPR para usuárias na UE)
+
+Você tem direito a:
+— Confirmação da existência do tratamento
+— Acesso aos dados
+— Correção de dados incompletos ou inexatos
+— Eliminação dos dados (exercido pela exclusão de conta na plataforma)
+— Portabilidade dos dados
+— Revogação do consentimento
+— Informação sobre compartilhamento com terceiros
+
+Para exercer seus direitos, envie e-mail para: carinaleite.br@gmail.com
+Prazo de resposta: até 15 dias corridos.
+
+9. EXCLUSÃO DE CONTA
+
+Você pode excluir sua conta e todos os seus dados a qualquer momento em Configurações → Excluir conta. A exclusão é imediata e irreversível para:
+— Arquivos de laudos (removidos do armazenamento)
+— Biomarcadores extraídos
+— Perfil e dados de cadastro
+
+O registro de consentimento é anonimizado (identificador pessoal removido) e retido para fins de comprovação de licitude do tratamento.
+
+10. SEGURANÇA
+
+Adotamos as seguintes medidas técnicas:
+— Comunicação criptografada via TLS/HTTPS
+— Autenticação gerenciada pelo Supabase Auth
+— Controle de acesso por linha (Row Level Security) no banco de dados
+— Senhas armazenadas em hash (bcrypt)
+— Acesso aos dados restrito a operações autorizadas via service role
+
+11. COOKIES E RASTREAMENTO
+
+Utilizamos apenas cookies estritamente necessários para autenticação e funcionamento da sessão. Não utilizamos cookies de rastreamento publicitário ou analytics de terceiros.
+
+12. ALTERAÇÕES NESTA POLÍTICA
+
+Quando houver alteração material nesta política, você será notificada por e-mail e precisará aceitar a nova versão para continuar usando a plataforma. A versão em vigor é sempre a identificada no topo deste documento. O histórico de versões é mantido no repositório público da plataforma.
+
+13. CONTATO E ENCARREGADA DE DADOS (DPO)
+
+Carina Leite
+carinaleite.br@gmail.com
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
