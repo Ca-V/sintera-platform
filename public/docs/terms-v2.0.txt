@@ -1,4 +1,4 @@
-TERMOS DE USO — SINCTERA
+TERMOS DE USO — SINTERA
 Versão: 2.0
 Data de vigência: 04 de junho de 2026
 
@@ -6,17 +6,17 @@ Data de vigência: 04 de junho de 2026
 
 1. ACEITAÇÃO
 
-Ao criar uma conta na Sinctera, você declara que leu, compreendeu e concorda com estes Termos de Uso. Se não concordar com qualquer cláusula, não utilize a plataforma.
+Ao criar uma conta na SINTERA, você declara que leu, compreendeu e concorda com estes Termos de Uso. Se não concordar com qualquer cláusula, não utilize a plataforma.
 
-2. O QUE É A SINCTERA
+2. O QUE É A SINTERA
 
-A Sinctera é uma plataforma de saúde feminina que permite à usuária fazer upload de laudos laboratoriais e visualizar os biomarcadores extraídos automaticamente por inteligência artificial de forma organizada e longitudinal.
+A SINTERA é uma plataforma de saúde feminina que permite à usuária fazer upload de laudos laboratoriais e visualizar os biomarcadores extraídos automaticamente por inteligência artificial de forma organizada e longitudinal.
 
-A Sinctera não é um serviço médico. Não oferece diagnóstico, prescrição, interpretação clínica ou aconselhamento de saúde. Os dados exibidos são uma organização estruturada do conteúdo dos seus próprios laudos. Qualquer decisão de saúde deve ser tomada com orientação de profissional habilitado.
+A SINTERA não é um serviço médico. Não oferece diagnóstico, prescrição, interpretação clínica ou aconselhamento de saúde. Os dados exibidos são uma organização estruturada do conteúdo dos seus próprios laudos. Qualquer decisão de saúde deve ser tomada com orientação de profissional habilitado.
 
 3. ELEGIBILIDADE
 
-Para usar a Sinctera, você deve:
+Para usar a SINTERA, você deve:
 — Ter pelo menos 18 anos de idade
 — Ter capacidade legal para contratar
 — Usar a plataforma para fins pessoais e não comerciais
@@ -45,17 +45,17 @@ Para usar a Sinctera, você deve:
 
 6. DADOS ENVIADOS PELA USUÁRIA
 
-Você mantém a titularidade dos seus dados e laudos. Ao enviá-los, você concede à Sinctera licença limitada, não exclusiva e revogável para processá-los exclusivamente com a finalidade de oferecer o serviço descrito nestes termos.
+Você mantém a titularidade dos seus dados e laudos. Ao enviá-los, você concede à SINTERA licença limitada, não exclusiva e revogável para processá-los exclusivamente com a finalidade de oferecer o serviço descrito nestes termos.
 
 Não utilizamos seus laudos ou biomarcadores para treinar modelos de IA ou para qualquer finalidade além da descrita nestes termos e na Política de Privacidade.
 
 7. LIMITAÇÕES DO SERVIÇO
 
-7.1 A extração de biomarcadores por IA é automatizada e pode conter erros. A Sinctera não garante a precisão, completude ou correção dos dados extraídos.
+7.1 A extração de biomarcadores por IA é automatizada e pode conter erros. A SINTERA não garante a precisão, completude ou correção dos dados extraídos.
 
 7.2 O serviço é oferecido "como está" durante o período Beta. Podemos alterar, suspender ou descontinuar funcionalidades com aviso prévio por e-mail sempre que possível.
 
-7.3 A Sinctera não se responsabiliza por decisões de saúde tomadas com base nos dados exibidos na plataforma.
+7.3 A SINTERA não se responsabiliza por decisões de saúde tomadas com base nos dados exibidos na plataforma.
 
 8. DISPONIBILIDADE
 
