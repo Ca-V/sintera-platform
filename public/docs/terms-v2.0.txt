@@ -1,0 +1,89 @@
+TERMOS DE USO — SINCTERA
+Versão: 2.0
+Data de vigência: 04 de junho de 2026
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. ACEITAÇÃO
+
+Ao criar uma conta na Sinctera, você declara que leu, compreendeu e concorda com estes Termos de Uso. Se não concordar com qualquer cláusula, não utilize a plataforma.
+
+2. O QUE É A SINCTERA
+
+A Sinctera é uma plataforma de saúde feminina que permite à usuária fazer upload de laudos laboratoriais e visualizar os biomarcadores extraídos automaticamente por inteligência artificial de forma organizada e longitudinal.
+
+A Sinctera não é um serviço médico. Não oferece diagnóstico, prescrição, interpretação clínica ou aconselhamento de saúde. Os dados exibidos são uma organização estruturada do conteúdo dos seus próprios laudos. Qualquer decisão de saúde deve ser tomada com orientação de profissional habilitado.
+
+3. ELEGIBILIDADE
+
+Para usar a Sinctera, você deve:
+— Ter pelo menos 18 anos de idade
+— Ter capacidade legal para contratar
+— Usar a plataforma para fins pessoais e não comerciais
+
+4. CONTA E RESPONSABILIDADES
+
+4.1 Você é responsável por manter a confidencialidade da sua senha e por todas as atividades realizadas com sua conta.
+
+4.2 Você concorda em notificar imediatamente carinaleite.br@gmail.com em caso de uso não autorizado da sua conta.
+
+4.3 Você declara que os laudos enviados são seus ou que você tem autorização da pessoa titular para enviá-los.
+
+5. USO ACEITÁVEL
+
+É permitido:
+— Fazer upload dos seus próprios laudos laboratoriais
+— Visualizar e acompanhar seus biomarcadores
+— Exportar seus próprios dados
+
+É proibido:
+— Usar a plataforma para fins comerciais ou de revenda
+— Fazer upload de documentos que não sejam laudos laboratoriais pessoais
+— Tentar acessar dados de outras usuárias
+— Realizar engenharia reversa, scraping ou qualquer forma de extração automatizada de dados da plataforma
+— Usar a plataforma de forma que viole leis aplicáveis
+
+6. DADOS ENVIADOS PELA USUÁRIA
+
+Você mantém a titularidade dos seus dados e laudos. Ao enviá-los, você concede à Sinctera licença limitada, não exclusiva e revogável para processá-los exclusivamente com a finalidade de oferecer o serviço descrito nestes termos.
+
+Não utilizamos seus laudos ou biomarcadores para treinar modelos de IA ou para qualquer finalidade além da descrita nestes termos e na Política de Privacidade.
+
+7. LIMITAÇÕES DO SERVIÇO
+
+7.1 A extração de biomarcadores por IA é automatizada e pode conter erros. A Sinctera não garante a precisão, completude ou correção dos dados extraídos.
+
+7.2 O serviço é oferecido "como está" durante o período Beta. Podemos alterar, suspender ou descontinuar funcionalidades com aviso prévio por e-mail sempre que possível.
+
+7.3 A Sinctera não se responsabiliza por decisões de saúde tomadas com base nos dados exibidos na plataforma.
+
+8. DISPONIBILIDADE
+
+Fazemos esforços razoáveis para manter a plataforma disponível, mas não garantimos disponibilidade ininterrupta. Manutenções programadas serão comunicadas por e-mail com antecedência sempre que possível.
+
+9. PROPRIEDADE INTELECTUAL
+
+A plataforma, seu código, design, marca e conteúdo são de propriedade de Carina Leite. Nenhum direito é transferido à usuária além do direito de uso pessoal descrito nestes termos.
+
+10. RESCISÃO
+
+Você pode encerrar sua conta a qualquer momento em Configurações → Excluir conta.
+
+Podemos suspender ou encerrar sua conta em caso de violação destes termos, com notificação por e-mail salvo quando a suspensão for necessária para proteger a segurança da plataforma ou de outras usuárias.
+
+11. ALTERAÇÕES NOS TERMOS
+
+Quando houver alteração material nestes termos, você será notificada por e-mail e precisará aceitar a nova versão para continuar usando a plataforma. A versão em vigor é sempre a identificada no topo deste documento.
+
+12. LEI APLICÁVEL E FORO
+
+Estes termos são regidos pela legislação brasileira. Fica eleito o foro da comarca de domicílio da Controladora para dirimir quaisquer controvérsias, salvo disposição legal em contrário.
+
+Para usuárias localizadas na União Europeia, aplicam-se adicionalmente os direitos previstos no GDPR (Regulamento Geral de Proteção de Dados da UE).
+
+13. CONTATO
+
+Carina Leite
+carinaleite.br@gmail.com
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
