@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/layout/Sidebar'
 import Header from '@/components/layout/Header'
 import { useUser } from '@/context/UserContext'
+import FeedbackModal from '@/components/dashboard/FeedbackModal'
 
 function LoadingScreen() {
   return (
@@ -19,6 +20,7 @@ function LoadingScreen() {
         <p className="font-body text-sm text-mauve">Carregando sua SINTERA…</p>
       </div>
     </div>
+      <FeedbackModal triggerAfterAnalyses={2} />
   )
 }
 
@@ -57,5 +59,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </main>
       </div>
     </div>
+      <FeedbackModal triggerAfterAnalyses={2} />
   )
 }
