@@ -41,7 +41,8 @@ const STATUS_CONFIG: Record<string, {
 }
 
 const ACCEPTED_MIME = ['application/pdf', 'image/jpeg', 'image/png']
-const MAX_BYTES     = 10 * 1024 * 1024
+const MAX_BYTES           = 10 * 1024 * 1024
+const MAX_UPLOADS_PER_HOUR = 10  // limite de uploads por hora por conta (Beta)
 
 export default function ExamsPage() {
   const { user } = useUser()
@@ -52,7 +53,8 @@ export default function ExamsPage() {
   const [exams, setExams]               = useState<Exam[]>([])
   const [loadingExams, setLoadingExams] = useState(true)
   const [uploading, setUploading]       = useState(false)
-  const [uploadError, setUploadError]   = useState<string | null>(null)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const uploadTimestamps            = useRef<number[]>([])
 
   // Per-exam local state: 'running' | { error: string; biomarkers?: number }
   const [analyzing, setAnalyzing]   = useState<Record<string, true>>({})
@@ -118,6 +120,16 @@ export default function ExamsPage() {
     }
 
     setUploadError(null)
+
+    // Rate limit: máximo MAX_UPLOADS_PER_HOUR uploads por hora
+    const now = Date.now()
+    uploadTimestamps.current = uploadTimestamps.current.filter(t => now - t < 60 * 60 * 1000)
+    if (uploadTimestamps.current.length >= MAX_UPLOADS_PER_HOUR) {
+      setUploadError(Limite de ${MAX_UPLOADS_PER_HOUR} uploads por hora atingido. Tente novamente mais tarde.)
+      return
+    }
+    uploadTimestamps.current.push(now)
+
     setUploading(true)
     let examId: string | null = null
 
