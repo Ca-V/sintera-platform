@@ -197,6 +197,8 @@ export default function HistoricoPage() {
   const [search, setSearch]       = useState('')
 
   useEffect(() => {
+    // 6C: Registrar visualizacao do historico
+    fetch('/api/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_name: 'historico_viewed' }) }).catch(() => {})
     if (!user) return
     loadData()
   }, [user])
