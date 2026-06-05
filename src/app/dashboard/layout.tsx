@@ -20,7 +20,6 @@ function LoadingScreen() {
         <p className="font-body text-sm text-mauve">Carregando sua SINTERA…</p>
       </div>
     </div>
-      <FeedbackModal triggerAfterAnalyses={2} />
   )
 }
 
@@ -30,18 +29,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter()
 
   useEffect(() => {
-    // Only redirect after the auth check is complete and there's definitely no user.
-    // Use replace() to avoid polluting browser history and creating a back-button loop.
     if (!loading && !user) {
       router.replace('/login')
     }
   }, [user, loading, router])
 
-  // Show loading screen while auth state is being determined
   if (loading) return <LoadingScreen />
-
-  // Auth check done but no user — proxy should have already redirected,
-  // show loading screen briefly while router.replace('/login') takes effect
   if (!user) return <LoadingScreen />
 
   return (
@@ -52,13 +45,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Banner Beta */}
         <div className="bg-petal/10 border-b border-petal/20 px-5 py-2 flex items-center justify-center gap-2">
           <span className="text-xs font-body font-semibold text-petal bg-petal/15 px-2 py-0.5 rounded-full">BETA</span>
-          <p className="text-xs font-body text-petal-dark">Versão em teste. Algumas funcionalidades podem apresentar limitações. Dúvidas? <a href="mailto:carinaleite.br@gmail.com" className="underline hover:opacity-80">carinaleite.br@gmail.com</a></p>
+          <p className="text-xs font-body text-petal-dark">
+            Versao em teste. Algumas funcionalidades podem apresentar limitacoes. Duvidas?{' '}
+            <a href="mailto:carinaleite.br@gmail.com" className="underline hover:opacity-80">carinaleite.br@gmail.com</a>
+          </p>
         </div>
         <main className="flex-1 overflow-y-auto p-5 lg:p-6">
           {children}
         </main>
       </div>
-    </div>
+      {/* 6D: Survey de feedback — aparece apos 2 analises bem-sucedidas */}
       <FeedbackModal triggerAfterAnalyses={2} />
+    </div>
   )
 }
