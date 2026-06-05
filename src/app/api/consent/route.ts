@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createClient as createSupabaseAdmin } from '@supabase/supabase-js'
 import crypto from 'crypto'
 import fs from 'fs'
 import path from 'path'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 function hashDocument(filename: string): string {
   const filePath = path.join(process.cwd(), 'public', 'docs', filename)
@@ -28,6 +23,12 @@ export async function POST(req: NextRequest) {
     const termsHash   = hashDocument('terms-v2.0.txt')
     const privacyHash = hashDocument('privacy-v2.0.txt')
 
+    // Inicializar admin client dentro da funcao (nao em nivel de modulo)
+    const supabaseAdmin = createSupabaseAdmin(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
     const { error } = await supabaseAdmin.from('consent_records').insert([
       {
         user_id:       userId,
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
         ip_address:    ip,
         user_agent:    userAgent,
       },
-    ])
+    ] as never[])
 
     if (error) {
       console.error('[consent] insert error:', error)
