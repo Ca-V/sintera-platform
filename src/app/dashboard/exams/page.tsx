@@ -125,7 +125,7 @@ export default function ExamsPage() {
     const now = Date.now()
     uploadTimestamps.current = uploadTimestamps.current.filter(t => now - t < 60 * 60 * 1000)
     if (uploadTimestamps.current.length >= MAX_UPLOADS_PER_HOUR) {
-      setUploadError(Limite de ${MAX_UPLOADS_PER_HOUR} uploads por hora atingido. Tente novamente mais tarde.)
+      setUploadError(`Limite de ${MAX_UPLOADS_PER_HOUR} uploads por hora atingido. Tente novamente mais tarde.`)
       return
     }
     uploadTimestamps.current.push(now)
