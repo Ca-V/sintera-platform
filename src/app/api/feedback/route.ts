@@ -12,15 +12,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Campos obrigatorios: accuracy, most_useful' }, { status: 400 })
     }
 
-    // upsert — garante uma resposta por usuária
-    await supabase.from('feedback_responses').upsert({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any).from('feedback_responses').upsert({
       user_id:     user.id,
       accuracy,
       most_useful,
     }, { onConflict: 'user_id' })
 
-    // Registrar evento de uso
-    await supabase.from('usage_events').insert({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any).from('usage_events').insert({
       user_id:    user.id,
       event_name: 'feedback_submitted',
       metadata:   { accuracy, most_useful },
@@ -39,7 +39,8 @@ export async function GET() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ submitted: false })
 
-    const { data } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data } = await (supabase as any)
       .from('feedback_responses')
       .select('id')
       .eq('user_id', user.id)
