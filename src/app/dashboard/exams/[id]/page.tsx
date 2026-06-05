@@ -57,7 +57,7 @@ const ERROR_REASON_LABELS: Record<string, string> = {
 
 function getErrorLabel(reason: string | null): string {
   if (!reason) return 'Erro desconhecido. Tente novamente.'
-  return ERROR_REASON_LABELS[reason] ?? Erro: . Tente novamente.
+  return ERROR_REASON_LABELS[reason] ?? `Erro na análise. Tente novamente.`
 }
 
 const INTERP_ORDER: Record<string, number> = {
