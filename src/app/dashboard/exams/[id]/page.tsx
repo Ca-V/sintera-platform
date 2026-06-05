@@ -403,6 +403,19 @@ export default function ExamDetailPage() {
           </p>
         </motion.div>
       )}
+
+      {/* Botao Reportar Problema */}
+      {hasResults && (
+        <div className="flex justify-center pt-2 pb-4">
+          <a
+            href={mailto:carinaleite.br@gmail.com?subject=Problema no exame &body=Ola, encontrei um problema na extracao de biomarcadores do exame .%0A%0ADescreva o problema aqui:}
+            className="inline-flex items-center gap-2 text-xs font-body text-mauve/60 hover:text-petal transition-colors border border-border rounded-full px-4 py-2 hover:border-petal/40"
+          >
+            <AlertCircle size={12} />
+            Reportar problema neste exame
+          </a>
+        </div>
+      )}
     </div>
   )
 }
