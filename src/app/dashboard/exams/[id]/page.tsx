@@ -156,7 +156,15 @@ export default function ExamDetailPage() {
   const [analyzing, setAnalyzing] = useState(false)
   const [analyzeError, setAnalyzeError] = useState<string | null>(null)
 
-  useEffect(() => { loadData() }, [examId])
+  useEffect(() => {
+    loadData()
+    // 6C: Registrar visualização do exame
+    fetch('/api/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event_name: 'exam_detail_viewed', metadata: { examId } }),
+    }).catch(() => {})
+  }, [examId])
 
   async function loadData() {
     setLoading(true)
@@ -188,6 +196,14 @@ export default function ExamDetailPage() {
       const data = await res.json() as { error?: string; code?: string }
       if (!res.ok) throw new Error(data.error ?? 'Erro desconhecido')
       await loadData()
+      // 6C: Incrementar contador de análises para trigger do feedback
+      const prev = parseInt(localStorage.getItem('sintera_analyses_count') ?? '0')
+      localStorage.setItem('sintera_analyses_count', String(prev + 1))
+      fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event_name: 'exam_analyzed_success', metadata: { examId } }),
+      }).catch(() => {})
     } catch (err: unknown) {
       setAnalyzeError(err instanceof Error ? err.message : 'Falha de conexão.')
     } finally {
