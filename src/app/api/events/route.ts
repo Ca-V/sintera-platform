@@ -10,7 +10,8 @@ export async function POST(req: NextRequest) {
     const { event_name, metadata } = await req.json()
     if (!event_name) return NextResponse.json({ error: 'event_name obrigatorio' }, { status: 400 })
 
-    await supabase.from('usage_events').insert({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any).from('usage_events').insert({
       user_id:    user.id,
       event_name,
       metadata:   metadata ?? null,
