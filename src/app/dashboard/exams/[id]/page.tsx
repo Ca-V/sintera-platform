@@ -43,14 +43,14 @@ interface LastLog {
   extraction_path: string | null
 }
 
-// ── Mensagens de erro amigaveis ───────────────────────────────────────────────
+// ── Mensagens de erro ─────────────────────────────────────────────────────────
 
 const ERROR_REASON_LABELS: Record<string, string> = {
   password_protected:      'O PDF esta protegido por senha. Remova a protecao e tente novamente.',
   corrupted:               'O arquivo PDF esta corrompido e nao pode ser lido.',
   too_large:               'O arquivo excede o limite de 10 MB.',
   storage_download_failed: 'Nao foi possivel acessar o arquivo. Tente novamente em instantes.',
-  insufficient_text:       'O PDF nao contem texto legivel suficiente. Verifique se o arquivo nao e uma imagem escaneada de baixa qualidade.',
+  insufficient_text:       'O PDF nao contem texto legivel suficiente.',
   parse_error:             'A IA nao conseguiu interpretar o conteudo. Tente reanalisar o exame.',
   rate_limit_exceeded:     'Limite de analises atingido. Aguarde 1 minuto e tente novamente.',
 }
@@ -63,20 +63,20 @@ function getErrorLabel(reason: string | null): string {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const INTERP_ORDER: Record<string, number> = {
-  acima_da_referencia:       1,
-  abaixo_da_referencia:      2,
-  dentro_da_referencia:      3,
+  acima_da_referencia:         1,
+  abaixo_da_referencia:        2,
+  dentro_da_referencia:        3,
   sem_referencia_identificada: 4,
-  indisponivel:              5,
+  indisponivel:                5,
 }
 
 const INTERP_CONFIG: Record<string, { label: string; color: string; bg: string; Icon: React.ComponentType<{ size: number; className?: string }> }> = {
-  acima_da_referencia:         { label: 'Acima da ref.',        color: 'text-orange-500', bg: 'bg-orange-50 border-orange-200', Icon: TrendingUp   },
-  abaixo_da_referencia:        { label: 'Abaixo da ref.',       color: 'text-blue-500',   bg: 'bg-blue-50 border-blue-200',     Icon: TrendingDown },
-  dentro_da_referencia:        { label: 'Dentro da ref.',       color: 'text-sage',       bg: 'bg-sage-light border-sage/30',   Icon: Minus        },
-  sem_referencia_identificada: { label: 'Ref. nao informada',   color: 'text-amber-600',  bg: 'bg-amber-50 border-amber-200',   Icon: HelpCircle   },
-  indisponivel:                { label: 'Resultado ausente',    color: 'text-mauve/60',   bg: 'bg-ivory border-border',         Icon: HelpCircle   },
-  extraction_failed:           { label: 'Falha na extracao',    color: 'text-red-500',    bg: 'bg-red-50 border-red-200',       Icon: AlertCircle  },
+  acima_da_referencia:         { label: 'Acima da ref.',      color: 'text-orange-500', bg: 'bg-orange-50 border-orange-200', Icon: TrendingUp   },
+  abaixo_da_referencia:        { label: 'Abaixo da ref.',     color: 'text-blue-500',   bg: 'bg-blue-50 border-blue-200',     Icon: TrendingDown },
+  dentro_da_referencia:        { label: 'Dentro da ref.',     color: 'text-sage',       bg: 'bg-sage-light border-sage/30',   Icon: Minus        },
+  sem_referencia_identificada: { label: 'Ref. nao informada', color: 'text-amber-600',  bg: 'bg-amber-50 border-amber-200',   Icon: HelpCircle   },
+  indisponivel:                { label: 'Resultado ausente',  color: 'text-mauve/60',   bg: 'bg-ivory border-border',         Icon: HelpCircle   },
+  extraction_failed:           { label: 'Falha na extracao',  color: 'text-red-500',    bg: 'bg-red-50 border-red-200',       Icon: AlertCircle  },
 }
 
 // ── Indice Experimental ───────────────────────────────────────────────────────
@@ -109,16 +109,15 @@ function IndexCard({ index }: { index: { numerator: number; denominator: number;
         </div>
       </div>
       <p className="font-body text-[11px] text-mauve/50 mt-3 leading-relaxed">
-        Metrica informativa baseada apenas na proporcao de resultados numericos dentro das referencias impressas neste laudo.
-        Nao representa diagnostico, risco ou estado geral de saude. Nao substitui avaliacao medica.
+        Metrica informativa. Nao representa diagnostico ou estado geral de saude. Nao substitui avaliacao medica.
       </p>
     </div>
   )
 }
 
 function getInterpConfig(b: Biomarker) {
-  if (b.interpretation === 'indisponivel') {
-    if (b.result_type === 'extraction_failed') return INTERP_CONFIG.extraction_failed
+  if (b.interpretation === 'indisponivel' && b.result_type === 'extraction_failed') {
+    return INTERP_CONFIG.extraction_failed
   }
   return INTERP_CONFIG[b.interpretation ?? ''] ?? INTERP_CONFIG.indisponivel
 }
@@ -143,12 +142,20 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
+function trackEvent(eventName: string, metadata?: Record<string, unknown>) {
+  fetch('/api/events', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ event_name: eventName, metadata }),
+  }).catch(() => {})
+}
+
 // ── Componente principal ──────────────────────────────────────────────────────
 
 export default function ExamDetailPage() {
-  const params  = useParams()
-  const router  = useRouter()
-  const examId  = params.id as string
+  const params   = useParams()
+  const router   = useRouter()
+  const examId   = params.id as string
   const supabase = useRef(createClient()).current
 
   const [exam, setExam]             = useState<Exam | null>(null)
@@ -158,30 +165,25 @@ export default function ExamDetailPage() {
   const [analyzing, setAnalyzing]   = useState(false)
   const [analyzeError, setAnalyzeError] = useState<string | null>(null)
 
+  // 6C: Registrar visualizacao do exame
   useEffect(() => {
     loadData()
-    // 6C: Registrar visualizacao do exame
-    fetch('/api/events', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ event_name: 'exam_detail_viewed', metadata: { examId } }),
-    }).catch(() => {})
+    trackEvent('exam_detail_viewed', { examId })
   }, [examId])
 
-  // 6C: Registrar visualizacao do Indice quando biomarcadores carregam e indice existe
+  // 6C: Registrar visualizacao do Indice quando biomarcadores carregam
   useEffect(() => {
     if (biomarkers.length > 0) {
       const idx = calcExperimentalIndex(biomarkers)
-      if (idx) {
-        fetch('/api/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_name: 'indice_viewed', metadata: { examId } }) }).catch(() => {})
-      }
+      if (idx) trackEvent('indice_viewed', { examId })
     }
   }, [biomarkers, examId])
 
   async function loadData() {
     setLoading(true)
     const [{ data: examData }, { data: bioData }, { data: logData }] = await Promise.all([
-      supabase.from('exams').select('id,type,status,pdf_quality,page_count,created_at,error_reason,text_truncated')
+      supabase.from('exams')
+        .select('id,type,status,pdf_quality,page_count,created_at,error_reason,text_truncated')
         .eq('id', examId).single(),
       supabase.from('biomarkers')
         .select('id,name,value,value_text,unit,reference_min,reference_max,interpretation,result_type,range_extracted,reference_source,source')
@@ -208,14 +210,10 @@ export default function ExamDetailPage() {
       const data = await res.json() as { error?: string; code?: string }
       if (!res.ok) throw new Error(data.error ?? 'Erro desconhecido')
       await loadData()
-      // 6C: Incrementar contador de analises para trigger do feedback
+      // 6C: Contador de analises para trigger do feedback
       const prev = parseInt(localStorage.getItem('sintera_analyses_count') ?? '0')
       localStorage.setItem('sintera_analyses_count', String(prev + 1))
-      fetch('/api/events', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ event_name: 'exam_analyzed_success', metadata: { examId } }),
-      }).catch(() => {})
+      trackEvent('exam_analyzed_success', { examId })
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Falha de conexao.'
       const friendly = msg.includes('rate') || msg.includes('429')
@@ -229,7 +227,6 @@ export default function ExamDetailPage() {
     }
   }
 
-  // ── Contagens para o cabecalho ──────────────────────────────────────────
   const counts = {
     acima:  biomarkers.filter(b => b.interpretation === 'acima_da_referencia').length,
     abaixo: biomarkers.filter(b => b.interpretation === 'abaixo_da_referencia').length,
@@ -251,13 +248,12 @@ export default function ExamDetailPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-5">
 
-      {/* Voltar */}
       <button onClick={() => router.push('/dashboard/exams')}
         className="flex items-center gap-2 text-mauve hover:text-petal transition-colors text-sm font-body">
         <ArrowLeft size={16} /> Voltar
       </button>
 
-      {/* Cabecalho do exame */}
+      {/* Cabecalho */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
         className="card-premium p-6">
         <div className="flex items-start justify-between gap-4">
@@ -273,32 +269,14 @@ export default function ExamDetailPage() {
                 {exam ? formatDate(exam.created_at) : ''}
                 {exam?.page_count ? ` · ${exam.page_count} paginas` : ''}
               </p>
-
-              {/* Resumo de contagens */}
               {hasResults && (
                 <div className="flex flex-wrap gap-3 mt-3">
-                  <span className="font-body text-xs font-medium text-onyx/60">
-                    {counts.total} biomarcadores
-                  </span>
-                  {counts.acima > 0 && (
-                    <span className="font-body text-xs font-semibold text-orange-500">
-                      {`↑ ${counts.acima} acima`}
-                    </span>
-                  )}
-                  {counts.abaixo > 0 && (
-                    <span className="font-body text-xs font-semibold text-blue-500">
-                      {`↓ ${counts.abaixo} abaixo`}
-                    </span>
-                  )}
-                  {counts.dentro > 0 && (
-                    <span className="font-body text-xs font-semibold text-sage">
-                      {`✓ ${counts.dentro} normais`}
-                    </span>
-                  )}
+                  <span className="font-body text-xs font-medium text-onyx/60">{counts.total} biomarcadores</span>
+                  {counts.acima > 0 && <span className="font-body text-xs font-semibold text-orange-500">{`↑ ${counts.acima} acima`}</span>}
+                  {counts.abaixo > 0 && <span className="font-body text-xs font-semibold text-blue-500">{`↓ ${counts.abaixo} abaixo`}</span>}
+                  {counts.dentro > 0 && <span className="font-body text-xs font-semibold text-sage">{`✓ ${counts.dentro} normais`}</span>}
                 </div>
               )}
-
-              {/* Ultima analise bem-sucedida */}
               {lastLog && (
                 <p className="font-body text-xs text-mauve/60 mt-2">
                   Ultima analise: {formatDate(lastLog.started_at)}
@@ -308,8 +286,6 @@ export default function ExamDetailPage() {
               )}
             </div>
           </div>
-
-          {/* Botao de analise */}
           <button onClick={handleAnalyze} disabled={analyzing}
             className="flex items-center gap-2 gradient-sintera text-white font-body text-sm font-medium px-4 py-2.5 rounded-full hover:opacity-90 transition-opacity shadow-sm flex-shrink-0 disabled:opacity-60">
             {analyzing
@@ -325,7 +301,7 @@ export default function ExamDetailPage() {
             <AlertCircle size={14} className="text-amber-500 flex-shrink-0 mt-0.5" />
             <p className="font-body text-xs text-amber-700 leading-relaxed">
               <strong>Laudo extenso:</strong> o texto deste exame excedeu o limite de processamento e foi parcialmente analisado.
-              Alguns biomarcadores podem nao ter sido extraidos. Este e um limite tecnico da plataforma.
+              Alguns biomarcadores podem nao ter sido extraidos.
             </p>
           </div>
         )}
@@ -349,39 +325,29 @@ export default function ExamDetailPage() {
         ) : null
       })()}
 
-      {/* Tabela de biomarcadores */}
+      {/* Tabela */}
       {hasResults ? (
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
           className="card-premium overflow-hidden">
           <div className="p-5 border-b border-border/50">
             <h2 className="font-display text-base font-semibold text-onyx">Biomarcadores extraidos</h2>
           </div>
-
-          {/* Header da tabela */}
           <div className="hidden md:grid grid-cols-[2fr_1fr_1.5fr_1fr_1fr] gap-2 px-5 py-2.5 bg-ivory border-b border-border/50">
             {['Biomarcador', 'Resultado', 'Referencia', 'Classificacao', 'Fonte'].map(h => (
               <span key={h} className="font-body text-xs font-semibold text-onyx/40 uppercase tracking-wider">{h}</span>
             ))}
           </div>
-
           <div className="divide-y divide-border/30">
             {biomarkers.map((b, i) => {
               const cfg  = getInterpConfig(b)
               const Icon = cfg.Icon
               const isQualitative = b.result_type === 'qualitative'
-              const refLabel = b.reference_source === 'ausente'
-                ? 'Nao informada'
-                : formatRef(b.reference_min, b.reference_max)
-
+              const refLabel = b.reference_source === 'ausente' ? 'Nao informada' : formatRef(b.reference_min, b.reference_max)
               return (
                 <motion.div key={b.id}
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.02 + i * 0.01 }}
                   className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1.5fr_1fr_1fr] gap-2 items-center px-5 py-3 hover:bg-blush/20 transition-colors">
-
-                  {/* Biomarcador */}
                   <span className="font-body text-sm font-medium text-onyx">{b.name}</span>
-
-                  {/* Resultado */}
                   <span className="font-body text-sm text-onyx">
                     {isQualitative && b.value_text
                       ? <span className="text-blue-600 font-medium">{b.value_text}</span>
@@ -390,28 +356,17 @@ export default function ExamDetailPage() {
                         : <span className="text-mauve/40">{'—'}</span>
                     }
                   </span>
-
-                  {/* Referencia */}
                   <span className={`font-body text-sm ${b.reference_source === 'ausente' ? 'text-mauve/40 italic text-xs' : 'text-mauve'}`}>
                     {refLabel}
                   </span>
-
-                  {/* Classificacao */}
                   <span className={`inline-flex items-center gap-1 font-body text-xs font-medium px-2.5 py-1 rounded-full border w-fit ${cfg.bg} ${cfg.color}`}>
-                    <Icon size={10} />
-                    {cfg.label}
+                    <Icon size={10} />{cfg.label}
                   </span>
-
-                  {/* Fonte */}
-                  <span className="font-body text-xs text-mauve/70 capitalize">
-                    {b.reference_source ?? '—'}
-                  </span>
+                  <span className="font-body text-xs text-mauve/70 capitalize">{b.reference_source ?? '—'}</span>
                 </motion.div>
               )
             })}
           </div>
-
-          {/* Rodape com contagem */}
           <div className="px-5 py-3 bg-ivory border-t border-border/50">
             <p className="font-body text-xs text-mauve/60">
               {counts.total} biomarcadores exibidos {'·'} fonte: {biomarkers[0]?.source ?? 'ai_extracted'}
@@ -419,7 +374,6 @@ export default function ExamDetailPage() {
           </div>
         </motion.div>
       ) : (
-        /* Estado vazio */
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
           className="card-premium p-12 text-center">
           <FileText size={40} className="text-border mx-auto mb-3" />
@@ -444,7 +398,8 @@ export default function ExamDetailPage() {
         <div className="flex justify-center pt-2 pb-4">
           <a
             href={`mailto:carinaleite.br@gmail.com?subject=Problema no exame ${examId}&body=Ola, encontrei um problema na extracao de biomarcadores do exame ${examId}.%0A%0ADescreva o problema aqui:`}
-            onClick={() => fetch("/api/events", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ event_name: "report_problem_clicked", metadata: { examId } }) }).catch(() => {})} className="inline-flex items-center gap-2 text-xs font-body text-mauve/60 hover:text-petal transition-colors border border-border rounded-full px-4 py-2 hover:border-petal/40"
+            onClick={() => trackEvent('report_problem_clicked', { examId })}
+            className="inline-flex items-center gap-2 text-xs font-body text-mauve/60 hover:text-petal transition-colors border border-border rounded-full px-4 py-2 hover:border-petal/40"
           >
             <AlertCircle size={12} />
             Reportar problema neste exame
@@ -455,5 +410,3 @@ export default function ExamDetailPage() {
     </div>
   )
 }
-
-
