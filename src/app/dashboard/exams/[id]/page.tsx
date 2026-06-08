@@ -334,7 +334,8 @@ export default function ExamDetailPage() {
         const idx = calcExperimentalIndex(biomarkers)
         return idx ? (
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-            <IndexCard index={idx} />
+            {/* 6C: Registrar visualizacao do Indice */}
+            {typeof window !== 'undefined' && (() => { fetch('/api/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_name: 'indice_viewed', metadata: { examId } }) }).catch(() => {}) })()}
           </motion.div>
         ) : null
       })()}
@@ -434,7 +435,7 @@ export default function ExamDetailPage() {
         <div className="flex justify-center pt-2 pb-4">
           <a
             href={`mailto:carinaleite.br@gmail.com?subject=Problema no exame ${examId}&body=Ola, encontrei um problema na extracao de biomarcadores do exame ${examId}.%0A%0ADescreva o problema aqui:`}
-            className="inline-flex items-center gap-2 text-xs font-body text-mauve/60 hover:text-petal transition-colors border border-border rounded-full px-4 py-2 hover:border-petal/40"
+            onClick={() => fetch("/api/events", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ event_name: "report_problem_clicked", metadata: { examId } }) }).catch(() => {})} className="inline-flex items-center gap-2 text-xs font-body text-mauve/60 hover:text-petal transition-colors border border-border rounded-full px-4 py-2 hover:border-petal/40"
           >
             <AlertCircle size={12} />
             Reportar problema neste exame
@@ -445,3 +446,4 @@ export default function ExamDetailPage() {
     </div>
   )
 }
+
