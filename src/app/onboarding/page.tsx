@@ -809,7 +809,7 @@ export default function OnboardingPage() {
                     <div className="flex gap-2">
                       {[1, 2, 3, 4, 5].map(n => (
                         <button key={n} type="button" onClick={() => setComprehensionBaseline(n)}
-                          className={lex-1 py-2 rounded-xl text-xs font-body font-medium border transition-all ${
+                          className={`flex-1 py-2 rounded-xl text-xs font-body font-medium border transition-all ${comprehensionBaseline === n ? "gradient-sintera text-white border-transparent" : "border-border text-mauve hover:border-petal/40"}`}>
                             comprehensionBaseline === n
                               ? 'gradient-sintera text-white border-transparent'
                               : 'border-border text-mauve hover:border-petal/40'
