@@ -168,6 +168,16 @@ export default function ExamDetailPage() {
     }).catch(() => {})
   }, [examId])
 
+  // 6C: Registrar visualizacao do Indice quando biomarcadores carregam e indice existe
+  useEffect(() => {
+    if (biomarkers.length > 0) {
+      const idx = calcExperimentalIndex(biomarkers)
+      if (idx) {
+        fetch('/api/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_name: 'indice_viewed', metadata: { examId } }) }).catch(() => {})
+      }
+    }
+  }, [biomarkers, examId])
+
   async function loadData() {
     setLoading(true)
     const [{ data: examData }, { data: bioData }, { data: logData }] = await Promise.all([
@@ -334,8 +344,7 @@ export default function ExamDetailPage() {
         const idx = calcExperimentalIndex(biomarkers)
         return idx ? (
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-            {/* 6C: Registrar visualizacao do Indice */}
-            {typeof window !== 'undefined' && (() => { fetch('/api/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_name: 'indice_viewed', metadata: { examId } }) }).catch(() => {}) })()}
+            <IndexCard index={idx} />
           </motion.div>
         ) : null
       })()}
@@ -446,4 +455,5 @@ export default function ExamDetailPage() {
     </div>
   )
 }
+
 
