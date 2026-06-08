@@ -378,7 +378,8 @@ export default function OnboardingPage() {
   const [authError, setAuthError] = useState('')
   const [loading, setLoading] = useState(false)
   const [consentTerms, setConsentTerms] = useState(false)
-  const [consentHealth, setConsentHealth] = useState(false)
+  const [consentHealth, setConsentHealth]   = useState(false)
+  const [comprehensionBaseline, setComprehensionBaseline] = useState<number | null>(null)
   const supabase = createClient()
 
   const toggleGoal = (id: GoalId) =>
@@ -416,7 +417,16 @@ export default function OnboardingPage() {
       })
     }
 
-    // 3. Record consent
+    // 3. Record comprehension baseline
+    if (data.user && comprehensionBaseline) {
+      fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event_name: 'comprehension_baseline', metadata: { score: comprehensionBaseline } }),
+      }).catch(() => {})
+    }
+
+    // 4. Record consent
     if (data.user) {
       await fetch('/api/consent', {
         method: 'POST',
@@ -790,6 +800,29 @@ export default function OnboardingPage() {
                     </div>
                   )}
 
+                  {/* Baseline de compreensao - P1 v2.1 ajuste 3 */}
+                  <div className="flex flex-col gap-2">
+                    <p className="text-xs font-body text-mauve uppercase tracking-wider">Antes de comecar</p>
+                    <p className="text-xs font-body text-onyx/70 leading-relaxed">
+                      Antes de usar a SINTERA, o quanto voce entendia seus exames de sangue?
+                    </p>
+                    <div className="flex gap-2">
+                      {[1, 2, 3, 4, 5].map(n => (
+                        <button key={n} type="button" onClick={() => setComprehensionBaseline(n)}
+                          className={lex-1 py-2 rounded-xl text-xs font-body font-medium border transition-all ${
+                            comprehensionBaseline === n
+                              ? 'gradient-sintera text-white border-transparent'
+                              : 'border-border text-mauve hover:border-petal/40'
+                          }}}>
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex justify-between text-[10px] font-body text-mauve/50">
+                      <span>Nada</span><span>Completamente</span>
+                    </div>
+                  </div>
+
                   {/* Account creation */}
                   <div className="flex flex-col gap-3">
                     <p className="text-xs font-body text-mauve uppercase tracking-wider">Criar sua conta</p>
@@ -946,3 +979,4 @@ export default function OnboardingPage() {
     </div>
   )
 }
+
