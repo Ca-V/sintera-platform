@@ -155,6 +155,8 @@ export default function ExamsPage() {
       if (insertErr) throw new Error(`[insert] ${insertErr.code}: ${insertErr.message}`)
 
       await loadExams()
+      // 6C: Registrar upload bem-sucedido
+      fetch('/api/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_name: 'exam_uploaded', metadata: { examId } }) }).catch(() => {})
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
       setUploadError(msg)
@@ -358,3 +360,5 @@ export default function ExamsPage() {
     </div>
   )
 }
+
+
