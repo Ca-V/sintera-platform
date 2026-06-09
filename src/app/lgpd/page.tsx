@@ -7,7 +7,7 @@ export const metadata = {
     'Como titular de dados pessoais, você tem direitos garantidos pela LGPD. Saiba como exercê-los na SINTERA.',
 }
 
-const CONTACT_EMAIL = 'privacidade@sintera.com.br'
+const CONTACT_EMAIL = 'privacidade@sinteramais.com.br'
 
 interface Right {
   icon: React.ElementType

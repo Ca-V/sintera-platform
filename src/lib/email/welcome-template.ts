@@ -76,7 +76,7 @@ export function welcomeEmailHtml(firstName: string): string {
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
                 <tr>
                   <td align="center">
-                    <a href="https://sintera.com.br/login"
+                    <a href="https://sinteramais.com.br/login"
                       style="display:inline-block;background:linear-gradient(135deg,#E8A4B8,#C490D1);color:#fff;font-size:15px;font-weight:600;text-decoration:none;padding:14px 36px;border-radius:50px;letter-spacing:0.04em;">
                       Acessar a SINTERA →
                     </a>
@@ -102,11 +102,11 @@ export function welcomeEmailHtml(firstName: string): string {
               <p style="margin:0 0 8px;font-size:12px;color:#B0A8B9;line-height:1.6;">
                 Você recebeu este e-mail porque se cadastrou na lista de espera do Beta da SINTERA.<br />
                 Seus dados são tratados conforme nossa
-                <a href="https://sintera.com.br/privacidade" style="color:#C490D1;text-decoration:none;">Política de Privacidade</a>
+                <a href="https://sinteramais.com.br/privacidade" style="color:#C490D1;text-decoration:none;">Política de Privacidade</a>
                 e a LGPD (Lei nº 13.709/2018).
               </p>
               <p style="margin:0;font-size:11px;color:#C8C0D0;">
-                SINTERA Tecnologia em Saúde · privacidade@sintera.com.br
+                SINTERA Tecnologia em Saúde · privacidade@sinteramais.com.br
               </p>
             </td>
           </tr>
@@ -127,7 +127,7 @@ Sua vaga no Beta da SINTERA está confirmada.
 
 Você está entre as primeiras pessoas a acessar a plataforma que organiza laudos laboratoriais com IA e transforma números em informação que você realmente entende.
 
-Acesse agora: https://sintera.com.br/login
+Acesse agora: https://sinteramais.com.br/login
 
 No Beta você pode:
 - Enviar laudos em PDF (a IA extrai os biomarcadores automaticamente)
@@ -142,5 +142,5 @@ Fundadora, SINTERA
 
 ---
 Você recebeu este e-mail porque se cadastrou na lista de espera do Beta da SINTERA.
-Seus dados são tratados conforme nossa Política de Privacidade (sintera.com.br/privacidade) e a LGPD.`
+Seus dados são tratados conforme nossa Política de Privacidade (sinteramais.com.br/privacidade) e a LGPD.`
 }

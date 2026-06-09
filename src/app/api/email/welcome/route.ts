@@ -3,7 +3,7 @@ import { Resend } from 'resend'
 import { welcomeEmailHtml, welcomeEmailText } from '@/lib/email/welcome-template'
 
 const ADMIN_EMAIL = 'carinaleite.br@gmail.com'
-const FROM_ADDRESS = 'SINTERA <ola@sintera.com.br>'
+const FROM_ADDRESS = 'SINTERA <ola@sinteramais.com.br>'
 
 export async function POST(req: NextRequest) {
   // Somente a admin pode disparar

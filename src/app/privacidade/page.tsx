@@ -70,7 +70,7 @@ export default function PrivacidadePage() {
               <li>Revogar o consentimento a qualquer momento</li>
               <li>Portabilidade dos dados (sob solicitação)</li>
             </ul>
-            <p>Para exercer esses direitos, entre em contato: <a href="mailto:privacidade@sintera.app" className="text-petal hover:underline">privacidade@sintera.app</a></p>
+            <p>Para exercer esses direitos, entre em contato: <a href="mailto:privacidade@sinteramais.com.br" className="text-petal hover:underline">privacidade@sinteramais.com.br</a></p>
           </section>
 
           <section className="space-y-3">
@@ -95,7 +95,7 @@ export default function PrivacidadePage() {
 
           <section className="space-y-3">
             <h2 className="font-display text-lg font-semibold text-onyx">10. Contato</h2>
-            <p>Dúvidas sobre privacidade: <a href="mailto:privacidade@sintera.app" className="text-petal hover:underline">privacidade@sintera.app</a></p>
+            <p>Dúvidas sobre privacidade: <a href="mailto:privacidade@sinteramais.com.br" className="text-petal hover:underline">privacidade@sinteramais.com.br</a></p>
           </section>
 
           <div className="border-t border-border pt-6">
