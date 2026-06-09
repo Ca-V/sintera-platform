@@ -76,7 +76,7 @@ export function welcomeEmailHtml(firstName: string): string {
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
                 <tr>
                   <td align="center">
-                    <a href="https://sinteramais.com.br/login"
+                    <a href="https://sinteramais.com.br/onboarding"
                       style="display:inline-block;background:linear-gradient(135deg,#E8A4B8,#C490D1);color:#fff;font-size:15px;font-weight:600;text-decoration:none;padding:14px 36px;border-radius:50px;letter-spacing:0.04em;">
                       Acessar a SINTERA →
                     </a>
@@ -127,7 +127,7 @@ Sua vaga no Beta da SINTERA está confirmada.
 
 Você está entre as primeiras pessoas a acessar a plataforma que organiza laudos laboratoriais com IA e transforma números em informação que você realmente entende.
 
-Acesse agora: https://sinteramais.com.br/login
+Crie sua conta agora: https://sinteramais.com.br/onboarding
 
 No Beta você pode:
 - Enviar laudos em PDF (a IA extrai os biomarcadores automaticamente)
