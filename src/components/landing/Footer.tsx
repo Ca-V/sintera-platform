@@ -46,6 +46,8 @@ export default function Footer() {
                     item === 'Termos de uso' ? '/termos' :
                     item === 'LGPD' ? '/lgpd' :
                     item === 'Beta' ? '/lista-de-espera' :
+                    item === 'Como funciona' ? '/como-funciona' :
+                    item === 'Funcionalidades' ? '/#funcionalidades' :
                     '#' + item.toLowerCase().replace(/\s+/g, '-')
                   return (
                     <li key={item}>
