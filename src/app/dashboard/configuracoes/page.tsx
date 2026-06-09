@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Shield, Mail, Key, AlertTriangle, Check, X, Loader2, ExternalLink } from 'lucide-react'
+import { Shield, Mail, Key, AlertTriangle, Check, X, Loader2, ExternalLink, Download } from 'lucide-react'
 import { useUser } from '@/context/UserContext'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
@@ -29,6 +29,31 @@ export default function ConfiguracoesPage() {
       setPwSent(true)
     }
     setPwLoading(false)
+  }
+
+  // ── Exportar dados ────────────────────────────────────────────────────────
+  const [exportLoading, setExportLoading] = useState(false)
+  const [exportDone, setExportDone]       = useState(false)
+
+  async function handleExport() {
+    setExportLoading(true)
+    try {
+      const res = await fetch('/api/account/export')
+      if (!res.ok) throw new Error('Erro ao exportar')
+      const blob = await res.blob()
+      const url  = URL.createObjectURL(blob)
+      const a    = document.createElement('a')
+      a.href     = url
+      a.download = `sintera-dados-${new Date().toISOString().slice(0, 10)}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+      setExportDone(true)
+      setTimeout(() => setExportDone(false), 4000)
+    } catch {
+      // silencia — erro raro, usuária pode tentar novamente
+    } finally {
+      setExportLoading(false)
+    }
   }
 
   // ── Excluir conta ──────────────────────────────────────────────────────────
@@ -112,6 +137,18 @@ export default function ConfiguracoesPage() {
           </div>
           <h2 className="font-body text-sm font-semibold text-onyx">Privacidade & Dados</h2>
         </div>
+
+        <button onClick={handleExport} disabled={exportLoading}
+          className="w-full flex items-center justify-between py-3 border-b border-border/50 text-sm font-body text-onyx/70 hover:text-petal transition-colors disabled:opacity-50">
+          <span>Exportar meus dados</span>
+          {exportDone ? (
+            <Check size={13} className="text-sage" />
+          ) : exportLoading ? (
+            <Loader2 size={13} className="animate-spin text-petal" />
+          ) : (
+            <Download size={13} className="text-border" />
+          )}
+        </button>
 
         <Link href="/privacidade" target="_blank"
           className="w-full flex items-center justify-between py-3 border-b border-border/50 text-sm font-body text-onyx/70 hover:text-petal transition-colors">
