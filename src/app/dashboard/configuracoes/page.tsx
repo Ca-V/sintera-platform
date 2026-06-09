@@ -150,6 +150,12 @@ export default function ConfiguracoesPage() {
           )}
         </button>
 
+        <Link href="/lgpd" target="_blank"
+          className="w-full flex items-center justify-between py-3 border-b border-border/50 text-sm font-body text-onyx/70 hover:text-petal transition-colors">
+          Seus direitos (LGPD)
+          <ExternalLink size={13} className="text-border" />
+        </Link>
+
         <Link href="/privacidade" target="_blank"
           className="w-full flex items-center justify-between py-3 border-b border-border/50 text-sm font-body text-onyx/70 hover:text-petal transition-colors">
           Política de Privacidade
