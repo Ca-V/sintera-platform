@@ -18,9 +18,26 @@ const dmSans = DM_Sans({
 })
 
 export const metadata: Metadata = {
-  title: 'SINTERA',
-  description: 'Organize seus laudos laboratoriais com IA. Visualize a evolução dos seus biomarcadores ao longo do tempo.',
-  keywords: ['laudos laboratoriais', 'biomarcadores', 'histórico de saúde', 'exames', 'IA'],
+  title: { default: 'SINTERA', template: '%s — SINTERA' },
+  description: 'Organize seus laudos laboratoriais com IA e acompanhe a evolução dos seus biomarcadores ao longo do tempo. Gratuito durante o Beta.',
+  keywords: ['laudos laboratoriais', 'biomarcadores', 'histórico de saúde', 'exames', 'saúde feminina', 'IA', 'SINTERA'],
+  metadataBase: new URL('https://sinteramais.com.br'),
+  openGraph: {
+    type: 'website',
+    locale: 'pt_BR',
+    url: 'https://sinteramais.com.br',
+    siteName: 'SINTERA',
+    title: 'SINTERA — Seus exames têm uma história.',
+    description: 'Organize seus laudos laboratoriais com IA e acompanhe a evolução dos seus biomarcadores ao longo do tempo.',
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'SINTERA' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'SINTERA — Seus exames têm uma história.',
+    description: 'Organize seus laudos laboratoriais com IA e acompanhe a evolução dos seus biomarcadores.',
+    images: ['/og-image.png'],
+  },
+  robots: { index: true, follow: true },
 }
 
 export default function RootLayout({

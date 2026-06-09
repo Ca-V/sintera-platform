@@ -67,7 +67,7 @@ export default function PricingSection() {
             ))}
           </div>
 
-          <Link href="/onboarding" className="block">
+          <Link href="/lista-de-espera" className="block">
             <button className="w-full flex items-center justify-center gap-2 gradient-sintera text-white font-body font-medium py-4 rounded-full hover:opacity-90 transition-opacity shadow-md text-[0.95rem]">
               Criar conta gratuita
               <ArrowRight size={16} />

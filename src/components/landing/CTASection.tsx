@@ -32,7 +32,7 @@ export default function CTASection() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-14">
-            <Link href="/onboarding">
+            <Link href="/lista-de-espera">
               <button className="inline-flex items-center gap-2 gradient-sintera text-white font-body font-medium px-8 py-4 rounded-full hover:opacity-90 transition-opacity shadow-lg text-[0.95rem]">
                 Começar gratuitamente
                 <ArrowRight size={16} />

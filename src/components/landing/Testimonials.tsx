@@ -28,7 +28,7 @@ export default function Testimonials() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-            <Link href="/onboarding">
+            <Link href="/lista-de-espera">
               <button className="inline-flex items-center gap-2 gradient-sintera text-white font-body font-medium px-8 py-4 rounded-full hover:opacity-90 transition-opacity shadow-md text-[0.95rem]">
                 Solicitar acesso Beta
                 <ArrowRight size={16} />

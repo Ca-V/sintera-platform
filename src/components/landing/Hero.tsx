@@ -72,7 +72,7 @@ export default function Hero() {
 
             <motion.div variants={fadeUp(0.44)} initial="hidden" animate="show"
               className="flex flex-wrap gap-3 mb-10">
-              <Link href="/onboarding">
+              <Link href="/lista-de-espera">
                 <button className="inline-flex items-center gap-2 gradient-sintera text-white font-body font-medium px-7 py-3.5 rounded-full hover:opacity-90 active:scale-[0.98] transition-all duration-200 shadow-md text-[0.9rem]">
                   Começar gratuitamente
                   <ArrowRight size={16} />

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
   Users, FileText, CheckCircle, AlertCircle, FlaskConical,
-  MessageCircle, Flag, TrendingUp, Upload, RefreshCw, Loader2, Send, Plus, X,
+  MessageCircle, Flag, TrendingUp, Upload, RefreshCw, Loader2, Send, Plus, X, Clock,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
@@ -68,6 +68,10 @@ export default function AdminPage() {
   const router  = useRouter()
   const supabase = useRef(createClient()).current
 
+  // ── Lista de espera ───────────────────────────────────────────────────────
+  type WaitlistEntry = { id: string; name: string; email: string; created_at: string }
+  const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([])
+
   const [stats, setStats]         = useState<Stats | null>(null)
   const [recentEvents, setEvents]  = useState<RecentEvent[]>([])
   const [feedbacks, setFeedbacks]  = useState<FeedbackRow[]>([])
@@ -128,6 +132,11 @@ export default function AdminPage() {
   async function loadData() {
     setLoading(true)
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: waitlistData } = await (supabase as any)
+        .from('waitlist').select('id,name,email,created_at').order('created_at', { ascending: false })
+      setWaitlist((waitlistData ?? []) as WaitlistEntry[])
+
       const [
         { count: totalExams },
         { count: processed },
@@ -335,6 +344,39 @@ export default function AdminPage() {
             )}
           </>
         )}
+
+        {/* ── Lista de espera ── */}
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+          className="card-premium overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-border/40 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Clock size={14} className="text-mauve" />
+              <h2 className="font-body text-sm font-semibold text-onyx">Lista de espera</h2>
+            </div>
+            <span className="font-body text-xs text-mauve/60 bg-ivory border border-border px-2.5 py-0.5 rounded-full">
+              {waitlist.length} cadastro{waitlist.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+          {waitlist.length === 0 ? (
+            <div className="px-5 py-8 text-center">
+              <p className="font-body text-xs text-mauve/50">Nenhum cadastro ainda.</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-border/20 max-h-64 overflow-y-auto">
+              {waitlist.map(w => (
+                <div key={w.id} className="flex items-center justify-between px-5 py-2.5 gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-body text-xs font-medium text-onyx truncate">{w.name}</p>
+                    <p className="font-body text-[11px] text-mauve/60 truncate">{w.email}</p>
+                  </div>
+                  <span className="font-body text-[10px] text-mauve/40 flex-shrink-0">
+                    {formatDate(w.created_at)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </motion.div>
 
         {/* ── E-mail de boas-vindas Beta ── */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}

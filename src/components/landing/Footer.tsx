@@ -44,8 +44,8 @@ export default function Footer() {
                   const href =
                     item === 'Privacidade' ? '/privacidade' :
                     item === 'Termos de uso' ? '/termos' :
-                    item === 'LGPD' ? '/privacidade' :
-                    item === 'Beta' ? '/onboarding' :
+                    item === 'LGPD' ? '/lgpd' :
+                    item === 'Beta' ? '/lista-de-espera' :
                     '#' + item.toLowerCase().replace(/\s+/g, '-')
                   return (
                     <li key={item}>

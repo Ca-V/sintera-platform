@@ -72,7 +72,7 @@ export default function Navbar() {
             Entrar
           </Link>
           <Link
-            href="/onboarding"
+            href="/lista-de-espera"
             className="gradient-sintera text-white text-sm font-body font-medium px-5 py-2.5 rounded-full hover:opacity-90 active:scale-[0.98] transition-all duration-200 shadow-sm"
           >
             Começar grátis
@@ -109,7 +109,7 @@ export default function Navbar() {
               >
                 Entrar
               </Link>
-              <Link href="/onboarding" onClick={() => setOpen(false)}
+              <Link href="/lista-de-espera" onClick={() => setOpen(false)}
                 className="text-center py-3 rounded-xl gradient-sintera text-white text-sm font-body font-medium"
               >
                 Começar grátis
