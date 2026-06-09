@@ -29,13 +29,13 @@ export const metadata: Metadata = {
     siteName: 'SINTERA',
     title: 'SINTERA — Seus exames têm uma história.',
     description: 'Organize seus laudos laboratoriais com IA e acompanhe a evolução dos seus biomarcadores ao longo do tempo.',
-    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'SINTERA' }],
+    images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: 'SINTERA — Seus exames têm uma história.' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'SINTERA — Seus exames têm uma história.',
     description: 'Organize seus laudos laboratoriais com IA e acompanhe a evolução dos seus biomarcadores.',
-    images: ['/og-image.png'],
+    images: ['/opengraph-image'],
   },
   robots: { index: true, follow: true },
 }
