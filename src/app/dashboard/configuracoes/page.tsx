@@ -1,94 +1,227 @@
 'use client'
 
 import { useState } from 'react'
-import { Bell, Shield, Palette, Globe, ChevronRight } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Shield, Mail, Key, AlertTriangle, Check, X, Loader2, ExternalLink } from 'lucide-react'
 import { useUser } from '@/context/UserContext'
+import { createClient } from '@/lib/supabase/client'
+import Link from 'next/link'
 
 export default function ConfiguracoesPage() {
-  const { signOut } = useUser()
-  const [notifications, setNotifications] = useState({ daily: true, phase: true, email: false, weekly: true })
+  const { user, signOut } = useUser()
+  const supabase = createClient()
+
+  // ── Alterar senha ──────────────────────────────────────────────────────────
+  const [pwSent, setPwSent]       = useState(false)
+  const [pwLoading, setPwLoading] = useState(false)
+  const [pwError, setPwError]     = useState<string | null>(null)
+
+  async function handlePasswordReset() {
+    if (!user?.email) return
+    setPwLoading(true)
+    setPwError(null)
+    const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+      redirectTo: `${window.location.origin}/atualizar-senha`,
+    })
+    if (error) {
+      setPwError('Não foi possível enviar o e-mail. Tente novamente.')
+    } else {
+      setPwSent(true)
+    }
+    setPwLoading(false)
+  }
+
+  // ── Excluir conta ──────────────────────────────────────────────────────────
+  const [deleteStep, setDeleteStep] = useState<'idle' | 'confirm' | 'loading' | 'done'>('idle')
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  async function handleDeleteAccount() {
+    setDeleteStep('loading')
+    setDeleteError(null)
+    try {
+      const res = await fetch('/api/account', { method: 'DELETE' })
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({})) as { error?: string }
+        throw new Error(json.error ?? 'Erro ao excluir conta')
+      }
+      setDeleteStep('done')
+      setTimeout(() => signOut(), 2500)
+    } catch (e) {
+      setDeleteError(e instanceof Error ? e.message : 'Erro desconhecido')
+      setDeleteStep('confirm')
+    }
+  }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <div>
+
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Configurações</h1>
-        <p className="font-body text-sm text-mauve">Gerencie sua conta e preferências</p>
-      </div>
+        <p className="font-body text-sm text-mauve">Gerencie sua conta e dados</p>
+      </motion.div>
 
-      {/* Notifications */}
-      <div className="card-premium p-6 space-y-4">
-        <div className="flex items-center gap-3 mb-2">
+      {/* ── Conta ── */}
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+        className="card-premium p-6 space-y-4">
+        <div className="flex items-center gap-3 mb-1">
           <div className="w-8 h-8 rounded-lg bg-blush flex items-center justify-center">
-            <Bell size={15} className="text-petal" />
+            <Key size={15} className="text-petal" />
           </div>
-          <h2 className="font-body text-sm font-semibold text-onyx">Notificações</h2>
+          <h2 className="font-body text-sm font-semibold text-onyx">Conta</h2>
         </div>
-        {[
-          { key: 'daily' as const,   label: 'Lembretes diários de registro' },
-          { key: 'phase' as const,   label: 'Alertas de transição de fase' },
-          { key: 'email' as const,   label: 'Insights semanais por e-mail' },
-          { key: 'weekly' as const,  label: 'Resumo semanal no app' },
-        ].map(p => (
-          <div key={p.key} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-            <span className="text-sm font-body text-onyx/80">{p.label}</span>
-            <button
-              onClick={() => setNotifications(prev => ({ ...prev, [p.key]: !prev[p.key] }))}
-              className={`w-10 h-[22px] rounded-full relative transition-all duration-300 flex-shrink-0 ${notifications[p.key] ? 'gradient-sintera' : 'bg-warm'}`}
-            >
-              <div className={`absolute top-[2px] w-[18px] h-[18px] rounded-full bg-white shadow-sm transition-all duration-300 ${notifications[p.key] ? 'left-[20px]' : 'left-[2px]'}`} />
-            </button>
-          </div>
-        ))}
-      </div>
 
-      {/* Privacy */}
-      <div className="card-premium p-6">
-        <div className="flex items-center gap-3 mb-4">
+        {/* E-mail */}
+        <div className="flex items-center justify-between py-3 border-b border-border/50">
+          <div>
+            <p className="font-body text-sm text-onyx">E-mail</p>
+            <p className="font-body text-xs text-mauve mt-0.5">{user?.email ?? '—'}</p>
+          </div>
+          <span className="font-body text-xs text-mauve/50 bg-ivory px-2.5 py-1 rounded-full border border-border">
+            Verificado
+          </span>
+        </div>
+
+        {/* Alterar senha */}
+        <div className="flex items-center justify-between py-3">
+          <div>
+            <p className="font-body text-sm text-onyx">Senha</p>
+            <p className="font-body text-xs text-mauve mt-0.5">Enviaremos um link para o seu e-mail</p>
+          </div>
+          {pwSent ? (
+            <span className="flex items-center gap-1.5 font-body text-xs text-sage font-medium">
+              <Check size={13} /> Link enviado
+            </span>
+          ) : (
+            <button onClick={handlePasswordReset} disabled={pwLoading}
+              className="flex items-center gap-1.5 font-body text-sm text-petal hover:underline disabled:opacity-50 transition-colors">
+              {pwLoading ? <Loader2 size={13} className="animate-spin" /> : <Mail size={13} />}
+              Alterar senha
+            </button>
+          )}
+        </div>
+        {pwError && <p className="font-body text-xs text-red-500">{pwError}</p>}
+      </motion.div>
+
+      {/* ── Privacidade & Dados ── */}
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+        className="card-premium p-6 space-y-1">
+        <div className="flex items-center gap-3 mb-3">
           <div className="w-8 h-8 rounded-lg bg-sage-light flex items-center justify-center">
             <Shield size={15} className="text-sage" />
           </div>
           <h2 className="font-body text-sm font-semibold text-onyx">Privacidade & Dados</h2>
         </div>
-        {[
-          'Baixar meus dados',
-          'Exportar histórico de saúde',
-          'Excluir minha conta',
-        ].map(item => (
-          <button key={item}
-            className={`w-full flex items-center justify-between py-3 border-b border-border last:border-0 text-sm font-body hover:text-petal transition-colors text-left ${item.includes('Excluir') ? 'text-red-400 hover:text-red-500' : 'text-onyx/70'}`}>
-            {item}
-            <ChevronRight size={15} className="text-border" />
-          </button>
-        ))}
-      </div>
 
-      {/* Appearance */}
-      <div className="card-premium p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-8 h-8 rounded-lg bg-lavender-light flex items-center justify-center">
-            <Palette size={15} className="text-lavender" />
+        <Link href="/privacidade" target="_blank"
+          className="w-full flex items-center justify-between py-3 border-b border-border/50 text-sm font-body text-onyx/70 hover:text-petal transition-colors">
+          Política de Privacidade
+          <ExternalLink size={13} className="text-border" />
+        </Link>
+
+        <Link href="/termos" target="_blank"
+          className="w-full flex items-center justify-between py-3 border-b border-border/50 text-sm font-body text-onyx/70 hover:text-petal transition-colors">
+          Termos de Uso
+          <ExternalLink size={13} className="text-border" />
+        </Link>
+
+        <div className="pt-2">
+          <p className="font-body text-xs text-mauve/60 leading-relaxed">
+            Seus dados são armazenados de forma segura e nunca compartilhados com terceiros.
+            Você pode excluir sua conta e todos os seus dados a qualquer momento.
+          </p>
+        </div>
+      </motion.div>
+
+      {/* ── Excluir conta ── */}
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+        className="card-premium p-6 border border-red-100">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center">
+            <AlertTriangle size={15} className="text-red-400" />
           </div>
-          <h2 className="font-body text-sm font-semibold text-onyx">Aparência & Idioma</h2>
+          <h2 className="font-body text-sm font-semibold text-onyx">Excluir conta</h2>
         </div>
-        <div className="flex items-center justify-between py-3 border-b border-border">
-          <span className="text-sm font-body text-onyx/80">Idioma</span>
-          <span className="text-sm font-body text-mauve flex items-center gap-1.5">
-            <Globe size={13}/> Português (BR)
-          </span>
-        </div>
-        <div className="flex items-center justify-between py-3">
-          <span className="text-sm font-body text-onyx/80">Tema</span>
-          <span className="text-sm font-body text-mauve">Claro</span>
-        </div>
-      </div>
 
-      {/* Sign out */}
+        <AnimatePresence mode="wait">
+          {deleteStep === 'idle' && (
+            <motion.div key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <p className="font-body text-xs text-mauve leading-relaxed mb-4">
+                Ao excluir sua conta, todos os seus exames, biomarcadores e dados pessoais serão
+                permanentemente removidos. Esta ação não pode ser desfeita.
+              </p>
+              <button onClick={() => setDeleteStep('confirm')}
+                className="font-body text-sm text-red-400 hover:text-red-600 font-medium transition-colors">
+                Quero excluir minha conta →
+              </button>
+            </motion.div>
+          )}
+
+          {deleteStep === 'confirm' && (
+            <motion.div key="confirm" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+              className="space-y-4">
+              <div className="bg-red-50 rounded-xl px-4 py-3">
+                <p className="font-body text-xs text-red-700 font-semibold mb-1">Atenção — ação irreversível</p>
+                <p className="font-body text-xs text-red-600 leading-relaxed">
+                  Todos os seus exames, biomarcadores e histórico serão excluídos permanentemente.
+                </p>
+              </div>
+              <div className="space-y-1.5">
+                <label className="font-body text-xs text-onyx/60">
+                  Digite <strong>EXCLUIR</strong> para confirmar
+                </label>
+                <input
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={e => setDeleteConfirmText(e.target.value)}
+                  placeholder="EXCLUIR"
+                  className="w-full px-3 py-2.5 border border-red-200 rounded-xl font-body text-sm text-onyx focus:outline-none focus:ring-1 focus:ring-red-300 transition-colors"
+                />
+              </div>
+              {deleteError && (
+                <p className="font-body text-xs text-red-500">{deleteError}</p>
+              )}
+              <div className="flex gap-2">
+                <button onClick={() => { setDeleteStep('idle'); setDeleteConfirmText(''); setDeleteError(null) }}
+                  className="flex-1 py-2.5 rounded-xl border border-border text-mauve text-sm font-body hover:border-petal/40 transition-colors flex items-center justify-center gap-2">
+                  <X size={13} /> Cancelar
+                </button>
+                <button
+                  onClick={handleDeleteAccount}
+                  disabled={deleteConfirmText !== 'EXCLUIR'}
+                  className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-body font-medium hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                  Excluir permanentemente
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {deleteStep === 'loading' && (
+            <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              className="flex items-center gap-3 py-4">
+              <Loader2 size={18} className="animate-spin text-red-400" />
+              <p className="font-body text-sm text-mauve">Excluindo seus dados…</p>
+            </motion.div>
+          )}
+
+          {deleteStep === 'done' && (
+            <motion.div key="done" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              className="text-center py-4">
+              <Check size={24} className="text-sage mx-auto mb-2" />
+              <p className="font-body text-sm font-semibold text-onyx mb-1">Conta excluída</p>
+              <p className="font-body text-xs text-mauve">Redirecionando…</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+
+      {/* Sair */}
       <button onClick={signOut}
-        className="w-full py-3.5 rounded-xl border border-red-200 text-red-400 text-sm font-body font-medium hover:bg-red-50 transition-colors">
+        className="w-full py-3.5 rounded-xl border border-border text-mauve text-sm font-body font-medium hover:border-red-200 hover:text-red-400 transition-colors">
         Sair da conta
       </button>
 
-      <p className="text-center text-xs font-body text-mauve/40">SINTERA v0.1.0 · Beta</p>
+      <p className="text-center text-xs font-body text-mauve/40 pb-4">SINTERA · Beta</p>
     </div>
   )
 }

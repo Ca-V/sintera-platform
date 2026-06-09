@@ -1,85 +1,250 @@
 'use client'
 
-import { Zap, BedDouble, Droplets } from 'lucide-react'
-import DailyScoreCard from '@/components/dashboard/DailyScoreCard'
-import RingCard from '@/components/dashboard/RingCard'
-import CycleArc from '@/components/dashboard/CycleArc'
-import WeeklyChart from '@/components/dashboard/WeeklyChart'
-import InsightsPanel from '@/components/dashboard/InsightsPanel'
-import QuickLogCard from '@/components/dashboard/QuickLogCard'
+import { useEffect, useState, useRef } from 'react'
+import { useRouter } from 'next/navigation'
+import { motion } from 'framer-motion'
+import {
+  FileText, TrendingUp, Upload, Zap,
+  CheckCircle, Clock, AlertCircle, ArrowRight, FlaskConical, CalendarDays,
+} from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { useUser } from '@/context/UserContext'
+import AgendarModal from '@/components/AgendarModal'
 
-const rings = [
-  {
-    title: 'Energia',
-    value: '84',
-    unit: '%',
-    sub: '+12% vs. média da fase',
-    pct: 84,
-    icon: Zap,
-    gradient: '#C9A97A, #E2C49A',
-    gradientId: 'gEn',
-    accentColor: '#C9A97A',
-    delay: 0.15,
-  },
-  {
-    title: 'Sono',
-    value: '7.5',
-    unit: 'h',
-    sub: 'Meta: 8h · Qualidade ótima',
-    pct: 94,
-    icon: BedDouble,
-    gradient: '#A89CBD, #C5B8D8',
-    gradientId: 'gSl',
-    accentColor: '#A89CBD',
-    delay: 0.22,
-  },
-  {
-    title: 'Hidratação',
-    value: '1.8',
-    unit: 'L',
-    sub: 'Meta: 2.5L · 72% atingida',
-    pct: 72,
-    icon: Droplets,
-    gradient: '#7DAF9E, #9ECFBF',
-    gradientId: 'gHy',
-    accentColor: '#7DAF9E',
-    delay: 0.29,
-  },
-]
+interface ExamSummary {
+  id: string
+  type: string | null
+  status: string
+  created_at: string
+}
+
+interface Stats {
+  totalExams: number
+  processedExams: number
+  totalBiomarkers: number
+  pendingExams: number
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
+  processed:  { label: 'Analisado',   color: 'text-sage',     bg: 'bg-sage-light',     icon: CheckCircle },
+  pending:    { label: 'Aguardando',  color: 'text-gold',     bg: 'bg-warm',           icon: Clock       },
+  processing: { label: 'Processando', color: 'text-lavender', bg: 'bg-lavender-light', icon: Clock       },
+  error:      { label: 'Erro',        color: 'text-red-400',  bg: 'bg-red-50',         icon: AlertCircle },
+}
 
 export default function DashboardPage() {
+  const { user, profile } = useUser()
+  const router   = useRouter()
+  const supabase = useRef(createClient()).current
+
+  const [stats, setStats]         = useState<Stats | null>(null)
+  const [recentExams, setRecent]   = useState<ExamSummary[]>([])
+  const [loading, setLoading]     = useState(true)
+  const [agendarOpen, setAgendar] = useState(false)
+
+  const hour        = new Date().getHours()
+  const greeting    = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite'
+  const displayName = profile?.name?.split(' ')[0] ?? 'por aqui'
+
+  useEffect(() => {
+    if (!user) return
+    loadData()
+  }, [user])
+
+  async function loadData() {
+    setLoading(true)
+
+    const [examsResult, bioResult] = await Promise.all([
+      supabase.from('exams').select('id,type,status,created_at').eq('user_id', user!.id).order('created_at', { ascending: false }),
+      supabase.from('biomarkers').select('id', { count: 'exact', head: true }).eq('user_id', user!.id).eq('synthetic', false),
+    ])
+
+    const exams = (examsResult.data ?? []) as ExamSummary[]
+    const totalBiomarkers = bioResult.count ?? 0
+
+    setStats({
+      totalExams:     exams.length,
+      processedExams: exams.filter(e => e.status === 'processed').length,
+      totalBiomarkers,
+      pendingExams:   exams.filter(e => e.status === 'pending' || e.status === 'processing').length,
+    })
+    setRecent(exams.slice(0, 4))
+    setLoading(false)
+  }
+
   return (
-    <div className="max-w-[1200px] mx-auto flex flex-col gap-5">
+    <div className="max-w-4xl mx-auto space-y-5">
 
-      {/* ── Row 1: Score (dark) + Ring metrics ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-        <div className="lg:col-span-2">
-          <DailyScoreCard/>
-        </div>
-        <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {rings.map(r => <RingCard key={r.title} {...r}/>)}
-        </div>
-      </div>
+      {/* Saudação */}
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+        <h1 className="font-display text-2xl font-semibold text-onyx">
+          {greeting}, {displayName} 👋
+        </h1>
+        <p className="font-body text-sm text-mauve mt-1">
+          Seus dados de saúde organizados em um lugar só.
+        </p>
+      </motion.div>
 
-      {/* ── Row 2: Cycle Arc + Weekly Chart ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-        <div className="lg:col-span-3">
-          <CycleArc/>
-        </div>
-        <div className="lg:col-span-2">
-          <WeeklyChart/>
-        </div>
-      </div>
+      {/* Cards de estatísticas */}
+      {!loading && stats && (
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+          className="grid grid-cols-2 md:grid-cols-4 gap-3">
 
-      {/* ── Row 3: Insights + Quick Log ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-        <div className="lg:col-span-3">
-          <InsightsPanel/>
+          <div className="card-premium p-4 text-center">
+            <div className="w-9 h-9 rounded-xl bg-blush flex items-center justify-center mx-auto mb-2">
+              <FileText size={17} className="text-petal" />
+            </div>
+            <p className="font-display text-2xl font-bold text-onyx">{stats.totalExams}</p>
+            <p className="font-body text-xs text-mauve mt-0.5">Exame{stats.totalExams !== 1 ? 's' : ''}</p>
+          </div>
+
+          <div className="card-premium p-4 text-center">
+            <div className="w-9 h-9 rounded-xl bg-sage-light flex items-center justify-center mx-auto mb-2">
+              <CheckCircle size={17} className="text-sage" />
+            </div>
+            <p className="font-display text-2xl font-bold text-onyx">{stats.processedExams}</p>
+            <p className="font-body text-xs text-mauve mt-0.5">Analisado{stats.processedExams !== 1 ? 's' : ''}</p>
+          </div>
+
+          <div className="card-premium p-4 text-center">
+            <div className="w-9 h-9 rounded-xl bg-lavender-light flex items-center justify-center mx-auto mb-2">
+              <FlaskConical size={17} className="text-lavender" />
+            </div>
+            <p className="font-display text-2xl font-bold text-onyx">{stats.totalBiomarkers}</p>
+            <p className="font-body text-xs text-mauve mt-0.5">Biomarcadores</p>
+          </div>
+
+          <div className="card-premium p-4 text-center">
+            <div className="w-9 h-9 rounded-xl bg-warm flex items-center justify-center mx-auto mb-2">
+              <TrendingUp size={17} className="text-gold" />
+            </div>
+            <p className="font-display text-2xl font-bold text-onyx">{stats.pendingExams}</p>
+            <p className="font-body text-xs text-mauve mt-0.5">Aguardando</p>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Estado vazio — nenhum exame ainda */}
+      {!loading && stats?.totalExams === 0 && (
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          className="card-premium p-10 text-center">
+          <div className="w-16 h-16 rounded-2xl gradient-sintera-soft flex items-center justify-center mx-auto mb-4">
+            <Upload size={28} className="text-petal" />
+          </div>
+          <h2 className="font-display text-lg font-semibold text-onyx mb-2">Comece enviando seu primeiro exame</h2>
+          <p className="font-body text-sm text-mauve max-w-sm mx-auto mb-6">
+            Faça upload de um laudo em PDF e a SINTERA extrai automaticamente todos os biomarcadores via IA.
+          </p>
+          <button
+            onClick={() => router.push('/dashboard/exams')}
+            className="inline-flex items-center gap-2 gradient-sintera text-white font-body text-sm font-medium px-6 py-2.5 rounded-full hover:opacity-90 transition-opacity shadow-sm">
+            <Upload size={15} /> Enviar exame
+          </button>
+        </motion.div>
+      )}
+
+      {/* Ações rápidas */}
+      {!loading && stats && stats.totalExams > 0 && (
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+          <button
+            onClick={() => router.push('/dashboard/exams')}
+            className="card-premium p-5 text-left flex items-center gap-4 hover:shadow-md transition-shadow group">
+            <div className="w-11 h-11 rounded-2xl gradient-sintera-soft flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+              <Upload size={20} className="text-petal" />
+            </div>
+            <div className="flex-1">
+              <p className="font-body text-sm font-semibold text-onyx">Enviar novo exame</p>
+              <p className="font-body text-xs text-mauve mt-0.5">Upload de PDF · extração automática</p>
+            </div>
+            <ArrowRight size={15} className="text-mauve/40 group-hover:text-petal transition-colors flex-shrink-0" />
+          </button>
+
+          <button
+            onClick={() => router.push('/dashboard/historico')}
+            className="card-premium p-5 text-left flex items-center gap-4 hover:shadow-md transition-shadow group">
+            <div className="w-11 h-11 rounded-2xl bg-sage-light flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+              <TrendingUp size={20} className="text-sage" />
+            </div>
+            <div className="flex-1">
+              <p className="font-body text-sm font-semibold text-onyx">Ver histórico</p>
+              <p className="font-body text-xs text-mauve mt-0.5">Evolução dos seus biomarcadores</p>
+            </div>
+            <ArrowRight size={15} className="text-mauve/40 group-hover:text-sage transition-colors flex-shrink-0" />
+          </button>
+
+          <button
+            onClick={() => setAgendar(true)}
+            className="card-premium p-5 text-left flex items-center gap-4 hover:shadow-md transition-shadow group sm:col-span-2 md:col-span-1">
+            <div className="w-11 h-11 rounded-2xl bg-lavender-light flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+              <CalendarDays size={20} className="text-lavender" />
+            </div>
+            <div className="flex-1">
+              <p className="font-body text-sm font-semibold text-onyx">Agendar consulta ou exame</p>
+              <p className="font-body text-xs text-mauve mt-0.5">Adiciona ao Google, Outlook ou .ics</p>
+            </div>
+            <ArrowRight size={15} className="text-mauve/40 group-hover:text-lavender transition-colors flex-shrink-0" />
+          </button>
+        </motion.div>
+      )}
+
+      {/* Exames recentes */}
+      {!loading && recentExams.length > 0 && (
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+          className="card-premium overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-border/40 flex items-center justify-between">
+            <p className="font-body text-sm font-semibold text-onyx">Exames recentes</p>
+            <button onClick={() => router.push('/dashboard/exams')}
+              className="font-body text-xs text-petal hover:underline">
+              Ver todos →
+            </button>
+          </div>
+          <div className="divide-y divide-border/30">
+            {recentExams.map((exam) => {
+              const cfg  = STATUS_CONFIG[exam.status] ?? STATUS_CONFIG.pending
+              const Icon = cfg.icon
+              return (
+                <button key={exam.id}
+                  onClick={() => router.push('/dashboard/exams/' + exam.id)}
+                  className="w-full flex items-center gap-4 px-5 py-3.5 hover:bg-blush/20 transition-colors text-left">
+                  <div className="w-8 h-8 rounded-xl bg-blush flex items-center justify-center flex-shrink-0">
+                    <FileText size={15} className="text-petal" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-body text-sm font-medium text-onyx truncate">{exam.type ?? 'Exame'}</p>
+                    <p className="font-body text-xs text-mauve">{formatDate(exam.created_at)}</p>
+                  </div>
+                  <span className={`inline-flex items-center gap-1.5 text-xs font-body font-medium px-2.5 py-1 rounded-full flex-shrink-0 ${cfg.bg} ${cfg.color}`}>
+                    <Icon size={10} />
+                    {cfg.label}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </motion.div>
+      )}
+
+      {/* AgendarModal */}
+      <AgendarModal open={agendarOpen} onClose={() => setAgendar(false)} />
+
+      {/* Banner Beta */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+        className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 flex items-start gap-3">
+        <Zap size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
+        <div>
+          <p className="font-body text-xs font-semibold text-amber-800">Versão Beta</p>
+          <p className="font-body text-xs text-amber-700 mt-0.5 leading-relaxed">
+            Você faz parte do grupo de acesso antecipado. Seu feedback é essencial para evoluirmos a plataforma.
+            Use o botão "Reportar problema" sempre que encontrar algo inesperado.
+          </p>
         </div>
-        <div className="lg:col-span-2">
-          <QuickLogCard/>
-        </div>
-      </div>
+      </motion.div>
 
     </div>
   )

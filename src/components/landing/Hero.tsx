@@ -2,23 +2,19 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowRight, ChevronRight } from 'lucide-react'
+import { ArrowRight, ChevronRight, Upload, TrendingUp, FlaskConical } from 'lucide-react'
 
 function fadeUp(delay = 0) {
   return {
     hidden: { opacity: 0, y: 30 },
-    show: {
-      opacity: 1, y: 0,
-      transition: { duration: 0.7, delay, ease: 'easeOut' as const },
-    },
+    show: { opacity: 1, y: 0, transition: { duration: 0.7, delay, ease: 'easeOut' as const } },
   }
 }
 
 const marqueePhrases = [
-  'Ciclo Menstrual', 'Energia & Performance', 'Sono & Recuperação',
-  'Equilíbrio Hormonal', 'Saúde Integral', 'Insights Personalizados',
-  'Fase Folicular', 'Progesterona', 'Ovulação', 'Cortisol',
-  'Biofeedback Feminino', 'Relatórios Mensais',
+  'Hemograma', 'Glicemia', 'Vitamina D', 'Ferritina', 'TSH', 'Colesterol Total',
+  'Triglicerídeos', 'Vitamina B12', 'PCR', 'Insulina', 'Cortisol', 'Creatinina',
+  'Ácido Úrico', 'Albumina', 'Bilirrubina', 'Hormônios', 'Leucócitos', 'Plaquetas',
 ]
 
 export default function Hero() {
@@ -26,27 +22,12 @@ export default function Hero() {
     <section className="relative min-h-screen flex flex-col overflow-hidden gradient-hero">
       {/* Decorative rings */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 80, repeat: Infinity, ease: 'linear' }}
+        <motion.div animate={{ rotate: 360 }} transition={{ duration: 80, repeat: Infinity, ease: 'linear' }}
           className="absolute top-1/2 right-[-10%] -translate-y-1/2 w-[700px] h-[700px] rounded-full"
-          style={{
-            border: '1px solid rgba(194,132,154,0.12)',
-          }}
-        />
-        <motion.div
-          animate={{ rotate: -360 }}
-          transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
+          style={{ border: '1px solid rgba(194,132,154,0.12)' }} />
+        <motion.div animate={{ rotate: -360 }} transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
           className="absolute top-1/2 right-[-6%] -translate-y-1/2 w-[540px] h-[540px] rounded-full"
-          style={{
-            border: '1.5px dashed rgba(168,156,189,0.15)',
-          }}
-        />
-        <div className="absolute top-1/2 right-[6%] -translate-y-1/2 w-[360px] h-[360px] rounded-full"
-          style={{ background: 'radial-gradient(circle, rgba(194,132,154,0.07) 0%, transparent 70%)' }}
-        />
-
-        {/* Blobs */}
+          style={{ border: '1.5px dashed rgba(168,156,189,0.15)' }} />
         <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-petal-light/20 blur-3xl animate-breathe" />
         <div className="absolute -bottom-48 left-[20%] w-[500px] h-[500px] rounded-full bg-lavender-light/25 blur-3xl animate-breathe delay-300" />
       </div>
@@ -62,92 +43,63 @@ export default function Hero() {
                 <span className="w-5 h-5 rounded-full gradient-sintera flex items-center justify-center">
                   <span className="text-white text-[9px]">✦</span>
                 </span>
-                Lançamento 2025 · Versão Beta
+                Acesso Beta · Vagas limitadas
                 <ChevronRight size={12} className="text-petal ml-0.5" />
               </span>
             </motion.div>
 
-            <motion.h1
-              variants={fadeUp(0.2)}
-              initial="hidden"
-              animate="show"
+            <motion.h1 variants={fadeUp(0.2)} initial="hidden" animate="show"
               className="font-display font-semibold leading-[1.05] text-onyx mb-6"
-              style={{ fontSize: 'clamp(2.8rem, 5.5vw, 4.2rem)' }}
-            >
-              O seu corpo tem{' '}
-              <span className="text-gradient italic">ciclos de poder.</span>
+              style={{ fontSize: 'clamp(2.8rem, 5.5vw, 4.2rem)' }}>
+              Seus exames têm{' '}
+              <span className="text-gradient italic">uma história.</span>
               <br />
-              Aprenda a{' '}
+              A SINTERA te{' '}
               <span className="relative inline-block">
-                usá-los.
+                ajuda a lê-la.
                 <svg className="absolute -bottom-1 left-0 w-full" height="6" viewBox="0 0 120 6" preserveAspectRatio="none">
                   <path d="M0 5 Q30 1 60 5 Q90 9 120 5" stroke="#C2849A" strokeWidth="1.8" fill="none" strokeLinecap="round" />
                 </svg>
               </span>
             </motion.h1>
 
-            <motion.p
-              variants={fadeUp(0.32)}
-              initial="hidden"
-              animate="show"
-              className="font-body text-[1.05rem] text-mauve leading-relaxed max-w-[480px] mb-8"
-            >
-              SINTERA transforma seus dados biológicos em inteligência feminina —
-              ciclo, hormônios, energia, sono e performance. Tudo em um lugar feito para você.
+            <motion.p variants={fadeUp(0.32)} initial="hidden" animate="show"
+              className="font-body text-[1.05rem] text-mauve leading-relaxed max-w-[480px] mb-8">
+              Faça upload dos seus laudos laboratoriais em PDF. A IA extrai automaticamente
+              todos os biomarcadores e constrói o histórico longitudinal da sua saúde — de forma
+              clara, organizada e sempre disponível.
             </motion.p>
 
-            <motion.div
-              variants={fadeUp(0.44)}
-              initial="hidden"
-              animate="show"
-              className="flex flex-wrap gap-3 mb-10"
-            >
+            <motion.div variants={fadeUp(0.44)} initial="hidden" animate="show"
+              className="flex flex-wrap gap-3 mb-10">
               <Link href="/onboarding">
                 <button className="inline-flex items-center gap-2 gradient-sintera text-white font-body font-medium px-7 py-3.5 rounded-full hover:opacity-90 active:scale-[0.98] transition-all duration-200 shadow-md text-[0.9rem]">
                   Começar gratuitamente
                   <ArrowRight size={16} />
                 </button>
               </Link>
-              <Link href="/dashboard">
+              <Link href="/login">
                 <button className="inline-flex items-center gap-2 bg-white border border-border text-onyx font-body font-medium px-7 py-3.5 rounded-full hover:border-petal hover:bg-blush transition-all duration-200 text-[0.9rem] shadow-sm">
-                  Ver demonstração
+                  Já tenho conta
                 </button>
               </Link>
             </motion.div>
 
-            <motion.div
-              variants={fadeUp(0.56)}
-              initial="hidden"
-              animate="show"
-              className="flex flex-wrap items-center gap-5"
-            >
-              {/* Avatars */}
-              <div className="flex -space-x-2.5">
-                {['#EDD5DF','#E2D9EE','#C8E2DB','#F8EDF2','#EEE8E1'].map((c, i) => (
-                  <div key={i} className="w-8 h-8 rounded-full border-2 border-white shadow-sm"
-                    style={{ backgroundColor: c, zIndex: 5 - i }}
-                  />
-                ))}
-              </div>
-              <div>
-                <p className="text-sm font-body font-semibold text-onyx leading-tight">+18.000 mulheres</p>
-                <p className="text-xs font-body text-mauve">já transformaram sua saúde</p>
-              </div>
-
-              <div className="h-6 w-px bg-border hidden sm:block" />
-
-              {/* Rating */}
-              <div className="flex items-center gap-1.5">
-                <div className="flex">
-                  {[...Array(5)].map((_, i) => (
-                    <svg key={i} width="14" height="14" viewBox="0 0 14 14" fill="#C9A97A">
-                      <path d="M7 1l1.6 3.3 3.6.5-2.6 2.6.6 3.6L7 9.3l-3.2 1.7.6-3.6L1.8 4.8l3.6-.5z" />
-                    </svg>
-                  ))}
+            {/* 3 pilares */}
+            <motion.div variants={fadeUp(0.56)} initial="hidden" animate="show"
+              className="flex flex-col sm:flex-row gap-4">
+              {[
+                { icon: Upload,      color: 'text-petal',   bg: 'bg-blush',         text: 'Upload do laudo em PDF'         },
+                { icon: FlaskConical, color: 'text-lavender', bg: 'bg-lavender-light', text: 'IA extrai os biomarcadores'     },
+                { icon: TrendingUp,  color: 'text-sage',    bg: 'bg-sage-light',    text: 'Histórico longitudinal organizado' },
+              ].map(({ icon: Icon, color, bg, text }) => (
+                <div key={text} className="flex items-center gap-2.5">
+                  <div className={`w-7 h-7 rounded-lg ${bg} flex items-center justify-center flex-shrink-0`}>
+                    <Icon size={14} className={color} />
+                  </div>
+                  <span className="font-body text-xs text-mauve leading-snug">{text}</span>
                 </div>
-                <span className="text-sm font-body font-medium text-onyx">4.9</span>
-                <span className="text-xs text-mauve font-body">(2.1k avaliações)</span>
-              </div>
+              ))}
             </motion.div>
           </div>
 
@@ -156,14 +108,13 @@ export default function Hero() {
             initial={{ opacity: 0, x: 40, scale: 0.96 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
             transition={{ duration: 0.9, delay: 0.25, ease: 'easeOut' }}
-            className="hidden lg:block relative"
-          >
+            className="hidden lg:block relative">
             <ProductPreview />
           </motion.div>
         </div>
       </div>
 
-      {/* Marquee strip */}
+      {/* Marquee — biomarcadores reais */}
       <div className="relative border-t border-border/50 bg-white/60 backdrop-blur-sm py-4 overflow-hidden marquee-mask">
         <div className="flex gap-0 w-max animate-marquee">
           {[...marqueePhrases, ...marqueePhrases].map((p, i) => (
@@ -179,11 +130,18 @@ export default function Hero() {
 }
 
 function ProductPreview() {
+  const biomarkers = [
+    { name: 'Glicemia',    value: '92',  unit: 'mg/dL', status: 'dentro',  color: 'text-sage',       indicator: '✓' },
+    { name: 'Vitamina D',  value: '18',  unit: 'ng/mL', status: 'abaixo',  color: 'text-blue-500',   indicator: '▼' },
+    { name: 'Ferritina',   value: '14',  unit: 'ng/mL', status: 'abaixo',  color: 'text-blue-500',   indicator: '▼' },
+    { name: 'TSH',         value: '2.1', unit: 'mUI/L', status: 'dentro',  color: 'text-sage',       indicator: '✓' },
+    { name: 'Colesterol',  value: '198', unit: 'mg/dL', status: 'dentro',  color: 'text-sage',       indicator: '✓' },
+  ]
+
   return (
     <div className="relative w-full max-w-[420px] ml-auto">
       {/* Browser-frame card */}
       <div className="card-premium overflow-hidden">
-        {/* Browser bar */}
         <div className="flex items-center gap-2 px-4 py-3 bg-ivory border-b border-border">
           <div className="flex gap-1.5">
             <div className="w-2.5 h-2.5 rounded-full bg-red-300" />
@@ -195,117 +153,84 @@ function ProductPreview() {
           </div>
         </div>
 
-        {/* Dashboard content */}
-        <div className="p-5 bg-cream">
-          {/* Header row */}
-          <div className="flex items-center justify-between mb-5">
+        <div className="p-5 bg-cream space-y-4">
+          {/* Header */}
+          <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-body text-mauve">Bom dia, Sofia 🌸</p>
-              <p className="text-base font-display font-semibold text-onyx">Dia 8 · Fase Folicular</p>
+              <p className="text-xs font-body text-mauve">Bom dia 👋</p>
+              <p className="text-base font-display font-semibold text-onyx">Check-up Anual 2024</p>
             </div>
-            <div className="w-9 h-9 rounded-full gradient-sintera flex items-center justify-center shadow-sm">
-              <span className="text-white text-xs font-display font-bold">S</span>
-            </div>
+            <span className="font-body text-[10px] text-sage bg-sage-light px-2.5 py-1 rounded-full border border-sage/20 font-medium">
+              Analisado
+            </span>
           </div>
 
-          {/* Cycle arc */}
-          <div className="bg-white rounded-2xl p-4 mb-4 border border-border/60">
-            <div className="flex items-center gap-5">
-              <div className="relative w-20 h-20 flex-shrink-0">
-                <svg viewBox="0 0 80 80" className="w-full h-full">
-                  {/* Segments */}
-                  {[
-                    { color: '#EDD5DF', start: 0, length: 0.18 },
-                    { color: '#C2849A', start: 0.18, length: 0.30, active: true },
-                    { color: '#C8E2DB', start: 0.48, length: 0.10 },
-                    { color: '#E2D9EE', start: 0.58, length: 0.42 },
-                  ].map((seg, i) => {
-                    const r = 30, cx = 40, cy = 40
-                    const c = 2 * Math.PI * r
-                    const offset = c * (0.75 - seg.start)
-                    const dash = c * seg.length
-                    return (
-                      <circle key={i} cx={cx} cy={cy} r={r}
-                        fill="none"
-                        stroke={seg.color}
-                        strokeWidth={seg.active ? 9 : 7}
-                        strokeDasharray={`${dash} ${c - dash}`}
-                        strokeDashoffset={offset}
-                        strokeLinecap="round"
-                        style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%' }}
-                      />
-                    )
-                  })}
-                  <circle cx="40" cy="40" r="20" fill="white" />
-                  <text x="40" y="38" textAnchor="middle" fontSize="11" fontWeight="600" fill="#9A6478" fontFamily="serif">8</text>
-                  <text x="40" y="50" textAnchor="middle" fontSize="7" fill="#7A6470" fontFamily="sans-serif">dia</text>
-                </svg>
-              </div>
-              <div className="flex-1">
-                <p className="text-[11px] font-body text-mauve mb-1 uppercase tracking-wider">Fase atual</p>
-                <p className="text-base font-display font-semibold text-onyx mb-0.5">Folicular</p>
-                <p className="text-[11px] font-body text-mauve">Estrogênio ↑ · Alta energia</p>
-                <div className="mt-2 flex gap-1">
-                  {['Menstrual', 'Folicular', 'Ovulação', 'Lútea'].map((p, i) => (
-                    <span key={p} className={`text-[9px] font-body px-1.5 py-0.5 rounded-full ${i === 1 ? 'bg-petal-light text-petal-dark font-medium' : 'bg-ivory text-mauve'}`}>
-                      {p}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Metric chips */}
+          {/* Stats */}
           <div className="grid grid-cols-3 gap-2">
             {[
-              { label: 'Energia', value: '84%', color: '#C9A97A', bg: '#F5F0EC' },
-              { label: 'Sono', value: '7.5h', color: '#A89CBD', bg: '#F0EBF7' },
-              { label: 'Humor', value: '9/10', color: '#C2849A', bg: '#F8EDF2' },
-            ].map((m) => (
+              { label: 'Biomarcadores', value: '24',  color: '#C2849A', bg: '#F8EDF2' },
+              { label: 'Dentro ref.',   value: '18',  color: '#7DAF9E', bg: '#EBF5F1' },
+              { label: 'Fora ref.',     value: '6',   color: '#A89CBD', bg: '#F0EBF7' },
+            ].map(m => (
               <div key={m.label} className="rounded-xl py-2.5 px-2 text-center border border-border/50"
                 style={{ backgroundColor: m.bg }}>
                 <p className="text-base font-display font-semibold" style={{ color: m.color }}>{m.value}</p>
-                <p className="text-[10px] font-body text-mauve">{m.label}</p>
+                <p className="text-[10px] font-body text-mauve leading-tight">{m.label}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Biomarker list */}
+          <div className="bg-white rounded-2xl border border-border/60 overflow-hidden">
+            <div className="px-3 py-2 border-b border-border/40 flex items-center justify-between">
+              <p className="text-[11px] font-body font-semibold text-onyx/60 uppercase tracking-wider">Biomarcadores</p>
+              <p className="text-[10px] font-body text-mauve">5 de 24</p>
+            </div>
+            {biomarkers.map((b, i) => (
+              <div key={b.name} className={`flex items-center gap-2 px-3 py-2 ${i < biomarkers.length - 1 ? 'border-b border-border/30' : ''}`}>
+                <span className="font-body text-xs text-onyx font-medium flex-1">{b.name}</span>
+                <span className="font-body text-xs text-onyx">{b.value}</span>
+                <span className="font-body text-[10px] text-mauve w-10">{b.unit}</span>
+                <span className={`font-body text-xs font-semibold w-4 text-right ${b.color}`}>{b.indicator}</span>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Floating insight card */}
+      {/* Floating card — histórico */}
       <motion.div
         animate={{ y: [0, -7, 0] }}
         transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute -left-10 top-1/3 glass rounded-2xl p-3 shadow-xl w-44"
-      >
-        <div className="flex items-center gap-2 mb-1.5">
-          <span className="text-base">⚡</span>
-          <span className="text-[11px] font-body font-semibold text-onyx">Alta performance</span>
+        className="absolute -left-10 top-1/4 glass rounded-2xl p-3 shadow-xl w-44">
+        <p className="text-[11px] font-body font-semibold text-onyx mb-2">Vitamina D — histórico</p>
+        <div className="flex items-end gap-1 h-8">
+          {[32, 28, 22, 18].map((v, i) => (
+            <div key={i} className="flex-1 rounded-sm"
+              style={{ height: `${(v / 36) * 100}%`, backgroundColor: i === 3 ? '#A89CBD' : '#E2D9EE' }} />
+          ))}
         </div>
-        <p className="text-[10px] font-body text-mauve leading-snug">
-          Ótimo dia para treinos intensos e decisões importantes
-        </p>
-        <div className="mt-2 flex items-center gap-1">
-          <div className="flex-1 h-1 bg-ivory rounded-full overflow-hidden">
-            <div className="w-4/5 h-full rounded-full" style={{ background: 'linear-gradient(90deg,#C2849A,#A89CBD)' }} />
-          </div>
-          <span className="text-[9px] font-body text-mauve">84%</span>
+        <div className="flex justify-between mt-1">
+          <span className="text-[9px] font-body text-mauve">2021</span>
+          <span className="text-[9px] font-body text-blue-500 font-medium">2024: 18</span>
         </div>
       </motion.div>
 
-      {/* Floating ovulation card */}
+      {/* Floating card — upload */}
       <motion.div
         animate={{ y: [0, 7, 0] }}
         transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-        className="absolute -right-8 bottom-16 glass rounded-2xl p-3 shadow-xl w-40"
-      >
-        <div className="flex items-center gap-1.5 mb-1">
-          <span className="w-5 h-5 rounded-full bg-sage-light flex items-center justify-center text-[10px]">🌿</span>
-          <span className="text-[10px] font-body font-semibold text-onyx">Próxima ovulação</span>
+        className="absolute -right-8 bottom-16 glass rounded-2xl p-3 shadow-xl w-40">
+        <div className="flex items-center gap-1.5 mb-1.5">
+          <div className="w-5 h-5 rounded-lg gradient-sintera flex items-center justify-center flex-shrink-0">
+            <Upload size={10} className="text-white" />
+          </div>
+          <span className="text-[10px] font-body font-semibold text-onyx">PDF analisado</span>
         </div>
-        <p className="text-lg font-display font-bold text-sage">5 dias</p>
-        <p className="text-[9px] font-body text-mauve">Janela fértil: 13–17 jun</p>
+        <p className="text-[10px] font-body text-mauve leading-snug">24 biomarcadores extraídos automaticamente</p>
+        <div className="mt-2 h-1 bg-ivory rounded-full overflow-hidden">
+          <div className="w-full h-full rounded-full gradient-sintera" />
+        </div>
       </motion.div>
     </div>
   )

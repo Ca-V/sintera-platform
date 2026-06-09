@@ -1,173 +1,194 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { useUser } from '@/context/UserContext'
-import { Edit3 } from 'lucide-react'
-import ProfileEditor from '@/components/profile/ProfileEditor'
+import { createClient } from '@/lib/supabase/client'
+import { Edit3, Check, X, Loader2, FileText, FlaskConical, CalendarDays } from 'lucide-react'
 
-const GOALS = [
-  { id: 'cycle',       emoji: '🌙', label: 'Entender meu ciclo' },
-  { id: 'energy',      emoji: '⚡', label: 'Maximizar energia' },
-  { id: 'sleep',       emoji: '✨', label: 'Dormir melhor' },
-  { id: 'performance', emoji: '🔥', label: 'Alta performance' },
-  { id: 'hormones',    emoji: '🧬', label: 'Equilíbrio hormonal' },
-  { id: 'mood',        emoji: '🌸', label: 'Saúde emocional' },
-  { id: 'fertility',   emoji: '🌱', label: 'Planejamento familiar' },
-  { id: 'nutrition',   emoji: '🥗', label: 'Nutrição por fase' },
-]
+interface Stats {
+  totalExams: number
+  totalBiomarkers: number
+  memberSince: string | null
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+}
 
 export default function ProfilePage() {
-  const { user, profile } = useUser()
-  const [editing, setEditing] = useState(false)
+  const { user, profile, updateProfile } = useUser()
+  const supabase = useRef(createClient()).current
+
+  const [stats, setStats]         = useState<Stats | null>(null)
+  const [editingName, setEditName] = useState(false)
+  const [nameValue, setNameValue]  = useState('')
+  const [savingName, setSaving]    = useState(false)
+  const [nameError, setNameError]  = useState<string | null>(null)
 
   const displayName = profile?.name ?? 'Usuária'
-  const initials = displayName.charAt(0).toUpperCase()
+  const initials    = displayName.charAt(0).toUpperCase()
+
+  useEffect(() => {
+    if (!user) return
+    loadStats()
+  }, [user])
+
+  async function loadStats() {
+    const [examsRes, bioRes] = await Promise.all([
+      supabase.from('exams').select('id', { count: 'exact', head: true }).eq('user_id', user!.id),
+      supabase.from('biomarkers').select('id', { count: 'exact', head: true }).eq('user_id', user!.id).eq('synthetic', false),
+    ])
+    setStats({
+      totalExams:     examsRes.count ?? 0,
+      totalBiomarkers: bioRes.count ?? 0,
+      memberSince:    user?.created_at ?? null,
+    })
+  }
+
+  function startEdit() {
+    setNameValue(profile?.name ?? '')
+    setNameError(null)
+    setEditName(true)
+  }
+
+  async function saveName() {
+    if (!nameValue.trim()) return
+    setSaving(true)
+    setNameError(null)
+    try {
+      const res = await fetch('/api/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: nameValue.trim() }),
+      })
+      if (!res.ok) throw new Error('Erro ao salvar')
+      const saved = await res.json()
+      updateProfile(saved)
+      setEditName(false)
+    } catch {
+      setNameError('Não foi possível salvar. Tente novamente.')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Meu Perfil</h1>
-          <p className="font-body text-sm text-mauve">
-            {editing ? 'Edite seus dados e salve ao terminar' : 'Gerencie seus dados pessoais e preferências'}
-          </p>
-        </div>
-        {!editing && (
-          <button
-            onClick={() => setEditing(true)}
-            className="flex items-center gap-2 text-sm font-body font-medium text-petal-dark bg-blush border border-petal-light px-4 py-2 rounded-full hover:shadow-sm transition-all flex-shrink-0"
-          >
-            <Edit3 size={14} /> Editar
-          </button>
-        )}
-      </div>
 
-      {/* Avatar card — always visible */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="card-premium p-6 flex items-center gap-5"
-      >
-        <div className="w-16 h-16 rounded-full gradient-sintera flex items-center justify-center shadow-lg flex-shrink-0">
-          <span className="text-white font-display text-2xl font-semibold">{initials}</span>
-        </div>
-        <div>
-          <p className="font-display text-xl font-semibold text-onyx">{displayName}</p>
-          <p className="font-body text-sm text-mauve">{user?.email}</p>
-          <span className="inline-flex items-center gap-1.5 mt-1.5 text-xs font-body font-medium text-petal-dark bg-blush border border-petal-light px-3 py-0.5 rounded-full">
-            Fase Folicular · Dia 8
-          </span>
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+        <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Meu Perfil</h1>
+        <p className="font-body text-sm text-mauve">Seus dados na SINTERA</p>
+      </motion.div>
+
+      {/* Avatar + info principal */}
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+        className="card-premium p-6">
+        <div className="flex items-center gap-5">
+          <div className="w-16 h-16 rounded-full gradient-sintera flex items-center justify-center shadow-lg flex-shrink-0">
+            <span className="text-white font-display text-2xl font-semibold">{initials}</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            {editingName ? (
+              <div className="flex items-center gap-2">
+                <input
+                  autoFocus
+                  value={nameValue}
+                  onChange={e => setNameValue(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') saveName(); if (e.key === 'Escape') setEditName(false) }}
+                  className="font-display text-xl font-semibold text-onyx bg-ivory border border-petal/40 rounded-lg px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-petal/40 min-w-0 flex-1"
+                />
+                <button onClick={saveName} disabled={savingName}
+                  className="text-sage hover:text-sage/70 transition-colors flex-shrink-0">
+                  {savingName ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                </button>
+                <button onClick={() => setEditName(false)}
+                  className="text-mauve hover:text-onyx transition-colors flex-shrink-0">
+                  <X size={16} />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 group">
+                <p className="font-display text-xl font-semibold text-onyx truncate">{displayName}</p>
+                <button onClick={startEdit}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity text-mauve/50 hover:text-petal flex-shrink-0">
+                  <Edit3 size={14} />
+                </button>
+              </div>
+            )}
+            {nameError && <p className="font-body text-xs text-red-500 mt-1">{nameError}</p>}
+            <p className="font-body text-sm text-mauve mt-0.5">{user?.email}</p>
+            {stats?.memberSince && (
+              <p className="font-body text-xs text-mauve/50 mt-1">
+                Membro desde {formatDate(stats.memberSince)}
+              </p>
+            )}
+          </div>
         </div>
       </motion.div>
 
-      {/* Edit mode */}
-      {editing && profile && (
-        <ProfileEditor
-          profile={profile}
-          onCancel={() => setEditing(false)}
-          onSaved={() => setEditing(false)}
-        />
-      )}
-
-      {/* Edit mode but profile hasn't loaded yet */}
-      {editing && !profile && (
-        <p className="font-body text-sm text-mauve text-center py-8">
-          Carregando perfil…
-        </p>
-      )}
-
-      {/* View mode */}
-      {!editing && (
-        <>
-          {/* Info grid */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="card-premium p-6 space-y-5"
-          >
-            <h2 className="font-body text-sm font-semibold text-onyx/60 uppercase tracking-widest">
-              Dados pessoais
-            </h2>
-            <div className="grid sm:grid-cols-2 gap-4">
-              {[
-                { label: 'Nome',         value: profile?.name ?? '—' },
-                { label: 'Faixa etária', value: profile?.age_range ?? '—' },
-                { label: 'Ciclo médio',  value: profile?.cycle_length ? `${profile.cycle_length} dias` : '—' },
-                { label: 'Regularidade', value: profile?.cycle_regularity ?? '—' },
-              ].map(f => (
-                <div key={f.label} className="flex flex-col gap-1 p-3 bg-ivory rounded-xl">
-                  <span className="text-[10px] font-body text-mauve uppercase tracking-wider">{f.label}</span>
-                  <span className="text-sm font-body font-medium text-onyx">{f.value}</span>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* Goals */}
-          {(profile?.goals?.length ?? 0) > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="card-premium p-6"
-            >
-              <h2 className="font-body text-sm font-semibold text-onyx/60 uppercase tracking-widest mb-4">
-                Meus objetivos
-              </h2>
-              <div className="flex flex-wrap gap-2">
-                {(profile!.goals ?? []).map(id => {
-                  const g = GOALS.find(x => x.id === id)
-                  if (!g) return null
-                  return (
-                    <span
-                      key={id}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-body font-medium bg-blush text-petal-dark border border-petal-light"
-                    >
-                      {g.emoji} {g.label}
-                    </span>
-                  )
-                })}
+      {/* Estatísticas */}
+      {stats && (
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          className="grid grid-cols-3 gap-3">
+          {[
+            { icon: FileText,      value: stats.totalExams,      label: 'Exames',       color: 'text-petal',   bg: 'bg-blush' },
+            { icon: FlaskConical,  value: stats.totalBiomarkers, label: 'Biomarcadores', color: 'text-lavender', bg: 'bg-lavender-light' },
+            { icon: CalendarDays,  value: stats.memberSince ? Math.max(1, Math.floor((Date.now() - new Date(stats.memberSince).getTime()) / (1000 * 60 * 60 * 24))) : 0,
+              label: 'Dias na SINTERA', color: 'text-sage', bg: 'bg-sage-light' },
+          ].map(({ icon: Icon, value, label, color, bg }) => (
+            <div key={label} className="card-premium p-4 text-center">
+              <div className={`w-8 h-8 rounded-xl ${bg} flex items-center justify-center mx-auto mb-2`}>
+                <Icon size={15} className={color} />
               </div>
-            </motion.div>
-          )}
-
-          {/* Notifications (read-only view) */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="card-premium p-6"
-          >
-            <h2 className="font-body text-sm font-semibold text-onyx/60 uppercase tracking-widest mb-4">
-              Notificações
-            </h2>
-            <div className="flex flex-col gap-3">
-              {[
-                { label: 'Lembretes diários de registro', active: profile?.pref_daily_reminder ?? true },
-                { label: 'Alertas de transição de fase',  active: profile?.pref_phase_alerts ?? true },
-                { label: 'Insights semanais por e-mail',  active: profile?.pref_email_insights ?? false },
-              ].map(p => (
-                <div
-                  key={p.label}
-                  className="flex items-center justify-between py-2 border-b border-border last:border-0"
-                >
-                  <span className="text-sm font-body text-onyx/80">{p.label}</span>
-                  <span
-                    className={`text-xs font-body font-medium px-2.5 py-1 rounded-full ${
-                      p.active ? 'bg-sage-light text-sage' : 'bg-ivory text-mauve'
-                    }`}
-                  >
-                    {p.active ? 'Ativo' : 'Inativo'}
-                  </span>
-                </div>
-              ))}
+              <p className="font-display text-xl font-bold text-onyx">{value}</p>
+              <p className="font-body text-[11px] text-mauve mt-0.5 leading-tight">{label}</p>
             </div>
-          </motion.div>
-        </>
+          ))}
+        </motion.div>
       )}
+
+      {/* Informações da conta */}
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+        className="card-premium p-6 space-y-4">
+        <h2 className="font-body text-xs font-semibold text-onyx/50 uppercase tracking-wider">Informações da conta</h2>
+
+        <div className="grid sm:grid-cols-2 gap-3">
+          <div className="p-3 bg-ivory rounded-xl">
+            <p className="font-body text-[10px] text-mauve uppercase tracking-wider mb-1">Nome</p>
+            <p className="font-body text-sm font-medium text-onyx">{profile?.name ?? '—'}</p>
+          </div>
+          <div className="p-3 bg-ivory rounded-xl">
+            <p className="font-body text-[10px] text-mauve uppercase tracking-wider mb-1">E-mail</p>
+            <p className="font-body text-sm font-medium text-onyx truncate">{user?.email ?? '—'}</p>
+          </div>
+          <div className="p-3 bg-ivory rounded-xl">
+            <p className="font-body text-[10px] text-mauve uppercase tracking-wider mb-1">Plano</p>
+            <p className="font-body text-sm font-medium text-onyx">
+              Beta <span className="text-amber-600 text-xs">· Acesso antecipado</span>
+            </p>
+          </div>
+          <div className="p-3 bg-ivory rounded-xl">
+            <p className="font-body text-[10px] text-mauve uppercase tracking-wider mb-1">Conta criada</p>
+            <p className="font-body text-sm font-medium text-onyx">
+              {stats?.memberSince ? formatDate(stats.memberSince) : '—'}
+            </p>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Link para configurações */}
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+        <a href="/dashboard/configuracoes"
+          className="block card-premium p-4 flex items-center justify-between hover:shadow-md transition-shadow">
+          <div>
+            <p className="font-body text-sm font-semibold text-onyx">Configurações da conta</p>
+            <p className="font-body text-xs text-mauve mt-0.5">Alterar senha, privacidade, excluir conta</p>
+          </div>
+          <span className="font-body text-sm text-petal">→</span>
+        </a>
+      </motion.div>
+
     </div>
   )
 }

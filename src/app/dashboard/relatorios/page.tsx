@@ -1,71 +1,57 @@
-import { BarChart3, Download, Calendar, TrendingUp } from 'lucide-react'
+'use client'
 
-const reports = [
-  { month: 'Maio 2025',  status: 'available', highlights: ['Fase Folicular estável', 'Energia +15% vs. abril', 'Sono médio: 7.4h'] },
-  { month: 'Abril 2025', status: 'available', highlights: ['Ciclo de 27 dias', 'Cortisol elevado na lútea', 'Hidratação abaixo da meta'] },
-  { month: 'Março 2025', status: 'available', highlights: ['Ciclo de 29 dias', 'Energia consistente', '3 insights gerados pela IA'] },
-]
+import { motion } from 'framer-motion'
+import { BarChart3, FileText, ArrowRight } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 export default function RelatoriosPage() {
+  const router = useRouter()
+
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div>
+    <div className="max-w-2xl mx-auto space-y-6">
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Relatórios</h1>
-        <p className="font-body text-sm text-mauve">Resumos mensais com tendências, padrões e insights da IA</p>
-      </div>
+        <p className="font-body text-sm text-mauve">Resumos consolidados dos seus dados de saúde</p>
+      </motion.div>
 
-      {/* Summary cards */}
-      <div className="grid sm:grid-cols-3 gap-4">
-        {[
-          { icon: Calendar,    label: 'Ciclos monitorados', value: '3', color: 'text-petal',   bg: 'bg-blush' },
-          { icon: TrendingUp,  label: 'Tendência geral',    value: '↑ Ótima', color: 'text-sage', bg: 'bg-sage-light' },
-          { icon: BarChart3,   label: 'Insights gerados',   value: '14',  color: 'text-lavender', bg: 'bg-lavender-light' },
-        ].map(s => (
-          <div key={s.label} className="card-premium p-5 flex items-center gap-4">
-            <div className={`w-10 h-10 rounded-xl ${s.bg} flex items-center justify-center flex-shrink-0`}>
-              <s.icon size={18} className={s.color} />
-            </div>
-            <div>
-              <p className="text-xs font-body text-mauve">{s.label}</p>
-              <p className={`font-display text-xl font-semibold ${s.color}`}>{s.value}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Monthly reports */}
-      <div className="flex flex-col gap-4">
-        {reports.map((r, i) => (
-          <div key={r.month} className="card-premium p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h3 className="font-display text-lg font-semibold text-onyx">{r.month}</h3>
-                <span className="text-xs font-body text-sage font-medium bg-sage-light px-2.5 py-0.5 rounded-full">
-                  Disponível
-                </span>
-              </div>
-              <button className="flex items-center gap-2 text-xs font-body font-medium text-petal hover:underline">
-                <Download size={13} /> Baixar PDF
-              </button>
-            </div>
-            <div className="grid sm:grid-cols-3 gap-2">
-              {r.highlights.map(h => (
-                <div key={h} className="flex items-start gap-2 p-3 bg-ivory rounded-xl">
-                  <span className="text-petal text-[10px] mt-0.5 flex-shrink-0">✦</span>
-                  <span className="text-xs font-body text-onyx/75">{h}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="card-dark p-5 text-center">
-        <p className="font-body text-sm font-semibold text-white mb-1">Relatórios com IA — Em breve</p>
-        <p className="font-body text-xs text-white/50">
-          Análise automática de biomarcadores, tendências longitudinais e recomendações personalizadas geradas pela IA da SINTERA.
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+        className="card-premium p-10 text-center">
+        <div className="w-16 h-16 rounded-2xl gradient-sintera-soft flex items-center justify-center mx-auto mb-5">
+          <BarChart3 size={28} className="text-petal" />
+        </div>
+        <h2 className="font-display text-xl font-semibold text-onyx mb-2">Em desenvolvimento</h2>
+        <p className="font-body text-sm text-mauve max-w-sm mx-auto leading-relaxed">
+          Os relatórios consolidados — resumos periódicos dos seus biomarcadores, evolução
+          e exportações completas — estão sendo preparados para o próximo ciclo de desenvolvimento.
         </p>
-      </div>
+      </motion.div>
+
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+        className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <button onClick={() => router.push('/dashboard/exams')}
+          className="card-premium p-5 text-left flex items-center gap-4 hover:shadow-md transition-shadow group">
+          <div className="w-10 h-10 rounded-2xl bg-blush flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+            <FileText size={18} className="text-petal" />
+          </div>
+          <div className="flex-1">
+            <p className="font-body text-sm font-semibold text-onyx">Exportar exame individual</p>
+            <p className="font-body text-xs text-mauve mt-0.5">CSV ou PDF por exame</p>
+          </div>
+          <ArrowRight size={14} className="text-mauve/40 group-hover:text-petal transition-colors flex-shrink-0" />
+        </button>
+
+        <button onClick={() => router.push('/dashboard/historico')}
+          className="card-premium p-5 text-left flex items-center gap-4 hover:shadow-md transition-shadow group">
+          <div className="w-10 h-10 rounded-2xl bg-sage-light flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+            <BarChart3 size={18} className="text-sage" />
+          </div>
+          <div className="flex-1">
+            <p className="font-body text-sm font-semibold text-onyx">Histórico de biomarcadores</p>
+            <p className="font-body text-xs text-mauve mt-0.5">Evolução longitudinal dos resultados</p>
+          </div>
+          <ArrowRight size={14} className="text-mauve/40 group-hover:text-sage transition-colors flex-shrink-0" />
+        </button>
+      </motion.div>
     </div>
   )
 }

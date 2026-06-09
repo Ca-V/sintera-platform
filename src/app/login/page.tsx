@@ -66,9 +66,9 @@ export default function LoginPage() {
           </div>
           <p className="font-display text-4xl font-semibold tracking-[0.25em] mb-6">SINTERA</p>
           <p className="font-display text-2xl font-light leading-snug mb-4 italic">
-            "Seu corpo tem ciclos<br/>de poder. Aprenda a<br/>usá-los."
+            "Seus exames têm<br/>uma história.<br/>Aprenda a lê-la."
           </p>
-          <p className="font-body text-white/60 text-sm">Inteligência Preventiva Feminina</p>
+          <p className="font-body text-white/60 text-sm">Organize seus laudos com inteligência artificial</p>
         </motion.div>
       </div>
 
@@ -120,7 +120,7 @@ export default function LoginPage() {
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium text-onyx/80 font-body">Senha</label>
-                <Link href="#" className="text-xs font-body text-petal hover:underline">Esqueci minha senha</Link>
+                <Link href="/recuperar-senha" className="text-xs font-body text-petal hover:underline">Esqueci minha senha</Link>
               </div>
               <div className="relative">
                 <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-mauve"/>

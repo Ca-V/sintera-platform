@@ -6,8 +6,12 @@ import { motion } from 'framer-motion'
 import {
   ArrowLeft, FileText, Loader2, RefreshCw, Zap,
   TrendingUp, TrendingDown, Minus, HelpCircle, AlertCircle,
+  Download, Printer, ChevronDown, CalendarDays,
+  Pencil, Check, X, Flag,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import FeedbackModal from '@/components/FeedbackModal'
+import AgendarModal from '@/components/AgendarModal'
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -19,6 +23,7 @@ interface Exam {
   page_count: number | null
   created_at: string
   error_reason: string | null
+  text_truncated: boolean | null
 }
 
 interface Biomarker {
@@ -76,11 +81,12 @@ function calcExperimentalIndex(bms: Biomarker[]): { numerator: number; denominat
 }
 
 function IndexCard({ index }: { index: { numerator: number; denominator: number; pct: number } }) {
-  const color = index.pct >= 80 ? 'text-sage' : index.pct >= 60 ? 'text-amber-600' : 'text-orange-500'
-  const bg    = index.pct >= 80 ? 'bg-sage-light border-sage/30' : index.pct >= 60 ? 'bg-amber-50 border-amber-200' : 'bg-orange-50 border-orange-200'
+  const color    = index.pct >= 80 ? 'text-sage' : index.pct >= 60 ? 'text-amber-600' : 'text-orange-500'
+  const bg       = index.pct >= 80 ? 'bg-sage-light border-sage/30' : index.pct >= 60 ? 'bg-amber-50 border-amber-200' : 'bg-orange-50 border-orange-200'
+  const [tip, setTip] = useState(false)
   return (
     <div className={`rounded-2xl border px-5 py-4 ${bg}`}>
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-0.5">
             <span className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Proporção dentro da referência</span>
@@ -88,6 +94,32 @@ function IndexCard({ index }: { index: { numerator: number; denominator: number;
           </div>
           <p className={`font-display text-3xl font-bold ${color}`}>{index.pct}%</p>
           <p className="font-body text-xs text-mauve/70 mt-0.5">{index.numerator} de {index.denominator} biomarcadores dentro da referência</p>
+        </div>
+        {/* Tooltip — O que é isso? */}
+        <div className="relative flex-shrink-0">
+          <button
+            onClick={() => setTip(t => !t)}
+            className="w-6 h-6 rounded-full bg-white/70 border border-current/20 flex items-center justify-center text-mauve/60 hover:text-onyx transition-colors"
+            aria-label="O que é este índice?">
+            <HelpCircle size={14} />
+          </button>
+          {tip && (
+            <div className="absolute right-0 top-8 z-20 w-72 bg-white rounded-2xl shadow-xl border border-border p-4">
+              <p className="font-body text-xs font-semibold text-onyx mb-2">O que é a Proporção dentro da referência?</p>
+              <p className="font-body text-xs text-mauve leading-relaxed mb-2">
+                É uma contagem simples: de todos os biomarcadores numéricos com referência impressa neste laudo, quantos estão dentro da faixa informada pelo laboratório.
+              </p>
+              <p className="font-body text-xs text-mauve leading-relaxed mb-2">
+                <strong className="text-onyx">Importante:</strong> cada laboratório usa referências próprias. Um mesmo valor pode estar "dentro" em um laudo e "fora" em outro.
+              </p>
+              <p className="font-body text-xs text-amber-700 bg-amber-50 rounded-xl px-3 py-2 leading-relaxed">
+                Esta métrica não representa diagnóstico, risco ou estado geral de saúde. Não substitui avaliação médica.
+              </p>
+              <button onClick={() => setTip(false)} className="mt-2 w-full text-center font-body text-xs text-mauve hover:text-petal transition-colors">
+                Fechar
+              </button>
+            </div>
+          )}
         </div>
       </div>
       <p className="font-body text-[11px] text-mauve/50 mt-3 leading-relaxed">
@@ -139,13 +171,135 @@ export default function ExamDetailPage() {
   const [loading, setLoading]     = useState(true)
   const [analyzing, setAnalyzing] = useState(false)
   const [analyzeError, setAnalyzeError] = useState<string | null>(null)
+  const [exportOpen, setExportOpen]     = useState(false)
+  const [agendarOpen, setAgendarOpen]   = useState(false)
 
-  useEffect(() => { loadData() }, [examId])
+  // ── Renomear exame ───────────────────────────────────────────────────────
+  const [editingName, setEditingName]   = useState(false)
+  const [nameValue, setNameValue]       = useState('')
+  const [savingName, setSavingName]     = useState(false)
+
+  // ── Editar data do exame ──────────────────────────────────────────────────
+  const [editingDate, setEditingDate]   = useState(false)
+  const [dateValue, setDateValue]       = useState('')
+  const [savingDate, setSavingDate]     = useState(false)
+
+  function startEditDate() {
+    const current = (exam as unknown as { exam_date?: string | null })?.exam_date
+    setDateValue(current ?? new Date().toISOString().split('T')[0])
+    setEditingDate(true)
+  }
+
+  async function saveDate() {
+    if (!exam || !dateValue) return
+    setSavingDate(true)
+    await supabase.from('exams').update({ exam_date: dateValue } as never).eq('id', exam.id)
+    setExam(prev => prev ? { ...prev, exam_date: dateValue } as never : prev)
+    setEditingDate(false)
+    setSavingDate(false)
+  }
+
+  function startEditName() {
+    setNameValue(exam?.type ?? '')
+    setEditingName(true)
+  }
+
+  async function saveName() {
+    if (!exam || !nameValue.trim()) return
+    setSavingName(true)
+    await supabase.from('exams').update({ type: nameValue.trim() } as never).eq('id', exam.id)
+    setExam(prev => prev ? { ...prev, type: nameValue.trim() } : prev)
+    setEditingName(false)
+    setSavingName(false)
+  }
+
+  function cancelEditName() {
+    setEditingName(false)
+    setNameValue('')
+  }
+
+  // ── Reportar problema ────────────────────────────────────────────────────
+  const [reportOpen, setReportOpen]     = useState(false)
+  const [reportText, setReportText]     = useState('')
+  const [reportSent, setReportSent]     = useState(false)
+  const [reportLoading, setReportLoading] = useState(false)
+
+  async function submitReport() {
+    if (!reportText.trim()) return
+    setReportLoading(true)
+    try {
+      await fetch('/api/events', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event_name: 'problema_reportado',
+          metadata: {
+            exam_id:     examId,
+            exam_type:   exam?.type ?? '',
+            descricao:   reportText.trim(),
+            categoria:   'erro_extracao',
+          },
+        }),
+      })
+      setReportSent(true)
+      setReportText('')
+      setTimeout(() => { setReportOpen(false); setReportSent(false) }, 2500)
+    } catch {
+      setReportLoading(false)
+    } finally {
+      setReportLoading(false)
+    }
+  }
+
+  // ── Export CSV ───────────────────────────────────────────────────────────
+  function exportCSV() {
+    if (!exam || biomarkers.length === 0) return
+    const header = ['Biomarcador', 'Resultado', 'Unidade', 'Tipo', 'Ref. Mínima', 'Ref. Máxima', 'Situação', 'Fonte da Referência']
+    const rows = biomarkers.map(b => {
+      const resultado = b.result_type === 'qualitative' ? (b.value_text ?? '') : (b.value !== null ? String(b.value) : '')
+      const situacao  = b.interpretation?.replace(/_/g, ' ') ?? ''
+      return [
+        `"${b.name}"`,
+        `"${resultado}"`,
+        `"${b.unit ?? ''}"`,
+        `"${b.result_type ?? ''}"`,
+        b.reference_min !== null ? String(b.reference_min) : '',
+        b.reference_max !== null ? String(b.reference_max) : '',
+        `"${situacao}"`,
+        `"${b.reference_source ?? ''}"`,
+      ].join(',')
+    })
+    const csv  = [header.join(','), ...rows].join('\n')
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href     = url
+    a.download = `sintera_${(exam.type ?? 'exame').replace(/\s+/g, '_')}_${formatDate(exam.created_at).replace(/\s/g, '_')}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+    setExportOpen(false)
+  }
+
+  // ── Export PDF (impressão) ────────────────────────────────────────────────
+  function exportPDF() {
+    setExportOpen(false)
+    setTimeout(() => window.print(), 150)
+  }
+
+  useEffect(() => {
+    loadData()
+    // Tracking P2 — exam_detail_viewed
+    fetch('/api/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event_name: 'exam_detail_viewed', metadata: { exam_id: examId } }),
+    }).catch(() => {})
+  }, [examId])
 
   async function loadData() {
     setLoading(true)
     const [{ data: examData }, { data: bioData }, { data: logData }] = await Promise.all([
-      supabase.from('exams').select('id,type,status,pdf_quality,page_count,created_at,error_reason')
+      supabase.from('exams').select('id,type,status,pdf_quality,page_count,created_at,error_reason,text_truncated')
         .eq('id', examId).single(),
       supabase.from('biomarkers')
         .select('id,name,value,value_text,unit,reference_min,reference_max,interpretation,result_type,range_extracted,reference_source,source')
@@ -172,6 +326,14 @@ export default function ExamDetailPage() {
       const data = await res.json() as { error?: string; code?: string }
       if (!res.ok) throw new Error(data.error ?? 'Erro desconhecido')
       await loadData()
+      // Tracking P2 — exam_analyzed_success + incrementa contagem para FeedbackModal
+      fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event_name: 'exam_analyzed_success', metadata: { exam_id: examId } }),
+      }).catch(() => {})
+      const prev = parseInt(localStorage.getItem('sintera_analyses_count') ?? '0')
+      localStorage.setItem('sintera_analyses_count', String(prev + 1))
     } catch (err: unknown) {
       setAnalyzeError(err instanceof Error ? err.message : 'Falha de conexão.')
     } finally {
@@ -201,9 +363,28 @@ export default function ExamDetailPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-5">
 
+      {/* Cabeçalho de impressão — visível apenas no print */}
+      <div className="print-header hidden">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+          <span style={{ fontFamily: 'serif', fontSize: '18px', fontWeight: '600', letterSpacing: '0.15em' }}>SINTERA</span>
+          <span style={{ fontSize: '11px', color: '#888' }}>Relatório de Exame</span>
+        </div>
+        <p style={{ fontSize: '11px', color: '#555', margin: 0 }}>
+          {exam?.type ?? 'Exame'} · {exam ? formatDate(exam.created_at) : ''}
+          {exam?.page_count ? ` · ${exam.page_count} páginas` : ''}
+        </p>
+      </div>
+
+      {/* Rodapé de impressão — visível apenas no print */}
+      <div className="print-footer hidden">
+        A SINTERA organiza e exibe dados de laudos laboratoriais. Não oferece diagnóstico, interpretação clínica ou recomendações médicas.
+        Os dados exibidos são reprodução estruturada do laudo original. Sempre consulte seu médico.
+        Impresso em {new Date().toLocaleDateString('pt-BR')}.
+      </div>
+
       {/* Voltar */}
       <button onClick={() => router.push('/dashboard/exams')}
-        className="flex items-center gap-2 text-mauve hover:text-petal transition-colors text-sm font-body">
+        className="flex items-center gap-2 text-mauve hover:text-petal transition-colors text-sm font-body print:hidden">
         <ArrowLeft size={16} /> Voltar
       </button>
 
@@ -216,13 +397,63 @@ export default function ExamDetailPage() {
               <FileText size={22} className="text-petal" />
             </div>
             <div className="min-w-0">
-              <h1 className="font-display text-xl font-semibold text-onyx truncate">
-                {exam?.type ?? 'Exame'}
-              </h1>
-              <p className="font-body text-sm text-mauve mt-0.5">
-                {exam ? formatDate(exam.created_at) : ''}
-                {exam?.page_count ? ` · ${exam.page_count} páginas` : ''}
-              </p>
+              {editingName ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    autoFocus
+                    value={nameValue}
+                    onChange={e => setNameValue(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') saveName(); if (e.key === 'Escape') cancelEditName() }}
+                    className="font-display text-xl font-semibold text-onyx bg-ivory border border-petal/40 rounded-lg px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-petal/40 min-w-0 w-full"
+                  />
+                  <button onClick={saveName} disabled={savingName}
+                    className="text-sage hover:text-sage/70 transition-colors flex-shrink-0">
+                    {savingName ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />}
+                  </button>
+                  <button onClick={cancelEditName} className="text-mauve hover:text-onyx transition-colors flex-shrink-0">
+                    <X size={15} />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 group/name">
+                  <h1 className="font-display text-xl font-semibold text-onyx truncate">
+                    {exam?.type ?? 'Exame'}
+                  </h1>
+                  <button onClick={startEditName}
+                    className="opacity-0 group-hover/name:opacity-100 transition-opacity text-mauve/50 hover:text-petal flex-shrink-0 print:hidden">
+                    <Pencil size={13} />
+                  </button>
+                </div>
+              )}
+              {/* Data editável */}
+              {editingDate ? (
+                <div className="flex items-center gap-2 mt-0.5">
+                  <input
+                    type="date"
+                    value={dateValue}
+                    onChange={e => setDateValue(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') saveDate(); if (e.key === 'Escape') setEditingDate(false) }}
+                    className="font-body text-sm text-onyx bg-ivory border border-petal/40 rounded-lg px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-petal/40"
+                  />
+                  <button onClick={saveDate} disabled={savingDate} className="text-sage hover:text-sage/70 transition-colors flex-shrink-0">
+                    {savingDate ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+                  </button>
+                  <button onClick={() => setEditingDate(false)} className="text-mauve hover:text-onyx transition-colors flex-shrink-0">
+                    <X size={13} />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 group/date mt-0.5">
+                  <p className="font-body text-sm text-mauve">
+                    {exam ? formatDate((exam as unknown as { exam_date?: string | null }).exam_date ?? exam.created_at) : ''}
+                    {exam?.page_count ? ` · ${exam.page_count} páginas` : ''}
+                  </p>
+                  <button onClick={startEditDate}
+                    className="opacity-0 group-hover/date:opacity-100 transition-opacity text-mauve/50 hover:text-petal flex-shrink-0 print:hidden">
+                    <Pencil size={11} />
+                  </button>
+                </div>
+              )}
 
               {/* Resumo de contagens */}
               {hasResults && (
@@ -259,15 +490,75 @@ export default function ExamDetailPage() {
             </div>
           </div>
 
-          {/* Botão de análise */}
-          <button onClick={handleAnalyze} disabled={analyzing}
-            className="flex items-center gap-2 gradient-sintera text-white font-body text-sm font-medium px-4 py-2.5 rounded-full hover:opacity-90 transition-opacity shadow-sm flex-shrink-0 disabled:opacity-60">
-            {analyzing
-              ? <><Loader2 size={14} className="animate-spin" /> Analisando…</>
-              : <><AnalyzeIcon size={14} /> {analyzeLabel}</>
-            }
-          </button>
+          {/* Botões de ação */}
+          <div className="flex items-center gap-2 flex-shrink-0 print:hidden">
+
+            {/* Reportar problema */}
+            <button
+              onClick={() => setReportOpen(true)}
+              className="flex items-center gap-1.5 border border-border text-mauve font-body text-sm font-medium px-3 py-2.5 rounded-full hover:border-red-300 hover:text-red-500 transition-colors">
+              <Flag size={14} /> Reportar
+            </button>
+
+            {/* Agendar */}
+            <button
+              onClick={() => setAgendarOpen(true)}
+              className="flex items-center gap-1.5 border border-border text-mauve font-body text-sm font-medium px-3 py-2.5 rounded-full hover:border-petal/40 hover:text-petal transition-colors">
+              <CalendarDays size={14} /> Agendar
+            </button>
+
+            {/* Export */}
+            {isProcessed && biomarkers.length > 0 && (
+              <div className="relative">
+                <button
+                  onClick={() => setExportOpen(o => !o)}
+                  className="flex items-center gap-1.5 border border-border text-mauve font-body text-sm font-medium px-3 py-2.5 rounded-full hover:border-petal/40 hover:text-petal transition-colors">
+                  <Download size={14} /> Exportar <ChevronDown size={12} />
+                </button>
+                {exportOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setExportOpen(false)} />
+                    <div className="absolute right-0 top-full mt-1.5 z-20 bg-white rounded-2xl shadow-xl border border-border overflow-hidden w-44">
+                      <button onClick={exportCSV}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm font-body text-onyx hover:bg-blush transition-colors text-left">
+                        <Download size={14} className="text-petal flex-shrink-0" />
+                        Baixar CSV
+                      </button>
+                      <button onClick={exportPDF}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm font-body text-onyx hover:bg-blush transition-colors text-left border-t border-border/50">
+                        <Printer size={14} className="text-petal flex-shrink-0" />
+                        Imprimir / PDF
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Analisar */}
+            <button onClick={handleAnalyze} disabled={analyzing}
+              className="flex items-center gap-2 gradient-sintera text-white font-body text-sm font-medium px-4 py-2.5 rounded-full hover:opacity-90 transition-opacity shadow-sm disabled:opacity-60">
+              {analyzing
+                ? <><Loader2 size={14} className="animate-spin" /> Analisando…</>
+                : <><AnalyzeIcon size={14} /> {analyzeLabel}</>
+              }
+            </button>
+          </div>
         </div>
+
+        {/* Banner de truncagem — text_truncated */}
+        {exam?.text_truncated && (
+          <div className="mt-4 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+            <AlertCircle size={14} className="text-amber-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-body text-xs font-semibold text-amber-800">Laudo parcialmente processado</p>
+              <p className="font-body text-xs text-amber-700 mt-0.5 leading-relaxed">
+                Este laudo é muito extenso e foi processado parcialmente. Alguns biomarcadores podem não ter sido extraídos.
+                Reanalise o exame ou confira o laudo original para garantir que todos os dados estão presentes.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Erro de análise */}
         {analyzeError && (
@@ -370,6 +661,74 @@ export default function ExamDetailPage() {
           </p>
         </motion.div>
       )}
+
+      {/* Modal — Reportar problema */}
+      {reportOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => { setReportOpen(false); setReportSent(false) }} />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1,    y: 0  }}
+            className="relative z-10 bg-white rounded-3xl shadow-2xl border border-border w-full max-w-md overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border/50">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center">
+                  <Flag size={15} className="text-red-400" />
+                </div>
+                <p className="font-body text-sm font-semibold text-onyx">Reportar problema</p>
+              </div>
+              <button onClick={() => { setReportOpen(false); setReportSent(false) }} className="text-mauve hover:text-onyx transition-colors">
+                <X size={16} />
+              </button>
+            </div>
+            {reportSent ? (
+              <div className="px-6 py-8 text-center">
+                <div className="w-12 h-12 rounded-full bg-sage-light flex items-center justify-center mx-auto mb-3">
+                  <Check size={20} className="text-sage" />
+                </div>
+                <p className="font-body text-sm font-semibold text-onyx mb-1">Obrigada pelo relato!</p>
+                <p className="font-body text-xs text-mauve">Vamos investigar e usar isso para melhorar a extração.</p>
+              </div>
+            ) : (
+              <div className="px-6 py-5 space-y-4">
+                <p className="font-body text-xs text-mauve leading-relaxed">
+                  Encontrou um valor incorreto, biomarcador ausente ou outro problema neste exame?
+                  Descreva abaixo — isso nos ajuda a melhorar a qualidade da IA.
+                </p>
+                <textarea
+                  autoFocus
+                  value={reportText}
+                  onChange={e => setReportText(e.target.value)}
+                  rows={4}
+                  placeholder="Ex: O valor da glicose está diferente do laudo. No laudo aparece 92 mg/dL, aqui apareceu 29 mg/dL."
+                  className="w-full px-3 py-2.5 border border-border rounded-xl font-body text-sm text-onyx placeholder:text-mauve/40 resize-none focus:outline-none focus:ring-1 focus:ring-petal/40 transition-colors"
+                />
+                <div className="flex gap-2">
+                  <button onClick={() => setReportOpen(false)}
+                    className="flex-1 py-2.5 rounded-xl border border-border text-mauve text-sm font-body hover:border-petal/40 transition-colors">
+                    Cancelar
+                  </button>
+                  <button onClick={submitReport} disabled={!reportText.trim() || reportLoading}
+                    className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-body font-medium hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                    {reportLoading ? 'Enviando…' : 'Enviar relato'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </motion.div>
+        </div>
+      )}
+
+      {/* FeedbackModal P2 — aparece após 1ª análise no Beta */}
+      <FeedbackModal />
+
+      {/* AgendarModal */}
+      <AgendarModal
+        open={agendarOpen}
+        onClose={() => setAgendarOpen(false)}
+        defaultTitle={exam?.type ? `Repetir ${exam.type}` : ''}
+        defaultNotes={`Referente ao exame: ${exam?.type ?? ''}`}
+      />
     </div>
   )
 }

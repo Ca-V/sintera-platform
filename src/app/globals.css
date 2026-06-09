@@ -219,3 +219,46 @@ input[type="range"].range-gold::-webkit-slider-thumb { background: #C9A97A; }
   border-radius: 0 2px 2px 0;
   background: linear-gradient(180deg, #C2849A 0%, #A89CBD 100%);
 }
+
+/* ─── Print / Export PDF ─── */
+@media print {
+  /* Ocultar elementos de navegação */
+  aside, header, nav,
+  .print\:hidden { display: none !important; }
+
+  /* Layout limpo */
+  body { background: white !important; color: #1a1a1a !important; }
+  main { padding: 0 !important; overflow: visible !important; }
+
+  /* Cards sem sombra */
+  .card-premium {
+    border: 1px solid #e5e5e5 !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+
+  /* Cabeçalho de impressão */
+  .print-header {
+    display: block !important;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+    border-bottom: 2px solid #C2849A;
+  }
+
+  /* Forçar cores visíveis */
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  /* Rodapé com disclaimer */
+  .print-footer {
+    display: block !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 8px 16px;
+    font-size: 9px;
+    color: #888;
+    border-top: 1px solid #eee;
+    text-align: center;
+  }
+}

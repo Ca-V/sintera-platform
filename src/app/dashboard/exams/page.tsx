@@ -1,11 +1,11 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState, useRef, useCallback, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Upload, FileText, Clock, CheckCircle, AlertCircle,
-  Plus, X, Loader2, RefreshCw, Zap,
+  Plus, X, Loader2, Zap, Search, ChevronDown, ChevronUp,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
@@ -13,7 +13,6 @@ import type { Database } from '@/lib/supabase/types'
 
 type Exam = Database['public']['Tables']['exams']['Row']
 
-// Mensagens de erro por código retornado pelo backend (Epic 1.1)
 const ERROR_MESSAGES: Record<string, string> = {
   PDF_NO_TEXT_LAYER:       'Este PDF parece ser uma imagem escaneada. PDFs escaneados não são suportados nesta versão Beta.',
   PDF_PASSWORD_PROTECTED:  'O PDF está protegido por senha. Remova a proteção e envie novamente.',
@@ -34,14 +33,29 @@ const STATUS_CONFIG: Record<string, {
   label: string; color: string; bg: string
   icon: React.ComponentType<{ size: number; className?: string }>
 }> = {
-  processed:  { label: 'Analisado',    color: 'text-sage',        bg: 'bg-sage-light',    icon: CheckCircle },
-  pending:    { label: 'Aguardando',   color: 'text-gold',        bg: 'bg-warm',          icon: Clock       },
-  processing: { label: 'Processando',  color: 'text-lavender',    bg: 'bg-lavender-light', icon: Loader2    },
-  error:      { label: 'Erro',         color: 'text-red-400',     bg: 'bg-red-50',        icon: AlertCircle },
+  processed:  { label: 'Analisado',   color: 'text-sage',       bg: 'bg-sage-light',     icon: CheckCircle },
+  pending:    { label: 'Aguardando',  color: 'text-gold',       bg: 'bg-warm',           icon: Clock       },
+  processing: { label: 'Processando', color: 'text-lavender',   bg: 'bg-lavender-light', icon: Loader2     },
+  error:      { label: 'Erro',        color: 'text-red-400',    bg: 'bg-red-50',         icon: AlertCircle },
 }
+
+const STATUS_FILTER_OPTIONS = [
+  { value: 'all',       label: 'Todos os status' },
+  { value: 'processed', label: 'Analisado'        },
+  { value: 'pending',   label: 'Aguardando'       },
+  { value: 'error',     label: 'Com erro'         },
+]
 
 const ACCEPTED_MIME = ['application/pdf', 'image/jpeg', 'image/png']
 const MAX_BYTES     = 10 * 1024 * 1024
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+function getYear(iso: string) {
+  return new Date(iso).getFullYear()
+}
 
 export default function ExamsPage() {
   const { user } = useUser()
@@ -54,10 +68,14 @@ export default function ExamsPage() {
   const [uploading, setUploading]       = useState(false)
   const [uploadError, setUploadError]   = useState<string | null>(null)
 
-  // Per-exam local state: 'running' | { error: string; biomarkers?: number }
-  const [analyzing, setAnalyzing]   = useState<Record<string, true>>({})
-  const [examErrors, setExamErrors] = useState<Record<string, string>>({})
-  const [examSuccess, setExamSuccess] = useState<Record<string, number>>({})
+  const [analyzing, setAnalyzing]     = useState<Record<string, true>>({})
+  const [examErrors, setExamErrors]   = useState<Record<string, string>>({})
+
+  // ── Filtros (Epic Fase 1) ──────────────────────────────────────────────────
+  const [searchName, setSearchName]   = useState('')
+  const [filterYear, setFilterYear]   = useState<string>('all')
+  const [filterStatus, setFilterStatus] = useState<string>('all')
+  const [collapsedYears, setCollapsedYears] = useState<Set<number>>(new Set())
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -67,33 +85,68 @@ export default function ExamsPage() {
     const { data, error } = await supabase
       .from('exams').select('*').eq('user_id', user.id)
       .order('created_at', { ascending: false })
-    if (error) console.error('[Sintera] exams fetch:', error.message)
+    if (error) console.error('[SINTERA] exams fetch:', error.message)
     else setExams((data ?? []) as Exam[])
     setLoadingExams(false)
   }, [user, supabase])
 
   useEffect(() => { loadExams() }, [loadExams])
 
-  // ── Analisar exame ────────────────────────────────────────────────────────
-  const analyzeExam = useCallback(async (exam: Exam) => {
-    if (analyzing[exam.id]) return // duplo clique — já processando
+  // ── Anos disponíveis para o filtro ────────────────────────────────────────
+  const availableYears = useMemo(() => {
+    const years = [...new Set(exams.map(e => getYear(e.created_at)))].sort((a, b) => b - a)
+    return years
+  }, [exams])
 
+  // ── Exames filtrados + agrupados por ano ──────────────────────────────────
+  const examsByYear = useMemo(() => {
+    let filtered = exams
+
+    if (searchName.trim()) {
+      const q = searchName.toLowerCase()
+      filtered = filtered.filter(e => (e.type ?? '').toLowerCase().includes(q))
+    }
+    if (filterYear !== 'all') {
+      const yr = parseInt(filterYear)
+      filtered = filtered.filter(e => getYear(e.created_at) === yr)
+    }
+    if (filterStatus !== 'all') {
+      filtered = filtered.filter(e => e.status === filterStatus)
+    }
+
+    // Agrupar por ano
+    const groups = new Map<number, Exam[]>()
+    for (const exam of filtered) {
+      const yr = getYear(exam.created_at)
+      if (!groups.has(yr)) groups.set(yr, [])
+      groups.get(yr)!.push(exam)
+    }
+    return [...groups.entries()].sort((a, b) => b[0] - a[0])
+  }, [exams, searchName, filterYear, filterStatus])
+
+  const totalFiltered = useMemo(() => examsByYear.reduce((s, [, g]) => s + g.length, 0), [examsByYear])
+  const hasActiveFilters = searchName.trim() !== '' || filterYear !== 'all' || filterStatus !== 'all'
+
+  function toggleYear(yr: number) {
+    setCollapsedYears(prev => {
+      const next = new Set(prev)
+      next.has(yr) ? next.delete(yr) : next.add(yr)
+      return next
+    })
+  }
+
+  // ── Analisar exame ─────────────────────────────────────────────────────────
+  const analyzeExam = useCallback(async (exam: Exam) => {
+    if (analyzing[exam.id]) return
     setAnalyzing(prev => ({ ...prev, [exam.id]: true }))
     setExamErrors(prev => { const n = { ...prev }; delete n[exam.id]; return n })
-    setExamSuccess(prev => { const n = { ...prev }; delete n[exam.id]; return n })
-
     try {
       const res  = await fetch(`/api/exams/${exam.id}/analyze`, { method: 'POST' })
-      const data = await res.json() as { error?: string; code?: string; biomarkers?: number }
-
+      const data = await res.json() as { error?: string; code?: string }
       if (!res.ok) {
-        setExamErrors(prev => ({
-          ...prev,
-          [exam.id]: friendlyError(data.code, data.error),
-        }))
+        setExamErrors(prev => ({ ...prev, [exam.id]: friendlyError(data.code, data.error) }))
         await loadExams()
       } else {
-        // Análise concluída — navegar diretamente para a tela de resultado
         router.push(`/dashboard/exams/${exam.id}`)
       }
     } catch {
@@ -107,97 +160,51 @@ export default function ExamsPage() {
   // ── Upload ─────────────────────────────────────────────────────────────────
   const processFile = useCallback(async (file: File) => {
     if (!user) return
-
-    if (!ACCEPTED_MIME.includes(file.type)) {
-      setUploadError('Formato inválido. São aceitos PDF, JPG e PNG.')
-      return
-    }
-    if (file.size > MAX_BYTES) {
-      setUploadError('Arquivo muito grande. O limite é 10 MB.')
-      return
-    }
-
-    setUploadError(null)
-    setUploading(true)
+    if (!ACCEPTED_MIME.includes(file.type)) { setUploadError('Formato inválido. São aceitos PDF, JPG e PNG.'); return }
+    if (file.size > MAX_BYTES) { setUploadError('Arquivo muito grande. O limite é 10 MB.'); return }
+    setUploadError(null); setUploading(true)
     let examId: string | null = null
-
     try {
       const ext         = file.name.split('.').pop() ?? 'bin'
       const storagePath = `${user.id}/${crypto.randomUUID()}.${ext}`
-
-      const { error: storageErr } = await supabase.storage
-        .from('exams').upload(storagePath, file, { contentType: file.type, upsert: false })
+      const { error: storageErr } = await supabase.storage.from('exams').upload(storagePath, file, { contentType: file.type, upsert: false })
       if (storageErr) throw new Error(`[storage] ${storageErr.message}`)
-
-      const { data: signedData, error: signedErr } = await supabase.storage
-        .from('exams').createSignedUrl(storagePath, 60 * 60 * 24 * 365)
+      const { data: signedData, error: signedErr } = await supabase.storage.from('exams').createSignedUrl(storagePath, 60 * 60 * 24 * 365)
       if (signedErr) throw new Error(`[signed-url] ${signedErr.message}`)
-
       examId = crypto.randomUUID()
       const examName = file.name.replace(/\.[^.]+$/, '')
-
-      const { error: insertErr } = await supabase.from('exams').insert({
-        id: examId, user_id: user.id, type: examName,
-        file_url: signedData.signedUrl, status: 'pending',
-      } as unknown as never)
+      const todayISO  = new Date().toISOString().split('T')[0] // YYYY-MM-DD — padrão editável pelo usuário
+      const { error: insertErr } = await supabase.from('exams').insert({ id: examId, user_id: user.id, type: examName, exam_date: todayISO, file_url: signedData.signedUrl, status: 'pending' } as unknown as never)
       if (insertErr) throw new Error(`[insert] ${insertErr.code}: ${insertErr.message}`)
-
       await loadExams()
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
       setUploadError(msg)
-      if (examId) {
-        await supabase.from('exams').update({ status: 'error' } as unknown as never).eq('id', examId)
-        await loadExams()
-      }
-    } finally {
-      setUploading(false)
-    }
+      if (examId) { await supabase.from('exams').update({ status: 'error' } as unknown as never).eq('id', examId); await loadExams() }
+    } finally { setUploading(false) }
   }, [user, supabase, loadExams])
 
-  const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) processFile(file)
-    e.target.value = ''
-  }
-
-  const onDrop = (e: React.DragEvent) => {
-    e.preventDefault(); setDragging(false)
-    const file = e.dataTransfer.files?.[0]
-    if (file) processFile(file)
-  }
-
-  const onDragLeave = (e: React.DragEvent) => {
-    if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragging(false)
-  }
-
-  const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+  const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => { const f = e.target.files?.[0]; if (f) processFile(f); e.target.value = '' }
+  const onDrop = (e: React.DragEvent) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files?.[0]; if (f) processFile(f) }
+  const onDragLeave = (e: React.DragEvent) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragging(false) }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Exames</h1>
-        <p className="font-body text-sm text-mauve">
-          Faça upload dos seus exames em PDF e inicie a extração de biomarcadores por IA
-        </p>
+        <p className="font-body text-sm text-mauve">Faça upload dos seus exames em PDF e inicie a extração de biomarcadores por IA</p>
       </motion.div>
 
       {/* Drop zone */}
       <motion.label
         initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
         onDragOver={e => { e.preventDefault(); setDragging(true) }}
-        onDragLeave={onDragLeave}
-        onDrop={onDrop}
-        className={[
-          'block border-2 border-dashed rounded-2xl p-10 text-center',
-          'transition-all duration-200 cursor-pointer',
-          dragging  ? 'border-petal bg-blush' : 'border-border hover:border-petal/50 hover:bg-blush/30',
-          uploading ? 'opacity-60 pointer-events-none select-none' : '',
-        ].join(' ')}
+        onDragLeave={onDragLeave} onDrop={onDrop}
+        className={['block border-2 border-dashed rounded-2xl p-10 text-center transition-all duration-200 cursor-pointer',
+          dragging ? 'border-petal bg-blush' : 'border-border hover:border-petal/50 hover:bg-blush/30',
+          uploading ? 'opacity-60 pointer-events-none select-none' : ''].join(' ')}
       >
-        <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png"
-          className="sr-only" disabled={uploading} onChange={onInputChange} />
+        <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" className="sr-only" disabled={uploading} onChange={onInputChange} />
         <div className="w-14 h-14 rounded-2xl gradient-sintera-soft flex items-center justify-center mx-auto mb-4">
           <Upload size={24} className={`text-petal ${uploading ? 'animate-bounce' : ''}`} />
         </div>
@@ -218,131 +225,198 @@ export default function ExamsPage() {
         )}
       </motion.label>
 
-      {/* Upload error */}
       {uploadError && (
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
           className="flex items-start gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-xl">
           <AlertCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
           <p className="font-body text-xs text-red-700 flex-1">{uploadError}</p>
-          <button type="button" onClick={() => setUploadError(null)} className="text-red-300 hover:text-red-500 flex-shrink-0">
-            <X size={15} />
-          </button>
+          <button type="button" onClick={() => setUploadError(null)} className="text-red-300 hover:text-red-500"><X size={15} /></button>
         </motion.div>
       )}
 
-      {/* Exam list */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-body text-sm font-semibold text-onyx/60 uppercase tracking-widest">Histórico</h2>
-          <span className="text-xs font-body text-mauve">{exams.length} exame{exams.length !== 1 ? 's' : ''}</span>
+      {/* ── Filtros (Epic Fase 1) ────────────────────────────────────────── */}
+      {exams.length > 0 && (
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+          className="card-premium p-4 space-y-3">
+          <div className="flex flex-wrap gap-2">
+            {/* Busca por nome */}
+            <div className="relative flex-1 min-w-[160px]">
+              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-mauve/50" />
+              <input
+                type="text"
+                placeholder="Buscar exame…"
+                value={searchName}
+                onChange={e => setSearchName(e.target.value)}
+                className="w-full pl-8 pr-3 py-2 bg-ivory border border-border rounded-xl font-body text-sm text-onyx placeholder-mauve/40 focus:outline-none focus:ring-1 focus:ring-petal/40"
+              />
+            </div>
+
+            {/* Filtro por ano */}
+            <select
+              value={filterYear}
+              onChange={e => setFilterYear(e.target.value)}
+              className="py-2 px-3 bg-ivory border border-border rounded-xl font-body text-sm text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40"
+            >
+              <option value="all">Todos os anos</option>
+              {availableYears.map(yr => (
+                <option key={yr} value={String(yr)}>{yr}</option>
+              ))}
+            </select>
+
+            {/* Filtro por status */}
+            <select
+              value={filterStatus}
+              onChange={e => setFilterStatus(e.target.value)}
+              className="py-2 px-3 bg-ivory border border-border rounded-xl font-body text-sm text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40"
+            >
+              {STATUS_FILTER_OPTIONS.map(o => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+
+            {/* Limpar filtros */}
+            {hasActiveFilters && (
+              <button
+                onClick={() => { setSearchName(''); setFilterYear('all'); setFilterStatus('all') }}
+                className="py-2 px-3 rounded-xl border border-border text-mauve font-body text-sm hover:border-petal/40 transition-colors flex items-center gap-1.5"
+              >
+                <X size={12} /> Limpar
+              </button>
+            )}
+          </div>
+
+          {/* Contagem de resultados */}
+          <p className="font-body text-xs text-mauve/60">
+            {hasActiveFilters
+              ? `${totalFiltered} exame${totalFiltered !== 1 ? 's' : ''} encontrado${totalFiltered !== 1 ? 's' : ''} · ${exams.length} no total`
+              : `${exams.length} exame${exams.length !== 1 ? 's' : ''}`
+            }
+          </p>
+        </motion.div>
+      )}
+
+      {/* ── Lista agrupada por ano ─────────────────────────────────────────── */}
+      {loadingExams ? (
+        <div className="flex flex-col gap-3">
+          {[1, 2, 3].map(i => <div key={i} className="card-premium h-[72px] rounded-2xl animate-pulse" style={{ background: '#F2EDE8' }} />)}
         </div>
-
-        {loadingExams ? (
-          <div className="flex flex-col gap-3">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="card-premium h-[72px] rounded-2xl animate-pulse" style={{ background: '#F2EDE8' }} />
-            ))}
-          </div>
-        ) : exams.length === 0 ? (
-          <div className="card-premium p-12 text-center">
-            <FileText size={36} className="text-border mx-auto mb-3" />
-            <p className="font-body text-sm text-mauve">Nenhum exame ainda</p>
-            <p className="font-body text-xs text-mauve/60 mt-1">Faça upload do primeiro exame acima</p>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {exams.map((exam, i) => {
-              const isRunning   = !!analyzing[exam.id]
-              const errMsg      = examErrors[exam.id]
-              const successCount = examSuccess[exam.id]
-
-              const displayStatus = isRunning ? 'processing' : exam.status
-              const cfg  = STATUS_CONFIG[displayStatus] ?? STATUS_CONFIG.pending
-              const Icon = cfg.icon
-
-              // Exame processed → botão "Ver análise" (navega para detalhe)
-              // Exame pending/error → botão "Analisar exame" / "Tentar novamente"
-              const hasFile    = !!(exam as unknown as { file_url: string | null }).file_url
-              const isProcessed = exam.status === 'processed'
-              const canAnalyze = hasFile && !isRunning && !isProcessed && exam.status !== 'processing'
-              const analyzeLabel = exam.status === 'error' ? 'Tentar novamente' : 'Analisar exame'
-              const AnalyzeIcon = Zap
-
-              return (
-                <motion.div key={exam.id}
-                  initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.05 + i * 0.05 }}
-                  className="card-premium overflow-hidden"
+      ) : exams.length === 0 ? (
+        <div className="card-premium p-12 text-center">
+          <FileText size={36} className="text-border mx-auto mb-3" />
+          <p className="font-body text-sm text-mauve">Nenhum exame ainda</p>
+          <p className="font-body text-xs text-mauve/60 mt-1">Faça upload do primeiro exame acima</p>
+        </div>
+      ) : examsByYear.length === 0 ? (
+        <div className="card-premium p-10 text-center">
+          <Search size={32} className="text-border mx-auto mb-3" />
+          <p className="font-body text-sm font-semibold text-onyx mb-1">Nenhum exame encontrado</p>
+          <p className="font-body text-xs text-mauve">Tente ajustar os filtros de busca.</p>
+        </div>
+      ) : (
+        <div className="space-y-5">
+          {examsByYear.map(([year, yearExams]) => {
+            const isCollapsed = collapsedYears.has(year)
+            return (
+              <motion.div key={year} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+                {/* Header do ano */}
+                <button
+                  onClick={() => toggleYear(year)}
+                  className="w-full flex items-center justify-between mb-2 group"
                 >
-                  <div
-                    className="p-5 flex items-center gap-4 cursor-pointer"
-                    onClick={() => router.push('/dashboard/exams/' + exam.id)}
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-blush flex items-center justify-center flex-shrink-0">
-                      <FileText size={18} className="text-petal" />
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <p className="font-body text-sm font-semibold text-onyx truncate">{exam.type ?? 'Exame'}</p>
-                      <p className="font-body text-xs text-mauve">{formatDate(exam.created_at)}</p>
-                      {isProcessed && !isRunning && (
-                        <p className="font-body text-xs text-sage mt-0.5">Análise disponível</p>
-                      )}
-                    </div>
-
-                    {/* Status badge */}
-                    <span className={`inline-flex items-center gap-1.5 text-xs font-body font-medium px-3 py-1 rounded-full flex-shrink-0 ${cfg.bg} ${cfg.color}`}>
-                      <Icon size={11} className={isRunning ? 'animate-spin' : ''} />
-                      {cfg.label}
+                  <div className="flex items-center gap-3">
+                    <span className="font-display text-lg font-semibold text-onyx">{year}</span>
+                    <span className="font-body text-xs text-mauve/60 bg-ivory border border-border px-2 py-0.5 rounded-full">
+                      {yearExams.length} exame{yearExams.length !== 1 ? 's' : ''}
                     </span>
-
-                    {/* Botão de análise */}
-                    {/* Exame analisado → Ver análise */}
-                    {isProcessed && !isRunning && (
-                      <button
-                        type="button"
-                        onClick={e => { e.stopPropagation(); router.push('/dashboard/exams/' + exam.id) }}
-                        className="ml-1 flex items-center gap-1.5 text-xs font-body font-medium text-petal-dark bg-blush border border-petal/30 px-3 py-1.5 rounded-full hover:bg-petal/10 transition-colors flex-shrink-0"
-                      >
-                        Ver análise →
-                      </button>
-                    )}
-
-                    {/* Exame pendente/erro → Analisar */}
-                    {canAnalyze && (
-                      <button
-                        type="button"
-                        onClick={e => { e.stopPropagation(); analyzeExam(exam) }}
-                        className="ml-1 flex items-center gap-1.5 text-xs font-body font-medium text-white gradient-sintera px-3 py-1.5 rounded-full hover:opacity-90 transition-opacity flex-shrink-0 shadow-sm"
-                      >
-                        <AnalyzeIcon size={11} /> {analyzeLabel}
-                      </button>
-                    )}
-
-                    {/* Spinner durante análise */}
-                    {isRunning && (
-                      <div className="ml-1 flex items-center gap-1.5 text-xs font-body text-mauve flex-shrink-0">
-                        <Loader2 size={13} className="animate-spin" />
-                        <span>Analisando…</span>
-                      </div>
-                    )}
                   </div>
+                  <span className="text-mauve/40 group-hover:text-mauve transition-colors">
+                    {isCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+                  </span>
+                </button>
 
-                  {/* Mensagem de erro inline */}
-                  {errMsg && (
-                    <div className="px-5 pb-4">
-                      <div className="flex items-start gap-2 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-                        <AlertCircle size={13} className="text-red-400 flex-shrink-0 mt-0.5" />
-                        <p className="font-body text-xs text-red-700">{errMsg}</p>
+                <AnimatePresence>
+                  {!isCollapsed && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="flex flex-col gap-2">
+                        {yearExams.map((exam, i) => {
+                          const isRunning   = !!analyzing[exam.id]
+                          const errMsg      = examErrors[exam.id]
+                          const displayStatus = isRunning ? 'processing' : exam.status
+                          const cfg  = STATUS_CONFIG[displayStatus] ?? STATUS_CONFIG.pending
+                          const Icon = cfg.icon
+                          const hasFile     = !!(exam as unknown as { file_url: string | null }).file_url
+                          const isProcessed = exam.status === 'processed'
+                          const canAnalyze  = hasFile && !isRunning && !isProcessed && exam.status !== 'processing'
+                          const analyzeLabel = exam.status === 'error' ? 'Tentar novamente' : 'Analisar exame'
+
+                          return (
+                            <motion.div key={exam.id}
+                              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: i * 0.04 }}
+                              className="card-premium overflow-hidden"
+                            >
+                              <div className="p-5 flex items-center gap-4 cursor-pointer"
+                                onClick={() => router.push('/dashboard/exams/' + exam.id)}>
+                                <div className="w-10 h-10 rounded-xl bg-blush flex items-center justify-center flex-shrink-0">
+                                  <FileText size={18} className="text-petal" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-body text-sm font-semibold text-onyx truncate">{exam.type ?? 'Exame'}</p>
+                                  <p className="font-body text-xs text-mauve">{formatDate(exam.created_at)}</p>
+                                  {isProcessed && !isRunning && (
+                                    <p className="font-body text-xs text-sage mt-0.5">Análise disponível</p>
+                                  )}
+                                </div>
+                                <span className={`inline-flex items-center gap-1.5 text-xs font-body font-medium px-3 py-1 rounded-full flex-shrink-0 ${cfg.bg} ${cfg.color}`}>
+                                  <Icon size={11} className={isRunning ? 'animate-spin' : ''} />
+                                  {cfg.label}
+                                </span>
+                                {isProcessed && !isRunning && (
+                                  <button type="button"
+                                    onClick={e => { e.stopPropagation(); router.push('/dashboard/exams/' + exam.id) }}
+                                    className="ml-1 flex items-center gap-1.5 text-xs font-body font-medium text-petal-dark bg-blush border border-petal/30 px-3 py-1.5 rounded-full hover:bg-petal/10 transition-colors flex-shrink-0">
+                                    Ver análise →
+                                  </button>
+                                )}
+                                {canAnalyze && (
+                                  <button type="button"
+                                    onClick={e => { e.stopPropagation(); analyzeExam(exam) }}
+                                    className="ml-1 flex items-center gap-1.5 text-xs font-body font-medium text-white gradient-sintera px-3 py-1.5 rounded-full hover:opacity-90 transition-opacity flex-shrink-0 shadow-sm">
+                                    <Zap size={11} /> {analyzeLabel}
+                                  </button>
+                                )}
+                                {isRunning && (
+                                  <div className="ml-1 flex items-center gap-1.5 text-xs font-body text-mauve flex-shrink-0">
+                                    <Loader2 size={13} className="animate-spin" /><span>Analisando…</span>
+                                  </div>
+                                )}
+                              </div>
+                              {errMsg && (
+                                <div className="px-5 pb-4">
+                                  <div className="flex items-start gap-2 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+                                    <AlertCircle size={13} className="text-red-400 flex-shrink-0 mt-0.5" />
+                                    <p className="font-body text-xs text-red-700">{errMsg}</p>
+                                  </div>
+                                </div>
+                              )}
+                            </motion.div>
+                          )
+                        })}
                       </div>
-                    </div>
+                    </motion.div>
                   )}
-                </motion.div>
-              )
-            })}
-          </div>
-        )}
-      </div>
+                </AnimatePresence>
+              </motion.div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

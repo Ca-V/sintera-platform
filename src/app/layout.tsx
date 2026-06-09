@@ -18,9 +18,9 @@ const dmSans = DM_Sans({
 })
 
 export const metadata: Metadata = {
-  title: 'SINTERA — Inteligência Feminina',
-  description: 'Plataforma de inteligência feminina para monitoramento de saúde, performance, fisiologia e dados biológicos.',
-  keywords: ['saúde feminina', 'ciclo menstrual', 'biohacking', 'performance', 'hormônios'],
+  title: 'SINTERA',
+  description: 'Organize seus laudos laboratoriais com IA. Visualize a evolução dos seus biomarcadores ao longo do tempo.',
+  keywords: ['laudos laboratoriais', 'biomarcadores', 'histórico de saúde', 'exames', 'IA'],
 }
 
 export default function RootLayout({
