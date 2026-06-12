@@ -14,9 +14,9 @@
 |---|---|---|
 | Contrato de dados (schema) | ✅ Pronto | migrações 022/022b aplicadas; `ai_insights` estendida, `insight_feedback`, `biomarker_catalog` (83), `biomarker_aliases` (99) |
 | Governança básica | ⚠️ Parcial | `prompt_registry` + `ai_processing_log` existem; prompts narrative/qa em `draft` não aprovados |
-| Resolver | ❌ Não implementado | nenhum código em `src/` |
-| Assembler | ❌ Não implementado | nenhum código |
-| Motor determinístico | ❌ Não implementado | nenhum código; limiares clínicos indefinidos |
+| Resolver | ✅ Implementado e testado (não conectado) | `src/lib/ai/insights/resolver.ts`; smoke test bate 100% nos 118 pares reais |
+| Assembler | ✅ Implementado e testado (não conectado) | `src/lib/ai/insights/assembler.ts` |
+| Motor determinístico | ⚠️ Mecanismo implementado e testado; regras (limiares) bloqueadas por clínica | `src/lib/ai/insights/engine.ts` + `rules.clinical.ts` (ruleset VAZIO até aprovação) |
 | Templates rule-based | ❌ Não implementado | `template_key` previsto no schema, sem catálogo de templates |
 | Geração narrativa | ❌ Não implementado | prompt existe (draft); sem código que o invoque |
 | Gate de QA | ❌ Não implementado | prompt existe (draft); sem código |
@@ -55,16 +55,18 @@ Os componentes puramente técnicos sem dependência clínica (**Resolver** e **A
 
 > *Derivado do schema — confirmar antes de implementar.*
 
-### 3.1 Resolver  🟢 pronto para execução
+### 3.1 Resolver  ✅ implementado — `src/lib/ai/insights/resolver.ts`
 **Entrada:** `biomarkers.name` + `biomarkers.unit`.
-**Processo:** normaliza o nome (lowercase, sem acento — a migração 022 usa `translate(...)`), casa contra `biomarker_aliases.alias_normalized`, desambigua por `unit_pattern` (substring literal, ver correção 022b).
-**Saída:** preenche `biomarkers.catalog_id`.
-**Sem dependência clínica.** Já existe lógica SQL de referência nas migrações 022/022b que pode virar código ou função.
+**Processo:** normaliza o nome (lowercase, sem acento — porte do `translate(...)` da migração 022), casa contra `biomarker_aliases.alias_normalized`, desambigua por `unit_pattern` (substring literal, ver correção 022b).
+**Saída:** entrada do `biomarker_catalog` (ou null se não casar).
+**Validação:** smoke test executável (`__smoke__/resolver.e2e.mjs`) resolve 118/118 pares reais idêntico ao `catalog_id` de produção.
+**Falta:** conectar à rota de extração para preencher `biomarkers.catalog_id` em exames novos.
 
-### 3.2 Assembler  🟢 pronto para execução
-**Entrada:** biomarcadores resolvidos de um exame + perfil + (opcional) histórico longitudinal.
-**Saída:** contexto estruturado para o motor.
-**Sem dependência clínica.**
+### 3.2 Assembler  ✅ implementado — `src/lib/ai/insights/assembler.ts`
+**Entrada:** `examId` + `userId`.
+**Processo:** carrega biomarcadores + perfil, resolve contra o catálogo, organiza por categoria, calcula `rangeStatus` aritmético (valor vs. faixa impressa) e lista críticos/fora-de-faixa/não-resolvidos.
+**Saída:** `InsightContext` estruturado para o motor determinístico (futuro).
+**Sem dependência clínica.** Não emite `clinical_flag`.
 
 ### 3.3 Motor determinístico  🔴 bloqueado por decisão clínica
 **Entrada:** contexto do assembler.
