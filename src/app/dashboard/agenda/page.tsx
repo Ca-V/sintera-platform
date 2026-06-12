@@ -15,6 +15,7 @@ interface AgendaEvent {
   duration_min: number | null
   notes: string | null
   status: 'pending' | 'done' | 'cancelled'
+  reminder_enabled: boolean
 }
 
 const TYPE_META: Record<EventType, { label: string; emoji: string }> = {
@@ -49,7 +50,7 @@ export default function AgendaPage() {
     // agenda_events ainda não está nos tipos gerados — cast necessário
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = await (supabase.from('agenda_events') as any)
-      .select('id, event_type, title, event_date, event_time, duration_min, notes, status')
+      .select('id, event_type, title, event_date, event_time, duration_min, notes, status, reminder_enabled')
       .eq('user_id', auth.user.id)
       .neq('status', 'cancelled')
       .order('event_date', { ascending: true })
@@ -68,13 +69,16 @@ export default function AgendaPage() {
     if (!auth.user) return
 
     const payload = {
-      user_id:      auth.user.id,
-      event_type:   input.eventType,
-      title:        input.title,
-      event_date:   input.date,
-      event_time:   input.time || null,
-      duration_min: input.durationMin,
-      notes:        input.notes || null,
+      user_id:          auth.user.id,
+      event_type:       input.eventType,
+      title:            input.title,
+      event_date:       input.date,
+      event_time:       input.time || null,
+      duration_min:     input.durationMin,
+      notes:            input.notes || null,
+      reminder_enabled: input.reminderEnabled,
+      // Re-arma o lembrete (ex.: data alterada na edição).
+      reminder_sent_at: null,
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -128,6 +132,7 @@ export default function AgendaPage() {
         time:        editing.event_time?.slice(0, 5) ?? '08:00',
         durationMin: editing.duration_min ?? 60,
         notes:       editing.notes ?? '',
+        reminderEnabled: editing.reminder_enabled,
       }
     : undefined
 

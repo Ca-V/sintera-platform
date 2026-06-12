@@ -14,6 +14,7 @@ export interface AgendaEventInput {
   time: string         // 'HH:mm'
   durationMin: number
   notes: string
+  reminderEnabled: boolean
 }
 
 interface AgendarModalProps {
@@ -109,6 +110,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
   const [time, setTime]             = useState('08:00')
   const [duration, setDuration]     = useState('60')
   const [notes, setNotes]           = useState(defaultNotes)
+  const [reminderEnabled, setReminderEnabled] = useState(true)
   const [added, setAdded]           = useState(false)
   const [saving, setSaving]         = useState(false)
 
@@ -122,6 +124,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
     setTime(initialEvent?.time ?? '08:00')
     setDuration(initialEvent?.durationMin ? String(initialEvent.durationMin) : '60')
     setNotes(initialEvent?.notes ?? defaultNotes)
+    setReminderEnabled(initialEvent?.reminderEnabled ?? true)
     setAdded(false)
     setSaving(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -176,6 +179,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
         time,
         durationMin: parseInt(duration),
         notes: notes.trim(),
+        reminderEnabled,
       })
       handleClose()
     } catch {
@@ -346,9 +350,20 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                     />
                   </div>
 
-                  {/* Salvar na agenda da plataforma (Fase 1) */}
+                  {/* Salvar na agenda da plataforma (Fase 1) + lembrete (Fase 2) */}
                   {onSave && (
-                    <div className="pt-1">
+                    <div className="pt-1 space-y-2.5">
+                      <label className="flex items-center gap-2.5 px-1 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={reminderEnabled}
+                          onChange={e => setReminderEnabled(e.target.checked)}
+                          className="w-4 h-4 rounded border-border accent-petal"
+                        />
+                        <span className="font-body text-xs text-onyx/80">
+                          Receber lembrete por e-mail no dia anterior
+                        </span>
+                      </label>
                       <button
                         onClick={handleSave}
                         disabled={!canExport || saving}
@@ -357,7 +372,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                           ? <><Loader2 size={15} className="animate-spin" /> Salvando…</>
                           : <><Check size={15} /> {initialEvent ? 'Salvar alterações' : 'Salvar na minha agenda'}</>}
                       </button>
-                      <p className="font-body text-[11px] text-mauve/60 text-center mt-1.5">
+                      <p className="font-body text-[11px] text-mauve/60 text-center">
                         Fica guardado aqui e você ainda pode exportar abaixo.
                       </p>
                     </div>
