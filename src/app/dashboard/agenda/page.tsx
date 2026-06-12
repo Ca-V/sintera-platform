@@ -2,9 +2,10 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { CalendarDays, Plus, Check, Pencil, Trash2, Loader2, CalendarClock } from 'lucide-react'
+import { CalendarDays, Plus, Check, Pencil, Trash2, Loader2, CalendarClock, Sparkles, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import AgendarModal, { type AgendaEventInput, type EventType } from '@/components/AgendarModal'
+import { buildExamRecencySuggestion, type AgendaSuggestion } from '@/lib/agenda/suggestions'
 
 interface AgendaEvent {
   id: string
@@ -42,6 +43,9 @@ export default function AgendaPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<AgendaEvent | null>(null)
   const [busyId, setBusyId]   = useState<string | null>(null)
+  const [prefill, setPrefill] = useState<Partial<AgendaEventInput> | undefined>(undefined)
+  const [suggestion, setSuggestion] = useState<AgendaSuggestion | null>(null)
+  const [dismissed, setDismissed]   = useState(false)
 
   const load = useCallback(async () => {
     const supabase = createClient()
@@ -55,7 +59,21 @@ export default function AgendaPage() {
       .neq('status', 'cancelled')
       .order('event_date', { ascending: true })
       .order('event_time', { ascending: true })
-    setEvents((data ?? []) as AgendaEvent[])
+    const evs = (data ?? []) as AgendaEvent[]
+    setEvents(evs)
+
+    // Sugestão TEMPORAL (Fase 3): baseada só na recência dos exames, sem juízo clínico.
+    const { data: examData } = await supabase
+      .from('exams')
+      .select('type, exam_date, status, created_at')
+      .eq('user_id', auth.user.id)
+    const examsLite = (examData ?? []).map(e => {
+      const r = e as { type: string | null; exam_date: string | null; status: string | null; created_at: string | null }
+      return { type: r.type, status: r.status, date: (r.exam_date ?? r.created_at ?? '').slice(0, 10) }
+    })
+    const hasPendingExam = evs.some(e => e.status === 'pending' && e.event_type === 'exame')
+    setSuggestion(buildExamRecencySuggestion(examsLite, hasPendingExam))
+
     setLoading(false)
   }, [])
 
@@ -112,11 +130,19 @@ export default function AgendaPage() {
 
   function openAdd() {
     setEditing(null)
+    setPrefill(undefined)
     setModalOpen(true)
   }
 
   function openEdit(ev: AgendaEvent) {
     setEditing(ev)
+    setPrefill(undefined)
+    setModalOpen(true)
+  }
+
+  function openFromSuggestion(s: AgendaSuggestion) {
+    setEditing(null)
+    setPrefill({ eventType: s.suggestedEventType, title: s.suggestedTitle })
     setModalOpen(true)
   }
 
@@ -134,7 +160,7 @@ export default function AgendaPage() {
         notes:       editing.notes ?? '',
         reminderEnabled: editing.reminder_enabled,
       }
-    : undefined
+    : prefill
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -149,6 +175,27 @@ export default function AgendaPage() {
           <Plus size={16} /> Adicionar
         </button>
       </motion.div>
+
+      {/* Sugestão temporal (Fase 3) — apenas recência, sem juízo clínico */}
+      {!loading && suggestion && !dismissed && (
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+          className="card-premium p-4 flex items-start gap-3 border border-petal/20 bg-blush/20">
+          <div className="w-9 h-9 rounded-2xl gradient-sintera-soft flex items-center justify-center flex-shrink-0">
+            <Sparkles size={17} className="text-petal" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-body text-sm text-onyx leading-relaxed">{suggestion.message}</p>
+            <button onClick={() => openFromSuggestion(suggestion)}
+              className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg gradient-sintera text-white text-xs font-body font-medium hover:opacity-90 transition-opacity">
+              <Plus size={13} /> Registrar lembrete
+            </button>
+          </div>
+          <button onClick={() => setDismissed(true)} title="Dispensar"
+            className="p-1.5 rounded-lg text-mauve/50 hover:text-mauve hover:bg-white/50 transition-colors flex-shrink-0">
+            <X size={15} />
+          </button>
+        </motion.div>
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center py-20 text-mauve">
@@ -245,7 +292,7 @@ export default function AgendaPage() {
 
       <AgendarModal
         open={modalOpen}
-        onClose={() => { setModalOpen(false); setEditing(null) }}
+        onClose={() => { setModalOpen(false); setEditing(null); setPrefill(undefined) }}
         onSave={handleSave}
         initialEvent={editingInitial}
       />
