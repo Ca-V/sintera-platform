@@ -44,7 +44,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
   }
 
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  // Fallback para SUPABASE_SECRET_KEY (chave nova gerada pela integração
+  // Vercel↔Supabase) caso a SERVICE_ROLE_KEY legada esteja ausente/vazia.
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY
   const apiKey = process.env.RESEND_API_KEY
   if (!serviceKey || !apiKey) {
     return NextResponse.json({
