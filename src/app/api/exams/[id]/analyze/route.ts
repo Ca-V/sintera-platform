@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { extractBiomarkers, isGatewayError } from '@/lib/ai/gateway'
 import { extractTextFromPdf, filterRelevantPages } from '@/lib/pdf/extractor'
+import { loadCatalogIndex, resolveBiomarker } from '@/lib/ai/insights/resolver'
 
 const ERROR_MESSAGES: Record<string, string> = {
   password_protected: 'O PDF está protegido por senha e não pode ser processado.',
@@ -146,6 +147,16 @@ export async function POST(
     // Remover biomarcadores anteriores deste exame
     await supabase.from('biomarkers').delete().eq('exam_id', examId)
 
+    // Resolver (best-effort): preenche catalog_id ligando o biomarcador ao
+    // catálogo canônico. SEM juízo clínico — só normalização + casamento.
+    // Falha aqui não pode quebrar a extração: cai para catalog_id nulo.
+    let catalogIndex: Awaited<ReturnType<typeof loadCatalogIndex>> | null = null
+    try {
+      catalogIndex = await loadCatalogIndex(supabase)
+    } catch {
+      catalogIndex = null
+    }
+
     const bmRows = result.biomarkers.map(b => ({
       exam_id:          examId,
       user_id:          userId,
@@ -172,6 +183,9 @@ export async function POST(
       reference_source: b.referenceSource,
       ai_log_id:        result.aiLogId,
       synthetic:        false,
+      catalog_id:       catalogIndex
+        ? resolveBiomarker(catalogIndex, { name: b.name, unit: b.unit }).catalog?.id ?? null
+        : null,
     }))
 
     await supabase.from('biomarkers').insert(bmRows as unknown as never[])
