@@ -47,7 +47,13 @@ export async function POST(req: NextRequest) {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   const apiKey = process.env.RESEND_API_KEY
   if (!serviceKey || !apiKey) {
-    return NextResponse.json({ error: 'Configuração ausente' }, { status: 500 })
+    return NextResponse.json({
+      error: 'Configuração ausente',
+      missing: {
+        SUPABASE_SERVICE_ROLE_KEY: !serviceKey,
+        RESEND_API_KEY: !apiKey,
+      },
+    }, { status: 500 })
   }
 
   const admin = createAdmin(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceKey)
