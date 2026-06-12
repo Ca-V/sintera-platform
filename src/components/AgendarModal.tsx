@@ -1,23 +1,38 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Calendar, Download, ExternalLink, CalendarDays } from 'lucide-react'
+import { X, Calendar, Download, ExternalLink, CalendarDays, Loader2, Check } from 'lucide-react'
+
+export type EventType = 'exame' | 'consulta' | 'retorno' | 'medicacao' | 'outro'
+
+/** Dados de um evento, usados para salvar na agenda da plataforma. */
+export interface AgendaEventInput {
+  eventType: EventType
+  title: string
+  date: string         // 'YYYY-MM-DD'
+  time: string         // 'HH:mm'
+  durationMin: number
+  notes: string
+}
 
 interface AgendarModalProps {
   open: boolean
   onClose: () => void
   defaultTitle?: string   // pré-preenche o título (ex: "Repetir Hemograma")
   defaultNotes?: string   // pré-preenche as notas
+  // Persistência na agenda (Fase 1). Quando fornecido, exibe "Salvar na minha agenda".
+  onSave?: (data: AgendaEventInput) => Promise<void> | void
+  // Pré-preenche o formulário ao editar um evento existente.
+  initialEvent?: Partial<AgendaEventInput>
 }
 
-type EventType = 'exame' | 'consulta' | 'retorno' | 'outro'
-
 const EVENT_TYPES: { id: EventType; label: string; emoji: string }[] = [
-  { id: 'exame',    label: 'Exame',       emoji: '🧪' },
-  { id: 'consulta', label: 'Consulta',    emoji: '👩‍⚕️' },
-  { id: 'retorno',  label: 'Retorno',     emoji: '📋' },
-  { id: 'outro',    label: 'Outro',       emoji: '📅' },
+  { id: 'exame',     label: 'Exame',     emoji: '🧪' },
+  { id: 'consulta',  label: 'Consulta',  emoji: '👩‍⚕️' },
+  { id: 'retorno',   label: 'Retorno',   emoji: '📋' },
+  { id: 'medicacao', label: 'Medicação', emoji: '💊' },
+  { id: 'outro',     label: 'Outro',     emoji: '📅' },
 ]
 
 function formatGoogleDate(date: Date): string {
@@ -85,7 +100,7 @@ function downloadICS(ics: string, filename: string) {
   URL.revokeObjectURL(url)
 }
 
-export default function AgendarModal({ open, onClose, defaultTitle = '', defaultNotes = '' }: AgendarModalProps) {
+export default function AgendarModal({ open, onClose, defaultTitle = '', defaultNotes = '', onSave, initialEvent }: AgendarModalProps) {
   const today = new Date().toISOString().split('T')[0]
 
   const [eventType, setEventType]   = useState<EventType>('exame')
@@ -95,6 +110,23 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
   const [duration, setDuration]     = useState('60')
   const [notes, setNotes]           = useState(defaultNotes)
   const [added, setAdded]           = useState(false)
+  const [saving, setSaving]         = useState(false)
+
+  // Sincroniza o formulário ao abrir (suporta edição via initialEvent).
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    if (!open) return
+    setEventType(initialEvent?.eventType ?? 'exame')
+    setTitle(initialEvent?.title ?? defaultTitle)
+    setDate(initialEvent?.date ?? '')
+    setTime(initialEvent?.time ?? '08:00')
+    setDuration(initialEvent?.durationMin ? String(initialEvent.durationMin) : '60')
+    setNotes(initialEvent?.notes ?? defaultNotes)
+    setAdded(false)
+    setSaving(false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const typeLabel = EVENT_TYPES.find(t => t.id === eventType)?.label ?? 'Evento'
   const fullTitle = title.trim() || `${typeLabel} de Saúde`
@@ -131,6 +163,24 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
     const ics = buildICS(fullTitle, start, end, buildDescription())
     downloadICS(ics, `sintera_${fullTitle.toLowerCase().replace(/\s+/g, '_')}.ics`)
     setAdded(true)
+  }
+
+  async function handleSave() {
+    if (!onSave || !canExport || saving) return
+    setSaving(true)
+    try {
+      await onSave({
+        eventType,
+        title: fullTitle,
+        date,
+        time,
+        durationMin: parseInt(duration),
+        notes: notes.trim(),
+      })
+      handleClose()
+    } catch {
+      setSaving(false)
+    }
   }
 
   const canExport = date !== ''
@@ -296,9 +346,28 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                     />
                   </div>
 
+                  {/* Salvar na agenda da plataforma (Fase 1) */}
+                  {onSave && (
+                    <div className="pt-1">
+                      <button
+                        onClick={handleSave}
+                        disabled={!canExport || saving}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl gradient-sintera text-white text-sm font-body font-medium hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
+                        {saving
+                          ? <><Loader2 size={15} className="animate-spin" /> Salvando…</>
+                          : <><Check size={15} /> {initialEvent ? 'Salvar alterações' : 'Salvar na minha agenda'}</>}
+                      </button>
+                      <p className="font-body text-[11px] text-mauve/60 text-center mt-1.5">
+                        Fica guardado aqui e você ainda pode exportar abaixo.
+                      </p>
+                    </div>
+                  )}
+
                   {/* Botões de export */}
                   <div className="space-y-2 pt-1">
-                    <p className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Adicionar ao calendário</p>
+                    <p className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">
+                      {onSave ? 'Exportar para calendário' : 'Adicionar ao calendário'}
+                    </p>
 
                     <button
                       onClick={handleGoogle}
