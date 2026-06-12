@@ -1,0 +1,4 @@
+# Configuração do projeto Supabase (usada pela CLI e pela GitHub Integration).
+# A GitHub Integration aplica as migrações de supabase/migrations/ ao mergear
+# na branch de produção (main).
+project_id = "sintera-platform"
