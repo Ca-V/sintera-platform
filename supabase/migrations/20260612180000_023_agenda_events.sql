@@ -24,13 +24,18 @@ create table if not exists public.agenda_events (
 
 alter table public.agenda_events enable row level security;
 
+-- Idempotente: permite re-aplicação segura (CI / migração já aplicada à mão).
+drop policy if exists "agenda_events_select" on public.agenda_events;
 create policy "agenda_events_select" on public.agenda_events
   for select using ((select auth.uid()) = user_id);
+drop policy if exists "agenda_events_insert" on public.agenda_events;
 create policy "agenda_events_insert" on public.agenda_events
   for insert with check ((select auth.uid()) = user_id);
+drop policy if exists "agenda_events_update" on public.agenda_events;
 create policy "agenda_events_update" on public.agenda_events
   for update using ((select auth.uid()) = user_id)
               with check ((select auth.uid()) = user_id);
+drop policy if exists "agenda_events_delete" on public.agenda_events;
 create policy "agenda_events_delete" on public.agenda_events
   for delete using ((select auth.uid()) = user_id);
 
