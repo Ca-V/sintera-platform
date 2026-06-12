@@ -13,10 +13,10 @@ export async function DELETE() {
     }
     const userId = user.id
 
-    // 2. Admin client (requer SUPABASE_SERVICE_ROLE_KEY)
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    // 2. Admin client (service role; fallback p/ SUPABASE_SECRET_KEY da integração Vercel↔Supabase)
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY
     if (!serviceKey) {
-      console.error('[account/delete] SUPABASE_SERVICE_ROLE_KEY não configurada')
+      console.error('[account/delete] service role key não configurada')
       return NextResponse.json({ error: 'Configuração interna ausente' }, { status: 500 })
     }
 
