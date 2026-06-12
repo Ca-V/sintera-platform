@@ -10,8 +10,11 @@ Ver `docs/SPRINT-2-INSIGHTS.md` (arquitetura) e `docs/GOVERNANCA-CLINICA-SINTERA
 | `types.ts` | — | Tipos centrais do motor (catálogo, resolução, contexto). |
 | `resolver.ts` | **Resolver** | Resolve `(nome, unidade)` do laudo → entrada do `biomarker_catalog`. Porte 1:1 da SQL das migrações 022/022b. |
 | `assembler.ts` | **Assembler** | Monta o `InsightContext` de um exame: biomarcadores resolvidos + perfil, agrupados por categoria, fora-de-faixa (aritmético) e críticos. |
+| `engine.ts` | **Motor determinístico (mecanismo)** | Avalia regras clínicas FORNECIDAS e produz candidatos a insight. Sem limiares embutidos. |
+| `rules.clinical.ts` | regras (template) | Conjunto de regras clínicas — **VAZIO** até aprovação clínica. É onde a clínica define os limiares. |
 | `__smoke__/resolver.normalize.mjs` | teste | Valida a normalização de nomes (mapa de acentos) contra 16 casos reais. |
 | `__smoke__/resolver.e2e.mjs` | teste | Valida o resolver completo contra **118 pares reais** de produção — bate 100% com o `catalog_id` que o banco já tem. |
+| `__smoke__/engine.eval.mjs` | teste | Valida o mecanismo da engine com regras sintéticas (inclui a garantia: conjunto vazio → 0 candidatos). |
 
 Rodar os testes (não precisam de banco nem de `node_modules`):
 
@@ -46,7 +49,7 @@ const results = await resolveBiomarkers(supabase, [{ name: 'Hemoglobina', unit: 
 
 ## O que falta (bloqueado — ver docs)
 
-- **Motor determinístico** (valor → `clinical_flag`): depende dos limiares clínicos aprovados.
+- **Regras clínicas** (`rules.clinical.ts`): o *mecanismo* do motor está pronto e testado; faltam as REGRAS (limiares valor → `clinical_flag`), que são decisão clínica humana. Sem elas, `evaluateRules` retorna `[]` por segurança.
 - **Templates rule-based**, **Narrativa** e **Gate de QA**: dependem da aprovação dos prompts `narrative`/`qa` (hoje `draft`).
 - **Persistência em `ai_insights`** e **ativação na UI**: vêm depois dos itens acima.
 

@@ -16,7 +16,7 @@
 | Governança básica | ⚠️ Parcial | `prompt_registry` + `ai_processing_log` existem; prompts narrative/qa em `draft` não aprovados |
 | Resolver | ✅ Implementado e testado (não conectado) | `src/lib/ai/insights/resolver.ts`; smoke test bate 100% nos 118 pares reais |
 | Assembler | ✅ Implementado e testado (não conectado) | `src/lib/ai/insights/assembler.ts` |
-| Motor determinístico | ❌ Não implementado | nenhum código; limiares clínicos indefinidos |
+| Motor determinístico | ⚠️ Mecanismo implementado e testado; regras (limiares) bloqueadas por clínica | `src/lib/ai/insights/engine.ts` + `rules.clinical.ts` (ruleset VAZIO até aprovação) |
 | Templates rule-based | ❌ Não implementado | `template_key` previsto no schema, sem catálogo de templates |
 | Geração narrativa | ❌ Não implementado | prompt existe (draft); sem código que o invoque |
 | Gate de QA | ❌ Não implementado | prompt existe (draft); sem código |

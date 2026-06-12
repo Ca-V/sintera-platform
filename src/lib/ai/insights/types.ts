@@ -33,6 +33,12 @@ export type BiomarkerCategory =
 export type Specimen = 'sangue' | 'urina' | 'urina_24h'
 export type MeasureKind = 'absoluto' | 'percentual' | 'qualitativo'
 
+/** Classificação de criticidade (ai_insights.clinical_flag). DECISÃO CLÍNICA. */
+export type ClinicalFlag = 'atencao_imediata' | 'acompanhar' | 'normal'
+
+/** Tipo do insight (ai_insights.insight_type). */
+export type InsightType = 'biomarker' | 'cluster' | 'longitudinal' | 'priority'
+
 /** Entrada do catálogo canônico (biomarker_catalog). */
 export interface CatalogEntry {
   id: string
