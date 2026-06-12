@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, FileText, TrendingUp,
   Settings, X, LogOut, User, ChevronRight,
-  Sparkles, BarChart3,
+  Sparkles, BarChart3, CalendarDays,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUser } from '@/context/UserContext'
@@ -15,6 +15,7 @@ const navItems = [
   { href: '/dashboard',            icon: LayoutDashboard, label: 'Visão Geral', soon: false },
   { href: '/dashboard/exams',      icon: FileText,        label: 'Exames',      soon: false },
   { href: '/dashboard/historico',  icon: TrendingUp,      label: 'Histórico',   soon: false },
+  { href: '/dashboard/agenda',     icon: CalendarDays,    label: 'Planejamento', soon: false },
   { href: '/dashboard/insights',   icon: Sparkles,        label: 'Insights',    soon: true  },
   { href: '/dashboard/relatorios', icon: BarChart3,       label: 'Relatórios',  soon: true  },
 ]
