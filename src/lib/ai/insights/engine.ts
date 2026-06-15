@@ -31,6 +31,39 @@ export type RuleCondition =
   | { kind: 'numericThreshold'; op: '<' | '<=' | '>' | '>='; value: number }
   | { kind: 'always' }
 
+/** Estado de uma regra no fluxo de governança científica (ver docs/clinical/GOVERNANCA-CIENTIFICA.md §3). */
+export type RuleStatus = 'draft' | 'validated' | 'active'
+
+/**
+ * Proveniência de uma regra clínica — rastreabilidade obrigatória da fonte e
+ * da aprovação. É METADADO de governança, não decisão clínica em si; mas
+ * `approvedBy`/`approvalDate` só são preenchidos por um Responsável Clínico
+ * humano (CRM). Sem eles, `status` não pode ser 'active'.
+ * Ver docs/clinical/GOVERNANCA-CIENTIFICA.md §2.
+ */
+export interface RuleProvenance {
+  /** Identificador estável da regra. */
+  ruleId: string
+  /** Fonte da decisão (ex.: 'KDIGO 2024', 'ADA 2025', 'laudo'). */
+  source: string
+  /** Versão da fonte/diretriz. */
+  version: string
+  /** Data de publicação da fonte (ISO). */
+  publicationDate?: string
+  /** PMID do estudo de respaldo, quando houver. */
+  pmid?: string
+  /** Código LOINC do biomarcador, quando mapeado. */
+  loincCode?: string
+  /** CRM do Responsável Clínico que aprovou (obrigatório para status 'active'). */
+  approvedBy?: string
+  /** Data da aprovação (ISO; obrigatória para status 'active'). */
+  approvalDate?: string
+  /** A partir de quando a regra vale (ISO). */
+  effectiveFrom?: string
+  /** Estágio no fluxo draft → validated → active. */
+  status: RuleStatus
+}
+
 /**
  * Uma regra clínica. `clinicalFlag`, `templateKey` e os limiares em `when`
  * são CONTEÚDO CLÍNICO — definidos e aprovados por um clínico, nunca inferidos
@@ -49,12 +82,34 @@ export interface InsightRule {
   insightType: InsightType
   /** Prioridade opcional de exibição. */
   priority?: 'low' | 'medium' | 'high'
+  /** Proveniência/rastreabilidade da regra (ver RuleProvenance). Opcional na estrutura; obrigatória para ativar em produção. */
+  provenance?: RuleProvenance
 }
 
 export type RuleSet = InsightRule[]
 
 /** Conjunto padrão VAZIO — sem regras clínicas aprovadas, nada é emitido. */
 export const EMPTY_RULESET: RuleSet = []
+
+/**
+ * Invariante de governança (mecânica): uma regra só pode estar 'active' se tiver
+ * proveniência com `approvedBy` e `approvalDate` preenchidos por um Responsável
+ * Clínico. Pura — não decide nada clínico, apenas verifica o metadado.
+ * Ver docs/clinical/GOVERNANCA-CIENTIFICA.md §2 e §3.
+ */
+export function isRuleActivatable(rule: InsightRule): boolean {
+  const p = rule.provenance
+  return !!p && p.status === 'active' && !!p.approvedBy && !!p.approvalDate
+}
+
+/**
+ * Filtra um ruleset para conter apenas regras ativáveis (active + aprovadas).
+ * Com `EMPTY_RULESET`, retorna []. Útil para o orquestrador garantir que só
+ * regras formalmente aprovadas alcancem a usuária.
+ */
+export function activeRulesOnly(ruleset: RuleSet): RuleSet {
+  return ruleset.filter(isRuleActivatable)
+}
 
 // ── Candidato a insight produzido pela engine ─────────────────────────────────
 
