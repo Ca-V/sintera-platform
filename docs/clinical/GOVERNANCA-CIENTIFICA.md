@@ -142,7 +142,7 @@ A partir da confiança das sugestões do rascunho (60 alta / 16 média / 3 baixa
 | Estrutura de proveniência por regra | ✅ Tipo definido (`RuleProvenance`) — **vazio** até a clínica preencher. |
 | Fluxo `draft → validated → active` | ✅ Documentado; aplicável quando houver regras. |
 | Colunas `loinc_code` e `snomed_ct_code` no catálogo | ✅ Criadas (migrações 026/027) — **vazias** até curadoria. |
-| Campos de governança do catálogo (status, fonte, revisor…) | 📄 Migração 028 **criada, não aplicada** (aguarda decisão). |
+| Campos de governança do catálogo (status, fonte, revisor…) | ✅ Migração 028 **aplicada** (estrutura vazia; todos os itens `draft`). |
 | Rascunho de mapeamento LOINC + ledger + template | 📄 Prontos em `docs/clinical/` — **draft**, não aplicados. |
 | Camada educacional MedlinePlus (por LOINC) | ✅ Implementada (`/api/education/biomarker/[code]`); retorna conteúdo só p/ itens já mapeados. |
 | Painel de cobertura científica (`/admin/catalogo`) | ✅ Mostra LOINC/SNOMED/Regra e "experiência completa" por biomarcador. |

@@ -1,8 +1,9 @@
 -- ============================================================
 -- SINTERA — Migração 028: campos de governança científica no catálogo
 -- ============================================================
--- ⚠️ NÃO APLICADA AUTOMATICAMENTE NESTA SESSÃO (a pedido). Aplicar quando a
---    equipe decidir — é estrutura VAZIA, não toca conteúdo clínico.
+-- ✅ APLICADA em 2026-06-15 (somente estrutura; checklist confirmado: sem
+--    UPDATE/INSERT/backfill/trigger/default clínico/alteração de regra ou de
+--    comportamento da app). Estrutura VAZIA, não toca conteúdo clínico.
 --
 -- Adiciona ao biomarker_catalog os campos permanentes que dão rastreabilidade
 -- ao mapeamento de interoperabilidade (LOINC/SNOMED) e à sua aprovação. Ver

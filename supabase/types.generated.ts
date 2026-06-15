@@ -407,6 +407,7 @@ export type Database = {
       }
       biomarker_catalog: {
         Row: {
+          approval_status: string
           canonical_unit: string | null
           category: string
           code: string
@@ -415,11 +416,18 @@ export type Database = {
           id: string
           is_critical: boolean
           loinc_code: string | null
+          loinc_status: string
           measure_kind: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          scientific_source: string | null
+          scientific_version: string | null
           snomed_ct_code: string | null
+          snomed_status: string
           specimen: string
         }
         Insert: {
+          approval_status?: string
           canonical_unit?: string | null
           category: string
           code: string
@@ -428,11 +436,18 @@ export type Database = {
           id?: string
           is_critical?: boolean
           loinc_code?: string | null
+          loinc_status?: string
           measure_kind?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          scientific_source?: string | null
+          scientific_version?: string | null
           snomed_ct_code?: string | null
+          snomed_status?: string
           specimen: string
         }
         Update: {
+          approval_status?: string
           canonical_unit?: string | null
           category?: string
           code?: string
@@ -441,8 +456,14 @@ export type Database = {
           id?: string
           is_critical?: boolean
           loinc_code?: string | null
+          loinc_status?: string
           measure_kind?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          scientific_source?: string | null
+          scientific_version?: string | null
           snomed_ct_code?: string | null
+          snomed_status?: string
           specimen?: string
         }
         Relationships: []
