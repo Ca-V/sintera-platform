@@ -96,7 +96,9 @@ Princípio: **nenhuma alteração entra em `active` sem aprovação clínica.** 
 | Motor determinístico rodando vazio até aprovação | ✅ Implementado (`CLINICAL_RULESET = []`). |
 | Estrutura de proveniência por regra | ✅ Tipo definido (`RuleProvenance`) — **vazio** até a clínica preencher. |
 | Fluxo `draft → validated → active` | ✅ Documentado; aplicável quando houver regras. |
-| Mapeamento LOINC do catálogo | ⏳ Estrutura prevista; preenchimento é trabalho de curadoria. |
+| Colunas `loinc_code` e `snomed_ct_code` no catálogo | ✅ Criadas (migrações 026/027) — **vazias** até curadoria. |
+| Camada educacional MedlinePlus (por LOINC) | ✅ Implementada (`/api/education/biomarker/[code]`); retorna conteúdo só p/ itens já mapeados. |
+| Painel de cobertura científica (`/admin/catalogo`) | ✅ Mostra LOINC/SNOMED/Regra e "experiência completa" por biomarcador. |
 | Conteúdo clínico (limiares, flags, textos) | ⛔ **Bloqueado** até Responsável Clínico (CRM). |
 
 ---

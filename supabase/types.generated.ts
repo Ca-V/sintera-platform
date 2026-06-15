@@ -416,6 +416,7 @@ export type Database = {
           is_critical: boolean
           loinc_code: string | null
           measure_kind: string
+          snomed_ct_code: string | null
           specimen: string
         }
         Insert: {
@@ -428,6 +429,7 @@ export type Database = {
           is_critical?: boolean
           loinc_code?: string | null
           measure_kind?: string
+          snomed_ct_code?: string | null
           specimen: string
         }
         Update: {
@@ -440,6 +442,7 @@ export type Database = {
           is_critical?: boolean
           loinc_code?: string | null
           measure_kind?: string
+          snomed_ct_code?: string | null
           specimen?: string
         }
         Relationships: []

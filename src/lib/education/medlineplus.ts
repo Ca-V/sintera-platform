@@ -94,7 +94,7 @@ export function parseConnectResponse(json: unknown): MedlineTopic[] {
 export async function fetchMedlinePlusByLoinc(
   loincCode: string,
   language: MedlineLanguage = 'en',
-  timeoutMs = 6000,
+  timeoutMs = 4000,
 ): Promise<MedlineTopic[]> {
   if (!loincCode) return []
   const controller = new AbortController()
