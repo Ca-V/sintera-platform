@@ -418,6 +418,7 @@ export type Database = {
           loinc_code: string | null
           loinc_status: string
           measure_kind: string
+          rejection_reason: string | null
           reviewed_at: string | null
           reviewed_by: string | null
           scientific_source: string | null
@@ -438,6 +439,7 @@ export type Database = {
           loinc_code?: string | null
           loinc_status?: string
           measure_kind?: string
+          rejection_reason?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           scientific_source?: string | null
@@ -458,6 +460,7 @@ export type Database = {
           loinc_code?: string | null
           loinc_status?: string
           measure_kind?: string
+          rejection_reason?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           scientific_source?: string | null

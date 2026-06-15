@@ -95,6 +95,8 @@ de regras clínicas (não exige CRM, mas exige revisão humana antes de produç�
 
 ```
   draft  →  em_curadoria  →  verificado  →  aprovado  →  producao
+                  │
+                  └──────────────►  rejeitado  (com rejection_reason)
 ```
 
 - **draft** — código candidato sugerido (ver `loinc-mapping-draft.csv`). Não aplicado.
@@ -102,6 +104,8 @@ de regras clínicas (não exige CRM, mas exige revisão humana antes de produç�
 - **verificado** — código confirmado pelo curador.
 - **aprovado** — registrado no ledger (`loinc-approval-ledger.csv`) com fonte/curador/data.
 - **producao** — escrito no banco via migração versionada; visível em `/admin/catalogo`.
+- **rejeitado** — candidato descartado na curadoria; `rejection_reason` preserva o
+  porquê (ex.: "1234-5 é glicose sérica, não em jejum"). Mantém histórico/auditoria.
 
 Materializado nos campos da migração 028: `loinc_status`, `snomed_status`,
 `scientific_source`, `scientific_version`, `reviewed_by`, `reviewed_at`,

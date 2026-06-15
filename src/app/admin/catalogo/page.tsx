@@ -32,6 +32,25 @@ interface CatalogRow {
   is_critical: boolean
   loinc_code: string | null
   snomed_ct_code: string | null
+  loinc_status: string
+  approval_status: string
+  scientific_source: string | null
+  reviewed_by: string | null
+  rejection_reason: string | null
+}
+
+// Cores do estágio de governança (draft→…→producao, +rejeitado).
+const STATUS_STYLE: Record<string, string> = {
+  draft:        'text-mauve/50 bg-ivory border-border',
+  em_curadoria: 'text-amber-700 bg-amber-50 border-amber-200',
+  verificado:   'text-lavender bg-lavender-light border-lavender/20',
+  aprovado:     'text-sage bg-sage-light border-sage/20',
+  producao:     'text-petal bg-blush border-petal/20',
+  rejeitado:    'text-red-500 bg-red-50 border-red-200',
+}
+const STATUS_LABEL: Record<string, string> = {
+  draft: 'Draft', em_curadoria: 'Em curadoria', verificado: 'Verificado',
+  aprovado: 'Aprovado', producao: 'Produção', rejeitado: 'Rejeitado',
 }
 
 /** Rótulo de conteúdo disponível para o biomarcador (gestão de produto). */
@@ -143,7 +162,7 @@ export default function CatalogoAdminPage() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data } = await (supabase as any)
         .from('biomarker_catalog')
-        .select('code, display_name, category, specimen, is_critical, loinc_code, snomed_ct_code')
+        .select('code, display_name, category, specimen, is_critical, loinc_code, snomed_ct_code, loinc_status, approval_status, scientific_source, reviewed_by, rejection_reason')
         .order('category', { ascending: true })
         .order('display_name', { ascending: true })
       setRows((data ?? []) as CatalogRow[])
@@ -268,6 +287,21 @@ export default function CatalogoAdminPage() {
                             )}
                           </div>
                           <p className="font-body text-[11px] text-mauve/50 mt-0.5">{r.code} · {r.specimen}</p>
+                          {/* Governança: estágio + fonte + revisor */}
+                          <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                            <span className={`inline-flex items-center font-body text-[10px] rounded-full px-1.5 py-0.5 border ${STATUS_STYLE[r.approval_status] ?? STATUS_STYLE.draft}`}>
+                              {STATUS_LABEL[r.approval_status] ?? r.approval_status}
+                            </span>
+                            {r.scientific_source && (
+                              <span className="font-body text-[10px] text-mauve/60">fonte: {r.scientific_source}</span>
+                            )}
+                            {r.reviewed_by && (
+                              <span className="font-body text-[10px] text-mauve/60">· revisor: {r.reviewed_by}</span>
+                            )}
+                          </div>
+                          {r.approval_status === 'rejeitado' && r.rejection_reason && (
+                            <p className="font-body text-[10px] text-red-500 mt-0.5">motivo: {r.rejection_reason}</p>
+                          )}
                           {r.loinc_code && <EducationPreview code={r.code} />}
                         </div>
                         <div className="flex-shrink-0 flex flex-col items-end gap-1.5">
