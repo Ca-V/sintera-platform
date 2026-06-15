@@ -172,6 +172,18 @@ monitorar conforme o catálogo expande (Ondas 2-4):
 > dado individual — por isso é seguro cacheá-lo entre usuárias. Após uma atualização
 > de curadoria, chamar `clearCatalogIndexCache()` (ou aguardar o TTL) propaga a mudança.
 
+#### Backlog técnico
+
+**Alias Collision Guardrail**
+- **Descrição:** Falhar CI quando existir `alias_normalized` associado a mais de um
+  biomarcador sem `unit_pattern` desambiguador (risco de falso positivo no matching).
+- **Status:** Recomendado (não implementado).
+- **Prioridade:** Baixa.
+- **Gatilho:** Implementar quando — aliases > 1.000; **ou** colisões > 50; **ou**
+  primeira ambiguidade real detectada (colisão sem desambiguação).
+- **Estado de referência (2026-06-15):** 99 aliases · 8 nomes em colisão · **0** sem
+  desambiguação. Modelo saudável; guardrail é preventivo para a expansão.
+
 ---
 
 ## 4. O que a plataforma faz hoje vs. o que fica pronto para depois
