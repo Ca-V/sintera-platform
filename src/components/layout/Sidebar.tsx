@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  LayoutDashboard, FileText, TrendingUp,
+  LayoutDashboard, FileText, TrendingUp, Activity,
   Settings, X, LogOut, User, ChevronRight,
   Sparkles, BarChart3, CalendarDays,
 } from 'lucide-react'
@@ -13,6 +13,7 @@ import { useUser } from '@/context/UserContext'
 
 const navItems = [
   { href: '/dashboard',            icon: LayoutDashboard, label: 'Visão Geral', soon: false },
+  { href: '/dashboard/saude',      icon: Activity,        label: 'Minha Saúde', soon: false },
   { href: '/dashboard/exams',      icon: FileText,        label: 'Exames',      soon: false },
   { href: '/dashboard/historico',  icon: TrendingUp,      label: 'Histórico',   soon: false },
   { href: '/dashboard/agenda',     icon: CalendarDays,    label: 'Planejamento', soon: false },
