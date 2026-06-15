@@ -88,6 +88,51 @@ Princípio: **nenhuma alteração entra em `active` sem aprovação clínica.** 
 
 ---
 
+### 3.1 Workflow do mapeamento de catálogo (LOINC/SNOMED)
+
+O mapeamento de interoperabilidade tem seu próprio fluxo, **distinto** do staging
+de regras clínicas (não exige CRM, mas exige revisão humana antes de produção):
+
+```
+  draft  →  em_curadoria  →  verificado  →  aprovado  →  producao
+```
+
+- **draft** — código candidato sugerido (ver `loinc-mapping-draft.csv`). Não aplicado.
+- **em_curadoria** — sendo conferido contra loinc.org (variante, unidade, método).
+- **verificado** — código confirmado pelo curador.
+- **aprovado** — registrado no ledger (`loinc-approval-ledger.csv`) com fonte/curador/data.
+- **producao** — escrito no banco via migração versionada; visível em `/admin/catalogo`.
+
+Materializado nos campos da migração 028: `loinc_status`, `snomed_status`,
+`scientific_source`, `scientific_version`, `reviewed_by`, `reviewed_at`,
+`approval_status`.
+
+> **Risco de "falso progresso":** ter 83 códigos preenchidos ≠ governança pronta.
+> Cada código precisa de variante/método/unidade corretos. Por isso o gate é a
+> revisão, não o preenchimento. **Trilha de auditoria > o código em si** — daqui a
+> 12 meses, "por que HbA1c virou 4548-4?" precisa ter resposta no ledger.
+
+### 3.2 Priorização da curadoria (Sprints)
+
+A partir da confiança das sugestões do rascunho (60 alta / 16 média / 3 baixa / 4 sem):
+
+| Sprint | Escopo | Racional |
+|---|---|---|
+| **A** | 60 de alta confiança | Maior parte do uso; valida rápido. |
+| **B** | 16 de média confiança | Conferir variante/unidade (ex.: eGFR, ureia vs BUN, Vit D). |
+| **C** | 3 baixa + 4 sem candidato | Ambíguos (bastonetes, epitélios, muco, cilindros, atividade de protrombina); muito tempo, pouco valor — por último. |
+
+### 3.3 Artefatos desta fase
+
+| Arquivo | Papel |
+|---|---|
+| `loinc-mapping-draft.csv` | Rascunho `draft` (candidatos + confiança + notas). Não aplicado. |
+| `loinc-approval-ledger.csv` | Trilha de auditoria — fonte/curador/data/status por biomarcador. |
+| `loinc-apply.template.sql` | Template comentado de `UPDATE` (fora do runner; nunca executa só). |
+| migração 028 | Campos permanentes de governança (estrutura vazia). |
+
+---
+
 ## 4. O que a plataforma faz hoje vs. o que fica pronto para depois
 
 | Item | Estado |
@@ -97,6 +142,8 @@ Princípio: **nenhuma alteração entra em `active` sem aprovação clínica.** 
 | Estrutura de proveniência por regra | ✅ Tipo definido (`RuleProvenance`) — **vazio** até a clínica preencher. |
 | Fluxo `draft → validated → active` | ✅ Documentado; aplicável quando houver regras. |
 | Colunas `loinc_code` e `snomed_ct_code` no catálogo | ✅ Criadas (migrações 026/027) — **vazias** até curadoria. |
+| Campos de governança do catálogo (status, fonte, revisor…) | 📄 Migração 028 **criada, não aplicada** (aguarda decisão). |
+| Rascunho de mapeamento LOINC + ledger + template | 📄 Prontos em `docs/clinical/` — **draft**, não aplicados. |
 | Camada educacional MedlinePlus (por LOINC) | ✅ Implementada (`/api/education/biomarker/[code]`); retorna conteúdo só p/ itens já mapeados. |
 | Painel de cobertura científica (`/admin/catalogo`) | ✅ Mostra LOINC/SNOMED/Regra e "experiência completa" por biomarcador. |
 | Conteúdo clínico (limiares, flags, textos) | ⛔ **Bloqueado** até Responsável Clínico (CRM). |

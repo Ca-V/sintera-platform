@@ -1,0 +1,107 @@
+-- ============================================================
+-- SINTERA — TEMPLATE de aplicacao do mapeamento LOINC
+-- ============================================================
+-- DRAFT — NAO EXECUTAR. Arquivo de TEMPLATE, fora do runner de
+--   migracoes (vive em docs/). Cada UPDATE esta COMENTADO.
+--
+-- Como usar (apos a curadoria validar o CSV):
+--   1. Conferir cada loinc_code em loinc.org (variante soro/plasma, unidade).
+--   2. Registrar a aprovacao no ledger (loinc-approval-ledger.csv).
+--   3. Descomentar APENAS as linhas aprovadas, preencher reviewed_by/at e
+--      promover loinc_status/approval_status para a etapa correspondente.
+--   4. Mover o conteudo aprovado para uma migracao versionada e aplicar.
+--
+-- Premissa: a coluna de juncao e biomarker_catalog.code (NAO existe slug).
+-- Pre-requisito: migracao 028 (campos de governanca) aplicada.
+-- ============================================================
+
+-- ===== SPRINT A — alta confianca (60) =====
+-- UPDATE biomarker_catalog SET loinc_code = '1869-7', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'APO_A1';  -- Apolipoproteína A1 [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '2085-9', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'HDL';  -- HDL colesterol [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '2571-8', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'TRIGLICERIDEOS';  -- Triglicerídeos [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '6301-6', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'RNI';  -- RNI (INR) [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '5902-2', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'TP_SEGUNDOS';  -- Tempo de protrombina [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '14979-9', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'TTPA';  -- TTPA [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '1751-7', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'ALBUMINA';  -- Albumina [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '2885-2', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'PROTEINAS_TOTAIS';  -- Proteínas totais [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '1759-0', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'RELACAO_AG';  -- Relação A/G [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '1995-0', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'CALCIO_IONICO';  -- Cálcio iônico [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '2075-0', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'CLORETOS';  -- Cloretos [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '2160-0', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'CREATININA_SERICA';  -- Creatinina [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '2777-1', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'FOSFORO';  -- Fósforo [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '2823-3', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'POTASSIO';  -- Potássio [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '2951-2', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'SODIO';  -- Sódio [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '3024-7', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'T4_LIVRE';  -- T4 livre [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '3016-3', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'TSH';  -- TSH [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '704-7', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'BASOFILOS_ABS';  -- Basófilos [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '706-2', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'BASOFILOS_PCT';  -- Basófilos (%) [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '711-2', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'EOSINOFILOS_ABS';  -- Eosinófilos [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '713-8', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'EOSINOFILOS_PCT';  -- Eosinófilos (%) [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '6690-2', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'LEUCOCITOS_TOTAIS';  -- Leucócitos totais [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '731-0', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'LINFOCITOS_ABS';  -- Linfócitos [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '736-9', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'LINFOCITOS_PCT';  -- Linfócitos (%) [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '742-7', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'MONOCITOS_ABS';  -- Monócitos [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '5905-5', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'MONOCITOS_PCT';  -- Monócitos (%) [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '777-3', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'PLAQUETAS';  -- Plaquetas [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '786-4', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'CHCM';  -- CHCM [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '785-6', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'HCM';  -- HCM [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '789-8', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'HEMACIAS_SANGUE';  -- Hemácias [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '4544-3', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'HEMATOCRITO';  -- Hematócrito [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '718-7', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'HEMOGLOBINA_SANGUE';  -- Hemoglobina [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '788-0', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'RDW';  -- RDW [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '787-2', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'VCM';  -- VCM [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '2243-4', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'ESTRADIOL';  -- Estradiol [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '15067-2', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'FSH';  -- FSH [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '10501-5', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'LH';  -- LH [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '2731-8', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'PTH';  -- Paratormônio (PTH) [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '2839-9', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'PROGESTERONA';  -- Progesterona [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '1988-5', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'PCR';  -- Proteína C reativa [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '2276-4', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'FERRITINA';  -- Ferritina [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '2498-4', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'FERRO_SERICO';  -- Ferro sérico [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '1558-6', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'GLICEMIA';  -- Glicose (jejum) [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '4548-4', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'HBA1C';  -- Hemoglobina glicada (HbA1c) [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '2829-0', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'POTASSIO_24H';  -- Potássio (urina 24h) [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '2956-1', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'SODIO_24H';  -- Sódio (urina 24h) [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '5770-3', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'EAS_BILIRRUBINA';  -- Bilirrubina (urina) [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '5769-5', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'EAS_CILINDROS_HIALINOS';  -- Cilindros hialinos [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '5778-6', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'EAS_COR';  -- Cor da urina [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '5797-6', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'EAS_CETONAS';  -- Corpos cetônicos (urina) [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '5811-5', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'EAS_DENSIDADE';  -- Densidade urinária [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '5792-7', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'EAS_GLICOSE';  -- Glicose (urina) [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '13945-1', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'EAS_HEMACIAS_CAMPO';  -- Hemácias (sedimento) [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '5794-3', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'EAS_HEMOGLOBINA';  -- Hemoglobina (urina) [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '5799-2', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'EAS_LEUCO_ESTERASE';  -- Leucócito esterase (urina) [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '5802-4', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'EAS_NITRITO';  -- Nitrito (urina) [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '5803-2', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'EAS_PH';  -- pH urinário [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '5804-0', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'EAS_PROTEINA';  -- Proteína (urina) [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '5818-0', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'EAS_UROBILINOGENIO';  -- Urobilinogênio (urina) [alta]
+-- UPDATE biomarker_catalog SET loinc_code = '2132-9', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'VIT_B12';  -- Vitamina B12 [alta]
+
+-- ===== SPRINT B — media confianca (conferir variante/unidade) (16) =====
+-- UPDATE biomarker_catalog SET loinc_code = '10834-0', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'GLOBULINAS';  -- Globulinas [media]
+-- UPDATE biomarker_catalog SET loinc_code = '19123-9', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'MAGNESIO';  -- Magnésio [media]
+-- UPDATE biomarker_catalog SET loinc_code = '33914-3', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'RFG';  -- Ritmo de filtração glomerular [media]
+-- UPDATE biomarker_catalog SET loinc_code = '22664-7', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'UREIA';  -- Ureia [media]
+-- UPDATE biomarker_catalog SET loinc_code = '764-1', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'NEUTROFILOS_BAST_PCT';  -- Neutrófilos bastonetes (%) [media]
+-- UPDATE biomarker_catalog SET loinc_code = '30451-9', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'NEUTROFILOS_SEG_ABS';  -- Neutrófilos segmentados [media]
+-- UPDATE biomarker_catalog SET loinc_code = '769-0', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'NEUTROFILOS_SEG_PCT';  -- Neutrófilos segmentados (%) [media]
+-- UPDATE biomarker_catalog SET loinc_code = '21198-7', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'BHCG';  -- Beta-HCG [media]
+-- UPDATE biomarker_catalog SET loinc_code = '27894-3', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'INSULINA';  -- Insulina [media]
+-- UPDATE biomarker_catalog SET loinc_code = '6874-2', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'CALCIO_24H';  -- Cálcio (urina 24h) [media]
+-- UPDATE biomarker_catalog SET loinc_code = '30621-7', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'CITRATO_24H';  -- Citrato (urina 24h) [media]
+-- UPDATE biomarker_catalog SET loinc_code = '5767-9', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'EAS_ASPECTO';  -- Aspecto da urina [media]
+-- UPDATE biomarker_catalog SET loinc_code = '5783-6', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'EAS_CRISTAIS';  -- Cristais (urina) [media]
+-- UPDATE biomarker_catalog SET loinc_code = '25145-4', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'EAS_FLORA';  -- Flora bacteriana (urina) [media]
+-- UPDATE biomarker_catalog SET loinc_code = '5821-4', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'EAS_PIOCITOS';  -- Piócitos (sedimento) [media]
+-- UPDATE biomarker_catalog SET loinc_code = '62292-8', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'VIT_D_25OH';  -- Vitamina D (25-OH) [media]
+
+-- ===== SPRINT C — baixa confianca (ambiguos) (3) =====
+-- UPDATE biomarker_catalog SET loinc_code = '26508-0', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'NEUTROFILOS_BAST_ABS';  -- Neutrófilos bastonetes [baixa]
+-- UPDATE biomarker_catalog SET loinc_code = '6082-2', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'IGE_LATEX';  -- IgE específico — látex (K82) [baixa]
+-- UPDATE biomarker_catalog SET loinc_code = '13362-9', loinc_status = 'verificado', scientific_source = 'loinc.org', reviewed_by = '<curador>', reviewed_at = now() WHERE code = 'EAS_EPITELIOS_ALTAS';  -- Epitélios vias altas [baixa]
+
+-- ===== SEM CANDIDATO LOINC — definir na curadoria (4) =====
+-- TODO sem codigo sugerido: ATIVIDADE_PROTROMBINA (Atividade de protrombina)
+-- TODO sem codigo sugerido: EAS_CILINDROS_PATOLOGICOS (Cilindros patológicos)
+-- TODO sem codigo sugerido: EAS_EPITELIOS_BAIXAS (Epitélios vias baixas)
+-- TODO sem codigo sugerido: EAS_MUCO (Muco (urina))
