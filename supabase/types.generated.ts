@@ -414,6 +414,7 @@ export type Database = {
           display_name: string
           id: string
           is_critical: boolean
+          loinc_code: string | null
           measure_kind: string
           specimen: string
         }
@@ -425,6 +426,7 @@ export type Database = {
           display_name: string
           id?: string
           is_critical?: boolean
+          loinc_code?: string | null
           measure_kind?: string
           specimen: string
         }
@@ -436,6 +438,7 @@ export type Database = {
           display_name?: string
           id?: string
           is_critical?: boolean
+          loinc_code?: string | null
           measure_kind?: string
           specimen?: string
         }
