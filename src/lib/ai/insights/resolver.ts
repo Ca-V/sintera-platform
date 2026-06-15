@@ -99,26 +99,55 @@ export function resolveBiomarker(
 }
 
 /**
+ * Lê TODAS as linhas de uma consulta paginando em páginas de 1.000.
+ * O PostgREST/Supabase devolve no máximo ~1.000 linhas por requisição e
+ * truncaria silenciosamente catálogos maiores — por isso paginamos até a
+ * última página. Essencial para escalar a centenas/milhares de biomarcadores.
+ */
+async function fetchAllPaged(
+  makeQuery: (from: number, to: number) => PromiseLike<{ data: unknown[] | null; error: { message: string } | null }>,
+  label: string,
+): Promise<Array<Record<string, unknown>>> {
+  const PAGE = 1000
+  const all: Array<Record<string, unknown>> = []
+  let from = 0
+  for (;;) {
+    const { data, error } = await makeQuery(from, from + PAGE - 1)
+    if (error) throw new Error(`Falha ao carregar ${label}: ${error.message}`)
+    const rows = (data ?? []) as Array<Record<string, unknown>>
+    all.push(...rows)
+    if (rows.length < PAGE) break // última página
+    from += PAGE
+  }
+  return all
+}
+
+/**
  * Carrega catálogo + apelidos do banco e monta o índice em memória.
- * Leitura única; o índice pode ser reaproveitado para um lote de biomarcadores.
- * Usa o client recebido (respeita RLS — ambas as tabelas têm policy de SELECT
- * para authenticated, ver migração 022).
+ * Leitura única (paginada); o índice pode ser reaproveitado para um lote de
+ * biomarcadores. Usa o client recebido (respeita RLS — ambas as tabelas têm
+ * policy de SELECT para authenticated, ver migração 022).
  */
 export async function loadCatalogIndex(supabase: SupabaseClient): Promise<CatalogIndex> {
-  const [catalogRes, aliasRes] = await Promise.all([
-    supabase
-      .from('biomarker_catalog')
-      .select('id, code, display_name, category, specimen, canonical_unit, measure_kind, is_critical'),
-    supabase
-      .from('biomarker_aliases')
-      .select('alias_normalized, catalog_id, unit_pattern'),
+  const [catalogRows, aliasRows] = await Promise.all([
+    fetchAllPaged(
+      (from, to) => supabase
+        .from('biomarker_catalog')
+        .select('id, code, display_name, category, specimen, canonical_unit, measure_kind, is_critical')
+        .range(from, to),
+      'biomarker_catalog',
+    ),
+    fetchAllPaged(
+      (from, to) => supabase
+        .from('biomarker_aliases')
+        .select('alias_normalized, catalog_id, unit_pattern')
+        .range(from, to),
+      'biomarker_aliases',
+    ),
   ])
 
-  if (catalogRes.error) throw new Error(`Falha ao carregar biomarker_catalog: ${catalogRes.error.message}`)
-  if (aliasRes.error) throw new Error(`Falha ao carregar biomarker_aliases: ${aliasRes.error.message}`)
-
   const byId = new Map<string, CatalogEntry>()
-  for (const row of (catalogRes.data ?? []) as Array<Record<string, unknown>>) {
+  for (const row of catalogRows) {
     const entry: CatalogEntry = {
       id: row.id as string,
       code: row.code as string,
@@ -133,7 +162,7 @@ export async function loadCatalogIndex(supabase: SupabaseClient): Promise<Catalo
   }
 
   const aliasesByName = new Map<string, AliasEntry[]>()
-  for (const row of (aliasRes.data ?? []) as Array<Record<string, unknown>>) {
+  for (const row of aliasRows) {
     const alias: AliasEntry = {
       aliasNormalized: row.alias_normalized as string,
       catalogId: row.catalog_id as string,

@@ -161,13 +161,24 @@ export default function CatalogoAdminPage() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase as any)
-        .from('biomarker_catalog')
-        .select('code, display_name, category, specimen, is_critical, loinc_code, snomed_ct_code, loinc_status, approval_status, scientific_source, reviewed_by, rejection_reason, curation_wave, curation_priority')
-        .order('category', { ascending: true })
-        .order('display_name', { ascending: true })
-      setRows((data ?? []) as CatalogRow[])
+      // Pagina em blocos de 1.000 — o Supabase trunca silenciosamente acima disso.
+      const PAGE = 1000
+      const cols = 'code, display_name, category, specimen, is_critical, loinc_code, snomed_ct_code, loinc_status, approval_status, scientific_source, reviewed_by, rejection_reason, curation_wave, curation_priority'
+      const all: CatalogRow[] = []
+      for (let from = 0; ; from += PAGE) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data, error } = await (supabase as any)
+          .from('biomarker_catalog')
+          .select(cols)
+          .order('category', { ascending: true })
+          .order('display_name', { ascending: true })
+          .range(from, from + PAGE - 1)
+        if (error) throw error
+        const rows = (data ?? []) as CatalogRow[]
+        all.push(...rows)
+        if (rows.length < PAGE) break
+      }
+      setRows(all)
     } catch (e) {
       console.error('[admin/catalogo] load error:', e)
     } finally {
