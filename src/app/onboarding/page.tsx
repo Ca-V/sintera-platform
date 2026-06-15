@@ -85,6 +85,13 @@ export default function OnboardingPage() {
     if (data.user) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (supabase as any).from('profiles').upsert({ id: data.user.id, name })
+      // Registro de consentimento (LGPD) — termos + dados de saúde. Best-effort:
+      // não bloqueia a criação de conta se falhar.
+      await fetch('/api/consent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ types: ['terms', 'health_data'] }),
+      }).catch(() => {})
       // Segmentação P2 — salva como evento de perfil
       if (examFreq || tracksMedic) {
         await fetch('/api/events', {
