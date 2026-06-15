@@ -7,6 +7,7 @@ import { Activity, TrendingUp, TrendingDown, Minus, ArrowRight, Loader2, FlaskCo
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
+import { analyzeSeries } from '@/lib/biomarkers/longitudinal'
 
 // ── Tipos (client genérico: catalog_id e biomarker_catalog não estão nos tipos manuais) ──
 interface Row {
@@ -80,6 +81,10 @@ interface Highlight {
   deltaPercent: number | null
   trend: Trend
   count: number
+  /** Velocidade relativa: % por mês ao longo de toda a série (FASE 3). null se não calculável. */
+  ratePercentPerMonth: number | null
+  /** Meses cobertos pela série. */
+  monthsSpan: number | null
 }
 
 function buildHighlights(rows: Row[]): Highlight[] {
@@ -101,6 +106,8 @@ function buildHighlights(rows: Row[]): Highlight[] {
     if (prev === 0) continue
     const delta = (last - prev) / Math.abs(prev)
     const trend: Trend = delta > 0.05 ? 'up' : delta < -0.05 ? 'down' : 'stable'
+    // Velocidade de mudança (FASE 3): ritmo médio por mês ao longo de toda a série.
+    const analysis = analyzeSeries(sorted.map(r => ({ value: r.value!, date: examDate(r) })))
     highlights.push({
       name: sorted[sorted.length - 1].name,
       unit: units[0],
@@ -108,6 +115,8 @@ function buildHighlights(rows: Row[]): Highlight[] {
       deltaPercent: Math.round(delta * 100),
       trend,
       count: sorted.length,
+      ratePercentPerMonth: analysis?.ratePercentPerMonth != null ? Math.round(analysis.ratePercentPerMonth) : null,
+      monthsSpan: analysis?.monthsSpan != null ? Math.round(analysis.monthsSpan) : null,
     })
   }
   // Maior variação absoluta primeiro
@@ -286,7 +295,10 @@ export default function MinhaSaudePage() {
                   <div key={i} className="flex items-center gap-3 px-5 py-3">
                     <div className="flex-1 min-w-0">
                       <p className="font-body text-sm text-onyx truncate">{h.name}</p>
-                      <p className="font-body text-xs text-mauve/60">{h.count} medições</p>
+                      <p className="font-body text-xs text-mauve/60">
+                        {h.count} medições
+                        {h.ratePercentPerMonth !== null && ` · ritmo ${h.ratePercentPerMonth > 0 ? '+' : ''}${h.ratePercentPerMonth}%/mês`}
+                      </p>
                     </div>
                     <span className="font-body text-sm font-semibold text-onyx flex-shrink-0">
                       {h.lastValue} <span className="text-xs font-normal text-mauve">{h.unit}</span>
@@ -297,7 +309,7 @@ export default function MinhaSaudePage() {
               </div>
               <div className="px-5 py-2.5 bg-ivory/40">
                 <p className="font-body text-[11px] text-mauve/50">
-                  Variação factual entre as duas últimas medições. Não indica melhora ou piora clínica.
+                  Variação entre as duas últimas medições e ritmo médio no período — métricas factuais. Não indicam melhora ou piora clínica.
                 </p>
               </div>
             </motion.div>
