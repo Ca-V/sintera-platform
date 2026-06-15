@@ -37,6 +37,8 @@ interface CatalogRow {
   scientific_source: string | null
   reviewed_by: string | null
   rejection_reason: string | null
+  curation_wave: number
+  curation_priority: number | null
 }
 
 // Cores do estágio de governança (draft→…→producao, +rejeitado).
@@ -162,7 +164,7 @@ export default function CatalogoAdminPage() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data } = await (supabase as any)
         .from('biomarker_catalog')
-        .select('code, display_name, category, specimen, is_critical, loinc_code, snomed_ct_code, loinc_status, approval_status, scientific_source, reviewed_by, rejection_reason')
+        .select('code, display_name, category, specimen, is_critical, loinc_code, snomed_ct_code, loinc_status, approval_status, scientific_source, reviewed_by, rejection_reason, curation_wave, curation_priority')
         .order('category', { ascending: true })
         .order('display_name', { ascending: true })
       setRows((data ?? []) as CatalogRow[])
@@ -283,6 +285,11 @@ export default function CatalogoAdminPage() {
                             {r.is_critical && (
                               <span className="inline-flex items-center gap-1 font-body text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-1.5 py-0.5">
                                 <AlertTriangle size={9} /> crítico
+                              </span>
+                            )}
+                            {r.curation_priority != null && (
+                              <span className="inline-flex items-center font-body text-[10px] text-petal bg-blush border border-petal/20 rounded-full px-1.5 py-0.5">
+                                P{r.curation_priority}
                               </span>
                             )}
                           </div>

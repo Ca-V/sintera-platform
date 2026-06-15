@@ -126,6 +126,26 @@ A partir da confiança das sugestões do rascunho (60 alta / 16 média / 3 baixa
 | **B** | 16 de média confiança | Conferir variante/unidade (ex.: eGFR, ureia vs BUN, Vit D). |
 | **C** | 3 baixa + 4 sem candidato | Ambíguos (bastonetes, epitélios, muco, cilindros, atividade de protrombina); muito tempo, pouco valor — por último. |
 
+### 3.4 Catálogo como sistema que escala (ondas de curadoria)
+
+Os 83 biomarcadores atuais **não são o catálogo-alvo** — são o **Sprint 0 / Onda 1**
+(MVP operacional). A governança foi desenhada para incorporar centenas/milhares de
+biomarcadores ao longo do tempo, de forma segura, auditável e rastreável. O objetivo
+não é fechar um catálogo, mas ter um **sistema de incorporação contínua**.
+
+Campos que orientam isso (migração 030): `curation_wave` (onda; 1 = catálogo atual)
+e `curation_priority` (1 = mais alta, dentro da onda; definida no planejamento).
+
+| Onda | Escopo (orientação de produto/curadoria) |
+|---|---|
+| **1** | Biomarcadores atuais (os 83). |
+| **2** | Cardiometabólicos adicionais (LDL, colesterol total, ApoB, Lp(a), não-HDL…) quando fizer sentido. |
+| **3** | Biomarcadores avançados (performance, longevidade). |
+| **4** | Metabolômica e expansões futuras. |
+
+> A Onda 1 **não** espera a definição do catálogo completo — começa já, usando a
+> infraestrutura recém-criada. As ondas seguintes entram conforme o produto evolui.
+
 ### 3.3 Artefatos desta fase
 
 | Arquivo | Papel |

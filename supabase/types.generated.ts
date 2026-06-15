@@ -412,6 +412,8 @@ export type Database = {
           category: string
           code: string
           created_at: string
+          curation_priority: number | null
+          curation_wave: number
           display_name: string
           id: string
           is_critical: boolean
@@ -433,6 +435,8 @@ export type Database = {
           category: string
           code: string
           created_at?: string
+          curation_priority?: number | null
+          curation_wave?: number
           display_name: string
           id?: string
           is_critical?: boolean
@@ -454,6 +458,8 @@ export type Database = {
           category?: string
           code?: string
           created_at?: string
+          curation_priority?: number | null
+          curation_wave?: number
           display_name?: string
           id?: string
           is_critical?: boolean
