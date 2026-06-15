@@ -124,11 +124,11 @@ async function fetchAllPaged(
 
 /**
  * Carrega catálogo + apelidos do banco e monta o índice em memória.
- * Leitura única (paginada); o índice pode ser reaproveitado para um lote de
- * biomarcadores. Usa o client recebido (respeita RLS — ambas as tabelas têm
- * policy de SELECT para authenticated, ver migração 022).
+ * Leitura única (paginada). Usado pela camada de cache abaixo.
+ * Usa o client recebido (respeita RLS — ambas as tabelas têm policy de SELECT
+ * para authenticated, ver migração 022).
  */
-export async function loadCatalogIndex(supabase: SupabaseClient): Promise<CatalogIndex> {
+async function fetchCatalogIndex(supabase: SupabaseClient): Promise<CatalogIndex> {
   const [catalogRows, aliasRows] = await Promise.all([
     fetchAllPaged(
       (from, to) => supabase
@@ -174,6 +174,37 @@ export async function loadCatalogIndex(supabase: SupabaseClient): Promise<Catalo
   }
 
   return { byId, aliasesByName }
+}
+
+// ── Cache do índice ───────────────────────────────────────────────────────────
+// O catálogo/apelidos mudam raramente (só por curadoria) e são GLOBAIS — a RLS
+// é `USING (true)` para authenticated, então o índice é idêntico para todas as
+// usuárias e pode ser cacheado no processo com segurança (sem dado individual).
+// Evita rebuscar dezenas de milhares de apelidos a cada extração. Em ambiente
+// serverless o cache vive na instância "quente"; cold starts recarregam.
+const CATALOG_CACHE_TTL_MS = Number(process.env.CATALOG_CACHE_TTL_MS ?? 5 * 60 * 1000)
+let cachedIndex: { index: CatalogIndex; expiresAt: number } | null = null
+
+/** Invalida o cache do índice (testes ou após uma atualização de curadoria). */
+export function clearCatalogIndexCache(): void {
+  cachedIndex = null
+}
+
+/**
+ * Retorna o índice do catálogo, servindo do cache em memória quando válido.
+ * Passe `{ forceReload: true }` para ignorar o cache (ex.: logo após curadoria).
+ */
+export async function loadCatalogIndex(
+  supabase: SupabaseClient,
+  opts: { forceReload?: boolean } = {},
+): Promise<CatalogIndex> {
+  const now = Date.now()
+  if (!opts.forceReload && cachedIndex && cachedIndex.expiresAt > now) {
+    return cachedIndex.index
+  }
+  const index = await fetchCatalogIndex(supabase)
+  cachedIndex = { index, expiresAt: now + CATALOG_CACHE_TTL_MS }
+  return index
 }
 
 /**

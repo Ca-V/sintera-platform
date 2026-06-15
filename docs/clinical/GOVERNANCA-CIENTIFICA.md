@@ -155,6 +155,23 @@ e `curation_priority` (1 = mais alta, dentro da onda; definida no planejamento).
 | `loinc-apply.template.sql` | Template comentado de `UPDATE` (fora do runner; nunca executa só). |
 | migração 028 | Campos permanentes de governança (estrutura vazia). |
 
+### 3.5 Escala e robustez (limiares para revisitar)
+
+A camada de matching (resolver) e o catálogo foram desenhados para crescer a
+milhares de biomarcadores. Decisões de engenharia já tomadas e os gatilhos a
+monitorar conforme o catálogo expande (Ondas 2-4):
+
+| Item | Estado | Gatilho para revisitar |
+|---|---|---|
+| Teto implícito de 1.000 linhas (PostgREST) | ✅ Corrigido — resolver e painel paginam via `.range()`. | — |
+| Cache do índice do catálogo em memória | ✅ Ativo (`CATALOG_CACHE_TTL_MS`, padrão 5 min; `clearCatalogIndexCache()` após curadoria). | Se o catálogo crescer muito, considerar cache compartilhado (edge/Redis) e/ou invalidação por versão em vez de TTL. |
+| Matching por `Map` (hash O(1)) | ✅ Escala sem mudança até dezenas de milhares de apelidos. | Reavaliar só se o perfil de uso mudar radicalmente. |
+| Paginação/virtualização da UI do painel | ⏳ Não necessária com poucas centenas. | Ao aproximar de ~500-1.000 itens, filtrar/paginar no servidor (campos `curation_wave`/`approval_status` já existem). |
+
+> Nota: o índice é **global** (RLS `USING (true)` para authenticated) e não contém
+> dado individual — por isso é seguro cacheá-lo entre usuárias. Após uma atualização
+> de curadoria, chamar `clearCatalogIndexCache()` (ou aguardar o TTL) propaga a mudança.
+
 ---
 
 ## 4. O que a plataforma faz hoje vs. o que fica pronto para depois
