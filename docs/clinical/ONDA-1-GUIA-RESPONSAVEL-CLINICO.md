@@ -88,6 +88,20 @@ versão, aprovado por, data, validade).
 
 ---
 
+## 4.1 Estrutura de aprovação — três assinaturas independentes
+
+A validação do RC é separada em **três aprovações independentes** (ver
+`TERMO-APROVACAO-RC.md`), que podem ser assinadas em momentos distintos:
+
+| # | Aprovação | Documentos | Depende do conteúdo clínico? |
+|---|---|---|---|
+| 1 | **Processo de governança** | GOVERNANCA-CIENTIFICA, -CLINICA-SINTERA, -PROCESSO | Não — pode assinar já |
+| 2 | **Prompts (linguagem)** | prompts-candidatos-v1.1 | Não — pode assinar já |
+| 3 | **Conteúdo clínico** | regras-clinicas-template + para-revisao + loinc-mapping-draft + ledger | **Sim** — só após preencher |
+
+As Aprovações 1 e 2 destravam o processo e a linguagem rapidamente; a 3 é o
+trabalho clínico que liga o motor.
+
 ## 5. Checklist consolidado de entregáveis
 
 **A preencher e devolver (ou editar no repositório):**
