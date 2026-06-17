@@ -1,6 +1,6 @@
 # SINTERA — Value Proposition & North Star
 
-**Versão:** v1 (rascunho de produto).
+**Versão:** v1.1 (rascunho de produto).
 **Status:** **HIPÓTESES para ratificação da fundadora e validação de mercado** — não são
 fatos decididos. Diferente dos documentos de arquitetura/governança (estrutura), aqui há
 suposições de mercado que precisam ser testadas com clientes reais (empresas, operadoras,
@@ -53,8 +53,22 @@ frequência diária — ela quer ser **o lar confiável da jornada de saúde**, 
 
 ## 3. North Star Metric
 
-**Health Continuity Rate (HCR)** — *proporção de usuárias ativas cuja jornada preventiva
-aplicável está rastreada e em dia (com proveniência).*
+**Health Continuity Rate (HCR)** — *proporção de usuários ativos cuja jornada de saúde
+possui rastreabilidade adequada, eventos relevantes registrados com proveniência conhecida
+e cobertura compatível com os protocolos governados aplicáveis.*
+
+> A formulação evita a expressão "em dia" (intuitiva, mas clínica/juridicamente ambígua) —
+> mede rastreabilidade e cobertura documental, **não** um juízo de saúde.
+
+**Continuidade × Adesão × Saúde (o que o HCR mede — e o que NÃO mede):**
+
+| Conceito | Significado |
+|---|---|
+| **Continuidade** | Existência de jornada rastreável ao longo do tempo |
+| **Adesão** | Grau de cobertura dos itens previstos no protocolo |
+| **Saúde** | **NÃO medida pela SINTERA** |
+
+A SINTERA mede **continuidade e adesão documental** — não mede saúde, risco nem prognóstico.
 
 **Por que esta, e não outras:**
 - Liga as três coisas que importam: **valor** (estar em dia), **retenção** (manter a
@@ -78,7 +92,28 @@ rastreados/atualizados, por usuária ativa, ponderados pela confiança do dado (
 
 ---
 
-## 4. Estratégia de aquisição de dados
+## 4. Flywheel — por que o negócio se fortalece sozinho
+
+**B2C:**
+```
+mais eventos registrados → timeline mais completa → maior continuidade da jornada
+→ maior confiança do usuário → maior retenção → mais eventos registrados
+```
+
+**B2B:**
+```
+mais cobertura preventiva → mais dados estruturados → melhor governança
+→ maior valor para o empregador → renovação e expansão → mais cobertura
+```
+
+> **Afiação honesta:** o ciclo só gira a partir do passo "mais eventos registrados" — ou
+> seja, **depende da estratégia de aquisição de dados (§5)**. Sem resolver a entrada de
+> dados, o flywheel não inicia. Por isso a porta **B2B ocupacional** (que já traz dado) é
+> o melhor ponto de ignição.
+
+---
+
+## 5. Estratégia de aquisição de dados
 
 O Compliance/Timeline só valem com dado de entrada. Caminho realista = **combinação, com
 proveniência e confiança por evento** (alinhado à arquitetura já construída):
@@ -104,18 +139,32 @@ B2B Saúde Ocupacional → B2B2C (operadoras) → B2C
 
 ---
 
-## 5. Riscos e hipóteses a validar (honestidade)
+## 6. O que a SINTERA NÃO faz
+
+- não realiza diagnóstico;
+- não realiza estratificação clínica de risco;
+- não substitui avaliação médica;
+- não recomenda tratamento;
+- não realiza prescrição;
+- **não mede estado de saúde** (mede continuidade e adesão documental — ver §3).
+
+Seção propositalmente explícita, para reduzir ambiguidade e reforçar o enquadramento
+regulatório (RDC 657/2022).
+
+---
+
+## 7. Riscos e hipóteses a validar (honestidade)
 
 1. **Disposição a pagar:** governança/continuidade são valor *institucional* claro, mas
    *individual* (B2C) tem histórico de baixa conversão — validar B2B primeiro.
 2. **Frequência baixa:** o produto precisa ser valioso *sem* uso diário (ver §2).
-3. **Aquisição de dados:** sem dado, HCR é vazio — depende da §4.
+3. **Aquisição de dados:** sem dado, HCR é vazio — depende da §5.
 4. **HCR ↔ retenção/receita:** correlação assumida, não comprovada — instrumentar e medir.
 5. **Enquadramento de "pendente":** depende da decisão jurídica (ver governança §9).
 
 ---
 
-## 6. Resumo executivo (uma frase)
+## 8. Resumo executivo (uma frase)
 
 A SINTERA é **o lar confiável da jornada de saúde**: responde "estou em dia com o que é
 aplicável a mim?" de forma rastreável e sem diagnóstico — medindo **Health Continuity
