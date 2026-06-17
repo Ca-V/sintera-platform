@@ -50,6 +50,15 @@ export default function InsightsPage() {
   const [feedback, setFeedback] = useState<Record<string, 'util' | 'nao_util'>>({})
   const [feedbackBusy, setFeedbackBusy] = useState<Record<string, boolean>>({})
 
+  // Modo demonstração: SÓ com ?demo=1. Usuárias reais nunca veem dados synthetic.
+  const [demoMode, setDemoMode] = useState(false)
+  const [generating, setGenerating] = useState(false)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setDemoMode(new URLSearchParams(window.location.search).get('demo') === '1')
+    }
+  }, [])
+
   const load = useCallback(async () => {
     if (!user) return
     setLoading(true)
@@ -59,12 +68,30 @@ export default function InsightsPage() {
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
     if (error) console.error('[SINTERA] insights fetch:', error.message)
-    const rows = ((data ?? []) as unknown as InsightRow[]).filter(r => r.synthetic === false)
+    const all = (data ?? []) as unknown as InsightRow[]
+    // Modo demo mostra os insights de demonstração (synthetic, source=demo_factual);
+    // modo normal mostra só os reais (synthetic=false).
+    const rows = demoMode
+      ? all.filter(r => r.source === 'demo_factual')
+      : all.filter(r => r.synthetic === false)
     setInsights(rows)
     setLoading(false)
-  }, [user, supabase])
+  }, [user, supabase, demoMode])
 
   useEffect(() => { load() }, [load])
+
+  async function generateDemo() {
+    if (generating) return
+    setGenerating(true)
+    try {
+      const res = await fetch('/api/insights/demo', { method: 'POST' })
+      if (res.ok) await load()
+    } catch {
+      // silencioso — demonstração é não-crítica
+    } finally {
+      setGenerating(false)
+    }
+  }
 
   async function sendFeedback(id: string, rating: 'util' | 'nao_util') {
     if (feedbackBusy[id] || feedback[id]) return
@@ -89,6 +116,24 @@ export default function InsightsPage() {
         <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Insights</h1>
         <p className="font-body text-sm text-mauve">Análise dos seus dados de saúde — organização, sem diagnóstico</p>
       </motion.div>
+
+      {demoMode && (
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+          className="rounded-2xl border-2 border-dashed border-petal/40 bg-blush/30 px-5 py-4 space-y-3">
+          <div>
+            <p className="font-body text-sm font-semibold text-petal">Modo demonstração — sem validação clínica</p>
+            <p className="font-body text-xs text-mauve mt-1 leading-relaxed">
+              Os itens abaixo são <strong>factuais</strong>: apenas indicam se o valor está acima ou abaixo
+              da faixa impressa no seu laudo. Não há classificação nem juízo clínico — isso só será habilitado
+              após a aprovação do Responsável Clínico. Não visível para usuárias reais.
+            </p>
+          </div>
+          <button onClick={generateDemo} disabled={generating}
+            className="font-body text-xs font-medium px-4 py-2 rounded-full gradient-sintera text-white disabled:opacity-50 hover:opacity-90 transition-opacity">
+            {generating ? 'Gerando…' : 'Gerar demonstração factual dos meus exames'}
+          </button>
+        </motion.div>
+      )}
 
       {loading ? (
         <div className="card-premium p-10 text-center">
