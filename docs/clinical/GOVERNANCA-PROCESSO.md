@@ -59,7 +59,8 @@ draft → in_review → approved → active → deprecated
 
 | Artefato | Versão | content_hash | Aprovado por | Data | Validade até |
 |---|---|---|---|---|---|
-| — | — | — | — | — | — |
+| Processo de governança (Aprovação 1) | v1 | — | Carina Leite (fundadora) — **provisório, pendente ratificação RC** | 2026-06-16 | ratificar c/ RC |
+| Prompts `narrative`/`qa` (Aprovação 2) | v1.1 | a registrar na ativação | Carina Leite (fundadora) — **provisório, pendente ratificação RC** | 2026-06-16 | ratificar c/ RC |
 
 ## 7. Histórico de alterações
 

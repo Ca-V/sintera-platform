@@ -22,7 +22,7 @@ rastreabilidade) é aceitável. **Não** envolve conteúdo clínico.
 
 | Parecer | Responsável (nome + CRM) | Data | Assinatura |
 |---|---|---|---|
-| ☐ Aprovado  ☐ Aprovado com ressalvas  ☐ Reprovado | | | |
+| ☑ **Aprovado (provisório — fundadora)** | Carina Leite — fundadora · *pendente ratificação do RC (CRM)* | 2026-06-16 | aprovação provisória |
 
 **Ressalvas / observações:**
 _______________________________________________________________________
@@ -40,13 +40,16 @@ avaliação médica).
 
 | Parecer | Responsável (nome + CRM) | Data | Assinatura |
 |---|---|---|---|
-| ☐ Aprovado  ☐ Aprovado com ressalvas  ☐ Reprovado | | | |
+| ☑ **Aprovado (provisório — fundadora)** | Carina Leite — fundadora · *pendente ratificação do RC (CRM)* | 2026-06-16 | aprovação provisória |
 
 **Ressalvas / observações:**
+Aprovação provisória da fundadora; ratificação clínica pelo RC pendente.
 _______________________________________________________________________
 
-> Ao aprovar, os prompts passam de `draft` para `active` no `prompt_registry`
-> (com `approved_by`/`approved_at` e `content_hash`).
+> A ativação dos prompts (`draft → active` no `prompt_registry` com
+> `approved_by`/`approved_at`/`content_hash`) só ocorre na **ratificação do RC**.
+> A aprovação provisória da fundadora **não** os coloca em produção — e, de todo
+> modo, o motor está vazio, então nenhum prompt é invocado até a Aprovação 3.
 
 ---
 
