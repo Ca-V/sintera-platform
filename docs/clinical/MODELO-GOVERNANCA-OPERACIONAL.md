@@ -1,7 +1,7 @@
 # Modelo de Governança Operacional — SINTERA
 
 **Também chamado:** "Constituição Clínica" da SINTERA.
-**Versão:** v1 (rascunho de engenharia/processo — **para validação**).
+**Versão:** v2 (rascunho de engenharia/processo — **para validação**).
 **Status:** documento de **processo e organização**. **NÃO contém conteúdo clínico.**
 Define *quem* governa o conteúdo científico, *como* ele é adotado/versionado/auditado
 e *quem responde* por ele. O conteúdo em si (protocolos, itens, limiares) é decisão
@@ -50,12 +50,32 @@ clínica de saúde mental. Ver §10.
 | Papel | Responsabilidade | NÃO faz |
 |---|---|---|
 | **Fonte científica** (MS, INCA, CONITEC, PNI, AMB, sociedades) | Autoria da diretriz/evidência (externa à SINTERA) | — |
-| **Responsável Clínico (RC)** — CRM | Autoridade clínica; aprova adoção e ativação; assina | Não cria diretriz; não programa |
-| **Comitê Clínico** (multidisciplinar, futuro) | Resolve precedência/conflito entre fontes; cobre amplitude (oncologia, geriatria, psiquiatria, mastologia…) | — |
+| **Conselho Científico** (independente, futuro) | **Governança científica:** valida metodologia, revisa conflitos complexos e posições controversas, emite pareceres, garante independência científica | Não opera o pipeline; não programa |
+| **Comitê Clínico** (multidisciplinar) | **Governança operacional clínica:** resolve precedência/conflito de rotina; cobre amplitude de especialidades (oncologia, geriatria, psiquiatria, mastologia…) | Não define metodologia científica |
+| **Responsável Clínico (RC)** — CRM | Autoridade clínica que aprova e **ativa** protocolos; assina | Não cria diretriz; não programa |
 | **Engenharia (ENG)** | Mecanismo, schema, motor, auditoria | **Nunca** define conteúdo clínico |
 | **Produto (PROD)** | Linguagem/UX não-clínica; enquadramento de exibição | Não define critério clínico |
 | **Jurídico/Regulatório** | Enquadramento RDC 657 / CFM; decisão sobre "pendente" (§9) | — |
 | **DPO / LGPD** | Dados sensíveis, consentimento, minimização, retenção | — |
+
+### 3.1 Governança científica × governança operacional
+
+Não são a mesma coisa, e a confusão entre elas é um erro comum. A SINTERA separa:
+
+```
+  Conselho Científico   →  governança científica (metodologia, conflitos complexos, independência)
+        ↓
+  Comitê Clínico        →  governança operacional clínica (precedência de rotina, amplitude)
+        ↓
+  Responsável Clínico   →  aprova e ativa protocolos (assinatura)
+        ↓
+  Operação SINTERA      →  custódia, distribuição, auditoria (infraestrutura)
+```
+
+**Instanciação faseada (não-negociável de viabilidade):** a *estrutura* acima é definida
+desde já, mas os *corpos* são preenchidos conforme catálogo e mercado crescem. No MVP, o
+RC pode acumular funções e o Conselho pode ser pequeno/consultivo; a separação formal
+amadurece com a escala. Não se exige um Conselho Científico permanente no dia 1.
 
 ---
 
@@ -72,6 +92,21 @@ A responsabilidade é **estratificada** — não há "dono único":
 Isto é o que torna o ativo defensável: a SINTERA não "opina" clinicamente — ela
 **custodia e distribui** um protocolo cuja autoria é de uma sociedade e cuja adoção é
 de um clínico responsável.
+
+### 4.1 Definição formal de "Protocolo"
+
+Para impedir que se cadastre opinião médica, artigo isolado, conteúdo comercial ou
+recomendação sem aprovação, **protocolo** na SINTERA é definido como:
+
+> **Conjunto versionado de itens derivados de fontes científicas aprovadas (Nível 1–3),
+> aplicável a uma população específica e ativado por instância formal de governança
+> clínica.**
+
+Decorrências (regras de admissão):
+- Todo item **rastreia obrigatoriamente** a uma fonte de Nível 1–3 (benchmark não basta).
+- Protocolo **não é motor de recomendação individual** — é um conjunto aplicável a uma
+  população, do qual se mede *aderência*.
+- Sem ativação assinada (RC/comitê), não é protocolo — é rascunho.
 
 ---
 
@@ -156,6 +191,24 @@ ser decidido por **Jurídico + RC**:
 e acompanhar de enquadramento defensivo: *"aderência ao protocolo ≠ estado de saúde;
 confirme com seu médico"*. A escolha final do nível é decisão jurídica/clínica.
 
+### 9.1 Provenance Viewer (transparência ao usuário)
+
+Para cada item exibido, a usuária pode ver a **rastreabilidade** — sem nenhuma
+interpretação clínica:
+
+```
+Origem:    INCA
+Diretriz:  Rastreamento (exemplo)
+Versão:    2026
+Aprovado:  Comitê Clínico SINTERA
+Data:      03/2026
+```
+
+Isto **reforça o posicionamento** (transparência e governança são o produto) e é também
+**mitigação regulatória**: ao mostrar a fonte pública, deixa explícito que a SINTERA
+*relata uma diretriz*, não dá conselho pessoal — sustentando o Modelo B (§9). É
+construível cedo: exibe apenas metadado de proveniência, **zero conteúdo clínico**.
+
 ---
 
 ## 10. O que fica fora da V1 (decisão de escopo)
@@ -179,6 +232,38 @@ protocolo de segurança formal.
 6. **Enquadramento RDC 657:** a "aplicabilidade personalizada" se mantém nas exclusões de
    software de organização/gestão, ou requer enquadramento adicional?
 7. **LGPD:** consentimento/minimização/retenção para o escopo ampliado (perfil, jornada).
+
+---
+
+## 11-bis. Sustentabilidade econômica da curadoria (risco crítico)
+
+O maior risco que resta **não é técnico, clínico nem regulatório — é econômico**: a
+curadoria pode custar mais do que o valor que gera. A armadilha:
+
+```
+50 especialidades → 200 diretrizes → 3.000 protocol items → revisões anuais
+= máquina de manutenção permanente
+```
+
+**Princípio formal:** expandir o catálogo de protocolos **por valor de mercado, não por
+completude científica.** Cada onda precisa de justificativa de valor, não só de existência
+de diretriz.
+
+**Mitigações:**
+- Começar pelo **Nível 1 (MS / INCA / PNI)** — poucas fontes, **estáveis**, alto valor
+  universal — antes da cauda longa de sociedades de especialidade.
+- Monitoramento de atualização de diretriz pode ser apoiado por automação; o **juízo**
+  de adoção, nunca.
+- Custo de curadoria por fonte entra no **modelo financeiro** (não é projeto, é processo).
+
+**Ondas (expansão por valor):**
+
+| Onda | Escopo | Fontes-base |
+|---|---|---|
+| **1** | Prevenção universal | MS, INCA, PNI |
+| **2** | Saúde da mulher (alinha à identidade da SINTERA) | FEBRASGO, INCA |
+| **3** | Cardiometabólico | SBC, SBD, SBEM |
+| **4** | Demais especialidades | sociedades AMB |
 
 ---
 
