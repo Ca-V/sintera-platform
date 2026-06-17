@@ -51,7 +51,8 @@ F6 Escala (operadoras, ocupacional, marketplace de protocolos)
   - **Decisão das 14 questões** do `GOVERNANCE-DECISIONS-CHECKLIST`.
 - **Dono:** Fundadora (+ jurídico, + RC).
 - **Gate de saída:** evidência de disposição a pagar (≥ 1 segmento) **e** decisões 3, 4, 5,
-  6, 8 do checklist assinadas.
+  6, 8 do checklist assinadas **e** verificação dos **critérios de revisão da tese**
+  (Master Strategy §12.2) — registrar decisão seguir/revisar/pivotar.
 
 ## F2 — Fundação de governança clínica formal
 

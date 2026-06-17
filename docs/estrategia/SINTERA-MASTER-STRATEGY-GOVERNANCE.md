@@ -140,6 +140,34 @@ saúde mental clínica (começa por bem-estar sem classificação) · apoio à d
 e disposição a pagar não estão validados.** A próxima rodada de aprendizado vem de
 **compradores e usuários reais**, não de mais refinamento conceitual.
 
+## 12. Maturidade atual e critérios de revisão da tese
+
+### 12.1 Maturidade *(snapshot executivo)*
+
+| Dimensão | Status |
+|---|---|
+| Visão · Produto · Governança · Roadmap · Arquitetura | Consolidada |
+| Modelo regulatório | Hipótese forte |
+| Modelo comercial | Hipótese moderada |
+| Disposição a pagar · Escalabilidade clínica · Escalabilidade comercial | **Não validada** |
+
+### 12.2 Critérios de revisão da tese (gatilhos de pivô)
+
+Pré-comprometidos para evitar persistência por viés. Cada gatilho tem **limiar**, **dono**
+e **resposta**. Verificados no **gate da F1** (e revisitados a cada fase).
+
+| Domínio | Gatilho (limiar) | Dono | Resposta |
+|---|---|---|---|
+| **Mercado** | Após ~20 entrevistas, <10% enxergam valor **ou** nenhuma intenção real de compra | Fundadora | Revisar **proposta de valor / segmento** |
+| **Jurídico** | Parecer conclui que HCR / "item pendente" / aplicabilidade personalizada criam enquadramento regulatório incompatível | Jurídico | Revisar **modelo de exibição / nível do "pendente"** |
+| **Clínica** | RC considera precedência, manutenção ou curadoria **inviáveis** na prática | RC/Comitê | Revisar **escopo / amplitude de fontes** |
+| **Econômico** | Custo de curadoria projetado > valor capturável por onda | Fundadora | Revisar **ondas / priorização por valor** |
+| **Dados** | Aquisição de dado confiável inviável nos canais previstos | Eng + Negócio | Revisar **dependência de integração / GTM** |
+
+> Princípio: o gatilho dispara **revisão de um componente**, não abandono automático da
+> tese. Mas nenhum deve ser ignorado — registrar a decisão (seguir / revisar / pivotar) é
+> obrigatório no gate.
+
 ---
 
 *Documentos relacionados: VALUE-PROPOSITION-NORTH-STAR v1.1 · MODELO-GOVERNANCA-OPERACIONAL
