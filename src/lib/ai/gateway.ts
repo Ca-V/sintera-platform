@@ -349,6 +349,7 @@ export async function extractBiomarkers(
     biomarkers,
     examType: typeof parsed.exam_type === 'string' ? parsed.exam_type : 'indeterminado',
     examDate: parseExamDate(parsed.exam_date),
+    patientName: toStringOrNull(parsed.patient_name),
     extractionNotes: toStringOrNull(parsed.extraction_notes),
     aiLogId,
     model: providerResult.model,

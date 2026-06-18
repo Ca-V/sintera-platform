@@ -10,6 +10,8 @@ import {
   Pencil, Check, X, Flag, Trash2,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { useUser } from '@/context/UserContext'
+import { compareNames } from '@/lib/exams/nameMatch'
 import FeedbackModal from '@/components/FeedbackModal'
 import AgendarModal from '@/components/AgendarModal'
 
@@ -162,6 +164,7 @@ function formatDate(iso: string) {
 export default function ExamDetailPage() {
   const params  = useParams()
   const router  = useRouter()
+  const { profile } = useUser()
   const examId  = params.id as string
   const supabase = useRef(createClient()).current
 
@@ -318,7 +321,7 @@ export default function ExamDetailPage() {
   async function loadData() {
     setLoading(true)
     const [{ data: examData }, { data: bioData }, { data: logData }] = await Promise.all([
-      supabase.from('exams').select('id,type,status,pdf_quality,page_count,created_at,exam_date,error_reason,text_truncated')
+      supabase.from('exams').select('id,type,status,pdf_quality,page_count,created_at,exam_date,error_reason,text_truncated,file_url,patient_name')
         .eq('id', examId).single(),
       supabase.from('biomarkers')
         .select('id,name,value,value_text,unit,reference_min,reference_max,interpretation,result_type,range_extracted,reference_source,source')
@@ -406,6 +409,33 @@ export default function ExamDetailPage() {
         className="flex items-center gap-2 text-mauve hover:text-petal transition-colors text-sm font-body print:hidden">
         <ArrowLeft size={16} /> Voltar
       </button>
+
+      {/* Conferência de identidade — nome do paciente vs perfil */}
+      {(() => {
+        const examName = (exam as unknown as { patient_name?: string | null })?.patient_name
+        if (!examName) return null
+        const status = compareNames(profile?.name, examName)
+        if (status === 'mismatch') {
+          return (
+            <div className="rounded-2xl border-2 border-red-200 bg-red-50 px-5 py-4 flex items-start gap-3 print:hidden">
+              <AlertCircle size={18} className="text-red-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-body text-sm font-semibold text-red-700">Confira: este exame parece ser de outra pessoa</p>
+                <p className="font-body text-xs text-red-600 mt-1 leading-relaxed">
+                  Nome no laudo: <strong>{examName}</strong>
+                  {profile?.name ? <> · seu perfil: <strong>{profile.name}</strong></> : null}.
+                  Se este exame não for seu, exclua-o.
+                </p>
+              </div>
+            </div>
+          )
+        }
+        return (
+          <p className="font-body text-xs text-mauve print:hidden">
+            Paciente no laudo: <strong className="text-onyx">{examName}</strong>
+          </p>
+        )
+      })()}
 
       {/* Cabeçalho do exame */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
@@ -525,6 +555,14 @@ export default function ExamDetailPage() {
               className="flex items-center gap-1.5 border border-border text-mauve font-body text-sm font-medium px-3 py-2.5 rounded-full hover:border-petal/40 hover:text-petal transition-colors">
               <CalendarDays size={14} /> Agendar
             </button>
+
+            {/* Baixar/ver PDF original — disponível sempre que houver arquivo */}
+            {(exam as unknown as { file_url?: string | null })?.file_url && (
+              <a href={(exam as unknown as { file_url: string }).file_url} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-1.5 border border-border text-mauve font-body text-sm font-medium px-3 py-2.5 rounded-full hover:border-petal/40 hover:text-petal transition-colors">
+                <Download size={14} /> Baixar PDF
+              </a>
+            )}
 
             {/* Export */}
             {isProcessed && biomarkers.length > 0 && (

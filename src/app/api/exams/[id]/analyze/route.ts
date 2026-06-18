@@ -196,6 +196,7 @@ export async function POST(
   //     Só sobrescreve quando extraída (não apaga uma data informada manualmente).
   const finalUpdate: Record<string, unknown> = { status: 'processed', type: result.examType }
   if (result.examDate) finalUpdate.exam_date = result.examDate
+  if (result.patientName) finalUpdate.patient_name = result.patientName
   await supabase.from('exams')
     .update(finalUpdate as never)
     .eq('id', examId)
