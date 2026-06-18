@@ -5,7 +5,7 @@ import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Upload, FileText, Clock, CheckCircle, AlertCircle,
-  Plus, X, Loader2, Zap, Search, ChevronDown, ChevronUp,
+  Plus, X, Loader2, Zap, Search, ChevronDown, ChevronUp, Trash2,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
@@ -78,6 +78,7 @@ export default function ExamsPage() {
 
   const [analyzing, setAnalyzing]     = useState<Record<string, true>>({})
   const [examErrors, setExamErrors]   = useState<Record<string, string>>({})
+  const [deletingId, setDeletingId]   = useState<string | null>(null)
 
   // ── Filtros (Epic Fase 1) ──────────────────────────────────────────────────
   const [searchName, setSearchName]   = useState('')
@@ -192,6 +193,33 @@ export default function ExamsPage() {
       if (examId) { await supabase.from('exams').update({ status: 'error' } as unknown as never).eq('id', examId); await loadExams() }
     } finally { setUploading(false) }
   }, [user, supabase, loadExams, examDate])
+
+  // ── Excluir exame ───────────────────────────────────────────────────────────
+  // Remove o exame + biomarcadores + insights + arquivo. Histórico, jornada e
+  // dashboard são derivados ao vivo dos dados → recalculam no próximo load.
+  async function deleteExam(exam: Exam) {
+    if (deletingId) return
+    const ok = window.confirm(
+      `Excluir "${exam.type ?? 'Exame'}"?\n\nIsto remove o exame, seus biomarcadores e insights, e o arquivo enviado. ` +
+      `O histórico e a jornada serão recalculados sem este exame. Esta ação não pode ser desfeita.`,
+    )
+    if (!ok) return
+    setDeletingId(exam.id)
+    setUploadError(null)
+    try {
+      const res = await fetch(`/api/exams/${exam.id}`, { method: 'DELETE' })
+      if (res.ok) {
+        await loadExams()
+      } else {
+        const j = await res.json().catch(() => ({}))
+        setUploadError(j.error ?? 'Falha ao excluir o exame.')
+      }
+    } catch {
+      setUploadError('Falha ao excluir o exame.')
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => { const f = e.target.files?.[0]; if (f) processFile(f); e.target.value = '' }
   const onDrop = (e: React.DragEvent) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files?.[0]; if (f) processFile(f) }
@@ -419,6 +447,14 @@ export default function ExamsPage() {
                                   <div className="ml-1 flex items-center gap-1.5 text-xs font-body text-mauve flex-shrink-0">
                                     <Loader2 size={13} className="animate-spin" /><span>Analisando…</span>
                                   </div>
+                                )}
+                                {!isRunning && (
+                                  <button type="button" disabled={deletingId === exam.id}
+                                    onClick={e => { e.stopPropagation(); deleteExam(exam) }}
+                                    aria-label="Excluir exame" title="Excluir exame"
+                                    className="ml-1 w-8 h-8 rounded-full flex items-center justify-center text-mauve/50 hover:text-red-500 hover:bg-red-50 transition-colors flex-shrink-0 disabled:opacity-40">
+                                    {deletingId === exam.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                                  </button>
                                 )}
                               </div>
                               {errMsg && (

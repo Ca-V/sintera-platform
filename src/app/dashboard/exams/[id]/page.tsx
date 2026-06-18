@@ -7,7 +7,7 @@ import {
   ArrowLeft, FileText, Loader2, RefreshCw, Zap,
   TrendingUp, TrendingDown, Minus, HelpCircle, AlertCircle,
   Download, Printer, ChevronDown, CalendarDays,
-  Pencil, Check, X, Flag,
+  Pencil, Check, X, Flag, Trash2,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import FeedbackModal from '@/components/FeedbackModal'
@@ -216,6 +216,25 @@ export default function ExamDetailPage() {
   function cancelEditName() {
     setEditingName(false)
     setNameValue('')
+  }
+
+  // ── Excluir exame ───────────────────────────────────────────────────────────
+  const [deleting, setDeleting] = useState(false)
+  async function deleteExam() {
+    if (!exam || deleting) return
+    const ok = window.confirm(
+      `Excluir "${exam.type ?? 'Exame'}"?\n\nIsto remove o exame, seus biomarcadores e insights, e o arquivo enviado. ` +
+      `O histórico e a jornada serão recalculados sem este exame. Esta ação não pode ser desfeita.`,
+    )
+    if (!ok) return
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/exams/${exam.id}`, { method: 'DELETE' })
+      if (res.ok) router.push('/dashboard/exams')
+      else { setDeleting(false); alert('Falha ao excluir o exame. Tente novamente.') }
+    } catch {
+      setDeleting(false); alert('Falha ao excluir o exame. Tente novamente.')
+    }
   }
 
   // ── Reportar problema ────────────────────────────────────────────────────
@@ -729,6 +748,20 @@ export default function ExamDetailPage() {
         defaultTitle={exam?.type ? `Repetir ${exam.type}` : ''}
         defaultNotes={`Referente ao exame: ${exam?.type ?? ''}`}
       />
+
+      {/* Excluir exame — ação destrutiva */}
+      {exam && (
+        <div className="pt-2 print:hidden">
+          <button onClick={deleteExam} disabled={deleting}
+            className="inline-flex items-center gap-2 text-sm font-body text-red-500 hover:text-red-600 hover:bg-red-50 px-4 py-2 rounded-full transition-colors disabled:opacity-50">
+            {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+            {deleting ? 'Excluindo…' : 'Excluir exame'}
+          </button>
+          <p className="font-body text-[11px] text-mauve/50 mt-1">
+            Remove o exame, seus biomarcadores e insights. O histórico e a jornada são recalculados.
+          </p>
+        </div>
+      )}
     </div>
   )
 }
