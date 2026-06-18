@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
+import { compareNames } from '@/lib/exams/nameMatch'
 import type { Database } from '@/lib/supabase/types'
 
 type Exam = Database['public']['Tables']['exams']['Row']
@@ -64,7 +65,7 @@ function effDate(e: Exam): string {
 }
 
 export default function ExamsPage() {
-  const { user } = useUser()
+  const { user, profile } = useUser()
   const router   = useRouter()
   const supabase = useRef(createClient()).current
 
@@ -423,6 +424,11 @@ export default function ExamsPage() {
                                   </p>
                                   {isProcessed && !isRunning && (
                                     <p className="font-body text-xs text-sage mt-0.5">Análise disponível</p>
+                                  )}
+                                  {compareNames(profile?.name, (exam as unknown as { patient_name?: string | null }).patient_name) === 'mismatch' && (
+                                    <p className="font-body text-xs text-red-500 mt-0.5 flex items-center gap-1">
+                                      <AlertCircle size={11} /> Nome no laudo divergente do seu perfil
+                                    </p>
                                   )}
                                 </div>
                                 <span className={`inline-flex items-center gap-1.5 text-xs font-body font-medium px-3 py-1 rounded-full flex-shrink-0 ${cfg.bg} ${cfg.color}`}>
