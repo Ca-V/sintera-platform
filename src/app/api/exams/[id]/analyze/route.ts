@@ -191,10 +191,12 @@ export async function POST(
     await supabase.from('biomarkers').insert(bmRows as unknown as never[])
   }
 
-  // 10. Atualizar exame com tipo, data de realização (se extraída) e status final.
-  //     A data do laudo é FATO impresso — preenche exam_date automaticamente.
-  //     Só sobrescreve quando extraída (não apaga uma data informada manualmente).
-  const finalUpdate: Record<string, unknown> = { status: 'processed', type: result.examType }
+  // 10. Atualizar exame: status + data de realização + nome do paciente.
+  //     NÃO sobrescreve `type` (o nome do exame) — mantém o nome do arquivo de
+  //     origem definido no upload. A categoria detectada pela IA (result.examType)
+  //     fica apenas no retorno/log; o nome que a usuária vê é o do arquivo.
+  //     A data do laudo é FATO impresso — preenche exam_date só quando extraída.
+  const finalUpdate: Record<string, unknown> = { status: 'processed' }
   if (result.examDate) finalUpdate.exam_date = result.examDate
   if (result.patientName) finalUpdate.patient_name = result.patientName
   await supabase.from('exams')
