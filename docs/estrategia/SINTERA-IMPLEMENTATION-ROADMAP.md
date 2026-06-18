@@ -2,7 +2,13 @@
 
 **Roadmap de implementação orientado por marcos (não datas).** Define as fases de agora até
 a fase final, com objetivo, entregáveis, dono e **critério de passagem (gate)** de cada uma.
-**Versão:** v1 · **Data:** 2026-06-16
+**Versão:** v2 · **Data:** 2026-06-16
+
+> **Fonte de verdade única.** Esta v2 reconcilia e **substitui** os documentos divergentes
+> "Full Implementation Blueprint" e "Investor Roadmap & Value Creation Plan" (que tinham
+> numeração inconsistente). Incorpora deles o que era bom — **Design Partners (F1.5)** e a
+> **visão de value-creation** (§ ao final) — sobre a base disciplinada (gates, dependência
+> de dados, critérios de revisão).
 
 > **Princípio de sequência (não-negociável):** nenhuma fase de conteúdo clínico ou de motor
 > avança antes da governança estar validada. O risco que governa a ordem é **governança**,
@@ -17,6 +23,8 @@ F0 Fundação (✅ concluída)
    ↓  gate: documentação + plataforma demo prontas
 F1 Validação externa (mercado + jurídico + RC)
    ↓  gate: tese validada + decisões de governança tomadas
+F1.5 Design Partners (converter interessados em parceiros de validação)
+   ↓  gate: 1–3 parceiros ativos fornecendo dado/feedback
 F2 Fundação de governança clínica formal
    ↓  gate: RC/Comitê ativos + precedência + personalização definidas
 F3 Life Course Governance Engine (motor vazio, governado)
@@ -53,6 +61,16 @@ F6 Escala (operadoras, ocupacional, marketplace de protocolos)
 - **Gate de saída:** evidência de disposição a pagar (≥ 1 segmento) **e** decisões 3, 4, 5,
   6, 8 do checklist assinadas **e** verificação dos **critérios de revisão da tese**
   (Master Strategy §12.2) — registrar decisão seguir/revisar/pivotar.
+
+## F1.5 — Design Partners
+
+- **Objetivo:** converter os interessados das entrevistas (F1) em **parceiros ativos de
+  validação** — early adopters que fornecem dado real, feedback e co-desenvolvimento antes
+  do produto completo. Reduz risco de mercado e já inicia a aquisição de dados.
+- **Entregáveis:** 1–3 design partners (preferencialmente B2B ocupacional); acordo de
+  piloto; fluxo inicial de dados (upload/ocupacional) com proveniência.
+- **Dono:** Fundadora (+ Negócio).
+- **Gate de saída:** ao menos 1 parceiro ativo fornecendo dado/feedback recorrente.
 
 ## F2 — Fundação de governança clínica formal
 
@@ -110,6 +128,7 @@ F6 Escala (operadoras, ocupacional, marketplace de protocolos)
 | Fase | Métrica-chave |
 |---|---|
 | F1 | Nº de entrevistas + sinais de disposição a pagar; decisões fechadas |
+| F1.5 | Nº de design partners ativos + 1º dado real fluindo |
 | F2 | Governança instalada (RC/Comitê/precedência) |
 | F3 | Engine em produção (vazio) + cobertura de auditoria |
 | F4 | **HCR** começa a ser medido (coorte Onda 1) |
@@ -119,10 +138,32 @@ F6 Escala (operadoras, ocupacional, marketplace de protocolos)
 ## Dependências críticas (não burlar)
 
 1. **Conteúdo clínico** depende de **RC + governança validada** (F2 antes de F4).
-2. **Compliance/Timeline** dependem de **aquisição de dados** (F5/integrações + canal
-   ocupacional).
+2. **Compliance/Timeline** dependem de **aquisição de dados** — que começa **cedo** (upload
+   + canal ocupacional em F1.5), não só nas integrações pesadas (F5).
 3. **"Pendente" na UI** depende de **parecer jurídico** (F1).
 4. **Expansão de ondas** é governada por **valor de mercado**, não por completude (F5+).
+
+## Visão de investidor (value-creation)
+
+Mesma jornada, lida por marcos de **criação de valor** (deriva das fases acima; expande F5/F6
+nos marcos comerciais que importam ao investidor):
+
+| Marco de valor | Fase(s) | O que destrava |
+|---|---|---|
+| Tese validada + primeiros parceiros | F1–F1.5 | Risco de mercado cai; dado começa a fluir |
+| Governança instalada (ativo defensável) | F2 | Moat regulatório/científico |
+| Motor em produção (infraestrutura pronta) | F3 | Escalabilidade técnica comprovada |
+| 1º conteúdo vivo + HCR mensurável | F4 | Prova de valor (continuidade real) |
+| Saúde da Mulher (alinha à identidade) | F5 | Expansão com foco de marca |
+| Cardiometabólico + integrações | F5 | Profundidade + dado confiável |
+| Produto corporativo (dashboards populacionais) | F6 | Receita recorrente B2B |
+| Operadoras (B2B2C) | F6 | Escala |
+| Marketplace de protocolos | F6 | Efeito de ecossistema |
+| *Visão 2035: infraestrutura de continuidade da saúde* | — | Categoria |
+
+**Métricas de valor:** HCR · retenção · cobertura preventiva da população · eventos
+rastreados · receita recorrente. (Health OS / "infraestrutura nacional" é **visão**, não
+fase — não tem entregável próprio.)
 
 ## Frentes externas (paralelas, não bloqueiam o motor)
 
