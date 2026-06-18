@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { Eye, EyeOff, Check, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 export default function AtualizarSenhaPage() {
   const [password, setPassword]       = useState('')
@@ -13,16 +14,46 @@ export default function AtualizarSenhaPage() {
   const [loading, setLoading]         = useState(false)
   const [done, setDone]               = useState(false)
   const [error, setError]             = useState('')
-  const [sessionReady, setSession]    = useState(false)
+  const [canReset, setCanReset]       = useState(false)
+  const [checking, setChecking]       = useState(true)
   const router  = useRouter()
   const supabase = createClient()
 
-  // Supabase envia o token via hash na URL — precisa ser processado
+  // O link de recuperação chega com o token na URL (code/hash). O client
+  // (detectSessionInUrl) cria a sessão de recovery; aqui só confirmamos que ela
+  // existe para liberar o formulário — senão mostramos "link inválido/expirado".
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') setSession(true)
+    let active = true
+
+    // Erro vindo do Supabase na própria URL (ex.: link expirado).
+    const params = new URLSearchParams(
+      window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.search,
+    )
+    if (params.get('error') || params.get('error_description')) {
+      setError('O link de recuperação é inválido ou expirou. Solicite um novo.')
+      setChecking(false)
+      return
+    }
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!active) return
+      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
+        setCanReset(true); setChecking(false)
+      }
     })
-    return () => subscription.unsubscribe()
+
+    // Checagem inicial (caso a sessão já tenha sido estabelecida antes do listener).
+    supabase.auth.getSession().then(({ data }) => {
+      if (active && data.session) { setCanReset(true); setChecking(false) }
+    })
+
+    // Se em alguns segundos não houver sessão de recovery, o link não é válido.
+    const t = setTimeout(() => {
+      if (active && !canReset) setChecking(false)
+    }, 4000)
+
+    return () => { active = false; subscription.unsubscribe(); clearTimeout(t) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -65,6 +96,25 @@ export default function AtualizarSenhaPage() {
             </div>
             <h1 className="font-display text-2xl font-semibold text-onyx mb-2">Senha atualizada</h1>
             <p className="font-body text-sm text-mauve">Redirecionando para o dashboard…</p>
+          </div>
+        ) : checking ? (
+          <div className="card-premium p-8 text-center">
+            <span className="inline-block w-6 h-6 border-2 border-petal border-t-transparent rounded-full animate-spin mb-3" />
+            <p className="font-body text-sm text-mauve">Verificando o link de recuperação…</p>
+          </div>
+        ) : !canReset ? (
+          <div className="card-premium p-8 text-center">
+            <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
+              <AlertCircle size={24} className="text-red-400" />
+            </div>
+            <h1 className="font-display text-2xl font-semibold text-onyx mb-2">Link inválido ou expirado</h1>
+            <p className="font-body text-sm text-mauve leading-relaxed mb-6">
+              {error || 'Este link de recuperação não é mais válido. Solicite um novo para redefinir sua senha.'}
+            </p>
+            <Link href="/recuperar-senha"
+              className="inline-block gradient-sintera text-white font-body font-medium px-6 py-3 rounded-full hover:opacity-90 transition-opacity">
+              Solicitar novo link
+            </Link>
           </div>
         ) : (
           <div className="card-premium p-8">
