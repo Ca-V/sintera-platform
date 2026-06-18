@@ -151,9 +151,32 @@ function parseAIResponse(raw: string): {
   parseErrorOriginal?: string
 } {
   const candidate = extractJsonCandidate(raw)
-  if (!candidate) return { parsed: null, suspicious: true }
-
   const sha256 = (s: string) => createHash('sha256').update(s, 'utf8').digest('hex')
+
+  if (!candidate) {
+    // Sem objeto JSON balanceado → provável resposta TRUNCADA (modelo cortou no
+    // limite de saída). Em vez de descartar tudo, tenta reparar a partir do
+    // primeiro '{' (jsonrepair fecha estruturas abertas) e salvar os
+    // biomarcadores que vieram. A última entrada incompleta é descartada.
+    const firstBrace = raw.indexOf('{')
+    if (firstBrace >= 0) {
+      try {
+        const repaired = jsonrepair(raw.slice(firstBrace))
+        const obj = JSON.parse(repaired) as RawAIResponse
+        const suspicious = !Array.isArray(obj.biomarkers)
+        return {
+          parsed: obj,
+          suspicious,
+          repaired: true,
+          repairedHash: sha256(repaired),
+          parseErrorOriginal: 'truncated_response_salvaged',
+        }
+      } catch {
+        // não foi possível salvar — segue como suspeito
+      }
+    }
+    return { parsed: null, suspicious: true }
+  }
 
   // Tentativa 1: parse direto
   try {
