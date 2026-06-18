@@ -11,10 +11,11 @@ import { motion } from 'framer-motion'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   Clock, Plus, X, Stethoscope, Syringe, Activity, FlaskConical, CalendarDays,
-  Loader2, Pencil, Trash2, Paperclip,
+  Loader2, Pencil, Trash2, Paperclip, Bell, Info,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
+import AgendarModal, { type EventType as AgendaType } from '@/components/AgendarModal'
 
 type EventType = 'consulta' | 'vacina' | 'procedimento' | 'exame' | 'outro'
 
@@ -44,6 +45,13 @@ const CONFIDENCE_CLS: Record<string, string> = {
   media: 'text-gold bg-warm border-amber-200',
   baixa: 'text-mauve/60 bg-ivory border-border',
 }
+const CONFIDENCE_LABEL: Record<string, string> = {
+  alta: 'confiança alta', media: 'confiança média', baixa: 'confiança baixa',
+}
+
+// Mapeia o tipo da jornada para o tipo aceito pelo AgendarModal.
+const toAgendaType = (t: EventType): AgendaType =>
+  t === 'consulta' ? 'consulta' : t === 'exame' ? 'exame' : 'outro'
 
 const MAX_BYTES = 10 * 1024 * 1024
 const ACCEPTED = ['application/pdf', 'image/jpeg', 'image/png']
@@ -64,6 +72,18 @@ export default function TimelinePage() {
   const [saving, setSaving] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
+  const [reminderFor, setReminderFor] = useState<TimelineItem | null>(null)
+  const [showOnboard, setShowOnboard] = useState(false)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setShowOnboard(localStorage.getItem('sintera_journey_onboarded') !== '1')
+    }
+  }, [])
+  function dismissOnboard() {
+    if (typeof window !== 'undefined') localStorage.setItem('sintera_journey_onboarded', '1')
+    setShowOnboard(false)
+  }
 
   // Formulário (criar/editar)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -195,6 +215,7 @@ export default function TimelinePage() {
 
   const renderItem = (it: TimelineItem, i: number) => {
     const meta = TYPE_META[it.eventType]
+    const isUpcoming = it.date.slice(0, 10) >= today
     return (
       <motion.div key={it.id}
         initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
@@ -219,11 +240,18 @@ export default function TimelinePage() {
             </div>
             <div className="flex flex-col items-end gap-1 flex-shrink-0">
               <span className="font-body text-[11px] text-mauve/60">{fmt(it.date)}</span>
-              <span className={`font-body text-[10px] rounded-full px-1.5 py-0.5 border ${CONFIDENCE_CLS[it.confidence] ?? CONFIDENCE_CLS.baixa}`}>
-                {it.source === 'autorrelato' ? 'autorrelato' : it.source}
+              <span title={`Proveniência: ${it.source}`}
+                className={`font-body text-[10px] rounded-full px-1.5 py-0.5 border ${CONFIDENCE_CLS[it.confidence] ?? CONFIDENCE_CLS.baixa}`}>
+                {CONFIDENCE_LABEL[it.confidence] ?? 'confiança baixa'}
               </span>
               {it.kind === 'event' && it.rawId && (
                 <div className="flex items-center gap-1 mt-0.5">
+                  {isUpcoming && (
+                    <button aria-label="Lembrar" title="Adicionar lembrete ao calendário" onClick={() => setReminderFor(it)}
+                      className="w-6 h-6 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/60 hover:text-petal transition-colors">
+                      <Bell size={12} />
+                    </button>
+                  )}
                   <button aria-label="Editar" onClick={() => openEdit(it)}
                     className="w-6 h-6 rounded-lg hover:bg-black/5 flex items-center justify-center text-mauve/60 hover:text-petal transition-colors">
                     <Pencil size={12} />
@@ -256,6 +284,23 @@ export default function TimelinePage() {
           {showForm ? 'Fechar' : 'Adicionar evento'}
         </button>
       </motion.div>
+
+      {/* Onboarding dispensável */}
+      {showOnboard && (
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+          className="rounded-2xl border border-petal/30 bg-blush/30 px-4 py-3 flex items-start gap-3">
+          <Info size={16} className="text-petal flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="font-body text-xs text-onyx leading-relaxed">
+              Esta é a sua <strong>jornada de saúde</strong>: exames entram automaticamente, e você
+              pode registrar consultas, vacinas e procedimentos. Eventos futuros aparecem em
+              <strong> Próximos</strong> e podem virar lembrete no seu calendário (🔔).
+            </p>
+          </div>
+          <button onClick={dismissOnboard} aria-label="Dispensar"
+            className="text-mauve/50 hover:text-onyx transition-colors flex-shrink-0"><X size={14} /></button>
+        </motion.div>
+      )}
 
       {showForm && (
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
@@ -346,9 +391,34 @@ export default function TimelinePage() {
         </div>
       )}
 
+      {/* Legenda de proveniência */}
+      {items.length > 0 && (
+        <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+          <span className="font-body text-[10px] text-mauve/50">Confiança do dado:</span>
+          {(['alta', 'media', 'baixa'] as const).map(c => (
+            <span key={c} className={`font-body text-[10px] rounded-full px-1.5 py-0.5 border ${CONFIDENCE_CLS[c]}`}>
+              {CONFIDENCE_LABEL[c]}
+            </span>
+          ))}
+          <span className="font-body text-[10px] text-mauve/40">— alta: laudo/integração · baixa: autorrelato</span>
+        </div>
+      )}
+
       <p className="font-body text-[11px] text-mauve/40 text-center">
         Organização factual da sua jornada. Não constitui diagnóstico nem avaliação clínica.
       </p>
+
+      {/* Lembrete no calendário para evento futuro */}
+      <AgendarModal
+        open={!!reminderFor}
+        onClose={() => setReminderFor(null)}
+        defaultTitle={reminderFor?.title ?? ''}
+        initialEvent={reminderFor ? {
+          eventType: toAgendaType(reminderFor.eventType),
+          title: reminderFor.title,
+          date: reminderFor.date.slice(0, 10),
+        } : undefined}
+      />
     </div>
   )
 }
