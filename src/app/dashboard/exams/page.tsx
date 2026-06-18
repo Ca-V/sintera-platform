@@ -5,7 +5,7 @@ import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Upload, FileText, Clock, CheckCircle, AlertCircle,
-  Plus, X, Loader2, Zap, Search, ChevronDown, ChevronUp, Trash2,
+  Plus, X, Loader2, Zap, Search, ChevronDown, ChevronUp, Trash2, Pencil, Check,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
@@ -80,6 +80,10 @@ export default function ExamsPage() {
   const [analyzing, setAnalyzing]     = useState<Record<string, true>>({})
   const [examErrors, setExamErrors]   = useState<Record<string, string>>({})
   const [deletingId, setDeletingId]   = useState<string | null>(null)
+  // Edição inline do nome do exame na lista
+  const [editingNameId, setEditingNameId] = useState<string | null>(null)
+  const [nameDraft, setNameDraft]     = useState('')
+  const [savingName, setSavingName]   = useState(false)
 
   // ── Filtros (Epic Fase 1) ──────────────────────────────────────────────────
   const [searchName, setSearchName]   = useState('')
@@ -228,6 +232,20 @@ export default function ExamsPage() {
     }
   }
 
+  // ── Renomear exame (inline na lista) ────────────────────────────────────────
+  async function saveExamName(examId: string) {
+    const v = nameDraft.trim()
+    if (!v || savingName) { setEditingNameId(null); return }
+    setSavingName(true)
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).from('exams').update({ type: v }).eq('id', examId)
+      setExams(prev => prev.map(e => e.id === examId ? ({ ...e, type: v } as Exam) : e))
+    } finally {
+      setSavingName(false); setEditingNameId(null)
+    }
+  }
+
   const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => { const f = e.target.files?.[0]; if (f) processFile(f); e.target.value = '' }
   const onDrop = (e: React.DragEvent) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files?.[0]; if (f) processFile(f) }
   const onDragLeave = (e: React.DragEvent) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragging(false) }
@@ -238,6 +256,30 @@ export default function ExamsPage() {
         <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Exames</h1>
         <p className="font-body text-sm text-mauve">Faça upload dos seus exames em PDF e inicie a extração de biomarcadores por IA</p>
       </motion.div>
+
+      {/* Aviso destacado: exame(s) com nome divergente do perfil */}
+      {(() => {
+        const divergentes = exams.filter(
+          e => compareNames(profile?.name, (e as unknown as { patient_name?: string | null }).patient_name) === 'mismatch',
+        )
+        if (divergentes.length === 0) return null
+        return (
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl border-2 border-red-200 bg-red-50 px-5 py-4 flex items-start gap-3">
+            <AlertCircle size={18} className="text-red-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-body text-sm font-semibold text-red-700">
+                {divergentes.length} exame{divergentes.length !== 1 ? 's' : ''} com nome divergente do seu perfil
+              </p>
+              <p className="font-body text-xs text-red-600 mt-1 leading-relaxed">
+                O nome do paciente no laudo não corresponde ao do seu perfil
+                {profile?.name ? <> (<strong>{profile.name}</strong>)</> : null}. Confira se {divergentes.length !== 1 ? 'são seus' : 'é seu'};
+                se não for, exclua{divergentes.length !== 1 ? '-os' : '-o'}.
+              </p>
+            </div>
+          </motion.div>
+        )
+      })()}
 
       {/* Data de realização — o que importa para histórico/dashboard */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
@@ -433,7 +475,29 @@ export default function ExamsPage() {
                                   <FileText size={18} className="text-petal" />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <p className="font-body text-sm font-semibold text-onyx truncate">{exam.type ?? 'Exame'}</p>
+                                  {editingNameId === exam.id ? (
+                                    <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
+                                      <input value={nameDraft} autoFocus
+                                        onChange={e => setNameDraft(e.target.value)}
+                                        onKeyDown={e => { if (e.key === 'Enter') saveExamName(exam.id); if (e.key === 'Escape') setEditingNameId(null) }}
+                                        className="flex-1 min-w-0 px-2 py-1 border border-border rounded-lg font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/40" />
+                                      <button aria-label="Salvar" onClick={() => saveExamName(exam.id)} disabled={savingName}
+                                        className="text-sage hover:text-sage/70 transition-colors flex-shrink-0">
+                                        {savingName ? <Loader2 size={14} className="animate-spin" /> : <Check size={15} />}
+                                      </button>
+                                      <button aria-label="Cancelar" onClick={() => setEditingNameId(null)}
+                                        className="text-mauve hover:text-onyx transition-colors flex-shrink-0"><X size={15} /></button>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center gap-1.5 group/name">
+                                      <p className="font-body text-sm font-semibold text-onyx truncate">{exam.type ?? 'Exame'}</p>
+                                      <button aria-label="Renomear" title="Renomear"
+                                        onClick={e => { e.stopPropagation(); setNameDraft(exam.type ?? ''); setEditingNameId(exam.id) }}
+                                        className="opacity-0 group-hover/name:opacity-100 transition-opacity text-mauve/50 hover:text-petal flex-shrink-0">
+                                        <Pencil size={12} />
+                                      </button>
+                                    </div>
+                                  )}
                                   <p className="font-body text-xs text-mauve">
                                     Realizado em {formatDate(effDate(exam))}
                                     {exam.exam_date && exam.exam_date.slice(0, 10) !== exam.created_at.slice(0, 10) && (
