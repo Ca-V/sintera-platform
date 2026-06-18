@@ -43,6 +43,7 @@ export default function DashboardPage() {
 
   const [stats, setStats]         = useState<Stats | null>(null)
   const [recentExams, setRecent]   = useState<ExamSummary[]>([])
+  const [journey, setJourney]     = useState<{ count: number; last: { title: string; date: string } | null }>({ count: 0, last: null })
   const [loading, setLoading]     = useState(true)
   const [agendarOpen, setAgendar] = useState(false)
 
@@ -58,13 +59,17 @@ export default function DashboardPage() {
   async function loadData() {
     setLoading(true)
 
-    const [examsResult, bioResult] = await Promise.all([
+    const [examsResult, bioResult, journeyResult] = await Promise.all([
       supabase.from('exams').select('id,type,status,created_at').eq('user_id', user!.id).order('created_at', { ascending: false }),
       supabase.from('biomarkers').select('id', { count: 'exact', head: true }).eq('user_id', user!.id).eq('synthetic', false),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase as any).from('health_events').select('title,event_date', { count: 'exact' }).eq('user_id', user!.id).eq('synthetic', false).order('event_date', { ascending: false }).limit(1),
     ])
 
     const exams = (examsResult.data ?? []) as ExamSummary[]
     const totalBiomarkers = bioResult.count ?? 0
+    const lastEvent = ((journeyResult.data ?? []) as Array<{ title: string; event_date: string }>)[0]
+    setJourney({ count: journeyResult.count ?? 0, last: lastEvent ? { title: lastEvent.title, date: lastEvent.event_date } : null })
 
     setStats({
       totalExams:     exams.length,
@@ -180,7 +185,7 @@ export default function DashboardPage() {
 
           <button
             onClick={() => setAgendar(true)}
-            className="card-premium p-5 text-left flex items-center gap-4 hover:shadow-md transition-shadow group sm:col-span-2 md:col-span-1">
+            className="card-premium p-5 text-left flex items-center gap-4 hover:shadow-md transition-shadow group">
             <div className="w-11 h-11 rounded-2xl bg-lavender-light flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
               <CalendarDays size={20} className="text-lavender" />
             </div>
@@ -189,6 +194,21 @@ export default function DashboardPage() {
               <p className="font-body text-xs text-mauve mt-0.5">Adiciona ao Google, Outlook ou .ics</p>
             </div>
             <ArrowRight size={15} className="text-mauve/40 group-hover:text-lavender transition-colors flex-shrink-0" />
+          </button>
+
+          <button
+            onClick={() => router.push('/dashboard/timeline')}
+            className="card-premium p-5 text-left flex items-center gap-4 hover:shadow-md transition-shadow group">
+            <div className="w-11 h-11 rounded-2xl bg-blush flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+              <Clock size={20} className="text-petal" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-body text-sm font-semibold text-onyx">Minha Jornada</p>
+              <p className="font-body text-xs text-mauve mt-0.5 truncate">
+                {journey.last ? `Último: ${journey.last.title}` : 'Registre consultas, vacinas e procedimentos'}
+              </p>
+            </div>
+            <ArrowRight size={15} className="text-mauve/40 group-hover:text-petal transition-colors flex-shrink-0" />
           </button>
         </motion.div>
       )}
