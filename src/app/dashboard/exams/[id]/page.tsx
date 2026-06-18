@@ -704,6 +704,15 @@ export default function ExamDetailPage() {
               {counts.total} biomarcadores exibidos · fonte: {biomarkers[0]?.source ?? 'ai_extracted'}
             </p>
           </div>
+
+          {/* Nota sobre a fonte da referência (regulatória) */}
+          <div className="px-5 py-3 border-t border-border/50 bg-amber-50/40">
+            <p className="font-body text-[11px] text-mauve/70 leading-relaxed">
+              As faixas de referência exibidas são as <strong className="text-onyx/70">impressas no laudo do seu laboratório</strong> e
+              podem variar conforme o laboratório e o método. A referência adequada ao seu caso <strong className="text-onyx/70">também
+              depende de avaliação médica</strong> — esta informação organiza seus dados e não substitui a consulta com seu médico.
+            </p>
+          </div>
         </motion.div>
       ) : (
         /* Estado vazio */
