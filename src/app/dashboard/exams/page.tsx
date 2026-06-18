@@ -57,6 +57,12 @@ function getYear(iso: string) {
   return new Date(iso).getFullYear()
 }
 
+// Data de REALIZAÇÃO do exame (o que importa para histórico/dashboard);
+// cai para a data de entrada (created_at) só se a realização não existir.
+function effDate(e: Exam): string {
+  return e.exam_date ?? e.created_at
+}
+
 export default function ExamsPage() {
   const { user } = useUser()
   const router   = useRouter()
@@ -67,6 +73,8 @@ export default function ExamsPage() {
   const [loadingExams, setLoadingExams] = useState(true)
   const [uploading, setUploading]       = useState(false)
   const [uploadError, setUploadError]   = useState<string | null>(null)
+  // Data de realização do exame (não a de upload). Padrão hoje, editável.
+  const [examDate, setExamDate]         = useState(() => new Date().toISOString().split('T')[0])
 
   const [analyzing, setAnalyzing]     = useState<Record<string, true>>({})
   const [examErrors, setExamErrors]   = useState<Record<string, string>>({})
@@ -94,7 +102,7 @@ export default function ExamsPage() {
 
   // ── Anos disponíveis para o filtro ────────────────────────────────────────
   const availableYears = useMemo(() => {
-    const years = [...new Set(exams.map(e => getYear(e.created_at)))].sort((a, b) => b - a)
+    const years = [...new Set(exams.map(e => getYear(effDate(e))))].sort((a, b) => b - a)
     return years
   }, [exams])
 
@@ -108,7 +116,7 @@ export default function ExamsPage() {
     }
     if (filterYear !== 'all') {
       const yr = parseInt(filterYear)
-      filtered = filtered.filter(e => getYear(e.created_at) === yr)
+      filtered = filtered.filter(e => getYear(effDate(e)) === yr)
     }
     if (filterStatus !== 'all') {
       filtered = filtered.filter(e => e.status === filterStatus)
@@ -117,7 +125,7 @@ export default function ExamsPage() {
     // Agrupar por ano
     const groups = new Map<number, Exam[]>()
     for (const exam of filtered) {
-      const yr = getYear(exam.created_at)
+      const yr = getYear(effDate(exam))
       if (!groups.has(yr)) groups.set(yr, [])
       groups.get(yr)!.push(exam)
     }
@@ -173,8 +181,9 @@ export default function ExamsPage() {
       if (signedErr) throw new Error(`[signed-url] ${signedErr.message}`)
       examId = crypto.randomUUID()
       const examName = file.name.replace(/\.[^.]+$/, '')
-      const todayISO  = new Date().toISOString().split('T')[0] // YYYY-MM-DD — padrão editável pelo usuário
-      const { error: insertErr } = await supabase.from('exams').insert({ id: examId, user_id: user.id, type: examName, exam_date: todayISO, file_url: signedData.signedUrl, status: 'pending' } as unknown as never)
+      // exam_date = data de REALIZAÇÃO informada pela usuária (não a data de upload).
+      const realizationDate = examDate || new Date().toISOString().split('T')[0]
+      const { error: insertErr } = await supabase.from('exams').insert({ id: examId, user_id: user.id, type: examName, exam_date: realizationDate, file_url: signedData.signedUrl, status: 'pending' } as unknown as never)
       if (insertErr) throw new Error(`[insert] ${insertErr.code}: ${insertErr.message}`)
       await loadExams()
     } catch (err: unknown) {
@@ -182,7 +191,7 @@ export default function ExamsPage() {
       setUploadError(msg)
       if (examId) { await supabase.from('exams').update({ status: 'error' } as unknown as never).eq('id', examId); await loadExams() }
     } finally { setUploading(false) }
-  }, [user, supabase, loadExams])
+  }, [user, supabase, loadExams, examDate])
 
   const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => { const f = e.target.files?.[0]; if (f) processFile(f); e.target.value = '' }
   const onDrop = (e: React.DragEvent) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files?.[0]; if (f) processFile(f) }
@@ -193,6 +202,16 @@ export default function ExamsPage() {
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Exames</h1>
         <p className="font-body text-sm text-mauve">Faça upload dos seus exames em PDF e inicie a extração de biomarcadores por IA</p>
+      </motion.div>
+
+      {/* Data de realização — o que importa para histórico/dashboard */}
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+        className="card-premium p-4 flex flex-wrap items-center gap-3">
+        <label htmlFor="exam-date" className="font-body text-sm font-medium text-onyx">Data de realização do exame</label>
+        <input id="exam-date" type="date" value={examDate} max={new Date().toISOString().split('T')[0]}
+          onChange={e => setExamDate(e.target.value)}
+          className="px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+        <span className="font-body text-xs text-mauve/60">Quando o exame foi feito — não a data de envio. Você pode ajustar depois.</span>
       </motion.div>
 
       {/* Drop zone */}
@@ -368,7 +387,12 @@ export default function ExamsPage() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <p className="font-body text-sm font-semibold text-onyx truncate">{exam.type ?? 'Exame'}</p>
-                                  <p className="font-body text-xs text-mauve">{formatDate(exam.created_at)}</p>
+                                  <p className="font-body text-xs text-mauve">
+                                    Realizado em {formatDate(effDate(exam))}
+                                    {exam.exam_date && exam.exam_date.slice(0, 10) !== exam.created_at.slice(0, 10) && (
+                                      <span className="text-mauve/40"> · enviado {formatDate(exam.created_at)}</span>
+                                    )}
+                                  </p>
                                   {isProcessed && !isRunning && (
                                     <p className="font-body text-xs text-sage mt-0.5">Análise disponível</p>
                                   )}

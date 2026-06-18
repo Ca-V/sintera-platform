@@ -299,7 +299,7 @@ export default function ExamDetailPage() {
   async function loadData() {
     setLoading(true)
     const [{ data: examData }, { data: bioData }, { data: logData }] = await Promise.all([
-      supabase.from('exams').select('id,type,status,pdf_quality,page_count,created_at,error_reason,text_truncated')
+      supabase.from('exams').select('id,type,status,pdf_quality,page_count,created_at,exam_date,error_reason,text_truncated')
         .eq('id', examId).single(),
       supabase.from('biomarkers')
         .select('id,name,value,value_text,unit,reference_min,reference_max,interpretation,result_type,range_extracted,reference_source,source')
@@ -370,7 +370,7 @@ export default function ExamDetailPage() {
           <span style={{ fontSize: '11px', color: '#888' }}>Relatório de Exame</span>
         </div>
         <p style={{ fontSize: '11px', color: '#555', margin: 0 }}>
-          {exam?.type ?? 'Exame'} · {exam ? formatDate(exam.created_at) : ''}
+          {exam?.type ?? 'Exame'} · {exam ? formatDate((exam as unknown as { exam_date?: string | null }).exam_date ?? exam.created_at) : ''}
           {exam?.page_count ? ` · ${exam.page_count} páginas` : ''}
         </p>
       </div>
@@ -445,7 +445,7 @@ export default function ExamDetailPage() {
               ) : (
                 <div className="flex items-center gap-1.5 group/date mt-0.5">
                   <p className="font-body text-sm text-mauve">
-                    {exam ? formatDate((exam as unknown as { exam_date?: string | null }).exam_date ?? exam.created_at) : ''}
+                    Realizado em {exam ? formatDate((exam as unknown as { exam_date?: string | null }).exam_date ?? exam.created_at) : ''}
                     {exam?.page_count ? ` · ${exam.page_count} páginas` : ''}
                   </p>
                   <button onClick={startEditDate}

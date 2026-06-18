@@ -16,6 +16,7 @@ interface ExamSummary {
   type: string | null
   status: string
   created_at: string
+  exam_date: string | null
 }
 
 interface Stats {
@@ -61,7 +62,7 @@ export default function DashboardPage() {
 
     const todayISO = new Date().toISOString().slice(0, 10)
     const [examsResult, bioResult, journeyResult, nextResult] = await Promise.all([
-      supabase.from('exams').select('id,type,status,created_at').eq('user_id', user!.id).order('created_at', { ascending: false }),
+      supabase.from('exams').select('id,type,status,created_at,exam_date').eq('user_id', user!.id).order('exam_date', { ascending: false, nullsFirst: false }),
       supabase.from('biomarkers').select('id', { count: 'exact', head: true }).eq('user_id', user!.id).eq('synthetic', false),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (supabase as any).from('health_events').select('title,event_date', { count: 'exact' }).eq('user_id', user!.id).eq('synthetic', false).order('event_date', { ascending: false }).limit(1),
@@ -247,7 +248,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-body text-sm font-medium text-onyx truncate">{exam.type ?? 'Exame'}</p>
-                    <p className="font-body text-xs text-mauve">{formatDate(exam.created_at)}</p>
+                    <p className="font-body text-xs text-mauve">Realizado em {formatDate(exam.exam_date ?? exam.created_at)}</p>
                   </div>
                   <span className={`inline-flex items-center gap-1.5 text-xs font-body font-medium px-2.5 py-1 rounded-full flex-shrink-0 ${cfg.bg} ${cfg.color}`}>
                     <Icon size={10} />
