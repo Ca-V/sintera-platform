@@ -553,7 +553,7 @@ export default function ExamDetailPage() {
             <button
               onClick={() => setAgendarOpen(true)}
               className="flex items-center gap-1.5 border border-border text-mauve font-body text-sm font-medium px-3 py-2.5 rounded-full hover:border-petal/40 hover:text-petal transition-colors">
-              <CalendarDays size={14} /> Agendar
+              <CalendarDays size={14} /> Criar lembrete
             </button>
 
             {/* Baixar/ver PDF original — disponível sempre que houver arquivo */}

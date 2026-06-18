@@ -44,7 +44,7 @@ const features = [
   {
     icon: CalendarDays,
     title: 'Agenda de saúde',
-    description: 'Agende exames e consultas diretamente no Google Calendar, Outlook ou Apple Calendar.',
+    description: 'Crie lembretes de exames e consultas no Google Calendar, Outlook ou Apple Calendar.',
     iconColor: 'text-petal',
     iconBg: 'bg-blush',
     span: 'lg:col-span-1',
