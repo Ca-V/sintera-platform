@@ -199,7 +199,7 @@ export default function DashboardPage() {
               <CalendarDays size={20} className="text-lavender" />
             </div>
             <div className="flex-1">
-              <p className="font-body text-sm font-semibold text-onyx">Agendar consulta ou exame</p>
+              <p className="font-body text-sm font-semibold text-onyx">Criar lembrete de consulta ou exame</p>
               <p className="font-body text-xs text-mauve mt-0.5">Adiciona ao Google, Outlook ou .ics</p>
             </div>
             <ArrowRight size={15} className="text-mauve/40 group-hover:text-lavender transition-colors flex-shrink-0" />
