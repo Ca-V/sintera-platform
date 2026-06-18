@@ -17,7 +17,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   PDF_NO_TEXT_LAYER:       'Este PDF parece ser uma imagem escaneada. PDFs escaneados não são suportados nesta versão Beta.',
   PDF_PASSWORD_PROTECTED:  'O PDF está protegido por senha. Remova a proteção e envie novamente.',
   PDF_CORRUPTED:           'O arquivo parece estar corrompido. Tente enviá-lo novamente.',
-  PDF_TOO_LARGE:           'O arquivo excede o limite de 10 MB.',
+  PDF_TOO_LARGE:           'O arquivo excede o limite de 50 MB.',
   STORAGE_DOWNLOAD_FAILED: 'Não foi possível acessar o arquivo. Tente novamente em alguns instantes.',
   RATE_LIMIT_EXCEEDED:     'Limite de análises atingido. Aguarde 1 minuto.',
   NO_ACTIVE_PROMPT:        'O sistema de análise está em manutenção. Tente mais tarde.',
@@ -47,7 +47,7 @@ const STATUS_FILTER_OPTIONS = [
 ]
 
 const ACCEPTED_MIME = ['application/pdf', 'image/jpeg', 'image/png']
-const MAX_BYTES     = 10 * 1024 * 1024
+const MAX_BYTES     = 50 * 1024 * 1024
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -170,7 +170,7 @@ export default function ExamsPage() {
   const processFile = useCallback(async (file: File) => {
     if (!user) return
     if (!ACCEPTED_MIME.includes(file.type)) { setUploadError('Formato inválido. São aceitos PDF, JPG e PNG.'); return }
-    if (file.size > MAX_BYTES) { setUploadError('Arquivo muito grande. O limite é 10 MB.'); return }
+    if (file.size > MAX_BYTES) { setUploadError('Arquivo muito grande. O limite é 50 MB.'); return }
     setUploadError(null); setUploading(true)
     let examId: string | null = null
     try {
@@ -264,7 +264,7 @@ export default function ExamsPage() {
           <>
             <p className="font-display text-lg font-semibold text-onyx mb-1">Arraste seu exame aqui</p>
             <p className="font-body text-sm text-mauve mb-4">ou clique para selecionar um arquivo</p>
-            <p className="text-xs font-body text-mauve/60 mb-5">PDF · Até 10 MB</p>
+            <p className="text-xs font-body text-mauve/60 mb-5">PDF · Até 50 MB</p>
             <span className="inline-flex items-center gap-2 gradient-sintera text-white font-body text-sm font-medium px-6 py-2.5 rounded-full hover:opacity-90 transition-opacity shadow-sm">
               <Plus size={15} /> Selecionar arquivo
             </span>
