@@ -161,7 +161,7 @@ function ProductPreview() {
               <p className="text-base font-display font-semibold text-onyx">Check-up Anual 2024</p>
             </div>
             <span className="font-body text-[10px] text-sage bg-sage-light px-2.5 py-1 rounded-full border border-sage/20 font-medium">
-              Analisado
+              Dados extraídos
             </span>
           </div>
 
@@ -225,7 +225,7 @@ function ProductPreview() {
           <div className="w-5 h-5 rounded-lg gradient-sintera flex items-center justify-center flex-shrink-0">
             <Upload size={10} className="text-white" />
           </div>
-          <span className="text-[10px] font-body font-semibold text-onyx">PDF analisado</span>
+          <span className="text-[10px] font-body font-semibold text-onyx">PDF processado</span>
         </div>
         <p className="text-[10px] font-body text-mauve leading-snug">24 biomarcadores extraídos automaticamente</p>
         <div className="mt-2 h-1 bg-ivory rounded-full overflow-hidden">

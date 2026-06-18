@@ -20,21 +20,21 @@ const ERROR_MESSAGES: Record<string, string> = {
   PDF_CORRUPTED:           'O arquivo parece estar corrompido. Tente enviá-lo novamente.',
   PDF_TOO_LARGE:           'O arquivo excede o limite de 50 MB.',
   STORAGE_DOWNLOAD_FAILED: 'Não foi possível acessar o arquivo. Tente novamente em alguns instantes.',
-  RATE_LIMIT_EXCEEDED:     'Limite de análises atingido. Aguarde 1 minuto.',
-  NO_ACTIVE_PROMPT:        'O sistema de análise está em manutenção. Tente mais tarde.',
+  RATE_LIMIT_EXCEEDED:     'Limite de extrações atingido. Aguarde 1 minuto.',
+  NO_ACTIVE_PROMPT:        'O sistema de extração está em manutenção. Tente mais tarde.',
   ALREADY_PROCESSING:      'Este exame já está sendo processado.',
 }
 
 function friendlyError(code?: string, fallback?: string): string {
   if (code && ERROR_MESSAGES[code]) return ERROR_MESSAGES[code]
-  return fallback ?? 'Ocorreu um erro durante a análise. Tente novamente.'
+  return fallback ?? 'Ocorreu um erro durante a extração. Tente novamente.'
 }
 
 const STATUS_CONFIG: Record<string, {
   label: string; color: string; bg: string
   icon: React.ComponentType<{ size: number; className?: string }>
 }> = {
-  processed:  { label: 'Analisado',   color: 'text-sage',       bg: 'bg-sage-light',     icon: CheckCircle },
+  processed:  { label: 'Dados extraídos', color: 'text-sage',    bg: 'bg-sage-light',     icon: CheckCircle },
   pending:    { label: 'Aguardando',  color: 'text-gold',       bg: 'bg-warm',           icon: Clock       },
   processing: { label: 'Processando', color: 'text-lavender',   bg: 'bg-lavender-light', icon: Loader2     },
   error:      { label: 'Erro',        color: 'text-red-400',    bg: 'bg-red-50',         icon: AlertCircle },
@@ -42,7 +42,7 @@ const STATUS_CONFIG: Record<string, {
 
 const STATUS_FILTER_OPTIONS = [
   { value: 'all',       label: 'Todos os status' },
-  { value: 'processed', label: 'Analisado'        },
+  { value: 'processed', label: 'Dados extraídos'  },
   { value: 'pending',   label: 'Aguardando'       },
   { value: 'error',     label: 'Com erro'         },
 ]
@@ -85,6 +85,9 @@ export default function ExamsPage() {
   const [searchName, setSearchName]   = useState('')
   const [filterYear, setFilterYear]   = useState<string>('all')
   const [filterStatus, setFilterStatus] = useState<string>('all')
+  // Período por data de REALIZAÇÃO (de / até), formato YYYY-MM-DD.
+  const [filterFrom, setFilterFrom]   = useState<string>('')
+  const [filterTo, setFilterTo]       = useState<string>('')
   const [collapsedYears, setCollapsedYears] = useState<Set<number>>(new Set())
 
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -123,6 +126,9 @@ export default function ExamsPage() {
     if (filterStatus !== 'all') {
       filtered = filtered.filter(e => e.status === filterStatus)
     }
+    // Período por data de realização (inclusive nas pontas)
+    if (filterFrom) filtered = filtered.filter(e => effDate(e).slice(0, 10) >= filterFrom)
+    if (filterTo)   filtered = filtered.filter(e => effDate(e).slice(0, 10) <= filterTo)
 
     // Agrupar por ano
     const groups = new Map<number, Exam[]>()
@@ -132,10 +138,10 @@ export default function ExamsPage() {
       groups.get(yr)!.push(exam)
     }
     return [...groups.entries()].sort((a, b) => b[0] - a[0])
-  }, [exams, searchName, filterYear, filterStatus])
+  }, [exams, searchName, filterYear, filterStatus, filterFrom, filterTo])
 
   const totalFiltered = useMemo(() => examsByYear.reduce((s, [, g]) => s + g.length, 0), [examsByYear])
-  const hasActiveFilters = searchName.trim() !== '' || filterYear !== 'all' || filterStatus !== 'all'
+  const hasActiveFilters = searchName.trim() !== '' || filterYear !== 'all' || filterStatus !== 'all' || filterFrom !== '' || filterTo !== ''
 
   function toggleYear(yr: number) {
     setCollapsedYears(prev => {
@@ -322,10 +328,22 @@ export default function ExamsPage() {
               ))}
             </select>
 
+            {/* Período por data de realização */}
+            <div className="flex items-center gap-1.5">
+              <span className="font-body text-xs text-mauve/60">Período:</span>
+              <input type="date" value={filterFrom} max={filterTo || undefined}
+                onChange={e => setFilterFrom(e.target.value)} aria-label="Data inicial"
+                className="py-2 px-2.5 bg-ivory border border-border rounded-xl font-body text-xs text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40" />
+              <span className="font-body text-xs text-mauve/50">até</span>
+              <input type="date" value={filterTo} min={filterFrom || undefined}
+                onChange={e => setFilterTo(e.target.value)} aria-label="Data final"
+                className="py-2 px-2.5 bg-ivory border border-border rounded-xl font-body text-xs text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40" />
+            </div>
+
             {/* Limpar filtros */}
             {hasActiveFilters && (
               <button
-                onClick={() => { setSearchName(''); setFilterYear('all'); setFilterStatus('all') }}
+                onClick={() => { setSearchName(''); setFilterYear('all'); setFilterStatus('all'); setFilterFrom(''); setFilterTo('') }}
                 className="py-2 px-3 rounded-xl border border-border text-mauve font-body text-sm hover:border-petal/40 transition-colors flex items-center gap-1.5"
               >
                 <X size={12} /> Limpar
@@ -401,7 +419,7 @@ export default function ExamsPage() {
                           const hasFile     = !!(exam as unknown as { file_url: string | null }).file_url
                           const isProcessed = exam.status === 'processed'
                           const canAnalyze  = hasFile && !isRunning && !isProcessed && exam.status !== 'processing'
-                          const analyzeLabel = exam.status === 'error' ? 'Tentar novamente' : 'Analisar exame'
+                          const analyzeLabel = exam.status === 'error' ? 'Tentar novamente' : 'Extrair dados'
 
                           return (
                             <motion.div key={exam.id}
@@ -423,7 +441,7 @@ export default function ExamsPage() {
                                     )}
                                   </p>
                                   {isProcessed && !isRunning && (
-                                    <p className="font-body text-xs text-sage mt-0.5">Análise disponível</p>
+                                    <p className="font-body text-xs text-sage mt-0.5">Dados disponíveis</p>
                                   )}
                                   {compareNames(profile?.name, (exam as unknown as { patient_name?: string | null }).patient_name) === 'mismatch' && (
                                     <p className="font-body text-xs text-red-500 mt-0.5 flex items-center gap-1">
@@ -439,7 +457,7 @@ export default function ExamsPage() {
                                   <button type="button"
                                     onClick={e => { e.stopPropagation(); router.push('/dashboard/exams/' + exam.id) }}
                                     className="ml-1 flex items-center gap-1.5 text-xs font-body font-medium text-petal-dark bg-blush border border-petal/30 px-3 py-1.5 rounded-full hover:bg-petal/10 transition-colors flex-shrink-0">
-                                    Ver análise →
+                                    Ver dados →
                                   </button>
                                 )}
                                 {canAnalyze && (
@@ -451,7 +469,7 @@ export default function ExamsPage() {
                                 )}
                                 {isRunning && (
                                   <div className="ml-1 flex items-center gap-1.5 text-xs font-body text-mauve flex-shrink-0">
-                                    <Loader2 size={13} className="animate-spin" /><span>Analisando…</span>
+                                    <Loader2 size={13} className="animate-spin" /><span>Extraindo…</span>
                                   </div>
                                 )}
                                 {!isRunning && (

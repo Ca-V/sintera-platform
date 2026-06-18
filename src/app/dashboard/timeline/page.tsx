@@ -112,7 +112,7 @@ export default function TimelinePage() {
       merged.push({
         id: `exam-${e.id as string}`, kind: 'exam', eventType: 'exame',
         title: (e.type as string) || 'Exame laboratorial',
-        subtitle: (e.status as string) === 'processed' ? 'Analisado' : (e.status as string) ?? null,
+        subtitle: (e.status as string) === 'processed' ? 'Dados extraídos' : (e.status as string) ?? null,
         date: (e.exam_date as string) || (e.created_at as string),
         source: 'upload', confidence: 'alta',
       })

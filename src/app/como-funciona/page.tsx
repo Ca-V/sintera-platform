@@ -30,7 +30,7 @@ function MockupUpload() {
                 <CheckCircle size={13} className="text-sage" />
               </div>
               <span className="font-body text-xs text-onyx">{f}</span>
-              <span className="ml-auto font-body text-[10px] text-sage font-medium">Analisado</span>
+              <span className="ml-auto font-body text-[10px] text-sage font-medium">Dados extraídos</span>
             </div>
           ))}
         </div>
