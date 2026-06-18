@@ -189,6 +189,59 @@ export default function TimelinePage() {
     }
   }
 
+  const today = new Date().toISOString().slice(0, 10)
+  const upcoming = items.filter(it => it.date.slice(0, 10) >= today).slice().reverse() // mais próximo primeiro
+  const past = items.filter(it => it.date.slice(0, 10) < today)
+
+  const renderItem = (it: TimelineItem, i: number) => {
+    const meta = TYPE_META[it.eventType]
+    return (
+      <motion.div key={it.id}
+        initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
+        className="relative">
+        <div className={`absolute -left-6 top-1.5 w-3.5 h-3.5 rounded-full border-2 border-cream ${meta.cls}`} />
+        <div className="card-premium p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3 min-w-0">
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${meta.cls}`}>
+                <meta.Icon size={15} />
+              </div>
+              <div className="min-w-0">
+                <p className="font-body text-sm font-semibold text-onyx">{it.title}</p>
+                <p className="font-body text-[11px] text-mauve/60">{meta.label}{it.subtitle ? ` · ${it.subtitle}` : ''}</p>
+                {it.attachmentUrl && (
+                  <a href={it.attachmentUrl} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 font-body text-[11px] text-petal hover:underline mt-1">
+                    <Paperclip size={11} /> Ver anexo
+                  </a>
+                )}
+              </div>
+            </div>
+            <div className="flex flex-col items-end gap-1 flex-shrink-0">
+              <span className="font-body text-[11px] text-mauve/60">{fmt(it.date)}</span>
+              <span className={`font-body text-[10px] rounded-full px-1.5 py-0.5 border ${CONFIDENCE_CLS[it.confidence] ?? CONFIDENCE_CLS.baixa}`}>
+                {it.source === 'autorrelato' ? 'autorrelato' : it.source}
+              </span>
+              {it.kind === 'event' && it.rawId && (
+                <div className="flex items-center gap-1 mt-0.5">
+                  <button aria-label="Editar" onClick={() => openEdit(it)}
+                    className="w-6 h-6 rounded-lg hover:bg-black/5 flex items-center justify-center text-mauve/60 hover:text-petal transition-colors">
+                    <Pencil size={12} />
+                  </button>
+                  <button aria-label="Excluir" disabled={busyId === it.rawId}
+                    onClick={() => remove(it.rawId!, it.title)}
+                    className="w-6 h-6 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve/60 hover:text-red-400 transition-colors disabled:opacity-40">
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    )
+  }
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
@@ -269,58 +322,27 @@ export default function TimelinePage() {
           </p>
         </div>
       ) : (
-        <div className="relative pl-6">
-          <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border/60" />
-          <div className="space-y-4">
-            {items.map((it, i) => {
-              const meta = TYPE_META[it.eventType]
-              return (
-                <motion.div key={it.id}
-                  initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
-                  className="relative">
-                  <div className={`absolute -left-6 top-1.5 w-3.5 h-3.5 rounded-full border-2 border-cream ${meta.cls}`} />
-                  <div className="card-premium p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-3 min-w-0">
-                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${meta.cls}`}>
-                          <meta.Icon size={15} />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-body text-sm font-semibold text-onyx">{it.title}</p>
-                          <p className="font-body text-[11px] text-mauve/60">{meta.label}{it.subtitle ? ` · ${it.subtitle}` : ''}</p>
-                          {it.attachmentUrl && (
-                            <a href={it.attachmentUrl} target="_blank" rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 font-body text-[11px] text-petal hover:underline mt-1">
-                              <Paperclip size={11} /> Ver anexo
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                        <span className="font-body text-[11px] text-mauve/60">{fmt(it.date)}</span>
-                        <span className={`font-body text-[10px] rounded-full px-1.5 py-0.5 border ${CONFIDENCE_CLS[it.confidence] ?? CONFIDENCE_CLS.baixa}`}>
-                          {it.source === 'autorrelato' ? 'autorrelato' : it.source}
-                        </span>
-                        {it.kind === 'event' && it.rawId && (
-                          <div className="flex items-center gap-1 mt-0.5">
-                            <button aria-label="Editar" onClick={() => openEdit(it)}
-                              className="w-6 h-6 rounded-lg hover:bg-black/5 flex items-center justify-center text-mauve/60 hover:text-petal transition-colors">
-                              <Pencil size={12} />
-                            </button>
-                            <button aria-label="Excluir" disabled={busyId === it.rawId}
-                              onClick={() => remove(it.rawId!, it.title)}
-                              className="w-6 h-6 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve/60 hover:text-red-400 transition-colors disabled:opacity-40">
-                              <Trash2 size={12} />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )
-            })}
-          </div>
+        <div className="space-y-6">
+          {upcoming.length > 0 && (
+            <div>
+              <p className="font-body text-xs font-semibold text-mauve/70 uppercase tracking-wider mb-3">Próximos</p>
+              <div className="relative pl-6">
+                <div className="absolute left-[7px] top-2 bottom-2 w-px bg-petal/30" />
+                <div className="space-y-4">{upcoming.map(renderItem)}</div>
+              </div>
+            </div>
+          )}
+          {past.length > 0 && (
+            <div>
+              {upcoming.length > 0 && (
+                <p className="font-body text-xs font-semibold text-mauve/70 uppercase tracking-wider mb-3">Histórico</p>
+              )}
+              <div className="relative pl-6">
+                <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border/60" />
+                <div className="space-y-4">{past.map(renderItem)}</div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

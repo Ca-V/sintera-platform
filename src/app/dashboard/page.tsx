@@ -43,7 +43,7 @@ export default function DashboardPage() {
 
   const [stats, setStats]         = useState<Stats | null>(null)
   const [recentExams, setRecent]   = useState<ExamSummary[]>([])
-  const [journey, setJourney]     = useState<{ count: number; last: { title: string; date: string } | null }>({ count: 0, last: null })
+  const [journey, setJourney]     = useState<{ count: number; last: { title: string; date: string } | null; next: { title: string; date: string } | null }>({ count: 0, last: null, next: null })
   const [loading, setLoading]     = useState(true)
   const [agendarOpen, setAgendar] = useState(false)
 
@@ -59,17 +59,25 @@ export default function DashboardPage() {
   async function loadData() {
     setLoading(true)
 
-    const [examsResult, bioResult, journeyResult] = await Promise.all([
+    const todayISO = new Date().toISOString().slice(0, 10)
+    const [examsResult, bioResult, journeyResult, nextResult] = await Promise.all([
       supabase.from('exams').select('id,type,status,created_at').eq('user_id', user!.id).order('created_at', { ascending: false }),
       supabase.from('biomarkers').select('id', { count: 'exact', head: true }).eq('user_id', user!.id).eq('synthetic', false),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (supabase as any).from('health_events').select('title,event_date', { count: 'exact' }).eq('user_id', user!.id).eq('synthetic', false).order('event_date', { ascending: false }).limit(1),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase as any).from('health_events').select('title,event_date').eq('user_id', user!.id).eq('synthetic', false).gte('event_date', todayISO).order('event_date', { ascending: true }).limit(1),
     ])
 
     const exams = (examsResult.data ?? []) as ExamSummary[]
     const totalBiomarkers = bioResult.count ?? 0
     const lastEvent = ((journeyResult.data ?? []) as Array<{ title: string; event_date: string }>)[0]
-    setJourney({ count: journeyResult.count ?? 0, last: lastEvent ? { title: lastEvent.title, date: lastEvent.event_date } : null })
+    const nextEvent = ((nextResult.data ?? []) as Array<{ title: string; event_date: string }>)[0]
+    setJourney({
+      count: journeyResult.count ?? 0,
+      last: lastEvent ? { title: lastEvent.title, date: lastEvent.event_date } : null,
+      next: nextEvent ? { title: nextEvent.title, date: nextEvent.event_date } : null,
+    })
 
     setStats({
       totalExams:     exams.length,
@@ -133,8 +141,8 @@ export default function DashboardPage() {
         </motion.div>
       )}
 
-      {/* Estado vazio — nenhum exame ainda */}
-      {!loading && stats?.totalExams === 0 && (
+      {/* Estado vazio — nenhum exame e nenhuma jornada ainda */}
+      {!loading && stats?.totalExams === 0 && journey.count === 0 && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
           className="card-premium p-10 text-center">
           <div className="w-16 h-16 rounded-2xl gradient-sintera-soft flex items-center justify-center mx-auto mb-4">
@@ -153,7 +161,7 @@ export default function DashboardPage() {
       )}
 
       {/* Ações rápidas */}
-      {!loading && stats && stats.totalExams > 0 && (
+      {!loading && stats && (stats.totalExams > 0 || journey.count > 0) && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
           className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
@@ -205,7 +213,9 @@ export default function DashboardPage() {
             <div className="flex-1 min-w-0">
               <p className="font-body text-sm font-semibold text-onyx">Minha Jornada</p>
               <p className="font-body text-xs text-mauve mt-0.5 truncate">
-                {journey.last ? `Último: ${journey.last.title}` : 'Registre consultas, vacinas e procedimentos'}
+                {journey.next ? `Próximo: ${journey.next.title} · ${formatDate(journey.next.date)}`
+                  : journey.last ? `Último: ${journey.last.title}`
+                  : 'Registre consultas, vacinas e procedimentos'}
               </p>
             </div>
             <ArrowRight size={15} className="text-mauve/40 group-hover:text-petal transition-colors flex-shrink-0" />
