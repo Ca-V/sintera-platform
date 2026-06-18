@@ -53,7 +53,7 @@ const features = [
   {
     icon: FlaskConical,
     title: 'Índice por exame',
-    description: 'Veja a proporção de biomarcadores dentro e fora da referência em cada laudo analisado.',
+    description: 'Veja a proporção de biomarcadores dentro e fora da referência em cada laudo processado.',
     iconColor: 'text-sage',
     iconBg: 'bg-sage-light',
     span: 'lg:col-span-1',

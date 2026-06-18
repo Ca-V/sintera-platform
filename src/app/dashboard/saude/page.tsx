@@ -222,7 +222,7 @@ export default function MinhaSaudePage() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="card-premium p-12 text-center">
           <FlaskConical size={40} className="text-border mx-auto mb-3" />
           <p className="font-body text-sm font-semibold text-onyx mb-1">Nenhum dado disponível ainda</p>
-          <p className="font-body text-xs text-mauve mb-5">Analise um exame para ver sua visão geral aqui.</p>
+          <p className="font-body text-xs text-mauve mb-5">Extraia os dados de um exame para ver sua visão geral aqui.</p>
           <button onClick={() => router.push('/dashboard/exams')}
             className="inline-flex items-center gap-2 gradient-sintera text-white font-body text-sm font-medium px-6 py-2.5 rounded-full hover:opacity-90 transition-opacity">
             Enviar exame

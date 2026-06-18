@@ -403,7 +403,7 @@ export default function HistoricoPage() {
             {search || hasActiveFilters ? 'Nenhum biomarcador encontrado' : 'Nenhum dado disponível'}
           </p>
           <p className="font-body text-xs text-mauve">
-            {search || hasActiveFilters ? 'Tente ajustar os filtros.' : 'Analise um exame para ver o histórico aqui.'}
+            {search || hasActiveFilters ? 'Tente ajustar os filtros.' : 'Extraia os dados de um exame para ver o histórico aqui.'}
           </p>
         </motion.div>
       )}

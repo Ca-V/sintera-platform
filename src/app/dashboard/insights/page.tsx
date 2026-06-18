@@ -114,7 +114,7 @@ export default function InsightsPage() {
     <div className="max-w-2xl mx-auto space-y-6">
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Insights</h1>
-        <p className="font-body text-sm text-mauve">Análise dos seus dados de saúde — organização, sem diagnóstico</p>
+        <p className="font-body text-sm text-mauve">Organização dos seus dados de saúde — sem diagnóstico</p>
       </motion.div>
 
       {demoMode && (
@@ -149,7 +149,7 @@ export default function InsightsPage() {
             </div>
             <h2 className="font-display text-xl font-semibold text-onyx mb-2">Você ainda não tem insights</h2>
             <p className="font-body text-sm text-mauve max-w-sm mx-auto leading-relaxed">
-              Os insights aparecem aqui após a análise dos seus exames, quando há regras clínicas
+              Os insights aparecem aqui após a extração dos seus exames, quando há regras clínicas
               aprovadas para os seus biomarcadores — sempre como organização de informação, nunca
               como diagnóstico.
             </p>
@@ -176,7 +176,7 @@ export default function InsightsPage() {
               </div>
               <div className="flex-1">
                 <p className="font-body text-sm font-semibold text-onyx">Meus exames</p>
-                <p className="font-body text-xs text-mauve mt-0.5">Todos os laudos analisados pela IA</p>
+                <p className="font-body text-xs text-mauve mt-0.5">Todos os laudos processados pela IA</p>
               </div>
               <ArrowRight size={14} className="text-mauve/40 group-hover:text-petal transition-colors flex-shrink-0" />
             </button>

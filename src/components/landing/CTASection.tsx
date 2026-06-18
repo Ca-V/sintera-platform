@@ -6,7 +6,7 @@ import { useRef } from 'react'
 import { ArrowRight, Upload, TrendingUp, FileText } from 'lucide-react'
 
 const floatingChips = [
-  { icon: Upload,     text: 'PDF analisado em segundos',         color: 'bg-blush/20 text-petal border-petal/20'       },
+  { icon: Upload,     text: 'Dados extraídos em segundos',         color: 'bg-blush/20 text-petal border-petal/20'       },
   { icon: TrendingUp, text: '7 anos de exames organizados',       color: 'bg-sage-light/20 text-sage border-sage/20'    },
   { icon: FileText,   text: '24 biomarcadores extraídos',         color: 'bg-lavender-light/20 text-lavender border-lavender/20' },
 ]

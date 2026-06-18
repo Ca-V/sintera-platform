@@ -379,7 +379,7 @@ export default function ExamDetailPage() {
 
   const isProcessed  = exam?.status === 'processed'
   const hasResults   = biomarkers.length > 0
-  const analyzeLabel = isProcessed ? 'Reanalisar' : 'Analisar exame'
+  const analyzeLabel = isProcessed ? 'Extrair novamente' : 'Extrair dados'
   const AnalyzeIcon  = isProcessed ? RefreshCw : Zap
 
   return (
@@ -528,10 +528,10 @@ export default function ExamDetailPage() {
                 </div>
               )}
 
-              {/* Última análise bem-sucedida */}
+              {/* Última extração bem-sucedida */}
               {lastLog && (
                 <p className="font-body text-xs text-mauve/60 mt-2">
-                  Última análise: {formatDate(lastLog.started_at)}
+                  Última extração: {formatDate(lastLog.started_at)}
                   {lastLog.parse_repaired && ' · reparado automaticamente'}
                   {lastLog.extraction_path === 'pdf_native' && ' · leitura nativa PDF'}
                 </p>
@@ -596,7 +596,7 @@ export default function ExamDetailPage() {
             <button onClick={handleAnalyze} disabled={analyzing}
               className="flex items-center gap-2 gradient-sintera text-white font-body text-sm font-medium px-4 py-2.5 rounded-full hover:opacity-90 transition-opacity shadow-sm disabled:opacity-60">
               {analyzing
-                ? <><Loader2 size={14} className="animate-spin" /> Analisando…</>
+                ? <><Loader2 size={14} className="animate-spin" /> Extraindo…</>
                 : <><AnalyzeIcon size={14} /> {analyzeLabel}</>
               }
             </button>
@@ -611,7 +611,7 @@ export default function ExamDetailPage() {
               <p className="font-body text-xs font-semibold text-amber-800">Laudo parcialmente processado</p>
               <p className="font-body text-xs text-amber-700 mt-0.5 leading-relaxed">
                 Este laudo é muito extenso e foi processado parcialmente. Alguns biomarcadores podem não ter sido extraídos.
-                Reanalise o exame ou confira o laudo original para garantir que todos os dados estão presentes.
+                Extraia os dados novamente ou confira o laudo original para garantir que todos os dados estão presentes.
               </p>
             </div>
           </div>
@@ -713,8 +713,8 @@ export default function ExamDetailPage() {
           <p className="font-body text-sm font-semibold text-onyx mb-1">Nenhum biomarcador encontrado</p>
           <p className="font-body text-xs text-mauve">
             {exam?.status === 'error'
-              ? `Última análise falhou (${exam.error_reason ?? 'erro desconhecido'}). Clique em "Analisar exame" para tentar novamente.`
-              : 'Clique em "Analisar exame" para extrair os biomarcadores deste exame.'}
+              ? `Última extração falhou (${exam.error_reason ?? 'erro desconhecido'}). Clique em "Extrair dados" para tentar novamente.`
+              : 'Clique em "Extrair dados" para extrair os biomarcadores deste exame.'}
           </p>
         </motion.div>
       )}

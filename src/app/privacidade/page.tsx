@@ -33,9 +33,9 @@ export default function PrivacidadePage() {
             <h2 className="font-display text-lg font-semibold text-onyx">2. Dados que coletamos</h2>
             <ul className="space-y-2 list-disc list-inside text-mauve">
               <li><span className="text-onyx/80">Dados cadastrais:</span> nome e endereço de e-mail fornecidos no cadastro.</li>
-              <li><span className="text-onyx/80">Arquivos de laudos:</span> PDFs enviados pela usuária para análise. Armazenados de forma segura e acessíveis apenas pela própria usuária.</li>
+              <li><span className="text-onyx/80">Arquivos de laudos:</span> PDFs enviados pela usuária para extração de dados. Armazenados de forma segura e acessíveis apenas pela própria usuária.</li>
               <li><span className="text-onyx/80">Dados extraídos:</span> biomarcadores, valores, unidades e referências extraídos dos laudos pela IA.</li>
-              <li><span className="text-onyx/80">Dados de uso:</span> eventos de navegação dentro da plataforma (exames visualizados, análises realizadas), sem identificação pessoal de comportamento fora da plataforma.</li>
+              <li><span className="text-onyx/80">Dados de uso:</span> eventos de navegação dentro da plataforma (exames visualizados, extrações realizadas), sem identificação pessoal de comportamento fora da plataforma.</li>
               <li><span className="text-onyx/80">Dados técnicos:</span> IP de acesso e user-agent para fins de segurança e auditoria de consentimento (LGPD).</li>
             </ul>
           </section>

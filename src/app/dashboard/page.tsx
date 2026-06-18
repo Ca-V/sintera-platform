@@ -31,7 +31,7 @@ function formatDate(iso: string) {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
-  processed:  { label: 'Analisado',   color: 'text-sage',     bg: 'bg-sage-light',     icon: CheckCircle },
+  processed:  { label: 'Dados extraídos',   color: 'text-sage',     bg: 'bg-sage-light',     icon: CheckCircle },
   pending:    { label: 'Aguardando',  color: 'text-gold',     bg: 'bg-warm',           icon: Clock       },
   processing: { label: 'Processando', color: 'text-lavender', bg: 'bg-lavender-light', icon: Clock       },
   error:      { label: 'Erro',        color: 'text-red-400',  bg: 'bg-red-50',         icon: AlertCircle },
@@ -121,7 +121,7 @@ export default function DashboardPage() {
               <CheckCircle size={17} className="text-sage" />
             </div>
             <p className="font-display text-2xl font-bold text-onyx">{stats.processedExams}</p>
-            <p className="font-body text-xs text-mauve mt-0.5">Analisado{stats.processedExams !== 1 ? 's' : ''}</p>
+            <p className="font-body text-xs text-mauve mt-0.5">Extraído{stats.processedExams !== 1 ? 's' : ''}</p>
           </div>
 
           <div className="card-premium p-4 text-center">
