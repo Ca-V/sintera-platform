@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { reminderEmailHtml, reminderEmailText } from '@/lib/email/reminder-template'
+import { sendWhatsAppReminder } from '@/lib/whatsapp/send'
 
 const FROM_ADDRESS = 'SINTERA <ola@sinteramais.com.br>'
 
@@ -85,12 +86,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ due: 0, sent: 0, failed: 0 })
   }
 
-  // Nomes das usuárias (profiles está nos tipos; sem cast).
+  // Nomes + telefone + opt-in de WhatsApp das usuárias.
   const userIds = [...new Set(events.map(e => e.user_id))]
-  const { data: profiles } = await admin.from('profiles').select('id, name').in('id', userIds)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: profiles } = await (admin.from('profiles') as any)
+    .select('id, name, phone, pref_whatsapp_reminder').in('id', userIds)
   const nameById = new Map<string, string>()
-  for (const p of (profiles ?? []) as { id: string; name: string | null }[]) {
+  const phoneById = new Map<string, string | null>()
+  const waOptInById = new Map<string, boolean>()
+  for (const p of (profiles ?? []) as { id: string; name: string | null; phone: string | null; pref_whatsapp_reminder: boolean | null }[]) {
     nameById.set(p.id, p.name ?? '')
+    phoneById.set(p.id, p.phone ?? null)
+    waOptInById.set(p.id, p.pref_whatsapp_reminder === true)
   }
 
   // E-mails via Auth Admin (cache por usuária).
@@ -102,32 +109,37 @@ export async function POST(req: NextRequest) {
 
   const sentIds: string[] = []
   let failed = 0
+  let whatsappSent = 0
 
   for (const ev of events) {
     const email = emailById.get(ev.user_id)
-    if (!email) { failed++; continue }
     const firstName = (nameById.get(ev.user_id) ?? '').split(' ')[0]
     const typeLabel = TYPE_LABEL[ev.event_type] ?? 'Evento'
-    const payload = {
-      firstName,
-      title: ev.title,
-      dateLabel: dateLabel(ev.event_date, today, tomorrow),
-      timeLabel: ev.event_time ? ev.event_time.slice(0, 5) : null,
-      notes: null,
-      typeLabel,
+    const label = dateLabel(ev.event_date, today, tomorrow)
+    let delivered = false
+
+    // Canal 1 — e-mail
+    if (email) {
+      try {
+        await resend.emails.send({
+          from: FROM_ADDRESS,
+          to: [email],
+          subject: `Lembrete: ${ev.title} — ${label}`,
+          html: reminderEmailHtml({ firstName, title: ev.title, dateLabel: label, timeLabel: ev.event_time ? ev.event_time.slice(0, 5) : null, notes: null, typeLabel }),
+          text: reminderEmailText({ firstName, title: ev.title, dateLabel: label, timeLabel: ev.event_time ? ev.event_time.slice(0, 5) : null, notes: null, typeLabel }),
+        })
+        delivered = true
+      } catch { /* tenta o WhatsApp mesmo assim */ }
     }
-    try {
-      await resend.emails.send({
-        from: FROM_ADDRESS,
-        to: [email],
-        subject: `Lembrete: ${ev.title} — ${payload.dateLabel}`,
-        html: reminderEmailHtml(payload),
-        text: reminderEmailText(payload),
-      })
-      sentIds.push(ev.id)
-    } catch {
-      failed++
+
+    // Canal 2 — WhatsApp (só com opt-in + telefone; ignora se sem credenciais)
+    if (waOptInById.get(ev.user_id) && phoneById.get(ev.user_id)) {
+      const wa = await sendWhatsAppReminder(phoneById.get(ev.user_id), { title: ev.title, dateLabel: label })
+      if (wa === 'sent') { delivered = true; whatsappSent++ }
     }
+
+    if (delivered) sentIds.push(ev.id)
+    else failed++
   }
 
   if (sentIds.length > 0) {
@@ -137,5 +149,5 @@ export async function POST(req: NextRequest) {
       .in('id', sentIds)
   }
 
-  return NextResponse.json({ due: events.length, sent: sentIds.length, failed })
+  return NextResponse.json({ due: events.length, sent: sentIds.length, whatsappSent, failed })
 }

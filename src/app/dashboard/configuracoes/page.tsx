@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Shield, Mail, Key, AlertTriangle, Check, X, Loader2, ExternalLink, Download } from 'lucide-react'
+import { Shield, Mail, Key, AlertTriangle, Check, X, Loader2, ExternalLink, Download, MessageCircle } from 'lucide-react'
 import { useUser } from '@/context/UserContext'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
@@ -29,6 +29,35 @@ export default function ConfiguracoesPage() {
       setPwSent(true)
     }
     setPwLoading(false)
+  }
+
+  // ── Lembretes por WhatsApp ──────────────────────────────────────────────────
+  const [phone, setPhone]         = useState('')
+  const [waOptIn, setWaOptIn]     = useState(false)
+  const [waLoading, setWaLoading] = useState(false)
+  const [waSaved, setWaSaved]     = useState(false)
+
+  useEffect(() => {
+    if (!user) return
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(supabase as any).from('profiles').select('phone, pref_whatsapp_reminder').eq('id', user.id).maybeSingle()
+      .then(({ data }: { data: { phone: string | null; pref_whatsapp_reminder: boolean | null } | null }) => {
+        if (data) { setPhone(data.phone ?? ''); setWaOptIn(data.pref_whatsapp_reminder === true) }
+      })
+  }, [user, supabase])
+
+  async function saveWhatsApp() {
+    if (!user || waLoading) return
+    setWaLoading(true); setWaSaved(false)
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).from('profiles')
+        .update({ phone: phone.trim() || null, pref_whatsapp_reminder: waOptIn })
+        .eq('id', user.id)
+      setWaSaved(true)
+    } finally {
+      setWaLoading(false)
+    }
   }
 
   // ── Exportar dados ────────────────────────────────────────────────────────
@@ -126,6 +155,47 @@ export default function ConfiguracoesPage() {
           )}
         </div>
         {pwError && <p className="font-body text-xs text-red-500">{pwError}</p>}
+      </motion.div>
+
+      {/* ── Lembretes por WhatsApp ── */}
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}
+        className="card-premium p-6 space-y-4">
+        <div className="flex items-center gap-3 mb-1">
+          <div className="w-8 h-8 rounded-lg bg-sage-light flex items-center justify-center">
+            <MessageCircle size={15} className="text-sage" />
+          </div>
+          <h2 className="font-body text-sm font-semibold text-onyx">Lembretes por WhatsApp</h2>
+        </div>
+
+        <div className="flex items-center justify-between py-2">
+          <div className="pr-4">
+            <p className="font-body text-sm text-onyx">Receber lembretes por WhatsApp</p>
+            <p className="font-body text-xs text-mauve mt-0.5">Lembretes dos eventos da sua agenda (consultas, exames). Você pode desativar quando quiser.</p>
+          </div>
+          <button onClick={() => setWaOptIn(v => !v)} aria-label="Ativar lembretes por WhatsApp"
+            className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${waOptIn ? 'bg-sage' : 'bg-border'}`}>
+            <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${waOptIn ? 'left-[22px]' : 'left-0.5'}`} />
+          </button>
+        </div>
+
+        <div>
+          <label className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Telefone (WhatsApp)</label>
+          <input type="tel" value={phone} onChange={e => setPhone(e.target.value)}
+            placeholder="(11) 99999-9999"
+            className="mt-1 w-full px-3 py-2.5 border border-border rounded-xl font-body text-sm text-onyx bg-ivory placeholder:text-mauve/40 focus:outline-none focus:ring-1 focus:ring-petal/30" />
+          <p className="font-body text-[11px] text-mauve/50 mt-1">Com DDD. Usado apenas para enviar seus lembretes.</p>
+        </div>
+
+        <div className="flex items-center justify-end gap-3">
+          {waSaved && <span className="font-body text-xs text-sage flex items-center gap-1"><Check size={13} /> Salvo</span>}
+          <button onClick={saveWhatsApp} disabled={waLoading || (waOptIn && !phone.trim())}
+            className="px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium disabled:opacity-40 hover:opacity-90 transition-opacity">
+            {waLoading ? 'Salvando…' : 'Salvar'}
+          </button>
+        </div>
+        {waOptIn && !phone.trim() && (
+          <p className="font-body text-[11px] text-amber-600">Informe o telefone para ativar os lembretes por WhatsApp.</p>
+        )}
       </motion.div>
 
       {/* ── Privacidade & Dados ── */}
