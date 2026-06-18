@@ -99,6 +99,21 @@ function parseBiomarker(raw: RawBiomarker): ExtractedBiomarker | null {
   }
 }
 
+// Valida a data extraída do laudo: aceita só YYYY-MM-DD real e não-futura distante.
+// É FATO (data impressa no laudo), não juízo clínico. Retorna null se ausente/inválida.
+function parseExamDate(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null
+  const m = raw.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (!m) return null
+  const d = new Date(`${m[1]}-${m[2]}-${m[3]}T00:00:00Z`)
+  if (Number.isNaN(d.getTime())) return null
+  const year = Number(m[1])
+  if (year < 1900 || year > new Date().getUTCFullYear() + 1) return null
+  // Confirma que a data existe (ex.: rejeita 2026-02-30, que o Date normaliza).
+  if (d.getUTCFullYear() !== year || d.getUTCMonth() + 1 !== Number(m[2]) || d.getUTCDate() !== Number(m[3])) return null
+  return `${m[1]}-${m[2]}-${m[3]}`
+}
+
 // Extrai o primeiro objeto JSON completo da resposta da IA via contagem de chaves balanceadas.
 // Robusto para: markdown code fences, texto antes/depois do JSON, objetos aninhados.
 // A estratégia de regex não-greedy foi descartada: (\{[\s\S]*?\}) para no primeiro }
@@ -310,6 +325,7 @@ export async function extractBiomarkers(
   return {
     biomarkers,
     examType: typeof parsed.exam_type === 'string' ? parsed.exam_type : 'indeterminado',
+    examDate: parseExamDate(parsed.exam_date),
     extractionNotes: toStringOrNull(parsed.extraction_notes),
     aiLogId,
     model: providerResult.model,
