@@ -16,6 +16,7 @@ interface ExamSummary {
   type: string | null
   status: string
   created_at: string
+  exam_date: string | null
 }
 
 interface Stats {
@@ -43,6 +44,7 @@ export default function DashboardPage() {
 
   const [stats, setStats]         = useState<Stats | null>(null)
   const [recentExams, setRecent]   = useState<ExamSummary[]>([])
+  const [journey, setJourney]     = useState<{ count: number; last: { title: string; date: string } | null; next: { title: string; date: string } | null }>({ count: 0, last: null, next: null })
   const [loading, setLoading]     = useState(true)
   const [agendarOpen, setAgendar] = useState(false)
 
@@ -58,13 +60,25 @@ export default function DashboardPage() {
   async function loadData() {
     setLoading(true)
 
-    const [examsResult, bioResult] = await Promise.all([
-      supabase.from('exams').select('id,type,status,created_at').eq('user_id', user!.id).order('created_at', { ascending: false }),
+    const todayISO = new Date().toISOString().slice(0, 10)
+    const [examsResult, bioResult, journeyResult, nextResult] = await Promise.all([
+      supabase.from('exams').select('id,type,status,created_at,exam_date').eq('user_id', user!.id).order('exam_date', { ascending: false, nullsFirst: false }),
       supabase.from('biomarkers').select('id', { count: 'exact', head: true }).eq('user_id', user!.id).eq('synthetic', false),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase as any).from('health_events').select('title,event_date', { count: 'exact' }).eq('user_id', user!.id).eq('synthetic', false).order('event_date', { ascending: false }).limit(1),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase as any).from('health_events').select('title,event_date').eq('user_id', user!.id).eq('synthetic', false).gte('event_date', todayISO).order('event_date', { ascending: true }).limit(1),
     ])
 
     const exams = (examsResult.data ?? []) as ExamSummary[]
     const totalBiomarkers = bioResult.count ?? 0
+    const lastEvent = ((journeyResult.data ?? []) as Array<{ title: string; event_date: string }>)[0]
+    const nextEvent = ((nextResult.data ?? []) as Array<{ title: string; event_date: string }>)[0]
+    setJourney({
+      count: journeyResult.count ?? 0,
+      last: lastEvent ? { title: lastEvent.title, date: lastEvent.event_date } : null,
+      next: nextEvent ? { title: nextEvent.title, date: nextEvent.event_date } : null,
+    })
 
     setStats({
       totalExams:     exams.length,
@@ -128,8 +142,8 @@ export default function DashboardPage() {
         </motion.div>
       )}
 
-      {/* Estado vazio — nenhum exame ainda */}
-      {!loading && stats?.totalExams === 0 && (
+      {/* Estado vazio — nenhum exame e nenhuma jornada ainda */}
+      {!loading && stats?.totalExams === 0 && journey.count === 0 && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
           className="card-premium p-10 text-center">
           <div className="w-16 h-16 rounded-2xl gradient-sintera-soft flex items-center justify-center mx-auto mb-4">
@@ -148,7 +162,7 @@ export default function DashboardPage() {
       )}
 
       {/* Ações rápidas */}
-      {!loading && stats && stats.totalExams > 0 && (
+      {!loading && stats && (stats.totalExams > 0 || journey.count > 0) && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
           className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
@@ -180,7 +194,7 @@ export default function DashboardPage() {
 
           <button
             onClick={() => setAgendar(true)}
-            className="card-premium p-5 text-left flex items-center gap-4 hover:shadow-md transition-shadow group sm:col-span-2 md:col-span-1">
+            className="card-premium p-5 text-left flex items-center gap-4 hover:shadow-md transition-shadow group">
             <div className="w-11 h-11 rounded-2xl bg-lavender-light flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
               <CalendarDays size={20} className="text-lavender" />
             </div>
@@ -189,6 +203,23 @@ export default function DashboardPage() {
               <p className="font-body text-xs text-mauve mt-0.5">Adiciona ao Google, Outlook ou .ics</p>
             </div>
             <ArrowRight size={15} className="text-mauve/40 group-hover:text-lavender transition-colors flex-shrink-0" />
+          </button>
+
+          <button
+            onClick={() => router.push('/dashboard/timeline')}
+            className="card-premium p-5 text-left flex items-center gap-4 hover:shadow-md transition-shadow group">
+            <div className="w-11 h-11 rounded-2xl bg-blush flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+              <Clock size={20} className="text-petal" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-body text-sm font-semibold text-onyx">Minha Jornada</p>
+              <p className="font-body text-xs text-mauve mt-0.5 truncate">
+                {journey.next ? `Próximo: ${journey.next.title} · ${formatDate(journey.next.date)}`
+                  : journey.last ? `Último: ${journey.last.title}`
+                  : 'Registre consultas, vacinas e procedimentos'}
+              </p>
+            </div>
+            <ArrowRight size={15} className="text-mauve/40 group-hover:text-petal transition-colors flex-shrink-0" />
           </button>
         </motion.div>
       )}
@@ -217,7 +248,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-body text-sm font-medium text-onyx truncate">{exam.type ?? 'Exame'}</p>
-                    <p className="font-body text-xs text-mauve">{formatDate(exam.created_at)}</p>
+                    <p className="font-body text-xs text-mauve">Realizado em {formatDate(exam.exam_date ?? exam.created_at)}</p>
                   </div>
                   <span className={`inline-flex items-center gap-1.5 text-xs font-body font-medium px-2.5 py-1 rounded-full flex-shrink-0 ${cfg.bg} ${cfg.color}`}>
                     <Icon size={10} />

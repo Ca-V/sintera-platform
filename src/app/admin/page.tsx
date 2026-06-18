@@ -232,11 +232,18 @@ export default function AdminPage() {
               {lastUpdated ? `Atualizado ${formatDate(lastUpdated.toISOString())}` : 'Carregando…'}
             </p>
           </div>
-          <button onClick={loadData} disabled={loading}
-            className="flex items-center gap-2 border border-border text-mauve font-body text-sm px-4 py-2 rounded-full hover:border-petal/40 hover:text-petal transition-colors disabled:opacity-50">
-            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-            Atualizar
-          </button>
+          <div className="flex items-center gap-2">
+            <a href="/admin/catalogo"
+              className="flex items-center gap-2 border border-border text-mauve font-body text-sm px-4 py-2 rounded-full hover:border-petal/40 hover:text-petal transition-colors">
+              <FlaskConical size={14} />
+              Catálogo
+            </a>
+            <button onClick={loadData} disabled={loading}
+              className="flex items-center gap-2 border border-border text-mauve font-body text-sm px-4 py-2 rounded-full hover:border-petal/40 hover:text-petal transition-colors disabled:opacity-50">
+              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+              Atualizar
+            </button>
+          </div>
         </div>
 
         {loading && !stats ? (

@@ -21,7 +21,13 @@ export default function RecuperarSenhaPage() {
       redirectTo: `${window.location.origin}/atualizar-senha`,
     })
     if (error) {
-      setError('Não foi possível enviar o e-mail. Tente novamente.')
+      console.error('[recuperar-senha] resetPasswordForEmail:', error.status, error.message)
+      const isRate = error.status === 429 || /rate|limit|seconds|too many/i.test(error.message ?? '')
+      setError(
+        isRate
+          ? 'Muitas solicitações em pouco tempo. Aguarde alguns minutos e tente novamente.'
+          : 'Não foi possível enviar o e-mail agora. Tente novamente em instantes.',
+      )
     } else {
       setSent(true)
     }

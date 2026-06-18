@@ -62,6 +62,13 @@ const SYN_RULES = [
   { catalogCode: 'CREATININA_SERICA', when: { kind: 'rangeStatus', status: ['below','above'] }, clinicalFlag: 'acompanhar', templateKey: 'syn_creat', insightType: 'biomarker' },
 ]
 
+// ── Invariante de governança científica (portada de engine.ts) ────────────────
+function isRuleActivatable(rule) {
+  const p = rule.provenance
+  return !!p && p.status === 'active' && !!p.approvedBy && !!p.approvalDate
+}
+function activeRulesOnly(ruleset) { return ruleset.filter(isRuleActivatable) }
+
 let failures = 0
 function check(label, cond) {
   if (!cond) { failures++; console.log(`FAIL  ${label}`) } else { console.log(`OK    ${label}`) }
@@ -77,6 +84,20 @@ check('glicemia >=126 dispara (200)', cands.some(c => c.templateKey === 'syn_gli
 check('creatinina within NÃO dispara', !cands.some(c => c.templateKey === 'syn_creat'))
 check('biomarcador não resolvido é ignorado', !cands.some(c => c.biomarkerIds[0] === 'b4'))
 check('total de candidatos = 2', cands.length === 2)
+
+// 3) Governança: só vira 'active' com aprovação (CRM + data). Valores FICTÍCIOS.
+const semProv = { ...SYN_RULES[0] }
+const draft = { ...SYN_RULES[0], provenance: { ruleId: 'syn1', source: 'fonte-ficticia', version: '0', status: 'draft' } }
+const validated = { ...SYN_RULES[0], provenance: { ruleId: 'syn1', source: 'fonte-ficticia', version: '0', status: 'validated' } }
+const activeSemAprov = { ...SYN_RULES[0], provenance: { ruleId: 'syn1', source: 'fonte-ficticia', version: '0', status: 'active' } }
+const activeAprov = { ...SYN_RULES[0], provenance: { ruleId: 'syn1', source: 'fonte-ficticia', version: '0', status: 'active', approvedBy: 'CRM-000000', approvalDate: '2026-06-15', effectiveFrom: '2026-06-15' } }
+
+check('sem proveniência NÃO é ativável', !isRuleActivatable(semProv))
+check('draft NÃO é ativável', !isRuleActivatable(draft))
+check('validated NÃO é ativável', !isRuleActivatable(validated))
+check('active sem aprovação NÃO é ativável', !isRuleActivatable(activeSemAprov))
+check('active + CRM + data É ativável', isRuleActivatable(activeAprov))
+check('activeRulesOnly filtra só aprovadas', activeRulesOnly([semProv, draft, validated, activeSemAprov, activeAprov]).length === 1)
 
 console.log(`\n${failures === 0 ? 'TODOS OK' : failures + ' FALHA(S)'}`)
 if (failures > 0) process.exit(1)

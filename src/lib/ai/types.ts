@@ -54,6 +54,8 @@ export interface ExtractedBiomarker {
 export interface ExtractionResult {
   biomarkers: ExtractedBiomarker[]
   examType: string
+  /** Data de realização/coleta extraída do laudo (YYYY-MM-DD) ou null se ausente. */
+  examDate: string | null
   extractionNotes: string | null
   aiLogId: string
   model: string
@@ -85,6 +87,7 @@ export interface GatewayError {
 
 export interface RawAIResponse {
   exam_type?: unknown
+  exam_date?: unknown
   biomarkers?: unknown[]
   extraction_notes?: unknown
 }

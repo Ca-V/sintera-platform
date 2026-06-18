@@ -191,15 +191,20 @@ export async function POST(
     await supabase.from('biomarkers').insert(bmRows as unknown as never[])
   }
 
-  // 10. Atualizar exame com tipo e status final
+  // 10. Atualizar exame com tipo, data de realização (se extraída) e status final.
+  //     A data do laudo é FATO impresso — preenche exam_date automaticamente.
+  //     Só sobrescreve quando extraída (não apaga uma data informada manualmente).
+  const finalUpdate: Record<string, unknown> = { status: 'processed', type: result.examType }
+  if (result.examDate) finalUpdate.exam_date = result.examDate
   await supabase.from('exams')
-    .update({ status: 'processed', type: result.examType } as never)
+    .update(finalUpdate as never)
     .eq('id', examId)
 
   return NextResponse.json({
     success:        true,
     biomarkers:     result.biomarkers.length,
     examType:       result.examType,
+    examDate:       result.examDate,
     rangeExtracted: result.biomarkers.filter(b => b.rangeExtracted).length,
     aiLogId:        result.aiLogId,
     model:          result.model,

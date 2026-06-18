@@ -1,0 +1,84 @@
+code,display_name,specimen,canonical_unit,loinc_code_candidate,loinc_confidence,snomed_ct_candidate,needs_verification,notes
+APO_A1,Apolipoproteína A1,sangue,mg/dL,1869-7,alta,,sim,Apolipoprotein A-I [Mass/vol] Ser/Plas
+HDL,HDL colesterol,sangue,mg/dL,2085-9,alta,,sim,Cholesterol in HDL [Mass/vol] Ser/Plas
+TRIGLICERIDEOS,Triglicerídeos,sangue,mg/dL,2571-8,alta,,sim,Triglyceride [Mass/vol] Ser/Plas
+ATIVIDADE_PROTROMBINA,Atividade de protrombina,sangue,%,,baixa,,sim,Sem LOINC direto p/ atividade em %; conferir variante laboratorial
+RNI,RNI (INR),sangue,,6301-6,alta,,sim,INR in Platelet poor plasma by Coag assay
+TP_SEGUNDOS,Tempo de protrombina,sangue,segundos,5902-2,alta,,sim,Prothrombin time (PT)
+TTPA,TTPA,sangue,segundos,14979-9,alta,,sim,aPTT in Platelet poor plasma by Coag assay
+ALBUMINA,Albumina,sangue,g/dL,1751-7,alta,,sim,Albumin [Mass/vol] Ser/Plas
+GLOBULINAS,Globulinas,sangue,g/dL,10834-0,media,,sim,Globulin [Mass/vol] Ser
+PROTEINAS_TOTAIS,Proteínas totais,sangue,g/dL,2885-2,alta,,sim,Protein [Mass/vol] Ser/Plas
+RELACAO_AG,Relação A/G,sangue,,1759-0,alta,,sim,Albumin/Globulin [Mass ratio] Ser/Plas
+CALCIO_IONICO,Cálcio iônico,sangue,mmol/L,1995-0,alta,,sim,Calcium.ionized [Moles/vol] Ser/Plas
+CLORETOS,Cloretos,sangue,mEq/L,2075-0,alta,,sim,Chloride [Moles/vol] Ser/Plas
+CREATININA_SERICA,Creatinina,sangue,mg/dL,2160-0,alta,,sim,Creatinine [Mass/vol] Ser/Plas
+FOSFORO,Fósforo,sangue,mg/dL,2777-1,alta,,sim,Phosphate [Mass/vol] Ser/Plas
+MAGNESIO,Magnésio,sangue,mg/dL,19123-9,media,,sim,Magnesium [Mass/vol] Ser/Plas (variante massa)
+POTASSIO,Potássio,sangue,mEq/L,2823-3,alta,,sim,Potassium [Moles/vol] Ser/Plas
+RFG,Ritmo de filtração glomerular,sangue,mL/min/1.73m2,33914-3,media,,sim,eGFR MDRD; CKD-EPI=62238-1 — escolher fórmula
+SODIO,Sódio,sangue,mEq/L,2951-2,alta,,sim,Sodium [Moles/vol] Ser/Plas
+UREIA,Ureia,sangue,mg/dL,22664-7,media,,sim,Urea [Mass/vol] (NÃO confundir com BUN 3094-0)
+T4_LIVRE,T4 livre,sangue,ng/dL,3024-7,alta,,sim,Thyroxine free [Mass/vol] Ser/Plas
+TSH,TSH,sangue,mUI/L,3016-3,alta,,sim,Thyrotropin [Units/vol] Ser/Plas
+BASOFILOS_ABS,Basófilos,sangue,/mm3,704-7,alta,,sim,Basophils [#/vol] Bld automated
+BASOFILOS_PCT,Basófilos (%),sangue,%,706-2,alta,,sim,Basophils/100 leukocytes Bld
+EOSINOFILOS_ABS,Eosinófilos,sangue,/mm3,711-2,alta,,sim,Eosinophils [#/vol] Bld automated
+EOSINOFILOS_PCT,Eosinófilos (%),sangue,%,713-8,alta,,sim,Eosinophils/100 leukocytes Bld
+LEUCOCITOS_TOTAIS,Leucócitos totais,sangue,/mm3,6690-2,alta,,sim,Leukocytes [#/vol] Bld automated
+LINFOCITOS_ABS,Linfócitos,sangue,/mm3,731-0,alta,,sim,Lymphocytes [#/vol] Bld automated
+LINFOCITOS_PCT,Linfócitos (%),sangue,%,736-9,alta,,sim,Lymphocytes/100 leukocytes Bld
+MONOCITOS_ABS,Monócitos,sangue,/mm3,742-7,alta,,sim,Monocytes [#/vol] Bld automated
+MONOCITOS_PCT,Monócitos (%),sangue,%,5905-5,alta,,sim,Monocytes/100 leukocytes Bld
+NEUTROFILOS_BAST_ABS,Neutrófilos bastonetes,sangue,/mm3,26508-0,baixa,,sim,Band form neutrophils [#/vol] — conferir
+NEUTROFILOS_BAST_PCT,Neutrófilos bastonetes (%),sangue,%,764-1,media,,sim,Band form neutrophils/100 leukocytes
+NEUTROFILOS_SEG_ABS,Neutrófilos segmentados,sangue,/mm3,30451-9,media,,sim,Segmented neutrophils [#/vol] — conferir
+NEUTROFILOS_SEG_PCT,Neutrófilos segmentados (%),sangue,%,769-0,media,,sim,Segmented neutrophils/100 leukocytes
+PLAQUETAS,Plaquetas,sangue,/mm3,777-3,alta,,sim,Platelets [#/vol] Bld automated
+CHCM,CHCM,sangue,g/dL,786-4,alta,,sim,MCHC [Mass/vol] automated
+HCM,HCM,sangue,pg,785-6,alta,,sim,MCH [Entitic mass]
+HEMACIAS_SANGUE,Hemácias,sangue,/mm3,789-8,alta,,sim,Erythrocytes [#/vol] Bld automated
+HEMATOCRITO,Hematócrito,sangue,%,4544-3,alta,,sim,Hematocrit [Vol fraction] automated
+HEMOGLOBINA_SANGUE,Hemoglobina,sangue,g/dL,718-7,alta,,sim,Hemoglobin [Mass/vol] Bld
+RDW,RDW,sangue,%,788-0,alta,,sim,Erythrocyte distribution width [Ratio] automated
+VCM,VCM,sangue,fL,787-2,alta,,sim,MCV [Entitic vol] automated
+BHCG,Beta-HCG,sangue,mUI/mL,21198-7,media,,sim,Choriogonadotropin quant — conferir beta vs total
+ESTRADIOL,Estradiol,sangue,pg/mL,2243-4,alta,,sim,Estradiol (E2) [Mass/vol] Ser/Plas
+FSH,FSH,sangue,mUI/mL,15067-2,alta,,sim,Follitropin [Units/vol] Ser/Plas
+LH,LH,sangue,mUI/mL,10501-5,alta,,sim,Lutropin [Units/vol] Ser/Plas
+PTH,Paratormônio (PTH),sangue,pg/mL,2731-8,alta,,sim,Parathyrin.intact [Mass/vol] Ser/Plas
+PROGESTERONA,Progesterona,sangue,ng/mL,2839-9,alta,,sim,Progesterone [Mass/vol] Ser/Plas
+IGE_LATEX,IgE específico — látex (K82),sangue,kU/L,6082-2,baixa,,sim,Hevea brasiliensis (latex) IgE Ab — conferir
+PCR,Proteína C reativa,sangue,mg/dL,1988-5,alta,,sim,C reactive protein [Mass/vol] (hsCRP=30522-7)
+FERRITINA,Ferritina,sangue,ng/mL,2276-4,alta,,sim,Ferritin [Mass/vol] Ser/Plas
+FERRO_SERICO,Ferro sérico,sangue,ug/dL,2498-4,alta,,sim,Iron [Mass/vol] Ser/Plas
+GLICEMIA,Glicose (jejum),sangue,mg/dL,1558-6,alta,,sim,Fasting glucose [Mass/vol] Ser/Plas
+HBA1C,Hemoglobina glicada (HbA1c),sangue,%,4548-4,alta,43396009,sim,Hemoglobin A1c/total Hgb (% IFCC)
+INSULINA,Insulina,sangue,uUI/mL,27894-3,media,,sim,Insulin [Units/vol] Ser/Plas
+CALCIO_24H,Cálcio (urina 24h),urina_24h,mg/24h,6874-2,media,,sim,Calcium [Mass/time] 24h Urine
+CITRATO_24H,Citrato (urina 24h),urina_24h,mg/24h,30621-7,media,,sim,Citrate [Mass/time] 24h Urine — conferir
+POTASSIO_24H,Potássio (urina 24h),urina_24h,mEq/24h,2829-0,alta,,sim,Potassium [Moles/time] 24h Urine
+SODIO_24H,Sódio (urina 24h),urina_24h,mEq/24h,2956-1,alta,,sim,Sodium [Moles/time] 24h Urine
+EAS_ASPECTO,Aspecto da urina,urina,,5767-9,media,,sim,Appearance of Urine
+EAS_BILIRRUBINA,Bilirrubina (urina),urina,,5770-3,alta,,sim,Bilirubin [Presence] Urine test strip
+EAS_CILINDROS_HIALINOS,Cilindros hialinos,urina,por campo,5769-5,alta,,sim,Hyaline casts [#/area] Urine sediment
+EAS_CILINDROS_PATOLOGICOS,Cilindros patológicos,urina,,,baixa,,sim,Categoria ampla; mapear por tipo de cilindro
+EAS_COR,Cor da urina,urina,,5778-6,alta,,sim,Color of Urine
+EAS_CETONAS,Corpos cetônicos (urina),urina,,5797-6,alta,,sim,Ketones [Presence] Urine test strip
+EAS_CRISTAIS,Cristais (urina),urina,,5783-6,media,,sim,Crystals [#/area] Urine sediment — conferir
+EAS_DENSIDADE,Densidade urinária,urina,,5811-5,alta,,sim,Specific gravity Urine test strip
+EAS_EPITELIOS_ALTAS,Epitélios vias altas,urina,por campo,13362-9,baixa,,sim,Renal epithelial cells [#/area] — conferir
+EAS_EPITELIOS_BAIXAS,Epitélios vias baixas,urina,por campo,,baixa,,sim,Células epiteliais escamosas — mapear
+EAS_FLORA,Flora bacteriana (urina),urina,,25145-4,media,,sim,Bacteria [Presence] Urine sediment
+EAS_GLICOSE,Glicose (urina),urina,,5792-7,alta,,sim,Glucose [Mass/vol] Urine test strip
+EAS_HEMACIAS_CAMPO,Hemácias (sedimento),urina,por campo,13945-1,alta,,sim,Erythrocytes [#/area] Urine sediment
+EAS_HEMOGLOBINA,Hemoglobina (urina),urina,,5794-3,alta,,sim,Hemoglobin [Presence] Urine test strip
+EAS_LEUCO_ESTERASE,Leucócito esterase (urina),urina,,5799-2,alta,,sim,Leukocyte esterase [Presence] Urine test strip
+EAS_MUCO,Muco (urina),urina,,,baixa,,sim,Mucus [Presence] Urine sediment — conferir código
+EAS_NITRITO,Nitrito (urina),urina,,5802-4,alta,,sim,Nitrite [Presence] Urine test strip
+EAS_PH,pH urinário,urina,,5803-2,alta,,sim,pH of Urine test strip
+EAS_PIOCITOS,Piócitos (sedimento),urina,por campo,5821-4,media,,sim,Leukocytes [#/area] Urine sediment
+EAS_PROTEINA,Proteína (urina),urina,,5804-0,alta,,sim,Protein [Mass/vol] Urine test strip
+EAS_UROBILINOGENIO,Urobilinogênio (urina),urina,mg/dL,5818-0,alta,,sim,Urobilinogen [Mass/vol] Urine test strip
+VIT_B12,Vitamina B12,sangue,pg/mL,2132-9,alta,,sim,Cobalamin (Vit B12) [Mass/vol] Ser/Plas
+VIT_D_25OH,Vitamina D (25-OH),sangue,ng/mL,62292-8,media,,sim,25-OH D2+D3 total; alternativa 1989-3 (D3)

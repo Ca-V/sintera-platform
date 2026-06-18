@@ -1,0 +1,84 @@
+code,display_name,loinc_candidato,confianca,fonte_validacao,curador,data_aprovacao,status
+APO_A1,Apolipoproteína A1,1869-7,alta,,,,draft
+HDL,HDL colesterol,2085-9,alta,,,,draft
+TRIGLICERIDEOS,Triglicerídeos,2571-8,alta,,,,draft
+ATIVIDADE_PROTROMBINA,Atividade de protrombina,,baixa,,,,draft
+RNI,RNI (INR),6301-6,alta,,,,draft
+TP_SEGUNDOS,Tempo de protrombina,5902-2,alta,,,,draft
+TTPA,TTPA,14979-9,alta,,,,draft
+ALBUMINA,Albumina,1751-7,alta,,,,draft
+GLOBULINAS,Globulinas,10834-0,media,,,,draft
+PROTEINAS_TOTAIS,Proteínas totais,2885-2,alta,,,,draft
+RELACAO_AG,Relação A/G,1759-0,alta,,,,draft
+CALCIO_IONICO,Cálcio iônico,1995-0,alta,,,,draft
+CLORETOS,Cloretos,2075-0,alta,,,,draft
+CREATININA_SERICA,Creatinina,2160-0,alta,,,,draft
+FOSFORO,Fósforo,2777-1,alta,,,,draft
+MAGNESIO,Magnésio,19123-9,media,,,,draft
+POTASSIO,Potássio,2823-3,alta,,,,draft
+RFG,Ritmo de filtração glomerular,33914-3,media,,,,draft
+SODIO,Sódio,2951-2,alta,,,,draft
+UREIA,Ureia,22664-7,media,,,,draft
+T4_LIVRE,T4 livre,3024-7,alta,,,,draft
+TSH,TSH,3016-3,alta,,,,draft
+BASOFILOS_ABS,Basófilos,704-7,alta,,,,draft
+BASOFILOS_PCT,Basófilos (%),706-2,alta,,,,draft
+EOSINOFILOS_ABS,Eosinófilos,711-2,alta,,,,draft
+EOSINOFILOS_PCT,Eosinófilos (%),713-8,alta,,,,draft
+LEUCOCITOS_TOTAIS,Leucócitos totais,6690-2,alta,,,,draft
+LINFOCITOS_ABS,Linfócitos,731-0,alta,,,,draft
+LINFOCITOS_PCT,Linfócitos (%),736-9,alta,,,,draft
+MONOCITOS_ABS,Monócitos,742-7,alta,,,,draft
+MONOCITOS_PCT,Monócitos (%),5905-5,alta,,,,draft
+NEUTROFILOS_BAST_ABS,Neutrófilos bastonetes,26508-0,baixa,,,,draft
+NEUTROFILOS_BAST_PCT,Neutrófilos bastonetes (%),764-1,media,,,,draft
+NEUTROFILOS_SEG_ABS,Neutrófilos segmentados,30451-9,media,,,,draft
+NEUTROFILOS_SEG_PCT,Neutrófilos segmentados (%),769-0,media,,,,draft
+PLAQUETAS,Plaquetas,777-3,alta,,,,draft
+CHCM,CHCM,786-4,alta,,,,draft
+HCM,HCM,785-6,alta,,,,draft
+HEMACIAS_SANGUE,Hemácias,789-8,alta,,,,draft
+HEMATOCRITO,Hematócrito,4544-3,alta,,,,draft
+HEMOGLOBINA_SANGUE,Hemoglobina,718-7,alta,,,,draft
+RDW,RDW,788-0,alta,,,,draft
+VCM,VCM,787-2,alta,,,,draft
+BHCG,Beta-HCG,21198-7,media,,,,draft
+ESTRADIOL,Estradiol,2243-4,alta,,,,draft
+FSH,FSH,15067-2,alta,,,,draft
+LH,LH,10501-5,alta,,,,draft
+PTH,Paratormônio (PTH),2731-8,alta,,,,draft
+PROGESTERONA,Progesterona,2839-9,alta,,,,draft
+IGE_LATEX,IgE específico — látex (K82),6082-2,baixa,,,,draft
+PCR,Proteína C reativa,1988-5,alta,,,,draft
+FERRITINA,Ferritina,2276-4,alta,,,,draft
+FERRO_SERICO,Ferro sérico,2498-4,alta,,,,draft
+GLICEMIA,Glicose (jejum),1558-6,alta,,,,draft
+HBA1C,Hemoglobina glicada (HbA1c),4548-4,alta,,,,draft
+INSULINA,Insulina,27894-3,media,,,,draft
+CALCIO_24H,Cálcio (urina 24h),6874-2,media,,,,draft
+CITRATO_24H,Citrato (urina 24h),30621-7,media,,,,draft
+POTASSIO_24H,Potássio (urina 24h),2829-0,alta,,,,draft
+SODIO_24H,Sódio (urina 24h),2956-1,alta,,,,draft
+EAS_ASPECTO,Aspecto da urina,5767-9,media,,,,draft
+EAS_BILIRRUBINA,Bilirrubina (urina),5770-3,alta,,,,draft
+EAS_CILINDROS_HIALINOS,Cilindros hialinos,5769-5,alta,,,,draft
+EAS_CILINDROS_PATOLOGICOS,Cilindros patológicos,,baixa,,,,draft
+EAS_COR,Cor da urina,5778-6,alta,,,,draft
+EAS_CETONAS,Corpos cetônicos (urina),5797-6,alta,,,,draft
+EAS_CRISTAIS,Cristais (urina),5783-6,media,,,,draft
+EAS_DENSIDADE,Densidade urinária,5811-5,alta,,,,draft
+EAS_EPITELIOS_ALTAS,Epitélios vias altas,13362-9,baixa,,,,draft
+EAS_EPITELIOS_BAIXAS,Epitélios vias baixas,,baixa,,,,draft
+EAS_FLORA,Flora bacteriana (urina),25145-4,media,,,,draft
+EAS_GLICOSE,Glicose (urina),5792-7,alta,,,,draft
+EAS_HEMACIAS_CAMPO,Hemácias (sedimento),13945-1,alta,,,,draft
+EAS_HEMOGLOBINA,Hemoglobina (urina),5794-3,alta,,,,draft
+EAS_LEUCO_ESTERASE,Leucócito esterase (urina),5799-2,alta,,,,draft
+EAS_MUCO,Muco (urina),,baixa,,,,draft
+EAS_NITRITO,Nitrito (urina),5802-4,alta,,,,draft
+EAS_PH,pH urinário,5803-2,alta,,,,draft
+EAS_PIOCITOS,Piócitos (sedimento),5821-4,media,,,,draft
+EAS_PROTEINA,Proteína (urina),5804-0,alta,,,,draft
+EAS_UROBILINOGENIO,Urobilinogênio (urina),5818-0,alta,,,,draft
+VIT_B12,Vitamina B12,2132-9,alta,,,,draft
+VIT_D_25OH,Vitamina D (25-OH),62292-8,media,,,,draft
