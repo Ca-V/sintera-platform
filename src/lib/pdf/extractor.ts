@@ -91,7 +91,7 @@ export function filterRelevantPages(pageTexts: string[], threshold = 3): PageFil
   }
 }
 
-const MAX_PDF_BYTES  = 10 * 1024 * 1024 // 10 MB
+const MAX_PDF_BYTES  = 50 * 1024 * 1024 // 50 MB (alinhado ao limite de upload)
 const MIN_USEFUL_CHARS = 200
 
 // Retorna true para caracteres fora dos ranges válidos em documentos médicos em português.

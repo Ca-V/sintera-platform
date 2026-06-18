@@ -10,7 +10,7 @@ import { loadCatalogIndex, resolveBiomarker } from '@/lib/ai/insights/resolver'
 const ERROR_MESSAGES: Record<string, string> = {
   password_protected: 'O PDF está protegido por senha e não pode ser processado.',
   corrupted:          'O arquivo PDF está corrompido.',
-  too_large:          'O arquivo PDF excede o limite de 10 MB.',
+  too_large:          'O arquivo PDF excede o limite de 50 MB.',
 }
 
 export async function POST(
