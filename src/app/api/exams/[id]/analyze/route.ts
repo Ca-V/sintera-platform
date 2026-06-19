@@ -142,11 +142,11 @@ export async function POST(
     filter_fallback: filterResult.fallbackUsed,
   } as never).eq('id', result.aiLogId)
 
-  // 10. Salvar biomarcadores — DELETE + INSERT direto (sem RPC)
+  // 10. Salvar biomarcadores — substituição atômica via RPC replace_biomarkers
+  //     (DELETE + INSERT numa única transação plpgsql). Se a gravação falhar,
+  //     a transação é revertida e os biomarcadores anteriores ficam intactos —
+  //     uma reanálise malsucedida não deixa o exame sem dados.
   if (result.biomarkers.length > 0) {
-    // Remover biomarcadores anteriores deste exame
-    await supabase.from('biomarkers').delete().eq('exam_id', examId)
-
     // Resolver (best-effort): preenche catalog_id ligando o biomarcador ao
     // catálogo canônico. SEM juízo clínico — só normalização + casamento.
     // Falha aqui não pode quebrar a extração: cai para catalog_id nulo.
@@ -158,8 +158,6 @@ export async function POST(
     }
 
     const bmRows = result.biomarkers.map(b => ({
-      exam_id:          examId,
-      user_id:          userId,
       name:             b.name,
       value:            b.value,
       value_text:       b.valueText,
@@ -182,13 +180,31 @@ export async function POST(
       range_extracted:  b.rangeExtracted,
       reference_source: b.referenceSource,
       ai_log_id:        result.aiLogId,
-      synthetic:        false,
       catalog_id:       catalogIndex
         ? resolveBiomarker(catalogIndex, { name: b.name, unit: b.unit }).catalog?.id ?? null
         : null,
     }))
 
-    await supabase.from('biomarkers').insert(bmRows as unknown as never[])
+    // O nome da RPC não consta nos tipos gerados do Supabase — cast pontual.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: replaceErr } = await (supabase.rpc as any)('replace_biomarkers', {
+      p_exam_id:    examId,
+      p_user_id:    userId,
+      p_biomarkers: bmRows,
+    })
+
+    if (replaceErr) {
+      // Transação revertida: os biomarcadores anteriores seguem intactos.
+      // Não marca 'processed' — preserva o estado anterior quando já era válido.
+      const statusOnFailure = previousStatus === 'processed' ? 'processed' : 'error'
+      await supabase.from('exams')
+        .update({ status: statusOnFailure, error_reason: 'biomarker_persist_failed' } as never)
+        .eq('id', examId)
+      return NextResponse.json(
+        { error: 'Falha ao salvar os biomarcadores extraídos.', code: 'BIOMARKER_PERSIST_FAILED' },
+        { status: 500 },
+      )
+    }
   }
 
   // 10. Atualizar exame: status + data de realização + nome do paciente.
