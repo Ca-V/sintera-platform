@@ -16,10 +16,12 @@ import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 
 type Status = 'em_uso' | 'suspenso'
+type Kind = 'medicamento' | 'suplemento'
 
 interface Med {
   id: string
   name: string
+  kind: Kind
   dose: string | null
   frequency: string | null
   startedOn: string | null
@@ -43,6 +45,7 @@ export default function MedicamentosPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [name, setName] = useState('')
+  const [kind, setKind] = useState<Kind>('medicamento')
   const [dose, setDose] = useState('')
   const [freq, setFreq] = useState('')
   const [startedOn, setStartedOn] = useState('')
@@ -55,12 +58,13 @@ export default function MedicamentosPage() {
     setLoading(true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = await (supabase as any).from('medications')
-      .select('id, name, dose, frequency, started_on, status, notes')
+      .select('id, name, kind, dose, frequency, started_on, status, notes')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
     setMeds(((data ?? []) as Array<Record<string, unknown>>).map(m => ({
       id: m.id as string,
       name: (m.name as string) ?? '',
+      kind: ((m.kind as string) === 'suplemento' ? 'suplemento' : 'medicamento') as Kind,
       dose: (m.dose as string) ?? null,
       frequency: (m.frequency as string) ?? null,
       startedOn: (m.started_on as string) ?? null,
@@ -73,10 +77,10 @@ export default function MedicamentosPage() {
   useEffect(() => { if (!authLoading) load() }, [authLoading, load])
 
   function reset() {
-    setEditingId(null); setName(''); setDose(''); setFreq(''); setStartedOn(''); setNotes(''); setErr(null)
+    setEditingId(null); setName(''); setKind('medicamento'); setDose(''); setFreq(''); setStartedOn(''); setNotes(''); setErr(null)
   }
   function openEdit(m: Med) {
-    setEditingId(m.id); setName(m.name); setDose(m.dose ?? ''); setFreq(m.frequency ?? '')
+    setEditingId(m.id); setName(m.name); setKind(m.kind); setDose(m.dose ?? ''); setFreq(m.frequency ?? '')
     setStartedOn(m.startedOn ?? ''); setNotes(m.notes ?? ''); setErr(null); setShowForm(true)
   }
 
@@ -84,7 +88,7 @@ export default function MedicamentosPage() {
     if (!user || saving || !name.trim()) return
     setSaving(true); setErr(null)
     const payload = {
-      name: name.trim(), dose: dose.trim() || null, frequency: freq.trim() || null,
+      name: name.trim(), kind, dose: dose.trim() || null, frequency: freq.trim() || null,
       started_on: startedOn || null, notes: notes.trim() || null,
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -113,8 +117,32 @@ export default function MedicamentosPage() {
     await load(); setBusyId(null)
   }
 
-  const emUso = meds.filter(m => m.status === 'em_uso')
-  const suspensos = meds.filter(m => m.status === 'suspenso')
+  const KIND_LABEL: Record<Kind, string> = { medicamento: 'Medicamentos', suplemento: 'Suplementos' }
+
+  function kindSection(k: Kind) {
+    const list = meds.filter(m => m.kind === k)
+    if (list.length === 0) return null
+    const emUso = list.filter(m => m.status === 'em_uso')
+    const suspensos = list.filter(m => m.status === 'suspenso')
+    return (
+      <div key={k}>
+        <p className="font-display text-base font-semibold text-onyx mb-2">{KIND_LABEL[k]}</p>
+        <div className="space-y-4">
+          <div>
+            <p className="font-body text-[11px] font-semibold text-mauve/70 uppercase tracking-wider mb-2">Em uso ({emUso.length})</p>
+            {emUso.length > 0 ? <div className="space-y-3">{emUso.map(card)}</div>
+              : <p className="font-body text-sm text-mauve/60">Nenhum em uso.</p>}
+          </div>
+          {suspensos.length > 0 && (
+            <div>
+              <p className="font-body text-[11px] font-semibold text-mauve/50 uppercase tracking-wider mb-2">Suspensos ({suspensos.length})</p>
+              <div className="space-y-3 opacity-75">{suspensos.map(card)}</div>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
 
   function card(m: Med) {
     return (
@@ -162,9 +190,9 @@ export default function MedicamentosPage() {
         <div>
           <div className="inline-flex items-center gap-1.5 text-petal mb-2">
             <Pill size={16} />
-            <span className="font-body text-xs font-medium uppercase tracking-wider">Medicamentos</span>
+            <span className="font-body text-xs font-medium uppercase tracking-wider">Medicamentos e suplementos</span>
           </div>
-          <h1 className="font-display text-2xl font-semibold text-onyx">Meus medicamentos</h1>
+          <h1 className="font-display text-2xl font-semibold text-onyx">Medicamentos e suplementos</h1>
           <p className="font-body text-sm text-mauve mt-1">Registre o que você usa. A SINTERA organiza — quem prescreve é o seu médico.</p>
         </div>
         <button onClick={() => (showForm ? (reset(), setShowForm(false)) : (reset(), setShowForm(true)))}
@@ -177,8 +205,16 @@ export default function MedicamentosPage() {
       {showForm && (
         <div className="card-premium p-5 space-y-3">
           <div>
-            <label className="font-body text-xs text-mauve/70 block mb-1">Nome do medicamento</label>
-            <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Ex.: Losartana"
+            <label className="font-body text-xs text-mauve/70 block mb-1">Tipo</label>
+            <select value={kind} onChange={e => setKind(e.target.value as Kind)}
+              className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
+              <option value="medicamento">Medicamento</option>
+              <option value="suplemento">Suplemento</option>
+            </select>
+          </div>
+          <div>
+            <label className="font-body text-xs text-mauve/70 block mb-1">Nome do {kind === 'suplemento' ? 'suplemento' : 'medicamento'}</label>
+            <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder={kind === 'suplemento' ? 'Ex.: Vitamina D' : 'Ex.: Losartana'}
               className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -217,26 +253,17 @@ export default function MedicamentosPage() {
         <div className="card-premium p-10 text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></div>
       ) : meds.length === 0 ? (
         <div className="card-premium p-8 text-center">
-          <p className="font-body text-sm text-mauve">Nenhum medicamento registrado ainda. Use o botão <strong>Adicionar</strong>.</p>
+          <p className="font-body text-sm text-mauve">Nenhum medicamento ou suplemento registrado ainda. Use o botão <strong>Adicionar</strong>.</p>
         </div>
       ) : (
-        <div className="space-y-6">
-          <div>
-            <p className="font-body text-xs font-semibold text-onyx uppercase tracking-wider mb-2">Em uso ({emUso.length})</p>
-            {emUso.length > 0 ? <div className="space-y-3">{emUso.map(card)}</div>
-              : <p className="font-body text-sm text-mauve/60">Nenhum medicamento em uso.</p>}
-          </div>
-          {suspensos.length > 0 && (
-            <div>
-              <p className="font-body text-xs font-semibold text-mauve/70 uppercase tracking-wider mb-2">Suspensos ({suspensos.length})</p>
-              <div className="space-y-3 opacity-75">{suspensos.map(card)}</div>
-            </div>
-          )}
+        <div className="space-y-8">
+          {kindSection('medicamento')}
+          {kindSection('suplemento')}
         </div>
       )}
 
       <p className="font-body text-[11px] text-mauve/50 text-center leading-relaxed">
-        Organização da sua lista de medicamentos. Não é prescrição nem orientação de dose — siga sempre a orientação do seu médico.
+        Organização da sua lista de medicamentos e suplementos. Não é prescrição nem orientação de dose — siga sempre a orientação do seu médico.
       </p>
     </div>
   )
