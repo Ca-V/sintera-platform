@@ -349,17 +349,17 @@ export default function MedicamentosPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
-      <Link href="/dashboard/timeline" className="inline-flex items-center gap-1.5 font-body text-sm text-mauve hover:text-petal transition-colors">
-        <ArrowLeft size={15} /> Histórico de Saúde
+      <Link href="/dashboard" className="inline-flex items-center gap-1.5 font-body text-sm text-mauve hover:text-petal transition-colors">
+        <ArrowLeft size={15} /> Painel Inicial
       </Link>
 
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-1.5 text-petal mb-2">
             <Pill size={16} />
-            <span className="font-body text-xs font-medium uppercase tracking-wider">Medicamentos e suplementos</span>
+            <span className="font-body text-xs font-medium uppercase tracking-wider">Medicamentos e Suplementos</span>
           </div>
-          <h1 className="font-display text-2xl font-semibold text-onyx">Medicamentos e suplementos</h1>
+          <h1 className="font-display text-2xl font-semibold text-onyx">Medicamentos e Suplementos</h1>
           <p className="font-body text-sm text-mauve mt-1">Registre o que você usa. A SINTERA organiza — quem prescreve é o seu médico.</p>
         </div>
         <div className="flex flex-col items-end gap-2 flex-shrink-0">

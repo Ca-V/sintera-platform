@@ -76,18 +76,18 @@ export default function GastosPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
-      <Link href="/dashboard/timeline" className="inline-flex items-center gap-1.5 font-body text-sm text-mauve hover:text-petal transition-colors">
-        <ArrowLeft size={15} /> Histórico de Saúde
+      <Link href="/dashboard" className="inline-flex items-center gap-1.5 font-body text-sm text-mauve hover:text-petal transition-colors">
+        <ArrowLeft size={15} /> Painel Inicial
       </Link>
 
       <div>
         <div className="inline-flex items-center gap-1.5 text-petal mb-2">
           <Receipt size={16} />
-          <span className="font-body text-xs font-medium uppercase tracking-wider">Gastos com saúde</span>
+          <span className="font-body text-xs font-medium uppercase tracking-wider">Gastos com Saúde</span>
         </div>
-        <h1 className="font-display text-2xl font-semibold text-onyx">Seus gastos com saúde</h1>
+        <h1 className="font-display text-2xl font-semibold text-onyx">Gastos com Saúde</h1>
         <p className="font-body text-sm text-mauve mt-1 leading-relaxed">
-          Soma dos valores que você registrou na sua jornada, com os comprovantes para baixar.
+          Soma dos valores que você registrou no seu Histórico de Saúde, com os comprovantes para baixar.
         </p>
       </div>
 

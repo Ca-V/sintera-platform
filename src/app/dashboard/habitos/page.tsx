@@ -128,7 +128,7 @@ export default function HabitosPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
       <Link href="/dashboard" className="inline-flex items-center gap-1.5 font-body text-sm text-mauve hover:text-petal transition-colors">
-        <ArrowLeft size={15} /> Painel
+        <ArrowLeft size={15} /> Painel Inicial
       </Link>
 
       <div className="flex items-start justify-between gap-4">

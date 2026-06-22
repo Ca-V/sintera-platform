@@ -140,8 +140,8 @@ export default function RelatorioPage() {
     <div className="max-w-2xl mx-auto px-4 py-8">
       {/* Barra de ações — escondida na impressão */}
       <div className="flex items-center justify-between mb-6 print:hidden">
-        <Link href="/dashboard/timeline" className="inline-flex items-center gap-1.5 font-body text-sm text-mauve hover:text-petal">
-          <ArrowLeft size={15} /> Histórico de Saúde
+        <Link href="/dashboard" className="inline-flex items-center gap-1.5 font-body text-sm text-mauve hover:text-petal">
+          <ArrowLeft size={15} /> Painel Inicial
         </Link>
         <button onClick={() => window.print()}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity">
@@ -199,7 +199,7 @@ export default function RelatorioPage() {
         {/* Cabeçalho */}
         <div className="border-b border-border pb-4">
           <div className="inline-flex items-center gap-1.5 text-petal mb-1 print:hidden">
-            <FileText size={16} /><span className="font-body text-xs font-medium uppercase tracking-wider">Relatório de saúde</span>
+            <FileText size={16} /><span className="font-body text-xs font-medium uppercase tracking-wider">Relatórios</span>
           </div>
           <h1 className="font-display text-xl font-semibold text-onyx">Relatório de saúde — {nome}</h1>
           <p className="font-body text-xs text-mauve mt-1">Gerado em {hoje} · organização dos dados registrados pela própria pessoa.</p>

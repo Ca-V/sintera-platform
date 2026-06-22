@@ -223,7 +223,7 @@ export default function TimelinePage() {
 
   async function remove(rawId: string, label: string) {
     if (busyId) return
-    if (!window.confirm(`Excluir "${label}" da sua jornada?`)) return
+    if (!window.confirm(`Excluir "${label}" do seu Histórico de Saúde?`)) return
     setBusyId(rawId)
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -304,17 +304,17 @@ export default function TimelinePage() {
           <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Histórico de Saúde</h1>
           <p className="font-body text-sm text-mauve">Seu acompanhamento longitudinal — a linha do tempo com exames, consultas, vacinas, procedimentos e medicamentos</p>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5">
-            <Link href="/dashboard/gastos" className="inline-flex items-center gap-1 font-body text-xs text-petal hover:underline">
-              <Receipt size={13} /> Gastos com saúde
-            </Link>
             <Link href="/dashboard/medicamentos" className="inline-flex items-center gap-1 font-body text-xs text-petal hover:underline">
-              <Pill size={13} /> Medicamentos
+              <Pill size={13} /> Medicamentos e Suplementos
             </Link>
             <Link href="/dashboard/medidas" className="inline-flex items-center gap-1 font-body text-xs text-petal hover:underline">
               <Activity size={13} /> Medidas
             </Link>
+            <Link href="/dashboard/gastos" className="inline-flex items-center gap-1 font-body text-xs text-petal hover:underline">
+              <Receipt size={13} /> Gastos com Saúde
+            </Link>
             <Link href="/dashboard/relatorio" className="inline-flex items-center gap-1 font-body text-xs text-petal hover:underline">
-              <FileText size={13} /> Relatório
+              <FileText size={13} /> Relatórios
             </Link>
           </div>
         </div>
@@ -338,7 +338,7 @@ export default function TimelinePage() {
           <Info size={16} className="text-petal flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="font-body text-xs text-onyx leading-relaxed">
-              Esta é a sua <strong>jornada de saúde</strong>: exames entram automaticamente, e você
+              Este é o seu <strong>Histórico de Saúde</strong>: exames entram automaticamente, e você
               pode registrar consultas, vacinas e procedimentos. Eventos futuros aparecem em
               <strong> Próximos</strong> e podem virar lembrete no seu calendário (🔔).
             </p>
@@ -437,7 +437,7 @@ export default function TimelinePage() {
           <div className="w-14 h-14 rounded-2xl gradient-sintera-soft flex items-center justify-center mx-auto mb-4">
             <Clock size={26} className="text-petal" />
           </div>
-          <h2 className="font-display text-lg font-semibold text-onyx mb-1">Sua jornada começa aqui</h2>
+          <h2 className="font-display text-lg font-semibold text-onyx mb-1">Seu Histórico de Saúde começa aqui</h2>
           <p className="font-body text-sm text-mauve max-w-sm mx-auto">
             Envie um exame ou adicione uma consulta, vacina ou procedimento para começar a
             construir sua linha do tempo de saúde.
@@ -469,7 +469,7 @@ export default function TimelinePage() {
       )}
 
       <p className="font-body text-[11px] text-mauve/40 text-center">
-        Organização factual da sua jornada. Não constitui diagnóstico nem avaliação clínica.
+        Organização factual do seu Histórico de Saúde. Não constitui diagnóstico nem avaliação clínica.
       </p>
 
       {/* Lembrete no calendário para evento futuro */}

@@ -227,7 +227,7 @@ export default function ExamDetailPage() {
     if (!exam || deleting) return
     const ok = window.confirm(
       `Excluir "${exam.type ?? 'Exame'}"?\n\nIsto remove o exame, seus biomarcadores e insights, e o arquivo enviado. ` +
-      `O histórico e a jornada serão recalculados sem este exame. Esta ação não pode ser desfeita.`,
+      `O seu Histórico de Saúde será recalculado sem este exame. Esta ação não pode ser desfeita.`,
     )
     if (!ok) return
     setDeleting(true)
@@ -404,10 +404,10 @@ export default function ExamDetailPage() {
         Impresso em {new Date().toLocaleDateString('pt-BR')}.
       </div>
 
-      {/* Voltar */}
+      {/* Voltar para Exames e Documentos */}
       <button onClick={() => router.push('/dashboard/exams')}
         className="flex items-center gap-2 text-mauve hover:text-petal transition-colors text-sm font-body print:hidden">
-        <ArrowLeft size={16} /> Voltar
+        <ArrowLeft size={16} /> Exames e Documentos
       </button>
 
       {/* Conferência de identidade — nome do paciente vs perfil */}
@@ -805,7 +805,7 @@ export default function ExamDetailPage() {
             {deleting ? 'Excluindo…' : 'Excluir exame'}
           </button>
           <p className="font-body text-[11px] text-mauve/50 mt-1">
-            Remove o exame, seus biomarcadores e insights. O histórico e a jornada são recalculados.
+            Remove o exame, seus biomarcadores e insights. O seu Histórico de Saúde é recalculado.
           </p>
         </div>
       )}

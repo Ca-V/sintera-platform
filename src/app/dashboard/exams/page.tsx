@@ -210,7 +210,7 @@ export default function ExamsPage() {
     if (deletingId) return
     const ok = window.confirm(
       `Excluir "${exam.type ?? 'Exame'}"?\n\nIsto remove o exame, seus biomarcadores e insights, e o arquivo enviado. ` +
-      `O histórico e a jornada serão recalculados sem este exame. Esta ação não pode ser desfeita.`,
+      `O seu Histórico de Saúde será recalculado sem este exame. Esta ação não pode ser desfeita.`,
     )
     if (!ok) return
     setDeletingId(exam.id)

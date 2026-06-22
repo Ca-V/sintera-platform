@@ -211,7 +211,7 @@ export default function MinhaSaudePage() {
             <Activity size={22} className="text-petal" />
           </div>
           <div>
-            <h1 className="font-display text-xl font-semibold text-onyx">Indicadores de saúde</h1>
+            <h1 className="font-display text-xl font-semibold text-onyx">Indicadores de Saúde</h1>
             <p className="font-body text-sm text-mauve mt-0.5">
               Os valores dos seus exames — organização dos dados do laudo, sem diagnóstico
             </p>
@@ -294,7 +294,7 @@ export default function MinhaSaudePage() {
               <div className="px-5 py-3.5 border-b border-border/40 flex items-center justify-between">
                 <p className="font-body text-sm font-semibold text-onyx">Evolução ao longo do tempo</p>
                 <button onClick={() => router.push('/dashboard/historico')}
-                  className="font-body text-xs text-petal hover:underline">Ver histórico completo →</button>
+                  className="font-body text-xs text-petal hover:underline">Ver evolução completa →</button>
               </div>
               <div className="divide-y divide-border/20">
                 {highlights.slice(0, 6).map((h, i) => (
@@ -329,7 +329,7 @@ export default function MinhaSaudePage() {
                 <TrendingUp size={18} className="text-sage" />
               </div>
               <div className="flex-1">
-                <p className="font-body text-sm font-semibold text-onyx">Histórico de biomarcadores</p>
+                <p className="font-body text-sm font-semibold text-onyx">Evolução dos indicadores</p>
                 <p className="font-body text-xs text-mauve mt-0.5">A comparação ao longo do tempo aparece quando há 2+ exames</p>
               </div>
               <ArrowRight size={15} className="text-mauve/40 group-hover:text-sage transition-colors flex-shrink-0" />
