@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, FileText, Activity, Clock, Pill, Receipt, CalendarDays,
-  HeartPulse, Stethoscope, ScrollText,
+  HeartPulse, Stethoscope, ScrollText, Droplet,
   X, ChevronRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -29,6 +29,7 @@ const navGroups: {
       { href: '/dashboard/exams',        icon: FileText,  label: 'Exames e Documentos' },
       { href: '/dashboard/medicamentos', icon: Pill,      label: 'Medicamentos e Suplementos' },
       { href: '/dashboard/saude',        icon: Activity,  label: 'Indicadores de Saúde', extra: ['/dashboard/medidas', '/dashboard/sinais-vitais'] },
+      { href: '/dashboard/ciclo',        icon: Droplet,   label: 'Ciclo e Contracepção' },
       { href: '/dashboard/timeline',     icon: Clock,     label: 'Histórico de Saúde', extra: ['/dashboard/historico'] },
     ],
   },
