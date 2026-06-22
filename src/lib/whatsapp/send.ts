@@ -5,7 +5,7 @@
 // Configuração via variáveis de ambiente (não há credencial no código):
 //   WHATSAPP_CLOUD_TOKEN      — token de acesso (System User / permanente)
 //   WHATSAPP_PHONE_NUMBER_ID  — ID do número remetente no WhatsApp Business
-//   WHATSAPP_TEMPLATE_NAME    — nome do template aprovado (padrão 'lembrete_sintera')
+//   WHATSAPP_TEMPLATE_NAME    — nome do template aprovado (padrão 'sintera_lembrete')
 //   WHATSAPP_TEMPLATE_LANG    — idioma do template (padrão 'pt_BR')
 //
 // Sem as credenciais, retorna 'skipped' (não quebra o worker de lembretes).
@@ -59,7 +59,7 @@ export async function sendWhatsAppReminder(
   const to = normalizePhoneBR(phone)
   if (!to) return { status: 'skipped', detail: 'invalid_phone' }
 
-  const templateName = process.env.WHATSAPP_TEMPLATE_NAME ?? 'lembrete_sintera'
+  const templateName = process.env.WHATSAPP_TEMPLATE_NAME ?? 'sintera_lembrete'
   const lang = process.env.WHATSAPP_TEMPLATE_LANG ?? 'pt_BR'
 
   // Idioma configurado primeiro; se o template não existir nesse idioma
