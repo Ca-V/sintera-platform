@@ -90,7 +90,8 @@ export default function MedicamentosPage() {
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [scanning, setScanning] = useState(false)
-  const [scanResults, setScanResults] = useState<{ name: string; dose: string | null; frequency: string | null; startedOn?: string | null }[]>([])
+  type ScanItem = { name: string; dose: string | null; frequency: string | null; startedOn?: string | null; packQty?: number | null; dailyCons?: number | null; purchasedOn?: string | null }
+  const [scanResults, setScanResults] = useState<ScanItem[]>([])
 
   async function handleScan(file: File) {
     setErr(null); setScanning(true); setScanResults([])
@@ -124,17 +125,35 @@ export default function MedicamentosPage() {
       const j = await resp.json()
       if (!resp.ok) { setErr(j.error ?? 'Falha ao interpretar.'); return }
       // Sem itens estruturados → usa a própria fala como nome (a usuária ajusta).
-      setScanResults(j.items?.length ? j.items : [{ name: text.trim(), dose: null, frequency: null, startedOn: null }])
+      setScanResults(j.items?.length ? j.items : [{ name: text.trim(), dose: null, frequency: null, startedOn: null, packQty: null, dailyCons: null, purchasedOn: null }])
       setShowForm(false)
     } finally { setScanning(false) }
   }
 
-  function useScanned(it: { name: string; dose: string | null; frequency: string | null; startedOn?: string | null }) {
+  function useScanned(it: ScanItem) {
     setEditingId(null); setKind('medicamento'); setName(it.name); setDose(it.dose ?? ''); setFreq(it.frequency ?? '')
     setStartedOn(it.startedOn ?? ''); setUntilOn(''); setNotes('')
-    setPackQty(''); setDailyCons(''); setPurchasedOn(''); setPurchaseStatus(''); setRepurchase(false); setErr(null)
+    setPackQty(it.packQty != null ? String(it.packQty) : ''); setDailyCons(it.dailyCons != null ? String(it.dailyCons) : '')
+    setPurchasedOn(it.purchasedOn ?? ''); setPurchaseStatus(it.purchasedOn ? 'comprado' : ''); setRepurchase(false); setErr(null)
     setScanResults(prev => prev.filter(x => x !== it))
     setShowForm(true)
+  }
+
+  // Voz para preencher os campos de compra/recompra do formulário aberto.
+  async function handleVoicePurchase(text: string) {
+    if (!text.trim()) return
+    try {
+      const resp = await fetch('/api/medications/scan', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }),
+      })
+      const j = await resp.json()
+      const it = j.items?.[0] as ScanItem | undefined
+      if (it) {
+        if (it.packQty != null) setPackQty(String(it.packQty))
+        if (it.dailyCons != null) setDailyCons(String(it.dailyCons))
+        if (it.purchasedOn) { setPurchasedOn(it.purchasedOn); setPurchaseStatus('comprado') }
+      }
+    } catch { /* silencioso */ }
   }
 
   const load = useCallback(async () => {
@@ -354,7 +373,7 @@ export default function MedicamentosPage() {
             <input type="file" accept="image/*" capture="environment" className="sr-only" disabled={scanning}
               onChange={e => { const f = e.target.files?.[0]; if (f) handleScan(f); e.target.value = '' }} />
             {scanning ? <Loader2 size={15} className="animate-spin" /> : <Camera size={15} />}
-            {scanning ? 'Lendo…' : 'Escanear foto'}
+            {scanning ? 'Lendo…' : 'Escanear documento'}
           </label>
           <VoiceInput onResult={handleVoiceAdd} label="Falar" title="Adicionar por voz"
             className="flex items-center gap-2 px-4 py-2 rounded-full border border-petal/40 text-petal font-body text-sm font-medium hover:bg-blush transition-colors" />
@@ -365,10 +384,10 @@ export default function MedicamentosPage() {
       {scanResults.length > 0 && (
         <div className="card-premium p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <p className="font-body text-sm font-semibold text-onyx">Detectado na foto — confira e adicione</p>
+            <p className="font-body text-sm font-semibold text-onyx">Detectado — confira e adicione</p>
             <button onClick={() => setScanResults([])} className="text-mauve/50 hover:text-onyx"><X size={15} /></button>
           </div>
-          <p className="font-body text-[11px] text-mauve/60">Transcrição automática da imagem. Revise antes de salvar — a plataforma só organiza, não prescreve.</p>
+          <p className="font-body text-[11px] text-mauve/60">Transcrição automática (foto ou voz). Revise antes de salvar — a plataforma só organiza, não prescreve.</p>
           {scanResults.map((it, i) => (
             <div key={i} className="flex items-center justify-between gap-3 rounded-xl border border-border bg-ivory px-3 py-2">
               <div className="min-w-0">
@@ -436,7 +455,10 @@ export default function MedicamentosPage() {
 
           {/* Compra e recompra (opcional) */}
           <div className="rounded-xl border border-border bg-ivory/40 p-3 space-y-3">
-            <p className="font-body text-xs font-semibold text-onyx">Compra e recompra (opcional)</p>
+            <div className="flex items-center justify-between gap-2">
+              <p className="font-body text-xs font-semibold text-onyx">Compra e recompra (opcional)</p>
+              <VoiceInput onResult={handleVoicePurchase} label="Falar" title="Preencher compra por voz" />
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="font-body text-[11px] text-mauve/70 block mb-1">Qtd. na embalagem</label>
