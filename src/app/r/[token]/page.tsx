@@ -75,18 +75,24 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
   const uid = share.user_id as string
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = admin as any
-  const [{ data: prof }, { data: meds }, { data: events }, { data: exams }, { data: measures }, { data: conditions }, { data: habits }, { data: authUser }] = await Promise.all([
-    db.from('profiles').select('name').eq('id', uid).maybeSingle(),
+  const [{ data: prof }, { data: meds }, { data: events }, { data: exams }, { data: measures }, { data: conditions }, { data: habits }, { data: eyewear }, { data: authUser }] = await Promise.all([
+    db.from('profiles').select('name, height_cm').eq('id', uid).maybeSingle(),
     db.from('medications').select('name, kind, dose, frequency, started_on, until_date, status').eq('user_id', uid).order('status'),
     db.from('health_events').select('title, event_type, event_date, notes, professional_kind').eq('user_id', uid).eq('synthetic', false).order('event_date', { ascending: false }),
     db.from('exams').select('type, exam_date, created_at').eq('user_id', uid).order('created_at', { ascending: false }),
     db.from('body_metrics').select('metric, label, value_text, unit, measured_on').eq('user_id', uid).order('measured_on', { ascending: false }),
     db.from('health_conditions').select('scope, name, relative, since_label, notes').eq('user_id', uid).order('created_at', { ascending: false }),
     db.from('life_habits').select('category, description, frequency, notes').eq('user_id', uid).order('created_at', { ascending: false }),
+    db.from('eyeglass_prescriptions').select('kind, prescribed_on, prescriber, od_sph, od_cyl, od_axis, od_add, oe_sph, oe_cyl, oe_axis, oe_add, dnp, bc, dia').eq('user_id', uid).order('prescribed_on', { ascending: false, nullsFirst: false }),
     admin.auth.admin.getUserById(uid),
   ])
 
   const nome = (prof?.name as string) || authUser?.user?.email || '—'
+  const alturaCm = (prof?.height_cm as number | null | undefined) ?? null
+  const ewArr = (eyewear ?? []) as Array<Record<string, unknown>>
+  const grauStr = (sph: unknown, cyl: unknown, axis: unknown, add: unknown) =>
+    [sph ? `Esf ${sph}` : null, cyl ? `Cil ${cyl}` : null, axis ? `Eixo ${axis}` : null, add ? `Adição ${add}` : null].filter(Boolean).join(', ')
+  const EYEWEAR_LABEL: Record<string, string> = { oculos: 'Óculos', lentes_contato: 'Lentes de contato' }
   const medsArr = (meds ?? []) as Array<Record<string, unknown>>
   const medsEmUso = medsArr.filter(m => m.status === 'em_uso')
   const medsSusp = medsArr.filter(m => m.status === 'suspenso')
@@ -160,6 +166,29 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
       </section>
       )}
 
+      {show('visao') && (
+      <section style={{ marginBottom: 22 }}>
+        <h2 style={{ fontSize: 15 }}>Óculos e lentes de contato</h2>
+        {ewArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum registro.</p> : (
+          <ul style={{ paddingLeft: 18, fontSize: 14 }}>
+            {ewArr.map((e, i) => {
+              const extras = [e.dnp ? `DNP ${e.dnp}` : null, e.bc ? `BC ${e.bc}` : null, e.dia ? `DIA ${e.dia}` : null,
+                e.prescribed_on ? fmt(e.prescribed_on as string) : null, e.prescriber].filter(Boolean)
+              const od = grauStr(e.od_sph, e.od_cyl, e.od_axis, e.od_add)
+              const oe = grauStr(e.oe_sph, e.oe_cyl, e.oe_axis, e.oe_add)
+              return (
+                <li key={i}><strong>{EYEWEAR_LABEL[e.kind as string] ?? 'Óculos'}</strong>
+                  {od ? <span style={{ display: 'block', fontSize: 12, color: '#8a7b92' }}>OD: {od}</span> : null}
+                  {oe ? <span style={{ display: 'block', fontSize: 12, color: '#8a7b92' }}>OE: {oe}</span> : null}
+                  {extras.length ? <span style={{ display: 'block', fontSize: 12, color: '#8a7b92' }}>{extras.join(' · ')}</span> : null}
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </section>
+      )}
+
       {show('eventos') && (
       <section style={{ marginBottom: 22 }}>
         <h2 style={{ fontSize: 15 }}>Consultas, procedimentos e eventos</h2>
@@ -195,7 +224,8 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
       {show('medidas') && (
       <section style={{ marginBottom: 22 }}>
         <h2 style={{ fontSize: 15 }}>Medidas corporais</h2>
-        {mzArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhuma registrada.</p> : (
+        {alturaCm != null && <p style={{ fontSize: 14, margin: '0 0 6px' }}><span style={{ color: '#8a7b92' }}>Altura:</span> {alturaCm} cm</p>}
+        {mzArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>{alturaCm != null ? 'Sem outras medidas registradas.' : 'Nenhuma registrada.'}</p> : (
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
             <tbody>
               {mzArr.map((m, i) => (

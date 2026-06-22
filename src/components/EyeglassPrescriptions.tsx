@@ -16,21 +16,26 @@ import { useUser } from '@/context/UserContext'
 
 interface Rx {
   id: string
+  kind: string
   prescribedOn: string | null
   prescriber: string | null
   odSph: string | null; odCyl: string | null; odAxis: string | null; odAdd: string | null
   oeSph: string | null; oeCyl: string | null; oeAxis: string | null; oeAdd: string | null
   dnp: string | null
+  bc: string | null; dia: string | null
   notes: string | null
   fileUrl: string | null
 }
 
 const EMPTY = {
+  kind: 'oculos',
   prescribedOn: '', prescriber: '',
   odSph: '', odCyl: '', odAxis: '', odAdd: '',
   oeSph: '', oeCyl: '', oeAxis: '', oeAdd: '',
-  dnp: '', notes: '', fileUrl: '' as string | null,
+  dnp: '', bc: '', dia: '', notes: '', fileUrl: '' as string | null,
 }
+
+const KIND_LABEL: Record<string, string> = { oculos: 'Óculos', lentes_contato: 'Lentes de contato' }
 
 function fmt(date: string | null): string {
   if (!date) return ''
@@ -61,13 +66,14 @@ export default function EyeglassPrescriptions() {
     setLoading(true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = await (supabase as any).from('eyeglass_prescriptions')
-      .select('id, prescribed_on, prescriber, od_sph, od_cyl, od_axis, od_add, oe_sph, oe_cyl, oe_axis, oe_add, dnp, notes, file_url')
+      .select('id, kind, prescribed_on, prescriber, od_sph, od_cyl, od_axis, od_add, oe_sph, oe_cyl, oe_axis, oe_add, dnp, bc, dia, notes, file_url')
       .eq('user_id', user.id).order('prescribed_on', { ascending: false, nullsFirst: false })
     setItems(((data ?? []) as Array<Record<string, unknown>>).map(r => ({
-      id: r.id as string, prescribedOn: (r.prescribed_on as string) ?? null, prescriber: (r.prescriber as string) ?? null,
+      id: r.id as string, kind: (r.kind as string) ?? 'oculos', prescribedOn: (r.prescribed_on as string) ?? null, prescriber: (r.prescriber as string) ?? null,
       odSph: (r.od_sph as string) ?? null, odCyl: (r.od_cyl as string) ?? null, odAxis: (r.od_axis as string) ?? null, odAdd: (r.od_add as string) ?? null,
       oeSph: (r.oe_sph as string) ?? null, oeCyl: (r.oe_cyl as string) ?? null, oeAxis: (r.oe_axis as string) ?? null, oeAdd: (r.oe_add as string) ?? null,
-      dnp: (r.dnp as string) ?? null, notes: (r.notes as string) ?? null, fileUrl: (r.file_url as string) ?? null,
+      dnp: (r.dnp as string) ?? null, bc: (r.bc as string) ?? null, dia: (r.dia as string) ?? null,
+      notes: (r.notes as string) ?? null, fileUrl: (r.file_url as string) ?? null,
     })))
     setLoading(false)
   }, [user, supabase])
@@ -79,10 +85,11 @@ export default function EyeglassPrescriptions() {
   function startEdit(r: Rx) {
     setEditingId(r.id)
     setF({
+      kind: r.kind ?? 'oculos',
       prescribedOn: r.prescribedOn ?? '', prescriber: r.prescriber ?? '',
       odSph: r.odSph ?? '', odCyl: r.odCyl ?? '', odAxis: r.odAxis ?? '', odAdd: r.odAdd ?? '',
       oeSph: r.oeSph ?? '', oeCyl: r.oeCyl ?? '', oeAxis: r.oeAxis ?? '', oeAdd: r.oeAdd ?? '',
-      dnp: r.dnp ?? '', notes: r.notes ?? '', fileUrl: r.fileUrl ?? '',
+      dnp: r.dnp ?? '', bc: r.bc ?? '', dia: r.dia ?? '', notes: r.notes ?? '', fileUrl: r.fileUrl ?? '',
     })
     setErr(null); setShowForm(true)
   }
@@ -121,7 +128,8 @@ export default function EyeglassPrescriptions() {
           prescribedOn: r.prescribed_on ?? s.prescribedOn, prescriber: r.prescriber ?? s.prescriber,
           odSph: r.od?.sph ?? s.odSph, odCyl: r.od?.cyl ?? s.odCyl, odAxis: r.od?.axis ?? s.odAxis, odAdd: r.od?.add ?? s.odAdd,
           oeSph: r.oe?.sph ?? s.oeSph, oeCyl: r.oe?.cyl ?? s.oeCyl, oeAxis: r.oe?.axis ?? s.oeAxis, oeAdd: r.oe?.add ?? s.oeAdd,
-          dnp: r.dnp ?? s.dnp,
+          dnp: r.dnp ?? s.dnp, bc: r.bc ?? s.bc, dia: r.dia ?? s.dia,
+          kind: (r.bc || r.dia) ? 'lentes_contato' : s.kind,
         }))
       } else if (!resp.ok) {
         setErr('Não consegui ler a receita automaticamente. Preencha manualmente.')
@@ -137,11 +145,14 @@ export default function EyeglassPrescriptions() {
     if (!user || saving) return
     const blank = (v: string) => (v.trim() ? v.trim() : null)
     const payload = {
-      user_id: user.id,
+      user_id: user.id, kind: f.kind,
       prescribed_on: f.prescribedOn || null, prescriber: blank(f.prescriber),
       od_sph: blank(f.odSph), od_cyl: blank(f.odCyl), od_axis: blank(f.odAxis), od_add: blank(f.odAdd),
       oe_sph: blank(f.oeSph), oe_cyl: blank(f.oeCyl), oe_axis: blank(f.oeAxis), oe_add: blank(f.oeAdd),
-      dnp: blank(f.dnp), notes: blank(f.notes), file_url: f.fileUrl || null,
+      dnp: f.kind === 'oculos' ? blank(f.dnp) : null,
+      bc: f.kind === 'lentes_contato' ? blank(f.bc) : null,
+      dia: f.kind === 'lentes_contato' ? blank(f.dia) : null,
+      notes: blank(f.notes), file_url: f.fileUrl || null,
     }
     setSaving(true); setErr(null)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -154,7 +165,7 @@ export default function EyeglassPrescriptions() {
 
   async function remove(r: Rx) {
     if (busyId) return
-    if (!window.confirm('Remover esta receita de óculos?')) return
+    if (!window.confirm('Remover este registro?')) return
     setBusyId(r.id)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (supabase as any).from('eyeglass_prescriptions').delete().eq('id', r.id)
@@ -175,7 +186,7 @@ export default function EyeglassPrescriptions() {
       <div className="flex items-center justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
           <Glasses size={15} className="text-petal" />
-          <p className="font-display text-base font-semibold text-onyx">Receitas de óculos</p>
+          <p className="font-display text-base font-semibold text-onyx">Óculos e lentes de contato</p>
         </div>
         <div className="flex items-center gap-2">
           <input ref={scanRef} type="file" accept="image/*" capture="environment" className="hidden"
@@ -199,6 +210,13 @@ export default function EyeglassPrescriptions() {
               <Loader2 size={14} className="animate-spin" /> Lendo a receita…
             </div>
           )}
+          <div>
+            <label className="font-body text-xs text-mauve/70 block mb-1">Tipo</label>
+            <select value={f.kind} onChange={e => set('kind', e.target.value)} className={inputCls}>
+              <option value="oculos">Óculos</option>
+              <option value="lentes_contato">Lentes de contato</option>
+            </select>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="font-body text-xs text-mauve/70 block mb-1">Data da receita</label>
@@ -236,25 +254,51 @@ export default function EyeglassPrescriptions() {
             <p className="font-body text-[10px] text-mauve/50">OD = olho direito · OE = olho esquerdo</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="font-body text-xs text-mauve/70 block mb-1">DNP / DP</label>
-              <input type="text" value={f.dnp} onChange={e => set('dnp', e.target.value)} placeholder="Ex.: 62" className={inputCls} />
+          {f.kind === 'oculos' ? (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="font-body text-xs text-mauve/70 block mb-1">DNP / DP</label>
+                <input type="text" value={f.dnp} onChange={e => set('dnp', e.target.value)} placeholder="Ex.: 62" className={inputCls} />
+              </div>
+              <div className="flex items-end">
+                {f.fileUrl ? (
+                  <a href={f.fileUrl} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 font-body text-xs text-petal hover:underline pb-1.5">
+                    <Paperclip size={13} /> Foto anexada
+                  </a>
+                ) : (
+                  <button onClick={() => scanRef.current?.click()}
+                    className="inline-flex items-center gap-1.5 font-body text-xs text-mauve hover:text-petal pb-1.5">
+                    <Camera size={13} /> Anexar foto
+                  </button>
+                )}
+              </div>
             </div>
-            <div className="flex items-end">
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-body text-xs text-mauve/70 block mb-1">Curva base (BC)</label>
+                  <input type="text" value={f.bc} onChange={e => set('bc', e.target.value)} placeholder="Ex.: 8.6" className={inputCls} />
+                </div>
+                <div>
+                  <label className="font-body text-xs text-mauve/70 block mb-1">Diâmetro (DIA)</label>
+                  <input type="text" value={f.dia} onChange={e => set('dia', e.target.value)} placeholder="Ex.: 14.2" className={inputCls} />
+                </div>
+              </div>
               {f.fileUrl ? (
                 <a href={f.fileUrl} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 font-body text-xs text-petal hover:underline pb-1.5">
+                  className="inline-flex items-center gap-1.5 font-body text-xs text-petal hover:underline">
                   <Paperclip size={13} /> Foto anexada
                 </a>
               ) : (
                 <button onClick={() => scanRef.current?.click()}
-                  className="inline-flex items-center gap-1.5 font-body text-xs text-mauve hover:text-petal pb-1.5">
+                  className="inline-flex items-center gap-1.5 font-body text-xs text-mauve hover:text-petal">
                   <Camera size={13} /> Anexar foto
                 </button>
               )}
-            </div>
-          </div>
+            </>
+          )}
           <div>
             <label className="font-body text-xs text-mauve/70 block mb-1">Observações (opcional)</label>
             <textarea value={f.notes} onChange={e => set('notes', e.target.value)} rows={2} className={inputCls} />
@@ -282,14 +326,19 @@ export default function EyeglassPrescriptions() {
             <div key={r.id} className="card-premium p-3.5 flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="font-body text-sm font-semibold text-onyx">
-                  Receita de óculos{r.prescribedOn ? ` · ${fmt(r.prescribedOn)}` : ''}
+                  {KIND_LABEL[r.kind] ?? 'Óculos'}{r.prescribedOn ? ` · ${fmt(r.prescribedOn)}` : ''}
                 </p>
                 <div className="mt-1 space-y-0.5">
                   {grauLine('OD', r.odSph, r.odCyl, r.odAxis, r.odAdd)}
                   {grauLine('OE', r.oeSph, r.oeCyl, r.oeAxis, r.oeAdd)}
                 </div>
                 <p className="font-body text-[11px] text-mauve/70 mt-1">
-                  {[r.dnp ? `DNP ${r.dnp}` : null, r.prescriber].filter(Boolean).join(' · ')}
+                  {[
+                    r.dnp ? `DNP ${r.dnp}` : null,
+                    r.bc ? `BC ${r.bc}` : null,
+                    r.dia ? `DIA ${r.dia}` : null,
+                    r.prescriber,
+                  ].filter(Boolean).join(' · ')}
                 </p>
                 {r.notes && <p className="font-body text-[11px] text-mauve/60 mt-1">{r.notes}</p>}
                 {r.fileUrl && (
