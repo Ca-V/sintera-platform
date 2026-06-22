@@ -5,7 +5,7 @@ import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
 import { Check, ArrowRight } from 'lucide-react'
 
-const betaFeatures = [
+const features = [
   'Upload ilimitado de laudos em PDF',
   'Extração automática de biomarcadores via IA',
   'Histórico longitudinal completo',
@@ -27,14 +27,14 @@ export default function PricingSection() {
         <motion.div initial={{ opacity: 0, y: 24 }} animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.65 }} className="text-center mb-12">
           <span className="inline-block px-4 py-1.5 rounded-full bg-blush border border-petal-light text-xs font-body font-medium text-petal-dark uppercase tracking-wider mb-5">
-            Acesso Beta
+            Planos
           </span>
           <h2 className="font-display text-4xl lg:text-5xl font-semibold text-onyx leading-tight mb-4">
             Gratuito agora.<br />
             <span className="text-gradient">Para sempre transparente.</span>
           </h2>
           <p className="font-body text-mauve text-lg max-w-xl mx-auto">
-            Durante o Beta, o acesso é completamente gratuito.
+            No momento, o acesso é completamente gratuito.
             Quando lançarmos os planos pagos, você será avisada com antecedência.
           </p>
         </motion.div>
@@ -45,12 +45,12 @@ export default function PricingSection() {
           <div className="flex items-start justify-between gap-4 mb-6">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-display text-2xl font-semibold text-onyx">Beta</h3>
-                <span className="font-body text-xs font-medium text-amber-700 bg-amber-100 px-2.5 py-0.5 rounded-full border border-amber-200">
-                  Acesso antecipado
+                <h3 className="font-display text-2xl font-semibold text-onyx">Gratuito</h3>
+                <span className="font-body text-xs font-medium text-sage bg-sage-light px-2.5 py-0.5 rounded-full border border-sage/20">
+                  Acesso completo
                 </span>
               </div>
-              <p className="font-body text-sm text-mauve">Acesso completo durante o período de Beta</p>
+              <p className="font-body text-sm text-mauve">Acesso completo a todos os recursos</p>
             </div>
             <div className="text-right flex-shrink-0">
               <p className="font-display text-4xl font-bold text-petal">R$0</p>
@@ -59,7 +59,7 @@ export default function PricingSection() {
           </div>
 
           <div className="grid sm:grid-cols-2 gap-3 mb-8">
-            {betaFeatures.map(f => (
+            {features.map(f => (
               <div key={f} className="flex items-start gap-2.5">
                 <Check size={14} className="text-sage flex-shrink-0 mt-0.5" />
                 <span className="font-body text-sm text-onyx/80 leading-snug">{f}</span>

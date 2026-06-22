@@ -100,9 +100,9 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
   return (
     <div className="flex flex-col h-full bg-deep select-none">
 
-      {/* Logo */}
+      {/* Logo — leva ao Painel Inicial (área logada) */}
       <div className="flex items-center justify-between px-5 py-4">
-        <Link href="/" className="flex items-center gap-2.5">
+        <Link href="/dashboard" onClick={onClose} className="flex items-center gap-2.5">
           <div className="w-7 h-7 rounded-full gradient-sintera flex items-center justify-center shadow-lg">
             <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
               <circle cx="8" cy="8" r="5.5" stroke="white" strokeWidth="1.2" fill="none"/>

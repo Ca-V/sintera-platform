@@ -181,7 +181,7 @@ export default function ComoFuncionaPage() {
         </Link>
         <Link href="/lista-de-espera"
           className="inline-flex items-center gap-2 gradient-sintera text-white font-body text-sm font-medium px-5 py-2.5 rounded-full hover:opacity-90 transition-opacity">
-          Quero acesso Beta <ArrowRight size={14} />
+          Começar grátis <ArrowRight size={14} />
         </Link>
       </header>
 
@@ -272,11 +272,11 @@ export default function ComoFuncionaPage() {
           Pronta para ver a história<br />dos seus exames?
         </h2>
         <p className="font-body text-mauve mb-8">
-          Acesso Beta gratuito · Vagas limitadas
+          Acesso gratuito · Comece em minutos
         </p>
         <Link href="/lista-de-espera">
           <button className="inline-flex items-center gap-2 gradient-sintera text-white font-body font-medium px-8 py-4 rounded-full hover:opacity-90 transition-opacity shadow-md text-[0.95rem]">
-            Solicitar acesso Beta
+            Criar conta gratuita
             <ArrowRight size={16} />
           </button>
         </Link>

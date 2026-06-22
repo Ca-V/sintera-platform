@@ -54,13 +54,13 @@ export default function ListaDeEsperaPage() {
 
           <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
             <span className="inline-block px-4 py-1.5 rounded-full bg-blush border border-petal-light text-xs font-body font-medium text-petal-dark uppercase tracking-wider mb-5">
-              Beta fechado · Vagas limitadas
+              Acesso antecipado · Gratuito
             </span>
             <h1 className="font-display text-3xl font-semibold text-onyx leading-tight mb-3">
               Entre para a lista de espera
             </h1>
             <p className="font-body text-sm text-mauve leading-relaxed">
-              A SINTERA está em Beta fechado com um grupo seleto.
+              A SINTERA está começando com um grupo de pessoas que ajudam a moldar a plataforma.
               Deixe seu nome e e-mail — avisamos assim que houver uma vaga.
             </p>
           </motion.div>
