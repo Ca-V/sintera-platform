@@ -5,8 +5,9 @@ import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Upload, FileText, Clock, CheckCircle, AlertCircle,
-  Plus, X, Loader2, Zap, Search, ChevronDown, ChevronUp, Trash2, Pencil, Check, Camera,
+  Plus, X, Loader2, Zap, Search, ChevronDown, ChevronUp, Trash2, Pencil, Check, Camera, Dna, ChevronRight,
 } from 'lucide-react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import { compareNames } from '@/lib/exams/nameMatch'
@@ -254,6 +255,19 @@ export default function ExamsPage() {
         <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Exames e Documentos</h1>
         <p className="font-body text-sm text-mauve">Envie seus <strong className="font-medium text-onyx/70">exames</strong> (extraímos os dados por IA), <strong className="font-medium text-onyx/70">receitas</strong> e outros arquivos de saúde — por PDF ou foto.</p>
       </motion.div>
+
+      {/* Entrada para Ômica (metabolômica e outros) */}
+      <Link href="/dashboard/omics"
+        className="card-premium p-4 flex items-center gap-3 hover:shadow-md transition-shadow group">
+        <div className="w-10 h-10 rounded-2xl bg-lavender-light flex items-center justify-center flex-shrink-0">
+          <Dna size={19} className="text-lavender" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-body text-sm font-semibold text-onyx">Ômica</p>
+          <p className="font-body text-xs text-mauve mt-0.5">Metabolômica, proteômica, microbioma e outros — organizados, versionados e comparáveis no tempo</p>
+        </div>
+        <ChevronRight size={16} className="text-mauve/40 group-hover:text-lavender transition-colors flex-shrink-0" />
+      </Link>
 
       {/* Aviso destacado: exame(s) com nome divergente do perfil */}
       {(() => {

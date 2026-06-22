@@ -16,7 +16,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   let q = (supabase as any).from('omics_results')
     .select('id, feature_id, feature_name, category_id, value, unit, raw_value, detection_status, method, measured_on')
     .eq('panel_id', id).eq('user_id', userId)
-  if (categoryId) q = q.eq('category_id', categoryId)
+  if (categoryId === 'none') q = q.is('category_id', null)
+  else if (categoryId) q = q.eq('category_id', categoryId)
   const { data, error: e } = await q
     .order('feature_name', { ascending: true })
     .range(offset, offset + limit - 1)
