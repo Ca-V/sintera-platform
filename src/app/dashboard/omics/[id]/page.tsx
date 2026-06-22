@@ -16,6 +16,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import Sparkline, { parseNum } from '@/components/Sparkline'
 import { DOMAIN_LABEL, fmtOmicsDate, type OmicsDomain } from '@/lib/omics/domains'
+import { uploadAndIngest } from '@/lib/omics/ingestClient'
 
 interface Panel { id: string; domain: OmicsDomain; technology: string | null; platform: string | null; total_features: number | null; laboratory: string | null; collected_on: string | null; created_at: string }
 interface Category { category_id: string | null; name: string; display_order: number | null; count: number }
@@ -384,51 +385,13 @@ function ImportResults({ panelId, onDone }: { panelId: string; onDone: () => voi
 
   async function onFile(file: File) {
     if (!user) return
-    const lower = file.name.toLowerCase()
-    const isJson = lower.endsWith('.json') || file.type.includes('json')
-    const isCsv = lower.endsWith('.csv') || file.type.includes('csv') || file.type.includes('text/plain')
-    const isPdf = lower.endsWith('.pdf') || file.type === 'application/pdf'
-    const isImage = file.type.startsWith('image/')
-    if (!isJson && !isCsv && !isPdf && !isImage) { setErr('Envie um arquivo CSV, JSON, PDF ou foto do laudo.'); return }
-    const maxMb = (isPdf || isImage) ? 6 : 8
-    if (file.size > maxMb * 1024 * 1024) { setErr(`Arquivo muito grande (máx. ${maxMb} MB).`); return }
     setBusy(true); setErr(null); setMsg(null)
     try {
-      // Preserva o arquivo original (bucket privado).
-      let sourceUrl: string | null = null
-      const path = `${user.id}/omics/${crypto.randomUUID()}-${file.name}`
-      const { error: upErr } = await supabase.storage.from('exams').upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false })
-      if (!upErr) {
-        const { data: signed } = await supabase.storage.from('exams').createSignedUrl(path, 60 * 60 * 24 * 365)
-        sourceUrl = signed?.signedUrl ?? null
-      }
-
-      let res: Response
-      if (isPdf || isImage) {
-        // Extração por IA (transcrição) → mesmo pipeline de ingestão.
-        const base64 = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader()
-          reader.onload = () => resolve(String(reader.result).split(',')[1] ?? '')
-          reader.onerror = reject
-          reader.readAsDataURL(file)
-        })
-        res = await fetch(`/api/omics/panels/${panelId}/ingest-pdf`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fileBase64: base64, mediaType: isPdf ? 'application/pdf' : file.type, source_file: sourceUrl, note: file.name }),
-        })
-      } else {
-        const content = await file.text()
-        res = await fetch(`/api/omics/panels/${panelId}/ingest`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ format: isJson ? 'json' : 'csv', content, source_file: sourceUrl, note: file.name }),
-        })
-      }
-      const json = await res.json()
-      if (!res.ok) { setErr(json.error ?? 'Falha na importação.'); setBusy(false); return }
+      const json = await uploadAndIngest(panelId, file, user.id, supabase)
       setMsg(`Versão v${json.version}: ${json.inserted} resultados importados (${json.resolved} identificados no catálogo).`)
       await loadVersions(); onDone()
-    } catch {
-      setErr('Falha ao importar o arquivo.')
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Falha ao importar o arquivo.')
     } finally {
       setBusy(false)
     }
