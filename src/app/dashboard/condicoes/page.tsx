@@ -9,7 +9,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Loader2, Plus, X, Stethoscope, ArrowLeft, Trash2, Users } from 'lucide-react'
+import { Loader2, Plus, X, Stethoscope, ArrowLeft, Trash2, Users, Pencil } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
@@ -33,6 +33,7 @@ export default function CondicoesPage() {
   const [busyId, setBusyId] = useState<string | null>(null)
 
   const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [scope, setScope] = useState<Scope>('propria')
   const [name, setName] = useState('')
   const [relative, setRelative] = useState('')
@@ -57,17 +58,27 @@ export default function CondicoesPage() {
 
   useEffect(() => { if (!authLoading) load() }, [authLoading, load])
 
-  function reset() { setScope('propria'); setName(''); setRelative(''); setSince(''); setNotes(''); setErr(null) }
+  function reset() { setEditingId(null); setScope('propria'); setName(''); setRelative(''); setSince(''); setNotes(''); setErr(null) }
+
+  function startEdit(c: Condition) {
+    setEditingId(c.id); setScope(c.scope); setName(c.name)
+    setRelative(c.relative ?? ''); setSince(c.sinceLabel ?? ''); setNotes(c.notes ?? '')
+    setErr(null); setShowForm(true)
+  }
 
   async function save() {
     if (!user || saving || !name.trim()) return
     setSaving(true); setErr(null)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any).from('health_conditions').insert({
+    const payload = {
       user_id: user.id, scope, name: name.trim(),
       relative: scope === 'familiar' ? (relative.trim() || null) : null,
       since_label: since.trim() || null, notes: notes.trim() || null,
-    })
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const db = (supabase as any).from('health_conditions')
+    const { error } = editingId
+      ? await db.update(payload).eq('id', editingId)
+      : await db.insert(payload)
     setSaving(false)
     if (error) { setErr(error.message); return }
     reset(); setShowForm(false); await load()
@@ -95,10 +106,16 @@ export default function CondicoesPage() {
           </p>
           {c.notes && <p className="font-body text-[11px] text-mauve/60 mt-1">{c.notes}</p>}
         </div>
-        <button onClick={() => remove(c)} disabled={busyId === c.id} title="Remover"
-          className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve/60 hover:text-red-500 flex-shrink-0">
-          <Trash2 size={13} />
-        </button>
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <button onClick={() => startEdit(c)} title="Editar"
+            className="w-7 h-7 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/60 hover:text-petal">
+            <Pencil size={13} />
+          </button>
+          <button onClick={() => remove(c)} disabled={busyId === c.id} title="Remover"
+            className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve/60 hover:text-red-500">
+            <Trash2 size={13} />
+          </button>
+        </div>
       </div>
     )
   }
@@ -166,7 +183,7 @@ export default function CondicoesPage() {
           <div className="flex justify-end">
             <button onClick={save} disabled={saving || !name.trim()}
               className="px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium disabled:opacity-40 hover:opacity-90 transition-opacity">
-              {saving ? 'Salvando…' : 'Salvar'}
+              {saving ? 'Salvando…' : editingId ? 'Salvar alterações' : 'Salvar'}
             </button>
           </div>
         </div>
