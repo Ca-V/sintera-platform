@@ -45,6 +45,32 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
   }
 
+  // Diagnóstico opcional (não envia nada): pergunta à Graph API o que o número
+  // remetente configurado enxerga — dados do número + templates da WABA.
+  // Acionado por { "debug": true, "wabaId"?: "..." }. Só metadados, sem segredos.
+  let debugBody: { debug?: boolean; wabaId?: string } = {}
+  try { debugBody = await req.json() } catch { /* corpo vazio = fluxo normal */ }
+  if (debugBody?.debug === true) {
+    const token = process.env.WHATSAPP_CLOUD_TOKEN
+    const pnid = process.env.WHATSAPP_PHONE_NUMBER_ID
+    const wabaId = debugBody.wabaId || process.env.WHATSAPP_WABA_ID || ''
+    const g = async (path: string) => {
+      try {
+        const r = await fetch(`https://graph.facebook.com/v21.0/${path}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        return { status: r.status, body: (await r.text()).slice(0, 1800) }
+      } catch (e) { return { error: String(e).slice(0, 200) } }
+    }
+    return NextResponse.json({
+      debug: true,
+      hasToken: !!token,
+      phoneNumberId: pnid ?? null,
+      phone: pnid ? await g(`${pnid}?fields=id,display_phone_number,verified_name,name_status`) : null,
+      templates: wabaId ? await g(`${wabaId}/message_templates?fields=name,status,language,category&limit=80`) : 'sem wabaId',
+    })
+  }
+
   // Fallback para SUPABASE_SECRET_KEY (chave nova gerada pela integração
   // Vercel↔Supabase) caso a SERVICE_ROLE_KEY legada esteja ausente/vazia.
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY
