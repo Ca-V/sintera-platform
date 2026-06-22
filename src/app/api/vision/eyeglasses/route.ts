@@ -20,11 +20,13 @@ Extraia, EXATAMENTE como impresso, o grau de cada olho:
 - OE = olho esquerdo (pode aparecer como "OE", "OS" ou "Olho Esquerdo").
 Para cada olho devolva: sph (esférico, ex.: "-2,00", "+1,25"), cyl (cilíndrico, ex.: "-0,75"),
 axis (eixo, ex.: "180", "90"), add (adição, ex.: "+2,00"). Use null para o que não aparecer.
-Devolva também: dnp (distância naso-pupilar/DP, ex.: "62" ou "31/31"), prescribed_on (data da
-receita NO FORMATO YYYY-MM-DD, se visível) e prescriber (nome do profissional/clínica, se visível).
+Devolva também: dnp (distância naso-pupilar/DP, ex.: "62" ou "31/31"), bc (curva base, se for
+receita de LENTES DE CONTATO, ex.: "8.6"), dia (diâmetro, lentes de contato, ex.: "14.2"),
+prescribed_on (data da receita NO FORMATO YYYY-MM-DD, se visível) e prescriber (nome do
+profissional/clínica, se visível).
 Mantenha o sinal (+/-) e a vírgula decimal como impresso. NÃO converta, NÃO calcule, NÃO interprete.
 Responda APENAS com JSON válido:
-{"od":{"sph":null,"cyl":null,"axis":null,"add":null},"oe":{"sph":null,"cyl":null,"axis":null,"add":null},"dnp":null,"prescribed_on":null,"prescriber":null}
+{"od":{"sph":null,"cyl":null,"axis":null,"add":null},"oe":{"sph":null,"cyl":null,"axis":null,"add":null},"dnp":null,"bc":null,"dia":null,"prescribed_on":null,"prescriber":null}
 Não invente o que não estiver visível. Não forneça orientação médica.`
 
 function s(v: unknown, max = 24): string | null {
@@ -74,7 +76,7 @@ export async function POST(req: NextRequest) {
     const result = {
       od: { sph: s(od.sph), cyl: s(od.cyl), axis: s(od.axis), add: s(od.add) },
       oe: { sph: s(oe.sph), cyl: s(oe.cyl), axis: s(oe.axis), add: s(oe.add) },
-      dnp: s(o.dnp),
+      dnp: s(o.dnp), bc: s(o.bc), dia: s(o.dia),
       prescribed_on: typeof o.prescribed_on === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(o.prescribed_on.trim()) ? o.prescribed_on.trim() : null,
       prescriber: s(o.prescriber, 120),
     }

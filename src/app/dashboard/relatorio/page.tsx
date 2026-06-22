@@ -27,6 +27,16 @@ interface Ex { type: string; date: string }
 interface Measure { metric: string; label: string | null; valueText: string; unit: string | null; date: string }
 interface Condition { scope: string; name: string; relative: string | null; since: string | null; notes: string | null }
 interface Habit { category: string; description: string; frequency: string | null; notes: string | null }
+interface Eyewear {
+  kind: string; prescribedOn: string | null; prescriber: string | null
+  odSph: string | null; odCyl: string | null; odAxis: string | null; odAdd: string | null
+  oeSph: string | null; oeCyl: string | null; oeAxis: string | null; oeAdd: string | null
+  dnp: string | null; bc: string | null; dia: string | null
+}
+const EYEWEAR_LABEL: Record<string, string> = { oculos: 'Óculos', lentes_contato: 'Lentes de contato' }
+function grauStr(sph: string | null, cyl: string | null, axis: string | null, add: string | null): string {
+  return [sph ? `Esf ${sph}` : null, cyl ? `Cil ${cyl}` : null, axis ? `Eixo ${axis}` : null, add ? `Adição ${add}` : null].filter(Boolean).join(', ')
+}
 
 const METRIC_LABEL: Record<string, string> = {
   peso: 'Peso', altura: 'Altura', circunferencia_cintura: 'Circunferência (cintura)',
@@ -72,10 +82,11 @@ export default function RelatorioPage() {
   const [measures, setMeasures] = useState<Measure[]>([])
   const [conditions, setConditions] = useState<Condition[]>([])
   const [habits, setHabits] = useState<Habit[]>([])
+  const [eyewear, setEyewear] = useState<Eyewear[]>([])
   const [shares, setShares] = useState<{ id: string; token: string; expiresAt: string }[]>([])
   const [shareBusy, setShareBusy] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
-  const [sections, setSections] = useState({ medicamentos: true, condicoes: true, habitos: true, eventos: true, exames: true, medidas: true, sinais: true })
+  const [sections, setSections] = useState({ medicamentos: true, condicoes: true, habitos: true, visao: true, eventos: true, exames: true, medidas: true, sinais: true })
   const toggle = (k: keyof typeof sections) => setSections(s => ({ ...s, [k]: !s[k] }))
 
   const load = useCallback(async () => {
@@ -83,13 +94,14 @@ export default function RelatorioPage() {
     setLoading(true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db = supabase as any
-    const [medRes, evRes, exRes, mzRes, cdRes, hbRes] = await Promise.all([
+    const [medRes, evRes, exRes, mzRes, cdRes, hbRes, ewRes] = await Promise.all([
       db.from('medications').select('name, kind, dose, frequency, started_on, until_date, status').eq('user_id', user.id).order('status'),
       db.from('health_events').select('title, event_type, professional_kind, event_date, notes').eq('user_id', user.id).eq('synthetic', false).order('event_date', { ascending: false }),
       db.from('exams').select('type, exam_date, created_at').eq('user_id', user.id).order('created_at', { ascending: false }),
       db.from('body_metrics').select('metric, label, value_text, unit, measured_on').eq('user_id', user.id).order('measured_on', { ascending: false }),
       db.from('health_conditions').select('scope, name, relative, since_label, notes').eq('user_id', user.id).order('created_at', { ascending: false }),
       db.from('life_habits').select('category, description, frequency, notes').eq('user_id', user.id).order('created_at', { ascending: false }),
+      db.from('eyeglass_prescriptions').select('kind, prescribed_on, prescriber, od_sph, od_cyl, od_axis, od_add, oe_sph, oe_cyl, oe_axis, oe_add, dnp, bc, dia').eq('user_id', user.id).order('prescribed_on', { ascending: false, nullsFirst: false }),
     ])
     setMeds(((medRes.data ?? []) as Array<Record<string, unknown>>).map(m => ({
       name: m.name as string, kind: (m.kind as string) ?? 'medicamento', dose: (m.dose as string) ?? null, frequency: (m.frequency as string) ?? null,
@@ -113,6 +125,12 @@ export default function RelatorioPage() {
     setHabits(((hbRes.data ?? []) as Array<Record<string, unknown>>).map(h => ({
       category: (h.category as string) ?? 'outro', description: (h.description as string) ?? '',
       frequency: (h.frequency as string) ?? null, notes: (h.notes as string) ?? null,
+    })))
+    setEyewear(((ewRes.data ?? []) as Array<Record<string, unknown>>).map(e => ({
+      kind: (e.kind as string) ?? 'oculos', prescribedOn: (e.prescribed_on as string) ?? null, prescriber: (e.prescriber as string) ?? null,
+      odSph: (e.od_sph as string) ?? null, odCyl: (e.od_cyl as string) ?? null, odAxis: (e.od_axis as string) ?? null, odAdd: (e.od_add as string) ?? null,
+      oeSph: (e.oe_sph as string) ?? null, oeCyl: (e.oe_cyl as string) ?? null, oeAxis: (e.oe_axis as string) ?? null, oeAdd: (e.oe_add as string) ?? null,
+      dnp: (e.dnp as string) ?? null, bc: (e.bc as string) ?? null, dia: (e.dia as string) ?? null,
     })))
     const { data: sh } = await db.from('report_shares')
       .select('id, token, expires_at').eq('user_id', user.id).eq('revoked', false)
@@ -160,6 +178,7 @@ export default function RelatorioPage() {
   const condFamiliar = conditions.filter(c => c.scope === 'familiar')
   const measuresCorpo = measures.filter(m => !isVital(m.metric))
   const measuresVitais = measures.filter(m => isVital(m.metric))
+  const alturaCm = (profile as { height_cm?: number | null } | null)?.height_cm ?? null
   const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
 
   if (loading) {
@@ -215,7 +234,7 @@ export default function RelatorioPage() {
       <div className="card-premium p-5 mb-6 print:hidden">
         <p className="font-body text-sm font-semibold text-onyx mb-2">Mostrar no relatório</p>
         <div className="flex flex-wrap gap-x-5 gap-y-2">
-          {([['medicamentos', 'Medicamentos'], ['condicoes', 'Condições de saúde'], ['habitos', 'Hábitos de vida'], ['eventos', 'Consultas e eventos'], ['exames', 'Exames'], ['medidas', 'Medidas corporais'], ['sinais', 'Sinais vitais']] as const).map(([k, label]) => (
+          {([['medicamentos', 'Medicamentos'], ['condicoes', 'Condições de saúde'], ['habitos', 'Hábitos de vida'], ['visao', 'Óculos e lentes'], ['eventos', 'Consultas e eventos'], ['exames', 'Exames'], ['medidas', 'Medidas corporais'], ['sinais', 'Sinais vitais']] as const).map(([k, label]) => (
             <label key={k} className="flex items-center gap-2 font-body text-sm text-onyx cursor-pointer">
               <input type="checkbox" checked={sections[k]} onChange={() => toggle(k)} className="accent-petal w-4 h-4" />
               {label}
@@ -308,6 +327,33 @@ export default function RelatorioPage() {
         </section>
         )}
 
+        {/* Óculos e lentes de contato */}
+        {sections.visao && (
+        <section>
+          <h2 className="font-body text-sm font-bold text-onyx mb-2">Óculos e lentes de contato</h2>
+          {eyewear.length === 0 ? (
+            <p className="font-body text-sm text-mauve/60">Nenhum registro.</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {eyewear.map((e, i) => {
+                const extras = [
+                  e.dnp ? `DNP ${e.dnp}` : null, e.bc ? `BC ${e.bc}` : null, e.dia ? `DIA ${e.dia}` : null,
+                  e.prescribedOn ? fmt(e.prescribedOn) : null, e.prescriber,
+                ].filter(Boolean)
+                return (
+                  <li key={i} className="font-body text-sm text-onyx">
+                    • <strong>{EYEWEAR_LABEL[e.kind] ?? 'Óculos'}</strong>
+                    {grauStr(e.odSph, e.odCyl, e.odAxis, e.odAdd) ? <span className="block text-xs text-mauve/70 ml-3">OD: {grauStr(e.odSph, e.odCyl, e.odAxis, e.odAdd)}</span> : null}
+                    {grauStr(e.oeSph, e.oeCyl, e.oeAxis, e.oeAdd) ? <span className="block text-xs text-mauve/70 ml-3">OE: {grauStr(e.oeSph, e.oeCyl, e.oeAxis, e.oeAdd)}</span> : null}
+                    {extras.length ? <span className="block text-xs text-mauve/60 ml-3">{extras.join(' · ')}</span> : null}
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </section>
+        )}
+
         {/* Jornada */}
         {sections.eventos && (
         <section>
@@ -352,8 +398,11 @@ export default function RelatorioPage() {
         {sections.medidas && (
         <section>
           <h2 className="font-body text-sm font-bold text-onyx mb-2">Medidas corporais</h2>
+          {alturaCm != null && (
+            <p className="font-body text-sm text-onyx mb-1"><span className="text-mauve/70">Altura:</span> {alturaCm} cm</p>
+          )}
           {measuresCorpo.length === 0 ? (
-            <p className="font-body text-sm text-mauve/60">Nenhuma medida registrada.</p>
+            <p className="font-body text-sm text-mauve/60">{alturaCm != null ? 'Sem outras medidas registradas.' : 'Nenhuma medida registrada.'}</p>
           ) : (
             <table className="w-full text-left">
               <tbody>
