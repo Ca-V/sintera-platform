@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
-  FileText, Activity, Clock, Pill, ScrollText, CalendarDays,
+  FileText, Activity, Clock, Pill, ScrollText, CalendarDays, Droplet,
   Upload, CheckCircle, AlertCircle, ArrowRight, FlaskConical, Bell, ChevronRight,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -44,7 +44,8 @@ const QUICK_ACCESS: { href: string; icon: React.ElementType; label: string; desc
   { href: '/dashboard/timeline',     icon: Clock,       label: 'Histórico de Saúde',        desc: 'Linha do tempo e evolução',      tile: 'bg-sage-light',     tint: 'text-sage' },
   { href: '/dashboard/agenda',       icon: CalendarDays,label: 'Planejamento de Saúde',     desc: 'Agenda e lembretes',             tile: 'bg-warm',           tint: 'text-gold' },
   { href: '/dashboard/medicamentos', icon: Pill,        label: 'Medicamentos e Suplementos',desc: 'Em uso e recompra',              tile: 'bg-sage-light',     tint: 'text-sage' },
-  { href: '/dashboard/relatorio',    icon: ScrollText,  label: 'Relatórios',                desc: 'Compartilhar com profissionais', tile: 'bg-blush',          tint: 'text-petal' },
+  { href: '/dashboard/ciclo',        icon: Droplet,     label: 'Ciclo e Contracepção',      desc: 'Menstruação e troca de método',  tile: 'bg-blush',          tint: 'text-petal' },
+  { href: '/dashboard/relatorio',    icon: ScrollText,  label: 'Relatórios',                desc: 'Compartilhar com profissionais', tile: 'bg-lavender-light', tint: 'text-lavender' },
 ]
 
 export default function DashboardPage() {
