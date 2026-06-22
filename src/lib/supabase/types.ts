@@ -137,6 +137,7 @@ export interface Database {
           last_period: string | null
           cycle_regularity: string | null
           goals: string[] | null
+          height_cm: number | null
           pref_daily_reminder: boolean
           pref_phase_alerts: boolean
           pref_email_insights: boolean
@@ -152,6 +153,7 @@ export interface Database {
           last_period?: string | null
           cycle_regularity?: string | null
           goals?: string[] | null
+          height_cm?: number | null
           pref_daily_reminder?: boolean
           pref_phase_alerts?: boolean
           pref_email_insights?: boolean
@@ -164,6 +166,7 @@ export interface Database {
           last_period?: string | null
           cycle_regularity?: string | null
           goals?: string[] | null
+          height_cm?: number | null
           pref_daily_reminder?: boolean
           pref_phase_alerts?: boolean
           pref_email_insights?: boolean
