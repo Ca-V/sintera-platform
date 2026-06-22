@@ -11,7 +11,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
-import { Loader2, ArrowLeft, Dna, ChevronRight, ChevronDown, Plus, X, Trash2, ExternalLink, Upload, History } from 'lucide-react'
+import { Loader2, ArrowLeft, Dna, ChevronRight, ChevronDown, Plus, X, Trash2, ExternalLink, Upload, History, Camera } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import Sparkline, { parseNum } from '@/components/Sparkline'
@@ -367,6 +367,7 @@ function ImportResults({ panelId, onDone }: { panelId: string; onDone: () => voi
   const { user } = useUser()
   const supabase = createClient()
   const fileRef = useRef<HTMLInputElement>(null)
+  const cameraRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
@@ -438,9 +439,15 @@ function ImportResults({ panelId, onDone }: { panelId: string; onDone: () => voi
       <div className="flex flex-wrap items-center gap-2">
         <input ref={fileRef} type="file" accept=".csv,.json,.pdf,image/*,text/csv,application/json,application/pdf" className="hidden"
           onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = '' }} />
+        <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden"
+          onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = '' }} />
         <button onClick={() => fileRef.current?.click()} disabled={busy}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-petal/40 text-petal font-body text-sm font-medium hover:bg-blush transition-colors disabled:opacity-50">
-          {busy ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />} Importar (PDF, foto, CSV ou JSON)
+          {busy ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />} Selecionar arquivo
+        </button>
+        <button onClick={() => cameraRef.current?.click()} disabled={busy}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-petal/40 text-petal font-body text-sm font-medium hover:bg-blush transition-colors disabled:opacity-50">
+          <Camera size={15} /> Tirar foto do laudo
         </button>
         {versions.length > 0 && (
           <button onClick={() => setShowVersions(v => !v)}
@@ -449,6 +456,7 @@ function ImportResults({ panelId, onDone }: { panelId: string; onDone: () => voi
           </button>
         )}
       </div>
+      <p className="font-body text-[11px] text-mauve/50 mt-1.5">PDF ou foto do laudo (a IA transcreve), ou CSV/JSON estruturado. O arquivo original é guardado e cada importação vira uma versão.</p>
       {msg && <p className="font-body text-xs text-sage mt-2">{msg}</p>}
       {err && <p className="font-body text-xs text-red-500 mt-2">{err}</p>}
       {showVersions && versions.length > 0 && (
