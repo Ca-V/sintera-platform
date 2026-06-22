@@ -28,12 +28,41 @@ interface Med {
   untilOn: string | null
   status: Status
   notes: string | null
+  packQty: number | null
+  dailyCons: number | null
+  purchasedOn: string | null
+  purchaseStatus: string | null
+  repurchaseReminder: boolean
+  repurchaseEventId: string | null
 }
 
 function fmtDate(date: string | null): string | null {
   if (!date) return null
   const d = new Date(`${date}T00:00:00`)
   return d.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })
+}
+function fmtFull(date: string): string {
+  return new Date(`${date}T00:00:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+function ymd(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+// Data estimada de término (a partir de quantidade ÷ consumo/dia desde a compra).
+function runoutDate(purchasedOn: string | null, packQty: number | null, dailyCons: number | null): string | null {
+  if (!purchasedOn || !packQty || !dailyCons || dailyCons <= 0) return null
+  const days = Math.floor(packQty / dailyCons)
+  const d = new Date(`${purchasedOn}T00:00:00`)
+  d.setDate(d.getDate() + days)
+  return ymd(d)
+}
+// Data sugerida para recompra: ~5 dias antes de acabar (nunca no passado).
+function recompraDate(purchasedOn: string | null, packQty: number | null, dailyCons: number | null): string | null {
+  const ro = runoutDate(purchasedOn, packQty, dailyCons)
+  if (!ro) return null
+  const d = new Date(`${ro}T00:00:00`)
+  d.setDate(d.getDate() - 5)
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  return d < today ? ymd(today) : ymd(d)
 }
 
 export default function MedicamentosPage() {
@@ -52,6 +81,11 @@ export default function MedicamentosPage() {
   const [startedOn, setStartedOn] = useState('')
   const [untilOn, setUntilOn] = useState('')
   const [notes, setNotes] = useState('')
+  const [packQty, setPackQty] = useState('')
+  const [dailyCons, setDailyCons] = useState('')
+  const [purchasedOn, setPurchasedOn] = useState('')
+  const [purchaseStatus, setPurchaseStatus] = useState('')
+  const [repurchase, setRepurchase] = useState(false)
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [scanning, setScanning] = useState(false)
@@ -90,7 +124,7 @@ export default function MedicamentosPage() {
     setLoading(true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = await (supabase as any).from('medications')
-      .select('id, name, kind, dose, frequency, started_on, until_date, status, notes')
+      .select('id, name, kind, dose, frequency, started_on, until_date, status, notes, pack_quantity, daily_consumption, purchased_on, purchase_status, repurchase_reminder, repurchase_event_id')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
     setMeds(((data ?? []) as Array<Record<string, unknown>>).map(m => ({
@@ -103,6 +137,12 @@ export default function MedicamentosPage() {
       untilOn: (m.until_date as string) ?? null,
       status: (m.status as Status) ?? 'em_uso',
       notes: (m.notes as string) ?? null,
+      packQty: m.pack_quantity != null ? Number(m.pack_quantity) : null,
+      dailyCons: m.daily_consumption != null ? Number(m.daily_consumption) : null,
+      purchasedOn: (m.purchased_on as string) ?? null,
+      purchaseStatus: (m.purchase_status as string) ?? null,
+      repurchaseReminder: m.repurchase_reminder === true,
+      repurchaseEventId: (m.repurchase_event_id as string) ?? null,
     })))
     setLoading(false)
   }, [user, supabase])
@@ -110,27 +150,62 @@ export default function MedicamentosPage() {
   useEffect(() => { if (!authLoading) load() }, [authLoading, load])
 
   function reset() {
-    setEditingId(null); setName(''); setKind('medicamento'); setDose(''); setFreq(''); setStartedOn(''); setUntilOn(''); setNotes(''); setErr(null)
+    setEditingId(null); setName(''); setKind('medicamento'); setDose(''); setFreq(''); setStartedOn(''); setUntilOn(''); setNotes('')
+    setPackQty(''); setDailyCons(''); setPurchasedOn(''); setPurchaseStatus(''); setRepurchase(false); setErr(null)
   }
   function openEdit(m: Med) {
     setEditingId(m.id); setName(m.name); setKind(m.kind); setDose(m.dose ?? ''); setFreq(m.frequency ?? '')
-    setStartedOn(m.startedOn ?? ''); setUntilOn(m.untilOn ?? ''); setNotes(m.notes ?? ''); setErr(null); setShowForm(true)
+    setStartedOn(m.startedOn ?? ''); setUntilOn(m.untilOn ?? ''); setNotes(m.notes ?? '')
+    setPackQty(m.packQty != null ? String(m.packQty) : ''); setDailyCons(m.dailyCons != null ? String(m.dailyCons) : '')
+    setPurchasedOn(m.purchasedOn ?? ''); setPurchaseStatus(m.purchaseStatus ?? ''); setRepurchase(m.repurchaseReminder)
+    setErr(null); setShowForm(true)
   }
 
   async function save() {
     if (!user || saving || !name.trim()) return
     setSaving(true); setErr(null)
+    const num = (s: string) => { const v = parseFloat(s.replace(',', '.')); return isFinite(v) && v > 0 ? v : null }
     const payload = {
       name: name.trim(), kind, dose: dose.trim() || null, frequency: freq.trim() || null,
       started_on: startedOn || null, until_date: untilOn || null, notes: notes.trim() || null,
+      pack_quantity: num(packQty), daily_consumption: num(dailyCons),
+      purchased_on: purchasedOn || null, purchase_status: purchaseStatus || null,
+      repurchase_reminder: repurchase,
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db = supabase as any
-    const { error } = editingId
-      ? await db.from('medications').update({ ...payload, updated_at: new Date().toISOString() }).eq('id', editingId)
-      : await db.from('medications').insert({ ...payload, user_id: user.id, status: 'em_uso' })
+    const existing = editingId ? meds.find(m => m.id === editingId) : null
+    const status: Status = existing?.status ?? 'em_uso'
+    let medId: string | null = editingId
+    if (editingId) {
+      const { error } = await db.from('medications').update({ ...payload, updated_at: new Date().toISOString() }).eq('id', editingId)
+      if (error) { setErr(error.message); setSaving(false); return }
+    } else {
+      const { data, error } = await db.from('medications').insert({ ...payload, user_id: user.id, status: 'em_uso' }).select('id').single()
+      if (error) { setErr(error.message); setSaving(false); return }
+      medId = (data?.id as string) ?? null
+    }
+
+    // Lembrete de recompra (reaproveita o worker de lembretes via agenda_events)
+    if (medId) {
+      const rec = recompraDate(purchasedOn || null, num(packQty), num(dailyCons))
+      const wants = repurchase && status === 'em_uso' && !!rec
+      const existingEvent = existing?.repurchaseEventId ?? null
+      try {
+        if (wants) {
+          if (existingEvent) {
+            await db.from('agenda_events').update({ title: `Recomprar: ${name.trim()}`, event_date: rec, status: 'pending', reminder_enabled: true, reminder_sent_at: null }).eq('id', existingEvent)
+          } else {
+            const { data: ev } = await db.from('agenda_events').insert({ user_id: user.id, event_type: 'medicacao', title: `Recomprar: ${name.trim()}`, event_date: rec, status: 'pending', reminder_enabled: true }).select('id').single()
+            if (ev?.id) await db.from('medications').update({ repurchase_event_id: ev.id }).eq('id', medId)
+          }
+        } else if (existingEvent) {
+          await db.from('agenda_events').delete().eq('id', existingEvent)
+          await db.from('medications').update({ repurchase_event_id: null }).eq('id', medId)
+        }
+      } catch { /* lembrete é best-effort, não bloqueia o salvamento */ }
+    }
     setSaving(false)
-    if (error) { setErr(error.message); return }
     reset(); setShowForm(false); await load()
   }
 
@@ -141,12 +216,14 @@ export default function MedicamentosPage() {
     await load(); setBusyId(null)
   }
 
-  async function remove(id: string, label: string) {
+  async function remove(m: Med) {
     if (busyId) return
-    if (!window.confirm(`Remover "${label}" da sua lista?`)) return
-    setBusyId(id)
+    if (!window.confirm(`Remover "${m.name}" da sua lista?`)) return
+    setBusyId(m.id)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from('medications').delete().eq('id', id)
+    const db = supabase as any
+    if (m.repurchaseEventId) await db.from('agenda_events').delete().eq('id', m.repurchaseEventId)
+    await db.from('medications').delete().eq('id', m.id)
     await load(); setBusyId(null)
   }
 
@@ -189,6 +266,24 @@ export default function MedicamentosPage() {
               : m.untilOn ? ` · até ${fmtDate(m.untilOn)}` : ''}
           </p>
           {m.notes && <p className="font-body text-[11px] text-mauve/60 mt-1">{m.notes}</p>}
+          {(() => {
+            const ro = runoutDate(m.purchasedOn, m.packQty, m.dailyCons)
+            return (
+              <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                {m.purchaseStatus === 'a_comprar' && (
+                  <span className="font-body text-[10px] text-gold bg-warm border border-amber-200 rounded-full px-1.5 py-0.5">A comprar</span>
+                )}
+                {m.purchaseStatus === 'comprado' && m.purchasedOn && (
+                  <span className="font-body text-[10px] text-sage bg-sage-light border border-sage/20 rounded-full px-1.5 py-0.5">Comprado em {fmtFull(m.purchasedOn)}</span>
+                )}
+                {ro && (
+                  <span className="font-body text-[10px] text-petal bg-blush border border-petal-light rounded-full px-1.5 py-0.5">
+                    Acaba ~{fmtFull(ro)}{m.repurchaseReminder ? ' · recompra ✓' : ''}
+                  </span>
+                )}
+              </div>
+            )
+          })()}
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
           {m.status === 'em_uso' ? (
@@ -206,7 +301,7 @@ export default function MedicamentosPage() {
             className="w-7 h-7 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/60 hover:text-petal">
             <Pencil size={13} />
           </button>
-          <button title="Remover" disabled={busyId === m.id} onClick={() => remove(m.id, m.name)}
+          <button title="Remover" disabled={busyId === m.id} onClick={() => remove(m)}
             className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve/60 hover:text-red-500">
             <Trash2 size={13} />
           </button>
@@ -312,6 +407,51 @@ export default function MedicamentosPage() {
             <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2}
               className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
           </div>
+
+          {/* Compra e recompra (opcional) */}
+          <div className="rounded-xl border border-border bg-ivory/40 p-3 space-y-3">
+            <p className="font-body text-xs font-semibold text-onyx">Compra e recompra (opcional)</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="font-body text-[11px] text-mauve/70 block mb-1">Qtd. na embalagem</label>
+                <input type="text" inputMode="decimal" value={packQty} onChange={e => setPackQty(e.target.value)} placeholder="Ex.: 30"
+                  className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30" />
+              </div>
+              <div>
+                <label className="font-body text-[11px] text-mauve/70 block mb-1">Consumo por dia</label>
+                <input type="text" inputMode="decimal" value={dailyCons} onChange={e => setDailyCons(e.target.value)} placeholder="Ex.: 1"
+                  className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="font-body text-[11px] text-mauve/70 block mb-1">Comprado em</label>
+                <input type="date" value={purchasedOn} onChange={e => setPurchasedOn(e.target.value)}
+                  className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30" />
+              </div>
+              <div>
+                <label className="font-body text-[11px] text-mauve/70 block mb-1">Situação</label>
+                <select value={purchaseStatus} onChange={e => setPurchaseStatus(e.target.value)}
+                  className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30">
+                  <option value="">—</option>
+                  <option value="a_comprar">A comprar</option>
+                  <option value="comprado">Comprado</option>
+                </select>
+              </div>
+            </div>
+            <label className="flex items-center gap-2 font-body text-sm text-onyx cursor-pointer">
+              <input type="checkbox" checked={repurchase} onChange={e => setRepurchase(e.target.checked)} className="accent-petal w-4 h-4" />
+              Lembrar de recomprar (uso contínuo)
+            </label>
+            {(() => {
+              const num = (s: string) => { const v = parseFloat(s.replace(',', '.')); return isFinite(v) && v > 0 ? v : null }
+              const ro = runoutDate(purchasedOn || null, num(packQty), num(dailyCons))
+              if (!ro) return <p className="font-body text-[10px] text-mauve/50">Informe quantidade, consumo/dia e data de compra para estimar o término.</p>
+              const rc = recompraDate(purchasedOn || null, num(packQty), num(dailyCons))
+              return <p className="font-body text-[11px] text-petal">Estimativa: acaba por volta de <strong>{fmtFull(ro)}</strong>{repurchase && rc ? `; lembrete ~${fmtFull(rc)}` : ''}.</p>
+            })()}
+          </div>
+
           {err && <p className="font-body text-xs text-red-500">{err}</p>}
           <div className="flex justify-end">
             <button onClick={save} disabled={saving || !name.trim()}
