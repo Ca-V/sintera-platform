@@ -7,6 +7,7 @@
 // ============================================================
 
 import { createClient } from '@supabase/supabase-js'
+import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
 
 export const metadata = { robots: { index: false, follow: false } }
 
@@ -75,7 +76,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
   const uid = share.user_id as string
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = admin as any
-  const [{ data: prof }, { data: meds }, { data: events }, { data: exams }, { data: measures }, { data: conditions }, { data: habits }, { data: eyewear }, { data: authUser }] = await Promise.all([
+  const [{ data: prof }, { data: meds }, { data: events }, { data: exams }, { data: measures }, { data: conditions }, { data: habits }, { data: eyewear }, { data: omics }, { data: authUser }] = await Promise.all([
     db.from('profiles').select('name, height_cm').eq('id', uid).maybeSingle(),
     db.from('medications').select('name, kind, dose, frequency, started_on, until_date, status').eq('user_id', uid).order('status'),
     db.from('health_events').select('title, event_type, event_date, notes, professional_kind').eq('user_id', uid).eq('synthetic', false).order('event_date', { ascending: false }),
@@ -84,12 +85,14 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
     db.from('health_conditions').select('scope, name, relative, since_label, notes').eq('user_id', uid).order('created_at', { ascending: false }),
     db.from('life_habits').select('category, description, frequency, notes').eq('user_id', uid).order('created_at', { ascending: false }),
     db.from('eyeglass_prescriptions').select('kind, prescribed_on, prescriber, od_sph, od_cyl, od_axis, od_add, oe_sph, oe_cyl, oe_axis, oe_add, dnp, bc, dia').eq('user_id', uid).order('prescribed_on', { ascending: false, nullsFirst: false }),
+    db.from('omics_panels').select('domain, laboratory, total_features, collected_on, created_at').eq('user_id', uid).order('collected_on', { ascending: false, nullsFirst: false }),
     admin.auth.admin.getUserById(uid),
   ])
 
   const nome = (prof?.name as string) || authUser?.user?.email || '—'
   const alturaCm = (prof?.height_cm as number | null | undefined) ?? null
   const ewArr = (eyewear ?? []) as Array<Record<string, unknown>>
+  const omArr = (omics ?? []) as Array<Record<string, unknown>>
   const grauStr = (sph: unknown, cyl: unknown, axis: unknown, add: unknown) =>
     [sph ? `Esf ${sph}` : null, cyl ? `Cil ${cyl}` : null, axis ? `Eixo ${axis}` : null, add ? `Adição ${add}` : null].filter(Boolean).join(', ')
   const EYEWEAR_LABEL: Record<string, string> = { oculos: 'Óculos', lentes_contato: 'Lentes de contato' }
@@ -216,6 +219,21 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
         {exArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum.</p> : (
           <ul style={{ paddingLeft: 18, fontSize: 14 }}>
             {exArr.map((e, i) => <li key={i}>{fmt((e.exam_date as string) || (e.created_at as string))} — {(e.type as string) || 'Exame'}</li>)}
+          </ul>
+        )}
+      </section>
+      )}
+
+      {show('omica') && (
+      <section style={{ marginBottom: 22 }}>
+        <h2 style={{ fontSize: 15 }}>Exames de ômica</h2>
+        {omArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum registrado.</p> : (
+          <ul style={{ paddingLeft: 18, fontSize: 14 }}>
+            {omArr.map((o, i) => {
+              const extra = [o.laboratory as string | null, o.total_features != null ? `${(o.total_features as number).toLocaleString('pt-BR')} marcadores` : null].filter(Boolean).join(', ')
+              const d = (o.collected_on as string) || (o.created_at as string)
+              return <li key={i}>{d ? `${fmt(d)} — ` : ''}<strong>{DOMAIN_LABEL[o.domain as OmicsDomain] ?? 'Ômica'}</strong>{extra ? ` (${extra})` : ''}</li>
+            })}
           </ul>
         )}
       </section>
