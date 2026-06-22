@@ -40,6 +40,21 @@ Redeploy após salvar.
 Em **Configurações → Lembretes por WhatsApp**: liga o opt-in e informa o telefone (com DDD).
 O telefone é normalizado para E.164 (Brasil +55) no envio.
 
+## Estado atual (2026-06) e pré-requisitos de PRODUÇÃO
+**Código 100% pronto e validado** até onde o ambiente permite: worker, opt-in, template,
+**fallback de idioma** (pt_BR→en) e **administração de templates pelo backend** (criar/
+excluir via Graph API, atrás do `x-admin-secret`). O template padrão é **`sintera_lembrete`**.
+
+**Bloqueio para usuárias reais — depende de você (não do código):**
+1. **CNPJ / empresa formalizada** — a Sintera precisa existir como empresa.
+2. **Verificação do negócio na Meta** (Business Verification) — exige os documentos (CNPJ etc.).
+3. **Número remetente próprio** — uma linha dedicada, registrada na conta WhatsApp da Sintera
+   (o número de teste da Meta só envia para até 5 destinatários cadastrados).
+
+> A **aprovação de template** NÃO depende de verificação (é revisão de conteúdo) — funciona
+> em conta não verificada. Quem depende de CNPJ/verificação é o **envio a usuárias reais**.
+> Até lá, **o lembrete por e-mail cobre a função**.
+
 ## Observações
 - **LGPD/consentimento:** o envio só ocorre com **opt-in explícito** + telefone informado.
 - **Conteúdo:** factual (lembrete de evento criado pela própria usuária) — sem juízo clínico.
