@@ -217,10 +217,11 @@ export default function MinhaSaudePage() {
             </p>
           </div>
         </div>
-        {/* Abas: Atual (esta) · Medidas. A evolução longitudinal fica em Histórico de Saúde. */}
+        {/* Abas: Atual (esta) · Medidas · Sinais vitais. A evolução longitudinal fica em Histórico de Saúde. */}
         <div className="flex flex-wrap gap-2 mt-4">
           <span className="px-3.5 py-1.5 rounded-full gradient-sintera text-white font-body text-sm font-medium">Atual</span>
           <Link href="/dashboard/medidas" className="px-3.5 py-1.5 rounded-full bg-ivory border border-border text-mauve font-body text-sm hover:border-petal/40 transition-colors">Medidas</Link>
+          <Link href="/dashboard/sinais-vitais" className="px-3.5 py-1.5 rounded-full bg-ivory border border-border text-mauve font-body text-sm hover:border-petal/40 transition-colors">Sinais vitais</Link>
         </div>
       </motion.div>
 

@@ -29,9 +29,17 @@ interface Condition { scope: string; name: string; relative: string | null; sinc
 interface Habit { category: string; description: string; frequency: string | null; notes: string | null }
 
 const METRIC_LABEL: Record<string, string> = {
-  peso: 'Peso', altura: 'Altura', pressao_arterial: 'Pressão arterial', circunferencia_cintura: 'Circunferência (cintura)',
-  gordura_corporal: 'Gordura corporal', massa_muscular: 'Massa muscular', outro: 'Outra medida',
+  peso: 'Peso', altura: 'Altura', circunferencia_cintura: 'Circunferência (cintura)',
+  imc: 'IMC', gordura_corporal: 'Gordura corporal', massa_muscular: 'Massa muscular',
+  agua_corporal: 'Água corporal', gordura_visceral: 'Gordura visceral', massa_ossea: 'Massa óssea',
+  taxa_metabolica: 'Taxa metabólica basal',
+  pressao_arterial: 'Pressão arterial', frequencia_cardiaca: 'Frequência cardíaca', glicemia: 'Glicemia',
+  saturacao: 'Saturação (SpO₂)', temperatura: 'Temperatura', outro_sinal: 'Outro sinal',
+  outro: 'Outra medida',
 }
+// Sinais vitais (registrados em body_metrics, separados das medidas corporais).
+const VITAL_METRICS = ['pressao_arterial', 'frequencia_cardiaca', 'glicemia', 'saturacao', 'temperatura', 'outro_sinal']
+const isVital = (m: string) => VITAL_METRICS.includes(m)
 const HABIT_LABEL: Record<string, string> = {
   atividade_fisica: 'Atividade física', sono: 'Sono', tabagismo: 'Tabagismo',
   alcool: 'Álcool', alimentacao: 'Alimentação', hidratacao: 'Hidratação', outro: 'Outro',
@@ -67,7 +75,7 @@ export default function RelatorioPage() {
   const [shares, setShares] = useState<{ id: string; token: string; expiresAt: string }[]>([])
   const [shareBusy, setShareBusy] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
-  const [sections, setSections] = useState({ medicamentos: true, condicoes: true, habitos: true, eventos: true, exames: true, medidas: true })
+  const [sections, setSections] = useState({ medicamentos: true, condicoes: true, habitos: true, eventos: true, exames: true, medidas: true, sinais: true })
   const toggle = (k: keyof typeof sections) => setSections(s => ({ ...s, [k]: !s[k] }))
 
   const load = useCallback(async () => {
@@ -150,6 +158,8 @@ export default function RelatorioPage() {
   const medsSusp = meds.filter(m => m.status === 'suspenso')
   const condProprias = conditions.filter(c => c.scope === 'propria')
   const condFamiliar = conditions.filter(c => c.scope === 'familiar')
+  const measuresCorpo = measures.filter(m => !isVital(m.metric))
+  const measuresVitais = measures.filter(m => isVital(m.metric))
   const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
 
   if (loading) {
@@ -205,7 +215,7 @@ export default function RelatorioPage() {
       <div className="card-premium p-5 mb-6 print:hidden">
         <p className="font-body text-sm font-semibold text-onyx mb-2">Mostrar no relatório</p>
         <div className="flex flex-wrap gap-x-5 gap-y-2">
-          {([['medicamentos', 'Medicamentos'], ['condicoes', 'Condições de saúde'], ['habitos', 'Hábitos de vida'], ['eventos', 'Consultas e eventos'], ['exames', 'Exames'], ['medidas', 'Medidas']] as const).map(([k, label]) => (
+          {([['medicamentos', 'Medicamentos'], ['condicoes', 'Condições de saúde'], ['habitos', 'Hábitos de vida'], ['eventos', 'Consultas e eventos'], ['exames', 'Exames'], ['medidas', 'Medidas corporais'], ['sinais', 'Sinais vitais']] as const).map(([k, label]) => (
             <label key={k} className="flex items-center gap-2 font-body text-sm text-onyx cursor-pointer">
               <input type="checkbox" checked={sections[k]} onChange={() => toggle(k)} className="accent-petal w-4 h-4" />
               {label}
@@ -342,16 +352,39 @@ export default function RelatorioPage() {
         {sections.medidas && (
         <section>
           <h2 className="font-body text-sm font-bold text-onyx mb-2">Medidas corporais</h2>
-          {measures.length === 0 ? (
+          {measuresCorpo.length === 0 ? (
             <p className="font-body text-sm text-mauve/60">Nenhuma medida registrada.</p>
           ) : (
             <table className="w-full text-left">
               <tbody>
-                {measures.map((m, i) => (
+                {measuresCorpo.map((m, i) => (
                   <tr key={i} className="border-b border-border/50">
                     <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(m.date)}</td>
                     <td className="font-body text-sm text-onyx py-1.5">
                       <span className="text-mauve/70">{m.metric === 'outro' && m.label ? m.label : METRIC_LABEL[m.metric] ?? 'Medida'}:</span> {m.valueText}{m.unit ? ` ${m.unit}` : ''}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
+        )}
+
+        {/* Sinais vitais */}
+        {sections.sinais && (
+        <section>
+          <h2 className="font-body text-sm font-bold text-onyx mb-2">Sinais vitais</h2>
+          {measuresVitais.length === 0 ? (
+            <p className="font-body text-sm text-mauve/60">Nenhum sinal vital registrado.</p>
+          ) : (
+            <table className="w-full text-left">
+              <tbody>
+                {measuresVitais.map((m, i) => (
+                  <tr key={i} className="border-b border-border/50">
+                    <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(m.date)}</td>
+                    <td className="font-body text-sm text-onyx py-1.5">
+                      <span className="text-mauve/70">{m.metric === 'outro_sinal' && m.label ? m.label : METRIC_LABEL[m.metric] ?? 'Sinal'}:</span> {m.valueText}{m.unit ? ` ${m.unit}` : ''}
                     </td>
                   </tr>
                 ))}

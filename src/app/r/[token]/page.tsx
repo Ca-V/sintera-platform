@@ -19,9 +19,16 @@ const PROF_LABEL: Record<string, string> = {
   fisioterapeuta: 'Fisioterapeuta', dentista: 'Dentista', outro: 'Outro profissional',
 }
 const METRIC_LABEL: Record<string, string> = {
-  peso: 'Peso', altura: 'Altura', pressao_arterial: 'Pressão arterial', circunferencia_cintura: 'Circunferência (cintura)',
-  gordura_corporal: 'Gordura corporal', massa_muscular: 'Massa muscular', outro: 'Outra medida',
+  peso: 'Peso', altura: 'Altura', circunferencia_cintura: 'Circunferência (cintura)',
+  imc: 'IMC', gordura_corporal: 'Gordura corporal', massa_muscular: 'Massa muscular',
+  agua_corporal: 'Água corporal', gordura_visceral: 'Gordura visceral', massa_ossea: 'Massa óssea',
+  taxa_metabolica: 'Taxa metabólica basal',
+  pressao_arterial: 'Pressão arterial', frequencia_cardiaca: 'Frequência cardíaca', glicemia: 'Glicemia',
+  saturacao: 'Saturação (SpO₂)', temperatura: 'Temperatura', outro_sinal: 'Outro sinal',
+  outro: 'Outra medida',
 }
+const VITAL_METRICS = ['pressao_arterial', 'frequencia_cardiaca', 'glicemia', 'saturacao', 'temperatura', 'outro_sinal']
+const isVital = (m: string) => VITAL_METRICS.includes(m)
 const HABIT_LABEL: Record<string, string> = {
   atividade_fisica: 'Atividade física', sono: 'Sono', tabagismo: 'Tabagismo',
   alcool: 'Álcool', alimentacao: 'Alimentação', hidratacao: 'Hidratação', outro: 'Outro',
@@ -85,7 +92,9 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
   const medsSusp = medsArr.filter(m => m.status === 'suspenso')
   const evArr = (events ?? []) as Array<Record<string, unknown>>
   const exArr = (exams ?? []) as Array<Record<string, unknown>>
-  const mzArr = (measures ?? []) as Array<Record<string, unknown>>
+  const mzAll = (measures ?? []) as Array<Record<string, unknown>>
+  const mzArr = mzAll.filter(m => !isVital(m.metric as string))
+  const vitalArr = mzAll.filter(m => isVital(m.metric as string))
   const cdArr = (conditions ?? []) as Array<Record<string, unknown>>
   const condProprias = cdArr.filter(c => c.scope === 'propria')
   const condFamiliar = cdArr.filter(c => c.scope === 'familiar')
@@ -193,6 +202,24 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
                 <tr key={i} style={{ borderBottom: '1px solid #f2eef4' }}>
                   <td style={{ padding: '6px 12px 6px 0', color: '#8a7b92', whiteSpace: 'nowrap', verticalAlign: 'top' }}>{fmt(m.measured_on as string)}</td>
                   <td style={{ padding: '6px 0' }}><span style={{ color: '#8a7b92' }}>{m.metric === 'outro' && m.label ? (m.label as string) : METRIC_LABEL[m.metric as string] ?? 'Medida'}:</span> {m.value_text as string}{m.unit ? ` ${m.unit as string}` : ''}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+      )}
+
+      {show('sinais') && (
+      <section style={{ marginBottom: 22 }}>
+        <h2 style={{ fontSize: 15 }}>Sinais vitais</h2>
+        {vitalArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum registrado.</p> : (
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+            <tbody>
+              {vitalArr.map((m, i) => (
+                <tr key={i} style={{ borderBottom: '1px solid #f2eef4' }}>
+                  <td style={{ padding: '6px 12px 6px 0', color: '#8a7b92', whiteSpace: 'nowrap', verticalAlign: 'top' }}>{fmt(m.measured_on as string)}</td>
+                  <td style={{ padding: '6px 0' }}><span style={{ color: '#8a7b92' }}>{m.metric === 'outro_sinal' && m.label ? (m.label as string) : METRIC_LABEL[m.metric as string] ?? 'Sinal'}:</span> {m.value_text as string}{m.unit ? ` ${m.unit as string}` : ''}</td>
                 </tr>
               ))}
             </tbody>

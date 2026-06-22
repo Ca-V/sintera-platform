@@ -28,7 +28,7 @@ const navGroups: {
     items: [
       { href: '/dashboard/exams',        icon: FileText,  label: 'Exames e Documentos' },
       { href: '/dashboard/medicamentos', icon: Pill,      label: 'Medicamentos e Suplementos' },
-      { href: '/dashboard/saude',        icon: Activity,  label: 'Indicadores de Saúde', extra: ['/dashboard/medidas'] },
+      { href: '/dashboard/saude',        icon: Activity,  label: 'Indicadores de Saúde', extra: ['/dashboard/medidas', '/dashboard/sinais-vitais'] },
       { href: '/dashboard/timeline',     icon: Clock,     label: 'Histórico de Saúde', extra: ['/dashboard/historico'] },
     ],
   },
