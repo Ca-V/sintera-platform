@@ -14,6 +14,7 @@ import { Loader2, Plus, X, Activity, ArrowLeft, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
+import Sparkline, { parseNum } from '@/components/Sparkline'
 
 type Metric =
   | 'peso' | 'altura' | 'circunferencia_cintura'
@@ -216,9 +217,19 @@ export default function MedidasPage() {
           {groups.map(g => {
             const list = items.filter(i => i.metric === g)
             if (list.length === 0) return null
+            // Série cronológica (lista vem do mais recente; invertemos para o gráfico).
+            const serie = [...list].reverse().map(it => parseNum(it.valueText)).filter((v): v is number => v !== null)
             return (
               <div key={g}>
-                <p className="font-display text-base font-semibold text-onyx mb-2">{METRIC_LABEL[g]}</p>
+                <div className="flex items-center justify-between gap-3 mb-2">
+                  <p className="font-display text-base font-semibold text-onyx">{METRIC_LABEL[g]}</p>
+                  {serie.length >= 2 && (
+                    <div className="flex items-center gap-2">
+                      <span className="font-body text-[10px] text-mauve/50">{list.length} registros</span>
+                      <Sparkline values={serie} />
+                    </div>
+                  )}
+                </div>
                 <div className="space-y-2">
                   {list.map(it => (
                     <div key={it.id} className="card-premium p-3 flex items-center justify-between gap-3">
