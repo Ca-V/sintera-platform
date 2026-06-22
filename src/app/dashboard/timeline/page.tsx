@@ -11,14 +11,14 @@ import { motion } from 'framer-motion'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   Clock, Plus, X, Stethoscope, Syringe, Activity, FlaskConical, CalendarDays,
-  Loader2, Pencil, Trash2, Paperclip, Bell, Info, Sparkles, Pill, Receipt, FileText,
+  Loader2, Pencil, Trash2, Paperclip, Bell, Info, Sparkles, Pill, Receipt, FileText, Dumbbell,
 } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import AgendarModal, { type EventType as AgendaType } from '@/components/AgendarModal'
 
-type EventType = 'consulta' | 'vacina' | 'procedimento' | 'estetico' | 'medicamento' | 'exame' | 'outro'
+type EventType = 'consulta' | 'vacina' | 'procedimento' | 'estetico' | 'medicamento' | 'atividade' | 'exame' | 'outro'
 
 interface TimelineItem {
   id: string
@@ -41,6 +41,7 @@ const TYPE_META: Record<EventType, { label: string; Icon: React.ElementType; cls
   procedimento: { label: 'Procedimento', Icon: Activity,     cls: 'bg-lavender-light text-lavender' },
   estetico:     { label: 'Procedimento estético', Icon: Sparkles, cls: 'bg-blush text-petal' },
   medicamento:  { label: 'Medicamento',  Icon: Pill,         cls: 'bg-sage-light text-sage' },
+  atividade:    { label: 'Atividade física', Icon: Dumbbell, cls: 'bg-lavender-light text-lavender' },
   exame:        { label: 'Exame',        Icon: FlaskConical, cls: 'bg-warm text-gold' },
   outro:        { label: 'Evento',       Icon: CalendarDays, cls: 'bg-ivory text-mauve' },
 }
@@ -351,6 +352,7 @@ export default function TimelinePage() {
                 <option value="procedimento">Procedimento</option>
                 <option value="estetico">Procedimento estético</option>
                 <option value="medicamento">Medicamento</option>
+                <option value="atividade">Atividade física</option>
                 <option value="outro">Outro</option>
               </select>
             </div>
