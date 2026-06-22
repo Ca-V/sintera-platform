@@ -40,15 +40,6 @@ const TYPE_META: Record<EventType, { label: string; Icon: React.ElementType; cls
   outro:        { label: 'Evento',       Icon: CalendarDays, cls: 'bg-ivory text-mauve' },
 }
 
-const CONFIDENCE_CLS: Record<string, string> = {
-  alta:  'text-sage bg-sage-light border-sage/20',
-  media: 'text-gold bg-warm border-amber-200',
-  baixa: 'text-mauve/60 bg-ivory border-border',
-}
-const CONFIDENCE_LABEL: Record<string, string> = {
-  alta: 'confiança alta', media: 'confiança média', baixa: 'confiança baixa',
-}
-
 // Mapeia o tipo da jornada para o tipo aceito pelo AgendarModal.
 const toAgendaType = (t: EventType): AgendaType =>
   t === 'consulta' ? 'consulta' : t === 'exame' ? 'exame' : 'outro'
@@ -240,10 +231,6 @@ export default function TimelinePage() {
             </div>
             <div className="flex flex-col items-end gap-1 flex-shrink-0">
               <span className="font-body text-[11px] text-mauve/60">{fmt(it.date)}</span>
-              <span title={`Proveniência: ${it.source}`}
-                className={`font-body text-[10px] rounded-full px-1.5 py-0.5 border ${CONFIDENCE_CLS[it.confidence] ?? CONFIDENCE_CLS.baixa}`}>
-                {CONFIDENCE_LABEL[it.confidence] ?? 'confiança baixa'}
-              </span>
               {it.kind === 'event' && it.rawId && (
                 <div className="flex items-center gap-1 mt-0.5">
                   {isUpcoming && (
@@ -342,7 +329,7 @@ export default function TimelinePage() {
           </div>
           {formError && <p className="font-body text-xs text-red-500">{formError}</p>}
           <div className="flex items-center justify-between">
-            <p className="font-body text-[11px] text-mauve/50">Registro manual entra como autorrelato (confiança baixa).</p>
+            <p className="font-body text-[11px] text-mauve/50">Registro manual entra como autorrelato.</p>
             <button onClick={save} disabled={saving || !evTitle.trim() || !evDate}
               className="px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium disabled:opacity-40 hover:opacity-90 transition-opacity">
               {saving ? 'Salvando…' : editingId ? 'Atualizar' : 'Salvar'}
@@ -388,19 +375,6 @@ export default function TimelinePage() {
               </div>
             </div>
           )}
-        </div>
-      )}
-
-      {/* Legenda de proveniência */}
-      {items.length > 0 && (
-        <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
-          <span className="font-body text-[10px] text-mauve/50">Confiança do dado:</span>
-          {(['alta', 'media', 'baixa'] as const).map(c => (
-            <span key={c} className={`font-body text-[10px] rounded-full px-1.5 py-0.5 border ${CONFIDENCE_CLS[c]}`}>
-              {CONFIDENCE_LABEL[c]}
-            </span>
-          ))}
-          <span className="font-body text-[10px] text-mauve/40">— alta: laudo/integração · baixa: autorrelato</span>
         </div>
       )}
 
