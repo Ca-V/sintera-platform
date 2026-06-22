@@ -68,50 +68,67 @@ export async function POST(
     return NextResponse.json({ error: 'Falha ao baixar o arquivo PDF.', code: 'STORAGE_DOWNLOAD_FAILED' }, { status: 502 })
   }
 
-  // 5. Quality Assessment — classifica o PDF e decide o caminho
-  const extraction = await extractTextFromPdf(pdfBuffer)
+  // 5–7. Foto do laudo (imagem) vs PDF. Detecta pela extensão do arquivo.
+  const filePath = (() => {
+    try { return new URL(exam.file_url!).pathname.toLowerCase() } catch { return exam.file_url!.toLowerCase() }
+  })()
+  const isImage = /\.(jpe?g|png|webp)$/.test(filePath)
 
-  if (!extraction.ok) {
-    await supabase.from('exams')
-      .update({ status: 'error', error_reason: extraction.quality, pdf_quality: extraction.quality } as never)
-      .eq('id', examId)
-    return NextResponse.json(
-      { error: ERROR_MESSAGES[extraction.quality] ?? 'Falha na extração do texto.', code: extraction.quality.toUpperCase() },
-      { status: 422 },
-    )
+  let gatewayParams: Parameters<typeof extractBiomarkers>[1]
+  let filterResult: ReturnType<typeof filterRelevantPages> | null = null
+  let pageCount = 1
+  let pdfQuality = 'image'
+
+  if (isImage) {
+    // Caminho de imagem — modelo multimodal lê a foto. Sem extração de texto/PDF.
+    const mediaType = filePath.endsWith('.png') ? 'image/png'
+      : filePath.endsWith('.webp') ? 'image/webp' : 'image/jpeg'
+    await supabase.from('exams').update({ pdf_quality: 'image', page_count: 1 } as never).eq('id', examId)
+    gatewayParams = { examId, userId, imageBuffer: pdfBuffer, imageMediaType: mediaType, pdfQualityDetected: 'image' }
+  } else {
+    // 5. Quality Assessment — classifica o PDF e decide o caminho
+    const extraction = await extractTextFromPdf(pdfBuffer)
+
+    if (!extraction.ok) {
+      await supabase.from('exams')
+        .update({ status: 'error', error_reason: extraction.quality, pdf_quality: extraction.quality } as never)
+        .eq('id', examId)
+      return NextResponse.json(
+        { error: ERROR_MESSAGES[extraction.quality] ?? 'Falha na extração do texto.', code: extraction.quality.toUpperCase() },
+        { status: 422 },
+      )
+    }
+
+    // 6. Salvar exam_text (mesmo quando corrompido) + pdf_quality + page_count
+    await supabase.from('exams').update({
+      exam_text:   extraction.text,
+      pdf_quality: extraction.quality,
+      page_count:  extraction.pageCount,
+    } as never).eq('id', examId)
+
+    pageCount = extraction.pageCount
+    pdfQuality = extraction.quality
+
+    // 7. Filtro de páginas (Epic 1.4A) — remove conteúdo administrativo antes da IA
+    filterResult = filterRelevantPages(extraction.pageTexts, 3)
+
+    // 7b. Roteamento: Path A (texto) vs Path B (PDF nativo)
+    const useNative = extraction.quality !== 'good_text' && filterResult.pagesRelevant <= 20
+    const MAX_EXAM_CHARS = 40_000
+    const filteredText = filterResult.filteredText.length > MAX_EXAM_CHARS
+      ? filterResult.filteredText.slice(0, MAX_EXAM_CHARS)
+      : filterResult.filteredText
+
+    gatewayParams = useNative
+      ? { examId, userId, pdfBuffer, pdfQualityDetected: extraction.quality }
+      : {
+          examId, userId,
+          pdfQualityDetected: extraction.quality,
+          examText: filteredText || (extraction.text.length > MAX_EXAM_CHARS
+            ? extraction.text.slice(0, MAX_EXAM_CHARS)
+            : extraction.text),
+        }
   }
-
-  // 6. Salvar exam_text (mesmo quando corrompido) + pdf_quality + page_count
-  // exam_text garante auditabilidade independente do caminho usado
-  await supabase.from('exams').update({
-    exam_text:   extraction.text,
-    pdf_quality: extraction.quality,
-    page_count:  extraction.pageCount,
-  } as never).eq('id', examId)
-
-  // 7. Filtro de páginas (Epic 1.4A) — remove conteúdo administrativo antes da IA
-  const filterResult = filterRelevantPages(extraction.pageTexts, 3)
-
-  // 7b. Roteamento: Path A (texto) vs Path B (PDF nativo)
-  //    good_text       → Path A (com texto filtrado)
-  //    corrupted_text  → Path B, salvo se > 20 páginas relevantes → Path A
-  //    insufficient_text → Path B, salvo se > 20 páginas relevantes → Path A
-  const useNative = extraction.quality !== 'good_text' && filterResult.pagesRelevant <= 20
-  const MAX_EXAM_CHARS = 40_000
-
-  const filteredText = filterResult.filteredText.length > MAX_EXAM_CHARS
-    ? filterResult.filteredText.slice(0, MAX_EXAM_CHARS)
-    : filterResult.filteredText
-
-  const gatewayParams = useNative
-    ? { examId, userId, pdfBuffer, pdfQualityDetected: extraction.quality }
-    : {
-        examId, userId,
-        pdfQualityDetected: extraction.quality,
-        examText: filteredText || (extraction.text.length > MAX_EXAM_CHARS
-          ? extraction.text.slice(0, MAX_EXAM_CHARS)
-          : extraction.text),
-      }
 
   // 8. Chamar o Gateway de IA
   const result = await extractBiomarkers(supabase, gatewayParams)
@@ -133,14 +150,16 @@ export async function POST(
     return NextResponse.json({ error: result.message, code: result.code }, { status: result.httpStatus })
   }
 
-  // 9. Registrar campos do filtro no ai_processing_log
-  await supabase.from('ai_processing_log').update({
-    pages_total:     filterResult.pagesTotal,
-    pages_relevant:  filterResult.pagesRelevant,
-    pages_filtered:  filterResult.pagesFiltered,
-    filter_applied:  filterResult.filterApplied,
-    filter_fallback: filterResult.fallbackUsed,
-  } as never).eq('id', result.aiLogId)
+  // 9. Registrar campos do filtro no ai_processing_log (só no caminho de PDF)
+  if (filterResult) {
+    await supabase.from('ai_processing_log').update({
+      pages_total:     filterResult.pagesTotal,
+      pages_relevant:  filterResult.pagesRelevant,
+      pages_filtered:  filterResult.pagesFiltered,
+      filter_applied:  filterResult.filterApplied,
+      filter_fallback: filterResult.fallbackUsed,
+    } as never).eq('id', result.aiLogId)
+  }
 
   // 10. Salvar biomarcadores — substituição atômica via RPC replace_biomarkers
   //     (DELETE + INSERT numa única transação plpgsql). Se a gravação falhar,
@@ -229,8 +248,8 @@ export async function POST(
     model:          result.model,
     promptVersion:  result.promptVersion,
     durationMs:     result.durationMs,
-    pageCount:      extraction.pageCount,
+    pageCount:      pageCount,
     extractionPath: result.extractionPath,
-    pdfQuality:     extraction.quality,
+    pdfQuality:     pdfQuality,
   })
 }
