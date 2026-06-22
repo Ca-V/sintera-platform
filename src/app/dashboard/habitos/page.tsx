@@ -11,7 +11,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
-  Loader2, Plus, X, HeartPulse, ArrowLeft, Trash2,
+  Loader2, Plus, X, HeartPulse, ArrowLeft, Trash2, Pencil,
   Dumbbell, Moon, Cigarette, Wine, Apple, Droplets, Sparkles,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -52,6 +52,7 @@ export default function HabitosPage() {
   const [busyId, setBusyId] = useState<string | null>(null)
 
   const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [category, setCategory] = useState<Category>('atividade_fisica')
   const [description, setDescription] = useState('')
   const [frequency, setFrequency] = useState('')
@@ -76,16 +77,25 @@ export default function HabitosPage() {
 
   useEffect(() => { if (!authLoading) load() }, [authLoading, load])
 
-  function reset() { setCategory('atividade_fisica'); setDescription(''); setFrequency(''); setNotes(''); setErr(null) }
+  function reset() { setEditingId(null); setCategory('atividade_fisica'); setDescription(''); setFrequency(''); setNotes(''); setErr(null) }
+
+  function startEdit(h: Habit) {
+    setEditingId(h.id); setCategory(h.category); setDescription(h.description)
+    setFrequency(h.frequency ?? ''); setNotes(h.notes ?? ''); setErr(null); setShowForm(true)
+  }
 
   async function save() {
     if (!user || saving || !description.trim()) return
     setSaving(true); setErr(null)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any).from('life_habits').insert({
+    const payload = {
       user_id: user.id, category, description: description.trim(),
       frequency: frequency.trim() || null, notes: notes.trim() || null,
-    })
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const db = (supabase as any).from('life_habits')
+    const { error } = editingId
+      ? await db.update(payload).eq('id', editingId)
+      : await db.insert(payload)
     setSaving(false)
     if (error) { setErr(error.message); return }
     reset(); setShowForm(false); await load()
@@ -117,10 +127,16 @@ export default function HabitosPage() {
             {h.notes && <p className="font-body text-[11px] text-mauve/60 mt-1">{h.notes}</p>}
           </div>
         </div>
-        <button onClick={() => remove(h)} disabled={busyId === h.id} title="Remover"
-          className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve/60 hover:text-red-500 flex-shrink-0">
-          <Trash2 size={13} />
-        </button>
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <button onClick={() => startEdit(h)} title="Editar"
+            className="w-7 h-7 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/60 hover:text-petal">
+            <Pencil size={13} />
+          </button>
+          <button onClick={() => remove(h)} disabled={busyId === h.id} title="Remover"
+            className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve/60 hover:text-red-500">
+            <Trash2 size={13} />
+          </button>
+        </div>
       </div>
     )
   }
@@ -190,7 +206,7 @@ export default function HabitosPage() {
           <div className="flex justify-end">
             <button onClick={save} disabled={saving || !description.trim()}
               className="px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium disabled:opacity-40 hover:opacity-90 transition-opacity">
-              {saving ? 'Salvando…' : 'Salvar'}
+              {saving ? 'Salvando…' : editingId ? 'Salvar alterações' : 'Salvar'}
             </button>
           </div>
         </div>
