@@ -165,7 +165,7 @@ export default function ProfilePage() {
           <div className="p-3 bg-ivory rounded-xl">
             <p className="font-body text-[10px] text-mauve uppercase tracking-wider mb-1">Plano</p>
             <p className="font-body text-sm font-medium text-onyx">
-              Beta <span className="text-amber-600 text-xs">· Acesso antecipado</span>
+              Gratuito
             </p>
           </div>
           <div className="p-3 bg-ivory rounded-xl">

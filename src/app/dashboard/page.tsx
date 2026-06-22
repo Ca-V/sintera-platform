@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
-  FileText, TrendingUp, Upload, Zap,
+  FileText, TrendingUp, Upload,
   CheckCircle, Clock, AlertCircle, ArrowRight, FlaskConical, CalendarDays,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -263,19 +263,6 @@ export default function DashboardPage() {
 
       {/* AgendarModal */}
       <AgendarModal open={agendarOpen} onClose={() => setAgendar(false)} />
-
-      {/* Banner Beta */}
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-        className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 flex items-start gap-3">
-        <Zap size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
-        <div>
-          <p className="font-body text-xs font-semibold text-amber-800">Versão Beta</p>
-          <p className="font-body text-xs text-amber-700 mt-0.5 leading-relaxed">
-            Você faz parte do grupo de acesso antecipado. Seu feedback é essencial para evoluirmos a plataforma.
-            Use o botão "Reportar problema" sempre que encontrar algo inesperado.
-          </p>
-        </div>
-      </motion.div>
 
     </div>
   )

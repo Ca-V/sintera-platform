@@ -334,7 +334,7 @@ export default function ConfiguracoesPage() {
         Sair da conta
       </button>
 
-      <p className="text-center text-xs font-body text-mauve/40 pb-4">SINTERA · Beta</p>
+      <p className="text-center text-xs font-body text-mauve/40 pb-4">SINTERA</p>
     </div>
   )
 }
