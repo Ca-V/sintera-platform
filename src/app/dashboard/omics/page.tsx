@@ -9,10 +9,13 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Loader2, Plus, X, Dna, ArrowLeft, ChevronRight } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useRef } from 'react'
+import { Loader2, Plus, X, Dna, ArrowLeft, ChevronRight, Upload, Camera, Paperclip } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import { DOMAIN_LABEL, DOMAINS, fmtOmicsDate, type OmicsDomain } from '@/lib/omics/domains'
+import { uploadAndIngest } from '@/lib/omics/ingestClient'
 
 interface Panel {
   id: string
@@ -25,6 +28,7 @@ interface Panel {
 }
 
 export default function OmicsListPage() {
+  const router = useRouter()
   const { user, loading: authLoading } = useUser()
   const supabase = createClient()
   const [panels, setPanels] = useState<Panel[]>([])
@@ -35,8 +39,12 @@ export default function OmicsListPage() {
   const [lab, setLab] = useState('')
   const [tech, setTech] = useState('')
   const [date, setDate] = useState('')
+  const [file, setFile] = useState<File | null>(null)
   const [saving, setSaving] = useState(false)
+  const [progress, setProgress] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+  const cameraRef = useRef<HTMLInputElement>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -48,19 +56,33 @@ export default function OmicsListPage() {
 
   useEffect(() => { if (!authLoading) load() }, [authLoading, load])
 
-  function reset() { setDomain('metabolomics'); setLab(''); setTech(''); setDate(''); setErr(null) }
+  function reset() { setDomain('metabolomics'); setLab(''); setTech(''); setDate(''); setFile(null); setErr(null); setProgress(null) }
 
+  // Cria o painel e, se houver arquivo, já importa — num passo só.
   async function save() {
     if (!user || saving) return
-    setSaving(true); setErr(null)
+    setSaving(true); setErr(null); setProgress('Criando exame…')
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any).from('omics_panels').insert({
+    const { data, error } = await (supabase as any).from('omics_panels').insert({
       user_id: user.id, domain, laboratory: lab.trim() || null, technology: tech.trim() || null,
       collected_on: date || null,
-    })
-    setSaving(false)
-    if (error) { setErr(error.message); return }
-    reset(); setShowForm(false); await load()
+    }).select('id').single()
+    if (error || !data) { setSaving(false); setErr(error?.message ?? 'Falha ao criar.'); setProgress(null); return }
+    const panelId = data.id as string
+
+    if (file) {
+      try {
+        setProgress('Enviando e lendo o laudo…')
+        await uploadAndIngest(panelId, file, user.id, supabase)
+      } catch {
+        // Painel criado; importação falhou — leva ao painel para tentar de novo lá.
+        setSaving(false)
+        router.push(`/dashboard/omics/${panelId}`)
+        return
+      }
+    }
+    setSaving(false); reset(); setShowForm(false)
+    router.push(`/dashboard/omics/${panelId}`)
   }
 
   return (
@@ -80,7 +102,7 @@ export default function OmicsListPage() {
         </div>
         <button onClick={() => (showForm ? (reset(), setShowForm(false)) : (reset(), setShowForm(true)))}
           className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0">
-          {showForm ? <X size={15} /> : <Plus size={15} />} {showForm ? 'Fechar' : 'Novo painel'}
+          {showForm ? <X size={15} /> : <Plus size={15} />} {showForm ? 'Fechar' : 'Enviar exame'}
         </button>
       </div>
 
@@ -112,14 +134,44 @@ export default function OmicsListPage() {
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
             </div>
           </div>
+          {/* Upload do laudo (opcional) — selecionar arquivo ou tirar foto */}
+          <div>
+            <label className="font-body text-xs text-mauve/70 block mb-1.5">Laudo do exame</label>
+            <input ref={fileRef} type="file" accept=".csv,.json,.pdf,image/*,text/csv,application/json,application/pdf" className="hidden"
+              onChange={e => { const f = e.target.files?.[0]; if (f) setFile(f); e.target.value = '' }} />
+            <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden"
+              onChange={e => { const f = e.target.files?.[0]; if (f) setFile(f); e.target.value = '' }} />
+            {file ? (
+              <div className="flex items-center justify-between gap-3 rounded-xl border border-petal/30 bg-blush/30 px-3 py-2">
+                <span className="inline-flex items-center gap-2 min-w-0">
+                  <Paperclip size={14} className="text-petal flex-shrink-0" />
+                  <span className="font-body text-xs text-onyx truncate">{file.name}</span>
+                </span>
+                <button onClick={() => setFile(null)} className="text-mauve/50 hover:text-red-500 flex-shrink-0"><X size={14} /></button>
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                <button onClick={() => fileRef.current?.click()}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-petal/40 text-petal font-body text-sm font-medium hover:bg-blush transition-colors">
+                  <Upload size={15} /> Selecionar arquivo
+                </button>
+                <button onClick={() => cameraRef.current?.click()}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-petal/40 text-petal font-body text-sm font-medium hover:bg-blush transition-colors">
+                  <Camera size={15} /> Tirar foto do laudo
+                </button>
+              </div>
+            )}
+            <p className="font-body text-[11px] text-mauve/50 mt-1.5">PDF ou foto do laudo (a IA transcreve), ou CSV/JSON estruturado. Opcional — você também pode criar vazio e adicionar resultados depois.</p>
+          </div>
+
           {err && <p className="font-body text-xs text-red-500">{err}</p>}
-          <div className="flex justify-end">
+          <div className="flex items-center justify-end gap-3">
+            {saving && progress && <span className="font-body text-xs text-mauve">{progress}</span>}
             <button onClick={save} disabled={saving}
               className="px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium disabled:opacity-40 hover:opacity-90 transition-opacity">
-              {saving ? 'Salvando…' : 'Criar painel'}
+              {saving ? 'Processando…' : file ? 'Criar e importar' : 'Criar exame'}
             </button>
           </div>
-          <p className="font-body text-[11px] text-mauve/50">Entrada manual. A importação por PDF/CSV entra em uma próxima fase.</p>
         </div>
       )}
 
@@ -127,8 +179,8 @@ export default function OmicsListPage() {
         <div className="card-premium p-10 text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></div>
       ) : panels.length === 0 ? (
         <div className="card-premium p-8 text-center space-y-1">
-          <p className="font-body text-sm text-mauve">Nenhum painel de ômica registrado ainda.</p>
-          <p className="font-body text-xs text-mauve/60">Use <strong>Novo painel</strong> para começar.</p>
+          <p className="font-body text-sm text-mauve">Nenhum exame de ômica registrado ainda.</p>
+          <p className="font-body text-xs text-mauve/60">Toque em <strong>Enviar exame</strong> e anexe o laudo (PDF, foto, CSV ou JSON).</p>
         </div>
       ) : (
         <div className="space-y-2">
