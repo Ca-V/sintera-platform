@@ -8,10 +8,10 @@
 // Entrada manual de resultado usa a RESOLUÇÃO DE IDENTIDADE do catálogo.
 // ============================================================
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
-import { Loader2, ArrowLeft, Dna, ChevronRight, ChevronDown, Plus, X, Trash2, ExternalLink } from 'lucide-react'
+import { Loader2, ArrowLeft, Dna, ChevronRight, ChevronDown, Plus, X, Trash2, ExternalLink, Upload, History } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import Sparkline, { parseNum } from '@/components/Sparkline'
@@ -140,8 +140,12 @@ export default function OmicsPanelPage() {
         )}
       </div>
 
-      <AddResult panelId={panel.id} domain={panel.domain} defaultDate={panel.collected_on}
-        onSaved={() => { setRowsByCat({}); setOpen(null); loadPanel() }} />
+      <div className="flex flex-wrap gap-2">
+        <AddResult panelId={panel.id} domain={panel.domain} defaultDate={panel.collected_on}
+          onSaved={() => { setRowsByCat({}); setOpen(null); loadPanel() }} />
+        <ImportResults panelId={panel.id}
+          onDone={() => { setRowsByCat({}); setOpen(null); loadPanel() }} />
+      </div>
 
       {/* Níveis 2 e 3 — categorias → features */}
       {categories.length === 0 ? (
@@ -304,7 +308,7 @@ function AddResult({ panelId, domain, defaultDate, onSaved }: {
   )
 
   return (
-    <div className="card-premium p-5 space-y-3">
+    <div className="card-premium p-5 space-y-3 w-full">
       <div className="flex items-center justify-between">
         <p className="font-body text-sm font-semibold text-onyx">Adicionar resultado</p>
         <button onClick={() => setShow(false)} className="text-mauve/50 hover:text-onyx"><X size={16} /></button>
@@ -352,6 +356,103 @@ function AddResult({ panelId, domain, defaultDate, onSaved }: {
           {saving ? 'Salvando…' : 'Salvar'}
         </button>
       </div>
+    </div>
+  )
+}
+
+// ── Ingestão estruturada (CSV/JSON) + versões ──────────────────────────────
+interface Version { version_number: number; source_file: string | null; note: string | null; created_at: string }
+
+function ImportResults({ panelId, onDone }: { panelId: string; onDone: () => void }) {
+  const { user } = useUser()
+  const supabase = createClient()
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState<string | null>(null)
+  const [err, setErr] = useState<string | null>(null)
+  const [versions, setVersions] = useState<Version[]>([])
+  const [showVersions, setShowVersions] = useState(false)
+
+  const loadVersions = useCallback(async () => {
+    const res = await fetch(`/api/omics/panels/${panelId}/versions`)
+    const json = await res.json().catch(() => ({ versions: [] }))
+    setVersions((json.versions ?? []) as Version[])
+  }, [panelId])
+
+  useEffect(() => { loadVersions() }, [loadVersions])
+
+  async function onFile(file: File) {
+    if (!user) return
+    const isJson = file.name.toLowerCase().endsWith('.json') || file.type.includes('json')
+    if (!isJson && !file.name.toLowerCase().endsWith('.csv') && !file.type.includes('csv') && !file.type.includes('text')) {
+      setErr('Envie um arquivo CSV ou JSON.'); return
+    }
+    if (file.size > 8 * 1024 * 1024) { setErr('Arquivo muito grande (máx. 8 MB).'); return }
+    setBusy(true); setErr(null); setMsg(null)
+    try {
+      const content = await file.text()
+      // Preserva o arquivo original (bucket privado).
+      let sourceUrl: string | null = null
+      const path = `${user.id}/omics/${crypto.randomUUID()}-${file.name}`
+      const { error: upErr } = await supabase.storage.from('exams').upload(path, file, { contentType: file.type || 'text/plain', upsert: false })
+      if (!upErr) {
+        const { data: signed } = await supabase.storage.from('exams').createSignedUrl(path, 60 * 60 * 24 * 365)
+        sourceUrl = signed?.signedUrl ?? null
+      }
+      const res = await fetch(`/api/omics/panels/${panelId}/ingest`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ format: isJson ? 'json' : 'csv', content, source_file: sourceUrl, note: file.name }),
+      })
+      const json = await res.json()
+      if (!res.ok) { setErr(json.error ?? 'Falha na importação.'); setBusy(false); return }
+      setMsg(`Versão v${json.version}: ${json.inserted} resultados importados (${json.resolved} identificados no catálogo).`)
+      await loadVersions(); onDone()
+    } catch {
+      setErr('Falha ao importar o arquivo.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="w-full">
+      <div className="flex flex-wrap items-center gap-2">
+        <input ref={fileRef} type="file" accept=".csv,.json,text/csv,application/json" className="hidden"
+          onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = '' }} />
+        <button onClick={() => fileRef.current?.click()} disabled={busy}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-petal/40 text-petal font-body text-sm font-medium hover:bg-blush transition-colors disabled:opacity-50">
+          {busy ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />} Importar CSV/JSON
+        </button>
+        {versions.length > 0 && (
+          <button onClick={() => setShowVersions(v => !v)}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full font-body text-xs text-mauve hover:text-petal transition-colors">
+            <History size={13} /> {versions.length} {versions.length === 1 ? 'versão' : 'versões'}
+          </button>
+        )}
+      </div>
+      {msg && <p className="font-body text-xs text-sage mt-2">{msg}</p>}
+      {err && <p className="font-body text-xs text-red-500 mt-2">{err}</p>}
+      {showVersions && versions.length > 0 && (
+        <div className="card-premium p-3 mt-2 space-y-1.5">
+          {versions.map(v => (
+            <div key={v.version_number} className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <span className="font-body text-xs font-semibold text-onyx">v{v.version_number}</span>
+                {v.note && <span className="font-body text-[11px] text-mauve/70"> · {v.note}</span>}
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <span className="font-body text-[10px] text-mauve/50">{fmtOmicsDate(v.created_at)}</span>
+                {v.source_file && (
+                  <a href={v.source_file} target="_blank" rel="noopener noreferrer" className="text-petal hover:underline" title="Arquivo original">
+                    <ExternalLink size={11} />
+                  </a>
+                )}
+              </div>
+            </div>
+          ))}
+          <p className="font-body text-[10px] text-mauve/50 pt-1">Nenhuma versão é sobrescrita — todas permanecem acessíveis.</p>
+        </div>
+      )}
     </div>
   )
 }
