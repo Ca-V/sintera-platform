@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Activity, TrendingUp, TrendingDown, Minus, ArrowRight, Loader2, FlaskConical } from 'lucide-react'
@@ -210,11 +211,16 @@ export default function MinhaSaudePage() {
             <Activity size={22} className="text-petal" />
           </div>
           <div>
-            <h1 className="font-display text-xl font-semibold text-onyx">Minha Saúde</h1>
+            <h1 className="font-display text-xl font-semibold text-onyx">Indicadores de saúde</h1>
             <p className="font-body text-sm text-mauve mt-0.5">
-              Visão geral dos seus biomarcadores — organização dos dados do laudo, sem diagnóstico
+              Os valores dos seus exames — organização dos dados do laudo, sem diagnóstico
             </p>
           </div>
+        </div>
+        {/* Abas: Atual (esta) · Evolução (histórico) */}
+        <div className="flex gap-2 mt-4">
+          <span className="px-3.5 py-1.5 rounded-full gradient-sintera text-white font-body text-sm font-medium">Atual</span>
+          <Link href="/dashboard/historico" className="px-3.5 py-1.5 rounded-full bg-ivory border border-border text-mauve font-body text-sm hover:border-petal/40 transition-colors">Evolução</Link>
         </div>
       </motion.div>
 

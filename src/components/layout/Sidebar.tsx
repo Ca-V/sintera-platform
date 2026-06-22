@@ -4,23 +4,53 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  LayoutDashboard, FileText, TrendingUp, Activity,
+  LayoutDashboard, FileText, Activity, Clock,
+  Pill, Ruler, Receipt, ClipboardList, CalendarDays, HeartPulse,
   Settings, X, LogOut, User, ChevronRight,
-  Sparkles, BarChart3, CalendarDays, Clock,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUser } from '@/context/UserContext'
 
-const navItems = [
-  { href: '/dashboard',            icon: LayoutDashboard, label: 'Visão Geral', soon: false },
-  { href: '/dashboard/saude',      icon: Activity,        label: 'Minha Saúde', soon: false },
-  { href: '/dashboard/timeline',   icon: Clock,           label: 'Minha Jornada', soon: false },
-  { href: '/dashboard/exams',      icon: FileText,        label: 'Exames',      soon: false },
-  { href: '/dashboard/historico',  icon: TrendingUp,      label: 'Histórico',   soon: false },
-  { href: '/dashboard/agenda',     icon: CalendarDays,    label: 'Planejamento', soon: false },
-  { href: '/dashboard/insights',   icon: Sparkles,        label: 'Insights',    soon: true  },
-  { href: '/dashboard/relatorios', icon: BarChart3,       label: 'Relatórios',  soon: true  },
+// Grupos da navegação. Cada item tem papel único:
+//  - Linha do tempo: eventos no tempo (consultas, procedimentos, remédios…)
+//  - Indicadores de saúde: valores dos exames (atual + evolução)
+//  - Documentos: arquivos (exames, receitas, orientações)
+const navGroups: {
+  title: string
+  items: { href: string; icon: React.ElementType; label: string; extra?: string[] }[]
+}[] = [
+  {
+    title: 'Principal',
+    items: [
+      { href: '/dashboard',           icon: LayoutDashboard, label: 'Visão Geral' },
+      { href: '/dashboard/timeline',  icon: Clock,           label: 'Linha do tempo' },
+      { href: '/dashboard/saude',     icon: Activity,        label: 'Indicadores de saúde', extra: ['/dashboard/historico'] },
+      { href: '/dashboard/exams',     icon: FileText,        label: 'Documentos' },
+    ],
+  },
+  {
+    title: 'Meus registros',
+    items: [
+      { href: '/dashboard/medicamentos', icon: Pill,    label: 'Medicamentos' },
+      { href: '/dashboard/medidas',      icon: Ruler,   label: 'Medidas' },
+      { href: '/dashboard/gastos',       icon: Receipt, label: 'Gastos com saúde' },
+    ],
+  },
+  {
+    title: 'Compartilhar e planejar',
+    items: [
+      { href: '/dashboard/relatorio',  icon: ClipboardList, label: 'Relatório' },
+      { href: '/dashboard/agenda',     icon: CalendarDays,  label: 'Agenda' },
+      { href: '/dashboard/prevencao',  icon: HeartPulse,    label: 'Cuidados' },
+    ],
+  },
 ]
+
+function isActive(pathname: string, href: string, extra?: string[]): boolean {
+  if (href === '/dashboard') return pathname === '/dashboard'
+  if (pathname === href || pathname.startsWith(href + '/')) return true
+  return (extra ?? []).some(e => pathname === e || pathname.startsWith(e + '/'))
+}
 
 interface SidebarProps { open: boolean; onClose: () => void }
 
@@ -89,17 +119,22 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
       </Link>
 
       {/* Navegação principal */}
-      <nav className="flex-1 px-3 overflow-y-auto">
-        <p className="text-[9px] font-body font-semibold text-white/25 uppercase tracking-[0.2em] px-3 mb-1.5">
-          Principal
-        </p>
-        <ul className="flex flex-col gap-0.5">
-          {navItems.map(item => (
-            <li key={item.href}>
-              <NavItem {...item} active={pathname === item.href} soon={item.soon} onClose={onClose} />
-            </li>
-          ))}
-        </ul>
+      <nav className="flex-1 px-3 overflow-y-auto pb-2">
+        {navGroups.map(group => (
+          <div key={group.title} className="mb-3">
+            <p className="text-[9px] font-body font-semibold text-white/25 uppercase tracking-[0.2em] px-3 mb-1.5">
+              {group.title}
+            </p>
+            <ul className="flex flex-col gap-0.5">
+              {group.items.map(item => (
+                <li key={item.href}>
+                  <NavItem href={item.href} icon={item.icon} label={item.label}
+                    active={isActive(pathname, item.href, item.extra)} onClose={onClose} />
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </nav>
 
       {/* Rodapé */}
