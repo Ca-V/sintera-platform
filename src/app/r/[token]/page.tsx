@@ -19,7 +19,8 @@ const PROF_LABEL: Record<string, string> = {
   fisioterapeuta: 'Fisioterapeuta', dentista: 'Dentista', outro: 'Outro profissional',
 }
 const METRIC_LABEL: Record<string, string> = {
-  peso: 'Peso', pressao_arterial: 'Pressão arterial', circunferencia_cintura: 'Circunferência (cintura)', outro: 'Outra medida',
+  peso: 'Peso', altura: 'Altura', pressao_arterial: 'Pressão arterial', circunferencia_cintura: 'Circunferência (cintura)',
+  gordura_corporal: 'Gordura corporal', massa_muscular: 'Massa muscular', outro: 'Outra medida',
 }
 
 function periodo(start: string | null, until: string | null): string {

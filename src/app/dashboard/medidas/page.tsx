@@ -13,17 +13,20 @@ import { Loader2, Plus, X, Activity, ArrowLeft, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 
-type Metric = 'peso' | 'pressao_arterial' | 'circunferencia_cintura' | 'outro'
+type Metric = 'peso' | 'altura' | 'pressao_arterial' | 'circunferencia_cintura' | 'gordura_corporal' | 'massa_muscular' | 'outro'
 
 const METRIC_LABEL: Record<Metric, string> = {
-  peso: 'Peso', pressao_arterial: 'Pressão arterial',
-  circunferencia_cintura: 'Circunferência (cintura)', outro: 'Outra medida',
+  peso: 'Peso', altura: 'Altura', pressao_arterial: 'Pressão arterial',
+  circunferencia_cintura: 'Circunferência (cintura)',
+  gordura_corporal: 'Gordura corporal', massa_muscular: 'Massa muscular', outro: 'Outra medida',
 }
 const DEFAULT_UNIT: Record<Metric, string> = {
-  peso: 'kg', pressao_arterial: 'mmHg', circunferencia_cintura: 'cm', outro: '',
+  peso: 'kg', altura: 'cm', pressao_arterial: 'mmHg', circunferencia_cintura: 'cm',
+  gordura_corporal: '%', massa_muscular: 'kg', outro: '',
 }
 const PLACEHOLDER: Record<Metric, string> = {
-  peso: 'Ex.: 72,5', pressao_arterial: 'Ex.: 120/80', circunferencia_cintura: 'Ex.: 84', outro: 'Valor',
+  peso: 'Ex.: 72,5', altura: 'Ex.: 165', pressao_arterial: 'Ex.: 120/80', circunferencia_cintura: 'Ex.: 84',
+  gordura_corporal: 'Ex.: 28', massa_muscular: 'Ex.: 24', outro: 'Valor',
 }
 
 interface Entry {
@@ -100,7 +103,7 @@ export default function MedidasPage() {
     await load(); setBusyId(null)
   }
 
-  const groups: Metric[] = ['peso', 'pressao_arterial', 'circunferencia_cintura', 'outro']
+  const groups: Metric[] = ['peso', 'altura', 'pressao_arterial', 'circunferencia_cintura', 'gordura_corporal', 'massa_muscular', 'outro']
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
@@ -131,8 +134,11 @@ export default function MedidasPage() {
               <select value={metric} onChange={e => chooseMetric(e.target.value as Metric)}
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
                 <option value="peso">Peso</option>
+                <option value="altura">Altura</option>
                 <option value="pressao_arterial">Pressão arterial</option>
                 <option value="circunferencia_cintura">Circunferência (cintura)</option>
+                <option value="gordura_corporal">Gordura corporal (bioimpedância)</option>
+                <option value="massa_muscular">Massa muscular (bioimpedância)</option>
                 <option value="outro">Outra medida</option>
               </select>
             </div>

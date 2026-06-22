@@ -27,7 +27,8 @@ interface Ex { type: string; date: string }
 interface Measure { metric: string; label: string | null; valueText: string; unit: string | null; date: string }
 
 const METRIC_LABEL: Record<string, string> = {
-  peso: 'Peso', pressao_arterial: 'Pressão arterial', circunferencia_cintura: 'Circunferência (cintura)', outro: 'Outra medida',
+  peso: 'Peso', altura: 'Altura', pressao_arterial: 'Pressão arterial', circunferencia_cintura: 'Circunferência (cintura)',
+  gordura_corporal: 'Gordura corporal', massa_muscular: 'Massa muscular', outro: 'Outra medida',
 }
 const PROF_LABEL: Record<string, string> = {
   medico: 'Médico(a)', psicologo: 'Psicólogo(a)', nutricionista: 'Nutricionista',
