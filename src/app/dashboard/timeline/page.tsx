@@ -290,9 +290,14 @@ export default function TimelinePage() {
         <div>
           <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Minha Jornada</h1>
           <p className="font-body text-sm text-mauve">Sua linha do tempo de saúde — exames, consultas, vacinas e procedimentos</p>
-          <Link href="/dashboard/gastos" className="inline-flex items-center gap-1 font-body text-xs text-petal hover:underline mt-1.5">
-            <Receipt size={13} /> Gastos com saúde
-          </Link>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5">
+            <Link href="/dashboard/gastos" className="inline-flex items-center gap-1 font-body text-xs text-petal hover:underline">
+              <Receipt size={13} /> Gastos com saúde
+            </Link>
+            <Link href="/dashboard/medicamentos" className="inline-flex items-center gap-1 font-body text-xs text-petal hover:underline">
+              <Pill size={13} /> Medicamentos
+            </Link>
+          </div>
         </div>
         <button onClick={() => (showForm ? (resetForm(), setShowForm(false)) : openCreate())}
           className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0">
