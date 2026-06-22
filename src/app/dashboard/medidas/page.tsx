@@ -114,7 +114,6 @@ export default function MedidasPage() {
 
       <div className="flex flex-wrap gap-2">
         <Link href="/dashboard/saude" className="px-3.5 py-1.5 rounded-full bg-ivory border border-border text-mauve font-body text-sm hover:border-petal/40 transition-colors">Atual</Link>
-        <Link href="/dashboard/historico" className="px-3.5 py-1.5 rounded-full bg-ivory border border-border text-mauve font-body text-sm hover:border-petal/40 transition-colors">Evolução</Link>
         <span className="px-3.5 py-1.5 rounded-full gradient-sintera text-white font-body text-sm font-medium">Medidas</span>
       </div>
 
