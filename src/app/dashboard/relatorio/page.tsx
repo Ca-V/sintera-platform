@@ -141,7 +141,7 @@ export default function RelatorioPage() {
       {/* Barra de ações — escondida na impressão */}
       <div className="flex items-center justify-between mb-6 print:hidden">
         <Link href="/dashboard/timeline" className="inline-flex items-center gap-1.5 font-body text-sm text-mauve hover:text-petal">
-          <ArrowLeft size={15} /> Minha Jornada
+          <ArrowLeft size={15} /> Histórico de Saúde
         </Link>
         <button onClick={() => window.print()}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity">

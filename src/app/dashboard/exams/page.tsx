@@ -251,7 +251,7 @@ export default function ExamsPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Documentos</h1>
+        <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Exames e Documentos</h1>
         <p className="font-body text-sm text-mauve">Envie seus <strong className="font-medium text-onyx/70">exames</strong> (extraímos os dados por IA), <strong className="font-medium text-onyx/70">receitas</strong> e outros arquivos de saúde — por PDF ou foto.</p>
       </motion.div>
 

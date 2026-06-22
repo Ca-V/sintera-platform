@@ -301,8 +301,8 @@ export default function TimelinePage() {
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
         className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Minha Jornada</h1>
-          <p className="font-body text-sm text-mauve">Sua linha do tempo de saúde — exames, consultas, vacinas e procedimentos</p>
+          <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Histórico de Saúde</h1>
+          <p className="font-body text-sm text-mauve">Seu acompanhamento longitudinal — a linha do tempo com exames, consultas, vacinas, procedimentos e medicamentos</p>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5">
             <Link href="/dashboard/gastos" className="inline-flex items-center gap-1 font-body text-xs text-petal hover:underline">
               <Receipt size={13} /> Gastos com saúde

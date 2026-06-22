@@ -77,7 +77,7 @@ export default function GastosPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
       <Link href="/dashboard/timeline" className="inline-flex items-center gap-1.5 font-body text-sm text-mauve hover:text-petal transition-colors">
-        <ArrowLeft size={15} /> Minha Jornada
+        <ArrowLeft size={15} /> Histórico de Saúde
       </Link>
 
       <div>
@@ -104,7 +104,7 @@ export default function GastosPage() {
       ) : items.length === 0 ? (
         <div className="card-premium p-8 text-center">
           <p className="font-body text-sm text-mauve">
-            Nenhum gasto registrado ainda. Ao adicionar um evento em <Link href="/dashboard/timeline" className="text-petal hover:underline">Minha Jornada</Link>,
+            Nenhum gasto registrado ainda. Ao adicionar um evento em <Link href="/dashboard/timeline" className="text-petal hover:underline">Histórico de Saúde</Link>,
             informe o <strong>valor pago</strong> e anexe a <strong>nota fiscal</strong> — eles aparecem aqui.
           </p>
         </div>

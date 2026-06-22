@@ -4,44 +4,58 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  LayoutDashboard, FileText, Activity, Clock,
-  Pill, Ruler, Receipt, ClipboardList, CalendarDays, HeartPulse,
+  LayoutDashboard, FileText, Activity, Clock, Pill, Receipt, CalendarDays,
+  HeartPulse, Stethoscope, Users, ScrollText,
   Settings, X, LogOut, User, ChevronRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUser } from '@/context/UserContext'
 
-// Grupos da navegação. Cada item tem papel único:
-//  - Linha do tempo: eventos no tempo (consultas, procedimentos, remédios…)
-//  - Indicadores de saúde: valores dos exames (atual + evolução)
-//  - Documentos: arquivos (exames, receitas, orientações)
+// Arquitetura de navegação (governança/organização da saúde — sem suporte à
+// decisão clínica). Cada item tem papel único.
 const navGroups: {
   title: string
   items: { href: string; icon: React.ElementType; label: string; extra?: string[] }[]
 }[] = [
   {
-    title: 'Principal',
+    title: 'Painel',
     items: [
-      { href: '/dashboard',           icon: LayoutDashboard, label: 'Visão Geral' },
-      { href: '/dashboard/timeline',  icon: Clock,           label: 'Linha do tempo' },
-      { href: '/dashboard/saude',     icon: Activity,        label: 'Indicadores de saúde', extra: ['/dashboard/historico'] },
-      { href: '/dashboard/exams',     icon: FileText,        label: 'Documentos' },
+      { href: '/dashboard', icon: LayoutDashboard, label: 'Painel Inicial' },
     ],
   },
   {
-    title: 'Meus registros',
+    title: 'Minhas informações',
     items: [
-      { href: '/dashboard/medicamentos', icon: Pill,    label: 'Medicamentos' },
-      { href: '/dashboard/medidas',      icon: Ruler,   label: 'Medidas' },
-      { href: '/dashboard/gastos',       icon: Receipt, label: 'Gastos com saúde' },
+      { href: '/dashboard/exams',        icon: FileText,  label: 'Exames e Documentos' },
+      { href: '/dashboard/medicamentos', icon: Pill,      label: 'Medicamentos e Suplementos' },
+      { href: '/dashboard/saude',        icon: Activity,  label: 'Indicadores de Saúde', extra: ['/dashboard/historico', '/dashboard/medidas'] },
+      { href: '/dashboard/timeline',     icon: Clock,     label: 'Histórico de Saúde' },
     ],
   },
   {
-    title: 'Compartilhar e planejar',
+    title: 'Organização',
     items: [
-      { href: '/dashboard/relatorio',  icon: ClipboardList, label: 'Relatório' },
-      { href: '/dashboard/agenda',     icon: CalendarDays,  label: 'Agenda' },
-      { href: '/dashboard/prevencao',  icon: HeartPulse,    label: 'Cuidados' },
+      { href: '/dashboard/agenda', icon: CalendarDays, label: 'Planejamento de Saúde' },
+    ],
+  },
+  {
+    title: 'Contexto',
+    items: [
+      { href: '/dashboard/habitos',   icon: HeartPulse,   label: 'Hábitos de Vida' },
+      { href: '/dashboard/condicoes', icon: Stethoscope,  label: 'Condições de Saúde' },
+      { href: '/dashboard/familiar',  icon: Users,        label: 'Histórico Familiar' },
+    ],
+  },
+  {
+    title: 'Compartilhar',
+    items: [
+      { href: '/dashboard/relatorio', icon: ScrollText, label: 'Relatórios' },
+    ],
+  },
+  {
+    title: 'Financeiro',
+    items: [
+      { href: '/dashboard/gastos', icon: Receipt, label: 'Gastos com Saúde' },
     ],
   },
 ]

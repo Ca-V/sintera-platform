@@ -108,18 +108,24 @@ export default function MedidasPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
-      <Link href="/dashboard/timeline" className="inline-flex items-center gap-1.5 font-body text-sm text-mauve hover:text-petal transition-colors">
-        <ArrowLeft size={15} /> Minha Jornada
+      <Link href="/dashboard/saude" className="inline-flex items-center gap-1.5 font-body text-sm text-mauve hover:text-petal transition-colors">
+        <ArrowLeft size={15} /> Indicadores de Saúde
       </Link>
+
+      <div className="flex flex-wrap gap-2">
+        <Link href="/dashboard/saude" className="px-3.5 py-1.5 rounded-full bg-ivory border border-border text-mauve font-body text-sm hover:border-petal/40 transition-colors">Atual</Link>
+        <Link href="/dashboard/historico" className="px-3.5 py-1.5 rounded-full bg-ivory border border-border text-mauve font-body text-sm hover:border-petal/40 transition-colors">Evolução</Link>
+        <span className="px-3.5 py-1.5 rounded-full gradient-sintera text-white font-body text-sm font-medium">Medidas</span>
+      </div>
 
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-1.5 text-petal mb-2">
             <Activity size={16} />
-            <span className="font-body text-xs font-medium uppercase tracking-wider">Medidas corporais</span>
+            <span className="font-body text-xs font-medium uppercase tracking-wider">Indicadores de Saúde</span>
           </div>
           <h1 className="font-display text-2xl font-semibold text-onyx">Minhas medidas</h1>
-          <p className="font-body text-sm text-mauve mt-1">Acompanhe peso, pressão e outras medidas ao longo do tempo. Registro seu — sem juízo clínico.</p>
+          <p className="font-body text-sm text-mauve mt-1">Acompanhe peso, altura, pressão e outras medidas ao longo do tempo. Registro seu — sem juízo clínico.</p>
         </div>
         <button onClick={() => (showForm ? (reset(), setShowForm(false)) : (reset(), setShowForm(true)))}
           className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0">

@@ -350,7 +350,7 @@ export default function MedicamentosPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
       <Link href="/dashboard/timeline" className="inline-flex items-center gap-1.5 font-body text-sm text-mauve hover:text-petal transition-colors">
-        <ArrowLeft size={15} /> Minha Jornada
+        <ArrowLeft size={15} /> Histórico de Saúde
       </Link>
 
       <div className="flex items-start justify-between gap-4">
