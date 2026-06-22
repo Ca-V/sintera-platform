@@ -4,8 +4,8 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
-  FileText, TrendingUp, Upload,
-  CheckCircle, Clock, AlertCircle, ArrowRight, FlaskConical, CalendarDays,
+  FileText, Activity, Clock, Pill, ScrollText, CalendarDays,
+  Upload, CheckCircle, AlertCircle, ArrowRight, FlaskConical, Bell, ChevronRight,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
@@ -31,11 +31,21 @@ function formatDate(iso: string) {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
-  processed:  { label: 'Dados extraídos',   color: 'text-sage',     bg: 'bg-sage-light',     icon: CheckCircle },
-  pending:    { label: 'Aguardando',  color: 'text-gold',     bg: 'bg-warm',           icon: Clock       },
-  processing: { label: 'Processando', color: 'text-lavender', bg: 'bg-lavender-light', icon: Clock       },
-  error:      { label: 'Erro',        color: 'text-red-400',  bg: 'bg-red-50',         icon: AlertCircle },
+  processed:  { label: 'Dados extraídos', color: 'text-sage',     bg: 'bg-sage-light',     icon: CheckCircle },
+  pending:    { label: 'Aguardando',      color: 'text-gold',     bg: 'bg-warm',           icon: Clock       },
+  processing: { label: 'Processando',     color: 'text-lavender', bg: 'bg-lavender-light', icon: Clock       },
+  error:      { label: 'Erro',            color: 'text-red-400',  bg: 'bg-red-50',         icon: AlertCircle },
 }
+
+// Acesso rápido — usa exatamente a nomenclatura do menu lateral esquerdo.
+const QUICK_ACCESS: { href: string; icon: React.ElementType; label: string; desc: string; tile: string; tint: string }[] = [
+  { href: '/dashboard/exams',        icon: FileText,    label: 'Exames e Documentos',       desc: 'Laudos e arquivos',              tile: 'bg-blush',          tint: 'text-petal' },
+  { href: '/dashboard/saude',        icon: Activity,    label: 'Indicadores de Saúde',      desc: 'Valores atuais dos exames',      tile: 'bg-lavender-light', tint: 'text-lavender' },
+  { href: '/dashboard/timeline',     icon: Clock,       label: 'Histórico de Saúde',        desc: 'Linha do tempo e evolução',      tile: 'bg-sage-light',     tint: 'text-sage' },
+  { href: '/dashboard/agenda',       icon: CalendarDays,label: 'Planejamento de Saúde',     desc: 'Agenda e lembretes',             tile: 'bg-warm',           tint: 'text-gold' },
+  { href: '/dashboard/medicamentos', icon: Pill,        label: 'Medicamentos e Suplementos',desc: 'Em uso e recompra',              tile: 'bg-sage-light',     tint: 'text-sage' },
+  { href: '/dashboard/relatorio',    icon: ScrollText,  label: 'Relatórios',                desc: 'Compartilhar com profissionais', tile: 'bg-blush',          tint: 'text-petal' },
+]
 
 export default function DashboardPage() {
   const { user, profile } = useUser()
@@ -90,8 +100,10 @@ export default function DashboardPage() {
     setLoading(false)
   }
 
+  const isEmpty = !loading && stats?.totalExams === 0 && journey.count === 0
+
   return (
-    <div className="max-w-4xl mx-auto space-y-5">
+    <div className="max-w-4xl mx-auto space-y-6">
 
       {/* Saudação */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
@@ -103,47 +115,47 @@ export default function DashboardPage() {
         </p>
       </motion.div>
 
-      {/* Cards de estatísticas */}
-      {!loading && stats && (
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {/* ───────────────────────── Destaques (o mais importante, no topo) ───────────────────────── */}
 
-          <div className="card-premium p-4 text-center">
-            <div className="w-9 h-9 rounded-xl bg-blush flex items-center justify-center mx-auto mb-2">
-              <FileText size={17} className="text-petal" />
-            </div>
-            <p className="font-display text-2xl font-bold text-onyx">{stats.totalExams}</p>
-            <p className="font-body text-xs text-mauve mt-0.5">Exame{stats.totalExams !== 1 ? 's' : ''}</p>
+      {/* Próximo no Planejamento de Saúde — sensível ao tempo */}
+      {!loading && journey.next && (
+        <motion.button
+          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 }}
+          onClick={() => router.push('/dashboard/agenda')}
+          className="w-full card-premium p-5 text-left flex items-center gap-4 hover:shadow-md transition-shadow group gradient-sintera-soft">
+          <div className="w-12 h-12 rounded-2xl bg-white/70 flex items-center justify-center flex-shrink-0">
+            <CalendarDays size={22} className="text-petal" />
           </div>
-
-          <div className="card-premium p-4 text-center">
-            <div className="w-9 h-9 rounded-xl bg-sage-light flex items-center justify-center mx-auto mb-2">
-              <CheckCircle size={17} className="text-sage" />
-            </div>
-            <p className="font-display text-2xl font-bold text-onyx">{stats.processedExams}</p>
-            <p className="font-body text-xs text-mauve mt-0.5">Extraído{stats.processedExams !== 1 ? 's' : ''}</p>
+          <div className="flex-1 min-w-0">
+            <p className="font-body text-[11px] font-medium uppercase tracking-wider text-petal">Planejamento de Saúde · próximo</p>
+            <p className="font-body text-sm font-semibold text-onyx truncate mt-0.5">{journey.next.title}</p>
+            <p className="font-body text-xs text-mauve mt-0.5">{formatDate(journey.next.date)}</p>
           </div>
-
-          <div className="card-premium p-4 text-center">
-            <div className="w-9 h-9 rounded-xl bg-lavender-light flex items-center justify-center mx-auto mb-2">
-              <FlaskConical size={17} className="text-lavender" />
-            </div>
-            <p className="font-display text-2xl font-bold text-onyx">{stats.totalBiomarkers}</p>
-            <p className="font-body text-xs text-mauve mt-0.5">Biomarcadores</p>
-          </div>
-
-          <div className="card-premium p-4 text-center">
-            <div className="w-9 h-9 rounded-xl bg-warm flex items-center justify-center mx-auto mb-2">
-              <TrendingUp size={17} className="text-gold" />
-            </div>
-            <p className="font-display text-2xl font-bold text-onyx">{stats.pendingExams}</p>
-            <p className="font-body text-xs text-mauve mt-0.5">Aguardando</p>
-          </div>
-        </motion.div>
+          <ChevronRight size={18} className="text-petal/50 group-hover:text-petal transition-colors flex-shrink-0" />
+        </motion.button>
       )}
 
-      {/* Estado vazio — nenhum exame e nenhuma jornada ainda */}
-      {!loading && stats?.totalExams === 0 && journey.count === 0 && (
+      {/* Exames aguardando extração — sensível ao tempo */}
+      {!loading && stats && stats.pendingExams > 0 && (
+        <motion.button
+          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}
+          onClick={() => router.push('/dashboard/exams')}
+          className="w-full card-premium p-4 text-left flex items-center gap-3 hover:shadow-md transition-shadow group">
+          <div className="w-9 h-9 rounded-xl bg-warm flex items-center justify-center flex-shrink-0">
+            <Bell size={16} className="text-gold" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-body text-sm font-semibold text-onyx">
+              {stats.pendingExams} exame{stats.pendingExams !== 1 ? 's' : ''} aguardando extração
+            </p>
+            <p className="font-body text-xs text-mauve mt-0.5">Em Exames e Documentos</p>
+          </div>
+          <ChevronRight size={16} className="text-mauve/40 group-hover:text-gold transition-colors flex-shrink-0" />
+        </motion.button>
+      )}
+
+      {/* ───────────────────────── Estado vazio ───────────────────────── */}
+      {isEmpty && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
           className="card-premium p-10 text-center">
           <div className="w-16 h-16 rounded-2xl gradient-sintera-soft flex items-center justify-center mx-auto mb-4">
@@ -161,72 +173,77 @@ export default function DashboardPage() {
         </motion.div>
       )}
 
-      {/* Ações rápidas */}
-      {!loading && stats && (stats.totalExams > 0 || journey.count > 0) && (
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-
-          <button
-            onClick={() => router.push('/dashboard/exams')}
-            className="card-premium p-5 text-left flex items-center gap-4 hover:shadow-md transition-shadow group">
-            <div className="w-11 h-11 rounded-2xl gradient-sintera-soft flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-              <Upload size={20} className="text-petal" />
-            </div>
-            <div className="flex-1">
-              <p className="font-body text-sm font-semibold text-onyx">Enviar novo exame</p>
-              <p className="font-body text-xs text-mauve mt-0.5">Upload de PDF · extração automática</p>
-            </div>
-            <ArrowRight size={15} className="text-mauve/40 group-hover:text-petal transition-colors flex-shrink-0" />
-          </button>
-
-          <button
-            onClick={() => router.push('/dashboard/historico')}
-            className="card-premium p-5 text-left flex items-center gap-4 hover:shadow-md transition-shadow group">
-            <div className="w-11 h-11 rounded-2xl bg-sage-light flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-              <TrendingUp size={20} className="text-sage" />
-            </div>
-            <div className="flex-1">
-              <p className="font-body text-sm font-semibold text-onyx">Ver histórico</p>
-              <p className="font-body text-xs text-mauve mt-0.5">Evolução dos seus biomarcadores</p>
-            </div>
-            <ArrowRight size={15} className="text-mauve/40 group-hover:text-sage transition-colors flex-shrink-0" />
-          </button>
-
-          <button
-            onClick={() => setAgendar(true)}
-            className="card-premium p-5 text-left flex items-center gap-4 hover:shadow-md transition-shadow group">
-            <div className="w-11 h-11 rounded-2xl bg-lavender-light flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-              <CalendarDays size={20} className="text-lavender" />
-            </div>
-            <div className="flex-1">
-              <p className="font-body text-sm font-semibold text-onyx">Criar lembrete de consulta ou exame</p>
-              <p className="font-body text-xs text-mauve mt-0.5">Adiciona ao Google, Outlook ou .ics</p>
-            </div>
-            <ArrowRight size={15} className="text-mauve/40 group-hover:text-lavender transition-colors flex-shrink-0" />
-          </button>
-
-          <button
-            onClick={() => router.push('/dashboard/timeline')}
-            className="card-premium p-5 text-left flex items-center gap-4 hover:shadow-md transition-shadow group">
-            <div className="w-11 h-11 rounded-2xl bg-blush flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-              <Clock size={20} className="text-petal" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-body text-sm font-semibold text-onyx">Histórico de Saúde</p>
-              <p className="font-body text-xs text-mauve mt-0.5 truncate">
-                {journey.next ? `Próximo: ${journey.next.title} · ${formatDate(journey.next.date)}`
-                  : journey.last ? `Último: ${journey.last.title}`
-                  : 'Registre consultas, vacinas e procedimentos'}
-              </p>
-            </div>
-            <ArrowRight size={15} className="text-mauve/40 group-hover:text-petal transition-colors flex-shrink-0" />
-          </button>
+      {/* ───────────────────────── Acesso rápido (nomenclatura do menu) ───────────────────────── */}
+      {!isEmpty && (
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
+          <div className="flex items-center justify-between mb-2.5">
+            <p className="font-body text-sm font-semibold text-onyx">Acesso rápido</p>
+            <button onClick={() => setAgendar(true)}
+              className="inline-flex items-center gap-1.5 font-body text-xs font-medium text-petal hover:underline">
+              <Bell size={13} /> Criar lembrete
+            </button>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {QUICK_ACCESS.map(card => {
+              const Icon = card.icon
+              return (
+                <button key={card.href}
+                  onClick={() => router.push(card.href)}
+                  className="card-premium p-4 text-left flex flex-col gap-2.5 hover:shadow-md transition-shadow group">
+                  <div className={`w-10 h-10 rounded-2xl ${card.tile} flex items-center justify-center group-hover:scale-105 transition-transform`}>
+                    <Icon size={19} className={card.tint} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-body text-sm font-semibold text-onyx leading-tight">{card.label}</p>
+                    <p className="font-body text-xs text-mauve mt-0.5">{card.desc}</p>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
         </motion.div>
       )}
 
-      {/* Exames recentes */}
-      {!loading && recentExams.length > 0 && (
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+      {/* ───────────────────────── Resumo (números) ───────────────────────── */}
+      {!isEmpty && !loading && stats && (
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
+          <p className="font-body text-sm font-semibold text-onyx mb-2.5">Resumo</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="card-premium p-4 text-center">
+              <div className="w-9 h-9 rounded-xl bg-blush flex items-center justify-center mx-auto mb-2">
+                <FileText size={17} className="text-petal" />
+              </div>
+              <p className="font-display text-2xl font-bold text-onyx">{stats.totalExams}</p>
+              <p className="font-body text-xs text-mauve mt-0.5">Exame{stats.totalExams !== 1 ? 's' : ''}</p>
+            </div>
+            <div className="card-premium p-4 text-center">
+              <div className="w-9 h-9 rounded-xl bg-sage-light flex items-center justify-center mx-auto mb-2">
+                <CheckCircle size={17} className="text-sage" />
+              </div>
+              <p className="font-display text-2xl font-bold text-onyx">{stats.processedExams}</p>
+              <p className="font-body text-xs text-mauve mt-0.5">Extraído{stats.processedExams !== 1 ? 's' : ''}</p>
+            </div>
+            <div className="card-premium p-4 text-center">
+              <div className="w-9 h-9 rounded-xl bg-lavender-light flex items-center justify-center mx-auto mb-2">
+                <FlaskConical size={17} className="text-lavender" />
+              </div>
+              <p className="font-display text-2xl font-bold text-onyx">{stats.totalBiomarkers}</p>
+              <p className="font-body text-xs text-mauve mt-0.5">Biomarcadores</p>
+            </div>
+            <div className="card-premium p-4 text-center">
+              <div className="w-9 h-9 rounded-xl bg-warm flex items-center justify-center mx-auto mb-2">
+                <Clock size={17} className="text-gold" />
+              </div>
+              <p className="font-display text-2xl font-bold text-onyx">{stats.pendingExams}</p>
+              <p className="font-body text-xs text-mauve mt-0.5">Aguardando</p>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* ───────────────────────── Exames recentes ───────────────────────── */}
+      {!isEmpty && !loading && recentExams.length > 0 && (
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }}
           className="card-premium overflow-hidden">
           <div className="px-5 py-3.5 border-b border-border/40 flex items-center justify-between">
             <p className="font-body text-sm font-semibold text-onyx">Exames recentes</p>
