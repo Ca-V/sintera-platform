@@ -14,6 +14,7 @@ import Link from 'next/link'
 import { Loader2, Plus, X, Pill, ArrowLeft, Pencil, Trash2, PauseCircle, PlayCircle, Camera } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
+import VoiceInput from '@/components/VoiceInput'
 
 type Status = 'em_uso' | 'suspenso'
 type Kind = 'medicamento' | 'suplemento'
@@ -404,8 +405,11 @@ export default function MedicamentosPage() {
           </div>
           <div>
             <label className="font-body text-xs text-mauve/70 block mb-1">Observações (opcional)</label>
-            <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2}
-              className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+            <div className="flex items-start gap-2">
+              <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2}
+                className="flex-1 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+              <VoiceInput onResult={t => setNotes(v => (v ? v + ' ' : '') + t)} />
+            </div>
           </div>
 
           {/* Compra e recompra (opcional) */}
