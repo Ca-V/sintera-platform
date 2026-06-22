@@ -98,7 +98,7 @@ export default function OmicsListPage() {
             <span className="font-body text-xs font-medium uppercase tracking-wider">Exames e Documentos</span>
           </div>
           <h1 className="font-display text-2xl font-semibold text-onyx">Ômica</h1>
-          <p className="font-body text-sm text-mauve mt-1">Metabolômica, proteômica, microbioma e outros. A SINTERA organiza, versiona e compara seus dados — sem interpretação clínica.</p>
+          <p className="font-body text-sm text-mauve mt-1">Metabolômica, proteômica, microbioma e outros. Toque em <strong className="text-onyx/70 font-medium">Enviar exame</strong> e anexe o laudo (PDF, foto, CSV ou JSON). A SINTERA organiza, versiona e compara seus dados — sem interpretação clínica.</p>
         </div>
         <button onClick={() => (showForm ? (reset(), setShowForm(false)) : (reset(), setShowForm(true)))}
           className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0">
