@@ -13,16 +13,20 @@ import { createClient } from '@/lib/supabase/server'
 
 const MODEL = 'claude-haiku-4-5-20251001'
 
-const SYSTEM = `Você transcreve, de uma imagem, informações de medicamentos/suplementos.
-A imagem pode ser uma caixa/embalagem ou uma receita. Liste os itens visíveis.
-Para cada item, extraia:
-- name: nome do produto (obrigatório)
-- dose: concentração/dose se visível (ex.: "50 mg", "1000 UI") ou null
-- frequency: posologia se indicada (ex.: "1x ao dia", "8/8h") ou null
-Responda APENAS com JSON válido: {"items":[{"name":"","dose":null,"frequency":null}]}.
-Transcreva só o que está visível — não invente. Não forneça orientação médica.`
+const SYSTEM = `Você extrai medicamentos/suplementos de uma IMAGEM (caixa/embalagem ou receita)
+ou de uma FALA transcrita. Liste os itens. Para cada item, SEPARE bem:
+- name: apenas o nome do produto, sem dose nem frequência. Ex.: "Losartana", "Vitamina D".
+- dose: quantidade por vez. Ex.: "50 mg", "2 comprimidos", "1000 UI". null se ausente.
+- frequency: com que frequência usa. Ex.: "1x ao dia", "2x por semana", "de 8 em 8 horas",
+  "1 comprimido à noite". null se ausente.
+- started_on: data de início NO FORMATO YYYY-MM-DD, se a pessoa indicar quando começou
+  (resolva expressões como "desde ontem", "semana passada", "dia 10" usando a data de HOJE
+  informada na mensagem). null se não indicada.
+Responda APENAS com JSON válido: {"items":[{"name":"","dose":null,"frequency":null,"started_on":null}]}.
+NÃO coloque dose ou frequência dentro de name — separe nos campos certos.
+Não invente o que não foi dito/visto. Não forneça orientação médica.`
 
-interface ScanItem { name: string; dose: string | null; frequency: string | null }
+interface ScanItem { name: string; dose: string | null; frequency: string | null; startedOn: string | null }
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -46,7 +50,7 @@ export async function POST(req: NextRequest) {
         { type: 'text', text: 'Transcreva os medicamentos/suplementos desta imagem no formato JSON pedido.' },
       ]
     : [
-        { type: 'text', text: `A pessoa ditou: "${text.slice(0, 500)}". Extraia os medicamentos/suplementos no formato JSON pedido.` },
+        { type: 'text', text: `HOJE é ${new Date().toISOString().slice(0, 10)}. A pessoa ditou: "${text.slice(0, 500)}". Extraia os medicamentos/suplementos no formato JSON pedido, separando nome, dose, frequência e início de uso.` },
       ]
   let raw = ''
   try {
@@ -79,6 +83,7 @@ export async function POST(req: NextRequest) {
               name: name.slice(0, 120),
               dose: typeof o.dose === 'string' && o.dose.trim() ? o.dose.trim().slice(0, 60) : null,
               frequency: typeof o.frequency === 'string' && o.frequency.trim() ? o.frequency.trim().slice(0, 60) : null,
+              startedOn: typeof o.started_on === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(o.started_on.trim()) ? o.started_on.trim() : null,
             }
           })
           .filter((x): x is ScanItem => x !== null)

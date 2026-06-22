@@ -90,7 +90,7 @@ export default function MedicamentosPage() {
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [scanning, setScanning] = useState(false)
-  const [scanResults, setScanResults] = useState<{ name: string; dose: string | null; frequency: string | null }[]>([])
+  const [scanResults, setScanResults] = useState<{ name: string; dose: string | null; frequency: string | null; startedOn?: string | null }[]>([])
 
   async function handleScan(file: File) {
     setErr(null); setScanning(true); setScanResults([])
@@ -124,14 +124,15 @@ export default function MedicamentosPage() {
       const j = await resp.json()
       if (!resp.ok) { setErr(j.error ?? 'Falha ao interpretar.'); return }
       // Sem itens estruturados → usa a própria fala como nome (a usuária ajusta).
-      setScanResults(j.items?.length ? j.items : [{ name: text.trim(), dose: null, frequency: null }])
+      setScanResults(j.items?.length ? j.items : [{ name: text.trim(), dose: null, frequency: null, startedOn: null }])
       setShowForm(false)
     } finally { setScanning(false) }
   }
 
-  function useScanned(it: { name: string; dose: string | null; frequency: string | null }) {
+  function useScanned(it: { name: string; dose: string | null; frequency: string | null; startedOn?: string | null }) {
     setEditingId(null); setKind('medicamento'); setName(it.name); setDose(it.dose ?? ''); setFreq(it.frequency ?? '')
-    setStartedOn(''); setUntilOn(''); setNotes(''); setErr(null)
+    setStartedOn(it.startedOn ?? ''); setUntilOn(''); setNotes('')
+    setPackQty(''); setDailyCons(''); setPurchasedOn(''); setPurchaseStatus(''); setRepurchase(false); setErr(null)
     setScanResults(prev => prev.filter(x => x !== it))
     setShowForm(true)
   }
@@ -372,7 +373,7 @@ export default function MedicamentosPage() {
             <div key={i} className="flex items-center justify-between gap-3 rounded-xl border border-border bg-ivory px-3 py-2">
               <div className="min-w-0">
                 <p className="font-body text-sm font-semibold text-onyx truncate">{it.name}</p>
-                <p className="font-body text-[11px] text-mauve/70">{[it.dose, it.frequency].filter(Boolean).join(' · ') || 'Sem dose/frequência detectada'}</p>
+                <p className="font-body text-[11px] text-mauve/70">{[it.dose, it.frequency, it.startedOn ? `desde ${it.startedOn}` : null].filter(Boolean).join(' · ') || 'Sem dose/frequência detectada'}</p>
               </div>
               <button onClick={() => useScanned(it)}
                 className="px-3 py-1.5 rounded-full gradient-sintera text-white font-body text-xs font-medium flex-shrink-0 hover:opacity-90">Usar</button>
