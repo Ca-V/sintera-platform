@@ -113,6 +113,22 @@ export default function MedicamentosPage() {
     } finally { setScanning(false) }
   }
 
+  async function handleVoiceAdd(text: string) {
+    if (!text.trim()) return
+    setErr(null); setScanning(true); setScanResults([])
+    try {
+      const resp = await fetch('/api/medications/scan', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      })
+      const j = await resp.json()
+      if (!resp.ok) { setErr(j.error ?? 'Falha ao interpretar.'); return }
+      // Sem itens estruturados → usa a própria fala como nome (a usuária ajusta).
+      setScanResults(j.items?.length ? j.items : [{ name: text.trim(), dose: null, frequency: null }])
+      setShowForm(false)
+    } finally { setScanning(false) }
+  }
+
   function useScanned(it: { name: string; dose: string | null; frequency: string | null }) {
     setEditingId(null); setKind('medicamento'); setName(it.name); setDose(it.dose ?? ''); setFreq(it.frequency ?? '')
     setStartedOn(''); setUntilOn(''); setNotes(''); setErr(null)
@@ -339,6 +355,8 @@ export default function MedicamentosPage() {
             {scanning ? <Loader2 size={15} className="animate-spin" /> : <Camera size={15} />}
             {scanning ? 'Lendo…' : 'Escanear foto'}
           </label>
+          <VoiceInput onResult={handleVoiceAdd} label="Falar" title="Adicionar por voz"
+            className="flex items-center gap-2 px-4 py-2 rounded-full border border-petal/40 text-petal font-body text-sm font-medium hover:bg-blush transition-colors" />
         </div>
       </div>
 
@@ -375,8 +393,11 @@ export default function MedicamentosPage() {
           </div>
           <div>
             <label className="font-body text-xs text-mauve/70 block mb-1">Nome do {kind === 'suplemento' ? 'suplemento' : 'medicamento'}</label>
-            <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder={kind === 'suplemento' ? 'Ex.: Vitamina D' : 'Ex.: Losartana'}
-              className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+            <div className="flex items-center gap-2">
+              <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder={kind === 'suplemento' ? 'Ex.: Vitamina D' : 'Ex.: Losartana'}
+                className="flex-1 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+              <VoiceInput onResult={t => setName(v => (v ? v + ' ' : '') + t)} />
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>

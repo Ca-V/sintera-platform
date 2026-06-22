@@ -29,14 +29,25 @@ export async function POST(req: NextRequest) {
   const { data: auth } = await supabase.auth.getUser()
   if (!auth.user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
-  let body: { imageBase64?: string; mediaType?: string }
+  let body: { imageBase64?: string; mediaType?: string; text?: string }
   try { body = await req.json() } catch { return NextResponse.json({ error: 'Corpo inválido' }, { status: 400 }) }
   const imageBase64 = body.imageBase64
   const mediaType = body.mediaType || 'image/jpeg'
-  if (!imageBase64) return NextResponse.json({ error: 'Imagem ausente' }, { status: 400 })
+  const text = typeof body.text === 'string' ? body.text.trim() : ''
+  if (!imageBase64 && !text) return NextResponse.json({ error: 'Imagem ou texto ausente' }, { status: 400 })
   if (!process.env.ANTHROPIC_API_KEY) return NextResponse.json({ error: 'IA indisponível' }, { status: 503 })
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: 60_000 })
+  // Conteúdo: foto (visão) OU texto ditado pela usuária.
+  const content = imageBase64
+    ? [
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        { type: 'image', source: { type: 'base64', media_type: mediaType as any, data: imageBase64 } } as any,
+        { type: 'text', text: 'Transcreva os medicamentos/suplementos desta imagem no formato JSON pedido.' },
+      ]
+    : [
+        { type: 'text', text: `A pessoa ditou: "${text.slice(0, 500)}". Extraia os medicamentos/suplementos no formato JSON pedido.` },
+      ]
   let raw = ''
   try {
     const msg = await client.messages.create({
@@ -44,18 +55,12 @@ export async function POST(req: NextRequest) {
       max_tokens: 1024,
       temperature: 0,
       system: SYSTEM,
-      messages: [{
-        role: 'user',
-        content: [
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          { type: 'image', source: { type: 'base64', media_type: mediaType as any, data: imageBase64 } },
-          { type: 'text', text: 'Transcreva os medicamentos/suplementos desta imagem no formato JSON pedido.' },
-        ],
-      }],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      messages: [{ role: 'user', content: content as any }],
     })
     raw = msg.content[0]?.type === 'text' ? msg.content[0].text : ''
   } catch {
-    return NextResponse.json({ error: 'Falha ao ler a imagem.' }, { status: 502 })
+    return NextResponse.json({ error: 'Falha ao interpretar.' }, { status: 502 })
   }
 
   // Extrai o objeto JSON da resposta.
