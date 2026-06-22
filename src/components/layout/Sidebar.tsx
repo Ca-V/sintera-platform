@@ -83,7 +83,6 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-body font-medium text-white leading-tight truncate">{displayName}</p>
-            <p className="text-[11px] font-body text-white/40 mt-0.5">Beta</p>
           </div>
           <ChevronRight size={13} className="text-white/25 flex-shrink-0"/>
         </div>

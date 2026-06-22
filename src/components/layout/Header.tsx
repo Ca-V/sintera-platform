@@ -28,12 +28,6 @@ export default function Header({ onMenuClick }: HeaderProps) {
       {/* Espaço */}
       <div className="flex-1" />
 
-      {/* Badge Beta */}
-      <span className="hidden md:inline-flex items-center gap-1.5 bg-amber-50 border border-amber-200 rounded-full px-3 py-1">
-        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse-soft"/>
-        <span className="text-xs font-body font-medium text-amber-700">Beta</span>
-      </span>
-
       {/* Avatar + menu */}
       <div className="relative group">
         <button className="flex items-center gap-2 pl-1.5 pr-2 py-1 rounded-lg hover:bg-black/5 transition-colors">
