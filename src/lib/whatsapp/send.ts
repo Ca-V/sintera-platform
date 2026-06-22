@@ -62,34 +62,49 @@ export async function sendWhatsAppReminder(
   const templateName = process.env.WHATSAPP_TEMPLATE_NAME ?? 'lembrete_sintera'
   const lang = process.env.WHATSAPP_TEMPLATE_LANG ?? 'pt_BR'
 
-  const body = {
-    messaging_product: 'whatsapp',
-    to,
-    type: 'template',
-    template: {
-      name: templateName,
-      language: { code: lang },
-      components: [
-        {
-          type: 'body',
-          parameters: [
-            { type: 'text', text: params.title.slice(0, 200) },
-            { type: 'text', text: params.dateLabel.slice(0, 60) },
-          ],
-        },
-      ],
-    },
-  }
+  // Idioma configurado primeiro; se o template não existir nesse idioma
+  // (erro #132001 da Meta), tenta os fallbacks comuns. Resolve o caso de um
+  // template aprovado num código de idioma diferente do esperado.
+  const langCandidates = [lang, ...['pt_BR', 'en', 'en_US'].filter(l => l !== lang)]
 
-  try {
+  const attempt = async (code: string) => {
+    const body = {
+      messaging_product: 'whatsapp',
+      to,
+      type: 'template',
+      template: {
+        name: templateName,
+        language: { code },
+        components: [
+          {
+            type: 'body',
+            parameters: [
+              { type: 'text', text: params.title.slice(0, 200) },
+              { type: 'text', text: params.dateLabel.slice(0, 60) },
+            ],
+          },
+        ],
+      },
+    }
     const res = await fetch(`https://graph.facebook.com/${GRAPH_VERSION}/${phoneNumberId}/messages`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     })
-    if (res.ok) return { status: 'sent' }
-    const errText = await res.text().catch(() => '')
-    return { status: 'failed', detail: `http_${res.status}: ${errText.slice(0, 400)}` }
+    const text = res.ok ? '' : await res.text().catch(() => '')
+    return { ok: res.ok, status: res.status, text }
+  }
+
+  try {
+    let lastDetail = ''
+    for (const code of langCandidates) {
+      const r = await attempt(code)
+      if (r.ok) return { status: 'sent' }
+      lastDetail = `http_${r.status} [${code}]: ${r.text.slice(0, 300)}`
+      // Só vale tentar outro idioma se o erro for "template não existe nesse idioma".
+      if (!r.text.includes('132001')) break
+    }
+    return { status: 'failed', detail: lastDetail }
   } catch (e) {
     return { status: 'failed', detail: `exception: ${String(e).slice(0, 200)}` }
   }
