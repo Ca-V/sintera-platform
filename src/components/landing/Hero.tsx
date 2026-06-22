@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowRight, ChevronRight, Upload, TrendingUp, FlaskConical } from 'lucide-react'
+import { ArrowRight, Upload, TrendingUp, Share2 } from 'lucide-react'
 
 function fadeUp(delay = 0) {
   return {
@@ -43,20 +43,19 @@ export default function Hero() {
                 <span className="w-5 h-5 rounded-full gradient-sintera flex items-center justify-center">
                   <span className="text-white text-[9px]">✦</span>
                 </span>
-                Acesso Beta · Vagas limitadas
-                <ChevronRight size={12} className="text-petal ml-0.5" />
+                Organize, acompanhe e compartilhe sua saúde
               </span>
             </motion.div>
 
             <motion.h1 variants={fadeUp(0.2)} initial="hidden" animate="show"
               className="font-display font-semibold leading-[1.05] text-onyx mb-6"
               style={{ fontSize: 'clamp(2.8rem, 5.5vw, 4.2rem)' }}>
-              Seus exames têm{' '}
+              Sua saúde tem{' '}
               <span className="text-gradient italic">uma história.</span>
               <br />
-              A SINTERA te{' '}
+              A SINTERA te ajuda a{' '}
               <span className="relative inline-block">
-                ajuda a lê-la.
+                organizá-la.
                 <svg className="absolute -bottom-1 left-0 w-full" height="6" viewBox="0 0 120 6" preserveAspectRatio="none">
                   <path d="M0 5 Q30 1 60 5 Q90 9 120 5" stroke="#C2849A" strokeWidth="1.8" fill="none" strokeLinecap="round" />
                 </svg>
@@ -64,10 +63,11 @@ export default function Hero() {
             </motion.h1>
 
             <motion.p variants={fadeUp(0.32)} initial="hidden" animate="show"
-              className="font-body text-[1.05rem] text-mauve leading-relaxed max-w-[480px] mb-8">
-              Faça upload dos seus laudos laboratoriais em PDF. A IA extrai automaticamente
-              todos os biomarcadores e constrói o histórico longitudinal da sua saúde — de forma
-              clara, organizada e sempre disponível.
+              className="font-body text-[1.05rem] text-mauve leading-relaxed max-w-[510px] mb-8">
+              A SINTERA reúne num só lugar seus exames e documentos, medicamentos, condições de saúde,
+              hábitos, medidas e sinais vitais. Organiza suas informações, mostra a evolução ao longo do
+              tempo e gera um relatório para compartilhar com seus profissionais — de forma clara e factual.
+              Não interpreta nem substitui a avaliação profissional.
             </motion.p>
 
             <motion.div variants={fadeUp(0.44)} initial="hidden" animate="show"
@@ -89,9 +89,9 @@ export default function Hero() {
             <motion.div variants={fadeUp(0.56)} initial="hidden" animate="show"
               className="flex flex-col sm:flex-row gap-4">
               {[
-                { icon: Upload,      color: 'text-petal',   bg: 'bg-blush',         text: 'Upload do laudo em PDF'         },
-                { icon: FlaskConical, color: 'text-lavender', bg: 'bg-lavender-light', text: 'IA extrai os biomarcadores'     },
-                { icon: TrendingUp,  color: 'text-sage',    bg: 'bg-sage-light',    text: 'Histórico longitudinal organizado' },
+                { icon: Upload,     color: 'text-petal',    bg: 'bg-blush',          text: 'Tudo num só lugar, organizado'   },
+                { icon: TrendingUp, color: 'text-lavender', bg: 'bg-lavender-light', text: 'Evolução ao longo do tempo'      },
+                { icon: Share2,     color: 'text-sage',     bg: 'bg-sage-light',     text: 'Relatório para compartilhar'     },
               ].map(({ icon: Icon, color, bg, text }) => (
                 <div key={text} className="flex items-center gap-2.5">
                   <div className={`w-7 h-7 rounded-lg ${bg} flex items-center justify-center flex-shrink-0`}>
