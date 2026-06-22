@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, FileText, Activity, Clock, Pill, Receipt, CalendarDays,
-  HeartPulse, Stethoscope, Users, ScrollText,
+  HeartPulse, Stethoscope, ScrollText,
   Settings, X, LogOut, User, ChevronRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -43,7 +43,6 @@ const navGroups: {
     items: [
       { href: '/dashboard/habitos',   icon: HeartPulse,   label: 'Hábitos de Vida' },
       { href: '/dashboard/condicoes', icon: Stethoscope,  label: 'Condições de Saúde' },
-      { href: '/dashboard/familiar',  icon: Users,        label: 'Histórico Familiar' },
     ],
   },
   {
