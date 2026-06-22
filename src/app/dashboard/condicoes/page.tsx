@@ -13,6 +13,7 @@ import { Loader2, Plus, X, Stethoscope, ArrowLeft, Trash2, Users, Pencil } from 
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
+import EyeglassPrescriptions from '@/components/EyeglassPrescriptions'
 
 type Scope = 'propria' | 'familiar'
 
@@ -208,6 +209,10 @@ export default function CondicoesPage() {
             </div>
             {familiares.length > 0 ? <div className="space-y-2">{familiares.map(card)}</div>
               : <p className="font-body text-sm text-mauve/60">Nenhum registrado.</p>}
+          </div>
+
+          <div className="border-t border-border/50 pt-6">
+            <EyeglassPrescriptions />
           </div>
         </div>
       )}
