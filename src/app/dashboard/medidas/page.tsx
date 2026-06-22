@@ -141,6 +141,17 @@ export default function MedidasPage() {
         </button>
       </div>
 
+      {/* Onde registrar bioimpedância (ex.: do nutricionista) */}
+      <div className="rounded-2xl border border-petal/30 bg-blush/30 px-4 py-3 flex items-start gap-3">
+        <Activity size={16} className="text-petal flex-shrink-0 mt-0.5" />
+        <p className="font-body text-xs text-onyx leading-relaxed">
+          Fez <strong>bioimpedância</strong> (por exemplo, com seu nutricionista)? Registre cada resultado em
+          <strong> Adicionar → Bioimpedância</strong> (gordura corporal, massa muscular, água, IMC e outros).
+          Para guardar o laudo completo, envie o arquivo em{' '}
+          <Link href="/dashboard/exams" className="text-petal hover:underline font-medium">Exames e Documentos</Link>.
+        </p>
+      </div>
+
       {showForm && (
         <div className="card-premium p-5 space-y-3">
           <div className="grid grid-cols-2 gap-3">

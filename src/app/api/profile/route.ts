@@ -48,6 +48,7 @@ export async function PATCH(request: Request) {
   if ('last_period' in body)        payload.last_period        = body.last_period as string | null
   if ('cycle_regularity' in body)   payload.cycle_regularity   = body.cycle_regularity as string | null
   if ('goals' in body)              payload.goals              = body.goals as string[] | null
+  if ('height_cm' in body)          payload.height_cm          = body.height_cm as number | null
   if ('pref_daily_reminder' in body) payload.pref_daily_reminder = body.pref_daily_reminder as boolean
   if ('pref_phase_alerts' in body)  payload.pref_phase_alerts  = body.pref_phase_alerts as boolean
   if ('pref_email_insights' in body) payload.pref_email_insights = body.pref_email_insights as boolean
