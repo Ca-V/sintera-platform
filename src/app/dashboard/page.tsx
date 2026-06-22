@@ -212,7 +212,7 @@ export default function DashboardPage() {
               <Clock size={20} className="text-petal" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-body text-sm font-semibold text-onyx">Minha Jornada</p>
+              <p className="font-body text-sm font-semibold text-onyx">Histórico de Saúde</p>
               <p className="font-body text-xs text-mauve mt-0.5 truncate">
                 {journey.next ? `Próximo: ${journey.next.title} · ${formatDate(journey.next.date)}`
                   : journey.last ? `Último: ${journey.last.title}`
