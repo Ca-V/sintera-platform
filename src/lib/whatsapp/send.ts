@@ -14,7 +14,17 @@
 
 const GRAPH_VERSION = 'v21.0'
 
-export type WhatsAppResult = 'sent' | 'skipped' | 'failed'
+export type WhatsAppStatus = 'sent' | 'skipped' | 'failed'
+
+/**
+ * Resultado do envio, com detalhe para diagnóstico/observabilidade.
+ * `detail` traz o motivo do skip (ex.: 'no_token') ou o erro da Meta
+ * (ex.: 'http_400: <corpo>'). Nunca contém credenciais.
+ */
+export interface WhatsAppResult {
+  status: WhatsAppStatus
+  detail?: string
+}
 
 /** Normaliza telefone para E.164 só-dígitos (assume Brasil +55 se sem país). */
 export function normalizePhoneBR(raw: string | null | undefined): string | null {
@@ -34,8 +44,8 @@ export interface ReminderParams {
 
 /**
  * Envia um lembrete por WhatsApp via Meta Cloud API.
- * Retorna 'skipped' se faltar credencial/telefone, 'sent' se a API aceitou,
- * 'failed' em erro de envio. Nunca lança.
+ * Retorna { status:'skipped' } se faltar credencial/telefone, 'sent' se a API
+ * aceitou, 'failed' em erro de envio (com `detail` do erro). Nunca lança.
  */
 export async function sendWhatsAppReminder(
   phone: string | null | undefined,
@@ -43,10 +53,11 @@ export async function sendWhatsAppReminder(
 ): Promise<WhatsAppResult> {
   const token = process.env.WHATSAPP_CLOUD_TOKEN
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID
-  if (!token || !phoneNumberId) return 'skipped'
+  if (!token) return { status: 'skipped', detail: 'no_token' }
+  if (!phoneNumberId) return { status: 'skipped', detail: 'no_phone_number_id' }
 
   const to = normalizePhoneBR(phone)
-  if (!to) return 'skipped'
+  if (!to) return { status: 'skipped', detail: 'invalid_phone' }
 
   const templateName = process.env.WHATSAPP_TEMPLATE_NAME ?? 'lembrete_sintera'
   const lang = process.env.WHATSAPP_TEMPLATE_LANG ?? 'pt_BR'
@@ -76,8 +87,10 @@ export async function sendWhatsAppReminder(
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     })
-    return res.ok ? 'sent' : 'failed'
-  } catch {
-    return 'failed'
+    if (res.ok) return { status: 'sent' }
+    const errText = await res.text().catch(() => '')
+    return { status: 'failed', detail: `http_${res.status}: ${errText.slice(0, 400)}` }
+  } catch (e) {
+    return { status: 'failed', detail: `exception: ${String(e).slice(0, 200)}` }
   }
 }

@@ -110,6 +110,7 @@ export async function POST(req: NextRequest) {
   const sentIds: string[] = []
   let failed = 0
   let whatsappSent = 0
+  const whatsappDiag: string[] = []   // diagnóstico de falhas de envio (sem credenciais)
 
   for (const ev of events) {
     const email = emailById.get(ev.user_id)
@@ -135,7 +136,8 @@ export async function POST(req: NextRequest) {
     // Canal 2 — WhatsApp (só com opt-in + telefone; ignora se sem credenciais)
     if (waOptInById.get(ev.user_id) && phoneById.get(ev.user_id)) {
       const wa = await sendWhatsAppReminder(phoneById.get(ev.user_id), { title: ev.title, dateLabel: label })
-      if (wa === 'sent') { delivered = true; whatsappSent++ }
+      if (wa.status === 'sent') { delivered = true; whatsappSent++ }
+      else if (wa.detail) whatsappDiag.push(`${ev.id.slice(0, 8)}:${wa.status}:${wa.detail}`)
     }
 
     if (delivered) sentIds.push(ev.id)
@@ -149,5 +151,5 @@ export async function POST(req: NextRequest) {
       .in('id', sentIds)
   }
 
-  return NextResponse.json({ due: events.length, sent: sentIds.length, whatsappSent, failed })
+  return NextResponse.json({ due: events.length, sent: sentIds.length, whatsappSent, failed, whatsappDiag })
 }
