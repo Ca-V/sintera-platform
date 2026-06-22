@@ -383,26 +383,45 @@ function ImportResults({ panelId, onDone }: { panelId: string; onDone: () => voi
 
   async function onFile(file: File) {
     if (!user) return
-    const isJson = file.name.toLowerCase().endsWith('.json') || file.type.includes('json')
-    if (!isJson && !file.name.toLowerCase().endsWith('.csv') && !file.type.includes('csv') && !file.type.includes('text')) {
-      setErr('Envie um arquivo CSV ou JSON.'); return
-    }
-    if (file.size > 8 * 1024 * 1024) { setErr('Arquivo muito grande (máx. 8 MB).'); return }
+    const lower = file.name.toLowerCase()
+    const isJson = lower.endsWith('.json') || file.type.includes('json')
+    const isCsv = lower.endsWith('.csv') || file.type.includes('csv') || file.type.includes('text/plain')
+    const isPdf = lower.endsWith('.pdf') || file.type === 'application/pdf'
+    const isImage = file.type.startsWith('image/')
+    if (!isJson && !isCsv && !isPdf && !isImage) { setErr('Envie um arquivo CSV, JSON, PDF ou foto do laudo.'); return }
+    const maxMb = (isPdf || isImage) ? 6 : 8
+    if (file.size > maxMb * 1024 * 1024) { setErr(`Arquivo muito grande (máx. ${maxMb} MB).`); return }
     setBusy(true); setErr(null); setMsg(null)
     try {
-      const content = await file.text()
       // Preserva o arquivo original (bucket privado).
       let sourceUrl: string | null = null
       const path = `${user.id}/omics/${crypto.randomUUID()}-${file.name}`
-      const { error: upErr } = await supabase.storage.from('exams').upload(path, file, { contentType: file.type || 'text/plain', upsert: false })
+      const { error: upErr } = await supabase.storage.from('exams').upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false })
       if (!upErr) {
         const { data: signed } = await supabase.storage.from('exams').createSignedUrl(path, 60 * 60 * 24 * 365)
         sourceUrl = signed?.signedUrl ?? null
       }
-      const res = await fetch(`/api/omics/panels/${panelId}/ingest`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ format: isJson ? 'json' : 'csv', content, source_file: sourceUrl, note: file.name }),
-      })
+
+      let res: Response
+      if (isPdf || isImage) {
+        // Extração por IA (transcrição) → mesmo pipeline de ingestão.
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = () => resolve(String(reader.result).split(',')[1] ?? '')
+          reader.onerror = reject
+          reader.readAsDataURL(file)
+        })
+        res = await fetch(`/api/omics/panels/${panelId}/ingest-pdf`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fileBase64: base64, mediaType: isPdf ? 'application/pdf' : file.type, source_file: sourceUrl, note: file.name }),
+        })
+      } else {
+        const content = await file.text()
+        res = await fetch(`/api/omics/panels/${panelId}/ingest`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ format: isJson ? 'json' : 'csv', content, source_file: sourceUrl, note: file.name }),
+        })
+      }
       const json = await res.json()
       if (!res.ok) { setErr(json.error ?? 'Falha na importação.'); setBusy(false); return }
       setMsg(`Versão v${json.version}: ${json.inserted} resultados importados (${json.resolved} identificados no catálogo).`)
@@ -417,11 +436,11 @@ function ImportResults({ panelId, onDone }: { panelId: string; onDone: () => voi
   return (
     <div className="w-full">
       <div className="flex flex-wrap items-center gap-2">
-        <input ref={fileRef} type="file" accept=".csv,.json,text/csv,application/json" className="hidden"
+        <input ref={fileRef} type="file" accept=".csv,.json,.pdf,image/*,text/csv,application/json,application/pdf" className="hidden"
           onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = '' }} />
         <button onClick={() => fileRef.current?.click()} disabled={busy}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-petal/40 text-petal font-body text-sm font-medium hover:bg-blush transition-colors disabled:opacity-50">
-          {busy ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />} Importar CSV/JSON
+          {busy ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />} Importar (PDF, foto, CSV ou JSON)
         </button>
         {versions.length > 0 && (
           <button onClick={() => setShowVersions(v => !v)}
