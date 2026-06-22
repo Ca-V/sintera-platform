@@ -21,9 +21,26 @@ const TYPE_LABEL: Record<string, string> = {
   estetico: 'Procedimento estético', medicamento: 'Medicamento', exame: 'Exame', outro: 'Evento',
 }
 
-interface Med { name: string; dose: string | null; frequency: string | null; startedOn: string | null; status: string }
-interface Ev { title: string; eventType: string; date: string; notes: string | null }
+interface Med { name: string; kind: string; dose: string | null; frequency: string | null; startedOn: string | null; untilOn: string | null; status: string }
+interface Ev { title: string; eventType: string; prof: string | null; date: string; notes: string | null }
 interface Ex { type: string; date: string }
+interface Measure { metric: string; label: string | null; valueText: string; unit: string | null; date: string }
+
+const METRIC_LABEL: Record<string, string> = {
+  peso: 'Peso', altura: 'Altura', pressao_arterial: 'Pressão arterial', circunferencia_cintura: 'Circunferência (cintura)',
+  gordura_corporal: 'Gordura corporal', massa_muscular: 'Massa muscular', outro: 'Outra medida',
+}
+const PROF_LABEL: Record<string, string> = {
+  medico: 'Médico(a)', psicologo: 'Psicólogo(a)', nutricionista: 'Nutricionista',
+  fisioterapeuta: 'Fisioterapeuta', dentista: 'Dentista', outro: 'Outro profissional',
+}
+
+function periodo(start: string | null, until: string | null): string {
+  if (start && until) return ` (de ${fmt(start)} até ${fmt(until)})`
+  if (start) return ` (desde ${fmt(start)})`
+  if (until) return ` (até ${fmt(until)})`
+  return ''
+}
 
 function fmt(date: string | null): string {
   if (!date) return '—'
@@ -38,6 +55,7 @@ export default function RelatorioPage() {
   const [meds, setMeds] = useState<Med[]>([])
   const [events, setEvents] = useState<Ev[]>([])
   const [exams, setExams] = useState<Ex[]>([])
+  const [measures, setMeasures] = useState<Measure[]>([])
   const [shares, setShares] = useState<{ id: string; token: string; expiresAt: string }[]>([])
   const [shareBusy, setShareBusy] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
@@ -47,21 +65,26 @@ export default function RelatorioPage() {
     setLoading(true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db = supabase as any
-    const [medRes, evRes, exRes] = await Promise.all([
-      db.from('medications').select('name, dose, frequency, started_on, status').eq('user_id', user.id).order('status'),
-      db.from('health_events').select('title, event_type, event_date, notes').eq('user_id', user.id).eq('synthetic', false).order('event_date', { ascending: false }),
+    const [medRes, evRes, exRes, mzRes] = await Promise.all([
+      db.from('medications').select('name, kind, dose, frequency, started_on, until_date, status').eq('user_id', user.id).order('status'),
+      db.from('health_events').select('title, event_type, professional_kind, event_date, notes').eq('user_id', user.id).eq('synthetic', false).order('event_date', { ascending: false }),
       db.from('exams').select('type, exam_date, created_at').eq('user_id', user.id).order('created_at', { ascending: false }),
+      db.from('body_metrics').select('metric, label, value_text, unit, measured_on').eq('user_id', user.id).order('measured_on', { ascending: false }),
     ])
     setMeds(((medRes.data ?? []) as Array<Record<string, unknown>>).map(m => ({
-      name: m.name as string, dose: (m.dose as string) ?? null, frequency: (m.frequency as string) ?? null,
-      startedOn: (m.started_on as string) ?? null, status: (m.status as string) ?? 'em_uso',
+      name: m.name as string, kind: (m.kind as string) ?? 'medicamento', dose: (m.dose as string) ?? null, frequency: (m.frequency as string) ?? null,
+      startedOn: (m.started_on as string) ?? null, untilOn: (m.until_date as string) ?? null, status: (m.status as string) ?? 'em_uso',
     })))
     setEvents(((evRes.data ?? []) as Array<Record<string, unknown>>).map(e => ({
-      title: e.title as string, eventType: (e.event_type as string) ?? 'outro',
+      title: e.title as string, eventType: (e.event_type as string) ?? 'outro', prof: (e.professional_kind as string) ?? null,
       date: e.event_date as string, notes: (e.notes as string) ?? null,
     })))
     setExams(((exRes.data ?? []) as Array<Record<string, unknown>>).map(e => ({
       type: (e.type as string) || 'Exame', date: (e.exam_date as string) || (e.created_at as string),
+    })))
+    setMeasures(((mzRes.data ?? []) as Array<Record<string, unknown>>).map(m => ({
+      metric: (m.metric as string) ?? 'outro', label: (m.label as string) ?? null,
+      valueText: (m.value_text as string) ?? '', unit: (m.unit as string) ?? null, date: m.measured_on as string,
     })))
     const { data: sh } = await db.from('report_shares')
       .select('id, token, expires_at').eq('user_id', user.id).eq('revoked', false)
@@ -165,17 +188,17 @@ export default function RelatorioPage() {
           <p className="font-body text-xs text-mauve mt-1">Gerado em {hoje} · organização dos dados registrados pela própria pessoa.</p>
         </div>
 
-        {/* Medicamentos */}
+        {/* Medicamentos e suplementos */}
         <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Medicamentos em uso</h2>
+          <h2 className="font-body text-sm font-bold text-onyx mb-2">Medicamentos e suplementos em uso</h2>
           {medsEmUso.length === 0 ? (
-            <p className="font-body text-sm text-mauve/60">Nenhum medicamento em uso registrado.</p>
+            <p className="font-body text-sm text-mauve/60">Nenhum registrado em uso.</p>
           ) : (
             <ul className="space-y-1">
               {medsEmUso.map((m, i) => (
                 <li key={i} className="font-body text-sm text-onyx">
-                  • <strong>{m.name}</strong>{[m.dose, m.frequency].filter(Boolean).length ? ` — ${[m.dose, m.frequency].filter(Boolean).join(', ')}` : ''}
-                  {m.startedOn ? ` (desde ${fmt(m.startedOn)})` : ''}
+                  • <strong>{m.name}</strong>{m.kind === 'suplemento' ? ' (suplemento)' : ''}{[m.dose, m.frequency].filter(Boolean).length ? ` — ${[m.dose, m.frequency].filter(Boolean).join(', ')}` : ''}
+                  {periodo(m.startedOn, m.untilOn)}
                 </li>
               ))}
             </ul>
@@ -197,7 +220,7 @@ export default function RelatorioPage() {
                   <tr key={i} className="border-b border-border/50">
                     <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(e.date)}</td>
                     <td className="font-body text-sm text-onyx py-1.5">
-                      <span className="text-mauve/70">{TYPE_LABEL[e.eventType] ?? 'Evento'}:</span> {e.title}
+                      <span className="text-mauve/70">{TYPE_LABEL[e.eventType] ?? 'Evento'}{e.prof && PROF_LABEL[e.prof] ? ` (${PROF_LABEL[e.prof]})` : ''}:</span> {e.title}
                       {e.notes ? <span className="block text-xs text-mauve/60">{e.notes}</span> : null}
                     </td>
                   </tr>
@@ -218,6 +241,27 @@ export default function RelatorioPage() {
                 <li key={i} className="font-body text-sm text-onyx">• {fmt(e.date)} — {e.type}</li>
               ))}
             </ul>
+          )}
+        </section>
+
+        {/* Medidas corporais */}
+        <section>
+          <h2 className="font-body text-sm font-bold text-onyx mb-2">Medidas corporais</h2>
+          {measures.length === 0 ? (
+            <p className="font-body text-sm text-mauve/60">Nenhuma medida registrada.</p>
+          ) : (
+            <table className="w-full text-left">
+              <tbody>
+                {measures.map((m, i) => (
+                  <tr key={i} className="border-b border-border/50">
+                    <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(m.date)}</td>
+                    <td className="font-body text-sm text-onyx py-1.5">
+                      <span className="text-mauve/70">{m.metric === 'outro' && m.label ? m.label : METRIC_LABEL[m.metric] ?? 'Medida'}:</span> {m.valueText}{m.unit ? ` ${m.unit}` : ''}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </section>
 
