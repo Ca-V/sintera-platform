@@ -59,6 +59,8 @@ export default function RelatorioPage() {
   const [shares, setShares] = useState<{ id: string; token: string; expiresAt: string }[]>([])
   const [shareBusy, setShareBusy] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
+  const [sections, setSections] = useState({ medicamentos: true, eventos: true, exames: true, medidas: true })
+  const toggle = (k: keyof typeof sections) => setSections(s => ({ ...s, [k]: !s[k] }))
 
   const load = useCallback(async () => {
     if (!user) return
@@ -100,8 +102,9 @@ export default function RelatorioPage() {
     setShareBusy(true)
     const token = (crypto.randomUUID() + crypto.randomUUID()).replace(/-/g, '')
     const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    const sel = (Object.keys(sections) as (keyof typeof sections)[]).filter(k => sections[k])
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from('report_shares').insert({ user_id: user.id, token, expires_at: expires })
+    await (supabase as any).from('report_shares').insert({ user_id: user.id, token, expires_at: expires, sections: sel })
     await load()
     setShareBusy(false)
   }
@@ -178,6 +181,20 @@ export default function RelatorioPage() {
         )}
       </div>
 
+      {/* Seleção do que mostrar — vale para impressão e link compartilhado */}
+      <div className="card-premium p-5 mb-6 print:hidden">
+        <p className="font-body text-sm font-semibold text-onyx mb-2">Mostrar no relatório</p>
+        <div className="flex flex-wrap gap-x-5 gap-y-2">
+          {([['medicamentos', 'Medicamentos'], ['eventos', 'Consultas e eventos'], ['exames', 'Exames'], ['medidas', 'Medidas']] as const).map(([k, label]) => (
+            <label key={k} className="flex items-center gap-2 font-body text-sm text-onyx cursor-pointer">
+              <input type="checkbox" checked={sections[k]} onChange={() => toggle(k)} className="accent-petal w-4 h-4" />
+              {label}
+            </label>
+          ))}
+        </div>
+        <p className="font-body text-[11px] text-mauve/60 mt-2">Marque o que deseja incluir. Vale para a impressão e para o link compartilhado.</p>
+      </div>
+
       <div className="bg-white rounded-2xl border border-border p-8 space-y-6 print:border-0 print:p-0">
         {/* Cabeçalho */}
         <div className="border-b border-border pb-4">
@@ -189,6 +206,7 @@ export default function RelatorioPage() {
         </div>
 
         {/* Medicamentos e suplementos */}
+        {sections.medicamentos && (
         <section>
           <h2 className="font-body text-sm font-bold text-onyx mb-2">Medicamentos e suplementos em uso</h2>
           {medsEmUso.length === 0 ? (
@@ -207,8 +225,10 @@ export default function RelatorioPage() {
             <p className="font-body text-xs text-mauve/60 mt-2">Suspensos: {medsSusp.map(m => m.name).join(', ')}.</p>
           )}
         </section>
+        )}
 
         {/* Jornada */}
+        {sections.eventos && (
         <section>
           <h2 className="font-body text-sm font-bold text-onyx mb-2">Consultas, procedimentos e eventos</h2>
           {events.length === 0 ? (
@@ -229,8 +249,10 @@ export default function RelatorioPage() {
             </table>
           )}
         </section>
+        )}
 
         {/* Exames */}
+        {sections.exames && (
         <section>
           <h2 className="font-body text-sm font-bold text-onyx mb-2">Exames enviados</h2>
           {exams.length === 0 ? (
@@ -243,8 +265,10 @@ export default function RelatorioPage() {
             </ul>
           )}
         </section>
+        )}
 
         {/* Medidas corporais */}
+        {sections.medidas && (
         <section>
           <h2 className="font-body text-sm font-bold text-onyx mb-2">Medidas corporais</h2>
           {measures.length === 0 ? (
@@ -264,6 +288,7 @@ export default function RelatorioPage() {
             </table>
           )}
         </section>
+        )}
 
         <p className="font-body text-[11px] text-mauve/60 border-t border-border pt-3 leading-relaxed">
           Este relatório organiza os dados informados pela própria pessoa na plataforma SINTERA. <strong>Não é laudo, diagnóstico
