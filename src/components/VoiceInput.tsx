@@ -12,9 +12,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { Mic } from 'lucide-react'
 
-export default function VoiceInput({ onResult, title = 'Ditar por voz' }: {
+export default function VoiceInput({ onResult, title = 'Ditar por voz', label = 'Falar', className }: {
   onResult: (text: string) => void
   title?: string
+  label?: string
+  className?: string
 }) {
   const [supported, setSupported] = useState(false)
   const [listening, setListening] = useState(false)
@@ -51,14 +53,15 @@ export default function VoiceInput({ onResult, title = 'Ditar por voz' }: {
     try { rec.start() } catch { setListening(false) }
   }
 
+  const cls = className ?? `inline-flex items-center gap-1.5 px-2.5 h-9 rounded-lg border transition-colors flex-shrink-0 font-body text-xs ${
+    listening ? 'border-petal bg-blush text-petal'
+      : supported ? 'border-petal/40 text-petal hover:bg-blush'
+      : 'border-border text-mauve/40'
+  }`
   return (
     <button type="button" onClick={toggle} title={supported ? title : 'Ditado por voz indisponível neste navegador'} aria-label={title}
-      className={`inline-flex items-center gap-1.5 px-2.5 h-9 rounded-lg border transition-colors flex-shrink-0 font-body text-xs ${
-        listening ? 'border-petal bg-blush text-petal animate-pulse-soft'
-          : supported ? 'border-petal/40 text-petal hover:bg-blush'
-          : 'border-border text-mauve/40'
-      }`}>
-      <Mic size={15} /> {listening ? 'Ouvindo…' : 'Falar'}
+      className={`${cls}${listening ? ' animate-pulse-soft' : ''}`}>
+      <Mic size={15} /> {listening ? 'Ouvindo…' : label}
     </button>
   )
 }

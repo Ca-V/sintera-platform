@@ -12,6 +12,7 @@ import Link from 'next/link'
 import { Loader2, Plus, X, Activity, ArrowLeft, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
+import VoiceInput from '@/components/VoiceInput'
 
 type Metric = 'peso' | 'altura' | 'pressao_arterial' | 'circunferencia_cintura' | 'gordura_corporal' | 'massa_muscular' | 'outro'
 
@@ -169,8 +170,11 @@ export default function MedidasPage() {
           </div>
           <div>
             <label className="font-body text-xs text-mauve/70 block mb-1">Observações (opcional)</label>
-            <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2}
-              className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+            <div className="flex items-start gap-2">
+              <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2}
+                className="flex-1 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+              <VoiceInput onResult={t => setNotes(v => (v ? v + ' ' : '') + t)} />
+            </div>
           </div>
           {err && <p className="font-body text-xs text-red-500">{err}</p>}
           <div className="flex justify-end">
