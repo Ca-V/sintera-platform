@@ -11,8 +11,9 @@ import { motion } from 'framer-motion'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   Clock, Plus, X, Stethoscope, Syringe, Activity, FlaskConical, CalendarDays,
-  Loader2, Pencil, Trash2, Paperclip, Bell, Info, Sparkles, Pill,
+  Loader2, Pencil, Trash2, Paperclip, Bell, Info, Sparkles, Pill, Receipt,
 } from 'lucide-react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import AgendarModal, { type EventType as AgendaType } from '@/components/AgendarModal'
@@ -30,6 +31,7 @@ interface TimelineItem {
   source: string
   confidence: string
   attachmentUrl?: string | null
+  amountCents?: number | null
 }
 
 const TYPE_META: Record<EventType, { label: string; Icon: React.ElementType; cls: string }> = {
@@ -52,6 +54,20 @@ const ACCEPTED = ['application/pdf', 'image/jpeg', 'image/png']
 function fmt(date: string): string {
   const d = new Date(date.length <= 10 ? `${date}T00:00:00` : date)
   return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+// "150,00" | "R$ 1.500,00" | "150.5" → centavos. Vazio/inválido → null.
+function parseAmountToCents(s: string): number | null {
+  let t = s.trim().replace(/[R$\s]/g, '')
+  if (!t) return null
+  // Formato BR com vírgula decimal: ponto é separador de milhar.
+  if (t.includes(',')) t = t.replace(/\./g, '').replace(',', '.')
+  const n = parseFloat(t)
+  return isFinite(n) && n >= 0 ? Math.round(n * 100) : null
+}
+
+function fmtBRL(cents: number): string {
+  return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
 export default function TimelinePage() {
@@ -84,6 +100,7 @@ export default function TimelinePage() {
   const [evTitle, setEvTitle] = useState('')
   const [evDate, setEvDate] = useState('')
   const [evNotes, setEvNotes] = useState('')
+  const [evAmount, setEvAmount] = useState('')
   const [evFile, setEvFile] = useState<File | null>(null)
 
   const load = useCallback(async () => {
@@ -95,7 +112,7 @@ export default function TimelinePage() {
         .eq('user_id', user.id),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (supabase as any).from('health_events')
-        .select('id, event_type, title, event_date, notes, source, confidence, attachment_url, synthetic')
+        .select('id, event_type, title, event_date, notes, source, confidence, attachment_url, amount_cents, synthetic')
         .eq('user_id', user.id)
         .eq('synthetic', false),
     ])
@@ -120,6 +137,7 @@ export default function TimelinePage() {
         source: (ev.source as string) ?? 'autorrelato',
         confidence: (ev.confidence as string) ?? 'baixa',
         attachmentUrl: (ev.attachment_url as string) ?? null,
+        amountCents: (ev.amount_cents as number) ?? null,
       })
     }
     merged.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
@@ -131,7 +149,7 @@ export default function TimelinePage() {
 
   function resetForm() {
     setEditingId(null); setEvType('consulta'); setEvTitle(''); setEvDate('')
-    setEvNotes(''); setEvFile(null); setFormError(null)
+    setEvNotes(''); setEvAmount(''); setEvFile(null); setFormError(null)
     if (fileRef.current) fileRef.current.value = ''
   }
 
@@ -140,6 +158,7 @@ export default function TimelinePage() {
     setEditingId(it.rawId ?? null)
     setEvType(it.eventType); setEvTitle(it.title); setEvDate(it.date.slice(0, 10))
     setEvNotes(it.subtitle ?? ''); setEvFile(null); setFormError(null)
+    setEvAmount(it.amountCents != null ? (it.amountCents / 100).toFixed(2).replace('.', ',') : '')
     setShowForm(true)
   }
 
@@ -166,7 +185,7 @@ export default function TimelinePage() {
       if (editingId) {
         const patch: Record<string, unknown> = {
           event_type: evType, title: evTitle.trim(), event_date: evDate,
-          notes: evNotes.trim() || null,
+          notes: evNotes.trim() || null, amount_cents: parseAmountToCents(evAmount),
         }
         if (attachmentUrl !== undefined) patch.attachment_url = attachmentUrl
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -177,7 +196,7 @@ export default function TimelinePage() {
         const { error } = await (supabase as any).from('health_events').insert({
           user_id: user.id, event_type: evType, title: evTitle.trim(), event_date: evDate,
           notes: evNotes.trim() || null, source: 'autorrelato', confidence: 'baixa',
-          attachment_url: attachmentUrl ?? null,
+          attachment_url: attachmentUrl ?? null, amount_cents: parseAmountToCents(evAmount),
         })
         if (error) { setFormError(error.message); return }
       }
@@ -223,6 +242,11 @@ export default function TimelinePage() {
               <div className="min-w-0">
                 <p className="font-body text-sm font-semibold text-onyx">{it.title}</p>
                 <p className="font-body text-[11px] text-mauve/60">{meta.label}{it.subtitle ? ` · ${it.subtitle}` : ''}</p>
+                {it.amountCents != null && (
+                  <span className="inline-block font-body text-[11px] font-medium text-sage bg-sage-light border border-sage/20 rounded-full px-2 py-0.5 mt-1">
+                    {fmtBRL(it.amountCents)}
+                  </span>
+                )}
                 {it.attachmentUrl && (
                   <a href={it.attachmentUrl} target="_blank" rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 font-body text-[11px] text-petal hover:underline mt-1">
@@ -266,6 +290,9 @@ export default function TimelinePage() {
         <div>
           <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Minha Jornada</h1>
           <p className="font-body text-sm text-mauve">Sua linha do tempo de saúde — exames, consultas, vacinas e procedimentos</p>
+          <Link href="/dashboard/gastos" className="inline-flex items-center gap-1 font-body text-xs text-petal hover:underline mt-1.5">
+            <Receipt size={13} /> Gastos com saúde
+          </Link>
         </div>
         <button onClick={() => (showForm ? (resetForm(), setShowForm(false)) : openCreate())}
           className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0">
@@ -326,7 +353,14 @@ export default function TimelinePage() {
               className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
           </div>
           <div>
-            <label className="font-body text-xs text-mauve/70 block mb-1">Anexo (opcional — PDF/JPG/PNG)</label>
+            <label className="font-body text-xs text-mauve/70 block mb-1">Valor pago — R$ (opcional)</label>
+            <input type="text" inputMode="decimal" value={evAmount} onChange={e => setEvAmount(e.target.value)}
+              placeholder="Ex.: 250,00 — se foi particular"
+              className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+            <p className="font-body text-[10px] text-mauve/50 mt-1">Para organizar seus gastos com saúde. Anexe a nota fiscal abaixo.</p>
+          </div>
+          <div>
+            <label className="font-body text-xs text-mauve/70 block mb-1">Nota fiscal / comprovante / anexo (opcional — PDF/JPG/PNG)</label>
             <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png"
               onChange={e => setEvFile(e.target.files?.[0] ?? null)}
               className="block w-full text-xs font-body text-mauve file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:bg-blush file:text-petal file:font-medium" />
