@@ -15,6 +15,7 @@ import Link from 'next/link'
 import { Loader2, Printer, ArrowLeft, FileText, Share2, Copy, Trash2, Check } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
+import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
 
 const TYPE_LABEL: Record<string, string> = {
   consulta: 'Consulta', vacina: 'Vacina', procedimento: 'Procedimento',
@@ -34,6 +35,7 @@ interface Eyewear {
   dnp: string | null; bc: string | null; dia: string | null
 }
 const EYEWEAR_LABEL: Record<string, string> = { oculos: 'Óculos', lentes_contato: 'Lentes de contato' }
+interface Omics { domain: string; laboratory: string | null; totalFeatures: number | null; date: string | null }
 function grauStr(sph: string | null, cyl: string | null, axis: string | null, add: string | null): string {
   return [sph ? `Esf ${sph}` : null, cyl ? `Cil ${cyl}` : null, axis ? `Eixo ${axis}` : null, add ? `Adição ${add}` : null].filter(Boolean).join(', ')
 }
@@ -83,10 +85,11 @@ export default function RelatorioPage() {
   const [conditions, setConditions] = useState<Condition[]>([])
   const [habits, setHabits] = useState<Habit[]>([])
   const [eyewear, setEyewear] = useState<Eyewear[]>([])
+  const [omics, setOmics] = useState<Omics[]>([])
   const [shares, setShares] = useState<{ id: string; token: string; expiresAt: string }[]>([])
   const [shareBusy, setShareBusy] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
-  const [sections, setSections] = useState({ medicamentos: true, condicoes: true, habitos: true, visao: true, eventos: true, exames: true, medidas: true, sinais: true })
+  const [sections, setSections] = useState({ medicamentos: true, condicoes: true, habitos: true, visao: true, eventos: true, exames: true, omica: true, medidas: true, sinais: true })
   const toggle = (k: keyof typeof sections) => setSections(s => ({ ...s, [k]: !s[k] }))
 
   const load = useCallback(async () => {
@@ -94,7 +97,7 @@ export default function RelatorioPage() {
     setLoading(true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db = supabase as any
-    const [medRes, evRes, exRes, mzRes, cdRes, hbRes, ewRes] = await Promise.all([
+    const [medRes, evRes, exRes, mzRes, cdRes, hbRes, ewRes, omRes] = await Promise.all([
       db.from('medications').select('name, kind, dose, frequency, started_on, until_date, status').eq('user_id', user.id).order('status'),
       db.from('health_events').select('title, event_type, professional_kind, event_date, notes').eq('user_id', user.id).eq('synthetic', false).order('event_date', { ascending: false }),
       db.from('exams').select('type, exam_date, created_at').eq('user_id', user.id).order('created_at', { ascending: false }),
@@ -102,6 +105,7 @@ export default function RelatorioPage() {
       db.from('health_conditions').select('scope, name, relative, since_label, notes').eq('user_id', user.id).order('created_at', { ascending: false }),
       db.from('life_habits').select('category, description, frequency, notes').eq('user_id', user.id).order('created_at', { ascending: false }),
       db.from('eyeglass_prescriptions').select('kind, prescribed_on, prescriber, od_sph, od_cyl, od_axis, od_add, oe_sph, oe_cyl, oe_axis, oe_add, dnp, bc, dia').eq('user_id', user.id).order('prescribed_on', { ascending: false, nullsFirst: false }),
+      db.from('omics_panels').select('domain, laboratory, total_features, collected_on, created_at').eq('user_id', user.id).order('collected_on', { ascending: false, nullsFirst: false }),
     ])
     setMeds(((medRes.data ?? []) as Array<Record<string, unknown>>).map(m => ({
       name: m.name as string, kind: (m.kind as string) ?? 'medicamento', dose: (m.dose as string) ?? null, frequency: (m.frequency as string) ?? null,
@@ -131,6 +135,10 @@ export default function RelatorioPage() {
       odSph: (e.od_sph as string) ?? null, odCyl: (e.od_cyl as string) ?? null, odAxis: (e.od_axis as string) ?? null, odAdd: (e.od_add as string) ?? null,
       oeSph: (e.oe_sph as string) ?? null, oeCyl: (e.oe_cyl as string) ?? null, oeAxis: (e.oe_axis as string) ?? null, oeAdd: (e.oe_add as string) ?? null,
       dnp: (e.dnp as string) ?? null, bc: (e.bc as string) ?? null, dia: (e.dia as string) ?? null,
+    })))
+    setOmics(((omRes.data ?? []) as Array<Record<string, unknown>>).map(o => ({
+      domain: (o.domain as string) ?? 'metabolomics', laboratory: (o.laboratory as string) ?? null,
+      totalFeatures: (o.total_features as number) ?? null, date: (o.collected_on as string) ?? (o.created_at as string) ?? null,
     })))
     const { data: sh } = await db.from('report_shares')
       .select('id, token, expires_at').eq('user_id', user.id).eq('revoked', false)
@@ -234,7 +242,7 @@ export default function RelatorioPage() {
       <div className="card-premium p-5 mb-6 print:hidden">
         <p className="font-body text-sm font-semibold text-onyx mb-2">Mostrar no relatório</p>
         <div className="flex flex-wrap gap-x-5 gap-y-2">
-          {([['medicamentos', 'Medicamentos'], ['condicoes', 'Condições de saúde'], ['habitos', 'Hábitos de vida'], ['visao', 'Óculos e lentes'], ['eventos', 'Consultas e eventos'], ['exames', 'Exames'], ['medidas', 'Medidas corporais'], ['sinais', 'Sinais vitais']] as const).map(([k, label]) => (
+          {([['medicamentos', 'Medicamentos'], ['condicoes', 'Condições de saúde'], ['habitos', 'Hábitos de vida'], ['visao', 'Óculos e lentes'], ['eventos', 'Consultas e eventos'], ['exames', 'Exames'], ['omica', 'Exames de ômica'], ['medidas', 'Medidas corporais'], ['sinais', 'Sinais vitais']] as const).map(([k, label]) => (
             <label key={k} className="flex items-center gap-2 font-body text-sm text-onyx cursor-pointer">
               <input type="checkbox" checked={sections[k]} onChange={() => toggle(k)} className="accent-petal w-4 h-4" />
               {label}
@@ -388,6 +396,26 @@ export default function RelatorioPage() {
             <ul className="space-y-1">
               {exams.map((e, i) => (
                 <li key={i} className="font-body text-sm text-onyx">• {fmt(e.date)} — {e.type}</li>
+              ))}
+            </ul>
+          )}
+        </section>
+        )}
+
+        {/* Exames de ômica */}
+        {sections.omica && (
+        <section>
+          <h2 className="font-body text-sm font-bold text-onyx mb-2">Exames de ômica</h2>
+          {omics.length === 0 ? (
+            <p className="font-body text-sm text-mauve/60">Nenhum exame de ômica registrado.</p>
+          ) : (
+            <ul className="space-y-1">
+              {omics.map((o, i) => (
+                <li key={i} className="font-body text-sm text-onyx">
+                  • {o.date ? `${fmt(o.date)} — ` : ''}<strong>{DOMAIN_LABEL[o.domain as OmicsDomain] ?? 'Ômica'}</strong>
+                  {[o.laboratory, o.totalFeatures != null ? `${o.totalFeatures.toLocaleString('pt-BR')} marcadores` : null].filter(Boolean).length
+                    ? ` (${[o.laboratory, o.totalFeatures != null ? `${o.totalFeatures.toLocaleString('pt-BR')} marcadores` : null].filter(Boolean).join(', ')})` : ''}
+                </li>
               ))}
             </ul>
           )}

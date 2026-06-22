@@ -11,20 +11,21 @@ import { motion } from 'framer-motion'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   Clock, Plus, X, Stethoscope, Syringe, Activity, FlaskConical, CalendarDays,
-  Loader2, Pencil, Trash2, Paperclip, Bell, Info, Sparkles, Pill, Receipt, FileText, Dumbbell,
+  Loader2, Pencil, Trash2, Paperclip, Bell, Info, Sparkles, Pill, Receipt, FileText, Dumbbell, Dna,
 } from 'lucide-react'
 import Link from 'next/link'
 import VoiceInput from '@/components/VoiceInput'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import AgendarModal, { type EventType as AgendaType } from '@/components/AgendarModal'
+import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
 
-type EventType = 'consulta' | 'vacina' | 'procedimento' | 'estetico' | 'medicamento' | 'atividade' | 'exame' | 'outro'
+type EventType = 'consulta' | 'vacina' | 'procedimento' | 'estetico' | 'medicamento' | 'atividade' | 'exame' | 'omica' | 'outro'
 
 interface TimelineItem {
   id: string
   rawId?: string            // health_events.id (só para eventos editáveis)
-  kind: 'exam' | 'event'
+  kind: 'exam' | 'event' | 'omica'
   eventType: EventType
   title: string
   subtitle: string | null
@@ -34,6 +35,7 @@ interface TimelineItem {
   attachmentUrl?: string | null
   amountCents?: number | null
   profKind?: string | null
+  href?: string             // link para o painel (ômica)
 }
 
 const TYPE_META: Record<EventType, { label: string; Icon: React.ElementType; cls: string }> = {
@@ -44,6 +46,7 @@ const TYPE_META: Record<EventType, { label: string; Icon: React.ElementType; cls
   medicamento:  { label: 'Medicamento',  Icon: Pill,         cls: 'bg-sage-light text-sage' },
   atividade:    { label: 'Atividade física', Icon: Dumbbell, cls: 'bg-lavender-light text-lavender' },
   exame:        { label: 'Exame',        Icon: FlaskConical, cls: 'bg-warm text-gold' },
+  omica:        { label: 'Ômica',        Icon: Dna,          cls: 'bg-lavender-light text-lavender' },
   outro:        { label: 'Evento',       Icon: CalendarDays, cls: 'bg-ivory text-mauve' },
 }
 
@@ -115,7 +118,7 @@ export default function TimelinePage() {
   const load = useCallback(async () => {
     if (!user) return
     setLoading(true)
-    const [examsRes, eventsRes] = await Promise.all([
+    const [examsRes, eventsRes, omicsRes] = await Promise.all([
       supabase.from('exams')
         .select('id, type, exam_date, status, notes, created_at')
         .eq('user_id', user.id),
@@ -124,6 +127,10 @@ export default function TimelinePage() {
         .select('id, event_type, title, event_date, notes, source, confidence, attachment_url, amount_cents, professional_kind, synthetic')
         .eq('user_id', user.id)
         .eq('synthetic', false),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase as any).from('omics_panels')
+        .select('id, domain, laboratory, total_features, collected_on, created_at')
+        .eq('user_id', user.id),
     ])
 
     const merged: TimelineItem[] = []
@@ -148,6 +155,18 @@ export default function TimelinePage() {
         attachmentUrl: (ev.attachment_url as string) ?? null,
         amountCents: (ev.amount_cents as number) ?? null,
         profKind: (ev.professional_kind as string) ?? null,
+      })
+    }
+    for (const p of (omicsRes.data ?? []) as Array<Record<string, unknown>>) {
+      const total = p.total_features as number | null
+      const sub = [p.laboratory as string | null, total != null ? `${total.toLocaleString('pt-BR')} marcadores` : null].filter(Boolean).join(' · ')
+      merged.push({
+        id: `omics-${p.id as string}`, kind: 'omica', eventType: 'omica',
+        title: DOMAIN_LABEL[(p.domain as OmicsDomain)] ?? 'Ômica',
+        subtitle: sub || null,
+        date: (p.collected_on as string) || (p.created_at as string),
+        source: 'upload', confidence: 'alta',
+        href: `/dashboard/omics/${p.id as string}`,
       })
     }
     merged.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
@@ -265,6 +284,12 @@ export default function TimelinePage() {
                     className="inline-flex items-center gap-1 font-body text-[11px] text-petal hover:underline mt-1">
                     <Paperclip size={11} /> Ver anexo
                   </a>
+                )}
+                {it.href && (
+                  <Link href={it.href}
+                    className="inline-flex items-center gap-1 font-body text-[11px] text-petal hover:underline mt-1">
+                    Ver painel →
+                  </Link>
                 )}
               </div>
             </div>
