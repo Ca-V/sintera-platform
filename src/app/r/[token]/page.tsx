@@ -53,7 +53,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: share } = await (admin.from('report_shares') as any)
-    .select('user_id, expires_at, revoked')
+    .select('user_id, expires_at, revoked, sections')
     .eq('token', token)
     .maybeSingle()
 
@@ -80,6 +80,8 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
   const evArr = (events ?? []) as Array<Record<string, unknown>>
   const exArr = (exams ?? []) as Array<Record<string, unknown>>
   const mzArr = (measures ?? []) as Array<Record<string, unknown>>
+  const allowed = Array.isArray(share.sections) ? (share.sections as string[]) : null
+  const show = (k: string) => !allowed || allowed.includes(k)
   const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
 
   return (
@@ -89,6 +91,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
         <p style={{ fontSize: 12, color: '#8a7b92', marginTop: 6 }}>Gerado em {hoje} · organização dos dados registrados pela própria pessoa (SINTERA).</p>
       </div>
 
+      {show('medicamentos') && (
       <section style={{ marginBottom: 22 }}>
         <h2 style={{ fontSize: 15 }}>Medicamentos e suplementos em uso</h2>
         {medsEmUso.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum registrado.</p> : (
@@ -100,7 +103,9 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
         )}
         {medsSusp.length > 0 && <p style={{ fontSize: 12, color: '#8a7b92' }}>Suspensos: {medsSusp.map(m => m.name as string).join(', ')}.</p>}
       </section>
+      )}
 
+      {show('eventos') && (
       <section style={{ marginBottom: 22 }}>
         <h2 style={{ fontSize: 15 }}>Consultas, procedimentos e eventos</h2>
         {evArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum registrado.</p> : (
@@ -119,7 +124,9 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
           </table>
         )}
       </section>
+      )}
 
+      {show('exames') && (
       <section style={{ marginBottom: 22 }}>
         <h2 style={{ fontSize: 15 }}>Exames enviados</h2>
         {exArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum.</p> : (
@@ -128,7 +135,9 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
           </ul>
         )}
       </section>
+      )}
 
+      {show('medidas') && (
       <section style={{ marginBottom: 22 }}>
         <h2 style={{ fontSize: 15 }}>Medidas corporais</h2>
         {mzArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhuma registrada.</p> : (
@@ -144,6 +153,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
           </table>
         )}
       </section>
+      )}
 
       <p style={{ fontSize: 11, color: '#8a7b92', borderTop: '1px solid #ece6ef', paddingTop: 12 }}>
         Relatório compartilhado pela própria pessoa via SINTERA. Organiza dados autorrelatados — <strong>não é laudo, diagnóstico ou parecer</strong> e não substitui avaliação profissional.
