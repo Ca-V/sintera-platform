@@ -32,6 +32,7 @@ interface TimelineItem {
   confidence: string
   attachmentUrl?: string | null
   amountCents?: number | null
+  profKind?: string | null
 }
 
 const TYPE_META: Record<EventType, { label: string; Icon: React.ElementType; cls: string }> = {
@@ -42,6 +43,11 @@ const TYPE_META: Record<EventType, { label: string; Icon: React.ElementType; cls
   medicamento:  { label: 'Medicamento',  Icon: Pill,         cls: 'bg-sage-light text-sage' },
   exame:        { label: 'Exame',        Icon: FlaskConical, cls: 'bg-warm text-gold' },
   outro:        { label: 'Evento',       Icon: CalendarDays, cls: 'bg-ivory text-mauve' },
+}
+
+const PROF_LABEL: Record<string, string> = {
+  medico: 'Médico(a)', psicologo: 'Psicólogo(a)', nutricionista: 'Nutricionista',
+  fisioterapeuta: 'Fisioterapeuta', dentista: 'Dentista', outro: 'Outro profissional',
 }
 
 // Mapeia o tipo da jornada para o tipo aceito pelo AgendarModal.
@@ -101,6 +107,7 @@ export default function TimelinePage() {
   const [evDate, setEvDate] = useState('')
   const [evNotes, setEvNotes] = useState('')
   const [evAmount, setEvAmount] = useState('')
+  const [evProfKind, setEvProfKind] = useState('')
   const [evFile, setEvFile] = useState<File | null>(null)
 
   const load = useCallback(async () => {
@@ -112,7 +119,7 @@ export default function TimelinePage() {
         .eq('user_id', user.id),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (supabase as any).from('health_events')
-        .select('id, event_type, title, event_date, notes, source, confidence, attachment_url, amount_cents, synthetic')
+        .select('id, event_type, title, event_date, notes, source, confidence, attachment_url, amount_cents, professional_kind, synthetic')
         .eq('user_id', user.id)
         .eq('synthetic', false),
     ])
@@ -138,6 +145,7 @@ export default function TimelinePage() {
         confidence: (ev.confidence as string) ?? 'baixa',
         attachmentUrl: (ev.attachment_url as string) ?? null,
         amountCents: (ev.amount_cents as number) ?? null,
+        profKind: (ev.professional_kind as string) ?? null,
       })
     }
     merged.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
@@ -149,7 +157,7 @@ export default function TimelinePage() {
 
   function resetForm() {
     setEditingId(null); setEvType('consulta'); setEvTitle(''); setEvDate('')
-    setEvNotes(''); setEvAmount(''); setEvFile(null); setFormError(null)
+    setEvNotes(''); setEvAmount(''); setEvProfKind(''); setEvFile(null); setFormError(null)
     if (fileRef.current) fileRef.current.value = ''
   }
 
@@ -159,6 +167,7 @@ export default function TimelinePage() {
     setEvType(it.eventType); setEvTitle(it.title); setEvDate(it.date.slice(0, 10))
     setEvNotes(it.subtitle ?? ''); setEvFile(null); setFormError(null)
     setEvAmount(it.amountCents != null ? (it.amountCents / 100).toFixed(2).replace('.', ',') : '')
+    setEvProfKind(it.profKind ?? '')
     setShowForm(true)
   }
 
@@ -186,6 +195,7 @@ export default function TimelinePage() {
         const patch: Record<string, unknown> = {
           event_type: evType, title: evTitle.trim(), event_date: evDate,
           notes: evNotes.trim() || null, amount_cents: parseAmountToCents(evAmount),
+          professional_kind: evType === 'consulta' ? (evProfKind || null) : null,
         }
         if (attachmentUrl !== undefined) patch.attachment_url = attachmentUrl
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -197,6 +207,7 @@ export default function TimelinePage() {
           user_id: user.id, event_type: evType, title: evTitle.trim(), event_date: evDate,
           notes: evNotes.trim() || null, source: 'autorrelato', confidence: 'baixa',
           attachment_url: attachmentUrl ?? null, amount_cents: parseAmountToCents(evAmount),
+          professional_kind: evType === 'consulta' ? (evProfKind || null) : null,
         })
         if (error) { setFormError(error.message); return }
       }
@@ -241,7 +252,7 @@ export default function TimelinePage() {
               </div>
               <div className="min-w-0">
                 <p className="font-body text-sm font-semibold text-onyx">{it.title}</p>
-                <p className="font-body text-[11px] text-mauve/60">{meta.label}{it.subtitle ? ` · ${it.subtitle}` : ''}</p>
+                <p className="font-body text-[11px] text-mauve/60">{meta.label}{it.profKind && PROF_LABEL[it.profKind] ? ` · ${PROF_LABEL[it.profKind]}` : ''}{it.subtitle ? ` · ${it.subtitle}` : ''}</p>
                 {it.amountCents != null && (
                   <span className="inline-block font-body text-[11px] font-medium text-sage bg-sage-light border border-sage/20 rounded-full px-2 py-0.5 mt-1">
                     {fmtBRL(it.amountCents)}
@@ -349,6 +360,21 @@ export default function TimelinePage() {
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
             </div>
           </div>
+          {evType === 'consulta' && (
+            <div>
+              <label className="font-body text-xs text-mauve/70 block mb-1">Profissional (opcional)</label>
+              <select value={evProfKind} onChange={e => setEvProfKind(e.target.value)}
+                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
+                <option value="">—</option>
+                <option value="medico">Médico(a)</option>
+                <option value="psicologo">Psicólogo(a)</option>
+                <option value="nutricionista">Nutricionista</option>
+                <option value="fisioterapeuta">Fisioterapeuta</option>
+                <option value="dentista">Dentista</option>
+                <option value="outro">Outro profissional</option>
+              </select>
+            </div>
+          )}
           <div>
             <label className="font-body text-xs text-mauve/70 block mb-1">Título</label>
             <input type="text" value={evTitle} onChange={e => setEvTitle(e.target.value)}
