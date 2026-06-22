@@ -45,29 +45,61 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
   }
 
-  // Diagnóstico opcional (não envia nada): pergunta à Graph API o que o número
-  // remetente configurado enxerga — dados do número + templates da WABA.
-  // Acionado por { "debug": true, "wabaId"?: "..." }. Só metadados, sem segredos.
-  let debugBody: { debug?: boolean; wabaId?: string } = {}
+  // Ferramenta de administração da Meta (atrás do x-admin-secret), para
+  // gerenciar templates pelo backend sem a interface da Meta:
+  //   { debug:true }                              → lista número + templates
+  //   { debug:true, action:'create_template', ... } → cria template
+  //   { debug:true, action:'delete_template', name }→ exclui template (todos idiomas)
+  // Usa o token de sistema (permissão whatsapp_business_management). Não envia
+  // lembretes. Conteúdo factual; sem juízo clínico.
+  let debugBody: {
+    debug?: boolean; wabaId?: string; action?: string
+    name?: string; lang?: string; category?: string; bodyText?: string
+  } = {}
   try { debugBody = await req.json() } catch { /* corpo vazio = fluxo normal */ }
   if (debugBody?.debug === true) {
     const token = process.env.WHATSAPP_CLOUD_TOKEN
     const pnid = process.env.WHATSAPP_PHONE_NUMBER_ID
     const wabaId = debugBody.wabaId || process.env.WHATSAPP_WABA_ID || ''
-    const g = async (path: string) => {
+    const call = async (method: string, path: string, jsonBody?: unknown) => {
       try {
         const r = await fetch(`https://graph.facebook.com/v21.0/${path}`, {
-          headers: { Authorization: `Bearer ${token}` },
+          method,
+          headers: {
+            Authorization: `Bearer ${token}`,
+            ...(jsonBody ? { 'Content-Type': 'application/json' } : {}),
+          },
+          body: jsonBody ? JSON.stringify(jsonBody) : undefined,
         })
         return { status: r.status, body: (await r.text()).slice(0, 1800) }
       } catch (e) { return { error: String(e).slice(0, 200) } }
     }
+
+    if (debugBody.action === 'create_template') {
+      const result = await call('POST', `${wabaId}/message_templates`, {
+        name: debugBody.name ?? 'lembrete_sintera',
+        language: debugBody.lang ?? 'pt_BR',
+        category: debugBody.category ?? 'UTILITY',
+        components: [{
+          type: 'BODY',
+          text: debugBody.bodyText ?? 'Lembrete SINTERA: {{1}} em {{2}}. Esta é uma organização da sua jornada de saúde e não substitui avaliação médica.',
+          example: { body_text: [['Consulta com cardiologista', 'amanhã, qua 20 jun']] },
+        }],
+      })
+      return NextResponse.json({ debug: true, action: 'create_template', result })
+    }
+
+    if (debugBody.action === 'delete_template') {
+      const result = await call('DELETE', `${wabaId}/message_templates?name=${encodeURIComponent(debugBody.name ?? '')}`)
+      return NextResponse.json({ debug: true, action: 'delete_template', result })
+    }
+
     return NextResponse.json({
       debug: true,
       hasToken: !!token,
       phoneNumberId: pnid ?? null,
-      phone: pnid ? await g(`${pnid}?fields=id,display_phone_number,verified_name,name_status`) : null,
-      templates: wabaId ? await g(`${wabaId}/message_templates?fields=name,status,language,category&limit=80`) : 'sem wabaId',
+      phone: pnid ? (await call('GET', `${pnid}?fields=id,display_phone_number,verified_name,name_status`)) : null,
+      templates: wabaId ? (await call('GET', `${wabaId}/message_templates?fields=name,status,language,category&limit=80`)) : 'sem wabaId',
     })
   }
 
