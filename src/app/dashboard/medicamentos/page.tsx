@@ -11,7 +11,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Loader2, Plus, X, Pill, ArrowLeft, Pencil, Trash2, PauseCircle, PlayCircle } from 'lucide-react'
+import { Loader2, Plus, X, Pill, ArrowLeft, Pencil, Trash2, PauseCircle, PlayCircle, Camera } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 
@@ -54,6 +54,36 @@ export default function MedicamentosPage() {
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
+  const [scanning, setScanning] = useState(false)
+  const [scanResults, setScanResults] = useState<{ name: string; dose: string | null; frequency: string | null }[]>([])
+
+  async function handleScan(file: File) {
+    setErr(null); setScanning(true); setScanResults([])
+    try {
+      const base64 = await new Promise<string>((res, rej) => {
+        const r = new FileReader()
+        r.onload = () => res((r.result as string).split(',')[1] ?? '')
+        r.onerror = rej
+        r.readAsDataURL(file)
+      })
+      const resp = await fetch('/api/medications/scan', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64: base64, mediaType: file.type || 'image/jpeg' }),
+      })
+      const j = await resp.json()
+      if (!resp.ok) { setErr(j.error ?? 'Falha ao ler a imagem.'); return }
+      if (!j.items?.length) { setErr('Não consegui ler os dados. Tente uma foto mais nítida e bem iluminada.'); return }
+      setScanResults(j.items)
+      setShowForm(false)
+    } finally { setScanning(false) }
+  }
+
+  function useScanned(it: { name: string; dose: string | null; frequency: string | null }) {
+    setEditingId(null); setKind('medicamento'); setName(it.name); setDose(it.dose ?? ''); setFreq(it.frequency ?? '')
+    setStartedOn(''); setUntilOn(''); setNotes(''); setErr(null)
+    setScanResults(prev => prev.filter(x => x !== it))
+    setShowForm(true)
+  }
 
   const load = useCallback(async () => {
     if (!user) return
@@ -200,12 +230,42 @@ export default function MedicamentosPage() {
           <h1 className="font-display text-2xl font-semibold text-onyx">Medicamentos e suplementos</h1>
           <p className="font-body text-sm text-mauve mt-1">Registre o que você usa. A SINTERA organiza — quem prescreve é o seu médico.</p>
         </div>
-        <button onClick={() => (showForm ? (reset(), setShowForm(false)) : (reset(), setShowForm(true)))}
-          className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0">
-          {showForm ? <X size={15} /> : <Plus size={15} />}
-          {showForm ? 'Fechar' : 'Adicionar'}
-        </button>
+        <div className="flex flex-col items-end gap-2 flex-shrink-0">
+          <button onClick={() => (showForm ? (reset(), setShowForm(false)) : (reset(), setShowForm(true)))}
+            className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity">
+            {showForm ? <X size={15} /> : <Plus size={15} />}
+            {showForm ? 'Fechar' : 'Adicionar'}
+          </button>
+          <label className={['flex items-center gap-2 px-4 py-2 rounded-full border border-petal/40 text-petal font-body text-sm font-medium cursor-pointer hover:bg-blush transition-colors',
+            scanning ? 'opacity-60 pointer-events-none' : ''].join(' ')}>
+            <input type="file" accept="image/*" capture="environment" className="sr-only" disabled={scanning}
+              onChange={e => { const f = e.target.files?.[0]; if (f) handleScan(f); e.target.value = '' }} />
+            {scanning ? <Loader2 size={15} className="animate-spin" /> : <Camera size={15} />}
+            {scanning ? 'Lendo…' : 'Escanear foto'}
+          </label>
+        </div>
       </div>
+
+      {/* Resultados do escaneamento — conferir antes de adicionar */}
+      {scanResults.length > 0 && (
+        <div className="card-premium p-5 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="font-body text-sm font-semibold text-onyx">Detectado na foto — confira e adicione</p>
+            <button onClick={() => setScanResults([])} className="text-mauve/50 hover:text-onyx"><X size={15} /></button>
+          </div>
+          <p className="font-body text-[11px] text-mauve/60">Transcrição automática da imagem. Revise antes de salvar — a plataforma só organiza, não prescreve.</p>
+          {scanResults.map((it, i) => (
+            <div key={i} className="flex items-center justify-between gap-3 rounded-xl border border-border bg-ivory px-3 py-2">
+              <div className="min-w-0">
+                <p className="font-body text-sm font-semibold text-onyx truncate">{it.name}</p>
+                <p className="font-body text-[11px] text-mauve/70">{[it.dose, it.frequency].filter(Boolean).join(' · ') || 'Sem dose/frequência detectada'}</p>
+              </div>
+              <button onClick={() => useScanned(it)}
+                className="px-3 py-1.5 rounded-full gradient-sintera text-white font-body text-xs font-medium flex-shrink-0 hover:opacity-90">Usar</button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {showForm && (
         <div className="card-premium p-5 space-y-3">
