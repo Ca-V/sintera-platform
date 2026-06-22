@@ -334,7 +334,7 @@ export default function HistoricoPage() {
             <TrendingUp size={22} className="text-petal" />
           </div>
           <div>
-            <h1 className="font-display text-xl font-semibold text-onyx">Indicadores de saúde — evolução</h1>
+            <h1 className="font-display text-xl font-semibold text-onyx">Histórico de Saúde — evolução dos indicadores</h1>
             <p className="font-body text-sm text-mauve mt-0.5">
               {allGroups.length} biomarcadores · {rows.length} medições
               {availableYears.length > 1 && ` · ${availableYears[0]}–${availableYears[availableYears.length - 1]}`}
@@ -342,11 +342,10 @@ export default function HistoricoPage() {
           </div>
         </div>
 
-        {/* Abas: Atual · Evolução (esta) */}
+        {/* Abas do acompanhamento longitudinal: Linha do tempo · Evolução (esta) */}
         <div className="flex flex-wrap gap-2 mt-4">
-          <Link href="/dashboard/saude" className="px-3.5 py-1.5 rounded-full bg-ivory border border-border text-mauve font-body text-sm hover:border-petal/40 transition-colors">Atual</Link>
-          <span className="px-3.5 py-1.5 rounded-full gradient-sintera text-white font-body text-sm font-medium">Evolução</span>
-          <Link href="/dashboard/medidas" className="px-3.5 py-1.5 rounded-full bg-ivory border border-border text-mauve font-body text-sm hover:border-petal/40 transition-colors">Medidas</Link>
+          <Link href="/dashboard/timeline" className="px-3.5 py-1.5 rounded-full bg-ivory border border-border text-mauve font-body text-sm hover:border-petal/40 transition-colors">Linha do tempo</Link>
+          <span className="px-3.5 py-1.5 rounded-full gradient-sintera text-white font-body text-sm font-medium">Evolução dos indicadores</span>
         </div>
 
         {/* Filtros (Epic Fase 1) */}

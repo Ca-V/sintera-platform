@@ -325,6 +325,12 @@ export default function TimelinePage() {
         </button>
       </motion.div>
 
+      {/* Abas do acompanhamento longitudinal: Linha do tempo (esta) · Evolução (biomarcadores) */}
+      <div className="flex flex-wrap gap-2">
+        <span className="px-3.5 py-1.5 rounded-full gradient-sintera text-white font-body text-sm font-medium">Linha do tempo</span>
+        <Link href="/dashboard/historico" className="px-3.5 py-1.5 rounded-full bg-ivory border border-border text-mauve font-body text-sm hover:border-petal/40 transition-colors">Evolução dos indicadores</Link>
+      </div>
+
       {/* Onboarding dispensável */}
       {showOnboard && (
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
