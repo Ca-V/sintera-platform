@@ -142,6 +142,10 @@ F6 Escala (operadoras, ocupacional, marketplace de protocolos)
    + canal ocupacional em F1.5), não só nas integrações pesadas (F5).
 3. **"Pendente" na UI** depende de **parecer jurídico** (F1).
 4. **Expansão de ondas** é governada por **valor de mercado**, não por completude (F5+).
+5. **Lembrete por WhatsApp (para usuárias reais)** depende de **formalização da empresa
+   (CNPJ) → verificação do negócio na Meta → número remetente próprio**. O código está
+   pronto e validado; o canal só vai ao ar quando a Sintera for empresa formalizada. Até lá,
+   **o lembrete por e-mail cobre a função** (não bloqueia nada).
 
 ## Visão de investidor (value-creation)
 
@@ -169,6 +173,9 @@ fase — não tem entregável próprio.)
 
 - FASE Wearables (Oura/Strava/Garmin) — depende de hardware/conta; alimenta dados futuros.
 - Observabilidade de extração por laboratório — robustez operacional conforme o volume cresce.
+- **Lembrete por WhatsApp** — código pronto (worker + template + fallback de idioma + admin
+  de templates pelo backend). **Bloqueado para usuárias reais** até: CNPJ → verificação do
+  negócio na Meta → número remetente próprio. Detalhes operacionais em `docs/WHATSAPP-SETUP.md`.
 
 ---
 
