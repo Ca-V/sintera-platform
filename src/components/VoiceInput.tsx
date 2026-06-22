@@ -30,7 +30,10 @@ export default function VoiceInput({ onResult, title = 'Ditar por voz' }: {
   function toggle() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-    if (!SR) return
+    if (!SR) {
+      window.alert('Ditado por voz não está disponível neste navegador. Tente o Google Chrome (Android) ou o Safari atualizado (iPhone).')
+      return
+    }
     if (listening) { recRef.current?.stop?.(); return }
     const rec = new SR()
     rec.lang = 'pt-BR'
@@ -48,14 +51,14 @@ export default function VoiceInput({ onResult, title = 'Ditar por voz' }: {
     try { rec.start() } catch { setListening(false) }
   }
 
-  if (!supported) return null
-
   return (
-    <button type="button" onClick={toggle} title={title} aria-label={title}
-      className={`inline-flex items-center justify-center w-8 h-8 rounded-lg border transition-colors flex-shrink-0 ${
-        listening ? 'border-petal bg-blush text-petal animate-pulse-soft' : 'border-border text-mauve/60 hover:text-petal hover:border-petal/40'
+    <button type="button" onClick={toggle} title={supported ? title : 'Ditado por voz indisponível neste navegador'} aria-label={title}
+      className={`inline-flex items-center gap-1.5 px-2.5 h-9 rounded-lg border transition-colors flex-shrink-0 font-body text-xs ${
+        listening ? 'border-petal bg-blush text-petal animate-pulse-soft'
+          : supported ? 'border-petal/40 text-petal hover:bg-blush'
+          : 'border-border text-mauve/40'
       }`}>
-      <Mic size={15} />
+      <Mic size={15} /> {listening ? 'Ouvindo…' : 'Falar'}
     </button>
   )
 }
