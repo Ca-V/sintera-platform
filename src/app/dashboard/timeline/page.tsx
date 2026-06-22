@@ -11,7 +11,7 @@ import { motion } from 'framer-motion'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   Clock, Plus, X, Stethoscope, Syringe, Activity, FlaskConical, CalendarDays,
-  Loader2, Pencil, Trash2, Paperclip, Bell, Info, Sparkles, Pill, Receipt,
+  Loader2, Pencil, Trash2, Paperclip, Bell, Info, Sparkles, Pill, Receipt, FileText,
 } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -296,6 +296,9 @@ export default function TimelinePage() {
             </Link>
             <Link href="/dashboard/medicamentos" className="inline-flex items-center gap-1 font-body text-xs text-petal hover:underline">
               <Pill size={13} /> Medicamentos
+            </Link>
+            <Link href="/dashboard/relatorio" className="inline-flex items-center gap-1 font-body text-xs text-petal hover:underline">
+              <FileText size={13} /> Relatório
             </Link>
           </div>
         </div>
