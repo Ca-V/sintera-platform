@@ -264,7 +264,7 @@ export default function ExamsPage() {
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-body text-sm font-semibold text-onyx">Ômica</p>
-          <p className="font-body text-xs text-mauve mt-0.5">Metabolômica, proteômica, microbioma e outros — organizados, versionados e comparáveis no tempo</p>
+          <p className="font-body text-xs text-mauve mt-0.5">Registre e importe metabolômica, proteômica, microbioma e outros — com catálogo, versionamento e comparação no tempo</p>
         </div>
         <ChevronRight size={16} className="text-mauve/40 group-hover:text-lavender transition-colors flex-shrink-0" />
       </Link>
@@ -329,6 +329,17 @@ export default function ExamsPage() {
         <input type="file" accept="image/*" capture="environment" className="sr-only" disabled={uploading} onChange={onInputChange} />
         <Camera size={15} /> Tirar foto do laudo
       </label>
+
+      {/* Direcionamento: laudos de ômica têm fluxo próprio (catálogo + versionamento) */}
+      <div className="mt-3 rounded-2xl border border-lavender/30 bg-lavender-light/40 px-4 py-3 flex items-start gap-3">
+        <Dna size={16} className="text-lavender flex-shrink-0 mt-0.5" />
+        <p className="font-body text-xs text-onyx leading-relaxed">
+          É um exame de <strong>ômica</strong> (metabolômica, proteômica, microbioma, genética…)? Esses laudos têm
+          centenas a milhares de marcadores e seguem um fluxo próprio, com catálogo e versionamento —
+          registre em <Link href="/dashboard/omics" className="text-lavender hover:underline font-medium">Ômica</Link>,
+          não aqui.
+        </p>
+      </div>
 
       {uploadError && (
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
