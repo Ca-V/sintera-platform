@@ -22,11 +22,17 @@ ou de uma FALA transcrita. Liste os itens. Para cada item, SEPARE bem:
 - started_on: data de início NO FORMATO YYYY-MM-DD, se a pessoa indicar quando começou
   (resolva expressões como "desde ontem", "semana passada", "dia 10" usando a data de HOJE
   informada na mensagem). null se não indicada.
-Responda APENAS com JSON válido: {"items":[{"name":"","dose":null,"frequency":null,"started_on":null}]}.
+- pack_quantity: número de unidades na embalagem (ex.: 30 comprimidos → 30). Só número. null se não dito.
+- daily_consumption: quantas unidades por dia (ex.: "1 por dia" → 1). Só número. null se não dito.
+- purchased_on: data da compra YYYY-MM-DD, se disser quando comprou (use HOJE para resolver relativos). null se não dito.
+Responda APENAS com JSON válido: {"items":[{"name":"","dose":null,"frequency":null,"started_on":null,"pack_quantity":null,"daily_consumption":null,"purchased_on":null}]}.
 NÃO coloque dose ou frequência dentro de name — separe nos campos certos.
 Não invente o que não foi dito/visto. Não forneça orientação médica.`
 
-interface ScanItem { name: string; dose: string | null; frequency: string | null; startedOn: string | null }
+interface ScanItem {
+  name: string; dose: string | null; frequency: string | null; startedOn: string | null
+  packQty: number | null; dailyCons: number | null; purchasedOn: string | null
+}
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -84,6 +90,9 @@ export async function POST(req: NextRequest) {
               dose: typeof o.dose === 'string' && o.dose.trim() ? o.dose.trim().slice(0, 60) : null,
               frequency: typeof o.frequency === 'string' && o.frequency.trim() ? o.frequency.trim().slice(0, 60) : null,
               startedOn: typeof o.started_on === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(o.started_on.trim()) ? o.started_on.trim() : null,
+              packQty: typeof o.pack_quantity === 'number' && isFinite(o.pack_quantity) && o.pack_quantity > 0 ? o.pack_quantity : null,
+              dailyCons: typeof o.daily_consumption === 'number' && isFinite(o.daily_consumption) && o.daily_consumption > 0 ? o.daily_consumption : null,
+              purchasedOn: typeof o.purchased_on === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(o.purchased_on.trim()) ? o.purchased_on.trim() : null,
             }
           })
           .filter((x): x is ScanItem => x !== null)
