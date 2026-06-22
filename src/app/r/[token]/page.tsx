@@ -1,0 +1,124 @@
+// ============================================================
+// Visualização pública do relatório de saúde (link compartilhado)
+// ============================================================
+// Somente-leitura. Renderizada NO SERVIDOR com service role, apenas para
+// tokens válidos (não revogados e não expirados). Sem login. A usuária gera e
+// revoga o link no app. Não indexável.
+// ============================================================
+
+import { createClient } from '@supabase/supabase-js'
+
+export const metadata = { robots: { index: false, follow: false } }
+
+const TYPE_LABEL: Record<string, string> = {
+  consulta: 'Consulta', vacina: 'Vacina', procedimento: 'Procedimento',
+  estetico: 'Procedimento estético', medicamento: 'Medicamento', exame: 'Exame', outro: 'Evento',
+}
+const PROF_LABEL: Record<string, string> = {
+  medico: 'Médico(a)', psicologo: 'Psicólogo(a)', nutricionista: 'Nutricionista',
+  fisioterapeuta: 'Fisioterapeuta', dentista: 'Dentista', outro: 'Outro profissional',
+}
+
+function fmt(date: string | null): string {
+  if (!date) return '—'
+  const d = new Date(date.length <= 10 ? `${date}T00:00:00` : date)
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+function Aviso({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ maxWidth: 640, margin: '60px auto', padding: '0 20px', fontFamily: 'system-ui, sans-serif', textAlign: 'center', color: '#6b5b73' }}>
+      {children}
+    </div>
+  )
+}
+
+export default async function SharedReportPage({ params }: { params: Promise<{ token: string }> }) {
+  const { token } = await params
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY
+  if (!serviceKey) return <Aviso>Indisponível no momento.</Aviso>
+
+  const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceKey)
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: share } = await (admin.from('report_shares') as any)
+    .select('user_id, expires_at, revoked')
+    .eq('token', token)
+    .maybeSingle()
+
+  if (!share || share.revoked || new Date(share.expires_at as string) < new Date()) {
+    return <Aviso><h1 style={{ fontSize: 20, color: '#2b2230' }}>Link inválido ou expirado</h1><p style={{ marginTop: 8 }}>Peça um novo link à pessoa que compartilhou.</p></Aviso>
+  }
+
+  const uid = share.user_id as string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = admin as any
+  const [{ data: prof }, { data: meds }, { data: events }, { data: exams }, { data: authUser }] = await Promise.all([
+    db.from('profiles').select('name').eq('id', uid).maybeSingle(),
+    db.from('medications').select('name, dose, frequency, started_on, status').eq('user_id', uid).order('status'),
+    db.from('health_events').select('title, event_type, event_date, notes, professional_kind').eq('user_id', uid).eq('synthetic', false).order('event_date', { ascending: false }),
+    db.from('exams').select('type, exam_date, created_at').eq('user_id', uid).order('created_at', { ascending: false }),
+    admin.auth.admin.getUserById(uid),
+  ])
+
+  const nome = (prof?.name as string) || authUser?.user?.email || '—'
+  const medsArr = (meds ?? []) as Array<Record<string, unknown>>
+  const medsEmUso = medsArr.filter(m => m.status === 'em_uso')
+  const medsSusp = medsArr.filter(m => m.status === 'suspenso')
+  const evArr = (events ?? []) as Array<Record<string, unknown>>
+  const exArr = (exams ?? []) as Array<Record<string, unknown>>
+  const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
+
+  return (
+    <div style={{ maxWidth: 680, margin: '0 auto', padding: '32px 20px', fontFamily: 'system-ui, sans-serif', color: '#2b2230', lineHeight: 1.5 }}>
+      <div style={{ borderBottom: '1px solid #ece6ef', paddingBottom: 16, marginBottom: 20 }}>
+        <h1 style={{ fontSize: 20, margin: 0 }}>Relatório de saúde — {nome}</h1>
+        <p style={{ fontSize: 12, color: '#8a7b92', marginTop: 6 }}>Gerado em {hoje} · organização dos dados registrados pela própria pessoa (SINTERA).</p>
+      </div>
+
+      <section style={{ marginBottom: 22 }}>
+        <h2 style={{ fontSize: 15 }}>Medicamentos em uso</h2>
+        {medsEmUso.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum registrado.</p> : (
+          <ul style={{ paddingLeft: 18, fontSize: 14 }}>
+            {medsEmUso.map((m, i) => (
+              <li key={i}><strong>{m.name as string}</strong>{[m.dose, m.frequency].filter(Boolean).length ? ` — ${[m.dose, m.frequency].filter(Boolean).join(', ')}` : ''}{m.started_on ? ` (desde ${fmt(m.started_on as string)})` : ''}</li>
+            ))}
+          </ul>
+        )}
+        {medsSusp.length > 0 && <p style={{ fontSize: 12, color: '#8a7b92' }}>Suspensos: {medsSusp.map(m => m.name as string).join(', ')}.</p>}
+      </section>
+
+      <section style={{ marginBottom: 22 }}>
+        <h2 style={{ fontSize: 15 }}>Consultas, procedimentos e eventos</h2>
+        {evArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum registrado.</p> : (
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+            <tbody>
+              {evArr.map((e, i) => (
+                <tr key={i} style={{ borderBottom: '1px solid #f2eef4' }}>
+                  <td style={{ padding: '6px 12px 6px 0', color: '#8a7b92', whiteSpace: 'nowrap', verticalAlign: 'top' }}>{fmt(e.event_date as string)}</td>
+                  <td style={{ padding: '6px 0' }}>
+                    <span style={{ color: '#8a7b92' }}>{TYPE_LABEL[e.event_type as string] ?? 'Evento'}{e.professional_kind && PROF_LABEL[e.professional_kind as string] ? ` (${PROF_LABEL[e.professional_kind as string]})` : ''}:</span> {e.title as string}
+                    {e.notes ? <span style={{ display: 'block', fontSize: 12, color: '#8a7b92' }}>{e.notes as string}</span> : null}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+
+      <section style={{ marginBottom: 22 }}>
+        <h2 style={{ fontSize: 15 }}>Exames enviados</h2>
+        {exArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum.</p> : (
+          <ul style={{ paddingLeft: 18, fontSize: 14 }}>
+            {exArr.map((e, i) => <li key={i}>{fmt((e.exam_date as string) || (e.created_at as string))} — {(e.type as string) || 'Exame'}</li>)}
+          </ul>
+        )}
+      </section>
+
+      <p style={{ fontSize: 11, color: '#8a7b92', borderTop: '1px solid #ece6ef', paddingTop: 12 }}>
+        Relatório compartilhado pela própria pessoa via SINTERA. Organiza dados autorrelatados — <strong>não é laudo, diagnóstico ou parecer</strong> e não substitui avaliação profissional.
+      </p>
+    </div>
+  )
+}

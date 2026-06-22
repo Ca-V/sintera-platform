@@ -12,7 +12,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Loader2, Printer, ArrowLeft, FileText } from 'lucide-react'
+import { Loader2, Printer, ArrowLeft, FileText, Share2, Copy, Trash2, Check } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 
@@ -38,6 +38,9 @@ export default function RelatorioPage() {
   const [meds, setMeds] = useState<Med[]>([])
   const [events, setEvents] = useState<Ev[]>([])
   const [exams, setExams] = useState<Ex[]>([])
+  const [shares, setShares] = useState<{ id: string; token: string; expiresAt: string }[]>([])
+  const [shareBusy, setShareBusy] = useState(false)
+  const [copied, setCopied] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     if (!user) return
@@ -60,8 +63,41 @@ export default function RelatorioPage() {
     setExams(((exRes.data ?? []) as Array<Record<string, unknown>>).map(e => ({
       type: (e.type as string) || 'Exame', date: (e.exam_date as string) || (e.created_at as string),
     })))
+    const { data: sh } = await db.from('report_shares')
+      .select('id, token, expires_at').eq('user_id', user.id).eq('revoked', false)
+      .gt('expires_at', new Date().toISOString()).order('created_at', { ascending: false })
+    setShares(((sh ?? []) as Array<Record<string, unknown>>).map(s => ({
+      id: s.id as string, token: s.token as string, expiresAt: s.expires_at as string,
+    })))
     setLoading(false)
   }, [user, supabase])
+
+  async function createShare() {
+    if (!user || shareBusy) return
+    setShareBusy(true)
+    const token = (crypto.randomUUID() + crypto.randomUUID()).replace(/-/g, '')
+    const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any).from('report_shares').insert({ user_id: user.id, token, expires_at: expires })
+    await load()
+    setShareBusy(false)
+  }
+
+  async function revokeShare(id: string) {
+    if (shareBusy) return
+    if (!window.confirm('Revogar este link? Quem o tiver não verá mais o relatório.')) return
+    setShareBusy(true)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any).from('report_shares').update({ revoked: true }).eq('id', id)
+    await load()
+    setShareBusy(false)
+  }
+
+  function copyLink(token: string) {
+    const url = `${window.location.origin}/r/${token}`
+    navigator.clipboard?.writeText(url)
+    setCopied(token); setTimeout(() => setCopied(null), 1800)
+  }
 
   useEffect(() => { if (!authLoading) load() }, [authLoading, load])
 
@@ -85,6 +121,38 @@ export default function RelatorioPage() {
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity">
           <Printer size={15} /> Imprimir / Salvar PDF
         </button>
+      </div>
+
+      {/* Compartilhar com profissional — link revogável, somente leitura */}
+      <div className="card-premium p-5 mb-6 print:hidden">
+        <div className="flex items-center gap-2 mb-2">
+          <Share2 size={16} className="text-petal" />
+          <h2 className="font-display text-base font-semibold text-onyx">Compartilhar com um profissional</h2>
+        </div>
+        <p className="font-body text-xs text-mauve leading-relaxed mb-3">
+          Gere um link <strong>somente-leitura</strong> e <strong>temporário</strong> (30 dias) deste relatório, para enviar a um profissional de saúde —
+          sem precisar dar acesso à sua conta. Você pode <strong>revogar</strong> quando quiser. Ao gerar, você concorda em compartilhar estes dados com quem receber o link.
+        </p>
+        <button onClick={createShare} disabled={shareBusy}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium disabled:opacity-40 hover:opacity-90 transition-opacity">
+          <Share2 size={14} /> Gerar link
+        </button>
+        {shares.length > 0 && (
+          <div className="space-y-2 mt-4">
+            {shares.map(s => (
+              <div key={s.id} className="flex items-center gap-2 rounded-xl border border-border bg-ivory px-3 py-2">
+                <input readOnly value={`${typeof window !== 'undefined' ? window.location.origin : ''}/r/${s.token}`}
+                  className="flex-1 min-w-0 bg-transparent font-body text-xs text-mauve outline-none" />
+                <button onClick={() => copyLink(s.token)} title="Copiar" className="text-mauve/60 hover:text-petal flex-shrink-0">
+                  {copied === s.token ? <Check size={14} className="text-sage" /> : <Copy size={14} />}
+                </button>
+                <button onClick={() => revokeShare(s.id)} title="Revogar" className="text-mauve/60 hover:text-red-500 flex-shrink-0">
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="bg-white rounded-2xl border border-border p-8 space-y-6 print:border-0 print:p-0">
