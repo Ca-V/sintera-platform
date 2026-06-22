@@ -25,7 +25,31 @@ export class AnthropicProvider implements AIProvider {
     const startTime = Date.now()
     let msg: Message
 
-    if (input.extractionPath === 'pdf_native' && input.pdfBuffer) {
+    if (input.extractionPath === 'image' && input.imageBuffer) {
+      // Path imagem — foto do laudo enviada como bloco de imagem (modelo multimodal)
+      const imgBase64 = input.imageBuffer.toString('base64')
+      const mediaType = input.imageMediaType || 'image/jpeg'
+      msg = await this.client.messages.create({
+        model: this.model,
+        max_tokens: input.maxTokens,
+        temperature: input.temperature,
+        system: input.systemPrompt,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              { type: 'image', source: { type: 'base64', media_type: mediaType as any, data: imgBase64 } },
+              {
+                type: 'text',
+                text: input.userTemplate.replace('{{examText}}', '').trim() ||
+                  'Extraia todos os biomarcadores deste laudo laboratorial conforme as instruções do sistema.',
+              },
+            ],
+          },
+        ],
+      }) as Message
+    } else if (input.extractionPath === 'pdf_native' && input.pdfBuffer) {
       // Path B — PDF nativo: envia o arquivo diretamente ao modelo
       const pdfBase64 = input.pdfBuffer.toString('base64')
 

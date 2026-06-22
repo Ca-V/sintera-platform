@@ -217,10 +217,13 @@ export async function extractBiomarkers(
     examText?: string
     // Path B
     pdfBuffer?: Buffer
+    // Path imagem (foto do laudo)
+    imageBuffer?: Buffer
+    imageMediaType?: string
   },
 ): Promise<GatewayReturn> {
-  const { examId, userId, examText, pdfBuffer, pdfQualityDetected } = params
-  const extractionPath: import('./types').ExtractionPath = pdfBuffer ? 'pdf_native' : 'text'
+  const { examId, userId, examText, pdfBuffer, imageBuffer, imageMediaType, pdfQualityDetected } = params
+  const extractionPath: import('./types').ExtractionPath = imageBuffer ? 'image' : pdfBuffer ? 'pdf_native' : 'text'
 
   // 1. Rate limit
   if (!checkRateLimit(userId)) {
@@ -276,6 +279,8 @@ export async function extractBiomarkers(
     providerResult = await provider.extractBiomarkers({
       examText,
       pdfBuffer,
+      imageBuffer,
+      imageMediaType,
       extractionPath,
       examId,
       userId,

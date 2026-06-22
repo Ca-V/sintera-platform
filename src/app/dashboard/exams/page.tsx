@@ -5,7 +5,7 @@ import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Upload, FileText, Clock, CheckCircle, AlertCircle,
-  Plus, X, Loader2, Zap, Search, ChevronDown, ChevronUp, Trash2, Pencil, Check,
+  Plus, X, Loader2, Zap, Search, ChevronDown, ChevronUp, Trash2, Pencil, Check, Camera,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
@@ -301,13 +301,20 @@ export default function ExamsPage() {
           <>
             <p className="font-display text-lg font-semibold text-onyx mb-1">Arraste seu exame aqui</p>
             <p className="font-body text-sm text-mauve mb-4">ou clique para selecionar um arquivo</p>
-            <p className="text-xs font-body text-mauve/60 mb-5">PDF · Até 50 MB</p>
+            <p className="text-xs font-body text-mauve/60 mb-5">PDF ou foto do laudo (JPG/PNG) · Até 50 MB</p>
             <span className="inline-flex items-center gap-2 gradient-sintera text-white font-body text-sm font-medium px-6 py-2.5 rounded-full hover:opacity-90 transition-opacity shadow-sm">
               <Plus size={15} /> Selecionar arquivo
             </span>
           </>
         )}
       </motion.label>
+
+      {/* Tirar foto do laudo (abre a câmera no celular) */}
+      <label className={['mt-3 inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-petal/40 text-petal font-body text-sm font-medium cursor-pointer hover:bg-blush transition-colors',
+        uploading ? 'opacity-60 pointer-events-none' : ''].join(' ')}>
+        <input type="file" accept="image/*" capture="environment" className="sr-only" disabled={uploading} onChange={onInputChange} />
+        <Camera size={15} /> Tirar foto do laudo
+      </label>
 
       {uploadError && (
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}

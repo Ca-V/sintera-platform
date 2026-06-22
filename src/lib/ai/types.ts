@@ -1,7 +1,7 @@
 // AI Gateway — tipos centrais
 // DMEAV: Fase 1, F1-M1 (Gateway) + F1-M2 (Dual Pipeline)
 
-export type ExtractionPath = 'text' | 'pdf_native'
+export type ExtractionPath = 'text' | 'pdf_native' | 'image'
 
 export interface AIProvider {
   readonly name: string
@@ -22,6 +22,9 @@ export interface ExtractionInput {
   // NOTA DMEAV: usa header beta 'anthropic-beta: pdfs-2024-09-25'
   // Dependência externa sujeita a alteração pela Anthropic.
   pdfBuffer?: Buffer
+  // Path imagem — foto do laudo (câmera do celular). Modelo multimodal lê a imagem.
+  imageBuffer?: Buffer
+  imageMediaType?: string
   extractionPath: ExtractionPath
 }
 
