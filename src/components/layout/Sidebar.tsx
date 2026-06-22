@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, FileText, Activity, Clock, Pill, Receipt, CalendarDays,
   HeartPulse, Stethoscope, ScrollText,
-  Settings, X, LogOut, User, ChevronRight,
+  X, ChevronRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUser } from '@/context/UserContext'
@@ -73,7 +73,7 @@ function NavItem({ href, icon: Icon, label, active, soon, onClose }: {
   return (
     <Link href={href} onClick={onClose}
       className={cn(
-        'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-sm font-body group',
+        'flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 text-sm font-body group',
         active
           ? 'nav-active-glow bg-white/8 text-white'
           : 'text-white/45 hover:text-white/80 hover:bg-white/5'
@@ -93,7 +93,7 @@ function NavItem({ href, icon: Icon, label, active, soon, onClose }: {
 
 function SidebarContent({ onClose }: { onClose: () => void }) {
   const pathname = usePathname()
-  const { profile, signOut } = useUser()
+  const { profile } = useUser()
   const displayName = profile?.name ?? 'Usuária'
   const initials    = displayName.charAt(0).toUpperCase()
 
@@ -101,7 +101,7 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
     <div className="flex flex-col h-full bg-deep select-none">
 
       {/* Logo */}
-      <div className="flex items-center justify-between px-5 py-5">
+      <div className="flex items-center justify-between px-5 py-4">
         <Link href="/" className="flex items-center gap-2.5">
           <div className="w-7 h-7 rounded-full gradient-sintera flex items-center justify-center shadow-lg">
             <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
@@ -117,11 +117,11 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
         </button>
       </div>
 
-      {/* Perfil da usuária */}
+      {/* Perfil da usuária — atalho para o perfil (perfil/config/sair ficam no menu do topo) */}
       <Link href="/dashboard/profile" onClick={onClose}
-        className="mx-4 mb-5 p-3.5 rounded-2xl border border-white/6 bg-white/4 hover:bg-white/7 transition-colors">
+        className="mx-4 mb-3 p-3 rounded-2xl border border-white/6 bg-white/4 hover:bg-white/7 transition-colors">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full gradient-sintera flex items-center justify-center flex-shrink-0 shadow-md">
+          <div className="w-8 h-8 rounded-full gradient-sintera flex items-center justify-center flex-shrink-0 shadow-md">
             <span className="text-white text-sm font-display font-bold">{initials}</span>
           </div>
           <div className="min-w-0 flex-1">
@@ -131,11 +131,11 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
         </div>
       </Link>
 
-      {/* Navegação principal */}
-      <nav className="flex-1 px-3 overflow-y-auto pb-2">
+      {/* Navegação principal — todos os tópicos visíveis sem rolagem */}
+      <nav className="flex-1 px-3 overflow-y-auto pb-3">
         {navGroups.map(group => (
-          <div key={group.title} className="mb-3">
-            <p className="text-[9px] font-body font-semibold text-white/25 uppercase tracking-[0.2em] px-3 mb-1.5">
+          <div key={group.title} className="mb-2">
+            <p className="text-[9px] font-body font-semibold text-white/25 uppercase tracking-[0.2em] px-3 mb-1">
               {group.title}
             </p>
             <ul className="flex flex-col gap-0.5">
@@ -149,31 +149,6 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
           </div>
         ))}
       </nav>
-
-      {/* Rodapé */}
-      <div className="px-3 pb-4 mt-3 border-t border-white/6 pt-3 space-y-0.5">
-        <Link href="/dashboard/profile" onClick={onClose}
-          className={cn('flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-body transition-all duration-200',
-            pathname === '/dashboard/profile'
-              ? 'bg-white/8 text-white'
-              : 'text-white/40 hover:text-white/75 hover:bg-white/5')}>
-          <User size={16} className="flex-shrink-0"/>
-          Meu Perfil
-        </Link>
-        <Link href="/dashboard/configuracoes" onClick={onClose}
-          className={cn('flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-body transition-all duration-200',
-            pathname === '/dashboard/configuracoes'
-              ? 'bg-white/8 text-white'
-              : 'text-white/40 hover:text-white/75 hover:bg-white/5')}>
-          <Settings size={16} className="flex-shrink-0"/>
-          Configurações
-        </Link>
-        <button onClick={signOut}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-body text-white/40 hover:text-red-400/80 hover:bg-red-500/8 transition-all duration-200">
-          <LogOut size={16} className="flex-shrink-0"/>
-          Sair
-        </button>
-      </div>
     </div>
   )
 }
