@@ -1,7 +1,7 @@
 import Link from 'next/link'
 
 const links = {
-  Produto:  ['Funcionalidades', 'Como funciona', 'Beta'],
+  Produto:  ['Funcionalidades', 'Como funciona', 'Planos'],
   Legal:    ['Privacidade', 'Termos de uso', 'LGPD'],
 }
 
@@ -24,11 +24,10 @@ export default function Footer() {
               <span className="font-display text-lg font-semibold tracking-[0.2em] text-white">SINTERA</span>
             </div>
             <p className="font-body text-sm text-white/40 leading-relaxed mb-4 max-w-xs">
-              Organize seus laudos laboratoriais com IA.
-              Compreenda a evolução da sua saúde ao longo do tempo.
+              Organize suas informações de saúde num só lugar e acompanhe a evolução ao longo do tempo.
             </p>
             <p className="font-body text-xs text-white/25 leading-relaxed max-w-xs">
-              A SINTERA organiza e exibe dados de laudos laboratoriais.
+              A SINTERA organiza e exibe informações de saúde registradas pela própria pessoa.
               Não oferece diagnóstico, interpretação clínica ou recomendações médicas.
             </p>
           </div>
@@ -45,7 +44,7 @@ export default function Footer() {
                     item === 'Privacidade' ? '/privacidade' :
                     item === 'Termos de uso' ? '/termos' :
                     item === 'LGPD' ? '/lgpd' :
-                    item === 'Beta' ? '/lista-de-espera' :
+                    item === 'Planos' ? '/#planos' :
                     item === 'Como funciona' ? '/como-funciona' :
                     item === 'Funcionalidades' ? '/#funcionalidades' :
                     '#' + item.toLowerCase().replace(/\s+/g, '-')
@@ -66,7 +65,7 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="border-t border-white/8 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="font-body text-xs text-white/25">
-            © {new Date().getFullYear()} SINTERA · Versão Beta
+            © {new Date().getFullYear()} SINTERA
           </p>
           <p className="font-body text-xs text-white/20 text-center sm:text-right max-w-sm">
             Os dados exibidos são reprodução estruturada dos laudos originais.

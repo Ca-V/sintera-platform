@@ -4,7 +4,7 @@ import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
 
 const stats = [
-  { value: 'Beta',   label: 'Acesso antecipado gratuito',  color: 'text-petal'    },
+  { value: 'Grátis', label: 'Acesso completo, sem custo',  color: 'text-petal'    },
   { value: '100%',   label: 'Privado — nunca compartilhado', color: 'text-sage'   },
   { value: 'IA',     label: 'Extração automática de biomarcadores', color: 'text-lavender' },
   { value: 'PDF',    label: 'Qualquer laudo laboratorial',  color: 'text-gold'     },

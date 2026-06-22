@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
         to:   [email],
         bcc:  [ADMIN_EMAIL],
         replyTo: ADMIN_EMAIL,
-        subject: `${firstName ? firstName + ', sua' : 'Sua'} vaga no Beta da SINTERA está confirmada`,
+        subject: `${firstName ? firstName + ', seu' : 'Seu'} acesso à SINTERA está confirmado`,
         html: welcomeEmailHtml(firstName),
         text: welcomeEmailText(firstName),
       })

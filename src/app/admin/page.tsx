@@ -385,14 +385,14 @@ export default function AdminPage() {
           )}
         </motion.div>
 
-        {/* ── E-mail de boas-vindas Beta ── */}
+        {/* ── E-mail de boas-vindas ── */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
           className="card-premium p-6 space-y-5">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-blush flex items-center justify-center">
               <Send size={14} className="text-petal" />
             </div>
-            <h2 className="font-body text-sm font-semibold text-onyx">Enviar e-mail de boas-vindas Beta</h2>
+            <h2 className="font-body text-sm font-semibold text-onyx">Enviar e-mail de boas-vindas</h2>
           </div>
 
           {/* Lista de destinatárias */}

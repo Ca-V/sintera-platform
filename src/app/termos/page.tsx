@@ -79,7 +79,7 @@ export default function TermosPage() {
 
           <section className="space-y-3">
             <h2 className="font-display text-lg font-semibold text-onyx">7. Disponibilidade do serviço</h2>
-            <p>A SINTERA é fornecida "como está" (Beta). Não garantimos disponibilidade ininterrupta. O serviço pode ser interrompido para manutenção ou por razões técnicas sem aviso prévio durante o período Beta.</p>
+            <p>A SINTERA é fornecida "como está". Não garantimos disponibilidade ininterrupta. O serviço pode ser interrompido para manutenção ou por razões técnicas sem aviso prévio.</p>
           </section>
 
           <section className="space-y-3">

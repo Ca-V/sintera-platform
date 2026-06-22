@@ -65,14 +65,14 @@ export default function OgImage() {
             fontSize: '56px', fontWeight: '700', color: '#1C1C1E',
             lineHeight: '1.1', textAlign: 'center',
           }}>
-            Seus exames têm{' '}
+            Sua saúde tem{' '}
             <span style={{ color: '#C4849A' }}>uma história.</span>
           </span>
           <span style={{
             fontSize: '26px', color: '#7A6E8A', fontWeight: '400',
             lineHeight: '1.4',
           }}>
-            Organize seus laudos com IA. Acompanhe sua saúde ao longo do tempo.
+            Organize suas informações de saúde e acompanhe a evolução ao longo do tempo.
           </span>
         </div>
 
@@ -85,7 +85,7 @@ export default function OgImage() {
           borderRadius: '50px', padding: '10px 24px',
         }}>
           <span style={{ fontSize: '16px', color: '#C4849A', fontWeight: '600', letterSpacing: '0.08em' }}>
-            ✦  BETA · ACESSO GRATUITO  ✦
+            ✦  ACESSO GRATUITO  ✦
           </span>
         </div>
 

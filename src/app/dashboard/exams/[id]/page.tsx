@@ -92,7 +92,6 @@ function IndexCard({ index }: { index: { numerator: number; denominator: number;
         <div>
           <div className="flex items-center gap-2 mb-0.5">
             <span className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Proporção dentro da referência</span>
-            <span className="font-body text-[10px] text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded-full border border-amber-200">Beta</span>
           </div>
           <p className={`font-display text-3xl font-bold ${color}`}>{index.pct}%</p>
           <p className="font-body text-xs text-mauve/70 mt-0.5">{index.numerator} de {index.denominator} biomarcadores dentro da referência</p>

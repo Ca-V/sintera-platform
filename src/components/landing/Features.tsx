@@ -75,10 +75,10 @@ export default function Features() {
           </span>
           <h2 className="font-display text-4xl lg:text-5xl font-semibold text-onyx leading-tight mb-4">
             Tudo o que você precisa<br />
-            <span className="text-gradient">para entender seus exames.</span>
+            <span className="text-gradient">para organizar a sua rotina de saúde.</span>
           </h2>
           <p className="font-body text-mauve text-lg max-w-xl mx-auto">
-            Da extração automática ao histórico longitudinal — sem complicação.
+            Dos exames aos hábitos — reunidos e organizados num só lugar, sem complicação.
           </p>
         </motion.div>
 

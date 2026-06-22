@@ -15,7 +15,7 @@ import type { Database } from '@/lib/supabase/types'
 type Exam = Database['public']['Tables']['exams']['Row']
 
 const ERROR_MESSAGES: Record<string, string> = {
-  PDF_NO_TEXT_LAYER:       'Este PDF parece ser uma imagem escaneada. PDFs escaneados não são suportados nesta versão Beta.',
+  PDF_NO_TEXT_LAYER:       'Este PDF parece ser uma imagem escaneada. PDFs escaneados ainda não são suportados — tente um PDF com texto ou tire uma foto do laudo.',
   PDF_PASSWORD_PROTECTED:  'O PDF está protegido por senha. Remova a proteção e envie novamente.',
   PDF_CORRUPTED:           'O arquivo parece estar corrompido. Tente enviá-lo novamente.',
   PDF_TOO_LARGE:           'O arquivo excede o limite de 50 MB.',
