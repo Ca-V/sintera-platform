@@ -14,8 +14,6 @@
 // eventual exibição pública dependem de validação do Responsável Clínico (CRM).
 // ============================================================
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { Stethoscope, Smile, Eye, HeartPulse, CalendarCheck, Info } from 'lucide-react'
 import { useUser } from '@/context/UserContext'
 
@@ -69,16 +67,25 @@ function bandFor(age: number | null): LifeBand {
 
 export default function PrevencaoPreviewPage() {
   const { user, profile, loading } = useUser()
-  const router = useRouter()
 
-  useEffect(() => {
-    if (!loading && (!user || user.email !== ADMIN_EMAIL)) {
-      router.replace('/dashboard')
-    }
-  }, [loading, user, router])
-
-  if (loading || !user || user.email !== ADMIN_EMAIL) {
+  if (loading) {
     return <div className="p-10 text-center font-body text-sm text-mauve">Carregando…</div>
+  }
+
+  // Para usuárias em geral: ainda não disponível (depende de validação clínica).
+  // A prévia funcional fica visível apenas para a conta de administração.
+  if (!user || user.email !== ADMIN_EMAIL) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-16 text-center space-y-3">
+        <div className="w-12 h-12 rounded-2xl bg-blush flex items-center justify-center mx-auto">
+          <HeartPulse size={22} className="text-petal" />
+        </div>
+        <h1 className="font-display text-xl font-semibold text-onyx">Cuidados — em breve</h1>
+        <p className="font-body text-sm text-mauve leading-relaxed">
+          Lembretes de acompanhamentos importantes por fase da vida. Em preparação, com validação de um profissional de saúde responsável.
+        </p>
+      </div>
+    )
   }
 
   const ageRange = (profile as { age_range?: string | null } | null)?.age_range ?? null

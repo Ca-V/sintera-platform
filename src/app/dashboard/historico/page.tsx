@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef, useMemo } from 'react'
+import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { TrendingUp, TrendingDown, Minus, Search, Loader2, FileText, AlertTriangle, HelpCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -333,12 +334,18 @@ export default function HistoricoPage() {
             <TrendingUp size={22} className="text-petal" />
           </div>
           <div>
-            <h1 className="font-display text-xl font-semibold text-onyx">Histórico de Biomarcadores</h1>
+            <h1 className="font-display text-xl font-semibold text-onyx">Indicadores de saúde — evolução</h1>
             <p className="font-body text-sm text-mauve mt-0.5">
               {allGroups.length} biomarcadores · {rows.length} medições
               {availableYears.length > 1 && ` · ${availableYears[0]}–${availableYears[availableYears.length - 1]}`}
             </p>
           </div>
+        </div>
+
+        {/* Abas: Atual · Evolução (esta) */}
+        <div className="flex gap-2 mt-4">
+          <Link href="/dashboard/saude" className="px-3.5 py-1.5 rounded-full bg-ivory border border-border text-mauve font-body text-sm hover:border-petal/40 transition-colors">Atual</Link>
+          <span className="px-3.5 py-1.5 rounded-full gradient-sintera text-white font-body text-sm font-medium">Evolução</span>
         </div>
 
         {/* Filtros (Epic Fase 1) */}
