@@ -18,6 +18,16 @@ const PROF_LABEL: Record<string, string> = {
   medico: 'Médico(a)', psicologo: 'Psicólogo(a)', nutricionista: 'Nutricionista',
   fisioterapeuta: 'Fisioterapeuta', dentista: 'Dentista', outro: 'Outro profissional',
 }
+const METRIC_LABEL: Record<string, string> = {
+  peso: 'Peso', pressao_arterial: 'Pressão arterial', circunferencia_cintura: 'Circunferência (cintura)', outro: 'Outra medida',
+}
+
+function periodo(start: string | null, until: string | null): string {
+  if (start && until) return ` (de ${fmt(start)} até ${fmt(until)})`
+  if (start) return ` (desde ${fmt(start)})`
+  if (until) return ` (até ${fmt(until)})`
+  return ''
+}
 
 function fmt(date: string | null): string {
   if (!date) return '—'
@@ -53,11 +63,12 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
   const uid = share.user_id as string
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = admin as any
-  const [{ data: prof }, { data: meds }, { data: events }, { data: exams }, { data: authUser }] = await Promise.all([
+  const [{ data: prof }, { data: meds }, { data: events }, { data: exams }, { data: measures }, { data: authUser }] = await Promise.all([
     db.from('profiles').select('name').eq('id', uid).maybeSingle(),
-    db.from('medications').select('name, dose, frequency, started_on, status').eq('user_id', uid).order('status'),
+    db.from('medications').select('name, kind, dose, frequency, started_on, until_date, status').eq('user_id', uid).order('status'),
     db.from('health_events').select('title, event_type, event_date, notes, professional_kind').eq('user_id', uid).eq('synthetic', false).order('event_date', { ascending: false }),
     db.from('exams').select('type, exam_date, created_at').eq('user_id', uid).order('created_at', { ascending: false }),
+    db.from('body_metrics').select('metric, label, value_text, unit, measured_on').eq('user_id', uid).order('measured_on', { ascending: false }),
     admin.auth.admin.getUserById(uid),
   ])
 
@@ -67,6 +78,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
   const medsSusp = medsArr.filter(m => m.status === 'suspenso')
   const evArr = (events ?? []) as Array<Record<string, unknown>>
   const exArr = (exams ?? []) as Array<Record<string, unknown>>
+  const mzArr = (measures ?? []) as Array<Record<string, unknown>>
   const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
 
   return (
@@ -77,11 +89,11 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
       </div>
 
       <section style={{ marginBottom: 22 }}>
-        <h2 style={{ fontSize: 15 }}>Medicamentos em uso</h2>
+        <h2 style={{ fontSize: 15 }}>Medicamentos e suplementos em uso</h2>
         {medsEmUso.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum registrado.</p> : (
           <ul style={{ paddingLeft: 18, fontSize: 14 }}>
             {medsEmUso.map((m, i) => (
-              <li key={i}><strong>{m.name as string}</strong>{[m.dose, m.frequency].filter(Boolean).length ? ` — ${[m.dose, m.frequency].filter(Boolean).join(', ')}` : ''}{m.started_on ? ` (desde ${fmt(m.started_on as string)})` : ''}</li>
+              <li key={i}><strong>{m.name as string}</strong>{m.kind === 'suplemento' ? ' (suplemento)' : ''}{[m.dose, m.frequency].filter(Boolean).length ? ` — ${[m.dose, m.frequency].filter(Boolean).join(', ')}` : ''}{periodo((m.started_on as string) ?? null, (m.until_date as string) ?? null)}</li>
             ))}
           </ul>
         )}
@@ -113,6 +125,22 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
           <ul style={{ paddingLeft: 18, fontSize: 14 }}>
             {exArr.map((e, i) => <li key={i}>{fmt((e.exam_date as string) || (e.created_at as string))} — {(e.type as string) || 'Exame'}</li>)}
           </ul>
+        )}
+      </section>
+
+      <section style={{ marginBottom: 22 }}>
+        <h2 style={{ fontSize: 15 }}>Medidas corporais</h2>
+        {mzArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhuma registrada.</p> : (
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+            <tbody>
+              {mzArr.map((m, i) => (
+                <tr key={i} style={{ borderBottom: '1px solid #f2eef4' }}>
+                  <td style={{ padding: '6px 12px 6px 0', color: '#8a7b92', whiteSpace: 'nowrap', verticalAlign: 'top' }}>{fmt(m.measured_on as string)}</td>
+                  <td style={{ padding: '6px 0' }}><span style={{ color: '#8a7b92' }}>{m.metric === 'outro' && m.label ? (m.label as string) : METRIC_LABEL[m.metric as string] ?? 'Medida'}:</span> {m.value_text as string}{m.unit ? ` ${m.unit as string}` : ''}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </section>
 

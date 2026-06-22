@@ -25,6 +25,7 @@ interface Med {
   dose: string | null
   frequency: string | null
   startedOn: string | null
+  untilOn: string | null
   status: Status
   notes: string | null
 }
@@ -49,6 +50,7 @@ export default function MedicamentosPage() {
   const [dose, setDose] = useState('')
   const [freq, setFreq] = useState('')
   const [startedOn, setStartedOn] = useState('')
+  const [untilOn, setUntilOn] = useState('')
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
@@ -58,7 +60,7 @@ export default function MedicamentosPage() {
     setLoading(true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = await (supabase as any).from('medications')
-      .select('id, name, kind, dose, frequency, started_on, status, notes')
+      .select('id, name, kind, dose, frequency, started_on, until_date, status, notes')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
     setMeds(((data ?? []) as Array<Record<string, unknown>>).map(m => ({
@@ -68,6 +70,7 @@ export default function MedicamentosPage() {
       dose: (m.dose as string) ?? null,
       frequency: (m.frequency as string) ?? null,
       startedOn: (m.started_on as string) ?? null,
+      untilOn: (m.until_date as string) ?? null,
       status: (m.status as Status) ?? 'em_uso',
       notes: (m.notes as string) ?? null,
     })))
@@ -77,11 +80,11 @@ export default function MedicamentosPage() {
   useEffect(() => { if (!authLoading) load() }, [authLoading, load])
 
   function reset() {
-    setEditingId(null); setName(''); setKind('medicamento'); setDose(''); setFreq(''); setStartedOn(''); setNotes(''); setErr(null)
+    setEditingId(null); setName(''); setKind('medicamento'); setDose(''); setFreq(''); setStartedOn(''); setUntilOn(''); setNotes(''); setErr(null)
   }
   function openEdit(m: Med) {
     setEditingId(m.id); setName(m.name); setKind(m.kind); setDose(m.dose ?? ''); setFreq(m.frequency ?? '')
-    setStartedOn(m.startedOn ?? ''); setNotes(m.notes ?? ''); setErr(null); setShowForm(true)
+    setStartedOn(m.startedOn ?? ''); setUntilOn(m.untilOn ?? ''); setNotes(m.notes ?? ''); setErr(null); setShowForm(true)
   }
 
   async function save() {
@@ -89,7 +92,7 @@ export default function MedicamentosPage() {
     setSaving(true); setErr(null)
     const payload = {
       name: name.trim(), kind, dose: dose.trim() || null, frequency: freq.trim() || null,
-      started_on: startedOn || null, notes: notes.trim() || null,
+      started_on: startedOn || null, until_date: untilOn || null, notes: notes.trim() || null,
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db = supabase as any
@@ -151,7 +154,9 @@ export default function MedicamentosPage() {
           <p className="font-body text-sm font-semibold text-onyx">{m.name}</p>
           <p className="font-body text-[11px] text-mauve/70 mt-0.5">
             {[m.dose, m.frequency].filter(Boolean).join(' · ') || 'Sem detalhes'}
-            {fmtDate(m.startedOn) ? ` · desde ${fmtDate(m.startedOn)}` : ''}
+            {m.startedOn && m.untilOn ? ` · de ${fmtDate(m.startedOn)} até ${fmtDate(m.untilOn)}`
+              : m.startedOn ? ` · desde ${fmtDate(m.startedOn)}`
+              : m.untilOn ? ` · até ${fmtDate(m.untilOn)}` : ''}
           </p>
           {m.notes && <p className="font-body text-[11px] text-mauve/60 mt-1">{m.notes}</p>}
         </div>
@@ -229,10 +234,18 @@ export default function MedicamentosPage() {
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
             </div>
           </div>
-          <div>
-            <label className="font-body text-xs text-mauve/70 block mb-1">Desde quando (opcional)</label>
-            <input type="date" value={startedOn} onChange={e => setStartedOn(e.target.value)}
-              className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="font-body text-xs text-mauve/70 block mb-1">Início (opcional)</label>
+              <input type="date" value={startedOn} onChange={e => setStartedOn(e.target.value)}
+                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+            </div>
+            <div>
+              <label className="font-body text-xs text-mauve/70 block mb-1">Até quando (opcional)</label>
+              <input type="date" value={untilOn} onChange={e => setUntilOn(e.target.value)}
+                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+              <p className="font-body text-[10px] text-mauve/50 mt-1">Em branco = sem previsão.</p>
+            </div>
           </div>
           <div>
             <label className="font-body text-xs text-mauve/70 block mb-1">Observações (opcional)</label>
