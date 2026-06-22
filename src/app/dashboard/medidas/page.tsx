@@ -123,7 +123,7 @@ export default function MedidasPage() {
             <Activity size={16} />
             <span className="font-body text-xs font-medium uppercase tracking-wider">Indicadores de Saúde</span>
           </div>
-          <h1 className="font-display text-2xl font-semibold text-onyx">Minhas medidas</h1>
+          <h1 className="font-display text-2xl font-semibold text-onyx">Medidas</h1>
           <p className="font-body text-sm text-mauve mt-1">Acompanhe peso, altura, pressão e outras medidas ao longo do tempo. Registro seu — sem juízo clínico.</p>
         </div>
         <button onClick={() => (showForm ? (reset(), setShowForm(false)) : (reset(), setShowForm(true)))}
