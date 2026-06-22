@@ -22,6 +22,10 @@ const METRIC_LABEL: Record<string, string> = {
   peso: 'Peso', altura: 'Altura', pressao_arterial: 'Pressão arterial', circunferencia_cintura: 'Circunferência (cintura)',
   gordura_corporal: 'Gordura corporal', massa_muscular: 'Massa muscular', outro: 'Outra medida',
 }
+const HABIT_LABEL: Record<string, string> = {
+  atividade_fisica: 'Atividade física', sono: 'Sono', tabagismo: 'Tabagismo',
+  alcool: 'Álcool', alimentacao: 'Alimentação', hidratacao: 'Hidratação', outro: 'Outro',
+}
 
 function periodo(start: string | null, until: string | null): string {
   if (start && until) return ` (de ${fmt(start)} até ${fmt(until)})`
@@ -64,12 +68,14 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
   const uid = share.user_id as string
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = admin as any
-  const [{ data: prof }, { data: meds }, { data: events }, { data: exams }, { data: measures }, { data: authUser }] = await Promise.all([
+  const [{ data: prof }, { data: meds }, { data: events }, { data: exams }, { data: measures }, { data: conditions }, { data: habits }, { data: authUser }] = await Promise.all([
     db.from('profiles').select('name').eq('id', uid).maybeSingle(),
     db.from('medications').select('name, kind, dose, frequency, started_on, until_date, status').eq('user_id', uid).order('status'),
     db.from('health_events').select('title, event_type, event_date, notes, professional_kind').eq('user_id', uid).eq('synthetic', false).order('event_date', { ascending: false }),
     db.from('exams').select('type, exam_date, created_at').eq('user_id', uid).order('created_at', { ascending: false }),
     db.from('body_metrics').select('metric, label, value_text, unit, measured_on').eq('user_id', uid).order('measured_on', { ascending: false }),
+    db.from('health_conditions').select('scope, name, relative, since_label, notes').eq('user_id', uid).order('created_at', { ascending: false }),
+    db.from('life_habits').select('category, description, frequency, notes').eq('user_id', uid).order('created_at', { ascending: false }),
     admin.auth.admin.getUserById(uid),
   ])
 
@@ -80,6 +86,10 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
   const evArr = (events ?? []) as Array<Record<string, unknown>>
   const exArr = (exams ?? []) as Array<Record<string, unknown>>
   const mzArr = (measures ?? []) as Array<Record<string, unknown>>
+  const cdArr = (conditions ?? []) as Array<Record<string, unknown>>
+  const condProprias = cdArr.filter(c => c.scope === 'propria')
+  const condFamiliar = cdArr.filter(c => c.scope === 'familiar')
+  const hbArr = (habits ?? []) as Array<Record<string, unknown>>
   const allowed = Array.isArray(share.sections) ? (share.sections as string[]) : null
   const show = (k: string) => !allowed || allowed.includes(k)
   const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
@@ -102,6 +112,42 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
           </ul>
         )}
         {medsSusp.length > 0 && <p style={{ fontSize: 12, color: '#8a7b92' }}>Suspensos: {medsSusp.map(m => m.name as string).join(', ')}.</p>}
+      </section>
+      )}
+
+      {show('condicoes') && (
+      <section style={{ marginBottom: 22 }}>
+        <h2 style={{ fontSize: 15 }}>Condições de saúde</h2>
+        {condProprias.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhuma condição registrada.</p> : (
+          <ul style={{ paddingLeft: 18, fontSize: 14 }}>
+            {condProprias.map((c, i) => (
+              <li key={i}><strong>{c.name as string}</strong>{c.since_label ? ` (desde ${c.since_label as string})` : ''}{c.notes ? <span style={{ display: 'block', fontSize: 12, color: '#8a7b92' }}>{c.notes as string}</span> : null}</li>
+            ))}
+          </ul>
+        )}
+        {condFamiliar.length > 0 && (
+          <>
+            <h3 style={{ fontSize: 12, color: '#8a7b92', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 12, marginBottom: 4 }}>Histórico familiar</h3>
+            <ul style={{ paddingLeft: 18, fontSize: 14 }}>
+              {condFamiliar.map((c, i) => (
+                <li key={i}><strong>{c.name as string}</strong>{c.relative ? ` — ${c.relative as string}` : ''}{c.since_label ? ` (desde ${c.since_label as string})` : ''}{c.notes ? <span style={{ display: 'block', fontSize: 12, color: '#8a7b92' }}>{c.notes as string}</span> : null}</li>
+              ))}
+            </ul>
+          </>
+        )}
+      </section>
+      )}
+
+      {show('habitos') && (
+      <section style={{ marginBottom: 22 }}>
+        <h2 style={{ fontSize: 15 }}>Hábitos de vida</h2>
+        {hbArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum hábito registrado.</p> : (
+          <ul style={{ paddingLeft: 18, fontSize: 14 }}>
+            {hbArr.map((h, i) => (
+              <li key={i}><span style={{ color: '#8a7b92' }}>{HABIT_LABEL[h.category as string] ?? 'Hábito'}:</span> {h.description as string}{h.frequency ? ` — ${h.frequency as string}` : ''}{h.notes ? <span style={{ display: 'block', fontSize: 12, color: '#8a7b92' }}>{h.notes as string}</span> : null}</li>
+            ))}
+          </ul>
+        )}
       </section>
       )}
 
