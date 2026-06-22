@@ -14,6 +14,7 @@ import {
   Loader2, Pencil, Trash2, Paperclip, Bell, Info, Sparkles, Pill, Receipt, FileText, Dumbbell,
 } from 'lucide-react'
 import Link from 'next/link'
+import VoiceInput from '@/components/VoiceInput'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import AgendarModal, { type EventType as AgendaType } from '@/components/AgendarModal'
@@ -382,14 +383,20 @@ export default function TimelinePage() {
           )}
           <div>
             <label className="font-body text-xs text-mauve/70 block mb-1">Título</label>
-            <input type="text" value={evTitle} onChange={e => setEvTitle(e.target.value)}
-              placeholder="Ex.: Consulta ginecologista, Vacina HPV…"
-              className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+            <div className="flex items-center gap-2">
+              <input type="text" value={evTitle} onChange={e => setEvTitle(e.target.value)}
+                placeholder="Ex.: Consulta ginecologista, Vacina HPV…"
+                className="flex-1 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+              <VoiceInput onResult={t => setEvTitle(v => (v ? v + ' ' : '') + t)} />
+            </div>
           </div>
           <div>
             <label className="font-body text-xs text-mauve/70 block mb-1">Observações (opcional)</label>
-            <textarea value={evNotes} onChange={e => setEvNotes(e.target.value)} rows={2}
-              className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+            <div className="flex items-start gap-2">
+              <textarea value={evNotes} onChange={e => setEvNotes(e.target.value)} rows={2}
+                className="flex-1 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+              <VoiceInput onResult={t => setEvNotes(v => (v ? v + ' ' : '') + t)} />
+            </div>
           </div>
           <div>
             <label className="font-body text-xs text-mauve/70 block mb-1">Valor pago — R$ (opcional)</label>
