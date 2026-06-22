@@ -309,6 +309,9 @@ export default function TimelinePage() {
             <Link href="/dashboard/medicamentos" className="inline-flex items-center gap-1 font-body text-xs text-petal hover:underline">
               <Pill size={13} /> Medicamentos
             </Link>
+            <Link href="/dashboard/medidas" className="inline-flex items-center gap-1 font-body text-xs text-petal hover:underline">
+              <Activity size={13} /> Medidas
+            </Link>
             <Link href="/dashboard/relatorio" className="inline-flex items-center gap-1 font-body text-xs text-petal hover:underline">
               <FileText size={13} /> Relatório
             </Link>
