@@ -13,6 +13,7 @@ import { useUser } from '@/context/UserContext'
 
 // Arquitetura de navegação (governança/organização da saúde — sem suporte à
 // decisão clínica). Cada item tem papel único.
+// (Inclui Ciclo e Contracepção em "Minhas informações".)
 const navGroups: {
   title: string
   items: { href: string; icon: React.ElementType; label: string; extra?: string[] }[]
