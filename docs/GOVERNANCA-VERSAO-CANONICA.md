@@ -58,3 +58,29 @@ Todos passam a ler via view canônica (`current_biomarkers` / `current_clinical_
 3. Nenhum fluxo de uso normal lê resultado cujo `extraction_version_id ≠ current_extraction_version_id`.
 4. A canônica só muda por promoção explícita e auditada.
 5. Existe **um** sistema de versionamento (`extraction_versions`) para todas as modalidades.
+
+## 6. Independência documento ↔ extração (propriedade vs. reuso)
+
+Garantido **estruturalmente** pelo schema:
+
+- **1 documento → N versões:** `extraction_versions.exam_id` é `NOT NULL` + `unique (exam_id, version_number)`. Um documento pode ter quantas versões forem necessárias.
+- **Propriedade exclusiva:** cada `extraction_version` pertence a **exatamente um** `exam_id`. **Nunca** é compartilhada entre documentos diferentes.
+- **Reuso ≠ compartilhamento:** quando o reuso dispara (mesmo `document_sha256` + chave completa), cria-se uma **nova versão pertencente ao NOVO documento**, com `reused_from_version_id` apontando para a versão-fonte **apenas como linhagem/auditoria**. Os resultados são **copiados** (copy-on-reuse) para o novo exame — **nenhuma linha de resultado é compartilhada** entre documentos.
+- **Rastreabilidade:** documento → versões é sempre auditável (`exam_id`, `version_number`, lineage `reused_from_version_id`, `created_by`/`created_at`, `ai_log_id`).
+
+> Resultado: o **reuso de resultado** (eficiência/reprodutibilidade) e a **propriedade do documento original** ficam **separados sem ambiguidade**. Apagar um documento (`exams`) remove **só** as suas versões (`on delete cascade`); a versão-fonte de um reuso, se em outro documento, permanece (o lineage vira `null` por `on delete set null`).
+
+## 7. Neutralidade de modalidade
+
+`extraction_versions` é **100% neutra** — nenhum campo assume biomarcadores laboratoriais:
+
+| Campo | Natureza |
+|---|---|
+| `document_sha256`, `source_text` | identidade e texto-fonte de **qualquer** documento (PDF/OCR/transcrição) |
+| `extractor_version`, `prompt_version`, `model_version` | pipeline/modelo — `prompt_version`/`model_version` **nullable** (modalidade sem LLM, ex.: parser determinístico, fica neutra) |
+| `origin`, `reused_from_version_id`, `reason` | ciclo de vida da versão |
+| `ai_log_id`, `created_by/at`, `promoted_by/at/reason` | proveniência e auditoria |
+
+Nenhum campo cita biomarcador, unidade, referência ou valor numérico. Os dados **específicos de modalidade** moram **só** na tabela de resultado (`biomarkers` / `clinical_findings` / `omics_results`), nunca em `extraction_versions`.
+
+**Views `current_*`:** uma por modalidade, com **estrutura idêntica** (filtro pela versão canônica). Cada view lê apenas a sua tabela de resultado — **nenhuma** assume o schema de outra modalidade. O padrão é uniforme; o conteúdo é da modalidade.
