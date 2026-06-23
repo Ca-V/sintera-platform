@@ -199,13 +199,14 @@ export default function ExamsPage() {
       // e pode ser ajustado manualmente no detalhe. Não assumimos a data de envio.
       const { error: insertErr } = await supabase.from('exams').insert({ id: examId, user_id: user.id, type: examName, exam_date: null, file_url: signedData.signedUrl, status: 'pending' } as unknown as never)
       if (insertErr) throw new Error(`[insert] ${insertErr.code}: ${insertErr.message}`)
-      await loadExams()
+      // P3 — vai direto ao exame enviado; a análise inicia sozinha lá (status 'pending')
+      router.push(`/dashboard/exams/${examId}`)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
       setUploadError(msg)
       if (examId) { await supabase.from('exams').update({ status: 'error' } as unknown as never).eq('id', examId); await loadExams() }
     } finally { setUploading(false) }
-  }, [user, supabase, loadExams])
+  }, [user, supabase, loadExams, router])
 
   // ── Excluir exame ───────────────────────────────────────────────────────────
   // Remove o exame + biomarcadores + insights + arquivo. Histórico, jornada e

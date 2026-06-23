@@ -166,6 +166,8 @@ export default function ExamDetailPage() {
   const { profile } = useUser()
   const examId  = params.id as string
   const supabase = useRef(createClient()).current
+  // P1 — guarda de disparo único da auto-análise (cobre Strict Mode / re-render)
+  const autoStartedRef = useRef(false)
 
   const [exam, setExam]           = useState<Exam | null>(null)
   const [biomarkers, setBiomarkers] = useState<Biomarker[]>([])
@@ -361,6 +363,19 @@ export default function ExamDetailPage() {
       setAnalyzing(false)
     }
   }
+
+  // P1 — auto-análise baseada em ESTADO (sem flag de URL): um exame recém-enviado
+  // entra como 'pending' e a análise inicia sozinha. Só dispara para 'pending'
+  // (nunca 'error', evitando loop de retry). O ref garante disparo único; o
+  // 409 ALREADY_PROCESSING do servidor é a rede de segurança. O setTimeout(0)
+  // tira o setState do corpo síncrono do efeito.
+  useEffect(() => {
+    if (exam?.status !== 'pending' || autoStartedRef.current) return
+    autoStartedRef.current = true
+    const t = setTimeout(() => { handleAnalyze() }, 0)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exam?.status])
 
   // ── Contagens para o cabeçalho ──────────────────────────────────────────
   const counts = {
@@ -712,6 +727,14 @@ export default function ExamDetailPage() {
               depende de avaliação médica</strong> — esta informação organiza seus dados e não substitui a consulta com seu médico.
             </p>
           </div>
+        </motion.div>
+      ) : (analyzing || exam?.status === 'processing' || exam?.status === 'pending') ? (
+        /* P3 — Estado de processamento (auto-análise em andamento; 'pending' evita flash do estado vazio) */
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          className="card-premium p-12 text-center">
+          <Loader2 size={40} className="text-petal mx-auto mb-3 animate-spin" />
+          <p className="font-body text-sm font-semibold text-onyx mb-1">Analisando seu exame…</p>
+          <p className="font-body text-xs text-mauve">A SINTERA está extraindo os biomarcadores do seu laudo. Isso leva alguns segundos.</p>
         </motion.div>
       ) : (
         /* Estado vazio */
