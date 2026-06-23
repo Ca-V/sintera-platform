@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server'
  * GET /api/exams/process-pending
  *
  * Finds all exams stuck in 'pending' or 'processing' (> 5 min) for the
- * authenticated user and triggers /api/exams/[id]/process for each.
+ * authenticated user and triggers /api/exams/[id]/analyze for each.
  *
  * Can be called by an external cron job (e.g. Vercel Cron, GitHub Actions)
  * or manually from the client to recover from failed processing.
@@ -30,14 +30,22 @@ export async function GET(request: Request) {
     return NextResponse.json({ processed: 0, message: 'Nenhum exame pendente encontrado' })
   }
 
+  // PR1 1.1 — Correções:
+  //  - rota correta é /analyze (não /process, que nunca existiu)
+  //  - propagar o cookie de auth, senão /analyze responde 401
+  //  - contar sucesso real (res.ok); allSettled trata 401/404 como 'fulfilled'
   const origin = new URL(request.url).origin
+  const cookie = request.headers.get('cookie') ?? ''
   const results = await Promise.allSettled(
     stuckExams.map(exam =>
-      fetch(`${origin}/api/exams/${exam.id}/process`, { method: 'POST' })
+      fetch(`${origin}/api/exams/${exam.id}/analyze`, {
+        method: 'POST',
+        headers: { cookie },
+      })
     )
   )
 
-  const succeeded = results.filter(r => r.status === 'fulfilled').length
+  const succeeded = results.filter(r => r.status === 'fulfilled' && r.value.ok).length
   const failed    = results.length - succeeded
 
   return NextResponse.json({ processed: succeeded, failed, total: stuckExams.length })

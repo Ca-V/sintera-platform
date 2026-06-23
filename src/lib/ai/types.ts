@@ -34,6 +34,8 @@ export interface ProviderResult {
   completionTokens: number
   model: string
   durationMs: number
+  // PR1 1.3 — motivo de parada do modelo. 'max_tokens' indica resposta truncada.
+  stopReason: string | null
 }
 
 export type ResultType = 'numeric' | 'qualitative' | 'missing' | 'extraction_failed'
@@ -69,16 +71,21 @@ export interface ExtractionResult {
   promptTokens: number
   completionTokens: number
   durationMs: number
-  truncated: false
+  // PR1 1.3 — true quando o modelo parou por max_tokens (output cortado).
+  // Distinto de exams.text_truncated, que se refere à truncagem do INPUT (texto do PDF).
+  truncated: boolean
+  stopReason: string | null
   parsedOk: boolean
   extractionPath: ExtractionPath
 }
 
 export type GatewayErrorCode =
-  | 'RATE_LIMIT_EXCEEDED'
+  | 'RATE_LIMIT_EXCEEDED'       // limite interno do app (rate-limiter em memória)
   | 'NO_ACTIVE_PROMPT'
   | 'PROMPT_INTEGRITY_VIOLATION'
-  | 'PROVIDER_TIMEOUT'
+  | 'PROVIDER_TIMEOUT'          // timeout/erro de conexão com a API Anthropic
+  | 'PROVIDER_RATE_LIMITED'     // PR1 1.2 — 429 retornado pela API Anthropic
+  | 'PROVIDER_OVERLOADED'       // PR1 1.2 — 529 (Overloaded) retornado pela API Anthropic
   | 'PROVIDER_ERROR'
   | 'PARSE_FAILED'
   | 'NO_BIOMARKERS'

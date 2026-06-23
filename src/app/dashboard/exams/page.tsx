@@ -22,6 +22,9 @@ const ERROR_MESSAGES: Record<string, string> = {
   PDF_TOO_LARGE:           'O arquivo excede o limite de 50 MB.',
   STORAGE_DOWNLOAD_FAILED: 'Não foi possível acessar o arquivo. Tente novamente em alguns instantes.',
   RATE_LIMIT_EXCEEDED:     'Limite de extrações atingido. Aguarde 1 minuto.',
+  PROVIDER_RATE_LIMITED:   'Muitas extrações em andamento no momento. Aguarde alguns instantes e tente novamente.',
+  PROVIDER_OVERLOADED:     'O serviço de extração está temporariamente sobrecarregado. Tente novamente em alguns instantes.',
+  PROVIDER_TIMEOUT:        'A extração demorou mais que o esperado. Tente novamente.',
   NO_ACTIVE_PROMPT:        'O sistema de extração está em manutenção. Tente mais tarde.',
   ALREADY_PROCESSING:      'Este exame já está sendo processado.',
 }
