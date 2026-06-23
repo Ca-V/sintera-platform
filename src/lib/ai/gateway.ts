@@ -1,5 +1,6 @@
 import { createHash } from 'crypto'
 import { jsonrepair } from 'jsonrepair'
+import Anthropic from '@anthropic-ai/sdk'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { AnthropicProvider } from './providers/anthropic'
 import { checkRateLimit } from './rate-limiter'
@@ -7,6 +8,7 @@ import { loadActivePrompt, verifyPromptIntegrity } from './prompt-loader'
 import type {
   ExtractionResult,
   GatewayError,
+  GatewayErrorCode,
   ExtractedBiomarker,
   RawAIResponse,
   RawBiomarker,
@@ -18,6 +20,41 @@ type GatewayReturn = ExtractionResult | GatewayError
 
 export function isGatewayError(r: GatewayReturn): r is GatewayError {
   return 'code' in r
+}
+
+// ── PR1 1.2 — Classificação explícita de erros do provider ────────────────────
+// Substitui a heurística frágil err.message.includes('timeout').
+// O SDK Anthropic expõe APIError.status; 529 (Overloaded) não tem classe própria,
+// é detectado por status. Ordem importa: subclasses de conexão antes de APIError.
+interface ProviderErrorClass {
+  code: GatewayErrorCode
+  httpStatus: number          // status HTTP devolvido ao cliente
+  logStatus: string           // ai_processing_log.status
+  providerHttpStatus: number | null  // status HTTP recebido da Anthropic
+}
+
+function classifyProviderError(err: unknown): ProviderErrorClass {
+  // Timeout de conexão (sem status HTTP)
+  if (err instanceof Anthropic.APIConnectionTimeoutError) {
+    return { code: 'PROVIDER_TIMEOUT', httpStatus: 504, logStatus: 'timeout', providerHttpStatus: null }
+  }
+  // Demais erros de conexão (DNS, socket, etc.) — sem status
+  if (err instanceof Anthropic.APIConnectionError) {
+    return { code: 'PROVIDER_TIMEOUT', httpStatus: 504, logStatus: 'connection_error', providerHttpStatus: null }
+  }
+  // Erros com resposta HTTP da API
+  if (err instanceof Anthropic.APIError) {
+    const status = typeof err.status === 'number' ? err.status : null
+    if (status === 429) {
+      return { code: 'PROVIDER_RATE_LIMITED', httpStatus: 429, logStatus: 'rate_limited', providerHttpStatus: 429 }
+    }
+    if (status === 529) {
+      return { code: 'PROVIDER_OVERLOADED', httpStatus: 503, logStatus: 'overloaded', providerHttpStatus: 529 }
+    }
+    return { code: 'PROVIDER_ERROR', httpStatus: 502, logStatus: 'error', providerHttpStatus: status }
+  }
+  // Erro desconhecido
+  return { code: 'PROVIDER_ERROR', httpStatus: 502, logStatus: 'error', providerHttpStatus: null }
 }
 
 // ── Validação e normalização do JSON bruto ────────────────────────────────────
@@ -290,18 +327,17 @@ export async function extractBiomarkers(
       maxTokens: prompt.maxTokens,
     })
   } catch (err: unknown) {
-    const isTimeout = err instanceof Error && err.message.includes('timeout')
-    const status = isTimeout ? 'timeout' : 'error'
-    const code = isTimeout ? 'PROVIDER_TIMEOUT' : 'PROVIDER_ERROR'
+    const { code, httpStatus, logStatus, providerHttpStatus } = classifyProviderError(err)
 
     await supabase.from('ai_processing_log').update({
-      status,
+      status: logStatus,
+      provider_http_status: providerHttpStatus,
       parse_error: err instanceof Error ? err.message.slice(0, 500) : String(err),
       completed_at: new Date().toISOString(),
       duration_ms: Date.now() - startTime,
     } as never).eq('id', aiLogId)
 
-    return { code, message: `Erro no provider: ${code}`, httpStatus: isTimeout ? 504 : 502 }
+    return { code, message: `Erro no provider: ${code}`, httpStatus }
   }
 
   // 7. Parsear e validar JSON
@@ -332,9 +368,16 @@ export async function extractBiomarkers(
     .map(b => parseBiomarker(b as RawBiomarker))
     .filter((b): b is ExtractedBiomarker => b !== null)
 
-  // 9. Atualizar log com resultado completo (status='success') + auditoria de reparo
+  // PR1 1.3 — Truncagem de output: o modelo parou por max_tokens.
+  // Decisão aprovada: flag + persistir (não bloquear) — salva os biomarcadores
+  // que vieram e sinaliza para a UI avisar que a extração pode estar incompleta.
+  const truncated = providerResult.stopReason === 'max_tokens'
+
+  // 9. Atualizar log com resultado completo + auditoria de reparo + truncagem
   await supabase.from('ai_processing_log').update({
-    status: 'success',
+    status: truncated ? 'success_truncated' : 'success',
+    truncated,
+    stop_reason: providerResult.stopReason,
     raw_response: providerResult.rawResponse.slice(0, 15000),
     parsed_ok: true,
     biomarkers_extracted: biomarkers.length,
@@ -363,7 +406,8 @@ export async function extractBiomarkers(
     promptTokens: providerResult.promptTokens,
     completionTokens: providerResult.completionTokens,
     durationMs: providerResult.durationMs,
-    truncated: false,
+    truncated,
+    stopReason: providerResult.stopReason,
     parsedOk: true,
     extractionPath,
   }

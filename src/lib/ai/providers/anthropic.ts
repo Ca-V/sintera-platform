@@ -97,6 +97,7 @@ export class AnthropicProvider implements AIProvider {
       completionTokens: msg.usage.output_tokens,
       model: msg.model,
       durationMs: Date.now() - startTime,
+      stopReason: msg.stop_reason ?? null,
     }
   }
 }

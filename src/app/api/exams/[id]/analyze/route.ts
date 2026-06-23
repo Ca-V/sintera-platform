@@ -251,5 +251,7 @@ export async function POST(
     pageCount:      pageCount,
     extractionPath: result.extractionPath,
     pdfQuality:     pdfQuality,
+    // PR1 1.3 — output truncado por max_tokens: biomarcadores podem estar incompletos
+    truncated:      result.truncated,
   })
 }
