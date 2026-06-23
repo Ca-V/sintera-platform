@@ -84,3 +84,11 @@ Garantido **estruturalmente** pelo schema:
 Nenhum campo cita biomarcador, unidade, referência ou valor numérico. Os dados **específicos de modalidade** moram **só** na tabela de resultado (`biomarkers` / `clinical_findings` / `omics_results`), nunca em `extraction_versions`.
 
 **Views `current_*`:** uma por modalidade, com **estrutura idêntica** (filtro pela versão canônica). Cada view lê apenas a sua tabela de resultado — **nenhuma** assume o schema de outra modalidade. O padrão é uniforme; o conteúdo é da modalidade.
+
+## 8. Diretriz arquitetural — `extraction_versions` é o núcleo documental
+
+`extraction_versions` é o **artefato central** da plataforma documental da SINTERA — **não** apenas da extração de biomarcadores. Biomarcadores são **um** tipo possível de resultado, entre outros.
+
+Uma extração pode produzir: **biomarcadores**, **achados clínicos estruturados**, **medições**, **classificações**, **recomendações documentadas no laudo**, **metadados do exame**, ou **simplesmente um documento versionado sem extração estruturada** (uma versão com `source_text` e sem linhas de resultado é válida).
+
+**Princípio (vinculante para as próximas fases):** os resultados especializados (`biomarkers`/`clinical_findings`/`omics_results`/…) são **projeções derivadas da versão canônica**, não a entidade central. É **proibido** qualquer evolução que recoloque biomarcadores (ou qualquer tipo específico de resultado) como entidade central da arquitetura. Toda modalidade nova pluga em `extraction_versions`.
