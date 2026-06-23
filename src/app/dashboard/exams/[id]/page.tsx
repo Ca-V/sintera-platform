@@ -166,6 +166,8 @@ export default function ExamDetailPage() {
   const { profile } = useUser()
   const examId  = params.id as string
   const supabase = useRef(createClient()).current
+  // P1 — guarda de disparo único da auto-análise (cobre Strict Mode / re-render)
+  const autoStartedRef = useRef(false)
 
   const [exam, setExam]           = useState<Exam | null>(null)
   const [biomarkers, setBiomarkers] = useState<Biomarker[]>([])
@@ -317,8 +319,8 @@ export default function ExamDetailPage() {
     }).catch(() => {})
   }, [examId])
 
-  async function loadData() {
-    setLoading(true)
+  async function loadData(silent = false) {
+    if (!silent) setLoading(true)
     const [{ data: examData }, { data: bioData }, { data: logData }] = await Promise.all([
       supabase.from('exams').select('id,type,status,pdf_quality,page_count,created_at,exam_date,error_reason,text_truncated,file_url,patient_name')
         .eq('id', examId).single(),
@@ -335,7 +337,7 @@ export default function ExamDetailPage() {
     if (examData) setExam(examData as Exam)
     if (bioData)  setBiomarkers(sortBiomarkers(bioData as Biomarker[]))
     if (logData?.[0]) setLastLog(logData[0] as LastLog)
-    setLoading(false)
+    if (!silent) setLoading(false)
   }
 
   async function handleAnalyze() {
@@ -345,6 +347,8 @@ export default function ExamDetailPage() {
     try {
       const res  = await fetch(`/api/exams/${examId}/analyze`, { method: 'POST' })
       const data = await res.json() as { error?: string; code?: string }
+      // 409 ALREADY_PROCESSING (ex.: outra aba já iniciou) não é erro — reflete o estado real
+      if (res.status === 409) { await loadData(true); return }
       if (!res.ok) throw new Error(data.error ?? 'Erro desconhecido')
       await loadData()
       // Tracking P2 — exam_analyzed_success + incrementa contagem para FeedbackModal
@@ -357,10 +361,35 @@ export default function ExamDetailPage() {
       localStorage.setItem('sintera_analyses_count', String(prev + 1))
     } catch (err: unknown) {
       setAnalyzeError(err instanceof Error ? err.message : 'Falha de conexão.')
+      // sincroniza o status real do servidor (ex.: 'error') para não ficar preso em "Analisando…"
+      await loadData(true)
     } finally {
       setAnalyzing(false)
     }
   }
+
+  // P1 — auto-análise baseada em ESTADO (sem flag de URL): um exame recém-enviado
+  // entra como 'pending' e a análise inicia sozinha. Só dispara para 'pending'
+  // (nunca 'error', evitando loop de retry). O ref garante disparo único; o
+  // 409 ALREADY_PROCESSING do servidor é a rede de segurança. O setTimeout(0)
+  // tira o setState do corpo síncrono do efeito.
+  useEffect(() => {
+    if (exam?.status !== 'pending' || autoStartedRef.current) return
+    autoStartedRef.current = true
+    const t = setTimeout(() => { handleAnalyze() }, 0)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exam?.status])
+
+  // P3 — polling silencioso enquanto o servidor processa: a análise roda no
+  // servidor independentemente do cliente, então após refresh / retorno posterior
+  // / outra aba, isto reflete a conclusão sozinho. Para ao sair de 'processing'.
+  useEffect(() => {
+    if (exam?.status !== 'processing') return
+    const iv = setInterval(() => { loadData(true) }, 3000)
+    return () => clearInterval(iv)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exam?.status])
 
   // ── Contagens para o cabeçalho ──────────────────────────────────────────
   const counts = {
@@ -712,6 +741,14 @@ export default function ExamDetailPage() {
               depende de avaliação médica</strong> — esta informação organiza seus dados e não substitui a consulta com seu médico.
             </p>
           </div>
+        </motion.div>
+      ) : (analyzing || exam?.status === 'processing' || exam?.status === 'pending') ? (
+        /* P3 — Estado de processamento (auto-análise em andamento; 'pending' evita flash do estado vazio) */
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          className="card-premium p-12 text-center">
+          <Loader2 size={40} className="text-petal mx-auto mb-3 animate-spin" />
+          <p className="font-body text-sm font-semibold text-onyx mb-1">Analisando seu exame…</p>
+          <p className="font-body text-xs text-mauve">A SINTERA está extraindo os biomarcadores do seu laudo. Isso leva alguns segundos.</p>
         </motion.div>
       ) : (
         /* Estado vazio */
