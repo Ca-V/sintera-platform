@@ -55,21 +55,42 @@ where v.exam_id = e.id
   and e.current_extraction_version_id is null;
 
 -- ============================================================================
--- VALIDAÇÕES PÓS-EXECUÇÃO (rodar SEPARADAMENTE após aplicar; não fazem parte da
--- transação). Critério de sucesso: a=0, b=0, c=6, d=0 e contagem de biomarcadores
--- inalterada (o backfill não cria/apaga biomarcador, só preenche a FK).
+-- INVARIANTES PERMANENTES (verdadeiros após a execução E após rollback)
+--   Rodar SEPARADAMENTE; não fazem parte da transação. Todos devem dar 0.
+--   I5 (antes=depois) exige capturar o total de biomarcadores ANTES (baseline=54).
 -- ----------------------------------------------------------------------------
 -- select
---   (select count(*) from public.exams e
---      where exists (select 1 from public.biomarkers b where b.exam_id=e.id)
---        and e.current_extraction_version_id is null)                              as a_exames_lab_sem_canonica, -- 0
---   (select count(*) from public.biomarkers b
---      join public.exams e on e.id=b.exam_id
---      where b.extraction_version_id is null)                                      as b_biomarkers_sem_versao,   -- 0
---   (select count(*) from public.extraction_versions where reason='backfill_legacy') as c_versoes_backfill,      -- 6
---   (select count(*) from public.biomarkers b
---      join public.extraction_versions v on v.id=b.extraction_version_id
---      where v.exam_id <> b.exam_id)                                               as d_vinculos_cruzados;       -- 0
+--   -- I1: todo biomarker tem extraction_version_id
+--   (select count(*) from public.biomarkers where extraction_version_id is null)                       as i1_biomarkers_sem_versao,    -- 0
+--   -- I2: todo exame com biomarcadores tem current_extraction_version_id
+--   (select count(*) from public.exams e where exists(select 1 from public.biomarkers b where b.exam_id=e.id)
+--      and e.current_extraction_version_id is null)                                                    as i2_exames_lab_sem_canonica,  -- 0
+--   -- I3: toda extraction_version pertence a exatamente um exam_id
+--   (select count(*) from public.extraction_versions where exam_id is null)                            as i3_versoes_sem_exame,        -- 0
+--   -- I4: nenhum biomarker vinculado a versão de OUTRO exame
+--   (select count(*) from public.biomarkers b join public.extraction_versions v on v.id=b.extraction_version_id
+--      where v.exam_id <> b.exam_id)                                                                   as i4_vinculos_cruzados,        -- 0
+--   -- I6: nenhuma linha órfã (FK aponta p/ versão inexistente)
+--   (select count(*) from public.biomarkers b where b.extraction_version_id is not null
+--      and not exists(select 1 from public.extraction_versions v where v.id=b.extraction_version_id))  as i6_orfaos;                   -- 0
+-- I5: conferir (select count(*) from public.biomarkers) == baseline ANTES (54). Igual = ok.
+
+-- ============================================================================
+-- RELATÓRIO DE AUDITORIA PÓS-EXECUÇÃO (quantitativo; integridade/auditoria futura)
+-- ----------------------------------------------------------------------------
+-- select
+--   (select count(distinct exam_id) from public.extraction_versions where reason='backfill_legacy')   as exames_processados,
+--   (select count(*) from public.extraction_versions where reason='backfill_legacy')                  as versoes_criadas,
+--   (select count(*) from public.biomarkers b join public.extraction_versions v on v.id=b.extraction_version_id
+--      where v.reason='backfill_legacy')                                                              as biomarkers_vinculados,
+--   (select count(*) from public.exams e where not exists(select 1 from public.biomarkers b where b.exam_id=e.id)) as exames_sem_biomarkers,
+--   (select count(*) from public.exams e where exists(select 1 from public.biomarkers b where b.exam_id=e.id)
+--      and e.current_extraction_version_id is not null
+--      and e.current_extraction_version_id not in (select id from public.extraction_versions where reason='backfill_legacy')) as exames_ja_canonicos_ignorados,
+--   (select count(*) from public.biomarkers b where b.extraction_version_id is not null
+--      and not exists(select 1 from public.extraction_versions v where v.id=b.extraction_version_id))  as registros_orfaos,
+--   (select count(*) from public.biomarkers)          as biomarkers_total_depois,    -- comparar com 54 (antes)
+--   (select count(*) from public.extraction_versions) as versoes_total_depois;       -- comparar com 0  (antes)
 
 -- ============================================================================
 -- ROLLBACK (executar nesta ordem). Reversível e sem perda: as linhas de
