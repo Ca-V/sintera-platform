@@ -1,0 +1,29 @@
+# Harness de concorrência da escrita canônica (1d.1) — teste repetível da suíte de validação.
+# Executa scripts/concurrency-harness.mjs com 2 conexões pg independentes contra o banco
+# apontado por DATABASE_URL (secret). Preferir um banco de BRANCH/STAGING equivalente
+# (o harness cria e apaga um exame de teste). Disparo manual (workflow_dispatch).
+#
+# Secrets necessários no repositório (Settings > Secrets and variables > Actions):
+#   DATABASE_URL  -> connection string Postgres do ambiente de validação (ex.: branch Supabase)
+#   TEST_USER_ID  -> uuid de um usuário existente nesse banco
+
+name: concurrency-harness
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  concurrency:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Instalar pg (ad-hoc)
+        run: npm i pg --no-save
+      - name: Rodar harness de concorrência
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          TEST_USER_ID: ${{ secrets.TEST_USER_ID }}
+        run: node scripts/concurrency-harness.mjs
