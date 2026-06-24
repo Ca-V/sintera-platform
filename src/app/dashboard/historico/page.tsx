@@ -241,7 +241,7 @@ export default function HistoricoPage() {
   async function loadData() {
     setLoading(true)
     const { data } = await supabase
-      .from('biomarkers')
+      .from('current_biomarkers')
       .select('id,name,value,value_text,unit,result_type,reference_min,reference_max,reference_source,interpretation,synthetic,exam_id,exams(exam_date,created_at,type)')
       .eq('user_id', user!.id)
       .eq('synthetic', false)
