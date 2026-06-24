@@ -324,7 +324,7 @@ export default function ExamDetailPage() {
     const [{ data: examData }, { data: bioData }, { data: logData }] = await Promise.all([
       supabase.from('exams').select('id,type,status,pdf_quality,page_count,created_at,exam_date,error_reason,text_truncated,file_url,patient_name')
         .eq('id', examId).single(),
-      supabase.from('biomarkers')
+      supabase.from('current_biomarkers')
         .select('id,name,value,value_text,unit,reference_min,reference_max,interpretation,result_type,range_extracted,reference_source,source')
         .eq('exam_id', examId),
       supabase.from('ai_processing_log')

@@ -91,6 +91,44 @@ export interface Database {
           ai_insight?: string | null
         }
       }
+      // View canônica (1c): mesmo shape de biomarkers, filtrada para a versão canônica
+      // de cada exame. Somente-leitura (grants revogados em produção; Insert/Update aqui
+      // apenas espelham o shape para tipagem do .from()).
+      current_biomarkers: {
+        Row: {
+          id: string
+          exam_id: string | null
+          user_id: string
+          name: string
+          value: number | null
+          unit: string | null
+          reference_min: number | null
+          reference_max: number | null
+          interpretation: string | null
+          ai_insight: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          exam_id?: string | null
+          user_id: string
+          name: string
+          value?: number | null
+          unit?: string | null
+          reference_min?: number | null
+          reference_max?: number | null
+          interpretation?: string | null
+          ai_insight?: string | null
+        }
+        Update: {
+          value?: number | null
+          unit?: string | null
+          reference_min?: number | null
+          reference_max?: number | null
+          interpretation?: string | null
+          ai_insight?: string | null
+        }
+      }
       biological_scores: {
         Row: {
           id: string
