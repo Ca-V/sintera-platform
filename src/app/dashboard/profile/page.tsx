@@ -41,7 +41,7 @@ export default function ProfilePage() {
   async function loadStats() {
     const [examsRes, bioRes] = await Promise.all([
       supabase.from('exams').select('id', { count: 'exact', head: true }).eq('user_id', user!.id),
-      supabase.from('biomarkers').select('id', { count: 'exact', head: true }).eq('user_id', user!.id).eq('synthetic', false),
+      supabase.from('current_biomarkers').select('id', { count: 'exact', head: true }).eq('user_id', user!.id).eq('synthetic', false),
     ])
     setStats({
       totalExams:     examsRes.count ?? 0,

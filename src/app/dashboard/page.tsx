@@ -74,7 +74,7 @@ export default function DashboardPage() {
     const todayISO = new Date().toISOString().slice(0, 10)
     const [examsResult, bioResult, journeyResult, nextResult] = await Promise.all([
       supabase.from('exams').select('id,type,status,created_at,exam_date').eq('user_id', user!.id).order('exam_date', { ascending: false, nullsFirst: false }),
-      supabase.from('biomarkers').select('id', { count: 'exact', head: true }).eq('user_id', user!.id).eq('synthetic', false),
+      supabase.from('current_biomarkers').select('id', { count: 'exact', head: true }).eq('user_id', user!.id).eq('synthetic', false),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (supabase as any).from('health_events').select('title,event_date', { count: 'exact' }).eq('user_id', user!.id).eq('synthetic', false).order('event_date', { ascending: false }).limit(1),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

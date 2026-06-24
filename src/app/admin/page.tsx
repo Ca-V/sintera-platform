@@ -155,7 +155,7 @@ export default function AdminPage() {
         supabase.from('exams').select('*', { count: 'exact', head: true }).eq('status', 'error'),
         supabase.from('exams').select('*', { count: 'exact', head: true }).in('status', ['pending', 'processing']),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (supabase as any).from('biomarkers').select('*', { count: 'exact', head: true }).eq('synthetic', false),
+        (supabase as any).from('current_biomarkers').select('*', { count: 'exact', head: true }).eq('synthetic', false),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (supabase as any).from('feedback_responses').select('*', { count: 'exact', head: true }).not('comprehension', 'is', null),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
