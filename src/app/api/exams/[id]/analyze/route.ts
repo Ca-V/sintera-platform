@@ -204,13 +204,34 @@ export async function POST(
         : null,
     }))
 
-    // O nome da RPC não consta nos tipos gerados do Supabase — cast pontual.
+    // Dispatcher 1d — roteia a escrita conforme system_flags.canonical_write_mode.
+    // 'off' (padrão) → replace_biomarkers (ponte 1d.0.5): comportamento INALTERADO.
+    // 'on' → write_canonical_extraction (append-only). Sem mudança até o cutover (1d.4).
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: replaceErr } = await (supabase.rpc as any)('replace_biomarkers', {
-      p_exam_id:    examId,
-      p_user_id:    userId,
-      p_biomarkers: bmRows,
-    })
+    const { data: flagRow } = await (supabase as any)
+      .from('system_flags').select('value').eq('key', 'canonical_write_mode').maybeSingle()
+    const canonicalWriteMode = (flagRow?.value as string | undefined) ?? 'off'
+
+    let replaceErr: { message?: string } | null = null
+    if (canonicalWriteMode === 'on') {
+      // Escrita canônica append-only. p_meta mínimo por ora (proveniência completa = fase 1e).
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.rpc as any)('write_canonical_extraction', {
+        p_exam_id:    examId,
+        p_user_id:    userId,
+        p_biomarkers: bmRows,
+        p_meta:       { ai_log_id: result.aiLogId, origin: 'fresh', processing_mode: 'canonical_on' },
+      })
+      replaceErr = error
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.rpc as any)('replace_biomarkers', {
+        p_exam_id:    examId,
+        p_user_id:    userId,
+        p_biomarkers: bmRows,
+      })
+      replaceErr = error
+    }
 
     if (replaceErr) {
       // Transação revertida: os biomarcadores anteriores seguem intactos.
