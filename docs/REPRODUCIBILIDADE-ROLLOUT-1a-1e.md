@@ -48,3 +48,28 @@
 3. **Sem auto-avanço.** Nenhuma fase dispara a seguinte automaticamente.
 4. **Reversível por etapa.** Cada fase tem rollback documentado e (1c/1d) feature-flag.
 5. **Aplicação só após revisão do SQL/diff** de cada fase.
+
+## Sequência rigorosa das fases (ordem aprovada)
+
+1. Aplicação da **066** (backfill laboratorial).
+2. Validação dos **gates e invariantes**.
+3. **Conclusão formal da 1b.**
+4. **1c** — views canônicas + migração das leituras.
+5. **1d** — eliminação do fluxo destrutivo + adoção completa de versões.
+6. **Convergência da ômica** (frente própria — ver `REPRODUCIBILIDADE-CONVERGENCIA-OMICA.md`).
+7. **Estrutura universal de extração** (laboratorial, imagem, anatomopatológico, funcional e demais documentos clínicos).
+
+Sem auto-avanço; cada item exige aprovação explícita.
+
+## Neutralidade de modalidade na 1b
+
+- A 1b é **laboratorial apenas por causa do estado atual dos dados** (a ômica não tem `exam_id`; imagem/pathology/functional ainda não existem como dados).
+- `extraction_versions` permanece **neutra em relação à modalidade**.
+- O **mesmo padrão** (v1 + ponteiro canônico + projeção dos resultados) será usado para `imaging`, `pathology`, `functional` e `clinical_document`.
+- **Nenhuma decisão da 1b cria dependência laboratorial permanente.**
+
+## Diretriz estratégica — congelamento de novas frentes
+
+**Prioridade absoluta:** concluir a infraestrutura de **reprodutibilidade, versionamento, proveniência e governança** dos dados.
+
+Enquanto 1b/1c/1d e o plano de convergência da ômica não estiverem concluídos, **NÃO** abrir novas frentes de: UX, canais de ingestão (e-mail, WhatsApp, compartilhamento mobile), OCR avançado, ou novos recursos de produto. Somente após essa conclusão avançamos para a **camada de extração universal de documentos clínicos**.
