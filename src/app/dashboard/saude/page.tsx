@@ -149,7 +149,7 @@ export default function MinhaSaudePage() {
     if (!user) return
     setLoading(true)
     const { data, error } = await supabase
-      .from('biomarkers')
+      .from('current_biomarkers')
       .select('id,name,value,value_text,unit,result_type,reference_min,reference_max,exam_id,exams(exam_date,created_at),catalog:biomarker_catalog(category,display_name)')
       .eq('user_id', user.id)
       .eq('synthetic', false)
