@@ -96,7 +96,7 @@ export async function assembleInsightContext(
   const [index, biomarkersRes, profileRes] = await Promise.all([
     loadCatalogIndex(supabase),
     supabase
-      .from('biomarkers')
+      .from('current_biomarkers')
       .select('id, name, unit, value, value_text, result_type, reference_min, reference_max, reference_source, catalog_id')
       .eq('exam_id', examId)
       .eq('user_id', userId),
