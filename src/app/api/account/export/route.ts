@@ -20,7 +20,7 @@ export async function GET() {
       supabase.from('profiles').select('*').eq('id', userId).single(),
       supabase.from('exams').select('id,type,exam_date,status,notes,created_at').eq('user_id', userId),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (supabase as any).from('biomarkers').select('name,value,value_text,unit,reference_min,reference_max,interpretation,result_type,reference_source,exam_id,created_at').eq('user_id', userId).eq('synthetic', false),
+      (supabase as any).from('current_biomarkers').select('name,value,value_text,unit,reference_min,reference_max,interpretation,result_type,reference_source,exam_id,created_at').eq('user_id', userId).eq('synthetic', false),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (supabase as any).from('ai_insights').select('insight,category,priority,is_read,created_at').eq('user_id', userId).eq('synthetic', false),
     ])
