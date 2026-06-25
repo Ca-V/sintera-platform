@@ -204,14 +204,17 @@ export async function POST(
         : null,
     }))
 
-    // Dispatcher 1d.2 — Rollout Controlado. should_write_canonical encapsula
-    // canonical_write_mode ('on') + canonical_write_pct (fração) com roteamento
-    // determinístico por exame. Com pct=0 → sempre false → replace_biomarkers (INALTERADO).
+    // Dispatcher 1d.2 — Rollout Controlado. canonical_route devolve o motivo da rota
+    // ('mode_off' | 'allowlist' | 'percent' | 'percent_miss'): allowlist (caso controlado,
+    // determinístico) tem precedência sobre o percentual; hash de produção intacto.
+    // Escreve canônico só quando 'allowlist' ou 'percent'. Com mode=off → 'mode_off' →
+    // replace_biomarkers (INALTERADO). route_reason é gravado na telemetria (origem da escrita).
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: useCanonical } = await (supabase.rpc as any)('should_write_canonical', { p_exam_id: examId })
+    const { data: route } = await (supabase.rpc as any)('canonical_route', { p_exam_id: examId })
+    const useCanonical = route === 'allowlist' || route === 'percent'
 
     let replaceErr: { message?: string } | null = null
-    if (useCanonical === true) {
+    if (useCanonical) {
       // Escrita canônica append-only. p_meta mínimo por ora (proveniência completa = fase 1e).
       const t0 = Date.now()
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -226,10 +229,11 @@ export async function POST(
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (supabase as any).from('canonical_write_telemetry').insert({
-          exam_id:     examId,
-          version_id:  (cwRes as { version_id?: string } | null)?.version_id ?? null,
-          action:      (cwRes as { action?: string } | null)?.action ?? null,
-          duration_ms: Date.now() - t0,
+          exam_id:      examId,
+          version_id:   (cwRes as { version_id?: string } | null)?.version_id ?? null,
+          action:       (cwRes as { action?: string } | null)?.action ?? null,
+          duration_ms:  Date.now() - t0,
+          route_reason: route,
         })
       } catch { /* telemetria não pode quebrar a extração */ }
     } else {
