@@ -204,25 +204,34 @@ export async function POST(
         : null,
     }))
 
-    // Dispatcher 1d — roteia a escrita conforme system_flags.canonical_write_mode.
-    // 'off' (padrão) → replace_biomarkers (ponte 1d.0.5): comportamento INALTERADO.
-    // 'on' → write_canonical_extraction (append-only). Sem mudança até o cutover (1d.4).
+    // Dispatcher 1d.2 — Rollout Controlado. should_write_canonical encapsula
+    // canonical_write_mode ('on') + canonical_write_pct (fração) com roteamento
+    // determinístico por exame. Com pct=0 → sempre false → replace_biomarkers (INALTERADO).
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: flagRow } = await (supabase as any)
-      .from('system_flags').select('value').eq('key', 'canonical_write_mode').maybeSingle()
-    const canonicalWriteMode = (flagRow?.value as string | undefined) ?? 'off'
+    const { data: useCanonical } = await (supabase.rpc as any)('should_write_canonical', { p_exam_id: examId })
 
     let replaceErr: { message?: string } | null = null
-    if (canonicalWriteMode === 'on') {
+    if (useCanonical === true) {
       // Escrita canônica append-only. p_meta mínimo por ora (proveniência completa = fase 1e).
+      const t0 = Date.now()
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase.rpc as any)('write_canonical_extraction', {
+      const { data: cwRes, error } = await (supabase.rpc as any)('write_canonical_extraction', {
         p_exam_id:    examId,
         p_user_id:    userId,
         p_biomarkers: bmRows,
         p_meta:       { ai_log_id: result.aiLogId, origin: 'fresh', processing_mode: 'canonical_on' },
       })
       replaceErr = error
+      // Telemetria do rollout (best-effort — nunca quebra a extração).
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase as any).from('canonical_write_telemetry').insert({
+          exam_id:     examId,
+          version_id:  (cwRes as { version_id?: string } | null)?.version_id ?? null,
+          action:      (cwRes as { action?: string } | null)?.action ?? null,
+          duration_ms: Date.now() - t0,
+        })
+      } catch { /* telemetria não pode quebrar a extração */ }
     } else {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await (supabase.rpc as any)('replace_biomarkers', {
