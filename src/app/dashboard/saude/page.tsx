@@ -299,9 +299,10 @@ export default function MinhaSaudePage() {
               </div>
               <div className="divide-y divide-border/20">
                 {highlights.slice(0, 6).map((h, i) => (
-                  <div key={i} className="flex items-center gap-3 px-5 py-3">
+                  <Link key={i} href={`/dashboard/saude/${encodeURIComponent(normalizeName(h.name))}`}
+                    className="flex items-center gap-3 px-5 py-3 hover:bg-blush/10 transition-colors group">
                     <div className="flex-1 min-w-0">
-                      <p className="font-body text-sm text-onyx truncate">{h.name}</p>
+                      <p className="font-body text-sm text-onyx truncate group-hover:text-petal transition-colors">{h.name}</p>
                       <p className="font-body text-xs text-mauve/60">
                         {h.count} medições
                         {h.ratePercentPerMonth !== null && ` · ritmo ${h.ratePercentPerMonth > 0 ? '+' : ''}${h.ratePercentPerMonth}%/mês`}
@@ -311,7 +312,7 @@ export default function MinhaSaudePage() {
                       {h.lastValue} <span className="text-xs font-normal text-mauve">{h.unit}</span>
                     </span>
                     <div className="flex-shrink-0 w-36 text-right"><TrendBadge trend={h.trend} delta={h.deltaPercent} /></div>
-                  </div>
+                  </Link>
                 ))}
               </div>
               <div className="px-5 py-2.5 bg-ivory/40">
