@@ -1,8 +1,9 @@
 'use client'
 
-// T2-B1a.1 (Evolução Funcional) — Drill-down de Indicador por biomarcador:
-// gráfico temporal + "Exames utilizados". Aditivo e reversível; lê a view canônica
-// current_biomarkers (não toca o caminho de escrita). Linguagem factual (RDC 657/2022).
+// Drill-down de Indicador por biomarcador (T2-B1a): gráfico temporal +
+// "Exames utilizados". Lê a view canônica current_biomarkers (não toca o caminho
+// de escrita). Linguagem factual (RDC 657/2022). Usa a lib compartilhada de
+// agrupamento (src/lib/biomarkers/grouping.ts) para não duplicar lógica.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
@@ -12,36 +13,8 @@ import { ArrowLeft, Loader2, FlaskConical, ArrowRight } from 'lucide-react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
+import { seriesForName, type BiomarkerRow, type Measurement } from '@/lib/biomarkers/grouping'
 
-interface Row {
-  id: string
-  name: string
-  value: number | null
-  unit: string | null
-  result_type: string | null
-  reference_min: number | null
-  reference_max: number | null
-  interpretation: string | null
-  exam_id: string
-  exams: { exam_date: string | null; created_at: string } | null
-}
-
-interface Point {
-  examId: string
-  date: string
-  value: number
-  unit: string
-  referenceMin: number | null
-  referenceMax: number | null
-  interpretation: string | null
-}
-
-function normalizeName(n: string): string {
-  return n.toLowerCase().replace(/\s+/g, ' ').trim()
-}
-function examDate(r: Row): string {
-  return r.exams?.exam_date ?? r.exams?.created_at ?? ''
-}
 function formatDateFull(iso: string): string {
   if (!iso) return '—'
   return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -52,11 +25,8 @@ function formatDateShort(iso: string): string {
 }
 
 const INTERP_COLORS: Record<string, string> = {
-  acima_da_referencia:         'text-orange-500',
-  abaixo_da_referencia:        'text-blue-500',
-  dentro_da_referencia:        'text-sage',
-  sem_referencia_identificada: 'text-mauve/60',
-  indisponivel:                'text-mauve/40',
+  acima_da_referencia: 'text-orange-500', abaixo_da_referencia: 'text-blue-500',
+  dentro_da_referencia: 'text-sage', sem_referencia_identificada: 'text-mauve/60', indisponivel: 'text-mauve/40',
 }
 const INTERP_SYM: Record<string, string> = {
   acima_da_referencia: '▲', abaixo_da_referencia: '▼', dentro_da_referencia: '✓',
@@ -64,7 +34,7 @@ const INTERP_SYM: Record<string, string> = {
 }
 
 // ── Gráfico temporal (SVG inline, sem dependência) ─────────────────────────────
-function TemporalChart({ points }: { points: Point[] }) {
+function TemporalChart({ points }: { points: Measurement[] }) {
   const W = 640, H = 200, padX = 36, padY = 24
   const values = points.map(p => p.value)
   const refMins = points.map(p => p.referenceMin).filter((v): v is number => v !== null)
@@ -77,17 +47,14 @@ function TemporalChart({ points }: { points: Point[] }) {
   const x = (i: number) => padX + (points.length === 1 ? (W - 2 * padX) / 2 : (i * (W - 2 * padX)) / (points.length - 1))
   const y = (v: number) => H - padY - ((v - min) / (max - min)) * (H - 2 * padY)
 
-  // Faixa de referência (se constante e definida em todas as medições)
   const refMin = refMins.length === points.length && new Set(refMins).size === 1 ? refMins[0] : null
   const refMax = refMaxs.length === points.length && new Set(refMaxs).size === 1 ? refMaxs[0] : null
-
   const line = points.map((p, i) => `${x(i)},${y(p.value)}`).join(' ')
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" role="img" aria-label="Gráfico temporal do biomarcador">
       {refMin !== null && refMax !== null && (
-        <rect x={padX} y={y(refMax)} width={W - 2 * padX} height={Math.max(0, y(refMin) - y(refMax))}
-          className="fill-sage/10" />
+        <rect x={padX} y={y(refMax)} width={W - 2 * padX} height={Math.max(0, y(refMin) - y(refMax))} className="fill-sage/10" />
       )}
       {refMin !== null && refMax !== null && (
         <>
@@ -112,7 +79,7 @@ export default function IndicadorDrilldownPage() {
   const slug = decodeURIComponent(params.slug)
   const { user } = useUser()
   const supabase = useRef(createClient() as unknown as SupabaseClient).current
-  const [rows, setRows] = useState<Row[]>([])
+  const [rows, setRows] = useState<BiomarkerRow[]>([])
   const [loading, setLoading] = useState(true)
 
   const load = useCallback(async () => {
@@ -125,29 +92,13 @@ export default function IndicadorDrilldownPage() {
       .eq('synthetic', false)
       .eq('result_type', 'numeric')
     if (error) console.error('[SINTERA] indicador fetch:', error.message)
-    setRows((data ?? []) as unknown as Row[])
+    setRows((data ?? []) as unknown as BiomarkerRow[])
     setLoading(false)
   }, [user, supabase])
 
   useEffect(() => { load() }, [load])
 
-  const model = useMemo(() => {
-    const matched = rows.filter(r => normalizeName(r.name) === slug && r.value !== null)
-    if (matched.length === 0) return null
-    const units = [...new Set(matched.map(r => r.unit ?? ''))]
-    const displayName = matched[matched.length - 1].name
-    const sorted = [...matched].sort((a, b) => examDate(a).localeCompare(examDate(b)) || a.id.localeCompare(b.id))
-    const points: Point[] = sorted.map(r => ({
-      examId: r.exam_id, date: examDate(r), value: r.value!, unit: r.unit ?? '',
-      referenceMin: r.reference_min, referenceMax: r.reference_max, interpretation: r.interpretation,
-    }))
-    const first = points[0]
-    const last = points[points.length - 1]
-    const totalDelta = points.length >= 2 && first.value !== 0
-      ? Math.round(((last.value - first.value) / Math.abs(first.value)) * 100)
-      : null
-    return { displayName, unit: units[0] ?? '', unitMismatch: units.length > 1, points, first, last, totalDelta }
-  }, [rows, slug])
+  const model = useMemo(() => seriesForName(rows, slug), [rows, slug])
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-[60vh]"><Loader2 size={28} className="animate-spin text-petal" /></div>
@@ -159,11 +110,11 @@ export default function IndicadorDrilldownPage() {
         <ArrowLeft size={15} /> Indicadores
       </Link>
 
-      {!model ? (
+      {!model || model.measurements.length === 0 ? (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="card-premium p-12 text-center">
           <FlaskConical size={40} className="text-border mx-auto mb-3" />
           <p className="font-body text-sm font-semibold text-onyx mb-1">Indicador não encontrado</p>
-          <p className="font-body text-xs text-mauve">Não há medições numéricas para este biomarcador.</p>
+          <p className="font-body text-xs text-mauve">{model?.hasUnitMismatch ? 'Unidades diferentes entre exames — série não comparável.' : 'Não há medições numéricas para este biomarcador.'}</p>
         </motion.div>
       ) : (
         <>
@@ -171,9 +122,9 @@ export default function IndicadorDrilldownPage() {
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="card-premium p-6">
             <h1 className="font-display text-xl font-semibold text-onyx">{model.displayName}</h1>
             <p className="font-body text-sm text-mauve mt-0.5">
-              {model.unit ? `${model.unit} · ` : ''}{model.points.length} medição{model.points.length !== 1 ? 'ões' : ''}
+              {model.unit ? `${model.unit} · ` : ''}{model.measurements.length} medição{model.measurements.length !== 1 ? 'ões' : ''}
             </p>
-            {model.first && model.last && model.points.length >= 2 && (
+            {model.first && model.latest && model.measurements.length >= 2 && (
               <div className="grid grid-cols-3 gap-3 mt-4">
                 <div className="rounded-2xl bg-ivory/60 py-3 px-3">
                   <p className="font-body text-[10px] text-mauve/50 uppercase tracking-wider mb-0.5">Primeira</p>
@@ -182,14 +133,14 @@ export default function IndicadorDrilldownPage() {
                 </div>
                 <div className="rounded-2xl bg-ivory/60 py-3 px-3">
                   <p className="font-body text-[10px] text-mauve/50 uppercase tracking-wider mb-0.5">Última</p>
-                  <p className="font-body text-sm font-semibold text-onyx">{model.last.value} <span className="text-xs font-normal text-mauve">{model.unit}</span></p>
-                  <p className="font-body text-[10px] text-mauve/50">{formatDateFull(model.last.date)}</p>
+                  <p className="font-body text-sm font-semibold text-onyx">{model.latest.value} <span className="text-xs font-normal text-mauve">{model.unit}</span></p>
+                  <p className="font-body text-[10px] text-mauve/50">{formatDateFull(model.latest.date)}</p>
                 </div>
                 <div className="rounded-2xl bg-ivory/60 py-3 px-3">
                   <p className="font-body text-[10px] text-mauve/50 uppercase tracking-wider mb-0.5">Variação total</p>
-                  {model.totalDelta !== null ? (
-                    <p className={`font-body text-sm font-semibold ${model.totalDelta > 0 ? 'text-orange-500' : model.totalDelta < 0 ? 'text-blue-500' : 'text-mauve'}`}>
-                      {model.totalDelta > 0 ? '+' : ''}{model.totalDelta}%
+                  {model.totalDeltaPercent !== null ? (
+                    <p className={`font-body text-sm font-semibold ${model.totalDeltaPercent > 0 ? 'text-orange-500' : model.totalDeltaPercent < 0 ? 'text-blue-500' : 'text-mauve'}`}>
+                      {model.totalDeltaPercent > 0 ? '+' : ''}{model.totalDeltaPercent}%
                     </p>
                   ) : <p className="font-body text-sm text-mauve/40">—</p>}
                   <p className="font-body text-[10px] text-mauve/50">no período</p>
@@ -199,19 +150,13 @@ export default function IndicadorDrilldownPage() {
           </motion.div>
 
           {/* Gráfico temporal */}
-          {model.unitMismatch ? (
-            <div className="card-premium p-5">
-              <p className="font-body text-xs text-amber-700">Unidades diferentes entre exames — gráfico temporal não exibido.</p>
-            </div>
-          ) : (
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="card-premium p-5">
-              <p className="font-body text-sm font-semibold text-onyx mb-3">Evolução temporal</p>
-              <TemporalChart points={model.points} />
-              <p className="font-body text-[11px] text-mauve/50 mt-2">
-                Faixa verde = referência impressa no laudo (quando constante). Valores factuais; não indicam melhora ou piora clínica.
-              </p>
-            </motion.div>
-          )}
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="card-premium p-5">
+            <p className="font-body text-sm font-semibold text-onyx mb-3">Evolução temporal</p>
+            <TemporalChart points={model.measurements} />
+            <p className="font-body text-[11px] text-mauve/50 mt-2">
+              Faixa verde = referência impressa no laudo (quando constante). Valores factuais; não indicam melhora ou piora clínica.
+            </p>
+          </motion.div>
 
           {/* Exames utilizados */}
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} className="card-premium overflow-hidden">
@@ -219,7 +164,7 @@ export default function IndicadorDrilldownPage() {
               <p className="font-body text-sm font-semibold text-onyx">Exames utilizados</p>
             </div>
             <div className="divide-y divide-border/20">
-              {[...model.points].reverse().map((p) => {
+              {[...model.measurements].reverse().map((p) => {
                 const interpColor = INTERP_COLORS[p.interpretation ?? ''] ?? 'text-mauve/60'
                 const sym = INTERP_SYM[p.interpretation ?? ''] ?? '–'
                 return (
