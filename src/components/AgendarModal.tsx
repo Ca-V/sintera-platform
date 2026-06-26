@@ -104,6 +104,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
   const [showDetails, setShowDetails] = useState(false)
   const [added, setAdded] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
@@ -165,7 +166,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
 
   async function handleSave() {
     if (!onSave || !canExport || saving) return
-    setSaving(true)
+    setSaving(true); setSaveError(null)
     try {
       await onSave({
         eventType, title: fullTitle, date, time, durationMin: parseInt(duration), notes: notes.trim(), reminderEnabled,
@@ -175,14 +176,18 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
         outcome: outcome.trim(), operadora: operadora.trim(), carteirinha: carteirinha.trim(),
       })
       handleClose()
-    } catch { setSaving(false) }
+    } catch (e) {
+      // Falha de gravação: mostrar e MANTER o modal aberto para a usuária tentar de novo.
+      setSaveError(e instanceof Error ? e.message : 'Não foi possível salvar. Tente novamente.')
+      setSaving(false)
+    }
   }
 
   function handleClose() {
     setAdded(false); setTitle(defaultTitle); setDate(''); setTime('08:00'); setDuration('60'); setNotes(defaultNotes)
     setEventType('exame'); setModality(''); setProfessionalName(''); setEstablishment(''); setLocation(''); setPreparation(''); setAmount('')
     setRecurrence('none'); setRecurrenceUntil(''); setPriority(''); setDirectExpense(false); setOutcome(''); setOperadora(''); setCarteirinha('')
-    setShowDetails(false)
+    setShowDetails(false); setSaveError(null)
     onClose()
   }
 
@@ -239,7 +244,8 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5"><label className={LABEL}>Data</label>
-                      <input type="date" value={date} min={today} onChange={e => setDate(e.target.value)} className={FIELD} /></div>
+                      {/* Sem min: permite data retroativa (lançar procedimento já feito, p/ controle anual). */}
+                      <input type="date" value={date} onChange={e => setDate(e.target.value)} className={FIELD} /></div>
                     <div className="space-y-1.5"><label className={LABEL}>Horário</label>
                       <input type="time" value={time} onChange={e => setTime(e.target.value)} className={FIELD} /></div>
                   </div>
@@ -343,6 +349,9 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                         className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl gradient-sintera text-white text-sm font-body font-medium hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
                         {saving ? <><Loader2 size={15} className="animate-spin" /> Salvando…</> : <><Check size={15} /> {initialEvent ? 'Salvar alterações' : 'Salvar na minha agenda'}</>}
                       </button>
+                      {saveError && (
+                        <p className="font-body text-xs text-red-500 text-center px-2">{saveError}</p>
+                      )}
                     </div>
                   )}
 

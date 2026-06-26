@@ -62,7 +62,10 @@ export function createSupabaseEventRepository(supabase: SupabaseClient): EventRe
     listFinancialEntries:  async (u) => selectFinancial(await listAll(u)),
     save: async (userId, event) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase.from('health_events') as any).upsert(healthEventToRow(userId, event))
+      const { error } = await (supabase.from('health_events') as any).upsert(healthEventToRow(userId, event))
+      // NUNCA engolir falha de gravação — propaga para a UI avisar a usuária
+      // (evita "salvei e não apareceu"). Ver AgendarModal: exibe a mensagem.
+      if (error) throw new Error(error.message || 'Falha ao salvar o evento')
     },
   }
 }
