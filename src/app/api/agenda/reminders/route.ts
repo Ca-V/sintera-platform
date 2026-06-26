@@ -10,21 +10,11 @@ import { createClient as createAdmin } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { reminderEmailHtml, reminderEmailText } from '@/lib/email/reminder-template'
 import { sendWhatsAppReminder } from '@/lib/whatsapp/send'
+import { buildEventNotification } from '@/lib/agenda/notification'
+import { eventToNotificationInput, formatDateBR } from '@/lib/agenda/presentation'
+import { rowToHealthEvent, agendaRowToHealthEvent, isClosed, type HealthEvent, type HealthEventRow, type AgendaEventRow } from '@/lib/agenda/event'
 
 const FROM_ADDRESS = 'SINTERA <ola@sinteramais.com.br>'
-
-const TYPE_LABEL: Record<string, string> = {
-  exame: 'Exame', consulta: 'Consulta', retorno: 'Retorno', medicacao: 'Medicação', outro: 'Evento',
-}
-
-interface AgendaRow {
-  id: string
-  user_id: string
-  event_type: string
-  title: string
-  event_date: string        // YYYY-MM-DD
-  event_time: string | null
-}
 
 function ymd(d: Date): string {
   return d.toISOString().split('T')[0]
@@ -124,28 +114,38 @@ export async function POST(req: NextRequest) {
   const today = ymd(now)
   const tomorrow = ymd(new Date(now.getTime() + 24 * 60 * 60 * 1000))
 
-  // Eventos elegíveis: pendentes, com lembrete ligado, ainda não lembrados,
-  // vencendo hoje ou amanhã.
+  // Eventos elegíveis (lembrete ligado, ainda não enviado, vencendo hoje/amanhã):
+  // lê o CANÔNICO health_events E o legado agenda_events (coexistência), expondo o
+  // mesmo domínio. Dedup por id (canônico vence). Status fechado não recebe lembrete.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (admin.from('agenda_events') as any)
-    .select('id, user_id, event_type, title, event_date, event_time')
-    .eq('status', 'pending')
-    .eq('reminder_enabled', true)
-    .is('reminder_sent_at', null)
-    .gte('event_date', today)
-    .lte('event_date', tomorrow)
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  const hRes = await (admin.from('health_events') as any)
+    .select('*').eq('reminder_enabled', true).is('reminder_sent_at', null)
+    .gte('event_date', today).lte('event_date', tomorrow).eq('synthetic', false)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const aRes = await (admin.from('agenda_events') as any)
+    .select('id, user_id, event_type, title, event_date, event_time, duration_min, notes, status, reminder_enabled, reminder_sent_at')
+    .eq('status', 'pending').eq('reminder_enabled', true).is('reminder_sent_at', null)
+    .gte('event_date', today).lte('event_date', tomorrow)
+  if (hRes.error || aRes.error) {
+    return NextResponse.json({ error: hRes.error?.message ?? aRes.error?.message }, { status: 500 })
   }
 
-  const events = (data ?? []) as AgendaRow[]
-  if (events.length === 0) {
+  type DueItem = { event: HealthEvent; userId: string; table: 'health_events' | 'agenda_events' }
+  const byId = new Map<string, DueItem>()
+  for (const r of (aRes.data ?? []) as (AgendaEventRow & { user_id: string })[]) {
+    byId.set(r.id, { event: agendaRowToHealthEvent(r), userId: r.user_id, table: 'agenda_events' })
+  }
+  for (const r of (hRes.data ?? []) as (HealthEventRow & { user_id: string })[]) {
+    const e = rowToHealthEvent(r)
+    if (!isClosed(e)) byId.set(e.id, { event: e, userId: r.user_id, table: 'health_events' }) // canônico vence
+  }
+  const items = [...byId.values()]
+  if (items.length === 0) {
     return NextResponse.json({ due: 0, sent: 0, failed: 0 })
   }
 
   // Nomes + telefone + opt-in de WhatsApp das usuárias.
-  const userIds = [...new Set(events.map(e => e.user_id))]
+  const userIds = [...new Set(items.map(i => i.userId))]
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: profiles } = await (admin.from('profiles') as any)
     .select('id, name, phone, pref_whatsapp_reminder').in('id', userIds)
@@ -165,49 +165,50 @@ export async function POST(req: NextRequest) {
     emailById.set(uid, u.user?.email ?? null)
   }
 
-  const sentIds: string[] = []
+  const sentByTable: Record<'health_events' | 'agenda_events', string[]> = { health_events: [], agenda_events: [] }
   let failed = 0
   let whatsappSent = 0
-  const whatsappDiag: string[] = []   // diagnóstico de falhas de envio (sem credenciais)
+  const whatsappDiag: string[] = []
 
-  for (const ev of events) {
-    const email = emailById.get(ev.user_id)
-    const firstName = (nameById.get(ev.user_id) ?? '').split(' ')[0]
-    const typeLabel = TYPE_LABEL[ev.event_type] ?? 'Evento'
-    const label = dateLabel(ev.event_date, today, tomorrow)
+  for (const { event: ev, userId, table } of items) {
+    const email = emailById.get(userId)
+    const firstName = (nameById.get(userId) ?? '').split(' ')[0]
+    const notification = buildEventNotification(eventToNotificationInput(ev))   // REQ-NOTIF-001
+    const subjectWhen = dateLabel(ev.date, today, tomorrow)
     let delivered = false
 
-    // Canal 1 — e-mail
+    // Canal 1 — e-mail (projeção completa do domínio)
     if (email) {
       try {
         await resend.emails.send({
           from: FROM_ADDRESS,
           to: [email],
-          subject: `Lembrete: ${ev.title} — ${label}`,
-          html: reminderEmailHtml({ firstName, title: ev.title, dateLabel: label, timeLabel: ev.event_time ? ev.event_time.slice(0, 5) : null, notes: null, typeLabel }),
-          text: reminderEmailText({ firstName, title: ev.title, dateLabel: label, timeLabel: ev.event_time ? ev.event_time.slice(0, 5) : null, notes: null, typeLabel }),
+          subject: `Lembrete: ${ev.title} — ${subjectWhen}`,
+          html: reminderEmailHtml({ firstName, notification }),
+          text: reminderEmailText({ firstName, notification }),
         })
         delivered = true
       } catch { /* tenta o WhatsApp mesmo assim */ }
     }
 
-    // Canal 2 — WhatsApp (só com opt-in + telefone; ignora se sem credenciais)
-    if (waOptInById.get(ev.user_id) && phoneById.get(ev.user_id)) {
-      const wa = await sendWhatsAppReminder(phoneById.get(ev.user_id), { title: ev.title, dateLabel: label })
+    // Canal 2 — WhatsApp (só com opt-in + telefone)
+    if (waOptInById.get(userId) && phoneById.get(userId)) {
+      const wa = await sendWhatsAppReminder(phoneById.get(userId), { title: ev.title, dateLabel: formatDateBR(ev.date) })
       if (wa.status === 'sent') { delivered = true; whatsappSent++ }
       else if (wa.detail) whatsappDiag.push(`${ev.id.slice(0, 8)}:${wa.status}:${wa.detail}`)
     }
 
-    if (delivered) sentIds.push(ev.id)
+    if (delivered) sentByTable[table].push(ev.id)
     else failed++
   }
 
-  if (sentIds.length > 0) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (admin.from('agenda_events') as any)
-      .update({ reminder_sent_at: new Date().toISOString() })
-      .in('id', sentIds)
+  for (const table of ['health_events', 'agenda_events'] as const) {
+    if (sentByTable[table].length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (admin.from(table) as any).update({ reminder_sent_at: new Date().toISOString() }).in('id', sentByTable[table])
+    }
   }
 
-  return NextResponse.json({ due: events.length, sent: sentIds.length, whatsappSent, failed, whatsappDiag })
+  const sent = sentByTable.health_events.length + sentByTable.agenda_events.length
+  return NextResponse.json({ due: items.length, sent, whatsappSent, failed, whatsappDiag })
 }
