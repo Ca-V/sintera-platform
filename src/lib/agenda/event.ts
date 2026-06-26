@@ -1,27 +1,28 @@
-// Planejamento da Saúde — modelo de DOMÍNIO do evento da jornada de saúde.
-// Fonte única consumida por tela, notificações, calendário e integrações futuras.
-// A notificação é PROJEÇÃO deste objeto (ver eventToNotificationInput), nunca a origem.
-
-import type { EventNotificationInput, EventModality } from './notification'
+// DOMÍNIO do evento da jornada de saúde (tabela canônica health_events).
+// HealthEvent = um ACONTECIMENTO de saúde (consulta, exame, procedimento, vacina,
+// medicamento, suplemento, atividade física, evento financeiro, protocolo preventivo,
+// evento derivado automaticamente) — NÃO um "item de agenda". As telas são PROJEÇÕES.
+//
+// Este módulo contém SÓ domínio: enums, tipos, mapeadores (persistência→domínio) e
+// projeções técnicas (predicados). Sem texto/ícone/cor de UI (→ presentation.ts) e
+// sem origem física de dados (→ repository.ts).
 
 // Status canônico — enum único de plataforma.
 export const EVENT_STATUSES = ['planejado', 'confirmado', 'realizado', 'cancelado', 'reagendado', 'perdido'] as const
 export type EventStatus = typeof EVENT_STATUSES[number]
 
-// Modalidade: tipo canônico vive em ./notification (consumido pela projeção); reexportado aqui.
-export type { EventModality }
-export const EVENT_MODALITIES: readonly EventModality[] = ['presencial', 'telemedicina']
+export const EVENT_MODALITIES = ['presencial', 'telemedicina'] as const
+export type EventModality = typeof EVENT_MODALITIES[number]
 
-// Linkagem da jornada clínica (não armazenamento genérico). Chaves PREVISTAS —
-// formato único {kind,id,label} para evitar múltiplos formatos no futuro:
+// Relacionamento da jornada — padrão único {id, type, source, metadata} (facilita
+// integrações futuras e a convergência ômica). Chaves previstas de `type`:
 //   exam · biomarker · protocol · medication · supplement · document · professional
 export type EventLinkKind = 'exam' | 'biomarker' | 'protocol' | 'medication' | 'supplement' | 'document' | 'professional'
-export interface EventLink { kind: EventLinkKind; id?: string; label?: string }
-
-export const EVENT_TYPE_LABELS: Record<string, string> = {
-  consulta: 'Consulta', vacina: 'Vacina', procedimento: 'Procedimento',
-  estetico: 'Procedimento estético', medicamento: 'Medicamento', atividade: 'Atividade física',
-  exame: 'Exame', omica: 'Ômica', outro: 'Evento',
+export interface EventLink {
+  type: EventLinkKind
+  id?: string
+  source?: string
+  metadata?: Record<string, unknown>
 }
 
 /** Objeto de domínio do evento (espelha health_events; uma única fonte de verdade). */
@@ -30,6 +31,7 @@ export interface HealthEvent {
   type: string
   title: string
   status: EventStatus
+  source: string               // origem: manual · exam · protocol · wearable · import · connector · system…
   date: string                 // 'YYYY-MM-DD'
   time: string | null          // 'HH:MM' | 'HH:MM:SS'
   durationMin: number | null
@@ -50,26 +52,14 @@ export interface HealthEvent {
   completedAt: string | null
 }
 
-// ── Formatação pura (sem Date/locale → determinística e testável) ──────────────
-/** 'YYYY-MM-DD' → 'DD/MM/YYYY'. Entrada inesperada retorna a própria string. */
-export function formatDateBR(iso: string): string {
-  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso ?? '')
-  return m ? `${m[3]}/${m[2]}/${m[1]}` : (iso ?? '')
-}
-/** 'HH:MM[:SS]' → 'HH:MM'. Vazio → null. */
-export function formatTimeBR(time: string | null): string | null {
-  if (!time) return null
-  const m = /^(\d{2}):(\d{2})/.exec(time)
-  return m ? `${m[1]}:${m[2]}` : null
-}
-
-// ── Mapeador DB → domínio (a UI consome o domínio, não a linha crua) ───────────
-/** Forma da linha de `health_events` (snake_case) usada pelos mapeadores. */
+// ── Mapeadores persistência → domínio (a UI consome o domínio, não a linha crua) ──
+/** Forma da linha de `health_events` (snake_case). */
 export interface HealthEventRow {
   id: string
   event_type: string
   title: string
   status?: string | null
+  source?: string | null
   event_date: string
   event_time?: string | null
   duration_min?: number | null
@@ -90,30 +80,30 @@ export interface HealthEventRow {
   completed_at?: string | null
 }
 
-/** Converte uma linha do banco no objeto de domínio. Puro e tolerante a valores inesperados. */
+function normStatus(s: string | null | undefined): EventStatus {
+  return (EVENT_STATUSES as readonly string[]).includes(s ?? '') ? (s as EventStatus) : 'planejado'
+}
+function normModality(m: string | null | undefined): EventModality | null {
+  return m === 'presencial' || m === 'telemedicina' ? m : null
+}
+
+/** Converte uma linha de `health_events` no domínio. Puro e tolerante a valores inesperados. */
 export function rowToHealthEvent(r: HealthEventRow): HealthEvent {
-  const status = (EVENT_STATUSES as readonly string[]).includes(r.status ?? '') ? (r.status as EventStatus) : 'planejado'
-  const modality = r.modality === 'presencial' || r.modality === 'telemedicina' ? r.modality : null
   return {
-    id: r.id, type: r.event_type, title: r.title, status,
+    id: r.id, type: r.event_type, title: r.title, status: normStatus(r.status),
+    source: r.source ?? 'manual',
     date: r.event_date, time: r.event_time ?? null,
-    durationMin: r.duration_min ?? null,
-    reminderEnabled: r.reminder_enabled ?? true,
-    reminderSentAt: r.reminder_sent_at ?? null,
+    durationMin: r.duration_min ?? null, reminderEnabled: r.reminder_enabled ?? true, reminderSentAt: r.reminder_sent_at ?? null,
     professionalKind: r.professional_kind ?? null, professionalName: r.professional_name ?? null,
     establishment: r.establishment ?? null, location: r.location ?? null,
-    modality, preparation: r.preparation ?? null, notes: r.notes ?? null,
+    modality: normModality(r.modality), preparation: r.preparation ?? null, notes: r.notes ?? null,
     amountCents: r.amount_cents ?? null, attachmentUrl: r.attachment_url ?? null,
     links: Array.isArray(r.links) ? (r.links as EventLink[]) : [],
-    recurrenceRule: r.recurrence_rule ?? null, seriesId: r.series_id ?? null,
-    completedAt: r.completed_at ?? null,
+    recurrenceRule: r.recurrence_rule ?? null, seriesId: r.series_id ?? null, completedAt: r.completed_at ?? null,
   }
 }
 
-// ── Adaptador legado: agenda_events → domínio (Fase 2 da consolidação) ─────────
-// Coexistência controlada: a camada de serviço pode ler `agenda_events` enquanto
-// os dados não migram, sempre expondo o mesmo `HealthEvent`. Mapeia o status antigo
-// (pending/done/cancelled) para o enum canônico.
+// ── Adaptador legado: agenda_events → domínio (coexistência da consolidação) ──────
 export interface AgendaEventRow {
   id: string
   event_type: string
@@ -126,19 +116,15 @@ export interface AgendaEventRow {
   reminder_enabled?: boolean | null
   reminder_sent_at?: string | null
 }
-
-const AGENDA_STATUS_MAP: Record<string, EventStatus> = {
-  pending: 'planejado', done: 'realizado', cancelled: 'cancelado',
-}
+const AGENDA_STATUS_MAP: Record<string, EventStatus> = { pending: 'planejado', done: 'realizado', cancelled: 'cancelado' }
 
 export function agendaRowToHealthEvent(r: AgendaEventRow): HealthEvent {
   return {
     id: r.id, type: r.event_type, title: r.title,
     status: AGENDA_STATUS_MAP[r.status ?? ''] ?? 'planejado',
+    source: 'agenda_legacy',
     date: r.event_date, time: r.event_time ?? null,
-    durationMin: r.duration_min ?? null,
-    reminderEnabled: r.reminder_enabled ?? true,
-    reminderSentAt: r.reminder_sent_at ?? null,
+    durationMin: r.duration_min ?? null, reminderEnabled: r.reminder_enabled ?? true, reminderSentAt: r.reminder_sent_at ?? null,
     professionalKind: null, professionalName: null, establishment: null, location: null,
     modality: null, preparation: null, notes: r.notes ?? null,
     amountCents: null, attachmentUrl: null, links: [],
@@ -146,27 +132,18 @@ export function agendaRowToHealthEvent(r: AgendaEventRow): HealthEvent {
   }
 }
 
-// Guardrails de arquitetura (fundadora 25/06/2026):
-// - `completed_at` é só MARCADOR temporal. A regra de negócio do "realizado"
-//   (alimentar Histórico, gerar gasto, atualizar indicadores) vive numa CAMADA DE
-//   SERVIÇO — nunca em triggers de banco nem neste módulo de projeção.
-// - Mudanças de status serão auditáveis no futuro (tabela de histórico aditiva);
-//   este modelo não precluí essa evolução.
+// ── Projeções técnicas (predicados) — as telas FILTRAM por estes, sem regra própria ──
+// Datas recebem `refDate` ('YYYY-MM-DD') para serem puras/testáveis.
+export function isConcluded(ev: HealthEvent): boolean { return ev.status === 'realizado' }
+export function isClosed(ev: HealthEvent): boolean { return ev.status === 'realizado' || ev.status === 'cancelado' || ev.status === 'perdido' }
+export function isUpcoming(ev: HealthEvent, refDate: string): boolean { return !isClosed(ev) && ev.date >= refDate }
+export function isPast(ev: HealthEvent, refDate: string): boolean { return isConcluded(ev) || ev.date < refDate }
+export function hasActiveReminder(ev: HealthEvent): boolean { return ev.reminderEnabled && !isClosed(ev) }
+export function hasCost(ev: HealthEvent): boolean { return (ev.amountCents ?? 0) > 0 }
+/** Evento não criado manualmente pelo usuário (protocolo, exame, wearable, importação…). */
+export function isDerived(ev: HealthEvent): boolean { return ev.source !== 'manual' && ev.source !== 'agenda_legacy' }
 
-/**
- * PROJEÇÃO do evento de domínio para o input do formatter de notificação.
- * A notificação nunca é origem de informação — só projeta o domínio consolidado.
- */
-export function eventToNotificationInput(ev: HealthEvent): EventNotificationInput {
-  return {
-    typeLabel: EVENT_TYPE_LABELS[ev.type] ?? 'Evento',
-    title: ev.title,
-    dateLabel: formatDateBR(ev.date),
-    timeLabel: formatTimeBR(ev.time),
-    professional: ev.professionalName,
-    establishment: ev.establishment,
-    location: ev.location,
-    modality: ev.modality,
-    preparation: ev.preparation,
-  }
-}
+// Guardrails (fundadora): `completed_at` é só MARCADOR; a regra de negócio do
+// "realizado" (alimentar Histórico, gerar gasto, atualizar indicadores) vive numa
+// CAMADA DE SERVIÇO — nunca em trigger nem em projeção. Mudanças de status serão
+// auditáveis no futuro (tabela aditiva); este modelo não precluí isso.
