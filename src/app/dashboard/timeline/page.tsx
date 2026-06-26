@@ -6,18 +6,17 @@
 // criar / editar / excluir e anexo opcional.
 // Ver docs/estrategia/SINTERA-VALUE-PROPOSITION-NORTH-STAR.md.
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   Clock, Plus, X, Stethoscope, Syringe, Activity, FlaskConical, CalendarDays,
   Loader2, Pencil, Trash2, Paperclip, Bell, Info, Sparkles, Pill, Receipt, FileText, Dumbbell, Dna, CheckCircle2,
 } from 'lucide-react'
 import Link from 'next/link'
-import VoiceInput from '@/components/VoiceInput'
-import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
-import AgendarModal, { type EventType as AgendaType } from '@/components/AgendarModal'
+import AgendarModal, { type EventType as AgendaType, type AgendaEventInput } from '@/components/AgendarModal'
+import { useEventForm, eventToInput } from '@/components/eventForm'
+import { rowToHealthEvent, type HealthEvent, type HealthEventRow } from '@/lib/agenda'
 import HistoricoTabs from '@/components/HistoricoTabs'
 import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
 
@@ -68,22 +67,9 @@ const PROF_LABEL: Record<string, string> = {
 const toAgendaType = (t: EventType): AgendaType =>
   t === 'consulta' ? 'consulta' : t === 'exame' ? 'exame' : 'outro'
 
-const MAX_BYTES = 10 * 1024 * 1024
-const ACCEPTED = ['application/pdf', 'image/jpeg', 'image/png']
-
 function fmt(date: string): string {
   const d = new Date(date.length <= 10 ? `${date}T00:00:00` : date)
   return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
-}
-
-// "150,00" | "R$ 1.500,00" | "150.5" → centavos. Vazio/inválido → null.
-function parseAmountToCents(s: string): number | null {
-  let t = s.trim().replace(/[R$\s]/g, '')
-  if (!t) return null
-  // Formato BR com vírgula decimal: ponto é separador de milhar.
-  if (t.includes(',')) t = t.replace(/\./g, '').replace(',', '.')
-  const n = parseFloat(t)
-  return isFinite(n) && n >= 0 ? Math.round(n * 100) : null
 }
 
 function fmtBRL(cents: number): string {
@@ -92,18 +78,19 @@ function fmtBRL(cents: number): string {
 
 export default function TimelinePage() {
   const { user } = useUser()
-  const supabase = useRef(createClient() as unknown as SupabaseClient).current
-  const fileRef = useRef<HTMLInputElement>(null)
+  // Caminho ÚNICO de evento: mesmo modal e mesma gravação da Agenda.
+  const { supabase, saveEvent } = useEventForm()
 
   const [items, setItems] = useState<TimelineItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
-  const [saving, setSaving] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
-  const [formError, setFormError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [reminderFor, setReminderFor] = useState<TimelineItem | null>(null)
   const [showOnboard, setShowOnboard] = useState(false)
+
+  // Formulário único de evento (AgendarModal)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editingEvent, setEditingEvent] = useState<HealthEvent | null>(null)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -117,15 +104,6 @@ export default function TimelinePage() {
     setShowOnboard(false)
   }
 
-  // Formulário (criar/editar)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [evType, setEvType] = useState<EventType>('consulta')
-  const [evTitle, setEvTitle] = useState('')
-  const [evDate, setEvDate] = useState('')
-  const [evNotes, setEvNotes] = useState('')
-  const [evAmount, setEvAmount] = useState('')
-  const [evProfKind, setEvProfKind] = useState('')
-  const [evFile, setEvFile] = useState<File | null>(null)
 
   const load = useCallback(async () => {
     if (!user) return
@@ -191,68 +169,21 @@ export default function TimelinePage() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load() }, [load])
 
-  function resetForm() {
-    setEditingId(null); setEvType('consulta'); setEvTitle(''); setEvDate('')
-    setEvNotes(''); setEvAmount(''); setEvProfKind(''); setEvFile(null); setFormError(null)
-    if (fileRef.current) fileRef.current.value = ''
+  function openCreate() { setEditingEvent(null); setModalOpen(true) }
+  async function openEdit(it: TimelineItem) {
+    if (!it.rawId) return
+    setActionError(null)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any).from('health_events').select('*').eq('id', it.rawId).single()
+    if (error || !data) { setActionError('Não foi possível abrir o evento para edição.'); return }
+    setEditingEvent(rowToHealthEvent(data as HealthEventRow)); setModalOpen(true)
   }
 
-  function openCreate() { resetForm(); setShowForm(true) }
-  function openEdit(it: TimelineItem) {
-    setEditingId(it.rawId ?? null)
-    setEvType(it.eventType); setEvTitle(it.title); setEvDate(it.date.slice(0, 10))
-    setEvNotes(it.subtitle ?? ''); setEvFile(null); setFormError(null)
-    setEvAmount(it.amountCents != null ? (it.amountCents / 100).toFixed(2).replace('.', ',') : '')
-    setEvProfKind(it.profKind ?? '')
-    setShowForm(true)
-  }
-
-  async function uploadAttachment(file: File): Promise<string | null> {
-    if (!user) return null
-    if (!ACCEPTED.includes(file.type)) { setFormError('Anexo deve ser PDF, JPG ou PNG.'); throw new Error('mime') }
-    if (file.size > MAX_BYTES) { setFormError('Anexo muito grande (máx. 10 MB).'); throw new Error('size') }
-    const ext = file.name.split('.').pop() ?? 'bin'
-    // Mesma pasta da usuária dos exames → coberto pela RLS e pela exclusão de conta (LGPD).
-    const path = `${user.id}/${crypto.randomUUID()}.${ext}`
-    const { error } = await supabase.storage.from('exams').upload(path, file, { contentType: file.type, upsert: false })
-    if (error) { setFormError(`Falha no anexo: ${error.message}`); throw error }
-    const { data } = await supabase.storage.from('exams').createSignedUrl(path, 60 * 60 * 24 * 365)
-    return data?.signedUrl ?? null
-  }
-
-  async function save() {
-    if (!user || saving || !evTitle.trim() || !evDate) return
-    setSaving(true); setFormError(null)
-    try {
-      let attachmentUrl: string | null | undefined = undefined
-      if (evFile) attachmentUrl = await uploadAttachment(evFile)
-
-      if (editingId) {
-        const patch: Record<string, unknown> = {
-          event_type: evType, title: evTitle.trim(), event_date: evDate,
-          notes: evNotes.trim() || null, amount_cents: parseAmountToCents(evAmount),
-          professional_kind: evType === 'consulta' ? (evProfKind || null) : null,
-        }
-        if (attachmentUrl !== undefined) patch.attachment_url = attachmentUrl
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error } = await (supabase as any).from('health_events').update(patch).eq('id', editingId)
-        if (error) { setFormError(error.message); return }
-      } else {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error } = await (supabase as any).from('health_events').insert({
-          user_id: user.id, event_type: evType, title: evTitle.trim(), event_date: evDate,
-          notes: evNotes.trim() || null, source: 'autorrelato', confidence: 'baixa',
-          attachment_url: attachmentUrl ?? null, amount_cents: parseAmountToCents(evAmount),
-          professional_kind: evType === 'consulta' ? (evProfKind || null) : null,
-        })
-        if (error) { setFormError(error.message); return }
-      }
-      resetForm(); setShowForm(false); await load()
-    } catch {
-      // erro de anexo já reportado em formError
-    } finally {
-      setSaving(false)
-    }
+  // Salva via o MESMO caminho da Agenda (hook). Erros sobem para o modal (visíveis).
+  async function handleSave(input: AgendaEventInput) {
+    if (!user) return
+    await saveEvent(user.id, input, editingEvent)
+    setModalOpen(false); setEditingEvent(null); await load()
   }
 
   async function remove(rawId: string, label: string) {
@@ -388,10 +319,9 @@ export default function TimelinePage() {
             </Link>
           </div>
         </div>
-        <button onClick={() => (showForm ? (resetForm(), setShowForm(false)) : openCreate())}
+        <button onClick={openCreate}
           className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0">
-          {showForm ? <X size={15} /> : <Plus size={15} />}
-          {showForm ? 'Fechar' : 'Adicionar evento'}
+          <Plus size={15} /> Adicionar evento
         </button>
       </motion.div>
 
@@ -419,86 +349,6 @@ export default function TimelinePage() {
           </div>
           <button onClick={dismissOnboard} aria-label="Dispensar"
             className="text-mauve/50 hover:text-onyx transition-colors flex-shrink-0"><X size={14} /></button>
-        </motion.div>
-      )}
-
-      {showForm && (
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-          className="card-premium p-5 space-y-3">
-          <p className="font-body text-sm font-semibold text-onyx">{editingId ? 'Editar evento' : 'Novo evento'}</p>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="font-body text-xs text-mauve/70 block mb-1">Tipo</label>
-              <select value={evType} onChange={e => setEvType(e.target.value as EventType)}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
-                <option value="consulta">Consulta</option>
-                <option value="vacina">Vacina</option>
-                <option value="procedimento">Procedimento</option>
-                <option value="estetico">Procedimento estético</option>
-                <option value="medicamento">Medicamento</option>
-                <option value="atividade">Atividade física</option>
-                <option value="outro">Outro</option>
-              </select>
-            </div>
-            <div>
-              <label className="font-body text-xs text-mauve/70 block mb-1">Data</label>
-              <input type="date" value={evDate} onChange={e => setEvDate(e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
-            </div>
-          </div>
-          {evType === 'consulta' && (
-            <div>
-              <label className="font-body text-xs text-mauve/70 block mb-1">Profissional (opcional)</label>
-              <select value={evProfKind} onChange={e => setEvProfKind(e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
-                <option value="">—</option>
-                <option value="medico">Médico(a)</option>
-                <option value="psicologo">Psicólogo(a)</option>
-                <option value="nutricionista">Nutricionista</option>
-                <option value="fisioterapeuta">Fisioterapeuta</option>
-                <option value="dentista">Dentista</option>
-                <option value="outro">Outro profissional</option>
-              </select>
-            </div>
-          )}
-          <div>
-            <label className="font-body text-xs text-mauve/70 block mb-1">Título</label>
-            <div className="flex items-center gap-2">
-              <input type="text" value={evTitle} onChange={e => setEvTitle(e.target.value)}
-                placeholder="Ex.: Consulta ginecologista, Vacina HPV…"
-                className="flex-1 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
-              <VoiceInput onResult={t => setEvTitle(v => (v ? v + ' ' : '') + t)} />
-            </div>
-          </div>
-          <div>
-            <label className="font-body text-xs text-mauve/70 block mb-1">Observações (opcional)</label>
-            <div className="flex items-start gap-2">
-              <textarea value={evNotes} onChange={e => setEvNotes(e.target.value)} rows={2}
-                className="flex-1 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
-              <VoiceInput onResult={t => setEvNotes(v => (v ? v + ' ' : '') + t)} />
-            </div>
-          </div>
-          <div>
-            <label className="font-body text-xs text-mauve/70 block mb-1">Valor pago — R$ (opcional)</label>
-            <input type="text" inputMode="decimal" value={evAmount} onChange={e => setEvAmount(e.target.value)}
-              placeholder="Ex.: 250,00 — se foi particular"
-              className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
-            <p className="font-body text-[10px] text-mauve/50 mt-1">Para organizar seus gastos com saúde. Anexe a nota fiscal abaixo.</p>
-          </div>
-          <div>
-            <label className="font-body text-xs text-mauve/70 block mb-1">Nota fiscal / comprovante / anexo (opcional — PDF/JPG/PNG)</label>
-            <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png"
-              onChange={e => setEvFile(e.target.files?.[0] ?? null)}
-              className="block w-full text-xs font-body text-mauve file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:bg-blush file:text-petal file:font-medium" />
-          </div>
-          {formError && <p className="font-body text-xs text-red-500">{formError}</p>}
-          <div className="flex items-center justify-between">
-            <p className="font-body text-[11px] text-mauve/50">Registro manual entra como autorrelato.</p>
-            <button onClick={save} disabled={saving || !evTitle.trim() || !evDate}
-              className="px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium disabled:opacity-40 hover:opacity-90 transition-opacity">
-              {saving ? 'Salvando…' : editingId ? 'Atualizar' : 'Salvar'}
-            </button>
-          </div>
         </motion.div>
       )}
 
@@ -546,7 +396,15 @@ export default function TimelinePage() {
         Organização factual do seu Histórico de Saúde. Não constitui diagnóstico nem avaliação clínica.
       </p>
 
-      {/* Lembrete no calendário para evento futuro */}
+      {/* Formulário ÚNICO de evento (criar/editar) — o MESMO da Agenda */}
+      <AgendarModal
+        open={modalOpen}
+        onClose={() => { setModalOpen(false); setEditingEvent(null) }}
+        onSave={handleSave}
+        initialEvent={editingEvent ? eventToInput(editingEvent) : undefined}
+      />
+
+      {/* Lembrete no calendário para evento futuro (somente exportação) */}
       <AgendarModal
         open={!!reminderFor}
         onClose={() => setReminderFor(null)}

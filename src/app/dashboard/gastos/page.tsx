@@ -5,13 +5,13 @@
 // nunca o banco. Agrupa por ano, com comprovantes para download. Não é orientação
 // tributária — apenas organiza.
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Loader2, Paperclip, Receipt, ArrowLeft, Info } from 'lucide-react'
-import type { SupabaseClient } from '@supabase/supabase-js'
-import { createClient } from '@/lib/supabase/client'
+import { Loader2, Paperclip, Receipt, ArrowLeft, Info, Plus, X } from 'lucide-react'
 import { useUser } from '@/context/UserContext'
-import { eventServicesFor, typeLabel, formatDateBR, type HealthEvent } from '@/lib/agenda'
+import { typeLabel, formatDateBR, type HealthEvent } from '@/lib/agenda'
+import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
+import { useEventForm } from '@/components/eventForm'
 
 function fmtBRL(cents: number): string {
   return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -19,11 +19,13 @@ function fmtBRL(cents: number): string {
 
 export default function GastosPage() {
   const { user, loading: authLoading } = useUser()
-  const [supabase] = useState(() => createClient() as unknown as SupabaseClient)
-  const services = useMemo(() => eventServicesFor(supabase), [supabase])
+  const { services, saveEvent } = useEventForm()
   const [items, setItems] = useState<HealthEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [year, setYear] = useState<number | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
+  const [showAddInfo, setShowAddInfo] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
 
   useEffect(() => {
     if (authLoading) return
@@ -39,7 +41,13 @@ export default function GastosPage() {
       setLoading(false)
     })()
     return () => { active = false }
-  }, [authLoading, user, services])
+  }, [authLoading, user, services, reloadKey])
+
+  async function handleSave(input: AgendaEventInput) {
+    if (!user) return
+    await saveEvent(user.id, input, null)
+    setModalOpen(false); setShowAddInfo(false); setReloadKey(k => k + 1)
+  }
 
   const years = [...new Set(items.map(r => Number(r.date.slice(0, 4))))].sort((a, b) => b - a)
   const ofYear = items.filter(r => Number(r.date.slice(0, 4)) === year)
@@ -51,16 +59,38 @@ export default function GastosPage() {
         <ArrowLeft size={15} /> Painel Inicial
       </Link>
 
-      <div>
-        <div className="inline-flex items-center gap-1.5 text-petal mb-2">
-          <Receipt size={16} />
-          <span className="font-body text-xs font-medium uppercase tracking-wider">Gastos com Saúde</span>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <div className="inline-flex items-center gap-1.5 text-petal mb-2">
+            <Receipt size={16} />
+            <span className="font-body text-xs font-medium uppercase tracking-wider">Gastos com Saúde</span>
+          </div>
+          <h1 className="font-display text-2xl font-semibold text-onyx">Gastos com Saúde</h1>
+          <p className="font-body text-sm text-mauve mt-1 leading-relaxed">
+            Os valores dos eventos que você <strong>concluiu</strong> na Agenda, com os comprovantes para baixar.
+          </p>
         </div>
-        <h1 className="font-display text-2xl font-semibold text-onyx">Gastos com Saúde</h1>
-        <p className="font-body text-sm text-mauve mt-1 leading-relaxed">
-          Os valores dos eventos que você <strong>concluiu</strong> na Agenda, com os comprovantes para baixar.
-        </p>
+        <button onClick={() => setShowAddInfo(v => !v)}
+          className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0">
+          <Plus size={15} /> Adicionar gasto
+        </button>
       </div>
+
+      {showAddInfo && (
+        <div className="card-premium p-5 flex items-start gap-3 border border-petal/20 bg-blush/15">
+          <Info size={17} className="text-petal flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="font-body text-sm text-onyx leading-relaxed">
+              Os gastos são registrados através dos seus <strong>eventos de saúde</strong> — assim existe uma única origem para os dados.
+            </p>
+            <button onClick={() => setModalOpen(true)}
+              className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity">
+              <Plus size={15} /> Adicionar evento
+            </button>
+          </div>
+          <button onClick={() => setShowAddInfo(false)} aria-label="Fechar" className="text-mauve/40 hover:text-onyx transition-colors flex-shrink-0"><X size={15} /></button>
+        </div>
+      )}
 
       <div className="rounded-2xl border border-border bg-ivory px-4 py-3 flex items-start gap-2.5">
         <Info size={15} className="text-mauve/50 flex-shrink-0 mt-0.5" />
@@ -120,6 +150,13 @@ export default function GastosPage() {
           </div>
         </>
       )}
+
+      {/* Formulário ÚNICO de evento — mesma origem da Agenda e do Histórico */}
+      <AgendarModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSave={handleSave}
+      />
     </div>
   )
 }
