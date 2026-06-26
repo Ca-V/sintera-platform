@@ -217,8 +217,12 @@ export default function TimelinePage() {
   }
 
   const today = new Date().toISOString().slice(0, 10)
-  const upcoming = items.filter(it => it.date.slice(0, 10) >= today).slice().reverse() // mais próximo primeiro
-  const past = items.filter(it => it.date.slice(0, 10) < today)
+  // Histórico = SÓ o que já aconteceu. Eventos futuros ainda planejados vivem na Agenda
+  // (regra definitiva: Agenda = futuro · Histórico = passado). Exames/ômica e eventos
+  // realizados/cancelados aparecem; um evento futuro ainda "planejado" não.
+  const isFuturePlanned = (it: TimelineItem) =>
+    it.kind === 'event' && it.date.slice(0, 10) >= today && it.status !== 'realizado' && it.status !== 'cancelado'
+  const history = items.filter(it => !isFuturePlanned(it)) // já ordenado: mais recente primeiro
 
   const renderItem = (it: TimelineItem, i: number) => {
     const meta = TYPE_META[it.eventType] ?? TYPE_META.outro
@@ -342,9 +346,9 @@ export default function TimelinePage() {
           <Info size={16} className="text-petal flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="font-body text-xs text-onyx leading-relaxed">
-              Este é o seu <strong>Histórico</strong>: exames entram automaticamente, e você
-              pode registrar consultas, vacinas e procedimentos. Eventos futuros aparecem em
-              <strong> Próximos</strong> e podem virar lembrete no seu calendário (🔔).
+              Este é o seu <strong>Histórico</strong>: tudo o que já aconteceu — exames entram
+              automaticamente, e você registra consultas, vacinas e procedimentos. O que ainda
+              vai acontecer fica na <strong>Agenda</strong>; quando é concluído, vem para cá.
             </p>
           </div>
           <button onClick={dismissOnboard} aria-label="Dispensar"
@@ -356,7 +360,7 @@ export default function TimelinePage() {
         <div className="card-premium p-10 text-center flex items-center justify-center">
           <Loader2 size={24} className="animate-spin text-petal" />
         </div>
-      ) : items.length === 0 ? (
+      ) : history.length === 0 ? (
         <div className="card-premium p-10 text-center">
           <div className="w-14 h-14 rounded-2xl gradient-sintera-soft flex items-center justify-center mx-auto mb-4">
             <Clock size={26} className="text-petal" />
@@ -368,27 +372,9 @@ export default function TimelinePage() {
           </p>
         </div>
       ) : (
-        <div className="space-y-6">
-          {upcoming.length > 0 && (
-            <div>
-              <p className="font-body text-xs font-semibold text-mauve/70 uppercase tracking-wider mb-3">Próximos</p>
-              <div className="relative pl-6">
-                <div className="absolute left-[7px] top-2 bottom-2 w-px bg-petal/30" />
-                <div className="space-y-4">{upcoming.map(renderItem)}</div>
-              </div>
-            </div>
-          )}
-          {past.length > 0 && (
-            <div>
-              {upcoming.length > 0 && (
-                <p className="font-body text-xs font-semibold text-mauve/70 uppercase tracking-wider mb-3">Histórico</p>
-              )}
-              <div className="relative pl-6">
-                <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border/60" />
-                <div className="space-y-4">{past.map(renderItem)}</div>
-              </div>
-            </div>
-          )}
+        <div className="relative pl-6">
+          <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border/60" />
+          <div className="space-y-4">{history.map(renderItem)}</div>
         </div>
       )}
 
