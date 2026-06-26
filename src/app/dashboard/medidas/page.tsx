@@ -96,6 +96,9 @@ export default function MedidasPage() {
     setLoading(false)
   }, [user, supabase])
 
+  // Carrega na montagem (e após mutações); o setLoading(true) síncrono — o spinner —
+  // é intencional.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { if (!authLoading) load() }, [authLoading, load])
 
   function chooseMetric(m: Metric) { setMetric(m); setUnit(DEFAULT_UNIT[m]) }
@@ -185,7 +188,7 @@ export default function MedidasPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
       <Link href="/dashboard/saude" className="inline-flex items-center gap-1.5 font-body text-sm text-mauve hover:text-petal transition-colors">
-        <ArrowLeft size={15} /> Indicadores de Saúde
+        <ArrowLeft size={15} /> Histórico de Saúde
       </Link>
 
       <div className="flex flex-wrap gap-2">
@@ -198,7 +201,7 @@ export default function MedidasPage() {
         <div>
           <div className="inline-flex items-center gap-1.5 text-petal mb-2">
             <Activity size={16} />
-            <span className="font-body text-xs font-medium uppercase tracking-wider">Indicadores de Saúde</span>
+            <span className="font-body text-xs font-medium uppercase tracking-wider">Histórico de Saúde</span>
           </div>
           <h1 className="font-display text-2xl font-semibold text-onyx">Medidas</h1>
           <p className="font-body text-sm text-mauve mt-1">Acompanhe peso, altura, circunferência e composição corporal (bioimpedância) ao longo do tempo. Registro seu — sem juízo clínico.</p>

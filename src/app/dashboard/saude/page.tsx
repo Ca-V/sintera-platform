@@ -14,6 +14,7 @@ import { Activity, TrendingUp, TrendingDown, Minus, ArrowRight, Search, Loader2,
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
+import HistoricoTabs from '@/components/HistoricoTabs'
 import { summarizeBiomarkers, computeReferenceIndex, type BiomarkerRow, type BiomarkerSummary, type Trend } from '@/lib/biomarkers/grouping'
 
 const INTERP_CFG: Record<string, { sym: string; cls: string }> = {
@@ -81,6 +82,9 @@ export default function IndicadoresPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-5">
+      {/* Módulo Histórico de Saúde — visão Evolução */}
+      <HistoricoTabs active="evolucao" />
+
       {/* Cabeçalho */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="card-premium p-6">
         <div className="flex items-start gap-4">
@@ -88,14 +92,13 @@ export default function IndicadoresPage() {
             <Activity size={22} className="text-petal" />
           </div>
           <div>
-            <h1 className="font-display text-xl font-semibold text-onyx">Indicadores de Saúde</h1>
+            <h1 className="font-display text-xl font-semibold text-onyx">Histórico de Saúde — Evolução</h1>
             <p className="font-body text-sm text-mauve mt-0.5">
               Seus biomarcadores ao longo do tempo — clique para ver a evolução. Sem diagnóstico.
             </p>
           </div>
         </div>
         <div className="flex flex-wrap gap-2 mt-4">
-          <span className="px-3.5 py-1.5 rounded-full gradient-sintera text-white font-body text-sm font-medium">Indicadores</span>
           <Link href="/dashboard/medidas" className="px-3.5 py-1.5 rounded-full bg-ivory border border-border text-mauve font-body text-sm hover:border-petal/40 transition-colors">Medidas</Link>
           <Link href="/dashboard/sinais-vitais" className="px-3.5 py-1.5 rounded-full bg-ivory border border-border text-mauve font-body text-sm hover:border-petal/40 transition-colors">Sinais vitais</Link>
         </div>
@@ -189,7 +192,7 @@ export default function IndicadoresPage() {
           </motion.div>
 
           <p className="font-body text-xs text-mauve/40 text-center pb-4">
-            A linha do tempo dos seus exames e documentos fica em <Link href="/dashboard/timeline" className="text-petal hover:underline">Histórico de Saúde</Link>.
+            A <Link href="/dashboard/timeline" className="text-petal hover:underline">Linha do Tempo</Link> reúne seus exames, consultas e eventos.
             Esta visão organiza os dados dos laudos; não substitui avaliação profissional nem constitui diagnóstico (RDC 657/2022).
           </p>
         </>

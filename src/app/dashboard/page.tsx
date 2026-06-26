@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
-  FileText, Activity, Clock, Pill, ScrollText, CalendarDays, Droplet,
+  FileText, Clock, Pill, ScrollText, CalendarDays, Droplet,
   Upload, CheckCircle, AlertCircle, FlaskConical, Bell, ChevronRight,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -40,10 +40,9 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
 // Acesso rápido — usa exatamente a nomenclatura do menu lateral esquerdo.
 const QUICK_ACCESS: { href: string; icon: React.ElementType; label: string; desc: string; tile: string; tint: string }[] = [
   { href: '/dashboard/exams',        icon: FileText,    label: 'Exames e Documentos',       desc: 'Laudos e arquivos',              tile: 'bg-blush',          tint: 'text-petal' },
-  { href: '/dashboard/saude',        icon: Activity,    label: 'Indicadores de Saúde',      desc: 'Valores atuais dos exames',      tile: 'bg-lavender-light', tint: 'text-lavender' },
   { href: '/dashboard/timeline',     icon: Clock,       label: 'Histórico de Saúde',        desc: 'Linha do tempo e evolução',      tile: 'bg-sage-light',     tint: 'text-sage' },
   { href: '/dashboard/agenda',       icon: CalendarDays,label: 'Agenda',                   desc: 'Eventos e lembretes',            tile: 'bg-warm',           tint: 'text-gold' },
-  { href: '/dashboard/medicamentos', icon: Pill,        label: 'Medicamentos e Suplementos',desc: 'Em uso e recompra',              tile: 'bg-sage-light',     tint: 'text-sage' },
+  { href: '/dashboard/medicamentos', icon: Pill,        label: 'Medicamentos, Suplementos, Produtos e Dispositivos', desc: 'Em uso, recompra e dispositivos', tile: 'bg-sage-light',     tint: 'text-sage' },
   { href: '/dashboard/ciclo',        icon: Droplet,     label: 'Ciclo e Contracepção',      desc: 'Menstruação e troca de método',  tile: 'bg-blush',          tint: 'text-petal' },
   { href: '/dashboard/relatorio',    icon: ScrollText,  label: 'Relatórios',                desc: 'Compartilhar com profissionais', tile: 'bg-lavender-light', tint: 'text-lavender' },
 ]

@@ -18,6 +18,7 @@ import VoiceInput from '@/components/VoiceInput'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import AgendarModal, { type EventType as AgendaType } from '@/components/AgendarModal'
+import HistoricoTabs from '@/components/HistoricoTabs'
 import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
 
 type EventType = 'consulta' | 'vacina' | 'procedimento' | 'estetico' | 'medicamento' | 'atividade' | 'exame' | 'omica' | 'outro'
@@ -97,6 +98,8 @@ export default function TimelinePage() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // Lê preferência do onboarding uma vez na montagem (acesso a localStorage).
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowOnboard(localStorage.getItem('sintera_journey_onboarded') !== '1')
     }
   }, [])
@@ -174,6 +177,8 @@ export default function TimelinePage() {
     setLoading(false)
   }, [user, supabase])
 
+  // Carrega na montagem (e após mutações); o setLoading(true) síncrono é intencional.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load() }, [load])
 
   function resetForm() {
@@ -350,11 +355,8 @@ export default function TimelinePage() {
         </button>
       </motion.div>
 
-      {/* Abas do acompanhamento longitudinal: Linha do tempo (esta) · Evolução (biomarcadores) */}
-      <div className="flex flex-wrap gap-2">
-        <span className="px-3.5 py-1.5 rounded-full gradient-sintera text-white font-body text-sm font-medium">Linha do tempo</span>
-        <Link href="/dashboard/historico" className="px-3.5 py-1.5 rounded-full bg-ivory border border-border text-mauve font-body text-sm hover:border-petal/40 transition-colors">Evolução dos indicadores</Link>
-      </div>
+      {/* Duas visões do mesmo registro longitudinal: Linha do Tempo (esta) · Evolução */}
+      <HistoricoTabs active="linha" />
 
       {/* Onboarding dispensável */}
       {showOnboard && (
