@@ -11,7 +11,7 @@ import { motion } from 'framer-motion'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   Clock, Plus, X, Stethoscope, Syringe, Activity, FlaskConical, CalendarDays,
-  Loader2, Pencil, Trash2, Paperclip, Bell, Info, Sparkles, Pill, Receipt, FileText, Dumbbell, Dna,
+  Loader2, Pencil, Trash2, Paperclip, Bell, Info, Sparkles, Pill, Receipt, FileText, Dumbbell, Dna, CheckCircle2,
 } from 'lucide-react'
 import Link from 'next/link'
 import VoiceInput from '@/components/VoiceInput'
@@ -36,6 +36,7 @@ interface TimelineItem {
   attachmentUrl?: string | null
   amountCents?: number | null
   profKind?: string | null
+  status?: string           // status do health_event (só kind 'event')
   href?: string             // link para o painel (ômica)
 }
 
@@ -100,6 +101,7 @@ export default function TimelinePage() {
   const [saving, setSaving] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
   const [reminderFor, setReminderFor] = useState<TimelineItem | null>(null)
   const [showOnboard, setShowOnboard] = useState(false)
 
@@ -134,7 +136,7 @@ export default function TimelinePage() {
         .eq('user_id', user.id),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (supabase as any).from('health_events')
-        .select('id, event_type, title, event_date, notes, source, confidence, attachment_url, amount_cents, professional_kind, synthetic')
+        .select('id, event_type, title, event_date, notes, source, confidence, attachment_url, amount_cents, professional_kind, synthetic, status')
         .eq('user_id', user.id)
         .eq('synthetic', false),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -165,6 +167,7 @@ export default function TimelinePage() {
         attachmentUrl: (ev.attachment_url as string) ?? null,
         amountCents: (ev.amount_cents as number) ?? null,
         profKind: (ev.professional_kind as string) ?? null,
+        status: (ev.status as string) ?? 'planejado',
       })
     }
     for (const p of (omicsRes.data ?? []) as Array<Record<string, unknown>>) {
@@ -255,11 +258,28 @@ export default function TimelinePage() {
   async function remove(rawId: string, label: string) {
     if (busyId) return
     if (!window.confirm(`Excluir "${label}" do seu Histórico de Saúde?`)) return
-    setBusyId(rawId)
+    setBusyId(rawId); setActionError(null)
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await (supabase as any).from('health_events').delete().eq('id', rawId)
-      if (!error) await load()
+      if (error) { setActionError(`Não foi possível excluir: ${error.message}`); return }
+      await load()
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  // Marca um evento do Histórico como Realizado — atualização CIRÚRGICA (só status +
+  // completed_at) p/ preservar os demais campos. Realizado + valor entra em Gastos.
+  async function markRealized(rawId: string) {
+    if (busyId) return
+    setBusyId(rawId); setActionError(null)
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any).from('health_events')
+        .update({ status: 'realizado', completed_at: new Date().toISOString() }).eq('id', rawId)
+      if (error) { setActionError(`Não foi possível concluir: ${error.message}`); return }
+      await load()
     } finally {
       setBusyId(null)
     }
@@ -307,8 +327,21 @@ export default function TimelinePage() {
             </div>
             <div className="flex flex-col items-end gap-1 flex-shrink-0">
               <span className="font-body text-[11px] text-mauve/60">{fmt(it.date)}</span>
+              {it.kind === 'event' && it.status === 'realizado' && (
+                <span className="font-body text-[10px] text-sage">✓ realizado</span>
+              )}
+              {it.kind === 'event' && it.status === 'cancelado' && (
+                <span className="font-body text-[10px] text-mauve/40 line-through">cancelado</span>
+              )}
               {it.kind === 'event' && it.rawId && (
                 <div className="flex items-center gap-1 mt-0.5">
+                  {it.status !== 'realizado' && it.status !== 'cancelado' && (
+                    <button aria-label="Marcar como realizado" title="Marcar como realizado (se tiver valor, entra em Gastos)"
+                      disabled={busyId === it.rawId} onClick={() => markRealized(it.rawId!)}
+                      className="w-6 h-6 rounded-lg hover:bg-sage-light flex items-center justify-center text-mauve/60 hover:text-sage transition-colors disabled:opacity-40">
+                      <CheckCircle2 size={12} />
+                    </button>
+                  )}
                   {isUpcoming && (
                     <button aria-label="Lembrar" title="Adicionar lembrete ao calendário" onClick={() => setReminderFor(it)}
                       className="w-6 h-6 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/60 hover:text-petal transition-colors">
@@ -364,6 +397,13 @@ export default function TimelinePage() {
 
       {/* Duas visões do mesmo registro longitudinal: Linha do Tempo (esta) · Evolução */}
       <HistoricoTabs active="linha" />
+
+      {actionError && (
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+          <p className="font-body text-xs text-red-600">{actionError}</p>
+          <button onClick={() => setActionError(null)} className="text-red-400 hover:text-red-600 transition-colors flex-shrink-0"><X size={14} /></button>
+        </div>
+      )}
 
       {/* Onboarding dispensável */}
       {showOnboard && (
