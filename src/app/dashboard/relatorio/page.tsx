@@ -16,11 +16,7 @@ import { Loader2, Printer, ArrowLeft, FileText, Share2, Copy, Trash2, Check } fr
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
-
-const TYPE_LABEL: Record<string, string> = {
-  consulta: 'Consulta', vacina: 'Vacina', procedimento: 'Procedimento',
-  estetico: 'Procedimento estético', medicamento: 'Medicamento', exame: 'Exame', outro: 'Evento',
-}
+import { typeLabel } from '@/lib/agenda' // fonte ÚNICA de rótulos de tipo de evento
 
 interface Med { name: string; kind: string; dose: string | null; frequency: string | null; startedOn: string | null; untilOn: string | null; status: string }
 interface Ev { title: string; eventType: string; prof: string | null; date: string; notes: string | null }
@@ -177,6 +173,7 @@ export default function RelatorioPage() {
     setCopied(token); setTimeout(() => setCopied(null), 1800)
   }
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { if (!authLoading) load() }, [authLoading, load])
 
   const nome = (profile as { name?: string } | null)?.name ?? user?.email ?? '—'
@@ -375,7 +372,7 @@ export default function RelatorioPage() {
                   <tr key={i} className="border-b border-border/50">
                     <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(e.date)}</td>
                     <td className="font-body text-sm text-onyx py-1.5">
-                      <span className="text-mauve/70">{TYPE_LABEL[e.eventType] ?? 'Evento'}{e.prof && PROF_LABEL[e.prof] ? ` (${PROF_LABEL[e.prof]})` : ''}:</span> {e.title}
+                      <span className="text-mauve/70">{typeLabel(e.eventType)}{e.prof && PROF_LABEL[e.prof] ? ` (${PROF_LABEL[e.prof]})` : ''}:</span> {e.title}
                       {e.notes ? <span className="block text-xs text-mauve/60">{e.notes}</span> : null}
                     </td>
                   </tr>

@@ -208,6 +208,7 @@ export default function AgendaPage() {
         onSave={handleSave}
         onGoToHistory={() => router.push('/dashboard/timeline')}
         initialEvent={editingInitial}
+        isEditing={!!editing}
       />
     </div>
   )

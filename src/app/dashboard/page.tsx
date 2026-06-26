@@ -9,7 +9,8 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
-import AgendarModal from '@/components/AgendarModal'
+import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
+import { useEventForm } from '@/components/eventForm'
 
 interface ExamSummary {
   id: string
@@ -52,6 +53,7 @@ export default function DashboardPage() {
   const { user, profile } = useUser()
   const router   = useRouter()
   const supabase = useRef(createClient()).current
+  const { saveEvent } = useEventForm()
 
   const [stats, setStats]         = useState<Stats | null>(null)
   const [recentExams, setRecent]   = useState<ExamSummary[]>([])
@@ -102,6 +104,13 @@ export default function DashboardPage() {
     loadData()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
+
+  // "Agendar" salva na Agenda pelo MESMO caminho dos demais módulos (não só exporta).
+  async function handleAgendarSave(input: AgendaEventInput) {
+    if (!user) return
+    await saveEvent(user.id, input, null)
+    setAgendar(false); await loadData()
+  }
 
   const isEmpty = !loading && stats?.totalExams === 0 && journey.count === 0
 
@@ -281,8 +290,13 @@ export default function DashboardPage() {
         </motion.div>
       )}
 
-      {/* AgendarModal */}
-      <AgendarModal open={agendarOpen} onClose={() => setAgendar(false)} />
+      {/* AgendarModal — salva na Agenda (caminho único) e oferece exportar depois */}
+      <AgendarModal
+        open={agendarOpen}
+        onClose={() => setAgendar(false)}
+        onSave={handleAgendarSave}
+        onGoToHistory={() => router.push('/dashboard/timeline')}
+      />
 
     </div>
   )

@@ -49,6 +49,7 @@ interface AgendarModalProps {
   onSave?: (data: AgendaEventInput) => Promise<void> | void
   onGoToHistory?: () => void   // ação após salvar um evento "Realizado" (vai p/ Histórico)
   initialEvent?: Partial<AgendaEventInput>
+  isEditing?: boolean          // true = editar evento existente; false/omisso = criar (mesmo com prefill)
 }
 
 const RECURRENCE_OPTS: { v: RecurrenceFreq; l: string }[] = [
@@ -78,7 +79,7 @@ function downloadICS(ics: string, filename: string) {
 const FIELD = 'w-full px-3 py-2.5 border border-border rounded-xl font-body text-sm text-onyx placeholder:text-mauve/40 focus:outline-none focus:ring-1 focus:ring-petal/40 transition-colors'
 const LABEL = 'font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider'
 
-export default function AgendarModal({ open, onClose, defaultTitle = '', defaultNotes = '', onSave, onGoToHistory, initialEvent }: AgendarModalProps) {
+export default function AgendarModal({ open, onClose, defaultTitle = '', defaultNotes = '', onSave, onGoToHistory, initialEvent, isEditing = false }: AgendarModalProps) {
   const today = new Date().toISOString().split('T')[0]
 
   const [eventType, setEventType] = useState<EventType>('consulta')
@@ -231,7 +232,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-2xl bg-blush flex items-center justify-center"><CalendarDays size={17} className="text-petal" /></div>
                   <div>
-                    <p className="font-body text-sm font-semibold text-onyx">{initialEvent ? 'Editar evento' : 'Adicionar à agenda'}</p>
+                    <p className="font-body text-sm font-semibold text-onyx">{isEditing ? 'Editar evento' : 'Adicionar à agenda'}</p>
                     <p className="font-body text-xs text-mauve">Registre um compromisso de saúde</p>
                   </div>
                 </div>
@@ -431,7 +432,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                       </label>
                       <button onClick={handleSave} disabled={!canExport || saving}
                         className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl gradient-sintera text-white text-sm font-body font-medium hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
-                        {saving ? <><Loader2 size={15} className="animate-spin" /> Salvando…</> : <><Check size={15} /> {initialEvent ? 'Salvar alterações' : 'Salvar na minha agenda'}</>}
+                        {saving ? <><Loader2 size={15} className="animate-spin" /> Salvando…</> : <><Check size={15} /> {isEditing ? 'Salvar alterações' : 'Salvar na minha agenda'}</>}
                       </button>
                       {saveError && (
                         <p className="font-body text-xs text-red-500 text-center px-2">{saveError}</p>

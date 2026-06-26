@@ -10,11 +10,11 @@ import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   Clock, Plus, X, Stethoscope, Syringe, Activity, FlaskConical, CalendarDays,
-  Loader2, Pencil, Trash2, Paperclip, Bell, Info, Sparkles, Pill, Receipt, FileText, Dumbbell, Dna, CheckCircle2,
+  Loader2, Pencil, Trash2, Paperclip, Info, Sparkles, Pill, Receipt, FileText, Dumbbell, Dna, CheckCircle2,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useUser } from '@/context/UserContext'
-import AgendarModal, { type EventType as AgendaType, type AgendaEventInput } from '@/components/AgendarModal'
+import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm, eventToInput } from '@/components/eventForm'
 import { rowToHealthEvent, type HealthEvent, type HealthEventRow } from '@/lib/agenda'
 import HistoricoTabs from '@/components/HistoricoTabs'
@@ -63,10 +63,6 @@ const PROF_LABEL: Record<string, string> = {
   fisioterapeuta: 'Fisioterapeuta', dentista: 'Dentista', outro: 'Outro profissional',
 }
 
-// Mapeia o tipo da jornada para o tipo aceito pelo AgendarModal.
-const toAgendaType = (t: EventType): AgendaType =>
-  t === 'consulta' ? 'consulta' : t === 'exame' ? 'exame' : 'outro'
-
 function fmt(date: string): string {
   const d = new Date(date.length <= 10 ? `${date}T00:00:00` : date)
   return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -85,7 +81,6 @@ export default function TimelinePage() {
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
-  const [reminderFor, setReminderFor] = useState<TimelineItem | null>(null)
   const [showOnboard, setShowOnboard] = useState(false)
 
   // Formulário único de evento (AgendarModal)
@@ -226,7 +221,6 @@ export default function TimelinePage() {
 
   const renderItem = (it: TimelineItem, i: number) => {
     const meta = TYPE_META[it.eventType] ?? TYPE_META.outro
-    const isUpcoming = it.date.slice(0, 10) >= today
     return (
       <motion.div key={it.id}
         initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
@@ -275,12 +269,6 @@ export default function TimelinePage() {
                       disabled={busyId === it.rawId} onClick={() => markRealized(it.rawId!)}
                       className="w-6 h-6 rounded-lg hover:bg-sage-light flex items-center justify-center text-mauve/60 hover:text-sage transition-colors disabled:opacity-40">
                       <CheckCircle2 size={12} />
-                    </button>
-                  )}
-                  {isUpcoming && (
-                    <button aria-label="Lembrar" title="Adicionar lembrete ao calendário" onClick={() => setReminderFor(it)}
-                      className="w-6 h-6 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/60 hover:text-petal transition-colors">
-                      <Bell size={12} />
                     </button>
                   )}
                   <button aria-label="Editar" onClick={() => openEdit(it)}
@@ -388,18 +376,7 @@ export default function TimelinePage() {
         onClose={() => { setModalOpen(false); setEditingEvent(null) }}
         onSave={handleSave}
         initialEvent={editingEvent ? eventToInput(editingEvent) : undefined}
-      />
-
-      {/* Lembrete no calendário para evento futuro (somente exportação) */}
-      <AgendarModal
-        open={!!reminderFor}
-        onClose={() => setReminderFor(null)}
-        defaultTitle={reminderFor?.title ?? ''}
-        initialEvent={reminderFor ? {
-          eventType: toAgendaType(reminderFor.eventType),
-          title: reminderFor.title,
-          date: reminderFor.date.slice(0, 10),
-        } : undefined}
+        isEditing={!!editingEvent}
       />
     </div>
   )

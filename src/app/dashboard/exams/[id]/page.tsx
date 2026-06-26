@@ -13,7 +13,8 @@ import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import { compareNames } from '@/lib/exams/nameMatch'
 import FeedbackModal from '@/components/FeedbackModal'
-import AgendarModal from '@/components/AgendarModal'
+import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
+import { useEventForm } from '@/components/eventForm'
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -163,7 +164,8 @@ function formatDate(iso: string) {
 export default function ExamDetailPage() {
   const params  = useParams()
   const router  = useRouter()
-  const { profile } = useUser()
+  const { user, profile } = useUser()
+  const { saveEvent } = useEventForm()
   const examId  = params.id as string
   const supabase = useRef(createClient()).current
   // P1 — guarda de disparo único da auto-análise (cobre Strict Mode / re-render)
@@ -824,12 +826,19 @@ export default function ExamDetailPage() {
       {/* FeedbackModal P2 — aparece após 1ª análise no Beta */}
       <FeedbackModal />
 
-      {/* AgendarModal */}
+      {/* AgendarModal — salva na Agenda (caminho único); "Repetir exame" cria evento de exame */}
       <AgendarModal
         open={agendarOpen}
         onClose={() => setAgendarOpen(false)}
+        onSave={async (input: AgendaEventInput) => {
+          if (!user) return
+          await saveEvent(user.id, input, null)
+          setAgendarOpen(false)
+        }}
+        onGoToHistory={() => router.push('/dashboard/timeline')}
         defaultTitle={exam?.type ? `Repetir ${exam.type}` : ''}
         defaultNotes={`Referente ao exame: ${exam?.type ?? ''}`}
+        initialEvent={{ eventType: 'exame' }}
       />
 
       {/* Excluir exame — ação destrutiva */}
