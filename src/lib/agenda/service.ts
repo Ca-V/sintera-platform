@@ -95,11 +95,17 @@ export function createEventCommandService(repo: EventRepository, bus: EventBus, 
 
   return {
     async create(userId, draft) {
-      // Regra de negócio (camada de serviço, não UI): nascer "realizado" carimba
-      // completed_at — assim o evento já entra no Histórico e em Gastos (se tiver valor).
-      const d: EventDraft = (draft.status === 'realizado' && !draft.completedAt)
-        ? { ...draft, completedAt: clock.now() }
+      // A recorrência pertence à SÉRIE: todo evento recorrente nasce com `series_id`
+      // (mesmo sendo a 1ª ocorrência). O roll-forward só MATERIALIZA as próximas
+      // ocorrências da MESMA série — não é a definição da recorrência.
+      const rule = parseRule(draft.recurrenceRule ?? null)
+      const s: EventDraft = (rule.frequency !== 'none' && !draft.seriesId)
+        ? { ...draft, seriesId: newId() }
         : draft
+      // Regra de negócio: nascer "realizado" carimba completed_at (entra no Histórico/Gastos).
+      const d: EventDraft = (s.status === 'realizado' && !s.completedAt)
+        ? { ...s, completedAt: clock.now() }
+        : s
       await repo.save(userId, d)
       await emit('EventCreated', userId, d as HealthEvent)
       // Se nasceu recorrente E já realizado, deixa a próxima ocorrência planejada.
