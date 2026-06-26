@@ -32,6 +32,9 @@ export interface HealthEvent {
   status: EventStatus
   date: string                 // 'YYYY-MM-DD'
   time: string | null          // 'HH:MM' | 'HH:MM:SS'
+  durationMin: number | null
+  reminderEnabled: boolean
+  reminderSentAt: string | null
   professionalKind: string | null
   professionalName: string | null
   establishment: string | null
@@ -69,6 +72,9 @@ export interface HealthEventRow {
   status?: string | null
   event_date: string
   event_time?: string | null
+  duration_min?: number | null
+  reminder_enabled?: boolean | null
+  reminder_sent_at?: string | null
   professional_kind?: string | null
   professional_name?: string | null
   establishment?: string | null
@@ -91,6 +97,9 @@ export function rowToHealthEvent(r: HealthEventRow): HealthEvent {
   return {
     id: r.id, type: r.event_type, title: r.title, status,
     date: r.event_date, time: r.event_time ?? null,
+    durationMin: r.duration_min ?? null,
+    reminderEnabled: r.reminder_enabled ?? true,
+    reminderSentAt: r.reminder_sent_at ?? null,
     professionalKind: r.professional_kind ?? null, professionalName: r.professional_name ?? null,
     establishment: r.establishment ?? null, location: r.location ?? null,
     modality, preparation: r.preparation ?? null, notes: r.notes ?? null,
@@ -98,6 +107,42 @@ export function rowToHealthEvent(r: HealthEventRow): HealthEvent {
     links: Array.isArray(r.links) ? (r.links as EventLink[]) : [],
     recurrenceRule: r.recurrence_rule ?? null, seriesId: r.series_id ?? null,
     completedAt: r.completed_at ?? null,
+  }
+}
+
+// ── Adaptador legado: agenda_events → domínio (Fase 2 da consolidação) ─────────
+// Coexistência controlada: a camada de serviço pode ler `agenda_events` enquanto
+// os dados não migram, sempre expondo o mesmo `HealthEvent`. Mapeia o status antigo
+// (pending/done/cancelled) para o enum canônico.
+export interface AgendaEventRow {
+  id: string
+  event_type: string
+  title: string
+  event_date: string
+  event_time?: string | null
+  duration_min?: number | null
+  notes?: string | null
+  status?: string | null          // pending | done | cancelled
+  reminder_enabled?: boolean | null
+  reminder_sent_at?: string | null
+}
+
+const AGENDA_STATUS_MAP: Record<string, EventStatus> = {
+  pending: 'planejado', done: 'realizado', cancelled: 'cancelado',
+}
+
+export function agendaRowToHealthEvent(r: AgendaEventRow): HealthEvent {
+  return {
+    id: r.id, type: r.event_type, title: r.title,
+    status: AGENDA_STATUS_MAP[r.status ?? ''] ?? 'planejado',
+    date: r.event_date, time: r.event_time ?? null,
+    durationMin: r.duration_min ?? null,
+    reminderEnabled: r.reminder_enabled ?? true,
+    reminderSentAt: r.reminder_sent_at ?? null,
+    professionalKind: null, professionalName: null, establishment: null, location: null,
+    modality: null, preparation: null, notes: r.notes ?? null,
+    amountCents: null, attachmentUrl: null, links: [],
+    recurrenceRule: null, seriesId: null, completedAt: null,
   }
 }
 

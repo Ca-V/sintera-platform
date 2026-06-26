@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest'
-import { formatDateBR, formatTimeBR, eventToNotificationInput, rowToHealthEvent, type HealthEvent, type HealthEventRow } from './event'
+import { formatDateBR, formatTimeBR, eventToNotificationInput, rowToHealthEvent, agendaRowToHealthEvent, type HealthEvent, type HealthEventRow } from './event'
 import { buildEventNotification, notificationToInline } from './notification'
 
 function event(p: Partial<HealthEvent>): HealthEvent {
   return {
     id: 'e1', type: 'consulta', title: 'Consulta de Cardiologia', status: 'planejado',
-    date: '2026-07-18', time: '14:30:00', professionalKind: 'medico', professionalName: 'Dr. João Silva',
+    date: '2026-07-18', time: '14:30:00', durationMin: null, reminderEnabled: true, reminderSentAt: null,
+    professionalKind: 'medico', professionalName: 'Dr. João Silva',
     establishment: 'Clínica ABC', location: null, modality: 'presencial', preparation: null,
     notes: null, amountCents: null, attachmentUrl: null, links: [], recurrenceRule: null,
     seriesId: null, completedAt: null, ...p,
@@ -45,6 +46,21 @@ describe('rowToHealthEvent (mapeador DB → domínio)', () => {
     expect(ev.status).toBe('planejado')
     expect(ev.modality).toBeNull()
     expect(ev.links).toEqual([])
+  })
+})
+
+describe('agendaRowToHealthEvent (adaptador legado agenda_events → domínio)', () => {
+  it('mapeia status legado pending/done/cancelled → enum canônico', () => {
+    expect(agendaRowToHealthEvent({ id: 'a', event_type: 'exame', title: 'Hemograma', event_date: '2026-07-01', status: 'pending' }).status).toBe('planejado')
+    expect(agendaRowToHealthEvent({ id: 'b', event_type: 'exame', title: 'X', event_date: '2026-07-01', status: 'done' }).status).toBe('realizado')
+    expect(agendaRowToHealthEvent({ id: 'c', event_type: 'exame', title: 'X', event_date: '2026-07-01', status: 'cancelled' }).status).toBe('cancelado')
+    expect(agendaRowToHealthEvent({ id: 'd', event_type: 'exame', title: 'X', event_date: '2026-07-01', status: 'xyz' }).status).toBe('planejado')
+  })
+  it('expõe o mesmo HealthEvent (campos de agendamento preservados)', () => {
+    const ev = agendaRowToHealthEvent({ id: 'a', event_type: 'consulta', title: 'Cardio', event_date: '2026-07-18', event_time: '14:30:00', duration_min: 30, reminder_enabled: false })
+    expect(ev.time).toBe('14:30:00')
+    expect(ev.durationMin).toBe(30)
+    expect(ev.reminderEnabled).toBe(false)
   })
 })
 
