@@ -12,8 +12,9 @@ import { createClient } from '@/lib/supabase/client'
 import AgendarModal, { type AgendaEventInput, type EventType } from '@/components/AgendarModal'
 import { buildExamRecencySuggestion, type AgendaSuggestion } from '@/lib/agenda/suggestions'
 import { eventServicesFor, typeLabel, statusLabel, formatDateBR, formatTimeBR, type HealthEvent } from '@/lib/agenda'
+import { serializeRule, parseRule } from '@/lib/recurrence'
 
-const MODAL_TYPES: EventType[] = ['exame', 'consulta', 'retorno', 'medicacao', 'outro']
+const MODAL_TYPES: EventType[] = ['exame', 'consulta', 'retorno', 'medicacao', 'plano', 'outro']
 const toModalType = (t: string): EventType => (MODAL_TYPES as string[]).includes(t) ? (t as EventType) : 'outro'
 
 const TYPE_EMOJI: Record<string, string> = {
@@ -95,6 +96,11 @@ export default function AgendaPage() {
 
   async function handleSave(input: AgendaEventInput) {
     if (!userId) return
+    const isPlano = input.eventType === 'plano'
+    // Plano de saúde: operadora→estabelecimento, carteirinha→local (round-trip na edição).
+    const establishment = isPlano ? input.operadora : input.establishment
+    const location = isPlano ? input.carteirinha : input.location
+    const recurrenceRule = serializeRule({ frequency: input.recurrenceFrequency, interval: 1, until: input.recurrenceUntil || null, count: null })
     await services.command.create(userId, {
       ...(editing ? { id: editing.id } : {}),
       type: input.eventType, title: input.title, date: input.date,
@@ -102,10 +108,13 @@ export default function AgendaPage() {
       reminderEnabled: input.reminderEnabled,
       modality: input.modality || null,
       professionalName: input.professionalName || null,
-      establishment: input.establishment || null,
-      location: input.location || null,
+      establishment: establishment || null,
+      location: location || null,
       preparation: input.preparation || null,
       amountCents: parseAmountToCents(input.amount),
+      recurrenceRule, priority: input.priority || null,
+      outcome: input.outcome ? { summary: input.outcome } : null,
+      directExpense: input.directExpense,
       status: editing?.status ?? 'planejado', source: editing?.source ?? 'manual',
     })
     setEditing(null); setModalOpen(false); setPrefill(undefined); reload()
@@ -119,14 +128,24 @@ export default function AgendaPage() {
 
   const today = new Date().toISOString().slice(0, 10)
   const editingInitial: Partial<AgendaEventInput> | undefined = editing
-    ? {
-        eventType: toModalType(editing.type), title: editing.title, date: editing.date,
-        time: formatTimeBR(editing.time) ?? '08:00', durationMin: editing.durationMin ?? 60,
-        notes: editing.notes ?? '', reminderEnabled: editing.reminderEnabled,
-        modality: editing.modality ?? '', professionalName: editing.professionalName ?? '',
-        establishment: editing.establishment ?? '', location: editing.location ?? '',
-        preparation: editing.preparation ?? '', amount: centsToAmount(editing.amountCents),
-      }
+    ? (() => {
+        const isPlano = editing.type === 'plano'
+        const rule = parseRule(editing.recurrenceRule)
+        return {
+          eventType: toModalType(editing.type), title: editing.title, date: editing.date,
+          time: formatTimeBR(editing.time) ?? '08:00', durationMin: editing.durationMin ?? 60,
+          notes: editing.notes ?? '', reminderEnabled: editing.reminderEnabled,
+          modality: editing.modality ?? '', professionalName: editing.professionalName ?? '',
+          establishment: isPlano ? '' : (editing.establishment ?? ''),
+          location: isPlano ? '' : (editing.location ?? ''),
+          preparation: editing.preparation ?? '', amount: centsToAmount(editing.amountCents),
+          recurrenceFrequency: rule.frequency, recurrenceUntil: rule.until ?? '',
+          priority: editing.priority ?? '', directExpense: editing.directExpense,
+          outcome: editing.outcome?.summary ?? '',
+          operadora: isPlano ? (editing.establishment ?? '') : '',
+          carteirinha: isPlano ? (editing.location ?? '') : '',
+        }
+      })()
     : prefill
 
   return (
@@ -192,11 +211,14 @@ export default function AgendaPage() {
                 <div className="text-xl leading-none mt-0.5">{TYPE_EMOJI[ev.type] ?? '📅'}</div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
+                    {ev.priority && <span className={`w-2 h-2 rounded-full flex-shrink-0 ${ev.priority === 'alta' ? 'bg-red-400' : ev.priority === 'media' ? 'bg-amber-400' : 'bg-sage'}`} title={`Prioridade ${ev.priority}`} />}
                     <p className="font-body text-sm font-semibold text-onyx truncate">{ev.title}</p>
                     <span className={`font-body text-[10px] font-semibold px-2 py-0.5 rounded-full ${STATUS_CLS[ev.status] ?? 'bg-mauve/10 text-mauve'}`}>{statusLabel(ev.status)}</span>
+                    {ev.recurrenceRule && <span className="font-body text-[10px] text-mauve/60" title="Evento recorrente">🔁</span>}
                   </div>
                   <p className="font-body text-xs text-mauve mt-0.5">
                     {typeLabel(ev.type)} · {formatDateBR(ev.date)}{formatTimeBR(ev.time) ? ` · ${formatTimeBR(ev.time)}` : ''}
+                    {ev.directExpense && <span className="ml-2 text-sage">despesa direta</span>}
                     {overdue && <span className="ml-2 text-petal font-medium">atrasado</span>}
                   </p>
                   {ev.notes && <p className="font-body text-xs text-mauve/70 mt-1 line-clamp-2">{ev.notes}</p>}

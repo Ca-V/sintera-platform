@@ -16,7 +16,7 @@ function ev(p: Partial<HealthEvent>): HealthEvent {
 
 function fakeRepo() {
   const calls: { method: string; args: unknown[] }[] = []
-  let saved: (Partial<HealthEvent> & { type: string }) | null = null
+  const savedAll: (Partial<HealthEvent> & { type: string })[] = []
   const repo: EventRepository = {
     listUpcomingEvents: async (...a) => { calls.push({ method: 'listUpcomingEvents', args: a }); return [] },
     listHistoricalEvents: async (...a) => { calls.push({ method: 'listHistoricalEvents', args: a }); return [] },
@@ -25,9 +25,9 @@ function fakeRepo() {
     listEventsByProtocol: async () => [],
     listFinancialEntries: async () => [],
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    save: async (_u, e) => { saved = e as any },
+    save: async (_u, e) => { savedAll.push(e as any) },
   }
-  return { repo, calls, getSaved: () => saved }
+  return { repo, calls, getSaved: () => savedAll[savedAll.length - 1] ?? null, getSavedAll: () => savedAll }
 }
 
 const clock = { today: () => '2026-07-18', now: () => '2026-07-18T10:00:00Z' }
@@ -74,6 +74,24 @@ describe('EventCommandService (escrita + transições no bus)', () => {
     await cmd.cancel('u1', ev({}))
     await cmd.reschedule('u1', ev({}), '2026-08-01', '09:00')
     expect(seen).toEqual(['EventCancelled', 'EventRescheduled'])
+  })
+
+  it('create com recorrência gera a série (mesmo series_id; 1ª manual, demais recurrence)', async () => {
+    const { repo, getSavedAll } = fakeRepo()
+    const cmd = createEventCommandService(repo, createEventBus(), clock)
+    await cmd.create('u1', { type: 'consulta', title: 'Psicóloga', date: '2026-07-18', recurrenceRule: 'freq=weekly;interval=1;count=3' })
+    const all = getSavedAll()
+    expect(all.map(e => e.date)).toEqual(['2026-07-18', '2026-07-25', '2026-08-01'])
+    expect(new Set(all.map(e => e.seriesId)).size).toBe(1)
+    expect(all[0].source).toBe('manual')
+    expect(all[1].source).toBe('recurrence')
+  })
+
+  it('create sem recorrência salva 1 evento', async () => {
+    const { repo, getSavedAll } = fakeRepo()
+    const cmd = createEventCommandService(repo, createEventBus(), clock)
+    await cmd.create('u1', { type: 'consulta', title: 'X', date: '2026-07-18' })
+    expect(getSavedAll()).toHaveLength(1)
   })
 })
 

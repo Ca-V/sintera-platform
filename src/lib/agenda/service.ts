@@ -11,6 +11,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { createSupabaseEventRepository, type EventRepository } from './repository'
 import { createEventBus, type EventBus, type DomainEvent, type DomainEventType, type EventActor } from './bus'
 import { completeRule, cancelRule, rescheduleRule, canTransition, type HealthEvent, type EventStatus } from './event'
+import { parseRule, generateOccurrences } from '../recurrence'
 
 export type EventDraft = Partial<HealthEvent> & { type: string; title: string; date: string }
 
@@ -75,8 +76,20 @@ export function createEventCommandService(repo: EventRepository, bus: EventBus, 
   }
   return {
     async create(userId, draft) {
-      await repo.save(userId, draft)
-      await emit('EventCreated', userId, draft as HealthEvent)
+      const rule = parseRule(draft.recurrenceRule ?? null)
+      // Série só na CRIAÇÃO de evento novo; edição (id presente) salva único.
+      if (rule.frequency === 'none' || draft.id) {
+        await repo.save(userId, draft)
+        await emit('EventCreated', userId, draft as HealthEvent)
+        return
+      }
+      // Série recorrente: gera as ocorrências com um series_id comum.
+      const seriesId = draft.seriesId ?? newId()
+      const dates = generateOccurrences(rule, draft.date)
+      for (let i = 0; i < dates.length; i++) {
+        await repo.save(userId, { ...draft, date: dates[i], seriesId, source: i === 0 ? (draft.source ?? 'manual') : 'recurrence' })
+      }
+      await emit('EventCreated', userId, { ...draft, seriesId, date: dates[0] } as HealthEvent)
     },
     complete:   (userId, ev) => guardedSave(userId, ev, 'realizado', () => completeRule(ev, clock.now()), 'EventCompleted'),
     cancel:     (userId, ev) => guardedSave(userId, ev, 'cancelado', () => cancelRule(ev), 'EventCancelled'),
