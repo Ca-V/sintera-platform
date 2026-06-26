@@ -8,7 +8,7 @@ export type {
 } from './event'
 export {
   EVENT_STATUSES, EVENT_MODALITIES, canTransition,
-  isUpcoming, isPast, isClosed, isConcluded, hasActiveReminder, hasCost, isDerived,
+  isUpcoming, isPast, isClosed, isConcluded, hasActiveReminder, hasCost, isDerived, isFinancial,
 } from './event'
 
 export {

@@ -23,6 +23,7 @@ function fakeRepo() {
     listEventsByExam: async () => [],
     listEventsByBiomarker: async () => [],
     listEventsByProtocol: async () => [],
+    listFinancialEntries: async () => [],
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     save: async (_u, e) => { saved = e as any },
   }

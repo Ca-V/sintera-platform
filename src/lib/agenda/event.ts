@@ -156,6 +156,8 @@ export function hasActiveReminder(ev: HealthEvent): boolean { return ev.reminder
 export function hasCost(ev: HealthEvent): boolean { return (ev.amountCents ?? 0) > 0 }
 /** Evento não criado manualmente pelo usuário (protocolo, exame, wearable, importação…). */
 export function isDerived(ev: HealthEvent): boolean { return ev.source !== 'manual' && ev.source !== 'agenda_legacy' }
+/** Lançamento financeiro = evento REALIZADO com valor. Gastos é PROJEÇÃO disto (não cria registros). */
+export function isFinancial(ev: HealthEvent): boolean { return isConcluded(ev) && hasCost(ev) }
 
 // ── Seletores puros (capacidades de leitura projetam por estes) ───────────────
 export function selectUpcoming(events: HealthEvent[], refDate: string): HealthEvent[] {
@@ -166,6 +168,9 @@ export function selectHistorical(events: HealthEvent[], refDate: string): Health
 }
 export function selectByLink(events: HealthEvent[], type: EventLinkKind, id: string): HealthEvent[] {
   return events.filter(e => e.links.some(l => l.type === type && l.id === id))
+}
+export function selectFinancial(events: HealthEvent[]): HealthEvent[] {
+  return events.filter(isFinancial)
 }
 
 // ── Mapeador domínio → linha de persistência (health_events canônico) ─────────

@@ -10,7 +10,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   agendaRowToHealthEvent, rowToHealthEvent, healthEventToRow,
-  selectUpcoming, selectHistorical, selectByLink,
+  selectUpcoming, selectHistorical, selectByLink, selectFinancial,
   type AgendaEventRow, type HealthEventRow, type HealthEvent, type EventLinkKind,
 } from './event'
 
@@ -20,6 +20,7 @@ export interface EventRepository {
   listEventsByExam(userId: string, examId: string): Promise<HealthEvent[]>
   listEventsByBiomarker(userId: string, biomarker: string): Promise<HealthEvent[]>
   listEventsByProtocol(userId: string, protocolId: string): Promise<HealthEvent[]>
+  listFinancialEntries(userId: string): Promise<HealthEvent[]>
   save(userId: string, event: Partial<HealthEvent> & { type: string; title: string; date: string }): Promise<void>
 }
 
@@ -58,6 +59,7 @@ export function createSupabaseEventRepository(supabase: SupabaseClient): EventRe
     listEventsByExam:      async (u, id) => selectByLink(await listAll(u), 'exam' as EventLinkKind, id),
     listEventsByBiomarker: async (u, b)  => selectByLink(await listAll(u), 'biomarker' as EventLinkKind, b),
     listEventsByProtocol:  async (u, id) => selectByLink(await listAll(u), 'protocol' as EventLinkKind, id),
+    listFinancialEntries:  async (u) => selectFinancial(await listAll(u)),
     save: async (userId, event) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (supabase.from('health_events') as any).upsert(healthEventToRow(userId, event))

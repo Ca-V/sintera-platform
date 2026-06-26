@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest'
 import {
   rowToHealthEvent, agendaRowToHealthEvent,
   isUpcoming, isPast, isConcluded, isClosed, hasActiveReminder, hasCost, isDerived,
-  selectUpcoming, selectHistorical, selectByLink, completeRule, cancelRule, rescheduleRule, canTransition,
+  selectUpcoming, selectHistorical, selectByLink, selectFinancial, isFinancial,
+  completeRule, cancelRule, rescheduleRule, canTransition,
   type HealthEvent, type HealthEventRow,
 } from './event'
 
@@ -81,6 +82,13 @@ describe('seletores e regras de transição (puros)', () => {
     expect(selectUpcoming(list, ref).map(e => e.id).sort()).toEqual(['fut', 'lnk'])
     expect(selectHistorical(list, ref).map(e => e.id)).toEqual(['pas'])
     expect(selectByLink(list, 'exam', 'x1').map(e => e.id)).toEqual(['lnk'])
+  })
+  it('isFinancial / selectFinancial = realizado COM valor (Gastos = projeção)', () => {
+    expect(isFinancial(ev({ status: 'realizado', amountCents: 25000 }))).toBe(true)
+    expect(isFinancial(ev({ status: 'planejado', amountCents: 25000 }))).toBe(false) // ainda não realizado
+    expect(isFinancial(ev({ status: 'realizado', amountCents: null }))).toBe(false)  // sem valor
+    const list = [ev({ id: 'a', status: 'realizado', amountCents: 100 }), ev({ id: 'b', status: 'planejado', amountCents: 100 }), ev({ id: 'c', status: 'realizado', amountCents: null })]
+    expect(selectFinancial(list).map(e => e.id)).toEqual(['a'])
   })
   it('completeRule / cancelRule / rescheduleRule retornam novo estado', () => {
     expect(completeRule(ev({}), '2026-07-18T10:00:00Z')).toMatchObject({ status: 'realizado', completedAt: '2026-07-18T10:00:00Z' })

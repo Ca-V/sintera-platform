@@ -26,6 +26,8 @@ export interface EventQueryService {
   listByExam(userId: string, examId: string): Promise<HealthEvent[]>
   listByBiomarker(userId: string, biomarker: string): Promise<HealthEvent[]>
   listByProtocol(userId: string, protocolId: string): Promise<HealthEvent[]>
+  /** Gastos = projeção: eventos realizados com valor. */
+  listFinancial(userId: string): Promise<HealthEvent[]>
 }
 
 export function createEventQueryService(repo: EventRepository, clock: Clock = SYSTEM_CLOCK): EventQueryService {
@@ -35,6 +37,7 @@ export function createEventQueryService(repo: EventRepository, clock: Clock = SY
     listByExam:      (u, id) => repo.listEventsByExam(u, id),
     listByBiomarker: (u, b)  => repo.listEventsByBiomarker(u, b),
     listByProtocol:  (u, id) => repo.listEventsByProtocol(u, id),
+    listFinancial:   (u) => repo.listFinancialEntries(u),
   }
 }
 
