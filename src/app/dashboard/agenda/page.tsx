@@ -4,54 +4,28 @@
 // Consome SÓ o contrato @/lib/agenda (services), nunca o banco. O Histórico é a
 // projeção dos eventos passados. Sem juízo clínico (RDC 657/2022).
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { CalendarDays, Plus, Check, Pencil, Ban, Loader2, CalendarClock, Sparkles, X } from 'lucide-react'
-import type { SupabaseClient } from '@supabase/supabase-js'
-import { createClient } from '@/lib/supabase/client'
-import AgendarModal, { type AgendaEventInput, type EventType } from '@/components/AgendarModal'
+import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
+import { useEventForm, eventToInput } from '@/components/eventForm'
 import { buildExamRecencySuggestion, type AgendaSuggestion } from '@/lib/agenda/suggestions'
-import { eventServicesFor, typeLabel, statusLabel, formatDateBR, formatTimeBR, type HealthEvent } from '@/lib/agenda'
-import { serializeRule, parseRule } from '@/lib/recurrence'
-
-const MODAL_TYPES: EventType[] = ['consulta', 'exame', 'procedimento', 'vacina', 'medicamento', 'plano', 'outro']
-// Não-tipos → tipo canônico do seletor (+ atributo): retorno→consulta(isReturn),
-// cirurgia→procedimento(isSurgery), suplemento→medicamento; demais legados mapeados.
-const LEGACY_TYPE_MAP: Record<string, EventType> = {
-  retorno: 'consulta', cirurgia: 'procedimento', suplemento: 'medicamento',
-  medicacao: 'medicamento', estetico: 'procedimento', atividade: 'outro', omica: 'outro',
-}
-const toModalType = (t: string): EventType =>
-  (MODAL_TYPES as string[]).includes(t) ? (t as EventType) : (LEGACY_TYPE_MAP[t] ?? 'outro')
-const toModalStatus = (s: string): 'planejado' | 'realizado' | 'cancelado' =>
-  s === 'realizado' ? 'realizado' : s === 'cancelado' ? 'cancelado' : 'planejado'
-
-const TYPE_EMOJI: Record<string, string> = {
-  exame: '🧪', consulta: '👩‍⚕️', retorno: '📋', vacina: '💉', procedimento: '🩺',
-  medicacao: '💊', medicamento: '💊', atividade: '🏃‍♀️', outro: '📅',
-}
+import { typeLabel, statusLabel, formatDateBR, formatTimeBR, type HealthEvent } from '@/lib/agenda'
 
 const STATUS_CLS: Record<string, string> = {
-  planejado: 'bg-mauve/10 text-mauve', confirmado: 'bg-blue-50 text-blue-500',
+  planejado: 'bg-mauve/10 text-mauve',
   realizado: 'bg-sage-light text-sage', cancelado: 'bg-red-50 text-red-400',
   reagendado: 'bg-amber-50 text-amber-600', perdido: 'bg-red-50 text-red-400',
 }
-
-// "250,00" | "R$ 1.500,00" | "150.5" → centavos. Vazio/inválido → null.
-function parseAmountToCents(s: string): number | null {
-  let t = (s ?? '').trim().replace(/[R$\s]/g, '')
-  if (!t) return null
-  if (t.includes(',')) t = t.replace(/\./g, '').replace(',', '.')
-  const n = parseFloat(t)
-  return isFinite(n) && n >= 0 ? Math.round(n * 100) : null
-}
-function centsToAmount(cents: number | null): string {
-  return cents != null ? (cents / 100).toFixed(2).replace('.', ',') : ''
+const TYPE_EMOJI: Record<string, string> = {
+  consulta: '🩺', retorno: '📋', exame: '🧪', procedimento: '🩹', cirurgia: '⚕️',
+  vacina: '💉', medicamento: '💊', medicacao: '💊', suplemento: '🌿', plano: '🏥', outro: '📌',
 }
 
 export default function AgendaPage() {
-  const [supabase] = useState(() => createClient() as unknown as SupabaseClient)
-  const services = useMemo(() => eventServicesFor(supabase), [supabase])
+  const router = useRouter()
+  const { services, supabase, saveEvent } = useEventForm()
 
   const [userId, setUserId]   = useState<string | null>(null)
   const [events, setEvents]   = useState<HealthEvent[]>([])
@@ -108,29 +82,8 @@ export default function AgendaPage() {
 
   async function handleSave(input: AgendaEventInput) {
     if (!userId) return
-    const isPlano = input.eventType === 'plano'
-    // Plano de saúde: operadora→estabelecimento, carteirinha→local (round-trip na edição).
-    const establishment = isPlano ? input.operadora : input.establishment
-    const location = isPlano ? input.carteirinha : input.location
-    const recurrenceRule = serializeRule({ frequency: input.recurrenceFrequency, interval: 1, until: input.recurrenceUntil || null, count: null })
-    await services.command.create(userId, {
-      // Ao editar, preserva campos NÃO presentes no formulário (anexo, links, lineage,
-      // série, completed_at…) — só os campos do formulário são sobrescritos abaixo.
-      ...(editing ?? {}),
-      type: input.isSurgery ? 'cirurgia' : input.eventType, title: input.title, date: input.date,
-      time: input.time || null, durationMin: input.durationMin, notes: input.notes || null,
-      reminderEnabled: input.reminderEnabled,
-      modality: input.modality || null,
-      professionalName: input.professionalName || null,
-      establishment: establishment || null,
-      location: location || null,
-      preparation: input.preparation || null,
-      amountCents: parseAmountToCents(input.amount),
-      recurrenceRule, priority: input.priority || null,
-      outcome: input.outcome ? { summary: input.outcome } : null,
-      directExpense: input.directExpense, isReturn: input.isReturn,
-      status: input.status, source: editing?.source ?? 'manual',
-    })
+    // Caminho ÚNICO de gravação (compartilhado com Histórico e Gastos).
+    await saveEvent(userId, input, editing)
     setEditing(null); setModalOpen(false); setPrefill(undefined); reload()
   }
 
@@ -141,30 +94,7 @@ export default function AgendaPage() {
   }
 
   const today = new Date().toISOString().slice(0, 10)
-  const editingInitial: Partial<AgendaEventInput> | undefined = editing
-    ? (() => {
-        const isPlano = editing.type === 'plano'
-        const rule = parseRule(editing.recurrenceRule)
-        return {
-          eventType: toModalType(editing.type),
-          isReturn: editing.isReturn || editing.type === 'retorno',
-          isSurgery: editing.type === 'cirurgia',
-          status: toModalStatus(editing.status),
-          title: editing.title, date: editing.date,
-          time: formatTimeBR(editing.time) ?? '08:00', durationMin: editing.durationMin ?? 60,
-          notes: editing.notes ?? '', reminderEnabled: editing.reminderEnabled,
-          modality: editing.modality ?? '', professionalName: editing.professionalName ?? '',
-          establishment: isPlano ? '' : (editing.establishment ?? ''),
-          location: isPlano ? '' : (editing.location ?? ''),
-          preparation: editing.preparation ?? '', amount: centsToAmount(editing.amountCents),
-          recurrenceFrequency: rule.frequency, recurrenceUntil: rule.until ?? '',
-          priority: editing.priority ?? '', directExpense: editing.directExpense,
-          outcome: editing.outcome?.summary ?? '',
-          operadora: isPlano ? (editing.establishment ?? '') : '',
-          carteirinha: isPlano ? (editing.location ?? '') : '',
-        }
-      })()
-    : prefill
+  const editingInitial: Partial<AgendaEventInput> | undefined = editing ? eventToInput(editing) : prefill
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -276,6 +206,7 @@ export default function AgendaPage() {
         open={modalOpen}
         onClose={() => { setModalOpen(false); setEditing(null); setPrefill(undefined) }}
         onSave={handleSave}
+        onGoToHistory={() => router.push('/dashboard/timeline')}
         initialEvent={editingInitial}
       />
     </div>

@@ -37,6 +37,8 @@ export interface AgendaEventInput {
   outcome: string      // Desfecho (resumo) — preenchido após realizar
   operadora: string    // Plano de saúde
   carteirinha: string
+  attachmentFile?: File | null   // nota fiscal / comprovante / laudo (novo upload)
+  attachmentUrl?: string         // anexo já existente (exibição na edição)
 }
 
 interface AgendarModalProps {
@@ -45,6 +47,7 @@ interface AgendarModalProps {
   defaultTitle?: string
   defaultNotes?: string
   onSave?: (data: AgendaEventInput) => Promise<void> | void
+  onGoToHistory?: () => void   // ação após salvar um evento "Realizado" (vai p/ Histórico)
   initialEvent?: Partial<AgendaEventInput>
 }
 
@@ -75,7 +78,7 @@ function downloadICS(ics: string, filename: string) {
 const FIELD = 'w-full px-3 py-2.5 border border-border rounded-xl font-body text-sm text-onyx placeholder:text-mauve/40 focus:outline-none focus:ring-1 focus:ring-petal/40 transition-colors'
 const LABEL = 'font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider'
 
-export default function AgendarModal({ open, onClose, defaultTitle = '', defaultNotes = '', onSave, initialEvent }: AgendarModalProps) {
+export default function AgendarModal({ open, onClose, defaultTitle = '', defaultNotes = '', onSave, onGoToHistory, initialEvent }: AgendarModalProps) {
   const today = new Date().toISOString().split('T')[0]
 
   const [eventType, setEventType] = useState<EventType>('consulta')
@@ -101,6 +104,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
   const [outcome, setOutcome] = useState('')
   const [operadora, setOperadora] = useState('')
   const [carteirinha, setCarteirinha] = useState('')
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null)
   const [showDetails, setShowDetails] = useState(false)
   const [added, setAdded] = useState(false)
   const [savedToAgenda, setSavedToAgenda] = useState(false)
@@ -133,6 +137,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
     setOutcome(initialEvent?.outcome ?? '')
     setOperadora(initialEvent?.operadora ?? '')
     setCarteirinha(initialEvent?.carteirinha ?? '')
+    setAttachmentFile(null)
     setShowDetails(false)
     setAdded(false); setSaving(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -191,6 +196,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
         preparation: preparation.trim(), amount: amount.trim(),
         recurrenceFrequency: recurrence, recurrenceUntil, priority, directExpense,
         outcome: outcome.trim(), operadora: operadora.trim(), carteirinha: carteirinha.trim(),
+        attachmentFile, attachmentUrl: initialEvent?.attachmentUrl,
       })
       // Salvou na Agenda: mostra confirmação; exportar p/ calendário fica como ação
       // SECUNDÁRIA, oferecida só agora que o evento já existe.
@@ -205,7 +211,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
   function resetFields() {
     setTitle(defaultTitle); setDate(''); setTime(''); setDuration('60'); setNotes(defaultNotes)
     setEventType('consulta'); setIsReturn(false); setIsSurgery(false); setStatus('planejado'); setModality(''); setProfessionalName(''); setEstablishment(''); setLocation(''); setPreparation(''); setAmount('')
-    setRecurrence('none'); setRecurrenceUntil(''); setPriority(''); setDirectExpense(false); setOutcome(''); setOperadora(''); setCarteirinha('')
+    setRecurrence('none'); setRecurrenceUntil(''); setPriority(''); setDirectExpense(false); setOutcome(''); setOperadora(''); setCarteirinha(''); setAttachmentFile(null)
     setShowDetails(false); setSaveError(null)
   }
   function addAnother() { resetFields(); setAdded(false); setSavedToAgenda(false) }
@@ -235,8 +241,15 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
               {added ? (
                 <div className="px-6 py-7 text-center">
                   <div className="w-14 h-14 rounded-full bg-sage-light flex items-center justify-center mx-auto mb-3"><Check size={24} className="text-sage" /></div>
-                  <p className="font-body text-sm font-semibold text-onyx mb-1">{savedToAgenda ? 'Salvo na sua Agenda' : 'Adicionado ao calendário'}</p>
-                  <p className="font-body text-xs text-mauve mb-5">{savedToAgenda ? 'Quando for realizado, ele passa para o Histórico de Saúde.' : 'Pronto.'}</p>
+                  <p className="font-body text-sm font-semibold text-onyx mb-1">{savedToAgenda ? (status === 'realizado' ? 'Salvo no seu Histórico' : 'Salvo na sua Agenda') : 'Adicionado ao calendário'}</p>
+                  <p className="font-body text-xs text-mauve mb-5">{savedToAgenda ? (status === 'realizado' ? 'Como já foi realizado, ele está no Histórico de Saúde.' : 'Quando for realizado, ele passa para o Histórico de Saúde.') : 'Pronto.'}</p>
+
+                  {savedToAgenda && status === 'realizado' && onGoToHistory && (
+                    <button onClick={() => { handleClose(); onGoToHistory() }}
+                      className="w-full mb-3 py-2.5 rounded-xl gradient-sintera text-white text-sm font-body font-medium hover:opacity-90 transition-opacity">
+                      Ir para o Histórico de Saúde
+                    </button>
+                  )}
 
                   {savedToAgenda && (
                     <div className="space-y-2 mb-5 text-left">
@@ -391,6 +404,14 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
 
                       <div className="space-y-1.5"><label className={LABEL}>Observações</label>
                         <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} placeholder="Ex.: levar laudos anteriores…" className={`${FIELD} resize-none`} /></div>
+
+                      <div className="space-y-1.5"><label className={LABEL}>Nota fiscal / comprovante / anexo <span className="font-normal text-mauve/50 normal-case">(PDF, JPG, PNG)</span></label>
+                        <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e => setAttachmentFile(e.target.files?.[0] ?? null)}
+                          className="block w-full text-xs font-body text-mauve file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:bg-blush file:text-petal file:font-medium" />
+                        {initialEvent?.attachmentUrl && !attachmentFile && (
+                          <p className="font-body text-[11px] text-mauve/60">Anexo atual mantido. Escolha um arquivo para substituir.</p>
+                        )}
+                      </div>
 
                       <label className="flex items-center gap-2.5 px-1 cursor-pointer select-none">
                         <input type="checkbox" checked={directExpense} onChange={e => setDirectExpense(e.target.checked)} className="w-4 h-4 rounded border-border accent-petal" />
