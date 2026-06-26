@@ -9,8 +9,8 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createSupabaseEventRepository, type EventRepository } from './repository'
-import { createEventBus, type EventBus } from './bus'
-import { completeRule, cancelRule, rescheduleRule, type HealthEvent } from './event'
+import { createEventBus, type EventBus, type DomainEvent, type DomainEventType, type EventActor } from './bus'
+import { completeRule, cancelRule, rescheduleRule, canTransition, type HealthEvent, type EventStatus } from './event'
 
 export type EventDraft = Partial<HealthEvent> & { type: string; title: string; date: string }
 
@@ -46,27 +46,38 @@ export interface EventCommandService {
   reschedule(userId: string, event: HealthEvent, date: string, time: string | null): Promise<void>
 }
 
+function newId(): string {
+  return (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`)
+}
+
+export class InvalidTransitionError extends Error {
+  constructor(public from: EventStatus, public to: EventStatus) {
+    super(`Transição de status inválida: ${from} → ${to}`)
+    this.name = 'InvalidTransitionError'
+  }
+}
+
 export function createEventCommandService(repo: EventRepository, bus: EventBus, clock: Clock = SYSTEM_CLOCK): EventCommandService {
+  // Envelope observável padronizado + enforço da máquina de estados.
+  async function emit(type: DomainEventType, userId: string, next: HealthEvent, fromStatus?: EventStatus, correlationId?: string) {
+    const actor: EventActor = { kind: 'user', id: userId }
+    const e: DomainEvent = { type, eventId: newId(), aggregateId: next.id ?? '', correlationId, actor, at: clock.now(), event: next, fromStatus }
+    await bus.publish(e)
+  }
+  async function guardedSave(userId: string, ev: HealthEvent, to: EventStatus, apply: () => HealthEvent, type: DomainEventType) {
+    if (!canTransition(ev.status, to)) throw new InvalidTransitionError(ev.status, to)
+    const next = apply()
+    await repo.save(userId, next)
+    await emit(type, userId, next, ev.status)
+  }
   return {
     async create(userId, draft) {
       await repo.save(userId, draft)
-      await bus.publish({ type: 'EventCreated', event: draft as HealthEvent, at: clock.now() })
+      await emit('EventCreated', userId, draft as HealthEvent)
     },
-    async complete(userId, ev) {
-      const next = completeRule(ev, clock.now())
-      await repo.save(userId, next)
-      await bus.publish({ type: 'EventCompleted', event: next, fromStatus: ev.status, at: clock.now() })
-    },
-    async cancel(userId, ev) {
-      const next = cancelRule(ev)
-      await repo.save(userId, next)
-      await bus.publish({ type: 'EventCancelled', event: next, fromStatus: ev.status, at: clock.now() })
-    },
-    async reschedule(userId, ev, date, time) {
-      const next = rescheduleRule(ev, date, time)
-      await repo.save(userId, next)
-      await bus.publish({ type: 'EventRescheduled', event: next, fromStatus: ev.status, at: clock.now() })
-    },
+    complete:   (userId, ev) => guardedSave(userId, ev, 'realizado', () => completeRule(ev, clock.now()), 'EventCompleted'),
+    cancel:     (userId, ev) => guardedSave(userId, ev, 'cancelado', () => cancelRule(ev), 'EventCancelled'),
+    reschedule: (userId, ev, date, time) => guardedSave(userId, ev, 'reagendado', () => rescheduleRule(ev, date, time), 'EventRescheduled'),
   }
 }
 

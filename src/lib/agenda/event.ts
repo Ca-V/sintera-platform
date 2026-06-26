@@ -186,6 +186,22 @@ export function healthEventToRow(userId: string, ev: Partial<HealthEvent> & { ty
   }
 }
 
+// ── Invariantes do domínio — máquina de estados (regras AQUI, não na UI/serviço) ──
+// Ex.: planejado→confirmado→realizado é permitido; cancelado→realizado NÃO é.
+const ALLOWED_TRANSITIONS: Record<EventStatus, EventStatus[]> = {
+  planejado:  ['confirmado', 'reagendado', 'cancelado', 'realizado', 'perdido'],
+  confirmado: ['realizado', 'reagendado', 'cancelado', 'perdido'],
+  reagendado: ['confirmado', 'realizado', 'reagendado', 'cancelado', 'perdido'],
+  realizado:  [],            // terminal
+  cancelado:  [],            // terminal
+  perdido:    ['reagendado', 'cancelado'],
+}
+/** `true` se a transição de status é permitida (no-op `from===to` é sempre válido). */
+export function canTransition(from: EventStatus, to: EventStatus): boolean {
+  if (from === to) return true
+  return ALLOWED_TRANSITIONS[from]?.includes(to) ?? false
+}
+
 // ── Regras de transição (PURAS) — usadas pela camada de SERVIÇO, não pelo domínio
 // como efeito. Retornam um novo estado; persistência/efeitos colaterais ficam no serviço.
 export function completeRule(ev: HealthEvent, nowIso: string): HealthEvent {

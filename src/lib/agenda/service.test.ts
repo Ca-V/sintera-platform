@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { createEventQueryService, createEventCommandService } from './service'
+import { createEventQueryService, createEventCommandService, InvalidTransitionError } from './service'
 import { createEventBus, type DomainEvent } from './bus'
 import type { EventRepository } from './repository'
 import type { HealthEvent } from './event'
@@ -52,7 +52,17 @@ describe('EventCommandService (escrita + transições no bus)', () => {
     await cmd.complete('u1', ev({ status: 'confirmado' }))
     expect(getSaved()).toMatchObject({ status: 'realizado', completedAt: '2026-07-18T10:00:00Z' })
     expect(seen).toHaveLength(1)
-    expect(seen[0]).toMatchObject({ type: 'EventCompleted', fromStatus: 'confirmado' })
+    expect(seen[0]).toMatchObject({ type: 'EventCompleted', fromStatus: 'confirmado', actor: { kind: 'user', id: 'u1' } })
+    expect(seen[0].eventId).toBeTruthy()
+    expect(seen[0].aggregateId).toBe('e1')
+  })
+
+  it('proíbe transição inválida (cancelado→realizado) via InvalidTransitionError', async () => {
+    const { repo, getSaved } = fakeRepo()
+    const bus = createEventBus()
+    const cmd = createEventCommandService(repo, bus, clock)
+    await expect(cmd.complete('u1', ev({ status: 'cancelado' }))).rejects.toBeInstanceOf(InvalidTransitionError)
+    expect(getSaved()).toBeNull()
   })
   it('cancel e reschedule emitem suas transições', async () => {
     const { repo } = fakeRepo()
@@ -69,12 +79,14 @@ describe('EventCommandService (escrita + transições no bus)', () => {
 describe('EventBus', () => {
   it('publica para assinantes do tipo e respeita unsubscribe', async () => {
     const bus = createEventBus()
+    const de = (type: 'EventCreated' | 'EventCompleted'): DomainEvent =>
+      ({ type, eventId: 'x', aggregateId: 'e1', actor: { kind: 'user' }, at: 'x', event: ev({}) })
     let n = 0
     const off = bus.subscribe('EventCreated', () => { n++ })
-    await bus.publish({ type: 'EventCreated', event: ev({}), at: 'x' })
-    await bus.publish({ type: 'EventCompleted', event: ev({}), at: 'x' }) // outro tipo: ignora
+    await bus.publish(de('EventCreated'))
+    await bus.publish(de('EventCompleted')) // outro tipo: ignora
     off()
-    await bus.publish({ type: 'EventCreated', event: ev({}), at: 'x' })   // após unsubscribe: ignora
+    await bus.publish(de('EventCreated'))   // após unsubscribe: ignora
     expect(n).toBe(1)
   })
 })

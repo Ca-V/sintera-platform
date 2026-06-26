@@ -8,11 +8,19 @@ import type { HealthEvent, EventStatus } from './event'
 
 export type DomainEventType = 'EventCreated' | 'EventCompleted' | 'EventCancelled' | 'EventRescheduled'
 
+/** Quem causou a transição (usuário, sistema, IA). */
+export type EventActor = { kind: 'user' | 'system' | 'ai'; id?: string }
+
+// Envelope OBSERVÁVEL padronizado (estrutura fixa mesmo sem persistir ainda).
 export interface DomainEvent {
   type: DomainEventType
+  eventId: string               // id único do evento de domínio
+  aggregateId: string           // id do HealthEvent (agregado/jornada)
+  correlationId?: string        // encadeia causas relacionadas
+  actor: EventActor
+  at: string                    // ISO timestamp
   event: HealthEvent
   fromStatus?: EventStatus      // transição (auditoria/explicabilidade futuras)
-  at: string                    // ISO
 }
 
 export type DomainEventHandler = (e: DomainEvent) => void | Promise<void>

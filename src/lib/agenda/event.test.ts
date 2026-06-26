@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   rowToHealthEvent, agendaRowToHealthEvent,
   isUpcoming, isPast, isConcluded, isClosed, hasActiveReminder, hasCost, isDerived,
-  selectUpcoming, selectHistorical, selectByLink, completeRule, cancelRule, rescheduleRule,
+  selectUpcoming, selectHistorical, selectByLink, completeRule, cancelRule, rescheduleRule, canTransition,
   type HealthEvent, type HealthEventRow,
 } from './event'
 
@@ -87,5 +87,19 @@ describe('seletores e regras de transição (puros)', () => {
     expect(cancelRule(ev({})).status).toBe('cancelado')
     const r = rescheduleRule(ev({ date: '2026-07-18', time: '14:30' }), '2026-08-01', '09:00')
     expect(r).toMatchObject({ status: 'reagendado', date: '2026-08-01', time: '09:00' })
+  })
+})
+
+describe('canTransition (invariantes de status)', () => {
+  it('permite planejado→confirmado→realizado', () => {
+    expect(canTransition('planejado', 'confirmado')).toBe(true)
+    expect(canTransition('confirmado', 'realizado')).toBe(true)
+  })
+  it('proíbe cancelado→realizado e a partir de estados terminais', () => {
+    expect(canTransition('cancelado', 'realizado')).toBe(false)
+    expect(canTransition('realizado', 'planejado')).toBe(false)
+  })
+  it('no-op (from===to) é válido', () => {
+    expect(canTransition('planejado', 'planejado')).toBe(true)
   })
 })
