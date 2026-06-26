@@ -44,7 +44,12 @@ export function createSupabaseEventRepository(supabase: SupabaseClient): EventRe
     ])
     const legacy = ((a.data ?? []) as AgendaEventRow[]).map(agendaRowToHealthEvent)
     const canonical = ((h.data ?? []) as HealthEventRow[]).map(rowToHealthEvent)
-    return sortByWhen([...legacy, ...canonical])
+    // Coexistência: se o mesmo id existir nos dois (evento legado já mutado para o
+    // canônico), o CANÔNICO vence — evita duplicata na lista.
+    const byId = new Map<string, HealthEvent>()
+    for (const e of legacy) byId.set(e.id, e)
+    for (const e of canonical) byId.set(e.id, e)
+    return sortByWhen([...byId.values()])
   }
 
   return {
