@@ -12,8 +12,10 @@ export type EventStatus = typeof EVENT_STATUSES[number]
 export type { EventModality }
 export const EVENT_MODALITIES: readonly EventModality[] = ['presencial', 'telemedicina']
 
-// Linkagem extensível a outros objetos da plataforma (opcional).
-export type EventLinkKind = 'exam' | 'biomarker' | 'protocol' | 'medication' | 'supplement' | 'professional' | 'document'
+// Linkagem da jornada clínica (não armazenamento genérico). Chaves PREVISTAS —
+// formato único {kind,id,label} para evitar múltiplos formatos no futuro:
+//   exam · biomarker · protocol · medication · supplement · document · professional
+export type EventLinkKind = 'exam' | 'biomarker' | 'protocol' | 'medication' | 'supplement' | 'document' | 'professional'
 export interface EventLink { kind: EventLinkKind; id?: string; label?: string }
 
 export const EVENT_TYPE_LABELS: Record<string, string> = {
@@ -57,6 +59,54 @@ export function formatTimeBR(time: string | null): string | null {
   const m = /^(\d{2}):(\d{2})/.exec(time)
   return m ? `${m[1]}:${m[2]}` : null
 }
+
+// ── Mapeador DB → domínio (a UI consome o domínio, não a linha crua) ───────────
+/** Forma da linha de `health_events` (snake_case) usada pelos mapeadores. */
+export interface HealthEventRow {
+  id: string
+  event_type: string
+  title: string
+  status?: string | null
+  event_date: string
+  event_time?: string | null
+  professional_kind?: string | null
+  professional_name?: string | null
+  establishment?: string | null
+  location?: string | null
+  modality?: string | null
+  preparation?: string | null
+  notes?: string | null
+  amount_cents?: number | null
+  attachment_url?: string | null
+  links?: unknown
+  recurrence_rule?: string | null
+  series_id?: string | null
+  completed_at?: string | null
+}
+
+/** Converte uma linha do banco no objeto de domínio. Puro e tolerante a valores inesperados. */
+export function rowToHealthEvent(r: HealthEventRow): HealthEvent {
+  const status = (EVENT_STATUSES as readonly string[]).includes(r.status ?? '') ? (r.status as EventStatus) : 'planejado'
+  const modality = r.modality === 'presencial' || r.modality === 'telemedicina' ? r.modality : null
+  return {
+    id: r.id, type: r.event_type, title: r.title, status,
+    date: r.event_date, time: r.event_time ?? null,
+    professionalKind: r.professional_kind ?? null, professionalName: r.professional_name ?? null,
+    establishment: r.establishment ?? null, location: r.location ?? null,
+    modality, preparation: r.preparation ?? null, notes: r.notes ?? null,
+    amountCents: r.amount_cents ?? null, attachmentUrl: r.attachment_url ?? null,
+    links: Array.isArray(r.links) ? (r.links as EventLink[]) : [],
+    recurrenceRule: r.recurrence_rule ?? null, seriesId: r.series_id ?? null,
+    completedAt: r.completed_at ?? null,
+  }
+}
+
+// Guardrails de arquitetura (fundadora 25/06/2026):
+// - `completed_at` é só MARCADOR temporal. A regra de negócio do "realizado"
+//   (alimentar Histórico, gerar gasto, atualizar indicadores) vive numa CAMADA DE
+//   SERVIÇO — nunca em triggers de banco nem neste módulo de projeção.
+// - Mudanças de status serão auditáveis no futuro (tabela de histórico aditiva);
+//   este modelo não precluí essa evolução.
 
 /**
  * PROJEÇÃO do evento de domínio para o input do formatter de notificação.

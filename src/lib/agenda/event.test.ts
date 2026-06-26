@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatDateBR, formatTimeBR, eventToNotificationInput, type HealthEvent } from './event'
+import { formatDateBR, formatTimeBR, eventToNotificationInput, rowToHealthEvent, type HealthEvent, type HealthEventRow } from './event'
 import { buildEventNotification, notificationToInline } from './notification'
 
 function event(p: Partial<HealthEvent>): HealthEvent {
@@ -21,6 +21,30 @@ describe('formatadores puros', () => {
     expect(formatTimeBR('14:30:00')).toBe('14:30')
     expect(formatTimeBR('09:05')).toBe('09:05')
     expect(formatTimeBR(null)).toBeNull()
+  })
+})
+
+describe('rowToHealthEvent (mapeador DB → domínio)', () => {
+  const row: HealthEventRow = {
+    id: 'e1', event_type: 'consulta', title: 'Consulta', status: 'confirmado',
+    event_date: '2026-07-18', event_time: '14:30:00', professional_name: 'Dr. João',
+    establishment: 'Clínica ABC', modality: 'presencial', preparation: 'Jejum',
+    links: [{ kind: 'exam', id: 'x1' }], amount_cents: 25000,
+  }
+  it('mapeia snake_case → domínio e preserva links/valores', () => {
+    const ev = rowToHealthEvent(row)
+    expect(ev.type).toBe('consulta')
+    expect(ev.status).toBe('confirmado')
+    expect(ev.professionalName).toBe('Dr. João')
+    expect(ev.modality).toBe('presencial')
+    expect(ev.links).toEqual([{ kind: 'exam', id: 'x1' }])
+    expect(ev.amountCents).toBe(25000)
+  })
+  it('tolera status/modality inesperados e links não-array', () => {
+    const ev = rowToHealthEvent({ ...row, status: 'xpto', modality: 'foo', links: null })
+    expect(ev.status).toBe('planejado')
+    expect(ev.modality).toBeNull()
+    expect(ev.links).toEqual([])
   })
 })
 
