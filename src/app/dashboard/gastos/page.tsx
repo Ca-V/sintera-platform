@@ -7,7 +7,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Loader2, Paperclip, Receipt, ArrowLeft, Info, Plus, X } from 'lucide-react'
+import { Loader2, Paperclip, Receipt, ArrowLeft, Info, Plus, X, RotateCcw, Trash2 } from 'lucide-react'
 import { useUser } from '@/context/UserContext'
 import { typeLabel, formatDateBR, type HealthEvent } from '@/lib/agenda'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
@@ -18,14 +18,16 @@ function fmtBRL(cents: number): string {
 }
 
 export default function GastosPage() {
-  const { user, loading: authLoading } = useUser()
-  const { services, saveEvent } = useEventForm()
+  const { user, loading: authLoading, } = useUser()
+  const { services, saveEvent, supabase } = useEventForm()
   const [items, setItems] = useState<HealthEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [year, setYear] = useState<number | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
   const [showAddInfo, setShowAddInfo] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
+  const [busyId, setBusyId] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
 
   useEffect(() => {
     if (authLoading) return
@@ -47,6 +49,27 @@ export default function GastosPage() {
     if (!user) return
     await saveEvent(user.id, input, null)
     setModalOpen(false); setShowAddInfo(false); setReloadKey(k => k + 1)
+  }
+
+  // Reabrir: desfaz a conclusão (correção) — sai de Gastos, volta para a Agenda.
+  async function reopenGasto(r: HealthEvent) {
+    if (busyId || !user) return
+    setBusyId(r.id); setActionError(null)
+    try { await services.command.reopen(user.id, r); setReloadKey(k => k + 1) }
+    catch (e) { setActionError(e instanceof Error ? e.message : 'Não foi possível reabrir.') }
+    finally { setBusyId(null) }
+  }
+  // Excluir o lançamento (o evento) de vez.
+  async function deleteGasto(r: HealthEvent) {
+    if (busyId || !user) return
+    if (!window.confirm(`Excluir "${r.title}" dos seus gastos? O evento é removido.`)) return
+    setBusyId(r.id); setActionError(null)
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any).from('health_events').delete().eq('id', r.id)
+      if (error) { setActionError(`Não foi possível excluir: ${error.message}`); return }
+      setReloadKey(k => k + 1)
+    } finally { setBusyId(null) }
   }
 
   const years = [...new Set(items.map(r => Number(r.date.slice(0, 4))))].sort((a, b) => b - a)
@@ -100,6 +123,13 @@ export default function GastosPage() {
         </p>
       </div>
 
+      {actionError && (
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+          <p className="font-body text-xs text-red-600">{actionError}</p>
+          <button onClick={() => setActionError(null)} className="text-red-400 hover:text-red-600 transition-colors flex-shrink-0"><X size={14} /></button>
+        </div>
+      )}
+
       {loading ? (
         <div className="card-premium p-10 text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></div>
       ) : items.length === 0 ? (
@@ -144,7 +174,21 @@ export default function GastosPage() {
                     <span className="font-body text-[11px] text-mauve/40 mt-1 inline-block">Sem comprovante anexado</span>
                   )}
                 </div>
-                <span className="font-body text-sm font-semibold text-sage flex-shrink-0">{fmtBRL(r.amountCents ?? 0)}</span>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className="font-body text-sm font-semibold text-sage">{fmtBRL(r.amountCents ?? 0)}</span>
+                  {!r.directExpense && (
+                    <button aria-label="Reabrir" title="Reabrir (desfazer conclusão — volta para a Agenda)"
+                      disabled={busyId === r.id} onClick={() => reopenGasto(r)}
+                      className="w-7 h-7 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/60 hover:text-petal transition-colors disabled:opacity-40">
+                      <RotateCcw size={13} />
+                    </button>
+                  )}
+                  <button aria-label="Excluir" title="Excluir lançamento"
+                    disabled={busyId === r.id} onClick={() => deleteGasto(r)}
+                    className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve/60 hover:text-red-400 transition-colors disabled:opacity-40">
+                    <Trash2 size={13} />
+                  </button>
+                </div>
               </div>
             ))}
           </div>

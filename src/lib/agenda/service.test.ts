@@ -76,15 +76,34 @@ describe('EventCommandService (escrita + transições no bus)', () => {
     expect(seen).toEqual(['EventCancelled', 'EventRescheduled'])
   })
 
-  it('create com recorrência gera a série (mesmo series_id; 1ª manual, demais recurrence)', async () => {
+  it('create recorrente salva 1 evento (a série rola ao concluir, não na criação)', async () => {
     const { repo, getSavedAll } = fakeRepo()
     const cmd = createEventCommandService(repo, createEventBus(), clock)
-    await cmd.create('u1', { type: 'consulta', title: 'Psicóloga', date: '2026-07-18', recurrenceRule: 'freq=weekly;interval=1;count=3' })
+    await cmd.create('u1', { type: 'medicamento', title: 'EFEXOR', date: '2026-07-18', recurrenceRule: 'freq=monthly;interval=1;until=2026-12-18' })
+    expect(getSavedAll()).toHaveLength(1)
+  })
+
+  it('concluir recorrente gera a PRÓXIMA ocorrência planejada (uso contínuo nunca some)', async () => {
+    const { repo, getSavedAll } = fakeRepo()
+    const cmd = createEventCommandService(repo, createEventBus(), clock)
+    await cmd.complete('u1', ev({ status: 'planejado', date: '2026-07-18', recurrenceRule: 'freq=monthly;interval=1;until=2026-12-18' }))
     const all = getSavedAll()
-    expect(all.map(e => e.date)).toEqual(['2026-07-18', '2026-07-25', '2026-08-01'])
-    expect(new Set(all.map(e => e.seriesId)).size).toBe(1)
-    expect(all[0].source).toBe('manual')
-    expect(all[1].source).toBe('recurrence')
+    expect(all.map(e => e.status)).toEqual(['realizado', 'planejado'])
+    expect(all[1].date).toBe('2026-08-18')
+  })
+
+  it('concluir recorrente após o until NÃO gera próxima', async () => {
+    const { repo, getSavedAll } = fakeRepo()
+    const cmd = createEventCommandService(repo, createEventBus(), clock)
+    await cmd.complete('u1', ev({ status: 'planejado', date: '2026-12-18', recurrenceRule: 'freq=monthly;interval=1;until=2026-12-18' }))
+    expect(getSavedAll()).toHaveLength(1)
+  })
+
+  it('reopen desfaz a conclusão (volta a planejado, limpa completedAt)', async () => {
+    const { repo, getSaved } = fakeRepo()
+    const cmd = createEventCommandService(repo, createEventBus(), clock)
+    await cmd.reopen('u1', ev({ status: 'realizado', completedAt: '2026-07-18T10:00:00Z' }))
+    expect(getSaved()).toMatchObject({ status: 'planejado', completedAt: null })
   })
 
   it('create sem recorrência salva 1 evento', async () => {

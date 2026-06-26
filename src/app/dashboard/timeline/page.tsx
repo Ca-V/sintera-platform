@@ -10,7 +10,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   Clock, Plus, X, Stethoscope, Syringe, Activity, FlaskConical, CalendarDays,
-  Loader2, Pencil, Trash2, Paperclip, Info, Sparkles, Pill, Receipt, FileText, Dumbbell, Dna, CheckCircle2,
+  Loader2, Pencil, Trash2, Paperclip, Info, Sparkles, Pill, Receipt, FileText, Dumbbell, Dna, CheckCircle2, RotateCcw,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useUser } from '@/context/UserContext'
@@ -75,7 +75,7 @@ function fmtBRL(cents: number): string {
 export default function TimelinePage() {
   const { user } = useUser()
   // Caminho ÚNICO de evento: mesmo modal e mesma gravação da Agenda.
-  const { supabase, saveEvent } = useEventForm()
+  const { supabase, saveEvent, services } = useEventForm()
 
   const [items, setItems] = useState<TimelineItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -197,19 +197,27 @@ export default function TimelinePage() {
 
   // Marca um evento do Histórico como Realizado — atualização CIRÚRGICA (só status +
   // completed_at) p/ preservar os demais campos. Realizado + valor entra em Gastos.
-  async function markRealized(rawId: string) {
-    if (busyId) return
+  // Carrega o evento completo e usa o MESMO comando da Agenda (com roll-forward da
+  // recorrência: concluir um item de uso contínuo já deixa a próxima ocorrência na Agenda).
+  async function withFullEvent(rawId: string, action: (ev: HealthEvent) => Promise<void>, errMsg: string) {
+    if (busyId || !user) return
     setBusyId(rawId); setActionError(null)
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any).from('health_events')
-        .update({ status: 'realizado', completed_at: new Date().toISOString() }).eq('id', rawId)
-      if (error) { setActionError(`Não foi possível concluir: ${error.message}`); return }
+      const { data, error } = await (supabase as any).from('health_events').select('*').eq('id', rawId).single()
+      if (error || !data) { setActionError(errMsg); return }
+      await action(rowToHealthEvent(data as HealthEventRow))
       await load()
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : errMsg)
     } finally {
       setBusyId(null)
     }
   }
+  const markRealized = (rawId: string) =>
+    withFullEvent(rawId, ev => services.command.complete(user!.id, ev), 'Não foi possível concluir o evento.')
+  const reopenEvent = (rawId: string) =>
+    withFullEvent(rawId, ev => services.command.reopen(user!.id, ev), 'Não foi possível reabrir o evento.')
 
   const today = new Date().toISOString().slice(0, 10)
   // Histórico = SÓ o que já aconteceu. Eventos futuros ainda planejados vivem na Agenda
@@ -269,6 +277,13 @@ export default function TimelinePage() {
                       disabled={busyId === it.rawId} onClick={() => markRealized(it.rawId!)}
                       className="w-6 h-6 rounded-lg hover:bg-sage-light flex items-center justify-center text-mauve/60 hover:text-sage transition-colors disabled:opacity-40">
                       <CheckCircle2 size={12} />
+                    </button>
+                  )}
+                  {it.status === 'realizado' && (
+                    <button aria-label="Reabrir" title="Reabrir (desfazer conclusão — volta para a Agenda)"
+                      disabled={busyId === it.rawId} onClick={() => reopenEvent(it.rawId!)}
+                      className="w-6 h-6 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/60 hover:text-petal transition-colors disabled:opacity-40">
+                      <RotateCcw size={12} />
                     </button>
                   )}
                   <button aria-label="Editar" onClick={() => openEdit(it)}

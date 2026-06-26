@@ -11,7 +11,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { createSupabaseEventRepository, type EventRepository } from './repository'
 import { createEventBus, type EventBus, type DomainEvent, type DomainEventType, type EventActor } from './bus'
 import { completeRule, cancelRule, rescheduleRule, canTransition, type HealthEvent, type EventStatus } from './event'
-import { parseRule, generateOccurrences } from '../recurrence'
+import { parseRule, addToDate } from '../recurrence'
 
 export type EventDraft = Partial<HealthEvent> & { type: string; title: string; date: string }
 
@@ -48,6 +48,8 @@ export interface EventCommandService {
   complete(userId: string, event: HealthEvent): Promise<void>
   cancel(userId: string, event: HealthEvent): Promise<void>
   reschedule(userId: string, event: HealthEvent, date: string, time: string | null): Promise<void>
+  /** Desfaz conclusão/cancelamento (correção): volta para "planejado" e limpa completed_at. */
+  reopen(userId: string, event: HealthEvent): Promise<void>
 }
 
 function newId(): string {
@@ -74,31 +76,47 @@ export function createEventCommandService(repo: EventRepository, bus: EventBus, 
     await repo.save(userId, next)
     await emit(type, userId, next, ev.status)
   }
+  // ROLL-FORWARD da recorrência: ao concluir (ou criar já realizado) um evento
+  // recorrente, gera a PRÓXIMA ocorrência (planejada) até o `until`. Assim um item de
+  // uso contínuo (ex.: medicamento mensal) NUNCA some da Agenda: concluiu um, aparece o
+  // próximo. Sempre existe no máximo UMA ocorrência futura por vez (sem duplicatas).
+  async function rollForward(userId: string, ev: EventDraft) {
+    const rule = parseRule(ev.recurrenceRule ?? null)
+    if (rule.frequency === 'none') return
+    const nextDate = addToDate(ev.date, rule.frequency, rule.interval)
+    if (rule.until && nextDate > rule.until) return
+    const occ: EventDraft = {
+      ...ev, id: newId(), date: nextDate, status: 'planejado', completedAt: null,
+      reminderSentAt: null, seriesId: ev.seriesId ?? newId(), source: 'recurrence',
+    }
+    await repo.save(userId, occ)
+    await emit('EventCreated', userId, occ as HealthEvent)
+  }
+
   return {
     async create(userId, draft) {
       // Regra de negócio (camada de serviço, não UI): nascer "realizado" carimba
       // completed_at — assim o evento já entra no Histórico e em Gastos (se tiver valor).
-      const d = (draft.status === 'realizado' && !draft.completedAt)
+      const d: EventDraft = (draft.status === 'realizado' && !draft.completedAt)
         ? { ...draft, completedAt: clock.now() }
         : draft
-      const rule = parseRule(d.recurrenceRule ?? null)
-      // Série só na CRIAÇÃO de evento novo; edição (id presente) salva único.
-      if (rule.frequency === 'none' || d.id) {
-        await repo.save(userId, d)
-        await emit('EventCreated', userId, d as HealthEvent)
-        return
-      }
-      // Série recorrente: gera as ocorrências com um series_id comum.
-      const seriesId = d.seriesId ?? newId()
-      const dates = generateOccurrences(rule, d.date)
-      for (let i = 0; i < dates.length; i++) {
-        await repo.save(userId, { ...d, date: dates[i], seriesId, source: i === 0 ? (d.source ?? 'manual') : 'recurrence' })
-      }
-      await emit('EventCreated', userId, { ...d, seriesId, date: dates[0] } as HealthEvent)
+      await repo.save(userId, d)
+      await emit('EventCreated', userId, d as HealthEvent)
+      // Se nasceu recorrente E já realizado, deixa a próxima ocorrência planejada.
+      if (d.status === 'realizado') await rollForward(userId, d)
     },
-    complete:   (userId, ev) => guardedSave(userId, ev, 'realizado', () => completeRule(ev, clock.now()), 'EventCompleted'),
+    async complete(userId, ev) {
+      await guardedSave(userId, ev, 'realizado', () => completeRule(ev, clock.now()), 'EventCompleted')
+      await rollForward(userId, ev) // recorrente concluído → próxima ocorrência na Agenda
+    },
     cancel:     (userId, ev) => guardedSave(userId, ev, 'cancelado', () => cancelRule(ev), 'EventCancelled'),
     reschedule: (userId, ev, date, time) => guardedSave(userId, ev, 'reagendado', () => rescheduleRule(ev, date, time), 'EventRescheduled'),
+    async reopen(userId, ev) {
+      // Correção: desfaz conclusão/cancelamento. Volta a "planejado" e limpa completed_at.
+      const next = { ...ev, status: 'planejado' as EventStatus, completedAt: null }
+      await repo.save(userId, next)
+      await emit('EventRescheduled', userId, next, ev.status)
+    },
   }
 }
 
