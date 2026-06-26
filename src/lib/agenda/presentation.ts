@@ -34,7 +34,7 @@ export const EVENT_TYPE_LABELS: Record<string, string> = {
 // Status canônico do domínio (6) × status oferecidos na UI (3, decisão da fundadora:
 // Agendado/Realizado/Cancelado). "Agendado" = planejado no domínio.
 export const EVENT_STATUS_LABELS: Record<EventStatus, string> = {
-  planejado: 'Agendado', confirmado: 'Confirmado', realizado: 'Realizado',
+  planejado: 'Agendado', realizado: 'Realizado',
   cancelado: 'Cancelado', reagendado: 'Reagendado', perdido: 'Não compareceu',
 }
 export const EVENT_STATUS_UI: { id: EventStatus; label: string }[] = [

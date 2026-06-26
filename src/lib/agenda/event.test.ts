@@ -20,12 +20,12 @@ function ev(p: Partial<HealthEvent>): HealthEvent {
 describe('rowToHealthEvent', () => {
   it('mapeia snake_case → domínio com source/links/reminder', () => {
     const row: HealthEventRow = {
-      id: 'e1', event_type: 'consulta', title: 'Consulta', status: 'confirmado', source: 'protocol',
+      id: 'e1', event_type: 'consulta', title: 'Consulta', status: 'reagendado', source: 'protocol',
       event_date: '2026-07-18', event_time: '14:30:00', duration_min: 30, reminder_enabled: false,
       modality: 'presencial', links: [{ type: 'exam', id: 'x1' }],
     }
     const e = rowToHealthEvent(row)
-    expect(e.status).toBe('confirmado')
+    expect(e.status).toBe('reagendado')
     expect(e.source).toBe('protocol')
     expect(e.durationMin).toBe(30)
     expect(e.reminderEnabled).toBe(false)
@@ -105,9 +105,9 @@ describe('seletores e regras de transição (puros)', () => {
 })
 
 describe('canTransition (invariantes de status)', () => {
-  it('permite planejado→confirmado→realizado', () => {
-    expect(canTransition('planejado', 'confirmado')).toBe(true)
-    expect(canTransition('confirmado', 'realizado')).toBe(true)
+  it('permite planejado→realizado e reagendado→realizado', () => {
+    expect(canTransition('planejado', 'realizado')).toBe(true)
+    expect(canTransition('reagendado', 'realizado')).toBe(true)
   })
   it('proíbe cancelado→realizado e a partir de estados terminais', () => {
     expect(canTransition('cancelado', 'realizado')).toBe(false)

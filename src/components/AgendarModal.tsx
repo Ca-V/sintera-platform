@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Calendar, Download, ExternalLink, CalendarDays, Loader2, Check, ChevronDown } from 'lucide-react'
+import { X, Download, ExternalLink, CalendarDays, Loader2, Check, ChevronDown } from 'lucide-react'
 import { EVENT_TYPE_DEFS, EVENT_STATUS_UI } from '@/lib/agenda'
 
 // Tipos vêm da FONTE ÚNICA (@/lib/agenda) — Agenda e Histórico falam a mesma língua.
@@ -82,7 +82,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
   const [status, setStatus]       = useState<EventStatusInput>('planejado')
   const [title, setTitle]   = useState(defaultTitle)
   const [date, setDate]     = useState('')
-  const [time, setTime]     = useState('08:00')
+  const [time, setTime]     = useState('')
   const [duration, setDuration] = useState('60')
   const [notes, setNotes]   = useState(defaultNotes)
   const [reminderEnabled, setReminderEnabled] = useState(true)
@@ -101,6 +101,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
   const [carteirinha, setCarteirinha] = useState('')
   const [showDetails, setShowDetails] = useState(false)
   const [added, setAdded] = useState(false)
+  const [savedToAgenda, setSavedToAgenda] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
@@ -112,7 +113,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
     setStatus(initialEvent?.status ?? 'planejado')
     setTitle(initialEvent?.title ?? defaultTitle)
     setDate(initialEvent?.date ?? '')
-    setTime(initialEvent?.time ?? '08:00')
+    setTime(initialEvent?.time ?? '')
     setDuration(initialEvent?.durationMin ? String(initialEvent.durationMin) : '60')
     setNotes(initialEvent?.notes ?? defaultNotes)
     setReminderEnabled(initialEvent?.reminderEnabled ?? true)
@@ -158,7 +159,9 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
   const canExport = date !== ''
 
   function buildDates() {
-    const start = new Date(`${date}T${time}:00`)
+    // Exportação p/ calendário precisa de hora; se a usuária não informou, usa 09:00
+    // só no link do calendário (o evento salvo na SINTERA mantém horário vazio).
+    const start = new Date(`${date}T${time || '09:00'}:00`)
     const end = new Date(start.getTime() + parseInt(duration) * 60 * 1000)
     return { start, end }
   }
@@ -184,7 +187,9 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
         recurrenceFrequency: recurrence, recurrenceUntil, priority, directExpense,
         outcome: outcome.trim(), operadora: operadora.trim(), carteirinha: carteirinha.trim(),
       })
-      handleClose()
+      // Salvou na Agenda: mostra confirmação; exportar p/ calendário fica como ação
+      // SECUNDÁRIA, oferecida só agora que o evento já existe.
+      setSaving(false); setSavedToAgenda(true); setAdded(true)
     } catch (e) {
       // Falha de gravação: mostrar e MANTER o modal aberto para a usuária tentar de novo.
       setSaveError(e instanceof Error ? e.message : 'Não foi possível salvar. Tente novamente.')
@@ -192,13 +197,14 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
     }
   }
 
-  function handleClose() {
-    setAdded(false); setTitle(defaultTitle); setDate(''); setTime('08:00'); setDuration('60'); setNotes(defaultNotes)
+  function resetFields() {
+    setTitle(defaultTitle); setDate(''); setTime(''); setDuration('60'); setNotes(defaultNotes)
     setEventType('consulta'); setIsReturn(false); setStatus('planejado'); setModality(''); setProfessionalName(''); setEstablishment(''); setLocation(''); setPreparation(''); setAmount('')
     setRecurrence('none'); setRecurrenceUntil(''); setPriority(''); setDirectExpense(false); setOutcome(''); setOperadora(''); setCarteirinha('')
     setShowDetails(false); setSaveError(null)
-    onClose()
   }
+  function addAnother() { resetFields(); setAdded(false); setSavedToAgenda(false) }
+  function handleClose() { resetFields(); setAdded(false); setSavedToAgenda(false); onClose() }
 
   return (
     <AnimatePresence>
@@ -215,20 +221,37 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                   <div className="w-9 h-9 rounded-2xl bg-blush flex items-center justify-center"><CalendarDays size={17} className="text-petal" /></div>
                   <div>
                     <p className="font-body text-sm font-semibold text-onyx">{initialEvent ? 'Editar evento' : 'Adicionar à agenda'}</p>
-                    <p className="font-body text-xs text-mauve">Salva na sua Agenda · exporta p/ calendário</p>
+                    <p className="font-body text-xs text-mauve">Registre um compromisso de saúde</p>
                   </div>
                 </div>
                 <button onClick={handleClose} className="text-mauve hover:text-onyx transition-colors"><X size={17} /></button>
               </div>
 
               {added ? (
-                <div className="px-6 py-8 text-center">
-                  <div className="w-14 h-14 rounded-full bg-sage-light flex items-center justify-center mx-auto mb-3"><Calendar size={24} className="text-sage" /></div>
-                  <p className="font-body text-sm font-semibold text-onyx mb-1">Evento criado!</p>
-                  <p className="font-body text-xs text-mauve mb-5">Adicionado ao seu calendário.</p>
+                <div className="px-6 py-7 text-center">
+                  <div className="w-14 h-14 rounded-full bg-sage-light flex items-center justify-center mx-auto mb-3"><Check size={24} className="text-sage" /></div>
+                  <p className="font-body text-sm font-semibold text-onyx mb-1">{savedToAgenda ? 'Salvo na sua Agenda' : 'Adicionado ao calendário'}</p>
+                  <p className="font-body text-xs text-mauve mb-5">{savedToAgenda ? 'Quando for realizado, ele passa para o Histórico de Saúde.' : 'Pronto.'}</p>
+
+                  {savedToAgenda && (
+                    <div className="space-y-2 mb-5 text-left">
+                      <p className={LABEL}>Exportar para calendário <span className="font-normal text-mauve/50 normal-case">(opcional)</span></p>
+                      <button onClick={handleGoogle} className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl border border-border hover:border-petal/40 hover:bg-blush/30 transition-all">
+                        <span className="font-body text-sm text-onyx flex-1 text-left">Google Calendar</span><ExternalLink size={13} className="text-mauve/50" />
+                      </button>
+                      <button onClick={handleOutlook} className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl border border-border hover:border-petal/40 hover:bg-blush/30 transition-all">
+                        <span className="font-body text-sm text-onyx flex-1 text-left">Outlook / Microsoft</span><ExternalLink size={13} className="text-mauve/50" />
+                      </button>
+                      <button onClick={handleICS} className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl border border-border hover:border-petal/40 hover:bg-blush/30 transition-all">
+                        <div className="w-[18px] h-[18px] rounded flex items-center justify-center bg-sage-light flex-shrink-0"><Download size={11} className="text-sage" /></div>
+                        <span className="font-body text-sm text-onyx flex-1 text-left">Baixar .ics</span><span className="font-body text-[10px] text-mauve/50">Apple, outros</span>
+                      </button>
+                    </div>
+                  )}
+
                   <div className="flex gap-2">
-                    <button onClick={() => setAdded(false)} className="flex-1 py-2.5 rounded-xl border border-border text-mauve text-sm font-body hover:border-petal/40 transition-colors">Adicionar outro</button>
-                    <button onClick={handleClose} className="flex-1 py-2.5 rounded-xl gradient-sintera text-white text-sm font-body hover:opacity-90 transition-opacity">Fechar</button>
+                    <button onClick={addAnother} className="flex-1 py-2.5 rounded-xl border border-border text-mauve text-sm font-body hover:border-petal/40 transition-colors">Adicionar outro</button>
+                    <button onClick={handleClose} className="flex-1 py-2.5 rounded-xl gradient-sintera text-white text-sm font-body hover:opacity-90 transition-opacity">Concluir</button>
                   </div>
                 </div>
               ) : (
@@ -382,21 +405,24 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                     </div>
                   )}
 
-                  {/* Export */}
-                  <div className="space-y-2 pt-1">
-                    <p className={LABEL}>{onSave ? 'Exportar para calendário' : 'Adicionar ao calendário'}</p>
-                    <button onClick={handleGoogle} disabled={!canExport} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-petal/40 hover:bg-blush/30 disabled:opacity-40 transition-all">
-                      <span className="font-body text-sm text-onyx flex-1 text-left">Google Calendar</span><ExternalLink size={13} className="text-mauve/50" />
-                    </button>
-                    <button onClick={handleOutlook} disabled={!canExport} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-petal/40 hover:bg-blush/30 disabled:opacity-40 transition-all">
-                      <span className="font-body text-sm text-onyx flex-1 text-left">Outlook / Microsoft</span><ExternalLink size={13} className="text-mauve/50" />
-                    </button>
-                    <button onClick={handleICS} disabled={!canExport} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-petal/40 hover:bg-blush/30 disabled:opacity-40 transition-all">
-                      <div className="w-[18px] h-[18px] rounded flex items-center justify-center bg-sage-light flex-shrink-0"><Download size={11} className="text-sage" /></div>
-                      <span className="font-body text-sm text-onyx flex-1 text-left">Baixar .ics</span><span className="font-body text-[10px] text-mauve/50">Apple, outros</span>
-                    </button>
-                    {!canExport && <p className="font-body text-xs text-mauve/50 text-center">Selecione uma data para continuar</p>}
-                  </div>
+                  {/* Export — só no modo "somente calendário" (sem Salvar). No modo Agenda,
+                      exportar é oferecido DEPOIS de salvar (tela de confirmação). */}
+                  {!onSave && (
+                    <div className="space-y-2 pt-1">
+                      <p className={LABEL}>Adicionar ao calendário</p>
+                      <button onClick={handleGoogle} disabled={!canExport} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-petal/40 hover:bg-blush/30 disabled:opacity-40 transition-all">
+                        <span className="font-body text-sm text-onyx flex-1 text-left">Google Calendar</span><ExternalLink size={13} className="text-mauve/50" />
+                      </button>
+                      <button onClick={handleOutlook} disabled={!canExport} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-petal/40 hover:bg-blush/30 disabled:opacity-40 transition-all">
+                        <span className="font-body text-sm text-onyx flex-1 text-left">Outlook / Microsoft</span><ExternalLink size={13} className="text-mauve/50" />
+                      </button>
+                      <button onClick={handleICS} disabled={!canExport} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-petal/40 hover:bg-blush/30 disabled:opacity-40 transition-all">
+                        <div className="w-[18px] h-[18px] rounded flex items-center justify-center bg-sage-light flex-shrink-0"><Download size={11} className="text-sage" /></div>
+                        <span className="font-body text-sm text-onyx flex-1 text-left">Baixar .ics</span><span className="font-body text-[10px] text-mauve/50">Apple, outros</span>
+                      </button>
+                      {!canExport && <p className="font-body text-xs text-mauve/50 text-center">Selecione uma data para continuar</p>}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

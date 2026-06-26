@@ -50,10 +50,10 @@ describe('EventCommandService (escrita + transições no bus)', () => {
     const seen: DomainEvent[] = []
     bus.subscribe('EventCompleted', e => { seen.push(e) })
     const cmd = createEventCommandService(repo, bus, clock)
-    await cmd.complete('u1', ev({ status: 'confirmado' }))
+    await cmd.complete('u1', ev({ status: 'planejado' }))
     expect(getSaved()).toMatchObject({ status: 'realizado', completedAt: '2026-07-18T10:00:00Z' })
     expect(seen).toHaveLength(1)
-    expect(seen[0]).toMatchObject({ type: 'EventCompleted', fromStatus: 'confirmado', actor: { kind: 'user', id: 'u1' } })
+    expect(seen[0]).toMatchObject({ type: 'EventCompleted', fromStatus: 'planejado', actor: { kind: 'user', id: 'u1' } })
     expect(seen[0].eventId).toBeTruthy()
     expect(seen[0].aggregateId).toBe('e1')
   })

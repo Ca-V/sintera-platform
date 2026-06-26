@@ -7,8 +7,9 @@
 // projeções técnicas (predicados). Sem texto/ícone/cor de UI (→ presentation.ts) e
 // sem origem física de dados (→ repository.ts).
 
-// Status canônico — enum único de plataforma.
-export const EVENT_STATUSES = ['planejado', 'confirmado', 'realizado', 'cancelado', 'reagendado', 'perdido'] as const
+// Status canônico — enum único de plataforma. "Confirmado" removido: era idêntico a
+// "planejado" nas projeções (não mudava comportamento) — menos estados, menos complexidade.
+export const EVENT_STATUSES = ['planejado', 'realizado', 'cancelado', 'reagendado', 'perdido'] as const
 export type EventStatus = typeof EVENT_STATUSES[number]
 
 export const EVENT_MODALITIES = ['presencial', 'telemedicina'] as const
@@ -229,11 +230,10 @@ export function healthEventToRow(userId: string, ev: Partial<HealthEvent> & { ty
 }
 
 // ── Invariantes do domínio — máquina de estados (regras AQUI, não na UI/serviço) ──
-// Ex.: planejado→confirmado→realizado é permitido; cancelado→realizado NÃO é.
+// Ex.: planejado→realizado é permitido; cancelado→realizado NÃO é.
 const ALLOWED_TRANSITIONS: Record<EventStatus, EventStatus[]> = {
-  planejado:  ['confirmado', 'reagendado', 'cancelado', 'realizado', 'perdido'],
-  confirmado: ['realizado', 'reagendado', 'cancelado', 'perdido'],
-  reagendado: ['confirmado', 'realizado', 'reagendado', 'cancelado', 'perdido'],
+  planejado:  ['reagendado', 'cancelado', 'realizado', 'perdido'],
+  reagendado: ['realizado', 'reagendado', 'cancelado', 'perdido'],
   realizado:  [],            // terminal
   cancelado:  [],            // terminal
   perdido:    ['reagendado', 'cancelado'],
