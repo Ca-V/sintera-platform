@@ -14,6 +14,9 @@ export type EventStatus = typeof EVENT_STATUSES[number]
 export const EVENT_MODALITIES = ['presencial', 'telemedicina'] as const
 export type EventModality = typeof EVENT_MODALITIES[number]
 
+export const EVENT_PRIORITIES = ['alta', 'media', 'baixa'] as const
+export type EventPriority = typeof EVENT_PRIORITIES[number]
+
 // Relacionamento da jornada — padrão único {id, type, source, metadata} (facilita
 // integrações futuras e a convergência ômica). Chaves previstas de `type`:
 //   exam · biomarker · protocol · medication · supplement · document · professional
@@ -45,6 +48,7 @@ export interface HealthEvent {
   title: string
   status: EventStatus
   source: string               // origem: manual · exam · protocol · wearable · import · connector · system…
+  priority: EventPriority | null
   date: string                 // 'YYYY-MM-DD'
   time: string | null          // 'HH:MM' | 'HH:MM:SS'
   durationMin: number | null
@@ -82,6 +86,7 @@ export interface HealthEventRow {
   title: string
   status?: string | null
   source?: string | null
+  priority?: string | null
   event_date: string
   event_time?: string | null
   duration_min?: number | null
@@ -112,12 +117,15 @@ function normStatus(s: string | null | undefined): EventStatus {
 function normModality(m: string | null | undefined): EventModality | null {
   return m === 'presencial' || m === 'telemedicina' ? m : null
 }
+function normPriority(p: string | null | undefined): EventPriority | null {
+  return p === 'alta' || p === 'media' || p === 'baixa' ? p : null
+}
 
 /** Converte uma linha de `health_events` no domínio. Puro e tolerante a valores inesperados. */
 export function rowToHealthEvent(r: HealthEventRow): HealthEvent {
   return {
     id: r.id, type: r.event_type, title: r.title, status: normStatus(r.status),
-    source: r.source ?? 'manual',
+    source: r.source ?? 'manual', priority: normPriority(r.priority),
     date: r.event_date, time: r.event_time ?? null,
     durationMin: r.duration_min ?? null, reminderEnabled: r.reminder_enabled ?? true, reminderSentAt: r.reminder_sent_at ?? null,
     professionalKind: r.professional_kind ?? null, professionalName: r.professional_name ?? null,
@@ -152,7 +160,7 @@ export function agendaRowToHealthEvent(r: AgendaEventRow): HealthEvent {
   return {
     id: r.id, type: r.event_type, title: r.title,
     status: AGENDA_STATUS_MAP[r.status ?? ''] ?? 'planejado',
-    source: 'agenda_legacy',
+    source: 'agenda_legacy', priority: null,
     date: r.event_date, time: r.event_time ?? null,
     durationMin: r.duration_min ?? null, reminderEnabled: r.reminder_enabled ?? true, reminderSentAt: r.reminder_sent_at ?? null,
     professionalKind: null, professionalName: null, establishment: null, location: null,
@@ -202,6 +210,7 @@ export function healthEventToRow(userId: string, ev: Partial<HealthEvent> & { ty
     ...(ev.id ? { id: ev.id } : {}),
     user_id: userId,
     event_type: ev.type, title: ev.title, status: ev.status ?? 'planejado', source: ev.source ?? 'manual',
+    priority: ev.priority ?? null,
     event_date: ev.date, event_time: ev.time ?? null, duration_min: ev.durationMin ?? null,
     reminder_enabled: ev.reminderEnabled ?? true, reminder_sent_at: ev.reminderSentAt ?? null,
     professional_kind: ev.professionalKind ?? null, professional_name: ev.professionalName ?? null,

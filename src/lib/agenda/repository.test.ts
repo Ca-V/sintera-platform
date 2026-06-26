@@ -4,7 +4,7 @@ import type { HealthEvent } from './event'
 
 function ev(id: string, date: string, time: string | null): HealthEvent {
   return {
-    id, type: 'consulta', title: id, status: 'planejado', source: 'manual',
+    id, type: 'consulta', title: id, status: 'planejado', source: 'manual', priority: null,
     date, time, durationMin: null, reminderEnabled: true, reminderSentAt: null,
     professionalKind: null, professionalName: null, establishment: null, location: null,
     modality: null, preparation: null, notes: null, amountCents: null, directExpense: false, attachmentUrl: null,

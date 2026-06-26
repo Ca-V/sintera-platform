@@ -6,7 +6,7 @@ import type { HealthEvent } from './event'
 
 function ev(p: Partial<HealthEvent>): HealthEvent {
   return {
-    id: 'e1', type: 'consulta', title: 'Consulta', status: 'planejado', source: 'manual',
+    id: 'e1', type: 'consulta', title: 'Consulta', status: 'planejado', source: 'manual', priority: null,
     date: '2026-07-18', time: '14:30', durationMin: null, reminderEnabled: true, reminderSentAt: null,
     professionalKind: null, professionalName: null, establishment: null, location: null,
     modality: null, preparation: null, notes: null, amountCents: null, directExpense: false, attachmentUrl: null,

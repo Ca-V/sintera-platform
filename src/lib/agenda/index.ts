@@ -3,11 +3,11 @@
 // a UI continua funcionando. Não importar de event/repository/service diretamente.
 
 export type {
-  HealthEvent, EventStatus, EventModality, EventLink, EventLinkKind,
+  HealthEvent, EventStatus, EventModality, EventPriority, EventLink, EventLinkKind,
   EventLinkRelationship, EventSource, Outcome,
 } from './event'
 export {
-  EVENT_STATUSES, EVENT_MODALITIES, canTransition,
+  EVENT_STATUSES, EVENT_MODALITIES, EVENT_PRIORITIES, canTransition,
   isUpcoming, isPast, isClosed, isConcluded, hasActiveReminder, hasCost, isDerived, isFinancial, isDirectExpense,
 } from './event'
 

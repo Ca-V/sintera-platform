@@ -5,7 +5,7 @@ import type { HealthEvent } from './event'
 
 function ev(p: Partial<HealthEvent>): HealthEvent {
   return {
-    id: 'e1', type: 'consulta', title: 'Consulta de Cardiologia', status: 'planejado', source: 'manual',
+    id: 'e1', type: 'consulta', title: 'Consulta de Cardiologia', status: 'planejado', source: 'manual', priority: null,
     date: '2026-07-18', time: '14:30:00', durationMin: null, reminderEnabled: true, reminderSentAt: null,
     professionalKind: 'medico', professionalName: 'Dr. João Silva', establishment: 'Clínica ABC',
     location: null, modality: 'presencial', preparation: null, notes: null, amountCents: null,
