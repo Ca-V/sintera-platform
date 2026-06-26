@@ -23,16 +23,19 @@ interface Med {
   id: string
   name: string
   kind: Kind
+  brand: string | null
   dose: string | null
   frequency: string | null
   startedOn: string | null
   untilOn: string | null
   status: Status
   notes: string | null
+  acquiredQty: number | null
   packQty: number | null
   dailyCons: number | null
   purchasedOn: string | null
   purchaseStatus: string | null
+  amountCents: number | null
   repurchaseReminder: boolean
   repurchaseEventId: string | null
 }
@@ -84,8 +87,11 @@ export default function MedicamentosPage() {
   }, [showForm, editingId])
   const [name, setName] = useState('')
   const [kind, setKind] = useState<Kind>('medicamento')
+  const [brand, setBrand] = useState('')
   const [dose, setDose] = useState('')
   const [freq, setFreq] = useState('')
+  const [acquiredQty, setAcquiredQty] = useState('')
+  const [amount, setAmount] = useState('')
   const [startedOn, setStartedOn] = useState('')
   const [untilOn, setUntilOn] = useState('')
   const [notes, setNotes] = useState('')
@@ -168,23 +174,26 @@ export default function MedicamentosPage() {
     setLoading(true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = await (supabase as any).from('medications')
-      .select('id, name, kind, dose, frequency, started_on, until_date, status, notes, pack_quantity, daily_consumption, purchased_on, purchase_status, repurchase_reminder, repurchase_event_id')
+      .select('id, name, kind, brand, dose, frequency, started_on, until_date, status, notes, acquired_quantity, pack_quantity, daily_consumption, purchased_on, purchase_status, amount_cents, repurchase_reminder, repurchase_event_id')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
     setMeds(((data ?? []) as Array<Record<string, unknown>>).map(m => ({
       id: m.id as string,
       name: (m.name as string) ?? '',
-      kind: ((m.kind as string) === 'suplemento' ? 'suplemento' : 'medicamento') as Kind,
+      kind: (['suplemento', 'produto', 'dispositivo'].includes(m.kind as string) ? (m.kind as string) : 'medicamento') as Kind,
+      brand: (m.brand as string) ?? null,
       dose: (m.dose as string) ?? null,
       frequency: (m.frequency as string) ?? null,
       startedOn: (m.started_on as string) ?? null,
       untilOn: (m.until_date as string) ?? null,
       status: (m.status as Status) ?? 'em_uso',
       notes: (m.notes as string) ?? null,
+      acquiredQty: m.acquired_quantity != null ? Number(m.acquired_quantity) : null,
       packQty: m.pack_quantity != null ? Number(m.pack_quantity) : null,
       dailyCons: m.daily_consumption != null ? Number(m.daily_consumption) : null,
       purchasedOn: (m.purchased_on as string) ?? null,
       purchaseStatus: (m.purchase_status as string) ?? null,
+      amountCents: m.amount_cents != null ? Number(m.amount_cents) : null,
       repurchaseReminder: m.repurchase_reminder === true,
       repurchaseEventId: (m.repurchase_event_id as string) ?? null,
     })))
@@ -195,16 +204,18 @@ export default function MedicamentosPage() {
   useEffect(() => { if (!authLoading) load() }, [authLoading, load])
 
   function reset() {
-    setEditingId(null); setName(''); setKind('medicamento'); setDose(''); setFreq(''); setStartedOn(''); setUntilOn(''); setNotes('')
-    setPackQty(''); setDailyCons(''); setPurchasedOn(''); setPurchaseStatus(''); setRepurchase(false); setErr(null)
+    setEditingId(null); setName(''); setKind('medicamento'); setBrand(''); setDose(''); setFreq(''); setStartedOn(''); setUntilOn(''); setNotes('')
+    setAcquiredQty(''); setAmount(''); setPackQty(''); setDailyCons(''); setPurchasedOn(''); setPurchaseStatus(''); setRepurchase(false); setErr(null)
     setShowMoreDetails(false)
   }
   function openEdit(m: Med) {
-    setEditingId(m.id); setName(m.name); setKind(m.kind); setDose(m.dose ?? ''); setFreq(m.frequency ?? '')
+    setEditingId(m.id); setName(m.name); setKind(m.kind); setBrand(m.brand ?? ''); setDose(m.dose ?? ''); setFreq(m.frequency ?? '')
     setStartedOn(m.startedOn ?? ''); setUntilOn(m.untilOn ?? ''); setNotes(m.notes ?? '')
+    setAcquiredQty(m.acquiredQty != null ? String(m.acquiredQty) : '')
+    setAmount(m.amountCents != null ? (m.amountCents / 100).toFixed(2).replace('.', ',') : '')
     setPackQty(m.packQty != null ? String(m.packQty) : ''); setDailyCons(m.dailyCons != null ? String(m.dailyCons) : '')
     setPurchasedOn(m.purchasedOn ?? ''); setPurchaseStatus(m.purchaseStatus ?? ''); setRepurchase(m.repurchaseReminder)
-    setShowMoreDetails(!!(m.startedOn || m.untilOn || m.notes || m.packQty != null || m.dailyCons != null || m.purchasedOn || m.purchaseStatus || m.repurchaseReminder))
+    setShowMoreDetails(!!(m.startedOn || m.untilOn || m.notes || m.acquiredQty != null || m.amountCents != null || m.packQty != null || m.dailyCons != null || m.purchasedOn || m.purchaseStatus || m.repurchaseReminder))
     setErr(null); setShowForm(true)
   }
 
@@ -212,11 +223,17 @@ export default function MedicamentosPage() {
     if (!user || saving || !name.trim()) return
     setSaving(true); setErr(null)
     const num = (s: string) => { const v = parseFloat(s.replace(',', '.')); return isFinite(v) && v > 0 ? v : null }
+    // "250,00" | "R$ 1.500,00" → centavos. Vazio/inválido → null.
+    const toCents = (s: string) => {
+      let t = s.trim().replace(/[R$\s]/g, ''); if (!t) return null
+      if (t.includes(',')) t = t.replace(/\./g, '').replace(',', '.')
+      const v = parseFloat(t); return isFinite(v) && v >= 0 ? Math.round(v * 100) : null
+    }
     const payload = {
-      name: name.trim(), kind, dose: dose.trim() || null, frequency: freq.trim() || null,
+      name: name.trim(), kind, brand: brand.trim() || null, dose: dose.trim() || null, frequency: freq.trim() || null,
       started_on: startedOn || null, until_date: untilOn || null, notes: notes.trim() || null,
-      pack_quantity: num(packQty), daily_consumption: num(dailyCons),
-      purchased_on: purchasedOn || null, purchase_status: purchaseStatus || null,
+      acquired_quantity: num(acquiredQty), pack_quantity: num(packQty), daily_consumption: num(dailyCons),
+      purchased_on: purchasedOn || null, purchase_status: purchaseStatus || null, amount_cents: toCents(amount),
       repurchase_reminder: repurchase,
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -433,13 +450,13 @@ export default function MedicamentosPage() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="font-body text-xs text-mauve/70 block mb-1">Dose (opcional)</label>
-              <input type="text" value={dose} onChange={e => setDose(e.target.value)} placeholder="Ex.: 50 mg"
+              <label className="font-body text-xs text-mauve/70 block mb-1">Marca / Fabricante (opcional)</label>
+              <input type="text" value={brand} onChange={e => setBrand(e.target.value)} placeholder="Ex.: EMS, Bayer…"
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
             </div>
             <div>
-              <label className="font-body text-xs text-mauve/70 block mb-1">Frequência (opcional)</label>
-              <input type="text" value={freq} onChange={e => setFreq(e.target.value)} placeholder="Ex.: 1x ao dia"
+              <label className="font-body text-xs text-mauve/70 block mb-1">Dose ou especificação (opcional)</label>
+              <input type="text" value={dose} onChange={e => setDose(e.target.value)} placeholder={kind === 'dispositivo' || kind === 'produto' ? 'Ex.: grau -2,00' : 'Ex.: 50 mg'}
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
             </div>
           </div>
@@ -450,14 +467,19 @@ export default function MedicamentosPage() {
           </button>
           {showMoreDetails && (
           <div className="space-y-3 pt-1 border-t border-border/40">
+          <div>
+            <label className="font-body text-xs text-mauve/70 block mb-1">Frequência de uso (opcional)</label>
+            <input type="text" value={freq} onChange={e => setFreq(e.target.value)} placeholder="Ex.: 1x ao dia"
+              className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="font-body text-xs text-mauve/70 block mb-1">Início (opcional)</label>
+              <label className="font-body text-xs text-mauve/70 block mb-1">Início de uso (opcional)</label>
               <input type="date" value={startedOn} onChange={e => setStartedOn(e.target.value)}
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
             </div>
             <div>
-              <label className="font-body text-xs text-mauve/70 block mb-1">Até quando (opcional)</label>
+              <label className="font-body text-xs text-mauve/70 block mb-1">Data limite (opcional)</label>
               <input type="date" value={untilOn} onChange={e => setUntilOn(e.target.value)}
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
               <p className="font-body text-[10px] text-mauve/50 mt-1">Em branco = sem previsão.</p>
@@ -480,13 +502,25 @@ export default function MedicamentosPage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="font-body text-[11px] text-mauve/70 block mb-1">Qtd. na embalagem</label>
-                <input type="text" inputMode="decimal" value={packQty} onChange={e => setPackQty(e.target.value)} placeholder="Ex.: 30"
+                <label className="font-body text-[11px] text-mauve/70 block mb-1">Quantidade adquirida</label>
+                <input type="text" inputMode="decimal" value={acquiredQty} onChange={e => setAcquiredQty(e.target.value)} placeholder="Ex.: 2 caixas"
                   className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30" />
               </div>
               <div>
-                <label className="font-body text-[11px] text-mauve/70 block mb-1">Consumo por dia</label>
-                <input type="text" inputMode="decimal" value={dailyCons} onChange={e => setDailyCons(e.target.value)} placeholder="Ex.: 1"
+                <label className="font-body text-[11px] text-mauve/70 block mb-1">Quantidade da embalagem</label>
+                <input type="text" inputMode="decimal" value={packQty} onChange={e => setPackQty(e.target.value)} placeholder="Ex.: 30"
+                  className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="font-body text-[11px] text-mauve/70 block mb-1">Consumo por período</label>
+                <input type="text" inputMode="decimal" value={dailyCons} onChange={e => setDailyCons(e.target.value)} placeholder="Ex.: 1 por dia"
+                  className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30" />
+              </div>
+              <div>
+                <label className="font-body text-[11px] text-mauve/70 block mb-1">Valor pago — R$</label>
+                <input type="text" inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder="Ex.: 250,00"
                   className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30" />
               </div>
             </div>
