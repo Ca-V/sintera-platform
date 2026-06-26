@@ -76,20 +76,25 @@ export function createEventCommandService(repo: EventRepository, bus: EventBus, 
   }
   return {
     async create(userId, draft) {
-      const rule = parseRule(draft.recurrenceRule ?? null)
+      // Regra de negócio (camada de serviço, não UI): nascer "realizado" carimba
+      // completed_at — assim o evento já entra no Histórico e em Gastos (se tiver valor).
+      const d = (draft.status === 'realizado' && !draft.completedAt)
+        ? { ...draft, completedAt: clock.now() }
+        : draft
+      const rule = parseRule(d.recurrenceRule ?? null)
       // Série só na CRIAÇÃO de evento novo; edição (id presente) salva único.
-      if (rule.frequency === 'none' || draft.id) {
-        await repo.save(userId, draft)
-        await emit('EventCreated', userId, draft as HealthEvent)
+      if (rule.frequency === 'none' || d.id) {
+        await repo.save(userId, d)
+        await emit('EventCreated', userId, d as HealthEvent)
         return
       }
       // Série recorrente: gera as ocorrências com um series_id comum.
-      const seriesId = draft.seriesId ?? newId()
-      const dates = generateOccurrences(rule, draft.date)
+      const seriesId = d.seriesId ?? newId()
+      const dates = generateOccurrences(rule, d.date)
       for (let i = 0; i < dates.length; i++) {
-        await repo.save(userId, { ...draft, date: dates[i], seriesId, source: i === 0 ? (draft.source ?? 'manual') : 'recurrence' })
+        await repo.save(userId, { ...d, date: dates[i], seriesId, source: i === 0 ? (d.source ?? 'manual') : 'recurrence' })
       }
-      await emit('EventCreated', userId, { ...draft, seriesId, date: dates[0] } as HealthEvent)
+      await emit('EventCreated', userId, { ...d, seriesId, date: dates[0] } as HealthEvent)
     },
     complete:   (userId, ev) => guardedSave(userId, ev, 'realizado', () => completeRule(ev, clock.now()), 'EventCompleted'),
     cancel:     (userId, ev) => guardedSave(userId, ev, 'cancelado', () => cancelRule(ev), 'EventCancelled'),

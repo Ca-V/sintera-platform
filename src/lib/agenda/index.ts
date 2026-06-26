@@ -16,6 +16,9 @@ export {
   type EventQueryService, type EventCommandService, type EventDraft,
 } from './service'
 
-export { typeLabel, statusLabel, formatDateBR, formatTimeBR, eventToNotificationInput } from './presentation'
+export {
+  typeLabel, statusLabel, formatDateBR, formatTimeBR, eventToNotificationInput,
+  EVENT_TYPE_DEFS, EVENT_TYPE_LABELS, EVENT_STATUS_UI,
+} from './presentation'
 export { buildEventNotification, notificationToInline, type EventNotification } from './notification'
 export type { DomainEvent, DomainEventType, EventActor, EventBus } from './bus'

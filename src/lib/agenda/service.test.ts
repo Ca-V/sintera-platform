@@ -6,7 +6,7 @@ import type { HealthEvent } from './event'
 
 function ev(p: Partial<HealthEvent>): HealthEvent {
   return {
-    id: 'e1', type: 'consulta', title: 'Consulta', status: 'planejado', source: 'manual', priority: null,
+    id: 'e1', type: 'consulta', title: 'Consulta', isReturn: false, status: 'planejado', source: 'manual', priority: null,
     date: '2026-07-18', time: '14:30', durationMin: null, reminderEnabled: true, reminderSentAt: null,
     professionalKind: null, professionalName: null, establishment: null, location: null,
     modality: null, preparation: null, notes: null, amountCents: null, directExpense: false, attachmentUrl: null,
@@ -92,6 +92,13 @@ describe('EventCommandService (escrita + transições no bus)', () => {
     const cmd = createEventCommandService(repo, createEventBus(), clock)
     await cmd.create('u1', { type: 'consulta', title: 'X', date: '2026-07-18' })
     expect(getSavedAll()).toHaveLength(1)
+  })
+
+  it('create com status realizado carimba completedAt (lançamento já realizado)', async () => {
+    const { repo, getSaved } = fakeRepo()
+    const cmd = createEventCommandService(repo, createEventBus(), clock)
+    await cmd.create('u1', { type: 'consulta', title: 'Botox', date: '2026-03-20', status: 'realizado', amountCents: 120000 })
+    expect(getSaved()).toMatchObject({ status: 'realizado', completedAt: '2026-07-18T10:00:00Z' })
   })
 })
 

@@ -46,6 +46,7 @@ export interface HealthEvent {
   id: string
   type: string
   title: string
+  isReturn: boolean            // atributo da Consulta: "é um retorno" (não é um tipo próprio)
   status: EventStatus
   source: string               // origem: manual · exam · protocol · wearable · import · connector · system…
   priority: EventPriority | null
@@ -84,6 +85,7 @@ export interface HealthEventRow {
   id: string
   event_type: string
   title: string
+  is_return?: boolean | null
   status?: string | null
   source?: string | null
   priority?: string | null
@@ -124,7 +126,7 @@ function normPriority(p: string | null | undefined): EventPriority | null {
 /** Converte uma linha de `health_events` no domínio. Puro e tolerante a valores inesperados. */
 export function rowToHealthEvent(r: HealthEventRow): HealthEvent {
   return {
-    id: r.id, type: r.event_type, title: r.title, status: normStatus(r.status),
+    id: r.id, type: r.event_type, title: r.title, isReturn: r.is_return ?? false, status: normStatus(r.status),
     source: r.source ?? 'manual', priority: normPriority(r.priority),
     date: r.event_date, time: r.event_time ?? null,
     durationMin: r.duration_min ?? null, reminderEnabled: r.reminder_enabled ?? true, reminderSentAt: r.reminder_sent_at ?? null,
@@ -158,7 +160,7 @@ const AGENDA_STATUS_MAP: Record<string, EventStatus> = { pending: 'planejado', d
 
 export function agendaRowToHealthEvent(r: AgendaEventRow): HealthEvent {
   return {
-    id: r.id, type: r.event_type, title: r.title,
+    id: r.id, type: r.event_type, title: r.title, isReturn: false,
     status: AGENDA_STATUS_MAP[r.status ?? ''] ?? 'planejado',
     source: 'agenda_legacy', priority: null,
     date: r.event_date, time: r.event_time ?? null,
@@ -209,7 +211,8 @@ export function healthEventToRow(userId: string, ev: Partial<HealthEvent> & { ty
   return {
     ...(ev.id ? { id: ev.id } : {}),
     user_id: userId,
-    event_type: ev.type, title: ev.title, status: ev.status ?? 'planejado', source: ev.source ?? 'manual',
+    event_type: ev.type, title: ev.title, is_return: ev.isReturn ?? false,
+    status: ev.status ?? 'planejado', source: ev.source ?? 'manual',
     priority: ev.priority ?? null,
     event_date: ev.date, event_time: ev.time ?? null, duration_min: ev.durationMin ?? null,
     reminder_enabled: ev.reminderEnabled ?? true, reminder_sent_at: ev.reminderSentAt ?? null,

@@ -5,18 +5,45 @@
 import type { HealthEvent, EventStatus } from './event'
 import type { EventNotificationInput } from './notification'
 
+// ── FONTE ÚNICA dos tipos de evento (Agenda E Histórico falam a mesma língua) ──
+// Lista canônica e ORDENADA para o seletor de tipo. "Retorno" não é tipo — é um
+// atributo (is_return) da Consulta. Cirurgia/Suplemento entram aqui (migração 080).
+export const EVENT_TYPE_DEFS = [
+  { id: 'consulta',     label: 'Consulta',       emoji: '🩺' },
+  { id: 'exame',        label: 'Exame',          emoji: '🧪' },
+  { id: 'procedimento', label: 'Procedimento',   emoji: '🩹' },
+  { id: 'cirurgia',     label: 'Cirurgia',       emoji: '⚕️' },
+  { id: 'vacina',       label: 'Vacina',         emoji: '💉' },
+  { id: 'medicamento',  label: 'Medicamento',    emoji: '💊' },
+  { id: 'suplemento',   label: 'Suplemento',     emoji: '🌿' },
+  { id: 'plano',        label: 'Plano de saúde', emoji: '🏥' },
+  { id: 'outro',        label: 'Outro',          emoji: '📌' },
+] as const
+
+// Superset de rótulos para RENDERIZAÇÃO (inclui tipos legados já gravados, para o
+// Histórico nunca quebrar ao exibir dados antigos).
 export const EVENT_TYPE_LABELS: Record<string, string> = {
-  consulta: 'Consulta', exame: 'Exame', procedimento: 'Procedimento', vacina: 'Vacina',
-  retorno: 'Retorno', medicamento: 'Medicamento', medicacao: 'Medicação', suplemento: 'Suplemento',
-  atividade: 'Atividade física', estetico: 'Procedimento estético', omica: 'Ômica',
-  protocolo: 'Protocolo', outro: 'Evento',
-}
-export const EVENT_STATUS_LABELS: Record<EventStatus, string> = {
-  planejado: 'Planejado', confirmado: 'Confirmado', realizado: 'Realizado',
-  cancelado: 'Cancelado', reagendado: 'Reagendado', perdido: 'Não compareceu',
+  consulta: 'Consulta', exame: 'Exame', procedimento: 'Procedimento', cirurgia: 'Cirurgia',
+  vacina: 'Vacina', medicamento: 'Medicamento', suplemento: 'Suplemento', plano: 'Plano de saúde',
+  outro: 'Outro',
+  // legados (não oferecidos no seletor, mas renderizáveis):
+  retorno: 'Consulta', medicacao: 'Medicamento', atividade: 'Atividade física',
+  estetico: 'Procedimento', omica: 'Ômica', protocolo: 'Protocolo',
 }
 
-export function typeLabel(type: string): string { return EVENT_TYPE_LABELS[type] ?? 'Evento' }
+// Status canônico do domínio (6) × status oferecidos na UI (3, decisão da fundadora:
+// Agendado/Realizado/Cancelado). "Agendado" = planejado no domínio.
+export const EVENT_STATUS_LABELS: Record<EventStatus, string> = {
+  planejado: 'Agendado', confirmado: 'Confirmado', realizado: 'Realizado',
+  cancelado: 'Cancelado', reagendado: 'Reagendado', perdido: 'Não compareceu',
+}
+export const EVENT_STATUS_UI: { id: EventStatus; label: string }[] = [
+  { id: 'planejado', label: 'Agendado' },
+  { id: 'realizado', label: 'Realizado' },
+  { id: 'cancelado', label: 'Cancelado' },
+]
+
+export function typeLabel(type: string): string { return EVENT_TYPE_LABELS[type] ?? 'Outro' }
 export function statusLabel(status: EventStatus): string { return EVENT_STATUS_LABELS[status] ?? status }
 
 // Formatação pura (sem Date/locale → determinística e testável).

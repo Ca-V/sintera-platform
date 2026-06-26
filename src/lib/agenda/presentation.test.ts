@@ -5,7 +5,7 @@ import type { HealthEvent } from './event'
 
 function ev(p: Partial<HealthEvent>): HealthEvent {
   return {
-    id: 'e1', type: 'consulta', title: 'Consulta de Cardiologia', status: 'planejado', source: 'manual', priority: null,
+    id: 'e1', type: 'consulta', title: 'Consulta de Cardiologia', isReturn: false, status: 'planejado', source: 'manual', priority: null,
     date: '2026-07-18', time: '14:30:00', durationMin: null, reminderEnabled: true, reminderSentAt: null,
     professionalKind: 'medico', professionalName: 'Dr. João Silva', establishment: 'Clínica ABC',
     location: null, modality: 'presencial', preparation: null, notes: null, amountCents: null,
@@ -20,7 +20,7 @@ describe('formatadores de apresentação', () => {
     expect(formatTimeBR('14:30:00')).toBe('14:30')
     expect(formatTimeBR(null)).toBeNull()
     expect(typeLabel('exame')).toBe('Exame')
-    expect(typeLabel('desconhecido')).toBe('Evento')
+    expect(typeLabel('desconhecido')).toBe('Outro')
   })
 })
 

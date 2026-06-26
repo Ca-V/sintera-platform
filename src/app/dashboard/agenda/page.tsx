@@ -14,8 +14,13 @@ import { buildExamRecencySuggestion, type AgendaSuggestion } from '@/lib/agenda/
 import { eventServicesFor, typeLabel, statusLabel, formatDateBR, formatTimeBR, type HealthEvent } from '@/lib/agenda'
 import { serializeRule, parseRule } from '@/lib/recurrence'
 
-const MODAL_TYPES: EventType[] = ['exame', 'consulta', 'retorno', 'medicacao', 'plano', 'outro']
-const toModalType = (t: string): EventType => (MODAL_TYPES as string[]).includes(t) ? (t as EventType) : 'outro'
+const MODAL_TYPES: EventType[] = ['consulta', 'exame', 'procedimento', 'cirurgia', 'vacina', 'medicamento', 'suplemento', 'plano', 'outro']
+// Tipos legados → tipo canônico do seletor ("retorno" vira consulta + atributo isReturn).
+const LEGACY_TYPE_MAP: Record<string, EventType> = { retorno: 'consulta', medicacao: 'medicamento', estetico: 'procedimento', atividade: 'outro', omica: 'outro' }
+const toModalType = (t: string): EventType =>
+  (MODAL_TYPES as string[]).includes(t) ? (t as EventType) : (LEGACY_TYPE_MAP[t] ?? 'outro')
+const toModalStatus = (s: string): 'planejado' | 'realizado' | 'cancelado' =>
+  s === 'realizado' ? 'realizado' : s === 'cancelado' ? 'cancelado' : 'planejado'
 
 const TYPE_EMOJI: Record<string, string> = {
   exame: '🧪', consulta: '👩‍⚕️', retorno: '📋', vacina: '💉', procedimento: '🩺',
@@ -48,6 +53,7 @@ export default function AgendaPage() {
   const [events, setEvents]   = useState<HealthEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId]   = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
 
   const [modalOpen, setModalOpen] = useState(false)
@@ -83,15 +89,17 @@ export default function AgendaPage() {
 
   async function onComplete(ev: HealthEvent) {
     if (!userId) return
-    setBusyId(ev.id)
-    try { await services.command.complete(userId, ev) } catch (e) { console.error('[SINTERA] complete:', e) }
-    reload(); setBusyId(null)
+    setBusyId(ev.id); setActionError(null)
+    try { await services.command.complete(userId, ev); reload() }
+    catch (e) { setActionError(e instanceof Error ? e.message : 'Não foi possível concluir o evento.') }
+    finally { setBusyId(null) }
   }
   async function onCancel(ev: HealthEvent) {
     if (!userId) return
-    setBusyId(ev.id)
-    try { await services.command.cancel(userId, ev) } catch (e) { console.error('[SINTERA] cancel:', e) }
-    reload(); setBusyId(null)
+    setBusyId(ev.id); setActionError(null)
+    try { await services.command.cancel(userId, ev); reload() }
+    catch (e) { setActionError(e instanceof Error ? e.message : 'Não foi possível cancelar o evento.') }
+    finally { setBusyId(null) }
   }
 
   async function handleSave(input: AgendaEventInput) {
@@ -114,8 +122,8 @@ export default function AgendaPage() {
       amountCents: parseAmountToCents(input.amount),
       recurrenceRule, priority: input.priority || null,
       outcome: input.outcome ? { summary: input.outcome } : null,
-      directExpense: input.directExpense,
-      status: editing?.status ?? 'planejado', source: editing?.source ?? 'manual',
+      directExpense: input.directExpense, isReturn: input.isReturn,
+      status: input.status, source: editing?.source ?? 'manual',
     })
     setEditing(null); setModalOpen(false); setPrefill(undefined); reload()
   }
@@ -132,7 +140,10 @@ export default function AgendaPage() {
         const isPlano = editing.type === 'plano'
         const rule = parseRule(editing.recurrenceRule)
         return {
-          eventType: toModalType(editing.type), title: editing.title, date: editing.date,
+          eventType: toModalType(editing.type),
+          isReturn: editing.isReturn || editing.type === 'retorno',
+          status: toModalStatus(editing.status),
+          title: editing.title, date: editing.date,
           time: formatTimeBR(editing.time) ?? '08:00', durationMin: editing.durationMin ?? 60,
           notes: editing.notes ?? '', reminderEnabled: editing.reminderEnabled,
           modality: editing.modality ?? '', professionalName: editing.professionalName ?? '',
@@ -160,6 +171,13 @@ export default function AgendaPage() {
           <Plus size={16} /> Adicionar
         </button>
       </motion.div>
+
+      {actionError && (
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+          <p className="font-body text-xs text-red-600">{actionError}</p>
+          <button onClick={() => setActionError(null)} className="text-red-400 hover:text-red-600 transition-colors flex-shrink-0"><X size={14} /></button>
+        </div>
+      )}
 
       {!loading && suggestion && !dismissed && (
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}

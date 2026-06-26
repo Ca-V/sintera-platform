@@ -9,7 +9,7 @@ import {
 
 function ev(p: Partial<HealthEvent>): HealthEvent {
   return {
-    id: 'e1', type: 'consulta', title: 'Consulta', status: 'planejado', source: 'manual', priority: null,
+    id: 'e1', type: 'consulta', title: 'Consulta', isReturn: false, status: 'planejado', source: 'manual', priority: null,
     date: '2026-07-18', time: '14:30:00', durationMin: null, reminderEnabled: true, reminderSentAt: null,
     professionalKind: null, professionalName: null, establishment: null, location: null,
     modality: null, preparation: null, notes: null, amountCents: null, directExpense: false, attachmentUrl: null,
@@ -115,5 +115,20 @@ describe('canTransition (invariantes de status)', () => {
   })
   it('no-op (from===to) é válido', () => {
     expect(canTransition('planejado', 'planejado')).toBe(true)
+  })
+})
+
+describe('modelo do dinheiro (Gastos) — exatamente 2 formas', () => {
+  it('realizado + valor = entra em Gastos', () => {
+    expect(isFinancial(ev({ status: 'realizado', amountCents: 120000 }))).toBe(true)
+  })
+  it('planejado + valor = NÃO entra (precisa concluir)', () => {
+    expect(isFinancial(ev({ status: 'planejado', amountCents: 120000 }))).toBe(false)
+  })
+  it('despesa direta + valor = entra sem precisar concluir (ex.: plano)', () => {
+    expect(isFinancial(ev({ status: 'planejado', amountCents: 55000, directExpense: true }))).toBe(true)
+  })
+  it('sem valor = nunca entra', () => {
+    expect(isFinancial(ev({ status: 'realizado', amountCents: null }))).toBe(false)
   })
 })

@@ -3,8 +3,11 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Calendar, Download, ExternalLink, CalendarDays, Loader2, Check, ChevronDown } from 'lucide-react'
+import { EVENT_TYPE_DEFS, EVENT_STATUS_UI } from '@/lib/agenda'
 
-export type EventType = 'exame' | 'consulta' | 'retorno' | 'medicacao' | 'plano' | 'outro'
+// Tipos vêm da FONTE ÚNICA (@/lib/agenda) — Agenda e Histórico falam a mesma língua.
+export type EventType = typeof EVENT_TYPE_DEFS[number]['id']
+export type EventStatusInput = 'planejado' | 'realizado' | 'cancelado'
 export type EventModality = 'presencial' | 'telemedicina' | ''
 export type RecurrenceFreq = 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'yearly'
 export type PriorityInput = '' | 'alta' | 'media' | 'baixa'
@@ -12,6 +15,8 @@ export type PriorityInput = '' | 'alta' | 'media' | 'baixa'
 /** Dados de um evento, usados para salvar na agenda da plataforma. */
 export interface AgendaEventInput {
   eventType: EventType
+  isReturn: boolean    // atributo da Consulta ("é um retorno")
+  status: EventStatusInput
   title: string
   date: string         // 'YYYY-MM-DD'
   time: string         // 'HH:mm'
@@ -41,15 +46,6 @@ interface AgendarModalProps {
   onSave?: (data: AgendaEventInput) => Promise<void> | void
   initialEvent?: Partial<AgendaEventInput>
 }
-
-const EVENT_TYPES: { id: EventType; label: string; emoji: string }[] = [
-  { id: 'exame',     label: 'Exame',     emoji: '🧪' },
-  { id: 'consulta',  label: 'Consulta',  emoji: '👩‍⚕️' },
-  { id: 'retorno',   label: 'Retorno',   emoji: '📋' },
-  { id: 'medicacao', label: 'Medicação', emoji: '💊' },
-  { id: 'plano',     label: 'Plano',     emoji: '🏥' },
-  { id: 'outro',     label: 'Outro',     emoji: '📅' },
-]
 
 const RECURRENCE_OPTS: { v: RecurrenceFreq; l: string }[] = [
   { v: 'none', l: 'Não repetir' }, { v: 'daily', l: 'Diariamente' }, { v: 'weekly', l: 'Semanalmente' },
@@ -81,7 +77,9 @@ const LABEL = 'font-body text-xs font-semibold text-onyx/60 uppercase tracking-w
 export default function AgendarModal({ open, onClose, defaultTitle = '', defaultNotes = '', onSave, initialEvent }: AgendarModalProps) {
   const today = new Date().toISOString().split('T')[0]
 
-  const [eventType, setEventType] = useState<EventType>('exame')
+  const [eventType, setEventType] = useState<EventType>('consulta')
+  const [isReturn, setIsReturn]   = useState(false)
+  const [status, setStatus]       = useState<EventStatusInput>('planejado')
   const [title, setTitle]   = useState(defaultTitle)
   const [date, setDate]     = useState('')
   const [time, setTime]     = useState('08:00')
@@ -109,7 +107,9 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!open) return
-    setEventType(initialEvent?.eventType ?? 'exame')
+    setEventType(initialEvent?.eventType ?? 'consulta')
+    setIsReturn(initialEvent?.isReturn ?? false)
+    setStatus(initialEvent?.status ?? 'planejado')
     setTitle(initialEvent?.title ?? defaultTitle)
     setDate(initialEvent?.date ?? '')
     setTime(initialEvent?.time ?? '08:00')
@@ -138,6 +138,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
   // Plano de saúde: despesa direta recorrente mensal por padrão.
   function chooseType(t: EventType) {
     setEventType(t)
+    if (t !== 'consulta') setIsReturn(false)
     if (t === 'plano') {
       setDirectExpense(true)
       setRecurrence(r => (r === 'none' ? 'monthly' : r))
@@ -145,8 +146,15 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
     }
   }
 
-  const typeLabel = EVENT_TYPES.find(t => t.id === eventType)?.label ?? 'Evento'
-  const fullTitle = title.trim() || `${typeLabel} de Saúde`
+  // Automação: data no passado sugere "Realizado" (lançamento retroativo de algo já feito).
+  function onDateChange(v: string) {
+    setDate(v)
+    if (v && v < today && status === 'planejado') setStatus('realizado')
+  }
+
+  const typeLabel = EVENT_TYPE_DEFS.find(t => t.id === eventType)?.label ?? 'Evento'
+  // Automação: título sugerido a partir do tipo + profissional ("Consulta — Dra. X").
+  const fullTitle = title.trim() || [typeLabel, professionalName.trim()].filter(Boolean).join(' — ') || `${typeLabel} de Saúde`
   const canExport = date !== ''
 
   function buildDates() {
@@ -169,7 +177,8 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
     setSaving(true); setSaveError(null)
     try {
       await onSave({
-        eventType, title: fullTitle, date, time, durationMin: parseInt(duration), notes: notes.trim(), reminderEnabled,
+        eventType, isReturn: eventType === 'consulta' ? isReturn : false, status,
+        title: fullTitle, date, time, durationMin: parseInt(duration), notes: notes.trim(), reminderEnabled,
         modality, professionalName: professionalName.trim(), establishment: establishment.trim(), location: location.trim(),
         preparation: preparation.trim(), amount: amount.trim(),
         recurrenceFrequency: recurrence, recurrenceUntil, priority, directExpense,
@@ -185,7 +194,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
 
   function handleClose() {
     setAdded(false); setTitle(defaultTitle); setDate(''); setTime('08:00'); setDuration('60'); setNotes(defaultNotes)
-    setEventType('exame'); setModality(''); setProfessionalName(''); setEstablishment(''); setLocation(''); setPreparation(''); setAmount('')
+    setEventType('consulta'); setIsReturn(false); setStatus('planejado'); setModality(''); setProfessionalName(''); setEstablishment(''); setLocation(''); setPreparation(''); setAmount('')
     setRecurrence('none'); setRecurrenceUntil(''); setPriority(''); setDirectExpense(false); setOutcome(''); setOperadora(''); setCarteirinha('')
     setShowDetails(false); setSaveError(null)
     onClose()
@@ -224,52 +233,55 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                 </div>
               ) : (
                 <div className="px-6 py-5 space-y-4">
-                  {/* ── Essenciais ───────────────────────────────── */}
+                  {/* ── Essenciais (registrar em < 1 min) ────────── */}
                   <div className="space-y-2">
                     <label className={LABEL}>Tipo</label>
                     <div className="grid grid-cols-3 gap-2">
-                      {EVENT_TYPES.map(t => (
+                      {EVENT_TYPE_DEFS.map(t => (
                         <button key={t.id} type="button" onClick={() => chooseType(t.id)}
                           className={`flex flex-col items-center gap-1 py-2.5 rounded-xl border text-xs font-body font-medium transition-all ${eventType === t.id ? 'gradient-sintera text-white border-transparent shadow-sm' : 'border-border text-mauve hover:border-petal/40'}`}>
                           <span className="text-base">{t.emoji}</span>{t.label}
                         </button>
                       ))}
                     </div>
+                    {eventType === 'consulta' && (
+                      <label className="flex items-center gap-2 px-1 pt-1 cursor-pointer select-none">
+                        <input type="checkbox" checked={isReturn} onChange={e => setIsReturn(e.target.checked)} className="w-4 h-4 rounded border-border accent-petal" />
+                        <span className="font-body text-xs text-onyx/80">É um retorno</span>
+                      </label>
+                    )}
                   </div>
 
                   <div className="space-y-1.5">
                     <label className={LABEL}>Título</label>
-                    <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder={`${typeLabel} de Saúde`} className={FIELD} />
+                    <input type="text" value={title} onChange={e => setTitle(e.target.value)}
+                      placeholder={professionalName.trim() ? `${typeLabel} — ${professionalName.trim()}` : `${typeLabel} de Saúde`} className={FIELD} />
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5"><label className={LABEL}>Data</label>
-                      {/* Sem min: permite data retroativa (lançar procedimento já feito, p/ controle anual). */}
-                      <input type="date" value={date} onChange={e => setDate(e.target.value)} className={FIELD} /></div>
+                      {/* Sem min: permite data retroativa (lançar algo já feito, p/ controle anual). */}
+                      <input type="date" value={date} onChange={e => onDateChange(e.target.value)} className={FIELD} /></div>
                     <div className="space-y-1.5"><label className={LABEL}>Horário</label>
                       <input type="time" value={time} onChange={e => setTime(e.target.value)} className={FIELD} /></div>
                   </div>
 
-                  {/* Recorrência (essencial) */}
+                  {/* Status (Agendado/Realizado/Cancelado) */}
                   <div className="space-y-1.5">
-                    <label className={LABEL}>Recorrência</label>
-                    <select value={recurrence} onChange={e => setRecurrence(e.target.value as RecurrenceFreq)} className={FIELD}>
-                      {RECURRENCE_OPTS.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
-                    </select>
-                    {recurrence !== 'none' && (
-                      <div className="flex items-center gap-2 pt-1">
-                        <span className="font-body text-xs text-mauve/70">até (opcional):</span>
-                        <input type="date" value={recurrenceUntil} min={date || today} onChange={e => setRecurrenceUntil(e.target.value)}
-                          className="flex-1 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40" />
-                      </div>
-                    )}
+                    <label className={LABEL}>Status</label>
+                    <div className="flex gap-2">
+                      {EVENT_STATUS_UI.map(s => (
+                        <button key={s.id} type="button" onClick={() => setStatus(s.id as EventStatusInput)}
+                          className={`flex-1 py-2 rounded-xl text-xs font-body font-medium border transition-all ${status === s.id ? 'gradient-sintera text-white border-transparent shadow-sm' : 'border-border text-mauve hover:border-petal/40'}`}>{s.label}</button>
+                      ))}
+                    </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5"><label className={LABEL}>Profissional <span className="font-normal text-mauve/50 normal-case">(opc.)</span></label>
-                      <input type="text" value={professionalName} onChange={e => setProfessionalName(e.target.value)} placeholder="Dr(a). …" className={FIELD} /></div>
-                    <div className="space-y-1.5"><label className={LABEL}>Valor — R$ <span className="font-normal text-mauve/50 normal-case">(opc.)</span></label>
-                      <input type="text" inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder="250,00" className={FIELD} /></div>
+                  {/* Valor + modelo do dinheiro (explícito) */}
+                  <div className="space-y-1.5">
+                    <label className={LABEL}>Valor — R$ <span className="font-normal text-mauve/50 normal-case">(opc.)</span></label>
+                    <input type="text" inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder="250,00" className={FIELD} />
+                    <p className="font-body text-[11px] text-mauve/60">Entra em <strong>Gastos</strong> quando o status for <strong>Realizado</strong> — ou marque como <strong>despesa direta</strong> (em Mais detalhes).</p>
                   </div>
 
                   {/* ── Mais detalhes ────────────────────────────── */}
@@ -281,6 +293,24 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
 
                   {showDetails && (
                     <div className="space-y-4 pt-1 border-t border-border/40">
+                      {/* Repetir (recorrência única para qualquer tipo) */}
+                      <div className="space-y-1.5 pt-3">
+                        <label className={LABEL}>Repetir</label>
+                        <select value={recurrence} onChange={e => setRecurrence(e.target.value as RecurrenceFreq)} className={FIELD}>
+                          {RECURRENCE_OPTS.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
+                        </select>
+                        {recurrence !== 'none' && (
+                          <div className="flex items-center gap-2 pt-1">
+                            <span className="font-body text-xs text-mauve/70">até (opcional):</span>
+                            <input type="date" value={recurrenceUntil} min={date || today} onChange={e => setRecurrenceUntil(e.target.value)}
+                              className="flex-1 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40" />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-1.5"><label className={LABEL}>Profissional <span className="font-normal text-mauve/50 normal-case">(opc.)</span></label>
+                        <input type="text" value={professionalName} onChange={e => setProfessionalName(e.target.value)} placeholder="Dr(a). …" className={FIELD} /></div>
+
                       {eventType === 'plano' && (
                         <div className="grid grid-cols-2 gap-3 pt-3">
                           <div className="space-y-1.5"><label className={LABEL}>Operadora</label>
@@ -290,34 +320,31 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                         </div>
                       )}
 
-                      <div className="space-y-1.5"><label className={LABEL}>Modalidade</label>
+                      <div className="space-y-1.5"><label className={LABEL}>Formato</label>
                         <div className="flex gap-2">
-                          {([['', '—'], ['presencial', 'Presencial'], ['telemedicina', 'Telemedicina']] as [EventModality, string][]).map(([v, l]) => (
+                          {([['', '—'], ['presencial', 'Presencial'], ['telemedicina', 'Teleconsulta']] as [EventModality, string][]).map(([v, l]) => (
                             <button key={v} type="button" onClick={() => setModality(v)}
                               className={`flex-1 py-2 rounded-xl text-xs font-body font-medium border transition-all ${modality === v ? 'gradient-sintera text-white border-transparent shadow-sm' : 'border-border text-mauve hover:border-petal/40'}`}>{l}</button>
                           ))}
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1.5"><label className={LABEL}>Estabelecimento</label>
-                          <input type="text" value={establishment} onChange={e => setEstablishment(e.target.value)} placeholder="Clínica / hospital" className={FIELD} /></div>
-                        <div className="space-y-1.5"><label className={LABEL}>Prioridade</label>
-                          <div className="flex gap-1.5">
-                            {([['', '—'], ['alta', 'Alta'], ['media', 'Média'], ['baixa', 'Baixa']] as [PriorityInput, string][]).map(([v, l]) => (
-                              <button key={v} type="button" onClick={() => setPriority(v)}
-                                className={`flex-1 py-2 rounded-lg text-[11px] font-body font-medium border transition-all ${priority === v ? 'gradient-sintera text-white border-transparent' : 'border-border text-mauve hover:border-petal/40'}`}>{l}</button>
-                            ))}
-                          </div></div>
-                      </div>
+                      <div className="space-y-1.5"><label className={LABEL}>Local <span className="font-normal text-mauve/50 normal-case">(clínica / endereço)</span></label>
+                        <input type="text" value={establishment} onChange={e => setEstablishment(e.target.value)} placeholder="Clínica, hospital, endereço…" className={FIELD} /></div>
 
-                      <div className="space-y-1.5"><label className={LABEL}>Local / endereço</label>
-                        <input type="text" value={location} onChange={e => setLocation(e.target.value)} placeholder="Endereço, sala…" className={FIELD} /></div>
+                      <div className="space-y-1.5"><label className={LABEL}>Prioridade</label>
+                        <div className="flex gap-1.5">
+                          {([['', '—'], ['alta', 'Alta'], ['media', 'Média'], ['baixa', 'Baixa']] as [PriorityInput, string][]).map(([v, l]) => (
+                            <button key={v} type="button" onClick={() => setPriority(v)}
+                              className={`flex-1 py-2 rounded-lg text-[11px] font-body font-medium border transition-all ${priority === v ? 'gradient-sintera text-white border-transparent' : 'border-border text-mauve hover:border-petal/40'}`}>{l}</button>
+                          ))}
+                        </div>
+                      </div>
 
                       <div className="space-y-1.5"><label className={LABEL}>Orientações de preparo</label>
                         <input type="text" value={preparation} onChange={e => setPreparation(e.target.value)} placeholder="Ex.: jejum de 8h" className={FIELD} /></div>
 
-                      <div className="space-y-1.5"><label className={LABEL}>Desfecho <span className="font-normal text-mauve/50 normal-case">(após realizar)</span></label>
+                      <div className="space-y-1.5"><label className={LABEL}>Como foi <span className="font-normal text-mauve/50 normal-case">(após realizar)</span></label>
                         <textarea value={outcome} onChange={e => setOutcome(e.target.value)} rows={2} placeholder="Resumo, conduta, encaminhamentos…" className={`${FIELD} resize-none`} /></div>
 
                       <div className="space-y-1.5"><label className={LABEL}>Duração estimada</label>

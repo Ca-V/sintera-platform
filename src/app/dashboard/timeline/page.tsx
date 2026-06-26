@@ -39,13 +39,20 @@ interface TimelineItem {
   href?: string             // link para o painel (ômica)
 }
 
-const TYPE_META: Record<EventType, { label: string; Icon: React.ElementType; cls: string }> = {
+// Cobre a taxonomia única + tipos legados já gravados. NUNCA deve quebrar: o acesso
+// usa fallback para 'outro' (ver renderItem) caso surja um tipo desconhecido.
+const TYPE_META: Record<string, { label: string; Icon: React.ElementType; cls: string }> = {
   consulta:     { label: 'Consulta',     Icon: Stethoscope,  cls: 'bg-blush text-petal' },
+  retorno:      { label: 'Consulta (retorno)', Icon: Stethoscope, cls: 'bg-blush text-petal' },
   vacina:       { label: 'Vacina',       Icon: Syringe,      cls: 'bg-sage-light text-sage' },
   procedimento: { label: 'Procedimento', Icon: Activity,     cls: 'bg-lavender-light text-lavender' },
-  estetico:     { label: 'Procedimento estético', Icon: Sparkles, cls: 'bg-blush text-petal' },
+  cirurgia:     { label: 'Cirurgia',     Icon: Activity,     cls: 'bg-lavender-light text-lavender' },
+  estetico:     { label: 'Procedimento', Icon: Sparkles,     cls: 'bg-blush text-petal' },
   medicamento:  { label: 'Medicamento',  Icon: Pill,         cls: 'bg-sage-light text-sage' },
+  medicacao:    { label: 'Medicamento',  Icon: Pill,         cls: 'bg-sage-light text-sage' },
+  suplemento:   { label: 'Suplemento',   Icon: Pill,         cls: 'bg-sage-light text-sage' },
   atividade:    { label: 'Atividade física', Icon: Dumbbell, cls: 'bg-lavender-light text-lavender' },
+  plano:        { label: 'Plano de saúde', Icon: Receipt,    cls: 'bg-warm text-gold' },
   exame:        { label: 'Exame',        Icon: FlaskConical, cls: 'bg-warm text-gold' },
   omica:        { label: 'Ômica',        Icon: Dna,          cls: 'bg-lavender-light text-lavender' },
   outro:        { label: 'Evento',       Icon: CalendarDays, cls: 'bg-ivory text-mauve' },
@@ -263,7 +270,7 @@ export default function TimelinePage() {
   const past = items.filter(it => it.date.slice(0, 10) < today)
 
   const renderItem = (it: TimelineItem, i: number) => {
-    const meta = TYPE_META[it.eventType]
+    const meta = TYPE_META[it.eventType] ?? TYPE_META.outro
     const isUpcoming = it.date.slice(0, 10) >= today
     return (
       <motion.div key={it.id}
