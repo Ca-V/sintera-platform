@@ -27,6 +27,18 @@ const STATUS_CLS: Record<string, string> = {
   reagendado: 'bg-amber-50 text-amber-600', perdido: 'bg-red-50 text-red-400',
 }
 
+// "250,00" | "R$ 1.500,00" | "150.5" → centavos. Vazio/inválido → null.
+function parseAmountToCents(s: string): number | null {
+  let t = (s ?? '').trim().replace(/[R$\s]/g, '')
+  if (!t) return null
+  if (t.includes(',')) t = t.replace(/\./g, '').replace(',', '.')
+  const n = parseFloat(t)
+  return isFinite(n) && n >= 0 ? Math.round(n * 100) : null
+}
+function centsToAmount(cents: number | null): string {
+  return cents != null ? (cents / 100).toFixed(2).replace('.', ',') : ''
+}
+
 export default function AgendaPage() {
   const [supabase] = useState(() => createClient() as unknown as SupabaseClient)
   const services = useMemo(() => eventServicesFor(supabase), [supabase])
@@ -88,6 +100,12 @@ export default function AgendaPage() {
       type: input.eventType, title: input.title, date: input.date,
       time: input.time || null, durationMin: input.durationMin, notes: input.notes || null,
       reminderEnabled: input.reminderEnabled,
+      modality: input.modality || null,
+      professionalName: input.professionalName || null,
+      establishment: input.establishment || null,
+      location: input.location || null,
+      preparation: input.preparation || null,
+      amountCents: parseAmountToCents(input.amount),
       status: editing?.status ?? 'planejado', source: editing?.source ?? 'manual',
     })
     setEditing(null); setModalOpen(false); setPrefill(undefined); reload()
@@ -105,6 +123,9 @@ export default function AgendaPage() {
         eventType: toModalType(editing.type), title: editing.title, date: editing.date,
         time: formatTimeBR(editing.time) ?? '08:00', durationMin: editing.durationMin ?? 60,
         notes: editing.notes ?? '', reminderEnabled: editing.reminderEnabled,
+        modality: editing.modality ?? '', professionalName: editing.professionalName ?? '',
+        establishment: editing.establishment ?? '', location: editing.location ?? '',
+        preparation: editing.preparation ?? '', amount: centsToAmount(editing.amountCents),
       }
     : prefill
 

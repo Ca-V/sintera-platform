@@ -6,6 +6,8 @@ import { X, Calendar, Download, ExternalLink, CalendarDays, Loader2, Check } fro
 
 export type EventType = 'exame' | 'consulta' | 'retorno' | 'medicacao' | 'outro'
 
+export type EventModality = 'presencial' | 'telemedicina' | ''
+
 /** Dados de um evento, usados para salvar na agenda da plataforma. */
 export interface AgendaEventInput {
   eventType: EventType
@@ -15,6 +17,12 @@ export interface AgendaEventInput {
   durationMin: number
   notes: string
   reminderEnabled: boolean
+  modality: EventModality
+  professionalName: string
+  establishment: string
+  location: string
+  preparation: string
+  amount: string       // valor em reais, formato livre ("250,00"); convertido no consumidor
 }
 
 interface AgendarModalProps {
@@ -111,6 +119,12 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
   const [duration, setDuration]     = useState('60')
   const [notes, setNotes]           = useState(defaultNotes)
   const [reminderEnabled, setReminderEnabled] = useState(true)
+  const [modality, setModality]     = useState<EventModality>('')
+  const [professionalName, setProfessionalName] = useState('')
+  const [establishment, setEstablishment]       = useState('')
+  const [location, setLocation]     = useState('')
+  const [preparation, setPreparation] = useState('')
+  const [amount, setAmount]         = useState('')
   const [added, setAdded]           = useState(false)
   const [saving, setSaving]         = useState(false)
 
@@ -125,6 +139,12 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
     setDuration(initialEvent?.durationMin ? String(initialEvent.durationMin) : '60')
     setNotes(initialEvent?.notes ?? defaultNotes)
     setReminderEnabled(initialEvent?.reminderEnabled ?? true)
+    setModality(initialEvent?.modality ?? '')
+    setProfessionalName(initialEvent?.professionalName ?? '')
+    setEstablishment(initialEvent?.establishment ?? '')
+    setLocation(initialEvent?.location ?? '')
+    setPreparation(initialEvent?.preparation ?? '')
+    setAmount(initialEvent?.amount ?? '')
     setAdded(false)
     setSaving(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -180,6 +200,12 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
         durationMin: parseInt(duration),
         notes: notes.trim(),
         reminderEnabled,
+        modality,
+        professionalName: professionalName.trim(),
+        establishment: establishment.trim(),
+        location: location.trim(),
+        preparation: preparation.trim(),
+        amount: amount.trim(),
       })
       handleClose()
     } catch {
@@ -197,6 +223,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
     setDuration('60')
     setNotes(defaultNotes)
     setEventType('exame')
+    setModality(''); setProfessionalName(''); setEstablishment(''); setLocation(''); setPreparation(''); setAmount('')
     onClose()
   }
 
@@ -334,6 +361,53 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                         </button>
                       ))}
                     </div>
+                  </div>
+
+                  {/* Modalidade */}
+                  <div className="space-y-1.5">
+                    <label className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Modalidade <span className="font-normal text-mauve/50 normal-case">(opcional)</span></label>
+                    <div className="flex gap-2">
+                      {([['', '—'], ['presencial', 'Presencial'], ['telemedicina', 'Telemedicina']] as [EventModality, string][]).map(([v, l]) => (
+                        <button key={v} type="button" onClick={() => setModality(v)}
+                          className={`flex-1 py-2 rounded-xl text-xs font-body font-medium border transition-all ${modality === v ? 'gradient-sintera text-white border-transparent shadow-sm' : 'border-border text-mauve hover:border-petal/40'}`}>
+                          {l}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Profissional / Estabelecimento / Local */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Profissional <span className="font-normal text-mauve/50 normal-case">(opc.)</span></label>
+                      <input type="text" value={professionalName} onChange={e => setProfessionalName(e.target.value)} placeholder="Dr(a). …"
+                        className="w-full px-3 py-2.5 border border-border rounded-xl font-body text-sm text-onyx placeholder:text-mauve/40 focus:outline-none focus:ring-1 focus:ring-petal/40 transition-colors" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Estabelecimento <span className="font-normal text-mauve/50 normal-case">(opc.)</span></label>
+                      <input type="text" value={establishment} onChange={e => setEstablishment(e.target.value)} placeholder="Clínica / hospital"
+                        className="w-full px-3 py-2.5 border border-border rounded-xl font-body text-sm text-onyx placeholder:text-mauve/40 focus:outline-none focus:ring-1 focus:ring-petal/40 transition-colors" />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Local / endereço <span className="font-normal text-mauve/50 normal-case">(opcional)</span></label>
+                    <input type="text" value={location} onChange={e => setLocation(e.target.value)} placeholder="Endereço, sala…"
+                      className="w-full px-3 py-2.5 border border-border rounded-xl font-body text-sm text-onyx placeholder:text-mauve/40 focus:outline-none focus:ring-1 focus:ring-petal/40 transition-colors" />
+                  </div>
+
+                  {/* Preparo */}
+                  <div className="space-y-1.5">
+                    <label className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Orientações de preparo <span className="font-normal text-mauve/50 normal-case">(opcional)</span></label>
+                    <input type="text" value={preparation} onChange={e => setPreparation(e.target.value)} placeholder="Ex.: jejum de 8h"
+                      className="w-full px-3 py-2.5 border border-border rounded-xl font-body text-sm text-onyx placeholder:text-mauve/40 focus:outline-none focus:ring-1 focus:ring-petal/40 transition-colors" />
+                  </div>
+
+                  {/* Valor */}
+                  <div className="space-y-1.5">
+                    <label className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Valor — R$ <span className="font-normal text-mauve/50 normal-case">(opcional)</span></label>
+                    <input type="text" inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder="Ex.: 250,00"
+                      className="w-full px-3 py-2.5 border border-border rounded-xl font-body text-sm text-onyx placeholder:text-mauve/40 focus:outline-none focus:ring-1 focus:ring-petal/40 transition-colors" />
+                    <p className="font-body text-[10px] text-mauve/50">Ao concluir o evento, este valor entra automaticamente em Gastos.</p>
                   </div>
 
                   {/* Notas */}
