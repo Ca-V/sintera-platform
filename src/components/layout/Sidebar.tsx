@@ -37,7 +37,7 @@ const navGroups: {
   {
     title: 'Organização',
     items: [
-      { href: '/dashboard/agenda', icon: CalendarDays, label: 'Planejamento de Saúde' },
+      { href: '/dashboard/agenda', icon: CalendarDays, label: 'Agenda' },
     ],
   },
   {
