@@ -5,7 +5,7 @@
 // de escrita). Linguagem factual (RDC 657/2022). Usa a lib compartilhada de
 // agrupamento (src/lib/biomarkers/grouping.ts) para não duplicar lógica.
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { motion } from 'framer-motion'
@@ -78,25 +78,27 @@ export default function IndicadorDrilldownPage() {
   const params = useParams<{ slug: string }>()
   const slug = decodeURIComponent(params.slug)
   const { user } = useUser()
-  const supabase = useRef(createClient() as unknown as SupabaseClient).current
+  const [supabase] = useState(() => createClient() as unknown as SupabaseClient)
   const [rows, setRows] = useState<BiomarkerRow[]>([])
   const [loading, setLoading] = useState(true)
 
-  const load = useCallback(async () => {
+  useEffect(() => {
     if (!user) return
-    setLoading(true)
-    const { data, error } = await supabase
-      .from('current_biomarkers')
-      .select('id,name,value,unit,result_type,reference_min,reference_max,interpretation,exam_id,exams(exam_date,created_at)')
-      .eq('user_id', user.id)
-      .eq('synthetic', false)
-      .eq('result_type', 'numeric')
-    if (error) console.error('[SINTERA] indicador fetch:', error.message)
-    setRows((data ?? []) as unknown as BiomarkerRow[])
-    setLoading(false)
+    let active = true
+    ;(async () => {
+      const { data, error } = await supabase
+        .from('current_biomarkers')
+        .select('id,name,value,unit,result_type,reference_min,reference_max,interpretation,exam_id,exams(exam_date,created_at)')
+        .eq('user_id', user.id)
+        .eq('synthetic', false)
+        .eq('result_type', 'numeric')
+      if (!active) return
+      if (error) console.error('[SINTERA] indicador fetch:', error.message)
+      setRows((data ?? []) as unknown as BiomarkerRow[])
+      setLoading(false)
+    })()
+    return () => { active = false }
   }, [user, supabase])
-
-  useEffect(() => { load() }, [load])
 
   const model = useMemo(() => seriesForName(rows, slug), [rows, slug])
 

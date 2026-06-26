@@ -6,7 +6,7 @@
 // Histórico. Lê a view canônica current_biomarkers (não toca o caminho de escrita).
 // Linguagem factual — sem juízo clínico (RDC 657/2022).
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
@@ -44,26 +44,28 @@ function TrendBadge({ trend, delta }: { trend: Trend; delta: number | null }) {
 export default function IndicadoresPage() {
   const router = useRouter()
   const { user } = useUser()
-  const supabase = useRef(createClient() as unknown as SupabaseClient).current
+  const [supabase] = useState(() => createClient() as unknown as SupabaseClient)
   const [rows, setRows] = useState<BiomarkerRow[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
 
-  const load = useCallback(async () => {
+  useEffect(() => {
     if (!user) return
-    setLoading(true)
-    const { data, error } = await supabase
-      .from('current_biomarkers')
-      .select('id,name,value,unit,result_type,reference_min,reference_max,interpretation,exam_id,exams(exam_date,created_at)')
-      .eq('user_id', user.id)
-      .eq('synthetic', false)
-      .eq('result_type', 'numeric')
-    if (error) console.error('[SINTERA] indicadores fetch:', error.message)
-    setRows((data ?? []) as unknown as BiomarkerRow[])
-    setLoading(false)
+    let active = true
+    ;(async () => {
+      const { data, error } = await supabase
+        .from('current_biomarkers')
+        .select('id,name,value,unit,result_type,reference_min,reference_max,interpretation,exam_id,exams(exam_date,created_at)')
+        .eq('user_id', user.id)
+        .eq('synthetic', false)
+        .eq('result_type', 'numeric')
+      if (!active) return
+      if (error) console.error('[SINTERA] indicadores fetch:', error.message)
+      setRows((data ?? []) as unknown as BiomarkerRow[])
+      setLoading(false)
+    })()
+    return () => { active = false }
   }, [user, supabase])
-
-  useEffect(() => { load() }, [load])
 
   const summaries = useMemo(() => summarizeBiomarkers(rows), [rows])
   const filtered = useMemo(() => {
