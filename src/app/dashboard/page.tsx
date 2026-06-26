@@ -40,9 +40,9 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
 // Acesso rápido — usa exatamente a nomenclatura do menu lateral esquerdo.
 const QUICK_ACCESS: { href: string; icon: React.ElementType; label: string; desc: string; tile: string; tint: string }[] = [
   // Ordem espelha a barra lateral: Minha Saúde primeiro, depois Contexto/Organização.
-  { href: '/dashboard/timeline',     icon: Clock,       label: 'Histórico de Saúde',        desc: 'Linha do tempo e evolução',      tile: 'bg-sage-light',     tint: 'text-sage' },
+  { href: '/dashboard/timeline',     icon: Clock,       label: 'Histórico',                 desc: 'Linha do tempo e evolução',      tile: 'bg-sage-light',     tint: 'text-sage' },
   { href: '/dashboard/agenda',       icon: CalendarDays,label: 'Agenda',                   desc: 'Eventos e lembretes',            tile: 'bg-warm',           tint: 'text-gold' },
-  { href: '/dashboard/exams',        icon: FileText,    label: 'Exames e Documentos',       desc: 'Laudos e arquivos',              tile: 'bg-blush',          tint: 'text-petal' },
+  { href: '/dashboard/exams',        icon: FileText,    label: 'Exames',                    desc: 'Laudos e documentos',            tile: 'bg-blush',          tint: 'text-petal' },
   { href: '/dashboard/medicamentos', icon: Pill,        label: 'Medicamentos, Suplementos, Produtos e Dispositivos', desc: 'Em uso, recompra e dispositivos', tile: 'bg-sage-light',     tint: 'text-sage' },
   { href: '/dashboard/ciclo',        icon: Droplet,     label: 'Ciclo e Contracepção',      desc: 'Menstruação e troca de método',  tile: 'bg-blush',          tint: 'text-petal' },
   { href: '/dashboard/relatorio',    icon: ScrollText,  label: 'Relatórios',                desc: 'Compartilhar com profissionais', tile: 'bg-lavender-light', tint: 'text-lavender' },
@@ -151,7 +151,7 @@ export default function DashboardPage() {
             <p className="font-body text-sm font-semibold text-onyx">
               {stats.pendingExams} exame{stats.pendingExams !== 1 ? 's' : ''} aguardando extração
             </p>
-            <p className="font-body text-xs text-mauve mt-0.5">Em Exames e Documentos</p>
+            <p className="font-body text-xs text-mauve mt-0.5">Em Exames</p>
           </div>
           <ChevronRight size={16} className="text-mauve/40 group-hover:text-gold transition-colors flex-shrink-0" />
         </motion.button>

@@ -242,12 +242,12 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                 <div className="px-6 py-7 text-center">
                   <div className="w-14 h-14 rounded-full bg-sage-light flex items-center justify-center mx-auto mb-3"><Check size={24} className="text-sage" /></div>
                   <p className="font-body text-sm font-semibold text-onyx mb-1">{savedToAgenda ? (status === 'realizado' ? 'Salvo no seu Histórico' : 'Salvo na sua Agenda') : 'Adicionado ao calendário'}</p>
-                  <p className="font-body text-xs text-mauve mb-5">{savedToAgenda ? (status === 'realizado' ? 'Como já foi realizado, ele está no Histórico de Saúde.' : 'Quando for realizado, ele passa para o Histórico de Saúde.') : 'Pronto.'}</p>
+                  <p className="font-body text-xs text-mauve mb-5">{savedToAgenda ? (status === 'realizado' ? 'Como já foi realizado, ele está no Histórico.' : 'Quando for realizado, ele passa para o Histórico.') : 'Pronto.'}</p>
 
                   {savedToAgenda && status === 'realizado' && onGoToHistory && (
                     <button onClick={() => { handleClose(); onGoToHistory() }}
                       className="w-full mb-3 py-2.5 rounded-xl gradient-sintera text-white text-sm font-body font-medium hover:opacity-90 transition-opacity">
-                      Ir para o Histórico de Saúde
+                      Ir para o Histórico
                     </button>
                   )}
 

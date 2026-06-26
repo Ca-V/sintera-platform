@@ -11,14 +11,12 @@ import {
 import { cn } from '@/lib/utils'
 import { useUser } from '@/context/UserContext'
 
-// Arquitetura de navegação (governança/organização da saúde — sem suporte à
-// decisão clínica). Agrupada pela JORNADA da usuária:
-//   Minha Saúde      = o que é dela / o que ela faz na jornada (inclui Agenda).
-//   Contexto Clínico = pano de fundo e medições longitudinais.
-//   Organização      = gestão (financeiro + compartilhamento).
-//   Configurações    = conta.
-// "Histórico de Saúde" é o registro longitudinal com duas visões internas
-// (Linha do Tempo + Evolução); "Indicadores" deixou de ser item (virou aba).
+// Arquitetura de navegação que acompanha o MODELO MENTAL da usuária (sem jargão):
+//   Minha Saúde   = o que ela faz / acompanha na jornada (Agenda, Histórico, Exames, Medicamentos…).
+//   Meu Perfil    = quem ela é em termos de saúde (problemas, hábitos, medidas, ciclo).
+//   Organização   = gestão (financeiro + compartilhamento).
+//   Configurações = conta.
+// "Histórico" reúne Linha do Tempo + Evolução (duas visões do registro longitudinal).
 const navGroups: {
   title: string
   items: { href: string; icon: React.ElementType; label: string; extra?: string[] }[]
@@ -32,16 +30,16 @@ const navGroups: {
   {
     title: 'Minha Saúde',
     items: [
-      { href: '/dashboard/timeline',     icon: Clock,        label: 'Histórico de Saúde', extra: ['/dashboard/saude', '/dashboard/historico'] },
       { href: '/dashboard/agenda',       icon: CalendarDays, label: 'Agenda' },
-      { href: '/dashboard/exams',        icon: FileText,     label: 'Exames e Documentos' },
+      { href: '/dashboard/timeline',     icon: Clock,        label: 'Histórico', extra: ['/dashboard/saude', '/dashboard/historico'] },
+      { href: '/dashboard/exams',        icon: FileText,     label: 'Exames' },
       { href: '/dashboard/medicamentos', icon: Pill,         label: 'Medicamentos, Suplementos, Produtos e Dispositivos' },
     ],
   },
   {
-    title: 'Contexto Clínico',
+    title: 'Meu Perfil',
     items: [
-      { href: '/dashboard/condicoes',     icon: Stethoscope, label: 'Condições' },
+      { href: '/dashboard/condicoes',     icon: Stethoscope, label: 'Problemas de Saúde' },
       { href: '/dashboard/habitos',       icon: HeartPulse,  label: 'Hábitos' },
       { href: '/dashboard/medidas',       icon: Ruler,       label: 'Medidas Corporais' },
       { href: '/dashboard/sinais-vitais', icon: Activity,    label: 'Sinais Vitais' },

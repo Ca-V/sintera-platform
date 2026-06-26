@@ -82,7 +82,7 @@ export default function IndicadoresPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-5">
-      {/* Módulo Histórico de Saúde — visão Evolução */}
+      {/* Módulo Histórico — visão Evolução */}
       <HistoricoTabs active="evolucao" />
 
       {/* Cabeçalho */}
@@ -92,7 +92,7 @@ export default function IndicadoresPage() {
             <Activity size={22} className="text-petal" />
           </div>
           <div>
-            <h1 className="font-display text-xl font-semibold text-onyx">Histórico de Saúde — Evolução</h1>
+            <h1 className="font-display text-xl font-semibold text-onyx">Histórico — Evolução</h1>
             <p className="font-body text-sm text-mauve mt-0.5">
               Seus biomarcadores ao longo do tempo — clique para ver a evolução. Sem diagnóstico.
             </p>

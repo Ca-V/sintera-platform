@@ -188,7 +188,7 @@ export default function MedidasPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
       <Link href="/dashboard/saude" className="inline-flex items-center gap-1.5 font-body text-sm text-mauve hover:text-petal transition-colors">
-        <ArrowLeft size={15} /> Histórico de Saúde
+        <ArrowLeft size={15} /> Histórico
       </Link>
 
       <div className="flex flex-wrap gap-2">
@@ -201,7 +201,7 @@ export default function MedidasPage() {
         <div>
           <div className="inline-flex items-center gap-1.5 text-petal mb-2">
             <Activity size={16} />
-            <span className="font-body text-xs font-medium uppercase tracking-wider">Histórico de Saúde</span>
+            <span className="font-body text-xs font-medium uppercase tracking-wider">Histórico</span>
           </div>
           <h1 className="font-display text-2xl font-semibold text-onyx">Medidas</h1>
           <p className="font-body text-sm text-mauve mt-1">Acompanhe peso, altura, circunferência e composição corporal (bioimpedância) ao longo do tempo. Registro seu — sem juízo clínico.</p>
@@ -227,7 +227,7 @@ export default function MedidasPage() {
           Fez <strong>bioimpedância</strong> (por exemplo, com seu nutricionista)? Registre cada resultado em
           <strong> Adicionar → Bioimpedância</strong> (gordura corporal, massa muscular, água, IMC e outros).
           Para guardar o laudo completo, envie o arquivo em{' '}
-          <Link href="/dashboard/exams" className="text-petal hover:underline font-medium">Exames e Documentos</Link>.
+          <Link href="/dashboard/exams" className="text-petal hover:underline font-medium">Exames</Link>.
         </p>
       </div>
 

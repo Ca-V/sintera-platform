@@ -188,7 +188,7 @@ export default function TimelinePage() {
 
   async function remove(rawId: string, label: string) {
     if (busyId) return
-    if (!window.confirm(`Excluir "${label}" do seu Histórico de Saúde?`)) return
+    if (!window.confirm(`Excluir "${label}" do seu Histórico?`)) return
     setBusyId(rawId); setActionError(null)
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -302,17 +302,17 @@ export default function TimelinePage() {
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
         className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Histórico de Saúde</h1>
+          <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Histórico</h1>
           <p className="font-body text-sm text-mauve">Seu acompanhamento longitudinal — a linha do tempo com exames, consultas, vacinas, procedimentos e medicamentos</p>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5">
             <Link href="/dashboard/medicamentos" className="inline-flex items-center gap-1 font-body text-xs text-petal hover:underline">
-              <Pill size={13} /> Medicamentos e Suplementos
+              <Pill size={13} /> Medicamentos
             </Link>
             <Link href="/dashboard/medidas" className="inline-flex items-center gap-1 font-body text-xs text-petal hover:underline">
               <Activity size={13} /> Medidas
             </Link>
             <Link href="/dashboard/gastos" className="inline-flex items-center gap-1 font-body text-xs text-petal hover:underline">
-              <Receipt size={13} /> Gastos com Saúde
+              <Receipt size={13} /> Gastos
             </Link>
             <Link href="/dashboard/relatorio" className="inline-flex items-center gap-1 font-body text-xs text-petal hover:underline">
               <FileText size={13} /> Relatórios
@@ -342,7 +342,7 @@ export default function TimelinePage() {
           <Info size={16} className="text-petal flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="font-body text-xs text-onyx leading-relaxed">
-              Este é o seu <strong>Histórico de Saúde</strong>: exames entram automaticamente, e você
+              Este é o seu <strong>Histórico</strong>: exames entram automaticamente, e você
               pode registrar consultas, vacinas e procedimentos. Eventos futuros aparecem em
               <strong> Próximos</strong> e podem virar lembrete no seu calendário (🔔).
             </p>
@@ -361,7 +361,7 @@ export default function TimelinePage() {
           <div className="w-14 h-14 rounded-2xl gradient-sintera-soft flex items-center justify-center mx-auto mb-4">
             <Clock size={26} className="text-petal" />
           </div>
-          <h2 className="font-display text-lg font-semibold text-onyx mb-1">Seu Histórico de Saúde começa aqui</h2>
+          <h2 className="font-display text-lg font-semibold text-onyx mb-1">Seu Histórico começa aqui</h2>
           <p className="font-body text-sm text-mauve max-w-sm mx-auto">
             Envie um exame ou adicione uma consulta, vacina ou procedimento para começar a
             construir sua linha do tempo de saúde.
@@ -393,7 +393,7 @@ export default function TimelinePage() {
       )}
 
       <p className="font-body text-[11px] text-mauve/40 text-center">
-        Organização factual do seu Histórico de Saúde. Não constitui diagnóstico nem avaliação clínica.
+        Organização factual do seu Histórico. Não constitui diagnóstico nem avaliação clínica.
       </p>
 
       {/* Formulário ÚNICO de evento (criar/editar) — o MESMO da Agenda */}
