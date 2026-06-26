@@ -391,8 +391,10 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                       <div className="space-y-1.5"><label className={LABEL}>Orientações de preparo</label>
                         <input type="text" value={preparation} onChange={e => setPreparation(e.target.value)} placeholder="Ex.: jejum de 8h" className={FIELD} /></div>
 
-                      <div className="space-y-1.5"><label className={LABEL}>Como foi <span className="font-normal text-mauve/50 normal-case">(após realizar)</span></label>
-                        <textarea value={outcome} onChange={e => setOutcome(e.target.value)} rows={2} placeholder="Resumo, conduta, encaminhamentos…" className={`${FIELD} resize-none`} /></div>
+                      {status === 'realizado' && (
+                        <div className="space-y-1.5"><label className={LABEL}>Como foi</label>
+                          <textarea value={outcome} onChange={e => setOutcome(e.target.value)} rows={2} placeholder="Resumo, conduta, encaminhamentos…" className={`${FIELD} resize-none`} /></div>
+                      )}
 
                       <div className="space-y-1.5"><label className={LABEL}>Duração estimada</label>
                         <div className="flex gap-2">
