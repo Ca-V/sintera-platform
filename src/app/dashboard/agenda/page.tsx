@@ -14,9 +14,13 @@ import { buildExamRecencySuggestion, type AgendaSuggestion } from '@/lib/agenda/
 import { eventServicesFor, typeLabel, statusLabel, formatDateBR, formatTimeBR, type HealthEvent } from '@/lib/agenda'
 import { serializeRule, parseRule } from '@/lib/recurrence'
 
-const MODAL_TYPES: EventType[] = ['consulta', 'exame', 'procedimento', 'cirurgia', 'vacina', 'medicamento', 'suplemento', 'plano', 'outro']
-// Tipos legados → tipo canônico do seletor ("retorno" vira consulta + atributo isReturn).
-const LEGACY_TYPE_MAP: Record<string, EventType> = { retorno: 'consulta', medicacao: 'medicamento', estetico: 'procedimento', atividade: 'outro', omica: 'outro' }
+const MODAL_TYPES: EventType[] = ['consulta', 'exame', 'procedimento', 'vacina', 'medicamento', 'plano', 'outro']
+// Não-tipos → tipo canônico do seletor (+ atributo): retorno→consulta(isReturn),
+// cirurgia→procedimento(isSurgery), suplemento→medicamento; demais legados mapeados.
+const LEGACY_TYPE_MAP: Record<string, EventType> = {
+  retorno: 'consulta', cirurgia: 'procedimento', suplemento: 'medicamento',
+  medicacao: 'medicamento', estetico: 'procedimento', atividade: 'outro', omica: 'outro',
+}
 const toModalType = (t: string): EventType =>
   (MODAL_TYPES as string[]).includes(t) ? (t as EventType) : (LEGACY_TYPE_MAP[t] ?? 'outro')
 const toModalStatus = (s: string): 'planejado' | 'realizado' | 'cancelado' =>
@@ -110,8 +114,10 @@ export default function AgendaPage() {
     const location = isPlano ? input.carteirinha : input.location
     const recurrenceRule = serializeRule({ frequency: input.recurrenceFrequency, interval: 1, until: input.recurrenceUntil || null, count: null })
     await services.command.create(userId, {
-      ...(editing ? { id: editing.id } : {}),
-      type: input.eventType, title: input.title, date: input.date,
+      // Ao editar, preserva campos NÃO presentes no formulário (anexo, links, lineage,
+      // série, completed_at…) — só os campos do formulário são sobrescritos abaixo.
+      ...(editing ?? {}),
+      type: input.isSurgery ? 'cirurgia' : input.eventType, title: input.title, date: input.date,
       time: input.time || null, durationMin: input.durationMin, notes: input.notes || null,
       reminderEnabled: input.reminderEnabled,
       modality: input.modality || null,
@@ -142,6 +148,7 @@ export default function AgendaPage() {
         return {
           eventType: toModalType(editing.type),
           isReturn: editing.isReturn || editing.type === 'retorno',
+          isSurgery: editing.type === 'cirurgia',
           status: toModalStatus(editing.status),
           title: editing.title, date: editing.date,
           time: formatTimeBR(editing.time) ?? '08:00', durationMin: editing.durationMin ?? 60,

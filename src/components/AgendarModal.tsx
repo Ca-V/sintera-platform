@@ -16,6 +16,7 @@ export type PriorityInput = '' | 'alta' | 'media' | 'baixa'
 export interface AgendaEventInput {
   eventType: EventType
   isReturn: boolean    // atributo da Consulta ("é um retorno")
+  isSurgery: boolean   // subtipo do Procedimento ("é uma cirurgia")
   status: EventStatusInput
   title: string
   date: string         // 'YYYY-MM-DD'
@@ -79,6 +80,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
 
   const [eventType, setEventType] = useState<EventType>('consulta')
   const [isReturn, setIsReturn]   = useState(false)
+  const [isSurgery, setIsSurgery] = useState(false)
   const [status, setStatus]       = useState<EventStatusInput>('planejado')
   const [title, setTitle]   = useState(defaultTitle)
   const [date, setDate]     = useState('')
@@ -110,6 +112,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
     if (!open) return
     setEventType(initialEvent?.eventType ?? 'consulta')
     setIsReturn(initialEvent?.isReturn ?? false)
+    setIsSurgery(initialEvent?.isSurgery ?? false)
     setStatus(initialEvent?.status ?? 'planejado')
     setTitle(initialEvent?.title ?? defaultTitle)
     setDate(initialEvent?.date ?? '')
@@ -140,6 +143,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
   function chooseType(t: EventType) {
     setEventType(t)
     if (t !== 'consulta') setIsReturn(false)
+    if (t !== 'procedimento') setIsSurgery(false)
     if (t === 'plano') {
       setDirectExpense(true)
       setRecurrence(r => (r === 'none' ? 'monthly' : r))
@@ -180,7 +184,8 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
     setSaving(true); setSaveError(null)
     try {
       await onSave({
-        eventType, isReturn: eventType === 'consulta' ? isReturn : false, status,
+        eventType, isReturn: eventType === 'consulta' ? isReturn : false,
+        isSurgery: eventType === 'procedimento' ? isSurgery : false, status,
         title: fullTitle, date, time, durationMin: parseInt(duration), notes: notes.trim(), reminderEnabled,
         modality, professionalName: professionalName.trim(), establishment: establishment.trim(), location: location.trim(),
         preparation: preparation.trim(), amount: amount.trim(),
@@ -199,7 +204,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
 
   function resetFields() {
     setTitle(defaultTitle); setDate(''); setTime(''); setDuration('60'); setNotes(defaultNotes)
-    setEventType('consulta'); setIsReturn(false); setStatus('planejado'); setModality(''); setProfessionalName(''); setEstablishment(''); setLocation(''); setPreparation(''); setAmount('')
+    setEventType('consulta'); setIsReturn(false); setIsSurgery(false); setStatus('planejado'); setModality(''); setProfessionalName(''); setEstablishment(''); setLocation(''); setPreparation(''); setAmount('')
     setRecurrence('none'); setRecurrenceUntil(''); setPriority(''); setDirectExpense(false); setOutcome(''); setOperadora(''); setCarteirinha('')
     setShowDetails(false); setSaveError(null)
   }
@@ -271,6 +276,12 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                       <label className="flex items-center gap-2 px-1 pt-1 cursor-pointer select-none">
                         <input type="checkbox" checked={isReturn} onChange={e => setIsReturn(e.target.checked)} className="w-4 h-4 rounded border-border accent-petal" />
                         <span className="font-body text-xs text-onyx/80">É um retorno</span>
+                      </label>
+                    )}
+                    {eventType === 'procedimento' && (
+                      <label className="flex items-center gap-2 px-1 pt-1 cursor-pointer select-none">
+                        <input type="checkbox" checked={isSurgery} onChange={e => setIsSurgery(e.target.checked)} className="w-4 h-4 rounded border-border accent-petal" />
+                        <span className="font-body text-xs text-onyx/80">É uma cirurgia</span>
                       </label>
                     )}
                   </div>
