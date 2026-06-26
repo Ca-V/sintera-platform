@@ -14,7 +14,7 @@ import { Activity, TrendingUp, TrendingDown, Minus, ArrowRight, Search, Loader2,
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
-import { summarizeBiomarkers, type BiomarkerRow, type BiomarkerSummary, type Trend } from '@/lib/biomarkers/grouping'
+import { summarizeBiomarkers, computeReferenceIndex, type BiomarkerRow, type BiomarkerSummary, type Trend } from '@/lib/biomarkers/grouping'
 
 const INTERP_CFG: Record<string, { sym: string; cls: string }> = {
   acima_da_referencia:         { sym: '▲', cls: 'text-orange-500' },
@@ -55,7 +55,7 @@ export default function IndicadoresPage() {
     ;(async () => {
       const { data, error } = await supabase
         .from('current_biomarkers')
-        .select('id,name,value,unit,result_type,reference_min,reference_max,interpretation,exam_id,exams(exam_date,created_at)')
+        .select('id,name,value,unit,result_type,reference_min,reference_max,interpretation,reference_source,exam_id,exams(exam_date,created_at)')
         .eq('user_id', user.id)
         .eq('synthetic', false)
         .eq('result_type', 'numeric')
@@ -68,6 +68,7 @@ export default function IndicadoresPage() {
   }, [user, supabase])
 
   const summaries = useMemo(() => summarizeBiomarkers(rows), [rows])
+  const refIndex = useMemo(() => computeReferenceIndex(rows), [rows])
   const filtered = useMemo(() => {
     if (!search.trim()) return summaries
     const q = search.toLowerCase()
@@ -122,6 +123,33 @@ export default function IndicadoresPage() {
         </motion.div>
       ) : (
         <>
+          {/* Índice Experimental — proporção dentro da referência por exame (relocado do Histórico, T2-B1b) */}
+          {refIndex.length > 0 && (
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 }}
+              className="card-premium overflow-hidden">
+              <div className="px-5 py-3 border-b border-border/40">
+                <p className="font-body text-sm font-semibold text-onyx">Proporção dentro da referência</p>
+              </div>
+              <div className="px-5 py-4 space-y-3">
+                {refIndex.map((idx) => {
+                  const barColor  = idx.pct >= 80 ? 'bg-sage' : idx.pct >= 60 ? 'bg-amber-400' : 'bg-orange-400'
+                  const textColor = idx.pct >= 80 ? 'text-sage' : idx.pct >= 60 ? 'text-amber-600' : 'text-orange-500'
+                  return (
+                    <div key={idx.examId} className="flex items-center gap-3">
+                      <span className="font-body text-xs text-mauve/60 w-14 flex-shrink-0">{formatDate(idx.date)}</span>
+                      <div className="flex-1 bg-border/30 rounded-full h-2"><div className={`h-2 rounded-full ${barColor}`} style={{ width: `${idx.pct}%` }} /></div>
+                      <span className={`font-body text-sm font-semibold ${textColor} w-10 text-right flex-shrink-0`}>{idx.pct}%</span>
+                      <span className="font-body text-xs text-mauve/50 flex-shrink-0">{idx.num}/{idx.den}</span>
+                    </div>
+                  )
+                })}
+                <p className="font-body text-[11px] text-mauve/40 pt-1">
+                  De cada exame, quantos biomarcadores numéricos estão dentro da faixa do laudo. Experimental; não representa diagnóstico ou estado de saúde.
+                </p>
+              </div>
+            </motion.div>
+          )}
+
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
             className="card-premium overflow-hidden">
             <div className="px-5 py-3 border-b border-border/40 flex items-center justify-between">
@@ -161,7 +189,7 @@ export default function IndicadoresPage() {
           </motion.div>
 
           <p className="font-body text-xs text-mauve/40 text-center pb-4">
-            A linha do tempo dos seus exames e documentos fica em <Link href="/dashboard/historico" className="text-petal hover:underline">Histórico de Saúde</Link>.
+            A linha do tempo dos seus exames e documentos fica em <Link href="/dashboard/timeline" className="text-petal hover:underline">Histórico de Saúde</Link>.
             Esta visão organiza os dados dos laudos; não substitui avaliação profissional nem constitui diagnóstico (RDC 657/2022).
           </p>
         </>

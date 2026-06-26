@@ -31,7 +31,7 @@ const navGroups: {
       { href: '/dashboard/medicamentos', icon: Pill,      label: 'Medicamentos e Suplementos' },
       { href: '/dashboard/saude',        icon: Activity,  label: 'Indicadores de Saúde', extra: ['/dashboard/medidas', '/dashboard/sinais-vitais'] },
       { href: '/dashboard/ciclo',        icon: Droplet,   label: 'Ciclo e Contracepção' },
-      { href: '/dashboard/timeline',     icon: Clock,     label: 'Histórico de Saúde', extra: ['/dashboard/historico'] },
+      { href: '/dashboard/timeline',     icon: Clock,     label: 'Histórico de Saúde' },
     ],
   },
   {

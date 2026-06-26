@@ -13,8 +13,18 @@ export interface BiomarkerRow {
   reference_min: number | null
   reference_max: number | null
   interpretation?: string | null
+  reference_source?: string | null
   exam_id: string
   exams: { exam_date: string | null; created_at: string } | null
+}
+
+/** Ponto do Índice Experimental: proporção de biomarcadores dentro da referência por exame. */
+export interface ReferenceIndexPoint {
+  examId: string
+  date: string
+  pct: number
+  num: number
+  den: number
 }
 
 export type Trend = 'up' | 'down' | 'stable' | 'single' | 'unit_mismatch'
@@ -108,4 +118,24 @@ export function summarizeBiomarkers(rows: BiomarkerRow[]): BiomarkerSummary[] {
 /** Série de um único biomarcador (drill-down), pelo nome normalizado. */
 export function seriesForName(rows: BiomarkerRow[], normalizedName: string): BiomarkerSummary | null {
   return summarizeBiomarkers(rows).find(s => s.canonicalName === normalizedName) ?? null
+}
+
+/**
+ * Índice Experimental — por exame, a proporção de biomarcadores NUMÉRICOS com
+ * referência impressa no laudo (reference_source='laudo', interpretation definida)
+ * que estão dentro da faixa. Só exames com pelo menos 5 elegíveis entram. Factual.
+ */
+export function computeReferenceIndex(rows: BiomarkerRow[]): ReferenceIndexPoint[] {
+  const byExam = new Map<string, { date: string; num: number; den: number }>()
+  for (const r of rows) {
+    if (r.reference_source !== 'laudo' || r.result_type !== 'numeric' || !r.interpretation) continue
+    if (!byExam.has(r.exam_id)) byExam.set(r.exam_id, { date: examDate(r), num: 0, den: 0 })
+    const g = byExam.get(r.exam_id)!
+    g.den += 1
+    if (r.interpretation === 'dentro_da_referencia') g.num += 1
+  }
+  return [...byExam.entries()]
+    .map(([examId, g]) => ({ examId, date: g.date, num: g.num, den: g.den, pct: Math.round((g.num / g.den) * 100) }))
+    .filter(p => p.den >= 5)
+    .sort((a, b) => a.date.localeCompare(b.date))
 }
