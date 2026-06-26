@@ -11,13 +11,13 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Loader2, Plus, X, Pill, ArrowLeft, Pencil, Trash2, PauseCircle, PlayCircle, Camera } from 'lucide-react'
+import { Loader2, Plus, X, Pill, ArrowLeft, Pencil, Trash2, PauseCircle, PlayCircle, Camera, ChevronDown } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 
 type Status = 'em_uso' | 'suspenso'
-type Kind = 'medicamento' | 'suplemento'
+type Kind = 'medicamento' | 'suplemento' | 'produto' | 'dispositivo'
 
 interface Med {
   id: string
@@ -74,6 +74,7 @@ export default function MedicamentosPage() {
   const [busyId, setBusyId] = useState<string | null>(null)
 
   const [showForm, setShowForm] = useState(false)
+  const [showMoreDetails, setShowMoreDetails] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   // O formulário abre acima das listas; ao editar um item lá embaixo (ex.: suplemento)
   // ele abria fora da tela. Rolamos até ele ao abrir/trocar de item editado.
@@ -196,12 +197,14 @@ export default function MedicamentosPage() {
   function reset() {
     setEditingId(null); setName(''); setKind('medicamento'); setDose(''); setFreq(''); setStartedOn(''); setUntilOn(''); setNotes('')
     setPackQty(''); setDailyCons(''); setPurchasedOn(''); setPurchaseStatus(''); setRepurchase(false); setErr(null)
+    setShowMoreDetails(false)
   }
   function openEdit(m: Med) {
     setEditingId(m.id); setName(m.name); setKind(m.kind); setDose(m.dose ?? ''); setFreq(m.frequency ?? '')
     setStartedOn(m.startedOn ?? ''); setUntilOn(m.untilOn ?? ''); setNotes(m.notes ?? '')
     setPackQty(m.packQty != null ? String(m.packQty) : ''); setDailyCons(m.dailyCons != null ? String(m.dailyCons) : '')
     setPurchasedOn(m.purchasedOn ?? ''); setPurchaseStatus(m.purchaseStatus ?? ''); setRepurchase(m.repurchaseReminder)
+    setShowMoreDetails(!!(m.startedOn || m.untilOn || m.notes || m.packQty != null || m.dailyCons != null || m.purchasedOn || m.purchaseStatus || m.repurchaseReminder))
     setErr(null); setShowForm(true)
   }
 
@@ -271,7 +274,7 @@ export default function MedicamentosPage() {
     await load(); setBusyId(null)
   }
 
-  const KIND_LABEL: Record<Kind, string> = { medicamento: 'Medicamentos', suplemento: 'Suplementos' }
+  const KIND_LABEL: Record<Kind, string> = { medicamento: 'Medicamentos', suplemento: 'Suplementos', produto: 'Produtos', dispositivo: 'Dispositivos' }
 
   function kindSection(k: Kind) {
     const list = meds.filter(m => m.kind === k)
@@ -416,12 +419,14 @@ export default function MedicamentosPage() {
               className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
               <option value="medicamento">Medicamento</option>
               <option value="suplemento">Suplemento</option>
+              <option value="produto">Produto</option>
+              <option value="dispositivo">Dispositivo</option>
             </select>
           </div>
           <div>
-            <label className="font-body text-xs text-mauve/70 block mb-1">Nome do {kind === 'suplemento' ? 'suplemento' : 'medicamento'}</label>
+            <label className="font-body text-xs text-mauve/70 block mb-1">Nome do {kind === 'suplemento' ? 'suplemento' : kind === 'produto' ? 'produto' : kind === 'dispositivo' ? 'dispositivo' : 'medicamento'}</label>
             <div className="flex items-center gap-2">
-              <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder={kind === 'suplemento' ? 'Ex.: Vitamina D' : 'Ex.: Losartana'}
+              <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder={kind === 'suplemento' ? 'Ex.: Vitamina D' : kind === 'produto' ? 'Ex.: Lente de contato' : kind === 'dispositivo' ? 'Ex.: Medidor de glicose' : 'Ex.: Losartana'}
                 className="flex-1 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
               <VoiceInput onResult={t => setName(v => (v ? v + ' ' : '') + t)} />
             </div>
@@ -438,6 +443,13 @@ export default function MedicamentosPage() {
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
             </div>
           </div>
+          <button type="button" onClick={() => setShowMoreDetails(v => !v)}
+            className="w-full flex items-center justify-between px-1 py-1.5 font-body text-sm text-petal hover:text-petal/80 transition-colors">
+            <span>Mais detalhes <span className="font-normal text-mauve/50">— uso contínuo, compra e recompra</span></span>
+            <ChevronDown size={16} className={`transition-transform ${showMoreDetails ? 'rotate-180' : ''}`} />
+          </button>
+          {showMoreDetails && (
+          <div className="space-y-3 pt-1 border-t border-border/40">
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="font-body text-xs text-mauve/70 block mb-1">Início (opcional)</label>
@@ -506,6 +518,8 @@ export default function MedicamentosPage() {
               return <p className="font-body text-[11px] text-petal">Estimativa: acaba por volta de <strong>{fmtFull(ro)}</strong>{repurchase && rc ? `; lembrete ~${fmtFull(rc)}` : ''}.</p>
             })()}
           </div>
+          </div>
+          )}
 
           {err && <p className="font-body text-xs text-red-500">{err}</p>}
           <div className="flex justify-end">
@@ -527,6 +541,8 @@ export default function MedicamentosPage() {
         <div className="space-y-8">
           {kindSection('medicamento')}
           {kindSection('suplemento')}
+          {kindSection('produto')}
+          {kindSection('dispositivo')}
         </div>
       )}
 
