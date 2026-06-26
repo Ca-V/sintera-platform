@@ -9,7 +9,7 @@
 // frequência e desde quando.
 // ============================================================
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Loader2, Plus, X, Pill, ArrowLeft, Pencil, Trash2, PauseCircle, PlayCircle, Camera } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -75,6 +75,12 @@ export default function MedicamentosPage() {
 
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  // O formulário abre acima das listas; ao editar um item lá embaixo (ex.: suplemento)
+  // ele abria fora da tela. Rolamos até ele ao abrir/trocar de item editado.
+  const formRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (showForm) formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [showForm, editingId])
   const [name, setName] = useState('')
   const [kind, setKind] = useState<Kind>('medicamento')
   const [dose, setDose] = useState('')
@@ -130,7 +136,7 @@ export default function MedicamentosPage() {
     } finally { setScanning(false) }
   }
 
-  function useScanned(it: ScanItem) {
+  function applyScanned(it: ScanItem) {
     setEditingId(null); setKind('medicamento'); setName(it.name); setDose(it.dose ?? ''); setFreq(it.frequency ?? '')
     setStartedOn(it.startedOn ?? ''); setUntilOn(''); setNotes('')
     setPackQty(it.packQty != null ? String(it.packQty) : ''); setDailyCons(it.dailyCons != null ? String(it.dailyCons) : '')
@@ -184,6 +190,7 @@ export default function MedicamentosPage() {
     setLoading(false)
   }, [user, supabase])
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { if (!authLoading) load() }, [authLoading, load])
 
   function reset() {
@@ -394,7 +401,7 @@ export default function MedicamentosPage() {
                 <p className="font-body text-sm font-semibold text-onyx truncate">{it.name}</p>
                 <p className="font-body text-[11px] text-mauve/70">{[it.dose, it.frequency, it.startedOn ? `desde ${it.startedOn}` : null].filter(Boolean).join(' · ') || 'Sem dose/frequência detectada'}</p>
               </div>
-              <button onClick={() => useScanned(it)}
+              <button onClick={() => applyScanned(it)}
                 className="px-3 py-1.5 rounded-full gradient-sintera text-white font-body text-xs font-medium flex-shrink-0 hover:opacity-90">Usar</button>
             </div>
           ))}
@@ -402,7 +409,7 @@ export default function MedicamentosPage() {
       )}
 
       {showForm && (
-        <div className="card-premium p-5 space-y-3">
+        <div ref={formRef} className="card-premium p-5 space-y-3 scroll-mt-20">
           <div>
             <label className="font-body text-xs text-mauve/70 block mb-1">Tipo</label>
             <select value={kind} onChange={e => setKind(e.target.value as Kind)}
