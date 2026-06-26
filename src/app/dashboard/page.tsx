@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
   FileText, Activity, Clock, Pill, ScrollText, CalendarDays, Droplet,
-  Upload, CheckCircle, AlertCircle, ArrowRight, FlaskConical, Bell, ChevronRight,
+  Upload, CheckCircle, AlertCircle, FlaskConical, Bell, ChevronRight,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
@@ -42,7 +42,7 @@ const QUICK_ACCESS: { href: string; icon: React.ElementType; label: string; desc
   { href: '/dashboard/exams',        icon: FileText,    label: 'Exames e Documentos',       desc: 'Laudos e arquivos',              tile: 'bg-blush',          tint: 'text-petal' },
   { href: '/dashboard/saude',        icon: Activity,    label: 'Indicadores de Saúde',      desc: 'Valores atuais dos exames',      tile: 'bg-lavender-light', tint: 'text-lavender' },
   { href: '/dashboard/timeline',     icon: Clock,       label: 'Histórico de Saúde',        desc: 'Linha do tempo e evolução',      tile: 'bg-sage-light',     tint: 'text-sage' },
-  { href: '/dashboard/agenda',       icon: CalendarDays,label: 'Planejamento de Saúde',     desc: 'Agenda e lembretes',             tile: 'bg-warm',           tint: 'text-gold' },
+  { href: '/dashboard/agenda',       icon: CalendarDays,label: 'Agenda',                   desc: 'Eventos e lembretes',            tile: 'bg-warm',           tint: 'text-gold' },
   { href: '/dashboard/medicamentos', icon: Pill,        label: 'Medicamentos e Suplementos',desc: 'Em uso e recompra',              tile: 'bg-sage-light',     tint: 'text-sage' },
   { href: '/dashboard/ciclo',        icon: Droplet,     label: 'Ciclo e Contracepção',      desc: 'Menstruação e troca de método',  tile: 'bg-blush',          tint: 'text-petal' },
   { href: '/dashboard/relatorio',    icon: ScrollText,  label: 'Relatórios',                desc: 'Compartilhar com profissionais', tile: 'bg-lavender-light', tint: 'text-lavender' },
@@ -62,11 +62,6 @@ export default function DashboardPage() {
   const hour        = new Date().getHours()
   const greeting    = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite'
   const displayName = profile?.name?.split(' ')[0] ?? 'por aqui'
-
-  useEffect(() => {
-    if (!user) return
-    loadData()
-  }, [user])
 
   async function loadData() {
     setLoading(true)
@@ -101,6 +96,13 @@ export default function DashboardPage() {
     setLoading(false)
   }
 
+  useEffect(() => {
+    if (!user) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
+
   const isEmpty = !loading && stats?.totalExams === 0 && journey.count === 0
 
   return (
@@ -118,7 +120,7 @@ export default function DashboardPage() {
 
       {/* ───────────────────────── Destaques (o mais importante, no topo) ───────────────────────── */}
 
-      {/* Próximo no Planejamento de Saúde — sensível ao tempo */}
+      {/* Próximo na Agenda — sensível ao tempo */}
       {!loading && journey.next && (
         <motion.button
           initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 }}
@@ -128,7 +130,7 @@ export default function DashboardPage() {
             <CalendarDays size={22} className="text-petal" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-body text-[11px] font-medium uppercase tracking-wider text-petal">Planejamento de Saúde · próximo</p>
+            <p className="font-body text-[11px] font-medium uppercase tracking-wider text-petal">Agenda · próximo</p>
             <p className="font-body text-sm font-semibold text-onyx truncate mt-0.5">{journey.next.title}</p>
             <p className="font-body text-xs text-mauve mt-0.5">{formatDate(journey.next.date)}</p>
           </div>

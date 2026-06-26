@@ -1,4 +1,4 @@
-// Planejamento da Saúde — montagem da NOTIFICAÇÃO de evento (REQ-NOTIF-001).
+// Agenda — montagem da NOTIFICAÇÃO de evento (REQ-NOTIF-001).
 // Fonte ÚNICA de verdade do conteúdo da notificação: consumida pela tela e pelos
 // templates de e-mail/WhatsApp, evitando duas listas independentes de campos.
 // Função PURA + testada. Organização factual, sem juízo clínico (RDC 657/2022).
