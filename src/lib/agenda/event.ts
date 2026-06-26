@@ -28,6 +28,16 @@ export interface EventLink {
   metadata?: Record<string, unknown>
 }
 
+// Desfecho do evento — fecha a jornada (mais abrangente que "resultado").
+export interface Outcome {
+  summary?: string          // resumo da consulta
+  diagnosis?: string        // diagnóstico informado
+  conduct?: string          // conduta
+  requestedExams?: string   // exames solicitados
+  referrals?: string        // encaminhamentos
+  notes?: string            // observações
+}
+
 /** Objeto de domínio do evento (espelha health_events; uma única fonte de verdade). */
 export interface HealthEvent {
   id: string
@@ -48,8 +58,10 @@ export interface HealthEvent {
   preparation: string | null
   notes: string | null
   amountCents: number | null
+  directExpense: boolean          // despesa direta: conta como gasto sem precisar estar "realizado"
   attachmentUrl: string | null
   links: EventLink[]
+  outcome: Outcome | null         // Desfecho
   recurrenceRule: string | null
   seriesId: string | null
   parentEventId: string | null    // evento que originou este (cadeia da jornada)
@@ -83,8 +95,10 @@ export interface HealthEventRow {
   preparation?: string | null
   notes?: string | null
   amount_cents?: number | null
+  direct_expense?: boolean | null
   attachment_url?: string | null
   links?: unknown
+  outcome?: unknown
   recurrence_rule?: string | null
   series_id?: string | null
   parent_event_id?: string | null
@@ -109,8 +123,10 @@ export function rowToHealthEvent(r: HealthEventRow): HealthEvent {
     professionalKind: r.professional_kind ?? null, professionalName: r.professional_name ?? null,
     establishment: r.establishment ?? null, location: r.location ?? null,
     modality: normModality(r.modality), preparation: r.preparation ?? null, notes: r.notes ?? null,
-    amountCents: r.amount_cents ?? null, attachmentUrl: r.attachment_url ?? null,
+    amountCents: r.amount_cents ?? null, directExpense: r.direct_expense ?? false,
+    attachmentUrl: r.attachment_url ?? null,
     links: Array.isArray(r.links) ? (r.links as EventLink[]) : [],
+    outcome: (r.outcome && typeof r.outcome === 'object') ? (r.outcome as Outcome) : null,
     recurrenceRule: r.recurrence_rule ?? null, seriesId: r.series_id ?? null,
     parentEventId: r.parent_event_id ?? null, rootEventId: r.root_event_id ?? null,
     completedAt: r.completed_at ?? null,
@@ -141,7 +157,7 @@ export function agendaRowToHealthEvent(r: AgendaEventRow): HealthEvent {
     durationMin: r.duration_min ?? null, reminderEnabled: r.reminder_enabled ?? true, reminderSentAt: r.reminder_sent_at ?? null,
     professionalKind: null, professionalName: null, establishment: null, location: null,
     modality: null, preparation: null, notes: r.notes ?? null,
-    amountCents: null, attachmentUrl: null, links: [],
+    amountCents: null, directExpense: false, attachmentUrl: null, links: [], outcome: null,
     recurrenceRule: null, seriesId: null, parentEventId: null, rootEventId: null, completedAt: null,
   }
 }
@@ -156,8 +172,15 @@ export function hasActiveReminder(ev: HealthEvent): boolean { return ev.reminder
 export function hasCost(ev: HealthEvent): boolean { return (ev.amountCents ?? 0) > 0 }
 /** Evento não criado manualmente pelo usuário (protocolo, exame, wearable, importação…). */
 export function isDerived(ev: HealthEvent): boolean { return ev.source !== 'manual' && ev.source !== 'agenda_legacy' }
-/** Lançamento financeiro = evento REALIZADO com valor. Gastos é PROJEÇÃO disto (não cria registros). */
-export function isFinancial(ev: HealthEvent): boolean { return isConcluded(ev) && hasCost(ev) }
+/** Despesa direta (plano/academia/assinatura/suplemento/compra): conta sem precisar de "realizado". */
+export function isDirectExpense(ev: HealthEvent): boolean { return ev.directExpense }
+/**
+ * Lançamento financeiro = evento com valor que (a) foi REALIZADO **ou** (b) é uma
+ * despesa DIRETA. Gastos é PROJEÇÃO disto — não cria registros próprios.
+ */
+export function isFinancial(ev: HealthEvent): boolean {
+  return hasCost(ev) && (isConcluded(ev) || isDirectExpense(ev))
+}
 
 // ── Seletores puros (capacidades de leitura projetam por estes) ───────────────
 export function selectUpcoming(events: HealthEvent[], refDate: string): HealthEvent[] {
@@ -184,8 +207,10 @@ export function healthEventToRow(userId: string, ev: Partial<HealthEvent> & { ty
     professional_kind: ev.professionalKind ?? null, professional_name: ev.professionalName ?? null,
     establishment: ev.establishment ?? null, location: ev.location ?? null,
     modality: ev.modality ?? null, preparation: ev.preparation ?? null, notes: ev.notes ?? null,
-    amount_cents: ev.amountCents ?? null, attachment_url: ev.attachmentUrl ?? null,
-    links: ev.links ?? [], recurrence_rule: ev.recurrenceRule ?? null, series_id: ev.seriesId ?? null,
+    amount_cents: ev.amountCents ?? null, direct_expense: ev.directExpense ?? false,
+    attachment_url: ev.attachmentUrl ?? null,
+    links: ev.links ?? [], outcome: ev.outcome ?? null,
+    recurrence_rule: ev.recurrenceRule ?? null, series_id: ev.seriesId ?? null,
     parent_event_id: ev.parentEventId ?? null, root_event_id: ev.rootEventId ?? null,
     completed_at: ev.completedAt ?? null,
   }

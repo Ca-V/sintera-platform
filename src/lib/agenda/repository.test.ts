@@ -7,8 +7,8 @@ function ev(id: string, date: string, time: string | null): HealthEvent {
     id, type: 'consulta', title: id, status: 'planejado', source: 'manual',
     date, time, durationMin: null, reminderEnabled: true, reminderSentAt: null,
     professionalKind: null, professionalName: null, establishment: null, location: null,
-    modality: null, preparation: null, notes: null, amountCents: null, attachmentUrl: null,
-    links: [], recurrenceRule: null, seriesId: null, parentEventId: null, rootEventId: null, completedAt: null,
+    modality: null, preparation: null, notes: null, amountCents: null, directExpense: false, attachmentUrl: null,
+    links: [], outcome: null, recurrenceRule: null, seriesId: null, parentEventId: null, rootEventId: null, completedAt: null,
   }
 }
 

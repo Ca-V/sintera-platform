@@ -12,8 +12,8 @@ function ev(p: Partial<HealthEvent>): HealthEvent {
     id: 'e1', type: 'consulta', title: 'Consulta', status: 'planejado', source: 'manual',
     date: '2026-07-18', time: '14:30:00', durationMin: null, reminderEnabled: true, reminderSentAt: null,
     professionalKind: null, professionalName: null, establishment: null, location: null,
-    modality: null, preparation: null, notes: null, amountCents: null, attachmentUrl: null,
-    links: [], recurrenceRule: null, seriesId: null, parentEventId: null, rootEventId: null, completedAt: null, ...p,
+    modality: null, preparation: null, notes: null, amountCents: null, directExpense: false, attachmentUrl: null,
+    links: [], outcome: null, recurrenceRule: null, seriesId: null, parentEventId: null, rootEventId: null, completedAt: null, ...p,
   }
 }
 
@@ -83,12 +83,18 @@ describe('seletores e regras de transição (puros)', () => {
     expect(selectHistorical(list, ref).map(e => e.id)).toEqual(['pas'])
     expect(selectByLink(list, 'exam', 'x1').map(e => e.id)).toEqual(['lnk'])
   })
-  it('isFinancial / selectFinancial = realizado COM valor (Gastos = projeção)', () => {
+  it('isFinancial / selectFinancial = realizado-com-valor OU despesa direta (Gastos = projeção)', () => {
     expect(isFinancial(ev({ status: 'realizado', amountCents: 25000 }))).toBe(true)
-    expect(isFinancial(ev({ status: 'planejado', amountCents: 25000 }))).toBe(false) // ainda não realizado
+    expect(isFinancial(ev({ status: 'planejado', amountCents: 25000 }))).toBe(false) // não realizado e não-direto
+    expect(isFinancial(ev({ status: 'planejado', amountCents: 25000, directExpense: true }))).toBe(true) // despesa direta (plano)
     expect(isFinancial(ev({ status: 'realizado', amountCents: null }))).toBe(false)  // sem valor
-    const list = [ev({ id: 'a', status: 'realizado', amountCents: 100 }), ev({ id: 'b', status: 'planejado', amountCents: 100 }), ev({ id: 'c', status: 'realizado', amountCents: null })]
-    expect(selectFinancial(list).map(e => e.id)).toEqual(['a'])
+    const list = [
+      ev({ id: 'a', status: 'realizado', amountCents: 100 }),
+      ev({ id: 'b', status: 'planejado', amountCents: 100 }),
+      ev({ id: 'd', status: 'planejado', amountCents: 100, directExpense: true }),
+      ev({ id: 'c', status: 'realizado', amountCents: null }),
+    ]
+    expect(selectFinancial(list).map(e => e.id).sort()).toEqual(['a', 'd'])
   })
   it('completeRule / cancelRule / rescheduleRule retornam novo estado', () => {
     expect(completeRule(ev({}), '2026-07-18T10:00:00Z')).toMatchObject({ status: 'realizado', completedAt: '2026-07-18T10:00:00Z' })

@@ -9,8 +9,8 @@ function ev(p: Partial<HealthEvent>): HealthEvent {
     id: 'e1', type: 'consulta', title: 'Consulta', status: 'planejado', source: 'manual',
     date: '2026-07-18', time: '14:30', durationMin: null, reminderEnabled: true, reminderSentAt: null,
     professionalKind: null, professionalName: null, establishment: null, location: null,
-    modality: null, preparation: null, notes: null, amountCents: null, attachmentUrl: null,
-    links: [], recurrenceRule: null, seriesId: null, parentEventId: null, rootEventId: null, completedAt: null, ...p,
+    modality: null, preparation: null, notes: null, amountCents: null, directExpense: false, attachmentUrl: null,
+    links: [], outcome: null, recurrenceRule: null, seriesId: null, parentEventId: null, rootEventId: null, completedAt: null, ...p,
   }
 }
 

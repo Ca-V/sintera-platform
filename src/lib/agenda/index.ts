@@ -4,11 +4,11 @@
 
 export type {
   HealthEvent, EventStatus, EventModality, EventLink, EventLinkKind,
-  EventLinkRelationship, EventSource,
+  EventLinkRelationship, EventSource, Outcome,
 } from './event'
 export {
   EVENT_STATUSES, EVENT_MODALITIES, canTransition,
-  isUpcoming, isPast, isClosed, isConcluded, hasActiveReminder, hasCost, isDerived, isFinancial,
+  isUpcoming, isPast, isClosed, isConcluded, hasActiveReminder, hasCost, isDerived, isFinancial, isDirectExpense,
 } from './event'
 
 export {
