@@ -18,9 +18,12 @@ export type EventModality = typeof EVENT_MODALITIES[number]
 // integrações futuras e a convergência ômica). Chaves previstas de `type`:
 //   exam · biomarker · protocol · medication · supplement · document · professional
 export type EventLinkKind = 'exam' | 'biomarker' | 'protocol' | 'medication' | 'supplement' | 'document' | 'professional'
+// Semântica da relação — permite navegar a cadeia da jornada.
+export type EventLinkRelationship = 'origin' | 'follow_up' | 'generated_from' | 'related'
 export interface EventLink {
   type: EventLinkKind
   id?: string
+  relationship?: EventLinkRelationship
   source?: string
   metadata?: Record<string, unknown>
 }

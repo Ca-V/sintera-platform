@@ -29,7 +29,8 @@ export function sortByWhen(events: HealthEvent[]): HealthEvent[] {
     a.date.localeCompare(b.date) || (a.time ?? '').localeCompare(b.time ?? '') || a.id.localeCompare(b.id))
 }
 
-export function createEventRepository(supabase: SupabaseClient): EventRepository {
+/** Implementação de persistência sobre o Supabase. O domínio/serviço nunca conhece o banco. */
+export function createSupabaseEventRepository(supabase: SupabaseClient): EventRepository {
   // Leitura única da jornada (coexistência: legados + canônicos), já como domínio.
   async function listAll(userId: string): Promise<HealthEvent[]> {
     const [a, h] = await Promise.all([

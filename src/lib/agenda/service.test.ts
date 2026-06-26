@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { createEventService } from './service'
+import { createEventQueryService, createEventCommandService } from './service'
+import { createEventBus, type DomainEvent } from './bus'
 import type { EventRepository } from './repository'
 import type { HealthEvent } from './event'
 
@@ -13,7 +14,6 @@ function ev(p: Partial<HealthEvent>): HealthEvent {
   }
 }
 
-// Repositório falso que registra as chamadas — testa as regras do serviço sem banco.
 function fakeRepo() {
   const calls: { method: string; args: unknown[] }[] = []
   let saved: (Partial<HealthEvent> & { type: string }) | null = null
@@ -31,29 +31,50 @@ function fakeRepo() {
 
 const clock = { today: () => '2026-07-18', now: () => '2026-07-18T10:00:00Z' }
 
-describe('EventService (regras na camada de serviço)', () => {
-  it('listUpcoming/listHistorical usam o repositório com a data de hoje', async () => {
+describe('EventQueryService (leitura)', () => {
+  it('Agenda/Histórico usam as capacidades com a data de hoje', async () => {
     const { repo, calls } = fakeRepo()
-    const svc = createEventService(repo, clock)
-    await svc.listUpcoming('u1')
-    await svc.listHistorical('u1')
+    const q = createEventQueryService(repo, clock)
+    await q.listUpcoming('u1')
+    await q.listHistorical('u1')
     expect(calls[0]).toEqual({ method: 'listUpcomingEvents', args: ['u1', '2026-07-18'] })
     expect(calls[1]).toEqual({ method: 'listHistoricalEvents', args: ['u1', '2026-07-18'] })
   })
+})
 
-  it('complete aplica a regra (realizado + completed_at) antes de salvar', async () => {
+describe('EventCommandService (escrita + transições no bus)', () => {
+  it('complete aplica a regra e emite EventCompleted com fromStatus', async () => {
     const { repo, getSaved } = fakeRepo()
-    const svc = createEventService(repo, clock)
-    await svc.complete('u1', ev({}))
+    const bus = createEventBus()
+    const seen: DomainEvent[] = []
+    bus.subscribe('EventCompleted', e => { seen.push(e) })
+    const cmd = createEventCommandService(repo, bus, clock)
+    await cmd.complete('u1', ev({ status: 'confirmado' }))
     expect(getSaved()).toMatchObject({ status: 'realizado', completedAt: '2026-07-18T10:00:00Z' })
+    expect(seen).toHaveLength(1)
+    expect(seen[0]).toMatchObject({ type: 'EventCompleted', fromStatus: 'confirmado' })
   })
+  it('cancel e reschedule emitem suas transições', async () => {
+    const { repo } = fakeRepo()
+    const bus = createEventBus()
+    const seen: string[] = []
+    ;(['EventCancelled', 'EventRescheduled'] as const).forEach(t => bus.subscribe(t, () => { seen.push(t) }))
+    const cmd = createEventCommandService(repo, bus, clock)
+    await cmd.cancel('u1', ev({}))
+    await cmd.reschedule('u1', ev({}), '2026-08-01', '09:00')
+    expect(seen).toEqual(['EventCancelled', 'EventRescheduled'])
+  })
+})
 
-  it('cancel e reschedule aplicam as regras', async () => {
-    const { repo, getSaved } = fakeRepo()
-    const svc = createEventService(repo, clock)
-    await svc.cancel('u1', ev({}))
-    expect(getSaved()).toMatchObject({ status: 'cancelado' })
-    await svc.reschedule('u1', ev({}), '2026-08-01', '09:00')
-    expect(getSaved()).toMatchObject({ status: 'reagendado', date: '2026-08-01', time: '09:00' })
+describe('EventBus', () => {
+  it('publica para assinantes do tipo e respeita unsubscribe', async () => {
+    const bus = createEventBus()
+    let n = 0
+    const off = bus.subscribe('EventCreated', () => { n++ })
+    await bus.publish({ type: 'EventCreated', event: ev({}), at: 'x' })
+    await bus.publish({ type: 'EventCompleted', event: ev({}), at: 'x' }) // outro tipo: ignora
+    off()
+    await bus.publish({ type: 'EventCreated', event: ev({}), at: 'x' })   // após unsubscribe: ignora
+    expect(n).toBe(1)
   })
 })
