@@ -9,7 +9,8 @@ function ev(p: Partial<HealthEvent>): HealthEvent {
     date: '2026-07-18', time: '14:30:00', durationMin: null, reminderEnabled: true, reminderSentAt: null,
     professionalKind: 'medico', professionalName: 'Dr. João Silva', establishment: 'Clínica ABC',
     location: null, modality: 'presencial', preparation: null, notes: null, amountCents: null,
-    attachmentUrl: null, links: [], recurrenceRule: null, seriesId: null, completedAt: null, ...p,
+    attachmentUrl: null, links: [], recurrenceRule: null, seriesId: null,
+    parentEventId: null, rootEventId: null, completedAt: null, ...p,
   }
 }
 

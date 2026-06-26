@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   rowToHealthEvent, agendaRowToHealthEvent,
   isUpcoming, isPast, isConcluded, isClosed, hasActiveReminder, hasCost, isDerived,
+  selectUpcoming, selectHistorical, selectByLink, completeRule, cancelRule, rescheduleRule,
   type HealthEvent, type HealthEventRow,
 } from './event'
 
@@ -11,7 +12,7 @@ function ev(p: Partial<HealthEvent>): HealthEvent {
     date: '2026-07-18', time: '14:30:00', durationMin: null, reminderEnabled: true, reminderSentAt: null,
     professionalKind: null, professionalName: null, establishment: null, location: null,
     modality: null, preparation: null, notes: null, amountCents: null, attachmentUrl: null,
-    links: [], recurrenceRule: null, seriesId: null, completedAt: null, ...p,
+    links: [], recurrenceRule: null, seriesId: null, parentEventId: null, rootEventId: null, completedAt: null, ...p,
   }
 }
 
@@ -66,5 +67,25 @@ describe('predicados de projeção (telas só filtram por estes)', () => {
     expect(hasCost(ev({ amountCents: null }))).toBe(false)
     expect(isDerived(ev({ source: 'protocol' }))).toBe(true)
     expect(isDerived(ev({ source: 'manual' }))).toBe(false)
+  })
+})
+
+describe('seletores e regras de transição (puros)', () => {
+  const ref = '2026-07-18'
+  it('selectUpcoming / selectHistorical / selectByLink', () => {
+    const list = [
+      ev({ id: 'fut', date: '2026-08-01' }),
+      ev({ id: 'pas', date: '2026-07-01' }),
+      ev({ id: 'lnk', date: '2026-08-02', links: [{ type: 'exam', id: 'x1' }] }),
+    ]
+    expect(selectUpcoming(list, ref).map(e => e.id).sort()).toEqual(['fut', 'lnk'])
+    expect(selectHistorical(list, ref).map(e => e.id)).toEqual(['pas'])
+    expect(selectByLink(list, 'exam', 'x1').map(e => e.id)).toEqual(['lnk'])
+  })
+  it('completeRule / cancelRule / rescheduleRule retornam novo estado', () => {
+    expect(completeRule(ev({}), '2026-07-18T10:00:00Z')).toMatchObject({ status: 'realizado', completedAt: '2026-07-18T10:00:00Z' })
+    expect(cancelRule(ev({})).status).toBe('cancelado')
+    const r = rescheduleRule(ev({ date: '2026-07-18', time: '14:30' }), '2026-08-01', '09:00')
+    expect(r).toMatchObject({ status: 'reagendado', date: '2026-08-01', time: '09:00' })
   })
 })

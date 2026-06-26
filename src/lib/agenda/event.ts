@@ -49,8 +49,15 @@ export interface HealthEvent {
   links: EventLink[]
   recurrenceRule: string | null
   seriesId: string | null
+  parentEventId: string | null    // evento que originou este (cadeia da jornada)
+  rootEventId: string | null      // raiz da cadeia
   completedAt: string | null
 }
+
+// `source` evolui para múltiplas origens. Tipo aberto (string) — valores previstos:
+export type EventSource =
+  | 'manual' | 'agenda_legacy' | 'exam' | 'protocol' | 'ai' | 'wearable'
+  | 'device' | 'hospital' | 'lab' | 'import' | 'connector' | 'system'
 
 // ── Mapeadores persistência → domínio (a UI consome o domínio, não a linha crua) ──
 /** Forma da linha de `health_events` (snake_case). */
@@ -77,6 +84,8 @@ export interface HealthEventRow {
   links?: unknown
   recurrence_rule?: string | null
   series_id?: string | null
+  parent_event_id?: string | null
+  root_event_id?: string | null
   completed_at?: string | null
 }
 
@@ -99,7 +108,9 @@ export function rowToHealthEvent(r: HealthEventRow): HealthEvent {
     modality: normModality(r.modality), preparation: r.preparation ?? null, notes: r.notes ?? null,
     amountCents: r.amount_cents ?? null, attachmentUrl: r.attachment_url ?? null,
     links: Array.isArray(r.links) ? (r.links as EventLink[]) : [],
-    recurrenceRule: r.recurrence_rule ?? null, seriesId: r.series_id ?? null, completedAt: r.completed_at ?? null,
+    recurrenceRule: r.recurrence_rule ?? null, seriesId: r.series_id ?? null,
+    parentEventId: r.parent_event_id ?? null, rootEventId: r.root_event_id ?? null,
+    completedAt: r.completed_at ?? null,
   }
 }
 
@@ -128,7 +139,7 @@ export function agendaRowToHealthEvent(r: AgendaEventRow): HealthEvent {
     professionalKind: null, professionalName: null, establishment: null, location: null,
     modality: null, preparation: null, notes: r.notes ?? null,
     amountCents: null, attachmentUrl: null, links: [],
-    recurrenceRule: null, seriesId: null, completedAt: null,
+    recurrenceRule: null, seriesId: null, parentEventId: null, rootEventId: null, completedAt: null,
   }
 }
 
@@ -143,7 +154,48 @@ export function hasCost(ev: HealthEvent): boolean { return (ev.amountCents ?? 0)
 /** Evento não criado manualmente pelo usuário (protocolo, exame, wearable, importação…). */
 export function isDerived(ev: HealthEvent): boolean { return ev.source !== 'manual' && ev.source !== 'agenda_legacy' }
 
+// ── Seletores puros (capacidades de leitura projetam por estes) ───────────────
+export function selectUpcoming(events: HealthEvent[], refDate: string): HealthEvent[] {
+  return events.filter(e => isUpcoming(e, refDate))
+}
+export function selectHistorical(events: HealthEvent[], refDate: string): HealthEvent[] {
+  return events.filter(e => isPast(e, refDate))
+}
+export function selectByLink(events: HealthEvent[], type: EventLinkKind, id: string): HealthEvent[] {
+  return events.filter(e => e.links.some(l => l.type === type && l.id === id))
+}
+
+// ── Mapeador domínio → linha de persistência (health_events canônico) ─────────
+export function healthEventToRow(userId: string, ev: Partial<HealthEvent> & { type: string; title: string; date: string }): Record<string, unknown> {
+  return {
+    ...(ev.id ? { id: ev.id } : {}),
+    user_id: userId,
+    event_type: ev.type, title: ev.title, status: ev.status ?? 'planejado', source: ev.source ?? 'manual',
+    event_date: ev.date, event_time: ev.time ?? null, duration_min: ev.durationMin ?? null,
+    reminder_enabled: ev.reminderEnabled ?? true, reminder_sent_at: ev.reminderSentAt ?? null,
+    professional_kind: ev.professionalKind ?? null, professional_name: ev.professionalName ?? null,
+    establishment: ev.establishment ?? null, location: ev.location ?? null,
+    modality: ev.modality ?? null, preparation: ev.preparation ?? null, notes: ev.notes ?? null,
+    amount_cents: ev.amountCents ?? null, attachment_url: ev.attachmentUrl ?? null,
+    links: ev.links ?? [], recurrence_rule: ev.recurrenceRule ?? null, series_id: ev.seriesId ?? null,
+    parent_event_id: ev.parentEventId ?? null, root_event_id: ev.rootEventId ?? null,
+    completed_at: ev.completedAt ?? null,
+  }
+}
+
+// ── Regras de transição (PURAS) — usadas pela camada de SERVIÇO, não pelo domínio
+// como efeito. Retornam um novo estado; persistência/efeitos colaterais ficam no serviço.
+export function completeRule(ev: HealthEvent, nowIso: string): HealthEvent {
+  return { ...ev, status: 'realizado', completedAt: ev.completedAt ?? nowIso }
+}
+export function cancelRule(ev: HealthEvent): HealthEvent {
+  return { ...ev, status: 'cancelado' }
+}
+export function rescheduleRule(ev: HealthEvent, date: string, time: string | null): HealthEvent {
+  return { ...ev, status: 'reagendado', date, time }
+}
+
 // Guardrails (fundadora): `completed_at` é só MARCADOR; a regra de negócio do
-// "realizado" (alimentar Histórico, gerar gasto, atualizar indicadores) vive numa
-// CAMADA DE SERVIÇO — nunca em trigger nem em projeção. Mudanças de status serão
-// auditáveis no futuro (tabela aditiva); este modelo não precluí isso.
+// "realizado" (alimentar Histórico, gerar gasto, atualizar indicadores) vive na
+// CAMADA DE SERVIÇO (service.ts) — nunca em trigger nem em projeção. Mudanças de
+// status serão auditáveis no futuro (tabela aditiva); este modelo não precluí isso.

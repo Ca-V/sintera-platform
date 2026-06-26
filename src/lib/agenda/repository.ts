@@ -1,16 +1,26 @@
-// Camada de REPOSITÓRIO dos eventos — esconde a ORIGEM FÍSICA dos dados e expõe
-// APENAS o domínio (HealthEvent). A UI nunca toca o banco; consome o repositório.
+// Camada de REPOSITÓRIO (persistência) — esconde a ORIGEM FÍSICA e expõe APENAS
+// HealthEvent, por CAPACIDADES (não por tabela). A UI nunca chama o repositório
+// direto — ela usa a camada de SERVIÇO.
 //
-// Hoje: coexistência da consolidação — lê `agenda_events` (legado) via adaptador.
-// Depois (Fase 3): passa a ler `health_events`. Futuro: wearables, integrações,
-// protocolos automáticos, importações e conectores plugam aqui — sem mudar a UI.
+// Coexistência da consolidação: lê eventos legados de `agenda_events` + canônicos de
+// `health_events`; ESCREVE no canônico `health_events`. Fase 3 migra os legados e
+// passa a ler só `health_events`. Futuro: wearables/integrações/protocolos/conectores
+// plugam aqui sem mudar serviço nem UI.
 
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { agendaRowToHealthEvent, type AgendaEventRow, type HealthEvent } from './event'
+import {
+  agendaRowToHealthEvent, rowToHealthEvent, healthEventToRow,
+  selectUpcoming, selectHistorical, selectByLink,
+  type AgendaEventRow, type HealthEventRow, type HealthEvent, type EventLinkKind,
+} from './event'
 
 export interface EventRepository {
-  /** Todos os eventos da jornada da usuária, já como domínio. */
-  listForUser(userId: string): Promise<HealthEvent[]>
+  listUpcomingEvents(userId: string, refDate: string): Promise<HealthEvent[]>
+  listHistoricalEvents(userId: string, refDate: string): Promise<HealthEvent[]>
+  listEventsByExam(userId: string, examId: string): Promise<HealthEvent[]>
+  listEventsByBiomarker(userId: string, biomarker: string): Promise<HealthEvent[]>
+  listEventsByProtocol(userId: string, protocolId: string): Promise<HealthEvent[]>
+  save(userId: string, event: Partial<HealthEvent> & { type: string; title: string; date: string }): Promise<void>
 }
 
 /** Ordena por data e horário (ascendente) — ordenação técnica do domínio. */
@@ -19,19 +29,32 @@ export function sortByWhen(events: HealthEvent[]): HealthEvent[] {
     a.date.localeCompare(b.date) || (a.time ?? '').localeCompare(b.time ?? '') || a.id.localeCompare(b.id))
 }
 
-/**
- * Implementação de COEXISTÊNCIA: lê `agenda_events` e expõe HealthEvent.
- * Não vaza estrutura física. Fase 3 troca a fonte para `health_events` sem mexer na UI.
- */
 export function createEventRepository(supabase: SupabaseClient): EventRepository {
-  return {
-    async listForUser(userId: string): Promise<HealthEvent[]> {
+  // Leitura única da jornada (coexistência: legados + canônicos), já como domínio.
+  async function listAll(userId: string): Promise<HealthEvent[]> {
+    const [a, h] = await Promise.all([
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase.from('agenda_events') as any)
+      (supabase.from('agenda_events') as any)
         .select('id, event_type, title, event_date, event_time, duration_min, notes, status, reminder_enabled, reminder_sent_at')
-        .eq('user_id', userId)
-      const rows = (data ?? []) as AgendaEventRow[]
-      return sortByWhen(rows.map(agendaRowToHealthEvent))
+        .eq('user_id', userId),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase.from('health_events') as any)
+        .select('*').eq('user_id', userId).eq('synthetic', false),
+    ])
+    const legacy = ((a.data ?? []) as AgendaEventRow[]).map(agendaRowToHealthEvent)
+    const canonical = ((h.data ?? []) as HealthEventRow[]).map(rowToHealthEvent)
+    return sortByWhen([...legacy, ...canonical])
+  }
+
+  return {
+    listUpcomingEvents:   async (u, ref) => selectUpcoming(await listAll(u), ref),
+    listHistoricalEvents: async (u, ref) => selectHistorical(await listAll(u), ref),
+    listEventsByExam:      async (u, id) => selectByLink(await listAll(u), 'exam' as EventLinkKind, id),
+    listEventsByBiomarker: async (u, b)  => selectByLink(await listAll(u), 'biomarker' as EventLinkKind, b),
+    listEventsByProtocol:  async (u, id) => selectByLink(await listAll(u), 'protocol' as EventLinkKind, id),
+    save: async (userId, event) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase.from('health_events') as any).upsert(healthEventToRow(userId, event))
     },
   }
 }
