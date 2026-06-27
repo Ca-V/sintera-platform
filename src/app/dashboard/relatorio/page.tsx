@@ -12,7 +12,10 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Loader2, Printer, ArrowLeft, FileText, Share2, Copy, Trash2, Check } from 'lucide-react'
+import {
+  Loader2, Printer, ArrowLeft, FileText, Share2, Copy, Trash2, Check,
+  CalendarDays, FlaskConical, Pill, Stethoscope, HeartPulse, Ruler, Activity, Eye,
+} from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
@@ -235,18 +238,41 @@ export default function RelatorioPage() {
         )}
       </div>
 
-      {/* Seleção do que mostrar — vale para impressão e link compartilhado */}
+      {/* Seleção do que mostrar — segue a mesma estrutura da navegação (sidebar):
+          agrupada em Minha Saúde / Meu Perfil, com os mesmos rótulos, ordem e ícones. */}
       <div className="card-premium p-5 mb-6 print:hidden">
-        <p className="font-body text-sm font-semibold text-onyx mb-2">Mostrar no relatório</p>
-        <div className="flex flex-wrap gap-x-5 gap-y-2">
-          {([['medicamentos', 'Medicamentos'], ['condicoes', 'Condições de saúde'], ['habitos', 'Hábitos de vida'], ['visao', 'Óculos e lentes'], ['eventos', 'Consultas e eventos'], ['exames', 'Exames'], ['omica', 'Exames de ômica'], ['medidas', 'Medidas corporais'], ['sinais', 'Sinais vitais']] as const).map(([k, label]) => (
-            <label key={k} className="flex items-center gap-2 font-body text-sm text-onyx cursor-pointer">
-              <input type="checkbox" checked={sections[k]} onChange={() => toggle(k)} className="accent-petal w-4 h-4" />
-              {label}
-            </label>
+        <p className="font-body text-sm font-semibold text-onyx mb-3">Mostrar no relatório</p>
+        <div className="space-y-4">
+          {([
+            ['Minha Saúde', [
+              ['eventos', 'Consultas e eventos', CalendarDays],
+              ['exames', 'Exames', FileText],
+              ['omica', 'Exames de ômica', FlaskConical],
+              ['medicamentos', 'Medicamentos, Suplementos, Produtos e Dispositivos', Pill],
+            ]],
+            ['Meu Perfil', [
+              ['condicoes', 'Problemas de Saúde', Stethoscope],
+              ['habitos', 'Hábitos', HeartPulse],
+              ['medidas', 'Medidas Corporais', Ruler],
+              ['sinais', 'Sinais Vitais', Activity],
+              ['visao', 'Óculos e lentes', Eye],
+            ]],
+          ] as const).map(([groupTitle, items]) => (
+            <div key={groupTitle}>
+              <p className="font-body text-[10px] font-semibold text-mauve/50 uppercase tracking-[0.15em] mb-1.5">{groupTitle}</p>
+              <div className="flex flex-col gap-1.5">
+                {items.map(([k, label, Icon]) => (
+                  <label key={k} className="flex items-center gap-2.5 font-body text-sm text-onyx cursor-pointer">
+                    <input type="checkbox" checked={sections[k]} onChange={() => toggle(k)} className="accent-petal w-4 h-4 flex-shrink-0" />
+                    <Icon size={15} className="text-petal/70 flex-shrink-0" />
+                    <span className="min-w-0">{label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
-        <p className="font-body text-[11px] text-mauve/60 mt-2">Marque o que deseja incluir. Vale para a impressão e para o link compartilhado.</p>
+        <p className="font-body text-[11px] text-mauve/60 mt-3">Marque o que deseja incluir. Vale para a impressão e para o link compartilhado.</p>
       </div>
 
       <div className="bg-white rounded-2xl border border-border p-8 space-y-6 print:border-0 print:p-0">
