@@ -37,6 +37,7 @@ interface Med {
   purchaseStatus: string | null
   amountCents: number | null
   repurchaseReminder: boolean
+  repurchaseFreq: string | null
   repurchaseEventId: string | null
 }
 
@@ -92,6 +93,7 @@ export default function MedicamentosPage() {
   const [freq, setFreq] = useState('')
   const [acquiredQty, setAcquiredQty] = useState('')
   const [amount, setAmount] = useState('')
+  const [repurchaseFreq, setRepurchaseFreq] = useState('')
   const [startedOn, setStartedOn] = useState('')
   const [untilOn, setUntilOn] = useState('')
   const [notes, setNotes] = useState('')
@@ -174,7 +176,7 @@ export default function MedicamentosPage() {
     setLoading(true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = await (supabase as any).from('medications')
-      .select('id, name, kind, brand, dose, frequency, started_on, until_date, status, notes, acquired_quantity, pack_quantity, daily_consumption, purchased_on, purchase_status, amount_cents, repurchase_reminder, repurchase_event_id')
+      .select('id, name, kind, brand, dose, frequency, started_on, until_date, status, notes, acquired_quantity, pack_quantity, daily_consumption, purchased_on, purchase_status, amount_cents, repurchase_reminder, repurchase_frequency, repurchase_event_id')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
     setMeds(((data ?? []) as Array<Record<string, unknown>>).map(m => ({
@@ -195,6 +197,7 @@ export default function MedicamentosPage() {
       purchaseStatus: (m.purchase_status as string) ?? null,
       amountCents: m.amount_cents != null ? Number(m.amount_cents) : null,
       repurchaseReminder: m.repurchase_reminder === true,
+      repurchaseFreq: (m.repurchase_frequency as string) ?? null,
       repurchaseEventId: (m.repurchase_event_id as string) ?? null,
     })))
     setLoading(false)
@@ -205,7 +208,7 @@ export default function MedicamentosPage() {
 
   function reset() {
     setEditingId(null); setName(''); setKind('medicamento'); setBrand(''); setDose(''); setFreq(''); setStartedOn(''); setUntilOn(''); setNotes('')
-    setAcquiredQty(''); setAmount(''); setPackQty(''); setDailyCons(''); setPurchasedOn(''); setPurchaseStatus(''); setRepurchase(false); setErr(null)
+    setAcquiredQty(''); setAmount(''); setPackQty(''); setDailyCons(''); setPurchasedOn(''); setPurchaseStatus(''); setRepurchase(false); setRepurchaseFreq(''); setErr(null)
     setShowMoreDetails(false)
   }
   function openEdit(m: Med) {
@@ -214,7 +217,7 @@ export default function MedicamentosPage() {
     setAcquiredQty(m.acquiredQty != null ? String(m.acquiredQty) : '')
     setAmount(m.amountCents != null ? (m.amountCents / 100).toFixed(2).replace('.', ',') : '')
     setPackQty(m.packQty != null ? String(m.packQty) : ''); setDailyCons(m.dailyCons != null ? String(m.dailyCons) : '')
-    setPurchasedOn(m.purchasedOn ?? ''); setPurchaseStatus(m.purchaseStatus ?? ''); setRepurchase(m.repurchaseReminder)
+    setPurchasedOn(m.purchasedOn ?? ''); setPurchaseStatus(m.purchaseStatus ?? ''); setRepurchase(m.repurchaseReminder); setRepurchaseFreq(m.repurchaseFreq ?? '')
     setShowMoreDetails(!!(m.startedOn || m.untilOn || m.notes || m.acquiredQty != null || m.amountCents != null || m.packQty != null || m.dailyCons != null || m.purchasedOn || m.purchaseStatus || m.repurchaseReminder))
     setErr(null); setShowForm(true)
   }
@@ -234,7 +237,7 @@ export default function MedicamentosPage() {
       started_on: startedOn || null, until_date: untilOn || null, notes: notes.trim() || null,
       acquired_quantity: num(acquiredQty), pack_quantity: num(packQty), daily_consumption: num(dailyCons),
       purchased_on: purchasedOn || null, purchase_status: purchaseStatus || null, amount_cents: toCents(amount),
-      repurchase_reminder: repurchase,
+      repurchase_reminder: repurchase, repurchase_frequency: repurchase ? (repurchaseFreq || null) : null,
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db = supabase as any
@@ -454,11 +457,18 @@ export default function MedicamentosPage() {
               <input type="text" value={brand} onChange={e => setBrand(e.target.value)} placeholder="Ex.: EMS, Bayer…"
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
             </div>
-            <div>
-              <label className="font-body text-xs text-mauve/70 block mb-1">Dose ou especificação (opcional)</label>
-              <input type="text" value={dose} onChange={e => setDose(e.target.value)} placeholder={kind === 'dispositivo' || kind === 'produto' ? 'Ex.: grau -2,00' : 'Ex.: 50 mg'}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
-            </div>
+            {kind !== 'produto' && (
+              <div>
+                <label className="font-body text-xs text-mauve/70 block mb-1">{kind === 'dispositivo' ? 'Modelo / especificação' : 'Dose ou especificação'} <span className="font-normal text-mauve/50">(opcional)</span></label>
+                <input type="text" value={dose} onChange={e => setDose(e.target.value)} placeholder={kind === 'dispositivo' ? 'Ex.: modelo / grau' : 'Ex.: 50 mg'}
+                  className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+              </div>
+            )}
+          </div>
+          <div>
+            <label className="font-body text-xs text-mauve/70 block mb-1">Valor pago — R$ <span className="font-normal text-mauve/50">(opcional)</span></label>
+            <input type="text" inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder="Ex.: 250,00"
+              className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
           </div>
           <button type="button" onClick={() => setShowMoreDetails(v => !v)}
             className="w-full flex items-center justify-between px-1 py-1.5 font-body text-sm text-petal hover:text-petal/80 transition-colors">
@@ -467,11 +477,14 @@ export default function MedicamentosPage() {
           </button>
           {showMoreDetails && (
           <div className="space-y-3 pt-1 border-t border-border/40">
-          <div>
-            <label className="font-body text-xs text-mauve/70 block mb-1">Frequência de uso (opcional)</label>
-            <input type="text" value={freq} onChange={e => setFreq(e.target.value)} placeholder="Ex.: 1x ao dia"
-              className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
-          </div>
+          {(kind === 'medicamento' || kind === 'suplemento') && (
+            <div>
+              <label className="font-body text-xs text-mauve/70 block mb-1">Frequência de uso (opcional)</label>
+              <input type="text" value={freq} onChange={e => setFreq(e.target.value)} placeholder="Ex.: 1x ao dia"
+                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+            </div>
+          )}
+          {!repurchase && (
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="font-body text-xs text-mauve/70 block mb-1">Início de uso (opcional)</label>
@@ -485,6 +498,7 @@ export default function MedicamentosPage() {
               <p className="font-body text-[10px] text-mauve/50 mt-1">Em branco = sem previsão.</p>
             </div>
           </div>
+          )}
           <div>
             <label className="font-body text-xs text-mauve/70 block mb-1">Observações (opcional)</label>
             <div className="flex items-start gap-2">
@@ -512,18 +526,13 @@ export default function MedicamentosPage() {
                   className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30" />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            {(kind === 'medicamento' || kind === 'suplemento') && (
               <div>
                 <label className="font-body text-[11px] text-mauve/70 block mb-1">Consumo por período</label>
                 <input type="text" inputMode="decimal" value={dailyCons} onChange={e => setDailyCons(e.target.value)} placeholder="Ex.: 1 por dia"
                   className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30" />
               </div>
-              <div>
-                <label className="font-body text-[11px] text-mauve/70 block mb-1">Valor pago — R$</label>
-                <input type="text" inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder="Ex.: 250,00"
-                  className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30" />
-              </div>
-            </div>
+            )}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="font-body text-[11px] text-mauve/70 block mb-1">Comprado em</label>
@@ -541,9 +550,39 @@ export default function MedicamentosPage() {
               </div>
             </div>
             <label className="flex items-center gap-2 font-body text-sm text-onyx cursor-pointer">
-              <input type="checkbox" checked={repurchase} onChange={e => setRepurchase(e.target.checked)} className="accent-petal w-4 h-4" />
-              Lembrar de recomprar (uso contínuo)
+              <input type="checkbox" checked={repurchase} onChange={e => { setRepurchase(e.target.checked); if (e.target.checked) setShowMoreDetails(true) }} className="accent-petal w-4 h-4" />
+              Compra recorrente (uso contínuo)
             </label>
+            {repurchase && (
+              <div className="space-y-3 rounded-lg bg-blush/20 border border-petal/15 p-2.5">
+                <div>
+                  <label className="font-body text-[11px] text-mauve/70 block mb-1">Frequência da compra</label>
+                  <select value={repurchaseFreq} onChange={e => setRepurchaseFreq(e.target.value)}
+                    className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30">
+                    <option value="">Com que frequência você recompra?</option>
+                    <option value="semanal">Semanal</option>
+                    <option value="quinzenal">Quinzenal</option>
+                    <option value="mensal">Mensal</option>
+                    <option value="bimestral">Bimestral</option>
+                    <option value="trimestral">Trimestral</option>
+                    <option value="semestral">Semestral</option>
+                    <option value="anual">Anual</option>
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-body text-[11px] text-mauve/70 block mb-1">A partir de</label>
+                    <input type="date" value={startedOn} onChange={e => setStartedOn(e.target.value)}
+                      className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                  </div>
+                  <div>
+                    <label className="font-body text-[11px] text-mauve/70 block mb-1">Até <span className="font-normal text-mauve/50">(opcional)</span></label>
+                    <input type="date" value={untilOn} onChange={e => setUntilOn(e.target.value)}
+                      className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                  </div>
+                </div>
+              </div>
+            )}
             {(() => {
               const num = (s: string) => { const v = parseFloat(s.replace(',', '.')); return isFinite(v) && v > 0 ? v : null }
               const ro = runoutDate(purchasedOn || null, num(packQty), num(dailyCons))
