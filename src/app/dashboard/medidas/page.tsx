@@ -197,8 +197,8 @@ export default function MedidasPage() {
         <Link href="/dashboard/sinais-vitais" className="px-3.5 py-1.5 rounded-full bg-ivory border border-border text-mauve font-body text-sm hover:border-petal/40 transition-colors">Sinais vitais</Link>
       </div>
 
-      <div className="flex items-start justify-between gap-4">
-        <div>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <div className="inline-flex items-center gap-1.5 text-petal mb-2">
             <Activity size={16} />
             <span className="font-body text-xs font-medium uppercase tracking-wider">Histórico</span>
@@ -206,7 +206,7 @@ export default function MedidasPage() {
           <h1 className="font-display text-2xl font-semibold text-onyx">Medidas</h1>
           <p className="font-body text-sm text-mauve mt-1">Acompanhe peso, altura, circunferência e composição corporal (bioimpedância) ao longo do tempo. Registro seu — sem juízo clínico.</p>
         </div>
-        <div className="flex flex-col items-end gap-2 flex-shrink-0">
+        <div className="flex flex-row flex-wrap items-center gap-2 sm:flex-col sm:items-end flex-shrink-0">
           <button onClick={() => (showForm ? (reset(), setShowForm(false)) : (reset(), setShowForm(true)))}
             className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity">
             {showForm ? <X size={15} /> : <Plus size={15} />} {showForm ? 'Fechar' : 'Adicionar'}
