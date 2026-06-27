@@ -45,6 +45,12 @@ export async function POST(req: NextRequest) {
   const mediaType = body.mediaType || 'image/jpeg'
   const text = typeof body.text === 'string' ? body.text.trim() : ''
   if (!imageBase64 && !text) return NextResponse.json({ error: 'Imagem ou texto ausente' }, { status: 400 })
+  // A IA de visão só aceita JPEG/PNG/WebP/GIF. Fotos de iPhone costumam ser HEIC —
+  // rejeita com mensagem clara em vez de deixar a chamada falhar com erro genérico.
+  const SUPPORTED_IMAGE = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+  if (imageBase64 && !SUPPORTED_IMAGE.includes(mediaType)) {
+    return NextResponse.json({ error: 'Formato de imagem não suportado (ex.: HEIC do iPhone). Tire a foto como JPG, ou ajuste a câmera para "Mais compatível".' }, { status: 400 })
+  }
   if (!process.env.ANTHROPIC_API_KEY) return NextResponse.json({ error: 'IA indisponível' }, { status: 503 })
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: 60_000 })
@@ -69,8 +75,12 @@ export async function POST(req: NextRequest) {
       messages: [{ role: 'user', content: content as any }],
     })
     raw = msg.content[0]?.type === 'text' ? msg.content[0].text : ''
-  } catch {
-    return NextResponse.json({ error: 'Falha ao interpretar.' }, { status: 502 })
+  } catch (e) {
+    // Loga o erro real (visível nos logs da função) e devolve um detalhe curto
+    // para o cliente — ajuda a diagnosticar falhas de visão em produção/Preview.
+    const detail = e instanceof Error ? e.message : String(e)
+    console.error('[medications/scan] falha na chamada de visão:', detail)
+    return NextResponse.json({ error: 'Falha ao interpretar.', detail: detail.slice(0, 200) }, { status: 502 })
   }
 
   // Extrai o objeto JSON da resposta.

@@ -131,7 +131,14 @@ export default function MedicamentosPage() {
         }
       }
     } catch { /* fallback p/ a imagem original */ }
-    return { base64: dataUrl.split(',')[1] ?? '', mediaType: file.type || 'image/jpeg' }
+    // Fallback: se o navegador não decodificou a foto (ex.: HEIC do iPhone),
+    // não dá pra converter aqui — só enviamos se for um formato que a IA aceita.
+    const t = file.type || 'image/jpeg'
+    const SUPPORTED = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    if (!SUPPORTED.includes(t)) {
+      throw new Error('Formato de foto não suportado (ex.: HEIC do iPhone). Tire a foto como JPG, ou em Ajustes → Câmera → Formatos escolha "Mais compatível".')
+    }
+    return { base64: dataUrl.split(',')[1] ?? '', mediaType: t }
   }
 
   async function handleScan(file: File) {
@@ -143,7 +150,7 @@ export default function MedicamentosPage() {
         body: JSON.stringify({ imageBase64: base64, mediaType }),
       })
       const j = await resp.json().catch(() => ({}))
-      if (!resp.ok) { setScanErr(j.error ?? `Falha ao ler a imagem (${resp.status}).`); return }
+      if (!resp.ok) { setScanErr((j.error ?? `Falha ao ler a imagem (${resp.status}).`) + (j.detail ? ` — ${j.detail}` : '')); return }
       if (!j.items?.length) { setScanErr('Não consegui ler os dados do rótulo. Tente uma foto mais nítida, aproximada e bem iluminada.'); return }
       setScanResults(j.items)
       setShowForm(false)

@@ -226,7 +226,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
             className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm" onClick={handleClose} />
           <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-            className="fixed inset-x-4 bottom-4 sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 z-50 w-full sm:max-w-md max-h-[88vh] overflow-y-auto">
+            className="fixed inset-x-4 bottom-4 sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 z-50 sm:w-full sm:max-w-md max-h-[88vh] overflow-y-auto">
             <div className="bg-white rounded-3xl shadow-2xl border border-border overflow-hidden">
               <div className="flex items-center justify-between px-6 py-5 border-b border-border/50">
                 <div className="flex items-center gap-3">
