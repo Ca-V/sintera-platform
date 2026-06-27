@@ -111,7 +111,7 @@ export default function MedicamentosPage() {
 
   // Reduz a foto (câmera do celular gera arquivos grandes) antes de enviar — evita
   // estourar o limite do corpo da requisição e acelera a leitura.
-  async function downscaleImage(file: File, maxDim = 1600): Promise<{ base64: string; mediaType: string }> {
+  async function downscaleImage(file: File, maxDim = 1100): Promise<{ base64: string; mediaType: string }> {
     const dataUrl = await new Promise<string>((res, rej) => {
       const r = new FileReader(); r.onload = () => res(r.result as string); r.onerror = rej; r.readAsDataURL(file)
     })
@@ -150,7 +150,7 @@ export default function MedicamentosPage() {
         body: JSON.stringify({ imageBase64: base64, mediaType }),
       })
       const j = await resp.json().catch(() => ({}))
-      if (!resp.ok) { setScanErr((j.error ?? `Falha ao ler a imagem (${resp.status}).`) + (j.detail ? ` — ${j.detail}` : '')); return }
+      if (!resp.ok) { setScanErr(j.error ?? `Falha ao ler a imagem (${resp.status}).`); return }
       if (!j.items?.length) { setScanErr('Não consegui ler os dados do rótulo. Tente uma foto mais nítida, aproximada e bem iluminada.'); return }
       setScanResults(j.items)
       setShowForm(false)

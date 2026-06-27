@@ -76,11 +76,10 @@ export async function POST(req: NextRequest) {
     })
     raw = msg.content[0]?.type === 'text' ? msg.content[0].text : ''
   } catch (e) {
-    // Loga o erro real (visível nos logs da função) e devolve um detalhe curto
-    // para o cliente — ajuda a diagnosticar falhas de visão em produção/Preview.
+    // Erro técnico fica SÓ nos logs da função; a usuária vê mensagem amigável.
     const detail = e instanceof Error ? e.message : String(e)
     console.error('[medications/scan] falha na chamada de visão:', detail)
-    return NextResponse.json({ error: 'Falha ao interpretar.', detail: detail.slice(0, 200) }, { status: 502 })
+    return NextResponse.json({ error: 'O serviço de leitura está temporariamente indisponível. Tente novamente em instantes.' }, { status: 502 })
   }
 
   // Extrai o objeto JSON da resposta.

@@ -53,6 +53,38 @@ function fmt(date: string): string {
   return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
+// Reduz a foto do laudo antes de enviar à IA de visão: corta MUITO os tokens de
+// entrada (custo) e acelera. Laudo de bioimpedância tem números finos → mantém um
+// pouco mais de resolução que o scan de rótulo. Se o navegador não decodificar
+// (ex.: HEIC do iPhone), lança mensagem clara em vez de mandar formato inválido.
+async function downscaleImage(file: File, maxDim = 1300): Promise<{ base64: string; mediaType: string }> {
+  const dataUrl = await new Promise<string>((res, rej) => {
+    const r = new FileReader(); r.onload = () => res(r.result as string); r.onerror = rej; r.readAsDataURL(file)
+  })
+  try {
+    const img = await new Promise<HTMLImageElement>((res, rej) => {
+      const i = new window.Image(); i.onload = () => res(i); i.onerror = rej; i.src = dataUrl
+    })
+    const scale = Math.min(1, maxDim / Math.max(img.width, img.height))
+    if (scale < 1) {
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.round(img.width * scale); canvas.height = Math.round(img.height * scale)
+      const ctx = canvas.getContext('2d')
+      if (ctx) {
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+        const out = canvas.toDataURL('image/jpeg', 0.85)
+        return { base64: out.split(',')[1] ?? '', mediaType: 'image/jpeg' }
+      }
+    }
+  } catch { /* fallback p/ a imagem original */ }
+  const t = file.type || 'image/jpeg'
+  const SUPPORTED = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+  if (!SUPPORTED.includes(t)) {
+    throw new Error('Formato de foto não suportado (ex.: HEIC do iPhone). Tire a foto como JPG, ou em Ajustes → Câmera → Formatos escolha "Mais compatível".')
+  }
+  return { base64: dataUrl.split(',')[1] ?? '', mediaType: t }
+}
+
 // Métricas extraídas de um laudo de bioimpedância (IMC é calculado à parte).
 const BIO_METRICS: Metric[] = ['peso', 'gordura_corporal', 'massa_muscular', 'agua_corporal', 'gordura_visceral', 'massa_ossea', 'taxa_metabolica']
 
@@ -132,15 +164,10 @@ export default function MedidasPage() {
     if (file.size > 10 * 1024 * 1024) { setScanErr('Imagem muito grande (máx. 10 MB).'); return }
     setScanning(true); setScanErr(null); setScanRows(null); setShowForm(false)
     try {
-      const base64 = await new Promise<string>((res, rej) => {
-        const reader = new FileReader()
-        reader.onload = () => res(String(reader.result).split(',')[1] ?? '')
-        reader.onerror = rej
-        reader.readAsDataURL(file)
-      })
+      const { base64, mediaType } = await downscaleImage(file)
       const resp = await fetch('/api/vision/bioimpedance', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageBase64: base64, mediaType: file.type }),
+        body: JSON.stringify({ imageBase64: base64, mediaType }),
       })
       const json = await resp.json()
       const r = json?.result as Record<string, string | null> | null
@@ -151,8 +178,8 @@ export default function MedidasPage() {
       if (rows.length === 0) { setScanErr('Não encontrei medidas no laudo. Tente outra foto ou registre manualmente.'); setScanning(false); return }
       setScanRows(rows)
       setScanDate(r.measured_on || new Date().toISOString().slice(0, 10))
-    } catch {
-      setScanErr('Falha ao processar a foto. Tente novamente ou registre manualmente.')
+    } catch (e) {
+      setScanErr(e instanceof Error ? e.message : 'Falha ao processar a foto. Tente novamente ou registre manualmente.')
     } finally {
       setScanning(false)
     }
