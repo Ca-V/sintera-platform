@@ -17,7 +17,7 @@ import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 
 type Status = 'em_uso' | 'suspenso'
-type Kind = 'medicamento' | 'suplemento' | 'produto' | 'dispositivo'
+type Kind = 'medicamento' | 'suplemento' | 'produto' | 'dispositivo' | 'outro'
 
 interface Med {
   id: string
@@ -182,7 +182,7 @@ export default function MedicamentosPage() {
     setMeds(((data ?? []) as Array<Record<string, unknown>>).map(m => ({
       id: m.id as string,
       name: (m.name as string) ?? '',
-      kind: (['suplemento', 'produto', 'dispositivo'].includes(m.kind as string) ? (m.kind as string) : 'medicamento') as Kind,
+      kind: (['suplemento', 'produto', 'dispositivo', 'outro'].includes(m.kind as string) ? (m.kind as string) : 'medicamento') as Kind,
       brand: (m.brand as string) ?? null,
       dose: (m.dose as string) ?? null,
       frequency: (m.frequency as string) ?? null,
@@ -294,7 +294,7 @@ export default function MedicamentosPage() {
     await load(); setBusyId(null)
   }
 
-  const KIND_LABEL: Record<Kind, string> = { medicamento: 'Medicamentos', suplemento: 'Suplementos', produto: 'Produtos', dispositivo: 'Dispositivos' }
+  const KIND_LABEL: Record<Kind, string> = { medicamento: 'Medicamentos', suplemento: 'Suplementos', produto: 'Produtos', dispositivo: 'Dispositivos', outro: 'Outros' }
 
   function kindSection(k: Kind) {
     const list = meds.filter(m => m.kind === k)
@@ -441,6 +441,7 @@ export default function MedicamentosPage() {
               <option value="suplemento">Suplemento</option>
               <option value="produto">Produto</option>
               <option value="dispositivo">Dispositivo</option>
+              <option value="outro">Outro</option>
             </select>
           </div>
           <div>
@@ -616,6 +617,7 @@ export default function MedicamentosPage() {
           {kindSection('suplemento')}
           {kindSection('produto')}
           {kindSection('dispositivo')}
+          {kindSection('outro')}
         </div>
       )}
 
