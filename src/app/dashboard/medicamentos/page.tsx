@@ -105,40 +105,63 @@ export default function MedicamentosPage() {
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [scanning, setScanning] = useState(false)
+  const [scanErr, setScanErr] = useState<string | null>(null)
   type ScanItem = { name: string; dose: string | null; frequency: string | null; startedOn?: string | null; packQty?: number | null; dailyCons?: number | null; purchasedOn?: string | null }
   const [scanResults, setScanResults] = useState<ScanItem[]>([])
 
-  async function handleScan(file: File) {
-    setErr(null); setScanning(true); setScanResults([])
+  // Reduz a foto (câmera do celular gera arquivos grandes) antes de enviar — evita
+  // estourar o limite do corpo da requisição e acelera a leitura.
+  async function downscaleImage(file: File, maxDim = 1600): Promise<{ base64: string; mediaType: string }> {
+    const dataUrl = await new Promise<string>((res, rej) => {
+      const r = new FileReader(); r.onload = () => res(r.result as string); r.onerror = rej; r.readAsDataURL(file)
+    })
     try {
-      const base64 = await new Promise<string>((res, rej) => {
-        const r = new FileReader()
-        r.onload = () => res((r.result as string).split(',')[1] ?? '')
-        r.onerror = rej
-        r.readAsDataURL(file)
+      const img = await new Promise<HTMLImageElement>((res, rej) => {
+        const i = new window.Image(); i.onload = () => res(i); i.onerror = rej; i.src = dataUrl
       })
+      const scale = Math.min(1, maxDim / Math.max(img.width, img.height))
+      if (scale < 1) {
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.round(img.width * scale); canvas.height = Math.round(img.height * scale)
+        const ctx = canvas.getContext('2d')
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+          const out = canvas.toDataURL('image/jpeg', 0.85)
+          return { base64: out.split(',')[1] ?? '', mediaType: 'image/jpeg' }
+        }
+      }
+    } catch { /* fallback p/ a imagem original */ }
+    return { base64: dataUrl.split(',')[1] ?? '', mediaType: file.type || 'image/jpeg' }
+  }
+
+  async function handleScan(file: File) {
+    setScanErr(null); setScanning(true); setScanResults([])
+    try {
+      const { base64, mediaType } = await downscaleImage(file)
       const resp = await fetch('/api/medications/scan', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageBase64: base64, mediaType: file.type || 'image/jpeg' }),
+        body: JSON.stringify({ imageBase64: base64, mediaType }),
       })
-      const j = await resp.json()
-      if (!resp.ok) { setErr(j.error ?? 'Falha ao ler a imagem.'); return }
-      if (!j.items?.length) { setErr('Não consegui ler os dados. Tente uma foto mais nítida e bem iluminada.'); return }
+      const j = await resp.json().catch(() => ({}))
+      if (!resp.ok) { setScanErr(j.error ?? `Falha ao ler a imagem (${resp.status}).`); return }
+      if (!j.items?.length) { setScanErr('Não consegui ler os dados do rótulo. Tente uma foto mais nítida, aproximada e bem iluminada.'); return }
       setScanResults(j.items)
       setShowForm(false)
+    } catch (e) {
+      setScanErr(e instanceof Error ? e.message : 'Falha ao processar a imagem.')
     } finally { setScanning(false) }
   }
 
   async function handleVoiceAdd(text: string) {
     if (!text.trim()) return
-    setErr(null); setScanning(true); setScanResults([])
+    setScanErr(null); setScanning(true); setScanResults([])
     try {
       const resp = await fetch('/api/medications/scan', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text }),
       })
-      const j = await resp.json()
-      if (!resp.ok) { setErr(j.error ?? 'Falha ao interpretar.'); return }
+      const j = await resp.json().catch(() => ({}))
+      if (!resp.ok) { setScanErr(j.error ?? 'Falha ao interpretar.'); return }
       // Sem itens estruturados → usa a própria fala como nome (a usuária ajusta).
       setScanResults(j.items?.length ? j.items : [{ name: text.trim(), dose: null, frequency: null, startedOn: null, packQty: null, dailyCons: null, purchasedOn: null }])
       setShowForm(false)
@@ -409,6 +432,14 @@ export default function MedicamentosPage() {
             className="flex items-center gap-2 px-4 py-2 rounded-full border border-petal/40 text-petal font-body text-sm font-medium hover:bg-blush transition-colors" />
         </div>
       </div>
+
+      {/* Erro de leitura (foto/voz) — fica visível mesmo com o formulário fechado */}
+      {scanErr && (
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+          <p className="font-body text-xs text-red-600">{scanErr}</p>
+          <button onClick={() => setScanErr(null)} className="text-red-400 hover:text-red-600 transition-colors flex-shrink-0"><X size={14} /></button>
+        </div>
+      )}
 
       {/* Resultados do escaneamento — conferir antes de adicionar */}
       {scanResults.length > 0 && (
