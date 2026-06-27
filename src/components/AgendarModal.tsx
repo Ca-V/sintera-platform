@@ -145,13 +145,17 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
   }, [open])
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  // Plano de saúde: despesa direta recorrente mensal por padrão.
+  // Plano de saúde: compromisso recorrente MENSAL — aparece como previsão na
+  // Agenda e vira Gasto quando concluído (com "Reabrir" disponível). NÃO marca
+  // "despesa direta" por padrão (decisão fundadora 27/06): quem quiser lançar
+  // direto em Gastos sem previsão marca o checkbox em Mais detalhes. O modelo
+  // financeiro completo (default, editar de Gastos, valores em camadas) é T2-FIN.
   function chooseType(t: EventType) {
     setEventType(t)
     if (t !== 'consulta') setIsReturn(false)
     if (t !== 'procedimento') setIsSurgery(false)
     if (t === 'plano') {
-      setDirectExpense(true)
+      setDirectExpense(false)
       setRecurrence(r => (r === 'none' ? 'monthly' : r))
       setShowDetails(true)
     }
