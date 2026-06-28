@@ -150,7 +150,21 @@ describe('selectNextUpcoming — "próximo evento" tem UMA definição (REV-04)'
     // "próximo" do Dashboard = função única.
     const dashboardNext = selectNextUpcoming(list, ref)
     expect(dashboardNext).toEqual(agendaFirst)
+    expect(dashboardNext?.id).toBe(agendaFirst?.id) // MESMO registro (identidade), não só equivalente
     expect(dashboardNext?.id).toBe('leg-near')
+  })
+
+  it('identidade: com EMPATE de data/horário, retorna o MESMO registro (id) nos dois caminhos', () => {
+    // Dois eventos no mesmo dia e horário, origens diferentes — só o id desempata.
+    // Garante que Dashboard e Agenda não escolham itens "equivalentes" distintos.
+    const list = [
+      ev({ id: 'b', date: '2026-06-28', time: '09:00:00', status: 'planejado', source: 'agenda_legacy' }),
+      ev({ id: 'a', date: '2026-06-28', time: '09:00:00', status: 'planejado', source: 'manual' }),
+    ]
+    const agendaFirst = selectUpcoming(sortByWhen(list), ref)[0] ?? null
+    const dashboardNext = selectNextUpcoming(list, ref)
+    expect(dashboardNext?.id).toBe(agendaFirst?.id) // desempate determinístico idêntico
+    expect(dashboardNext?.id).toBe('a')
   })
 
   it('inclui eventos legados (agenda_events) na decisão do "próximo"', () => {
