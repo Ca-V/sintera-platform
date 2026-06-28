@@ -193,6 +193,19 @@ export function isFinancial(ev: HealthEvent): boolean {
   return hasCost(ev) && (isConcluded(ev) || isDirectExpense(ev))
 }
 
+// ── Ordenação cronológica — PRINCÍPIO DE ARQUITETURA (congelado 27/06/2026) ────
+// Toda funcionalidade que dependa da ORDEM CRONOLÓGICA dos eventos DEVE usar
+// estas funções do domínio. É PROIBIDO reimplementar ordenação (`events.sort(...)`)
+// na camada de apresentação (páginas/widgets) ou no repositório. Existe UMA única
+// definição de "ordem do tempo" → impossível duas telas divergirem (ver REV-04).
+export function compareByWhen(a: HealthEvent, b: HealthEvent): number {
+  return a.date.localeCompare(b.date) || (a.time ?? '').localeCompare(b.time ?? '') || a.id.localeCompare(b.id)
+}
+/** Ordena eventos por data → horário → id (ordem canônica do domínio). */
+export function sortByWhen(events: HealthEvent[]): HealthEvent[] {
+  return [...events].sort(compareByWhen)
+}
+
 // ── Seletores puros (capacidades de leitura projetam por estes) ───────────────
 export function selectUpcoming(events: HealthEvent[], refDate: string): HealthEvent[] {
   return events.filter(e => isUpcoming(e, refDate))
@@ -200,16 +213,13 @@ export function selectUpcoming(events: HealthEvent[], refDate: string): HealthEv
 /**
  * DEFINIÇÃO ÚNICA de "próximo evento". A Agenda (1º da lista) e o Dashboard
  * ("Agenda · próximo") — e qualquer componente futuro — DEVEM usar esta função,
- * para nunca existirem duas interpretações de "próximo". Ordena de forma
- * determinística (data → horário → id) e devolve o mais cedo dos futuros;
- * independe da ordem de entrada. Inclui eventos legados (`agenda_events`),
- * pois entram na mesma lista de domínio. Ver teste de regressão em event.test.ts.
+ * para nunca existirem duas interpretações de "próximo". Usa a ordenação canônica
+ * (`sortByWhen`) e devolve o mais cedo dos futuros; independe da ordem de entrada.
+ * Inclui eventos legados (`agenda_events`), pois entram na mesma lista de domínio.
+ * Ver teste de regressão em event.test.ts.
  */
 export function selectNextUpcoming(events: HealthEvent[], refDate: string): HealthEvent | null {
-  const upcoming = selectUpcoming(events, refDate)
-  const sorted = [...upcoming].sort((a, b) =>
-    a.date.localeCompare(b.date) || (a.time ?? '').localeCompare(b.time ?? '') || a.id.localeCompare(b.id))
-  return sorted[0] ?? null
+  return sortByWhen(selectUpcoming(events, refDate))[0] ?? null
 }
 export function selectHistorical(events: HealthEvent[], refDate: string): HealthEvent[] {
   return events.filter(e => isPast(e, refDate))

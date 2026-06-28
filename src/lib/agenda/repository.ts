@@ -10,7 +10,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   agendaRowToHealthEvent, rowToHealthEvent, healthEventToRow,
-  selectUpcoming, selectHistorical, selectByLink, selectFinancial,
+  selectUpcoming, selectHistorical, selectByLink, selectFinancial, sortByWhen,
   type AgendaEventRow, type HealthEventRow, type HealthEvent, type EventLinkKind,
 } from './event'
 
@@ -24,11 +24,8 @@ export interface EventRepository {
   save(userId: string, event: Partial<HealthEvent> & { type: string; title: string; date: string }): Promise<void>
 }
 
-/** Ordena por data e horário (ascendente) — ordenação técnica do domínio. */
-export function sortByWhen(events: HealthEvent[]): HealthEvent[] {
-  return [...events].sort((a, b) =>
-    a.date.localeCompare(b.date) || (a.time ?? '').localeCompare(b.time ?? '') || a.id.localeCompare(b.id))
-}
+// `sortByWhen` (ordem cronológica canônica) vive no DOMÍNIO (event.ts) — o
+// repositório a CONSOME, não reimplementa (princípio congelado 27/06/2026).
 
 /** Implementação de persistência sobre o Supabase. O domínio/serviço nunca conhece o banco. */
 export function createSupabaseEventRepository(supabase: SupabaseClient): EventRepository {

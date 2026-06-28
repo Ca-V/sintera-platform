@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { sortByWhen } from './repository'
+import { sortByWhen } from './event'
 import type { HealthEvent } from './event'
 
 function ev(id: string, date: string, time: string | null): HealthEvent {

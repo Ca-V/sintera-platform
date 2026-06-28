@@ -6,7 +6,7 @@ import {
   completeRule, cancelRule, rescheduleRule, canTransition,
   type HealthEvent, type HealthEventRow,
 } from './event'
-import { sortByWhen } from './repository'
+import { sortByWhen } from './event'
 
 function ev(p: Partial<HealthEvent>): HealthEvent {
   return {
