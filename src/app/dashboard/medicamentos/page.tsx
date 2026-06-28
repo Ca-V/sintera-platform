@@ -15,6 +15,7 @@ import { Loader2, Plus, X, Pill, ArrowLeft, Pencil, Trash2, PauseCircle, PlayCir
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
+import { runoutDate, recompraDate } from '@/lib/medications/repurchase'
 
 type Status = 'em_uso' | 'suspenso'
 type Kind = 'medicamento' | 'suplemento' | 'produto' | 'dispositivo' | 'outro'
@@ -49,27 +50,6 @@ function fmtDate(date: string | null): string | null {
 function fmtFull(date: string): string {
   return new Date(`${date}T00:00:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
 }
-function ymd(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-// Data estimada de término (a partir de quantidade ÷ consumo/dia desde a compra).
-function runoutDate(purchasedOn: string | null, packQty: number | null, dailyCons: number | null): string | null {
-  if (!purchasedOn || !packQty || !dailyCons || dailyCons <= 0) return null
-  const days = Math.floor(packQty / dailyCons)
-  const d = new Date(`${purchasedOn}T00:00:00`)
-  d.setDate(d.getDate() + days)
-  return ymd(d)
-}
-// Data sugerida para recompra: ~5 dias antes de acabar (nunca no passado).
-function recompraDate(purchasedOn: string | null, packQty: number | null, dailyCons: number | null): string | null {
-  const ro = runoutDate(purchasedOn, packQty, dailyCons)
-  if (!ro) return null
-  const d = new Date(`${ro}T00:00:00`)
-  d.setDate(d.getDate() - 5)
-  const today = new Date(); today.setHours(0, 0, 0, 0)
-  return d < today ? ymd(today) : ymd(d)
-}
-
 export default function MedicamentosPage() {
   const { user, loading: authLoading } = useUser()
   const supabase = createClient()
@@ -285,7 +265,7 @@ export default function MedicamentosPage() {
 
     // Lembrete de recompra (reaproveita o worker de lembretes via agenda_events)
     if (medId) {
-      const rec = recompraDate(purchasedOn || null, num(packQty), num(dailyCons))
+      const rec = recompraDate(purchasedOn || null, num(packQty), num(dailyCons), num(acquiredQty))
       const wants = repurchase && status === 'em_uso' && !!rec
       const existingEvent = existing?.repurchaseEventId ?? null
       try {
@@ -364,7 +344,7 @@ export default function MedicamentosPage() {
           </p>
           {m.notes && <p className="font-body text-[11px] text-mauve/60 mt-1">{m.notes}</p>}
           {(() => {
-            const ro = runoutDate(m.purchasedOn, m.packQty, m.dailyCons)
+            const ro = runoutDate(m.purchasedOn, m.packQty, m.dailyCons, m.acquiredQty)
             return (
               <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
                 {m.purchaseStatus === 'a_comprar' && (
@@ -624,9 +604,9 @@ export default function MedicamentosPage() {
             )}
             {(() => {
               const num = (s: string) => { const v = parseFloat(s.replace(',', '.')); return isFinite(v) && v > 0 ? v : null }
-              const ro = runoutDate(purchasedOn || null, num(packQty), num(dailyCons))
+              const ro = runoutDate(purchasedOn || null, num(packQty), num(dailyCons), num(acquiredQty))
               if (!ro) return <p className="font-body text-[10px] text-mauve/50">Informe quantidade, consumo/dia e data de compra para estimar o término.</p>
-              const rc = recompraDate(purchasedOn || null, num(packQty), num(dailyCons))
+              const rc = recompraDate(purchasedOn || null, num(packQty), num(dailyCons), num(acquiredQty))
               return <p className="font-body text-[11px] text-petal">Estimativa: acaba por volta de <strong>{fmtFull(ro)}</strong>{repurchase && rc ? `; lembrete ~${fmtFull(rc)}` : ''}.</p>
             })()}
           </div>
