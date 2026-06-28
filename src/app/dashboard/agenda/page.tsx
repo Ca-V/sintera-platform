@@ -67,6 +67,9 @@ export default function AgendaPage() {
 
   async function onComplete(ev: HealthEvent) {
     if (!userId) return
+    // Concluir tem consequência (sai da Agenda → Histórico, e Gastos se tiver valor).
+    // Confirma e explica antes — é reversível depois via "Reabrir".
+    if (!window.confirm('Concluir este evento? Ele sai da Agenda e passa para o Histórico — e para os Gastos, se tiver valor. Você pode reabri-lo depois, se precisar.')) return
     setBusyId(ev.id); setActionError(null)
     try { await services.command.complete(userId, ev); reload() }
     catch (e) { setActionError(e instanceof Error ? e.message : 'Não foi possível concluir o evento.') }
