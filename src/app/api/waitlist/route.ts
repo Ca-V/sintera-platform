@@ -1,5 +1,9 @@
+// Cadastro na lista de espera (landing PÚBLICA, sem login).
+// A tabela `waitlist` tem RLS service_role-only (sem policy de INSERT anônimo),
+// então o insert precisa do ADMIN client — como em /api/consent. Mantém a tabela
+// protegida (não abre escrita pública) e corrige o 500 "Algo deu errado".
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdmin } from '@supabase/supabase-js'
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,24 +16,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Nome obrigatório' }, { status: 400 })
     }
 
-    const supabase = await createClient()
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY
+    if (!serviceKey) {
+      console.error('[waitlist] service role key não configurada')
+      return NextResponse.json({ error: 'Configuração interna ausente' }, { status: 500 })
+    }
+    const admin = createAdmin(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceKey)
 
-    // Verifica duplicata
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: existing } = await (supabase as any)
+    const normEmail = email.toLowerCase().trim()
+
+    // 0 ou 1 linha → maybeSingle (single() acusa erro quando não há linha).
+    const { data: existing } = await admin
       .from('waitlist')
       .select('id')
-      .eq('email', email.toLowerCase().trim())
-      .single()
+      .eq('email', normEmail)
+      .maybeSingle()
 
     if (existing) {
       return NextResponse.json({ ok: true, already: true })
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any).from('waitlist').insert({
-      name:  name.trim(),
-      email: email.toLowerCase().trim(),
+    const { error } = await admin.from('waitlist').insert({
+      name: name.trim(),
+      email: normEmail,
     })
 
     if (error) throw error
