@@ -15,6 +15,7 @@ import {
 import Link from 'next/link'
 import { useUser } from '@/context/UserContext'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
+import ConfirmDialog from '@/components/ConfirmDialog'
 import { useEventForm, eventToInput } from '@/components/eventForm'
 import { rowToHealthEvent, type HealthEvent, type HealthEventRow } from '@/lib/agenda'
 import HistoricoTabs from '@/components/HistoricoTabs'
@@ -86,6 +87,8 @@ export default function TimelinePage() {
   // Formulário único de evento (AgendarModal)
   const [modalOpen, setModalOpen] = useState(false)
   const [editingEvent, setEditingEvent] = useState<HealthEvent | null>(null)
+  // Confirmação própria (não-bloqueante) p/ ações com consequência (reabrir).
+  const [confirm, setConfirm] = useState<{ message: string; confirmLabel: string; onYes: () => void } | null>(null)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -216,8 +219,14 @@ export default function TimelinePage() {
   }
   const markRealized = (rawId: string) =>
     withFullEvent(rawId, ev => services.command.complete(user!.id, ev), 'Não foi possível concluir o evento.')
+  // Reabrir tem consequência (volta para a Agenda; sai do Histórico/Gastos).
+  // Confirmação explicativa antes — importante no mobile, onde não há tooltip.
   const reopenEvent = (rawId: string) =>
-    withFullEvent(rawId, ev => services.command.reopen(user!.id, ev), 'Não foi possível reabrir o evento.')
+    setConfirm({
+      message: 'Reabrir este evento? Ele volta para a Agenda (sai do Histórico) — e sai dos Gastos, se estava lá.',
+      confirmLabel: 'Reabrir',
+      onYes: () => withFullEvent(rawId, ev => services.command.reopen(user!.id, ev), 'Não foi possível reabrir o evento.'),
+    })
 
   const today = new Date().toISOString().slice(0, 10)
   // Histórico = SÓ o que já aconteceu. Eventos futuros ainda planejados vivem na Agenda
@@ -392,6 +401,14 @@ export default function TimelinePage() {
         onSave={handleSave}
         initialEvent={editingEvent ? eventToInput(editingEvent) : undefined}
         isEditing={!!editingEvent}
+      />
+
+      <ConfirmDialog
+        open={!!confirm}
+        message={confirm?.message ?? ''}
+        confirmLabel={confirm?.confirmLabel ?? 'Confirmar'}
+        onConfirm={() => { const c = confirm; setConfirm(null); c?.onYes() }}
+        onCancel={() => setConfirm(null)}
       />
     </div>
   )

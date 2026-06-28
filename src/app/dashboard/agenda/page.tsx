@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { CalendarDays, Plus, Check, Pencil, Ban, Loader2, CalendarClock, Sparkles, X } from 'lucide-react'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
+import ConfirmDialog from '@/components/ConfirmDialog'
 import { useEventForm, eventToInput } from '@/components/eventForm'
 import { buildExamRecencySuggestion, type AgendaSuggestion } from '@/lib/agenda/suggestions'
 import { typeLabel, statusLabel, formatDateBR, formatTimeBR, type HealthEvent } from '@/lib/agenda'
@@ -39,6 +40,8 @@ export default function AgendaPage() {
   const [prefill, setPrefill]     = useState<Partial<AgendaEventInput> | undefined>(undefined)
   const [suggestion, setSuggestion] = useState<AgendaSuggestion | null>(null)
   const [dismissed, setDismissed]   = useState(false)
+  // Confirmação própria (não-bloqueante) p/ ações com consequência (concluir).
+  const [confirm, setConfirm] = useState<{ message: string; confirmLabel: string; onYes: () => void } | null>(null)
 
   useEffect(() => {
     let active = true
@@ -65,11 +68,18 @@ export default function AgendaPage() {
 
   const reload = () => setReloadKey(k => k + 1)
 
-  async function onComplete(ev: HealthEvent) {
+  // Concluir tem consequência (sai da Agenda → Histórico, e Gastos se tiver valor).
+  // Pede confirmação explicativa antes — reversível depois via "Reabrir".
+  function onComplete(ev: HealthEvent) {
     if (!userId) return
-    // Concluir tem consequência (sai da Agenda → Histórico, e Gastos se tiver valor).
-    // Confirma e explica antes — é reversível depois via "Reabrir".
-    if (!window.confirm('Concluir este evento? Ele sai da Agenda e passa para o Histórico — e para os Gastos, se tiver valor. Você pode reabri-lo depois, se precisar.')) return
+    setConfirm({
+      message: 'Concluir este evento? Ele sai da Agenda e passa para o Histórico — e para os Gastos, se tiver valor. Você pode reabri-lo depois, se precisar.',
+      confirmLabel: 'Concluir',
+      onYes: () => doComplete(ev),
+    })
+  }
+  async function doComplete(ev: HealthEvent) {
+    if (!userId) return
     setBusyId(ev.id); setActionError(null)
     try { await services.command.complete(userId, ev); reload() }
     catch (e) { setActionError(e instanceof Error ? e.message : 'Não foi possível concluir o evento.') }
@@ -212,6 +222,14 @@ export default function AgendaPage() {
         onGoToHistory={() => router.push('/dashboard/timeline')}
         initialEvent={editingInitial}
         isEditing={!!editing}
+      />
+
+      <ConfirmDialog
+        open={!!confirm}
+        message={confirm?.message ?? ''}
+        confirmLabel={confirm?.confirmLabel ?? 'Confirmar'}
+        onConfirm={() => { const c = confirm; setConfirm(null); c?.onYes() }}
+        onCancel={() => setConfirm(null)}
       />
     </div>
   )
