@@ -185,9 +185,9 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
     lines.push('', 'SINTERA não oferece diagnóstico ou orientação clínica.')
     return lines.join('\n')
   }
-  function handleGoogle() { const { start, end } = buildDates(); window.open(buildGoogleCalendarUrl(fullTitle, start, end, buildDescription()), '_blank', 'noopener,noreferrer'); setAdded(true) }
-  function handleOutlook() { const { start, end } = buildDates(); window.open(buildOutlookUrl(fullTitle, start, end, buildDescription()), '_blank', 'noopener,noreferrer'); setAdded(true) }
-  function handleICS() { const { start, end } = buildDates(); downloadICS(buildICS(fullTitle, start, end, buildDescription()), `sintera_${fullTitle.toLowerCase().replace(/\s+/g, '_')}.ics`); setAdded(true) }
+  function handleGoogle() { const { start, end } = buildDates(); window.open(buildGoogleCalendarUrl(fullTitle, start, end, buildDescription()), '_blank', 'noopener,noreferrer'); if (!onSave) setAdded(true) }
+  function handleOutlook() { const { start, end } = buildDates(); window.open(buildOutlookUrl(fullTitle, start, end, buildDescription()), '_blank', 'noopener,noreferrer'); if (!onSave) setAdded(true) }
+  function handleICS() { const { start, end } = buildDates(); downloadICS(buildICS(fullTitle, start, end, buildDescription()), `sintera_${fullTitle.toLowerCase().replace(/\s+/g, '_')}.ics`); if (!onSave) setAdded(true) }
 
   async function handleSave() {
     if (!onSave || !canExport || saving) return
@@ -444,24 +444,23 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                     </div>
                   )}
 
-                  {/* Export — só no modo "somente calendário" (sem Salvar). No modo Agenda,
-                      exportar é oferecido DEPOIS de salvar (tela de confirmação). */}
-                  {!onSave && (
-                    <div className="space-y-2 pt-1">
-                      <p className={LABEL}>Adicionar ao calendário</p>
-                      <button onClick={handleGoogle} disabled={!canExport} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-petal/40 hover:bg-blush/30 disabled:opacity-40 transition-all">
-                        <span className="font-body text-sm text-onyx flex-1 text-left">Google Calendar</span><ExternalLink size={13} className="text-mauve/50" />
-                      </button>
-                      <button onClick={handleOutlook} disabled={!canExport} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-petal/40 hover:bg-blush/30 disabled:opacity-40 transition-all">
-                        <span className="font-body text-sm text-onyx flex-1 text-left">Outlook / Microsoft</span><ExternalLink size={13} className="text-mauve/50" />
-                      </button>
-                      <button onClick={handleICS} disabled={!canExport} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-petal/40 hover:bg-blush/30 disabled:opacity-40 transition-all">
-                        <div className="w-[18px] h-[18px] rounded flex items-center justify-center bg-sage-light flex-shrink-0"><Download size={11} className="text-sage" /></div>
-                        <span className="font-body text-sm text-onyx flex-1 text-left">Baixar .ics</span><span className="font-body text-[10px] text-mauve/50">Apple, outros</span>
-                      </button>
-                      {!canExport && <p className="font-body text-xs text-mauve/50 text-center">Selecione uma data para continuar</p>}
-                    </div>
-                  )}
+                  {/* Exportar para um calendário externo (Google/Outlook/.ics). Fica NO
+                      formulário (não num painel pós-salvar, que as telas fechavam → BUG
+                      FND-1). No modo Agenda é opcional e independente do "Salvar". */}
+                  <div className="space-y-2 pt-1">
+                    <p className={LABEL}>{onSave ? 'Exportar para o calendário (opcional)' : 'Adicionar ao calendário'}</p>
+                    <button onClick={handleGoogle} disabled={!canExport} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-petal/40 hover:bg-blush/30 disabled:opacity-40 transition-all">
+                      <span className="font-body text-sm text-onyx flex-1 text-left">Google Calendar</span><ExternalLink size={13} className="text-mauve/50" />
+                    </button>
+                    <button onClick={handleOutlook} disabled={!canExport} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-petal/40 hover:bg-blush/30 disabled:opacity-40 transition-all">
+                      <span className="font-body text-sm text-onyx flex-1 text-left">Outlook / Microsoft</span><ExternalLink size={13} className="text-mauve/50" />
+                    </button>
+                    <button onClick={handleICS} disabled={!canExport} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-petal/40 hover:bg-blush/30 disabled:opacity-40 transition-all">
+                      <div className="w-[18px] h-[18px] rounded flex items-center justify-center bg-sage-light flex-shrink-0"><Download size={11} className="text-sage" /></div>
+                      <span className="font-body text-sm text-onyx flex-1 text-left">Baixar .ics</span><span className="font-body text-[10px] text-mauve/50">Apple, outros</span>
+                    </button>
+                    {!canExport && <p className="font-body text-xs text-mauve/50 text-center">Selecione uma data para continuar</p>}
+                  </div>
                 </div>
               )}
             </div>
