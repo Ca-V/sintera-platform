@@ -2,10 +2,11 @@ import { describe, it, expect } from 'vitest'
 import {
   rowToHealthEvent, agendaRowToHealthEvent,
   isUpcoming, isPast, isConcluded, isClosed, hasActiveReminder, hasCost, isDerived,
-  selectUpcoming, selectHistorical, selectByLink, selectFinancial, isFinancial,
+  selectUpcoming, selectNextUpcoming, selectHistorical, selectByLink, selectFinancial, isFinancial,
   completeRule, cancelRule, rescheduleRule, canTransition,
   type HealthEvent, type HealthEventRow,
 } from './event'
+import { sortByWhen } from './repository'
 
 function ev(p: Partial<HealthEvent>): HealthEvent {
   return {
@@ -130,5 +131,42 @@ describe('modelo do dinheiro (Gastos) — exatamente 2 formas', () => {
   })
   it('sem valor = nunca entra', () => {
     expect(isFinancial(ev({ status: 'realizado', amountCents: null }))).toBe(false)
+  })
+})
+
+describe('selectNextUpcoming — "próximo evento" tem UMA definição (REV-04)', () => {
+  const ref = '2026-06-27'
+
+  it('Dashboard ("próximo") == 1º da Agenda (mesma pipeline: ordena + filtra)', () => {
+    // Lista propositalmente FORA de ordem e misturando origens (manual + legado).
+    const list = [
+      ev({ id: 'h-far',    date: '2026-07-25', status: 'planejado', source: 'manual' }),
+      ev({ id: 'leg-near', date: '2026-06-28', status: 'planejado', source: 'agenda_legacy' }),
+      ev({ id: 'past',     date: '2026-06-01', status: 'planejado', source: 'manual' }),
+      ev({ id: 'done',     date: '2026-06-27', status: 'realizado', source: 'manual' }),
+    ]
+    // 1º item da Agenda = pipeline do repositório (sortByWhen → selectUpcoming).
+    const agendaFirst = selectUpcoming(sortByWhen(list), ref)[0] ?? null
+    // "próximo" do Dashboard = função única.
+    const dashboardNext = selectNextUpcoming(list, ref)
+    expect(dashboardNext).toEqual(agendaFirst)
+    expect(dashboardNext?.id).toBe('leg-near')
+  })
+
+  it('inclui eventos legados (agenda_events) na decisão do "próximo"', () => {
+    const list = [
+      ev({ id: 'h',   date: '2026-08-10', status: 'planejado', source: 'manual' }),
+      ev({ id: 'leg', date: '2026-06-28', status: 'planejado', source: 'agenda_legacy' }),
+    ]
+    expect(selectNextUpcoming(list, ref)?.id).toBe('leg')
+  })
+
+  it('ignora fechados e passados; null quando não há futuro', () => {
+    const list = [
+      ev({ id: 'done',   date: '2026-07-01', status: 'realizado' }),
+      ev({ id: 'cancel', date: '2026-07-02', status: 'cancelado' }),
+      ev({ id: 'past',   date: '2026-06-01', status: 'planejado' }),
+    ]
+    expect(selectNextUpcoming(list, ref)).toBeNull()
   })
 })

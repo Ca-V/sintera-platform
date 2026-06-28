@@ -197,6 +197,20 @@ export function isFinancial(ev: HealthEvent): boolean {
 export function selectUpcoming(events: HealthEvent[], refDate: string): HealthEvent[] {
   return events.filter(e => isUpcoming(e, refDate))
 }
+/**
+ * DEFINIÇÃO ÚNICA de "próximo evento". A Agenda (1º da lista) e o Dashboard
+ * ("Agenda · próximo") — e qualquer componente futuro — DEVEM usar esta função,
+ * para nunca existirem duas interpretações de "próximo". Ordena de forma
+ * determinística (data → horário → id) e devolve o mais cedo dos futuros;
+ * independe da ordem de entrada. Inclui eventos legados (`agenda_events`),
+ * pois entram na mesma lista de domínio. Ver teste de regressão em event.test.ts.
+ */
+export function selectNextUpcoming(events: HealthEvent[], refDate: string): HealthEvent | null {
+  const upcoming = selectUpcoming(events, refDate)
+  const sorted = [...upcoming].sort((a, b) =>
+    a.date.localeCompare(b.date) || (a.time ?? '').localeCompare(b.time ?? '') || a.id.localeCompare(b.id))
+  return sorted[0] ?? null
+}
 export function selectHistorical(events: HealthEvent[], refDate: string): HealthEvent[] {
   return events.filter(e => isPast(e, refDate))
 }

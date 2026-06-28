@@ -53,7 +53,7 @@ export default function DashboardPage() {
   const { user, profile } = useUser()
   const router   = useRouter()
   const supabase = useRef(createClient()).current
-  const { saveEvent } = useEventForm()
+  const { saveEvent, services } = useEventForm()
 
   const [stats, setStats]         = useState<Stats | null>(null)
   const [recentExams, setRecent]   = useState<ExamSummary[]>([])
@@ -68,24 +68,23 @@ export default function DashboardPage() {
   async function loadData() {
     setLoading(true)
 
-    const todayISO = new Date().toISOString().slice(0, 10)
-    const [examsResult, bioResult, journeyResult, nextResult] = await Promise.all([
+    const [examsResult, bioResult, journeyResult, nextEvent] = await Promise.all([
       supabase.from('exams').select('id,type,status,created_at,exam_date').eq('user_id', user!.id).order('exam_date', { ascending: false, nullsFirst: false }),
       supabase.from('current_biomarkers').select('id', { count: 'exact', head: true }).eq('user_id', user!.id).eq('synthetic', false),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (supabase as any).from('health_events').select('title,event_date', { count: 'exact' }).eq('user_id', user!.id).eq('synthetic', false).order('event_date', { ascending: false }).limit(1),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (supabase as any).from('health_events').select('title,event_date').eq('user_id', user!.id).eq('synthetic', false).gte('event_date', todayISO).order('event_date', { ascending: true }).limit(1),
+      // "Agenda · próximo" usa a FONTE ÚNICA do domínio (mesma da Agenda) — nunca
+      // uma query própria, para Dashboard e Agenda jamais divergirem (REV-04).
+      services.query.nextUpcoming(user!.id),
     ])
 
     const exams = (examsResult.data ?? []) as ExamSummary[]
     const totalBiomarkers = bioResult.count ?? 0
     const lastEvent = ((journeyResult.data ?? []) as Array<{ title: string; event_date: string }>)[0]
-    const nextEvent = ((nextResult.data ?? []) as Array<{ title: string; event_date: string }>)[0]
     setJourney({
       count: journeyResult.count ?? 0,
       last: lastEvent ? { title: lastEvent.title, date: lastEvent.event_date } : null,
-      next: nextEvent ? { title: nextEvent.title, date: nextEvent.event_date } : null,
+      next: nextEvent ? { title: nextEvent.title, date: nextEvent.date } : null,
     })
 
     setStats({

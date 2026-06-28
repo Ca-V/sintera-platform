@@ -10,7 +10,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createSupabaseEventRepository, type EventRepository } from './repository'
 import { createEventBus, type EventBus, type DomainEvent, type DomainEventType, type EventActor } from './bus'
-import { completeRule, cancelRule, rescheduleRule, canTransition, type HealthEvent, type EventStatus } from './event'
+import { completeRule, cancelRule, rescheduleRule, canTransition, selectNextUpcoming, type HealthEvent, type EventStatus } from './event'
 import { parseRule, addToDate } from '../recurrence'
 
 export type EventDraft = Partial<HealthEvent> & { type: string; title: string; date: string }
@@ -23,6 +23,8 @@ const SYSTEM_CLOCK: Clock = { today: todayISO, now: nowISO }
 // ── Leitura ───────────────────────────────────────────────────────────────────
 export interface EventQueryService {
   listUpcoming(userId: string): Promise<HealthEvent[]>      // Agenda
+  /** "Próximo evento" — fonte ÚNICA (Dashboard, Agenda e afins consomem isto). */
+  nextUpcoming(userId: string): Promise<HealthEvent | null>
   listHistorical(userId: string): Promise<HealthEvent[]>    // Histórico
   listByExam(userId: string, examId: string): Promise<HealthEvent[]>
   listByBiomarker(userId: string, biomarker: string): Promise<HealthEvent[]>
@@ -34,6 +36,8 @@ export interface EventQueryService {
 export function createEventQueryService(repo: EventRepository, clock: Clock = SYSTEM_CLOCK): EventQueryService {
   return {
     listUpcoming:   (u) => repo.listUpcomingEvents(u, clock.today()),
+    // Mesma lista da Agenda → o "próximo" via função única (nunca duas definições).
+    nextUpcoming:   (u) => repo.listUpcomingEvents(u, clock.today()).then(l => selectNextUpcoming(l, clock.today())),
     listHistorical: (u) => repo.listHistoricalEvents(u, clock.today()),
     listByExam:      (u, id) => repo.listEventsByExam(u, id),
     listByBiomarker: (u, b)  => repo.listEventsByBiomarker(u, b),
