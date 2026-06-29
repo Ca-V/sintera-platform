@@ -187,10 +187,12 @@ export function isDerived(ev: HealthEvent): boolean { return ev.source !== 'manu
 export function isDirectExpense(ev: HealthEvent): boolean { return ev.directExpense }
 /**
  * Lançamento financeiro = evento com valor que (a) foi REALIZADO **ou** (b) é uma
- * despesa DIRETA. Gastos é PROJEÇÃO disto — não cria registros próprios.
+ * despesa DIRETA — e que NÃO foi cancelado. Um evento cancelado nunca é gasto
+ * real (mesmo despesa direta): cancelou → não entra em Gastos. Gastos é PROJEÇÃO
+ * disto — não cria registros próprios.
  */
 export function isFinancial(ev: HealthEvent): boolean {
-  return hasCost(ev) && (isConcluded(ev) || isDirectExpense(ev))
+  return hasCost(ev) && ev.status !== 'cancelado' && (isConcluded(ev) || isDirectExpense(ev))
 }
 
 // ── Ordenação cronológica — PRINCÍPIO DE ARQUITETURA (congelado 27/06/2026) ────

@@ -129,6 +129,10 @@ describe('modelo do dinheiro (Gastos) — exatamente 2 formas', () => {
   it('despesa direta + valor = entra sem precisar concluir (ex.: plano)', () => {
     expect(isFinancial(ev({ status: 'planejado', amountCents: 55000, directExpense: true }))).toBe(true)
   })
+  it('CANCELADO com valor NÃO entra em Gastos (mesmo despesa direta) — REGRESSÃO', () => {
+    expect(isFinancial(ev({ status: 'cancelado', amountCents: 55000, directExpense: true }))).toBe(false)
+    expect(isFinancial(ev({ status: 'cancelado', amountCents: 55000 }))).toBe(false)
+  })
   it('sem valor = nunca entra', () => {
     expect(isFinancial(ev({ status: 'realizado', amountCents: null }))).toBe(false)
   })

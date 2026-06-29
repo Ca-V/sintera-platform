@@ -10,6 +10,10 @@
 //     clínico e depende do motor de insights + governança aprovada.
 //
 // Linguagem sempre factual e opcional. Nunca prescritiva.
+//
+// REGRA OBRIGATÓRIA (fundadora 28/06/2026, RDC 657): toda sugestão de exame,
+// consulta ou procedimento DEVE orientar a usuária a CONFIRMAR com o médico
+// ("confira com seu médico se…"). A SINTERA organiza; quem orienta é o médico.
 // ============================================================
 
 /** Exame reduzido ao necessário para a sugestão de recência. */
@@ -78,7 +82,7 @@ export function buildExamRecencySuggestion(
     id: `exam_recency_${latest.date}`,
     kind: 'exam_recency',
     monthsSince: months,
-    message: `Seu exame mais recente é de ${monthsLabel(months)} atrás. Se fizer sentido para você, registre um lembrete para um novo.`,
+    message: `Seu exame mais recente é de ${monthsLabel(months)} atrás. Confira com seu médico se seria interessante registrar um lembrete para um novo — a SINTERA apenas organiza; quem orienta é o seu médico.`,
     suggestedTitle: 'Novo exame',
     suggestedEventType: 'exame',
   }
