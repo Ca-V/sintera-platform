@@ -115,7 +115,7 @@ export default function RelatorioPage() {
     const db = supabase as any
     const [medRes, evRes, exRes, mzRes, cdRes, hbRes, ewRes, omRes] = await Promise.all([
       db.from('medications').select('name, kind, dose, frequency, started_on, until_date, status').eq('user_id', user.id).order('status'),
-      db.from('health_events').select('title, event_type, professional_kind, event_date, notes').eq('user_id', user.id).eq('synthetic', false).order('event_date', { ascending: false }),
+      db.from('health_events').select('title, event_type, professional_kind, event_date, notes, status').eq('user_id', user.id).eq('synthetic', false).order('event_date', { ascending: false }),
       db.from('exams').select('type, exam_date, created_at').eq('user_id', user.id).order('created_at', { ascending: false }),
       db.from('body_metrics').select('metric, label, value_text, unit, measured_on').eq('user_id', user.id).order('measured_on', { ascending: false }),
       db.from('health_conditions').select('scope, name, relative, since_label, notes').eq('user_id', user.id).order('created_at', { ascending: false }),
@@ -127,12 +127,20 @@ export default function RelatorioPage() {
       name: m.name as string, kind: (m.kind as string) ?? 'medicamento', dose: (m.dose as string) ?? null, frequency: (m.frequency as string) ?? null,
       startedOn: (m.started_on as string) ?? null, untilOn: (m.until_date as string) ?? null, status: (m.status as string) ?? 'em_uso',
     })))
-    // "Consultas, procedimentos e eventos" NÃO inclui medicamentos/suplementos: estes
-    // têm seção própria (catálogo). Os eventos de recompra ("Recomprar: X", tipo
-    // medicamento/medicacao/suplemento) pertencem ao domínio de Medicamentos, não a
-    // consultas/procedimentos — por isso são excluídos desta seção.
+    // O relatório é uma compilação FACTUAL (o que já aconteceu). Exclui: (a) medicamentos/
+    // suplementos — têm seção própria (catálogo); e (b) itens FUTUROS planejados — estes
+    // pertencem à AGENDA, não ao relatório (decisão PO 29/06). Mesma régua do Histórico
+    // (futuro-planejado = data >= hoje e status não realizado/cancelado).
+    const hojeISO = new Date().toISOString().slice(0, 10)
     setEvents(((evRes.data ?? []) as Array<Record<string, unknown>>)
-      .filter(e => !['medicamento', 'medicacao', 'suplemento'].includes((e.event_type as string) ?? ''))
+      .filter(e => {
+        const t = (e.event_type as string) ?? ''
+        if (['medicamento', 'medicacao', 'suplemento'].includes(t)) return false
+        const d = ((e.event_date as string) ?? '').slice(0, 10)
+        const st = (e.status as string) ?? ''
+        const futuroPlanejado = d >= hojeISO && st !== 'realizado' && st !== 'cancelado'
+        return !futuroPlanejado
+      })
       .map(e => ({
         title: e.title as string, eventType: (e.event_type as string) ?? 'outro', prof: (e.professional_kind as string) ?? null,
         date: e.event_date as string, notes: (e.notes as string) ?? null,
