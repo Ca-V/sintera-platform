@@ -4,10 +4,10 @@ import { useRouter } from 'next/navigation'
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Upload, FileText, Clock, CheckCircle, AlertCircle,
-  Plus, X, Loader2, Zap, Search, ChevronDown, ChevronUp, Trash2, Pencil, Check, Camera, Dna, Image as ImageIcon,
+  FileText, Clock, CheckCircle, AlertCircle,
+  X, Loader2, Zap, Search, ChevronDown, ChevronUp, Trash2, Pencil, Check,
 } from 'lucide-react'
-import Link from 'next/link'
+import ExamEntryHub from '@/components/ExamEntryHub'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import { compareNames } from '@/lib/exams/nameMatch'
@@ -51,8 +51,6 @@ const STATUS_FILTER_OPTIONS = [
   { value: 'error',     label: 'Com erro'         },
 ]
 
-const ACCEPTED_MIME = ['application/pdf', 'image/jpeg', 'image/png']
-const MAX_BYTES     = 50 * 1024 * 1024
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -73,14 +71,10 @@ export default function ExamsPage() {
   const router   = useRouter()
   const supabase = useRef(createClient()).current
 
-  const [dragging, setDragging]         = useState(false)
   const [exams, setExams]               = useState<Exam[]>([])
   const [loadingExams, setLoadingExams] = useState(true)
-  const [uploading, setUploading]       = useState(false)
-  const [uploadError, setUploadError]   = useState<string | null>(null)
-  // "Adicionar exame": categoria escolhida (convencional vs ômico). Só apresentação —
-  // ômico ROTEIA para o fluxo próprio (catálogo+versionamento); não funde processamento.
-  const [addCategory, setAddCategory]   = useState<'convencional' | 'omico'>('convencional')
+  // Erro de EXCLUSÃO de exame (upload e seus erros vivem no ExamEntryHub).
+  const [deleteError, setDeleteError]   = useState<string | null>(null)
 
   const [analyzing, setAnalyzing]     = useState<Record<string, true>>({})
   const [examErrors, setExamErrors]   = useState<Record<string, string>>({})
@@ -99,7 +93,6 @@ export default function ExamsPage() {
   const [filterTo, setFilterTo]       = useState<string>('')
   const [collapsedYears, setCollapsedYears] = useState<Set<number>>(new Set())
 
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const loadExams = useCallback(async () => {
     if (!user) return
@@ -183,35 +176,6 @@ export default function ExamsPage() {
     }
   }, [analyzing, loadExams, router])
 
-  // ── Upload ─────────────────────────────────────────────────────────────────
-  const processFile = useCallback(async (file: File) => {
-    if (!user) return
-    if (!ACCEPTED_MIME.includes(file.type)) { setUploadError('Formato inválido. São aceitos PDF, JPG e PNG.'); return }
-    if (file.size > MAX_BYTES) { setUploadError('Arquivo muito grande. O limite é 50 MB.'); return }
-    setUploadError(null); setUploading(true)
-    let examId: string | null = null
-    try {
-      const ext         = file.name.split('.').pop() ?? 'bin'
-      const storagePath = `${user.id}/${crypto.randomUUID()}.${ext}`
-      const { error: storageErr } = await supabase.storage.from('exams').upload(storagePath, file, { contentType: file.type, upsert: false })
-      if (storageErr) throw new Error(`[storage] ${storageErr.message}`)
-      const { data: signedData, error: signedErr } = await supabase.storage.from('exams').createSignedUrl(storagePath, 60 * 60 * 24 * 365)
-      if (signedErr) throw new Error(`[signed-url] ${signedErr.message}`)
-      examId = crypto.randomUUID()
-      const examName = file.name.replace(/\.[^.]+$/, '')
-      // exam_date fica nulo no upload — é preenchido pela extração (data do laudo)
-      // e pode ser ajustado manualmente no detalhe. Não assumimos a data de envio.
-      const { error: insertErr } = await supabase.from('exams').insert({ id: examId, user_id: user.id, type: examName, exam_date: null, file_url: signedData.signedUrl, status: 'pending' } as unknown as never)
-      if (insertErr) throw new Error(`[insert] ${insertErr.code}: ${insertErr.message}`)
-      // P3 — vai direto ao exame enviado; a análise inicia sozinha lá (status 'pending')
-      router.push(`/dashboard/exams/${examId}`)
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err)
-      setUploadError(msg)
-      if (examId) { await supabase.from('exams').update({ status: 'error' } as unknown as never).eq('id', examId); await loadExams() }
-    } finally { setUploading(false) }
-  }, [user, supabase, loadExams, router])
-
   // ── Excluir exame ───────────────────────────────────────────────────────────
   // Remove o exame + biomarcadores + insights + arquivo. Histórico, jornada e
   // dashboard são derivados ao vivo dos dados → recalculam no próximo load.
@@ -223,17 +187,17 @@ export default function ExamsPage() {
     )
     if (!ok) return
     setDeletingId(exam.id)
-    setUploadError(null)
+    setDeleteError(null)
     try {
       const res = await fetch(`/api/exams/${exam.id}`, { method: 'DELETE' })
       if (res.ok) {
         await loadExams()
       } else {
         const j = await res.json().catch(() => ({}))
-        setUploadError(j.error ?? 'Falha ao excluir o exame.')
+        setDeleteError(j.error ?? 'Falha ao excluir o exame.')
       }
     } catch {
-      setUploadError('Falha ao excluir o exame.')
+      setDeleteError('Falha ao excluir o exame.')
     } finally {
       setDeletingId(null)
     }
@@ -253,9 +217,6 @@ export default function ExamsPage() {
     }
   }
 
-  const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => { const f = e.target.files?.[0]; if (f) processFile(f); e.target.value = '' }
-  const onDrop = (e: React.DragEvent) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files?.[0]; if (f) processFile(f) }
-  const onDragLeave = (e: React.DragEvent) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragging(false) }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -291,6 +252,14 @@ export default function ExamsPage() {
       {/* Área "Meus exames" (foco): filtros + lista. A área "Adicionar exame" foi
           movida para o FIM da página (hub: primeiro "o que eu já tenho?", depois
           "como adiciono outro?"). */}
+
+      {deleteError && (
+        <div className="flex items-start gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-xl">
+          <AlertCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
+          <p className="font-body text-xs text-red-700 flex-1">{deleteError}</p>
+          <button type="button" onClick={() => setDeleteError(null)} className="text-red-300 hover:text-red-500"><X size={15} /></button>
+        </div>
+      )}
 
       {/* ── Filtros (Epic Fase 1) ────────────────────────────────────────── */}
       {exams.length > 0 && (
@@ -528,100 +497,9 @@ export default function ExamsPage() {
         </div>
       )}
 
-      {/* ════ Adicionar exame (Centro de Entrada de Exames) — área de AÇÃO ════
-          Hub: "o que já tenho?" (lista, acima) → "como adiciono outro?" (aqui).
-          Costura de evolução: blocos futuros "Importar exame" (integrações: labs,
-          convênios, Apple/Google Health, Garmin, Oura, HL7/FHIR…) e "Solicitar
-          exame" entram como irmãos deste card, sem redesenhar a página. */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-        className="card-premium p-5 space-y-4">
-        <p className="font-display text-base font-semibold text-onyx">Adicionar exame</p>
-
-        {/* Categoria do exame (define o fluxo) — NÃO confundir com método de entrada. */}
-        <div>
-          <p className="font-body text-[11px] text-mauve/70 mb-1.5">Categoria do exame</p>
-          <div className="flex gap-2">
-            {([['convencional', 'Convencional'], ['omico', 'Ômico']] as const).map(([id, label]) => (
-              <button key={id} type="button" onClick={() => setAddCategory(id)}
-                className={`px-3.5 py-1.5 rounded-full font-body text-sm font-medium border transition-colors ${
-                  addCategory === id ? 'gradient-sintera text-white border-transparent' : 'bg-ivory text-mauve border-border hover:border-petal/40'}`}>
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {addCategory === 'convencional' ? (
-          <div className="space-y-3">
-            <p className="font-body text-xs text-mauve">Como deseja adicionar?</p>
-            {/* Método de entrada — todos reusam o MESMO upload (onInputChange). */}
-            <motion.label
-              onDragOver={e => { e.preventDefault(); setDragging(true) }}
-              onDragLeave={onDragLeave} onDrop={onDrop}
-              className={['block border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-200 cursor-pointer',
-                dragging ? 'border-petal bg-blush' : 'border-border hover:border-petal/50 hover:bg-blush/30',
-                uploading ? 'opacity-60 pointer-events-none select-none' : ''].join(' ')}
-            >
-              <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" className="sr-only" disabled={uploading} onChange={onInputChange} />
-              <div className="w-12 h-12 rounded-2xl gradient-sintera-soft flex items-center justify-center mx-auto mb-3">
-                <Upload size={22} className={`text-petal ${uploading ? 'animate-bounce' : ''}`} />
-              </div>
-              {uploading ? (
-                <>
-                  <p className="font-display text-base font-semibold text-onyx">Enviando exame…</p>
-                  <p className="font-body text-xs text-mauve">Não feche esta aba até concluir</p>
-                </>
-              ) : (
-                <>
-                  <p className="font-display text-base font-semibold text-onyx mb-1">Arraste o PDF aqui</p>
-                  <p className="font-body text-sm text-mauve mb-3">ou clique para selecionar um arquivo</p>
-                  <span className="inline-flex items-center gap-2 gradient-sintera text-white font-body text-sm font-medium px-5 py-2 rounded-full hover:opacity-90 transition-opacity shadow-sm">
-                    <Plus size={15} /> PDF
-                  </span>
-                  <p className="text-[11px] font-body text-mauve/60 mt-3">PDF ou foto do laudo (JPG/PNG) · Até 50 MB</p>
-                </>
-              )}
-            </motion.label>
-            <div className="flex flex-wrap gap-2">
-              <label className={['inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-petal/40 text-petal font-body text-sm font-medium cursor-pointer hover:bg-blush transition-colors',
-                uploading ? 'opacity-60 pointer-events-none' : ''].join(' ')}>
-                <input type="file" accept="image/*" capture="environment" className="sr-only" disabled={uploading} onChange={onInputChange} />
-                <Camera size={15} /> Foto
-              </label>
-              <label className={['inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-petal/40 text-petal font-body text-sm font-medium cursor-pointer hover:bg-blush transition-colors',
-                uploading ? 'opacity-60 pointer-events-none' : ''].join(' ')}>
-                <input type="file" accept="image/*" className="sr-only" disabled={uploading} onChange={onInputChange} />
-                <ImageIcon size={15} /> Galeria
-              </label>
-            </div>
-          </div>
-        ) : (
-          /* Ômico: a área NÃO some — é substituída por uma chamada ao fluxo próprio.
-             Sem termos técnicos ("pipeline") na interface. */
-          <div className="rounded-2xl border border-lavender/30 bg-lavender-light/40 px-4 py-4 flex items-start gap-3">
-            <Dna size={18} className="text-lavender flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <p className="font-body text-sm text-onyx leading-relaxed">
-                Os exames <strong>ômicos</strong> (metabolômica, proteômica, microbioma, genética…) têm
-                centenas a milhares de marcadores e possuem um <strong>fluxo específico de processamento e
-                interpretação</strong>, com catálogo, versionamento e comparação ao longo do tempo.
-              </p>
-              <Link href="/dashboard/omics"
-                className="mt-2.5 inline-flex items-center gap-1.5 font-body text-sm font-medium text-lavender hover:underline">
-                Ir para Exames Ômicos →
-              </Link>
-            </div>
-          </div>
-        )}
-
-        {uploadError && (
-          <div className="flex items-start gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-xl">
-            <AlertCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
-            <p className="font-body text-xs text-red-700 flex-1">{uploadError}</p>
-            <button type="button" onClick={() => setUploadError(null)} className="text-red-300 hover:text-red-500"><X size={15} /></button>
-          </div>
-        )}
-      </motion.div>
+      {/* Centro de Entrada de Exames — componente reutilizável (Dashboard, Timeline,
+          onboarding…). "o que já tenho?" (lista, acima) → "como adiciono?" (aqui). */}
+      <ExamEntryHub onChanged={loadExams} />
     </div>
   )
 }
