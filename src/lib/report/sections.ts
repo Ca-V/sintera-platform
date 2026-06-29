@@ -21,6 +21,16 @@ export type ReportDimension<K extends string> = {
  *  equivalência: dashboard e público devem produzir a MESMA árvore. */
 export type ReportTree = { group: string; keys: string[] }[]
 
+// ── INTENÇÃO ARQUITETURAL (não implementar agora — decisão PO 29/06) ──────────────
+// `buildReportData()`: produzir uma REPRESENTAÇÃO do relatório INDEPENDENTE DA INTERFACE
+// (árvore rica: Section → Subsection → Item com valores), a ser criada QUANDO surgir o
+// primeiro consumidor que NÃO seja um renderizador React — PDF, IA, impressão, API,
+// app móvel. Hoje os 2 renderizadores compartilham a ESTRUTURA (REPORT_DIMENSIONS +
+// buildReportTree) e divergem só na estilização (Tailwind × inline email-safe), o que
+// já resolve o problema arquitetural central (uma única definição da estrutura). Antes
+// de um 3º consumidor, um objeto data-rich AUMENTA complexidade em vez de reduzir.
+// (Mesma régua de mode/FSM/HealthTaxonomy/FormShell: abstrair quando o consumidor é real.)
+
 export function buildReportTree<K extends string>(
   dimensions: ReportDimension<K>[],
   selected: Record<string, boolean>,
