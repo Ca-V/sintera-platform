@@ -117,6 +117,15 @@ export const REPORT_DIMENSIONS_V2: ReportDimension<ReportSectionKeyV2>[] = [
 export const ALL_SECTION_KEYS_V2: ReportSectionKeyV2[] =
   REPORT_DIMENSIONS_V2.flatMap(d => d.sections.map(s => s.key))
 
+export function defaultReportSelectionV2(): Record<ReportSectionKeyV2, boolean> {
+  return Object.fromEntries(ALL_SECTION_KEYS_V2.map(k => [k, true])) as Record<ReportSectionKeyV2, boolean>
+}
+
+/** Serializa a seleção (V2) para gravar em report_shares. */
+export function serializeReportSectionsV2(selected: Record<ReportSectionKeyV2, boolean>): ReportSectionKeyV2[] {
+  return ALL_SECTION_KEYS_V2.filter(k => selected[k])
+}
+
 // Vocabulário V1 → V2 (expansão). Detecção de versão: se há chave que só existe em V2,
 // a lista já é V2; senão é V1 e expande tudo (inclusive `exames` → exames + últimos).
 const LEGACY_V1_TO_V2: Record<string, ReportSectionKeyV2[]> = {

@@ -14,13 +14,15 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
   Loader2, Printer, ArrowLeft, FileText, Share2, Copy, Trash2, Check,
-  CalendarDays, FlaskConical, Pill, Stethoscope, HeartPulse, Ruler, Activity, Eye,
+  CalendarDays, FlaskConical, Pill, Stethoscope, HeartPulse, Ruler, Activity,
+  Leaf, Package, Glasses,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
 import { typeLabel, professionalLabel } from '@/lib/agenda' // fonte ÚNICA de rótulos (tipo + profissional)
-import { REPORT_DIMENSIONS_V1, buildReportTree, serializeReportSectionsV1, type ReportSectionKeyV1 } from '@/lib/report/sections'
+import { REPORT_DIMENSIONS_V2, buildReportTree, serializeReportSectionsV2, defaultReportSelectionV2, type ReportSectionKeyV2 } from '@/lib/report/sections'
+import { normalizeKind } from '@/lib/catalog/presentation'
 
 interface Med { name: string; kind: string; dose: string | null; frequency: string | null; startedOn: string | null; untilOn: string | null; status: string }
 interface Ev { title: string; eventType: string; prof: string | null; date: string; notes: string | null }
@@ -60,10 +62,11 @@ const HABIT_LABEL: Record<string, string> = {
 // A ESTRUTURA do relatório (grupos/ordem/rótulos) vive em `lib/report` (REPORT_DIMENSIONS_V1),
 // fonte ÚNICA consumida pelas DUAS telas (dashboard + público). Aqui ficam só os ÍCONES do
 // seletor (apresentação), por seção. (Marco 1: unifica renderização sem mudar comportamento.)
-type SectionKey = ReportSectionKeyV1
+type SectionKey = ReportSectionKeyV2
 const SECTION_ICON: Record<SectionKey, React.ElementType> = {
-  eventos: CalendarDays, exames: FileText, omica: FlaskConical, medicamentos: Pill,
-  condicoes: Stethoscope, habitos: HeartPulse, medidas: Ruler, sinais: Activity, visao: Eye,
+  condicoes: Stethoscope, medicamento: Pill, suplemento: Leaf, produto: Package, dispositivo: Glasses,
+  habitos: HeartPulse, medidasAtuais: Ruler, sinaisAtuais: Activity, ultimosExames: FileText,
+  eventos: CalendarDays, exames: FileText, omica: FlaskConical, medidasEvolucao: Ruler, sinaisEvolucao: Activity,
 }
 
 function periodo(start: string | null, until: string | null): string {
@@ -94,7 +97,7 @@ export default function RelatorioPage() {
   const [shares, setShares] = useState<{ id: string; token: string; expiresAt: string }[]>([])
   const [shareBusy, setShareBusy] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
-  const [sections, setSections] = useState({ medicamentos: true, condicoes: true, habitos: true, visao: true, eventos: true, exames: true, omica: true, medidas: true, sinais: true })
+  const [sections, setSections] = useState(defaultReportSelectionV2())
   const toggle = (k: keyof typeof sections) => setSections(s => ({ ...s, [k]: !s[k] }))
 
   const load = useCallback(async () => {
@@ -173,7 +176,7 @@ export default function RelatorioPage() {
     setShareBusy(true)
     const token = (crypto.randomUUID() + crypto.randomUUID()).replace(/-/g, '')
     const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-    const sel = serializeReportSectionsV1(sections)
+    const sel = serializeReportSectionsV2(sections)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (supabase as any).from('report_shares').insert({ user_id: user.id, token, expires_at: expires, sections: sel })
     await load()
@@ -263,7 +266,7 @@ export default function RelatorioPage() {
       <div className="card-premium p-5 mb-6 print:hidden">
         <p className="font-body text-sm font-semibold text-onyx mb-3">Mostrar no relatório</p>
         <div className="space-y-4">
-          {REPORT_DIMENSIONS_V1.map(({ id, title, sections: items }) => (
+          {REPORT_DIMENSIONS_V2.map(({ id, title, sections: items }) => (
             <div key={id}>
               <p className="font-body text-[10px] font-semibold text-mauve/50 uppercase tracking-[0.15em] mb-1.5">{title}</p>
               <div className="flex flex-col gap-1.5">
@@ -298,27 +301,42 @@ export default function RelatorioPage() {
             REPORT_SECTIONS (fonte única). Cada seção tem CONTEÚDO próprio; o corpo só
             renderiza, na estrutura do seletor, o que a usuária marcou. */}
         {(() => {
+          // ── Derivações Marco 2 (snapshots de ESTADO ATUAL) — só apresentação ──
+          const medsOf = (k: string) => medsEmUso.filter(m => normalizeKind(m.kind) === k)
+          const medList = (kind: string, emptyMsg: string) => (
+            medsOf(kind).length === 0
+              ? <p className="font-body text-sm text-mauve/60">{emptyMsg}</p>
+              : <ul className="space-y-1">{medsOf(kind).map((m, i) => (
+                  <li key={i} className="font-body text-sm text-onyx">• <strong>{m.name}</strong>{[m.dose, m.frequency].filter(Boolean).length ? ` — ${[m.dose, m.frequency].filter(Boolean).join(', ')}` : ''}{periodo(m.startedOn, m.untilOn)}</li>
+                ))}</ul>
+          )
+          const latestByMetric = (arr: typeof measures): typeof measures => {
+            const map = new Map<string, (typeof measures)[number]>()
+            for (const x of arr) { const c = map.get(x.metric); if (!c || x.date > c.date) map.set(x.metric, x) }
+            return [...map.values()]
+          }
+          const metricName = (m: (typeof measures)[number], sinal: boolean) =>
+            (m.metric === 'outro' || m.metric === 'outro_sinal') && m.label ? m.label : METRIC_LABEL[m.metric] ?? (sinal ? 'Sinal' : 'Medida')
+          const measureRows = (arr: typeof measures, sinal: boolean) => (
+            <table className="w-full text-left"><tbody>
+              {arr.map((m, i) => (
+                <tr key={i} className="border-b border-border/50">
+                  <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(m.date)}</td>
+                  <td className="font-body text-sm text-onyx py-1.5"><span className="text-mauve/70">{metricName(m, sinal)}:</span> {m.valueText}{m.unit ? ` ${m.unit}` : ''}</td>
+                </tr>
+              ))}
+            </tbody></table>
+          )
+          const snapshotList = (arr: typeof measures, sinal: boolean) => (
+            <ul className="space-y-1">{arr.map((m, i) => (
+              <li key={i} className="font-body text-sm text-onyx">• <span className="text-mauve/70">{metricName(m, sinal)}:</span> {m.valueText}{m.unit ? ` ${m.unit}` : ''}</li>
+            ))}</ul>
+          )
+          const ultExamMap = new Map<string, (typeof exams)[number]>()
+          for (const e of exams) { const c = ultExamMap.get(e.type); if (!c || e.date > c.date) ultExamMap.set(e.type, e) }
+          const ultimosExamesArr = [...ultExamMap.values()]
+
           const sectionContent: Record<SectionKey, React.ReactNode> = {
-            medicamentos: (
-              <section>
-                <h2 className="font-body text-sm font-bold text-onyx mb-2">Medicamentos e suplementos em uso</h2>
-                {medsEmUso.length === 0 ? (
-                  <p className="font-body text-sm text-mauve/60">Nenhum registrado em uso.</p>
-                ) : (
-                  <ul className="space-y-1">
-                    {medsEmUso.map((m, i) => (
-                      <li key={i} className="font-body text-sm text-onyx">
-                        • <strong>{m.name}</strong>{m.kind === 'suplemento' ? ' (suplemento)' : ''}{[m.dose, m.frequency].filter(Boolean).length ? ` — ${[m.dose, m.frequency].filter(Boolean).join(', ')}` : ''}
-                        {periodo(m.startedOn, m.untilOn)}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {medsSusp.length > 0 && (
-                  <p className="font-body text-xs text-mauve/60 mt-2">Suspensos: {medsSusp.map(m => m.name).join(', ')}.</p>
-                )}
-              </section>
-            ),
             condicoes: (
               <section>
                 <h2 className="font-body text-sm font-bold text-onyx mb-2">Condições de saúde</h2>
@@ -349,28 +367,38 @@ export default function RelatorioPage() {
                 )}
               </section>
             ),
-            habitos: (
+            medicamento: (
               <section>
-                <h2 className="font-body text-sm font-bold text-onyx mb-2">Hábitos de vida</h2>
-                {habits.length === 0 ? (
-                  <p className="font-body text-sm text-mauve/60">Nenhum hábito registrado.</p>
-                ) : (
-                  <ul className="space-y-1">
-                    {habits.map((h, i) => (
-                      <li key={i} className="font-body text-sm text-onyx">
-                        • <span className="text-mauve/70">{HABIT_LABEL[h.category] ?? 'Hábito'}:</span> {h.description}{h.frequency ? ` — ${h.frequency}` : ''}
-                        {h.notes ? <span className="block text-xs text-mauve/60">{h.notes}</span> : null}
-                      </li>
-                    ))}
-                  </ul>
+                <h2 className="font-body text-sm font-bold text-onyx mb-2">Medicamentos</h2>
+                {medList('medicamento', 'Nenhum medicamento em uso.')}
+                {medsSusp.length > 0 && (
+                  <p className="font-body text-xs text-mauve/60 mt-2">Suspensos: {medsSusp.map(m => m.name).join(', ')}.</p>
                 )}
               </section>
             ),
-            visao: (
+            suplemento: (
               <section>
-                <h2 className="font-body text-sm font-bold text-onyx mb-2">Óculos e lentes de contato</h2>
+                <h2 className="font-body text-sm font-bold text-onyx mb-2">Suplementos</h2>
+                {medList('suplemento', 'Nenhum suplemento em uso.')}
+              </section>
+            ),
+            produto: (
+              <section>
+                <h2 className="font-body text-sm font-bold text-onyx mb-2">Produtos</h2>
+                {medList('produto', 'Nenhum produto registrado.')}
+              </section>
+            ),
+            dispositivo: (
+              <section>
+                <h2 className="font-body text-sm font-bold text-onyx mb-2">Dispositivos</h2>
+                {medsOf('dispositivo').length > 0 && (
+                  <ul className="space-y-1 mb-2">{medsOf('dispositivo').map((m, i) => (
+                    <li key={i} className="font-body text-sm text-onyx">• <strong>{m.name}</strong>{[m.dose, m.frequency].filter(Boolean).length ? ` — ${[m.dose, m.frequency].filter(Boolean).join(', ')}` : ''}</li>
+                  ))}</ul>
+                )}
+                <h3 className="font-body text-xs font-bold text-mauve/80 mt-1 mb-1 uppercase tracking-wider">Óculos e lentes</h3>
                 {eyewear.length === 0 ? (
-                  <p className="font-body text-sm text-mauve/60">Nenhum registro.</p>
+                  <p className="font-body text-sm text-mauve/60">Nenhum registrado.</p>
                 ) : (
                   <ul className="space-y-1.5">
                     {eyewear.map((e, i) => {
@@ -387,6 +415,23 @@ export default function RelatorioPage() {
                         </li>
                       )
                     })}
+                  </ul>
+                )}
+              </section>
+            ),
+            habitos: (
+              <section>
+                <h2 className="font-body text-sm font-bold text-onyx mb-2">Hábitos de vida</h2>
+                {habits.length === 0 ? (
+                  <p className="font-body text-sm text-mauve/60">Nenhum hábito registrado.</p>
+                ) : (
+                  <ul className="space-y-1">
+                    {habits.map((h, i) => (
+                      <li key={i} className="font-body text-sm text-onyx">
+                        • <span className="text-mauve/70">{HABIT_LABEL[h.category] ?? 'Hábito'}:</span> {h.description}{h.frequency ? ` — ${h.frequency}` : ''}
+                        {h.notes ? <span className="block text-xs text-mauve/60">{h.notes}</span> : null}
+                      </li>
+                    ))}
                   </ul>
                 )}
               </section>
@@ -445,54 +490,56 @@ export default function RelatorioPage() {
                 )}
               </section>
             ),
-            medidas: (
+            medidasAtuais: (
               <section>
-                <h2 className="font-body text-sm font-bold text-onyx mb-2">Medidas corporais</h2>
+                <h2 className="font-body text-sm font-bold text-onyx mb-2">Medidas atuais</h2>
                 {alturaCm != null && (
                   <p className="font-body text-sm text-onyx mb-1"><span className="text-mauve/70">Altura:</span> {alturaCm} cm</p>
                 )}
-                {measuresCorpo.length === 0 ? (
+                {latestByMetric(measuresCorpo).length === 0 ? (
                   <p className="font-body text-sm text-mauve/60">{alturaCm != null ? 'Sem outras medidas registradas.' : 'Nenhuma medida registrada.'}</p>
+                ) : snapshotList(latestByMetric(measuresCorpo), false)}
+              </section>
+            ),
+            ultimosExames: (
+              <section>
+                <h2 className="font-body text-sm font-bold text-onyx mb-2">Últimos exames</h2>
+                {ultimosExamesArr.length === 0 ? (
+                  <p className="font-body text-sm text-mauve/60">Nenhum exame registrado.</p>
                 ) : (
-                  <table className="w-full text-left">
-                    <tbody>
-                      {measuresCorpo.map((m, i) => (
-                        <tr key={i} className="border-b border-border/50">
-                          <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(m.date)}</td>
-                          <td className="font-body text-sm text-onyx py-1.5">
-                            <span className="text-mauve/70">{m.metric === 'outro' && m.label ? m.label : METRIC_LABEL[m.metric] ?? 'Medida'}:</span> {m.valueText}{m.unit ? ` ${m.unit}` : ''}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <ul className="space-y-1">{ultimosExamesArr.map((e, i) => (
+                    <li key={i} className="font-body text-sm text-onyx">• <strong>{e.type}</strong> <span className="text-mauve/60">— último realizado em {fmt(e.date)}</span></li>
+                  ))}</ul>
                 )}
               </section>
             ),
-            sinais: (
+            medidasEvolucao: (
               <section>
-                <h2 className="font-body text-sm font-bold text-onyx mb-2">Sinais vitais</h2>
+                <h2 className="font-body text-sm font-bold text-onyx mb-2">Evolução das medidas</h2>
+                {measuresCorpo.length === 0 ? (
+                  <p className="font-body text-sm text-mauve/60">Nenhuma medida registrada.</p>
+                ) : measureRows(measuresCorpo, false)}
+              </section>
+            ),
+            sinaisAtuais: (
+              <section>
+                <h2 className="font-body text-sm font-bold text-onyx mb-2">Sinais vitais atuais</h2>
+                {latestByMetric(measuresVitais).length === 0 ? (
+                  <p className="font-body text-sm text-mauve/60">Nenhum sinal vital registrado.</p>
+                ) : snapshotList(latestByMetric(measuresVitais), true)}
+              </section>
+            ),
+            sinaisEvolucao: (
+              <section>
+                <h2 className="font-body text-sm font-bold text-onyx mb-2">Evolução dos sinais vitais</h2>
                 {measuresVitais.length === 0 ? (
                   <p className="font-body text-sm text-mauve/60">Nenhum sinal vital registrado.</p>
-                ) : (
-                  <table className="w-full text-left">
-                    <tbody>
-                      {measuresVitais.map((m, i) => (
-                        <tr key={i} className="border-b border-border/50">
-                          <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(m.date)}</td>
-                          <td className="font-body text-sm text-onyx py-1.5">
-                            <span className="text-mauve/70">{m.metric === 'outro_sinal' && m.label ? m.label : METRIC_LABEL[m.metric] ?? 'Sinal'}:</span> {m.valueText}{m.unit ? ` ${m.unit}` : ''}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
+                ) : measureRows(measuresVitais, true)}
               </section>
             ),
           }
           // Árvore lógica via fonte única (mesma do relatório público) — testada por equivalência.
-          return buildReportTree(REPORT_DIMENSIONS_V1, sections).map(({ group, keys }) => (
+          return buildReportTree(REPORT_DIMENSIONS_V2, sections).map(({ group, keys }) => (
             <div key={group}>
               <p className="font-body text-[11px] font-semibold text-mauve/50 uppercase tracking-[0.15em] mb-3">{group}</p>
               <div className="space-y-6">

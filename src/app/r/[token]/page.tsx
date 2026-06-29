@@ -9,7 +9,8 @@
 import { createClient } from '@supabase/supabase-js'
 import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
 import { typeLabel, professionalLabel } from '@/lib/agenda/presentation' // fonte ÚNICA de rótulos
-import { REPORT_DIMENSIONS_V1, buildReportTree, normalizeReportSectionsV1 } from '@/lib/report/sections'
+import { REPORT_DIMENSIONS_V2, buildReportTree, normalizeReportSectionsV2 } from '@/lib/report/sections'
+import { normalizeKind } from '@/lib/catalog/presentation'
 import type { ReactNode } from 'react'
 
 export const metadata = { robots: { index: false, follow: false } }
@@ -105,19 +106,59 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
   const hbArr = (habits ?? []) as Array<Record<string, unknown>>
   // Marco 1: mesma ESTRUTURA do dashboard (REPORT_DIMENSIONS_V1) + compat dos links
   // antigos via normalizeReportSectionsV1 (único ponto de tradução).
-  const selection = Object.fromEntries(normalizeReportSectionsV1(share.sections).map(k => [k, true])) as Record<string, boolean>
+  const selection = Object.fromEntries(normalizeReportSectionsV2(share.sections).map(k => [k, true])) as Record<string, boolean>
+  // Helpers Marco 2 (snapshots de Estado Atual) — só apresentação, dados crus.
+  const medsOf = (k: string) => medsEmUso.filter(m => normalizeKind(m.kind as string) === k)
+  const medList = (kind: string, empty: string) => (
+    medsOf(kind).length === 0
+      ? <p style={{ color: '#8a7b92', fontSize: 14 }}>{empty}</p>
+      : <ul style={{ paddingLeft: 18, fontSize: 14 }}>{medsOf(kind).map((m, i) => (
+          <li key={i}><strong>{m.name as string}</strong>{[m.dose, m.frequency].filter(Boolean).length ? ` — ${[m.dose, m.frequency].filter(Boolean).join(', ')}` : ''}{periodo((m.started_on as string) ?? null, (m.until_date as string) ?? null)}</li>
+        ))}</ul>
+  )
+  const latestMeasures = (arr: typeof mzArr) => {
+    const map = new Map<string, (typeof mzArr)[number]>()
+    for (const x of arr) { const k = String(x.metric); const c = map.get(k); if (!c || String(x.measured_on) > String(c.measured_on)) map.set(k, x) }
+    return [...map.values()]
+  }
+  const metricName = (m: Record<string, unknown>, sinal: boolean) =>
+    (m.metric === 'outro' || m.metric === 'outro_sinal') && m.label ? (m.label as string) : METRIC_LABEL[m.metric as string] ?? (sinal ? 'Sinal' : 'Medida')
+  const measureTable = (arr: typeof mzArr, sinal: boolean) => (
+    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}><tbody>
+      {arr.map((m, i) => (
+        <tr key={i} style={{ borderBottom: '1px solid #f2eef4' }}>
+          <td style={{ padding: '6px 12px 6px 0', color: '#8a7b92', whiteSpace: 'nowrap', verticalAlign: 'top' }}>{fmt(m.measured_on as string)}</td>
+          <td style={{ padding: '6px 0' }}><span style={{ color: '#8a7b92' }}>{metricName(m, sinal)}:</span> {m.value_text as string}{m.unit ? ` ${m.unit as string}` : ''}</td>
+        </tr>
+      ))}
+    </tbody></table>
+  )
+  const snapList = (arr: typeof mzArr, sinal: boolean) => (
+    <ul style={{ paddingLeft: 18, fontSize: 14 }}>{arr.map((m, i) => (
+      <li key={i}><span style={{ color: '#8a7b92' }}>{metricName(m, sinal)}:</span> {m.value_text as string}{m.unit ? ` ${m.unit as string}` : ''}</li>
+    ))}</ul>
+  )
+  const ultExamMap = new Map<string, (typeof exArr)[number]>()
+  for (const e of exArr) { const t = String((e.type as string) || 'Exame'); const d = (e.exam_date as string) || (e.created_at as string) || ''; const c = ultExamMap.get(t); if (!c || d > ((c.exam_date as string) || (c.created_at as string) || '')) ultExamMap.set(t, e) }
+  const ultimosExamesArr = [...ultExamMap.values()]
   const sectionContent: Record<string, ReactNode> = {
-    medicamentos: (
+    medicamento: (
       <section style={{ marginBottom: 22 }}>
-        <h2 style={{ fontSize: 15 }}>Medicamentos e suplementos em uso</h2>
-        {medsEmUso.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum registrado.</p> : (
-          <ul style={{ paddingLeft: 18, fontSize: 14 }}>
-            {medsEmUso.map((m, i) => (
-              <li key={i}><strong>{m.name as string}</strong>{m.kind === 'suplemento' ? ' (suplemento)' : ''}{[m.dose, m.frequency].filter(Boolean).length ? ` — ${[m.dose, m.frequency].filter(Boolean).join(', ')}` : ''}{periodo((m.started_on as string) ?? null, (m.until_date as string) ?? null)}</li>
-            ))}
-          </ul>
-        )}
+        <h2 style={{ fontSize: 15 }}>Medicamentos</h2>
+        {medList('medicamento', 'Nenhum medicamento em uso.')}
         {medsSusp.length > 0 && <p style={{ fontSize: 12, color: '#8a7b92' }}>Suspensos: {medsSusp.map(m => m.name as string).join(', ')}.</p>}
+      </section>
+    ),
+    suplemento: (
+      <section style={{ marginBottom: 22 }}>
+        <h2 style={{ fontSize: 15 }}>Suplementos</h2>
+        {medList('suplemento', 'Nenhum suplemento em uso.')}
+      </section>
+    ),
+    produto: (
+      <section style={{ marginBottom: 22 }}>
+        <h2 style={{ fontSize: 15 }}>Produtos</h2>
+        {medList('produto', 'Nenhum produto registrado.')}
       </section>
     ),
     condicoes: (
@@ -154,10 +195,16 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
         )}
       </section>
     ),
-    visao: (
+    dispositivo: (
       <section style={{ marginBottom: 22 }}>
-        <h2 style={{ fontSize: 15 }}>Óculos e lentes de contato</h2>
-        {ewArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum registro.</p> : (
+        <h2 style={{ fontSize: 15 }}>Dispositivos</h2>
+        {medsOf('dispositivo').length > 0 && (
+          <ul style={{ paddingLeft: 18, fontSize: 14, marginBottom: 8 }}>{medsOf('dispositivo').map((m, i) => (
+            <li key={i}><strong>{m.name as string}</strong>{[m.dose, m.frequency].filter(Boolean).length ? ` — ${[m.dose, m.frequency].filter(Boolean).join(', ')}` : ''}</li>
+          ))}</ul>
+        )}
+        <h3 style={{ fontSize: 12, color: '#8a7b92', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 8, marginBottom: 4 }}>Óculos e lentes</h3>
+        {ewArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum registrado.</p> : (
           <ul style={{ paddingLeft: 18, fontSize: 14 }}>
             {ewArr.map((e, i) => {
               const extras = [e.dnp ? `DNP ${e.dnp}` : null, e.bc ? `BC ${e.bc}` : null, e.dia ? `DIA ${e.dia}` : null,
@@ -220,39 +267,39 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
         )}
       </section>
     ),
-    medidas: (
+    medidasAtuais: (
       <section style={{ marginBottom: 22 }}>
-        <h2 style={{ fontSize: 15 }}>Medidas corporais</h2>
+        <h2 style={{ fontSize: 15 }}>Medidas atuais</h2>
         {alturaCm != null && <p style={{ fontSize: 14, margin: '0 0 6px' }}><span style={{ color: '#8a7b92' }}>Altura:</span> {alturaCm} cm</p>}
-        {mzArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>{alturaCm != null ? 'Sem outras medidas registradas.' : 'Nenhuma registrada.'}</p> : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-            <tbody>
-              {mzArr.map((m, i) => (
-                <tr key={i} style={{ borderBottom: '1px solid #f2eef4' }}>
-                  <td style={{ padding: '6px 12px 6px 0', color: '#8a7b92', whiteSpace: 'nowrap', verticalAlign: 'top' }}>{fmt(m.measured_on as string)}</td>
-                  <td style={{ padding: '6px 0' }}><span style={{ color: '#8a7b92' }}>{m.metric === 'outro' && m.label ? (m.label as string) : METRIC_LABEL[m.metric as string] ?? 'Medida'}:</span> {m.value_text as string}{m.unit ? ` ${m.unit as string}` : ''}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {latestMeasures(mzArr).length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>{alturaCm != null ? 'Sem outras medidas registradas.' : 'Nenhuma registrada.'}</p> : snapList(latestMeasures(mzArr), false)}
+      </section>
+    ),
+    ultimosExames: (
+      <section style={{ marginBottom: 22 }}>
+        <h2 style={{ fontSize: 15 }}>Últimos exames</h2>
+        {ultimosExamesArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum exame registrado.</p> : (
+          <ul style={{ paddingLeft: 18, fontSize: 14 }}>{ultimosExamesArr.map((e, i) => (
+            <li key={i}><strong>{(e.type as string) || 'Exame'}</strong> <span style={{ color: '#8a7b92' }}>— último realizado em {fmt((e.exam_date as string) || (e.created_at as string))}</span></li>
+          ))}</ul>
         )}
       </section>
     ),
-    sinais: (
+    medidasEvolucao: (
       <section style={{ marginBottom: 22 }}>
-        <h2 style={{ fontSize: 15 }}>Sinais vitais</h2>
-        {vitalArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum registrado.</p> : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-            <tbody>
-              {vitalArr.map((m, i) => (
-                <tr key={i} style={{ borderBottom: '1px solid #f2eef4' }}>
-                  <td style={{ padding: '6px 12px 6px 0', color: '#8a7b92', whiteSpace: 'nowrap', verticalAlign: 'top' }}>{fmt(m.measured_on as string)}</td>
-                  <td style={{ padding: '6px 0' }}><span style={{ color: '#8a7b92' }}>{m.metric === 'outro_sinal' && m.label ? (m.label as string) : METRIC_LABEL[m.metric as string] ?? 'Sinal'}:</span> {m.value_text as string}{m.unit ? ` ${m.unit as string}` : ''}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+        <h2 style={{ fontSize: 15 }}>Evolução das medidas</h2>
+        {mzArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhuma registrada.</p> : measureTable(mzArr, false)}
+      </section>
+    ),
+    sinaisAtuais: (
+      <section style={{ marginBottom: 22 }}>
+        <h2 style={{ fontSize: 15 }}>Sinais vitais atuais</h2>
+        {latestMeasures(vitalArr).length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum registrado.</p> : snapList(latestMeasures(vitalArr), true)}
+      </section>
+    ),
+    sinaisEvolucao: (
+      <section style={{ marginBottom: 22 }}>
+        <h2 style={{ fontSize: 15 }}>Evolução dos sinais vitais</h2>
+        {vitalArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum registrado.</p> : measureTable(vitalArr, true)}
       </section>
     ),
   }
@@ -265,8 +312,8 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
         <p style={{ fontSize: 12, color: '#8a7b92', marginTop: 6 }}>Gerado em {hoje} · organização dos dados registrados pela própria pessoa (SINTERA).</p>
       </div>
 
-      {/* Mesma estrutura/árvore lógica do dashboard (Marco 1) — buildReportTree(REPORT_DIMENSIONS_V1). */}
-      {buildReportTree(REPORT_DIMENSIONS_V1, selection).map(({ group, keys }) => (
+      {/* Mesma estrutura/árvore lógica do dashboard — buildReportTree(REPORT_DIMENSIONS_V2). */}
+      {buildReportTree(REPORT_DIMENSIONS_V2, selection).map(({ group, keys }) => (
         <div key={group}>
           <p style={{ fontSize: 11, fontWeight: 600, color: '#8a7b92', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 10px' }}>{group}</p>
           {keys.map(k => <div key={k}>{sectionContent[k]}</div>)}
