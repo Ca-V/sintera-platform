@@ -127,10 +127,16 @@ export default function RelatorioPage() {
       name: m.name as string, kind: (m.kind as string) ?? 'medicamento', dose: (m.dose as string) ?? null, frequency: (m.frequency as string) ?? null,
       startedOn: (m.started_on as string) ?? null, untilOn: (m.until_date as string) ?? null, status: (m.status as string) ?? 'em_uso',
     })))
-    setEvents(((evRes.data ?? []) as Array<Record<string, unknown>>).map(e => ({
-      title: e.title as string, eventType: (e.event_type as string) ?? 'outro', prof: (e.professional_kind as string) ?? null,
-      date: e.event_date as string, notes: (e.notes as string) ?? null,
-    })))
+    // "Consultas, procedimentos e eventos" NÃO inclui medicamentos/suplementos: estes
+    // têm seção própria (catálogo). Os eventos de recompra ("Recomprar: X", tipo
+    // medicamento/medicacao/suplemento) pertencem ao domínio de Medicamentos, não a
+    // consultas/procedimentos — por isso são excluídos desta seção.
+    setEvents(((evRes.data ?? []) as Array<Record<string, unknown>>)
+      .filter(e => !['medicamento', 'medicacao', 'suplemento'].includes((e.event_type as string) ?? ''))
+      .map(e => ({
+        title: e.title as string, eventType: (e.event_type as string) ?? 'outro', prof: (e.professional_kind as string) ?? null,
+        date: e.event_date as string, notes: (e.notes as string) ?? null,
+      })))
     setExams(((exRes.data ?? []) as Array<Record<string, unknown>>).map(e => ({
       type: (e.type as string) || 'Exame', date: (e.exam_date as string) || (e.created_at as string),
     })))
