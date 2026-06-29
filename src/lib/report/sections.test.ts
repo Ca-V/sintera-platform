@@ -1,9 +1,26 @@
 import { describe, it, expect } from 'vitest'
 import {
   normalizeReportSectionsV1, serializeReportSectionsV1, ALL_SECTION_KEYS_V1, defaultReportSelectionV1,
-  normalizeReportSectionsV2,
+  normalizeReportSectionsV2, ALL_SECTION_KEYS_V2, REPORT_DIMENSIONS_V2,
   buildReportTree, REPORT_DIMENSIONS_V1,
 } from './sections'
+
+describe('ESTABILIDADE da árvore — ordem/grupos/nomes (pega regressão de UX que snapshot de HTML não pega)', () => {
+  it('V1 (atual): Minha Saúde / Meu Perfil, ordem fixa', () => {
+    const sel = Object.fromEntries(ALL_SECTION_KEYS_V1.map(k => [k, true]))
+    expect(buildReportTree(REPORT_DIMENSIONS_V1, sel)).toEqual([
+      { group: 'Minha Saúde', keys: ['eventos', 'exames', 'omica', 'medicamentos'] },
+      { group: 'Meu Perfil', keys: ['condicoes', 'habitos', 'medidas', 'sinais', 'visao'] },
+    ])
+  })
+  it('V2 (nova): Estado Atual / Histórico, ordem fixa', () => {
+    const sel = Object.fromEntries(ALL_SECTION_KEYS_V2.map(k => [k, true]))
+    expect(buildReportTree(REPORT_DIMENSIONS_V2, sel)).toEqual([
+      { group: 'Estado Atual', keys: ['condicoes', 'medicamento', 'suplemento', 'produto', 'dispositivo', 'habitos', 'medidasAtuais', 'sinaisAtuais', 'ultimosExames'] },
+      { group: 'Histórico', keys: ['eventos', 'exames', 'omica', 'medidasEvolucao', 'sinaisEvolucao'] },
+    ])
+  })
+})
 
 describe('V1 (Marco 1) — estrutura atual, mesmos links, mesmo conteúdo', () => {
   it('o link compartilhado existente continua válido (sem omica/visao, que não estavam nele)', () => {
