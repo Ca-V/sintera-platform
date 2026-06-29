@@ -7,7 +7,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { CalendarDays, Plus, Check, Pencil, Ban, Loader2, CalendarClock, Sparkles, X } from 'lucide-react'
+import { CalendarDays, Plus, Check, Pencil, Ban, Trash2, Loader2, CalendarClock, Sparkles, X } from 'lucide-react'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { useEventForm, eventToInput } from '@/components/eventForm'
@@ -90,6 +90,30 @@ export default function AgendaPage() {
     setBusyId(ev.id); setActionError(null)
     try { await services.command.cancel(userId, ev); reload() }
     catch (e) { setActionError(e instanceof Error ? e.message : 'Não foi possível cancelar o evento.') }
+    finally { setBusyId(null) }
+  }
+  // Excluir = apagar DE VEZ (evento criado por engano), distinto de Cancelar.
+  // Ação permanente → confirmação clara antes.
+  function onDelete(ev: HealthEvent) {
+    if (!userId) return
+    setConfirm({
+      message: 'Excluir este evento de vez? Ele será removido da Agenda, do Histórico e dos Gastos. Esta ação não pode ser desfeita.',
+      confirmLabel: 'Excluir',
+      onYes: () => doDelete(ev),
+    })
+  }
+  async function doDelete(ev: HealthEvent) {
+    if (!userId) return
+    setBusyId(ev.id); setActionError(null)
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any).from('health_events').delete().eq('id', ev.id)
+      if (error) throw error
+      // Legado: a Agenda também mostra lembretes de agenda_events (recompra/ciclo).
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).from('agenda_events').delete().eq('id', ev.id)
+      reload()
+    } catch (e) { setActionError(e instanceof Error ? e.message : 'Não foi possível excluir o evento.') }
     finally { setBusyId(null) }
   }
 
@@ -200,9 +224,13 @@ export default function AgendaPage() {
                     className="p-2 rounded-lg text-mauve hover:text-petal hover:bg-blush/40 transition-colors">
                     <Pencil size={15} />
                   </button>
-                  <button onClick={() => onCancel(ev)} disabled={busyId === ev.id} title="Cancelar"
-                    className="p-2 rounded-lg text-mauve hover:text-red-400 hover:bg-red-500/8 transition-colors disabled:opacity-40">
+                  <button onClick={() => onCancel(ev)} disabled={busyId === ev.id} title="Cancelar (marca como cancelado — fica no Histórico)"
+                    className="p-2 rounded-lg text-mauve hover:text-amber-500 hover:bg-amber-500/8 transition-colors disabled:opacity-40">
                     <Ban size={15} />
+                  </button>
+                  <button onClick={() => onDelete(ev)} disabled={busyId === ev.id} title="Excluir (apaga de vez — Agenda, Histórico e Gastos)"
+                    className="p-2 rounded-lg text-mauve hover:text-red-500 hover:bg-red-500/8 transition-colors disabled:opacity-40">
+                    <Trash2 size={15} />
                   </button>
                 </div>
               </motion.div>
