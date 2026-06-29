@@ -10,7 +10,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   Clock, Plus, X, Stethoscope, Syringe, Activity, FlaskConical, CalendarDays,
-  Loader2, Pencil, Trash2, Paperclip, Info, Sparkles, Pill, Receipt, FileText, Dumbbell, Dna, CheckCircle2, RotateCcw,
+  Loader2, Pencil, Trash2, Paperclip, Info, Sparkles, Pill, Receipt, Dumbbell, Dna, CheckCircle2, RotateCcw,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useUser } from '@/context/UserContext'
@@ -19,6 +19,7 @@ import ConfirmDialog from '@/components/ConfirmDialog'
 import { useEventForm, eventToInput } from '@/components/eventForm'
 import { rowToHealthEvent, type HealthEvent, type HealthEventRow } from '@/lib/agenda'
 import HistoricoTabs from '@/components/HistoricoTabs'
+import CategoryFilterBar, { type FilterCategory } from '@/components/CategoryFilterBar'
 import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
 
 type EventType = 'consulta' | 'vacina' | 'procedimento' | 'estetico' | 'medicamento' | 'atividade' | 'exame' | 'omica' | 'outro'
@@ -59,6 +60,34 @@ const TYPE_META: Record<string, { label: string; Icon: React.ElementType; cls: s
   outro:        { label: 'Evento',       Icon: CalendarDays, cls: 'bg-ivory text-mauve' },
 }
 
+// Categorias de FILTRO da Linha do Tempo — agrupa os tipos granulares em categorias
+// que a usuária reconhece. Só visualização (filtro em memória; não toca dados).
+const FILTER_CATEGORIES: FilterCategory[] = [
+  { key: 'consulta',     label: 'Consultas',     Icon: Stethoscope },
+  { key: 'exame',        label: 'Exames',        Icon: FlaskConical },
+  { key: 'procedimento', label: 'Procedimentos', Icon: Activity },
+  { key: 'medicamento',  label: 'Medicamentos',  Icon: Pill },
+  { key: 'vacina',       label: 'Vacinas',       Icon: Syringe },
+  { key: 'plano',        label: 'Plano',         Icon: Receipt },
+  { key: 'atividade',    label: 'Atividade',     Icon: Dumbbell },
+  { key: 'omica',        label: 'Ômica',         Icon: Dna },
+  { key: 'outro',        label: 'Outros',        Icon: CalendarDays },
+]
+function itemCategory(it: TimelineItem): string {
+  if (it.kind === 'exam') return 'exame'
+  if (it.kind === 'omica') return 'omica'
+  const t = it.eventType as string
+  if (t === 'consulta' || t === 'retorno') return 'consulta'
+  if (t === 'exame') return 'exame'
+  if (t === 'procedimento' || t === 'cirurgia' || t === 'estetico') return 'procedimento'
+  if (t === 'medicamento' || t === 'medicacao' || t === 'suplemento') return 'medicamento'
+  if (t === 'vacina') return 'vacina'
+  if (t === 'plano') return 'plano'
+  if (t === 'atividade') return 'atividade'
+  if (t === 'omica') return 'omica'
+  return 'outro'
+}
+
 const PROF_LABEL: Record<string, string> = {
   medico: 'Médico(a)', psicologo: 'Psicólogo(a)', nutricionista: 'Nutricionista',
   fisioterapeuta: 'Fisioterapeuta', dentista: 'Dentista', outro: 'Outro profissional',
@@ -81,6 +110,9 @@ export default function TimelinePage() {
   const [items, setItems] = useState<TimelineItem[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
+  // Filtro por categoria (só visualização). Guarda as categorias OCULTAS → padrão
+  // vazio = todas visíveis. Não toca dados.
+  const [hiddenCats, setHiddenCats] = useState<Set<string>>(new Set())
   const [actionError, setActionError] = useState<string | null>(null)
   const [showOnboard, setShowOnboard] = useState(false)
 
@@ -235,6 +267,13 @@ export default function TimelinePage() {
   const isFuturePlanned = (it: TimelineItem) =>
     it.kind === 'event' && it.date.slice(0, 10) >= today && it.status !== 'realizado' && it.status !== 'cancelado'
   const history = items.filter(it => !isFuturePlanned(it)) // já ordenado: mais recente primeiro
+  // Filtro por categoria — em memória; não altera dados nem a ordem cronológica.
+  const presentKeys = new Set(history.map(itemCategory))
+  const filterCats = FILTER_CATEGORIES.filter(c => presentKeys.has(c.key))
+  const shownCats = new Set([...presentKeys].filter(k => !hiddenCats.has(k)))
+  const visibleHistory = history.filter(it => !hiddenCats.has(itemCategory(it)))
+  const toggleCat = (key: string) =>
+    setHiddenCats(prev => { const n = new Set(prev); if (n.has(key)) n.delete(key); else n.add(key); return n })
 
   const renderItem = (it: TimelineItem, i: number) => {
     const meta = TYPE_META[it.eventType] ?? TYPE_META.outro
@@ -320,20 +359,6 @@ export default function TimelinePage() {
         <div>
           <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Histórico</h1>
           <p className="font-body text-sm text-mauve">Seu acompanhamento longitudinal — a linha do tempo com exames, consultas, vacinas, procedimentos e medicamentos</p>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5">
-            <Link href="/dashboard/medicamentos" className="inline-flex items-center gap-1 font-body text-xs text-petal hover:underline">
-              <Pill size={13} /> Medicamentos
-            </Link>
-            <Link href="/dashboard/medidas" className="inline-flex items-center gap-1 font-body text-xs text-petal hover:underline">
-              <Activity size={13} /> Medidas
-            </Link>
-            <Link href="/dashboard/gastos" className="inline-flex items-center gap-1 font-body text-xs text-petal hover:underline">
-              <Receipt size={13} /> Gastos
-            </Link>
-            <Link href="/dashboard/relatorio" className="inline-flex items-center gap-1 font-body text-xs text-petal hover:underline">
-              <FileText size={13} /> Relatórios
-            </Link>
-          </div>
         </div>
         <button onClick={openCreate}
           className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0">
@@ -368,6 +393,11 @@ export default function TimelinePage() {
         </motion.div>
       )}
 
+      {/* Filtro por categoria (só visualização) — aparece quando há ≥2 categorias */}
+      {!loading && filterCats.length > 1 && (
+        <CategoryFilterBar categories={filterCats} selected={shownCats} onToggle={toggleCat} />
+      )}
+
       {loading ? (
         <div className="card-premium p-10 text-center flex items-center justify-center">
           <Loader2 size={24} className="animate-spin text-petal" />
@@ -383,10 +413,14 @@ export default function TimelinePage() {
             construir sua linha do tempo de saúde.
           </p>
         </div>
+      ) : visibleHistory.length === 0 ? (
+        <div className="card-premium p-8 text-center">
+          <p className="font-body text-sm text-mauve">Nenhum item nas categorias selecionadas — ajuste o filtro acima.</p>
+        </div>
       ) : (
         <div className="relative pl-6">
           <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border/60" />
-          <div className="space-y-4">{history.map(renderItem)}</div>
+          <div className="space-y-4">{visibleHistory.map(renderItem)}</div>
         </div>
       )}
 

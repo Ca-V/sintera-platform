@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import {
   FileText, Clock, Pill, ScrollText, CalendarDays, Droplet,
   Upload, CheckCircle, AlertCircle, FlaskConical, Bell, ChevronRight,
+  Stethoscope, HeartPulse, Ruler, Activity, Receipt,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
@@ -38,15 +39,24 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
   error:      { label: 'Erro',            color: 'text-red-400',  bg: 'bg-red-50',         icon: AlertCircle },
 }
 
-// Acesso rápido — usa exatamente a nomenclatura do menu lateral esquerdo.
+// Acesso rápido — espelha TODOS os módulos da barra lateral (mesma ordem e MESMA
+// nomenclatura), exceto "Painel Inicial" (é esta tela) e "Configurações". Assim o
+// Painel é um hub de navegação completo para Agenda, Histórico e os demais módulos.
 const QUICK_ACCESS: { href: string; icon: React.ElementType; label: string; desc: string; tile: string; tint: string }[] = [
-  // Ordem espelha a barra lateral: Minha Saúde primeiro, depois Contexto/Organização.
-  { href: '/dashboard/timeline',     icon: Clock,       label: 'Histórico',                 desc: 'Linha do tempo e evolução',      tile: 'bg-sage-light',     tint: 'text-sage' },
-  { href: '/dashboard/agenda',       icon: CalendarDays,label: 'Agenda',                   desc: 'Eventos e lembretes',            tile: 'bg-warm',           tint: 'text-gold' },
-  { href: '/dashboard/exams',        icon: FileText,    label: 'Exames',                    desc: 'Laudos e documentos',            tile: 'bg-blush',          tint: 'text-petal' },
-  { href: '/dashboard/medicamentos', icon: Pill,        label: 'Medicamentos, Suplementos, Produtos e Dispositivos', desc: 'Em uso, recompra e dispositivos', tile: 'bg-sage-light',     tint: 'text-sage' },
-  { href: '/dashboard/ciclo',        icon: Droplet,     label: 'Ciclo e Contracepção',      desc: 'Menstruação e troca de método',  tile: 'bg-blush',          tint: 'text-petal' },
-  { href: '/dashboard/relatorio',    icon: ScrollText,  label: 'Relatórios',                desc: 'Compartilhar com profissionais', tile: 'bg-lavender-light', tint: 'text-lavender' },
+  // Minha Saúde
+  { href: '/dashboard/agenda',       icon: CalendarDays, label: 'Agenda',     desc: 'Eventos e lembretes',       tile: 'bg-warm',           tint: 'text-gold' },
+  { href: '/dashboard/timeline',     icon: Clock,        label: 'Histórico',  desc: 'Linha do tempo e evolução', tile: 'bg-sage-light',     tint: 'text-sage' },
+  { href: '/dashboard/exams',        icon: FileText,     label: 'Exames',     desc: 'Laudos e documentos',       tile: 'bg-blush',          tint: 'text-petal' },
+  { href: '/dashboard/medicamentos', icon: Pill,         label: 'Medicamentos, Suplementos, Produtos e Dispositivos', desc: 'Em uso, recompra e dispositivos', tile: 'bg-sage-light', tint: 'text-sage' },
+  // Meu Perfil
+  { href: '/dashboard/condicoes',     icon: Stethoscope, label: 'Problemas de Saúde',   desc: 'Suas condições',          tile: 'bg-lavender-light', tint: 'text-lavender' },
+  { href: '/dashboard/habitos',       icon: HeartPulse,  label: 'Hábitos',              desc: 'Rotina e estilo de vida', tile: 'bg-blush',          tint: 'text-petal' },
+  { href: '/dashboard/medidas',       icon: Ruler,       label: 'Medidas Corporais',    desc: 'Peso e medidas',          tile: 'bg-sage-light',     tint: 'text-sage' },
+  { href: '/dashboard/sinais-vitais', icon: Activity,    label: 'Sinais Vitais',        desc: 'Pressão, batimentos e +', tile: 'bg-warm',           tint: 'text-gold' },
+  { href: '/dashboard/ciclo',         icon: Droplet,     label: 'Ciclo e Contracepção', desc: 'Menstruação e método',    tile: 'bg-blush',          tint: 'text-petal' },
+  // Organização
+  { href: '/dashboard/gastos',    icon: Receipt,    label: 'Gastos',     desc: 'Custos de saúde',                tile: 'bg-warm',           tint: 'text-gold' },
+  { href: '/dashboard/relatorio', icon: ScrollText, label: 'Relatórios', desc: 'Compartilhar com profissionais', tile: 'bg-lavender-light', tint: 'text-lavender' },
 ]
 
 export default function DashboardPage() {
