@@ -2,52 +2,58 @@
 
 // ════════ Centro de Entrada de Exames (ExamEntryHub) ════════
 // Componente REUTILIZÁVEL e autocontido (dono do próprio upload). Reusável em
-// Exames, Dashboard, Linha do Tempo, estado vazio ("você ainda não tem exames"),
-// onboarding e fluxos futuros.
+// Exames, Dashboard, Linha do Tempo, estado vazio, onboarding e fluxos futuros.
 //
 // Separa CATEGORIA do exame (Convencional/Ômico — define o FLUXO) do MÉTODO de
-// entrada (PDF/Foto/Galeria — independe do fluxo). Ômico ROTEIA para o fluxo próprio
-// (catálogo + versionamento); NÃO funde pipelines (Princípio 7). Nenhum termo técnico
-// ("pipeline") aparece na interface.
+// entrada (PDF/Foto/Galeria — independe do fluxo). Ômico NÃO funde pipelines.
 //
-// VOCAÇÃO DE CRESCER (não implementado agora): este card nasce como um centro de
-// entrada — no futuro ganha a seção "Importar exame" (integrações: laboratório,
-// hospital, Apple/Google Health, Garmin, Oura, HL7/FHIR, WhatsApp…) e "Solicitar
-// exame", como irmãs, sem redesenhar a página.
+// NÃO decide navegação: emite INTENÇÕES (onUploaded, onChooseOmics) — quem roteia é
+// a página. O ciclo do upload vive num ÚNICO estado (idle/uploading/error), sem
+// variáveis paralelas.
+//
+// VOCAÇÃO DE CRESCER (não implementado agora): futura seção "Importar exame"
+// (integrações: laboratório, hospital, Apple/Google Health, Garmin, Oura, HL7/FHIR,
+// WhatsApp…) e "Solicitar exame" entram como irmãs deste card. Variações de
+// apresentação (mode compact/full/wizard) e máquina de estados completa = só quando
+// existir um segundo consumidor real (evitar abstração especulativa).
 
-import { useState, useRef, useMemo, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useMemo, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { Upload, Plus, X, Camera, Dna, AlertCircle, Image as ImageIcon } from 'lucide-react'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 
 const ACCEPTED_MIME = ['application/pdf', 'image/jpeg', 'image/png']
 const MAX_BYTES = 50 * 1024 * 1024
 
+// Ciclo de vida do UPLOAD como estado ÚNICO (sem booleano + string paralelos).
+type UploadState = { status: 'idle' } | { status: 'uploading' } | { status: 'error'; message: string }
+
 interface Props {
   className?: string
-  /** Chamado quando a lista de exames pode ter mudado (ex.: upload marcado como erro).
-   *  No SUCESSO o componente navega para o exame criado. */
+  /** Exame criado com sucesso — a PÁGINA decide para onde ir. */
+  onUploaded?: (examId: string) => void
+  /** Usuária escolheu a categoria Ômico — a PÁGINA decide a navegação. */
+  onChooseOmics?: () => void
+  /** A lista de exames pode ter mudado (ex.: upload marcado como erro). */
   onChanged?: () => void
 }
 
-export default function ExamEntryHub({ className, onChanged }: Props) {
+export default function ExamEntryHub({ className, onUploaded, onChooseOmics, onChanged }: Props) {
   const { user } = useUser()
-  const router = useRouter()
   const supabase = useMemo(() => createClient(), [])
   const [dragging, setDragging] = useState(false)
-  const [uploading, setUploading] = useState(false)
-  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [upload, setUpload] = useState<UploadState>({ status: 'idle' })
   const [category, setCategory] = useState<'convencional' | 'omico'>('convencional')
-  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const uploading   = upload.status === 'uploading'
+  const uploadError = upload.status === 'error' ? upload.message : null
 
   const processFile = useCallback(async (file: File) => {
     if (!user) return
-    if (!ACCEPTED_MIME.includes(file.type)) { setUploadError('Formato inválido. São aceitos PDF, JPG e PNG.'); return }
-    if (file.size > MAX_BYTES) { setUploadError('Arquivo muito grande. O limite é 50 MB.'); return }
-    setUploadError(null); setUploading(true)
+    if (!ACCEPTED_MIME.includes(file.type)) { setUpload({ status: 'error', message: 'Formato inválido. São aceitos PDF, JPG e PNG.' }); return }
+    if (file.size > MAX_BYTES) { setUpload({ status: 'error', message: 'Arquivo muito grande. O limite é 50 MB.' }); return }
+    setUpload({ status: 'uploading' })
     let examId: string | null = null
     try {
       const ext         = file.name.split('.').pop() ?? 'bin'
@@ -61,13 +67,14 @@ export default function ExamEntryHub({ className, onChanged }: Props) {
       // exam_date fica nulo no upload — preenchido pela extração (data do laudo).
       const { error: insertErr } = await supabase.from('exams').insert({ id: examId, user_id: user.id, type: examName, exam_date: null, file_url: signedData.signedUrl, status: 'pending' } as unknown as never)
       if (insertErr) throw new Error(`[insert] ${insertErr.code}: ${insertErr.message}`)
-      router.push(`/dashboard/exams/${examId}`)
+      setUpload({ status: 'idle' })
+      onUploaded?.(examId) // intenção: a página navega para o exame
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
-      setUploadError(msg)
+      setUpload({ status: 'error', message: msg })
       if (examId) { await supabase.from('exams').update({ status: 'error' } as unknown as never).eq('id', examId); onChanged?.() }
-    } finally { setUploading(false) }
-  }, [user, supabase, router, onChanged])
+    }
+  }, [user, supabase, onUploaded, onChanged])
 
   const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => { const f = e.target.files?.[0]; if (f) processFile(f); e.target.value = '' }
   const onDrop = (e: React.DragEvent) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files?.[0]; if (f) processFile(f) }
@@ -103,7 +110,7 @@ export default function ExamEntryHub({ className, onChanged }: Props) {
             className={['block border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-200 cursor-pointer',
               dragging ? 'border-petal bg-blush' : 'border-border hover:border-petal/50 hover:bg-blush/30',
               uploading ? 'opacity-60 pointer-events-none select-none' : ''].join(' ')}>
-            <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" className="sr-only" disabled={uploading} onChange={onInputChange} />
+            <input type="file" accept=".pdf,.jpg,.jpeg,.png" className="sr-only" disabled={uploading} onChange={onInputChange} />
             <div className="w-12 h-12 rounded-2xl gradient-sintera-soft flex items-center justify-center mx-auto mb-3">
               <Upload size={22} className={`text-petal ${uploading ? 'animate-bounce' : ''}`} />
             </div>
@@ -137,7 +144,8 @@ export default function ExamEntryHub({ className, onChanged }: Props) {
           </div>
         </div>
       ) : (
-        /* Ômico: a área NÃO some — é substituída por uma chamada ao fluxo próprio. */
+        /* Ômico: a área NÃO some — vira uma chamada ao fluxo próprio. O componente
+           só EMITE a intenção (onChooseOmics); a página decide navegar. */
         <div className="rounded-2xl border border-lavender/30 bg-lavender-light/40 px-4 py-4 flex items-start gap-3">
           <Dna size={18} className="text-lavender flex-shrink-0 mt-0.5" />
           <div className="flex-1">
@@ -145,10 +153,10 @@ export default function ExamEntryHub({ className, onChanged }: Props) {
               Os exames <strong>ômicos</strong> (metabolômica, proteômica, microbioma, genética…) possuem um
               <strong> fluxo específico de organização e interpretação</strong>, com catálogo e versionamento.
             </p>
-            <Link href="/dashboard/omics"
+            <button type="button" onClick={() => onChooseOmics?.()}
               className="mt-2.5 inline-flex items-center gap-1.5 font-body text-sm font-medium text-lavender hover:underline">
               Ir para Exames Ômicos →
-            </Link>
+            </button>
           </div>
         </div>
       )}
@@ -157,7 +165,7 @@ export default function ExamEntryHub({ className, onChanged }: Props) {
         <div className="flex items-start gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-xl">
           <AlertCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
           <p className="font-body text-xs text-red-700 flex-1">{uploadError}</p>
-          <button type="button" onClick={() => setUploadError(null)} className="text-red-300 hover:text-red-500"><X size={15} /></button>
+          <button type="button" onClick={() => setUpload({ status: 'idle' })} className="text-red-300 hover:text-red-500"><X size={15} /></button>
         </div>
       )}
     </motion.div>

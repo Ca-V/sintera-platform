@@ -498,8 +498,12 @@ export default function ExamsPage() {
       )}
 
       {/* Centro de Entrada de Exames — componente reutilizável (Dashboard, Timeline,
-          onboarding…). "o que já tenho?" (lista, acima) → "como adiciono?" (aqui). */}
-      <ExamEntryHub onChanged={loadExams} />
+          onboarding…). O componente EMITE intenções; a PÁGINA decide a navegação. */}
+      <ExamEntryHub
+        onUploaded={examId => router.push(`/dashboard/exams/${examId}`)}
+        onChooseOmics={() => router.push('/dashboard/omics')}
+        onChanged={loadExams}
+      />
     </div>
   )
 }
