@@ -327,6 +327,9 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                           className={`flex-1 py-2 rounded-xl text-xs font-body font-medium border transition-all ${status === s.id ? 'gradient-sintera text-white border-transparent shadow-sm' : 'border-border text-mauve hover:border-petal/40'}`}>{s.label}</button>
                       ))}
                     </div>
+                    {date && date < today && status === 'realizado' && (
+                      <p className="font-body text-[11px] text-gold">Data no passado → entra como <strong>Realizado</strong> (vai ao Histórico e Gastos, não fica na Agenda). Mude o status se quiser agendá-lo.</p>
+                    )}
                   </div>
 
                   {/* Valor + modelo do dinheiro (explícito) */}
@@ -424,6 +427,9 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                         <input type="checkbox" checked={directExpense} onChange={e => setDirectExpense(e.target.checked)} className="w-4 h-4 rounded border-border accent-petal" />
                         <span className="font-body text-xs text-onyx/80">Despesa direta — conta em Gastos sem precisar concluir (plano, academia, compra…)</span>
                       </label>
+                      {directExpense && status !== 'realizado' && (
+                        <p className="font-body text-[11px] text-mauve/60 px-1">Aparece na <strong>Agenda</strong> (previsão) e já entra em <strong>Gastos</strong>, mesmo antes de concluir.</p>
+                      )}
                     </div>
                   )}
 
