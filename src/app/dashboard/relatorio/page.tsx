@@ -339,7 +339,7 @@ export default function RelatorioPage() {
           const sectionContent: Record<SectionKey, React.ReactNode> = {
             condicoes: (
               <section>
-                <h2 className="font-body text-sm font-bold text-onyx mb-2">Condições de saúde</h2>
+                <h2 className="font-body text-sm font-bold text-onyx mb-2">Problemas de Saúde</h2>
                 {condProprias.length === 0 ? (
                   <p className="font-body text-sm text-mauve/60">Nenhuma condição registrada.</p>
                 ) : (

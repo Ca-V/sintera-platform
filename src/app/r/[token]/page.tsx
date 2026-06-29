@@ -163,7 +163,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
     ),
     condicoes: (
       <section style={{ marginBottom: 22 }}>
-        <h2 style={{ fontSize: 15 }}>Condições de saúde</h2>
+        <h2 style={{ fontSize: 15 }}>Problemas de Saúde</h2>
         {condProprias.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhuma condição registrada.</p> : (
           <ul style={{ paddingLeft: 18, fontSize: 14 }}>
             {condProprias.map((c, i) => (

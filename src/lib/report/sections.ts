@@ -101,7 +101,7 @@ export const REPORT_DIMENSIONS_V2: ReportDimension<ReportSectionKeyV2>[] = [
   {
     id: 'estado_atual', title: 'Estado Atual',
     sections: [
-      { key: 'condicoes',     label: 'Condições' },
+      { key: 'condicoes',     label: 'Problemas de Saúde' },
       { key: 'medicamento',   label: 'Medicamentos' },
       { key: 'suplemento',    label: 'Suplementos' },
       { key: 'produto',       label: 'Produtos' },
