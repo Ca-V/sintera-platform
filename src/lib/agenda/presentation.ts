@@ -14,17 +14,17 @@ export const EVENT_TYPE_DEFS = [
   { id: 'procedimento', label: 'Procedimento',   emoji: '🩹' },
   { id: 'vacina',       label: 'Vacina',         emoji: '💉' },
   { id: 'medicamento',  label: 'Medicamento',    emoji: '💊' },
-  { id: 'suplemento',   label: 'Suplemento',     emoji: '🌿' },
   { id: 'plano',        label: 'Plano de saúde', emoji: '🏥' },
   { id: 'outro',        label: 'Outro',          emoji: '📌' },
 ] as const
 // Subtipos/atributos (NÃO são tipos no seletor): Retorno = atributo da Consulta
 // (is_return); Cirurgia = subtipo de Procedimento (gravado como event_type 'cirurgia').
-// Suplemento é OFERECIDO no seletor (decisão PO 29/06): melhoria imediata de
-// consistência de entrada — antes um suplemento era forçado a "Medicamento". É um
-// paliativo de baixo risco (event_type é texto livre; o domínio não ramifica por
-// tipo) enquanto o modelo Ação×Objeto×Entidade (T2-D2B) não entra. Produto e
-// Dispositivo continuam FORA do seletor — são OBJETOS, não AÇÕES (ver T2-D2B).
+// SELETOR LEGADO (híbrido): mistura AÇÃO (consulta/exame/procedimento/vacina) e
+// OBJETO (medicamento/plano). DECISÃO PO 29/06: NÃO adicionar novos Objetos aqui —
+// Suplemento/Produto/Dispositivo NÃO entram (um suplemento adicionado provisoriamente
+// foi REVERTIDO). No T2-D2B este seletor é reconstruído como seletor de AÇÃO, e
+// Medicamento/Plano saem da 1ª pergunta (modelo Ação→Objeto→Entidade). Suplemento
+// volta a ser responsabilidade do T2-D2B (não há solução transitória de tipo).
 
 // Superset de rótulos para RENDERIZAÇÃO (inclui tipos legados já gravados, para o
 // Histórico nunca quebrar ao exibir dados antigos).
