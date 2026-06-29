@@ -56,6 +56,27 @@ const HABIT_LABEL: Record<string, string> = {
   alcool: 'Álcool', alimentacao: 'Alimentação', hidratacao: 'Hidratação', outro: 'Outro',
 }
 
+// ════ FONTE ÚNICA da organização do relatório (regra de arquitetura, fundadora 29/06) ════
+// O SELETOR e o CORPO do relatório consomem ESTA estrutura — nenhum dos dois define
+// categorias próprias. Direção: REPORT_SECTIONS → seletor + corpo (nunca o contrário).
+// Mudou aqui? Seletor e corpo acompanham automaticamente (sem risco de divergência).
+type SectionKey = 'eventos' | 'exames' | 'omica' | 'medicamentos' | 'condicoes' | 'habitos' | 'medidas' | 'sinais' | 'visao'
+const REPORT_SECTIONS: { group: string; items: { key: SectionKey; label: string; Icon: React.ElementType }[] }[] = [
+  { group: 'Minha Saúde', items: [
+    { key: 'eventos',      label: 'Consultas e eventos', Icon: CalendarDays },
+    { key: 'exames',       label: 'Exames', Icon: FileText },
+    { key: 'omica',        label: 'Exames de ômica', Icon: FlaskConical },
+    { key: 'medicamentos', label: 'Medicamentos, Suplementos, Produtos e Dispositivos', Icon: Pill },
+  ] },
+  { group: 'Meu Perfil', items: [
+    { key: 'condicoes', label: 'Problemas de Saúde', Icon: Stethoscope },
+    { key: 'habitos',   label: 'Hábitos', Icon: HeartPulse },
+    { key: 'medidas',   label: 'Medidas Corporais', Icon: Ruler },
+    { key: 'sinais',    label: 'Sinais Vitais', Icon: Activity },
+    { key: 'visao',     label: 'Óculos e lentes', Icon: Eye },
+  ] },
+]
+
 function periodo(start: string | null, until: string | null): string {
   if (start && until) return ` (de ${fmt(start)} até ${fmt(until)})`
   if (start) return ` (desde ${fmt(start)})`
@@ -239,27 +260,13 @@ export default function RelatorioPage() {
       <div className="card-premium p-5 mb-6 print:hidden">
         <p className="font-body text-sm font-semibold text-onyx mb-3">Mostrar no relatório</p>
         <div className="space-y-4">
-          {([
-            ['Minha Saúde', [
-              ['eventos', 'Consultas e eventos', CalendarDays],
-              ['exames', 'Exames', FileText],
-              ['omica', 'Exames de ômica', FlaskConical],
-              ['medicamentos', 'Medicamentos, Suplementos, Produtos e Dispositivos', Pill],
-            ]],
-            ['Meu Perfil', [
-              ['condicoes', 'Problemas de Saúde', Stethoscope],
-              ['habitos', 'Hábitos', HeartPulse],
-              ['medidas', 'Medidas Corporais', Ruler],
-              ['sinais', 'Sinais Vitais', Activity],
-              ['visao', 'Óculos e lentes', Eye],
-            ]],
-          ] as const).map(([groupTitle, items]) => (
-            <div key={groupTitle}>
-              <p className="font-body text-[10px] font-semibold text-mauve/50 uppercase tracking-[0.15em] mb-1.5">{groupTitle}</p>
+          {REPORT_SECTIONS.map(({ group, items }) => (
+            <div key={group}>
+              <p className="font-body text-[10px] font-semibold text-mauve/50 uppercase tracking-[0.15em] mb-1.5">{group}</p>
               <div className="flex flex-col gap-1.5">
-                {items.map(([k, label, Icon]) => (
-                  <label key={k} className="flex items-center gap-2.5 font-body text-sm text-onyx cursor-pointer">
-                    <input type="checkbox" checked={sections[k]} onChange={() => toggle(k)} className="accent-petal w-4 h-4 flex-shrink-0" />
+                {items.map(({ key, label, Icon }) => (
+                  <label key={key} className="flex items-center gap-2.5 font-body text-sm text-onyx cursor-pointer">
+                    <input type="checkbox" checked={sections[key]} onChange={() => toggle(key)} className="accent-petal w-4 h-4 flex-shrink-0" />
                     <Icon size={15} className="text-petal/70 flex-shrink-0" />
                     <span className="min-w-0">{label}</span>
                   </label>
@@ -277,218 +284,220 @@ export default function RelatorioPage() {
           <div className="inline-flex items-center gap-1.5 text-petal mb-1 print:hidden">
             <FileText size={16} /><span className="font-body text-xs font-medium uppercase tracking-wider">Relatórios</span>
           </div>
-          <h1 className="font-display text-xl font-semibold text-onyx">Relatório de saúde — {nome}</h1>
+          <h1 className="font-display text-xl font-semibold text-onyx">Relatório — {nome}</h1>
           <p className="font-body text-xs text-mauve mt-1">Gerado em {hoje} · organização dos dados registrados pela própria pessoa.</p>
         </div>
 
-        {/* Medicamentos e suplementos */}
-        {sections.medicamentos && (
-        <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Medicamentos e suplementos em uso</h2>
-          {medsEmUso.length === 0 ? (
-            <p className="font-body text-sm text-mauve/60">Nenhum registrado em uso.</p>
-          ) : (
-            <ul className="space-y-1">
-              {medsEmUso.map((m, i) => (
-                <li key={i} className="font-body text-sm text-onyx">
-                  • <strong>{m.name}</strong>{m.kind === 'suplemento' ? ' (suplemento)' : ''}{[m.dose, m.frequency].filter(Boolean).length ? ` — ${[m.dose, m.frequency].filter(Boolean).join(', ')}` : ''}
-                  {periodo(m.startedOn, m.untilOn)}
-                </li>
-              ))}
-            </ul>
-          )}
-          {medsSusp.length > 0 && (
-            <p className="font-body text-xs text-mauve/60 mt-2">Suspensos: {medsSusp.map(m => m.name).join(', ')}.</p>
-          )}
-        </section>
-        )}
-
-        {/* Condições de saúde — próprias + histórico familiar */}
-        {sections.condicoes && (
-        <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Condições de saúde</h2>
-          {condProprias.length === 0 ? (
-            <p className="font-body text-sm text-mauve/60">Nenhuma condição registrada.</p>
-          ) : (
-            <ul className="space-y-1">
-              {condProprias.map((c, i) => (
-                <li key={i} className="font-body text-sm text-onyx">
-                  • <strong>{c.name}</strong>{c.since ? ` (desde ${c.since})` : ''}
-                  {c.notes ? <span className="block text-xs text-mauve/60">{c.notes}</span> : null}
-                </li>
-              ))}
-            </ul>
-          )}
-          {condFamiliar.length > 0 && (
-            <>
-              <h3 className="font-body text-xs font-bold text-mauve/80 mt-3 mb-1 uppercase tracking-wider">Histórico familiar</h3>
-              <ul className="space-y-1">
-                {condFamiliar.map((c, i) => (
-                  <li key={i} className="font-body text-sm text-onyx">
-                    • <strong>{c.name}</strong>{c.relative ? ` — ${c.relative}` : ''}{c.since ? ` (desde ${c.since})` : ''}
-                    {c.notes ? <span className="block text-xs text-mauve/60">{c.notes}</span> : null}
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-        </section>
-        )}
-
-        {/* Hábitos de vida */}
-        {sections.habitos && (
-        <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Hábitos de vida</h2>
-          {habits.length === 0 ? (
-            <p className="font-body text-sm text-mauve/60">Nenhum hábito registrado.</p>
-          ) : (
-            <ul className="space-y-1">
-              {habits.map((h, i) => (
-                <li key={i} className="font-body text-sm text-onyx">
-                  • <span className="text-mauve/70">{HABIT_LABEL[h.category] ?? 'Hábito'}:</span> {h.description}{h.frequency ? ` — ${h.frequency}` : ''}
-                  {h.notes ? <span className="block text-xs text-mauve/60">{h.notes}</span> : null}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-        )}
-
-        {/* Óculos e lentes de contato */}
-        {sections.visao && (
-        <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Óculos e lentes de contato</h2>
-          {eyewear.length === 0 ? (
-            <p className="font-body text-sm text-mauve/60">Nenhum registro.</p>
-          ) : (
-            <ul className="space-y-1.5">
-              {eyewear.map((e, i) => {
-                const extras = [
-                  e.dnp ? `DNP ${e.dnp}` : null, e.bc ? `BC ${e.bc}` : null, e.dia ? `DIA ${e.dia}` : null,
-                  e.prescribedOn ? fmt(e.prescribedOn) : null, e.prescriber,
-                ].filter(Boolean)
-                return (
-                  <li key={i} className="font-body text-sm text-onyx">
-                    • <strong>{EYEWEAR_LABEL[e.kind] ?? 'Óculos'}</strong>
-                    {grauStr(e.odSph, e.odCyl, e.odAxis, e.odAdd) ? <span className="block text-xs text-mauve/70 ml-3">OD: {grauStr(e.odSph, e.odCyl, e.odAxis, e.odAdd)}</span> : null}
-                    {grauStr(e.oeSph, e.oeCyl, e.oeAxis, e.oeAdd) ? <span className="block text-xs text-mauve/70 ml-3">OE: {grauStr(e.oeSph, e.oeCyl, e.oeAxis, e.oeAdd)}</span> : null}
-                    {extras.length ? <span className="block text-xs text-mauve/60 ml-3">{extras.join(' · ')}</span> : null}
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-        </section>
-        )}
-
-        {/* Jornada */}
-        {sections.eventos && (
-        <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Consultas, procedimentos e eventos</h2>
-          {events.length === 0 ? (
-            <p className="font-body text-sm text-mauve/60">Nenhum evento registrado.</p>
-          ) : (
-            <table className="w-full text-left">
-              <tbody>
-                {events.map((e, i) => (
-                  <tr key={i} className="border-b border-border/50">
-                    <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(e.date)}</td>
-                    <td className="font-body text-sm text-onyx py-1.5">
-                      <span className="text-mauve/70">{typeLabel(e.eventType)}{professionalLabel(e.prof) ? ` (${professionalLabel(e.prof)})` : ''}:</span> {e.title}
-                      {e.notes ? <span className="block text-xs text-mauve/60">{e.notes}</span> : null}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </section>
-        )}
-
-        {/* Exames */}
-        {sections.exames && (
-        <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Exames enviados</h2>
-          {exams.length === 0 ? (
-            <p className="font-body text-sm text-mauve/60">Nenhum exame enviado.</p>
-          ) : (
-            <ul className="space-y-1">
-              {exams.map((e, i) => (
-                <li key={i} className="font-body text-sm text-onyx">• {fmt(e.date)} — {e.type}</li>
-              ))}
-            </ul>
-          )}
-        </section>
-        )}
-
-        {/* Exames de ômica */}
-        {sections.omica && (
-        <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Exames de ômica</h2>
-          {omics.length === 0 ? (
-            <p className="font-body text-sm text-mauve/60">Nenhum exame de ômica registrado.</p>
-          ) : (
-            <ul className="space-y-1">
-              {omics.map((o, i) => (
-                <li key={i} className="font-body text-sm text-onyx">
-                  • {o.date ? `${fmt(o.date)} — ` : ''}<strong>{DOMAIN_LABEL[o.domain as OmicsDomain] ?? 'Ômica'}</strong>
-                  {[o.laboratory, o.totalFeatures != null ? `${o.totalFeatures.toLocaleString('pt-BR')} marcadores` : null].filter(Boolean).length
-                    ? ` (${[o.laboratory, o.totalFeatures != null ? `${o.totalFeatures.toLocaleString('pt-BR')} marcadores` : null].filter(Boolean).join(', ')})` : ''}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-        )}
-
-        {/* Medidas corporais */}
-        {sections.medidas && (
-        <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Medidas corporais</h2>
-          {alturaCm != null && (
-            <p className="font-body text-sm text-onyx mb-1"><span className="text-mauve/70">Altura:</span> {alturaCm} cm</p>
-          )}
-          {measuresCorpo.length === 0 ? (
-            <p className="font-body text-sm text-mauve/60">{alturaCm != null ? 'Sem outras medidas registradas.' : 'Nenhuma medida registrada.'}</p>
-          ) : (
-            <table className="w-full text-left">
-              <tbody>
-                {measuresCorpo.map((m, i) => (
-                  <tr key={i} className="border-b border-border/50">
-                    <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(m.date)}</td>
-                    <td className="font-body text-sm text-onyx py-1.5">
-                      <span className="text-mauve/70">{m.metric === 'outro' && m.label ? m.label : METRIC_LABEL[m.metric] ?? 'Medida'}:</span> {m.valueText}{m.unit ? ` ${m.unit}` : ''}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </section>
-        )}
-
-        {/* Sinais vitais */}
-        {sections.sinais && (
-        <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Sinais vitais</h2>
-          {measuresVitais.length === 0 ? (
-            <p className="font-body text-sm text-mauve/60">Nenhum sinal vital registrado.</p>
-          ) : (
-            <table className="w-full text-left">
-              <tbody>
-                {measuresVitais.map((m, i) => (
-                  <tr key={i} className="border-b border-border/50">
-                    <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(m.date)}</td>
-                    <td className="font-body text-sm text-onyx py-1.5">
-                      <span className="text-mauve/70">{m.metric === 'outro_sinal' && m.label ? m.label : METRIC_LABEL[m.metric] ?? 'Sinal'}:</span> {m.valueText}{m.unit ? ` ${m.unit}` : ''}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </section>
-        )}
+        {/* CORPO do relatório — a organização (grupos, ordem, títulos de grupo) vem de
+            REPORT_SECTIONS (fonte única). Cada seção tem CONTEÚDO próprio; o corpo só
+            renderiza, na estrutura do seletor, o que a usuária marcou. */}
+        {(() => {
+          const sectionContent: Record<SectionKey, React.ReactNode> = {
+            medicamentos: (
+              <section>
+                <h2 className="font-body text-sm font-bold text-onyx mb-2">Medicamentos e suplementos em uso</h2>
+                {medsEmUso.length === 0 ? (
+                  <p className="font-body text-sm text-mauve/60">Nenhum registrado em uso.</p>
+                ) : (
+                  <ul className="space-y-1">
+                    {medsEmUso.map((m, i) => (
+                      <li key={i} className="font-body text-sm text-onyx">
+                        • <strong>{m.name}</strong>{m.kind === 'suplemento' ? ' (suplemento)' : ''}{[m.dose, m.frequency].filter(Boolean).length ? ` — ${[m.dose, m.frequency].filter(Boolean).join(', ')}` : ''}
+                        {periodo(m.startedOn, m.untilOn)}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {medsSusp.length > 0 && (
+                  <p className="font-body text-xs text-mauve/60 mt-2">Suspensos: {medsSusp.map(m => m.name).join(', ')}.</p>
+                )}
+              </section>
+            ),
+            condicoes: (
+              <section>
+                <h2 className="font-body text-sm font-bold text-onyx mb-2">Condições de saúde</h2>
+                {condProprias.length === 0 ? (
+                  <p className="font-body text-sm text-mauve/60">Nenhuma condição registrada.</p>
+                ) : (
+                  <ul className="space-y-1">
+                    {condProprias.map((c, i) => (
+                      <li key={i} className="font-body text-sm text-onyx">
+                        • <strong>{c.name}</strong>{c.since ? ` (desde ${c.since})` : ''}
+                        {c.notes ? <span className="block text-xs text-mauve/60">{c.notes}</span> : null}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {condFamiliar.length > 0 && (
+                  <>
+                    <h3 className="font-body text-xs font-bold text-mauve/80 mt-3 mb-1 uppercase tracking-wider">Histórico familiar</h3>
+                    <ul className="space-y-1">
+                      {condFamiliar.map((c, i) => (
+                        <li key={i} className="font-body text-sm text-onyx">
+                          • <strong>{c.name}</strong>{c.relative ? ` — ${c.relative}` : ''}{c.since ? ` (desde ${c.since})` : ''}
+                          {c.notes ? <span className="block text-xs text-mauve/60">{c.notes}</span> : null}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </section>
+            ),
+            habitos: (
+              <section>
+                <h2 className="font-body text-sm font-bold text-onyx mb-2">Hábitos de vida</h2>
+                {habits.length === 0 ? (
+                  <p className="font-body text-sm text-mauve/60">Nenhum hábito registrado.</p>
+                ) : (
+                  <ul className="space-y-1">
+                    {habits.map((h, i) => (
+                      <li key={i} className="font-body text-sm text-onyx">
+                        • <span className="text-mauve/70">{HABIT_LABEL[h.category] ?? 'Hábito'}:</span> {h.description}{h.frequency ? ` — ${h.frequency}` : ''}
+                        {h.notes ? <span className="block text-xs text-mauve/60">{h.notes}</span> : null}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            ),
+            visao: (
+              <section>
+                <h2 className="font-body text-sm font-bold text-onyx mb-2">Óculos e lentes de contato</h2>
+                {eyewear.length === 0 ? (
+                  <p className="font-body text-sm text-mauve/60">Nenhum registro.</p>
+                ) : (
+                  <ul className="space-y-1.5">
+                    {eyewear.map((e, i) => {
+                      const extras = [
+                        e.dnp ? `DNP ${e.dnp}` : null, e.bc ? `BC ${e.bc}` : null, e.dia ? `DIA ${e.dia}` : null,
+                        e.prescribedOn ? fmt(e.prescribedOn) : null, e.prescriber,
+                      ].filter(Boolean)
+                      return (
+                        <li key={i} className="font-body text-sm text-onyx">
+                          • <strong>{EYEWEAR_LABEL[e.kind] ?? 'Óculos'}</strong>
+                          {grauStr(e.odSph, e.odCyl, e.odAxis, e.odAdd) ? <span className="block text-xs text-mauve/70 ml-3">OD: {grauStr(e.odSph, e.odCyl, e.odAxis, e.odAdd)}</span> : null}
+                          {grauStr(e.oeSph, e.oeCyl, e.oeAxis, e.oeAdd) ? <span className="block text-xs text-mauve/70 ml-3">OE: {grauStr(e.oeSph, e.oeCyl, e.oeAxis, e.oeAdd)}</span> : null}
+                          {extras.length ? <span className="block text-xs text-mauve/60 ml-3">{extras.join(' · ')}</span> : null}
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
+              </section>
+            ),
+            eventos: (
+              <section>
+                <h2 className="font-body text-sm font-bold text-onyx mb-2">Consultas, procedimentos e eventos</h2>
+                {events.length === 0 ? (
+                  <p className="font-body text-sm text-mauve/60">Nenhum evento registrado.</p>
+                ) : (
+                  <table className="w-full text-left">
+                    <tbody>
+                      {events.map((e, i) => (
+                        <tr key={i} className="border-b border-border/50">
+                          <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(e.date)}</td>
+                          <td className="font-body text-sm text-onyx py-1.5">
+                            <span className="text-mauve/70">{typeLabel(e.eventType)}{professionalLabel(e.prof) ? ` (${professionalLabel(e.prof)})` : ''}:</span> {e.title}
+                            {e.notes ? <span className="block text-xs text-mauve/60">{e.notes}</span> : null}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </section>
+            ),
+            exames: (
+              <section>
+                <h2 className="font-body text-sm font-bold text-onyx mb-2">Exames enviados</h2>
+                {exams.length === 0 ? (
+                  <p className="font-body text-sm text-mauve/60">Nenhum exame enviado.</p>
+                ) : (
+                  <ul className="space-y-1">
+                    {exams.map((e, i) => (
+                      <li key={i} className="font-body text-sm text-onyx">• {fmt(e.date)} — {e.type}</li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            ),
+            omica: (
+              <section>
+                <h2 className="font-body text-sm font-bold text-onyx mb-2">Exames de ômica</h2>
+                {omics.length === 0 ? (
+                  <p className="font-body text-sm text-mauve/60">Nenhum exame de ômica registrado.</p>
+                ) : (
+                  <ul className="space-y-1">
+                    {omics.map((o, i) => (
+                      <li key={i} className="font-body text-sm text-onyx">
+                        • {o.date ? `${fmt(o.date)} — ` : ''}<strong>{DOMAIN_LABEL[o.domain as OmicsDomain] ?? 'Ômica'}</strong>
+                        {[o.laboratory, o.totalFeatures != null ? `${o.totalFeatures.toLocaleString('pt-BR')} marcadores` : null].filter(Boolean).length
+                          ? ` (${[o.laboratory, o.totalFeatures != null ? `${o.totalFeatures.toLocaleString('pt-BR')} marcadores` : null].filter(Boolean).join(', ')})` : ''}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            ),
+            medidas: (
+              <section>
+                <h2 className="font-body text-sm font-bold text-onyx mb-2">Medidas corporais</h2>
+                {alturaCm != null && (
+                  <p className="font-body text-sm text-onyx mb-1"><span className="text-mauve/70">Altura:</span> {alturaCm} cm</p>
+                )}
+                {measuresCorpo.length === 0 ? (
+                  <p className="font-body text-sm text-mauve/60">{alturaCm != null ? 'Sem outras medidas registradas.' : 'Nenhuma medida registrada.'}</p>
+                ) : (
+                  <table className="w-full text-left">
+                    <tbody>
+                      {measuresCorpo.map((m, i) => (
+                        <tr key={i} className="border-b border-border/50">
+                          <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(m.date)}</td>
+                          <td className="font-body text-sm text-onyx py-1.5">
+                            <span className="text-mauve/70">{m.metric === 'outro' && m.label ? m.label : METRIC_LABEL[m.metric] ?? 'Medida'}:</span> {m.valueText}{m.unit ? ` ${m.unit}` : ''}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </section>
+            ),
+            sinais: (
+              <section>
+                <h2 className="font-body text-sm font-bold text-onyx mb-2">Sinais vitais</h2>
+                {measuresVitais.length === 0 ? (
+                  <p className="font-body text-sm text-mauve/60">Nenhum sinal vital registrado.</p>
+                ) : (
+                  <table className="w-full text-left">
+                    <tbody>
+                      {measuresVitais.map((m, i) => (
+                        <tr key={i} className="border-b border-border/50">
+                          <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(m.date)}</td>
+                          <td className="font-body text-sm text-onyx py-1.5">
+                            <span className="text-mauve/70">{m.metric === 'outro_sinal' && m.label ? m.label : METRIC_LABEL[m.metric] ?? 'Sinal'}:</span> {m.valueText}{m.unit ? ` ${m.unit}` : ''}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </section>
+            ),
+          }
+          return REPORT_SECTIONS.map(({ group, items }) => {
+            const visible = items.filter(it => sections[it.key])
+            if (visible.length === 0) return null
+            return (
+              <div key={group}>
+                <p className="font-body text-[11px] font-semibold text-mauve/50 uppercase tracking-[0.15em] mb-3">{group}</p>
+                <div className="space-y-6">
+                  {visible.map(it => <div key={it.key}>{sectionContent[it.key]}</div>)}
+                </div>
+              </div>
+            )
+          })
+        })()}
 
         <p className="font-body text-[11px] text-mauve/60 border-t border-border pt-3 leading-relaxed">
           Este relatório organiza os dados informados pela própria pessoa na plataforma SINTERA. <strong>Não é laudo, diagnóstico
