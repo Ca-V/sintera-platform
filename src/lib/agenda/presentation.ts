@@ -30,7 +30,18 @@ export const EVENT_TYPE_LABELS: Record<string, string> = {
   outro: 'Outro',
   // legados (não oferecidos no seletor, mas renderizáveis):
   retorno: 'Consulta', medicacao: 'Medicamento', atividade: 'Atividade física',
-  estetico: 'Procedimento', omica: 'Ômica', protocolo: 'Protocolo',
+  estetico: 'Procedimento estético', omica: 'Ômica', protocolo: 'Protocolo',
+}
+
+// Rótulos de PROFISSIONAL (professional_kind) — FONTE ÚNICA (Histórico, Relatório,
+// Relatório Público consomem isto; proibido mapa local). Sem fallback genérico:
+// tipo desconhecido/ausente → '' (a UI simplesmente não exibe o profissional).
+export const PROFESSIONAL_LABELS: Record<string, string> = {
+  medico: 'Médico(a)', psicologo: 'Psicólogo(a)', nutricionista: 'Nutricionista',
+  fisioterapeuta: 'Fisioterapeuta', dentista: 'Dentista', outro: 'Outro profissional',
+}
+export function professionalLabel(kind: string | null | undefined): string {
+  return (kind && PROFESSIONAL_LABELS[kind]) || ''
 }
 
 // Status canônico do domínio (6) × status oferecidos na UI (3, decisão da fundadora:

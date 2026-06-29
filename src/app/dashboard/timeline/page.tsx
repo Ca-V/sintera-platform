@@ -17,7 +17,7 @@ import { useUser } from '@/context/UserContext'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { useEventForm, eventToInput } from '@/components/eventForm'
-import { rowToHealthEvent, type HealthEvent, type HealthEventRow } from '@/lib/agenda'
+import { rowToHealthEvent, typeLabel, professionalLabel, type HealthEvent, type HealthEventRow } from '@/lib/agenda'
 import HistoricoTabs from '@/components/HistoricoTabs'
 import CategoryFilterBar, { type FilterCategory } from '@/components/CategoryFilterBar'
 import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
@@ -41,23 +41,24 @@ interface TimelineItem {
   href?: string             // link para o painel (ômica)
 }
 
-// Cobre a taxonomia única + tipos legados já gravados. NUNCA deve quebrar: o acesso
-// usa fallback para 'outro' (ver renderItem) caso surja um tipo desconhecido.
-const TYPE_META: Record<string, { label: string; Icon: React.ElementType; cls: string }> = {
-  consulta:     { label: 'Consulta',     Icon: Stethoscope,  cls: 'bg-blush text-petal' },
-  retorno:      { label: 'Consulta (retorno)', Icon: Stethoscope, cls: 'bg-blush text-petal' },
-  vacina:       { label: 'Vacina',       Icon: Syringe,      cls: 'bg-sage-light text-sage' },
-  procedimento: { label: 'Procedimento', Icon: Activity,     cls: 'bg-lavender-light text-lavender' },
-  cirurgia:     { label: 'Cirurgia',     Icon: Activity,     cls: 'bg-lavender-light text-lavender' },
-  estetico:     { label: 'Procedimento', Icon: Sparkles,     cls: 'bg-blush text-petal' },
-  medicamento:  { label: 'Medicamento',  Icon: Pill,         cls: 'bg-sage-light text-sage' },
-  medicacao:    { label: 'Medicamento',  Icon: Pill,         cls: 'bg-sage-light text-sage' },
-  suplemento:   { label: 'Suplemento',   Icon: Pill,         cls: 'bg-sage-light text-sage' },
-  atividade:    { label: 'Atividade física', Icon: Dumbbell, cls: 'bg-lavender-light text-lavender' },
-  plano:        { label: 'Plano de saúde', Icon: Receipt,    cls: 'bg-warm text-gold' },
-  exame:        { label: 'Exame',        Icon: FlaskConical, cls: 'bg-warm text-gold' },
-  omica:        { label: 'Ômica',        Icon: Dna,          cls: 'bg-lavender-light text-lavender' },
-  outro:        { label: 'Evento',       Icon: CalendarDays, cls: 'bg-ivory text-mauve' },
+// Estilo VISUAL por tipo (ícone + cor) — NÃO contém rótulo. A nomenclatura vem
+// SEMPRE de typeLabel() (fonte ÚNICA, presentation.ts); aqui é só apresentação
+// gráfica. Fallback visual para 'outro' caso surja um tipo desconhecido.
+const TYPE_VISUAL: Record<string, { Icon: React.ElementType; cls: string }> = {
+  consulta:     { Icon: Stethoscope,  cls: 'bg-blush text-petal' },
+  retorno:      { Icon: Stethoscope,  cls: 'bg-blush text-petal' },
+  vacina:       { Icon: Syringe,      cls: 'bg-sage-light text-sage' },
+  procedimento: { Icon: Activity,     cls: 'bg-lavender-light text-lavender' },
+  cirurgia:     { Icon: Activity,     cls: 'bg-lavender-light text-lavender' },
+  estetico:     { Icon: Sparkles,     cls: 'bg-blush text-petal' },
+  medicamento:  { Icon: Pill,         cls: 'bg-sage-light text-sage' },
+  medicacao:    { Icon: Pill,         cls: 'bg-sage-light text-sage' },
+  suplemento:   { Icon: Pill,         cls: 'bg-sage-light text-sage' },
+  atividade:    { Icon: Dumbbell,     cls: 'bg-lavender-light text-lavender' },
+  plano:        { Icon: Receipt,      cls: 'bg-warm text-gold' },
+  exame:        { Icon: FlaskConical, cls: 'bg-warm text-gold' },
+  omica:        { Icon: Dna,          cls: 'bg-lavender-light text-lavender' },
+  outro:        { Icon: CalendarDays, cls: 'bg-ivory text-mauve' },
 }
 
 // Categorias de FILTRO da Linha do Tempo — agrupa os tipos granulares em categorias
@@ -88,10 +89,6 @@ function itemCategory(it: TimelineItem): string {
   return 'outro'
 }
 
-const PROF_LABEL: Record<string, string> = {
-  medico: 'Médico(a)', psicologo: 'Psicólogo(a)', nutricionista: 'Nutricionista',
-  fisioterapeuta: 'Fisioterapeuta', dentista: 'Dentista', outro: 'Outro profissional',
-}
 
 function fmt(date: string): string {
   const d = new Date(date.length <= 10 ? `${date}T00:00:00` : date)
@@ -276,7 +273,7 @@ export default function TimelinePage() {
     setHiddenCats(prev => { const n = new Set(prev); if (n.has(key)) n.delete(key); else n.add(key); return n })
 
   const renderItem = (it: TimelineItem, i: number) => {
-    const meta = TYPE_META[it.eventType] ?? TYPE_META.outro
+    const meta = TYPE_VISUAL[it.eventType] ?? TYPE_VISUAL.outro
     return (
       <motion.div key={it.id}
         initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
@@ -290,7 +287,7 @@ export default function TimelinePage() {
               </div>
               <div className="min-w-0">
                 <p className="font-body text-sm font-semibold text-onyx">{it.title}</p>
-                <p className="font-body text-[11px] text-mauve/60">{meta.label}{it.profKind && PROF_LABEL[it.profKind] ? ` · ${PROF_LABEL[it.profKind]}` : ''}{it.subtitle ? ` · ${it.subtitle}` : ''}</p>
+                <p className="font-body text-[11px] text-mauve/60">{typeLabel(it.eventType)}{professionalLabel(it.profKind) ? ` · ${professionalLabel(it.profKind)}` : ''}{it.subtitle ? ` · ${it.subtitle}` : ''}</p>
                 {it.amountCents != null && (
                   <span className="inline-block font-body text-[11px] font-medium text-sage bg-sage-light border border-sage/20 rounded-full px-2 py-0.5 mt-1">
                     {fmtBRL(it.amountCents)}

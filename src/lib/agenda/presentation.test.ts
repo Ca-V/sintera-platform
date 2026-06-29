@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatDateBR, formatTimeBR, eventToNotificationInput, typeLabel } from './presentation'
+import { formatDateBR, formatTimeBR, eventToNotificationInput, typeLabel, professionalLabel } from './presentation'
 import { buildEventNotification, notificationToInline } from './notification'
 import type { HealthEvent } from './event'
 
@@ -21,6 +21,23 @@ describe('formatadores de apresentação', () => {
     expect(formatTimeBR(null)).toBeNull()
     expect(typeLabel('exame')).toBe('Exame')
     expect(typeLabel('desconhecido')).toBe('Outro')
+  })
+})
+
+describe('fonte ÚNICA de rótulos — consolidação da camada de apresentação (Sprint UX)', () => {
+  it('typeLabel usa o rótulo mais específico e NUNCA "Evento"', () => {
+    expect(typeLabel('estetico')).toBe('Procedimento estético')
+    expect(typeLabel('medicacao')).toBe('Medicamento')
+    expect(typeLabel('retorno')).toBe('Consulta')
+    expect(typeLabel('outro')).toBe('Outro')         // padrão oficial é "Outro", não "Evento"
+    expect(typeLabel('desconhecido')).toBe('Outro')  // fallback canônico
+  })
+  it('professionalLabel mapeia conhecidos e devolve "" para ausente/desconhecido', () => {
+    expect(professionalLabel('medico')).toBe('Médico(a)')
+    expect(professionalLabel('outro')).toBe('Outro profissional')
+    expect(professionalLabel(null)).toBe('')
+    expect(professionalLabel(undefined)).toBe('')
+    expect(professionalLabel('inexistente')).toBe('')
   })
 })
 

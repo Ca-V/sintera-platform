@@ -19,7 +19,7 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
-import { typeLabel } from '@/lib/agenda' // fonte ÚNICA de rótulos de tipo de evento
+import { typeLabel, professionalLabel } from '@/lib/agenda' // fonte ÚNICA de rótulos (tipo + profissional)
 
 interface Med { name: string; kind: string; dose: string | null; frequency: string | null; startedOn: string | null; untilOn: string | null; status: string }
 interface Ev { title: string; eventType: string; prof: string | null; date: string; notes: string | null }
@@ -54,10 +54,6 @@ const isVital = (m: string) => VITAL_METRICS.includes(m)
 const HABIT_LABEL: Record<string, string> = {
   atividade_fisica: 'Atividade física', sono: 'Sono', tabagismo: 'Tabagismo',
   alcool: 'Álcool', alimentacao: 'Alimentação', hidratacao: 'Hidratação', outro: 'Outro',
-}
-const PROF_LABEL: Record<string, string> = {
-  medico: 'Médico(a)', psicologo: 'Psicólogo(a)', nutricionista: 'Nutricionista',
-  fisioterapeuta: 'Fisioterapeuta', dentista: 'Dentista', outro: 'Outro profissional',
 }
 
 function periodo(start: string | null, until: string | null): string {
@@ -398,7 +394,7 @@ export default function RelatorioPage() {
                   <tr key={i} className="border-b border-border/50">
                     <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(e.date)}</td>
                     <td className="font-body text-sm text-onyx py-1.5">
-                      <span className="text-mauve/70">{typeLabel(e.eventType)}{e.prof && PROF_LABEL[e.prof] ? ` (${PROF_LABEL[e.prof]})` : ''}:</span> {e.title}
+                      <span className="text-mauve/70">{typeLabel(e.eventType)}{professionalLabel(e.prof) ? ` (${professionalLabel(e.prof)})` : ''}:</span> {e.title}
                       {e.notes ? <span className="block text-xs text-mauve/60">{e.notes}</span> : null}
                     </td>
                   </tr>

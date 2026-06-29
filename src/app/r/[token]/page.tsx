@@ -8,17 +8,10 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
+import { typeLabel, professionalLabel } from '@/lib/agenda/presentation' // fonte ÚNICA de rótulos
 
 export const metadata = { robots: { index: false, follow: false } }
 
-const TYPE_LABEL: Record<string, string> = {
-  consulta: 'Consulta', vacina: 'Vacina', procedimento: 'Procedimento',
-  estetico: 'Procedimento estético', medicamento: 'Medicamento', exame: 'Exame', outro: 'Evento',
-}
-const PROF_LABEL: Record<string, string> = {
-  medico: 'Médico(a)', psicologo: 'Psicólogo(a)', nutricionista: 'Nutricionista',
-  fisioterapeuta: 'Fisioterapeuta', dentista: 'Dentista', outro: 'Outro profissional',
-}
 const METRIC_LABEL: Record<string, string> = {
   peso: 'Peso', altura: 'Altura', circunferencia_cintura: 'Circunferência (cintura)',
   imc: 'IMC', gordura_corporal: 'Gordura corporal', massa_muscular: 'Massa muscular',
@@ -202,7 +195,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
                 <tr key={i} style={{ borderBottom: '1px solid #f2eef4' }}>
                   <td style={{ padding: '6px 12px 6px 0', color: '#8a7b92', whiteSpace: 'nowrap', verticalAlign: 'top' }}>{fmt(e.event_date as string)}</td>
                   <td style={{ padding: '6px 0' }}>
-                    <span style={{ color: '#8a7b92' }}>{TYPE_LABEL[e.event_type as string] ?? 'Evento'}{e.professional_kind && PROF_LABEL[e.professional_kind as string] ? ` (${PROF_LABEL[e.professional_kind as string]})` : ''}:</span> {e.title as string}
+                    <span style={{ color: '#8a7b92' }}>{typeLabel(e.event_type as string)}{professionalLabel(e.professional_kind as string) ? ` (${professionalLabel(e.professional_kind as string)})` : ''}:</span> {e.title as string}
                     {e.notes ? <span style={{ display: 'block', fontSize: 12, color: '#8a7b92' }}>{e.notes as string}</span> : null}
                   </td>
                 </tr>

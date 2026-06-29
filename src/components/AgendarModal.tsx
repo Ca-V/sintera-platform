@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Download, ExternalLink, CalendarDays, Loader2, Check, ChevronDown } from 'lucide-react'
-import { EVENT_TYPE_DEFS, EVENT_STATUS_UI } from '@/lib/agenda'
+import { EVENT_TYPE_DEFS, EVENT_STATUS_UI, typeLabel } from '@/lib/agenda'
 
 // Tipos vêm da FONTE ÚNICA (@/lib/agenda) — Agenda e Histórico falam a mesma língua.
 export type EventType = typeof EVENT_TYPE_DEFS[number]['id']
@@ -167,9 +167,9 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
     if (v && v < today && status === 'planejado') setStatus('realizado')
   }
 
-  const typeLabel = EVENT_TYPE_DEFS.find(t => t.id === eventType)?.label ?? 'Evento'
+  const tLabel = typeLabel(eventType) // rótulo canônico (fonte ÚNICA)
   // Automação: título sugerido a partir do tipo + profissional ("Consulta — Dra. X").
-  const fullTitle = title.trim() || [typeLabel, professionalName.trim()].filter(Boolean).join(' — ') || `${typeLabel} de Saúde`
+  const fullTitle = title.trim() || [tLabel, professionalName.trim()].filter(Boolean).join(' — ') || `${tLabel} de Saúde`
   const canExport = date !== ''
 
   function buildDates() {
