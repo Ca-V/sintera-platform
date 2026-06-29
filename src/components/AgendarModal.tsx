@@ -328,7 +328,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                       ))}
                     </div>
                     {date && date < today && status === 'realizado' && (
-                      <p className="font-body text-[11px] text-gold">Data no passado → entra como <strong>Realizado</strong> (vai ao Histórico e Gastos, não fica na Agenda). Mude o status se quiser agendá-lo.</p>
+                      <p className="font-body text-[11px] text-gold">ℹ Como a data está no passado, o sistema marcou automaticamente como <strong>Realizado</strong> (vai ao Histórico e Gastos, não fica na Agenda). Mude o status acima se quiser agendá-lo.</p>
                     )}
                   </div>
 
