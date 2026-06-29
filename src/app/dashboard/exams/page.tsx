@@ -109,6 +109,7 @@ export default function ExamsPage() {
     setLoadingExams(false)
   }, [user, supabase])
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadExams() }, [loadExams])
 
   // ── Anos disponíveis para o filtro ────────────────────────────────────────
@@ -215,7 +216,7 @@ export default function ExamsPage() {
     if (deletingId) return
     const ok = window.confirm(
       `Excluir "${exam.type ?? 'Exame'}"?\n\nIsto remove o exame, seus biomarcadores e insights, e o arquivo enviado. ` +
-      `O seu Histórico de Saúde será recalculado sem este exame. Esta ação não pode ser desfeita.`,
+      `O seu Histórico será recalculado sem este exame. Esta ação não pode ser desfeita.`,
     )
     if (!ok) return
     setDeletingId(exam.id)
@@ -256,7 +257,7 @@ export default function ExamsPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Exames e Documentos</h1>
+        <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Exames</h1>
         <p className="font-body text-sm text-mauve">Envie seus <strong className="font-medium text-onyx/70">exames</strong> (extraímos os dados por IA), <strong className="font-medium text-onyx/70">receitas</strong> e outros arquivos de saúde — por PDF ou foto.</p>
       </motion.div>
 

@@ -6,18 +6,19 @@
 // criar / editar / excluir e anexo opcional.
 // Ver docs/estrategia/SINTERA-VALUE-PROPOSITION-NORTH-STAR.md.
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   Clock, Plus, X, Stethoscope, Syringe, Activity, FlaskConical, CalendarDays,
-  Loader2, Pencil, Trash2, Paperclip, Bell, Info, Sparkles, Pill, Receipt, FileText, Dumbbell, Dna,
+  Loader2, Pencil, Trash2, Paperclip, Info, Sparkles, Pill, Receipt, FileText, Dumbbell, Dna, CheckCircle2, RotateCcw,
 } from 'lucide-react'
 import Link from 'next/link'
-import VoiceInput from '@/components/VoiceInput'
-import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
-import AgendarModal, { type EventType as AgendaType } from '@/components/AgendarModal'
+import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
+import ConfirmDialog from '@/components/ConfirmDialog'
+import { useEventForm, eventToInput } from '@/components/eventForm'
+import { rowToHealthEvent, type HealthEvent, type HealthEventRow } from '@/lib/agenda'
+import HistoricoTabs from '@/components/HistoricoTabs'
 import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
 
 type EventType = 'consulta' | 'vacina' | 'procedimento' | 'estetico' | 'medicamento' | 'atividade' | 'exame' | 'omica' | 'outro'
@@ -35,16 +36,24 @@ interface TimelineItem {
   attachmentUrl?: string | null
   amountCents?: number | null
   profKind?: string | null
+  status?: string           // status do health_event (só kind 'event')
   href?: string             // link para o painel (ômica)
 }
 
-const TYPE_META: Record<EventType, { label: string; Icon: React.ElementType; cls: string }> = {
+// Cobre a taxonomia única + tipos legados já gravados. NUNCA deve quebrar: o acesso
+// usa fallback para 'outro' (ver renderItem) caso surja um tipo desconhecido.
+const TYPE_META: Record<string, { label: string; Icon: React.ElementType; cls: string }> = {
   consulta:     { label: 'Consulta',     Icon: Stethoscope,  cls: 'bg-blush text-petal' },
+  retorno:      { label: 'Consulta (retorno)', Icon: Stethoscope, cls: 'bg-blush text-petal' },
   vacina:       { label: 'Vacina',       Icon: Syringe,      cls: 'bg-sage-light text-sage' },
   procedimento: { label: 'Procedimento', Icon: Activity,     cls: 'bg-lavender-light text-lavender' },
-  estetico:     { label: 'Procedimento estético', Icon: Sparkles, cls: 'bg-blush text-petal' },
+  cirurgia:     { label: 'Cirurgia',     Icon: Activity,     cls: 'bg-lavender-light text-lavender' },
+  estetico:     { label: 'Procedimento', Icon: Sparkles,     cls: 'bg-blush text-petal' },
   medicamento:  { label: 'Medicamento',  Icon: Pill,         cls: 'bg-sage-light text-sage' },
+  medicacao:    { label: 'Medicamento',  Icon: Pill,         cls: 'bg-sage-light text-sage' },
+  suplemento:   { label: 'Suplemento',   Icon: Pill,         cls: 'bg-sage-light text-sage' },
   atividade:    { label: 'Atividade física', Icon: Dumbbell, cls: 'bg-lavender-light text-lavender' },
+  plano:        { label: 'Plano de saúde', Icon: Receipt,    cls: 'bg-warm text-gold' },
   exame:        { label: 'Exame',        Icon: FlaskConical, cls: 'bg-warm text-gold' },
   omica:        { label: 'Ômica',        Icon: Dna,          cls: 'bg-lavender-light text-lavender' },
   outro:        { label: 'Evento',       Icon: CalendarDays, cls: 'bg-ivory text-mauve' },
@@ -55,26 +64,9 @@ const PROF_LABEL: Record<string, string> = {
   fisioterapeuta: 'Fisioterapeuta', dentista: 'Dentista', outro: 'Outro profissional',
 }
 
-// Mapeia o tipo da jornada para o tipo aceito pelo AgendarModal.
-const toAgendaType = (t: EventType): AgendaType =>
-  t === 'consulta' ? 'consulta' : t === 'exame' ? 'exame' : 'outro'
-
-const MAX_BYTES = 10 * 1024 * 1024
-const ACCEPTED = ['application/pdf', 'image/jpeg', 'image/png']
-
 function fmt(date: string): string {
   const d = new Date(date.length <= 10 ? `${date}T00:00:00` : date)
   return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
-}
-
-// "150,00" | "R$ 1.500,00" | "150.5" → centavos. Vazio/inválido → null.
-function parseAmountToCents(s: string): number | null {
-  let t = s.trim().replace(/[R$\s]/g, '')
-  if (!t) return null
-  // Formato BR com vírgula decimal: ponto é separador de milhar.
-  if (t.includes(',')) t = t.replace(/\./g, '').replace(',', '.')
-  const n = parseFloat(t)
-  return isFinite(n) && n >= 0 ? Math.round(n * 100) : null
 }
 
 function fmtBRL(cents: number): string {
@@ -83,20 +75,25 @@ function fmtBRL(cents: number): string {
 
 export default function TimelinePage() {
   const { user } = useUser()
-  const supabase = useRef(createClient() as unknown as SupabaseClient).current
-  const fileRef = useRef<HTMLInputElement>(null)
+  // Caminho ÚNICO de evento: mesmo modal e mesma gravação da Agenda.
+  const { supabase, saveEvent, services } = useEventForm()
 
   const [items, setItems] = useState<TimelineItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
-  const [saving, setSaving] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
-  const [formError, setFormError] = useState<string | null>(null)
-  const [reminderFor, setReminderFor] = useState<TimelineItem | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
   const [showOnboard, setShowOnboard] = useState(false)
+
+  // Formulário único de evento (AgendarModal)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editingEvent, setEditingEvent] = useState<HealthEvent | null>(null)
+  // Confirmação própria (não-bloqueante) p/ ações com consequência (reabrir).
+  const [confirm, setConfirm] = useState<{ message: string; confirmLabel: string; onYes: () => void } | null>(null)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // Lê preferência do onboarding uma vez na montagem (acesso a localStorage).
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowOnboard(localStorage.getItem('sintera_journey_onboarded') !== '1')
     }
   }, [])
@@ -105,15 +102,6 @@ export default function TimelinePage() {
     setShowOnboard(false)
   }
 
-  // Formulário (criar/editar)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [evType, setEvType] = useState<EventType>('consulta')
-  const [evTitle, setEvTitle] = useState('')
-  const [evDate, setEvDate] = useState('')
-  const [evNotes, setEvNotes] = useState('')
-  const [evAmount, setEvAmount] = useState('')
-  const [evProfKind, setEvProfKind] = useState('')
-  const [evFile, setEvFile] = useState<File | null>(null)
 
   const load = useCallback(async () => {
     if (!user) return
@@ -124,7 +112,7 @@ export default function TimelinePage() {
         .eq('user_id', user.id),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (supabase as any).from('health_events')
-        .select('id, event_type, title, event_date, notes, source, confidence, attachment_url, amount_cents, professional_kind, synthetic')
+        .select('id, event_type, title, event_date, notes, source, confidence, attachment_url, amount_cents, professional_kind, synthetic, status')
         .eq('user_id', user.id)
         .eq('synthetic', false),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -155,6 +143,7 @@ export default function TimelinePage() {
         attachmentUrl: (ev.attachment_url as string) ?? null,
         amountCents: (ev.amount_cents as number) ?? null,
         profKind: (ev.professional_kind as string) ?? null,
+        status: (ev.status as string) ?? 'planejado',
       })
     }
     for (const p of (omicsRes.data ?? []) as Array<Record<string, unknown>>) {
@@ -174,92 +163,81 @@ export default function TimelinePage() {
     setLoading(false)
   }, [user, supabase])
 
+  // Carrega na montagem (e após mutações); o setLoading(true) síncrono é intencional.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load() }, [load])
 
-  function resetForm() {
-    setEditingId(null); setEvType('consulta'); setEvTitle(''); setEvDate('')
-    setEvNotes(''); setEvAmount(''); setEvProfKind(''); setEvFile(null); setFormError(null)
-    if (fileRef.current) fileRef.current.value = ''
+  function openCreate() { setEditingEvent(null); setModalOpen(true) }
+  async function openEdit(it: TimelineItem) {
+    if (!it.rawId) return
+    setActionError(null)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any).from('health_events').select('*').eq('id', it.rawId).single()
+    if (error || !data) { setActionError('Não foi possível abrir o evento para edição.'); return }
+    setEditingEvent(rowToHealthEvent(data as HealthEventRow)); setModalOpen(true)
   }
 
-  function openCreate() { resetForm(); setShowForm(true) }
-  function openEdit(it: TimelineItem) {
-    setEditingId(it.rawId ?? null)
-    setEvType(it.eventType); setEvTitle(it.title); setEvDate(it.date.slice(0, 10))
-    setEvNotes(it.subtitle ?? ''); setEvFile(null); setFormError(null)
-    setEvAmount(it.amountCents != null ? (it.amountCents / 100).toFixed(2).replace('.', ',') : '')
-    setEvProfKind(it.profKind ?? '')
-    setShowForm(true)
-  }
-
-  async function uploadAttachment(file: File): Promise<string | null> {
-    if (!user) return null
-    if (!ACCEPTED.includes(file.type)) { setFormError('Anexo deve ser PDF, JPG ou PNG.'); throw new Error('mime') }
-    if (file.size > MAX_BYTES) { setFormError('Anexo muito grande (máx. 10 MB).'); throw new Error('size') }
-    const ext = file.name.split('.').pop() ?? 'bin'
-    // Mesma pasta da usuária dos exames → coberto pela RLS e pela exclusão de conta (LGPD).
-    const path = `${user.id}/${crypto.randomUUID()}.${ext}`
-    const { error } = await supabase.storage.from('exams').upload(path, file, { contentType: file.type, upsert: false })
-    if (error) { setFormError(`Falha no anexo: ${error.message}`); throw error }
-    const { data } = await supabase.storage.from('exams').createSignedUrl(path, 60 * 60 * 24 * 365)
-    return data?.signedUrl ?? null
-  }
-
-  async function save() {
-    if (!user || saving || !evTitle.trim() || !evDate) return
-    setSaving(true); setFormError(null)
-    try {
-      let attachmentUrl: string | null | undefined = undefined
-      if (evFile) attachmentUrl = await uploadAttachment(evFile)
-
-      if (editingId) {
-        const patch: Record<string, unknown> = {
-          event_type: evType, title: evTitle.trim(), event_date: evDate,
-          notes: evNotes.trim() || null, amount_cents: parseAmountToCents(evAmount),
-          professional_kind: evType === 'consulta' ? (evProfKind || null) : null,
-        }
-        if (attachmentUrl !== undefined) patch.attachment_url = attachmentUrl
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error } = await (supabase as any).from('health_events').update(patch).eq('id', editingId)
-        if (error) { setFormError(error.message); return }
-      } else {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error } = await (supabase as any).from('health_events').insert({
-          user_id: user.id, event_type: evType, title: evTitle.trim(), event_date: evDate,
-          notes: evNotes.trim() || null, source: 'autorrelato', confidence: 'baixa',
-          attachment_url: attachmentUrl ?? null, amount_cents: parseAmountToCents(evAmount),
-          professional_kind: evType === 'consulta' ? (evProfKind || null) : null,
-        })
-        if (error) { setFormError(error.message); return }
-      }
-      resetForm(); setShowForm(false); await load()
-    } catch {
-      // erro de anexo já reportado em formError
-    } finally {
-      setSaving(false)
-    }
+  // Salva via o MESMO caminho da Agenda (hook). Erros sobem para o modal (visíveis).
+  async function handleSave(input: AgendaEventInput) {
+    if (!user) return
+    await saveEvent(user.id, input, editingEvent)
+    setModalOpen(false); setEditingEvent(null); await load()
   }
 
   async function remove(rawId: string, label: string) {
     if (busyId) return
-    if (!window.confirm(`Excluir "${label}" do seu Histórico de Saúde?`)) return
-    setBusyId(rawId)
+    if (!window.confirm(`Excluir "${label}" do seu Histórico?`)) return
+    setBusyId(rawId); setActionError(null)
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await (supabase as any).from('health_events').delete().eq('id', rawId)
-      if (!error) await load()
+      if (error) { setActionError(`Não foi possível excluir: ${error.message}`); return }
+      await load()
     } finally {
       setBusyId(null)
     }
   }
 
+  // Marca um evento do Histórico como Realizado — atualização CIRÚRGICA (só status +
+  // completed_at) p/ preservar os demais campos. Realizado + valor entra em Gastos.
+  // Carrega o evento completo e usa o MESMO comando da Agenda (com roll-forward da
+  // recorrência: concluir um item de uso contínuo já deixa a próxima ocorrência na Agenda).
+  async function withFullEvent(rawId: string, action: (ev: HealthEvent) => Promise<void>, errMsg: string) {
+    if (busyId || !user) return
+    setBusyId(rawId); setActionError(null)
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any).from('health_events').select('*').eq('id', rawId).single()
+      if (error || !data) { setActionError(errMsg); return }
+      await action(rowToHealthEvent(data as HealthEventRow))
+      await load()
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : errMsg)
+    } finally {
+      setBusyId(null)
+    }
+  }
+  const markRealized = (rawId: string) =>
+    withFullEvent(rawId, ev => services.command.complete(user!.id, ev), 'Não foi possível concluir o evento.')
+  // Reabrir tem consequência (volta para a Agenda; sai do Histórico/Gastos).
+  // Confirmação explicativa antes — importante no mobile, onde não há tooltip.
+  const reopenEvent = (rawId: string) =>
+    setConfirm({
+      message: 'Reabrir este evento? Ele volta para a Agenda (sai do Histórico) — e sai dos Gastos, se estava lá.',
+      confirmLabel: 'Reabrir',
+      onYes: () => withFullEvent(rawId, ev => services.command.reopen(user!.id, ev), 'Não foi possível reabrir o evento.'),
+    })
+
   const today = new Date().toISOString().slice(0, 10)
-  const upcoming = items.filter(it => it.date.slice(0, 10) >= today).slice().reverse() // mais próximo primeiro
-  const past = items.filter(it => it.date.slice(0, 10) < today)
+  // Histórico = SÓ o que já aconteceu. Eventos futuros ainda planejados vivem na Agenda
+  // (regra definitiva: Agenda = futuro · Histórico = passado). Exames/ômica e eventos
+  // realizados/cancelados aparecem; um evento futuro ainda "planejado" não.
+  const isFuturePlanned = (it: TimelineItem) =>
+    it.kind === 'event' && it.date.slice(0, 10) >= today && it.status !== 'realizado' && it.status !== 'cancelado'
+  const history = items.filter(it => !isFuturePlanned(it)) // já ordenado: mais recente primeiro
 
   const renderItem = (it: TimelineItem, i: number) => {
-    const meta = TYPE_META[it.eventType]
-    const isUpcoming = it.date.slice(0, 10) >= today
+    const meta = TYPE_META[it.eventType] ?? TYPE_META.outro
     return (
       <motion.div key={it.id}
         initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
@@ -295,12 +273,26 @@ export default function TimelinePage() {
             </div>
             <div className="flex flex-col items-end gap-1 flex-shrink-0">
               <span className="font-body text-[11px] text-mauve/60">{fmt(it.date)}</span>
+              {it.kind === 'event' && it.status === 'realizado' && (
+                <span className="font-body text-[10px] text-sage">✓ realizado</span>
+              )}
+              {it.kind === 'event' && it.status === 'cancelado' && (
+                <span className="font-body text-[10px] text-mauve/40 line-through">cancelado</span>
+              )}
               {it.kind === 'event' && it.rawId && (
                 <div className="flex items-center gap-1 mt-0.5">
-                  {isUpcoming && (
-                    <button aria-label="Lembrar" title="Adicionar lembrete ao calendário" onClick={() => setReminderFor(it)}
-                      className="w-6 h-6 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/60 hover:text-petal transition-colors">
-                      <Bell size={12} />
+                  {it.status !== 'realizado' && it.status !== 'cancelado' && (
+                    <button aria-label="Marcar como realizado" title="Marcar como realizado (se tiver valor, entra em Gastos)"
+                      disabled={busyId === it.rawId} onClick={() => markRealized(it.rawId!)}
+                      className="w-6 h-6 rounded-lg hover:bg-sage-light flex items-center justify-center text-mauve/60 hover:text-sage transition-colors disabled:opacity-40">
+                      <CheckCircle2 size={12} />
+                    </button>
+                  )}
+                  {it.status === 'realizado' && (
+                    <button aria-label="Reabrir" title="Reabrir (desfazer conclusão — volta para a Agenda)"
+                      disabled={busyId === it.rawId} onClick={() => reopenEvent(it.rawId!)}
+                      className="w-6 h-6 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/60 hover:text-petal transition-colors disabled:opacity-40">
+                      <RotateCcw size={12} />
                     </button>
                   )}
                   <button aria-label="Editar" onClick={() => openEdit(it)}
@@ -326,35 +318,38 @@ export default function TimelinePage() {
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
         className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Histórico de Saúde</h1>
+          <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Histórico</h1>
           <p className="font-body text-sm text-mauve">Seu acompanhamento longitudinal — a linha do tempo com exames, consultas, vacinas, procedimentos e medicamentos</p>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5">
             <Link href="/dashboard/medicamentos" className="inline-flex items-center gap-1 font-body text-xs text-petal hover:underline">
-              <Pill size={13} /> Medicamentos e Suplementos
+              <Pill size={13} /> Medicamentos
             </Link>
             <Link href="/dashboard/medidas" className="inline-flex items-center gap-1 font-body text-xs text-petal hover:underline">
               <Activity size={13} /> Medidas
             </Link>
             <Link href="/dashboard/gastos" className="inline-flex items-center gap-1 font-body text-xs text-petal hover:underline">
-              <Receipt size={13} /> Gastos com Saúde
+              <Receipt size={13} /> Gastos
             </Link>
             <Link href="/dashboard/relatorio" className="inline-flex items-center gap-1 font-body text-xs text-petal hover:underline">
               <FileText size={13} /> Relatórios
             </Link>
           </div>
         </div>
-        <button onClick={() => (showForm ? (resetForm(), setShowForm(false)) : openCreate())}
+        <button onClick={openCreate}
           className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0">
-          {showForm ? <X size={15} /> : <Plus size={15} />}
-          {showForm ? 'Fechar' : 'Adicionar evento'}
+          <Plus size={15} /> Adicionar evento
         </button>
       </motion.div>
 
-      {/* Abas do acompanhamento longitudinal: Linha do tempo (esta) · Evolução (biomarcadores) */}
-      <div className="flex flex-wrap gap-2">
-        <span className="px-3.5 py-1.5 rounded-full gradient-sintera text-white font-body text-sm font-medium">Linha do tempo</span>
-        <Link href="/dashboard/historico" className="px-3.5 py-1.5 rounded-full bg-ivory border border-border text-mauve font-body text-sm hover:border-petal/40 transition-colors">Evolução dos indicadores</Link>
-      </div>
+      {/* Duas visões do mesmo registro longitudinal: Linha do Tempo (esta) · Evolução */}
+      <HistoricoTabs active="linha" />
+
+      {actionError && (
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+          <p className="font-body text-xs text-red-600">{actionError}</p>
+          <button onClick={() => setActionError(null)} className="text-red-400 hover:text-red-600 transition-colors flex-shrink-0"><X size={14} /></button>
+        </div>
+      )}
 
       {/* Onboarding dispensável */}
       {showOnboard && (
@@ -363,9 +358,9 @@ export default function TimelinePage() {
           <Info size={16} className="text-petal flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="font-body text-xs text-onyx leading-relaxed">
-              Este é o seu <strong>Histórico de Saúde</strong>: exames entram automaticamente, e você
-              pode registrar consultas, vacinas e procedimentos. Eventos futuros aparecem em
-              <strong> Próximos</strong> e podem virar lembrete no seu calendário (🔔).
+              Este é o seu <strong>Histórico</strong>: tudo o que já aconteceu — exames entram
+              automaticamente, e você registra consultas, vacinas e procedimentos. O que ainda
+              vai acontecer fica na <strong>Agenda</strong>; quando é concluído, vem para cá.
             </p>
           </div>
           <button onClick={dismissOnboard} aria-label="Dispensar"
@@ -373,140 +368,47 @@ export default function TimelinePage() {
         </motion.div>
       )}
 
-      {showForm && (
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-          className="card-premium p-5 space-y-3">
-          <p className="font-body text-sm font-semibold text-onyx">{editingId ? 'Editar evento' : 'Novo evento'}</p>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="font-body text-xs text-mauve/70 block mb-1">Tipo</label>
-              <select value={evType} onChange={e => setEvType(e.target.value as EventType)}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
-                <option value="consulta">Consulta</option>
-                <option value="vacina">Vacina</option>
-                <option value="procedimento">Procedimento</option>
-                <option value="estetico">Procedimento estético</option>
-                <option value="medicamento">Medicamento</option>
-                <option value="atividade">Atividade física</option>
-                <option value="outro">Outro</option>
-              </select>
-            </div>
-            <div>
-              <label className="font-body text-xs text-mauve/70 block mb-1">Data</label>
-              <input type="date" value={evDate} onChange={e => setEvDate(e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
-            </div>
-          </div>
-          {evType === 'consulta' && (
-            <div>
-              <label className="font-body text-xs text-mauve/70 block mb-1">Profissional (opcional)</label>
-              <select value={evProfKind} onChange={e => setEvProfKind(e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
-                <option value="">—</option>
-                <option value="medico">Médico(a)</option>
-                <option value="psicologo">Psicólogo(a)</option>
-                <option value="nutricionista">Nutricionista</option>
-                <option value="fisioterapeuta">Fisioterapeuta</option>
-                <option value="dentista">Dentista</option>
-                <option value="outro">Outro profissional</option>
-              </select>
-            </div>
-          )}
-          <div>
-            <label className="font-body text-xs text-mauve/70 block mb-1">Título</label>
-            <div className="flex items-center gap-2">
-              <input type="text" value={evTitle} onChange={e => setEvTitle(e.target.value)}
-                placeholder="Ex.: Consulta ginecologista, Vacina HPV…"
-                className="flex-1 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
-              <VoiceInput onResult={t => setEvTitle(v => (v ? v + ' ' : '') + t)} />
-            </div>
-          </div>
-          <div>
-            <label className="font-body text-xs text-mauve/70 block mb-1">Observações (opcional)</label>
-            <div className="flex items-start gap-2">
-              <textarea value={evNotes} onChange={e => setEvNotes(e.target.value)} rows={2}
-                className="flex-1 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
-              <VoiceInput onResult={t => setEvNotes(v => (v ? v + ' ' : '') + t)} />
-            </div>
-          </div>
-          <div>
-            <label className="font-body text-xs text-mauve/70 block mb-1">Valor pago — R$ (opcional)</label>
-            <input type="text" inputMode="decimal" value={evAmount} onChange={e => setEvAmount(e.target.value)}
-              placeholder="Ex.: 250,00 — se foi particular"
-              className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
-            <p className="font-body text-[10px] text-mauve/50 mt-1">Para organizar seus gastos com saúde. Anexe a nota fiscal abaixo.</p>
-          </div>
-          <div>
-            <label className="font-body text-xs text-mauve/70 block mb-1">Nota fiscal / comprovante / anexo (opcional — PDF/JPG/PNG)</label>
-            <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png"
-              onChange={e => setEvFile(e.target.files?.[0] ?? null)}
-              className="block w-full text-xs font-body text-mauve file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:bg-blush file:text-petal file:font-medium" />
-          </div>
-          {formError && <p className="font-body text-xs text-red-500">{formError}</p>}
-          <div className="flex items-center justify-between">
-            <p className="font-body text-[11px] text-mauve/50">Registro manual entra como autorrelato.</p>
-            <button onClick={save} disabled={saving || !evTitle.trim() || !evDate}
-              className="px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium disabled:opacity-40 hover:opacity-90 transition-opacity">
-              {saving ? 'Salvando…' : editingId ? 'Atualizar' : 'Salvar'}
-            </button>
-          </div>
-        </motion.div>
-      )}
-
       {loading ? (
         <div className="card-premium p-10 text-center flex items-center justify-center">
           <Loader2 size={24} className="animate-spin text-petal" />
         </div>
-      ) : items.length === 0 ? (
+      ) : history.length === 0 ? (
         <div className="card-premium p-10 text-center">
           <div className="w-14 h-14 rounded-2xl gradient-sintera-soft flex items-center justify-center mx-auto mb-4">
             <Clock size={26} className="text-petal" />
           </div>
-          <h2 className="font-display text-lg font-semibold text-onyx mb-1">Seu Histórico de Saúde começa aqui</h2>
+          <h2 className="font-display text-lg font-semibold text-onyx mb-1">Seu Histórico começa aqui</h2>
           <p className="font-body text-sm text-mauve max-w-sm mx-auto">
             Envie um exame ou adicione uma consulta, vacina ou procedimento para começar a
             construir sua linha do tempo de saúde.
           </p>
         </div>
       ) : (
-        <div className="space-y-6">
-          {upcoming.length > 0 && (
-            <div>
-              <p className="font-body text-xs font-semibold text-mauve/70 uppercase tracking-wider mb-3">Próximos</p>
-              <div className="relative pl-6">
-                <div className="absolute left-[7px] top-2 bottom-2 w-px bg-petal/30" />
-                <div className="space-y-4">{upcoming.map(renderItem)}</div>
-              </div>
-            </div>
-          )}
-          {past.length > 0 && (
-            <div>
-              {upcoming.length > 0 && (
-                <p className="font-body text-xs font-semibold text-mauve/70 uppercase tracking-wider mb-3">Histórico</p>
-              )}
-              <div className="relative pl-6">
-                <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border/60" />
-                <div className="space-y-4">{past.map(renderItem)}</div>
-              </div>
-            </div>
-          )}
+        <div className="relative pl-6">
+          <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border/60" />
+          <div className="space-y-4">{history.map(renderItem)}</div>
         </div>
       )}
 
       <p className="font-body text-[11px] text-mauve/40 text-center">
-        Organização factual do seu Histórico de Saúde. Não constitui diagnóstico nem avaliação clínica.
+        Organização factual do seu Histórico. Não constitui diagnóstico nem avaliação clínica.
       </p>
 
-      {/* Lembrete no calendário para evento futuro */}
+      {/* Formulário ÚNICO de evento (criar/editar) — o MESMO da Agenda */}
       <AgendarModal
-        open={!!reminderFor}
-        onClose={() => setReminderFor(null)}
-        defaultTitle={reminderFor?.title ?? ''}
-        initialEvent={reminderFor ? {
-          eventType: toAgendaType(reminderFor.eventType),
-          title: reminderFor.title,
-          date: reminderFor.date.slice(0, 10),
-        } : undefined}
+        open={modalOpen}
+        onClose={() => { setModalOpen(false); setEditingEvent(null) }}
+        onSave={handleSave}
+        initialEvent={editingEvent ? eventToInput(editingEvent) : undefined}
+        isEditing={!!editingEvent}
+      />
+
+      <ConfirmDialog
+        open={!!confirm}
+        message={confirm?.message ?? ''}
+        confirmLabel={confirm?.confirmLabel ?? 'Confirmar'}
+        onConfirm={() => { const c = confirm; setConfirm(null); c?.onYes() }}
+        onCancel={() => setConfirm(null)}
       />
     </div>
   )

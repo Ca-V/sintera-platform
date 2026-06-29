@@ -13,7 +13,8 @@ import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import { compareNames } from '@/lib/exams/nameMatch'
 import FeedbackModal from '@/components/FeedbackModal'
-import AgendarModal from '@/components/AgendarModal'
+import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
+import { useEventForm } from '@/components/eventForm'
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -111,7 +112,7 @@ function IndexCard({ index }: { index: { numerator: number; denominator: number;
                 É uma contagem simples: de todos os biomarcadores numéricos com referência impressa neste laudo, quantos estão dentro da faixa informada pelo laboratório.
               </p>
               <p className="font-body text-xs text-mauve leading-relaxed mb-2">
-                <strong className="text-onyx">Importante:</strong> cada laboratório usa referências próprias. Um mesmo valor pode estar "dentro" em um laudo e "fora" em outro.
+                <strong className="text-onyx">Importante:</strong> cada laboratório usa referências próprias. Um mesmo valor pode estar “dentro” em um laudo e “fora” em outro.
               </p>
               <p className="font-body text-xs text-amber-700 bg-amber-50 rounded-xl px-3 py-2 leading-relaxed">
                 Esta métrica não representa diagnóstico, risco ou estado geral de saúde. Não substitui avaliação médica.
@@ -163,7 +164,8 @@ function formatDate(iso: string) {
 export default function ExamDetailPage() {
   const params  = useParams()
   const router  = useRouter()
-  const { profile } = useUser()
+  const { user, profile } = useUser()
+  const { saveEvent } = useEventForm()
   const examId  = params.id as string
   const supabase = useRef(createClient()).current
   // P1 — guarda de disparo único da auto-análise (cobre Strict Mode / re-render)
@@ -228,7 +230,7 @@ export default function ExamDetailPage() {
     if (!exam || deleting) return
     const ok = window.confirm(
       `Excluir "${exam.type ?? 'Exame'}"?\n\nIsto remove o exame, seus biomarcadores e insights, e o arquivo enviado. ` +
-      `O seu Histórico de Saúde será recalculado sem este exame. Esta ação não pode ser desfeita.`,
+      `O seu Histórico será recalculado sem este exame. Esta ação não pode ser desfeita.`,
     )
     if (!ok) return
     setDeleting(true)
@@ -432,10 +434,10 @@ export default function ExamDetailPage() {
         Impresso em {new Date().toLocaleDateString('pt-BR')}.
       </div>
 
-      {/* Voltar para Exames e Documentos */}
+      {/* Voltar para Exames */}
       <button onClick={() => router.push('/dashboard/exams')}
         className="flex items-center gap-2 text-mauve hover:text-petal transition-colors text-sm font-body print:hidden">
-        <ArrowLeft size={16} /> Exames e Documentos
+        <ArrowLeft size={16} /> Exames
       </button>
 
       {/* Conferência de identidade — nome do paciente vs perfil */}
@@ -824,12 +826,19 @@ export default function ExamDetailPage() {
       {/* FeedbackModal P2 — aparece após 1ª análise no Beta */}
       <FeedbackModal />
 
-      {/* AgendarModal */}
+      {/* AgendarModal — salva na Agenda (caminho único); "Repetir exame" cria evento de exame */}
       <AgendarModal
         open={agendarOpen}
         onClose={() => setAgendarOpen(false)}
+        onSave={async (input: AgendaEventInput) => {
+          if (!user) return
+          await saveEvent(user.id, input, null)
+          setAgendarOpen(false)
+        }}
+        onGoToHistory={() => router.push('/dashboard/timeline')}
         defaultTitle={exam?.type ? `Repetir ${exam.type}` : ''}
         defaultNotes={`Referente ao exame: ${exam?.type ?? ''}`}
+        initialEvent={{ eventType: 'exame' }}
       />
 
       {/* Excluir exame — ação destrutiva */}
@@ -841,7 +850,7 @@ export default function ExamDetailPage() {
             {deleting ? 'Excluindo…' : 'Excluir exame'}
           </button>
           <p className="font-body text-[11px] text-mauve/50 mt-1">
-            Remove o exame, seus biomarcadores e insights. O seu Histórico de Saúde é recalculado.
+            Remove o exame, seus biomarcadores e insights. O seu Histórico é recalculado.
           </p>
         </div>
       )}

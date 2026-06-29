@@ -170,7 +170,7 @@ export default function ConfiguracoesPage() {
         <div className="flex items-center justify-between py-2">
           <div className="pr-4">
             <p className="font-body text-sm text-onyx">Receber lembretes por WhatsApp</p>
-            <p className="font-body text-xs text-mauve mt-0.5">Lembretes dos eventos do seu Planejamento de Saúde (consultas, exames). Você pode desativar quando quiser.</p>
+            <p className="font-body text-xs text-mauve mt-0.5">Lembretes dos eventos da sua Agenda (consultas, exames). Você pode desativar quando quiser.</p>
           </div>
           <button onClick={() => setWaOptIn(v => !v)} aria-label="Ativar lembretes por WhatsApp"
             className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${waOptIn ? 'bg-sage' : 'bg-border'}`}>

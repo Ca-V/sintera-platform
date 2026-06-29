@@ -1,18 +1,19 @@
-// Template de e-mail de lembrete de evento da agenda (Fase 2).
-// Estilo alinhado ao welcome-template. Sem conteúdo clínico.
+// Template de e-mail de lembrete de evento da Agenda.
+// Renderiza a PROJEÇÃO do domínio (REQ-NOTIF-001): data, horário, tipo, profissional,
+// estabelecimento, local, modalidade e preparo — quando disponíveis. Sem juízo clínico.
+
+import type { EventNotification } from '@/lib/agenda/notification'
 
 interface ReminderData {
   firstName: string
-  title: string
-  dateLabel: string   // ex.: "amanhã, sex, 13 jun"
-  timeLabel: string | null
-  notes: string | null
-  typeLabel: string
+  notification: EventNotification   // heading + typeLabel + lines (já projetadas do domínio)
 }
 
 export function reminderEmailHtml(d: ReminderData): string {
   const name = d.firstName.trim() || 'Olá'
-  const when = `${d.dateLabel}${d.timeLabel ? ` às ${d.timeLabel}` : ''}`
+  const n = d.notification
+  const lines = n.lines.map(l =>
+    `<p style="margin:0 0 4px;font-size:14px;color:#6B6B70;">${l.icon} ${l.text}</p>`).join('')
   return /* html */`
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -31,14 +32,13 @@ export function reminderEmailHtml(d: ReminderData): string {
         </td></tr>
         <tr><td style="background:#FFFFFF;border-radius:20px;padding:36px 32px;box-shadow:0 2px 16px rgba(0,0,0,0.06);">
           <p style="margin:0 0 6px;font-size:13px;color:#9B8EA8;letter-spacing:0.08em;text-transform:uppercase;font-weight:600;">
-            Lembrete · ${d.typeLabel}
+            Lembrete · ${n.typeLabel}
           </p>
           <h1 style="margin:0 0 18px;font-size:22px;color:#1C1C1E;font-weight:700;">${name}, você tem um compromisso de saúde</h1>
           <table width="100%" cellpadding="0" cellspacing="0" style="background:#FAF8F5;border-radius:14px;padding:18px 20px;margin-bottom:18px;">
             <tr><td>
-              <p style="margin:0 0 4px;font-size:17px;color:#1C1C1E;font-weight:600;">${d.title}</p>
-              <p style="margin:0;font-size:14px;color:#6B6B70;">${when}</p>
-              ${d.notes ? `<p style="margin:10px 0 0;font-size:13px;color:#9B8EA8;">${d.notes}</p>` : ''}
+              <p style="margin:0 0 8px;font-size:17px;color:#1C1C1E;font-weight:600;">${n.heading}</p>
+              ${lines}
             </td></tr>
           </table>
           <p style="margin:0;font-size:13px;color:#9B8EA8;line-height:1.6;">
@@ -57,17 +57,16 @@ export function reminderEmailHtml(d: ReminderData): string {
 
 export function reminderEmailText(d: ReminderData): string {
   const name = d.firstName.trim() || 'Olá'
-  const when = `${d.dateLabel}${d.timeLabel ? ` às ${d.timeLabel}` : ''}`
+  const n = d.notification
   return [
-    `SINTERA — Lembrete (${d.typeLabel})`,
+    `SINTERA — Lembrete (${n.typeLabel})`,
     '',
     `${name}, você tem um compromisso de saúde:`,
     '',
-    `• ${d.title}`,
-    `• ${when}`,
-    d.notes ? `• ${d.notes}` : '',
+    `• ${n.heading}`,
+    ...n.lines.map(l => `• ${l.icon} ${l.text}`),
     '',
     'A SINTERA organiza seus eventos de saúde. Não oferece diagnóstico nem orientação clínica.',
     'Você recebe este lembrete porque criou este evento na SINTERA.',
-  ].filter(Boolean).join('\n')
+  ].join('\n')
 }

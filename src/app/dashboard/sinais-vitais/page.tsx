@@ -1,7 +1,7 @@
 'use client'
 
 // ============================================================
-// Sinais vitais — série temporal autorrelatada (dentro de Indicadores de Saúde)
+// Sinais vitais — série temporal autorrelatada (dentro de Histórico)
 // ============================================================
 // Pressão arterial, frequência cardíaca, glicemia, saturação, temperatura.
 // Registro factual da própria pessoa para acompanhar no tempo e levar ao
@@ -80,6 +80,9 @@ export default function SinaisVitaisPage() {
     setLoading(false)
   }, [user, supabase])
 
+  // Carrega na montagem (e após mutações); o setLoading(true) síncrono — o spinner —
+  // é intencional.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { if (!authLoading) load() }, [authLoading, load])
 
   function chooseMetric(m: Vital) { setMetric(m); setUnit(DEFAULT_UNIT[m]) }
@@ -110,7 +113,7 @@ export default function SinaisVitaisPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
       <Link href="/dashboard/saude" className="inline-flex items-center gap-1.5 font-body text-sm text-mauve hover:text-petal transition-colors">
-        <ArrowLeft size={15} /> Indicadores de Saúde
+        <ArrowLeft size={15} /> Histórico
       </Link>
 
       <div className="flex flex-wrap gap-2">
@@ -123,7 +126,7 @@ export default function SinaisVitaisPage() {
         <div>
           <div className="inline-flex items-center gap-1.5 text-petal mb-2">
             <HeartPulse size={16} />
-            <span className="font-body text-xs font-medium uppercase tracking-wider">Indicadores de Saúde</span>
+            <span className="font-body text-xs font-medium uppercase tracking-wider">Histórico</span>
           </div>
           <h1 className="font-display text-2xl font-semibold text-onyx">Sinais vitais</h1>
           <p className="font-body text-sm text-mauve mt-1">Acompanhe pressão arterial, frequência cardíaca, glicemia e outros ao longo do tempo. Registro seu — sem juízo clínico.</p>

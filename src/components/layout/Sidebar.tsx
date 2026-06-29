@@ -4,16 +4,19 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  LayoutDashboard, FileText, Activity, Clock, Pill, Receipt, CalendarDays,
-  HeartPulse, Stethoscope, ScrollText, Droplet,
+  LayoutDashboard, FileText, Clock, Pill, Receipt, CalendarDays,
+  HeartPulse, Stethoscope, ScrollText, Droplet, Activity, Ruler, Settings,
   X, ChevronRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUser } from '@/context/UserContext'
 
-// Arquitetura de navegação (governança/organização da saúde — sem suporte à
-// decisão clínica). Cada item tem papel único.
-// (Inclui Ciclo e Contracepção em "Minhas informações".)
+// Arquitetura de navegação que acompanha o MODELO MENTAL da usuária (sem jargão):
+//   Minha Saúde   = o que ela faz / acompanha na jornada (Agenda, Histórico, Exames, Medicamentos…).
+//   Meu Perfil    = quem ela é em termos de saúde (problemas, hábitos, medidas, ciclo).
+//   Organização   = gestão (financeiro + compartilhamento).
+//   Configurações = conta.
+// "Histórico" reúne Linha do Tempo + Evolução (duas visões do registro longitudinal).
 const navGroups: {
   title: string
   items: { href: string; icon: React.ElementType; label: string; extra?: string[] }[]
@@ -25,38 +28,35 @@ const navGroups: {
     ],
   },
   {
-    title: 'Minhas informações',
+    title: 'Minha Saúde',
     items: [
-      { href: '/dashboard/exams',        icon: FileText,  label: 'Exames e Documentos' },
-      { href: '/dashboard/medicamentos', icon: Pill,      label: 'Medicamentos e Suplementos' },
-      { href: '/dashboard/saude',        icon: Activity,  label: 'Indicadores de Saúde', extra: ['/dashboard/medidas', '/dashboard/sinais-vitais'] },
-      { href: '/dashboard/ciclo',        icon: Droplet,   label: 'Ciclo e Contracepção' },
-      { href: '/dashboard/timeline',     icon: Clock,     label: 'Histórico de Saúde', extra: ['/dashboard/historico'] },
+      { href: '/dashboard/agenda',       icon: CalendarDays, label: 'Agenda' },
+      { href: '/dashboard/timeline',     icon: Clock,        label: 'Histórico', extra: ['/dashboard/saude', '/dashboard/historico'] },
+      { href: '/dashboard/exams',        icon: FileText,     label: 'Exames' },
+      { href: '/dashboard/medicamentos', icon: Pill,         label: 'Medicamentos, Suplementos, Produtos e Dispositivos' },
+    ],
+  },
+  {
+    title: 'Meu Perfil',
+    items: [
+      { href: '/dashboard/condicoes',     icon: Stethoscope, label: 'Problemas de Saúde' },
+      { href: '/dashboard/habitos',       icon: HeartPulse,  label: 'Hábitos' },
+      { href: '/dashboard/medidas',       icon: Ruler,       label: 'Medidas Corporais' },
+      { href: '/dashboard/sinais-vitais', icon: Activity,    label: 'Sinais Vitais' },
+      { href: '/dashboard/ciclo',         icon: Droplet,     label: 'Ciclo e Contracepção' },
     ],
   },
   {
     title: 'Organização',
     items: [
-      { href: '/dashboard/agenda', icon: CalendarDays, label: 'Planejamento de Saúde' },
-    ],
-  },
-  {
-    title: 'Contexto',
-    items: [
-      { href: '/dashboard/habitos',   icon: HeartPulse,   label: 'Hábitos de Vida' },
-      { href: '/dashboard/condicoes', icon: Stethoscope,  label: 'Condições de Saúde' },
-    ],
-  },
-  {
-    title: 'Compartilhar',
-    items: [
+      { href: '/dashboard/gastos',    icon: Receipt,    label: 'Gastos' },
       { href: '/dashboard/relatorio', icon: ScrollText, label: 'Relatórios' },
     ],
   },
   {
-    title: 'Financeiro',
+    title: 'Configurações',
     items: [
-      { href: '/dashboard/gastos', icon: Receipt, label: 'Gastos com Saúde' },
+      { href: '/dashboard/configuracoes', icon: Settings, label: 'Configurações' },
     ],
   },
 ]

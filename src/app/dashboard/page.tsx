@@ -4,12 +4,13 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
-  FileText, Activity, Clock, Pill, ScrollText, CalendarDays, Droplet,
-  Upload, CheckCircle, AlertCircle, ArrowRight, FlaskConical, Bell, ChevronRight,
+  FileText, Clock, Pill, ScrollText, CalendarDays, Droplet,
+  Upload, CheckCircle, AlertCircle, FlaskConical, Bell, ChevronRight,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
-import AgendarModal from '@/components/AgendarModal'
+import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
+import { useEventForm } from '@/components/eventForm'
 
 interface ExamSummary {
   id: string
@@ -39,11 +40,11 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
 
 // Acesso rápido — usa exatamente a nomenclatura do menu lateral esquerdo.
 const QUICK_ACCESS: { href: string; icon: React.ElementType; label: string; desc: string; tile: string; tint: string }[] = [
-  { href: '/dashboard/exams',        icon: FileText,    label: 'Exames e Documentos',       desc: 'Laudos e arquivos',              tile: 'bg-blush',          tint: 'text-petal' },
-  { href: '/dashboard/saude',        icon: Activity,    label: 'Indicadores de Saúde',      desc: 'Valores atuais dos exames',      tile: 'bg-lavender-light', tint: 'text-lavender' },
-  { href: '/dashboard/timeline',     icon: Clock,       label: 'Histórico de Saúde',        desc: 'Linha do tempo e evolução',      tile: 'bg-sage-light',     tint: 'text-sage' },
-  { href: '/dashboard/agenda',       icon: CalendarDays,label: 'Planejamento de Saúde',     desc: 'Agenda e lembretes',             tile: 'bg-warm',           tint: 'text-gold' },
-  { href: '/dashboard/medicamentos', icon: Pill,        label: 'Medicamentos e Suplementos',desc: 'Em uso e recompra',              tile: 'bg-sage-light',     tint: 'text-sage' },
+  // Ordem espelha a barra lateral: Minha Saúde primeiro, depois Contexto/Organização.
+  { href: '/dashboard/timeline',     icon: Clock,       label: 'Histórico',                 desc: 'Linha do tempo e evolução',      tile: 'bg-sage-light',     tint: 'text-sage' },
+  { href: '/dashboard/agenda',       icon: CalendarDays,label: 'Agenda',                   desc: 'Eventos e lembretes',            tile: 'bg-warm',           tint: 'text-gold' },
+  { href: '/dashboard/exams',        icon: FileText,    label: 'Exames',                    desc: 'Laudos e documentos',            tile: 'bg-blush',          tint: 'text-petal' },
+  { href: '/dashboard/medicamentos', icon: Pill,        label: 'Medicamentos, Suplementos, Produtos e Dispositivos', desc: 'Em uso, recompra e dispositivos', tile: 'bg-sage-light',     tint: 'text-sage' },
   { href: '/dashboard/ciclo',        icon: Droplet,     label: 'Ciclo e Contracepção',      desc: 'Menstruação e troca de método',  tile: 'bg-blush',          tint: 'text-petal' },
   { href: '/dashboard/relatorio',    icon: ScrollText,  label: 'Relatórios',                desc: 'Compartilhar com profissionais', tile: 'bg-lavender-light', tint: 'text-lavender' },
 ]
@@ -52,6 +53,7 @@ export default function DashboardPage() {
   const { user, profile } = useUser()
   const router   = useRouter()
   const supabase = useRef(createClient()).current
+  const { saveEvent, services } = useEventForm()
 
   const [stats, setStats]         = useState<Stats | null>(null)
   const [recentExams, setRecent]   = useState<ExamSummary[]>([])
@@ -63,32 +65,26 @@ export default function DashboardPage() {
   const greeting    = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite'
   const displayName = profile?.name?.split(' ')[0] ?? 'por aqui'
 
-  useEffect(() => {
-    if (!user) return
-    loadData()
-  }, [user])
-
   async function loadData() {
     setLoading(true)
 
-    const todayISO = new Date().toISOString().slice(0, 10)
-    const [examsResult, bioResult, journeyResult, nextResult] = await Promise.all([
+    const [examsResult, bioResult, journeyResult, nextEvent] = await Promise.all([
       supabase.from('exams').select('id,type,status,created_at,exam_date').eq('user_id', user!.id).order('exam_date', { ascending: false, nullsFirst: false }),
       supabase.from('current_biomarkers').select('id', { count: 'exact', head: true }).eq('user_id', user!.id).eq('synthetic', false),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (supabase as any).from('health_events').select('title,event_date', { count: 'exact' }).eq('user_id', user!.id).eq('synthetic', false).order('event_date', { ascending: false }).limit(1),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (supabase as any).from('health_events').select('title,event_date').eq('user_id', user!.id).eq('synthetic', false).gte('event_date', todayISO).order('event_date', { ascending: true }).limit(1),
+      // "Agenda · próximo" usa a FONTE ÚNICA do domínio (mesma da Agenda) — nunca
+      // uma query própria, para Dashboard e Agenda jamais divergirem (REV-04).
+      services.query.nextUpcoming(user!.id),
     ])
 
     const exams = (examsResult.data ?? []) as ExamSummary[]
     const totalBiomarkers = bioResult.count ?? 0
     const lastEvent = ((journeyResult.data ?? []) as Array<{ title: string; event_date: string }>)[0]
-    const nextEvent = ((nextResult.data ?? []) as Array<{ title: string; event_date: string }>)[0]
     setJourney({
       count: journeyResult.count ?? 0,
       last: lastEvent ? { title: lastEvent.title, date: lastEvent.event_date } : null,
-      next: nextEvent ? { title: nextEvent.title, date: nextEvent.event_date } : null,
+      next: nextEvent ? { title: nextEvent.title, date: nextEvent.date } : null,
     })
 
     setStats({
@@ -99,6 +95,20 @@ export default function DashboardPage() {
     })
     setRecent(exams.slice(0, 4))
     setLoading(false)
+  }
+
+  useEffect(() => {
+    if (!user) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
+
+  // "Agendar" salva na Agenda pelo MESMO caminho dos demais módulos (não só exporta).
+  async function handleAgendarSave(input: AgendaEventInput) {
+    if (!user) return
+    await saveEvent(user.id, input, null)
+    setAgendar(false); await loadData()
   }
 
   const isEmpty = !loading && stats?.totalExams === 0 && journey.count === 0
@@ -118,7 +128,7 @@ export default function DashboardPage() {
 
       {/* ───────────────────────── Destaques (o mais importante, no topo) ───────────────────────── */}
 
-      {/* Próximo no Planejamento de Saúde — sensível ao tempo */}
+      {/* Próximo na Agenda — sensível ao tempo */}
       {!loading && journey.next && (
         <motion.button
           initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 }}
@@ -128,7 +138,7 @@ export default function DashboardPage() {
             <CalendarDays size={22} className="text-petal" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-body text-[11px] font-medium uppercase tracking-wider text-petal">Planejamento de Saúde · próximo</p>
+            <p className="font-body text-[11px] font-medium uppercase tracking-wider text-petal">Agenda · próximo</p>
             <p className="font-body text-sm font-semibold text-onyx truncate mt-0.5">{journey.next.title}</p>
             <p className="font-body text-xs text-mauve mt-0.5">{formatDate(journey.next.date)}</p>
           </div>
@@ -149,7 +159,7 @@ export default function DashboardPage() {
             <p className="font-body text-sm font-semibold text-onyx">
               {stats.pendingExams} exame{stats.pendingExams !== 1 ? 's' : ''} aguardando extração
             </p>
-            <p className="font-body text-xs text-mauve mt-0.5">Em Exames e Documentos</p>
+            <p className="font-body text-xs text-mauve mt-0.5">Em Exames</p>
           </div>
           <ChevronRight size={16} className="text-mauve/40 group-hover:text-gold transition-colors flex-shrink-0" />
         </motion.button>
@@ -279,8 +289,13 @@ export default function DashboardPage() {
         </motion.div>
       )}
 
-      {/* AgendarModal */}
-      <AgendarModal open={agendarOpen} onClose={() => setAgendar(false)} />
+      {/* AgendarModal — salva na Agenda (caminho único) e oferece exportar depois */}
+      <AgendarModal
+        open={agendarOpen}
+        onClose={() => setAgendar(false)}
+        onSave={handleAgendarSave}
+        onGoToHistory={() => router.push('/dashboard/timeline')}
+      />
 
     </div>
   )
