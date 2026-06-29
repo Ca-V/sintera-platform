@@ -17,13 +17,17 @@ interface Props {
   categories: FilterCategory[]
   selected: Set<string>
   onToggle: (key: string) => void
+  /** Frase-guia opcional acima dos chips (deixa claro que são clicáveis). */
+  label?: string
 }
 
-export default function CategoryFilterBar({ categories, selected, onToggle }: Props) {
+export default function CategoryFilterBar({ categories, selected, onToggle, label }: Props) {
   if (categories.length <= 1) return null // 0/1 categoria → filtro não agrega
   return (
-    <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por categoria">
-      {categories.map(({ key, label, Icon }) => {
+    <div className="space-y-2">
+      {label && <p className="font-body text-xs text-mauve">{label}</p>}
+      <div className="flex flex-wrap gap-2" role="group" aria-label={label ?? 'Filtrar por categoria'}>
+        {categories.map(({ key, label: catLabel, Icon }) => {
         const on = selected.has(key)
         return (
           <button
@@ -38,10 +42,11 @@ export default function CategoryFilterBar({ categories, selected, onToggle }: Pr
             }`}
           >
             <Icon size={13} className={on ? 'text-white' : 'text-mauve/40'} />
-            {label}
+            {catLabel}
           </button>
         )
-      })}
+        })}
+      </div>
     </div>
   )
 }

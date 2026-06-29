@@ -395,7 +395,12 @@ export default function TimelinePage() {
 
       {/* Filtro por categoria (só visualização) — aparece quando há ≥2 categorias */}
       {!loading && filterCats.length > 1 && (
-        <CategoryFilterBar categories={filterCats} selected={shownCats} onToggle={toggleCat} />
+        <CategoryFilterBar
+          categories={filterCats}
+          selected={shownCats}
+          onToggle={toggleCat}
+          label="Toque nas categorias para mostrar ou ocultar itens na linha do tempo:"
+        />
       )}
 
       {loading ? (
