@@ -5,7 +5,7 @@ import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Upload, FileText, Clock, CheckCircle, AlertCircle,
-  Plus, X, Loader2, Zap, Search, ChevronDown, ChevronUp, Trash2, Pencil, Check, Camera, Dna, ChevronRight,
+  Plus, X, Loader2, Zap, Search, ChevronDown, ChevronUp, Trash2, Pencil, Check, Camera, Dna, Image as ImageIcon,
 } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -78,6 +78,9 @@ export default function ExamsPage() {
   const [loadingExams, setLoadingExams] = useState(true)
   const [uploading, setUploading]       = useState(false)
   const [uploadError, setUploadError]   = useState<string | null>(null)
+  // "Adicionar exame": categoria escolhida (convencional vs ômico). Só apresentação —
+  // ômico ROTEIA para o fluxo próprio (catálogo+versionamento); não funde processamento.
+  const [addCategory, setAddCategory]   = useState<'convencional' | 'omico'>('convencional')
 
   const [analyzing, setAnalyzing]     = useState<Record<string, true>>({})
   const [examErrors, setExamErrors]   = useState<Record<string, string>>({})
@@ -261,19 +264,6 @@ export default function ExamsPage() {
         <p className="font-body text-sm text-mauve">Envie seus <strong className="font-medium text-onyx/70">exames</strong> (extraímos os dados por IA), <strong className="font-medium text-onyx/70">receitas</strong> e outros arquivos de saúde — por PDF ou foto.</p>
       </motion.div>
 
-      {/* Entrada para Ômica (metabolômica e outros) */}
-      <Link href="/dashboard/omics"
-        className="card-premium p-4 flex items-center gap-3 hover:shadow-md transition-shadow group">
-        <div className="w-10 h-10 rounded-2xl bg-lavender-light flex items-center justify-center flex-shrink-0">
-          <Dna size={19} className="text-lavender" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-body text-sm font-semibold text-onyx">Ômica</p>
-          <p className="font-body text-xs text-mauve mt-0.5">Registre e importe metabolômica, proteômica, microbioma e outros — com catálogo, versionamento e comparação no tempo</p>
-        </div>
-        <ChevronRight size={16} className="text-mauve/40 group-hover:text-lavender transition-colors flex-shrink-0" />
-      </Link>
-
       {/* Aviso destacado: exame(s) com nome divergente do perfil */}
       {(() => {
         const divergentes = exams.filter(
@@ -298,62 +288,9 @@ export default function ExamsPage() {
         )
       })()}
 
-      {/* Drop zone */}
-      <motion.label
-        initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-        onDragOver={e => { e.preventDefault(); setDragging(true) }}
-        onDragLeave={onDragLeave} onDrop={onDrop}
-        className={['block border-2 border-dashed rounded-2xl p-10 text-center transition-all duration-200 cursor-pointer',
-          dragging ? 'border-petal bg-blush' : 'border-border hover:border-petal/50 hover:bg-blush/30',
-          uploading ? 'opacity-60 pointer-events-none select-none' : ''].join(' ')}
-      >
-        <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" className="sr-only" disabled={uploading} onChange={onInputChange} />
-        <div className="w-14 h-14 rounded-2xl gradient-sintera-soft flex items-center justify-center mx-auto mb-4">
-          <Upload size={24} className={`text-petal ${uploading ? 'animate-bounce' : ''}`} />
-        </div>
-        {uploading ? (
-          <div className="flex flex-col items-center gap-2">
-            <p className="font-display text-lg font-semibold text-onyx">Enviando exame…</p>
-            <p className="font-body text-xs text-mauve">Não feche esta aba até concluir</p>
-          </div>
-        ) : (
-          <>
-            <p className="font-display text-lg font-semibold text-onyx mb-1">Arraste seu exame aqui</p>
-            <p className="font-body text-sm text-mauve mb-4">ou clique para selecionar um arquivo</p>
-            <p className="text-xs font-body text-mauve/60 mb-5">PDF ou foto do laudo (JPG/PNG) · Até 50 MB</p>
-            <span className="inline-flex items-center gap-2 gradient-sintera text-white font-body text-sm font-medium px-6 py-2.5 rounded-full hover:opacity-90 transition-opacity shadow-sm">
-              <Plus size={15} /> Selecionar arquivo
-            </span>
-          </>
-        )}
-      </motion.label>
-
-      {/* Tirar foto do laudo (abre a câmera no celular) */}
-      <label className={['mt-3 inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-petal/40 text-petal font-body text-sm font-medium cursor-pointer hover:bg-blush transition-colors',
-        uploading ? 'opacity-60 pointer-events-none' : ''].join(' ')}>
-        <input type="file" accept="image/*" capture="environment" className="sr-only" disabled={uploading} onChange={onInputChange} />
-        <Camera size={15} /> Tirar foto do laudo
-      </label>
-
-      {/* Direcionamento: laudos de ômica têm fluxo próprio (catálogo + versionamento) */}
-      <div className="mt-3 rounded-2xl border border-lavender/30 bg-lavender-light/40 px-4 py-3 flex items-start gap-3">
-        <Dna size={16} className="text-lavender flex-shrink-0 mt-0.5" />
-        <p className="font-body text-xs text-onyx leading-relaxed">
-          É um exame de <strong>ômica</strong> (metabolômica, proteômica, microbioma, genética…)? Esses laudos têm
-          centenas a milhares de marcadores e seguem um fluxo próprio, com catálogo e versionamento —
-          registre em <Link href="/dashboard/omics" className="text-lavender hover:underline font-medium">Ômica</Link>,
-          não aqui.
-        </p>
-      </div>
-
-      {uploadError && (
-        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-          className="flex items-start gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-xl">
-          <AlertCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
-          <p className="font-body text-xs text-red-700 flex-1">{uploadError}</p>
-          <button type="button" onClick={() => setUploadError(null)} className="text-red-300 hover:text-red-500"><X size={15} /></button>
-        </motion.div>
-      )}
+      {/* Área "Meus exames" (foco): filtros + lista. A área "Adicionar exame" foi
+          movida para o FIM da página (hub: primeiro "o que eu já tenho?", depois
+          "como adiciono outro?"). */}
 
       {/* ── Filtros (Epic Fase 1) ────────────────────────────────────────── */}
       {exams.length > 0 && (
@@ -437,7 +374,7 @@ export default function ExamsPage() {
         <div className="card-premium p-12 text-center">
           <FileText size={36} className="text-border mx-auto mb-3" />
           <p className="font-body text-sm text-mauve">Nenhum exame ainda</p>
-          <p className="font-body text-xs text-mauve/60 mt-1">Faça upload do primeiro exame acima</p>
+          <p className="font-body text-xs text-mauve/60 mt-1">Adicione seu primeiro exame no bloco abaixo</p>
         </div>
       ) : examsByYear.length === 0 ? (
         <div className="card-premium p-10 text-center">
@@ -590,6 +527,101 @@ export default function ExamsPage() {
           })}
         </div>
       )}
+
+      {/* ════ Adicionar exame (Centro de Entrada de Exames) — área de AÇÃO ════
+          Hub: "o que já tenho?" (lista, acima) → "como adiciono outro?" (aqui).
+          Costura de evolução: blocos futuros "Importar exame" (integrações: labs,
+          convênios, Apple/Google Health, Garmin, Oura, HL7/FHIR…) e "Solicitar
+          exame" entram como irmãos deste card, sem redesenhar a página. */}
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+        className="card-premium p-5 space-y-4">
+        <p className="font-display text-base font-semibold text-onyx">Adicionar exame</p>
+
+        {/* Categoria do exame (define o fluxo) — NÃO confundir com método de entrada. */}
+        <div>
+          <p className="font-body text-[11px] text-mauve/70 mb-1.5">Categoria do exame</p>
+          <div className="flex gap-2">
+            {([['convencional', 'Convencional'], ['omico', 'Ômico']] as const).map(([id, label]) => (
+              <button key={id} type="button" onClick={() => setAddCategory(id)}
+                className={`px-3.5 py-1.5 rounded-full font-body text-sm font-medium border transition-colors ${
+                  addCategory === id ? 'gradient-sintera text-white border-transparent' : 'bg-ivory text-mauve border-border hover:border-petal/40'}`}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {addCategory === 'convencional' ? (
+          <div className="space-y-3">
+            <p className="font-body text-xs text-mauve">Como deseja adicionar?</p>
+            {/* Método de entrada — todos reusam o MESMO upload (onInputChange). */}
+            <motion.label
+              onDragOver={e => { e.preventDefault(); setDragging(true) }}
+              onDragLeave={onDragLeave} onDrop={onDrop}
+              className={['block border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-200 cursor-pointer',
+                dragging ? 'border-petal bg-blush' : 'border-border hover:border-petal/50 hover:bg-blush/30',
+                uploading ? 'opacity-60 pointer-events-none select-none' : ''].join(' ')}
+            >
+              <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" className="sr-only" disabled={uploading} onChange={onInputChange} />
+              <div className="w-12 h-12 rounded-2xl gradient-sintera-soft flex items-center justify-center mx-auto mb-3">
+                <Upload size={22} className={`text-petal ${uploading ? 'animate-bounce' : ''}`} />
+              </div>
+              {uploading ? (
+                <>
+                  <p className="font-display text-base font-semibold text-onyx">Enviando exame…</p>
+                  <p className="font-body text-xs text-mauve">Não feche esta aba até concluir</p>
+                </>
+              ) : (
+                <>
+                  <p className="font-display text-base font-semibold text-onyx mb-1">Arraste o PDF aqui</p>
+                  <p className="font-body text-sm text-mauve mb-3">ou clique para selecionar um arquivo</p>
+                  <span className="inline-flex items-center gap-2 gradient-sintera text-white font-body text-sm font-medium px-5 py-2 rounded-full hover:opacity-90 transition-opacity shadow-sm">
+                    <Plus size={15} /> PDF
+                  </span>
+                  <p className="text-[11px] font-body text-mauve/60 mt-3">PDF ou foto do laudo (JPG/PNG) · Até 50 MB</p>
+                </>
+              )}
+            </motion.label>
+            <div className="flex flex-wrap gap-2">
+              <label className={['inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-petal/40 text-petal font-body text-sm font-medium cursor-pointer hover:bg-blush transition-colors',
+                uploading ? 'opacity-60 pointer-events-none' : ''].join(' ')}>
+                <input type="file" accept="image/*" capture="environment" className="sr-only" disabled={uploading} onChange={onInputChange} />
+                <Camera size={15} /> Foto
+              </label>
+              <label className={['inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-petal/40 text-petal font-body text-sm font-medium cursor-pointer hover:bg-blush transition-colors',
+                uploading ? 'opacity-60 pointer-events-none' : ''].join(' ')}>
+                <input type="file" accept="image/*" className="sr-only" disabled={uploading} onChange={onInputChange} />
+                <ImageIcon size={15} /> Galeria
+              </label>
+            </div>
+          </div>
+        ) : (
+          /* Ômico: a área NÃO some — é substituída por uma chamada ao fluxo próprio.
+             Sem termos técnicos ("pipeline") na interface. */
+          <div className="rounded-2xl border border-lavender/30 bg-lavender-light/40 px-4 py-4 flex items-start gap-3">
+            <Dna size={18} className="text-lavender flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="font-body text-sm text-onyx leading-relaxed">
+                Os exames <strong>ômicos</strong> (metabolômica, proteômica, microbioma, genética…) têm
+                centenas a milhares de marcadores e possuem um <strong>fluxo específico de processamento e
+                interpretação</strong>, com catálogo, versionamento e comparação ao longo do tempo.
+              </p>
+              <Link href="/dashboard/omics"
+                className="mt-2.5 inline-flex items-center gap-1.5 font-body text-sm font-medium text-lavender hover:underline">
+                Ir para Exames Ômicos →
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {uploadError && (
+          <div className="flex items-start gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-xl">
+            <AlertCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
+            <p className="font-body text-xs text-red-700 flex-1">{uploadError}</p>
+            <button type="button" onClick={() => setUploadError(null)} className="text-red-300 hover:text-red-500"><X size={15} /></button>
+          </div>
+        )}
+      </motion.div>
     </div>
   )
 }

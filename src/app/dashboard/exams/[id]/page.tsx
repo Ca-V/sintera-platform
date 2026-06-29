@@ -687,7 +687,7 @@ export default function ExamDetailPage() {
               const Icon = cfg.Icon
               const isQualitative = b.result_type === 'qualitative'
               const refLabel = b.reference_source === 'ausente'
-                ? 'Não informada'
+                ? 'Sem faixa de referência'
                 : formatRef(b.reference_min, b.reference_max)
 
               return (
@@ -719,9 +719,9 @@ export default function ExamDetailPage() {
                     {cfg.label}
                   </span>
 
-                  {/* Fonte */}
+                  {/* Fonte — quando não há referência, não repetir "Ausente": mostra "—" */}
                   <span className="font-body text-xs text-mauve/70 capitalize">
-                    {b.reference_source ?? '—'}
+                    {b.reference_source && b.reference_source !== 'ausente' ? b.reference_source : '—'}
                   </span>
                 </motion.div>
               )
