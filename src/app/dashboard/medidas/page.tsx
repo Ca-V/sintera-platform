@@ -10,7 +10,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Loader2, Plus, X, Activity, ArrowLeft, Trash2, Camera, ScanLine } from 'lucide-react'
+import { Loader2, Plus, X, Activity, ArrowLeft, Trash2, Camera, ScanLine, ChevronDown, ChevronRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
@@ -94,6 +94,9 @@ export default function MedidasPage() {
   const [items, setItems] = useState<Entry[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
+  // REV-11: cada métrica colapsa numa barra (último valor + data); clicar expande a lista.
+  const [expanded, setExpanded] = useState<Set<string>>(new Set())
+  const toggleGroup = (g: string) => setExpanded(prev => { const n = new Set(prev); if (n.has(g)) n.delete(g); else n.add(g); return n })
 
   const [showForm, setShowForm] = useState(false)
   const [metric, setMetric] = useState<Metric>('peso')
@@ -404,34 +407,44 @@ export default function MedidasPage() {
             if (list.length === 0) return null
             // Série cronológica (lista vem do mais recente; invertemos para o gráfico).
             const serie = [...list].reverse().map(it => parseNum(it.valueText)).filter((v): v is number => v !== null)
+            const isOpen = expanded.has(g)
+            const latest = list[0] // mais recente primeiro
             return (
               <div key={g}>
-                <div className="flex items-center justify-between gap-3 mb-2">
-                  <p className="font-display text-base font-semibold text-onyx">{METRIC_LABEL[g]}</p>
-                  {serie.length >= 2 && (
-                    <div className="flex items-center gap-2">
-                      <span className="font-body text-[10px] text-mauve/50">{list.length} registros</span>
-                      <Sparkline values={serie} />
-                    </div>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  {list.map(it => (
-                    <div key={it.id} className="card-premium p-3 flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="font-body text-sm text-onyx">
-                          {it.metric === 'outro' && it.label ? <span className="text-mauve/70">{it.label}: </span> : null}
-                          <strong>{it.valueText}</strong>{it.unit ? ` ${it.unit}` : ''}
-                        </p>
-                        <p className="font-body text-[11px] text-mauve/60">{fmt(it.measuredOn)}{it.notes ? ` · ${it.notes}` : ''}</p>
+                {/* Barra colapsável: nome + último valor/data + nº (REV-11). Clicar expande. */}
+                <button type="button" onClick={() => toggleGroup(g)}
+                  className="w-full flex items-center justify-between gap-3 mb-2 text-left">
+                  <div className="flex items-center gap-2 min-w-0">
+                    {isOpen ? <ChevronDown size={16} className="text-mauve/50 flex-shrink-0" /> : <ChevronRight size={16} className="text-mauve/50 flex-shrink-0" />}
+                    <p className="font-display text-base font-semibold text-onyx truncate">{METRIC_LABEL[g]}</p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {!isOpen && latest && (
+                      <span className="font-body text-xs text-onyx"><strong>{latest.valueText}</strong>{latest.unit ? ` ${latest.unit}` : ''} <span className="text-mauve/50">· {fmt(latest.measuredOn)}</span></span>
+                    )}
+                    <span className="font-body text-[10px] text-mauve/50">{list.length}</span>
+                    {serie.length >= 2 && <Sparkline values={serie} />}
+                  </div>
+                </button>
+                {isOpen && (
+                  <div className="space-y-2">
+                    {list.map(it => (
+                      <div key={it.id} className="card-premium p-3 flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="font-body text-sm text-onyx">
+                            {it.metric === 'outro' && it.label ? <span className="text-mauve/70">{it.label}: </span> : null}
+                            <strong>{it.valueText}</strong>{it.unit ? ` ${it.unit}` : ''}
+                          </p>
+                          <p className="font-body text-[11px] text-mauve/60">{fmt(it.measuredOn)}{it.notes ? ` · ${it.notes}` : ''}</p>
+                        </div>
+                        <button onClick={() => remove(it.id)} disabled={busyId === it.id} title="Remover"
+                          className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve/60 hover:text-red-500 flex-shrink-0">
+                          <Trash2 size={13} />
+                        </button>
                       </div>
-                      <button onClick={() => remove(it.id)} disabled={busyId === it.id} title="Remover"
-                        className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve/60 hover:text-red-500 flex-shrink-0">
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )
           })}
