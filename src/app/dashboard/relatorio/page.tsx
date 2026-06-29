@@ -20,6 +20,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
 import { typeLabel, professionalLabel } from '@/lib/agenda' // fonte ÚNICA de rótulos (tipo + profissional)
+import { REPORT_DIMENSIONS_V1, buildReportTree, serializeReportSectionsV1, type ReportSectionKeyV1 } from '@/lib/report/sections'
 
 interface Med { name: string; kind: string; dose: string | null; frequency: string | null; startedOn: string | null; untilOn: string | null; status: string }
 interface Ev { title: string; eventType: string; prof: string | null; date: string; notes: string | null }
@@ -56,26 +57,14 @@ const HABIT_LABEL: Record<string, string> = {
   alcool: 'Álcool', alimentacao: 'Alimentação', hidratacao: 'Hidratação', outro: 'Outro',
 }
 
-// ════ FONTE ÚNICA da organização do relatório (regra de arquitetura, fundadora 29/06) ════
-// O SELETOR e o CORPO do relatório consomem ESTA estrutura — nenhum dos dois define
-// categorias próprias. Direção: REPORT_SECTIONS → seletor + corpo (nunca o contrário).
-// Mudou aqui? Seletor e corpo acompanham automaticamente (sem risco de divergência).
-type SectionKey = 'eventos' | 'exames' | 'omica' | 'medicamentos' | 'condicoes' | 'habitos' | 'medidas' | 'sinais' | 'visao'
-const REPORT_SECTIONS: { group: string; items: { key: SectionKey; label: string; Icon: React.ElementType }[] }[] = [
-  { group: 'Minha Saúde', items: [
-    { key: 'eventos',      label: 'Consultas e eventos', Icon: CalendarDays },
-    { key: 'exames',       label: 'Exames', Icon: FileText },
-    { key: 'omica',        label: 'Exames de ômica', Icon: FlaskConical },
-    { key: 'medicamentos', label: 'Medicamentos, Suplementos, Produtos e Dispositivos', Icon: Pill },
-  ] },
-  { group: 'Meu Perfil', items: [
-    { key: 'condicoes', label: 'Problemas de Saúde', Icon: Stethoscope },
-    { key: 'habitos',   label: 'Hábitos', Icon: HeartPulse },
-    { key: 'medidas',   label: 'Medidas Corporais', Icon: Ruler },
-    { key: 'sinais',    label: 'Sinais Vitais', Icon: Activity },
-    { key: 'visao',     label: 'Óculos e lentes', Icon: Eye },
-  ] },
-]
+// A ESTRUTURA do relatório (grupos/ordem/rótulos) vive em `lib/report` (REPORT_DIMENSIONS_V1),
+// fonte ÚNICA consumida pelas DUAS telas (dashboard + público). Aqui ficam só os ÍCONES do
+// seletor (apresentação), por seção. (Marco 1: unifica renderização sem mudar comportamento.)
+type SectionKey = ReportSectionKeyV1
+const SECTION_ICON: Record<SectionKey, React.ElementType> = {
+  eventos: CalendarDays, exames: FileText, omica: FlaskConical, medicamentos: Pill,
+  condicoes: Stethoscope, habitos: HeartPulse, medidas: Ruler, sinais: Activity, visao: Eye,
+}
 
 function periodo(start: string | null, until: string | null): string {
   if (start && until) return ` (de ${fmt(start)} até ${fmt(until)})`
@@ -184,7 +173,7 @@ export default function RelatorioPage() {
     setShareBusy(true)
     const token = (crypto.randomUUID() + crypto.randomUUID()).replace(/-/g, '')
     const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-    const sel = (Object.keys(sections) as (keyof typeof sections)[]).filter(k => sections[k])
+    const sel = serializeReportSectionsV1(sections)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (supabase as any).from('report_shares').insert({ user_id: user.id, token, expires_at: expires, sections: sel })
     await load()
@@ -274,17 +263,20 @@ export default function RelatorioPage() {
       <div className="card-premium p-5 mb-6 print:hidden">
         <p className="font-body text-sm font-semibold text-onyx mb-3">Mostrar no relatório</p>
         <div className="space-y-4">
-          {REPORT_SECTIONS.map(({ group, items }) => (
-            <div key={group}>
-              <p className="font-body text-[10px] font-semibold text-mauve/50 uppercase tracking-[0.15em] mb-1.5">{group}</p>
+          {REPORT_DIMENSIONS_V1.map(({ id, title, sections: items }) => (
+            <div key={id}>
+              <p className="font-body text-[10px] font-semibold text-mauve/50 uppercase tracking-[0.15em] mb-1.5">{title}</p>
               <div className="flex flex-col gap-1.5">
-                {items.map(({ key, label, Icon }) => (
-                  <label key={key} className="flex items-center gap-2.5 font-body text-sm text-onyx cursor-pointer">
-                    <input type="checkbox" checked={sections[key]} onChange={() => toggle(key)} className="accent-petal w-4 h-4 flex-shrink-0" />
-                    <Icon size={15} className="text-petal/70 flex-shrink-0" />
-                    <span className="min-w-0">{label}</span>
-                  </label>
-                ))}
+                {items.map(({ key, label }) => {
+                  const Icon = SECTION_ICON[key]
+                  return (
+                    <label key={key} className="flex items-center gap-2.5 font-body text-sm text-onyx cursor-pointer">
+                      <input type="checkbox" checked={sections[key]} onChange={() => toggle(key)} className="accent-petal w-4 h-4 flex-shrink-0" />
+                      <Icon size={15} className="text-petal/70 flex-shrink-0" />
+                      <span className="min-w-0">{label}</span>
+                    </label>
+                  )
+                })}
               </div>
             </div>
           ))}
@@ -499,18 +491,15 @@ export default function RelatorioPage() {
               </section>
             ),
           }
-          return REPORT_SECTIONS.map(({ group, items }) => {
-            const visible = items.filter(it => sections[it.key])
-            if (visible.length === 0) return null
-            return (
-              <div key={group}>
-                <p className="font-body text-[11px] font-semibold text-mauve/50 uppercase tracking-[0.15em] mb-3">{group}</p>
-                <div className="space-y-6">
-                  {visible.map(it => <div key={it.key}>{sectionContent[it.key]}</div>)}
-                </div>
+          // Árvore lógica via fonte única (mesma do relatório público) — testada por equivalência.
+          return buildReportTree(REPORT_DIMENSIONS_V1, sections).map(({ group, keys }) => (
+            <div key={group}>
+              <p className="font-body text-[11px] font-semibold text-mauve/50 uppercase tracking-[0.15em] mb-3">{group}</p>
+              <div className="space-y-6">
+                {keys.map(k => <div key={k}>{sectionContent[k as SectionKey]}</div>)}
               </div>
-            )
-          })
+            </div>
+          ))
         })()}
 
         <p className="font-body text-[11px] text-mauve/60 border-t border-border pt-3 leading-relaxed">

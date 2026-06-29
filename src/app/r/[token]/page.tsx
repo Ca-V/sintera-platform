@@ -9,6 +9,8 @@
 import { createClient } from '@supabase/supabase-js'
 import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
 import { typeLabel, professionalLabel } from '@/lib/agenda/presentation' // fonte ÚNICA de rótulos
+import { REPORT_DIMENSIONS_V1, buildReportTree, normalizeReportSectionsV1 } from '@/lib/report/sections'
+import type { ReactNode } from 'react'
 
 export const metadata = { robots: { index: false, follow: false } }
 
@@ -101,18 +103,11 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
   const condProprias = cdArr.filter(c => c.scope === 'propria')
   const condFamiliar = cdArr.filter(c => c.scope === 'familiar')
   const hbArr = (habits ?? []) as Array<Record<string, unknown>>
-  const allowed = Array.isArray(share.sections) ? (share.sections as string[]) : null
-  const show = (k: string) => !allowed || allowed.includes(k)
-  const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
-
-  return (
-    <div style={{ maxWidth: 680, margin: '0 auto', padding: '32px 20px', fontFamily: 'system-ui, sans-serif', color: '#2b2230', lineHeight: 1.5 }}>
-      <div style={{ borderBottom: '1px solid #ece6ef', paddingBottom: 16, marginBottom: 20 }}>
-        <h1 style={{ fontSize: 20, margin: 0 }}>Relatório de saúde — {nome}</h1>
-        <p style={{ fontSize: 12, color: '#8a7b92', marginTop: 6 }}>Gerado em {hoje} · organização dos dados registrados pela própria pessoa (SINTERA).</p>
-      </div>
-
-      {show('medicamentos') && (
+  // Marco 1: mesma ESTRUTURA do dashboard (REPORT_DIMENSIONS_V1) + compat dos links
+  // antigos via normalizeReportSectionsV1 (único ponto de tradução).
+  const selection = Object.fromEntries(normalizeReportSectionsV1(share.sections).map(k => [k, true])) as Record<string, boolean>
+  const sectionContent: Record<string, ReactNode> = {
+    medicamentos: (
       <section style={{ marginBottom: 22 }}>
         <h2 style={{ fontSize: 15 }}>Medicamentos e suplementos em uso</h2>
         {medsEmUso.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum registrado.</p> : (
@@ -124,9 +119,8 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
         )}
         {medsSusp.length > 0 && <p style={{ fontSize: 12, color: '#8a7b92' }}>Suspensos: {medsSusp.map(m => m.name as string).join(', ')}.</p>}
       </section>
-      )}
-
-      {show('condicoes') && (
+    ),
+    condicoes: (
       <section style={{ marginBottom: 22 }}>
         <h2 style={{ fontSize: 15 }}>Condições de saúde</h2>
         {condProprias.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhuma condição registrada.</p> : (
@@ -147,9 +141,8 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
           </>
         )}
       </section>
-      )}
-
-      {show('habitos') && (
+    ),
+    habitos: (
       <section style={{ marginBottom: 22 }}>
         <h2 style={{ fontSize: 15 }}>Hábitos de vida</h2>
         {hbArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum hábito registrado.</p> : (
@@ -160,9 +153,8 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
           </ul>
         )}
       </section>
-      )}
-
-      {show('visao') && (
+    ),
+    visao: (
       <section style={{ marginBottom: 22 }}>
         <h2 style={{ fontSize: 15 }}>Óculos e lentes de contato</h2>
         {ewArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum registro.</p> : (
@@ -183,9 +175,8 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
           </ul>
         )}
       </section>
-      )}
-
-      {show('eventos') && (
+    ),
+    eventos: (
       <section style={{ marginBottom: 22 }}>
         <h2 style={{ fontSize: 15 }}>Consultas, procedimentos e eventos</h2>
         {evArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum registrado.</p> : (
@@ -204,9 +195,8 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
           </table>
         )}
       </section>
-      )}
-
-      {show('exames') && (
+    ),
+    exames: (
       <section style={{ marginBottom: 22 }}>
         <h2 style={{ fontSize: 15 }}>Exames enviados</h2>
         {exArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum.</p> : (
@@ -215,9 +205,8 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
           </ul>
         )}
       </section>
-      )}
-
-      {show('omica') && (
+    ),
+    omica: (
       <section style={{ marginBottom: 22 }}>
         <h2 style={{ fontSize: 15 }}>Exames de ômica</h2>
         {omArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum registrado.</p> : (
@@ -230,9 +219,8 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
           </ul>
         )}
       </section>
-      )}
-
-      {show('medidas') && (
+    ),
+    medidas: (
       <section style={{ marginBottom: 22 }}>
         <h2 style={{ fontSize: 15 }}>Medidas corporais</h2>
         {alturaCm != null && <p style={{ fontSize: 14, margin: '0 0 6px' }}><span style={{ color: '#8a7b92' }}>Altura:</span> {alturaCm} cm</p>}
@@ -249,9 +237,8 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
           </table>
         )}
       </section>
-      )}
-
-      {show('sinais') && (
+    ),
+    sinais: (
       <section style={{ marginBottom: 22 }}>
         <h2 style={{ fontSize: 15 }}>Sinais vitais</h2>
         {vitalArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum registrado.</p> : (
@@ -267,7 +254,24 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
           </table>
         )}
       </section>
-      )}
+    ),
+  }
+  const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
+
+  return (
+    <div style={{ maxWidth: 680, margin: '0 auto', padding: '32px 20px', fontFamily: 'system-ui, sans-serif', color: '#2b2230', lineHeight: 1.5 }}>
+      <div style={{ borderBottom: '1px solid #ece6ef', paddingBottom: 16, marginBottom: 20 }}>
+        <h1 style={{ fontSize: 20, margin: 0 }}>Relatório — {nome}</h1>
+        <p style={{ fontSize: 12, color: '#8a7b92', marginTop: 6 }}>Gerado em {hoje} · organização dos dados registrados pela própria pessoa (SINTERA).</p>
+      </div>
+
+      {/* Mesma estrutura/árvore lógica do dashboard (Marco 1) — buildReportTree(REPORT_DIMENSIONS_V1). */}
+      {buildReportTree(REPORT_DIMENSIONS_V1, selection).map(({ group, keys }) => (
+        <div key={group}>
+          <p style={{ fontSize: 11, fontWeight: 600, color: '#8a7b92', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 10px' }}>{group}</p>
+          {keys.map(k => <div key={k}>{sectionContent[k]}</div>)}
+        </div>
+      ))}
 
       <p style={{ fontSize: 11, color: '#8a7b92', borderTop: '1px solid #ece6ef', paddingTop: 12 }}>
         Relatório compartilhado pela própria pessoa via SINTERA. Organiza dados autorrelatados — <strong>não é laudo, diagnóstico ou parecer</strong> e não substitui avaliação profissional.
