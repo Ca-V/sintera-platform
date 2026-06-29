@@ -131,7 +131,7 @@ export default function MedicamentosPage() {
       })
       const j = await resp.json().catch(() => ({}))
       if (!resp.ok) { setScanErr(j.error ?? `Falha ao ler a imagem (${resp.status}).`); return }
-      if (!j.items?.length) { setScanErr('Não foi possível identificar um medicamento ou suplemento nesta imagem. Verifique se o documento é mesmo um rótulo de medicamento/suplemento — para outros tipos (ex.: receita de óculos), use o módulo correspondente. Se for um medicamento, tente uma foto mais nítida.'); return }
+      if (!j.items?.length) { setScanErr('Não foi possível identificar um medicamento ou suplemento nesta imagem. Confira se o documento é um rótulo de medicamento/suplemento e se a foto está nítida.'); return }
       setScanResults(j.items)
       setShowForm(false)
     } catch (e) {
