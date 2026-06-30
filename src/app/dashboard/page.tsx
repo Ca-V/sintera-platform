@@ -5,13 +5,15 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
   FileText, Clock, Pill, ScrollText, CalendarDays, Droplet,
-  Upload, CheckCircle, AlertCircle, FlaskConical, Bell, ChevronRight,
+  Upload, CheckCircle, AlertCircle, FlaskConical, Bell, ChevronRight, FilePlus, X,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { parseDateOnly } from '@/lib/agenda'
 import { useUser } from '@/context/UserContext'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
+import DocumentIntakeHub from '@/lib/capture/intake/DocumentIntakeHub'
+import { processorFor } from '@/lib/capture/registry'
 
 interface ExamSummary {
   id: string
@@ -61,6 +63,7 @@ export default function DashboardPage() {
   const [journey, setJourney]     = useState<{ count: number; last: { title: string; date: string } | null; next: { title: string; date: string } | null }>({ count: 0, last: null, next: null })
   const [loading, setLoading]     = useState(true)
   const [agendarOpen, setAgendar] = useState(false)
+  const [intakeOpen, setIntakeOpen] = useState(false)
 
   const hour        = new Date().getHours()
   const greeting    = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite'
@@ -125,6 +128,21 @@ export default function DashboardPage() {
         <p className="font-body text-sm text-mauve mt-1">
           Seus dados de saúde organizados em um lugar só.
         </p>
+      </motion.div>
+
+      {/* Centro de Entrada — entrada unificada de documentos */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.02 }}>
+        <button onClick={() => setIntakeOpen(true)}
+          className="w-full card-premium p-4 text-left flex items-center gap-3 hover:shadow-md transition-shadow group">
+          <div className="w-11 h-11 rounded-2xl gradient-sintera flex items-center justify-center flex-shrink-0">
+            <FilePlus size={20} className="text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-body text-sm font-semibold text-onyx">Adicionar documento</p>
+            <p className="font-body text-xs text-mauve mt-0.5">Exame, receita, óculos, ômico — num só lugar</p>
+          </div>
+          <ChevronRight size={18} className="text-mauve/30 group-hover:text-petal transition-colors flex-shrink-0" />
+        </button>
       </motion.div>
 
       {/* ───────────────────────── Destaques (o mais importante, no topo) ───────────────────────── */}
@@ -297,6 +315,25 @@ export default function DashboardPage() {
         onSave={handleAgendarSave}
         onGoToHistory={() => router.push('/dashboard/timeline')}
       />
+
+      {/* Centro de Entrada — modal de entrada de documentos */}
+      {intakeOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-onyx/30 backdrop-blur-sm"
+          onClick={() => setIntakeOpen(false)}>
+          <div className="card-premium p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <p className="font-display text-lg font-semibold text-onyx">Adicionar documento</p>
+              <button onClick={() => setIntakeOpen(false)} aria-label="Fechar"
+                className="text-mauve/40 hover:text-onyx transition-colors"><X size={18} /></button>
+            </div>
+            <DocumentIntakeHub onChoose={(kind) => {
+              setIntakeOpen(false)
+              const proc = processorFor(kind)
+              if (proc) router.push(proc.target)
+            }} />
+          </div>
+        </div>
+      )}
 
     </div>
   )
