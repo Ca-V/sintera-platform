@@ -69,6 +69,17 @@ export function formatDateBR(iso: string): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso ?? '')
   return m ? `${m[3]}/${m[2]}/${m[1]}` : (iso ?? '')
 }
+/**
+ * 'YYYY-MM-DD' (data-only) → meia-noite LOCAL. Evita o bug do "dia anterior" em
+ * fusos negativos: `new Date('2026-07-03')` é interpretado como UTC e, em BR (UTC-3),
+ * vira 02/07 21h → `.toLocaleDateString` exibe o dia errado. Timestamps completos
+ * (com hora) passam direto. Use em TODO formatador de data curta que recebe datas
+ * do domínio (event.date, exam_date, datas de biomarcador etc.).
+ */
+export function toLocalDate(iso: string): Date {
+  return new Date((iso ?? '').length <= 10 ? `${iso}T00:00:00` : iso)
+}
+
 /** 'HH:MM[:SS]' → 'HH:MM'. Vazio → null. */
 export function formatTimeBR(time: string | null): string | null {
   if (!time) return null

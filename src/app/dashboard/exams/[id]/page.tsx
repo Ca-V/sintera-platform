@@ -12,6 +12,7 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import { compareNames } from '@/lib/exams/nameMatch'
+import { toLocalDate } from '@/lib/agenda'
 import FeedbackModal from '@/components/FeedbackModal'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
@@ -156,7 +157,7 @@ function formatRef(min: number | null, max: number | null): string {
 }
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+  return toLocalDate(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 // ── Componente principal ──────────────────────────────────────────────────────
