@@ -10,6 +10,7 @@ import {
   Pencil, Check, X, Flag, Trash2,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { parseDateOnly } from '@/lib/agenda'
 import { useUser } from '@/context/UserContext'
 import { compareNames } from '@/lib/exams/nameMatch'
 import FeedbackModal from '@/components/FeedbackModal'
@@ -156,7 +157,7 @@ function formatRef(min: number | null, max: number | null): string {
 }
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+  return parseDateOnly(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 // ── Componente principal ──────────────────────────────────────────────────────

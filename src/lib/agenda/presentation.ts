@@ -54,6 +54,18 @@ export function formatDateBR(iso: string): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso ?? '')
   return m ? `${m[3]}/${m[2]}/${m[1]}` : (iso ?? '')
 }
+/**
+ * Interpreta uma DATA CIVIL ('YYYY-MM-DD', sem horário) como meia-noite LOCAL —
+ * NÃO é uma conversão genérica de fuso. Evita o bug do "dia anterior": `new
+ * Date('2026-07-03')` é lido como UTC e, em BR (UTC-3), vira 02/07 21h → exibe o dia
+ * errado. Entradas que JÁ têm horário (timestamps completos, ex.: `created_at`) passam
+ * DIRETO, sem alteração. Use em todo formatador que recebe datas do domínio
+ * (event.date, exam_date, datas de biomarcador etc.).
+ */
+export function parseDateOnly(iso: string): Date {
+  return new Date((iso ?? '').length <= 10 ? `${iso}T00:00:00` : iso)
+}
+
 /** 'HH:MM[:SS]' → 'HH:MM'. Vazio → null. */
 export function formatTimeBR(time: string | null): string | null {
   if (!time) return null

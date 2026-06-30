@@ -13,6 +13,7 @@ import { motion } from 'framer-motion'
 import { Activity, TrendingUp, TrendingDown, Minus, ArrowRight, Search, Loader2, FlaskConical } from 'lucide-react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
+import { parseDateOnly } from '@/lib/agenda'
 import { useUser } from '@/context/UserContext'
 import HistoricoTabs from '@/components/HistoricoTabs'
 import { summarizeBiomarkers, computeReferenceIndex, type BiomarkerRow, type BiomarkerSummary, type Trend } from '@/lib/biomarkers/grouping'
@@ -27,7 +28,7 @@ const INTERP_CFG: Record<string, { sym: string; cls: string }> = {
 
 function formatDate(iso: string): string {
   if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' })
+  return parseDateOnly(iso).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' })
 }
 
 function TrendBadge({ trend, delta }: { trend: Trend; delta: number | null }) {
