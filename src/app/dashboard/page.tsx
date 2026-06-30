@@ -12,7 +12,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
-import { toLocalDate } from '@/lib/agenda'
+import { parseDateOnly } from '@/lib/agenda'
 
 interface ExamSummary {
   id: string
@@ -30,7 +30,7 @@ interface Stats {
 }
 
 function formatDate(iso: string) {
-  return toLocalDate(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+  return parseDateOnly(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {

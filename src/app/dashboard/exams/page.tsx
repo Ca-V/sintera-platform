@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import ExamEntryHub from '@/components/ExamEntryHub'
 import { createClient } from '@/lib/supabase/client'
-import { toLocalDate } from '@/lib/agenda'
+import { parseDateOnly } from '@/lib/agenda'
 import { useUser } from '@/context/UserContext'
 import { compareNames } from '@/lib/exams/nameMatch'
 import type { Database } from '@/lib/supabase/types'
@@ -54,7 +54,7 @@ const STATUS_FILTER_OPTIONS = [
 
 
 function formatDate(iso: string) {
-  return toLocalDate(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+  return parseDateOnly(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 function getYear(iso: string) {

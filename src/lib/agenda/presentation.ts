@@ -70,13 +70,14 @@ export function formatDateBR(iso: string): string {
   return m ? `${m[3]}/${m[2]}/${m[1]}` : (iso ?? '')
 }
 /**
- * 'YYYY-MM-DD' (data-only) → meia-noite LOCAL. Evita o bug do "dia anterior" em
- * fusos negativos: `new Date('2026-07-03')` é interpretado como UTC e, em BR (UTC-3),
- * vira 02/07 21h → `.toLocaleDateString` exibe o dia errado. Timestamps completos
- * (com hora) passam direto. Use em TODO formatador de data curta que recebe datas
- * do domínio (event.date, exam_date, datas de biomarcador etc.).
+ * Interpreta uma DATA CIVIL ('YYYY-MM-DD', sem horário) como meia-noite LOCAL —
+ * NÃO é uma conversão genérica de fuso. Evita o bug do "dia anterior": `new
+ * Date('2026-07-03')` é lido como UTC e, em BR (UTC-3), vira 02/07 21h → exibe o dia
+ * errado. Entradas que JÁ têm horário (timestamps completos, ex.: `created_at`) passam
+ * DIRETO, sem alteração. Use em todo formatador que recebe datas do domínio
+ * (event.date, exam_date, datas de biomarcador etc.).
  */
-export function toLocalDate(iso: string): Date {
+export function parseDateOnly(iso: string): Date {
   return new Date((iso ?? '').length <= 10 ? `${iso}T00:00:00` : iso)
 }
 

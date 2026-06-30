@@ -1,18 +1,18 @@
 import { describe, it, expect } from 'vitest'
-import { formatDateBR, formatTimeBR, toLocalDate, eventToNotificationInput, typeLabel, professionalLabel } from './presentation'
+import { formatDateBR, formatTimeBR, parseDateOnly, eventToNotificationInput, typeLabel, professionalLabel } from './presentation'
 import { buildEventNotification, notificationToInline } from './notification'
 import type { HealthEvent } from './event'
 
-describe('toLocalDate — data-only sem deslocamento de fuso (regressão: Painel mostrava 02/07 p/ consulta de 03/07)', () => {
+describe('parseDateOnly — data-only sem deslocamento de fuso (regressão: Painel mostrava 02/07 p/ consulta de 03/07)', () => {
   it('mantém o dia para uma data-only em qualquer fuso', () => {
-    const d = toLocalDate('2026-07-03')
+    const d = parseDateOnly('2026-07-03')
     expect(d.getFullYear()).toBe(2026)
     expect(d.getMonth()).toBe(6) // julho (0-based)
     expect(d.getDate()).toBe(3)  // com o bug (new Date('2026-07-03')=UTC), em UTC-3 seria 2
   })
   it('preserva timestamps completos (com hora)', () => {
     const iso = '2026-07-03T15:30:00Z'
-    expect(toLocalDate(iso).getTime()).toBe(new Date(iso).getTime())
+    expect(parseDateOnly(iso).getTime()).toBe(new Date(iso).getTime())
   })
 })
 
