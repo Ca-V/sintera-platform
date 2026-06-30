@@ -1,19 +1,22 @@
 // ============================================================
 // Centro de Entrada de Documentos — CONTRATOS (Trilha B, sem domínio)
 // ============================================================
-// Orquestra a captura: Documento → Classificação → Prévia → Confirmação →
-// Encaminhamento → pipeline ESPECÍFICO (já existente). Esta camada NÃO cria evento,
-// NÃO escreve no catálogo, NÃO decide domínio (Estado 2). Apenas conduz o documento
-// até o fluxo correto. Cada tipo é tratado por um DocumentProcessor desacoplado.
+// Camadas isoladas (PO 30/06):
+//   Documento → Intake (UX) → Classifier (identifica) → Processor (encaminha) → Pipeline existente
+// Esta camada NÃO cria evento, NÃO escreve catálogo, NÃO decide domínio (Estado 2).
 // ============================================================
 
-/** Tipos de documento que o Centro de Entrada reconhece (+ desconhecido). */
+/** O que a usuária deseja adicionar (intenção) + classificações auxiliares. */
 export type DocumentKind =
   | 'exam'                   // exame
-  | 'lab_report'             // laudo
-  | 'medication_label'       // rótulo/receita de medicamento ou suplemento
+  | 'medication_label'       // receita/rótulo de medicamento ou suplemento
   | 'eyeglass_prescription'  // receita de óculos/lentes
-  | 'unknown'
+  | 'omics'                  // exame ômico (pipeline próprio)
+  | 'other'                  // outro documento
+  | 'unknown'                // classificador não identificou
+
+/** Como a usuária deseja enviar (método de entrada). */
+export type IntakeMethod = 'pdf' | 'photo' | 'gallery'
 
 /** Resultado FACTUAL da classificação — a UI mostra e pede confirmação. */
 export interface ClassificationResult {
@@ -24,20 +27,20 @@ export interface ClassificationResult {
 }
 
 /**
- * Contrato de um processador de documento. O Centro de Entrada conversa SÓ com esta
- * interface; cada processador evolui de forma independente e encaminha para o pipeline
- * que JÁ existe (sem alterá-lo). `target` é a rota/destino do encaminhamento.
+ * Contrato de um processador de documento. O Intake conversa SÓ com esta interface;
+ * cada processador evolui isolado e encaminha para o pipeline que JÁ existe (sem
+ * alterá-lo). `target` = rota/destino do encaminhamento.
  */
 export interface DocumentProcessor {
-  kind: Exclude<DocumentKind, 'unknown'>
-  /** Rótulo para a usuária (sem jargão técnico). */
+  kind: Exclude<DocumentKind, 'unknown' | 'other'>
+  /** Rótulo pela INTENÇÃO da usuária ("O que deseja adicionar?"). Sem jargão. */
   label: string
   /** Nome do ícone (lucide) — a UI resolve o componente. */
   icon: string
-  /** MIME types aceitos por este processador. */
+  /** MIME types aceitos. */
   accepts: string[]
   /** Destino do encaminhamento (pipeline existente). */
   target: string
-  /** Frase de confirmação: "Detectamos que parece ser {confirmPhrase}." */
+  /** Frase de confirmação (V0.1+): "Detectamos que parece ser {confirmPhrase}." */
   confirmPhrase: string
 }

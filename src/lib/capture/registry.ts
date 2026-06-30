@@ -1,49 +1,25 @@
 // ============================================================
 // Centro de Entrada — REGISTRO de processadores (fonte única)
 // ============================================================
-// Cada tipo de documento → seu processador, que aponta para o pipeline EXISTENTE.
-// Adicionar um novo tipo (vacina, DICOM, receita veterinária…) = uma linha aqui,
-// sem mexer no orquestrador. Nenhum pipeline atual é alterado.
+// Agrega os processadores isolados (processors/*). Adicionar um novo tipo (vacina,
+// DICOM, receita veterinária…) = um arquivo em processors/ + uma linha aqui, sem
+// tocar o Intake nem os pipelines existentes.
 // ============================================================
 
 import type { DocumentKind, DocumentProcessor } from './types'
+import { examProcessor } from './processors/exam'
+import { medicationProcessor } from './processors/medication'
+import { eyeglassProcessor } from './processors/eyeglass'
+import { omicsProcessor } from './processors/omics'
 
 export const CAPTURE_PROCESSORS: DocumentProcessor[] = [
-  {
-    kind: 'exam',
-    label: 'Exame',
-    icon: 'FlaskConical',
-    accepts: ['application/pdf', 'image/jpeg', 'image/png'],
-    target: '/dashboard/exams',
-    confirmPhrase: 'um exame',
-  },
-  {
-    kind: 'lab_report',
-    label: 'Laudo',
-    icon: 'FileText',
-    accepts: ['application/pdf', 'image/jpeg', 'image/png'],
-    target: '/dashboard/exams',
-    confirmPhrase: 'um laudo',
-  },
-  {
-    kind: 'medication_label',
-    label: 'Medicamento ou suplemento',
-    icon: 'Pill',
-    accepts: ['image/jpeg', 'image/png'],
-    target: '/dashboard/medicamentos',
-    confirmPhrase: 'um rótulo ou receita de medicamento',
-  },
-  {
-    kind: 'eyeglass_prescription',
-    label: 'Receita de óculos ou lentes',
-    icon: 'Glasses',
-    accepts: ['application/pdf', 'image/jpeg', 'image/png'],
-    target: '/dashboard/condicoes',
-    confirmPhrase: 'uma receita de óculos ou lentes',
-  },
+  examProcessor,
+  medicationProcessor,
+  eyeglassProcessor,
+  omicsProcessor,
 ]
 
-/** Processador de um tipo (null para 'unknown' ou tipo não registrado). */
+/** Processador de um tipo (null para unknown/other ou tipo não registrado). */
 export function processorFor(kind: DocumentKind): DocumentProcessor | null {
   return CAPTURE_PROCESSORS.find(p => p.kind === kind) ?? null
 }
