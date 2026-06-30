@@ -1,7 +1,8 @@
 import type { DocumentProcessor } from '../types'
+import { captureForwarded } from '../result'
 
-// Processador de EXAME ÔMICO. Encaminha ao fluxo próprio de Ômica (catálogo +
-// versionamento) — pipeline distinto, NÃO fundir com exame convencional (Princípio 7).
+// Processador de EXAME ÔMICO. Pipeline próprio (catálogo + versionamento) — NÃO fundir
+// com exame convencional (Princípio 7). V1: encaminha ao fluxo de Ômica.
 export const omicsProcessor: DocumentProcessor = {
   kind: 'omics',
   label: 'Exame ômico',
@@ -9,4 +10,5 @@ export const omicsProcessor: DocumentProcessor = {
   accepts: ['application/pdf', 'image/jpeg', 'image/png'],
   target: '/dashboard/omics',
   confirmPhrase: 'um exame ômico',
+  process: async () => captureForwarded(omicsProcessor),
 }

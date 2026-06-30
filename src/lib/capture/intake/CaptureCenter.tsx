@@ -1,23 +1,24 @@
 'use client'
 
 // ============================================================
-// Centro de Entrada (Capture Center) — INTAKE · componente REUTILIZÁVEL
+// Central de Entrada (interno: CaptureCenter) — INTAKE · componente REUTILIZÁVEL
 // ============================================================
 // V1 (MVP, SEM IA): selecionar/arrastar → prévia → sugestão heurística + escolher/
-// corrigir o tipo → encaminhar ao pipeline EXISTENTE → resultado. Sem domínio novo,
-// sem criação de evento, sem lote/fila/OCR/IA. Apenas ORQUESTRAÇÃO.
-// Usado em várias superfícies (Dashboard agora; Exames/Medicamentos/Timeline/mobile
-// depois). A página é só consumidora — a lógica vive aqui.
+// corrigir o tipo → ENVIAR → resultado UNIFICADO. Estados, resultado e erro são
+// uniformes (contrato CaptureResult) — a usuária sente UM ponto de entrada, não 4
+// módulos. Sem domínio novo, sem evento, sem lote/fila/OCR/IA. Apenas ORQUESTRAÇÃO.
 // ============================================================
 
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { FlaskConical, Pill, Glasses, Dna, FileText, UploadCloud, Loader2, X } from 'lucide-react'
+import { FlaskConical, Pill, Glasses, Dna, FileText, UploadCloud, Loader2, X, CheckCircle, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import { CAPTURE_PROCESSORS, processorFor, processorsAccepting } from '../registry'
 import { classifyByFilename } from '../classifier/classify'
-import type { DocumentKind } from '../types'
+import { captureError } from '../result'
+import { logCapture } from '../telemetry'
+import type { DocumentKind, CaptureResult } from '../types'
 
 const ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   FlaskConical, Pill, Glasses, Dna, FileText,
@@ -49,8 +50,8 @@ export default function CaptureCenter({ className = '', onDone }: CaptureCenterP
   const [dragOver, setDragOver] = useState(false)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [result, setResult] = useState<CaptureResult | null>(null)
 
-  // Tipos válidos para o arquivo escolhido (por MIME).
   const validKinds = useMemo(() => (file ? processorsAccepting(file.type) : CAPTURE_PROCESSORS), [file])
 
   const pickFile = useCallback((f: File) => {
@@ -59,48 +60,67 @@ export default function CaptureCenter({ className = '', onDone }: CaptureCenterP
     if (f.size > MAX_BYTES) { setError('Arquivo muito grande (limite 50 MB).'); return }
     setFile(f)
     setPreviewUrl(f.type.startsWith('image/') ? URL.createObjectURL(f) : null)
-    // Sugestão heurística (só se o tipo aceitar o MIME do arquivo).
     const guess = classifyByFilename(f.name).kind
     setKind(processorsAccepting(f.type).some(p => p.kind === guess) ? guess : null)
   }, [])
 
   function reset() {
     if (previewUrl) URL.revokeObjectURL(previewUrl)
-    setFile(null); setPreviewUrl(null); setKind(null); setError(null); setSending(false)
+    setFile(null); setPreviewUrl(null); setKind(null); setError(null); setSending(false); setResult(null)
+  }
+
+  function cancel() {
+    if (file) logCapture({ kind, suggested: classifyByFilename(file.name).kind, outcome: 'cancelled' })
+    reset()
   }
 
   async function forward() {
     if (!file || !kind || sending) return
     const proc = processorFor(kind)
     if (!proc) return
-    setError(null)
-    // EXAME: upload + insert + navega ao resultado (pipeline existente, reusado fielmente).
-    // Demais tipos: encaminha à entrada do módulo (upload-no-hub por tipo = próximo incremento).
-    if (kind === 'exam') {
-      if (!user) { setError('Faça login para enviar.'); return }
-      setSending(true)
-      try {
-        const ext = file.name.split('.').pop() ?? 'bin'
-        const path = `${user.id}/${crypto.randomUUID()}.${ext}`
-        const up = await supabase.storage.from('exams').upload(path, file, { contentType: file.type, upsert: false })
-        if (up.error) throw new Error(up.error.message)
-        const signed = await supabase.storage.from('exams').createSignedUrl(path, 60 * 60 * 24 * 365)
-        if (signed.error || !signed.data) throw new Error(signed.error?.message ?? 'Não foi possível gerar o link do arquivo.')
-        const examId = crypto.randomUUID()
-        const name = file.name.replace(/\.[^.]+$/, '')
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const ins = await (supabase.from('exams') as any).insert({ id: examId, user_id: user.id, type: name, exam_date: null, file_url: signed.data.signedUrl, status: 'pending' })
-        if (ins.error) throw new Error(ins.error.message)
-        onDone?.()
-        router.push(`/dashboard/exams/${examId}`)
-      } catch (e) {
-        setSending(false)
-        setError(e instanceof Error ? e.message : 'Falha ao enviar. Tente novamente.')
-      }
-    } else {
-      onDone?.()
-      router.push(proc.target)
+    if (kind === 'exam' && !user) { setError('Faça login para enviar.'); return }
+    setSending(true); setError(null)
+    const start = Date.now()
+    const suggested = classifyByFilename(file.name).kind
+    try {
+      const res = await proc.process(file, { supabase, userId: user?.id ?? '' })
+      logCapture({ kind, suggested, outcome: res.status, durationMs: Date.now() - start, errorReason: res.errorReason })
+      setResult(res)
+    } catch (e) {
+      logCapture({ kind, suggested, outcome: 'error', durationMs: Date.now() - start })
+      setResult(captureError(kind, e instanceof Error ? e.message : String(e)))
+    } finally {
+      setSending(false)
     }
+  }
+
+  // ── Resultado UNIFICADO (sucesso · encaminhado · erro) ──────────────────────
+  if (result) {
+    const ok = result.status !== 'error'
+    return (
+      <div className={className}>
+        <div className="text-center py-4">
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3 ${ok ? 'bg-sage-light' : 'bg-red-50'}`}>
+            {ok ? <CheckCircle size={24} className="text-sage" /> : <AlertCircle size={24} className="text-red-500" />}
+          </div>
+          <p className="font-display text-lg font-semibold text-onyx">{result.title}</p>
+          <p className="font-body text-sm text-mauve mt-1 max-w-xs mx-auto">{result.message}</p>
+          <div className="flex items-center justify-center gap-2 mt-5">
+            {result.nextHref && result.nextActionLabel && (
+              <button onClick={() => { onDone?.(); router.push(result.nextHref!) }}
+                className="px-5 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity">
+                {result.nextActionLabel}
+              </button>
+            )}
+            {ok ? (
+              <button onClick={reset} className="px-4 py-2 rounded-full font-body text-sm text-mauve hover:text-onyx transition-colors">Adicionar outro</button>
+            ) : (
+              <button onClick={() => setResult(null)} className="px-4 py-2 rounded-full font-body text-sm text-petal hover:underline">Tentar novamente</button>
+            )}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -124,7 +144,7 @@ export default function CaptureCenter({ className = '', onDone }: CaptureCenterP
           {error && <p className="font-body text-xs text-red-600 mt-2">{error}</p>}
         </div>
       ) : (
-        // ── Passo 2: prévia + tipo + encaminhar ─────────────────────────────────
+        // ── Passo 2: prévia + tipo + enviar ─────────────────────────────────────
         <div className="space-y-4">
           <div className="flex items-center gap-3 rounded-2xl border border-border bg-ivory p-3">
             {previewUrl ? (
@@ -137,7 +157,7 @@ export default function CaptureCenter({ className = '', onDone }: CaptureCenterP
               <p className="font-body text-sm text-onyx truncate">{file.name}</p>
               <p className="font-body text-xs text-mauve">{fmtSize(file.size)} · {file.type.includes('pdf') ? 'PDF' : 'Imagem'}</p>
             </div>
-            <button onClick={reset} disabled={sending} aria-label="Trocar arquivo" className="text-mauve/40 hover:text-onyx transition-colors disabled:opacity-40"><X size={16} /></button>
+            <button onClick={cancel} disabled={sending} aria-label="Trocar arquivo" className="text-mauve/40 hover:text-onyx transition-colors disabled:opacity-40"><X size={16} /></button>
           </div>
 
           <div>
@@ -163,7 +183,7 @@ export default function CaptureCenter({ className = '', onDone }: CaptureCenterP
           {error && <p className="font-body text-xs text-red-600">{error}</p>}
 
           <div className="flex items-center justify-end gap-2">
-            <button onClick={reset} disabled={sending}
+            <button onClick={cancel} disabled={sending}
               className="px-4 py-2 rounded-full font-body text-sm text-mauve hover:text-onyx transition-colors disabled:opacity-40">Cancelar</button>
             <button onClick={forward} disabled={!kind || sending}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium disabled:opacity-40 hover:opacity-90 transition-opacity">

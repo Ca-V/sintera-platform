@@ -321,7 +321,7 @@ export default function DashboardPage() {
           onClick={() => setIntakeOpen(false)}>
           <div className="card-premium p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <p className="font-display text-lg font-semibold text-onyx">Adicionar documento</p>
+              <p className="font-display text-lg font-semibold text-onyx">Central de Entrada</p>
               <button onClick={() => setIntakeOpen(false)} aria-label="Fechar"
                 className="text-mauve/40 hover:text-onyx transition-colors"><X size={18} /></button>
             </div>

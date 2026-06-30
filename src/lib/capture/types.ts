@@ -2,18 +2,22 @@
 // Centro de Entrada de Documentos — CONTRATOS (Trilha B, sem domínio)
 // ============================================================
 // Camadas isoladas (PO 30/06):
-//   Documento → Intake (UX) → Classifier (identifica) → Processor (encaminha) → Pipeline existente
+//   Documento → Intake (UX) → Classifier (identifica) → Processor (encaminha) → Pipeline
 // Esta camada NÃO cria evento, NÃO escreve catálogo, NÃO decide domínio (Estado 2).
+// CONTRATO ÚNICO: todo processador devolve um CaptureResult; o Hub só renderiza —
+// estados, resultado e erro ficam UNIFORMES, independentemente do pipeline.
 // ============================================================
+
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 /** O que a usuária deseja adicionar (intenção) + classificações auxiliares. */
 export type DocumentKind =
-  | 'exam'                   // exame
-  | 'medication_label'       // receita/rótulo de medicamento ou suplemento
-  | 'eyeglass_prescription'  // receita de óculos/lentes
-  | 'omics'                  // exame ômico (pipeline próprio)
-  | 'other'                  // outro documento
-  | 'unknown'                // classificador não identificou
+  | 'exam'
+  | 'medication_label'
+  | 'eyeglass_prescription'
+  | 'omics'
+  | 'other'
+  | 'unknown'
 
 /** Como a usuária deseja enviar (método de entrada). */
 export type IntakeMethod = 'pdf' | 'photo' | 'gallery'
@@ -22,25 +26,48 @@ export type IntakeMethod = 'pdf' | 'photo' | 'gallery'
 export interface ClassificationResult {
   kind: DocumentKind
   confidence: 'high' | 'medium' | 'low'
-  /** Pista factual que levou ao palpite (para a UI explicar). Opcional. */
   reason?: string
+}
+
+/** Motivo de erro NORMALIZADO (o Hub traduz qualquer falha de pipeline para isto). */
+export type CaptureErrorReason = 'unreadable' | 'protected' | 'incompatible' | 'temporary' | 'unknown'
+
+/** Contexto passado aos processadores (sem acoplar a React). */
+export interface CaptureContext {
+  supabase: SupabaseClient
+  userId: string
+}
+
+/** CONTRATO ÚNICO de retorno — todo processador devolve isto; o Hub só renderiza. */
+export interface CaptureResult {
+  status: 'success' | 'forwarded' | 'error'
+  kind: DocumentKind
+  /** Título unificado ("Exame criado", "Documento encaminhado", "Não foi possível processar"). */
+  title: string
+  /** Detalhe factual para a usuária. */
+  message: string
+  /** Rótulo da próxima ação ("Abrir exame", "Continuar"). */
+  nextActionLabel?: string
+  /** Destino da próxima ação. */
+  nextHref?: string
+  /** Id da entidade criada (quando houver). */
+  entityId?: string
+  /** Preenchido quando status='error'. */
+  errorReason?: CaptureErrorReason
 }
 
 /**
  * Contrato de um processador de documento. O Intake conversa SÓ com esta interface;
- * cada processador evolui isolado e encaminha para o pipeline que JÁ existe (sem
- * alterá-lo). `target` = rota/destino do encaminhamento.
+ * cada processador encaminha para o pipeline EXISTENTE (sem alterá-lo) e devolve o
+ * CaptureResult único.
  */
 export interface DocumentProcessor {
   kind: Exclude<DocumentKind, 'unknown' | 'other'>
-  /** Rótulo pela INTENÇÃO da usuária ("O que deseja adicionar?"). Sem jargão. */
   label: string
-  /** Nome do ícone (lucide) — a UI resolve o componente. */
   icon: string
-  /** MIME types aceitos. */
   accepts: string[]
-  /** Destino do encaminhamento (pipeline existente). */
   target: string
-  /** Frase de confirmação (V0.1+): "Detectamos que parece ser {confirmPhrase}." */
   confirmPhrase: string
+  /** Processa/encaminha o arquivo e devolve o CONTRATO ÚNICO. */
+  process(file: File, ctx: CaptureContext): Promise<CaptureResult>
 }

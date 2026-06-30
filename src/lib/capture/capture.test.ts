@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { CAPTURE_PROCESSORS, processorFor, processorsAccepting } from './registry'
 import { classifyByFilename } from './classifier/classify'
+import { classifyCaptureError, captureForwarded } from './result'
+import { medicationProcessor } from './processors/medication'
 
 describe('registry de processadores', () => {
   it('não tem kinds duplicados', () => {
@@ -40,5 +42,22 @@ describe('classifier — heurística por nome de arquivo', () => {
   })
   it('sem sinal → unknown (UI pergunta à usuária)', () => {
     expect(classifyByFilename('IMG_2026_0001.jpg').kind).toBe('unknown')
+  })
+})
+
+describe('resultado/erro unificado (contrato único)', () => {
+  it('normaliza mensagens cruas de pipeline num motivo único', () => {
+    expect(classifyCaptureError('PDF protegido por senha')).toBe('protected')
+    expect(classifyCaptureError('arquivo muito grande (limite)')).toBe('incompatible')
+    expect(classifyCaptureError('timeout na rede')).toBe('temporary')
+    expect(classifyCaptureError('PDF escaneado sem texto')).toBe('unreadable')
+    expect(classifyCaptureError('algo totalmente inesperado xyz')).toBe('unknown')
+  })
+  it('captureForwarded devolve CaptureResult unificado com destino', () => {
+    const r = captureForwarded(medicationProcessor)
+    expect(r.status).toBe('forwarded')
+    expect(r.kind).toBe('medication_label')
+    expect(r.nextHref).toBe('/dashboard/medicamentos')
+    expect(r.nextActionLabel).toBe('Continuar')
   })
 })
