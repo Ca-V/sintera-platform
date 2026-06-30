@@ -60,7 +60,7 @@ function formatDate(iso: string) {
 }
 
 function getYear(iso: string) {
-  return new Date(iso).getFullYear()
+  return parseDateOnly(iso).getFullYear()
 }
 
 // Data de REALIZAÇÃO do exame (o que importa para histórico/dashboard);

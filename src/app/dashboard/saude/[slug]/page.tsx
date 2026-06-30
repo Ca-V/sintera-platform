@@ -12,16 +12,17 @@ import { motion } from 'framer-motion'
 import { ArrowLeft, Loader2, FlaskConical, ArrowRight } from 'lucide-react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
+import { parseDateOnly } from '@/lib/agenda'
 import { useUser } from '@/context/UserContext'
 import { seriesForName, type BiomarkerRow, type Measurement } from '@/lib/biomarkers/grouping'
 
 function formatDateFull(iso: string): string {
   if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+  return parseDateOnly(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 function formatDateShort(iso: string): string {
   if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' })
+  return parseDateOnly(iso).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' })
 }
 
 const INTERP_COLORS: Record<string, string> = {
