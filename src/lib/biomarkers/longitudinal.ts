@@ -72,3 +72,35 @@ export function analyzeSeries(points: SeriesPoint[]): SeriesAnalysis | null {
 
   return { count: valid.length, first, last, monthsSpan: months, ratePerMonth, ratePercentPerMonth, totalDeltaPercent, direction }
 }
+
+// ── Aderência à faixa de referência (FACTUAL, sem juízo clínico) ───────────────
+export type RefStatus = 'within' | 'above' | 'below' | 'unknown'
+
+export interface ReferenceReadout {
+  /** Medições com status avaliável (dentro/acima/abaixo da referência impressa). */
+  evaluable: number
+  /** Quantas estão DENTRO da faixa impressa. */
+  within: number
+  /** Status da medição mais RECENTE. */
+  last: RefStatus
+}
+
+const INTERP_TO_STATUS: Record<string, RefStatus> = {
+  dentro_da_referencia: 'within',
+  acima_da_referencia: 'above',
+  abaixo_da_referencia: 'below',
+}
+
+/**
+ * Resumo FACTUAL de aderência à faixa de referência IMPRESSA no laudo.
+ * `interps` em ordem cronológica (mais antiga → mais recente). Conta apenas o que o
+ * laboratório informou; NÃO interpreta clinicamente (cada laudo usa sua própria faixa).
+ */
+export function referenceReadout(interps: (string | null)[]): ReferenceReadout {
+  const statuses = interps.map(i => INTERP_TO_STATUS[i ?? ''] ?? 'unknown')
+  return {
+    evaluable: statuses.filter(s => s !== 'unknown').length,
+    within: statuses.filter(s => s === 'within').length,
+    last: statuses.length ? statuses[statuses.length - 1] : 'unknown',
+  }
+}

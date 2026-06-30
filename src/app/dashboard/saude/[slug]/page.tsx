@@ -15,6 +15,7 @@ import { createClient } from '@/lib/supabase/client'
 import { parseDateOnly } from '@/lib/agenda'
 import { useUser } from '@/context/UserContext'
 import { seriesForName, type BiomarkerRow, type Measurement } from '@/lib/biomarkers/grouping'
+import { analyzeSeries, referenceReadout, type RefStatus, type SeriesAnalysis } from '@/lib/biomarkers/longitudinal'
 
 function formatDateFull(iso: string): string {
   if (!iso) return '—'
@@ -32,6 +33,21 @@ const INTERP_COLORS: Record<string, string> = {
 const INTERP_SYM: Record<string, string> = {
   acima_da_referencia: '▲', abaixo_da_referencia: '▼', dentro_da_referencia: '✓',
   sem_referencia_identificada: '–', indisponivel: '–',
+}
+
+const REF_STATUS_LABEL: Record<RefStatus, string> = {
+  within: 'dentro da referência', above: 'acima da referência', below: 'abaixo da referência', unknown: 'sem referência informada',
+}
+const REF_STATUS_COLOR: Record<RefStatus, string> = {
+  within: 'text-sage', above: 'text-orange-500', below: 'text-blue-500', unknown: 'text-mauve/50',
+}
+// Frase FACTUAL de tendência (direção + ritmo). Sem juízo clínico.
+function trendSentence(a: SeriesAnalysis): string {
+  if (a.direction === 'stable') return 'Estável no período (variação total abaixo de 5%).'
+  const dir = a.direction === 'up' ? 'Tendência de alta' : 'Tendência de queda'
+  if (a.ratePercentPerMonth === null) return `${dir} no período.`
+  const rate = Math.round(a.ratePercentPerMonth)
+  return `${dir} — cerca de ${rate > 0 ? '+' : ''}${rate}% ao mês no período.`
 }
 
 // ── Gráfico temporal (SVG inline, sem dependência) ─────────────────────────────
@@ -102,6 +118,10 @@ export default function IndicadorDrilldownPage() {
   }, [user, supabase])
 
   const model = useMemo(() => seriesForName(rows, slug), [rows, slug])
+  const analysis = useMemo(() => (model && model.measurements.length >= 2)
+    ? analyzeSeries(model.measurements.map(m => ({ value: m.value, date: m.date }))) : null, [model])
+  const refRead = useMemo(() => model
+    ? referenceReadout(model.measurements.map(m => m.interpretation)) : null, [model])
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-[60vh]"><Loader2 size={28} className="animate-spin text-petal" /></div>
@@ -160,6 +180,27 @@ export default function IndicadorDrilldownPage() {
               Faixa verde = referência impressa no laudo (quando constante). Valores factuais; não indicam melhora ou piora clínica.
             </p>
           </motion.div>
+
+          {/* Leitura factual (tendência + aderência à referência) */}
+          {refRead && (analysis || refRead.evaluable > 0) && (
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.065 }} className="card-premium p-5">
+              <p className="font-body text-sm font-semibold text-onyx mb-3">Leitura factual</p>
+              <div className="space-y-2">
+                {analysis && (
+                  <p className="font-body text-sm text-onyx">• {trendSentence(analysis)}</p>
+                )}
+                {refRead.evaluable > 0 && (
+                  <p className="font-body text-sm text-onyx">
+                    • <strong>{refRead.within}</strong> de <strong>{refRead.evaluable}</strong> medições dentro da faixa impressa · última:{' '}
+                    <span className={`font-semibold ${REF_STATUS_COLOR[refRead.last]}`}>{REF_STATUS_LABEL[refRead.last]}</span>
+                  </p>
+                )}
+              </div>
+              <p className="font-body text-[11px] text-mauve/50 mt-3">
+                Direção factual do número no tempo e contagem segundo a faixa impressa em cada laudo — não indica melhora ou piora clínica (RDC 657/2022).
+              </p>
+            </motion.div>
+          )}
 
           {/* Exames utilizados */}
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} className="card-premium overflow-hidden">
