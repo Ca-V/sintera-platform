@@ -12,8 +12,7 @@ import { parseDateOnly } from '@/lib/agenda'
 import { useUser } from '@/context/UserContext'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
-import DocumentIntakeHub from '@/lib/capture/intake/DocumentIntakeHub'
-import { processorFor } from '@/lib/capture/registry'
+import CaptureCenter from '@/lib/capture/intake/CaptureCenter'
 
 interface ExamSummary {
   id: string
@@ -326,11 +325,7 @@ export default function DashboardPage() {
               <button onClick={() => setIntakeOpen(false)} aria-label="Fechar"
                 className="text-mauve/40 hover:text-onyx transition-colors"><X size={18} /></button>
             </div>
-            <DocumentIntakeHub onChoose={(kind) => {
-              setIntakeOpen(false)
-              const proc = processorFor(kind)
-              if (proc) router.push(proc.target)
-            }} />
+            <CaptureCenter onDone={() => setIntakeOpen(false)} />
           </div>
         </div>
       )}
