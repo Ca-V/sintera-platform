@@ -62,18 +62,18 @@ const INTERP_ORDER: Record<string, number> = {
 }
 
 const INTERP_CONFIG: Record<string, { label: string; color: string; bg: string; Icon: React.ComponentType<{ size: number; className?: string }> | null }> = {
-  acima_da_referencia:         { label: 'Acima da ref.',        color: 'text-orange-500', bg: 'bg-orange-50 border-orange-200', Icon: TrendingUp   },
-  abaixo_da_referencia:        { label: 'Abaixo da ref.',       color: 'text-blue-500',   bg: 'bg-blue-50 border-blue-200',     Icon: TrendingDown },
-  dentro_da_referencia:        { label: 'Dentro da ref.',       color: 'text-sage',       bg: 'bg-sage-light border-sage/30',   Icon: Minus        },
-  // Resultado presente, mas sem faixa numérica no laudo (só a referência falta — o resultado existe).
-  sem_referencia_identificada: { label: 'Sem faixa no laudo',   color: 'text-amber-600',  bg: 'bg-amber-50 border-amber-200',   Icon: HelpCircle   },
-  // Resultado PRESENTE e qualitativo (Negativo, Ausentes, Turvo…) — nunca "ausente"; marcador neutro.
-  qualitative:                 { label: 'Resultado qualitativo', color: 'text-mauve',     bg: 'bg-ivory border-border',         Icon: null         },
-  // Resultado realmente não extraído do laudo.
-  missing:                     { label: 'Não consta neste laudo', color: 'text-mauve/60', bg: 'bg-ivory border-border',         Icon: null         },
-  extraction_failed:           { label: 'Não foi possível ler este item', color: 'text-red-500', bg: 'bg-red-50 border-red-200', Icon: AlertCircle },
+  acima_da_referencia:         { label: 'Acima da referência informada pelo laboratório',  color: 'text-orange-600', bg: 'bg-orange-50 border-orange-200', Icon: TrendingUp   },
+  abaixo_da_referencia:        { label: 'Abaixo da referência informada pelo laboratório', color: 'text-blue-600',   bg: 'bg-blue-50 border-blue-200',     Icon: TrendingDown },
+  dentro_da_referencia:        { label: 'Dentro da referência informada pelo laboratório', color: 'text-sage',       bg: 'bg-sage-light border-sage/30',   Icon: Minus        },
+  // Resultado presente; o laudo só não trouxe a faixa de referência para comparar.
+  sem_referencia_identificada: { label: 'O laboratório não informou uma faixa de referência', color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200', Icon: HelpCircle },
+  // Resultado PRESENTE e qualitativo (Negativo, Ausentes, Turvo…) — nunca "ausente".
+  qualitative:                 { label: 'Resultado descritivo (em palavras, sem faixa numérica para comparar)', color: 'text-mauve', bg: 'bg-ivory border-border', Icon: null },
+  // Resultado realmente não trazido pelo laudo.
+  missing:                     { label: 'Este resultado não foi informado no laudo', color: 'text-mauve/70', bg: 'bg-ivory border-border', Icon: null },
+  extraction_failed:           { label: 'Não foi possível ler este item do laudo', color: 'text-red-500', bg: 'bg-red-50 border-red-200', Icon: AlertCircle },
   // Fallback neutro (numérico sem interpretação) — NÃO diz "ausente".
-  indisponivel:                { label: 'Sem interpretação',    color: 'text-mauve/60',   bg: 'bg-ivory border-border',         Icon: null         },
+  indisponivel:                { label: 'Sem interpretação numérica disponível', color: 'text-mauve/70', bg: 'bg-ivory border-border', Icon: null },
 }
 
 // ── Índice Experimental ───────────────────────────────────────────────────────
@@ -682,56 +682,46 @@ export default function ExamDetailPage() {
             <h2 className="font-display text-base font-semibold text-onyx">Biomarcadores extraídos</h2>
           </div>
 
-          {/* Header da tabela */}
-          <div className="hidden md:grid grid-cols-[2fr_1fr_1.5fr_1fr_1fr] gap-2 px-5 py-2.5 bg-ivory border-b border-border/50">
-            {['Biomarcador', 'Resultado', 'Referência', 'Classificação', 'Fonte'].map(h => (
-              <span key={h} className="font-body text-xs font-semibold text-onyx/40 uppercase tracking-wider">{h}</span>
-            ))}
-          </div>
-
+          {/* Lista em cartões — um biomarcador por cartão, linguagem acessível */}
           <div className="divide-y divide-border/30">
             {biomarkers.map((b, i) => {
               const cfg  = getInterpConfig(b)
               const Icon = cfg.Icon
               const isQualitative = b.result_type === 'qualitative'
-              // Sem redundância: quando a faixa não vem no laudo, a coluna mostra "—" e o
-              // badge "Sem faixa no laudo" carrega a explicação (um só aviso, não dois).
-              const refLabel = b.reference_source === 'ausente'
-                ? '—'
-                : formatRef(b.reference_min, b.reference_max)
+              // A faixa só é mostrada quando o laudo realmente a trouxe.
+              const hasRange = b.reference_source !== 'ausente' &&
+                (b.reference_min !== null || b.reference_max !== null)
 
               return (
                 <motion.div key={b.id}
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.02 + i * 0.01 }}
-                  className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1.5fr_1fr_1fr] gap-2 items-center px-5 py-3 hover:bg-blush/20 transition-colors">
+                  className="px-5 py-4 hover:bg-blush/20 transition-colors">
 
-                  {/* Biomarcador */}
-                  <span className="font-body text-sm font-medium text-onyx">{b.name}</span>
+                  {/* Nome do exame */}
+                  <p className="font-body text-sm font-medium text-onyx">{b.name}</p>
 
-                  {/* Resultado */}
-                  <span className="font-body text-sm text-onyx">
+                  {/* Resultado (valor grande e legível) */}
+                  <p className="font-display text-lg text-onyx mt-0.5 leading-tight">
                     {isQualitative && b.value_text
                       ? <span className="text-blue-600 font-medium">{b.value_text}</span>
                       : b.value !== null
-                        ? <>{b.value}{b.unit ? <span className="text-mauve text-xs ml-1">{b.unit}</span> : null}</>
+                        ? <>{b.value}{b.unit ? <span className="text-mauve text-sm ml-1">{b.unit}</span> : null}</>
                         : <span className="text-mauve/40">—</span>
                     }
-                  </span>
+                  </p>
 
-                  {/* Referência */}
-                  <span className={`font-body text-sm ${b.reference_source === 'ausente' ? 'text-mauve/40 italic text-xs' : 'text-mauve'}`}>
-                    {refLabel}
-                  </span>
+                  {/* Faixa de referência do laboratório, quando informada */}
+                  {hasRange && (
+                    <p className="font-body text-xs text-mauve mt-1">
+                      Referência do laboratório: {formatRef(b.reference_min, b.reference_max)}
+                      {b.unit ? ` ${b.unit}` : ''}
+                    </p>
+                  )}
 
-                  {/* Classificação */}
-                  <span className={`inline-flex items-center gap-1 font-body text-xs font-medium px-2.5 py-1 rounded-full border w-fit ${cfg.bg} ${cfg.color}`}>
-                    {Icon && <Icon size={10} />}
+                  {/* Status — uma frase clara e completa (sem abreviação, sem redundância) */}
+                  <span className={`inline-flex items-center gap-1.5 font-body text-xs font-medium px-3 py-1.5 rounded-full border mt-2 ${cfg.bg} ${cfg.color}`}>
+                    {Icon && <Icon size={12} className="flex-shrink-0" />}
                     {cfg.label}
-                  </span>
-
-                  {/* Fonte */}
-                  <span className="font-body text-xs text-mauve/70 capitalize">
-                    {b.reference_source ?? '—'}
                   </span>
                 </motion.div>
               )
