@@ -201,6 +201,23 @@ function prettyValueText(s: string): string {
   return t
 }
 
+/** Parte principal + unidade do resultado, para NÚMERO e TEXTO terem o MESMO
+ *  tratamento (valor grande, unidade pequena e discreta). Quando o laudo embute
+ *  a unidade no texto (ex.: "SUPERIOR A 90 mL/min/1,73 m2"), ela é extraída para
+ *  não inflar o resultado. Vale para qualquer exame incorporado à plataforma. */
+function displayValue(b: Biomarker): { main: string | null; unit: string | null } {
+  if (b.result_type === 'qualitative' && b.value_text) {
+    const raw = b.value_text.trim()
+    const u = b.unit?.trim()
+    if (u && raw.length > u.length && raw.toLowerCase().endsWith(u.toLowerCase())) {
+      return { main: prettyValueText(raw.slice(0, raw.length - u.length).trim()), unit: u }
+    }
+    return { main: prettyValueText(raw), unit: null }
+  }
+  if (b.value !== null) return { main: String(b.value), unit: b.unit?.trim() || null }
+  return { main: null, unit: null }
+}
+
 const CATEGORY_LABEL: Record<string, string> = {
   hematologia_vermelha:          'Série vermelha',
   hematologia_branca_plaquetas:  'Série branca e plaquetas',
@@ -800,7 +817,7 @@ export default function ExamDetailPage() {
                     {cat.items.map((b, i) => {
                       const cfg  = getInterpConfig(b)
                       const Icon = cfg.Icon
-                      const isQualitative = b.result_type === 'qualitative'
+                      const dv   = displayValue(b)
                       // A faixa só é mostrada quando o laudo realmente a trouxe.
                       const hasRange = b.reference_source !== 'ausente' &&
                         (b.reference_min !== null || b.reference_max !== null)
@@ -813,13 +830,12 @@ export default function ExamDetailPage() {
                           {/* Nome do biomarcador */}
                           <p className="font-body text-sm font-medium text-onyx">{b.name}</p>
 
-                          {/* Resultado — protagonista, mesmo tratamento p/ número e texto */}
+                          {/* Resultado — protagonista; número e texto com o MESMO
+                              tratamento (valor grande, unidade sempre pequena) */}
                           <p className="font-display text-xl font-semibold text-onyx mt-0.5 leading-tight">
-                            {isQualitative && b.value_text
-                              ? prettyValueText(b.value_text)
-                              : b.value !== null
-                                ? <>{b.value}{b.unit ? <span className="text-mauve text-sm font-normal ml-1">{b.unit}</span> : null}</>
-                                : <span className="text-mauve/40 font-normal">—</span>
+                            {dv.main !== null
+                              ? <>{dv.main}{dv.unit ? <span className="text-mauve text-sm font-normal ml-1">{dv.unit}</span> : null}</>
+                              : <span className="text-mauve/40 font-normal">—</span>
                             }
                           </p>
 
