@@ -8,6 +8,7 @@ import {
   TrendingUp, TrendingDown, Minus, HelpCircle, AlertCircle,
   Download, Printer, ChevronDown, CalendarDays,
   Pencil, Check, X, Flag, Trash2,
+  Droplet, FlaskConical, TestTube,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { parseDateOnly } from '@/lib/agenda'
@@ -183,6 +184,23 @@ const SPECIMEN_LABEL: Record<string, string> = {
 }
 const SPECIMEN_ORDER = ['sangue', 'urina', 'urina_24h']
 
+// Ícone por material. Fallback cobre qualquer tipo futuro (fezes, saliva, líquor…).
+const SPECIMEN_META: Record<string, { Icon: React.ComponentType<{ size?: number; className?: string }>; color: string }> = {
+  sangue:    { Icon: Droplet,      color: 'text-red-400' },
+  urina:     { Icon: FlaskConical, color: 'text-amber-500' },
+  urina_24h: { Icon: FlaskConical, color: 'text-amber-500' },
+}
+const SPECIMEN_FALLBACK = { Icon: TestTube, color: 'text-mauve' }
+
+/** Suaviza valores descritivos em CAIXA ALTA (comuns em laudos) para caixa de frase. */
+function prettyValueText(s: string): string {
+  const t = s.trim()
+  if (t.length > 1 && t === t.toUpperCase() && t !== t.toLowerCase()) {
+    return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase()
+  }
+  return t
+}
+
 const CATEGORY_LABEL: Record<string, string> = {
   hematologia_vermelha:          'Série vermelha',
   hematologia_branca_plaquetas:  'Série branca e plaquetas',
@@ -196,7 +214,7 @@ const CATEGORY_LABEL: Record<string, string> = {
   urina_24h:                     'Urina de 24 horas',
   vitaminas_minerais:            'Vitaminas e minerais',
   hormonios_sexuais_reprodutivo: 'Hormônios sexuais e reprodutivos',
-  cardiometabolico:              'Colesterol e triglicérides',
+  cardiometabolico:              'Perfil lipídico (colesterol e triglicérides)',
   urinalise_eas:                 'Urina tipo I (EAS)',
 }
 
@@ -758,10 +776,14 @@ export default function ExamDetailPage() {
 
           {/* Agrupado por material (sangue/urina) e painel — deixa claro de qual exame
               cada biomarcador veio e mantém as variáveis do mesmo painel juntas */}
-          {groupBiomarkers(biomarkers).map(spec => (
+          {groupBiomarkers(biomarkers).map(spec => {
+            const sm = SPECIMEN_META[spec.key] ?? SPECIMEN_FALLBACK
+            const SpecIcon = sm.Icon
+            return (
             <div key={spec.key}>
-              {/* Cabeçalho do material/exame */}
-              <div className="px-5 py-2.5 bg-ivory border-b border-border/50">
+              {/* Cabeçalho do material/exame com ícone */}
+              <div className="px-5 py-2.5 bg-ivory border-b border-border/50 flex items-center gap-2">
+                <SpecIcon size={15} className={`${sm.color} flex-shrink-0`} />
                 <h3 className="font-body text-xs font-semibold text-onyx/70 uppercase tracking-wider">{spec.label}</h3>
               </div>
 
@@ -791,13 +813,13 @@ export default function ExamDetailPage() {
                           {/* Nome do biomarcador */}
                           <p className="font-body text-sm font-medium text-onyx">{b.name}</p>
 
-                          {/* Resultado — o valor é o protagonista */}
-                          <p className="font-display text-lg text-onyx mt-0.5 leading-tight">
+                          {/* Resultado — protagonista, mesmo tratamento p/ número e texto */}
+                          <p className="font-display text-xl font-semibold text-onyx mt-0.5 leading-tight">
                             {isQualitative && b.value_text
-                              ? <span className="text-blue-600 font-medium">{b.value_text}</span>
+                              ? prettyValueText(b.value_text)
                               : b.value !== null
-                                ? <>{b.value}{b.unit ? <span className="text-mauve text-sm ml-1">{b.unit}</span> : null}</>
-                                : <span className="text-mauve/40">—</span>
+                                ? <>{b.value}{b.unit ? <span className="text-mauve text-sm font-normal ml-1">{b.unit}</span> : null}</>
+                                : <span className="text-mauve/40 font-normal">—</span>
                             }
                           </p>
 
@@ -820,7 +842,7 @@ export default function ExamDetailPage() {
                 </div>
               ))}
             </div>
-          ))}
+          )})}
 
           {/* Rodapé com contagem — E5 homologação */}
           <div className="px-5 py-3 bg-ivory border-t border-border/50">
