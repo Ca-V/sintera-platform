@@ -5,7 +5,7 @@ import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Upload, FileText, Clock, CheckCircle, AlertCircle,
-  Plus, X, Loader2, Zap, Search, ChevronDown, ChevronUp, Trash2, Pencil, Check, Camera, Dna, ChevronRight,
+  Plus, X, Loader2, Zap, Search, ChevronDown, ChevronUp, Trash2, Pencil, Check, Camera, Dna, ChevronRight, Info,
 } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -315,27 +315,28 @@ export default function ExamsPage() {
         </motion.div>
       )}
 
-      {/* Diferença convencional × ômica + barra de Ômica (abaixo da caixa) */}
-      <div className="rounded-2xl border border-lavender/30 bg-lavender-light/40 px-4 py-3">
-        <div className="flex items-start gap-3">
-          <Dna size={16} className="text-lavender flex-shrink-0 mt-0.5" />
-          <p className="font-body text-xs text-onyx leading-relaxed">
-            <strong>Exame convencional</strong> (a caixa acima): laudos laboratoriais comuns — sangue, urina, hormônios… — em PDF ou foto, e a IA extrai os dados.{' '}
-            <strong>Ômica</strong>: metabolômica, proteômica, microbioma, genética — centenas a milhares de marcadores, com catálogo e versionamento próprios. Registre esses laudos aqui:
-          </p>
-        </div>
-        <Link href="/dashboard/omics"
-          className="mt-3 card-premium p-4 flex items-center gap-3 hover:shadow-md transition-shadow group">
-          <div className="w-10 h-10 rounded-2xl bg-lavender-light flex items-center justify-center flex-shrink-0">
-            <Dna size={19} className="text-lavender" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-body text-sm font-semibold text-onyx">Ômica</p>
-            <p className="font-body text-xs text-mauve mt-0.5">Registre e importe metabolômica, proteômica, microbioma e outros — com catálogo, versionamento e comparação no tempo</p>
-          </div>
-          <ChevronRight size={16} className="text-mauve/40 group-hover:text-lavender transition-colors flex-shrink-0" />
-        </Link>
+      {/* Explicação convencional × ômica — barra NEUTRA, separada da de Ômica
+          (para não parecer que o convencional faz parte da Ômica) */}
+      <div className="rounded-2xl border border-border bg-ivory px-4 py-3 flex items-start gap-3">
+        <Info size={16} className="text-mauve flex-shrink-0 mt-0.5" />
+        <p className="font-body text-xs text-onyx leading-relaxed">
+          <strong>Exame convencional</strong> — laudos laboratoriais comuns (sangue, urina, hormônios…) que você envia na caixa acima; a IA extrai os dados.{' '}
+          <strong>Ômica</strong> — metabolômica, proteômica, microbioma, genética: centenas a milhares de marcadores, com catálogo e versionamento próprios. Use a opção abaixo.
+        </p>
       </div>
+
+      {/* Barra de Ômica — elemento próprio, separado da explicação */}
+      <Link href="/dashboard/omics"
+        className="card-premium p-4 flex items-center gap-3 hover:shadow-md transition-shadow group">
+        <div className="w-10 h-10 rounded-2xl bg-lavender-light flex items-center justify-center flex-shrink-0">
+          <Dna size={19} className="text-lavender" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-body text-sm font-semibold text-onyx">Ômica</p>
+          <p className="font-body text-xs text-mauve mt-0.5">Registre e importe metabolômica, proteômica, microbioma e outros — com catálogo, versionamento e comparação no tempo</p>
+        </div>
+        <ChevronRight size={16} className="text-mauve/40 group-hover:text-lavender transition-colors flex-shrink-0" />
+      </Link>
 
       {/* Aviso: exame(s) com nome divergente do perfil (acima da lista) */}
       {(() => {
