@@ -319,10 +319,14 @@ export default function ExamsPage() {
           (para não parecer que o convencional faz parte da Ômica) */}
       <div className="rounded-2xl border border-border bg-ivory px-4 py-3 flex items-start gap-3">
         <Info size={16} className="text-mauve flex-shrink-0 mt-0.5" />
-        <p className="font-body text-xs text-onyx leading-relaxed">
-          <strong>Exame convencional</strong> — laudos laboratoriais comuns (sangue, urina, hormônios…) que você envia na caixa acima; a IA extrai os dados.{' '}
-          <strong>Ômica</strong> — metabolômica, proteômica, microbioma, genética: centenas a milhares de marcadores, com catálogo e versionamento próprios. Use a opção abaixo.
-        </p>
+        <div className="space-y-2">
+          <p className="font-body text-xs text-onyx leading-relaxed">
+            <strong>Exame convencional</strong> — laudos laboratoriais comuns (sangue, urina, hormônios…) que você envia na caixa acima; a IA extrai os dados automaticamente.
+          </p>
+          <p className="font-body text-xs text-onyx leading-relaxed">
+            <strong>Exame ômico</strong> — também é um tipo de exame: metabolômica, proteômica, microbioma, genética. Reúne de centenas a milhares de marcadores e tem fluxo próprio, com catálogo e versionamento. Use a opção abaixo.
+          </p>
+        </div>
       </div>
 
       {/* Barra de Ômica — elemento próprio, separado da explicação */}
