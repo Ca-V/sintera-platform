@@ -61,13 +61,19 @@ const INTERP_ORDER: Record<string, number> = {
   indisponivel:              5,
 }
 
-const INTERP_CONFIG: Record<string, { label: string; color: string; bg: string; Icon: React.ComponentType<{ size: number; className?: string }> }> = {
+const INTERP_CONFIG: Record<string, { label: string; color: string; bg: string; Icon: React.ComponentType<{ size: number; className?: string }> | null }> = {
   acima_da_referencia:         { label: 'Acima da ref.',        color: 'text-orange-500', bg: 'bg-orange-50 border-orange-200', Icon: TrendingUp   },
   abaixo_da_referencia:        { label: 'Abaixo da ref.',       color: 'text-blue-500',   bg: 'bg-blue-50 border-blue-200',     Icon: TrendingDown },
   dentro_da_referencia:        { label: 'Dentro da ref.',       color: 'text-sage',       bg: 'bg-sage-light border-sage/30',   Icon: Minus        },
-  sem_referencia_identificada: { label: 'Ref. não informada',   color: 'text-amber-600',  bg: 'bg-amber-50 border-amber-200',   Icon: HelpCircle   },
-  indisponivel:                { label: 'Resultado ausente',    color: 'text-mauve/60',   bg: 'bg-ivory border-border',         Icon: HelpCircle   },
-  extraction_failed:           { label: 'Falha na extração',    color: 'text-red-500',    bg: 'bg-red-50 border-red-200',       Icon: AlertCircle  },
+  // Resultado presente, mas sem faixa numérica no laudo (só a referência falta — o resultado existe).
+  sem_referencia_identificada: { label: 'Sem faixa no laudo',   color: 'text-amber-600',  bg: 'bg-amber-50 border-amber-200',   Icon: HelpCircle   },
+  // Resultado PRESENTE e qualitativo (Negativo, Ausentes, Turvo…) — nunca "ausente"; marcador neutro.
+  qualitative:                 { label: 'Resultado qualitativo', color: 'text-mauve',     bg: 'bg-ivory border-border',         Icon: null         },
+  // Resultado realmente não extraído do laudo.
+  missing:                     { label: 'Não consta neste laudo', color: 'text-mauve/60', bg: 'bg-ivory border-border',         Icon: null         },
+  extraction_failed:           { label: 'Não foi possível ler este item', color: 'text-red-500', bg: 'bg-red-50 border-red-200', Icon: AlertCircle },
+  // Fallback neutro (numérico sem interpretação) — NÃO diz "ausente".
+  indisponivel:                { label: 'Sem interpretação',    color: 'text-mauve/60',   bg: 'bg-ivory border-border',         Icon: null         },
 }
 
 // ── Índice Experimental ───────────────────────────────────────────────────────
@@ -134,10 +140,11 @@ function IndexCard({ index }: { index: { numerator: number; denominator: number;
 }
 
 function getInterpConfig(b: Biomarker) {
-  if (b.interpretation === 'indisponivel') {
-    if (b.result_type === 'extraction_failed') return INTERP_CONFIG.extraction_failed
-  }
-  return INTERP_CONFIG[b.interpretation ?? ''] ?? INTERP_CONFIG.indisponivel
+  // Prioriza o TIPO do resultado: um resultado PRESENTE (qualitativo) nunca é "ausente".
+  if (b.result_type === 'extraction_failed') return INTERP_CONFIG.extraction_failed
+  if (b.result_type === 'missing')           return INTERP_CONFIG.missing
+  if (b.result_type === 'qualitative')       return INTERP_CONFIG.qualitative
+  return INTERP_CONFIG[b.interpretation ?? ''] ?? INTERP_CONFIG.sem_referencia_identificada
 }
 
 function sortBiomarkers(bms: Biomarker[]): Biomarker[] {
@@ -687,8 +694,10 @@ export default function ExamDetailPage() {
               const cfg  = getInterpConfig(b)
               const Icon = cfg.Icon
               const isQualitative = b.result_type === 'qualitative'
+              // Sem redundância: quando a faixa não vem no laudo, a coluna mostra "—" e o
+              // badge "Sem faixa no laudo" carrega a explicação (um só aviso, não dois).
               const refLabel = b.reference_source === 'ausente'
-                ? 'Não informada'
+                ? '—'
                 : formatRef(b.reference_min, b.reference_max)
 
               return (
@@ -716,7 +725,7 @@ export default function ExamDetailPage() {
 
                   {/* Classificação */}
                   <span className={`inline-flex items-center gap-1 font-body text-xs font-medium px-2.5 py-1 rounded-full border w-fit ${cfg.bg} ${cfg.color}`}>
-                    <Icon size={10} />
+                    {Icon && <Icon size={10} />}
                     {cfg.label}
                   </span>
 
