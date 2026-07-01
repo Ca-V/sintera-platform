@@ -43,6 +43,10 @@ interface Biomarker {
   range_extracted: boolean
   reference_source: string | null
   source: string | null
+  catalog_id: string | null
+  // Enriquecidos em loadData a partir do biomarker_catalog (só apresentação):
+  specimen?: string | null   // 'sangue' | 'urina' | 'urina_24h'
+  category?: string | null   // painel/grupo do exame
 }
 
 interface LastLog {
@@ -165,6 +169,66 @@ function formatRef(min: number | null, max: number | null): string {
 
 function formatDate(iso: string) {
   return parseDateOnly(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+// ── Agrupamento por material (specimen) e painel (categoria) ───────────────────
+// Deixa claro de QUAL exame cada biomarcador veio (sangue x urina) e mantém as
+// variáveis de um mesmo painel juntas, em vez de uma lista solta. Só apresentação:
+// rótulos legíveis para os códigos que já existem em biomarker_catalog.
+
+const SPECIMEN_LABEL: Record<string, string> = {
+  sangue:    'Exame de sangue',
+  urina:     'Exame de urina',
+  urina_24h: 'Exame de urina (24 horas)',
+}
+const SPECIMEN_ORDER = ['sangue', 'urina', 'urina_24h']
+
+const CATEGORY_LABEL: Record<string, string> = {
+  hematologia_vermelha:          'Série vermelha',
+  hematologia_branca_plaquetas:  'Série branca e plaquetas',
+  coagulacao:                    'Coagulação',
+  metabolismo_ferro:             'Metabolismo do ferro',
+  metabolismo_glicose:           'Glicose',
+  funcao_tireoidiana:            'Tireoide',
+  inflamacao_imunologia:         'Inflamação e imunologia',
+  funcao_hepatica_proteinas:     'Fígado e proteínas',
+  funcao_renal_eletrolitos:      'Rins e eletrólitos',
+  urina_24h:                     'Urina de 24 horas',
+  vitaminas_minerais:            'Vitaminas e minerais',
+  hormonios_sexuais_reprodutivo: 'Hormônios sexuais e reprodutivos',
+  cardiometabolico:              'Colesterol e triglicérides',
+  urinalise_eas:                 'Urina tipo I (EAS)',
+}
+
+interface BioGroup {
+  key: string
+  label: string
+  categories: { key: string; label: string | null; items: Biomarker[] }[]
+}
+
+/** Agrupa por material → painel, preservando a ordem já resolvida por sortBiomarkers. */
+function groupBiomarkers(bms: Biomarker[]): BioGroup[] {
+  const specs = new Map<string, Map<string, Biomarker[]>>()
+  for (const b of bms) {
+    const sk = b.specimen ?? 'outros'
+    const ck = b.category ?? 'outros'
+    if (!specs.has(sk)) specs.set(sk, new Map())
+    const cats = specs.get(sk)!
+    if (!cats.has(ck)) cats.set(ck, [])
+    cats.get(ck)!.push(b)
+  }
+  const rank = (k: string) => { const i = SPECIMEN_ORDER.indexOf(k); return i < 0 ? 99 : i }
+  return [...specs.keys()]
+    .sort((a, b) => rank(a) - rank(b))
+    .map(sk => ({
+      key: sk,
+      label: SPECIMEN_LABEL[sk] ?? 'Outros exames',
+      categories: [...specs.get(sk)!.entries()].map(([ck, items]) => ({
+        key: ck,
+        label: CATEGORY_LABEL[ck] ?? null,
+        items,
+      })),
+    }))
 }
 
 // ── Componente principal ──────────────────────────────────────────────────────
@@ -331,11 +395,11 @@ export default function ExamDetailPage() {
 
   async function loadData(silent = false) {
     if (!silent) setLoading(true)
-    const [{ data: examData }, { data: bioData }, { data: logData }] = await Promise.all([
+    const [{ data: examData }, { data: bioData }, { data: logData }, { data: catData }] = await Promise.all([
       supabase.from('exams').select('id,type,status,pdf_quality,page_count,created_at,exam_date,error_reason,text_truncated,file_url,patient_name')
         .eq('id', examId).single(),
       supabase.from('current_biomarkers')
-        .select('id,name,value,value_text,unit,reference_min,reference_max,interpretation,result_type,range_extracted,reference_source,source')
+        .select('id,name,value,value_text,unit,reference_min,reference_max,interpretation,result_type,range_extracted,reference_source,source,catalog_id')
         .eq('exam_id', examId),
       supabase.from('ai_processing_log')
         .select('started_at,parse_repaired,extraction_path')
@@ -343,9 +407,19 @@ export default function ExamDetailPage() {
         .eq('status', 'success')
         .order('started_at', { ascending: false })
         .limit(1),
+      supabase.from('biomarker_catalog').select('id,specimen,category'),
     ])
     if (examData) setExam(examData as Exam)
-    if (bioData)  setBiomarkers(sortBiomarkers(bioData as Biomarker[]))
+    if (bioData) {
+      // Enriquece cada biomarcador com material/painel do catálogo (só apresentação).
+      const cats   = (catData ?? []) as { id: string; specimen: string; category: string }[]
+      const catMap = new Map(cats.map(c => [c.id, c]))
+      const enriched = (bioData as Biomarker[]).map(b => {
+        const c = b.catalog_id ? catMap.get(b.catalog_id) : undefined
+        return { ...b, specimen: c?.specimen ?? null, category: c?.category ?? null }
+      })
+      setBiomarkers(sortBiomarkers(enriched))
+    }
     if (logData?.[0]) setLastLog(logData[0] as LastLog)
     if (!silent) setLoading(false)
   }
@@ -682,51 +756,71 @@ export default function ExamDetailPage() {
             <h2 className="font-display text-base font-semibold text-onyx">Biomarcadores extraídos</h2>
           </div>
 
-          {/* Lista em cartões — um biomarcador por cartão, linguagem acessível */}
-          <div className="divide-y divide-border/30">
-            {biomarkers.map((b, i) => {
-              const cfg  = getInterpConfig(b)
-              const Icon = cfg.Icon
-              const isQualitative = b.result_type === 'qualitative'
-              // A faixa só é mostrada quando o laudo realmente a trouxe.
-              const hasRange = b.reference_source !== 'ausente' &&
-                (b.reference_min !== null || b.reference_max !== null)
+          {/* Agrupado por material (sangue/urina) e painel — deixa claro de qual exame
+              cada biomarcador veio e mantém as variáveis do mesmo painel juntas */}
+          {groupBiomarkers(biomarkers).map(spec => (
+            <div key={spec.key}>
+              {/* Cabeçalho do material/exame */}
+              <div className="px-5 py-2.5 bg-ivory border-b border-border/50">
+                <h3 className="font-body text-xs font-semibold text-onyx/70 uppercase tracking-wider">{spec.label}</h3>
+              </div>
 
-              return (
-                <motion.div key={b.id}
-                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.02 + i * 0.01 }}
-                  className="px-5 py-4 hover:bg-blush/20 transition-colors">
-
-                  {/* Nome do exame */}
-                  <p className="font-body text-sm font-medium text-onyx">{b.name}</p>
-
-                  {/* Resultado (valor grande e legível) */}
-                  <p className="font-display text-lg text-onyx mt-0.5 leading-tight">
-                    {isQualitative && b.value_text
-                      ? <span className="text-blue-600 font-medium">{b.value_text}</span>
-                      : b.value !== null
-                        ? <>{b.value}{b.unit ? <span className="text-mauve text-sm ml-1">{b.unit}</span> : null}</>
-                        : <span className="text-mauve/40">—</span>
-                    }
-                  </p>
-
-                  {/* Faixa de referência do laboratório, quando informada */}
-                  {hasRange && (
-                    <p className="font-body text-xs text-mauve mt-1">
-                      Referência do laboratório: {formatRef(b.reference_min, b.reference_max)}
-                      {b.unit ? ` ${b.unit}` : ''}
+              {spec.categories.map(cat => (
+                <div key={cat.key}>
+                  {/* Sub-cabeçalho do painel, quando reconhecido */}
+                  {cat.label && (
+                    <p className="px-5 pt-3 pb-1 font-body text-[11px] font-semibold text-mauve/60 uppercase tracking-wide">
+                      {cat.label}
                     </p>
                   )}
 
-                  {/* Status — uma frase clara e completa (sem abreviação, sem redundância) */}
-                  <span className={`inline-flex items-center gap-1.5 font-body text-xs font-medium px-3 py-1.5 rounded-full border mt-2 ${cfg.bg} ${cfg.color}`}>
-                    {Icon && <Icon size={12} className="flex-shrink-0" />}
-                    {cfg.label}
-                  </span>
-                </motion.div>
-              )
-            })}
-          </div>
+                  <div className="divide-y divide-border/30">
+                    {cat.items.map((b, i) => {
+                      const cfg  = getInterpConfig(b)
+                      const Icon = cfg.Icon
+                      const isQualitative = b.result_type === 'qualitative'
+                      // A faixa só é mostrada quando o laudo realmente a trouxe.
+                      const hasRange = b.reference_source !== 'ausente' &&
+                        (b.reference_min !== null || b.reference_max !== null)
+
+                      return (
+                        <motion.div key={b.id}
+                          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.01 + i * 0.008 }}
+                          className="px-5 py-3 hover:bg-blush/20 transition-colors">
+
+                          {/* Nome do biomarcador */}
+                          <p className="font-body text-sm font-medium text-onyx">{b.name}</p>
+
+                          {/* Resultado — o valor é o protagonista */}
+                          <p className="font-display text-lg text-onyx mt-0.5 leading-tight">
+                            {isQualitative && b.value_text
+                              ? <span className="text-blue-600 font-medium">{b.value_text}</span>
+                              : b.value !== null
+                                ? <>{b.value}{b.unit ? <span className="text-mauve text-sm ml-1">{b.unit}</span> : null}</>
+                                : <span className="text-mauve/40">—</span>
+                            }
+                          </p>
+
+                          {/* Referência + status numa linha discreta (não rouba atenção do valor) */}
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
+                            {hasRange && (
+                              <span className="font-body text-[11px] text-mauve/70">
+                                Referência do laboratório: {formatRef(b.reference_min, b.reference_max)}{b.unit ? ` ${b.unit}` : ''}
+                              </span>
+                            )}
+                            <span className={`inline-flex items-center gap-1 font-body text-[11px] ${cfg.color}`}>
+                              {Icon && <Icon size={11} className="flex-shrink-0" />}
+                              {cfg.label}
+                            </span>
+                          </div>
+                        </motion.div>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
 
           {/* Rodapé com contagem — E5 homologação */}
           <div className="px-5 py-3 bg-ivory border-t border-border/50">
