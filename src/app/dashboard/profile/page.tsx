@@ -31,6 +31,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!user) return
+    // eslint-disable-next-line react-hooks/immutability -- loadStats é declarada abaixo (função hoisted); chamada intencional
     loadStats()
   }, [user])
 
@@ -134,6 +135,7 @@ export default function ProfilePage() {
           {[
             { icon: FileText,      value: stats.totalExams,      label: 'Exames',       color: 'text-petal',   bg: 'bg-blush' },
             { icon: FlaskConical,  value: stats.totalBiomarkers, label: 'Biomarcadores', color: 'text-lavender', bg: 'bg-lavender-light' },
+            // eslint-disable-next-line react-hooks/purity -- cálculo de exibição (dias desde o cadastro)
             { icon: CalendarDays,  value: stats.memberSince ? Math.max(1, Math.floor((Date.now() - new Date(stats.memberSince).getTime()) / (1000 * 60 * 60 * 24))) : 0,
               label: 'Dias na SINTERA', color: 'text-sage', bg: 'bg-sage-light' },
           ].map(({ icon: Icon, value, label, color, bg }) => (

@@ -75,6 +75,7 @@ export default function HabitosPage() {
     setLoading(false)
   }, [user, supabase])
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- carrega dados na montagem (data fetching)
   useEffect(() => { if (!authLoading) load() }, [authLoading, load])
 
   function reset() { setEditingId(null); setCategory('atividade_fisica'); setDescription(''); setFrequency(''); setNotes(''); setErr(null) }

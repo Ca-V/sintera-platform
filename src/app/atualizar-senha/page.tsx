@@ -30,6 +30,7 @@ export default function AtualizarSenhaPage() {
       window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.search,
     )
     if (params.get('error') || params.get('error_description')) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- valida o link de recuperação na montagem
       setError('O link de recuperação é inválido ou expirou. Solicite um novo.')
       setChecking(false)
       return

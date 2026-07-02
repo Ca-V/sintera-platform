@@ -80,8 +80,8 @@ export default function ScienceSection() {
           transition={{ duration: 0.8, delay: 0.7, ease: 'easeOut' }}
           className="mt-16 max-w-2xl mx-auto text-center border-t border-white/10 pt-12">
           <p className="font-display text-2xl font-light text-white/80 italic leading-relaxed">
-            "Anos de exames espalhados em papel e PDF. A SINTERA transforma isso em uma linha do tempo
-            que você consegue entender — e levar para o seu médico."
+            &ldquo;Anos de exames espalhados em papel e PDF. A SINTERA transforma isso em uma linha do tempo
+            que você consegue entender — e levar para o seu médico.&rdquo;
           </p>
         </motion.div>
       </div>

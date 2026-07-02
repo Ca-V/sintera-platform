@@ -27,6 +27,7 @@ export async function GET(
   const language: MedlineLanguage = langParam === 'es' ? 'es' : 'en'
 
   // Busca o LOINC do tipo de exame no catálogo.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- cast do supabase (tipos gerados não cobrem a tabela); resultado tipado abaixo
   const { data: entry } = await (supabase as any)
     .from('biomarker_catalog')
     .select('code, display_name, loinc_code')

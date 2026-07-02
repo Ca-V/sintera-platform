@@ -96,6 +96,7 @@ export default function CicloPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- carrega dados na montagem (data fetching)
   useEffect(() => { if (!authLoading) load() }, [authLoading, load])
 
   function chooseKind(k: string) {

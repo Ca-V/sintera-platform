@@ -51,6 +51,7 @@ export default function OmicsPanelPage() {
     setLoading(false)
   }, [id])
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- carrega o painel na montagem (data fetching)
   useEffect(() => { loadPanel() }, [loadPanel])
 
   async function toggleCategory(c: Category) {
@@ -381,6 +382,7 @@ function ImportResults({ panelId, onDone }: { panelId: string; onDone: () => voi
     setVersions((json.versions ?? []) as Version[])
   }, [panelId])
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- carrega versões na montagem (data fetching)
   useEffect(() => { loadVersions() }, [loadVersions])
 
   async function onFile(file: File) {

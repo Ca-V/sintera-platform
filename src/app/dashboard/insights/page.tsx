@@ -55,6 +55,7 @@ export default function InsightsPage() {
   const [generating, setGenerating] = useState(false)
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- leitura única do query param (demo) na montagem
       setDemoMode(new URLSearchParams(window.location.search).get('demo') === '1')
     }
   }, [])
@@ -78,6 +79,7 @@ export default function InsightsPage() {
     setLoading(false)
   }, [user, supabase, demoMode])
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- carrega dados na montagem (data fetching)
   useEffect(() => { load() }, [load])
 
   async function generateDemo() {

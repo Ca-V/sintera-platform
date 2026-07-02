@@ -28,6 +28,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   // Singleton — createClient() called exactly once
+  // eslint-disable-next-line react-hooks/refs -- singleton do cliente; leitura do ref é intencional
   const supabase = useRef(createClient()).current
 
   // Profile fetch is fire-and-forget: never blocks auth loading state
@@ -85,6 +86,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       mounted = false
       subscription.unsubscribe()
     }
+    // eslint-disable-next-line react-hooks/refs -- supabase é ref estável (singleton); dependência intencional
   }, [supabase, fetchProfile]) // both are stable refs — runs once
 
   const signOut = async () => {

@@ -54,6 +54,7 @@ export default function OmicsListPage() {
     setLoading(false)
   }, [])
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- carrega dados na montagem (data fetching)
   useEffect(() => { if (!authLoading) load() }, [authLoading, load])
 
   function reset() { setDomain('metabolomics'); setLab(''); setTech(''); setDate(''); setFile(null); setErr(null); setProgress(null) }

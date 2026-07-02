@@ -191,6 +191,7 @@ export default function CatalogoAdminPage() {
   }, [user, authLoading, router])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- carrega dados do admin na montagem
     if (user?.email === ADMIN_EMAIL) load()
   }, [user, load])
 

@@ -26,6 +26,7 @@ export default function VoiceInput({ onResult, title = 'Ditar por voz', label = 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const SR = typeof window !== 'undefined' && ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition)
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- detecção de suporte a voz na montagem
     setSupported(!!SR)
   }, [])
 
