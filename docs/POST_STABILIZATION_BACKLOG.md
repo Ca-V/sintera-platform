@@ -26,6 +26,24 @@ Escrever **nesta ordem** (NÃO começar por tabelas — evita o banco direcionar
 5. **Modelo físico (schema)** — **por último**.
 **Regra da Sprint 1:** NÃO escrever migrations, NÃO escrever código, NÃO alterar o banco. Objetivo único = **especificação revisável**. A implementação (Sprint 3) só começa após **aprovação formal** da Spec.
 
+### Design Review — gate obrigatório entre Sprint 1 e Sprint 2
+A Spec **só** passa para o Migration Plan após um **Design Review formal** (aprovação ≠ "documento pronto"). Checklist objetivo:
+1. [ ] Escopo permanece dentro da **fronteira aprovada** do Catalog v2.
+2. [ ] Não introduz entidades **fora do Domain Model**.
+3. [ ] Não altera **ADRs** existentes.
+4. [ ] Não altera **Bounded Contexts**.
+5. [ ] Mantém o **Catálogo como SSOT**.
+6. [ ] Aderente ao **Domain Model**.
+7. [ ] Aderente ao **Plano de Maturidade**.
+8. [ ] Não incorpora funcionalidades de sprints futuras (SRL, IA Contextual, Mobile…).
+9. [ ] O **modelo físico decorre do conceitual** (não o contrário).
+
+### Governança de decisão (toda sprint termina com uma decisão explícita)
+- ✅ **Aprovada** → segue para a próxima.
+- ⚠️ **Aprovada com ressalvas** → segue com ajustes **registrados**.
+- ⛔ **Reprovada** → retorna para revisão.
+Evita que documentos/entregas avancem "por inércia". Papel da fundadora a partir da Sprint 1 = **revisora técnica** (aderência a domínio/governança/maturidade).
+
 *(Documentos de apoio quando cada sprint começar: `ARCHITECTURE_COMPLIANCE_CHECKLIST.md` no Sprint 2; `NON_FUNCTIONAL_REQUIREMENTS.md` antes do Mobile — `ADR-015`.)*
 
 ### Fronteira de escopo do Scientific Catalog v2 (disciplina — NÃO deixar crescer)
