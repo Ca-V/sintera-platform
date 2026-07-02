@@ -13,14 +13,14 @@ export const EVENT_TYPE_DEFS = [
   { id: 'exame',        label: 'Exame',          emoji: '🧪' },
   { id: 'procedimento', label: 'Procedimento',   emoji: '🩹' },
   { id: 'vacina',       label: 'Vacina',         emoji: '💉' },
-  { id: 'medicamento',  label: 'Medicamento',    emoji: '💊' },
   { id: 'plano',        label: 'Plano de saúde', emoji: '🏥' },
   { id: 'outro',        label: 'Outro',          emoji: '📌' },
 ] as const
 // Subtipos/atributos (NÃO são tipos no seletor): Retorno = atributo da Consulta
 // (is_return); Cirurgia = subtipo de Procedimento (gravado como event_type 'cirurgia').
-// Suplemento NÃO é tipo de evento — pertence ao módulo Medicamentos/Suplementos; na
-// Agenda, um suplemento é um evento do tipo Medicamento.
+// Medicamento/Suplemento NÃO são tipos do seletor da Agenda — o ponto de entrada é o
+// módulo Medicamentos (com especificação), que PROJETA para a Agenda (recompra etc.).
+// Eventos de medicamento já gravados continuam renderizáveis via EVENT_TYPE_LABELS.
 
 // Superset de rótulos para RENDERIZAÇÃO (inclui tipos legados já gravados, para o
 // Histórico nunca quebrar ao exibir dados antigos).

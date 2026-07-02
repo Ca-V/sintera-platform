@@ -12,12 +12,14 @@ import { parseRule, serializeRule } from '@/lib/recurrence'
 import type { AgendaEventInput, EventType } from './AgendarModal'
 
 // ── Mapeamento de tipos (fonte única) ────────────────────────────────────────
-export const MODAL_TYPES: EventType[] = ['consulta', 'exame', 'procedimento', 'vacina', 'medicamento', 'plano', 'outro']
+export const MODAL_TYPES: EventType[] = ['consulta', 'exame', 'procedimento', 'vacina', 'plano', 'outro']
 // Não-tipos/legados → tipo do seletor (+ atributo): retorno→consulta(isReturn),
-// cirurgia→procedimento(isSurgery), suplemento→medicamento.
+// cirurgia→procedimento(isSurgery). Medicamento/suplemento/medicação não têm tipo
+// próprio na Agenda (entrada = módulo Medicamentos) → 'outro' ao abrir no modal.
+// A exibição na lista mantém o ícone 💊 (mapa de ícones da Agenda / EVENT_TYPE_LABELS).
 const LEGACY_TYPE_MAP: Record<string, EventType> = {
-  retorno: 'consulta', cirurgia: 'procedimento', suplemento: 'medicamento',
-  medicacao: 'medicamento', estetico: 'procedimento', atividade: 'outro', omica: 'outro',
+  retorno: 'consulta', cirurgia: 'procedimento', suplemento: 'outro',
+  medicamento: 'outro', medicacao: 'outro', estetico: 'procedimento', atividade: 'outro', omica: 'outro',
 }
 export const toModalType = (t: string): EventType =>
   (MODAL_TYPES as string[]).includes(t) ? (t as EventType) : (LEGACY_TYPE_MAP[t] ?? 'outro')
