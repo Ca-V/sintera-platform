@@ -363,8 +363,10 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                         )}
                       </div>
 
+                      {eventType !== 'plano' && (
                       <div className="space-y-1.5"><label className={LABEL}>Profissional <span className="font-normal text-mauve/50 normal-case">(opc.)</span></label>
                         <input type="text" value={professionalName} onChange={e => setProfessionalName(e.target.value)} placeholder="Dr(a). …" className={FIELD} /></div>
+                      )}
 
                       {eventType === 'plano' && (
                         <div className="grid grid-cols-2 gap-3 pt-3">
@@ -375,6 +377,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                         </div>
                       )}
 
+                      {eventType !== 'plano' && (
                       <div className="space-y-1.5"><label className={LABEL}>Formato</label>
                         <div className="flex gap-2">
                           {([['', '—'], ['presencial', 'Presencial'], ['telemedicina', 'Teleconsulta']] as [EventModality, string][]).map(([v, l]) => (
@@ -383,9 +386,12 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                           ))}
                         </div>
                       </div>
+                      )}
 
+                      {eventType !== 'plano' && (
                       <div className="space-y-1.5"><label className={LABEL}>Local <span className="font-normal text-mauve/50 normal-case">(clínica / endereço)</span></label>
                         <input type="text" value={establishment} onChange={e => setEstablishment(e.target.value)} placeholder="Clínica, hospital, endereço…" className={FIELD} /></div>
+                      )}
 
                       <div className="space-y-1.5"><label className={LABEL}>Prioridade</label>
                         <div className="flex gap-1.5">
@@ -396,14 +402,17 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                         </div>
                       </div>
 
+                      {eventType !== 'plano' && (
                       <div className="space-y-1.5"><label className={LABEL}>Orientações de preparo</label>
                         <input type="text" value={preparation} onChange={e => setPreparation(e.target.value)} placeholder="Ex.: jejum de 8h" className={FIELD} /></div>
+                      )}
 
                       {status === 'realizado' && (
                         <div className="space-y-1.5"><label className={LABEL}>Como foi</label>
                           <textarea value={outcome} onChange={e => setOutcome(e.target.value)} rows={2} placeholder="Resumo, conduta, encaminhamentos…" className={`${FIELD} resize-none`} /></div>
                       )}
 
+                      {eventType !== 'plano' && (
                       <div className="space-y-1.5"><label className={LABEL}>Duração estimada</label>
                         <div className="flex gap-2">
                           {[{ v: '30', l: '30 min' }, { v: '60', l: '1h' }, { v: '90', l: '1h30' }, { v: '120', l: '2h' }].map(opt => (
@@ -411,6 +420,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                               className={`flex-1 py-2 rounded-xl text-xs font-body font-medium border transition-all ${duration === opt.v ? 'gradient-sintera text-white border-transparent shadow-sm' : 'border-border text-mauve hover:border-petal/40'}`}>{opt.l}</button>
                           ))}
                         </div></div>
+                      )}
 
                       <div className="space-y-1.5"><label className={LABEL}>Observações</label>
                         <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} placeholder="Ex.: levar laudos anteriores…" className={`${FIELD} resize-none`} /></div>

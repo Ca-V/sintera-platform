@@ -26,10 +26,6 @@ export default function ProfilePage() {
   const [savingName, setSaving]    = useState(false)
   const [nameError, setNameError]  = useState<string | null>(null)
 
-  const [editingHeight, setEditHeight] = useState(false)
-  const [heightValue, setHeightValue]  = useState('')
-  const [savingHeight, setSavingHeight] = useState(false)
-
   const displayName = profile?.name ?? 'Usuária'
   const initials    = displayName.charAt(0).toUpperCase()
 
@@ -54,33 +50,6 @@ export default function ProfilePage() {
     setNameValue(profile?.name ?? '')
     setNameError(null)
     setEditName(true)
-  }
-
-  function startEditHeight() {
-    const h = (profile as { height_cm?: number | null } | null)?.height_cm
-    setHeightValue(h != null ? String(h) : '')
-    setEditHeight(true)
-  }
-
-  async function saveHeight() {
-    setSavingHeight(true)
-    const raw = heightValue.replace(',', '.').trim()
-    const num = raw === '' ? null : Number(raw)
-    try {
-      const res = await fetch('/api/profile', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ height_cm: num != null && isFinite(num) ? num : null }),
-      })
-      if (!res.ok) throw new Error('Erro ao salvar')
-      const saved = await res.json()
-      updateProfile(saved)
-      setEditHeight(false)
-    } catch {
-      /* silencioso */
-    } finally {
-      setSavingHeight(false)
-    }
   }
 
   async function saveName() {
@@ -142,7 +111,7 @@ export default function ProfilePage() {
               <div className="flex items-center gap-2 group">
                 <p className="font-display text-xl font-semibold text-onyx truncate">{displayName}</p>
                 <button onClick={startEdit}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity text-mauve/50 hover:text-petal flex-shrink-0">
+                  className="text-mauve/50 hover:text-petal transition-colors flex-shrink-0">
                   <Edit3 size={14} />
                 </button>
               </div>
@@ -192,39 +161,6 @@ export default function ProfilePage() {
           <div className="p-3 bg-ivory rounded-xl">
             <p className="font-body text-[10px] text-mauve uppercase tracking-wider mb-1">E-mail</p>
             <p className="font-body text-sm font-medium text-onyx truncate">{user?.email ?? '—'}</p>
-          </div>
-          <div className="p-3 bg-ivory rounded-xl">
-            <div className="flex items-center justify-between gap-2">
-              <p className="font-body text-[10px] text-mauve uppercase tracking-wider mb-1">Altura</p>
-              {!editingHeight && (
-                <button onClick={startEditHeight} className="text-mauve/50 hover:text-petal transition-colors -mt-1">
-                  <Edit3 size={12} />
-                </button>
-              )}
-            </div>
-            {editingHeight ? (
-              <div className="flex items-center gap-1.5">
-                <input
-                  autoFocus type="number" inputMode="decimal" value={heightValue}
-                  onChange={e => setHeightValue(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') saveHeight(); if (e.key === 'Escape') setEditHeight(false) }}
-                  placeholder="Ex.: 165"
-                  className="w-20 font-body text-sm font-medium text-onyx bg-white border border-petal/40 rounded-lg px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-petal/40"
-                />
-                <span className="font-body text-xs text-mauve">cm</span>
-                <button onClick={saveHeight} disabled={savingHeight} className="text-sage hover:text-sage/70 flex-shrink-0">
-                  {savingHeight ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-                </button>
-                <button onClick={() => setEditHeight(false)} className="text-mauve hover:text-onyx flex-shrink-0">
-                  <X size={14} />
-                </button>
-              </div>
-            ) : (
-              <p className="font-body text-sm font-medium text-onyx">
-                {(profile as { height_cm?: number | null } | null)?.height_cm != null
-                  ? `${(profile as { height_cm?: number | null }).height_cm} cm` : '—'}
-              </p>
-            )}
           </div>
           <div className="p-3 bg-ivory rounded-xl">
             <p className="font-body text-[10px] text-mauve uppercase tracking-wider mb-1">Plano</p>
