@@ -42,6 +42,8 @@
 
 **Catálogo Científico** — Base canônica de metadados dos biomarcadores (SSOT). Origem única de nome, aliases, painel, material, unidade, ordenação, ícone. Ver `CATALOG_SINGLE_SOURCE_OF_TRUTH.md`.
 
+**Alias** *(Catalog v2, ADR-010)* — Forma alternativa (normalizada) de nomear um biomarcador, usada para **resolver** o nome de um laudo para o `catalog_id`. Determinístico (normalização + `unit_pattern` opcional); nunca semântico. Pertence ao Catálogo Científico.
+
 **Clinical Knowledge Layer** — Camada que **relaciona** metadados científicos (biomarcador↔órgão↔sistema↔doença↔protocolo↔diretriz↔evidência↔histórico) para **organizar e contextualizar**. Não conclui, não decide.
 
 **Knowledge Graph** — Grafo que conecta paciente↔eventos↔biomarcadores↔órgãos↔doenças↔medicamentos↔ômicas↔protocolos↔literatura. **Organiza relações**; não produz diagnóstico.

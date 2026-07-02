@@ -1,6 +1,6 @@
 # SINTERA — Scientific Catalog v2 — Specification (Sprint 1)
 
-**Status:** Sprint 1 — **Especificação revisável**. **Sem código, sem migrations, sem alterações de banco.** **Decisão do Design Review: 🟡 EM REVISÃO** (não aprovada, não reprovada) — aguarda revisão linha a linha da fundadora (checklist de 9 itens em `POST_STABILIZATION_BACKLOG.md`) antes da Sprint 2 (Migration Plan).
+**Status:** Sprint 1 — **✅ APROVADA COM RESSALVAS** (fundadora, 02/07). Ressalvas **editoriais resolvidas** (não alteram arquitetura nem escopo): (1) RF×RNF — RNF-03/07 reformuladas como propriedade, com referência ao mecanismo funcional; (2) responsabilidade única por entidade (§4, sem sobreposição); (3) terminologia validada contra `DOMAIN_GLOSSARY.md` (+ "Alias" adicionado). **Sprint 1 ENCERRADA.** Segue para a **Sprint 2 — Migration Plan** (`CATALOG_V2_MIGRATION_PLAN.md`). **Sem código, sem migrations, sem alterações de banco** nesta e na próxima sprint (só documento).
 **Base:** Domain Model v1.0 (`DOMAIN_MODEL_APPROVED.md`), `CATALOG_SINGLE_SOURCE_OF_TRUTH.md` (Princípio #12), `ADR-010`. Ordem deste documento: **Objetivos → Requisitos Funcionais → Requisitos Não-Funcionais → Modelo Conceitual → Modelo Físico** (físico por último — o domínio direciona o dado, não o contrário).
 
 ---
@@ -45,21 +45,21 @@ Fica **fora** (fases seguintes do roadmap — ver `POST_STABILIZATION_BACKLOG.md
 
 - **RNF-01 · Performance.** Resolução nome→`catalog_id` e leitura de metadados devem ser O(1)/indexadas. Catálogo é pequeno e **altamente cacheável** (leitura dominante).
 - **RNF-02 · Escalabilidade.** Suportar milhares de biomarcadores e dezenas de milhares de aliases sem degradar a resolução.
-- **RNF-03 · Auditabilidade.** Toda mudança de metadado é versionada e rastreável (autor/data/versão/aprovação) — do **catálogo** (não confundir com auditoria da jornada clínica, `CAT-022`).
+- **RNF-03 · Auditabilidade (propriedade).** As mudanças de metadado do catálogo são **consultáveis e rastreáveis** (quem/quando/versão/aprovação) — propriedade de qualidade. *(O mecanismo de versionamento/governança é RF-08/RF-09; não confundir com a auditoria da jornada clínica, `CAT-022`.)*
 - **RNF-04 · Compatibilidade (consumidores atuais).** `catalog_id` permanece a chave; as telas que já leem `display_name`/`specimen`/`category` via `catalog_id` continuam funcionando durante e após a migração.
 - **RNF-05 · Backward compatibility aditiva (PRINCÍPIO).** **Nenhuma alteração do Catalog v2 poderá exigir migração destrutiva na primeira versão.** Migração é **aditiva** sobre o `biomarker_catalog` existente (não recriar). `specimen`/`category` (hoje `text`/enum) evoluem para `material_id`/`panel_id` com **camada de compatibilidade** (view/coluna espelho) até os consumidores migrarem. Remoção de colunas/estruturas legadas só em versão posterior, após todos os consumidores migrarem.
 - **RNF-06 · Governança de RLS/segurança.** Catálogo é leitura pública autenticada (como hoje); escrita restrita à curadoria (service role). SSOT preservado.
-- **RNF-07 · Determinismo.** Nenhuma resolução probabilística/semântica nesta fase — resultados reproduzíveis.
+- **RNF-07 · Reprodutibilidade (propriedade).** Mesmas entradas produzem os mesmos resultados de resolução/exibição — propriedade transversal. *(O comportamento determinístico de resolução, sem semântica, é RF-10.)*
 
 ## 4. Modelo Conceitual (entidades · relações · responsabilidades)
 
-**Entidades**
-- **BiomarkerCatalogItem** — identidade científica canônica (nomes, unidade, códigos externos, estado, governança).
-- **Alias** — forma alternativa (normalizada) de nomear um item; resolve laudo→identidade.
-- **Panel** — agrupamento científico nomeado (rótulo, ordenação).
-- **Material** — tipo de amostra (rótulo, ordenação).
-- **ExternalCode** — LOINC/SNOMED (código + status) — pode ser atributo do item ou entidade própria.
-- **CatalogVersion** — versão/estado do metadado de um item (histórico de curadoria).
+**Entidades (uma responsabilidade cada — sem sobreposição)**
+- **BiomarkerCatalogItem** → **identidade** + atributos canônicos correntes (nomes, unidade). *Não* guarda histórico nem trilha de aprovação.
+- **Alias** → **resolução de nome** (laudo→identidade): forma normalizada + `unit_pattern` opcional.
+- **Panel** → **painel** (agrupamento nomeado): rótulo + ordenação.
+- **Material** → **material/espécime**: rótulo + ordenação.
+- **ExternalCode** → **códigos externos** (LOINC/SNOMED): código + status.
+- **CatalogVersion** → **versionamento e governança**: versão, estado do ciclo de vida, aprovação/revisor/data (histórico de curadoria).
 
 **Relações**
 ```
