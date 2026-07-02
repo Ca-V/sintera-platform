@@ -48,7 +48,7 @@
 | Item | Resultado esperado | Status | Resp. | Evidência |
 |---|---|---|---|---|
 | TypeScript | `tsc --noEmit` sem erros | ✅ | Dev | **exit 0** (02/07) |
-| ESLint | sem erros | ⚠️ | Dev | **22 erros + 9 avisos** no projeto (pré-existentes) — **triar** |
+| ESLint | sem erros nem avisos | ✅ | Dev | **0 erros · 0 avisos** (02/07; era 22+9) — commits `3e72f25` + limpeza de avisos |
 | Testes automatizados | suíte verde | ✅ | Dev | **153 passed** · 126 todo |
 | Performance | tempos aceitáveis (OCR/Timeline/API) | ⏳ | Dev | metas em `NON_FUNCTIONAL_REQUIREMENTS` (a criar) |
 | Logs | erros logados; cobertura de catálogo | ⚠️ | Dev | fallback `catalogId ?? ''` sem log (dívida) |

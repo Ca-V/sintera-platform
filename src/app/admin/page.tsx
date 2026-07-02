@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
-  Users, FileText, CheckCircle, AlertCircle, FlaskConical,
+  FileText, CheckCircle, AlertCircle, FlaskConical,
   MessageCircle, Flag, TrendingUp, Upload, RefreshCw, Loader2, Send, Plus, X, Clock,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -127,6 +127,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (user?.email === ADMIN_EMAIL) loadData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- roda quando user muda; loadData intencionalmente fora das deps
   }, [user])
 
   async function loadData() {

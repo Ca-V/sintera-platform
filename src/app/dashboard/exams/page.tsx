@@ -154,7 +154,7 @@ export default function ExamsPage() {
   function toggleYear(yr: number) {
     setCollapsedYears(prev => {
       const next = new Set(prev)
-      next.has(yr) ? next.delete(yr) : next.add(yr)
+      if (next.has(yr)) next.delete(yr); else next.add(yr)
       return next
     })
   }

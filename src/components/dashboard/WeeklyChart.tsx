@@ -34,14 +34,13 @@ function buildArea(values: number[]): string {
   const linePath = buildPath(values)
   const max = 100
   const lastX = PAD_X + W - PAD_X * 2
-  const lastY = PAD_Y + (1 - values[values.length - 1] / max) * (H - PAD_Y * 2)
   const firstY = PAD_Y + (1 - values[0] / max) * (H - PAD_Y * 2)
   return `${linePath} L ${lastX} ${H} L ${PAD_X} ${H} L ${PAD_X} ${firstY} Z`
 }
 
 export default function WeeklyChart() {
   const [active, setActive] = useState<DataKey>('Energia')
-  const { values, color, gradient } = datasets[active]
+  const { values, color } = datasets[active]
   const avg = Math.round(values.reduce((a, b) => a + b, 0) / values.length)
   const max = 100
 

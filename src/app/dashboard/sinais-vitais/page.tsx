@@ -78,6 +78,7 @@ export default function SinaisVitaisPage() {
       measuredOn: m.measured_on as string, notes: (m.notes as string) ?? null,
     })))
     setLoading(false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- VITALS é constante do módulo; não precisa nas deps
   }, [user, supabase])
 
   // Carrega na montagem (e após mutações); o setLoading(true) síncrono — o spinner —

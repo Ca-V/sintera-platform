@@ -33,6 +33,7 @@ export default function ProfilePage() {
     if (!user) return
     // eslint-disable-next-line react-hooks/immutability -- loadStats é declarada abaixo (função hoisted); chamada intencional
     loadStats()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- roda quando user muda; loadStats intencionalmente fora das deps
   }, [user])
 
   async function loadStats() {

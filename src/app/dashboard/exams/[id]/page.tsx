@@ -433,6 +433,7 @@ export default function ExamDetailPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ event_name: 'exam_detail_viewed', metadata: { exam_id: examId } }),
     }).catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- registra a visualização uma vez por examId
   }, [examId])
 
   async function loadData(silent = false) {
