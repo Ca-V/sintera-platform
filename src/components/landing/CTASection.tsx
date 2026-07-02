@@ -31,19 +31,23 @@ export default function CTASection() {
             sobre a sua saúde ao longo do tempo.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-14">
-            <Link href="/lista-de-espera">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-5">
+            <Link href="/onboarding">
               <button className="inline-flex items-center gap-2 gradient-sintera text-white font-body font-medium px-8 py-4 rounded-full hover:opacity-90 transition-opacity shadow-lg text-[0.95rem]">
-                Começar gratuitamente
+                Criar conta gratuitamente
                 <ArrowRight size={16} />
               </button>
             </Link>
             <Link href="/login">
               <button className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white font-body font-medium px-8 py-4 rounded-full hover:bg-white/15 transition-colors text-[0.95rem]">
-                Já tenho conta
+                Entrar
               </button>
             </Link>
           </div>
+          <p className="font-body text-sm text-white/50 mb-14">
+            Prefere só acompanhar a evolução?{' '}
+            <Link href="/lista-de-espera" className="text-white/80 font-medium hover:underline">Entre na lista de espera</Link>.
+          </p>
 
           <div className="flex flex-wrap justify-center gap-3">
             {floatingChips.map(({ icon: Icon, text, color }) => (

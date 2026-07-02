@@ -71,19 +71,26 @@ export default function Hero() {
             </motion.p>
 
             <motion.div variants={fadeUp(0.44)} initial="hidden" animate="show"
-              className="flex flex-wrap gap-3 mb-10">
-              <Link href="/lista-de-espera">
+              className="flex flex-wrap gap-3 mb-4">
+              <Link href="/onboarding">
                 <button className="inline-flex items-center gap-2 gradient-sintera text-white font-body font-medium px-7 py-3.5 rounded-full hover:opacity-90 active:scale-[0.98] transition-all duration-200 shadow-md text-[0.9rem]">
-                  Começar gratuitamente
+                  Criar conta gratuitamente
                   <ArrowRight size={16} />
                 </button>
               </Link>
               <Link href="/login">
                 <button className="inline-flex items-center gap-2 bg-white border border-border text-onyx font-body font-medium px-7 py-3.5 rounded-full hover:border-petal hover:bg-blush transition-all duration-200 text-[0.9rem] shadow-sm">
-                  Já tenho conta
+                  Entrar
                 </button>
               </Link>
             </motion.div>
+
+            {/* Lista de espera continua disponível para quem quer só acompanhar */}
+            <motion.p variants={fadeUp(0.5)} initial="hidden" animate="show"
+              className="font-body text-sm text-mauve mb-10">
+              Prefere só acompanhar a evolução da plataforma?{' '}
+              <Link href="/lista-de-espera" className="text-petal font-medium hover:underline">Entre na lista de espera</Link>.
+            </motion.p>
 
             {/* 3 pilares */}
             <motion.div variants={fadeUp(0.56)} initial="hidden" animate="show"
