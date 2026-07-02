@@ -17,6 +17,9 @@ import { parseDateOnly } from '@/lib/agenda'
 import { useUser } from '@/context/UserContext'
 import HistoricoTabs from '@/components/HistoricoTabs'
 import { summarizeBiomarkers, computeReferenceIndex, type BiomarkerRow, type BiomarkerSummary, type Trend } from '@/lib/biomarkers/grouping'
+import { groupBySpecimen } from '@/lib/biomarkers/panels'
+
+interface CatalogEntry { id: string; specimen: string | null; category: string | null; display_name: string }
 
 const INTERP_CFG: Record<string, { sym: string; cls: string }> = {
   acima_da_referencia:         { sym: '▲', cls: 'text-orange-500' },
@@ -48,6 +51,7 @@ export default function IndicadoresPage() {
   const { user } = useUser()
   const [supabase] = useState(() => createClient() as unknown as SupabaseClient)
   const [rows, setRows] = useState<BiomarkerRow[]>([])
+  const [catalog, setCatalog] = useState<Map<string, CatalogEntry>>(new Map())
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
 
@@ -55,15 +59,18 @@ export default function IndicadoresPage() {
     if (!user) return
     let active = true
     ;(async () => {
-      const { data, error } = await supabase
-        .from('current_biomarkers')
-        .select('id,name,value,unit,result_type,reference_min,reference_max,interpretation,reference_source,exam_id,exams(exam_date,created_at)')
-        .eq('user_id', user.id)
-        .eq('synthetic', false)
-        .eq('result_type', 'numeric')
+      const [bio, cat] = await Promise.all([
+        supabase.from('current_biomarkers')
+          .select('id,name,value,unit,result_type,reference_min,reference_max,interpretation,reference_source,catalog_id,exam_id,exams(exam_date,created_at)')
+          .eq('user_id', user.id).eq('synthetic', false).eq('result_type', 'numeric'),
+        supabase.from('biomarker_catalog').select('id,specimen,category,display_name'),
+      ])
       if (!active) return
-      if (error) console.error('[SINTERA] indicadores fetch:', error.message)
-      setRows((data ?? []) as unknown as BiomarkerRow[])
+      if (bio.error) console.error('[SINTERA] indicadores fetch:', bio.error.message)
+      setRows((bio.data ?? []) as unknown as BiomarkerRow[])
+      const cmap = new Map<string, CatalogEntry>()
+      for (const c of (cat.data ?? []) as CatalogEntry[]) cmap.set(c.id, c)
+      setCatalog(cmap)
       setLoading(false)
     })()
     return () => { active = false }
@@ -71,11 +78,17 @@ export default function IndicadoresPage() {
 
   const summaries = useMemo(() => summarizeBiomarkers(rows), [rows])
   const refIndex = useMemo(() => computeReferenceIndex(rows), [rows])
+  // Nome curado + material/painel do catálogo (nomenclatura consistente + segmentação).
+  const nameOf  = (s: BiomarkerSummary) => catalog.get(s.catalogId ?? '')?.display_name ?? s.displayName
+  const panelOf = (s: BiomarkerSummary) => {
+    const c = catalog.get(s.catalogId ?? '')
+    return { specimen: c?.specimen ?? null, category: c?.category ?? null }
+  }
   const filtered = useMemo(() => {
     if (!search.trim()) return summaries
     const q = search.toLowerCase()
-    return summaries.filter(s => s.displayName.toLowerCase().includes(q))
-  }, [summaries, search])
+    return summaries.filter(s => (catalog.get(s.catalogId ?? '')?.display_name ?? s.displayName).toLowerCase().includes(q))
+  }, [summaries, search, catalog])
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-[60vh]"><Loader2 size={28} className="animate-spin text-petal" /></div>
@@ -155,31 +168,46 @@ export default function IndicadoresPage() {
               <p className="font-body text-sm font-semibold text-onyx">Biomarcadores</p>
               <span className="font-body text-xs text-mauve/60">{filtered.length} de {summaries.length}</span>
             </div>
-            <div className="divide-y divide-border/20">
-              {filtered.map((s: BiomarkerSummary) => {
-                const interp = INTERP_CFG[s.latest?.interpretation ?? ''] ?? INTERP_CFG.indisponivel
-                return (
-                  <Link key={s.canonicalName} href={`/dashboard/saude/${encodeURIComponent(s.canonicalName)}`}
-                    className="flex items-center gap-3 px-5 py-3 hover:bg-blush/10 transition-colors group">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-body text-sm text-onyx truncate group-hover:text-petal transition-colors">{s.displayName}</p>
-                      <p className="font-body text-xs text-mauve/60">
-                        {s.count} mediç{s.count !== 1 ? 'ões' : 'ão'}
-                        {s.latest && ` · última ${formatDate(s.latest.date)}`}
-                      </p>
-                    </div>
-                    {s.latest && (
-                      <span className="font-body text-sm font-semibold text-onyx flex-shrink-0">
-                        {s.latest.value} <span className="text-xs font-normal text-mauve">{s.unit}</span>
-                        <span className={`ml-1.5 text-xs font-semibold ${interp.cls}`}>{interp.sym}</span>
-                      </span>
+            {groupBySpecimen(filtered, panelOf).map(spec => (
+              <div key={spec.key}>
+                {/* Material do exame (sangue/urina) */}
+                <div className="px-5 py-2 bg-ivory border-b border-border/40">
+                  <h3 className="font-body text-xs font-semibold text-onyx/70 uppercase tracking-wider">{spec.label}</h3>
+                </div>
+                {spec.categories.map(cat => (
+                  <div key={cat.key}>
+                    {cat.label && (
+                      <p className="px-5 pt-2.5 pb-1 font-body text-[11px] font-semibold text-mauve/60 uppercase tracking-wide">{cat.label}</p>
                     )}
-                    <div className="flex-shrink-0 w-20 text-right hidden sm:block"><TrendBadge trend={s.trend} delta={s.deltaPercent} /></div>
-                    <ArrowRight size={15} className="text-mauve/30 group-hover:text-petal transition-colors flex-shrink-0" />
-                  </Link>
-                )
-              })}
-            </div>
+                    <div className="divide-y divide-border/20">
+                      {cat.items.map((s) => {
+                        const interp = INTERP_CFG[s.latest?.interpretation ?? ''] ?? INTERP_CFG.indisponivel
+                        return (
+                          <Link key={s.canonicalName} href={`/dashboard/saude/${encodeURIComponent(s.canonicalName)}`}
+                            className="flex items-center gap-3 px-5 py-3 hover:bg-blush/10 transition-colors group">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-body text-sm text-onyx truncate group-hover:text-petal transition-colors">{nameOf(s)}</p>
+                              <p className="font-body text-xs text-mauve/60">
+                                {s.count} mediç{s.count !== 1 ? 'ões' : 'ão'}
+                                {s.latest && ` · última ${formatDate(s.latest.date)}`}
+                              </p>
+                            </div>
+                            {s.latest && (
+                              <span className="font-body text-sm font-semibold text-onyx flex-shrink-0">
+                                {s.latest.value} <span className="text-xs font-normal text-mauve">{s.unit}</span>
+                                <span className={`ml-1.5 text-xs font-semibold ${interp.cls}`}>{interp.sym}</span>
+                              </span>
+                            )}
+                            <div className="flex-shrink-0 w-20 text-right hidden sm:block"><TrendBadge trend={s.trend} delta={s.deltaPercent} /></div>
+                            <ArrowRight size={15} className="text-mauve/30 group-hover:text-petal transition-colors flex-shrink-0" />
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
             {filtered.length === 0 && (
               <div className="px-5 py-8 text-center">
                 <p className="font-body text-xs text-mauve">Nenhum biomarcador encontrado.</p>

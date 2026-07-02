@@ -14,6 +14,7 @@ export interface BiomarkerRow {
   reference_max: number | null
   interpretation?: string | null
   reference_source?: string | null
+  catalog_id?: string | null
   exam_id: string
   exams: { exam_date: string | null; created_at: string } | null
 }
@@ -42,6 +43,7 @@ export interface Measurement {
 export interface BiomarkerSummary {
   canonicalName: string
   displayName: string
+  catalogId?: string | null
   unit: string
   latest: Measurement | null
   first: Measurement | null
@@ -105,6 +107,7 @@ export function summarizeBiomarkers(rows: BiomarkerRow[]): BiomarkerSummary[] {
     out.push({
       canonicalName: key,
       displayName: sorted[sorted.length - 1].name,
+      catalogId: sorted[sorted.length - 1].catalog_id ?? null,
       unit: primaryUnit,
       latest, first, count: sorted.length,
       trend, deltaPercent, totalDeltaPercent,

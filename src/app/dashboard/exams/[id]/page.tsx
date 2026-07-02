@@ -449,16 +449,16 @@ export default function ExamDetailPage() {
         .eq('status', 'success')
         .order('started_at', { ascending: false })
         .limit(1),
-      supabase.from('biomarker_catalog').select('id,specimen,category'),
+      supabase.from('biomarker_catalog').select('id,specimen,category,display_name'),
     ])
     if (examData) setExam(examData as Exam)
     if (bioData) {
       // Enriquece cada biomarcador com material/painel do catálogo (só apresentação).
-      const cats   = (catData ?? []) as { id: string; specimen: string; category: string }[]
+      const cats   = (catData ?? []) as { id: string; specimen: string; category: string; display_name: string }[]
       const catMap = new Map(cats.map(c => [c.id, c]))
       const enriched = (bioData as Biomarker[]).map(b => {
         const c = b.catalog_id ? catMap.get(b.catalog_id) : undefined
-        return { ...b, specimen: c?.specimen ?? null, category: c?.category ?? null }
+        return { ...b, name: c?.display_name ?? b.name, specimen: c?.specimen ?? null, category: c?.category ?? null }
       })
       setBiomarkers(sortBiomarkers(enriched))
     }

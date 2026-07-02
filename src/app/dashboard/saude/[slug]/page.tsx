@@ -81,21 +81,25 @@ export default function IndicadorDrilldownPage() {
   const { user } = useUser()
   const [supabase] = useState(() => createClient() as unknown as SupabaseClient)
   const [rows, setRows] = useState<BiomarkerRow[]>([])
+  const [catalogNames, setCatalogNames] = useState<Map<string, string>>(new Map())
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!user) return
     let active = true
     ;(async () => {
-      const { data, error } = await supabase
-        .from('current_biomarkers')
-        .select('id,name,value,unit,result_type,reference_min,reference_max,interpretation,exam_id,exams(exam_date,created_at)')
-        .eq('user_id', user.id)
-        .eq('synthetic', false)
-        .eq('result_type', 'numeric')
+      const [bio, cat] = await Promise.all([
+        supabase.from('current_biomarkers')
+          .select('id,name,value,unit,result_type,reference_min,reference_max,interpretation,catalog_id,exam_id,exams(exam_date,created_at)')
+          .eq('user_id', user.id).eq('synthetic', false).eq('result_type', 'numeric'),
+        supabase.from('biomarker_catalog').select('id,display_name'),
+      ])
       if (!active) return
-      if (error) console.error('[SINTERA] indicador fetch:', error.message)
-      setRows((data ?? []) as unknown as BiomarkerRow[])
+      if (bio.error) console.error('[SINTERA] indicador fetch:', bio.error.message)
+      setRows((bio.data ?? []) as unknown as BiomarkerRow[])
+      const cmap = new Map<string, string>()
+      for (const c of (cat.data ?? []) as { id: string; display_name: string }[]) cmap.set(c.id, c.display_name)
+      setCatalogNames(cmap)
       setLoading(false)
     })()
     return () => { active = false }
@@ -123,7 +127,7 @@ export default function IndicadorDrilldownPage() {
         <>
           {/* Cabeçalho + resumo factual */}
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="card-premium p-6">
-            <h1 className="font-body text-xl font-semibold text-onyx">{model.displayName}</h1>
+            <h1 className="font-body text-xl font-semibold text-onyx">{catalogNames.get(model.catalogId ?? '') ?? model.displayName}</h1>
             <p className="font-body text-sm text-mauve mt-0.5">
               {model.unit ? `${model.unit} · ` : ''}{model.measurements.length} mediç{model.measurements.length !== 1 ? 'ões' : 'ão'}
             </p>
