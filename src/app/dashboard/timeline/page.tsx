@@ -10,7 +10,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   Clock, Plus, X, Stethoscope, Syringe, Activity, FlaskConical, CalendarDays,
-  Loader2, Pencil, Trash2, Paperclip, Info, Sparkles, Pill, Receipt, FileText, Dumbbell, Dna, CheckCircle2, RotateCcw,
+  Loader2, Pencil, Trash2, Paperclip, Info, Sparkles, Pill, Receipt, Dumbbell, Dna, CheckCircle2, RotateCcw,
 } from 'lucide-react'
 import Link from 'next/link'
 import TimelineEntry from '@/components/entry/TimelineEntry'
@@ -136,6 +136,7 @@ function LegacyTimeline() {
         subtitle: (e.status as string) === 'processed' ? 'Dados extraídos' : (e.status as string) ?? null,
         date: (e.exam_date as string) || (e.created_at as string),
         source: 'upload', confidence: 'alta',
+        href: `/dashboard/exams/${e.id as string}`,
       })
     }
     for (const ev of (eventsRes.data ?? []) as Array<Record<string, unknown>>) {
@@ -257,7 +258,13 @@ function LegacyTimeline() {
                 <meta.Icon size={15} />
               </div>
               <div className="min-w-0">
-                <p className="font-body text-sm font-semibold text-onyx">{it.title}</p>
+                {it.href ? (
+                  <Link href={it.href} className="font-body text-sm font-semibold text-onyx hover:text-petal hover:underline">{it.title}</Link>
+                ) : it.rawId ? (
+                  <button onClick={() => openEdit(it)} className="block font-body text-sm font-semibold text-onyx hover:text-petal text-left">{it.title}</button>
+                ) : (
+                  <p className="font-body text-sm font-semibold text-onyx">{it.title}</p>
+                )}
                 <p className="font-body text-[11px] text-mauve/60">{meta.label}{it.profKind && PROF_LABEL[it.profKind] ? ` · ${PROF_LABEL[it.profKind]}` : ''}{it.subtitle ? ` · ${it.subtitle}` : ''}</p>
                 {it.amountCents != null && (
                   <span className="inline-block font-body text-[11px] font-medium text-sage bg-sage-light border border-sage/20 rounded-full px-2 py-0.5 mt-1">
@@ -273,7 +280,7 @@ function LegacyTimeline() {
                 {it.href && (
                   <Link href={it.href}
                     className="inline-flex items-center gap-1 font-body text-[11px] text-petal hover:underline mt-1">
-                    Ver painel →
+                    {it.kind === 'exam' ? 'Ver exame' : 'Ver painel'} →
                   </Link>
                 )}
               </div>
@@ -327,20 +334,6 @@ function LegacyTimeline() {
         <div>
           <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Histórico</h1>
           <p className="font-body text-sm text-mauve">Seu acompanhamento longitudinal — a linha do tempo com exames, consultas, vacinas, procedimentos e medicamentos</p>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5">
-            <Link href="/dashboard/medicamentos" className="inline-flex items-center gap-1 font-body text-xs text-petal hover:underline">
-              <Pill size={13} /> Medicamentos
-            </Link>
-            <Link href="/dashboard/medidas" className="inline-flex items-center gap-1 font-body text-xs text-petal hover:underline">
-              <Activity size={13} /> Medidas
-            </Link>
-            <Link href="/dashboard/gastos" className="inline-flex items-center gap-1 font-body text-xs text-petal hover:underline">
-              <Receipt size={13} /> Gastos
-            </Link>
-            <Link href="/dashboard/relatorio" className="inline-flex items-center gap-1 font-body text-xs text-petal hover:underline">
-              <FileText size={13} /> Relatórios
-            </Link>
-          </div>
         </div>
         <button onClick={openCreate}
           className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0">
@@ -365,9 +358,10 @@ function LegacyTimeline() {
           <Info size={16} className="text-petal flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="font-body text-xs text-onyx leading-relaxed">
-              Este é o seu <strong>Histórico</strong>: tudo o que já aconteceu — exames entram
-              automaticamente, e você registra consultas, vacinas e procedimentos. O que ainda
-              vai acontecer fica na <strong>Agenda</strong>; quando é concluído, vem para cá.
+              Este é o seu <strong>Histórico</strong>: o registro do que já aconteceu. Adicione seus
+              exames, consultas, vacinas e procedimentos para mantê-lo completo. O que ainda está por
+              vir permanece na <Link href="/dashboard/agenda" className="text-petal hover:underline">Agenda</Link>{' '}
+              e, ao ser concluído, passa para cá.
             </p>
           </div>
           <button onClick={dismissOnboard} aria-label="Dispensar"
