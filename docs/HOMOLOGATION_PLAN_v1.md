@@ -63,7 +63,9 @@
 | Rastreabilidade | dados com proveniência | ⏳ | Dev | referência do laudo OK; ciência (SRL) = futuro |
 
 ## 5.1 Smoke test mínimo (~15 min) — GATE para iniciar o Scientific Catalog v2
-Cobertura automatizada é **só unitária/domínio** (não cobre OCR/Supabase/upload/auth). Antes de mudar o foco para o Catalog v2, a PO executa este fluxo real em produção (`sinteramais.com.br`). **Só inicia o Catalog v2 se todos passarem.**
+Cobertura automatizada é **só unitária/domínio** (não cobre OCR/Supabase/upload/auth). A PO executa em produção (`sinteramais.com.br`). Três grupos:
+
+### Grupo A — Gate de Liberação (OBRIGATÓRIOS — precisam passar)
 1. [ ] Criar usuário *(requer cadastro publicado — Supabase)*
 2. [ ] Fazer login
 3. [ ] Enviar exame em **PDF**
@@ -75,15 +77,17 @@ Cobertura automatizada é **só unitária/domínio** (não cobre OCR/Supabase/up
 9. [ ] **Evolução** atualiza (biomarcadores)
 10. [ ] **Dashboard** atualiza
 11. [ ] Abrir **detalhes do exame** (resultado/segmentação/nome do catálogo)
-12. [ ] Logout
-13. [ ] Novo login
-14. [ ] Dados permanecem íntegros
+12. [ ] Logout · 13. [ ] Novo login · 14. [ ] Dados permanecem íntegros
 
-**Cenários de consistência (DIAGNÓSTICOS — documentam o estado atual, NÃO bloqueiam):**
-15. [ ] Excluir um exame → **Timeline e Dashboard atualizam** (re-derivam do dado). ⚠️ *Auditoria HOJE não é preservada: a exclusão apaga o `ai_processing_log` (`api/exams/[id]/route.ts:60`) — gap vs. invariante de auditoria; item de backlog (arquitetura de eventos).*
-16. [ ] Reenviar o **mesmo** exame → ⚠️ *HOJE cria duplicata (deduplicação NÃO implementada — DOMAIN_BEHAVIORS B5, comportamento futuro). Item de backlog.*
+### Grupo B — Testes de Evolução Arquitetural (NÃO bloqueiam)
+Validam capacidades previstas para a PRÓXIMA arquitetura; **não são bugs**, e sim limitações conhecidas da implementação vigente (que **ainda não atende** ao domínio aprovado). Não são critério de aprovação da plataforma atual.
+15. [ ] Excluir um exame → Timeline/Dashboard atualizam ✅. *Hoje a exclusão apaga o `ai_processing_log` (`api/exams/[id]/route.ts:60`) — a trilha de auditoria é perdida. A implementação atual **ainda não atende** ao domínio aprovado (Event Store + auditoria permanente). → **CAT-022**.*
+16. [ ] Reenviar o mesmo exame → *Hoje faz nova ingestão (sem deduplicação — DOMAIN_BEHAVIORS B5). Previsto para a próxima arquitetura. → **CAT-021**.*
 
-**GATE de bloqueio para o Catalog v2 = passos 1–14 (fluxo principal íntegro) + cutover + cadastro.** Os passos 15–16 são diagnósticos: auditoria e dedup **dependem** da arquitetura orientada a eventos (Catalog v2+), então não podem ser pré-condição para iniciá-la — seus resultados vão para o backlog. Risco principal a mitigar: descobrir problema **estrutural** no fluxo 1–14 durante o Catalog v2.
+### Grupo C — Testes Futuros (executados APÓS o Catalog v2)
+Replay completo · event sourcing · auditoria imutável · reprojeções · SRL · IA Contextual.
+
+**GATE de bloqueio = Grupo A (1–14) + cutover + cadastro.** O Grupo B **não** bloqueia: dedup e auditoria permanente **dependem** da própria arquitetura orientada a eventos que o Catalog v2 introduz — não podem ser pré-condição para iniciá-la. Risco a mitigar: problema **estrutural** no fluxo do Grupo A.
 
 ## 6. Critérios de Aceite (regra)
 A **homologação v1.0 é aprovada** quando: (a) todos os itens **Funcionais** e **Regulatórios** = ✅; (b) itens **Técnicos** sem ⛔ (ressalvas ⚠️ com dívida registrada são aceitáveis); (c) ressalvas arquiteturais (SSOT/séries por catalog_id) **registradas como pós-estabilização**, não bloqueiam v1.0. Cada ✅ exige **evidência** (screenshot/log/commit). O que ficar ⏳ é responsabilidade da PO validar em produção.
