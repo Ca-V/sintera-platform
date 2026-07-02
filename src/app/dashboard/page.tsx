@@ -13,6 +13,7 @@ import { useUser } from '@/context/UserContext'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
 import CaptureCenter from '@/lib/capture/intake/CaptureCenter'
+import DashboardEntry from '@/components/entry/DashboardEntry'
 
 interface ExamSummary {
   id: string
@@ -51,7 +52,13 @@ const QUICK_ACCESS: { href: string; icon: React.ElementType; label: string; desc
   { href: '/dashboard/relatorio',    icon: ScrollText,  label: 'Relatórios',                desc: 'Compartilhar com profissionais', tile: 'bg-lavender-light', tint: 'text-lavender' },
 ]
 
-export default function DashboardPage() {
+// Passo 7 (cutover) — a rota decide legacy × v2 pelo Entry. Default: legacy
+// (RENDER_CONFIG/ENV). Flip por página via NEXT_PUBLIC_DASHBOARD_V2=true.
+export default function DashboardRoute() {
+  return <DashboardEntry legacy={<LegacyDashboard />} />
+}
+
+function LegacyDashboard() {
   const { user, profile } = useUser()
   const router   = useRouter()
   const supabase = useRef(createClient()).current
