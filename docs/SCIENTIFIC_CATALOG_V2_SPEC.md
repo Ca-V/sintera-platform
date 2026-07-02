@@ -1,6 +1,6 @@
 # SINTERA — Scientific Catalog v2 — Specification (Sprint 1)
 
-**Status:** Sprint 1 — **Especificação revisável**. **Sem código, sem migrations, sem alterações de banco.** Aguarda **Design Review formal** (checklist em `POST_STABILIZATION_BACKLOG.md`) antes da Sprint 2 (Migration Plan).
+**Status:** Sprint 1 — **Especificação revisável**. **Sem código, sem migrations, sem alterações de banco.** **Decisão do Design Review: 🟡 EM REVISÃO** (não aprovada, não reprovada) — aguarda revisão linha a linha da fundadora (checklist de 9 itens em `POST_STABILIZATION_BACKLOG.md`) antes da Sprint 2 (Migration Plan).
 **Base:** Domain Model v1.0 (`DOMAIN_MODEL_APPROVED.md`), `CATALOG_SINGLE_SOURCE_OF_TRUTH.md` (Princípio #12), `ADR-010`. Ordem deste documento: **Objetivos → Requisitos Funcionais → Requisitos Não-Funcionais → Modelo Conceitual → Modelo Físico** (físico por último — o domínio direciona o dado, não o contrário).
 
 ---
@@ -47,7 +47,7 @@ Fica **fora** (fases seguintes do roadmap — ver `POST_STABILIZATION_BACKLOG.md
 - **RNF-02 · Escalabilidade.** Suportar milhares de biomarcadores e dezenas de milhares de aliases sem degradar a resolução.
 - **RNF-03 · Auditabilidade.** Toda mudança de metadado é versionada e rastreável (autor/data/versão/aprovação) — do **catálogo** (não confundir com auditoria da jornada clínica, `CAT-022`).
 - **RNF-04 · Compatibilidade (consumidores atuais).** `catalog_id` permanece a chave; as telas que já leem `display_name`/`specimen`/`category` via `catalog_id` continuam funcionando durante e após a migração.
-- **RNF-05 · Backward compatibility.** Migração **aditiva** sobre o `biomarker_catalog` existente (não recriar). `specimen`/`category` (hoje `text`/enum) evoluem para `material_id`/`panel_id` com **camada de compatibilidade** (view/coluna espelho) até os consumidores migrarem.
+- **RNF-05 · Backward compatibility aditiva (PRINCÍPIO).** **Nenhuma alteração do Catalog v2 poderá exigir migração destrutiva na primeira versão.** Migração é **aditiva** sobre o `biomarker_catalog` existente (não recriar). `specimen`/`category` (hoje `text`/enum) evoluem para `material_id`/`panel_id` com **camada de compatibilidade** (view/coluna espelho) até os consumidores migrarem. Remoção de colunas/estruturas legadas só em versão posterior, após todos os consumidores migrarem.
 - **RNF-06 · Governança de RLS/segurança.** Catálogo é leitura pública autenticada (como hoje); escrita restrita à curadoria (service role). SSOT preservado.
 - **RNF-07 · Determinismo.** Nenhuma resolução probabilística/semântica nesta fase — resultados reproduzíveis.
 
@@ -77,6 +77,7 @@ BiomarkerCatalogItem 1—N ExternalCode      (LOINC/SNOMED)
 
 ## 5. Modelo Físico (schema — DESIGN; sem migrations)
 > Design conceitual das tabelas para revisão. **Não** é migration nem DDL executável — isso é a Sprint 2 (Migration Plan) e Sprint 3 (Implementação).
+> **Ordem de derivação (domain-first):** o design-alvo abaixo **decorre do Modelo Conceitual (§4)**, que decorre dos Requisitos (§2/§3) e do Domain Model aprovado. O schema atual (v1) é consultado **apenas** para definir **compatibilidade e migração** — **não** é o ponto de partida do desenho.
 
 **Estado atual (v1, a estender — não recriar):** `biomarker_catalog(id, code, display_name, category, specimen, canonical_unit, measure_kind, is_critical, created_at, loinc_code, snomed_ct_code, loinc_status, snomed_status, scientific_source, scientific_version, reviewed_by, reviewed_at, approval_status, rejection_reason, curation_wave, curation_priority)` · `biomarker_aliases(alias_normalized, catalog_id, unit_pattern)`.
 
@@ -90,6 +91,18 @@ BiomarkerCatalogItem 1—N ExternalCode      (LOINC/SNOMED)
 - **Compat:** view `current_catalog` (ou colunas espelho) expondo `specimen`/`category` derivados de `material_id`/`panel_id` enquanto os consumidores migram — dissolve `lib/biomarkers/panels.ts`.
 
 *(Colunas/índices/constraints exatos, estratégia de backfill de `material_id`/`panel_id` a partir de `specimen`/`category`, e rollback: **Sprint 2 — Migration Plan**.)*
+
+## 6. Fora de Escopo
+Esta Specification **não** contempla (remetidos a fases seguintes do roadmap — protege contra expansão de escopo na Sprint 3):
+- Scientific Retrieval Layer
+- Knowledge Graph v2
+- Knowledge Layer v2
+- IA Contextual
+- Mobile
+- Event Store
+- Replay de eventos
+- Auditoria Imutável (da jornada clínica)
+- Busca semântica · integrações externas · conversão de unidades
 
 ---
 ## Rastreabilidade
