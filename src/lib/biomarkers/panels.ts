@@ -1,7 +1,12 @@
 // Rótulos de painel/material dos biomarcadores (material = specimen, painel = category
-// do biomarker_catalog) + agrupador puro. Fonte ÚNICA compartilhada entre o detalhe do
-// exame e a Evolução (evita duplicar os mapas). Só apresentação — nomenclatura
-// científica/médica/laboratorial curada; nenhuma lógica clínica (RDC 657).
+// do biomarker_catalog) + agrupador puro. Só apresentação — nenhuma lógica clínica (RDC 657).
+//
+// ⚠️ TRANSICIONAL (não é um novo catálogo). Estes mapas código→rótulo (e futuros
+// ícone/ordem) são METADADO que pertence ao CATÁLOGO CIENTÍFICO (SSOT — Princípio #12).
+// Enquanto o catálogo não expõe esses rótulos (Scientific Catalog v2: material_id/panel_id
+// com label/sort_order), este arquivo os hospeda provisoriamente. A CHAVE é sempre
+// `catalog_id`/`specimen`/`category` (código), NUNCA o display_name. `groupBySpecimen`
+// (lógica de agrupamento) deve permanecer aqui/no domínio; os RÓTULOS migram para o catálogo.
 
 export const SPECIMEN_LABEL: Record<string, string> = {
   sangue:    'Exame de sangue',
