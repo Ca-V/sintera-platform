@@ -3,6 +3,8 @@
 **Status:** repositório mestre das decisões estruturais (a "constituição" da arquitetura).
 **Regra:** toda decisão estrutural nova entra aqui com ID, status e link para o documento-fonte. Nenhuma implementação estrutural sem ADR correspondente.
 
+> 🧊 **ARQUITETURA OFICIALMENTE CONGELADA — 02/07/2026 (fundadora).** Encerrada a fase de arquitetura. **Início da fase de implementação/execução.** A partir daqui: **nenhuma nova documentação arquitetural, nenhum novo ADR e nenhum novo modelo de domínio** — exceto **inconsistência crítica** surgida durante a implementação. Foco total em implementação, testes e validação, na ordem do `POST_STABILIZATION_BACKLOG.md` (após a homologação v1.0 — `HOMOLOGATION_PLAN_v1.md`).
+
 | ID | Decisão | Status | Fonte |
 |---|---|---|---|
 | **ADR-001** | **Plataforma de Governança Científica** (organiza/relaciona/recupera; não conclui/diagnostica/recomenda) | ✅ Aprovada | `PLANO_MATURIDADE_PRE_MOBILE.md §0` |

@@ -4,19 +4,18 @@
 
 ---
 
-## Ordem canônica (dependências)
-| # | Iniciativa | Depende de | ADR/Doc |
-|---|---|---|---|
-| 1 | **Scientific Catalog v2 — Specification** | Domain Model aprovado ✅ | `ADR-010`; `SCIENTIFIC_CATALOG_V2_SPEC.md` (a criar) |
-| 2 | **Catalog v2 — Migration Plan** | Spec | `CATALOG_V2_MIGRATION_PLAN.md` (a criar) |
-| 3 | **Catalog v2 — Implementação** | Migration Plan | `ADR-010` |
-| 4 | **Knowledge Layer v2** | Catalog v2 | `ADR-006` |
-| 5 | **Knowledge Graph v2** | Knowledge Layer v2 | `ADR-007` |
-| 6 | **Scientific Retrieval Layer** | KL v2 + KG v2 (conhecimento consolidado) | `ADR-016`; `SCIENTIFIC_RETRIEVAL_LAYER.md` |
-| 7 | **IA Contextual** | SRL | `PLANO_MATURIDADE §12/§13` |
-| 8 | **Architecture Compliance Checklist** | início da impl. estrutural (Catalog v2) | `ARCHITECTURE_COMPLIANCE_CHECKLIST.md` (a criar) |
-| 9 | **Non-Functional Requirements** | antes do Mobile | `ADR-015`; `NON_FUNCTIONAL_REQUIREMENTS.md` (a criar) |
-| 10 | **Aplicativos Mobile (iOS/Android)** | plataforma madura (critérios `PLANO_MATURIDADE §20`) | `ADR-008` |
+## Sprints (ordem priorizada)
+| Sprint | Entrega | ADR/Doc |
+|---|---|---|
+| **Sprint 1** | Scientific Catalog v2 — **Specification** + **Migration Plan** | `ADR-010` |
+| **Sprint 2** | **Implementação** do Scientific Catalog v2 | `ADR-010` |
+| **Sprint 3** | **Knowledge Layer v2** | `ADR-006` |
+| **Sprint 4** | **Knowledge Graph v2** | `ADR-007` |
+| **Sprint 5** | **Scientific Retrieval Layer** | `ADR-016` |
+| **Sprint 6** | **IA Contextual** | `PLANO_MATURIDADE §12/§13` |
+| **Sprint 7** | **Mobile Foundation** | `ADR-008` |
+
+*(Documentos de apoio quando cada sprint começar: `ARCHITECTURE_COMPLIANCE_CHECKLIST.md` no Sprint 2; `NON_FUNCTIONAL_REQUIREMENTS.md` antes do Mobile — `ADR-015`.)*
 
 ## Dívidas técnicas autorizadas (entram junto com o Catalog v2)
 - **Agrupar séries longitudinais por `catalog_id`** (hoje por nome) — `CATALOG_SINGLE_SOURCE_OF_TRUTH.md`.
