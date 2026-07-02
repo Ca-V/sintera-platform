@@ -18,12 +18,17 @@
 | **ADR-011** | **RBAC multi-perfil** (paciente/médico/lab/nutri/empresa/RH/pesquisador/admin) | 🔵 Planejada | `PLANO_MATURIDADE §10` |
 | **ADR-012** | **Auditoria/rastreabilidade completa** (autor/data/versão/aprovação/assinatura) | 🔵 Planejada | `PLANO_MATURIDADE §11` |
 | **ADR-013** | **Bounded Contexts** (modularização por domínio; integração por contratos) | ✅ Aprovada | `docs/BOUNDED_CONTEXTS.md` |
+| **ADR-014** | **Toda entidade relevante possui ciclo de vida + máquina de estados documentados** (nascimento→evolução→fim; estados/transições válidas) | ✅ Aprovada | `docs/ENTITY_LIFECYCLES.md`, `docs/DOMAIN_STATE_MACHINE.md` |
+| **ADR-015** | **Requisitos não-funcionais** (metas de performance/disponibilidade/LGPD/criptografia/auditoria/observabilidade/escalabilidade) | 🔵 Planejada — **antes do Mobile** | `docs/NON_FUNCTIONAL_REQUIREMENTS.md` (a criar) |
 
 **Legenda:** ✅ Aprovada (decidida, vigente) · 🔵 Planejada (aceita como direção; a implementar na fase própria).
 
 ## Sequenciamento (governança vigente)
 1. **Agora:** estabilizar a Sprint UX (cutover em legacy, sem flip v2). Congelamento do Estado 2 mantido.
-2. **Próximo salto (fundação):** **ADR-010 Scientific Catalog v2** — coincide com o início do Estado 2 Camada 1 (**Catálogo**). É o "coração"; Timeline/IA/Knowledge/Mobile/APIs/Omics/Produtos/Busca dependem dele. **Encadeamento obrigatório (domínio → arquitetura → dados):** **Domain Model** = `SCIENTIFIC_DOMAIN_MODEL.md` (estrutura) + `DOMAIN_BEHAVIORS.md` (comportamento) + `DOMAIN_EVENTS.md` (eventos oficiais) + `DOMAIN_INVARIANTS.md` (invariantes) — ✅ produzidos, **fechado só após aprovação da fundadora** → `SCIENTIFIC_CATALOG_V2_SPEC.md` (especificação) → `CATALOG_V2_MIGRATION_PLAN.md` (migração/backfill/rollback) → implementação (migrations/código/testes). **Nada de schema antes do Domain Model aprovado.**
+2. **Próximo salto (fundação):** **ADR-010 Scientific Catalog v2** — coincide com o início do Estado 2 Camada 1 (**Catálogo**). É o "coração"; Timeline/IA/Knowledge/Mobile/APIs/Omics/Produtos/Busca dependem dele. **Encadeamento obrigatório (domínio → arquitetura → dados):** **Domain Model (6 docs)** = `SCIENTIFIC_DOMAIN_MODEL` (estrutura) + `DOMAIN_BEHAVIORS` (comportamento) + `DOMAIN_EVENTS` (eventos) + `DOMAIN_INVARIANTS` (invariantes) + `ENTITY_LIFECYCLES` (ciclo de vida) + `DOMAIN_STATE_MACHINE` (estados/transições) — ✅ produzidos, **fechado só após aprovação da fundadora** → `SCIENTIFIC_CATALOG_V2_SPEC.md` → `CATALOG_V2_MIGRATION_PLAN.md` → implementação. **Nada de schema antes do Domain Model aprovado.**
+
+## Congelamento arquitetural (recomendação da fundadora, 02/07)
+Após o Domain Model fechado e antes de escrever migrations/código estrutural: **período de estabilização arquitetural de ~30 dias** — nenhuma mudança estrutural; apenas correções, homologação (cutover/cadastro/Sprint UX), revisão da documentação e validação dos conceitos. Objetivo: caçar inconsistências antes de codar; reduz retrabalho.
 3. Depois: Evento→EventLink (Estado 2), Knowledge Layer/Graph, APIs versionadas, RBAC, auditoria, Mobile.
 
 > Regressões proibidas: nenhuma implementação pode contrariar um ADR ✅ Aprovada sem novo ADR que o substitua.
