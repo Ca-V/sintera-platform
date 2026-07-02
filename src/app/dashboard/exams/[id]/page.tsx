@@ -832,7 +832,7 @@ export default function ExamDetailPage() {
 
                           {/* Resultado — protagonista; número e texto com o MESMO
                               tratamento (valor grande, unidade sempre pequena) */}
-                          <p className="font-display text-xl font-semibold text-onyx mt-0.5 leading-tight">
+                          <p className="font-body text-xl font-semibold text-onyx mt-0.5 leading-tight">
                             {dv.main !== null
                               ? <>{dv.main}{dv.unit ? <span className="text-mauve text-sm font-normal ml-1">{dv.unit}</span> : null}</>
                               : <span className="text-mauve/40 font-normal">—</span>
