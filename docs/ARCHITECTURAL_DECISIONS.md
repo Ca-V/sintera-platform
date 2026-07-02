@@ -23,7 +23,7 @@
 
 ## Sequenciamento (governança vigente)
 1. **Agora:** estabilizar a Sprint UX (cutover em legacy, sem flip v2). Congelamento do Estado 2 mantido.
-2. **Próximo salto (fundação):** **ADR-010 Scientific Catalog v2** — coincide com o início do Estado 2 Camada 1 (**Catálogo**). É o "coração"; Timeline/IA/Knowledge/Mobile/APIs/Omics/Produtos/Busca dependem dele. **Encadeamento obrigatório (domínio → arquitetura → dados):** `SCIENTIFIC_DOMAIN_MODEL.md` (conceitual, ✅ produzido — aguarda fechamento) → `SCIENTIFIC_CATALOG_V2_SPEC.md` (especificação) → `CATALOG_V2_MIGRATION_PLAN.md` (migração/backfill/rollback) → implementação (migrations/código/testes). **Nada de schema antes do Domain Model aprovado.**
+2. **Próximo salto (fundação):** **ADR-010 Scientific Catalog v2** — coincide com o início do Estado 2 Camada 1 (**Catálogo**). É o "coração"; Timeline/IA/Knowledge/Mobile/APIs/Omics/Produtos/Busca dependem dele. **Encadeamento obrigatório (domínio → arquitetura → dados):** **Domain Model** = `SCIENTIFIC_DOMAIN_MODEL.md` (estrutura) + `DOMAIN_BEHAVIORS.md` (comportamento) + `DOMAIN_EVENTS.md` (eventos oficiais) + `DOMAIN_INVARIANTS.md` (invariantes) — ✅ produzidos, **fechado só após aprovação da fundadora** → `SCIENTIFIC_CATALOG_V2_SPEC.md` (especificação) → `CATALOG_V2_MIGRATION_PLAN.md` (migração/backfill/rollback) → implementação (migrations/código/testes). **Nada de schema antes do Domain Model aprovado.**
 3. Depois: Evento→EventLink (Estado 2), Knowledge Layer/Graph, APIs versionadas, RBAC, auditoria, Mobile.
 
 > Regressões proibidas: nenhuma implementação pode contrariar um ADR ✅ Aprovada sem novo ADR que o substitua.
