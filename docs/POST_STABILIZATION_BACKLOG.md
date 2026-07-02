@@ -17,6 +17,12 @@
 
 *(Documentos de apoio quando cada sprint começar: `ARCHITECTURE_COMPLIANCE_CHECKLIST.md` no Sprint 2; `NON_FUNCTIONAL_REQUIREMENTS.md` antes do Mobile — `ADR-015`.)*
 
+### Fronteira de escopo do Scientific Catalog v2 (disciplina — NÃO deixar crescer)
+Erro comum: transformar o "Catalog v2" num projeto que tenta resolver tudo. Escopo **fechado**:
+- **DENTRO (só isto):** identidade única dos biomarcadores · nomenclatura científica · aliases · LOINC · SNOMED CT · UCUM · painéis · materiais · versionamento · governança.
+- **FORA (fases seguintes do roadmap):** Scientific Retrieval · IA · recomendações · busca semântica · integrações externas · funcionalidades móveis.
+Qualquer coisa fora dessa lista → próxima sprint, não o Catalog v2.
+
 ## Dívidas técnicas autorizadas (entram junto com o Catalog v2)
 - **Agrupar séries longitudinais por `catalog_id`** (hoje por nome) — `CATALOG_SINGLE_SOURCE_OF_TRUTH.md`.
 - **Remover fallback `catalogId ?? ''`** — tornar `catalog_id` obrigatório + log de cobertura.
@@ -25,9 +31,11 @@
 
 ## Known Gaps (limitações arquiteturais conhecidas — NÃO são defeitos)
 > **Nota oficial:** a ausência de deduplicação e de auditoria permanente na exclusão **não** é defeito da plataforma atual. É uma **limitação arquitetural conhecida**, cuja implementação está planejada para a fase do **Scientific Catalog v2 + arquitetura orientada a eventos**. **Não** constituem bloqueadores para iniciar essa evolução. (A implementação atual ainda **não atende** ao domínio aprovado — não "viola" um invariante já vigente; o invariante pertence ao domínio-alvo.) Evita que, meses depois, alguém abra "bug: auditoria errada" — ela ainda não existe.
-- **CAT-021 · Deduplicação** — reenviar o mesmo exame faz nova ingestão; `DocumentDuplicateDetected` (DOMAIN_BEHAVIORS B5) não implementado.
-- **CAT-022 · Auditoria imutável** — a exclusão apaga o `ai_processing_log` (`api/exams/[id]/route.ts:60`); a trilha não é preservada. Alvo: `Event Store → Audit Log → Projections` (Exam→Event→Audit), não "Audit depende do Exame".
-- **CAT-023 · Replay de eventos / reprojeções** — inexistente; entra com o event sourcing.
+| ID | Item | Prioridade | Dependência |
+|---|---|---|---|
+| **CAT-021** | Deduplicação (reenvio faz nova ingestão; `DocumentDuplicateDetected`/B5 não implementado) | Alta | Catalog v2 |
+| **CAT-022** | Auditoria imutável (exclusão apaga `ai_processing_log`; alvo `Event Store → Audit Log → Projections`, não "Audit depende do Exame") | Alta | Event Store |
+| **CAT-023** | Replay de eventos / reprojeções (inexistente) | Alta | Event Store |
 
 **Acceptance Criteria do Catalog v2 / arquitetura de eventos:** essa fase **não** é considerada concluída enquanto **CAT-021 (dedup) · CAT-022 (auditoria imutável) · CAT-023 (replay/reprojeções)** não existirem — assim os Known Gaps reaparecem como critério de aceite e não somem do radar.
 

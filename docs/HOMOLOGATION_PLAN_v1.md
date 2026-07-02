@@ -79,8 +79,8 @@ Cobertura automatizada é **só unitária/domínio** (não cobre OCR/Supabase/up
 11. [ ] Abrir **detalhes do exame** (resultado/segmentação/nome do catálogo)
 12. [ ] Logout · 13. [ ] Novo login · 14. [ ] Dados permanecem íntegros
 
-### Grupo B — Testes de Evolução Arquitetural (NÃO bloqueiam)
-Validam capacidades previstas para a PRÓXIMA arquitetura; **não são bugs**, e sim limitações conhecidas da implementação vigente (que **ainda não atende** ao domínio aprovado). Não são critério de aprovação da plataforma atual.
+### Grupo B — Critérios de Validação da Nova Arquitetura (NÃO bloqueiam)
+Não são apenas "testes": são os **critérios que a nova arquitetura deverá satisfazer**. Validam capacidades previstas para a PRÓXIMA arquitetura; **não são bugs**, e sim limitações conhecidas da implementação vigente (que **ainda não atende** ao domínio aprovado). Não são critério de aprovação da plataforma atual.
 15. [ ] Excluir um exame → Timeline/Dashboard atualizam ✅. *Hoje a exclusão apaga o `ai_processing_log` (`api/exams/[id]/route.ts:60`) — a trilha de auditoria é perdida. A implementação atual **ainda não atende** ao domínio aprovado (Event Store + auditoria permanente). → **CAT-022**.*
 16. [ ] Reenviar o mesmo exame → *Hoje faz nova ingestão (sem deduplicação — DOMAIN_BEHAVIORS B5). Previsto para a próxima arquitetura. → **CAT-021**.*
 
