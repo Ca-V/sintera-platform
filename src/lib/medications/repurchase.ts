@@ -44,6 +44,44 @@ export function recompraDate(
   if (!ro) return null
   const d = new Date(`${ro}T00:00:00`)
   d.setDate(d.getDate() - 5)
+  return notPast(ymd(d))
+}
+
+/** Nunca no passado: se a data já passou, devolve hoje. */
+function notPast(dateStr: string): string {
+  const d = new Date(`${dateStr}T00:00:00`)
   const today = new Date(); today.setHours(0, 0, 0, 0)
   return d < today ? ymd(today) : ymd(d)
+}
+
+// Recorrência declarada pelo usuário → intervalo (dias ou meses).
+const FREQ_DAYS: Record<string, number> = { semanal: 7, quinzenal: 15 }
+const FREQ_MONTHS: Record<string, number> = { mensal: 1, bimestral: 2, trimestral: 3, semestral: 6, anual: 12 }
+
+/** Recompra pela recorrência declarada (compra + intervalo), nunca no passado. */
+export function recompraFromFrequency(purchasedOn: string | null, frequency: string | null): string | null {
+  if (!purchasedOn || !frequency) return null
+  const d = new Date(`${purchasedOn}T00:00:00`)
+  if (isNaN(d.getTime())) return null
+  if (FREQ_DAYS[frequency]) d.setDate(d.getDate() + FREQ_DAYS[frequency])
+  else if (FREQ_MONTHS[frequency]) d.setMonth(d.getMonth() + FREQ_MONTHS[frequency])
+  else return null
+  return notPast(ymd(d))
+}
+
+/**
+ * Hierarquia OFICIAL da próxima recompra (regra de negócio aprovada):
+ *   1. Se há cálculo por consumo (embalagem + consumo/dia) → usar o cálculo.
+ *   2. Senão, se há recorrência declarada (mensal…anual) → usar a recorrência.
+ *   3. Senão → não há recompra.
+ */
+export function nextRepurchaseDate(
+  purchasedOn: string | null,
+  packQty: number | null,
+  dailyCons: number | null,
+  acquiredQty: number | null,
+  frequency: string | null,
+): string | null {
+  return recompraDate(purchasedOn, packQty, dailyCons, acquiredQty)
+    ?? recompraFromFrequency(purchasedOn, frequency)
 }

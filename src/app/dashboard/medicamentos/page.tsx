@@ -15,7 +15,8 @@ import { Loader2, Plus, X, Pill, ArrowLeft, Pencil, Trash2, PauseCircle, PlayCir
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
-import { runoutDate, recompraDate } from '@/lib/medications/repurchase'
+import { runoutDate, recompraDate, nextRepurchaseDate } from '@/lib/medications/repurchase'
+import { healthEventToRow } from '@/lib/agenda/event'
 
 type Status = 'em_uso' | 'suspenso'
 type Kind = 'medicamento' | 'suplemento' | 'produto' | 'dispositivo' | 'outro'
@@ -40,6 +41,7 @@ interface Med {
   repurchaseReminder: boolean
   repurchaseFreq: string | null
   repurchaseEventId: string | null
+  purchaseEventId: string | null
 }
 
 function fmtDate(date: string | null): string | null {
@@ -186,7 +188,7 @@ export default function MedicamentosPage() {
     setLoading(true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = await (supabase as any).from('medications')
-      .select('id, name, kind, brand, dose, frequency, started_on, until_date, status, notes, acquired_quantity, pack_quantity, daily_consumption, purchased_on, purchase_status, amount_cents, repurchase_reminder, repurchase_frequency, repurchase_event_id')
+      .select('id, name, kind, brand, dose, frequency, started_on, until_date, status, notes, acquired_quantity, pack_quantity, daily_consumption, purchased_on, purchase_status, amount_cents, repurchase_reminder, repurchase_frequency, repurchase_event_id, purchase_event_id')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
     setMeds(((data ?? []) as Array<Record<string, unknown>>).map(m => ({
@@ -209,6 +211,7 @@ export default function MedicamentosPage() {
       repurchaseReminder: m.repurchase_reminder === true,
       repurchaseFreq: (m.repurchase_frequency as string) ?? null,
       repurchaseEventId: (m.repurchase_event_id as string) ?? null,
+      purchaseEventId: (m.purchase_event_id as string) ?? null,
     })))
     setLoading(false)
   }, [user, supabase])
@@ -263,9 +266,12 @@ export default function MedicamentosPage() {
       medId = (data?.id as string) ?? null
     }
 
-    // Lembrete de recompra (reaproveita o worker de lembretes via agenda_events)
+    // Lembrete de recompra (reaproveita o worker de lembretes via agenda_events).
+    // Data pela HIERARQUIA oficial: cálculo por consumo tem prioridade; na ausência
+    // dele, usa a recorrência declarada (mensal…anual) — antes só o consumo agendava,
+    // então uma recorrência "trimestral" sem consumo nunca gerava evento (bug corrigido).
     if (medId) {
-      const rec = recompraDate(purchasedOn || null, num(packQty), num(dailyCons), num(acquiredQty))
+      const rec = nextRepurchaseDate(purchasedOn || null, num(packQty), num(dailyCons), num(acquiredQty), repurchaseFreq || null)
       const wants = repurchase && status === 'em_uso' && !!rec
       const existingEvent = existing?.repurchaseEventId ?? null
       try {
@@ -281,6 +287,33 @@ export default function MedicamentosPage() {
           await db.from('medications').update({ repurchase_event_id: null }).eq('id', medId)
         }
       } catch { /* lembrete é best-effort, não bloqueia o salvamento */ }
+    }
+
+    // Evento canônico de COMPRA (Opção A): marcar "comprado" emite um health_events
+    // que alimenta Gastos + Histórico + Dashboard por origem única. Idempotente via
+    // purchase_event_id (editar atualiza o mesmo evento; despublicar remove).
+    if (medId) {
+      const wantsPurchase = purchaseStatus === 'comprado' && !!purchasedOn
+      const existingPurchase = existing?.purchaseEventId ?? null
+      // kind → event_type válido (CHECK health_events): produto/dispositivo → 'outro'
+      const evType = kind === 'medicamento' ? 'medicamento' : kind === 'suplemento' ? 'suplemento' : 'outro'
+      try {
+        if (wantsPurchase) {
+          const row = healthEventToRow(user.id, {
+            ...(existingPurchase ? { id: existingPurchase } : {}),
+            type: evType, title: `Compra: ${name.trim()}`, date: purchasedOn,
+            status: 'realizado', source: 'system', directExpense: true,
+            amountCents: toCents(amount),
+          })
+          const { data: pev } = await db.from('health_events').upsert(row).select('id').single()
+          if (pev?.id && pev.id !== existingPurchase) {
+            await db.from('medications').update({ purchase_event_id: pev.id }).eq('id', medId)
+          }
+        } else if (existingPurchase) {
+          await db.from('health_events').delete().eq('id', existingPurchase)
+          await db.from('medications').update({ purchase_event_id: null }).eq('id', medId)
+        }
+      } catch { /* projeção best-effort: não bloqueia o salvamento do medicamento */ }
     }
     setSaving(false)
     reset(); setShowForm(false); await load()
@@ -300,6 +333,7 @@ export default function MedicamentosPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db = supabase as any
     if (m.repurchaseEventId) await db.from('agenda_events').delete().eq('id', m.repurchaseEventId)
+    if (m.purchaseEventId) await db.from('health_events').delete().eq('id', m.purchaseEventId)
     await db.from('medications').delete().eq('id', m.id)
     await load(); setBusyId(null)
   }
