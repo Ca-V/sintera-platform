@@ -37,7 +37,7 @@ function TrendBadge({ trend, delta }: { trend: Trend; delta: number | null }) {
   if (trend === 'down')
     return <span className="flex items-center gap-1 text-blue-500 font-body text-xs font-semibold"><TrendingDown size={12} /> {delta !== null ? `${delta}%` : '↓'}</span>
   if (trend === 'stable')
-    return <span className="flex items-center gap-1 text-mauve font-body text-xs"><Minus size={12} /> estável</span>
+    return <span className="flex items-center gap-1 text-mauve font-body text-xs"><Minus size={12} /> {delta !== null ? `${delta > 0 ? '+' : ''}${delta}%` : '—'}</span>
   if (trend === 'single')
     return <span className="font-body text-xs text-mauve/50">1ª medição</span>
   return <span className="font-body text-xs text-amber-600">unidades ≠</span>
@@ -99,11 +99,6 @@ export default function IndicadoresPage() {
             </p>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2 mt-4">
-          <Link href="/dashboard/medidas" className="px-3.5 py-1.5 rounded-full bg-ivory border border-border text-mauve font-body text-sm hover:border-petal/40 transition-colors">Medidas</Link>
-          <Link href="/dashboard/sinais-vitais" className="px-3.5 py-1.5 rounded-full bg-ivory border border-border text-mauve font-body text-sm hover:border-petal/40 transition-colors">Sinais vitais</Link>
-        </div>
-
         {summaries.length > 0 && (
           <div className="mt-4 relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-mauve/50" />
@@ -169,7 +164,7 @@ export default function IndicadoresPage() {
                     <div className="flex-1 min-w-0">
                       <p className="font-body text-sm text-onyx truncate group-hover:text-petal transition-colors">{s.displayName}</p>
                       <p className="font-body text-xs text-mauve/60">
-                        {s.count} medição{s.count !== 1 ? 'ões' : ''}
+                        {s.count} mediç{s.count !== 1 ? 'ões' : 'ão'}
                         {s.latest && ` · última ${formatDate(s.latest.date)}`}
                       </p>
                     </div>
