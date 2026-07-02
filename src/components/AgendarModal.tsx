@@ -380,7 +380,10 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                       {eventType !== 'plano' && (
                       <div className="space-y-1.5"><label className={LABEL}>Formato</label>
                         <div className="flex gap-2">
-                          {([['', '—'], ['presencial', 'Presencial'], ['telemedicina', 'Teleconsulta']] as [EventModality, string][]).map(([v, l]) => (
+                          {/* Teleconsulta não se aplica a Exame/Vacina (presencial ou domiciliar) */}
+                          {([['', '—'], ['presencial', 'Presencial'], ['telemedicina', 'Teleconsulta']] as [EventModality, string][])
+                            .filter(([v]) => !(v === 'telemedicina' && (eventType === 'exame' || eventType === 'vacina')))
+                            .map(([v, l]) => (
                             <button key={v} type="button" onClick={() => setModality(v)}
                               className={`flex-1 py-2 rounded-xl text-xs font-body font-medium border transition-all ${modality === v ? 'gradient-sintera text-white border-transparent shadow-sm' : 'border-border text-mauve hover:border-petal/40'}`}>{l}</button>
                           ))}
