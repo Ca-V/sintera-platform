@@ -161,10 +161,17 @@ function sortBiomarkers(bms: Biomarker[]): Biomarker[] {
   })
 }
 
+/** Número em pt-BR: vírgula decimal + agrupamento de milhar, sem arredondar. */
+function fmtNum(n: number): string {
+  const [int, dec] = String(n).split('.')
+  const grouped = Number(int).toLocaleString('pt-BR')
+  return dec ? `${grouped},${dec}` : grouped
+}
+
 function formatRef(min: number | null, max: number | null): string {
-  if (min !== null && max !== null) return `${min} – ${max}`
-  if (min !== null) return `> ${min}`
-  if (max !== null) return `< ${max}`
+  if (min !== null && max !== null) return `${fmtNum(min)} – ${fmtNum(max)}`
+  if (min !== null) return `> ${fmtNum(min)}`
+  if (max !== null) return `< ${fmtNum(max)}`
   return '—'
 }
 
@@ -214,7 +221,7 @@ function displayValue(b: Biomarker): { main: string | null; unit: string | null 
     }
     return { main: prettyValueText(raw), unit: null }
   }
-  if (b.value !== null) return { main: String(b.value), unit: b.unit?.trim() || null }
+  if (b.value !== null) return { main: fmtNum(b.value), unit: b.unit?.trim() || null }
   return { main: null, unit: null }
 }
 
