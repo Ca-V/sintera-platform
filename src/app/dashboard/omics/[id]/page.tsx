@@ -410,7 +410,7 @@ function ImportResults({ panelId, onDone }: { panelId: string; onDone: () => voi
         </button>
         <button onClick={() => cameraRef.current?.click()} disabled={busy}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-petal/40 text-petal font-body text-sm font-medium hover:bg-blush transition-colors disabled:opacity-50">
-          <Camera size={15} /> Tirar foto do laudo
+          <Camera size={15} /> Fotografar o laudo
         </button>
         {versions.length > 0 && (
           <button onClick={() => setShowVersions(v => !v)}

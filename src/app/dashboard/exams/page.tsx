@@ -299,7 +299,7 @@ export default function ExamsPage() {
                 className={['inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-petal/40 text-petal font-body text-sm font-medium cursor-pointer hover:bg-blush transition-colors',
                   uploading ? 'opacity-60 pointer-events-none' : ''].join(' ')}>
                 <input type="file" accept="image/*" capture="environment" className="sr-only" disabled={uploading} onChange={onInputChange} />
-                <Camera size={15} /> Tirar foto do laudo
+                <Camera size={15} /> Fotografar o laudo
               </label>
             </div>
           </>
@@ -448,7 +448,7 @@ export default function ExamsPage() {
         <div className="card-premium p-12 text-center">
           <FileText size={36} className="text-border mx-auto mb-3" />
           <p className="font-body text-sm text-mauve">Nenhum exame ainda</p>
-          <p className="font-body text-xs text-mauve/60 mt-1">Faça upload do primeiro exame acima</p>
+          <p className="font-body text-xs text-mauve/60 mt-1">Adicione o primeiro exame acima</p>
         </div>
       ) : examsByYear.length === 0 ? (
         <div className="card-premium p-10 text-center">

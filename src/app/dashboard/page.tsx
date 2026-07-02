@@ -199,12 +199,12 @@ function LegacyDashboard() {
           </div>
           <h2 className="font-display text-lg font-semibold text-onyx mb-2">Comece enviando seu primeiro exame</h2>
           <p className="font-body text-sm text-mauve max-w-sm mx-auto mb-6">
-            Faça upload de um laudo em PDF e a SINTERA extrai automaticamente todos os biomarcadores via IA.
+            Adicione um laudo em PDF e a SINTERA extrai automaticamente todos os biomarcadores via IA.
           </p>
           <button
             onClick={() => router.push('/dashboard/exams')}
             className="inline-flex items-center gap-2 gradient-sintera text-white font-body text-sm font-medium px-6 py-2.5 rounded-full hover:opacity-90 transition-opacity shadow-sm">
-            <Upload size={15} /> Enviar exame
+            <Upload size={15} /> Adicionar exame
           </button>
         </motion.div>
       )}
