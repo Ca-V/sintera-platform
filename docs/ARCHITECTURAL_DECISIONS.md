@@ -20,7 +20,8 @@
 | **ADR-013** | **Bounded Contexts** (modularização por domínio; integração por contratos) | ✅ Aprovada | `docs/BOUNDED_CONTEXTS.md` |
 | **ADR-014** | **Toda entidade relevante possui ciclo de vida + máquina de estados documentados** (nascimento→evolução→fim; estados/transições válidas) | ✅ Aprovada | `docs/ENTITY_LIFECYCLES.md`, `docs/DOMAIN_STATE_MACHINE.md` |
 | **ADR-015** | **Requisitos não-funcionais** (metas de performance/disponibilidade/LGPD/criptografia/auditoria/observabilidade/escalabilidade) | 🔵 Planejada — **antes do Mobile** | `docs/NON_FUNCTIONAL_REQUIREMENTS.md` (a criar) |
-| **ADR-016** | **Scientific Retrieval Layer** — componente **independente** do Knowledge Layer e do Knowledge Graph; recupera/indexa literatura·diretrizes·protocolos; exclusivamente informacional; separação absoluta dado clínico × conhecimento; ciência **verificável e rastreável à fonte** | ✅ Aprovada (v1.2) — 🔵 implementação **após Catalog v2** | `docs/SCIENTIFIC_RETRIEVAL_LAYER.md` |
+| **ADR-016** | **Scientific Retrieval Layer** — capacidade **transversal** (porta de entrada do conhecimento externo), **independente** do Knowledge Layer/Graph; recupera/indexa; exclusivamente informacional; **opcional/desacoplada** (nunca dependência); separação absoluta dado clínico × conhecimento | ✅ Aprovada (v1.2) — 🔵 implementação **após KL v2/KG v2** | `docs/SCIENTIFIC_RETRIEVAL_LAYER.md` |
+| **ADR-017** | **Princípio da Proveniência Científica** — toda informação científica com origem·versão·data·organização·identificador rastreáveis | 🔵 Planejada | `docs/SCIENTIFIC_RETRIEVAL_LAYER.md §12` |
 
 **Legenda:** ✅ Aprovada (decidida, vigente) · 🔵 Planejada (aceita como direção; a implementar na fase própria).
 
@@ -30,6 +31,6 @@
 
 ## Congelamento arquitetural (recomendação da fundadora, 02/07)
 Após o Domain Model fechado e antes de escrever migrations/código estrutural: **período de estabilização arquitetural de ~30 dias** — nenhuma mudança estrutural; apenas correções, homologação (cutover/cadastro/Sprint UX), revisão da documentação e validação dos conceitos. Objetivo: caçar inconsistências antes de codar; reduz retrabalho.
-3. Depois: Evento→EventLink (Estado 2), **Scientific Retrieval Layer** (`ADR-016` — entre o Catalog v2 e a IA avançada), Knowledge Layer/Graph, APIs versionadas, RBAC, auditoria, Mobile.
+3. Depois (ordem de build): Evento→EventLink (Estado 2) → **Knowledge Layer v2 → Knowledge Graph v2 → Scientific Retrieval Layer** (`ADR-016`; depende do catálogo + modelo de conhecimento consolidado) → **IA Contextual** → APIs versionadas, RBAC, auditoria, Mobile.
 
 > Regressões proibidas: nenhuma implementação pode contrariar um ADR ✅ Aprovada sem novo ADR que o substitua.

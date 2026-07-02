@@ -43,8 +43,18 @@ Relacionar biomarcadores · eventos · medicamentos · suplementos · dispositiv
 - Toda informação científica deve ser **verificável e rastreável à fonte original**.
 - A plataforma **organiza e contextualiza** conhecimento, **sem produzir interpretação clínica**.
 
-## 11. Roadmap
-Inserir a fase **"Scientific Retrieval" entre o Scientific Catalog v2 e a IA avançada**. Entregas: índice científico · busca semântica · recuperação de literatura/diretrizes/protocolos · resumos científicos · **referências rastreáveis**.
+## 11. Roadmap (ajustado — refinamento fundadora 02/07)
+Entregas da SRL: índice científico · busca semântica · recuperação de literatura/diretrizes/protocolos · resumos científicos · **referências rastreáveis**.
+**Ordem de implementação (build):** `Catalog v2 → Knowledge Layer v2 → Knowledge Graph v2 → Scientific Retrieval → IA Contextual`. (A SRL depende do catálogo **e** do modelo de conhecimento consolidado — por isso vem após KL v2/KG v2.)
+
+## 12. Refinamentos de governança (v1.2 — aprovados 02/07/2026)
+1. **Capacidade transversal, não "mais um módulo".** A SRL é a **porta de entrada do conhecimento externo** da plataforma. **Fluxo de responsabilidade (runtime):** `Scientific Retrieval Layer → Knowledge Layer (organiza) → Knowledge Graph (relaciona) → IA (utiliza)`. (Distinto da ordem de *build* acima.)
+2. **Princípio da Proveniência Científica** (futuro `ADR-017`): toda informação científica na plataforma tem **origem rastreável**; nenhuma existe sem indicar **origem · versão · data · organização responsável · identificador da fonte (quando disponível)**.
+3. **SRL é OPCIONAL e DESACOPLADA — nunca dependência.** A SINTERA funciona plenamente mesmo que nenhuma API científica esteja disponível ou nenhuma busca externa ocorra. A SRL **enriquece**; jamais é obrigatória para o funcionamento.
+4. **Conceito "Fonte de Conhecimento"** (novo, no domínio): diretriz · artigo · consenso · revisão sistemática · protocolo · documento técnico · base governamental · sociedade científica. (Amplia "literatura".)
+5. **Scientific Summary** sempre identificado como **síntese automatizada** e apresentando as fontes: rotular "Resumo automatizado baseado nas fontes abaixo"; **nunca** parecer texto autoral.
+6. **Busca Semântica RECUPERA, não RESPONDE:** `Pergunta → Recuperação → Documentos → Contexto → Referências`. **Nunca** `Pergunta → Resposta clínica`.
+7. **Estabilização mantida:** nenhuma implementação agora — só homologação/QA/correções/testes.
 
 ---
-**Sequência (inalterada pela estabilização):** homologação (cutover/cadastro/Sprint UX) → Catalog v2 (Domain Model→Spec→Migration→impl) → **Scientific Retrieval Layer** → IA avançada. Nada aqui se implementa antes do Catalog v2.
+**Sequência geral (inalterada pela estabilização):** homologação (cutover/cadastro/Sprint UX) → Catalog v2 → **Knowledge Layer v2 → Knowledge Graph v2 → Scientific Retrieval Layer** → IA Contextual. Nada aqui se implementa antes do Catalog v2.

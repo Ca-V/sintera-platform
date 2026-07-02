@@ -36,6 +36,10 @@
 
 **Diretriz** — Recomendação publicada por sociedade/entidade científica. **Referenciada** ("veja a diretriz"); nunca transformada em decisão automática.
 
+**Fonte de Conhecimento** *(v1.2, ADR-016)* — Qualquer origem de conhecimento científico recuperável pela Scientific Retrieval Layer: diretriz · artigo · consenso · revisão sistemática · protocolo · documento técnico · base governamental · sociedade científica. Toda Fonte tem **proveniência rastreável** (origem·versão·data·organização·identificador — ADR-017).
+
+**Scientific Retrieval Layer (SRL)** *(v1.2, ADR-016)* — Capacidade **transversal** de recuperação/indexação de conhecimento externo (porta de entrada). Alimenta o Knowledge Layer. **Opcional e desacoplada** (nunca dependência). Recupera documentos/contexto/referências; **não** responde clinicamente.
+
 **Catálogo Científico** — Base canônica de metadados dos biomarcadores (SSOT). Origem única de nome, aliases, painel, material, unidade, ordenação, ícone. Ver `CATALOG_SINGLE_SOURCE_OF_TRUTH.md`.
 
 **Clinical Knowledge Layer** — Camada que **relaciona** metadados científicos (biomarcador↔órgão↔sistema↔doença↔protocolo↔diretriz↔evidência↔histórico) para **organizar e contextualizar**. Não conclui, não decide.
