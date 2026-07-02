@@ -12,6 +12,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
+import ReportEntry from '@/components/entry/ReportEntry'
 import {
   Loader2, Printer, ArrowLeft, FileText, Share2, Copy, Trash2, Check,
   CalendarDays, FlaskConical, Pill, Stethoscope, HeartPulse, Ruler, Activity, Eye,
@@ -73,7 +74,13 @@ function fmt(date: string | null): string {
   return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
-export default function RelatorioPage() {
+// Passo 7 (cutover) — a rota decide legacy × v2 pelo Entry. Default: legacy.
+// Flip por página via NEXT_PUBLIC_REPORT_V2=true.
+export default function RelatorioRoute() {
+  return <ReportEntry legacy={<LegacyReport />} />
+}
+
+function LegacyReport() {
   const { user, profile, loading: authLoading } = useUser()
   const supabase = createClient()
   const [loading, setLoading] = useState(true)

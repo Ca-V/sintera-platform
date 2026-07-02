@@ -13,6 +13,7 @@ import {
   Loader2, Pencil, Trash2, Paperclip, Info, Sparkles, Pill, Receipt, FileText, Dumbbell, Dna, CheckCircle2, RotateCcw,
 } from 'lucide-react'
 import Link from 'next/link'
+import TimelineEntry from '@/components/entry/TimelineEntry'
 import { useUser } from '@/context/UserContext'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import ConfirmDialog from '@/components/ConfirmDialog'
@@ -73,7 +74,13 @@ function fmtBRL(cents: number): string {
   return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
-export default function TimelinePage() {
+// Passo 7 (cutover) — a rota decide legacy × v2 pelo Entry. Default: legacy.
+// Flip por página via NEXT_PUBLIC_TIMELINE_V2=true.
+export default function TimelineRoute() {
+  return <TimelineEntry legacy={<LegacyTimeline />} />
+}
+
+function LegacyTimeline() {
   const { user } = useUser()
   // Caminho ÚNICO de evento: mesmo modal e mesma gravação da Agenda.
   const { supabase, saveEvent, services } = useEventForm()
