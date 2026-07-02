@@ -10,7 +10,8 @@
 | **Catalog** | Nomenclatura, biomarcadores, painéis, materiais, aliases, unidades, ordenação (SSOT) | Valores do paciente, decisões clínicas | — (base) |
 | **Clinical Data** | Exames, biomarcadores medidos, resultados, séries | Nomenclatura (vem do Catalog), interpretação | Catalog |
 | **Timeline** | Eventos, histórico, linha do tempo, agenda | Cálculo de resultados, conhecimento | Clinical Data, Products |
-| **Knowledge** | Diretrizes, protocolos, literatura, referências, relações científicas | Decisão/diagnóstico (só organiza/relaciona) | Catalog |
+| **Scientific Retrieval (SRL)** | Recuperar/indexar literatura, diretrizes, protocolos; busca semântica; resumos com referências rastreáveis (ADR-016) | Interpretar/diagnosticar; persistir conhecimento como dado clínico | Catalog |
+| **Knowledge** | Diretrizes, protocolos, literatura, referências, relações científicas (consome da SRL) | Decisão/diagnóstico (só organiza/relaciona) | Catalog, SRL |
 | **Documents** | PDFs, imagens, armazenamento, OCR | Extração semântica (é da AI) | — |
 | **AI** | Extração, normalização, classificação, sumarização, comparação factual, busca | Conclusão clínica, prescrição | Documents, Catalog, Clinical Data |
 | **Users** | Autenticação, perfis, permissões (RBAC) | Dados clínicos | — (base) |
