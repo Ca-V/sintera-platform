@@ -1,6 +1,6 @@
 # SINTERA — Scientific Catalog v2 — Migration Plan (Sprint 2)
 
-**Status:** Sprint 2 — **Plano de migração revisável**. **Sem código de negócio, sem DDL executado, sem alterar o banco.** Descreve *como* migrar; a execução é a **Sprint 3** (gated pelo **Gate Operacional**).
+**Status:** Sprint 2 — **🟢 APROVADO COM RESSALVAS** (fundadora, 02/07). Ressalvas **editoriais resolvidas**: (1) garantia explícita de **idempotência** do backfill (§3); (2) seção **Critérios de Sucesso da Migração** com métricas (§6.1). **Sprint 2 ENCERRADA.** **Sem código de negócio, sem DDL executado, sem alterar o banco.** Próxima etapa = **Sprint 3 (Implementação)**, condicionada **apenas** ao **Gate Operacional** (Supabase · smoke Grupo A · cutover). Sem novos documentos.
 **Base:** `SCIENTIFIC_CATALOG_V2_SPEC.md` (§5 Modelo Físico). **Princípio herdado (RNF-05):** *nenhuma alteração poderá exigir migração destrutiva na primeira versão* — tudo **aditivo e reversível**.
 **Pré-requisitos para EXECUTAR (Sprint 3):** Spec aprovada ✅ · Design Review do Migration Plan · **Gate Operacional** (smoke Grupo A · cutover · cadastro).
 
@@ -21,6 +21,7 @@ Evoluir o `biomarker_catalog` (v1) para o design-alvo da Spec **sem quebrar cons
 **Fase M9 — Depreciação (versão POSTERIOR, não a primeira).** Só após todos os consumidores migrados: marcar `specimen`/`category` como legados. **Remoção destrutiva fica FORA da v1** (RNF-05).
 
 ## 3. Backfill — mapeamentos determinísticos
+> **Garantia de idempotência (obrigatória):** executar o backfill **2 ou mais vezes produz exatamente o mesmo estado final**. Implementado por **upsert em chave natural** (ex.: `material` por label; `biomarker_panels` por `(catalog_id, panel_id)`; colunas do item por `catalog_id`) — nunca `insert` cego. Isso torna o backfill **seguro para retomadas de deploy, rollback e reprocessamento**.
 - `specimen` → `material_id`: `sangue`→Material "Sangue"; `urina`→"Urina"; `urina_24h`→"Urina (24 horas)". (Rótulos de `panels.ts` `SPECIMEN_LABEL`.)
 - `category` → `panel_id` (via `biomarker_panels`): usar `CATEGORY_LABEL` de `panels.ts` (hematologia_vermelha→"Série vermelha", cardiometabolico→"Perfil lipídico", urinalise_eas→"Urina tipo I (EAS)", etc.).
 - `canonical_unit` → `ucum_unit`: mapeamento curado (não automático); onde não houver UCUM confiável, deixar nulo e sinalizar para curadoria (sem preencher errado).
@@ -45,6 +46,18 @@ Evoluir o `biomarker_catalog` (v1) para o design-alvo da Spec **sem quebrar cons
 - [ ] Cobertura de `catalog_id` nos biomarcadores medidos ≥ atual (~99%); os sem match **logados** (não silenciosos).
 - [ ] `tsc` 0 · ESLint 0 · testes verdes após a migração dos consumidores (M8).
 - [ ] Backfill idempotente (re-rodar não duplica).
+
+## 6.1 Critérios de Sucesso da Migração (métricas objetivas)
+A migração (Sprint 3) só é considerada bem-sucedida quando **todas** verdadeiras:
+- **100%** dos registros com `material_id`.
+- **100%** dos registros com `panel_id` (ou marcados explicitamente "sem painel").
+- **0** registros órfãos (nenhum `catalog_id`/`biomarkers.catalog_id` quebrado).
+- **0** perda de `catalog_id` (chave estável preservada em todos os itens).
+- **0** incompatibilidades na **view de compatibilidade** (`specimen`/`category` derivados == valores atuais; diff = 0).
+- **Tempo de execução** dentro do esperado (registrar a estimativa e o real; catálogo é pequeno → segundos a poucos minutos).
+- **Rollback validado** (testado em ambiente de verificação antes de produção).
+- **Cobertura de `catalog_id`** nos biomarcadores medidos **≥** a atual (~99%); os sem match **logados**, não silenciosos.
+- `tsc` 0 · ESLint 0 · testes verdes após a migração dos consumidores (M8).
 
 ## 7. Ordem de execução (topológica)
 `M1 → M2 → M3 → M4 → M5 → M6 → M7` (todas aditivas, seguras) → **[Gate Operacional + Sprint 3]** → `M8` (código) → `M9` (só em versão posterior).
