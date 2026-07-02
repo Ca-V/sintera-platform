@@ -62,6 +62,25 @@
 | Governança Científica | organiza/contextualiza, não conclui | ✅ | Dev | princípio `PLANO_MATURIDADE §0` |
 | Rastreabilidade | dados com proveniência | ⏳ | Dev | referência do laudo OK; ciência (SRL) = futuro |
 
+## 5.1 Smoke test mínimo (~15 min) — GATE para iniciar o Scientific Catalog v2
+Cobertura automatizada é **só unitária/domínio** (não cobre OCR/Supabase/upload/auth). Antes de mudar o foco para o Catalog v2, a PO executa este fluxo real em produção (`sinteramais.com.br`). **Só inicia o Catalog v2 se todos passarem.**
+1. [ ] Criar usuário *(requer cadastro publicado — Supabase)*
+2. [ ] Fazer login
+3. [ ] Enviar exame em **PDF**
+4. [ ] Enviar exame em **imagem** (foto)
+5. [ ] OCR/extração processa
+6. [ ] Parser: valores/unidades coerentes
+7. [ ] Exame aparece na lista
+8. [ ] **Timeline (Histórico)** atualiza
+9. [ ] **Evolução** atualiza (biomarcadores)
+10. [ ] **Dashboard** atualiza
+11. [ ] Abrir **detalhes do exame** (resultado/segmentação/nome do catálogo)
+12. [ ] Logout
+13. [ ] Novo login
+14. [ ] Dados permanecem íntegros
+
+Se tudo ✅ → plataforma apta a mudar de foco. Risco principal a mitigar: descobrir problema estrutural **durante** o Catalog v2 (obrigaria a parar e corrigir a base) — por isso este gate.
+
 ## 6. Critérios de Aceite (regra)
 A **homologação v1.0 é aprovada** quando: (a) todos os itens **Funcionais** e **Regulatórios** = ✅; (b) itens **Técnicos** sem ⛔ (ressalvas ⚠️ com dívida registrada são aceitáveis); (c) ressalvas arquiteturais (SSOT/séries por catalog_id) **registradas como pós-estabilização**, não bloqueiam v1.0. Cada ✅ exige **evidência** (screenshot/log/commit). O que ficar ⏳ é responsabilidade da PO validar em produção.
 
