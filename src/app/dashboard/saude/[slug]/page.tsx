@@ -123,7 +123,7 @@ export default function IndicadorDrilldownPage() {
         <>
           {/* Cabeçalho + resumo factual */}
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="card-premium p-6">
-            <h1 className="font-display text-xl font-semibold text-onyx">{model.displayName}</h1>
+            <h1 className="font-body text-xl font-semibold text-onyx">{model.displayName}</h1>
             <p className="font-body text-sm text-mauve mt-0.5">
               {model.unit ? `${model.unit} · ` : ''}{model.measurements.length} mediç{model.measurements.length !== 1 ? 'ões' : 'ão'}
             </p>
