@@ -23,6 +23,10 @@
 - **Dissolver `lib/biomarkers/panels.ts`** — rótulos/material/painel/ordem migram para o catálogo (Catalog v2).
 - **ESLint** — triar os 22 erros + 9 avisos pré-existentes do projeto.
 
+## Gaps de consistência revelados no smoke test (dependem da arquitetura de eventos)
+- **Deduplicação de documento/exame** — reenviar o mesmo exame cria duplicata hoje; comportamento `DocumentDuplicateDetected` (DOMAIN_BEHAVIORS B5) não implementado. Entra com a arquitetura orientada a eventos.
+- **Auditoria de exclusão** — excluir um exame apaga o `ai_processing_log` (`api/exams/[id]/route.ts:60`); viola o invariante "operações críticas → AuditRecorded". Preservar trilha na exclusão (arquitetura de eventos/auditoria).
+
 ## Backlog de domínio (Estado 2 — já registrado, entra após Catalog v2)
 - Camada 1: Catálogo→Evento→EventLink · Camada 2: ActionExecutor/CaptureProcessor · Camada 3: projeções reconsumindo · Camada 4: Financeiro/Relatório/Programas/Contexto Biológico.
 - Itens de UX adiados: Formato "Domiciliar" (migração `074`) · recorrência bimestral/trimestral/semestral.

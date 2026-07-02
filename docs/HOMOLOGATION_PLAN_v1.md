@@ -79,7 +79,11 @@ Cobertura automatizada é **só unitária/domínio** (não cobre OCR/Supabase/up
 13. [ ] Novo login
 14. [ ] Dados permanecem íntegros
 
-Se tudo ✅ → plataforma apta a mudar de foco. Risco principal a mitigar: descobrir problema estrutural **durante** o Catalog v2 (obrigaria a parar e corrigir a base) — por isso este gate.
+**Cenários de consistência (DIAGNÓSTICOS — documentam o estado atual, NÃO bloqueiam):**
+15. [ ] Excluir um exame → **Timeline e Dashboard atualizam** (re-derivam do dado). ⚠️ *Auditoria HOJE não é preservada: a exclusão apaga o `ai_processing_log` (`api/exams/[id]/route.ts:60`) — gap vs. invariante de auditoria; item de backlog (arquitetura de eventos).*
+16. [ ] Reenviar o **mesmo** exame → ⚠️ *HOJE cria duplicata (deduplicação NÃO implementada — DOMAIN_BEHAVIORS B5, comportamento futuro). Item de backlog.*
+
+**GATE de bloqueio para o Catalog v2 = passos 1–14 (fluxo principal íntegro) + cutover + cadastro.** Os passos 15–16 são diagnósticos: auditoria e dedup **dependem** da arquitetura orientada a eventos (Catalog v2+), então não podem ser pré-condição para iniciá-la — seus resultados vão para o backlog. Risco principal a mitigar: descobrir problema **estrutural** no fluxo 1–14 durante o Catalog v2.
 
 ## 6. Critérios de Aceite (regra)
 A **homologação v1.0 é aprovada** quando: (a) todos os itens **Funcionais** e **Regulatórios** = ✅; (b) itens **Técnicos** sem ⛔ (ressalvas ⚠️ com dívida registrada são aceitáveis); (c) ressalvas arquiteturais (SSOT/séries por catalog_id) **registradas como pós-estabilização**, não bloqueiam v1.0. Cada ✅ exige **evidência** (screenshot/log/commit). O que ficar ⏳ é responsabilidade da PO validar em produção.
