@@ -7,13 +7,24 @@
 ## Sprints (ordem priorizada)
 | Sprint | Entrega | ADR/Doc |
 |---|---|---|
-| **Sprint 1** | Scientific Catalog v2 — **Specification** + **Migration Plan** | `ADR-010` |
-| **Sprint 2** | **Implementação** do Scientific Catalog v2 | `ADR-010` |
-| **Sprint 3** | **Knowledge Layer v2** | `ADR-006` |
-| **Sprint 4** | **Knowledge Graph v2** | `ADR-007` |
-| **Sprint 5** | **Scientific Retrieval Layer** | `ADR-016` |
-| **Sprint 6** | **IA Contextual** | `PLANO_MATURIDADE §12/§13` |
-| **Sprint 7** | **Mobile Foundation** | `ADR-008` |
+| **Sprint 1** | Catalog v2 — **Specification** (só documento revisável; **SEM migrations/código/banco**) | `ADR-010` |
+| **Sprint 2** | Catalog v2 — **Migration Plan** (sem código de negócio) | `ADR-010` |
+| **Sprint 3** | Catalog v2 — **Implementação** (só após aprovação FORMAL da Spec) | `ADR-010` |
+| **Sprint 4** | Catalog v2 — **Homologação** | `ADR-010` |
+| **Sprint 5** | **Knowledge Layer v2** | `ADR-006` |
+| **Sprint 6** | **Knowledge Graph v2** | `ADR-007` |
+| **Sprint 7** | **Scientific Retrieval Layer** | `ADR-016` |
+| **Sprint 8** | **IA Contextual** | `PLANO_MATURIDADE §12/§13` |
+| **Sprint 9** | **Mobile Foundation** | `ADR-008` |
+
+### Protocolo da Sprint 1 — `SCIENTIFIC_CATALOG_V2_SPEC.md` (ordem obrigatória, domínio→dados)
+Escrever **nesta ordem** (NÃO começar por tabelas — evita o banco direcionar o desenho):
+1. **Objetivos** — o que resolve · o que **deliberadamente NÃO** resolve (ver Fronteira de escopo abaixo).
+2. **Requisitos funcionais** — identidade única · nomenclatura · aliases · painéis · materiais · unidades · versionamento · governança.
+3. **Requisitos não-funcionais** — performance · escalabilidade · auditabilidade · compatibilidade · backward compatibility.
+4. **Modelo conceitual** — entidades · relacionamentos · responsabilidades.
+5. **Modelo físico (schema)** — **por último**.
+**Regra da Sprint 1:** NÃO escrever migrations, NÃO escrever código, NÃO alterar o banco. Objetivo único = **especificação revisável**. A implementação (Sprint 3) só começa após **aprovação formal** da Spec.
 
 *(Documentos de apoio quando cada sprint começar: `ARCHITECTURE_COMPLIANCE_CHECKLIST.md` no Sprint 2; `NON_FUNCTIONAL_REQUIREMENTS.md` antes do Mobile — `ADR-015`.)*
 
