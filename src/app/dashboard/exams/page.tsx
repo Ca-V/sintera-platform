@@ -526,7 +526,7 @@ export default function ExamsPage() {
                                     </div>
                                   ) : (
                                     <div className="flex items-center gap-1.5 group/name">
-                                      <p className="font-body text-sm font-semibold text-onyx truncate">{exam.type ?? 'Exame'}</p>
+                                      <p className="font-body text-sm font-semibold text-onyx break-words">{exam.type ?? 'Exame'}</p>
                                       <button aria-label="Renomear" title="Renomear"
                                         onClick={e => { e.stopPropagation(); setNameDraft(exam.type ?? ''); setEditingNameId(exam.id) }}
                                         className="opacity-0 group-hover/name:opacity-100 transition-opacity text-mauve/50 hover:text-petal flex-shrink-0">

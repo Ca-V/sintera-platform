@@ -86,9 +86,9 @@ export default function GastosPage() {
         <div>
           <div className="inline-flex items-center gap-1.5 text-petal mb-2">
             <Receipt size={16} />
-            <span className="font-body text-xs font-medium uppercase tracking-wider">Gastos com Saúde</span>
+            <span className="font-body text-xs font-medium uppercase tracking-wider">Gastos</span>
           </div>
-          <h1 className="font-display text-2xl font-semibold text-onyx">Gastos com Saúde</h1>
+          <h1 className="font-display text-2xl font-semibold text-onyx">Gastos</h1>
           <p className="font-body text-sm text-mauve mt-1 leading-relaxed">
             Os valores dos eventos que você <strong>concluiu</strong> na Agenda, com os comprovantes para baixar.
           </p>
@@ -163,7 +163,7 @@ export default function GastosPage() {
             {ofYear.map(r => (
               <div key={r.id} className="card-premium p-4 flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="font-body text-sm font-semibold text-onyx truncate">{r.title}</p>
+                  <p className="font-body text-sm font-semibold text-onyx break-words">{r.title}</p>
                   <p className="font-body text-[11px] text-mauve/60">{typeLabel(r.type)} · {formatDateBR(r.date)}</p>
                   {r.attachmentUrl ? (
                     <a href={r.attachmentUrl} target="_blank" rel="noopener noreferrer"

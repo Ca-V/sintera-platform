@@ -467,7 +467,7 @@ export default function MedicamentosPage() {
           {scanResults.map((it, i) => (
             <div key={i} className="flex items-center justify-between gap-3 rounded-xl border border-border bg-ivory px-3 py-2">
               <div className="min-w-0">
-                <p className="font-body text-sm font-semibold text-onyx truncate">{it.name}</p>
+                <p className="font-body text-sm font-semibold text-onyx break-words">{it.name}</p>
                 <p className="font-body text-[11px] text-mauve/70">{[it.dose, it.frequency, it.startedOn ? `desde ${it.startedOn}` : null].filter(Boolean).join(' · ') || 'Sem dose/frequência detectada'}</p>
               </div>
               <button onClick={() => applyScanned(it)}
