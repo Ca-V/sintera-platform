@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildCatalogLabels, groupBySpecimen } from './catalogLabels'
+import { buildCatalogLabels, groupBySpecimen, groupByMaterial } from './catalogLabels'
 
 const materials = [
   { id: 'sangue', label: 'Exame de sangue', sort_order: 0 },
@@ -58,5 +58,30 @@ describe('groupBySpecimen', () => {
     expect(groups[0].key).toBe('outros')
     expect(groups[0].categories[0].key).toBe('outros')
     expect(groups[0].categories[0].label).toBeNull()
+  })
+})
+
+describe('groupByMaterial — só material, sem painel fisiológico (ING-003)', () => {
+  const labels = buildCatalogLabels(materials, panels)
+  type Item = { id: string; specimen: string | null }
+  const get = (i: Item) => ({ specimen: i.specimen })
+
+  it('agrupa só por material (sem nível de painel), ordenado por specimenOrder', () => {
+    const items: Item[] = [
+      { id: 'a', specimen: 'urina' },
+      { id: 'b', specimen: 'sangue' },
+      { id: 'c', specimen: 'sangue' },
+    ]
+    const groups = groupByMaterial(items, get, labels)
+    expect(groups.map(g => g.key)).toEqual(['sangue', 'urina'])
+    expect(groups[0].label).toBe('Exame de sangue')
+    expect(groups[0].items).toHaveLength(2)
+    expect(groups[0]).not.toHaveProperty('categories') // painel fisiológico não existe aqui
+  })
+
+  it('specimen nulo cai em "outros" (fallback), por último', () => {
+    const groups = groupByMaterial([{ id: 'a', specimen: null }, { id: 'b', specimen: 'sangue' }], get, labels)
+    expect(groups.map(g => g.key)).toEqual(['sangue', 'outros'])
+    expect(groups[1].label).toBe('Outros exames')
   })
 })
