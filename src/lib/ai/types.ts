@@ -54,6 +54,11 @@ export interface ExtractedBiomarker {
   rawText: string
   confidence: number
   extractionNotes: string | null
+  // Fidelidade da Ingestão (RF-01/RF-02): contexto do laudo, texto ORIGINAL, sem
+  // normalização/inferência. null quando o laudo não informa (não inventar contexto).
+  // Prefixo `source` explicita a proveniência (laudo, não catálogo/normalizado).
+  sourceMaterial: string | null
+  sourceExamName: string | null
 }
 
 export interface ExtractionResult {
@@ -118,4 +123,6 @@ export interface RawBiomarker {
   raw_text?: unknown
   confidence?: unknown
   extraction_notes?: unknown
+  source_material?: unknown
+  source_exam_name?: unknown
 }
