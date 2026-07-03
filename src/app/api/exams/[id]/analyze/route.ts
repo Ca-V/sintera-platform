@@ -13,6 +13,10 @@ const ERROR_MESSAGES: Record<string, string> = {
   too_large:          'O arquivo PDF excede o limite de 50 MB.',
 }
 
+// Contrato de extração prompt↔app. v2 = Fidelidade da Ingestão (source_material +
+// source_exam_name). Gravado na extraction_versions p/ auditoria (fundadora 03/07).
+const EXTRACTION_SCHEMA_VERSION = 2
+
 export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -202,6 +206,9 @@ export async function POST(
       catalog_id:       catalogIndex
         ? resolveBiomarker(catalogIndex, { name: b.name, unit: b.unit }).catalog?.id ?? null
         : null,
+      // Fidelidade da Ingestão (RF-01/RF-02): contexto do laudo, texto original (ou null).
+      source_material:  b.sourceMaterial,
+      source_exam_name: b.sourceExamName,
     }))
 
     // Dispatcher 1d.2 — Rollout Controlado. canonical_route devolve o motivo da rota
@@ -222,7 +229,7 @@ export async function POST(
         p_exam_id:    examId,
         p_user_id:    userId,
         p_biomarkers: bmRows,
-        p_meta:       { ai_log_id: result.aiLogId, origin: 'fresh', processing_mode: 'canonical_on' },
+        p_meta:       { ai_log_id: result.aiLogId, origin: 'fresh', processing_mode: 'canonical_on', extraction_schema_version: EXTRACTION_SCHEMA_VERSION },
       })
       replaceErr = error
       // Telemetria do rollout (best-effort — nunca quebra a extração).

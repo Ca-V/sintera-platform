@@ -14,7 +14,7 @@ import { createClient } from '@/lib/supabase/client'
 import { parseDateOnly } from '@/lib/agenda'
 import { useUser } from '@/context/UserContext'
 import { compareNames } from '@/lib/exams/nameMatch'
-import { groupBySpecimen, loadCatalogLabels, buildCatalogLabels, type CatalogLabels } from '@/lib/biomarkers/catalogLabels'
+import { loadCatalogLabels, buildCatalogLabels, type CatalogLabels } from '@/lib/biomarkers/catalogLabels'
 import FeedbackModal from '@/components/FeedbackModal'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
@@ -46,9 +46,12 @@ interface Biomarker {
   reference_source: string | null
   source: string | null
   catalog_id: string | null
-  // Enriquecidos em loadData a partir do biomarker_catalog (só apresentação):
+  // Contexto do laudo (Fidelidade da Ingestão) — texto original ou null (legado):
+  source_material: string | null
+  source_exam_name: string | null
+  // Enriquecidos em loadData a partir do biomarker_catalog (fallback do material):
   specimen?: string | null   // 'sangue' | 'urina' | 'urina_24h'
-  category?: string | null   // painel/grupo do exame
+  category?: string | null   // painel científico (NÃO segmenta a tela — dimensão do KG)
 }
 
 interface LastLog {
@@ -220,8 +223,35 @@ function displayValue(b: Biomarker): { main: string | null; unit: string | null 
   return { main: null, unit: null }
 }
 
-// Agrupamento por material → painel: lógica de domínio em `groupBySpecimen`
-// (lib/biomarkers/catalogLabels); rótulos/ordem vêm do Scientific Catalog v2.
+// Agrupamento da página de Exames — FIEL AO LAUDO (Fidelidade da Ingestão):
+// Material → Nome do exame → Resultados. O material e o nome do exame vêm do LAUDO
+// (source_material / source_exam_name); no legado (null) o material cai no fallback do
+// catálogo (specimen) e não há nível de exame. O painel científico (category) NÃO
+// segmenta a tela — é dimensão do Knowledge Graph. Ordem = primeira aparição (fiel ao laudo).
+interface ExamGroup {
+  key: string
+  label: string
+  iconKey: string
+  exams: { key: string; label: string | null; items: Biomarker[] }[]
+}
+
+function groupByExam(bms: Biomarker[], labels: CatalogLabels): ExamGroup[] {
+  const materialLabelOf = (b: Biomarker) => b.source_material?.trim() || labels.materialLabel(b.specimen)
+  const examLabelOf = (b: Biomarker) => b.source_exam_name?.trim() || null
+
+  const mats = new Map<string, ExamGroup>()
+  for (const b of bms) {
+    const mLabel = materialLabelOf(b)
+    if (!mats.has(mLabel)) mats.set(mLabel, { key: mLabel, label: mLabel, iconKey: b.specimen ?? 'outros', exams: [] })
+    const mat = mats.get(mLabel)!
+    const eLabel = examLabelOf(b)
+    const eKey = eLabel ?? '__sem_exame__'
+    let ex = mat.exams.find(e => e.key === eKey)
+    if (!ex) { ex = { key: eKey, label: eLabel, items: [] }; mat.exams.push(ex) }
+    ex.items.push(b)
+  }
+  return [...mats.values()]
+}
 
 // ── Componente principal ──────────────────────────────────────────────────────
 
@@ -393,7 +423,7 @@ export default function ExamDetailPage() {
       supabase.from('exams').select('id,type,status,pdf_quality,page_count,created_at,exam_date,error_reason,text_truncated,file_url,patient_name')
         .eq('id', examId).single(),
       supabase.from('current_biomarkers')
-        .select('id,name,value,value_text,unit,reference_min,reference_max,interpretation,result_type,range_extracted,reference_source,source,catalog_id')
+        .select('id,name,value,value_text,unit,reference_min,reference_max,interpretation,result_type,range_extracted,reference_source,source,catalog_id,source_material,source_exam_name')
         .eq('exam_id', examId),
       supabase.from('ai_processing_log')
         .select('started_at,parse_repaired,extraction_path')
@@ -753,28 +783,28 @@ export default function ExamDetailPage() {
 
           {/* Agrupado por material (sangue/urina) e painel — deixa claro de qual exame
               cada biomarcador veio e mantém as variáveis do mesmo painel juntas */}
-          {groupBySpecimen(biomarkers, b => ({ specimen: b.specimen ?? null, category: b.category ?? null }), labels).map(spec => {
-            const sm = SPECIMEN_META[spec.key] ?? SPECIMEN_FALLBACK
+          {groupByExam(biomarkers, labels).map(mat => {
+            const sm = SPECIMEN_META[mat.iconKey] ?? SPECIMEN_FALLBACK
             const SpecIcon = sm.Icon
             return (
-            <div key={spec.key}>
-              {/* Cabeçalho do material/exame com ícone */}
+            <div key={mat.key}>
+              {/* Cabeçalho do MATERIAL (do laudo; fallback ao catálogo no legado) */}
               <div className="px-5 py-2.5 bg-ivory border-b border-border/50 flex items-center gap-2">
                 <SpecIcon size={15} className={`${sm.color} flex-shrink-0`} />
-                <h3 className="font-body text-xs font-semibold text-onyx/70 uppercase tracking-wider">{spec.label}</h3>
+                <h3 className="font-body text-xs font-semibold text-onyx/70 uppercase tracking-wider">{mat.label}</h3>
               </div>
 
-              {spec.categories.map(cat => (
-                <div key={cat.key}>
-                  {/* Sub-cabeçalho do painel, quando reconhecido */}
-                  {cat.label && (
+              {mat.exams.map(ex => (
+                <div key={ex.key}>
+                  {/* Nome do EXAME informado no laudo (ausente no legado) */}
+                  {ex.label && (
                     <p className="px-5 pt-3 pb-1 font-body text-[11px] font-semibold text-mauve/60 uppercase tracking-wide">
-                      {cat.label}
+                      {ex.label}
                     </p>
                   )}
 
                   <div className="divide-y divide-border/30">
-                    {cat.items.map((b, i) => {
+                    {ex.items.map((b, i) => {
                       const cfg  = getInterpConfig(b)
                       const Icon = cfg.Icon
                       const dv   = displayValue(b)

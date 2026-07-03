@@ -104,7 +104,7 @@ function toReferenceSource(v: unknown, refMin: number | null, refMax: number | n
   return refMin !== null || refMax !== null ? 'laudo' : 'ausente'
 }
 
-function parseBiomarker(raw: RawBiomarker): ExtractedBiomarker | null {
+export function parseBiomarker(raw: RawBiomarker): ExtractedBiomarker | null {
   const name = toStringOrNull(raw.name)
   if (!name) return null
 
@@ -133,6 +133,9 @@ function parseBiomarker(raw: RawBiomarker): ExtractedBiomarker | null {
     rawText: toStringOrNull(raw.raw_text)?.slice(0, 200) ?? '',
     confidence: clamp01(raw.confidence),  // informativo apenas (Ajuste A4 aprovado)
     extractionNotes: toStringOrNull(raw.extraction_notes),
+    // Fidelidade da Ingestão: texto ORIGINAL do laudo; null quando ausente (não inventar).
+    sourceMaterial: toStringOrNull(raw.source_material)?.slice(0, 120) ?? null,
+    sourceExamName: toStringOrNull(raw.source_exam_name)?.slice(0, 120) ?? null,
   }
 }
 
