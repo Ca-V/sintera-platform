@@ -1,6 +1,6 @@
 # SINTERA — Knowledge Graph v2 — Modelagem (Sprint 2)
 
-**Status:** Sprint 2 — **modelagem, documento apenas** (sem código, sem banco, sem SQL, sem tecnologia). Desenvolvida em 3 partes SEQUENCIAIS, cada uma com Design Review: **Parte 1 (conceitual)** → aprovar → **Parte 2 (lógico)** → **Parte 3 (decisão arquitetural)**.
+**Status:** Sprint 2 — **modelagem, documento apenas** (sem código, sem banco, sem SQL, sem tecnologia). 3 partes SEQUENCIAIS com Design Review entre cada: **Parte 1 (conceitual) — 🟢 APROVADA COM RESSALVAS resolvidas** (fundadora, 03/07: Reference≠Evidence · direção semântica geral · identidade≠estado) — **ENCERRADA**. **Parte 2 (lógico) — em revisão** (abaixo). **Parte 3 (decisão arquitetural)** — após a Parte 2.
 **Base:** `KNOWLEDGE_GRAPH_V2_SPEC.md` (Sprint 1, aprovada). Herda as 7 regras imutáveis — em especial **nº 1** (KG nunca altera a ingestão), **nº 6** (rastreabilidade obrigatória) e **nº 7** (monotonicidade: KG só acrescenta; Catálogo=O QUE · Ingestão=ONDE · KG=COMO).
 **Critério da Parte 1:** *um cientista e um engenheiro devem entender o modelo sem conhecer PostgreSQL.*
 
@@ -34,6 +34,8 @@ Conjunto **fechado e versionado**. Novos tipos entram **apenas por governança**
 | `recommended_by` | Biomarker → Guideline | direcional | HbA1c → Diretriz ADA |
 | `associated_with` | Biomarker → Physiological System | direcional | Albumina → Função renal |
 
+**Regra geral de direção:** *toda relação possui **direção semântica definida** (origem → destino).* Apenas os tipos **explicitamente marcados como simétricos** (ex.: `measured_with`) admitem **navegação bidirecional sem duplicar a relação** — a relação é cadastrada **uma única vez**; a navegação A↔B decorre da simetria, não de dois registros (A→B e B→A).
+
 ## 1.3 Cardinalidades
 
 - Um **Biomarker** pode pertencer a **vários** sistemas, participar de **várias** vias, ser recomendado por **várias** diretrizes → todas as relações são **N:N**.
@@ -57,11 +59,11 @@ draft ──▶ approved ──▶ active ──▶ deprecated
 
 ## 1.5 Proveniência (Regra nº 6)
 
-**Toda** relação carrega, obrigatoriamente:
-- **Reference** — a fonte identificável (ex.: LOINC/SNOMED/Reactome/diretriz) com **identificador** e **versão**;
-- **Evidence** — o que sustenta a relação + **força/nível** da evidência.
+**Toda** relação carrega, obrigatoriamente, duas coisas **distintas e não intercambiáveis**:
+- **Reference** = a **FONTE científica identificável** — *onde* a relação está documentada (ex.: uma diretriz, um artigo, uma base como LOINC/Reactome/KEGG/MedlinePlus), com **identificador** e **versão**.
+- **Evidence** = o **SUPORTE que justifica** aquela relação **naquela** referência — *quão forte* ela é (nível/força da evidência, tipo de estudo, qualidade metodológica).
 
-Uma relação **sem fonte identificável e versionada não existe** no KG.
+> **Reference ≠ Evidence.** "Evidence" nunca é usada como sinônimo de "fonte": a Reference diz **de onde vem**; a Evidence diz **o quão sustentada está**. Uma relação **sem fonte identificável e versionada não existe** no KG (Regra nº 6).
 
 ## 1.6 Versionamento
 
@@ -73,6 +75,8 @@ Uma relação **sem fonte identificável e versionada não existe** no KG.
 > A identidade de uma `Relationship` é **`origin + relationship_type + target + source_version`**.
 
 Consequência: **duas relações iguais, oriundas da mesma versão da mesma fonte, não coexistem duplicadas**. Uma mudança em qualquer um dos quatro componentes é uma relação distinta (ou uma nova versão).
+
+> **Identidade ≠ estado.** O **estado** (`draft`, `approved`, `active`, `deprecated`) **NÃO** participa da identidade da relação. Uma mudança de estado (ex.: `approved` → `active`, ou `active` → `deprecated`) **não** cria uma nova relação — é a **mesma** relação mudando de estado no seu ciclo de vida.
 
 ## 1.8 Governança (conceitual)
 
@@ -96,7 +100,71 @@ Ao final, esta parte responde, sem tecnologia:
 ---
 
 # PARTE 2 — MODELO LÓGICO
-*(A desenvolver após aprovação da Parte 1: entidades lógicas, atributos, chaves, restrições, índices conceituais, regras de integridade — ainda sem decidir implementação.)*
+
+**Independente de tecnologia** (nada de PostgreSQL/grafo/SQL — isso é a Parte 3). Aqui: entidades lógicas, atributos, chaves, restrições, índices conceituais e regras de integridade.
+
+## 2.1 Entidades lógicas e atributos
+
+**Nós (conceitos):**
+
+| Entidade | Atributos | Chave |
+|---|---|---|
+| **Biomarker** (nó) | `catalog_id` (referência ao Scientific Catalog — SOMENTE LEITURA) | `catalog_id` |
+| **PhysiologicalSystem** | `system_id`, `name` | `system_id` |
+| **Pathway** | `pathway_id`, `name`, `reference_id` | `pathway_id` |
+| **Guideline** | `guideline_id`, `name`, `organization`, `reference_id`, `version` | `guideline_id` |
+
+> O nó **Biomarker não tem atributos próprios de identidade/dado** — nome, material, painel e unidade vêm do Catálogo (Regra nº 7). O KG só guarda a **referência** (`catalog_id`).
+
+**Proveniência (Reference ≠ Evidence):**
+
+| Entidade | Atributos | Chave |
+|---|---|---|
+| **Reference** (a FONTE) | `reference_id`, `source_type` (loinc/snomed/reactome/kegg/guideline/article/medlineplus…), `external_identifier` (código/DOI/PMID/URL), `version`, `organization`, `retrieved_at` | `reference_id` |
+| **Evidence** (o SUPORTE) | `evidence_id`, `reference_id` (→ Reference), `strength` (nível/força), `study_type?`, `quality?`, `notes?` | `evidence_id` |
+
+**Relação (aresta de 1ª classe):**
+
+| Entidade | Atributos | Chave |
+|---|---|---|
+| **Relationship** | `origin_node`, `relationship_type`, `target_node`, `source_version`, `evidence_id` (→ Evidence), `reference_id` (→ Reference), `status`, `created_at`, `retired_at` | **identidade natural** = (`origin_node`, `relationship_type`, `target_node`, `source_version`) |
+
+> **Refinamento decorrente da Ressalva 1:** a **força da evidência (`strength`) é atributo de `Evidence`**, não é duplicada na `Relationship` — a relação a alcança via `evidence_id`. Assim "força" tem um único dono.
+
+## 2.2 Chaves
+- **Nós:** `catalog_id` (Biomarker — chave externa/somente-leitura ao Catálogo), `system_id`, `pathway_id`, `guideline_id`.
+- **Proveniência:** `reference_id` (Reference); `evidence_id` (Evidence, com FK → Reference).
+- **Relationship:** identidade natural **única** (`origin_node` + `relationship_type` + `target_node` + `source_version`); FKs → `Evidence` e → `Reference`.
+
+## 2.3 Restrições / regras de integridade
+- `relationship_type` ∈ **taxonomia controlada** (conjunto fechado — §1.2); valor fora dela é inválido.
+- `status` ∈ {`draft`, `approved`, `active`, `deprecated`}; **não participa da identidade** (Ressalva 3).
+- `evidence_id` **e** `reference_id` **obrigatórios** em toda relação (Regra nº 6 — sem proveniência não existe).
+- **Identidade única:** não coexistem duas relações com (`origin`+`type`+`target`+`source_version`) iguais.
+- `retired_at` preenchido **se e somente se** `status = deprecated`.
+- **Direção/simetria:** `origin_node`→`target_node` sempre definido; tipos simétricos (`measured_with`) armazenados **uma vez** (proibido cadastrar A→B **e** B→A).
+- **Compatibilidade de domínio/range:** `origin_node`/`target_node` devem ser dos tipos previstos para o `relationship_type` (ex.: `belongs_to_system` só de Biomarker → PhysiologicalSystem).
+- **Somente-leitura entre camadas:** `catalog_id` é referência; o KG **nunca** escreve no Catálogo nem na Ingestão (Regras nº 1 e nº 7).
+- **Append-only:** nenhuma relação é deletada; aposentadoria = `status=deprecated` + `retired_at` (histórico preservado).
+
+## 2.4 Índices conceituais (padrões de acesso — sem DDL)
+Quais buscas precisam ser eficientes (a **tecnologia** que as realiza é a Parte 3):
+- por `origin_node` — todas as relações de um biomarcador;
+- por `target_node` — todos os biomarcadores de um sistema/via/diretriz;
+- por `relationship_type`;
+- por `status` — só as `active` para a navegação;
+- por `reference_id`/`source_version` — auditoria (tudo que veio de uma fonte/versão);
+- navegação bidirecional para tipos simétricos.
+
+## 2.5 Regras de integridade (resumo)
+Rastreabilidade (nº 6) · Monotonicidade (nº 7) · append-only · identidade sem estado · direção semântica · taxonomia fechada · `catalog_id` somente-leitura · proveniência obrigatória.
+
+## Critério de aceite da Parte 2
+- [ ] quais **entidades lógicas** existem e seus **atributos**;
+- [ ] quais **chaves** (identidade natural das relações; PKs dos nós; FKs de proveniência);
+- [ ] quais **restrições/regras de integridade**;
+- [ ] quais **índices conceituais** (padrões de acesso);
+- [ ] **sem** decidir tecnologia de armazenamento.
 
 # PARTE 3 — DECISÃO ARQUITETURAL
 *(A desenvolver após a Parte 2: relacional × extensão de grafo × grafo dedicado × híbrido — a decisão como CONSEQUÊNCIA do modelo, não o contrário.)*
