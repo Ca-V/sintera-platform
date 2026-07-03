@@ -129,10 +129,13 @@ export default function AgendaPage() {
     // Medicamentos/suplementos foram REMOVIDOS do formulário de evento — editam-se na
     // página de Medicamentos. Roteia o lembrete de medicação (ex.: "Recomprar: X") para
     // lá, abrindo o próprio medicamento (achado pelo repurchase_event_id).
-    if (ev.type === 'medicacao' || ev.type === 'medicamento' || ev.type === 'suplemento') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase as any).from('medications').select('id').eq('repurchase_event_id', ev.id).maybeSingle()
-      const medId = (data?.id as string) ?? null
+    const isMedType = ev.type === 'medicacao' || ev.type === 'medicamento' || ev.type === 'suplemento'
+    const looksLikeRecompra = /^recomprar/i.test((ev.title ?? '').trim())
+    // Detecção DEFINITIVA: existe um medicamento vinculado a este evento? (lembrete de recompra)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: medRow } = await (supabase as any).from('medications').select('id').eq('repurchase_event_id', ev.id).maybeSingle()
+    const medId = (medRow?.id as string) ?? null
+    if (medId || isMedType || looksLikeRecompra) {
       router.push(medId ? `/dashboard/medicamentos?edit=${medId}` : '/dashboard/medicamentos')
       return
     }
