@@ -15,7 +15,11 @@ const MODEL = 'claude-haiku-4-5-20251001'
 
 const SYSTEM = `Você extrai medicamentos/suplementos de uma IMAGEM (caixa/embalagem ou receita)
 ou de uma FALA transcrita. Liste os itens. Para cada item, SEPARE bem:
-- name: apenas o nome do produto, sem dose nem frequência. Ex.: "Losartana", "Vitamina D".
+- name: o NOME/TÍTULO do produto (marca/nome comercial na frente do rótulo), sem dose nem frequência. Ex.: "Losartana", "Vitamina D".
+
+REGRA — UM produto físico = UM item:
+- Se a imagem for de UM único rótulo/frasco/embalagem/produto, retorne UM ÚNICO item, mesmo que o produto contenha VÁRIOS componentes/ativos (ex.: um suplemento com Vitamina E + Coenzima Q10 + Ômega 3 é UM produto). Use o NOME DO PRODUTO (o título comercial), NÃO separe os ativos em itens diferentes.
+- Só retorne MÚLTIPLOS itens quando houver produtos DISTINTOS de fato (ex.: uma receita listando vários medicamentos diferentes, ou várias embalagens/frascos diferentes na imagem).
 - dose: quantidade por vez. Ex.: "50 mg", "2 comprimidos", "1000 UI". null se ausente.
 - frequency: com que frequência usa. Ex.: "1x ao dia", "2x por semana", "de 8 em 8 horas",
   "1 comprimido à noite". null se ausente.

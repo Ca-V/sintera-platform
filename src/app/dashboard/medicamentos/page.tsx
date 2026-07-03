@@ -458,7 +458,7 @@ export default function MedicamentosPage() {
             <input type="file" accept="image/*" capture="environment" className="sr-only" disabled={scanning}
               onChange={e => { const f = e.target.files?.[0]; if (f) handleScan(f); e.target.value = '' }} />
             {scanning ? <Loader2 size={15} className="animate-spin" /> : <Camera size={15} />}
-            {scanning ? 'Lendo…' : 'Escanear documento'}
+            {scanning ? 'Lendo…' : 'Fotografar ou escanear'}
           </label>
           <VoiceInput onResult={handleVoiceAdd} label="Falar" title="Adicionar por voz"
             className="flex items-center gap-2 px-4 py-2 rounded-full border border-petal/40 text-petal font-body text-sm font-medium hover:bg-blush transition-colors" />
