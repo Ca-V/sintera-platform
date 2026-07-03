@@ -1,6 +1,6 @@
 # SINTERA — Knowledge Graph v2 — Modelagem (Sprint 2)
 
-**Status:** Sprint 2 — **modelagem, documento apenas** (sem código, sem banco, sem SQL, sem tecnologia). 3 partes SEQUENCIAIS com Design Review entre cada: **Parte 1 (conceitual) — 🟢 APROVADA COM RESSALVAS resolvidas** (fundadora, 03/07: Reference≠Evidence · direção semântica geral · identidade≠estado) — **ENCERRADA**. **Parte 2 (lógico) — em revisão** (abaixo). **Parte 3 (decisão arquitetural)** — após a Parte 2.
+**Status:** Sprint 2 — **modelagem, documento apenas** (sem código, sem banco, sem SQL, sem tecnologia). 3 partes SEQUENCIAIS com Design Review entre cada: **Parte 1 (conceitual) — 🟢 APROVADA COM RESSALVAS resolvidas** (fundadora, 03/07: Reference≠Evidence · direção semântica geral · identidade≠estado) — **ENCERRADA**. **Parte 2 (lógico) — 🟢 APROVADA COM RESSALVAS resolvidas** (fundadora, 03/07: identidade natural×técnica · domínio/range formal · versionamento Reference×Relationship · metadados científicos×operacionais) — **ENCERRADA**. **Parte 3 (decisão arquitetural) — em revisão** (abaixo).
 **Base:** `KNOWLEDGE_GRAPH_V2_SPEC.md` (Sprint 1, aprovada). Herda as 7 regras imutáveis — em especial **nº 1** (KG nunca altera a ingestão), **nº 6** (rastreabilidade obrigatória) e **nº 7** (monotonicidade: KG só acrescenta; Catálogo=O QUE · Ingestão=ONDE · KG=COMO).
 **Critério da Parte 1:** *um cientista e um engenheiro devem entender o modelo sem conhecer PostgreSQL.*
 
@@ -131,10 +131,14 @@ Ao final, esta parte responde, sem tecnologia:
 
 > **Refinamento decorrente da Ressalva 1:** a **força da evidência (`strength`) é atributo de `Evidence`**, não é duplicada na `Relationship` — a relação a alcança via `evidence_id`. Assim "força" tem um único dono.
 
-## 2.2 Chaves
-- **Nós:** `catalog_id` (Biomarker — chave externa/somente-leitura ao Catálogo), `system_id`, `pathway_id`, `guideline_id`.
+## 2.2 Chaves — identidade NATURAL × identidade TÉCNICA (Ressalva 1)
+Toda entidade lógica tem **duas identidades distintas**:
+- **Identidade natural (de negócio) — imutável:** o significado. Para a `Relationship` = (`origin_node`, `relationship_type`, `target_node`, `source_version`); para os nós = `catalog_id`/`system_id`/`pathway_id`/`guideline_id`.
+- **Identidade técnica (de persistência) — interna:** um identificador de superfície (surrogate), usado **apenas** para persistência, referências internas (FKs) e auditoria. **Nunca** carrega significado científico e **não** substitui a identidade natural.
+
+- **Nós:** identidade natural = `catalog_id` (Biomarker — chave externa/somente-leitura ao Catálogo), `system_id`, `pathway_id`, `guideline_id` (+ id técnico interno).
 - **Proveniência:** `reference_id` (Reference); `evidence_id` (Evidence, com FK → Reference).
-- **Relationship:** identidade natural **única** (`origin_node` + `relationship_type` + `target_node` + `source_version`); FKs → `Evidence` e → `Reference`.
+- **Relationship:** identidade natural **única** (`origin`+`type`+`target`+`source_version`); id técnico interno para persistência/auditoria; FKs → `Evidence` e → `Reference`.
 
 ## 2.3 Restrições / regras de integridade
 - `relationship_type` ∈ **taxonomia controlada** (conjunto fechado — §1.2); valor fora dela é inválido.
@@ -146,6 +150,24 @@ Ao final, esta parte responde, sem tecnologia:
 - **Compatibilidade de domínio/range:** `origin_node`/`target_node` devem ser dos tipos previstos para o `relationship_type` (ex.: `belongs_to_system` só de Biomarker → PhysiologicalSystem).
 - **Somente-leitura entre camadas:** `catalog_id` é referência; o KG **nunca** escreve no Catálogo nem na Ingestão (Regras nº 1 e nº 7).
 - **Append-only:** nenhuma relação é deletada; aposentadoria = `status=deprecated` + `retired_at` (histórico preservado).
+
+### 2.3.1 Regra formal de domínio/range (Ressalva 2)
+Cada `relationship_type` tem **origem obrigatória** e **destino obrigatório**. Criar uma relação fora do par é **inválido** (ex.: `Guideline belongs_to_system Pathway` não existe).
+
+| relationship_type | origem obrigatória | destino obrigatório | simétrica |
+|---|---|---|---|
+| `belongs_to_system` | Biomarker | PhysiologicalSystem | não |
+| `participates_in_pathway` | Biomarker | Pathway | não |
+| `regulated_by` | Biomarker | Biomarker | não |
+| `measured_with` | Biomarker | Biomarker | **sim** |
+| `recommended_by` | Biomarker | Guideline | não |
+| `associated_with` | Biomarker | PhysiologicalSystem | não |
+
+### 2.3.2 Versionamento de Reference × Relationship (Ressalva 3)
+*Uma nova versão de uma `Reference` **não** cria automaticamente uma nova `Relationship`.* A `Reference v2` só gera/atualiza relação **após passar novamente pelo ciclo editorial** (`draft → approved → active`). Isso preserva a governança: mudança de fonte não vira conhecimento ativo sem aprovação.
+
+### 2.3.3 Metadados científicos × operacionais (Ressalva 4)
+Atributos como `created_at`, `updated_at`, `retired_at`, `approved_by`, `status` (e o id técnico) são **metadados OPERACIONAIS** — de persistência/auditoria/governança. **NÃO** são conhecimento científico do grafo. O conhecimento científico está em: os **nós**, os **tipos de relação** (taxonomia), a **Evidence** (força) e a **Reference** (fonte). Essa separação evita que metadados operacionais sejam confundidos com atributos científicos.
 
 ## 2.4 Índices conceituais (padrões de acesso — sem DDL)
 Quais buscas precisam ser eficientes (a **tecnologia** que as realiza é a Parte 3):

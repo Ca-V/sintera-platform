@@ -133,10 +133,8 @@ export default function AgendaPage() {
     const looksLikeRecompra = /^recomprar/i.test((ev.title ?? '').trim())
     // Detecção DEFINITIVA: existe um medicamento vinculado a este evento? (lembrete de recompra)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: medRow, error: medErr } = await (supabase as any).from('medications').select('id').eq('repurchase_event_id', ev.id).maybeSingle()
+    const { data: medRow } = await (supabase as any).from('medications').select('id').eq('repurchase_event_id', ev.id).maybeSingle()
     const medId = (medRow?.id as string) ?? null
-    // DIAG (temporário) — instrumentação p/ diagnosticar o bug A. Remover após.
-    console.log('[DIAG openEdit]', { handler: 'openEdit', id: ev.id, type: ev.type, title: ev.title, medId, isMedType, looksLikeRecompra, medErr: medErr?.message ?? null })
     if (medId || isMedType || looksLikeRecompra) {
       router.push(medId ? `/dashboard/medicamentos?edit=${medId}` : '/dashboard/medicamentos')
       return

@@ -33,8 +33,6 @@ export default function VoiceInput({ onResult, title = 'Ditar por voz', label = 
   function toggle() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-    // DIAG (temporário) — instrumentação p/ diagnosticar o bug C. Remover após.
-    console.log('[DIAG voz] clique', { SR_existe: !!SR, supported, listening, protocolo: location.protocol })
     if (!SR) {
       window.alert('Ditado por voz não está disponível neste navegador. Tente o Google Chrome (Android) ou o Safari atualizado (iPhone).')
       return
@@ -44,19 +42,15 @@ export default function VoiceInput({ onResult, title = 'Ditar por voz', label = 
     rec.lang = 'pt-BR'
     rec.interimResults = false
     rec.maxAlternatives = 1
-    rec.onstart = () => console.log('[DIAG voz] onstart (ouvindo)')
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     rec.onresult = (e: any) => {
       const t = e?.results?.[0]?.[0]?.transcript
-      console.log('[DIAG voz] onresult', { transcript: t })
       if (t) onResult(String(t).trim())
     }
     rec.onend = () => setListening(false)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     rec.onerror = (e: any) => {
       setListening(false)
-      // DIAG (temporário) — captura o código de erro real. Remover após.
-      console.log('[DIAG voz] onerror', { error: e?.error, message: e?.message })
       // Antes o erro era silencioso → parecia "não funcionar". Agora explica o motivo.
       const err = e?.error
       if (err === 'not-allowed' || err === 'service-not-allowed') {
@@ -72,7 +66,7 @@ export default function VoiceInput({ onResult, title = 'Ditar por voz', label = 
     }
     recRef.current = rec
     setListening(true)
-    try { rec.start() } catch (err) { console.log('[DIAG voz] start() lançou', err); setListening(false) }
+    try { rec.start() } catch { setListening(false) }
   }
 
   const cls = className ?? `inline-flex items-center gap-1.5 px-2.5 h-9 rounded-lg border transition-colors flex-shrink-0 font-body text-xs ${

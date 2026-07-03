@@ -166,25 +166,6 @@ export default function MedicamentosPage() {
     setShowForm(true)
   }
 
-  // Voz para preencher os campos de compra/recompra do formulário aberto.
-  async function handleVoicePurchase(text: string) {
-    console.log('[DIAG voz-compra] recebeu texto', { text })
-    if (!text.trim()) return
-    try {
-      const resp = await fetch('/api/medications/scan', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }),
-      })
-      const j = await resp.json()
-      console.log('[DIAG voz-compra] scan respondeu', { ok: resp.ok, items: j.items })
-      const it = j.items?.[0] as ScanItem | undefined
-      if (it) {
-        if (it.packQty != null) setPackQty(String(it.packQty))
-        if (it.dailyCons != null) setDailyCons(String(it.dailyCons))
-        if (it.purchasedOn) { setPurchasedOn(it.purchasedOn); setPurchaseStatus('comprado') }
-      }
-    } catch { /* silencioso */ }
-  }
-
   const load = useCallback(async () => {
     if (!user) return
     setLoading(true)
@@ -576,10 +557,7 @@ export default function MedicamentosPage() {
 
           {/* Compra e recompra (opcional) */}
           <div className="rounded-xl border border-border bg-ivory/40 p-3 space-y-3">
-            <div className="flex items-center justify-between gap-2">
-              <p className="font-body text-xs font-semibold text-onyx">Compra e recompra (opcional)</p>
-              <VoiceInput onResult={handleVoicePurchase} label="Falar" title="Preencher compra por voz" />
-            </div>
+            <p className="font-body text-xs font-semibold text-onyx">Compra e recompra (opcional)</p>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="font-body text-[11px] text-mauve/70 block mb-1">Quantidade adquirida</label>
