@@ -17,7 +17,7 @@ import { parseDateOnly } from '@/lib/agenda'
 import { useUser } from '@/context/UserContext'
 import HistoricoTabs from '@/components/HistoricoTabs'
 import { summarizeBiomarkers, computeReferenceIndex, type BiomarkerRow, type BiomarkerSummary, type Trend } from '@/lib/biomarkers/grouping'
-import { groupBySpecimen, loadCatalogLabels, type CatalogLabels } from '@/lib/biomarkers/catalogLabels'
+import { groupByMaterial, loadCatalogLabels, type CatalogLabels } from '@/lib/biomarkers/catalogLabels'
 
 interface CatalogEntry { id: string; specimen: string | null; category: string | null; display_name: string }
 
@@ -171,44 +171,38 @@ export default function IndicadoresPage() {
               <p className="font-body text-sm font-semibold text-onyx">Biomarcadores</p>
               <span className="font-body text-xs text-mauve/60">{filtered.length} de {summaries.length}</span>
             </div>
-            {groupBySpecimen(filtered, panelOf, labels).map(spec => (
-              <div key={spec.key}>
-                {/* Material do exame (sangue/urina) */}
+            {groupByMaterial(filtered, panelOf, labels).map(mat => (
+              <div key={mat.key}>
+                {/* Material (sangue/urina). O painel fisiológico NÃO segmenta a UI —
+                    é dimensão do Knowledge Graph (ING-003). Evolução = série longitudinal. */}
                 <div className="px-5 py-2 bg-ivory border-b border-border/40">
-                  <h3 className="font-body text-xs font-semibold text-onyx/70 uppercase tracking-wider">{spec.label}</h3>
+                  <h3 className="font-body text-xs font-semibold text-onyx/70 uppercase tracking-wider">{mat.label}</h3>
                 </div>
-                {spec.categories.map(cat => (
-                  <div key={cat.key}>
-                    {cat.label && (
-                      <p className="px-5 pt-2.5 pb-1 font-body text-[11px] font-semibold text-mauve/60 uppercase tracking-wide">{cat.label}</p>
-                    )}
-                    <div className="divide-y divide-border/20">
-                      {cat.items.map((s) => {
-                        const interp = INTERP_CFG[s.latest?.interpretation ?? ''] ?? INTERP_CFG.indisponivel
-                        return (
-                          <Link key={s.canonicalName} href={`/dashboard/saude/${encodeURIComponent(s.canonicalName)}`}
-                            className="flex items-center gap-3 px-5 py-3 hover:bg-blush/10 transition-colors group">
-                            <div className="flex-1 min-w-0">
-                              <p className="font-body text-sm text-onyx truncate group-hover:text-petal transition-colors">{nameOf(s)}</p>
-                              <p className="font-body text-xs text-mauve/60">
-                                {s.count} mediç{s.count !== 1 ? 'ões' : 'ão'}
-                                {s.latest && ` · última ${formatDate(s.latest.date)}`}
-                              </p>
-                            </div>
-                            {s.latest && (
-                              <span className="font-body text-sm font-semibold text-onyx flex-shrink-0">
-                                {s.latest.value} <span className="text-xs font-normal text-mauve">{s.unit}</span>
-                                <span className={`ml-1.5 text-xs font-semibold ${interp.cls}`}>{interp.sym}</span>
-                              </span>
-                            )}
-                            <div className="flex-shrink-0 w-20 text-right hidden sm:block"><TrendBadge trend={s.trend} delta={s.deltaPercent} /></div>
-                            <ArrowRight size={15} className="text-mauve/30 group-hover:text-petal transition-colors flex-shrink-0" />
-                          </Link>
-                        )
-                      })}
-                    </div>
-                  </div>
-                ))}
+                <div className="divide-y divide-border/20">
+                  {mat.items.map((s) => {
+                    const interp = INTERP_CFG[s.latest?.interpretation ?? ''] ?? INTERP_CFG.indisponivel
+                    return (
+                      <Link key={s.canonicalName} href={`/dashboard/saude/${encodeURIComponent(s.canonicalName)}`}
+                        className="flex items-center gap-3 px-5 py-3 hover:bg-blush/10 transition-colors group">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-body text-sm text-onyx truncate group-hover:text-petal transition-colors">{nameOf(s)}</p>
+                          <p className="font-body text-xs text-mauve/60">
+                            {s.count} mediç{s.count !== 1 ? 'ões' : 'ão'}
+                            {s.latest && ` · última ${formatDate(s.latest.date)}`}
+                          </p>
+                        </div>
+                        {s.latest && (
+                          <span className="font-body text-sm font-semibold text-onyx flex-shrink-0">
+                            {s.latest.value} <span className="text-xs font-normal text-mauve">{s.unit}</span>
+                            <span className={`ml-1.5 text-xs font-semibold ${interp.cls}`}>{interp.sym}</span>
+                          </span>
+                        )}
+                        <div className="flex-shrink-0 w-20 text-right hidden sm:block"><TrendBadge trend={s.trend} delta={s.deltaPercent} /></div>
+                        <ArrowRight size={15} className="text-mauve/30 group-hover:text-petal transition-colors flex-shrink-0" />
+                      </Link>
+                    )
+                  })}
+                </div>
               </div>
             ))}
             {filtered.length === 0 && (

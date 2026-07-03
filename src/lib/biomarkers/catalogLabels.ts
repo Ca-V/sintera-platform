@@ -40,6 +40,35 @@ export async function loadCatalogLabels(supabase: SupabaseClient): Promise<Catal
   return buildCatalogLabels((mats.data ?? []) as RefRow[], (pans.data ?? []) as RefRow[])
 }
 
+export interface MaterialGroup<T> {
+  key: string
+  label: string
+  items: T[]
+}
+
+/**
+ * Agrupa itens SÓ por material (specimen), preservando a ordem de entrada.
+ * SEM nível de painel fisiológico — a dimensão científica (category) NÃO segmenta a
+ * UI (ela pertence ao Knowledge Graph). Usado na Evolução (série longitudinal por
+ * biomarcador): Material → Biomarcadores. Rótulos/ordem do catálogo. (ING-003)
+ */
+export function groupByMaterial<T>(
+  items: T[],
+  get: (t: T) => { specimen: string | null },
+  labels: CatalogLabels,
+): MaterialGroup<T>[] {
+  const mats = new Map<string, T[]>()
+  for (const it of items) {
+    const sk = get(it).specimen ?? 'outros'
+    if (!mats.has(sk)) mats.set(sk, [])
+    mats.get(sk)!.push(it)
+  }
+  const rank = (k: string) => { const i = labels.specimenOrder.indexOf(k); return i < 0 ? 99 : i }
+  return [...mats.keys()]
+    .sort((a, b) => rank(a) - rank(b))
+    .map(sk => ({ key: sk, label: labels.materialLabel(sk), items: mats.get(sk)! }))
+}
+
 export interface PanelGroup<T> {
   key: string
   label: string
