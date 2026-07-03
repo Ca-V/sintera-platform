@@ -17,7 +17,7 @@ import { parseDateOnly } from '@/lib/agenda'
 import { useUser } from '@/context/UserContext'
 import HistoricoTabs from '@/components/HistoricoTabs'
 import { summarizeBiomarkers, computeReferenceIndex, type BiomarkerRow, type BiomarkerSummary, type Trend } from '@/lib/biomarkers/grouping'
-import { groupBySpecimen } from '@/lib/biomarkers/panels'
+import { groupBySpecimen, loadCatalogLabels, type CatalogLabels } from '@/lib/biomarkers/catalogLabels'
 
 interface CatalogEntry { id: string; specimen: string | null; category: string | null; display_name: string }
 
@@ -52,6 +52,7 @@ export default function IndicadoresPage() {
   const [supabase] = useState(() => createClient() as unknown as SupabaseClient)
   const [rows, setRows] = useState<BiomarkerRow[]>([])
   const [catalog, setCatalog] = useState<Map<string, CatalogEntry>>(new Map())
+  const [labels, setLabels] = useState<CatalogLabels | null>(null)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
 
@@ -59,11 +60,12 @@ export default function IndicadoresPage() {
     if (!user) return
     let active = true
     ;(async () => {
-      const [bio, cat] = await Promise.all([
+      const [bio, cat, lbls] = await Promise.all([
         supabase.from('current_biomarkers')
           .select('id,name,value,unit,result_type,reference_min,reference_max,interpretation,reference_source,catalog_id,exam_id,exams(exam_date,created_at)')
           .eq('user_id', user.id).eq('synthetic', false).eq('result_type', 'numeric'),
         supabase.from('biomarker_catalog').select('id,specimen,category,display_name'),
+        loadCatalogLabels(supabase),
       ])
       if (!active) return
       if (bio.error) console.error('[SINTERA] indicadores fetch:', bio.error.message)
@@ -71,6 +73,7 @@ export default function IndicadoresPage() {
       const cmap = new Map<string, CatalogEntry>()
       for (const c of (cat.data ?? []) as CatalogEntry[]) cmap.set(c.id, c)
       setCatalog(cmap)
+      setLabels(lbls)
       setLoading(false)
     })()
     return () => { active = false }
@@ -90,7 +93,7 @@ export default function IndicadoresPage() {
     return summaries.filter(s => (catalog.get(s.catalogId ?? '')?.display_name ?? s.displayName).toLowerCase().includes(q))
   }, [summaries, search, catalog])
 
-  if (loading) return (
+  if (loading || !labels) return (
     <div className="flex items-center justify-center min-h-[60vh]"><Loader2 size={28} className="animate-spin text-petal" /></div>
   )
 
@@ -168,7 +171,7 @@ export default function IndicadoresPage() {
               <p className="font-body text-sm font-semibold text-onyx">Biomarcadores</p>
               <span className="font-body text-xs text-mauve/60">{filtered.length} de {summaries.length}</span>
             </div>
-            {groupBySpecimen(filtered, panelOf).map(spec => (
+            {groupBySpecimen(filtered, panelOf, labels).map(spec => (
               <div key={spec.key}>
                 {/* Material do exame (sangue/urina) */}
                 <div className="px-5 py-2 bg-ivory border-b border-border/40">

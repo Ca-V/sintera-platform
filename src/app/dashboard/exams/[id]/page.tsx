@@ -14,6 +14,7 @@ import { createClient } from '@/lib/supabase/client'
 import { parseDateOnly } from '@/lib/agenda'
 import { useUser } from '@/context/UserContext'
 import { compareNames } from '@/lib/exams/nameMatch'
+import { groupBySpecimen, loadCatalogLabels, buildCatalogLabels, type CatalogLabels } from '@/lib/biomarkers/catalogLabels'
 import FeedbackModal from '@/components/FeedbackModal'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
@@ -184,14 +185,8 @@ function formatDate(iso: string) {
 // variáveis de um mesmo painel juntas, em vez de uma lista solta. Só apresentação:
 // rótulos legíveis para os códigos que já existem em biomarker_catalog.
 
-const SPECIMEN_LABEL: Record<string, string> = {
-  sangue:    'Exame de sangue',
-  urina:     'Exame de urina',
-  urina_24h: 'Exame de urina (24 horas)',
-}
-const SPECIMEN_ORDER = ['sangue', 'urina', 'urina_24h']
-
 // Ícone por material. Fallback cobre qualquer tipo futuro (fezes, saliva, líquor…).
+// (rótulo/ordem do material vêm do catálogo via CatalogLabels — ícone é presentação.)
 const SPECIMEN_META: Record<string, { Icon: React.ComponentType<{ size?: number; className?: string }>; color: string }> = {
   sangue:    { Icon: Droplet,      color: 'text-red-400' },
   urina:     { Icon: FlaskConical, color: 'text-amber-500' },
@@ -225,53 +220,8 @@ function displayValue(b: Biomarker): { main: string | null; unit: string | null 
   return { main: null, unit: null }
 }
 
-const CATEGORY_LABEL: Record<string, string> = {
-  hematologia_vermelha:          'Série vermelha',
-  hematologia_branca_plaquetas:  'Série branca e plaquetas',
-  coagulacao:                    'Coagulação',
-  metabolismo_ferro:             'Metabolismo do ferro',
-  metabolismo_glicose:           'Glicose',
-  funcao_tireoidiana:            'Tireoide',
-  inflamacao_imunologia:         'Inflamação e imunologia',
-  funcao_hepatica_proteinas:     'Fígado e proteínas',
-  funcao_renal_eletrolitos:      'Rins e eletrólitos',
-  urina_24h:                     'Urina de 24 horas',
-  vitaminas_minerais:            'Vitaminas e minerais',
-  hormonios_sexuais_reprodutivo: 'Hormônios sexuais e reprodutivos',
-  cardiometabolico:              'Perfil lipídico (colesterol e triglicérides)',
-  urinalise_eas:                 'Urina tipo I (EAS)',
-}
-
-interface BioGroup {
-  key: string
-  label: string
-  categories: { key: string; label: string | null; items: Biomarker[] }[]
-}
-
-/** Agrupa por material → painel, preservando a ordem já resolvida por sortBiomarkers. */
-function groupBiomarkers(bms: Biomarker[]): BioGroup[] {
-  const specs = new Map<string, Map<string, Biomarker[]>>()
-  for (const b of bms) {
-    const sk = b.specimen ?? 'outros'
-    const ck = b.category ?? 'outros'
-    if (!specs.has(sk)) specs.set(sk, new Map())
-    const cats = specs.get(sk)!
-    if (!cats.has(ck)) cats.set(ck, [])
-    cats.get(ck)!.push(b)
-  }
-  const rank = (k: string) => { const i = SPECIMEN_ORDER.indexOf(k); return i < 0 ? 99 : i }
-  return [...specs.keys()]
-    .sort((a, b) => rank(a) - rank(b))
-    .map(sk => ({
-      key: sk,
-      label: SPECIMEN_LABEL[sk] ?? 'Outros exames',
-      categories: [...specs.get(sk)!.entries()].map(([ck, items]) => ({
-        key: ck,
-        label: CATEGORY_LABEL[ck] ?? null,
-        items,
-      })),
-    }))
-}
+// Agrupamento por material → painel: lógica de domínio em `groupBySpecimen`
+// (lib/biomarkers/catalogLabels); rótulos/ordem vêm do Scientific Catalog v2.
 
 // ── Componente principal ──────────────────────────────────────────────────────
 
@@ -287,6 +237,7 @@ export default function ExamDetailPage() {
 
   const [exam, setExam]           = useState<Exam | null>(null)
   const [biomarkers, setBiomarkers] = useState<Biomarker[]>([])
+  const [labels, setLabels]         = useState<CatalogLabels>(() => buildCatalogLabels([], []))
   const [lastLog, setLastLog]     = useState<LastLog | null>(null)
   const [loading, setLoading]     = useState(true)
   const [analyzing, setAnalyzing] = useState(false)
@@ -452,6 +403,7 @@ export default function ExamDetailPage() {
         .limit(1),
       supabase.from('biomarker_catalog').select('id,specimen,category,display_name'),
     ])
+    setLabels(await loadCatalogLabels(supabase))
     if (examData) setExam(examData as Exam)
     if (bioData) {
       // Enriquece cada biomarcador com material/painel do catálogo (só apresentação).
@@ -801,7 +753,7 @@ export default function ExamDetailPage() {
 
           {/* Agrupado por material (sangue/urina) e painel — deixa claro de qual exame
               cada biomarcador veio e mantém as variáveis do mesmo painel juntas */}
-          {groupBiomarkers(biomarkers).map(spec => {
+          {groupBySpecimen(biomarkers, b => ({ specimen: b.specimen ?? null, category: b.category ?? null }), labels).map(spec => {
             const sm = SPECIMEN_META[spec.key] ?? SPECIMEN_FALLBACK
             const SpecIcon = sm.Icon
             return (
