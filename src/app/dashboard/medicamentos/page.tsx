@@ -219,6 +219,17 @@ export default function MedicamentosPage() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { if (!authLoading) load() }, [authLoading, load])
 
+  // Abrir direto o medicamento indicado por ?edit=<id> (ex.: vindo do lembrete
+  // "Recomprar" na Agenda — medicamentos editam-se AQUI, não no formulário de evento).
+  const openedEditParam = useRef(false)
+  useEffect(() => {
+    if (openedEditParam.current || meds.length === 0) return
+    const editId = new URLSearchParams(window.location.search).get('edit')
+    if (!editId) return
+    const m = meds.find(x => x.id === editId)
+    if (m) { openEdit(m); openedEditParam.current = true }
+  }, [meds])
+
   function reset() {
     setEditingId(null); setName(''); setKind('medicamento'); setBrand(''); setDose(''); setFreq(''); setStartedOn(''); setUntilOn(''); setNotes('')
     setAcquiredQty(''); setAmount(''); setPackQty(''); setDailyCons(''); setPurchasedOn(''); setPurchaseStatus(''); setRepurchase(false); setRepurchaseFreq(''); setErr(null)

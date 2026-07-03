@@ -125,7 +125,19 @@ export default function AgendaPage() {
   }
 
   function openAdd() { setEditing(null); setPrefill(undefined); setModalOpen(true) }
-  function openEdit(ev: HealthEvent) { setEditing(ev); setPrefill(undefined); setModalOpen(true) }
+  async function openEdit(ev: HealthEvent) {
+    // Medicamentos/suplementos foram REMOVIDOS do formulário de evento — editam-se na
+    // página de Medicamentos. Roteia o lembrete de medicação (ex.: "Recomprar: X") para
+    // lá, abrindo o próprio medicamento (achado pelo repurchase_event_id).
+    if (ev.type === 'medicacao' || ev.type === 'medicamento' || ev.type === 'suplemento') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await (supabase as any).from('medications').select('id').eq('repurchase_event_id', ev.id).maybeSingle()
+      const medId = (data?.id as string) ?? null
+      router.push(medId ? `/dashboard/medicamentos?edit=${medId}` : '/dashboard/medicamentos')
+      return
+    }
+    setEditing(ev); setPrefill(undefined); setModalOpen(true)
+  }
   function openFromSuggestion(s: AgendaSuggestion) {
     setEditing(null); setPrefill({ eventType: s.suggestedEventType, title: s.suggestedTitle }); setModalOpen(true)
   }
