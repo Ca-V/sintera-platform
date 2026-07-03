@@ -166,23 +166,6 @@ export default function MedicamentosPage() {
     setShowForm(true)
   }
 
-  // Voz para preencher os campos de compra/recompra do formulário aberto.
-  async function handleVoicePurchase(text: string) {
-    if (!text.trim()) return
-    try {
-      const resp = await fetch('/api/medications/scan', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }),
-      })
-      const j = await resp.json()
-      const it = j.items?.[0] as ScanItem | undefined
-      if (it) {
-        if (it.packQty != null) setPackQty(String(it.packQty))
-        if (it.dailyCons != null) setDailyCons(String(it.dailyCons))
-        if (it.purchasedOn) { setPurchasedOn(it.purchasedOn); setPurchaseStatus('comprado') }
-      }
-    } catch { /* silencioso */ }
-  }
-
   const load = useCallback(async () => {
     if (!user) return
     setLoading(true)
@@ -218,6 +201,17 @@ export default function MedicamentosPage() {
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { if (!authLoading) load() }, [authLoading, load])
+
+  // Abrir direto o medicamento indicado por ?edit=<id> (ex.: vindo do lembrete
+  // "Recomprar" na Agenda — medicamentos editam-se AQUI, não no formulário de evento).
+  const openedEditParam = useRef(false)
+  useEffect(() => {
+    if (openedEditParam.current || meds.length === 0) return
+    const editId = new URLSearchParams(window.location.search).get('edit')
+    if (!editId) return
+    const m = meds.find(x => x.id === editId)
+    if (m) { openEdit(m); openedEditParam.current = true }
+  }, [meds])
 
   function reset() {
     setEditingId(null); setName(''); setKind('medicamento'); setBrand(''); setDose(''); setFreq(''); setStartedOn(''); setUntilOn(''); setNotes('')
@@ -447,7 +441,7 @@ export default function MedicamentosPage() {
             <input type="file" accept="image/*" capture="environment" className="sr-only" disabled={scanning}
               onChange={e => { const f = e.target.files?.[0]; if (f) handleScan(f); e.target.value = '' }} />
             {scanning ? <Loader2 size={15} className="animate-spin" /> : <Camera size={15} />}
-            {scanning ? 'Lendo…' : 'Escanear documento'}
+            {scanning ? 'Lendo…' : 'Fotografar ou escanear'}
           </label>
           <VoiceInput onResult={handleVoiceAdd} label="Falar" title="Adicionar por voz"
             className="flex items-center gap-2 px-4 py-2 rounded-full border border-petal/40 text-petal font-body text-sm font-medium hover:bg-blush transition-colors" />
@@ -563,10 +557,7 @@ export default function MedicamentosPage() {
 
           {/* Compra e recompra (opcional) */}
           <div className="rounded-xl border border-border bg-ivory/40 p-3 space-y-3">
-            <div className="flex items-center justify-between gap-2">
-              <p className="font-body text-xs font-semibold text-onyx">Compra e recompra (opcional)</p>
-              <VoiceInput onResult={handleVoicePurchase} label="Falar" title="Preencher compra por voz" />
-            </div>
+            <p className="font-body text-xs font-semibold text-onyx">Compra e recompra (opcional)</p>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="font-body text-[11px] text-mauve/70 block mb-1">Quantidade adquirida</label>

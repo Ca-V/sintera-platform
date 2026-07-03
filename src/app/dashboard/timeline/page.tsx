@@ -13,6 +13,7 @@ import {
   Loader2, Pencil, Trash2, Paperclip, Info, Sparkles, Pill, Receipt, Dumbbell, Dna, CheckCircle2, RotateCcw,
 } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import TimelineEntry from '@/components/entry/TimelineEntry'
 import { useUser } from '@/context/UserContext'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
@@ -82,6 +83,7 @@ export default function TimelineRoute() {
 
 function LegacyTimeline() {
   const { user } = useUser()
+  const router = useRouter()
   // Caminho ÚNICO de evento: mesmo modal e mesma gravação da Agenda.
   const { supabase, saveEvent, services } = useEventForm()
 
@@ -182,6 +184,21 @@ function LegacyTimeline() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase as any).from('health_events').select('*').eq('id', it.rawId).single()
     if (error || !data) { setActionError('Não foi possível abrir o evento para edição.'); return }
+    // Medicamentos/suplementos foram REMOVIDOS do formulário de evento — editam-se na
+    // página de Medicamentos (mesmo tratamento da Agenda). Aqui o Histórico mostra
+    // compra E recompra, então busca o medicamento por qualquer um dos dois vínculos.
+    const evType = (data as { event_type?: string }).event_type ?? ''
+    const evTitle = ((data as { title?: string }).title ?? '').trim()
+    const isMedType = evType === 'medicacao' || evType === 'medicamento' || evType === 'suplemento'
+    const looksLikeRecompra = /^recomprar/i.test(evTitle)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: medRow } = await (supabase as any).from('medications').select('id')
+      .or(`purchase_event_id.eq.${it.rawId},repurchase_event_id.eq.${it.rawId}`).maybeSingle()
+    const medId = (medRow?.id as string) ?? null
+    if (medId || isMedType || looksLikeRecompra) {
+      router.push(medId ? `/dashboard/medicamentos?edit=${medId}` : '/dashboard/medicamentos')
+      return
+    }
     setEditingEvent(rowToHealthEvent(data as HealthEventRow)); setModalOpen(true)
   }
 
