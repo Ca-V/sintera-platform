@@ -17,7 +17,7 @@ import { parseDateOnly } from '@/lib/agenda'
 import { useUser } from '@/context/UserContext'
 import HistoricoTabs from '@/components/HistoricoTabs'
 import { summarizeBiomarkers, computeReferenceIndex, type BiomarkerRow, type BiomarkerSummary, type Trend } from '@/lib/biomarkers/grouping'
-import { groupByMaterial, loadCatalogLabels, type CatalogLabels } from '@/lib/biomarkers/catalogLabels'
+import { groupByMaterialExam, loadCatalogLabels, type CatalogLabels } from '@/lib/biomarkers/catalogLabels'
 
 interface CatalogEntry { id: string; specimen: string | null; category: string | null; display_name: string }
 
@@ -62,7 +62,7 @@ export default function IndicadoresPage() {
     ;(async () => {
       const [bio, cat, lbls] = await Promise.all([
         supabase.from('current_biomarkers')
-          .select('id,name,value,unit,result_type,reference_min,reference_max,interpretation,reference_source,catalog_id,exam_id,exams(exam_date,created_at)')
+          .select('id,name,value,unit,result_type,reference_min,reference_max,interpretation,reference_source,catalog_id,source_material,source_exam_name,exam_id,exams(exam_date,created_at)')
           .eq('user_id', user.id).eq('synthetic', false).eq('result_type', 'numeric'),
         supabase.from('biomarker_catalog').select('id,specimen,category,display_name'),
         loadCatalogLabels(supabase),
@@ -171,38 +171,47 @@ export default function IndicadoresPage() {
               <p className="font-body text-sm font-semibold text-onyx">Biomarcadores</p>
               <span className="font-body text-xs text-mauve/60">{filtered.length} de {summaries.length}</span>
             </div>
-            {groupByMaterial(filtered, panelOf, labels).map(mat => (
+            {groupByMaterialExam(filtered, s => ({ sourceMaterial: s.sourceMaterial ?? null, specimen: panelOf(s).specimen, sourceExamName: s.sourceExamName ?? null }), labels).map(mat => (
               <div key={mat.key}>
-                {/* Material (sangue/urina). O painel fisiológico NÃO segmenta a UI —
-                    é dimensão do Knowledge Graph (ING-003). Evolução = série longitudinal. */}
+                {/* Material (do laudo; fallback do catálogo). Painel fisiológico NÃO segmenta
+                    a UI (é do Knowledge Graph). Evolução = série longitudinal. (ING-004) */}
                 <div className="px-5 py-2 bg-ivory border-b border-border/40">
                   <h3 className="font-body text-xs font-semibold text-onyx/70 uppercase tracking-wider">{mat.label}</h3>
                 </div>
-                <div className="divide-y divide-border/20">
-                  {mat.items.map((s) => {
-                    const interp = INTERP_CFG[s.latest?.interpretation ?? ''] ?? INTERP_CFG.indisponivel
-                    return (
-                      <Link key={s.canonicalName} href={`/dashboard/saude/${encodeURIComponent(s.canonicalName)}`}
-                        className="flex items-center gap-3 px-5 py-3 hover:bg-blush/10 transition-colors group">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-body text-sm text-onyx truncate group-hover:text-petal transition-colors">{nameOf(s)}</p>
-                          <p className="font-body text-xs text-mauve/60">
-                            {s.count} mediç{s.count !== 1 ? 'ões' : 'ão'}
-                            {s.latest && ` · última ${formatDate(s.latest.date)}`}
-                          </p>
-                        </div>
-                        {s.latest && (
-                          <span className="font-body text-sm font-semibold text-onyx flex-shrink-0">
-                            {s.latest.value} <span className="text-xs font-normal text-mauve">{s.unit}</span>
-                            <span className={`ml-1.5 text-xs font-semibold ${interp.cls}`}>{interp.sym}</span>
-                          </span>
-                        )}
-                        <div className="flex-shrink-0 w-20 text-right hidden sm:block"><TrendBadge trend={s.trend} delta={s.deltaPercent} /></div>
-                        <ArrowRight size={15} className="text-mauve/30 group-hover:text-petal transition-colors flex-shrink-0" />
-                      </Link>
-                    )
-                  })}
-                </div>
+                {mat.exams.map(ex => (
+                  <div key={ex.key}>
+                    {/* Nome do exame do laudo (quando houver) — dá contexto ao biomarcador
+                        (ex.: pH/pO₂/SatO₂ sob "Gasometria venosa"). Ausente → itens diretos. */}
+                    {ex.label && (
+                      <p className="px-5 pt-2.5 pb-1 font-body text-[11px] font-semibold text-mauve/60 uppercase tracking-wide">{ex.label}</p>
+                    )}
+                    <div className="divide-y divide-border/20">
+                      {ex.items.map((s) => {
+                        const interp = INTERP_CFG[s.latest?.interpretation ?? ''] ?? INTERP_CFG.indisponivel
+                        return (
+                          <Link key={s.canonicalName} href={`/dashboard/saude/${encodeURIComponent(s.canonicalName)}`}
+                            className="flex items-center gap-3 px-5 py-3 hover:bg-blush/10 transition-colors group">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-body text-sm text-onyx truncate group-hover:text-petal transition-colors">{nameOf(s)}</p>
+                              <p className="font-body text-xs text-mauve/60">
+                                {s.count} mediç{s.count !== 1 ? 'ões' : 'ão'}
+                                {s.latest && ` · última ${formatDate(s.latest.date)}`}
+                              </p>
+                            </div>
+                            {s.latest && (
+                              <span className="font-body text-sm font-semibold text-onyx flex-shrink-0">
+                                {s.latest.value} <span className="text-xs font-normal text-mauve">{s.unit}</span>
+                                <span className={`ml-1.5 text-xs font-semibold ${interp.cls}`}>{interp.sym}</span>
+                              </span>
+                            )}
+                            <div className="flex-shrink-0 w-20 text-right hidden sm:block"><TrendBadge trend={s.trend} delta={s.deltaPercent} /></div>
+                            <ArrowRight size={15} className="text-mauve/30 group-hover:text-petal transition-colors flex-shrink-0" />
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
             ))}
             {filtered.length === 0 && (

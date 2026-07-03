@@ -69,6 +69,43 @@ export function groupByMaterial<T>(
     .map(sk => ({ key: sk, label: labels.materialLabel(sk), items: mats.get(sk)! }))
 }
 
+export interface MaterialExamGroup<T> {
+  key: string
+  label: string
+  iconKey: string
+  exams: { key: string; label: string | null; items: T[] }[]
+}
+
+/**
+ * Agrupa por Material → Nome do exame (quando houver) → itens (Evolução, ING-004).
+ * Material: para biomarcadores RECONHECIDOS (specimen do catálogo) usa o rótulo do
+ * CATÁLOGO — evita dividir o mesmo material entre texto cru do laudo e rótulo canônico
+ * numa série longitudinal; para NÃO-reconhecidos (ex.: gasometria) usa o `source_material`
+ * do laudo. Exame = `source_exam_name` (null → itens direto sob o material). Ordem =
+ * primeira aparição. Painel fisiológico (category) NÃO participa — é do Knowledge Graph.
+ */
+export function groupByMaterialExam<T>(
+  items: T[],
+  get: (t: T) => { sourceMaterial: string | null; specimen: string | null; sourceExamName: string | null },
+  labels: CatalogLabels,
+): MaterialExamGroup<T>[] {
+  const mats = new Map<string, MaterialExamGroup<T>>()
+  for (const it of items) {
+    const g = get(it)
+    const mLabel = g.specimen
+      ? labels.materialLabel(g.specimen)
+      : (g.sourceMaterial?.trim() || labels.materialLabel(null))
+    if (!mats.has(mLabel)) mats.set(mLabel, { key: mLabel, label: mLabel, iconKey: g.specimen ?? 'outros', exams: [] })
+    const mat = mats.get(mLabel)!
+    const eLabel = g.sourceExamName?.trim() || null
+    const eKey = eLabel ?? '__sem_exame__'
+    let ex = mat.exams.find(e => e.key === eKey)
+    if (!ex) { ex = { key: eKey, label: eLabel, items: [] }; mat.exams.push(ex) }
+    ex.items.push(it)
+  }
+  return [...mats.values()]
+}
+
 export interface PanelGroup<T> {
   key: string
   label: string

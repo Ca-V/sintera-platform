@@ -15,6 +15,8 @@ export interface BiomarkerRow {
   interpretation?: string | null
   reference_source?: string | null
   catalog_id?: string | null
+  source_material?: string | null
+  source_exam_name?: string | null
   exam_id: string
   exams: { exam_date: string | null; created_at: string } | null
 }
@@ -44,6 +46,11 @@ export interface BiomarkerSummary {
   canonicalName: string
   displayName: string
   catalogId?: string | null
+  // Contexto do laudo (Fidelidade da Ingestão) — da medição mais recente que o tiver.
+  // Usado na Evolução (ING-004): Material → Nome do exame → Biomarcadores quando presente.
+  // Opcional (como catalogId) para não quebrar mocks de teste; summarizeBiomarkers sempre preenche.
+  sourceMaterial?: string | null
+  sourceExamName?: string | null
   unit: string
   latest: Measurement | null
   first: Measurement | null
@@ -104,10 +111,18 @@ export function summarizeBiomarkers(rows: BiomarkerRow[]): BiomarkerSummary[] {
       ? Math.round(((latest.value - first.value) / Math.abs(first.value)) * 100)
       : null
 
+    // Contexto do laudo: pega a medição MAIS RECENTE que tenha o campo (dado misto
+    // antigo/novo). São consistentes dentro de uma mesma série (mesmo biomarcador).
+    const revd = [...sorted].reverse()
+    const sourceMaterial = revd.find(r => r.source_material)?.source_material ?? null
+    const sourceExamName = revd.find(r => r.source_exam_name)?.source_exam_name ?? null
+
     out.push({
       canonicalName: key,
       displayName: sorted[sorted.length - 1].name,
       catalogId: sorted[sorted.length - 1].catalog_id ?? null,
+      sourceMaterial,
+      sourceExamName,
       unit: primaryUnit,
       latest, first, count: sorted.length,
       trend, deltaPercent, totalDeltaPercent,

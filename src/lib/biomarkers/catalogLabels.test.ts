@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildCatalogLabels, groupBySpecimen, groupByMaterial } from './catalogLabels'
+import { buildCatalogLabels, groupBySpecimen, groupByMaterial, groupByMaterialExam } from './catalogLabels'
 
 const materials = [
   { id: 'sangue', label: 'Exame de sangue', sort_order: 0 },
@@ -83,5 +83,41 @@ describe('groupByMaterial — só material, sem painel fisiológico (ING-003)', 
     const groups = groupByMaterial([{ id: 'a', specimen: null }, { id: 'b', specimen: 'sangue' }], get, labels)
     expect(groups.map(g => g.key)).toEqual(['sangue', 'outros'])
     expect(groups[1].label).toBe('Outros exames')
+  })
+})
+
+describe('groupByMaterialExam — Material → Exame(opcional) → itens (ING-004)', () => {
+  const labels = buildCatalogLabels(materials, panels)
+  type Item = { id: string; sourceMaterial: string | null; specimen: string | null; sourceExamName: string | null }
+  const get = (i: Item) => ({ sourceMaterial: i.sourceMaterial, specimen: i.specimen, sourceExamName: i.sourceExamName })
+
+  it('com source_exam_name → agrupa por material do laudo → nome do exame (gasometria)', () => {
+    const items: Item[] = [
+      { id: 'pH', sourceMaterial: 'Sangue venoso', specimen: null, sourceExamName: 'Gasometria venosa' },
+      { id: 'pO2', sourceMaterial: 'Sangue venoso', specimen: null, sourceExamName: 'Gasometria venosa' },
+    ]
+    const g = groupByMaterialExam(items, get, labels)
+    expect(g).toHaveLength(1)
+    expect(g[0].label).toBe('Sangue venoso')
+    expect(g[0].exams).toHaveLength(1)
+    expect(g[0].exams[0].label).toBe('Gasometria venosa')
+    expect(g[0].exams[0].items).toHaveLength(2)
+  })
+
+  it('sem source_exam_name → itens diretos sob o material (exame label null)', () => {
+    const g = groupByMaterialExam([{ id: 'ca', sourceMaterial: 'URINA DE 24 HORAS', specimen: null, sourceExamName: null }], get, labels)
+    expect(g[0].label).toBe('URINA DE 24 HORAS')
+    expect(g[0].exams[0].label).toBeNull()
+  })
+
+  it('sem source_material → fallback ao rótulo do catálogo (specimen)', () => {
+    const g = groupByMaterialExam([{ id: 'hb', sourceMaterial: null, specimen: 'sangue', sourceExamName: null }], get, labels)
+    expect(g[0].label).toBe('Exame de sangue')
+    expect(g[0].iconKey).toBe('sangue')
+  })
+
+  it('reconhecido (specimen presente) → rótulo do CATÁLOGO vence o texto cru do laudo (evita divisão)', () => {
+    const g = groupByMaterialExam([{ id: 'ca', sourceMaterial: 'SANGUE', specimen: 'sangue', sourceExamName: null }], get, labels)
+    expect(g[0].label).toBe('Exame de sangue') // não "SANGUE"
   })
 })
