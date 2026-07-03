@@ -168,12 +168,14 @@ export default function MedicamentosPage() {
 
   // Voz para preencher os campos de compra/recompra do formulário aberto.
   async function handleVoicePurchase(text: string) {
+    console.log('[DIAG voz-compra] recebeu texto', { text })
     if (!text.trim()) return
     try {
       const resp = await fetch('/api/medications/scan', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }),
       })
       const j = await resp.json()
+      console.log('[DIAG voz-compra] scan respondeu', { ok: resp.ok, items: j.items })
       const it = j.items?.[0] as ScanItem | undefined
       if (it) {
         if (it.packQty != null) setPackQty(String(it.packQty))
