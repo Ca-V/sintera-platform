@@ -418,68 +418,67 @@ export default function MedicamentosPage() {
 
   function card(m: Med) {
     return (
-      <div key={m.id} className="card-premium p-4 flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="font-body text-sm font-semibold text-onyx">{m.name}</p>
-          {(() => {
-            const conteudo = m.packQty != null ? `${m.packQty}${m.packUnit ? ' ' + m.packUnit : ''}` : ''
-            // Essenciais numa linha só (flui na horizontal, quebra quando precisa) —
-            // evita card muito alto no celular.
-            const clinico = [formMetaOf(m.form ?? '')?.label, m.route, conteudo, m.dose, m.frequency].filter(Boolean).join(' • ')
-            const periodo = m.startedOn && m.untilOn ? `de ${fmtDate(m.startedOn)} até ${fmtDate(m.untilOn)}`
-              : m.startedOn ? `desde ${fmtDate(m.startedOn)}`
-              : m.untilOn ? `até ${fmtDate(m.untilOn)}` : ''
-            const meta = [m.prescriber ? `Prescrito por ${m.prescriber}` : null, periodo].filter(Boolean).join(' · ')
-            const vazio = !clinico && !meta
-            return (
-              <div className="font-body text-[11px] text-mauve/70 mt-0.5 space-y-0.5">
-                {clinico && <p>{clinico}</p>}
-                {meta && <p className="text-mauve/50">{meta}</p>}
-                {vazio && <p>Sem detalhes</p>}
-              </div>
-            )
-          })()}
-          {m.notes && <p className="font-body text-[11px] text-mauve/60 mt-1">{m.notes}</p>}
-          {(() => {
-            const ro = runoutDate(m.purchasedOn, m.packQty, m.dailyCons, m.acquiredQty)
-            return (
-              <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                {m.purchaseStatus === 'a_comprar' && (
-                  <span className="font-body text-[10px] text-gold bg-warm border border-amber-200 rounded-full px-1.5 py-0.5">A comprar</span>
-                )}
-                {m.purchaseStatus === 'comprado' && m.purchasedOn && (
-                  <span className="font-body text-[10px] text-sage bg-sage-light border border-sage/20 rounded-full px-1.5 py-0.5">Comprado em {fmtFull(m.purchasedOn)}</span>
-                )}
-                {ro && (
-                  <span className="font-body text-[10px] text-petal bg-blush border border-petal-light rounded-full px-1.5 py-0.5">
-                    Acaba ~{fmtFull(ro)}{m.repurchaseReminder ? ' · recompra ✓' : ''}
-                  </span>
-                )}
-              </div>
-            )
-          })()}
-        </div>
-        <div className="flex items-center gap-1 flex-shrink-0">
-          {m.status === 'em_uso' ? (
-            <button title="Marcar como suspenso" disabled={busyId === m.id} onClick={() => setStatus(m.id, 'suspenso')}
+      <div key={m.id} className="card-premium p-4">
+        <div className="flex items-start justify-between gap-3">
+          <p className="font-body text-sm font-semibold text-onyx min-w-0 break-words">{m.name}</p>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            {m.status === 'em_uso' ? (
+              <button title="Marcar como suspenso" disabled={busyId === m.id} onClick={() => setStatus(m.id, 'suspenso')}
+                className="w-7 h-7 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/60 hover:text-petal">
+                <PauseCircle size={14} />
+              </button>
+            ) : (
+              <button title="Voltar a usar" disabled={busyId === m.id} onClick={() => setStatus(m.id, 'em_uso')}
+                className="w-7 h-7 rounded-lg hover:bg-sage-light flex items-center justify-center text-mauve/60 hover:text-sage">
+                <PlayCircle size={14} />
+              </button>
+            )}
+            <button title="Editar" onClick={() => openEdit(m)}
               className="w-7 h-7 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/60 hover:text-petal">
-              <PauseCircle size={14} />
+              <Pencil size={13} />
             </button>
-          ) : (
-            <button title="Voltar a usar" disabled={busyId === m.id} onClick={() => setStatus(m.id, 'em_uso')}
-              className="w-7 h-7 rounded-lg hover:bg-sage-light flex items-center justify-center text-mauve/60 hover:text-sage">
-              <PlayCircle size={14} />
+            <button title="Remover" disabled={busyId === m.id} onClick={() => remove(m)}
+              className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve/60 hover:text-red-500">
+              <Trash2 size={13} />
             </button>
-          )}
-          <button title="Editar" onClick={() => openEdit(m)}
-            className="w-7 h-7 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/60 hover:text-petal">
-            <Pencil size={13} />
-          </button>
-          <button title="Remover" disabled={busyId === m.id} onClick={() => remove(m)}
-            className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve/60 hover:text-red-500">
-            <Trash2 size={13} />
-          </button>
+          </div>
         </div>
+        {/* Detalhes ocupam a LARGURA TOTAL do card (abaixo do nome+ações) — menos altura. */}
+        {(() => {
+          const conteudo = m.packQty != null ? `${m.packQty}${m.packUnit ? ' ' + m.packUnit : ''}` : ''
+          const clinico = [formMetaOf(m.form ?? '')?.label, m.route, conteudo, m.dose, m.frequency].filter(Boolean).join(' • ')
+          const periodo = m.startedOn && m.untilOn ? `de ${fmtDate(m.startedOn)} até ${fmtDate(m.untilOn)}`
+            : m.startedOn ? `desde ${fmtDate(m.startedOn)}`
+            : m.untilOn ? `até ${fmtDate(m.untilOn)}` : ''
+          const meta = [m.prescriber ? `Prescrito por ${m.prescriber}` : null, periodo].filter(Boolean).join(' · ')
+          const vazio = !clinico && !meta
+          return (
+            <div className="font-body text-[11px] text-mauve/70 mt-0.5 space-y-0.5">
+              {clinico && <p>{clinico}</p>}
+              {meta && <p className="text-mauve/50">{meta}</p>}
+              {vazio && <p>Sem detalhes</p>}
+            </div>
+          )
+        })()}
+        {m.notes && <p className="font-body text-[11px] text-mauve/60 mt-1">{m.notes}</p>}
+        {(() => {
+          const ro = runoutDate(m.purchasedOn, m.packQty, m.dailyCons, m.acquiredQty)
+          return (
+            <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+              {m.purchaseStatus === 'a_comprar' && (
+                <span className="font-body text-[10px] text-gold bg-warm border border-amber-200 rounded-full px-1.5 py-0.5">A comprar</span>
+              )}
+              {m.purchaseStatus === 'comprado' && m.purchasedOn && (
+                <span className="font-body text-[10px] text-sage bg-sage-light border border-sage/20 rounded-full px-1.5 py-0.5">Comprado em {fmtFull(m.purchasedOn)}</span>
+              )}
+              {ro && (
+                <span className="font-body text-[10px] text-petal bg-blush border border-petal-light rounded-full px-1.5 py-0.5">
+                  Acaba ~{fmtFull(ro)}{m.repurchaseReminder ? ' · recompra ✓' : ''}
+                </span>
+              )}
+            </div>
+          )
+        })()}
       </div>
     )
   }
