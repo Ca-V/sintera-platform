@@ -21,6 +21,31 @@ import { healthEventToRow } from '@/lib/agenda/event'
 type Status = 'em_uso' | 'suspenso'
 type Kind = 'medicamento' | 'suplemento' | 'produto' | 'dispositivo' | 'outro'
 
+// Forma farmacêutica → define a UNIDADE do conteúdo da embalagem e se a duração é
+// ESTIMÁVEL. Só estima quando conteúdo e consumo compartilham unidade (ex.: comprimidos,
+// mL); para gel/creme/loção/pumps etc. (estimatable:false) NÃO adivinha (regra da fundadora).
+const FORMS: { value: string; label: string; unit: string; estimatable: boolean }[] = [
+  { value: 'comprimido',     label: 'Comprimido',     unit: 'comprimidos', estimatable: true },
+  { value: 'capsula',        label: 'Cápsula',        unit: 'cápsulas',    estimatable: true },
+  { value: 'dragea',         label: 'Drágea',         unit: 'drágeas',     estimatable: true },
+  { value: 'solucao_oral',   label: 'Solução oral',   unit: 'mL',          estimatable: true },
+  { value: 'suspensao_oral', label: 'Suspensão oral', unit: 'mL',          estimatable: true },
+  { value: 'xarope',         label: 'Xarope',         unit: 'mL',          estimatable: true },
+  { value: 'gotas',          label: 'Gotas',          unit: 'mL',          estimatable: false },
+  { value: 'spray',          label: 'Spray',          unit: 'doses',       estimatable: true },
+  { value: 'gel',            label: 'Gel',            unit: 'g',           estimatable: false },
+  { value: 'creme',          label: 'Creme',          unit: 'g',           estimatable: false },
+  { value: 'pomada',         label: 'Pomada',         unit: 'g',           estimatable: false },
+  { value: 'locao',          label: 'Loção',          unit: 'mL',          estimatable: false },
+  { value: 'injetavel',      label: 'Injetável',      unit: 'mL',          estimatable: false },
+  { value: 'colirio',        label: 'Colírio',        unit: 'mL',          estimatable: false },
+  { value: 'sache',          label: 'Sachê',          unit: 'sachês',      estimatable: true },
+  { value: 'adesivo',        label: 'Adesivo',        unit: 'adesivos',    estimatable: false },
+  { value: 'outro',          label: 'Outro',          unit: '',            estimatable: false },
+]
+const ROUTES = ['Oral', 'Tópica', 'Oftálmica', 'Nasal', 'Inalatória', 'Sublingual', 'Vaginal', 'Retal', 'Intramuscular', 'Endovenosa', 'Subcutânea', 'Outra']
+function formMetaOf(value: string) { return FORMS.find(f => f.value === value) ?? null }
+
 interface Med {
   id: string
   name: string
@@ -42,6 +67,9 @@ interface Med {
   repurchaseFreq: string | null
   repurchaseEventId: string | null
   purchaseEventId: string | null
+  form: string | null
+  route: string | null
+  packUnit: string | null
 }
 
 function fmtDate(date: string | null): string | null {
@@ -83,12 +111,15 @@ export default function MedicamentosPage() {
   const [dailyCons, setDailyCons] = useState('')
   const [purchasedOn, setPurchasedOn] = useState('')
   const [purchaseStatus, setPurchaseStatus] = useState('')
+  const [form, setForm] = useState('')
+  const [route, setRoute] = useState('')
+  const [packUnit, setPackUnit] = useState('')
   const [repurchase, setRepurchase] = useState(false)
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [scanning, setScanning] = useState(false)
   const [scanErr, setScanErr] = useState<string | null>(null)
-  type ScanItem = { name: string; dose: string | null; frequency: string | null; startedOn?: string | null; packQty?: number | null; dailyCons?: number | null; purchasedOn?: string | null }
+  type ScanItem = { name: string; dose: string | null; frequency: string | null; startedOn?: string | null; packQty?: number | null; dailyCons?: number | null; purchasedOn?: string | null; form?: string | null; route?: string | null; packUnit?: string | null }
   const [scanResults, setScanResults] = useState<ScanItem[]>([])
 
   // Reduz a foto (câmera do celular gera arquivos grandes) antes de enviar — evita
@@ -162,6 +193,7 @@ export default function MedicamentosPage() {
     setStartedOn(it.startedOn ?? ''); setUntilOn(''); setNotes('')
     setPackQty(it.packQty != null ? String(it.packQty) : ''); setDailyCons(it.dailyCons != null ? String(it.dailyCons) : '')
     setPurchasedOn(it.purchasedOn ?? ''); setPurchaseStatus(it.purchasedOn ? 'comprado' : ''); setRepurchase(false); setErr(null)
+    setForm(it.form ?? ''); setRoute(it.route ?? ''); setPackUnit(it.packUnit ?? formMetaOf(it.form ?? '')?.unit ?? '')
     setScanResults(prev => prev.filter(x => x !== it))
     setShowForm(true)
   }
@@ -171,7 +203,7 @@ export default function MedicamentosPage() {
     setLoading(true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = await (supabase as any).from('medications')
-      .select('id, name, kind, brand, dose, frequency, started_on, until_date, status, notes, acquired_quantity, pack_quantity, daily_consumption, purchased_on, purchase_status, amount_cents, repurchase_reminder, repurchase_frequency, repurchase_event_id, purchase_event_id')
+      .select('id, name, kind, brand, dose, frequency, started_on, until_date, status, notes, acquired_quantity, pack_quantity, daily_consumption, purchased_on, purchase_status, amount_cents, repurchase_reminder, repurchase_frequency, repurchase_event_id, purchase_event_id, pharmaceutical_form, administration_route, pack_unit')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
     setMeds(((data ?? []) as Array<Record<string, unknown>>).map(m => ({
@@ -195,6 +227,9 @@ export default function MedicamentosPage() {
       repurchaseFreq: (m.repurchase_frequency as string) ?? null,
       repurchaseEventId: (m.repurchase_event_id as string) ?? null,
       purchaseEventId: (m.purchase_event_id as string) ?? null,
+      form: (m.pharmaceutical_form as string) ?? null,
+      route: (m.administration_route as string) ?? null,
+      packUnit: (m.pack_unit as string) ?? null,
     })))
     setLoading(false)
   }, [user, supabase])
@@ -216,6 +251,7 @@ export default function MedicamentosPage() {
   function reset() {
     setEditingId(null); setName(''); setKind('medicamento'); setBrand(''); setDose(''); setFreq(''); setStartedOn(''); setUntilOn(''); setNotes('')
     setAcquiredQty(''); setAmount(''); setPackQty(''); setDailyCons(''); setPurchasedOn(''); setPurchaseStatus(''); setRepurchase(false); setRepurchaseFreq(''); setErr(null)
+    setForm(''); setRoute(''); setPackUnit('')
     setShowMoreDetails(false)
   }
   function openEdit(m: Med) {
@@ -225,12 +261,16 @@ export default function MedicamentosPage() {
     setAmount(m.amountCents != null ? (m.amountCents / 100).toFixed(2).replace('.', ',') : '')
     setPackQty(m.packQty != null ? String(m.packQty) : ''); setDailyCons(m.dailyCons != null ? String(m.dailyCons) : '')
     setPurchasedOn(m.purchasedOn ?? ''); setPurchaseStatus(m.purchaseStatus ?? ''); setRepurchase(m.repurchaseReminder); setRepurchaseFreq(m.repurchaseFreq ?? '')
+    setForm(m.form ?? ''); setRoute(m.route ?? ''); setPackUnit(m.packUnit ?? '')
     setShowMoreDetails(!!(m.startedOn || m.untilOn || m.notes || m.acquiredQty != null || m.amountCents != null || m.packQty != null || m.dailyCons != null || m.purchasedOn || m.purchaseStatus || m.repurchaseReminder))
     setErr(null); setShowForm(true)
   }
 
   async function save() {
     if (!user || saving || !name.trim()) return
+    if ((kind === 'medicamento' || kind === 'suplemento') && (!form || !route)) {
+      setErr('Selecione a forma farmacêutica e a via de administração.'); return
+    }
     setSaving(true); setErr(null)
     const num = (s: string) => { const v = parseFloat(s.replace(',', '.')); return isFinite(v) && v > 0 ? v : null }
     // "250,00" | "R$ 1.500,00" → centavos. Vazio/inválido → null.
@@ -245,6 +285,7 @@ export default function MedicamentosPage() {
       acquired_quantity: num(acquiredQty), pack_quantity: num(packQty), daily_consumption: num(dailyCons),
       purchased_on: purchasedOn || null, purchase_status: purchaseStatus || null, amount_cents: toCents(amount),
       repurchase_reminder: repurchase, repurchase_frequency: repurchase ? (repurchaseFreq || null) : null,
+      pharmaceutical_form: form || null, administration_route: route || null, pack_unit: packUnit.trim() || null,
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db = supabase as any
@@ -265,7 +306,10 @@ export default function MedicamentosPage() {
     // dele, usa a recorrência declarada (mensal…anual) — antes só o consumo agendava,
     // então uma recorrência "trimestral" sem consumo nunca gerava evento (bug corrigido).
     if (medId) {
-      const rec = nextRepurchaseDate(purchasedOn || null, num(packQty), num(dailyCons), num(acquiredQty), repurchaseFreq || null)
+      // Só usa consumo (conteúdo÷consumo) quando a forma é estimável; senão o lembrete
+      // sai só da recorrência declarada — evita data errada em gel/creme/pumps.
+      const estimable = formMetaOf(form)?.estimatable ?? true
+      const rec = nextRepurchaseDate(purchasedOn || null, estimable ? num(packQty) : null, estimable ? num(dailyCons) : null, num(acquiredQty), repurchaseFreq || null)
       const wants = repurchase && status === 'em_uso' && !!rec
       const existingEvent = existing?.repurchaseEventId ?? null
       try {
@@ -365,14 +409,15 @@ export default function MedicamentosPage() {
         <div className="min-w-0">
           <p className="font-body text-sm font-semibold text-onyx">{m.name}</p>
           <p className="font-body text-[11px] text-mauve/70 mt-0.5">
-            {[m.dose, m.frequency].filter(Boolean).join(' · ') || 'Sem detalhes'}
+            {[formMetaOf(m.form ?? '')?.label, m.dose, m.frequency, m.route].filter(Boolean).join(' · ') || 'Sem detalhes'}
             {m.startedOn && m.untilOn ? ` · de ${fmtDate(m.startedOn)} até ${fmtDate(m.untilOn)}`
               : m.startedOn ? ` · desde ${fmtDate(m.startedOn)}`
               : m.untilOn ? ` · até ${fmtDate(m.untilOn)}` : ''}
           </p>
           {m.notes && <p className="font-body text-[11px] text-mauve/60 mt-1">{m.notes}</p>}
           {(() => {
-            const ro = runoutDate(m.purchasedOn, m.packQty, m.dailyCons, m.acquiredQty)
+            const estimable = !m.form || (formMetaOf(m.form)?.estimatable ?? true)
+            const ro = estimable ? runoutDate(m.purchasedOn, m.packQty, m.dailyCons, m.acquiredQty) : null
             return (
               <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
                 {m.purchaseStatus === 'a_comprar' && (
@@ -498,6 +543,26 @@ export default function MedicamentosPage() {
               <VoiceInput onResult={t => setName(v => (v ? v + ' ' : '') + t)} />
             </div>
           </div>
+          {(kind === 'medicamento' || kind === 'suplemento') && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="font-body text-xs text-mauve/70 block mb-1">Forma farmacêutica</label>
+              <select value={form} onChange={e => { setForm(e.target.value); setPackUnit(formMetaOf(e.target.value)?.unit ?? '') }}
+                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
+                <option value="">Selecione…</option>
+                {FORMS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="font-body text-xs text-mauve/70 block mb-1">Via de administração</label>
+              <select value={route} onChange={e => setRoute(e.target.value)}
+                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
+                <option value="">Selecione…</option>
+                {ROUTES.map(r => <option key={r} value={r}>{r}</option>)}
+              </select>
+            </div>
+          </div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="font-body text-xs text-mauve/70 block mb-1">Marca / Fabricante (opcional)</label>
@@ -565,9 +630,13 @@ export default function MedicamentosPage() {
                   className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30" />
               </div>
               <div>
-                <label className="font-body text-[11px] text-mauve/70 block mb-1">Quantidade da embalagem</label>
-                <input type="text" inputMode="decimal" value={packQty} onChange={e => setPackQty(e.target.value)} placeholder="Ex.: 30"
-                  className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                <label className="font-body text-[11px] text-mauve/70 block mb-1">Conteúdo da embalagem</label>
+                <div className="flex items-center gap-1.5">
+                  <input type="text" inputMode="decimal" value={packQty} onChange={e => setPackQty(e.target.value)} placeholder="Ex.: 30"
+                    className="flex-1 min-w-0 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                  <input type="text" value={packUnit} onChange={e => setPackUnit(e.target.value)} placeholder="un." aria-label="Unidade do conteúdo" title="Unidade (definida pela forma; editável)"
+                    className="w-20 flex-shrink-0 px-2 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white text-center focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                </div>
               </div>
             </div>
             {(kind === 'medicamento' || kind === 'suplemento') && (
@@ -629,8 +698,15 @@ export default function MedicamentosPage() {
             )}
             {(() => {
               const num = (s: string) => { const v = parseFloat(s.replace(',', '.')); return isFinite(v) && v > 0 ? v : null }
-              const ro = runoutDate(purchasedOn || null, num(packQty), num(dailyCons), num(acquiredQty))
-              if (!ro) return <p className="font-body text-[10px] text-mauve/50">Informe quantidade, consumo/dia e data de compra para estimar o término.</p>
+              const meta = formMetaOf(form)
+              // Ponto 5: só estima quando há relação matemática conteúdo↔consumo
+              // (comprimidos, mL, doses…). Para gel/creme/gotas/pumps NÃO adivinha.
+              if (form && meta && !meta.estimatable && (num(packQty) || num(dailyCons))) {
+                return <p className="font-body text-[10px] text-mauve/50">Não foi possível estimar a duração automaticamente para esta forma farmacêutica.</p>
+              }
+              const estimable = !form || (meta?.estimatable ?? true)
+              const ro = estimable ? runoutDate(purchasedOn || null, num(packQty), num(dailyCons), num(acquiredQty)) : null
+              if (!ro) return <p className="font-body text-[10px] text-mauve/50">Informe conteúdo, consumo/dia e data de compra para estimar o término.</p>
               const rc = recompraDate(purchasedOn || null, num(packQty), num(dailyCons), num(acquiredQty))
               return <p className="font-body text-[11px] text-petal">Estimativa: acaba por volta de <strong>{fmtFull(ro)}</strong>{repurchase && rc ? `; lembrete ~${fmtFull(rc)}` : ''}.</p>
             })()}

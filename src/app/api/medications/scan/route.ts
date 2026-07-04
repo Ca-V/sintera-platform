@@ -26,16 +26,24 @@ REGRA — UM produto físico = UM item:
 - started_on: data de início NO FORMATO YYYY-MM-DD, se a pessoa indicar quando começou
   (resolva expressões como "desde ontem", "semana passada", "dia 10" usando a data de HOJE
   informada na mensagem). null se não indicada.
-- pack_quantity: número de unidades na embalagem (ex.: 30 comprimidos → 30). Só número. null se não dito.
-- daily_consumption: quantas unidades por dia (ex.: "1 por dia" → 1). Só número. null se não dito.
+- pack_quantity: CONTEÚDO numérico da embalagem (ex.: "30 comprimidos" → 30; "50 g" → 50; "120 mL" → 120). Só número. null se não dito.
+- pack_unit: unidade desse conteúdo (ex.: "comprimidos", "cápsulas", "g", "mL", "doses"). null se não dito.
+- daily_consumption: quanto se usa por dia, no MESMO tipo de unidade (ex.: "1 por dia" → 1; "10 mL/dia" → 10). Só número. null se não dito.
 - purchased_on: data da compra YYYY-MM-DD, se disser quando comprou (use HOJE para resolver relativos). null se não dito.
-Responda APENAS com JSON válido: {"items":[{"name":"","dose":null,"frequency":null,"started_on":null,"pack_quantity":null,"daily_consumption":null,"purchased_on":null}]}.
+- pharmaceutical_form: a FORMA farmacêutica, como UM destes códigos EXATOS: comprimido, capsula, dragea, solucao_oral, suspensao_oral, xarope, gotas, spray, gel, creme, pomada, locao, injetavel, colirio, sache, adesivo, outro. null se não der para saber.
+- administration_route: a VIA de administração, como UM destes: Oral, Tópica, Oftálmica, Nasal, Inalatória, Sublingual, Vaginal, Retal, Intramuscular, Endovenosa, Subcutânea, Outra. null se não indicada.
+Responda APENAS com JSON válido: {"items":[{"name":"","dose":null,"frequency":null,"started_on":null,"pack_quantity":null,"pack_unit":null,"daily_consumption":null,"purchased_on":null,"pharmaceutical_form":null,"administration_route":null}]}.
 NÃO coloque dose ou frequência dentro de name — separe nos campos certos.
 Não invente o que não foi dito/visto. Não forneça orientação médica.`
+
+// Listas controladas (espelham a UI). Valores fora delas são descartados (null).
+const FORM_SLUGS = ['comprimido', 'capsula', 'dragea', 'solucao_oral', 'suspensao_oral', 'xarope', 'gotas', 'spray', 'gel', 'creme', 'pomada', 'locao', 'injetavel', 'colirio', 'sache', 'adesivo', 'outro']
+const ROUTE_LABELS = ['Oral', 'Tópica', 'Oftálmica', 'Nasal', 'Inalatória', 'Sublingual', 'Vaginal', 'Retal', 'Intramuscular', 'Endovenosa', 'Subcutânea', 'Outra']
 
 interface ScanItem {
   name: string; dose: string | null; frequency: string | null; startedOn: string | null
   packQty: number | null; dailyCons: number | null; purchasedOn: string | null
+  form: string | null; route: string | null; packUnit: string | null
 }
 
 export async function POST(req: NextRequest) {
@@ -106,6 +114,9 @@ export async function POST(req: NextRequest) {
               packQty: typeof o.pack_quantity === 'number' && isFinite(o.pack_quantity) && o.pack_quantity > 0 ? o.pack_quantity : null,
               dailyCons: typeof o.daily_consumption === 'number' && isFinite(o.daily_consumption) && o.daily_consumption > 0 ? o.daily_consumption : null,
               purchasedOn: typeof o.purchased_on === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(o.purchased_on.trim()) ? o.purchased_on.trim() : null,
+              form: typeof o.pharmaceutical_form === 'string' && FORM_SLUGS.includes(o.pharmaceutical_form.trim().toLowerCase()) ? o.pharmaceutical_form.trim().toLowerCase() : null,
+              route: typeof o.administration_route === 'string' && ROUTE_LABELS.includes(o.administration_route.trim()) ? o.administration_route.trim() : null,
+              packUnit: typeof o.pack_unit === 'string' && o.pack_unit.trim() ? o.pack_unit.trim().slice(0, 20) : null,
             }
           })
           .filter((x): x is ScanItem => x !== null)
