@@ -102,30 +102,27 @@ export default function GastosPage() {
       {showAddInfo && (
         <div className="card-premium p-5 flex items-start gap-3 border border-petal/20 bg-blush/15">
           <Info size={17} className="text-petal flex-shrink-0 mt-0.5" />
-          <div className="flex-1 space-y-3.5">
-            <p className="font-body text-sm text-onyx leading-relaxed">
-              A despesa vem de um <strong>evento de saúde</strong> (consulta, exame, procedimento…) ou de uma <strong>compra de medicamento, suplemento, produto ou dispositivo</strong> — sempre com o <strong>valor pago</strong> informado.
-            </p>
+          <div className="flex-1 space-y-3">
+            <p className="font-body text-xs text-mauve leading-relaxed">A despesa é o <strong className="text-onyx">valor pago</strong> de um evento ou de uma compra.</p>
             <div>
               <p className="font-body text-xs font-semibold text-onyx mb-1.5">Ainda não registrei</p>
               <div className="flex flex-wrap gap-2">
                 <button onClick={() => setModalOpen(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity">
-                  <Plus size={15} /> Novo evento
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full gradient-sintera text-white font-body text-xs font-medium hover:opacity-90 transition-opacity">
+                  <Plus size={14} /> Novo evento
                 </button>
                 <Link href="/dashboard/medicamentos"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-petal/40 text-petal font-body text-sm font-medium hover:bg-blush transition-colors">
-                  <Pill size={15} /> Novo medicamento
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-petal/40 text-petal font-body text-xs font-medium hover:bg-blush transition-colors">
+                  <Pill size={14} /> Novo medicamento
                 </Link>
               </div>
             </div>
             <div>
-              <p className="font-body text-xs font-semibold text-onyx mb-0.5">Já registrei, só faltou o valor</p>
-              <p className="font-body text-[11px] text-mauve mb-1.5">Abra o item e informe o <strong>valor pago</strong> — ele passa a aparecer aqui.</p>
+              <p className="font-body text-xs font-semibold text-onyx mb-1.5">Já registrei — só faltou o valor</p>
               <div className="flex flex-wrap gap-2">
                 <Link href="/dashboard/timeline"
                   className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-border text-mauve font-body text-xs font-medium hover:border-petal/40 hover:text-petal transition-colors">
-                  Ir ao Histórico (eventos)
+                  Ir ao Histórico
                 </Link>
                 <Link href="/dashboard/medicamentos"
                   className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-border text-mauve font-body text-xs font-medium hover:border-petal/40 hover:text-petal transition-colors">
