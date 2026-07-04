@@ -16,6 +16,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import { runoutDate, nextRepurchaseDate } from '@/lib/medications/repurchase'
+import { scanMedicationImage, PENDING_MED_SCAN_KEY } from '@/lib/medications/scanImage'
 import { healthEventToRow } from '@/lib/agenda/event'
 
 type Status = 'em_uso' | 'suspenso'
@@ -127,54 +128,14 @@ export default function MedicamentosPage() {
   // para permitir tratar VÁRIOS produtos da mesma receita, um a um.
   const [scanEditing, setScanEditing] = useState<ScanItem | null>(null)
 
-  // Reduz a foto (câmera do celular gera arquivos grandes) antes de enviar — evita
-  // estourar o limite do corpo da requisição e acelera a leitura.
-  async function downscaleImage(file: File, maxDim = 1100): Promise<{ base64: string; mediaType: string }> {
-    const dataUrl = await new Promise<string>((res, rej) => {
-      const r = new FileReader(); r.onload = () => res(r.result as string); r.onerror = rej; r.readAsDataURL(file)
-    })
-    try {
-      const img = await new Promise<HTMLImageElement>((res, rej) => {
-        const i = new window.Image(); i.onload = () => res(i); i.onerror = rej; i.src = dataUrl
-      })
-      const scale = Math.min(1, maxDim / Math.max(img.width, img.height))
-      if (scale < 1) {
-        const canvas = document.createElement('canvas')
-        canvas.width = Math.round(img.width * scale); canvas.height = Math.round(img.height * scale)
-        const ctx = canvas.getContext('2d')
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-          const out = canvas.toDataURL('image/jpeg', 0.85)
-          return { base64: out.split(',')[1] ?? '', mediaType: 'image/jpeg' }
-        }
-      }
-    } catch { /* fallback p/ a imagem original */ }
-    // Fallback: se o navegador não decodificou a foto (ex.: HEIC do iPhone),
-    // não dá pra converter aqui — só enviamos se for um formato que a IA aceita.
-    const t = file.type || 'image/jpeg'
-    const SUPPORTED = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-    if (!SUPPORTED.includes(t)) {
-      throw new Error('Formato de foto não suportado (ex.: HEIC do iPhone). Tire a foto como JPG, ou em Ajustes → Câmera → Formatos escolha "Mais compatível".')
-    }
-    return { base64: dataUrl.split(',')[1] ?? '', mediaType: t }
-  }
-
   async function handleScan(file: File) {
     setScanErr(null); setScanning(true); setScanResults([])
-    try {
-      const { base64, mediaType } = await downscaleImage(file)
-      const resp = await fetch('/api/medications/scan', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageBase64: base64, mediaType }),
-      })
-      const j = await resp.json().catch(() => ({}))
-      if (!resp.ok) { setScanErr(j.error ?? `Falha ao ler a imagem (${resp.status}).`); return }
-      if (!j.items?.length) { setScanErr('Não consegui ler os dados do rótulo. Tente uma foto mais nítida, aproximada e bem iluminada.'); return }
-      setScanResults(j.items)
-      setShowForm(false)
-    } catch (e) {
-      setScanErr(e instanceof Error ? e.message : 'Falha ao processar a imagem.')
-    } finally { setScanning(false) }
+    const r = await scanMedicationImage(file)
+    setScanning(false)
+    if (!r.ok) { setScanErr(r.error ?? 'Falha ao processar a imagem.'); return }
+    if (!r.items.length) { setScanErr('Não consegui ler os dados do rótulo. Tente uma foto mais nítida, aproximada e bem iluminada.'); return }
+    setScanResults(r.items as ScanItem[])
+    setShowForm(false)
   }
 
   async function handleVoiceAdd(text: string) {
@@ -276,6 +237,18 @@ export default function MedicamentosPage() {
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { if (!authLoading) load() }, [authLoading, load])
+
+  // Handoff da captura da Home: se chegou uma foto já escaneada, abre a prévia "Detectado".
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(PENDING_MED_SCAN_KEY)
+      if (!raw) return
+      sessionStorage.removeItem(PENDING_MED_SCAN_KEY)
+      const items = JSON.parse(raw)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (Array.isArray(items) && items.length) setScanResults(items as ScanItem[])
+    } catch { /* ignora handoff inválido */ }
+  }, [])
 
   // Abrir direto o medicamento indicado por ?edit=<id> (ex.: vindo do lembrete
   // "Recomprar" na Agenda — medicamentos editam-se AQUI, não no formulário de evento).
