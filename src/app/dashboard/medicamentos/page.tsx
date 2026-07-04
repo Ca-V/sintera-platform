@@ -123,6 +123,9 @@ export default function MedicamentosPage() {
   const [scanErr, setScanErr] = useState<string | null>(null)
   type ScanItem = { name: string; dose: string | null; frequency: string | null; startedOn?: string | null; acquiredQty?: number | null; packQty?: number | null; dailyCons?: number | null; purchasedOn?: string | null; form?: string | null; route?: string | null; packUnit?: string | null; prescriber?: string | null }
   const [scanResults, setScanResults] = useState<ScanItem[]>([])
+  // Item do scan atualmente carregado no formulário — só sai da lista após salvar,
+  // para permitir tratar VÁRIOS produtos da mesma receita, um a um.
+  const [scanEditing, setScanEditing] = useState<ScanItem | null>(null)
 
   // Reduz a foto (câmera do celular gera arquivos grandes) antes de enviar — evita
   // estourar o limite do corpo da requisição e acelera a leitura.
@@ -198,7 +201,7 @@ export default function MedicamentosPage() {
     setPurchasedOn(it.purchasedOn ?? ''); setPurchaseStatus(it.purchasedOn ? 'comprado' : ''); setRepurchase(false); setErr(null)
     setForm(it.form ?? ''); setRoute(it.route ?? ''); setPackUnit(it.packUnit ?? formMetaOf(it.form ?? '')?.unit ?? ''); setPrescriber(it.prescriber ?? '')
     if (it.acquiredQty != null || it.packQty != null || it.dailyCons != null || it.purchasedOn) setShowMoreDetails(true)
-    setScanResults(prev => prev.filter(x => x !== it))
+    setScanEditing(it)
     setShowForm(true)
   }
 
@@ -231,7 +234,7 @@ export default function MedicamentosPage() {
     if (it.purchasedOn) { setPurchasedOn(it.purchasedOn); setPurchaseStatus('comprado') }
     if (it.prescriber) setPrescriber(it.prescriber)
     if (it.acquiredQty != null || it.packQty != null || it.dailyCons != null || it.purchasedOn) setShowMoreDetails(true)
-    setScanResults(prev => prev.filter(x => x !== it))
+    setScanEditing(it); setShowForm(true)
   }
 
   const load = useCallback(async () => {
@@ -289,7 +292,7 @@ export default function MedicamentosPage() {
     setEditingId(null); setName(''); setKind('medicamento'); setBrand(''); setDose(''); setFreq(''); setStartedOn(''); setUntilOn(''); setNotes('')
     setAcquiredQty(''); setAmount(''); setPackQty(''); setDailyCons(''); setPurchasedOn(''); setPurchaseStatus(''); setRepurchase(false); setRepurchaseFreq(''); setErr(null)
     setForm(''); setRoute(''); setPackUnit(''); setPrescriber('')
-    setShowMoreDetails(false)
+    setShowMoreDetails(false); setScanEditing(null)
   }
   function openEdit(m: Med) {
     setEditingId(m.id); setName(m.name); setKind(m.kind); setBrand(m.brand ?? ''); setDose(m.dose ?? ''); setFreq(m.frequency ?? '')
@@ -388,6 +391,8 @@ export default function MedicamentosPage() {
         }
       } catch { /* projeção best-effort: não bloqueia o salvamento do medicamento */ }
     }
+    // Só agora (salvo com sucesso) o item do scan sai da lista de detectados.
+    if (scanEditing) setScanResults(prev => prev.filter(x => x !== scanEditing))
     setSaving(false)
     reset(); setShowForm(false); await load()
   }
@@ -444,20 +449,19 @@ export default function MedicamentosPage() {
         <div className="min-w-0">
           <p className="font-body text-sm font-semibold text-onyx">{m.name}</p>
           {(() => {
-            const linhaFormaVia = [formMetaOf(m.form ?? '')?.label, m.route].filter(Boolean).join(' • ')
             const conteudo = m.packQty != null ? `${m.packQty}${m.packUnit ? ' ' + m.packUnit : ''}` : ''
-            const posologia = [m.dose, m.frequency].filter(Boolean).join(' • ')
+            // Essenciais numa linha só (flui na horizontal, quebra quando precisa) —
+            // evita card muito alto no celular.
+            const clinico = [formMetaOf(m.form ?? '')?.label, m.route, conteudo, m.dose, m.frequency].filter(Boolean).join(' • ')
             const periodo = m.startedOn && m.untilOn ? `de ${fmtDate(m.startedOn)} até ${fmtDate(m.untilOn)}`
               : m.startedOn ? `desde ${fmtDate(m.startedOn)}`
               : m.untilOn ? `até ${fmtDate(m.untilOn)}` : ''
-            const vazio = !linhaFormaVia && !conteudo && !posologia && !periodo && !m.prescriber
+            const meta = [m.prescriber ? `Prescrito por ${m.prescriber}` : null, periodo].filter(Boolean).join(' · ')
+            const vazio = !clinico && !meta
             return (
               <div className="font-body text-[11px] text-mauve/70 mt-0.5 space-y-0.5">
-                {linhaFormaVia && <p>{linhaFormaVia}</p>}
-                {conteudo && <p>{conteudo}</p>}
-                {posologia && <p>{posologia}</p>}
-                {m.prescriber && <p className="text-mauve/50">Prescrito por {m.prescriber}</p>}
-                {periodo && <p className="text-mauve/60">{periodo}</p>}
+                {clinico && <p>{clinico}</p>}
+                {meta && <p className="text-mauve/50">{meta}</p>}
                 {vazio && <p>Sem detalhes</p>}
               </div>
             )
@@ -549,14 +553,14 @@ export default function MedicamentosPage() {
       )}
 
       {/* Resultados do escaneamento — conferir antes de adicionar */}
-      {scanResults.length > 0 && (
+      {scanResults.some(x => x !== scanEditing) && (
         <div className="card-premium p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <p className="font-body text-sm font-semibold text-onyx">Detectado — confira e adicione</p>
+            <p className="font-body text-sm font-semibold text-onyx">Detectado — confira e adicione{scanResults.filter(x => x !== scanEditing).length > 1 ? ' (um de cada vez)' : ''}</p>
             <button onClick={() => setScanResults([])} className="text-mauve/50 hover:text-onyx"><X size={15} /></button>
           </div>
           <p className="font-body text-[11px] text-mauve/60">Transcrição automática (foto ou voz). Revise antes de salvar — a plataforma só organiza, não prescreve.</p>
-          {scanResults.map((it, i) => {
+          {scanResults.filter(x => x !== scanEditing).map((it, i) => {
             const dup = findDuplicate(it)
             return (
             <div key={i} className="rounded-xl border border-border bg-ivory px-3 py-2 space-y-2">
@@ -574,7 +578,7 @@ export default function MedicamentosPage() {
                 <div className="space-y-1.5">
                   <span className="inline-flex items-center gap-1 font-body text-[10px] font-semibold text-gold bg-warm border border-amber-200 rounded-full px-2 py-0.5">Já está na sua lista</span>
                   <div className="flex flex-wrap gap-1.5">
-                    <button onClick={() => { openEdit(dup); setScanResults(prev => prev.filter(x => x !== it)) }}
+                    <button onClick={() => { openEdit(dup); setScanEditing(null); setScanResults(prev => prev.filter(x => x !== it)) }}
                       className="px-2.5 py-1 rounded-full border border-petal/40 text-petal font-body text-[11px] font-medium hover:bg-blush">Abrir existente</button>
                     <button onClick={() => updateExistingFromScan(it, dup)}
                       className="px-2.5 py-1 rounded-full gradient-sintera text-white font-body text-[11px] font-medium hover:opacity-90">Atualizar informações</button>
