@@ -7,7 +7,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Loader2, Paperclip, Receipt, ArrowLeft, Info, Plus, X, RotateCcw, Trash2, Pill } from 'lucide-react'
+import { Loader2, Paperclip, Receipt, ArrowLeft, Info, Plus, X, RotateCcw, Trash2 } from 'lucide-react'
 import { useUser } from '@/context/UserContext'
 import { typeLabel, formatDateBR, type HealthEvent } from '@/lib/agenda'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
@@ -108,12 +108,12 @@ export default function GastosPage() {
               <p className="font-body text-xs font-semibold text-onyx mb-1.5">Ainda não registrei</p>
               <div className="flex flex-wrap gap-2">
                 <button onClick={() => setModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full gradient-sintera text-white font-body text-xs font-medium hover:opacity-90 transition-opacity">
-                  <Plus size={14} /> Novo evento
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-border text-mauve font-body text-xs font-medium hover:border-petal/40 hover:text-petal transition-colors">
+                  Novo evento
                 </button>
                 <Link href="/dashboard/medicamentos"
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-petal/40 text-petal font-body text-xs font-medium hover:bg-blush transition-colors">
-                  <Pill size={14} /> Novo medicamento
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-border text-mauve font-body text-xs font-medium hover:border-petal/40 hover:text-petal transition-colors">
+                  Novo medicamento
                 </Link>
               </div>
             </div>
