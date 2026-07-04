@@ -13,6 +13,7 @@ import ConfirmDialog from '@/components/ConfirmDialog'
 import { useEventForm, eventToInput } from '@/components/eventForm'
 import { buildExamRecencySuggestion, type AgendaSuggestion } from '@/lib/agenda/suggestions'
 import { typeLabel, statusLabel, formatDateBR, formatTimeBR, type HealthEvent } from '@/lib/agenda'
+import { useStickyView } from '@/lib/ui/useStickyView'
 
 const STATUS_CLS: Record<string, string> = {
   planejado: 'bg-mauve/10 text-mauve',
@@ -40,7 +41,7 @@ export default function AgendaPage() {
   const [prefill, setPrefill]     = useState<Partial<AgendaEventInput> | undefined>(undefined)
   const [suggestion, setSuggestion] = useState<AgendaSuggestion | null>(null)
   const [dismissed, setDismissed]   = useState(false)
-  const [view, setView]             = useState<'data' | 'tipo'>('data')
+  const [view, setView]             = useStickyView<'data' | 'tipo'>('sintera:view:agenda', 'data')
   // Confirmação própria (não-bloqueante) p/ ações com consequência (concluir).
   const [confirm, setConfirm] = useState<{ message: string; confirmLabel: string; onYes: () => void } | null>(null)
 
@@ -274,7 +275,11 @@ export default function AgendaPage() {
               const key = view === 'data' ? monthLabel(ev.date) : typeLabel(ev.type)
               const arr = groups.get(key) ?? []; arr.push(ev); groups.set(key, arr)
             }
-            return [...groups.entries()].map(([label, evs]) => (
+            const order = ['Consulta', 'Exame', 'Medicamento', 'Suplemento', 'Procedimento', 'Cirurgia', 'Vacina', 'Plano', 'Atividade']
+            const rank = (l: string) => { const i = order.findIndex(o => l.startsWith(o)); return i < 0 ? 99 : i }
+            const entries = [...groups.entries()]
+            if (view === 'tipo') entries.sort((a, b) => rank(a[0]) - rank(b[0]))
+            return entries.map(([label, evs]) => (
               <div key={label} className="space-y-2">
                 <p className="font-body text-[11px] font-semibold text-mauve/60 uppercase tracking-wider mt-1">{label}</p>
                 {evs.map(agendaRow)}

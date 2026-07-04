@@ -21,6 +21,7 @@ import ConfirmDialog from '@/components/ConfirmDialog'
 import { useEventForm, eventToInput } from '@/components/eventForm'
 import { rowToHealthEvent, type HealthEvent, type HealthEventRow } from '@/lib/agenda'
 import HistoricoTabs from '@/components/HistoricoTabs'
+import { useStickyView } from '@/lib/ui/useStickyView'
 import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
 
 type EventType = 'consulta' | 'vacina' | 'procedimento' | 'estetico' | 'medicamento' | 'atividade' | 'exame' | 'omica' | 'outro'
@@ -97,7 +98,7 @@ function LegacyTimeline() {
   const [busyId, setBusyId] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [showOnboard, setShowOnboard] = useState(false)
-  const [view, setView] = useState<'data' | 'tipo'>('data')
+  const [view, setView] = useStickyView<'data' | 'tipo'>('sintera:view:historico', 'data')
 
   // Formulário único de evento (AgendarModal)
   const [modalOpen, setModalOpen] = useState(false)
@@ -423,7 +424,11 @@ function LegacyTimeline() {
               const key = view === 'data' ? monthYear(it.date) : (TYPE_META[it.eventType]?.label ?? 'Outro')
               const arr = groups.get(key) ?? []; arr.push(it); groups.set(key, arr)
             }
-            return [...groups.entries()].map(([label, its]) => (
+            const order = ['Consulta', 'Exame', 'Medicamento', 'Suplemento', 'Procedimento', 'Cirurgia', 'Vacina', 'Plano', 'Atividade']
+            const rank = (l: string) => { const i = order.findIndex(o => l.startsWith(o)); return i < 0 ? 99 : i }
+            const entries = [...groups.entries()]
+            if (view === 'tipo') entries.sort((a, b) => rank(a[0]) - rank(b[0]))
+            return entries.map(([label, its]) => (
               <div key={label}>
                 <p className="font-body text-[11px] font-semibold text-mauve/60 uppercase tracking-wider mb-2">{label}</p>
                 <div className="relative pl-6">

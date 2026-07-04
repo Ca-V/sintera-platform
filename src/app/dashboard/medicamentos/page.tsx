@@ -11,15 +11,16 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Loader2, Plus, X, Pill, ArrowLeft, Pencil, Trash2, PauseCircle, PlayCircle, Camera, ChevronDown } from 'lucide-react'
+import { Loader2, Plus, X, Pill, ArrowLeft, Pencil, Trash2, Camera, ChevronDown } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import { runoutDate, nextRepurchaseDate } from '@/lib/medications/repurchase'
 import { scanMedicationImage, PENDING_MED_SCAN_KEY } from '@/lib/medications/scanImage'
+import { useStickyView } from '@/lib/ui/useStickyView'
 import { healthEventToRow } from '@/lib/agenda/event'
 
-type Status = 'em_uso' | 'suspenso'
+type Status = 'em_uso' | 'programado' | 'suspenso' | 'encerrado'
 type Kind = 'medicamento' | 'suplemento' | 'produto' | 'dispositivo' | 'outro'
 
 // Forma farmacêutica → SUGERE a unidade inicial do conteúdo (o campo é editável).
@@ -88,7 +89,7 @@ export default function MedicamentosPage() {
   const [meds, setMeds] = useState<Med[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
-  const [listView, setListView] = useState<'tipo' | 'situacao'>('tipo')
+  const [listView, setListView] = useStickyView<'tipo' | 'situacao'>('sintera:view:medicamentos', 'situacao')
 
   const [showForm, setShowForm] = useState(false)
   const [showMoreDetails, setShowMoreDetails] = useState(false)
@@ -391,6 +392,7 @@ export default function MedicamentosPage() {
   }
 
   const KIND_LABEL: Record<Kind, string> = { medicamento: 'Medicamentos', suplemento: 'Suplementos', produto: 'Produtos', dispositivo: 'Dispositivos', outro: 'Outros' }
+  const STATUS_LABEL: Record<Status, string> = { em_uso: 'Em uso', programado: 'Programado', suspenso: 'Suspenso', encerrado: 'Encerrado' }
 
   function kindSection(k: Kind) {
     const list = meds.filter(m => m.kind === k)
@@ -423,8 +425,8 @@ export default function MedicamentosPage() {
     if (list.length === 0) return null
     return (
       <div key={s}>
-        <p className="font-display text-base font-semibold text-onyx mb-2">{s === 'em_uso' ? 'Em uso' : 'Suspensos'} ({list.length})</p>
-        <div className={`space-y-3${s === 'suspenso' ? ' opacity-75' : ''}`}>{list.map(card)}</div>
+        <p className="font-display text-base font-semibold text-onyx mb-2">{STATUS_LABEL[s]} ({list.length})</p>
+        <div className={`space-y-3${s === 'suspenso' || s === 'encerrado' ? ' opacity-75' : ''}`}>{list.map(card)}</div>
       </div>
     )
   }
@@ -435,17 +437,14 @@ export default function MedicamentosPage() {
         <div className="flex items-start justify-between gap-3">
           <p className="font-body text-sm font-semibold text-onyx min-w-0 break-words">{m.name}</p>
           <div className="flex items-center gap-1 flex-shrink-0">
-            {m.status === 'em_uso' ? (
-              <button title="Marcar como suspenso" disabled={busyId === m.id} onClick={() => setStatus(m.id, 'suspenso')}
-                className="w-7 h-7 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/60 hover:text-petal">
-                <PauseCircle size={14} />
-              </button>
-            ) : (
-              <button title="Voltar a usar" disabled={busyId === m.id} onClick={() => setStatus(m.id, 'em_uso')}
-                className="w-7 h-7 rounded-lg hover:bg-sage-light flex items-center justify-center text-mauve/60 hover:text-sage">
-                <PlayCircle size={14} />
-              </button>
-            )}
+            <select value={m.status} onChange={e => setStatus(m.id, e.target.value as Status)} disabled={busyId === m.id}
+              aria-label="Situação" title="Mudar situação"
+              className="h-7 rounded-lg border border-border bg-ivory text-mauve font-body text-[11px] px-1.5 focus:outline-none focus:ring-1 focus:ring-petal/30 disabled:opacity-40">
+              <option value="em_uso">Em uso</option>
+              <option value="programado">Programado</option>
+              <option value="suspenso">Suspenso</option>
+              <option value="encerrado">Encerrado</option>
+            </select>
             <button title="Editar" onClick={() => openEdit(m)}
               className="w-7 h-7 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/60 hover:text-petal">
               <Pencil size={13} />
@@ -815,8 +814,7 @@ export default function MedicamentosPage() {
               </>
             ) : (
               <>
-                {statusSection('em_uso')}
-                {statusSection('suspenso')}
+                {(['em_uso', 'programado', 'suspenso', 'encerrado'] as const).map(statusSection)}
               </>
             )}
           </div>

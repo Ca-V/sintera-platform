@@ -12,6 +12,7 @@ import { useUser } from '@/context/UserContext'
 import { typeLabel, formatDateBR, type HealthEvent } from '@/lib/agenda'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
+import { useStickyView } from '@/lib/ui/useStickyView'
 
 function fmtBRL(cents: number): string {
   return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -23,7 +24,7 @@ export default function GastosPage() {
   const [items, setItems] = useState<HealthEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [year, setYear] = useState<number | null>(null)
-  const [view, setView] = useState<'data' | 'tipo'>('data')
+  const [view, setView] = useStickyView<'data' | 'tipo'>('sintera:view:despesas', 'data')
   const [reloadKey, setReloadKey] = useState(0)
   const [showAddInfo, setShowAddInfo] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
