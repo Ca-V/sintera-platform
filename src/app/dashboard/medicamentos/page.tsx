@@ -88,6 +88,7 @@ export default function MedicamentosPage() {
   const [meds, setMeds] = useState<Med[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [listView, setListView] = useState<'tipo' | 'situacao'>('tipo')
 
   const [showForm, setShowForm] = useState(false)
   const [showMoreDetails, setShowMoreDetails] = useState(false)
@@ -412,6 +413,18 @@ export default function MedicamentosPage() {
             </div>
           )}
         </div>
+      </div>
+    )
+  }
+
+  // Visão "Por situação": Em uso / Suspensos como agrupamento primário (lista corrida).
+  function statusSection(s: Status) {
+    const list = meds.filter(m => m.status === s)
+    if (list.length === 0) return null
+    return (
+      <div key={s}>
+        <p className="font-display text-base font-semibold text-onyx mb-2">{s === 'em_uso' ? 'Em uso' : 'Suspensos'} ({list.length})</p>
+        <div className={`space-y-3${s === 'suspenso' ? ' opacity-75' : ''}`}>{list.map(card)}</div>
       </div>
     )
   }
@@ -782,12 +795,31 @@ export default function MedicamentosPage() {
           <p className="font-body text-sm text-mauve">Nenhum medicamento ou suplemento registrado ainda. Use o botão <strong>Adicionar</strong>.</p>
         </div>
       ) : (
-        <div className="space-y-8">
-          {kindSection('medicamento')}
-          {kindSection('suplemento')}
-          {kindSection('produto')}
-          {kindSection('dispositivo')}
-          {kindSection('outro')}
+        <div className="space-y-6">
+          <div className="flex items-center gap-1.5">
+            {([['tipo', 'Por tipo'], ['situacao', 'Por situação']] as const).map(([v, lbl]) => (
+              <button key={v} onClick={() => setListView(v)}
+                className={`font-body text-xs rounded-full px-3 py-1 border transition-colors ${listView === v ? 'gradient-sintera text-white border-transparent' : 'bg-ivory text-mauve border-border hover:border-petal/40'}`}>
+                {lbl}
+              </button>
+            ))}
+          </div>
+          <div className="space-y-8">
+            {listView === 'tipo' ? (
+              <>
+                {kindSection('medicamento')}
+                {kindSection('suplemento')}
+                {kindSection('produto')}
+                {kindSection('dispositivo')}
+                {kindSection('outro')}
+              </>
+            ) : (
+              <>
+                {statusSection('em_uso')}
+                {statusSection('suspenso')}
+              </>
+            )}
+          </div>
         </div>
       )}
 

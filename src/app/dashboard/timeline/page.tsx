@@ -70,6 +70,11 @@ function fmt(date: string): string {
   const d = new Date(date.length <= 10 ? `${date}T00:00:00` : date)
   return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
 }
+function monthYear(date: string): string {
+  const d = new Date(date.length <= 10 ? `${date}T00:00:00` : date)
+  const s = d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
 
 function fmtBRL(cents: number): string {
   return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -92,6 +97,7 @@ function LegacyTimeline() {
   const [busyId, setBusyId] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [showOnboard, setShowOnboard] = useState(false)
+  const [view, setView] = useState<'data' | 'tipo'>('data')
 
   // Formulário único de evento (AgendarModal)
   const [modalOpen, setModalOpen] = useState(false)
@@ -402,9 +408,31 @@ function LegacyTimeline() {
           </p>
         </div>
       ) : (
-        <div className="relative pl-6">
-          <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border/60" />
-          <div className="space-y-4">{history.map(renderItem)}</div>
+        <div className="space-y-5">
+          <div className="flex items-center gap-1.5">
+            {(['data', 'tipo'] as const).map(v => (
+              <button key={v} onClick={() => setView(v)}
+                className={`font-body text-xs rounded-full px-3 py-1 border transition-colors ${view === v ? 'gradient-sintera text-white border-transparent' : 'bg-ivory text-mauve border-border hover:border-petal/40'}`}>
+                {v === 'data' ? 'Por data' : 'Por tipo'}
+              </button>
+            ))}
+          </div>
+          {(() => {
+            const groups = new Map<string, TimelineItem[]>()
+            for (const it of history) {
+              const key = view === 'data' ? monthYear(it.date) : (TYPE_META[it.eventType]?.label ?? 'Outro')
+              const arr = groups.get(key) ?? []; arr.push(it); groups.set(key, arr)
+            }
+            return [...groups.entries()].map(([label, its]) => (
+              <div key={label}>
+                <p className="font-body text-[11px] font-semibold text-mauve/60 uppercase tracking-wider mb-2">{label}</p>
+                <div className="relative pl-6">
+                  <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border/60" />
+                  <div className="space-y-4">{its.map(renderItem)}</div>
+                </div>
+              </div>
+            ))
+          })()}
         </div>
       )}
 

@@ -40,6 +40,7 @@ export default function AgendaPage() {
   const [prefill, setPrefill]     = useState<Partial<AgendaEventInput> | undefined>(undefined)
   const [suggestion, setSuggestion] = useState<AgendaSuggestion | null>(null)
   const [dismissed, setDismissed]   = useState(false)
+  const [view, setView]             = useState<'data' | 'tipo'>('data')
   // Confirmação própria (não-bloqueante) p/ ações com consequência (concluir).
   const [confirm, setConfirm] = useState<{ message: string; confirmLabel: string; onYes: () => void } | null>(null)
 
@@ -148,6 +149,53 @@ export default function AgendaPage() {
   const today = new Date().toISOString().slice(0, 10)
   const editingInitial: Partial<AgendaEventInput> | undefined = editing ? eventToInput(editing) : prefill
 
+  function monthLabel(date: string): string {
+    const d = new Date(date.length <= 10 ? `${date}T00:00:00` : date)
+    const s = d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+    return s.charAt(0).toUpperCase() + s.slice(1)
+  }
+  function agendaRow(ev: HealthEvent) {
+    const overdue = ev.date < today
+    return (
+      <motion.div key={ev.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+        className="card-premium p-4 flex items-start gap-3">
+        <div className="text-xl leading-none mt-0.5">{TYPE_EMOJI[ev.type] ?? '📅'}</div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            {ev.priority && <span className={`w-2 h-2 rounded-full flex-shrink-0 ${ev.priority === 'alta' ? 'bg-red-400' : ev.priority === 'media' ? 'bg-amber-400' : 'bg-sage'}`} title={`Prioridade ${ev.priority}`} />}
+            <p className="font-body text-sm font-semibold text-onyx break-words">{ev.title}</p>
+            <span className={`font-body text-[10px] font-semibold px-2 py-0.5 rounded-full ${STATUS_CLS[ev.status] ?? 'bg-mauve/10 text-mauve'}`}>{statusLabel(ev.status)}</span>
+            {ev.recurrenceRule && <span className="font-body text-[10px] text-mauve/60" title="Evento recorrente">🔁</span>}
+          </div>
+          <p className="font-body text-xs text-mauve mt-0.5">
+            {typeLabel(ev.type)} · {formatDateBR(ev.date)}{formatTimeBR(ev.time) ? ` · ${formatTimeBR(ev.time)}` : ''}
+            {ev.directExpense && <span className="ml-2 text-sage">despesa direta</span>}
+            {overdue && <span className="ml-2 text-petal font-medium">atrasado</span>}
+          </p>
+          {ev.notes && <p className="font-body text-xs text-mauve/70 mt-1 line-clamp-2">{ev.notes}</p>}
+        </div>
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <button onClick={() => onComplete(ev)} disabled={busyId === ev.id} title="Concluir"
+            className="p-2 rounded-lg text-mauve hover:text-sage hover:bg-sage-light transition-colors disabled:opacity-40">
+            {busyId === ev.id ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />}
+          </button>
+          <button onClick={() => openEdit(ev)} title="Editar / exportar"
+            className="p-2 rounded-lg text-mauve hover:text-petal hover:bg-blush/40 transition-colors">
+            <Pencil size={15} />
+          </button>
+          <button onClick={() => onCancel(ev)} disabled={busyId === ev.id} title="Cancelar (marca como cancelado — fica no Histórico)"
+            className="p-2 rounded-lg text-mauve hover:text-amber-500 hover:bg-amber-500/8 transition-colors disabled:opacity-40">
+            <Ban size={15} />
+          </button>
+          <button onClick={() => onDelete(ev)} disabled={busyId === ev.id} title="Excluir (apaga de vez — Agenda, Histórico e Despesas)"
+            className="p-2 rounded-lg text-mauve hover:text-red-500 hover:bg-red-500/8 transition-colors disabled:opacity-40">
+            <Trash2 size={15} />
+          </button>
+        </div>
+      </motion.div>
+    )
+  }
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="flex items-start justify-between gap-4">
@@ -206,51 +254,33 @@ export default function AgendaPage() {
         </motion.div>
       ) : (
         <section className="space-y-3">
-          <div className="flex items-center gap-2">
-            <CalendarClock size={15} className="text-petal" />
-            <h2 className="font-body text-sm font-semibold text-onyx">Próximos ({events.length})</h2>
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2">
+              <CalendarClock size={15} className="text-petal" />
+              <h2 className="font-body text-sm font-semibold text-onyx">Próximos ({events.length})</h2>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {(['data', 'tipo'] as const).map(v => (
+                <button key={v} onClick={() => setView(v)}
+                  className={`font-body text-xs rounded-full px-3 py-1 border transition-colors ${view === v ? 'gradient-sintera text-white border-transparent' : 'bg-ivory text-mauve border-border hover:border-petal/40'}`}>
+                  {v === 'data' ? 'Por data' : 'Por tipo'}
+                </button>
+              ))}
+            </div>
           </div>
-          {events.map(ev => {
-            const overdue = ev.date < today
-            return (
-              <motion.div key={ev.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                className="card-premium p-4 flex items-start gap-3">
-                <div className="text-xl leading-none mt-0.5">{TYPE_EMOJI[ev.type] ?? '📅'}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {ev.priority && <span className={`w-2 h-2 rounded-full flex-shrink-0 ${ev.priority === 'alta' ? 'bg-red-400' : ev.priority === 'media' ? 'bg-amber-400' : 'bg-sage'}`} title={`Prioridade ${ev.priority}`} />}
-                    <p className="font-body text-sm font-semibold text-onyx break-words">{ev.title}</p>
-                    <span className={`font-body text-[10px] font-semibold px-2 py-0.5 rounded-full ${STATUS_CLS[ev.status] ?? 'bg-mauve/10 text-mauve'}`}>{statusLabel(ev.status)}</span>
-                    {ev.recurrenceRule && <span className="font-body text-[10px] text-mauve/60" title="Evento recorrente">🔁</span>}
-                  </div>
-                  <p className="font-body text-xs text-mauve mt-0.5">
-                    {typeLabel(ev.type)} · {formatDateBR(ev.date)}{formatTimeBR(ev.time) ? ` · ${formatTimeBR(ev.time)}` : ''}
-                    {ev.directExpense && <span className="ml-2 text-sage">despesa direta</span>}
-                    {overdue && <span className="ml-2 text-petal font-medium">atrasado</span>}
-                  </p>
-                  {ev.notes && <p className="font-body text-xs text-mauve/70 mt-1 line-clamp-2">{ev.notes}</p>}
-                </div>
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <button onClick={() => onComplete(ev)} disabled={busyId === ev.id} title="Concluir"
-                    className="p-2 rounded-lg text-mauve hover:text-sage hover:bg-sage-light transition-colors disabled:opacity-40">
-                    {busyId === ev.id ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />}
-                  </button>
-                  <button onClick={() => openEdit(ev)} title="Editar / exportar"
-                    className="p-2 rounded-lg text-mauve hover:text-petal hover:bg-blush/40 transition-colors">
-                    <Pencil size={15} />
-                  </button>
-                  <button onClick={() => onCancel(ev)} disabled={busyId === ev.id} title="Cancelar (marca como cancelado — fica no Histórico)"
-                    className="p-2 rounded-lg text-mauve hover:text-amber-500 hover:bg-amber-500/8 transition-colors disabled:opacity-40">
-                    <Ban size={15} />
-                  </button>
-                  <button onClick={() => onDelete(ev)} disabled={busyId === ev.id} title="Excluir (apaga de vez — Agenda, Histórico e Despesas)"
-                    className="p-2 rounded-lg text-mauve hover:text-red-500 hover:bg-red-500/8 transition-colors disabled:opacity-40">
-                    <Trash2 size={15} />
-                  </button>
-                </div>
-              </motion.div>
-            )
-          })}
+          {(() => {
+            const groups = new Map<string, HealthEvent[]>()
+            for (const ev of events) {
+              const key = view === 'data' ? monthLabel(ev.date) : typeLabel(ev.type)
+              const arr = groups.get(key) ?? []; arr.push(ev); groups.set(key, arr)
+            }
+            return [...groups.entries()].map(([label, evs]) => (
+              <div key={label} className="space-y-2">
+                <p className="font-body text-[11px] font-semibold text-mauve/60 uppercase tracking-wider mt-1">{label}</p>
+                {evs.map(agendaRow)}
+              </div>
+            ))
+          })()}
         </section>
       )}
 
