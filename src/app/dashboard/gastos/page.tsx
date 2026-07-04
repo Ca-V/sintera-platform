@@ -7,7 +7,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Loader2, Paperclip, Receipt, ArrowLeft, Info, Plus, X, RotateCcw, Trash2 } from 'lucide-react'
+import { Loader2, Paperclip, Receipt, ArrowLeft, Info, Plus, X, RotateCcw, Trash2, Pill } from 'lucide-react'
 import { useUser } from '@/context/UserContext'
 import { typeLabel, formatDateBR, type HealthEvent } from '@/lib/agenda'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
@@ -104,12 +104,18 @@ export default function GastosPage() {
           <Info size={17} className="text-petal flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="font-body text-sm text-onyx leading-relaxed">
-              As despesas são registradas através dos seus <strong>eventos de saúde</strong> — assim existe uma única origem para os dados.
+              As despesas vêm dos seus <strong>eventos de saúde</strong> (consulta, exame, procedimento…) e das <strong>compras de medicamentos</strong> — assim existe uma única origem para os dados.
             </p>
-            <button onClick={() => setModalOpen(true)}
-              className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity">
-              <Plus size={15} /> Adicionar evento
-            </button>
+            <div className="flex flex-wrap gap-2 mt-3">
+              <button onClick={() => setModalOpen(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity">
+                <Plus size={15} /> Adicionar evento
+              </button>
+              <Link href="/dashboard/medicamentos"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-petal/40 text-petal font-body text-sm font-medium hover:bg-blush transition-colors">
+                <Pill size={15} /> Adicionar medicamento
+              </Link>
+            </div>
           </div>
           <button onClick={() => setShowAddInfo(false)} aria-label="Fechar" className="text-mauve/40 hover:text-onyx transition-colors flex-shrink-0"><X size={15} /></button>
         </div>
