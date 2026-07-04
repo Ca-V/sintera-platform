@@ -205,12 +205,17 @@ export default function MedicamentosPage() {
   // Identidade composta p/ detectar duplicata: nome + dose/concentração + forma.
   // Evita colidir apresentações diferentes (ex.: Testogel 50 mg/g × 16,2 mg/g).
   // Futuro: um identificador sanitário canônico substitui esta identidade.
-  function medIdentity(name: string | null, dose: string | null, form: string | null) {
-    return [name, dose, form].map(v => (v ?? '').trim().toLowerCase()).join('|')
-  }
+  const normStr = (s: string | null | undefined) => (s ?? '').trim().toLowerCase().replace(/\s+/g, ' ')
+  // Duplicata: nome + dose obrigatórios; a FORMA só distingue quando AMBOS os lados a
+  // têm e diferem — não quebra o casamento quando um está vazio (ex.: cadastro antigo
+  // sem forma vs. scan que agora detecta a forma). Distingue apresentações reais.
   function findDuplicate(it: ScanItem): Med | null {
-    const key = medIdentity(it.name, it.dose ?? null, it.form ?? null)
-    return meds.find(m => medIdentity(m.name, m.dose, m.form) === key) ?? null
+    const n = normStr(it.name), d = normStr(it.dose), f = normStr(it.form)
+    return meds.find(m => {
+      if (normStr(m.name) !== n || normStr(m.dose) !== d) return false
+      const mf = normStr(m.form)
+      return !(mf && f && mf !== f)
+    }) ?? null
   }
   // "Atualizar informações": abre o medicamento existente e sobrepõe só os campos
   // que vieram do scan (mantém o resto). Não cria um segundo cadastro.
@@ -761,6 +766,7 @@ export default function MedicamentosPage() {
                       className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30" />
                   </div>
                 </div>
+                <p className="font-body text-[10px] text-mauve/60 leading-relaxed">A previsão de recompra considera o uso conforme a orientação médica. Caso o consumo real seja diferente, a data prevista poderá variar e poderá haver sobra ou término antecipado do produto.</p>
               </div>
             )}
             {(() => {
@@ -772,14 +778,11 @@ export default function MedicamentosPage() {
               const rec = repurchase ? nextRepurchaseDate(purchasedOn || null, num(packQty), num(dailyCons), num(acquiredQty), repurchaseFreq || null) : null
               if (!ro && !rec) return <p className="font-body text-[10px] text-mauve/50">Informe o conteúdo, o consumo por dia (na mesma unidade do conteúdo) e a data de compra para estimar o término — ou marque a recompra e a frequência.</p>
               return (
-                <div className="space-y-1">
-                  <p className="font-body text-[11px] text-petal">
-                    {ro
-                      ? <>Estimativa: acaba por volta de <strong>{fmtFull(ro)}</strong>{rec ? <>; recompra ~<strong>{fmtFull(rec)}</strong></> : null}.</>
-                      : <>Recompra prevista para ~<strong>{fmtFull(rec!)}</strong>.</>}
-                  </p>
-                  {rec && <p className="font-body text-[10px] text-mauve/50">A previsão de recompra considera o uso conforme a orientação médica. Caso o consumo real seja diferente, a data prevista poderá variar e poderá haver sobra ou término antecipado do produto.</p>}
-                </div>
+                <p className="font-body text-[11px] text-petal">
+                  {ro
+                    ? <>Estimativa: acaba por volta de <strong>{fmtFull(ro)}</strong>{rec ? <>; recompra ~<strong>{fmtFull(rec)}</strong></> : null}.</>
+                    : <>Recompra prevista para ~<strong>{fmtFull(rec!)}</strong>.</>}
+                </p>
               )
             })()}
           </div>
