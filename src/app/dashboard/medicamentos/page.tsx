@@ -494,11 +494,11 @@ export default function MedicamentosPage() {
             <label className="font-body text-xs text-mauve/70 block mb-1">Nome do {kind === 'suplemento' ? 'suplemento' : kind === 'produto' ? 'produto' : kind === 'dispositivo' ? 'dispositivo' : 'medicamento'}</label>
             <div className="flex items-center gap-2">
               <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder={kind === 'suplemento' ? 'Ex.: Vitamina D' : kind === 'produto' ? 'Ex.: Lente de contato' : kind === 'dispositivo' ? 'Ex.: Medidor de glicose' : 'Ex.: Losartana'}
-                className="flex-1 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                className="flex-1 min-w-0 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
               <VoiceInput onResult={t => setName(v => (v ? v + ' ' : '') + t)} />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="font-body text-xs text-mauve/70 block mb-1">Marca / Fabricante (opcional)</label>
               <input type="text" value={brand} onChange={e => setBrand(e.target.value)} placeholder="Ex.: EMS, Bayer…"
@@ -532,7 +532,7 @@ export default function MedicamentosPage() {
             </div>
           )}
           {!repurchase && (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="font-body text-xs text-mauve/70 block mb-1">Início de uso (opcional)</label>
               <input type="date" value={startedOn} onChange={e => setStartedOn(e.target.value)}
@@ -550,7 +550,7 @@ export default function MedicamentosPage() {
             <label className="font-body text-xs text-mauve/70 block mb-1">Observações (opcional)</label>
             <div className="flex items-start gap-2">
               <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2}
-                className="flex-1 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                className="flex-1 min-w-0 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
               <VoiceInput onResult={t => setNotes(v => (v ? v + ' ' : '') + t)} />
             </div>
           </div>
@@ -558,7 +558,7 @@ export default function MedicamentosPage() {
           {/* Compra e recompra (opcional) */}
           <div className="rounded-xl border border-border bg-ivory/40 p-3 space-y-3">
             <p className="font-body text-xs font-semibold text-onyx">Compra e recompra (opcional)</p>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="font-body text-[11px] text-mauve/70 block mb-1">Quantidade adquirida</label>
                 <input type="text" inputMode="decimal" value={acquiredQty} onChange={e => setAcquiredQty(e.target.value)} placeholder="Ex.: 2 caixas"
@@ -577,7 +577,7 @@ export default function MedicamentosPage() {
                   className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30" />
               </div>
             )}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="font-body text-[11px] text-mauve/70 block mb-1">Comprado em</label>
                 <input type="date" value={purchasedOn} onChange={e => setPurchasedOn(e.target.value)}
@@ -613,7 +613,7 @@ export default function MedicamentosPage() {
                     <option value="anual">Anual</option>
                   </select>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="font-body text-[11px] text-mauve/70 block mb-1">A partir de</label>
                     <input type="date" value={startedOn} onChange={e => setStartedOn(e.target.value)}
