@@ -284,13 +284,13 @@ function LegacyTimeline() {
               </div>
               <div className="min-w-0">
                 {it.href ? (
-                  <Link href={it.href} className="font-body text-sm font-semibold text-onyx hover:text-petal hover:underline">{it.title}</Link>
+                  <Link href={it.href} className="font-body text-sm font-semibold text-onyx hover:text-petal hover:underline break-words">{it.title}</Link>
                 ) : it.rawId ? (
-                  <button onClick={() => openEdit(it)} className="block font-body text-sm font-semibold text-onyx hover:text-petal text-left">{it.title}</button>
+                  <button onClick={() => openEdit(it)} className="block font-body text-sm font-semibold text-onyx hover:text-petal text-left break-words">{it.title}</button>
                 ) : (
-                  <p className="font-body text-sm font-semibold text-onyx">{it.title}</p>
+                  <p className="font-body text-sm font-semibold text-onyx break-words">{it.title}</p>
                 )}
-                <p className="font-body text-[11px] text-mauve/60">{meta.label}{it.profKind && PROF_LABEL[it.profKind] ? ` · ${PROF_LABEL[it.profKind]}` : ''}{it.subtitle ? ` · ${it.subtitle}` : ''}</p>
+                <p className="font-body text-[11px] text-mauve/60">{fmt(it.date)} · {meta.label}{it.profKind && PROF_LABEL[it.profKind] ? ` · ${PROF_LABEL[it.profKind]}` : ''}{it.subtitle ? ` · ${it.subtitle}` : ''}</p>
                 {it.amountCents != null && (
                   <span className="inline-block font-body text-[11px] font-medium text-sage bg-sage-light border border-sage/20 rounded-full px-2 py-0.5 mt-1">
                     {fmtBRL(it.amountCents)}
@@ -311,7 +311,6 @@ function LegacyTimeline() {
               </div>
             </div>
             <div className="flex flex-col items-end gap-1 flex-shrink-0">
-              <span className="font-body text-[11px] text-mauve/60">{fmt(it.date)}</span>
               {it.kind === 'event' && it.status === 'realizado' && (
                 <span className="font-body text-[10px] text-sage">✓ realizado</span>
               )}
