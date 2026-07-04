@@ -202,6 +202,33 @@ export default function MedicamentosPage() {
     setShowForm(true)
   }
 
+  // Identidade composta p/ detectar duplicata: nome + dose/concentração + forma.
+  // Evita colidir apresentações diferentes (ex.: Testogel 50 mg/g × 16,2 mg/g).
+  // Futuro: um identificador sanitário canônico substitui esta identidade.
+  function medIdentity(name: string | null, dose: string | null, form: string | null) {
+    return [name, dose, form].map(v => (v ?? '').trim().toLowerCase()).join('|')
+  }
+  function findDuplicate(it: ScanItem): Med | null {
+    const key = medIdentity(it.name, it.dose ?? null, it.form ?? null)
+    return meds.find(m => medIdentity(m.name, m.dose, m.form) === key) ?? null
+  }
+  // "Atualizar informações": abre o medicamento existente e sobrepõe só os campos
+  // que vieram do scan (mantém o resto). Não cria um segundo cadastro.
+  function updateExistingFromScan(it: ScanItem, dup: Med) {
+    openEdit(dup)
+    if (it.dose) setDose(it.dose)
+    if (it.frequency) setFreq(it.frequency)
+    if (it.form) { setForm(it.form); setPackUnit(it.packUnit ?? formMetaOf(it.form)?.unit ?? '') }
+    if (it.route) setRoute(it.route)
+    if (it.acquiredQty != null) setAcquiredQty(String(it.acquiredQty))
+    if (it.packQty != null) setPackQty(String(it.packQty))
+    if (it.dailyCons != null) setDailyCons(String(it.dailyCons))
+    if (it.purchasedOn) { setPurchasedOn(it.purchasedOn); setPurchaseStatus('comprado') }
+    if (it.prescriber) setPrescriber(it.prescriber)
+    if (it.acquiredQty != null || it.packQty != null || it.dailyCons != null || it.purchasedOn) setShowMoreDetails(true)
+    setScanResults(prev => prev.filter(x => x !== it))
+  }
+
   const load = useCallback(async () => {
     if (!user) return
     setLoading(true)
@@ -524,16 +551,36 @@ export default function MedicamentosPage() {
             <button onClick={() => setScanResults([])} className="text-mauve/50 hover:text-onyx"><X size={15} /></button>
           </div>
           <p className="font-body text-[11px] text-mauve/60">Transcrição automática (foto ou voz). Revise antes de salvar — a plataforma só organiza, não prescreve.</p>
-          {scanResults.map((it, i) => (
-            <div key={i} className="flex items-center justify-between gap-3 rounded-xl border border-border bg-ivory px-3 py-2">
-              <div className="min-w-0">
-                <p className="font-body text-sm font-semibold text-onyx break-words">{it.name}</p>
-                <p className="font-body text-[11px] text-mauve/70">{[it.dose, it.frequency, it.startedOn ? `desde ${it.startedOn}` : null].filter(Boolean).join(' · ') || 'Sem dose/frequência detectada'}</p>
+          {scanResults.map((it, i) => {
+            const dup = findDuplicate(it)
+            return (
+            <div key={i} className="rounded-xl border border-border bg-ivory px-3 py-2 space-y-2">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-body text-sm font-semibold text-onyx break-words">{it.name}</p>
+                  <p className="font-body text-[11px] text-mauve/70">{[it.dose, formMetaOf(it.form ?? '')?.label, it.frequency, it.startedOn ? `desde ${it.startedOn}` : null].filter(Boolean).join(' · ') || 'Sem dose/frequência detectada'}</p>
+                </div>
+                {!dup && (
+                  <button onClick={() => applyScanned(it)}
+                    className="px-3 py-1.5 rounded-full gradient-sintera text-white font-body text-xs font-medium flex-shrink-0 hover:opacity-90">Usar</button>
+                )}
               </div>
-              <button onClick={() => applyScanned(it)}
-                className="px-3 py-1.5 rounded-full gradient-sintera text-white font-body text-xs font-medium flex-shrink-0 hover:opacity-90">Usar</button>
+              {dup && (
+                <div className="space-y-1.5">
+                  <span className="inline-flex items-center gap-1 font-body text-[10px] font-semibold text-gold bg-warm border border-amber-200 rounded-full px-2 py-0.5">Já está na sua lista</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    <button onClick={() => { openEdit(dup); setScanResults(prev => prev.filter(x => x !== it)) }}
+                      className="px-2.5 py-1 rounded-full border border-petal/40 text-petal font-body text-[11px] font-medium hover:bg-blush">Abrir existente</button>
+                    <button onClick={() => updateExistingFromScan(it, dup)}
+                      className="px-2.5 py-1 rounded-full gradient-sintera text-white font-body text-[11px] font-medium hover:opacity-90">Atualizar informações</button>
+                    <button onClick={() => applyScanned(it)}
+                      className="px-2.5 py-1 rounded-full border border-border text-mauve font-body text-[11px] font-medium hover:bg-white">Criar outro mesmo assim</button>
+                  </div>
+                </div>
+              )}
             </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
@@ -731,7 +778,7 @@ export default function MedicamentosPage() {
                       ? <>Estimativa: acaba por volta de <strong>{fmtFull(ro)}</strong>{rec ? <>; recompra ~<strong>{fmtFull(rec)}</strong></> : null}.</>
                       : <>Recompra prevista para ~<strong>{fmtFull(rec!)}</strong>.</>}
                   </p>
-                  {rec && <p className="font-body text-[10px] text-mauve/50">A previsão de recompra considera o uso conforme a orientação médica. Se o consumo for diferente, a data pode não coincidir (pode sobrar produto).</p>}
+                  {rec && <p className="font-body text-[10px] text-mauve/50">A previsão de recompra considera o uso conforme a orientação médica. Caso o consumo real seja diferente, a data prevista poderá variar e poderá haver sobra ou término antecipado do produto.</p>}
                 </div>
               )
             })()}
