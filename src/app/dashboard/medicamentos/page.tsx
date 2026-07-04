@@ -18,6 +18,7 @@ import VoiceInput from '@/components/VoiceInput'
 import { runoutDate, nextRepurchaseDate } from '@/lib/medications/repurchase'
 import { scanMedicationImage, PENDING_MED_SCAN_KEY } from '@/lib/medications/scanImage'
 import { useStickyView } from '@/lib/ui/useStickyView'
+import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import { healthEventToRow } from '@/lib/agenda/event'
 
 type Status = 'em_uso' | 'programado' | 'suspenso' | 'encerrado'
@@ -795,14 +796,7 @@ export default function MedicamentosPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          <div className="flex items-center gap-1.5">
-            {([['tipo', 'Por tipo'], ['situacao', 'Por situação']] as const).map(([v, lbl]) => (
-              <button key={v} onClick={() => setListView(v)}
-                className={`font-body text-xs rounded-full px-3 py-1 border transition-colors ${listView === v ? 'gradient-sintera text-white border-transparent' : 'bg-ivory text-mauve border-border hover:border-petal/40'}`}>
-                {lbl}
-              </button>
-            ))}
-          </div>
+          <ViewModeSwitcher active={listView} onChange={setListView} modes={[{ value: 'situacao', label: 'Por situação' }, { value: 'tipo', label: 'Por tipo' }]} />
           <div className="space-y-8">
             {listView === 'tipo' ? (
               <>

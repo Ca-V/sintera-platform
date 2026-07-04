@@ -22,6 +22,7 @@ import { useEventForm, eventToInput } from '@/components/eventForm'
 import { rowToHealthEvent, type HealthEvent, type HealthEventRow } from '@/lib/agenda'
 import HistoricoTabs from '@/components/HistoricoTabs'
 import { useStickyView } from '@/lib/ui/useStickyView'
+import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
 
 type EventType = 'consulta' | 'vacina' | 'procedimento' | 'estetico' | 'medicamento' | 'atividade' | 'exame' | 'omica' | 'outro'
@@ -410,21 +411,14 @@ function LegacyTimeline() {
         </div>
       ) : (
         <div className="space-y-5">
-          <div className="flex items-center gap-1.5">
-            {(['data', 'tipo'] as const).map(v => (
-              <button key={v} onClick={() => setView(v)}
-                className={`font-body text-xs rounded-full px-3 py-1 border transition-colors ${view === v ? 'gradient-sintera text-white border-transparent' : 'bg-ivory text-mauve border-border hover:border-petal/40'}`}>
-                {v === 'data' ? 'Por data' : 'Por tipo'}
-              </button>
-            ))}
-          </div>
+          <ViewModeSwitcher active={view} onChange={setView} modes={[{ value: 'data', label: 'Por data' }, { value: 'tipo', label: 'Por tipo' }]} />
           {(() => {
             const groups = new Map<string, TimelineItem[]>()
             for (const it of history) {
               const key = view === 'data' ? monthYear(it.date) : (TYPE_META[it.eventType]?.label ?? 'Outro')
               const arr = groups.get(key) ?? []; arr.push(it); groups.set(key, arr)
             }
-            const order = ['Consulta', 'Exame', 'Medicamento', 'Suplemento', 'Procedimento', 'Cirurgia', 'Vacina', 'Plano', 'Atividade']
+            const order = ['Consulta', 'Exame', 'Procedimento', 'Cirurgia', 'Medicamento', 'Suplemento', 'Vacina']
             const rank = (l: string) => { const i = order.findIndex(o => l.startsWith(o)); return i < 0 ? 99 : i }
             const entries = [...groups.entries()]
             if (view === 'tipo') entries.sort((a, b) => rank(a[0]) - rank(b[0]))

@@ -13,6 +13,7 @@ import { typeLabel, formatDateBR, type HealthEvent } from '@/lib/agenda'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
 import { useStickyView } from '@/lib/ui/useStickyView'
+import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 
 function fmtBRL(cents: number): string {
   return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -224,14 +225,7 @@ export default function GastosPage() {
           </div>
 
           {/* Visualização: por data × por tipo */}
-          <div className="flex items-center gap-1.5">
-            {(['data', 'tipo'] as const).map(v => (
-              <button key={v} onClick={() => setView(v)}
-                className={`font-body text-xs rounded-full px-3 py-1 border transition-colors ${view === v ? 'gradient-sintera text-white border-transparent' : 'bg-ivory text-mauve border-border hover:border-petal/40'}`}>
-                {v === 'data' ? 'Por data' : 'Por tipo'}
-              </button>
-            ))}
-          </div>
+          <ViewModeSwitcher active={view} onChange={setView} modes={[{ value: 'data', label: 'Por data' }, { value: 'tipo', label: 'Por tipo' }]} />
 
           {view === 'data' ? (
             <div className="space-y-3">
