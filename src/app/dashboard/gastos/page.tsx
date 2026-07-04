@@ -23,6 +23,7 @@ export default function GastosPage() {
   const [items, setItems] = useState<HealthEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [year, setYear] = useState<number | null>(null)
+  const [view, setView] = useState<'data' | 'tipo'>('data')
   const [reloadKey, setReloadKey] = useState(0)
   const [showAddInfo, setShowAddInfo] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
@@ -75,6 +76,49 @@ export default function GastosPage() {
   const years = [...new Set(items.map(r => Number(r.date.slice(0, 4))))].sort((a, b) => b - a)
   const ofYear = items.filter(r => Number(r.date.slice(0, 4)) === year)
   const total = ofYear.reduce((s, r) => s + (r.amountCents ?? 0), 0)
+  // Agrupamento por tipo (com subtotais) para a visão "Por tipo".
+  const typeGroups = Object.values(
+    ofYear.reduce<Record<string, { label: string; rows: HealthEvent[]; subtotal: number }>>((acc, r) => {
+      const label = typeLabel(r.type)
+      const g = (acc[label] ??= { label, rows: [], subtotal: 0 })
+      g.rows.push(r); g.subtotal += r.amountCents ?? 0
+      return acc
+    }, {})
+  ).sort((a, b) => b.subtotal - a.subtotal)
+
+  function expenseRow(r: HealthEvent) {
+    return (
+      <div key={r.id} className="card-premium p-4 flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="font-body text-sm font-semibold text-onyx break-words">{r.title}</p>
+          <p className="font-body text-[11px] text-mauve/60">{typeLabel(r.type)} · {formatDateBR(r.date)}</p>
+          {r.attachmentUrl ? (
+            <a href={r.attachmentUrl} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 font-body text-[11px] text-petal hover:underline mt-1">
+              <Paperclip size={11} /> Baixar nota fiscal
+            </a>
+          ) : (
+            <span className="font-body text-[11px] text-mauve/40 mt-1 inline-block">Sem comprovante anexado</span>
+          )}
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span className="font-body text-sm font-semibold text-sage">{fmtBRL(r.amountCents ?? 0)}</span>
+          {!r.directExpense && (
+            <button aria-label="Reabrir" title="Reabrir (desfazer conclusão — volta para a Agenda)"
+              disabled={busyId === r.id} onClick={() => reopenGasto(r)}
+              className="w-7 h-7 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/60 hover:text-petal transition-colors disabled:opacity-40">
+              <RotateCcw size={13} />
+            </button>
+          )}
+          <button aria-label="Excluir" title="Excluir lançamento"
+            disabled={busyId === r.id} onClick={() => deleteGasto(r)}
+            className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve/60 hover:text-red-400 transition-colors disabled:opacity-40">
+            <Trash2 size={13} />
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
@@ -178,40 +222,33 @@ export default function GastosPage() {
             <p className="font-body text-xs text-mauve/60 mt-1">{ofYear.length} {ofYear.length === 1 ? 'registro' : 'registros'}</p>
           </div>
 
-          {/* Lista do ano */}
-          <div className="space-y-3">
-            {ofYear.map(r => (
-              <div key={r.id} className="card-premium p-4 flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="font-body text-sm font-semibold text-onyx break-words">{r.title}</p>
-                  <p className="font-body text-[11px] text-mauve/60">{typeLabel(r.type)} · {formatDateBR(r.date)}</p>
-                  {r.attachmentUrl ? (
-                    <a href={r.attachmentUrl} target="_blank" rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 font-body text-[11px] text-petal hover:underline mt-1">
-                      <Paperclip size={11} /> Baixar nota fiscal
-                    </a>
-                  ) : (
-                    <span className="font-body text-[11px] text-mauve/40 mt-1 inline-block">Sem comprovante anexado</span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <span className="font-body text-sm font-semibold text-sage">{fmtBRL(r.amountCents ?? 0)}</span>
-                  {!r.directExpense && (
-                    <button aria-label="Reabrir" title="Reabrir (desfazer conclusão — volta para a Agenda)"
-                      disabled={busyId === r.id} onClick={() => reopenGasto(r)}
-                      className="w-7 h-7 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/60 hover:text-petal transition-colors disabled:opacity-40">
-                      <RotateCcw size={13} />
-                    </button>
-                  )}
-                  <button aria-label="Excluir" title="Excluir lançamento"
-                    disabled={busyId === r.id} onClick={() => deleteGasto(r)}
-                    className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve/60 hover:text-red-400 transition-colors disabled:opacity-40">
-                    <Trash2 size={13} />
-                  </button>
-                </div>
-              </div>
+          {/* Visualização: por data × por tipo */}
+          <div className="flex items-center gap-1.5">
+            {(['data', 'tipo'] as const).map(v => (
+              <button key={v} onClick={() => setView(v)}
+                className={`font-body text-xs rounded-full px-3 py-1 border transition-colors ${view === v ? 'gradient-sintera text-white border-transparent' : 'bg-ivory text-mauve border-border hover:border-petal/40'}`}>
+                {v === 'data' ? 'Por data' : 'Por tipo'}
+              </button>
             ))}
           </div>
+
+          {view === 'data' ? (
+            <div className="space-y-3">
+              {[...ofYear].sort((a, b) => (a.date < b.date ? 1 : -1)).map(expenseRow)}
+            </div>
+          ) : (
+            <div className="space-y-5">
+              {typeGroups.map(g => (
+                <div key={g.label}>
+                  <div className="flex items-center justify-between mb-2 px-1">
+                    <p className="font-body text-xs font-semibold text-onyx uppercase tracking-wider">{g.label}</p>
+                    <p className="font-body text-xs font-semibold text-sage">{fmtBRL(g.subtotal)}</p>
+                  </div>
+                  <div className="space-y-3">{g.rows.map(expenseRow)}</div>
+                </div>
+              ))}
+            </div>
+          )}
         </>
       )}
 
