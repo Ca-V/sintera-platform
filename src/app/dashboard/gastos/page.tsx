@@ -113,7 +113,7 @@ export default function GastosPage() {
                 </button>
                 <Link href="/dashboard/medicamentos"
                   className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-border text-mauve font-body text-xs font-medium hover:border-petal/40 hover:text-petal transition-colors">
-                  Novo medicamento
+                  Novo medicamento ou produto
                 </Link>
               </div>
             </div>
