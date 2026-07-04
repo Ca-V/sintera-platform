@@ -268,8 +268,8 @@ export default function MedicamentosPage() {
 
   async function save() {
     if (!user || saving || !name.trim()) return
-    if ((kind === 'medicamento' || kind === 'suplemento') && (!form || !route)) {
-      setErr('Selecione a forma farmacêutica e a via de administração.'); return
+    if ((kind === 'medicamento' || kind === 'suplemento') && !form) {
+      setErr('Selecione a forma farmacêutica.'); return
     }
     setSaving(true); setErr(null)
     const num = (s: string) => { const v = parseFloat(s.replace(',', '.')); return isFinite(v) && v > 0 ? v : null }
@@ -408,12 +408,24 @@ export default function MedicamentosPage() {
       <div key={m.id} className="card-premium p-4 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-body text-sm font-semibold text-onyx">{m.name}</p>
-          <p className="font-body text-[11px] text-mauve/70 mt-0.5">
-            {[formMetaOf(m.form ?? '')?.label, m.dose, m.frequency, m.route].filter(Boolean).join(' · ') || 'Sem detalhes'}
-            {m.startedOn && m.untilOn ? ` · de ${fmtDate(m.startedOn)} até ${fmtDate(m.untilOn)}`
-              : m.startedOn ? ` · desde ${fmtDate(m.startedOn)}`
-              : m.untilOn ? ` · até ${fmtDate(m.untilOn)}` : ''}
-          </p>
+          {(() => {
+            const linhaFormaVia = [formMetaOf(m.form ?? '')?.label, m.route].filter(Boolean).join(' • ')
+            const conteudo = m.packQty != null ? `${m.packQty}${m.packUnit ? ' ' + m.packUnit : ''}` : ''
+            const posologia = [m.dose, m.frequency].filter(Boolean).join(' • ')
+            const periodo = m.startedOn && m.untilOn ? `de ${fmtDate(m.startedOn)} até ${fmtDate(m.untilOn)}`
+              : m.startedOn ? `desde ${fmtDate(m.startedOn)}`
+              : m.untilOn ? `até ${fmtDate(m.untilOn)}` : ''
+            const vazio = !linhaFormaVia && !conteudo && !posologia && !periodo
+            return (
+              <div className="font-body text-[11px] text-mauve/70 mt-0.5 space-y-0.5">
+                {linhaFormaVia && <p>{linhaFormaVia}</p>}
+                {conteudo && <p>{conteudo}</p>}
+                {posologia && <p>{posologia}</p>}
+                {periodo && <p className="text-mauve/60">{periodo}</p>}
+                {vazio && <p>Sem detalhes</p>}
+              </div>
+            )
+          })()}
           {m.notes && <p className="font-body text-[11px] text-mauve/60 mt-1">{m.notes}</p>}
           {(() => {
             const estimable = !m.form || (formMetaOf(m.form)?.estimatable ?? true)
@@ -554,7 +566,7 @@ export default function MedicamentosPage() {
               </select>
             </div>
             <div>
-              <label className="font-body text-xs text-mauve/70 block mb-1">Via de administração</label>
+              <label className="font-body text-xs text-mauve/70 block mb-1">Via de administração <span className="font-normal text-mauve/50">(opcional)</span></label>
               <select value={route} onChange={e => setRoute(e.target.value)}
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
                 <option value="">Selecione…</option>
