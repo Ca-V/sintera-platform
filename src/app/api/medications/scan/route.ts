@@ -26,13 +26,14 @@ REGRA — UM produto físico = UM item:
 - started_on: data de início NO FORMATO YYYY-MM-DD, se a pessoa indicar quando começou
   (resolva expressões como "desde ontem", "semana passada", "dia 10" usando a data de HOJE
   informada na mensagem). null se não indicada.
+- acquired_quantity: QUANTAS embalagens/caixas/frascos foram prescritos ou comprados (ex.: "1 cx" → 1, "2 caixas" → 2, "3 frascos" → 3). Só número. null se não dito.
 - pack_quantity: CONTEÚDO numérico da embalagem (ex.: "30 comprimidos" → 30; "50 g" → 50; "120 mL" → 120). Só número. null se não dito.
 - pack_unit: unidade desse conteúdo (ex.: "comprimidos", "cápsulas", "g", "mL", "doses"). null se não dito.
 - daily_consumption: quanto se usa por dia, no MESMO tipo de unidade (ex.: "1 por dia" → 1; "10 mL/dia" → 10). Só número. null se não dito.
 - purchased_on: data da compra YYYY-MM-DD, se disser quando comprou (use HOJE para resolver relativos). null se não dito.
 - pharmaceutical_form: a FORMA farmacêutica, APENAS se estiver EXPLICITAMENTE escrita/visível no rótulo ou receita. NÃO deduza pelo nome nem pelo seu conhecimento do medicamento. Como UM destes códigos EXATOS: comprimido, capsula, dragea, solucao_oral, suspensao_oral, xarope, gotas, spray, gel, creme, pomada, locao, injetavel, colirio, sache, adesivo, outro. null quando não estiver escrita.
 - administration_route: a VIA de administração, APENAS se EXPLICITAMENTE indicada no texto (NÃO deduza). Como UM destes: Oral, Tópica, Oftálmica, Nasal, Inalatória, Sublingual, Vaginal, Retal, Intramuscular, Endovenosa, Subcutânea, Outra. null quando não indicada.
-Responda APENAS com JSON válido: {"items":[{"name":"","dose":null,"frequency":null,"started_on":null,"pack_quantity":null,"pack_unit":null,"daily_consumption":null,"purchased_on":null,"pharmaceutical_form":null,"administration_route":null}]}.
+Responda APENAS com JSON válido: {"items":[{"name":"","dose":null,"frequency":null,"started_on":null,"acquired_quantity":null,"pack_quantity":null,"pack_unit":null,"daily_consumption":null,"purchased_on":null,"pharmaceutical_form":null,"administration_route":null}]}.
 NÃO coloque dose ou frequência dentro de name — separe nos campos certos.
 Não invente o que não foi dito/visto. Não forneça orientação médica.`
 
@@ -42,7 +43,7 @@ const ROUTE_LABELS = ['Oral', 'Tópica', 'Oftálmica', 'Nasal', 'Inalatória', '
 
 interface ScanItem {
   name: string; dose: string | null; frequency: string | null; startedOn: string | null
-  packQty: number | null; dailyCons: number | null; purchasedOn: string | null
+  acquiredQty: number | null; packQty: number | null; dailyCons: number | null; purchasedOn: string | null
   form: string | null; route: string | null; packUnit: string | null
 }
 
@@ -111,6 +112,7 @@ export async function POST(req: NextRequest) {
               dose: typeof o.dose === 'string' && o.dose.trim() ? o.dose.trim().slice(0, 60) : null,
               frequency: typeof o.frequency === 'string' && o.frequency.trim() ? o.frequency.trim().slice(0, 60) : null,
               startedOn: typeof o.started_on === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(o.started_on.trim()) ? o.started_on.trim() : null,
+              acquiredQty: typeof o.acquired_quantity === 'number' && isFinite(o.acquired_quantity) && o.acquired_quantity > 0 ? o.acquired_quantity : null,
               packQty: typeof o.pack_quantity === 'number' && isFinite(o.pack_quantity) && o.pack_quantity > 0 ? o.pack_quantity : null,
               dailyCons: typeof o.daily_consumption === 'number' && isFinite(o.daily_consumption) && o.daily_consumption > 0 ? o.daily_consumption : null,
               purchasedOn: typeof o.purchased_on === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(o.purchased_on.trim()) ? o.purchased_on.trim() : null,

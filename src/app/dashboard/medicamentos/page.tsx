@@ -21,27 +21,27 @@ import { healthEventToRow } from '@/lib/agenda/event'
 type Status = 'em_uso' | 'suspenso'
 type Kind = 'medicamento' | 'suplemento' | 'produto' | 'dispositivo' | 'outro'
 
-// Forma farmacêutica → define a UNIDADE do conteúdo da embalagem e se a duração é
-// ESTIMÁVEL. Só estima quando conteúdo e consumo compartilham unidade (ex.: comprimidos,
-// mL); para gel/creme/loção/pumps etc. (estimatable:false) NÃO adivinha (regra da fundadora).
-const FORMS: { value: string; label: string; unit: string; estimatable: boolean }[] = [
-  { value: 'comprimido',     label: 'Comprimido',     unit: 'comprimidos', estimatable: true },
-  { value: 'capsula',        label: 'Cápsula',        unit: 'cápsulas',    estimatable: true },
-  { value: 'dragea',         label: 'Drágea',         unit: 'drágeas',     estimatable: true },
-  { value: 'solucao_oral',   label: 'Solução oral',   unit: 'mL',          estimatable: true },
-  { value: 'suspensao_oral', label: 'Suspensão oral', unit: 'mL',          estimatable: true },
-  { value: 'xarope',         label: 'Xarope',         unit: 'mL',          estimatable: true },
-  { value: 'gotas',          label: 'Gotas',          unit: 'mL',          estimatable: false },
-  { value: 'spray',          label: 'Spray',          unit: 'doses',       estimatable: true },
-  { value: 'gel',            label: 'Gel',            unit: 'g',           estimatable: false },
-  { value: 'creme',          label: 'Creme',          unit: 'g',           estimatable: false },
-  { value: 'pomada',         label: 'Pomada',         unit: 'g',           estimatable: false },
-  { value: 'locao',          label: 'Loção',          unit: 'mL',          estimatable: false },
-  { value: 'injetavel',      label: 'Injetável',      unit: 'mL',          estimatable: false },
-  { value: 'colirio',        label: 'Colírio',        unit: 'mL',          estimatable: false },
-  { value: 'sache',          label: 'Sachê',          unit: 'sachês',      estimatable: true },
-  { value: 'adesivo',        label: 'Adesivo',        unit: 'adesivos',    estimatable: false },
-  { value: 'outro',          label: 'Outro',          unit: '',            estimatable: false },
+// Forma farmacêutica → SUGERE a unidade inicial do conteúdo (o campo é editável).
+// A estimativa de duração NÃO depende da forma: calcula sempre que o consumo por dia
+// estiver na MESMA unidade do conteúdo (ex.: 50 g de gel, 2 g/dia → 25 dias).
+const FORMS: { value: string; label: string; unit: string }[] = [
+  { value: 'comprimido',     label: 'Comprimido',     unit: 'comprimidos' },
+  { value: 'capsula',        label: 'Cápsula',        unit: 'cápsulas' },
+  { value: 'dragea',         label: 'Drágea',         unit: 'drágeas' },
+  { value: 'solucao_oral',   label: 'Solução oral',   unit: 'mL' },
+  { value: 'suspensao_oral', label: 'Suspensão oral', unit: 'mL' },
+  { value: 'xarope',         label: 'Xarope',         unit: 'mL' },
+  { value: 'gotas',          label: 'Gotas',          unit: 'mL' },
+  { value: 'spray',          label: 'Spray',          unit: 'doses' },
+  { value: 'gel',            label: 'Gel',            unit: 'g' },
+  { value: 'creme',          label: 'Creme',          unit: 'g' },
+  { value: 'pomada',         label: 'Pomada',         unit: 'g' },
+  { value: 'locao',          label: 'Loção',          unit: 'mL' },
+  { value: 'injetavel',      label: 'Injetável',      unit: 'mL' },
+  { value: 'colirio',        label: 'Colírio',        unit: 'mL' },
+  { value: 'sache',          label: 'Sachê',          unit: 'sachês' },
+  { value: 'adesivo',        label: 'Adesivo',        unit: 'adesivos' },
+  { value: 'outro',          label: 'Outro',          unit: '' },
 ]
 const ROUTES = ['Oral', 'Tópica', 'Oftálmica', 'Nasal', 'Inalatória', 'Sublingual', 'Vaginal', 'Retal', 'Intramuscular', 'Endovenosa', 'Subcutânea', 'Outra']
 function formMetaOf(value: string) { return FORMS.find(f => f.value === value) ?? null }
@@ -119,7 +119,7 @@ export default function MedicamentosPage() {
   const [err, setErr] = useState<string | null>(null)
   const [scanning, setScanning] = useState(false)
   const [scanErr, setScanErr] = useState<string | null>(null)
-  type ScanItem = { name: string; dose: string | null; frequency: string | null; startedOn?: string | null; packQty?: number | null; dailyCons?: number | null; purchasedOn?: string | null; form?: string | null; route?: string | null; packUnit?: string | null }
+  type ScanItem = { name: string; dose: string | null; frequency: string | null; startedOn?: string | null; acquiredQty?: number | null; packQty?: number | null; dailyCons?: number | null; purchasedOn?: string | null; form?: string | null; route?: string | null; packUnit?: string | null }
   const [scanResults, setScanResults] = useState<ScanItem[]>([])
 
   // Reduz a foto (câmera do celular gera arquivos grandes) antes de enviar — evita
@@ -191,9 +191,11 @@ export default function MedicamentosPage() {
   function applyScanned(it: ScanItem) {
     setEditingId(null); setKind('medicamento'); setName(it.name); setDose(it.dose ?? ''); setFreq(it.frequency ?? '')
     setStartedOn(it.startedOn ?? ''); setUntilOn(''); setNotes('')
+    setAcquiredQty(it.acquiredQty != null ? String(it.acquiredQty) : '')
     setPackQty(it.packQty != null ? String(it.packQty) : ''); setDailyCons(it.dailyCons != null ? String(it.dailyCons) : '')
     setPurchasedOn(it.purchasedOn ?? ''); setPurchaseStatus(it.purchasedOn ? 'comprado' : ''); setRepurchase(false); setErr(null)
     setForm(it.form ?? ''); setRoute(it.route ?? ''); setPackUnit(it.packUnit ?? formMetaOf(it.form ?? '')?.unit ?? '')
+    if (it.acquiredQty != null || it.packQty != null || it.dailyCons != null || it.purchasedOn) setShowMoreDetails(true)
     setScanResults(prev => prev.filter(x => x !== it))
     setShowForm(true)
   }
@@ -306,10 +308,7 @@ export default function MedicamentosPage() {
     // dele, usa a recorrência declarada (mensal…anual) — antes só o consumo agendava,
     // então uma recorrência "trimestral" sem consumo nunca gerava evento (bug corrigido).
     if (medId) {
-      // Só usa consumo (conteúdo÷consumo) quando a forma é estimável; senão o lembrete
-      // sai só da recorrência declarada — evita data errada em gel/creme/pumps.
-      const estimable = formMetaOf(form)?.estimatable ?? true
-      const rec = nextRepurchaseDate(purchasedOn || null, estimable ? num(packQty) : null, estimable ? num(dailyCons) : null, num(acquiredQty), repurchaseFreq || null)
+      const rec = nextRepurchaseDate(purchasedOn || null, num(packQty), num(dailyCons), num(acquiredQty), repurchaseFreq || null)
       const wants = repurchase && status === 'em_uso' && !!rec
       const existingEvent = existing?.repurchaseEventId ?? null
       try {
@@ -428,8 +427,7 @@ export default function MedicamentosPage() {
           })()}
           {m.notes && <p className="font-body text-[11px] text-mauve/60 mt-1">{m.notes}</p>}
           {(() => {
-            const estimable = !m.form || (formMetaOf(m.form)?.estimatable ?? true)
-            const ro = estimable ? runoutDate(m.purchasedOn, m.packQty, m.dailyCons, m.acquiredQty) : null
+            const ro = runoutDate(m.purchasedOn, m.packQty, m.dailyCons, m.acquiredQty)
             return (
               <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
                 {m.purchaseStatus === 'a_comprar' && (
@@ -653,8 +651,8 @@ export default function MedicamentosPage() {
             </div>
             {(kind === 'medicamento' || kind === 'suplemento') && (
               <div>
-                <label className="font-body text-[11px] text-mauve/70 block mb-1">Consumo por período</label>
-                <input type="text" inputMode="decimal" value={dailyCons} onChange={e => setDailyCons(e.target.value)} placeholder="Ex.: 1 por dia"
+                <label className="font-body text-[11px] text-mauve/70 block mb-1">Consumo por dia{packUnit ? <span className="font-normal text-mauve/50"> (em {packUnit})</span> : null}</label>
+                <input type="text" inputMode="decimal" value={dailyCons} onChange={e => setDailyCons(e.target.value)} placeholder="Ex.: 2"
                   className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30" />
               </div>
             )}
@@ -710,15 +708,10 @@ export default function MedicamentosPage() {
             )}
             {(() => {
               const num = (s: string) => { const v = parseFloat(s.replace(',', '.')); return isFinite(v) && v > 0 ? v : null }
-              const meta = formMetaOf(form)
-              // Ponto 5: só estima quando há relação matemática conteúdo↔consumo
-              // (comprimidos, mL, doses…). Para gel/creme/gotas/pumps NÃO adivinha.
-              if (form && meta && !meta.estimatable && (num(packQty) || num(dailyCons))) {
-                return <p className="font-body text-[10px] text-mauve/50">Não foi possível estimar a duração automaticamente para esta forma farmacêutica.</p>
-              }
-              const estimable = !form || (meta?.estimatable ?? true)
-              const ro = estimable ? runoutDate(purchasedOn || null, num(packQty), num(dailyCons), num(acquiredQty)) : null
-              if (!ro) return <p className="font-body text-[10px] text-mauve/50">Informe conteúdo, consumo/dia e data de compra para estimar o término.</p>
+              // Estima sempre que conteúdo e consumo/dia estão na MESMA unidade (não
+              // depende da forma). Sem número de consumo (ex.: "conforme necessidade") → não estima.
+              const ro = runoutDate(purchasedOn || null, num(packQty), num(dailyCons), num(acquiredQty))
+              if (!ro) return <p className="font-body text-[10px] text-mauve/50">Informe o conteúdo, o consumo por dia (na mesma unidade do conteúdo) e a data de compra para estimar o término.</p>
               const rc = recompraDate(purchasedOn || null, num(packQty), num(dailyCons), num(acquiredQty))
               return <p className="font-body text-[11px] text-petal">Estimativa: acaba por volta de <strong>{fmtFull(ro)}</strong>{repurchase && rc ? `; lembrete ~${fmtFull(rc)}` : ''}.</p>
             })()}
