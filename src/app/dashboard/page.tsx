@@ -49,7 +49,7 @@ const QUICK_ACCESS: { href: string; icon: React.ElementType; label: string; desc
   { href: '/dashboard/exams',        icon: FileText,    label: 'Exames',                    desc: 'Laudos e documentos',            tile: 'bg-blush',          tint: 'text-petal' },
   { href: '/dashboard/medicamentos', icon: Pill,        label: 'Medicamentos, Suplementos, Produtos e Dispositivos', desc: 'Em uso, recompra e dispositivos', tile: 'bg-sage-light',     tint: 'text-sage' },
   { href: '/dashboard/relatorio',    icon: ScrollText,  label: 'Relatórios',                desc: 'Compartilhar com profissionais', tile: 'bg-lavender-light', tint: 'text-lavender' },
-  { href: '/dashboard/gastos',       icon: Receipt,     label: 'Gastos',                    desc: 'Consultas, exames e medicamentos', tile: 'bg-blush',          tint: 'text-petal' },
+  { href: '/dashboard/gastos',       icon: Receipt,     label: 'Despesas',                  desc: 'Consultas, exames e medicamentos', tile: 'bg-blush',          tint: 'text-petal' },
 ]
 
 // Passo 7 (cutover) — a rota decide legacy × v2 pelo Entry. Default: legacy

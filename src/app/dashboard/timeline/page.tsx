@@ -248,7 +248,7 @@ function LegacyTimeline() {
   // Confirmação explicativa antes — importante no mobile, onde não há tooltip.
   const reopenEvent = (rawId: string) =>
     setConfirm({
-      message: 'Reabrir este evento? Ele volta para a Agenda (sai do Histórico) — e sai dos Gastos, se estava lá.',
+      message: 'Reabrir este evento? Ele volta para a Agenda (sai do Histórico) — e sai das Despesas, se estava lá.',
       confirmLabel: 'Reabrir',
       onYes: () => withFullEvent(rawId, ev => services.command.reopen(user!.id, ev), 'Não foi possível reabrir o evento.'),
     })
@@ -313,7 +313,7 @@ function LegacyTimeline() {
               {it.kind === 'event' && it.rawId && (
                 <div className="flex items-center gap-1 mt-0.5">
                   {it.status !== 'realizado' && it.status !== 'cancelado' && (
-                    <button aria-label="Marcar como realizado" title="Marcar como realizado (se tiver valor, entra em Gastos)"
+                    <button aria-label="Marcar como realizado" title="Marcar como realizado (se tiver valor, entra em Despesas)"
                       disabled={busyId === it.rawId} onClick={() => markRealized(it.rawId!)}
                       className="w-6 h-6 rounded-lg hover:bg-sage-light flex items-center justify-center text-mauve/60 hover:text-sage transition-colors disabled:opacity-40">
                       <CheckCircle2 size={12} />

@@ -62,7 +62,7 @@ export default function GastosPage() {
   // Excluir o lançamento (o evento) de vez.
   async function deleteGasto(r: HealthEvent) {
     if (busyId || !user) return
-    if (!window.confirm(`Excluir "${r.title}" dos seus gastos? O evento é removido.`)) return
+    if (!window.confirm(`Excluir "${r.title}" das suas despesas? O evento é removido.`)) return
     setBusyId(r.id); setActionError(null)
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -86,16 +86,16 @@ export default function GastosPage() {
         <div>
           <div className="inline-flex items-center gap-1.5 text-petal mb-2">
             <Receipt size={16} />
-            <span className="font-body text-xs font-medium uppercase tracking-wider">Gastos</span>
+            <span className="font-body text-xs font-medium uppercase tracking-wider">Despesas</span>
           </div>
-          <h1 className="font-display text-2xl font-semibold text-onyx">Gastos</h1>
+          <h1 className="font-display text-2xl font-semibold text-onyx">Despesas</h1>
           <p className="font-body text-sm text-mauve mt-1 leading-relaxed">
             Os valores dos eventos que você <strong>concluiu</strong> na Agenda, com os comprovantes para baixar.
           </p>
         </div>
         <button onClick={() => setShowAddInfo(v => !v)}
           className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0">
-          <Plus size={15} /> Adicionar gasto
+          <Plus size={15} /> Adicionar despesa
         </button>
       </div>
 
@@ -104,7 +104,7 @@ export default function GastosPage() {
           <Info size={17} className="text-petal flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="font-body text-sm text-onyx leading-relaxed">
-              Os gastos são registrados através dos seus <strong>eventos de saúde</strong> — assim existe uma única origem para os dados.
+              As despesas são registradas através dos seus <strong>eventos de saúde</strong> — assim existe uma única origem para os dados.
             </p>
             <button onClick={() => setModalOpen(true)}
               className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity">
@@ -118,7 +118,7 @@ export default function GastosPage() {
       <div className="rounded-2xl border border-border bg-ivory px-4 py-3 flex items-start gap-2.5">
         <Info size={15} className="text-mauve/50 flex-shrink-0 mt-0.5" />
         <p className="font-body text-[11px] text-mauve leading-relaxed">
-          Isto <strong>organiza</strong> seus gastos e comprovantes — útil, por exemplo, para juntar documentos da sua declaração.
+          Isto <strong>organiza</strong> suas despesas e comprovantes — útil, por exemplo, para juntar documentos da sua declaração.
           Não é orientação tributária; sobre o que é dedutível, consulte seu contador.
         </p>
       </div>
@@ -135,7 +135,7 @@ export default function GastosPage() {
       ) : items.length === 0 ? (
         <div className="card-premium p-8 text-center">
           <p className="font-body text-sm text-mauve">
-            Nenhum gasto registrado ainda. Ao <strong>concluir</strong> um evento na <Link href="/dashboard/agenda" className="text-petal hover:underline">Agenda</Link> com
+            Nenhuma despesa registrada ainda. Ao <strong>concluir</strong> um evento na <Link href="/dashboard/agenda" className="text-petal hover:underline">Agenda</Link> com
             o <strong>valor pago</strong> informado, ele aparece aqui automaticamente.
           </p>
         </div>
@@ -153,7 +153,7 @@ export default function GastosPage() {
                 </button>
               ))}
             </div>
-            <p className="font-body text-xs text-mauve uppercase tracking-wider">Total gasto em {year}</p>
+            <p className="font-body text-xs text-mauve uppercase tracking-wider">Total de despesas em {year}</p>
             <p className="font-display text-3xl font-semibold text-onyx mt-1">{fmtBRL(total)}</p>
             <p className="font-body text-xs text-mauve/60 mt-1">{ofYear.length} {ofYear.length === 1 ? 'registro' : 'registros'}</p>
           </div>

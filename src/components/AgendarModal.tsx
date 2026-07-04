@@ -328,7 +328,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                       ))}
                     </div>
                     {date && date < today && status === 'realizado' && (
-                      <p className="font-body text-[11px] text-gold">ℹ Como a data está no passado, o sistema marcou automaticamente como <strong>Realizado</strong> (vai ao Histórico e Gastos, não fica na Agenda). Mude o status acima se quiser agendá-lo.</p>
+                      <p className="font-body text-[11px] text-gold">ℹ Como a data está no passado, o sistema marcou automaticamente como <strong>Realizado</strong> (vai ao Histórico e Despesas, não fica na Agenda). Mude o status acima se quiser agendá-lo.</p>
                     )}
                   </div>
 
@@ -336,7 +336,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                   <div className="space-y-1.5">
                     <label className={LABEL}>Valor — R$ <span className="font-normal text-mauve/50 normal-case">(opc.)</span></label>
                     <input type="text" inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder="250,00" className={FIELD} />
-                    <p className="font-body text-[11px] text-mauve/60">Entra em <strong>Gastos</strong> quando o status for <strong>Realizado</strong> — ou marque como <strong>despesa direta</strong> (em Mais detalhes).</p>
+                    <p className="font-body text-[11px] text-mauve/60">Entra em <strong>Despesas</strong> quando o status for <strong>Realizado</strong> — ou marque como <strong>despesa direta</strong> (em Mais detalhes).</p>
                   </div>
 
                   {/* ── Mais detalhes ────────────────────────────── */}
@@ -438,10 +438,10 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
 
                       <label className="flex items-center gap-2.5 px-1 cursor-pointer select-none">
                         <input type="checkbox" checked={directExpense} onChange={e => setDirectExpense(e.target.checked)} className="w-4 h-4 rounded border-border accent-petal" />
-                        <span className="font-body text-xs text-onyx/80">Despesa direta — conta em Gastos sem precisar concluir (plano, academia, compra…)</span>
+                        <span className="font-body text-xs text-onyx/80">Despesa direta — conta em Despesas sem precisar concluir (plano, academia, compra…)</span>
                       </label>
                       {directExpense && status !== 'realizado' && (
-                        <p className="font-body text-[11px] text-mauve/60 px-1">Aparece na <strong>Agenda</strong> (previsão) e já entra em <strong>Gastos</strong>, mesmo antes de concluir.</p>
+                        <p className="font-body text-[11px] text-mauve/60 px-1">Aparece na <strong>Agenda</strong> (previsão) e já entra em <strong>Despesas</strong>, mesmo antes de concluir.</p>
                       )}
                     </div>
                   )}

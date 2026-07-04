@@ -73,7 +73,7 @@ export default function AgendaPage() {
   function onComplete(ev: HealthEvent) {
     if (!userId) return
     setConfirm({
-      message: 'Concluir este evento? Ele sai da Agenda e passa para o Histórico — e para os Gastos, se tiver valor. Você pode reabri-lo depois, se precisar.',
+      message: 'Concluir este evento? Ele sai da Agenda e passa para o Histórico — e para as Despesas, se tiver valor. Você pode reabri-lo depois, se precisar.',
       confirmLabel: 'Concluir',
       onYes: () => doComplete(ev),
     })
@@ -97,7 +97,7 @@ export default function AgendaPage() {
   function onDelete(ev: HealthEvent) {
     if (!userId) return
     setConfirm({
-      message: 'Excluir este evento de vez? Ele será removido da Agenda, do Histórico e dos Gastos. Esta ação não pode ser desfeita.',
+      message: 'Excluir este evento de vez? Ele será removido da Agenda, do Histórico e das Despesas. Esta ação não pode ser desfeita.',
       confirmLabel: 'Excluir',
       onYes: () => doDelete(ev),
     })
@@ -243,7 +243,7 @@ export default function AgendaPage() {
                     className="p-2 rounded-lg text-mauve hover:text-amber-500 hover:bg-amber-500/8 transition-colors disabled:opacity-40">
                     <Ban size={15} />
                   </button>
-                  <button onClick={() => onDelete(ev)} disabled={busyId === ev.id} title="Excluir (apaga de vez — Agenda, Histórico e Gastos)"
+                  <button onClick={() => onDelete(ev)} disabled={busyId === ev.id} title="Excluir (apaga de vez — Agenda, Histórico e Despesas)"
                     className="p-2 rounded-lg text-mauve hover:text-red-500 hover:bg-red-500/8 transition-colors disabled:opacity-40">
                     <Trash2 size={15} />
                   </button>
