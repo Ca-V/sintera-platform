@@ -164,7 +164,7 @@ function LegacyDashboard() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-body text-[11px] font-medium uppercase tracking-wider text-petal">Agenda · próximo</p>
-            <p className="font-body text-sm font-semibold text-onyx truncate mt-0.5">{journey.next.title}</p>
+            <p className="font-body text-sm font-semibold text-onyx break-words mt-0.5">{journey.next.title}</p>
             <p className="font-body text-xs text-mauve mt-0.5">{formatDate(journey.next.date)}</p>
           </div>
           <ChevronRight size={18} className="text-petal/50 group-hover:text-petal transition-colors flex-shrink-0" />
