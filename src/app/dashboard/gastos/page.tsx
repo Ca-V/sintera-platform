@@ -15,6 +15,8 @@ import { useEventForm } from '@/components/eventForm'
 import { useStickyView } from '@/lib/ui/useStickyView'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import ListCard, { CardChip } from '@/components/ListCard'
+import PageHeader from '@/components/PageHeader'
+import EmptyState from '@/components/EmptyState'
 
 function fmtBRL(cents: number): string {
   return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -127,22 +129,18 @@ export default function GastosPage() {
         <ArrowLeft size={15} /> Painel Inicial
       </Link>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-        <div>
-          <div className="inline-flex items-center gap-1.5 text-petal mb-2">
-            <Receipt size={16} />
-            <span className="font-body text-xs font-medium uppercase tracking-wider">Despesas</span>
-          </div>
-          <h1 className="font-display text-2xl font-semibold text-onyx">Despesas</h1>
-          <p className="font-body text-sm text-mauve mt-1 leading-relaxed">
-            Os valores dos eventos que você <strong>concluiu</strong> na Agenda, com os comprovantes para baixar.
-          </p>
-        </div>
-        <button onClick={() => setShowAddInfo(v => !v)}
-          className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0">
-          <Plus size={15} /> Adicionar despesa
-        </button>
-      </div>
+      <PageHeader
+        icon={<Receipt size={16} />}
+        eyebrow="Despesas"
+        title="Despesas"
+        subtitle={<>Os valores dos eventos que você <strong>concluiu</strong> na Agenda, com os comprovantes para baixar.</>}
+        action={
+          <button onClick={() => setShowAddInfo(v => !v)}
+            className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity">
+            <Plus size={15} /> Adicionar despesa
+          </button>
+        }
+      />
 
       {showAddInfo && (
         <div className="card-premium p-5 flex items-start gap-3 border border-petal/20 bg-blush/15">
@@ -198,12 +196,11 @@ export default function GastosPage() {
       {loading ? (
         <div className="card-premium p-10 text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></div>
       ) : items.length === 0 ? (
-        <div className="card-premium p-8 text-center">
-          <p className="font-body text-sm text-mauve">
-            Nenhuma despesa registrada ainda. Ao <strong>concluir</strong> um evento na <Link href="/dashboard/agenda" className="text-petal hover:underline">Agenda</Link> com
-            o <strong>valor pago</strong> informado, ele aparece aqui automaticamente.
-          </p>
-        </div>
+        <EmptyState
+          icon={<Receipt size={28} className="text-petal" />}
+          title="Nenhuma despesa ainda"
+          message={<>Ao <strong>concluir</strong> um evento na <Link href="/dashboard/agenda" className="text-petal hover:underline">Agenda</Link> com o <strong>valor pago</strong> informado, ele aparece aqui automaticamente.</>}
+        />
       ) : (
         <>
           {/* Seletor de ano + total */}
