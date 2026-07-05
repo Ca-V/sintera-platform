@@ -127,7 +127,7 @@ export default function GastosPage() {
         <ArrowLeft size={15} /> Painel Inicial
       </Link>
 
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div>
           <div className="inline-flex items-center gap-1.5 text-petal mb-2">
             <Receipt size={16} />
