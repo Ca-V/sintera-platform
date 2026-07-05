@@ -14,6 +14,7 @@ import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
 import { useStickyView } from '@/lib/ui/useStickyView'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
+import ListCard, { CardChip } from '@/components/ListCard'
 
 function fmtBRL(cents: number): string {
   return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -90,35 +91,33 @@ export default function GastosPage() {
 
   function expenseRow(r: HealthEvent) {
     return (
-      <div key={r.id} className="card-premium p-4">
-        <div className="flex items-start justify-between gap-3">
-          <p className="font-body text-sm font-semibold text-onyx break-words min-w-0">{r.title}</p>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <span className="font-body text-sm font-semibold text-sage">{fmtBRL(r.amountCents ?? 0)}</span>
+      <ListCard key={r.id}
+        title={r.title}
+        meta={`${typeLabel(r.type)} · ${formatDateBR(r.date)}`}
+        chips={
+          <>
+            <CardChip tone="sage">{fmtBRL(r.amountCents ?? 0)}</CardChip>
+            {r.attachmentUrl && (
+              <a href={r.attachmentUrl} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 font-body text-[10px] text-petal hover:underline">
+                <Paperclip size={10} /> Nota fiscal
+              </a>
+            )}
+          </>
+        }
+        actions={
+          <>
             {!r.directExpense && (
               <button aria-label="Reabrir" title="Reabrir (desfazer conclusão — volta para a Agenda)"
                 disabled={busyId === r.id} onClick={() => reopenGasto(r)}
-                className="w-7 h-7 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/60 hover:text-petal transition-colors disabled:opacity-40">
-                <RotateCcw size={13} />
-              </button>
+                className="w-6 h-6 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/40 hover:text-petal transition-colors disabled:opacity-40"><RotateCcw size={12} /></button>
             )}
             <button aria-label="Excluir" title="Excluir lançamento"
               disabled={busyId === r.id} onClick={() => deleteGasto(r)}
-              className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve/60 hover:text-red-400 transition-colors disabled:opacity-40">
-              <Trash2 size={13} />
-            </button>
-          </div>
-        </div>
-        <p className="font-body text-[11px] text-mauve/60 mt-0.5">{typeLabel(r.type)} · {formatDateBR(r.date)}</p>
-        {r.attachmentUrl ? (
-          <a href={r.attachmentUrl} target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 font-body text-[11px] text-petal hover:underline mt-1">
-            <Paperclip size={11} /> Baixar nota fiscal
-          </a>
-        ) : (
-          <span className="font-body text-[11px] text-mauve/40 mt-1 inline-block">Sem comprovante anexado</span>
-        )}
-      </div>
+              className="w-6 h-6 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve/40 hover:text-red-400 transition-colors disabled:opacity-40"><Trash2 size={12} /></button>
+          </>
+        }
+      />
     )
   }
 

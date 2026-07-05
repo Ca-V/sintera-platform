@@ -23,6 +23,7 @@ import { rowToHealthEvent, type HealthEvent, type HealthEventRow } from '@/lib/a
 import HistoricoTabs from '@/components/HistoricoTabs'
 import { useStickyView } from '@/lib/ui/useStickyView'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
+import ListCard, { CardChip } from '@/components/ListCard'
 import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
 
 type EventType = 'consulta' | 'vacina' | 'procedimento' | 'estetico' | 'medicamento' | 'atividade' | 'exame' | 'omica' | 'outro'
@@ -275,78 +276,43 @@ function LegacyTimeline() {
       <motion.div key={it.id}
         initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
         className="relative">
-        <div className={`absolute -left-6 top-1.5 w-3.5 h-3.5 rounded-full border-2 border-cream ${meta.cls}`} />
-        <div className="card-premium p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-start gap-3 min-w-0">
-              <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${meta.cls}`}>
-                <meta.Icon size={15} />
-              </div>
-              <div className="min-w-0">
-                {it.href ? (
-                  <Link href={it.href} className="font-body text-sm font-semibold text-onyx hover:text-petal hover:underline break-words">{it.title}</Link>
-                ) : it.rawId ? (
-                  <button onClick={() => openEdit(it)} className="block font-body text-sm font-semibold text-onyx hover:text-petal text-left break-words">{it.title}</button>
-                ) : (
-                  <p className="font-body text-sm font-semibold text-onyx break-words">{it.title}</p>
-                )}
-                <p className="font-body text-[11px] text-mauve/60">{fmt(it.date)} · {meta.label}{it.profKind && PROF_LABEL[it.profKind] ? ` · ${PROF_LABEL[it.profKind]}` : ''}{it.subtitle ? ` · ${it.subtitle}` : ''}</p>
-                {it.amountCents != null && (
-                  <span className="inline-block font-body text-[11px] font-medium text-sage bg-sage-light border border-sage/20 rounded-full px-2 py-0.5 mt-1">
-                    {fmtBRL(it.amountCents)}
-                  </span>
-                )}
-                {it.attachmentUrl && (
-                  <a href={it.attachmentUrl} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 font-body text-[11px] text-petal hover:underline mt-1">
-                    <Paperclip size={11} /> Ver anexo
-                  </a>
-                )}
-                {it.href && (
-                  <Link href={it.href}
-                    className="inline-flex items-center gap-1 font-body text-[11px] text-petal hover:underline mt-1">
-                    {it.kind === 'exam' ? 'Ver exame' : 'Ver painel'} →
-                  </Link>
-                )}
-              </div>
-            </div>
-            <div className="flex flex-col items-end gap-1 flex-shrink-0">
-              {it.kind === 'event' && it.status === 'realizado' && (
-                <span className="font-body text-[10px] text-sage">✓ realizado</span>
+        <div className={`absolute -left-6 top-4 w-3.5 h-3.5 rounded-full border-2 border-cream ${meta.cls}`} />
+        <ListCard
+          leading={<div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${meta.cls}`}><meta.Icon size={15} /></div>}
+          title={it.title}
+          titleHref={it.href}
+          onTitleClick={it.rawId ? () => openEdit(it) : undefined}
+          meta={`${fmt(it.date)} · ${meta.label}${it.profKind && PROF_LABEL[it.profKind] ? ` · ${PROF_LABEL[it.profKind]}` : ''}${it.subtitle ? ` · ${it.subtitle}` : ''}`}
+          chips={
+            <>
+              {it.amountCents != null && <CardChip tone="sage">{fmtBRL(it.amountCents)}</CardChip>}
+              {it.kind === 'event' && it.status === 'realizado' && <CardChip tone="sage">✓ realizado</CardChip>}
+              {it.kind === 'event' && it.status === 'cancelado' && <CardChip tone="neutral">cancelado</CardChip>}
+              {it.attachmentUrl && (
+                <a href={it.attachmentUrl} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 font-body text-[10px] text-petal hover:underline"><Paperclip size={10} /> Anexo</a>
               )}
-              {it.kind === 'event' && it.status === 'cancelado' && (
-                <span className="font-body text-[10px] text-mauve/40 line-through">cancelado</span>
+            </>
+          }
+          actions={it.kind === 'event' && it.rawId ? (
+            <>
+              {it.status !== 'realizado' && it.status !== 'cancelado' && (
+                <button aria-label="Marcar como realizado" title="Marcar como realizado (se tiver valor, entra em Despesas)"
+                  disabled={busyId === it.rawId} onClick={() => markRealized(it.rawId!)}
+                  className="w-6 h-6 rounded-lg hover:bg-sage-light flex items-center justify-center text-mauve/40 hover:text-sage transition-colors disabled:opacity-40"><CheckCircle2 size={12} /></button>
               )}
-              {it.kind === 'event' && it.rawId && (
-                <div className="flex items-center gap-1 mt-0.5">
-                  {it.status !== 'realizado' && it.status !== 'cancelado' && (
-                    <button aria-label="Marcar como realizado" title="Marcar como realizado (se tiver valor, entra em Despesas)"
-                      disabled={busyId === it.rawId} onClick={() => markRealized(it.rawId!)}
-                      className="w-6 h-6 rounded-lg hover:bg-sage-light flex items-center justify-center text-mauve/60 hover:text-sage transition-colors disabled:opacity-40">
-                      <CheckCircle2 size={12} />
-                    </button>
-                  )}
-                  {it.status === 'realizado' && (
-                    <button aria-label="Reabrir" title="Reabrir (desfazer conclusão — volta para a Agenda)"
-                      disabled={busyId === it.rawId} onClick={() => reopenEvent(it.rawId!)}
-                      className="w-6 h-6 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/60 hover:text-petal transition-colors disabled:opacity-40">
-                      <RotateCcw size={12} />
-                    </button>
-                  )}
-                  <button aria-label="Editar" onClick={() => openEdit(it)}
-                    className="w-6 h-6 rounded-lg hover:bg-black/5 flex items-center justify-center text-mauve/60 hover:text-petal transition-colors">
-                    <Pencil size={12} />
-                  </button>
-                  <button aria-label="Excluir" disabled={busyId === it.rawId}
-                    onClick={() => remove(it.rawId!, it.title)}
-                    className="w-6 h-6 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve/60 hover:text-red-400 transition-colors disabled:opacity-40">
-                    <Trash2 size={12} />
-                  </button>
-                </div>
+              {it.status === 'realizado' && (
+                <button aria-label="Reabrir" title="Reabrir (desfazer conclusão — volta para a Agenda)"
+                  disabled={busyId === it.rawId} onClick={() => reopenEvent(it.rawId!)}
+                  className="w-6 h-6 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/40 hover:text-petal transition-colors disabled:opacity-40"><RotateCcw size={12} /></button>
               )}
-            </div>
-          </div>
-        </div>
+              <button aria-label="Editar" onClick={() => openEdit(it)}
+                className="w-6 h-6 rounded-lg hover:bg-black/5 flex items-center justify-center text-mauve/40 hover:text-petal transition-colors"><Pencil size={12} /></button>
+              <button aria-label="Excluir" disabled={busyId === it.rawId} onClick={() => remove(it.rawId!, it.title)}
+                className="w-6 h-6 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve/40 hover:text-red-400 transition-colors disabled:opacity-40"><Trash2 size={12} /></button>
+            </>
+          ) : undefined}
+        />
       </motion.div>
     )
   }

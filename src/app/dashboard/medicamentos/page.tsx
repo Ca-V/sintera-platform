@@ -18,6 +18,7 @@ import VoiceInput from '@/components/VoiceInput'
 import { runoutDate, nextRepurchaseDate } from '@/lib/medications/repurchase'
 import { scanMedicationImage, PENDING_MED_SCAN_KEY } from '@/lib/medications/scanImage'
 import { useStickyView } from '@/lib/ui/useStickyView'
+import ListCard, { CardChip } from '@/components/ListCard'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import { healthEventToRow } from '@/lib/agenda/event'
 
@@ -76,14 +77,10 @@ interface Med {
   prescriber: string | null
 }
 
-function fmtDate(date: string | null): string | null {
-  if (!date) return null
-  const d = new Date(`${date}T00:00:00`)
-  return d.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })
-}
 function fmtFull(date: string): string {
   return new Date(`${date}T00:00:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
 }
+function fmtShort(date: string): string { return `${date.slice(8, 10)}/${date.slice(5, 7)}` }
 export default function MedicamentosPage() {
   const { user, loading: authLoading } = useUser()
   const supabase = createClient()
@@ -103,6 +100,7 @@ export default function MedicamentosPage() {
   }, [showForm, editingId])
   const [name, setName] = useState('')
   const [kind, setKind] = useState<Kind>('medicamento')
+  const [medStatus, setMedStatus] = useState<Status>('em_uso')
   const [brand, setBrand] = useState('')
   const [dose, setDose] = useState('')
   const [freq, setFreq] = useState('')
@@ -267,7 +265,7 @@ export default function MedicamentosPage() {
   function reset() {
     setEditingId(null); setName(''); setKind('medicamento'); setBrand(''); setDose(''); setFreq(''); setStartedOn(''); setUntilOn(''); setNotes('')
     setAcquiredQty(''); setAmount(''); setPackQty(''); setDailyCons(''); setPurchasedOn(''); setPurchaseStatus(''); setRepurchase(false); setRepurchaseFreq(''); setErr(null)
-    setForm(''); setRoute(''); setPackUnit(''); setPrescriber('')
+    setForm(''); setRoute(''); setPackUnit(''); setPrescriber(''); setMedStatus('em_uso')
     setShowMoreDetails(false); setScanEditing(null)
   }
   function openEdit(m: Med) {
@@ -277,7 +275,7 @@ export default function MedicamentosPage() {
     setAmount(m.amountCents != null ? (m.amountCents / 100).toFixed(2).replace('.', ',') : '')
     setPackQty(m.packQty != null ? String(m.packQty) : ''); setDailyCons(m.dailyCons != null ? String(m.dailyCons) : '')
     setPurchasedOn(m.purchasedOn ?? ''); setPurchaseStatus(m.purchaseStatus ?? ''); setRepurchase(m.repurchaseReminder); setRepurchaseFreq(m.repurchaseFreq ?? '')
-    setForm(m.form ?? ''); setRoute(m.route ?? ''); setPackUnit(m.packUnit ?? ''); setPrescriber(m.prescriber ?? '')
+    setForm(m.form ?? ''); setRoute(m.route ?? ''); setPackUnit(m.packUnit ?? ''); setPrescriber(m.prescriber ?? ''); setMedStatus(m.status)
     setShowMoreDetails(!!(m.startedOn || m.untilOn || m.notes || m.acquiredQty != null || m.amountCents != null || m.packQty != null || m.dailyCons != null || m.purchasedOn || m.purchaseStatus || m.repurchaseReminder))
     setErr(null); setShowForm(true)
   }
@@ -302,18 +300,18 @@ export default function MedicamentosPage() {
       purchased_on: purchasedOn || null, purchase_status: purchaseStatus || null, amount_cents: toCents(amount),
       repurchase_reminder: repurchase, repurchase_frequency: repurchase ? (repurchaseFreq || null) : null,
       pharmaceutical_form: form || null, administration_route: route || null, pack_unit: packUnit.trim() || null,
-      prescriber_name: prescriber.trim() || null,
+      prescriber_name: prescriber.trim() || null, status: medStatus,
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db = supabase as any
     const existing = editingId ? meds.find(m => m.id === editingId) : null
-    const status: Status = existing?.status ?? 'em_uso'
+    const status: Status = medStatus
     let medId: string | null = editingId
     if (editingId) {
       const { error } = await db.from('medications').update({ ...payload, updated_at: new Date().toISOString() }).eq('id', editingId)
       if (error) { setErr(error.message); setSaving(false); return }
     } else {
-      const { data, error } = await db.from('medications').insert({ ...payload, user_id: user.id, status: 'em_uso' }).select('id').single()
+      const { data, error } = await db.from('medications').insert({ ...payload, user_id: user.id }).select('id').single()
       if (error) { setErr(error.message); setSaving(false); return }
       medId = (data?.id as string) ?? null
     }
@@ -373,12 +371,6 @@ export default function MedicamentosPage() {
     reset(); setShowForm(false); await load()
   }
 
-  async function setStatus(id: string, status: Status) {
-    setBusyId(id)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from('medications').update({ status, updated_at: new Date().toISOString() }).eq('id', id)
-    await load(); setBusyId(null)
-  }
 
   async function remove(m: Med) {
     if (busyId) return
@@ -394,6 +386,7 @@ export default function MedicamentosPage() {
 
   const KIND_LABEL: Record<Kind, string> = { medicamento: 'Medicamentos', suplemento: 'Suplementos', produto: 'Produtos', dispositivo: 'Dispositivos', outro: 'Outros' }
   const STATUS_LABEL: Record<Status, string> = { em_uso: 'Em uso', programado: 'Programado', suspenso: 'Suspenso', encerrado: 'Encerrado' }
+  const STATUS_TONE: Record<Status, string> = { em_uso: 'sage', programado: 'gold', suspenso: 'mauve', encerrado: 'neutral' }
 
   function kindSection(k: Kind) {
     const list = meds.filter(m => m.kind === k)
@@ -433,66 +426,32 @@ export default function MedicamentosPage() {
   }
 
   function card(m: Med) {
+    const meta = [formMetaOf(m.form ?? '')?.label, m.dose].filter(Boolean).join(' • ')
+    const ro = runoutDate(m.purchasedOn, m.packQty, m.dailyCons, m.acquiredQty)
+    const hasChips = m.purchaseStatus === 'a_comprar' || (m.purchaseStatus === 'comprado' && !!m.purchasedOn) || !!ro
     return (
-      <div key={m.id} className="card-premium p-4">
-        <div className="flex items-start justify-between gap-3">
-          <p className="font-body text-sm font-semibold text-onyx min-w-0 break-words">{m.name}</p>
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <select value={m.status} onChange={e => setStatus(m.id, e.target.value as Status)} disabled={busyId === m.id}
-              aria-label="Situação" title="Mudar situação"
-              className="h-7 rounded-lg border border-border bg-ivory text-mauve font-body text-[11px] px-1.5 focus:outline-none focus:ring-1 focus:ring-petal/30 disabled:opacity-40">
-              <option value="em_uso">Em uso</option>
-              <option value="programado">Programado</option>
-              <option value="suspenso">Suspenso</option>
-              <option value="encerrado">Encerrado</option>
-            </select>
+      <ListCard key={m.id}
+        title={m.name}
+        onTitleClick={() => openEdit(m)}
+        dim={m.status === 'suspenso' || m.status === 'encerrado'}
+        trailing={<CardChip tone={STATUS_TONE[m.status]}>{STATUS_LABEL[m.status]}</CardChip>}
+        meta={meta || undefined}
+        chips={hasChips ? (
+          <>
+            {m.purchaseStatus === 'a_comprar' && <CardChip tone="gold">A comprar</CardChip>}
+            {m.purchaseStatus === 'comprado' && m.purchasedOn && <CardChip tone="sage">Compra {fmtShort(m.purchasedOn)}</CardChip>}
+            {ro && <CardChip tone="petal">Recompra {fmtShort(ro)}{m.repurchaseReminder ? ' ✓' : ''}</CardChip>}
+          </>
+        ) : undefined}
+        actions={
+          <>
             <button title="Editar" onClick={() => openEdit(m)}
-              className="w-7 h-7 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/60 hover:text-petal">
-              <Pencil size={13} />
-            </button>
+              className="w-6 h-6 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/40 hover:text-petal transition-colors"><Pencil size={12} /></button>
             <button title="Remover" disabled={busyId === m.id} onClick={() => remove(m)}
-              className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve/60 hover:text-red-500">
-              <Trash2 size={13} />
-            </button>
-          </div>
-        </div>
-        {/* Detalhes ocupam a LARGURA TOTAL do card (abaixo do nome+ações) — menos altura. */}
-        {(() => {
-          const conteudo = m.packQty != null ? `${m.packQty}${m.packUnit ? ' ' + m.packUnit : ''}` : ''
-          const clinico = [formMetaOf(m.form ?? '')?.label, m.route, conteudo, m.dose, m.frequency].filter(Boolean).join(' • ')
-          const periodo = m.startedOn && m.untilOn ? `de ${fmtDate(m.startedOn)} até ${fmtDate(m.untilOn)}`
-            : m.startedOn ? `desde ${fmtDate(m.startedOn)}`
-            : m.untilOn ? `até ${fmtDate(m.untilOn)}` : ''
-          const meta = [m.prescriber ? `Prescrito por ${m.prescriber}` : null, periodo].filter(Boolean).join(' · ')
-          const vazio = !clinico && !meta
-          return (
-            <div className="font-body text-[11px] text-mauve/70 mt-0.5 space-y-0.5">
-              {clinico && <p>{clinico}</p>}
-              {meta && <p className="text-mauve/50">{meta}</p>}
-              {vazio && <p>Sem detalhes</p>}
-            </div>
-          )
-        })()}
-        {m.notes && <p className="font-body text-[11px] text-mauve/60 mt-1">{m.notes}</p>}
-        {(() => {
-          const ro = runoutDate(m.purchasedOn, m.packQty, m.dailyCons, m.acquiredQty)
-          return (
-            <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-              {m.purchaseStatus === 'a_comprar' && (
-                <span className="font-body text-[10px] text-gold bg-warm border border-amber-200 rounded-full px-1.5 py-0.5">A comprar</span>
-              )}
-              {m.purchaseStatus === 'comprado' && m.purchasedOn && (
-                <span className="font-body text-[10px] text-sage bg-sage-light border border-sage/20 rounded-full px-1.5 py-0.5">Comprado em {fmtFull(m.purchasedOn)}</span>
-              )}
-              {ro && (
-                <span className="font-body text-[10px] text-petal bg-blush border border-petal-light rounded-full px-1.5 py-0.5">
-                  Acaba ~{fmtFull(ro)}{m.repurchaseReminder ? ' · recompra ✓' : ''}
-                </span>
-              )}
-            </div>
-          )
-        })()}
-      </div>
+              className="w-6 h-6 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve/40 hover:text-red-400 transition-colors disabled:opacity-40"><Trash2 size={12} /></button>
+          </>
+        }
+      />
     )
   }
 
@@ -580,16 +539,28 @@ export default function MedicamentosPage() {
 
       {showForm && (
         <div ref={formRef} className="card-premium p-5 space-y-3 scroll-mt-20">
-          <div>
-            <label className="font-body text-xs text-mauve/70 block mb-1">Tipo</label>
-            <select value={kind} onChange={e => setKind(e.target.value as Kind)}
-              className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
-              <option value="medicamento">Medicamento</option>
-              <option value="suplemento">Suplemento</option>
-              <option value="produto">Produto</option>
-              <option value="dispositivo">Dispositivo</option>
-              <option value="outro">Outro</option>
-            </select>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="font-body text-xs text-mauve/70 block mb-1">Tipo</label>
+              <select value={kind} onChange={e => setKind(e.target.value as Kind)}
+                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
+                <option value="medicamento">Medicamento</option>
+                <option value="suplemento">Suplemento</option>
+                <option value="produto">Produto</option>
+                <option value="dispositivo">Dispositivo</option>
+                <option value="outro">Outro</option>
+              </select>
+            </div>
+            <div>
+              <label className="font-body text-xs text-mauve/70 block mb-1">Situação</label>
+              <select value={medStatus} onChange={e => setMedStatus(e.target.value as Status)}
+                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
+                <option value="em_uso">Em uso</option>
+                <option value="programado">Programado</option>
+                <option value="suspenso">Suspenso</option>
+                <option value="encerrado">Encerrado</option>
+              </select>
+            </div>
           </div>
           <div>
             <label className="font-body text-xs text-mauve/70 block mb-1">Nome do {kind === 'suplemento' ? 'suplemento' : kind === 'produto' ? 'produto' : kind === 'dispositivo' ? 'dispositivo' : 'medicamento'}</label>

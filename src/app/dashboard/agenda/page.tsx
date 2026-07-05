@@ -15,12 +15,8 @@ import { buildExamRecencySuggestion, type AgendaSuggestion } from '@/lib/agenda/
 import { typeLabel, statusLabel, formatDateBR, formatTimeBR, type HealthEvent } from '@/lib/agenda'
 import { useStickyView } from '@/lib/ui/useStickyView'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
+import ListCard, { CardChip } from '@/components/ListCard'
 
-const STATUS_CLS: Record<string, string> = {
-  planejado: 'bg-mauve/10 text-mauve',
-  realizado: 'bg-sage-light text-sage', cancelado: 'bg-red-50 text-red-400',
-  reagendado: 'bg-amber-50 text-amber-600', perdido: 'bg-red-50 text-red-400',
-}
 const TYPE_EMOJI: Record<string, string> = {
   consulta: '🩺', retorno: '📋', exame: '🧪', procedimento: '🩹', cirurgia: '⚕️',
   vacina: '💉', medicamento: '💊', medicacao: '💊', suplemento: '🌿', plano: '🏥', outro: '📌',
@@ -158,43 +154,38 @@ export default function AgendaPage() {
   }
   function agendaRow(ev: HealthEvent) {
     const overdue = ev.date < today
+    const tone = ev.status === 'planejado' ? 'mauve' : (ev.status === 'cancelado' || ev.status === 'perdido') ? 'neutral' : 'sage'
     return (
-      <motion.div key={ev.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-        className="card-premium p-4 flex items-start gap-3">
-        <div className="text-xl leading-none mt-0.5">{TYPE_EMOJI[ev.type] ?? '📅'}</div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            {ev.priority && <span className={`w-2 h-2 rounded-full flex-shrink-0 ${ev.priority === 'alta' ? 'bg-red-400' : ev.priority === 'media' ? 'bg-amber-400' : 'bg-sage'}`} title={`Prioridade ${ev.priority}`} />}
-            <p className="font-body text-sm font-semibold text-onyx break-words">{ev.title}</p>
-            <span className={`font-body text-[10px] font-semibold px-2 py-0.5 rounded-full ${STATUS_CLS[ev.status] ?? 'bg-mauve/10 text-mauve'}`}>{statusLabel(ev.status)}</span>
-            {ev.recurrenceRule && <span className="font-body text-[10px] text-mauve/60" title="Evento recorrente">🔁</span>}
-          </div>
-          <p className="font-body text-xs text-mauve mt-0.5">
+      <ListCard key={ev.id}
+        leading={<div className="text-xl leading-none">{TYPE_EMOJI[ev.type] ?? '📅'}</div>}
+        title={ev.title}
+        onTitleClick={() => openEdit(ev)}
+        meta={
+          <>
             {typeLabel(ev.type)} · {formatDateBR(ev.date)}{formatTimeBR(ev.time) ? ` · ${formatTimeBR(ev.time)}` : ''}
-            {ev.directExpense && <span className="ml-2 text-sage">despesa direta</span>}
-            {overdue && <span className="ml-2 text-petal font-medium">atrasado</span>}
-          </p>
-          {ev.notes && <p className="font-body text-xs text-mauve/70 mt-1 line-clamp-2">{ev.notes}</p>}
-        </div>
-        <div className="flex items-center gap-1 flex-shrink-0">
-          <button onClick={() => onComplete(ev)} disabled={busyId === ev.id} title="Concluir"
-            className="p-2 rounded-lg text-mauve hover:text-sage hover:bg-sage-light transition-colors disabled:opacity-40">
-            {busyId === ev.id ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />}
-          </button>
-          <button onClick={() => openEdit(ev)} title="Editar / exportar"
-            className="p-2 rounded-lg text-mauve hover:text-petal hover:bg-blush/40 transition-colors">
-            <Pencil size={15} />
-          </button>
-          <button onClick={() => onCancel(ev)} disabled={busyId === ev.id} title="Cancelar (marca como cancelado — fica no Histórico)"
-            className="p-2 rounded-lg text-mauve hover:text-amber-500 hover:bg-amber-500/8 transition-colors disabled:opacity-40">
-            <Ban size={15} />
-          </button>
-          <button onClick={() => onDelete(ev)} disabled={busyId === ev.id} title="Excluir (apaga de vez — Agenda, Histórico e Despesas)"
-            className="p-2 rounded-lg text-mauve hover:text-red-500 hover:bg-red-500/8 transition-colors disabled:opacity-40">
-            <Trash2 size={15} />
-          </button>
-        </div>
-      </motion.div>
+            {ev.directExpense && <span className="text-sage"> · despesa direta</span>}
+            {overdue && <span className="text-petal font-medium"> · atrasado</span>}
+          </>
+        }
+        chips={
+          <>
+            <CardChip tone={tone}>{statusLabel(ev.status)}</CardChip>
+            {ev.recurrenceRule && <CardChip tone="neutral">🔁 recorrente</CardChip>}
+          </>
+        }
+        actions={
+          <>
+            <button onClick={() => onComplete(ev)} disabled={busyId === ev.id} title="Concluir"
+              className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-sage hover:bg-sage-light transition-colors disabled:opacity-40">{busyId === ev.id ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}</button>
+            <button onClick={() => openEdit(ev)} title="Editar / exportar"
+              className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-petal hover:bg-blush/40 transition-colors"><Pencil size={12} /></button>
+            <button onClick={() => onCancel(ev)} disabled={busyId === ev.id} title="Cancelar (marca como cancelado — fica no Histórico)"
+              className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-amber-500 hover:bg-amber-500/8 transition-colors disabled:opacity-40"><Ban size={12} /></button>
+            <button onClick={() => onDelete(ev)} disabled={busyId === ev.id} title="Excluir (apaga de vez — Agenda, Histórico e Despesas)"
+              className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-red-500 hover:bg-red-500/8 transition-colors disabled:opacity-40"><Trash2 size={12} /></button>
+          </>
+        }
+      />
     )
   }
 
