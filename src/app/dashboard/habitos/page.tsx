@@ -17,6 +17,7 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
+import ListCard from '@/components/ListCard'
 
 type Category =
   | 'atividade_fisica' | 'sono' | 'tabagismo' | 'alcool'
@@ -115,30 +116,28 @@ export default function HabitosPage() {
     const meta = catMeta(h.category)
     const Icon = meta.icon
     return (
-      <div key={h.id} className="card-premium p-3.5 flex items-start justify-between gap-3">
-        <div className="flex items-start gap-3 min-w-0">
+      <ListCard
+        key={h.id}
+        leading={
           <div className="w-8 h-8 rounded-lg bg-blush flex items-center justify-center flex-shrink-0">
             <Icon size={15} className="text-petal" />
           </div>
-          <div className="min-w-0">
-            <p className="font-body text-sm font-semibold text-onyx">{h.description}</p>
-            <p className="font-body text-[11px] text-mauve/70 mt-0.5">
-              {[meta.label, h.frequency].filter(Boolean).join(' · ')}
-            </p>
-            {h.notes && <p className="font-body text-[11px] text-mauve/60 mt-1">{h.notes}</p>}
-          </div>
-        </div>
-        <div className="flex items-center gap-1 flex-shrink-0">
-          <button onClick={() => startEdit(h)} title="Editar"
-            className="w-7 h-7 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/60 hover:text-petal">
-            <Pencil size={13} />
-          </button>
-          <button onClick={() => remove(h)} disabled={busyId === h.id} title="Remover"
-            className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve/60 hover:text-red-500">
-            <Trash2 size={13} />
-          </button>
-        </div>
-      </div>
+        }
+        title={h.description}
+        meta={[meta.label, h.frequency, h.notes].filter(Boolean).join(' · ')}
+        actions={
+          <>
+            <button onClick={() => startEdit(h)} title="Editar"
+              className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-petal transition-colors">
+              <Pencil size={12} />
+            </button>
+            <button onClick={() => remove(h)} disabled={busyId === h.id} title="Remover"
+              className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-red-400 hover:bg-red-50 transition-colors">
+              <Trash2 size={12} />
+            </button>
+          </>
+        }
+      />
     )
   }
 

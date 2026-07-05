@@ -16,6 +16,7 @@
 
 import { Stethoscope, Smile, Eye, HeartPulse, CalendarCheck, Info } from 'lucide-react'
 import { useUser } from '@/context/UserContext'
+import ListCard from '@/components/ListCard'
 
 const ADMIN_EMAIL = 'carinaleite.br@gmail.com'
 
@@ -116,15 +117,16 @@ export default function PrevencaoPreviewPage() {
 
       <div className="space-y-3">
         {band.itens.map(it => (
-          <div key={it.titulo} className="card-premium p-5 flex items-start gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-blush flex items-center justify-center flex-shrink-0">
-              <it.Icon size={18} className="text-petal" />
-            </div>
-            <div>
-              <p className="font-body text-sm font-semibold text-onyx">{it.titulo}</p>
-              <p className="font-body text-sm text-mauve mt-0.5 leading-relaxed">{it.texto}</p>
-            </div>
-          </div>
+          <ListCard
+            key={it.titulo}
+            leading={
+              <div className="w-10 h-10 rounded-xl bg-blush flex items-center justify-center flex-shrink-0">
+                <it.Icon size={18} className="text-petal" />
+              </div>
+            }
+            title={it.titulo}
+            meta={it.texto}
+          />
         ))}
       </div>
 

@@ -14,6 +14,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import EyeglassPrescriptions from '@/components/EyeglassPrescriptions'
+import ListCard from '@/components/ListCard'
 
 type Scope = 'propria' | 'familiar'
 
@@ -100,26 +101,28 @@ export default function CondicoesPage() {
   const familiares = items.filter(i => i.scope === 'familiar')
 
   function card(c: Condition) {
+    const meta = [c.relative, c.sinceLabel ? `desde ${c.sinceLabel}` : null].filter(Boolean).join(' • ')
     return (
-      <div key={c.id} className="card-premium p-3.5 flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="font-body text-sm font-semibold text-onyx">{c.name}</p>
-          <p className="font-body text-[11px] text-mauve/70 mt-0.5">
-            {[c.relative, c.sinceLabel ? `desde ${c.sinceLabel}` : null].filter(Boolean).join(' · ')}
-          </p>
-          {c.notes && <p className="font-body text-[11px] text-mauve/60 mt-1">{c.notes}</p>}
-        </div>
-        <div className="flex items-center gap-1 flex-shrink-0">
-          <button onClick={() => startEdit(c)} title="Editar"
-            className="w-7 h-7 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/60 hover:text-petal">
-            <Pencil size={13} />
-          </button>
-          <button onClick={() => remove(c)} disabled={busyId === c.id} title="Remover"
-            className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve/60 hover:text-red-500">
-            <Trash2 size={13} />
-          </button>
-        </div>
-      </div>
+      <ListCard key={c.id}
+        title={c.name}
+        onTitleClick={() => startEdit(c)}
+        meta={
+          (meta || c.notes) ? (
+            <>
+              {meta}
+              {c.notes && <span className={meta ? 'block mt-0.5 text-mauve/50' : 'text-mauve/50'}>{c.notes}</span>}
+            </>
+          ) : undefined
+        }
+        actions={
+          <>
+            <button onClick={() => startEdit(c)} title="Editar"
+              className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-petal transition-colors"><Pencil size={12} /></button>
+            <button onClick={() => remove(c)} disabled={busyId === c.id} title="Remover"
+              className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-red-400 hover:bg-red-50 transition-colors disabled:opacity-40"><Trash2 size={12} /></button>
+          </>
+        }
+      />
     )
   }
 
