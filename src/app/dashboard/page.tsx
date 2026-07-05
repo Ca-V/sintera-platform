@@ -300,7 +300,7 @@ function LegacyDashboard() {
                     <FileText size={15} className="text-petal" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-body text-sm font-medium text-onyx truncate">{exam.type ?? 'Exame'}</p>
+                    <p className="font-body text-sm font-medium text-onyx break-words">{exam.type ?? 'Exame'}</p>
                     <p className="font-body text-xs text-mauve">Realizado em {formatDate(exam.exam_date ?? exam.created_at)}</p>
                   </div>
                   <span className={`inline-flex items-center gap-1.5 text-xs font-body font-medium px-2.5 py-1 rounded-full flex-shrink-0 ${cfg.bg} ${cfg.color}`}>
