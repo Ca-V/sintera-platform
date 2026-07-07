@@ -6,7 +6,7 @@ import { captureForwarded } from '../result'
 // é escolhido na própria página de Recursos. (Rename do kind é escopo do CAP-001.)
 export const eyeglassProcessor: DocumentProcessor = {
   kind: 'eyeglass_prescription',
-  label: 'Recurso de saúde',
+  label: 'Recursos de Saúde',
   icon: 'HeartPulse',
   accepts: ['application/pdf', 'image/jpeg', 'image/png'],
   target: '/dashboard/recursos',
