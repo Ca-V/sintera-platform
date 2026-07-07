@@ -305,3 +305,39 @@ Especificação **encerrada**. Ordem de execução:
    `Routing Engine` + integração com `health_documents` (DOC-001) + config central de formatos (§2.5).
 4. **Só depois, migrar gradualmente** Exames (referência) → Medicamentos → Recursos → Ômica →
    demais módulos para a infraestrutura única, começando pela causa raiz (PDF em medicamento).
+
+## 8. Critérios de Aceite (oficiais — homologação do CAP-001)
+
+O CAP-001 só é considerado **implementado** quando **todos** os itens forem verdadeiros:
+
+- [ ] Todos os módulos utilizam **exclusivamente** o `DocumentCapture`.
+- [ ] **Não existem** mais fluxos próprios de upload por módulo.
+- [ ] Todos os módulos oferecem **exatamente os mesmos 6 meios**: digitar manualmente · tirar foto · enviar arquivo · arrastar arquivo · importar do Centro de Captura · falar.
+- [ ] O Centro de Captura apresenta **sempre todos os destinos** suportados pela plataforma.
+- [ ] A lista de destinos **não varia** conforme o tipo de arquivo enviado.
+- [ ] Toda validação de formatos usa a **configuração central**.
+- [ ] **Não existem** validações de MIME duplicadas.
+- [ ] **Não existem** limites de tamanho diferentes entre módulos.
+- [ ] O documento original segue o fluxo definido no **DOC-001** (`health_documents`).
+- [ ] Todos os fluxos são **homologados com PDF, JPG, PNG e HEIC**.
+
+### Status de implementação (linha divisória documentação × execução — 2026-07-07)
+
+Especificação **congelada**; implementação **ainda não iniciada** (programada para após o merge
+da REL-001). Verificado no código nesta data:
+
+| Item | Status |
+|---|---|
+| Aceitar PDF para receita de medicamento (`medication.accepts`) | ❌ Não implementado |
+| `DocumentCapture` único | ❌ Não implementado |
+| Todos os módulos usando o mesmo componente | ❌ Não implementado |
+| Centro de Captura exibindo todos os destinos | ❌ Não implementado |
+| Configuração central de formatos (`formats.ts`) | ❌ Não implementado |
+| Capture Engine | ❌ Não implementado |
+| Routing Engine (por registry) | ❌ Não implementado |
+| Integração com `health_documents` (DOC-001) | ❌ Não implementado |
+| Migração dos módulos para a nova arquitetura | ❌ Não implementado |
+
+**Precursores existentes (não são os entregáveis CAP-001):** `CaptureCenter` (intake da Home,
+com filtro por MIME a ser removido) e a `registry.ts` de processadores (base para o Routing Engine).
+Tudo o mais acima é da **próxima etapa de desenvolvimento**.
