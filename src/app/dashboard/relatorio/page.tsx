@@ -14,6 +14,7 @@ import { useCallback, useEffect, useState, type ElementType } from 'react'
 import Link from 'next/link'
 import ReportEntry from '@/components/entry/ReportEntry'
 import ProvenanceLine from '@/components/ui/ProvenanceLine'
+import SelectionToolbar from '@/components/ui/SelectionToolbar'
 import { examProvenance } from '@/lib/provenance'
 import {
   Loader2, Printer, ArrowLeft, FileText, Share2, Copy, Trash2, Check,
@@ -134,6 +135,14 @@ function LegacyReport() {
       ['habitos', 'Hábitos', HeartPulse],
     ] },
   ]
+  // Comandos de seleção (via SelectionToolbar reutilizável).
+  const DEFAULT_SECTIONS = { medicamentos: true, condicoes: true, habitos: true, visao: true, eventos: true, exames: true, omica: true, medidas: true, sinais: true }
+  const allSections = (v: boolean) => Object.fromEntries(Object.keys(sections).map(k => [k, v])) as typeof sections
+  const selectAllSections = () => { setSections(allSections(true)); setExcluded({}) }
+  const clearSections = () => setSections(allSections(false))
+  const resetSections = () => { setSections({ ...DEFAULT_SECTIONS }); setExcluded({}) }
+  const expandAll = () => { setOpenGroups(Object.fromEntries(SELECT_GROUPS.map(g => [g.title, true]))); setOpenSections({ exames: true, medicamentos: true }) }
+  const collapseAll = () => { setOpenGroups(Object.fromEntries(SELECT_GROUPS.map(g => [g.title, false]))); setOpenSections({}) }
 
   const load = useCallback(async () => {
     if (!user) return
@@ -296,7 +305,10 @@ function LegacyReport() {
       {/* Seleção = árvore do menu lateral (UX-001): grupos expansíveis, seleção por
           grupo (tri-state) e por item, com a mesma ordem, nomenclatura e ícones. */}
       <div className="card-premium p-5 mb-6 print:hidden">
-        <p className="font-body text-sm font-semibold text-onyx mb-3">Mostrar no relatório</p>
+        <p className="font-body text-sm font-semibold text-onyx mb-2">Mostrar no relatório</p>
+        <SelectionToolbar className="mb-3"
+          onSelectAll={selectAllSections} onClear={clearSections} onReset={resetSections}
+          onExpandAll={expandAll} onCollapseAll={collapseAll} />
         <div className="space-y-2">
           {SELECT_GROUPS.map(group => {
             const keys = group.items.map(i => i[0])
