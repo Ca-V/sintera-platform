@@ -7,6 +7,22 @@
 
 ---
 
+## 0.0 Enquadramento arquitetural — CAMADA DE COMUNICAÇÃO DA SINTERA (fundadora, 07/07)
+
+Esta frente é, oficialmente, a **Camada de Comunicação da Plataforma** — responsável por **transformar os dados organizados pela plataforma em diferentes formas de apresentação**. O **Relatório é apenas o primeiro consumidor**. A mesma infraestrutura alimentará: compartilhamento por link · compartilhamento para médicos · exportação PDF · impressão · e-mail · WhatsApp · integração com prontuários · timeline compartilhada · APIs futuras · IA contextual.
+
+**Regra permanente desta frente:** ao implementar qualquer coisa aqui, perguntar — *"Estou construindo uma capacidade reutilizável da plataforma ou uma solução específica do Relatório?"*. Se for específica → **parar e abstrair antes**.
+
+**Capacidades transversais (construir como infraestrutura única, nunca por módulo):**
+- **Proveniência** (`@/lib/provenance`) — 5 níveis; módulos só implementam adaptadores.
+- **Seleção** (`SelectionToolbar` + estado) — seleção em massa/exportação/compartilhamento.
+- **Ordenação** — infraestrutura ÚNICA: cada módulo declara campos ordenáveis, ordenação padrão e agrupamentos; Agenda/Histórico/Exames/Recursos/Medicamentos/Despesas usam o mesmo mecanismo.
+- **Filtros e agrupamentos** — mesma abstração comum (filtros · agrupamentos · ordenação · seleção), usada em toda a plataforma.
+
+**Perfis de Comunicação (não "configuração salva"):** os templates são **Perfis de Comunicação**. Arquiteturalmente, **primeiro os perfis OFICIAIS da plataforma** (Consulta médica · Segunda opinião · Emergência · Viagem · Compartilhamento familiar · Seguro · Perícia · Pesquisa clínica), **depois** os personalizados pelo usuário.
+
+---
+
 ## 0. Diretrizes oficiais complementares (congeladas)
 
 **Nome oficial do módulo: "Relatório"** (nunca "Relatório de Saúde"). A SINTERA **não emite avaliação nem parecer clínico** — organiza e apresenta os registros e documentos inseridos pela usuária. Aplicar "Relatório" de forma consistente em: menu · título da página · breadcrumbs · Home (atalhos) · compartilhamento · PDF · cabeçalhos · links internos.
