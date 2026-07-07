@@ -326,6 +326,19 @@ function LegacyReport() {
     await (supabase as any).from('report_templates').delete().eq('id', id)
     await load()
   }
+
+  // Resumo/tamanho — o que está incluído (seções selecionadas, dentro do período).
+  const resumoItems = [
+    sections.eventos && { label: 'consultas/eventos', n: perEvents.length },
+    sections.exames && { label: 'exames', n: perVisExams.length },
+    sections.omica && { label: 'ômica', n: perOmics.length },
+    sections.medicamentos && { label: 'medicamentos', n: visMedsEmUso.length + perMedsSusp.length },
+    sections.condicoes && { label: 'condições', n: condProprias.length + condFamiliar.length },
+    sections.visao && { label: 'recursos', n: eyewear.length },
+    sections.medidas && { label: 'medidas', n: perMeasuresCorpo.length },
+    sections.sinais && { label: 'sinais vitais', n: perMeasuresVitais.length },
+    sections.habitos && { label: 'hábitos', n: habits.length },
+  ].filter((x): x is { label: string; n: number } => !!x && x.n > 0)
   const alturaCm = (profile as { height_cm?: number | null } | null)?.height_cm ?? null
   const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
 
@@ -382,7 +395,7 @@ function LegacyReport() {
       <div className="card-premium p-5 mb-6 print:hidden">
         <p className="font-body text-sm font-semibold text-onyx mb-3">Período</p>
         <PeriodSelector period={period} onChange={setPeriod} />
-        <p className="font-body text-[11px] text-mauve/60 mt-3">Recorte aplicado ao relatório e ao link compartilhado. Condições atuais e itens em uso aparecem independentemente do período.</p>
+        <p className="font-body text-[11px] text-mauve/60 mt-3">Recorte aplicado ao relatório exibido e à impressão/PDF. Condições atuais e itens em uso aparecem independentemente do período.</p>
       </div>
 
       {/* Perfis de Comunicação — oficiais da plataforma + personalizados (report_templates) */}
@@ -518,6 +531,9 @@ function LegacyReport() {
           <h1 className="font-display text-2xl font-semibold text-onyx">Relatório</h1>
           <p className="font-body text-sm text-mauve mt-1">Organização estruturada das informações registradas na SINTERA.</p>
           <p className="font-body text-xs font-medium text-onyx/80 mt-2">Período: {periodLabel(period)}</p>
+          {resumoItems.length > 0 && (
+            <p className="font-body text-xs text-mauve/70 mt-1">Neste relatório: {resumoItems.map(r => `${r.n} ${r.label}`).join(' · ')}.</p>
+          )}
           <p className="font-body text-xs text-mauve/70 mt-1">{nome} · Gerado em {hoje}</p>
         </div>
 
