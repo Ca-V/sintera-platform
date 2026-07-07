@@ -103,8 +103,20 @@ function LegacyReport() {
   // seleção por grupo (tri-state) e por item. Mesma ordem/nomenclatura da sidebar.
   type SectionKey = keyof typeof sections
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({})   // 3º nível (itens de Exames/Medicamentos)
+  const [excluded, setExcluded] = useState<Record<string, Set<string>>>({})        // itens desmarcados por seção
   const setGroup = (keys: SectionKey[], on: boolean) =>
     setSections(s => { const n = { ...s }; keys.forEach(k => { n[k] = on }); return n })
+  // Seções que permitem seleção item a item (Exames e Medicamentos).
+  const hasItems = (k: SectionKey): boolean => k === 'exames' || k === 'medicamentos'
+  const sectionItems = (k: SectionKey): { key: string; label: string }[] => {
+    if (k === 'exames') return exams.map(e => ({ key: `${e.type}__${e.date}`, label: `${fmt(e.date)} — ${e.type}` }))
+    if (k === 'medicamentos') return meds.map(m => ({ key: m.name, label: m.name + (m.status === 'suspenso' ? ' (suspenso)' : '') }))
+    return []
+  }
+  const isItemOn = (k: string, key: string): boolean => !(excluded[k]?.has(key))
+  const toggleItem = (k: string, key: string) =>
+    setExcluded(e => { const s = new Set(e[k] ?? []); if (s.has(key)) s.delete(key); else s.add(key); return { ...e, [k]: s } })
   const SELECT_GROUPS: { title: string; items: [SectionKey, string, ElementType][] }[] = [
     { title: 'Acompanhamento', items: [
       ['eventos', 'Consultas e eventos', CalendarDays],
@@ -217,6 +229,11 @@ function LegacyReport() {
   const nome = (profile as { name?: string } | null)?.name ?? user?.email ?? '—'
   const medsEmUso = meds.filter(m => m.status === 'em_uso')
   const medsSusp = meds.filter(m => m.status === 'suspenso')
+  // Aplicam a seleção item a item ao relatório exibido/impresso (PDF). A propagação
+  // ao link compartilhado (/r/[token]) é incremento seguinte (persistir no share).
+  const visMedsEmUso = medsEmUso.filter(m => isItemOn('medicamentos', m.name))
+  const visMedsSusp = medsSusp.filter(m => isItemOn('medicamentos', m.name))
+  const visExams = exams.filter(e => isItemOn('exames', `${e.type}__${e.date}`))
   const condProprias = conditions.filter(c => c.scope === 'propria')
   const condFamiliar = conditions.filter(c => c.scope === 'familiar')
   const measuresCorpo = measures.filter(m => !isVital(m.metric))
@@ -302,16 +319,48 @@ function LegacyReport() {
                   <span className="font-body text-[11px] font-semibold text-mauve/70 uppercase tracking-wider flex-1 min-w-0">{group.title}</span>
                   <span className="font-body text-[11px] text-mauve/50 flex-shrink-0 tabular-nums">{sel}/{keys.length}</span>
                 </div>
-                {/* Itens do grupo */}
+                {/* Itens do grupo (módulos) — Exames/Medicamentos abrem seleção item a item */}
                 {open && (
-                  <div className="flex flex-col gap-1 px-3 py-2 pl-[2.9rem]">
-                    {group.items.map(([k, label, Icon]) => (
-                      <label key={k} className="flex items-center gap-2.5 font-body text-sm text-onyx cursor-pointer py-0.5">
-                        <input type="checkbox" checked={sections[k]} onChange={() => toggle(k)} className="accent-petal w-4 h-4 flex-shrink-0" />
-                        <Icon size={15} className="text-petal/70 flex-shrink-0" />
-                        <span className="min-w-0 break-words">{label}</span>
-                      </label>
-                    ))}
+                  <div className="flex flex-col gap-0.5 px-3 py-2 pl-9">
+                    {group.items.map(([k, label, Icon]) => {
+                      const withItems = hasItems(k)
+                      const items = withItems ? sectionItems(k) : []
+                      const secOpen = openSections[k] ?? false
+                      const onCount = items.filter(it => isItemOn(k, it.key)).length
+                      return (
+                        <div key={k}>
+                          <div className="flex items-center gap-2 py-0.5">
+                            {withItems ? (
+                              <button type="button" onClick={() => setOpenSections(o => ({ ...o, [k]: !secOpen }))}
+                                aria-label={secOpen ? 'Recolher itens' : 'Expandir itens'}
+                                className="text-mauve/40 hover:text-petal transition-colors flex-shrink-0">
+                                <ChevronDown size={13} className="transition-transform" style={{ transform: secOpen ? 'none' : 'rotate(-90deg)' }} />
+                              </button>
+                            ) : <span className="w-[13px] flex-shrink-0" aria-hidden="true" />}
+                            <label className="flex items-center gap-2.5 flex-1 min-w-0 cursor-pointer">
+                              <input type="checkbox" checked={sections[k]} onChange={() => toggle(k)} className="accent-petal w-4 h-4 flex-shrink-0" />
+                              <Icon size={15} className="text-petal/70 flex-shrink-0" />
+                              <span className="min-w-0 break-words font-body text-sm text-onyx">{label}</span>
+                            </label>
+                            {withItems && sections[k] && items.length > 0 && (
+                              <span className="font-body text-[10px] text-mauve/50 flex-shrink-0 tabular-nums">{onCount}/{items.length}</span>
+                            )}
+                          </div>
+                          {withItems && sections[k] && secOpen && (
+                            <div className="flex flex-col gap-0.5 pl-[3.4rem] pb-1">
+                              {items.length === 0
+                                ? <span className="font-body text-xs text-mauve/50">Nenhum registro.</span>
+                                : items.map(it => (
+                                    <label key={it.key} className="flex items-center gap-2 font-body text-[13px] text-onyx/90 cursor-pointer">
+                                      <input type="checkbox" checked={isItemOn(k, it.key)} onChange={() => toggleItem(k, it.key)} className="accent-petal w-3.5 h-3.5 flex-shrink-0" />
+                                      <span className="min-w-0 break-words">{it.label}</span>
+                                    </label>
+                                  ))}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
                 )}
               </div>
@@ -335,11 +384,11 @@ function LegacyReport() {
         {sections.medicamentos && (
         <section>
           <h2 className="font-body text-sm font-bold text-onyx mb-2">Medicamentos e suplementos em uso</h2>
-          {medsEmUso.length === 0 ? (
+          {visMedsEmUso.length === 0 ? (
             <p className="font-body text-sm text-mauve/60">Nenhum registrado em uso.</p>
           ) : (
             <ul className="space-y-1">
-              {medsEmUso.map((m, i) => (
+              {visMedsEmUso.map((m, i) => (
                 <li key={i} className="font-body text-sm text-onyx">
                   • <strong>{m.name}</strong>{m.kind === 'suplemento' ? ' (suplemento)' : ''}{[m.dose, m.frequency].filter(Boolean).length ? ` — ${[m.dose, m.frequency].filter(Boolean).join(', ')}` : ''}
                   {periodo(m.startedOn, m.untilOn)}
@@ -347,8 +396,8 @@ function LegacyReport() {
               ))}
             </ul>
           )}
-          {medsSusp.length > 0 && (
-            <p className="font-body text-xs text-mauve/60 mt-2">Suspensos: {medsSusp.map(m => m.name).join(', ')}.</p>
+          {visMedsSusp.length > 0 && (
+            <p className="font-body text-xs text-mauve/60 mt-2">Suspensos: {visMedsSusp.map(m => m.name).join(', ')}.</p>
           )}
         </section>
         )}
@@ -459,11 +508,11 @@ function LegacyReport() {
         {sections.exames && (
         <section>
           <h2 className="font-body text-sm font-bold text-onyx mb-2">Exames enviados</h2>
-          {exams.length === 0 ? (
+          {visExams.length === 0 ? (
             <p className="font-body text-sm text-mauve/60">Nenhum exame enviado.</p>
           ) : (
             <ul className="space-y-1">
-              {exams.map((e, i) => (
+              {visExams.map((e, i) => (
                 <li key={i} className="font-body text-sm text-onyx">• {fmt(e.date)} — {e.type}</li>
               ))}
             </ul>
