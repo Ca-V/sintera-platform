@@ -188,6 +188,15 @@ Todos os inputs, processadores e validações passam a **ler dessa config** — 
 precisar de suporte no futuro, há **um só ponto** de manutenção. Elimina as três `ACCEPTED`
 duplicadas e os limites divergentes (§1.2).
 
+### 2.6 Princípio 7 — captura orientada ao objetivo, não à origem do documento
+
+A captura é guiada pelo **objetivo da usuária**, não pela **tecnologia da entrada**. Ela não pensa
+*"vou enviar um PDF / tirar uma foto / importar um documento"* — pensa *"quero cadastrar um
+medicamento / adicionar um exame / guardar uma receita / registrar um recurso"*. Os meios (foto,
+arquivo, voz, manual…) são só **formas de atingir o objetivo**. O sistema é **orientado a tarefas**,
+não a tecnologia. Consequência de design: a interface parte da **tarefa/destino**; o meio de entrada
+é secundário e intercambiável.
+
 ## 3. Auditoria de conformidade e lacunas
 
 | Módulo | Manual | Foto | Arquivo+Drag (PDF) | Centro de Captura | Voz | Lacuna a corrigir |
@@ -214,3 +223,49 @@ Prioridade do relato: **Medicamentos** (arquivo/PDF+drag) e **Centro de Captura*
 > manualmente · tirar foto · enviar/arrastar arquivo · importar do Centro de Captura ·
 > falar.** O Centro de Captura é canal **adicional**, nunca o único local de envio de
 > arquivo. O usuário não reaprende a inserir informação a cada tela. (UX-001 §1.10 e §10.)
+
+## 6. Arquitetura de implementação (3 camadas + DOC-001)
+
+`<DocumentCapture>` **não é só um componente visual** — é composto por três camadas separadas:
+
+| Camada | Responsabilidade |
+|---|---|
+| **Presentation** | interface: botões, drag-and-drop, câmera, voz, entrada manual. |
+| **Capture Engine** | recebe **qualquer** entrada e produz um **`CapturedDocument`** padronizado (contrato único). |
+| **Routing Engine** | encaminha o documento para o módulo correto (Exames, Medicamentos, Recursos, Ômica, Procedimentos…). |
+
+**Extensibilidade por adaptadores:** futuras origens — Apple Health, Google Health Connect, e-mail,
+WhatsApp, scanner TWAIN, integrações com clínicas, APIs externas — entram como **novos adaptadores no
+Capture Engine**, sem alterar nenhuma tela. Presentation e Routing permanecem intactos.
+
+### Integração com o DOC-001 (repositório único de documentos)
+
+O documento original passa **primeiro** pelo repositório único e **só depois** é distribuído:
+
+```
+DocumentCapture (Presentation)
+        ↓
+Capture Engine  → CapturedDocument
+        ↓
+health_documents (DOC-001)      ← repositório único; proveniência compartilhada
+        ↓
+Routing Engine
+        ↓
+Exames · Medicamentos · Recursos · Ômica · Procedimentos · …
+```
+
+Assim, **um só armazenamento** do arquivo (sem duplicação por tabela/módulo) e **uma só
+proveniência** para toda a plataforma — os módulos referenciam `document_id` e a camada
+`@/lib/provenance` ([[REL-001]]) consome o documento por referência. Consolida a lacuna já
+registrada em [[DOC-001]] (ômica/medicamentos hoje sem documento armazenado).
+
+## 7. Sequência de trabalho (encerra a especificação)
+
+Especificação **encerrada**. Ordem de execução:
+
+1. **Homologar e publicar a REL-001** (pré-requisito; não misturar escopos).
+2. **Abrir a implementação do CAP-001** (branch dedicada).
+3. **Construir primeiro a infraestrutura:** `DocumentCapture` (3 camadas) + `Capture Engine` +
+   `Routing Engine` + integração com `health_documents` (DOC-001) + config central de formatos (§2.5).
+4. **Só depois, migrar gradualmente** Exames (referência) → Medicamentos → Recursos → Ômica →
+   demais módulos para a infraestrutura única, começando pela causa raiz (PDF em medicamento).
