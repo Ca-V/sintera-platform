@@ -6,7 +6,7 @@
 // Relatório, Histórico, Timeline, Exames, Medicamentos, Recursos e futuros KG/SRL/IA.
 
 import { Paperclip } from 'lucide-react'
-import { type Provenance, sourceLabel, hasDocument } from '@/lib/provenance'
+import { type Provenance, sourceLabel, hasDocument, documentUrl } from '@/lib/provenance'
 
 export default function ProvenanceLine({ provenance, showOrigin = true, className = '' }: {
   provenance: Provenance
@@ -19,7 +19,7 @@ export default function ProvenanceLine({ provenance, showOrigin = true, classNam
     <span className={`inline-flex flex-wrap items-center gap-x-1.5 gap-y-0.5 font-body text-[11px] text-mauve/70 ${className}`}>
       {showOrigin && <span>Origem: {meta}</span>}
       {hasDocument(provenance) && (
-        <a href={provenance.documentUrl as string} target="_blank" rel="noopener noreferrer"
+        <a href={documentUrl(provenance) as string} target="_blank" rel="noopener noreferrer"
           className="inline-flex items-center gap-1 text-petal hover:underline">
           <Paperclip size={11} /> Ver documento original
         </a>
