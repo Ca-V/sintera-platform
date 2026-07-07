@@ -9,7 +9,7 @@ export const medicationProcessor: DocumentProcessor = {
   kind: 'medication_label',
   label: 'Receita de medicamento',
   icon: 'Pill',
-  accepts: ['image/jpeg', 'image/png'],
+  accepts: ['image/jpeg', 'image/png', 'application/pdf'],
   target: '/dashboard/medicamentos',
   confirmPhrase: 'um rótulo ou receita de medicamento',
   process: async (file) => {
