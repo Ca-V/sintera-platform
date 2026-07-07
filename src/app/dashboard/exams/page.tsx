@@ -407,16 +407,16 @@ export default function ExamsPage() {
               ))}
             </select>
 
-            {/* Período por data de realização */}
-            <div className="flex items-center gap-1.5">
-              <span className="font-body text-xs text-mauve/60">Período:</span>
+            {/* Período por data de realização — linha inteira no mobile p/ caber no card */}
+            <div className="flex items-center gap-1.5 w-full sm:w-auto">
+              <span className="font-body text-xs text-mauve/60 flex-shrink-0">Período:</span>
               <input type="date" value={filterFrom} max={filterTo || undefined}
                 onChange={e => setFilterFrom(e.target.value)} aria-label="Data inicial"
-                className="py-2 px-2.5 bg-ivory border border-border rounded-xl font-body text-xs text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40" />
-              <span className="font-body text-xs text-mauve/50">até</span>
+                className="flex-1 min-w-0 sm:flex-none py-2 px-2 bg-ivory border border-border rounded-xl font-body text-xs text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40" />
+              <span className="font-body text-xs text-mauve/50 flex-shrink-0">até</span>
               <input type="date" value={filterTo} min={filterFrom || undefined}
                 onChange={e => setFilterTo(e.target.value)} aria-label="Data final"
-                className="py-2 px-2.5 bg-ivory border border-border rounded-xl font-body text-xs text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40" />
+                className="flex-1 min-w-0 sm:flex-none py-2 px-2 bg-ivory border border-border rounded-xl font-body text-xs text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40" />
             </div>
 
             {/* Limpar filtros */}

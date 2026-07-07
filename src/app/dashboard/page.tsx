@@ -295,18 +295,20 @@ function LegacyDashboard() {
               return (
                 <button key={exam.id}
                   onClick={() => router.push('/dashboard/exams/' + exam.id)}
-                  className="w-full flex items-center gap-4 px-5 py-3.5 hover:bg-blush/20 transition-colors text-left">
+                  className="w-full flex items-start gap-3 px-5 py-3.5 hover:bg-blush/20 transition-colors text-left">
                   <div className="w-8 h-8 rounded-xl bg-blush flex items-center justify-center flex-shrink-0">
                     <FileText size={15} className="text-petal" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-body text-sm font-medium text-onyx break-words">{exam.type ?? 'Exame'}</p>
-                    <p className="font-body text-xs text-mauve">Realizado em {formatDate(exam.exam_date ?? exam.created_at)}</p>
+                    <p className="font-body text-sm font-medium text-onyx break-words line-clamp-2">{exam.type ?? 'Exame'}</p>
+                    <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                      <p className="font-body text-xs text-mauve">Realizado em {formatDate(exam.exam_date ?? exam.created_at)}</p>
+                      <span className={`inline-flex items-center gap-1 text-[10px] font-body font-medium px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.color}`}>
+                        <Icon size={9} />
+                        {cfg.label}
+                      </span>
+                    </div>
                   </div>
-                  <span className={`inline-flex items-center gap-1.5 text-xs font-body font-medium px-2.5 py-1 rounded-full flex-shrink-0 ${cfg.bg} ${cfg.color}`}>
-                    <Icon size={10} />
-                    {cfg.label}
-                  </span>
                 </button>
               )
             })}
