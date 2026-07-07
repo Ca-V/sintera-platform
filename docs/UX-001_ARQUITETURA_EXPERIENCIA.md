@@ -1,193 +1,187 @@
-# UX-001 — Arquitetura da Experiência (Constituição da Interface)
+# UX-001 — Arquitetura Funcional da Plataforma (Constituição)
 
-**Status:** Especificação (documento apenas — sem código). Base para o **congelamento da arquitetura funcional** antes do KG v2 — Parte 3.
-**Origem:** decisão da fundadora (07/07/2026): consolidar num único documento as decisões de nomenclatura, navegação, módulos, Design System, listas, formulários e responsividade — a "constituição" da interface — para que o KG v2 passe a consumir uma organização estável.
+**Status:** 🟡 Especificação aprovada com ressalvas incorporadas — documento apenas (sem código). Base para o **congelamento da arquitetura funcional** antes do KG v2 — Parte 3.
+**Escopo:** **arquitetura funcional** — o que existe, como se organiza, como se navega e como cresce. **NÃO** trata de componentes visuais, cores, tokens ou padrões de interface — isso é responsabilidade do **[[DS-001]] — Design System** (referenciado onde couber).
 **Sequência:** UX-001 (spec) → Implementação → **Freeze da arquitetura funcional** → KG v2 Parte 3 → Implementação do KG.
-**Herda:** [[PLANO_MATURIDADE_PRE_MOBILE]] (§0 Governança Científica, §0.1 SSOT, §3 modelo orientado a eventos) e o feedback de consistência de layout.
+**Herda:** [[PLANO_MATURIDADE_PRE_MOBILE]] (§0 Governança Científica, §0.1 SSOT, §3 modelo orientado a eventos).
 
 ---
 
 ## 1. Princípios
 
-1. **Simplicidade (mobile-first).** Cada tela é projetada primeiro para o celular: poucos toques, leitura rápida, mínimo de altura. O desktop é a expansão, nunca a origem.
-2. **Consistência.** O mesmo problema tem a mesma solução em toda a plataforma: mesmos componentes, mesma hierarquia, mesmos espaçamentos, mesma tipografia. Um vocabulário visual único.
-3. **Terminologia neutra (RDC 657/2022).** A interface **organiza, não diagnostica**. Evita termos que sugiram juízo clínico ("problema", "risco", "alterado", "perigoso", "diagnóstico"). Prefere termos factuais e amplos ("condição", "registro", "acompanhamento").
-4. **Um conceito = um módulo.** Cada entidade de 1ª classe (Condição, Medicamento, Recurso, Procedimento…) tem seu **próprio modelo de dados** e seu próprio lugar. É proibido misturar entidades diferentes na mesma tabela/tela por conveniência.
-5. **SSOT do metadado clínico.** Nomes, categorias, unidades, ícones, ordenação de metadados clínicos vêm do Catálogo Científico — nunca duplicados na interface (herda §0.1 do Plano de Maturidade).
-6. **Modelo orientado a eventos.** A jornada é uma linha do tempo de eventos de saúde; a interface é projeção desse modelo, não a fonte da verdade.
+1. **Simplicidade (mobile-first).** Projetar primeiro para o celular; o desktop é expansão.
+2. **Consistência.** O mesmo problema tem a mesma solução em toda a plataforma.
+3. **Terminologia neutra (RDC 657/2022).** A plataforma **organiza, não diagnostica**. Evita termos de juízo clínico ("problema", "risco", "alterado", "diagnóstico"); prefere factuais e amplos ("condição", "registro", "acompanhamento").
+4. **Um conceito = um módulo.** Cada entidade de 1ª classe tem **modelo de dados próprio** e lugar próprio. Proibido misturar entidades por conveniência.
+5. **Responsabilidade única.** *Um módulo existe para representar apenas UM conceito do domínio.* Condições não registra compras, consultas nem medicamentos; Medicamentos não registra dispositivos nem condições; Recursos não registra medicamentos. (Detalhado na §8.)
+6. **SSOT do metadado clínico.** Nomes, categorias, unidades, ícones e ordenação de metadados clínicos vêm do Catálogo Científico — nunca duplicados (herda §0.1 do Plano de Maturidade).
+7. **Modelo orientado a eventos.** A jornada é uma linha do tempo de eventos; a interface é projeção, não a fonte da verdade.
 
 ---
 
-## 2. Mapa Completo dos Módulos
+## 2. Modelo Arquitetural — dois eixos distintos
 
-Cada módulo é uma **entidade de 1ª classe** com modelo de dados próprio. Distinção fundamental entre **módulo** (entidade com página própria) e **tipo de evento** (categoria dentro da linha do tempo Agenda/Histórico).
+A plataforma tem **dois eixos completamente diferentes**. Confundi-los é a principal causa de crescimento oportunista da arquitetura.
 
-| Módulo | Conceito (o que representa) | Grupo de menu | Modelo de dados (tabela) |
-|---|---|---|---|
-| **Painel Inicial** | Visão geral / porta de entrada | Painel | (agrega) |
-| **Agenda** | Eventos **futuros** da jornada | Minha Saúde | `health_events` (futuros) |
-| **Histórico** | Eventos **passados** + Evolução | Minha Saúde | `health_events` (passados), `exams`, biomarcadores |
-| **Exames** | Laudos e documentos + extração IA | Minha Saúde | `exams`, `biomarkers` |
-| **Medicamentos e Suplementos** | O que a pessoa **toma** (tratamento) | Minha Saúde | `medications` (kind: medicamento, suplemento) |
-| **Condições de Saúde** | O que a pessoa **tem** (próprias + familiares) | Meu Perfil | `health_conditions` |
-| **Recursos de Saúde** *(novo)* | Recursos **utilizados** para cuidado, compensação funcional ou monitoramento | Meu Perfil | *modelo próprio (novo — §"Recursos de Saúde")* |
-| **Hábitos** | Estilo de vida (atividade, sono, tabagismo…) | Meu Perfil | `life_habits` |
-| **Medidas Corporais** | Peso, altura, IMC, composição corporal | Meu Perfil | `body_metrics` (corporais) |
-| **Sinais Vitais** | Pressão, FC, glicemia, SpO₂, temperatura | Meu Perfil | `body_metrics` (vitais) |
-| **Ciclo e Contracepção** | Menstruação + métodos contraceptivos | Meu Perfil | (ciclo) |
-| **Despesas** | Valores dos eventos/compras (projeção financeira) | Organização | `health_events` c/ valor (projeção) |
-| **Relatórios** | Compilação factual para o profissional | Organização | (agrega todos) |
-| **Configurações** | Conta | Configurações | — |
+### A. Módulos — entidades permanentes
+Representam algo que **existe/persiste** no perfil da pessoa; têm identidade própria e página própria.
+> Condições de Saúde · Medicamentos e Suplementos · Recursos de Saúde · Hábitos · Medidas Corporais · Sinais Vitais · Exames · Ciclo.
 
-**Tipos de evento** (dentro de Agenda/Histórico, NÃO são módulos): consulta, retorno, procedimento, cirurgia, vacina, exame, plano de saúde, medicação (lembrete de recompra), outro. Fonte única de rótulos: `@/lib/agenda` (`typeLabel`).
+### B. Eventos — acontecimentos no tempo
+São **fatos registrados numa data**; pertencem à **Agenda** (futuros) e ao **Histórico** (passados). **Não** viram módulo.
+> Consulta · Retorno · Procedimento · Cirurgia · Vacina · Internação · Exame (realização) · Plano de saúde · Compra · Recompra.
 
-**Correção estrutural definida por UX-001:** óculos e lentes (`eyeglass_prescriptions`), hoje embutidos na página de Condições, **migram para Recursos de Saúde**. Condição ≠ recurso (ceratocone é condição; lente escleral é recurso).
+**Regra de ouro:** antes de propor "criar um módulo X", verificar se X é na verdade um **evento** (ocorre numa data → Agenda/Histórico) ou um **atributo/subtipo** de um módulo existente. Ex.: *Vacina* é evento, não módulo.
 
 ---
 
-## 3. Modelo de Navegação
+## 3. Tipos de Módulos
 
-**Menu lateral** — agrupado pelo modelo mental da usuária (sem jargão):
-- **Painel** — Painel Inicial.
-- **Minha Saúde** (o que ela faz/acompanha na jornada) — Agenda · Histórico · Exames · Medicamentos e Suplementos.
-- **Meu Perfil** (quem ela é em termos de saúde) — Condições de Saúde · **Recursos de Saúde** · Hábitos · Medidas Corporais · Sinais Vitais · Ciclo e Contracepção.
-- **Organização** (gestão) — Despesas · Relatórios.
-- **Configurações** — conta.
+Todo módulo pertence a **uma** das três categorias — orienta a evolução e a navegação.
 
-**Acesso rápido (Painel Inicial)** — os módulos de uso mais frequente: Histórico · Agenda · Exames · Medicamentos · Relatórios · Despesas. (Ciclo e demais itens de perfil não entram no acesso rápido — são consulta menos frequente.)
-
-**Relatório** — espelha os módulos como seções selecionáveis; usa os mesmos rótulos do menu (SSOT de nomenclatura).
-
-Regra: **rota ≠ rótulo.** URLs (ex.: `/dashboard/gastos`, `/dashboard/condicoes`) são estáveis e não mudam com renomeações de rótulo.
-
----
-
-## 4. Padrão de Página
-
-Toda página de listagem segue a **hierarquia fixa**, montada só com primitivos:
-
-```
-PageShell  (max-w-2xl · px-4 py-8 · space-y-6)
-  1. PageHeader   → eyebrow (ícone + rótulo) · Título (h1) · Subtítulo (LARGURA TOTAL) · ação
-  2. Toolbar      → filtros / segmentação (ViewModeSwitcher)
-  3. Conteúdo     → listas de cards (ListCard) agrupadas
-  4. Ações        → nos próprios cards (não há barra de ação global)
-  (EmptyState quando não há conteúdo)
-```
-
-- **Subtítulo em largura total** (nunca espremido ao lado do botão).
-- **Escala de espaçamento única:** entre seções `space-y-6`; header→conteúdo e dentro de grupo `space-y-3`; título→subtítulo `mt-1`.
-- Componentes: `PageHeader`, `EmptyState` (padrão único).
-
----
-
-## 5. Padrão de Lista
-
-- **`ListCard`** (card de 2 camadas, mobile-first):
-  - Linha 1: [ícone] **Nome** dominante (`break-words` + `line-clamp-2`, **nunca** `break-all`) · trailing (valor/status).
-  - Linha 2: meta secundária (categoria • data • detalhe).
-  - Linha 3: **chips** compactos (`CardChip`, tons: sage/petal/gold/mauve/neutral).
-  - Linha 4: ações discretas à direita (ícones 12px, `text-mauve/40`).
-- **Segmentação** via **`ViewModeSwitcher`** (componente único): Por data · Por tipo · Por situação · Ano — conforme o módulo. Padrão inicial por módulo e **preferência persistida** por módulo (`useStickyView`/localStorage).
-- **Agrupamento** com ordem **fixa** (não alfabética/oportunista): ex. "Por tipo" = Consultas · Exames · Procedimentos · Medicamentos · Suplementos · Vacinas · Outros.
-- Listagem mostra **só o essencial**; detalhes completos só na edição.
-
----
-
-## 6. Padrão de Formulário
-
-- Pares de campos: `grid-cols-1 sm:grid-cols-2` (empilham no mobile, nada sobreposto/comprimido).
-- Campo com botão ao lado (ex.: "Falar"): input `flex-1 min-w-0` para o botão não ser empurrado.
-- Rótulo `text-xs text-mauve/70` acima do campo; campo `rounded-xl` `bg-ivory`.
-- Espaçamento entre campos uniforme (`space-y-3`).
-- Situação/estado editável **no formulário** (na lista é badge, não seletor).
-- Voz (`VoiceInput`) só onde acrescenta valor (nome, observações); com feedback de permissão de microfone.
-
----
-
-## 7. Padrão de Nomenclatura
-
-**Regras:** neutra (RDC 657) · curta · consistente com o menu · sem conotação negativa · um conceito por nome.
-
-**Decisões consolidadas:**
-| Antes | Depois | Motivo |
+| Categoria | Módulos | Papel |
 |---|---|---|
-| Problemas de Saúde | **Condições de Saúde** | "problema" sugere diagnóstico/negativo; "condições" é amplo e factual |
-| Gastos / Gastos com Saúde | **Despesas** | preciso; contexto já é saúde |
-| Dispositivos (dentro de Medicamentos) | **Recursos de Saúde** (módulo próprio) | óculos/marcapasso/prótese não são medicamento; recurso ≠ condição |
-| "Medicamentos, Suplementos, Produtos e Dispositivos" | **Medicamentos e Suplementos** | Produtos/Dispositivos saem para Recursos de Saúde |
+| **Clínicos** | Condições · Exames · Medicamentos e Suplementos · Recursos de Saúde · Hábitos · Medidas Corporais · Sinais Vitais · Ciclo | O que compõe a saúde da pessoa (o domínio) |
+| **Operacionais** | Agenda · Histórico · Despesas · Relatórios | Gestão/organização da jornada (projeções e ferramentas) |
+| **de Sistema** | Perfil · Configurações | Conta e preferências |
 
 ---
 
-## 8. Responsividade
+## 4. Mapa dos Módulos
 
-- **Mobile-first**, breakpoint único `sm` (640px). Mesmo componente serve os dois formatos.
-- **Mobile:** compacto, vertical, leitura rápida — cabeçalho empilha (subtítulo full-width), cards baixos, ações discretas, campos em 1 coluna.
-- **Desktop:** aproveita a largura — cabeçalho lado a lado, cards mais largos (nome em 1 linha), campos em 2 colunas, chips na mesma linha.
-- Nenhum texto quebra palavra; nenhum elemento estoura o card; nenhuma coluna fixa espreme o conteúdo.
+Cada módulo = entidade de 1ª classe com **modelo de dados próprio**.
+
+| Módulo | Categoria | Conceito | Modelo (tabela) |
+|---|---|---|---|
+| Painel Inicial | Operacional | Visão geral / entrada | (agrega) |
+| Agenda | Operacional | Eventos **futuros** | `health_events` (futuros) |
+| Histórico | Operacional | Eventos **passados** + Evolução | `health_events`, `exams`, biomarcadores |
+| Despesas | Operacional | Projeção financeira (eventos/compras com valor) | `health_events` c/ valor |
+| Relatórios | Operacional | Compilação factual p/ o profissional | (agrega) |
+| Exames | Clínico | Laudos + extração IA | `exams`, `biomarkers` |
+| Medicamentos e Suplementos | Clínico | O que a pessoa **toma** | `medications` (medicamento, suplemento) |
+| Condições de Saúde | Clínico | O que a pessoa **tem** (próprias + familiares) | `health_conditions` |
+| **Recursos de Saúde** *(novo)* | Clínico | Recursos que **usa** (cuidado/compensação/monitoramento) | *modelo próprio (Anexo A)* |
+| Hábitos | Clínico | Estilo de vida | `life_habits` |
+| Medidas Corporais | Clínico | Peso/altura/IMC/composição | `body_metrics` (corporais) |
+| Sinais Vitais | Clínico | Pressão/FC/glicemia/SpO₂/temperatura | `body_metrics` (vitais) |
+| Ciclo e Contracepção | Clínico | Menstruação + métodos | (ciclo) |
+| Perfil · Configurações | Sistema | Conta | — |
+
+**Correção estrutural:** óculos/lentes (`eyeglass_prescriptions`), hoje embutidos em Condições, **migram para Recursos de Saúde** (condição ≠ recurso).
 
 ---
 
-## 9. Critérios para Criação de Novos Módulos
+## 5. Navegação
 
-Antes de criar qualquer coisa nova (ex.: Vacinas, Alergias, Internações, Histórico Familiar), aplicar esta **árvore de decisão** — evita crescimento oportunista da arquitetura.
+**Hierarquia de navegação — regra única (toda página segue):**
+```
+Módulo → Lista → Detalhe → Edição
+```
 
-**Passo 1 — É um conceito distinto?** Se é a mesma coisa com outro nome de um módulo existente → é o módulo existente.
+**Menu lateral** (agrupado pelo modelo mental da usuária):
+- **Painel** — Painel Inicial.
+- **Minha Saúde** — Agenda · Histórico · Exames · Medicamentos e Suplementos.
+- **Meu Perfil** — Condições de Saúde · **Recursos de Saúde** · Hábitos · Medidas Corporais · Sinais Vitais · Ciclo e Contracepção.
+- **Organização** — Despesas · Relatórios.
+- **Configurações**.
 
-**Passo 2 — Tem modelo de dados próprio e significativo?** Se os atributos são substancialmente diferentes dos de qualquer módulo existente (não caberia sem encher de campos nulos/regras condicionais) → candidato a **módulo novo**. Se são poucos campos que cabem num módulo existente → é **atributo/sub-item**, não módulo.
+*(Os grupos de menu são a face de navegação; a taxonomia formal é a §3. Ex.: "Minha Saúde"/"Meu Perfil" reúnem módulos Clínicos + Operacionais por afinidade de uso.)*
 
-**Passo 3 — Acontece numa data (evento) ou é um estado contínuo?**
-- **Evento pontual** (ocorre numa data, entra na linha do tempo) → é **tipo de evento** dentro de Agenda/Histórico (ex.: consulta, vacina, internação, cirurgia). **Não** vira módulo próprio.
-- **Estado/registro contínuo** (a pessoa "tem"/"usa" ao longo do tempo) → candidato a **módulo de perfil** (ex.: condição, recurso, hábito).
+**Acesso rápido (Painel Inicial):** os módulos mais frequentes — Histórico · Agenda · Exames · Medicamentos · Relatórios · Despesas.
+**Relatório:** espelha os módulos como seções, com os mesmos rótulos do menu.
+**Rota ≠ rótulo:** URLs (`/dashboard/gastos`, `/dashboard/condicoes`) são estáveis; renomear o rótulo não muda a rota.
 
-**Passo 4 — Justifica entrada no menu?** Volume de uso e clareza mental. Se raro/marginal, pode ser sub-seção de um módulo maior, não item de menu próprio.
+---
+
+## 6. Padrões de Página (estrutura funcional)
+
+Toda página de módulo segue a **hierarquia fixa de conteúdo**:
+```
+Título → Texto explicativo → Filtros/Segmentação → Conteúdo (lista) → Ações (no item)
+```
+- O **detalhe** e a **edição** são alcançados a partir da **lista** (hierarquia da §5).
+- A **implementação visual** dessa estrutura (componentes, espaçamentos, tipografia, responsividade) é definida em **[[DS-001]]** — este documento fixa apenas a **ordem e a responsabilidade** de cada bloco.
+
+---
+
+## 7. Critérios para Criação de Novos Módulos (checklist obrigatório)
+
+Um novo conceito **só vira módulo** se responder **SIM** a todas:
+- [ ] Possui **identidade própria** (é um conceito distinto, não sinônimo de módulo existente)?
+- [ ] Possui **ciclo de vida próprio** (nasce, muda de estado, encerra de forma independente)?
+- [ ] Possui **modelo de dados próprio** (atributos que não caberiam em outro módulo sem encher de nulos)?
+- [ ] Possui **regras próprias** (comportamento/validação específicos)?
+- [ ] **Faz sentido existir sem depender** de outro módulo?
+
+Se **qualquer** resposta for **NÃO**, provavelmente é:
+- um **atributo** de um módulo existente; ou
+- um **subtipo** dentro de um módulo; ou
+- um **evento** (Agenda/Histórico).
 
 **Aplicação (decisões de referência):**
 | Ideia | Decisão | Por quê |
 |---|---|---|
-| **Recursos de Saúde** | **Módulo novo** | conceito distinto + modelo próprio + estado contínuo ("usa") |
-| **Vacinas** | **Tipo de evento** (Agenda/Histórico) | ocorre numa data; já existe como event_type |
-| **Procedimentos** | **Tipo de evento** | ocorre numa data (na jornada) |
-| **Internações** | **Tipo de evento** | ocorre num período/data |
-| **Alergias** | **Sub-item de Condições de Saúde** (ou atributo) | é um tipo de condição; não justifica módulo/tabela própria de início |
-| **Histórico Familiar** | **Sub-seção de Condições de Saúde** (já é o `scope=familiar`) | mesma entidade, escopo diferente |
+| Recursos de Saúde | **Módulo novo** | SIM a todas (identidade, ciclo, modelo, regras, independência) |
+| Vacinas | **Evento** | ocorre numa data → Agenda/Histórico |
+| Procedimentos · Internações · Cirurgias | **Eventos** | ocorrem numa data/período |
+| Alergias | **Subtipo/atributo de Condições** | é um tipo de condição; sem modelo próprio |
+| Histórico Familiar | **Escopo de Condições** (`scope=familiar`) | mesma entidade, escopo diferente |
 
 ---
 
-## Anexo A — Desenho do módulo "Recursos de Saúde" (para o ciclo de implementação)
+## 8. Responsabilidades dos Módulos (responsabilidade única)
 
-**Conceito:** recursos utilizados pela pessoa para **cuidado, compensação funcional ou monitoramento** — o que ela *usa*, não o que ela *tem* (condição) nem *toma* (medicamento).
+Cada módulo registra **apenas** o seu conceito. Fronteiras explícitas:
+
+| Módulo | Registra | NÃO registra |
+|---|---|---|
+| Condições de Saúde | condições próprias e familiares | compras · consultas · medicamentos · recursos |
+| Medicamentos e Suplementos | medicamentos e suplementos que toma | dispositivos · condições · procedimentos |
+| Recursos de Saúde | recursos que usa (óculos, dispositivos, próteses, auxílios…) | medicamentos · condições |
+| Hábitos | estilo de vida | medidas · sinais vitais |
+| Medidas Corporais | peso/altura/IMC/composição | sinais vitais |
+| Sinais Vitais | pressão/FC/glicemia/SpO₂/temperatura | medidas corporais |
+| Agenda / Histórico | eventos (futuros/passados) | estados contínuos (módulos clínicos) |
+| Despesas | valores (projeção de eventos/compras) | os próprios eventos (é projeção) |
+
+---
+
+## 9. Freeze Arquitetural
+
+Concluída a **implementação** do UX-001, a arquitetura funcional é **congelada**. A partir daí:
+- Todo novo desenvolvimento respeita este documento (modelo de dois eixos, tipos de módulos, mapa, navegação, responsabilidade única) e o checklist da §7.
+- Componentes/visual seguem o **DS-001**.
+- Alterações **estruturais** exigem revisão explícita desta constituição — não ajustes pontuais.
+
+---
+
+## Anexo A — Módulo "Recursos de Saúde" (para o ciclo de implementação)
+
+**Conceito:** recursos que a pessoa **usa** para cuidado, compensação funcional ou monitoramento — não o que *tem* (condição) nem *toma* (medicamento).
 
 **Sub-tipos (taxonomia controlada):**
 | Sub-tipo | Exemplos |
 |---|---|
 | Correção visual | óculos, lentes de contato, lente escleral |
-| Dispositivos médicos | marca-passo, CDI, bomba de insulina, sensor contínuo de glicose, neuroestimulador |
+| Dispositivos médicos | marca-passo, CDI, bomba de insulina, sensor de glicose, neuroestimulador |
 | Próteses e órteses | prótese, órtese, palmilha, aparelho ortodôntico |
 | Auxílios | aparelho auditivo, bengala, muletas, andador, cadeira de rodas |
 | Compressão e suporte | meia compressiva, colar cervical, faixa, colete |
 
-**Modelo de dados — próprio (NÃO reutilizar `medications`).** Motivo: dose/frequência/forma farmacêutica/via/recompra/prescritor/conteúdo da embalagem não fazem sentido para óculos/marcapasso/prótese; reaproveitar geraria tabela cheia de nulos e regras condicionais, e prejudicaria o KG v2. Modelo indicativo (a detalhar na implementação):
-`resource_id · user_id · resource_type (sub-tipo) · name · brand · started_on · until_date · status · notes · attributes (JSON específico do sub-tipo, ex.: grau para correção visual)`.
-
-**Migração:** os dados de `eyeglass_prescriptions` (óculos/lentes) migram para Recursos de Saúde (correção visual), saindo da página de Condições.
-
-**UI:** página própria "Recursos de Saúde" (grupo Meu Perfil), montada com os primitivos do Design System (PageHeader, ListCard, ViewModeSwitcher por sub-tipo, EmptyState). A página de Medicamentos passa a ser **Medicamentos e Suplementos** (kinds: medicamento, suplemento).
-
----
-
-## Congelamento (após a implementação do UX-001)
-
-Concluída a implementação, a **arquitetura funcional é congelada**: qualquer novo desenvolvimento respeita este documento (módulos, navegação, nomenclatura, Design System, padrões de página/lista/formulário) e os critérios da §9. Alterações estruturais exigem revisão explícita desta constituição — não ajustes pontuais.
+**Modelo de dados — PRÓPRIO (não reutilizar `medications`).** Dose/frequência/forma/via/recompra/prescritor não cabem em óculos/marcapasso/prótese; reaproveitar geraria nulos e regras condicionais e prejudicaria o KG v2. Modelo indicativo: `resource_id · user_id · resource_type · name · brand · started_on · until_date · status · notes · attributes (JSON por sub-tipo, ex.: grau da correção visual)`.
+**Migração:** `eyeglass_prescriptions` → Recursos de Saúde (correção visual), saindo de Condições.
+**UI:** página própria (grupo Meu Perfil), montada com os primitivos do **DS-001**. Medicamentos passa a ser **"Medicamentos e Suplementos"**.
 
 ---
 
 ## Critérios de Aceite (do UX-001)
-
-- Todos os módulos mapeados, cada um com conceito e modelo próprios definidos.
-- Nomenclatura consolidada e neutra (RDC 657).
-- Navegação (menu, acesso rápido, relatório) coerente e única.
-- Design System declarado como padrão oficial (componentes únicos).
-- Padrões de página, lista, formulário e responsividade documentados.
-- Critérios objetivos para novos módulos (§9) definidos e aplicados aos casos conhecidos.
-- "Recursos de Saúde" desenhado como módulo próprio, pronto para implementar.
+- Dois eixos (Módulo × Evento) explícitos e no início.
+- Três tipos de módulo (Clínicos/Operacionais/Sistema) definidos.
+- Mapa dos módulos com categoria e modelo próprio.
+- Hierarquia de navegação (Módulo→Lista→Detalhe→Edição) e estrutura de página.
+- Checklist obrigatório para novos módulos + casos aplicados.
+- Responsabilidade única declarada por módulo.
+- Design System **fora** do UX-001 (referência ao DS-001).
+- Recursos de Saúde desenhado como módulo próprio.
+- Freeze definido.
