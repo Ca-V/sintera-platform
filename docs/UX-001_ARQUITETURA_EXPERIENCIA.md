@@ -17,6 +17,7 @@
 6. **SSOT do metadado clínico.** Nomes, categorias, unidades, ícones e ordenação de metadados clínicos vêm do Catálogo Científico — nunca duplicados (herda §0.1 do Plano de Maturidade).
 7. **Modelo orientado a eventos.** A jornada é uma linha do tempo de eventos; a interface é projeção, não a fonte da verdade.
 8. **Navegação por frequência de uso, não por estrutura técnica.** *A organização do menu reflete a **frequência de uso** das funcionalidades — não a estrutura do banco de dados nem a arquitetura interna do sistema.* É por isso que **Acompanhamento** (uso diário) vem antes de **Minha Saúde** (contexto permanente), embora ambos sejam módulos independentes (§5). Reorganizações futuras de navegação partem da **experiência do usuário**, nunca da implementação técnica.
+9. **Nome único por módulo (sem sinônimos).** O nome do módulo no **menu lateral** é o **mesmo** na Home, nos Relatórios, nos breadcrumbs, nos títulos de página e em qualquer fluxo de navegação. É **proibido** haver sinônimos para o mesmo módulo (ex.: "Problemas de Saúde" num lugar e "Condições de Saúde" em outro). Renomear um módulo significa atualizar **todos** os pontos de exibição de uma vez.
 
 ---
 
@@ -115,6 +116,8 @@ Título → Texto explicativo → Filtros/Segmentação → Conteúdo (lista) �
 ---
 
 ## 7. Critérios para Criação de Novos Módulos (checklist obrigatório)
+
+> **Regra arquitetural permanente.** Nenhum novo módulo pode ser criado **apenas porque surgiu uma nova funcionalidade**. Um módulo só existe quando representa uma **entidade de primeira classe** — com **modelo de dados, ciclo de vida e responsabilidades próprias**. Caso contrário, deve ser implementado como **subtipo · atributo · visão · evento · ou funcionalidade** de um módulo existente.
 
 Um novo conceito **só vira módulo** se responder **SIM** a todas:
 - [ ] Possui **identidade própria** (é um conceito distinto, não sinônimo de módulo existente)?

@@ -6,10 +6,13 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, FileText, Clock, Pill, Receipt, CalendarDays,
   HeartPulse, Stethoscope, ScrollText, Droplet, Activity, Ruler, Settings,
-  Package, X, ChevronRight,
+  Accessibility, X, ChevronRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUser } from '@/context/UserContext'
+
+// Painel Inicial — item avulso (sem grupo), primeiro do menu.
+const homeItem = { href: '/dashboard', icon: LayoutDashboard, label: 'Painel Inicial', extra: undefined as string[] | undefined }
 
 // Arquitetura de navegação (UX-001 §5). Ordem = sequência natural de uso; agrupamento
 // = organização da experiência, NÃO fusão de entidades (cada módulo preserva modelo/regras).
@@ -23,12 +26,6 @@ const navGroups: {
   items: { href: string; icon: React.ElementType; label: string; extra?: string[] }[]
 }[] = [
   {
-    title: 'Painel',
-    items: [
-      { href: '/dashboard', icon: LayoutDashboard, label: 'Painel Inicial' },
-    ],
-  },
-  {
     title: 'Acompanhamento',
     items: [
       { href: '/dashboard/agenda',       icon: CalendarDays, label: 'Agenda' },
@@ -40,8 +37,8 @@ const navGroups: {
   {
     title: 'Minha Saúde',
     items: [
-      { href: '/dashboard/condicoes',     icon: Stethoscope, label: 'Condições de Saúde' },
-      { href: '/dashboard/recursos',      icon: Package,     label: 'Recursos de Saúde' },
+      { href: '/dashboard/condicoes',     icon: Stethoscope,   label: 'Condições de Saúde' },
+      { href: '/dashboard/recursos',      icon: Accessibility, label: 'Recursos de Saúde' },
       { href: '/dashboard/medidas',       icon: Ruler,       label: 'Medidas Corporais' },
       { href: '/dashboard/sinais-vitais', icon: Activity,    label: 'Sinais Vitais' },
       { href: '/dashboard/habitos',       icon: HeartPulse,  label: 'Hábitos' },
@@ -77,7 +74,7 @@ function NavItem({ href, icon: Icon, label, active, soon, onClose }: {
   return (
     <Link href={href} onClick={onClose}
       className={cn(
-        'flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 text-sm font-body group',
+        'flex items-center gap-3 px-3 py-1.5 rounded-xl transition-all duration-200 text-sm font-body group',
         active
           ? 'nav-active-glow bg-white/8 text-white'
           : 'text-white/45 hover:text-white/80 hover:bg-white/5'
@@ -85,7 +82,7 @@ function NavItem({ href, icon: Icon, label, active, soon, onClose }: {
     >
       <Icon size={16} className={cn('flex-shrink-0 transition-colors',
         active ? 'text-petal' : 'text-white/30 group-hover:text-white/60')} />
-      <span className="flex-1">{label}</span>
+      <span className={cn('flex-1', active && 'font-medium')}>{label}</span>
       {soon && (
         <span className="font-body text-[9px] font-medium text-white/30 bg-white/8 px-1.5 py-0.5 rounded-full border border-white/10">
           Em breve
@@ -135,11 +132,17 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
         </div>
       </Link>
 
-      {/* Navegação principal — todos os tópicos visíveis sem rolagem */}
+      {/* Navegação principal — todos os tópicos visíveis sem rolagem.
+          Painel Inicial é item avulso; os grupos vêm em seguida (títulos com mais
+          destaque, itens mais compactos para caber mais sem rolagem). */}
       <nav className="flex-1 px-3 overflow-y-auto pb-3">
+        <div className="mb-2">
+          <NavItem href={homeItem.href} icon={homeItem.icon} label={homeItem.label}
+            active={isActive(pathname, homeItem.href, homeItem.extra)} onClose={onClose} />
+        </div>
         {navGroups.map(group => (
-          <div key={group.title} className="mb-2">
-            <p className="text-[9px] font-body font-semibold text-white/25 uppercase tracking-[0.2em] px-3 mb-1">
+          <div key={group.title} className="mb-1.5">
+            <p className="text-[10px] font-body font-bold text-white/45 uppercase tracking-[0.16em] px-3 mt-1 mb-1">
               {group.title}
             </p>
             <ul className="flex flex-col gap-0.5">
