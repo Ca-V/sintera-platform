@@ -42,3 +42,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# QA-001 artefatos de auditoria visual (screenshots + json) — não versionar
+qa001-artifacts/
