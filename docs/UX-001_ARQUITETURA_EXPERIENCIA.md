@@ -91,6 +91,12 @@ Módulo → Lista → Detalhe → Edição
 
 *(Decisão desta versão: **Acompanhamento vem antes de Minha Saúde** — prioriza as funções mais acessadas no dia a dia e deixa o perfil de saúde como contexto permanente, não como primeiro ponto de entrada. "Minha Saúde" designa o estado-perfil clínico — Condições, Recursos, Medidas, Sinais, Hábitos e Ciclo, cada um independente. Ciclo fica em Minha Saúde por ser estado-perfil contínuo, como Medidas/Sinais. Reordenar grupos é arquitetura de navegação — não altera modelos, rotas nem permissões.)*
 
+**Definição formal dos grupos (critério de encaixe para módulos novos):**
+- **Acompanhamento** reúne os módulos da **jornada de cuidado** — atividades e registros organizados no tempo (agendar, realizar, tomar), de gestão contínua e orientada a datas/eventos. *(Agenda, Histórico, Exames, Medicamentos e Suplementos.)*
+- **Minha Saúde** reúne os módulos que descrevem o **perfil/estado de saúde** da pessoa — o que ela **é, tem e mede sobre si** —, relativamente estável e independente de um evento específico. Mesmo quando medido periodicamente (ex.: peso, pressão), descreve o **corpo**, não uma atividade de cuidado. *(Condições, Recursos, Medidas, Sinais Vitais, Hábitos, Ciclo.)*
+
+> **Como decidir onde encaixar um módulo novo:** ele representa uma **atividade/evento de cuidado no tempo** → Acompanhamento; representa um **traço/estado do perfil de saúde** → Minha Saúde. (Se for um acontecimento numa data, reveja antes a §2/§7: pode ser um **evento**, não um módulo.)
+
 **Acesso rápido (Painel Inicial):** os módulos mais frequentes — Histórico · Agenda · Exames · Medicamentos · Relatórios · Despesas.
 **Relatório:** espelha os módulos como seções, com os mesmos rótulos do menu.
 **Rota ≠ rótulo:** URLs (`/dashboard/gastos`, `/dashboard/condicoes`) são estáveis; renomear o rótulo não muda a rota.
@@ -162,6 +168,9 @@ Cada módulo registra **apenas** o seu conceito. Fronteiras explícitas:
 - Consolidar `produto`/`dispositivo` (hoje ainda como `kind` em Medicamentos) no módulo Recursos — requer migração de dados dos registros reais; fazer com confirmação da fundadora.
 - Ampliar a seção de Relatórios/relatório compartilhado para exibir **todos** os sub-tipos de Recursos (hoje espelha apenas correção visual).
 - Alergias como subtipo de Condições (§7) — quando priorizado.
+
+**Notas de evolução futura (registradas, não congeladas — não mudam agora):**
+- **Histórico como visão global.** O Histórico é uma **projeção transversal** (consultas, exames, medicamentos, despesas, procedimentos sobre a linha do tempo). Hoje é, corretamente, um módulo Operacional em Acompanhamento; no futuro pode evoluir para uma **visão global tipo Timeline** que atravessa toda a plataforma, deixando de ser apenas um item de um grupo. Registrado como direção possível — sem alteração neste ciclo.
 
 ---
 
