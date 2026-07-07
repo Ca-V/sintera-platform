@@ -79,3 +79,32 @@ REL-001, DOC-001, CAP-001, QA-001) só reabrem por **revisão explícita** — n
 um **smoke test em produção** confirmando que o deploy anterior publicou corretamente e **não
 introduziu regressões** (o harness QA-001 aponta para a URL de produção). Só então abrir a nova
 branch. Reduz o risco de carregar problemas de uma entrega para a implementação da seguinte.
+
+## Modo de Execução por Lote (a partir do CAP-001)
+
+Após o marco de transição, a execução é orientada por **entregas completas (lotes)**, não por
+incrementos pequenos. Cada lote chega **finalizado, testado e auditado**, contendo:
+
+- **implementação completa** do escopo do lote;
+- **evidências objetivas** de funcionamento (instrumentadas);
+- **TypeScript, ESLint e build limpos**;
+- **auditoria QA-001** correspondente (visual desktop+mobile);
+- **preview** pronto para homologação.
+
+**Autonomia de engenharia (total durante a implementação):** todas as decisões de engenharia,
+componentes, estrutura de código, layout técnico, refatorações e organização interna são tomadas
+de forma autônoma. A fundadora é acionada **apenas** para decisões de: **arquitetura · modelo de
+domínio · produto · governança · posicionamento · conformidade regulatória.**
+
+**Relatório executivo ao fim de cada lote** (além da entrega técnica):
+1. objetivos entregues;
+2. itens implementados;
+3. problemas encontrados;
+4. decisões técnicas tomadas;
+5. riscos remanescentes;
+6. pendências (se houver);
+7. checklist de homologação.
+
+**Lotes do CAP-001 (exemplo):** (1) infraestrutura completa — `DocumentCapture` + Capture Engine +
+Routing Engine + config central de formatos + integração DOC-001; (2) migração completa de
+Medicamentos; (3) Recursos; (4) Exames; (5) demais módulos.
