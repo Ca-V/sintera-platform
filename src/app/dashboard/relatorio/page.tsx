@@ -523,7 +523,7 @@ function LegacyReport() {
         <p className="font-body text-[11px] text-mauve/60 mt-3">Marque o que deseja incluir. Vale para a impressão e para o link compartilhado.</p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-border p-8 space-y-6 print:border-0 print:p-0">
+      <div className="bg-white rounded-2xl border border-border p-5 sm:p-8 space-y-6 print:border-0 print:p-0">
         {/* Cabeçalho */}
         <div className="border-b border-border pb-4">
           <div className="inline-flex items-center gap-1.5 text-petal mb-1 print:hidden">
