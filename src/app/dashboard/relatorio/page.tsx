@@ -20,7 +20,6 @@ import { examProvenance, resourceProvenance } from '@/lib/provenance'
 import { type Period, resolvePeriod, inPeriod, overlapsPeriod, periodLabel } from '@/lib/communication/period'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import { applySort, type SortSpec } from '@/lib/listview'
-import { COMMUNICATION_PROFILES, type CommunicationProfile } from '@/lib/communication/profiles'
 import {
   Loader2, Printer, ArrowLeft, FileText, Share2, Copy, Trash2, Check,
   CalendarDays, FlaskConical, Pill, Stethoscope, HeartPulse, Ruler, Activity, Eye,
@@ -124,6 +123,7 @@ function LegacyReport() {
   // Perfis de Comunicação personalizados (report_templates).
   const [templates, setTemplates] = useState<{ id: string; name: string; selection: Record<string, unknown> }[]>([])
   const [tplName, setTplName] = useState('')
+  const [configOpen, setConfigOpen] = useState(false)   // "Configurações de relatório" (discreto)
 
   // Árvore de seleção = espelho do menu lateral (UX-001): grupos expansíveis,
   // seleção por grupo (tri-state) e por item. Mesma ordem/nomenclatura da sidebar.
@@ -300,12 +300,7 @@ function LegacyReport() {
   ]
   const sortedExams = applySort(perVisExams, EXAM_SORTS, examSort)
 
-  // Perfis de Comunicação: aplicar perfil oficial · salvar/aplicar/excluir personalizado.
-  const applyProfile = (p: CommunicationProfile) => {
-    const next = allSections(false)
-    p.sections.forEach(k => { (next as Record<string, boolean>)[k] = true })
-    setSections(next); setExcluded({})
-  }
+  // Configurações de relatório (salvas): salvar/aplicar/excluir (personalizadas).
   const currentConfig = () => ({
     sections,
     excluded: Object.fromEntries(Object.entries(excluded).map(([k, v]) => [k, [...v]])),
@@ -404,47 +399,6 @@ function LegacyReport() {
         <p className="font-body text-[11px] text-mauve/60 mt-3">Recorte aplicado ao relatório, à impressão/PDF e ao link compartilhado. Condições atuais e itens em uso aparecem independentemente do período.</p>
       </div>
 
-      {/* Perfis de Comunicação — oficiais da plataforma + personalizados (report_templates) */}
-      <div className="card-premium p-5 mb-6 print:hidden">
-        <p className="font-body text-sm font-semibold text-onyx mb-1">Perfis de Comunicação</p>
-        <p className="font-body text-[11px] text-mauve/60 mb-3">Aplique um perfil oficial ou salve a configuração atual (seções, itens e período) como um perfil seu.</p>
-        <div className="flex flex-wrap gap-1.5">
-          {COMMUNICATION_PROFILES.map(p => (
-            <button key={p.key} type="button" onClick={() => applyProfile(p)}
-              className="font-body text-xs rounded-full px-3 py-1 border border-border text-mauve bg-ivory hover:border-petal/40 hover:text-petal transition-colors">
-              {p.label}
-            </button>
-          ))}
-        </div>
-        {templates.length > 0 && (
-          <div className="mt-3 pt-3 border-t border-border/50">
-            <p className="font-body text-[10px] font-semibold text-mauve/50 uppercase tracking-[0.15em] mb-2">Meus perfis</p>
-            <div className="flex flex-col gap-1.5">
-              {templates.map(t => (
-                <div key={t.id} className="flex items-center gap-2">
-                  <button type="button" onClick={() => applyConfig(t.selection)}
-                    className="flex-1 min-w-0 truncate text-left font-body text-xs rounded-full px-3 py-1 border border-petal/30 text-petal bg-blush/40 hover:bg-blush transition-colors">
-                    {t.name}
-                  </button>
-                  <button type="button" onClick={() => deleteTemplate(t.id)} title="Remover perfil"
-                    className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-red-400 hover:bg-red-50 transition-colors flex-shrink-0">
-                    <Trash2 size={13} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-        <div className="flex items-center gap-2 mt-3">
-          <input type="text" value={tplName} onChange={e => setTplName(e.target.value)} placeholder="Nome do perfil"
-            className="flex-1 min-w-0 px-3 py-1.5 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
-          <button type="button" onClick={saveTemplate} disabled={!tplName.trim()}
-            className="px-3 py-1.5 rounded-full gradient-sintera text-white font-body text-xs font-medium disabled:opacity-40 hover:opacity-90 transition-opacity flex-shrink-0">
-            Salvar perfil
-          </button>
-        </div>
-      </div>
-
       {/* Seleção = árvore do menu lateral (UX-001): grupos expansíveis, seleção por
           grupo (tri-state) e por item, com a mesma ordem, nomenclatura e ícones. */}
       <div className="card-premium p-5 mb-6 print:hidden">
@@ -526,6 +480,45 @@ function LegacyReport() {
           })}
         </div>
         <p className="font-body text-[11px] text-mauve/60 mt-3">Marque o que deseja incluir. Vale para a impressão e para o link compartilhado.</p>
+      </div>
+
+      {/* Configurações de relatório — salvar/reutilizar (discreto, recolhido por padrão) */}
+      <div className="card-premium p-4 mb-6 print:hidden">
+        <button type="button" onClick={() => setConfigOpen(o => !o)} className="w-full flex items-center justify-between gap-2 text-left">
+          <div className="min-w-0">
+            <p className="font-body text-sm font-semibold text-onyx">Configurações de relatório</p>
+            <p className="font-body text-[11px] text-mauve/60">Salve esta configuração (seções, itens e período) para reutilizar depois{templates.length > 0 ? ` · ${templates.length} salva${templates.length > 1 ? 's' : ''}` : ''}.</p>
+          </div>
+          <ChevronDown size={16} className="text-mauve/50 flex-shrink-0 transition-transform" style={{ transform: configOpen ? 'none' : 'rotate(-90deg)' }} />
+        </button>
+        {configOpen && (
+          <div className="mt-3 pt-3 border-t border-border/50 space-y-3">
+            {templates.length > 0 && (
+              <div className="flex flex-col gap-1.5">
+                {templates.map(t => (
+                  <div key={t.id} className="flex items-center gap-2">
+                    <button type="button" onClick={() => applyConfig(t.selection)}
+                      className="flex-1 min-w-0 truncate text-left font-body text-xs rounded-full px-3 py-1 border border-petal/30 text-petal bg-blush/40 hover:bg-blush transition-colors">
+                      {t.name}
+                    </button>
+                    <button type="button" onClick={() => deleteTemplate(t.id)} title="Remover"
+                      className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-red-400 hover:bg-red-50 transition-colors flex-shrink-0">
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <input type="text" value={tplName} onChange={e => setTplName(e.target.value)} placeholder="Ex.: Consulta endócrino, Viagem…"
+                className="flex-1 min-w-0 px-3 py-1.5 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+              <button type="button" onClick={saveTemplate} disabled={!tplName.trim()}
+                className="px-3 py-1.5 rounded-full gradient-sintera text-white font-body text-xs font-medium disabled:opacity-40 hover:opacity-90 transition-opacity flex-shrink-0">
+                Salvar configuração
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="bg-white rounded-2xl border border-border p-5 sm:p-8 space-y-6 print:border-0 print:p-0">
