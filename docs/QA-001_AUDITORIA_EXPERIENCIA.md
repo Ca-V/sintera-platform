@@ -37,17 +37,36 @@ Por rota, em **desktop (1280)** e **mobile (375)**:
 | **UX** | facilidade de entendimento · nº de cliques · carga cognitiva · organização · hierarquia visual |
 | **Design** | consistência visual · uso correto do DS-001 · equilíbrio de espaços · contraste · legibilidade |
 | **Arquitetura** | aderência ao UX-001 · coerência entre módulos · organização do menu · navegação |
-| **Regulatório** | aderência ao posicionamento oficial e à RDC 657 (organiza, não interpreta/diagnostica) |
+| **Regulatório** | aderência ao posicionamento oficial e à RDC 657 · nenhuma tela pode sugerir diagnóstico · interpretação clínica · recomendação terapêutica · estratificação de risco · parecer médico (havendo dúvida, propor alternativa compatível) |
+| **Consistência** | nomenclaturas · mensagens · botões · títulos · ícones · breadcrumbs · componentes · comportamento — nenhuma tela pode parecer de outro sistema |
+| **Comunicação** | tom · linguagem · microcopy · mensagens de ajuda · Empty States · confirmações · erros |
+| **Identidade do produto** | transmite organização · confiança · continuidade · autonomia da pessoa · rastreabilidade · segurança · simplicidade? |
+| **Performance percebida** | tempo de leitura · excesso de informação · densidade visual · organização |
+
+### 3.1 Proposta de valor por tela (complemento estratégico — obrigatório)
+Para **cada página**, responder objetivamente:
+1. Qual é o **objetivo** desta tela?
+2. O usuário entende esse objetivo em **até 5 segundos**?
+3. Existe algum elemento que **não contribui** para esse objetivo?
+4. Existe algo importante que **está faltando**?
+5. **Esta tela faz a SINTERA parecer um "organizador de documentos" ou uma "plataforma de continuidade do cuidado"?**
+
+A pergunta 5 é a mais importante. O diferencial da SINTERA **não** é armazenar documentos — é **organizar, relacionar e tornar as informações de saúde utilizáveis ao longo do tempo, com rastreabilidade, sem substituir o julgamento clínico**. A auditoria verifica se essa proposta de valor está **evidente em toda a experiência**.
+
+### 3.2 Lente permanente — retenção
+Ao longo de **toda** a auditoria, responder continuamente: **"Por que alguém continuaria usando a SINTERA daqui a um ano?"** Se uma tela não contribui para essa resposta, propor melhorias.
 
 ## 4. Auditoria específica da Home (posicionamento de produto)
 
-A Home recebe auditoria própria. Ela deve **responder imediatamente**:
-- Por que usar a SINTERA?
-- Qual problema resolve?
-- Qual benefício entrega?
-- Por que continuar usando **diariamente**?
+A Home recebe auditoria própria. Não é "uma tela inicial" — deve **transmitir imediatamente o propósito da SINTERA** e, em poucos segundos, responder:
+- Por que esta plataforma **existe**?
+- Por que vale a pena usá-la **diariamente**?
+- Qual **problema** resolve?
+- Qual **benefício concreto** entrega?
 
-Entregável: **proposta completa de evolução da Home** — não apenas melhorias visuais, mas **revisão de posicionamento de produto**.
+Deve incentivar o uso contínuo **sem mensagens alarmistas**. Deve carregar, quando fizer sentido, a **história, direção, valores e visão** da SINTERA — o que é fundamental para o sucesso do produto (herda [[sintera_mission_vision]]).
+
+Entregável: **proposta completa de evolução da Home** — não apenas visual, mas **revisão de posicionamento de produto**: quando o usuário vê a Home, deve **sentir a necessidade** de ter e usar a plataforma (necessidade de uso, praticidade, ganho real para a vida).
 
 ## 5. Documento-resultado (não é lista de bugs)
 
@@ -60,6 +79,8 @@ Um documento único com seis eixos:
 6. Oportunidades de evolução do **produto**
 
 **Cada item carrega:** `criticidade · impacto · esforço estimado · dependências · prioridade dentro do Roadmap por Ondas (onda-alvo)`.
+
+**Regra: nada é implementado durante a auditoria.** Primeiro consolida-se **todo** o diagnóstico (os três pareceres); só depois as melhorias são priorizadas e posicionadas nas ondas do roadmap. Nada é presumido como correto só porque "funciona" — cada elemento é questionado sob a ótica de produto. *(A REL-001 e demais itens já aprovados do roadmap não são achados de auditoria e seguem normalmente.)*
 
 ## 6. Três pareceres → consolidação
 
