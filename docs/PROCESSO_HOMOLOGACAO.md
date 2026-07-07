@@ -108,3 +108,24 @@ domínio · produto · governança · posicionamento · conformidade regulatóri
 **Lotes do CAP-001 (exemplo):** (1) infraestrutura completa — `DocumentCapture` + Capture Engine +
 Routing Engine + config central de formatos + integração DOC-001; (2) migração completa de
 Medicamentos; (3) Recursos; (4) Exames; (5) demais módulos.
+
+### Disciplina de escopo durante o lote (anti-scope-creep)
+
+Ideias, melhorias ou oportunidades que surgirem **durante** a implementação — **mesmo que façam
+sentido** — **não** são implementadas automaticamente. Cada descoberta é **classificada**:
+
+| Categoria | Pode alterar o escopo do lote em andamento? |
+|---|---|
+| **Bug crítico** | ✅ Sim (corrige no lote) |
+| **Correção regulatória** (RDC 657 etc.) | ✅ Sim (corrige no lote) |
+| Bug não-crítico | ❌ Backlog |
+| Débito técnico | ❌ Backlog |
+| Melhoria de UX | ❌ Backlog |
+| Nova funcionalidade | ❌ Backlog |
+| Evolução arquitetural | ❌ Backlog |
+
+**Somente bug crítico ou problema regulatório** altera o escopo do lote corrente. **Todo o restante**
+é **registrado automaticamente no backlog** — com **justificativa, prioridade e onda sugerida** no
+Roadmap — **sem interromper a execução**. Objetivo: impedir crescimento de escopo e garantir que
+cada lote tenha **início, meio e fim** definidos; concluir integralmente uma entrega antes de iniciar
+a seguinte. O backlog é mantido em registro próprio (ex.: `docs/BACKLOG_CAP-001.md` / Roadmap por Ondas).
