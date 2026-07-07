@@ -13,8 +13,8 @@ import { createClient } from '@/lib/supabase/server'
 
 const MODEL = 'claude-haiku-4-5-20251001'
 
-const SYSTEM = `Você extrai medicamentos/suplementos de uma IMAGEM (caixa/embalagem ou receita)
-ou de uma FALA transcrita. Liste os itens. Para cada item, SEPARE bem:
+const SYSTEM = `Você extrai medicamentos/suplementos de uma IMAGEM ou de um PDF (caixa/embalagem
+ou receita) ou de uma FALA transcrita. Liste os itens. Para cada item, SEPARE bem:
 - name: o NOME/TÍTULO do produto (marca/nome comercial na frente do rótulo), sem dose nem frequência. Ex.: "Losartana", "Vitamina D".
 
 REGRA — UM produto físico = UM item:
@@ -53,27 +53,32 @@ export async function POST(req: NextRequest) {
   const { data: auth } = await supabase.auth.getUser()
   if (!auth.user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
-  let body: { imageBase64?: string; mediaType?: string; text?: string }
+  let body: { imageBase64?: string; fileBase64?: string; mediaType?: string; text?: string }
   try { body = await req.json() } catch { return NextResponse.json({ error: 'Corpo inválido' }, { status: 400 }) }
-  const imageBase64 = body.imageBase64
+  // fileBase64 é o campo genérico (imagem OU PDF); imageBase64 mantido por compatibilidade.
+  const fileBase64 = body.fileBase64 || body.imageBase64
   const mediaType = body.mediaType || 'image/jpeg'
+  const isPdf = mediaType === 'application/pdf'
   const text = typeof body.text === 'string' ? body.text.trim() : ''
-  if (!imageBase64 && !text) return NextResponse.json({ error: 'Imagem ou texto ausente' }, { status: 400 })
-  // A IA de visão só aceita JPEG/PNG/WebP/GIF. Fotos de iPhone costumam ser HEIC —
+  if (!fileBase64 && !text) return NextResponse.json({ error: 'Documento ou texto ausente' }, { status: 400 })
+  // Visão aceita JPEG/PNG/WebP/GIF; PDF vai como documento. HEIC (iPhone) não é aceito —
   // rejeita com mensagem clara em vez de deixar a chamada falhar com erro genérico.
   const SUPPORTED_IMAGE = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-  if (imageBase64 && !SUPPORTED_IMAGE.includes(mediaType)) {
-    return NextResponse.json({ error: 'Formato de imagem não suportado (ex.: HEIC do iPhone). Tire a foto como JPG, ou ajuste a câmera para "Mais compatível".' }, { status: 400 })
+  if (fileBase64 && !isPdf && !SUPPORTED_IMAGE.includes(mediaType)) {
+    return NextResponse.json({ error: 'Formato não suportado (ex.: HEIC do iPhone). Use PDF, JPG ou PNG — ou ajuste a câmera para "Mais compatível".' }, { status: 400 })
   }
   if (!process.env.ANTHROPIC_API_KEY) return NextResponse.json({ error: 'IA indisponível' }, { status: 503 })
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: 60_000 })
-  // Conteúdo: foto (visão) OU texto ditado pela usuária.
-  const content = imageBase64
+  // Conteúdo: documento (PDF via 'document', imagem via 'image') OU texto ditado.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const docBlock: any = isPdf
+    ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: fileBase64 } }
+    : { type: 'image', source: { type: 'base64', media_type: mediaType, data: fileBase64 } }
+  const content = fileBase64
     ? [
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        { type: 'image', source: { type: 'base64', media_type: mediaType as any, data: imageBase64 } } as any,
-        { type: 'text', text: 'Transcreva os medicamentos/suplementos desta imagem no formato JSON pedido.' },
+        docBlock,
+        { type: 'text', text: `HOJE é ${new Date().toISOString().slice(0, 10)}. Transcreva os medicamentos/suplementos deste documento (rótulo ou receita, imagem ou PDF) no formato JSON pedido.` },
       ]
     : [
         { type: 'text', text: `HOJE é ${new Date().toISOString().slice(0, 10)}. A pessoa ditou: "${text.slice(0, 500)}". Extraia os medicamentos/suplementos no formato JSON pedido, separando nome, dose, frequência e início de uso.` },

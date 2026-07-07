@@ -11,7 +11,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Loader2, Plus, X, Pill, ArrowLeft, Pencil, Trash2, Camera, ChevronDown } from 'lucide-react'
+import { Loader2, Plus, X, Pill, ArrowLeft, Pencil, Trash2, Camera, ChevronDown, Upload } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
@@ -90,6 +90,9 @@ export default function MedicamentosPage() {
   const [listView, setListView] = useStickyView<'tipo' | 'situacao'>('sintera:view:medicamentos', 'situacao')
 
   const [showForm, setShowForm] = useState(false)
+  const [showMethods, setShowMethods] = useState(false)   // escolha do método de cadastro (CAP-001 §2.9)
+  const fileRef = useRef<HTMLInputElement>(null)           // enviar arquivo (PDF/imagem, sem câmera)
+  const cameraRef = useRef<HTMLInputElement>(null)         // tirar foto (imagem, câmera no mobile)
   const [showMoreDetails, setShowMoreDetails] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   // O formulário abre acima das listas; ao editar um item lá embaixo (ex.: suplemento)
@@ -134,7 +137,7 @@ export default function MedicamentosPage() {
     const r = await scanMedicationImage(file)
     setScanning(false)
     if (!r.ok) { setScanErr(r.error ?? 'Falha ao processar a imagem.'); return }
-    if (!r.items.length) { setScanErr('Não consegui ler os dados do rótulo. Tente uma foto mais nítida, aproximada e bem iluminada.'); return }
+    if (!r.items.length) { setScanErr('Não consegui ler os dados do rótulo/receita. Tente um PDF legível ou uma foto nítida, aproximada e bem iluminada.'); return }
     setScanResults(r.items as ScanItem[])
     setShowForm(false)
   }
@@ -470,21 +473,42 @@ export default function MedicamentosPage() {
           <h1 className="font-display text-2xl font-semibold text-onyx">Medicamentos e Suplementos</h1>
           <p className="font-body text-sm text-mauve mt-1">Registre o que você usa. A SINTERA organiza — quem prescreve é o seu médico.</p>
         </div>
-        <div className="flex flex-row flex-wrap items-center gap-2 sm:flex-col sm:items-end flex-shrink-0">
-          <button onClick={() => (showForm ? (reset(), setShowForm(false)) : (reset(), setShowForm(true)))}
+        <div className="relative flex flex-row flex-wrap items-center gap-2 sm:flex-col sm:items-end flex-shrink-0">
+          {/* Cadastrar → escolha do MÉTODO (CAP-001 §2.9: a intenção primeiro, o meio depois) */}
+          <button onClick={() => (showForm ? (reset(), setShowForm(false)) : setShowMethods(v => !v))}
             className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity">
-            {showForm ? <X size={15} /> : <Plus size={15} />}
-            {showForm ? 'Fechar' : 'Adicionar'}
+            {showForm ? <X size={15} /> : scanning ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />}
+            {showForm ? 'Fechar' : scanning ? 'Lendo…' : 'Novo medicamento'}
           </button>
-          <label className={['flex items-center gap-2 px-4 py-2 rounded-full border border-petal/40 text-petal font-body text-sm font-medium cursor-pointer hover:bg-blush transition-colors',
-            scanning ? 'opacity-60 pointer-events-none' : ''].join(' ')}>
-            <input type="file" accept="image/*" capture="environment" className="sr-only" disabled={scanning}
-              onChange={e => { const f = e.target.files?.[0]; if (f) handleScan(f); e.target.value = '' }} />
-            {scanning ? <Loader2 size={15} className="animate-spin" /> : <Camera size={15} />}
-            {scanning ? 'Lendo…' : 'Fotografar ou escanear'}
-          </label>
-          <VoiceInput onResult={handleVoiceAdd} label="Falar" title="Adicionar por voz"
-            className="flex items-center gap-2 px-4 py-2 rounded-full border border-petal/40 text-petal font-body text-sm font-medium hover:bg-blush transition-colors" />
+
+          {showMethods && (
+            <>
+              <div className="fixed inset-0 z-20" onClick={() => setShowMethods(false)} aria-hidden="true" />
+              <div className="absolute right-0 top-full mt-2 z-30 w-64 card-premium p-2 space-y-0.5">
+                <p className="font-body text-[11px] text-mauve/60 px-2 pt-1 pb-1.5">Como deseja cadastrar?</p>
+                <button type="button" onClick={() => { setShowMethods(false); fileRef.current?.click() }}
+                  className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-blush text-left font-body text-sm text-onyx transition-colors">
+                  <Upload size={15} className="text-petal flex-shrink-0" /> Enviar arquivo (PDF ou foto)
+                </button>
+                <button type="button" onClick={() => { setShowMethods(false); cameraRef.current?.click() }}
+                  className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-blush text-left font-body text-sm text-onyx transition-colors">
+                  <Camera size={15} className="text-petal flex-shrink-0" /> Tirar foto
+                </button>
+                <button type="button" onClick={() => { setShowMethods(false); reset(); setShowForm(true) }}
+                  className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-blush text-left font-body text-sm text-onyx transition-colors">
+                  <Pencil size={15} className="text-petal flex-shrink-0" /> Digitar manualmente
+                </button>
+                <VoiceInput onResult={(t) => { setShowMethods(false); handleVoiceAdd(t) }} label="Falar" title="Adicionar por voz"
+                  className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-blush text-left font-body text-sm text-onyx transition-colors" />
+              </div>
+            </>
+          )}
+
+          {/* Inputs ocultos: enviar arquivo (PDF/imagem, sem câmera) e tirar foto (imagem, câmera no mobile) */}
+          <input ref={fileRef} type="file" accept="application/pdf,image/*" className="sr-only" disabled={scanning}
+            onChange={e => { const f = e.target.files?.[0]; if (f) handleScan(f); e.target.value = '' }} />
+          <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="sr-only" disabled={scanning}
+            onChange={e => { const f = e.target.files?.[0]; if (f) handleScan(f); e.target.value = '' }} />
         </div>
       </div>
 
@@ -503,7 +527,7 @@ export default function MedicamentosPage() {
             <p className="font-body text-sm font-semibold text-onyx">Detectado — confira e adicione{scanResults.filter(x => x !== scanEditing).length > 1 ? ' (um de cada vez)' : ''}</p>
             <button onClick={() => setScanResults([])} className="text-mauve/50 hover:text-onyx"><X size={15} /></button>
           </div>
-          <p className="font-body text-[11px] text-mauve/60">Transcrição automática (foto ou voz). Revise antes de salvar — a plataforma só organiza, não prescreve.</p>
+          <p className="font-body text-[11px] text-mauve/60">Transcrição automática (arquivo, foto ou voz). Revise antes de salvar — a plataforma só organiza, não prescreve.</p>
           {scanResults.filter(x => x !== scanEditing).map((it, i) => {
             const dup = findDuplicate(it)
             return (
