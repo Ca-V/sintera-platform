@@ -20,11 +20,23 @@ Hoje coexistem **dois modelos mentais** de entrada de documento que deveriam con
 O objetivo é um **fluxo único e previsível** de captura em toda a plataforma: o usuário
 aprende uma vez e reencontra o mesmo padrão em qualquer módulo.
 
-**Objetivo final (não é correção de upload de medicamento).** O CAP-001 entrega uma
-**arquitetura única de captura documental** para toda a SINTERA — um só componente, uma só
-lógica de orquestração, um só conjunto de meios de entrada e de formatos — **eliminando
-definitivamente** diferenças de comportamento entre módulos e reduzindo a manutenção futura.
-Corrigir o PDF de medicamento é apenas o primeiro sintoma tratado por essa unificação.
+**Objetivo final — unificar toda a JORNADA de criação de registros (não só uploads).** A
+definição do CAP-001 é elevada: não é "unificar uploads", é **unificar toda a jornada de criação
+de registros na plataforma** — do documento de entrada até o **formulário correspondente já aberto
+e preenchido**. O CAP-001 entrega **um só componente**, **uma só lógica de orquestração**, **um só
+conjunto de meios de entrada e formatos** e **um só fluxo de ponta a ponta**, eliminando diferenças
+de comportamento entre módulos e reduzindo a manutenção futura.
+
+**Fluxo padrão da plataforma** (ex.: receita de medicamento): (1) seleciona o documento → (2)
+informa que é uma "Receita de medicamento ou suplemento" → (3) o sistema **processa** o documento →
+(4) o **formulário de Medicamentos abre automaticamente** → (5) os campos extraíveis já vêm
+**preenchidos** → (6) a usuária apenas **revisa, complementa e salva**. Levar apenas para a página
+do módulo **interrompe** a jornada e obriga a recomeçar — é considerado incompleto.
+
+Este objetivo é mais coerente com o posicionamento da SINTERA (**reduzir trabalho manual e
+organizar automaticamente** a informação de saúde) e escala para exames, recursos, despesas,
+agenda e futuros módulos. Corrigir o PDF de medicamento é apenas o primeiro sintoma; a meta é a
+jornada completa.
 
 ## 1. Estado atual (mapeado no código — fatos)
 
@@ -208,6 +220,30 @@ invalida documentos antigos; trocar o **OCR** não quebra a proveniência; troca
 a referência ao documento original (`documentId`/`checksum` são estáveis e permanentes). É um
 contrato permanente — conversa diretamente com [[DOC-001]], **KG v2** e **SRL**.
 
+### 2.8 Princípio 9 — a jornada termina no formulário preenchido, não na página do módulo
+
+> **Sempre que um documento puder gerar automaticamente um registro da plataforma, o fluxo termina
+> DENTRO do formulário correspondente, já preenchido com o que foi extraído — nunca apenas na página
+> do módulo.** A usuária só revisa, complementa e salva.
+
+- Encaminhar para a página do módulo **sem** abrir o formulário preenchido é **experiência incompleta**.
+- Vale para todos os módulos que geram registro a partir de documento: Medicamentos, Exames, Recursos,
+  Despesas, Agenda e futuros.
+- O **Routing Engine** entrega ao módulo o `CapturedDocument` **+ os campos extraídos**; o módulo abre
+  seu formulário em modo de revisão pré-preenchido.
+
+### 2.9 Padrão do botão "Adicionar" — escolher o método, não o formulário manual direto
+
+Em **qualquer** módulo, "Adicionar" **não** abre direto o formulário manual. Abre primeiro a **escolha
+do método de cadastro** (o mesmo `DocumentCapture`), com os meios oficiais — por exemplo, em Medicamentos:
+
+> **Adicionar medicamento** → Digitalizar receita · Selecionar arquivo · Tirar foto · Importar do
+> Centro de Captura · Digitar manualmente · Falar.
+
+Depois da escolha, o fluxo continua automaticamente (documento → processado → formulário preenchido,
+Princípio 9). A **digitação manual é uma opção entre outras, não o caminho principal** — isso mantém a
+experiência consistente e reforça o posicionamento de **reduzir trabalho manual**.
+
 ## 3. Auditoria de conformidade e lacunas
 
 | Módulo | Manual | Foto | Arquivo+Drag (PDF) | Centro de Captura | Voz | Lacuna a corrigir |
@@ -322,6 +358,8 @@ O CAP-001 só é considerado **implementado** quando **todos** os itens forem ve
 - [ ] Todos os fluxos são **homologados com PDF, JPG, PNG e HEIC**.
 - [ ] **Selecionar arquivo existente** do dispositivo (PDF/imagem da galeria) está disponível em **todos** os módulos — não apenas câmera.
 - [ ] **Validação obrigatória em mobile (iOS e Android)** em cada módulo: abrir **câmera** · abrir **galeria** · **selecionar arquivo** do dispositivo · **selecionar PDF** · **comportamento idêntico** em todos os módulos. *(Critério obrigatório — a captura é um dos principais fluxos da SINTERA; inconsistência aqui compromete a proposta de valor.)*
+- [ ] **Jornada completa (Princípio 9):** documento → processado → **formulário do módulo abre automaticamente e já preenchido** com o que foi extraído; a usuária só revisa/complementa/salva. **Não** terminar apenas na página do módulo.
+- [ ] **"Adicionar" abre a escolha do método** (Digitalizar receita · Selecionar arquivo · Tirar foto · Importar do Centro de Captura · Digitar manualmente · Falar), **não** o formulário manual direto — em todos os módulos.
 
 ### Status de implementação (linha divisória documentação × execução — 2026-07-07)
 
