@@ -16,7 +16,7 @@ import ReportEntry from '@/components/entry/ReportEntry'
 import ProvenanceLine from '@/components/ui/ProvenanceLine'
 import SelectionToolbar from '@/components/ui/SelectionToolbar'
 import PeriodSelector from '@/components/ui/PeriodSelector'
-import { examProvenance } from '@/lib/provenance'
+import { examProvenance, resourceProvenance } from '@/lib/provenance'
 import { type Period, resolvePeriod, inPeriod, overlapsPeriod, periodLabel } from '@/lib/communication/period'
 import {
   Loader2, Printer, ArrowLeft, FileText, Share2, Copy, Trash2, Check,
@@ -38,7 +38,7 @@ interface Eyewear {
   kind: string; prescribedOn: string | null; prescriber: string | null
   odSph: string | null; odCyl: string | null; odAxis: string | null; odAdd: string | null
   oeSph: string | null; oeCyl: string | null; oeAxis: string | null; oeAdd: string | null
-  dnp: string | null; bc: string | null; dia: string | null
+  dnp: string | null; bc: string | null; dia: string | null; fileUrl: string | null
 }
 const EYEWEAR_LABEL: Record<string, string> = { oculos: 'Óculos', lentes_contato: 'Lentes de contato' }
 interface Omics { domain: string; laboratory: string | null; totalFeatures: number | null; date: string | null }
@@ -172,7 +172,7 @@ function LegacyReport() {
       db.from('body_metrics').select('metric, label, value_text, unit, measured_on').eq('user_id', user.id).order('measured_on', { ascending: false }),
       db.from('health_conditions').select('scope, name, relative, since_label, notes').eq('user_id', user.id).order('created_at', { ascending: false }),
       db.from('life_habits').select('category, description, frequency, notes').eq('user_id', user.id).order('created_at', { ascending: false }),
-      db.from('health_resources').select('name, resource_type, prescriber, started_on, attributes').eq('user_id', user.id).eq('resource_type', 'correcao_visual').order('created_at', { ascending: false }),
+      db.from('health_resources').select('name, resource_type, prescriber, started_on, attributes, file_url').eq('user_id', user.id).eq('resource_type', 'correcao_visual').order('created_at', { ascending: false }),
       db.from('omics_panels').select('domain, laboratory, total_features, collected_on, created_at').eq('user_id', user.id).order('collected_on', { ascending: false, nullsFirst: false }),
     ])
     setMeds(((medRes.data ?? []) as Array<Record<string, unknown>>).map(m => ({
@@ -208,6 +208,7 @@ function LegacyReport() {
         odSph: od.sph ?? null, odCyl: od.cyl ?? null, odAxis: od.axis ?? null, odAdd: od.add ?? null,
         oeSph: oe.sph ?? null, oeCyl: oe.cyl ?? null, oeAxis: oe.axis ?? null, oeAdd: oe.add ?? null,
         dnp: (a.dnp as string) ?? null, bc: (a.bc as string) ?? null, dia: (a.dia as string) ?? null,
+        fileUrl: (e.file_url as string) ?? null,
       }
     }))
     setOmics(((omRes.data ?? []) as Array<Record<string, unknown>>).map(o => ({
@@ -575,6 +576,7 @@ function LegacyReport() {
                     {grauStr(e.odSph, e.odCyl, e.odAxis, e.odAdd) ? <span className="block text-xs text-mauve/70 ml-3">OD: {grauStr(e.odSph, e.odCyl, e.odAxis, e.odAdd)}</span> : null}
                     {grauStr(e.oeSph, e.oeCyl, e.oeAxis, e.oeAdd) ? <span className="block text-xs text-mauve/70 ml-3">OE: {grauStr(e.oeSph, e.oeCyl, e.oeAxis, e.oeAdd)}</span> : null}
                     {extras.length ? <span className="block text-xs text-mauve/60 ml-3">{extras.join(' · ')}</span> : null}
+                    {e.fileUrl ? <span className="block ml-3 mt-0.5"><ProvenanceLine provenance={resourceProvenance({ fileUrl: e.fileUrl, prescriber: e.prescriber })} showOrigin={false} /></span> : null}
                   </li>
                 )
               })}

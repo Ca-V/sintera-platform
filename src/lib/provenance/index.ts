@@ -15,6 +15,14 @@
 // Os níveis 4 e 5 já estão previstos na estrutura (evolução sem refação); nem tudo
 // é preenchido hoje. Consumidores: Relatório (1º), Histórico, Timeline, Exames,
 // Medicamentos, Recursos e, futuramente, KG v2 / SRL / IA Contextual.
+//
+// REGRA ARQUITETURAL DEFINITIVA: sempre que uma informação possuir um documento de
+// origem, esse documento DEVE estar acessível ("Ver documento original") em QUALQUER
+// consumidor da Camada de Comunicação (Relatório · PDF · compartilhamento · impressão
+// · Timeline compartilhada · integrações), pela MESMA lógica, sem implementação
+// específica por módulo. Quando um fluxo passar a armazenar o documento (ex.: ômica,
+// receitas de medicamentos), o link aparece automaticamente — basta o adaptador
+// popular `document.url`.
 // ============================================================
 
 // ── Nível 2 — origem ──────────────────────────────────────────────────────────
