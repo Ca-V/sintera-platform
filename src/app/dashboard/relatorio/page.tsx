@@ -524,9 +524,6 @@ function LegacyReport() {
       <div className="bg-white rounded-2xl border border-border p-5 sm:p-8 space-y-6 print:border-0 print:p-0">
         {/* Cabeçalho */}
         <div className="border-b border-border pb-4">
-          <div className="inline-flex items-center gap-1.5 text-petal mb-1 print:hidden">
-            <FileText size={16} /><span className="font-body text-xs font-medium uppercase tracking-wider">Relatório</span>
-          </div>
           <h1 className="font-display text-2xl font-semibold text-onyx">Relatório</h1>
           <p className="font-body text-sm text-mauve mt-1">Organização estruturada das informações registradas na SINTERA para compartilhamento e acompanhamento da saúde.</p>
           <p className="font-body text-xs text-mauve/70 mt-1.5">{nome} · Gerado em {hoje}</p>
