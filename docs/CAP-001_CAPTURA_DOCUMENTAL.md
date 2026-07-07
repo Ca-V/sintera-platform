@@ -29,12 +29,41 @@ aprende uma vez e reencontra o mesmo padrão em qualquer módulo.
 | **Voz (reutilizável)** | ✅ `VoiceInput` compartilhado | `src/components/VoiceInput.tsx` |
 | **Centro reutilizável** | ✅ `DocumentIntakeHub`/`CaptureCenter` (drag+preview+classificação+rota) | `src/lib/capture/intake/CaptureCenter.tsx` |
 
-### ⚠️ Discrepância a confirmar (fato × relato)
-O relato foi "o Centro de Captura só mostra Exame, Receita de óculos e Exame ômico
-(falta medicamento)". **O código-fonte (branch e `main`) já inclui "Receita de medicamento"
-→ `/dashboard/medicamentos`.** Portanto, ou o build testado está **defasado** em relação ao
-código, ou há **duas UIs de captura** convivendo em produção. **Ação:** confirmar qual
-componente a produção renderiza antes de "adicionar" algo que já existe.
+## 1.1 Fase 0 — Auditoria arquitetural (concluída · causa raiz confirmada)
+
+Auditoria instrumentada dos fluxos de captura (não suposição). Respostas:
+
+**(a) Uma ou duas implementações do Centro de Captura?** — **Um** componente de captura:
+`src/lib/capture/intake/CaptureCenter.tsx`. O antigo `DocumentIntakeHub.tsx` foi **deletado**
+(substituído — commit cf53884). **Porém há DUAS Homes** atrás do flag `NEXT_PUBLIC_DASHBOARD_V2`
+(`dashboard/page.tsx:56`): **V1 legado** (`dashboard/page.tsx`) fia o CaptureCenter no modal
+"Adicionar documento" (`:337`); **V2** (`DashboardNew` → `DashboardPriority`) tem um botão
+"Adicionar documento" **sem `onClick`** (`DashboardPriority.tsx:112`) — botão morto.
+
+**(b) Quais módulos usam o mesmo componente?** — Apenas a Home V1 (modal) usa o CaptureCenter.
+**Nenhuma página de módulo o reutiliza.**
+
+**(c) Quais têm implementação própria?** — Exames, Medicamentos, Recursos, Ômica, Medidas,
+Agenda: cada um com seu `<input type=file>` inline.
+
+**(d) O que cada fluxo oferece?** — ver tabela §1. CaptureCenter: arquivo+drag+câmera, aceita
+PDF/JPG/PNG, mas **não** oferece manual/voz. Módulos: manual+câmera+voz; Medicamentos/Recursos
+**sem PDF/arquivo/drag**.
+
+### ✅ Causa raiz do relato "só 3 opções, sem medicamento" (CONFIRMADA)
+`CaptureCenter.tsx:56` → `validKinds = file ? processorsAccepting(file.type) : CAPTURE_PROCESSORS`:
+as opções de tipo são **filtradas pelo MIME do arquivo**. E `processors/medication.ts:12` →
+`accepts: ['image/jpeg','image/png']` — **não inclui `application/pdf`** (exam/eyeglass/omics
+incluem). Logo, ao enviar um **PDF**, a lista mostra só `[Exame, Receita de óculos, Exame ômico]`
+— medicamento **filtrado**. Receita de medicamento é quase sempre PDF → o usuário não consegue
+classificá-la. **Não** é build defasado nem duas UIs de captura: é **defeito de dados** (`accepts`)
++ **decisão de UX** (esconder destino por MIME).
+
+### Divergências a eliminar
+1. `medication.accepts` sem `application/pdf` → causa do relato. (Trivial, mas é implementação CAP-001.)
+2. **Duas Homes**; a V2 (`DashboardPriority`) tem "Adicionar documento"/"Exame"/"Medicamento" sem `onClick`. Decidir Home canônica e remover/fiar a morta.
+3. Filtro silencioso por MIME esconde destinos — preferir mostrar todos e validar no envio.
+4. Sem componente único — unificar módulos + Home no `<DocumentCapture>`.
 
 ## 2. Estado-alvo
 
