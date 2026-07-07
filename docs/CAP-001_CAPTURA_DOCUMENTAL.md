@@ -98,17 +98,23 @@ classificá-la. **Não** é build defasado nem duas UIs de captura: é **defeito
 dado, não documento); **uma** constante compartilhada; **um** limite de tamanho; declaração de
 `accepts` por processador só para **validação pós-seleção** (nunca para esconder destino).
 
-## 1.3 Home canônica (divergência estrutural — decisão de produto)
+## 1.3 Home oficial (DECIDIDO pela fundadora — 2026-07-07)
 
-Existem duas Homes atrás de `NEXT_PUBLIC_DASHBOARD_V2` (`dashboard/page.tsx:56`):
-- **V1 (padrão/legado)** — `dashboard/page.tsx`; **funcional**, fia o CaptureCenter.
-- **V2** — `DashboardNew` → `DashboardPriority`; botões "Adicionar documento/Exame/Medicamento"
-  **sem `onClick`** (`DashboardPriority.tsx:112-117`).
+Existem duas Homes atrás de `NEXT_PUBLIC_DASHBOARD_V2` (`dashboard/page.tsx:56`): **V1**
+(`dashboard/page.tsx`, funcional, fia o CaptureCenter) e **V2** (`DashboardNew` →
+`DashboardPriority`, com botões sem `onClick` em `DashboardPriority.tsx:112-117`).
 
-**Regra:** não manter duas Homes evoluindo em paralelo. **Recomendação de engenharia:** manter
-**V1 como canônica** enquanto a V2 não atinge paridade funcional; até lá, a V2 não deve ser
-exposta (nem seus botões mortos). Se a V2 for eleita o futuro, **todos** os botões precisam
-funcionar antes de substituir a V1. *A escolha final V1×V2 é decisão de produto da fundadora.*
+**Decisão (sem ambiguidade, alinhada ao princípio SSOT / fluxo único):**
+- A **Home V1 é a única Home oficial** da plataforma a partir de agora.
+- A **V2 é apenas implementação em desenvolvimento** — **sem evolução paralela** de funcionalidades.
+- **Enquanto não houver paridade:** toda nova funcionalidade entra na Home oficial (V1); **nenhuma**
+  funcionalidade existe exclusivamente na V2; **nenhum botão** permanece sem comportamento definido.
+- A V2 só substitui a V1 quando atingir **paridade funcional completa** (todos os fluxos existentes)
+  **e** for superior em experiência — então substitui **integralmente** e a **V1 é removida do código**.
+- **Não há convivência permanente** entre duas Homes.
+
+*Consequência para o CAP-001:* os botões mortos da V2 (`DashboardPriority.tsx:112-117`) são
+inconsistência a resolver (fiar ao fluxo oficial ou não expor), não um segundo fluxo a manter.
 
 ## 2. Estado-alvo
 
@@ -158,6 +164,29 @@ existir só no Centro de Captura — tem de estar **dentro do módulo**.
 - Cada módulo **declara** `accepts` + processador de destino; o componente entrega os 6 meios de
   forma idêntica. **Exames** é a implementação de referência.
 - Fonte **única** de `ACCEPTED` + limite de tamanho (hoje triplicada e divergente — §1.2).
+
+### 2.4 Princípio 6 — o usuário nunca escolhe entre fluxos equivalentes
+
+A plataforma **conduz** ao melhor fluxo; não transfere a decisão de arquitetura ao usuário.
+Na página de Medicamentos, a pessoa **não** deve ponderar *"uso o Centro de Captura? Adicionar?
+Escanear? Enviar arquivo?"*. Ela apenas escolhe **a forma de entrada** (foto · arquivo · voz ·
+manual) e a plataforma faz o resto. O Centro de Captura é canal unificado para documentos
+diversos, mas **não compete** com os módulos. Comportamento **consistente** em toda a plataforma.
+*(Coerente com [[UX-001]] §1.2 Consistência e §1.10.)*
+
+### 2.5 Configuração central de formatos (ponto único de manutenção)
+
+Em vez de apenas desduplicar, criar **uma configuração única** (ex.: `@/lib/capture/formats.ts`)
+como fonte da verdade de:
+- **formatos aceitos** (MIME + extensões) — base `PDF · JPG · PNG · HEIC`;
+- **tamanho máximo** (um limite; hoje 50 MB × 10 MB divergem);
+- **mensagens de erro** (formato inválido, arquivo grande…);
+- **tipos permitidos por categoria documental** (ex.: Ômica soma `CSV · JSON`; medicamento/receita
+  = base; futuros: **DICOM** para imagem médica, **AVIF** etc.).
+
+Todos os inputs, processadores e validações passam a **ler dessa config** — quando um novo formato
+precisar de suporte no futuro, há **um só ponto** de manutenção. Elimina as três `ACCEPTED`
+duplicadas e os limites divergentes (§1.2).
 
 ## 3. Auditoria de conformidade e lacunas
 
