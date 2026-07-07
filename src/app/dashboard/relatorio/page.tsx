@@ -78,6 +78,18 @@ function fmt(date: string | null): string {
   return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
+// Faixa divisória de GRUPO no corpo do relatório (espelha os grupos do menu:
+// Acompanhamento · Minha Saúde · Organização) — dá identidade visual às seções.
+function ReportBand({ children }: { children: string }) {
+  return (
+    <div className="flex items-center gap-3 pt-2" role="presentation">
+      <span className="h-px flex-1 bg-petal/25" aria-hidden="true" />
+      <span className="font-display text-xs font-bold uppercase tracking-[0.25em] text-petal whitespace-nowrap">{children}</span>
+      <span className="h-px flex-1 bg-petal/25" aria-hidden="true" />
+    </div>
+  )
+}
+
 // Passo 7 (cutover) — a rota decide legacy × v2 pelo Entry. Default: legacy.
 // Flip por página via NEXT_PUBLIC_REPORT_V2=true.
 export default function RelatorioRoute() {
@@ -246,6 +258,9 @@ function LegacyReport() {
   const visMedsEmUso = medsEmUso.filter(m => isItemOn('medicamentos', m.name))
   const visMedsSusp = medsSusp.filter(m => isItemOn('medicamentos', m.name))
   const visExams = exams.filter(e => isItemOn('exames', `${e.type}__${e.date}`))
+  // Faixas de grupo (espelham o menu): exibidas se houver ao menos uma seção do grupo.
+  const showAcompanhamento = sections.eventos || sections.exames || sections.omica || sections.medicamentos
+  const showMinhaSaude = sections.condicoes || sections.visao || sections.medidas || sections.sinais || sections.habitos
   const condProprias = conditions.filter(c => c.scope === 'propria')
   const condFamiliar = conditions.filter(c => c.scope === 'familiar')
   const measuresCorpo = measures.filter(m => !isVital(m.metric))
@@ -389,113 +404,17 @@ function LegacyReport() {
         {/* Cabeçalho */}
         <div className="border-b border-border pb-4">
           <div className="inline-flex items-center gap-1.5 text-petal mb-1 print:hidden">
-            <FileText size={16} /><span className="font-body text-xs font-medium uppercase tracking-wider">Relatórios</span>
+            <FileText size={16} /><span className="font-body text-xs font-medium uppercase tracking-wider">Relatório</span>
           </div>
-          <h1 className="font-display text-2xl font-semibold text-onyx">Relatório — {nome}</h1>
-          <p className="font-body text-xs text-mauve mt-1">Gerado em {hoje} · organização dos dados registrados pela própria pessoa.</p>
+          <h1 className="font-display text-2xl font-semibold text-onyx">Relatório</h1>
+          <p className="font-body text-sm text-mauve mt-1">Organização estruturada das informações registradas na SINTERA.</p>
+          <p className="font-body text-xs text-mauve/70 mt-1.5">{nome} · Gerado em {hoje}</p>
         </div>
 
-        {/* Medicamentos e suplementos */}
-        {sections.medicamentos && (
-        <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Medicamentos e suplementos em uso</h2>
-          {visMedsEmUso.length === 0 ? (
-            <p className="font-body text-sm text-mauve/60">Nenhum registrado em uso.</p>
-          ) : (
-            <ul className="space-y-1">
-              {visMedsEmUso.map((m, i) => (
-                <li key={i} className="font-body text-sm text-onyx">
-                  • <strong>{m.name}</strong>{m.kind === 'suplemento' ? ' (suplemento)' : ''}{[m.dose, m.frequency].filter(Boolean).length ? ` — ${[m.dose, m.frequency].filter(Boolean).join(', ')}` : ''}
-                  {periodo(m.startedOn, m.untilOn)}
-                </li>
-              ))}
-            </ul>
-          )}
-          {visMedsSusp.length > 0 && (
-            <p className="font-body text-xs text-mauve/60 mt-2">Suspensos: {visMedsSusp.map(m => m.name).join(', ')}.</p>
-          )}
-        </section>
-        )}
+        {/* ══════════ ACOMPANHAMENTO ══════════ */}
+        {showAcompanhamento && <ReportBand>Acompanhamento</ReportBand>}
 
-        {/* Condições de saúde — próprias + histórico familiar */}
-        {sections.condicoes && (
-        <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Condições de saúde</h2>
-          {condProprias.length === 0 ? (
-            <p className="font-body text-sm text-mauve/60">Nenhuma condição registrada.</p>
-          ) : (
-            <ul className="space-y-1">
-              {condProprias.map((c, i) => (
-                <li key={i} className="font-body text-sm text-onyx">
-                  • <strong>{c.name}</strong>{c.since ? ` (desde ${c.since})` : ''}
-                  {c.notes ? <span className="block text-xs text-mauve/60">{c.notes}</span> : null}
-                </li>
-              ))}
-            </ul>
-          )}
-          {condFamiliar.length > 0 && (
-            <>
-              <h3 className="font-body text-xs font-bold text-mauve/80 mt-3 mb-1 uppercase tracking-wider">Histórico familiar</h3>
-              <ul className="space-y-1">
-                {condFamiliar.map((c, i) => (
-                  <li key={i} className="font-body text-sm text-onyx">
-                    • <strong>{c.name}</strong>{c.relative ? ` — ${c.relative}` : ''}{c.since ? ` (desde ${c.since})` : ''}
-                    {c.notes ? <span className="block text-xs text-mauve/60">{c.notes}</span> : null}
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-        </section>
-        )}
-
-        {/* Hábitos de vida */}
-        {sections.habitos && (
-        <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Hábitos de vida</h2>
-          {habits.length === 0 ? (
-            <p className="font-body text-sm text-mauve/60">Nenhum hábito registrado.</p>
-          ) : (
-            <ul className="space-y-1">
-              {habits.map((h, i) => (
-                <li key={i} className="font-body text-sm text-onyx">
-                  • <span className="text-mauve/70">{HABIT_LABEL[h.category] ?? 'Hábito'}:</span> {h.description}{h.frequency ? ` — ${h.frequency}` : ''}
-                  {h.notes ? <span className="block text-xs text-mauve/60">{h.notes}</span> : null}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-        )}
-
-        {/* Óculos e lentes de contato */}
-        {sections.visao && (
-        <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Óculos e lentes de contato</h2>
-          {eyewear.length === 0 ? (
-            <p className="font-body text-sm text-mauve/60">Nenhum registro.</p>
-          ) : (
-            <ul className="space-y-1.5">
-              {eyewear.map((e, i) => {
-                const extras = [
-                  e.dnp ? `DNP ${e.dnp}` : null, e.bc ? `BC ${e.bc}` : null, e.dia ? `DIA ${e.dia}` : null,
-                  e.prescribedOn ? fmt(e.prescribedOn) : null, e.prescriber,
-                ].filter(Boolean)
-                return (
-                  <li key={i} className="font-body text-sm text-onyx">
-                    • <strong>{EYEWEAR_LABEL[e.kind] ?? 'Óculos'}</strong>
-                    {grauStr(e.odSph, e.odCyl, e.odAxis, e.odAdd) ? <span className="block text-xs text-mauve/70 ml-3">OD: {grauStr(e.odSph, e.odCyl, e.odAxis, e.odAdd)}</span> : null}
-                    {grauStr(e.oeSph, e.oeCyl, e.oeAxis, e.oeAdd) ? <span className="block text-xs text-mauve/70 ml-3">OE: {grauStr(e.oeSph, e.oeCyl, e.oeAxis, e.oeAdd)}</span> : null}
-                    {extras.length ? <span className="block text-xs text-mauve/60 ml-3">{extras.join(' · ')}</span> : null}
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-        </section>
-        )}
-
-        {/* Jornada */}
+        {/* Consultas, procedimentos e eventos (Histórico) */}
         {sections.eventos && (
         <section>
           <h2 className="font-body text-sm font-bold text-onyx mb-2">Consultas, procedimentos e eventos</h2>
@@ -522,7 +441,7 @@ function LegacyReport() {
         {/* Exames */}
         {sections.exames && (
         <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Exames enviados</h2>
+          <h2 className="font-body text-sm font-bold text-onyx mb-2">Exames</h2>
           {visExams.length === 0 ? (
             <p className="font-body text-sm text-mauve/60">Nenhum exame enviado.</p>
           ) : (
@@ -558,10 +477,94 @@ function LegacyReport() {
         </section>
         )}
 
+        {/* Medicamentos e suplementos */}
+        {sections.medicamentos && (
+        <section>
+          <h2 className="font-body text-sm font-bold text-onyx mb-2">Medicamentos e Suplementos em uso</h2>
+          {visMedsEmUso.length === 0 ? (
+            <p className="font-body text-sm text-mauve/60">Nenhum registrado em uso.</p>
+          ) : (
+            <ul className="space-y-1">
+              {visMedsEmUso.map((m, i) => (
+                <li key={i} className="font-body text-sm text-onyx">
+                  • <strong>{m.name}</strong>{m.kind === 'suplemento' ? ' (suplemento)' : ''}{[m.dose, m.frequency].filter(Boolean).length ? ` — ${[m.dose, m.frequency].filter(Boolean).join(', ')}` : ''}
+                  {periodo(m.startedOn, m.untilOn)}
+                </li>
+              ))}
+            </ul>
+          )}
+          {visMedsSusp.length > 0 && (
+            <p className="font-body text-xs text-mauve/60 mt-2">Suspensos: {visMedsSusp.map(m => m.name).join(', ')}.</p>
+          )}
+        </section>
+        )}
+
+        {/* ══════════ MINHA SAÚDE ══════════ */}
+        {showMinhaSaude && <ReportBand>Minha Saúde</ReportBand>}
+
+        {/* Condições de saúde — próprias + histórico familiar */}
+        {sections.condicoes && (
+        <section>
+          <h2 className="font-body text-sm font-bold text-onyx mb-2">Condições de Saúde</h2>
+          {condProprias.length === 0 ? (
+            <p className="font-body text-sm text-mauve/60">Nenhuma condição registrada.</p>
+          ) : (
+            <ul className="space-y-1">
+              {condProprias.map((c, i) => (
+                <li key={i} className="font-body text-sm text-onyx">
+                  • <strong>{c.name}</strong>{c.since ? ` (desde ${c.since})` : ''}
+                  {c.notes ? <span className="block text-xs text-mauve/60">{c.notes}</span> : null}
+                </li>
+              ))}
+            </ul>
+          )}
+          {condFamiliar.length > 0 && (
+            <>
+              <h3 className="font-body text-xs font-bold text-mauve/80 mt-3 mb-1 uppercase tracking-wider">Histórico familiar</h3>
+              <ul className="space-y-1">
+                {condFamiliar.map((c, i) => (
+                  <li key={i} className="font-body text-sm text-onyx">
+                    • <strong>{c.name}</strong>{c.relative ? ` — ${c.relative}` : ''}{c.since ? ` (desde ${c.since})` : ''}
+                    {c.notes ? <span className="block text-xs text-mauve/60">{c.notes}</span> : null}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </section>
+        )}
+
+        {/* Recursos de Saúde (correção visual: óculos e lentes de contato) */}
+        {sections.visao && (
+        <section>
+          <h2 className="font-body text-sm font-bold text-onyx mb-2">Recursos de Saúde</h2>
+          {eyewear.length === 0 ? (
+            <p className="font-body text-sm text-mauve/60">Nenhum recurso registrado.</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {eyewear.map((e, i) => {
+                const extras = [
+                  e.dnp ? `DNP ${e.dnp}` : null, e.bc ? `BC ${e.bc}` : null, e.dia ? `DIA ${e.dia}` : null,
+                  e.prescribedOn ? fmt(e.prescribedOn) : null, e.prescriber,
+                ].filter(Boolean)
+                return (
+                  <li key={i} className="font-body text-sm text-onyx">
+                    • <strong>{EYEWEAR_LABEL[e.kind] ?? 'Óculos'}</strong>
+                    {grauStr(e.odSph, e.odCyl, e.odAxis, e.odAdd) ? <span className="block text-xs text-mauve/70 ml-3">OD: {grauStr(e.odSph, e.odCyl, e.odAxis, e.odAdd)}</span> : null}
+                    {grauStr(e.oeSph, e.oeCyl, e.oeAxis, e.oeAdd) ? <span className="block text-xs text-mauve/70 ml-3">OE: {grauStr(e.oeSph, e.oeCyl, e.oeAxis, e.oeAdd)}</span> : null}
+                    {extras.length ? <span className="block text-xs text-mauve/60 ml-3">{extras.join(' · ')}</span> : null}
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </section>
+        )}
+
         {/* Medidas corporais */}
         {sections.medidas && (
         <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Medidas corporais</h2>
+          <h2 className="font-body text-sm font-bold text-onyx mb-2">Medidas Corporais</h2>
           {alturaCm != null && (
             <p className="font-body text-sm text-onyx mb-1"><span className="text-mauve/70">Altura:</span> {alturaCm} cm</p>
           )}
@@ -587,7 +590,7 @@ function LegacyReport() {
         {/* Sinais vitais */}
         {sections.sinais && (
         <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Sinais vitais</h2>
+          <h2 className="font-body text-sm font-bold text-onyx mb-2">Sinais Vitais</h2>
           {measuresVitais.length === 0 ? (
             <p className="font-body text-sm text-mauve/60">Nenhum sinal vital registrado.</p>
           ) : (
@@ -603,6 +606,25 @@ function LegacyReport() {
                 ))}
               </tbody>
             </table>
+          )}
+        </section>
+        )}
+
+        {/* Hábitos de vida */}
+        {sections.habitos && (
+        <section>
+          <h2 className="font-body text-sm font-bold text-onyx mb-2">Hábitos</h2>
+          {habits.length === 0 ? (
+            <p className="font-body text-sm text-mauve/60">Nenhum hábito registrado.</p>
+          ) : (
+            <ul className="space-y-1">
+              {habits.map((h, i) => (
+                <li key={i} className="font-body text-sm text-onyx">
+                  • <span className="text-mauve/70">{HABIT_LABEL[h.category] ?? 'Hábito'}:</span> {h.description}{h.frequency ? ` — ${h.frequency}` : ''}
+                  {h.notes ? <span className="block text-xs text-mauve/60">{h.notes}</span> : null}
+                </li>
+              ))}
+            </ul>
           )}
         </section>
         )}
