@@ -1,11 +1,13 @@
 # CAP-001 — Padronização da Captura Documental (Camada de Captura)
 
-**Status:** 🔒 **ESPECIFICAÇÃO CONGELADA** (2026-07-07) — aprovada pela fundadora. Iniciativa
-própria, **não** faz parte da REL-001. Implementação em branch dedicada, após o merge da REL-001.
-Contém: problema · auditoria arquitetural (Fase 0) · auditoria de compatibilidade MIME · 8 princípios ·
+**Status:** 🔒 **ESPECIFICAÇÃO CONGELADA · CONCEPÇÃO ENCERRADA** (2026-07-07) — aprovada pela fundadora.
+Iniciativa própria, **não** faz parte da REL-001. Implementação em branch dedicada, após o merge da REL-001.
+Contém: problema · auditoria arquitetural (Fase 0) · auditoria de compatibilidade MIME · **9 princípios** ·
 Home oficial (V1) · arquitetura de 3 camadas + contrato `CapturedDocument` + Routing por registry ·
-integração DOC-001 · estratégia de migração · governança. Refinamentos posteriores exigem revisão explícita.
-**Herda:** [[UX-001]] (§1.10 e §10, emendados nesta data), [[DS-001]].
+integração DOC-001 · jornada completa (documento → formulário preenchido) · estratégia de migração · governança.
+**A partir daqui, o aprendizado vem da IMPLEMENTAÇÃO e da homologação — não de novas rodadas de documentação.**
+Reabertura só por revisão explícita (erro estrutural real durante a implementação).
+**Herda:** [[UX-001]] (§1.10, §1.11 e §10, emendados nesta data), [[DS-001]].
 
 ---
 
@@ -232,17 +234,20 @@ contrato permanente — conversa diretamente com [[DOC-001]], **KG v2** e **SRL*
 - O **Routing Engine** entrega ao módulo o `CapturedDocument` **+ os campos extraídos**; o módulo abre
   seu formulário em modo de revisão pré-preenchido.
 
-### 2.9 Padrão do botão "Adicionar" — escolher o método, não o formulário manual direto
+### 2.9 Fluxo orientado à INTENÇÃO — "o que/como deseja cadastrar", não "adicionar documento"
 
-Em **qualquer** módulo, "Adicionar" **não** abre direto o formulário manual. Abre primeiro a **escolha
-do método de cadastro** (o mesmo `DocumentCapture`), com os meios oficiais — por exemplo, em Medicamentos:
+O fluxo **nasce na intenção da usuária**, não no mecanismo (herda [[UX-001]] §1.11). A usuária nunca
+está "adicionando um documento" — ela quer **cadastrar um medicamento / exame / recurso / despesa /
+consulta**; o documento é só um **meio**. Consequências de UX:
 
-> **Adicionar medicamento** → Digitalizar receita · Selecionar arquivo · Tirar foto · Importar do
-> Centro de Captura · Digitar manualmente · Falar.
-
-Depois da escolha, o fluxo continua automaticamente (documento → processado → formulário preenchido,
-Princípio 9). A **digitação manual é uma opção entre outras, não o caminho principal** — isso mantém a
-experiência consistente e reforça o posicionamento de **reduzir trabalho manual**.
+- **Ponto de partida** = a intenção: na Home, **"O que você deseja cadastrar?"**; dentro de um módulo,
+  **"Como deseja cadastrar este medicamento?"**. Não "Adicionar documento".
+- **Verbo do botão** comunica intenção: **"Novo medicamento" / "Cadastrar medicamento"** — não "Adicionar".
+- Ao acionar, abre a **escolha do método** (o mesmo `DocumentCapture`): Digitalizar receita · Selecionar
+  arquivo · Tirar foto · Importar do Centro de Captura · Digitar manualmente · Falar. **A tecnologia
+  desaparece; a intenção fica em primeiro plano.**
+- Depois da escolha, o fluxo continua automaticamente (documento → processado → formulário preenchido,
+  Princípio 9). A **digitação manual é uma opção entre outras, não o caminho principal**.
 
 ## 3. Auditoria de conformidade e lacunas
 

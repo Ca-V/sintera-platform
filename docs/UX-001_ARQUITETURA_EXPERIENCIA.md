@@ -1,7 +1,7 @@
 # UX-001 — Arquitetura Funcional da Plataforma (Constituição)
 
 **Status:** 🔒 **ARQUITETURA FUNCIONAL CONGELADA** (07/07/2026) — implementada e em vigor a partir deste ciclo. Base para o KG v2 — Parte 3. Alterações estruturais exigem revisão explícita desta constituição (§9).
-**Emendas pós-freeze (revisão explícita, aprovadas pela fundadora):** 2026-07-07 — §1.10 + §10 Padrões de Captura Documental ([[CAP-001]]).
+**Emendas pós-freeze (revisão explícita, aprovadas pela fundadora):** 2026-07-07 — §1.10 + §10 Padrões de Captura Documental ([[CAP-001]]); §1.11 Orientação por objetivo da usuária (princípio transversal).
 **Escopo:** **arquitetura funcional** — o que existe, como se organiza, como se navega e como cresce. **NÃO** trata de componentes visuais, cores, tokens ou padrões de interface — isso é responsabilidade do **[[DS-001]] — Design System** (referenciado onde couber).
 **Sequência:** UX-001 (spec) → Implementação → **Freeze da arquitetura funcional** → KG v2 Parte 3 → Implementação do KG.
 **Herda:** [[PLANO_MATURIDADE_PRE_MOBILE]] (§0 Governança Científica, §0.1 SSOT, §3 modelo orientado a eventos).
@@ -20,6 +20,7 @@
 8. **Navegação por frequência de uso, não por estrutura técnica.** *A organização do menu reflete a **frequência de uso** das funcionalidades — não a estrutura do banco de dados nem a arquitetura interna do sistema.* É por isso que **Acompanhamento** (uso diário) vem antes de **Minha Saúde** (contexto permanente), embora ambos sejam módulos independentes (§5). Reorganizações futuras de navegação partem da **experiência do usuário**, nunca da implementação técnica.
 9. **Nome único por módulo (sem sinônimos).** O nome do módulo no **menu lateral** é o **mesmo** na Home, nos Relatórios, nos breadcrumbs, nos títulos de página e em qualquer fluxo de navegação. É **proibido** haver sinônimos para o mesmo módulo (ex.: "Problemas de Saúde" num lugar e "Condições de Saúde" em outro). Renomear um módulo significa atualizar **todos** os pontos de exibição de uma vez.
 10. **Meios de entrada padronizados (captura documental).** *Todo módulo que aceite documentos oferece exatamente os mesmos meios de entrada: **digitar manualmente · tirar foto · enviar/arrastar arquivo · importar do Centro de Captura · falar (voz)**.* O Centro de Captura é canal **adicional** de entrada — nunca o único local onde se pode enviar um arquivo. Nenhum módulo oferece apenas um subconjunto sem justificativa técnica registrada. (Detalhado na §10 e em [[CAP-001]].)
+11. **Orientação por objetivo da usuária, não pelo mecanismo técnico.** *A plataforma é organizada pelo **que a usuária quer fazer** (cadastrar um medicamento, um exame, um recurso, uma despesa, uma consulta), não pela **tecnologia** usada para isso (documento, upload, foto, OCR).* O ponto de partida do fluxo é a **intenção** ("O que você deseja cadastrar?" / "Como deseja cadastrar este medicamento?"); os meios (digitalizar, arquivo, foto, manual, voz) são secundários e intercambiáveis. Rótulos comunicam intenção ("Novo medicamento" / "Cadastrar medicamento"), não o mecanismo ("Adicionar documento"). Princípio transversal — vale para [[CAP-001]], [[REL-001]], DS-001, QA-001 e o Roadmap por Ondas.
 
 ---
 
