@@ -84,14 +84,26 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
     db.from('body_metrics').select('metric, label, value_text, unit, measured_on').eq('user_id', uid).order('measured_on', { ascending: false }),
     db.from('health_conditions').select('scope, name, relative, since_label, notes').eq('user_id', uid).order('created_at', { ascending: false }),
     db.from('life_habits').select('category, description, frequency, notes').eq('user_id', uid).order('created_at', { ascending: false }),
-    db.from('eyeglass_prescriptions').select('kind, prescribed_on, prescriber, od_sph, od_cyl, od_axis, od_add, oe_sph, oe_cyl, oe_axis, oe_add, dnp, bc, dia').eq('user_id', uid).order('prescribed_on', { ascending: false, nullsFirst: false }),
+    db.from('health_resources').select('name, resource_type, prescriber, started_on, attributes').eq('user_id', uid).eq('resource_type', 'correcao_visual').order('created_at', { ascending: false }),
     db.from('omics_panels').select('domain, laboratory, total_features, collected_on, created_at').eq('user_id', uid).order('collected_on', { ascending: false, nullsFirst: false }),
     admin.auth.admin.getUserById(uid),
   ])
 
   const nome = (prof?.name as string) || authUser?.user?.email || '—'
   const alturaCm = (prof?.height_cm as number | null | undefined) ?? null
-  const ewArr = (eyewear ?? []) as Array<Record<string, unknown>>
+  // Óculos/lentes agora vivem em health_resources (correcao_visual); normaliza para
+  // o mesmo formato plano que esta seção já renderiza.
+  const ewArr = ((eyewear ?? []) as Array<Record<string, unknown>>).map(r => {
+    const a = (r.attributes as Record<string, unknown>) ?? {}
+    const od = (a.od as Record<string, string>) ?? {}
+    const oe = (a.oe as Record<string, string>) ?? {}
+    return {
+      kind: (a.vision_kind as string) ?? 'oculos', prescribed_on: r.started_on ?? null, prescriber: r.prescriber ?? null,
+      od_sph: od.sph ?? null, od_cyl: od.cyl ?? null, od_axis: od.axis ?? null, od_add: od.add ?? null,
+      oe_sph: oe.sph ?? null, oe_cyl: oe.cyl ?? null, oe_axis: oe.axis ?? null, oe_add: oe.add ?? null,
+      dnp: (a.dnp as string) ?? null, bc: (a.bc as string) ?? null, dia: (a.dia as string) ?? null,
+    }
+  })
   const omArr = (omics ?? []) as Array<Record<string, unknown>>
   const grauStr = (sph: unknown, cyl: unknown, axis: unknown, add: unknown) =>
     [sph ? `Esf ${sph}` : null, cyl ? `Cil ${cyl}` : null, axis ? `Eixo ${axis}` : null, add ? `Adição ${add}` : null].filter(Boolean).join(', ')
