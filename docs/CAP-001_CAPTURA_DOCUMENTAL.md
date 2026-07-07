@@ -320,6 +320,8 @@ O CAP-001 só é considerado **implementado** quando **todos** os itens forem ve
 - [ ] **Não existem** limites de tamanho diferentes entre módulos.
 - [ ] O documento original segue o fluxo definido no **DOC-001** (`health_documents`).
 - [ ] Todos os fluxos são **homologados com PDF, JPG, PNG e HEIC**.
+- [ ] **Selecionar arquivo existente** do dispositivo (PDF/imagem da galeria) está disponível em **todos** os módulos — não apenas câmera.
+- [ ] **Validação obrigatória em mobile (iOS e Android)** em cada módulo: abrir **câmera** · abrir **galeria** · **selecionar arquivo** do dispositivo · **selecionar PDF** · **comportamento idêntico** em todos os módulos. *(Critério obrigatório — a captura é um dos principais fluxos da SINTERA; inconsistência aqui compromete a proposta de valor.)*
 
 ### Status de implementação (linha divisória documentação × execução — 2026-07-07)
 
@@ -328,10 +330,11 @@ da REL-001). Verificado no código nesta data:
 
 | Item | Status |
 |---|---|
-| Aceitar PDF para receita de medicamento (`medication.accepts`) | ❌ Não implementado |
+| Aceitar PDF para receita de medicamento (`medication.accepts`) | 🟡 Hotfix aplicado — branch `fix/capture-destinos-sempre-visiveis` (aguardando merge) |
+| Centro de Captura exibindo todos os destinos (sem filtro por MIME) | 🟡 Hotfix aplicado — idem |
 | `DocumentCapture` único | ❌ Não implementado |
 | Todos os módulos usando o mesmo componente | ❌ Não implementado |
-| Centro de Captura exibindo todos os destinos | ❌ Não implementado |
+| **Página de Medicamentos (mobile): selecionar arquivo/galeria, não só câmera** | ❌ Não implementado |
 | Configuração central de formatos (`formats.ts`) | ❌ Não implementado |
 | Capture Engine | ❌ Não implementado |
 | Routing Engine (por registry) | ❌ Não implementado |
