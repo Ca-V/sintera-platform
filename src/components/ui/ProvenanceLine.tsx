@@ -5,7 +5,7 @@
 // original". Sem documento → só a origem (nunca link fictício). Reutilizável em
 // Relatório, Histórico, Timeline, Exames, Medicamentos, Recursos e futuros KG/SRL/IA.
 
-import { Paperclip } from 'lucide-react'
+import { FileText } from 'lucide-react'
 import { type Provenance, sourceLabel, hasDocument, documentUrl } from '@/lib/provenance'
 
 export default function ProvenanceLine({ provenance, showOrigin = true, className = '' }: {
@@ -20,8 +20,8 @@ export default function ProvenanceLine({ provenance, showOrigin = true, classNam
       {showOrigin && <span>Origem: {meta}</span>}
       {hasDocument(provenance) && (
         <a href={documentUrl(provenance) as string} target="_blank" rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-petal hover:underline">
-          <Paperclip size={11} /> Ver documento original
+          className="inline-flex items-center gap-1 text-petal hover:underline font-medium">
+          <FileText size={12} className="flex-shrink-0" /> Ver documento original
         </a>
       )}
     </span>

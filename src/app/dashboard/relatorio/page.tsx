@@ -340,6 +340,11 @@ function LegacyReport() {
     sections.sinais && { label: 'sinais vitais', n: perMeasuresVitais.length },
     sections.habitos && { label: 'hábitos', n: habits.length },
   ].filter((x): x is { label: string; n: number } => !!x && x.n > 0)
+  const totalRegistros = resumoItems.reduce((s, r) => s + r.n, 0)
+  const lastUpdate = ([
+    ...perEvents.map(e => e.date), ...perVisExams.map(e => e.date), ...perOmics.map(o => o.date),
+    ...perMeasuresCorpo.map(m => m.date), ...perMeasuresVitais.map(m => m.date),
+  ].filter(Boolean) as string[]).sort().slice(-1)[0] ?? null
   const alturaCm = (profile as { height_cm?: number | null } | null)?.height_cm ?? null
   const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
 
@@ -530,20 +535,54 @@ function LegacyReport() {
             <FileText size={16} /><span className="font-body text-xs font-medium uppercase tracking-wider">Relatório</span>
           </div>
           <h1 className="font-display text-2xl font-semibold text-onyx">Relatório</h1>
-          <p className="font-body text-sm text-mauve mt-1">Organização estruturada das informações registradas na SINTERA.</p>
-          <p className="font-body text-xs font-medium text-onyx/80 mt-2">Período: {periodLabel(period)}</p>
-          {resumoItems.length > 0 && (
-            <p className="font-body text-xs text-mauve/70 mt-1">Neste relatório: {resumoItems.map(r => `${r.n} ${r.label}`).join(' · ')}.</p>
-          )}
-          <p className="font-body text-xs text-mauve/70 mt-1">{nome} · Gerado em {hoje}</p>
+          <p className="font-body text-sm text-mauve mt-1">Organização estruturada das informações registradas na SINTERA para compartilhamento e acompanhamento da saúde.</p>
+          <p className="font-body text-xs text-mauve/70 mt-1.5">{nome} · Gerado em {hoje}</p>
         </div>
+
+        {/* Resumo do relatório — cabeçalho executivo, totalmente factual (RDC 657) */}
+        <div className="rounded-2xl border border-border bg-ivory/40 p-4 sm:p-5">
+          <p className="font-display text-sm font-semibold text-onyx mb-1">Resumo do relatório</p>
+          <p className="font-body text-xs font-semibold text-petal mb-2.5">Período considerado neste relatório: {periodLabel(period)}</p>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-1 font-body text-xs text-onyx">
+            <p><span className="text-mauve/70">Registros incluídos:</span> <strong>{totalRegistros}</strong></p>
+            {sections.exames && <p><span className="text-mauve/70">Exames:</span> {perVisExams.length}</p>}
+            {sections.eventos && <p><span className="text-mauve/70">Consultas e eventos:</span> {perEvents.length}</p>}
+            {sections.medicamentos && <p><span className="text-mauve/70">Medicamentos em uso:</span> {visMedsEmUso.length}</p>}
+            {sections.condicoes && <p><span className="text-mauve/70">Condições registradas:</span> {condProprias.length + condFamiliar.length}</p>}
+            {sections.visao && <p><span className="text-mauve/70">Recursos de saúde:</span> {eyewear.length}</p>}
+            <p><span className="text-mauve/70">Última atualização:</span> {lastUpdate ? fmt(lastUpdate) : hoje}</p>
+          </div>
+        </div>
+
+        {/* Índice navegável — espelha o menu (grupos → seções selecionadas), clicável no PDF */}
+        {resumoItems.length > 0 && (
+        <nav className="rounded-2xl border border-border p-4 sm:p-5" aria-label="Índice do relatório">
+          <p className="font-display text-sm font-semibold text-onyx mb-2.5">Índice</p>
+          <div className="space-y-2">
+            {SELECT_GROUPS.map(g => {
+              const items = g.items.filter(([k]) => sections[k])
+              if (!items.length) return null
+              return (
+                <div key={g.title}>
+                  <p className="font-body text-[11px] font-semibold text-petal uppercase tracking-wider mb-0.5">{g.title}</p>
+                  <ul className="flex flex-col gap-0.5 pl-3">
+                    {items.map(([k, label]) => (
+                      <li key={k}><a href={`#sec-${k}`} className="font-body text-xs text-onyx hover:text-petal transition-colors">{label}</a></li>
+                    ))}
+                  </ul>
+                </div>
+              )
+            })}
+          </div>
+        </nav>
+        )}
 
         {/* ══════════ ACOMPANHAMENTO ══════════ */}
         {showAcompanhamento && <ReportBand>Acompanhamento</ReportBand>}
 
         {/* Consultas, procedimentos e eventos (Histórico) */}
         {sections.eventos && (
-        <section>
+        <section id="sec-eventos" style={{ scrollMarginTop: 16 }}>
           <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Consultas, procedimentos e eventos</h2>
           {perEvents.length === 0 ? (
             <p className="font-body text-sm text-mauve/60">Nenhum evento registrado.</p>
@@ -567,7 +606,7 @@ function LegacyReport() {
 
         {/* Exames */}
         {sections.exames && (
-        <section>
+        <section id="sec-exames" style={{ scrollMarginTop: 16 }}>
           <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Exames</h2>
           {perVisExams.length > 1 && (
             <ViewModeSwitcher className="mb-2 print:hidden"
@@ -591,7 +630,7 @@ function LegacyReport() {
 
         {/* Exames de ômica */}
         {sections.omica && (
-        <section>
+        <section id="sec-omica" style={{ scrollMarginTop: 16 }}>
           <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Exames de ômica</h2>
           {perOmics.length === 0 ? (
             <p className="font-body text-sm text-mauve/60">Nenhum exame de ômica registrado.</p>
@@ -611,7 +650,7 @@ function LegacyReport() {
 
         {/* Medicamentos e suplementos */}
         {sections.medicamentos && (
-        <section>
+        <section id="sec-medicamentos" style={{ scrollMarginTop: 16 }}>
           <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Medicamentos e Suplementos em uso</h2>
           {visMedsEmUso.length === 0 ? (
             <p className="font-body text-sm text-mauve/60">Nenhum registrado em uso.</p>
@@ -636,7 +675,7 @@ function LegacyReport() {
 
         {/* Condições de saúde — próprias + histórico familiar */}
         {sections.condicoes && (
-        <section>
+        <section id="sec-condicoes" style={{ scrollMarginTop: 16 }}>
           <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Condições de Saúde</h2>
           {condProprias.length === 0 ? (
             <p className="font-body text-sm text-mauve/60">Nenhuma condição registrada.</p>
@@ -668,7 +707,7 @@ function LegacyReport() {
 
         {/* Recursos de Saúde (correção visual: óculos e lentes de contato) */}
         {sections.visao && (
-        <section>
+        <section id="sec-visao" style={{ scrollMarginTop: 16 }}>
           <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Recursos de Saúde</h2>
           {eyewear.length === 0 ? (
             <p className="font-body text-sm text-mauve/60">Nenhum recurso registrado.</p>
@@ -696,7 +735,7 @@ function LegacyReport() {
 
         {/* Medidas corporais */}
         {sections.medidas && (
-        <section>
+        <section id="sec-medidas" style={{ scrollMarginTop: 16 }}>
           <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Medidas Corporais</h2>
           {alturaCm != null && (
             <p className="font-body text-sm text-onyx mb-1"><span className="text-mauve/70">Altura:</span> {alturaCm} cm</p>
@@ -722,7 +761,7 @@ function LegacyReport() {
 
         {/* Sinais vitais */}
         {sections.sinais && (
-        <section>
+        <section id="sec-sinais" style={{ scrollMarginTop: 16 }}>
           <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Sinais Vitais</h2>
           {perMeasuresVitais.length === 0 ? (
             <p className="font-body text-sm text-mauve/60">Nenhum sinal vital registrado.</p>
@@ -745,7 +784,7 @@ function LegacyReport() {
 
         {/* Hábitos de vida */}
         {sections.habitos && (
-        <section>
+        <section id="sec-habitos" style={{ scrollMarginTop: 16 }}>
           <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Hábitos</h2>
           {habits.length === 0 ? (
             <p className="font-body text-sm text-mauve/60">Nenhum hábito registrado.</p>

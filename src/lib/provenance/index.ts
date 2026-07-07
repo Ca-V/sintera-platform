@@ -16,13 +16,16 @@
 // é preenchido hoje. Consumidores: Relatório (1º), Histórico, Timeline, Exames,
 // Medicamentos, Recursos e, futuramente, KG v2 / SRL / IA Contextual.
 //
-// REGRA ARQUITETURAL DEFINITIVA: sempre que uma informação possuir um documento de
-// origem, esse documento DEVE estar acessível ("Ver documento original") em QUALQUER
-// consumidor da Camada de Comunicação (Relatório · PDF · compartilhamento · impressão
-// · Timeline compartilhada · integrações), pela MESMA lógica, sem implementação
-// específica por módulo. Quando um fluxo passar a armazenar o documento (ex.: ômica,
-// receitas de medicamentos), o link aparece automaticamente — basta o adaptador
-// popular `document.url`.
+// REGRA ARQUITETURAL DEFINITIVA (Camada de Comunicação): TODA informação apresentada
+// deve possuir uma ORIGEM IDENTIFICÁVEL (SourceKind); e SEMPRE que existir um documento
+// original associado, ele DEVE estar acessível ("Ver documento original") em QUALQUER
+// consumidor (Relatório · PDF · compartilhamento · impressão · Timeline · integrações),
+// pela MESMA lógica, sem implementação específica por módulo. Quando um fluxo passar a
+// armazenar o documento (ex.: ômica, receitas de medicamentos), o link aparece
+// automaticamente — basta o adaptador popular `document.url`.
+// Nível 5 (references): cada informação/bloco pode futuramente expor "Referências
+// científicas relacionadas", alimentadas pelo KG v2/SRL — hoje oculto; o layout já
+// comporta sem reformulação.
 //
 // Esta camada consome o documento por REFERÊNCIA (DocumentMeta) e NUNCA conhece
 // onde ele foi originado. A evolução oficial é um repositório ÚNICO de documentos

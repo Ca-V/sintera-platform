@@ -7,7 +7,7 @@
 // (Ver REL-001 §0.0 — Camada de Comunicação.)
 // ============================================================
 
-export type PeriodPreset = 'all' | '30d' | '90d' | '6m' | '1y' | 'custom'
+export type PeriodPreset = 'all' | '7d' | '1m' | '3m' | '6m' | '1y' | 'custom'
 
 export interface Period {
   preset: PeriodPreset
@@ -17,8 +17,9 @@ export interface Period {
 
 export const PERIOD_PRESETS: { value: PeriodPreset; label: string }[] = [
   { value: 'all',    label: 'Todo o histórico' },
-  { value: '30d',    label: 'Últimos 30 dias' },
-  { value: '90d',    label: 'Últimos 90 dias' },
+  { value: '7d',     label: 'Últimos 7 dias' },
+  { value: '1m',     label: 'Último mês' },
+  { value: '3m',     label: 'Últimos 3 meses' },
   { value: '6m',     label: 'Últimos 6 meses' },
   { value: '1y',     label: 'Último ano' },
   { value: 'custom', label: 'Intervalo personalizado' },
@@ -33,14 +34,16 @@ export function resolvePeriod(p: Period, now: Date = new Date()): ResolvedPeriod
   const backMonths = (m: number) => { const d = new Date(now); d.setMonth(d.getMonth() - m); d.setHours(0, 0, 0, 0); return d }
   switch (p.preset) {
     case 'all': return { from: null, to: null }
-    case '30d': return { from: backDays(30), to: end }
-    case '90d': return { from: backDays(90), to: end }
+    case '7d':  return { from: backDays(7), to: end }
+    case '1m':  return { from: backMonths(1), to: end }
+    case '3m':  return { from: backMonths(3), to: end }
     case '6m':  return { from: backMonths(6), to: end }
     case '1y':  return { from: backMonths(12), to: end }
     case 'custom': return {
       from: p.from ? new Date(`${p.from}T00:00:00`) : null,
       to:   p.to ? new Date(`${p.to}T23:59:59`) : null,
     }
+    default: return { from: null, to: null }   // legado/desconhecido = todo o histórico
   }
 }
 
