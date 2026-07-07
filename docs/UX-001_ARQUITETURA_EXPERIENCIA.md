@@ -16,6 +16,7 @@
 5. **Responsabilidade única.** *Um módulo existe para representar apenas UM conceito do domínio.* Condições não registra compras, consultas nem medicamentos; Medicamentos não registra dispositivos nem condições; Recursos não registra medicamentos. (Detalhado na §8.)
 6. **SSOT do metadado clínico.** Nomes, categorias, unidades, ícones e ordenação de metadados clínicos vêm do Catálogo Científico — nunca duplicados (herda §0.1 do Plano de Maturidade).
 7. **Modelo orientado a eventos.** A jornada é uma linha do tempo de eventos; a interface é projeção, não a fonte da verdade.
+8. **Navegação por frequência de uso, não por estrutura técnica.** *A organização do menu reflete a **frequência de uso** das funcionalidades — não a estrutura do banco de dados nem a arquitetura interna do sistema.* É por isso que **Acompanhamento** (uso diário) vem antes de **Minha Saúde** (contexto permanente), embora ambos sejam módulos independentes (§5). Reorganizações futuras de navegação partem da **experiência do usuário**, nunca da implementação técnica.
 
 ---
 
