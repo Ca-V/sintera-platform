@@ -18,6 +18,8 @@ import SelectionToolbar from '@/components/ui/SelectionToolbar'
 import PeriodSelector from '@/components/ui/PeriodSelector'
 import { examProvenance, resourceProvenance } from '@/lib/provenance'
 import { type Period, resolvePeriod, inPeriod, overlapsPeriod, periodLabel } from '@/lib/communication/period'
+import ViewModeSwitcher from '@/components/ViewModeSwitcher'
+import { applySort, type SortSpec } from '@/lib/listview'
 import {
   Loader2, Printer, ArrowLeft, FileText, Share2, Copy, Trash2, Check,
   CalendarDays, FlaskConical, Pill, Stethoscope, HeartPulse, Ruler, Activity, Eye,
@@ -117,6 +119,7 @@ function LegacyReport() {
   const toggle = (k: keyof typeof sections) => setSections(s => ({ ...s, [k]: !s[k] }))
   // Filtro temporal (capacidade transversal da Camada de Comunicação).
   const [period, setPeriod] = useState<Period>({ preset: 'all' })
+  const [examSort, setExamSort] = useState('data')   // ordenação via @/lib/listview
 
   // Árvore de seleção = espelho do menu lateral (UX-001): grupos expansíveis,
   // seleção por grupo (tri-state) e por item. Mesma ordem/nomenclatura da sidebar.
@@ -280,6 +283,12 @@ function LegacyReport() {
   const perMeasuresVitais = measuresVitais.filter(m => inPeriod(m.date, rp))
   const perVisExams = visExams.filter(e => inPeriod(e.date, rp))
   const perMedsSusp = visMedsSusp.filter(m => overlapsPeriod(m.startedOn, m.untilOn, rp))
+  // Ordenação de Exames — declara a config; a mecânica é a infra comum (listview).
+  const EXAM_SORTS: SortSpec<Ex>[] = [
+    { key: 'data', label: 'Por data', compare: (a, b) => (b.date ?? '').localeCompare(a.date ?? '') },
+    { key: 'tipo', label: 'Por tipo', compare: (a, b) => (a.type ?? '').localeCompare(b.type ?? '') },
+  ]
+  const sortedExams = applySort(perVisExams, EXAM_SORTS, examSort)
   const alturaCm = (profile as { height_cm?: number | null } | null)?.height_cm ?? null
   const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
 
@@ -465,11 +474,16 @@ function LegacyReport() {
         {sections.exames && (
         <section>
           <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Exames</h2>
+          {perVisExams.length > 1 && (
+            <ViewModeSwitcher className="mb-2 print:hidden"
+              modes={EXAM_SORTS.map(s => ({ value: s.key, label: s.label }))}
+              active={examSort} onChange={setExamSort} />
+          )}
           {perVisExams.length === 0 ? (
             <p className="font-body text-sm text-mauve/60">Nenhum exame enviado.</p>
           ) : (
             <ul className="space-y-1">
-              {perVisExams.map((e, i) => (
+              {sortedExams.map((e, i) => (
                 <li key={i} className="font-body text-sm text-onyx flex flex-wrap items-baseline gap-x-2">
                   <span>• {fmt(e.date)} — {e.type}</span>
                   <ProvenanceLine provenance={examProvenance({ fileUrl: e.fileUrl })} showOrigin={false} />
