@@ -1,6 +1,6 @@
 # UX-001 — Arquitetura Funcional da Plataforma (Constituição)
 
-**Status:** 🟡 Especificação aprovada com ressalvas incorporadas — documento apenas (sem código). Base para o **congelamento da arquitetura funcional** antes do KG v2 — Parte 3.
+**Status:** 🔒 **ARQUITETURA FUNCIONAL CONGELADA** (07/07/2026) — implementada e em vigor a partir deste ciclo. Base para o KG v2 — Parte 3. Alterações estruturais exigem revisão explícita desta constituição (§9).
 **Escopo:** **arquitetura funcional** — o que existe, como se organiza, como se navega e como cresce. **NÃO** trata de componentes visuais, cores, tokens ou padrões de interface — isso é responsabilidade do **[[DS-001]] — Design System** (referenciado onde couber).
 **Sequência:** UX-001 (spec) → Implementação → **Freeze da arquitetura funcional** → KG v2 Parte 3 → Implementação do KG.
 **Herda:** [[PLANO_MATURIDADE_PRE_MOBILE]] (§0 Governança Científica, §0.1 SSOT, §3 modelo orientado a eventos).
@@ -61,7 +61,7 @@ Cada módulo = entidade de 1ª classe com **modelo de dados próprio**.
 | Exames | Clínico | Laudos + extração IA | `exams`, `biomarkers` |
 | Medicamentos e Suplementos | Clínico | O que a pessoa **toma** | `medications` (medicamento, suplemento) |
 | Condições de Saúde | Clínico | O que a pessoa **tem** (próprias + familiares) | `health_conditions` |
-| **Recursos de Saúde** *(novo)* | Clínico | Recursos que **usa** (cuidado/compensação/monitoramento) | *modelo próprio (Anexo A)* |
+| **Recursos de Saúde** *(novo)* | Clínico | Recursos que **usa** (cuidado/compensação/monitoramento) | `health_resources` (modelo próprio — Anexo A) |
 | Hábitos | Clínico | Estilo de vida | `life_habits` |
 | Medidas Corporais | Clínico | Peso/altura/IMC/composição | `body_metrics` (corporais) |
 | Sinais Vitais | Clínico | Pressão/FC/glicemia/SpO₂/temperatura | `body_metrics` (vitais) |
@@ -79,14 +79,16 @@ Cada módulo = entidade de 1ª classe com **modelo de dados próprio**.
 Módulo → Lista → Detalhe → Edição
 ```
 
+**Agrupamento ≠ fusão.** Os grupos de menu são **organização da experiência**, não fusão de entidades. Cada módulo dentro de um grupo **preserva identidade, ciclo de vida, regras e modelo de dados próprios** — agrupar reduz itens de primeiro nível sem misturar dados. O grupo é rótulo de navegação; a taxonomia formal é a §3.
+
 **Menu lateral** (agrupado pelo modelo mental da usuária):
 - **Painel** — Painel Inicial.
-- **Minha Saúde** — Agenda · Histórico · Exames · Medicamentos e Suplementos.
-- **Meu Perfil** — Condições de Saúde · **Recursos de Saúde** · Hábitos · Medidas Corporais · Sinais Vitais · Ciclo e Contracepção.
+- **Minha Saúde** *(estado-perfil: o que a pessoa **é/tem** de forma contínua)* — Condições de Saúde · **Recursos de Saúde** · Medidas Corporais · Sinais Vitais · Hábitos · Ciclo e Contracepção.
+- **Acompanhamento** *(a jornada no tempo e os registros clínicos)* — Agenda · Histórico · Exames · Medicamentos e Suplementos.
 - **Organização** — Despesas · Relatórios.
 - **Configurações**.
 
-*(Os grupos de menu são a face de navegação; a taxonomia formal é a §3. Ex.: "Minha Saúde"/"Meu Perfil" reúnem módulos Clínicos + Operacionais por afinidade de uso.)*
+*(Decisão desta versão: "Minha Saúde" passou a designar o **estado-perfil clínico** — reúne Condições, Recursos, Medidas, Sinais, Hábitos e Ciclo, cada um independente. Os módulos de jornada/registro migraram para o grupo **Acompanhamento**. Ciclo e Contracepção fica em Minha Saúde por ser estado-perfil contínuo, como Medidas/Sinais.)*
 
 **Acesso rápido (Painel Inicial):** os módulos mais frequentes — Histórico · Agenda · Exames · Medicamentos · Relatórios · Despesas.
 **Relatório:** espelha os módulos como seções, com os mesmos rótulos do menu.
@@ -149,10 +151,16 @@ Cada módulo registra **apenas** o seu conceito. Fronteiras explícitas:
 
 ## 9. Freeze Arquitetural
 
-Concluída a **implementação** do UX-001, a arquitetura funcional é **congelada**. A partir daí:
+🔒 **Congelado em 07/07/2026.** A implementação do UX-001 foi concluída (navegação em Minha Saúde / Acompanhamento; módulo Recursos de Saúde com modelo próprio `health_resources` + migração de óculos/lentes; renames Condições de Saúde e Medicamentos e Suplementos). A partir daqui:
 - Todo novo desenvolvimento respeita este documento (modelo de dois eixos, tipos de módulos, mapa, navegação, responsabilidade única) e o checklist da §7.
 - Componentes/visual seguem o **DS-001**.
 - Alterações **estruturais** exigem revisão explícita desta constituição — não ajustes pontuais.
+- **Próximo passo:** KG v2 — Parte 3 (Decisão Arquitetural).
+
+**Pendências registradas (não bloqueiam o freeze — sobre a base já congelada):**
+- Consolidar `produto`/`dispositivo` (hoje ainda como `kind` em Medicamentos) no módulo Recursos — requer migração de dados dos registros reais; fazer com confirmação da fundadora.
+- Ampliar a seção de Relatórios/relatório compartilhado para exibir **todos** os sub-tipos de Recursos (hoje espelha apenas correção visual).
+- Alergias como subtipo de Condições (§7) — quando priorizado.
 
 ---
 
@@ -169,8 +177,10 @@ Concluída a **implementação** do UX-001, a arquitetura funcional é **congela
 | Auxílios | aparelho auditivo, bengala, muletas, andador, cadeira de rodas |
 | Compressão e suporte | meia compressiva, colar cervical, faixa, colete |
 
-**Modelo de dados — PRÓPRIO (não reutilizar `medications`).** Dose/frequência/forma/via/recompra/prescritor não cabem em óculos/marcapasso/prótese; reaproveitar geraria nulos e regras condicionais e prejudicaria o KG v2. Modelo indicativo: `resource_id · user_id · resource_type · name · brand · started_on · until_date · status · notes · attributes (JSON por sub-tipo, ex.: grau da correção visual)`.
-**Migração:** `eyeglass_prescriptions` → Recursos de Saúde (correção visual), saindo de Condições.
+**Modelo de dados — PRÓPRIO (não reutilizar `medications`).** Dose/frequência/forma/via/recompra não cabem em óculos/marcapasso/prótese; reaproveitar geraria nulos e regras condicionais e prejudicaria o KG v2. Tabela `health_resources`:
+`id · user_id · resource_type · name · brand · prescriber · started_on · until_date · status (em_uso | suspenso | encerrado) · notes · file_url · attributes (JSONB por sub-tipo)`.
+O `attributes` guarda o que é específico do sub-tipo — ex.: correção visual = `{vision_kind, od{sph,cyl,axis,add}, oe{…}, dnp, bc, dia}`. Assim o núcleo é comum a todos os recursos e o detalhe fica isolado, sem colunas nulas.
+**Migração:** `eyeglass_prescriptions` → `health_resources` (`resource_type='correcao_visual'`), saindo de Condições; migração idempotente (rastreia `attributes.legacy_id`).
 **UI:** página própria (grupo Meu Perfil), montada com os primitivos do **DS-001**. Medicamentos passa a ser **"Medicamentos e Suplementos"**.
 
 ---

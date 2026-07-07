@@ -110,7 +110,7 @@ function LegacyReport() {
       db.from('body_metrics').select('metric, label, value_text, unit, measured_on').eq('user_id', user.id).order('measured_on', { ascending: false }),
       db.from('health_conditions').select('scope, name, relative, since_label, notes').eq('user_id', user.id).order('created_at', { ascending: false }),
       db.from('life_habits').select('category, description, frequency, notes').eq('user_id', user.id).order('created_at', { ascending: false }),
-      db.from('eyeglass_prescriptions').select('kind, prescribed_on, prescriber, od_sph, od_cyl, od_axis, od_add, oe_sph, oe_cyl, oe_axis, oe_add, dnp, bc, dia').eq('user_id', user.id).order('prescribed_on', { ascending: false, nullsFirst: false }),
+      db.from('health_resources').select('name, resource_type, prescriber, started_on, attributes').eq('user_id', user.id).eq('resource_type', 'correcao_visual').order('created_at', { ascending: false }),
       db.from('omics_panels').select('domain, laboratory, total_features, collected_on, created_at').eq('user_id', user.id).order('collected_on', { ascending: false, nullsFirst: false }),
     ])
     setMeds(((medRes.data ?? []) as Array<Record<string, unknown>>).map(m => ({
@@ -136,12 +136,17 @@ function LegacyReport() {
       category: (h.category as string) ?? 'outro', description: (h.description as string) ?? '',
       frequency: (h.frequency as string) ?? null, notes: (h.notes as string) ?? null,
     })))
-    setEyewear(((ewRes.data ?? []) as Array<Record<string, unknown>>).map(e => ({
-      kind: (e.kind as string) ?? 'oculos', prescribedOn: (e.prescribed_on as string) ?? null, prescriber: (e.prescriber as string) ?? null,
-      odSph: (e.od_sph as string) ?? null, odCyl: (e.od_cyl as string) ?? null, odAxis: (e.od_axis as string) ?? null, odAdd: (e.od_add as string) ?? null,
-      oeSph: (e.oe_sph as string) ?? null, oeCyl: (e.oe_cyl as string) ?? null, oeAxis: (e.oe_axis as string) ?? null, oeAdd: (e.oe_add as string) ?? null,
-      dnp: (e.dnp as string) ?? null, bc: (e.bc as string) ?? null, dia: (e.dia as string) ?? null,
-    })))
+    setEyewear(((ewRes.data ?? []) as Array<Record<string, unknown>>).map(e => {
+      const a = (e.attributes as Record<string, unknown>) ?? {}
+      const od = (a.od as Record<string, string>) ?? {}
+      const oe = (a.oe as Record<string, string>) ?? {}
+      return {
+        kind: (a.vision_kind as string) ?? 'oculos', prescribedOn: (e.started_on as string) ?? null, prescriber: (e.prescriber as string) ?? null,
+        odSph: od.sph ?? null, odCyl: od.cyl ?? null, odAxis: od.axis ?? null, odAdd: od.add ?? null,
+        oeSph: oe.sph ?? null, oeCyl: oe.cyl ?? null, oeAxis: oe.axis ?? null, oeAdd: oe.add ?? null,
+        dnp: (a.dnp as string) ?? null, bc: (a.bc as string) ?? null, dia: (a.dia as string) ?? null,
+      }
+    }))
     setOmics(((omRes.data ?? []) as Array<Record<string, unknown>>).map(o => ({
       domain: (o.domain as string) ?? 'metabolomics', laboratory: (o.laboratory as string) ?? null,
       totalFeatures: (o.total_features as number) ?? null, date: (o.collected_on as string) ?? (o.created_at as string) ?? null,
@@ -246,23 +251,23 @@ function LegacyReport() {
       </div>
 
       {/* Seleção do que mostrar — segue a mesma estrutura da navegação (sidebar):
-          agrupada em Minha Saúde / Meu Perfil, com os mesmos rótulos, ordem e ícones. */}
+          agrupada em Minha Saúde / Acompanhamento, com os mesmos rótulos, ordem e ícones. */}
       <div className="card-premium p-5 mb-6 print:hidden">
         <p className="font-body text-sm font-semibold text-onyx mb-3">Mostrar no relatório</p>
         <div className="space-y-4">
           {([
             ['Minha Saúde', [
+              ['condicoes', 'Condições de Saúde', Stethoscope],
+              ['visao', 'Recursos de Saúde (óculos e lentes)', Eye],
+              ['medidas', 'Medidas Corporais', Ruler],
+              ['sinais', 'Sinais Vitais', Activity],
+              ['habitos', 'Hábitos', HeartPulse],
+            ]],
+            ['Acompanhamento', [
               ['eventos', 'Consultas e eventos', CalendarDays],
               ['exames', 'Exames', FileText],
               ['omica', 'Exames de ômica', FlaskConical],
-              ['medicamentos', 'Medicamentos, Suplementos, Produtos e Dispositivos', Pill],
-            ]],
-            ['Meu Perfil', [
-              ['condicoes', 'Problemas de Saúde', Stethoscope],
-              ['habitos', 'Hábitos', HeartPulse],
-              ['medidas', 'Medidas Corporais', Ruler],
-              ['sinais', 'Sinais Vitais', Activity],
-              ['visao', 'Óculos e lentes', Eye],
+              ['medicamentos', 'Medicamentos e Suplementos', Pill],
             ]],
           ] as const).map(([groupTitle, items]) => (
             <div key={groupTitle}>

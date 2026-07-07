@@ -6,16 +6,17 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, FileText, Clock, Pill, Receipt, CalendarDays,
   HeartPulse, Stethoscope, ScrollText, Droplet, Activity, Ruler, Settings,
-  X, ChevronRight,
+  Package, X, ChevronRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUser } from '@/context/UserContext'
 
-// Arquitetura de navegação que acompanha o MODELO MENTAL da usuária (sem jargão):
-//   Minha Saúde   = o que ela faz / acompanha na jornada (Agenda, Histórico, Exames, Medicamentos…).
-//   Meu Perfil    = quem ela é em termos de saúde (problemas, hábitos, medidas, ciclo).
-//   Organização   = gestão (financeiro + compartilhamento).
-//   Configurações = conta.
+// Arquitetura de navegação (UX-001 §5). Agrupamento = organização da experiência,
+// NÃO fusão de entidades — cada módulo preserva modelo/regras próprios.
+//   Minha Saúde    = estado-perfil clínico contínuo (Condições, Recursos, Medidas, Sinais, Hábitos, Ciclo).
+//   Acompanhamento = a jornada no tempo e os registros (Agenda, Histórico, Exames, Medicamentos e Suplementos).
+//   Organização    = gestão (financeiro + relatórios).
+//   Configurações  = conta.
 // "Histórico" reúne Linha do Tempo + Evolução (duas visões do registro longitudinal).
 const navGroups: {
   title: string
@@ -30,20 +31,21 @@ const navGroups: {
   {
     title: 'Minha Saúde',
     items: [
-      { href: '/dashboard/agenda',       icon: CalendarDays, label: 'Agenda' },
-      { href: '/dashboard/timeline',     icon: Clock,        label: 'Histórico', extra: ['/dashboard/saude', '/dashboard/historico'] },
-      { href: '/dashboard/exams',        icon: FileText,     label: 'Exames' },
-      { href: '/dashboard/medicamentos', icon: Pill,         label: 'Medicamentos, Suplementos, Produtos e Dispositivos' },
+      { href: '/dashboard/condicoes',     icon: Stethoscope, label: 'Condições de Saúde' },
+      { href: '/dashboard/recursos',      icon: Package,     label: 'Recursos de Saúde' },
+      { href: '/dashboard/medidas',       icon: Ruler,       label: 'Medidas Corporais' },
+      { href: '/dashboard/sinais-vitais', icon: Activity,    label: 'Sinais Vitais' },
+      { href: '/dashboard/habitos',       icon: HeartPulse,  label: 'Hábitos' },
+      { href: '/dashboard/ciclo',         icon: Droplet,     label: 'Ciclo e Contracepção' },
     ],
   },
   {
-    title: 'Meu Perfil',
+    title: 'Acompanhamento',
     items: [
-      { href: '/dashboard/condicoes',     icon: Stethoscope, label: 'Problemas de Saúde' },
-      { href: '/dashboard/habitos',       icon: HeartPulse,  label: 'Hábitos' },
-      { href: '/dashboard/medidas',       icon: Ruler,       label: 'Medidas Corporais' },
-      { href: '/dashboard/sinais-vitais', icon: Activity,    label: 'Sinais Vitais' },
-      { href: '/dashboard/ciclo',         icon: Droplet,     label: 'Ciclo e Contracepção' },
+      { href: '/dashboard/agenda',       icon: CalendarDays, label: 'Agenda' },
+      { href: '/dashboard/timeline',     icon: Clock,        label: 'Histórico', extra: ['/dashboard/saude', '/dashboard/historico'] },
+      { href: '/dashboard/exams',        icon: FileText,     label: 'Exames' },
+      { href: '/dashboard/medicamentos', icon: Pill,         label: 'Medicamentos e Suplementos' },
     ],
   },
   {

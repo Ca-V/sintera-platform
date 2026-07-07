@@ -465,9 +465,9 @@ export default function MedicamentosPage() {
         <div className="min-w-0">
           <div className="inline-flex items-center gap-1.5 text-petal mb-2">
             <Pill size={16} />
-            <span className="font-body text-xs font-medium uppercase tracking-wider">Medicamentos, Suplementos, Produtos e Dispositivos</span>
+            <span className="font-body text-xs font-medium uppercase tracking-wider">Medicamentos e Suplementos</span>
           </div>
-          <h1 className="font-display text-xl font-semibold text-onyx">Medicamentos, Suplementos, Produtos e Dispositivos</h1>
+          <h1 className="font-display text-2xl font-semibold text-onyx">Medicamentos e Suplementos</h1>
           <p className="font-body text-sm text-mauve mt-1">Registre o que você usa. A SINTERA organiza — quem prescreve é o seu médico.</p>
         </div>
         <div className="flex flex-row flex-wrap items-center gap-2 sm:flex-col sm:items-end flex-shrink-0">

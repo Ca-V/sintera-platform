@@ -1,7 +1,7 @@
 'use client'
 
 // ============================================================
-// Problemas de Saúde — próprias + histórico familiar
+// Condições de Saúde — próprias + histórico familiar
 // ============================================================
 // Registro factual e autorrelatado. A SINTERA NUNCA identifica nem infere
 // condições — apenas organiza o que a usuária informa (dela ou da família).
@@ -13,7 +13,6 @@ import { Loader2, Plus, X, Stethoscope, ArrowLeft, Trash2, Users, Pencil } from 
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
-import EyeglassPrescriptions from '@/components/EyeglassPrescriptions'
 import ListCard from '@/components/ListCard'
 
 type Scope = 'propria' | 'familiar'
@@ -136,9 +135,9 @@ export default function CondicoesPage() {
         <div>
           <div className="inline-flex items-center gap-1.5 text-petal mb-2">
             <Stethoscope size={16} />
-            <span className="font-body text-xs font-medium uppercase tracking-wider">Problemas de Saúde</span>
+            <span className="font-body text-xs font-medium uppercase tracking-wider">Condições de Saúde</span>
           </div>
-          <h1 className="font-display text-2xl font-semibold text-onyx">Problemas de Saúde</h1>
+          <h1 className="font-display text-2xl font-semibold text-onyx">Condições de Saúde</h1>
           <p className="font-body text-sm text-mauve mt-1">Registre condições suas e antecedentes familiares. A SINTERA só organiza o que você informa — não identifica nem infere condições.</p>
         </div>
         <button onClick={() => (showForm ? (reset(), setShowForm(false)) : (reset(), setShowForm(true)))}
@@ -214,10 +213,6 @@ export default function CondicoesPage() {
             </div>
             {familiares.length > 0 ? <div className="space-y-2">{familiares.map(card)}</div>
               : <p className="font-body text-sm text-mauve/60">Nenhum registrado.</p>}
-          </div>
-
-          <div className="border-t border-border/50 pt-6">
-            <EyeglassPrescriptions />
           </div>
         </div>
       )}
