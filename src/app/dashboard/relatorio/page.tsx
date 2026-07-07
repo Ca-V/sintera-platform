@@ -243,7 +243,7 @@ function LegacyReport() {
     const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
     const sel = (Object.keys(sections) as (keyof typeof sections)[]).filter(k => sections[k])
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from('report_shares').insert({ user_id: user.id, token, expires_at: expires, sections: sel })
+    await (supabase as any).from('report_shares').insert({ user_id: user.id, token, expires_at: expires, sections: sel, period })
     await load()
     setShareBusy(false)
   }
@@ -270,8 +270,9 @@ function LegacyReport() {
   const nome = (profile as { name?: string } | null)?.name ?? user?.email ?? '—'
   const medsEmUso = meds.filter(m => m.status === 'em_uso')
   const medsSusp = meds.filter(m => m.status === 'suspenso')
-  // Aplicam a seleção item a item ao relatório exibido/impresso (PDF). A propagação
-  // ao link compartilhado (/r/[token]) é incremento seguinte (persistir no share).
+  // Aplicam a seleção item a item ao relatório exibido/impresso (PDF). O PERÍODO
+  // propaga ao link (/r/[token], persistido no share); a exclusão item a item no
+  // link é refinamento futuro (seção-nível e período já propagam).
   const visMedsEmUso = medsEmUso.filter(m => isItemOn('medicamentos', m.name))
   const visMedsSusp = medsSusp.filter(m => isItemOn('medicamentos', m.name))
   const visExams = exams.filter(e => isItemOn('exames', `${e.type}__${e.date}`))
@@ -395,7 +396,7 @@ function LegacyReport() {
       <div className="card-premium p-5 mb-6 print:hidden">
         <p className="font-body text-sm font-semibold text-onyx mb-3">Período</p>
         <PeriodSelector period={period} onChange={setPeriod} />
-        <p className="font-body text-[11px] text-mauve/60 mt-3">Recorte aplicado ao relatório exibido e à impressão/PDF. Condições atuais e itens em uso aparecem independentemente do período.</p>
+        <p className="font-body text-[11px] text-mauve/60 mt-3">Recorte aplicado ao relatório, à impressão/PDF e ao link compartilhado. Condições atuais e itens em uso aparecem independentemente do período.</p>
       </div>
 
       {/* Perfis de Comunicação — oficiais da plataforma + personalizados (report_templates) */}

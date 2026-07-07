@@ -8,6 +8,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
+import { resolvePeriod, inPeriod, overlapsPeriod, type Period } from '@/lib/communication/period'
 
 export const metadata = { robots: { index: false, follow: false } }
 
@@ -65,7 +66,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: share } = await (admin.from('report_shares') as any)
-    .select('user_id, expires_at, revoked, sections')
+    .select('user_id, expires_at, revoked, sections, period')
     .eq('token', token)
     .maybeSingle()
 
@@ -74,6 +75,8 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
   }
 
   const uid = share.user_id as string
+  // Contexto Temporal do compartilhamento — mesmo recorte do relatório que gerou o link.
+  const rp = resolvePeriod((share.period as Period | null) ?? { preset: 'all' })
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = admin as any
   const [{ data: prof }, { data: meds }, { data: events }, { data: exams }, { data: measures }, { data: conditions }, { data: habits }, { data: eyewear }, { data: omics }, { data: authUser }] = await Promise.all([
@@ -104,18 +107,18 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
       dnp: (a.dnp as string) ?? null, bc: (a.bc as string) ?? null, dia: (a.dia as string) ?? null,
     }
   })
-  const omArr = (omics ?? []) as Array<Record<string, unknown>>
+  const omArr = ((omics ?? []) as Array<Record<string, unknown>>).filter(o => inPeriod((o.collected_on as string) ?? (o.created_at as string) ?? null, rp))
   const grauStr = (sph: unknown, cyl: unknown, axis: unknown, add: unknown) =>
     [sph ? `Esf ${sph}` : null, cyl ? `Cil ${cyl}` : null, axis ? `Eixo ${axis}` : null, add ? `Adição ${add}` : null].filter(Boolean).join(', ')
   const EYEWEAR_LABEL: Record<string, string> = { oculos: 'Óculos', lentes_contato: 'Lentes de contato' }
   const medsArr = (meds ?? []) as Array<Record<string, unknown>>
   const medsEmUso = medsArr.filter(m => m.status === 'em_uso')
-  const medsSusp = medsArr.filter(m => m.status === 'suspenso')
-  const evArr = (events ?? []) as Array<Record<string, unknown>>
-  const exArr = (exams ?? []) as Array<Record<string, unknown>>
+  const medsSusp = medsArr.filter(m => m.status === 'suspenso' && overlapsPeriod((m.started_on as string) ?? null, (m.until_date as string) ?? null, rp))
+  const evArr = ((events ?? []) as Array<Record<string, unknown>>).filter(e => inPeriod((e.event_date as string) ?? null, rp))
+  const exArr = ((exams ?? []) as Array<Record<string, unknown>>).filter(e => inPeriod((e.exam_date as string) ?? (e.created_at as string) ?? null, rp))
   const mzAll = (measures ?? []) as Array<Record<string, unknown>>
-  const mzArr = mzAll.filter(m => !isVital(m.metric as string))
-  const vitalArr = mzAll.filter(m => isVital(m.metric as string))
+  const mzArr = mzAll.filter(m => !isVital(m.metric as string) && inPeriod(m.measured_on as string, rp))
+  const vitalArr = mzAll.filter(m => isVital(m.metric as string) && inPeriod(m.measured_on as string, rp))
   const cdArr = (conditions ?? []) as Array<Record<string, unknown>>
   const condProprias = cdArr.filter(c => c.scope === 'propria')
   const condFamiliar = cdArr.filter(c => c.scope === 'familiar')
