@@ -39,7 +39,7 @@ const navGroups: {
   {
     title: 'Meu Perfil',
     items: [
-      { href: '/dashboard/condicoes',     icon: Stethoscope, label: 'Problemas de Saúde' },
+      { href: '/dashboard/condicoes',     icon: Stethoscope, label: 'Condições de Saúde' },
       { href: '/dashboard/habitos',       icon: HeartPulse,  label: 'Hábitos' },
       { href: '/dashboard/medidas',       icon: Ruler,       label: 'Medidas Corporais' },
       { href: '/dashboard/sinais-vitais', icon: Activity,    label: 'Sinais Vitais' },

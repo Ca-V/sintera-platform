@@ -258,7 +258,7 @@ function LegacyReport() {
               ['medicamentos', 'Medicamentos, Suplementos, Produtos e Dispositivos', Pill],
             ]],
             ['Meu Perfil', [
-              ['condicoes', 'Problemas de Saúde', Stethoscope],
+              ['condicoes', 'Condições de Saúde', Stethoscope],
               ['habitos', 'Hábitos', HeartPulse],
               ['medidas', 'Medidas Corporais', Ruler],
               ['sinais', 'Sinais Vitais', Activity],
