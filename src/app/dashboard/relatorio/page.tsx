@@ -15,7 +15,9 @@ import Link from 'next/link'
 import ReportEntry from '@/components/entry/ReportEntry'
 import ProvenanceLine from '@/components/ui/ProvenanceLine'
 import SelectionToolbar from '@/components/ui/SelectionToolbar'
+import PeriodSelector from '@/components/ui/PeriodSelector'
 import { examProvenance } from '@/lib/provenance'
+import { type Period, resolvePeriod, inPeriod, overlapsPeriod, periodLabel } from '@/lib/communication/period'
 import {
   Loader2, Printer, ArrowLeft, FileText, Share2, Copy, Trash2, Check,
   CalendarDays, FlaskConical, Pill, Stethoscope, HeartPulse, Ruler, Activity, Eye,
@@ -113,6 +115,8 @@ function LegacyReport() {
   const [copied, setCopied] = useState<string | null>(null)
   const [sections, setSections] = useState({ medicamentos: true, condicoes: true, habitos: true, visao: true, eventos: true, exames: true, omica: true, medidas: true, sinais: true })
   const toggle = (k: keyof typeof sections) => setSections(s => ({ ...s, [k]: !s[k] }))
+  // Filtro temporal (capacidade transversal da Camada de Comunicação).
+  const [period, setPeriod] = useState<Period>({ preset: 'all' })
 
   // Árvore de seleção = espelho do menu lateral (UX-001): grupos expansíveis,
   // seleção por grupo (tri-state) e por item. Mesma ordem/nomenclatura da sidebar.
@@ -265,6 +269,16 @@ function LegacyReport() {
   const condFamiliar = conditions.filter(c => c.scope === 'familiar')
   const measuresCorpo = measures.filter(m => !isVital(m.metric))
   const measuresVitais = measures.filter(m => isVital(m.metric))
+  // Aplica o período aos módulos TEMPORAIS (eventos/exames/ômica/medidas/sinais e
+  // medicamentos suspensos por sobreposição). Estados atuais (condições, meds em
+  // uso, recursos, hábitos) aparecem independentemente do período.
+  const rp = resolvePeriod(period)
+  const perEvents = events.filter(e => inPeriod(e.date, rp))
+  const perOmics = omics.filter(o => inPeriod(o.date, rp))
+  const perMeasuresCorpo = measuresCorpo.filter(m => inPeriod(m.date, rp))
+  const perMeasuresVitais = measuresVitais.filter(m => inPeriod(m.date, rp))
+  const perVisExams = visExams.filter(e => inPeriod(e.date, rp))
+  const perMedsSusp = visMedsSusp.filter(m => overlapsPeriod(m.startedOn, m.untilOn, rp))
   const alturaCm = (profile as { height_cm?: number | null } | null)?.height_cm ?? null
   const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
 
@@ -315,6 +329,13 @@ function LegacyReport() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Período — parâmetro da Camada de Comunicação (aplica a todos os módulos temporais) */}
+      <div className="card-premium p-5 mb-6 print:hidden">
+        <p className="font-body text-sm font-semibold text-onyx mb-3">Período</p>
+        <PeriodSelector period={period} onChange={setPeriod} />
+        <p className="font-body text-[11px] text-mauve/60 mt-3">Recorte aplicado ao relatório e ao link compartilhado. Condições atuais e itens em uso aparecem independentemente do período.</p>
       </div>
 
       {/* Seleção = árvore do menu lateral (UX-001): grupos expansíveis, seleção por
@@ -408,7 +429,8 @@ function LegacyReport() {
           </div>
           <h1 className="font-display text-2xl font-semibold text-onyx">Relatório</h1>
           <p className="font-body text-sm text-mauve mt-1">Organização estruturada das informações registradas na SINTERA.</p>
-          <p className="font-body text-xs text-mauve/70 mt-1.5">{nome} · Gerado em {hoje}</p>
+          <p className="font-body text-xs font-medium text-onyx/80 mt-2">Período: {periodLabel(period)}</p>
+          <p className="font-body text-xs text-mauve/70 mt-1">{nome} · Gerado em {hoje}</p>
         </div>
 
         {/* ══════════ ACOMPANHAMENTO ══════════ */}
@@ -418,12 +440,12 @@ function LegacyReport() {
         {sections.eventos && (
         <section>
           <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Consultas, procedimentos e eventos</h2>
-          {events.length === 0 ? (
+          {perEvents.length === 0 ? (
             <p className="font-body text-sm text-mauve/60">Nenhum evento registrado.</p>
           ) : (
             <table className="w-full text-left">
               <tbody>
-                {events.map((e, i) => (
+                {perEvents.map((e, i) => (
                   <tr key={i} className="border-b border-border/50">
                     <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(e.date)}</td>
                     <td className="font-body text-sm text-onyx py-1.5">
@@ -442,11 +464,11 @@ function LegacyReport() {
         {sections.exames && (
         <section>
           <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Exames</h2>
-          {visExams.length === 0 ? (
+          {perVisExams.length === 0 ? (
             <p className="font-body text-sm text-mauve/60">Nenhum exame enviado.</p>
           ) : (
             <ul className="space-y-1">
-              {visExams.map((e, i) => (
+              {perVisExams.map((e, i) => (
                 <li key={i} className="font-body text-sm text-onyx flex flex-wrap items-baseline gap-x-2">
                   <span>• {fmt(e.date)} — {e.type}</span>
                   <ProvenanceLine provenance={examProvenance({ fileUrl: e.fileUrl })} showOrigin={false} />
@@ -461,11 +483,11 @@ function LegacyReport() {
         {sections.omica && (
         <section>
           <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Exames de ômica</h2>
-          {omics.length === 0 ? (
+          {perOmics.length === 0 ? (
             <p className="font-body text-sm text-mauve/60">Nenhum exame de ômica registrado.</p>
           ) : (
             <ul className="space-y-1">
-              {omics.map((o, i) => (
+              {perOmics.map((o, i) => (
                 <li key={i} className="font-body text-sm text-onyx">
                   • {o.date ? `${fmt(o.date)} — ` : ''}<strong>{DOMAIN_LABEL[o.domain as OmicsDomain] ?? 'Ômica'}</strong>
                   {[o.laboratory, o.totalFeatures != null ? `${o.totalFeatures.toLocaleString('pt-BR')} marcadores` : null].filter(Boolean).length
@@ -493,8 +515,8 @@ function LegacyReport() {
               ))}
             </ul>
           )}
-          {visMedsSusp.length > 0 && (
-            <p className="font-body text-xs text-mauve/60 mt-2">Suspensos: {visMedsSusp.map(m => m.name).join(', ')}.</p>
+          {perMedsSusp.length > 0 && (
+            <p className="font-body text-xs text-mauve/60 mt-2">Suspensos: {perMedsSusp.map(m => m.name).join(', ')}.</p>
           )}
         </section>
         )}
@@ -568,12 +590,12 @@ function LegacyReport() {
           {alturaCm != null && (
             <p className="font-body text-sm text-onyx mb-1"><span className="text-mauve/70">Altura:</span> {alturaCm} cm</p>
           )}
-          {measuresCorpo.length === 0 ? (
+          {perMeasuresCorpo.length === 0 ? (
             <p className="font-body text-sm text-mauve/60">{alturaCm != null ? 'Sem outras medidas registradas.' : 'Nenhuma medida registrada.'}</p>
           ) : (
             <table className="w-full text-left">
               <tbody>
-                {measuresCorpo.map((m, i) => (
+                {perMeasuresCorpo.map((m, i) => (
                   <tr key={i} className="border-b border-border/50">
                     <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(m.date)}</td>
                     <td className="font-body text-sm text-onyx py-1.5">
@@ -591,12 +613,12 @@ function LegacyReport() {
         {sections.sinais && (
         <section>
           <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Sinais Vitais</h2>
-          {measuresVitais.length === 0 ? (
+          {perMeasuresVitais.length === 0 ? (
             <p className="font-body text-sm text-mauve/60">Nenhum sinal vital registrado.</p>
           ) : (
             <table className="w-full text-left">
               <tbody>
-                {measuresVitais.map((m, i) => (
+                {perMeasuresVitais.map((m, i) => (
                   <tr key={i} className="border-b border-border/50">
                     <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(m.date)}</td>
                     <td className="font-body text-sm text-onyx py-1.5">

@@ -18,6 +18,9 @@ Esta frente é, oficialmente, a **Camada de Comunicação da Plataforma** — re
 - **Seleção** (`SelectionToolbar` + estado) — seleção em massa/exportação/compartilhamento.
 - **Ordenação** — infraestrutura ÚNICA: cada módulo declara campos ordenáveis, ordenação padrão e agrupamentos; Agenda/Histórico/Exames/Recursos/Medicamentos/Despesas usam o mesmo mecanismo.
 - **Filtros e agrupamentos** — mesma abstração comum (filtros · agrupamentos · ordenação · seleção), usada em toda a plataforma.
+- **Período / recorte temporal** (`@/lib/communication/period` + `PeriodSelector`) — **parâmetro oficial da comunicação**: Todo o histórico · 30 dias · 90 dias · 6 meses · 1 ano · Intervalo personalizado (data inicial/final). Aplica-se a **todos os módulos temporais** (Agenda · Histórico · Exames · Medicamentos · Recursos com data · Procedimentos · Despesas · Sinais Vitais · Medidas · Hábitos com histórico · Ciclo). Reutilizável por PDF · compartilhamento · impressão · exportações · Timeline · Dashboards · APIs. O período **é informado ao destinatário** logo abaixo do título ("Período: …").
+  - **Estados permanentes:** condições atuais e itens **em uso** aparecem **independentemente** do período; entidades **encerradas** (ex.: medicamento suspenso) só aparecem se a janela de atividade **cruzar** o intervalo (`overlapsPeriod`).
+  - **Filtros temporais futuros (previstos, NÃO nesta entrega):** apenas ativos · apenas alterações no período · apenas exames alterados · apenas medicamentos em uso · apenas determinado profissional · apenas determinada condição.
 
 **Perfis de Comunicação (não "configuração salva"):** os templates são **Perfis de Comunicação**. Arquiteturalmente, **primeiro os perfis OFICIAIS da plataforma** (Consulta médica · Segunda opinião · Emergência · Viagem · Compartilhamento familiar · Seguro · Perícia · Pesquisa clínica), **depois** os personalizados pelo usuário.
 
