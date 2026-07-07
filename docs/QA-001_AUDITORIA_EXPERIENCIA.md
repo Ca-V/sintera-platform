@@ -1,15 +1,21 @@
 # QA-001 — Auditoria de Experiência da Plataforma (Metodologia Permanente)
 
-**Status:** 📄 Metodologia oficial (aprovada 07/07/2026). Passa a ser a **metodologia permanente de auditoria e homologação** da SINTERA.
+**Status:** 🔒 **DOCUMENTO CONSTITUCIONAL** (aprovado 07/07/2026) — processo oficial e permanente de auditoria e homologação da SINTERA. Toda homologação futura segue este processo.
+**Documentos constitucionais (governança oficial):** Plano de Maturidade · UX-001 · DS-001 · REL-001 · KG v2 · Roadmap por Ondas · **QA-001**.
 **Natureza:** 🟪 Infraestrutura (QA) — desenvolvida em **paralelo**, **não bloqueia** a evolução funcional (Onda 0.5 / REL-001 seguem prioritárias).
-**Integração:** a auditoria automatizada passa a integrar o **Definition of Done** de todas as ondas — toda homologação futura executa o harness **antes de publicar**.
-**Herda:** [[UX-001]] · [[DS-001]] · [[REL-001]] · Roadmap por Ondas ([[roadmap_ondas_core]]) · RDC 657.
+**Integração:** a auditoria automatizada integra o **Definition of Done** de todas as ondas — a cada release o harness executa automaticamente (desktop · mobile · console · screenshots · overflow · falhas de rede · responsividade · consistência dos componentes) **antes de publicar**.
+**Herda:** [[UX-001]] · [[DS-001]] · [[REL-001]] · Roadmap por Ondas ([[roadmap_ondas_core]]) · [[sintera_mission_vision]] · RDC 657.
 
 ---
 
 ## 1. Princípio
 
 A qualidade da plataforma deixa de depender de **observações pontuais** e passa a seguir um **roteiro fixo e reprodutível**. Uma auditoria não produz "uma lista de bugs" — produz uma **leitura completa de produto** (problemas + oportunidades), priorizada dentro do Roadmap por Ondas.
+
+> ### ⭐ Critério central do QA-001
+> Durante **toda** a auditoria, a pergunta mais importante — o **principal critério de avaliação de produto** — é:
+> **"Esta funcionalidade aproxima a SINTERA do objetivo de ser a melhor plataforma de organização, continuidade e compartilhamento das informações de saúde do usuário?"**
+> Se a resposta for **negativa**, a funcionalidade deve ser **simplificada, revista ou removida**. O produto evolui por **valor**, não pela mera adição de funcionalidades.
 
 ## 2. Fonte oficial de evidências — harness Playwright único
 
@@ -49,7 +55,9 @@ Para **cada página**, responder objetivamente:
 2. O usuário entende esse objetivo em **até 5 segundos**?
 3. Existe algum elemento que **não contribui** para esse objetivo?
 4. Existe algo importante que **está faltando**?
-5. **Esta tela faz a SINTERA parecer um "organizador de documentos" ou uma "plataforma de continuidade do cuidado"?**
+5. **Esta página reforça a proposta de valor da SINTERA?** — concretamente: faz a SINTERA parecer um *"organizador de documentos"* ou uma *"plataforma de continuidade do cuidado"*?
+
+Sempre que possível, **propor simplificações** (funcionalidade redundante/desnecessária · excesso de informação · excesso de cliques).
 
 A pergunta 5 é a mais importante. O diferencial da SINTERA **não** é armazenar documentos — é **organizar, relacionar e tornar as informações de saúde utilizáveis ao longo do tempo, com rastreabilidade, sem substituir o julgamento clínico**. A auditoria verifica se essa proposta de valor está **evidente em toda a experiência**.
 
@@ -66,7 +74,10 @@ A Home recebe auditoria própria. Não é "uma tela inicial" — deve **transmit
 
 Deve incentivar o uso contínuo **sem mensagens alarmistas**. Deve carregar, quando fizer sentido, a **história, direção, valores e visão** da SINTERA — o que é fundamental para o sucesso do produto (herda [[sintera_mission_vision]]).
 
-Entregável: **proposta completa de evolução da Home** — não apenas visual, mas **revisão de posicionamento de produto**: quando o usuário vê a Home, deve **sentir a necessidade** de ter e usar a plataforma (necessidade de uso, praticidade, ganho real para a vida).
+Entregável: **proposta completa de evolução da Home** — não apenas visual, mas **revisão de posicionamento de produto** — contemplando:
+- **proposta de valor** · **posicionamento** · **percepção de confiança** · **retenção** · **diferenciação** · **organização visual** · **incentivo ao uso recorrente**.
+
+Quando o usuário vê a Home, deve **compreender imediatamente por que vale a pena usar a SINTERA continuamente** e **sentir a necessidade** de tê-la (necessidade de uso, praticidade, ganho real para a vida) — **sem alarmismo**.
 
 ## 5. Documento-resultado (não é lista de bugs)
 
@@ -78,7 +89,7 @@ Um documento único com seis eixos:
 5. Oportunidades de evolução da **arquitetura**
 6. Oportunidades de evolução do **produto**
 
-**Cada item carrega:** `criticidade · impacto · esforço estimado · dependências · prioridade dentro do Roadmap por Ondas (onda-alvo)`.
+**Cada recomendação carrega (obrigatório — nenhuma aparece só como "observação"):** `criticidade · impacto para o usuário · esforço estimado · dependências · **natureza** (Produto · UX · Arquitetura · Infraestrutura · Regulatório) · prioridade/onda no Roadmap por Ondas`.
 
 **Regra: nada é implementado durante a auditoria.** Primeiro consolida-se **todo** o diagnóstico (os três pareceres); só depois as melhorias são priorizadas e posicionadas nas ondas do roadmap. Nada é presumido como correto só porque "funciona" — cada elemento é questionado sob a ótica de produto. *(A REL-001 e demais itens já aprovados do roadmap não são achados de auditoria e seguem normalmente.)*
 
