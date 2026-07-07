@@ -417,7 +417,7 @@ function LegacyReport() {
         {/* Consultas, procedimentos e eventos (Histórico) */}
         {sections.eventos && (
         <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Consultas, procedimentos e eventos</h2>
+          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Consultas, procedimentos e eventos</h2>
           {events.length === 0 ? (
             <p className="font-body text-sm text-mauve/60">Nenhum evento registrado.</p>
           ) : (
@@ -441,7 +441,7 @@ function LegacyReport() {
         {/* Exames */}
         {sections.exames && (
         <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Exames</h2>
+          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Exames</h2>
           {visExams.length === 0 ? (
             <p className="font-body text-sm text-mauve/60">Nenhum exame enviado.</p>
           ) : (
@@ -460,7 +460,7 @@ function LegacyReport() {
         {/* Exames de ômica */}
         {sections.omica && (
         <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Exames de ômica</h2>
+          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Exames de ômica</h2>
           {omics.length === 0 ? (
             <p className="font-body text-sm text-mauve/60">Nenhum exame de ômica registrado.</p>
           ) : (
@@ -480,7 +480,7 @@ function LegacyReport() {
         {/* Medicamentos e suplementos */}
         {sections.medicamentos && (
         <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Medicamentos e Suplementos em uso</h2>
+          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Medicamentos e Suplementos em uso</h2>
           {visMedsEmUso.length === 0 ? (
             <p className="font-body text-sm text-mauve/60">Nenhum registrado em uso.</p>
           ) : (
@@ -505,7 +505,7 @@ function LegacyReport() {
         {/* Condições de saúde — próprias + histórico familiar */}
         {sections.condicoes && (
         <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Condições de Saúde</h2>
+          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Condições de Saúde</h2>
           {condProprias.length === 0 ? (
             <p className="font-body text-sm text-mauve/60">Nenhuma condição registrada.</p>
           ) : (
@@ -537,7 +537,7 @@ function LegacyReport() {
         {/* Recursos de Saúde (correção visual: óculos e lentes de contato) */}
         {sections.visao && (
         <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Recursos de Saúde</h2>
+          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Recursos de Saúde</h2>
           {eyewear.length === 0 ? (
             <p className="font-body text-sm text-mauve/60">Nenhum recurso registrado.</p>
           ) : (
@@ -564,7 +564,7 @@ function LegacyReport() {
         {/* Medidas corporais */}
         {sections.medidas && (
         <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Medidas Corporais</h2>
+          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Medidas Corporais</h2>
           {alturaCm != null && (
             <p className="font-body text-sm text-onyx mb-1"><span className="text-mauve/70">Altura:</span> {alturaCm} cm</p>
           )}
@@ -590,7 +590,7 @@ function LegacyReport() {
         {/* Sinais vitais */}
         {sections.sinais && (
         <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Sinais Vitais</h2>
+          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Sinais Vitais</h2>
           {measuresVitais.length === 0 ? (
             <p className="font-body text-sm text-mauve/60">Nenhum sinal vital registrado.</p>
           ) : (
@@ -613,7 +613,7 @@ function LegacyReport() {
         {/* Hábitos de vida */}
         {sections.habitos && (
         <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Hábitos</h2>
+          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Hábitos</h2>
           {habits.length === 0 ? (
             <p className="font-body text-sm text-mauve/60">Nenhum hábito registrado.</p>
           ) : (
