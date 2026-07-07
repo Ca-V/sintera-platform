@@ -11,7 +11,7 @@
 
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { FlaskConical, Pill, Glasses, Dna, FileText, UploadCloud, Loader2, X, CheckCircle, AlertCircle } from 'lucide-react'
+import { FlaskConical, Pill, Glasses, Dna, FileText, UploadCloud, Camera, Loader2, X, CheckCircle, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import { CAPTURE_PROCESSORS, processorFor, processorsAccepting } from '../registry'
@@ -43,6 +43,7 @@ export default function CaptureCenter({ className = '', onDone }: CaptureCenterP
   const { user } = useUser()
   const supabase = useRef(createClient()).current
   const inputRef = useRef<HTMLInputElement>(null)
+  const cameraRef = useRef<HTMLInputElement>(null)
 
   const [file, setFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -139,7 +140,14 @@ export default function CaptureCenter({ className = '', onDone }: CaptureCenterP
             <p className="font-body text-sm text-onyx">Arraste um arquivo ou <span className="text-petal font-medium">selecione</span></p>
             <p className="font-body text-xs text-mauve mt-1">PDF, JPG ou PNG · até 50 MB</p>
           </div>
+          <button type="button" onClick={() => cameraRef.current?.click()}
+            className="mt-2 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl border border-petal/40 text-petal font-body text-sm font-medium hover:bg-blush transition-colors">
+            <Camera size={16} /> Tirar foto ou escanear
+          </button>
           <input ref={inputRef} type="file" accept={ACCEPTED.join(',')} className="hidden"
+            onChange={e => { const f = e.target.files?.[0]; if (f) pickFile(f); e.target.value = '' }} />
+          {/* Câmera: no celular abre direto a câmera (capture); no desktop, o seletor de arquivos. */}
+          <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden"
             onChange={e => { const f = e.target.files?.[0]; if (f) pickFile(f); e.target.value = '' }} />
           {error && <p className="font-body text-xs text-red-600 mt-2">{error}</p>}
         </div>

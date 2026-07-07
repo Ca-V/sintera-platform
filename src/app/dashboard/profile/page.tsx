@@ -111,7 +111,7 @@ export default function ProfilePage() {
               </div>
             ) : (
               <div className="flex items-center gap-2 group">
-                <p className="font-display text-xl font-semibold text-onyx truncate">{displayName}</p>
+                <p className="font-display text-xl font-semibold text-onyx break-words min-w-0">{displayName}</p>
                 <button onClick={startEdit}
                   className="text-mauve/50 hover:text-petal transition-colors flex-shrink-0">
                   <Edit3 size={14} />

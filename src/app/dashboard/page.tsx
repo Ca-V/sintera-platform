@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
-  FileText, Clock, Pill, ScrollText, CalendarDays, Droplet,
+  FileText, Clock, Pill, ScrollText, CalendarDays, Receipt,
   Upload, CheckCircle, AlertCircle, FlaskConical, Bell, ChevronRight, FilePlus, X,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -48,8 +48,8 @@ const QUICK_ACCESS: { href: string; icon: React.ElementType; label: string; desc
   { href: '/dashboard/agenda',       icon: CalendarDays,label: 'Agenda',                   desc: 'Eventos e lembretes',            tile: 'bg-warm',           tint: 'text-gold' },
   { href: '/dashboard/exams',        icon: FileText,    label: 'Exames',                    desc: 'Laudos e documentos',            tile: 'bg-blush',          tint: 'text-petal' },
   { href: '/dashboard/medicamentos', icon: Pill,        label: 'Medicamentos, Suplementos, Produtos e Dispositivos', desc: 'Em uso, recompra e dispositivos', tile: 'bg-sage-light',     tint: 'text-sage' },
-  { href: '/dashboard/ciclo',        icon: Droplet,     label: 'Ciclo e Contracepção',      desc: 'Menstruação e troca de método',  tile: 'bg-blush',          tint: 'text-petal' },
   { href: '/dashboard/relatorio',    icon: ScrollText,  label: 'Relatórios',                desc: 'Compartilhar com profissionais', tile: 'bg-lavender-light', tint: 'text-lavender' },
+  { href: '/dashboard/gastos',       icon: Receipt,     label: 'Despesas',                  desc: 'Consultas, exames e medicamentos', tile: 'bg-blush',          tint: 'text-petal' },
 ]
 
 // Passo 7 (cutover) — a rota decide legacy × v2 pelo Entry. Default: legacy
@@ -164,7 +164,7 @@ function LegacyDashboard() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-body text-[11px] font-medium uppercase tracking-wider text-petal">Agenda · próximo</p>
-            <p className="font-body text-sm font-semibold text-onyx truncate mt-0.5">{journey.next.title}</p>
+            <p className="font-body text-sm font-semibold text-onyx break-words mt-0.5">{journey.next.title}</p>
             <p className="font-body text-xs text-mauve mt-0.5">{formatDate(journey.next.date)}</p>
           </div>
           <ChevronRight size={18} className="text-petal/50 group-hover:text-petal transition-colors flex-shrink-0" />
@@ -295,18 +295,20 @@ function LegacyDashboard() {
               return (
                 <button key={exam.id}
                   onClick={() => router.push('/dashboard/exams/' + exam.id)}
-                  className="w-full flex items-center gap-4 px-5 py-3.5 hover:bg-blush/20 transition-colors text-left">
+                  className="w-full flex items-start gap-3 px-5 py-3.5 hover:bg-blush/20 transition-colors text-left">
                   <div className="w-8 h-8 rounded-xl bg-blush flex items-center justify-center flex-shrink-0">
                     <FileText size={15} className="text-petal" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-body text-sm font-medium text-onyx truncate">{exam.type ?? 'Exame'}</p>
-                    <p className="font-body text-xs text-mauve">Realizado em {formatDate(exam.exam_date ?? exam.created_at)}</p>
+                    <p className="font-body text-sm font-medium text-onyx break-words line-clamp-2">{exam.type ?? 'Exame'}</p>
+                    <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                      <p className="font-body text-xs text-mauve">Realizado em {formatDate(exam.exam_date ?? exam.created_at)}</p>
+                      <span className={`inline-flex items-center gap-1 text-[10px] font-body font-medium px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.color}`}>
+                        <Icon size={9} />
+                        {cfg.label}
+                      </span>
+                    </div>
                   </div>
-                  <span className={`inline-flex items-center gap-1.5 text-xs font-body font-medium px-2.5 py-1 rounded-full flex-shrink-0 ${cfg.bg} ${cfg.color}`}>
-                    <Icon size={10} />
-                    {cfg.label}
-                  </span>
                 </button>
               )
             })}

@@ -12,6 +12,11 @@ import { useUser } from '@/context/UserContext'
 import { typeLabel, formatDateBR, type HealthEvent } from '@/lib/agenda'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
+import { useStickyView } from '@/lib/ui/useStickyView'
+import ViewModeSwitcher from '@/components/ViewModeSwitcher'
+import ListCard, { CardChip } from '@/components/ListCard'
+import PageHeader from '@/components/PageHeader'
+import EmptyState from '@/components/EmptyState'
 
 function fmtBRL(cents: number): string {
   return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -23,6 +28,7 @@ export default function GastosPage() {
   const [items, setItems] = useState<HealthEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [year, setYear] = useState<number | null>(null)
+  const [view, setView] = useStickyView<'data' | 'tipo'>('sintera:view:despesas', 'data')
   const [reloadKey, setReloadKey] = useState(0)
   const [showAddInfo, setShowAddInfo] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
@@ -62,7 +68,7 @@ export default function GastosPage() {
   // Excluir o lançamento (o evento) de vez.
   async function deleteGasto(r: HealthEvent) {
     if (busyId || !user) return
-    if (!window.confirm(`Excluir "${r.title}" dos seus gastos? O evento é removido.`)) return
+    if (!window.confirm(`Excluir "${r.title}" das suas despesas? O evento é removido.`)) return
     setBusyId(r.id); setActionError(null)
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -75,6 +81,47 @@ export default function GastosPage() {
   const years = [...new Set(items.map(r => Number(r.date.slice(0, 4))))].sort((a, b) => b - a)
   const ofYear = items.filter(r => Number(r.date.slice(0, 4)) === year)
   const total = ofYear.reduce((s, r) => s + (r.amountCents ?? 0), 0)
+  // Agrupamento por tipo (com subtotais) para a visão "Por tipo".
+  const typeGroups = Object.values(
+    ofYear.reduce<Record<string, { label: string; rows: HealthEvent[]; subtotal: number }>>((acc, r) => {
+      const label = typeLabel(r.type)
+      const g = (acc[label] ??= { label, rows: [], subtotal: 0 })
+      g.rows.push(r); g.subtotal += r.amountCents ?? 0
+      return acc
+    }, {})
+  ).sort((a, b) => b.subtotal - a.subtotal)
+
+  function expenseRow(r: HealthEvent) {
+    return (
+      <ListCard key={r.id}
+        title={r.title}
+        meta={`${typeLabel(r.type)} · ${formatDateBR(r.date)}`}
+        chips={
+          <>
+            <CardChip tone="sage">{fmtBRL(r.amountCents ?? 0)}</CardChip>
+            {r.attachmentUrl && (
+              <a href={r.attachmentUrl} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 font-body text-[10px] text-petal hover:underline">
+                <Paperclip size={10} /> Nota fiscal
+              </a>
+            )}
+          </>
+        }
+        actions={
+          <>
+            {!r.directExpense && (
+              <button aria-label="Reabrir" title="Reabrir (desfazer conclusão — volta para a Agenda)"
+                disabled={busyId === r.id} onClick={() => reopenGasto(r)}
+                className="w-6 h-6 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/40 hover:text-petal transition-colors disabled:opacity-40"><RotateCcw size={12} /></button>
+            )}
+            <button aria-label="Excluir" title="Excluir lançamento"
+              disabled={busyId === r.id} onClick={() => deleteGasto(r)}
+              className="w-6 h-6 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve/40 hover:text-red-400 transition-colors disabled:opacity-40"><Trash2 size={12} /></button>
+          </>
+        }
+      />
+    )
+  }
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
@@ -82,34 +129,50 @@ export default function GastosPage() {
         <ArrowLeft size={15} /> Painel Inicial
       </Link>
 
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <div className="inline-flex items-center gap-1.5 text-petal mb-2">
-            <Receipt size={16} />
-            <span className="font-body text-xs font-medium uppercase tracking-wider">Gastos com Saúde</span>
-          </div>
-          <h1 className="font-display text-2xl font-semibold text-onyx">Gastos com Saúde</h1>
-          <p className="font-body text-sm text-mauve mt-1 leading-relaxed">
-            Os valores dos eventos que você <strong>concluiu</strong> na Agenda, com os comprovantes para baixar.
-          </p>
-        </div>
-        <button onClick={() => setShowAddInfo(v => !v)}
-          className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0">
-          <Plus size={15} /> Adicionar gasto
-        </button>
-      </div>
+      <PageHeader
+        icon={<Receipt size={16} />}
+        eyebrow="Despesas"
+        title="Despesas"
+        subtitle={<>Os valores dos eventos que você <strong>concluiu</strong> na Agenda, com os comprovantes para baixar.</>}
+        action={
+          <button onClick={() => setShowAddInfo(v => !v)}
+            className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity">
+            <Plus size={15} /> Adicionar despesa
+          </button>
+        }
+      />
 
       {showAddInfo && (
         <div className="card-premium p-5 flex items-start gap-3 border border-petal/20 bg-blush/15">
           <Info size={17} className="text-petal flex-shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <p className="font-body text-sm text-onyx leading-relaxed">
-              Os gastos são registrados através dos seus <strong>eventos de saúde</strong> — assim existe uma única origem para os dados.
-            </p>
-            <button onClick={() => setModalOpen(true)}
-              className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity">
-              <Plus size={15} /> Adicionar evento
-            </button>
+          <div className="flex-1 space-y-3">
+            <p className="font-body text-xs text-mauve leading-relaxed">A despesa é o <strong className="text-onyx">valor pago</strong> de um evento ou de uma compra.</p>
+            <div>
+              <p className="font-body text-xs font-semibold text-onyx mb-1.5">Ainda não registrei</p>
+              <div className="flex flex-wrap gap-2">
+                <button onClick={() => setModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-border text-mauve font-body text-xs font-medium hover:border-petal/40 hover:text-petal transition-colors">
+                  Novo evento
+                </button>
+                <Link href="/dashboard/medicamentos"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-border text-mauve font-body text-xs font-medium hover:border-petal/40 hover:text-petal transition-colors">
+                  Novo medicamento ou produto
+                </Link>
+              </div>
+            </div>
+            <div>
+              <p className="font-body text-xs font-semibold text-onyx mb-1.5">Já registrei — só faltou o valor</p>
+              <div className="flex flex-wrap gap-2">
+                <Link href="/dashboard/timeline"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-border text-mauve font-body text-xs font-medium hover:border-petal/40 hover:text-petal transition-colors">
+                  Ir ao Histórico
+                </Link>
+                <Link href="/dashboard/medicamentos"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-border text-mauve font-body text-xs font-medium hover:border-petal/40 hover:text-petal transition-colors">
+                  Ir a Medicamentos
+                </Link>
+              </div>
+            </div>
           </div>
           <button onClick={() => setShowAddInfo(false)} aria-label="Fechar" className="text-mauve/40 hover:text-onyx transition-colors flex-shrink-0"><X size={15} /></button>
         </div>
@@ -118,7 +181,7 @@ export default function GastosPage() {
       <div className="rounded-2xl border border-border bg-ivory px-4 py-3 flex items-start gap-2.5">
         <Info size={15} className="text-mauve/50 flex-shrink-0 mt-0.5" />
         <p className="font-body text-[11px] text-mauve leading-relaxed">
-          Isto <strong>organiza</strong> seus gastos e comprovantes — útil, por exemplo, para juntar documentos da sua declaração.
+          Isto <strong>organiza</strong> suas despesas e comprovantes — útil, por exemplo, para juntar documentos da sua declaração.
           Não é orientação tributária; sobre o que é dedutível, consulte seu contador.
         </p>
       </div>
@@ -133,12 +196,11 @@ export default function GastosPage() {
       {loading ? (
         <div className="card-premium p-10 text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></div>
       ) : items.length === 0 ? (
-        <div className="card-premium p-8 text-center">
-          <p className="font-body text-sm text-mauve">
-            Nenhum gasto registrado ainda. Ao <strong>concluir</strong> um evento na <Link href="/dashboard/agenda" className="text-petal hover:underline">Agenda</Link> com
-            o <strong>valor pago</strong> informado, ele aparece aqui automaticamente.
-          </p>
-        </div>
+        <EmptyState
+          icon={<Receipt size={28} className="text-petal" />}
+          title="Nenhuma despesa ainda"
+          message={<>Ao <strong>concluir</strong> um evento na <Link href="/dashboard/agenda" className="text-petal hover:underline">Agenda</Link> com o <strong>valor pago</strong> informado, ele aparece aqui automaticamente.</>}
+        />
       ) : (
         <>
           {/* Seletor de ano + total */}
@@ -153,45 +215,31 @@ export default function GastosPage() {
                 </button>
               ))}
             </div>
-            <p className="font-body text-xs text-mauve uppercase tracking-wider">Total gasto em {year}</p>
+            <p className="font-body text-xs text-mauve uppercase tracking-wider">Total de despesas em {year}</p>
             <p className="font-display text-3xl font-semibold text-onyx mt-1">{fmtBRL(total)}</p>
             <p className="font-body text-xs text-mauve/60 mt-1">{ofYear.length} {ofYear.length === 1 ? 'registro' : 'registros'}</p>
           </div>
 
-          {/* Lista do ano */}
-          <div className="space-y-3">
-            {ofYear.map(r => (
-              <div key={r.id} className="card-premium p-4 flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="font-body text-sm font-semibold text-onyx truncate">{r.title}</p>
-                  <p className="font-body text-[11px] text-mauve/60">{typeLabel(r.type)} · {formatDateBR(r.date)}</p>
-                  {r.attachmentUrl ? (
-                    <a href={r.attachmentUrl} target="_blank" rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 font-body text-[11px] text-petal hover:underline mt-1">
-                      <Paperclip size={11} /> Baixar nota fiscal
-                    </a>
-                  ) : (
-                    <span className="font-body text-[11px] text-mauve/40 mt-1 inline-block">Sem comprovante anexado</span>
-                  )}
+          {/* Visualização: por data × por tipo */}
+          <ViewModeSwitcher active={view} onChange={setView} modes={[{ value: 'data', label: 'Por data' }, { value: 'tipo', label: 'Por tipo' }]} />
+
+          {view === 'data' ? (
+            <div className="space-y-3">
+              {[...ofYear].sort((a, b) => (a.date < b.date ? 1 : -1)).map(expenseRow)}
+            </div>
+          ) : (
+            <div className="space-y-5">
+              {typeGroups.map(g => (
+                <div key={g.label}>
+                  <div className="flex items-center justify-between mb-2 px-1">
+                    <p className="font-body text-xs font-semibold text-onyx uppercase tracking-wider">{g.label}</p>
+                    <p className="font-body text-xs font-semibold text-sage">{fmtBRL(g.subtotal)}</p>
+                  </div>
+                  <div className="space-y-3">{g.rows.map(expenseRow)}</div>
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <span className="font-body text-sm font-semibold text-sage">{fmtBRL(r.amountCents ?? 0)}</span>
-                  {!r.directExpense && (
-                    <button aria-label="Reabrir" title="Reabrir (desfazer conclusão — volta para a Agenda)"
-                      disabled={busyId === r.id} onClick={() => reopenGasto(r)}
-                      className="w-7 h-7 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/60 hover:text-petal transition-colors disabled:opacity-40">
-                      <RotateCcw size={13} />
-                    </button>
-                  )}
-                  <button aria-label="Excluir" title="Excluir lançamento"
-                    disabled={busyId === r.id} onClick={() => deleteGasto(r)}
-                    className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve/60 hover:text-red-400 transition-colors disabled:opacity-40">
-                    <Trash2 size={13} />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </>
       )}
 

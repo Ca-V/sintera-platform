@@ -13,6 +13,7 @@ import {
   Loader2, Pencil, Trash2, Paperclip, Info, Sparkles, Pill, Receipt, Dumbbell, Dna, CheckCircle2, RotateCcw,
 } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import TimelineEntry from '@/components/entry/TimelineEntry'
 import { useUser } from '@/context/UserContext'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
@@ -20,6 +21,9 @@ import ConfirmDialog from '@/components/ConfirmDialog'
 import { useEventForm, eventToInput } from '@/components/eventForm'
 import { rowToHealthEvent, type HealthEvent, type HealthEventRow } from '@/lib/agenda'
 import HistoricoTabs from '@/components/HistoricoTabs'
+import { useStickyView } from '@/lib/ui/useStickyView'
+import ViewModeSwitcher from '@/components/ViewModeSwitcher'
+import ListCard, { CardChip } from '@/components/ListCard'
 import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
 
 type EventType = 'consulta' | 'vacina' | 'procedimento' | 'estetico' | 'medicamento' | 'atividade' | 'exame' | 'omica' | 'outro'
@@ -69,6 +73,11 @@ function fmt(date: string): string {
   const d = new Date(date.length <= 10 ? `${date}T00:00:00` : date)
   return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
 }
+function monthYear(date: string): string {
+  const d = new Date(date.length <= 10 ? `${date}T00:00:00` : date)
+  const s = d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
 
 function fmtBRL(cents: number): string {
   return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -82,6 +91,7 @@ export default function TimelineRoute() {
 
 function LegacyTimeline() {
   const { user } = useUser()
+  const router = useRouter()
   // Caminho ÚNICO de evento: mesmo modal e mesma gravação da Agenda.
   const { supabase, saveEvent, services } = useEventForm()
 
@@ -90,6 +100,7 @@ function LegacyTimeline() {
   const [busyId, setBusyId] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [showOnboard, setShowOnboard] = useState(false)
+  const [view, setView] = useStickyView<'data' | 'tipo'>('sintera:view:historico', 'data')
 
   // Formulário único de evento (AgendarModal)
   const [modalOpen, setModalOpen] = useState(false)
@@ -182,6 +193,21 @@ function LegacyTimeline() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase as any).from('health_events').select('*').eq('id', it.rawId).single()
     if (error || !data) { setActionError('Não foi possível abrir o evento para edição.'); return }
+    // Medicamentos/suplementos foram REMOVIDOS do formulário de evento — editam-se na
+    // página de Medicamentos (mesmo tratamento da Agenda). Aqui o Histórico mostra
+    // compra E recompra, então busca o medicamento por qualquer um dos dois vínculos.
+    const evType = (data as { event_type?: string }).event_type ?? ''
+    const evTitle = ((data as { title?: string }).title ?? '').trim()
+    const isMedType = evType === 'medicacao' || evType === 'medicamento' || evType === 'suplemento'
+    const looksLikeRecompra = /^recomprar/i.test(evTitle)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: medRow } = await (supabase as any).from('medications').select('id')
+      .or(`purchase_event_id.eq.${it.rawId},repurchase_event_id.eq.${it.rawId}`).maybeSingle()
+    const medId = (medRow?.id as string) ?? null
+    if (medId || isMedType || looksLikeRecompra) {
+      router.push(medId ? `/dashboard/medicamentos?edit=${medId}` : '/dashboard/medicamentos')
+      return
+    }
     setEditingEvent(rowToHealthEvent(data as HealthEventRow)); setModalOpen(true)
   }
 
@@ -231,7 +257,7 @@ function LegacyTimeline() {
   // Confirmação explicativa antes — importante no mobile, onde não há tooltip.
   const reopenEvent = (rawId: string) =>
     setConfirm({
-      message: 'Reabrir este evento? Ele volta para a Agenda (sai do Histórico) — e sai dos Gastos, se estava lá.',
+      message: 'Reabrir este evento? Ele volta para a Agenda (sai do Histórico) — e sai das Despesas, se estava lá.',
       confirmLabel: 'Reabrir',
       onYes: () => withFullEvent(rawId, ev => services.command.reopen(user!.id, ev), 'Não foi possível reabrir o evento.'),
     })
@@ -250,79 +276,43 @@ function LegacyTimeline() {
       <motion.div key={it.id}
         initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
         className="relative">
-        <div className={`absolute -left-6 top-1.5 w-3.5 h-3.5 rounded-full border-2 border-cream ${meta.cls}`} />
-        <div className="card-premium p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-start gap-3 min-w-0">
-              <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${meta.cls}`}>
-                <meta.Icon size={15} />
-              </div>
-              <div className="min-w-0">
-                {it.href ? (
-                  <Link href={it.href} className="font-body text-sm font-semibold text-onyx hover:text-petal hover:underline">{it.title}</Link>
-                ) : it.rawId ? (
-                  <button onClick={() => openEdit(it)} className="block font-body text-sm font-semibold text-onyx hover:text-petal text-left">{it.title}</button>
-                ) : (
-                  <p className="font-body text-sm font-semibold text-onyx">{it.title}</p>
-                )}
-                <p className="font-body text-[11px] text-mauve/60">{meta.label}{it.profKind && PROF_LABEL[it.profKind] ? ` · ${PROF_LABEL[it.profKind]}` : ''}{it.subtitle ? ` · ${it.subtitle}` : ''}</p>
-                {it.amountCents != null && (
-                  <span className="inline-block font-body text-[11px] font-medium text-sage bg-sage-light border border-sage/20 rounded-full px-2 py-0.5 mt-1">
-                    {fmtBRL(it.amountCents)}
-                  </span>
-                )}
-                {it.attachmentUrl && (
-                  <a href={it.attachmentUrl} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 font-body text-[11px] text-petal hover:underline mt-1">
-                    <Paperclip size={11} /> Ver anexo
-                  </a>
-                )}
-                {it.href && (
-                  <Link href={it.href}
-                    className="inline-flex items-center gap-1 font-body text-[11px] text-petal hover:underline mt-1">
-                    {it.kind === 'exam' ? 'Ver exame' : 'Ver painel'} →
-                  </Link>
-                )}
-              </div>
-            </div>
-            <div className="flex flex-col items-end gap-1 flex-shrink-0">
-              <span className="font-body text-[11px] text-mauve/60">{fmt(it.date)}</span>
-              {it.kind === 'event' && it.status === 'realizado' && (
-                <span className="font-body text-[10px] text-sage">✓ realizado</span>
+        <div className={`absolute -left-6 top-4 w-3.5 h-3.5 rounded-full border-2 border-cream ${meta.cls}`} />
+        <ListCard
+          leading={<div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${meta.cls}`}><meta.Icon size={15} /></div>}
+          title={it.title}
+          titleHref={it.href}
+          onTitleClick={it.rawId ? () => openEdit(it) : undefined}
+          meta={`${fmt(it.date)} · ${meta.label}${it.profKind && PROF_LABEL[it.profKind] ? ` · ${PROF_LABEL[it.profKind]}` : ''}${it.subtitle ? ` · ${it.subtitle}` : ''}`}
+          chips={
+            <>
+              {it.amountCents != null && <CardChip tone="sage">{fmtBRL(it.amountCents)}</CardChip>}
+              {it.kind === 'event' && it.status === 'realizado' && <CardChip tone="sage">✓ realizado</CardChip>}
+              {it.kind === 'event' && it.status === 'cancelado' && <CardChip tone="neutral">cancelado</CardChip>}
+              {it.attachmentUrl && (
+                <a href={it.attachmentUrl} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 font-body text-[10px] text-petal hover:underline"><Paperclip size={10} /> Anexo</a>
               )}
-              {it.kind === 'event' && it.status === 'cancelado' && (
-                <span className="font-body text-[10px] text-mauve/40 line-through">cancelado</span>
+            </>
+          }
+          actions={it.kind === 'event' && it.rawId ? (
+            <>
+              {it.status !== 'realizado' && it.status !== 'cancelado' && (
+                <button aria-label="Marcar como realizado" title="Marcar como realizado (se tiver valor, entra em Despesas)"
+                  disabled={busyId === it.rawId} onClick={() => markRealized(it.rawId!)}
+                  className="w-6 h-6 rounded-lg hover:bg-sage-light flex items-center justify-center text-mauve/40 hover:text-sage transition-colors disabled:opacity-40"><CheckCircle2 size={12} /></button>
               )}
-              {it.kind === 'event' && it.rawId && (
-                <div className="flex items-center gap-1 mt-0.5">
-                  {it.status !== 'realizado' && it.status !== 'cancelado' && (
-                    <button aria-label="Marcar como realizado" title="Marcar como realizado (se tiver valor, entra em Gastos)"
-                      disabled={busyId === it.rawId} onClick={() => markRealized(it.rawId!)}
-                      className="w-6 h-6 rounded-lg hover:bg-sage-light flex items-center justify-center text-mauve/60 hover:text-sage transition-colors disabled:opacity-40">
-                      <CheckCircle2 size={12} />
-                    </button>
-                  )}
-                  {it.status === 'realizado' && (
-                    <button aria-label="Reabrir" title="Reabrir (desfazer conclusão — volta para a Agenda)"
-                      disabled={busyId === it.rawId} onClick={() => reopenEvent(it.rawId!)}
-                      className="w-6 h-6 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/60 hover:text-petal transition-colors disabled:opacity-40">
-                      <RotateCcw size={12} />
-                    </button>
-                  )}
-                  <button aria-label="Editar" onClick={() => openEdit(it)}
-                    className="w-6 h-6 rounded-lg hover:bg-black/5 flex items-center justify-center text-mauve/60 hover:text-petal transition-colors">
-                    <Pencil size={12} />
-                  </button>
-                  <button aria-label="Excluir" disabled={busyId === it.rawId}
-                    onClick={() => remove(it.rawId!, it.title)}
-                    className="w-6 h-6 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve/60 hover:text-red-400 transition-colors disabled:opacity-40">
-                    <Trash2 size={12} />
-                  </button>
-                </div>
+              {it.status === 'realizado' && (
+                <button aria-label="Reabrir" title="Reabrir (desfazer conclusão — volta para a Agenda)"
+                  disabled={busyId === it.rawId} onClick={() => reopenEvent(it.rawId!)}
+                  className="w-6 h-6 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/40 hover:text-petal transition-colors disabled:opacity-40"><RotateCcw size={12} /></button>
               )}
-            </div>
-          </div>
-        </div>
+              <button aria-label="Editar" onClick={() => openEdit(it)}
+                className="w-6 h-6 rounded-lg hover:bg-black/5 flex items-center justify-center text-mauve/40 hover:text-petal transition-colors"><Pencil size={12} /></button>
+              <button aria-label="Excluir" disabled={busyId === it.rawId} onClick={() => remove(it.rawId!, it.title)}
+                className="w-6 h-6 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve/40 hover:text-red-400 transition-colors disabled:opacity-40"><Trash2 size={12} /></button>
+            </>
+          ) : undefined}
+        />
       </motion.div>
     )
   }
@@ -330,7 +320,7 @@ function LegacyTimeline() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-        className="flex items-start justify-between gap-4">
+        className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div>
           <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Histórico</h1>
           <p className="font-body text-sm text-mauve">Seu acompanhamento longitudinal — a linha do tempo com exames, consultas, vacinas, procedimentos e medicamentos</p>
@@ -385,9 +375,28 @@ function LegacyTimeline() {
           </p>
         </div>
       ) : (
-        <div className="relative pl-6">
-          <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border/60" />
-          <div className="space-y-4">{history.map(renderItem)}</div>
+        <div className="space-y-5">
+          <ViewModeSwitcher active={view} onChange={setView} modes={[{ value: 'data', label: 'Por data' }, { value: 'tipo', label: 'Por tipo' }]} />
+          {(() => {
+            const groups = new Map<string, TimelineItem[]>()
+            for (const it of history) {
+              const key = view === 'data' ? monthYear(it.date) : (TYPE_META[it.eventType]?.label ?? 'Outro')
+              const arr = groups.get(key) ?? []; arr.push(it); groups.set(key, arr)
+            }
+            const order = ['Consulta', 'Exame', 'Procedimento', 'Cirurgia', 'Medicamento', 'Suplemento', 'Vacina']
+            const rank = (l: string) => { const i = order.findIndex(o => l.startsWith(o)); return i < 0 ? 99 : i }
+            const entries = [...groups.entries()]
+            if (view === 'tipo') entries.sort((a, b) => rank(a[0]) - rank(b[0]))
+            return entries.map(([label, its]) => (
+              <div key={label}>
+                <p className="font-body text-[11px] font-semibold text-mauve/60 uppercase tracking-wider mb-2">{label}</p>
+                <div className="relative pl-6">
+                  <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border/60" />
+                  <div className="space-y-4">{its.map(renderItem)}</div>
+                </div>
+              </div>
+            ))
+          })()}
         </div>
       )}
 

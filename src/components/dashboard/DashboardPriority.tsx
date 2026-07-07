@@ -161,7 +161,7 @@ export default function DashboardPriority(props: DashboardPriorityProps) {
 
       {/* 8 · Gastos (resumo) */}
       {spend && (
-        <Section title="Gastos">
+        <Section title="Despesas">
           <div className="flex items-baseline gap-3">
             <span className="text-xl font-medium text-onyx">{spend.value}</span>
             <span className="text-xs text-mauve">{spend.caption}</span>

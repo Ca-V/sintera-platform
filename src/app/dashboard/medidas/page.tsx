@@ -15,6 +15,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import Sparkline, { parseNum } from '@/components/Sparkline'
+import ListCard from '@/components/ListCard'
 
 type Metric =
   | 'peso' | 'altura' | 'circunferencia_cintura'
@@ -416,21 +417,22 @@ export default function MedidasPage() {
                   )}
                 </div>
                 <div className="space-y-2">
-                  {list.map(it => (
-                    <div key={it.id} className="card-premium p-3 flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="font-body text-sm text-onyx">
-                          {it.metric === 'outro' && it.label ? <span className="text-mauve/70">{it.label}: </span> : null}
-                          <strong>{it.valueText}</strong>{it.unit ? ` ${it.unit}` : ''}
-                        </p>
-                        <p className="font-body text-[11px] text-mauve/60">{fmt(it.measuredOn)}{it.notes ? ` · ${it.notes}` : ''}</p>
-                      </div>
-                      <button onClick={() => remove(it.id)} disabled={busyId === it.id} title="Remover"
-                        className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve/60 hover:text-red-500 flex-shrink-0">
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-                  ))}
+                  {list.map(it => {
+                    const prefix = it.metric === 'outro' && it.label ? `${it.label}: ` : ''
+                    return (
+                      <ListCard
+                        key={it.id}
+                        title={`${prefix}${it.valueText}${it.unit ? ` ${it.unit}` : ''}`}
+                        meta={`${fmt(it.measuredOn)}${it.notes ? ` · ${it.notes}` : ''}`}
+                        actions={
+                          <button onClick={() => remove(it.id)} disabled={busyId === it.id} title="Remover"
+                            className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-red-400 hover:bg-red-50 transition-colors">
+                            <Trash2 size={12} />
+                          </button>
+                        }
+                      />
+                    )
+                  })}
                 </div>
               </div>
             )

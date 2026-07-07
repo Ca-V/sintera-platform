@@ -182,7 +182,7 @@ export default function OmicsPanelPage() {
                           <div key={r.id}>
                             <button onClick={() => toggleFeature(r)} disabled={!r.feature_id}
                               className={`w-full flex items-center gap-3 px-4 py-2.5 text-left ${r.feature_id ? 'hover:bg-ivory/50' : 'cursor-default'}`}>
-                              <span className="font-body text-sm text-onyx flex-1 min-w-0 truncate">{r.feature_name}</span>
+                              <span className="font-body text-sm text-onyx flex-1 min-w-0 break-words">{r.feature_name}</span>
                               <span className="font-body text-sm font-semibold text-onyx">{r.value ?? r.raw_value ?? '—'}</span>
                               <span className="font-body text-xs text-mauve flex-shrink-0">{r.unit}</span>
                               {r.feature_id && (openFeature === r.feature_id

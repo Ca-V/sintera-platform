@@ -15,6 +15,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import Sparkline, { parseNum } from '@/components/Sparkline'
+import ListCard from '@/components/ListCard'
 
 type Vital = 'pressao_arterial' | 'frequencia_cardiaca' | 'glicemia' | 'saturacao' | 'temperatura' | 'outro_sinal'
 
@@ -123,7 +124,7 @@ export default function SinaisVitaisPage() {
         <span className="px-3.5 py-1.5 rounded-full gradient-sintera text-white font-body text-sm font-medium">Sinais vitais</span>
       </div>
 
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div>
           <div className="inline-flex items-center gap-1.5 text-petal mb-2">
             <HeartPulse size={16} />
@@ -221,19 +222,16 @@ export default function SinaisVitaisPage() {
                 </div>
                 <div className="space-y-2">
                   {list.map(it => (
-                    <div key={it.id} className="card-premium p-3 flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="font-body text-sm text-onyx">
-                          {it.metric === 'outro_sinal' && it.label ? <span className="text-mauve/70">{it.label}: </span> : null}
-                          <strong>{it.valueText}</strong>{it.unit ? ` ${it.unit}` : ''}
-                        </p>
-                        <p className="font-body text-[11px] text-mauve/60">{fmt(it.measuredOn)}{it.notes ? ` · ${it.notes}` : ''}</p>
-                      </div>
-                      <button onClick={() => remove(it.id)} disabled={busyId === it.id} title="Remover"
-                        className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve/60 hover:text-red-500 flex-shrink-0">
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
+                    <ListCard key={it.id}
+                      title={`${it.metric === 'outro_sinal' && it.label ? `${it.label}: ` : ''}${it.valueText}${it.unit ? ` ${it.unit}` : ''}`}
+                      meta={`${fmt(it.measuredOn)}${it.notes ? ` · ${it.notes}` : ''}`}
+                      actions={
+                        <button onClick={() => remove(it.id)} disabled={busyId === it.id} title="Remover"
+                          className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-red-400 hover:bg-red-50 transition-colors disabled:opacity-40">
+                          <Trash2 size={12} />
+                        </button>
+                      }
+                    />
                   ))}
                 </div>
               </div>

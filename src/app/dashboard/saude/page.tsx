@@ -10,12 +10,13 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Activity, TrendingUp, TrendingDown, Minus, ArrowRight, Search, Loader2, FlaskConical } from 'lucide-react'
+import { Activity, TrendingUp, TrendingDown, Minus, Search, Loader2, FlaskConical } from 'lucide-react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { parseDateOnly } from '@/lib/agenda'
 import { useUser } from '@/context/UserContext'
 import HistoricoTabs from '@/components/HistoricoTabs'
+import ListCard from '@/components/ListCard'
 import { summarizeBiomarkers, computeReferenceIndex, type BiomarkerRow, type BiomarkerSummary, type Trend } from '@/lib/biomarkers/grouping'
 import { groupByMaterialExam, loadCatalogLabels, type CatalogLabels } from '@/lib/biomarkers/catalogLabels'
 
@@ -185,28 +186,22 @@ export default function IndicadoresPage() {
                     {ex.label && (
                       <p className="px-5 pt-2.5 pb-1 font-body text-[11px] font-semibold text-mauve/60 uppercase tracking-wide">{ex.label}</p>
                     )}
-                    <div className="divide-y divide-border/20">
+                    <div className="space-y-3 px-4 pb-3">
                       {ex.items.map((s) => {
                         const interp = INTERP_CFG[s.latest?.interpretation ?? ''] ?? INTERP_CFG.indisponivel
                         return (
-                          <Link key={s.canonicalName} href={`/dashboard/saude/${encodeURIComponent(s.canonicalName)}`}
-                            className="flex items-center gap-3 px-5 py-3 hover:bg-blush/10 transition-colors group">
-                            <div className="flex-1 min-w-0">
-                              <p className="font-body text-sm text-onyx truncate group-hover:text-petal transition-colors">{nameOf(s)}</p>
-                              <p className="font-body text-xs text-mauve/60">
-                                {s.count} mediç{s.count !== 1 ? 'ões' : 'ão'}
-                                {s.latest && ` · última ${formatDate(s.latest.date)}`}
-                              </p>
-                            </div>
-                            {s.latest && (
-                              <span className="font-body text-sm font-semibold text-onyx flex-shrink-0">
+                          <ListCard key={s.canonicalName}
+                            title={nameOf(s)}
+                            titleHref={`/dashboard/saude/${encodeURIComponent(s.canonicalName)}`}
+                            meta={`${s.count} mediç${s.count !== 1 ? 'ões' : 'ão'}${s.latest ? ` · última ${formatDate(s.latest.date)}` : ''}`}
+                            trailing={s.latest ? (
+                              <span className="font-body text-sm font-semibold text-onyx">
                                 {s.latest.value} <span className="text-xs font-normal text-mauve">{s.unit}</span>
                                 <span className={`ml-1.5 text-xs font-semibold ${interp.cls}`}>{interp.sym}</span>
                               </span>
-                            )}
-                            <div className="flex-shrink-0 w-20 text-right hidden sm:block"><TrendBadge trend={s.trend} delta={s.deltaPercent} /></div>
-                            <ArrowRight size={15} className="text-mauve/30 group-hover:text-petal transition-colors flex-shrink-0" />
-                          </Link>
+                            ) : undefined}
+                            chips={<TrendBadge trend={s.trend} delta={s.deltaPercent} />}
+                          />
                         )
                       })}
                     </div>

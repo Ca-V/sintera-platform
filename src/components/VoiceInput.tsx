@@ -48,7 +48,22 @@ export default function VoiceInput({ onResult, title = 'Ditar por voz', label = 
       if (t) onResult(String(t).trim())
     }
     rec.onend = () => setListening(false)
-    rec.onerror = () => setListening(false)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    rec.onerror = (e: any) => {
+      setListening(false)
+      // Antes o erro era silencioso → parecia "não funcionar". Agora explica o motivo.
+      const err = e?.error
+      if (err === 'not-allowed' || err === 'service-not-allowed') {
+        window.alert('Permita o acesso ao microfone para usar o ditado por voz. No navegador, clique no ícone de cadeado/câmera na barra de endereço e libere o microfone.')
+      } else if (err === 'audio-capture') {
+        window.alert('Nenhum microfone encontrado. Conecte um microfone e tente de novo.')
+      } else if (err === 'no-speech') {
+        window.alert('Não ouvi nada. Toque em "Falar" e fale perto do microfone.')
+      } else if (err === 'network') {
+        window.alert('O ditado por voz precisa de conexão com a internet. Verifique sua conexão e tente de novo.')
+      }
+      // 'aborted' e afins: silencioso (ex.: a própria pessoa parou).
+    }
     recRef.current = rec
     setListening(true)
     try { rec.start() } catch { setListening(false) }

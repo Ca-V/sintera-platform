@@ -14,6 +14,7 @@ import Link from 'next/link'
 import { Loader2, Plus, X, ArrowLeft, Trash2, Pencil, Droplet, ShieldCheck, Bell } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
+import ListCard from '@/components/ListCard'
 
 // ── Métodos contraceptivos (vida útil padrão em meses; editável) ──
 const KINDS: { value: string; label: string; months: number | null }[] = [
@@ -293,31 +294,33 @@ export default function CicloPage() {
               <p className="font-body text-sm text-mauve/60">Nenhum método registrado.</p>
             ) : (
               <div className="space-y-2">
-                {[...activeMethods, ...pastMethods].map(m => (
-                  <div key={m.id} className={`card-premium p-3.5 flex items-start justify-between gap-3 ${m.status === 'encerrado' ? 'opacity-60' : ''}`}>
-                    <div className="min-w-0">
-                      <p className="font-body text-sm font-semibold text-onyx">
-                        {kindLabel(m.kind)}{m.brand ? ` · ${m.brand}` : ''}{m.status === 'encerrado' ? ' · encerrado' : ''}
-                      </p>
-                      <p className="font-body text-[11px] text-mauve/70 mt-0.5">
-                        {[m.startedOn ? `desde ${fmt(m.startedOn)}` : null,
-                          m.replaceOn && m.status === 'ativo' ? `troca ~${fmt(m.replaceOn)}` : null,
-                          m.reminderEnabled && m.status === 'ativo' ? 'lembrete ✓' : null].filter(Boolean).join(' · ')}
-                      </p>
-                      {m.notes && <p className="font-body text-[11px] text-mauve/60 mt-1">{m.notes}</p>}
-                      <button onClick={() => toggleStatus(m)} disabled={busyId === m.id}
-                        className="font-body text-[11px] text-petal hover:underline mt-1">
-                        {m.status === 'ativo' ? 'Marcar como encerrado' : 'Reativar'}
-                      </button>
-                    </div>
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <button onClick={() => startEdit(m)} title="Editar"
-                        className="w-7 h-7 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/60 hover:text-petal"><Pencil size={13} /></button>
-                      <button onClick={() => removeMethod(m)} disabled={busyId === m.id} title="Remover"
-                        className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve/60 hover:text-red-500"><Trash2 size={13} /></button>
-                    </div>
-                  </div>
-                ))}
+                {[...activeMethods, ...pastMethods].map(m => {
+                  const meta = [m.startedOn ? `desde ${fmt(m.startedOn)}` : null,
+                    m.replaceOn && m.status === 'ativo' ? `troca ~${fmt(m.replaceOn)}` : null,
+                    m.reminderEnabled && m.status === 'ativo' ? 'lembrete ✓' : null,
+                    m.notes || null].filter(Boolean).join(' · ')
+                  return (
+                    <ListCard key={m.id}
+                      dim={m.status === 'encerrado'}
+                      title={`${kindLabel(m.kind)}${m.brand ? ` · ${m.brand}` : ''}${m.status === 'encerrado' ? ' · encerrado' : ''}`}
+                      meta={meta || undefined}
+                      chips={
+                        <button onClick={() => toggleStatus(m)} disabled={busyId === m.id}
+                          className="font-body text-[11px] text-petal hover:underline disabled:opacity-40">
+                          {m.status === 'ativo' ? 'Marcar como encerrado' : 'Reativar'}
+                        </button>
+                      }
+                      actions={
+                        <>
+                          <button onClick={() => startEdit(m)} title="Editar"
+                            className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-petal hover:bg-blush transition-colors"><Pencil size={12} /></button>
+                          <button onClick={() => removeMethod(m)} disabled={busyId === m.id} title="Remover"
+                            className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-red-400 hover:bg-red-50 transition-colors disabled:opacity-40"><Trash2 size={12} /></button>
+                        </>
+                      }
+                    />
+                  )
+                })}
               </div>
             )}
           </div>

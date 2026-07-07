@@ -12,6 +12,7 @@ import { createClient } from '@/lib/supabase/client'
 import { parseDateOnly } from '@/lib/agenda'
 import { useUser } from '@/context/UserContext'
 import { compareNames } from '@/lib/exams/nameMatch'
+import ListCard, { CardChip } from '@/components/ListCard'
 import type { Database } from '@/lib/supabase/types'
 
 type Exam = Database['public']['Tables']['exams']['Row']
@@ -406,16 +407,16 @@ export default function ExamsPage() {
               ))}
             </select>
 
-            {/* Período por data de realização */}
-            <div className="flex items-center gap-1.5">
-              <span className="font-body text-xs text-mauve/60">Período:</span>
+            {/* Período por data de realização — linha inteira no mobile p/ caber no card */}
+            <div className="flex items-center gap-1.5 w-full sm:w-auto">
+              <span className="font-body text-xs text-mauve/60 flex-shrink-0">Período:</span>
               <input type="date" value={filterFrom} max={filterTo || undefined}
                 onChange={e => setFilterFrom(e.target.value)} aria-label="Data inicial"
-                className="py-2 px-2.5 bg-ivory border border-border rounded-xl font-body text-xs text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40" />
-              <span className="font-body text-xs text-mauve/50">até</span>
+                className="flex-1 min-w-0 sm:flex-none py-2 px-2 bg-ivory border border-border rounded-xl font-body text-xs text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40" />
+              <span className="font-body text-xs text-mauve/50 flex-shrink-0">até</span>
               <input type="date" value={filterTo} min={filterFrom || undefined}
                 onChange={e => setFilterTo(e.target.value)} aria-label="Data final"
-                className="py-2 px-2.5 bg-ivory border border-border rounded-xl font-body text-xs text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40" />
+                className="flex-1 min-w-0 sm:flex-none py-2 px-2 bg-ivory border border-border rounded-xl font-body text-xs text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40" />
             </div>
 
             {/* Limpar filtros */}
@@ -498,91 +499,102 @@ export default function ExamsPage() {
                           const isProcessed = exam.status === 'processed'
                           const canAnalyze  = hasFile && !isRunning && !isProcessed && exam.status !== 'processing'
                           const analyzeLabel = exam.status === 'error' ? 'Tentar novamente' : 'Extrair dados'
+                          const isMismatch  = compareNames(profile?.name, (exam as unknown as { patient_name?: string | null }).patient_name) === 'mismatch'
+
+                          // Modo de edição inline do nome — cartão dedicado (o ListCard
+                          // recebe o nome como string e não comporta o input embutido).
+                          if (editingNameId === exam.id) {
+                            return (
+                              <div key={exam.id} className="card-premium p-3.5 flex items-center gap-2.5">
+                                <div className="w-9 h-9 rounded-xl bg-blush flex items-center justify-center flex-shrink-0">
+                                  <FileText size={17} className="text-petal" />
+                                </div>
+                                <input value={nameDraft} autoFocus
+                                  onChange={e => setNameDraft(e.target.value)}
+                                  onKeyDown={e => { if (e.key === 'Enter') saveExamName(exam.id); if (e.key === 'Escape') setEditingNameId(null) }}
+                                  className="flex-1 min-w-0 px-2 py-1 border border-border rounded-lg font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/40" />
+                                <button aria-label="Salvar" onClick={() => saveExamName(exam.id)} disabled={savingName}
+                                  className="text-sage hover:text-sage/70 transition-colors flex-shrink-0">
+                                  {savingName ? <Loader2 size={14} className="animate-spin" /> : <Check size={15} />}
+                                </button>
+                                <button aria-label="Cancelar" onClick={() => setEditingNameId(null)}
+                                  className="text-mauve hover:text-onyx transition-colors flex-shrink-0"><X size={15} /></button>
+                              </div>
+                            )
+                          }
 
                           return (
                             <motion.div key={exam.id}
                               initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: i * 0.04 }}
-                              className="card-premium overflow-hidden"
                             >
-                              <div className="p-5 flex items-center gap-4 cursor-pointer"
-                                onClick={() => router.push('/dashboard/exams/' + exam.id)}>
-                                <div className="w-10 h-10 rounded-xl bg-blush flex items-center justify-center flex-shrink-0">
-                                  <FileText size={18} className="text-petal" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  {editingNameId === exam.id ? (
-                                    <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
-                                      <input value={nameDraft} autoFocus
-                                        onChange={e => setNameDraft(e.target.value)}
-                                        onKeyDown={e => { if (e.key === 'Enter') saveExamName(exam.id); if (e.key === 'Escape') setEditingNameId(null) }}
-                                        className="flex-1 min-w-0 px-2 py-1 border border-border rounded-lg font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/40" />
-                                      <button aria-label="Salvar" onClick={() => saveExamName(exam.id)} disabled={savingName}
-                                        className="text-sage hover:text-sage/70 transition-colors flex-shrink-0">
-                                        {savingName ? <Loader2 size={14} className="animate-spin" /> : <Check size={15} />}
-                                      </button>
-                                      <button aria-label="Cancelar" onClick={() => setEditingNameId(null)}
-                                        className="text-mauve hover:text-onyx transition-colors flex-shrink-0"><X size={15} /></button>
-                                    </div>
-                                  ) : (
-                                    <div className="flex items-center gap-1.5 group/name">
-                                      <p className="font-body text-sm font-semibold text-onyx truncate">{exam.type ?? 'Exame'}</p>
-                                      <button aria-label="Renomear" title="Renomear"
-                                        onClick={e => { e.stopPropagation(); setNameDraft(exam.type ?? ''); setEditingNameId(exam.id) }}
-                                        className="opacity-0 group-hover/name:opacity-100 transition-opacity text-mauve/50 hover:text-petal flex-shrink-0">
-                                        <Pencil size={12} />
-                                      </button>
-                                    </div>
-                                  )}
-                                  <p className="font-body text-xs text-mauve">
+                              <ListCard
+                                leading={
+                                  <div className="w-9 h-9 rounded-xl bg-blush flex items-center justify-center flex-shrink-0">
+                                    <FileText size={17} className="text-petal" />
+                                  </div>
+                                }
+                                title={exam.type ?? 'Exame'}
+                                onTitleClick={() => router.push('/dashboard/exams/' + exam.id)}
+                                trailing={
+                                  <span className={`inline-flex items-center gap-1 text-[10px] font-body font-medium px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.color}`}>
+                                    <Icon size={10} className={isRunning ? 'animate-spin' : ''} />
+                                    {cfg.label}
+                                  </span>
+                                }
+                                meta={
+                                  <>
                                     Realizado em {formatDate(effDate(exam))}
                                     {exam.exam_date && exam.exam_date.slice(0, 10) !== exam.created_at.slice(0, 10) && (
                                       <span className="text-mauve/40"> · enviado {formatDate(exam.created_at)}</span>
                                     )}
-                                  </p>
-                                  {isProcessed && !isRunning && (
-                                    <p className="font-body text-xs text-sage mt-0.5">Dados disponíveis</p>
-                                  )}
-                                  {compareNames(profile?.name, (exam as unknown as { patient_name?: string | null }).patient_name) === 'mismatch' && (
-                                    <p className="font-body text-xs text-red-500 mt-0.5 flex items-center gap-1">
-                                      <AlertCircle size={11} /> Nome no laudo divergente do seu perfil
-                                    </p>
-                                  )}
-                                </div>
-                                <span className={`inline-flex items-center gap-1.5 text-xs font-body font-medium px-3 py-1 rounded-full flex-shrink-0 ${cfg.bg} ${cfg.color}`}>
-                                  <Icon size={11} className={isRunning ? 'animate-spin' : ''} />
-                                  {cfg.label}
-                                </span>
-                                {isProcessed && !isRunning && (
-                                  <button type="button"
-                                    onClick={e => { e.stopPropagation(); router.push('/dashboard/exams/' + exam.id) }}
-                                    className="ml-1 flex items-center gap-1.5 text-xs font-body font-medium text-petal-dark bg-blush border border-petal/30 px-3 py-1.5 rounded-full hover:bg-petal/10 transition-colors flex-shrink-0">
-                                    Ver dados →
-                                  </button>
-                                )}
-                                {canAnalyze && (
-                                  <button type="button"
-                                    onClick={e => { e.stopPropagation(); analyzeExam(exam) }}
-                                    className="ml-1 flex items-center gap-1.5 text-xs font-body font-medium text-white gradient-sintera px-3 py-1.5 rounded-full hover:opacity-90 transition-opacity flex-shrink-0 shadow-sm">
-                                    <Zap size={11} /> {analyzeLabel}
-                                  </button>
-                                )}
-                                {isRunning && (
-                                  <div className="ml-1 flex items-center gap-1.5 text-xs font-body text-mauve flex-shrink-0">
-                                    <Loader2 size={13} className="animate-spin" /><span>Extraindo…</span>
-                                  </div>
-                                )}
-                                {!isRunning && (
-                                  <button type="button" disabled={deletingId === exam.id}
-                                    onClick={e => { e.stopPropagation(); deleteExam(exam) }}
-                                    aria-label="Excluir exame" title="Excluir exame"
-                                    className="ml-1 w-8 h-8 rounded-full flex items-center justify-center text-mauve/50 hover:text-red-500 hover:bg-red-50 transition-colors flex-shrink-0 disabled:opacity-40">
-                                    {deletingId === exam.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-                                  </button>
-                                )}
-                              </div>
+                                  </>
+                                }
+                                chips={(isProcessed && !isRunning) || isMismatch ? (
+                                  <>
+                                    {isProcessed && !isRunning && <CardChip tone="sage">Dados disponíveis</CardChip>}
+                                    {isMismatch && <CardChip tone="petal">Nome divergente do perfil</CardChip>}
+                                  </>
+                                ) : undefined}
+                                actions={
+                                  <>
+                                    <button type="button" aria-label="Renomear" title="Renomear"
+                                      onClick={() => { setNameDraft(exam.type ?? ''); setEditingNameId(exam.id) }}
+                                      className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-petal transition-colors">
+                                      <Pencil size={12} />
+                                    </button>
+                                    {isProcessed && !isRunning && (
+                                      <button type="button"
+                                        onClick={() => router.push('/dashboard/exams/' + exam.id)}
+                                        className="flex items-center gap-1 text-[11px] font-body font-medium text-petal-dark bg-blush border border-petal/30 px-2.5 py-1 rounded-full hover:bg-petal/10 transition-colors">
+                                        Ver dados →
+                                      </button>
+                                    )}
+                                    {canAnalyze && (
+                                      <button type="button"
+                                        onClick={() => analyzeExam(exam)}
+                                        className="flex items-center gap-1 text-[11px] font-body font-medium text-white gradient-sintera px-2.5 py-1 rounded-full hover:opacity-90 transition-opacity shadow-sm">
+                                        <Zap size={11} /> {analyzeLabel}
+                                      </button>
+                                    )}
+                                    {isRunning && (
+                                      <span className="flex items-center gap-1 text-[11px] font-body text-mauve">
+                                        <Loader2 size={12} className="animate-spin" /> Extraindo…
+                                      </span>
+                                    )}
+                                    {!isRunning && (
+                                      <button type="button" disabled={deletingId === exam.id}
+                                        onClick={() => deleteExam(exam)}
+                                        aria-label="Excluir exame" title="Excluir exame"
+                                        className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-red-400 hover:bg-red-50 transition-colors disabled:opacity-40">
+                                        {deletingId === exam.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                                      </button>
+                                    )}
+                                  </>
+                                }
+                              />
                               {errMsg && (
-                                <div className="px-5 pb-4">
+                                <div className="mt-1.5">
                                   <div className="flex items-start gap-2 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
                                     <AlertCircle size={13} className="text-red-400 flex-shrink-0 mt-0.5" />
                                     <p className="font-body text-xs text-red-700">{errMsg}</p>

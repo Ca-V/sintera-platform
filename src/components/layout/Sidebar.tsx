@@ -49,7 +49,7 @@ const navGroups: {
   {
     title: 'Organização',
     items: [
-      { href: '/dashboard/gastos',    icon: Receipt,    label: 'Gastos' },
+      { href: '/dashboard/gastos',    icon: Receipt,    label: 'Despesas' },
       { href: '/dashboard/relatorio', icon: ScrollText, label: 'Relatórios' },
     ],
   },

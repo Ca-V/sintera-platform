@@ -602,7 +602,7 @@ export default function ExamDetailPage() {
                 </div>
               ) : (
                 <div className="flex items-center gap-2 group/name">
-                  <h1 className="font-display text-xl font-semibold text-onyx truncate">
+                  <h1 className="font-display text-xl font-semibold text-onyx break-words min-w-0">
                     {exam?.type ?? 'Exame'}
                   </h1>
                   <button onClick={startEditName}

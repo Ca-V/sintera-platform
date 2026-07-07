@@ -16,6 +16,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import { DOMAIN_LABEL, DOMAINS, fmtOmicsDate, type OmicsDomain } from '@/lib/omics/domains'
 import { uploadAndIngest } from '@/lib/omics/ingestClient'
+import ListCard from '@/components/ListCard'
 
 interface Panel {
   id: string
@@ -92,7 +93,7 @@ export default function OmicsListPage() {
         <ArrowLeft size={15} /> Exames
       </Link>
 
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div>
           <div className="inline-flex items-center gap-1.5 text-petal mb-2">
             <Dna size={16} />
@@ -186,21 +187,18 @@ export default function OmicsListPage() {
       ) : (
         <div className="space-y-2">
           {panels.map(p => (
-            <Link key={p.id} href={`/dashboard/omics/${p.id}`}
-              className="card-premium p-4 flex items-center justify-between gap-3 hover:shadow-md transition-shadow group">
-              <div className="flex items-center gap-3 min-w-0">
+            <ListCard
+              key={p.id}
+              titleHref={`/dashboard/omics/${p.id}`}
+              leading={
                 <div className="w-9 h-9 rounded-xl bg-lavender-light flex items-center justify-center flex-shrink-0">
                   <Dna size={16} className="text-lavender" />
                 </div>
-                <div className="min-w-0">
-                  <p className="font-body text-sm font-semibold text-onyx">{DOMAIN_LABEL[p.domain]}</p>
-                  <p className="font-body text-[11px] text-mauve/70">
-                    {[fmtOmicsDate(p.collected_on ?? p.created_at), p.laboratory, p.technology].filter(Boolean).join(' · ')}
-                  </p>
-                </div>
-              </div>
-              <ChevronRight size={16} className="text-mauve/40 group-hover:text-petal transition-colors flex-shrink-0" />
-            </Link>
+              }
+              title={DOMAIN_LABEL[p.domain]}
+              trailing={<ChevronRight size={16} className="text-mauve/40 flex-shrink-0" />}
+              meta={[fmtOmicsDate(p.collected_on ?? p.created_at), p.laboratory, p.technology].filter(Boolean).join(' · ')}
+            />
           ))}
         </div>
       )}

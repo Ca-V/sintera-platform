@@ -13,12 +13,10 @@ import ConfirmDialog from '@/components/ConfirmDialog'
 import { useEventForm, eventToInput } from '@/components/eventForm'
 import { buildExamRecencySuggestion, type AgendaSuggestion } from '@/lib/agenda/suggestions'
 import { typeLabel, statusLabel, formatDateBR, formatTimeBR, type HealthEvent } from '@/lib/agenda'
+import { useStickyView } from '@/lib/ui/useStickyView'
+import ViewModeSwitcher from '@/components/ViewModeSwitcher'
+import ListCard, { CardChip } from '@/components/ListCard'
 
-const STATUS_CLS: Record<string, string> = {
-  planejado: 'bg-mauve/10 text-mauve',
-  realizado: 'bg-sage-light text-sage', cancelado: 'bg-red-50 text-red-400',
-  reagendado: 'bg-amber-50 text-amber-600', perdido: 'bg-red-50 text-red-400',
-}
 const TYPE_EMOJI: Record<string, string> = {
   consulta: '🩺', retorno: '📋', exame: '🧪', procedimento: '🩹', cirurgia: '⚕️',
   vacina: '💉', medicamento: '💊', medicacao: '💊', suplemento: '🌿', plano: '🏥', outro: '📌',
@@ -40,6 +38,7 @@ export default function AgendaPage() {
   const [prefill, setPrefill]     = useState<Partial<AgendaEventInput> | undefined>(undefined)
   const [suggestion, setSuggestion] = useState<AgendaSuggestion | null>(null)
   const [dismissed, setDismissed]   = useState(false)
+  const [view, setView]             = useStickyView<'data' | 'tipo'>('sintera:view:agenda', 'data')
   // Confirmação própria (não-bloqueante) p/ ações com consequência (concluir).
   const [confirm, setConfirm] = useState<{ message: string; confirmLabel: string; onYes: () => void } | null>(null)
 
@@ -73,7 +72,7 @@ export default function AgendaPage() {
   function onComplete(ev: HealthEvent) {
     if (!userId) return
     setConfirm({
-      message: 'Concluir este evento? Ele sai da Agenda e passa para o Histórico — e para os Gastos, se tiver valor. Você pode reabri-lo depois, se precisar.',
+      message: 'Concluir este evento? Ele sai da Agenda e passa para o Histórico — e para as Despesas, se tiver valor. Você pode reabri-lo depois, se precisar.',
       confirmLabel: 'Concluir',
       onYes: () => doComplete(ev),
     })
@@ -97,7 +96,7 @@ export default function AgendaPage() {
   function onDelete(ev: HealthEvent) {
     if (!userId) return
     setConfirm({
-      message: 'Excluir este evento de vez? Ele será removido da Agenda, do Histórico e dos Gastos. Esta ação não pode ser desfeita.',
+      message: 'Excluir este evento de vez? Ele será removido da Agenda, do Histórico e das Despesas. Esta ação não pode ser desfeita.',
       confirmLabel: 'Excluir',
       onYes: () => doDelete(ev),
     })
@@ -125,7 +124,22 @@ export default function AgendaPage() {
   }
 
   function openAdd() { setEditing(null); setPrefill(undefined); setModalOpen(true) }
-  function openEdit(ev: HealthEvent) { setEditing(ev); setPrefill(undefined); setModalOpen(true) }
+  async function openEdit(ev: HealthEvent) {
+    // Medicamentos/suplementos foram REMOVIDOS do formulário de evento — editam-se na
+    // página de Medicamentos. Roteia o lembrete de medicação (ex.: "Recomprar: X") para
+    // lá, abrindo o próprio medicamento (achado pelo repurchase_event_id).
+    const isMedType = ev.type === 'medicacao' || ev.type === 'medicamento' || ev.type === 'suplemento'
+    const looksLikeRecompra = /^recomprar/i.test((ev.title ?? '').trim())
+    // Detecção DEFINITIVA: existe um medicamento vinculado a este evento? (lembrete de recompra)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: medRow } = await (supabase as any).from('medications').select('id').eq('repurchase_event_id', ev.id).maybeSingle()
+    const medId = (medRow?.id as string) ?? null
+    if (medId || isMedType || looksLikeRecompra) {
+      router.push(medId ? `/dashboard/medicamentos?edit=${medId}` : '/dashboard/medicamentos')
+      return
+    }
+    setEditing(ev); setPrefill(undefined); setModalOpen(true)
+  }
   function openFromSuggestion(s: AgendaSuggestion) {
     setEditing(null); setPrefill({ eventType: s.suggestedEventType, title: s.suggestedTitle }); setModalOpen(true)
   }
@@ -133,9 +147,51 @@ export default function AgendaPage() {
   const today = new Date().toISOString().slice(0, 10)
   const editingInitial: Partial<AgendaEventInput> | undefined = editing ? eventToInput(editing) : prefill
 
+  function monthLabel(date: string): string {
+    const d = new Date(date.length <= 10 ? `${date}T00:00:00` : date)
+    const s = d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+    return s.charAt(0).toUpperCase() + s.slice(1)
+  }
+  function agendaRow(ev: HealthEvent) {
+    const overdue = ev.date < today
+    const tone = ev.status === 'planejado' ? 'mauve' : (ev.status === 'cancelado' || ev.status === 'perdido') ? 'neutral' : 'sage'
+    return (
+      <ListCard key={ev.id}
+        leading={<div className="text-xl leading-none">{TYPE_EMOJI[ev.type] ?? '📅'}</div>}
+        title={ev.title}
+        onTitleClick={() => openEdit(ev)}
+        meta={
+          <>
+            {typeLabel(ev.type)} · {formatDateBR(ev.date)}{formatTimeBR(ev.time) ? ` · ${formatTimeBR(ev.time)}` : ''}
+            {ev.directExpense && <span className="text-sage"> · despesa direta</span>}
+            {overdue && <span className="text-petal font-medium"> · atrasado</span>}
+          </>
+        }
+        chips={
+          <>
+            <CardChip tone={tone}>{statusLabel(ev.status)}</CardChip>
+            {ev.recurrenceRule && <CardChip tone="neutral">🔁 recorrente</CardChip>}
+          </>
+        }
+        actions={
+          <>
+            <button onClick={() => onComplete(ev)} disabled={busyId === ev.id} title="Concluir"
+              className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-sage hover:bg-sage-light transition-colors disabled:opacity-40">{busyId === ev.id ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}</button>
+            <button onClick={() => openEdit(ev)} title="Editar / exportar"
+              className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-petal hover:bg-blush/40 transition-colors"><Pencil size={12} /></button>
+            <button onClick={() => onCancel(ev)} disabled={busyId === ev.id} title="Cancelar (marca como cancelado — fica no Histórico)"
+              className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-amber-500 hover:bg-amber-500/8 transition-colors disabled:opacity-40"><Ban size={12} /></button>
+            <button onClick={() => onDelete(ev)} disabled={busyId === ev.id} title="Excluir (apaga de vez — Agenda, Histórico e Despesas)"
+              className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-red-500 hover:bg-red-500/8 transition-colors disabled:opacity-40"><Trash2 size={12} /></button>
+          </>
+        }
+      />
+    )
+  }
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="flex items-start justify-between gap-4">
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div>
           <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Agenda</h1>
           <p className="font-body text-sm text-mauve">Seus próximos exames, consultas e retornos. O que já aconteceu fica no Histórico.</p>
@@ -191,51 +247,30 @@ export default function AgendaPage() {
         </motion.div>
       ) : (
         <section className="space-y-3">
-          <div className="flex items-center gap-2">
-            <CalendarClock size={15} className="text-petal" />
-            <h2 className="font-body text-sm font-semibold text-onyx">Próximos ({events.length})</h2>
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2">
+              <CalendarClock size={15} className="text-petal" />
+              <h2 className="font-body text-sm font-semibold text-onyx">Próximos ({events.length})</h2>
+            </div>
+            <ViewModeSwitcher active={view} onChange={setView} modes={[{ value: 'data', label: 'Por data' }, { value: 'tipo', label: 'Por tipo' }]} />
           </div>
-          {events.map(ev => {
-            const overdue = ev.date < today
-            return (
-              <motion.div key={ev.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                className="card-premium p-4 flex items-start gap-3">
-                <div className="text-xl leading-none mt-0.5">{TYPE_EMOJI[ev.type] ?? '📅'}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {ev.priority && <span className={`w-2 h-2 rounded-full flex-shrink-0 ${ev.priority === 'alta' ? 'bg-red-400' : ev.priority === 'media' ? 'bg-amber-400' : 'bg-sage'}`} title={`Prioridade ${ev.priority}`} />}
-                    <p className="font-body text-sm font-semibold text-onyx truncate">{ev.title}</p>
-                    <span className={`font-body text-[10px] font-semibold px-2 py-0.5 rounded-full ${STATUS_CLS[ev.status] ?? 'bg-mauve/10 text-mauve'}`}>{statusLabel(ev.status)}</span>
-                    {ev.recurrenceRule && <span className="font-body text-[10px] text-mauve/60" title="Evento recorrente">🔁</span>}
-                  </div>
-                  <p className="font-body text-xs text-mauve mt-0.5">
-                    {typeLabel(ev.type)} · {formatDateBR(ev.date)}{formatTimeBR(ev.time) ? ` · ${formatTimeBR(ev.time)}` : ''}
-                    {ev.directExpense && <span className="ml-2 text-sage">despesa direta</span>}
-                    {overdue && <span className="ml-2 text-petal font-medium">atrasado</span>}
-                  </p>
-                  {ev.notes && <p className="font-body text-xs text-mauve/70 mt-1 line-clamp-2">{ev.notes}</p>}
-                </div>
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <button onClick={() => onComplete(ev)} disabled={busyId === ev.id} title="Concluir"
-                    className="p-2 rounded-lg text-mauve hover:text-sage hover:bg-sage-light transition-colors disabled:opacity-40">
-                    {busyId === ev.id ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />}
-                  </button>
-                  <button onClick={() => openEdit(ev)} title="Editar / exportar"
-                    className="p-2 rounded-lg text-mauve hover:text-petal hover:bg-blush/40 transition-colors">
-                    <Pencil size={15} />
-                  </button>
-                  <button onClick={() => onCancel(ev)} disabled={busyId === ev.id} title="Cancelar (marca como cancelado — fica no Histórico)"
-                    className="p-2 rounded-lg text-mauve hover:text-amber-500 hover:bg-amber-500/8 transition-colors disabled:opacity-40">
-                    <Ban size={15} />
-                  </button>
-                  <button onClick={() => onDelete(ev)} disabled={busyId === ev.id} title="Excluir (apaga de vez — Agenda, Histórico e Gastos)"
-                    className="p-2 rounded-lg text-mauve hover:text-red-500 hover:bg-red-500/8 transition-colors disabled:opacity-40">
-                    <Trash2 size={15} />
-                  </button>
-                </div>
-              </motion.div>
-            )
-          })}
+          {(() => {
+            const groups = new Map<string, HealthEvent[]>()
+            for (const ev of events) {
+              const key = view === 'data' ? monthLabel(ev.date) : typeLabel(ev.type)
+              const arr = groups.get(key) ?? []; arr.push(ev); groups.set(key, arr)
+            }
+            const order = ['Consulta', 'Exame', 'Procedimento', 'Cirurgia', 'Medicamento', 'Suplemento', 'Vacina']
+            const rank = (l: string) => { const i = order.findIndex(o => l.startsWith(o)); return i < 0 ? 99 : i }
+            const entries = [...groups.entries()]
+            if (view === 'tipo') entries.sort((a, b) => rank(a[0]) - rank(b[0]))
+            return entries.map(([label, evs]) => (
+              <div key={label} className="space-y-2">
+                <p className="font-body text-[11px] font-semibold text-mauve/60 uppercase tracking-wider mt-1">{label}</p>
+                {evs.map(agendaRow)}
+              </div>
+            ))
+          })()}
         </section>
       )}
 
