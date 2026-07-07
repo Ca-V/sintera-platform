@@ -1,5 +1,5 @@
 // ============================================================
-// Visualização pública do relatório de saúde (link compartilhado)
+// Visualização pública do relatório (link compartilhado)
 // ============================================================
 // Somente-leitura. Renderizada NO SERVIDOR com service role, apenas para
 // tokens válidos (não revogados e não expirados). Sem login. A usuária gera e
@@ -127,7 +127,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
   return (
     <div style={{ maxWidth: 680, margin: '0 auto', padding: '32px 20px', fontFamily: 'system-ui, sans-serif', color: '#2b2230', lineHeight: 1.5 }}>
       <div style={{ borderBottom: '1px solid #ece6ef', paddingBottom: 16, marginBottom: 20 }}>
-        <h1 style={{ fontSize: 20, margin: 0 }}>Relatório de saúde — {nome}</h1>
+        <h1 style={{ fontSize: 20, margin: 0 }}>Relatório — {nome}</h1>
         <p style={{ fontSize: 12, color: '#8a7b92', marginTop: 6 }}>Gerado em {hoje} · organização dos dados registrados pela própria pessoa (SINTERA).</p>
       </div>
 

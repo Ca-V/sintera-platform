@@ -1,7 +1,7 @@
 'use client'
 
 // ============================================================
-// Relatório de saúde — compilação factual para levar/enviar ao profissional
+// Relatório — compilação factual para levar/enviar ao profissional
 // ============================================================
 // Reúne, num documento imprimível (Salvar como PDF), os dados que a usuária
 // registrou: medicamentos, eventos da jornada (consultas/procedimentos/exames)
@@ -293,7 +293,7 @@ function LegacyReport() {
           <div className="inline-flex items-center gap-1.5 text-petal mb-1 print:hidden">
             <FileText size={16} /><span className="font-body text-xs font-medium uppercase tracking-wider">Relatórios</span>
           </div>
-          <h1 className="font-display text-xl font-semibold text-onyx">Relatório de saúde — {nome}</h1>
+          <h1 className="font-display text-2xl font-semibold text-onyx">Relatório — {nome}</h1>
           <p className="font-body text-xs text-mauve mt-1">Gerado em {hoje} · organização dos dados registrados pela própria pessoa.</p>
         </div>
 

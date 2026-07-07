@@ -9,6 +9,9 @@
 
 ## 0. Diretrizes oficiais complementares (congeladas)
 
+**Nome oficial do módulo: "Relatório"** (nunca "Relatório de Saúde"). A SINTERA **não emite avaliação nem parecer clínico** — organiza e apresenta os registros e documentos inseridos pela usuária. Aplicar "Relatório" de forma consistente em: menu · título da página · breadcrumbs · Home (atalhos) · compartilhamento · PDF · cabeçalhos · links internos.
+**Diretriz permanente de nomenclatura:** em qualquer dúvida de nome, priorizar termos que descrevam a **função da plataforma** — *organiza · registra · estrutura · relaciona · apresenta* — e **nunca** uma interpretação clínica (a plataforma não diagnostica, não interpreta, não emite pareceres). Coerente com a RDC 657 e com o princípio 9 do UX-001 (nome único por módulo).
+
 1. **Relatório = funcionalidade de primeira classe.** Não é "uma tela que gera PDF": é a **central oficial de compartilhamento** das informações de saúde da SINTERA. Toda evolução futura de compartilhamento parte desta arquitetura.
 2. **Organização única e oficial.** A árvore de seleção espelha **integralmente** o menu lateral. Menu · Relatórios · Home · navegação futura têm **uma só** organização (ordem/nomenclatura/hierarquia) — UX-001.
 3. **Documento original = requisito obrigatório.** Sempre que houver documento associado (exames · receitas · laudos · documentos escaneados · prescrições), o item **deve** dar acesso ao original. Sem documento (autorrelato) → informar claramente a **origem**. **Nunca** links fictícios.
