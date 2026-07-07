@@ -60,3 +60,17 @@ de arquitetura, segurança, domínio ou governança.
 Princípio herdado e reafirmado: achados visuais devem ser **instrumentados** (medidos:
 bounding box, overflow, viewport), nunca supostos a partir de leitura de código. A
 leitura de código serve para escopo e triagem; a comprovação é sempre pela renderização.
+
+## Marco de transição: Arquitetura Congelada → Desenvolvimento Iniciado
+
+**Regra de foco (aprovada pela fundadora 2026-07-07).** Após o **merge da REL-001**, cria-se
+no Roadmap o marco formal **"Arquitetura Congelada → Desenvolvimento Iniciado"**. A partir dele:
+
+- **Alterações arquiteturais** só em caso de **erro grave** descoberto **durante a implementação**.
+- **Melhorias, ideias e funcionalidades novas** entram no **backlog** e são avaliadas em **outra onda** —
+  não reabrem a especificação já congelada.
+- O objetivo deixa de ser **"melhorar o documento"** e passa a ser **"entregar software"** funcionando e homologado.
+
+**Por quê:** impede o ciclo infinito de refinamento e distingue, sem ambiguidade, **arquitetura
+aprovada** de **funcionalidade entregue**. Documentos constitucionais congelados (UX-001, DS-001,
+REL-001, DOC-001, CAP-001, QA-001) só reabrem por **revisão explícita** — não por refinamento contínuo.
