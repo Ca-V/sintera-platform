@@ -74,3 +74,8 @@ no Roadmap o marco formal **"Arquitetura Congelada → Desenvolvimento Iniciado"
 **Por quê:** impede o ciclo infinito de refinamento e distingue, sem ambiguidade, **arquitetura
 aprovada** de **funcionalidade entregue**. Documentos constitucionais congelados (UX-001, DS-001,
 REL-001, DOC-001, CAP-001, QA-001) só reabrem por **revisão explícita** — não por refinamento contínuo.
+
+**Gate de smoke test pós-deploy.** Antes de abrir a **próxima frente de implementação**, executar
+um **smoke test em produção** confirmando que o deploy anterior publicou corretamente e **não
+introduziu regressões** (o harness QA-001 aponta para a URL de produção). Só então abrir a nova
+branch. Reduz o risco de carregar problemas de uma entrega para a implementação da seguinte.
