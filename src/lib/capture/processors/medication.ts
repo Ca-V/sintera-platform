@@ -7,11 +7,11 @@ import { scanMedicationImage, PENDING_MED_SCAN_KEY } from '../../medications/sca
 // para a usuária revisar e salvar. Resultado unificado (captureForwarded).
 export const medicationProcessor: DocumentProcessor = {
   kind: 'medication_label',
-  label: 'Receita de medicamento',
+  label: 'Receita de medicamento ou suplemento',
   icon: 'Pill',
   accepts: ['image/jpeg', 'image/png', 'application/pdf'],
   target: '/dashboard/medicamentos',
-  confirmPhrase: 'um rótulo ou receita de medicamento',
+  confirmPhrase: 'um rótulo ou receita de medicamento ou suplemento',
   process: async (file) => {
     try {
       const r = await scanMedicationImage(file)

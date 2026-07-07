@@ -11,7 +11,7 @@
 
 import { useCallback, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { FlaskConical, Pill, Glasses, Dna, FileText, UploadCloud, Camera, Loader2, X, CheckCircle, AlertCircle } from 'lucide-react'
+import { FlaskConical, Pill, Glasses, HeartPulse, Dna, FileText, UploadCloud, Camera, Loader2, X, CheckCircle, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import { CAPTURE_PROCESSORS, processorFor, processorsAccepting } from '../registry'
@@ -21,7 +21,7 @@ import { logCapture } from '../telemetry'
 import type { DocumentKind, CaptureResult } from '../types'
 
 const ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
-  FlaskConical, Pill, Glasses, Dna, FileText,
+  FlaskConical, Pill, Glasses, HeartPulse, Dna, FileText,
 }
 const ACCEPTED = ['application/pdf', 'image/jpeg', 'image/png']
 const MAX_BYTES = 50 * 1024 * 1024
