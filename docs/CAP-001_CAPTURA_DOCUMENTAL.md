@@ -17,6 +17,12 @@ Hoje coexistem **dois modelos mentais** de entrada de documento que deveriam con
 O objetivo é um **fluxo único e previsível** de captura em toda a plataforma: o usuário
 aprende uma vez e reencontra o mesmo padrão em qualquer módulo.
 
+**Objetivo final (não é correção de upload de medicamento).** O CAP-001 entrega uma
+**arquitetura única de captura documental** para toda a SINTERA — um só componente, uma só
+lógica de orquestração, um só conjunto de meios de entrada e de formatos — **eliminando
+definitivamente** diferenças de comportamento entre módulos e reduzindo a manutenção futura.
+Corrigir o PDF de medicamento é apenas o primeiro sintoma tratado por essa unificação.
+
 ## 1. Estado atual (mapeado no código — fatos)
 
 | Área | Meios de entrada hoje | Arquivo:linha |
@@ -65,6 +71,45 @@ classificá-la. **Não** é build defasado nem duas UIs de captura: é **defeito
 3. Filtro silencioso por MIME esconde destinos — preferir mostrar todos e validar no envio.
 4. Sem componente único — unificar módulos + Home no `<DocumentCapture>`.
 
+## 1.2 Auditoria de compatibilidade de formatos (MIME) — todos os fluxos
+
+| Fluxo | Aceita hoje | Câmera | Limite | Arquivo:linha |
+|---|---|:--:|---|---|
+| Proc. exam | PDF · JPG · PNG | — | — | `processors/exam.ts:10` |
+| Proc. eyeglass | PDF · JPG · PNG | — | — | `processors/eyeglass.ts:10` |
+| **Proc. medication** | **JPG · PNG (sem PDF)** ❌ | — | — | `processors/medication.ts:12` |
+| Proc. omics | PDF · JPG · PNG | — | — | `processors/omics.ts:10` |
+| CaptureCenter (Home) | PDF · JPG · PNG | ✅ sep. | 50 MB | `intake/CaptureCenter.tsx:26,147,150` |
+| Exames (módulo) | PDF · JPG · PNG + drag | ✅ | 50 MB | `exams/page.tsx:278,302` |
+| **Medicamentos** | **só image/\* (câmera)** ❌ | ✅ | — | `medicamentos/page.tsx:481` |
+| **Recursos** | **só image/\* (câmera)** ❌ | ✅ | — | `recursos/page.tsx:335` |
+| Medidas | image/\* (câmera) | ✅ | — | `medidas/page.tsx:242` |
+| Ômica (módulo) | CSV · JSON · PDF · image | ✅ | — | `omics/page.tsx:142,144` |
+| Agenda (anexo) | PDF · JPG · PNG | — | **10 MB** | `AgendarModal.tsx:432`, `eventForm.ts:66` |
+
+**Inconsistências (todas a eliminar, não só medicamento):**
+1. `medication` sem **PDF** (receita costuma ser PDF) — causa raiz do relato.
+2. **HEIC ausente** em todas as validações — foto de iPhone é `image/heic`; `image/*` passa no seletor mas `ACCEPTED = pdf/jpeg/png` **rejeita**.
+3. **`ACCEPTED` triplicada** (`CaptureCenter.tsx:26`, `exams/page.tsx:56`, `eventForm.ts:66`) — sem fonte única.
+4. **Limites divergentes:** 50 MB (captura/exames) × 10 MB (agenda/eventos).
+5. Medicamentos/Recursos/Medidas só câmera — sem arquivo/drag/PDF.
+
+**Alvo:** base de formatos **única** = `PDF · JPG · PNG · HEIC` (Ômica soma `CSV · JSON` por ser
+dado, não documento); **uma** constante compartilhada; **um** limite de tamanho; declaração de
+`accepts` por processador só para **validação pós-seleção** (nunca para esconder destino).
+
+## 1.3 Home canônica (divergência estrutural — decisão de produto)
+
+Existem duas Homes atrás de `NEXT_PUBLIC_DASHBOARD_V2` (`dashboard/page.tsx:56`):
+- **V1 (padrão/legado)** — `dashboard/page.tsx`; **funcional**, fia o CaptureCenter.
+- **V2** — `DashboardNew` → `DashboardPriority`; botões "Adicionar documento/Exame/Medicamento"
+  **sem `onClick`** (`DashboardPriority.tsx:112-117`).
+
+**Regra:** não manter duas Homes evoluindo em paralelo. **Recomendação de engenharia:** manter
+**V1 como canônica** enquanto a V2 não atinge paridade funcional; até lá, a V2 não deve ser
+exposta (nem seus botões mortos). Se a V2 for eleita o futuro, **todos** os botões precisam
+funcionar antes de substituir a V1. *A escolha final V1×V2 é decisão de produto da fundadora.*
+
 ## 2. Estado-alvo
 
 ### 2.1 Centro de Captura — lista de tipos e roteamento
@@ -81,25 +126,38 @@ Mudanças vs. hoje: **ampliar** "Receita de óculos" → "Receita de recurso de 
 (coerente com os sub-tipos do Anexo A do UX-001) e **acrescentar** "Outro documento de
 saúde" (catch-all com revisão manual). Os demais já existem.
 
+**Diretriz 1 — destinos nunca escondidos por tipo de arquivo.** A lista de destinos é
+**fixa** (todos os tipos suportados pela plataforma), independente do MIME do arquivo. A
+compatibilidade é validada **depois** que a pessoa escolhe o destino (se incompatível, mensagem
+clara: "receita de medicamento aceita PDF/JPG/PNG/HEIC"). Elimina a sensação de funcionalidade
+que "desaparece". → *substitui `validKinds = processorsAccepting(file.type)` por lista fixa +
+validação pós-seleção.*
+
 ### 2.2 Padrão único de meios de entrada (todo módulo que aceita documento)
 
-Os **meios oficiais**, sempre os mesmos, na mesma ordem:
+Os **6 meios oficiais**, sempre os mesmos, na mesma ordem:
 
 1. **Digitar manualmente** — formulário.
 2. **Tirar foto** — câmera (`capture=environment`).
-3. **Enviar ou arrastar arquivo** — file picker + drag-and-drop; aceita **PDF, JPG, PNG, HEIC**.
-4. **Importar do Centro de Captura** — quando aplicável.
-5. **Falar** — captura por voz (`VoiceInput`).
+3. **Enviar arquivo** — file picker.
+4. **Arrastar arquivo** — drag-and-drop.
+5. **Importar do Centro de Captura** — quando aplicável.
+6. **Falar** — captura por voz (`VoiceInput`).
 
-Nenhum módulo oferece apenas um subconjunto sem justificativa técnica registrada.
-O envio de arquivo **não pode** existir só no Centro de Captura.
+Formatos base: **PDF · JPG · PNG · HEIC** (fonte única). Nenhum módulo oferece apenas um
+subconjunto sem justificativa técnica registrada. O envio/arrastar de arquivo **não pode**
+existir só no Centro de Captura — tem de estar **dentro do módulo**.
 
-### 2.3 Componente compartilhado
+### 2.3 Um componente, uma lógica (captura × processamento separados)
 
-Extrair um **`<DocumentCapture>`** reutilizável (evolução do `DocumentIntakeHub`): cada
-módulo **declara** `accepts` (MIME) + o processador de destino; o componente entrega os
-meios 2–5 de forma idêntica. Exames é a implementação de referência (já tem 3, 4).
-Elimina os `<input type=file>` duplicados por módulo.
+- **Um único componente oficial `<DocumentCapture>`** (evolução do CaptureCenter). **Todos** os
+  módulos o reutilizam; **nenhum** implementa seu próprio `<input type=file>`/upload.
+- **Diretriz 3 — o componente decide apenas:** (a) qual documento foi enviado e (b) para qual
+  módulo encaminhar. **Cada módulo permanece responsável só pelo processamento específico** do
+  seu documento (OCR/IA/extração). Captura ≠ processamento.
+- Cada módulo **declara** `accepts` + processador de destino; o componente entrega os 6 meios de
+  forma idêntica. **Exames** é a implementação de referência.
+- Fonte **única** de `ACCEPTED` + limite de tamanho (hoje triplicada e divergente — §1.2).
 
 ## 3. Auditoria de conformidade e lacunas
 
