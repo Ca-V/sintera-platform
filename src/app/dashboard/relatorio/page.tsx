@@ -13,6 +13,8 @@
 import { useCallback, useEffect, useState, type ElementType } from 'react'
 import Link from 'next/link'
 import ReportEntry from '@/components/entry/ReportEntry'
+import ProvenanceLine from '@/components/ui/ProvenanceLine'
+import { examProvenance } from '@/lib/provenance'
 import {
   Loader2, Printer, ArrowLeft, FileText, Share2, Copy, Trash2, Check,
   CalendarDays, FlaskConical, Pill, Stethoscope, HeartPulse, Ruler, Activity, Eye,
@@ -25,7 +27,7 @@ import { typeLabel } from '@/lib/agenda' // fonte ÚNICA de rótulos de tipo de 
 
 interface Med { name: string; kind: string; dose: string | null; frequency: string | null; startedOn: string | null; untilOn: string | null; status: string }
 interface Ev { title: string; eventType: string; prof: string | null; date: string; notes: string | null }
-interface Ex { type: string; date: string }
+interface Ex { type: string; date: string; fileUrl: string | null }
 interface Measure { metric: string; label: string | null; valueText: string; unit: string | null; date: string }
 interface Condition { scope: string; name: string; relative: string | null; since: string | null; notes: string | null }
 interface Habit { category: string; description: string; frequency: string | null; notes: string | null }
@@ -141,7 +143,7 @@ function LegacyReport() {
     const [medRes, evRes, exRes, mzRes, cdRes, hbRes, ewRes, omRes] = await Promise.all([
       db.from('medications').select('name, kind, dose, frequency, started_on, until_date, status').eq('user_id', user.id).order('status'),
       db.from('health_events').select('title, event_type, professional_kind, event_date, notes').eq('user_id', user.id).eq('synthetic', false).order('event_date', { ascending: false }),
-      db.from('exams').select('type, exam_date, created_at').eq('user_id', user.id).order('created_at', { ascending: false }),
+      db.from('exams').select('type, exam_date, created_at, file_url').eq('user_id', user.id).order('created_at', { ascending: false }),
       db.from('body_metrics').select('metric, label, value_text, unit, measured_on').eq('user_id', user.id).order('measured_on', { ascending: false }),
       db.from('health_conditions').select('scope, name, relative, since_label, notes').eq('user_id', user.id).order('created_at', { ascending: false }),
       db.from('life_habits').select('category, description, frequency, notes').eq('user_id', user.id).order('created_at', { ascending: false }),
@@ -158,6 +160,7 @@ function LegacyReport() {
     })))
     setExams(((exRes.data ?? []) as Array<Record<string, unknown>>).map(e => ({
       type: (e.type as string) || 'Exame', date: (e.exam_date as string) || (e.created_at as string),
+      fileUrl: (e.file_url as string) ?? null,
     })))
     setMeasures(((mzRes.data ?? []) as Array<Record<string, unknown>>).map(m => ({
       metric: (m.metric as string) ?? 'outro', label: (m.label as string) ?? null,
@@ -513,7 +516,10 @@ function LegacyReport() {
           ) : (
             <ul className="space-y-1">
               {visExams.map((e, i) => (
-                <li key={i} className="font-body text-sm text-onyx">• {fmt(e.date)} — {e.type}</li>
+                <li key={i} className="font-body text-sm text-onyx flex flex-wrap items-baseline gap-x-2">
+                  <span>• {fmt(e.date)} — {e.type}</span>
+                  <ProvenanceLine provenance={examProvenance({ fileUrl: e.fileUrl })} showOrigin={false} />
+                </li>
               ))}
             </ul>
           )}
