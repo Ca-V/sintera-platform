@@ -1,7 +1,10 @@
 # CAP-001 — Padronização da Captura Documental (Camada de Captura)
 
-**Status:** Especificação aprovada pela fundadora (2026-07-07). Iniciativa própria —
-**não** faz parte da REL-001. Implementação em branch dedicada, após o merge da REL-001.
+**Status:** 🔒 **ESPECIFICAÇÃO CONGELADA** (2026-07-07) — aprovada pela fundadora. Iniciativa
+própria, **não** faz parte da REL-001. Implementação em branch dedicada, após o merge da REL-001.
+Contém: problema · auditoria arquitetural (Fase 0) · auditoria de compatibilidade MIME · 8 princípios ·
+Home oficial (V1) · arquitetura de 3 camadas + contrato `CapturedDocument` + Routing por registry ·
+integração DOC-001 · estratégia de migração · governança. Refinamentos posteriores exigem revisão explícita.
 **Herda:** [[UX-001]] (§1.10 e §10, emendados nesta data), [[DS-001]].
 
 ---
@@ -197,6 +200,14 @@ arquivo, voz, manual…) são só **formas de atingir o objetivo**. O sistema é
 não a tecnologia. Consequência de design: a interface parte da **tarefa/destino**; o meio de entrada
 é secundário e intercambiável.
 
+### 2.7 Princípio 8 — compatibilidade retroativa (backward compatibility)
+
+Toda evolução futura da captura **preserva compatibilidade com documentos já armazenados**: um
+documento enviado hoje continua funcionando daqui a cinco anos. Trocar o **Capture Engine** não
+invalida documentos antigos; trocar o **OCR** não quebra a proveniência; trocar a **IA** não altera
+a referência ao documento original (`documentId`/`checksum` são estáveis e permanentes). É um
+contrato permanente — conversa diretamente com [[DOC-001]], **KG v2** e **SRL**.
+
 ## 3. Auditoria de conformidade e lacunas
 
 | Módulo | Manual | Foto | Arquivo+Drag (PDF) | Centro de Captura | Voz | Lacuna a corrigir |
@@ -233,6 +244,31 @@ Prioridade do relato: **Medicamentos** (arquivo/PDF+drag) e **Centro de Captura*
 | **Presentation** | interface: botões, drag-and-drop, câmera, voz, entrada manual. |
 | **Capture Engine** | recebe **qualquer** entrada e produz um **`CapturedDocument`** padronizado (contrato único). |
 | **Routing Engine** | encaminha o documento para o módulo correto (Exames, Medicamentos, Recursos, Ômica, Procedimentos…). |
+
+### Contrato único — `CapturedDocument`
+
+Objeto **oficial** que trafega entre todas as camadas — evita que cada etapa crie sua própria
+estrutura (sem acoplamento entre Capture Engine, Routing Engine e módulos):
+
+| Campo | Descrição |
+|---|---|
+| `documentId` | id no repositório único ([[DOC-001]] / `health_documents`) |
+| `originalFile` | arquivo original (referência ao binário armazenado) |
+| `mimeType` | tipo do arquivo |
+| `checksum` | hash de integridade (dedup + verificação) |
+| `source` | origem (upload · câmera · Apple Health · WhatsApp · API…) |
+| `captureMethod` | meio de entrada (foto · arquivo · drag · voz · manual · importação) |
+| `capturedAt` | timestamp da captura |
+| `uploader` | usuário que capturou |
+| `metadata` | metadados livres por categoria documental |
+
+### Routing Engine por registry (extensível)
+
+O Routing Engine é **baseado em registradores** — mesmo padrão dos processadores atuais
+(`registry.ts` / `CAPTURE_PROCESSORS`): um `captureRegistry` mapeia tipo/destino → módulo
+(medication · exam · omics · resources · procedures · vaccines · …). Adicionar um módulo novo =
+**registrar um novo destino**, sem alteração estrutural no Routing Engine. Reduz manutenção ao
+longo dos anos.
 
 **Extensibilidade por adaptadores:** futuras origens — Apple Health, Google Health Connect, e-mail,
 WhatsApp, scanner TWAIN, integrações com clínicas, APIs externas — entram como **novos adaptadores no
