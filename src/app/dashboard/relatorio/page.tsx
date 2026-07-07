@@ -256,18 +256,18 @@ function LegacyReport() {
         <p className="font-body text-sm font-semibold text-onyx mb-3">Mostrar no relatório</p>
         <div className="space-y-4">
           {([
+            ['Acompanhamento', [
+              ['eventos', 'Consultas e eventos', CalendarDays],
+              ['exames', 'Exames', FileText],
+              ['omica', 'Exames de ômica', FlaskConical],
+              ['medicamentos', 'Medicamentos e Suplementos', Pill],
+            ]],
             ['Minha Saúde', [
               ['condicoes', 'Condições de Saúde', Stethoscope],
               ['visao', 'Recursos de Saúde (óculos e lentes)', Eye],
               ['medidas', 'Medidas Corporais', Ruler],
               ['sinais', 'Sinais Vitais', Activity],
               ['habitos', 'Hábitos', HeartPulse],
-            ]],
-            ['Acompanhamento', [
-              ['eventos', 'Consultas e eventos', CalendarDays],
-              ['exames', 'Exames', FileText],
-              ['omica', 'Exames de ômica', FlaskConical],
-              ['medicamentos', 'Medicamentos e Suplementos', Pill],
             ]],
           ] as const).map(([groupTitle, items]) => (
             <div key={groupTitle}>

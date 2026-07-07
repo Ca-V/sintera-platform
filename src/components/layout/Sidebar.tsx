@@ -11,11 +11,11 @@ import {
 import { cn } from '@/lib/utils'
 import { useUser } from '@/context/UserContext'
 
-// Arquitetura de navegação (UX-001 §5). Agrupamento = organização da experiência,
-// NÃO fusão de entidades — cada módulo preserva modelo/regras próprios.
-//   Minha Saúde    = estado-perfil clínico contínuo (Condições, Recursos, Medidas, Sinais, Hábitos, Ciclo).
-//   Acompanhamento = a jornada no tempo e os registros (Agenda, Histórico, Exames, Medicamentos e Suplementos).
-//   Organização    = gestão (financeiro + relatórios).
+// Arquitetura de navegação (UX-001 §5). Ordem = sequência natural de uso; agrupamento
+// = organização da experiência, NÃO fusão de entidades (cada módulo preserva modelo/regras).
+//   Acompanhamento = "o que preciso acompanhar hoje?" (Agenda, Histórico, Exames, Medicamentos e Suplementos) — uso diário, vem primeiro.
+//   Minha Saúde    = "quem eu sou / meu estado de saúde?" (Condições, Recursos, Medidas, Sinais, Hábitos, Ciclo) — contexto permanente.
+//   Organização    = "como organizo minha vida em saúde?" (Despesas, Relatórios).
 //   Configurações  = conta.
 // "Histórico" reúne Linha do Tempo + Evolução (duas visões do registro longitudinal).
 const navGroups: {
@@ -29,6 +29,15 @@ const navGroups: {
     ],
   },
   {
+    title: 'Acompanhamento',
+    items: [
+      { href: '/dashboard/agenda',       icon: CalendarDays, label: 'Agenda' },
+      { href: '/dashboard/timeline',     icon: Clock,        label: 'Histórico', extra: ['/dashboard/saude', '/dashboard/historico'] },
+      { href: '/dashboard/exams',        icon: FileText,     label: 'Exames' },
+      { href: '/dashboard/medicamentos', icon: Pill,         label: 'Medicamentos e Suplementos' },
+    ],
+  },
+  {
     title: 'Minha Saúde',
     items: [
       { href: '/dashboard/condicoes',     icon: Stethoscope, label: 'Condições de Saúde' },
@@ -37,15 +46,6 @@ const navGroups: {
       { href: '/dashboard/sinais-vitais', icon: Activity,    label: 'Sinais Vitais' },
       { href: '/dashboard/habitos',       icon: HeartPulse,  label: 'Hábitos' },
       { href: '/dashboard/ciclo',         icon: Droplet,     label: 'Ciclo e Contracepção' },
-    ],
-  },
-  {
-    title: 'Acompanhamento',
-    items: [
-      { href: '/dashboard/agenda',       icon: CalendarDays, label: 'Agenda' },
-      { href: '/dashboard/timeline',     icon: Clock,        label: 'Histórico', extra: ['/dashboard/saude', '/dashboard/historico'] },
-      { href: '/dashboard/exams',        icon: FileText,     label: 'Exames' },
-      { href: '/dashboard/medicamentos', icon: Pill,         label: 'Medicamentos e Suplementos' },
     ],
   },
   {

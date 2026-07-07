@@ -81,14 +81,14 @@ Módulo → Lista → Detalhe → Edição
 
 **Agrupamento ≠ fusão.** Os grupos de menu são **organização da experiência**, não fusão de entidades. Cada módulo dentro de um grupo **preserva identidade, ciclo de vida, regras e modelo de dados próprios** — agrupar reduz itens de primeiro nível sem misturar dados. O grupo é rótulo de navegação; a taxonomia formal é a §3.
 
-**Menu lateral** (agrupado pelo modelo mental da usuária):
+**Menu lateral** — a **ordem segue a sequência natural de uso** (uso diário primeiro; perfil de saúde como contexto permanente):
 - **Painel** — Painel Inicial.
-- **Minha Saúde** *(estado-perfil: o que a pessoa **é/tem** de forma contínua)* — Condições de Saúde · **Recursos de Saúde** · Medidas Corporais · Sinais Vitais · Hábitos · Ciclo e Contracepção.
-- **Acompanhamento** *(a jornada no tempo e os registros clínicos)* — Agenda · Histórico · Exames · Medicamentos e Suplementos.
-- **Organização** — Despesas · Relatórios.
+- **Acompanhamento** *("o que preciso acompanhar hoje?" — a jornada no tempo e os registros)* — Agenda · Histórico · Exames · Medicamentos e Suplementos.
+- **Minha Saúde** *("quem eu sou / meu estado de saúde?" — estado-perfil contínuo)* — Condições de Saúde · **Recursos de Saúde** · Medidas Corporais · Sinais Vitais · Hábitos · Ciclo e Contracepção.
+- **Organização** *("como organizo minha vida em saúde?")* — Despesas · Relatórios.
 - **Configurações**.
 
-*(Decisão desta versão: "Minha Saúde" passou a designar o **estado-perfil clínico** — reúne Condições, Recursos, Medidas, Sinais, Hábitos e Ciclo, cada um independente. Os módulos de jornada/registro migraram para o grupo **Acompanhamento**. Ciclo e Contracepção fica em Minha Saúde por ser estado-perfil contínuo, como Medidas/Sinais.)*
+*(Decisão desta versão: **Acompanhamento vem antes de Minha Saúde** — prioriza as funções mais acessadas no dia a dia e deixa o perfil de saúde como contexto permanente, não como primeiro ponto de entrada. "Minha Saúde" designa o estado-perfil clínico — Condições, Recursos, Medidas, Sinais, Hábitos e Ciclo, cada um independente. Ciclo fica em Minha Saúde por ser estado-perfil contínuo, como Medidas/Sinais. Reordenar grupos é arquitetura de navegação — não altera modelos, rotas nem permissões.)*
 
 **Acesso rápido (Painel Inicial):** os módulos mais frequentes — Histórico · Agenda · Exames · Medicamentos · Relatórios · Despesas.
 **Relatório:** espelha os módulos como seções, com os mesmos rótulos do menu.
