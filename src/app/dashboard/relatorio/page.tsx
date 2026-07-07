@@ -10,12 +10,13 @@
 // nutricionista, fisioterapeuta, dentista, etc.).
 // ============================================================
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, type ElementType } from 'react'
 import Link from 'next/link'
 import ReportEntry from '@/components/entry/ReportEntry'
 import {
   Loader2, Printer, ArrowLeft, FileText, Share2, Copy, Trash2, Check,
   CalendarDays, FlaskConical, Pill, Stethoscope, HeartPulse, Ruler, Activity, Eye,
+  ChevronDown, Minus,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
@@ -97,6 +98,28 @@ function LegacyReport() {
   const [copied, setCopied] = useState<string | null>(null)
   const [sections, setSections] = useState({ medicamentos: true, condicoes: true, habitos: true, visao: true, eventos: true, exames: true, omica: true, medidas: true, sinais: true })
   const toggle = (k: keyof typeof sections) => setSections(s => ({ ...s, [k]: !s[k] }))
+
+  // Árvore de seleção = espelho do menu lateral (UX-001): grupos expansíveis,
+  // seleção por grupo (tri-state) e por item. Mesma ordem/nomenclatura da sidebar.
+  type SectionKey = keyof typeof sections
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
+  const setGroup = (keys: SectionKey[], on: boolean) =>
+    setSections(s => { const n = { ...s }; keys.forEach(k => { n[k] = on }); return n })
+  const SELECT_GROUPS: { title: string; items: [SectionKey, string, ElementType][] }[] = [
+    { title: 'Acompanhamento', items: [
+      ['eventos', 'Consultas e eventos', CalendarDays],
+      ['exames', 'Exames', FileText],
+      ['omica', 'Exames de ômica', FlaskConical],
+      ['medicamentos', 'Medicamentos e Suplementos', Pill],
+    ] },
+    { title: 'Minha Saúde', items: [
+      ['condicoes', 'Condições de Saúde', Stethoscope],
+      ['visao', 'Recursos de Saúde (óculos e lentes)', Eye],
+      ['medidas', 'Medidas Corporais', Ruler],
+      ['sinais', 'Sinais Vitais', Activity],
+      ['habitos', 'Hábitos', HeartPulse],
+    ] },
+  ]
 
   const load = useCallback(async () => {
     if (!user) return
@@ -250,39 +273,50 @@ function LegacyReport() {
         )}
       </div>
 
-      {/* Seleção do que mostrar — segue a mesma estrutura da navegação (sidebar):
-          agrupada em Minha Saúde / Acompanhamento, com os mesmos rótulos, ordem e ícones. */}
+      {/* Seleção = árvore do menu lateral (UX-001): grupos expansíveis, seleção por
+          grupo (tri-state) e por item, com a mesma ordem, nomenclatura e ícones. */}
       <div className="card-premium p-5 mb-6 print:hidden">
         <p className="font-body text-sm font-semibold text-onyx mb-3">Mostrar no relatório</p>
-        <div className="space-y-4">
-          {([
-            ['Acompanhamento', [
-              ['eventos', 'Consultas e eventos', CalendarDays],
-              ['exames', 'Exames', FileText],
-              ['omica', 'Exames de ômica', FlaskConical],
-              ['medicamentos', 'Medicamentos e Suplementos', Pill],
-            ]],
-            ['Minha Saúde', [
-              ['condicoes', 'Condições de Saúde', Stethoscope],
-              ['visao', 'Recursos de Saúde (óculos e lentes)', Eye],
-              ['medidas', 'Medidas Corporais', Ruler],
-              ['sinais', 'Sinais Vitais', Activity],
-              ['habitos', 'Hábitos', HeartPulse],
-            ]],
-          ] as const).map(([groupTitle, items]) => (
-            <div key={groupTitle}>
-              <p className="font-body text-[10px] font-semibold text-mauve/50 uppercase tracking-[0.15em] mb-1.5">{groupTitle}</p>
-              <div className="flex flex-col gap-1.5">
-                {items.map(([k, label, Icon]) => (
-                  <label key={k} className="flex items-center gap-2.5 font-body text-sm text-onyx cursor-pointer">
-                    <input type="checkbox" checked={sections[k]} onChange={() => toggle(k)} className="accent-petal w-4 h-4 flex-shrink-0" />
-                    <Icon size={15} className="text-petal/70 flex-shrink-0" />
-                    <span className="min-w-0">{label}</span>
-                  </label>
-                ))}
+        <div className="space-y-2">
+          {SELECT_GROUPS.map(group => {
+            const keys = group.items.map(i => i[0])
+            const sel = keys.filter(k => sections[k]).length
+            const groupState = sel === 0 ? 'none' : sel === keys.length ? 'all' : 'some'
+            const open = openGroups[group.title] ?? true
+            return (
+              <div key={group.title} className="rounded-xl border border-border/60 overflow-hidden">
+                {/* Cabeçalho do grupo: expandir/recolher + seleção do grupo (tri-state) */}
+                <div className="flex items-center gap-2.5 px-3 py-2.5 bg-ivory/40">
+                  <button type="button" onClick={() => setOpenGroups(g => ({ ...g, [group.title]: !open }))}
+                    aria-label={open ? 'Recolher' : 'Expandir'}
+                    className="text-mauve/50 hover:text-petal transition-colors flex-shrink-0">
+                    <ChevronDown size={16} className="transition-transform" style={{ transform: open ? 'none' : 'rotate(-90deg)' }} />
+                  </button>
+                  <button type="button" onClick={() => setGroup(keys, groupState !== 'all')}
+                    aria-label={`Selecionar ${group.title}`}
+                    className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border transition-colors ${
+                      groupState === 'none' ? 'border-border bg-white' : 'border-petal bg-petal'}`}>
+                    {groupState === 'all' && <Check size={11} className="text-white" />}
+                    {groupState === 'some' && <Minus size={11} className="text-white" />}
+                  </button>
+                  <span className="font-body text-[11px] font-semibold text-mauve/70 uppercase tracking-wider flex-1 min-w-0">{group.title}</span>
+                  <span className="font-body text-[11px] text-mauve/50 flex-shrink-0 tabular-nums">{sel}/{keys.length}</span>
+                </div>
+                {/* Itens do grupo */}
+                {open && (
+                  <div className="flex flex-col gap-1 px-3 py-2 pl-[2.9rem]">
+                    {group.items.map(([k, label, Icon]) => (
+                      <label key={k} className="flex items-center gap-2.5 font-body text-sm text-onyx cursor-pointer py-0.5">
+                        <input type="checkbox" checked={sections[k]} onChange={() => toggle(k)} className="accent-petal w-4 h-4 flex-shrink-0" />
+                        <Icon size={15} className="text-petal/70 flex-shrink-0" />
+                        <span className="min-w-0 break-words">{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
         <p className="font-body text-[11px] text-mauve/60 mt-3">Marque o que deseja incluir. Vale para a impressão e para o link compartilhado.</p>
       </div>
