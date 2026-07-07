@@ -577,8 +577,8 @@ export default function ExamDetailPage() {
       {/* Cabeçalho do exame */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
         className="card-premium p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-start gap-4 flex-1 min-w-0">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-start gap-4 min-w-0">
             <div className="w-12 h-12 rounded-2xl bg-blush flex items-center justify-center flex-shrink-0">
               <FileText size={22} className="text-petal" />
             </div>
@@ -676,8 +676,10 @@ export default function ExamDetailPage() {
             </div>
           </div>
 
-          {/* Botões de ação */}
-          <div className="flex items-center gap-2 flex-shrink-0 print:hidden">
+          {/* Botões de ação — sempre abaixo do título, em largura total, quebrando
+              em linhas conforme a largura. Nunca competem com o título (que colapsava
+              o nome letra a letra em telas médias). */}
+          <div className="flex flex-wrap items-center gap-2 print:hidden">
 
             {/* Reportar problema */}
             <button
