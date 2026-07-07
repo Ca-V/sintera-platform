@@ -23,6 +23,11 @@
 // específica por módulo. Quando um fluxo passar a armazenar o documento (ex.: ômica,
 // receitas de medicamentos), o link aparece automaticamente — basta o adaptador
 // popular `document.url`.
+//
+// Esta camada consome o documento por REFERÊNCIA (DocumentMeta) e NUNCA conhece
+// onde ele foi originado. A evolução oficial é um repositório ÚNICO de documentos
+// (health_documents — ver docs/DOC-001); quando existir, os adaptadores passam a
+// ler dele em vez de `file_url` por tabela, sem mudar esta interface.
 // ============================================================
 
 // ── Nível 2 — origem ──────────────────────────────────────────────────────────
