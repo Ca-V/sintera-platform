@@ -45,3 +45,6 @@ next-env.d.ts
 
 # QA-001 artefatos de auditoria visual (screenshots + json) — não versionar
 qa001-artifacts/
+
+# Claude Code — configuração pessoal (nunca commitar segredos)
+.claude/settings.local.json
