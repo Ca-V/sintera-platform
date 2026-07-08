@@ -16,6 +16,7 @@ import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import Sparkline, { parseNum } from '@/components/Sparkline'
 import ListCard from '@/components/ListCard'
+import Card from '@/components/ui/Card'
 
 type Metric =
   | 'peso' | 'altura' | 'circunferencia_cintura'
@@ -260,7 +261,7 @@ export default function MedidasPage() {
       </div>
 
       {/* IMC calculado automaticamente (peso ÷ altura²) */}
-      <div className="card-premium p-4 flex items-center justify-between gap-3">
+      <Card padding="sm" className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="font-body text-[10px] text-mauve/70 uppercase tracking-wider mb-0.5">IMC (calculado)</p>
           {imcVal != null ? (
@@ -283,11 +284,11 @@ export default function MedidasPage() {
         <div className="w-10 h-10 rounded-2xl bg-lavender-light flex items-center justify-center flex-shrink-0">
           <Activity size={18} className="text-lavender" />
         </div>
-      </div>
+      </Card>
 
       {/* Revisão do laudo de bioimpedância escaneado */}
       {scanRows && (
-        <div className="card-premium p-5 space-y-3">
+        <Card padding="md" className="space-y-3">
           <div className="flex items-center gap-2">
             <Camera size={16} className="text-petal" />
             <p className="font-body text-sm font-semibold text-onyx">Revise os dados lidos do laudo</p>
@@ -323,13 +324,13 @@ export default function MedidasPage() {
               {savingScan ? 'Salvando…' : 'Salvar tudo'}
             </button>
           </div>
-        </div>
+        </Card>
       )}
 
       {scanErr && !scanRows && <p className="font-body text-xs text-red-500">{scanErr}</p>}
 
       {showForm && (
-        <div className="card-premium p-5 space-y-3">
+        <Card padding="md" className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="font-body text-xs text-mauve/70 block mb-1">Medida</label>
@@ -391,13 +392,13 @@ export default function MedidasPage() {
               {saving ? 'Salvando…' : 'Salvar'}
             </button>
           </div>
-        </div>
+        </Card>
       )}
 
       {loading ? (
-        <div className="card-premium p-10 text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></div>
+        <Card padding="xl" className="text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
       ) : items.length === 0 ? (
-        <div className="card-premium p-8 text-center"><p className="font-body text-sm text-mauve">Nenhuma medida registrada. Use <strong>Adicionar</strong>.</p></div>
+        <Card padding="none" className="p-8 text-center"><p className="font-body text-sm text-mauve">Nenhuma medida registrada. Use <strong>Adicionar</strong>.</p></Card>
       ) : (
         <div className="space-y-6">
           {groups.map(g => {
