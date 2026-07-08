@@ -17,6 +17,7 @@ import VoiceInput from '@/components/VoiceInput'
 import Sparkline, { parseNum } from '@/components/Sparkline'
 import ListCard from '@/components/ListCard'
 import Card from '@/components/ui/Card'
+import Section from '@/components/ui/Section'
 
 type Metric =
   | 'peso' | 'altura' | 'circunferencia_cintura'
@@ -288,11 +289,7 @@ export default function MedidasPage() {
 
       {/* Revisão do laudo de bioimpedância escaneado */}
       {scanRows && (
-        <Card padding="md" className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Camera size={16} className="text-petal" />
-            <p className="font-body text-sm font-semibold text-onyx">Revise os dados lidos do laudo</p>
-          </div>
+        <Section padding="md" bodyClassName="space-y-3" icon={<Camera size={16} className="text-petal" />} title="Revise os dados lidos do laudo">
           <div>
             <label className="font-body text-xs text-mauve/70 block mb-1">Data do exame</label>
             <input type="date" value={scanDate} onChange={e => setScanDate(e.target.value)}
@@ -324,7 +321,7 @@ export default function MedidasPage() {
               {savingScan ? 'Salvando…' : 'Salvar tudo'}
             </button>
           </div>
-        </Card>
+        </Section>
       )}
 
       {scanErr && !scanRows && <p className="font-body text-xs text-red-500">{scanErr}</p>}
@@ -396,9 +393,9 @@ export default function MedidasPage() {
       )}
 
       {loading ? (
-        <Card padding="xl" className="text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
+        <Card padding="2xl" className="text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
       ) : items.length === 0 ? (
-        <Card padding="none" className="p-8 text-center"><p className="font-body text-sm text-mauve">Nenhuma medida registrada. Use <strong>Adicionar</strong>.</p></Card>
+        <Card padding="xl" className="text-center"><p className="font-body text-sm text-mauve">Nenhuma medida registrada. Use <strong>Adicionar</strong>.</p></Card>
       ) : (
         <div className="space-y-6">
           {groups.map(g => {
