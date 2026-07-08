@@ -19,6 +19,12 @@ const PADDING: Record<CardPadding, string> = {
   '2xl': 'p-10',
 }
 
+// Classe canônica do card premium — FONTE ÚNICA reutilizada por Card, MotionCard
+// e ActionCard, para o estilo do card viver num só lugar.
+export function cardClassName(padding: CardPadding = 'md', className?: string) {
+  return cn('card-premium', PADDING[padding], className)
+}
+
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
   /** Espaçamento interno canônico. Default 'md' (p-5). */
   padding?: CardPadding
@@ -26,21 +32,16 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
 
 // Card premium (Design System · TEMA B). CONTAINER estático — painéis,
 // formulários, estados vazios/loading, tiles. Encapsula a classe canônica
-// `.card-premium` (fundo branco, cantos 20px, sombra suave, hover sutil) para as
-// páginas pararem de reescrever `<div className="card-premium p-5">` à mão.
+// `.card-premium` para as páginas pararem de reescrever `<div className="card-premium p-5">`.
 //
-// ESCOPO: apenas `<div>`. Cards clicáveis (`<button>`/`<Link>`) e animados
-// (`<motion.div>`) são OUTRO comportamento e terão componentes próprios — NÃO se
-// adiciona polimorfismo aqui só para aumentar cobertura.
-//
-// Encaminha `ref` (forwardRef) para o `<div>`, cobrindo padrões como scroll-to
-// (`ref={formRef}` + scroll-mt).
+// ESCOPO: apenas `<div>`. Cards animados → `MotionCard`; clicáveis → `ActionCard`.
+// Encaminha `ref` (forwardRef), cobrindo scroll-to (`ref` + scroll-mt).
 const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
   { padding = 'md', className, children, ...props },
   ref,
 ) {
   return (
-    <div ref={ref} className={cn('card-premium', PADDING[padding], className)} {...props}>
+    <div ref={ref} className={cardClassName(padding, className)} {...props}>
       {children}
     </div>
   )

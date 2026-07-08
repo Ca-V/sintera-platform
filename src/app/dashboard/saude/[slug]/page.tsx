@@ -8,13 +8,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { motion } from 'framer-motion'
 import { ArrowLeft, Loader2, FlaskConical, ArrowRight } from 'lucide-react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { parseDateOnly } from '@/lib/agenda'
 import { useUser } from '@/context/UserContext'
 import { seriesForName, type BiomarkerRow, type Measurement } from '@/lib/biomarkers/grouping'
+import MotionCard from '@/components/ui/MotionCard'
 
 function formatDateFull(iso: string): string {
   if (!iso) return '—'
@@ -118,15 +118,15 @@ export default function IndicadorDrilldownPage() {
       </Link>
 
       {!model || model.measurements.length === 0 ? (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="card-premium p-12 text-center">
+        <MotionCard initial={{ opacity: 0 }} animate={{ opacity: 1 }} padding="2xl" className="text-center">
           <FlaskConical size={40} className="text-border mx-auto mb-3" />
           <p className="font-body text-sm font-semibold text-onyx mb-1">Indicador não encontrado</p>
           <p className="font-body text-xs text-mauve">{model?.hasUnitMismatch ? 'Unidades diferentes entre exames — série não comparável.' : 'Não há medições numéricas para este biomarcador.'}</p>
-        </motion.div>
+        </MotionCard>
       ) : (
         <>
           {/* Cabeçalho + resumo factual */}
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="card-premium p-6">
+          <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} padding="lg">
             <h1 className="font-body text-xl font-semibold text-onyx">{catalogNames.get(model.catalogId ?? '') ?? model.displayName}</h1>
             <p className="font-body text-sm text-mauve mt-0.5">
               {model.unit ? `${model.unit} · ` : ''}{model.measurements.length} mediç{model.measurements.length !== 1 ? 'ões' : 'ão'}
@@ -154,19 +154,19 @@ export default function IndicadorDrilldownPage() {
                 </div>
               </div>
             )}
-          </motion.div>
+          </MotionCard>
 
           {/* Gráfico temporal */}
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="card-premium p-5">
+          <MotionCard initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} padding="md">
             <p className="font-body text-sm font-semibold text-onyx mb-3">Evolução temporal</p>
             <TemporalChart points={model.measurements} />
             <p className="font-body text-[11px] text-mauve/50 mt-2">
               Faixa verde = referência impressa no laudo (quando constante). Valores factuais; não indicam melhora ou piora clínica.
             </p>
-          </motion.div>
+          </MotionCard>
 
           {/* Exames utilizados */}
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} className="card-premium overflow-hidden">
+          <MotionCard initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} padding="none" className="overflow-hidden">
             <div className="px-5 py-3 border-b border-border/40">
               <p className="font-body text-sm font-semibold text-onyx">Exames utilizados</p>
             </div>
@@ -193,7 +193,7 @@ export default function IndicadorDrilldownPage() {
                 )
               })}
             </div>
-          </motion.div>
+          </MotionCard>
 
           <p className="font-body text-xs text-mauve/40 text-center pb-4">
             Esta visão organiza os dados dos seus laudos. Não substitui avaliação profissional nem constitui diagnóstico (RDC 657/2022).

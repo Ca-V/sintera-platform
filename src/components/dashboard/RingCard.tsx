@@ -1,6 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import MotionCard from '@/components/ui/MotionCard'
 import { type LucideIcon } from 'lucide-react'
 
 interface RingCardProps {
@@ -25,11 +26,12 @@ export default function RingCard({
   const filled = C * (pct / 100)
 
   return (
-    <motion.div
+    <MotionCard
+      padding="sm"
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5, delay, ease: 'easeOut' }}
-      className="card-premium p-4 flex items-center gap-4"
+      className="flex items-center gap-4"
     >
       {/* Ring */}
       <div className="relative w-[72px] h-[72px] flex-shrink-0">
@@ -79,6 +81,6 @@ export default function RingCard({
           />
         </div>
       </div>
-    </motion.div>
+    </MotionCard>
   )
 }

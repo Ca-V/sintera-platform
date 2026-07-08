@@ -9,7 +9,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
 import { Activity, TrendingUp, TrendingDown, Minus, Search, Loader2, FlaskConical } from 'lucide-react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
@@ -19,6 +18,7 @@ import HistoricoTabs from '@/components/HistoricoTabs'
 import ListCard from '@/components/ListCard'
 import { summarizeBiomarkers, computeReferenceIndex, type BiomarkerRow, type BiomarkerSummary, type Trend } from '@/lib/biomarkers/grouping'
 import { groupByMaterialExam, loadCatalogLabels, type CatalogLabels } from '@/lib/biomarkers/catalogLabels'
+import MotionCard from '@/components/ui/MotionCard'
 
 interface CatalogEntry { id: string; specimen: string | null; category: string | null; display_name: string }
 
@@ -104,7 +104,7 @@ export default function IndicadoresPage() {
       <HistoricoTabs active="evolucao" />
 
       {/* Cabeçalho */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="card-premium p-6">
+      <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} padding="lg">
         <div className="flex items-start gap-4">
           <div className="w-12 h-12 rounded-2xl bg-blush flex items-center justify-center flex-shrink-0">
             <Activity size={22} className="text-petal" />
@@ -125,10 +125,10 @@ export default function IndicadoresPage() {
             />
           </div>
         )}
-      </motion.div>
+      </MotionCard>
 
       {summaries.length === 0 ? (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="card-premium p-12 text-center">
+        <MotionCard initial={{ opacity: 0 }} animate={{ opacity: 1 }} padding="2xl" className="text-center">
           <FlaskConical size={40} className="text-border mx-auto mb-3" />
           <p className="font-body text-sm font-semibold text-onyx mb-1">Nenhum indicador disponível ainda</p>
           <p className="font-body text-xs text-mauve mb-5">Extraia os dados de um exame para acompanhar seus biomarcadores aqui.</p>
@@ -136,13 +136,13 @@ export default function IndicadoresPage() {
             className="inline-flex items-center gap-2 gradient-sintera text-white font-body text-sm font-medium px-6 py-2.5 rounded-full hover:opacity-90 transition-opacity">
             Enviar exame
           </button>
-        </motion.div>
+        </MotionCard>
       ) : (
         <>
           {/* Índice Experimental — proporção dentro da referência por exame (relocado do Histórico, T2-B1b) */}
           {refIndex.length > 0 && (
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 }}
-              className="card-premium overflow-hidden">
+            <MotionCard initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 }}
+              padding="none" className="overflow-hidden">
               <div className="px-5 py-3 border-b border-border/40">
                 <p className="font-body text-sm font-semibold text-onyx">Proporção dentro da referência</p>
               </div>
@@ -163,11 +163,11 @@ export default function IndicadoresPage() {
                   De cada exame, quantos biomarcadores numéricos estão dentro da faixa do laudo. Experimental; não representa diagnóstico ou estado de saúde.
                 </p>
               </div>
-            </motion.div>
+            </MotionCard>
           )}
 
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-            className="card-premium overflow-hidden">
+          <MotionCard initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+            padding="none" className="overflow-hidden">
             <div className="px-5 py-3 border-b border-border/40 flex items-center justify-between">
               <p className="font-body text-sm font-semibold text-onyx">Biomarcadores</p>
               <span className="font-body text-xs text-mauve/60">{filtered.length} de {summaries.length}</span>
@@ -214,7 +214,7 @@ export default function IndicadoresPage() {
                 <p className="font-body text-xs text-mauve">Nenhum biomarcador encontrado.</p>
               </div>
             )}
-          </motion.div>
+          </MotionCard>
 
           <p className="font-body text-xs text-mauve/40 text-center pb-4">
             A <Link href="/dashboard/timeline" className="text-petal hover:underline">Linha do Tempo</Link> reúne seus exames, consultas e eventos.

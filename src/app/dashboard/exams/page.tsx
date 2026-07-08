@@ -7,7 +7,6 @@ import {
   Upload, FileText, Clock, CheckCircle, AlertCircle,
   X, Loader2, Zap, Search, ChevronDown, ChevronUp, Trash2, Pencil, Check, Dna, ChevronRight, Info,
 } from 'lucide-react'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { parseDateOnly } from '@/lib/agenda'
 import { useUser } from '@/context/UserContext'
@@ -15,6 +14,8 @@ import { compareNames } from '@/lib/exams/nameMatch'
 import ListCard, { CardChip } from '@/components/ListCard'
 import CreateRecordMenu from '@/components/ui/CreateRecordMenu'
 import Card from '@/components/ui/Card'
+import MotionCard from '@/components/ui/MotionCard'
+import ActionCard from '@/components/ui/ActionCard'
 import type { Database } from '@/lib/supabase/types'
 
 type Exam = Database['public']['Tables']['exams']['Row']
@@ -327,8 +328,8 @@ export default function ExamsPage() {
       </div>
 
       {/* Barra de Ômica — elemento próprio, separado da explicação */}
-      <Link href="/dashboard/omics"
-        className="card-premium p-4 flex items-center gap-3 hover:shadow-md transition-shadow group">
+      <ActionCard href="/dashboard/omics" padding="sm"
+        className="flex items-center gap-3 group">
         <div className="w-10 h-10 rounded-2xl bg-lavender-light flex items-center justify-center flex-shrink-0">
           <Dna size={19} className="text-lavender" />
         </div>
@@ -337,7 +338,7 @@ export default function ExamsPage() {
           <p className="font-body text-xs text-mauve mt-0.5">Registre e importe metabolômica, proteômica, microbioma e outros — com catálogo, versionamento e comparação no tempo</p>
         </div>
         <ChevronRight size={16} className="text-mauve/40 group-hover:text-lavender transition-colors flex-shrink-0" />
-      </Link>
+      </ActionCard>
 
       {/* Aviso: exame(s) com nome divergente do perfil (acima da lista) */}
       {(() => {
@@ -365,8 +366,8 @@ export default function ExamsPage() {
 
       {/* ── Filtros (Epic Fase 1) ────────────────────────────────────────── */}
       {exams.length > 0 && (
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-          className="card-premium p-4 space-y-3">
+        <MotionCard initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+          padding="sm" className="space-y-3">
           <div className="flex flex-wrap gap-2">
             {/* Busca por nome */}
             <div className="relative flex-1 min-w-[160px]">
@@ -433,7 +434,7 @@ export default function ExamsPage() {
               : `${exams.length} exame${exams.length !== 1 ? 's' : ''}`
             }
           </p>
-        </motion.div>
+        </MotionCard>
       )}
 
       {/* ── Lista agrupada por ano ─────────────────────────────────────────── */}
@@ -501,7 +502,7 @@ export default function ExamsPage() {
                           // recebe o nome como string e não comporta o input embutido).
                           if (editingNameId === exam.id) {
                             return (
-                              <div key={exam.id} className="card-premium p-3.5 flex items-center gap-2.5">
+                              <Card key={exam.id} padding="sm" className="flex items-center gap-2.5">
                                 <div className="w-9 h-9 rounded-xl bg-blush flex items-center justify-center flex-shrink-0">
                                   <FileText size={17} className="text-petal" />
                                 </div>
@@ -515,7 +516,7 @@ export default function ExamsPage() {
                                 </button>
                                 <button aria-label="Cancelar" onClick={() => setEditingNameId(null)}
                                   className="text-mauve hover:text-onyx transition-colors flex-shrink-0"><X size={15} /></button>
-                              </div>
+                              </Card>
                             )
                           }
 
