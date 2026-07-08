@@ -5,7 +5,7 @@ import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Upload, FileText, Clock, CheckCircle, AlertCircle,
-  Plus, X, Loader2, Zap, Search, ChevronDown, ChevronUp, Trash2, Pencil, Check, Camera, Dna, ChevronRight, Info,
+  X, Loader2, Zap, Search, ChevronDown, ChevronUp, Trash2, Pencil, Check, Dna, ChevronRight, Info,
 } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -13,6 +13,7 @@ import { parseDateOnly } from '@/lib/agenda'
 import { useUser } from '@/context/UserContext'
 import { compareNames } from '@/lib/exams/nameMatch'
 import ListCard, { CardChip } from '@/components/ListCard'
+import CaptureMethods from '@/components/capture/CaptureMethods'
 import type { Database } from '@/lib/supabase/types'
 
 type Exam = Database['public']['Tables']['exams']['Row']
@@ -258,9 +259,16 @@ export default function ExamsPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Exames</h1>
-        <p className="font-body text-sm text-mauve">Envie seus <strong className="font-medium text-onyx/70">exames</strong> (extraímos os dados por IA), <strong className="font-medium text-onyx/70">receitas</strong> e outros arquivos de saúde — por PDF ou foto.</p>
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Exames</h1>
+          <p className="font-body text-sm text-mauve">Envie seus <strong className="font-medium text-onyx/70">exames</strong> (extraímos os dados por IA), <strong className="font-medium text-onyx/70">receitas</strong> e outros arquivos de saúde — por PDF ou foto.</p>
+        </div>
+        {/* Captura orientada à intenção (CAP-001) — mesmo componente do Medicamentos */}
+        <CaptureMethods label="Novo exame" onFile={processFile}
+          fileAccept=".pdf,.jpg,.jpeg,.png" busy={uploading} busyLabel="Enviando…"
+          className="flex-shrink-0" />
       </motion.div>
 
       {/* ── Adicionar exame ──────────────────────────────────────────────── */}
@@ -286,23 +294,9 @@ export default function ExamsPage() {
           </div>
         ) : (
           <>
-            <p className="font-display text-lg font-semibold text-onyx mb-1">Arraste seu exame aqui</p>
-            <p className="font-body text-sm text-mauve mb-1">ou envie de uma destas formas</p>
-            <p className="text-xs font-body text-mauve/60 mb-5">PDF ou foto do laudo (JPG/PNG) · Até 50 MB</p>
-            <div className="flex flex-wrap items-center justify-center gap-2.5">
-              {/* Selecionar arquivo — clicar na caixa já abre este seletor */}
-              <span className="inline-flex items-center gap-2 gradient-sintera text-white font-body text-sm font-medium px-6 py-2.5 rounded-full hover:opacity-90 transition-opacity shadow-sm">
-                <Plus size={15} /> Selecionar arquivo
-              </span>
-              {/* Tirar foto do laudo — agora DENTRO da caixa; câmera no celular */}
-              <label
-                onClick={e => e.stopPropagation()}
-                className={['inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-petal/40 text-petal font-body text-sm font-medium cursor-pointer hover:bg-blush transition-colors',
-                  uploading ? 'opacity-60 pointer-events-none' : ''].join(' ')}>
-                <input type="file" accept="image/*" capture="environment" className="sr-only" disabled={uploading} onChange={onInputChange} />
-                <Camera size={15} /> Fotografar o laudo
-              </label>
-            </div>
+            <p className="font-display text-lg font-semibold text-onyx mb-1">Arraste um arquivo aqui</p>
+            <p className="font-body text-sm text-mauve mb-1">ou clique para selecionar</p>
+            <p className="text-xs font-body text-mauve/60">PDF ou foto do laudo (JPG/PNG) · Até 50 MB · use <strong className="font-medium">Novo exame</strong> para a câmera</p>
           </>
         )}
       </motion.div>
