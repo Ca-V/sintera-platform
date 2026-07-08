@@ -1,14 +1,15 @@
 import type { DocumentProcessor } from '../types'
 import { captureForwarded } from '../result'
 
-// Processador de RECEITA DE ÓCULOS/LENTES. Encaminha ao módulo Recursos de Saúde
-// (correção visual), para onde óculos/lentes migraram (antes: Condições).
+// Processador de RECURSO DE SAÚDE. Encaminha ao módulo Recursos de Saúde — abrange
+// óculos, lentes, próteses, órteses, dispositivos etc. (não só óculos). O tipo específico
+// é escolhido na própria página de Recursos. (Rename do kind é escopo do CAP-001.)
 export const eyeglassProcessor: DocumentProcessor = {
   kind: 'eyeglass_prescription',
-  label: 'Receita de óculos',
-  icon: 'Glasses',
+  label: 'Recursos de Saúde',
+  icon: 'HeartPulse',
   accepts: ['application/pdf', 'image/jpeg', 'image/png'],
   target: '/dashboard/recursos',
-  confirmPhrase: 'uma receita de óculos ou lentes',
+  confirmPhrase: 'um documento de recurso de saúde (óculos, lentes, próteses, dispositivos…)',
   process: async () => captureForwarded(eyeglassProcessor),
 }

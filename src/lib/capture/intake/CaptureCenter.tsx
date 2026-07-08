@@ -9,9 +9,9 @@
 // módulos. Sem domínio novo, sem evento, sem lote/fila/OCR/IA. Apenas ORQUESTRAÇÃO.
 // ============================================================
 
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { FlaskConical, Pill, Glasses, Dna, FileText, UploadCloud, Camera, Loader2, X, CheckCircle, AlertCircle } from 'lucide-react'
+import { FlaskConical, Pill, Glasses, HeartPulse, Dna, FileText, UploadCloud, Camera, Loader2, X, CheckCircle, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import { CAPTURE_PROCESSORS, processorFor, processorsAccepting } from '../registry'
@@ -21,7 +21,7 @@ import { logCapture } from '../telemetry'
 import type { DocumentKind, CaptureResult } from '../types'
 
 const ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
-  FlaskConical, Pill, Glasses, Dna, FileText,
+  FlaskConical, Pill, Glasses, HeartPulse, Dna, FileText,
 }
 const ACCEPTED = ['application/pdf', 'image/jpeg', 'image/png']
 const MAX_BYTES = 50 * 1024 * 1024
@@ -53,7 +53,10 @@ export default function CaptureCenter({ className = '', onDone }: CaptureCenterP
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<CaptureResult | null>(null)
 
-  const validKinds = useMemo(() => (file ? processorsAccepting(file.type) : CAPTURE_PROCESSORS), [file])
+  // CAP-001 (Princípio 1): a lista de destinos NÃO varia pelo tipo do arquivo — mostra
+  // sempre todos os destinos suportados; a compatibilidade do formato é validada no envio
+  // (forward). Antes, filtrar por MIME escondia "Receita de medicamento" para PDFs.
+  const validKinds = CAPTURE_PROCESSORS
 
   const pickFile = useCallback((f: File) => {
     setError(null)
@@ -79,6 +82,11 @@ export default function CaptureCenter({ className = '', onDone }: CaptureCenterP
     if (!file || !kind || sending) return
     const proc = processorFor(kind)
     if (!proc) return
+    // Validação de formato PÓS-seleção do destino (CAP-001 Princípio 1).
+    if (!proc.accepts.includes(file.type)) {
+      setError('Este formato de arquivo não é compatível com o tipo de documento escolhido. Aceitos: PDF, JPG e PNG.')
+      return
+    }
     if (kind === 'exam' && !user) { setError('Faça login para enviar.'); return }
     setSending(true); setError(null)
     const start = Date.now()

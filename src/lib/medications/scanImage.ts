@@ -44,17 +44,38 @@ export async function downscaleImage(file: File, maxDim = 1100): Promise<{ base6
   return { base64: dataUrl.split(',')[1] ?? '', mediaType: t }
 }
 
-export async function scanMedicationImage(file: File): Promise<{ ok: boolean; items: ScannedMed[]; error?: string }> {
+// Base64 do arquivo (sem o prefixo data:) — usado para PDF, que vai como documento.
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((res, rej) => {
+    const r = new FileReader()
+    r.onload = () => res((r.result as string).split(',')[1] ?? '')
+    r.onerror = rej
+    r.readAsDataURL(file)
+  })
+}
+
+// Extrai medicamentos de um ARQUIVO (imagem OU PDF). Imagem: reduz e envia como visão;
+// PDF: envia como documento (a IA lê o PDF). Pré-preenche o cadastro para a usuária revisar.
+export async function scanMedicationFile(file: File): Promise<{ ok: boolean; items: ScannedMed[]; error?: string }> {
   try {
-    const { base64, mediaType } = await downscaleImage(file)
+    let payload: { fileBase64: string; mediaType: string }
+    if (file.type === 'application/pdf') {
+      payload = { fileBase64: await fileToBase64(file), mediaType: 'application/pdf' }
+    } else {
+      const { base64, mediaType } = await downscaleImage(file)
+      payload = { fileBase64: base64, mediaType }
+    }
     const resp = await fetch('/api/medications/scan', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ imageBase64: base64, mediaType }),
+      body: JSON.stringify(payload),
     })
     const j = await resp.json().catch(() => ({}))
-    if (!resp.ok) return { ok: false, items: [], error: j.error ?? `Falha ao ler a imagem (${resp.status}).` }
+    if (!resp.ok) return { ok: false, items: [], error: j.error ?? `Falha ao ler o documento (${resp.status}).` }
     return { ok: true, items: (j.items ?? []) as ScannedMed[] }
   } catch (e) {
-    return { ok: false, items: [], error: e instanceof Error ? e.message : 'Falha ao processar a imagem.' }
+    return { ok: false, items: [], error: e instanceof Error ? e.message : 'Falha ao processar o documento.' }
   }
 }
+
+/** Alias retrocompatível (aceita imagem e PDF). */
+export const scanMedicationImage = scanMedicationFile

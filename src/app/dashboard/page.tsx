@@ -145,7 +145,7 @@ function LegacyDashboard() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-body text-sm font-semibold text-onyx">Adicionar documento</p>
-            <p className="font-body text-xs text-mauve mt-0.5">Exame, receita, óculos, ômico — num só lugar</p>
+            <p className="font-body text-xs text-mauve mt-0.5">Exame, receita de medicamento, recursos de saúde e outros — num só lugar</p>
           </div>
           <ChevronRight size={18} className="text-mauve/30 group-hover:text-petal transition-colors flex-shrink-0" />
         </button>
