@@ -25,7 +25,7 @@ const HINTS: { kind: DocumentKind; re: RegExp }[] = [
 export function classifyByFilename(filename: string): ClassificationResult {
   const name = (filename ?? '').toLowerCase()
   for (const h of HINTS) {
-    if (h.re.test(name)) return { kind: h.kind, confidence: 'low', reason: 'nome do arquivo' }
+    if (h.re.test(name)) return { kind: h.kind, confidence: 'low', reason: 'nome do arquivo', source: 'filename' }
   }
-  return { kind: 'unknown', confidence: 'low' }
+  return { kind: 'unknown', confidence: 'low', source: 'none' }
 }

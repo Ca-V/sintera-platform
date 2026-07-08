@@ -242,14 +242,20 @@ export default function CaptureCenter({ className = '', onDone }: CaptureCenterP
 
           <div>
             <p className="font-body text-sm font-semibold text-onyx mb-1">Qual é este documento?</p>
-            {classifying ? (
-              <p className="font-body text-xs text-mauve mb-2 inline-flex items-center gap-1.5"><Loader2 size={12} className="animate-spin" /> Lendo o documento…</p>
-            ) : kind && processorFor(kind) ? (
-              <p className="font-body text-xs text-mauve mb-2">
-                {autoConfident
-                  ? <>Identifiquei que é <strong>{processorFor(kind)!.label.toLowerCase()}</strong> — confirme ou corrija.</>
-                  : <>Sugestão: parece ser <strong>{processorFor(kind)!.label.toLowerCase()}</strong> — confirme ou corrija.</>}
+            {/* Palpite IMEDIATO (por nome) sempre visível; a IA só refina em segundo plano
+                ("afinando…"), sem bloquear. "Lendo…" só quando ainda não há palpite algum. */}
+            {kind && processorFor(kind) ? (
+              <p className="font-body text-xs text-mauve mb-2 flex flex-wrap items-center gap-x-1.5">
+                <span>
+                  {autoConfident ? 'Identifiquei que é ' : 'Sugestão: parece ser '}
+                  <strong>{processorFor(kind)!.label.toLowerCase()}</strong> — confirme ou corrija.
+                </span>
+                {classifying && (
+                  <span className="inline-flex items-center gap-1 text-mauve/60"><Loader2 size={11} className="animate-spin" /> afinando…</span>
+                )}
               </p>
+            ) : classifying ? (
+              <p className="font-body text-xs text-mauve mb-2 inline-flex items-center gap-1.5"><Loader2 size={12} className="animate-spin" /> Lendo o documento…</p>
             ) : null}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {validKinds.map(p => {
