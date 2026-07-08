@@ -18,6 +18,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import ListCard from '@/components/ListCard'
+import Card from '@/components/ui/Card'
 
 type Category =
   | 'atividade_fisica' | 'sono' | 'tabagismo' | 'alcool'
@@ -163,7 +164,7 @@ export default function HabitosPage() {
       </div>
 
       {showForm && (
-        <div className="card-premium p-5 space-y-3">
+        <Card padding="md" className="space-y-3">
           <div>
             <label className="font-body text-xs text-mauve/70 block mb-1.5">Categoria</label>
             <div className="flex flex-wrap gap-1.5">
@@ -209,18 +210,18 @@ export default function HabitosPage() {
               {saving ? 'Salvando…' : editingId ? 'Salvar alterações' : 'Salvar'}
             </button>
           </div>
-        </div>
+        </Card>
       )}
 
       {loading ? (
-        <div className="card-premium p-10 text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></div>
+        <Card padding="2xl" className="text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
       ) : items.length > 0 ? (
         <div className="space-y-2">{items.map(card)}</div>
       ) : (
-        <div className="card-premium p-10 text-center space-y-1">
+        <Card padding="2xl" className="text-center space-y-1">
           <p className="font-body text-sm text-mauve">Nenhum hábito registrado ainda.</p>
           <p className="font-body text-xs text-mauve/60">Use “Adicionar” para registrar atividade física, sono, alimentação e outros.</p>
-        </div>
+        </Card>
       )}
 
       <p className="font-body text-[11px] text-mauve/50 text-center leading-relaxed">
