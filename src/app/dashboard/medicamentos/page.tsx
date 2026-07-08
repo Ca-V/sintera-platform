@@ -478,7 +478,7 @@ export default function MedicamentosPage() {
           <button onClick={() => (showForm ? (reset(), setShowForm(false)) : setShowMethods(v => !v))}
             className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity">
             {showForm ? <X size={15} /> : scanning ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />}
-            {showForm ? 'Fechar' : scanning ? 'Lendo…' : 'Novo medicamento'}
+            {showForm ? 'Fechar' : scanning ? 'Lendo…' : 'Novo medicamento ou suplemento'}
           </button>
 
           {showMethods && (
