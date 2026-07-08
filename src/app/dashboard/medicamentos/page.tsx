@@ -479,12 +479,11 @@ export default function MedicamentosPage() {
             </button>
           ) : (
             // Menu de criação de registros (padrão oficial DS-001) — MESMO em todo módulo.
-            <CreateRecordMenu label="Novo medicamento ou suplemento" onFile={handleScan}
+            <CreateRecordMenu label="Novo medicamento ou suplemento" methods={['file', 'camera', 'manual']}
+              onSelect={(m, file) => { if (file) handleScan(file); else if (m === 'manual') { reset(); setShowForm(true) } }}
               fileAccept="application/pdf,image/*" busy={scanning} busyLabel="Lendo…"
-              onManual={() => { reset(); setShowForm(true) }}>
-              <VoiceInput onResult={(t) => handleVoiceAdd(t)} label="Falar" title="Adicionar por voz"
-                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-blush text-left font-body text-sm text-onyx transition-colors" />
-            </CreateRecordMenu>
+              voice={<VoiceInput onResult={(t) => handleVoiceAdd(t)} label="Falar" title="Adicionar por voz"
+                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-blush text-left font-body text-sm text-onyx transition-colors" />} />
           )}
         </div>
       </div>

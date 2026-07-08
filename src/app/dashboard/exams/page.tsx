@@ -266,7 +266,8 @@ export default function ExamsPage() {
           <p className="font-body text-sm text-mauve">Envie seus <strong className="font-medium text-onyx/70">exames</strong> (extraímos os dados por IA), <strong className="font-medium text-onyx/70">receitas</strong> e outros arquivos de saúde — por PDF ou foto.</p>
         </div>
         {/* Menu de criação de registros (padrão oficial DS-001) — mesmo em todo módulo */}
-        <CreateRecordMenu label="Novo exame" onFile={processFile}
+        <CreateRecordMenu label="Novo exame" methods={['file', 'camera']}
+          onSelect={(_m, file) => { if (file) processFile(file) }}
           fileAccept=".pdf,.jpg,.jpeg,.png" busy={uploading} busyLabel="Enviando…"
           className="flex-shrink-0" />
       </motion.div>
