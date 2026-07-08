@@ -14,6 +14,7 @@ import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
 import CaptureCenter from '@/lib/capture/intake/CaptureCenter'
 import DashboardEntry from '@/components/entry/DashboardEntry'
+import Card from '@/components/ui/Card'
 
 interface ExamSummary {
   id: string
@@ -245,34 +246,34 @@ function LegacyDashboard() {
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
           <p className="font-body text-sm font-semibold text-onyx mb-2.5">Resumo</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="card-premium p-4 text-center">
+            <Card padding="sm" className="text-center">
               <div className="w-9 h-9 rounded-xl bg-blush flex items-center justify-center mx-auto mb-2">
                 <FileText size={17} className="text-petal" />
               </div>
               <p className="font-display text-2xl font-bold text-onyx">{stats.totalExams}</p>
               <p className="font-body text-xs text-mauve mt-0.5">Exame{stats.totalExams !== 1 ? 's' : ''}</p>
-            </div>
-            <div className="card-premium p-4 text-center">
+            </Card>
+            <Card padding="sm" className="text-center">
               <div className="w-9 h-9 rounded-xl bg-sage-light flex items-center justify-center mx-auto mb-2">
                 <CheckCircle size={17} className="text-sage" />
               </div>
               <p className="font-display text-2xl font-bold text-onyx">{stats.processedExams}</p>
               <p className="font-body text-xs text-mauve mt-0.5">Extraído{stats.processedExams !== 1 ? 's' : ''}</p>
-            </div>
-            <div className="card-premium p-4 text-center">
+            </Card>
+            <Card padding="sm" className="text-center">
               <div className="w-9 h-9 rounded-xl bg-lavender-light flex items-center justify-center mx-auto mb-2">
                 <FlaskConical size={17} className="text-lavender" />
               </div>
               <p className="font-display text-2xl font-bold text-onyx">{stats.totalBiomarkers}</p>
               <p className="font-body text-xs text-mauve mt-0.5">Biomarcadores</p>
-            </div>
-            <div className="card-premium p-4 text-center">
+            </Card>
+            <Card padding="sm" className="text-center">
               <div className="w-9 h-9 rounded-xl bg-warm flex items-center justify-center mx-auto mb-2">
                 <Clock size={17} className="text-gold" />
               </div>
               <p className="font-display text-2xl font-bold text-onyx">{stats.pendingExams}</p>
               <p className="font-body text-xs text-mauve mt-0.5">Aguardando</p>
-            </div>
+            </Card>
           </div>
         </motion.div>
       )}
@@ -328,14 +329,14 @@ function LegacyDashboard() {
       {intakeOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-onyx/30 backdrop-blur-sm"
           onClick={() => setIntakeOpen(false)}>
-          <div className="card-premium p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
+          <Card padding="lg" className="w-full max-w-md" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <p className="font-display text-lg font-semibold text-onyx">Central de Entrada</p>
               <button onClick={() => setIntakeOpen(false)} aria-label="Fechar"
                 className="text-mauve/40 hover:text-onyx transition-colors"><X size={18} /></button>
             </div>
             <CaptureCenter onDone={() => setIntakeOpen(false)} />
-          </div>
+          </Card>
         </div>
       )}
 

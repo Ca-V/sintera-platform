@@ -14,6 +14,7 @@ import { useUser } from '@/context/UserContext'
 import { compareNames } from '@/lib/exams/nameMatch'
 import ListCard, { CardChip } from '@/components/ListCard'
 import CreateRecordMenu from '@/components/ui/CreateRecordMenu'
+import Card from '@/components/ui/Card'
 import type { Database } from '@/lib/supabase/types'
 
 type Exam = Database['public']['Tables']['exams']['Row']
@@ -438,20 +439,20 @@ export default function ExamsPage() {
       {/* ── Lista agrupada por ano ─────────────────────────────────────────── */}
       {loadingExams ? (
         <div className="flex flex-col gap-3">
-          {[1, 2, 3].map(i => <div key={i} className="card-premium h-[72px] rounded-2xl animate-pulse" style={{ background: '#F2EDE8' }} />)}
+          {[1, 2, 3].map(i => <Card key={i} padding="none" className="h-[72px] rounded-2xl animate-pulse" style={{ background: '#F2EDE8' }} />)}
         </div>
       ) : exams.length === 0 ? (
-        <div className="card-premium p-12 text-center">
+        <Card padding="2xl" className="text-center">
           <FileText size={36} className="text-border mx-auto mb-3" />
           <p className="font-body text-sm text-mauve">Nenhum exame ainda</p>
           <p className="font-body text-xs text-mauve/60 mt-1">Adicione o primeiro exame acima</p>
-        </div>
+        </Card>
       ) : examsByYear.length === 0 ? (
-        <div className="card-premium p-10 text-center">
+        <Card padding="2xl" className="text-center">
           <Search size={32} className="text-border mx-auto mb-3" />
           <p className="font-body text-sm font-semibold text-onyx mb-1">Nenhum exame encontrado</p>
           <p className="font-body text-xs text-mauve">Tente ajustar os filtros de busca.</p>
-        </div>
+        </Card>
       ) : (
         <div className="space-y-5">
           {examsByYear.map(([year, yearExams]) => {
