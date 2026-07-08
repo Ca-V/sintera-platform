@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { useState } from 'react'
+import Card from '@/components/ui/Card'
 
 const days = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
 const datasets = {
@@ -50,7 +51,7 @@ export default function WeeklyChart() {
   }))
 
   return (
-    <div className="card-premium p-5">
+    <Card>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
@@ -145,6 +146,6 @@ export default function WeeklyChart() {
           })}
         </svg>
       </div>
-    </div>
+    </Card>
   )
 }

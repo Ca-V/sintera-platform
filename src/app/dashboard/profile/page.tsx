@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { useUser } from '@/context/UserContext'
 import { createClient } from '@/lib/supabase/client'
 import { Edit3, Check, X, Loader2, FileText, FlaskConical, CalendarDays } from 'lucide-react'
+import Card from '@/components/ui/Card'
 
 interface Stats {
   totalExams: number
@@ -140,13 +141,13 @@ export default function ProfilePage() {
             { icon: CalendarDays,  value: stats.memberSince ? Math.max(1, Math.floor((Date.now() - new Date(stats.memberSince).getTime()) / (1000 * 60 * 60 * 24))) : 0,
               label: 'Dias na SINTERA', color: 'text-sage', bg: 'bg-sage-light' },
           ].map(({ icon: Icon, value, label, color, bg }) => (
-            <div key={label} className="card-premium p-4 text-center">
+            <Card key={label} padding="sm" className="text-center">
               <div className={`w-8 h-8 rounded-xl ${bg} flex items-center justify-center mx-auto mb-2`}>
                 <Icon size={15} className={color} />
               </div>
               <p className="font-display text-xl font-bold text-onyx">{value}</p>
               <p className="font-body text-[11px] text-mauve mt-0.5 leading-tight">{label}</p>
-            </div>
+            </Card>
           ))}
         </motion.div>
       )}

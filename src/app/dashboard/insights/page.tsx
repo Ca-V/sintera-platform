@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
+import Card from '@/components/ui/Card'
 
 // ai_insights tem colunas de governança que não estão nos tipos manuais
 // (ver supabase/types.generated.ts). Definimos a forma que consumimos aqui.
@@ -138,9 +139,9 @@ export default function InsightsPage() {
       )}
 
       {loading ? (
-        <div className="card-premium p-10 text-center">
+        <Card padding="2xl" className="text-center">
           <p className="font-body text-sm text-mauve">Carregando…</p>
-        </div>
+        </Card>
       ) : insights.length === 0 ? (
         // ── Estado vazio honesto ─────────────────────────────────────────────
         <>
