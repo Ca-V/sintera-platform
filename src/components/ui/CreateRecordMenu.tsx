@@ -20,6 +20,7 @@
 
 import { useRef, useState, type ReactNode, type ComponentType } from 'react'
 import { Plus, Loader2, Upload, Camera, Pencil } from 'lucide-react'
+import Card from './Card'
 
 type IconType = ComponentType<{ size?: number; className?: string }>
 export type RecordMethod = 'file' | 'camera' | 'manual'
@@ -100,7 +101,7 @@ export default function CreateRecordMenu({
       {open && !single && (
         <>
           <div className="fixed inset-0 z-20" onClick={() => setOpen(false)} aria-hidden="true" />
-          <div className="absolute right-0 top-full mt-2 z-30 w-64 card-premium p-2 space-y-0.5">
+          <Card padding="none" className="absolute right-0 top-full mt-2 z-30 w-64 p-2 space-y-0.5">
             <p className="font-body text-[11px] text-mauve/60 px-2 pt-1 pb-1.5">Como deseja cadastrar?</p>
             {std.map(m => {
               const Icon = STD[m].icon
@@ -119,7 +120,7 @@ export default function CreateRecordMenu({
                 </button>
               )
             })}
-          </div>
+          </Card>
         </>
       )}
 
