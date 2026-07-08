@@ -7,6 +7,9 @@ import { useRouter } from 'next/navigation'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
+import Card from '@/components/ui/Card'
+import MotionCard from '@/components/ui/MotionCard'
+import ActionCard from '@/components/ui/ActionCard'
 
 // ai_insights tem colunas de governança que não estão nos tipos manuais
 // (ver supabase/types.generated.ts). Definimos a forma que consumimos aqui.
@@ -138,14 +141,14 @@ export default function InsightsPage() {
       )}
 
       {loading ? (
-        <div className="card-premium p-10 text-center">
+        <Card padding="2xl" className="text-center">
           <p className="font-body text-sm text-mauve">Carregando…</p>
-        </div>
+        </Card>
       ) : insights.length === 0 ? (
         // ── Estado vazio honesto ─────────────────────────────────────────────
         <>
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-            className="card-premium p-10 text-center">
+          <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+            padding="2xl" className="text-center">
             <div className="w-16 h-16 rounded-2xl gradient-sintera-soft flex items-center justify-center mx-auto mb-5">
               <Sparkles size={28} className="text-petal" />
             </div>
@@ -155,12 +158,12 @@ export default function InsightsPage() {
               aprovadas para os seus biomarcadores — sempre como organização de informação, nunca
               como diagnóstico.
             </p>
-          </motion.div>
+          </MotionCard>
 
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
             className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <button onClick={() => router.push('/dashboard/historico')}
-              className="card-premium p-5 text-left flex items-center gap-4 hover:shadow-md transition-shadow group">
+            <ActionCard onClick={() => router.push('/dashboard/historico')}
+              padding="md" className="flex items-center gap-4 group">
               <div className="w-10 h-10 rounded-2xl bg-sage-light flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
                 <TrendingUp size={18} className="text-sage" />
               </div>
@@ -169,10 +172,10 @@ export default function InsightsPage() {
                 <p className="font-body text-xs text-mauve mt-0.5">Evolução temporal dos seus resultados</p>
               </div>
               <ArrowRight size={14} className="text-mauve/40 group-hover:text-sage transition-colors flex-shrink-0" />
-            </button>
+            </ActionCard>
 
-            <button onClick={() => router.push('/dashboard/exams')}
-              className="card-premium p-5 text-left flex items-center gap-4 hover:shadow-md transition-shadow group">
+            <ActionCard onClick={() => router.push('/dashboard/exams')}
+              padding="md" className="flex items-center gap-4 group">
               <div className="w-10 h-10 rounded-2xl bg-blush flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
                 <FlaskConical size={18} className="text-petal" />
               </div>
@@ -181,7 +184,7 @@ export default function InsightsPage() {
                 <p className="font-body text-xs text-mauve mt-0.5">Todos os laudos processados pela IA</p>
               </div>
               <ArrowRight size={14} className="text-mauve/40 group-hover:text-petal transition-colors flex-shrink-0" />
-            </button>
+            </ActionCard>
           </motion.div>
         </>
       ) : (
@@ -192,9 +195,9 @@ export default function InsightsPage() {
             const origin = (it.source && SOURCE_LABEL[it.source]) || 'Organização de dados'
             const sent = feedback[it.id]
             return (
-              <motion.div key={it.id}
+              <MotionCard key={it.id}
                 initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-                className="card-premium p-5">
+                padding="md">
                 <div className="flex items-start justify-between gap-3 mb-2">
                   {flag && (
                     <span className={`font-body text-xs font-semibold px-2.5 py-1 rounded-full border ${flag.cls}`}>
@@ -226,7 +229,7 @@ export default function InsightsPage() {
                     </div>
                   )}
                 </div>
-              </motion.div>
+              </MotionCard>
             )
           })}
 

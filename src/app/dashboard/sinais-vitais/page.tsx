@@ -16,6 +16,7 @@ import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import Sparkline, { parseNum } from '@/components/Sparkline'
 import ListCard from '@/components/ListCard'
+import Card from '@/components/ui/Card'
 
 type Vital = 'pressao_arterial' | 'frequencia_cardiaca' | 'glicemia' | 'saturacao' | 'temperatura' | 'outro_sinal'
 
@@ -140,7 +141,7 @@ export default function SinaisVitaisPage() {
       </div>
 
       {showForm && (
-        <div className="card-premium p-5 space-y-3">
+        <Card padding="md" className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="font-body text-xs text-mauve/70 block mb-1">Sinal vital</label>
@@ -194,13 +195,13 @@ export default function SinaisVitaisPage() {
               {saving ? 'Salvando…' : 'Salvar'}
             </button>
           </div>
-        </div>
+        </Card>
       )}
 
       {loading ? (
-        <div className="card-premium p-10 text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></div>
+        <Card padding="2xl" className="text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
       ) : items.length === 0 ? (
-        <div className="card-premium p-8 text-center"><p className="font-body text-sm text-mauve">Nenhum sinal vital registrado. Use <strong>Adicionar</strong>.</p></div>
+        <Card padding="xl" className="text-center"><p className="font-body text-sm text-mauve">Nenhum sinal vital registrado. Use <strong>Adicionar</strong>.</p></Card>
       ) : (
         <div className="space-y-6">
           {VITALS.map(g => {

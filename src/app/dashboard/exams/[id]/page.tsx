@@ -18,6 +18,7 @@ import { loadCatalogLabels, buildCatalogLabels, type CatalogLabels } from '@/lib
 import FeedbackModal from '@/components/FeedbackModal'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
+import MotionCard from '@/components/ui/MotionCard'
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -575,8 +576,8 @@ export default function ExamDetailPage() {
       })()}
 
       {/* Cabeçalho do exame */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-        className="card-premium p-6">
+      <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+        padding="lg">
         <div className="flex flex-col gap-4">
           <div className="flex items-start gap-4 min-w-0">
             <div className="w-12 h-12 rounded-2xl bg-blush flex items-center justify-center flex-shrink-0">
@@ -763,7 +764,7 @@ export default function ExamDetailPage() {
             <p className="font-body text-xs text-red-700">{analyzeError}</p>
           </div>
         )}
-      </motion.div>
+      </MotionCard>
 
       {/* Índice Experimental */}
       {hasResults && (() => {
@@ -777,8 +778,8 @@ export default function ExamDetailPage() {
 
       {/* Tabela de biomarcadores */}
       {hasResults ? (
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          className="card-premium overflow-hidden">
+        <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          padding="none" className="overflow-hidden">
           <div className="p-5 border-b border-border/50">
             <h2 className="font-display text-base font-semibold text-onyx">Biomarcadores extraídos</h2>
           </div>
@@ -867,19 +868,19 @@ export default function ExamDetailPage() {
               depende de avaliação médica</strong> — esta informação organiza seus dados e não substitui a consulta com seu médico.
             </p>
           </div>
-        </motion.div>
+        </MotionCard>
       ) : (analyzing || exam?.status === 'processing' || exam?.status === 'pending') ? (
         /* P3 — Estado de processamento (auto-análise em andamento; 'pending' evita flash do estado vazio) */
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          className="card-premium p-12 text-center">
+        <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          padding="2xl" className="text-center">
           <Loader2 size={40} className="text-petal mx-auto mb-3 animate-spin" />
           <p className="font-body text-sm font-semibold text-onyx mb-1">Analisando seu exame…</p>
           <p className="font-body text-xs text-mauve">A SINTERA está extraindo os biomarcadores do seu laudo. Isso leva alguns segundos.</p>
-        </motion.div>
+        </MotionCard>
       ) : (
         /* Estado vazio */
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          className="card-premium p-12 text-center">
+        <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          padding="2xl" className="text-center">
           <FileText size={40} className="text-border mx-auto mb-3" />
           <p className="font-body text-sm font-semibold text-onyx mb-1">Nenhum biomarcador encontrado</p>
           <p className="font-body text-xs text-mauve">
@@ -887,7 +888,7 @@ export default function ExamDetailPage() {
               ? `Última extração falhou (${exam.error_reason ?? 'erro desconhecido'}). Clique em "Extrair dados" para tentar novamente.`
               : 'Clique em "Extrair dados" para extrair os biomarcadores deste exame.'}
           </p>
-        </motion.div>
+        </MotionCard>
       )}
 
       {/* Modal — Reportar problema */}

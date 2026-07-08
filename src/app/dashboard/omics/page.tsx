@@ -17,6 +17,7 @@ import { useUser } from '@/context/UserContext'
 import { DOMAIN_LABEL, DOMAINS, fmtOmicsDate, type OmicsDomain } from '@/lib/omics/domains'
 import { uploadAndIngest } from '@/lib/omics/ingestClient'
 import ListCard from '@/components/ListCard'
+import Card from '@/components/ui/Card'
 
 interface Panel {
   id: string
@@ -109,7 +110,7 @@ export default function OmicsListPage() {
       </div>
 
       {showForm && (
-        <div className="card-premium p-5 space-y-3">
+        <Card padding="md" className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="font-body text-xs text-mauve/70 block mb-1">Tipo de ômica</label>
@@ -174,16 +175,16 @@ export default function OmicsListPage() {
               {saving ? 'Processando…' : file ? 'Criar e importar' : 'Criar exame'}
             </button>
           </div>
-        </div>
+        </Card>
       )}
 
       {loading ? (
-        <div className="card-premium p-10 text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></div>
+        <Card padding="2xl" className="text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
       ) : panels.length === 0 ? (
-        <div className="card-premium p-8 text-center space-y-1">
+        <Card padding="xl" className="text-center space-y-1">
           <p className="font-body text-sm text-mauve">Nenhum exame de ômica registrado ainda.</p>
           <p className="font-body text-xs text-mauve/60">Toque em <strong>Adicionar exame</strong> e anexe o laudo (PDF, foto, CSV ou JSON).</p>
-        </div>
+        </Card>
       ) : (
         <div className="space-y-2">
           {panels.map(p => (

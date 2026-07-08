@@ -19,6 +19,7 @@ import PeriodSelector from '@/components/ui/PeriodSelector'
 import { examProvenance, resourceProvenance } from '@/lib/provenance'
 import { type Period, resolvePeriod, inPeriod, overlapsPeriod, periodLabel } from '@/lib/communication/period'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
+import Card from '@/components/ui/Card'
 import { applySort, type SortSpec } from '@/lib/listview'
 import {
   Loader2, Printer, ArrowLeft, FileText, Share2, Copy, Trash2, Check,
@@ -361,7 +362,7 @@ function LegacyReport() {
       </div>
 
       {/* Compartilhar com profissional — link revogável, somente leitura */}
-      <div className="card-premium p-5 mb-6 print:hidden">
+      <Card padding="md" className="mb-6 print:hidden">
         <div className="flex items-center gap-2 mb-2">
           <Share2 size={16} className="text-petal" />
           <h2 className="font-display text-base font-semibold text-onyx">Compartilhar com um profissional</h2>
@@ -390,18 +391,18 @@ function LegacyReport() {
             ))}
           </div>
         )}
-      </div>
+      </Card>
 
       {/* Período — parâmetro da Camada de Comunicação (aplica a todos os módulos temporais) */}
-      <div className="card-premium p-5 mb-6 print:hidden">
+      <Card padding="md" className="mb-6 print:hidden">
         <p className="font-body text-sm font-semibold text-onyx mb-3">Período</p>
         <PeriodSelector period={period} onChange={setPeriod} />
         <p className="font-body text-[11px] text-mauve/60 mt-3">Recorte aplicado ao relatório, à impressão/PDF e ao link compartilhado. Condições atuais e itens em uso aparecem independentemente do período.</p>
-      </div>
+      </Card>
 
       {/* Seleção = árvore do menu lateral (UX-001): grupos expansíveis, seleção por
           grupo (tri-state) e por item, com a mesma ordem, nomenclatura e ícones. */}
-      <div className="card-premium p-5 mb-6 print:hidden">
+      <Card padding="md" className="mb-6 print:hidden">
         <p className="font-body text-sm font-semibold text-onyx mb-2">Mostrar no relatório</p>
         <SelectionToolbar className="mb-3"
           onSelectAll={selectAllSections} onClear={clearSections} onReset={resetSections}
@@ -480,10 +481,10 @@ function LegacyReport() {
           })}
         </div>
         <p className="font-body text-[11px] text-mauve/60 mt-3">Marque o que deseja incluir. Vale para a impressão e para o link compartilhado.</p>
-      </div>
+      </Card>
 
       {/* Configurações de relatório — salvar/reutilizar (discreto, recolhido por padrão) */}
-      <div className="card-premium p-4 mb-6 print:hidden">
+      <Card padding="sm" className="mb-6 print:hidden">
         <button type="button" onClick={() => setConfigOpen(o => !o)} className="w-full flex items-center justify-between gap-2 text-left">
           <div className="min-w-0">
             <p className="font-body text-sm font-semibold text-onyx">Configurações de relatório</p>
@@ -519,7 +520,7 @@ function LegacyReport() {
             </div>
           </div>
         )}
-      </div>
+      </Card>
 
       <div className="bg-white rounded-2xl border border-border p-5 sm:p-8 space-y-6 print:border-0 print:p-0">
         {/* Cabeçalho */}

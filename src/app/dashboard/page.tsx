@@ -14,6 +14,9 @@ import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
 import CaptureCenter from '@/lib/capture/intake/CaptureCenter'
 import DashboardEntry from '@/components/entry/DashboardEntry'
+import Card from '@/components/ui/Card'
+import MotionCard from '@/components/ui/MotionCard'
+import ActionCard from '@/components/ui/ActionCard'
 
 interface ExamSummary {
   id: string
@@ -138,8 +141,8 @@ function LegacyDashboard() {
 
       {/* Centro de Entrada — entrada unificada de documentos */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.02 }}>
-        <button onClick={() => setIntakeOpen(true)}
-          className="w-full card-premium p-4 text-left flex items-center gap-3 hover:shadow-md transition-shadow group">
+        <ActionCard onClick={() => setIntakeOpen(true)} padding="sm"
+          className="flex items-center gap-3 group">
           <div className="w-11 h-11 rounded-2xl gradient-sintera flex items-center justify-center flex-shrink-0">
             <FilePlus size={20} className="text-white" />
           </div>
@@ -148,52 +151,52 @@ function LegacyDashboard() {
             <p className="font-body text-xs text-mauve mt-0.5">Exame, receita de medicamento, recursos de saúde e outros — num só lugar</p>
           </div>
           <ChevronRight size={18} className="text-mauve/30 group-hover:text-petal transition-colors flex-shrink-0" />
-        </button>
+        </ActionCard>
       </motion.div>
 
       {/* ───────────────────────── Destaques (o mais importante, no topo) ───────────────────────── */}
 
       {/* Próximo na Agenda — sensível ao tempo */}
       {!loading && journey.next && (
-        <motion.button
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 }}
-          onClick={() => router.push('/dashboard/agenda')}
-          className="w-full card-premium p-5 text-left flex items-center gap-4 hover:shadow-md transition-shadow group gradient-sintera-soft">
-          <div className="w-12 h-12 rounded-2xl bg-white/70 flex items-center justify-center flex-shrink-0">
-            <CalendarDays size={22} className="text-petal" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-body text-[11px] font-medium uppercase tracking-wider text-petal">Agenda · próximo</p>
-            <p className="font-body text-sm font-semibold text-onyx break-words mt-0.5">{journey.next.title}</p>
-            <p className="font-body text-xs text-mauve mt-0.5">{formatDate(journey.next.date)}</p>
-          </div>
-          <ChevronRight size={18} className="text-petal/50 group-hover:text-petal transition-colors flex-shrink-0" />
-        </motion.button>
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 }}>
+          <ActionCard onClick={() => router.push('/dashboard/agenda')} padding="md"
+            className="flex items-center gap-4 group gradient-sintera-soft">
+            <div className="w-12 h-12 rounded-2xl bg-white/70 flex items-center justify-center flex-shrink-0">
+              <CalendarDays size={22} className="text-petal" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-body text-[11px] font-medium uppercase tracking-wider text-petal">Agenda · próximo</p>
+              <p className="font-body text-sm font-semibold text-onyx break-words mt-0.5">{journey.next.title}</p>
+              <p className="font-body text-xs text-mauve mt-0.5">{formatDate(journey.next.date)}</p>
+            </div>
+            <ChevronRight size={18} className="text-petal/50 group-hover:text-petal transition-colors flex-shrink-0" />
+          </ActionCard>
+        </motion.div>
       )}
 
       {/* Exames aguardando extração — sensível ao tempo */}
       {!loading && stats && stats.pendingExams > 0 && (
-        <motion.button
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}
-          onClick={() => router.push('/dashboard/exams')}
-          className="w-full card-premium p-4 text-left flex items-center gap-3 hover:shadow-md transition-shadow group">
-          <div className="w-9 h-9 rounded-xl bg-warm flex items-center justify-center flex-shrink-0">
-            <Bell size={16} className="text-gold" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-body text-sm font-semibold text-onyx">
-              {stats.pendingExams} exame{stats.pendingExams !== 1 ? 's' : ''} aguardando extração
-            </p>
-            <p className="font-body text-xs text-mauve mt-0.5">Em Exames</p>
-          </div>
-          <ChevronRight size={16} className="text-mauve/40 group-hover:text-gold transition-colors flex-shrink-0" />
-        </motion.button>
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}>
+          <ActionCard onClick={() => router.push('/dashboard/exams')} padding="sm"
+            className="flex items-center gap-3 group">
+            <div className="w-9 h-9 rounded-xl bg-warm flex items-center justify-center flex-shrink-0">
+              <Bell size={16} className="text-gold" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-body text-sm font-semibold text-onyx">
+                {stats.pendingExams} exame{stats.pendingExams !== 1 ? 's' : ''} aguardando extração
+              </p>
+              <p className="font-body text-xs text-mauve mt-0.5">Em Exames</p>
+            </div>
+            <ChevronRight size={16} className="text-mauve/40 group-hover:text-gold transition-colors flex-shrink-0" />
+          </ActionCard>
+        </motion.div>
       )}
 
       {/* ───────────────────────── Estado vazio ───────────────────────── */}
       {isEmpty && (
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          className="card-premium p-10 text-center">
+        <MotionCard initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          padding="2xl" className="text-center">
           <div className="w-16 h-16 rounded-2xl gradient-sintera-soft flex items-center justify-center mx-auto mb-4">
             <Upload size={28} className="text-petal" />
           </div>
@@ -206,7 +209,7 @@ function LegacyDashboard() {
             className="inline-flex items-center gap-2 gradient-sintera text-white font-body text-sm font-medium px-6 py-2.5 rounded-full hover:opacity-90 transition-opacity shadow-sm">
             <Upload size={15} /> Adicionar exame
           </button>
-        </motion.div>
+        </MotionCard>
       )}
 
       {/* ───────────────────────── Acesso rápido (nomenclatura do menu) ───────────────────────── */}
@@ -223,9 +226,9 @@ function LegacyDashboard() {
             {QUICK_ACCESS.map(card => {
               const Icon = card.icon
               return (
-                <button key={card.href}
+                <ActionCard key={card.href}
                   onClick={() => router.push(card.href)}
-                  className="card-premium p-4 text-left flex flex-col gap-2.5 hover:shadow-md transition-shadow group">
+                  padding="sm" className="flex flex-col gap-2.5 group">
                   <div className={`w-10 h-10 rounded-2xl ${card.tile} flex items-center justify-center group-hover:scale-105 transition-transform`}>
                     <Icon size={19} className={card.tint} />
                   </div>
@@ -233,7 +236,7 @@ function LegacyDashboard() {
                     <p className="font-body text-sm font-semibold text-onyx leading-tight">{card.label}</p>
                     <p className="font-body text-xs text-mauve mt-0.5">{card.desc}</p>
                   </div>
-                </button>
+                </ActionCard>
               )
             })}
           </div>
@@ -245,42 +248,42 @@ function LegacyDashboard() {
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
           <p className="font-body text-sm font-semibold text-onyx mb-2.5">Resumo</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="card-premium p-4 text-center">
+            <Card padding="sm" className="text-center">
               <div className="w-9 h-9 rounded-xl bg-blush flex items-center justify-center mx-auto mb-2">
                 <FileText size={17} className="text-petal" />
               </div>
               <p className="font-display text-2xl font-bold text-onyx">{stats.totalExams}</p>
               <p className="font-body text-xs text-mauve mt-0.5">Exame{stats.totalExams !== 1 ? 's' : ''}</p>
-            </div>
-            <div className="card-premium p-4 text-center">
+            </Card>
+            <Card padding="sm" className="text-center">
               <div className="w-9 h-9 rounded-xl bg-sage-light flex items-center justify-center mx-auto mb-2">
                 <CheckCircle size={17} className="text-sage" />
               </div>
               <p className="font-display text-2xl font-bold text-onyx">{stats.processedExams}</p>
               <p className="font-body text-xs text-mauve mt-0.5">Extraído{stats.processedExams !== 1 ? 's' : ''}</p>
-            </div>
-            <div className="card-premium p-4 text-center">
+            </Card>
+            <Card padding="sm" className="text-center">
               <div className="w-9 h-9 rounded-xl bg-lavender-light flex items-center justify-center mx-auto mb-2">
                 <FlaskConical size={17} className="text-lavender" />
               </div>
               <p className="font-display text-2xl font-bold text-onyx">{stats.totalBiomarkers}</p>
               <p className="font-body text-xs text-mauve mt-0.5">Biomarcadores</p>
-            </div>
-            <div className="card-premium p-4 text-center">
+            </Card>
+            <Card padding="sm" className="text-center">
               <div className="w-9 h-9 rounded-xl bg-warm flex items-center justify-center mx-auto mb-2">
                 <Clock size={17} className="text-gold" />
               </div>
               <p className="font-display text-2xl font-bold text-onyx">{stats.pendingExams}</p>
               <p className="font-body text-xs text-mauve mt-0.5">Aguardando</p>
-            </div>
+            </Card>
           </div>
         </motion.div>
       )}
 
       {/* ───────────────────────── Exames recentes ───────────────────────── */}
       {!isEmpty && !loading && recentExams.length > 0 && (
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }}
-          className="card-premium overflow-hidden">
+        <MotionCard initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }}
+          padding="none" className="overflow-hidden">
           <div className="px-5 py-3.5 border-b border-border/40 flex items-center justify-between">
             <p className="font-body text-sm font-semibold text-onyx">Exames recentes</p>
             <button onClick={() => router.push('/dashboard/exams')}
@@ -313,7 +316,7 @@ function LegacyDashboard() {
               )
             })}
           </div>
-        </motion.div>
+        </MotionCard>
       )}
 
       {/* AgendarModal — salva na Agenda (caminho único) e oferece exportar depois */}
@@ -328,14 +331,14 @@ function LegacyDashboard() {
       {intakeOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-onyx/30 backdrop-blur-sm"
           onClick={() => setIntakeOpen(false)}>
-          <div className="card-premium p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
+          <Card padding="lg" className="w-full max-w-md" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <p className="font-display text-lg font-semibold text-onyx">Central de Entrada</p>
               <button onClick={() => setIntakeOpen(false)} aria-label="Fechar"
                 className="text-mauve/40 hover:text-onyx transition-colors"><X size={18} /></button>
             </div>
             <CaptureCenter onDone={() => setIntakeOpen(false)} />
-          </div>
+          </Card>
         </div>
       )}
 

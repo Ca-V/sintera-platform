@@ -15,6 +15,7 @@ import { Loader2, Plus, X, ArrowLeft, Trash2, Pencil, Droplet, ShieldCheck, Bell
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import ListCard from '@/components/ListCard'
+import Card from '@/components/ui/Card'
 
 // ── Métodos contraceptivos (vida útil padrão em meses; editável) ──
 const KINDS: { value: string; label: string; months: number | null }[] = [
@@ -218,7 +219,7 @@ export default function CicloPage() {
       </div>
 
       {loading ? (
-        <div className="card-premium p-10 text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></div>
+        <Card padding="2xl" className="text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
       ) : (
         <>
           {/* ───────── Contracepção ───────── */}
@@ -235,7 +236,7 @@ export default function CicloPage() {
             </div>
 
             {showForm && (
-              <div className="card-premium p-4 space-y-3 mb-3">
+              <Card padding="sm" className="space-y-3 mb-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="font-body text-xs text-mauve/70 block mb-1">Método</label>
@@ -287,7 +288,7 @@ export default function CicloPage() {
                     {saving ? 'Salvando…' : editingId ? 'Salvar alterações' : 'Salvar'}
                   </button>
                 </div>
-              </div>
+              </Card>
             )}
 
             {activeMethods.length === 0 && pastMethods.length === 0 ? (
@@ -334,18 +335,18 @@ export default function CicloPage() {
 
             {periods.length > 0 && (
               <div className="grid grid-cols-3 gap-2 mb-3">
-                <div className="card-premium p-3 text-center">
+                <Card padding="sm" className="text-center">
                   <p className="font-display text-lg font-bold text-onyx leading-none">{cycleStats.last ? fmt(cycleStats.last) : '—'}</p>
                   <p className="font-body text-[10px] text-mauve mt-1">Última menstruação</p>
-                </div>
-                <div className="card-premium p-3 text-center">
+                </Card>
+                <Card padding="sm" className="text-center">
                   <p className="font-display text-lg font-bold text-onyx leading-none">{cycleStats.avg != null ? `${cycleStats.avg} d` : '—'}</p>
                   <p className="font-body text-[10px] text-mauve mt-1">Ciclo médio</p>
-                </div>
-                <div className="card-premium p-3 text-center">
+                </Card>
+                <Card padding="sm" className="text-center">
                   <p className="font-display text-lg font-bold text-onyx leading-none">{cycleStats.next ? fmt(cycleStats.next) : '—'}</p>
                   <p className="font-body text-[10px] text-mauve mt-1">Próxima (estimada)</p>
-                </div>
+                </Card>
               </div>
             )}
 

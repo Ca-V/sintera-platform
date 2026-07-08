@@ -16,6 +16,7 @@ import { typeLabel, statusLabel, formatDateBR, formatTimeBR, type HealthEvent } 
 import { useStickyView } from '@/lib/ui/useStickyView'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import ListCard, { CardChip } from '@/components/ListCard'
+import MotionCard from '@/components/ui/MotionCard'
 
 const TYPE_EMOJI: Record<string, string> = {
   consulta: '🩺', retorno: '📋', exame: '🧪', procedimento: '🩹', cirurgia: '⚕️',
@@ -210,8 +211,8 @@ export default function AgendaPage() {
       )}
 
       {!loading && suggestion && !dismissed && (
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-          className="card-premium p-4 flex items-start gap-3 border border-petal/20 bg-blush/20">
+        <MotionCard initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} padding="sm"
+          className="flex items-start gap-3 border border-petal/20 bg-blush/20">
           <div className="w-9 h-9 rounded-2xl gradient-sintera-soft flex items-center justify-center flex-shrink-0">
             <Sparkles size={17} className="text-petal" />
           </div>
@@ -226,13 +227,13 @@ export default function AgendaPage() {
             className="p-1.5 rounded-lg text-mauve/50 hover:text-mauve hover:bg-white/50 transition-colors flex-shrink-0">
             <X size={15} />
           </button>
-        </motion.div>
+        </MotionCard>
       )}
 
       {loading ? (
         <div className="flex items-center justify-center py-20 text-mauve"><Loader2 size={22} className="animate-spin" /></div>
       ) : events.length === 0 ? (
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="card-premium p-10 text-center">
+        <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} padding="2xl" className="text-center">
           <div className="w-16 h-16 rounded-2xl gradient-sintera-soft flex items-center justify-center mx-auto mb-5">
             <CalendarDays size={28} className="text-petal" />
           </div>
@@ -244,7 +245,7 @@ export default function AgendaPage() {
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl gradient-sintera text-white text-sm font-body font-medium hover:opacity-90 transition-opacity">
             <Plus size={16} /> Adicionar primeiro evento
           </button>
-        </motion.div>
+        </MotionCard>
       ) : (
         <section className="space-y-3">
           <div className="flex items-center justify-between gap-2 flex-wrap">

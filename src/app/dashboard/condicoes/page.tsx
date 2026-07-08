@@ -14,6 +14,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import ListCard from '@/components/ListCard'
+import Card from '@/components/ui/Card'
 
 type Scope = 'propria' | 'familiar'
 
@@ -147,7 +148,7 @@ export default function CondicoesPage() {
       </div>
 
       {showForm && (
-        <div className="card-premium p-5 space-y-3">
+        <Card padding="md" className="space-y-3">
           <div>
             <label className="font-body text-xs text-mauve/70 block mb-1">Tipo</label>
             <select value={scope} onChange={e => setScope(e.target.value as Scope)}
@@ -191,11 +192,11 @@ export default function CondicoesPage() {
               {saving ? 'Salvando…' : editingId ? 'Salvar alterações' : 'Salvar'}
             </button>
           </div>
-        </div>
+        </Card>
       )}
 
       {loading ? (
-        <div className="card-premium p-10 text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></div>
+        <Card padding="2xl" className="text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
       ) : (
         <div className="space-y-6">
           <div>

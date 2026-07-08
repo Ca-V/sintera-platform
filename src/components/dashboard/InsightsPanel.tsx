@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { Zap, Moon, Droplets, FlaskConical, TrendingUp, ArrowRight } from 'lucide-react'
+import Card from '@/components/ui/Card'
 
 type Priority = 'high' | 'medium' | 'low'
 
@@ -83,7 +84,7 @@ const priorityDot: Record<Priority, string> = {
 
 export default function InsightsPanel() {
   return (
-    <div className="card-premium p-5">
+    <Card>
       <div className="flex items-center justify-between mb-5">
         <div>
           <h3 className="text-sm font-body font-semibold text-onyx">Insights</h3>
@@ -135,6 +136,6 @@ export default function InsightsPanel() {
           )
         })}
       </div>
-    </div>
+    </Card>
   )
 }

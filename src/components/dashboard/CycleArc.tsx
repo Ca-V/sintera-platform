@@ -1,6 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import Card from '@/components/ui/Card'
 
 type Phase = { name: string; startDay: number; endDay: number; color: string; label: string; active?: boolean }
 
@@ -56,7 +57,7 @@ export default function CycleArc() {
   const activePhase = PHASES.find(p => p.active)
 
   return (
-    <div className="card-premium p-5">
+    <Card>
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div>
@@ -165,6 +166,6 @@ export default function CycleArc() {
           </div>
         </div>
       </div>
-    </div>
+    </Card>
   )
 }

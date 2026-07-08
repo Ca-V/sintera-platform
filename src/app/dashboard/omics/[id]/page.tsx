@@ -15,6 +15,7 @@ import { Loader2, ArrowLeft, Dna, ChevronRight, ChevronDown, Plus, X, Trash2, Ex
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import Sparkline, { parseNum } from '@/components/Sparkline'
+import Card from '@/components/ui/Card'
 import { DOMAIN_LABEL, fmtOmicsDate, type OmicsDomain } from '@/lib/omics/domains'
 import { uploadAndIngest } from '@/lib/omics/ingestClient'
 
@@ -106,7 +107,7 @@ export default function OmicsPanelPage() {
       </Link>
 
       {/* Nível 1 — resumo do painel */}
-      <div className="card-premium p-6">
+      <Card padding="lg">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-4 min-w-0">
             <div className="w-12 h-12 rounded-2xl bg-lavender-light flex items-center justify-center flex-shrink-0">
@@ -140,7 +141,7 @@ export default function OmicsPanelPage() {
             {categories.map(c => c.name).join(' · ')}
           </p>
         )}
-      </div>
+      </Card>
 
       <div className="flex flex-wrap gap-2">
         <AddResult panelId={panel.id} domain={panel.domain} defaultDate={panel.collected_on}
@@ -151,17 +152,17 @@ export default function OmicsPanelPage() {
 
       {/* Níveis 2 e 3 — categorias → features */}
       {categories.length === 0 ? (
-        <div className="card-premium p-8 text-center">
+        <Card padding="xl" className="text-center">
           <p className="font-body text-sm text-mauve">Nenhum resultado neste painel ainda.</p>
           <p className="font-body text-xs text-mauve/60 mt-1">Use <strong>Adicionar resultado</strong> acima.</p>
-        </div>
+        </Card>
       ) : (
         <div className="space-y-2">
           {categories.map(c => {
             const key = c.category_id ?? 'none'
             const expanded = open === key
             return (
-              <div key={key} className="card-premium overflow-hidden">
+              <Card key={key} padding="none" className="overflow-hidden">
                 <button onClick={() => toggleCategory(c)}
                   className="w-full flex items-center justify-between gap-3 px-4 py-3 hover:bg-blush/20 transition-colors text-left">
                   <span className="font-body text-sm font-semibold text-onyx">{c.name}</span>
@@ -199,7 +200,7 @@ export default function OmicsPanelPage() {
                     )}
                   </div>
                 )}
-              </div>
+              </Card>
             )
           })}
         </div>
@@ -310,7 +311,7 @@ function AddResult({ panelId, domain, defaultDate, onSaved }: {
   )
 
   return (
-    <div className="card-premium p-5 space-y-3 w-full">
+    <Card padding="md" className="space-y-3 w-full">
       <div className="flex items-center justify-between">
         <p className="font-body text-sm font-semibold text-onyx">Adicionar resultado</p>
         <button onClick={() => setShow(false)} className="text-mauve/50 hover:text-onyx"><X size={16} /></button>
@@ -358,7 +359,7 @@ function AddResult({ panelId, domain, defaultDate, onSaved }: {
           {saving ? 'Salvando…' : 'Salvar'}
         </button>
       </div>
-    </div>
+    </Card>
   )
 }
 
@@ -425,7 +426,7 @@ function ImportResults({ panelId, onDone }: { panelId: string; onDone: () => voi
       {msg && <p className="font-body text-xs text-sage mt-2">{msg}</p>}
       {err && <p className="font-body text-xs text-red-500 mt-2">{err}</p>}
       {showVersions && versions.length > 0 && (
-        <div className="card-premium p-3 mt-2 space-y-1.5">
+        <Card padding="sm" className="mt-2 space-y-1.5">
           {versions.map(v => (
             <div key={v.version_number} className="flex items-center justify-between gap-3">
               <div className="min-w-0">
@@ -443,7 +444,7 @@ function ImportResults({ panelId, onDone }: { panelId: string; onDone: () => voi
             </div>
           ))}
           <p className="font-body text-[10px] text-mauve/50 pt-1">Nenhuma versão é sobrescrita — todas permanecem acessíveis.</p>
-        </div>
+        </Card>
       )}
     </div>
   )

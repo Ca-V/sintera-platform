@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import MotionCard from '@/components/ui/MotionCard'
 import { Shield, Mail, Key, AlertTriangle, Check, X, Loader2, ExternalLink, Download, MessageCircle } from 'lucide-react'
 import { useUser } from '@/context/UserContext'
 import { createClient } from '@/lib/supabase/client'
@@ -116,8 +117,8 @@ export default function ConfiguracoesPage() {
       </motion.div>
 
       {/* ── Conta ── */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-        className="card-premium p-6 space-y-4">
+      <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+        padding="lg" className="space-y-4">
         <div className="flex items-center gap-3 mb-1">
           <div className="w-8 h-8 rounded-lg bg-blush flex items-center justify-center">
             <Key size={15} className="text-petal" />
@@ -155,11 +156,11 @@ export default function ConfiguracoesPage() {
           )}
         </div>
         {pwError && <p className="font-body text-xs text-red-500">{pwError}</p>}
-      </motion.div>
+      </MotionCard>
 
       {/* ── Lembretes por WhatsApp ── */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}
-        className="card-premium p-6 space-y-4">
+      <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}
+        padding="lg" className="space-y-4">
         <div className="flex items-center gap-3 mb-1">
           <div className="w-8 h-8 rounded-lg bg-sage-light flex items-center justify-center">
             <MessageCircle size={15} className="text-sage" />
@@ -196,11 +197,11 @@ export default function ConfiguracoesPage() {
         {waOptIn && !phone.trim() && (
           <p className="font-body text-[11px] text-amber-600">Informe o telefone para ativar os lembretes por WhatsApp.</p>
         )}
-      </motion.div>
+      </MotionCard>
 
       {/* ── Privacidade & Dados ── */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-        className="card-premium p-6 space-y-1">
+      <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+        padding="lg" className="space-y-1">
         <div className="flex items-center gap-3 mb-3">
           <div className="w-8 h-8 rounded-lg bg-sage-light flex items-center justify-center">
             <Shield size={15} className="text-sage" />
@@ -244,11 +245,11 @@ export default function ConfiguracoesPage() {
             Você pode excluir sua conta e todos os seus dados a qualquer momento.
           </p>
         </div>
-      </motion.div>
+      </MotionCard>
 
       {/* ── Excluir conta ── */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-        className="card-premium p-6 border border-red-100">
+      <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+        padding="lg" className="border border-red-100">
         <div className="flex items-center gap-3 mb-3">
           <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center">
             <AlertTriangle size={15} className="text-red-400" />
@@ -326,7 +327,7 @@ export default function ConfiguracoesPage() {
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.div>
+      </MotionCard>
 
       {/* Sair */}
       <button onClick={signOut}

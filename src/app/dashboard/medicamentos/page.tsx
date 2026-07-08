@@ -21,6 +21,7 @@ import { scanMedicationImage, PENDING_MED_SCAN_KEY } from '@/lib/medications/sca
 import { useStickyView } from '@/lib/ui/useStickyView'
 import ListCard, { CardChip } from '@/components/ListCard'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
+import Card from '@/components/ui/Card'
 import { healthEventToRow } from '@/lib/agenda/event'
 
 type Status = 'em_uso' | 'programado' | 'suspenso' | 'encerrado'
@@ -498,7 +499,7 @@ export default function MedicamentosPage() {
 
       {/* Resultados do escaneamento — conferir antes de adicionar */}
       {scanResults.some(x => x !== scanEditing) && (
-        <div className="card-premium p-5 space-y-3">
+        <Card padding="md" className="space-y-3">
           <div className="flex items-center justify-between">
             <p className="font-body text-sm font-semibold text-onyx">Detectado — confira e adicione{scanResults.filter(x => x !== scanEditing).length > 1 ? ' (um de cada vez)' : ''}</p>
             <button onClick={() => setScanResults([])} className="text-mauve/50 hover:text-onyx"><X size={15} /></button>
@@ -534,11 +535,11 @@ export default function MedicamentosPage() {
             </div>
             )
           })}
-        </div>
+        </Card>
       )}
 
       {showForm && (
-        <div ref={formRef} className="card-premium p-5 space-y-3 scroll-mt-20">
+        <Card ref={formRef} padding="md" className="space-y-3 scroll-mt-20">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="font-body text-xs text-mauve/70 block mb-1">Tipo</label>
@@ -756,15 +757,15 @@ export default function MedicamentosPage() {
               {saving ? 'Salvando…' : editingId ? 'Atualizar' : 'Salvar'}
             </button>
           </div>
-        </div>
+        </Card>
       )}
 
       {loading ? (
-        <div className="card-premium p-10 text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></div>
+        <Card padding="2xl" className="text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
       ) : meds.length === 0 ? (
-        <div className="card-premium p-8 text-center">
+        <Card padding="xl" className="text-center">
           <p className="font-body text-sm text-mauve">Nenhum medicamento ou suplemento registrado ainda. Use o botão <strong>Adicionar</strong>.</p>
-        </div>
+        </Card>
       ) : (
         <div className="space-y-6">
           <ViewModeSwitcher active={listView} onChange={setListView} modes={[{ value: 'situacao', label: 'Por situação' }, { value: 'tipo', label: 'Por tipo' }]} />

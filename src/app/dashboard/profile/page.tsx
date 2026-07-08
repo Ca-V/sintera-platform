@@ -5,6 +5,9 @@ import { motion } from 'framer-motion'
 import { useUser } from '@/context/UserContext'
 import { createClient } from '@/lib/supabase/client'
 import { Edit3, Check, X, Loader2, FileText, FlaskConical, CalendarDays } from 'lucide-react'
+import Card from '@/components/ui/Card'
+import MotionCard from '@/components/ui/MotionCard'
+import ActionCard from '@/components/ui/ActionCard'
 
 interface Stats {
   totalExams: number
@@ -84,8 +87,8 @@ export default function ProfilePage() {
       </motion.div>
 
       {/* Avatar + info principal */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-        className="card-premium p-6">
+      <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+        padding="lg">
         <div className="flex items-center gap-5">
           <div className="w-16 h-16 rounded-full gradient-sintera flex items-center justify-center shadow-lg flex-shrink-0">
             <span className="text-white font-display text-2xl font-semibold">{initials}</span>
@@ -127,7 +130,7 @@ export default function ProfilePage() {
             )}
           </div>
         </div>
-      </motion.div>
+      </MotionCard>
 
       {/* Estatísticas */}
       {stats && (
@@ -140,20 +143,20 @@ export default function ProfilePage() {
             { icon: CalendarDays,  value: stats.memberSince ? Math.max(1, Math.floor((Date.now() - new Date(stats.memberSince).getTime()) / (1000 * 60 * 60 * 24))) : 0,
               label: 'Dias na SINTERA', color: 'text-sage', bg: 'bg-sage-light' },
           ].map(({ icon: Icon, value, label, color, bg }) => (
-            <div key={label} className="card-premium p-4 text-center">
+            <Card key={label} padding="sm" className="text-center">
               <div className={`w-8 h-8 rounded-xl ${bg} flex items-center justify-center mx-auto mb-2`}>
                 <Icon size={15} className={color} />
               </div>
               <p className="font-display text-xl font-bold text-onyx">{value}</p>
               <p className="font-body text-[11px] text-mauve mt-0.5 leading-tight">{label}</p>
-            </div>
+            </Card>
           ))}
         </motion.div>
       )}
 
       {/* Informações da conta */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-        className="card-premium p-6 space-y-4">
+      <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+        padding="lg" className="space-y-4">
         <h2 className="font-body text-xs font-semibold text-onyx/50 uppercase tracking-wider">Informações da conta</h2>
 
         <div className="grid sm:grid-cols-2 gap-3">
@@ -178,18 +181,18 @@ export default function ProfilePage() {
             </p>
           </div>
         </div>
-      </motion.div>
+      </MotionCard>
 
       {/* Link para configurações */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-        <a href="/dashboard/configuracoes"
-          className="block card-premium p-4 flex items-center justify-between hover:shadow-md transition-shadow">
+        <ActionCard href="/dashboard/configuracoes"
+          padding="sm" className="flex items-center justify-between">
           <div>
             <p className="font-body text-sm font-semibold text-onyx">Configurações da conta</p>
             <p className="font-body text-xs text-mauve mt-0.5">Alterar senha, privacidade, excluir conta</p>
           </div>
           <span className="font-body text-sm text-petal">→</span>
-        </a>
+        </ActionCard>
       </motion.div>
 
     </div>

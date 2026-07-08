@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { X, Check } from 'lucide-react'
 import { useUser } from '@/context/UserContext'
 import type { Profile } from '@/lib/supabase/types'
+import Card from '@/components/ui/Card'
 
 interface Props {
   profile: Profile
@@ -47,7 +48,7 @@ export default function ProfileEditor({ profile, onCancel, onSaved }: Props) {
   }
 
   return (
-    <div className="card-premium p-6 space-y-5">
+    <Card padding="lg" className="space-y-5">
       <h2 className="font-body text-sm font-semibold text-onyx/60 uppercase tracking-widest">
         Editar perfil
       </h2>
@@ -77,6 +78,6 @@ export default function ProfileEditor({ profile, onCancel, onSaved }: Props) {
           {saving ? 'Salvando…' : <><Check size={14} /> Salvar</>}
         </button>
       </div>
-    </div>
+    </Card>
   )
 }
