@@ -27,6 +27,8 @@ export interface ClassificationResult {
   kind: DocumentKind
   confidence: 'high' | 'medium' | 'low'
   reason?: string
+  /** Subtipo curto quando evidente (ex.: 'hemograma', 'bula', 'receita', 'omica'). */
+  subtype?: string
 }
 
 /** Motivo de erro NORMALIZADO (o Hub traduz qualquer falha de pipeline para isto). */
