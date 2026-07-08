@@ -94,14 +94,38 @@ Violações automáticas por página (produção):
 - **Achado (P2):** **Relatório dispara 22 requisições Supabase** (mais alto; Home 12) — agrega todos os
   módulos; oportunidade de **consolidar leituras** (reduzir waterfall/N+1). Sem P1 de performance.
 
-## Reprioridade (aplicada — fundadora)
+## 6. Por que 21 páginas usam `card-premium` cru? (A/B/C)
 
-- **P1 (máxima):** ① SSOT altura (arquitetural; 0 impacto real hoje, mas caminho órfão) · ② dois DS / 6
-  primitivos órfãos + adoção parcial · ③ captura/upload inconsistente (constantes 10×50 MB + inputs
-  duplicados em 8 lugares).
-- **P1 também:** acessibilidade (contraste + labels + foco/Escape em modais).
-- **P2:** CreateRecordMenu ainda não aplicado a todos os módulos (**consequência**, não causa) · dívida
-  técnica (`any`, data-fetching, erro) · cosméticos · Relatório 22 queries.
+**Resposta: predominantemente B + A — não C.** As ocorrências de `card-premium` são
+**painéis/seções/formulários/estados** (Relatório: cards de controle `p-5`; Insights/Profile/Configurações:
+seções `p-6`; Medicamentos/Condições: card do formulário `p-5`; loading/empty `p-10`) — **não** cards de
+item de lista (esses usam `ListCard`, 74%).
+
+- **B (existe mas não serve):** `ui/Card` existe, mas usa `bg-white border-border shadow-sm` — visual
+  **diferente** do premium; adotá-lo mudaria a aparência. Os devs corretamente o evitam.
+- **A (falta componente):** **não há** um `<Card>`/`<Section>` premium compartilhado — `card-premium` é só
+  uma **classe CSS**, então todo painel/form reimplementa o wrapper inline.
+- **Não é C (preguiça):** para *containers* não existe componente que sirva. *(Para itens, `ListCard` existe
+  e é usado; o baixo uso de `PageHeader`/`EmptyState` — 11% — aí sim é componente a DEIXAR de reutilizar.)*
+
+**Implicação estratégica:** a remediação do DS **não é "mandar reutilizar"** — é **construir os primitivos
+premium que faltam** (`<Card>`/`<Section>`, `<Button>`, `<Input>`) e então adotar. **Build-then-adopt.**
+
+## Priorização final (Camada 1 → Camada 3)
+
+- **P1:** ① **Fragmentação do Design System** · ② **Captura documental (CAP-001)** · ③ **Acessibilidade**
+  (contraste · labels · foco).
+- **P2:** **SSOT da altura** (dívida arquitetural, 0 impacto real hoje) · **componentização dos módulos** ·
+  **padronização dos uploads** · **requisições do Relatório**.
+- **P3 (cosmético):** eyebrow · microcopy · espaçamentos.
 - **Decisão da fundadora:** Prevenção proativa (RDC 657).
 
-**Camada 1 (com aprofundamentos) encerrada.** Nada implementado. Segue para a Camada 2 (produto/UX).
+Ajustes de interpretação aplicados:
+- **SSOT altura = P2 arquitetural** (dívida, não defeito — 0 divergência real em produção).
+- **Performance = oportunidade, não problema** (carregamento bom, JS controlado; oportunidade = reduzir as
+  22 chamadas Supabase do Relatório).
+- **Acessibilidade:** violações concentradas em **poucas categorias** (contraste · labels · foco) → poucas
+  correções resolvem grande parte.
+
+**Camada 1 encerrada (9.8/10).** Baseada em métricas, inspeção, execução automatizada e evidências
+objetivas. Nada implementado. Sem retorno marginal relevante em continuar — segue para a **Camada 2 (Produto/UX)**.
