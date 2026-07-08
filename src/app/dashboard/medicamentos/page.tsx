@@ -11,7 +11,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Loader2, X, Pill, ArrowLeft, Pencil, Trash2, ChevronDown } from 'lucide-react'
+import { Loader2, X, ArrowLeft, Pencil, Trash2, ChevronDown } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
@@ -22,6 +22,7 @@ import { useStickyView } from '@/lib/ui/useStickyView'
 import ListCard, { CardChip } from '@/components/ListCard'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import Card from '@/components/ui/Card'
+import Disclaimer from '@/components/ui/Disclaimer'
 import { healthEventToRow } from '@/lib/agenda/event'
 
 type Status = 'em_uso' | 'programado' | 'suspenso' | 'encerrado'
@@ -465,12 +466,8 @@ export default function MedicamentosPage() {
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <div className="inline-flex items-center gap-1.5 text-petal mb-2">
-            <Pill size={16} />
-            <span className="font-body text-xs font-medium uppercase tracking-wider">Medicamentos e Suplementos</span>
-          </div>
           <h1 className="font-display text-2xl font-semibold text-onyx">Medicamentos e Suplementos</h1>
-          <p className="font-body text-sm text-mauve mt-1">Registre o que você usa. A SINTERA organiza — quem prescreve é o seu médico.</p>
+          <p className="font-body text-sm text-mauve mt-1"><strong className="font-medium text-onyx/70">Fotografe a receita — a SINTERA lê e preenche os dados por você.</strong></p>
         </div>
         <div className="flex flex-row flex-wrap items-center gap-2 sm:flex-col sm:items-end flex-shrink-0">
           {showForm ? (
@@ -787,9 +784,7 @@ export default function MedicamentosPage() {
         </div>
       )}
 
-      <p className="font-body text-[11px] text-mauve/50 text-center leading-relaxed">
-        Organização da sua lista de medicamentos e suplementos. Não é prescrição nem orientação de dose — siga sempre a orientação do seu médico.
-      </p>
+      <Disclaimer variant="medicamento" className="text-center" />
     </div>
   )
 }

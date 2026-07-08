@@ -16,6 +16,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import ListCard from '@/components/ListCard'
 import Card from '@/components/ui/Card'
+import Disclaimer from '@/components/ui/Disclaimer'
 
 // ── Métodos contraceptivos (vida útil padrão em meses; editável) ──
 const KINDS: { value: string; label: string; months: number | null }[] = [
@@ -374,7 +375,7 @@ export default function CicloPage() {
                 ))}
               </div>
             )}
-            <p className="font-body text-[11px] text-mauve/50 mt-3">Ciclo médio e previsão são calculados das suas datas — estimativa factual, não um método contraceptivo nem diagnóstico.</p>
+            <Disclaimer variant="ciclo" className="mt-3" />
           </div>
         </>
       )}

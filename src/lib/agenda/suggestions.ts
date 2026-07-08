@@ -82,7 +82,7 @@ export function buildExamRecencySuggestion(
     id: `exam_recency_${latest.date}`,
     kind: 'exam_recency',
     monthsSince: months,
-    message: `Seu exame mais recente é de ${monthsLabel(months)} atrás. Confira com seu médico se seria interessante registrar um lembrete para um novo — a SINTERA apenas organiza; quem orienta é o seu médico.`,
+    message: `Percebi que seu último exame foi há ${monthsLabel(months)}. Confira com seu médico se seria interessante registrar um lembrete para um novo — a SINTERA apenas organiza; quem orienta é o seu médico.`,
     suggestedTitle: 'Novo exame',
     suggestedEventType: 'exame',
   }

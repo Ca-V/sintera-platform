@@ -17,6 +17,7 @@ import { useStickyView } from '@/lib/ui/useStickyView'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import ListCard, { CardChip } from '@/components/ListCard'
 import MotionCard from '@/components/ui/MotionCard'
+import Disclaimer from '@/components/ui/Disclaimer'
 
 const TYPE_EMOJI: Record<string, string> = {
   consulta: '🩺', retorno: '📋', exame: '🧪', procedimento: '🩹', cirurgia: '⚕️',
@@ -275,9 +276,7 @@ export default function AgendaPage() {
         </section>
       )}
 
-      <p className="font-body text-[11px] text-mauve/50 text-center leading-relaxed px-4">
-        A SINTERA organiza seus eventos de saúde. Não oferece diagnóstico nem orientação clínica.
-      </p>
+      <Disclaimer variant="geral" className="text-center px-4" />
 
       <AgendarModal
         open={modalOpen}

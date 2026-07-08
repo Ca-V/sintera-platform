@@ -10,6 +10,7 @@ import { useUser } from '@/context/UserContext'
 import Card from '@/components/ui/Card'
 import MotionCard from '@/components/ui/MotionCard'
 import ActionCard from '@/components/ui/ActionCard'
+import Disclaimer from '@/components/ui/Disclaimer'
 
 // ai_insights tem colunas de governança que não estão nos tipos manuais
 // (ver supabase/types.generated.ts). Definimos a forma que consumimos aqui.
@@ -237,8 +238,8 @@ export default function InsightsPage() {
             className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4">
             <p className="font-body text-xs text-amber-700 leading-relaxed">
               Os insights organizam seus dados para facilitar a compreensão e a conversa com seu médico.
-              Não substituem avaliação profissional nem constituem diagnóstico (RDC 657/2022).
             </p>
+            <Disclaimer variant="geral" className="mt-1 text-amber-700/70" />
           </motion.div>
         </div>
       )}
