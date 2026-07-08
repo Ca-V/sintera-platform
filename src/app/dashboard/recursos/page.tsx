@@ -24,6 +24,7 @@ import EmptyState from '@/components/EmptyState'
 import ListCard, { CardChip } from '@/components/ListCard'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import { useStickyView } from '@/lib/ui/useStickyView'
+import Card from '@/components/ui/Card'
 
 type ResourceType = 'correcao_visual' | 'dispositivo_medico' | 'protese_ortese' | 'auxilio' | 'compressao_suporte'
 type Status = 'em_uso' | 'suspenso' | 'encerrado'
@@ -347,7 +348,7 @@ export default function RecursosPage() {
       />
 
       {showForm && (
-        <div className="card-premium p-5 space-y-3">
+        <Card className="space-y-3">
           {scanning && (
             <div className="flex items-center gap-2 text-petal font-body text-xs">
               <Loader2 size={14} className="animate-spin" /> Lendo a foto…
@@ -483,7 +484,7 @@ export default function RecursosPage() {
             </button>
           </div>
           {err && <p className="font-body text-xs text-red-500">{err}</p>}
-        </div>
+        </Card>
       )}
 
       {!showForm && err && <p className="font-body text-xs text-red-500">{err}</p>}
@@ -496,7 +497,7 @@ export default function RecursosPage() {
       )}
 
       {loading ? (
-        <div className="card-premium p-10 text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></div>
+        <Card padding="2xl" className="text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
       ) : items.length === 0 ? (
         <EmptyState
           icon={<Package size={26} className="text-petal" />}

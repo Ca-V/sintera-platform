@@ -24,6 +24,7 @@ import HistoricoTabs from '@/components/HistoricoTabs'
 import { useStickyView } from '@/lib/ui/useStickyView'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import ListCard, { CardChip } from '@/components/ListCard'
+import Card from '@/components/ui/Card'
 import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
 
 type EventType = 'consulta' | 'vacina' | 'procedimento' | 'estetico' | 'medicamento' | 'atividade' | 'exame' | 'omica' | 'outro'
@@ -360,11 +361,11 @@ function LegacyTimeline() {
       )}
 
       {loading ? (
-        <div className="card-premium p-10 text-center flex items-center justify-center">
+        <Card padding="2xl" className="text-center flex items-center justify-center">
           <Loader2 size={24} className="animate-spin text-petal" />
-        </div>
+        </Card>
       ) : history.length === 0 ? (
-        <div className="card-premium p-10 text-center">
+        <Card padding="2xl" className="text-center">
           <div className="w-14 h-14 rounded-2xl gradient-sintera-soft flex items-center justify-center mx-auto mb-4">
             <Clock size={26} className="text-petal" />
           </div>
@@ -373,7 +374,7 @@ function LegacyTimeline() {
             Envie um exame ou adicione uma consulta, vacina ou procedimento para começar a
             construir sua linha do tempo de saúde.
           </p>
-        </div>
+        </Card>
       ) : (
         <div className="space-y-5">
           <ViewModeSwitcher active={view} onChange={setView} modes={[{ value: 'data', label: 'Por data' }, { value: 'tipo', label: 'Por tipo' }]} />

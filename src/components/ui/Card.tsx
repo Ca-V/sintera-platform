@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import { type HTMLAttributes } from 'react'
+import { forwardRef, type HTMLAttributes } from 'react'
 
 // Escala CANÔNICA de espaçamento interno do Design System (Onda 1 · TEMA B).
 // A base histórica usava paddings ad-hoc (p-2..p-12); a Onda 1 normaliza para
@@ -32,10 +32,18 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
 // ESCOPO: apenas `<div>`. Cards clicáveis (`<button>`/`<Link>`) e animados
 // (`<motion.div>`) são OUTRO comportamento e terão componentes próprios — NÃO se
 // adiciona polimorfismo aqui só para aumentar cobertura.
-export default function Card({ padding = 'md', className, children, ...props }: CardProps) {
+//
+// Encaminha `ref` (forwardRef) para o `<div>`, cobrindo padrões como scroll-to
+// (`ref={formRef}` + scroll-mt).
+const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
+  { padding = 'md', className, children, ...props },
+  ref,
+) {
   return (
-    <div className={cn('card-premium', PADDING[padding], className)} {...props}>
+    <div ref={ref} className={cn('card-premium', PADDING[padding], className)} {...props}>
       {children}
     </div>
   )
-}
+})
+
+export default Card

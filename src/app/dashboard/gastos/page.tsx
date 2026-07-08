@@ -17,6 +17,7 @@ import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import ListCard, { CardChip } from '@/components/ListCard'
 import PageHeader from '@/components/PageHeader'
 import EmptyState from '@/components/EmptyState'
+import Card from '@/components/ui/Card'
 
 function fmtBRL(cents: number): string {
   return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -143,7 +144,7 @@ export default function GastosPage() {
       />
 
       {showAddInfo && (
-        <div className="card-premium p-5 flex items-start gap-3 border border-petal/20 bg-blush/15">
+        <Card padding="md" className="flex items-start gap-3 border border-petal/20 bg-blush/15">
           <Info size={17} className="text-petal flex-shrink-0 mt-0.5" />
           <div className="flex-1 space-y-3">
             <p className="font-body text-xs text-mauve leading-relaxed">A despesa é o <strong className="text-onyx">valor pago</strong> de um evento ou de uma compra.</p>
@@ -175,7 +176,7 @@ export default function GastosPage() {
             </div>
           </div>
           <button onClick={() => setShowAddInfo(false)} aria-label="Fechar" className="text-mauve/40 hover:text-onyx transition-colors flex-shrink-0"><X size={15} /></button>
-        </div>
+        </Card>
       )}
 
       <div className="rounded-2xl border border-border bg-ivory px-4 py-3 flex items-start gap-2.5">
@@ -194,7 +195,7 @@ export default function GastosPage() {
       )}
 
       {loading ? (
-        <div className="card-premium p-10 text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></div>
+        <Card padding="2xl" className="text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
       ) : items.length === 0 ? (
         <EmptyState
           icon={<Receipt size={28} className="text-petal" />}
@@ -204,7 +205,7 @@ export default function GastosPage() {
       ) : (
         <>
           {/* Seletor de ano + total */}
-          <div className="card-premium p-6">
+          <Card padding="lg">
             <div className="flex flex-wrap items-center gap-2 mb-4">
               {years.map(y => (
                 <button key={y} onClick={() => setYear(y)}
@@ -218,7 +219,7 @@ export default function GastosPage() {
             <p className="font-body text-xs text-mauve uppercase tracking-wider">Total de despesas em {year}</p>
             <p className="font-display text-3xl font-semibold text-onyx mt-1">{fmtBRL(total)}</p>
             <p className="font-body text-xs text-mauve/60 mt-1">{ofYear.length} {ofYear.length === 1 ? 'registro' : 'registros'}</p>
-          </div>
+          </Card>
 
           {/* Visualização: por data × por tipo */}
           <ViewModeSwitcher active={view} onChange={setView} modes={[{ value: 'data', label: 'Por data' }, { value: 'tipo', label: 'Por tipo' }]} />
