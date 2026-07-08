@@ -13,7 +13,7 @@ import { parseDateOnly } from '@/lib/agenda'
 import { useUser } from '@/context/UserContext'
 import { compareNames } from '@/lib/exams/nameMatch'
 import ListCard, { CardChip } from '@/components/ListCard'
-import CaptureMethods from '@/components/capture/CaptureMethods'
+import CreateRecordMenu from '@/components/ui/CreateRecordMenu'
 import type { Database } from '@/lib/supabase/types'
 
 type Exam = Database['public']['Tables']['exams']['Row']
@@ -265,8 +265,8 @@ export default function ExamsPage() {
           <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Exames</h1>
           <p className="font-body text-sm text-mauve">Envie seus <strong className="font-medium text-onyx/70">exames</strong> (extraímos os dados por IA), <strong className="font-medium text-onyx/70">receitas</strong> e outros arquivos de saúde — por PDF ou foto.</p>
         </div>
-        {/* Captura orientada à intenção (CAP-001) — mesmo componente do Medicamentos */}
-        <CaptureMethods label="Novo exame" onFile={processFile}
+        {/* Menu de criação de registros (padrão oficial DS-001) — mesmo em todo módulo */}
+        <CreateRecordMenu label="Novo exame" onFile={processFile}
           fileAccept=".pdf,.jpg,.jpeg,.png" busy={uploading} busyLabel="Enviando…"
           className="flex-shrink-0" />
       </motion.div>
