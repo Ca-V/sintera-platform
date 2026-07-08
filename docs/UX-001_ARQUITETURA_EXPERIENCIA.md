@@ -1,6 +1,7 @@
 # UX-001 — Arquitetura Funcional da Plataforma (Constituição)
 
 **Status:** 🔒 **ARQUITETURA FUNCIONAL CONGELADA** (07/07/2026) — implementada e em vigor a partir deste ciclo. Base para o KG v2 — Parte 3. Alterações estruturais exigem revisão explícita desta constituição (§9).
+**Emendas pós-freeze (revisão explícita, aprovadas pela fundadora):** 2026-07-07 — §1.10 + §10 Padrões de Captura Documental ([[CAP-001]]); §1.11 Orientação por objetivo da usuária (princípio transversal).
 **Escopo:** **arquitetura funcional** — o que existe, como se organiza, como se navega e como cresce. **NÃO** trata de componentes visuais, cores, tokens ou padrões de interface — isso é responsabilidade do **[[DS-001]] — Design System** (referenciado onde couber).
 **Sequência:** UX-001 (spec) → Implementação → **Freeze da arquitetura funcional** → KG v2 Parte 3 → Implementação do KG.
 **Herda:** [[PLANO_MATURIDADE_PRE_MOBILE]] (§0 Governança Científica, §0.1 SSOT, §3 modelo orientado a eventos).
@@ -18,6 +19,8 @@
 7. **Modelo orientado a eventos.** A jornada é uma linha do tempo de eventos; a interface é projeção, não a fonte da verdade.
 8. **Navegação por frequência de uso, não por estrutura técnica.** *A organização do menu reflete a **frequência de uso** das funcionalidades — não a estrutura do banco de dados nem a arquitetura interna do sistema.* É por isso que **Acompanhamento** (uso diário) vem antes de **Minha Saúde** (contexto permanente), embora ambos sejam módulos independentes (§5). Reorganizações futuras de navegação partem da **experiência do usuário**, nunca da implementação técnica.
 9. **Nome único por módulo (sem sinônimos).** O nome do módulo no **menu lateral** é o **mesmo** na Home, nos Relatórios, nos breadcrumbs, nos títulos de página e em qualquer fluxo de navegação. É **proibido** haver sinônimos para o mesmo módulo (ex.: "Problemas de Saúde" num lugar e "Condições de Saúde" em outro). Renomear um módulo significa atualizar **todos** os pontos de exibição de uma vez.
+10. **Meios de entrada padronizados (captura documental).** *Todo módulo que aceite documentos oferece exatamente os mesmos meios de entrada: **digitar manualmente · tirar foto · enviar/arrastar arquivo · importar do Centro de Captura · falar (voz)**.* O Centro de Captura é canal **adicional** de entrada — nunca o único local onde se pode enviar um arquivo. Nenhum módulo oferece apenas um subconjunto sem justificativa técnica registrada. (Detalhado na §10 e em [[CAP-001]].)
+11. **Orientação por objetivo da usuária, não pelo mecanismo técnico.** *A plataforma é organizada pelo **que a usuária quer fazer** (cadastrar um medicamento, um exame, um recurso, uma despesa, uma consulta), não pela **tecnologia** usada para isso (documento, upload, foto, OCR).* O ponto de partida do fluxo é a **intenção** ("O que você deseja cadastrar?" / "Como deseja cadastrar este medicamento?"); os meios (digitalizar, arquivo, foto, manual, voz) são secundários e intercambiáveis. Rótulos comunicam intenção ("Novo medicamento" / "Cadastrar medicamento"), não o mecanismo ("Adicionar documento"). Princípio transversal — vale para [[CAP-001]], [[REL-001]], DS-001, QA-001 e o Roadmap por Ondas.
 
 ---
 
@@ -174,6 +177,33 @@ Cada módulo registra **apenas** o seu conceito. Fronteiras explícitas:
 
 **Notas de evolução futura (registradas, não congeladas — não mudam agora):**
 - **Histórico como visão global.** O Histórico é uma **projeção transversal** (consultas, exames, medicamentos, despesas, procedimentos sobre a linha do tempo). Hoje é, corretamente, um módulo Operacional em Acompanhamento; no futuro pode evoluir para uma **visão global tipo Timeline** que atravessa toda a plataforma, deixando de ser apenas um item de um grupo. Registrado como direção possível — sem alteração neste ciclo.
+
+---
+
+## 10. Padrões de Captura Documental (emenda 2026-07-07 · [[CAP-001]])
+
+> Emenda aprovada pela fundadora após o freeze (§9) — revisão explícita, não ajuste
+> pontual. Formaliza o princípio §1.10.
+
+**Meios oficiais de entrada** — sempre os mesmos, na mesma ordem, em todo módulo que aceite documentos:
+
+| # | Meio | Nota |
+|---|------|------|
+| 1 | **Digitar manualmente** | formulário do módulo |
+| 2 | **Tirar foto** | câmera (`capture=environment`) |
+| 3 | **Enviar ou arrastar arquivo** | file picker + drag-and-drop; **PDF, JPG, PNG, HEIC** |
+| 4 | **Importar do Centro de Captura** | quando aplicável |
+| 5 | **Falar** | captura por voz (`VoiceInput` reutilizável) |
+
+**Regras:**
+- O **envio de arquivo** (meio 3) deve existir **dentro do módulo**, não apenas no Centro de Captura.
+- **"Escanear" ≠ apenas fotografar:** aceita foto **e** arquivo/PDF já existente (celular, e-mail, computador).
+- Meios idênticos em **todos os módulos com OCR/IA documental**, atuais e futuros (Exames, Exames Ômicos, Medicamentos e Suplementos, Recursos de Saúde, Procedimentos, Vacinas, Documentos…).
+- Implementação via **componente único** (`<DocumentCapture>`, evolução do Centro de Captura); cada módulo apenas declara `accepts` + processador de destino. Exames é a referência.
+- **Centro de Captura** (Home): ponto único de classificação/roteamento — tipos: Exame · Exame ômico · Receita de medicamento ou suplemento · Receita de recurso de saúde · Outro documento de saúde → módulo correspondente ou revisão manual.
+- **RDC 657/2022:** captura organiza; não interpreta.
+
+Especificação de implementação, estado atual mapeado e auditoria de conformidade: **[[CAP-001]]**.
 
 ---
 

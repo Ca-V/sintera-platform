@@ -7,7 +7,31 @@
 
 ---
 
+## 0.0 Enquadramento arquitetural — CAMADA DE COMUNICAÇÃO DA SINTERA (fundadora, 07/07)
+
+Esta frente é, oficialmente, a **Camada de Comunicação da Plataforma** — responsável por **transformar os dados organizados pela plataforma em diferentes formas de apresentação**. O **Relatório é apenas o primeiro consumidor**. A mesma infraestrutura alimentará: compartilhamento por link · compartilhamento para médicos · exportação PDF · impressão · e-mail · WhatsApp · integração com prontuários · timeline compartilhada · APIs futuras · IA contextual.
+
+**Regra permanente desta frente:** ao implementar qualquer coisa aqui, perguntar — *"Estou construindo uma capacidade reutilizável da plataforma ou uma solução específica do Relatório?"*. Se for específica → **parar e abstrair antes**.
+
+**Capacidades transversais (construir como infraestrutura única, nunca por módulo):**
+- **Proveniência** (`@/lib/provenance`) — 5 níveis; módulos só implementam adaptadores. **REGRA ARQUITETURAL DEFINITIVA (permanente):** *toda informação apresentada deve possuir uma **origem identificável**; e sempre que existir um documento original associado, ele deverá estar acessível ("Ver documento original") em **qualquer** consumidor da Camada de Comunicação* (Relatório · PDF · compartilhamento · impressão · Timeline compartilhada · integrações) — mesma lógica, sem implementação específica por módulo. **Layout pronto para o nível 5:** cada seção/bloco pode futuramente receber uma área **"Referências científicas relacionadas"** (alimentada pelo KG v2/SRL), hoje oculta, sem reformulação do relatório. Abrange: exames laboratoriais e de imagem · **exames de ômica/metabolômica** · laudos · receitas médicas · receitas de medicamentos/suplementos · prescrições de óculos/lentes/dispositivos · qualquer documento emitido por profissional de saúde. **LACUNA DE ARMAZENAMENTO (decisão da fundadora — fora do escopo desta entrega):** hoje só `exams` e `health_resources` armazenam o documento (`file_url`); `omics_panels` e `medications` **não têm** coluna/captura de documento — por isso ômica e receitas de medicamentos ainda não exibem o link (não é tratamento diferente: o documento não é salvo). Quando o armazenamento for adicionado a esses fluxos, o link passa a aparecer **automaticamente** pela mesma camada, sem mudança nos consumidores. **Solução definitiva (decisão da fundadora, 07/07):** em vez de `file_url` por tabela, criar um **repositório ÚNICO de documentos** (`health_documents`) — documento = ativo de 1ª classe; módulos apenas referenciam; a Proveniência consome por referência. Registrado em **[[DOC-001]]** (backlog arquitetural, não implementar agora).
+- **Seleção** (`SelectionToolbar` + estado) — seleção em massa/exportação/compartilhamento.
+- **Ordenação** — infraestrutura ÚNICA: cada módulo declara campos ordenáveis, ordenação padrão e agrupamentos; Agenda/Histórico/Exames/Recursos/Medicamentos/Despesas usam o mesmo mecanismo.
+- **Filtros e agrupamentos** — mesma abstração comum (filtros · agrupamentos · ordenação · seleção), usada em toda a plataforma.
+- **Contexto Temporal** (`@/lib/communication/period` + `PeriodSelector`) — o Período representa oficialmente o **Contexto Temporal da comunicação**, não apenas um filtro de datas. **Parâmetro oficial e ÚNICO** da comunicação: Todo o histórico · 30 dias · 90 dias · 6 meses · 1 ano · Intervalo personalizado. Aplica-se a **todos os módulos temporais** (Agenda · Histórico · Exames · Medicamentos · Recursos com data · Procedimentos · Despesas · Sinais Vitais · Medidas · Hábitos com histórico · Ciclo). Reutilizável por PDF · compartilhamento · impressão · Timeline compartilhada · Dashboards · APIs. **Nenhum mecanismo paralelo de período** — todo consumidor usa esta infraestrutura. O contexto **é informado ao destinatário** abaixo do título ("Período: …").
+  - **Estados permanentes:** condições atuais e itens **em uso** aparecem **independentemente** do período; entidades **encerradas** só aparecem se a janela de atividade **cruzar** o intervalo (`overlapsPeriod`).
+  - **Evoluções de contexto futuras (previstas, modelagem aberta — NÃO agora):** desde a última consulta · desde o último relatório · desde determinado exame · durante um tratamento · durante uma gestação · durante uma internação · antes/depois de um procedimento.
+  - **Resumo do período (previsto, NÃO nesta entrega):** logo abaixo do período, um resumo executivo ("Neste período: 8 exames · 2 consultas · 3 medicamentos · 1 procedimento · 4 medições").
+  - **Filtros temporais futuros (previstos):** apenas ativos · apenas alterações no período · apenas exames alterados · apenas medicamentos em uso · apenas determinado profissional · apenas determinada condição.
+
+**Perfis de Comunicação (não "configuração salva"):** os templates são **Perfis de Comunicação**. Arquiteturalmente, **primeiro os perfis OFICIAIS da plataforma** (Consulta médica · Segunda opinião · Emergência · Viagem · Compartilhamento familiar · Seguro · Perícia · Pesquisa clínica), **depois** os personalizados pelo usuário.
+
+---
+
 ## 0. Diretrizes oficiais complementares (congeladas)
+
+**Nome oficial do módulo: "Relatório"** (nunca "Relatório de Saúde"). A SINTERA **não emite avaliação nem parecer clínico** — organiza e apresenta os registros e documentos inseridos pela usuária. Aplicar "Relatório" de forma consistente em: menu · título da página · breadcrumbs · Home (atalhos) · compartilhamento · PDF · cabeçalhos · links internos.
+**Diretriz permanente de nomenclatura:** em qualquer dúvida de nome, priorizar termos que descrevam a **função da plataforma** — *organiza · registra · estrutura · relaciona · apresenta* — e **nunca** uma interpretação clínica (a plataforma não diagnostica, não interpreta, não emite pareceres). Coerente com a RDC 657 e com o princípio 9 do UX-001 (nome único por módulo).
 
 1. **Relatório = funcionalidade de primeira classe.** Não é "uma tela que gera PDF": é a **central oficial de compartilhamento** das informações de saúde da SINTERA. Toda evolução futura de compartilhamento parte desta arquitetura.
 2. **Organização única e oficial.** A árvore de seleção espelha **integralmente** o menu lateral. Menu · Relatórios · Home · navegação futura têm **uma só** organização (ordem/nomenclatura/hierarquia) — UX-001.

@@ -1,7 +1,7 @@
 'use client'
 
 // ============================================================
-// Relatório de saúde — compilação factual para levar/enviar ao profissional
+// Relatório — compilação factual para levar/enviar ao profissional
 // ============================================================
 // Reúne, num documento imprimível (Salvar como PDF), os dados que a usuária
 // registrou: medicamentos, eventos da jornada (consultas/procedimentos/exames)
@@ -10,12 +10,20 @@
 // nutricionista, fisioterapeuta, dentista, etc.).
 // ============================================================
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, type ElementType } from 'react'
 import Link from 'next/link'
 import ReportEntry from '@/components/entry/ReportEntry'
+import ProvenanceLine from '@/components/ui/ProvenanceLine'
+import SelectionToolbar from '@/components/ui/SelectionToolbar'
+import PeriodSelector from '@/components/ui/PeriodSelector'
+import { examProvenance, resourceProvenance } from '@/lib/provenance'
+import { type Period, resolvePeriod, inPeriod, overlapsPeriod, periodLabel } from '@/lib/communication/period'
+import ViewModeSwitcher from '@/components/ViewModeSwitcher'
+import { applySort, type SortSpec } from '@/lib/listview'
 import {
   Loader2, Printer, ArrowLeft, FileText, Share2, Copy, Trash2, Check,
   CalendarDays, FlaskConical, Pill, Stethoscope, HeartPulse, Ruler, Activity, Eye,
+  ChevronDown, Minus,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
@@ -24,7 +32,7 @@ import { typeLabel } from '@/lib/agenda' // fonte ÚNICA de rótulos de tipo de 
 
 interface Med { name: string; kind: string; dose: string | null; frequency: string | null; startedOn: string | null; untilOn: string | null; status: string }
 interface Ev { title: string; eventType: string; prof: string | null; date: string; notes: string | null }
-interface Ex { type: string; date: string }
+interface Ex { type: string; date: string; fileUrl: string | null }
 interface Measure { metric: string; label: string | null; valueText: string; unit: string | null; date: string }
 interface Condition { scope: string; name: string; relative: string | null; since: string | null; notes: string | null }
 interface Habit { category: string; description: string; frequency: string | null; notes: string | null }
@@ -32,7 +40,7 @@ interface Eyewear {
   kind: string; prescribedOn: string | null; prescriber: string | null
   odSph: string | null; odCyl: string | null; odAxis: string | null; odAdd: string | null
   oeSph: string | null; oeCyl: string | null; oeAxis: string | null; oeAdd: string | null
-  dnp: string | null; bc: string | null; dia: string | null
+  dnp: string | null; bc: string | null; dia: string | null; fileUrl: string | null
 }
 const EYEWEAR_LABEL: Record<string, string> = { oculos: 'Óculos', lentes_contato: 'Lentes de contato' }
 interface Omics { domain: string; laboratory: string | null; totalFeatures: number | null; date: string | null }
@@ -74,6 +82,18 @@ function fmt(date: string | null): string {
   return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
+// Faixa divisória de GRUPO no corpo do relatório (espelha os grupos do menu:
+// Acompanhamento · Minha Saúde · Organização) — dá identidade visual às seções.
+function ReportBand({ children }: { children: string }) {
+  return (
+    <div className="flex items-center gap-3 pt-2" role="presentation">
+      <span className="h-px flex-1 bg-petal/25" aria-hidden="true" />
+      <span className="font-display text-xs font-bold uppercase tracking-[0.25em] text-petal whitespace-nowrap">{children}</span>
+      <span className="h-px flex-1 bg-petal/25" aria-hidden="true" />
+    </div>
+  )
+}
+
 // Passo 7 (cutover) — a rota decide legacy × v2 pelo Entry. Default: legacy.
 // Flip por página via NEXT_PUBLIC_REPORT_V2=true.
 export default function RelatorioRoute() {
@@ -97,6 +117,55 @@ function LegacyReport() {
   const [copied, setCopied] = useState<string | null>(null)
   const [sections, setSections] = useState({ medicamentos: true, condicoes: true, habitos: true, visao: true, eventos: true, exames: true, omica: true, medidas: true, sinais: true })
   const toggle = (k: keyof typeof sections) => setSections(s => ({ ...s, [k]: !s[k] }))
+  // Filtro temporal (capacidade transversal da Camada de Comunicação).
+  const [period, setPeriod] = useState<Period>({ preset: 'all' })
+  const [examSort, setExamSort] = useState('data')   // ordenação via @/lib/listview
+  // Perfis de Comunicação personalizados (report_templates).
+  const [templates, setTemplates] = useState<{ id: string; name: string; selection: Record<string, unknown> }[]>([])
+  const [tplName, setTplName] = useState('')
+  const [configOpen, setConfigOpen] = useState(false)   // "Configurações de relatório" (discreto)
+
+  // Árvore de seleção = espelho do menu lateral (UX-001): grupos expansíveis,
+  // seleção por grupo (tri-state) e por item. Mesma ordem/nomenclatura da sidebar.
+  type SectionKey = keyof typeof sections
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({})   // 3º nível (itens de Exames/Medicamentos)
+  const [excluded, setExcluded] = useState<Record<string, Set<string>>>({})        // itens desmarcados por seção
+  const setGroup = (keys: SectionKey[], on: boolean) =>
+    setSections(s => { const n = { ...s }; keys.forEach(k => { n[k] = on }); return n })
+  // Seções que permitem seleção item a item (Exames e Medicamentos).
+  const hasItems = (k: SectionKey): boolean => k === 'exames' || k === 'medicamentos'
+  const sectionItems = (k: SectionKey): { key: string; label: string }[] => {
+    if (k === 'exames') return exams.map(e => ({ key: `${e.type}__${e.date}`, label: `${fmt(e.date)} — ${e.type}` }))
+    if (k === 'medicamentos') return meds.map(m => ({ key: m.name, label: m.name + (m.status === 'suspenso' ? ' (suspenso)' : '') }))
+    return []
+  }
+  const isItemOn = (k: string, key: string): boolean => !(excluded[k]?.has(key))
+  const toggleItem = (k: string, key: string) =>
+    setExcluded(e => { const s = new Set(e[k] ?? []); if (s.has(key)) s.delete(key); else s.add(key); return { ...e, [k]: s } })
+  const SELECT_GROUPS: { title: string; items: [SectionKey, string, ElementType][] }[] = [
+    { title: 'Acompanhamento', items: [
+      ['eventos', 'Consultas e eventos', CalendarDays],
+      ['exames', 'Exames', FileText],
+      ['omica', 'Exames de ômica', FlaskConical],
+      ['medicamentos', 'Medicamentos e Suplementos', Pill],
+    ] },
+    { title: 'Minha Saúde', items: [
+      ['condicoes', 'Condições de Saúde', Stethoscope],
+      ['visao', 'Recursos de Saúde (óculos e lentes)', Eye],
+      ['medidas', 'Medidas Corporais', Ruler],
+      ['sinais', 'Sinais Vitais', Activity],
+      ['habitos', 'Hábitos', HeartPulse],
+    ] },
+  ]
+  // Comandos de seleção (via SelectionToolbar reutilizável).
+  const DEFAULT_SECTIONS = { medicamentos: true, condicoes: true, habitos: true, visao: true, eventos: true, exames: true, omica: true, medidas: true, sinais: true }
+  const allSections = (v: boolean) => Object.fromEntries(Object.keys(sections).map(k => [k, v])) as typeof sections
+  const selectAllSections = () => { setSections(allSections(true)); setExcluded({}) }
+  const clearSections = () => setSections(allSections(false))
+  const resetSections = () => { setSections({ ...DEFAULT_SECTIONS }); setExcluded({}) }
+  const expandAll = () => { setOpenGroups(Object.fromEntries(SELECT_GROUPS.map(g => [g.title, true]))); setOpenSections({ exames: true, medicamentos: true }) }
+  const collapseAll = () => { setOpenGroups(Object.fromEntries(SELECT_GROUPS.map(g => [g.title, false]))); setOpenSections({}) }
 
   const load = useCallback(async () => {
     if (!user) return
@@ -106,11 +175,11 @@ function LegacyReport() {
     const [medRes, evRes, exRes, mzRes, cdRes, hbRes, ewRes, omRes] = await Promise.all([
       db.from('medications').select('name, kind, dose, frequency, started_on, until_date, status').eq('user_id', user.id).order('status'),
       db.from('health_events').select('title, event_type, professional_kind, event_date, notes').eq('user_id', user.id).eq('synthetic', false).order('event_date', { ascending: false }),
-      db.from('exams').select('type, exam_date, created_at').eq('user_id', user.id).order('created_at', { ascending: false }),
+      db.from('exams').select('type, exam_date, created_at, file_url').eq('user_id', user.id).order('created_at', { ascending: false }),
       db.from('body_metrics').select('metric, label, value_text, unit, measured_on').eq('user_id', user.id).order('measured_on', { ascending: false }),
       db.from('health_conditions').select('scope, name, relative, since_label, notes').eq('user_id', user.id).order('created_at', { ascending: false }),
       db.from('life_habits').select('category, description, frequency, notes').eq('user_id', user.id).order('created_at', { ascending: false }),
-      db.from('health_resources').select('name, resource_type, prescriber, started_on, attributes').eq('user_id', user.id).eq('resource_type', 'correcao_visual').order('created_at', { ascending: false }),
+      db.from('health_resources').select('name, resource_type, prescriber, started_on, attributes, file_url').eq('user_id', user.id).eq('resource_type', 'correcao_visual').order('created_at', { ascending: false }),
       db.from('omics_panels').select('domain, laboratory, total_features, collected_on, created_at').eq('user_id', user.id).order('collected_on', { ascending: false, nullsFirst: false }),
     ])
     setMeds(((medRes.data ?? []) as Array<Record<string, unknown>>).map(m => ({
@@ -123,6 +192,7 @@ function LegacyReport() {
     })))
     setExams(((exRes.data ?? []) as Array<Record<string, unknown>>).map(e => ({
       type: (e.type as string) || 'Exame', date: (e.exam_date as string) || (e.created_at as string),
+      fileUrl: (e.file_url as string) ?? null,
     })))
     setMeasures(((mzRes.data ?? []) as Array<Record<string, unknown>>).map(m => ({
       metric: (m.metric as string) ?? 'outro', label: (m.label as string) ?? null,
@@ -145,6 +215,7 @@ function LegacyReport() {
         odSph: od.sph ?? null, odCyl: od.cyl ?? null, odAxis: od.axis ?? null, odAdd: od.add ?? null,
         oeSph: oe.sph ?? null, oeCyl: oe.cyl ?? null, oeAxis: oe.axis ?? null, oeAdd: oe.add ?? null,
         dnp: (a.dnp as string) ?? null, bc: (a.bc as string) ?? null, dia: (a.dia as string) ?? null,
+        fileUrl: (e.file_url as string) ?? null,
       }
     }))
     setOmics(((omRes.data ?? []) as Array<Record<string, unknown>>).map(o => ({
@@ -157,6 +228,11 @@ function LegacyReport() {
     setShares(((sh ?? []) as Array<Record<string, unknown>>).map(s => ({
       id: s.id as string, token: s.token as string, expiresAt: s.expires_at as string,
     })))
+    const { data: tpls } = await db.from('report_templates')
+      .select('id, name, selection').eq('user_id', user.id).order('created_at', { ascending: false })
+    setTemplates(((tpls ?? []) as Array<Record<string, unknown>>).map(t => ({
+      id: t.id as string, name: t.name as string, selection: (t.selection as Record<string, unknown>) ?? {},
+    })))
     setLoading(false)
   }, [user, supabase])
 
@@ -167,7 +243,7 @@ function LegacyReport() {
     const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
     const sel = (Object.keys(sections) as (keyof typeof sections)[]).filter(k => sections[k])
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from('report_shares').insert({ user_id: user.id, token, expires_at: expires, sections: sel })
+    await (supabase as any).from('report_shares').insert({ user_id: user.id, token, expires_at: expires, sections: sel, period })
     await load()
     setShareBusy(false)
   }
@@ -194,10 +270,76 @@ function LegacyReport() {
   const nome = (profile as { name?: string } | null)?.name ?? user?.email ?? '—'
   const medsEmUso = meds.filter(m => m.status === 'em_uso')
   const medsSusp = meds.filter(m => m.status === 'suspenso')
+  // Aplicam a seleção item a item ao relatório exibido/impresso (PDF). O PERÍODO
+  // propaga ao link (/r/[token], persistido no share); a exclusão item a item no
+  // link é refinamento futuro (seção-nível e período já propagam).
+  const visMedsEmUso = medsEmUso.filter(m => isItemOn('medicamentos', m.name))
+  const visMedsSusp = medsSusp.filter(m => isItemOn('medicamentos', m.name))
+  const visExams = exams.filter(e => isItemOn('exames', `${e.type}__${e.date}`))
+  // Faixas de grupo (espelham o menu): exibidas se houver ao menos uma seção do grupo.
+  const showAcompanhamento = sections.eventos || sections.exames || sections.omica || sections.medicamentos
+  const showMinhaSaude = sections.condicoes || sections.visao || sections.medidas || sections.sinais || sections.habitos
   const condProprias = conditions.filter(c => c.scope === 'propria')
   const condFamiliar = conditions.filter(c => c.scope === 'familiar')
   const measuresCorpo = measures.filter(m => !isVital(m.metric))
   const measuresVitais = measures.filter(m => isVital(m.metric))
+  // Aplica o período aos módulos TEMPORAIS (eventos/exames/ômica/medidas/sinais e
+  // medicamentos suspensos por sobreposição). Estados atuais (condições, meds em
+  // uso, recursos, hábitos) aparecem independentemente do período.
+  const rp = resolvePeriod(period)
+  const perEvents = events.filter(e => inPeriod(e.date, rp))
+  const perOmics = omics.filter(o => inPeriod(o.date, rp))
+  const perMeasuresCorpo = measuresCorpo.filter(m => inPeriod(m.date, rp))
+  const perMeasuresVitais = measuresVitais.filter(m => inPeriod(m.date, rp))
+  const perVisExams = visExams.filter(e => inPeriod(e.date, rp))
+  const perMedsSusp = visMedsSusp.filter(m => overlapsPeriod(m.startedOn, m.untilOn, rp))
+  // Ordenação de Exames — declara a config; a mecânica é a infra comum (listview).
+  const EXAM_SORTS: SortSpec<Ex>[] = [
+    { key: 'data', label: 'Por data', compare: (a, b) => (b.date ?? '').localeCompare(a.date ?? '') },
+    { key: 'tipo', label: 'Por tipo', compare: (a, b) => (a.type ?? '').localeCompare(b.type ?? '') },
+  ]
+  const sortedExams = applySort(perVisExams, EXAM_SORTS, examSort)
+
+  // Configurações de relatório (salvas): salvar/aplicar/excluir (personalizadas).
+  const currentConfig = () => ({
+    sections,
+    excluded: Object.fromEntries(Object.entries(excluded).map(([k, v]) => [k, [...v]])),
+    period,
+  })
+  const applyConfig = (cfg: Record<string, unknown>) => {
+    if (cfg.sections) setSections(cfg.sections as typeof sections)
+    setExcluded(Object.fromEntries(Object.entries((cfg.excluded as Record<string, string[]>) ?? {}).map(([k, v]) => [k, new Set(v)])))
+    if (cfg.period) setPeriod(cfg.period as Period)
+  }
+  async function saveTemplate() {
+    if (!user || !tplName.trim()) return
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any).from('report_templates').insert({ user_id: user.id, name: tplName.trim(), selection: currentConfig() })
+    setTplName(''); await load()
+  }
+  async function deleteTemplate(id: string) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any).from('report_templates').delete().eq('id', id)
+    await load()
+  }
+
+  // Resumo/tamanho — o que está incluído (seções selecionadas, dentro do período).
+  const resumoItems = [
+    sections.eventos && { label: 'consultas/eventos', n: perEvents.length },
+    sections.exames && { label: 'exames', n: perVisExams.length },
+    sections.omica && { label: 'ômica', n: perOmics.length },
+    sections.medicamentos && { label: 'medicamentos', n: visMedsEmUso.length + perMedsSusp.length },
+    sections.condicoes && { label: 'condições', n: condProprias.length + condFamiliar.length },
+    sections.visao && { label: 'recursos', n: eyewear.length },
+    sections.medidas && { label: 'medidas', n: perMeasuresCorpo.length },
+    sections.sinais && { label: 'sinais vitais', n: perMeasuresVitais.length },
+    sections.habitos && { label: 'hábitos', n: habits.length },
+  ].filter((x): x is { label: string; n: number } => !!x && x.n > 0)
+  const totalRegistros = resumoItems.reduce((s, r) => s + r.n, 0)
+  const lastUpdate = ([
+    ...perEvents.map(e => e.date), ...perVisExams.map(e => e.date), ...perOmics.map(o => o.date),
+    ...perMeasuresCorpo.map(m => m.date), ...perMeasuresVitais.map(m => m.date),
+  ].filter(Boolean) as string[]).sort().slice(-1)[0] ?? null
   const alturaCm = (profile as { height_cm?: number | null } | null)?.height_cm ?? null
   const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
 
@@ -250,62 +392,261 @@ function LegacyReport() {
         )}
       </div>
 
-      {/* Seleção do que mostrar — segue a mesma estrutura da navegação (sidebar):
-          agrupada em Minha Saúde / Acompanhamento, com os mesmos rótulos, ordem e ícones. */}
+      {/* Período — parâmetro da Camada de Comunicação (aplica a todos os módulos temporais) */}
       <div className="card-premium p-5 mb-6 print:hidden">
-        <p className="font-body text-sm font-semibold text-onyx mb-3">Mostrar no relatório</p>
-        <div className="space-y-4">
-          {([
-            ['Acompanhamento', [
-              ['eventos', 'Consultas e eventos', CalendarDays],
-              ['exames', 'Exames', FileText],
-              ['omica', 'Exames de ômica', FlaskConical],
-              ['medicamentos', 'Medicamentos e Suplementos', Pill],
-            ]],
-            ['Minha Saúde', [
-              ['condicoes', 'Condições de Saúde', Stethoscope],
-              ['visao', 'Recursos de Saúde (óculos e lentes)', Eye],
-              ['medidas', 'Medidas Corporais', Ruler],
-              ['sinais', 'Sinais Vitais', Activity],
-              ['habitos', 'Hábitos', HeartPulse],
-            ]],
-          ] as const).map(([groupTitle, items]) => (
-            <div key={groupTitle}>
-              <p className="font-body text-[10px] font-semibold text-mauve/50 uppercase tracking-[0.15em] mb-1.5">{groupTitle}</p>
-              <div className="flex flex-col gap-1.5">
-                {items.map(([k, label, Icon]) => (
-                  <label key={k} className="flex items-center gap-2.5 font-body text-sm text-onyx cursor-pointer">
-                    <input type="checkbox" checked={sections[k]} onChange={() => toggle(k)} className="accent-petal w-4 h-4 flex-shrink-0" />
-                    <Icon size={15} className="text-petal/70 flex-shrink-0" />
-                    <span className="min-w-0">{label}</span>
-                  </label>
-                ))}
+        <p className="font-body text-sm font-semibold text-onyx mb-3">Período</p>
+        <PeriodSelector period={period} onChange={setPeriod} />
+        <p className="font-body text-[11px] text-mauve/60 mt-3">Recorte aplicado ao relatório, à impressão/PDF e ao link compartilhado. Condições atuais e itens em uso aparecem independentemente do período.</p>
+      </div>
+
+      {/* Seleção = árvore do menu lateral (UX-001): grupos expansíveis, seleção por
+          grupo (tri-state) e por item, com a mesma ordem, nomenclatura e ícones. */}
+      <div className="card-premium p-5 mb-6 print:hidden">
+        <p className="font-body text-sm font-semibold text-onyx mb-2">Mostrar no relatório</p>
+        <SelectionToolbar className="mb-3"
+          onSelectAll={selectAllSections} onClear={clearSections} onReset={resetSections}
+          onExpandAll={expandAll} onCollapseAll={collapseAll} />
+        <div className="space-y-2">
+          {SELECT_GROUPS.map(group => {
+            const keys = group.items.map(i => i[0])
+            const sel = keys.filter(k => sections[k]).length
+            const groupState = sel === 0 ? 'none' : sel === keys.length ? 'all' : 'some'
+            const open = openGroups[group.title] ?? true
+            return (
+              <div key={group.title} className="rounded-xl border border-border/60 overflow-hidden">
+                {/* Cabeçalho do grupo: expandir/recolher + seleção do grupo (tri-state) */}
+                <div className="flex items-center gap-2.5 px-3 py-2.5 bg-ivory/40">
+                  <button type="button" onClick={() => setOpenGroups(g => ({ ...g, [group.title]: !open }))}
+                    aria-label={open ? 'Recolher' : 'Expandir'}
+                    className="text-mauve/50 hover:text-petal transition-colors flex-shrink-0">
+                    <ChevronDown size={16} className="transition-transform" style={{ transform: open ? 'none' : 'rotate(-90deg)' }} />
+                  </button>
+                  <button type="button" onClick={() => setGroup(keys, groupState !== 'all')}
+                    aria-label={`Selecionar ${group.title}`}
+                    className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border transition-colors ${
+                      groupState === 'none' ? 'border-border bg-white' : 'border-petal bg-petal'}`}>
+                    {groupState === 'all' && <Check size={11} className="text-white" />}
+                    {groupState === 'some' && <Minus size={11} className="text-white" />}
+                  </button>
+                  <span className="font-body text-[11px] font-semibold text-mauve/70 uppercase tracking-wider flex-1 min-w-0">{group.title}</span>
+                  <span className="font-body text-[11px] text-mauve/50 flex-shrink-0 tabular-nums">{sel}/{keys.length}</span>
+                </div>
+                {/* Itens do grupo (módulos) — Exames/Medicamentos abrem seleção item a item */}
+                {open && (
+                  <div className="flex flex-col gap-0.5 px-3 py-2 pl-9">
+                    {group.items.map(([k, label, Icon]) => {
+                      const withItems = hasItems(k)
+                      const items = withItems ? sectionItems(k) : []
+                      const secOpen = openSections[k] ?? false
+                      const onCount = items.filter(it => isItemOn(k, it.key)).length
+                      return (
+                        <div key={k}>
+                          <div className="flex items-center gap-2 py-0.5">
+                            {withItems ? (
+                              <button type="button" onClick={() => setOpenSections(o => ({ ...o, [k]: !secOpen }))}
+                                aria-label={secOpen ? 'Recolher itens' : 'Expandir itens'}
+                                className="text-mauve/40 hover:text-petal transition-colors flex-shrink-0">
+                                <ChevronDown size={13} className="transition-transform" style={{ transform: secOpen ? 'none' : 'rotate(-90deg)' }} />
+                              </button>
+                            ) : <span className="w-[13px] flex-shrink-0" aria-hidden="true" />}
+                            <label className="flex items-center gap-2.5 flex-1 min-w-0 cursor-pointer">
+                              <input type="checkbox" checked={sections[k]} onChange={() => toggle(k)} className="accent-petal w-4 h-4 flex-shrink-0" />
+                              <Icon size={15} className="text-petal/70 flex-shrink-0" />
+                              <span className="min-w-0 break-words font-body text-sm text-onyx">{label}</span>
+                            </label>
+                            {withItems && sections[k] && items.length > 0 && (
+                              <span className="font-body text-[10px] text-mauve/50 flex-shrink-0 tabular-nums">{onCount}/{items.length}</span>
+                            )}
+                          </div>
+                          {withItems && sections[k] && secOpen && (
+                            <div className="flex flex-col gap-0.5 pl-[3.4rem] pb-1">
+                              {items.length === 0
+                                ? <span className="font-body text-xs text-mauve/50">Nenhum registro.</span>
+                                : items.map(it => (
+                                    <label key={it.key} className="flex items-center gap-2 font-body text-[13px] text-onyx/90 cursor-pointer">
+                                      <input type="checkbox" checked={isItemOn(k, it.key)} onChange={() => toggleItem(k, it.key)} className="accent-petal w-3.5 h-3.5 flex-shrink-0" />
+                                      <span className="min-w-0 break-words">{it.label}</span>
+                                    </label>
+                                  ))}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
         <p className="font-body text-[11px] text-mauve/60 mt-3">Marque o que deseja incluir. Vale para a impressão e para o link compartilhado.</p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-border p-8 space-y-6 print:border-0 print:p-0">
+      {/* Configurações de relatório — salvar/reutilizar (discreto, recolhido por padrão) */}
+      <div className="card-premium p-4 mb-6 print:hidden">
+        <button type="button" onClick={() => setConfigOpen(o => !o)} className="w-full flex items-center justify-between gap-2 text-left">
+          <div className="min-w-0">
+            <p className="font-body text-sm font-semibold text-onyx">Configurações de relatório</p>
+            <p className="font-body text-[11px] text-mauve/60">Salve esta configuração (seções, itens e período) para reutilizar depois{templates.length > 0 ? ` · ${templates.length} salva${templates.length > 1 ? 's' : ''}` : ''}.</p>
+          </div>
+          <ChevronDown size={16} className="text-mauve/50 flex-shrink-0 transition-transform" style={{ transform: configOpen ? 'none' : 'rotate(-90deg)' }} />
+        </button>
+        {configOpen && (
+          <div className="mt-3 pt-3 border-t border-border/50 space-y-3">
+            {templates.length > 0 && (
+              <div className="flex flex-col gap-1.5">
+                {templates.map(t => (
+                  <div key={t.id} className="flex items-center gap-2">
+                    <button type="button" onClick={() => applyConfig(t.selection)}
+                      className="flex-1 min-w-0 truncate text-left font-body text-xs rounded-full px-3 py-1 border border-petal/30 text-petal bg-blush/40 hover:bg-blush transition-colors">
+                      {t.name}
+                    </button>
+                    <button type="button" onClick={() => deleteTemplate(t.id)} title="Remover"
+                      className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-red-400 hover:bg-red-50 transition-colors flex-shrink-0">
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <input type="text" value={tplName} onChange={e => setTplName(e.target.value)} placeholder="Ex.: Consulta endócrino, Viagem…"
+                className="flex-1 min-w-0 px-3 py-1.5 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+              <button type="button" onClick={saveTemplate} disabled={!tplName.trim()}
+                className="px-3 py-1.5 rounded-full gradient-sintera text-white font-body text-xs font-medium disabled:opacity-40 hover:opacity-90 transition-opacity flex-shrink-0">
+                Salvar configuração
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="bg-white rounded-2xl border border-border p-5 sm:p-8 space-y-6 print:border-0 print:p-0">
         {/* Cabeçalho */}
         <div className="border-b border-border pb-4">
-          <div className="inline-flex items-center gap-1.5 text-petal mb-1 print:hidden">
-            <FileText size={16} /><span className="font-body text-xs font-medium uppercase tracking-wider">Relatórios</span>
-          </div>
-          <h1 className="font-display text-xl font-semibold text-onyx">Relatório de saúde — {nome}</h1>
-          <p className="font-body text-xs text-mauve mt-1">Gerado em {hoje} · organização dos dados registrados pela própria pessoa.</p>
+          <h1 className="font-display text-2xl font-semibold text-onyx">Relatório</h1>
+          <p className="font-body text-sm text-mauve mt-1">Organização estruturada das informações registradas na SINTERA para compartilhamento e acompanhamento da saúde.</p>
+          <p className="font-body text-xs text-mauve/70 mt-1.5">{nome} · Gerado em {hoje}</p>
         </div>
+
+        {/* Resumo do relatório — cabeçalho executivo, totalmente factual (RDC 657) */}
+        <div className="rounded-2xl border border-border bg-ivory/40 p-4 sm:p-5">
+          <p className="font-display text-sm font-semibold text-onyx mb-1">Resumo do relatório</p>
+          <p className="font-body text-xs font-semibold text-petal mb-2.5">Período considerado neste relatório: {periodLabel(period)}</p>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-1 font-body text-xs text-onyx">
+            <p><span className="text-mauve/70">Registros incluídos:</span> <strong>{totalRegistros}</strong></p>
+            {sections.exames && <p><span className="text-mauve/70">Exames:</span> {perVisExams.length}</p>}
+            {sections.eventos && <p><span className="text-mauve/70">Consultas e eventos:</span> {perEvents.length}</p>}
+            {sections.medicamentos && <p><span className="text-mauve/70">Medicamentos em uso:</span> {visMedsEmUso.length}</p>}
+            {sections.condicoes && <p><span className="text-mauve/70">Condições registradas:</span> {condProprias.length + condFamiliar.length}</p>}
+            {sections.visao && <p><span className="text-mauve/70">Recursos de saúde:</span> {eyewear.length}</p>}
+            <p><span className="text-mauve/70">Última atualização:</span> {lastUpdate ? fmt(lastUpdate) : hoje}</p>
+          </div>
+        </div>
+
+        {/* Índice navegável — espelha o menu (grupos → seções selecionadas), clicável no PDF */}
+        {resumoItems.length > 0 && (
+        <nav className="rounded-2xl border border-border p-4 sm:p-5" aria-label="Índice do relatório">
+          <p className="font-display text-sm font-semibold text-onyx mb-2.5">Índice</p>
+          <div className="space-y-2">
+            {SELECT_GROUPS.map(g => {
+              const items = g.items.filter(([k]) => sections[k])
+              if (!items.length) return null
+              return (
+                <div key={g.title}>
+                  <p className="font-body text-[11px] font-semibold text-petal uppercase tracking-wider mb-0.5">{g.title}</p>
+                  <ul className="flex flex-col gap-0.5 pl-3">
+                    {items.map(([k, label]) => (
+                      <li key={k}><a href={`#sec-${k}`} className="font-body text-xs text-onyx hover:text-petal transition-colors">{label}</a></li>
+                    ))}
+                  </ul>
+                </div>
+              )
+            })}
+          </div>
+        </nav>
+        )}
+
+        {/* ══════════ ACOMPANHAMENTO ══════════ */}
+        {showAcompanhamento && <ReportBand>Acompanhamento</ReportBand>}
+
+        {/* Consultas, procedimentos e eventos (Histórico) */}
+        {sections.eventos && (
+        <section id="sec-eventos" style={{ scrollMarginTop: 16 }}>
+          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Consultas, procedimentos e eventos</h2>
+          {perEvents.length === 0 ? (
+            <p className="font-body text-sm text-mauve/60">Nenhum evento registrado.</p>
+          ) : (
+            <table className="w-full text-left">
+              <tbody>
+                {perEvents.map((e, i) => (
+                  <tr key={i} className="border-b border-border/50">
+                    <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(e.date)}</td>
+                    <td className="font-body text-sm text-onyx py-1.5">
+                      <span className="text-mauve/70">{typeLabel(e.eventType)}{e.prof && PROF_LABEL[e.prof] ? ` (${PROF_LABEL[e.prof]})` : ''}:</span> {e.title}
+                      {e.notes ? <span className="block text-xs text-mauve/60">{e.notes}</span> : null}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
+        )}
+
+        {/* Exames */}
+        {sections.exames && (
+        <section id="sec-exames" style={{ scrollMarginTop: 16 }}>
+          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Exames</h2>
+          {perVisExams.length > 1 && (
+            <ViewModeSwitcher className="mb-2 print:hidden"
+              modes={EXAM_SORTS.map(s => ({ value: s.key, label: s.label }))}
+              active={examSort} onChange={setExamSort} />
+          )}
+          {perVisExams.length === 0 ? (
+            <p className="font-body text-sm text-mauve/60">Nenhum exame enviado.</p>
+          ) : (
+            <ul className="space-y-1">
+              {sortedExams.map((e, i) => (
+                <li key={i} className="font-body text-sm text-onyx flex flex-wrap items-baseline gap-x-2">
+                  <span>• {fmt(e.date)} — {e.type}</span>
+                  <ProvenanceLine provenance={examProvenance({ fileUrl: e.fileUrl })} showOrigin={false} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+        )}
+
+        {/* Exames de ômica */}
+        {sections.omica && (
+        <section id="sec-omica" style={{ scrollMarginTop: 16 }}>
+          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Exames de ômica</h2>
+          {perOmics.length === 0 ? (
+            <p className="font-body text-sm text-mauve/60">Nenhum exame de ômica registrado.</p>
+          ) : (
+            <ul className="space-y-1">
+              {perOmics.map((o, i) => (
+                <li key={i} className="font-body text-sm text-onyx">
+                  • {o.date ? `${fmt(o.date)} — ` : ''}<strong>{DOMAIN_LABEL[o.domain as OmicsDomain] ?? 'Ômica'}</strong>
+                  {[o.laboratory, o.totalFeatures != null ? `${o.totalFeatures.toLocaleString('pt-BR')} marcadores` : null].filter(Boolean).length
+                    ? ` (${[o.laboratory, o.totalFeatures != null ? `${o.totalFeatures.toLocaleString('pt-BR')} marcadores` : null].filter(Boolean).join(', ')})` : ''}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+        )}
 
         {/* Medicamentos e suplementos */}
         {sections.medicamentos && (
-        <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Medicamentos e suplementos em uso</h2>
-          {medsEmUso.length === 0 ? (
+        <section id="sec-medicamentos" style={{ scrollMarginTop: 16 }}>
+          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Medicamentos e Suplementos em uso</h2>
+          {visMedsEmUso.length === 0 ? (
             <p className="font-body text-sm text-mauve/60">Nenhum registrado em uso.</p>
           ) : (
             <ul className="space-y-1">
-              {medsEmUso.map((m, i) => (
+              {visMedsEmUso.map((m, i) => (
                 <li key={i} className="font-body text-sm text-onyx">
                   • <strong>{m.name}</strong>{m.kind === 'suplemento' ? ' (suplemento)' : ''}{[m.dose, m.frequency].filter(Boolean).length ? ` — ${[m.dose, m.frequency].filter(Boolean).join(', ')}` : ''}
                   {periodo(m.startedOn, m.untilOn)}
@@ -313,16 +654,19 @@ function LegacyReport() {
               ))}
             </ul>
           )}
-          {medsSusp.length > 0 && (
-            <p className="font-body text-xs text-mauve/60 mt-2">Suspensos: {medsSusp.map(m => m.name).join(', ')}.</p>
+          {perMedsSusp.length > 0 && (
+            <p className="font-body text-xs text-mauve/60 mt-2">Suspensos: {perMedsSusp.map(m => m.name).join(', ')}.</p>
           )}
         </section>
         )}
 
+        {/* ══════════ MINHA SAÚDE ══════════ */}
+        {showMinhaSaude && <ReportBand>Minha Saúde</ReportBand>}
+
         {/* Condições de saúde — próprias + histórico familiar */}
         {sections.condicoes && (
-        <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Condições de saúde</h2>
+        <section id="sec-condicoes" style={{ scrollMarginTop: 16 }}>
+          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Condições de Saúde</h2>
           {condProprias.length === 0 ? (
             <p className="font-body text-sm text-mauve/60">Nenhuma condição registrada.</p>
           ) : (
@@ -351,31 +695,12 @@ function LegacyReport() {
         </section>
         )}
 
-        {/* Hábitos de vida */}
-        {sections.habitos && (
-        <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Hábitos de vida</h2>
-          {habits.length === 0 ? (
-            <p className="font-body text-sm text-mauve/60">Nenhum hábito registrado.</p>
-          ) : (
-            <ul className="space-y-1">
-              {habits.map((h, i) => (
-                <li key={i} className="font-body text-sm text-onyx">
-                  • <span className="text-mauve/70">{HABIT_LABEL[h.category] ?? 'Hábito'}:</span> {h.description}{h.frequency ? ` — ${h.frequency}` : ''}
-                  {h.notes ? <span className="block text-xs text-mauve/60">{h.notes}</span> : null}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-        )}
-
-        {/* Óculos e lentes de contato */}
+        {/* Recursos de Saúde (correção visual: óculos e lentes de contato) */}
         {sections.visao && (
-        <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Óculos e lentes de contato</h2>
+        <section id="sec-visao" style={{ scrollMarginTop: 16 }}>
+          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Recursos de Saúde</h2>
           {eyewear.length === 0 ? (
-            <p className="font-body text-sm text-mauve/60">Nenhum registro.</p>
+            <p className="font-body text-sm text-mauve/60">Nenhum recurso registrado.</p>
           ) : (
             <ul className="space-y-1.5">
               {eyewear.map((e, i) => {
@@ -389,6 +714,7 @@ function LegacyReport() {
                     {grauStr(e.odSph, e.odCyl, e.odAxis, e.odAdd) ? <span className="block text-xs text-mauve/70 ml-3">OD: {grauStr(e.odSph, e.odCyl, e.odAxis, e.odAdd)}</span> : null}
                     {grauStr(e.oeSph, e.oeCyl, e.oeAxis, e.oeAdd) ? <span className="block text-xs text-mauve/70 ml-3">OE: {grauStr(e.oeSph, e.oeCyl, e.oeAxis, e.oeAdd)}</span> : null}
                     {extras.length ? <span className="block text-xs text-mauve/60 ml-3">{extras.join(' · ')}</span> : null}
+                    {e.fileUrl ? <span className="block ml-3 mt-0.5"><ProvenanceLine provenance={resourceProvenance({ fileUrl: e.fileUrl, prescriber: e.prescriber })} showOrigin={false} /></span> : null}
                   </li>
                 )
               })}
@@ -397,79 +723,19 @@ function LegacyReport() {
         </section>
         )}
 
-        {/* Jornada */}
-        {sections.eventos && (
-        <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Consultas, procedimentos e eventos</h2>
-          {events.length === 0 ? (
-            <p className="font-body text-sm text-mauve/60">Nenhum evento registrado.</p>
-          ) : (
-            <table className="w-full text-left">
-              <tbody>
-                {events.map((e, i) => (
-                  <tr key={i} className="border-b border-border/50">
-                    <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(e.date)}</td>
-                    <td className="font-body text-sm text-onyx py-1.5">
-                      <span className="text-mauve/70">{typeLabel(e.eventType)}{e.prof && PROF_LABEL[e.prof] ? ` (${PROF_LABEL[e.prof]})` : ''}:</span> {e.title}
-                      {e.notes ? <span className="block text-xs text-mauve/60">{e.notes}</span> : null}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </section>
-        )}
-
-        {/* Exames */}
-        {sections.exames && (
-        <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Exames enviados</h2>
-          {exams.length === 0 ? (
-            <p className="font-body text-sm text-mauve/60">Nenhum exame enviado.</p>
-          ) : (
-            <ul className="space-y-1">
-              {exams.map((e, i) => (
-                <li key={i} className="font-body text-sm text-onyx">• {fmt(e.date)} — {e.type}</li>
-              ))}
-            </ul>
-          )}
-        </section>
-        )}
-
-        {/* Exames de ômica */}
-        {sections.omica && (
-        <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Exames de ômica</h2>
-          {omics.length === 0 ? (
-            <p className="font-body text-sm text-mauve/60">Nenhum exame de ômica registrado.</p>
-          ) : (
-            <ul className="space-y-1">
-              {omics.map((o, i) => (
-                <li key={i} className="font-body text-sm text-onyx">
-                  • {o.date ? `${fmt(o.date)} — ` : ''}<strong>{DOMAIN_LABEL[o.domain as OmicsDomain] ?? 'Ômica'}</strong>
-                  {[o.laboratory, o.totalFeatures != null ? `${o.totalFeatures.toLocaleString('pt-BR')} marcadores` : null].filter(Boolean).length
-                    ? ` (${[o.laboratory, o.totalFeatures != null ? `${o.totalFeatures.toLocaleString('pt-BR')} marcadores` : null].filter(Boolean).join(', ')})` : ''}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-        )}
-
         {/* Medidas corporais */}
         {sections.medidas && (
-        <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Medidas corporais</h2>
+        <section id="sec-medidas" style={{ scrollMarginTop: 16 }}>
+          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Medidas Corporais</h2>
           {alturaCm != null && (
             <p className="font-body text-sm text-onyx mb-1"><span className="text-mauve/70">Altura:</span> {alturaCm} cm</p>
           )}
-          {measuresCorpo.length === 0 ? (
+          {perMeasuresCorpo.length === 0 ? (
             <p className="font-body text-sm text-mauve/60">{alturaCm != null ? 'Sem outras medidas registradas.' : 'Nenhuma medida registrada.'}</p>
           ) : (
             <table className="w-full text-left">
               <tbody>
-                {measuresCorpo.map((m, i) => (
+                {perMeasuresCorpo.map((m, i) => (
                   <tr key={i} className="border-b border-border/50">
                     <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(m.date)}</td>
                     <td className="font-body text-sm text-onyx py-1.5">
@@ -485,14 +751,14 @@ function LegacyReport() {
 
         {/* Sinais vitais */}
         {sections.sinais && (
-        <section>
-          <h2 className="font-body text-sm font-bold text-onyx mb-2">Sinais vitais</h2>
-          {measuresVitais.length === 0 ? (
+        <section id="sec-sinais" style={{ scrollMarginTop: 16 }}>
+          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Sinais Vitais</h2>
+          {perMeasuresVitais.length === 0 ? (
             <p className="font-body text-sm text-mauve/60">Nenhum sinal vital registrado.</p>
           ) : (
             <table className="w-full text-left">
               <tbody>
-                {measuresVitais.map((m, i) => (
+                {perMeasuresVitais.map((m, i) => (
                   <tr key={i} className="border-b border-border/50">
                     <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(m.date)}</td>
                     <td className="font-body text-sm text-onyx py-1.5">
@@ -502,6 +768,25 @@ function LegacyReport() {
                 ))}
               </tbody>
             </table>
+          )}
+        </section>
+        )}
+
+        {/* Hábitos de vida */}
+        {sections.habitos && (
+        <section id="sec-habitos" style={{ scrollMarginTop: 16 }}>
+          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Hábitos</h2>
+          {habits.length === 0 ? (
+            <p className="font-body text-sm text-mauve/60">Nenhum hábito registrado.</p>
+          ) : (
+            <ul className="space-y-1">
+              {habits.map((h, i) => (
+                <li key={i} className="font-body text-sm text-onyx">
+                  • <span className="text-mauve/70">{HABIT_LABEL[h.category] ?? 'Hábito'}:</span> {h.description}{h.frequency ? ` — ${h.frequency}` : ''}
+                  {h.notes ? <span className="block text-xs text-mauve/60">{h.notes}</span> : null}
+                </li>
+              ))}
+            </ul>
           )}
         </section>
         )}

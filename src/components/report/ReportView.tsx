@@ -52,7 +52,7 @@ export default function ReportView(props: ReportViewProps) {
   return (
     <div className={cn('flex flex-col gap-4', className)}>
       <div className="flex flex-wrap items-center gap-2">
-        <h1 className="font-display text-xl text-onyx">Relatório de saúde</h1>
+        <h1 className="font-display text-xl text-onyx">Relatório</h1>
         <div className="ml-auto flex gap-2">
           <Button variant="secondary" size="sm"><Printer className="h-4 w-4" /> PDF</Button>
           <Button variant="primary" size="sm"><Share2 className="h-4 w-4" /> Compartilhar</Button>
