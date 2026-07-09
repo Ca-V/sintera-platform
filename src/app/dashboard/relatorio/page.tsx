@@ -27,6 +27,7 @@ import {
   ChevronDown, Minus,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { assembleOrganizedBiomarkers } from '@/lib/ai/insights/assembler'
 import { useUser } from '@/context/UserContext'
 import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
 import { typeLabel } from '@/lib/agenda' // fonte ÚNICA de rótulos de tipo de evento
@@ -125,19 +126,23 @@ function LegacyReport() {
   const [templates, setTemplates] = useState<{ id: string; name: string; selection: Record<string, unknown> }[]>([])
   const [tplName, setTplName] = useState('')
   const [configOpen, setConfigOpen] = useState(false)   // "Configurações de relatório" (discreto)
-  // Síntese factual dos biomarcadores ORGANIZADOS (TEMA C) — consome o SSOT único
-  // (/api/biomarkers/organized → Assembler). A tela não reagrupa; só exibe o resumo.
+  // Síntese factual dos biomarcadores ORGANIZADOS (TEMA C) — consome o SSOT único.
+  // Consumidor INTERNO chama o serviço de DOMÍNIO direto (sem hop HTTP): o
+  // Assembler é isomórfico e a RLS do client autenticado protege os dados. A rota
+  // /api/biomarkers/organized permanece apenas como adaptador p/ consumidores
+  // externos. A tela não reagrupa; só exibe o resumo.
   const [bioOrg, setBioOrg] = useState<{ total: number; categories: number; outOfRange: number } | null>(null)
   useEffect(() => {
+    if (!user?.id) return
     let alive = true
-    fetch('/api/biomarkers/organized')
-      .then(r => (r.ok ? r.json() : null))
-      .then((d: { counts?: { total: number; categories: number; outOfRange: number } } | null) => {
-        if (alive && d?.counts) setBioOrg(d.counts)
+    assembleOrganizedBiomarkers(supabase, { userId: user.id })
+      .then(org => {
+        if (alive) setBioOrg({ total: org.counts.total, categories: org.counts.categories, outOfRange: org.counts.outOfRange })
       })
       .catch(() => { /* silencioso — o resumo funciona sem a síntese */ })
     return () => { alive = false }
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id])
 
   // Árvore de seleção = espelho do menu lateral (UX-001): grupos expansíveis,
   // seleção por grupo (tri-state) e por item. Mesma ordem/nomenclatura da sidebar.

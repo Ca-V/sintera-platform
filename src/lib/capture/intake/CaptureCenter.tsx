@@ -15,7 +15,7 @@ import { FlaskConical, Pill, Glasses, HeartPulse, Dna, FileText, UploadCloud, Ca
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import { CAPTURE_PROCESSORS, processorFor, processorsAccepting } from '../registry'
-import { classifyByFilename } from '../classifier/classify'
+import { classifyCheap } from '../classifier/classify'
 import { captureError } from '../result'
 import { logCapture } from '../telemetry'
 import type { DocumentKind, CaptureResult, ClassificationResult } from '../types'
@@ -104,8 +104,8 @@ export default function CaptureCenter({ className = '', onDone }: CaptureCenterP
     setFile(f)
     setPreviewUrl(f.type.startsWith('image/') ? URL.createObjectURL(f) : null)
     setAutoConfident(false)
-    // Palpite instantâneo por NOME (rede de segurança).
-    const guess = classifyByFilename(f.name).kind
+    // Palpite instantâneo pela camada barata do ContentClassifier (síncrono, sem rede).
+    const guess = classifyCheap(f.type, f.name).kind
     setKind(processorsAccepting(f.type).some(p => p.kind === guess) ? guess : null)
     // Em seguida, o ContentClassifier lê o CONTEÚDO e melhora o palpite (fire-and-forget).
     setClassifying(true)
@@ -138,7 +138,7 @@ export default function CaptureCenter({ className = '', onDone }: CaptureCenterP
   }
 
   function cancel() {
-    if (file) logCapture({ kind, suggested: classifyByFilename(file.name).kind, outcome: 'cancelled' })
+    if (file) logCapture({ kind, suggested: classifyCheap(file.type, file.name).kind, outcome: 'cancelled' })
     reset()
   }
 
@@ -154,7 +154,7 @@ export default function CaptureCenter({ className = '', onDone }: CaptureCenterP
     if (kind === 'exam' && !user) { setError('Faça login para enviar.'); return }
     setSending(true); setError(null)
     const start = Date.now()
-    const suggested = classifyByFilename(file.name).kind
+    const suggested = classifyCheap(file.type, file.name).kind
     try {
       const res = await proc.process(file, { supabase, userId: user?.id ?? '' })
       logCapture({ kind, suggested, outcome: res.status, durationMs: Date.now() - start, errorReason: res.errorReason })

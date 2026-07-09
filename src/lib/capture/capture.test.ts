@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { CAPTURE_PROCESSORS, processorFor, processorsAccepting } from './registry'
-import { classifyByFilename } from './classifier/classify'
+import { classifyCheap } from './classifier/classify'
 import { classifyCaptureError, captureForwarded } from './result'
 import { medicationProcessor } from './processors/medication'
 
@@ -20,28 +20,35 @@ describe('registry de processadores', () => {
     expect(processorFor('medication_label')?.target).toBe('/dashboard/medicamentos')
     expect(processorFor('unknown')).toBeNull()
   })
-  it('processorsAccepting filtra por MIME', () => {
+  it('processorsAccepting devolve os destinos compatíveis com o MIME', () => {
+    // Só devolve processadores que aceitam o formato pedido.
     expect(processorsAccepting('application/pdf').every(p => p.accepts.includes('application/pdf'))).toBe(true)
-    // receita de medicamento é só imagem → não aceita PDF
-    expect(processorsAccepting('application/pdf').some(p => p.kind === 'medication_label')).toBe(false)
+    // CAP-001 Princípio 1: a lista de destinos NÃO varia pelo tipo de arquivo —
+    // todos os processadores aceitam PDF/JPG/PNG; a compatibilidade é validada no
+    // envio, não escondendo destinos. Logo, para qualquer formato suportado a
+    // lista é a mesma (nenhum destino é ocultado).
+    for (const mime of ['application/pdf', 'image/jpeg', 'image/png']) {
+      expect(processorsAccepting(mime).map(p => p.kind).sort())
+        .toEqual(CAPTURE_PROCESSORS.map(p => p.kind).sort())
+    }
   })
 })
 
-describe('classifier — heurística por nome de arquivo', () => {
+describe('classifier — camada barata do ContentClassifier (classifyCheap)', () => {
   it('reconhece receita de óculos', () => {
-    expect(classifyByFilename('receita_oculos_grau.pdf').kind).toBe('eyeglass_prescription')
+    expect(classifyCheap('application/pdf', 'receita_oculos_grau.pdf').kind).toBe('eyeglass_prescription')
   })
   it('reconhece medicamento', () => {
-    expect(classifyByFilename('bula_losartana.jpg').kind).toBe('medication_label')
+    expect(classifyCheap('image/jpeg', 'bula_losartana.jpg').kind).toBe('medication_label')
   })
   it('reconhece exame ômico', () => {
-    expect(classifyByFilename('painel_genomico.pdf').kind).toBe('omics')
+    expect(classifyCheap('application/pdf', 'painel_genomico.pdf').kind).toBe('omics')
   })
   it('reconhece exame', () => {
-    expect(classifyByFilename('hemograma_completo.pdf').kind).toBe('exam')
+    expect(classifyCheap('application/pdf', 'hemograma_completo.pdf').kind).toBe('exam')
   })
   it('sem sinal → unknown (UI pergunta à usuária)', () => {
-    expect(classifyByFilename('IMG_2026_0001.jpg').kind).toBe('unknown')
+    expect(classifyCheap('image/jpeg', 'IMG_2026_0001.jpg').kind).toBe('unknown')
   })
 })
 

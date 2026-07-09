@@ -14,7 +14,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
-import { classifyByFilename } from '@/lib/capture/classifier/classify'
+import { classifyCheap } from '@/lib/capture/classifier/classify'
 import type { ClassificationResult, DocumentKind } from '@/lib/capture/types'
 
 const MODEL = 'claude-haiku-4-5-20251001'
@@ -33,17 +33,6 @@ Responda APENAS com JSON: {"kind":"","subtype":null,"confidence":""}.`
 const VALID_KINDS: DocumentKind[] = ['exam', 'medication_label', 'eyeglass_prescription', 'other']
 const SUPPORTED_IMAGE = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 
-/**
- * Sinais BARATOS (sem IA). Hoje: os formatos aceitos (PDF/JPEG/PNG) não são
- * autoexplicativos pelo MIME, então o único sinal barato é o nome do arquivo
- * (confiança baixa). Extensível para MIME/assinatura inequívocos (DICOM, XML…)
- * sem tocar o contrato — bastando devolver `confidence:'high'` para curto-circuitar.
- */
-function cheapClassify(mediaType: string, filename: string): ClassificationResult {
-  void mediaType // reservado p/ regras de MIME/assinatura futuras
-  return classifyByFilename(filename)
-}
-
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: auth } = await supabase.auth.getUser()
@@ -57,8 +46,8 @@ export async function POST(req: NextRequest) {
   const filename = typeof body.filename === 'string' ? body.filename : ''
   const isPdf = mediaType === 'application/pdf'
 
-  // 1. Sinais baratos primeiro.
-  const cheap = cheapClassify(mediaType, filename)
+  // 1. Sinais baratos primeiro (mesma camada barata que a tela consome).
+  const cheap = classifyCheap(mediaType, filename)
 
   // 2. Se um sinal barato já for CONCLUSIVO (alta confiança), NÃO chama IA.
   if (cheap.confidence === 'high') return NextResponse.json(cheap)
