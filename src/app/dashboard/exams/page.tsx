@@ -286,7 +286,7 @@ export default function ExamsPage() {
           dragging ? 'border-petal bg-blush' : 'border-border hover:border-petal/50 hover:bg-blush/30',
           uploading ? 'opacity-60 pointer-events-none select-none' : ''].join(' ')}
       >
-        <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" className="sr-only" disabled={uploading} onChange={onInputChange} />
+        <input ref={fileInputRef} type="file" aria-label="Selecionar arquivo de exame" accept=".pdf,.jpg,.jpeg,.png" className="sr-only" disabled={uploading} onChange={onInputChange} />
         <div className="w-14 h-14 rounded-2xl gradient-sintera-soft flex items-center justify-center mx-auto mb-4">
           <Upload size={24} className={`text-petal ${uploading ? 'animate-bounce' : ''}`} />
         </div>
@@ -374,6 +374,7 @@ export default function ExamsPage() {
               <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-mauve/50" />
               <input
                 type="text"
+                aria-label="Buscar exame"
                 placeholder="Buscar exame…"
                 value={searchName}
                 onChange={e => setSearchName(e.target.value)}
@@ -383,6 +384,7 @@ export default function ExamsPage() {
 
             {/* Filtro por ano */}
             <select
+              aria-label="Filtrar por ano"
               value={filterYear}
               onChange={e => setFilterYear(e.target.value)}
               className="py-2 px-3 bg-ivory border border-border rounded-xl font-body text-sm text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40"
@@ -395,6 +397,7 @@ export default function ExamsPage() {
 
             {/* Filtro por status */}
             <select
+              aria-label="Filtrar por status"
               value={filterStatus}
               onChange={e => setFilterStatus(e.target.value)}
               className="py-2 px-3 bg-ivory border border-border rounded-xl font-body text-sm text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40"
@@ -506,7 +509,7 @@ export default function ExamsPage() {
                                 <div className="w-9 h-9 rounded-xl bg-blush flex items-center justify-center flex-shrink-0">
                                   <FileText size={17} className="text-petal" />
                                 </div>
-                                <input value={nameDraft} autoFocus
+                                <input value={nameDraft} autoFocus aria-label="Nome do exame"
                                   onChange={e => setNameDraft(e.target.value)}
                                   onKeyDown={e => { if (e.key === 'Enter') saveExamName(exam.id); if (e.key === 'Escape') setEditingNameId(null) }}
                                   className="flex-1 min-w-0 px-2 py-1 border border-border rounded-lg font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/40" />
@@ -534,7 +537,7 @@ export default function ExamsPage() {
                                 title={exam.type ?? 'Exame'}
                                 onTitleClick={() => router.push('/dashboard/exams/' + exam.id)}
                                 trailing={
-                                  <span className={`inline-flex items-center gap-1 text-[10px] font-body font-medium px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.color}`}>
+                                  <span className={`inline-flex items-center gap-1 text-[11px] font-body font-medium px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.color}`}>
                                     <Icon size={10} className={isRunning ? 'animate-spin' : ''} />
                                     {cfg.label}
                                   </span>

@@ -9,6 +9,8 @@
 import { createClient } from '@supabase/supabase-js'
 import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
 import { resolvePeriod, inPeriod, overlapsPeriod, type Period } from '@/lib/communication/period'
+import { rowToHealthEvent, selectFinancial, type HealthEventRow } from '@/lib/agenda/event' // Despesas = mesma projeção financeira do domínio (SSOT)
+import { contraceptiveLabel } from '@/lib/cycle' // SSOT dos métodos contraceptivos
 
 export const metadata = { robots: { index: false, follow: false } }
 
@@ -79,16 +81,18 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
   const rp = resolvePeriod((share.period as Period | null) ?? { preset: 'all' })
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = admin as any
-  const [{ data: prof }, { data: meds }, { data: events }, { data: exams }, { data: measures }, { data: conditions }, { data: habits }, { data: eyewear }, { data: omics }, { data: authUser }] = await Promise.all([
+  const [{ data: prof }, { data: meds }, { data: events }, { data: exams }, { data: measures }, { data: conditions }, { data: habits }, { data: eyewear }, { data: omics }, { data: contraceptives }, { data: menstruations }, { data: authUser }] = await Promise.all([
     db.from('profiles').select('name, height_cm').eq('id', uid).maybeSingle(),
     db.from('medications').select('name, kind, dose, frequency, started_on, until_date, status').eq('user_id', uid).order('status'),
-    db.from('health_events').select('title, event_type, event_date, notes, professional_kind').eq('user_id', uid).eq('synthetic', false).order('event_date', { ascending: false }),
+    db.from('health_events').select('id, title, event_type, event_date, notes, professional_kind, status, amount_cents, direct_expense').eq('user_id', uid).eq('synthetic', false).order('event_date', { ascending: false }),
     db.from('exams').select('type, exam_date, created_at').eq('user_id', uid).order('created_at', { ascending: false }),
     db.from('body_metrics').select('metric, label, value_text, unit, measured_on').eq('user_id', uid).order('measured_on', { ascending: false }),
     db.from('health_conditions').select('scope, name, relative, since_label, notes').eq('user_id', uid).order('created_at', { ascending: false }),
     db.from('life_habits').select('category, description, frequency, notes').eq('user_id', uid).order('created_at', { ascending: false }),
     db.from('health_resources').select('name, resource_type, prescriber, started_on, attributes').eq('user_id', uid).eq('resource_type', 'correcao_visual').order('created_at', { ascending: false }),
     db.from('omics_panels').select('domain, laboratory, total_features, collected_on, created_at').eq('user_id', uid).order('collected_on', { ascending: false, nullsFirst: false }),
+    db.from('contraceptive_methods').select('kind, brand, started_on, replace_on, status').eq('user_id', uid).order('created_at', { ascending: false }),
+    db.from('menstrual_periods').select('started_on, notes').eq('user_id', uid).order('started_on', { ascending: false }).limit(24),
     admin.auth.admin.getUserById(uid),
   ])
 
@@ -123,6 +127,11 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
   const condProprias = cdArr.filter(c => c.scope === 'propria')
   const condFamiliar = cdArr.filter(c => c.scope === 'familiar')
   const hbArr = (habits ?? []) as Array<Record<string, unknown>>
+  // Despesas = MESMA projeção financeira do domínio (selectFinancial), sem reimplementar a regra.
+  const expArr = selectFinancial(((events ?? []) as HealthEventRow[]).map(rowToHealthEvent)).filter(x => inPeriod(x.date, rp))
+  const ccArr = (contraceptives ?? []) as Array<Record<string, unknown>>
+  const mpArr = ((menstruations ?? []) as Array<Record<string, unknown>>).filter(m => inPeriod(m.started_on as string, rp))
+  const brl = (cents: number | null | undefined) => `R$ ${((cents ?? 0) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   const allowed = Array.isArray(share.sections) ? (share.sections as string[]) : null
   const show = (k: string) => !allowed || allowed.includes(k)
   const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
@@ -209,7 +218,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
 
       {show('eventos') && (
       <section style={{ marginBottom: 22 }}>
-        <h2 style={{ fontSize: 15 }}>Consultas, procedimentos e eventos</h2>
+        <h2 style={{ fontSize: 15 }}>Agenda</h2>
         {evArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum registrado.</p> : (
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
             <tbody>
@@ -287,6 +296,53 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
               ))}
             </tbody>
           </table>
+        )}
+      </section>
+      )}
+
+      {show('ciclo') && (
+      <section style={{ marginBottom: 22 }}>
+        <h2 style={{ fontSize: 15 }}>Ciclo e Contracepção</h2>
+        {ccArr.length === 0 && mpArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum registro de ciclo ou contracepção.</p> : (
+          <>
+            {ccArr.length > 0 && (
+              <ul style={{ paddingLeft: 18, fontSize: 14 }}>
+                {ccArr.map((c, i) => (
+                  <li key={i}><strong>{contraceptiveLabel(c.kind as string)}</strong>{c.brand ? ` (${c.brand as string})` : ''}
+                    {c.started_on ? ` — desde ${fmt(c.started_on as string)}` : ''}{c.replace_on ? ` · troca prevista ${fmt(c.replace_on as string)}` : ''}
+                    {c.status && c.status !== 'ativo' ? ` (${c.status as string})` : ''}</li>
+                ))}
+              </ul>
+            )}
+            {mpArr.length > 0 && (
+              <>
+                <h3 style={{ fontSize: 12, color: '#8a7b92', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 12, marginBottom: 4 }}>Menstruação</h3>
+                <p style={{ fontSize: 14 }}>{mpArr.map(m => fmt(m.started_on as string)).join(' · ')}</p>
+              </>
+            )}
+          </>
+        )}
+      </section>
+      )}
+
+      {show('gastos') && (
+      <section style={{ marginBottom: 22 }}>
+        <h2 style={{ fontSize: 15 }}>Despesas</h2>
+        {expArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhuma despesa registrada.</p> : (
+          <>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+              <tbody>
+                {expArr.map((x, i) => (
+                  <tr key={i} style={{ borderBottom: '1px solid #f2eef4' }}>
+                    <td style={{ padding: '6px 12px 6px 0', color: '#8a7b92', whiteSpace: 'nowrap', verticalAlign: 'top' }}>{fmt(x.date)}</td>
+                    <td style={{ padding: '6px 0' }}><span style={{ color: '#8a7b92' }}>{TYPE_LABEL[x.type] ?? 'Evento'}:</span> {x.title}</td>
+                    <td style={{ padding: '6px 0 6px 12px', textAlign: 'right', whiteSpace: 'nowrap', verticalAlign: 'top' }}>{brl(x.amountCents)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p style={{ fontSize: 14, fontWeight: 600, marginTop: 8, textAlign: 'right' }}>Total: {brl(expArr.reduce((s, x) => s + (x.amountCents ?? 0), 0))}</p>
+          </>
         )}
       </section>
       )}

@@ -80,7 +80,7 @@ function RightCard({ right }: { right: Right }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="font-body text-sm font-semibold text-onyx">{right.title}</h3>
-            <span className="font-body text-[10px] text-mauve/60 bg-ivory border border-border px-2 py-0.5 rounded-full">
+            <span className="font-body text-[11px] text-mauve/60 bg-ivory border border-border px-2 py-0.5 rounded-full">
               LGPD {right.article}
             </span>
           </div>
@@ -90,10 +90,10 @@ function RightCard({ right }: { right: Right }) {
 
       <div className="ml-12 space-y-2">
         <div className="bg-ivory rounded-xl px-4 py-3 space-y-1">
-          <p className="font-body text-[10px] font-semibold text-onyx/40 uppercase tracking-wider">Como exercer</p>
+          <p className="font-body text-[11px] font-semibold text-onyx/40 uppercase tracking-wider">Como exercer</p>
           <p className="font-body text-xs text-onyx/70 leading-relaxed">{right.howTo}</p>
         </div>
-        <p className="font-body text-[10px] text-mauve/50">
+        <p className="font-body text-[11px] text-mauve/50">
           <span className="font-semibold">Prazo de resposta:</span> {right.sla}
         </p>
       </div>

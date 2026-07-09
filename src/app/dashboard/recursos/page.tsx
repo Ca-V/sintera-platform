@@ -357,14 +357,14 @@ export default function RecursosPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="font-body text-xs text-mauve/70 block mb-1">Tipo de recurso</label>
-              <select value={f.resource_type} onChange={e => set('resource_type', e.target.value)} className={inputCls}>
+              <label htmlFor="recurso-tipo" className="font-body text-xs text-mauve/70 block mb-1">Tipo de recurso</label>
+              <select id="recurso-tipo" value={f.resource_type} onChange={e => set('resource_type', e.target.value)} className={inputCls}>
                 {TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
               </select>
             </div>
             <div>
-              <label className="font-body text-xs text-mauve/70 block mb-1">Situação</label>
-              <select value={f.status} onChange={e => set('status', e.target.value)} className={inputCls}>
+              <label htmlFor="recurso-situacao" className="font-body text-xs text-mauve/70 block mb-1">Situação</label>
+              <select id="recurso-situacao" value={f.status} onChange={e => set('status', e.target.value)} className={inputCls}>
                 {STATUS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
               </select>
             </div>
@@ -373,9 +373,9 @@ export default function RecursosPage() {
           <p className="font-body text-[11px] text-mauve/50 -mt-1">{TYPE_META(f.resource_type)?.hint}</p>
 
           <div>
-            <label className="font-body text-xs text-mauve/70 block mb-1">Nome do recurso</label>
+            <label htmlFor="recurso-nome" className="font-body text-xs text-mauve/70 block mb-1">Nome do recurso</label>
             <div className="flex items-center gap-2">
-              <input type="text" value={f.name} onChange={e => set('name', e.target.value)}
+              <input id="recurso-nome" type="text" value={f.name} onChange={e => set('name', e.target.value)}
                 placeholder={isVisual ? 'Ex.: Óculos de longe' : 'Ex.: Marca-passo, aparelho auditivo'}
                 className={`${inputCls} flex-1 min-w-0`} />
               <VoiceInput onResult={t => setF(s => ({ ...s, name: (s.name ? s.name + ' ' : '') + t }))} />
@@ -384,23 +384,23 @@ export default function RecursosPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="font-body text-xs text-mauve/70 block mb-1">Marca / modelo (opcional)</label>
-              <input type="text" value={f.brand} onChange={e => set('brand', e.target.value)} className={inputCls} />
+              <label htmlFor="recurso-marca" className="font-body text-xs text-mauve/70 block mb-1">Marca / modelo (opcional)</label>
+              <input id="recurso-marca" type="text" value={f.brand} onChange={e => set('brand', e.target.value)} className={inputCls} />
             </div>
             <div>
-              <label className="font-body text-xs text-mauve/70 block mb-1">Profissional / quem indicou (opcional)</label>
-              <input type="text" value={f.prescriber} onChange={e => set('prescriber', e.target.value)} className={inputCls} />
+              <label htmlFor="recurso-prescriber" className="font-body text-xs text-mauve/70 block mb-1">Profissional / quem indicou (opcional)</label>
+              <input id="recurso-prescriber" type="text" value={f.prescriber} onChange={e => set('prescriber', e.target.value)} className={inputCls} />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="font-body text-xs text-mauve/70 block mb-1">Desde quando (opcional)</label>
-              <input type="date" value={f.started_on} onChange={e => set('started_on', e.target.value)} className={inputCls} />
+              <label htmlFor="recurso-desde" className="font-body text-xs text-mauve/70 block mb-1">Desde quando (opcional)</label>
+              <input id="recurso-desde" type="date" value={f.started_on} onChange={e => set('started_on', e.target.value)} className={inputCls} />
             </div>
             <div>
-              <label className="font-body text-xs text-mauve/70 block mb-1">Troca / validade prevista (opcional)</label>
-              <input type="date" value={f.until_date} onChange={e => set('until_date', e.target.value)} className={inputCls} />
+              <label htmlFor="recurso-troca" className="font-body text-xs text-mauve/70 block mb-1">Troca / validade prevista (opcional)</label>
+              <input id="recurso-troca" type="date" value={f.until_date} onChange={e => set('until_date', e.target.value)} className={inputCls} />
             </div>
           </div>
 
@@ -408,50 +408,50 @@ export default function RecursosPage() {
           {isVisual && (
             <div className="rounded-xl border border-border/70 bg-ivory/40 p-3 space-y-3">
               <div>
-                <label className="font-body text-xs text-mauve/70 block mb-1">Formato</label>
-                <select value={f.vision_kind} onChange={e => set('vision_kind', e.target.value)} className={gradeCls}>
+                <label htmlFor="recurso-formato" className="font-body text-xs text-mauve/70 block mb-1">Formato</label>
+                <select id="recurso-formato" value={f.vision_kind} onChange={e => set('vision_kind', e.target.value)} className={gradeCls}>
                   <option value="oculos">Óculos</option>
                   <option value="lentes_contato">Lentes de contato</option>
                 </select>
               </div>
               <div className="space-y-2">
                 <div className="grid grid-cols-[2.2rem_1fr_1fr_1fr_1fr] items-center gap-1.5">
-                  <span className="font-body text-[10px] text-mauve/60" />
-                  <span className="font-body text-[10px] text-mauve/60 text-center">Esférico</span>
-                  <span className="font-body text-[10px] text-mauve/60 text-center">Cilíndrico</span>
-                  <span className="font-body text-[10px] text-mauve/60 text-center">Eixo</span>
-                  <span className="font-body text-[10px] text-mauve/60 text-center">Adição</span>
+                  <span className="font-body text-[11px] text-mauve/60" />
+                  <span className="font-body text-[11px] text-mauve/60 text-center">Esférico</span>
+                  <span className="font-body text-[11px] text-mauve/60 text-center">Cilíndrico</span>
+                  <span className="font-body text-[11px] text-mauve/60 text-center">Eixo</span>
+                  <span className="font-body text-[11px] text-mauve/60 text-center">Adição</span>
                 </div>
                 <div className="grid grid-cols-[2.2rem_1fr_1fr_1fr_1fr] items-center gap-1.5">
                   <span className="font-body text-xs font-semibold text-onyx">OD</span>
-                  <input value={f.od_sph} onChange={e => set('od_sph', e.target.value)} placeholder="-2,00" className={gradeCls} />
-                  <input value={f.od_cyl} onChange={e => set('od_cyl', e.target.value)} placeholder="-0,75" className={gradeCls} />
-                  <input value={f.od_axis} onChange={e => set('od_axis', e.target.value)} placeholder="180" className={gradeCls} />
-                  <input value={f.od_add} onChange={e => set('od_add', e.target.value)} placeholder="+2,00" className={gradeCls} />
+                  <input aria-label="OD esférico" value={f.od_sph} onChange={e => set('od_sph', e.target.value)} placeholder="-2,00" className={gradeCls} />
+                  <input aria-label="OD cilíndrico" value={f.od_cyl} onChange={e => set('od_cyl', e.target.value)} placeholder="-0,75" className={gradeCls} />
+                  <input aria-label="OD eixo" value={f.od_axis} onChange={e => set('od_axis', e.target.value)} placeholder="180" className={gradeCls} />
+                  <input aria-label="OD adição" value={f.od_add} onChange={e => set('od_add', e.target.value)} placeholder="+2,00" className={gradeCls} />
                 </div>
                 <div className="grid grid-cols-[2.2rem_1fr_1fr_1fr_1fr] items-center gap-1.5">
                   <span className="font-body text-xs font-semibold text-onyx">OE</span>
-                  <input value={f.oe_sph} onChange={e => set('oe_sph', e.target.value)} placeholder="-2,00" className={gradeCls} />
-                  <input value={f.oe_cyl} onChange={e => set('oe_cyl', e.target.value)} placeholder="-0,75" className={gradeCls} />
-                  <input value={f.oe_axis} onChange={e => set('oe_axis', e.target.value)} placeholder="180" className={gradeCls} />
-                  <input value={f.oe_add} onChange={e => set('oe_add', e.target.value)} placeholder="+2,00" className={gradeCls} />
+                  <input aria-label="OE esférico" value={f.oe_sph} onChange={e => set('oe_sph', e.target.value)} placeholder="-2,00" className={gradeCls} />
+                  <input aria-label="OE cilíndrico" value={f.oe_cyl} onChange={e => set('oe_cyl', e.target.value)} placeholder="-0,75" className={gradeCls} />
+                  <input aria-label="OE eixo" value={f.oe_axis} onChange={e => set('oe_axis', e.target.value)} placeholder="180" className={gradeCls} />
+                  <input aria-label="OE adição" value={f.oe_add} onChange={e => set('oe_add', e.target.value)} placeholder="+2,00" className={gradeCls} />
                 </div>
-                <p className="font-body text-[10px] text-mauve/50">OD = olho direito · OE = olho esquerdo</p>
+                <p className="font-body text-[11px] text-mauve/50">OD = olho direito · OE = olho esquerdo</p>
               </div>
               {f.vision_kind === 'oculos' ? (
                 <div>
-                  <label className="font-body text-xs text-mauve/70 block mb-1">DNP / DP (opcional)</label>
-                  <input type="text" value={f.dnp} onChange={e => set('dnp', e.target.value)} placeholder="Ex.: 62" className={gradeCls} />
+                  <label htmlFor="recurso-dnp" className="font-body text-xs text-mauve/70 block mb-1">DNP / DP (opcional)</label>
+                  <input id="recurso-dnp" type="text" value={f.dnp} onChange={e => set('dnp', e.target.value)} placeholder="Ex.: 62" className={gradeCls} />
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="font-body text-xs text-mauve/70 block mb-1">Curva base (BC)</label>
-                    <input type="text" value={f.bc} onChange={e => set('bc', e.target.value)} placeholder="Ex.: 8.6" className={gradeCls} />
+                    <label htmlFor="recurso-bc" className="font-body text-xs text-mauve/70 block mb-1">Curva base (BC)</label>
+                    <input id="recurso-bc" type="text" value={f.bc} onChange={e => set('bc', e.target.value)} placeholder="Ex.: 8.6" className={gradeCls} />
                   </div>
                   <div>
-                    <label className="font-body text-xs text-mauve/70 block mb-1">Diâmetro (DIA)</label>
-                    <input type="text" value={f.dia} onChange={e => set('dia', e.target.value)} placeholder="Ex.: 14.2" className={gradeCls} />
+                    <label htmlFor="recurso-dia" className="font-body text-xs text-mauve/70 block mb-1">Diâmetro (DIA)</label>
+                    <input id="recurso-dia" type="text" value={f.dia} onChange={e => set('dia', e.target.value)} placeholder="Ex.: 14.2" className={gradeCls} />
                   </div>
                 </div>
               )}
@@ -459,9 +459,9 @@ export default function RecursosPage() {
           )}
 
           <div>
-            <label className="font-body text-xs text-mauve/70 block mb-1">Observações (opcional)</label>
+            <label htmlFor="recurso-notes" className="font-body text-xs text-mauve/70 block mb-1">Observações (opcional)</label>
             <div className="flex items-start gap-2">
-              <textarea value={f.notes} onChange={e => set('notes', e.target.value)} rows={2} className={`${inputCls} flex-1 min-w-0`} />
+              <textarea id="recurso-notes" value={f.notes} onChange={e => set('notes', e.target.value)} rows={2} className={`${inputCls} flex-1 min-w-0`} />
               <VoiceInput onResult={t => setF(s => ({ ...s, notes: (s.notes ? s.notes + ' ' : '') + t }))} />
             </div>
           </div>

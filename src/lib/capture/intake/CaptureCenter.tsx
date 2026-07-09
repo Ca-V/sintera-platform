@@ -243,7 +243,9 @@ export default function CaptureCenter({ className = '', onDone }: CaptureCenterP
           <div>
             <p className="font-body text-sm font-semibold text-onyx mb-1">Qual é este documento?</p>
             {/* Palpite IMEDIATO (por nome) sempre visível; a IA só refina em segundo plano
-                ("afinando…"), sem bloquear. "Lendo…" só quando ainda não há palpite algum. */}
+                ("afinando…"), sem bloquear. "Lendo…" só quando ainda não há palpite algum.
+                Região aria-live: o leitor de tela anuncia a mudança de estado sem recarregar. */}
+            <div aria-live="polite" aria-atomic="true">
             {kind && processorFor(kind) ? (
               <p className="font-body text-xs text-mauve mb-2 flex flex-wrap items-center gap-x-1.5">
                 <span>
@@ -257,6 +259,7 @@ export default function CaptureCenter({ className = '', onDone }: CaptureCenterP
             ) : classifying ? (
               <p className="font-body text-xs text-mauve mb-2 inline-flex items-center gap-1.5"><Loader2 size={12} className="animate-spin" /> Lendo o documento…</p>
             ) : null}
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {validKinds.map(p => {
                 const Icon = ICONS[p.icon] ?? FileText

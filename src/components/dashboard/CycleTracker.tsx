@@ -84,7 +84,7 @@ export default function CycleTracker() {
                   >
                     {phase.name}
                   </span>
-                  <span className="text-[10px] font-body text-mauve/70">{phase.days}</span>
+                  <span className="text-[11px] font-body text-mauve/70">{phase.days}</span>
                 </div>
               </div>
               {phase.active && (

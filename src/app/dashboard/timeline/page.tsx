@@ -291,7 +291,7 @@ function LegacyTimeline() {
               {it.kind === 'event' && it.status === 'cancelado' && <CardChip tone="neutral">cancelado</CardChip>}
               {it.attachmentUrl && (
                 <a href={it.attachmentUrl} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 font-body text-[10px] text-petal hover:underline"><Paperclip size={10} /> Anexo</a>
+                  className="inline-flex items-center gap-1 font-body text-[11px] text-petal hover:underline"><Paperclip size={10} /> Anexo</a>
               )}
             </>
           }

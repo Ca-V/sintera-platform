@@ -322,7 +322,7 @@ export default function AdminPage() {
                         <span className="font-body text-xs text-onyx flex-1">
                           {eventLabels[ev.event_name] ?? ev.event_name}
                         </span>
-                        <span className="font-body text-[10px] text-mauve/50 flex-shrink-0">
+                        <span className="font-body text-[11px] text-mauve/50 flex-shrink-0">
                           {formatDate(ev.created_at)}
                         </span>
                       </div>
@@ -377,7 +377,7 @@ export default function AdminPage() {
                     <p className="font-body text-xs font-medium text-onyx truncate">{w.name}</p>
                     <p className="font-body text-[11px] text-mauve/60 truncate">{w.email}</p>
                   </div>
-                  <span className="font-body text-[10px] text-mauve/40 flex-shrink-0">
+                  <span className="font-body text-[11px] text-mauve/40 flex-shrink-0">
                     {formatDate(w.created_at)}
                   </span>
                 </div>
@@ -402,6 +402,7 @@ export default function AdminPage() {
               <div key={i} className="flex items-center gap-2">
                 <input
                   type="text"
+                  aria-label={`Nome da destinatária ${i + 1}`}
                   placeholder="Nome"
                   value={r.firstName}
                   onChange={e => updateRecipient(i, 'firstName', e.target.value)}
@@ -409,6 +410,7 @@ export default function AdminPage() {
                 />
                 <input
                   type="email"
+                  aria-label={`E-mail da destinatária ${i + 1}`}
                   placeholder="email@exemplo.com"
                   value={r.email}
                   onChange={e => updateRecipient(i, 'email', e.target.value)}
@@ -432,6 +434,7 @@ export default function AdminPage() {
           {/* Secret de admin */}
           <input
             type="password"
+            aria-label="Admin secret"
             placeholder="Admin secret (ADMIN_SECRET do .env)"
             value={adminSecret}
             onChange={e => setAdminSecret(e.target.value)}

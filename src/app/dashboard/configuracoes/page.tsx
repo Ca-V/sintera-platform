@@ -180,8 +180,8 @@ export default function ConfiguracoesPage() {
         </div>
 
         <div>
-          <label className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Telefone (WhatsApp)</label>
-          <input type="tel" value={phone} onChange={e => setPhone(e.target.value)}
+          <label htmlFor="config-phone" className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Telefone (WhatsApp)</label>
+          <input id="config-phone" type="tel" value={phone} onChange={e => setPhone(e.target.value)}
             placeholder="(11) 99999-9999"
             className="mt-1 w-full px-3 py-2.5 border border-border rounded-xl font-body text-sm text-onyx bg-ivory placeholder:text-mauve/40 focus:outline-none focus:ring-1 focus:ring-petal/30" />
           <p className="font-body text-[11px] text-mauve/50 mt-1">Com DDD. Usado apenas para enviar seus lembretes.</p>
@@ -281,10 +281,11 @@ export default function ConfiguracoesPage() {
                 </p>
               </div>
               <div className="space-y-1.5">
-                <label className="font-body text-xs text-onyx/60">
+                <label htmlFor="config-delete-confirm" className="font-body text-xs text-onyx/60">
                   Digite <strong>EXCLUIR</strong> para confirmar
                 </label>
                 <input
+                  id="config-delete-confirm"
                   type="text"
                   value={deleteConfirmText}
                   onChange={e => setDeleteConfirmText(e.target.value)}

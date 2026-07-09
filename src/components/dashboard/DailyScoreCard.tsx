@@ -88,7 +88,7 @@ export default function DailyScoreCard() {
             >
               {SCORE}
             </motion.span>
-            <span className="text-[10px] font-body text-white/40 mt-0.5">de 100</span>
+            <span className="text-[11px] font-body text-white/40 mt-0.5">de 100</span>
           </div>
         </div>
 
@@ -118,7 +118,7 @@ export default function DailyScoreCard() {
             <div key={m.label} className="flex flex-col gap-1.5">
               <div className="flex items-center gap-1.5">
                 <Icon size={12} style={{ color: m.color }}/>
-                <span className="text-[10px] font-body text-white/35 uppercase tracking-wider">{m.label}</span>
+                <span className="text-[11px] font-body text-white/35 uppercase tracking-wider">{m.label}</span>
               </div>
               <span className="font-display text-lg font-semibold text-white">{m.value}</span>
             </div>

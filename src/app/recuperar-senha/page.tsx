@@ -86,10 +86,11 @@ export default function RecuperarSenhaPage() {
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">E-mail</label>
+                <label htmlFor="recuperar-email" className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">E-mail</label>
                 <div className="relative">
                   <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-mauve" />
                   <input
+                    id="recuperar-email"
                     type="email" value={email} onChange={e => setEmail(e.target.value)}
                     placeholder="seu@email.com" required autoFocus
                     className="w-full rounded-xl border border-border bg-white pl-9 pr-4 py-3 text-sm font-body text-onyx placeholder:text-mauve/40 focus:outline-none focus:ring-2 focus:ring-petal/25 focus:border-petal transition-all"

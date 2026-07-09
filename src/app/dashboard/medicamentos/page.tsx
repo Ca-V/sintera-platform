@@ -521,7 +521,7 @@ export default function MedicamentosPage() {
               </div>
               {dup && (
                 <div className="space-y-1.5">
-                  <span className="inline-flex items-center gap-1 font-body text-[10px] font-semibold text-gold bg-warm border border-amber-200 rounded-full px-2 py-0.5">Já está na sua lista</span>
+                  <span className="inline-flex items-center gap-1 font-body text-[11px] font-semibold text-gold bg-warm border border-amber-200 rounded-full px-2 py-0.5">Já está na sua lista</span>
                   <div className="flex flex-wrap gap-1.5">
                     <button onClick={() => { openEdit(dup); setScanEditing(null); setScanResults(prev => prev.filter(x => x !== it)) }}
                       className="px-2.5 py-1 rounded-full border border-petal/40 text-petal font-body text-[11px] font-medium hover:bg-blush">Abrir existente</button>
@@ -542,8 +542,8 @@ export default function MedicamentosPage() {
         <Card ref={formRef} padding="md" className="space-y-3 scroll-mt-20">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="font-body text-xs text-mauve/70 block mb-1">Tipo</label>
-              <select value={kind} onChange={e => setKind(e.target.value as Kind)}
+              <label htmlFor="med-kind" className="font-body text-xs text-mauve/70 block mb-1">Tipo</label>
+              <select id="med-kind" value={kind} onChange={e => setKind(e.target.value as Kind)}
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
                 <option value="medicamento">Medicamento</option>
                 <option value="suplemento">Suplemento</option>
@@ -553,8 +553,8 @@ export default function MedicamentosPage() {
               </select>
             </div>
             <div>
-              <label className="font-body text-xs text-mauve/70 block mb-1">Situação</label>
-              <select value={medStatus} onChange={e => setMedStatus(e.target.value as Status)}
+              <label htmlFor="med-status" className="font-body text-xs text-mauve/70 block mb-1">Situação</label>
+              <select id="med-status" value={medStatus} onChange={e => setMedStatus(e.target.value as Status)}
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
                 <option value="em_uso">Em uso</option>
                 <option value="programado">Programado</option>
@@ -564,9 +564,9 @@ export default function MedicamentosPage() {
             </div>
           </div>
           <div>
-            <label className="font-body text-xs text-mauve/70 block mb-1">Nome do {kind === 'suplemento' ? 'suplemento' : kind === 'produto' ? 'produto' : kind === 'dispositivo' ? 'dispositivo' : 'medicamento'}</label>
+            <label htmlFor="med-name" className="font-body text-xs text-mauve/70 block mb-1">Nome do {kind === 'suplemento' ? 'suplemento' : kind === 'produto' ? 'produto' : kind === 'dispositivo' ? 'dispositivo' : 'medicamento'}</label>
             <div className="flex items-center gap-2">
-              <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder={kind === 'suplemento' ? 'Ex.: Vitamina D' : kind === 'produto' ? 'Ex.: Lente de contato' : kind === 'dispositivo' ? 'Ex.: Medidor de glicose' : 'Ex.: Losartana'}
+              <input id="med-name" type="text" value={name} onChange={e => setName(e.target.value)} placeholder={kind === 'suplemento' ? 'Ex.: Vitamina D' : kind === 'produto' ? 'Ex.: Lente de contato' : kind === 'dispositivo' ? 'Ex.: Medidor de glicose' : 'Ex.: Losartana'}
                 className="flex-1 min-w-0 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
               <VoiceInput onResult={t => setName(v => (v ? v + ' ' : '') + t)} />
             </div>
@@ -574,16 +574,16 @@ export default function MedicamentosPage() {
           {(kind === 'medicamento' || kind === 'suplemento') && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="font-body text-xs text-mauve/70 block mb-1">Forma farmacêutica</label>
-              <select value={form} onChange={e => { setForm(e.target.value); setPackUnit(formMetaOf(e.target.value)?.unit ?? '') }}
+              <label htmlFor="med-form" className="font-body text-xs text-mauve/70 block mb-1">Forma farmacêutica</label>
+              <select id="med-form" value={form} onChange={e => { setForm(e.target.value); setPackUnit(formMetaOf(e.target.value)?.unit ?? '') }}
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
                 <option value="">Selecione…</option>
                 {FORMS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
               </select>
             </div>
             <div>
-              <label className="font-body text-xs text-mauve/70 block mb-1">Via de administração <span className="font-normal text-mauve/50">(opcional)</span></label>
-              <select value={route} onChange={e => setRoute(e.target.value)}
+              <label htmlFor="med-route" className="font-body text-xs text-mauve/70 block mb-1">Via de administração <span className="font-normal text-mauve/50">(opcional)</span></label>
+              <select id="med-route" value={route} onChange={e => setRoute(e.target.value)}
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
                 <option value="">Selecione…</option>
                 {ROUTES.map(r => <option key={r} value={r}>{r}</option>)}
@@ -593,26 +593,26 @@ export default function MedicamentosPage() {
           )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="font-body text-xs text-mauve/70 block mb-1">Marca / Fabricante (opcional)</label>
-              <input type="text" value={brand} onChange={e => setBrand(e.target.value)} placeholder="Ex.: EMS, Bayer…"
+              <label htmlFor="med-brand" className="font-body text-xs text-mauve/70 block mb-1">Marca / Fabricante (opcional)</label>
+              <input id="med-brand" type="text" value={brand} onChange={e => setBrand(e.target.value)} placeholder="Ex.: EMS, Bayer…"
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
             </div>
             {kind !== 'produto' && (
               <div>
-                <label className="font-body text-xs text-mauve/70 block mb-1">{kind === 'dispositivo' ? 'Modelo / especificação' : 'Dose ou especificação'} <span className="font-normal text-mauve/50">(opcional)</span></label>
-                <input type="text" value={dose} onChange={e => setDose(e.target.value)} placeholder={kind === 'dispositivo' ? 'Ex.: modelo / grau' : 'Ex.: 50 mg'}
+                <label htmlFor="med-dose" className="font-body text-xs text-mauve/70 block mb-1">{kind === 'dispositivo' ? 'Modelo / especificação' : 'Dose ou especificação'} <span className="font-normal text-mauve/50">(opcional)</span></label>
+                <input id="med-dose" type="text" value={dose} onChange={e => setDose(e.target.value)} placeholder={kind === 'dispositivo' ? 'Ex.: modelo / grau' : 'Ex.: 50 mg'}
                   className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
               </div>
             )}
           </div>
           <div>
-            <label className="font-body text-xs text-mauve/70 block mb-1">Médico(a) que prescreveu <span className="font-normal text-mauve/50">(opcional)</span></label>
-            <input type="text" value={prescriber} onChange={e => setPrescriber(e.target.value)} placeholder="Ex.: Dra. Ana Souza"
+            <label htmlFor="med-prescriber" className="font-body text-xs text-mauve/70 block mb-1">Médico(a) que prescreveu <span className="font-normal text-mauve/50">(opcional)</span></label>
+            <input id="med-prescriber" type="text" value={prescriber} onChange={e => setPrescriber(e.target.value)} placeholder="Ex.: Dra. Ana Souza"
               className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
           </div>
           <div>
-            <label className="font-body text-xs text-mauve/70 block mb-1">Valor pago — R$ <span className="font-normal text-mauve/50">(opcional)</span></label>
-            <input type="text" inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder="Ex.: 250,00"
+            <label htmlFor="med-amount" className="font-body text-xs text-mauve/70 block mb-1">Valor pago — R$ <span className="font-normal text-mauve/50">(opcional)</span></label>
+            <input id="med-amount" type="text" inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder="Ex.: 250,00"
               className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
           </div>
           <button type="button" onClick={() => setShowMoreDetails(v => !v)}
@@ -624,30 +624,30 @@ export default function MedicamentosPage() {
           <div className="space-y-3 pt-1 border-t border-border/40">
           {(kind === 'medicamento' || kind === 'suplemento') && (
             <div>
-              <label className="font-body text-xs text-mauve/70 block mb-1">Frequência de uso (opcional)</label>
-              <input type="text" value={freq} onChange={e => setFreq(e.target.value)} placeholder="Ex.: 1x ao dia"
+              <label htmlFor="med-freq" className="font-body text-xs text-mauve/70 block mb-1">Frequência de uso (opcional)</label>
+              <input id="med-freq" type="text" value={freq} onChange={e => setFreq(e.target.value)} placeholder="Ex.: 1x ao dia"
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
             </div>
           )}
           {!repurchase && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="font-body text-xs text-mauve/70 block mb-1">Início de uso (opcional)</label>
-              <input type="date" value={startedOn} onChange={e => setStartedOn(e.target.value)}
+              <label htmlFor="med-inicio" className="font-body text-xs text-mauve/70 block mb-1">Início de uso (opcional)</label>
+              <input id="med-inicio" type="date" value={startedOn} onChange={e => setStartedOn(e.target.value)}
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
             </div>
             <div>
-              <label className="font-body text-xs text-mauve/70 block mb-1">Data limite (opcional)</label>
-              <input type="date" value={untilOn} onChange={e => setUntilOn(e.target.value)}
+              <label htmlFor="med-limite" className="font-body text-xs text-mauve/70 block mb-1">Data limite (opcional)</label>
+              <input id="med-limite" type="date" value={untilOn} onChange={e => setUntilOn(e.target.value)}
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
-              <p className="font-body text-[10px] text-mauve/50 mt-1">Em branco = sem previsão.</p>
+              <p className="font-body text-[11px] text-mauve/50 mt-1">Em branco = sem previsão.</p>
             </div>
           </div>
           )}
           <div>
-            <label className="font-body text-xs text-mauve/70 block mb-1">Observações (opcional)</label>
+            <label htmlFor="med-notes" className="font-body text-xs text-mauve/70 block mb-1">Observações (opcional)</label>
             <div className="flex items-start gap-2">
-              <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2}
+              <textarea id="med-notes" value={notes} onChange={e => setNotes(e.target.value)} rows={2}
                 className="flex-1 min-w-0 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
               <VoiceInput onResult={t => setNotes(v => (v ? v + ' ' : '') + t)} />
             </div>
@@ -658,14 +658,14 @@ export default function MedicamentosPage() {
             <p className="font-body text-xs font-semibold text-onyx">Compra e recompra (opcional)</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="font-body text-[11px] text-mauve/70 block mb-1">Quantidade adquirida</label>
-                <input type="text" inputMode="decimal" value={acquiredQty} onChange={e => setAcquiredQty(e.target.value)} placeholder="Ex.: 2 caixas"
+                <label htmlFor="med-acquired-qty" className="font-body text-[11px] text-mauve/70 block mb-1">Quantidade adquirida</label>
+                <input id="med-acquired-qty" type="text" inputMode="decimal" value={acquiredQty} onChange={e => setAcquiredQty(e.target.value)} placeholder="Ex.: 2 caixas"
                   className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30" />
               </div>
               <div>
-                <label className="font-body text-[11px] text-mauve/70 block mb-1">Conteúdo da embalagem</label>
+                <label htmlFor="med-pack-qty" className="font-body text-[11px] text-mauve/70 block mb-1">Conteúdo da embalagem</label>
                 <div className="flex items-center gap-1.5">
-                  <input type="text" inputMode="decimal" value={packQty} onChange={e => setPackQty(e.target.value)} placeholder="Ex.: 30"
+                  <input id="med-pack-qty" type="text" inputMode="decimal" value={packQty} onChange={e => setPackQty(e.target.value)} placeholder="Ex.: 30"
                     className="flex-1 min-w-0 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30" />
                   <input type="text" value={packUnit} onChange={e => setPackUnit(e.target.value)} placeholder="un." aria-label="Unidade do conteúdo" title="Unidade (definida pela forma; editável)"
                     className="w-20 flex-shrink-0 px-2 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white text-center focus:outline-none focus:ring-1 focus:ring-petal/30" />
@@ -674,20 +674,20 @@ export default function MedicamentosPage() {
             </div>
             {(kind === 'medicamento' || kind === 'suplemento') && (
               <div>
-                <label className="font-body text-[11px] text-mauve/70 block mb-1">Consumo por dia{packUnit ? <span className="font-normal text-mauve/50"> (em {packUnit})</span> : null}</label>
-                <input type="text" inputMode="decimal" value={dailyCons} onChange={e => setDailyCons(e.target.value)} placeholder="Ex.: 2"
+                <label htmlFor="med-daily-cons" className="font-body text-[11px] text-mauve/70 block mb-1">Consumo por dia{packUnit ? <span className="font-normal text-mauve/50"> (em {packUnit})</span> : null}</label>
+                <input id="med-daily-cons" type="text" inputMode="decimal" value={dailyCons} onChange={e => setDailyCons(e.target.value)} placeholder="Ex.: 2"
                   className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30" />
               </div>
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="font-body text-[11px] text-mauve/70 block mb-1">Comprado em</label>
-                <input type="date" value={purchasedOn} onChange={e => setPurchasedOn(e.target.value)}
+                <label htmlFor="med-purchased-on" className="font-body text-[11px] text-mauve/70 block mb-1">Comprado em</label>
+                <input id="med-purchased-on" type="date" value={purchasedOn} onChange={e => setPurchasedOn(e.target.value)}
                   className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30" />
               </div>
               <div>
-                <label className="font-body text-[11px] text-mauve/70 block mb-1">Situação</label>
-                <select value={purchaseStatus} onChange={e => setPurchaseStatus(e.target.value)}
+                <label htmlFor="med-purchase-status" className="font-body text-[11px] text-mauve/70 block mb-1">Situação</label>
+                <select id="med-purchase-status" value={purchaseStatus} onChange={e => setPurchaseStatus(e.target.value)}
                   className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30">
                   <option value="">—</option>
                   <option value="a_comprar">A comprar</option>
@@ -702,8 +702,8 @@ export default function MedicamentosPage() {
             {repurchase && (
               <div className="space-y-3 rounded-lg bg-blush/20 border border-petal/15 p-2.5">
                 <div>
-                  <label className="font-body text-[11px] text-mauve/70 block mb-1">Frequência da compra</label>
-                  <select value={repurchaseFreq} onChange={e => setRepurchaseFreq(e.target.value)}
+                  <label htmlFor="med-repurchase-freq" className="font-body text-[11px] text-mauve/70 block mb-1">Frequência da compra</label>
+                  <select id="med-repurchase-freq" value={repurchaseFreq} onChange={e => setRepurchaseFreq(e.target.value)}
                     className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30">
                     <option value="">Com que frequência você recompra?</option>
                     <option value="semanal">Semanal</option>
@@ -717,17 +717,17 @@ export default function MedicamentosPage() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="font-body text-[11px] text-mauve/70 block mb-1">A partir de</label>
-                    <input type="date" value={startedOn} onChange={e => setStartedOn(e.target.value)}
+                    <label htmlFor="med-recompra-inicio" className="font-body text-[11px] text-mauve/70 block mb-1">A partir de</label>
+                    <input id="med-recompra-inicio" type="date" value={startedOn} onChange={e => setStartedOn(e.target.value)}
                       className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30" />
                   </div>
                   <div>
-                    <label className="font-body text-[11px] text-mauve/70 block mb-1">Até <span className="font-normal text-mauve/50">(opcional)</span></label>
-                    <input type="date" value={untilOn} onChange={e => setUntilOn(e.target.value)}
+                    <label htmlFor="med-recompra-ate" className="font-body text-[11px] text-mauve/70 block mb-1">Até <span className="font-normal text-mauve/50">(opcional)</span></label>
+                    <input id="med-recompra-ate" type="date" value={untilOn} onChange={e => setUntilOn(e.target.value)}
                       className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30" />
                   </div>
                 </div>
-                <p className="font-body text-[10px] text-mauve/60 leading-relaxed">A previsão de recompra considera o uso conforme a orientação médica. Caso o consumo real seja diferente, a data prevista poderá variar e poderá haver sobra ou término antecipado do produto.</p>
+                <p className="font-body text-[11px] text-mauve/60 leading-relaxed">A previsão de recompra considera o uso conforme a orientação médica. Caso o consumo real seja diferente, a data prevista poderá variar e poderá haver sobra ou término antecipado do produto.</p>
               </div>
             )}
             {(() => {
@@ -737,7 +737,7 @@ export default function MedicamentosPage() {
               // Recompra: consumo tem prioridade; sem ele, usa a recorrência declarada
               // (quinzenal/mensal…) — assim prevê mesmo sem cálculo por g/mL.
               const rec = repurchase ? nextRepurchaseDate(purchasedOn || null, num(packQty), num(dailyCons), num(acquiredQty), repurchaseFreq || null) : null
-              if (!ro && !rec) return <p className="font-body text-[10px] text-mauve/50">Informe o conteúdo, o consumo por dia (na mesma unidade do conteúdo) e a data de compra para estimar o término — ou marque a recompra e a frequência.</p>
+              if (!ro && !rec) return <p className="font-body text-[11px] text-mauve/50">Informe o conteúdo, o consumo por dia (na mesma unidade do conteúdo) e a data de compra para estimar o término — ou marque a recompra e a frequência.</p>
               return (
                 <p className="font-body text-[11px] text-petal">
                   {ro

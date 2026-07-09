@@ -242,7 +242,7 @@ export default function OnboardingPage() {
               <div key={i} className="flex items-center gap-1.5">
                 <div className={`rounded-full transition-all duration-300 ${i === step ? 'w-5 h-1.5 bg-petal' : i < step ? 'w-1.5 h-1.5 bg-petal/40' : 'w-1.5 h-1.5 bg-border'}`}/>
                 {i === step && (
-                  <span className="text-[10px] font-body font-medium text-petal uppercase tracking-wider">{s.label}</span>
+                  <span className="text-[11px] font-body font-medium text-petal uppercase tracking-wider">{s.label}</span>
                 )}
               </div>
             ))}
@@ -273,8 +273,9 @@ export default function OnboardingPage() {
                   </div>
 
                   <div className="flex flex-col gap-2">
-                    <label className="text-xs font-body font-medium text-mauve uppercase tracking-wider">Seu nome</label>
+                    <label htmlFor="onboarding-name" className="text-xs font-body font-medium text-mauve uppercase tracking-wider">Seu nome</label>
                     <input
+                      id="onboarding-name"
                       type="text"
                       value={name}
                       onChange={e => setName(e.target.value)}
@@ -425,8 +426,9 @@ export default function OnboardingPage() {
 
                   <div className="flex flex-col gap-3">
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-body font-medium text-mauve uppercase tracking-wider">E-mail</label>
+                      <label htmlFor="onboarding-email" className="text-xs font-body font-medium text-mauve uppercase tracking-wider">E-mail</label>
                       <input
+                        id="onboarding-email"
                         type="email" value={email} onChange={e => setEmail(e.target.value)}
                         placeholder="seu@email.com"
                         className="w-full px-4 py-3 rounded-xl border border-border bg-white text-sm font-body text-onyx placeholder:text-mauve/40 focus:outline-none focus:ring-2 focus:ring-petal/25 focus:border-petal transition-all"
@@ -434,9 +436,10 @@ export default function OnboardingPage() {
                     </div>
 
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-body font-medium text-mauve uppercase tracking-wider">Senha</label>
+                      <label htmlFor="onboarding-password" className="text-xs font-body font-medium text-mauve uppercase tracking-wider">Senha</label>
                       <div className="relative">
                         <input
+                          id="onboarding-password"
                           type={showPassword ? 'text' : 'password'}
                           value={password} onChange={e => setPassword(e.target.value)}
                           placeholder="Mínimo 6 caracteres"
@@ -494,7 +497,7 @@ export default function OnboardingPage() {
               </motion.button>
             )}
             {!canContinue && step === 0 && (
-              <p className="text-[10px] font-body text-mauve/50">Digite seu nome para continuar</p>
+              <p className="text-[11px] font-body text-mauve/50">Digite seu nome para continuar</p>
             )}
           </div>
         </div>

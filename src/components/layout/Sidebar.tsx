@@ -142,7 +142,7 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
         </div>
         {navGroups.map(group => (
           <div key={group.title} className="mb-1.5">
-            <p className="text-[10px] font-body font-bold text-white/45 uppercase tracking-[0.16em] px-3 mt-1 mb-1">
+            <p className="text-[11px] font-body font-bold text-white/45 uppercase tracking-[0.16em] px-3 mt-1 mb-1">
               {group.title}
             </p>
             <ul className="flex flex-col gap-0.5">

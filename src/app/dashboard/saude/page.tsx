@@ -120,7 +120,7 @@ export default function IndicadoresPage() {
           <div className="mt-4 relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-mauve/50" />
             <input
-              type="text" placeholder="Buscar biomarcador…" value={search} onChange={e => setSearch(e.target.value)}
+              type="text" aria-label="Buscar biomarcador" placeholder="Buscar biomarcador…" value={search} onChange={e => setSearch(e.target.value)}
               className="w-full pl-9 pr-4 py-2.5 bg-ivory border border-border rounded-xl font-body text-sm text-onyx placeholder-mauve/40 focus:outline-none focus:ring-1 focus:ring-petal/40"
             />
           </div>

@@ -44,10 +44,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: '#F2EDE8' }}>
+      {/* Skip-link (a11y): primeiro foco no teclado — pula a navegação e vai ao conteúdo. */}
+      <a href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:z-[100] focus:top-3 focus:left-3 focus:px-4 focus:py-2 focus:rounded-xl focus:bg-white focus:text-onyx focus:shadow-lg focus:font-body focus:text-sm focus:outline-none focus:ring-2 focus:ring-petal">
+        Pular para o conteúdo
+      </a>
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="flex-1 flex flex-col min-w-0">
         <Header onMenuClick={() => setSidebarOpen(true)} />
-        <main className="flex-1 overflow-y-auto p-5 lg:p-6">
+        <main id="main-content" tabIndex={-1} className="flex-1 overflow-y-auto p-5 lg:p-6 outline-none">
           {children}
         </main>
       </div>

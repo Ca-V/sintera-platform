@@ -234,7 +234,7 @@ function FeatureHistory({ points, refs }: {
               <tr key={i} className="border-b border-border/20 last:border-0">
                 <td className="font-body text-[11px] text-mauve py-1 pr-3 whitespace-nowrap align-top">{fmtOmicsDate(p.measured_on) || '—'}</td>
                 <td className="font-body text-xs text-onyx py-1"><strong>{p.value ?? '—'}</strong>{p.unit ? ` ${p.unit}` : ''}</td>
-                <td className="font-body text-[10px] text-mauve/50 py-1 text-right">{p.laboratory ?? ''}</td>
+                <td className="font-body text-[11px] text-mauve/50 py-1 text-right">{p.laboratory ?? ''}</td>
               </tr>
             ))}
           </tbody>
@@ -244,7 +244,7 @@ function FeatureHistory({ points, refs }: {
         <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1">
           {refs.map((rf, i) => (
             <a key={i} href={rf.url ?? '#'} target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 font-body text-[10px] text-petal hover:underline">
+              className="inline-flex items-center gap-1 font-body text-[11px] text-petal hover:underline">
               {rf.source.toUpperCase()}: {rf.external_id} <ExternalLink size={9} />
             </a>
           ))}
@@ -317,8 +317,8 @@ function AddResult({ panelId, domain, defaultDate, onSaved }: {
         <button onClick={() => setShow(false)} className="text-mauve/50 hover:text-onyx"><X size={16} /></button>
       </div>
       <div>
-        <label className="font-body text-xs text-mauve/70 block mb-1">Feature (nome, sinônimo ou ID externo)</label>
-        <input value={name} onChange={e => setName(e.target.value)} onBlur={resolve} placeholder="Ex.: Leucine, L-Leucine ou HMDB0000687"
+        <label htmlFor="omics-result-feature" className="font-body text-xs text-mauve/70 block mb-1">Feature (nome, sinônimo ou ID externo)</label>
+        <input id="omics-result-feature" value={name} onChange={e => setName(e.target.value)} onBlur={resolve} placeholder="Ex.: Leucine, L-Leucine ou HMDB0000687"
           className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
         {resolving && <p className="font-body text-[11px] text-mauve/60 mt-1">Resolvendo no catálogo…</p>}
         {resolved && (
@@ -332,24 +332,24 @@ function AddResult({ panelId, domain, defaultDate, onSaved }: {
       </div>
       <div className="grid grid-cols-3 gap-2">
         <div>
-          <label className="font-body text-xs text-mauve/70 block mb-1">Valor</label>
-          <input value={value} onChange={e => setValue(e.target.value)} placeholder="420"
+          <label htmlFor="omics-result-valor" className="font-body text-xs text-mauve/70 block mb-1">Valor</label>
+          <input id="omics-result-valor" value={value} onChange={e => setValue(e.target.value)} placeholder="420"
             className="w-full px-2 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
         </div>
         <div>
-          <label className="font-body text-xs text-mauve/70 block mb-1">Unidade</label>
-          <input value={unit} onChange={e => setUnit(e.target.value)} placeholder="µmol/L"
+          <label htmlFor="omics-result-unidade" className="font-body text-xs text-mauve/70 block mb-1">Unidade</label>
+          <input id="omics-result-unidade" value={unit} onChange={e => setUnit(e.target.value)} placeholder="µmol/L"
             className="w-full px-2 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
         </div>
         <div>
-          <label className="font-body text-xs text-mauve/70 block mb-1">Data</label>
-          <input type="date" value={date} onChange={e => setDate(e.target.value)}
+          <label htmlFor="omics-result-data" className="font-body text-xs text-mauve/70 block mb-1">Data</label>
+          <input id="omics-result-data" type="date" value={date} onChange={e => setDate(e.target.value)}
             className="w-full px-2 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
         </div>
       </div>
       <div>
-        <label className="font-body text-xs text-mauve/70 block mb-1">Método (opcional)</label>
-        <input value={method} onChange={e => setMethod(e.target.value)} placeholder="Ex.: LC-MS/MS"
+        <label htmlFor="omics-result-metodo" className="font-body text-xs text-mauve/70 block mb-1">Método (opcional)</label>
+        <input id="omics-result-metodo" value={method} onChange={e => setMethod(e.target.value)} placeholder="Ex.: LC-MS/MS"
           className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
       </div>
       {err && <p className="font-body text-xs text-red-500">{err}</p>}
@@ -403,9 +403,9 @@ function ImportResults({ panelId, onDone }: { panelId: string; onDone: () => voi
   return (
     <div className="w-full">
       <div className="flex flex-wrap items-center gap-2">
-        <input ref={fileRef} type="file" accept=".csv,.json,.pdf,image/*,text/csv,application/json,application/pdf" className="hidden"
+        <input ref={fileRef} type="file" aria-label="Selecionar arquivo do laudo" accept=".csv,.json,.pdf,image/*,text/csv,application/json,application/pdf" className="hidden"
           onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = '' }} />
-        <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden"
+        <input ref={cameraRef} type="file" aria-label="Fotografar o laudo" accept="image/*" capture="environment" className="hidden"
           onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = '' }} />
         <button onClick={() => fileRef.current?.click()} disabled={busy}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-petal/40 text-petal font-body text-sm font-medium hover:bg-blush transition-colors disabled:opacity-50">
@@ -434,7 +434,7 @@ function ImportResults({ panelId, onDone }: { panelId: string; onDone: () => voi
                 {v.note && <span className="font-body text-[11px] text-mauve/70"> · {v.note}</span>}
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
-                <span className="font-body text-[10px] text-mauve/50">{fmtOmicsDate(v.created_at)}</span>
+                <span className="font-body text-[11px] text-mauve/50">{fmtOmicsDate(v.created_at)}</span>
                 {v.source_file && (
                   <a href={v.source_file} target="_blank" rel="noopener noreferrer" className="text-petal hover:underline" title="Arquivo original">
                     <ExternalLink size={11} />
@@ -443,7 +443,7 @@ function ImportResults({ panelId, onDone }: { panelId: string; onDone: () => voi
               </div>
             </div>
           ))}
-          <p className="font-body text-[10px] text-mauve/50 pt-1">Nenhuma versão é sobrescrita — todas permanecem acessíveis.</p>
+          <p className="font-body text-[11px] text-mauve/50 pt-1">Nenhuma versão é sobrescrita — todas permanecem acessíveis.</p>
         </Card>
       )}
     </div>

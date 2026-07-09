@@ -16,19 +16,8 @@ import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import ListCard from '@/components/ListCard'
 import Card from '@/components/ui/Card'
-
-// ── Métodos contraceptivos (vida útil padrão em meses; editável) ──
-const KINDS: { value: string; label: string; months: number | null }[] = [
-  { value: 'diu_cobre',    label: 'DIU de cobre',                  months: 120 },
-  { value: 'diu_hormonal', label: 'DIU hormonal (Mirena, Kyleena)', months: 60 },
-  { value: 'implante',     label: 'Implante (Implanon, Nexplanon)', months: 36 },
-  { value: 'injecao',      label: 'Injeção',                        months: 3 },
-  { value: 'anel',         label: 'Anel vaginal',                   months: 1 },
-  { value: 'adesivo',      label: 'Adesivo',                        months: 1 },
-  { value: 'pilula',       label: 'Pílula',                         months: null },
-  { value: 'outro',        label: 'Outro',                          months: null },
-]
-const kindLabel = (k: string) => KINDS.find(x => x.value === k)?.label ?? 'Método'
+// Taxonomia de métodos contraceptivos = SSOT em @/lib/cycle (compartilhada com o Relatório).
+import { CONTRACEPTIVE_KINDS as KINDS, contraceptiveLabel as kindLabel } from '@/lib/cycle'
 
 interface Method {
   id: string; kind: string; brand: string | null; startedOn: string | null
@@ -239,15 +228,15 @@ export default function CicloPage() {
               <Card padding="sm" className="space-y-3 mb-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="font-body text-xs text-mauve/70 block mb-1">Método</label>
-                    <select value={kind} onChange={e => chooseKind(e.target.value)}
+                    <label htmlFor="ciclo-metodo" className="font-body text-xs text-mauve/70 block mb-1">Método</label>
+                    <select id="ciclo-metodo" value={kind} onChange={e => chooseKind(e.target.value)}
                       className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
                       {KINDS.map(k => <option key={k.value} value={k.value}>{k.label}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="font-body text-xs text-mauve/70 block mb-1">Marca (opcional)</label>
-                    <input type="text" value={brand} onChange={e => setBrand(e.target.value)} placeholder="Ex.: Mirena"
+                    <label htmlFor="ciclo-marca" className="font-body text-xs text-mauve/70 block mb-1">Marca (opcional)</label>
+                    <input id="ciclo-marca" type="text" value={brand} onChange={e => setBrand(e.target.value)} placeholder="Ex.: Mirena"
                       className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
                   </div>
                 </div>
@@ -256,13 +245,13 @@ export default function CicloPage() {
                 ) : (
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="font-body text-xs text-mauve/70 block mb-1">Início / colocação</label>
-                      <input type="date" value={startedOn} onChange={e => setStartedOn(e.target.value)}
+                      <label htmlFor="ciclo-inicio" className="font-body text-xs text-mauve/70 block mb-1">Início / colocação</label>
+                      <input id="ciclo-inicio" type="date" value={startedOn} onChange={e => setStartedOn(e.target.value)}
                         className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
                     </div>
                     <div>
-                      <label className="font-body text-xs text-mauve/70 block mb-1">Vida útil (meses)</label>
-                      <input type="number" value={duration} onChange={e => setDuration(e.target.value)} placeholder="Ex.: 60"
+                      <label htmlFor="ciclo-vida-util" className="font-body text-xs text-mauve/70 block mb-1">Vida útil (meses)</label>
+                      <input id="ciclo-vida-util" type="number" value={duration} onChange={e => setDuration(e.target.value)} placeholder="Ex.: 60"
                         className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
                     </div>
                   </div>
@@ -277,8 +266,8 @@ export default function CicloPage() {
                   </label>
                 )}
                 <div>
-                  <label className="font-body text-xs text-mauve/70 block mb-1">Observações (opcional)</label>
-                  <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2}
+                  <label htmlFor="ciclo-notas" className="font-body text-xs text-mauve/70 block mb-1">Observações (opcional)</label>
+                  <textarea id="ciclo-notas" value={notes} onChange={e => setNotes(e.target.value)} rows={2}
                     className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
                 </div>
                 {err && <p className="font-body text-xs text-red-500">{err}</p>}
@@ -337,23 +326,23 @@ export default function CicloPage() {
               <div className="grid grid-cols-3 gap-2 mb-3">
                 <Card padding="sm" className="text-center">
                   <p className="font-display text-lg font-bold text-onyx leading-none">{cycleStats.last ? fmt(cycleStats.last) : '—'}</p>
-                  <p className="font-body text-[10px] text-mauve mt-1">Última menstruação</p>
+                  <p className="font-body text-[11px] text-mauve mt-1">Última menstruação</p>
                 </Card>
                 <Card padding="sm" className="text-center">
                   <p className="font-display text-lg font-bold text-onyx leading-none">{cycleStats.avg != null ? `${cycleStats.avg} d` : '—'}</p>
-                  <p className="font-body text-[10px] text-mauve mt-1">Ciclo médio</p>
+                  <p className="font-body text-[11px] text-mauve mt-1">Ciclo médio</p>
                 </Card>
                 <Card padding="sm" className="text-center">
                   <p className="font-display text-lg font-bold text-onyx leading-none">{cycleStats.next ? fmt(cycleStats.next) : '—'}</p>
-                  <p className="font-body text-[10px] text-mauve mt-1">Próxima (estimada)</p>
+                  <p className="font-body text-[11px] text-mauve mt-1">Próxima (estimada)</p>
                 </Card>
               </div>
             )}
 
             <div className="flex items-end gap-2 mb-3">
               <div className="flex-1">
-                <label className="font-body text-xs text-mauve/70 block mb-1">Início da menstruação</label>
-                <input type="date" value={periodDate} onChange={e => setPeriodDate(e.target.value)} max={todayISO()}
+                <label htmlFor="ciclo-menstruacao" className="font-body text-xs text-mauve/70 block mb-1">Início da menstruação</label>
+                <input id="ciclo-menstruacao" type="date" value={periodDate} onChange={e => setPeriodDate(e.target.value)} max={todayISO()}
                   className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
               </div>
               <button onClick={addPeriod} disabled={savingPeriod}

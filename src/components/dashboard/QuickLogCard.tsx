@@ -68,6 +68,7 @@ export default function QuickLogCard() {
               {item.id !== 'mood' ? (
                 <input
                   type="range"
+                  aria-label={item.label}
                   min={0}
                   max={item.max}
                   step={item.max === 4 ? 0.1 : 1}

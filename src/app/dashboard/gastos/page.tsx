@@ -102,7 +102,7 @@ export default function GastosPage() {
             <CardChip tone="sage">{fmtBRL(r.amountCents ?? 0)}</CardChip>
             {r.attachmentUrl && (
               <a href={r.attachmentUrl} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 font-body text-[10px] text-petal hover:underline">
+                className="inline-flex items-center gap-1 font-body text-[11px] text-petal hover:underline">
                 <Paperclip size={10} /> Nota fiscal
               </a>
             )}

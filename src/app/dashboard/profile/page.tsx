@@ -98,6 +98,7 @@ export default function ProfilePage() {
               <div className="flex items-center gap-2">
                 <input
                   autoFocus
+                  aria-label="Editar nome"
                   value={nameValue}
                   onChange={e => setNameValue(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') saveName(); if (e.key === 'Escape') setEditName(false) }}
@@ -161,21 +162,21 @@ export default function ProfilePage() {
 
         <div className="grid sm:grid-cols-2 gap-3">
           <div className="p-3 bg-ivory rounded-xl">
-            <p className="font-body text-[10px] text-mauve uppercase tracking-wider mb-1">Nome</p>
+            <p className="font-body text-[11px] text-mauve uppercase tracking-wider mb-1">Nome</p>
             <p className="font-body text-sm font-medium text-onyx">{profile?.name ?? '—'}</p>
           </div>
           <div className="p-3 bg-ivory rounded-xl">
-            <p className="font-body text-[10px] text-mauve uppercase tracking-wider mb-1">E-mail</p>
+            <p className="font-body text-[11px] text-mauve uppercase tracking-wider mb-1">E-mail</p>
             <p className="font-body text-sm font-medium text-onyx truncate">{user?.email ?? '—'}</p>
           </div>
           <div className="p-3 bg-ivory rounded-xl">
-            <p className="font-body text-[10px] text-mauve uppercase tracking-wider mb-1">Plano</p>
+            <p className="font-body text-[11px] text-mauve uppercase tracking-wider mb-1">Plano</p>
             <p className="font-body text-sm font-medium text-onyx">
               Gratuito
             </p>
           </div>
           <div className="p-3 bg-ivory rounded-xl">
-            <p className="font-body text-[10px] text-mauve uppercase tracking-wider mb-1">Conta criada</p>
+            <p className="font-body text-[11px] text-mauve uppercase tracking-wider mb-1">Conta criada</p>
             <p className="font-body text-sm font-medium text-onyx">
               {stats?.memberSince ? formatDate(stats.memberSince) : '—'}
             </p>

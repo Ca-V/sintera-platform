@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { parseDateOnly } from '@/lib/agenda'
+import { useModalA11y } from '@/lib/ui/useModalA11y'
 import { useUser } from '@/context/UserContext'
 import { compareNames } from '@/lib/exams/nameMatch'
 import { loadCatalogLabels, buildCatalogLabels, type CatalogLabels } from '@/lib/biomarkers/catalogLabels'
@@ -343,6 +344,8 @@ export default function ExamDetailPage() {
   const [reportOpen, setReportOpen]     = useState(false)
   const [reportText, setReportText]     = useState('')
   const [reportSent, setReportSent]     = useState(false)
+  const reportRef = useRef<HTMLDivElement>(null)
+  useModalA11y(reportRef, () => { setReportOpen(false); setReportSent(false) }, reportOpen)
   const [reportLoading, setReportLoading] = useState(false)
 
   async function submitReport() {
@@ -588,6 +591,7 @@ export default function ExamDetailPage() {
                 <div className="flex items-center gap-2">
                   <input
                     autoFocus
+                    aria-label="Nome do exame"
                     value={nameValue}
                     onChange={e => setNameValue(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') saveName(); if (e.key === 'Escape') cancelEditName() }}
@@ -617,6 +621,7 @@ export default function ExamDetailPage() {
                 <div className="flex items-center gap-2 mt-0.5">
                   <input
                     type="date"
+                    aria-label="Data do exame"
                     value={dateValue}
                     onChange={e => setDateValue(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') saveDate(); if (e.key === 'Escape') setEditingDate(false) }}
@@ -893,7 +898,8 @@ export default function ExamDetailPage() {
 
       {/* Modal — Reportar problema */}
       {reportOpen && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+        <div ref={reportRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Reportar problema"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 outline-none">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => { setReportOpen(false); setReportSent(false) }} />
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -926,6 +932,7 @@ export default function ExamDetailPage() {
                 </p>
                 <textarea
                   autoFocus
+                  aria-label="Descrição do problema"
                   value={reportText}
                   onChange={e => setReportText(e.target.value)}
                   rows={4}
