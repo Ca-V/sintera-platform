@@ -224,7 +224,7 @@ export default function AgendaPage() {
             </button>
           </div>
           <button onClick={() => setDismissed(true)} title="Dispensar"
-            className="p-1.5 rounded-lg text-mauve/50 hover:text-mauve hover:bg-white/50 transition-colors flex-shrink-0">
+            className="p-1.5 rounded-lg text-mauve hover:text-mauve hover:bg-white/50 transition-colors flex-shrink-0">
             <X size={15} />
           </button>
         </MotionCard>
@@ -267,7 +267,7 @@ export default function AgendaPage() {
             if (view === 'tipo') entries.sort((a, b) => rank(a[0]) - rank(b[0]))
             return entries.map(([label, evs]) => (
               <div key={label} className="space-y-2">
-                <p className="font-body text-[11px] font-semibold text-mauve/60 uppercase tracking-wider mt-1">{label}</p>
+                <p className="font-body text-[11px] font-semibold text-mauve uppercase tracking-wider mt-1">{label}</p>
                 {evs.map(agendaRow)}
               </div>
             ))
@@ -275,7 +275,7 @@ export default function AgendaPage() {
         </section>
       )}
 
-      <p className="font-body text-[11px] text-mauve/50 text-center leading-relaxed px-4">
+      <p className="font-body text-[11px] text-mauve text-center leading-relaxed px-4">
         A SINTERA organiza seus eventos de saúde. Não oferece diagnóstico nem orientação clínica.
       </p>
 

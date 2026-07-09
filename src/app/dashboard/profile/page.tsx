@@ -117,7 +117,7 @@ export default function ProfilePage() {
               <div className="flex items-center gap-2 group">
                 <p className="font-display text-xl font-semibold text-onyx break-words min-w-0">{displayName}</p>
                 <button onClick={startEdit}
-                  className="text-mauve/50 hover:text-petal transition-colors flex-shrink-0">
+                  className="text-mauve hover:text-petal transition-colors flex-shrink-0">
                   <Edit3 size={14} />
                 </button>
               </div>
@@ -125,7 +125,7 @@ export default function ProfilePage() {
             {nameError && <p className="font-body text-xs text-red-500 mt-1">{nameError}</p>}
             <p className="font-body text-sm text-mauve mt-0.5">{user?.email}</p>
             {stats?.memberSince && (
-              <p className="font-body text-xs text-mauve/50 mt-1">
+              <p className="font-body text-xs text-mauve mt-1">
                 Membro desde {formatDate(stats.memberSince)}
               </p>
             )}

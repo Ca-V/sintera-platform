@@ -67,7 +67,7 @@ export default function RecuperarSenhaPage() {
               Enviamos um link para <strong className="text-onyx">{email}</strong>.
               Verifique sua caixa de entrada e spam.
             </p>
-            <p className="font-body text-xs text-mauve/60">
+            <p className="font-body text-xs text-mauve">
               O link expira em 1 hora.
             </p>
           </div>

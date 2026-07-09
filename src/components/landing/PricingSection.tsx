@@ -74,7 +74,7 @@ export default function PricingSection() {
             </button>
           </Link>
 
-          <p className="font-body text-xs text-mauve/60 text-center mt-4">
+          <p className="font-body text-xs text-mauve text-center mt-4">
             Sem cartão de crédito. Sem compromisso.
             Você pode excluir sua conta e todos os dados a qualquer momento.
           </p>

@@ -30,10 +30,10 @@ export default function PeriodSelector({ period, onChange, className = '' }: {
       </div>
       {period.preset === 'custom' && (
         <div className="flex flex-wrap items-center gap-2 mt-2">
-          <label className="font-body text-[11px] text-mauve/70">De
+          <label className="font-body text-[11px] text-mauve">De
             <input type="date" value={period.from ?? ''} onChange={e => onChange({ ...period, preset: 'custom', from: e.target.value })} className={`${inputCls} ml-1.5`} />
           </label>
-          <label className="font-body text-[11px] text-mauve/70">até
+          <label className="font-body text-[11px] text-mauve">até
             <input type="date" value={period.to ?? ''} onChange={e => onChange({ ...period, preset: 'custom', to: e.target.value })} className={`${inputCls} ml-1.5`} />
           </label>
         </div>

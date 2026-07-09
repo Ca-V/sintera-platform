@@ -438,10 +438,10 @@ function LegacyReport() {
               <div key={s.id} className="flex items-center gap-2 rounded-xl border border-border bg-ivory px-3 py-2">
                 <input readOnly aria-label="Link de compartilhamento do relatório" value={`${typeof window !== 'undefined' ? window.location.origin : ''}/r/${s.token}`}
                   className="flex-1 min-w-0 bg-transparent font-body text-xs text-mauve outline-none" />
-                <button onClick={() => copyLink(s.token)} title="Copiar" className="text-mauve/60 hover:text-petal flex-shrink-0">
+                <button onClick={() => copyLink(s.token)} title="Copiar" className="text-mauve hover:text-petal flex-shrink-0">
                   {copied === s.token ? <Check size={14} className="text-sage" /> : <Copy size={14} />}
                 </button>
-                <button onClick={() => revokeShare(s.id)} title="Revogar" className="text-mauve/60 hover:text-red-500 flex-shrink-0">
+                <button onClick={() => revokeShare(s.id)} title="Revogar" className="text-mauve hover:text-red-500 flex-shrink-0">
                   <Trash2 size={14} />
                 </button>
               </div>
@@ -454,7 +454,7 @@ function LegacyReport() {
       <Card padding="md" className="mb-6 print:hidden">
         <p className="font-body text-sm font-semibold text-onyx mb-3">Período</p>
         <PeriodSelector period={period} onChange={setPeriod} />
-        <p className="font-body text-[11px] text-mauve/60 mt-3">Recorte aplicado ao relatório, à impressão/PDF e ao link compartilhado. Condições atuais e itens em uso aparecem independentemente do período.</p>
+        <p className="font-body text-[11px] text-mauve mt-3">Recorte aplicado ao relatório, à impressão/PDF e ao link compartilhado. Condições atuais e itens em uso aparecem independentemente do período.</p>
       </Card>
 
       {/* Seleção = árvore do menu lateral (UX-001): grupos expansíveis, seleção por
@@ -476,7 +476,7 @@ function LegacyReport() {
                 <div className="flex items-center gap-2.5 px-3 py-2.5 bg-ivory/40">
                   <button type="button" onClick={() => setOpenGroups(g => ({ ...g, [group.title]: !open }))}
                     aria-label={open ? 'Recolher' : 'Expandir'} aria-expanded={open}
-                    className="text-mauve/50 hover:text-petal transition-colors flex-shrink-0">
+                    className="text-mauve hover:text-petal transition-colors flex-shrink-0">
                     <ChevronDown size={16} className="transition-transform" style={{ transform: open ? 'none' : 'rotate(-90deg)' }} />
                   </button>
                   <button type="button" onClick={() => setGroup(keys, groupState !== 'all')}
@@ -486,8 +486,8 @@ function LegacyReport() {
                     {groupState === 'all' && <Check size={11} className="text-white" />}
                     {groupState === 'some' && <Minus size={11} className="text-white" />}
                   </button>
-                  <span className="font-body text-[11px] font-semibold text-mauve/70 uppercase tracking-wider flex-1 min-w-0">{group.title}</span>
-                  <span className="font-body text-[11px] text-mauve/50 flex-shrink-0 tabular-nums">{sel}/{keys.length}</span>
+                  <span className="font-body text-[11px] font-semibold text-mauve uppercase tracking-wider flex-1 min-w-0">{group.title}</span>
+                  <span className="font-body text-[11px] text-mauve flex-shrink-0 tabular-nums">{sel}/{keys.length}</span>
                 </div>
                 {/* Itens do grupo (módulos) — Exames/Medicamentos abrem seleção item a item */}
                 {open && (
@@ -513,13 +513,13 @@ function LegacyReport() {
                               <span className="min-w-0 break-words font-body text-sm text-onyx">{label}</span>
                             </label>
                             {withItems && sections[k] && items.length > 0 && (
-                              <span className="font-body text-[11px] text-mauve/50 flex-shrink-0 tabular-nums">{onCount}/{items.length}</span>
+                              <span className="font-body text-[11px] text-mauve flex-shrink-0 tabular-nums">{onCount}/{items.length}</span>
                             )}
                           </div>
                           {withItems && sections[k] && secOpen && (
                             <div className="flex flex-col gap-0.5 pl-[3.4rem] pb-1">
                               {items.length === 0
-                                ? <span className="font-body text-xs text-mauve/50">Nenhum registro.</span>
+                                ? <span className="font-body text-xs text-mauve">Nenhum registro.</span>
                                 : items.map(it => (
                                     <label key={it.key} className="flex items-center gap-2 font-body text-[13px] text-onyx/90 cursor-pointer">
                                       <input type="checkbox" checked={isItemOn(k, it.key)} onChange={() => toggleItem(k, it.key)} className="accent-petal w-3.5 h-3.5 flex-shrink-0" />
@@ -537,7 +537,7 @@ function LegacyReport() {
             )
           })}
         </div>
-        <p className="font-body text-[11px] text-mauve/60 mt-3">Marque o que deseja incluir. Vale para a impressão e para o link compartilhado.</p>
+        <p className="font-body text-[11px] text-mauve mt-3">Marque o que deseja incluir. Vale para a impressão e para o link compartilhado.</p>
       </Card>
 
       {/* Configurações de relatório — salvar/reutilizar (discreto, recolhido por padrão) */}
@@ -545,9 +545,9 @@ function LegacyReport() {
         <button type="button" onClick={() => setConfigOpen(o => !o)} aria-expanded={configOpen} className="w-full flex items-center justify-between gap-2 text-left">
           <div className="min-w-0">
             <p className="font-body text-sm font-semibold text-onyx">Configurações de relatório</p>
-            <p className="font-body text-[11px] text-mauve/60">Salve esta configuração (seções, itens e período) para reutilizar depois{templates.length > 0 ? ` · ${templates.length} salva${templates.length > 1 ? 's' : ''}` : ''}.</p>
+            <p className="font-body text-[11px] text-mauve">Salve esta configuração (seções, itens e período) para reutilizar depois{templates.length > 0 ? ` · ${templates.length} salva${templates.length > 1 ? 's' : ''}` : ''}.</p>
           </div>
-          <ChevronDown size={16} className="text-mauve/50 flex-shrink-0 transition-transform" style={{ transform: configOpen ? 'none' : 'rotate(-90deg)' }} />
+          <ChevronDown size={16} className="text-mauve flex-shrink-0 transition-transform" style={{ transform: configOpen ? 'none' : 'rotate(-90deg)' }} />
         </button>
         {configOpen && (
           <div className="mt-3 pt-3 border-t border-border/50 space-y-3">
@@ -584,7 +584,7 @@ function LegacyReport() {
         <div className="border-b border-border pb-4">
           <h1 className="font-display text-2xl font-semibold text-onyx">Relatório</h1>
           <p className="font-body text-sm text-mauve mt-1">Organização estruturada das informações registradas na SINTERA para compartilhamento e acompanhamento da saúde.</p>
-          <p className="font-body text-xs text-mauve/70 mt-1.5">{nome} · Gerado em {hoje}</p>
+          <p className="font-body text-xs text-mauve mt-1.5">{nome} · Gerado em {hoje}</p>
         </div>
 
         {/* Resumo do relatório — cabeçalho executivo, totalmente factual (RDC 657) */}
@@ -592,16 +592,16 @@ function LegacyReport() {
           <p className="font-display text-sm font-semibold text-onyx mb-1">Resumo do relatório</p>
           <p className="font-body text-xs font-semibold text-petal mb-2.5">Período considerado neste relatório: {periodLabel(period)}</p>
           <div className="grid grid-cols-2 gap-x-6 gap-y-1 font-body text-xs text-onyx">
-            <p><span className="text-mauve/70">Registros incluídos:</span> <strong>{totalRegistros}</strong></p>
-            {sections.exames && <p><span className="text-mauve/70">Exames:</span> {perVisExams.length}</p>}
-            {sections.eventos && <p><span className="text-mauve/70">Agenda:</span> {perEvents.length}</p>}
-            {sections.medicamentos && <p><span className="text-mauve/70">Medicamentos em uso:</span> {visMedsEmUso.length}</p>}
-            {sections.condicoes && <p><span className="text-mauve/70">Condições registradas:</span> {condProprias.length + condFamiliar.length}</p>}
-            {sections.visao && <p><span className="text-mauve/70">Recursos de saúde:</span> {eyewear.length}</p>}
-            <p><span className="text-mauve/70">Última atualização:</span> {lastUpdate ? fmt(lastUpdate) : hoje}</p>
+            <p><span className="text-mauve">Registros incluídos:</span> <strong>{totalRegistros}</strong></p>
+            {sections.exames && <p><span className="text-mauve">Exames:</span> {perVisExams.length}</p>}
+            {sections.eventos && <p><span className="text-mauve">Agenda:</span> {perEvents.length}</p>}
+            {sections.medicamentos && <p><span className="text-mauve">Medicamentos em uso:</span> {visMedsEmUso.length}</p>}
+            {sections.condicoes && <p><span className="text-mauve">Condições registradas:</span> {condProprias.length + condFamiliar.length}</p>}
+            {sections.visao && <p><span className="text-mauve">Recursos de saúde:</span> {eyewear.length}</p>}
+            <p><span className="text-mauve">Última atualização:</span> {lastUpdate ? fmt(lastUpdate) : hoje}</p>
             {sections.exames && bioOrg && bioOrg.total > 0 && (
               <p className="col-span-2">
-                <span className="text-mauve/70">Biomarcadores atuais:</span>{' '}
+                <span className="text-mauve">Biomarcadores atuais:</span>{' '}
                 <strong>{bioOrg.total}</strong> organizados em {bioOrg.categories} categoria{bioOrg.categories !== 1 ? 's' : ''}
                 {bioOrg.outOfRange > 0 ? ` · ${bioOrg.outOfRange} fora da faixa impressa do laudo` : ''}
               </p>
@@ -640,7 +640,7 @@ function LegacyReport() {
         <section id="sec-eventos" style={{ scrollMarginTop: 16 }}>
           <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Agenda</h2>
           {perEvents.length === 0 ? (
-            <p className="font-body text-sm text-mauve/60">Nenhum evento registrado.</p>
+            <p className="font-body text-sm text-mauve">Nenhum evento registrado.</p>
           ) : (
             <table className="w-full text-left">
               <tbody>
@@ -648,8 +648,8 @@ function LegacyReport() {
                   <tr key={i} className="border-b border-border/50">
                     <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(e.date)}</td>
                     <td className="font-body text-sm text-onyx py-1.5">
-                      <span className="text-mauve/70">{typeLabel(e.eventType)}{e.prof && PROF_LABEL[e.prof] ? ` (${PROF_LABEL[e.prof]})` : ''}:</span> {e.title}
-                      {e.notes ? <span className="block text-xs text-mauve/60">{e.notes}</span> : null}
+                      <span className="text-mauve">{typeLabel(e.eventType)}{e.prof && PROF_LABEL[e.prof] ? ` (${PROF_LABEL[e.prof]})` : ''}:</span> {e.title}
+                      {e.notes ? <span className="block text-xs text-mauve">{e.notes}</span> : null}
                     </td>
                   </tr>
                 ))}
@@ -669,7 +669,7 @@ function LegacyReport() {
               active={examSort} onChange={setExamSort} />
           )}
           {perVisExams.length === 0 ? (
-            <p className="font-body text-sm text-mauve/60">Nenhum exame enviado.</p>
+            <p className="font-body text-sm text-mauve">Nenhum exame enviado.</p>
           ) : (
             <ul className="space-y-1">
               {sortedExams.map((e, i) => (
@@ -688,7 +688,7 @@ function LegacyReport() {
         <section id="sec-omica" style={{ scrollMarginTop: 16 }}>
           <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Exames de ômica</h2>
           {perOmics.length === 0 ? (
-            <p className="font-body text-sm text-mauve/60">Nenhum exame de ômica registrado.</p>
+            <p className="font-body text-sm text-mauve">Nenhum exame de ômica registrado.</p>
           ) : (
             <ul className="space-y-1">
               {perOmics.map((o, i) => (
@@ -708,7 +708,7 @@ function LegacyReport() {
         <section id="sec-medicamentos" style={{ scrollMarginTop: 16 }}>
           <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Medicamentos e Suplementos em uso</h2>
           {visMedsEmUso.length === 0 ? (
-            <p className="font-body text-sm text-mauve/60">Nenhum registrado em uso.</p>
+            <p className="font-body text-sm text-mauve">Nenhum registrado em uso.</p>
           ) : (
             <ul className="space-y-1">
               {visMedsEmUso.map((m, i) => (
@@ -720,7 +720,7 @@ function LegacyReport() {
             </ul>
           )}
           {perMedsSusp.length > 0 && (
-            <p className="font-body text-xs text-mauve/60 mt-2">Suspensos: {perMedsSusp.map(m => m.name).join(', ')}.</p>
+            <p className="font-body text-xs text-mauve mt-2">Suspensos: {perMedsSusp.map(m => m.name).join(', ')}.</p>
           )}
         </section>
         )}
@@ -733,13 +733,13 @@ function LegacyReport() {
         <section id="sec-condicoes" style={{ scrollMarginTop: 16 }}>
           <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Condições de Saúde</h2>
           {condProprias.length === 0 ? (
-            <p className="font-body text-sm text-mauve/60">Nenhuma condição registrada.</p>
+            <p className="font-body text-sm text-mauve">Nenhuma condição registrada.</p>
           ) : (
             <ul className="space-y-1">
               {condProprias.map((c, i) => (
                 <li key={i} className="font-body text-sm text-onyx">
                   • <strong>{c.name}</strong>{c.since ? ` (desde ${c.since})` : ''}
-                  {c.notes ? <span className="block text-xs text-mauve/60">{c.notes}</span> : null}
+                  {c.notes ? <span className="block text-xs text-mauve">{c.notes}</span> : null}
                 </li>
               ))}
             </ul>
@@ -751,7 +751,7 @@ function LegacyReport() {
                 {condFamiliar.map((c, i) => (
                   <li key={i} className="font-body text-sm text-onyx">
                     • <strong>{c.name}</strong>{c.relative ? ` — ${c.relative}` : ''}{c.since ? ` (desde ${c.since})` : ''}
-                    {c.notes ? <span className="block text-xs text-mauve/60">{c.notes}</span> : null}
+                    {c.notes ? <span className="block text-xs text-mauve">{c.notes}</span> : null}
                   </li>
                 ))}
               </ul>
@@ -765,7 +765,7 @@ function LegacyReport() {
         <section id="sec-visao" style={{ scrollMarginTop: 16 }}>
           <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Recursos de Saúde</h2>
           {eyewear.length === 0 ? (
-            <p className="font-body text-sm text-mauve/60">Nenhum recurso registrado.</p>
+            <p className="font-body text-sm text-mauve">Nenhum recurso registrado.</p>
           ) : (
             <ul className="space-y-1.5">
               {eyewear.map((e, i) => {
@@ -776,9 +776,9 @@ function LegacyReport() {
                 return (
                   <li key={i} className="font-body text-sm text-onyx">
                     • <strong>{EYEWEAR_LABEL[e.kind] ?? 'Óculos'}</strong>
-                    {grauStr(e.odSph, e.odCyl, e.odAxis, e.odAdd) ? <span className="block text-xs text-mauve/70 ml-3">OD: {grauStr(e.odSph, e.odCyl, e.odAxis, e.odAdd)}</span> : null}
-                    {grauStr(e.oeSph, e.oeCyl, e.oeAxis, e.oeAdd) ? <span className="block text-xs text-mauve/70 ml-3">OE: {grauStr(e.oeSph, e.oeCyl, e.oeAxis, e.oeAdd)}</span> : null}
-                    {extras.length ? <span className="block text-xs text-mauve/60 ml-3">{extras.join(' · ')}</span> : null}
+                    {grauStr(e.odSph, e.odCyl, e.odAxis, e.odAdd) ? <span className="block text-xs text-mauve ml-3">OD: {grauStr(e.odSph, e.odCyl, e.odAxis, e.odAdd)}</span> : null}
+                    {grauStr(e.oeSph, e.oeCyl, e.oeAxis, e.oeAdd) ? <span className="block text-xs text-mauve ml-3">OE: {grauStr(e.oeSph, e.oeCyl, e.oeAxis, e.oeAdd)}</span> : null}
+                    {extras.length ? <span className="block text-xs text-mauve ml-3">{extras.join(' · ')}</span> : null}
                     {e.fileUrl ? <span className="block ml-3 mt-0.5"><ProvenanceLine provenance={resourceProvenance({ fileUrl: e.fileUrl, prescriber: e.prescriber })} showOrigin={false} /></span> : null}
                   </li>
                 )
@@ -793,10 +793,10 @@ function LegacyReport() {
         <section id="sec-medidas" style={{ scrollMarginTop: 16 }}>
           <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Medidas Corporais</h2>
           {alturaCm != null && (
-            <p className="font-body text-sm text-onyx mb-1"><span className="text-mauve/70">Altura:</span> {alturaCm} cm</p>
+            <p className="font-body text-sm text-onyx mb-1"><span className="text-mauve">Altura:</span> {alturaCm} cm</p>
           )}
           {perMeasuresCorpo.length === 0 ? (
-            <p className="font-body text-sm text-mauve/60">{alturaCm != null ? 'Sem outras medidas registradas.' : 'Nenhuma medida registrada.'}</p>
+            <p className="font-body text-sm text-mauve">{alturaCm != null ? 'Sem outras medidas registradas.' : 'Nenhuma medida registrada.'}</p>
           ) : (
             <table className="w-full text-left">
               <tbody>
@@ -804,7 +804,7 @@ function LegacyReport() {
                   <tr key={i} className="border-b border-border/50">
                     <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(m.date)}</td>
                     <td className="font-body text-sm text-onyx py-1.5">
-                      <span className="text-mauve/70">{m.metric === 'outro' && m.label ? m.label : METRIC_LABEL[m.metric] ?? 'Medida'}:</span> {m.valueText}{m.unit ? ` ${m.unit}` : ''}
+                      <span className="text-mauve">{m.metric === 'outro' && m.label ? m.label : METRIC_LABEL[m.metric] ?? 'Medida'}:</span> {m.valueText}{m.unit ? ` ${m.unit}` : ''}
                     </td>
                   </tr>
                 ))}
@@ -819,7 +819,7 @@ function LegacyReport() {
         <section id="sec-sinais" style={{ scrollMarginTop: 16 }}>
           <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Sinais Vitais</h2>
           {perMeasuresVitais.length === 0 ? (
-            <p className="font-body text-sm text-mauve/60">Nenhum sinal vital registrado.</p>
+            <p className="font-body text-sm text-mauve">Nenhum sinal vital registrado.</p>
           ) : (
             <table className="w-full text-left">
               <tbody>
@@ -827,7 +827,7 @@ function LegacyReport() {
                   <tr key={i} className="border-b border-border/50">
                     <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(m.date)}</td>
                     <td className="font-body text-sm text-onyx py-1.5">
-                      <span className="text-mauve/70">{m.metric === 'outro_sinal' && m.label ? m.label : METRIC_LABEL[m.metric] ?? 'Sinal'}:</span> {m.valueText}{m.unit ? ` ${m.unit}` : ''}
+                      <span className="text-mauve">{m.metric === 'outro_sinal' && m.label ? m.label : METRIC_LABEL[m.metric] ?? 'Sinal'}:</span> {m.valueText}{m.unit ? ` ${m.unit}` : ''}
                     </td>
                   </tr>
                 ))}
@@ -842,13 +842,13 @@ function LegacyReport() {
         <section id="sec-habitos" style={{ scrollMarginTop: 16 }}>
           <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Hábitos</h2>
           {habits.length === 0 ? (
-            <p className="font-body text-sm text-mauve/60">Nenhum hábito registrado.</p>
+            <p className="font-body text-sm text-mauve">Nenhum hábito registrado.</p>
           ) : (
             <ul className="space-y-1">
               {habits.map((h, i) => (
                 <li key={i} className="font-body text-sm text-onyx">
-                  • <span className="text-mauve/70">{HABIT_LABEL[h.category] ?? 'Hábito'}:</span> {h.description}{h.frequency ? ` — ${h.frequency}` : ''}
-                  {h.notes ? <span className="block text-xs text-mauve/60">{h.notes}</span> : null}
+                  • <span className="text-mauve">{HABIT_LABEL[h.category] ?? 'Hábito'}:</span> {h.description}{h.frequency ? ` — ${h.frequency}` : ''}
+                  {h.notes ? <span className="block text-xs text-mauve">{h.notes}</span> : null}
                 </li>
               ))}
             </ul>
@@ -861,7 +861,7 @@ function LegacyReport() {
         <section id="sec-ciclo" style={{ scrollMarginTop: 16 }}>
           <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Ciclo e Contracepção</h2>
           {contraceptives.length === 0 && perMenstruations.length === 0 ? (
-            <p className="font-body text-sm text-mauve/60">Nenhum registro de ciclo ou contracepção.</p>
+            <p className="font-body text-sm text-mauve">Nenhum registro de ciclo ou contracepção.</p>
           ) : (
             <>
               {contraceptives.length > 0 && (
@@ -894,7 +894,7 @@ function LegacyReport() {
         <section id="sec-gastos" style={{ scrollMarginTop: 16 }}>
           <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Despesas</h2>
           {perExpenses.length === 0 ? (
-            <p className="font-body text-sm text-mauve/60">Nenhuma despesa registrada.</p>
+            <p className="font-body text-sm text-mauve">Nenhuma despesa registrada.</p>
           ) : (
             <>
               <table className="w-full text-left">
@@ -902,7 +902,7 @@ function LegacyReport() {
                   {perExpenses.map((x, i) => (
                     <tr key={i} className="border-b border-border/50">
                       <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(x.date)}</td>
-                      <td className="font-body text-sm text-onyx py-1.5"><span className="text-mauve/70">{typeLabel(x.type)}:</span> {x.title}</td>
+                      <td className="font-body text-sm text-onyx py-1.5"><span className="text-mauve">{typeLabel(x.type)}:</span> {x.title}</td>
                       <td className="font-body text-sm text-onyx py-1.5 pl-3 text-right whitespace-nowrap align-top">{brl(x.amountCents)}</td>
                     </tr>
                   ))}
@@ -914,7 +914,7 @@ function LegacyReport() {
         </section>
         )}
 
-        <p className="font-body text-[11px] text-mauve/60 border-t border-border pt-3 leading-relaxed">
+        <p className="font-body text-[11px] text-mauve border-t border-border pt-3 leading-relaxed">
           Este relatório organiza os dados informados pela própria pessoa na plataforma SINTERA. <strong>Não é laudo, diagnóstico
           ou parecer</strong> e não substitui avaliação profissional. Destinado a apoiar a conversa com seu profissional de saúde
           (médico, psicólogo, nutricionista, fisioterapeuta, dentista, entre outros).

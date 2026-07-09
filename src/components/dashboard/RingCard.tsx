@@ -69,7 +69,7 @@ export default function RingCard({
           <span className="font-display text-2xl font-semibold text-onyx leading-none">{value}</span>
           {unit && <span className="text-xs font-body text-mauve">{unit}</span>}
         </div>
-        <p className="text-[11px] font-body text-mauve/70 leading-tight">{sub}</p>
+        <p className="text-[11px] font-body text-mauve leading-tight">{sub}</p>
         {/* Mini progress bar */}
         <div className="mt-2 h-1 bg-ivory rounded-full overflow-hidden w-full">
           <motion.div

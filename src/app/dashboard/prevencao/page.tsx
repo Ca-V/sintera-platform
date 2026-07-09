@@ -111,7 +111,7 @@ export default function PrevencaoPreviewPage() {
         <h1 className="font-display text-2xl font-semibold text-onyx">Acompanhamentos importantes para a sua fase</h1>
         <p className="font-body text-sm text-mauve mt-2 leading-relaxed">{band.intro}</p>
         {ageRange && (
-          <p className="font-body text-[11px] text-mauve/50 mt-1">Personalizado pela faixa informada no seu cadastro: {ageRange}.</p>
+          <p className="font-body text-[11px] text-mauve mt-1">Personalizado pela faixa informada no seu cadastro: {ageRange}.</p>
         )}
       </div>
 
@@ -138,7 +138,7 @@ export default function PrevencaoPreviewPage() {
         </p>
       </div>
 
-      <p className="font-body text-[11px] text-mauve/50 text-center leading-relaxed">
+      <p className="font-body text-[11px] text-mauve text-center leading-relaxed">
         Protótipo interno · personalizado por faixa etária · pendente de validação clínica. A versão completa (todas as faixas, da infância à terceira idade, mulher e homem) e a exibição para usuárias dependem da aprovação de um Responsável Clínico (CRM).
       </p>
     </div>

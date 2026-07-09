@@ -10,7 +10,7 @@ export default function ComingSoon({ title, desc }: { title: string; desc: strin
       </div>
       <h1 className="font-display text-xl font-semibold text-onyx">{title}</h1>
       <p className="font-body text-sm text-mauve leading-relaxed">{desc}</p>
-      <p className="font-body text-[11px] text-mauve/50">Em construção — esta área estará disponível em breve.</p>
+      <p className="font-body text-[11px] text-mauve">Em construção — esta área estará disponível em breve.</p>
     </div>
   )
 }

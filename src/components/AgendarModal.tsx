@@ -264,16 +264,16 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
 
                   {savedToAgenda && (
                     <div className="space-y-2 mb-5 text-left">
-                      <p className={LABEL}>Exportar para calendário <span className="font-normal text-mauve/50 normal-case">(opcional)</span></p>
+                      <p className={LABEL}>Exportar para calendário <span className="font-normal text-mauve normal-case">(opcional)</span></p>
                       <button onClick={handleGoogle} className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl border border-border hover:border-petal/40 hover:bg-blush/30 transition-all">
-                        <span className="font-body text-sm text-onyx flex-1 text-left">Google Calendar</span><ExternalLink size={13} className="text-mauve/50" />
+                        <span className="font-body text-sm text-onyx flex-1 text-left">Google Calendar</span><ExternalLink size={13} className="text-mauve" />
                       </button>
                       <button onClick={handleOutlook} className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl border border-border hover:border-petal/40 hover:bg-blush/30 transition-all">
-                        <span className="font-body text-sm text-onyx flex-1 text-left">Outlook / Microsoft</span><ExternalLink size={13} className="text-mauve/50" />
+                        <span className="font-body text-sm text-onyx flex-1 text-left">Outlook / Microsoft</span><ExternalLink size={13} className="text-mauve" />
                       </button>
                       <button onClick={handleICS} className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl border border-border hover:border-petal/40 hover:bg-blush/30 transition-all">
                         <div className="w-[18px] h-[18px] rounded flex items-center justify-center bg-sage-light flex-shrink-0"><Download size={11} className="text-sage" /></div>
-                        <span className="font-body text-sm text-onyx flex-1 text-left">Baixar .ics</span><span className="font-body text-[11px] text-mauve/50">Apple, outros</span>
+                        <span className="font-body text-sm text-onyx flex-1 text-left">Baixar .ics</span><span className="font-body text-[11px] text-mauve">Apple, outros</span>
                       </button>
                     </div>
                   )}
@@ -340,9 +340,9 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
 
                   {/* Valor + modelo do dinheiro (explícito) */}
                   <div className="space-y-1.5">
-                    <label htmlFor="agendar-valor" className={LABEL}>Valor — R$ <span className="font-normal text-mauve/50 normal-case">(opc.)</span></label>
+                    <label htmlFor="agendar-valor" className={LABEL}>Valor — R$ <span className="font-normal text-mauve normal-case">(opc.)</span></label>
                     <input id="agendar-valor" type="text" inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder="250,00" className={FIELD} />
-                    <p className="font-body text-[11px] text-mauve/60">Entra em <strong>Despesas</strong> quando o status for <strong>Realizado</strong> — ou marque como <strong>despesa direta</strong> (em Mais detalhes).</p>
+                    <p className="font-body text-[11px] text-mauve">Entra em <strong>Despesas</strong> quando o status for <strong>Realizado</strong> — ou marque como <strong>despesa direta</strong> (em Mais detalhes).</p>
                   </div>
 
                   {/* ── Mais detalhes ────────────────────────────── */}
@@ -362,7 +362,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                         </select>
                         {recurrence !== 'none' && (
                           <div className="flex items-center gap-2 pt-1">
-                            <span className="font-body text-xs text-mauve/70">até (opcional):</span>
+                            <span className="font-body text-xs text-mauve">até (opcional):</span>
                             <input type="date" aria-label="Repetir até" value={recurrenceUntil} min={date || today} onChange={e => setRecurrenceUntil(e.target.value)}
                               className="flex-1 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40" />
                           </div>
@@ -370,7 +370,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                       </div>
 
                       {eventType !== 'plano' && (
-                      <div className="space-y-1.5"><label htmlFor="agendar-profissional" className={LABEL}>Profissional <span className="font-normal text-mauve/50 normal-case">(opc.)</span></label>
+                      <div className="space-y-1.5"><label htmlFor="agendar-profissional" className={LABEL}>Profissional <span className="font-normal text-mauve normal-case">(opc.)</span></label>
                         <input id="agendar-profissional" type="text" value={professionalName} onChange={e => setProfessionalName(e.target.value)} placeholder="Dr(a). …" className={FIELD} /></div>
                       )}
 
@@ -398,7 +398,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                       )}
 
                       {eventType !== 'plano' && (
-                      <div className="space-y-1.5"><label htmlFor="agendar-local" className={LABEL}>Local <span className="font-normal text-mauve/50 normal-case">(clínica / endereço)</span></label>
+                      <div className="space-y-1.5"><label htmlFor="agendar-local" className={LABEL}>Local <span className="font-normal text-mauve normal-case">(clínica / endereço)</span></label>
                         <input id="agendar-local" type="text" value={establishment} onChange={e => setEstablishment(e.target.value)} placeholder="Clínica, hospital, endereço…" className={FIELD} /></div>
                       )}
 
@@ -434,11 +434,11 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                       <div className="space-y-1.5"><label htmlFor="agendar-observacoes" className={LABEL}>Observações</label>
                         <textarea id="agendar-observacoes" value={notes} onChange={e => setNotes(e.target.value)} rows={2} placeholder="Ex.: levar laudos anteriores…" className={`${FIELD} resize-none`} /></div>
 
-                      <div className="space-y-1.5"><label htmlFor="agendar-anexo" className={LABEL}>Nota fiscal / comprovante / anexo <span className="font-normal text-mauve/50 normal-case">(PDF, JPG, PNG)</span></label>
+                      <div className="space-y-1.5"><label htmlFor="agendar-anexo" className={LABEL}>Nota fiscal / comprovante / anexo <span className="font-normal text-mauve normal-case">(PDF, JPG, PNG)</span></label>
                         <input id="agendar-anexo" type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e => setAttachmentFile(e.target.files?.[0] ?? null)}
                           className="block w-full text-xs font-body text-mauve file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:bg-blush file:text-petal file:font-medium" />
                         {initialEvent?.attachmentUrl && !attachmentFile && (
-                          <p className="font-body text-[11px] text-mauve/60">Anexo atual mantido. Escolha um arquivo para substituir.</p>
+                          <p className="font-body text-[11px] text-mauve">Anexo atual mantido. Escolha um arquivo para substituir.</p>
                         )}
                       </div>
 
@@ -447,7 +447,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                         <span className="font-body text-xs text-onyx/80">Despesa direta — conta em Despesas sem precisar concluir (plano, academia, compra…)</span>
                       </label>
                       {directExpense && status !== 'realizado' && (
-                        <p className="font-body text-[11px] text-mauve/60 px-1">Aparece na <strong>Agenda</strong> (previsão) e já entra em <strong>Despesas</strong>, mesmo antes de concluir.</p>
+                        <p className="font-body text-[11px] text-mauve px-1">Aparece na <strong>Agenda</strong> (previsão) e já entra em <strong>Despesas</strong>, mesmo antes de concluir.</p>
                       )}
                     </div>
                   )}
@@ -475,16 +475,16 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                   <div className="space-y-2 pt-1">
                     <p className={LABEL}>{onSave ? 'Exportar para o calendário (opcional)' : 'Adicionar ao calendário'}</p>
                     <button onClick={handleGoogle} disabled={!canExport} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-petal/40 hover:bg-blush/30 disabled:opacity-40 transition-all">
-                      <span className="font-body text-sm text-onyx flex-1 text-left">Google Calendar</span><ExternalLink size={13} className="text-mauve/50" />
+                      <span className="font-body text-sm text-onyx flex-1 text-left">Google Calendar</span><ExternalLink size={13} className="text-mauve" />
                     </button>
                     <button onClick={handleOutlook} disabled={!canExport} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-petal/40 hover:bg-blush/30 disabled:opacity-40 transition-all">
-                      <span className="font-body text-sm text-onyx flex-1 text-left">Outlook / Microsoft</span><ExternalLink size={13} className="text-mauve/50" />
+                      <span className="font-body text-sm text-onyx flex-1 text-left">Outlook / Microsoft</span><ExternalLink size={13} className="text-mauve" />
                     </button>
                     <button onClick={handleICS} disabled={!canExport} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-petal/40 hover:bg-blush/30 disabled:opacity-40 transition-all">
                       <div className="w-[18px] h-[18px] rounded flex items-center justify-center bg-sage-light flex-shrink-0"><Download size={11} className="text-sage" /></div>
-                      <span className="font-body text-sm text-onyx flex-1 text-left">Baixar .ics</span><span className="font-body text-[11px] text-mauve/50">Apple, outros</span>
+                      <span className="font-body text-sm text-onyx flex-1 text-left">Baixar .ics</span><span className="font-body text-[11px] text-mauve">Apple, outros</span>
                     </button>
-                    {!canExport && <p className="font-body text-xs text-mauve/50 text-center">Selecione uma data para continuar</p>}
+                    {!canExport && <p className="font-body text-xs text-mauve text-center">Selecione uma data para continuar</p>}
                   </div>
                 </div>
               )}

@@ -88,7 +88,7 @@ export default function DailyScoreCard() {
             >
               {SCORE}
             </motion.span>
-            <span className="text-[11px] font-body text-white/40 mt-0.5">de 100</span>
+            <span className="text-[11px] font-body text-white/60 mt-0.5">de 100</span>
           </div>
         </div>
 
@@ -106,7 +106,7 @@ export default function DailyScoreCard() {
               Fase Folicular ativa. Estrogênio em alta — ótimo para treinos e foco.
             </p>
           </div>
-          <p className="text-xs font-body text-white/30">Ovulação prevista em 5 dias</p>
+          <p className="text-xs font-body text-white/60">Ovulação prevista em 5 dias</p>
         </div>
       </div>
 

@@ -110,7 +110,7 @@ export default function CondicoesPage() {
           (meta || c.notes) ? (
             <>
               {meta}
-              {c.notes && <span className={meta ? 'block mt-0.5 text-mauve/50' : 'text-mauve/50'}>{c.notes}</span>}
+              {c.notes && <span className={meta ? 'block mt-0.5 text-mauve' : 'text-mauve'}>{c.notes}</span>}
             </>
           ) : undefined
         }
@@ -150,7 +150,7 @@ export default function CondicoesPage() {
       {showForm && (
         <Card padding="md" className="space-y-3">
           <div>
-            <label htmlFor="cond-tipo" className="font-body text-xs text-mauve/70 block mb-1">Tipo</label>
+            <label htmlFor="cond-tipo" className="font-body text-xs text-mauve block mb-1">Tipo</label>
             <select id="cond-tipo" value={scope} onChange={e => setScope(e.target.value as Scope)}
               className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
               <option value="propria">Minha condição</option>
@@ -158,7 +158,7 @@ export default function CondicoesPage() {
             </select>
           </div>
           <div>
-            <label htmlFor="cond-nome" className="font-body text-xs text-mauve/70 block mb-1">Condição</label>
+            <label htmlFor="cond-nome" className="font-body text-xs text-mauve block mb-1">Condição</label>
             <div className="flex items-center gap-2">
               <input id="cond-nome" type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Ex.: Hipertensão"
                 className="flex-1 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
@@ -167,18 +167,18 @@ export default function CondicoesPage() {
           </div>
           {scope === 'familiar' && (
             <div>
-              <label htmlFor="cond-parente" className="font-body text-xs text-mauve/70 block mb-1">Parente</label>
+              <label htmlFor="cond-parente" className="font-body text-xs text-mauve block mb-1">Parente</label>
               <input id="cond-parente" type="text" value={relative} onChange={e => setRelative(e.target.value)} placeholder="Ex.: Mãe, avô paterno"
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
             </div>
           )}
           <div>
-            <label htmlFor="cond-desde" className="font-body text-xs text-mauve/70 block mb-1">Desde quando (opcional)</label>
+            <label htmlFor="cond-desde" className="font-body text-xs text-mauve block mb-1">Desde quando (opcional)</label>
             <input id="cond-desde" type="text" value={since} onChange={e => setSince(e.target.value)} placeholder="Ex.: 2020, infância"
               className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
           </div>
           <div>
-            <label htmlFor="cond-notas" className="font-body text-xs text-mauve/70 block mb-1">Observações (opcional)</label>
+            <label htmlFor="cond-notas" className="font-body text-xs text-mauve block mb-1">Observações (opcional)</label>
             <div className="flex items-start gap-2">
               <textarea id="cond-notas" value={notes} onChange={e => setNotes(e.target.value)} rows={2}
                 className="flex-1 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
@@ -205,7 +205,7 @@ export default function CondicoesPage() {
               <p className="font-display text-base font-semibold text-onyx">Minhas condições</p>
             </div>
             {proprias.length > 0 ? <div className="space-y-2">{proprias.map(card)}</div>
-              : <p className="font-body text-sm text-mauve/60">Nenhuma registrada.</p>}
+              : <p className="font-body text-sm text-mauve">Nenhuma registrada.</p>}
           </div>
           <div>
             <div className="flex items-center gap-2 mb-2">
@@ -213,12 +213,12 @@ export default function CondicoesPage() {
               <p className="font-display text-base font-semibold text-onyx">Histórico familiar</p>
             </div>
             {familiares.length > 0 ? <div className="space-y-2">{familiares.map(card)}</div>
-              : <p className="font-body text-sm text-mauve/60">Nenhum registrado.</p>}
+              : <p className="font-body text-sm text-mauve">Nenhum registrado.</p>}
           </div>
         </div>
       )}
 
-      <p className="font-body text-[11px] text-mauve/50 text-center leading-relaxed">
+      <p className="font-body text-[11px] text-mauve text-center leading-relaxed">
         Registro do que você informa. A SINTERA não identifica, não infere e não interpreta condições.
       </p>
     </div>

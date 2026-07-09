@@ -1,24 +1,29 @@
 @import "tailwindcss";
 
 @theme {
-  --color-petal: #C2849A;
-  --color-petal-light: #EDD5DF;
-  --color-petal-dark: #9A6478;
-  --color-blush: #F8EDF2;
-  --color-lavender: #A89CBD;
-  --color-lavender-light: #E2D9EE;
-  --color-sage: #7DAF9E;
+  /* Identidade oficial (Branding v1.0): PRIMÁRIA institucional = violeta profunda
+     (universal, premium, tecnológica, atemporal, gênero-neutro; passa WCAG AA como
+     texto ~7:1). O token histórico `petal` é o primário app-wide (530 usos) — seu
+     VALOR foi redefinido para o violeta; o rename do token é higiene agendada.
+     APOIO = sage. SECUNDÁRIA (apoio visual) = rosê, no token `lavender`. */
+  --color-petal: #5E4C86;        /* PRIMÁRIA institucional (violeta) */
+  --color-petal-light: #E7E1F0;
+  --color-petal-dark: #463669;
+  --color-blush: #EFEBF7;        /* fundo suave do primário (violeta) */
+  --color-lavender: #C2849A;     /* SECUNDÁRIA (rosê) — apoio visual pontual */
+  --color-lavender-light: #EDD5DF;
+  --color-sage: #7DAF9E;         /* APOIO */
   --color-sage-light: #C8E2DB;
   --color-cream: #F7F3F0;
   --color-ivory: #F2EDE8;
   --color-warm: #EEE8E1;
-  --color-gold: #C9A97A;
+  --color-gold: #C9A97A;         /* premium — uso restrito */
   --color-onyx: #1E1820;
   --color-deep: #12101A;
   --color-panel: #1C1826;
   --color-mauve: #7A6470;
   --color-border: #EAE2E8;
-  --color-surface: #FAF5F8;
+  --color-surface: #FAF7FB;
   --color-mist: #F2ECF6;
 }
 
@@ -148,8 +153,8 @@ input[type="range"].range-gold::-webkit-slider-thumb { background: #C9A97A; }
 }
 
 /* ─── Gradients ─── */
-.gradient-sintera      { background: linear-gradient(135deg, #C2849A 0%, #A89CBD 100%); }
-.gradient-sintera-soft { background: linear-gradient(135deg, #EDD5DF 0%, #E2D9EE 100%); }
+.gradient-sintera      { background: linear-gradient(135deg, #5E4C86 0%, #8E7DA6 100%); }
+.gradient-sintera-soft { background: linear-gradient(135deg, #E7E1F0 0%, #E2D9EE 100%); }
 .gradient-subtle       { background: linear-gradient(160deg, #FDFAF7 0%, #F8EDF2 45%, #E2D9EE 100%); }
 .gradient-dark         { background: linear-gradient(135deg, #12101A 0%, #1C1826 60%, #221C2E 100%); }
 .gradient-hero         {

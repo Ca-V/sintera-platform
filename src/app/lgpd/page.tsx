@@ -80,7 +80,7 @@ function RightCard({ right }: { right: Right }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="font-body text-sm font-semibold text-onyx">{right.title}</h3>
-            <span className="font-body text-[11px] text-mauve/60 bg-ivory border border-border px-2 py-0.5 rounded-full">
+            <span className="font-body text-[11px] text-mauve bg-ivory border border-border px-2 py-0.5 rounded-full">
               LGPD {right.article}
             </span>
           </div>
@@ -93,7 +93,7 @@ function RightCard({ right }: { right: Right }) {
           <p className="font-body text-[11px] font-semibold text-onyx/40 uppercase tracking-wider">Como exercer</p>
           <p className="font-body text-xs text-onyx/70 leading-relaxed">{right.howTo}</p>
         </div>
-        <p className="font-body text-[11px] text-mauve/50">
+        <p className="font-body text-[11px] text-mauve">
           <span className="font-semibold">Prazo de resposta:</span> {right.sla}
         </p>
       </div>
@@ -159,7 +159,7 @@ export default function LgpdPage() {
             <Mail size={14} />
             {CONTACT_EMAIL}
           </a>
-          <p className="font-body text-xs text-mauve/60 leading-relaxed">
+          <p className="font-body text-xs text-mauve leading-relaxed">
             Para exercer qualquer direito não disponível diretamente na plataforma, envie um e-mail
             com o assunto <strong>&ldquo;LGPD — [Direito que deseja exercer]&rdquo;</strong> e o endereço
             de e-mail cadastrado na sua conta. Respondemos em até 15 dias úteis.
@@ -168,7 +168,7 @@ export default function LgpdPage() {
 
         {/* ANPD */}
         <div className="rounded-2xl border border-border bg-ivory px-5 py-4 mb-8">
-          <p className="font-body text-xs text-mauve/70 leading-relaxed">
+          <p className="font-body text-xs text-mauve leading-relaxed">
             <span className="font-semibold text-onyx/60">Autoridade Nacional de Proteção de Dados (ANPD):</span>{' '}
             Se considerar que seus direitos não foram atendidos, você pode registrar uma reclamação
             junto à ANPD em{' '}

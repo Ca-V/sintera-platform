@@ -253,7 +253,7 @@ export default function CaptureCenter({ className = '', onDone }: CaptureCenterP
                   <strong>{processorFor(kind)!.label.toLowerCase()}</strong> — confirme ou corrija.
                 </span>
                 {classifying && (
-                  <span className="inline-flex items-center gap-1 text-mauve/60"><Loader2 size={11} className="animate-spin" /> afinando…</span>
+                  <span className="inline-flex items-center gap-1 text-mauve"><Loader2 size={11} className="animate-spin" /> afinando…</span>
                 )}
               </p>
             ) : classifying ? (

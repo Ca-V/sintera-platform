@@ -16,7 +16,7 @@ export default function ProvenanceLine({ provenance, showOrigin = true, classNam
 }) {
   const meta = [sourceLabel(provenance.kind), provenance.issuer, provenance.date].filter(Boolean).join(' · ')
   return (
-    <span className={`inline-flex flex-wrap items-center gap-x-1.5 gap-y-0.5 font-body text-[11px] text-mauve/70 ${className}`}>
+    <span className={`inline-flex flex-wrap items-center gap-x-1.5 gap-y-0.5 font-body text-[11px] text-mauve ${className}`}>
       {showOrigin && <span>Origem: {meta}</span>}
       {hasDocument(provenance) && (
         <a href={documentUrl(provenance) as string} target="_blank" rel="noopener noreferrer"

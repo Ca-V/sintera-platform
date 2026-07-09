@@ -14,7 +14,7 @@ interface Props {
 
 const inputClass =
   'w-full rounded-xl border border-border bg-white px-4 py-3 text-sm font-body text-onyx ' +
-  'placeholder:text-mauve/60 focus:outline-none focus:ring-2 focus:ring-petal/30 focus:border-petal ' +
+  'placeholder:text-mauve focus:outline-none focus:ring-2 focus:ring-petal/30 focus:border-petal ' +
   'transition-all duration-200 hover:border-petal-light'
 
 export default function ProfileEditor({ profile, onCancel, onSaved }: Props) {

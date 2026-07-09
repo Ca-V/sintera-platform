@@ -228,29 +228,29 @@ export default function CicloPage() {
               <Card padding="sm" className="space-y-3 mb-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label htmlFor="ciclo-metodo" className="font-body text-xs text-mauve/70 block mb-1">Método</label>
+                    <label htmlFor="ciclo-metodo" className="font-body text-xs text-mauve block mb-1">Método</label>
                     <select id="ciclo-metodo" value={kind} onChange={e => chooseKind(e.target.value)}
                       className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
                       {KINDS.map(k => <option key={k.value} value={k.value}>{k.label}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label htmlFor="ciclo-marca" className="font-body text-xs text-mauve/70 block mb-1">Marca (opcional)</label>
+                    <label htmlFor="ciclo-marca" className="font-body text-xs text-mauve block mb-1">Marca (opcional)</label>
                     <input id="ciclo-marca" type="text" value={brand} onChange={e => setBrand(e.target.value)} placeholder="Ex.: Mirena"
                       className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
                   </div>
                 </div>
                 {kind === 'pilula' ? (
-                  <p className="font-body text-[11px] text-mauve/70">Para pílula, registre dose, frequência e recompra em <Link href="/dashboard/medicamentos" className="text-petal hover:underline">Medicamentos e Suplementos</Link>.</p>
+                  <p className="font-body text-[11px] text-mauve">Para pílula, registre dose, frequência e recompra em <Link href="/dashboard/medicamentos" className="text-petal hover:underline">Medicamentos e Suplementos</Link>.</p>
                 ) : (
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label htmlFor="ciclo-inicio" className="font-body text-xs text-mauve/70 block mb-1">Início / colocação</label>
+                      <label htmlFor="ciclo-inicio" className="font-body text-xs text-mauve block mb-1">Início / colocação</label>
                       <input id="ciclo-inicio" type="date" value={startedOn} onChange={e => setStartedOn(e.target.value)}
                         className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
                     </div>
                     <div>
-                      <label htmlFor="ciclo-vida-util" className="font-body text-xs text-mauve/70 block mb-1">Vida útil (meses)</label>
+                      <label htmlFor="ciclo-vida-util" className="font-body text-xs text-mauve block mb-1">Vida útil (meses)</label>
                       <input id="ciclo-vida-util" type="number" value={duration} onChange={e => setDuration(e.target.value)} placeholder="Ex.: 60"
                         className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
                     </div>
@@ -266,7 +266,7 @@ export default function CicloPage() {
                   </label>
                 )}
                 <div>
-                  <label htmlFor="ciclo-notas" className="font-body text-xs text-mauve/70 block mb-1">Observações (opcional)</label>
+                  <label htmlFor="ciclo-notas" className="font-body text-xs text-mauve block mb-1">Observações (opcional)</label>
                   <textarea id="ciclo-notas" value={notes} onChange={e => setNotes(e.target.value)} rows={2}
                     className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
                 </div>
@@ -281,7 +281,7 @@ export default function CicloPage() {
             )}
 
             {activeMethods.length === 0 && pastMethods.length === 0 ? (
-              <p className="font-body text-sm text-mauve/60">Nenhum método registrado.</p>
+              <p className="font-body text-sm text-mauve">Nenhum método registrado.</p>
             ) : (
               <div className="space-y-2">
                 {[...activeMethods, ...pastMethods].map(m => {
@@ -341,7 +341,7 @@ export default function CicloPage() {
 
             <div className="flex items-end gap-2 mb-3">
               <div className="flex-1">
-                <label htmlFor="ciclo-menstruacao" className="font-body text-xs text-mauve/70 block mb-1">Início da menstruação</label>
+                <label htmlFor="ciclo-menstruacao" className="font-body text-xs text-mauve block mb-1">Início da menstruação</label>
                 <input id="ciclo-menstruacao" type="date" value={periodDate} onChange={e => setPeriodDate(e.target.value)} max={todayISO()}
                   className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
               </div>
@@ -352,18 +352,18 @@ export default function CicloPage() {
             </div>
 
             {periods.length === 0 ? (
-              <p className="font-body text-sm text-mauve/60">Nenhuma menstruação registrada. Registre o início para acompanhar o ciclo.</p>
+              <p className="font-body text-sm text-mauve">Nenhuma menstruação registrada. Registre o início para acompanhar o ciclo.</p>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {periods.map(p => (
                   <span key={p.id} className="inline-flex items-center gap-1.5 rounded-full bg-blush/40 border border-petal/20 pl-3 pr-1.5 py-1 font-body text-xs text-onyx">
                     {fmt(p.startedOn)}
-                    <button onClick={() => removePeriod(p.id)} disabled={busyId === p.id} className="text-mauve/50 hover:text-red-500"><X size={12} /></button>
+                    <button onClick={() => removePeriod(p.id)} disabled={busyId === p.id} className="text-mauve hover:text-red-500"><X size={12} /></button>
                   </span>
                 ))}
               </div>
             )}
-            <p className="font-body text-[11px] text-mauve/50 mt-3">Ciclo médio e previsão são calculados das suas datas — estimativa factual, não um método contraceptivo nem diagnóstico.</p>
+            <p className="font-body text-[11px] text-mauve mt-3">Ciclo médio e previsão são calculados das suas datas — estimativa factual, não um método contraceptivo nem diagnóstico.</p>
           </div>
         </>
       )}

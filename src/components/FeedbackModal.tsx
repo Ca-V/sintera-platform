@@ -145,7 +145,7 @@ export default function FeedbackModal() {
                   <p className="font-body text-xs font-semibold text-onyx">
                     Depois de usar a SINTERA, você tomou ou planeja alguma ação de saúde?
                   </p>
-                  <p className="font-body text-[11px] text-mauve/60">Opcional</p>
+                  <p className="font-body text-[11px] text-mauve">Opcional</p>
                   <div className="flex gap-2">
                     {[
                       { value: 'sim',             label: 'Sim' },
@@ -168,7 +168,7 @@ export default function FeedbackModal() {
                 <div className="space-y-1.5">
                   <p className="font-body text-xs font-semibold text-onyx">
                     Algo que queira nos contar?
-                    <span className="font-normal text-mauve/60 ml-1">Opcional</span>
+                    <span className="font-normal text-mauve ml-1">Opcional</span>
                   </p>
                   <textarea
                     value={openText}

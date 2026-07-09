@@ -81,10 +81,10 @@ function NavItem({ href, icon: Icon, label, active, soon, onClose }: {
       )}
     >
       <Icon size={16} className={cn('flex-shrink-0 transition-colors',
-        active ? 'text-petal' : 'text-white/30 group-hover:text-white/60')} />
+        active ? 'text-petal' : 'text-white/60 group-hover:text-white/60')} />
       <span className={cn('flex-1', active && 'font-medium')}>{label}</span>
       {soon && (
-        <span className="font-body text-[9px] font-medium text-white/30 bg-white/8 px-1.5 py-0.5 rounded-full border border-white/10">
+        <span className="font-body text-[9px] font-medium text-white/60 bg-white/8 px-1.5 py-0.5 rounded-full border border-white/10">
           Em breve
         </span>
       )}
@@ -113,7 +113,7 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
           </div>
           <span className="font-display text-lg font-semibold tracking-[0.2em] text-white">SINTERA</span>
         </Link>
-        <button onClick={onClose} className="lg:hidden text-white/30 hover:text-white/70 transition-colors">
+        <button onClick={onClose} className="lg:hidden text-white/60 hover:text-white/70 transition-colors">
           <X size={17}/>
         </button>
       </div>
@@ -128,7 +128,7 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
           <div className="min-w-0 flex-1">
             <p className="text-sm font-body font-medium text-white leading-tight truncate">{displayName}</p>
           </div>
-          <ChevronRight size={13} className="text-white/25 flex-shrink-0"/>
+          <ChevronRight size={13} className="text-white/60 flex-shrink-0"/>
         </div>
       </Link>
 

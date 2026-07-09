@@ -113,33 +113,33 @@ export default function OmicsListPage() {
         <Card padding="md" className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="omics-tipo" className="font-body text-xs text-mauve/70 block mb-1">Tipo de ômica</label>
+              <label htmlFor="omics-tipo" className="font-body text-xs text-mauve block mb-1">Tipo de ômica</label>
               <select id="omics-tipo" value={domain} onChange={e => setDomain(e.target.value as OmicsDomain)}
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
                 {DOMAINS.map(d => <option key={d} value={d}>{DOMAIN_LABEL[d]}</option>)}
               </select>
             </div>
             <div>
-              <label htmlFor="omics-data" className="font-body text-xs text-mauve/70 block mb-1">Data do exame</label>
+              <label htmlFor="omics-data" className="font-body text-xs text-mauve block mb-1">Data do exame</label>
               <input id="omics-data" type="date" value={date} onChange={e => setDate(e.target.value)}
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="omics-laboratorio" className="font-body text-xs text-mauve/70 block mb-1">Laboratório</label>
+              <label htmlFor="omics-laboratorio" className="font-body text-xs text-mauve block mb-1">Laboratório</label>
               <input id="omics-laboratorio" type="text" value={lab} onChange={e => setLab(e.target.value)} placeholder="Opcional"
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
             </div>
             <div>
-              <label htmlFor="omics-tecnologia" className="font-body text-xs text-mauve/70 block mb-1">Tecnologia</label>
+              <label htmlFor="omics-tecnologia" className="font-body text-xs text-mauve block mb-1">Tecnologia</label>
               <input id="omics-tecnologia" type="text" value={tech} onChange={e => setTech(e.target.value)} placeholder="Ex.: LC-MS/MS"
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
             </div>
           </div>
           {/* Upload do laudo (opcional) — selecionar arquivo ou tirar foto */}
           <div>
-            <label className="font-body text-xs text-mauve/70 block mb-1.5">Laudo do exame</label>
+            <label className="font-body text-xs text-mauve block mb-1.5">Laudo do exame</label>
             <input ref={fileRef} type="file" aria-label="Selecionar arquivo do laudo" accept=".csv,.json,.pdf,image/*,text/csv,application/json,application/pdf" className="hidden"
               onChange={e => { const f = e.target.files?.[0]; if (f) setFile(f); e.target.value = '' }} />
             <input ref={cameraRef} type="file" aria-label="Fotografar o laudo" accept="image/*" capture="environment" className="hidden"
@@ -150,7 +150,7 @@ export default function OmicsListPage() {
                   <Paperclip size={14} className="text-petal flex-shrink-0" />
                   <span className="font-body text-xs text-onyx truncate">{file.name}</span>
                 </span>
-                <button onClick={() => setFile(null)} className="text-mauve/50 hover:text-red-500 flex-shrink-0"><X size={14} /></button>
+                <button onClick={() => setFile(null)} className="text-mauve hover:text-red-500 flex-shrink-0"><X size={14} /></button>
               </div>
             ) : (
               <div className="flex flex-wrap gap-2">
@@ -164,7 +164,7 @@ export default function OmicsListPage() {
                 </button>
               </div>
             )}
-            <p className="font-body text-[11px] text-mauve/50 mt-1.5">PDF ou foto do laudo (a IA transcreve), ou CSV/JSON estruturado. Opcional — você também pode criar vazio e adicionar resultados depois.</p>
+            <p className="font-body text-[11px] text-mauve mt-1.5">PDF ou foto do laudo (a IA transcreve), ou CSV/JSON estruturado. Opcional — você também pode criar vazio e adicionar resultados depois.</p>
           </div>
 
           {err && <p className="font-body text-xs text-red-500">{err}</p>}
@@ -183,7 +183,7 @@ export default function OmicsListPage() {
       ) : panels.length === 0 ? (
         <Card padding="xl" className="text-center space-y-1">
           <p className="font-body text-sm text-mauve">Nenhum exame de ômica registrado ainda.</p>
-          <p className="font-body text-xs text-mauve/60">Toque em <strong>Adicionar exame</strong> e anexe o laudo (PDF, foto, CSV ou JSON).</p>
+          <p className="font-body text-xs text-mauve">Toque em <strong>Adicionar exame</strong> e anexe o laudo (PDF, foto, CSV ou JSON).</p>
         </Card>
       ) : (
         <div className="space-y-2">
@@ -204,7 +204,7 @@ export default function OmicsListPage() {
         </div>
       )}
 
-      <p className="font-body text-[11px] text-mauve/50 text-center leading-relaxed">
+      <p className="font-body text-[11px] text-mauve text-center leading-relaxed">
         Organização factual dos seus dados ômicos. A SINTERA não interpreta resultados nem gera conclusões clínicas.
       </p>
     </div>

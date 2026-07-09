@@ -102,7 +102,7 @@ export default function ListaDeEsperaPage() {
                     <>Quero uma vaga <ArrowRight size={15} /></>
                   )}
                 </button>
-                <p className="font-body text-[11px] text-mauve/50 text-center leading-relaxed">
+                <p className="font-body text-[11px] text-mauve text-center leading-relaxed">
                   Seus dados são tratados conforme nossa{' '}
                   <Link href="/privacidade" className="underline hover:text-petal transition-colors">Política de Privacidade</Link>
                   {' '}e a LGPD. Você pode pedir a exclusão a qualquer momento.
@@ -157,7 +157,7 @@ export default function ListaDeEsperaPage() {
                   <div className="w-9 h-9 rounded-xl bg-blush flex items-center justify-center mx-auto">
                     <Icon size={15} className="text-petal" />
                   </div>
-                  <p className="font-body text-[11px] text-mauve/70 leading-tight">{label}</p>
+                  <p className="font-body text-[11px] text-mauve leading-tight">{label}</p>
                 </div>
               ))}
             </motion.div>

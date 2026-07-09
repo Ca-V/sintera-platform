@@ -204,18 +204,18 @@ export default function InsightsPage() {
                       {flag.label}
                     </span>
                   )}
-                  <span className="font-body text-xs text-mauve/60 ml-auto">{formatDate(it.created_at)}</span>
+                  <span className="font-body text-xs text-mauve ml-auto">{formatDate(it.created_at)}</span>
                 </div>
 
                 <p className="font-body text-sm text-onyx leading-relaxed">{it.insight}</p>
 
                 <div className="flex items-center justify-between gap-3 mt-4 pt-3 border-t border-mauve/10">
-                  <span className="font-body text-xs text-mauve/70">{origin}</span>
+                  <span className="font-body text-xs text-mauve">{origin}</span>
                   {sent ? (
                     <span className="font-body text-xs text-sage">Obrigada pelo retorno</span>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <span className="font-body text-xs text-mauve/60">Foi útil?</span>
+                      <span className="font-body text-xs text-mauve">Foi útil?</span>
                       <button aria-label="Útil" disabled={feedbackBusy[it.id]}
                         onClick={() => sendFeedback(it.id, 'util')}
                         className="w-7 h-7 rounded-lg bg-sage-light flex items-center justify-center hover:scale-105 transition-transform disabled:opacity-50">

@@ -58,7 +58,7 @@ function StatCard({ icon: Icon, label, value, sub, color, bg }: {
       </div>
       <p className="font-display text-2xl font-bold text-onyx">{value}</p>
       <p className="font-body text-xs font-semibold text-onyx/60 mt-0.5">{label}</p>
-      {sub && <p className="font-body text-xs text-mauve/60 mt-0.5">{sub}</p>}
+      {sub && <p className="font-body text-xs text-mauve mt-0.5">{sub}</p>}
     </div>
   )
 }
@@ -287,7 +287,7 @@ export default function AdminPage() {
                     if (total === 0) return null
                     return (
                       <div key={label}>
-                        <p className="font-body text-xs text-mauve/60 uppercase tracking-wider mb-2">{label}</p>
+                        <p className="font-body text-xs text-mauve uppercase tracking-wider mb-2">{label}</p>
                         <div className="space-y-1.5">
                           {opts.map(([key, name]) => {
                             const count = map[key] ?? 0
@@ -322,7 +322,7 @@ export default function AdminPage() {
                         <span className="font-body text-xs text-onyx flex-1">
                           {eventLabels[ev.event_name] ?? ev.event_name}
                         </span>
-                        <span className="font-body text-[11px] text-mauve/50 flex-shrink-0">
+                        <span className="font-body text-[11px] text-mauve flex-shrink-0">
                           {formatDate(ev.created_at)}
                         </span>
                       </div>
@@ -361,13 +361,13 @@ export default function AdminPage() {
               <Clock size={14} className="text-mauve" />
               <h2 className="font-body text-sm font-semibold text-onyx">Lista de espera</h2>
             </div>
-            <span className="font-body text-xs text-mauve/60 bg-ivory border border-border px-2.5 py-0.5 rounded-full">
+            <span className="font-body text-xs text-mauve bg-ivory border border-border px-2.5 py-0.5 rounded-full">
               {waitlist.length} cadastro{waitlist.length !== 1 ? 's' : ''}
             </span>
           </div>
           {waitlist.length === 0 ? (
             <div className="px-5 py-8 text-center">
-              <p className="font-body text-xs text-mauve/50">Nenhum cadastro ainda.</p>
+              <p className="font-body text-xs text-mauve">Nenhum cadastro ainda.</p>
             </div>
           ) : (
             <div className="divide-y divide-border/20 max-h-64 overflow-y-auto">
@@ -375,7 +375,7 @@ export default function AdminPage() {
                 <div key={w.id} className="flex items-center justify-between px-5 py-2.5 gap-3">
                   <div className="flex-1 min-w-0">
                     <p className="font-body text-xs font-medium text-onyx truncate">{w.name}</p>
-                    <p className="font-body text-[11px] text-mauve/60 truncate">{w.email}</p>
+                    <p className="font-body text-[11px] text-mauve truncate">{w.email}</p>
                   </div>
                   <span className="font-body text-[11px] text-mauve/40 flex-shrink-0">
                     {formatDate(w.created_at)}

@@ -118,11 +118,11 @@ export default function OmicsPanelPage() {
               <p className="font-body text-sm text-mauve mt-0.5">
                 {[fmtOmicsDate(panel.collected_on ?? panel.created_at), panel.laboratory].filter(Boolean).join(' · ')}
               </p>
-              {panel.technology && <p className="font-body text-xs text-mauve/60 mt-0.5">Tecnologia: {panel.technology}</p>}
+              {panel.technology && <p className="font-body text-xs text-mauve mt-0.5">Tecnologia: {panel.technology}</p>}
             </div>
           </div>
           <button onClick={removePanel} title="Remover painel"
-            className="w-8 h-8 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve/50 hover:text-red-500 flex-shrink-0">
+            className="w-8 h-8 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve hover:text-red-500 flex-shrink-0">
             <Trash2 size={14} />
           </button>
         </div>
@@ -137,7 +137,7 @@ export default function OmicsPanelPage() {
           </div>
         </div>
         {categories.length > 0 && (
-          <p className="font-body text-[11px] text-mauve/60 mt-3">
+          <p className="font-body text-[11px] text-mauve mt-3">
             {categories.map(c => c.name).join(' · ')}
           </p>
         )}
@@ -154,7 +154,7 @@ export default function OmicsPanelPage() {
       {categories.length === 0 ? (
         <Card padding="xl" className="text-center">
           <p className="font-body text-sm text-mauve">Nenhum resultado neste painel ainda.</p>
-          <p className="font-body text-xs text-mauve/60 mt-1">Use <strong>Adicionar resultado</strong> acima.</p>
+          <p className="font-body text-xs text-mauve mt-1">Use <strong>Adicionar resultado</strong> acima.</p>
         </Card>
       ) : (
         <div className="space-y-2">
@@ -167,8 +167,8 @@ export default function OmicsPanelPage() {
                   className="w-full flex items-center justify-between gap-3 px-4 py-3 hover:bg-blush/20 transition-colors text-left">
                   <span className="font-body text-sm font-semibold text-onyx">{c.name}</span>
                   <span className="flex items-center gap-2">
-                    <span className="font-body text-[11px] text-mauve/60">{c.count} {c.count === 1 ? 'feature' : 'features'}</span>
-                    {expanded ? <ChevronDown size={15} className="text-mauve/50" /> : <ChevronRight size={15} className="text-mauve/50" />}
+                    <span className="font-body text-[11px] text-mauve">{c.count} {c.count === 1 ? 'feature' : 'features'}</span>
+                    {expanded ? <ChevronDown size={15} className="text-mauve" /> : <ChevronRight size={15} className="text-mauve" />}
                   </span>
                 </button>
                 {expanded && (
@@ -176,7 +176,7 @@ export default function OmicsPanelPage() {
                     {loadingCat === key ? (
                       <div className="p-5 text-center"><Loader2 size={18} className="animate-spin text-petal mx-auto" /></div>
                     ) : (rowsByCat[key] ?? []).length === 0 ? (
-                      <p className="px-4 py-3 font-body text-xs text-mauve/60">Sem resultados.</p>
+                      <p className="px-4 py-3 font-body text-xs text-mauve">Sem resultados.</p>
                     ) : (
                       <div className="divide-y divide-border/20">
                         {(rowsByCat[key] ?? []).map(r => (
@@ -206,7 +206,7 @@ export default function OmicsPanelPage() {
         </div>
       )}
 
-      <p className="font-body text-[11px] text-mauve/50 text-center leading-relaxed">
+      <p className="font-body text-[11px] text-mauve text-center leading-relaxed">
         Comparação factual ao longo do tempo. A SINTERA não indica melhora, piora ou normalização — apenas mostra os valores registrados.
       </p>
     </div>
@@ -226,7 +226,7 @@ function FeatureHistory({ points, refs }: {
         <div className="flex items-center gap-2 text-lavender"><Sparkline values={serie} className="text-lavender" /></div>
       )}
       {points.length === 0 ? (
-        <p className="font-body text-xs text-mauve/60">Sem histórico.</p>
+        <p className="font-body text-xs text-mauve">Sem histórico.</p>
       ) : (
         <table className="w-full text-left">
           <tbody>
@@ -234,7 +234,7 @@ function FeatureHistory({ points, refs }: {
               <tr key={i} className="border-b border-border/20 last:border-0">
                 <td className="font-body text-[11px] text-mauve py-1 pr-3 whitespace-nowrap align-top">{fmtOmicsDate(p.measured_on) || '—'}</td>
                 <td className="font-body text-xs text-onyx py-1"><strong>{p.value ?? '—'}</strong>{p.unit ? ` ${p.unit}` : ''}</td>
-                <td className="font-body text-[11px] text-mauve/50 py-1 text-right">{p.laboratory ?? ''}</td>
+                <td className="font-body text-[11px] text-mauve py-1 text-right">{p.laboratory ?? ''}</td>
               </tr>
             ))}
           </tbody>
@@ -314,41 +314,41 @@ function AddResult({ panelId, domain, defaultDate, onSaved }: {
     <Card padding="md" className="space-y-3 w-full">
       <div className="flex items-center justify-between">
         <p className="font-body text-sm font-semibold text-onyx">Adicionar resultado</p>
-        <button onClick={() => setShow(false)} className="text-mauve/50 hover:text-onyx"><X size={16} /></button>
+        <button onClick={() => setShow(false)} className="text-mauve hover:text-onyx"><X size={16} /></button>
       </div>
       <div>
-        <label htmlFor="omics-result-feature" className="font-body text-xs text-mauve/70 block mb-1">Feature (nome, sinônimo ou ID externo)</label>
+        <label htmlFor="omics-result-feature" className="font-body text-xs text-mauve block mb-1">Feature (nome, sinônimo ou ID externo)</label>
         <input id="omics-result-feature" value={name} onChange={e => setName(e.target.value)} onBlur={resolve} placeholder="Ex.: Leucine, L-Leucine ou HMDB0000687"
           className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
-        {resolving && <p className="font-body text-[11px] text-mauve/60 mt-1">Resolvendo no catálogo…</p>}
+        {resolving && <p className="font-body text-[11px] text-mauve mt-1">Resolvendo no catálogo…</p>}
         {resolved && (
           <p className="font-body text-[11px] text-sage mt-1">
             ✓ Identificado: <strong>{resolved.canonical_name}</strong>{resolved.omics_categories?.name ? ` · ${resolved.omics_categories.name}` : ''}
           </p>
         )}
         {!resolving && !resolved && name.trim() && (
-          <p className="font-body text-[11px] text-mauve/50 mt-1">Não encontrado no catálogo — será salvo como texto.</p>
+          <p className="font-body text-[11px] text-mauve mt-1">Não encontrado no catálogo — será salvo como texto.</p>
         )}
       </div>
       <div className="grid grid-cols-3 gap-2">
         <div>
-          <label htmlFor="omics-result-valor" className="font-body text-xs text-mauve/70 block mb-1">Valor</label>
+          <label htmlFor="omics-result-valor" className="font-body text-xs text-mauve block mb-1">Valor</label>
           <input id="omics-result-valor" value={value} onChange={e => setValue(e.target.value)} placeholder="420"
             className="w-full px-2 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
         </div>
         <div>
-          <label htmlFor="omics-result-unidade" className="font-body text-xs text-mauve/70 block mb-1">Unidade</label>
+          <label htmlFor="omics-result-unidade" className="font-body text-xs text-mauve block mb-1">Unidade</label>
           <input id="omics-result-unidade" value={unit} onChange={e => setUnit(e.target.value)} placeholder="µmol/L"
             className="w-full px-2 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
         </div>
         <div>
-          <label htmlFor="omics-result-data" className="font-body text-xs text-mauve/70 block mb-1">Data</label>
+          <label htmlFor="omics-result-data" className="font-body text-xs text-mauve block mb-1">Data</label>
           <input id="omics-result-data" type="date" value={date} onChange={e => setDate(e.target.value)}
             className="w-full px-2 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
         </div>
       </div>
       <div>
-        <label htmlFor="omics-result-metodo" className="font-body text-xs text-mauve/70 block mb-1">Método (opcional)</label>
+        <label htmlFor="omics-result-metodo" className="font-body text-xs text-mauve block mb-1">Método (opcional)</label>
         <input id="omics-result-metodo" value={method} onChange={e => setMethod(e.target.value)} placeholder="Ex.: LC-MS/MS"
           className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
       </div>
@@ -422,7 +422,7 @@ function ImportResults({ panelId, onDone }: { panelId: string; onDone: () => voi
           </button>
         )}
       </div>
-      <p className="font-body text-[11px] text-mauve/50 mt-1.5">PDF ou foto do laudo (a IA transcreve), ou CSV/JSON estruturado. O arquivo original é guardado e cada importação vira uma versão.</p>
+      <p className="font-body text-[11px] text-mauve mt-1.5">PDF ou foto do laudo (a IA transcreve), ou CSV/JSON estruturado. O arquivo original é guardado e cada importação vira uma versão.</p>
       {msg && <p className="font-body text-xs text-sage mt-2">{msg}</p>}
       {err && <p className="font-body text-xs text-red-500 mt-2">{err}</p>}
       {showVersions && versions.length > 0 && (
@@ -431,10 +431,10 @@ function ImportResults({ panelId, onDone }: { panelId: string; onDone: () => voi
             <div key={v.version_number} className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <span className="font-body text-xs font-semibold text-onyx">v{v.version_number}</span>
-                {v.note && <span className="font-body text-[11px] text-mauve/70"> · {v.note}</span>}
+                {v.note && <span className="font-body text-[11px] text-mauve"> · {v.note}</span>}
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
-                <span className="font-body text-[11px] text-mauve/50">{fmtOmicsDate(v.created_at)}</span>
+                <span className="font-body text-[11px] text-mauve">{fmtOmicsDate(v.created_at)}</span>
                 {v.source_file && (
                   <a href={v.source_file} target="_blank" rel="noopener noreferrer" className="text-petal hover:underline" title="Arquivo original">
                     <ExternalLink size={11} />
@@ -443,7 +443,7 @@ function ImportResults({ panelId, onDone }: { panelId: string; onDone: () => voi
               </div>
             </div>
           ))}
-          <p className="font-body text-[11px] text-mauve/50 pt-1">Nenhuma versão é sobrescrita — todas permanecem acessíveis.</p>
+          <p className="font-body text-[11px] text-mauve pt-1">Nenhuma versão é sobrescrita — todas permanecem acessíveis.</p>
         </Card>
       )}
     </div>

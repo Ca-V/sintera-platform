@@ -116,7 +116,7 @@ export default function CycleArc() {
               >
                 <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: p.color, opacity: p.active ? 1 : 0.5 }}/>
                 <span className={`text-xs font-body flex-1 ${p.active ? 'font-semibold text-onyx' : 'text-mauve'}`}>{p.name}</span>
-                <span className="text-[11px] font-body text-mauve/60">{p.label}</span>
+                <span className="text-[11px] font-body text-mauve">{p.label}</span>
                 {p.active && <span className="w-1.5 h-1.5 rounded-full bg-petal animate-pulse-soft"/>}
               </div>
             ))}
