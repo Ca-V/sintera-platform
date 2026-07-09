@@ -38,3 +38,28 @@ export const FORBIDDEN_VARIANTS: Record<CopyKey, readonly string[]> = {
 export function copy(key: CopyKey): string {
   return COPY[key]
 }
+
+/**
+ * Avisos regulatórios (RDC 657) CANÔNICOS — fonte única.
+ * Consolidam as ~12 redações que estavam espalhadas à mão pelas telas.
+ * Substância preservada das versões já vetadas (não reinterpreta a norma);
+ * a redação final é decisão regulatória da fundadora. Renderizar via <Disclaimer>.
+ */
+export const DISCLAIMERS = {
+  /** Uso geral (histórico, insights, evolução). */
+  geral: 'Não substitui avaliação profissional nem constitui diagnóstico (RDC 657/2022).',
+  /** Registros autorrelatados (condições, hábitos, medidas, sinais, recursos). */
+  registro: 'Registro seu — a SINTERA não interpreta nem infere. Leve os dados ao seu profissional de saúde.',
+  /** Extração/reprodução de laudos laboratoriais (exames, ômica, biomarcadores). */
+  laudo: 'Reprodução estruturada dos seus laudos — não constitui diagnóstico nem avaliação clínica.',
+  /** Medicamentos e suplementos. */
+  medicamento: 'A SINTERA organiza — não é prescrição nem orientação de dose. Quem prescreve é o seu médico.',
+  /** Valores calculados/estimados (IMC). */
+  estimativa: 'Estimativa calculada a partir dos seus dados — não substitui a avaliação profissional.',
+  /** Ciclo menstrual — previsões de data (preserva a ressalva contraceptiva vetada). */
+  ciclo: 'Estimativa calculada a partir das suas datas — não é método contraceptivo nem diagnóstico.',
+  /** Relatório e compartilhamento. */
+  relatorio: 'Documento factual para acompanhamento — não substitui a avaliação profissional (RDC 657/2022).',
+} as const
+
+export type DisclaimerVariant = keyof typeof DISCLAIMERS

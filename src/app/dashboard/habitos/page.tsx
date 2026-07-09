@@ -11,7 +11,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
-  Loader2, Plus, X, HeartPulse, ArrowLeft, Trash2, Pencil,
+  Loader2, Plus, X, ArrowLeft, Trash2, Pencil,
   Dumbbell, Moon, Cigarette, Wine, Apple, Droplets, Sparkles,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -19,6 +19,7 @@ import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import ListCard from '@/components/ListCard'
 import Card from '@/components/ui/Card'
+import Disclaimer from '@/components/ui/Disclaimer'
 
 type Category =
   | 'atividade_fisica' | 'sono' | 'tabagismo' | 'alcool'
@@ -150,12 +151,8 @@ export default function HabitosPage() {
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div>
-          <div className="inline-flex items-center gap-1.5 text-petal mb-2">
-            <HeartPulse size={16} />
-            <span className="font-body text-xs font-medium uppercase tracking-wider">Hábitos de Vida</span>
-          </div>
           <h1 className="font-display text-2xl font-semibold text-onyx">Hábitos de Vida</h1>
-          <p className="font-body text-sm text-mauve mt-1">Registre fatores do seu dia a dia. A SINTERA só organiza o que você informa — não avalia, não pontua nem recomenda.</p>
+          <p className="font-body text-sm text-mauve mt-1">Registre os fatores do seu dia a dia — a SINTERA organiza e acompanha sua evolução.</p>
         </div>
         <button onClick={() => (showForm ? (reset(), setShowForm(false)) : (reset(), setShowForm(true)))}
           className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0">
@@ -224,9 +221,7 @@ export default function HabitosPage() {
         </Card>
       )}
 
-      <p className="font-body text-[11px] text-mauve text-center leading-relaxed">
-        Registro do que você informa. A SINTERA não avalia, não pontua e não recomenda hábitos.
-      </p>
+      <Disclaimer variant="registro" className="text-center" />
     </div>
   )
 }

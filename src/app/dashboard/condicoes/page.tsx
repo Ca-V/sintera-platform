@@ -15,6 +15,7 @@ import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import ListCard from '@/components/ListCard'
 import Card from '@/components/ui/Card'
+import Disclaimer from '@/components/ui/Disclaimer'
 
 type Scope = 'propria' | 'familiar'
 
@@ -134,12 +135,8 @@ export default function CondicoesPage() {
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div>
-          <div className="inline-flex items-center gap-1.5 text-petal mb-2">
-            <Stethoscope size={16} />
-            <span className="font-body text-xs font-medium uppercase tracking-wider">Condições de Saúde</span>
-          </div>
           <h1 className="font-display text-2xl font-semibold text-onyx">Condições de Saúde</h1>
-          <p className="font-body text-sm text-mauve mt-1">Registre condições suas e antecedentes familiares. A SINTERA só organiza o que você informa — não identifica nem infere condições.</p>
+          <p className="font-body text-sm text-mauve mt-1">Registre suas condições e antecedentes familiares — a SINTERA mantém tudo organizado no seu histórico.</p>
         </div>
         <button onClick={() => (showForm ? (reset(), setShowForm(false)) : (reset(), setShowForm(true)))}
           className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0">
@@ -218,9 +215,7 @@ export default function CondicoesPage() {
         </div>
       )}
 
-      <p className="font-body text-[11px] text-mauve text-center leading-relaxed">
-        Registro do que você informa. A SINTERA não identifica, não infere e não interpreta condições.
-      </p>
+      <Disclaimer variant="registro" className="text-center" />
     </div>
   )
 }

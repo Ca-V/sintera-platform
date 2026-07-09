@@ -43,19 +43,18 @@ export default function Hero() {
                 <span className="w-5 h-5 rounded-full gradient-sintera flex items-center justify-center">
                   <span className="text-white text-[9px]">✦</span>
                 </span>
-                Organize, acompanhe e compartilhe sua saúde
+                A plataforma que faz o trabalho da sua saúde
               </span>
             </motion.div>
 
             <motion.h1 variants={fadeUp(0.2)} initial="hidden" animate="show"
               className="font-display font-semibold leading-[1.05] text-onyx mb-6"
               style={{ fontSize: 'clamp(2.8rem, 5.5vw, 4.2rem)' }}>
-              Sua saúde tem{' '}
-              <span className="text-gradient italic">uma história.</span>
+              Você envia os documentos.
               <br />
-              A SINTERA te ajuda a{' '}
+              A SINTERA{' '}
               <span className="relative inline-block">
-                organizá-la.
+                <span className="text-gradient italic">faz o resto.</span>
                 <svg className="absolute -bottom-1 left-0 w-full" height="6" viewBox="0 0 120 6" preserveAspectRatio="none">
                   <path d="M0 5 Q30 1 60 5 Q90 9 120 5" stroke="#C2849A" strokeWidth="1.8" fill="none" strokeLinecap="round" />
                 </svg>
@@ -64,10 +63,9 @@ export default function Hero() {
 
             <motion.p variants={fadeUp(0.32)} initial="hidden" animate="show"
               className="font-body text-[1.05rem] text-mauve leading-relaxed max-w-[510px] mb-8">
-              A SINTERA reúne num só lugar seus exames e documentos, medicamentos, condições de saúde,
-              hábitos, medidas e sinais vitais. Organiza suas informações, mostra a evolução ao longo do
-              tempo e gera um relatório para compartilhar com seus profissionais — de forma clara e factual.
-              Não interpreta nem substitui a avaliação profissional.
+              Ela lê seus exames, receitas e outros documentos, extrai e organiza as informações
+              automaticamente e prepara tudo para você revisar e levar ao médico — sem digitação, sem
+              planilha. Não interpreta nem substitui a avaliação profissional.
             </motion.p>
 
             <motion.div variants={fadeUp(0.44)} initial="hidden" animate="show"

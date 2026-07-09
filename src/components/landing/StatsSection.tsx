@@ -6,8 +6,8 @@ import { useRef } from 'react'
 const stats = [
   { value: 'Grátis', label: 'Acesso completo, sem custo',  color: 'text-petal'    },
   { value: '100%',   label: 'Privado — nunca compartilhado', color: 'text-sage'   },
-  { value: 'IA',     label: 'Extração automática de biomarcadores', color: 'text-lavender' },
-  { value: 'PDF',    label: 'Qualquer laudo laboratorial',  color: 'text-gold'     },
+  { value: 'IA',     label: 'Lê seus documentos e organiza por você', color: 'text-lavender' },
+  { value: 'Docs',   label: 'Exames, receitas e outros documentos',  color: 'text-gold'     },
 ]
 
 export default function StatsSection() {

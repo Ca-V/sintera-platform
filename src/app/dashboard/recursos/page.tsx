@@ -25,6 +25,7 @@ import ListCard, { CardChip } from '@/components/ListCard'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import { useStickyView } from '@/lib/ui/useStickyView'
 import Card from '@/components/ui/Card'
+import Disclaimer from '@/components/ui/Disclaimer'
 
 type ResourceType = 'correcao_visual' | 'dispositivo_medico' | 'protese_ortese' | 'auxilio' | 'compressao_suporte'
 type Status = 'em_uso' | 'suspenso' | 'encerrado'
@@ -327,10 +328,8 @@ export default function RecursosPage() {
       </Link>
 
       <PageHeader
-        icon={<Package size={16} />}
-        eyebrow="Recursos de Saúde"
         title="Recursos de Saúde"
-        subtitle="Recursos que você usa para cuidado, compensação funcional ou monitoramento — óculos e lentes, dispositivos médicos, próteses e órteses, auxílios, compressão e suporte. A SINTERA organiza o que você informa — não interpreta nem prescreve."
+        subtitle={<>Óculos, lentes, dispositivos e mais. <strong className="font-medium text-onyx/70">Escaneie a receita — a SINTERA preenche o grau por você.</strong></>}
         action={
           <div className="flex items-center gap-2">
             <input ref={scanRef} type="file" accept="image/*" capture="environment" className="hidden"
@@ -521,9 +520,7 @@ export default function RecursosPage() {
         </div>
       )}
 
-      <p className="font-body text-[11px] text-mauve text-center leading-relaxed">
-        Registro do que você informa. A SINTERA não identifica, não infere e não interpreta.
-      </p>
+      <Disclaimer variant="registro" className="text-center" />
     </div>
   )
 }

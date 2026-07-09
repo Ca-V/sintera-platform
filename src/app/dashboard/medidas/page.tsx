@@ -18,6 +18,7 @@ import Sparkline, { parseNum } from '@/components/Sparkline'
 import ListCard from '@/components/ListCard'
 import Card from '@/components/ui/Card'
 import Section from '@/components/ui/Section'
+import Disclaimer from '@/components/ui/Disclaimer'
 
 type Metric =
   | 'peso' | 'altura' | 'circunferencia_cintura'
@@ -229,12 +230,8 @@ export default function MedidasPage() {
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <div className="inline-flex items-center gap-1.5 text-petal mb-2">
-            <Activity size={16} />
-            <span className="font-body text-xs font-medium uppercase tracking-wider">Histórico</span>
-          </div>
           <h1 className="font-display text-2xl font-semibold text-onyx">Medidas</h1>
-          <p className="font-body text-sm text-mauve mt-1">Acompanhe peso, altura, circunferência e composição corporal (bioimpedância) ao longo do tempo. Registro seu — sem juízo clínico.</p>
+          <p className="font-body text-sm text-mauve mt-1">Acompanhe peso, altura, circunferência e composição corporal (bioimpedância) ao longo do tempo.</p>
         </div>
         <div className="flex flex-row flex-wrap items-center gap-2 sm:flex-col sm:items-end flex-shrink-0">
           <button onClick={() => (showForm ? (reset(), setShowForm(false)) : (reset(), setShowForm(true)))}
@@ -438,9 +435,7 @@ export default function MedidasPage() {
         </div>
       )}
 
-      <p className="font-body text-[11px] text-mauve text-center leading-relaxed">
-        Registro factual das suas medidas. Não interpreta nem diagnostica — leve os dados ao seu profissional de saúde.
-      </p>
+      <Disclaimer variant="registro" className="text-center" />
     </div>
   )
 }

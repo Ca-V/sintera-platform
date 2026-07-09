@@ -19,6 +19,7 @@ import ListCard from '@/components/ListCard'
 import { summarizeBiomarkers, computeReferenceIndex, type BiomarkerRow, type BiomarkerSummary, type Trend } from '@/lib/biomarkers/grouping'
 import { groupByMaterialExam, loadCatalogLabels, type CatalogLabels } from '@/lib/biomarkers/catalogLabels'
 import MotionCard from '@/components/ui/MotionCard'
+import Disclaimer from '@/components/ui/Disclaimer'
 
 interface CatalogEntry { id: string; specimen: string | null; category: string | null; display_name: string }
 
@@ -216,10 +217,12 @@ export default function IndicadoresPage() {
             )}
           </MotionCard>
 
-          <p className="font-body text-xs text-mauve/40 text-center pb-4">
-            A <Link href="/dashboard/timeline" className="text-petal hover:underline">Linha do Tempo</Link> reúne seus exames, consultas e eventos.
-            Esta visão organiza os dados dos laudos; não substitui avaliação profissional nem constitui diagnóstico (RDC 657/2022).
-          </p>
+          <div className="text-center pb-4 space-y-1">
+            <p className="font-body text-xs text-mauve/40">
+              A <Link href="/dashboard/timeline" className="text-petal hover:underline">Linha do Tempo</Link> reúne seus exames, consultas e eventos.
+            </p>
+            <Disclaimer variant="geral" className="text-center" />
+          </div>
         </>
       )}
     </div>
