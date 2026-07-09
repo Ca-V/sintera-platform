@@ -13,8 +13,9 @@
 - **Hierarquia:** nome dominante · detalhes secundários · ações discretas.
 
 ## 2. Tokens
+**Paleta oficial (CONGELADA — valores em `globals.css`; identidade em [[SINTERA_BRANDING]]):** primária institucional = **violeta `#6A5B91`** (token `petal`; gradiente `#6A5B91→#9485B6`) · apoio **sage `#7DAF9E`** · secundária/rosê **`#C2849A`** (token `lavender`) · premium **dourado `#C9A97A`** (uso restrito) · texto onyx `#1E1820` / mauve `#7A6470` · fundos creme/ivory. Contraste **WCAG AA** (primário ~5,8:1). *(Dívida agendada: rename do token `petal`→`primary`.)*
 **Espaçamento (escala única):** página `px-4 py-8`; entre seções `space-y-6`; header→conteúdo e dentro de grupo `space-y-3`; título→subtítulo `mt-1`; chips/ações `gap-1.5`.
-**Tipografia:** eyebrow `font-body text-xs font-medium uppercase tracking-wider text-petal` · H1 `font-display text-2xl font-semibold text-onyx` · subtítulo `font-body text-sm text-mauve leading-relaxed` · nome do card `text-sm font-semibold text-onyx` · meta `text-[11px] text-mauve/60` · chip `text-[10px]`.
+**Tipografia:** eyebrow `font-body text-xs font-medium uppercase tracking-wider text-petal` · H1 `font-display text-2xl font-semibold text-onyx` · subtítulo `font-body text-sm text-mauve leading-relaxed` · nome do card `text-sm font-semibold text-onyx` · meta `text-[11px] text-mauve` · chip `text-[11px]`.
 **Tons (chips/badges):** `sage` (positivo/valor) · `petal` (destaque/recompra) · `gold` (atenção/programado) · `mauve` (neutro-info) · `neutral` (cinza discreto).
 
 ## 3. Componentes (primitivos)

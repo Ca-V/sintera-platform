@@ -45,8 +45,8 @@ Muito **espaço em branco** · poucos elementos · **cards grandes** · sombras 
 ## 9. Paleta de cores (OFICIAL — congelada)
 Marca **universal, premium, tecnológica, humana, atemporal e gênero‑neutra.** A primária é uma **violeta profunda** (não rosê) — decisão de identidade decorrente do posicionamento universal.
 
-**Primária institucional — Violeta:** `#5E4C86` · claro `#E7E1F0` · escuro `#463669` · fundo suave `#EFEBF7`
-&nbsp;&nbsp;*(passa WCAG AA como texto ~7:1; gradiente de marca `#5E4C86 → #8E7DA6`)*
+**Primária institucional — Violeta (Ametista):** `#6A5B91` · claro `#E7E1F0` · escuro `#52447A` · fundo suave `#EFEBF7`
+&nbsp;&nbsp;*(tom oficial A2 — leve, sóbrio, atemporal; passa WCAG AA como texto ~5,8:1; gradiente de marca `#6A5B91 → #9485B6`)*
 **Apoio — Sálvia:** `#7DAF9E` · claro `#C8E2DB`
 **Secundária — Petal (rosê):** `#C2849A` · claro `#EDD5DF` *(apoio visual pontual — não é o rosto da marca)*
 **Premium/conquistas — Dourado:** `#C9A97A` *(uso restrito: indicadores, conquistas — nunca textos longos)*
@@ -55,6 +55,8 @@ Marca **universal, premium, tecnológica, humana, atemporal e gênero‑neutra.*
 **Superfície escura:** Deep `#12101A` · Onyx `#1E1820` *(sidebar, áreas de destaque)*
 
 > **Nota de implementação:** o token histórico `petal` (primário app‑wide, 530 usos) teve seu **valor** redefinido para a violeta institucional; o **rename** do token (`petal`→`primary`) é higiene técnica agendada — a identidade e o AA já estão corretos. `lavender` passou a carregar o rosê secundário.
+>
+> **Conformidade WCAG (estado atual):** a **superfície pública** (`/`, `/login`, `/lista-de-espera`, `/termos`) foi validada com axe‑core e está com **0 violações de `color-contrast`**. As **páginas autenticadas herdam os mesmos tokens globais** (a correção é determinística e aplicada em toda a plataforma), mas a **conformidade WCAG AA completa será confirmada na homologação final**, com o harness QA autenticado sobre todas as rotas.
 
 ## 10. Tipografia
 - **Display — Cormorant Garamond** (`--font-display`): títulos, hero, chamadas editoriais.

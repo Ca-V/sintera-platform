@@ -6,9 +6,9 @@
      texto ~7:1). O token histórico `petal` é o primário app-wide (530 usos) — seu
      VALOR foi redefinido para o violeta; o rename do token é higiene agendada.
      APOIO = sage. SECUNDÁRIA (apoio visual) = rosê, no token `lavender`. */
-  --color-petal: #5E4C86;        /* PRIMÁRIA institucional (violeta) */
+  --color-petal: #6A5B91;        /* PRIMÁRIA institucional (violeta A2 — oficial/congelada) */
   --color-petal-light: #E7E1F0;
-  --color-petal-dark: #463669;
+  --color-petal-dark: #52447A;
   --color-blush: #EFEBF7;        /* fundo suave do primário (violeta) */
   --color-lavender: #C2849A;     /* SECUNDÁRIA (rosê) — apoio visual pontual */
   --color-lavender-light: #EDD5DF;
@@ -153,7 +153,7 @@ input[type="range"].range-gold::-webkit-slider-thumb { background: #C9A97A; }
 }
 
 /* ─── Gradients ─── */
-.gradient-sintera      { background: linear-gradient(135deg, #5E4C86 0%, #8E7DA6 100%); }
+.gradient-sintera      { background: linear-gradient(135deg, #6A5B91 0%, #9485B6 100%); }
 .gradient-sintera-soft { background: linear-gradient(135deg, #E7E1F0 0%, #E2D9EE 100%); }
 .gradient-subtle       { background: linear-gradient(160deg, #FDFAF7 0%, #F8EDF2 45%, #E2D9EE 100%); }
 .gradient-dark         { background: linear-gradient(135deg, #12101A 0%, #1C1826 60%, #221C2E 100%); }
