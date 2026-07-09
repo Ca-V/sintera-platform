@@ -5,6 +5,9 @@
 // diálogo React não-bloqueante, estilizado e que funciona no mobile. Reutilizável
 // em ações com consequência (concluir, reabrir, excluir…).
 
+import { useRef } from 'react'
+import { useModalA11y } from '@/lib/ui/useModalA11y'
+
 interface ConfirmDialogProps {
   open: boolean
   title?: string
@@ -18,9 +21,11 @@ interface ConfirmDialogProps {
 export default function ConfirmDialog({
   open, title, message, confirmLabel = 'Confirmar', cancelLabel = 'Cancelar', onConfirm, onCancel,
 }: ConfirmDialogProps) {
+  const ref = useRef<HTMLDivElement>(null)
+  useModalA11y(ref, onCancel, open)
   if (!open) return null
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" role="dialog" aria-modal="true">
+    <div ref={ref} tabIndex={-1} className="fixed inset-0 z-[60] flex items-center justify-center p-4 outline-none" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onCancel} />
       <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl border border-border p-5">
         {title && <p className="font-display text-base font-semibold text-onyx mb-1.5">{title}</p>}

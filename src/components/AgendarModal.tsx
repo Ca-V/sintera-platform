@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Download, ExternalLink, CalendarDays, Loader2, Check, ChevronDown } from 'lucide-react'
 import { EVENT_TYPE_DEFS, EVENT_STATUS_UI } from '@/lib/agenda'
+import { useModalA11y } from '@/lib/ui/useModalA11y'
 
 // Tipos vêm da FONTE ÚNICA (@/lib/agenda) — Agenda e Histórico falam a mesma língua.
 export type EventType = typeof EVENT_TYPE_DEFS[number]['id']
@@ -222,15 +223,20 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
   function addAnother() { resetFields(); setAdded(false); setSavedToAgenda(false) }
   function handleClose() { resetFields(); setAdded(false); setSavedToAgenda(false); onClose() }
 
+  const dialogRef = useRef<HTMLDivElement>(null)
+  useModalA11y(dialogRef, handleClose, open)
+
   return (
     <AnimatePresence>
       {open && (
         <>
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm" onClick={handleClose} />
-          <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          <motion.div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true"
+            aria-label={isEditing ? 'Editar evento' : 'Adicionar à agenda'}
+            initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-            className="fixed inset-x-4 bottom-4 sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 z-50 sm:w-full sm:max-w-md max-h-[88vh] overflow-y-auto">
+            className="fixed inset-x-4 bottom-4 sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 z-50 sm:w-full sm:max-w-md max-h-[88vh] overflow-y-auto outline-none">
             <div className="bg-white rounded-3xl shadow-2xl border border-border overflow-hidden">
               <div className="flex items-center justify-between px-6 py-5 border-b border-border/50">
                 <div className="flex items-center gap-3">

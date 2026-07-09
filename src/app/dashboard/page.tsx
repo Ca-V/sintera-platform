@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { parseDateOnly } from '@/lib/agenda'
+import { useModalA11y } from '@/lib/ui/useModalA11y'
 import { useUser } from '@/context/UserContext'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
@@ -73,6 +74,8 @@ function LegacyDashboard() {
   const [loading, setLoading]     = useState(true)
   const [agendarOpen, setAgendar] = useState(false)
   const [intakeOpen, setIntakeOpen] = useState(false)
+  const intakeRef = useRef<HTMLDivElement>(null)
+  useModalA11y(intakeRef, () => setIntakeOpen(false), intakeOpen)
 
   const hour        = new Date().getHours()
   const greeting    = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite'
@@ -329,7 +332,8 @@ function LegacyDashboard() {
 
       {/* Centro de Entrada — modal de entrada de documentos */}
       {intakeOpen && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-onyx/30 backdrop-blur-sm"
+        <div ref={intakeRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Central de Entrada"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-onyx/30 backdrop-blur-sm outline-none"
           onClick={() => setIntakeOpen(false)}>
           <Card padding="lg" className="w-full max-w-md" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
