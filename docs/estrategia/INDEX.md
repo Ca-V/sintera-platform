@@ -1,47 +1,29 @@
-# SINTERA — Índice da Documentação Oficial
+# SINTERA — Índice da Documentação Estratégica Oficial
 
-**Fonte única de verdade.** Todos os documentos abaixo derivam do **Documento-Mãe**
-(`SINTERA-MASTER-STRATEGY-GOVERNANCE`). Qualquer versão anterior ou externa que conflite com
-estes está **superada** (ver §Superados).
-**Data:** 2026-06-16 · **Branch:** `claude/exciting-brahmagupta-8hsq5c`
+**Fonte única de verdade.** A partir de 2026-07-09, o documento canônico é a **Constituição Estratégica**. Qualquer documento anterior que conflite com ela está **superado** (ver §Superados).
 
 ---
 
-## Documentos oficiais (canônicos)
+## Documentos canônicos (vigentes)
 
 | Camada | Documento | Propósito |
 |---|---|---|
-| **Documento-Mãe** | `SINTERA-MASTER-STRATEGY-GOVERNANCE.md` | Consolida visão, posicionamento, governança, protocolos, regulatório, escopo, maturidade e critérios de revisão |
-| **Governança** | `clinical/MODELO-GOVERNANCA-OPERACIONAL.md` (v2) | Quem governa, como e quem responde (Conselho/Comitê/RC, precedência, fontes) |
-| **Governança** | `clinical/GOVERNANCE-DECISIONS-CHECKLIST.md` | 14 decisões com dono e estado |
-| **Produto** | `SINTERA-VALUE-PROPOSITION-NORTH-STAR.md` (v1.1) | Problema, valor, North Star (HCR), aquisição de dados, flywheel |
-| **Investidores** | `SINTERA-INVESTMENT-MEMO.md` (v3) | Memo de investimento (com placeholders de mercado/time/ask) |
-| **Investidores** | `SINTERA-ONE-PAGER.md` | Pitch executivo de 1 página |
-| **Execução** | `SINTERA-IMPLEMENTATION-ROADMAP.md` (v2) | Fases F0→F6 + Design Partners + visão de value-creation + gates |
+| **Constituição Estratégica** | `SINTERA_ESTRATEGIA_MASTER.md` (v2.2) | Documento‑mãe: propósito, missão, tese, posicionamento, unidade fundamental, arquitetura, monetização, moat, métricas, hipóteses, princípios invioláveis, governança |
+| **Branding** | `../branding/SINTERA_BRANDING.md` (v1.0) | Identidade de marca, tom de voz, identidade visual, paleta, tipografia, landing, diretrizes de comunicação — alinhado à Constituição |
+| **Design System** | `../DS-001_DESIGN_SYSTEM.md` | Fonte técnica de tokens/componentes (paleta canônica implementada) |
 
-### Pacote clínico / Onda 1 (operacional, para o Responsável Clínico)
-`clinical/ONDA-1-GUIA-RESPONSAVEL-CLINICO.md` · `clinical/TERMO-APROVACAO-RC.md` ·
-`clinical/GOVERNANCA-CIENTIFICA.md` · `clinical/loinc-mapping-draft.csv` ·
-`clinical/loinc-approval-ledger.csv` · `clinical/regras-clinicas-template.csv`.
+### Pacote clínico / governança operacional (a reler contra a Constituição)
+`clinical/MODELO-GOVERNANCA-OPERACIONAL.md` · `clinical/GOVERNANCE-DECISIONS-CHECKLIST.md` · `clinical/ONDA-1-GUIA-RESPONSAVEL-CLINICO.md` · `clinical/GOVERNANCA-CIENTIFICA.md` · demais em `clinical/`.
 
 ---
 
-## Superados (não circular)
+## Superados (não circular — refletem o posicionamento anterior "inteligência preventiva / saúde da mulher", substituído pela Constituição de continuidade)
 
-- **Investment Memo v2** (com "Inteligência / Biomarker Intelligence Engine") → usar **Memo v3**.
-- **Full Implementation Blueprint** e **Investor Roadmap & Value Creation Plan** (numeração
-  divergente) → usar **Implementation Roadmap v2** (já incorpora Design Partners + visão de
-  investidor).
+- `SINTERA-MASTER-STRATEGY-GOVERNANCE.md` → substituído por **`SINTERA_ESTRATEGIA_MASTER.md`**.
+- `SINTERA-VALUE-PROPOSITION-NORTH-STAR.md` · `SINTERA-INVESTMENT-MEMO.md` · `SINTERA-ONE-PAGER.md` · `SINTERA-MARKET-SIZING-FRAMEWORK.md` · `SINTERA-IMPLEMENTATION-ROADMAP.md` → posicionamento anterior; reescrever a partir da Constituição quando forem necessários para captação. *(Recomendo arquivar em `_superado/`.)*
 
 ---
 
-## Pendências de dados (não autoradas — dependem da fundadora)
+## Change-control
 
-Marcadas `[A PREENCHER]` no Investment Memo v3:
-- **TAM/SAM/SOM** (Brasil, Saúde Ocupacional, Operadoras, Saúde da Mulher) — requer dados
-  reais de mercado; não devem ser estimados sem fonte.
-- **Team** — composição do time + contratação do Responsável Clínico.
-- **The Ask** — valor da captação, uso dos recursos e marcos.
-
-Enquanto não preenchidas, o Investment Memo é um *Vision Memo*, não um *Investment Memo*
-completo.
+A Constituição é artefato de governança: **altera‑se apenas por evidência nova** (dados de usuário, validação/refutação de hipótese, mudança regulatória ou de mercado) — nunca por nova ideia ou revisão conceitual.
