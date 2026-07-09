@@ -264,7 +264,7 @@ export default function MedidasPage() {
       {/* IMC calculado automaticamente (peso ÷ altura²) */}
       <Card padding="sm" className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-body text-[10px] text-mauve/70 uppercase tracking-wider mb-0.5">IMC (calculado)</p>
+          <p className="font-body text-[11px] text-mauve/70 uppercase tracking-wider mb-0.5">IMC (calculado)</p>
           {imcVal != null ? (
             <>
               <p className="font-display text-2xl font-bold text-onyx leading-none">
@@ -409,7 +409,7 @@ export default function MedidasPage() {
                   <p className="font-display text-base font-semibold text-onyx">{METRIC_LABEL[g]}</p>
                   {serie.length >= 2 && (
                     <div className="flex items-center gap-2">
-                      <span className="font-body text-[10px] text-mauve/50">{list.length} registros</span>
+                      <span className="font-body text-[11px] text-mauve/50">{list.length} registros</span>
                       <Sparkline values={serie} />
                     </div>
                   )}

@@ -273,7 +273,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                       </button>
                       <button onClick={handleICS} className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl border border-border hover:border-petal/40 hover:bg-blush/30 transition-all">
                         <div className="w-[18px] h-[18px] rounded flex items-center justify-center bg-sage-light flex-shrink-0"><Download size={11} className="text-sage" /></div>
-                        <span className="font-body text-sm text-onyx flex-1 text-left">Baixar .ics</span><span className="font-body text-[10px] text-mauve/50">Apple, outros</span>
+                        <span className="font-body text-sm text-onyx flex-1 text-left">Baixar .ics</span><span className="font-body text-[11px] text-mauve/50">Apple, outros</span>
                       </button>
                     </div>
                   )}
@@ -482,7 +482,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                     </button>
                     <button onClick={handleICS} disabled={!canExport} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-petal/40 hover:bg-blush/30 disabled:opacity-40 transition-all">
                       <div className="w-[18px] h-[18px] rounded flex items-center justify-center bg-sage-light flex-shrink-0"><Download size={11} className="text-sage" /></div>
-                      <span className="font-body text-sm text-onyx flex-1 text-left">Baixar .ics</span><span className="font-body text-[10px] text-mauve/50">Apple, outros</span>
+                      <span className="font-body text-sm text-onyx flex-1 text-left">Baixar .ics</span><span className="font-body text-[11px] text-mauve/50">Apple, outros</span>
                     </button>
                     {!canExport && <p className="font-body text-xs text-mauve/50 text-center">Selecione uma data para continuar</p>}
                   </div>

@@ -216,7 +216,7 @@ export default function SinaisVitaisPage() {
                   <p className="font-display text-base font-semibold text-onyx">{VITAL_LABEL[g]}</p>
                   {serie.length >= 2 && (
                     <div className="flex items-center gap-2">
-                      <span className="font-body text-[10px] text-mauve/50">{list.length} registros</span>
+                      <span className="font-body text-[11px] text-mauve/50">{list.length} registros</span>
                       <Sparkline values={serie} />
                     </div>
                   )}

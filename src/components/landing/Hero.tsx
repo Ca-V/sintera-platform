@@ -167,7 +167,7 @@ function ProductPreview() {
               <p className="text-xs font-body text-mauve">Bom dia 👋</p>
               <p className="text-base font-display font-semibold text-onyx">Check-up Anual 2024</p>
             </div>
-            <span className="font-body text-[10px] text-sage bg-sage-light px-2.5 py-1 rounded-full border border-sage/20 font-medium">
+            <span className="font-body text-[11px] text-sage bg-sage-light px-2.5 py-1 rounded-full border border-sage/20 font-medium">
               Dados extraídos
             </span>
           </div>
@@ -182,7 +182,7 @@ function ProductPreview() {
               <div key={m.label} className="rounded-xl py-2.5 px-2 text-center border border-border/50"
                 style={{ backgroundColor: m.bg }}>
                 <p className="text-base font-display font-semibold" style={{ color: m.color }}>{m.value}</p>
-                <p className="text-[10px] font-body text-mauve leading-tight">{m.label}</p>
+                <p className="text-[11px] font-body text-mauve leading-tight">{m.label}</p>
               </div>
             ))}
           </div>
@@ -191,13 +191,13 @@ function ProductPreview() {
           <div className="bg-white rounded-2xl border border-border/60 overflow-hidden">
             <div className="px-3 py-2 border-b border-border/40 flex items-center justify-between">
               <p className="text-[11px] font-body font-semibold text-onyx/60 uppercase tracking-wider">Biomarcadores</p>
-              <p className="text-[10px] font-body text-mauve">5 de 24</p>
+              <p className="text-[11px] font-body text-mauve">5 de 24</p>
             </div>
             {biomarkers.map((b, i) => (
               <div key={b.name} className={`flex items-center gap-2 px-3 py-2 ${i < biomarkers.length - 1 ? 'border-b border-border/30' : ''}`}>
                 <span className="font-body text-xs text-onyx font-medium flex-1">{b.name}</span>
                 <span className="font-body text-xs text-onyx">{b.value}</span>
-                <span className="font-body text-[10px] text-mauve w-10">{b.unit}</span>
+                <span className="font-body text-[11px] text-mauve w-10">{b.unit}</span>
                 <span className={`font-body text-xs font-semibold w-4 text-right ${b.color}`}>{b.indicator}</span>
               </div>
             ))}
@@ -232,9 +232,9 @@ function ProductPreview() {
           <div className="w-5 h-5 rounded-lg gradient-sintera flex items-center justify-center flex-shrink-0">
             <Upload size={10} className="text-white" />
           </div>
-          <span className="text-[10px] font-body font-semibold text-onyx">PDF processado</span>
+          <span className="text-[11px] font-body font-semibold text-onyx">PDF processado</span>
         </div>
-        <p className="text-[10px] font-body text-mauve leading-snug">24 biomarcadores extraídos automaticamente</p>
+        <p className="text-[11px] font-body text-mauve leading-snug">24 biomarcadores extraídos automaticamente</p>
         <div className="mt-2 h-1 bg-ivory rounded-full overflow-hidden">
           <div className="w-full h-full rounded-full gradient-sintera" />
         </div>

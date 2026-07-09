@@ -87,7 +87,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 function CoverageChip({ label, on, title }: { label: string; on: boolean; title?: string }) {
   return (
     <span title={title}
-      className={`inline-flex items-center gap-0.5 font-body text-[10px] rounded-full px-1.5 py-0.5 border ${
+      className={`inline-flex items-center gap-0.5 font-body text-[11px] rounded-full px-1.5 py-0.5 border ${
         on ? 'text-sage bg-sage-light border-sage/20' : 'text-mauve/40 bg-ivory border-border'
       }`}>
       {on ? <Check size={9} /> : <X size={9} />} {label}
@@ -142,7 +142,7 @@ function EducationPreview({ code }: { code: string }) {
               {t.summary && <span className="block font-body text-[11px] text-mauve/70 line-clamp-2">{t.summary}</span>}
             </a>
           ))}
-          <p className="font-body text-[10px] text-mauve/40 pt-1">Referência educativa externa (NIH/MedlinePlus, en/es). Não interpreta resultados.</p>
+          <p className="font-body text-[11px] text-mauve/40 pt-1">Referência educativa externa (NIH/MedlinePlus, en/es). Não interpreta resultados.</p>
         </div>
       )}
     </div>
@@ -260,7 +260,7 @@ export default function CatalogoAdminPage() {
               </div>
             ))}
           </div>
-          <p className="font-body text-[10px] text-mauve/40 mt-2">
+          <p className="font-body text-[11px] text-mauve/40 mt-2">
             &quot;Experiência completa&quot; = biomarcador com LOINC mapeado + regra clínica aprovada. Hoje 0 — depende do Responsável Clínico.
           </p>
         </motion.div>
@@ -295,12 +295,12 @@ export default function CatalogoAdminPage() {
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-body text-sm text-onyx">{r.display_name}</span>
                             {r.is_critical && (
-                              <span className="inline-flex items-center gap-1 font-body text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-1.5 py-0.5">
+                              <span className="inline-flex items-center gap-1 font-body text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-1.5 py-0.5">
                                 <AlertTriangle size={9} /> crítico
                               </span>
                             )}
                             {r.curation_priority != null && (
-                              <span className="inline-flex items-center font-body text-[10px] text-petal bg-blush border border-petal/20 rounded-full px-1.5 py-0.5">
+                              <span className="inline-flex items-center font-body text-[11px] text-petal bg-blush border border-petal/20 rounded-full px-1.5 py-0.5">
                                 P{r.curation_priority}
                               </span>
                             )}
@@ -308,18 +308,18 @@ export default function CatalogoAdminPage() {
                           <p className="font-body text-[11px] text-mauve/50 mt-0.5">{r.code} · {r.specimen}</p>
                           {/* Governança: estágio + fonte + revisor */}
                           <div className="flex items-center gap-1.5 flex-wrap mt-1">
-                            <span className={`inline-flex items-center font-body text-[10px] rounded-full px-1.5 py-0.5 border ${STATUS_STYLE[r.approval_status] ?? STATUS_STYLE.draft}`}>
+                            <span className={`inline-flex items-center font-body text-[11px] rounded-full px-1.5 py-0.5 border ${STATUS_STYLE[r.approval_status] ?? STATUS_STYLE.draft}`}>
                               {STATUS_LABEL[r.approval_status] ?? r.approval_status}
                             </span>
                             {r.scientific_source && (
-                              <span className="font-body text-[10px] text-mauve/60">fonte: {r.scientific_source}</span>
+                              <span className="font-body text-[11px] text-mauve/60">fonte: {r.scientific_source}</span>
                             )}
                             {r.reviewed_by && (
-                              <span className="font-body text-[10px] text-mauve/60">· revisor: {r.reviewed_by}</span>
+                              <span className="font-body text-[11px] text-mauve/60">· revisor: {r.reviewed_by}</span>
                             )}
                           </div>
                           {r.approval_status === 'rejeitado' && r.rejection_reason && (
-                            <p className="font-body text-[10px] text-red-500 mt-0.5">motivo: {r.rejection_reason}</p>
+                            <p className="font-body text-[11px] text-red-500 mt-0.5">motivo: {r.rejection_reason}</p>
                           )}
                           {r.loinc_code && <EducationPreview code={r.code} />}
                         </div>
@@ -329,7 +329,7 @@ export default function CatalogoAdminPage() {
                             <CoverageChip label="SNOMED" on={!!r.snomed_ct_code} title={r.snomed_ct_code ?? undefined} />
                             <CoverageChip label="Regra" on={ACTIVE_RULE_CODES.has(r.code)} />
                           </div>
-                          <span className={`font-body text-[10px] ${coverageLabel(r) === 'Nenhum' ? 'text-mauve/40' : 'text-petal'}`}>
+                          <span className={`font-body text-[11px] ${coverageLabel(r) === 'Nenhum' ? 'text-mauve/40' : 'text-petal'}`}>
                             {coverageLabel(r)}
                           </span>
                         </div>

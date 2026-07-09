@@ -322,7 +322,7 @@ export default function AdminPage() {
                         <span className="font-body text-xs text-onyx flex-1">
                           {eventLabels[ev.event_name] ?? ev.event_name}
                         </span>
-                        <span className="font-body text-[10px] text-mauve/50 flex-shrink-0">
+                        <span className="font-body text-[11px] text-mauve/50 flex-shrink-0">
                           {formatDate(ev.created_at)}
                         </span>
                       </div>
@@ -377,7 +377,7 @@ export default function AdminPage() {
                     <p className="font-body text-xs font-medium text-onyx truncate">{w.name}</p>
                     <p className="font-body text-[11px] text-mauve/60 truncate">{w.email}</p>
                   </div>
-                  <span className="font-body text-[10px] text-mauve/40 flex-shrink-0">
+                  <span className="font-body text-[11px] text-mauve/40 flex-shrink-0">
                     {formatDate(w.created_at)}
                   </span>
                 </div>

@@ -61,7 +61,7 @@ export default function WelcomeBanner() {
               8
             </span>
           </div>
-          <span className="text-[10px] font-body text-mauve">dia do ciclo</span>
+          <span className="text-[11px] font-body text-mauve">dia do ciclo</span>
         </div>
       </div>
     </motion.div>

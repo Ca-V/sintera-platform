@@ -21,7 +21,7 @@ const TONES: Record<string, string> = {
 
 export function CardChip({ tone = 'neutral', children }: { tone?: keyof typeof TONES | string; children: ReactNode }) {
   return (
-    <span className={`inline-flex items-center font-body text-[10px] font-medium rounded-full px-1.5 py-0.5 border whitespace-nowrap ${TONES[tone] ?? TONES.neutral}`}>
+    <span className={`inline-flex items-center font-body text-[11px] font-medium rounded-full px-1.5 py-0.5 border whitespace-nowrap ${TONES[tone] ?? TONES.neutral}`}>
       {children}
     </span>
   )

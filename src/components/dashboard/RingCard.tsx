@@ -64,7 +64,7 @@ export default function RingCard({
 
       {/* Text */}
       <div className="min-w-0">
-        <p className="text-[10px] font-body text-mauve uppercase tracking-wider mb-0.5">{title}</p>
+        <p className="text-[11px] font-body text-mauve uppercase tracking-wider mb-0.5">{title}</p>
         <div className="flex items-baseline gap-1 mb-0.5">
           <span className="font-display text-2xl font-semibold text-onyx leading-none">{value}</span>
           {unit && <span className="text-xs font-body text-mauve">{unit}</span>}

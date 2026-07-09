@@ -521,7 +521,7 @@ export default function MedicamentosPage() {
               </div>
               {dup && (
                 <div className="space-y-1.5">
-                  <span className="inline-flex items-center gap-1 font-body text-[10px] font-semibold text-gold bg-warm border border-amber-200 rounded-full px-2 py-0.5">Já está na sua lista</span>
+                  <span className="inline-flex items-center gap-1 font-body text-[11px] font-semibold text-gold bg-warm border border-amber-200 rounded-full px-2 py-0.5">Já está na sua lista</span>
                   <div className="flex flex-wrap gap-1.5">
                     <button onClick={() => { openEdit(dup); setScanEditing(null); setScanResults(prev => prev.filter(x => x !== it)) }}
                       className="px-2.5 py-1 rounded-full border border-petal/40 text-petal font-body text-[11px] font-medium hover:bg-blush">Abrir existente</button>
@@ -640,7 +640,7 @@ export default function MedicamentosPage() {
               <label htmlFor="med-limite" className="font-body text-xs text-mauve/70 block mb-1">Data limite (opcional)</label>
               <input id="med-limite" type="date" value={untilOn} onChange={e => setUntilOn(e.target.value)}
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
-              <p className="font-body text-[10px] text-mauve/50 mt-1">Em branco = sem previsão.</p>
+              <p className="font-body text-[11px] text-mauve/50 mt-1">Em branco = sem previsão.</p>
             </div>
           </div>
           )}
@@ -727,7 +727,7 @@ export default function MedicamentosPage() {
                       className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30" />
                   </div>
                 </div>
-                <p className="font-body text-[10px] text-mauve/60 leading-relaxed">A previsão de recompra considera o uso conforme a orientação médica. Caso o consumo real seja diferente, a data prevista poderá variar e poderá haver sobra ou término antecipado do produto.</p>
+                <p className="font-body text-[11px] text-mauve/60 leading-relaxed">A previsão de recompra considera o uso conforme a orientação médica. Caso o consumo real seja diferente, a data prevista poderá variar e poderá haver sobra ou término antecipado do produto.</p>
               </div>
             )}
             {(() => {
@@ -737,7 +737,7 @@ export default function MedicamentosPage() {
               // Recompra: consumo tem prioridade; sem ele, usa a recorrência declarada
               // (quinzenal/mensal…) — assim prevê mesmo sem cálculo por g/mL.
               const rec = repurchase ? nextRepurchaseDate(purchasedOn || null, num(packQty), num(dailyCons), num(acquiredQty), repurchaseFreq || null) : null
-              if (!ro && !rec) return <p className="font-body text-[10px] text-mauve/50">Informe o conteúdo, o consumo por dia (na mesma unidade do conteúdo) e a data de compra para estimar o término — ou marque a recompra e a frequência.</p>
+              if (!ro && !rec) return <p className="font-body text-[11px] text-mauve/50">Informe o conteúdo, o consumo por dia (na mesma unidade do conteúdo) e a data de compra para estimar o término — ou marque a recompra e a frequência.</p>
               return (
                 <p className="font-body text-[11px] text-petal">
                   {ro

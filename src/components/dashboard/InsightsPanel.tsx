@@ -121,12 +121,12 @@ export default function InsightsPanel() {
                   </p>
                   <div className="flex items-center gap-1.5 flex-shrink-0">
                     <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${priorityDot[ins.priority]}`}/>
-                    <span className="text-[10px] font-body text-mauve/60 whitespace-nowrap">{ins.time}</span>
+                    <span className="text-[11px] font-body text-mauve/60 whitespace-nowrap">{ins.time}</span>
                   </div>
                 </div>
                 <p className="text-xs font-body text-mauve leading-relaxed line-clamp-2">{ins.body}</p>
                 <span
-                  className="inline-block mt-1.5 text-[10px] font-body font-medium px-2 py-0.5 rounded-full"
+                  className="inline-block mt-1.5 text-[11px] font-body font-medium px-2 py-0.5 rounded-full"
                   style={{ color: ins.accentColor, backgroundColor: `${ins.accentColor}18` }}
                 >
                   {ins.tag}

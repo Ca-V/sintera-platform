@@ -242,7 +242,7 @@ export default function OnboardingPage() {
               <div key={i} className="flex items-center gap-1.5">
                 <div className={`rounded-full transition-all duration-300 ${i === step ? 'w-5 h-1.5 bg-petal' : i < step ? 'w-1.5 h-1.5 bg-petal/40' : 'w-1.5 h-1.5 bg-border'}`}/>
                 {i === step && (
-                  <span className="text-[10px] font-body font-medium text-petal uppercase tracking-wider">{s.label}</span>
+                  <span className="text-[11px] font-body font-medium text-petal uppercase tracking-wider">{s.label}</span>
                 )}
               </div>
             ))}
@@ -497,7 +497,7 @@ export default function OnboardingPage() {
               </motion.button>
             )}
             {!canContinue && step === 0 && (
-              <p className="text-[10px] font-body text-mauve/50">Digite seu nome para continuar</p>
+              <p className="text-[11px] font-body text-mauve/50">Digite seu nome para continuar</p>
             )}
           </div>
         </div>

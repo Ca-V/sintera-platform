@@ -134,23 +134,23 @@ export default function IndicadorDrilldownPage() {
             {model.first && model.latest && model.measurements.length >= 2 && (
               <div className="grid grid-cols-3 gap-3 mt-4">
                 <div className="rounded-2xl bg-ivory/60 py-3 px-3">
-                  <p className="font-body text-[10px] text-mauve/50 uppercase tracking-wider mb-0.5">Primeira</p>
+                  <p className="font-body text-[11px] text-mauve/50 uppercase tracking-wider mb-0.5">Primeira</p>
                   <p className="font-body text-sm font-semibold text-onyx">{model.first.value} <span className="text-xs font-normal text-mauve">{model.unit}</span></p>
-                  <p className="font-body text-[10px] text-mauve/50">{formatDateFull(model.first.date)}</p>
+                  <p className="font-body text-[11px] text-mauve/50">{formatDateFull(model.first.date)}</p>
                 </div>
                 <div className="rounded-2xl bg-ivory/60 py-3 px-3">
-                  <p className="font-body text-[10px] text-mauve/50 uppercase tracking-wider mb-0.5">Última</p>
+                  <p className="font-body text-[11px] text-mauve/50 uppercase tracking-wider mb-0.5">Última</p>
                   <p className="font-body text-sm font-semibold text-onyx">{model.latest.value} <span className="text-xs font-normal text-mauve">{model.unit}</span></p>
-                  <p className="font-body text-[10px] text-mauve/50">{formatDateFull(model.latest.date)}</p>
+                  <p className="font-body text-[11px] text-mauve/50">{formatDateFull(model.latest.date)}</p>
                 </div>
                 <div className="rounded-2xl bg-ivory/60 py-3 px-3">
-                  <p className="font-body text-[10px] text-mauve/50 uppercase tracking-wider mb-0.5">Variação total</p>
+                  <p className="font-body text-[11px] text-mauve/50 uppercase tracking-wider mb-0.5">Variação total</p>
                   {model.totalDeltaPercent !== null ? (
                     <p className={`font-body text-sm font-semibold ${model.totalDeltaPercent > 0 ? 'text-orange-500' : model.totalDeltaPercent < 0 ? 'text-blue-500' : 'text-mauve'}`}>
                       {model.totalDeltaPercent > 0 ? '+' : ''}{model.totalDeltaPercent}%
                     </p>
                   ) : <p className="font-body text-sm text-mauve/40">—</p>}
-                  <p className="font-body text-[10px] text-mauve/50">no período</p>
+                  <p className="font-body text-[11px] text-mauve/50">no período</p>
                 </div>
               </div>
             )}

@@ -513,7 +513,7 @@ function LegacyReport() {
                               <span className="min-w-0 break-words font-body text-sm text-onyx">{label}</span>
                             </label>
                             {withItems && sections[k] && items.length > 0 && (
-                              <span className="font-body text-[10px] text-mauve/50 flex-shrink-0 tabular-nums">{onCount}/{items.length}</span>
+                              <span className="font-body text-[11px] text-mauve/50 flex-shrink-0 tabular-nums">{onCount}/{items.length}</span>
                             )}
                           </div>
                           {withItems && sections[k] && secOpen && (

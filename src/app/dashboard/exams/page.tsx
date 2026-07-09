@@ -537,7 +537,7 @@ export default function ExamsPage() {
                                 title={exam.type ?? 'Exame'}
                                 onTitleClick={() => router.push('/dashboard/exams/' + exam.id)}
                                 trailing={
-                                  <span className={`inline-flex items-center gap-1 text-[10px] font-body font-medium px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.color}`}>
+                                  <span className={`inline-flex items-center gap-1 text-[11px] font-body font-medium px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.color}`}>
                                     <Icon size={10} className={isRunning ? 'animate-spin' : ''} />
                                     {cfg.label}
                                   </span>

@@ -234,7 +234,7 @@ function FeatureHistory({ points, refs }: {
               <tr key={i} className="border-b border-border/20 last:border-0">
                 <td className="font-body text-[11px] text-mauve py-1 pr-3 whitespace-nowrap align-top">{fmtOmicsDate(p.measured_on) || '—'}</td>
                 <td className="font-body text-xs text-onyx py-1"><strong>{p.value ?? '—'}</strong>{p.unit ? ` ${p.unit}` : ''}</td>
-                <td className="font-body text-[10px] text-mauve/50 py-1 text-right">{p.laboratory ?? ''}</td>
+                <td className="font-body text-[11px] text-mauve/50 py-1 text-right">{p.laboratory ?? ''}</td>
               </tr>
             ))}
           </tbody>
@@ -244,7 +244,7 @@ function FeatureHistory({ points, refs }: {
         <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1">
           {refs.map((rf, i) => (
             <a key={i} href={rf.url ?? '#'} target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 font-body text-[10px] text-petal hover:underline">
+              className="inline-flex items-center gap-1 font-body text-[11px] text-petal hover:underline">
               {rf.source.toUpperCase()}: {rf.external_id} <ExternalLink size={9} />
             </a>
           ))}
@@ -434,7 +434,7 @@ function ImportResults({ panelId, onDone }: { panelId: string; onDone: () => voi
                 {v.note && <span className="font-body text-[11px] text-mauve/70"> · {v.note}</span>}
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
-                <span className="font-body text-[10px] text-mauve/50">{fmtOmicsDate(v.created_at)}</span>
+                <span className="font-body text-[11px] text-mauve/50">{fmtOmicsDate(v.created_at)}</span>
                 {v.source_file && (
                   <a href={v.source_file} target="_blank" rel="noopener noreferrer" className="text-petal hover:underline" title="Arquivo original">
                     <ExternalLink size={11} />
@@ -443,7 +443,7 @@ function ImportResults({ panelId, onDone }: { panelId: string; onDone: () => voi
               </div>
             </div>
           ))}
-          <p className="font-body text-[10px] text-mauve/50 pt-1">Nenhuma versão é sobrescrita — todas permanecem acessíveis.</p>
+          <p className="font-body text-[11px] text-mauve/50 pt-1">Nenhuma versão é sobrescrita — todas permanecem acessíveis.</p>
         </Card>
       )}
     </div>

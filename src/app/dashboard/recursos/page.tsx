@@ -416,11 +416,11 @@ export default function RecursosPage() {
               </div>
               <div className="space-y-2">
                 <div className="grid grid-cols-[2.2rem_1fr_1fr_1fr_1fr] items-center gap-1.5">
-                  <span className="font-body text-[10px] text-mauve/60" />
-                  <span className="font-body text-[10px] text-mauve/60 text-center">Esférico</span>
-                  <span className="font-body text-[10px] text-mauve/60 text-center">Cilíndrico</span>
-                  <span className="font-body text-[10px] text-mauve/60 text-center">Eixo</span>
-                  <span className="font-body text-[10px] text-mauve/60 text-center">Adição</span>
+                  <span className="font-body text-[11px] text-mauve/60" />
+                  <span className="font-body text-[11px] text-mauve/60 text-center">Esférico</span>
+                  <span className="font-body text-[11px] text-mauve/60 text-center">Cilíndrico</span>
+                  <span className="font-body text-[11px] text-mauve/60 text-center">Eixo</span>
+                  <span className="font-body text-[11px] text-mauve/60 text-center">Adição</span>
                 </div>
                 <div className="grid grid-cols-[2.2rem_1fr_1fr_1fr_1fr] items-center gap-1.5">
                   <span className="font-body text-xs font-semibold text-onyx">OD</span>
@@ -436,7 +436,7 @@ export default function RecursosPage() {
                   <input aria-label="OE eixo" value={f.oe_axis} onChange={e => set('oe_axis', e.target.value)} placeholder="180" className={gradeCls} />
                   <input aria-label="OE adição" value={f.oe_add} onChange={e => set('oe_add', e.target.value)} placeholder="+2,00" className={gradeCls} />
                 </div>
-                <p className="font-body text-[10px] text-mauve/50">OD = olho direito · OE = olho esquerdo</p>
+                <p className="font-body text-[11px] text-mauve/50">OD = olho direito · OE = olho esquerdo</p>
               </div>
               {f.vision_kind === 'oculos' ? (
                 <div>

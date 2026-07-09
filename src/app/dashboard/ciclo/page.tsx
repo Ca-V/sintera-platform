@@ -326,15 +326,15 @@ export default function CicloPage() {
               <div className="grid grid-cols-3 gap-2 mb-3">
                 <Card padding="sm" className="text-center">
                   <p className="font-display text-lg font-bold text-onyx leading-none">{cycleStats.last ? fmt(cycleStats.last) : '—'}</p>
-                  <p className="font-body text-[10px] text-mauve mt-1">Última menstruação</p>
+                  <p className="font-body text-[11px] text-mauve mt-1">Última menstruação</p>
                 </Card>
                 <Card padding="sm" className="text-center">
                   <p className="font-display text-lg font-bold text-onyx leading-none">{cycleStats.avg != null ? `${cycleStats.avg} d` : '—'}</p>
-                  <p className="font-body text-[10px] text-mauve mt-1">Ciclo médio</p>
+                  <p className="font-body text-[11px] text-mauve mt-1">Ciclo médio</p>
                 </Card>
                 <Card padding="sm" className="text-center">
                   <p className="font-display text-lg font-bold text-onyx leading-none">{cycleStats.next ? fmt(cycleStats.next) : '—'}</p>
-                  <p className="font-body text-[10px] text-mauve mt-1">Próxima (estimada)</p>
+                  <p className="font-body text-[11px] text-mauve mt-1">Próxima (estimada)</p>
                 </Card>
               </div>
             )}

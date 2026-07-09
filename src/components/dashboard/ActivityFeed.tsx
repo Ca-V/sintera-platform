@@ -74,7 +74,7 @@ export default function ActivityFeed() {
                 </p>
                 <p className="text-xs font-body text-mauve truncate">{activity.description}</p>
               </div>
-              <p className="text-[10px] font-body text-mauve/60 flex-shrink-0 mt-0.5">{activity.time}</p>
+              <p className="text-[11px] font-body text-mauve/60 flex-shrink-0 mt-0.5">{activity.time}</p>
             </motion.div>
           )
         })}

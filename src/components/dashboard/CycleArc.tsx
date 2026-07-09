@@ -116,7 +116,7 @@ export default function CycleArc() {
               >
                 <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: p.color, opacity: p.active ? 1 : 0.5 }}/>
                 <span className={`text-xs font-body flex-1 ${p.active ? 'font-semibold text-onyx' : 'text-mauve'}`}>{p.name}</span>
-                <span className="text-[10px] font-body text-mauve/60">{p.label}</span>
+                <span className="text-[11px] font-body text-mauve/60">{p.label}</span>
                 {p.active && <span className="w-1.5 h-1.5 rounded-full bg-petal animate-pulse-soft"/>}
               </div>
             ))}
@@ -124,12 +124,12 @@ export default function CycleArc() {
 
           {/* Hormone sparklines */}
           <div className="border-t border-border pt-3">
-            <p className="text-[10px] font-body text-mauve uppercase tracking-wider mb-2">Curvas hormonais</p>
+            <p className="text-[11px] font-body text-mauve uppercase tracking-wider mb-2">Curvas hormonais</p>
             <div className="flex flex-col gap-2">
               {hormones.map((h) => (
                 <div key={h.label} className="flex items-center gap-3">
                   <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: h.color }}/>
-                  <span className="text-[10px] font-body text-mauve w-24 flex-shrink-0">{h.label}</span>
+                  <span className="text-[11px] font-body text-mauve w-24 flex-shrink-0">{h.label}</span>
                   <div className="flex-1">
                     <svg viewBox={`0 0 ${CHART_W} ${CHART_H}`} className="w-full h-6" preserveAspectRatio="none">
                       <path d={sparkPath(h.values)} fill="none" stroke={h.color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.7"/>
@@ -160,7 +160,7 @@ export default function CycleArc() {
             ].map((f) => (
               <div key={f.label} className="text-center">
                 <p className={`font-display text-base font-semibold ${f.color}`}>{f.value}</p>
-                <p className="text-[10px] font-body text-mauve">{f.label}</p>
+                <p className="text-[11px] font-body text-mauve">{f.label}</p>
               </div>
             ))}
           </div>
