@@ -136,3 +136,23 @@ export interface InsightContext {
   unresolved: ResolvableBiomarker[]
   generatedAt: string
 }
+
+/**
+ * Contrato de DOMÍNIO da organização factual de biomarcadores — SSOT reutilizável
+ * por QUALQUER consumidor (Dashboard, Relatório, Timeline, Insights, visão do
+ * médico). Screen-agnostic: só dados organizados; o consumidor adapta a
+ * apresentação. Estritamente factual (RDC 657): categorias + faixa ARITMÉTICA;
+ * NÃO carrega clinical_flag nem priorização clínica.
+ */
+export interface OrganizedBiomarkers {
+  /** 'exam' = organização de um exame; 'user' = agregado de toda a pessoa. */
+  scope: 'exam' | 'user'
+  examId: string | null
+  userId: string
+  biomarkers: AssembledBiomarker[]
+  byCategory: Partial<Record<BiomarkerCategory, AssembledBiomarker[]>>
+  outOfPrintedRange: AssembledBiomarker[]
+  unresolved: ResolvableBiomarker[]
+  counts: { total: number; categories: number; outOfRange: number; unresolved: number }
+  generatedAt: string
+}

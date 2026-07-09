@@ -125,6 +125,19 @@ function LegacyReport() {
   const [templates, setTemplates] = useState<{ id: string; name: string; selection: Record<string, unknown> }[]>([])
   const [tplName, setTplName] = useState('')
   const [configOpen, setConfigOpen] = useState(false)   // "Configurações de relatório" (discreto)
+  // Síntese factual dos biomarcadores ORGANIZADOS (TEMA C) — consome o SSOT único
+  // (/api/biomarkers/organized → Assembler). A tela não reagrupa; só exibe o resumo.
+  const [bioOrg, setBioOrg] = useState<{ total: number; categories: number; outOfRange: number } | null>(null)
+  useEffect(() => {
+    let alive = true
+    fetch('/api/biomarkers/organized')
+      .then(r => (r.ok ? r.json() : null))
+      .then((d: { counts?: { total: number; categories: number; outOfRange: number } } | null) => {
+        if (alive && d?.counts) setBioOrg(d.counts)
+      })
+      .catch(() => { /* silencioso — o resumo funciona sem a síntese */ })
+    return () => { alive = false }
+  }, [])
 
   // Árvore de seleção = espelho do menu lateral (UX-001): grupos expansíveis,
   // seleção por grupo (tri-state) e por item. Mesma ordem/nomenclatura da sidebar.
@@ -542,6 +555,13 @@ function LegacyReport() {
             {sections.condicoes && <p><span className="text-mauve/70">Condições registradas:</span> {condProprias.length + condFamiliar.length}</p>}
             {sections.visao && <p><span className="text-mauve/70">Recursos de saúde:</span> {eyewear.length}</p>}
             <p><span className="text-mauve/70">Última atualização:</span> {lastUpdate ? fmt(lastUpdate) : hoje}</p>
+            {sections.exames && bioOrg && bioOrg.total > 0 && (
+              <p className="col-span-2">
+                <span className="text-mauve/70">Biomarcadores atuais:</span>{' '}
+                <strong>{bioOrg.total}</strong> organizados em {bioOrg.categories} categoria{bioOrg.categories !== 1 ? 's' : ''}
+                {bioOrg.outOfRange > 0 ? ` · ${bioOrg.outOfRange} fora da faixa impressa do laudo` : ''}
+              </p>
+            )}
           </div>
         </div>
 
