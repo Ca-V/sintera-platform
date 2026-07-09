@@ -264,13 +264,13 @@ export default function MedidasPage() {
       {/* IMC calculado automaticamente (peso ÷ altura²) */}
       <Card padding="sm" className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-body text-[11px] text-mauve/70 uppercase tracking-wider mb-0.5">IMC (calculado)</p>
+          <p className="font-body text-[11px] text-mauve uppercase tracking-wider mb-0.5">IMC (calculado)</p>
           {imcVal != null ? (
             <>
               <p className="font-display text-2xl font-bold text-onyx leading-none">
                 {imcVal.toFixed(1)} <span className="text-sm font-normal text-mauve">kg/m²</span>
               </p>
-              <p className="font-body text-[11px] text-mauve/60 mt-1">
+              <p className="font-body text-[11px] text-mauve mt-1">
                 A partir de {latestPeso!.valueText} kg ({fmt(latestPeso!.measuredOn)}) e {alturaCm} cm de altura.
               </p>
             </>
@@ -291,7 +291,7 @@ export default function MedidasPage() {
       {scanRows && (
         <Section padding="md" bodyClassName="space-y-3" icon={<Camera size={16} className="text-petal" />} title="Revise os dados lidos do laudo">
           <div>
-            <label htmlFor="medida-scan-date" className="font-body text-xs text-mauve/70 block mb-1">Data do exame</label>
+            <label htmlFor="medida-scan-date" className="font-body text-xs text-mauve block mb-1">Data do exame</label>
             <input id="medida-scan-date" type="date" value={scanDate} onChange={e => setScanDate(e.target.value)}
               className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
           </div>
@@ -304,7 +304,7 @@ export default function MedidasPage() {
                   className="flex-1 px-2 py-1.5 border border-border rounded-lg font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
                 <span className="font-body text-xs text-mauve w-12 flex-shrink-0">{row.unit}</span>
                 <button onClick={() => setScanRows(rows => rows!.filter((_, j) => j !== i))} title="Descartar"
-                  className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve/60 hover:text-red-500 flex-shrink-0">
+                  className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve hover:text-red-500 flex-shrink-0">
                   <Trash2 size={13} />
                 </button>
               </div>
@@ -330,7 +330,7 @@ export default function MedidasPage() {
         <Card padding="md" className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="medida-metric" className="font-body text-xs text-mauve/70 block mb-1">Medida</label>
+              <label htmlFor="medida-metric" className="font-body text-xs text-mauve block mb-1">Medida</label>
               <select id="medida-metric" value={metric} onChange={e => chooseMetric(e.target.value as Metric)}
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
                 <optgroup label="Corpo">
@@ -350,32 +350,32 @@ export default function MedidasPage() {
               </select>
             </div>
             <div>
-              <label htmlFor="medida-date" className="font-body text-xs text-mauve/70 block mb-1">Data</label>
+              <label htmlFor="medida-date" className="font-body text-xs text-mauve block mb-1">Data</label>
               <input id="medida-date" type="date" value={date} onChange={e => setDate(e.target.value)}
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
             </div>
           </div>
           {metric === 'outro' && (
             <div>
-              <label htmlFor="medida-label" className="font-body text-xs text-mauve/70 block mb-1">Nome da medida</label>
+              <label htmlFor="medida-label" className="font-body text-xs text-mauve block mb-1">Nome da medida</label>
               <input id="medida-label" type="text" value={label} onChange={e => setLabel(e.target.value)} placeholder="Ex.: Glicemia capilar"
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
             </div>
           )}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="medida-value" className="font-body text-xs text-mauve/70 block mb-1">Valor</label>
+              <label htmlFor="medida-value" className="font-body text-xs text-mauve block mb-1">Valor</label>
               <input id="medida-value" type="text" value={value} onChange={e => setValue(e.target.value)} placeholder={PLACEHOLDER[metric]}
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
             </div>
             <div>
-              <label htmlFor="medida-unit" className="font-body text-xs text-mauve/70 block mb-1">Unidade</label>
+              <label htmlFor="medida-unit" className="font-body text-xs text-mauve block mb-1">Unidade</label>
               <input id="medida-unit" type="text" value={unit} onChange={e => setUnit(e.target.value)} placeholder="kg, mmHg, cm…"
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
             </div>
           </div>
           <div>
-            <label htmlFor="medida-notes" className="font-body text-xs text-mauve/70 block mb-1">Observações (opcional)</label>
+            <label htmlFor="medida-notes" className="font-body text-xs text-mauve block mb-1">Observações (opcional)</label>
             <div className="flex items-start gap-2">
               <textarea id="medida-notes" value={notes} onChange={e => setNotes(e.target.value)} rows={2}
                 className="flex-1 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
@@ -409,7 +409,7 @@ export default function MedidasPage() {
                   <p className="font-display text-base font-semibold text-onyx">{METRIC_LABEL[g]}</p>
                   {serie.length >= 2 && (
                     <div className="flex items-center gap-2">
-                      <span className="font-body text-[11px] text-mauve/50">{list.length} registros</span>
+                      <span className="font-body text-[11px] text-mauve">{list.length} registros</span>
                       <Sparkline values={serie} />
                     </div>
                   )}
@@ -438,7 +438,7 @@ export default function MedidasPage() {
         </div>
       )}
 
-      <p className="font-body text-[11px] text-mauve/50 text-center leading-relaxed">
+      <p className="font-body text-[11px] text-mauve text-center leading-relaxed">
         Registro factual das suas medidas. Não interpreta nem diagnostica — leve os dados ao seu profissional de saúde.
       </p>
     </div>

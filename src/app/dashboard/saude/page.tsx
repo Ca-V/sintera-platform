@@ -24,9 +24,9 @@ interface CatalogEntry { id: string; specimen: string | null; category: string |
 
 const INTERP_CFG: Record<string, { sym: string; cls: string }> = {
   acima_da_referencia:         { sym: '▲', cls: 'text-orange-500' },
-  abaixo_da_referencia:        { sym: '▼', cls: 'text-blue-500' },
+  abaixo_da_referencia:        { sym: '▼', cls: 'text-blue-600' },
   dentro_da_referencia:        { sym: '✓', cls: 'text-sage' },
-  sem_referencia_identificada: { sym: '–', cls: 'text-mauve/50' },
+  sem_referencia_identificada: { sym: '–', cls: 'text-mauve' },
   indisponivel:                { sym: '–', cls: 'text-mauve/40' },
 }
 
@@ -39,11 +39,11 @@ function TrendBadge({ trend, delta }: { trend: Trend; delta: number | null }) {
   if (trend === 'up')
     return <span className="flex items-center gap-1 text-orange-500 font-body text-xs font-semibold"><TrendingUp size={12} /> {delta !== null ? `+${delta}%` : '↑'}</span>
   if (trend === 'down')
-    return <span className="flex items-center gap-1 text-blue-500 font-body text-xs font-semibold"><TrendingDown size={12} /> {delta !== null ? `${delta}%` : '↓'}</span>
+    return <span className="flex items-center gap-1 text-blue-600 font-body text-xs font-semibold"><TrendingDown size={12} /> {delta !== null ? `${delta}%` : '↓'}</span>
   if (trend === 'stable')
     return <span className="flex items-center gap-1 text-mauve font-body text-xs"><Minus size={12} /> {delta !== null ? `${delta > 0 ? '+' : ''}${delta}%` : '—'}</span>
   if (trend === 'single')
-    return <span className="font-body text-xs text-mauve/50">1ª medição</span>
+    return <span className="font-body text-xs text-mauve">1ª medição</span>
   return <span className="font-body text-xs text-amber-600">unidades ≠</span>
 }
 
@@ -118,7 +118,7 @@ export default function IndicadoresPage() {
         </div>
         {summaries.length > 0 && (
           <div className="mt-4 relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-mauve/50" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-mauve" />
             <input
               type="text" aria-label="Buscar biomarcador" placeholder="Buscar biomarcador…" value={search} onChange={e => setSearch(e.target.value)}
               className="w-full pl-9 pr-4 py-2.5 bg-ivory border border-border rounded-xl font-body text-sm text-onyx placeholder-mauve/40 focus:outline-none focus:ring-1 focus:ring-petal/40"
@@ -152,10 +152,10 @@ export default function IndicadoresPage() {
                   const textColor = idx.pct >= 80 ? 'text-sage' : idx.pct >= 60 ? 'text-amber-600' : 'text-orange-500'
                   return (
                     <div key={idx.examId} className="flex items-center gap-3">
-                      <span className="font-body text-xs text-mauve/60 w-14 flex-shrink-0">{formatDate(idx.date)}</span>
+                      <span className="font-body text-xs text-mauve w-14 flex-shrink-0">{formatDate(idx.date)}</span>
                       <div className="flex-1 bg-border/30 rounded-full h-2"><div className={`h-2 rounded-full ${barColor}`} style={{ width: `${idx.pct}%` }} /></div>
                       <span className={`font-body text-sm font-semibold ${textColor} w-10 text-right flex-shrink-0`}>{idx.pct}%</span>
-                      <span className="font-body text-xs text-mauve/50 flex-shrink-0">{idx.num}/{idx.den}</span>
+                      <span className="font-body text-xs text-mauve flex-shrink-0">{idx.num}/{idx.den}</span>
                     </div>
                   )
                 })}
@@ -170,7 +170,7 @@ export default function IndicadoresPage() {
             padding="none" className="overflow-hidden">
             <div className="px-5 py-3 border-b border-border/40 flex items-center justify-between">
               <p className="font-body text-sm font-semibold text-onyx">Biomarcadores</p>
-              <span className="font-body text-xs text-mauve/60">{filtered.length} de {summaries.length}</span>
+              <span className="font-body text-xs text-mauve">{filtered.length} de {summaries.length}</span>
             </div>
             {groupByMaterialExam(filtered, s => ({ sourceMaterial: s.sourceMaterial ?? null, specimen: panelOf(s).specimen, sourceExamName: s.sourceExamName ?? null }), labels).map(mat => (
               <div key={mat.key}>
@@ -184,7 +184,7 @@ export default function IndicadoresPage() {
                     {/* Nome do exame do laudo (quando houver) — dá contexto ao biomarcador
                         (ex.: pH/pO₂/SatO₂ sob "Gasometria venosa"). Ausente → itens diretos. */}
                     {ex.label && (
-                      <p className="px-5 pt-2.5 pb-1 font-body text-[11px] font-semibold text-mauve/60 uppercase tracking-wide">{ex.label}</p>
+                      <p className="px-5 pt-2.5 pb-1 font-body text-[11px] font-semibold text-mauve uppercase tracking-wide">{ex.label}</p>
                     )}
                     <div className="space-y-3 px-4 pb-3">
                       {ex.items.map((s) => {

@@ -26,8 +26,8 @@ function formatDateShort(iso: string): string {
 }
 
 const INTERP_COLORS: Record<string, string> = {
-  acima_da_referencia: 'text-orange-500', abaixo_da_referencia: 'text-blue-500',
-  dentro_da_referencia: 'text-sage', sem_referencia_identificada: 'text-mauve/60', indisponivel: 'text-mauve/40',
+  acima_da_referencia: 'text-orange-500', abaixo_da_referencia: 'text-blue-600',
+  dentro_da_referencia: 'text-sage', sem_referencia_identificada: 'text-mauve', indisponivel: 'text-mauve/40',
 }
 const INTERP_SYM: Record<string, string> = {
   acima_da_referencia: '▲', abaixo_da_referencia: '▼', dentro_da_referencia: '✓',
@@ -134,23 +134,23 @@ export default function IndicadorDrilldownPage() {
             {model.first && model.latest && model.measurements.length >= 2 && (
               <div className="grid grid-cols-3 gap-3 mt-4">
                 <div className="rounded-2xl bg-ivory/60 py-3 px-3">
-                  <p className="font-body text-[11px] text-mauve/50 uppercase tracking-wider mb-0.5">Primeira</p>
+                  <p className="font-body text-[11px] text-mauve uppercase tracking-wider mb-0.5">Primeira</p>
                   <p className="font-body text-sm font-semibold text-onyx">{model.first.value} <span className="text-xs font-normal text-mauve">{model.unit}</span></p>
-                  <p className="font-body text-[11px] text-mauve/50">{formatDateFull(model.first.date)}</p>
+                  <p className="font-body text-[11px] text-mauve">{formatDateFull(model.first.date)}</p>
                 </div>
                 <div className="rounded-2xl bg-ivory/60 py-3 px-3">
-                  <p className="font-body text-[11px] text-mauve/50 uppercase tracking-wider mb-0.5">Última</p>
+                  <p className="font-body text-[11px] text-mauve uppercase tracking-wider mb-0.5">Última</p>
                   <p className="font-body text-sm font-semibold text-onyx">{model.latest.value} <span className="text-xs font-normal text-mauve">{model.unit}</span></p>
-                  <p className="font-body text-[11px] text-mauve/50">{formatDateFull(model.latest.date)}</p>
+                  <p className="font-body text-[11px] text-mauve">{formatDateFull(model.latest.date)}</p>
                 </div>
                 <div className="rounded-2xl bg-ivory/60 py-3 px-3">
-                  <p className="font-body text-[11px] text-mauve/50 uppercase tracking-wider mb-0.5">Variação total</p>
+                  <p className="font-body text-[11px] text-mauve uppercase tracking-wider mb-0.5">Variação total</p>
                   {model.totalDeltaPercent !== null ? (
-                    <p className={`font-body text-sm font-semibold ${model.totalDeltaPercent > 0 ? 'text-orange-500' : model.totalDeltaPercent < 0 ? 'text-blue-500' : 'text-mauve'}`}>
+                    <p className={`font-body text-sm font-semibold ${model.totalDeltaPercent > 0 ? 'text-orange-500' : model.totalDeltaPercent < 0 ? 'text-blue-600' : 'text-mauve'}`}>
                       {model.totalDeltaPercent > 0 ? '+' : ''}{model.totalDeltaPercent}%
                     </p>
                   ) : <p className="font-body text-sm text-mauve/40">—</p>}
-                  <p className="font-body text-[11px] text-mauve/50">no período</p>
+                  <p className="font-body text-[11px] text-mauve">no período</p>
                 </div>
               </div>
             )}
@@ -160,7 +160,7 @@ export default function IndicadorDrilldownPage() {
           <MotionCard initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} padding="md">
             <p className="font-body text-sm font-semibold text-onyx mb-3">Evolução temporal</p>
             <TemporalChart points={model.measurements} />
-            <p className="font-body text-[11px] text-mauve/50 mt-2">
+            <p className="font-body text-[11px] text-mauve mt-2">
               Faixa verde = referência impressa no laudo (quando constante). Valores factuais; não indicam melhora ou piora clínica.
             </p>
           </MotionCard>
@@ -172,12 +172,12 @@ export default function IndicadorDrilldownPage() {
             </div>
             <div className="divide-y divide-border/20">
               {[...model.measurements].reverse().map((p) => {
-                const interpColor = INTERP_COLORS[p.interpretation ?? ''] ?? 'text-mauve/60'
+                const interpColor = INTERP_COLORS[p.interpretation ?? ''] ?? 'text-mauve'
                 const sym = INTERP_SYM[p.interpretation ?? ''] ?? '–'
                 return (
                   <Link key={p.examId + p.date} href={`/dashboard/exams/${p.examId}`}
                     className="flex items-center gap-3 px-5 py-3 hover:bg-blush/10 transition-colors group">
-                    <span className="font-body text-xs text-mauve/60 w-24 flex-shrink-0">{formatDateFull(p.date)}</span>
+                    <span className="font-body text-xs text-mauve w-24 flex-shrink-0">{formatDateFull(p.date)}</span>
                     <span className="font-body text-sm font-semibold text-onyx">{p.value}</span>
                     <span className="font-body text-xs text-mauve flex-shrink-0">{p.unit}</span>
                     {(p.referenceMin !== null || p.referenceMax !== null) && (

@@ -103,7 +103,7 @@ export default function TermosPage() {
           </section>
 
           <div className="border-t border-border pt-6">
-            <p className="text-xs text-mauve/60">SINTERA · Termos de Uso v2.0 · Junho de 2026</p>
+            <p className="text-xs text-mauve">SINTERA · Termos de Uso v2.0 · Junho de 2026</p>
           </div>
         </div>
 

@@ -16,7 +16,7 @@ const TONES: Record<string, string> = {
   petal: 'text-petal bg-blush border-petal/20',
   gold: 'text-gold bg-warm border-amber-200',
   mauve: 'text-mauve bg-mauve/10 border-mauve/20',
-  neutral: 'text-mauve/70 bg-black/[0.03] border-border',
+  neutral: 'text-mauve bg-black/[0.03] border-border',
 }
 
 export function CardChip({ tone = 'neutral', children }: { tone?: keyof typeof TONES | string; children: ReactNode }) {
@@ -56,7 +56,7 @@ export default function ListCard({
             {titleEl}
             {trailing != null && <div className="flex-shrink-0">{trailing}</div>}
           </div>
-          {meta != null && <div className="font-body text-[11px] text-mauve/60 mt-0.5 break-words">{meta}</div>}
+          {meta != null && <div className="font-body text-[11px] text-mauve mt-0.5 break-words">{meta}</div>}
           {chips != null && <div className="flex flex-wrap items-center gap-1 mt-1.5">{chips}</div>}
           {actions != null && <div className="flex items-center justify-end gap-0.5 mt-1.5 -mr-1">{actions}</div>}
         </div>

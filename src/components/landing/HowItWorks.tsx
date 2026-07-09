@@ -70,7 +70,7 @@ export default function HowItWorks() {
                 <div>
                   <h3 className="font-display text-xl font-semibold text-onyx mb-2">{step.title}</h3>
                   <p className="font-body text-mauve leading-relaxed mb-3">{step.description}</p>
-                  <p className="font-body text-sm text-mauve/60 leading-relaxed">{step.detail}</p>
+                  <p className="font-body text-sm text-mauve leading-relaxed">{step.detail}</p>
                 </div>
               </motion.div>
             )

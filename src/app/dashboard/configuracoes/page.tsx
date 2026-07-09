@@ -132,7 +132,7 @@ export default function ConfiguracoesPage() {
             <p className="font-body text-sm text-onyx">E-mail</p>
             <p className="font-body text-xs text-mauve mt-0.5">{user?.email ?? '—'}</p>
           </div>
-          <span className="font-body text-xs text-mauve/50 bg-ivory px-2.5 py-1 rounded-full border border-border">
+          <span className="font-body text-xs text-mauve bg-ivory px-2.5 py-1 rounded-full border border-border">
             Verificado
           </span>
         </div>
@@ -184,7 +184,7 @@ export default function ConfiguracoesPage() {
           <input id="config-phone" type="tel" value={phone} onChange={e => setPhone(e.target.value)}
             placeholder="(11) 99999-9999"
             className="mt-1 w-full px-3 py-2.5 border border-border rounded-xl font-body text-sm text-onyx bg-ivory placeholder:text-mauve/40 focus:outline-none focus:ring-1 focus:ring-petal/30" />
-          <p className="font-body text-[11px] text-mauve/50 mt-1">Com DDD. Usado apenas para enviar seus lembretes.</p>
+          <p className="font-body text-[11px] text-mauve mt-1">Com DDD. Usado apenas para enviar seus lembretes.</p>
         </div>
 
         <div className="flex items-center justify-end gap-3">
@@ -240,7 +240,7 @@ export default function ConfiguracoesPage() {
         </Link>
 
         <div className="pt-2">
-          <p className="font-body text-xs text-mauve/60 leading-relaxed">
+          <p className="font-body text-xs text-mauve leading-relaxed">
             Seus dados são armazenados de forma segura e nunca compartilhados com terceiros.
             Você pode excluir sua conta e todos os seus dados a qualquer momento.
           </p>

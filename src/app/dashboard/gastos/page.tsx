@@ -180,7 +180,7 @@ export default function GastosPage() {
       )}
 
       <div className="rounded-2xl border border-border bg-ivory px-4 py-3 flex items-start gap-2.5">
-        <Info size={15} className="text-mauve/50 flex-shrink-0 mt-0.5" />
+        <Info size={15} className="text-mauve flex-shrink-0 mt-0.5" />
         <p className="font-body text-[11px] text-mauve leading-relaxed">
           Isto <strong>organiza</strong> suas despesas e comprovantes — útil, por exemplo, para juntar documentos da sua declaração.
           Não é orientação tributária; sobre o que é dedutível, consulte seu contador.
@@ -218,7 +218,7 @@ export default function GastosPage() {
             </div>
             <p className="font-body text-xs text-mauve uppercase tracking-wider">Total de despesas em {year}</p>
             <p className="font-display text-3xl font-semibold text-onyx mt-1">{fmtBRL(total)}</p>
-            <p className="font-body text-xs text-mauve/60 mt-1">{ofYear.length} {ofYear.length === 1 ? 'registro' : 'registros'}</p>
+            <p className="font-body text-xs text-mauve mt-1">{ofYear.length} {ofYear.length === 1 ? 'registro' : 'registros'}</p>
           </Card>
 
           {/* Visualização: por data × por tipo */}

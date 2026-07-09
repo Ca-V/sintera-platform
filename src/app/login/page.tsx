@@ -110,7 +110,7 @@ export default function LoginPage() {
                   id="login-email"
                   type="email" required value={email} onChange={e => setEmail(e.target.value)}
                   placeholder="sofia@exemplo.com"
-                  className="w-full rounded-xl border border-border bg-white pl-9 pr-4 py-3 text-sm font-body text-onyx placeholder:text-mauve/50 focus:outline-none focus:ring-2 focus:ring-petal/25 focus:border-petal transition-all"
+                  className="w-full rounded-xl border border-border bg-white pl-9 pr-4 py-3 text-sm font-body text-onyx placeholder:text-mauve focus:outline-none focus:ring-2 focus:ring-petal/25 focus:border-petal transition-all"
                 />
               </div>
             </div>
@@ -128,7 +128,7 @@ export default function LoginPage() {
                   type={showPassword ? 'text' : 'password'} required
                   value={password} onChange={e => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full rounded-xl border border-border bg-white pl-9 pr-10 py-3 text-sm font-body text-onyx placeholder:text-mauve/50 focus:outline-none focus:ring-2 focus:ring-petal/25 focus:border-petal transition-all"
+                  className="w-full rounded-xl border border-border bg-white pl-9 pr-10 py-3 text-sm font-body text-onyx placeholder:text-mauve focus:outline-none focus:ring-2 focus:ring-petal/25 focus:border-petal transition-all"
                 />
                 <button type="button" onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-mauve hover:text-petal transition-colors">

@@ -23,10 +23,10 @@ export default function Footer() {
               </div>
               <span className="font-display text-lg font-semibold tracking-[0.2em] text-white">SINTERA</span>
             </div>
-            <p className="font-body text-sm text-white/40 leading-relaxed mb-4 max-w-xs">
+            <p className="font-body text-sm text-white/60 leading-relaxed mb-4 max-w-xs">
               Organize suas informações de saúde num só lugar e acompanhe a evolução ao longo do tempo.
             </p>
-            <p className="font-body text-xs text-white/25 leading-relaxed max-w-xs">
+            <p className="font-body text-xs text-white/60 leading-relaxed max-w-xs">
               A SINTERA organiza e exibe informações de saúde registradas pela própria pessoa.
               Não oferece diagnóstico, interpretação clínica ou recomendações médicas.
             </p>
@@ -35,7 +35,7 @@ export default function Footer() {
           {/* Links */}
           {Object.entries(links).map(([section, items]) => (
             <div key={section}>
-              <p className="font-body text-xs font-semibold text-white/30 uppercase tracking-[0.18em] mb-4">
+              <p className="font-body text-xs font-semibold text-white/60 uppercase tracking-[0.18em] mb-4">
                 {section}
               </p>
               <ul className="space-y-2.5">
@@ -51,7 +51,7 @@ export default function Footer() {
                   return (
                     <li key={item}>
                       <Link href={href}
-                        className="font-body text-sm text-white/40 hover:text-white/80 transition-colors">
+                        className="font-body text-sm text-white/60 hover:text-white/80 transition-colors">
                         {item}
                       </Link>
                     </li>
@@ -64,10 +64,10 @@ export default function Footer() {
 
         {/* Bottom bar */}
         <div className="border-t border-white/8 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="font-body text-xs text-white/25">
+          <p className="font-body text-xs text-white/60">
             © {new Date().getFullYear()} SINTERA
           </p>
-          <p className="font-body text-xs text-white/20 text-center sm:text-right max-w-sm">
+          <p className="font-body text-xs text-white/55 text-center sm:text-right max-w-sm">
             Os dados exibidos são reprodução estruturada dos laudos originais.
             Não substituem avaliação médica.
           </p>

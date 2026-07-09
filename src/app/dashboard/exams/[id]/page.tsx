@@ -81,10 +81,10 @@ const INTERP_CONFIG: Record<string, { label: string; color: string; bg: string; 
   // Resultado PRESENTE e qualitativo (Negativo, Ausentes, Turvo…) — nunca "ausente".
   qualitative:                 { label: 'Resultado descritivo (em palavras, sem faixa numérica para comparar)', color: 'text-mauve', bg: 'bg-ivory border-border', Icon: null },
   // Resultado realmente não trazido pelo laudo.
-  missing:                     { label: 'Este resultado não foi informado no laudo', color: 'text-mauve/70', bg: 'bg-ivory border-border', Icon: null },
+  missing:                     { label: 'Este resultado não foi informado no laudo', color: 'text-mauve', bg: 'bg-ivory border-border', Icon: null },
   extraction_failed:           { label: 'Não foi possível ler este item do laudo', color: 'text-red-500', bg: 'bg-red-50 border-red-200', Icon: AlertCircle },
   // Fallback neutro (numérico sem interpretação) — NÃO diz "ausente".
-  indisponivel:                { label: 'Sem interpretação numérica disponível', color: 'text-mauve/70', bg: 'bg-ivory border-border', Icon: null },
+  indisponivel:                { label: 'Sem interpretação numérica disponível', color: 'text-mauve', bg: 'bg-ivory border-border', Icon: null },
 }
 
 // ── Índice Experimental ───────────────────────────────────────────────────────
@@ -113,13 +113,13 @@ function IndexCard({ index }: { index: { numerator: number; denominator: number;
             <span className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Proporção dentro da referência</span>
           </div>
           <p className={`font-display text-3xl font-bold ${color}`}>{index.pct}%</p>
-          <p className="font-body text-xs text-mauve/70 mt-0.5">{index.numerator} de {index.denominator} biomarcadores dentro da referência</p>
+          <p className="font-body text-xs text-mauve mt-0.5">{index.numerator} de {index.denominator} biomarcadores dentro da referência</p>
         </div>
         {/* Tooltip — O que é isso? */}
         <div className="relative flex-shrink-0">
           <button
             onClick={() => setTip(t => !t)}
-            className="w-6 h-6 rounded-full bg-white/70 border border-current/20 flex items-center justify-center text-mauve/60 hover:text-onyx transition-colors"
+            className="w-6 h-6 rounded-full bg-white/70 border border-current/20 flex items-center justify-center text-mauve hover:text-onyx transition-colors"
             aria-label="O que é este índice?">
             <HelpCircle size={14} />
           </button>
@@ -142,7 +142,7 @@ function IndexCard({ index }: { index: { numerator: number; denominator: number;
           )}
         </div>
       </div>
-      <p className="font-body text-[11px] text-mauve/50 mt-3 leading-relaxed">
+      <p className="font-body text-[11px] text-mauve mt-3 leading-relaxed">
         Métrica informativa baseada apenas na proporção de resultados numéricos dentro das referências impressas neste laudo.
         Não representa diagnóstico, risco ou estado geral de saúde. Não substitui avaliação médica.
       </p>
@@ -611,7 +611,7 @@ export default function ExamDetailPage() {
                     {exam?.type ?? 'Exame'}
                   </h1>
                   <button onClick={startEditName}
-                    className="opacity-0 group-hover/name:opacity-100 transition-opacity text-mauve/50 hover:text-petal flex-shrink-0 print:hidden">
+                    className="opacity-0 group-hover/name:opacity-100 transition-opacity text-mauve hover:text-petal flex-shrink-0 print:hidden">
                     <Pencil size={13} />
                   </button>
                 </div>
@@ -641,7 +641,7 @@ export default function ExamDetailPage() {
                     {exam?.page_count ? ` · ${exam.page_count} páginas` : ''}
                   </p>
                   <button onClick={startEditDate}
-                    className="opacity-0 group-hover/date:opacity-100 transition-opacity text-mauve/50 hover:text-petal flex-shrink-0 print:hidden">
+                    className="opacity-0 group-hover/date:opacity-100 transition-opacity text-mauve hover:text-petal flex-shrink-0 print:hidden">
                     <Pencil size={11} />
                   </button>
                 </div>
@@ -659,7 +659,7 @@ export default function ExamDetailPage() {
                     </span>
                   )}
                   {counts.abaixo > 0 && (
-                    <span className="font-body text-xs font-semibold text-blue-500">
+                    <span className="font-body text-xs font-semibold text-blue-600">
                       ↓ {counts.abaixo} abaixo
                     </span>
                   )}
@@ -673,7 +673,7 @@ export default function ExamDetailPage() {
 
               {/* Última extração bem-sucedida */}
               {lastLog && (
-                <p className="font-body text-xs text-mauve/60 mt-2">
+                <p className="font-body text-xs text-mauve mt-2">
                   Última extração: {formatDate(lastLog.started_at)}
                   {lastLog.parse_repaired && ' · reparado automaticamente'}
                   {lastLog.extraction_path === 'pdf_native' && ' · leitura nativa PDF'}
@@ -806,7 +806,7 @@ export default function ExamDetailPage() {
                 <div key={ex.key}>
                   {/* Nome do EXAME informado no laudo (ausente no legado) */}
                   {ex.label && (
-                    <p className="px-5 pt-3 pb-1 font-body text-[11px] font-semibold text-mauve/60 uppercase tracking-wide">
+                    <p className="px-5 pt-3 pb-1 font-body text-[11px] font-semibold text-mauve uppercase tracking-wide">
                       {ex.label}
                     </p>
                   )}
@@ -840,7 +840,7 @@ export default function ExamDetailPage() {
                           {/* Referência + status numa linha discreta (não rouba atenção do valor) */}
                           <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
                             {hasRange && (
-                              <span className="font-body text-[11px] text-mauve/70">
+                              <span className="font-body text-[11px] text-mauve">
                                 Referência do laboratório: {formatRef(b.reference_min, b.reference_max)}{b.unit ? ` ${b.unit}` : ''}
                               </span>
                             )}
@@ -860,14 +860,14 @@ export default function ExamDetailPage() {
 
           {/* Rodapé com contagem — E5 homologação */}
           <div className="px-5 py-3 bg-ivory border-t border-border/50">
-            <p className="font-body text-xs text-mauve/60">
+            <p className="font-body text-xs text-mauve">
               {counts.total} biomarcadores exibidos · fonte: {biomarkers[0]?.source ?? 'ai_extracted'}
             </p>
           </div>
 
           {/* Nota sobre a fonte da referência (regulatória) */}
           <div className="px-5 py-3 border-t border-border/50 bg-amber-50/40">
-            <p className="font-body text-[11px] text-mauve/70 leading-relaxed">
+            <p className="font-body text-[11px] text-mauve leading-relaxed">
               As faixas de referência exibidas são as <strong className="text-onyx/70">impressas no laudo do seu laboratório</strong> e
               podem variar conforme o laboratório e o método. A referência adequada ao seu caso <strong className="text-onyx/70">também
               depende de avaliação médica</strong> — esta informação organiza seus dados e não substitui a consulta com seu médico.
@@ -981,7 +981,7 @@ export default function ExamDetailPage() {
             {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
             {deleting ? 'Excluindo…' : 'Excluir exame'}
           </button>
-          <p className="font-body text-[11px] text-mauve/50 mt-1">
+          <p className="font-body text-[11px] text-mauve mt-1">
             Remove o exame, seus biomarcadores e insights. O seu Histórico é recalculado.
           </p>
         </div>

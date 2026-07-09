@@ -166,7 +166,7 @@ export default function HabitosPage() {
       {showForm && (
         <Card padding="md" className="space-y-3">
           <div>
-            <label className="font-body text-xs text-mauve/70 block mb-1.5">Categoria</label>
+            <label className="font-body text-xs text-mauve block mb-1.5">Categoria</label>
             <div className="flex flex-wrap gap-1.5">
               {CATEGORIES.map(c => {
                 const Icon = c.icon
@@ -183,7 +183,7 @@ export default function HabitosPage() {
             </div>
           </div>
           <div>
-            <label htmlFor="habito-descricao" className="font-body text-xs text-mauve/70 block mb-1">Descrição</label>
+            <label htmlFor="habito-descricao" className="font-body text-xs text-mauve block mb-1">Descrição</label>
             <div className="flex items-center gap-2">
               <input id="habito-descricao" type="text" value={description} onChange={e => setDescription(e.target.value)} placeholder="Ex.: Caminhada, musculação, 7h de sono"
                 className="flex-1 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
@@ -191,12 +191,12 @@ export default function HabitosPage() {
             </div>
           </div>
           <div>
-            <label htmlFor="habito-frequencia" className="font-body text-xs text-mauve/70 block mb-1">Frequência (opcional)</label>
+            <label htmlFor="habito-frequencia" className="font-body text-xs text-mauve block mb-1">Frequência (opcional)</label>
             <input id="habito-frequencia" type="text" value={frequency} onChange={e => setFrequency(e.target.value)} placeholder="Ex.: 3x por semana, diário"
               className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
           </div>
           <div>
-            <label htmlFor="habito-observacoes" className="font-body text-xs text-mauve/70 block mb-1">Observações (opcional)</label>
+            <label htmlFor="habito-observacoes" className="font-body text-xs text-mauve block mb-1">Observações (opcional)</label>
             <div className="flex items-start gap-2">
               <textarea id="habito-observacoes" value={notes} onChange={e => setNotes(e.target.value)} rows={2}
                 className="flex-1 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
@@ -220,11 +220,11 @@ export default function HabitosPage() {
       ) : (
         <Card padding="2xl" className="text-center space-y-1">
           <p className="font-body text-sm text-mauve">Nenhum hábito registrado ainda.</p>
-          <p className="font-body text-xs text-mauve/60">Use “Adicionar” para registrar atividade física, sono, alimentação e outros.</p>
+          <p className="font-body text-xs text-mauve">Use “Adicionar” para registrar atividade física, sono, alimentação e outros.</p>
         </Card>
       )}
 
-      <p className="font-body text-[11px] text-mauve/50 text-center leading-relaxed">
+      <p className="font-body text-[11px] text-mauve text-center leading-relaxed">
         Registro do que você informa. A SINTERA não avalia, não pontua e não recomenda hábitos.
       </p>
     </div>

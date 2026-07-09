@@ -99,7 +99,7 @@ export default function PrivacidadePage() {
           </section>
 
           <div className="border-t border-border pt-6">
-            <p className="text-xs text-mauve/60">SINTERA · Política de Privacidade v2.0 · Junho de 2026</p>
+            <p className="text-xs text-mauve">SINTERA · Política de Privacidade v2.0 · Junho de 2026</p>
           </div>
         </div>
 

@@ -103,7 +103,7 @@ export default function CreateRecordMenu({
         <>
           <div className="fixed inset-0 z-20" onClick={() => setOpen(false)} aria-hidden="true" />
           <Card padding="none" className="absolute right-0 top-full mt-2 z-30 w-64 p-2 space-y-0.5">
-            <p className="font-body text-[11px] text-mauve/60 px-2 pt-1 pb-1.5">Como deseja cadastrar?</p>
+            <p className="font-body text-[11px] text-mauve px-2 pt-1 pb-1.5">Como deseja cadastrar?</p>
             {std.map(m => {
               const Icon = STD[m].icon
               return (

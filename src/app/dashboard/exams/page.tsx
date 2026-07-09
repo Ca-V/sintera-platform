@@ -299,7 +299,7 @@ export default function ExamsPage() {
           <>
             <p className="font-display text-lg font-semibold text-onyx mb-1">Arraste um arquivo aqui</p>
             <p className="font-body text-sm text-mauve mb-1">ou clique para selecionar</p>
-            <p className="text-xs font-body text-mauve/60">PDF ou foto do laudo (JPG/PNG) · Até 50 MB · use <strong className="font-medium">Novo exame</strong> para a câmera</p>
+            <p className="text-xs font-body text-mauve">PDF ou foto do laudo (JPG/PNG) · Até 50 MB · use <strong className="font-medium">Novo exame</strong> para a câmera</p>
           </>
         )}
       </motion.div>
@@ -371,7 +371,7 @@ export default function ExamsPage() {
           <div className="flex flex-wrap gap-2">
             {/* Busca por nome */}
             <div className="relative flex-1 min-w-[160px]">
-              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-mauve/50" />
+              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-mauve" />
               <input
                 type="text"
                 aria-label="Buscar exame"
@@ -409,11 +409,11 @@ export default function ExamsPage() {
 
             {/* Período por data de realização — linha inteira no mobile p/ caber no card */}
             <div className="flex items-center gap-1.5 w-full sm:w-auto">
-              <span className="font-body text-xs text-mauve/60 flex-shrink-0">Período:</span>
+              <span className="font-body text-xs text-mauve flex-shrink-0">Período:</span>
               <input type="date" value={filterFrom} max={filterTo || undefined}
                 onChange={e => setFilterFrom(e.target.value)} aria-label="Data inicial"
                 className="flex-1 min-w-0 sm:flex-none py-2 px-2 bg-ivory border border-border rounded-xl font-body text-xs text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40" />
-              <span className="font-body text-xs text-mauve/50 flex-shrink-0">até</span>
+              <span className="font-body text-xs text-mauve flex-shrink-0">até</span>
               <input type="date" value={filterTo} min={filterFrom || undefined}
                 onChange={e => setFilterTo(e.target.value)} aria-label="Data final"
                 className="flex-1 min-w-0 sm:flex-none py-2 px-2 bg-ivory border border-border rounded-xl font-body text-xs text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40" />
@@ -431,7 +431,7 @@ export default function ExamsPage() {
           </div>
 
           {/* Contagem de resultados */}
-          <p className="font-body text-xs text-mauve/60">
+          <p className="font-body text-xs text-mauve">
             {hasActiveFilters
               ? `${totalFiltered} exame${totalFiltered !== 1 ? 's' : ''} encontrado${totalFiltered !== 1 ? 's' : ''} · ${exams.length} no total`
               : `${exams.length} exame${exams.length !== 1 ? 's' : ''}`
@@ -449,7 +449,7 @@ export default function ExamsPage() {
         <Card padding="2xl" className="text-center">
           <FileText size={36} className="text-border mx-auto mb-3" />
           <p className="font-body text-sm text-mauve">Nenhum exame ainda</p>
-          <p className="font-body text-xs text-mauve/60 mt-1">Adicione o primeiro exame acima</p>
+          <p className="font-body text-xs text-mauve mt-1">Adicione o primeiro exame acima</p>
         </Card>
       ) : examsByYear.length === 0 ? (
         <Card padding="2xl" className="text-center">
@@ -470,7 +470,7 @@ export default function ExamsPage() {
                 >
                   <div className="flex items-center gap-3">
                     <span className="font-display text-lg font-semibold text-onyx">{year}</span>
-                    <span className="font-body text-xs text-mauve/60 bg-ivory border border-border px-2 py-0.5 rounded-full">
+                    <span className="font-body text-xs text-mauve bg-ivory border border-border px-2 py-0.5 rounded-full">
                       {yearExams.length} exame{yearExams.length !== 1 ? 's' : ''}
                     </span>
                   </div>

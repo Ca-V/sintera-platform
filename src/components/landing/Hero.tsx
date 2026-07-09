@@ -139,8 +139,8 @@ export default function Hero() {
 function ProductPreview() {
   const biomarkers = [
     { name: 'Glicemia',    value: '92',  unit: 'mg/dL', status: 'dentro',  color: 'text-sage',       indicator: '✓' },
-    { name: 'Vitamina D',  value: '18',  unit: 'ng/mL', status: 'abaixo',  color: 'text-blue-500',   indicator: '▼' },
-    { name: 'Ferritina',   value: '14',  unit: 'ng/mL', status: 'abaixo',  color: 'text-blue-500',   indicator: '▼' },
+    { name: 'Vitamina D',  value: '18',  unit: 'ng/mL', status: 'abaixo',  color: 'text-blue-600',   indicator: '▼' },
+    { name: 'Ferritina',   value: '14',  unit: 'ng/mL', status: 'abaixo',  color: 'text-blue-600',   indicator: '▼' },
     { name: 'TSH',         value: '2.1', unit: 'mUI/L', status: 'dentro',  color: 'text-sage',       indicator: '✓' },
     { name: 'Colesterol',  value: '198', unit: 'mg/dL', status: 'dentro',  color: 'text-sage',       indicator: '✓' },
   ]
@@ -155,7 +155,7 @@ function ProductPreview() {
             <div className="w-2.5 h-2.5 rounded-full bg-amber-300" />
             <div className="w-2.5 h-2.5 rounded-full bg-green-300" />
           </div>
-          <div className="flex-1 mx-4 bg-white rounded-md px-3 py-1 text-xs font-body text-mauve/60 text-center border border-border">
+          <div className="flex-1 mx-4 bg-white rounded-md px-3 py-1 text-xs font-body text-mauve text-center border border-border">
             sintera.app/dashboard
           </div>
         </div>
@@ -219,7 +219,7 @@ function ProductPreview() {
         </div>
         <div className="flex justify-between mt-1">
           <span className="text-[9px] font-body text-mauve">2021</span>
-          <span className="text-[9px] font-body text-blue-500 font-medium">2024: 18</span>
+          <span className="text-[9px] font-body text-blue-600 font-medium">2024: 18</span>
         </div>
       </motion.div>
 

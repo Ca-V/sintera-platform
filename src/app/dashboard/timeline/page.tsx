@@ -356,7 +356,7 @@ function LegacyTimeline() {
             </p>
           </div>
           <button onClick={dismissOnboard} aria-label="Dispensar"
-            className="text-mauve/50 hover:text-onyx transition-colors flex-shrink-0"><X size={14} /></button>
+            className="text-mauve hover:text-onyx transition-colors flex-shrink-0"><X size={14} /></button>
         </motion.div>
       )}
 
@@ -390,7 +390,7 @@ function LegacyTimeline() {
             if (view === 'tipo') entries.sort((a, b) => rank(a[0]) - rank(b[0]))
             return entries.map(([label, its]) => (
               <div key={label}>
-                <p className="font-body text-[11px] font-semibold text-mauve/60 uppercase tracking-wider mb-2">{label}</p>
+                <p className="font-body text-[11px] font-semibold text-mauve uppercase tracking-wider mb-2">{label}</p>
                 <div className="relative pl-6">
                   <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border/60" />
                   <div className="space-y-4">{its.map(renderItem)}</div>

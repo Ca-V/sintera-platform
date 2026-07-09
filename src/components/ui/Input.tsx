@@ -36,7 +36,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             aria-describedby={error ? errorId : undefined}
             className={cn(
               'w-full rounded-xl border border-border bg-white px-4 py-3',
-              'text-sm text-onyx placeholder:text-mauve/60 font-body',
+              'text-sm text-onyx placeholder:text-mauve font-body',
               'transition-all duration-200',
               'focus:outline-none focus:ring-2 focus:ring-petal/30 focus:border-petal',
               'hover:border-petal-light',

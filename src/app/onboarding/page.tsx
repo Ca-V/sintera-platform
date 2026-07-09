@@ -289,7 +289,7 @@ export default function OnboardingPage() {
                   {/* Segmentação P2 — frequência de exames */}
                   <div className="flex flex-col gap-2">
                     <label className="text-xs font-body font-medium text-mauve uppercase tracking-wider">
-                      Com que frequência você faz exames? <span className="normal-case font-normal text-mauve/50">(opcional)</span>
+                      Com que frequência você faz exames? <span className="normal-case font-normal text-mauve">(opcional)</span>
                     </label>
                     <div className="flex flex-wrap gap-2">
                       {[
@@ -314,7 +314,7 @@ export default function OnboardingPage() {
                   {/* Segmentação P2 — acompanha com médico */}
                   <div className="flex flex-col gap-2">
                     <label className="text-xs font-body font-medium text-mauve uppercase tracking-wider">
-                      Você costuma discutir seus resultados com um médico? <span className="normal-case font-normal text-mauve/50">(opcional)</span>
+                      Você costuma discutir seus resultados com um médico? <span className="normal-case font-normal text-mauve">(opcional)</span>
                     </label>
                     <div className="flex gap-2">
                       {[
@@ -453,7 +453,7 @@ export default function OnboardingPage() {
                     </div>
                   </div>
 
-                  <p className="text-xs font-body text-mauve/60 leading-relaxed">
+                  <p className="text-xs font-body text-mauve leading-relaxed">
                     Ao criar sua conta, você concorda com os{' '}
                     <Link href="/termos" target="_blank" className="text-petal hover:underline">Termos de Uso</Link>
                     {' '}e a{' '}
@@ -461,7 +461,7 @@ export default function OnboardingPage() {
                     {' '}da SINTERA.
                   </p>
 
-                  <p className="text-xs font-body text-mauve/60 text-center">
+                  <p className="text-xs font-body text-mauve text-center">
                     Já tem conta?{' '}
                     <Link href="/login" className="text-petal hover:underline font-medium">Entrar</Link>
                   </p>
@@ -497,7 +497,7 @@ export default function OnboardingPage() {
               </motion.button>
             )}
             {!canContinue && step === 0 && (
-              <p className="text-[11px] font-body text-mauve/50">Digite seu nome para continuar</p>
+              <p className="text-[11px] font-body text-mauve">Digite seu nome para continuar</p>
             )}
           </div>
         </div>

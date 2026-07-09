@@ -43,7 +43,7 @@ interface CatalogRow {
 
 // Cores do estágio de governança (draft→…→producao, +rejeitado).
 const STATUS_STYLE: Record<string, string> = {
-  draft:        'text-mauve/50 bg-ivory border-border',
+  draft:        'text-mauve bg-ivory border-border',
   em_curadoria: 'text-amber-700 bg-amber-50 border-amber-200',
   verificado:   'text-lavender bg-lavender-light border-lavender/20',
   aprovado:     'text-sage bg-sage-light border-sage/20',
@@ -128,10 +128,10 @@ function EducationPreview({ code }: { code: string }) {
       </button>
       {open && (
         <div className="mt-2 pl-4 border-l-2 border-border/40 space-y-2">
-          {loading && <p className="font-body text-[11px] text-mauve/60 flex items-center gap-1.5"><Loader2 size={11} className="animate-spin" /> Buscando…</p>}
+          {loading && <p className="font-body text-[11px] text-mauve flex items-center gap-1.5"><Loader2 size={11} className="animate-spin" /> Buscando…</p>}
           {error && <p className="font-body text-[11px] text-red-400">{error}</p>}
           {!loading && !error && topics?.length === 0 && (
-            <p className="font-body text-[11px] text-mauve/50">Sem conteúdo do MedlinePlus para este código.</p>
+            <p className="font-body text-[11px] text-mauve">Sem conteúdo do MedlinePlus para este código.</p>
           )}
           {topics?.map((t, i) => (
             <a key={i} href={t.url} target="_blank" rel="noopener noreferrer"
@@ -139,7 +139,7 @@ function EducationPreview({ code }: { code: string }) {
               <span className="font-body text-[11px] font-medium text-onyx group-hover:text-petal inline-flex items-center gap-1">
                 {t.title} <ExternalLink size={10} />
               </span>
-              {t.summary && <span className="block font-body text-[11px] text-mauve/70 line-clamp-2">{t.summary}</span>}
+              {t.summary && <span className="block font-body text-[11px] text-mauve line-clamp-2">{t.summary}</span>}
             </a>
           ))}
           <p className="font-body text-[11px] text-mauve/40 pt-1">Referência educativa externa (NIH/MedlinePlus, en/es). Não interpreta resultados.</p>
@@ -256,7 +256,7 @@ export default function CatalogoAdminPage() {
             ].map(([label, value]) => (
               <div key={label}>
                 <p className="font-display text-lg font-bold text-onyx">{value}</p>
-                <p className="font-body text-[11px] text-mauve/60">{label}</p>
+                <p className="font-body text-[11px] text-mauve">{label}</p>
               </div>
             ))}
           </div>
@@ -285,7 +285,7 @@ export default function CatalogoAdminPage() {
               <div key={cat} className="card-premium overflow-hidden">
                 <div className="px-5 py-3 border-b border-border/40 flex items-center justify-between">
                   <h2 className="font-body text-sm font-semibold text-onyx">{CATEGORY_LABELS[cat] ?? cat}</h2>
-                  <span className="font-body text-[11px] text-mauve/60">{items.length}</span>
+                  <span className="font-body text-[11px] text-mauve">{items.length}</span>
                 </div>
                 <div className="divide-y divide-border/20">
                   {items.map(r => (
@@ -305,17 +305,17 @@ export default function CatalogoAdminPage() {
                               </span>
                             )}
                           </div>
-                          <p className="font-body text-[11px] text-mauve/50 mt-0.5">{r.code} · {r.specimen}</p>
+                          <p className="font-body text-[11px] text-mauve mt-0.5">{r.code} · {r.specimen}</p>
                           {/* Governança: estágio + fonte + revisor */}
                           <div className="flex items-center gap-1.5 flex-wrap mt-1">
                             <span className={`inline-flex items-center font-body text-[11px] rounded-full px-1.5 py-0.5 border ${STATUS_STYLE[r.approval_status] ?? STATUS_STYLE.draft}`}>
                               {STATUS_LABEL[r.approval_status] ?? r.approval_status}
                             </span>
                             {r.scientific_source && (
-                              <span className="font-body text-[11px] text-mauve/60">fonte: {r.scientific_source}</span>
+                              <span className="font-body text-[11px] text-mauve">fonte: {r.scientific_source}</span>
                             )}
                             {r.reviewed_by && (
-                              <span className="font-body text-[11px] text-mauve/60">· revisor: {r.reviewed_by}</span>
+                              <span className="font-body text-[11px] text-mauve">· revisor: {r.reviewed_by}</span>
                             )}
                           </div>
                           {r.approval_status === 'rejeitado' && r.rejection_reason && (
