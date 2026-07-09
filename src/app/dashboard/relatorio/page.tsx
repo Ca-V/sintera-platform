@@ -397,7 +397,7 @@ function LegacyReport() {
           <div className="space-y-2 mt-4">
             {shares.map(s => (
               <div key={s.id} className="flex items-center gap-2 rounded-xl border border-border bg-ivory px-3 py-2">
-                <input readOnly value={`${typeof window !== 'undefined' ? window.location.origin : ''}/r/${s.token}`}
+                <input readOnly aria-label="Link de compartilhamento do relatório" value={`${typeof window !== 'undefined' ? window.location.origin : ''}/r/${s.token}`}
                   className="flex-1 min-w-0 bg-transparent font-body text-xs text-mauve outline-none" />
                 <button onClick={() => copyLink(s.token)} title="Copiar" className="text-mauve/60 hover:text-petal flex-shrink-0">
                   {copied === s.token ? <Check size={14} className="text-sage" /> : <Copy size={14} />}
@@ -529,7 +529,7 @@ function LegacyReport() {
               </div>
             )}
             <div className="flex items-center gap-2">
-              <input type="text" value={tplName} onChange={e => setTplName(e.target.value)} placeholder="Ex.: Consulta endócrino, Viagem…"
+              <input type="text" aria-label="Nome da configuração de relatório" value={tplName} onChange={e => setTplName(e.target.value)} placeholder="Ex.: Consulta endócrino, Viagem…"
                 className="flex-1 min-w-0 px-3 py-1.5 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
               <button type="button" onClick={saveTemplate} disabled={!tplName.trim()}
                 className="px-3 py-1.5 rounded-full gradient-sintera text-white font-body text-xs font-medium disabled:opacity-40 hover:opacity-90 transition-opacity flex-shrink-0">

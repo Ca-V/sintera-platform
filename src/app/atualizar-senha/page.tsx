@@ -131,9 +131,10 @@ export default function AtualizarSenhaPage() {
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Nova senha</label>
+                <label htmlFor="nova-senha" className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Nova senha</label>
                 <div className="relative">
                   <input
+                    id="nova-senha"
                     type={showPw ? 'text' : 'password'} value={password}
                     onChange={e => setPassword(e.target.value)}
                     placeholder="Mínimo 6 caracteres" required autoFocus
@@ -147,8 +148,9 @@ export default function AtualizarSenhaPage() {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Confirmar nova senha</label>
+                <label htmlFor="confirmar-nova-senha" className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Confirmar nova senha</label>
                 <input
+                  id="confirmar-nova-senha"
                   type="password" value={confirm}
                   onChange={e => setConfirm(e.target.value)}
                   placeholder="Repita a senha" required

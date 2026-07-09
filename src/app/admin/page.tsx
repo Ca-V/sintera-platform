@@ -402,6 +402,7 @@ export default function AdminPage() {
               <div key={i} className="flex items-center gap-2">
                 <input
                   type="text"
+                  aria-label={`Nome da destinatária ${i + 1}`}
                   placeholder="Nome"
                   value={r.firstName}
                   onChange={e => updateRecipient(i, 'firstName', e.target.value)}
@@ -409,6 +410,7 @@ export default function AdminPage() {
                 />
                 <input
                   type="email"
+                  aria-label={`E-mail da destinatária ${i + 1}`}
                   placeholder="email@exemplo.com"
                   value={r.email}
                   onChange={e => updateRecipient(i, 'email', e.target.value)}
@@ -432,6 +434,7 @@ export default function AdminPage() {
           {/* Secret de admin */}
           <input
             type="password"
+            aria-label="Admin secret"
             placeholder="Admin secret (ADMIN_SECRET do .env)"
             value={adminSecret}
             onChange={e => setAdminSecret(e.target.value)}

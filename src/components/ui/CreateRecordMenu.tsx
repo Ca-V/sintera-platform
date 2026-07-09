@@ -126,10 +126,12 @@ export default function CreateRecordMenu({
 
       {hasFile && (
         <input ref={fileRef} type="file" accept={fileAccept} className="sr-only" disabled={busy}
+          aria-label={fileLabel ?? 'Selecionar arquivo'}
           onChange={e => { const f = e.target.files?.[0]; if (f) onSelect('file', f); e.target.value = '' }} />
       )}
       {hasCamera && (
         <input ref={cameraRef} type="file" accept={cameraAccept} capture="environment" className="sr-only" disabled={busy}
+          aria-label="Tirar foto"
           onChange={e => { const f = e.target.files?.[0]; if (f) onSelect('camera', f); e.target.value = '' }} />
       )}
     </div>

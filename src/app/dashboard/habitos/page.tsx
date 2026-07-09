@@ -183,22 +183,22 @@ export default function HabitosPage() {
             </div>
           </div>
           <div>
-            <label className="font-body text-xs text-mauve/70 block mb-1">Descrição</label>
+            <label htmlFor="habito-descricao" className="font-body text-xs text-mauve/70 block mb-1">Descrição</label>
             <div className="flex items-center gap-2">
-              <input type="text" value={description} onChange={e => setDescription(e.target.value)} placeholder="Ex.: Caminhada, musculação, 7h de sono"
+              <input id="habito-descricao" type="text" value={description} onChange={e => setDescription(e.target.value)} placeholder="Ex.: Caminhada, musculação, 7h de sono"
                 className="flex-1 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
               <VoiceInput onResult={t => setDescription(v => (v ? v + ' ' : '') + t)} />
             </div>
           </div>
           <div>
-            <label className="font-body text-xs text-mauve/70 block mb-1">Frequência (opcional)</label>
-            <input type="text" value={frequency} onChange={e => setFrequency(e.target.value)} placeholder="Ex.: 3x por semana, diário"
+            <label htmlFor="habito-frequencia" className="font-body text-xs text-mauve/70 block mb-1">Frequência (opcional)</label>
+            <input id="habito-frequencia" type="text" value={frequency} onChange={e => setFrequency(e.target.value)} placeholder="Ex.: 3x por semana, diário"
               className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
           </div>
           <div>
-            <label className="font-body text-xs text-mauve/70 block mb-1">Observações (opcional)</label>
+            <label htmlFor="habito-observacoes" className="font-body text-xs text-mauve/70 block mb-1">Observações (opcional)</label>
             <div className="flex items-start gap-2">
-              <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2}
+              <textarea id="habito-observacoes" value={notes} onChange={e => setNotes(e.target.value)} rows={2}
                 className="flex-1 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
               <VoiceInput onResult={t => setNotes(v => (v ? v + ' ' : '') + t)} />
             </div>

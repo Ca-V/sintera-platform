@@ -305,17 +305,17 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className={LABEL}>Título</label>
-                    <input type="text" value={title} onChange={e => setTitle(e.target.value)}
+                    <label htmlFor="agendar-titulo" className={LABEL}>Título</label>
+                    <input id="agendar-titulo" type="text" value={title} onChange={e => setTitle(e.target.value)}
                       placeholder={professionalName.trim() ? `${typeLabel} — ${professionalName.trim()}` : `${typeLabel} de Saúde`} className={FIELD} />
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5"><label className={LABEL}>Data</label>
+                    <div className="space-y-1.5"><label htmlFor="agendar-data" className={LABEL}>Data</label>
                       {/* Sem min: permite data retroativa (lançar algo já feito, p/ controle anual). */}
-                      <input type="date" value={date} onChange={e => onDateChange(e.target.value)} className={FIELD} /></div>
-                    <div className="space-y-1.5"><label className={LABEL}>Horário</label>
-                      <input type="time" value={time} onChange={e => setTime(e.target.value)} className={FIELD} /></div>
+                      <input id="agendar-data" type="date" value={date} onChange={e => onDateChange(e.target.value)} className={FIELD} /></div>
+                    <div className="space-y-1.5"><label htmlFor="agendar-horario" className={LABEL}>Horário</label>
+                      <input id="agendar-horario" type="time" value={time} onChange={e => setTime(e.target.value)} className={FIELD} /></div>
                   </div>
 
                   {/* Status (Agendado/Realizado/Cancelado) */}
@@ -334,8 +334,8 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
 
                   {/* Valor + modelo do dinheiro (explícito) */}
                   <div className="space-y-1.5">
-                    <label className={LABEL}>Valor — R$ <span className="font-normal text-mauve/50 normal-case">(opc.)</span></label>
-                    <input type="text" inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder="250,00" className={FIELD} />
+                    <label htmlFor="agendar-valor" className={LABEL}>Valor — R$ <span className="font-normal text-mauve/50 normal-case">(opc.)</span></label>
+                    <input id="agendar-valor" type="text" inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder="250,00" className={FIELD} />
                     <p className="font-body text-[11px] text-mauve/60">Entra em <strong>Despesas</strong> quando o status for <strong>Realizado</strong> — ou marque como <strong>despesa direta</strong> (em Mais detalhes).</p>
                   </div>
 
@@ -350,30 +350,30 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                     <div className="space-y-4 pt-1 border-t border-border/40">
                       {/* Repetir (recorrência única para qualquer tipo) */}
                       <div className="space-y-1.5 pt-3">
-                        <label className={LABEL}>Repetir</label>
-                        <select value={recurrence} onChange={e => setRecurrence(e.target.value as RecurrenceFreq)} className={FIELD}>
+                        <label htmlFor="agendar-repetir" className={LABEL}>Repetir</label>
+                        <select id="agendar-repetir" value={recurrence} onChange={e => setRecurrence(e.target.value as RecurrenceFreq)} className={FIELD}>
                           {RECURRENCE_OPTS.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
                         </select>
                         {recurrence !== 'none' && (
                           <div className="flex items-center gap-2 pt-1">
                             <span className="font-body text-xs text-mauve/70">até (opcional):</span>
-                            <input type="date" value={recurrenceUntil} min={date || today} onChange={e => setRecurrenceUntil(e.target.value)}
+                            <input type="date" aria-label="Repetir até" value={recurrenceUntil} min={date || today} onChange={e => setRecurrenceUntil(e.target.value)}
                               className="flex-1 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40" />
                           </div>
                         )}
                       </div>
 
                       {eventType !== 'plano' && (
-                      <div className="space-y-1.5"><label className={LABEL}>Profissional <span className="font-normal text-mauve/50 normal-case">(opc.)</span></label>
-                        <input type="text" value={professionalName} onChange={e => setProfessionalName(e.target.value)} placeholder="Dr(a). …" className={FIELD} /></div>
+                      <div className="space-y-1.5"><label htmlFor="agendar-profissional" className={LABEL}>Profissional <span className="font-normal text-mauve/50 normal-case">(opc.)</span></label>
+                        <input id="agendar-profissional" type="text" value={professionalName} onChange={e => setProfessionalName(e.target.value)} placeholder="Dr(a). …" className={FIELD} /></div>
                       )}
 
                       {eventType === 'plano' && (
                         <div className="grid grid-cols-2 gap-3 pt-3">
-                          <div className="space-y-1.5"><label className={LABEL}>Operadora</label>
-                            <input type="text" value={operadora} onChange={e => setOperadora(e.target.value)} placeholder="Ex.: Unimed" className={FIELD} /></div>
-                          <div className="space-y-1.5"><label className={LABEL}>Carteirinha</label>
-                            <input type="text" value={carteirinha} onChange={e => setCarteirinha(e.target.value)} className={FIELD} /></div>
+                          <div className="space-y-1.5"><label htmlFor="agendar-operadora" className={LABEL}>Operadora</label>
+                            <input id="agendar-operadora" type="text" value={operadora} onChange={e => setOperadora(e.target.value)} placeholder="Ex.: Unimed" className={FIELD} /></div>
+                          <div className="space-y-1.5"><label htmlFor="agendar-carteirinha" className={LABEL}>Carteirinha</label>
+                            <input id="agendar-carteirinha" type="text" value={carteirinha} onChange={e => setCarteirinha(e.target.value)} className={FIELD} /></div>
                         </div>
                       )}
 
@@ -392,8 +392,8 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                       )}
 
                       {eventType !== 'plano' && (
-                      <div className="space-y-1.5"><label className={LABEL}>Local <span className="font-normal text-mauve/50 normal-case">(clínica / endereço)</span></label>
-                        <input type="text" value={establishment} onChange={e => setEstablishment(e.target.value)} placeholder="Clínica, hospital, endereço…" className={FIELD} /></div>
+                      <div className="space-y-1.5"><label htmlFor="agendar-local" className={LABEL}>Local <span className="font-normal text-mauve/50 normal-case">(clínica / endereço)</span></label>
+                        <input id="agendar-local" type="text" value={establishment} onChange={e => setEstablishment(e.target.value)} placeholder="Clínica, hospital, endereço…" className={FIELD} /></div>
                       )}
 
                       <div className="space-y-1.5"><label className={LABEL}>Prioridade</label>
@@ -406,13 +406,13 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                       </div>
 
                       {eventType !== 'plano' && (
-                      <div className="space-y-1.5"><label className={LABEL}>Orientações de preparo</label>
-                        <input type="text" value={preparation} onChange={e => setPreparation(e.target.value)} placeholder="Ex.: jejum de 8h" className={FIELD} /></div>
+                      <div className="space-y-1.5"><label htmlFor="agendar-preparo" className={LABEL}>Orientações de preparo</label>
+                        <input id="agendar-preparo" type="text" value={preparation} onChange={e => setPreparation(e.target.value)} placeholder="Ex.: jejum de 8h" className={FIELD} /></div>
                       )}
 
                       {status === 'realizado' && (
-                        <div className="space-y-1.5"><label className={LABEL}>Como foi</label>
-                          <textarea value={outcome} onChange={e => setOutcome(e.target.value)} rows={2} placeholder="Resumo, conduta, encaminhamentos…" className={`${FIELD} resize-none`} /></div>
+                        <div className="space-y-1.5"><label htmlFor="agendar-desfecho" className={LABEL}>Como foi</label>
+                          <textarea id="agendar-desfecho" value={outcome} onChange={e => setOutcome(e.target.value)} rows={2} placeholder="Resumo, conduta, encaminhamentos…" className={`${FIELD} resize-none`} /></div>
                       )}
 
                       {eventType !== 'plano' && (
@@ -425,11 +425,11 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                         </div></div>
                       )}
 
-                      <div className="space-y-1.5"><label className={LABEL}>Observações</label>
-                        <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} placeholder="Ex.: levar laudos anteriores…" className={`${FIELD} resize-none`} /></div>
+                      <div className="space-y-1.5"><label htmlFor="agendar-observacoes" className={LABEL}>Observações</label>
+                        <textarea id="agendar-observacoes" value={notes} onChange={e => setNotes(e.target.value)} rows={2} placeholder="Ex.: levar laudos anteriores…" className={`${FIELD} resize-none`} /></div>
 
-                      <div className="space-y-1.5"><label className={LABEL}>Nota fiscal / comprovante / anexo <span className="font-normal text-mauve/50 normal-case">(PDF, JPG, PNG)</span></label>
-                        <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e => setAttachmentFile(e.target.files?.[0] ?? null)}
+                      <div className="space-y-1.5"><label htmlFor="agendar-anexo" className={LABEL}>Nota fiscal / comprovante / anexo <span className="font-normal text-mauve/50 normal-case">(PDF, JPG, PNG)</span></label>
+                        <input id="agendar-anexo" type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e => setAttachmentFile(e.target.files?.[0] ?? null)}
                           className="block w-full text-xs font-body text-mauve file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:bg-blush file:text-petal file:font-medium" />
                         {initialEvent?.attachmentUrl && !attachmentFile && (
                           <p className="font-body text-[11px] text-mauve/60">Anexo atual mantido. Escolha um arquivo para substituir.</p>

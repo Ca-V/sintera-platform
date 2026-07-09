@@ -54,8 +54,9 @@ export default function ProfileEditor({ profile, onCancel, onSaved }: Props) {
       </h2>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-body font-medium text-mauve uppercase tracking-wider">Nome</label>
+        <label htmlFor="profile-nome" className="text-xs font-body font-medium text-mauve uppercase tracking-wider">Nome</label>
         <input
+          id="profile-nome"
           type="text"
           value={name}
           onChange={e => setName(e.target.value)}

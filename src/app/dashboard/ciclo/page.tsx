@@ -239,15 +239,15 @@ export default function CicloPage() {
               <Card padding="sm" className="space-y-3 mb-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="font-body text-xs text-mauve/70 block mb-1">Método</label>
-                    <select value={kind} onChange={e => chooseKind(e.target.value)}
+                    <label htmlFor="ciclo-metodo" className="font-body text-xs text-mauve/70 block mb-1">Método</label>
+                    <select id="ciclo-metodo" value={kind} onChange={e => chooseKind(e.target.value)}
                       className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
                       {KINDS.map(k => <option key={k.value} value={k.value}>{k.label}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="font-body text-xs text-mauve/70 block mb-1">Marca (opcional)</label>
-                    <input type="text" value={brand} onChange={e => setBrand(e.target.value)} placeholder="Ex.: Mirena"
+                    <label htmlFor="ciclo-marca" className="font-body text-xs text-mauve/70 block mb-1">Marca (opcional)</label>
+                    <input id="ciclo-marca" type="text" value={brand} onChange={e => setBrand(e.target.value)} placeholder="Ex.: Mirena"
                       className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
                   </div>
                 </div>
@@ -256,13 +256,13 @@ export default function CicloPage() {
                 ) : (
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="font-body text-xs text-mauve/70 block mb-1">Início / colocação</label>
-                      <input type="date" value={startedOn} onChange={e => setStartedOn(e.target.value)}
+                      <label htmlFor="ciclo-inicio" className="font-body text-xs text-mauve/70 block mb-1">Início / colocação</label>
+                      <input id="ciclo-inicio" type="date" value={startedOn} onChange={e => setStartedOn(e.target.value)}
                         className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
                     </div>
                     <div>
-                      <label className="font-body text-xs text-mauve/70 block mb-1">Vida útil (meses)</label>
-                      <input type="number" value={duration} onChange={e => setDuration(e.target.value)} placeholder="Ex.: 60"
+                      <label htmlFor="ciclo-vida-util" className="font-body text-xs text-mauve/70 block mb-1">Vida útil (meses)</label>
+                      <input id="ciclo-vida-util" type="number" value={duration} onChange={e => setDuration(e.target.value)} placeholder="Ex.: 60"
                         className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
                     </div>
                   </div>
@@ -277,8 +277,8 @@ export default function CicloPage() {
                   </label>
                 )}
                 <div>
-                  <label className="font-body text-xs text-mauve/70 block mb-1">Observações (opcional)</label>
-                  <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2}
+                  <label htmlFor="ciclo-notas" className="font-body text-xs text-mauve/70 block mb-1">Observações (opcional)</label>
+                  <textarea id="ciclo-notas" value={notes} onChange={e => setNotes(e.target.value)} rows={2}
                     className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
                 </div>
                 {err && <p className="font-body text-xs text-red-500">{err}</p>}
@@ -352,8 +352,8 @@ export default function CicloPage() {
 
             <div className="flex items-end gap-2 mb-3">
               <div className="flex-1">
-                <label className="font-body text-xs text-mauve/70 block mb-1">Início da menstruação</label>
-                <input type="date" value={periodDate} onChange={e => setPeriodDate(e.target.value)} max={todayISO()}
+                <label htmlFor="ciclo-menstruacao" className="font-body text-xs text-mauve/70 block mb-1">Início da menstruação</label>
+                <input id="ciclo-menstruacao" type="date" value={periodDate} onChange={e => setPeriodDate(e.target.value)} max={todayISO()}
                   className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
               </div>
               <button onClick={addPeriod} disabled={savingPeriod}

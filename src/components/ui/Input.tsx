@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { type InputHTMLAttributes, forwardRef } from 'react'
+import { type InputHTMLAttributes, forwardRef, useId } from 'react'
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string
@@ -11,7 +11,10 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ className, label, error, icon, id, ...props }, ref) => {
-    const inputId = id ?? label?.toLowerCase().replace(/\s+/g, '-')
+    // id estável e único (evita colisão quando dois campos têm o mesmo label).
+    const autoId = useId()
+    const inputId = id ?? autoId
+    const errorId = `${inputId}-error`
 
     return (
       <div className="flex flex-col gap-1.5">
@@ -29,6 +32,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           <input
             ref={ref}
             id={inputId}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? errorId : undefined}
             className={cn(
               'w-full rounded-xl border border-border bg-white px-4 py-3',
               'text-sm text-onyx placeholder:text-mauve/60 font-body',
@@ -43,7 +48,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           />
         </div>
         {error && (
-          <p className="text-xs text-red-500 font-body">{error}</p>
+          <p id={errorId} role="alert" className="text-xs text-red-500 font-body">{error}</p>
         )}
       </div>
     )

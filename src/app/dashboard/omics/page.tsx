@@ -113,36 +113,36 @@ export default function OmicsListPage() {
         <Card padding="md" className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="font-body text-xs text-mauve/70 block mb-1">Tipo de ômica</label>
-              <select value={domain} onChange={e => setDomain(e.target.value as OmicsDomain)}
+              <label htmlFor="omics-tipo" className="font-body text-xs text-mauve/70 block mb-1">Tipo de ômica</label>
+              <select id="omics-tipo" value={domain} onChange={e => setDomain(e.target.value as OmicsDomain)}
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
                 {DOMAINS.map(d => <option key={d} value={d}>{DOMAIN_LABEL[d]}</option>)}
               </select>
             </div>
             <div>
-              <label className="font-body text-xs text-mauve/70 block mb-1">Data do exame</label>
-              <input type="date" value={date} onChange={e => setDate(e.target.value)}
+              <label htmlFor="omics-data" className="font-body text-xs text-mauve/70 block mb-1">Data do exame</label>
+              <input id="omics-data" type="date" value={date} onChange={e => setDate(e.target.value)}
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="font-body text-xs text-mauve/70 block mb-1">Laboratório</label>
-              <input type="text" value={lab} onChange={e => setLab(e.target.value)} placeholder="Opcional"
+              <label htmlFor="omics-laboratorio" className="font-body text-xs text-mauve/70 block mb-1">Laboratório</label>
+              <input id="omics-laboratorio" type="text" value={lab} onChange={e => setLab(e.target.value)} placeholder="Opcional"
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
             </div>
             <div>
-              <label className="font-body text-xs text-mauve/70 block mb-1">Tecnologia</label>
-              <input type="text" value={tech} onChange={e => setTech(e.target.value)} placeholder="Ex.: LC-MS/MS"
+              <label htmlFor="omics-tecnologia" className="font-body text-xs text-mauve/70 block mb-1">Tecnologia</label>
+              <input id="omics-tecnologia" type="text" value={tech} onChange={e => setTech(e.target.value)} placeholder="Ex.: LC-MS/MS"
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
             </div>
           </div>
           {/* Upload do laudo (opcional) — selecionar arquivo ou tirar foto */}
           <div>
             <label className="font-body text-xs text-mauve/70 block mb-1.5">Laudo do exame</label>
-            <input ref={fileRef} type="file" accept=".csv,.json,.pdf,image/*,text/csv,application/json,application/pdf" className="hidden"
+            <input ref={fileRef} type="file" aria-label="Selecionar arquivo do laudo" accept=".csv,.json,.pdf,image/*,text/csv,application/json,application/pdf" className="hidden"
               onChange={e => { const f = e.target.files?.[0]; if (f) setFile(f); e.target.value = '' }} />
-            <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden"
+            <input ref={cameraRef} type="file" aria-label="Fotografar o laudo" accept="image/*" capture="environment" className="hidden"
               onChange={e => { const f = e.target.files?.[0]; if (f) setFile(f); e.target.value = '' }} />
             {file ? (
               <div className="flex items-center justify-between gap-3 rounded-xl border border-petal/30 bg-blush/30 px-3 py-2">

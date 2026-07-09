@@ -48,3 +48,6 @@ qa001-artifacts/
 
 # Claude Code — configuração pessoal (nunca commitar segredos)
 .claude/settings.local.json
+
+# QA a11y harness temporário (não versionar)
+scripts/qa/_tmp_*

@@ -98,6 +98,7 @@ export default function ProfilePage() {
               <div className="flex items-center gap-2">
                 <input
                   autoFocus
+                  aria-label="Editar nome"
                   value={nameValue}
                   onChange={e => setNameValue(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') saveName(); if (e.key === 'Escape') setEditName(false) }}

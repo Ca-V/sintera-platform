@@ -588,6 +588,7 @@ export default function ExamDetailPage() {
                 <div className="flex items-center gap-2">
                   <input
                     autoFocus
+                    aria-label="Nome do exame"
                     value={nameValue}
                     onChange={e => setNameValue(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') saveName(); if (e.key === 'Escape') cancelEditName() }}
@@ -617,6 +618,7 @@ export default function ExamDetailPage() {
                 <div className="flex items-center gap-2 mt-0.5">
                   <input
                     type="date"
+                    aria-label="Data do exame"
                     value={dateValue}
                     onChange={e => setDateValue(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') saveDate(); if (e.key === 'Escape') setEditingDate(false) }}
@@ -926,6 +928,7 @@ export default function ExamDetailPage() {
                 </p>
                 <textarea
                   autoFocus
+                  aria-label="Descrição do problema"
                   value={reportText}
                   onChange={e => setReportText(e.target.value)}
                   rows={4}
