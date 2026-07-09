@@ -16,19 +16,8 @@ import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import ListCard from '@/components/ListCard'
 import Card from '@/components/ui/Card'
-
-// ── Métodos contraceptivos (vida útil padrão em meses; editável) ──
-const KINDS: { value: string; label: string; months: number | null }[] = [
-  { value: 'diu_cobre',    label: 'DIU de cobre',                  months: 120 },
-  { value: 'diu_hormonal', label: 'DIU hormonal (Mirena, Kyleena)', months: 60 },
-  { value: 'implante',     label: 'Implante (Implanon, Nexplanon)', months: 36 },
-  { value: 'injecao',      label: 'Injeção',                        months: 3 },
-  { value: 'anel',         label: 'Anel vaginal',                   months: 1 },
-  { value: 'adesivo',      label: 'Adesivo',                        months: 1 },
-  { value: 'pilula',       label: 'Pílula',                         months: null },
-  { value: 'outro',        label: 'Outro',                          months: null },
-]
-const kindLabel = (k: string) => KINDS.find(x => x.value === k)?.label ?? 'Método'
+// Taxonomia de métodos contraceptivos = SSOT em @/lib/cycle (compartilhada com o Relatório).
+import { CONTRACEPTIVE_KINDS as KINDS, contraceptiveLabel as kindLabel } from '@/lib/cycle'
 
 interface Method {
   id: string; kind: string; brand: string | null; startedOn: string | null

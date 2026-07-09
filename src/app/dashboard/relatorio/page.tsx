@@ -24,13 +24,15 @@ import { applySort, type SortSpec } from '@/lib/listview'
 import {
   Loader2, Printer, ArrowLeft, FileText, Share2, Copy, Trash2, Check,
   CalendarDays, FlaskConical, Pill, Stethoscope, HeartPulse, Ruler, Activity, Eye,
-  ChevronDown, Minus,
+  ChevronDown, Minus, Droplet, Receipt,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { assembleOrganizedBiomarkers } from '@/lib/ai/insights/assembler'
 import { useUser } from '@/context/UserContext'
 import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
-import { typeLabel } from '@/lib/agenda' // fonte ÚNICA de rótulos de tipo de evento
+import { typeLabel, type HealthEvent } from '@/lib/agenda' // fonte ÚNICA de rótulos de tipo de evento
+import { useEventForm } from '@/components/eventForm' // serviço de domínio (query.listFinancial = Despesas)
+import { contraceptiveLabel } from '@/lib/cycle'       // SSOT dos métodos contraceptivos
 
 interface Med { name: string; kind: string; dose: string | null; frequency: string | null; startedOn: string | null; untilOn: string | null; status: string }
 interface Ev { title: string; eventType: string; prof: string | null; date: string; notes: string | null }
@@ -46,6 +48,8 @@ interface Eyewear {
 }
 const EYEWEAR_LABEL: Record<string, string> = { oculos: 'Óculos', lentes_contato: 'Lentes de contato' }
 interface Omics { domain: string; laboratory: string | null; totalFeatures: number | null; date: string | null }
+interface Contraceptive { kind: string; brand: string | null; startedOn: string | null; replaceOn: string | null; status: string }
+interface Menstruation { startedOn: string; notes: string | null }
 function grauStr(sph: string | null, cyl: string | null, axis: string | null, add: string | null): string {
   return [sph ? `Esf ${sph}` : null, cyl ? `Cil ${cyl}` : null, axis ? `Eixo ${axis}` : null, add ? `Adição ${add}` : null].filter(Boolean).join(', ')
 }
@@ -105,6 +109,7 @@ export default function RelatorioRoute() {
 function LegacyReport() {
   const { user, profile, loading: authLoading } = useUser()
   const supabase = createClient()
+  const { services } = useEventForm() // Despesas = projeção financeira dos eventos (mesmo serviço do módulo Gastos)
   const [loading, setLoading] = useState(true)
   const [meds, setMeds] = useState<Med[]>([])
   const [events, setEvents] = useState<Ev[]>([])
@@ -114,10 +119,13 @@ function LegacyReport() {
   const [habits, setHabits] = useState<Habit[]>([])
   const [eyewear, setEyewear] = useState<Eyewear[]>([])
   const [omics, setOmics] = useState<Omics[]>([])
+  const [contraceptives, setContraceptives] = useState<Contraceptive[]>([])
+  const [menstruations, setMenstruations] = useState<Menstruation[]>([])
+  const [expenses, setExpenses] = useState<HealthEvent[]>([])
   const [shares, setShares] = useState<{ id: string; token: string; expiresAt: string }[]>([])
   const [shareBusy, setShareBusy] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
-  const [sections, setSections] = useState({ medicamentos: true, condicoes: true, habitos: true, visao: true, eventos: true, exames: true, omica: true, medidas: true, sinais: true })
+  const [sections, setSections] = useState({ medicamentos: true, condicoes: true, habitos: true, visao: true, eventos: true, exames: true, omica: true, medidas: true, sinais: true, ciclo: true, gastos: true })
   const toggle = (k: keyof typeof sections) => setSections(s => ({ ...s, [k]: !s[k] }))
   // Filtro temporal (capacidade transversal da Camada de Comunicação).
   const [period, setPeriod] = useState<Period>({ preset: 'all' })
@@ -152,11 +160,19 @@ function LegacyReport() {
   const [excluded, setExcluded] = useState<Record<string, Set<string>>>({})        // itens desmarcados por seção
   const setGroup = (keys: SectionKey[], on: boolean) =>
     setSections(s => { const n = { ...s }; keys.forEach(k => { n[k] = on }); return n })
-  // Seções que permitem seleção item a item (Exames e Medicamentos).
-  const hasItems = (k: SectionKey): boolean => k === 'exames' || k === 'medicamentos'
+  // Seções com seleção item a item: Exames, Medicamentos e Agenda (por TIPO de evento
+  // — consulta/exame/procedimento/vacina/cirurgia… — granularidade máxima sem inventar
+  // módulos que não existem no domínio; "Agenda" é UMA entidade, os tipos são seus itens).
+  const hasItems = (k: SectionKey): boolean => k === 'exames' || k === 'medicamentos' || k === 'eventos'
   const sectionItems = (k: SectionKey): { key: string; label: string }[] => {
     if (k === 'exames') return exams.map(e => ({ key: `${e.type}__${e.date}`, label: `${fmt(e.date)} — ${e.type}` }))
     if (k === 'medicamentos') return meds.map(m => ({ key: m.name, label: m.name + (m.status === 'suspenso' ? ' (suspenso)' : '') }))
+    if (k === 'eventos') {
+      const seen = new Set<string>()
+      const out: { key: string; label: string }[] = []
+      for (const e of events) if (!seen.has(e.eventType)) { seen.add(e.eventType); out.push({ key: e.eventType, label: typeLabel(e.eventType) }) }
+      return out.sort((a, b) => a.label.localeCompare(b.label))
+    }
     return []
   }
   const isItemOn = (k: string, key: string): boolean => !(excluded[k]?.has(key))
@@ -164,7 +180,7 @@ function LegacyReport() {
     setExcluded(e => { const s = new Set(e[k] ?? []); if (s.has(key)) s.delete(key); else s.add(key); return { ...e, [k]: s } })
   const SELECT_GROUPS: { title: string; items: [SectionKey, string, ElementType][] }[] = [
     { title: 'Acompanhamento', items: [
-      ['eventos', 'Consultas e eventos', CalendarDays],
+      ['eventos', 'Agenda', CalendarDays],
       ['exames', 'Exames', FileText],
       ['omica', 'Exames de ômica', FlaskConical],
       ['medicamentos', 'Medicamentos e Suplementos', Pill],
@@ -175,15 +191,19 @@ function LegacyReport() {
       ['medidas', 'Medidas Corporais', Ruler],
       ['sinais', 'Sinais Vitais', Activity],
       ['habitos', 'Hábitos', HeartPulse],
+      ['ciclo', 'Ciclo e Contracepção', Droplet],
+    ] },
+    { title: 'Organização', items: [
+      ['gastos', 'Despesas', Receipt],
     ] },
   ]
   // Comandos de seleção (via SelectionToolbar reutilizável).
-  const DEFAULT_SECTIONS = { medicamentos: true, condicoes: true, habitos: true, visao: true, eventos: true, exames: true, omica: true, medidas: true, sinais: true }
+  const DEFAULT_SECTIONS = { medicamentos: true, condicoes: true, habitos: true, visao: true, eventos: true, exames: true, omica: true, medidas: true, sinais: true, ciclo: true, gastos: true }
   const allSections = (v: boolean) => Object.fromEntries(Object.keys(sections).map(k => [k, v])) as typeof sections
   const selectAllSections = () => { setSections(allSections(true)); setExcluded({}) }
   const clearSections = () => setSections(allSections(false))
   const resetSections = () => { setSections({ ...DEFAULT_SECTIONS }); setExcluded({}) }
-  const expandAll = () => { setOpenGroups(Object.fromEntries(SELECT_GROUPS.map(g => [g.title, true]))); setOpenSections({ exames: true, medicamentos: true }) }
+  const expandAll = () => { setOpenGroups(Object.fromEntries(SELECT_GROUPS.map(g => [g.title, true]))); setOpenSections({ exames: true, medicamentos: true, eventos: true }) }
   const collapseAll = () => { setOpenGroups(Object.fromEntries(SELECT_GROUPS.map(g => [g.title, false]))); setOpenSections({}) }
 
   const load = useCallback(async () => {
@@ -191,7 +211,7 @@ function LegacyReport() {
     setLoading(true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db = supabase as any
-    const [medRes, evRes, exRes, mzRes, cdRes, hbRes, ewRes, omRes] = await Promise.all([
+    const [medRes, evRes, exRes, mzRes, cdRes, hbRes, ewRes, omRes, ccRes, mpRes, finRes] = await Promise.all([
       db.from('medications').select('name, kind, dose, frequency, started_on, until_date, status').eq('user_id', user.id).order('status'),
       db.from('health_events').select('title, event_type, professional_kind, event_date, notes').eq('user_id', user.id).eq('synthetic', false).order('event_date', { ascending: false }),
       db.from('exams').select('type, exam_date, created_at, file_url').eq('user_id', user.id).order('created_at', { ascending: false }),
@@ -200,6 +220,9 @@ function LegacyReport() {
       db.from('life_habits').select('category, description, frequency, notes').eq('user_id', user.id).order('created_at', { ascending: false }),
       db.from('health_resources').select('name, resource_type, prescriber, started_on, attributes, file_url').eq('user_id', user.id).eq('resource_type', 'correcao_visual').order('created_at', { ascending: false }),
       db.from('omics_panels').select('domain, laboratory, total_features, collected_on, created_at').eq('user_id', user.id).order('collected_on', { ascending: false, nullsFirst: false }),
+      db.from('contraceptive_methods').select('kind, brand, started_on, replace_on, status').eq('user_id', user.id).order('created_at', { ascending: false }),
+      db.from('menstrual_periods').select('started_on, notes').eq('user_id', user.id).order('started_on', { ascending: false }).limit(24),
+      services.query.listFinancial(user.id), // Despesas = eventos realizados com valor pago (mesma fonte do módulo Gastos)
     ])
     setMeds(((medRes.data ?? []) as Array<Record<string, unknown>>).map(m => ({
       name: m.name as string, kind: (m.kind as string) ?? 'medicamento', dose: (m.dose as string) ?? null, frequency: (m.frequency as string) ?? null,
@@ -241,6 +264,14 @@ function LegacyReport() {
       domain: (o.domain as string) ?? 'metabolomics', laboratory: (o.laboratory as string) ?? null,
       totalFeatures: (o.total_features as number) ?? null, date: (o.collected_on as string) ?? (o.created_at as string) ?? null,
     })))
+    setContraceptives(((ccRes.data ?? []) as Array<Record<string, unknown>>).map(c => ({
+      kind: (c.kind as string) ?? 'outro', brand: (c.brand as string) ?? null,
+      startedOn: (c.started_on as string) ?? null, replaceOn: (c.replace_on as string) ?? null, status: (c.status as string) ?? 'ativo',
+    })))
+    setMenstruations(((mpRes.data ?? []) as Array<Record<string, unknown>>).map(p => ({
+      startedOn: p.started_on as string, notes: (p.notes as string) ?? null,
+    })))
+    setExpenses((finRes ?? []) as HealthEvent[])
     const { data: sh } = await db.from('report_shares')
       .select('id, token, expires_at').eq('user_id', user.id).eq('revoked', false)
       .gt('expires_at', new Date().toISOString()).order('created_at', { ascending: false })
@@ -253,7 +284,7 @@ function LegacyReport() {
       id: t.id as string, name: t.name as string, selection: (t.selection as Record<string, unknown>) ?? {},
     })))
     setLoading(false)
-  }, [user, supabase])
+  }, [user, supabase, services])
 
   async function createShare() {
     if (!user || shareBusy) return
@@ -297,7 +328,8 @@ function LegacyReport() {
   const visExams = exams.filter(e => isItemOn('exames', `${e.type}__${e.date}`))
   // Faixas de grupo (espelham o menu): exibidas se houver ao menos uma seção do grupo.
   const showAcompanhamento = sections.eventos || sections.exames || sections.omica || sections.medicamentos
-  const showMinhaSaude = sections.condicoes || sections.visao || sections.medidas || sections.sinais || sections.habitos
+  const showMinhaSaude = sections.condicoes || sections.visao || sections.medidas || sections.sinais || sections.habitos || sections.ciclo
+  const showOrganizacao = sections.gastos
   const condProprias = conditions.filter(c => c.scope === 'propria')
   const condFamiliar = conditions.filter(c => c.scope === 'familiar')
   const measuresCorpo = measures.filter(m => !isVital(m.metric))
@@ -306,12 +338,16 @@ function LegacyReport() {
   // medicamentos suspensos por sobreposição). Estados atuais (condições, meds em
   // uso, recursos, hábitos) aparecem independentemente do período.
   const rp = resolvePeriod(period)
-  const perEvents = events.filter(e => inPeriod(e.date, rp))
+  // Agenda: aplica período E a seleção por TIPO de evento (item a item).
+  const perEvents = events.filter(e => inPeriod(e.date, rp) && isItemOn('eventos', e.eventType))
   const perOmics = omics.filter(o => inPeriod(o.date, rp))
   const perMeasuresCorpo = measuresCorpo.filter(m => inPeriod(m.date, rp))
   const perMeasuresVitais = measuresVitais.filter(m => inPeriod(m.date, rp))
   const perVisExams = visExams.filter(e => inPeriod(e.date, rp))
   const perMedsSusp = visMedsSusp.filter(m => overlapsPeriod(m.startedOn, m.untilOn, rp))
+  const perExpenses = expenses.filter(x => inPeriod(x.date, rp))       // Despesas (temporal)
+  const perMenstruations = menstruations.filter(m => inPeriod(m.startedOn, rp)) // Ciclo — menstruação (temporal)
+  // Métodos contraceptivos = estado atual (independentes do período, como condições/meds em uso).
   // Ordenação de Exames — declara a config; a mecânica é a infra comum (listview).
   const EXAM_SORTS: SortSpec<Ex>[] = [
     { key: 'data', label: 'Por data', compare: (a, b) => (b.date ?? '').localeCompare(a.date ?? '') },
@@ -344,7 +380,7 @@ function LegacyReport() {
 
   // Resumo/tamanho — o que está incluído (seções selecionadas, dentro do período).
   const resumoItems = [
-    sections.eventos && { label: 'consultas/eventos', n: perEvents.length },
+    sections.eventos && { label: 'agenda', n: perEvents.length },
     sections.exames && { label: 'exames', n: perVisExams.length },
     sections.omica && { label: 'ômica', n: perOmics.length },
     sections.medicamentos && { label: 'medicamentos', n: visMedsEmUso.length + perMedsSusp.length },
@@ -353,6 +389,8 @@ function LegacyReport() {
     sections.medidas && { label: 'medidas', n: perMeasuresCorpo.length },
     sections.sinais && { label: 'sinais vitais', n: perMeasuresVitais.length },
     sections.habitos && { label: 'hábitos', n: habits.length },
+    sections.ciclo && { label: 'ciclo', n: contraceptives.length + perMenstruations.length },
+    sections.gastos && { label: 'despesas', n: perExpenses.length },
   ].filter((x): x is { label: string; n: number } => !!x && x.n > 0)
   const totalRegistros = resumoItems.reduce((s, r) => s + r.n, 0)
   const lastUpdate = ([
@@ -361,6 +399,7 @@ function LegacyReport() {
   ].filter(Boolean) as string[]).sort().slice(-1)[0] ?? null
   const alturaCm = (profile as { height_cm?: number | null } | null)?.height_cm ?? null
   const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
+  const brl = (cents: number | null) => `R$ ${((cents ?? 0) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
   if (loading) {
     return <div className="p-10 text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></div>
@@ -555,7 +594,7 @@ function LegacyReport() {
           <div className="grid grid-cols-2 gap-x-6 gap-y-1 font-body text-xs text-onyx">
             <p><span className="text-mauve/70">Registros incluídos:</span> <strong>{totalRegistros}</strong></p>
             {sections.exames && <p><span className="text-mauve/70">Exames:</span> {perVisExams.length}</p>}
-            {sections.eventos && <p><span className="text-mauve/70">Consultas e eventos:</span> {perEvents.length}</p>}
+            {sections.eventos && <p><span className="text-mauve/70">Agenda:</span> {perEvents.length}</p>}
             {sections.medicamentos && <p><span className="text-mauve/70">Medicamentos em uso:</span> {visMedsEmUso.length}</p>}
             {sections.condicoes && <p><span className="text-mauve/70">Condições registradas:</span> {condProprias.length + condFamiliar.length}</p>}
             {sections.visao && <p><span className="text-mauve/70">Recursos de saúde:</span> {eyewear.length}</p>}
@@ -599,7 +638,7 @@ function LegacyReport() {
         {/* Consultas, procedimentos e eventos (Histórico) */}
         {sections.eventos && (
         <section id="sec-eventos" style={{ scrollMarginTop: 16 }}>
-          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Consultas, procedimentos e eventos</h2>
+          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Agenda</h2>
           {perEvents.length === 0 ? (
             <p className="font-body text-sm text-mauve/60">Nenhum evento registrado.</p>
           ) : (
@@ -813,6 +852,64 @@ function LegacyReport() {
                 </li>
               ))}
             </ul>
+          )}
+        </section>
+        )}
+
+        {/* Ciclo e Contracepção */}
+        {sections.ciclo && (
+        <section id="sec-ciclo" style={{ scrollMarginTop: 16 }}>
+          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Ciclo e Contracepção</h2>
+          {contraceptives.length === 0 && perMenstruations.length === 0 ? (
+            <p className="font-body text-sm text-mauve/60">Nenhum registro de ciclo ou contracepção.</p>
+          ) : (
+            <>
+              {contraceptives.length > 0 && (
+                <ul className="space-y-1">
+                  {contraceptives.map((c, i) => (
+                    <li key={i} className="font-body text-sm text-onyx">
+                      • <strong>{contraceptiveLabel(c.kind)}</strong>{c.brand ? ` (${c.brand})` : ''}
+                      {c.startedOn ? ` — desde ${fmt(c.startedOn)}` : ''}{c.replaceOn ? ` · troca prevista ${fmt(c.replaceOn)}` : ''}
+                      {c.status && c.status !== 'ativo' ? ` (${c.status})` : ''}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {perMenstruations.length > 0 && (
+                <>
+                  <h3 className="font-body text-xs font-bold text-mauve/80 mt-3 mb-1 uppercase tracking-wider">Menstruação</h3>
+                  <p className="font-body text-sm text-onyx">{perMenstruations.map(m => fmt(m.startedOn)).join(' · ')}</p>
+                </>
+              )}
+            </>
+          )}
+        </section>
+        )}
+
+        {/* ══════════ ORGANIZAÇÃO ══════════ */}
+        {showOrganizacao && <ReportBand>Organização</ReportBand>}
+
+        {/* Despesas — eventos realizados com valor pago (projeção financeira da Agenda) */}
+        {sections.gastos && (
+        <section id="sec-gastos" style={{ scrollMarginTop: 16 }}>
+          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Despesas</h2>
+          {perExpenses.length === 0 ? (
+            <p className="font-body text-sm text-mauve/60">Nenhuma despesa registrada.</p>
+          ) : (
+            <>
+              <table className="w-full text-left">
+                <tbody>
+                  {perExpenses.map((x, i) => (
+                    <tr key={i} className="border-b border-border/50">
+                      <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(x.date)}</td>
+                      <td className="font-body text-sm text-onyx py-1.5"><span className="text-mauve/70">{typeLabel(x.type)}:</span> {x.title}</td>
+                      <td className="font-body text-sm text-onyx py-1.5 pl-3 text-right whitespace-nowrap align-top">{brl(x.amountCents)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p className="font-body text-sm font-semibold text-onyx mt-2 text-right">Total: {brl(perExpenses.reduce((s, x) => s + (x.amountCents ?? 0), 0))}</p>
+            </>
           )}
         </section>
         )}
