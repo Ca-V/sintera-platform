@@ -520,7 +520,7 @@ export default function RecursosPage() {
         </div>
       )}
 
-      <Disclaimer variant="registro" className="text-center" />
+      <Disclaimer variant="geral" className="text-center" />
     </div>
   )
 }

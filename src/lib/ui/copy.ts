@@ -46,20 +46,18 @@ export function copy(key: CopyKey): string {
  * a redação final é decisão regulatória da fundadora. Renderizar via <Disclaimer>.
  */
 export const DISCLAIMERS = {
-  /** Uso geral (histórico, insights, evolução). */
-  geral: 'Não substitui avaliação profissional nem constitui diagnóstico (RDC 657/2022).',
-  /** Registros autorrelatados (condições, hábitos, medidas, sinais, recursos). */
-  registro: 'Registro seu — a SINTERA não interpreta nem infere. Leve os dados ao seu profissional de saúde.',
+  /** Uso geral: histórico, insights, agenda, saúde, timeline E registros autorrelatados (condições, hábitos, medidas, sinais, recursos). */
+  geral: 'As informações apresentadas têm caráter organizacional e não substituem a avaliação de um profissional de saúde, nem constituem diagnóstico, prescrição ou orientação clínica.',
   /** Extração/reprodução de laudos laboratoriais (exames, ômica, biomarcadores). */
-  laudo: 'Reprodução estruturada dos seus laudos — não constitui diagnóstico nem avaliação clínica.',
+  laudo: 'Os dados apresentados correspondem à organização das informações contidas em seus laudos, preservando seu conteúdo original. Não constituem diagnóstico nem avaliação clínica.',
   /** Medicamentos e suplementos. */
-  medicamento: 'A SINTERA organiza — não é prescrição nem orientação de dose. Quem prescreve é o seu médico.',
+  medicamento: 'A SINTERA organiza informações sobre medicamentos e suplementos. Não realiza prescrições nem fornece orientações de tratamento ou dosagem.',
   /** Valores calculados/estimados (IMC). */
-  estimativa: 'Estimativa calculada a partir dos seus dados — não substitui a avaliação profissional.',
-  /** Ciclo menstrual — previsões de data (preserva a ressalva contraceptiva vetada). */
-  ciclo: 'Estimativa calculada a partir das suas datas — não é método contraceptivo nem diagnóstico.',
-  /** Relatório e compartilhamento. */
-  relatorio: 'Documento factual para acompanhamento — não substitui a avaliação profissional (RDC 657/2022).',
+  estimativa: 'Valor calculado automaticamente a partir dos dados informados pelo usuário. Deve ser interpretado no contexto da avaliação realizada por um profissional de saúde.',
+  /** Ciclo menstrual — PRESERVA a ressalva contraceptiva (requisito regulatório específico; NÃO dobrar em outra variante). */
+  ciclo: 'As estimativas são calculadas a partir das informações registradas pelo usuário e possuem finalidade exclusivamente organizacional. Não constituem método contraceptivo, diagnóstico ou orientação médica.',
+  /** Relatório e compartilhamento (documento que sai da plataforma → texto tailored). */
+  relatorio: 'Este relatório organiza informações registradas e documentos enviados pelo usuário para facilitar o acompanhamento da sua saúde. Não substitui avaliação, diagnóstico ou conduta definidos por um profissional de saúde.',
 } as const
 
 export type DisclaimerVariant = keyof typeof DISCLAIMERS

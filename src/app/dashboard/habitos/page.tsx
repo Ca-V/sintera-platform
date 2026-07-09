@@ -221,7 +221,7 @@ export default function HabitosPage() {
         </Card>
       )}
 
-      <Disclaimer variant="registro" className="text-center" />
+      <Disclaimer variant="geral" className="text-center" />
     </div>
   )
 }
