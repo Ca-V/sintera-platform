@@ -20,12 +20,26 @@ const HINTS: { kind: DocumentKind; re: RegExp }[] = [
 /**
  * Palpite factual por NOME do arquivo. Pura. Sempre 'low' (heurística).
  * 'unknown' quando nenhum sinal aparece — a UI então pede o tipo à usuária.
- * (V0.1+ pode somar sinais de MIME/conteúdo, mantendo a mesma assinatura de retorno.)
+ * Uso INTERNO do orquestrador — as telas consomem `classifyCheap` (abaixo).
  */
-export function classifyByFilename(filename: string): ClassificationResult {
+function classifyByFilename(filename: string): ClassificationResult {
   const name = (filename ?? '').toLowerCase()
   for (const h of HINTS) {
-    if (h.re.test(name)) return { kind: h.kind, confidence: 'low', reason: 'nome do arquivo' }
+    if (h.re.test(name)) return { kind: h.kind, confidence: 'low', reason: 'nome do arquivo', source: 'filename' }
   }
-  return { kind: 'unknown', confidence: 'low' }
+  return { kind: 'unknown', confidence: 'low', source: 'none' }
+}
+
+/**
+ * ÚNICO ponto de entrada dos SINAIS BARATOS (síncrono, sem IA, sem rede) — a
+ * camada barata do ContentClassifier. É isto que as telas e a rota `/api/capture/
+ * classify` chamam: nenhuma tela implementa heurística própria (SSOT da
+ * classificação). Hoje só o nome do arquivo resolve; quando entrarem MIME/
+ * assinatura inequívocos (DICOM, XML, HL7, PDF estruturado), a regra nasce AQUI e
+ * tanto o palpite instantâneo da tela quanto a rota passam a se beneficiar — sem
+ * que nenhuma tela mude. Devolve 'high' curto-circuita a IA na rota.
+ */
+export function classifyCheap(mediaType: string, filename: string): ClassificationResult {
+  void mediaType // reservado p/ regras de MIME/assinatura inequívocos (DICOM, XML, HL7…)
+  return classifyByFilename(filename)
 }

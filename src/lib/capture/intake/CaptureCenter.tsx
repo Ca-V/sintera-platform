@@ -15,10 +15,10 @@ import { FlaskConical, Pill, Glasses, HeartPulse, Dna, FileText, UploadCloud, Ca
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import { CAPTURE_PROCESSORS, processorFor, processorsAccepting } from '../registry'
-import { classifyByFilename } from '../classifier/classify'
+import { classifyCheap } from '../classifier/classify'
 import { captureError } from '../result'
 import { logCapture } from '../telemetry'
-import type { DocumentKind, CaptureResult } from '../types'
+import type { DocumentKind, CaptureResult, ClassificationResult } from '../types'
 
 const ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   FlaskConical, Pill, Glasses, HeartPulse, Dna, FileText,
@@ -30,6 +30,43 @@ function fmtSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+/** Converte o arquivo para base64 p/ a classificação por conteúdo. Imagem: reduz
+ *  (acelera/barateia); PDF: base64 direto. Client-only (canvas/FileReader). */
+async function fileToBase64(file: File): Promise<{ fileBase64: string; mediaType: string }> {
+  if (file.type.startsWith('image/')) {
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const img = new Image()
+        const url = URL.createObjectURL(file)
+        img.onload = () => {
+          const max = 1600
+          const scale = Math.min(1, max / Math.max(img.width, img.height))
+          const canvas = document.createElement('canvas')
+          canvas.width = Math.max(1, Math.round(img.width * scale))
+          canvas.height = Math.max(1, Math.round(img.height * scale))
+          const ctx = canvas.getContext('2d')
+          if (!ctx) { URL.revokeObjectURL(url); reject(new Error('canvas')); return }
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+          URL.revokeObjectURL(url)
+          resolve(canvas.toDataURL('image/jpeg', 0.8))
+        }
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('img')) }
+        img.src = url
+      })
+      return { fileBase64: dataUrl.split(',')[1] ?? '', mediaType: 'image/jpeg' }
+    } catch {
+      return { fileBase64: '', mediaType: file.type }
+    }
+  }
+  const b64 = await new Promise<string>((resolve) => {
+    const r = new FileReader()
+    r.onload = () => resolve(String(r.result).split(',')[1] ?? '')
+    r.onerror = () => resolve('')
+    r.readAsDataURL(file)
+  })
+  return { fileBase64: b64, mediaType: file.type }
 }
 
 export interface CaptureCenterProps {
@@ -52,6 +89,8 @@ export default function CaptureCenter({ className = '', onDone }: CaptureCenterP
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<CaptureResult | null>(null)
+  const [classifying, setClassifying] = useState(false)   // IA lendo o conteúdo
+  const [autoConfident, setAutoConfident] = useState(false) // classificação por conteúdo com alta confiança
 
   // CAP-001 (Princípio 1): a lista de destinos NÃO varia pelo tipo do arquivo — mostra
   // sempre todos os destinos suportados; a compatibilidade do formato é validada no envio
@@ -64,17 +103,42 @@ export default function CaptureCenter({ className = '', onDone }: CaptureCenterP
     if (f.size > MAX_BYTES) { setError('Arquivo muito grande (limite 50 MB).'); return }
     setFile(f)
     setPreviewUrl(f.type.startsWith('image/') ? URL.createObjectURL(f) : null)
-    const guess = classifyByFilename(f.name).kind
+    setAutoConfident(false)
+    // Palpite instantâneo pela camada barata do ContentClassifier (síncrono, sem rede).
+    const guess = classifyCheap(f.type, f.name).kind
     setKind(processorsAccepting(f.type).some(p => p.kind === guess) ? guess : null)
+    // Em seguida, o ContentClassifier lê o CONTEÚDO e melhora o palpite (fire-and-forget).
+    setClassifying(true)
+    void (async () => {
+      try {
+        const payload = await fileToBase64(f)
+        if (!payload.fileBase64) return
+        const res = await fetch('/api/capture/classify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...payload, filename: f.name }),
+        })
+        if (!res.ok) return
+        const cls = (await res.json()) as ClassificationResult
+        if (cls.kind && cls.kind !== 'unknown' && cls.kind !== 'other'
+            && processorsAccepting(f.type).some(p => p.kind === cls.kind)) {
+          setKind(cls.kind)
+          setAutoConfident(cls.confidence === 'high')
+        }
+      } catch { /* mantém o palpite por nome */ } finally {
+        setClassifying(false)
+      }
+    })()
   }, [])
 
   function reset() {
     if (previewUrl) URL.revokeObjectURL(previewUrl)
     setFile(null); setPreviewUrl(null); setKind(null); setError(null); setSending(false); setResult(null)
+    setClassifying(false); setAutoConfident(false)
   }
 
   function cancel() {
-    if (file) logCapture({ kind, suggested: classifyByFilename(file.name).kind, outcome: 'cancelled' })
+    if (file) logCapture({ kind, suggested: classifyCheap(file.type, file.name).kind, outcome: 'cancelled' })
     reset()
   }
 
@@ -90,7 +154,7 @@ export default function CaptureCenter({ className = '', onDone }: CaptureCenterP
     if (kind === 'exam' && !user) { setError('Faça login para enviar.'); return }
     setSending(true); setError(null)
     const start = Date.now()
-    const suggested = classifyByFilename(file.name).kind
+    const suggested = classifyCheap(file.type, file.name).kind
     try {
       const res = await proc.process(file, { supabase, userId: user?.id ?? '' })
       logCapture({ kind, suggested, outcome: res.status, durationMs: Date.now() - start, errorReason: res.errorReason })
@@ -178,9 +242,21 @@ export default function CaptureCenter({ className = '', onDone }: CaptureCenterP
 
           <div>
             <p className="font-body text-sm font-semibold text-onyx mb-1">Qual é este documento?</p>
-            {kind && processorFor(kind) && (
-              <p className="font-body text-xs text-mauve mb-2">Sugestão: parece ser <strong>{processorFor(kind)!.label.toLowerCase()}</strong> — confirme ou corrija.</p>
-            )}
+            {/* Palpite IMEDIATO (por nome) sempre visível; a IA só refina em segundo plano
+                ("afinando…"), sem bloquear. "Lendo…" só quando ainda não há palpite algum. */}
+            {kind && processorFor(kind) ? (
+              <p className="font-body text-xs text-mauve mb-2 flex flex-wrap items-center gap-x-1.5">
+                <span>
+                  {autoConfident ? 'Identifiquei que é ' : 'Sugestão: parece ser '}
+                  <strong>{processorFor(kind)!.label.toLowerCase()}</strong> — confirme ou corrija.
+                </span>
+                {classifying && (
+                  <span className="inline-flex items-center gap-1 text-mauve/60"><Loader2 size={11} className="animate-spin" /> afinando…</span>
+                )}
+              </p>
+            ) : classifying ? (
+              <p className="font-body text-xs text-mauve mb-2 inline-flex items-center gap-1.5"><Loader2 size={12} className="animate-spin" /> Lendo o documento…</p>
+            ) : null}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {validKinds.map(p => {
                 const Icon = ICONS[p.icon] ?? FileText

@@ -27,6 +27,7 @@ import {
   ChevronDown, Minus,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { assembleOrganizedBiomarkers } from '@/lib/ai/insights/assembler'
 import { useUser } from '@/context/UserContext'
 import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
 import { typeLabel } from '@/lib/agenda' // fonte ÚNICA de rótulos de tipo de evento
@@ -125,6 +126,23 @@ function LegacyReport() {
   const [templates, setTemplates] = useState<{ id: string; name: string; selection: Record<string, unknown> }[]>([])
   const [tplName, setTplName] = useState('')
   const [configOpen, setConfigOpen] = useState(false)   // "Configurações de relatório" (discreto)
+  // Síntese factual dos biomarcadores ORGANIZADOS (TEMA C) — consome o SSOT único.
+  // Consumidor INTERNO chama o serviço de DOMÍNIO direto (sem hop HTTP): o
+  // Assembler é isomórfico e a RLS do client autenticado protege os dados. A rota
+  // /api/biomarkers/organized permanece apenas como adaptador p/ consumidores
+  // externos. A tela não reagrupa; só exibe o resumo.
+  const [bioOrg, setBioOrg] = useState<{ total: number; categories: number; outOfRange: number } | null>(null)
+  useEffect(() => {
+    if (!user?.id) return
+    let alive = true
+    assembleOrganizedBiomarkers(supabase, { userId: user.id })
+      .then(org => {
+        if (alive) setBioOrg({ total: org.counts.total, categories: org.counts.categories, outOfRange: org.counts.outOfRange })
+      })
+      .catch(() => { /* silencioso — o resumo funciona sem a síntese */ })
+    return () => { alive = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id])
 
   // Árvore de seleção = espelho do menu lateral (UX-001): grupos expansíveis,
   // seleção por grupo (tri-state) e por item. Mesma ordem/nomenclatura da sidebar.
@@ -542,6 +560,13 @@ function LegacyReport() {
             {sections.condicoes && <p><span className="text-mauve/70">Condições registradas:</span> {condProprias.length + condFamiliar.length}</p>}
             {sections.visao && <p><span className="text-mauve/70">Recursos de saúde:</span> {eyewear.length}</p>}
             <p><span className="text-mauve/70">Última atualização:</span> {lastUpdate ? fmt(lastUpdate) : hoje}</p>
+            {sections.exames && bioOrg && bioOrg.total > 0 && (
+              <p className="col-span-2">
+                <span className="text-mauve/70">Biomarcadores atuais:</span>{' '}
+                <strong>{bioOrg.total}</strong> organizados em {bioOrg.categories} categoria{bioOrg.categories !== 1 ? 's' : ''}
+                {bioOrg.outOfRange > 0 ? ` · ${bioOrg.outOfRange} fora da faixa impressa do laudo` : ''}
+              </p>
+            )}
           </div>
         </div>
 

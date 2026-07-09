@@ -22,11 +22,18 @@ export type DocumentKind =
 /** Como a usuária deseja enviar (método de entrada). */
 export type IntakeMethod = 'pdf' | 'photo' | 'gallery'
 
+/** De onde veio a classificação — debug · métricas · melhoria contínua · auditoria. */
+export type ClassificationSource = 'filename' | 'mime' | 'signature' | 'content_ai' | 'none'
+
 /** Resultado FACTUAL da classificação — a UI mostra e pede confirmação. */
 export interface ClassificationResult {
   kind: DocumentKind
   confidence: 'high' | 'medium' | 'low'
   reason?: string
+  /** Subtipo curto quando evidente (ex.: 'hemograma', 'bula', 'receita', 'omica'). */
+  subtype?: string
+  /** Origem do sinal que decidiu a classificação. */
+  source?: ClassificationSource
 }
 
 /** Motivo de erro NORMALIZADO (o Hub traduz qualquer falha de pipeline para isto). */
