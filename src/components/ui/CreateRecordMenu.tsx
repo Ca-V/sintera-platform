@@ -91,6 +91,7 @@ export default function CreateRecordMenu({
   return (
     <div className={`relative ${className}`}>
       <button type="button" onClick={onPrimary}
+        aria-haspopup={single ? undefined : 'menu'} aria-expanded={single ? undefined : open}
         onDragOver={e => { e.preventDefault() }}
         onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f && hasFile) onSelect('file', f) }}
         className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity">

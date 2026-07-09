@@ -475,7 +475,7 @@ function LegacyReport() {
                 {/* Cabeçalho do grupo: expandir/recolher + seleção do grupo (tri-state) */}
                 <div className="flex items-center gap-2.5 px-3 py-2.5 bg-ivory/40">
                   <button type="button" onClick={() => setOpenGroups(g => ({ ...g, [group.title]: !open }))}
-                    aria-label={open ? 'Recolher' : 'Expandir'}
+                    aria-label={open ? 'Recolher' : 'Expandir'} aria-expanded={open}
                     className="text-mauve/50 hover:text-petal transition-colors flex-shrink-0">
                     <ChevronDown size={16} className="transition-transform" style={{ transform: open ? 'none' : 'rotate(-90deg)' }} />
                   </button>
@@ -502,7 +502,7 @@ function LegacyReport() {
                           <div className="flex items-center gap-2 py-0.5">
                             {withItems ? (
                               <button type="button" onClick={() => setOpenSections(o => ({ ...o, [k]: !secOpen }))}
-                                aria-label={secOpen ? 'Recolher itens' : 'Expandir itens'}
+                                aria-label={secOpen ? 'Recolher itens' : 'Expandir itens'} aria-expanded={secOpen}
                                 className="text-mauve/40 hover:text-petal transition-colors flex-shrink-0">
                                 <ChevronDown size={13} className="transition-transform" style={{ transform: secOpen ? 'none' : 'rotate(-90deg)' }} />
                               </button>
@@ -542,7 +542,7 @@ function LegacyReport() {
 
       {/* Configurações de relatório — salvar/reutilizar (discreto, recolhido por padrão) */}
       <Card padding="sm" className="mb-6 print:hidden">
-        <button type="button" onClick={() => setConfigOpen(o => !o)} className="w-full flex items-center justify-between gap-2 text-left">
+        <button type="button" onClick={() => setConfigOpen(o => !o)} aria-expanded={configOpen} className="w-full flex items-center justify-between gap-2 text-left">
           <div className="min-w-0">
             <p className="font-body text-sm font-semibold text-onyx">Configurações de relatório</p>
             <p className="font-body text-[11px] text-mauve/60">Salve esta configuração (seções, itens e período) para reutilizar depois{templates.length > 0 ? ` · ${templates.length} salva${templates.length > 1 ? 's' : ''}` : ''}.</p>
