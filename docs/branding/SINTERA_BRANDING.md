@@ -30,6 +30,7 @@ A plataforma recebe, identifica, organiza, estrutura e prepara suas informaçõe
 - **Deve ser:** claro · elegante · humano · objetivo · **factual**.
 - **Deve evitar:** hype · promessas absolutas · jargão tecnológico · exageros ("revolucionário", "o mais inteligente", "nunca mais…").
 - **Vocabulário:** "documento" (não "arquivo"), "organiza/prepara/estrutura" (nunca "diagnostica/interpreta/recomenda"). Coerente com a fronteira **RDC 657**.
+- **Diretriz permanente (regulatório):** sempre que um disclaimer tratar dos **limites de atuação da plataforma**, citar **explicitamente a RDC 657/2022** (ou a norma regulatória vigente que venha a substituí‑la), de forma integrada ao texto ("…em conformidade com a RDC 657/2022"). Reforça que a limitação decorre do enquadramento regulatório, não de escolha da SINTERA. Fonte única dos textos: `src/lib/ui/copy.ts` (`DISCLAIMERS`).
 
 ## 7. Arquitetura de comunicação (4 níveis)
 | Nível | Responde | Formulação |

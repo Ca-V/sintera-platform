@@ -43,6 +43,7 @@ A SINTERA cumpre sua missão quando:
 ## 7. Arquitetura estratégica `[Constituição]`
 - Arquitetura **única, horizontal**, extensível por segmentos sem fork.
 - **RDC 657 (princípio permanente):** lê · extrai · estrutura · organiza · resume · prepara · compartilha. **Nunca** interpreta · recomenda · prioriza clinicamente · substitui julgamento profissional.
+- **Diretriz permanente de comunicação regulatória:** todo disclaimer sobre os **limites de atuação da plataforma** cita **explicitamente a RDC 657/2022** (ou norma vigente que a substitua), integrada ao texto, com uniformidade em toda a comunicação institucional. Fonte única: `src/lib/ui/copy.ts`.
 
 ## 8. Monetização `[Estratégia]`
 - **Tese:** o consumidor **constrói** o ativo; o ecossistema **amplia** o valor desse ativo. Alta lucratividade **não** vem de assinatura de consumidor solo.
