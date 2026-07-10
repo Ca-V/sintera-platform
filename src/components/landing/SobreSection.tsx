@@ -49,8 +49,8 @@ export default function SobreSection() {
             </div>
             <h3 className="font-display text-lg font-semibold text-white mb-2">Visão</h3>
             <p className="font-body text-sm text-white/55 leading-relaxed">
-              Construir a plataforma de organização e continuidade da saúde, que acompanha cada
-              história ao longo de toda a vida — tornando o cuidado mais simples, organizado e contínuo.
+              Ser a plataforma de organização e continuidade da saúde, que acompanha cada história ao
+              longo de toda a vida — tornando o cuidado mais simples, acessível e humano.
             </p>
           </motion.div>
         </div>
