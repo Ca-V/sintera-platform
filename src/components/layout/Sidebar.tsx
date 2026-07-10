@@ -81,7 +81,7 @@ function NavItem({ href, icon: Icon, label, active, soon, onClose }: {
       )}
     >
       <Icon size={16} className={cn('flex-shrink-0 transition-colors',
-        active ? 'text-lavender' : 'text-white/55 group-hover:text-white/80')} />
+        active ? 'text-gold' : 'text-white/55 group-hover:text-white/80')} />
       <span className={cn('flex-1', active && 'font-medium')}>{label}</span>
       {soon && (
         <span className="font-body text-[9px] font-medium text-white/70 bg-white/10 px-1.5 py-0.5 rounded-full border border-white/12">
