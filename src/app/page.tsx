@@ -14,9 +14,9 @@ export default function LandingPage() {
       <Navbar />
       <Hero />
       <Features />
+      <SobreSection />
       <EcosystemSection />
       <ScienceSection />
-      <SobreSection />
       <PricingSection />
       <CTASection />
       <Footer />

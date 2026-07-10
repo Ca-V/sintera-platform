@@ -36,8 +36,8 @@ const leftPanels = [
 
 const quotes = [
   {
-    headline: 'Seus exames têm uma história.',
-    emphasis: 'A SINTERA te ajuda a lê-la.',
+    headline: 'Sua saúde tem uma história.',
+    emphasis: 'A SINTERA te ajuda a organizá-la e compreendê-la melhor.',
     sub: 'Cada laudo é um capítulo da sua saúde.',
   },
   {
