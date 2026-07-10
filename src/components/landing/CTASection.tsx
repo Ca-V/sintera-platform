@@ -6,7 +6,7 @@ import { useRef } from 'react'
 import { ArrowRight, Sparkles, TrendingUp, Bell } from 'lucide-react'
 
 const floatingChips = [
-  { icon: Sparkles,   text: 'Organizado automaticamente',           color: 'bg-blush/20 text-petal border-petal/20'       },
+  { icon: Sparkles,   text: 'Tudo organizado em um só lugar',       color: 'bg-white/10 text-[#8FD8CE] border-white/20'   },
   { icon: TrendingUp, text: 'Sua história de saúde contínua',        color: 'bg-sage-light/20 text-sage border-sage/20'    },
   { icon: Bell,       text: 'Lembretes por e-mail e WhatsApp',       color: 'bg-lavender-light/20 text-lavender border-lavender/20' },
 ]
