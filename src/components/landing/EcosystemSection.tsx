@@ -2,7 +2,8 @@
 
 import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
-import { User, Building2, Watch } from 'lucide-react'
+import Link from 'next/link'
+import { User, Building2, Watch, ArrowRight } from 'lucide-react'
 
 // Camada 5 da narrativa — "Como a SINTERA evolui comigo ao longo do tempo".
 // Descreve o ESTADO ATUAL com precisão e prepara a VISÃO FUTURA, sem prometer
@@ -18,10 +19,12 @@ const currentText =
 const futureText =
   'A evolução da plataforma permitirá que essas informações também sejam recebidas automaticamente de instituições parceiras e integradas a dispositivos e aplicativos de saúde, como relógios inteligentes e plataformas de atividade física.'
 
+// A fonte "Você" (disponível hoje) é acionável e leva o visitante a começar
+// (criar conta → registrar). As demais são "Em breve" e não são clicáveis.
 const sources = [
-  { icon: User,      label: 'Você',                 sub: 'Registros e documentos que você adiciona', now: true  },
-  { icon: Building2, label: 'Laboratórios e clínicas', sub: 'Recebimento automático de instituições parceiras', now: false },
-  { icon: Watch,     label: 'Dispositivos e apps',  sub: 'Relógios inteligentes e atividade física', now: false },
+  { icon: User,      label: 'Você',                   sub: 'Registros e documentos que você adiciona',          now: true,  href: '/onboarding' },
+  { icon: Building2, label: 'Laboratórios e clínicas', sub: 'Recebimento automático de instituições parceiras',  now: false, href: null },
+  { icon: Watch,     label: 'Dispositivos e apps',    sub: 'Relógios inteligentes e atividade física',          now: false, href: null },
 ]
 
 export default function EcosystemSection() {
@@ -51,11 +54,8 @@ export default function EcosystemSection() {
         <div className="grid sm:grid-cols-3 gap-4 mt-14">
           {sources.map((s, i) => {
             const Icon = s.icon
-            return (
-              <motion.div key={s.label}
-                initial={{ opacity: 0, y: 20 }} animate={inView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.5, delay: 0.2 + i * 0.1, ease: 'easeOut' }}
-                className="card-premium p-6 text-left relative">
+            const inner = (
+              <>
                 <div className="w-11 h-11 rounded-2xl bg-blush flex items-center justify-center mb-4">
                   <Icon size={20} className="text-petal" />
                 </div>
@@ -70,6 +70,27 @@ export default function EcosystemSection() {
                   </span>
                 </div>
                 <p className="font-body text-sm text-mauve leading-relaxed">{s.sub}</p>
+                {s.href && (
+                  <span className="mt-3 inline-flex items-center gap-1 text-sm font-body font-medium text-petal">
+                    Começar a registrar <ArrowRight size={14} />
+                  </span>
+                )}
+              </>
+            )
+            return (
+              <motion.div key={s.label}
+                initial={{ opacity: 0, y: 20 }} animate={inView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.5, delay: 0.2 + i * 0.1, ease: 'easeOut' }}>
+                {s.href ? (
+                  <Link href={s.href}
+                    className="card-premium p-6 text-left relative block h-full transition-all hover:border-petal/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-petal/40">
+                    {inner}
+                  </Link>
+                ) : (
+                  <div className="card-premium p-6 text-left relative h-full">
+                    {inner}
+                  </div>
+                )}
               </motion.div>
             )
           })}
