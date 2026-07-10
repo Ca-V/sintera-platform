@@ -21,8 +21,8 @@ const features = [
   },
   {
     icon: Bell,
-    title: 'Acompanhe e não perca nada',
-    description: 'Veja a evolução do seu cuidado e receba lembretes dos compromissos por e-mail e WhatsApp.',
+    title: 'Lembretes de tudo que importa',
+    description: 'Consultas, exames e a hora de tomar e repor seus medicamentos — avisos por e-mail e WhatsApp.',
     iconColor: 'text-lavender', iconBg: 'bg-lavender-light',
   },
   {

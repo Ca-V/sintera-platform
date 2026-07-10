@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowRight, Upload } from 'lucide-react'
+import { ArrowRight, Calendar, FileText, Pill, Syringe, Bell, Check } from 'lucide-react'
 
 function fadeUp(delay = 0) {
   return {
@@ -77,12 +77,11 @@ export default function Hero() {
 }
 
 function ProductPreview() {
-  const biomarkers = [
-    { name: 'Glicemia',    value: '92',  unit: 'mg/dL', status: 'dentro',  color: 'text-sage',       indicator: '✓' },
-    { name: 'Vitamina D',  value: '18',  unit: 'ng/mL', status: 'abaixo',  color: 'text-blue-600',   indicator: '▼' },
-    { name: 'Ferritina',   value: '14',  unit: 'ng/mL', status: 'abaixo',  color: 'text-blue-600',   indicator: '▼' },
-    { name: 'TSH',         value: '2.1', unit: 'mUI/L', status: 'dentro',  color: 'text-sage',       indicator: '✓' },
-    { name: 'Colesterol',  value: '198', unit: 'mg/dL', status: 'dentro',  color: 'text-sage',       indicator: '✓' },
+  const records = [
+    { icon: Calendar, title: 'Consulta — Cardiologista', date: '12 mar', color: 'text-petal',    bg: 'bg-blush' },
+    { icon: FileText, title: 'Exame — Hemograma',        date: '3 fev',  color: 'text-sage',     bg: 'bg-sage-light' },
+    { icon: Pill,     title: 'Receita — Losartana',      date: '20 jan', color: 'text-lavender', bg: 'bg-lavender-light' },
+    { icon: Syringe,  title: 'Vacina — Influenza',       date: '5 jan',  color: 'text-gold',     bg: 'bg-warm' },
   ]
 
   return (
@@ -96,7 +95,7 @@ function ProductPreview() {
             <div className="w-2.5 h-2.5 rounded-full bg-green-300" />
           </div>
           <div className="flex-1 mx-4 bg-white rounded-md px-3 py-1 text-xs font-body text-mauve text-center border border-border">
-            sintera.app/dashboard
+            sintera.app/minha-saude
           </div>
         </div>
 
@@ -105,79 +104,63 @@ function ProductPreview() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-body text-mauve">Bom dia 👋</p>
-              <p className="text-base font-display font-semibold text-onyx">Check-up Anual 2024</p>
+              <p className="text-base font-display font-semibold text-onyx">Minha saúde</p>
             </div>
-            <span className="font-body text-[11px] text-sage bg-sage-light px-2.5 py-1 rounded-full border border-sage/20 font-medium">
-              Dados extraídos
+            <span className="font-body text-[11px] text-petal bg-blush px-2.5 py-1 rounded-full border border-petal-light font-medium">
+              Tudo organizado
             </span>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-2">
-            {[
-              { label: 'Biomarcadores', value: '24',  color: '#0E6E64', bg: '#E7F3EF' },
-              { label: 'Dentro ref.',   value: '18',  color: '#7DAF9E', bg: '#EBF5F1' },
-              { label: 'Fora ref.',     value: '6',   color: '#E28C7D', bg: '#FBEEEA' },
-            ].map(m => (
-              <div key={m.label} className="rounded-xl py-2.5 px-2 text-center border border-border/50"
-                style={{ backgroundColor: m.bg }}>
-                <p className="text-base font-display font-semibold" style={{ color: m.color }}>{m.value}</p>
-                <p className="text-[11px] font-body text-mauve leading-tight">{m.label}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Biomarker list */}
+          {/* Linha do tempo — documentos organizados */}
           <div className="bg-white rounded-2xl border border-border/60 overflow-hidden">
             <div className="px-3 py-2 border-b border-border/40 flex items-center justify-between">
-              <p className="text-[11px] font-body font-semibold text-onyx/60 uppercase tracking-wider">Biomarcadores</p>
-              <p className="text-[11px] font-body text-mauve">5 de 24</p>
+              <p className="text-[11px] font-body font-semibold text-mauve uppercase tracking-wider">Sua linha do tempo</p>
+              <p className="text-[11px] font-body text-mauve">4 anos organizados</p>
             </div>
-            {biomarkers.map((b, i) => (
-              <div key={b.name} className={`flex items-center gap-2 px-3 py-2 ${i < biomarkers.length - 1 ? 'border-b border-border/30' : ''}`}>
-                <span className="font-body text-xs text-onyx font-medium flex-1">{b.name}</span>
-                <span className="font-body text-xs text-onyx">{b.value}</span>
-                <span className="font-body text-[11px] text-mauve w-10">{b.unit}</span>
-                <span className={`font-body text-xs font-semibold w-4 text-right ${b.color}`}>{b.indicator}</span>
-              </div>
-            ))}
+            {records.map((r, i) => {
+              const Icon = r.icon
+              return (
+                <div key={r.title} className={`flex items-center gap-3 px-3 py-2.5 ${i < records.length - 1 ? 'border-b border-border/30' : ''}`}>
+                  <div className={`w-7 h-7 rounded-lg ${r.bg} flex items-center justify-center flex-shrink-0`}>
+                    <Icon size={13} className={r.color} />
+                  </div>
+                  <span className="font-body text-xs text-onyx font-medium flex-1 leading-snug">{r.title}</span>
+                  <span className="font-body text-[11px] text-mauve whitespace-nowrap">{r.date}</span>
+                </div>
+              )
+            })}
           </div>
         </div>
       </div>
 
-      {/* Floating card — histórico */}
+      {/* Floating card — lembrete de consulta (agenda) */}
       <motion.div
         animate={{ y: [0, -7, 0] }}
         transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute -left-10 top-1/4 glass rounded-2xl p-3 shadow-xl w-44">
-        <p className="text-[11px] font-body font-semibold text-onyx mb-2">Vitamina D — histórico</p>
-        <div className="flex items-end gap-1 h-8">
-          {[32, 28, 22, 18].map((v, i) => (
-            <div key={i} className="flex-1 rounded-sm"
-              style={{ height: `${(v / 36) * 100}%`, backgroundColor: i === 3 ? '#0E6E64' : '#CDEAE4' }} />
-          ))}
+        className="absolute -left-10 top-1/4 glass rounded-2xl p-3 shadow-xl w-52">
+        <div className="flex items-center gap-1.5 mb-1.5">
+          <div className="w-5 h-5 rounded-lg gradient-sintera flex items-center justify-center flex-shrink-0">
+            <Bell size={10} className="text-white" />
+          </div>
+          <span className="text-[11px] font-body font-semibold text-onyx">Consulta amanhã · 14h</span>
         </div>
-        <div className="flex justify-between mt-1">
-          <span className="text-[9px] font-body text-mauve">2021</span>
-          <span className="text-[9px] font-body text-blue-600 font-medium">2024: 18</span>
-        </div>
+        <p className="text-[11px] font-body text-sage font-medium flex items-center gap-1">
+          <Check size={11} /> Lembrete enviado por WhatsApp
+        </p>
       </motion.div>
 
-      {/* Floating card — upload */}
+      {/* Floating card — lembrete de medicação */}
       <motion.div
         animate={{ y: [0, 7, 0] }}
         transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-        className="absolute -right-8 bottom-16 glass rounded-2xl p-3 shadow-xl w-40">
-        <div className="flex items-center gap-1.5 mb-1.5">
-          <div className="w-5 h-5 rounded-lg gradient-sintera flex items-center justify-center flex-shrink-0">
-            <Upload size={10} className="text-white" />
+        className="absolute -right-8 bottom-16 glass rounded-2xl p-3 shadow-xl w-44">
+        <div className="flex items-center gap-1.5 mb-1">
+          <div className="w-5 h-5 rounded-lg bg-lavender-light flex items-center justify-center flex-shrink-0">
+            <Pill size={10} className="text-lavender" />
           </div>
-          <span className="text-[11px] font-body font-semibold text-onyx">PDF processado</span>
+          <span className="text-[11px] font-body font-semibold text-onyx">Losartana</span>
         </div>
-        <p className="text-[11px] font-body text-mauve leading-snug">24 biomarcadores extraídos automaticamente</p>
-        <div className="mt-2 h-1 bg-ivory rounded-full overflow-hidden">
-          <div className="w-full h-full rounded-full gradient-sintera" />
-        </div>
+        <p className="text-[11px] font-body text-mauve leading-snug">Hora de repor — lembrete por e-mail</p>
       </motion.div>
     </div>
   )
