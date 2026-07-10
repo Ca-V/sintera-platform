@@ -23,8 +23,8 @@ export default function SobreSection() {
             Propósito
           </span>
           <h2 className="font-display text-3xl lg:text-4xl font-semibold text-white leading-tight max-w-3xl mx-auto">
-            Existimos para que a sua história de saúde esteja sempre com você —{' '}
-            <span className="text-shimmer">completa, organizada e pronta para qualquer momento da vida.</span>
+            Que toda pessoa tenha sua história de saúde{' '}
+            <span className="text-shimmer">organizada, compreendida e sempre a serviço do seu cuidado.</span>
           </h2>
         </motion.div>
 
@@ -37,8 +37,8 @@ export default function SobreSection() {
             </div>
             <h3 className="font-display text-lg font-semibold text-white mb-2">Missão</h3>
             <p className="font-body text-sm text-white/55 leading-relaxed">
-              Tirar a burocracia da saúde do seu caminho, para sobrar tempo com o que realmente
-              importa: cuidar de você.
+              Transformar informações de saúde dispersas em uma história de saúde organizada, contínua
+              e útil para o acompanhamento ao longo da vida.
             </p>
           </motion.div>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={inView ? { opacity: 1, y: 0 } : {}}
@@ -49,8 +49,8 @@ export default function SobreSection() {
             </div>
             <h3 className="font-display text-lg font-semibold text-white mb-2">Visão</h3>
             <p className="font-body text-sm text-white/55 leading-relaxed">
-              Ser o lugar onde a história de saúde de cada pessoa é reunida, organizada e acompanhada
-              ao longo de toda a vida.
+              Construir a infraestrutura pessoal de saúde que acompanha cada pessoa durante toda a
+              vida, tornando o cuidado mais simples, organizado e contínuo.
             </p>
           </motion.div>
         </div>
