@@ -43,29 +43,30 @@ export default function Hero() {
                 <span className="w-5 h-5 rounded-full gradient-sintera flex items-center justify-center">
                   <span className="text-white text-[9px]">✦</span>
                 </span>
-                A plataforma que faz o trabalho da sua saúde
+                Sua saúde, organizada para toda a vida.
               </span>
             </motion.div>
 
             <motion.h1 variants={fadeUp(0.2)} initial="hidden" animate="show"
-              className="font-display font-semibold leading-[1.05] text-onyx mb-6"
-              style={{ fontSize: 'clamp(2.8rem, 5.5vw, 4.2rem)' }}>
-              Você envia os documentos.
-              <br />
-              A SINTERA{' '}
-              <span className="relative inline-block">
-                <span className="text-gradient italic">faz o resto.</span>
-                <svg className="absolute -bottom-1 left-0 w-full" height="6" viewBox="0 0 120 6" preserveAspectRatio="none">
-                  <path d="M0 5 Q30 1 60 5 Q90 9 120 5" stroke="#C2849A" strokeWidth="1.8" fill="none" strokeLinecap="round" />
-                </svg>
-              </span>
+              className="font-display font-semibold leading-[1.1] text-onyx mb-6"
+              style={{ fontSize: 'clamp(1.9rem, 3.6vw, 2.9rem)' }}>
+              Todas as informações da sua saúde, organizadas para que você compreenda melhor a{' '}
+              <span className="text-gradient italic">evolução do seu cuidado ao longo da vida.</span>
             </motion.h1>
 
             <motion.p variants={fadeUp(0.32)} initial="hidden" animate="show"
-              className="font-body text-[1.05rem] text-mauve leading-relaxed max-w-[510px] mb-8">
-              Ela lê seus exames, receitas e outros documentos, extrai e organiza as informações
-              automaticamente e prepara tudo para você revisar e levar ao médico — sem digitação, sem
-              planilha. Não interpreta nem substitui a avaliação profissional.
+              className="font-body text-[1.05rem] text-mauve leading-relaxed max-w-[540px] mb-6">
+              A SINTERA reúne e organiza as informações da sua saúde à medida que você registra seus
+              dados e adiciona exames, receitas, laudos e outros documentos recebidos de laboratórios,
+              clínicas e profissionais de saúde, construindo uma visão clara da evolução do seu cuidado
+              ao longo da vida.
+            </motion.p>
+
+            {/* Frase de impacto */}
+            <motion.p variants={fadeUp(0.4)} initial="hidden" animate="show"
+              className="font-display italic text-petal-dark leading-snug mb-8"
+              style={{ fontSize: 'clamp(1.2rem, 2vw, 1.5rem)' }}>
+              Quem compreende melhor sua saúde, cuida melhor dela.
             </motion.p>
 
             <motion.div variants={fadeUp(0.44)} initial="hidden" animate="show"
@@ -83,15 +84,23 @@ export default function Hero() {
               </Link>
             </motion.div>
 
-            {/* Lista de espera continua disponível para quem quer só acompanhar */}
+            {/* Texto complementar */}
             <motion.p variants={fadeUp(0.5)} initial="hidden" animate="show"
+              className="font-body text-sm text-mauve leading-relaxed max-w-[540px] mb-5">
+              Ao transformar informações dispersas em uma história de saúde organizada e contínua, a
+              SINTERA facilita o acompanhamento da sua saúde e apoia as decisões que você toma junto aos
+              profissionais que participam do seu cuidado.
+            </motion.p>
+
+            {/* Lista de espera continua disponível para quem quer só acompanhar */}
+            <motion.p variants={fadeUp(0.58)} initial="hidden" animate="show"
               className="font-body text-sm text-mauve mb-10">
               Prefere só acompanhar a evolução da plataforma?{' '}
               <Link href="/lista-de-espera" className="text-petal font-medium hover:underline">Entre na lista de espera</Link>.
             </motion.p>
 
             {/* 3 pilares */}
-            <motion.div variants={fadeUp(0.56)} initial="hidden" animate="show"
+            <motion.div variants={fadeUp(0.64)} initial="hidden" animate="show"
               className="flex flex-col sm:flex-row gap-4">
               {[
                 { icon: Upload,     color: 'text-petal',    bg: 'bg-blush',          text: 'Tudo num só lugar, organizado'   },

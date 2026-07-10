@@ -8,8 +8,9 @@
 - **O que NÃO somos:** IA médica · prontuário de clínica (EHR) · app de prevenção · interpretação clínica.
 
 ## 2. Proposta de valor
-**Você envia os documentos. A SINTERA faz o resto.**
-A plataforma recebe, identifica, organiza, estrutura e prepara suas informações de saúde automaticamente — para revisão, acompanhamento e compartilhamento — preservando a decisão clínica com os profissionais.
+**Sua saúde, organizada para toda a vida.**
+A SINTERA reúne e organiza automaticamente as informações de saúde — exames, receitas, laudos e outros documentos — à medida que são adicionadas, construindo uma visão clara da **evolução do cuidado ao longo da vida** — para revisão, acompanhamento e compartilhamento — preservando a decisão clínica com os profissionais.
+*(A formulação anterior "Você envia os documentos. A SINTERA faz o resto." foi substituída em 09/07 — decisão da fundadora — por ser subjetiva/vaga; a nova centra continuidade + organização como mecanismo. Ver §12.)*
 
 ## 3. Propósito, Missão, Visão e Valores
 - **Propósito:** que toda pessoa tenha sua história de saúde **sempre pronta — completa, contínua e a serviço dela** — em qualquer momento da vida.
@@ -39,7 +40,7 @@ A plataforma recebe, identifica, organiza, estrutura e prepara suas informaçõe
 | **Propósito** | Por que existimos? | História de saúde sempre pronta |
 | **Posicionamento** | Que categoria lideramos? | Continuidade da saúde |
 | **Promessa** | Que transformação entregamos? | Burocracia recorrente → continuidade automática |
-| **Hero** | Como comunicar em segundos? | *Você envia os documentos. A SINTERA faz o resto.* |
+| **Hero** | Como comunicar em segundos? | *Todas as informações da sua saúde, organizadas para você compreender a evolução do seu cuidado ao longo da vida.* |
 
 ## 8. Identidade visual — direção de design
 Muito **espaço em branco** · poucos elementos · **cards grandes** · sombras suaves · bordas arredondadas · **hierarquia editorial**. A interface responde sempre a uma pergunta: *"como reduzir trabalho para esta pessoa?"*
@@ -71,7 +72,15 @@ Marca **universal, premium, tecnológica, humana, atemporal e gênero‑neutra.*
 - **Acessibilidade** é parte da identidade (TEMA G): rótulos associados, foco visível, leitura por leitor de tela — "confiável" também significa "acessível".
 
 ## 12. Proposta da página principal (landing)
-**Hero** — H1: *Você envia os documentos. A SINTERA faz o resto.* · Subtítulo: recebe exames, receitas e outros documentos em um só lugar; identifica, organiza e prepara automaticamente para revisão, acompanhamento e compartilhamento, preservando a decisão clínica com os profissionais. · **CTA principal:** "Enviar meu primeiro documento" · **CTA secundário:** "Conhecer a plataforma".
+**Hero (primeira dobra — congelada 09/07, decisão da fundadora):** cinco blocos, fonte no componente `src/components/landing/Hero.tsx`:
+- **Selo:** *Sua saúde, organizada para toda a vida.*
+- **Headline:** *Todas as informações da sua saúde, organizadas para que você compreenda melhor a evolução do seu cuidado ao longo da vida.*
+- **Texto principal:** *A SINTERA reúne e organiza as informações da sua saúde à medida que você registra seus dados e adiciona exames, receitas, laudos e outros documentos recebidos de laboratórios, clínicas e profissionais de saúde, construindo uma visão clara da evolução do seu cuidado ao longo da vida.*
+- **Frase de impacto:** *Quem compreende melhor sua saúde, cuida melhor dela.*
+- **Texto complementar:** *Ao transformar informações dispersas em uma história de saúde organizada e contínua, a SINTERA facilita o acompanhamento da sua saúde e apoia as decisões que você toma junto aos profissionais que participam do seu cuidado.*
+- **CTA principal:** "Criar conta gratuitamente" · **CTA secundário:** "Entrar".
+
+*Racional: vende **continuidade do cuidado** (o ativo), com a **organização automática** como mecanismo; objetiva, sem "faz o resto". "Evolução do cuidado ao longo da vida" = formulação leiga de continuidade (mais segura na RDC que "compreender sua saúde", pois refere-se à trajetória organizada). A validar com usuários: se "continuidade/evolução do cuidado" não comunicar, testar linguagem ainda mais intuitiva sem mudar o posicionamento.*
 
 **Estrutura da home:**
 1. **Hero** (promessa + CTA + visual da plataforma)
