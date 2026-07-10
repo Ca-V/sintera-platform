@@ -24,10 +24,10 @@ export default function Hero() {
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <motion.div animate={{ rotate: 360 }} transition={{ duration: 80, repeat: Infinity, ease: 'linear' }}
           className="absolute top-1/2 right-[-10%] -translate-y-1/2 w-[700px] h-[700px] rounded-full"
-          style={{ border: '1px solid rgba(194,132,154,0.12)' }} />
+          style={{ border: '1px solid rgba(87,179,173,0.16)' }} />
         <motion.div animate={{ rotate: -360 }} transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
           className="absolute top-1/2 right-[-6%] -translate-y-1/2 w-[540px] h-[540px] rounded-full"
-          style={{ border: '1.5px dashed rgba(168,156,189,0.15)' }} />
+          style={{ border: '1.5px dashed rgba(14,110,100,0.13)' }} />
         <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-petal-light/20 blur-3xl animate-breathe" />
         <div className="absolute -bottom-48 left-[20%] w-[500px] h-[500px] rounded-full bg-lavender-light/25 blur-3xl animate-breathe delay-300" />
       </div>
@@ -181,9 +181,9 @@ function ProductPreview() {
           {/* Stats */}
           <div className="grid grid-cols-3 gap-2">
             {[
-              { label: 'Biomarcadores', value: '24',  color: '#C2849A', bg: '#F8EDF2' },
+              { label: 'Biomarcadores', value: '24',  color: '#0E6E64', bg: '#E7F3EF' },
               { label: 'Dentro ref.',   value: '18',  color: '#7DAF9E', bg: '#EBF5F1' },
-              { label: 'Fora ref.',     value: '6',   color: '#A89CBD', bg: '#F0EBF7' },
+              { label: 'Fora ref.',     value: '6',   color: '#E28C7D', bg: '#FBEEEA' },
             ].map(m => (
               <div key={m.label} className="rounded-xl py-2.5 px-2 text-center border border-border/50"
                 style={{ backgroundColor: m.bg }}>
@@ -220,7 +220,7 @@ function ProductPreview() {
         <div className="flex items-end gap-1 h-8">
           {[32, 28, 22, 18].map((v, i) => (
             <div key={i} className="flex-1 rounded-sm"
-              style={{ height: `${(v / 36) * 100}%`, backgroundColor: i === 3 ? '#A89CBD' : '#E2D9EE' }} />
+              style={{ height: `${(v / 36) * 100}%`, backgroundColor: i === 3 ? '#0E6E64' : '#CDEAE4' }} />
           ))}
         </div>
         <div className="flex justify-between mt-1">

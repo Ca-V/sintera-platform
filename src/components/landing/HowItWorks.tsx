@@ -14,8 +14,8 @@ const steps = [
     title: 'Registre e reúna suas informações',
     description: 'Cadastre suas informações e adicione documentos e registros recebidos ao longo da sua jornada de saúde.',
     detail: 'Exames, receitas, laudos, consultas, medicamentos, hábitos — tudo em um só lugar.',
-    color: '#EDD5DF',
-    iconColor: '#9A6478',
+    color: '#CDEAE4',
+    iconColor: '#0E6E64',
   },
   {
     number: '02',
@@ -23,8 +23,8 @@ const steps = [
     title: 'A SINTERA organiza tudo para você',
     description: 'Suas informações passam a compor uma visão organizada e contínua da sua saúde, fácil de consultar sempre que precisar.',
     detail: 'Sem digitação e sem planilha — a organização acontece automaticamente.',
-    color: '#E2D9EE',
-    iconColor: '#7A6490',
+    color: '#E7F3EF',
+    iconColor: '#14746B',
   },
   {
     number: '03',

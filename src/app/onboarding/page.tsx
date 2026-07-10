@@ -19,18 +19,18 @@ const stepMeta = [
 const leftPanels = [
   {
     bg:          'linear-gradient(160deg, #0F0B14 0%, #1C1226 50%, #140E1C 100%)',
-    accentGlow:  'rgba(194,132,154,0.18)',
-    accent2:     'rgba(168,156,189,0.10)',
+    accentGlow:  'rgba(226,140,125,0.18)',
+    accent2:     'rgba(87,179,173,0.10)',
   },
   {
     bg:          'linear-gradient(160deg, #0B0F1C 0%, #141A2C 50%, #0E1220 100%)',
     accentGlow:  'rgba(125,175,158,0.20)',
-    accent2:     'rgba(168,156,189,0.10)',
+    accent2:     'rgba(87,179,173,0.10)',
   },
   {
     bg:          'linear-gradient(160deg, #180E0A 0%, #261614 50%, #1E1210 100%)',
     accentGlow:  'rgba(201,169,122,0.20)',
-    accent2:     'rgba(194,132,154,0.14)',
+    accent2:     'rgba(226,140,125,0.14)',
   },
 ]
 
@@ -137,12 +137,12 @@ export default function OnboardingPage() {
               <div className="flex flex-col items-center gap-3">
                 {[140, 220, 310].map((size, i) => (
                   <motion.div key={i} className="absolute rounded-full border"
-                    style={{ width: size, height: size, borderColor: `rgba(194,132,154,${0.1 - i * 0.025})` }}
+                    style={{ width: size, height: size, borderColor: `rgba(226,140,125,${0.1 - i * 0.025})` }}
                     animate={{ rotate: i % 2 === 0 ? 360 : -360 }}
                     transition={{ duration: 30 + i * 15, repeat: Infinity, ease: 'linear' }} />
                 ))}
                 <motion.div className="w-20 h-20 rounded-full"
-                  style={{ background: 'radial-gradient(circle, rgba(194,132,154,0.5) 0%, rgba(168,156,189,0.3) 50%, transparent 70%)' }}
+                  style={{ background: 'radial-gradient(circle, rgba(226,140,125,0.5) 0%, rgba(87,179,173,0.3) 50%, transparent 70%)' }}
                   animate={{ scale: [1, 1.15, 1], opacity: [0.6, 1, 0.6] }}
                   transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }} />
               </div>
@@ -151,8 +151,8 @@ export default function OnboardingPage() {
             {step === 1 && (
               <div className="flex flex-col items-center gap-5 px-10">
                 {[
-                  { icon: Upload,       label: 'Upload do laudo em PDF',           color: '#C2849A', delay: 0    },
-                  { icon: FlaskConical, label: 'IA extrai os biomarcadores',        color: '#A89CBD', delay: 0.15 },
+                  { icon: Upload,       label: 'Upload do laudo em PDF',           color: '#E28C7D', delay: 0    },
+                  { icon: FlaskConical, label: 'IA extrai os biomarcadores',        color: '#57B3AD', delay: 0.15 },
                   { icon: TrendingUp,   label: 'Histórico longitudinal organizado', color: '#7DAF9E', delay: 0.30 },
                 ].map(({ icon: Icon, label, color, delay }, i) => (
                   <motion.div key={i}
@@ -227,7 +227,7 @@ export default function OnboardingPage() {
         {/* Dots de progresso */}
         <div className="absolute top-1/2 right-6 -translate-y-1/2 hidden lg:flex flex-col gap-2">
           {stepMeta.map((s, i) => (
-            <div key={i} className={`rounded-full transition-all duration-300 ${i === step ? 'w-2 h-2 bg-petal shadow-[0_0_6px_rgba(194,132,154,0.8)]' : i < step ? 'w-1.5 h-1.5 bg-white/40' : 'w-1.5 h-1.5 bg-white/15'}`}/>
+            <div key={i} className={`rounded-full transition-all duration-300 ${i === step ? 'w-2 h-2 bg-petal shadow-[0_0_6px_rgba(226,140,125,0.8)]' : i < step ? 'w-1.5 h-1.5 bg-white/40' : 'w-1.5 h-1.5 bg-white/15'}`}/>
           ))}
         </div>
       </motion.div>
@@ -364,14 +364,14 @@ export default function OnboardingPage() {
                         icon: Upload,
                         title: '1. Faça upload do laudo',
                         desc: 'Envie qualquer laudo laboratorial em PDF — de qualquer laboratório.',
-                        color: '#C2849A',
+                        color: '#E28C7D',
                         bg: 'bg-blush',
                       },
                       {
                         icon: FlaskConical,
                         title: '2. A IA extrai os biomarcadores',
                         desc: 'Glicemia, colesterol, vitaminas, hormônios — extraídos automaticamente com os valores e referências do seu laudo.',
-                        color: '#A89CBD',
+                        color: '#57B3AD',
                         bg: 'bg-lavender-light',
                       },
                       {

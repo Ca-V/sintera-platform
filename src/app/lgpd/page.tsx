@@ -90,7 +90,7 @@ function RightCard({ right }: { right: Right }) {
 
       <div className="ml-12 space-y-2">
         <div className="bg-ivory rounded-xl px-4 py-3 space-y-1">
-          <p className="font-body text-[11px] font-semibold text-onyx/40 uppercase tracking-wider">Como exercer</p>
+          <p className="font-body text-[11px] font-semibold text-petal uppercase tracking-wider">Como exercer</p>
           <p className="font-body text-xs text-onyx/70 leading-relaxed">{right.howTo}</p>
         </div>
         <p className="font-body text-[11px] text-mauve">
@@ -169,7 +169,7 @@ export default function LgpdPage() {
         {/* ANPD */}
         <div className="rounded-2xl border border-border bg-ivory px-5 py-4 mb-8">
           <p className="font-body text-xs text-mauve leading-relaxed">
-            <span className="font-semibold text-onyx/60">Autoridade Nacional de Proteção de Dados (ANPD):</span>{' '}
+            <span className="font-semibold text-onyx">Autoridade Nacional de Proteção de Dados (ANPD):</span>{' '}
             Se considerar que seus direitos não foram atendidos, você pode registrar uma reclamação
             junto à ANPD em{' '}
             <span className="text-petal">gov.br/anpd</span>.
@@ -194,7 +194,7 @@ export default function LgpdPage() {
           </Link>
         </div>
 
-        <p className="font-body text-xs text-mauve/40 mt-8">
+        <p className="font-body text-xs text-mauve mt-8">
           SINTERA · Versão 1.0 · Vigente a partir de junho de 2026
         </p>
       </div>

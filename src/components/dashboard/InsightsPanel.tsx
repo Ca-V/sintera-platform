@@ -38,7 +38,7 @@ const insights: Insight[] = [
     tag: 'Ciclo',
     priority: 'high',
     time: 'Hoje',
-    accentColor: '#C2849A',
+    accentColor: '#E28C7D',
     bgColor: '#FDF2F7',
   },
   {
@@ -49,7 +49,7 @@ const insights: Insight[] = [
     tag: 'Hormônios',
     priority: 'medium',
     time: 'Ontem',
-    accentColor: '#A89CBD',
+    accentColor: '#57B3AD',
     bgColor: '#F5F2FB',
   },
   {
@@ -71,7 +71,7 @@ const insights: Insight[] = [
     tag: 'Sono',
     priority: 'low',
     time: '3 dias atrás',
-    accentColor: '#A89CBD',
+    accentColor: '#57B3AD',
     bgColor: '#F5F2FB',
   },
 ]

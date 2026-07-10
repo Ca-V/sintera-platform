@@ -71,7 +71,7 @@ export default function ListaDeEsperaPage() {
                 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                 className="card-premium p-6 space-y-4">
                 <div className="space-y-1.5">
-                  <label htmlFor="waitlist-nome" className="font-body text-xs font-medium text-onyx/60">Nome</label>
+                  <label htmlFor="waitlist-nome" className="font-body text-xs font-medium text-onyx">Nome</label>
                   <input
                     id="waitlist-nome"
                     type="text"
@@ -83,7 +83,7 @@ export default function ListaDeEsperaPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label htmlFor="waitlist-email" className="font-body text-xs font-medium text-onyx/60">E-mail</label>
+                  <label htmlFor="waitlist-email" className="font-body text-xs font-medium text-onyx">E-mail</label>
                   <input
                     id="waitlist-email"
                     type="email"

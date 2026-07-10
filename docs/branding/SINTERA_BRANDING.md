@@ -45,21 +45,22 @@ A SINTERA reúne e organiza automaticamente as **informações e registros de sa
 ## 8. Identidade visual — direção de design
 Muito **espaço em branco** · poucos elementos · **cards grandes** · sombras suaves · bordas arredondadas · **hierarquia editorial**. A interface responde sempre a uma pergunta: *"como reduzir trabalho para esta pessoa?"*
 
-## 9. Paleta de cores (OFICIAL — congelada)
-Marca **universal, premium, tecnológica, humana, atemporal e gênero‑neutra.** A primária é uma **violeta profunda** (não rosê) — decisão de identidade decorrente do posicionamento universal.
+## 9. Paleta de cores (OFICIAL v2.0 — território azul‑esverdeado / teal)
+Marca **universal, premium, humana, atemporal e gênero‑neutra.** Identidade construída no **território azul‑esverdeado** (não a cor da marca registrada Tiffany®; inspiração de território, não de cor) — o único que carrega, num só tom, **saúde + confiança + continuidade**. Dois tons **vivos** que oscilam: o **frio** (azul↔verde, assinatura) e o **quente** (rosé↔coral, acento). Preto e branco carregam o texto; o teal profundo carrega a afordância.
 
-**Primária institucional — Violeta (Ametista):** `#6A5B91` · claro `#E7E1F0` · escuro `#52447A` · fundo suave `#EFEBF7`
-&nbsp;&nbsp;*(tom oficial A2 — leve, sóbrio, atemporal; passa WCAG AA como texto ~5,8:1; gradiente de marca `#6A5B91 → #9485B6`)*
-**Apoio — Sálvia:** `#7DAF9E` · claro `#C8E2DB`
-**Secundária — Petal (rosê):** `#C2849A` · claro `#EDD5DF` *(apoio visual pontual — não é o rosto da marca)*
-**Premium/conquistas — Dourado:** `#C9A97A` *(uso restrito: indicadores, conquistas — nunca textos longos)*
+**Assinatura — Lagoa (a cor‑memória):** `#57B3AD` *(superfícies, blocos, selos, acentos de marca; texto escuro por cima — AA ✓; NÃO usar como texto)*
+**Ação / UI — Teal profundo:** `#0E6E64` · escuro `#0A4A44` · claro `#CDEAE4` · fundo suave `#E7F3EF`
+&nbsp;&nbsp;*(botões, links, ícones, foco; passa **WCAG AA 6,1:1** no branco; gradiente de marca `#0E6E64 → #57B3AD`)*
+**Escuro — Pinho:** Deep `#0A2E2C` · Panel `#0E3B37` *(sidebar, seções de confiança, gradiente escuro)*
+**Acento quente — Coral‑rosé:** `#E28C7D` · claro `#F7DFD8` *(raro; puxado ao coral p/ neutralidade de gênero; token `lavender`)*
+**Premium — Dourado:** `#C4A06A` *(uso restrito: conquistas, detalhes — nunca textos longos)*
+**Apoio (retaguarda) — Sálvia:** `#7DAF9E` · claro `#C8E2DB` *(mantida em reserva; não é protagonista)*
 **Fundo/superfície:** Creme `#F7F3F0` · Ivory `#F2EDE8` · Warm `#EEE8E1` · Branco `#FFFFFF`
-**Texto:** Onyx (principal) `#1E1820` · Mauve (secundário) `#7A6470` · Bordas `#EAE2E8`
-**Superfície escura:** Deep `#12101A` · Onyx `#1E1820` *(sidebar, áreas de destaque)*
+**Texto:** Onyx (principal) `#1C2321` *(near‑black, viés teal)* · Mauve (secundário) `#5B6B67` *(AA ✓)* · Bordas `#E1E8E4`
 
-> **Nota de implementação:** o token histórico `petal` (primário app‑wide, 530 usos) teve seu **valor** redefinido para a violeta institucional; o **rename** do token (`petal`→`primary`) é higiene técnica agendada — a identidade e o AA já estão corretos. `lavender` passou a carregar o rosê secundário.
+> **Nota de implementação:** o token histórico `petal` (primário app‑wide, 530 usos) teve seu **valor** redefinido para o **teal profundo** (ação/UI, AA); a **assinatura Lagoa** ganhou token próprio `--color-lagoa`; `lavender` passou a carregar o **coral‑rosé**. Zero mudança nos consumidores (redefinição por valor). O **rename** do token (`petal`→`primary`) segue como higiene agendada.
 >
-> **Conformidade WCAG (estado atual):** a **superfície pública** (`/`, `/login`, `/lista-de-espera`, `/termos`) foi validada com axe‑core e está com **0 violações de `color-contrast`**. As **páginas autenticadas herdam os mesmos tokens globais** (a correção é determinística e aplicada em toda a plataforma), mas a **conformidade WCAG AA completa será confirmada na homologação final**, com o harness QA autenticado sobre todas as rotas.
+> **Conformidade WCAG (revalidada 10/07 com a paleta teal):** a **superfície pública** (`/`, `/login`, `/lista‑de‑espera`, `/termos`, `/privacidade`, `/lgpd`) foi revalidada com axe‑core e está com **0 violações de `color-contrast`** (script `scripts/qa/axe-public.mjs`). As **páginas autenticadas herdam os mesmos tokens globais** (correção determinística), com **confirmação AA completa na homologação final** via harness QA autenticado. *(Histórico: violeta A2 #6A5B91 — substituída pelo território teal em 10/07 por evidência de encaixe estratégico superior: saúde/confiança/continuidade, neutralidade de gênero e escala internacional.)*
 
 ## 10. Tipografia
 - **Display — Cormorant Garamond** (`--font-display`): títulos, hero, chamadas editoriais.
