@@ -149,18 +149,18 @@ function ProductPreview() {
         </p>
       </motion.div>
 
-      {/* Floating card — lembrete de medicação */}
+      {/* Floating card — documento organizado (automação) */}
       <motion.div
         animate={{ y: [0, 7, 0] }}
         transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-        className="absolute -right-8 bottom-16 glass rounded-2xl p-3 shadow-xl w-44">
+        className="absolute -right-8 bottom-16 glass rounded-2xl p-3 shadow-xl w-48">
         <div className="flex items-center gap-1.5 mb-1">
-          <div className="w-5 h-5 rounded-lg bg-lavender-light flex items-center justify-center flex-shrink-0">
-            <Pill size={10} className="text-lavender" />
+          <div className="w-5 h-5 rounded-lg gradient-sintera flex items-center justify-center flex-shrink-0">
+            <Check size={11} className="text-white" />
           </div>
-          <span className="text-[11px] font-body font-semibold text-onyx">Ômega 3</span>
+          <span className="text-[11px] font-body font-semibold text-onyx">Documento organizado</span>
         </div>
-        <p className="text-[11px] font-body text-mauve leading-snug">Hora de repor — lembrete por e-mail</p>
+        <p className="text-[11px] font-body text-mauve leading-snug">Novo exame adicionado à sua linha do tempo</p>
       </motion.div>
     </div>
   )
