@@ -674,7 +674,7 @@ function LegacyReport() {
           ) : (
             <ul className="space-y-1">
               {sortedExams.map((e, i) => (
-                <li key={i} className="font-body text-sm text-onyx flex flex-wrap items-baseline gap-x-2">
+                <li key={i} className="font-body text-xs text-onyx flex flex-wrap items-baseline gap-x-2">
                   <span>• {fmt(e.date)} — {e.type}</span>
                   <ProvenanceLine provenance={examProvenance({ fileUrl: e.fileUrl })} showOrigin={false} />
                 </li>
@@ -882,7 +882,7 @@ function LegacyReport() {
               {perMenstruations.length > 0 && (
                 <>
                   <h3 className="font-body text-xs font-bold text-mauve/80 mt-3 mb-1 uppercase tracking-wider">Menstruação</h3>
-                  <p className="font-body text-sm text-onyx">{perMenstruations.map(m => fmt(m.startedOn)).join(' · ')}</p>
+                  <p className="font-body text-xs text-onyx">{perMenstruations.map(m => fmt(m.startedOn)).join(' · ')}</p>
                 </>
               )}
             </>
@@ -907,12 +907,12 @@ function LegacyReport() {
                     <tr key={i} className="border-b border-border/50">
                       <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(x.date)}</td>
                       <td className="font-body text-xs text-onyx py-1.5"><span className="text-mauve">{typeLabel(x.type)}:</span> {x.title}</td>
-                      <td className="font-body text-sm text-onyx py-1.5 pl-3 text-right whitespace-nowrap align-top">{brl(x.amountCents)}</td>
+                      <td className="font-body text-xs text-onyx py-1.5 pl-3 text-right whitespace-nowrap align-top">{brl(x.amountCents)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              <p className="font-body text-sm font-semibold text-onyx mt-2 text-right">Total: {brl(perExpenses.reduce((s, x) => s + (x.amountCents ?? 0), 0))}</p>
+              <p className="font-body text-xs font-semibold text-onyx mt-2 text-right">Total: {brl(perExpenses.reduce((s, x) => s + (x.amountCents ?? 0), 0))}</p>
             </>
           )}
         </section>

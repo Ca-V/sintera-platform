@@ -28,7 +28,7 @@ const navGroups: {
 }[] = [
   {
     title: 'Acompanhamento',
-    titleColor: 'text-lagoa',
+    titleColor: 'text-lavender',
     items: [
       { href: '/dashboard/agenda',       icon: CalendarDays, label: 'Agenda' },
       { href: '/dashboard/timeline',     icon: Clock,        label: 'Histórico', extra: ['/dashboard/saude', '/dashboard/historico'] },
@@ -38,7 +38,7 @@ const navGroups: {
   },
   {
     title: 'Minha Saúde',
-    titleColor: 'text-lavender',
+    titleColor: 'text-lagoa',
     items: [
       { href: '/dashboard/condicoes',     icon: Stethoscope,   label: 'Condições de Saúde' },
       { href: '/dashboard/recursos',      icon: Accessibility, label: 'Recursos de Saúde' },
