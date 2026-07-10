@@ -11,9 +11,9 @@ A cadeia causal que resume a empresa:
 Todo o restante deriva disto. *(Honestidade: o elo **continuidade → retenção** é a **Hipótese #1** — a cadeia é a lógica estratégica **a validar**, não causalidade já provada.)*
 
 ## 1. Propósito, Missão e Visão `[Constituição]`
-- **Propósito (por quê existimos):** que toda pessoa tenha sua história de saúde **organizada, compreendida e sempre a serviço do seu cuidado**. *(Fala da transformação na vida do usuário, não da tecnologia nem da burocracia.)*
-- **Missão (o que fazemos hoje):** **transformar informações de saúde dispersas em uma história de saúde organizada, contínua e útil para o acompanhamento ao longo da vida** — reduzindo o trabalho administrativo, sem extrapolar as capacidades (RDC 657/2022).
-- **Visão (o que queremos nos tornar):** construir a **infraestrutura pessoal de saúde** que acompanha cada pessoa durante toda a vida, tornando o cuidado mais simples, organizado e contínuo. *(Refinamento 10/07 — ver Branding §3.)*
+- **Propósito (por quê existimos):** existimos para que cada pessoa tenha sua história de saúde **organizada, compreendida e sempre a serviço do seu cuidado**. *(Fala da transformação na vida do usuário, não da tecnologia nem da burocracia.)*
+- **Missão (o que fazemos hoje):** **transformar informações de saúde dispersas em uma história de saúde organizada e contínua, que permita compreender e acompanhar melhor o cuidado ao longo da vida** — reduzindo o trabalho administrativo, sem extrapolar as capacidades (RDC 657/2022).
+- **Visão (o que queremos nos tornar):** construir a **plataforma de organização e continuidade da saúde** que acompanha cada história ao longo de toda a vida, tornando o cuidado mais simples, organizado e contínuo. *(Refinamento 10/07 — ver Branding §3.)*
 
 ## 2. Tese · Produto · Ativo `[Constituição]`
 - **Tese:** a SINTERA **transforma burocracia recorrente em continuidade automática.**

@@ -13,9 +13,9 @@ A SINTERA reúne e organiza automaticamente as **informações e registros de sa
 *(A formulação anterior "Você envia os documentos. A SINTERA faz o resto." foi substituída em 09/07 — decisão da fundadora — por ser subjetiva/vaga; a nova centra continuidade + organização como mecanismo. Ver §12.)*
 
 ## 3. Propósito, Missão, Visão e Valores
-- **Propósito** *(por quê existimos — impacto na vida do usuário):* que toda pessoa tenha sua história de saúde **organizada, compreendida e sempre a serviço do seu cuidado**.
-- **Missão** *(o que fazemos hoje):* transformar **informações de saúde dispersas** em uma **história de saúde organizada, contínua e útil** para o acompanhamento ao longo da vida.
-- **Visão** *(o que queremos nos tornar):* construir a **infraestrutura pessoal de saúde** que acompanha cada pessoa durante toda a vida, tornando o cuidado mais simples, organizado e contínuo.
+- **Propósito** *(por quê existimos — impacto na vida do usuário):* existimos para que cada pessoa tenha sua história de saúde **organizada, compreendida e sempre a serviço do seu cuidado**.
+- **Missão** *(o que fazemos hoje):* transformar **informações de saúde dispersas** em uma **história de saúde organizada e contínua**, que permita **compreender e acompanhar melhor o cuidado ao longo da vida**.
+- **Visão** *(o que queremos nos tornar):* construir a **plataforma de organização e continuidade da saúde** que acompanha **cada história ao longo de toda a vida**, tornando o cuidado mais simples, organizado e contínuo.
   *(Refinamento 10/07 — reencadeia os 3 conceitos: Propósito = impacto · Missão = transformar disperso em história · Visão = a infraestrutura que acompanha; sem prometer diagnóstico/inteligência clínica.)*
 - **Valores:** **Clareza** (informação compreensível) · **Confiança** (toda informação tem origem e rastreabilidade) · **Simplicidade** (menos esforço, menos repetição, menos burocracia) · **Assistência** (a tecnologia trabalha junto da pessoa, nunca no lugar dela) · **Responsabilidade** (organiza informações; as decisões clínicas permanecem humanas).
 
