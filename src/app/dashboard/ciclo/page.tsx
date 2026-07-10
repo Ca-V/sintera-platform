@@ -18,6 +18,7 @@ import ListCard from '@/components/ListCard'
 import Card from '@/components/ui/Card'
 // Taxonomia de métodos contraceptivos = SSOT em @/lib/cycle (compartilhada com o Relatório).
 import { CONTRACEPTIVE_KINDS as KINDS, contraceptiveLabel as kindLabel } from '@/lib/cycle'
+import Disclaimer from '@/components/ui/Disclaimer'
 
 interface Method {
   id: string; kind: string; brand: string | null; startedOn: string | null
@@ -363,7 +364,7 @@ export default function CicloPage() {
                 ))}
               </div>
             )}
-            <p className="font-body text-[11px] text-mauve mt-3">Ciclo médio e previsão são calculados das suas datas — estimativa factual, não um método contraceptivo nem diagnóstico.</p>
+            <Disclaimer variant="ciclo" className="mt-3" />
           </div>
         </>
       )}

@@ -2,33 +2,36 @@
 
 import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
-import { Upload, FlaskConical, TrendingUp } from 'lucide-react'
+import { Upload, Layers, TrendingUp } from 'lucide-react'
 
+// Camada 4 da narrativa — "Como funciona". Reframe completo (fora o fluxo
+// antigo de "upload de laudo → biomarcadores"): o fluxo real da plataforma
+// horizontal, na perspectiva do usuário.
 const steps = [
   {
     number: '01',
     icon: Upload,
-    title: 'Faça upload do laudo',
-    description: 'Envie seu laudo laboratorial em PDF — de qualquer laboratório. O processo leva menos de 1 minuto.',
-    detail: 'Suportamos laudos em PDF de texto nativo. Não importa o laboratório ou o formato.',
-    color: '#EDD5DF',
-    iconColor: '#9A6478',
+    title: 'Registre e reúna suas informações',
+    description: 'Cadastre suas informações e adicione documentos e registros recebidos ao longo da sua jornada de saúde.',
+    detail: 'Exames, receitas, laudos, consultas, medicamentos, hábitos — tudo em um só lugar.',
+    color: '#CDEAE4',
+    iconColor: '#0E6E64',
   },
   {
     number: '02',
-    icon: FlaskConical,
-    title: 'A IA extrai os biomarcadores',
-    description: 'Nossa IA lê o laudo e extrai automaticamente todos os biomarcadores — valores, unidades e referências do próprio laudo.',
-    detail: 'Glicemia, colesterol, vitaminas, hormônios, hemograma — tudo estruturado automaticamente, sem que você precise digitar nada.',
-    color: '#E2D9EE',
-    iconColor: '#7A6490',
+    icon: Layers,
+    title: 'A SINTERA organiza tudo para você',
+    description: 'Suas informações passam a compor uma visão organizada e contínua da sua saúde, fácil de consultar sempre que precisar.',
+    detail: 'Sem digitação e sem planilha — a organização acontece automaticamente.',
+    color: '#E7F3EF',
+    iconColor: '#14746B',
   },
   {
     number: '03',
     icon: TrendingUp,
-    title: 'Acompanhe sua evolução',
-    description: 'Visualize como cada biomarcador evoluiu ao longo dos anos. Leve essa visão para a sua próxima consulta.',
-    detail: 'Histórico longitudinal, filtros por período, resumo de variação percentual, export para o médico. Tudo em um lugar só.',
+    title: 'Compreenda sua evolução e compartilhe',
+    description: 'Visualize sua trajetória de saúde ao longo do tempo, acompanhe seus compromissos e compartilhe suas informações com os profissionais que participam do seu cuidado.',
+    detail: 'Uma visão clara para levar à consulta — a decisão permanece com os profissionais.',
     color: '#C8E2DB',
     iconColor: '#4A8F7A',
   },
@@ -48,7 +51,7 @@ export default function HowItWorks() {
           </span>
           <h2 className="font-display text-4xl lg:text-5xl font-semibold text-onyx leading-tight mb-4">
             Três passos.<br />
-            <span className="text-gradient">Anos de dados organizados.</span>
+            <span className="text-gradient">Uma visão completa da sua saúde.</span>
           </h2>
         </motion.div>
 

@@ -138,7 +138,7 @@ function LegacyDashboard() {
           {greeting}, {displayName} 👋
         </h1>
         <p className="font-body text-sm text-mauve mt-1">
-          Seus dados de saúde organizados em um lugar só.
+          Você envia os documentos; a SINTERA cuida do resto.
         </p>
       </motion.div>
 
@@ -203,14 +203,14 @@ function LegacyDashboard() {
           <div className="w-16 h-16 rounded-2xl gradient-sintera-soft flex items-center justify-center mx-auto mb-4">
             <Upload size={28} className="text-petal" />
           </div>
-          <h2 className="font-display text-lg font-semibold text-onyx mb-2">Comece enviando seu primeiro exame</h2>
+          <h2 className="font-display text-lg font-semibold text-onyx mb-2">Envie um documento. A SINTERA cuida do resto.</h2>
           <p className="font-body text-sm text-mauve max-w-sm mx-auto mb-6">
-            Adicione um laudo em PDF e a SINTERA extrai automaticamente todos os biomarcadores via IA.
+            Um exame, uma receita ou um atestado — a SINTERA lê, extrai os dados e organiza tudo para você.
           </p>
           <button
-            onClick={() => router.push('/dashboard/exams')}
+            onClick={() => setIntakeOpen(true)}
             className="inline-flex items-center gap-2 gradient-sintera text-white font-body text-sm font-medium px-6 py-2.5 rounded-full hover:opacity-90 transition-opacity shadow-sm">
-            <Upload size={15} /> Adicionar exame
+            <FilePlus size={15} /> Adicionar documento
           </button>
         </MotionCard>
       )}

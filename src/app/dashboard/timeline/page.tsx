@@ -15,6 +15,7 @@ import {
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import TimelineEntry from '@/components/entry/TimelineEntry'
+import Disclaimer from '@/components/ui/Disclaimer'
 import { useUser } from '@/context/UserContext'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import ConfirmDialog from '@/components/ConfirmDialog'
@@ -401,9 +402,7 @@ function LegacyTimeline() {
         </div>
       )}
 
-      <p className="font-body text-[11px] text-mauve/40 text-center">
-        Organização factual do seu Histórico. Não constitui diagnóstico nem avaliação clínica.
-      </p>
+      <Disclaimer variant="geral" className="text-center" />
 
       {/* Formulário ÚNICO de evento (criar/editar) — o MESMO da Agenda */}
       <AgendarModal

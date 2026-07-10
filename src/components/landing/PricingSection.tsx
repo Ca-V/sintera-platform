@@ -6,15 +6,14 @@ import { useRef } from 'react'
 import { Check, ArrowRight } from 'lucide-react'
 
 const features = [
-  'Upload ilimitado de laudos em PDF',
-  'Extração automática de biomarcadores via IA',
-  'Histórico longitudinal completo',
-  'Filtros por ano, tipo e período',
-  'Export individual em CSV e PDF',
-  'Integração com Google Calendar e Outlook',
-  'Agendamento de exames e consultas',
-  'Dados protegidos — LGPD compliant',
-  'Exclusão de conta a qualquer momento',
+  'Documentos e registros de saúde ilimitados',
+  'Organização automática — sem digitação',
+  'Sua história de saúde em uma linha do tempo',
+  'Registro de consultas, medicamentos, sintomas e hábitos',
+  'Lembretes de compromissos por e-mail e WhatsApp',
+  'Relatórios prontos para compartilhar',
+  'Suas informações protegidas — LGPD',
+  'Exclusão de conta e dados a qualquer momento',
 ]
 
 export default function PricingSection() {
@@ -30,12 +29,15 @@ export default function PricingSection() {
             Planos
           </span>
           <h2 className="font-display text-4xl lg:text-5xl font-semibold text-onyx leading-tight mb-4">
-            Gratuito agora.<br />
-            <span className="text-gradient">Para sempre transparente.</span>
+            Gratuito agora.
           </h2>
+          <p className="font-display text-2xl lg:text-3xl font-medium text-gradient leading-snug mb-5 max-w-2xl mx-auto">
+            Transparência, privacidade e confiança. Sempre.
+          </p>
           <p className="font-body text-mauve text-lg max-w-xl mx-auto">
-            No momento, o acesso é completamente gratuito.
-            Quando lançarmos os planos pagos, você será avisada com antecedência.
+            Hoje todos os recursos da SINTERA estão disponíveis gratuitamente. Se novos planos forem
+            disponibilizados no futuro, você será informada com antecedência, com total transparência
+            e liberdade para decidir.
           </p>
         </motion.div>
 

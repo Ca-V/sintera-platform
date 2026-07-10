@@ -2,62 +2,47 @@
 
 import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
-import { FileText, TrendingUp, Search, Download, CalendarDays, FlaskConical } from 'lucide-react'
+import { FileText, Activity, ClipboardList, Bell, FileCheck, Share2 } from 'lucide-react'
 
+// Camada 2 da narrativa — "Como a SINTERA ajuda no dia a dia".
+// Perspectiva no USUÁRIO (o que ele ganha), não na plataforma. Recupera o
+// diferencial central (menos trabalho administrativo) no título da seção.
 const features = [
   {
     icon: FileText,
-    title: 'Upload de laudos PDF',
-    description: 'Envie qualquer laudo laboratorial em PDF — de qualquer laboratório brasileiro. A IA lê e extrai automaticamente todos os biomarcadores com valores e referências.',
-    iconColor: 'text-petal',
-    iconBg: 'bg-blush',
-    span: 'lg:col-span-1 lg:row-span-2',
-    large: true,
+    title: 'Seus documentos em ordem',
+    description: 'Exames, receitas e laudos reunidos e organizados automaticamente, sem digitação.',
+    iconColor: 'text-petal', iconBg: 'bg-blush',
   },
   {
-    icon: TrendingUp,
-    title: 'Histórico longitudinal',
-    description: 'Visualize a evolução de cada biomarcador ao longo do tempo — de 2020 até hoje.',
-    iconColor: 'text-sage',
-    iconBg: 'bg-sage-light',
-    span: 'lg:col-span-1',
-    large: false,
+    icon: Activity,
+    title: 'Um acompanhamento contínuo',
+    description: 'Tudo o que acontece com a sua saúde reunido em uma linha do tempo clara.',
+    iconColor: 'text-sage', iconBg: 'bg-sage-light',
   },
   {
-    icon: Search,
-    title: 'Filtros inteligentes',
-    description: 'Encontre qualquer exame por ano, tipo, nome ou status em segundos.',
-    iconColor: 'text-lavender',
-    iconBg: 'bg-lavender-light',
-    span: 'lg:col-span-1',
-    large: false,
+    icon: ClipboardList,
+    title: 'Sua rotina toda em um lugar',
+    description: 'Registre consultas, medicamentos, sintomas e hábitos com poucos toques.',
+    iconColor: 'text-lavender', iconBg: 'bg-lavender-light',
   },
   {
-    icon: Download,
-    title: 'Exportação',
-    description: 'Exporte qualquer exame em CSV ou PDF para compartilhar com seu médico.',
-    iconColor: 'text-gold',
-    iconBg: 'bg-warm',
-    span: 'lg:col-span-1',
-    large: false,
+    icon: Bell,
+    title: 'Nunca perca um compromisso',
+    description: 'Você recebe lembretes dos seus compromissos de saúde por e-mail e WhatsApp.',
+    iconColor: 'text-petal', iconBg: 'bg-blush',
   },
   {
-    icon: CalendarDays,
-    title: 'Agenda de saúde',
-    description: 'Crie lembretes de exames e consultas no Google Calendar, Outlook ou Apple Calendar.',
-    iconColor: 'text-petal',
-    iconBg: 'bg-blush',
-    span: 'lg:col-span-1',
-    large: false,
+    icon: FileCheck,
+    title: 'Relatórios prontos na hora',
+    description: 'Um resumo organizado da sua saúde para levar à consulta quando precisar.',
+    iconColor: 'text-gold', iconBg: 'bg-warm',
   },
   {
-    icon: FlaskConical,
-    title: 'Índice por exame',
-    description: 'Veja a proporção de biomarcadores dentro e fora da referência em cada laudo processado.',
-    iconColor: 'text-sage',
-    iconBg: 'bg-sage-light',
-    span: 'lg:col-span-1',
-    large: false,
+    icon: Share2,
+    title: 'Compartilhe em segundos',
+    description: 'Leve suas informações organizadas aos profissionais que cuidam de você.',
+    iconColor: 'text-sage', iconBg: 'bg-sage-light',
   },
 ]
 
@@ -71,14 +56,15 @@ export default function Features() {
         <motion.div initial={{ opacity: 0, y: 24 }} animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.65 }} className="text-center mb-16">
           <span className="inline-block px-4 py-1.5 rounded-full bg-blush border border-petal-light text-xs font-body font-medium text-petal-dark uppercase tracking-wider mb-5">
-            Funcionalidades
+            No dia a dia
           </span>
           <h2 className="font-display text-4xl lg:text-5xl font-semibold text-onyx leading-tight mb-4">
-            Tudo o que você precisa<br />
-            <span className="text-gradient">para organizar a sua rotina de saúde.</span>
+            Menos tempo organizando.<br />
+            <span className="text-gradient">Mais tempo cuidando de você.</span>
           </h2>
           <p className="font-body text-mauve text-lg max-w-xl mx-auto">
-            Dos exames aos hábitos — reunidos e organizados num só lugar, sem complicação.
+            A burocracia da saúde deixa de tomar seu tempo: a SINTERA cuida das informações para
+            você se dedicar ao que realmente importa — cuidar de você.
           </p>
         </motion.div>
 
@@ -89,7 +75,7 @@ export default function Features() {
               <motion.div key={f.title}
                 initial={{ opacity: 0, y: 24 }} animate={inView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.5, delay: 0.1 + i * 0.08, ease: 'easeOut' }}
-                className={`card-premium p-7 flex flex-col gap-4 ${f.span}`}>
+                className="card-premium p-7 flex flex-col gap-4">
                 <div className={`w-11 h-11 rounded-2xl ${f.iconBg} flex items-center justify-center flex-shrink-0`}>
                   <Icon size={20} className={f.iconColor} />
                 </div>

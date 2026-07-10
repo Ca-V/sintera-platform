@@ -18,6 +18,7 @@ import { DOMAIN_LABEL, DOMAINS, fmtOmicsDate, type OmicsDomain } from '@/lib/omi
 import { uploadAndIngest } from '@/lib/omics/ingestClient'
 import ListCard from '@/components/ListCard'
 import Card from '@/components/ui/Card'
+import Disclaimer from '@/components/ui/Disclaimer'
 
 interface Panel {
   id: string
@@ -98,7 +99,7 @@ export default function OmicsListPage() {
         <div>
           <div className="inline-flex items-center gap-1.5 text-petal mb-2">
             <Dna size={16} />
-            <span className="font-body text-xs font-medium uppercase tracking-wider">Exames</span>
+            <span className="font-body text-xs font-medium uppercase tracking-wider">Ômica</span>
           </div>
           <h1 className="font-display text-2xl font-semibold text-onyx">Ômica</h1>
           <p className="font-body text-sm text-mauve mt-1">Metabolômica, proteômica, microbioma e outros. Toque em <strong className="text-onyx/70 font-medium">Adicionar exame</strong> e anexe o laudo (PDF, foto, CSV ou JSON). A SINTERA organiza, versiona e compara seus dados — sem interpretação clínica.</p>
@@ -204,9 +205,7 @@ export default function OmicsListPage() {
         </div>
       )}
 
-      <p className="font-body text-[11px] text-mauve text-center leading-relaxed">
-        Organização factual dos seus dados ômicos. A SINTERA não interpreta resultados nem gera conclusões clínicas.
-      </p>
+      <Disclaimer variant="laudo" className="text-center" />
     </div>
   )
 }

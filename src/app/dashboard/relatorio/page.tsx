@@ -13,6 +13,7 @@
 import { useCallback, useEffect, useState, type ElementType } from 'react'
 import Link from 'next/link'
 import ReportEntry from '@/components/entry/ReportEntry'
+import Disclaimer from '@/components/ui/Disclaimer'
 import ProvenanceLine from '@/components/ui/ProvenanceLine'
 import SelectionToolbar from '@/components/ui/SelectionToolbar'
 import PeriodSelector from '@/components/ui/PeriodSelector'
@@ -583,7 +584,7 @@ function LegacyReport() {
         {/* Cabeçalho */}
         <div className="border-b border-border pb-4">
           <h1 className="font-display text-2xl font-semibold text-onyx">Relatório</h1>
-          <p className="font-body text-sm text-mauve mt-1">Organização estruturada das informações registradas na SINTERA para compartilhamento e acompanhamento da saúde.</p>
+          <p className="font-body text-sm text-mauve mt-1">A SINTERA reúne seus exames, medicamentos e consultas num relatório pronto para o seu médico.</p>
           <p className="font-body text-xs text-mauve mt-1.5">{nome} · Gerado em {hoje}</p>
         </div>
 
@@ -914,11 +915,7 @@ function LegacyReport() {
         </section>
         )}
 
-        <p className="font-body text-[11px] text-mauve border-t border-border pt-3 leading-relaxed">
-          Este relatório organiza os dados informados pela própria pessoa na plataforma SINTERA. <strong>Não é laudo, diagnóstico
-          ou parecer</strong> e não substitui avaliação profissional. Destinado a apoiar a conversa com seu profissional de saúde
-          (médico, psicólogo, nutricionista, fisioterapeuta, dentista, entre outros).
-        </p>
+        <Disclaimer variant="relatorio" className="border-t border-border pt-3" />
       </div>
     </div>
   )

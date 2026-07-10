@@ -24,10 +24,10 @@ export default function Hero() {
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <motion.div animate={{ rotate: 360 }} transition={{ duration: 80, repeat: Infinity, ease: 'linear' }}
           className="absolute top-1/2 right-[-10%] -translate-y-1/2 w-[700px] h-[700px] rounded-full"
-          style={{ border: '1px solid rgba(194,132,154,0.12)' }} />
+          style={{ border: '1px solid rgba(87,179,173,0.16)' }} />
         <motion.div animate={{ rotate: -360 }} transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
           className="absolute top-1/2 right-[-6%] -translate-y-1/2 w-[540px] h-[540px] rounded-full"
-          style={{ border: '1.5px dashed rgba(168,156,189,0.15)' }} />
+          style={{ border: '1.5px dashed rgba(14,110,100,0.13)' }} />
         <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-petal-light/20 blur-3xl animate-breathe" />
         <div className="absolute -bottom-48 left-[20%] w-[500px] h-[500px] rounded-full bg-lavender-light/25 blur-3xl animate-breathe delay-300" />
       </div>
@@ -43,31 +43,29 @@ export default function Hero() {
                 <span className="w-5 h-5 rounded-full gradient-sintera flex items-center justify-center">
                   <span className="text-white text-[9px]">✦</span>
                 </span>
-                Organize, acompanhe e compartilhe sua saúde
+                Sua saúde, organizada para toda a vida.
               </span>
             </motion.div>
 
             <motion.h1 variants={fadeUp(0.2)} initial="hidden" animate="show"
-              className="font-display font-semibold leading-[1.05] text-onyx mb-6"
-              style={{ fontSize: 'clamp(2.8rem, 5.5vw, 4.2rem)' }}>
-              Sua saúde tem{' '}
-              <span className="text-gradient italic">uma história.</span>
-              <br />
-              A SINTERA te ajuda a{' '}
-              <span className="relative inline-block">
-                organizá-la.
-                <svg className="absolute -bottom-1 left-0 w-full" height="6" viewBox="0 0 120 6" preserveAspectRatio="none">
-                  <path d="M0 5 Q30 1 60 5 Q90 9 120 5" stroke="#C2849A" strokeWidth="1.8" fill="none" strokeLinecap="round" />
-                </svg>
-              </span>
+              className="font-display font-semibold leading-[1.1] text-onyx mb-6"
+              style={{ fontSize: 'clamp(1.9rem, 3.6vw, 2.9rem)' }}>
+              Todas as informações da sua saúde, organizadas para que você compreenda melhor a{' '}
+              <span className="text-gradient italic">evolução do seu cuidado ao longo da vida.</span>
             </motion.h1>
 
             <motion.p variants={fadeUp(0.32)} initial="hidden" animate="show"
-              className="font-body text-[1.05rem] text-mauve leading-relaxed max-w-[510px] mb-8">
-              A SINTERA reúne num só lugar seus exames e documentos, medicamentos, condições de saúde,
-              hábitos, medidas e sinais vitais. Organiza suas informações, mostra a evolução ao longo do
-              tempo e gera um relatório para compartilhar com seus profissionais — de forma clara e factual.
-              Não interpreta nem substitui a avaliação profissional.
+              className="font-body text-[1.05rem] text-mauve leading-relaxed max-w-[540px] mb-6">
+              A SINTERA reúne e organiza as informações da sua saúde à medida que você registra seus
+              dados e adiciona documentos e registros de saúde, construindo uma visão clara da sua
+              saúde ao longo do tempo.
+            </motion.p>
+
+            {/* Frase de impacto */}
+            <motion.p variants={fadeUp(0.4)} initial="hidden" animate="show"
+              className="font-display italic text-petal-dark leading-snug mb-8"
+              style={{ fontSize: 'clamp(1.2rem, 2vw, 1.5rem)' }}>
+              Quem compreende melhor sua saúde, cuida melhor dela.
             </motion.p>
 
             <motion.div variants={fadeUp(0.44)} initial="hidden" animate="show"
@@ -85,15 +83,23 @@ export default function Hero() {
               </Link>
             </motion.div>
 
-            {/* Lista de espera continua disponível para quem quer só acompanhar */}
+            {/* Texto complementar */}
             <motion.p variants={fadeUp(0.5)} initial="hidden" animate="show"
+              className="font-body text-sm text-mauve leading-relaxed max-w-[540px] mb-5">
+              Ao transformar informações dispersas em uma história de saúde organizada e contínua, a
+              SINTERA facilita o acompanhamento da sua saúde e apoia as decisões que você toma junto aos
+              profissionais que participam do seu cuidado.
+            </motion.p>
+
+            {/* Lista de espera continua disponível para quem quer só acompanhar */}
+            <motion.p variants={fadeUp(0.58)} initial="hidden" animate="show"
               className="font-body text-sm text-mauve mb-10">
               Prefere só acompanhar a evolução da plataforma?{' '}
               <Link href="/lista-de-espera" className="text-petal font-medium hover:underline">Entre na lista de espera</Link>.
             </motion.p>
 
             {/* 3 pilares */}
-            <motion.div variants={fadeUp(0.56)} initial="hidden" animate="show"
+            <motion.div variants={fadeUp(0.64)} initial="hidden" animate="show"
               className="flex flex-col sm:flex-row gap-4">
               {[
                 { icon: Upload,     color: 'text-petal',    bg: 'bg-blush',          text: 'Tudo num só lugar, organizado'   },
@@ -175,9 +181,9 @@ function ProductPreview() {
           {/* Stats */}
           <div className="grid grid-cols-3 gap-2">
             {[
-              { label: 'Biomarcadores', value: '24',  color: '#C2849A', bg: '#F8EDF2' },
+              { label: 'Biomarcadores', value: '24',  color: '#0E6E64', bg: '#E7F3EF' },
               { label: 'Dentro ref.',   value: '18',  color: '#7DAF9E', bg: '#EBF5F1' },
-              { label: 'Fora ref.',     value: '6',   color: '#A89CBD', bg: '#F0EBF7' },
+              { label: 'Fora ref.',     value: '6',   color: '#E28C7D', bg: '#FBEEEA' },
             ].map(m => (
               <div key={m.label} className="rounded-xl py-2.5 px-2 text-center border border-border/50"
                 style={{ backgroundColor: m.bg }}>
@@ -214,7 +220,7 @@ function ProductPreview() {
         <div className="flex items-end gap-1 h-8">
           {[32, 28, 22, 18].map((v, i) => (
             <div key={i} className="flex-1 rounded-sm"
-              style={{ height: `${(v / 36) * 100}%`, backgroundColor: i === 3 ? '#A89CBD' : '#E2D9EE' }} />
+              style={{ height: `${(v / 36) * 100}%`, backgroundColor: i === 3 ? '#0E6E64' : '#CDEAE4' }} />
           ))}
         </div>
         <div className="flex justify-between mt-1">

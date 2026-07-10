@@ -16,6 +16,7 @@ import CreateRecordMenu from '@/components/ui/CreateRecordMenu'
 import Card from '@/components/ui/Card'
 import MotionCard from '@/components/ui/MotionCard'
 import ActionCard from '@/components/ui/ActionCard'
+import Disclaimer from '@/components/ui/Disclaimer'
 import type { Database } from '@/lib/supabase/types'
 
 type Exam = Database['public']['Tables']['exams']['Row']
@@ -265,7 +266,7 @@ export default function ExamsPage() {
         className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Exames</h1>
-          <p className="font-body text-sm text-mauve">Envie seus <strong className="font-medium text-onyx/70">exames</strong> (extraímos os dados por IA), <strong className="font-medium text-onyx/70">receitas</strong> e outros arquivos de saúde — por PDF ou foto.</p>
+          <p className="font-body text-sm text-mauve"><strong className="font-medium text-onyx/70">Solte o laudo — a SINTERA lê e extrai os dados por você.</strong> Também guarda receitas e outros documentos.</p>
         </div>
         {/* Menu de criação de registros (padrão oficial DS-001) — mesmo em todo módulo */}
         <CreateRecordMenu label="Novo exame" methods={['file', 'camera']}
@@ -613,6 +614,8 @@ export default function ExamsPage() {
           })}
         </div>
       )}
+
+      <Disclaimer variant="laudo" className="text-center" />
     </div>
   )
 }

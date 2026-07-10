@@ -10,13 +10,14 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Loader2, Plus, X, HeartPulse, ArrowLeft, Trash2 } from 'lucide-react'
+import { Loader2, Plus, X, ArrowLeft, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import Sparkline, { parseNum } from '@/components/Sparkline'
 import ListCard from '@/components/ListCard'
 import Card from '@/components/ui/Card'
+import Disclaimer from '@/components/ui/Disclaimer'
 
 type Vital = 'pressao_arterial' | 'frequencia_cardiaca' | 'glicemia' | 'saturacao' | 'temperatura' | 'outro_sinal'
 
@@ -127,12 +128,8 @@ export default function SinaisVitaisPage() {
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div>
-          <div className="inline-flex items-center gap-1.5 text-petal mb-2">
-            <HeartPulse size={16} />
-            <span className="font-body text-xs font-medium uppercase tracking-wider">Histórico</span>
-          </div>
           <h1 className="font-display text-2xl font-semibold text-onyx">Sinais vitais</h1>
-          <p className="font-body text-sm text-mauve mt-1">Acompanhe pressão arterial, frequência cardíaca, glicemia e outros ao longo do tempo. Registro seu — sem juízo clínico.</p>
+          <p className="font-body text-sm text-mauve mt-1">Acompanhe pressão arterial, frequência cardíaca, glicemia e outros ao longo do tempo.</p>
         </div>
         <button onClick={() => (showForm ? (reset(), setShowForm(false)) : (reset(), setShowForm(true)))}
           className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0">
@@ -241,9 +238,7 @@ export default function SinaisVitaisPage() {
         </div>
       )}
 
-      <p className="font-body text-[11px] text-mauve text-center leading-relaxed">
-        Registro factual dos seus sinais vitais. Não interpreta nem diagnostica — leve os dados ao seu profissional de saúde.
-      </p>
+      <Disclaimer variant="geral" className="text-center" />
     </div>
   )
 }
