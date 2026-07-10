@@ -85,8 +85,8 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
     db.from('profiles').select('name, height_cm').eq('id', uid).maybeSingle(),
     db.from('medications').select('name, kind, dose, frequency, started_on, until_date, status').eq('user_id', uid).order('status'),
     db.from('health_events').select('id, title, event_type, event_date, notes, professional_kind, status, amount_cents, direct_expense').eq('user_id', uid).eq('synthetic', false).order('event_date', { ascending: false }),
-    db.from('exams').select('type, exam_date, created_at, file_url').eq('user_id', uid).order('created_at', { ascending: false }),
-    db.from('body_metrics').select('metric, label, value_text, unit, measured_on').eq('user_id', uid).order('measured_on', { ascending: false }),
+    db.from('exams').select('id, type, exam_date, created_at, file_url').eq('user_id', uid).order('created_at', { ascending: false }),
+    db.from('body_metrics').select('metric, label, value_text, unit, measured_on, exam_id').eq('user_id', uid).order('measured_on', { ascending: false }),
     db.from('health_conditions').select('scope, name, relative, since_label, notes').eq('user_id', uid).order('created_at', { ascending: false }),
     db.from('life_habits').select('category, description, frequency, notes').eq('user_id', uid).order('created_at', { ascending: false }),
     db.from('health_resources').select('name, resource_type, prescriber, started_on, attributes, file_url').eq('user_id', uid).eq('resource_type', 'correcao_visual').order('created_at', { ascending: false }),
@@ -124,6 +124,11 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
   const mzAll = (measures ?? []) as Array<Record<string, unknown>>
   const mzArr = mzAll.filter(m => !isVital(m.metric as string) && inPeriod(m.measured_on as string, rp))
   const vitalArr = mzAll.filter(m => isVital(m.metric as string) && inPeriod(m.measured_on as string, rp))
+  // Vínculo medida → laudo (documento original) + resumo antropométrico (estado atual).
+  const examById = new Map(((exams ?? []) as Array<Record<string, unknown>>).map(e => [e.id as string, e]))
+  const latestPeso = mzAll.find(m => (m.metric as string) === 'peso') ?? null
+  const pesoNum = latestPeso ? parseFloat(String(latestPeso.value_text).replace(',', '.')) : NaN
+  const imcVal = !Number.isNaN(pesoNum) && alturaCm != null ? pesoNum / Math.pow((alturaCm as number) / 100, 2) : null
   const cdArr = (conditions ?? []) as Array<Record<string, unknown>>
   const condProprias = cdArr.filter(c => c.scope === 'propria')
   const condFamiliar = cdArr.filter(c => c.scope === 'familiar')
@@ -275,16 +280,35 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
       {show('medidas') && (
       <section style={{ marginBottom: 22 }}>
         <h2 style={{ fontSize: 15 }}>Medidas corporais</h2>
-        {alturaCm != null && <p style={{ fontSize: 14, margin: '0 0 6px' }}><span style={{ color: '#8a7b92' }}>Altura:</span> {alturaCm} cm</p>}
-        {mzArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>{alturaCm != null ? 'Sem outras medidas registradas.' : 'Nenhuma registrada.'}</p> : (
+        {(latestPeso || alturaCm != null || imcVal != null) && (
+          <p style={{ fontSize: 14, margin: '0 0 6px' }}>
+            {[
+              latestPeso ? `Peso ${latestPeso.value_text as string}${latestPeso.unit ? ` ${latestPeso.unit as string}` : ''} (${fmt(latestPeso.measured_on as string)})` : null,
+              alturaCm != null ? `Altura ${alturaCm} cm` : null,
+              imcVal != null ? `IMC ${imcVal.toFixed(1)} kg/m²` : null,
+            ].filter(Boolean).join('  ·  ')}
+          </p>
+        )}
+        {mzArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>{latestPeso || alturaCm != null ? 'Sem outras medidas no período.' : 'Nenhuma registrada.'}</p> : (
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
             <tbody>
-              {mzArr.map((m, i) => (
+              {mzArr.map((m, i) => {
+                const ex = m.exam_id ? examById.get(m.exam_id as string) : null
+                return (
                 <tr key={i} style={{ borderBottom: '1px solid #f2eef4' }}>
                   <td style={{ padding: '6px 12px 6px 0', color: '#8a7b92', whiteSpace: 'nowrap', verticalAlign: 'top' }}>{fmt(m.measured_on as string)}</td>
-                  <td style={{ padding: '6px 0' }}><span style={{ color: '#8a7b92' }}>{m.metric === 'outro' && m.label ? (m.label as string) : METRIC_LABEL[m.metric as string] ?? 'Medida'}:</span> {m.value_text as string}{m.unit ? ` ${m.unit as string}` : ''}</td>
+                  <td style={{ padding: '6px 0' }}>
+                    <span style={{ color: '#8a7b92' }}>{m.metric === 'outro' && m.label ? (m.label as string) : METRIC_LABEL[m.metric as string] ?? 'Medida'}:</span> {m.value_text as string}{m.unit ? ` ${m.unit as string}` : ''}
+                    {ex ? (
+                      <span style={{ display: 'block', fontSize: 13, marginTop: 2, color: '#8a7b92' }}>
+                        Laudo: {(ex.type as string) || 'Exame'}{ex.exam_date ? ` · ${fmt(ex.exam_date as string)}` : ''}
+                        {ex.file_url ? <>{'  ·  '}<a href={ex.file_url as string} target="_blank" rel="noopener noreferrer" style={{ color: '#0E6E64', textDecoration: 'none' }}>Ver documento original</a></> : null}
+                      </span>
+                    ) : null}
+                  </td>
                 </tr>
-              ))}
+                )
+              })}
             </tbody>
           </table>
         )}

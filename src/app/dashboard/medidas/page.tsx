@@ -19,6 +19,8 @@ import ListCard from '@/components/ListCard'
 import Card from '@/components/ui/Card'
 import Section from '@/components/ui/Section'
 import Disclaimer from '@/components/ui/Disclaimer'
+import ProvenanceLine from '@/components/ui/ProvenanceLine'
+import { examProvenance } from '@/lib/provenance'
 
 type Metric =
   | 'peso' | 'altura' | 'circunferencia_cintura'
@@ -50,7 +52,12 @@ interface Entry {
   unit: string | null
   measuredOn: string
   notes: string | null
+  examId: string | null
 }
+
+// Exame (laudo) que a pessoa já enviou em Exames — usado para vincular a medida ao
+// documento original (ex.: laudo de bioimpedância).
+interface ExamRef { id: string; type: string; examDate: string | null; fileUrl: string | null }
 
 function fmt(date: string): string {
   const d = new Date(`${date}T00:00:00`)
@@ -96,6 +103,7 @@ export default function MedidasPage() {
   const { user, profile, loading: authLoading } = useUser()
   const supabase = createClient()
   const [items, setItems] = useState<Entry[]>([])
+  const [exams, setExams] = useState<ExamRef[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
 
@@ -106,6 +114,7 @@ export default function MedidasPage() {
   const [unit, setUnit] = useState('kg')
   const [date, setDate] = useState('')
   const [notes, setNotes] = useState('')
+  const [examId, setExamId] = useState('')
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
 
@@ -113,6 +122,7 @@ export default function MedidasPage() {
   const [scanning, setScanning] = useState(false)
   const [scanRows, setScanRows] = useState<{ metric: Metric; value: string; unit: string }[] | null>(null)
   const [scanDate, setScanDate] = useState('')
+  const [scanExamId, setScanExamId] = useState('')
   const [scanErr, setScanErr] = useState<string | null>(null)
   const [savingScan, setSavingScan] = useState(false)
   const scanRef = useRef<HTMLInputElement>(null)
@@ -121,13 +131,22 @@ export default function MedidasPage() {
     if (!user) return
     setLoading(true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (supabase as any).from('body_metrics')
-      .select('id, metric, label, value_text, unit, measured_on, notes')
-      .eq('user_id', user.id).order('measured_on', { ascending: false })
+    const db = supabase as any
+    const [{ data }, exRes] = await Promise.all([
+      db.from('body_metrics')
+        .select('id, metric, label, value_text, unit, measured_on, notes, exam_id')
+        .eq('user_id', user.id).order('measured_on', { ascending: false }),
+      db.from('exams').select('id, type, exam_date, file_url').eq('user_id', user.id).order('created_at', { ascending: false }),
+    ])
     setItems(((data ?? []) as Array<Record<string, unknown>>).map(m => ({
       id: m.id as string, metric: (m.metric as Metric) ?? 'outro', label: (m.label as string) ?? null,
       valueText: (m.value_text as string) ?? '', unit: (m.unit as string) ?? null,
       measuredOn: m.measured_on as string, notes: (m.notes as string) ?? null,
+      examId: (m.exam_id as string) ?? null,
+    })))
+    setExams(((exRes.data ?? []) as Array<Record<string, unknown>>).map(e => ({
+      id: e.id as string, type: (e.type as string) || 'Exame',
+      examDate: (e.exam_date as string) ?? null, fileUrl: (e.file_url as string) ?? null,
     })))
     setLoading(false)
   }, [user, supabase])
@@ -138,7 +157,7 @@ export default function MedidasPage() {
   useEffect(() => { if (!authLoading) load() }, [authLoading, load])
 
   function chooseMetric(m: Metric) { setMetric(m); setUnit(DEFAULT_UNIT[m]) }
-  function reset() { setMetric('peso'); setLabel(''); setValue(''); setUnit('kg'); setDate(''); setNotes(''); setErr(null) }
+  function reset() { setMetric('peso'); setLabel(''); setValue(''); setUnit('kg'); setDate(''); setNotes(''); setExamId(''); setErr(null) }
 
   async function save() {
     if (!user || saving || !value.trim() || !date) return
@@ -147,6 +166,7 @@ export default function MedidasPage() {
     const { error } = await (supabase as any).from('body_metrics').insert({
       user_id: user.id, metric, label: metric === 'outro' ? (label.trim() || 'Medida') : null,
       value_text: value.trim(), unit: unit.trim() || null, measured_on: date, notes: notes.trim() || null,
+      exam_id: examId || null,
     })
     setSaving(false)
     if (error) { setErr(error.message); return }
@@ -199,12 +219,12 @@ export default function MedidasPage() {
       rows.map(r => ({
         user_id: user.id, metric: r.metric, label: null,
         value_text: r.value.trim(), unit: r.unit || null, measured_on: scanDate,
-        notes: 'Importado de laudo de bioimpedância',
+        notes: 'Importado de laudo de bioimpedância', exam_id: scanExamId || null,
       })),
     )
     setSavingScan(false)
     if (error) { setScanErr(error.message); return }
-    setScanRows(null); await load()
+    setScanRows(null); setScanExamId(''); await load()
   }
 
   // IMC calculado a partir do peso mais recente e da altura do perfil (factual).
@@ -292,6 +312,18 @@ export default function MedidasPage() {
             <input id="medida-scan-date" type="date" value={scanDate} onChange={e => setScanDate(e.target.value)}
               className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
           </div>
+          {exams.length > 0 && (
+            <div>
+              <label htmlFor="medida-scan-exam" className="font-body text-xs text-mauve block mb-1">Vincular ao laudo em Exames (opcional)</label>
+              <select id="medida-scan-exam" value={scanExamId} onChange={e => setScanExamId(e.target.value)}
+                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
+                <option value="">Nenhum</option>
+                {exams.map(ex => (
+                  <option key={ex.id} value={ex.id}>{ex.type}{ex.examDate ? ` · ${fmt(ex.examDate)}` : ''}</option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="space-y-2">
             {scanRows.map((row, i) => (
               <div key={row.metric} className="flex items-center gap-2">
@@ -379,6 +411,21 @@ export default function MedidasPage() {
               <VoiceInput onResult={t => setNotes(v => (v ? v + ' ' : '') + t)} />
             </div>
           </div>
+          {exams.length > 0 && (
+            <div>
+              <label htmlFor="medida-exam" className="font-body text-xs text-mauve block mb-1">Vincular a um laudo (opcional)</label>
+              <select id="medida-exam" value={examId} onChange={e => setExamId(e.target.value)}
+                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
+                <option value="">Nenhum</option>
+                {exams.map(ex => (
+                  <option key={ex.id} value={ex.id}>{ex.type}{ex.examDate ? ` · ${fmt(ex.examDate)}` : ''}</option>
+                ))}
+              </select>
+              <p className="font-body text-[11px] text-mauve mt-1">
+                Veio de um exame/laudo já enviado em <Link href="/dashboard/exams" className="text-petal hover:underline">Exames</Link>? Vincule para abrir o documento original aqui e no relatório.
+              </p>
+            </div>
+          )}
           {err && <p className="font-body text-xs text-red-500">{err}</p>}
           <div className="flex justify-end">
             <button onClick={save} disabled={saving || !value.trim() || !date}
@@ -414,11 +461,22 @@ export default function MedidasPage() {
                 <div className="space-y-2">
                   {list.map(it => {
                     const prefix = it.metric === 'outro' && it.label ? `${it.label}: ` : ''
+                    const ex = it.examId ? exams.find(e => e.id === it.examId) : null
                     return (
                       <ListCard
                         key={it.id}
                         title={`${prefix}${it.valueText}${it.unit ? ` ${it.unit}` : ''}`}
-                        meta={`${fmt(it.measuredOn)}${it.notes ? ` · ${it.notes}` : ''}`}
+                        meta={
+                          <>
+                            {fmt(it.measuredOn)}{it.notes ? ` · ${it.notes}` : ''}
+                            {ex && (
+                              <span className="block mt-0.5">
+                                Laudo: {ex.type}{ex.examDate ? ` · ${fmt(ex.examDate)}` : ''}{' '}
+                                {ex.fileUrl ? <ProvenanceLine provenance={examProvenance({ fileUrl: ex.fileUrl })} showOrigin={false} className="ml-1" /> : null}
+                              </span>
+                            )}
+                          </>
+                        }
                         actions={
                           <button onClick={() => remove(it.id)} disabled={busyId === it.id} title="Remover"
                             className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-red-400 hover:bg-red-50 transition-colors">

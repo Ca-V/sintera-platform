@@ -37,8 +37,8 @@ import { contraceptiveLabel } from '@/lib/cycle'       // SSOT dos métodos cont
 
 interface Med { name: string; kind: string; dose: string | null; frequency: string | null; startedOn: string | null; untilOn: string | null; status: string }
 interface Ev { title: string; eventType: string; prof: string | null; date: string; notes: string | null }
-interface Ex { type: string; date: string; fileUrl: string | null }
-interface Measure { metric: string; label: string | null; valueText: string; unit: string | null; date: string }
+interface Ex { id: string; type: string; date: string; fileUrl: string | null }
+interface Measure { metric: string; label: string | null; valueText: string; unit: string | null; date: string; examId: string | null }
 interface Condition { scope: string; name: string; relative: string | null; since: string | null; notes: string | null }
 interface Habit { category: string; description: string; frequency: string | null; notes: string | null }
 interface Eyewear {
@@ -215,8 +215,8 @@ function LegacyReport() {
     const [medRes, evRes, exRes, mzRes, cdRes, hbRes, ewRes, omRes, ccRes, mpRes, finRes] = await Promise.all([
       db.from('medications').select('name, kind, dose, frequency, started_on, until_date, status').eq('user_id', user.id).order('status'),
       db.from('health_events').select('title, event_type, professional_kind, event_date, notes').eq('user_id', user.id).eq('synthetic', false).order('event_date', { ascending: false }),
-      db.from('exams').select('type, exam_date, created_at, file_url').eq('user_id', user.id).order('created_at', { ascending: false }),
-      db.from('body_metrics').select('metric, label, value_text, unit, measured_on').eq('user_id', user.id).order('measured_on', { ascending: false }),
+      db.from('exams').select('id, type, exam_date, created_at, file_url').eq('user_id', user.id).order('created_at', { ascending: false }),
+      db.from('body_metrics').select('metric, label, value_text, unit, measured_on, exam_id').eq('user_id', user.id).order('measured_on', { ascending: false }),
       db.from('health_conditions').select('scope, name, relative, since_label, notes').eq('user_id', user.id).order('created_at', { ascending: false }),
       db.from('life_habits').select('category, description, frequency, notes').eq('user_id', user.id).order('created_at', { ascending: false }),
       db.from('health_resources').select('name, resource_type, prescriber, started_on, attributes, file_url').eq('user_id', user.id).eq('resource_type', 'correcao_visual').order('created_at', { ascending: false }),
@@ -234,12 +234,13 @@ function LegacyReport() {
       date: e.event_date as string, notes: (e.notes as string) ?? null,
     })))
     setExams(((exRes.data ?? []) as Array<Record<string, unknown>>).map(e => ({
-      type: (e.type as string) || 'Exame', date: (e.exam_date as string) || (e.created_at as string),
+      id: e.id as string, type: (e.type as string) || 'Exame', date: (e.exam_date as string) || (e.created_at as string),
       fileUrl: (e.file_url as string) ?? null,
     })))
     setMeasures(((mzRes.data ?? []) as Array<Record<string, unknown>>).map(m => ({
       metric: (m.metric as string) ?? 'outro', label: (m.label as string) ?? null,
       valueText: (m.value_text as string) ?? '', unit: (m.unit as string) ?? null, date: m.measured_on as string,
+      examId: (m.exam_id as string) ?? null,
     })))
     setConditions(((cdRes.data ?? []) as Array<Record<string, unknown>>).map(c => ({
       scope: (c.scope as string) ?? 'propria', name: (c.name as string) ?? '',
@@ -399,6 +400,12 @@ function LegacyReport() {
     ...perMeasuresCorpo.map(m => m.date), ...perMeasuresVitais.map(m => m.date),
   ].filter(Boolean) as string[]).sort().slice(-1)[0] ?? null
   const alturaCm = (profile as { height_cm?: number | null } | null)?.height_cm ?? null
+  // Resumo antropométrico (estado atual): peso mais recente + altura do perfil + IMC calculado.
+  // Ignora o período (é snapshot atual, como condições/itens em uso). IMC = só aritmética, sem juízo.
+  const examById = new Map(exams.map(e => [e.id, e]))
+  const latestPeso = measuresCorpo.find(m => m.metric === 'peso') ?? null
+  const pesoNum = latestPeso ? parseFloat(String(latestPeso.valueText).replace(',', '.')) : NaN
+  const imcVal = !Number.isNaN(pesoNum) && alturaCm ? pesoNum / Math.pow(alturaCm / 100, 2) : null
   const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
   const brl = (cents: number | null) => `R$ ${((cents ?? 0) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
@@ -796,22 +803,37 @@ function LegacyReport() {
         {sections.medidas && (
         <section id="sec-medidas" style={{ scrollMarginTop: 16 }}>
           <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Medidas Corporais</h2>
-          {alturaCm != null && (
-            <p className="font-body text-xs text-onyx mb-1"><span className="text-mauve">Altura:</span> {alturaCm} cm</p>
+          {(latestPeso || alturaCm != null || imcVal != null) && (
+            <p className="font-body text-xs text-onyx mb-2">
+              {[
+                latestPeso ? `Peso ${latestPeso.valueText}${latestPeso.unit ? ` ${latestPeso.unit}` : ''} (${fmt(latestPeso.date)})` : null,
+                alturaCm != null ? `Altura ${alturaCm} cm` : null,
+                imcVal != null ? `IMC ${imcVal.toFixed(1)} kg/m²` : null,
+              ].filter(Boolean).join(' · ')}
+            </p>
           )}
           {perMeasuresCorpo.length === 0 ? (
-            <p className="font-body text-xs text-mauve">{alturaCm != null ? 'Sem outras medidas registradas.' : 'Nenhuma medida registrada.'}</p>
+            <p className="font-body text-xs text-mauve">{latestPeso || alturaCm != null ? 'Sem outras medidas no período.' : 'Nenhuma medida registrada.'}</p>
           ) : (
             <table className="w-full text-left">
               <tbody>
-                {perMeasuresCorpo.map((m, i) => (
+                {perMeasuresCorpo.map((m, i) => {
+                  const ex = m.examId ? examById.get(m.examId) : null
+                  return (
                   <tr key={i} className="border-b border-border/50">
                     <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(m.date)}</td>
                     <td className="font-body text-xs text-onyx py-1.5">
                       <span className="text-mauve">{m.metric === 'outro' && m.label ? m.label : METRIC_LABEL[m.metric] ?? 'Medida'}:</span> {m.valueText}{m.unit ? ` ${m.unit}` : ''}
+                      {ex ? (
+                        <span className="block mt-0.5 text-mauve">
+                          Laudo: {ex.type}{ex.date ? ` · ${fmt(ex.date)}` : ''}{' '}
+                          {ex.fileUrl ? <ProvenanceLine provenance={examProvenance({ fileUrl: ex.fileUrl })} showOrigin={false} className="ml-1" /> : null}
+                        </span>
+                      ) : null}
                     </td>
                   </tr>
-                ))}
+                  )
+                })}
               </tbody>
             </table>
           )}
