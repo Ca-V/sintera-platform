@@ -64,9 +64,9 @@ export default function LoginPage() {
           </div>
           <p className="font-display text-4xl font-semibold tracking-[0.25em] mb-6">SINTERA</p>
           <p className="font-display text-2xl font-light leading-snug mb-4 italic">
-            &ldquo;Seus exames têm<br/>uma história.<br/>Aprenda a lê-la.&rdquo;
+            &ldquo;Sua saúde tem<br/>uma história.<br/>A SINTERA te ajuda a<br/>organizá-la e compreendê-la.&rdquo;
           </p>
-          <p className="font-body text-white/60 text-sm">Organize seus laudos com inteligência artificial</p>
+          <p className="font-body text-white/60 text-sm">Toda a sua saúde, organizada em um só lugar</p>
         </motion.div>
       </div>
 
