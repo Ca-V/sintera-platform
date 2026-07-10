@@ -406,6 +406,10 @@ function LegacyReport() {
   const latestPeso = measuresCorpo.find(m => m.metric === 'peso') ?? null
   const pesoNum = latestPeso ? parseFloat(String(latestPeso.valueText).replace(',', '.')) : NaN
   const imcVal = !Number.isNaN(pesoNum) && alturaCm ? pesoNum / Math.pow(alturaCm / 100, 2) : null
+  // Laudos vinculados às medidas (ex.: bioimpedância): mostramos o DOCUMENTO (nome +
+  // data + link), como em Exames, em vez de discriminar cada métrica. Dedup por exame.
+  const medLaudos = Array.from(new Set(perMeasuresCorpo.map(m => m.examId).filter(Boolean) as string[]))
+    .map(id => examById.get(id)).filter((e): e is Ex => !!e)
   const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
   const brl = (cents: number | null) => `R$ ${((cents ?? 0) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
@@ -812,30 +816,17 @@ function LegacyReport() {
               ].filter(Boolean).join(' · ')}
             </p>
           )}
-          {perMeasuresCorpo.length === 0 ? (
-            <p className="font-body text-xs text-mauve">{latestPeso || alturaCm != null ? 'Sem outras medidas no período.' : 'Nenhuma medida registrada.'}</p>
+          {medLaudos.length > 0 ? (
+            <ul className="space-y-1">
+              {medLaudos.map((ex, i) => (
+                <li key={i} className="font-body text-xs text-onyx flex flex-wrap items-baseline gap-x-2">
+                  <span>• {ex.type}{ex.date ? ` · ${fmt(ex.date)}` : ''}</span>
+                  {ex.fileUrl ? <ProvenanceLine provenance={examProvenance({ fileUrl: ex.fileUrl })} showOrigin={false} /> : null}
+                </li>
+              ))}
+            </ul>
           ) : (
-            <table className="w-full text-left">
-              <tbody>
-                {perMeasuresCorpo.map((m, i) => {
-                  const ex = m.examId ? examById.get(m.examId) : null
-                  return (
-                  <tr key={i} className="border-b border-border/50">
-                    <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(m.date)}</td>
-                    <td className="font-body text-xs text-onyx py-1.5">
-                      <span className="text-mauve">{m.metric === 'outro' && m.label ? m.label : METRIC_LABEL[m.metric] ?? 'Medida'}:</span> {m.valueText}{m.unit ? ` ${m.unit}` : ''}
-                      {ex ? (
-                        <span className="block mt-0.5 text-mauve">
-                          Laudo: {ex.type}{ex.date ? ` · ${fmt(ex.date)}` : ''}{' '}
-                          {ex.fileUrl ? <ProvenanceLine provenance={examProvenance({ fileUrl: ex.fileUrl })} showOrigin={false} className="ml-1" /> : null}
-                        </span>
-                      ) : null}
-                    </td>
-                  </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+            <p className="font-body text-xs text-mauve">{latestPeso || alturaCm != null ? 'Nenhum laudo vinculado às medidas.' : 'Nenhuma medida registrada.'}</p>
           )}
         </section>
         )}

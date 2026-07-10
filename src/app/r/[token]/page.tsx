@@ -129,6 +129,10 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
   const latestPeso = mzAll.find(m => (m.metric as string) === 'peso') ?? null
   const pesoNum = latestPeso ? parseFloat(String(latestPeso.value_text).replace(',', '.')) : NaN
   const imcVal = !Number.isNaN(pesoNum) && alturaCm != null ? pesoNum / Math.pow((alturaCm as number) / 100, 2) : null
+  // Laudos vinculados às medidas (bioimpedância etc.): documento (nome + data + link),
+  // como em Exames, em vez de discriminar cada métrica. Dedup por exame.
+  const medLaudos = Array.from(new Set(mzArr.map(m => m.exam_id).filter(Boolean) as string[]))
+    .map(id => examById.get(id)).filter(Boolean) as Array<Record<string, unknown>>
   const cdArr = (conditions ?? []) as Array<Record<string, unknown>>
   const condProprias = cdArr.filter(c => c.scope === 'propria')
   const condFamiliar = cdArr.filter(c => c.scope === 'familiar')
@@ -289,28 +293,17 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
             ].filter(Boolean).join('  ·  ')}
           </p>
         )}
-        {mzArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>{latestPeso || alturaCm != null ? 'Sem outras medidas no período.' : 'Nenhuma registrada.'}</p> : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-            <tbody>
-              {mzArr.map((m, i) => {
-                const ex = m.exam_id ? examById.get(m.exam_id as string) : null
-                return (
-                <tr key={i} style={{ borderBottom: '1px solid #f2eef4' }}>
-                  <td style={{ padding: '6px 12px 6px 0', color: '#8a7b92', whiteSpace: 'nowrap', verticalAlign: 'top' }}>{fmt(m.measured_on as string)}</td>
-                  <td style={{ padding: '6px 0' }}>
-                    <span style={{ color: '#8a7b92' }}>{m.metric === 'outro' && m.label ? (m.label as string) : METRIC_LABEL[m.metric as string] ?? 'Medida'}:</span> {m.value_text as string}{m.unit ? ` ${m.unit as string}` : ''}
-                    {ex ? (
-                      <span style={{ display: 'block', fontSize: 13, marginTop: 2, color: '#8a7b92' }}>
-                        Laudo: {(ex.type as string) || 'Exame'}{ex.exam_date ? ` · ${fmt(ex.exam_date as string)}` : ''}
-                        {ex.file_url ? <>{'  ·  '}<a href={ex.file_url as string} target="_blank" rel="noopener noreferrer" style={{ color: '#0E6E64', textDecoration: 'none' }}>Ver documento original</a></> : null}
-                      </span>
-                    ) : null}
-                  </td>
-                </tr>
-                )
-              })}
-            </tbody>
-          </table>
+        {medLaudos.length > 0 ? (
+          <ul style={{ paddingLeft: 18, fontSize: 14, margin: 0 }}>
+            {medLaudos.map((ex, i) => (
+              <li key={i}>
+                {(ex.type as string) || 'Exame'}{ex.exam_date ? ` · ${fmt(ex.exam_date as string)}` : ''}
+                {ex.file_url ? <>{'  ·  '}<a href={ex.file_url as string} target="_blank" rel="noopener noreferrer" style={{ color: '#0E6E64', textDecoration: 'none', fontSize: 13 }}>Ver documento original</a></> : null}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p style={{ color: '#8a7b92', fontSize: 14 }}>{latestPeso || alturaCm != null ? 'Nenhum laudo vinculado às medidas.' : 'Nenhuma registrada.'}</p>
         )}
       </section>
       )}

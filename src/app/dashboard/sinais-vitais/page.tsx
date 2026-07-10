@@ -9,8 +9,7 @@
 // ============================================================
 
 import { useCallback, useEffect, useState } from 'react'
-import Link from 'next/link'
-import { Loader2, Plus, X, ArrowLeft, Trash2 } from 'lucide-react'
+import { Loader2, Plus, X, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
@@ -116,16 +115,6 @@ export default function SinaisVitaisPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
-      <Link href="/dashboard/saude" className="inline-flex items-center gap-1.5 font-body text-sm text-mauve hover:text-petal transition-colors">
-        <ArrowLeft size={15} /> Histórico
-      </Link>
-
-      <div className="flex flex-wrap gap-2">
-        <Link href="/dashboard/saude" className="px-3.5 py-1.5 rounded-full bg-ivory border border-border text-mauve font-body text-sm hover:border-petal/40 transition-colors">Atual</Link>
-        <Link href="/dashboard/medidas" className="px-3.5 py-1.5 rounded-full bg-ivory border border-border text-mauve font-body text-sm hover:border-petal/40 transition-colors">Medidas</Link>
-        <span className="px-3.5 py-1.5 rounded-full gradient-sintera text-white font-body text-sm font-medium">Sinais vitais</span>
-      </div>
-
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div>
           <h1 className="font-display text-2xl font-semibold text-onyx">Sinais vitais</h1>
