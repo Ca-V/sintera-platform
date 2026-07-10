@@ -60,6 +60,12 @@ export default function CTASection() {
               </motion.span>
             ))}
           </div>
+
+          <motion.p initial={{ opacity: 0 }} animate={inView ? { opacity: 1 } : {}}
+            transition={{ duration: 0.8, delay: 0.5, ease: 'easeOut' }}
+            className="font-display italic text-lg lg:text-xl text-white/70 leading-relaxed mt-14 max-w-xl mx-auto">
+            Cada informação registrada hoje torna sua história de saúde mais completa amanhã.
+          </motion.p>
         </motion.div>
       </div>
     </section>

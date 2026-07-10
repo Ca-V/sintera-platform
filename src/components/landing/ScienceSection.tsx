@@ -27,11 +27,11 @@ export default function ScienceSection() {
         <motion.div initial={{ opacity: 0, y: 24 }} animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.65, ease: 'easeOut' }} className="text-center mb-16">
           <span className="inline-block px-4 py-1.5 rounded-full border border-petal/30 text-xs font-body font-medium text-petal uppercase tracking-wider mb-5">
-            Por que confiar
+            Segurança e privacidade
           </span>
           <h2 className="font-display text-4xl lg:text-5xl font-semibold text-white leading-tight mb-4">
-            Sua história de saúde,<br />
-            <span className="text-shimmer">organizada com segurança.</span>
+            Por que confiar suas informações<br />
+            <span className="text-shimmer">de saúde à SINTERA?</span>
           </h2>
           <p className="font-body text-white/55 text-lg max-w-2xl mx-auto leading-relaxed">
             A SINTERA organiza suas informações preservando seu conteúdo original, sem alterar

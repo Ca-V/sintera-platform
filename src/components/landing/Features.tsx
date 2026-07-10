@@ -16,7 +16,7 @@ const features = [
   },
   {
     icon: Activity,
-    title: 'Uma história de saúde contínua',
+    title: 'Um acompanhamento contínuo',
     description: 'Tudo o que acontece com a sua saúde reunido em uma linha do tempo clara.',
     iconColor: 'text-sage', iconBg: 'bg-sage-light',
   },
@@ -63,8 +63,8 @@ export default function Features() {
             <span className="text-gradient">Mais tempo cuidando de você.</span>
           </h2>
           <p className="font-body text-mauve text-lg max-w-xl mx-auto">
-            A SINTERA cuida da papelada da sua saúde para você acompanhar o que importa —
-            sua história completa, sempre à mão.
+            A burocracia da saúde deixa de tomar seu tempo: a SINTERA cuida das informações para
+            você se dedicar ao que realmente importa — cuidar de você.
           </p>
         </motion.div>
 

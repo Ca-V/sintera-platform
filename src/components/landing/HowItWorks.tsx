@@ -21,7 +21,7 @@ const steps = [
     number: '02',
     icon: Layers,
     title: 'A SINTERA organiza tudo para você',
-    description: 'Suas informações passam a compor uma história de saúde organizada e contínua, fácil de consultar sempre que precisar.',
+    description: 'Suas informações passam a compor uma visão organizada e contínua da sua saúde, fácil de consultar sempre que precisar.',
     detail: 'Sem digitação e sem planilha — a organização acontece automaticamente.',
     color: '#E2D9EE',
     iconColor: '#7A6490',
@@ -51,7 +51,7 @@ export default function HowItWorks() {
           </span>
           <h2 className="font-display text-4xl lg:text-5xl font-semibold text-onyx leading-tight mb-4">
             Três passos.<br />
-            <span className="text-gradient">Uma história de saúde completa.</span>
+            <span className="text-gradient">Uma visão completa da sua saúde.</span>
           </h2>
         </motion.div>
 

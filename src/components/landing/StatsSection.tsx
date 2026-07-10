@@ -7,7 +7,7 @@ const stats = [
   { value: 'Grátis', label: 'Acesso completo, sem custo',  color: 'text-petal'    },
   { value: '100%',   label: 'Privado — suas informações nunca são compartilhadas', color: 'text-sage'   },
   { value: 'Zero',   label: 'Zero digitação — organizado por você', color: 'text-lavender' },
-  { value: 'Tudo',   label: 'Sua história de saúde em um só lugar',  color: 'text-gold'     },
+  { value: 'Tudo',   label: 'Sua saúde reunida em um só lugar',  color: 'text-gold'     },
 ]
 
 export default function StatsSection() {
