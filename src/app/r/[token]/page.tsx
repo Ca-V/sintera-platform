@@ -148,9 +148,12 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
         <h2 style={{ fontSize: 15 }}>Medicamentos e suplementos em uso</h2>
         {medsEmUso.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum registrado.</p> : (
           <ul style={{ paddingLeft: 18, fontSize: 14 }}>
-            {medsEmUso.map((m, i) => (
-              <li key={i}><strong>{m.name as string}</strong>{m.kind === 'suplemento' ? ' (suplemento)' : ''}{[m.dose, m.frequency].filter(Boolean).length ? ` — ${[m.dose, m.frequency].filter(Boolean).join(', ')}` : ''}{periodo((m.started_on as string) ?? null, (m.until_date as string) ?? null)}</li>
-            ))}
+            {medsEmUso.map((m, i) => {
+              const d = `${[m.dose, m.frequency].filter(Boolean).join(', ')}${periodo((m.started_on as string) ?? null, (m.until_date as string) ?? null)}`.trim()
+              return (
+              <li key={i}><strong>{m.name as string}</strong>{m.kind === 'suplemento' ? ' (suplemento)' : ''}{d ? <span style={{ display: 'block', fontSize: 12, color: '#8a7b92' }}>{d}</span> : null}</li>
+              )
+            })}
           </ul>
         )}
         {medsSusp.length > 0 && <p style={{ fontSize: 12, color: '#8a7b92' }}>Suspensos: {medsSusp.map(m => m.name as string).join(', ')}.</p>}

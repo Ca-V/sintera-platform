@@ -711,13 +711,16 @@ function LegacyReport() {
           {visMedsEmUso.length === 0 ? (
             <p className="font-body text-sm text-mauve">Nenhum registrado em uso.</p>
           ) : (
-            <ul className="space-y-1">
-              {visMedsEmUso.map((m, i) => (
+            <ul className="space-y-1.5">
+              {visMedsEmUso.map((m, i) => {
+                const detalhe = `${[m.dose, m.frequency].filter(Boolean).join(', ')}${periodo(m.startedOn, m.untilOn)}`.trim()
+                return (
                 <li key={i} className="font-body text-sm text-onyx">
-                  • <strong>{m.name}</strong>{m.kind === 'suplemento' ? ' (suplemento)' : ''}{[m.dose, m.frequency].filter(Boolean).length ? ` — ${[m.dose, m.frequency].filter(Boolean).join(', ')}` : ''}
-                  {periodo(m.startedOn, m.untilOn)}
+                  • <strong>{m.name}</strong>{m.kind === 'suplemento' ? ' (suplemento)' : ''}
+                  {detalhe ? <span className="block text-xs text-mauve ml-3">{detalhe}</span> : null}
                 </li>
-              ))}
+                )
+              })}
             </ul>
           )}
           {perMedsSusp.length > 0 && (
@@ -736,11 +739,11 @@ function LegacyReport() {
           {condProprias.length === 0 ? (
             <p className="font-body text-sm text-mauve">Nenhuma condição registrada.</p>
           ) : (
-            <ul className="space-y-1">
+            <ul className="space-y-1.5">
               {condProprias.map((c, i) => (
                 <li key={i} className="font-body text-sm text-onyx">
                   • <strong>{c.name}</strong>{c.since ? ` (desde ${c.since})` : ''}
-                  {c.notes ? <span className="block text-xs text-mauve">{c.notes}</span> : null}
+                  {c.notes ? <span className="block text-xs text-mauve ml-3">{c.notes}</span> : null}
                 </li>
               ))}
             </ul>
@@ -748,11 +751,11 @@ function LegacyReport() {
           {condFamiliar.length > 0 && (
             <>
               <h3 className="font-body text-xs font-bold text-mauve/80 mt-3 mb-1 uppercase tracking-wider">Histórico familiar</h3>
-              <ul className="space-y-1">
+              <ul className="space-y-1.5">
                 {condFamiliar.map((c, i) => (
                   <li key={i} className="font-body text-sm text-onyx">
                     • <strong>{c.name}</strong>{c.relative ? ` — ${c.relative}` : ''}{c.since ? ` (desde ${c.since})` : ''}
-                    {c.notes ? <span className="block text-xs text-mauve">{c.notes}</span> : null}
+                    {c.notes ? <span className="block text-xs text-mauve ml-3">{c.notes}</span> : null}
                   </li>
                 ))}
               </ul>
