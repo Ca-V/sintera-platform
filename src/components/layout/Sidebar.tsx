@@ -76,15 +76,15 @@ function NavItem({ href, icon: Icon, label, active, soon, onClose }: {
       className={cn(
         'flex items-center gap-3 px-3 py-1.5 rounded-xl transition-all duration-200 text-sm font-body group',
         active
-          ? 'nav-active-glow bg-white/8 text-white'
-          : 'text-white/45 hover:text-white/80 hover:bg-white/5'
+          ? 'nav-active-glow bg-white/50 text-onyx'
+          : 'text-onyx/75 hover:text-onyx hover:bg-white/25'
       )}
     >
       <Icon size={16} className={cn('flex-shrink-0 transition-colors',
-        active ? 'text-petal' : 'text-white/60 group-hover:text-white/60')} />
+        active ? 'text-petal-dark' : 'text-onyx/60 group-hover:text-onyx/80')} />
       <span className={cn('flex-1', active && 'font-medium')}>{label}</span>
       {soon && (
-        <span className="font-body text-[9px] font-medium text-white/60 bg-white/8 px-1.5 py-0.5 rounded-full border border-white/10">
+        <span className="font-body text-[9px] font-medium text-onyx/60 bg-white/40 px-1.5 py-0.5 rounded-full border border-onyx/10">
           Em breve
         </span>
       )}
@@ -99,36 +99,36 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
   const initials    = displayName.charAt(0).toUpperCase()
 
   return (
-    <div className="flex flex-col h-full bg-deep select-none">
+    <div className="flex flex-col h-full bg-gradient-to-b from-[#6BC5B7] to-[#54B0AA] select-none">
 
       {/* Logo — leva ao Painel Inicial (área logada) */}
       <div className="flex items-center justify-between px-5 py-4">
         <Link href="/dashboard" onClick={onClose} className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-full gradient-sintera flex items-center justify-center shadow-lg">
+          <div className="w-7 h-7 rounded-full bg-petal-dark flex items-center justify-center shadow-lg">
             <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
               <circle cx="8" cy="8" r="5.5" stroke="white" strokeWidth="1.2" fill="none"/>
               <circle cx="8" cy="8" r="2" fill="white"/>
               <path d="M8 2.5 A5.5 5.5 0 0 1 13.5 8" stroke="white" strokeWidth="1.4" strokeLinecap="round"/>
             </svg>
           </div>
-          <span className="font-display text-lg font-semibold tracking-[0.2em] text-white">SINTERA</span>
+          <span className="font-display text-lg font-semibold tracking-[0.2em] text-onyx">SINTERA</span>
         </Link>
-        <button onClick={onClose} className="lg:hidden text-white/60 hover:text-white/70 transition-colors">
+        <button onClick={onClose} className="lg:hidden text-onyx/50 hover:text-onyx/70 transition-colors">
           <X size={17}/>
         </button>
       </div>
 
       {/* Perfil da usuária — atalho para o perfil (perfil/config/sair ficam no menu do topo) */}
       <Link href="/dashboard/profile" onClick={onClose}
-        className="mx-4 mb-3 p-3 rounded-2xl border border-white/6 bg-white/4 hover:bg-white/7 transition-colors">
+        className="mx-4 mb-3 p-3 rounded-2xl border border-onyx/10 bg-white/30 hover:bg-white/45 transition-colors">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full gradient-sintera flex items-center justify-center flex-shrink-0 shadow-md">
+          <div className="w-8 h-8 rounded-full bg-petal-dark flex items-center justify-center flex-shrink-0 shadow-md">
             <span className="text-white text-sm font-display font-bold">{initials}</span>
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-body font-medium text-white leading-tight truncate">{displayName}</p>
+            <p className="text-sm font-body font-medium text-onyx leading-tight truncate">{displayName}</p>
           </div>
-          <ChevronRight size={13} className="text-white/60 flex-shrink-0"/>
+          <ChevronRight size={13} className="text-onyx/50 flex-shrink-0"/>
         </div>
       </Link>
 
@@ -142,7 +142,7 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
         </div>
         {navGroups.map(group => (
           <div key={group.title} className="mb-1.5">
-            <p className="text-[11px] font-body font-bold text-white/45 uppercase tracking-[0.16em] px-3 mt-1 mb-1">
+            <p className="text-[11px] font-body font-bold text-petal-dark uppercase tracking-[0.16em] px-3 mt-1 mb-1">
               {group.title}
             </p>
             <ul className="flex flex-col gap-0.5">
