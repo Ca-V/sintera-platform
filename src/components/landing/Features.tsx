@@ -2,6 +2,7 @@
 
 import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
+import Link from 'next/link'
 import { Upload, Layers, Bell, Share2 } from 'lucide-react'
 
 // "Como funciona" — funde o antigo "No dia a dia" (benefícios) com os 3 passos
@@ -62,15 +63,17 @@ export default function Features() {
             return (
               <motion.div key={f.title}
                 initial={{ opacity: 0, y: 24 }} animate={inView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.5, delay: 0.1 + i * 0.08, ease: 'easeOut' }}
-                className="card-premium p-7 flex flex-col gap-4">
-                <div className={`w-11 h-11 rounded-2xl ${f.iconBg} flex items-center justify-center flex-shrink-0`}>
-                  <Icon size={20} className={f.iconColor} />
-                </div>
-                <div>
-                  <h3 className="font-display text-lg font-semibold text-onyx mb-2">{f.title}</h3>
-                  <p className="font-body text-sm text-mauve leading-relaxed">{f.description}</p>
-                </div>
+                transition={{ duration: 0.5, delay: 0.1 + i * 0.08, ease: 'easeOut' }}>
+                <Link href="/onboarding"
+                  className="card-premium p-7 flex flex-col gap-4 h-full transition-all hover:border-petal/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-petal/40">
+                  <div className={`w-11 h-11 rounded-2xl ${f.iconBg} flex items-center justify-center flex-shrink-0`}>
+                    <Icon size={20} className={f.iconColor} />
+                  </div>
+                  <div>
+                    <h3 className="font-display text-lg font-semibold text-onyx mb-2">{f.title}</h3>
+                    <p className="font-body text-sm text-mauve leading-relaxed">{f.description}</p>
+                  </div>
+                </Link>
               </motion.div>
             )
           })}

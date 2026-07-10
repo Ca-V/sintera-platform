@@ -314,7 +314,7 @@ export default function OnboardingPage() {
                   {/* Segmentação P2 — acompanha com médico */}
                   <div className="flex flex-col gap-2">
                     <label className="text-xs font-body font-medium text-mauve uppercase tracking-wider">
-                      Você costuma discutir seus resultados com um médico? <span className="normal-case font-normal text-mauve">(opcional)</span>
+                      Você costuma discutir seus resultados com um profissional de saúde? <span className="normal-case font-normal text-mauve">(opcional)</span>
                     </label>
                     <div className="flex gap-2">
                       {[
@@ -398,7 +398,7 @@ export default function OnboardingPage() {
                     <span className="text-sm flex-shrink-0">⚠️</span>
                     <p className="text-xs font-body text-amber-800 leading-relaxed">
                       A SINTERA organiza e exibe seus dados. Não oferece diagnóstico, interpretação clínica
-                      ou recomendações médicas. As decisões de saúde são sempre suas, em conversa com seu médico.
+                      ou recomendações médicas. As decisões de saúde são sempre suas, em conversa com um profissional de saúde.
                     </p>
                   </div>
                 </div>
