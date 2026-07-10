@@ -37,7 +37,7 @@ export default function Testimonials() {
 
           <div className="grid sm:grid-cols-3 gap-6">
             {[
-              { emoji: '🧪', title: 'Gratuito agora',   desc: 'Acesso completo sem custo. Planos pagos só no futuro, com aviso prévio.' },
+              { emoji: '✨', title: 'Gratuito agora',   desc: 'Acesso completo sem custo. Planos pagos só no futuro, com aviso prévio.' },
               { emoji: '🔒', title: 'Dados protegidos',   desc: 'LGPD compliant. Seus dados são seus. Exclua a qualquer momento.' },
               { emoji: '💬', title: 'Seu feedback importa', desc: 'Cada relato de problema ou sugestão influencia diretamente o produto.' },
             ].map(({ emoji, title, desc }) => (

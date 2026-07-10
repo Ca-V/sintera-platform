@@ -3,12 +3,12 @@
 import Link from 'next/link'
 import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
-import { ArrowRight, Upload, TrendingUp, FileText } from 'lucide-react'
+import { ArrowRight, Sparkles, TrendingUp, Bell } from 'lucide-react'
 
 const floatingChips = [
-  { icon: Upload,     text: 'Dados extraídos em segundos',         color: 'bg-blush/20 text-petal border-petal/20'       },
-  { icon: TrendingUp, text: '7 anos de exames organizados',       color: 'bg-sage-light/20 text-sage border-sage/20'    },
-  { icon: FileText,   text: '24 biomarcadores extraídos',         color: 'bg-lavender-light/20 text-lavender border-lavender/20' },
+  { icon: Sparkles,   text: 'Organizado automaticamente',           color: 'bg-blush/20 text-petal border-petal/20'       },
+  { icon: TrendingUp, text: 'Sua história de saúde contínua',        color: 'bg-sage-light/20 text-sage border-sage/20'    },
+  { icon: Bell,       text: 'Lembretes por e-mail e WhatsApp',       color: 'bg-lavender-light/20 text-lavender border-lavender/20' },
 ]
 
 export default function CTASection() {
@@ -23,12 +23,12 @@ export default function CTASection() {
         <motion.div initial={{ opacity: 0, y: 24 }} animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.65 }}>
           <h2 className="font-display text-4xl lg:text-5xl font-semibold text-white leading-tight mb-6">
-            Seus exames merecem<br />
-            <span className="text-shimmer">ser compreendidos.</span>
+            Comece hoje a construir uma<br />
+            <span className="text-shimmer">história de saúde organizada para toda a vida.</span>
           </h2>
-          <p className="font-body text-white/60 text-lg max-w-xl mx-auto leading-relaxed mb-10">
-            Pare de guardar laudos em pasta. Comece a entender o que eles dizem
-            sobre a sua saúde ao longo do tempo.
+          <p className="font-body text-white/60 text-lg max-w-2xl mx-auto leading-relaxed mb-10">
+            Cada informação registrada torna sua visão da saúde mais completa, facilitando seu
+            acompanhamento e o cuidado realizado junto aos profissionais que fazem parte da sua jornada.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-5">

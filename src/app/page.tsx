@@ -3,6 +3,7 @@ import Hero from '@/components/landing/Hero'
 import StatsSection from '@/components/landing/StatsSection'
 import Features from '@/components/landing/Features'
 import HowItWorks from '@/components/landing/HowItWorks'
+import EcosystemSection from '@/components/landing/EcosystemSection'
 import ScienceSection from '@/components/landing/ScienceSection'
 import Testimonials from '@/components/landing/Testimonials'
 import PricingSection from '@/components/landing/PricingSection'
@@ -17,6 +18,7 @@ export default function LandingPage() {
       <StatsSection />
       <Features />
       <HowItWorks />
+      <EcosystemSection />
       <ScienceSection />
       <Testimonials />
       <PricingSection />

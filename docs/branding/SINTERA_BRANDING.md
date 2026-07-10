@@ -82,15 +82,21 @@ Marca **universal, premium, tecnológica, humana, atemporal e gênero‑neutra.*
 
 *Racional: vende **continuidade do cuidado** (o ativo), com a **organização automática** como mecanismo; objetiva, sem "faz o resto". "Evolução do cuidado ao longo da vida" = formulação leiga de continuidade (mais segura na RDC que "compreender sua saúde", pois refere-se à trajetória organizada). A validar com usuários: se "continuidade/evolução do cuidado" não comunicar, testar linguagem ainda mais intuitiva sem mudar o posicionamento.*
 
-**Estrutura da home:**
-1. **Hero** (promessa + CTA + visual da plataforma)
-2. **Como funciona** (envie → organiza automaticamente → revise e compartilhe)
-3. **O que a plataforma faz** (capacidades, não módulos: identifica documentos · organiza exames · reúne histórico · acompanha medicamentos · registra medidas · prepara relatórios)
-4. **Inteligência transversal** (a mesma inteligência acompanha todos os módulos)
-5. **Segurança e responsabilidade** (dados protegidos · rastreabilidade · organização factual · sem diagnóstico automático · sem substituição da avaliação profissional)
-6. **Encerramento** ("Menos tempo organizando informações. Mais tempo cuidando da sua saúde.") + CTA final "Começar agora"
+**Narrativa da home (reconstruída 09/07 — a landing conta UMA história, centrada no USUÁRIO, não em funcionalidades).** Princípio de revisão permanente: *toda seção fala mais da SINTERA ou da transformação do usuário? Se da SINTERA, reescrever.* Cada seção responde uma pergunta da jornada mental, nesta ordem:
 
-**Slogan principal:** *Sua saúde organizada. Seu tempo preservado.*
+| # | Pergunta do usuário | Seção | Mensagem |
+|---|---|---|---|
+| 1 | O que é? Por que preciso? | **Hero** | Sua saúde organizada para toda a vida (5 blocos) |
+| 2 | Posso confiar de cara? | **Stats** | Grátis · Privado · Zero digitação · Tudo num lugar |
+| 3 | Como me ajuda no dia a dia? | **Funcionalidades** | *"Menos tempo organizando. Mais tempo cuidando de você."* — 6 benefícios (inclui **lembretes por e-mail e WhatsApp**) |
+| 4 | Como funciona? | **Como funciona** | Registre e reúna → a SINTERA organiza → compreenda e compartilhe |
+| 5 | Como evolui comigo? | **Ecossistema** | *"Cada nova informação torna sua história de saúde mais completa."* (hoje: você/documentos · em breve: labs/wearables) |
+| 6 | Por que confiar? | **Confiança** | *"Sua história de saúde, organizada com segurança."* — conteúdo preservado · não diagnostica (RDC 657/2022) · privado · você no controle |
+| 7 | Como começo? | **Comece agora** + **CTA final** | *"Comece hoje a construir uma história de saúde organizada para toda a vida."* (fecha o loop com o Hero) |
+
+**Princípios de copy da landing:** (a) perspectiva no **usuário** ("você passa a…", não "a SINTERA faz…"); (b) preferir **"história de saúde"** (concreto) a **"continuidade"** (abstrato); (c) **IA nunca é protagonista** (é meio) — na confiança, foco é conteúdo preservado + controle do usuário; (d) recuperar o diferencial **"menos tempo organizando, mais tempo cuidando"**; (e) só afirmar o que está **live** (integrações labs/wearables ficam explicitamente como "em breve"). **Fonte:** componentes em `src/components/landing/`. Após esta reconstrução: **publicar e evoluir por métricas** (tempo na página · CTA · conversão), não por nova discussão conceitual.
+
+**Slogan de apoio:** *Sua saúde organizada. Seu tempo preservado.*
 
 ## 13. Diretrizes de marketing e comunicação
 Toda peça de marca, design, UX ou comunicação responde a quatro perguntas:

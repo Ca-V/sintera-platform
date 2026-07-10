@@ -5,9 +5,9 @@ import { useRef } from 'react'
 
 const stats = [
   { value: 'Grátis', label: 'Acesso completo, sem custo',  color: 'text-petal'    },
-  { value: '100%',   label: 'Privado — nunca compartilhado', color: 'text-sage'   },
-  { value: 'IA',     label: 'Lê seus documentos e organiza por você', color: 'text-lavender' },
-  { value: 'Docs',   label: 'Exames, receitas e outros documentos',  color: 'text-gold'     },
+  { value: '100%',   label: 'Privado — suas informações nunca são compartilhadas', color: 'text-sage'   },
+  { value: 'Zero',   label: 'Zero digitação — organizado por você', color: 'text-lavender' },
+  { value: 'Tudo',   label: 'Sua história de saúde em um só lugar',  color: 'text-gold'     },
 ]
 
 export default function StatsSection() {

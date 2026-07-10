@@ -6,15 +6,14 @@ import { useRef } from 'react'
 import { Check, ArrowRight } from 'lucide-react'
 
 const features = [
-  'Upload ilimitado de laudos em PDF',
-  'Extração automática de biomarcadores via IA',
-  'Histórico longitudinal completo',
-  'Filtros por ano, tipo e período',
-  'Export individual em CSV e PDF',
-  'Integração com Google Calendar e Outlook',
-  'Agendamento de exames e consultas',
-  'Dados protegidos — LGPD compliant',
-  'Exclusão de conta a qualquer momento',
+  'Documentos e registros de saúde ilimitados',
+  'Organização automática — sem digitação',
+  'Sua história de saúde em uma linha do tempo',
+  'Registro de consultas, medicamentos, sintomas e hábitos',
+  'Lembretes de compromissos por e-mail e WhatsApp',
+  'Relatórios prontos para compartilhar',
+  'Suas informações protegidas — LGPD',
+  'Exclusão de conta e dados a qualquer momento',
 ]
 
 export default function PricingSection() {
