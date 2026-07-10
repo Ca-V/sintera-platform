@@ -23,10 +23,12 @@ const homeItem = { href: '/dashboard', icon: LayoutDashboard, label: 'Painel Ini
 // "Histórico" reúne Linha do Tempo + Evolução (duas visões do registro longitudinal).
 const navGroups: {
   title: string
+  titleColor: string
   items: { href: string; icon: React.ElementType; label: string; extra?: string[] }[]
 }[] = [
   {
     title: 'Acompanhamento',
+    titleColor: 'text-lagoa',
     items: [
       { href: '/dashboard/agenda',       icon: CalendarDays, label: 'Agenda' },
       { href: '/dashboard/timeline',     icon: Clock,        label: 'Histórico', extra: ['/dashboard/saude', '/dashboard/historico'] },
@@ -36,6 +38,7 @@ const navGroups: {
   },
   {
     title: 'Minha Saúde',
+    titleColor: 'text-lavender',
     items: [
       { href: '/dashboard/condicoes',     icon: Stethoscope,   label: 'Condições de Saúde' },
       { href: '/dashboard/recursos',      icon: Accessibility, label: 'Recursos de Saúde' },
@@ -47,6 +50,7 @@ const navGroups: {
   },
   {
     title: 'Organização',
+    titleColor: 'text-gold',
     items: [
       { href: '/dashboard/gastos',    icon: Receipt,    label: 'Despesas' },
       { href: '/dashboard/relatorio', icon: ScrollText, label: 'Relatórios' },
@@ -54,6 +58,7 @@ const navGroups: {
   },
   {
     title: 'Configurações',
+    titleColor: 'text-white/45',
     items: [
       { href: '/dashboard/configuracoes', icon: Settings, label: 'Configurações' },
     ],
@@ -99,7 +104,7 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
   const initials    = displayName.charAt(0).toUpperCase()
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-b from-[#0F433E] to-[#0A2E2C] select-none">
+    <div className="flex flex-col h-full select-none" style={{ background: 'radial-gradient(ellipse 90% 35% at 50% 100%, rgba(196,160,106,0.15) 0%, transparent 72%), linear-gradient(to bottom, #0F433E, #0A2E2C)' }}>
 
       {/* Logo — leva ao Painel Inicial (área logada) */}
       <div className="flex items-center justify-between px-5 py-4">
@@ -142,7 +147,7 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
         </div>
         {navGroups.map(group => (
           <div key={group.title} className="mb-1.5">
-            <p className="text-[11px] font-body font-bold text-lagoa uppercase tracking-[0.16em] px-3 mt-1 mb-1">
+            <p className={cn('text-[11px] font-body font-bold uppercase tracking-[0.16em] px-3 mt-1 mb-1', group.titleColor)}>
               {group.title}
             </p>
             <ul className="flex flex-col gap-0.5">
