@@ -21,6 +21,7 @@ Tudo que representa **risco imediato**.
 - **Infraestrutura:** backup automático · **PITR** · **teste de restauração**.
 - **Segurança:** proteção contra senhas comprometidas · correção dos `SECURITY DEFINER` · **revisão de RLS**.
 - **Governança:** **inventário das permissões** · **revisão das secrets** · **rotação das chaves** (quando necessário).
+  - *Item de verificação:* a Edge Function `pipeline-alert` está com `verify_jwt=false`. **Confirmar se é intencional** (ex.: webhook / função pública protegida por segredo próprio) **antes de classificar como vulnerabilidade**. Se **não** for intencional, entra como correção do P0.
 
 ### 🟡 Shield Evolução — Onda 2 (contínuo, após o lançamento)
 monitoramento/observabilidade · auditoria contínua · classificação de dados · **Disaster Recovery completo** · LGPD aprofundada · documentação · testes periódicos.
