@@ -14,7 +14,7 @@ import { User, Building2, Watch } from 'lucide-react'
 // "A SINTERA reúne automaticamente informações provenientes dos seus
 // laboratórios, clínicas, dispositivos e aplicativos de saúde." Nada mais muda.
 const currentText =
-  'Hoje, é você quem registra suas informações e adiciona os documentos que recebe de laboratórios, clínicas e profissionais de saúde. De forma simples, você mesmo mantém sua história de saúde sempre atualizada.'
+  'Registre suas informações — consultas, procedimentos — e adicione os documentos e laudos que recebe de laboratórios, clínicas e profissionais de saúde. De forma simples: você registra e a SINTERA organiza, mantendo sua história de saúde sempre atualizada.'
 const futureText =
   'A evolução da plataforma permitirá que essas informações também sejam recebidas automaticamente de instituições parceiras e integradas a dispositivos e aplicativos de saúde, como relógios inteligentes e plataformas de atividade física.'
 
