@@ -639,16 +639,16 @@ function LegacyReport() {
         {/* Consultas, procedimentos e eventos (Histórico) */}
         {sections.eventos && (
         <section id="sec-eventos" style={{ scrollMarginTop: 16 }}>
-          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Agenda</h2>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Agenda</h2>
           {perEvents.length === 0 ? (
-            <p className="font-body text-sm text-mauve">Nenhum evento registrado.</p>
+            <p className="font-body text-xs text-mauve">Nenhum evento registrado.</p>
           ) : (
             <table className="w-full text-left">
               <tbody>
                 {perEvents.map((e, i) => (
                   <tr key={i} className="border-b border-border/50">
                     <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(e.date)}</td>
-                    <td className="font-body text-sm text-onyx py-1.5">
+                    <td className="font-body text-xs text-onyx py-1.5">
                       <span className="text-mauve">{typeLabel(e.eventType)}{e.prof && PROF_LABEL[e.prof] ? ` (${PROF_LABEL[e.prof]})` : ''}:</span> {e.title}
                       {e.notes ? <span className="block text-xs text-mauve">{e.notes}</span> : null}
                     </td>
@@ -663,14 +663,14 @@ function LegacyReport() {
         {/* Exames */}
         {sections.exames && (
         <section id="sec-exames" style={{ scrollMarginTop: 16 }}>
-          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Exames</h2>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Exames</h2>
           {perVisExams.length > 1 && (
             <ViewModeSwitcher className="mb-2 print:hidden"
               modes={EXAM_SORTS.map(s => ({ value: s.key, label: s.label }))}
               active={examSort} onChange={setExamSort} />
           )}
           {perVisExams.length === 0 ? (
-            <p className="font-body text-sm text-mauve">Nenhum exame enviado.</p>
+            <p className="font-body text-xs text-mauve">Nenhum exame enviado.</p>
           ) : (
             <ul className="space-y-1">
               {sortedExams.map((e, i) => (
@@ -687,13 +687,13 @@ function LegacyReport() {
         {/* Exames de ômica */}
         {sections.omica && (
         <section id="sec-omica" style={{ scrollMarginTop: 16 }}>
-          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Exames de ômica</h2>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Exames de ômica</h2>
           {perOmics.length === 0 ? (
-            <p className="font-body text-sm text-mauve">Nenhum exame de ômica registrado.</p>
+            <p className="font-body text-xs text-mauve">Nenhum exame de ômica registrado.</p>
           ) : (
             <ul className="space-y-1">
               {perOmics.map((o, i) => (
-                <li key={i} className="font-body text-sm text-onyx">
+                <li key={i} className="font-body text-xs text-onyx">
                   • {o.date ? `${fmt(o.date)} — ` : ''}<strong>{DOMAIN_LABEL[o.domain as OmicsDomain] ?? 'Ômica'}</strong>
                   {[o.laboratory, o.totalFeatures != null ? `${o.totalFeatures.toLocaleString('pt-BR')} marcadores` : null].filter(Boolean).length
                     ? ` (${[o.laboratory, o.totalFeatures != null ? `${o.totalFeatures.toLocaleString('pt-BR')} marcadores` : null].filter(Boolean).join(', ')})` : ''}
@@ -707,15 +707,15 @@ function LegacyReport() {
         {/* Medicamentos e suplementos */}
         {sections.medicamentos && (
         <section id="sec-medicamentos" style={{ scrollMarginTop: 16 }}>
-          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Medicamentos e Suplementos em uso</h2>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Medicamentos e Suplementos em uso</h2>
           {visMedsEmUso.length === 0 ? (
-            <p className="font-body text-sm text-mauve">Nenhum registrado em uso.</p>
+            <p className="font-body text-xs text-mauve">Nenhum registrado em uso.</p>
           ) : (
             <ul className="space-y-1.5">
               {visMedsEmUso.map((m, i) => {
                 const detalhe = `${[m.dose, m.frequency].filter(Boolean).join(', ')}${periodo(m.startedOn, m.untilOn)}`.trim()
                 return (
-                <li key={i} className="font-body text-sm text-onyx">
+                <li key={i} className="font-body text-xs text-onyx">
                   • <strong>{m.name}</strong>{m.kind === 'suplemento' ? ' (suplemento)' : ''}
                   {detalhe ? <span className="block text-xs text-mauve ml-3">{detalhe}</span> : null}
                 </li>
@@ -735,13 +735,13 @@ function LegacyReport() {
         {/* Condições de saúde — próprias + histórico familiar */}
         {sections.condicoes && (
         <section id="sec-condicoes" style={{ scrollMarginTop: 16 }}>
-          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Condições de Saúde</h2>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Condições de Saúde</h2>
           {condProprias.length === 0 ? (
-            <p className="font-body text-sm text-mauve">Nenhuma condição registrada.</p>
+            <p className="font-body text-xs text-mauve">Nenhuma condição registrada.</p>
           ) : (
             <ul className="space-y-1.5">
               {condProprias.map((c, i) => (
-                <li key={i} className="font-body text-sm text-onyx">
+                <li key={i} className="font-body text-xs text-onyx">
                   • <strong>{c.name}</strong>{c.since ? ` (desde ${c.since})` : ''}
                   {c.notes ? <span className="block text-xs text-mauve ml-3">{c.notes}</span> : null}
                 </li>
@@ -753,7 +753,7 @@ function LegacyReport() {
               <h3 className="font-body text-xs font-bold text-mauve/80 mt-3 mb-1 uppercase tracking-wider">Histórico familiar</h3>
               <ul className="space-y-1.5">
                 {condFamiliar.map((c, i) => (
-                  <li key={i} className="font-body text-sm text-onyx">
+                  <li key={i} className="font-body text-xs text-onyx">
                     • <strong>{c.name}</strong>{c.relative ? ` — ${c.relative}` : ''}{c.since ? ` (desde ${c.since})` : ''}
                     {c.notes ? <span className="block text-xs text-mauve ml-3">{c.notes}</span> : null}
                   </li>
@@ -767,9 +767,9 @@ function LegacyReport() {
         {/* Recursos de Saúde (correção visual: óculos e lentes de contato) */}
         {sections.visao && (
         <section id="sec-visao" style={{ scrollMarginTop: 16 }}>
-          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Recursos de Saúde</h2>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Recursos de Saúde</h2>
           {eyewear.length === 0 ? (
-            <p className="font-body text-sm text-mauve">Nenhum recurso registrado.</p>
+            <p className="font-body text-xs text-mauve">Nenhum recurso registrado.</p>
           ) : (
             <ul className="space-y-1.5">
               {eyewear.map((e, i) => {
@@ -778,7 +778,7 @@ function LegacyReport() {
                   e.prescribedOn ? fmt(e.prescribedOn) : null, e.prescriber,
                 ].filter(Boolean)
                 return (
-                  <li key={i} className="font-body text-sm text-onyx">
+                  <li key={i} className="font-body text-xs text-onyx">
                     • <strong>{EYEWEAR_LABEL[e.kind] ?? 'Óculos'}</strong>
                     {grauStr(e.odSph, e.odCyl, e.odAxis, e.odAdd) ? <span className="block text-xs text-mauve ml-3">OD: {grauStr(e.odSph, e.odCyl, e.odAxis, e.odAdd)}</span> : null}
                     {grauStr(e.oeSph, e.oeCyl, e.oeAxis, e.oeAdd) ? <span className="block text-xs text-mauve ml-3">OE: {grauStr(e.oeSph, e.oeCyl, e.oeAxis, e.oeAdd)}</span> : null}
@@ -795,19 +795,19 @@ function LegacyReport() {
         {/* Medidas corporais */}
         {sections.medidas && (
         <section id="sec-medidas" style={{ scrollMarginTop: 16 }}>
-          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Medidas Corporais</h2>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Medidas Corporais</h2>
           {alturaCm != null && (
-            <p className="font-body text-sm text-onyx mb-1"><span className="text-mauve">Altura:</span> {alturaCm} cm</p>
+            <p className="font-body text-xs text-onyx mb-1"><span className="text-mauve">Altura:</span> {alturaCm} cm</p>
           )}
           {perMeasuresCorpo.length === 0 ? (
-            <p className="font-body text-sm text-mauve">{alturaCm != null ? 'Sem outras medidas registradas.' : 'Nenhuma medida registrada.'}</p>
+            <p className="font-body text-xs text-mauve">{alturaCm != null ? 'Sem outras medidas registradas.' : 'Nenhuma medida registrada.'}</p>
           ) : (
             <table className="w-full text-left">
               <tbody>
                 {perMeasuresCorpo.map((m, i) => (
                   <tr key={i} className="border-b border-border/50">
                     <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(m.date)}</td>
-                    <td className="font-body text-sm text-onyx py-1.5">
+                    <td className="font-body text-xs text-onyx py-1.5">
                       <span className="text-mauve">{m.metric === 'outro' && m.label ? m.label : METRIC_LABEL[m.metric] ?? 'Medida'}:</span> {m.valueText}{m.unit ? ` ${m.unit}` : ''}
                     </td>
                   </tr>
@@ -821,16 +821,16 @@ function LegacyReport() {
         {/* Sinais vitais */}
         {sections.sinais && (
         <section id="sec-sinais" style={{ scrollMarginTop: 16 }}>
-          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Sinais Vitais</h2>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Sinais Vitais</h2>
           {perMeasuresVitais.length === 0 ? (
-            <p className="font-body text-sm text-mauve">Nenhum sinal vital registrado.</p>
+            <p className="font-body text-xs text-mauve">Nenhum sinal vital registrado.</p>
           ) : (
             <table className="w-full text-left">
               <tbody>
                 {perMeasuresVitais.map((m, i) => (
                   <tr key={i} className="border-b border-border/50">
                     <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(m.date)}</td>
-                    <td className="font-body text-sm text-onyx py-1.5">
+                    <td className="font-body text-xs text-onyx py-1.5">
                       <span className="text-mauve">{m.metric === 'outro_sinal' && m.label ? m.label : METRIC_LABEL[m.metric] ?? 'Sinal'}:</span> {m.valueText}{m.unit ? ` ${m.unit}` : ''}
                     </td>
                   </tr>
@@ -844,13 +844,13 @@ function LegacyReport() {
         {/* Hábitos de vida */}
         {sections.habitos && (
         <section id="sec-habitos" style={{ scrollMarginTop: 16 }}>
-          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Hábitos</h2>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Hábitos</h2>
           {habits.length === 0 ? (
-            <p className="font-body text-sm text-mauve">Nenhum hábito registrado.</p>
+            <p className="font-body text-xs text-mauve">Nenhum hábito registrado.</p>
           ) : (
             <ul className="space-y-1">
               {habits.map((h, i) => (
-                <li key={i} className="font-body text-sm text-onyx">
+                <li key={i} className="font-body text-xs text-onyx">
                   • <span className="text-mauve">{HABIT_LABEL[h.category] ?? 'Hábito'}:</span> {h.description}{h.frequency ? ` — ${h.frequency}` : ''}
                   {h.notes ? <span className="block text-xs text-mauve">{h.notes}</span> : null}
                 </li>
@@ -863,15 +863,15 @@ function LegacyReport() {
         {/* Ciclo e Contracepção */}
         {sections.ciclo && (
         <section id="sec-ciclo" style={{ scrollMarginTop: 16 }}>
-          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Ciclo e Contracepção</h2>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Ciclo e Contracepção</h2>
           {contraceptives.length === 0 && perMenstruations.length === 0 ? (
-            <p className="font-body text-sm text-mauve">Nenhum registro de ciclo ou contracepção.</p>
+            <p className="font-body text-xs text-mauve">Nenhum registro de ciclo ou contracepção.</p>
           ) : (
             <>
               {contraceptives.length > 0 && (
                 <ul className="space-y-1">
                   {contraceptives.map((c, i) => (
-                    <li key={i} className="font-body text-sm text-onyx">
+                    <li key={i} className="font-body text-xs text-onyx">
                       • <strong>{contraceptiveLabel(c.kind)}</strong>{c.brand ? ` (${c.brand})` : ''}
                       {c.startedOn ? ` — desde ${fmt(c.startedOn)}` : ''}{c.replaceOn ? ` · troca prevista ${fmt(c.replaceOn)}` : ''}
                       {c.status && c.status !== 'ativo' ? ` (${c.status})` : ''}
@@ -896,9 +896,9 @@ function LegacyReport() {
         {/* Despesas — eventos realizados com valor pago (projeção financeira da Agenda) */}
         {sections.gastos && (
         <section id="sec-gastos" style={{ scrollMarginTop: 16 }}>
-          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Despesas</h2>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Despesas</h2>
           {perExpenses.length === 0 ? (
-            <p className="font-body text-sm text-mauve">Nenhuma despesa registrada.</p>
+            <p className="font-body text-xs text-mauve">Nenhuma despesa registrada.</p>
           ) : (
             <>
               <table className="w-full text-left">
@@ -906,7 +906,7 @@ function LegacyReport() {
                   {perExpenses.map((x, i) => (
                     <tr key={i} className="border-b border-border/50">
                       <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(x.date)}</td>
-                      <td className="font-body text-sm text-onyx py-1.5"><span className="text-mauve">{typeLabel(x.type)}:</span> {x.title}</td>
+                      <td className="font-body text-xs text-onyx py-1.5"><span className="text-mauve">{typeLabel(x.type)}:</span> {x.title}</td>
                       <td className="font-body text-sm text-onyx py-1.5 pl-3 text-right whitespace-nowrap align-top">{brl(x.amountCents)}</td>
                     </tr>
                   ))}
