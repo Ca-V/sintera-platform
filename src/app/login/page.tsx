@@ -44,29 +44,29 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex gradient-subtle">
       {/* Left decorative panel */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-[#57B3AD] to-[#63C1B3] items-center justify-center p-16">
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-petal to-lavender items-center justify-center p-16">
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-white/25 blur-3xl" />
-          <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full bg-white/20 blur-3xl" />
+          <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-white/10 blur-3xl" />
+          <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full bg-white/10 blur-3xl" />
         </div>
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: 'easeOut' }}
-          className="relative text-onyx text-center"
+          className="relative text-white text-center"
         >
-          <div className="w-12 h-12 rounded-full bg-white/45 flex items-center justify-center mx-auto mb-6">
+          <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-6">
             <svg width="22" height="22" viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="8" r="5.5" stroke="#0A4A44" strokeWidth="1.2" fill="none"/>
-              <circle cx="8" cy="8" r="2" fill="#0A4A44"/>
-              <path d="M8 2.5 A5.5 5.5 0 0 1 13.5 8" stroke="#0A4A44" strokeWidth="1.4" strokeLinecap="round"/>
+              <circle cx="8" cy="8" r="5.5" stroke="white" strokeWidth="1.2" fill="none"/>
+              <circle cx="8" cy="8" r="2" fill="white"/>
+              <path d="M8 2.5 A5.5 5.5 0 0 1 13.5 8" stroke="white" strokeWidth="1.4" strokeLinecap="round"/>
             </svg>
           </div>
-          <p className="font-display text-4xl font-semibold tracking-[0.25em] mb-6 text-onyx">SINTERA</p>
-          <p className="font-display text-2xl font-light leading-snug mb-4 italic text-onyx">
+          <p className="font-display text-4xl font-semibold tracking-[0.25em] mb-6">SINTERA</p>
+          <p className="font-display text-2xl font-light leading-snug mb-4 italic">
             &ldquo;Sua saúde tem<br/>uma história.<br/>A SINTERA te ajuda a<br/>organizá-la e compreendê-la.&rdquo;
           </p>
-          <p className="font-body text-petal-dark text-sm font-medium">Toda a sua saúde, organizada em um só lugar</p>
+          <p className="font-body text-white/70 text-sm">Toda a sua saúde, organizada em um só lugar</p>
         </motion.div>
       </div>
 
