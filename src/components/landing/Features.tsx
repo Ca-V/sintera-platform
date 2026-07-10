@@ -22,7 +22,7 @@ const features = [
   {
     icon: Bell,
     title: 'Lembretes de tudo que importa',
-    description: 'Consultas, exames e a hora de tomar e repor seus medicamentos — avisos por e-mail e WhatsApp.',
+    description: 'Consultas, exames e a hora de repor seus medicamentos e suplementos — avisos por e-mail e WhatsApp.',
     iconColor: 'text-lavender', iconBg: 'bg-lavender-light',
   },
   {

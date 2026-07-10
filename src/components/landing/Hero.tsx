@@ -80,7 +80,7 @@ function ProductPreview() {
   const records = [
     { icon: Calendar, title: 'Consulta — Cardiologista', date: '12 mar', color: 'text-petal',    bg: 'bg-blush' },
     { icon: FileText, title: 'Exame — Hemograma',        date: '3 fev',  color: 'text-sage',     bg: 'bg-sage-light' },
-    { icon: Pill,     title: 'Receita — Losartana',      date: '20 jan', color: 'text-lavender', bg: 'bg-lavender-light' },
+    { icon: Pill,     title: 'Suplemento — Vitamina D3',  date: '20 jan', color: 'text-lavender', bg: 'bg-lavender-light' },
     { icon: Syringe,  title: 'Vacina — Influenza',       date: '5 jan',  color: 'text-gold',     bg: 'bg-warm' },
   ]
 
@@ -158,7 +158,7 @@ function ProductPreview() {
           <div className="w-5 h-5 rounded-lg bg-lavender-light flex items-center justify-center flex-shrink-0">
             <Pill size={10} className="text-lavender" />
           </div>
-          <span className="text-[11px] font-body font-semibold text-onyx">Losartana</span>
+          <span className="text-[11px] font-body font-semibold text-onyx">Ômega 3</span>
         </div>
         <p className="text-[11px] font-body text-mauve leading-snug">Hora de repor — lembrete por e-mail</p>
       </motion.div>
