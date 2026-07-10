@@ -85,11 +85,11 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
     db.from('profiles').select('name, height_cm').eq('id', uid).maybeSingle(),
     db.from('medications').select('name, kind, dose, frequency, started_on, until_date, status').eq('user_id', uid).order('status'),
     db.from('health_events').select('id, title, event_type, event_date, notes, professional_kind, status, amount_cents, direct_expense').eq('user_id', uid).eq('synthetic', false).order('event_date', { ascending: false }),
-    db.from('exams').select('type, exam_date, created_at').eq('user_id', uid).order('created_at', { ascending: false }),
+    db.from('exams').select('type, exam_date, created_at, file_url').eq('user_id', uid).order('created_at', { ascending: false }),
     db.from('body_metrics').select('metric, label, value_text, unit, measured_on').eq('user_id', uid).order('measured_on', { ascending: false }),
     db.from('health_conditions').select('scope, name, relative, since_label, notes').eq('user_id', uid).order('created_at', { ascending: false }),
     db.from('life_habits').select('category, description, frequency, notes').eq('user_id', uid).order('created_at', { ascending: false }),
-    db.from('health_resources').select('name, resource_type, prescriber, started_on, attributes').eq('user_id', uid).eq('resource_type', 'correcao_visual').order('created_at', { ascending: false }),
+    db.from('health_resources').select('name, resource_type, prescriber, started_on, attributes, file_url').eq('user_id', uid).eq('resource_type', 'correcao_visual').order('created_at', { ascending: false }),
     db.from('omics_panels').select('domain, laboratory, total_features, collected_on, created_at').eq('user_id', uid).order('collected_on', { ascending: false, nullsFirst: false }),
     db.from('contraceptive_methods').select('kind, brand, started_on, replace_on, status').eq('user_id', uid).order('created_at', { ascending: false }),
     db.from('menstrual_periods').select('started_on, notes').eq('user_id', uid).order('started_on', { ascending: false }).limit(24),
@@ -109,6 +109,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
       od_sph: od.sph ?? null, od_cyl: od.cyl ?? null, od_axis: od.axis ?? null, od_add: od.add ?? null,
       oe_sph: oe.sph ?? null, oe_cyl: oe.cyl ?? null, oe_axis: oe.axis ?? null, oe_add: oe.add ?? null,
       dnp: (a.dnp as string) ?? null, bc: (a.bc as string) ?? null, dia: (a.dia as string) ?? null,
+      fileUrl: (r.file_url as string) ?? null,
     }
   })
   const omArr = ((omics ?? []) as Array<Record<string, unknown>>).filter(o => inPeriod((o.collected_on as string) ?? (o.created_at as string) ?? null, rp))
@@ -211,6 +212,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
                   {od ? <span style={{ display: 'block', fontSize: 12, color: '#8a7b92' }}>OD: {od}</span> : null}
                   {oe ? <span style={{ display: 'block', fontSize: 12, color: '#8a7b92' }}>OE: {oe}</span> : null}
                   {extras.length ? <span style={{ display: 'block', fontSize: 12, color: '#8a7b92' }}>{extras.join(' · ')}</span> : null}
+                  {e.fileUrl ? <span style={{ display: 'block', fontSize: 13, marginTop: 2 }}><a href={e.fileUrl as string} target="_blank" rel="noopener noreferrer" style={{ color: '#0E6E64', textDecoration: 'none' }}>Ver documento original</a></span> : null}
                 </li>
               )
             })}
@@ -245,7 +247,11 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
         <h2 style={{ fontSize: 15 }}>Exames enviados</h2>
         {exArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum.</p> : (
           <ul style={{ paddingLeft: 18, fontSize: 14 }}>
-            {exArr.map((e, i) => <li key={i}>{fmt((e.exam_date as string) || (e.created_at as string))} — {(e.type as string) || 'Exame'}</li>)}
+            {exArr.map((e, i) => (
+              <li key={i}>{fmt((e.exam_date as string) || (e.created_at as string))} — {(e.type as string) || 'Exame'}
+                {e.file_url ? <>{'  ·  '}<a href={e.file_url as string} target="_blank" rel="noopener noreferrer" style={{ color: '#0E6E64', textDecoration: 'none', fontSize: 13 }}>Ver documento original</a></> : null}
+              </li>
+            ))}
           </ul>
         )}
       </section>
