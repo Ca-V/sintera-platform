@@ -9,7 +9,7 @@
 
 ## 2. Proposta de valor
 **Sua saúde, organizada para toda a vida.**
-A SINTERA reúne e organiza automaticamente as informações de saúde — exames, receitas, laudos e outros documentos — à medida que são adicionadas, construindo uma visão clara da **evolução do cuidado ao longo da vida** — para revisão, acompanhamento e compartilhamento — preservando a decisão clínica com os profissionais.
+A SINTERA reúne e organiza automaticamente as **informações e registros de saúde** — à medida que são adicionados — construindo uma visão clara da **evolução do cuidado ao longo da vida**, para revisão, acompanhamento e compartilhamento, preservando a decisão clínica com os profissionais. *("Informações e registros de saúde" é deliberadamente abrangente — comporta exames, laudos, receitas, medicamentos, consultas, vacinas, sinais vitais, hábitos, agenda/lembretes e, no futuro, wearables e integrações — sem reescrever o posicionamento a cada nova capacidade.)*
 *(A formulação anterior "Você envia os documentos. A SINTERA faz o resto." foi substituída em 09/07 — decisão da fundadora — por ser subjetiva/vaga; a nova centra continuidade + organização como mecanismo. Ver §12.)*
 
 ## 3. Propósito, Missão, Visão e Valores
@@ -75,7 +75,7 @@ Marca **universal, premium, tecnológica, humana, atemporal e gênero‑neutra.*
 **Hero (primeira dobra — congelada 09/07, decisão da fundadora):** cinco blocos, fonte no componente `src/components/landing/Hero.tsx`:
 - **Selo:** *Sua saúde, organizada para toda a vida.*
 - **Headline:** *Todas as informações da sua saúde, organizadas para que você compreenda melhor a evolução do seu cuidado ao longo da vida.*
-- **Texto principal:** *A SINTERA reúne e organiza as informações da sua saúde à medida que você registra seus dados e adiciona exames, receitas, laudos e outros documentos recebidos de laboratórios, clínicas e profissionais de saúde, construindo uma visão clara da evolução do seu cuidado ao longo da vida.*
+- **Texto principal:** *A SINTERA reúne e organiza as informações da sua saúde à medida que você registra seus dados e adiciona documentos e registros de saúde, construindo uma visão clara da evolução do seu cuidado ao longo da vida.* (Abrangente por design — os documentos específicos e a origem laboratórios/clínicas descem para as camadas 2 e 3.)
 - **Frase de impacto:** *Quem compreende melhor sua saúde, cuida melhor dela.*
 - **Texto complementar:** *Ao transformar informações dispersas em uma história de saúde organizada e contínua, a SINTERA facilita o acompanhamento da sua saúde e apoia as decisões que você toma junto aos profissionais que participam do seu cuidado.*
 - **CTA principal:** "Criar conta gratuitamente" · **CTA secundário:** "Entrar".

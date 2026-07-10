@@ -57,9 +57,8 @@ export default function Hero() {
             <motion.p variants={fadeUp(0.32)} initial="hidden" animate="show"
               className="font-body text-[1.05rem] text-mauve leading-relaxed max-w-[540px] mb-6">
               A SINTERA reúne e organiza as informações da sua saúde à medida que você registra seus
-              dados e adiciona exames, receitas, laudos e outros documentos recebidos de laboratórios,
-              clínicas e profissionais de saúde, construindo uma visão clara da evolução do seu cuidado
-              ao longo da vida.
+              dados e adiciona documentos e registros de saúde, construindo uma visão clara da evolução
+              do seu cuidado ao longo da vida.
             </motion.p>
 
             {/* Frase de impacto */}
