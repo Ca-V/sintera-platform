@@ -23,6 +23,15 @@
 // pela MESMA lógica, sem implementação específica por módulo. Quando um fluxo passar a
 // armazenar o documento (ex.: ômica, receitas de medicamentos), o link aparece
 // automaticamente — basta o adaptador popular `document.url`.
+//
+// PRINCÍPIO DA RASTREABILIDADE DOCUMENTAL (decisão arquitetural PERMANENTE, ratificada
+// 2026-07-10 em revisão cruzada): sempre que uma informação possuir DOCUMENTO DE ORIGEM,
+// o relatório deve PRIVILEGIAR a apresentação do documento original como FONTE PRIMÁRIA.
+// A SINTERA organiza, relaciona e facilita o acesso ao documento — preservando sua
+// rastreabilidade e SEM substituir seu conteúdo. Vale para todo o domínio (exames,
+// receitas, laudos de imagem, prescrições, documentos hospitalares, vacinação, atestados),
+// não só bioimpedância. Reforça o enquadramento RDC 657 (organiza, não interpreta) e o
+// posicionamento (o documento é a verdade; a plataforma dá acesso e contexto).
 // Nível 5 (references): cada informação/bloco pode futuramente expor "Referências
 // científicas relacionadas", alimentadas pelo KG v2/SRL — hoje oculto; o layout já
 // comporta sem reformulação.
