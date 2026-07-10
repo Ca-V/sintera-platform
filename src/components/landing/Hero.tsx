@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowRight, Upload, TrendingUp, Share2 } from 'lucide-react'
+import { ArrowRight, Upload } from 'lucide-react'
 
 function fadeUp(delay = 0) {
   return {
@@ -10,12 +10,6 @@ function fadeUp(delay = 0) {
     show: { opacity: 1, y: 0, transition: { duration: 0.7, delay, ease: 'easeOut' as const } },
   }
 }
-
-const marqueePhrases = [
-  'Hemograma', 'Glicemia', 'Vitamina D', 'Ferritina', 'TSH', 'Colesterol Total',
-  'Triglicerídeos', 'Vitamina B12', 'PCR', 'Insulina', 'Cortisol', 'Creatinina',
-  'Ácido Úrico', 'Albumina', 'Bilirrubina', 'Hormônios', 'Leucócitos', 'Plaquetas',
-]
 
 export default function Hero() {
   return (
@@ -45,12 +39,6 @@ export default function Hero() {
               <span className="text-gradient italic">evolução do seu cuidado ao longo da vida.</span>
             </motion.h1>
 
-            <motion.p variants={fadeUp(0.28)} initial="hidden" animate="show"
-              className="font-body text-[1.05rem] text-mauve leading-relaxed max-w-[520px] mb-7">
-              A SINTERA reúne e organiza suas informações de saúde à medida que você as adiciona —
-              uma visão clara da sua saúde, sempre à mão.
-            </motion.p>
-
             {/* Frase de impacto — acento coral */}
             <motion.p variants={fadeUp(0.36)} initial="hidden" animate="show"
               className="font-display italic text-onyx leading-snug mb-8 pl-4 border-l-2 border-lavender"
@@ -72,30 +60,6 @@ export default function Hero() {
                 </button>
               </Link>
             </motion.div>
-
-            {/* Lista de espera continua disponível para quem quer só acompanhar */}
-            <motion.p variants={fadeUp(0.5)} initial="hidden" animate="show"
-              className="font-body text-sm text-mauve mb-10">
-              Prefere só acompanhar a evolução da plataforma?{' '}
-              <Link href="/lista-de-espera" className="text-petal font-medium hover:underline">Entre na lista de espera</Link>.
-            </motion.p>
-
-            {/* 3 pilares */}
-            <motion.div variants={fadeUp(0.64)} initial="hidden" animate="show"
-              className="flex flex-col sm:flex-row gap-4">
-              {[
-                { icon: Upload,     color: 'text-petal',    bg: 'bg-blush',          text: 'Tudo num só lugar, organizado'   },
-                { icon: TrendingUp, color: 'text-lavender', bg: 'bg-lavender-light', text: 'Evolução ao longo do tempo'      },
-                { icon: Share2,     color: 'text-gold',     bg: 'bg-warm',           text: 'Relatório para compartilhar'     },
-              ].map(({ icon: Icon, color, bg, text }) => (
-                <div key={text} className="flex items-center gap-2.5">
-                  <div className={`w-7 h-7 rounded-lg ${bg} flex items-center justify-center flex-shrink-0`}>
-                    <Icon size={14} className={color} />
-                  </div>
-                  <span className="font-body text-xs text-mauve leading-snug">{text}</span>
-                </div>
-              ))}
-            </motion.div>
           </div>
 
           {/* Right — product preview */}
@@ -106,18 +70,6 @@ export default function Hero() {
             className="hidden lg:block relative">
             <ProductPreview />
           </motion.div>
-        </div>
-      </div>
-
-      {/* Marquee — biomarcadores reais */}
-      <div className="relative border-t border-border/50 bg-white/60 backdrop-blur-sm py-4 overflow-hidden marquee-mask">
-        <div className="flex gap-0 w-max animate-marquee">
-          {[...marqueePhrases, ...marqueePhrases].map((p, i) => (
-            <span key={i} className="inline-flex items-center gap-3 px-5 text-xs font-body font-medium text-mauve uppercase tracking-widest whitespace-nowrap">
-              <span className="w-1 h-1 rounded-full bg-petal inline-block" />
-              {p}
-            </span>
-          ))}
         </div>
       </div>
     </section>

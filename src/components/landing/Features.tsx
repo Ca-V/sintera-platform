@@ -2,47 +2,34 @@
 
 import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
-import { FileText, Activity, ClipboardList, Bell, FileCheck, Share2 } from 'lucide-react'
+import { FileText, Activity, Bell, FileCheck } from 'lucide-react'
 
 // Camada 2 da narrativa — "Como a SINTERA ajuda no dia a dia".
-// Perspectiva no USUÁRIO (o que ele ganha), não na plataforma. Recupera o
-// diferencial central (menos trabalho administrativo) no título da seção.
+// Perspectiva no USUÁRIO (o que ele ganha). 4 benefícios essenciais (enxuto).
 const features = [
   {
     icon: FileText,
-    title: 'Seus documentos em ordem',
-    description: 'Exames, receitas e laudos reunidos e organizados automaticamente, sem digitação.',
+    title: 'Tudo organizado em um só lugar',
+    description: 'Exames, receitas, consultas, medicamentos e hábitos — reunidos automaticamente, sem digitação.',
     iconColor: 'text-petal', iconBg: 'bg-blush',
   },
   {
     icon: Activity,
     title: 'Um acompanhamento contínuo',
-    description: 'Tudo o que acontece com a sua saúde reunido em uma linha do tempo clara.',
+    description: 'Tudo o que acontece com a sua saúde em uma linha do tempo clara.',
     iconColor: 'text-sage', iconBg: 'bg-sage-light',
-  },
-  {
-    icon: ClipboardList,
-    title: 'Sua rotina toda em um lugar',
-    description: 'Registre consultas, medicamentos, sintomas e hábitos com poucos toques.',
-    iconColor: 'text-lavender', iconBg: 'bg-lavender-light',
   },
   {
     icon: Bell,
-    title: 'Nunca perca um compromisso',
-    description: 'Você recebe lembretes dos seus compromissos de saúde por e-mail e WhatsApp.',
-    iconColor: 'text-petal', iconBg: 'bg-blush',
+    title: 'Lembretes por e-mail e WhatsApp',
+    description: 'Você é avisado dos seus compromissos de saúde — nunca perde uma consulta.',
+    iconColor: 'text-lavender', iconBg: 'bg-lavender-light',
   },
   {
     icon: FileCheck,
-    title: 'Relatórios prontos na hora',
-    description: 'Um resumo organizado da sua saúde para levar à consulta quando precisar.',
+    title: 'Relatórios prontos para compartilhar',
+    description: 'Um resumo organizado da sua saúde para levar e compartilhar com os profissionais.',
     iconColor: 'text-gold', iconBg: 'bg-warm',
-  },
-  {
-    icon: Share2,
-    title: 'Compartilhe em segundos',
-    description: 'Leve suas informações organizadas aos profissionais que cuidam de você.',
-    iconColor: 'text-sage', iconBg: 'bg-sage-light',
   },
 ]
 
@@ -68,7 +55,7 @@ export default function Features() {
           </p>
         </motion.div>
 
-        <div className="grid lg:grid-cols-3 gap-4 auto-rows-fr">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-fr">
           {features.map((f, i) => {
             const Icon = f.icon
             return (
