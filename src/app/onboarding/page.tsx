@@ -152,7 +152,7 @@ export default function OnboardingPage() {
               <div className="flex flex-col items-center gap-5 px-10">
                 {[
                   { icon: Upload,       label: 'Upload do laudo em PDF',           color: '#E28C7D', delay: 0    },
-                  { icon: FlaskConical, label: 'IA extrai os biomarcadores',        color: '#57B3AD', delay: 0.15 },
+                  { icon: FlaskConical, label: 'IA extrai os biomarcadores',        color: '#63C1B3', delay: 0.15 },
                   { icon: TrendingUp,   label: 'Histórico longitudinal organizado', color: '#7DAF9E', delay: 0.30 },
                 ].map(({ icon: Icon, label, color, delay }, i) => (
                   <motion.div key={i}
@@ -371,7 +371,7 @@ export default function OnboardingPage() {
                         icon: FlaskConical,
                         title: '2. A IA extrai os biomarcadores',
                         desc: 'Glicemia, colesterol, vitaminas, hormônios — extraídos automaticamente com os valores e referências do seu laudo.',
-                        color: '#57B3AD',
+                        color: '#63C1B3',
                         bg: 'bg-lavender-light',
                       },
                       {

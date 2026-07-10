@@ -7,7 +7,7 @@ type Phase = { name: string; startDay: number; endDay: number; color: string; la
 
 const PHASES: Phase[] = [
   { name: 'Menstrual',  startDay: 1,  endDay: 5,  color: '#E28C7D', label: 'Dias 1–5' },
-  { name: 'Folicular',  startDay: 6,  endDay: 13, color: '#57B3AD', label: 'Dias 6–13', active: true },
+  { name: 'Folicular',  startDay: 6,  endDay: 13, color: '#63C1B3', label: 'Dias 6–13', active: true },
   { name: 'Ovulatória', startDay: 14, endDay: 16, color: '#7DAF9E', label: 'Dias 14–16' },
   { name: 'Lútea',      startDay: 17, endDay: 28, color: '#C9A97A', label: 'Dias 17–28' },
 ]
@@ -37,7 +37,7 @@ function dayMarker(day: number) {
 
 const hormones = [
   { label: 'Estrogênio', values: [20,30,45,65,80,95,72,50,40,35,38,42,46,48,50,48,45,42,38,35,32,30,28,26,24,22,20,18], color: '#E28C7D' },
-  { label: 'Progesterona', values: [8,8,9,10,12,14,16,18,22,28,35,42,50,58,65,70,75,78,80,76,68,58,45,30,20,14,10,8], color: '#57B3AD' },
+  { label: 'Progesterona', values: [8,8,9,10,12,14,16,18,22,28,35,42,50,58,65,70,75,78,80,76,68,58,45,30,20,14,10,8], color: '#63C1B3' },
 ]
 
 const CHART_W = 200, CHART_H = 48

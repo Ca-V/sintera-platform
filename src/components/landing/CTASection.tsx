@@ -23,8 +23,8 @@ export default function CTASection() {
         <motion.div initial={{ opacity: 0, y: 24 }} animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.65 }}>
           <h2 className="font-display text-4xl lg:text-5xl font-semibold text-white leading-tight mb-6">
-            Comece hoje a construir uma<br />
-            <span className="text-shimmer">história de saúde organizada para toda a vida.</span>
+            Organize hoje.<br />
+            <span className="text-shimmer">Acompanhe por toda a vida.</span>
           </h2>
           <p className="font-body text-white/60 text-lg max-w-2xl mx-auto leading-relaxed mb-10">
             Cada informação registrada torna sua visão da saúde mais completa, facilitando seu

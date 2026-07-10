@@ -38,32 +38,22 @@ export default function Hero() {
 
           {/* Left — copy */}
           <div className="flex flex-col">
-            <motion.div variants={fadeUp(0.1)} initial="hidden" animate="show" className="inline-flex mb-6">
-              <span className="inline-flex items-center gap-2 bg-white/80 border border-petal-light rounded-full pl-2 pr-4 py-1.5 text-xs font-body font-medium text-petal-dark shadow-sm">
-                <span className="w-5 h-5 rounded-full gradient-sintera flex items-center justify-center">
-                  <span className="text-white text-[9px]">✦</span>
-                </span>
-                Sua saúde, organizada para toda a vida.
-              </span>
-            </motion.div>
-
-            <motion.h1 variants={fadeUp(0.2)} initial="hidden" animate="show"
+            <motion.h1 variants={fadeUp(0.15)} initial="hidden" animate="show"
               className="font-display font-semibold leading-[1.1] text-onyx mb-6"
-              style={{ fontSize: 'clamp(1.9rem, 3.6vw, 2.9rem)' }}>
-              Todas as informações da sua saúde, organizadas para que você compreenda melhor a{' '}
+              style={{ fontSize: 'clamp(2rem, 3.8vw, 3rem)' }}>
+              Comece hoje a construir uma história de saúde organizada — e compreenda melhor a{' '}
               <span className="text-gradient italic">evolução do seu cuidado ao longo da vida.</span>
             </motion.h1>
 
-            <motion.p variants={fadeUp(0.32)} initial="hidden" animate="show"
-              className="font-body text-[1.05rem] text-mauve leading-relaxed max-w-[540px] mb-6">
-              A SINTERA reúne e organiza as informações da sua saúde à medida que você registra seus
-              dados e adiciona documentos e registros de saúde, construindo uma visão clara da sua
-              saúde ao longo do tempo.
+            <motion.p variants={fadeUp(0.28)} initial="hidden" animate="show"
+              className="font-body text-[1.05rem] text-mauve leading-relaxed max-w-[520px] mb-7">
+              A SINTERA reúne e organiza suas informações de saúde à medida que você as adiciona —
+              uma visão clara da sua saúde, sempre à mão.
             </motion.p>
 
-            {/* Frase de impacto */}
-            <motion.p variants={fadeUp(0.4)} initial="hidden" animate="show"
-              className="font-display italic text-petal-dark leading-snug mb-8"
+            {/* Frase de impacto — acento coral */}
+            <motion.p variants={fadeUp(0.36)} initial="hidden" animate="show"
+              className="font-display italic text-onyx leading-snug mb-8 pl-4 border-l-2 border-lavender"
               style={{ fontSize: 'clamp(1.2rem, 2vw, 1.5rem)' }}>
               Quem compreende melhor sua saúde, cuida melhor dela.
             </motion.p>
@@ -83,16 +73,8 @@ export default function Hero() {
               </Link>
             </motion.div>
 
-            {/* Texto complementar */}
-            <motion.p variants={fadeUp(0.5)} initial="hidden" animate="show"
-              className="font-body text-sm text-mauve leading-relaxed max-w-[540px] mb-5">
-              Ao transformar informações dispersas em uma história de saúde organizada e contínua, a
-              SINTERA facilita o acompanhamento da sua saúde e apoia as decisões que você toma junto aos
-              profissionais que participam do seu cuidado.
-            </motion.p>
-
             {/* Lista de espera continua disponível para quem quer só acompanhar */}
-            <motion.p variants={fadeUp(0.58)} initial="hidden" animate="show"
+            <motion.p variants={fadeUp(0.5)} initial="hidden" animate="show"
               className="font-body text-sm text-mauve mb-10">
               Prefere só acompanhar a evolução da plataforma?{' '}
               <Link href="/lista-de-espera" className="text-petal font-medium hover:underline">Entre na lista de espera</Link>.
@@ -104,7 +86,7 @@ export default function Hero() {
               {[
                 { icon: Upload,     color: 'text-petal',    bg: 'bg-blush',          text: 'Tudo num só lugar, organizado'   },
                 { icon: TrendingUp, color: 'text-lavender', bg: 'bg-lavender-light', text: 'Evolução ao longo do tempo'      },
-                { icon: Share2,     color: 'text-sage',     bg: 'bg-sage-light',     text: 'Relatório para compartilhar'     },
+                { icon: Share2,     color: 'text-gold',     bg: 'bg-warm',           text: 'Relatório para compartilhar'     },
               ].map(({ icon: Icon, color, bg, text }) => (
                 <div key={text} className="flex items-center gap-2.5">
                   <div className={`w-7 h-7 rounded-lg ${bg} flex items-center justify-center flex-shrink-0`}>
