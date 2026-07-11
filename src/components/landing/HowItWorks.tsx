@@ -15,7 +15,7 @@ const steps = [
     description: 'Cadastre suas informações e adicione documentos e registros recebidos ao longo da sua jornada de saúde.',
     detail: 'Exames, receitas, laudos, consultas, medicamentos, hábitos — tudo em um só lugar.',
     color: '#CDEAE4',
-    iconColor: '#157A6F',
+    iconColor: '#0E7580',
   },
   {
     number: '02',

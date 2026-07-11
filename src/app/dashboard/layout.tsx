@@ -8,7 +8,7 @@ import { useUser } from '@/context/UserContext'
 
 function LoadingScreen() {
   return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: '#BCE7DF' }}>
+    <div className="min-h-screen flex items-center justify-center" style={{ background: '#B3E4EE' }}>
       <div className="flex flex-col items-center gap-4">
         <div className="w-12 h-12 rounded-full gradient-sintera flex items-center justify-center shadow-lg animate-pulse">
           <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
@@ -43,7 +43,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (!user) return <LoadingScreen />
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: '#BCE7DF' }}>
+    <div className="flex h-screen overflow-hidden" style={{ background: '#B3E4EE' }}>
       {/* Skip-link (a11y): primeiro foco no teclado — pula a navegação e vai ao conteúdo. */}
       <a href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:z-[100] focus:top-3 focus:left-3 focus:px-4 focus:py-2 focus:rounded-xl focus:bg-white focus:text-onyx focus:shadow-lg focus:font-body focus:text-sm focus:outline-none focus:ring-2 focus:ring-petal">

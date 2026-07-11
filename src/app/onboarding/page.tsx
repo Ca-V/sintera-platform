@@ -18,19 +18,19 @@ const stepMeta = [
 
 const leftPanels = [
   {
-    bg:          'linear-gradient(160deg, #0F0B14 0%, #1C1226 50%, #140E1C 100%)',
-    accentGlow:  'rgba(226,140,125,0.18)',
-    accent2:     'rgba(87,179,173,0.10)',
+    bg:          'linear-gradient(150deg, #9BD8E0 0%, #6FC1CF 58%, #57B0BF 100%)',
+    accentGlow:  'rgba(246,242,234,0.45)',
+    accent2:     'rgba(167,185,140,0.30)',
   },
   {
-    bg:          'linear-gradient(160deg, #0B0F1C 0%, #141A2C 50%, #0E1220 100%)',
-    accentGlow:  'rgba(125,175,158,0.20)',
-    accent2:     'rgba(87,179,173,0.10)',
+    bg:          'linear-gradient(150deg, #A6DCE3 0%, #72C3D0 58%, #5AB2C0 100%)',
+    accentGlow:  'rgba(167,185,140,0.40)',
+    accent2:     'rgba(107,192,206,0.30)',
   },
   {
-    bg:          'linear-gradient(160deg, #180E0A 0%, #261614 50%, #1E1210 100%)',
-    accentGlow:  'rgba(201,169,122,0.20)',
-    accent2:     'rgba(226,140,125,0.14)',
+    bg:          'linear-gradient(150deg, #9BD8E0 0%, #6FC1CF 58%, #57B0BF 100%)',
+    accentGlow:  'rgba(193,131,106,0.32)',
+    accent2:     'rgba(246,242,234,0.40)',
   },
 ]
 
@@ -152,7 +152,7 @@ export default function OnboardingPage() {
               <div className="flex flex-col items-center gap-5 px-10">
                 {[
                   { icon: Upload,       label: 'Upload do laudo em PDF',           color: '#C1836A', delay: 0    },
-                  { icon: FlaskConical, label: 'IA extrai os biomarcadores',        color: '#7FC6BF', delay: 0.15 },
+                  { icon: FlaskConical, label: 'IA extrai os biomarcadores',        color: '#6BC0CE', delay: 0.15 },
                   { icon: TrendingUp,   label: 'Histórico longitudinal organizado', color: '#A7B98C', delay: 0.30 },
                 ].map(({ icon: Icon, label, color, delay }, i) => (
                   <motion.div key={i}
@@ -163,9 +163,9 @@ export default function OnboardingPage() {
                       style={{ backgroundColor: `${color}25`, border: `1px solid ${color}40` }}>
                       <Icon size={18} style={{ color }} />
                     </div>
-                    <p className="font-body text-sm text-white/70">{label}</p>
+                    <p className="font-body text-sm text-onyx/75">{label}</p>
                     {i < 2 && (
-                      <motion.div className="absolute w-0.5 bg-white/10 rounded-full"
+                      <motion.div className="absolute w-0.5 bg-onyx/10 rounded-full"
                         style={{ height: 24, left: 'calc(50% - 28px)', top: `calc(${i * 72 + 68}px)` }} />
                     )}
                   </motion.div>
@@ -185,7 +185,7 @@ export default function OnboardingPage() {
                 </motion.div>
                 <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
-                  className="font-display text-2xl font-medium text-white">
+                  className="font-display text-2xl font-medium text-onyx">
                   {name || 'Você'} está pronta.
                 </motion.p>
               </div>
@@ -195,18 +195,18 @@ export default function OnboardingPage() {
 
         {/* Texto no rodapé do painel */}
         <div className="absolute bottom-0 left-0 right-0 p-8 lg:p-10"
-          style={{ background: 'linear-gradient(to top, rgba(10,8,16,0.85) 0%, transparent 100%)' }}>
+          style={{ background: 'linear-gradient(to top, rgba(255,255,255,0.42) 0%, transparent 100%)' }}>
           <AnimatePresence mode="wait">
             <motion.div key={step}
               initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.5, ease: 'easeOut' }}>
               {quote.headline && (
-                <p className="font-body text-sm text-white/45 mb-1">{quote.headline}</p>
+                <p className="font-body text-sm text-onyx/60 mb-1">{quote.headline}</p>
               )}
-              <p className="font-display text-xl lg:text-2xl font-medium text-white leading-snug mb-2">
+              <p className="font-display text-xl lg:text-2xl font-medium text-onyx leading-snug mb-2">
                 {quote.emphasis}
               </p>
-              <p className="font-body text-xs text-white/35">{quote.sub}</p>
+              <p className="font-body text-xs text-onyx/45">{quote.sub}</p>
             </motion.div>
           </AnimatePresence>
         </div>
@@ -220,14 +220,14 @@ export default function OnboardingPage() {
                 <circle cx="8" cy="8" r="2" fill="white"/>
               </svg>
             </div>
-            <span className="font-display text-sm font-semibold tracking-[0.2em] text-white">SINTERA</span>
+            <span className="font-display text-sm font-semibold tracking-[0.2em] text-onyx">SINTERA</span>
           </Link>
         </div>
 
         {/* Dots de progresso */}
         <div className="absolute top-1/2 right-6 -translate-y-1/2 hidden lg:flex flex-col gap-2">
           {stepMeta.map((s, i) => (
-            <div key={i} className={`rounded-full transition-all duration-300 ${i === step ? 'w-2 h-2 bg-petal shadow-[0_0_6px_rgba(226,140,125,0.8)]' : i < step ? 'w-1.5 h-1.5 bg-white/40' : 'w-1.5 h-1.5 bg-white/15'}`}/>
+            <div key={i} className={`rounded-full transition-all duration-300 ${i === step ? 'w-2 h-2 bg-petal shadow-[0_0_6px_rgba(14,117,128,0.7)]' : i < step ? 'w-1.5 h-1.5 bg-onyx/35' : 'w-1.5 h-1.5 bg-onyx/15'}`}/>
           ))}
         </div>
       </motion.div>
@@ -371,7 +371,7 @@ export default function OnboardingPage() {
                         icon: FlaskConical,
                         title: '2. A IA extrai os biomarcadores',
                         desc: 'Glicemia, colesterol, vitaminas, hormônios — extraídos automaticamente com os valores e referências do seu laudo.',
-                        color: '#7FC6BF',
+                        color: '#6BC0CE',
                         bg: 'bg-lavender-light',
                       },
                       {

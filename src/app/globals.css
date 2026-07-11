@@ -6,17 +6,17 @@
      turquesa — como nenhum exame isolado explica a saúde, nenhuma pincelada explica
      o quadro; é a SOMA das camadas ao longo do tempo que revela o todo.
      COR PRINCIPAL/AMBIENTE = TURQUESA (Lagoa) em superfícies e fundo. AÇÃO/UI com AA =
-     teal (token histórico `petal`, #157A6F, AA ~5,2:1; hover #0E6E64). LEITURA = branco/creme
+     teal (token histórico `petal`, #0E7580, AA ~5,2:1; hover #0A5A63). LEITURA = branco/creme
      (cards, tabelas, relatório). TEXTO = preto-marrom (carvão quente). ACENTO = terracota
      (coral suave entre coral e marrom, raro). APOIO = sálvia (natureza/neutra — NUNCA
      "resultado bom"; RDC 657). PREMIUM = dourado-palha. ESTRUTURA/detalhe = marrom.
      Disciplina de contraste: só `petal` (ação) e `onyx` (texto) carregam AA; lagoa/
      sálvia/dourado/terracota são decorativos/superfície, sempre com texto/ícone legível. */
-  --color-petal: #157A6F;        /* AÇÃO/UI — teal (um tom mais claro, AA ~5,2:1) */
-  --color-petal-light: #CFEAE6;  /* tinta clara — badges, fundos suaves */
-  --color-petal-dark: #0E6E64;   /* hover / teal mais profundo */
-  --color-blush: #E4F4F0;        /* fundo suave do primário (turquesa claro) */
-  --color-lagoa: #7FC6BF;        /* ASSINATURA/AMBIENTE — turquesa (cor principal) */
+  --color-petal: #0E7580;        /* AÇÃO/UI — teal (um tom mais claro, AA ~5,2:1) */
+  --color-petal-light: #CBEAF0;  /* tinta clara — badges, fundos suaves */
+  --color-petal-dark: #0A5A63;   /* hover / teal mais profundo */
+  --color-blush: #E1F4F7;        /* fundo suave do primário (turquesa claro) */
+  --color-lagoa: #6BC0CE;        /* ASSINATURA/AMBIENTE — turquesa (cor principal) */
   --color-lavender: #C1836A;     /* ACENTO — terracota (coral↔marrom), raro */
   --color-lavender-light: #F0DBCF;
   --color-sage: #A7B98C;         /* APOIO — sálvia (natureza/neutra) */
@@ -27,12 +27,12 @@
   --color-brown: #6F4E3D;        /* estrutura/detalhe — marrom do galho (discreto) */
   --color-gold: #C6A66A;         /* premium — dourado-palha (uso restrito) */
   --color-onyx: #26201C;         /* texto principal — preto-marrom (carvão quente) */
-  --color-deep: #0A2E2C;         /* superfície escura profunda (shell) */
-  --color-panel: #0E3B37;        /* painel escuro (teal) */
+  --color-deep: #0A2E34;         /* superfície escura profunda (shell) */
+  --color-panel: #0E3B44;        /* painel escuro (teal) */
   --color-mauve: #5F6A62;        /* texto secundário (viés teal — AA) */
   --color-border: #DCE8E3;       /* borda (viés turquesa) */
-  --color-surface: #F1F8F5;
-  --color-mist: #E4F4F0;
+  --color-surface: #EFF8FA;
+  --color-mist: #E1F4F7;
 }
 
 @theme inline {
@@ -87,7 +87,7 @@
 html { scroll-behavior: smooth; }
 
 body {
-  background-color: #BCE7DF;
+  background-color: #B3E4EE;
   color: #26201C;
   font-family: var(--font-body, "DM Sans", system-ui, sans-serif);
   -webkit-font-smoothing: antialiased;
@@ -98,7 +98,7 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(14,110,100,0.30); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(14,110,100,0.55); }
-::selection { background-color: #B7E5DE; color: #26201C; }
+::selection { background-color: #AEE3EE; color: #26201C; }
 
 /* ─── Range input ─── */
 input[type="range"] {
@@ -117,7 +117,7 @@ input[type="range"]::-webkit-slider-thumb {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #157A6F;
+  background: #0E7580;
   cursor: pointer;
   box-shadow: 0 0 0 3px white, 0 0 0 4px rgba(14,110,100,0.3);
   transition: box-shadow 0.15s ease;
@@ -161,25 +161,25 @@ input[type="range"].range-gold::-webkit-slider-thumb { background: #C6A66A; }
 }
 
 /* ─── Gradients ─── */
-.gradient-sintera      { background: linear-gradient(135deg, #157A6F 0%, #7FC6BF 100%); }
-.gradient-sintera-soft { background: linear-gradient(135deg, #D4EFEA 0%, #E4F4F0 100%); }
+.gradient-sintera      { background: linear-gradient(135deg, #0E7580 0%, #6BC0CE 100%); }
+.gradient-sintera-soft { background: linear-gradient(135deg, #CFEEF4 0%, #E1F4F7 100%); }
 .gradient-subtle       { background: linear-gradient(160deg, #FDFCFA 0%, #EEF7F4 45%, #DCEFEC 100%); }
-.gradient-dark         { background: linear-gradient(135deg, #0A2E2C 0%, #0C3B37 60%, #0E4641 100%); }
+.gradient-dark         { background: linear-gradient(135deg, #0A2E34 0%, #0C3B44 60%, #0E4652 100%); }
 .gradient-hero         {
   background:
-    radial-gradient(ellipse 80% 60% at 70% 50%, rgba(127,198,191,0.18) 0%, transparent 70%),
-    radial-gradient(ellipse 60% 80% at 30% 80%, rgba(21,122,111,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 80% 60% at 70% 50%, rgba(107,192,206,0.18) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 80% at 30% 80%, rgba(14,117,128,0.08) 0%, transparent 60%),
     linear-gradient(160deg, #FDFCFA 0%, #F2F9F6 100%);
 }
-.gradient-card-dark    { background: linear-gradient(145deg, #0C3B37 0%, #0E4641 100%); }
+.gradient-card-dark    { background: linear-gradient(145deg, #0C3B44 0%, #0E4652 100%); }
 .gradient-energy       { background: linear-gradient(135deg, #C6A66A 0%, #DEC098 100%); }
-.gradient-sleep        { background: linear-gradient(135deg, #7FC6BF 0%, #ABE0DA 100%); }
+.gradient-sleep        { background: linear-gradient(135deg, #6BC0CE 0%, #A6DFE9 100%); }
 .gradient-cycle        { background: linear-gradient(135deg, #C1836A 0%, #D6A48D 100%); }
 .gradient-hydration    { background: linear-gradient(135deg, #A7B98C 0%, #C2D4AC 100%); }
 
 /* ─── Text gradients ─── */
 .text-gradient {
-  background: linear-gradient(135deg, #157A6F 0%, #7FC6BF 100%);
+  background: linear-gradient(135deg, #0E7580 0%, #6BC0CE 100%);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
 .text-gradient-gold {
@@ -187,7 +187,7 @@ input[type="range"].range-gold::-webkit-slider-thumb { background: #C6A66A; }
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
 .text-shimmer {
-  background: linear-gradient(90deg, #157A6F 0%, #ABE0DA 30%, #7FC6BF 60%, #ABE0DA 80%, #157A6F 100%);
+  background: linear-gradient(90deg, #0E7580 0%, #A6DFE9 30%, #6BC0CE 60%, #A6DFE9 80%, #0E7580 100%);
   background-size: 200% auto;
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   animation: shimmer 4s linear infinite;
@@ -206,7 +206,7 @@ input[type="range"].range-gold::-webkit-slider-thumb { background: #C6A66A; }
   transform: translateY(-1px);
 }
 .card-dark {
-  background: linear-gradient(145deg, #0C3B37 0%, #0E4641 100%);
+  background: linear-gradient(145deg, #0C3B44 0%, #0E4652 100%);
   border: 1px solid rgba(255,255,255,0.06);
   border-radius: 20px;
   box-shadow: 0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04);
@@ -255,7 +255,7 @@ input[type="range"].range-gold::-webkit-slider-thumb { background: #C6A66A; }
     display: block !important;
     padding-bottom: 16px;
     margin-bottom: 16px;
-    border-bottom: 2px solid #157A6F;
+    border-bottom: 2px solid #0E7580;
   }
 
   /* Forçar cores visíveis */

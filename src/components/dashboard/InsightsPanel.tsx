@@ -49,7 +49,7 @@ const insights: Insight[] = [
     tag: 'Hormônios',
     priority: 'medium',
     time: 'Ontem',
-    accentColor: '#7FC6BF',
+    accentColor: '#6BC0CE',
     bgColor: '#F5F2FB',
   },
   {
@@ -71,7 +71,7 @@ const insights: Insight[] = [
     tag: 'Sono',
     priority: 'low',
     time: '3 dias atrás',
-    accentColor: '#7FC6BF',
+    accentColor: '#6BC0CE',
     bgColor: '#F5F2FB',
   },
 ]

@@ -42,7 +42,7 @@ export default function OgImage() {
         }}>
           <div style={{
             width: '56px', height: '56px', borderRadius: '50%',
-            background: 'linear-gradient(135deg, #157A6F, #7FC6BF)',
+            background: 'linear-gradient(135deg, #0E7580, #6BC0CE)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '28px', color: 'white',
           }}>
@@ -66,7 +66,7 @@ export default function OgImage() {
             lineHeight: '1.1', textAlign: 'center',
           }}>
             Sua saúde tem{' '}
-            <span style={{ color: '#157A6F' }}>uma história.</span>
+            <span style={{ color: '#0E7580' }}>uma história.</span>
           </span>
           <span style={{
             fontSize: '26px', color: '#5B6B67', fontWeight: '400',
@@ -84,7 +84,7 @@ export default function OgImage() {
           border: '1px solid rgba(87,179,173,0.4)',
           borderRadius: '50px', padding: '10px 24px',
         }}>
-          <span style={{ fontSize: '16px', color: '#157A6F', fontWeight: '600', letterSpacing: '0.08em' }}>
+          <span style={{ fontSize: '16px', color: '#0E7580', fontWeight: '600', letterSpacing: '0.08em' }}>
             ✦  ACESSO GRATUITO  ✦
           </span>
         </div>

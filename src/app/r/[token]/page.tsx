@@ -221,7 +221,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
                   {od ? <span style={{ display: 'block', fontSize: 12, color: '#5F6A62' }}>OD: {od}</span> : null}
                   {oe ? <span style={{ display: 'block', fontSize: 12, color: '#5F6A62' }}>OE: {oe}</span> : null}
                   {extras.length ? <span style={{ display: 'block', fontSize: 12, color: '#5F6A62' }}>{extras.join(' · ')}</span> : null}
-                  {e.fileUrl ? <span style={{ display: 'block', fontSize: 13, marginTop: 2 }}><a href={e.fileUrl as string} target="_blank" rel="noopener noreferrer" style={{ color: '#157A6F', textDecoration: 'none' }}>Ver documento original</a></span> : null}
+                  {e.fileUrl ? <span style={{ display: 'block', fontSize: 13, marginTop: 2 }}><a href={e.fileUrl as string} target="_blank" rel="noopener noreferrer" style={{ color: '#0E7580', textDecoration: 'none' }}>Ver documento original</a></span> : null}
                 </li>
               )
             })}
@@ -258,7 +258,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
           <ul style={{ paddingLeft: 18, fontSize: 14 }}>
             {exArr.map((e, i) => (
               <li key={i}>{fmt((e.exam_date as string) || (e.created_at as string))} — {(e.type as string) || 'Exame'}
-                {e.file_url ? <>{'  ·  '}<a href={e.file_url as string} target="_blank" rel="noopener noreferrer" style={{ color: '#157A6F', textDecoration: 'none', fontSize: 13 }}>Ver documento original</a></> : null}
+                {e.file_url ? <>{'  ·  '}<a href={e.file_url as string} target="_blank" rel="noopener noreferrer" style={{ color: '#0E7580', textDecoration: 'none', fontSize: 13 }}>Ver documento original</a></> : null}
               </li>
             ))}
           </ul>
@@ -298,7 +298,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
             {medLaudos.map((ex, i) => (
               <li key={i}>
                 {(ex.type as string) || 'Exame'}{ex.exam_date ? ` · ${fmt(ex.exam_date as string)}` : ''}
-                {ex.file_url ? <>{'  ·  '}<a href={ex.file_url as string} target="_blank" rel="noopener noreferrer" style={{ color: '#157A6F', textDecoration: 'none', fontSize: 13 }}>Ver documento original</a></> : null}
+                {ex.file_url ? <>{'  ·  '}<a href={ex.file_url as string} target="_blank" rel="noopener noreferrer" style={{ color: '#0E7580', textDecoration: 'none', fontSize: 13 }}>Ver documento original</a></> : null}
               </li>
             ))}
           </ul>

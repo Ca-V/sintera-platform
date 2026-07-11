@@ -10,14 +10,14 @@ const FILLED = C * (SCORE / 100)
 
 const subMetrics = [
   { label: 'Energia',     value: '84%',  icon: Zap,      color: '#C9A97A' },
-  { label: 'Sono',        value: '7.5h', icon: BedDouble, color: '#7FC6BF' },
+  { label: 'Sono',        value: '7.5h', icon: BedDouble, color: '#6BC0CE' },
   { label: 'Ciclo',       value: 'Dia 8',icon: Moon,     color: '#C1836A' },
 ]
 
 function label(score: number) {
   if (score >= 85) return { text: 'Excelente', color: '#A7B98C' }
   if (score >= 70) return { text: 'Boa',       color: '#C9A97A' }
-  if (score >= 50) return { text: 'Regular',   color: '#7FC6BF' }
+  if (score >= 50) return { text: 'Regular',   color: '#6BC0CE' }
   return { text: 'Baixa', color: '#C1836A' }
 }
 
@@ -56,7 +56,7 @@ export default function DailyScoreCard() {
         <div className="relative w-32 h-32 flex-shrink-0">
           {/* Glow layer */}
           <div className="absolute inset-0 rounded-full blur-xl opacity-20"
-            style={{ background: `conic-gradient(#C1836A, #7FC6BF, transparent)` }}/>
+            style={{ background: `conic-gradient(#C1836A, #6BC0CE, transparent)` }}/>
           <svg viewBox="0 0 128 128" className="w-full h-full -rotate-90 relative">
             {/* Track */}
             <circle cx="64" cy="64" r={R} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8"/>
@@ -75,7 +75,7 @@ export default function DailyScoreCard() {
             <defs>
               <linearGradient id="scoreGrad" x1="0" y1="0" x2="1" y2="1">
                 <stop offset="0%" stopColor="#C1836A"/>
-                <stop offset="100%" stopColor="#7FC6BF"/>
+                <stop offset="100%" stopColor="#6BC0CE"/>
               </linearGradient>
             </defs>
           </svg>
