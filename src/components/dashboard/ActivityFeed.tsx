@@ -22,7 +22,7 @@ const activities = [
   },
   {
     icon: Droplets,
-    color: 'bg-sage-light text-sage',
+    color: 'bg-blush text-petal',
     title: 'Meta de hidratação',
     description: '2.1L atingidos — parabéns!',
     time: 'Ontem',

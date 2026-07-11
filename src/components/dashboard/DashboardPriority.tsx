@@ -165,7 +165,7 @@ export default function DashboardPriority(props: DashboardPriorityProps) {
           <div className="flex items-baseline gap-3">
             <span className="text-xl font-medium text-onyx">{spend.value}</span>
             <span className="text-xs text-mauve">{spend.caption}</span>
-            {spend.trend && <span className="ml-auto text-xs text-sage">{spend.trend}</span>}
+            {spend.trend && <span className="ml-auto text-xs text-petal">{spend.trend}</span>}
           </div>
         </Section>
       )}

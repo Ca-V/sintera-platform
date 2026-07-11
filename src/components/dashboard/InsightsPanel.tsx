@@ -79,7 +79,7 @@ const insights: Insight[] = [
 const priorityDot: Record<Priority, string> = {
   high:   'bg-petal',
   medium: 'bg-gold',
-  low:    'bg-sage',
+  low:    'bg-petal',
 }
 
 export default function InsightsPanel() {

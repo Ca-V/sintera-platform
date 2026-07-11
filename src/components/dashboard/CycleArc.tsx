@@ -156,7 +156,7 @@ export default function CycleArc() {
             {[
               { label: 'Ovulação', value: '5 dias', color: 'text-lavender' },
               { label: 'Menstrua',  value: '20 dias', color: 'text-gold' },
-              { label: 'Energia',   value: 'Alta',    color: 'text-sage' },
+              { label: 'Energia',   value: 'Alta',    color: 'text-petal' },
             ].map((f) => (
               <div key={f.label} className="text-center">
                 <p className={`font-display text-base font-semibold ${f.color}`}>{f.value}</p>

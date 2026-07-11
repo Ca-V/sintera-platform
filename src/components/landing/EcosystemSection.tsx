@@ -63,7 +63,7 @@ export default function EcosystemSection() {
                   <h3 className="font-display text-lg font-semibold text-onyx">{s.label}</h3>
                   <span className={`font-body text-[10px] font-medium px-2 py-0.5 rounded-full border ${
                     s.now
-                      ? 'text-sage bg-sage-light border-sage/20'
+                      ? 'text-petal bg-blush border-petal/20'
                       : 'text-mauve bg-warm border-border'
                   }`}>
                     {s.now ? 'Hoje' : 'Em breve'}

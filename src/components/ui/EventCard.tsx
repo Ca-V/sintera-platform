@@ -22,7 +22,7 @@ const TONE_NODE: Record<EventTone, string> = {
   accent: 'bg-lavender-light text-lavender',
   neutral: 'bg-ivory text-mauve',
   attention: 'bg-warm text-gold',
-  positive: 'bg-sage-light text-sage',
+  positive: 'bg-blush text-petal',
 }
 
 interface EventCardProps extends ClickableCardProps {

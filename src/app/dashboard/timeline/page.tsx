@@ -52,13 +52,13 @@ interface TimelineItem {
 const TYPE_META: Record<string, { label: string; Icon: React.ElementType; cls: string }> = {
   consulta:     { label: 'Consulta',     Icon: Stethoscope,  cls: 'bg-blush text-petal' },
   retorno:      { label: 'Consulta (retorno)', Icon: Stethoscope, cls: 'bg-blush text-petal' },
-  vacina:       { label: 'Vacina',       Icon: Syringe,      cls: 'bg-sage-light text-sage' },
+  vacina:       { label: 'Vacina',       Icon: Syringe,      cls: 'bg-blush text-petal' },
   procedimento: { label: 'Procedimento', Icon: Activity,     cls: 'bg-lavender-light text-lavender' },
   cirurgia:     { label: 'Cirurgia',     Icon: Activity,     cls: 'bg-lavender-light text-lavender' },
   estetico:     { label: 'Procedimento', Icon: Sparkles,     cls: 'bg-blush text-petal' },
-  medicamento:  { label: 'Medicamento',  Icon: Pill,         cls: 'bg-sage-light text-sage' },
-  medicacao:    { label: 'Medicamento',  Icon: Pill,         cls: 'bg-sage-light text-sage' },
-  suplemento:   { label: 'Suplemento',   Icon: Pill,         cls: 'bg-sage-light text-sage' },
+  medicamento:  { label: 'Medicamento',  Icon: Pill,         cls: 'bg-blush text-petal' },
+  medicacao:    { label: 'Medicamento',  Icon: Pill,         cls: 'bg-blush text-petal' },
+  suplemento:   { label: 'Suplemento',   Icon: Pill,         cls: 'bg-blush text-petal' },
   atividade:    { label: 'Atividade física', Icon: Dumbbell, cls: 'bg-lavender-light text-lavender' },
   plano:        { label: 'Plano de saúde', Icon: Receipt,    cls: 'bg-warm text-gold' },
   exame:        { label: 'Exame',        Icon: FlaskConical, cls: 'bg-warm text-gold' },
@@ -301,7 +301,7 @@ function LegacyTimeline() {
               {it.status !== 'realizado' && it.status !== 'cancelado' && (
                 <button aria-label="Marcar como realizado" title="Marcar como realizado (se tiver valor, entra em Despesas)"
                   disabled={busyId === it.rawId} onClick={() => markRealized(it.rawId!)}
-                  className="w-6 h-6 rounded-lg hover:bg-sage-light flex items-center justify-center text-mauve/40 hover:text-sage transition-colors disabled:opacity-40"><CheckCircle2 size={12} /></button>
+                  className="w-6 h-6 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/40 hover:text-petal transition-colors disabled:opacity-40"><CheckCircle2 size={12} /></button>
               )}
               {it.status === 'realizado' && (
                 <button aria-label="Reabrir" title="Reabrir (desfazer conclusão — volta para a Agenda)"

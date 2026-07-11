@@ -18,7 +18,7 @@ const features = [
     icon: Layers,
     title: 'A SINTERA organiza tudo para você',
     description: 'Suas informações viram uma linha do tempo clara e contínua da sua saúde.',
-    iconColor: 'text-sage', iconBg: 'bg-sage-light',
+    iconColor: 'text-petal', iconBg: 'bg-blush',
   },
   {
     icon: Bell,

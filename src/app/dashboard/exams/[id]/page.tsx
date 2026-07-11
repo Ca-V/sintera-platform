@@ -75,7 +75,7 @@ const INTERP_ORDER: Record<string, number> = {
 const INTERP_CONFIG: Record<string, { label: string; color: string; bg: string; Icon: React.ComponentType<{ size: number; className?: string }> | null }> = {
   acima_da_referencia:         { label: 'Acima da referência informada pelo laboratório',  color: 'text-orange-600', bg: 'bg-orange-50 border-orange-200', Icon: TrendingUp   },
   abaixo_da_referencia:        { label: 'Abaixo da referência informada pelo laboratório', color: 'text-blue-600',   bg: 'bg-blue-50 border-blue-200',     Icon: TrendingDown },
-  dentro_da_referencia:        { label: 'Dentro da referência informada pelo laboratório', color: 'text-sage',       bg: 'bg-sage-light border-sage/30',   Icon: Minus        },
+  dentro_da_referencia:        { label: 'Dentro da referência informada pelo laboratório', color: 'text-petal',       bg: 'bg-blush border-petal/30',   Icon: Minus        },
   // Resultado presente; o laudo só não trouxe a faixa de referência para comparar.
   sem_referencia_identificada: { label: 'O laboratório não informou uma faixa de referência', color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200', Icon: HelpCircle },
   // Resultado PRESENTE e qualitativo (Negativo, Ausentes, Turvo…) — nunca "ausente".
@@ -102,8 +102,8 @@ function calcExperimentalIndex(bms: Biomarker[]): { numerator: number; denominat
 }
 
 function IndexCard({ index }: { index: { numerator: number; denominator: number; pct: number } }) {
-  const color    = index.pct >= 80 ? 'text-sage' : index.pct >= 60 ? 'text-amber-600' : 'text-orange-500'
-  const bg       = index.pct >= 80 ? 'bg-sage-light border-sage/30' : index.pct >= 60 ? 'bg-amber-50 border-amber-200' : 'bg-orange-50 border-orange-200'
+  const color    = index.pct >= 80 ? 'text-petal' : index.pct >= 60 ? 'text-amber-600' : 'text-orange-500'
+  const bg       = index.pct >= 80 ? 'bg-blush border-petal/30' : index.pct >= 60 ? 'bg-amber-50 border-amber-200' : 'bg-orange-50 border-orange-200'
   const [tip, setTip] = useState(false)
   return (
     <div className={`rounded-2xl border px-5 py-4 ${bg}`}>
@@ -598,7 +598,7 @@ export default function ExamDetailPage() {
                     className="font-display text-xl font-semibold text-onyx bg-ivory border border-petal/40 rounded-lg px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-petal/40 min-w-0 w-full"
                   />
                   <button onClick={saveName} disabled={savingName}
-                    className="text-sage hover:text-sage/70 transition-colors flex-shrink-0">
+                    className="text-petal hover:text-petal/70 transition-colors flex-shrink-0">
                     {savingName ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />}
                   </button>
                   <button onClick={cancelEditName} className="text-mauve hover:text-onyx transition-colors flex-shrink-0">
@@ -627,7 +627,7 @@ export default function ExamDetailPage() {
                     onKeyDown={e => { if (e.key === 'Enter') saveDate(); if (e.key === 'Escape') setEditingDate(false) }}
                     className="font-body text-sm text-onyx bg-ivory border border-petal/40 rounded-lg px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-petal/40"
                   />
-                  <button onClick={saveDate} disabled={savingDate} className="text-sage hover:text-sage/70 transition-colors flex-shrink-0">
+                  <button onClick={saveDate} disabled={savingDate} className="text-petal hover:text-petal/70 transition-colors flex-shrink-0">
                     {savingDate ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
                   </button>
                   <button onClick={() => setEditingDate(false)} className="text-mauve hover:text-onyx transition-colors flex-shrink-0">
@@ -664,7 +664,7 @@ export default function ExamDetailPage() {
                     </span>
                   )}
                   {counts.dentro > 0 && (
-                    <span className="font-body text-xs font-semibold text-sage">
+                    <span className="font-body text-xs font-semibold text-petal">
                       ✓ {counts.dentro} normais
                     </span>
                   )}
@@ -918,8 +918,8 @@ export default function ExamDetailPage() {
             </div>
             {reportSent ? (
               <div className="px-6 py-8 text-center">
-                <div className="w-12 h-12 rounded-full bg-sage-light flex items-center justify-center mx-auto mb-3">
-                  <Check size={20} className="text-sage" />
+                <div className="w-12 h-12 rounded-full bg-blush flex items-center justify-center mx-auto mb-3">
+                  <Check size={20} className="text-petal" />
                 </div>
                 <p className="font-body text-sm font-semibold text-onyx mb-1">Obrigada pelo relato!</p>
                 <p className="font-body text-xs text-mauve">Vamos investigar e usar isso para melhorar a extração.</p>

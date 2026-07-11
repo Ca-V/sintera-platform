@@ -257,7 +257,7 @@ export default function AdminPage() {
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
               className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <StatCard icon={FileText}     label="Exames totais"      value={stats.totalExams}     color="text-petal"    bg="bg-blush" />
-              <StatCard icon={CheckCircle}  label="Analisados"         value={stats.processedExams} sub={`${stats.taxaSucesso}% taxa de sucesso`} color="text-sage"  bg="bg-sage-light" />
+              <StatCard icon={CheckCircle}  label="Analisados"         value={stats.processedExams} sub={`${stats.taxaSucesso}% taxa de sucesso`} color="text-petal"  bg="bg-blush" />
               <StatCard icon={AlertCircle}  label="Com erro"           value={stats.failedExams}    color="text-red-400"  bg="bg-red-50" />
               <StatCard icon={FlaskConical} label="Biomarcadores"      value={stats.totalBiomarkers} color="text-lavender" bg="bg-lavender-light" />
             </motion.div>
@@ -266,7 +266,7 @@ export default function AdminPage() {
               className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <StatCard icon={Upload}       label="Uploads (24h)"    value={stats.uploads24h}          color="text-petal"  bg="bg-blush" />
               <StatCard icon={Upload}       label="Uploads (7 dias)" value={stats.uploads7d}            color="text-gold"   bg="bg-warm" />
-              <StatCard icon={MessageCircle} label="Feedbacks P2"    value={stats.feedbacksRecebidos}   color="text-sage"   bg="bg-sage-light" />
+              <StatCard icon={MessageCircle} label="Feedbacks P2"    value={stats.feedbacksRecebidos}   color="text-petal"   bg="bg-blush" />
               <StatCard icon={Flag}         label="Problemas reportados" value={stats.problemasReportados} color="text-red-400" bg="bg-red-50" />
             </motion.div>
 
@@ -443,7 +443,7 @@ export default function AdminPage() {
 
           {/* Resultado / erro */}
           {emailResult && (
-            <div className="rounded-xl bg-sage-light px-4 py-3 font-body text-xs text-sage">
+            <div className="rounded-xl bg-blush px-4 py-3 font-body text-xs text-petal">
               <strong>{emailResult.sent}</strong> e-mail{emailResult.sent !== 1 ? 's' : ''} enviado{emailResult.sent !== 1 ? 's' : ''} com sucesso
               {emailResult.failed > 0 && <span className="text-red-500 ml-2">· {emailResult.failed} falha{emailResult.failed !== 1 ? 's' : ''}</span>}
             </div>

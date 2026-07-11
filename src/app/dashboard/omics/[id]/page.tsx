@@ -322,7 +322,7 @@ function AddResult({ panelId, domain, defaultDate, onSaved }: {
           className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
         {resolving && <p className="font-body text-[11px] text-mauve mt-1">Resolvendo no catálogo…</p>}
         {resolved && (
-          <p className="font-body text-[11px] text-sage mt-1">
+          <p className="font-body text-[11px] text-petal mt-1">
             ✓ Identificado: <strong>{resolved.canonical_name}</strong>{resolved.omics_categories?.name ? ` · ${resolved.omics_categories.name}` : ''}
           </p>
         )}
@@ -423,7 +423,7 @@ function ImportResults({ panelId, onDone }: { panelId: string; onDone: () => voi
         )}
       </div>
       <p className="font-body text-[11px] text-mauve mt-1.5">PDF ou foto do laudo (a IA transcreve), ou CSV/JSON estruturado. O arquivo original é guardado e cada importação vira uma versão.</p>
-      {msg && <p className="font-body text-xs text-sage mt-2">{msg}</p>}
+      {msg && <p className="font-body text-xs text-petal mt-2">{msg}</p>}
       {err && <p className="font-body text-xs text-red-500 mt-2">{err}</p>}
       {showVersions && versions.length > 0 && (
         <Card padding="sm" className="mt-2 space-y-1.5">

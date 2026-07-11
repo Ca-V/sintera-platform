@@ -251,7 +251,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
 
               {added ? (
                 <div className="px-6 py-7 text-center">
-                  <div className="w-14 h-14 rounded-full bg-sage-light flex items-center justify-center mx-auto mb-3"><Check size={24} className="text-sage" /></div>
+                  <div className="w-14 h-14 rounded-full bg-blush flex items-center justify-center mx-auto mb-3"><Check size={24} className="text-petal" /></div>
                   <p className="font-body text-sm font-semibold text-onyx mb-1">{savedToAgenda ? (status === 'realizado' ? 'Salvo no seu Histórico' : 'Salvo na sua Agenda') : 'Adicionado ao calendário'}</p>
                   <p className="font-body text-xs text-mauve mb-5">{savedToAgenda ? (status === 'realizado' ? 'Como já foi realizado, ele está no Histórico.' : 'Quando for realizado, ele passa para o Histórico.') : 'Pronto.'}</p>
 
@@ -272,7 +272,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                         <span className="font-body text-sm text-onyx flex-1 text-left">Outlook / Microsoft</span><ExternalLink size={13} className="text-mauve" />
                       </button>
                       <button onClick={handleICS} className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl border border-border hover:border-petal/40 hover:bg-blush/30 transition-all">
-                        <div className="w-[18px] h-[18px] rounded flex items-center justify-center bg-sage-light flex-shrink-0"><Download size={11} className="text-sage" /></div>
+                        <div className="w-[18px] h-[18px] rounded flex items-center justify-center bg-blush flex-shrink-0"><Download size={11} className="text-petal" /></div>
                         <span className="font-body text-sm text-onyx flex-1 text-left">Baixar .ics</span><span className="font-body text-[11px] text-mauve">Apple, outros</span>
                       </button>
                     </div>
@@ -481,7 +481,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                       <span className="font-body text-sm text-onyx flex-1 text-left">Outlook / Microsoft</span><ExternalLink size={13} className="text-mauve" />
                     </button>
                     <button onClick={handleICS} disabled={!canExport} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-petal/40 hover:bg-blush/30 disabled:opacity-40 transition-all">
-                      <div className="w-[18px] h-[18px] rounded flex items-center justify-center bg-sage-light flex-shrink-0"><Download size={11} className="text-sage" /></div>
+                      <div className="w-[18px] h-[18px] rounded flex items-center justify-center bg-blush flex-shrink-0"><Download size={11} className="text-petal" /></div>
                       <span className="font-body text-sm text-onyx flex-1 text-left">Baixar .ics</span><span className="font-body text-[11px] text-mauve">Apple, outros</span>
                     </button>
                     {!canExport && <p className="font-body text-xs text-mauve text-center">Selecione uma data para continuar</p>}

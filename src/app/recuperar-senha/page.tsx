@@ -59,8 +59,8 @@ export default function RecuperarSenhaPage() {
 
         {sent ? (
           <div className="card-premium p-8 text-center">
-            <div className="w-14 h-14 rounded-full bg-sage-light flex items-center justify-center mx-auto mb-4">
-              <Check size={24} className="text-sage" />
+            <div className="w-14 h-14 rounded-full bg-blush flex items-center justify-center mx-auto mb-4">
+              <Check size={24} className="text-petal" />
             </div>
             <h1 className="font-display text-2xl font-semibold text-onyx mb-2">E-mail enviado</h1>
             <p className="font-body text-sm text-mauve leading-relaxed mb-6">

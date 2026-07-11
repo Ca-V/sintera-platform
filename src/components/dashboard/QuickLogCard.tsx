@@ -100,7 +100,7 @@ export default function QuickLogCard() {
           <motion.div
             key="saved"
             initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
-            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-sage/20 text-sage-light border border-sage/20 text-sm font-body font-medium"
+            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-petal/20 text-petal-light border border-petal/20 text-sm font-body font-medium"
           >
             <Check size={14}/> Registrado!
           </motion.div>

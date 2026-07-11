@@ -25,12 +25,12 @@ function MockupUpload() {
         </div>
         <div className="mt-4 space-y-2">
           {['Hemograma Completo.pdf', 'Painel Metabólico.pdf'].map(f => (
-            <div key={f} className="flex items-center gap-3 px-3 py-2 rounded-xl bg-sage-light/30">
-              <div className="w-7 h-7 rounded-lg bg-sage-light flex items-center justify-center flex-shrink-0">
-                <CheckCircle size={13} className="text-sage" />
+            <div key={f} className="flex items-center gap-3 px-3 py-2 rounded-xl bg-blush/30">
+              <div className="w-7 h-7 rounded-lg bg-blush flex items-center justify-center flex-shrink-0">
+                <CheckCircle size={13} className="text-petal" />
               </div>
               <span className="font-body text-xs text-onyx">{f}</span>
-              <span className="ml-auto font-body text-[11px] text-sage font-medium">Dados extraídos</span>
+              <span className="ml-auto font-body text-[11px] text-petal font-medium">Dados extraídos</span>
             </div>
           ))}
         </div>
@@ -64,7 +64,7 @@ function MockupBiomarkers() {
             </div>
             <div className="flex items-center gap-2">
               <span className="font-body text-sm font-bold text-onyx">{item.value}</span>
-              <span className={`w-2 h-2 rounded-full ${item.status === 'normal' ? 'bg-sage' : 'bg-amber-400'}`} />
+              <span className={`w-2 h-2 rounded-full ${item.status === 'normal' ? 'bg-petal' : 'bg-amber-400'}`} />
             </div>
           </div>
         ))}
@@ -91,7 +91,7 @@ function MockupHistory() {
           </div>
           <div className="text-right">
             <p className="font-body text-xs text-mauve">Variação total</p>
-            <p className="font-body text-sm font-semibold text-sage">+111% desde 2021</p>
+            <p className="font-body text-sm font-semibold text-petal">+111% desde 2021</p>
           </div>
         </div>
         <div className="flex items-end gap-2 h-20">
@@ -149,8 +149,8 @@ const steps = [
   {
     number: '03',
     icon: TrendingUp,
-    color: 'bg-sage-light',
-    iconColor: 'text-sage',
+    color: 'bg-blush',
+    iconColor: 'text-petal',
     title: 'Acompanhe sua evolução',
     description: 'Visualize como cada biomarcador evoluiu ao longo dos anos. Uma visão que você nunca teve antes — e pode levar para a próxima consulta.',
     details: [
@@ -226,8 +226,8 @@ export default function ComoFuncionaPage() {
                 <ul className="space-y-3">
                   {step.details.map(d => (
                     <li key={d} className="flex items-start gap-3">
-                      <div className="w-5 h-5 rounded-full bg-sage-light flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <CheckCircle size={11} className="text-sage" />
+                      <div className="w-5 h-5 rounded-full bg-blush flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <CheckCircle size={11} className="text-petal" />
                       </div>
                       <span className="font-body text-sm text-onyx/70 leading-relaxed">{d}</span>
                     </li>
@@ -249,8 +249,8 @@ export default function ComoFuncionaPage() {
       {/* Privacidade */}
       <div className="bg-white border-y border-border">
         <div className="max-w-4xl mx-auto px-6 py-12 flex flex-col md:flex-row items-center gap-6 text-center md:text-left">
-          <div className="w-14 h-14 rounded-2xl bg-sage-light flex items-center justify-center flex-shrink-0">
-            <Shield size={24} className="text-sage" />
+          <div className="w-14 h-14 rounded-2xl bg-blush flex items-center justify-center flex-shrink-0">
+            <Shield size={24} className="text-petal" />
           </div>
           <div className="flex-1">
             <h3 className="font-body text-base font-semibold text-onyx mb-1">Seus dados são seus.</h3>

@@ -32,10 +32,10 @@ const colorMap = {
     bar: 'bg-lavender',
   },
   sage: {
-    bg: 'bg-sage-light',
-    icon: 'bg-sage/20 text-sage',
-    value: 'text-sage',
-    bar: 'bg-sage',
+    bg: 'bg-blush',
+    icon: 'bg-petal/20 text-petal',
+    value: 'text-petal',
+    bar: 'bg-petal',
   },
   gold: {
     bg: 'bg-warm',
@@ -46,7 +46,7 @@ const colorMap = {
 }
 
 const TrendIcon = ({ trend }: { trend: Trend }) => {
-  if (trend === 'up') return <TrendingUp size={13} className="text-sage" />
+  if (trend === 'up') return <TrendingUp size={13} className="text-petal" />
   if (trend === 'down') return <TrendingDown size={13} className="text-red-400" />
   return <Minus size={13} className="text-mauve" />
 }

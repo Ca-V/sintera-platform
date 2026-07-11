@@ -24,11 +24,13 @@ const homeItem = { href: '/dashboard', icon: LayoutDashboard, label: 'Painel Ini
 const navGroups: {
   title: string
   titleColor: string
+  chipBg?: string
   items: { href: string; icon: React.ElementType; label: string; extra?: string[] }[]
 }[] = [
   {
     title: 'Acompanhamento',
     titleColor: 'text-lavender',
+    chipBg: 'bg-lavender',
     items: [
       { href: '/dashboard/agenda',       icon: CalendarDays, label: 'Agenda' },
       { href: '/dashboard/timeline',     icon: Clock,        label: 'Histórico', extra: ['/dashboard/saude', '/dashboard/historico'] },
@@ -39,6 +41,7 @@ const navGroups: {
   {
     title: 'Minha Saúde',
     titleColor: 'text-lagoa',
+    chipBg: 'bg-lagoa',
     items: [
       { href: '/dashboard/condicoes',     icon: Stethoscope,   label: 'Condições de Saúde' },
       { href: '/dashboard/recursos',      icon: Accessibility, label: 'Recursos de Saúde' },
@@ -51,6 +54,7 @@ const navGroups: {
   {
     title: 'Organização',
     titleColor: 'text-gold',
+    chipBg: 'bg-gold',
     items: [
       { href: '/dashboard/gastos',    icon: Receipt,    label: 'Despesas' },
       { href: '/dashboard/relatorio', icon: ScrollText, label: 'Relatórios' },
@@ -109,7 +113,7 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
       {/* Logo — leva ao Painel Inicial (área logada) */}
       <div className="flex items-center justify-between px-5 py-4">
         <Link href="/dashboard" onClick={onClose} className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-full gradient-sintera flex items-center justify-center shadow-lg">
+          <div className="w-7 h-7 rounded-full gradient-aqua flex items-center justify-center shadow-lg">
             <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
               <circle cx="8" cy="8" r="5.5" stroke="white" strokeWidth="1.2" fill="none"/>
               <circle cx="8" cy="8" r="2" fill="white"/>
@@ -127,7 +131,7 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
       <Link href="/dashboard/profile" onClick={onClose}
         className="mx-4 mb-3 p-3 rounded-2xl border border-white/8 bg-white/5 hover:bg-white/8 transition-colors">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full gradient-sintera flex items-center justify-center flex-shrink-0 shadow-md">
+          <div className="w-8 h-8 rounded-full gradient-aqua flex items-center justify-center flex-shrink-0 shadow-md">
             <span className="text-white text-sm font-display font-bold">{initials}</span>
           </div>
           <div className="min-w-0 flex-1">
@@ -147,9 +151,15 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
         </div>
         {navGroups.map(group => (
           <div key={group.title} className="mb-1.5">
-            <p className={cn('text-[11px] font-body font-bold uppercase tracking-[0.16em] px-3 mt-1 mb-1', group.titleColor)}>
-              {group.title}
-            </p>
+            {group.chipBg ? (
+              <div className={cn('mx-1 mt-2 mb-1.5 px-2.5 py-1 rounded-lg shadow-sm', group.chipBg)}>
+                <p className="text-[11px] font-body font-bold uppercase tracking-[0.14em] text-onyx/90">{group.title}</p>
+              </div>
+            ) : (
+              <p className={cn('text-[11px] font-body font-bold uppercase tracking-[0.16em] px-3 mt-1 mb-1', group.titleColor)}>
+                {group.title}
+              </p>
+            )}
             <ul className="flex flex-col gap-0.5">
               {group.items.map(item => (
                 <li key={item.href}>

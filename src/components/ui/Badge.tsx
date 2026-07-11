@@ -11,7 +11,7 @@ interface BadgeProps {
 const variants: Record<BadgeVariant, string> = {
   rose: 'bg-blush text-petal-dark border border-petal-light',
   lavender: 'bg-lavender-light text-lavender border border-lavender/30',
-  sage: 'bg-sage-light text-sage border border-sage/30',
+  sage: 'bg-blush text-petal border border-petal/25',
   gold: 'bg-warm text-gold border border-gold/40',
   neutral: 'bg-ivory text-mauve border border-border',
 }

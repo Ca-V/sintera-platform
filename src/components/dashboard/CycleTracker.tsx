@@ -105,7 +105,7 @@ export default function CycleTracker() {
           <p className="text-xs font-body text-mauve">dias para menstruar</p>
         </div>
         <div className="text-center">
-          <p className="font-display text-lg font-semibold text-sage">Alta</p>
+          <p className="font-display text-lg font-semibold text-petal">Alta</p>
           <p className="text-xs font-body text-mauve">energia esperada</p>
         </div>
       </div>

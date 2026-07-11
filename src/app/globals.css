@@ -162,6 +162,7 @@ input[type="range"].range-gold::-webkit-slider-thumb { background: #C6A66A; }
 
 /* ─── Gradients ─── */
 .gradient-sintera      { background: linear-gradient(135deg, #0E7580 0%, #6BC0CE 100%); }
+.gradient-aqua         { background: linear-gradient(135deg, #1585A0 0%, #52B8C8 100%); }
 .gradient-sintera-soft { background: linear-gradient(135deg, #CFEEF4 0%, #E1F4F7 100%); }
 .gradient-subtle       { background: linear-gradient(160deg, #FDFCFA 0%, #EDF6F8 45%, #DAEEF3 100%); }
 .gradient-dark         { background: linear-gradient(135deg, #0A2E34 0%, #0C3B44 60%, #0E4652 100%); }

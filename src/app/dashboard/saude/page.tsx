@@ -26,7 +26,7 @@ interface CatalogEntry { id: string; specimen: string | null; category: string |
 const INTERP_CFG: Record<string, { sym: string; cls: string }> = {
   acima_da_referencia:         { sym: '▲', cls: 'text-orange-500' },
   abaixo_da_referencia:        { sym: '▼', cls: 'text-blue-600' },
-  dentro_da_referencia:        { sym: '✓', cls: 'text-sage' },
+  dentro_da_referencia:        { sym: '✓', cls: 'text-petal' },
   sem_referencia_identificada: { sym: '–', cls: 'text-mauve' },
   indisponivel:                { sym: '–', cls: 'text-mauve/40' },
 }
@@ -149,8 +149,8 @@ export default function IndicadoresPage() {
               </div>
               <div className="px-5 py-4 space-y-3">
                 {refIndex.map((idx) => {
-                  const barColor  = idx.pct >= 80 ? 'bg-sage' : idx.pct >= 60 ? 'bg-amber-400' : 'bg-orange-400'
-                  const textColor = idx.pct >= 80 ? 'text-sage' : idx.pct >= 60 ? 'text-amber-600' : 'text-orange-500'
+                  const barColor  = idx.pct >= 80 ? 'bg-petal' : idx.pct >= 60 ? 'bg-amber-400' : 'bg-orange-400'
+                  const textColor = idx.pct >= 80 ? 'text-petal' : idx.pct >= 60 ? 'text-amber-600' : 'text-orange-500'
                   return (
                     <div key={idx.examId} className="flex items-center gap-3">
                       <span className="font-body text-xs text-mauve w-14 flex-shrink-0">{formatDate(idx.date)}</span>

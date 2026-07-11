@@ -114,8 +114,8 @@ export default function ListaDeEsperaPage() {
               <motion.div key="success"
                 initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}
                 className="card-premium p-8 text-center space-y-4">
-                <div className="w-14 h-14 rounded-full bg-sage-light flex items-center justify-center mx-auto">
-                  <Check size={24} className="text-sage" />
+                <div className="w-14 h-14 rounded-full bg-blush flex items-center justify-center mx-auto">
+                  <Check size={24} className="text-petal" />
                 </div>
                 <h2 className="font-display text-xl font-semibold text-onyx">
                   {state === 'already' ? 'Você já está na lista!' : 'Você está na lista!'}

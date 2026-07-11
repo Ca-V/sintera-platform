@@ -379,7 +379,7 @@ export default function OnboardingPage() {
                         title: '3. Acompanhe sua evolução',
                         desc: 'Veja como cada biomarcador mudou ao longo do tempo. Leve essa visão para sua próxima consulta.',
                         color: '#A7B98C',
-                        bg: 'bg-sage-light',
+                        bg: 'bg-blush',
                       },
                     ].map(({ icon: Icon, title, desc, color, bg }) => (
                       <div key={title} className={`flex items-start gap-4 p-4 rounded-2xl ${bg}`}>

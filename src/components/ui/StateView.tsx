@@ -19,7 +19,7 @@ interface StateViewProps {
 
 const toneIcon: Record<StateTone, string> = {
   neutral: 'bg-ivory text-mauve',
-  success: 'bg-sage-light text-sage',
+  success: 'bg-blush text-petal',
   danger: 'bg-blush text-petal-dark',
   info: 'bg-lavender-light text-lavender',
 }

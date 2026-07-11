@@ -79,7 +79,7 @@ export default function Hero() {
 function ProductPreview() {
   const records = [
     { icon: Calendar, title: 'Consulta — Cardiologista', date: '12 mar', color: 'text-petal',    bg: 'bg-blush' },
-    { icon: FileText, title: 'Exame — Hemograma',        date: '3 fev',  color: 'text-sage',     bg: 'bg-sage-light' },
+    { icon: FileText, title: 'Exame — Hemograma',        date: '3 fev',  color: 'text-petal',     bg: 'bg-blush' },
     { icon: Pill,     title: 'Suplemento — Vitamina D3',  date: '20 jan', color: 'text-lavender', bg: 'bg-lavender-light' },
     { icon: Syringe,  title: 'Vacina — Influenza',       date: '5 jan',  color: 'text-gold',     bg: 'bg-warm' },
   ]
@@ -144,7 +144,7 @@ function ProductPreview() {
           </div>
           <span className="text-[11px] font-body font-semibold text-onyx">Consulta amanhã · 14h</span>
         </div>
-        <p className="text-[11px] font-body text-sage font-medium flex items-center gap-1">
+        <p className="text-[11px] font-body text-petal font-medium flex items-center gap-1">
           <Check size={11} /> Lembrete enviado por WhatsApp
         </p>
       </motion.div>

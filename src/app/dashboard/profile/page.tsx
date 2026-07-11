@@ -105,7 +105,7 @@ export default function ProfilePage() {
                   className="font-display text-xl font-semibold text-onyx bg-ivory border border-petal/40 rounded-lg px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-petal/40 min-w-0 flex-1"
                 />
                 <button onClick={saveName} disabled={savingName}
-                  className="text-sage hover:text-sage/70 transition-colors flex-shrink-0">
+                  className="text-petal hover:text-petal/70 transition-colors flex-shrink-0">
                   {savingName ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
                 </button>
                 <button onClick={() => setEditName(false)}
@@ -142,7 +142,7 @@ export default function ProfilePage() {
             { icon: FlaskConical,  value: stats.totalBiomarkers, label: 'Biomarcadores', color: 'text-lavender', bg: 'bg-lavender-light' },
             // eslint-disable-next-line react-hooks/purity -- cálculo de exibição (dias desde o cadastro)
             { icon: CalendarDays,  value: stats.memberSince ? Math.max(1, Math.floor((Date.now() - new Date(stats.memberSince).getTime()) / (1000 * 60 * 60 * 24))) : 0,
-              label: 'Dias na SINTERA', color: 'text-sage', bg: 'bg-sage-light' },
+              label: 'Dias na SINTERA', color: 'text-petal', bg: 'bg-blush' },
           ].map(({ icon: Icon, value, label, color, bg }) => (
             <Card key={label} padding="sm" className="text-center">
               <div className={`w-8 h-8 rounded-xl ${bg} flex items-center justify-center mx-auto mb-2`}>

@@ -451,7 +451,7 @@ function LegacyReport() {
                 <input readOnly aria-label="Link de compartilhamento do relatório" value={`${typeof window !== 'undefined' ? window.location.origin : ''}/r/${s.token}`}
                   className="flex-1 min-w-0 bg-transparent font-body text-xs text-mauve outline-none" />
                 <button onClick={() => copyLink(s.token)} title="Copiar" className="text-mauve hover:text-petal flex-shrink-0">
-                  {copied === s.token ? <Check size={14} className="text-sage" /> : <Copy size={14} />}
+                  {copied === s.token ? <Check size={14} className="text-petal" /> : <Copy size={14} />}
                 </button>
                 <button onClick={() => revokeShare(s.id)} title="Revogar" className="text-mauve hover:text-red-500 flex-shrink-0">
                   <Trash2 size={14} />
