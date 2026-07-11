@@ -1,10 +1,12 @@
-# CAP-002 — Capture Hub & Caixa de Entrada (Health Inbox)
+# CAP-002 — Capture Hub & Caixa de Entrada (Health Inbox) — v1.0
 
-> Documento de arquitetura funcional e técnica. Evolução estratégica do **CAP-001**
-> (Captura Documental) para um **hub universal de ingestão clínica**. Camada de
-> execução (código CAP-*); consome DOC-001 (repositório único de documentos) e a
-> Camada de Comunicação/Proveniência (`@/lib/provenance`). Enquadramento RDC 657/2022
-> e LGPD Art. 11. Status: **spec para aprovação da fundadora (10/07/2026).**
+> **Domínio arquitetural transversal** da SINTERA — ao lado da Knowledge Layer, da
+> Scientific Retrieval Layer e do Routing Engine. Evolução estratégica do **CAP-001**
+> (Captura Documental). Responsável pela **ingestão, classificação, rastreabilidade e
+> distribuição de QUALQUER informação externa** que entre na plataforma. Consome
+> DOC-001 (repositório único de documentos) e a Camada de Proveniência
+> (`@/lib/provenance`). Enquadramento RDC 657/2022 + LGPD Art. 11.
+> **Status: v1.0 — aprovado com refinamentos; base para congelamento arquitetural (10/07/2026).**
 
 ---
 
@@ -14,29 +16,51 @@ O SINTERA não deve apenas "importar laudos". O objetivo é ser a plataforma com
 **maior eficiência e praticidade** para **enviar, incorporar, processar e analisar**
 informação clínica — **independentemente da origem do documento**.
 
-O **Capture Hub** é o **moat operacional**: reduz drasticamente a fricção de entrada
-de dados. Ele NÃO é o produto (o produto é a inteligência longitudinal + proveniência
-+ estruturação); é o diferencial que alimenta esse produto com o menor esforço possível
-do usuário. Princípio-guia: **"qualquer forma de compartilhar meu exame funciona"** —
-não **"como envio meu exame?"**.
-
-**Regra de ouro:** toda forma de captura **converge para um único fluxo de ingestão**.
-Arquivo, foto, scanner, colar link, e-mail, WhatsApp, compartilhamento nativo do
-celular e (futuro) integrações de laboratório/RNDS → **o mesmo pipeline**, mantendo
-**proveniência**, passando por **revisão humana** quando aplicável e sendo
-**distribuído automaticamente** ao módulo correto (Exames, Medicamentos, Condições,
-Vacinas, Recursos, Documento administrativo).
+O **Capture Hub** é o **moat operacional**: reduz drasticamente a fricção de entrada de
+dados. Ele NÃO é o produto (o produto é a inteligência longitudinal + proveniência +
+estruturação); é a **infraestrutura de ingestão** que alimenta esse produto com o menor
+esforço possível. Princípio-guia: **"qualquer forma de compartilhar meu exame funciona"**
+— não **"como envio meu exame?"**.
 
 ---
 
-## 1. Visão de produto
+## 1. Capture Hub é um DOMÍNIO transversal (não um módulo)
 
-- **Capture Hub** = porta ÚNICA de entrada (no Dashboard: "Adicionar documento" →
-  "Como deseja enviar?"). Já materializado em embrião pelo `CreateRecordMenu` (DS-001).
+Assim como Knowledge Layer, Scientific Retrieval Layer e Routing Engine são domínios, o
+Capture Hub é o **domínio responsável por toda a ingestão de dados clínicos externos**,
+independentemente da origem. Ele **atende a todos os domínios de destino**:
+
+**Exames · Condições · Medicamentos · Vacinas · Ômicas · Recursos de Saúde · Documentos
+administrativos · integrações futuras.**
+
+Consequência de governança: **nenhuma nova forma de captura deve ser desenvolvida de
+forma isolada dentro de um módulo** — toda captura passa a nascer como adaptador deste
+domínio, convergindo para o pipeline único.
+
+---
+
+## 2. Princípios fundamentais (invioláveis — orientam anos de evolução)
+
+1. **Uma única porta de entrada** para qualquer documento.
+2. **Uma única fila** de processamento (a Caixa de Entrada).
+3. **Um único pipeline** de classificação e extração.
+4. **Um único repositório documental** (DOC-001).
+5. **Um documento pode alimentar vários domínios** (ex.: um laudo → Exame + Condição),
+   sem duplicar o arquivo.
+6. **Proveniência obrigatória** — toda informação incorporada carrega origem + documento.
+7. **Revisão humana antes da persistência** sempre que houver extração automática.
+8. **Nenhuma origem conhece a lógica de negócio** — adaptadores só entregam o contrato.
+9. **Novas origens entram por adaptadores** — sem tocar no pipeline nem nos módulos.
+
+---
+
+## 3. Visão de produto
+
+- **Capture Hub** = porta ÚNICA no Dashboard ("Adicionar documento" → "Como deseja
+  enviar?"), já em embrião no `CreateRecordMenu` (DS-001).
 - **Caixa de Entrada (Health Inbox)** = fila única onde TODA captura pousa, processa em
-  segundo plano e aguarda revisão. É o que torna as origens **assíncronas**
-  (e-mail/WhatsApp/link) possíveis — o documento chega sozinho e precisa de um lugar
-  para ser processado e revisado. Ex. de estado visível ao usuário:
+  2º plano e aguarda revisão — é o que viabiliza origens **assíncronas**
+  (e-mail/WhatsApp/link/share). Estado visível ao usuário:
 
   ```
   Recebidos
@@ -47,167 +71,225 @@ Vacinas, Recursos, Documento administrativo).
   ❌ 1 ilegível
   ```
 
-- **Menor nº de etapas**: o alvo de UX é incorporar qualquer documento com o mínimo de
-  passos. Origens assíncronas tendem a ZERO etapas na hora do envio (o doc chega e é
-  processado; a revisão é opcional/posterior).
-- **Identidade própria**: o módulo ganha nome de produto (ex.: "Caixa de Entrada" /
-  "Central de Documentos"), não um rótulo técnico.
-- **Atalhos contextuais**: entradas por módulo ("Novo exame", "Nova condição") continuam
-  existindo como atalhos que **pré-escopam** o classificador; o Hub é a porta universal.
+- **Fricção mínima**: incorporar qualquer documento com o mínimo de passos; origens
+  assíncronas ≈ **zero etapa** no envio (o doc chega e é processado; revisão é posterior).
+- **Identidade própria** do módulo (ex.: "Caixa de Entrada"), não um rótulo técnico.
+- **Atalhos contextuais por módulo** ("Novo exame", "Nova condição") pré-escopam o
+  classificador; o Hub é a porta universal.
 
 ---
 
-## 2. Arquitetura (camadas)
+## 4. Arquitetura — visão geral e responsabilidades
 
 ```
-ORIGENS (adaptadores)                    →  CAPTURE ENGINE          →  INBOX (fila async)
- arquivo · foto · scanner · link ·          normaliza qualquer          capture_inbox:
- e-mail · WhatsApp · share nativo ·         entrada em                  status por doc,
- API lab/RNDS (futuro) · voz                CapturedDocument            proveniência
-
-  →  PIPELINE ÚNICO                       →  ROUTING ENGINE          →  REVISÃO HUMANA  →  PERSISTÊNCIA
-     OCR/visão → ContentClassifier            distribui ao módulo         (gate quando         DOC-001 (doc único)
-     (tipo) → extractor por tipo →            correto (registry)          aplicável)           + módulos +
-     needs_review                                                                              Linha do Tempo
+              Upload
+              Scanner
+             WhatsApp
+              E-mail
+            Share Sheet
+          API Laboratório / RNDS
+              (origens)
+                 │
+                 ▼
+           ┌─────────────┐
+           │ CAPTURE HUB │  recebe (adaptadores → CapturedDocument)
+           └─────────────┘
+                 │
+                 ▼
+        ┌───────────────────┐
+        │  CAIXA DE ENTRADA │  fila assíncrona + status por documento
+        └───────────────────┘
+                 │
+                 ▼
+        OCR / Vision / Parser          }
+                 │                      }  PIPELINE ÚNICO
+        Content Classifier (tipo)       }  (processa + classifica + extrai;
+                 │                      }   marca needs_review; dedup por checksum)
+        Extractor por tipo → needs_review
+                 │
+                 ▼
+          ┌──────────────┐
+          │ ROUTING ENGINE│  distribui ao domínio (registry)
+          └──────────────┘
+                 │
+   ┌────────┬────────────┬─────────────┬─────────┬─────────┐
+   ▼        ▼            ▼             ▼         ▼         ▼
+ Exames  Condições  Medicamentos    Vacinas   Ômicas   Documentos
+   └────────┴────────────┴─────────────┴─────────┴─────────┘
+                 │  (DOC-001 = arquivo único referenciado por documentId)
+                 ▼
+        LINHA DO TEMPO LONGITUDINAL
 ```
 
-- **Adaptadores de ingestão (Camada 1):** cada origem é um adaptador ISOLADO que só
-  sabe receber daquela origem e produzir o contrato comum. Nova origem = novo adaptador,
-  **sem tocar** no pipeline. (Alinha ao CAP-001: "Futuras origens = adaptadores no
-  Capture Engine, sem tocar a tela.")
-- **Capture Engine (Camada 2):** produz o **`CapturedDocument`** (contrato oficial):
-  `documentId · originalFile · mimeType · checksum · **origin** · captureMethod ·
-  capturedAt · uploader · metadata`. (`origin` novo: `file|camera|scanner|link|email|
-  whatsapp|native_share|lab_api|rnds|voice`.)
-- **Inbox / Fila (Camada 3):** entidade `capture_inbox` — persiste o documento recebido,
-  seu estado e eventos. Processamento **assíncrono** (job/worker), para não bloquear e
-  para suportar chegada espontânea.
-- **Pipeline único (Camada 4):** OCR/visão → **ContentClassifier** (decide o TIPO) →
-  **extractor específico** do tipo → marca `needs_review`. Idempotente; **dedup por
-  checksum** (não reprocessa/duplica o mesmo documento).
-- **Routing Engine (Camada 5):** por **registry** (mesmo padrão dos processadores),
-  encaminha ao módulo destino. Novo módulo = registrar destino.
-- **Revisão humana (Camada 6):** gate de confirmação quando aplicável (a IA transcreve;
-  a pessoa confirma antes de gravar em definitivo). Pode ser em LOTE na Inbox.
-- **Persistência (Camada 7):** documento original no **DOC-001** (repositório único);
-  o registro estruturado no módulo; tudo referencia o `documentId` (sem duplicar arquivo).
+**Responsabilidades (limites explícitos):**
+
+| Componente | Responsabilidade | NÃO faz |
+|---|---|---|
+| **Capture Hub** | Recebe de qualquer origem via adaptador; produz o `CapturedDocument`. | Não classifica, não persiste, não conhece módulo. |
+| **Caixa de Entrada** | Fila assíncrona; estado/eventos por documento; superfície de revisão. | Não extrai nem roteia. |
+| **Pipeline** | OCR/visão → classifica o tipo → extrai campos → marca `needs_review`; dedup por checksum. | Não decide destino final nem grava no módulo. |
+| **Routing Engine** | Distribui ao domínio correto (por registry). | Não processa conteúdo. |
+| **Módulos de domínio** | Persistem o registro estruturado; referenciam o `documentId`. | Não conhecem origem nem OCR. |
 
 ---
 
-## 3. Origens de captura por onda
+## 5. Contrato do adaptador de ingestão (interface)
+
+Cadeia canônica — **todo adaptador segue exatamente este fluxo**:
+
+```
+Capture Adapter → CapturedDocument → Capture Pipeline → Classifier
+     → Extractor → Needs Review → Routing Engine → Domain Module
+```
+
+Contrato (tipado) entre camadas:
+
+```ts
+interface CaptureAdapter {
+  origin: 'file' | 'camera' | 'scanner' | 'link' | 'email'
+        | 'whatsapp' | 'native_share' | 'lab_api' | 'rnds' | 'voice'
+  // Recebe da origem e entrega o contrato comum. NÃO conhece lógica de negócio.
+  receive(input: unknown): Promise<CapturedDocument>
+}
+
+interface CapturedDocument {         // contrato ÚNICO entre camadas (estende CAP-001)
+  documentId: string                 // estável — base da proveniência (DOC-001)
+  checksum: string                   // SHA-256 — dedup e integridade
+  origin: CaptureAdapter['origin']
+  captureMethod: string
+  mimeType: string
+  originalFile: Blob | { url: string }
+  uploader: string                   // user_id
+  capturedAt: string                 // ISO
+  metadata?: Record<string, unknown>
+}
+```
+
+Trocar OCR/IA no futuro **não** invalida documentos nem quebra proveniência
+(`documentId`/`checksum` estáveis — backward compatibility, CAP-001 Princípio 8).
+
+---
+
+## 6. Pipeline único, classificação e dedup
+
+- **OCR / Vision / Parser** — leitura do conteúdo (imagem, PDF, texto).
+- **Content Classifier** (transversal, TEMA C) — classifica o **tipo** por CONTEÚDO →
+  `exame | medicamento | condicao | vacina | omica | recurso | administrativo`.
+  **Factual** — classifica, não interpreta clinicamente.
+- **Extractor por tipo** — reusa o que já existe (visão de exames/biomarcadores,
+  medicamentos/scan, `/api/vision/condition`, bioimpedância). Novo tipo = novo extractor.
+- **`needs_review`** — registro de origem-IA nasce pendente; gravação definitiva só após
+  revisão humana (na Inbox ou no formulário do módulo).
+- **Dedup por checksum** — o mesmo arquivo (ex.: laudo enviado por e-mail E por WhatsApp)
+  não é reprocessado nem duplicado.
+
+---
+
+## 7. Origens de captura por onda
 
 | Onda | Origem | Natureza | Depende de |
 |---|---|---|---|
-| **A** | Arquivo · Foto · Scanner (câmera) · **Colar link** (público) · Voz | Síncrona | `CreateRecordMenu` (existe); allowlist/SSRF p/ link |
-| **B** | **E-mail exclusivo por usuário** · **WhatsApp** | Assíncrona | **Backbone da Inbox** (fila+worker); infra e-mail de entrada; API Meta (existe) |
-| **C** | **Compartilhamento nativo Android/iOS (Share Sheet)** | Assíncrona | **App móvel** (ver Plano de Maturidade Pré-Mobile) |
-| **D** | **Integrações**: labs BR (Fleury/Dasa/Hermes Pardini/Sabin), **RNDS/Meu SUS Digital**, FHIR/APIs | Pull | Acordos/APIs externas; longo prazo — NÃO virar dependência |
-
-**Ordem de BUILD recomendada** (não de valor): **1) Backbone da Inbox** (fila + worker
-assíncrono + classificador de rota + superfície de revisão) → **2) E-mail exclusivo**
-(1ª origem assíncrona, prova o modelo ponta a ponta) → **3) Link público + WhatsApp** →
-**4) Share nativo (com o app móvel)** → **5) Integrações**. A Onda A já existe em parte
-(upload/foto/voz) e conecta ao Hub assim que o backbone existir.
+| **A** | Arquivo · Foto · Scanner · **Colar link** (público) · Voz | Síncrona | `CreateRecordMenu` (existe); allowlist/anti-SSRF p/ link |
+| **B** | **E-mail exclusivo por usuário** · **WhatsApp** | Assíncrona | Backbone da Inbox; infra e-mail de entrada; API Meta (existe) |
+| **C** | **Share nativo Android/iOS (Share Sheet)** | Assíncrona | **App móvel** (Plano de Maturidade Pré-Mobile) |
+| **D** | **Integrações**: labs BR (Fleury/Dasa/Hermes Pardini/Sabin) · **RNDS/Meu SUS Digital** · FHIR/APIs | Pull | Acordos/APIs externas; longo prazo — NÃO virar dependência |
 
 ---
 
-## 4. Contrato e pipeline
+## 8. Proveniência, auditoria e DOC-001
 
-- **`CapturedDocument`** (Capture Engine → resto): estende o contrato do CAP-001 com
-  `origin`. É o único acoplamento entre camadas; troca de OCR/IA no futuro não invalida
-  documentos nem quebra proveniência (`documentId`/`checksum` estáveis — backward
-  compatibility, CAP-001 Princípio 8).
-- **ContentClassifier** (transversal, TEMA C): classifica por CONTEÚDO o TIPO do
-  documento → `exame | medicamento | condicao | vacina | recurso | administrativo`.
-  Já previsto como infraestrutura. **Factual** — classifica, não interpreta clinicamente.
-- **Extractors por tipo:** reusam o que já existe (visão de exames/biomarcadores,
-  medicamentos/scan, `/api/vision/condition`, bioimpedância). Cada tipo → seu extractor.
-- **`needs_review`:** todo registro de origem-IA nasce pendente de confirmação humana;
-  a gravação definitiva só ocorre após revisão (na Inbox ou no formulário do módulo).
-- **Dedup:** `checksum` (SHA-256) do arquivo evita reprocessar/duplicar o mesmo
-  documento (ex.: laudo enviado por e-mail E por WhatsApp).
-
----
-
-## 5. Proveniência, auditoria e rastreabilidade
-
-- **Princípio da Rastreabilidade Documental** (decisão permanente): havendo documento de
-  origem, o consumidor privilegia o documento original como fonte primária; "Ver
-  documento original" acessível em qualquer consumidor pela MESMA lógica.
-- Cada item incorporado guarda: **origin** (de onde veio) + **documentId/checksum** +
-  **linha de eventos** (recebido → processado → revisado → persistido, com timestamps).
+- **Princípio da Rastreabilidade Documental**: havendo documento de origem, o consumidor
+  privilegia o original como fonte primária; "Ver documento original" em qualquer
+  consumidor pela MESMA lógica.
+- Cada item incorporado guarda **origin** + **documentId/checksum** + **linha de eventos**
+  (recebido → processado → revisado → persistido, com timestamps).
 - **DOC-001** = repositório único do arquivo; módulos referenciam `documentId` (sem
-  duplicar). Um mesmo documento pode alimentar mais de um módulo (ex.: laudo que gera
-  Exame + Condição), sem cópia.
-- **Auditoria:** a Inbox é o log natural de ingestão (o que entrou, por qual origem,
-  quando, com que resultado de classificação/revisão).
+  duplicar). Um doc pode alimentar vários domínios (Princípio 5).
+- A **Caixa de Entrada é o log natural de auditoria** da ingestão.
 
 ---
 
-## 6. Experiência do usuário (fricção mínima)
+## 9. Experiência do usuário (fricção mínima)
 
-- **Uma porta:** "Adicionar documento" → "Como deseja enviar?" (ordem fixa DS-001:
-  Arquivo · Foto · Colar link · Encaminhar por e-mail · WhatsApp · Compartilhar do
-  celular · Ditar). Regra 1×2+ (`CreateRecordMenu`): 2+ métodos → menu; 1 → aciona direto.
-- **Inbox:** área única "Recebidos" com status por documento + ação de **revisar em lote**.
-- **Assíncrono = zero etapa no envio:** e-mail/WhatsApp/share chegam sozinhos; a pessoa
-  só revisa quando quiser (ou confia na auto-classificação para itens de alta confiança).
-- **Atalhos por módulo** pré-escopam o classificador, reduzindo passos quando o contexto
-  já é conhecido.
+- **Uma porta** ("Adicionar documento" → ordem fixa DS-001: Arquivo · Foto · Colar link ·
+  Encaminhar por e-mail · WhatsApp · Compartilhar do celular · Ditar). Regra 1×2+.
+- **Inbox** "Recebidos" com status por documento + **revisão em lote**.
+- **Assíncrono = zero etapa no envio**; a pessoa só revisa quando quiser.
+- Atalhos por módulo reduzem passos quando o contexto já é conhecido.
 
 ---
 
-## 7. LGPD e segurança (por origem)
+## 10. LGPD e segurança (por origem)
 
-- **E-mail exclusivo:** endereço por usuário com token não-adivinhável (ex.:
-  `carina.8F4K2@inbox.sinteramais.com.br`); validar **remetente/assunto**, rejeitar
-  spam, limitar tipo/tamanho de anexo. Infra de e-mail de ENTRADA (SendGrid Inbound /
-  Mailgun / Cloudflare Email Workers) — o Resend atual é só de saída.
-- **WhatsApp:** casar o **telefone confirmado** (`profiles.phone`) com a conta; opt-in
-  explícito; download de mídia via API Meta.
-- **Colar link:** **allowlist de domínios** de laboratórios + guarda **anti-SSRF**;
-  funciona só para links **públicos/de compartilhamento** que apontem a um arquivo
-  (Caso A). Página com login (Casos B/C) NÃO é acessível pelo servidor — orientar download.
-- **Transversal:** dado sensível (LGPD Art. 11) → consentimento, minimização, política de
-  retenção/apagamento, tudo referenciado ao Princípio da Rastreabilidade.
-- **RDC 657:** o Hub **organiza, transcreve e classifica de forma factual** — não infere
-  diagnóstico nem dá orientação clínica; a revisão humana é o gate.
+- **E-mail exclusivo**: endereço por usuário com token não-adivinhável
+  (`carina.8F4K2@inbox.sinteramais.com.br`); validar remetente/assunto; anti-spam;
+  limite de tipo/tamanho. Infra de e-mail de **ENTRADA** (SendGrid Inbound / Mailgun /
+  Cloudflare Email) — o Resend atual é só de saída.
+- **WhatsApp**: casar **telefone confirmado** (`profiles.phone`); opt-in explícito.
+- **Colar link**: **allowlist de domínios** + guarda **anti-SSRF**; só links públicos que
+  apontem a um arquivo (Caso A). Páginas com login (Casos B/C) não são acessíveis pelo
+  servidor — orientar download.
+- **Transversal**: dado sensível (LGPD Art. 11) → consentimento, minimização, retenção/
+  apagamento. **RDC 657**: organiza/transcreve/classifica de forma factual; revisão
+  humana é o gate; não interpreta.
 
 ---
 
-## 8. Faseamento no roadmap e dependências
+## 11. Métricas / KPIs do Capture Hub
 
-- **Depende de:** DOC-001 (repositório único — backbone de storage) para a forma final;
-  backbone da Inbox (fila+worker) para as origens assíncronas; app móvel para o share nativo.
-- **Destrava:** ingestão de fricção mínima → mais dados no prontuário longitudinal →
-  reforço do moat (continuidade do cuidado).
-- **Posição:** iniciativa **multi-onda** (Onda 2+). NÃO implementar oportunisticamente;
-  entra como frente estruturante APÓS o fechamento de Condições (que já é o 1º adaptador
-  "módulo").
-
----
-
-## 9. Métricas de sucesso
-
-- **Tempo até incorporar** um documento (mediana) — meta: menor da categoria.
-- **Nº de etapas** por origem (meta: assíncronas ≈ 0 no envio).
-- **% auto-classificado corretamente** (ContentClassifier) e **taxa de revisão** necessária.
-- **% de documentos que chegam por origens de baixa fricção** (e-mail/WhatsApp/share).
-- **Taxa de ilegível / falha de extração** (qualidade da captura).
+- **Tempo médio recebimento → processamento**.
+- **Tempo médio até incorporação** ao prontuário.
+- **% classificado automaticamente** (sem intervenção).
+- **Precisão da classificação** (tipo correto).
+- **Precisão da extração** (campos corretos).
+- **Taxa de revisão manual** necessária.
+- **Taxa de documentos ilegíveis / falha de extração**.
+- **% de documentos duplicados** (evitados pelo checksum).
+- **% de documentos por origem de baixa fricção** (e-mail/WhatsApp/share).
 
 ---
 
-## 10. Reconciliação com o que já existe
+## 12. Roadmap e faseamento
 
-- **`CreateRecordMenu` (DS-001)** já É o "escolha como enviar" — vira o front-end do Hub.
-- **Centro de Captura / `CaptureCenter`** = embrião do Hub (evolui para a Inbox).
-- **CAP-001** (3 camadas: Presentation → Capture Engine → Routing Engine; contrato
-  `CapturedDocument`; registry de destinos) = a fundação; CAP-002 acrescenta **Inbox
-  assíncrona**, **origens externas** e **classificador de rota** por cima.
-- **Adaptador de Condições** (`feat/condicoes-captura`) = 1º exemplo de módulo alimentado
-  pelo pipeline; ao existir o Hub, vira mais uma entrada contextual.
-- **DOC-001** = repositório único de documentos (backbone de storage + proveniência).
-- **TEMA C** (inteligência transversal) = o ContentClassifier é a peça de classificação.
+```
+Condições (fechar)
+   ↓
+Backbone do Capture Hub
+   ↓
+Caixa de Entrada (Inbox)
+   ↓
+DOC-001 (repositório único)      ← base documental comum, junto da Inbox
+   ↓
+E-mail exclusivo por usuário     ← 1ª origem assíncrona (prova ponta a ponta)
+   ↓
+WhatsApp
+   ↓
+Colar link (público)
+   ↓
+Share nativo (com app móvel)
+   ↓
+Integrações (labs BR / RNDS)     ← longo prazo, não é dependência
+
+[ Benchmark verificado roda EM PARALELO — refina, não bloqueia ]
+```
+
+**Dependências:** DOC-001 (storage comum) e backbone da Inbox (fila+worker) sustentam as
+origens assíncronas; app móvel sustenta o share nativo. **Posição:** iniciativa
+multi-onda (Onda 2+); NÃO implementar oportunisticamente; entra APÓS o fechamento de
+Condições (1º adaptador "módulo").
+
+---
+
+## 13. Reconciliação com o que já existe
+
+- **`CreateRecordMenu` (DS-001)** já É o "escolha como enviar" → front-end do Hub.
+- **Centro de Captura / `CaptureCenter`** = embrião da Inbox.
+- **CAP-001** (Presentation → Capture Engine → Routing Engine; contrato `CapturedDocument`;
+  registry de destinos) = fundação; CAP-002 acrescenta **Inbox assíncrona**, **origens
+  externas** e **classificador de rota**.
+- **Adaptador de Condições** (`feat/condicoes-captura`) = 1º módulo alimentado pelo
+  pipeline; vira uma entrada contextual do Hub.
+- **DOC-001** = repositório único de documentos. **TEMA C** = o ContentClassifier.
 
 Ver [[req_captura_documental]], [[principio_rastreabilidade_documental]],
 [[roadmap_ondas_core]], [[plano_maturidade_pre_mobile]], [[estrategia_master_v21]].
