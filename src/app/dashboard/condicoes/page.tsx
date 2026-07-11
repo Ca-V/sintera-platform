@@ -82,6 +82,7 @@ export default function CondicoesPage() {
   const [scanErr, setScanErr] = useState<string | null>(null)
   const [pendingFile, setPendingFile] = useState<File | null>(null)
   const [kind, setKind] = useState<string | null>(null)
+  const [sourceHint, setSourceHint] = useState<'manual' | 'voice'>('manual')
   const [docMeta, setDocMeta] = useState<{ isExam: boolean; examType: string | null; examDate: string | null } | null>(null)
 
   const load = useCallback(async () => {
@@ -104,7 +105,7 @@ export default function CondicoesPage() {
 
   function reset() {
     setEditingId(null); setScope('propria'); setName(''); setRelative(''); setSince(''); setNotes('')
-    setErr(null); setPendingFile(null); setKind(null); setDocMeta(null); setScanErr(null)
+    setErr(null); setPendingFile(null); setKind(null); setDocMeta(null); setScanErr(null); setSourceHint('manual')
   }
 
   function startEdit(c: Condition) {
@@ -159,33 +160,46 @@ export default function CondicoesPage() {
   }
 
   async function save() {
-    if (!user || saving || !name.trim()) return
+    const hasCondition = !!name.trim()
+    // Salva se há condição OU se o documento é um exame (mesmo sem condição afirmada).
+    const examOnly = !hasCondition && !!pendingFile && !!docMeta?.isExam
+    if (!user || saving || (!hasCondition && !examOnly)) return
     setSaving(true); setErr(null)
     try {
       let fileUrl: string | null = null
       if (pendingFile) fileUrl = await uploadDoc(pendingFile)
 
-      const payload: Record<string, unknown> = {
-        user_id: user.id, scope, name: name.trim(),
-        relative: scope === 'familiar' ? (relative.trim() || null) : null,
-        since_label: since.trim() || null, notes: notes.trim() || null,
-        kind: kind || null,
-      }
-      if (fileUrl) payload.file_url = fileUrl
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const db = (supabase as any).from('health_conditions')
-      const { error } = editingId ? await db.update(payload).eq('id', editingId) : await db.insert(payload)
-      if (error) throw new Error(error.message)
-
-      // Salvamento DUPLO: se o documento é um exame/laudo com resultado, cria também
-      // um registro em Exames (mesmo arquivo). Best-effort: não bloqueia a condição.
+      // EXAME: se o documento é laudo laboratorial/imagem, cria o Exame SEMPRE —
+      // independentemente do resultado (normal/negativo/positivo) ou de haver condição.
+      // A existência do exame não depende da conclusão clínica. Criado antes para
+      // vincular a condição (o vínculo pode existir ou não).
+      let examId: string | null = null
       if (fileUrl && docMeta?.isExam) {
+        examId = crypto.randomUUID()
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (supabase as any).from('exams').insert({
-          id: crypto.randomUUID(), user_id: user.id,
-          type: docMeta.examType || name.trim(), exam_date: docMeta.examDate, file_url: fileUrl, status: 'pending',
+          id: examId, user_id: user.id,
+          type: docMeta.examType || (hasCondition ? name.trim() : 'Exame'),
+          exam_date: docMeta.examDate, file_url: fileUrl, status: 'pending',
         })
+      }
+
+      // CONDIÇÃO: só quando o documento afirma um diagnóstico/condição (ou digitada).
+      if (hasCondition) {
+        const payload: Record<string, unknown> = {
+          user_id: user.id, scope, name: name.trim(),
+          relative: scope === 'familiar' ? (relative.trim() || null) : null,
+          since_label: since.trim() || null, notes: notes.trim() || null,
+          kind: kind || null,
+        }
+        if (fileUrl) payload.file_url = fileUrl
+        if (examId) payload.source_exam_id = examId
+        // source só na criação (não sobrescreve na edição manual)
+        if (!editingId) payload.source = pendingFile ? (docMeta?.isExam ? 'exam_report' : 'uploaded_document') : sourceHint
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const db = (supabase as any).from('health_conditions')
+        const { error } = editingId ? await db.update(payload).eq('id', editingId) : await db.insert(payload)
+        if (error) throw new Error(error.message)
       }
       reset(); setShowForm(false); await load()
     } catch (e) {
@@ -255,7 +269,7 @@ export default function CondicoesPage() {
           fileLabel="Selecionar laudo (PDF ou foto)"
           busy={scanning}
           busyLabel="Lendo documento…"
-          voice={<VoiceInput onResult={t => { reset(); setName(t); setShowForm(true) }} />}
+          voice={<VoiceInput onResult={t => { reset(); setSourceHint('voice'); setName(t); setShowForm(true) }} />}
           onSelect={onSelectMethod}
         />
       </div>
@@ -268,8 +282,11 @@ export default function CondicoesPage() {
             <div className="flex items-start gap-2.5 rounded-xl border border-petal/30 bg-blush px-3 py-2.5">
               <FileText size={16} className="text-petal flex-shrink-0 mt-0.5" />
               <p className="font-body text-xs text-onyx leading-relaxed">
-                Documento anexado — será salvo com a condição.
-                {docMeta?.isExam && <> Como é um exame{docMeta.examType ? ` (${docMeta.examType})` : ''}, também será salvo em <strong>Exames</strong>.</>}
+                {docMeta?.isExam ? (
+                  <>Documento anexado. Como é um exame{docMeta.examType ? ` (${docMeta.examType})` : ''}, será salvo em <strong>Exames</strong> — independentemente do resultado. {name.trim() ? 'A condição abaixo é registrada e vinculada a ele.' : 'Se o documento afirmar uma condição, preencha o nome abaixo (opcional); senão, salvo só o exame.'}</>
+                ) : (
+                  <>Documento anexado — será salvo com a condição.</>
+                )}
               </p>
             </div>
           )}
@@ -314,9 +331,9 @@ export default function CondicoesPage() {
           <div className="flex justify-end gap-2">
             <button onClick={() => { reset(); setShowForm(false) }}
               className="px-4 py-2 rounded-full border border-border text-mauve font-body text-sm hover:bg-ivory transition-colors">Cancelar</button>
-            <button onClick={save} disabled={saving || !name.trim()}
+            <button onClick={save} disabled={saving || !(name.trim() || (pendingFile && docMeta?.isExam))}
               className="px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium disabled:opacity-40 hover:opacity-90 transition-opacity">
-              {saving ? 'Salvando…' : editingId ? 'Salvar alterações' : 'Salvar'}
+              {saving ? 'Salvando…' : editingId ? 'Salvar alterações' : (!name.trim() && pendingFile && docMeta?.isExam ? 'Salvar exame' : 'Salvar')}
             </button>
           </div>
         </Card>

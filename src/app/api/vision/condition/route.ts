@@ -24,18 +24,21 @@ REGISTRADA NO DOCUMENTO pelo profissional. Regras absolutas:
   com seu conhecimento. Se algo não estiver no documento, use null.
 - Extraia a condição PRINCIPAL do documento (o diagnóstico/condição/alergia central).
 Campos:
-- name: nome da condição/diagnóstico/alergia como escrito (curto). Ex.: "Hipertensão arterial",
-  "Alergia à penicilina", "Diabetes tipo 2". Para alergia, inclua a substância. null se não houver.
+- name: nome da CONDIÇÃO/DIAGNÓSTICO/ALERGIA APENAS se o documento AFIRMAR explicitamente um
+  diagnóstico/condição (curto). Ex.: "Hipertensão arterial", "Alergia à penicilina". Para alergia,
+  inclua a substância. **null quando o documento NÃO afirma uma condição** (ex.: exame normal,
+  resultado negativo, valores dentro da referência) — a existência de um exame NÃO implica condição.
 - kind: um de ["diagnostico","alergia","condicao","outro"] conforme o que o documento indica.
 - since: data de diagnóstico/início NO FORMATO YYYY-MM-DD se houver data explícita; ou um rótulo
   curto se o documento disser (ex.: "2020"); null se ausente.
 - notes: detalhes FACTUAIS relevantes escritos no documento (ex.: gravidade, CID se citado,
   profissional/emissor, orientação registrada). Sem interpretação sua. null se nada relevante.
-- is_exam: true se o documento for um EXAME/LAUDO com RESULTADO (ex.: laudo laboratorial, de
-  imagem, teste alérgico) que valha guardar também na lista de Exames; false se for só atestado/
-  declaração/receita sem resultado de exame.
-- exam_type: se is_exam=true, o NOME/tipo do exame como escrito (ex.: "Hemograma", "Teste alérgico",
-  "Ressonância magnética"). null caso contrário.
+- is_exam: true se o documento for um EXAME LABORATORIAL ou de IMAGEM / LAUDO (ex.: hemograma, FAN,
+  biópsia, PSA, ressonância, ultrassom, teste alérgico), INDEPENDENTEMENTE do resultado — normal,
+  negativo, positivo ou alterado, TODOS são exames. false SÓ para receita, atestado ou declaração
+  SEM resultado de exame. A existência do exame NÃO depende da conclusão clínica.
+- exam_type: se is_exam=true, o NOME/tipo do exame como escrito (ex.: "Hemograma", "FAN",
+  "Ressonância magnética", "PSA"). null caso contrário.
 - exam_date: data do exame YYYY-MM-DD se escrita; null se ausente.
 Responda APENAS com JSON válido:
 {"name":null,"kind":"outro","since":null,"notes":null,"is_exam":false,"exam_type":null,"exam_date":null}
