@@ -111,7 +111,7 @@ export default function OnboardingPage() {
   const quote = quotes[step]
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row overflow-hidden" style={{ background: '#0F0B14' }}>
+    <div className="min-h-screen flex flex-col lg:flex-row overflow-hidden" style={{ background: '#F5F1E8' }}>
 
       {/* ── Painel esquerdo ── */}
       <motion.div className="relative lg:sticky lg:top-0 lg:h-screen lg:w-[45%] flex-shrink-0 overflow-hidden"
@@ -137,12 +137,12 @@ export default function OnboardingPage() {
               <div className="flex flex-col items-center gap-3">
                 {[140, 220, 310].map((size, i) => (
                   <motion.div key={i} className="absolute rounded-full border"
-                    style={{ width: size, height: size, borderColor: `rgba(226,140,125,${0.1 - i * 0.025})` }}
+                    style={{ width: size, height: size, borderColor: `rgba(193,131,106,${0.1 - i * 0.025})` }}
                     animate={{ rotate: i % 2 === 0 ? 360 : -360 }}
                     transition={{ duration: 30 + i * 15, repeat: Infinity, ease: 'linear' }} />
                 ))}
                 <motion.div className="w-20 h-20 rounded-full"
-                  style={{ background: 'radial-gradient(circle, rgba(226,140,125,0.5) 0%, rgba(87,179,173,0.3) 50%, transparent 70%)' }}
+                  style={{ background: 'radial-gradient(circle, rgba(193,131,106,0.5) 0%, rgba(107,192,206,0.3) 50%, transparent 70%)' }}
                   animate={{ scale: [1, 1.15, 1], opacity: [0.6, 1, 0.6] }}
                   transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }} />
               </div>

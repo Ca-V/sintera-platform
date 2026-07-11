@@ -26,13 +26,13 @@ export default function OgImage() {
         <div style={{
           position: 'absolute', top: '-100px', right: '-100px',
           width: '500px', height: '500px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(87,179,173,0.15) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(107,192,206,0.15) 0%, transparent 70%)',
           display: 'flex',
         }} />
         <div style={{
           position: 'absolute', bottom: '-80px', left: '-80px',
           width: '400px', height: '400px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(14,110,100,0.12) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(14,117,128,0.12) 0%, transparent 70%)',
           display: 'flex',
         }} />
 
@@ -80,8 +80,8 @@ export default function OgImage() {
         <div style={{
           marginTop: '48px',
           display: 'flex', alignItems: 'center', gap: '8px',
-          background: 'rgba(87,179,173,0.15)',
-          border: '1px solid rgba(87,179,173,0.4)',
+          background: 'rgba(107,192,206,0.15)',
+          border: '1px solid rgba(107,192,206,0.4)',
           borderRadius: '50px', padding: '10px 24px',
         }}>
           <span style={{ fontSize: '16px', color: '#0E7580', fontWeight: '600', letterSpacing: '0.08em' }}>

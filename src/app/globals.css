@@ -96,8 +96,8 @@ body {
 
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(14,110,100,0.30); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(14,110,100,0.55); }
+::-webkit-scrollbar-thumb { background: rgba(14,117,128,0.30); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(14,117,128,0.55); }
 ::selection { background-color: #AEE3EE; color: #26201C; }
 
 /* ─── Range input ─── */
@@ -119,11 +119,11 @@ input[type="range"]::-webkit-slider-thumb {
   border-radius: 50%;
   background: #0E7580;
   cursor: pointer;
-  box-shadow: 0 0 0 3px white, 0 0 0 4px rgba(14,110,100,0.3);
+  box-shadow: 0 0 0 3px white, 0 0 0 4px rgba(14,117,128,0.3);
   transition: box-shadow 0.15s ease;
 }
 input[type="range"]::-webkit-slider-thumb:hover {
-  box-shadow: 0 0 0 3px white, 0 0 0 5px rgba(14,110,100,0.5);
+  box-shadow: 0 0 0 3px white, 0 0 0 5px rgba(14,117,128,0.5);
 }
 input[type="range"].range-lavender::-webkit-slider-thumb { background: #C1836A; }
 input[type="range"].range-sage::-webkit-slider-thumb { background: #A7B98C; }
@@ -154,16 +154,16 @@ input[type="range"].range-gold::-webkit-slider-thumb { background: #C6A66A; }
   border: 1px solid rgba(140,200,192,0.32);
 }
 .glass-dark {
-  background: rgba(10, 46, 44, 0.82);
+  background: rgba(10, 46, 52, 0.82);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(87,179,173,0.16);
+  border: 1px solid rgba(107,192,206,0.16);
 }
 
 /* ─── Gradients ─── */
 .gradient-sintera      { background: linear-gradient(135deg, #0E7580 0%, #6BC0CE 100%); }
 .gradient-sintera-soft { background: linear-gradient(135deg, #CFEEF4 0%, #E1F4F7 100%); }
-.gradient-subtle       { background: linear-gradient(160deg, #FDFCFA 0%, #EEF7F4 45%, #DCEFEC 100%); }
+.gradient-subtle       { background: linear-gradient(160deg, #FDFCFA 0%, #EDF6F8 45%, #DAEEF3 100%); }
 .gradient-dark         { background: linear-gradient(135deg, #0A2E34 0%, #0C3B44 60%, #0E4652 100%); }
 .gradient-hero         {
   background:

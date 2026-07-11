@@ -35,9 +35,9 @@ export default function DailyScoreCard() {
     >
       {/* Background glow */}
       <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(226,140,125,0.12) 0%, transparent 65%)' }}/>
+        style={{ background: 'radial-gradient(circle, rgba(193,131,106,0.12) 0%, transparent 65%)' }}/>
       <div className="absolute -bottom-12 -left-12 w-40 h-40 rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(87,179,173,0.08) 0%, transparent 60%)' }}/>
+        style={{ background: 'radial-gradient(circle, rgba(107,192,206,0.08) 0%, transparent 60%)' }}/>
 
       {/* Header */}
       <div className="flex items-center justify-between relative">
