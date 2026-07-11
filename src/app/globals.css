@@ -87,7 +87,7 @@
 html { scroll-behavior: smooth; }
 
 body {
-  background-color: #B3E4EE;
+  background-color: #F5F1E8;
   color: #26201C;
   font-family: var(--font-body, "DM Sans", system-ui, sans-serif);
   -webkit-font-smoothing: antialiased;

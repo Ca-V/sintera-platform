@@ -104,7 +104,7 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
   const initials    = displayName.charAt(0).toUpperCase()
 
   return (
-    <div className="flex flex-col h-full select-none" style={{ background: 'radial-gradient(ellipse 90% 35% at 50% 100%, rgba(196,160,106,0.15) 0%, transparent 72%), linear-gradient(to bottom, #0E3F4A, #0A2E34)' }}>
+    <div className="flex flex-col h-full select-none" style={{ background: 'radial-gradient(ellipse 90% 35% at 50% 100%, rgba(196,160,106,0.16) 0%, transparent 72%), linear-gradient(to bottom, #1B7B85 0%, #0F565F 58%, #0A3E45 100%)' }}>
 
       {/* Logo — leva ao Painel Inicial (área logada) */}
       <div className="flex items-center justify-between px-5 py-4">
