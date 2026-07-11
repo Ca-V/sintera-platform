@@ -42,7 +42,7 @@ export default function OgImage() {
         }}>
           <div style={{
             width: '56px', height: '56px', borderRadius: '50%',
-            background: 'linear-gradient(135deg, #0E6E64, #57B3AD)',
+            background: 'linear-gradient(135deg, #157A6F, #7FC6BF)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '28px', color: 'white',
           }}>
@@ -50,7 +50,7 @@ export default function OgImage() {
           </div>
           <span style={{
             fontSize: '42px', fontWeight: '700', letterSpacing: '0.2em',
-            color: '#1C2321',
+            color: '#26201C',
           }}>
             SINTERA
           </span>
@@ -62,11 +62,11 @@ export default function OgImage() {
           textAlign: 'center', maxWidth: '800px',
         }}>
           <span style={{
-            fontSize: '56px', fontWeight: '700', color: '#1C2321',
+            fontSize: '56px', fontWeight: '700', color: '#26201C',
             lineHeight: '1.1', textAlign: 'center',
           }}>
             Sua saúde tem{' '}
-            <span style={{ color: '#0E6E64' }}>uma história.</span>
+            <span style={{ color: '#157A6F' }}>uma história.</span>
           </span>
           <span style={{
             fontSize: '26px', color: '#5B6B67', fontWeight: '400',
@@ -84,7 +84,7 @@ export default function OgImage() {
           border: '1px solid rgba(87,179,173,0.4)',
           borderRadius: '50px', padding: '10px 24px',
         }}>
-          <span style={{ fontSize: '16px', color: '#0E6E64', fontWeight: '600', letterSpacing: '0.08em' }}>
+          <span style={{ fontSize: '16px', color: '#157A6F', fontWeight: '600', letterSpacing: '0.08em' }}>
             ✦  ACESSO GRATUITO  ✦
           </span>
         </div>

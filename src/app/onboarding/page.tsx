@@ -151,9 +151,9 @@ export default function OnboardingPage() {
             {step === 1 && (
               <div className="flex flex-col items-center gap-5 px-10">
                 {[
-                  { icon: Upload,       label: 'Upload do laudo em PDF',           color: '#E28C7D', delay: 0    },
-                  { icon: FlaskConical, label: 'IA extrai os biomarcadores',        color: '#63C1B3', delay: 0.15 },
-                  { icon: TrendingUp,   label: 'Histórico longitudinal organizado', color: '#7DAF9E', delay: 0.30 },
+                  { icon: Upload,       label: 'Upload do laudo em PDF',           color: '#C1836A', delay: 0    },
+                  { icon: FlaskConical, label: 'IA extrai os biomarcadores',        color: '#7FC6BF', delay: 0.15 },
+                  { icon: TrendingUp,   label: 'Histórico longitudinal organizado', color: '#A7B98C', delay: 0.30 },
                 ].map(({ icon: Icon, label, color, delay }, i) => (
                   <motion.div key={i}
                     initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
@@ -364,21 +364,21 @@ export default function OnboardingPage() {
                         icon: Upload,
                         title: '1. Faça upload do laudo',
                         desc: 'Envie qualquer laudo laboratorial em PDF — de qualquer laboratório.',
-                        color: '#E28C7D',
+                        color: '#C1836A',
                         bg: 'bg-blush',
                       },
                       {
                         icon: FlaskConical,
                         title: '2. A IA extrai os biomarcadores',
                         desc: 'Glicemia, colesterol, vitaminas, hormônios — extraídos automaticamente com os valores e referências do seu laudo.',
-                        color: '#63C1B3',
+                        color: '#7FC6BF',
                         bg: 'bg-lavender-light',
                       },
                       {
                         icon: TrendingUp,
                         title: '3. Acompanhe sua evolução',
                         desc: 'Veja como cada biomarcador mudou ao longo do tempo. Leve essa visão para sua próxima consulta.',
-                        color: '#7DAF9E',
+                        color: '#A7B98C',
                         bg: 'bg-sage-light',
                       },
                     ].map(({ icon: Icon, title, desc, color, bg }) => (

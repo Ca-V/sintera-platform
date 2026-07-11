@@ -20,7 +20,7 @@ export function welcomeEmailHtml(firstName: string): string {
             <td align="center" style="padding-bottom:32px;">
               <table cellpadding="0" cellspacing="0">
                 <tr>
-                  <td style="background:linear-gradient(135deg,#0E6E64,#14746B);width:36px;height:36px;border-radius:50%;text-align:center;vertical-align:middle;">
+                  <td style="background:linear-gradient(135deg,#157A6F,#14746B);width:36px;height:36px;border-radius:50%;text-align:center;vertical-align:middle;">
                     <span style="color:#fff;font-size:18px;line-height:36px;">◎</span>
                   </td>
                   <td style="padding-left:10px;font-size:20px;font-weight:700;letter-spacing:0.2em;color:#1C1C1E;">
@@ -77,7 +77,7 @@ export function welcomeEmailHtml(firstName: string): string {
                 <tr>
                   <td align="center">
                     <a href="https://sinteramais.com.br/onboarding"
-                      style="display:inline-block;background:linear-gradient(135deg,#0E6E64,#14746B);color:#fff;font-size:15px;font-weight:600;text-decoration:none;padding:14px 36px;border-radius:50px;letter-spacing:0.04em;">
+                      style="display:inline-block;background:linear-gradient(135deg,#157A6F,#14746B);color:#fff;font-size:15px;font-weight:600;text-decoration:none;padding:14px 36px;border-radius:50px;letter-spacing:0.04em;">
                       Acessar a SINTERA →
                     </a>
                   </td>

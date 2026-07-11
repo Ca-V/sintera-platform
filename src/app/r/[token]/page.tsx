@@ -53,7 +53,7 @@ function fmt(date: string | null): string {
 
 function Aviso({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ maxWidth: 640, margin: '60px auto', padding: '0 20px', fontFamily: 'system-ui, sans-serif', textAlign: 'center', color: '#6b5b73' }}>
+    <div style={{ maxWidth: 640, margin: '60px auto', padding: '0 20px', fontFamily: 'system-ui, sans-serif', textAlign: 'center', color: '#5F6A62' }}>
       {children}
     </div>
   )
@@ -73,7 +73,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
     .maybeSingle()
 
   if (!share || share.revoked || new Date(share.expires_at as string) < new Date()) {
-    return <Aviso><h1 style={{ fontSize: 20, color: '#2b2230' }}>Link inválido ou expirado</h1><p style={{ marginTop: 8 }}>Peça um novo link à pessoa que compartilhou.</p></Aviso>
+    return <Aviso><h1 style={{ fontSize: 20, color: '#26201C' }}>Link inválido ou expirado</h1><p style={{ marginTop: 8 }}>Peça um novo link à pessoa que compartilhou.</p></Aviso>
   }
 
   const uid = share.user_id as string
@@ -147,45 +147,45 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
   const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
 
   return (
-    <div style={{ maxWidth: 680, margin: '0 auto', padding: '32px 20px', fontFamily: 'system-ui, sans-serif', color: '#2b2230', lineHeight: 1.5 }}>
-      <div style={{ borderBottom: '1px solid #ece6ef', paddingBottom: 16, marginBottom: 20 }}>
+    <div style={{ maxWidth: 680, margin: '0 auto', padding: '32px 20px', fontFamily: 'system-ui, sans-serif', color: '#26201C', lineHeight: 1.5 }}>
+      <div style={{ borderBottom: '1px solid #DCE8E3', paddingBottom: 16, marginBottom: 20 }}>
         <h1 style={{ fontSize: 20, margin: 0 }}>Relatório — {nome}</h1>
-        <p style={{ fontSize: 12, color: '#8a7b92', marginTop: 6 }}>Gerado em {hoje} · organização dos dados registrados pela própria pessoa (SINTERA).</p>
+        <p style={{ fontSize: 12, color: '#5F6A62', marginTop: 6 }}>Gerado em {hoje} · organização dos dados registrados pela própria pessoa (SINTERA).</p>
       </div>
 
       {show('medicamentos') && (
       <section style={{ marginBottom: 22 }}>
         <h2 style={{ fontSize: 15 }}>Medicamentos e suplementos em uso</h2>
-        {medsEmUso.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum registrado.</p> : (
+        {medsEmUso.length === 0 ? <p style={{ color: '#5F6A62', fontSize: 14 }}>Nenhum registrado.</p> : (
           <ul style={{ paddingLeft: 18, fontSize: 14 }}>
             {medsEmUso.map((m, i) => {
               const d = `${[m.dose, m.frequency].filter(Boolean).join(', ')}${periodo((m.started_on as string) ?? null, (m.until_date as string) ?? null)}`.trim()
               return (
-              <li key={i}><strong>{m.name as string}</strong>{m.kind === 'suplemento' ? ' (suplemento)' : ''}{d ? <span style={{ display: 'block', fontSize: 12, color: '#8a7b92' }}>{d}</span> : null}</li>
+              <li key={i}><strong>{m.name as string}</strong>{m.kind === 'suplemento' ? ' (suplemento)' : ''}{d ? <span style={{ display: 'block', fontSize: 12, color: '#5F6A62' }}>{d}</span> : null}</li>
               )
             })}
           </ul>
         )}
-        {medsSusp.length > 0 && <p style={{ fontSize: 12, color: '#8a7b92' }}>Suspensos: {medsSusp.map(m => m.name as string).join(', ')}.</p>}
+        {medsSusp.length > 0 && <p style={{ fontSize: 12, color: '#5F6A62' }}>Suspensos: {medsSusp.map(m => m.name as string).join(', ')}.</p>}
       </section>
       )}
 
       {show('condicoes') && (
       <section style={{ marginBottom: 22 }}>
         <h2 style={{ fontSize: 15 }}>Condições de saúde</h2>
-        {condProprias.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhuma condição registrada.</p> : (
+        {condProprias.length === 0 ? <p style={{ color: '#5F6A62', fontSize: 14 }}>Nenhuma condição registrada.</p> : (
           <ul style={{ paddingLeft: 18, fontSize: 14 }}>
             {condProprias.map((c, i) => (
-              <li key={i}><strong>{c.name as string}</strong>{c.since_label ? ` (desde ${c.since_label as string})` : ''}{c.notes ? <span style={{ display: 'block', fontSize: 12, color: '#8a7b92' }}>{c.notes as string}</span> : null}</li>
+              <li key={i}><strong>{c.name as string}</strong>{c.since_label ? ` (desde ${c.since_label as string})` : ''}{c.notes ? <span style={{ display: 'block', fontSize: 12, color: '#5F6A62' }}>{c.notes as string}</span> : null}</li>
             ))}
           </ul>
         )}
         {condFamiliar.length > 0 && (
           <>
-            <h3 style={{ fontSize: 12, color: '#8a7b92', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 12, marginBottom: 4 }}>Histórico familiar</h3>
+            <h3 style={{ fontSize: 12, color: '#5F6A62', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 12, marginBottom: 4 }}>Histórico familiar</h3>
             <ul style={{ paddingLeft: 18, fontSize: 14 }}>
               {condFamiliar.map((c, i) => (
-                <li key={i}><strong>{c.name as string}</strong>{c.relative ? ` — ${c.relative as string}` : ''}{c.since_label ? ` (desde ${c.since_label as string})` : ''}{c.notes ? <span style={{ display: 'block', fontSize: 12, color: '#8a7b92' }}>{c.notes as string}</span> : null}</li>
+                <li key={i}><strong>{c.name as string}</strong>{c.relative ? ` — ${c.relative as string}` : ''}{c.since_label ? ` (desde ${c.since_label as string})` : ''}{c.notes ? <span style={{ display: 'block', fontSize: 12, color: '#5F6A62' }}>{c.notes as string}</span> : null}</li>
               ))}
             </ul>
           </>
@@ -196,10 +196,10 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
       {show('habitos') && (
       <section style={{ marginBottom: 22 }}>
         <h2 style={{ fontSize: 15 }}>Hábitos de vida</h2>
-        {hbArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum hábito registrado.</p> : (
+        {hbArr.length === 0 ? <p style={{ color: '#5F6A62', fontSize: 14 }}>Nenhum hábito registrado.</p> : (
           <ul style={{ paddingLeft: 18, fontSize: 14 }}>
             {hbArr.map((h, i) => (
-              <li key={i}><span style={{ color: '#8a7b92' }}>{HABIT_LABEL[h.category as string] ?? 'Hábito'}:</span> {h.description as string}{h.frequency ? ` — ${h.frequency as string}` : ''}{h.notes ? <span style={{ display: 'block', fontSize: 12, color: '#8a7b92' }}>{h.notes as string}</span> : null}</li>
+              <li key={i}><span style={{ color: '#5F6A62' }}>{HABIT_LABEL[h.category as string] ?? 'Hábito'}:</span> {h.description as string}{h.frequency ? ` — ${h.frequency as string}` : ''}{h.notes ? <span style={{ display: 'block', fontSize: 12, color: '#5F6A62' }}>{h.notes as string}</span> : null}</li>
             ))}
           </ul>
         )}
@@ -209,7 +209,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
       {show('visao') && (
       <section style={{ marginBottom: 22 }}>
         <h2 style={{ fontSize: 15 }}>Óculos e lentes de contato</h2>
-        {ewArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum registro.</p> : (
+        {ewArr.length === 0 ? <p style={{ color: '#5F6A62', fontSize: 14 }}>Nenhum registro.</p> : (
           <ul style={{ paddingLeft: 18, fontSize: 14 }}>
             {ewArr.map((e, i) => {
               const extras = [e.dnp ? `DNP ${e.dnp}` : null, e.bc ? `BC ${e.bc}` : null, e.dia ? `DIA ${e.dia}` : null,
@@ -218,10 +218,10 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
               const oe = grauStr(e.oe_sph, e.oe_cyl, e.oe_axis, e.oe_add)
               return (
                 <li key={i}><strong>{EYEWEAR_LABEL[e.kind as string] ?? 'Óculos'}</strong>
-                  {od ? <span style={{ display: 'block', fontSize: 12, color: '#8a7b92' }}>OD: {od}</span> : null}
-                  {oe ? <span style={{ display: 'block', fontSize: 12, color: '#8a7b92' }}>OE: {oe}</span> : null}
-                  {extras.length ? <span style={{ display: 'block', fontSize: 12, color: '#8a7b92' }}>{extras.join(' · ')}</span> : null}
-                  {e.fileUrl ? <span style={{ display: 'block', fontSize: 13, marginTop: 2 }}><a href={e.fileUrl as string} target="_blank" rel="noopener noreferrer" style={{ color: '#0E6E64', textDecoration: 'none' }}>Ver documento original</a></span> : null}
+                  {od ? <span style={{ display: 'block', fontSize: 12, color: '#5F6A62' }}>OD: {od}</span> : null}
+                  {oe ? <span style={{ display: 'block', fontSize: 12, color: '#5F6A62' }}>OE: {oe}</span> : null}
+                  {extras.length ? <span style={{ display: 'block', fontSize: 12, color: '#5F6A62' }}>{extras.join(' · ')}</span> : null}
+                  {e.fileUrl ? <span style={{ display: 'block', fontSize: 13, marginTop: 2 }}><a href={e.fileUrl as string} target="_blank" rel="noopener noreferrer" style={{ color: '#157A6F', textDecoration: 'none' }}>Ver documento original</a></span> : null}
                 </li>
               )
             })}
@@ -233,15 +233,15 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
       {show('eventos') && (
       <section style={{ marginBottom: 22 }}>
         <h2 style={{ fontSize: 15 }}>Agenda</h2>
-        {evArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum registrado.</p> : (
+        {evArr.length === 0 ? <p style={{ color: '#5F6A62', fontSize: 14 }}>Nenhum registrado.</p> : (
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
             <tbody>
               {evArr.map((e, i) => (
-                <tr key={i} style={{ borderBottom: '1px solid #f2eef4' }}>
-                  <td style={{ padding: '6px 12px 6px 0', color: '#8a7b92', whiteSpace: 'nowrap', verticalAlign: 'top' }}>{fmt(e.event_date as string)}</td>
+                <tr key={i} style={{ borderBottom: '1px solid #DCE8E3' }}>
+                  <td style={{ padding: '6px 12px 6px 0', color: '#5F6A62', whiteSpace: 'nowrap', verticalAlign: 'top' }}>{fmt(e.event_date as string)}</td>
                   <td style={{ padding: '6px 0' }}>
-                    <span style={{ color: '#8a7b92' }}>{TYPE_LABEL[e.event_type as string] ?? 'Evento'}{e.professional_kind && PROF_LABEL[e.professional_kind as string] ? ` (${PROF_LABEL[e.professional_kind as string]})` : ''}:</span> {e.title as string}
-                    {e.notes ? <span style={{ display: 'block', fontSize: 12, color: '#8a7b92' }}>{e.notes as string}</span> : null}
+                    <span style={{ color: '#5F6A62' }}>{TYPE_LABEL[e.event_type as string] ?? 'Evento'}{e.professional_kind && PROF_LABEL[e.professional_kind as string] ? ` (${PROF_LABEL[e.professional_kind as string]})` : ''}:</span> {e.title as string}
+                    {e.notes ? <span style={{ display: 'block', fontSize: 12, color: '#5F6A62' }}>{e.notes as string}</span> : null}
                   </td>
                 </tr>
               ))}
@@ -254,11 +254,11 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
       {show('exames') && (
       <section style={{ marginBottom: 22 }}>
         <h2 style={{ fontSize: 15 }}>Exames enviados</h2>
-        {exArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum.</p> : (
+        {exArr.length === 0 ? <p style={{ color: '#5F6A62', fontSize: 14 }}>Nenhum.</p> : (
           <ul style={{ paddingLeft: 18, fontSize: 14 }}>
             {exArr.map((e, i) => (
               <li key={i}>{fmt((e.exam_date as string) || (e.created_at as string))} — {(e.type as string) || 'Exame'}
-                {e.file_url ? <>{'  ·  '}<a href={e.file_url as string} target="_blank" rel="noopener noreferrer" style={{ color: '#0E6E64', textDecoration: 'none', fontSize: 13 }}>Ver documento original</a></> : null}
+                {e.file_url ? <>{'  ·  '}<a href={e.file_url as string} target="_blank" rel="noopener noreferrer" style={{ color: '#157A6F', textDecoration: 'none', fontSize: 13 }}>Ver documento original</a></> : null}
               </li>
             ))}
           </ul>
@@ -269,7 +269,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
       {show('omica') && (
       <section style={{ marginBottom: 22 }}>
         <h2 style={{ fontSize: 15 }}>Exames de ômica</h2>
-        {omArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum registrado.</p> : (
+        {omArr.length === 0 ? <p style={{ color: '#5F6A62', fontSize: 14 }}>Nenhum registrado.</p> : (
           <ul style={{ paddingLeft: 18, fontSize: 14 }}>
             {omArr.map((o, i) => {
               const extra = [o.laboratory as string | null, o.total_features != null ? `${(o.total_features as number).toLocaleString('pt-BR')} marcadores` : null].filter(Boolean).join(', ')
@@ -298,12 +298,12 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
             {medLaudos.map((ex, i) => (
               <li key={i}>
                 {(ex.type as string) || 'Exame'}{ex.exam_date ? ` · ${fmt(ex.exam_date as string)}` : ''}
-                {ex.file_url ? <>{'  ·  '}<a href={ex.file_url as string} target="_blank" rel="noopener noreferrer" style={{ color: '#0E6E64', textDecoration: 'none', fontSize: 13 }}>Ver documento original</a></> : null}
+                {ex.file_url ? <>{'  ·  '}<a href={ex.file_url as string} target="_blank" rel="noopener noreferrer" style={{ color: '#157A6F', textDecoration: 'none', fontSize: 13 }}>Ver documento original</a></> : null}
               </li>
             ))}
           </ul>
         ) : (
-          <p style={{ color: '#8a7b92', fontSize: 14 }}>{latestPeso || alturaCm != null ? 'Nenhum laudo vinculado às medidas.' : 'Nenhuma registrada.'}</p>
+          <p style={{ color: '#5F6A62', fontSize: 14 }}>{latestPeso || alturaCm != null ? 'Nenhum laudo vinculado às medidas.' : 'Nenhuma registrada.'}</p>
         )}
       </section>
       )}
@@ -311,13 +311,13 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
       {show('sinais') && (
       <section style={{ marginBottom: 22 }}>
         <h2 style={{ fontSize: 15 }}>Sinais vitais</h2>
-        {vitalArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum registrado.</p> : (
+        {vitalArr.length === 0 ? <p style={{ color: '#5F6A62', fontSize: 14 }}>Nenhum registrado.</p> : (
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
             <tbody>
               {vitalArr.map((m, i) => (
-                <tr key={i} style={{ borderBottom: '1px solid #f2eef4' }}>
-                  <td style={{ padding: '6px 12px 6px 0', color: '#8a7b92', whiteSpace: 'nowrap', verticalAlign: 'top' }}>{fmt(m.measured_on as string)}</td>
-                  <td style={{ padding: '6px 0' }}><span style={{ color: '#8a7b92' }}>{m.metric === 'outro_sinal' && m.label ? (m.label as string) : METRIC_LABEL[m.metric as string] ?? 'Sinal'}:</span> {m.value_text as string}{m.unit ? ` ${m.unit as string}` : ''}</td>
+                <tr key={i} style={{ borderBottom: '1px solid #DCE8E3' }}>
+                  <td style={{ padding: '6px 12px 6px 0', color: '#5F6A62', whiteSpace: 'nowrap', verticalAlign: 'top' }}>{fmt(m.measured_on as string)}</td>
+                  <td style={{ padding: '6px 0' }}><span style={{ color: '#5F6A62' }}>{m.metric === 'outro_sinal' && m.label ? (m.label as string) : METRIC_LABEL[m.metric as string] ?? 'Sinal'}:</span> {m.value_text as string}{m.unit ? ` ${m.unit as string}` : ''}</td>
                 </tr>
               ))}
             </tbody>
@@ -329,7 +329,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
       {show('ciclo') && (
       <section style={{ marginBottom: 22 }}>
         <h2 style={{ fontSize: 15 }}>Ciclo e Contracepção</h2>
-        {ccArr.length === 0 && mpArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhum registro de ciclo ou contracepção.</p> : (
+        {ccArr.length === 0 && mpArr.length === 0 ? <p style={{ color: '#5F6A62', fontSize: 14 }}>Nenhum registro de ciclo ou contracepção.</p> : (
           <>
             {ccArr.length > 0 && (
               <ul style={{ paddingLeft: 18, fontSize: 14 }}>
@@ -342,7 +342,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
             )}
             {mpArr.length > 0 && (
               <>
-                <h3 style={{ fontSize: 12, color: '#8a7b92', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 12, marginBottom: 4 }}>Menstruação</h3>
+                <h3 style={{ fontSize: 12, color: '#5F6A62', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 12, marginBottom: 4 }}>Menstruação</h3>
                 <p style={{ fontSize: 14 }}>{mpArr.map(m => fmt(m.started_on as string)).join(' · ')}</p>
               </>
             )}
@@ -354,14 +354,14 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
       {show('gastos') && (
       <section style={{ marginBottom: 22 }}>
         <h2 style={{ fontSize: 15 }}>Despesas</h2>
-        {expArr.length === 0 ? <p style={{ color: '#8a7b92', fontSize: 14 }}>Nenhuma despesa registrada.</p> : (
+        {expArr.length === 0 ? <p style={{ color: '#5F6A62', fontSize: 14 }}>Nenhuma despesa registrada.</p> : (
           <>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
               <tbody>
                 {expArr.map((x, i) => (
-                  <tr key={i} style={{ borderBottom: '1px solid #f2eef4' }}>
-                    <td style={{ padding: '6px 12px 6px 0', color: '#8a7b92', whiteSpace: 'nowrap', verticalAlign: 'top' }}>{fmt(x.date)}</td>
-                    <td style={{ padding: '6px 0' }}><span style={{ color: '#8a7b92' }}>{TYPE_LABEL[x.type] ?? 'Evento'}:</span> {x.title}</td>
+                  <tr key={i} style={{ borderBottom: '1px solid #DCE8E3' }}>
+                    <td style={{ padding: '6px 12px 6px 0', color: '#5F6A62', whiteSpace: 'nowrap', verticalAlign: 'top' }}>{fmt(x.date)}</td>
+                    <td style={{ padding: '6px 0' }}><span style={{ color: '#5F6A62' }}>{TYPE_LABEL[x.type] ?? 'Evento'}:</span> {x.title}</td>
                     <td style={{ padding: '6px 0 6px 12px', textAlign: 'right', whiteSpace: 'nowrap', verticalAlign: 'top' }}>{brl(x.amountCents)}</td>
                   </tr>
                 ))}
@@ -373,7 +373,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
       </section>
       )}
 
-      <p style={{ fontSize: 11, color: '#8a7b92', borderTop: '1px solid #ece6ef', paddingTop: 12 }}>
+      <p style={{ fontSize: 11, color: '#5F6A62', borderTop: '1px solid #DCE8E3', paddingTop: 12 }}>
         Relatório compartilhado pela própria pessoa via SINTERA. Organiza dados autorrelatados — <strong>não é laudo, diagnóstico ou parecer</strong> e não substitui avaliação profissional.
       </p>
     </div>
