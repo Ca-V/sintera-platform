@@ -4,18 +4,25 @@
 // Condições de Saúde — próprias + histórico familiar
 // ============================================================
 // Registro factual e autorrelatado. A SINTERA NUNCA identifica nem infere
-// condições — apenas organiza o que a usuária informa (dela ou da família).
+// condições — apenas organiza o que a usuária informa OU o que está ESCRITO num
+// documento (laudo/exame/atestado) que ela carrega. Captura documental (CAP-001):
+// upload/foto/scan → IA transcreve → pré-preenche → usuária revisa e salva.
+// Quando o documento é um EXAME/laudo com resultado, ele é salvo em PARALELO na
+// página de Exames (salvamento duplo). Ver [[principio_rastreabilidade_documental]].
 // ============================================================
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Loader2, Plus, X, Stethoscope, ArrowLeft, Trash2, Users, Pencil } from 'lucide-react'
+import { Loader2, Stethoscope, ArrowLeft, Trash2, Users, Pencil, FileText } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import ListCard from '@/components/ListCard'
 import Card from '@/components/ui/Card'
 import Disclaimer from '@/components/ui/Disclaimer'
+import CreateRecordMenu from '@/components/ui/CreateRecordMenu'
+import ProvenanceLine from '@/components/ui/ProvenanceLine'
+import { examProvenance } from '@/lib/provenance'
 
 type Scope = 'propria' | 'familiar'
 
@@ -26,6 +33,31 @@ interface Condition {
   relative: string | null
   sinceLabel: string | null
   notes: string | null
+  fileUrl: string | null
+}
+
+// Reduz imagem antes de enviar à IA (corta tokens/custo). PDF vai como está.
+async function fileToPayload(file: File): Promise<{ base64: string; mediaType: string }> {
+  const dataUrl = await new Promise<string>((res, rej) => {
+    const r = new FileReader(); r.onload = () => res(r.result as string); r.onerror = rej; r.readAsDataURL(file)
+  })
+  if (file.type === 'application/pdf') return { base64: dataUrl.split(',')[1] ?? '', mediaType: 'application/pdf' }
+  try {
+    const img = await new Promise<HTMLImageElement>((res, rej) => {
+      const i = new window.Image(); i.onload = () => res(i); i.onerror = rej; i.src = dataUrl
+    })
+    const scale = Math.min(1, 1400 / Math.max(img.width, img.height))
+    if (scale < 1) {
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.round(img.width * scale); canvas.height = Math.round(img.height * scale)
+      const ctx = canvas.getContext('2d')
+      if (ctx) { ctx.drawImage(img, 0, 0, canvas.width, canvas.height); const out = canvas.toDataURL('image/jpeg', 0.85); return { base64: out.split(',')[1] ?? '', mediaType: 'image/jpeg' } }
+    }
+  } catch { /* usa original */ }
+  const t = file.type || 'image/jpeg'
+  const SUPPORTED = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+  if (!SUPPORTED.includes(t)) throw new Error('Formato de foto não suportado (ex.: HEIC do iPhone). Tire a foto como JPG ou envie PDF/PNG.')
+  return { base64: dataUrl.split(',')[1] ?? '', mediaType: t }
 }
 
 export default function CondicoesPage() {
@@ -45,48 +77,122 @@ export default function CondicoesPage() {
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
 
+  // Captura documental
+  const [scanning, setScanning] = useState(false)
+  const [scanErr, setScanErr] = useState<string | null>(null)
+  const [pendingFile, setPendingFile] = useState<File | null>(null)
+  const [kind, setKind] = useState<string | null>(null)
+  const [docMeta, setDocMeta] = useState<{ isExam: boolean; examType: string | null; examDate: string | null } | null>(null)
+
   const load = useCallback(async () => {
     if (!user) return
     setLoading(true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = await (supabase as any).from('health_conditions')
-      .select('id, scope, name, relative, since_label, notes')
+      .select('id, scope, name, relative, since_label, notes, file_url')
       .eq('user_id', user.id).order('created_at', { ascending: false })
     setItems(((data ?? []) as Array<Record<string, unknown>>).map(c => ({
       id: c.id as string, scope: (c.scope as Scope) ?? 'propria', name: (c.name as string) ?? '',
-      relative: (c.relative as string) ?? null, sinceLabel: (c.since_label as string) ?? null, notes: (c.notes as string) ?? null,
+      relative: (c.relative as string) ?? null, sinceLabel: (c.since_label as string) ?? null,
+      notes: (c.notes as string) ?? null, fileUrl: (c.file_url as string) ?? null,
     })))
     setLoading(false)
   }, [user, supabase])
 
-  // Carrega na montagem; o setLoading(true) síncrono (spinner) é intencional.
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { if (!authLoading) load() }, [authLoading, load])
 
-  function reset() { setEditingId(null); setScope('propria'); setName(''); setRelative(''); setSince(''); setNotes(''); setErr(null) }
+  function reset() {
+    setEditingId(null); setScope('propria'); setName(''); setRelative(''); setSince(''); setNotes('')
+    setErr(null); setPendingFile(null); setKind(null); setDocMeta(null); setScanErr(null)
+  }
 
   function startEdit(c: Condition) {
+    reset()
     setEditingId(c.id); setScope(c.scope); setName(c.name)
     setRelative(c.relative ?? ''); setSince(c.sinceLabel ?? ''); setNotes(c.notes ?? '')
-    setErr(null); setShowForm(true)
+    setShowForm(true)
+  }
+
+  // Método escolhido no CreateRecordMenu: 'manual' abre form vazio; 'file'/'camera'
+  // lê o documento com a IA e pré-preenche.
+  async function onSelectMethod(method: string, file?: File) {
+    if (method === 'manual') { reset(); setShowForm(true); return }
+    if (!file) return
+    if (file.size > 15 * 1024 * 1024) { setScanErr('Arquivo muito grande (máx. 15 MB).'); setShowForm(false); return }
+    reset(); setScanning(true); setScanErr(null); setShowForm(false)
+    try {
+      const { base64, mediaType } = await fileToPayload(file)
+      const resp = await fetch('/api/vision/condition', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileBase64: base64, mediaType }),
+      })
+      const json = await resp.json()
+      if (!resp.ok) throw new Error(json?.error || 'Falha ao ler o documento.')
+      const r = json?.result as { name: string | null; kind: string; since: string | null; notes: string | null; isExam: boolean; examType: string | null; examDate: string | null } | null
+      // Anexa o documento (será enviado ao salvar) e pré-preenche o que a IA leu.
+      setPendingFile(file)
+      setScope('propria')
+      setName(r?.name ?? '')
+      setSince(r?.since ?? '')
+      setNotes(r?.notes ?? '')
+      setKind(r?.kind ?? null)
+      setDocMeta(r ? { isExam: r.isExam, examType: r.examType, examDate: r.examDate } : { isExam: false, examType: null, examDate: null })
+      if (!r?.name) setScanErr('Não consegui ler a condição no documento. O documento fica anexado; preencha o nome manualmente.')
+      setShowForm(true)
+    } catch (e) {
+      setScanErr(e instanceof Error ? e.message : 'Falha ao processar o documento.')
+    } finally {
+      setScanning(false)
+    }
+  }
+
+  // Sobe o documento anexado ao storage e devolve a URL assinada (1 ano), como em Exames.
+  async function uploadDoc(file: File): Promise<string> {
+    const ext = file.name.split('.').pop() ?? 'bin'
+    const path = `${user!.id}/${crypto.randomUUID()}.${ext}`
+    const { error: upErr } = await supabase.storage.from('exams').upload(path, file, { contentType: file.type, upsert: false })
+    if (upErr) throw new Error(`[storage] ${upErr.message}`)
+    const { data: signed, error: sErr } = await supabase.storage.from('exams').createSignedUrl(path, 60 * 60 * 24 * 365)
+    if (sErr || !signed) throw new Error('[signed-url] falha ao gerar link do documento')
+    return signed.signedUrl
   }
 
   async function save() {
     if (!user || saving || !name.trim()) return
     setSaving(true); setErr(null)
-    const payload = {
-      user_id: user.id, scope, name: name.trim(),
-      relative: scope === 'familiar' ? (relative.trim() || null) : null,
-      since_label: since.trim() || null, notes: notes.trim() || null,
+    try {
+      let fileUrl: string | null = null
+      if (pendingFile) fileUrl = await uploadDoc(pendingFile)
+
+      const payload: Record<string, unknown> = {
+        user_id: user.id, scope, name: name.trim(),
+        relative: scope === 'familiar' ? (relative.trim() || null) : null,
+        since_label: since.trim() || null, notes: notes.trim() || null,
+        kind: kind || null,
+      }
+      if (fileUrl) payload.file_url = fileUrl
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const db = (supabase as any).from('health_conditions')
+      const { error } = editingId ? await db.update(payload).eq('id', editingId) : await db.insert(payload)
+      if (error) throw new Error(error.message)
+
+      // Salvamento DUPLO: se o documento é um exame/laudo com resultado, cria também
+      // um registro em Exames (mesmo arquivo). Best-effort: não bloqueia a condição.
+      if (fileUrl && docMeta?.isExam) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase as any).from('exams').insert({
+          id: crypto.randomUUID(), user_id: user.id,
+          type: docMeta.examType || name.trim(), exam_date: docMeta.examDate, file_url: fileUrl, status: 'pending',
+        })
+      }
+      reset(); setShowForm(false); await load()
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Falha ao salvar.')
+    } finally {
+      setSaving(false)
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const db = (supabase as any).from('health_conditions')
-    const { error } = editingId
-      ? await db.update(payload).eq('id', editingId)
-      : await db.insert(payload)
-    setSaving(false)
-    if (error) { setErr(error.message); return }
-    reset(); setShowForm(false); await load()
   }
 
   async function remove(c: Condition) {
@@ -108,10 +214,15 @@ export default function CondicoesPage() {
         title={c.name}
         onTitleClick={() => startEdit(c)}
         meta={
-          (meta || c.notes) ? (
+          (meta || c.notes || c.fileUrl) ? (
             <>
               {meta}
               {c.notes && <span className={meta ? 'block mt-0.5 text-mauve' : 'text-mauve'}>{c.notes}</span>}
+              {c.fileUrl && (
+                <span className="block mt-0.5">
+                  <ProvenanceLine provenance={examProvenance({ fileUrl: c.fileUrl })} showOrigin={false} />
+                </span>
+              )}
             </>
           ) : undefined
         }
@@ -136,16 +247,33 @@ export default function CondicoesPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div>
           <h1 className="font-display text-2xl font-semibold text-onyx">Condições de Saúde</h1>
-          <p className="font-body text-sm text-mauve mt-1">Registre suas condições e antecedentes familiares — a SINTERA mantém tudo organizado no seu histórico.</p>
+          <p className="font-body text-sm text-mauve mt-1">Carregue um laudo/exame (foto, arquivo ou scan) ou digite — a SINTERA lê e organiza. Se o documento for um exame, ele também é salvo em Exames.</p>
         </div>
-        <button onClick={() => (showForm ? (reset(), setShowForm(false)) : (reset(), setShowForm(true)))}
-          className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0">
-          {showForm ? <X size={15} /> : <Plus size={15} />} {showForm ? 'Fechar' : 'Adicionar'}
-        </button>
+        <CreateRecordMenu
+          label="Nova condição"
+          methods={['file', 'camera', 'manual']}
+          fileLabel="Selecionar laudo (PDF ou foto)"
+          busy={scanning}
+          busyLabel="Lendo documento…"
+          voice={<VoiceInput onResult={t => { reset(); setName(t); setShowForm(true) }} />}
+          onSelect={onSelectMethod}
+        />
       </div>
+
+      {scanErr && !showForm && <p className="font-body text-xs text-red-500">{scanErr}</p>}
 
       {showForm && (
         <Card padding="md" className="space-y-3">
+          {pendingFile && (
+            <div className="flex items-start gap-2.5 rounded-xl border border-petal/30 bg-blush px-3 py-2.5">
+              <FileText size={16} className="text-petal flex-shrink-0 mt-0.5" />
+              <p className="font-body text-xs text-onyx leading-relaxed">
+                Documento anexado — será salvo com a condição.
+                {docMeta?.isExam && <> Como é um exame{docMeta.examType ? ` (${docMeta.examType})` : ''}, também será salvo em <strong>Exames</strong>.</>}
+              </p>
+            </div>
+          )}
+          {scanErr && <p className="font-body text-xs text-red-500">{scanErr}</p>}
           <div>
             <label htmlFor="cond-tipo" className="font-body text-xs text-mauve block mb-1">Tipo</label>
             <select id="cond-tipo" value={scope} onChange={e => setScope(e.target.value as Scope)}
@@ -183,7 +311,9 @@ export default function CondicoesPage() {
             </div>
           </div>
           {err && <p className="font-body text-xs text-red-500">{err}</p>}
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
+            <button onClick={() => { reset(); setShowForm(false) }}
+              className="px-4 py-2 rounded-full border border-border text-mauve font-body text-sm hover:bg-ivory transition-colors">Cancelar</button>
             <button onClick={save} disabled={saving || !name.trim()}
               className="px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium disabled:opacity-40 hover:opacity-90 transition-opacity">
               {saving ? 'Salvando…' : editingId ? 'Salvar alterações' : 'Salvar'}
