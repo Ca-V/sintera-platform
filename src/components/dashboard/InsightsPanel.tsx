@@ -38,7 +38,7 @@ const insights: Insight[] = [
     tag: 'Ciclo',
     priority: 'high',
     time: 'Hoje',
-    accentColor: '#E28C7D',
+    accentColor: '#C1836A',
     bgColor: '#FDF2F7',
   },
   {
@@ -49,7 +49,7 @@ const insights: Insight[] = [
     tag: 'Hormônios',
     priority: 'medium',
     time: 'Ontem',
-    accentColor: '#57B3AD',
+    accentColor: '#6BC0CE',
     bgColor: '#F5F2FB',
   },
   {
@@ -60,7 +60,7 @@ const insights: Insight[] = [
     tag: 'Saúde',
     priority: 'medium',
     time: 'Hoje',
-    accentColor: '#7DAF9E',
+    accentColor: '#A7B98C',
     bgColor: '#F0F9F6',
   },
   {
@@ -71,7 +71,7 @@ const insights: Insight[] = [
     tag: 'Sono',
     priority: 'low',
     time: '3 dias atrás',
-    accentColor: '#57B3AD',
+    accentColor: '#6BC0CE',
     bgColor: '#F5F2FB',
   },
 ]
@@ -79,7 +79,7 @@ const insights: Insight[] = [
 const priorityDot: Record<Priority, string> = {
   high:   'bg-petal',
   medium: 'bg-gold',
-  low:    'bg-sage',
+  low:    'bg-petal',
 }
 
 export default function InsightsPanel() {

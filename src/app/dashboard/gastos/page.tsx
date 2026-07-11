@@ -234,7 +234,7 @@ export default function GastosPage() {
                 <div key={g.label}>
                   <div className="flex items-center justify-between mb-2 px-1">
                     <p className="font-body text-xs font-semibold text-onyx uppercase tracking-wider">{g.label}</p>
-                    <p className="font-body text-xs font-semibold text-sage">{fmtBRL(g.subtotal)}</p>
+                    <p className="font-body text-xs font-semibold text-petal">{fmtBRL(g.subtotal)}</p>
                   </div>
                   <div className="space-y-3">{g.rows.map(expenseRow)}</div>
                 </div>

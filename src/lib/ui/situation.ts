@@ -27,7 +27,7 @@ export interface SituationToneSpec {
 export const SITUATION_TONE: Record<SituationTone, SituationToneSpec> = {
   attention:   { tone: 'attention',   node: 'bg-warm text-gold',            busy: false, icon: 'alert-circle' },
   information: { tone: 'information', node: 'bg-lavender-light text-lavender', busy: false, icon: 'info' },
-  success:     { tone: 'success',     node: 'bg-sage-light text-sage',      busy: false, icon: 'circle-check' },
+  success:     { tone: 'success',     node: 'bg-blush text-petal',          busy: false, icon: 'circle-check' },
   processing:  { tone: 'processing',  node: 'bg-lavender-light text-lavender', busy: true,  icon: 'loader' },
   pending:     { tone: 'pending',     node: 'bg-ivory text-mauve',          busy: false, icon: 'clock' },
 }

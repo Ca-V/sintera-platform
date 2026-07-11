@@ -5,7 +5,7 @@ import Card, { type CardProps } from './Card'
 interface SectionProps extends Omit<CardProps, 'title'> {
   /** Ícone do cabeçalho, renderizado numa caixa arredondada padrão. */
   icon?: ReactNode
-  /** Classe de fundo da caixa do ícone (default bg-blush). Ex.: 'bg-sage-light'. */
+  /** Classe de fundo da caixa do ícone (default bg-blush). Ex.: 'bg-blush'. */
   iconBox?: string
   /** Título do painel (h2 · font-body · semibold — padrão real dos painéis). */
   title?: ReactNode

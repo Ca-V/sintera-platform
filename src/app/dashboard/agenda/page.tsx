@@ -165,7 +165,7 @@ export default function AgendaPage() {
         meta={
           <>
             {typeLabel(ev.type)} · {formatDateBR(ev.date)}{formatTimeBR(ev.time) ? ` · ${formatTimeBR(ev.time)}` : ''}
-            {ev.directExpense && <span className="text-sage"> · despesa direta</span>}
+            {ev.directExpense && <span className="text-petal"> · despesa direta</span>}
             {overdue && <span className="text-petal font-medium"> · atrasado</span>}
           </>
         }
@@ -178,7 +178,7 @@ export default function AgendaPage() {
         actions={
           <>
             <button onClick={() => onComplete(ev)} disabled={busyId === ev.id} title="Concluir"
-              className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-sage hover:bg-sage-light transition-colors disabled:opacity-40">{busyId === ev.id ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}</button>
+              className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-petal hover:bg-blush transition-colors disabled:opacity-40">{busyId === ev.id ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}</button>
             <button onClick={() => openEdit(ev)} title="Editar / exportar"
               className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-petal hover:bg-blush/40 transition-colors"><Pencil size={12} /></button>
             <button onClick={() => onCancel(ev)} disabled={busyId === ev.id} title="Cancelar (marca como cancelado — fica no Histórico)"

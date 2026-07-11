@@ -23,10 +23,14 @@ const homeItem = { href: '/dashboard', icon: LayoutDashboard, label: 'Painel Ini
 // "Histórico" reúne Linha do Tempo + Evolução (duas visões do registro longitudinal).
 const navGroups: {
   title: string
+  titleColor: string
+  chipBg?: string
   items: { href: string; icon: React.ElementType; label: string; extra?: string[] }[]
 }[] = [
   {
     title: 'Acompanhamento',
+    titleColor: 'text-lavender',
+    chipBg: 'bg-lavender',
     items: [
       { href: '/dashboard/agenda',       icon: CalendarDays, label: 'Agenda' },
       { href: '/dashboard/timeline',     icon: Clock,        label: 'Histórico', extra: ['/dashboard/saude', '/dashboard/historico'] },
@@ -36,6 +40,8 @@ const navGroups: {
   },
   {
     title: 'Minha Saúde',
+    titleColor: 'text-lagoa',
+    chipBg: 'bg-lagoa',
     items: [
       { href: '/dashboard/condicoes',     icon: Stethoscope,   label: 'Condições de Saúde' },
       { href: '/dashboard/recursos',      icon: Accessibility, label: 'Recursos de Saúde' },
@@ -47,6 +53,8 @@ const navGroups: {
   },
   {
     title: 'Organização',
+    titleColor: 'text-gold',
+    chipBg: 'bg-gold',
     items: [
       { href: '/dashboard/gastos',    icon: Receipt,    label: 'Despesas' },
       { href: '/dashboard/relatorio', icon: ScrollText, label: 'Relatórios' },
@@ -54,6 +62,7 @@ const navGroups: {
   },
   {
     title: 'Configurações',
+    titleColor: 'text-white/45',
     items: [
       { href: '/dashboard/configuracoes', icon: Settings, label: 'Configurações' },
     ],
@@ -76,15 +85,15 @@ function NavItem({ href, icon: Icon, label, active, soon, onClose }: {
       className={cn(
         'flex items-center gap-3 px-3 py-1.5 rounded-xl transition-all duration-200 text-sm font-body group',
         active
-          ? 'nav-active-glow bg-white/8 text-white'
-          : 'text-white/45 hover:text-white/80 hover:bg-white/5'
+          ? 'nav-active-glow bg-white/10 text-white'
+          : 'text-white/70 hover:text-white hover:bg-white/8'
       )}
     >
       <Icon size={16} className={cn('flex-shrink-0 transition-colors',
-        active ? 'text-petal' : 'text-white/60 group-hover:text-white/60')} />
+        active ? 'text-gold' : 'text-white/55 group-hover:text-white/80')} />
       <span className={cn('flex-1', active && 'font-medium')}>{label}</span>
       {soon && (
-        <span className="font-body text-[9px] font-medium text-white/60 bg-white/8 px-1.5 py-0.5 rounded-full border border-white/10">
+        <span className="font-body text-[9px] font-medium text-white/70 bg-white/10 px-1.5 py-0.5 rounded-full border border-white/12">
           Em breve
         </span>
       )}
@@ -99,12 +108,12 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
   const initials    = displayName.charAt(0).toUpperCase()
 
   return (
-    <div className="flex flex-col h-full bg-deep select-none">
+    <div className="flex flex-col h-full select-none" style={{ background: 'radial-gradient(ellipse 90% 35% at 50% 100%, rgba(196,160,106,0.16) 0%, transparent 72%), linear-gradient(to bottom, #1B7B85 0%, #0F565F 58%, #0A3E45 100%)' }}>
 
       {/* Logo — leva ao Painel Inicial (área logada) */}
       <div className="flex items-center justify-between px-5 py-4">
         <Link href="/dashboard" onClick={onClose} className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-full gradient-sintera flex items-center justify-center shadow-lg">
+          <div className="w-7 h-7 rounded-full gradient-aqua flex items-center justify-center shadow-lg">
             <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
               <circle cx="8" cy="8" r="5.5" stroke="white" strokeWidth="1.2" fill="none"/>
               <circle cx="8" cy="8" r="2" fill="white"/>
@@ -113,16 +122,16 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
           </div>
           <span className="font-display text-lg font-semibold tracking-[0.2em] text-white">SINTERA</span>
         </Link>
-        <button onClick={onClose} className="lg:hidden text-white/60 hover:text-white/70 transition-colors">
+        <button onClick={onClose} className="lg:hidden text-white/60 hover:text-white/80 transition-colors">
           <X size={17}/>
         </button>
       </div>
 
       {/* Perfil da usuária — atalho para o perfil (perfil/config/sair ficam no menu do topo) */}
       <Link href="/dashboard/profile" onClick={onClose}
-        className="mx-4 mb-3 p-3 rounded-2xl border border-white/6 bg-white/4 hover:bg-white/7 transition-colors">
+        className="mx-4 mb-3 p-3 rounded-2xl border border-white/8 bg-white/5 hover:bg-white/8 transition-colors">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full gradient-sintera flex items-center justify-center flex-shrink-0 shadow-md">
+          <div className="w-8 h-8 rounded-full gradient-aqua flex items-center justify-center flex-shrink-0 shadow-md">
             <span className="text-white text-sm font-display font-bold">{initials}</span>
           </div>
           <div className="min-w-0 flex-1">
@@ -142,9 +151,15 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
         </div>
         {navGroups.map(group => (
           <div key={group.title} className="mb-1.5">
-            <p className="text-[11px] font-body font-bold text-white/45 uppercase tracking-[0.16em] px-3 mt-1 mb-1">
-              {group.title}
-            </p>
+            {group.chipBg ? (
+              <div className={cn('mx-1 mt-2 mb-1.5 px-2.5 py-1 rounded-lg shadow-sm', group.chipBg)}>
+                <p className="text-[11px] font-body font-bold uppercase tracking-[0.14em] text-onyx/90">{group.title}</p>
+              </div>
+            ) : (
+              <p className={cn('text-[11px] font-body font-bold uppercase tracking-[0.16em] px-3 mt-1 mb-1', group.titleColor)}>
+                {group.title}
+              </p>
+            )}
             <ul className="flex flex-col gap-0.5">
               {group.items.map(item => (
                 <li key={item.href}>

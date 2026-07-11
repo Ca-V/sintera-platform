@@ -39,7 +39,7 @@ function formatDate(iso: string) {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
-  processed:  { label: 'Dados extraídos', color: 'text-sage',     bg: 'bg-sage-light',     icon: CheckCircle },
+  processed:  { label: 'Dados extraídos', color: 'text-petal',     bg: 'bg-blush',     icon: CheckCircle },
   pending:    { label: 'Aguardando',      color: 'text-gold',     bg: 'bg-warm',           icon: Clock       },
   processing: { label: 'Processando',     color: 'text-lavender', bg: 'bg-lavender-light', icon: Clock       },
   error:      { label: 'Erro',            color: 'text-red-400',  bg: 'bg-red-50',         icon: AlertCircle },
@@ -48,10 +48,10 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
 // Acesso rápido — usa exatamente a nomenclatura do menu lateral esquerdo.
 const QUICK_ACCESS: { href: string; icon: React.ElementType; label: string; desc: string; tile: string; tint: string }[] = [
   // Ordem espelha a barra lateral: Minha Saúde primeiro, depois Contexto/Organização.
-  { href: '/dashboard/timeline',     icon: Clock,       label: 'Histórico',                 desc: 'Linha do tempo e evolução',      tile: 'bg-sage-light',     tint: 'text-sage' },
+  { href: '/dashboard/timeline',     icon: Clock,       label: 'Histórico',                 desc: 'Linha do tempo e evolução',      tile: 'bg-blush',     tint: 'text-petal' },
   { href: '/dashboard/agenda',       icon: CalendarDays,label: 'Agenda',                   desc: 'Eventos e lembretes',            tile: 'bg-warm',           tint: 'text-gold' },
   { href: '/dashboard/exams',        icon: FileText,    label: 'Exames',                    desc: 'Laudos e documentos',            tile: 'bg-blush',          tint: 'text-petal' },
-  { href: '/dashboard/medicamentos', icon: Pill,        label: 'Medicamentos e Suplementos', desc: 'Em uso, recompra e estoque',     tile: 'bg-sage-light',     tint: 'text-sage' },
+  { href: '/dashboard/medicamentos', icon: Pill,        label: 'Medicamentos e Suplementos', desc: 'Em uso, recompra e estoque',     tile: 'bg-blush',     tint: 'text-petal' },
   { href: '/dashboard/relatorio',    icon: ScrollText,  label: 'Relatórios',                desc: 'Compartilhar com profissionais', tile: 'bg-lavender-light', tint: 'text-lavender' },
   { href: '/dashboard/gastos',       icon: Receipt,     label: 'Despesas',                  desc: 'Consultas, exames e medicamentos', tile: 'bg-blush',          tint: 'text-petal' },
 ]
@@ -259,8 +259,8 @@ function LegacyDashboard() {
               <p className="font-body text-xs text-mauve mt-0.5">Exame{stats.totalExams !== 1 ? 's' : ''}</p>
             </Card>
             <Card padding="sm" className="text-center">
-              <div className="w-9 h-9 rounded-xl bg-sage-light flex items-center justify-center mx-auto mb-2">
-                <CheckCircle size={17} className="text-sage" />
+              <div className="w-9 h-9 rounded-xl bg-blush flex items-center justify-center mx-auto mb-2">
+                <CheckCircle size={17} className="text-petal" />
               </div>
               <p className="font-display text-2xl font-bold text-onyx">{stats.processedExams}</p>
               <p className="font-body text-xs text-mauve mt-0.5">Extraído{stats.processedExams !== 1 ? 's' : ''}</p>

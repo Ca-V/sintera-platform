@@ -6,8 +6,8 @@ import { useRef } from 'react'
 import { ArrowRight, Sparkles, TrendingUp, Bell } from 'lucide-react'
 
 const floatingChips = [
-  { icon: Sparkles,   text: 'Organizado automaticamente',           color: 'bg-blush/20 text-petal border-petal/20'       },
-  { icon: TrendingUp, text: 'Sua história de saúde contínua',        color: 'bg-sage-light/20 text-sage border-sage/20'    },
+  { icon: Sparkles,   text: 'Tudo organizado em um só lugar',       color: 'bg-white/10 text-[#A6DFE9] border-white/20'   },
+  { icon: TrendingUp, text: 'Sua história de saúde contínua',        color: 'bg-blush/20 text-petal border-petal/20'    },
   { icon: Bell,       text: 'Lembretes por e-mail e WhatsApp',       color: 'bg-lavender-light/20 text-lavender border-lavender/20' },
 ]
 
@@ -23,8 +23,8 @@ export default function CTASection() {
         <motion.div initial={{ opacity: 0, y: 24 }} animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.65 }}>
           <h2 className="font-display text-4xl lg:text-5xl font-semibold text-white leading-tight mb-6">
-            Comece hoje a construir uma<br />
-            <span className="text-shimmer">história de saúde organizada para toda a vida.</span>
+            Organize hoje.<br />
+            <span className="text-shimmer">Acompanhe por toda a vida.</span>
           </h2>
           <p className="font-body text-white/60 text-lg max-w-2xl mx-auto leading-relaxed mb-10">
             Cada informação registrada torna sua visão da saúde mais completa, facilitando seu

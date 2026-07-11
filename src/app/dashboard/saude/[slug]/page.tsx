@@ -27,7 +27,7 @@ function formatDateShort(iso: string): string {
 
 const INTERP_COLORS: Record<string, string> = {
   acima_da_referencia: 'text-orange-500', abaixo_da_referencia: 'text-blue-600',
-  dentro_da_referencia: 'text-sage', sem_referencia_identificada: 'text-mauve', indisponivel: 'text-mauve/40',
+  dentro_da_referencia: 'text-petal', sem_referencia_identificada: 'text-mauve', indisponivel: 'text-mauve/40',
 }
 const INTERP_SYM: Record<string, string> = {
   acima_da_referencia: '▲', abaixo_da_referencia: '▼', dentro_da_referencia: '✓',

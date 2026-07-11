@@ -173,8 +173,8 @@ export default function CaptureCenter({ className = '', onDone }: CaptureCenterP
     return (
       <div className={className}>
         <div className="text-center py-4">
-          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3 ${ok ? 'bg-sage-light' : 'bg-red-50'}`}>
-            {ok ? <CheckCircle size={24} className="text-sage" /> : <AlertCircle size={24} className="text-red-500" />}
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3 ${ok ? 'bg-blush' : 'bg-red-50'}`}>
+            {ok ? <CheckCircle size={24} className="text-petal" /> : <AlertCircle size={24} className="text-red-500" />}
           </div>
           <p className="font-display text-lg font-semibold text-onyx">{result.title}</p>
           <p className="font-body text-sm text-mauve mt-1 max-w-xs mx-auto">{result.message}</p>

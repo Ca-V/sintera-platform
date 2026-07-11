@@ -12,7 +12,7 @@ import type { ReactNode } from 'react'
 // O nome usa break-words + line-clamp-2 (nunca break-all).
 
 const TONES: Record<string, string> = {
-  sage: 'text-sage bg-sage-light border-sage/20',
+  sage: 'text-petal bg-blush border-petal/20',
   petal: 'text-petal bg-blush border-petal/20',
   gold: 'text-gold bg-warm border-amber-200',
   mauve: 'text-mauve bg-mauve/10 border-mauve/20',

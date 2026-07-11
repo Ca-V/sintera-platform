@@ -44,7 +44,7 @@ const STATUS_CONFIG: Record<string, {
   label: string; color: string; bg: string
   icon: React.ComponentType<{ size: number; className?: string }>
 }> = {
-  processed:  { label: 'Dados extraídos', color: 'text-sage',    bg: 'bg-sage-light',     icon: CheckCircle },
+  processed:  { label: 'Dados extraídos', color: 'text-petal',    bg: 'bg-blush',     icon: CheckCircle },
   pending:    { label: 'Aguardando',  color: 'text-gold',       bg: 'bg-warm',           icon: Clock       },
   processing: { label: 'Processando', color: 'text-lavender',   bg: 'bg-lavender-light', icon: Loader2     },
   error:      { label: 'Erro',        color: 'text-red-400',    bg: 'bg-red-50',         icon: AlertCircle },
@@ -444,7 +444,7 @@ export default function ExamsPage() {
       {/* ── Lista agrupada por ano ─────────────────────────────────────────── */}
       {loadingExams ? (
         <div className="flex flex-col gap-3">
-          {[1, 2, 3].map(i => <Card key={i} padding="none" className="h-[72px] rounded-2xl animate-pulse" style={{ background: '#F2EDE8' }} />)}
+          {[1, 2, 3].map(i => <Card key={i} padding="none" className="h-[72px] rounded-2xl animate-pulse" style={{ background: '#EDE6DA' }} />)}
         </div>
       ) : exams.length === 0 ? (
         <Card padding="2xl" className="text-center">
@@ -515,7 +515,7 @@ export default function ExamsPage() {
                                   onKeyDown={e => { if (e.key === 'Enter') saveExamName(exam.id); if (e.key === 'Escape') setEditingNameId(null) }}
                                   className="flex-1 min-w-0 px-2 py-1 border border-border rounded-lg font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/40" />
                                 <button aria-label="Salvar" onClick={() => saveExamName(exam.id)} disabled={savingName}
-                                  className="text-sage hover:text-sage/70 transition-colors flex-shrink-0">
+                                  className="text-petal hover:text-petal/70 transition-colors flex-shrink-0">
                                   {savingName ? <Loader2 size={14} className="animate-spin" /> : <Check size={15} />}
                                 </button>
                                 <button aria-label="Cancelar" onClick={() => setEditingNameId(null)}

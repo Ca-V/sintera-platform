@@ -5,7 +5,7 @@ import { useRef } from 'react'
 
 const stats = [
   { value: 'Grátis', label: 'Acesso completo, sem custo',  color: 'text-petal'    },
-  { value: '100%',   label: 'Privado — suas informações nunca são compartilhadas', color: 'text-sage'   },
+  { value: '100%',   label: 'Privado — suas informações nunca são compartilhadas', color: 'text-petal'   },
   { value: 'Zero',   label: 'Zero digitação — organizado por você', color: 'text-lavender' },
   { value: 'Tudo',   label: 'Sua saúde reunida em um só lugar',  color: 'text-gold'     },
 ]

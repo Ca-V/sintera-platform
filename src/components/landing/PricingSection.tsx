@@ -48,7 +48,7 @@ export default function PricingSection() {
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <h3 className="font-display text-2xl font-semibold text-onyx">Gratuito</h3>
-                <span className="font-body text-xs font-medium text-sage bg-sage-light px-2.5 py-0.5 rounded-full border border-sage/20">
+                <span className="font-body text-xs font-medium text-petal bg-blush px-2.5 py-0.5 rounded-full border border-petal/20">
                   Acesso completo
                 </span>
               </div>
@@ -63,7 +63,7 @@ export default function PricingSection() {
           <div className="grid sm:grid-cols-2 gap-3 mb-8">
             {features.map(f => (
               <div key={f} className="flex items-start gap-2.5">
-                <Check size={14} className="text-sage flex-shrink-0 mt-0.5" />
+                <Check size={14} className="text-petal flex-shrink-0 mt-0.5" />
                 <span className="font-body text-sm text-onyx/80 leading-snug">{f}</span>
               </div>
             ))}

@@ -46,7 +46,7 @@ const STATUS_STYLE: Record<string, string> = {
   draft:        'text-mauve bg-ivory border-border',
   em_curadoria: 'text-amber-700 bg-amber-50 border-amber-200',
   verificado:   'text-lavender bg-lavender-light border-lavender/20',
-  aprovado:     'text-sage bg-sage-light border-sage/20',
+  aprovado:     'text-petal bg-blush border-petal/20',
   producao:     'text-petal bg-blush border-petal/20',
   rejeitado:    'text-red-500 bg-red-50 border-red-200',
 }
@@ -88,7 +88,7 @@ function CoverageChip({ label, on, title }: { label: string; on: boolean; title?
   return (
     <span title={title}
       className={`inline-flex items-center gap-0.5 font-body text-[11px] rounded-full px-1.5 py-0.5 border ${
-        on ? 'text-sage bg-sage-light border-sage/20' : 'text-mauve/40 bg-ivory border-border'
+        on ? 'text-petal bg-blush border-petal/20' : 'text-mauve/40 bg-ivory border-border'
       }`}>
       {on ? <Check size={9} /> : <X size={9} />} {label}
     </span>

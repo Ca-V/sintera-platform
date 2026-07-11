@@ -6,9 +6,9 @@ import { Menu, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navLinks = [
-  { label: 'Funcionalidades', href: '#funcionalidades' },
   { label: 'Como funciona', href: '#como-funciona' },
-  { label: 'Ciência', href: '#ciencia' },
+  { label: 'Propósito', href: '#proposito' },
+  { label: 'Confiança', href: '#confianca' },
   { label: 'Planos', href: '#planos' },
 ]
 

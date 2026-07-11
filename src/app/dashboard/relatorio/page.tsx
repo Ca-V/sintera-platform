@@ -37,8 +37,8 @@ import { contraceptiveLabel } from '@/lib/cycle'       // SSOT dos métodos cont
 
 interface Med { name: string; kind: string; dose: string | null; frequency: string | null; startedOn: string | null; untilOn: string | null; status: string }
 interface Ev { title: string; eventType: string; prof: string | null; date: string; notes: string | null }
-interface Ex { type: string; date: string; fileUrl: string | null }
-interface Measure { metric: string; label: string | null; valueText: string; unit: string | null; date: string }
+interface Ex { id: string; type: string; date: string; fileUrl: string | null }
+interface Measure { metric: string; label: string | null; valueText: string; unit: string | null; date: string; examId: string | null }
 interface Condition { scope: string; name: string; relative: string | null; since: string | null; notes: string | null }
 interface Habit { category: string; description: string; frequency: string | null; notes: string | null }
 interface Eyewear {
@@ -215,8 +215,8 @@ function LegacyReport() {
     const [medRes, evRes, exRes, mzRes, cdRes, hbRes, ewRes, omRes, ccRes, mpRes, finRes] = await Promise.all([
       db.from('medications').select('name, kind, dose, frequency, started_on, until_date, status').eq('user_id', user.id).order('status'),
       db.from('health_events').select('title, event_type, professional_kind, event_date, notes').eq('user_id', user.id).eq('synthetic', false).order('event_date', { ascending: false }),
-      db.from('exams').select('type, exam_date, created_at, file_url').eq('user_id', user.id).order('created_at', { ascending: false }),
-      db.from('body_metrics').select('metric, label, value_text, unit, measured_on').eq('user_id', user.id).order('measured_on', { ascending: false }),
+      db.from('exams').select('id, type, exam_date, created_at, file_url').eq('user_id', user.id).order('created_at', { ascending: false }),
+      db.from('body_metrics').select('metric, label, value_text, unit, measured_on, exam_id').eq('user_id', user.id).order('measured_on', { ascending: false }),
       db.from('health_conditions').select('scope, name, relative, since_label, notes').eq('user_id', user.id).order('created_at', { ascending: false }),
       db.from('life_habits').select('category, description, frequency, notes').eq('user_id', user.id).order('created_at', { ascending: false }),
       db.from('health_resources').select('name, resource_type, prescriber, started_on, attributes, file_url').eq('user_id', user.id).eq('resource_type', 'correcao_visual').order('created_at', { ascending: false }),
@@ -234,12 +234,13 @@ function LegacyReport() {
       date: e.event_date as string, notes: (e.notes as string) ?? null,
     })))
     setExams(((exRes.data ?? []) as Array<Record<string, unknown>>).map(e => ({
-      type: (e.type as string) || 'Exame', date: (e.exam_date as string) || (e.created_at as string),
+      id: e.id as string, type: (e.type as string) || 'Exame', date: (e.exam_date as string) || (e.created_at as string),
       fileUrl: (e.file_url as string) ?? null,
     })))
     setMeasures(((mzRes.data ?? []) as Array<Record<string, unknown>>).map(m => ({
       metric: (m.metric as string) ?? 'outro', label: (m.label as string) ?? null,
       valueText: (m.value_text as string) ?? '', unit: (m.unit as string) ?? null, date: m.measured_on as string,
+      examId: (m.exam_id as string) ?? null,
     })))
     setConditions(((cdRes.data ?? []) as Array<Record<string, unknown>>).map(c => ({
       scope: (c.scope as string) ?? 'propria', name: (c.name as string) ?? '',
@@ -399,6 +400,16 @@ function LegacyReport() {
     ...perMeasuresCorpo.map(m => m.date), ...perMeasuresVitais.map(m => m.date),
   ].filter(Boolean) as string[]).sort().slice(-1)[0] ?? null
   const alturaCm = (profile as { height_cm?: number | null } | null)?.height_cm ?? null
+  // Resumo antropométrico (estado atual): peso mais recente + altura do perfil + IMC calculado.
+  // Ignora o período (é snapshot atual, como condições/itens em uso). IMC = só aritmética, sem juízo.
+  const examById = new Map(exams.map(e => [e.id, e]))
+  const latestPeso = measuresCorpo.find(m => m.metric === 'peso') ?? null
+  const pesoNum = latestPeso ? parseFloat(String(latestPeso.valueText).replace(',', '.')) : NaN
+  const imcVal = !Number.isNaN(pesoNum) && alturaCm ? pesoNum / Math.pow(alturaCm / 100, 2) : null
+  // Laudos vinculados às medidas (ex.: bioimpedância): mostramos o DOCUMENTO (nome +
+  // data + link), como em Exames, em vez de discriminar cada métrica. Dedup por exame.
+  const medLaudos = Array.from(new Set(perMeasuresCorpo.map(m => m.examId).filter(Boolean) as string[]))
+    .map(id => examById.get(id)).filter((e): e is Ex => !!e)
   const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
   const brl = (cents: number | null) => `R$ ${((cents ?? 0) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
@@ -440,7 +451,7 @@ function LegacyReport() {
                 <input readOnly aria-label="Link de compartilhamento do relatório" value={`${typeof window !== 'undefined' ? window.location.origin : ''}/r/${s.token}`}
                   className="flex-1 min-w-0 bg-transparent font-body text-xs text-mauve outline-none" />
                 <button onClick={() => copyLink(s.token)} title="Copiar" className="text-mauve hover:text-petal flex-shrink-0">
-                  {copied === s.token ? <Check size={14} className="text-sage" /> : <Copy size={14} />}
+                  {copied === s.token ? <Check size={14} className="text-petal" /> : <Copy size={14} />}
                 </button>
                 <button onClick={() => revokeShare(s.id)} title="Revogar" className="text-mauve hover:text-red-500 flex-shrink-0">
                   <Trash2 size={14} />
@@ -639,16 +650,16 @@ function LegacyReport() {
         {/* Consultas, procedimentos e eventos (Histórico) */}
         {sections.eventos && (
         <section id="sec-eventos" style={{ scrollMarginTop: 16 }}>
-          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Agenda</h2>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Agenda</h2>
           {perEvents.length === 0 ? (
-            <p className="font-body text-sm text-mauve">Nenhum evento registrado.</p>
+            <p className="font-body text-xs text-mauve">Nenhum evento registrado.</p>
           ) : (
             <table className="w-full text-left">
               <tbody>
                 {perEvents.map((e, i) => (
                   <tr key={i} className="border-b border-border/50">
                     <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(e.date)}</td>
-                    <td className="font-body text-sm text-onyx py-1.5">
+                    <td className="font-body text-xs text-onyx py-1.5">
                       <span className="text-mauve">{typeLabel(e.eventType)}{e.prof && PROF_LABEL[e.prof] ? ` (${PROF_LABEL[e.prof]})` : ''}:</span> {e.title}
                       {e.notes ? <span className="block text-xs text-mauve">{e.notes}</span> : null}
                     </td>
@@ -663,18 +674,18 @@ function LegacyReport() {
         {/* Exames */}
         {sections.exames && (
         <section id="sec-exames" style={{ scrollMarginTop: 16 }}>
-          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Exames</h2>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Exames</h2>
           {perVisExams.length > 1 && (
             <ViewModeSwitcher className="mb-2 print:hidden"
               modes={EXAM_SORTS.map(s => ({ value: s.key, label: s.label }))}
               active={examSort} onChange={setExamSort} />
           )}
           {perVisExams.length === 0 ? (
-            <p className="font-body text-sm text-mauve">Nenhum exame enviado.</p>
+            <p className="font-body text-xs text-mauve">Nenhum exame enviado.</p>
           ) : (
             <ul className="space-y-1">
               {sortedExams.map((e, i) => (
-                <li key={i} className="font-body text-sm text-onyx flex flex-wrap items-baseline gap-x-2">
+                <li key={i} className="font-body text-xs text-onyx flex flex-wrap items-baseline gap-x-2">
                   <span>• {fmt(e.date)} — {e.type}</span>
                   <ProvenanceLine provenance={examProvenance({ fileUrl: e.fileUrl })} showOrigin={false} />
                 </li>
@@ -687,13 +698,13 @@ function LegacyReport() {
         {/* Exames de ômica */}
         {sections.omica && (
         <section id="sec-omica" style={{ scrollMarginTop: 16 }}>
-          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Exames de ômica</h2>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Exames de ômica</h2>
           {perOmics.length === 0 ? (
-            <p className="font-body text-sm text-mauve">Nenhum exame de ômica registrado.</p>
+            <p className="font-body text-xs text-mauve">Nenhum exame de ômica registrado.</p>
           ) : (
             <ul className="space-y-1">
               {perOmics.map((o, i) => (
-                <li key={i} className="font-body text-sm text-onyx">
+                <li key={i} className="font-body text-xs text-onyx">
                   • {o.date ? `${fmt(o.date)} — ` : ''}<strong>{DOMAIN_LABEL[o.domain as OmicsDomain] ?? 'Ômica'}</strong>
                   {[o.laboratory, o.totalFeatures != null ? `${o.totalFeatures.toLocaleString('pt-BR')} marcadores` : null].filter(Boolean).length
                     ? ` (${[o.laboratory, o.totalFeatures != null ? `${o.totalFeatures.toLocaleString('pt-BR')} marcadores` : null].filter(Boolean).join(', ')})` : ''}
@@ -707,17 +718,20 @@ function LegacyReport() {
         {/* Medicamentos e suplementos */}
         {sections.medicamentos && (
         <section id="sec-medicamentos" style={{ scrollMarginTop: 16 }}>
-          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Medicamentos e Suplementos em uso</h2>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Medicamentos e Suplementos em uso</h2>
           {visMedsEmUso.length === 0 ? (
-            <p className="font-body text-sm text-mauve">Nenhum registrado em uso.</p>
+            <p className="font-body text-xs text-mauve">Nenhum registrado em uso.</p>
           ) : (
-            <ul className="space-y-1">
-              {visMedsEmUso.map((m, i) => (
-                <li key={i} className="font-body text-sm text-onyx">
-                  • <strong>{m.name}</strong>{m.kind === 'suplemento' ? ' (suplemento)' : ''}{[m.dose, m.frequency].filter(Boolean).length ? ` — ${[m.dose, m.frequency].filter(Boolean).join(', ')}` : ''}
-                  {periodo(m.startedOn, m.untilOn)}
+            <ul className="space-y-1.5">
+              {visMedsEmUso.map((m, i) => {
+                const detalhe = `${[m.dose, m.frequency].filter(Boolean).join(', ')}${periodo(m.startedOn, m.untilOn)}`.trim()
+                return (
+                <li key={i} className="font-body text-xs text-onyx">
+                  • <strong>{m.name}</strong>{m.kind === 'suplemento' ? ' (suplemento)' : ''}
+                  {detalhe ? <span className="block text-xs text-mauve ml-3">{detalhe}</span> : null}
                 </li>
-              ))}
+                )
+              })}
             </ul>
           )}
           {perMedsSusp.length > 0 && (
@@ -732,15 +746,15 @@ function LegacyReport() {
         {/* Condições de saúde — próprias + histórico familiar */}
         {sections.condicoes && (
         <section id="sec-condicoes" style={{ scrollMarginTop: 16 }}>
-          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Condições de Saúde</h2>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Condições de Saúde</h2>
           {condProprias.length === 0 ? (
-            <p className="font-body text-sm text-mauve">Nenhuma condição registrada.</p>
+            <p className="font-body text-xs text-mauve">Nenhuma condição registrada.</p>
           ) : (
-            <ul className="space-y-1">
+            <ul className="space-y-1.5">
               {condProprias.map((c, i) => (
-                <li key={i} className="font-body text-sm text-onyx">
+                <li key={i} className="font-body text-xs text-onyx">
                   • <strong>{c.name}</strong>{c.since ? ` (desde ${c.since})` : ''}
-                  {c.notes ? <span className="block text-xs text-mauve">{c.notes}</span> : null}
+                  {c.notes ? <span className="block text-xs text-mauve ml-3">{c.notes}</span> : null}
                 </li>
               ))}
             </ul>
@@ -748,11 +762,11 @@ function LegacyReport() {
           {condFamiliar.length > 0 && (
             <>
               <h3 className="font-body text-xs font-bold text-mauve/80 mt-3 mb-1 uppercase tracking-wider">Histórico familiar</h3>
-              <ul className="space-y-1">
+              <ul className="space-y-1.5">
                 {condFamiliar.map((c, i) => (
-                  <li key={i} className="font-body text-sm text-onyx">
+                  <li key={i} className="font-body text-xs text-onyx">
                     • <strong>{c.name}</strong>{c.relative ? ` — ${c.relative}` : ''}{c.since ? ` (desde ${c.since})` : ''}
-                    {c.notes ? <span className="block text-xs text-mauve">{c.notes}</span> : null}
+                    {c.notes ? <span className="block text-xs text-mauve ml-3">{c.notes}</span> : null}
                   </li>
                 ))}
               </ul>
@@ -764,9 +778,9 @@ function LegacyReport() {
         {/* Recursos de Saúde (correção visual: óculos e lentes de contato) */}
         {sections.visao && (
         <section id="sec-visao" style={{ scrollMarginTop: 16 }}>
-          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Recursos de Saúde</h2>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Recursos de Saúde</h2>
           {eyewear.length === 0 ? (
-            <p className="font-body text-sm text-mauve">Nenhum recurso registrado.</p>
+            <p className="font-body text-xs text-mauve">Nenhum recurso registrado.</p>
           ) : (
             <ul className="space-y-1.5">
               {eyewear.map((e, i) => {
@@ -775,7 +789,7 @@ function LegacyReport() {
                   e.prescribedOn ? fmt(e.prescribedOn) : null, e.prescriber,
                 ].filter(Boolean)
                 return (
-                  <li key={i} className="font-body text-sm text-onyx">
+                  <li key={i} className="font-body text-xs text-onyx">
                     • <strong>{EYEWEAR_LABEL[e.kind] ?? 'Óculos'}</strong>
                     {grauStr(e.odSph, e.odCyl, e.odAxis, e.odAdd) ? <span className="block text-xs text-mauve ml-3">OD: {grauStr(e.odSph, e.odCyl, e.odAxis, e.odAdd)}</span> : null}
                     {grauStr(e.oeSph, e.oeCyl, e.oeAxis, e.oeAdd) ? <span className="block text-xs text-mauve ml-3">OE: {grauStr(e.oeSph, e.oeCyl, e.oeAxis, e.oeAdd)}</span> : null}
@@ -792,25 +806,27 @@ function LegacyReport() {
         {/* Medidas corporais */}
         {sections.medidas && (
         <section id="sec-medidas" style={{ scrollMarginTop: 16 }}>
-          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Medidas Corporais</h2>
-          {alturaCm != null && (
-            <p className="font-body text-sm text-onyx mb-1"><span className="text-mauve">Altura:</span> {alturaCm} cm</p>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Medidas Corporais</h2>
+          {(latestPeso || alturaCm != null || imcVal != null) && (
+            <p className="font-body text-xs text-onyx mb-2">
+              {[
+                latestPeso ? `Peso ${latestPeso.valueText}${latestPeso.unit ? ` ${latestPeso.unit}` : ''} (${fmt(latestPeso.date)})` : null,
+                alturaCm != null ? `Altura ${alturaCm} cm` : null,
+                imcVal != null ? `IMC ${imcVal.toFixed(1)} kg/m²` : null,
+              ].filter(Boolean).join(' · ')}
+            </p>
           )}
-          {perMeasuresCorpo.length === 0 ? (
-            <p className="font-body text-sm text-mauve">{alturaCm != null ? 'Sem outras medidas registradas.' : 'Nenhuma medida registrada.'}</p>
+          {medLaudos.length > 0 ? (
+            <ul className="space-y-1">
+              {medLaudos.map((ex, i) => (
+                <li key={i} className="font-body text-xs text-onyx flex flex-wrap items-baseline gap-x-2">
+                  <span>• {ex.type}{ex.date ? ` · ${fmt(ex.date)}` : ''}</span>
+                  {ex.fileUrl ? <ProvenanceLine provenance={examProvenance({ fileUrl: ex.fileUrl })} showOrigin={false} /> : null}
+                </li>
+              ))}
+            </ul>
           ) : (
-            <table className="w-full text-left">
-              <tbody>
-                {perMeasuresCorpo.map((m, i) => (
-                  <tr key={i} className="border-b border-border/50">
-                    <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(m.date)}</td>
-                    <td className="font-body text-sm text-onyx py-1.5">
-                      <span className="text-mauve">{m.metric === 'outro' && m.label ? m.label : METRIC_LABEL[m.metric] ?? 'Medida'}:</span> {m.valueText}{m.unit ? ` ${m.unit}` : ''}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <p className="font-body text-xs text-mauve">{latestPeso || alturaCm != null ? 'Nenhum laudo vinculado às medidas.' : 'Nenhuma medida registrada.'}</p>
           )}
         </section>
         )}
@@ -818,16 +834,16 @@ function LegacyReport() {
         {/* Sinais vitais */}
         {sections.sinais && (
         <section id="sec-sinais" style={{ scrollMarginTop: 16 }}>
-          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Sinais Vitais</h2>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Sinais Vitais</h2>
           {perMeasuresVitais.length === 0 ? (
-            <p className="font-body text-sm text-mauve">Nenhum sinal vital registrado.</p>
+            <p className="font-body text-xs text-mauve">Nenhum sinal vital registrado.</p>
           ) : (
             <table className="w-full text-left">
               <tbody>
                 {perMeasuresVitais.map((m, i) => (
                   <tr key={i} className="border-b border-border/50">
                     <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(m.date)}</td>
-                    <td className="font-body text-sm text-onyx py-1.5">
+                    <td className="font-body text-xs text-onyx py-1.5">
                       <span className="text-mauve">{m.metric === 'outro_sinal' && m.label ? m.label : METRIC_LABEL[m.metric] ?? 'Sinal'}:</span> {m.valueText}{m.unit ? ` ${m.unit}` : ''}
                     </td>
                   </tr>
@@ -841,13 +857,13 @@ function LegacyReport() {
         {/* Hábitos de vida */}
         {sections.habitos && (
         <section id="sec-habitos" style={{ scrollMarginTop: 16 }}>
-          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Hábitos</h2>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Hábitos</h2>
           {habits.length === 0 ? (
-            <p className="font-body text-sm text-mauve">Nenhum hábito registrado.</p>
+            <p className="font-body text-xs text-mauve">Nenhum hábito registrado.</p>
           ) : (
             <ul className="space-y-1">
               {habits.map((h, i) => (
-                <li key={i} className="font-body text-sm text-onyx">
+                <li key={i} className="font-body text-xs text-onyx">
                   • <span className="text-mauve">{HABIT_LABEL[h.category] ?? 'Hábito'}:</span> {h.description}{h.frequency ? ` — ${h.frequency}` : ''}
                   {h.notes ? <span className="block text-xs text-mauve">{h.notes}</span> : null}
                 </li>
@@ -860,15 +876,15 @@ function LegacyReport() {
         {/* Ciclo e Contracepção */}
         {sections.ciclo && (
         <section id="sec-ciclo" style={{ scrollMarginTop: 16 }}>
-          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Ciclo e Contracepção</h2>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Ciclo e Contracepção</h2>
           {contraceptives.length === 0 && perMenstruations.length === 0 ? (
-            <p className="font-body text-sm text-mauve">Nenhum registro de ciclo ou contracepção.</p>
+            <p className="font-body text-xs text-mauve">Nenhum registro de ciclo ou contracepção.</p>
           ) : (
             <>
               {contraceptives.length > 0 && (
                 <ul className="space-y-1">
                   {contraceptives.map((c, i) => (
-                    <li key={i} className="font-body text-sm text-onyx">
+                    <li key={i} className="font-body text-xs text-onyx">
                       • <strong>{contraceptiveLabel(c.kind)}</strong>{c.brand ? ` (${c.brand})` : ''}
                       {c.startedOn ? ` — desde ${fmt(c.startedOn)}` : ''}{c.replaceOn ? ` · troca prevista ${fmt(c.replaceOn)}` : ''}
                       {c.status && c.status !== 'ativo' ? ` (${c.status})` : ''}
@@ -879,7 +895,7 @@ function LegacyReport() {
               {perMenstruations.length > 0 && (
                 <>
                   <h3 className="font-body text-xs font-bold text-mauve/80 mt-3 mb-1 uppercase tracking-wider">Menstruação</h3>
-                  <p className="font-body text-sm text-onyx">{perMenstruations.map(m => fmt(m.startedOn)).join(' · ')}</p>
+                  <p className="font-body text-xs text-onyx">{perMenstruations.map(m => fmt(m.startedOn)).join(' · ')}</p>
                 </>
               )}
             </>
@@ -893,9 +909,9 @@ function LegacyReport() {
         {/* Despesas — eventos realizados com valor pago (projeção financeira da Agenda) */}
         {sections.gastos && (
         <section id="sec-gastos" style={{ scrollMarginTop: 16 }}>
-          <h2 className="font-display text-[15px] font-semibold text-onyx mb-2.5">Despesas</h2>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Despesas</h2>
           {perExpenses.length === 0 ? (
-            <p className="font-body text-sm text-mauve">Nenhuma despesa registrada.</p>
+            <p className="font-body text-xs text-mauve">Nenhuma despesa registrada.</p>
           ) : (
             <>
               <table className="w-full text-left">
@@ -903,13 +919,13 @@ function LegacyReport() {
                   {perExpenses.map((x, i) => (
                     <tr key={i} className="border-b border-border/50">
                       <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(x.date)}</td>
-                      <td className="font-body text-sm text-onyx py-1.5"><span className="text-mauve">{typeLabel(x.type)}:</span> {x.title}</td>
-                      <td className="font-body text-sm text-onyx py-1.5 pl-3 text-right whitespace-nowrap align-top">{brl(x.amountCents)}</td>
+                      <td className="font-body text-xs text-onyx py-1.5"><span className="text-mauve">{typeLabel(x.type)}:</span> {x.title}</td>
+                      <td className="font-body text-xs text-onyx py-1.5 pl-3 text-right whitespace-nowrap align-top">{brl(x.amountCents)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              <p className="font-body text-sm font-semibold text-onyx mt-2 text-right">Total: {brl(perExpenses.reduce((s, x) => s + (x.amountCents ?? 0), 0))}</p>
+              <p className="font-body text-xs font-semibold text-onyx mt-2 text-right">Total: {brl(perExpenses.reduce((s, x) => s + (x.amountCents ?? 0), 0))}</p>
             </>
           )}
         </section>

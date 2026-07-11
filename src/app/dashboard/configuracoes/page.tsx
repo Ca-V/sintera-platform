@@ -144,7 +144,7 @@ export default function ConfiguracoesPage() {
             <p className="font-body text-xs text-mauve mt-0.5">Enviaremos um link para o seu e-mail</p>
           </div>
           {pwSent ? (
-            <span className="flex items-center gap-1.5 font-body text-xs text-sage font-medium">
+            <span className="flex items-center gap-1.5 font-body text-xs text-petal font-medium">
               <Check size={13} /> Link enviado
             </span>
           ) : (
@@ -162,8 +162,8 @@ export default function ConfiguracoesPage() {
       <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}
         padding="lg" className="space-y-4">
         <div className="flex items-center gap-3 mb-1">
-          <div className="w-8 h-8 rounded-lg bg-sage-light flex items-center justify-center">
-            <MessageCircle size={15} className="text-sage" />
+          <div className="w-8 h-8 rounded-lg bg-blush flex items-center justify-center">
+            <MessageCircle size={15} className="text-petal" />
           </div>
           <h2 className="font-body text-sm font-semibold text-onyx">Lembretes por WhatsApp</h2>
         </div>
@@ -174,7 +174,7 @@ export default function ConfiguracoesPage() {
             <p className="font-body text-xs text-mauve mt-0.5">Lembretes dos eventos da sua Agenda (consultas, exames). Você pode desativar quando quiser.</p>
           </div>
           <button onClick={() => setWaOptIn(v => !v)} aria-label="Ativar lembretes por WhatsApp"
-            className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${waOptIn ? 'bg-sage' : 'bg-border'}`}>
+            className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${waOptIn ? 'bg-petal' : 'bg-border'}`}>
             <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${waOptIn ? 'left-[22px]' : 'left-0.5'}`} />
           </button>
         </div>
@@ -188,7 +188,7 @@ export default function ConfiguracoesPage() {
         </div>
 
         <div className="flex items-center justify-end gap-3">
-          {waSaved && <span className="font-body text-xs text-sage flex items-center gap-1"><Check size={13} /> Salvo</span>}
+          {waSaved && <span className="font-body text-xs text-petal flex items-center gap-1"><Check size={13} /> Salvo</span>}
           <button onClick={saveWhatsApp} disabled={waLoading || (waOptIn && !phone.trim())}
             className="px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium disabled:opacity-40 hover:opacity-90 transition-opacity">
             {waLoading ? 'Salvando…' : 'Salvar'}
@@ -203,8 +203,8 @@ export default function ConfiguracoesPage() {
       <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
         padding="lg" className="space-y-1">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-8 h-8 rounded-lg bg-sage-light flex items-center justify-center">
-            <Shield size={15} className="text-sage" />
+          <div className="w-8 h-8 rounded-lg bg-blush flex items-center justify-center">
+            <Shield size={15} className="text-petal" />
           </div>
           <h2 className="font-body text-sm font-semibold text-onyx">Privacidade & Dados</h2>
         </div>
@@ -213,7 +213,7 @@ export default function ConfiguracoesPage() {
           className="w-full flex items-center justify-between py-3 border-b border-border/50 text-sm font-body text-onyx/70 hover:text-petal transition-colors disabled:opacity-50">
           <span>Exportar meus dados</span>
           {exportDone ? (
-            <Check size={13} className="text-sage" />
+            <Check size={13} className="text-petal" />
           ) : exportLoading ? (
             <Loader2 size={13} className="animate-spin text-petal" />
           ) : (
@@ -322,7 +322,7 @@ export default function ConfiguracoesPage() {
           {deleteStep === 'done' && (
             <motion.div key="done" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               className="text-center py-4">
-              <Check size={24} className="text-sage mx-auto mb-2" />
+              <Check size={24} className="text-petal mx-auto mb-2" />
               <p className="font-body text-sm font-semibold text-onyx mb-1">Conta excluída</p>
               <p className="font-body text-xs text-mauve">Redirecionando…</p>
             </motion.div>

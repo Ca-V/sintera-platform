@@ -10,15 +10,15 @@ const FILLED = C * (SCORE / 100)
 
 const subMetrics = [
   { label: 'Energia',     value: '84%',  icon: Zap,      color: '#C9A97A' },
-  { label: 'Sono',        value: '7.5h', icon: BedDouble, color: '#57B3AD' },
-  { label: 'Ciclo',       value: 'Dia 8',icon: Moon,     color: '#E28C7D' },
+  { label: 'Sono',        value: '7.5h', icon: BedDouble, color: '#6BC0CE' },
+  { label: 'Ciclo',       value: 'Dia 8',icon: Moon,     color: '#C1836A' },
 ]
 
 function label(score: number) {
-  if (score >= 85) return { text: 'Excelente', color: '#7DAF9E' }
+  if (score >= 85) return { text: 'Excelente', color: '#A7B98C' }
   if (score >= 70) return { text: 'Boa',       color: '#C9A97A' }
-  if (score >= 50) return { text: 'Regular',   color: '#57B3AD' }
-  return { text: 'Baixa', color: '#E28C7D' }
+  if (score >= 50) return { text: 'Regular',   color: '#6BC0CE' }
+  return { text: 'Baixa', color: '#C1836A' }
 }
 
 export default function DailyScoreCard() {
@@ -35,9 +35,9 @@ export default function DailyScoreCard() {
     >
       {/* Background glow */}
       <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(226,140,125,0.12) 0%, transparent 65%)' }}/>
+        style={{ background: 'radial-gradient(circle, rgba(193,131,106,0.12) 0%, transparent 65%)' }}/>
       <div className="absolute -bottom-12 -left-12 w-40 h-40 rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(87,179,173,0.08) 0%, transparent 60%)' }}/>
+        style={{ background: 'radial-gradient(circle, rgba(107,192,206,0.08) 0%, transparent 60%)' }}/>
 
       {/* Header */}
       <div className="flex items-center justify-between relative">
@@ -56,7 +56,7 @@ export default function DailyScoreCard() {
         <div className="relative w-32 h-32 flex-shrink-0">
           {/* Glow layer */}
           <div className="absolute inset-0 rounded-full blur-xl opacity-20"
-            style={{ background: `conic-gradient(#E28C7D, #57B3AD, transparent)` }}/>
+            style={{ background: `conic-gradient(#C1836A, #6BC0CE, transparent)` }}/>
           <svg viewBox="0 0 128 128" className="w-full h-full -rotate-90 relative">
             {/* Track */}
             <circle cx="64" cy="64" r={R} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8"/>
@@ -74,8 +74,8 @@ export default function DailyScoreCard() {
             />
             <defs>
               <linearGradient id="scoreGrad" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#E28C7D"/>
-                <stop offset="100%" stopColor="#57B3AD"/>
+                <stop offset="0%" stopColor="#C1836A"/>
+                <stop offset="100%" stopColor="#6BC0CE"/>
               </linearGradient>
             </defs>
           </svg>

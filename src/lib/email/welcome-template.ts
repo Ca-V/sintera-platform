@@ -20,7 +20,7 @@ export function welcomeEmailHtml(firstName: string): string {
             <td align="center" style="padding-bottom:32px;">
               <table cellpadding="0" cellspacing="0">
                 <tr>
-                  <td style="background:linear-gradient(135deg,#E8A4B8,#C490D1);width:36px;height:36px;border-radius:50%;text-align:center;vertical-align:middle;">
+                  <td style="background:linear-gradient(135deg,#0E7580,#14746B);width:36px;height:36px;border-radius:50%;text-align:center;vertical-align:middle;">
                     <span style="color:#fff;font-size:18px;line-height:36px;">◎</span>
                   </td>
                   <td style="padding-left:10px;font-size:20px;font-weight:700;letter-spacing:0.2em;color:#1C1C1E;">
@@ -77,7 +77,7 @@ export function welcomeEmailHtml(firstName: string): string {
                 <tr>
                   <td align="center">
                     <a href="https://sinteramais.com.br/onboarding"
-                      style="display:inline-block;background:linear-gradient(135deg,#E8A4B8,#C490D1);color:#fff;font-size:15px;font-weight:600;text-decoration:none;padding:14px 36px;border-radius:50px;letter-spacing:0.04em;">
+                      style="display:inline-block;background:linear-gradient(135deg,#0E7580,#14746B);color:#fff;font-size:15px;font-weight:600;text-decoration:none;padding:14px 36px;border-radius:50px;letter-spacing:0.04em;">
                       Acessar a SINTERA →
                     </a>
                   </td>
@@ -102,7 +102,7 @@ export function welcomeEmailHtml(firstName: string): string {
               <p style="margin:0 0 8px;font-size:12px;color:#B0A8B9;line-height:1.6;">
                 Você recebeu este e-mail porque se cadastrou na lista de espera da SINTERA.<br />
                 Seus dados são tratados conforme nossa
-                <a href="https://sinteramais.com.br/privacidade" style="color:#C490D1;text-decoration:none;">Política de Privacidade</a>
+                <a href="https://sinteramais.com.br/privacidade" style="color:#14746B;text-decoration:none;">Política de Privacidade</a>
                 e a LGPD (Lei nº 13.709/2018).
               </p>
               <p style="margin:0;font-size:11px;color:#C8C0D0;">

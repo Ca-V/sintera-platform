@@ -29,7 +29,7 @@ interface InsightRow {
 const FLAG_CONFIG: Record<string, { label: string; cls: string }> = {
   atencao_imediata: { label: 'Atenção', cls: 'bg-red-50 text-red-500 border-red-200' },
   acompanhar:       { label: 'Acompanhar', cls: 'bg-warm text-gold border-amber-200' },
-  normal:           { label: 'Dentro do esperado', cls: 'bg-sage-light text-sage border-sage/20' },
+  normal:           { label: 'Dentro do esperado', cls: 'bg-blush text-petal border-petal/20' },
 }
 
 const SOURCE_LABEL: Record<string, string> = {
@@ -165,14 +165,14 @@ export default function InsightsPage() {
             className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <ActionCard onClick={() => router.push('/dashboard/historico')}
               padding="md" className="flex items-center gap-4 group">
-              <div className="w-10 h-10 rounded-2xl bg-sage-light flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-                <TrendingUp size={18} className="text-sage" />
+              <div className="w-10 h-10 rounded-2xl bg-blush flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                <TrendingUp size={18} className="text-petal" />
               </div>
               <div className="flex-1">
                 <p className="font-body text-sm font-semibold text-onyx">Histórico de biomarcadores</p>
                 <p className="font-body text-xs text-mauve mt-0.5">Evolução temporal dos seus resultados</p>
               </div>
-              <ArrowRight size={14} className="text-mauve/40 group-hover:text-sage transition-colors flex-shrink-0" />
+              <ArrowRight size={14} className="text-mauve/40 group-hover:text-petal transition-colors flex-shrink-0" />
             </ActionCard>
 
             <ActionCard onClick={() => router.push('/dashboard/exams')}
@@ -213,14 +213,14 @@ export default function InsightsPage() {
                 <div className="flex items-center justify-between gap-3 mt-4 pt-3 border-t border-mauve/10">
                   <span className="font-body text-xs text-mauve">{origin}</span>
                   {sent ? (
-                    <span className="font-body text-xs text-sage">Obrigada pelo retorno</span>
+                    <span className="font-body text-xs text-petal">Obrigada pelo retorno</span>
                   ) : (
                     <div className="flex items-center gap-2">
                       <span className="font-body text-xs text-mauve">Foi útil?</span>
                       <button aria-label="Útil" disabled={feedbackBusy[it.id]}
                         onClick={() => sendFeedback(it.id, 'util')}
-                        className="w-7 h-7 rounded-lg bg-sage-light flex items-center justify-center hover:scale-105 transition-transform disabled:opacity-50">
-                        <ThumbsUp size={13} className="text-sage" />
+                        className="w-7 h-7 rounded-lg bg-blush flex items-center justify-center hover:scale-105 transition-transform disabled:opacity-50">
+                        <ThumbsUp size={13} className="text-petal" />
                       </button>
                       <button aria-label="Não útil" disabled={feedbackBusy[it.id]}
                         onClick={() => sendFeedback(it.id, 'nao_util')}

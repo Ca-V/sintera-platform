@@ -78,7 +78,7 @@ export default function FeedbackModal() {
 
             {submitted ? (
               <div className="text-center py-3">
-                <p className="font-body text-sm text-sage font-medium">Obrigada pelo feedback! 💚</p>
+                <p className="font-body text-sm text-petal font-medium">Obrigada pelo feedback! 💚</p>
                 <p className="font-body text-xs text-mauve mt-1">
                   Seu feedback é mais valioso do que você imagina.
                 </p>
