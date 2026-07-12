@@ -21,6 +21,13 @@ import type { Database } from '@/lib/supabase/types'
 
 type Exam = Database['public']['Tables']['exams']['Row']
 
+// Pedidos/solicitações (medical_order) e guias de convênio (insurance_guide) são
+// SOLICITAÇÕES, não resultados — vão para a subseção própria, fora da lista de exames.
+const ORDER_DOC_TYPES = new Set(['medical_order', 'insurance_guide'])
+function isOrderExam(e: Exam): boolean {
+  return ORDER_DOC_TYPES.has((e as unknown as { document_type?: string | null }).document_type ?? '')
+}
+
 const ERROR_MESSAGES: Record<string, string> = {
   PDF_NO_TEXT_LAYER:       'Este PDF parece ser uma imagem escaneada. PDFs escaneados ainda não são suportados — tente um PDF com texto ou tire uma foto do laudo.',
   PDF_PASSWORD_PROTECTED:  'O PDF está protegido por senha. Remova a proteção e envie novamente.',
@@ -124,9 +131,19 @@ export default function ExamsPage() {
     return years
   }, [exams])
 
-  // ── Exames filtrados + agrupados por ano ──────────────────────────────────
+  // ── Pedidos e solicitações (subseção própria) ────────────────────────────
+  const orders = useMemo(() => {
+    let filtered = exams.filter(isOrderExam)
+    if (searchName.trim()) {
+      const q = searchName.toLowerCase()
+      filtered = filtered.filter(e => (e.type ?? '').toLowerCase().includes(q))
+    }
+    return filtered
+  }, [exams, searchName])
+
+  // ── Exames filtrados + agrupados por ano (SEM pedidos/guias) ──────────────
   const examsByYear = useMemo(() => {
-    let filtered = exams
+    let filtered = exams.filter(e => !isOrderExam(e))
 
     if (searchName.trim()) {
       const q = searchName.toLowerCase()
@@ -441,6 +458,56 @@ export default function ExamsPage() {
         </MotionCard>
       )}
 
+      {/* ── Pedidos e solicitações (subseção própria) ──────────────────────── */}
+      {!loadingExams && orders.length > 0 && (
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-1">
+            <span className="font-display text-lg font-semibold text-onyx">Pedidos e solicitações</span>
+            <span className="font-body text-xs text-mauve bg-ivory border border-border px-2 py-0.5 rounded-full">
+              {orders.length} {orders.length !== 1 ? 'itens' : 'item'}
+            </span>
+          </div>
+          <p className="font-body text-xs text-mauve mb-2.5">
+            Pedidos médicos e guias de convênio — documentos de solicitação, guardados à parte dos resultados.
+          </p>
+          <div className="flex flex-col gap-2">
+            {orders.map((order, i) => {
+              const fileUrl = (order as unknown as { file_url: string | null }).file_url
+              return (
+                <motion.div key={order.id}
+                  initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
+                  <ListCard
+                    leading={
+                      <div className="w-9 h-9 rounded-xl bg-warm flex items-center justify-center flex-shrink-0">
+                        <FileText size={17} className="text-gold" />
+                      </div>
+                    }
+                    title={order.type ?? 'Pedido médico'}
+                    onTitleClick={fileUrl ? () => window.open(fileUrl, '_blank', 'noopener') : undefined}
+                    meta={<>Adicionado em {formatDate(order.created_at)}</>}
+                    actions={
+                      <>
+                        {fileUrl && (
+                          <button type="button" onClick={() => window.open(fileUrl, '_blank', 'noopener')}
+                            className="flex items-center gap-1 text-[11px] font-body font-medium text-petal-dark bg-blush border border-petal/30 px-2.5 py-1 rounded-full hover:bg-petal/10 transition-colors">
+                            Ver documento →
+                          </button>
+                        )}
+                        <button type="button" aria-label="Excluir" title="Excluir"
+                          onClick={() => deleteExam(order)} disabled={deletingId === order.id}
+                          className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-red-500 transition-colors">
+                          {deletingId === order.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                        </button>
+                      </>
+                    }
+                  />
+                </motion.div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* ── Lista agrupada por ano ─────────────────────────────────────────── */}
       {loadingExams ? (
         <div className="flex flex-col gap-3">
@@ -452,7 +519,7 @@ export default function ExamsPage() {
           <p className="font-body text-sm text-mauve">Nenhum exame ainda</p>
           <p className="font-body text-xs text-mauve mt-1">Adicione o primeiro exame acima</p>
         </Card>
-      ) : examsByYear.length === 0 ? (
+      ) : examsByYear.length === 0 && orders.length === 0 ? (
         <Card padding="2xl" className="text-center">
           <Search size={32} className="text-border mx-auto mb-3" />
           <p className="font-body text-sm font-semibold text-onyx mb-1">Nenhum exame encontrado</p>
