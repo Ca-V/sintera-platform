@@ -96,12 +96,19 @@ maduros). Objetivo agora: **NÃO produzir novos documentos constitucionais**, e 
 qualidade da arquitetura passa a ser medida pela **facilidade com que novas
 funcionalidades reutilizam componentes** — não pela quantidade de documentos.
 
-**Marcos mensuráveis (o próximo indicador de sucesso é execução, não documento):**
-1. **Condições** validada com documentos reais e promovida a implementação de referência.
-2. **1º componente reutilizável** extraído para o backbone do Capture Hub.
-3. **DOC-001** operando como repositório documental único.
-4. **1º adaptador assíncrono (e-mail)** funcionando de ponta a ponta.
-5. **1ª ingestão totalmente automática** concluída com sucesso.
+**Painel de marcos** (o progresso é medido por marcos de consolidação, não por commits/
+docs). Ao concluir um marco: atualiza o **ADL** + registra o **resultado do ARG** +
+altera o status aqui.
+
+| Marco | Descrição | Status |
+|---|---|---|
+| **RI-001** | Condições validada e promovida a Reference Implementation (Gate RI-001, CAP-002-REF §4) | ⏳ em teste |
+| **HUB-001** | 1º componente reutilizável extraído para o backbone do Capture Hub | ⏳ |
+| **DOC-001** | Repositório documental único operacional | ⏳ |
+| **MAIL-001** | 1º adaptador assíncrono (e-mail exclusivo) ponta a ponta | ⏳ |
+| **AUTO-001** | 1ª ingestão totalmente automática concluída com sucesso | ⏳ |
+
+Legenda: ⏳ pendente · 🔧 em andamento · ✅ concluído.
 
 ## Regras gerais
 

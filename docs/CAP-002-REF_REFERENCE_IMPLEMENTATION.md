@@ -64,5 +64,38 @@ mapeamento: reusa `CreateRecordMenu` (adaptador) → `CapturedDocument` → pipe
 classifier → extractor do tipo → needs review → routing → persistência (DOC-001). O
 extractor é o único pedaço específico do tipo; o resto é o backbone comum.
 
+---
+
+## 4. Gate RI-001 — Reference Implementation Approval
+
+Condições **só se torna oficialmente a Reference Implementation** quando TODOS os itens
+abaixo forem atendidos. A partir daí ela vira o **modelo que os próximos módulos copiam**
+— por isso a barra de qualidade é alta. Legenda: ✅ verificado · 🧪 pende teste real
+(fundadora, preview) · ⚠️ gap a fechar.
+
+**Funcional**
+- ✅ Upload de PDF · ✅ Upload de imagem · ✅ Câmera · ✅ Manual · ✅ Voz
+- 🧪 Extração funcionando (com laudos reais) · ✅ Revisão humana obrigatória (gate no form)
+- ✅ Proveniência registrada (`file_url`/`source`) · ✅ Documento original acessível ("Ver documento original")
+- 🧪 Exame criado quando aplicável · 🧪 Condição criada quando aplicável · 🧪 Vínculos corretos (`source_exam_id`)
+- 🧪 Timeline consistente
+
+**Arquitetural**
+- ✅ Fluxo aderente ao CAP-002 · ✅ Sem bypass do Capture Hub · ✅ Sem duplicação de pipeline
+- ✅ Sem lógica de negócio acoplada ao adaptador (o adaptador só entrega o documento)
+- ✅ Componentes reutilizáveis identificados (ver §2 — deltas a generalizar)
+
+**Qualidade**
+- ✅ Sem erros de console · ✅ Sem overflow · ✅ Build limpa (tsc/build verdes)
+- ⚠️ **Testes automatizados do fluxo** (ainda não há suíte dedicada — homologação foi manual/Playwright ad-hoc) → fechar antes da aprovação
+- 🧪 Performance aceitável (com documentos reais)
+
+**Governança**
+- 🧪 ARG = Aprovado (após teste real) · ✅ ADL atualizado · ✅ Documentação sincronizada
+
+**Situação atual:** o verificável está ✅. Faltam para a aprovação do RI-001: o **teste
+com documentos reais** (🧪, fundadora no preview) e a **suíte de testes automatizados do
+fluxo** (⚠️). Após ambos + merge, Condições passa a ser a Reference Implementation oficial.
+
 Ver [[req_captura_documental]], `docs/CAP-002_CAPTURE_HUB.md` (arquitetura congelada),
-[[principio_rastreabilidade_documental]].
+`docs/GOVERNANCA.md` (ARG + marcos de consolidação), [[principio_rastreabilidade_documental]].
