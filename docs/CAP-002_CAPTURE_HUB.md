@@ -6,7 +6,12 @@
 > distribuição de QUALQUER informação externa** que entre na plataforma. Consome
 > DOC-001 (repositório único de documentos) e a Camada de Proveniência
 > (`@/lib/provenance`). Enquadramento RDC 657/2022 + LGPD Art. 11.
-> **Status: v1.0 — aprovado com refinamentos; base para congelamento arquitetural (10/07/2026).**
+> **Status: CONGELADO — v1.0 (fundadora, 10/07/2026).**
+> **Ressalva de escopo do congelamento:** aplica-se à **arquitetura do domínio e aos seus
+> princípios**. NÃO impede a adição de novos **adaptadores de captura, conectores ou
+> origens de ingestão** (novos laboratórios, canais, APIs), desde que **respeitem o
+> contrato do Capture Hub e não violem os princípios fundamentais**. A partir daqui o
+> foco migra da definição conceitual para a **execução incremental do roadmap**.
 
 ---
 
@@ -51,6 +56,11 @@ domínio, convergindo para o pipeline único.
 7. **Revisão humana antes da persistência** sempre que houver extração automática.
 8. **Nenhuma origem conhece a lógica de negócio** — adaptadores só entregam o contrato.
 9. **Novas origens entram por adaptadores** — sem tocar no pipeline nem nos módulos.
+10. **Toda entrada de informação externa é um adaptador do Hub** — QUALQUER nova
+    funcionalidade que permita a entrada de informação externa na plataforma DEVE ser um
+    adaptador do Capture Hub. É **vedado criar fluxos paralelos de ingestão** que
+    contornem o pipeline oficial (protege a arquitetura contra fragmentação à medida que
+    o produto cresce — nada de "upload rápido" isolado dentro de um módulo).
 
 ---
 
@@ -252,25 +262,24 @@ Trocar OCR/IA no futuro **não** invalida documentos nem quebra proveniência
 ## 12. Roadmap e faseamento
 
 ```
-Condições (fechar)
-   ↓
-Backbone do Capture Hub
-   ↓
-Caixa de Entrada (Inbox)
-   ↓
-DOC-001 (repositório único)      ← base documental comum, junto da Inbox
-   ↓
-E-mail exclusivo por usuário     ← 1ª origem assíncrona (prova ponta a ponta)
-   ↓
-WhatsApp
-   ↓
-Colar link (público)
-   ↓
-Share nativo (com app móvel)
-   ↓
-Integrações (labs BR / RNDS)     ← longo prazo, não é dependência
+1. Condições — concluir + testes reais no preview + merge após aprovação
+        ↓
+2. Backbone da Inbox — fila única de entrada (fila + worker assíncrono)
+        ↓
+3. DOC-001 — repositório documental único, integrado DESDE O INÍCIO ao backbone da Inbox
+        ↓
+4. Adaptador E-MAIL exclusivo — maior abrangência, menor dependência de terceiros
+        ↓
+5. Adaptador WHATSAPP — comportamento já consolidado no usuário brasileiro
+        ↓
+6. Adaptador LINK — critérios de segurança (allowlist de domínios; tratar links com login)
+        ↓
+7. Share NATIVO (Android/iOS) — quando houver maturidade do app móvel
+        ↓
+8. INTEGRAÇÕES diretas (labs BR / RNDS / ecossistemas) — conforme acordos e viabilidade
 
-[ Benchmark verificado roda EM PARALELO — refina, não bloqueia ]
+[ Benchmark verificado roda EM PARALELO por todo o processo — valida/identifica
+  oportunidades, sem bloquear a execução ]
 ```
 
 **Dependências:** DOC-001 (storage comum) e backbone da Inbox (fila+worker) sustentam as
