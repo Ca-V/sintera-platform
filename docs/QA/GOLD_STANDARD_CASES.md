@@ -63,6 +63,20 @@ correta**; nenhum "biomarcador".
 
 ---
 
+## 2.1 PRINCÍPIO — Ciclo Bug → Corpus (permanente, fundadora)
+
+Sempre que um **bug real for encontrado em produção**:
+1. **Corrigir** o bug.
+2. **Adicionar o documento ao CRC** (nova pasta `GS-XXX/`).
+3. **Criar o `expected.json`** (resultado esperado).
+4. **Escrever o teste de regressão** (compara extração × `expected.json`).
+5. **Nunca mais** permitir que o bug retorne.
+
+Cada problema encontrado por usuários vira **aumento permanente de robustez**. O efeito
+acumulativo (centenas de documentos reais anotados, versionados, com resultado esperado,
+cobrindo várias especialidades) torna o CRC um dos **ativos mais valiosos do projeto** —
+permite comparar versões de prompts, modelos e extratores de forma **objetiva**.
+
 ## 3. Como usar
 
 - **Regressão:** após implementar cada leitor do CEF, reprocessar o caso GS e comparar com o

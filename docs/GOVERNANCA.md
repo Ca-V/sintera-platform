@@ -91,11 +91,18 @@ revisão formal antes de qualquer código.
 
 ## Fase atual — Consolidação Arquitetural (a partir de 10/07/2026)
 
-A fase de **definição** da arquitetura está encerrada (arquitetura + governança + roadmap
-maduros). Objetivo agora: **NÃO produzir novos documentos constitucionais**, e sim
-**comprovar que os existentes são aplicáveis** via implementações reutilizáveis. A
-qualidade da arquitetura passa a ser medida pela **facilidade com que novas
-funcionalidades reutilizam componentes** — não pela quantidade de documentos.
+A **Fase de Definição Arquitetural está formalmente ENCERRADA** (fundadora, 12/07/2026):
+Capture Hub + CEF + ADL + ARG + RI-001 + Clinical Reference Corpus + Document Validator formam
+um conjunto suficiente. **O próximo capítulo não é escrever mais especificação** — é
+**demonstrar**, via **RI-001 → HUB-001 → 1º extrator especializado validado contra o CRC**, que
+a arquitetura produz software **reutilizável, mensurável e progressivamente mais preciso**.
+Esse é o verdadeiro marco de maturidade técnica.
+
+Objetivo agora: **NÃO produzir novos documentos constitucionais**, e sim **comprovar que os
+existentes são aplicáveis** via implementações reutilizáveis. A qualidade passa a ser medida por
+**evidência** (facilidade de reuso; métricas do CEF §10; painel de qualidade contínua) — não
+pela quantidade de documentos. Vale o **Ciclo Bug → Corpus** (todo bug de produção vira caso do
+CRC + regressão; `docs/QA/GOLD_STANDARD_CASES.md` §2.1).
 
 **Painel de marcos** (o progresso é medido por marcos de consolidação, não por commits/
 docs). Ao concluir um marco: atualiza o **ADL** + registra o **resultado do ARG** +

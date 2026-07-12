@@ -211,6 +211,21 @@ A partir daqui, o progresso é medido por indicadores concretos do mecanismo de 
 - **Precisão das datas de realização**.
 - **Taxa de documentos corretamente agrupados em bundles**.
 
+**Ciclo Bug → Corpus (permanente):** todo bug real de produção vira caso do CRC + `expected.json`
++ teste de regressão — nunca mais retorna (ver `docs/QA/GOLD_STANDARD_CASES.md` §2.1).
+
+**Painel de qualidade contínua (futuro, na massa crítica — centenas/milhares de casos):**
+| Indicador | Ex. |
+|---|---|
+| Casos no CRC | 412 |
+| Especialidades cobertas | 18 |
+| Casos passando automaticamente | 96,8% |
+| Datas corretamente extraídas | 99,2% |
+| Bundles corretamente montados | 98,5% |
+| Regressões introduzidas na última versão | 0 |
+
+A partir daí, a evolução deixa de ser guiada por percepção e passa a ser guiada por **evidência mensurável**.
+
 ## 11. Encerramento da especificação (fundadora, 12/07/2026)
 
 A fase de especificação está **encerrada**. Capture Hub + CEF + ADL + ARG + RI-001 + Clinical
