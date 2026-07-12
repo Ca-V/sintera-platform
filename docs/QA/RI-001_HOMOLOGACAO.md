@@ -16,14 +16,14 @@
 |---|---|---|---|
 | 1 | **Receita médica** | Cria **Condição**; **não** cria Exame | ☐ |
 | 2 | **Laudo laboratorial com um único exame** | Cria **Exame**; título = **nome do exame** (ex.: "Hemograma") | ☐ |
-| 3 | **Painel laboratorial** (Hermes Pardini, Axial…) | Cria Exame; título = **"Exames laboratoriais"** | ☐ |
-| 4 | **Sangue + urina no mesmo PDF** | `document_scope = mixed`; título = **"Exames laboratoriais"** | ☐ |
+| 3 | **Painel laboratorial** (Hermes Pardini, Axial…) | Cria Exame; título = **"Exames laboratoriais"** | ✅ (Hermes Pardini) |
+| 4 | **Sangue + urina no mesmo PDF** | `document_scope = mixed`; título = **"Exames laboratoriais"** | ✅ (`scope=mixed` confirmado no banco) |
 | 5 | **Exame de imagem** | Título = **modalidade** (ex.: "Ressonância magnética") | ☐ |
 | 6 | **Documento ilegível** | Solicita **revisão**; **não** cria registros incorretos | ☐ |
 | 7 | **Documento duplicado** | Comportamento esperado **documentado** (até o DOC-001) | ☐ |
 | 8 | **Documento original** | "Ver documento original" **funciona** | ☐ |
 | 9 | **Timeline** | Exame e/ou Condição aparecem corretamente | ☐ |
-| 10 | **Proveniência** | `origin`, `display_title`, `document_type`, `document_scope` **persistidos corretos** | ☐ |
+| 10 | **Proveniência** | `origin`, `display_title`, `document_type`, `document_scope` **persistidos corretos** | ✅ (display_title/document_type/document_scope/issuer confirmados) |
 
 ---
 
@@ -31,7 +31,7 @@
 
 | # | Caso | O que confirmar | Status |
 |---|---|---|---|
-| A | **Hermes Pardini** (painel sangue+urina) | O bug de nomenclatura **não regrediu** → "Exames laboratoriais", `scope=mixed` | ☐ |
+| A | **Hermes Pardini** (painel sangue+urina) | O bug de nomenclatura **não regrediu** → "Exames laboratoriais", `scope=mixed` | ✅ + `issuer=Hermes Pardini` |
 | B | **Axial** (se houver PDF representativo) | Mesmo padrão documental tratado igual (título por categoria+escopo) | ☐ |
 | C | **PDF com diagnóstico + exames** | (a) Exame criado · (b) Condição criada **só** com diagnóstico explícito · (c) **vínculo** `source_exam_id` correto | ☐ |
 
@@ -77,5 +77,7 @@ _(P0 bloqueia o merge; P1 corrige/homologa/segue; P2 vai ao backlog)_
 
 | # | Cenário | Observado | Prioridade | Encaminhamento |
 |---|---|---|---|---|
-| F1 | Painel Hermes Pardini (captura em Condições) | A captura exibia o nome do documento por **um biomarcador** ("IGE específico para látex") — classificador leve (`vision/condition`) contornava o Content Classifier | P1 | **Corrigido** (b9a1f96): captura não nomeia mais; nome determinístico só na análise. Aguarda re-teste + conferência do nome final salvo. |
-| F2 | Mesmo documento (IgE látex **negativo**) | Pré-preencheu a condição **"Alergia a látex"** a partir de um exame **negativo** (inferência indevida; viola RDC 657 e "condição só com diagnóstico afirmado") | P1 | **Corrigido** (b9a1f96): prompt reforçado — nome de exame ≠ diagnóstico; resultado negativo/não-reagente → `name=null`. Aguarda re-teste. |
+| F1 | Painel Hermes Pardini (captura em Condições) | A captura exibia o nome do documento por **um biomarcador** ("IGE específico para látex") — classificador leve (`vision/condition`) contornava o Content Classifier | P1 | **Corrigido + verificado** ✅: nome final salvo = "Exames laboratoriais • Hermes Pardini" (banco). |
+| F2 | Mesmo documento (IgE látex **negativo**) | Pré-preencheu a condição **"Alergia a látex"** a partir de um exame **negativo** (inferência indevida; viola RDC 657 e "condição só com diagnóstico afirmado") | P1 | **Corrigido + verificado** ✅: nenhuma condição criada (banco). |
+| F3 | Mesmo documento | Mensagem "Não consegui ler a condição" (vermelha) tratava ausência de condição como erro e empurrava a inventar uma | P2 | **Corrigido + verificado** ✅ (fundadora): nota informativa neutra. |
+| F4 | Enriquecimento (sugestão fundadora) | Incluir o **nome do laboratório emissor** no título | — | **Feito + verificado** ✅: `issuer` extraído e exibido ("• Hermes Pardini"). |
