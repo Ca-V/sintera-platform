@@ -6,7 +6,8 @@ import { createClient } from '@/lib/supabase/server'
 import { extractBiomarkers, isGatewayError } from '@/lib/ai/gateway'
 import { extractTextFromPdf, filterRelevantPages } from '@/lib/pdf/extractor'
 import { loadCatalogIndex, resolveBiomarker } from '@/lib/ai/insights/resolver'
-import { classifyExamDocument, deriveDisplayTitle } from '@/lib/capture/document-naming'
+import { classifyExamDocument, deriveDisplayTitle, withProvenance } from '@/lib/capture/document-naming'
+import { extractIssuer } from '@/lib/ai/issuer'
 
 const ERROR_MESSAGES: Record<string, string> = {
   password_protected: 'O PDF está protegido por senha e não pode ser processado.',
@@ -83,6 +84,7 @@ export async function POST(
   let filterResult: ReturnType<typeof filterRelevantPages> | null = null
   let pageCount = 1
   let pdfQuality = 'image'
+  let examTextForIssuer: string | null = null // texto do laudo p/ extrair o emissor
 
   if (isImage) {
     // Caminho de imagem — modelo multimodal lê a foto. Sem extração de texto/PDF.
@@ -113,6 +115,7 @@ export async function POST(
 
     pageCount = extraction.pageCount
     pdfQuality = extraction.quality
+    examTextForIssuer = extraction.text
 
     // 7. Filtro de páginas (Epic 1.4A) — remove conteúdo administrativo antes da IA
     filterResult = filterRelevantPages(extraction.pageTexts, 3)
@@ -293,7 +296,12 @@ export async function POST(
   if (confidentStructure) {
     const displayTitle = deriveDisplayTitle(structure)
     finalUpdate.display_title = displayTitle
-    finalUpdate.type = displayTitle
+    // Enriquecimento (fundadora): nome do laboratório emissor. Ex.: "Exames
+    // laboratoriais • Hermes Pardini". display_title fica limpo; `type` (nome
+    // exibido) recebe a proveniência. Best-effort — nunca quebra a análise.
+    const issuer = await extractIssuer(examTextForIssuer)
+    if (issuer) finalUpdate.issuer = issuer
+    finalUpdate.type = issuer ? withProvenance(displayTitle, { issuer }) : displayTitle
   }
   await supabase.from('exams')
     .update(finalUpdate as never)

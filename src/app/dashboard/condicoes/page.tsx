@@ -80,6 +80,8 @@ export default function CondicoesPage() {
   // Captura documental
   const [scanning, setScanning] = useState(false)
   const [scanErr, setScanErr] = useState<string | null>(null)
+  // Nota informativa (não é erro): ex. documento é exame sem condição afirmada.
+  const [scanInfo, setScanInfo] = useState<string | null>(null)
   const [pendingFile, setPendingFile] = useState<File | null>(null)
   const [kind, setKind] = useState<string | null>(null)
   const [sourceHint, setSourceHint] = useState<'manual' | 'voice'>('manual')
@@ -105,7 +107,7 @@ export default function CondicoesPage() {
 
   function reset() {
     setEditingId(null); setScope('propria'); setName(''); setRelative(''); setSince(''); setNotes('')
-    setErr(null); setPendingFile(null); setKind(null); setDocMeta(null); setScanErr(null); setSourceHint('manual')
+    setErr(null); setPendingFile(null); setKind(null); setDocMeta(null); setScanErr(null); setScanInfo(null); setSourceHint('manual')
   }
 
   function startEdit(c: Condition) {
@@ -121,7 +123,7 @@ export default function CondicoesPage() {
     if (method === 'manual') { reset(); setShowForm(true); return }
     if (!file) return
     if (file.size > 15 * 1024 * 1024) { setScanErr('Arquivo muito grande (máx. 15 MB).'); setShowForm(false); return }
-    reset(); setScanning(true); setScanErr(null); setShowForm(false)
+    reset(); setScanning(true); setScanErr(null); setScanInfo(null); setShowForm(false)
     try {
       const { base64, mediaType } = await fileToPayload(file)
       const resp = await fetch('/api/vision/condition', {
@@ -139,7 +141,15 @@ export default function CondicoesPage() {
       setNotes(r?.notes ?? '')
       setKind(r?.kind ?? null)
       setDocMeta(r ? { isExam: r.isExam, examType: r.examType, examDate: r.examDate } : { isExam: false, examType: null, examDate: null })
-      if (!r?.name) setScanErr('Não consegui ler a condição no documento. O documento fica anexado; preencha o nome manualmente.')
+      // Sem name pode ser: (a) documento é exame sem condição afirmada (NORMAL, não é
+      // erro) — RDC 657: não inferir; ou (b) o documento realmente não traz condição.
+      if (!r?.name) {
+        if (r?.isExam) {
+          setScanInfo('Este documento refere-se a exames — será salvo em Exames. Ele não afirma uma condição de saúde; se quiser registrar uma, preencha o nome abaixo (opcional).')
+        } else {
+          setScanInfo('Não identifiquei uma condição afirmada no documento. Preencha o nome abaixo se quiser registrar uma.')
+        }
+      }
       setShowForm(true)
     } catch (e) {
       setScanErr(e instanceof Error ? e.message : 'Falha ao processar o documento.')
@@ -281,6 +291,7 @@ export default function CondicoesPage() {
       </div>
 
       {scanErr && !showForm && <p className="font-body text-xs text-red-500">{scanErr}</p>}
+      {scanInfo && !showForm && <p className="font-body text-xs text-onyx/60">{scanInfo}</p>}
 
       {showForm && (
         <Card padding="md" className="space-y-3">
@@ -297,6 +308,7 @@ export default function CondicoesPage() {
             </div>
           )}
           {scanErr && <p className="font-body text-xs text-red-500">{scanErr}</p>}
+          {scanInfo && <p className="font-body text-xs text-onyx/60">{scanInfo}</p>}
           <div>
             <label htmlFor="cond-tipo" className="font-body text-xs text-mauve block mb-1">Tipo</label>
             <select id="cond-tipo" value={scope} onChange={e => setScope(e.target.value as Scope)}
