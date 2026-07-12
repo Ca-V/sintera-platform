@@ -73,5 +73,9 @@ já validada em produção — não de hipótese arquitetural).
 
 ## 5. Ressalvas / achados durante a homologação
 
-_(registrar aqui qualquer ❌/⚠️ com o cenário, o observado e o encaminhamento — P0 bloqueia
-o merge; P1 corrige/homologa/segue; P2 vai ao backlog)_
+_(P0 bloqueia o merge; P1 corrige/homologa/segue; P2 vai ao backlog)_
+
+| # | Cenário | Observado | Prioridade | Encaminhamento |
+|---|---|---|---|---|
+| F1 | Painel Hermes Pardini (captura em Condições) | A captura exibia o nome do documento por **um biomarcador** ("IGE específico para látex") — classificador leve (`vision/condition`) contornava o Content Classifier | P1 | **Corrigido** (b9a1f96): captura não nomeia mais; nome determinístico só na análise. Aguarda re-teste + conferência do nome final salvo. |
+| F2 | Mesmo documento (IgE látex **negativo**) | Pré-preencheu a condição **"Alergia a látex"** a partir de um exame **negativo** (inferência indevida; viola RDC 657 e "condição só com diagnóstico afirmado") | P1 | **Corrigido** (b9a1f96): prompt reforçado — nome de exame ≠ diagnóstico; resultado negativo/não-reagente → `name=null`. Aguarda re-teste. |
