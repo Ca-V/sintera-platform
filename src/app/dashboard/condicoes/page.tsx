@@ -179,8 +179,9 @@ export default function CondicoesPage() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (supabase as any).from('exams').insert({
           id: examId, user_id: user.id,
-          // Nome provisório; a extração aplica o nome DETERMINÍSTICO (Content Classifier).
-          type: docMeta.examType || (hasCondition ? name.trim() : 'Exame'),
+          // Placeholder neutro — a captura NÃO nomeia o documento. A análise aplica o
+          // nome DETERMINÍSTICO (Content Classifier), fonte única de nomenclatura.
+          type: 'Exame',
           exam_date: docMeta.examDate, file_url: fileUrl, status: 'pending',
         })
         // Dispara a extração no servidor: nomeia por categoria+escopo (display_title/
@@ -288,7 +289,7 @@ export default function CondicoesPage() {
               <FileText size={16} className="text-petal flex-shrink-0 mt-0.5" />
               <p className="font-body text-xs text-onyx leading-relaxed">
                 {docMeta?.isExam ? (
-                  <>Documento anexado. Como é um exame{docMeta.examType ? ` (${docMeta.examType})` : ''}, será salvo em <strong>Exames</strong> — independentemente do resultado. {name.trim() ? 'A condição abaixo é registrada e vinculada a ele.' : 'Se o documento afirmar uma condição, preencha o nome abaixo (opcional); senão, salvo só o exame.'}</>
+                  <>Documento anexado. Como é um exame, será salvo em <strong>Exames</strong> — independentemente do resultado; o nome do documento é definido automaticamente pela plataforma. {name.trim() ? 'A condição abaixo é registrada e vinculada a ele.' : 'Se o documento afirmar uma condição, preencha o nome abaixo (opcional); senão, salvo só o exame.'}</>
                 ) : (
                   <>Documento anexado — será salvo com a condição.</>
                 )}

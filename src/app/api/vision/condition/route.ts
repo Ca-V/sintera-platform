@@ -28,6 +28,12 @@ Campos:
   diagnóstico/condição (curto). Ex.: "Hipertensão arterial", "Alergia à penicilina". Para alergia,
   inclua a substância. **null quando o documento NÃO afirma uma condição** (ex.: exame normal,
   resultado negativo, valores dentro da referência) — a existência de um exame NÃO implica condição.
+  ATENÇÃO CRÍTICA — o NOME de um exame NÃO é um diagnóstico. Um exame que INVESTIGA uma substância
+  (ex.: "IgE específico para látex", "FAN", "teste de alergia a X") só vira condição se o RESULTADO
+  for POSITIVO/REAGENTE/ALTERADO e o documento AFIRMAR a condição. Se o resultado for NEGATIVO,
+  NÃO REAGENTE, INDETECTÁVEL, AUSENTE ou dentro da referência, o documento NEGA a condição → name=null.
+  Exemplo obrigatório: "IgE específico para látex — INFERIOR A 0,10 kU/L, INDETECTÁVEL, resultado
+  negativo" → name=null (o exame NEGA a sensibilização a látex; não afirma alergia).
 - kind: um de ["diagnostico","alergia","condicao","outro"] conforme o que o documento indica.
 - since: data de diagnóstico/início NO FORMATO YYYY-MM-DD se houver data explícita; ou um rótulo
   curto se o documento disser (ex.: "2020"); null se ausente.
