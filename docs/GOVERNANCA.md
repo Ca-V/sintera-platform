@@ -1,34 +1,88 @@
 # SINTERA — Sistema de Documentação de Governança
 
-Conjunto formal de documentos que governam a plataforma, com **códigos estáveis**. Sistema criado 10/07/2026 (sugestão da fundadora) para uma documentação **organizada e escalável**.
+Conjunto formal de documentos que governam a plataforma, com **códigos estáveis**.
+Sistema criado 10/07/2026. Objetivo: documentação **organizada, escalável e com peso
+explícito** — cada documento tem um **nível** que comunica sua estabilidade.
 
-## Camada de Governança (nível constituição)
-Documentos que definem *por quê / o quê / como se governa* a SINTERA.
+---
 
-| Código | Documento | Arquivo | Status |
-|---|---|---|---|
-| **CON-001** | Constituição Estratégica | `docs/estrategia/SINTERA_ESTRATEGIA_MASTER.md` | ✅ vigente (v2.2) |
-| **BRD-001** | Branding | `docs/branding/SINTERA_BRANDING.md` | ✅ vigente (v2.0 — paleta teal) |
-| **ARC-001** | Arquitetura | — | ⏳ a consolidar (hoje disperso: modelo canônico, horizontalidade, ContentClassifier) |
-| **SEC-001** | Projeto Shield — Segurança, Governança e Continuidade | `docs/SEC-001_PROJETO_SHIELD.md` | ✅ vigente (charter) |
-| **PRD-001** | Princípios de Produto | — | ⏳ a consolidar (hoje em CON-001 §13/§14: princípios invioláveis + critério de features) |
-| **OPS-001** | Operação e Continuidade | — | ⏳ a extrair (runbooks de deploy/backup/DR; parte hoje em SEC-001) |
-| **REG-001** | Compliance Regulatório | — | ⏳ a consolidar (RDC 657/2022 + LGPD; hoje disperso em CON-001/BRD-001/SEC-001) |
+## Classificação da documentação (4 níveis)
 
-## Camada de Execução (spec / implementação)
-Documentos que especificam *o que existe e como se apresenta/opera* — distintos da camada de governança.
+O nível indica **quão raramente o documento muda** e **quanto peso ele carrega**.
 
+### Nível 1 — Constituição *(muda muito raramente; define princípios e arquitetura estrutural)*
 | Código | Documento |
 |---|---|
-| **DS-001** | Design System (componentes, tokens, paleta) |
-| **UX-001** | Navegação e organização funcional |
-| **AUD-001** | Diagnóstico de acessibilidade (TEMA G) |
-| **REL-001** | Relatório (estrutura = domínio) |
-| **QA-001** | Processo de homologação (harness) |
-| **CAP-001** | Captura documental (5 meios de entrada) |
+| **CON-001** | Constituição Estratégica (`docs/estrategia/SINTERA_ESTRATEGIA_MASTER.md`, v2.2) |
+| **BRD-001** | Branding (identidade visual **v3.0 "Van Gogh"** — azul-turquesa/terracota/preto-marrom) |
+| **UX-001** | Arquitetura funcional / navegação |
+| **REL-001** | Camada de Comunicação (Relatório = 1º consumidor) |
+| **DS-001** | Design System (tokens, componentes, paleta) |
+| **CAP-002** | **Capture Hub** — domínio transversal de ingestão (🧊 congelado v1.0) |
+| **KG v2** | Knowledge Graph (modelo científico) |
+| **SRL** | Scientific Retrieval Layer |
+| **SEC-001** | Projeto Shield — Segurança/Governança/Continuidade |
+| — | Princípio da Rastreabilidade Documental; ADRs estruturantes |
+| **ARC-001·PRD-001·OPS-001·REG-001** | ⏳ a consolidar (hoje dispersos em CON/BRD/SEC) |
 
-## Regras
+### Nível 2 — Referências *(como implementar a Constituição na prática)*
+| Código | Documento |
+|---|---|
+| **CAP-002-REF** | Reference Implementation do Capture Hub (Condições → mapa CAP-002→código) |
+| **QA-001** | Processo de homologação (harness, tripé técnica/estrutural/visual) |
+| — | Exemplos, fluxos, implementações de referência |
+
+### Nível 3 — Especificações *(funcionalidades específicas)*
+| Código | Documento |
+|---|---|
+| **CAP-001** | Captura documental (5 meios de entrada) |
+| **DOC-001** | Repositório único de documentos (spec) |
+| — | Condições · Medicamentos · Inbox · Exames · Recursos · etc. |
+| **AUD-001** | Diagnóstico de acessibilidade (TEMA G) |
+
+### Nível 4 — Execução *(operação do dia a dia)*
+Backlog · issues · sprints · PRs · tarefas · roadmap por ondas (posicionamento).
+
+---
+
+## Architecture Review Gate (ARG)
+
+**Toda nova funcionalidade responde a este checklist ANTES de entrar em desenvolvimento.**
+Leva poucos minutos e evita a erosão arquitetural que ocorre à medida que o produto cresce.
+
+1. A funcionalidade **reutiliza um domínio existente**?
+2. Ela **introduz uma nova origem de dados**? Se sim, **usa o Capture Hub** (CAP-002)?
+3. Respeita os **princípios constitucionais** (CON/BRD/UX/REL/CAP/SEC…)?
+4. Existe **componente reutilizável** antes de criar um novo?
+5. Ela **aumenta ou reduz** a complexidade arquitetural?
+6. Há impacto em **proveniência, auditoria ou LGPD**?
+7. Precisa de **ADR** ou **atualização documental**?
+8. Há **cobertura de testes** para o fluxo arquitetural afetado?
+9. Ela **cria alguma exceção** à arquitetura? Se sim, a **justificativa está documentada**?
+
+> Regra de ouro (CAP-002 §princípio 10): **toda entrada de informação externa é um
+> adaptador do Capture Hub** — vedado fluxo paralelo de ingestão.
+
+---
+
+## Congelamento e evolução (formulação de governança)
+
+Não se diz "a arquitetura não será mais discutida". A formulação correta:
+
+> **Os princípios arquiteturais estão congelados. A arquitetura continua evoluindo por
+> refinamentos COMPATÍVEIS com esses princípios. Alterações que VIOLEM os princípios
+> exigem uma revisão arquitetural formal (ARG + ADR).**
+
+Nenhuma arquitetura é definitiva; o que se congela é o conjunto de princípios e o
+**processo** para mudanças estruturais. Refinamento compatível → segue. Violação →
+revisão formal antes de qualquer código.
+
+---
+
+## Regras gerais
+
 - **Código estável:** uma vez atribuído, não muda; a versão vive no cabeçalho do doc.
-- **Cadências:** governança muda raramente (por evidência); execução evolui contínua.
+- **Cadências:** Nível 1 muda raramente (por evidência/revisão formal); Níveis 3–4 evoluem contínuo.
 - **Fonte de verdade:** o `.md` no repo. PDFs na Área de Trabalho são derivados.
-- Docs "⏳ a consolidar" existem hoje **dispersos** em CON-001/BRD-001/SEC-001; serão extraídos quando o conteúdo justificar um documento próprio (não criar casca vazia).
+- Docs "⏳ a consolidar" existem hoje **dispersos**; extrair quando o conteúdo justificar
+  documento próprio (não criar casca vazia).
