@@ -102,6 +102,7 @@ altera o status aqui.
 
 | Marco | Descrição | Status |
 |---|---|---|
+| **NAM-001** | Nomenclatura documental determinística (categoria+escopo; substitui nome-de-arquivo/IA). **1ª entrega da Consolidação** — v1.0.1 | ✅ (deploy) |
 | **RI-001** | Condições validada e promovida a Reference Implementation (Gate RI-001, CAP-002-REF §4) | ⏳ em teste |
 | **HUB-001** | 1º componente reutilizável extraído para o backbone do Capture Hub | ⏳ |
 | **DOC-001** | Repositório documental único operacional | ⏳ |
