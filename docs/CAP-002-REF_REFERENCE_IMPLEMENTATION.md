@@ -93,9 +93,10 @@ abaixo forem atendidos. A partir daí ela vira o **modelo que os próximos módu
 **Governança**
 - 🧪 ARG = Aprovado (após teste real) · ✅ ADL atualizado · ✅ Documentação sincronizada
 
-**Situação atual:** o verificável está ✅. Faltam para a aprovação do RI-001: o **teste
-com documentos reais** (🧪, fundadora no preview) e a **suíte de testes automatizados do
-fluxo** (⚠️). Após ambos + merge, Condições passa a ser a Reference Implementation oficial.
+**Situação atual:** o verificável está ✅ e a **suíte de testes automatizados** está pronta
+(ARCH-002/003 + FUNC-001). Falta apenas o **teste com documentos reais** (🧪, fundadora no
+preview — matriz `docs/QA/RI-001_HOMOLOGACAO.md`). Após ele + merge, Condições passa a ser a
+Reference Implementation oficial.
 
 Ver [[req_captura_documental]], `docs/CAP-002_CAPTURE_HUB.md` (arquitetura congelada),
 `docs/GOVERNANCA.md` (ARG + marcos de consolidação), [[principio_rastreabilidade_documental]].
