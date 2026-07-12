@@ -63,6 +63,15 @@ Leva poucos minutos e evita a erosão arquitetural que ocorre à medida que o pr
 > Regra de ouro (CAP-002 §princípio 10): **toda entrada de informação externa é um
 > adaptador do Capture Hub** — vedado fluxo paralelo de ingestão.
 
+**Toda revisão ARG termina em EXATAMENTE um resultado** (registrado no ADL):
+1. **Aprovado** — pode seguir para implementação.
+2. **Aprovado com ressalvas** — segue, mas há pendências registradas.
+3. **Requer revisão arquitetural** — precisa de ajustes antes do desenvolvimento.
+4. **Requer ADR** — altera princípios ou decisões estruturantes → ADR antes de qualquer código.
+
+O resultado + a decisão entram no **`docs/ADL_ARCHITECTURE_DECISION_LOG.md`** (linha do
+tempo cronológica de TODAS as decisões arquiteturais, mesmo as sem ADR próprio).
+
 ---
 
 ## Congelamento e evolução (formulação de governança)
@@ -78,6 +87,21 @@ Nenhuma arquitetura é definitiva; o que se congela é o conjunto de princípios
 revisão formal antes de qualquer código.
 
 ---
+
+## Fase atual — Consolidação Arquitetural (a partir de 10/07/2026)
+
+A fase de **definição** da arquitetura está encerrada (arquitetura + governança + roadmap
+maduros). Objetivo agora: **NÃO produzir novos documentos constitucionais**, e sim
+**comprovar que os existentes são aplicáveis** via implementações reutilizáveis. A
+qualidade da arquitetura passa a ser medida pela **facilidade com que novas
+funcionalidades reutilizam componentes** — não pela quantidade de documentos.
+
+**Marcos mensuráveis (o próximo indicador de sucesso é execução, não documento):**
+1. **Condições** validada com documentos reais e promovida a implementação de referência.
+2. **1º componente reutilizável** extraído para o backbone do Capture Hub.
+3. **DOC-001** operando como repositório documental único.
+4. **1º adaptador assíncrono (e-mail)** funcionando de ponta a ponta.
+5. **1ª ingestão totalmente automática** concluída com sucesso.
 
 ## Regras gerais
 
