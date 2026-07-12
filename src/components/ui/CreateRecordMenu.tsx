@@ -19,7 +19,7 @@
 // CONFIGURAÇÃO (extras), sem alterar a estrutura. Herda UX-001 §1.10/§1.11, DS-001.
 
 import { useRef, useState, type ReactNode, type ComponentType } from 'react'
-import { Plus, Loader2, Upload, Camera, Pencil } from 'lucide-react'
+import { Plus, Loader2, Upload, Camera, Pencil, X } from 'lucide-react'
 import Card from './Card'
 
 type IconType = ComponentType<{ size?: number; className?: string }>
@@ -69,6 +69,29 @@ export default function CreateRecordMenu({
   const [open, setOpen] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   const cameraRef = useRef<HTMLInputElement>(null)
+  // Captura de documento com VÁRIAS páginas: imagens acumuladas → 1 PDF → 1 registro.
+  const [pages, setPages] = useState<File[]>([])
+  const [combining, setCombining] = useState(false)
+
+  const addImages = (files: File[]) => {
+    const imgs = files.filter(f => f.type.startsWith('image/'))
+    if (imgs.length) setPages(p => [...p, ...imgs])
+  }
+
+  async function finishPages() {
+    if (!pages.length || combining) return
+    if (pages.length === 1) { const f = pages[0]; setPages([]); onSelect('file', f); return }
+    setCombining(true)
+    try {
+      const { imagesToPdf } = await import('@/lib/capture/images-to-pdf')
+      const pdf = await imagesToPdf(pages, 'documento.pdf')
+      setPages([]); onSelect('file', pdf)
+    } catch {
+      const f = pages[0]; setPages([]); onSelect('file', f)
+    } finally {
+      setCombining(false)
+    }
+  }
   const std = ORDER.filter(m => methods.includes(m))
   const total = std.length + (voice ? 1 : 0) + extras.length
   const single = total === 1
@@ -93,7 +116,15 @@ export default function CreateRecordMenu({
       <button type="button" onClick={onPrimary}
         aria-haspopup={single ? undefined : 'menu'} aria-expanded={single ? undefined : open}
         onDragOver={e => { e.preventDefault() }}
-        onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f && hasFile) onSelect('file', f) }}
+        onDrop={e => {
+          e.preventDefault(); if (!hasFile) return
+          const fs = Array.from(e.dataTransfer.files ?? []); if (!fs.length) return
+          if (pages.length > 0) { addImages(fs); return }
+          const pdf = fs.find(f => f.type === 'application/pdf' || /\.pdf$/i.test(f.name))
+          if (pdf) { onSelect('file', pdf); return }
+          if (fs.length === 1) { onSelect('file', fs[0]); return }
+          addImages(fs)
+        }}
         className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity">
         {busy ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />}
         {busy ? busyLabel : label}
@@ -125,15 +156,68 @@ export default function CreateRecordMenu({
         </>
       )}
 
+      {/* Painel de captura multipágina — imagens do MESMO documento → 1 PDF. */}
+      {pages.length > 0 && (
+        <>
+          <div className="fixed inset-0 z-20" onClick={() => { if (!combining) setPages([]) }} aria-hidden="true" />
+          <Card padding="none" className="absolute right-0 top-full mt-2 z-30 w-72 p-3 space-y-2.5">
+            <p className="font-body text-sm font-semibold text-onyx">
+              Documento — {pages.length} página{pages.length !== 1 ? 's' : ''}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {pages.map((f, i) => (
+                <div key={i} className="relative w-14 h-14 rounded-lg overflow-hidden border border-border">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={URL.createObjectURL(f)} alt={`Página ${i + 1}`} className="w-full h-full object-cover" />
+                  <button type="button" onClick={() => setPages(p => p.filter((_, j) => j !== i))}
+                    aria-label={`Remover página ${i + 1}`}
+                    className="absolute top-0 right-0 bg-black/50 text-white rounded-bl-md p-0.5 hover:bg-black/70">
+                    <X size={11} />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <button type="button" onClick={() => cameraRef.current?.click()}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl border border-border font-body text-xs text-onyx hover:bg-blush transition-colors">
+                <Camera size={14} className="text-petal" /> Adicionar página
+              </button>
+              <button type="button" onClick={() => fileRef.current?.click()}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl border border-border font-body text-xs text-onyx hover:bg-blush transition-colors">
+                <Upload size={14} className="text-petal" /> Da galeria
+              </button>
+            </div>
+            <div className="flex gap-2 pt-0.5">
+              <button type="button" onClick={() => setPages([])} disabled={combining}
+                className="flex-1 py-2 rounded-xl font-body text-sm text-mauve hover:bg-blush transition-colors disabled:opacity-50">
+                Cancelar
+              </button>
+              <button type="button" onClick={finishPages} disabled={combining}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl font-body text-sm font-medium text-white gradient-sintera hover:opacity-90 transition-opacity disabled:opacity-60">
+                {combining ? <><Loader2 size={13} className="animate-spin" /> Montando…</> : `Concluir (${pages.length})`}
+              </button>
+            </div>
+          </Card>
+        </>
+      )}
+
       {hasFile && (
-        <input ref={fileRef} type="file" accept={fileAccept} className="sr-only" disabled={busy}
+        <input ref={fileRef} type="file" accept={fileAccept} multiple className="sr-only" disabled={busy}
           aria-label={fileLabel ?? 'Selecionar arquivo'}
-          onChange={e => { const f = e.target.files?.[0]; if (f) onSelect('file', f); e.target.value = '' }} />
+          onChange={e => {
+            const files = Array.from(e.target.files ?? []); e.target.value = ''
+            if (!files.length) return
+            if (pages.length > 0) { addImages(files); return }         // já montando → anexa páginas
+            const pdf = files.find(f => f.type === 'application/pdf' || /\.pdf$/i.test(f.name))
+            if (pdf) { onSelect('file', pdf); return }                  // PDF único = já multipágina
+            if (files.length === 1) { onSelect('file', files[0]); return } // 1 arquivo = direto
+            addImages(files)                                            // várias imagens = multipágina
+          }} />
       )}
       {hasCamera && (
         <input ref={cameraRef} type="file" accept={cameraAccept} capture="environment" className="sr-only" disabled={busy}
           aria-label="Tirar foto"
-          onChange={e => { const f = e.target.files?.[0]; if (f) onSelect('camera', f); e.target.value = '' }} />
+          onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) setPages(p => [...p, f]) }} />
       )}
     </div>
   )
