@@ -432,7 +432,7 @@ export default function ExamDetailPage() {
   async function loadData(silent = false) {
     if (!silent) setLoading(true)
     const [{ data: examData }, { data: bioData }, { data: logData }, { data: catData }] = await Promise.all([
-      supabase.from('exams').select('id,type,status,pdf_quality,page_count,created_at,exam_date,error_reason,text_truncated,file_url,patient_name')
+      supabase.from('exams').select('id,type,status,pdf_quality,page_count,created_at,exam_date,error_reason,text_truncated,file_url,patient_name,document_type,display_title')
         .eq('id', examId).single(),
       supabase.from('current_biomarkers')
         .select('id,name,value,value_text,unit,reference_min,reference_max,interpretation,result_type,range_extracted,reference_source,source,catalog_id,source_material,source_exam_name')
@@ -890,19 +890,50 @@ export default function ExamDetailPage() {
           <p className="font-body text-sm font-semibold text-onyx mb-1">Analisando seu exame…</p>
           <p className="font-body text-xs text-mauve">A SINTERA está extraindo os biomarcadores do seu laudo. Isso leva alguns segundos.</p>
         </MotionCard>
-      ) : (
-        /* Estado vazio */
-        <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          padding="2xl" className="text-center">
-          <FileText size={40} className="text-border mx-auto mb-3" />
-          <p className="font-body text-sm font-semibold text-onyx mb-1">Nenhum biomarcador encontrado</p>
-          <p className="font-body text-xs text-mauve">
-            {exam?.status === 'error'
-              ? `Última extração falhou (${exam.error_reason ?? 'erro desconhecido'}). Clique em "Extrair dados" para tentar novamente.`
-              : 'Clique em "Extrair dados" para extrair os biomarcadores deste exame.'}
-          </p>
-        </MotionCard>
-      )}
+      ) : (() => {
+        // Nomenclatura por TIPO: biomarcadores são de exames de sangue/urina. Exames de
+        // imagem, neuro, oftalmo etc. têm o resultado NO LAUDO — não se força "biomarcador".
+        const dt = (exam as unknown as { document_type?: string | null })?.document_type ?? null
+        const NON_LAB: Record<string, string> = {
+          imaging: 'exame de imagem', neurophysiology: 'exame neurofisiológico',
+          ophthalmology: 'exame oftalmológico', cardiology: 'exame cardiológico',
+          endoscopy: 'exame endoscópico', anatomopathology: 'laudo anatomopatológico',
+          medical_report: 'relatório médico',
+        }
+        const nonLabLabel = dt ? NON_LAB[dt] : undefined
+        const fileUrl = (exam as unknown as { file_url?: string | null })?.file_url ?? null
+        if (nonLabLabel && exam?.status !== 'error') {
+          return (
+            <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+              padding="2xl" className="text-center">
+              <FileText size={40} className="text-petal/70 mx-auto mb-3" />
+              <p className="font-body text-sm font-semibold text-onyx mb-1">Este é um {nonLabLabel}</p>
+              <p className="font-body text-xs text-mauve max-w-md mx-auto">
+                O resultado deste tipo de exame está no próprio laudo (não são biomarcadores de sangue/urina).
+                Consulte o documento original — a leitura estruturada por tipo de exame está em evolução.
+              </p>
+              {fileUrl && (
+                <button type="button" onClick={() => window.open(fileUrl, '_blank', 'noopener')}
+                  className="mt-4 inline-flex items-center gap-1.5 text-xs font-body font-medium text-petal-dark bg-blush border border-petal/30 px-3 py-1.5 rounded-full hover:bg-petal/10 transition-colors">
+                  Ver documento original →
+                </button>
+              )}
+            </MotionCard>
+          )
+        }
+        return (
+          <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+            padding="2xl" className="text-center">
+            <FileText size={40} className="text-border mx-auto mb-3" />
+            <p className="font-body text-sm font-semibold text-onyx mb-1">Nenhum biomarcador encontrado</p>
+            <p className="font-body text-xs text-mauve">
+              {exam?.status === 'error'
+                ? `Última extração falhou (${exam.error_reason ?? 'erro desconhecido'}). Clique em "Extrair dados" para tentar novamente.`
+                : 'Clique em "Extrair dados" para extrair os biomarcadores deste exame.'}
+            </p>
+          </MotionCard>
+        )
+      })()}
 
       {/* Modal — Reportar problema */}
       {reportOpen && (
