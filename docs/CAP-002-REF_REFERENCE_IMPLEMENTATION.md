@@ -87,7 +87,7 @@ abaixo forem atendidos. A partir daí ela vira o **modelo que os próximos módu
 
 **Qualidade**
 - ✅ Sem erros de console · ✅ Sem overflow · ✅ Build limpa (tsc/build verdes)
-- ⚠️ **Testes automatizados do fluxo** (ainda não há suíte dedicada — homologação foi manual/Playwright ad-hoc) → fechar antes da aprovação
+- ✅ **Testes automatizados do fluxo** — suíte vitest do Capture Hub: ARCH-002 (nomenclatura), ARCH-003 (canonicalização), FUNC-001 (roteamento do salvamento duplo, espelha a matriz RI-001). A decisão de roteamento (`decideCaptureRouting`) é a MESMA usada na produção. Suite rápida (mock) + config de homologação (IA real)
 - 🧪 Performance aceitável (com documentos reais)
 
 **Governança**

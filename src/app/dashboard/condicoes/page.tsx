@@ -21,6 +21,7 @@ import ListCard from '@/components/ListCard'
 import Card from '@/components/ui/Card'
 import Disclaimer from '@/components/ui/Disclaimer'
 import CreateRecordMenu from '@/components/ui/CreateRecordMenu'
+import { decideCaptureRouting } from '@/lib/capture/capture-routing'
 import ProvenanceLine from '@/components/ui/ProvenanceLine'
 import { examProvenance } from '@/lib/provenance'
 
@@ -171,9 +172,9 @@ export default function CondicoesPage() {
 
   async function save() {
     const hasCondition = !!name.trim()
-    // Salva se há condição OU se o documento é um exame (mesmo sem condição afirmada).
-    const examOnly = !hasCondition && !!pendingFile && !!docMeta?.isExam
-    if (!user || saving || (!hasCondition && !examOnly)) return
+    // Decisão de roteamento (função pura, testada): o que persistir (exame/condição/vínculo).
+    const routing = decideCaptureRouting({ hasCondition, isExam: !!docMeta?.isExam, hasFile: !!pendingFile })
+    if (!user || saving || !routing.canSave) return
     setSaving(true); setErr(null)
     try {
       let fileUrl: string | null = null
@@ -184,7 +185,7 @@ export default function CondicoesPage() {
       // A existência do exame não depende da conclusão clínica. Criado antes para
       // vincular a condição (o vínculo pode existir ou não).
       let examId: string | null = null
-      if (fileUrl && docMeta?.isExam) {
+      if (routing.createExam && fileUrl) {
         examId = crypto.randomUUID()
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (supabase as any).from('exams').insert({
@@ -192,7 +193,7 @@ export default function CondicoesPage() {
           // Placeholder neutro — a captura NÃO nomeia o documento. A análise aplica o
           // nome DETERMINÍSTICO (Content Classifier), fonte única de nomenclatura.
           type: 'Exame',
-          exam_date: docMeta.examDate, file_url: fileUrl, status: 'pending',
+          exam_date: docMeta?.examDate ?? null, file_url: fileUrl, status: 'pending',
         })
         // Dispara a extração no servidor: nomeia por categoria+escopo (display_title/
         // document_type/document_scope) e extrai biomarcadores. Fire-and-forget —
@@ -201,7 +202,7 @@ export default function CondicoesPage() {
       }
 
       // CONDIÇÃO: só quando o documento afirma um diagnóstico/condição (ou digitada).
-      if (hasCondition) {
+      if (routing.createCondition) {
         const payload: Record<string, unknown> = {
           user_id: user.id, scope, name: name.trim(),
           relative: scope === 'familiar' ? (relative.trim() || null) : null,
