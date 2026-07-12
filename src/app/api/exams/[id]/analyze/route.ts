@@ -313,9 +313,16 @@ export async function POST(
       : 'application/pdf'
     const doc = await classifyDocumentAI({ base64: pdfBuffer.toString('base64'), mediaType: docMediaType })
     if (doc?.displayName) {
+      // Passa pela mesma regra determinística (prefixo "Pedido —" p/ solicitações etc.).
+      const derived = deriveDisplayTitle({
+        documentType: doc.documentType as never,
+        documentScope: 'single', examCount: 0,
+        singleExamName: doc.displayName, modality: doc.displayName,
+      })
+      const title = derived === 'Documento' ? doc.displayName : derived
       finalUpdate.document_type = doc.documentType
-      finalUpdate.display_title = doc.displayName
-      finalUpdate.type = doc.issuer ? withProvenance(doc.displayName, { issuer: doc.issuer }) : doc.displayName
+      finalUpdate.display_title = title
+      finalUpdate.type = doc.issuer ? withProvenance(title, { issuer: doc.issuer }) : title
       if (doc.issuer) finalUpdate.issuer = doc.issuer
     }
   }

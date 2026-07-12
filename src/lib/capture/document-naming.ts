@@ -131,8 +131,12 @@ export function deriveDisplayTitle(s: DocumentStructure): string {
     case 'ophthalmology':
     case 'cardiology':
     case 'endoscopy':        return clean(s.singleExamName) || 'Exame'
-    case 'medical_order':    return clean(s.singleExamName) || 'Pedido médico'
-    case 'insurance_guide':  return clean(s.singleExamName) || 'Guia de convênio'
+    case 'medical_order': {
+      // Sinaliza que é uma SOLICITAÇÃO (não resultado), mantendo o exame pedido.
+      const n = clean(s.singleExamName)
+      return n && !/^pedido/i.test(n) ? `Pedido — ${n}` : (n || 'Pedido médico')
+    }
+    case 'insurance_guide':  return 'Guia de convênio'
     case 'laboratory': {
       if (s.documentScope === 'single') {
         const name = clean(s.singleExamName)
