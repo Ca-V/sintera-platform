@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { extractBiomarkers, isGatewayError } from '@/lib/ai/gateway'
 import { extractTextFromPdf, filterRelevantPages } from '@/lib/pdf/extractor'
 import { loadCatalogIndex, resolveBiomarker } from '@/lib/ai/insights/resolver'
+import { classifyExamDocument, deriveDisplayTitle } from '@/lib/capture/document-naming'
 
 const ERROR_MESSAGES: Record<string, string> = {
   password_protected: 'O PDF está protegido por senha e não pode ser processado.',
@@ -267,14 +268,33 @@ export async function POST(
     }
   }
 
-  // 10. Atualizar exame: status + data de realização + nome do paciente.
-  //     NÃO sobrescreve `type` (o nome do exame) — mantém o nome do arquivo de
-  //     origem definido no upload. A categoria detectada pela IA (result.examType)
-  //     fica apenas no retorno/log; o nome que a usuária vê é o do arquivo.
+  // 10. Atualizar exame: status + data + paciente + NOME DOCUMENTAL.
+  //     Nomenclatura documental (CAP-002 §Content Classifier, fundadora 12/07/2026):
+  //     o nome do registro representa o DOCUMENTO, nunca um resultado interno. A IA
+  //     descreve a estrutura; o domínio (deriveDisplayTitle) aplica um nome
+  //     DETERMINÍSTICO — painel → "Exames laboratoriais" (jamais um biomarcador).
+  //     Só sobrescreve o nome do arquivo quando a estrutura é confiável, para não
+  //     degradar um nome bom quando a extração não classificou nada.
   //     A data do laudo é FATO impresso — preenche exam_date só quando extraída.
   const finalUpdate: Record<string, unknown> = { status: 'processed' }
   if (result.examDate) finalUpdate.exam_date = result.examDate
   if (result.patientName) finalUpdate.patient_name = result.patientName
+
+  const structure = classifyExamDocument({
+    examType: result.examType,
+    biomarkers: result.biomarkers.map(b => ({ name: b.name, sourceExamName: b.sourceExamName })),
+  })
+  finalUpdate.document_type = structure.documentType
+  finalUpdate.document_scope = structure.documentScope
+  // Só sobrescreve o nome do arquivo quando aprendemos estrutura de verdade:
+  // categoria não-laboratorial detectada, OU laboratório com ≥1 exame distinto real.
+  // Evita transformar um nome de arquivo bom em "indeterminado"/"metabolismo".
+  const confidentStructure = structure.documentType !== 'laboratory' || structure.examCount >= 1
+  if (confidentStructure) {
+    const displayTitle = deriveDisplayTitle(structure)
+    finalUpdate.display_title = displayTitle
+    finalUpdate.type = displayTitle
+  }
   await supabase.from('exams')
     .update(finalUpdate as never)
     .eq('id', examId)

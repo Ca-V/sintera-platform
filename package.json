@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:homolog": "vitest run --config vitest.homolog.config.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",
