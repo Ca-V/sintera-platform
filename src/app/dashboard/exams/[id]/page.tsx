@@ -16,6 +16,7 @@ import { useModalA11y } from '@/lib/ui/useModalA11y'
 import { useUser } from '@/context/UserContext'
 import { compareNames } from '@/lib/exams/nameMatch'
 import { loadCatalogLabels, buildCatalogLabels, type CatalogLabels } from '@/lib/biomarkers/catalogLabels'
+import { canonicalMaterial, materialRank } from '@/lib/biomarkers/canonicalLabels'
 import FeedbackModal from '@/components/FeedbackModal'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
@@ -241,10 +242,15 @@ function groupByExam(bms: Biomarker[], labels: CatalogLabels): ExamGroup[] {
   const materialLabelOf = (b: Biomarker) => b.source_material?.trim() || labels.materialLabel(b.specimen)
   const examLabelOf = (b: Biomarker) => b.source_exam_name?.trim() || null
 
-  const mats = new Map<string, ExamGroup>()
+  // Rótulos permanecem FIÉIS ao laudo (Fidelidade da Ingestão); só a ORDEM passa a ser
+  // estável por material (Sangue → Urina → Urina 24h → …) em vez de 1ª aparição.
+  const mats = new Map<string, ExamGroup & { rank: number }>()
   for (const b of bms) {
     const mLabel = materialLabelOf(b)
-    if (!mats.has(mLabel)) mats.set(mLabel, { key: mLabel, label: mLabel, iconKey: b.specimen ?? 'outros', exams: [] })
+    if (!mats.has(mLabel)) {
+      const canonKey = b.specimen ?? canonicalMaterial(b.source_material).key
+      mats.set(mLabel, { key: mLabel, label: mLabel, iconKey: b.specimen ?? 'outros', exams: [], rank: materialRank(canonKey, labels.specimenOrder) })
+    }
     const mat = mats.get(mLabel)!
     const eLabel = examLabelOf(b)
     const eKey = eLabel ?? '__sem_exame__'
@@ -253,6 +259,8 @@ function groupByExam(bms: Biomarker[], labels: CatalogLabels): ExamGroup[] {
     ex.items.push(b)
   }
   return [...mats.values()]
+    .sort((a, b) => a.rank - b.rank || a.label.localeCompare(b.label, 'pt-BR'))
+    .map(g => ({ key: g.key, label: g.label, iconKey: g.iconKey, exams: g.exams }))
 }
 
 // ── Componente principal ──────────────────────────────────────────────────────

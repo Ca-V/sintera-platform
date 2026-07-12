@@ -5,6 +5,7 @@
 // deixam de ser hardcoded. Sem juízo clínico (RDC 657).
 
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { canonicalMaterial, canonicalExamName, materialRank } from './canonicalLabels'
 
 export interface CatalogLabels {
   /** Ordem dos materiais (specimen) por sort_order do catálogo. */
@@ -89,21 +90,37 @@ export function groupByMaterialExam<T>(
   get: (t: T) => { sourceMaterial: string | null; specimen: string | null; sourceExamName: string | null },
   labels: CatalogLabels,
 ): MaterialExamGroup<T>[] {
-  const mats = new Map<string, MaterialExamGroup<T>>()
+  // Chave canônica do material: specimen do catálogo quando reconhecido (SSOT); senão,
+  // canonicaliza o texto cru do laudo (funde "exame de sangue"→Sangue etc.). Rótulo do
+  // catálogo tem prioridade sobre o texto cru. Ordena por specimen (não mais 1ª aparição);
+  // exames por rótulo. Urina e Urina 24h ficam separadas (chaves distintas).
+  const mats = new Map<string, MaterialExamGroup<T> & { rank: number }>()
   for (const it of items) {
     const g = get(it)
-    const mLabel = g.specimen
-      ? labels.materialLabel(g.specimen)
-      : (g.sourceMaterial?.trim() || labels.materialLabel(null))
-    if (!mats.has(mLabel)) mats.set(mLabel, { key: mLabel, label: mLabel, iconKey: g.specimen ?? 'outros', exams: [] })
-    const mat = mats.get(mLabel)!
-    const eLabel = g.sourceExamName?.trim() || null
-    const eKey = eLabel ?? '__sem_exame__'
+    let mKey: string, mLabel: string
+    if (g.specimen) {
+      mKey = g.specimen; mLabel = labels.materialLabel(g.specimen)
+    } else {
+      const c = canonicalMaterial(g.sourceMaterial)
+      const catLabel = labels.materialLabel(c.key)
+      mKey = c.key; mLabel = catLabel !== 'Outros exames' ? catLabel : c.label
+    }
+    if (!mats.has(mKey)) {
+      mats.set(mKey, {
+        key: mKey, label: mLabel, iconKey: mKey.startsWith('x:') ? 'outros' : mKey,
+        exams: [], rank: materialRank(mKey, labels.specimenOrder),
+      })
+    }
+    const mat = mats.get(mKey)!
+    const ce = canonicalExamName(g.sourceExamName)
+    const eKey = ce?.key ?? '__sem_exame__'
     let ex = mat.exams.find(e => e.key === eKey)
-    if (!ex) { ex = { key: eKey, label: eLabel, items: [] }; mat.exams.push(ex) }
+    if (!ex) { ex = { key: eKey, label: ce?.label ?? null, items: [] }; mat.exams.push(ex) }
     ex.items.push(it)
   }
-  return [...mats.values()]
+  const groups = [...mats.values()].sort((a, b) => a.rank - b.rank || a.label.localeCompare(b.label, 'pt-BR'))
+  groups.forEach(gm => gm.exams.sort((a, b) => (a.label ?? '').localeCompare(b.label ?? '', 'pt-BR')))
+  return groups.map(gm => ({ key: gm.key, label: gm.label, iconKey: gm.iconKey, exams: gm.exams }))
 }
 
 export interface PanelGroup<T> {

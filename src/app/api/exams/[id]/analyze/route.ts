@@ -286,6 +286,7 @@ export async function POST(
   const structure = classifyExamDocument({
     examType: result.examType,
     biomarkers: result.biomarkers.map(b => ({ name: b.name, sourceExamName: b.sourceExamName })),
+    text: examTextForIssuer,
   })
   finalUpdate.document_type = structure.documentType
   finalUpdate.document_scope = structure.documentScope

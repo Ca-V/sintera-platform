@@ -95,6 +95,46 @@ describe('ARCH-002 · contagem de exames DISTINTOS (não de biomarcadores)', () 
   })
 })
 
+describe('ARCH-002 · cobertura de exames não-laboratoriais + pedidos', () => {
+  const doc = (text: string, examType: string | null = null) =>
+    deriveDisplayTitle(classifyExamDocument({ examType, biomarkers: [], text }))
+
+  it('neurofisiologia: EEG e mapeamento cerebral', () => {
+    expect(doc('LAUDO DE ELETROENCEFALOGRAMA DIGITAL')).toBe('Eletroencefalograma')
+    expect(doc('Mapeamento cerebral computadorizado')).toBe('Mapeamento cerebral')
+  })
+  it('oftalmológicos: retina, córnea, OCT, campimetria', () => {
+    expect(doc('Retinografia colorida / mapeamento de retina')).toBe('Mapeamento de retina')
+    expect(doc('Topografia de córnea (Pentacam)')).toBe('Exame de córnea')
+    expect(doc('OCT de mácula')).toBe('OCT (tomografia de coerência óptica)')
+    expect(doc('Campimetria computadorizada')).toBe('Campimetria')
+  })
+  it('cardiologia gráfica: ECG e Holter', () => {
+    expect(doc('Eletrocardiograma de repouso')).toBe('Eletrocardiograma')
+    expect(doc('HOLTER 24 HORAS')).toBe('Holter 24h')
+  })
+  it('pedido médico e guia de convênio (documento = solicitação)', () => {
+    const p = classifyExamDocument({ examType: null, biomarkers: [], text: 'PEDIDO MÉDICO: solicito ultrassonografia de abdome total' })
+    expect(p.documentType).toBe('medical_order')
+    expect(deriveDisplayTitle(p)).toBe('Pedido médico')
+    const g = classifyExamDocument({ examType: null, biomarkers: [], text: 'Guia SADT — autorização de procedimentos' })
+    expect(g.documentType).toBe('insurance_guide')
+    expect(deriveDisplayTitle(g)).toBe('Guia de convênio')
+  })
+  it('pedido de ultrassom NÃO é classificado como imagem (é solicitação)', () => {
+    const p = classifyExamDocument({ examType: null, biomarkers: [], text: 'Solicitação de exame: ressonância magnética de crânio' })
+    expect(p.documentType).toBe('medical_order')
+  })
+  it('com biomarcadores, texto mencionando ECG no histórico NÃO vira cardiologia', () => {
+    const s = classifyExamDocument({
+      examType: 'laboratorial',
+      biomarkers: [{ name: 'Glicose', sourceExamName: 'GLICOSE' }, { name: 'Ureia', sourceExamName: 'UREIA' }],
+      text: 'Paciente com histórico de ECG alterado. Hemograma e bioquímica.',
+    })
+    expect(s.documentType).toBe('laboratory')
+  })
+})
+
 describe('ARCH-002 · caso real Hermes Pardini (sangue + urina, vários exames)', () => {
   it('documento composto → "Exames laboratoriais" (regressão do bug "IgE látex")', () => {
     const biomarkers = [
