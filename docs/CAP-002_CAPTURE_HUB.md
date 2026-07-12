@@ -186,6 +186,21 @@ Trocar OCR/IA no futuro **não** invalida documentos nem quebra proveniência
 - **Content Classifier** (transversal, TEMA C) — classifica o **tipo** por CONTEÚDO →
   `exame | medicamento | condicao | vacina | omica | recurso | administrativo`.
   **Factual** — classifica, não interpreta clinicamente.
+- **Convenção de nomenclatura documental (REGRA DE DOMÍNIO):** o nome do registro
+  representa o **DOCUMENTO**, NUNCA um dos seus resultados internos. É **vedado** nomear
+  um painel pelo primeiro biomarcador (bug real: painel Hermes Pardini nomeado "IgE
+  látex"). **A IA NÃO inventa o título** — retorna só estrutura:
+  `{ document_type, exam_count, single_exam_name, modality?, issuer?, date? }`. A
+  **aplicação aplica uma convenção DETERMINÍSTICA** (previsível):
+  - `exam_count == 1` → `single_exam_name` (ex.: "TSH", "PSA Total")
+  - `exam_count > 1` (painel/sangue+urina/misto) → **"Exames laboratoriais"** (biomarcadores ficam DENTRO do doc)
+  - `imaging` → **modalidade** (Ressonância Magnética, Tomografia, Ultrassonografia…)
+  - `laboratory_urine` isolado → "Exame de urina" · `anatomopathology` → "Anatomopatológico"
+  - `prescription` → "Receita médica" · `medical_report` → "Relatório médico" · `attestation` → "Atestado médico"
+  - Enriquecimento opcional: `Exames laboratoriais • Hermes Pardini • 12/07/2026`.
+  Modelo de dados: separar **`display_title`** (nome de exibição) de **`document_type`**
+  (`laboratory_single|laboratory_panel|imaging|medical_report|prescription|vaccination|…`).
+  Regra vale para TODO documento (não só Exames/Condições) — mora no Content Classifier.
 - **Extractor por tipo** — reusa o que já existe (visão de exames/biomarcadores,
   medicamentos/scan, `/api/vision/condition`, bioimpedância). Novo tipo = novo extractor.
 - **`needs_review`** — registro de origem-IA nasce pendente; gravação definitiva só após
