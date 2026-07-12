@@ -73,6 +73,15 @@ abaixo forem atendidos. A partir daí ela vira o **modelo que os próximos módu
 — por isso a barra de qualidade é alta. Legenda: ✅ verificado · 🧪 pende teste real
 (fundadora, preview) · ⚠️ gap a fechar.
 
+**Escopo do RI-001 (fundadora, 12/07/2026) — o que este gate avalia:**
+- ✅ Captura multipágina (capacidade de entrada) · ✅ Classificação da **categoria documental**
+- ✅ Nomenclatura determinística · ✅ Separação `document_type` × `document_scope`
+- ✅ UI: exames não-laboratoriais deixam de ser tratados como "biomarcadores" · ✅ Proveniência/rastreabilidade
+
+**FORA do escopo do RI-001 (pertencem ao próximo ciclo — CEF):** extração especializada de EEG /
+Pentacam / ressonância · leitura semântica de datas · Document Validator completo · confiança
+estrutural · Clinical Extraction Framework. Não bloqueiam o RI-001.
+
 **Funcional**
 - ✅ Upload de PDF · ✅ Upload de imagem · ✅ Câmera · ✅ Manual · ✅ Voz
 - 🧪 Extração funcionando (com laudos reais) · ✅ Revisão humana obrigatória (gate no form)

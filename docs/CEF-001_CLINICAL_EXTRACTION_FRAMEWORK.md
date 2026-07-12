@@ -12,6 +12,18 @@
 
 ---
 
+## Mudança de paradigma (a tese do CEF)
+
+A plataforma evolui a pergunta que sabe responder:
+1. **"Como armazenar um exame?"** — armazenamento (estado anterior).
+2. **"Como representar corretamente um documento clínico?"** — modelagem de domínio (nomenclatura/classificação/bundle — em curso).
+3. **"Como estruturar corretamente o conteúdo de cada categoria de documento clínico SEM
+   extrapolar o que está escrito no laudo?"** — o **CEF**.
+
+O CEF é um diferencial técnico porque **não depende só de IA**: combina **taxonomia clínica +
+protocolos por categoria + regras determinísticas de domínio** — resultado mais **consistente e
+auditável** que um extrator genérico aplicado indistintamente a todos os tipos.
+
 ## 0. Enquadramento regulatório (inviolável)
 
 O CEF **EXTRAI e ESTRUTURA o que está ESCRITO** no documento pelo profissional. **NÃO
@@ -54,6 +66,11 @@ Documento Clínico
 ```
 
 Cada categoria possui um **protocolo próprio de leitura** e um **modelo de resultado próprio**.
+
+**Terminologia que escala (fundadora):** o classificador **classifica a CATEGORIA DOCUMENTAL** —
+que é distinta de **especialidade**, **modalidade**, **protocolo** e **extractor**. Ex.: categoria
+`imaging` → modalidade "ressonância" → especialidade "neurorradiologia" → protocolo/extractor
+específicos. Manter esses eixos separados evita acoplamento à medida que o CEF cresce.
 
 ---
 

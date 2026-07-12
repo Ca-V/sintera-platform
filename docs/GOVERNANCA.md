@@ -117,6 +117,7 @@ altera o status aqui.
 | **MAIL-001** | 1º adaptador assíncrono (e-mail exclusivo) ponta a ponta | ⏳ |
 | **AUTO-001** | 1ª ingestão totalmente automática concluída com sucesso | ⏳ |
 | **CEF-001** | Clinical Extraction Framework — leitura por tipo de exame (registro de leitores + modelos de resultado + semântica de datas + Document Bundle). **Próxima grande iniciativa após o HUB-001** | 📝 spec |
+| **CEF-001A** | **1º extrator especializado** (neuro/oftalmo). Critério de aprovação: passa **GS-003** + **GS-004** · Confidence **HIGH** · **Bundle** correto · **data** correta · **zero regressões**. Prova a arquitetura onde a solução anterior falhava | ⏳ (após RI-001) |
 
 Legenda: ⏳ pendente · 🔧 em andamento · ✅ concluído.
 
