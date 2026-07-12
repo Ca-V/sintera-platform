@@ -52,6 +52,13 @@ function clean(s: string | null | undefined): string {
   return (s ?? '').replace(/\s+/g, ' ').trim()
 }
 
+// Minúscula na 1ª letra p/ compor "Pedido de {exame}" — exceto siglas (EEG, OCT, ECG).
+function lcFirst(s: string): string {
+  const first = s.split(/\s/)[0] ?? ''
+  if (first && /[A-ZÀ-Ý]/.test(first) && first === first.toUpperCase()) return s
+  return s.charAt(0).toLowerCase() + s.slice(1)
+}
+
 const URINE_RE   = /(urina|urin[áa]lise|\beas\b|urocultura|sedimento urin)/i
 const IMAGING_RE = /(resson[âa]ncia|tomografia|ultrassonografia|ultrassom|ultra-som|radiografia|raio.?x|densitometria|mamografia|ecocardiograma|ecodoppler|doppler|cintilografia|pet.?ct|angiografia|imagem)/i
 const ANATOMO_RE = /(anatomopatol|histopatol|bi[óo]psia|citol[óo]gic|imuno.?histoqu[íi]mic|papanicolau|colpocitol)/i
@@ -134,7 +141,8 @@ export function deriveDisplayTitle(s: DocumentStructure): string {
     case 'medical_order': {
       // Sinaliza que é uma SOLICITAÇÃO (não resultado), mantendo o exame pedido.
       const n = clean(s.singleExamName)
-      return n && !/^pedido/i.test(n) ? `Pedido — ${n}` : (n || 'Pedido médico')
+      if (!n || /^(pedido|solicita)/i.test(n)) return n || 'Pedido médico'
+      return `Pedido de ${lcFirst(n)}`
     }
     case 'insurance_guide':  return 'Guia de convênio'
     case 'laboratory': {

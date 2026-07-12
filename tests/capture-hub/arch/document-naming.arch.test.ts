@@ -113,9 +113,12 @@ describe('ARCH-002 · cobertura de exames não-laboratoriais + pedidos', () => {
     expect(doc('Eletrocardiograma de repouso')).toBe('Eletrocardiograma')
     expect(doc('HOLTER 24 HORAS')).toBe('Holter 24h')
   })
-  it('pedido com exame solicitado → prefixo "Pedido —"', () => {
+  it('pedido com exame solicitado → "Pedido de {exame}"', () => {
     expect(deriveDisplayTitle({ documentType: 'medical_order', documentScope: 'single', examCount: 0, singleExamName: 'Ultrassonografia de parede abdominal' }))
-      .toBe('Pedido — Ultrassonografia de parede abdominal')
+      .toBe('Pedido de ultrassonografia de parede abdominal')
+    // siglas preservam a caixa
+    expect(deriveDisplayTitle({ documentType: 'medical_order', documentScope: 'single', examCount: 0, singleExamName: 'EEG' }))
+      .toBe('Pedido de EEG')
   })
   it('pedido médico e guia de convênio (documento = solicitação)', () => {
     const p = classifyExamDocument({ examType: null, biomarkers: [], text: 'PEDIDO MÉDICO: solicito ultrassonografia de abdome total' })

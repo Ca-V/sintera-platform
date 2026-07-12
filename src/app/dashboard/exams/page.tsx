@@ -108,6 +108,8 @@ export default function ExamsPage() {
   const [filterFrom, setFilterFrom]   = useState<string>('')
   const [filterTo, setFilterTo]       = useState<string>('')
   const [collapsedYears, setCollapsedYears] = useState<Set<number>>(new Set())
+  // Subcategoria: Resultados × Pedidos e solicitações (aba dentro de Exames).
+  const [activeTab, setActiveTab] = useState<'results' | 'orders'>('results')
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -358,8 +360,23 @@ export default function ExamsPage() {
         <ChevronRight size={16} className="text-mauve/40 group-hover:text-lavender transition-colors flex-shrink-0" />
       </ActionCard>
 
+      {/* ── Abas: Resultados × Pedidos e solicitações (subcategoria) ────────── */}
+      {exams.length > 0 && (
+        <div className="flex gap-1 p-1 bg-ivory border border-border rounded-2xl w-fit">
+          <button type="button" onClick={() => setActiveTab('results')}
+            className={`px-4 py-1.5 rounded-xl font-body text-sm font-medium transition-colors ${activeTab === 'results' ? 'bg-white text-onyx shadow-sm' : 'text-mauve hover:text-onyx'}`}>
+            Resultados
+          </button>
+          <button type="button" onClick={() => setActiveTab('orders')}
+            className={`px-4 py-1.5 rounded-xl font-body text-sm font-medium transition-colors flex items-center gap-1.5 ${activeTab === 'orders' ? 'bg-white text-onyx shadow-sm' : 'text-mauve hover:text-onyx'}`}>
+            Pedidos e solicitações
+            {orders.length > 0 && <span className="text-[11px] bg-warm text-gold px-1.5 py-0.5 rounded-full">{orders.length}</span>}
+          </button>
+        </div>
+      )}
+
       {/* Aviso: exame(s) com nome divergente do perfil (acima da lista) */}
-      {(() => {
+      {activeTab === 'results' && (() => {
         const divergentes = exams.filter(
           e => compareNames(profile?.name, (e as unknown as { patient_name?: string | null }).patient_name) === 'mismatch',
         )
@@ -383,7 +400,7 @@ export default function ExamsPage() {
       })()}
 
       {/* ── Filtros (Epic Fase 1) ────────────────────────────────────────── */}
-      {exams.length > 0 && (
+      {activeTab === 'results' && exams.length > 0 && (
         <MotionCard initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
           padding="sm" className="space-y-3">
           <div className="flex flex-wrap gap-2">
@@ -458,15 +475,15 @@ export default function ExamsPage() {
         </MotionCard>
       )}
 
-      {/* ── Pedidos e solicitações (subseção própria) ──────────────────────── */}
-      {!loadingExams && orders.length > 0 && (
-        <div className="mb-6">
-          <div className="flex items-center gap-3 mb-1">
-            <span className="font-display text-lg font-semibold text-onyx">Pedidos e solicitações</span>
-            <span className="font-body text-xs text-mauve bg-ivory border border-border px-2 py-0.5 rounded-full">
-              {orders.length} {orders.length !== 1 ? 'itens' : 'item'}
-            </span>
-          </div>
+      {/* ── Aba: Pedidos e solicitações ────────────────────────────────────── */}
+      {activeTab === 'orders' && (orders.length === 0 ? (
+        <Card padding="2xl" className="text-center">
+          <FileText size={32} className="text-border mx-auto mb-3" />
+          <p className="font-body text-sm font-semibold text-onyx mb-1">Nenhum pedido ou solicitação</p>
+          <p className="font-body text-xs text-mauve">Pedidos médicos e guias de convênio aparecem aqui quando você os envia.</p>
+        </Card>
+      ) : (
+        <div>
           <p className="font-body text-xs text-mauve mb-2.5">
             Pedidos médicos e guias de convênio — documentos de solicitação, guardados à parte dos resultados.
           </p>
@@ -506,10 +523,10 @@ export default function ExamsPage() {
             })}
           </div>
         </div>
-      )}
+      ))}
 
-      {/* ── Lista agrupada por ano ─────────────────────────────────────────── */}
-      {loadingExams ? (
+      {/* ── Aba: Resultados (lista agrupada por ano) ───────────────────────── */}
+      {activeTab === 'results' && (loadingExams ? (
         <div className="flex flex-col gap-3">
           {[1, 2, 3].map(i => <Card key={i} padding="none" className="h-[72px] rounded-2xl animate-pulse" style={{ background: '#EDE6DA' }} />)}
         </div>
@@ -680,7 +697,7 @@ export default function ExamsPage() {
             )
           })}
         </div>
-      )}
+      ))}
 
       <Disclaimer variant="laudo" className="text-center" />
     </div>
