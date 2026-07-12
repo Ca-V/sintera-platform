@@ -5,7 +5,7 @@ import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Upload, FileText, Clock, CheckCircle, AlertCircle,
-  X, Loader2, Zap, Search, ChevronDown, ChevronUp, Trash2, Pencil, Check, Dna, ChevronRight, Info,
+  X, Loader2, Zap, Search, ChevronDown, ChevronUp, Trash2, Pencil, Check, Dna, ChevronRight, Info, Camera,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { parseDateOnly } from '@/lib/agenda'
@@ -91,6 +91,9 @@ export default function ExamsPage() {
   const [loadingExams, setLoadingExams] = useState(true)
   const [uploading, setUploading]       = useState(false)
   const [uploadError, setUploadError]   = useState<string | null>(null)
+  // Captura multipágina na caixa grande: imagens acumuladas → 1 PDF → 1 registro.
+  const [capturePages, setCapturePages] = useState<File[]>([])
+  const [combining, setCombining]       = useState(false)
 
   const [analyzing, setAnalyzing]     = useState<Record<string, true>>({})
   const [examErrors, setExamErrors]   = useState<Record<string, string>>({})
@@ -275,8 +278,32 @@ export default function ExamsPage() {
     }
   }
 
-  const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => { const f = e.target.files?.[0]; if (f) processFile(f); e.target.value = '' }
-  const onDrop = (e: React.DragEvent) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files?.[0]; if (f) processFile(f) }
+  // Entrada unificada: PDF processa direto (já multipágina); IMAGENS entram no staging
+  // (permite "adicionar outra foto") — só ao Concluir viram 1 PDF/1 registro.
+  const isImg = (f: File) => f.type.startsWith('image/')
+  const isPdf = (f: File) => f.type === 'application/pdf' || /\.pdf$/i.test(f.name)
+  const intake = (files: File[]) => {
+    if (!files.length) return
+    if (capturePages.length > 0) { setCapturePages(p => [...p, ...files.filter(isImg)]); return }
+    const pdf = files.find(isPdf)
+    if (pdf) { processFile(pdf); return }
+    const imgs = files.filter(isImg)
+    if (imgs.length) { setCapturePages(imgs); return }
+    processFile(files[0])
+  }
+  const finishCapture = async () => {
+    if (!capturePages.length || combining) return
+    if (capturePages.length === 1) { const f = capturePages[0]; setCapturePages([]); processFile(f); return }
+    setCombining(true)
+    try {
+      const { imagesToPdf } = await import('@/lib/capture/images-to-pdf')
+      const pdf = await imagesToPdf(capturePages, 'documento.pdf')
+      setCapturePages([]); processFile(pdf)
+    } catch { const f = capturePages[0]; setCapturePages([]); processFile(f) }
+    finally { setCombining(false) }
+  }
+  const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => { const files = Array.from(e.target.files ?? []); e.target.value = ''; intake(files) }
+  const onDrop = (e: React.DragEvent) => { e.preventDefault(); setDragging(false); intake(Array.from(e.dataTransfer.files ?? [])) }
   const onDragLeave = (e: React.DragEvent) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragging(false) }
 
   return (
@@ -297,32 +324,69 @@ export default function ExamsPage() {
       {/* ── Adicionar exame ──────────────────────────────────────────────── */}
       {/* A caixa vem primeiro e concentra TODAS as formas de envio (selecionar
           arquivo, arrastar PDF, foto do laudo). Ômica fica logo abaixo. */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-        onDragOver={e => { e.preventDefault(); setDragging(true) }}
-        onDragLeave={onDragLeave} onDrop={onDrop}
-        onClick={() => { if (!uploading) fileInputRef.current?.click() }}
-        className={['block border-2 border-dashed rounded-2xl p-10 text-center transition-all duration-200 cursor-pointer',
-          dragging ? 'border-petal bg-blush' : 'border-border hover:border-petal/50 hover:bg-blush/30',
-          uploading ? 'opacity-60 pointer-events-none select-none' : ''].join(' ')}
-      >
-        <input ref={fileInputRef} type="file" aria-label="Selecionar arquivo de exame" accept=".pdf,.jpg,.jpeg,.png" className="sr-only" disabled={uploading} onChange={onInputChange} />
-        <div className="w-14 h-14 rounded-2xl gradient-sintera-soft flex items-center justify-center mx-auto mb-4">
-          <Upload size={24} className={`text-petal ${uploading ? 'animate-bounce' : ''}`} />
-        </div>
-        {uploading ? (
-          <div className="flex flex-col items-center gap-2">
-            <p className="font-display text-lg font-semibold text-onyx">Enviando exame…</p>
-            <p className="font-body text-xs text-mauve">Não feche esta aba até concluir</p>
+      {/* Input compartilhado (caixa + "Adicionar página"). `multiple` p/ galeria. */}
+      <input ref={fileInputRef} type="file" aria-label="Selecionar arquivo de exame" accept=".pdf,.jpg,.jpeg,.png" multiple className="sr-only" disabled={uploading || combining} onChange={onInputChange} />
+
+      {capturePages.length > 0 ? (
+        /* Staging multipágina — tirar/juntar várias páginas do MESMO documento */
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+          className="border-2 border-petal/40 rounded-2xl p-5 bg-blush/30 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="font-display text-base font-semibold text-onyx">
+              Documento — {capturePages.length} página{capturePages.length !== 1 ? 's' : ''}
+            </p>
+            <button type="button" onClick={() => setCapturePages([])} disabled={combining}
+              aria-label="Cancelar" className="text-mauve hover:text-onyx disabled:opacity-50"><X size={17} /></button>
           </div>
-        ) : (
-          <>
-            <p className="font-display text-lg font-semibold text-onyx mb-1">Arraste um arquivo aqui</p>
-            <p className="font-body text-sm text-mauve mb-1">ou clique para selecionar</p>
-            <p className="text-xs font-body text-mauve">PDF ou foto do laudo (JPG/PNG) · Até 50 MB · use <strong className="font-medium">Novo exame</strong> para a câmera</p>
-          </>
-        )}
-      </motion.div>
+          <div className="flex flex-wrap gap-2">
+            {capturePages.map((f, i) => (
+              <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden border border-border">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={URL.createObjectURL(f)} alt={`Página ${i + 1}`} className="w-full h-full object-cover" />
+                <button type="button" onClick={() => setCapturePages(p => p.filter((_, j) => j !== i))}
+                  aria-label={`Remover página ${i + 1}`}
+                  className="absolute top-0 right-0 bg-black/50 text-white rounded-bl-md p-0.5 hover:bg-black/70"><X size={11} /></button>
+              </div>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => fileInputRef.current?.click()} disabled={combining}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-white font-body text-sm text-onyx hover:bg-blush disabled:opacity-50">
+              <Camera size={15} className="text-petal" /> Adicionar página
+            </button>
+            <button type="button" onClick={finishCapture} disabled={combining}
+              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 disabled:opacity-60">
+              {combining ? <><Loader2 size={14} className="animate-spin" /> Montando…</> : `Concluir (${capturePages.length} pág.)`}
+            </button>
+          </div>
+        </motion.div>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          onDragOver={e => { e.preventDefault(); setDragging(true) }}
+          onDragLeave={onDragLeave} onDrop={onDrop}
+          onClick={() => { if (!uploading) fileInputRef.current?.click() }}
+          className={['block border-2 border-dashed rounded-2xl p-10 text-center transition-all duration-200 cursor-pointer',
+            dragging ? 'border-petal bg-blush' : 'border-border hover:border-petal/50 hover:bg-blush/30',
+            uploading ? 'opacity-60 pointer-events-none select-none' : ''].join(' ')}
+        >
+          <div className="w-14 h-14 rounded-2xl gradient-sintera-soft flex items-center justify-center mx-auto mb-4">
+            <Upload size={24} className={`text-petal ${uploading ? 'animate-bounce' : ''}`} />
+          </div>
+          {uploading ? (
+            <div className="flex flex-col items-center gap-2">
+              <p className="font-display text-lg font-semibold text-onyx">Enviando exame…</p>
+              <p className="font-body text-xs text-mauve">Não feche esta aba até concluir</p>
+            </div>
+          ) : (
+            <>
+              <p className="font-display text-lg font-semibold text-onyx mb-1">Arraste um arquivo ou toque para enviar</p>
+              <p className="font-body text-sm text-mauve mb-1">PDF, foto ou <strong className="font-medium">várias fotos</strong> do mesmo laudo</p>
+              <p className="text-xs font-body text-mauve">Ao tirar/escolher fotos, você adiciona quantas páginas quiser antes de concluir · Até 50 MB</p>
+            </>
+          )}
+        </motion.div>
+      )}
 
       {uploadError && (
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
