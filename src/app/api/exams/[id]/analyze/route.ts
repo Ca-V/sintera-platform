@@ -8,6 +8,7 @@ import { extractTextFromPdf, filterRelevantPages } from '@/lib/pdf/extractor'
 import { loadCatalogIndex, resolveBiomarker } from '@/lib/ai/insights/resolver'
 import { classifyExamDocument, deriveDisplayTitle, withProvenance } from '@/lib/capture/document-naming'
 import { extractIssuer } from '@/lib/ai/issuer'
+import { classifyDocumentAI } from '@/lib/ai/document-classifier'
 
 const ERROR_MESSAGES: Record<string, string> = {
   password_protected: 'O PDF está protegido por senha e não pode ser processado.',
@@ -303,6 +304,20 @@ export async function POST(
     const issuer = await extractIssuer(examTextForIssuer)
     if (issuer) finalUpdate.issuer = issuer
     finalUpdate.type = issuer ? withProvenance(displayTitle, { issuer }) : displayTitle
+  } else if (result.biomarkers.length === 0) {
+    // Sem biomarcadores E sem estrutura confiável (ex.: PDF escaneado/imagem, exame de
+    // imagem, oftalmológico, pedido…): o Content Classifier LÊ o próprio documento para
+    // nomear — em vez de manter o nome do arquivo (ex.: "CamScanner …"). Best-effort.
+    const docMediaType = isImage
+      ? (filePath.endsWith('.png') ? 'image/png' : filePath.endsWith('.webp') ? 'image/webp' : 'image/jpeg')
+      : 'application/pdf'
+    const doc = await classifyDocumentAI({ base64: pdfBuffer.toString('base64'), mediaType: docMediaType })
+    if (doc?.displayName) {
+      finalUpdate.document_type = doc.documentType
+      finalUpdate.display_title = doc.displayName
+      finalUpdate.type = doc.issuer ? withProvenance(doc.displayName, { issuer: doc.issuer }) : doc.displayName
+      if (doc.issuer) finalUpdate.issuer = doc.issuer
+    }
   }
   await supabase.from('exams')
     .update(finalUpdate as never)
