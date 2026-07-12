@@ -179,9 +179,14 @@ export default function CondicoesPage() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (supabase as any).from('exams').insert({
           id: examId, user_id: user.id,
+          // Nome provisório; a extração aplica o nome DETERMINÍSTICO (Content Classifier).
           type: docMeta.examType || (hasCondition ? name.trim() : 'Exame'),
           exam_date: docMeta.examDate, file_url: fileUrl, status: 'pending',
         })
+        // Dispara a extração no servidor: nomeia por categoria+escopo (display_title/
+        // document_type/document_scope) e extrai biomarcadores. Fire-and-forget —
+        // não bloqueia o salvamento da condição.
+        fetch(`/api/exams/${examId}/analyze`, { method: 'POST' }).catch(() => {})
       }
 
       // CONDIÇÃO: só quando o documento afirma um diagnóstico/condição (ou digitada).
