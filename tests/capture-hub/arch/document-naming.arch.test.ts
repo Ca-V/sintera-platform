@@ -1,67 +1,85 @@
 // ARCH-002 — Convenção de nomenclatura documental (Content Classifier, CAP-002).
 //
 // Teste ARQUITETURAL reutilizável: vale para TODO adaptador do Capture Hub, não só Exames.
-// Nasce do bug real relatado pela fundadora (12/07/2026): um painel de sangue+urina do
-// laboratório Hermes Pardini foi nomeado "IgE específico para látex" — um único biomarcador
-// representando um documento composto. A regra: o nome representa o DOCUMENTO, nunca um
-// resultado interno; a IA descreve estrutura, o domínio aplica nome determinístico.
+// Nasce do bug real (fundadora 12/07/2026): um painel de sangue+urina do Hermes Pardini foi
+// nomeado "IGE Específico para Látex" — um biomarcador representando um documento composto.
 //
-// Suite RÁPIDA (sem IA) — deve rodar em todo PR.
+// Algoritmo validado: classificar → identificar CATEGORIA documental → aplicar convenção.
+// O nome vem da categoria + escopo, NÃO apenas da contagem. Suite RÁPIDA (sem IA).
 
 import { describe, it, expect } from 'vitest'
 import {
   deriveDisplayTitle,
   classifyExamDocument,
+  normalizeModality,
   withProvenance,
   distinctExamNames,
+  type DocumentStructure,
 } from '@/lib/capture/document-naming'
 
-describe('ARCH-002 · nomenclatura determinística por estrutura', () => {
-  it('exame único → nome do próprio exame', () => {
-    expect(deriveDisplayTitle({ documentType: 'laboratory_single', examCount: 1, singleExamName: 'TSH' }))
-      .toBe('TSH')
-  })
+const lab = (over: Partial<DocumentStructure>): DocumentStructure => ({
+  documentType: 'laboratory', documentScope: 'single', examCount: 1, ...over,
+})
 
-  it('painel (vários exames) → "Exames laboratoriais", NUNCA um biomarcador', () => {
-    expect(deriveDisplayTitle({ documentType: 'laboratory_panel', examCount: 7, singleExamName: 'IgE específico para látex' }))
+describe('ARCH-002 · nome dirigido por CATEGORIA + ESCOPO (tabela de domínio)', () => {
+  it('painel laboratorial → "Exames laboratoriais" (nunca um biomarcador)', () => {
+    expect(deriveDisplayTitle(lab({ documentScope: 'panel', examCount: 7, singleExamName: 'IgE látex' })))
       .toBe('Exames laboratoriais')
   })
 
-  it('examCount > 1 sobrepõe qualquer singleExamName (regra do conjunto)', () => {
-    expect(deriveDisplayTitle({ documentType: 'laboratory_single', examCount: 3, singleExamName: 'Glicose' }))
-      .toBe('Exames laboratoriais')
+  it('documento misto (sangue+urina) → "Exames laboratoriais"', () => {
+    expect(deriveDisplayTitle(lab({ documentScope: 'mixed', examCount: 12 }))).toBe('Exames laboratoriais')
   })
 
-  it('imagem → modalidade', () => {
-    expect(deriveDisplayTitle({ documentType: 'imaging', examCount: 0, modality: 'Ressonância magnética do joelho' }))
-      .toBe('Ressonância magnética do joelho')
+  it('hemograma isolado → "Hemograma" (nome do próprio exame)', () => {
+    expect(deriveDisplayTitle(lab({ documentScope: 'single', singleExamName: 'Hemograma' }))).toBe('Hemograma')
   })
 
-  it('imagem sem modalidade → rótulo neutro', () => {
-    expect(deriveDisplayTitle({ documentType: 'imaging', examCount: 0 }))
-      .toBe('Exame de imagem')
+  it('urina isolada → "Urina tipo I"', () => {
+    expect(deriveDisplayTitle(lab({ documentScope: 'single', singleExamName: 'URINA ROTINA' }))).toBe('Urina tipo I')
+    expect(deriveDisplayTitle(lab({ documentScope: 'single', singleExamName: 'EAS' }))).toBe('Urina tipo I')
   })
 
-  it('urina isolada → "Exame de urina"', () => {
-    expect(deriveDisplayTitle({ documentType: 'laboratory_urine', examCount: 1, singleExamName: 'EAS' }))
-      .toBe('Exame de urina')
+  it('painel com categoria clínica → "Painel {categoria}"', () => {
+    expect(deriveDisplayTitle(lab({ documentScope: 'panel', examCount: 4, clinicalCategory: 'hormonal' })))
+      .toBe('Painel hormonal')
   })
 
-  it('tipos fixos: receita, relatório, anatomopatológico, vacinação, atestado', () => {
-    expect(deriveDisplayTitle({ documentType: 'prescription', examCount: 0 })).toBe('Receita médica')
-    expect(deriveDisplayTitle({ documentType: 'medical_report', examCount: 0 })).toBe('Relatório médico')
-    expect(deriveDisplayTitle({ documentType: 'anatomopathology', examCount: 0 })).toBe('Anatomopatológico')
-    expect(deriveDisplayTitle({ documentType: 'vaccination', examCount: 0 })).toBe('Comprovante de vacinação')
-    expect(deriveDisplayTitle({ documentType: 'attestation', examCount: 0 })).toBe('Atestado médico')
+  it('imagem → modalidade canônica', () => {
+    expect(deriveDisplayTitle({ documentType: 'imaging', documentScope: 'single', examCount: 0, modality: 'RM de joelho' }))
+      .toBe('Ressonância magnética')
+    expect(deriveDisplayTitle({ documentType: 'imaging', documentScope: 'single', examCount: 0, modality: 'TC de tórax' }))
+      .toBe('Tomografia computadorizada')
+    expect(deriveDisplayTitle({ documentType: 'imaging', documentScope: 'single', examCount: 0, modality: 'US abdome' }))
+      .toBe('Ultrassonografia')
   })
 
-  it('sem estrutura → rótulo neutro, jamais um resultado interno', () => {
-    expect(deriveDisplayTitle({ documentType: 'unknown', examCount: 0 })).toBe('Documento')
+  it('tipos fixos por categoria', () => {
+    const t = (documentType: DocumentStructure['documentType']) =>
+      deriveDisplayTitle({ documentType, documentScope: 'single', examCount: 0 })
+    expect(t('anatomopathology')).toBe('Anatomopatológico')
+    expect(t('medical_report')).toBe('Relatório médico')
+    expect(t('prescription')).toBe('Receita médica')
+    expect(t('vaccination')).toBe('Comprovante de vacinação')
+    expect(t('attestation')).toBe('Atestado médico')
+    expect(t('omics')).toBe('Análise ômica')
+    expect(t('unknown')).toBe('Documento')
+  })
+})
+
+describe('ARCH-002 · normalizeModality', () => {
+  it('mapeia sinônimos para o nome canônico', () => {
+    expect(normalizeModality('ressonância magnética nuclear')).toBe('Ressonância magnética')
+    expect(normalizeModality('tomografia computadorizada de crânio')).toBe('Tomografia computadorizada')
+    expect(normalizeModality('ecodoppler de carótidas')).toBe('Ultrassonografia')
+    expect(normalizeModality('mamografia digital')).toBe('Mamografia')
+    expect(normalizeModality(null)).toBe('Exame de imagem')
+    expect(normalizeModality('modalidade rara XYZ')).toBe('modalidade rara XYZ')
   })
 })
 
 describe('ARCH-002 · contagem de exames DISTINTOS (não de biomarcadores)', () => {
-  it('um hemograma (muitos biomarcadores, mesmo sourceExamName) conta como 1 exame', () => {
+  it('um hemograma (muitos biomarcadores, mesmo sourceExamName) = 1 exame → "Hemograma completo"', () => {
     const biomarkers = [
       { name: 'Hemoglobina', sourceExamName: 'Hemograma completo' },
       { name: 'Hematócrito', sourceExamName: 'Hemograma completo' },
@@ -70,6 +88,8 @@ describe('ARCH-002 · contagem de exames DISTINTOS (não de biomarcadores)', () 
     ]
     expect(distinctExamNames(biomarkers)).toEqual(['Hemograma completo'])
     const s = classifyExamDocument({ examType: 'Hemograma', biomarkers })
+    expect(s.documentType).toBe('laboratory')
+    expect(s.documentScope).toBe('single')
     expect(s.examCount).toBe(1)
     expect(deriveDisplayTitle(s)).toBe('Hemograma completo')
   })
@@ -78,19 +98,19 @@ describe('ARCH-002 · contagem de exames DISTINTOS (não de biomarcadores)', () 
 describe('ARCH-002 · caso real Hermes Pardini (sangue + urina, vários exames)', () => {
   it('documento composto → "Exames laboratoriais" (regressão do bug "IgE látex")', () => {
     const biomarkers = [
-      { name: 'IgE específico para látex', sourceExamName: 'IgE específico - Látex' },
-      { name: 'Hemoglobina', sourceExamName: 'Hemograma completo' },
-      { name: 'Glicose', sourceExamName: 'Glicemia de jejum' },
-      { name: 'Colesterol total', sourceExamName: 'Colesterol total' },
-      { name: 'Densidade', sourceExamName: 'Exame de urina (EAS)' },
+      { name: 'IgE específico para látex', sourceExamName: 'IGE ESPECÍFICO PARA LÁTEX (K82)' },
+      { name: 'Hemoglobina', sourceExamName: 'HEMOGRAMA' },
+      { name: 'Glicose', sourceExamName: 'GLICOSE - JEJUM' },
+      { name: 'Creatinina', sourceExamName: 'CREATININA' },
+      { name: 'Densidade', sourceExamName: 'URINA ROTINA' },
     ]
     const s = classifyExamDocument({ examType: 'laboratorial', biomarkers })
-    expect(s.documentType).toBe('laboratory_panel')
+    expect(s.documentType).toBe('laboratory')
+    expect(s.documentScope).toBe('mixed') // tem sangue + urina
     expect(s.examCount).toBeGreaterThan(1)
     const title = deriveDisplayTitle(s)
     expect(title).toBe('Exames laboratoriais')
-    expect(title).not.toContain('látex')
-    expect(title).not.toContain('IgE')
+    expect(title).not.toMatch(/látex|ige/i)
   })
 })
 
@@ -100,6 +120,6 @@ describe('ARCH-002 · enriquecimento opcional de proveniência', () => {
       .toBe('Exames laboratoriais • Hermes Pardini • 12/07/2026')
   })
   it('sem metadados → título-base limpo', () => {
-    expect(withProvenance('TSH')).toBe('TSH')
+    expect(withProvenance('Hemograma')).toBe('Hemograma')
   })
 })

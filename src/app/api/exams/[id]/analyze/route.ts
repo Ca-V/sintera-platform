@@ -285,9 +285,11 @@ export async function POST(
     biomarkers: result.biomarkers.map(b => ({ name: b.name, sourceExamName: b.sourceExamName })),
   })
   finalUpdate.document_type = structure.documentType
-  const confidentStructure =
-    structure.examCount >= 1 ||
-    (structure.documentType !== 'laboratory_single' && structure.documentType !== 'unknown')
+  finalUpdate.document_scope = structure.documentScope
+  // Só sobrescreve o nome do arquivo quando aprendemos estrutura de verdade:
+  // categoria não-laboratorial detectada, OU laboratório com ≥1 exame distinto real.
+  // Evita transformar um nome de arquivo bom em "indeterminado"/"metabolismo".
+  const confidentStructure = structure.documentType !== 'laboratory' || structure.examCount >= 1
   if (confidentStructure) {
     const displayTitle = deriveDisplayTitle(structure)
     finalUpdate.display_title = displayTitle

@@ -1,76 +1,101 @@
 // Content Classifier — Convenção de nomenclatura documental (CAP-002 §Content Classifier).
 //
-// REGRA DE DOMÍNIO (fundadora, 12/07/2026): o nome de um registro representa o DOCUMENTO,
-// NUNCA um dos seus resultados internos. É vedado nomear um painel pelo primeiro biomarcador
-// (bug real: painel de sangue+urina do Hermes Pardini nomeado "IgE específico para látex").
+// REGRA DE DOMÍNIO (fundadora, 12/07/2026), a partir de bug real: um painel de sangue+urina
+// do Hermes Pardini foi nomeado "IGE Específico para Látex" — um único biomarcador
+// representando um documento composto. O nome do registro representa o DOCUMENTO, nunca um
+// resultado interno.
 //
-// A IA NÃO inventa o título — ela apenas descreve a ESTRUTURA do documento
-// ({ documentType, examCount, singleExamName, modality }). A regra de nomenclatura vive AQUI,
-// no domínio da aplicação, e é DETERMINÍSTICA (mesma estrutura → mesmo nome, sempre).
+// Algoritmo (fundadora): classificar documento → identificar CATEGORIA documental → aplicar
+// convenção de nomenclatura. NÃO apenas "contar exames". A IA descreve a estrutura; o nome
+// é DETERMINÍSTICO e vive AQUI, no domínio — reutilizável por todo adaptador do Capture Hub.
 //
-// Reutilizável por TODO adaptador do Capture Hub (Exames, Condições, Medicamentos, Inbox…),
-// não só pelo pipeline de exames.
+// Conceitos SEPARADOS (para não misturar categorias):
+//   • documentType  — a MÍDIA/categoria do documento (laboratory, imaging, prescription…)
+//   • documentScope — a abrangência (single | panel | mixed)
+//   • clinicalCategory — agrupamento clínico do painel (ex.: "hormonal") → "Painel hormonal".
+//     Reservado: só é populado quando conseguimos identificar o agrupamento com segurança;
+//     enquanto nulo, painel laboratorial cai para "Exames laboratoriais".
 
 export type DocumentType =
-  | 'laboratory_single'   // um único exame laboratorial (ex.: TSH isolado)
-  | 'laboratory_panel'    // vários exames num só documento (sangue, urina, misto)
-  | 'laboratory_urine'    // exame de urina isolado
-  | 'imaging'             // exame de imagem (RM, TC, US, RX…)
-  | 'anatomopathology'    // laudo anatomopatológico / histopatológico
-  | 'medical_report'      // relatório/laudo médico textual
-  | 'prescription'        // receita médica
-  | 'vaccination'         // comprovante de vacinação
-  | 'attestation'         // atestado médico
+  | 'laboratory'
+  | 'imaging'
+  | 'anatomopathology'
+  | 'medical_report'
+  | 'prescription'
+  | 'vaccination'
+  | 'omics'
+  | 'attestation'
   | 'unknown'
 
-/** Estrutura do documento — o que a IA descreve. NÃO contém um "título" pronto. */
+export type DocumentScope = 'single' | 'panel' | 'mixed'
+
 export interface DocumentStructure {
   documentType: DocumentType
-  /** Nº de exames DISTINTOS no documento (não de biomarcadores). Painel > 1. */
+  documentScope: DocumentScope
+  /** Nº de exames DISTINTOS identificados (por source_exam_name). 0 = não classificável. */
   examCount: number
-  /** Nome do exame quando há apenas um (ex.: "TSH", "Hemograma completo"). */
+  /** Nome do exame quando há apenas um (ex.: "Hemograma", "TSH"). */
   singleExamName?: string | null
-  /** Modalidade de imagem, quando documentType === 'imaging'. */
+  /** Texto da modalidade de imagem, quando documentType === 'imaging'. */
   modality?: string | null
+  /** Agrupamento clínico do painel (ex.: "hormonal"). Reservado; ver nota no topo. */
+  clinicalCategory?: string | null
 }
-
-const FIXED_TITLE: Partial<Record<DocumentType, string>> = {
-  anatomopathology: 'Anatomopatológico',
-  medical_report:   'Relatório médico',
-  prescription:     'Receita médica',
-  vaccination:      'Comprovante de vacinação',
-  attestation:      'Atestado médico',
-}
-
-const PANEL_TITLE = 'Exames laboratoriais'
 
 function clean(s: string | null | undefined): string {
   return (s ?? '').replace(/\s+/g, ' ').trim()
 }
 
+const URINE_RE   = /(urina|urin[áa]lise|\beas\b|urocultura|sedimento urin)/i
+const IMAGING_RE = /(resson[âa]ncia|tomografia|ultrassonografia|ultrassom|ultra-som|radiografia|raio.?x|densitometria|mamografia|ecocardiograma|ecodoppler|doppler|cintilografia|pet.?ct|angiografia|imagem)/i
+const ANATOMO_RE = /(anatomopatol|histopatol|bi[óo]psia|citol[óo]gic|imuno.?histoqu[íi]mic|papanicolau|colpocitol)/i
+
+function isUrine(name: string | null | undefined): boolean {
+  return URINE_RE.test(name ?? '')
+}
+
+/** Normaliza a modalidade de imagem para o nome canônico (tabela da fundadora). */
+export function normalizeModality(modality: string | null | undefined): string {
+  const m = clean(modality)
+  if (!m) return 'Exame de imagem'
+  // Abreviações padrão (maiúsculas, palavra isolada) — só aqui, já sabendo que é imagem.
+  if (/resson[âa]ncia/i.test(m) || /\bRM\b/.test(m))   return 'Ressonância magnética'
+  if (/tomografia|pet.?ct/i.test(m) || /\bTC\b/.test(m)) return 'Tomografia computadorizada'
+  if (/ultrassonografia|ultrassom|ultra-som|doppler/i.test(m) || /\bUS\b/.test(m)) return 'Ultrassonografia'
+  if (/mamografia/i.test(m))                           return 'Mamografia'
+  if (/densitometria/i.test(m))                        return 'Densitometria óssea'
+  if (/ecocardiograma/i.test(m))                       return 'Ecocardiograma'
+  if (/cintilografia/i.test(m))                        return 'Cintilografia'
+  if (/radiografia|raio.?x/i.test(m) || /\bRX\b/.test(m)) return 'Radiografia'
+  return m // texto original quando não reconhecida (factual, sem inventar)
+}
+
 /**
- * Deriva o nome de EXIBIÇÃO do documento a partir da sua estrutura.
+ * Deriva o nome de EXIBIÇÃO a partir da CATEGORIA + ESCOPO do documento.
  * Determinística — nunca devolve um biomarcador para representar um painel.
  */
 export function deriveDisplayTitle(s: DocumentStructure): string {
-  // 1. Tipos não-laboratoriais com nome fixo têm precedência.
-  if (s.documentType === 'imaging') {
-    return clean(s.modality) || 'Exame de imagem'
+  switch (s.documentType) {
+    case 'imaging':          return normalizeModality(s.modality)
+    case 'anatomopathology': return 'Anatomopatológico'
+    case 'medical_report':   return 'Relatório médico'
+    case 'prescription':     return 'Receita médica'
+    case 'vaccination':      return 'Comprovante de vacinação'
+    case 'attestation':      return 'Atestado médico'
+    case 'omics':            return 'Análise ômica'
+    case 'laboratory': {
+      if (s.documentScope === 'single') {
+        const name = clean(s.singleExamName)
+        if (isUrine(name)) return 'Urina tipo I'
+        return name || 'Exame laboratorial'
+      }
+      // panel | mixed → representa o CONJUNTO, nunca um resultado interno.
+      const cat = clean(s.clinicalCategory)
+      if (cat && s.documentScope === 'panel') return `Painel ${cat.toLowerCase()}`
+      return 'Exames laboratoriais'
+    }
+    default:                 return 'Documento'
   }
-  const fixed = FIXED_TITLE[s.documentType]
-  if (fixed) return fixed
-
-  // 2. Laboratoriais: o CONJUNTO manda. Vários exames → nunca um biomarcador.
-  if (s.examCount > 1) return PANEL_TITLE
-
-  if (s.documentType === 'laboratory_urine') return 'Exame de urina'
-
-  // 3. Exame único → o nome do próprio exame.
-  const single = clean(s.singleExamName)
-  if (single) return single
-
-  // 4. Sem estrutura suficiente: rótulo neutro, seguro (nunca um resultado interno).
-  return s.documentType === 'unknown' ? 'Documento' : 'Exame laboratorial'
 }
 
 /**
@@ -92,22 +117,16 @@ export function withProvenance(
 }
 
 // ── Classificação a partir da extração de exames laboratoriais/imagem ──────────────
-// Ponte entre o extractor atual (que devolve examType livre + biomarcadores com
-// sourceExamName) e a DocumentStructure. À medida que a IA passar a devolver
-// documentType/examCount explicitamente, esta ponte encolhe — a regra de nome não muda.
-
-const IMAGING_RE = /(resson[âa]ncia|tomografia|ultrassonografia|ultrassom|ultra-som|radiografia|raio.?x|densitometria|mamografia|ecocardiograma|ecodoppler|doppler|cintilografia|pet.?ct|angiografia|imagem)/i
-const ANATOMO_RE = /(anatomopatol|histopatol|bi[óo]psia|citol[óo]gic|imuno.?histoqu[íi]mic|papanicolau|colpocitol)/i
-const URINE_RE   = /(urina|urin[áa]lise|\beas\b|urocultura|sedimento urin)/i
+// Ponte entre o extractor atual (examType livre + biomarcadores com sourceExamName) e a
+// DocumentStructure. À medida que a IA passar a devolver documentType/scope explícitos,
+// esta ponte encolhe — a regra de nome não muda.
 
 export interface ExamExtractionLike {
-  /** Categoria livre que a IA devolve hoje (parsed.exam_type). */
   examType: string | null
-  /** Biomarcadores extraídos; cada um carrega o exame de origem (sourceExamName). */
   biomarkers: Array<{ name: string; sourceExamName: string | null }>
 }
 
-/** Conta exames DISTINTOS pelo sourceExamName (fallback: nº de biomarcadores). */
+/** Conta exames DISTINTOS pelo sourceExamName (um hemograma = 1 exame, não N biomarcadores). */
 export function distinctExamNames(biomarkers: ExamExtractionLike['biomarkers']): string[] {
   const seen = new Map<string, string>()
   for (const b of biomarkers) {
@@ -121,26 +140,25 @@ export function distinctExamNames(biomarkers: ExamExtractionLike['biomarkers']):
 
 export function classifyExamDocument(ex: ExamExtractionLike): DocumentStructure {
   const examType = clean(ex.examType)
-  const distinct = distinctExamNames(ex.biomarkers)
-  // Sem sourceExamName? cai para a contagem de biomarcadores (proxy conservador).
-  const examCount = distinct.length > 0 ? distinct.length : ex.biomarkers.length
 
   if (examType && IMAGING_RE.test(examType)) {
-    return { documentType: 'imaging', examCount: 0, modality: examType }
+    return { documentType: 'imaging', documentScope: 'single', examCount: 0, modality: examType }
   }
   if (examType && ANATOMO_RE.test(examType)) {
-    return { documentType: 'anatomopathology', examCount: 0 }
+    return { documentType: 'anatomopathology', documentScope: 'single', examCount: 0 }
   }
 
+  const distinct = distinctExamNames(ex.biomarkers)
+  // examCount = exames DISTINTOS reais; sem source_exam_name → 0 (não classificável).
+  const examCount = distinct.length
   const single = distinct[0] ?? (ex.biomarkers[0]?.sourceExamName ?? null) ?? (examType || null)
-  const isUrineOnly =
-    examCount <= 1 && URINE_RE.test(single ?? '') && !distinct.some(n => !URINE_RE.test(n))
 
-  if (isUrineOnly) {
-    return { documentType: 'laboratory_urine', examCount, singleExamName: single }
+  if (examCount <= 1) {
+    return { documentType: 'laboratory', documentScope: 'single', examCount, singleExamName: single }
   }
-  if (examCount > 1) {
-    return { documentType: 'laboratory_panel', examCount, singleExamName: single }
-  }
-  return { documentType: 'laboratory_single', examCount, singleExamName: single }
+
+  const hasUrine = distinct.some(isUrine)
+  const hasNonUrine = distinct.some(n => !isUrine(n))
+  const scope: DocumentScope = hasUrine && hasNonUrine ? 'mixed' : 'panel'
+  return { documentType: 'laboratory', documentScope: scope, examCount, singleExamName: single }
 }

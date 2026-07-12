@@ -189,18 +189,24 @@ Trocar OCR/IA no futuro **não** invalida documentos nem quebra proveniência
 - **Convenção de nomenclatura documental (REGRA DE DOMÍNIO):** o nome do registro
   representa o **DOCUMENTO**, NUNCA um dos seus resultados internos. É **vedado** nomear
   um painel pelo primeiro biomarcador (bug real: painel Hermes Pardini nomeado "IgE
-  látex"). **A IA NÃO inventa o título** — retorna só estrutura:
-  `{ document_type, exam_count, single_exam_name, modality?, issuer?, date? }`. A
-  **aplicação aplica uma convenção DETERMINÍSTICA** (previsível):
-  - `exam_count == 1` → `single_exam_name` (ex.: "TSH", "PSA Total")
-  - `exam_count > 1` (painel/sangue+urina/misto) → **"Exames laboratoriais"** (biomarcadores ficam DENTRO do doc)
-  - `imaging` → **modalidade** (Ressonância Magnética, Tomografia, Ultrassonografia…)
-  - `laboratory_urine` isolado → "Exame de urina" · `anatomopathology` → "Anatomopatológico"
-  - `prescription` → "Receita médica" · `medical_report` → "Relatório médico" · `attestation` → "Atestado médico"
-  - Enriquecimento opcional: `Exames laboratoriais • Hermes Pardini • 12/07/2026`.
-  Modelo de dados: separar **`display_title`** (nome de exibição) de **`document_type`**
-  (`laboratory_single|laboratory_panel|imaging|medical_report|prescription|vaccination|…`).
-  Regra vale para TODO documento (não só Exames/Condições) — mora no Content Classifier.
+  látex"). Algoritmo: **classificar → identificar CATEGORIA documental → aplicar
+  convenção** (não apenas "contar exames"). **A IA NÃO inventa o título** — descreve a
+  estrutura; a **aplicação** aplica um nome **DETERMINÍSTICO** (`deriveDisplayTitle`).
+  Conceitos SEPARADOS (para não misturar categorias):
+  - **`document_type`** (categoria/mídia): `laboratory | imaging | anatomopathology | medical_report | prescription | vaccination | omics | attestation | unknown`
+  - **`document_scope`** (abrangência): `single | panel | mixed`
+  - **`clinical_category`** (agrupamento clínico do painel, ex. "hormonal") — **reservado**: só populado quando identificável com segurança.
+  - **`display_title`** — nome de exibição derivado dos anteriores.
+
+  Tabela de nomenclatura: laboratory·single → **nome do exame** (Hemograma, TSH) · urina isolada → **"Urina tipo I"** ·
+  laboratory·panel/mixed → **"Exames laboratoriais"** (ou **"Painel {categoria}"** quando `clinical_category` conhecida) ·
+  imaging → **modalidade canônica** (Ressonância magnética · Tomografia computadorizada · Ultrassonografia…) ·
+  anatomopathology → "Anatomopatológico" · prescription → "Receita médica" · medical_report → "Relatório médico" ·
+  vaccination → "Comprovante de vacinação" · attestation → "Atestado médico" · omics → "Análise ômica".
+  Contagem por **exames DISTINTOS** (`source_exam_name`), não por biomarcadores (um hemograma = 1 exame).
+  Enriquecimento opcional: `Exames laboratoriais • Hermes Pardini • 12/07/2026`.
+  Regra vale para TODO documento (não só Exames/Condições) — mora no Content Classifier
+  (`@/lib/capture/document-naming`).
 - **Extractor por tipo** — reusa o que já existe (visão de exames/biomarcadores,
   medicamentos/scan, `/api/vision/condition`, bioimpedância). Novo tipo = novo extractor.
 - **`needs_review`** — registro de origem-IA nasce pendente; gravação definitiva só após
