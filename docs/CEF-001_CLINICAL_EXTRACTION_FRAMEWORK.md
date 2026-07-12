@@ -126,6 +126,12 @@ antes de extrair (evita extrair de material ruim):
 Só depois de validado o extrator específico roda. Melhora muito a qualidade da extração e
 alimenta a confiança (§5.2).
 
+**Recoverable × Non-Recoverable** (fundadora): o Validator classifica o defeito.
+- **Recoverable** (imagem torta, resolução média, brilho ruim, OCR parcial) → a IA **continua**
+  (com confiança rebaixada).
+- **Non-Recoverable** (metade da página ausente, PDF corrompido, documento vazio, páginas
+  trocadas) → **NÃO extrair** → **solicitar novo documento**. Evita gerar dado de baixa qualidade.
+
 ## 5.2 Confiança estrutural (a regra do caso EEG "2002")
 
 O CEF produz não só um resultado, mas um **nível de confiança estrutural** por campo:
@@ -195,4 +201,23 @@ congelar após ARG). Implementado até aqui: apenas a 1ª casca (nomenclatura n�
 tela de detalhe + reconhecimento de tipos no Content Classifier). O registro de leitores, os
 modelos de resultado por tipo, a semântica de datas e o Document Bundle são o corpo do CEF.
 
-Ver `docs/CAP-002_CAPTURE_HUB.md`, `docs/GOVERNANCA.md`, [[modelo_canonico_plataforma]].
+## 10. Métricas de maturidade (o sucesso passa a ser medido, não especificado)
+
+A partir daqui, o progresso é medido por indicadores concretos do mecanismo de captura+extração:
+- **Tipos documentais suportados** pelo CEF (cobertura).
+- **Gold Standard Cases que passam automaticamente** (contra `expected.json`).
+- **Taxa de confiança estrutural ALTA**.
+- **Redução de correções manuais**.
+- **Precisão das datas de realização**.
+- **Taxa de documentos corretamente agrupados em bundles**.
+
+## 11. Encerramento da especificação (fundadora, 12/07/2026)
+
+A fase de especificação está **encerrada**. Capture Hub + CEF + ADL + ARG + RI-001 + Clinical
+Reference Corpus + Document Validator formam um conjunto suficiente para orientar a
+implementação. **O próximo grande salto NÃO é escrever mais spec** — é fazer o **primeiro
+extrator especializado** (provavelmente **neurofisiologia** ou **oftalmologia**) passar
+**integralmente GS-003 e GS-004**, provando o CEF na prática. Sequência: **RI-001 → HUB-001 →
+1º leitor do CEF validado contra o CRC**.
+
+Ver `docs/CAP-002_CAPTURE_HUB.md`, `docs/GOVERNANCA.md`, `docs/QA/GOLD_STANDARD_CASES.md`, [[modelo_canonico_plataforma]].

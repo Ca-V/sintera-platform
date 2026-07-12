@@ -1,0 +1,26 @@
+{
+  "case": "GS-004",
+  "title": "Pentacam (córnea)",
+  "category": "ophthalmology",
+  "document_type": "ophthalmology",
+  "document_scope": "single",
+  "bundle": { "is_bundle": true, "pages_expected": 2 },
+  "display_title": "Tomografia de córnea (Pentacam)",
+  "exam_date": {
+    "value": "2026-03-18",
+    "field": "data de realização",
+    "min_confidence": "HIGH",
+    "must_not_be": ["2025-01-26"]
+  },
+  "result": {
+    "type": "parâmetros tomográficos",
+    "must_not_be": "biomarcadores",
+    "per_eye": true,
+    "expected_fields": ["K1", "K2", "Kmax", "espessura mínima", "BAD-D", "elevação anterior", "elevação posterior"]
+  },
+  "regression_of_records": [
+    "cc4d2445-3d61-4d75-afe6-dfc0ab332a12",
+    "4835afc8-d0a2-4052-aef8-4b4e2c027758"
+  ],
+  "why_hard": "Legado classificou como laboratory com 8/18 'biomarcadores' e leu data '2025-01-26' (errada). CEF deve juntar em 1 bundle, ler parâmetros tomográficos por olho e usar realização com confiança HIGH."
+}

@@ -1,0 +1,25 @@
+{
+  "case": "GS-003",
+  "title": "EEG multipágina",
+  "category": "neurophysiology",
+  "document_type": "neurophysiology",
+  "document_scope": "single",
+  "bundle": { "is_bundle": true, "pages_expected": 2 },
+  "display_title": "Eletroencefalograma",
+  "exam_date": {
+    "value": "2026-02-27",
+    "field": "data de realização",
+    "min_confidence": "HIGH",
+    "must_not_be": ["2002-07-27"]
+  },
+  "result": {
+    "type": "achados",
+    "must_not_be": "biomarcadores",
+    "expected_fields": ["ritmo de base", "frequência dominante", "assimetrias", "descargas epileptiformes", "conclusão"]
+  },
+  "regression_of_records": [
+    "ac3f4673-434b-4250-82eb-20cf8ef8442f",
+    "89bf7e4b-ddad-4bbc-9c9f-69086f017d54"
+  ],
+  "why_hard": "Legado classificou como laboratory com 12/19 'biomarcadores' e leu data '2002' (protocolo/nascimento). CEF deve juntar em 1 bundle, ler achados e usar realização com confiança HIGH."
+}

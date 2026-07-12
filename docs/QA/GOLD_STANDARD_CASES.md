@@ -1,12 +1,23 @@
-# Gold Standard Cases — acervo oficial de regressão (Capture Hub + CEF)
+# Clinical Reference Corpus (CRC) — índice
 
-> **Ativos de engenharia** (decisão da fundadora, 12/07/2026). Conjunto de documentos REAIS
-> que validam toda evolução do **Capture Hub (CAP-002)** e do **Clinical Extraction Framework
-> (CEF-001)**. Princípio invertido: **primeiro reunir os casos difíceis → definir o protocolo
-> de leitura → implementar** (não o contrário). O CEF nasce orientado por estes casos.
+> **Ativos de engenharia** (fundadora, 12/07/2026). O **CRC** é o acervo de documentos REAIS que
+> valida toda evolução do **Capture Hub (CAP-002)** e do **Clinical Extraction Framework
+> (CEF-001)**. Este arquivo é o **ÍNDICE**; cada caso vive numa pasta própria em `docs/QA/CRC/`:
 >
-> **Regra:** estes registros NÃO devem ser alterados/mesclados manualmente. Eles provam se a
-> solução sistemática (CEF + Document Bundle) resolve os cenários. Sem juízo clínico (RDC 657).
+> ```
+> CRC/
+> ├── GS-003/
+> │   ├── documento.pdf     (a exportar do storage)
+> │   ├── expected.json     (asserção de regressão — FEITO)
+> │   ├── notes.md          (FEITO)
+> │   └── screenshots/
+> └── GS-004/  …
+> ```
+>
+> **Uso automatizado:** `Extractor → caso GS → comparar com expected.json → passou? → confiança →
+> aprovado`. Sem julgamento humano a cada vez. Princípio invertido: **reunir casos difíceis →
+> definir o protocolo → implementar**. **Regra:** NÃO alterar/mesclar estes registros manualmente
+> — provam se a solução sistemática resolve. Sem juízo clínico (RDC 657).
 
 ---
 
