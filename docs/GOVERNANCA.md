@@ -19,6 +19,7 @@ O nível indica **quão raramente o documento muda** e **quanto peso ele carrega
 | **REL-001** | Camada de Comunicação (Relatório = 1º consumidor) |
 | **DS-001** | Design System (tokens, componentes, paleta) |
 | **CAP-002** | **Capture Hub** — domínio transversal de ingestão (🧊 congelado v1.0) |
+| **CEF-001** | **Clinical Extraction Framework** — como cada tipo de documento é compreendido (spec v1.0, par do Capture Hub) |
 | **KG v2** | Knowledge Graph (modelo científico) |
 | **SRL** | Scientific Retrieval Layer |
 | **SEC-001** | Projeto Shield — Segurança/Governança/Continuidade |
@@ -108,6 +109,7 @@ altera o status aqui.
 | **DOC-001** | Repositório documental único operacional | ⏳ |
 | **MAIL-001** | 1º adaptador assíncrono (e-mail exclusivo) ponta a ponta | ⏳ |
 | **AUTO-001** | 1ª ingestão totalmente automática concluída com sucesso | ⏳ |
+| **CEF-001** | Clinical Extraction Framework — leitura por tipo de exame (registro de leitores + modelos de resultado + semântica de datas + Document Bundle). **Próxima grande iniciativa após o HUB-001** | 📝 spec |
 
 Legenda: ⏳ pendente · 🔧 em andamento · ✅ concluído.
 

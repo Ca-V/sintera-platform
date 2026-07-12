@@ -183,6 +183,11 @@ Trocar OCR/IA no futuro **não** invalida documentos nem quebra proveniência
 ## 6. Pipeline único, classificação e dedup
 
 - **OCR / Vision / Parser** — leitura do conteúdo (imagem, PDF, texto).
+- **Document Bundle** — um documento pode ter **N páginas** (fotos/PDFs/frente-verso/anexos).
+  Dois arquivos do MESMO exame são **1 documento, N páginas**, NÃO 2 exames. O Bundle é montado
+  ANTES da extração (a captura multipágina — imagens → 1 PDF — é o 1º passo). O
+  Clinical Extraction Framework (CEF-001) consome o Bundle já montado. Resolve laudos longos,
+  anexos, frente/verso e gráficos em páginas separadas.
 - **Content Classifier** (transversal, TEMA C) — classifica o **tipo** por CONTEÚDO →
   `exame | medicamento | condicao | vacina | omica | recurso | administrativo`.
   **Factual** — classifica, não interpreta clinicamente.
