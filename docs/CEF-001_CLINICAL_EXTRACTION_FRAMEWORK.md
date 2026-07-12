@@ -67,11 +67,13 @@ Document (Bundle)
       ↓
 Content Classifier        (identifica o TIPO — já existe no Capture Hub)
       ↓
+Document Validator        (qualidade ANTES de extrair — ver §5.1)
+      ↓
 Exam Type Registry        (resolve o leitor da família do exame)
       ↓
 Specific Extractor        (protocolo + terminologia + referência do tipo)
       ↓
-Structured Result         (modelo de resultado próprio do tipo)
+Structured Result + Confidence   (resultado próprio do tipo + confiança estrutural — §5.2)
 ```
 
 Cada **família de exame tem seu próprio extrator**. O laboratorial atual passa a ser **um**
@@ -112,6 +114,32 @@ Cada tipo documental tem semântica de data diferente — o leitor do tipo sabe 
 realização e ignora protocolo/nascimento (bug do EEG "2002").
 
 ---
+
+## 5.1 Document Validator (estágio antes da extração — fundadora)
+
+Entre o Classifier e o Extractor entra um **Document Validator**, que verifica a QUALIDADE
+antes de extrair (evita extrair de material ruim):
+
+- documento completo? · páginas faltando? · orientação correta? · resolução suficiente?
+- **datas plausíveis?** · conflito entre páginas? · são múltiplos documentos (não 1 bundle)?
+
+Só depois de validado o extrator específico roda. Melhora muito a qualidade da extração e
+alimenta a confiança (§5.2).
+
+## 5.2 Confiança estrutural (a regra do caso EEG "2002")
+
+O CEF produz não só um resultado, mas um **nível de confiança estrutural** por campo:
+`HIGH | MEDIUM | LOW`. **Regra:** um campo de **baixa confiança NÃO substitui automaticamente**
+um valor existente — em especial a **data de realização**. Isso teria evitado o EEG virar "2002".
+Baixa confiança → mantém o valor anterior e/ou sinaliza para revisão humana (gate).
+
+## 5.3 Desenvolvimento orientado por casos (Gold Standard)
+
+O CEF **nasce a partir de casos reais difíceis**, não de exemplos simples. Ordem:
+**reunir os casos difíceis → definir o protocolo de leitura → implementar** (não desenvolver e
+depois procurar exemplos). O acervo oficial de regressão está em
+`docs/QA/GOLD_STANDARD_CASES.md` (GS-001..GS-009 + casos reais já capturados: EEG e Pentacam =
+GS-003/GS-004). Cada leitor do CEF é validado contra o caso GS correspondente.
 
 ## 6. Document Bundle (pertence ao Capture Hub, consumido pelo CEF)
 
