@@ -542,12 +542,11 @@ não é infinito. A **última camada é a Governança, validada por HUMANO/corpu
 que mantém o RDC 657 e o aprendizado governado. Sem esse âncora humano, "validação entre camadas" viraria
 IA validando IA.
 
-**Pipeline completo (visão) — REORGANIZADO (fundadora, 13/07/2026: descoberta ANTES da extração):**
+**Pipeline completo (visão) — 9 ETAPAS (fundadora, 13/07/2026: descoberta ANTES da extração):**
 ```
-Bundle → DESCOBERTA do conteúdo (quantos documentos? quantos exames? fronteiras? modalidade?)
-  → Segmentação (bundle → N registros clínicos) → [por registro:] Identidade → Classificação clínica
-  → Extração/Representação estruturada → COBERTURA (tudo que a Descoberta achou foi estruturado?)
-  → Validação estrutural → Contextualização científica → Camada cognitiva → Governança (humano/corpus)
+1. Ingestão → 2. Análise Estrutural → 3. Segmentação (→ N CDUs) → [por CDU:] 4. Identidade Documental
+  → 5. Identidade Clínica → 6. Representação Estruturada (CEF) → 7. Validação da Representação
+  → 8. Cobertura → 9. UCDA   (→ Contextualização científica → Camada cognitiva → Governança humano/corpus)
 ```
 Cada seta é também uma **validação**: a camada seguinte valida a informação da anterior antes do uso.
 
@@ -562,16 +561,30 @@ mamografia + 2 US (não sabe que há 3 exames) · painel lab (não sabe que há 
 achados de parâmetros). **Enquanto a Descoberta estiver incompleta, todos os problemas seguintes
 reaparecem, em qualquer modalidade.**
 
-**DESCOBERTA do conteúdo documental** (nova 1ª etapa, **read-only — não extrai**): identifica **quantos
-documentos clínicos** existem · **quantos exames** · suas **fronteiras** · sua **modalidade**. É o
-mecanismo do **contador independente** (antes atribuído à Cobertura) — enumera as entidades. Absorve a
-**Segmentação** (quantos documentos) e alimenta Identidade/Classificação. Imperfeita, mas **independente**
-da extração → o desacordo Descoberta × extração é sinal forte; Descoberta incerta → fail-safe INCOMPLETO.
+**A "Descoberta" separa-se em DUAS etapas explícitas (refinamento fundadora, 13/07):**
+- **Análise Estrutural** (read-only, **engenharia da informação — não interpreta medicina**): a organização
+  física e lógica do material — páginas · anexos · texto · imagens · tabelas · laudos · assinaturas ·
+  blocos independentes · cabeçalhos repetidos · datas diferentes · emissores diferentes. **Format-agnostic**
+  (PDF/DICOM/HL7/FHIR/XML).
+- **Segmentação**: usa a estrutura para responder **quantas unidades clínicas independentes existem** e
+  cria **uma unidade de processamento (CDU) para cada uma**.
 
-**Reorganização do roadmap de execução** (a Cobertura deixa de *descobrir* e passa a só *validar*):
-`Descoberta → Segmentação → Identidade → Classificação (Clinical Identity Registry) → CEF → COBERTURA
-(valida: descoberto × estruturado) → UCDA`. **Timeout / retries / performance = robustez operacional
-(backlog), NÃO prioridade** — só rendem valor depois que a base de ingestão/compreensão estiver sólida.
+**CDU — Clinical Document Unit (novo objeto lógico):** o **Bundle é apenas o CONTÊINER**; após a
+Segmentação surgem **unidades independentes (CDUs)**, e **cada CDU percorre todo o pipeline** sozinha. A
+CDU é a ponte Captura→UCDA: **é o que a UCDA representa como "evidência clínica"**.
+**Fronteira da CDU (refinamento Claude — resolve "painel = 1 ou N CDUs"):** uma CDU = **uma identidade
+documental única + uma modalidade**; os sub-elementos (resultados de um painel, os 2 olhos do Pentacam,
+grupos do EEG) vivem **DENTRO** da CDU. Dois níveis de enumeração: **Segmentação = inter-CDU** ("quantos
+documentos?"; 3 laudos = 3 CDUs) · **Cobertura = intra-CDU** ("quantos resultados/olhos/grupos desta CDU
+foram estruturados?"; painel de 1 lab/data = **1 CDU** com N resultados dentro). Evita estilhaçar um painel.
+
+**Efeito no CEF:** ele **nunca mais recebe um PDF/Bundle heterogêneo** — recebe uma **entidade clínica já
+delimitada** (uma CDU com identidade + modalidade), o que aumenta a confiabilidade de qualquer extrator.
+
+**Roadmap de execução reorganizado:** `Ingestão → Análise Estrutural → Segmentação → Identidade Documental
+→ Identidade Clínica → CEF → Validação da Representação → Cobertura → UCDA`. **Timeout / retries /
+performance = robustez operacional (backlog), NÃO prioridade.** Próxima entrega de execução = a etapa de
+**Análise Estrutural + Segmentação** (compreensão documental).
 
 ### Princípio da Cobertura Documental (CONSTITUCIONAL — fundadora, 13/07/2026)
 
