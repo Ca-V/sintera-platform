@@ -37,15 +37,20 @@ export async function POST(
   // 2. Ownership + busca file_url e status anterior (para preservar 'processed' em caso de falha)
   const { data: exam } = await supabase
     .from('exams')
-    .select('id, file_url, status')
+    .select('id, file_url, status, display_title, document_type')
     .eq('id', examId)
     .eq('user_id', userId)
-    .single() as { data: { id: string; file_url: string | null; status: string } | null }
+    .single() as { data: { id: string; file_url: string | null; status: string; display_title: string | null; document_type: string | null } | null }
   const previousStatus = (exam as { status: string } | null)?.status ?? 'pending'
 
   if (!exam) {
     return NextResponse.json({ error: 'Exame não encontrado.' }, { status: 404 })
   }
+
+  // Princípio da Identidade Documental (GOVERNANCA) — a identidade documental é WRITE-ONCE:
+  // estabelecida na 1ª extração e imutável nas reextrações. `document_type` só é gravado pelo
+  // bloco de identidade, então != null sinaliza que a identidade já foi estabelecida.
+  const identityEstablished = exam.document_type != null
 
   // HTTP 409 — protege contra requisições duplicadas e chamadas diretas via DevTools
   if (exam.status === 'processing') {
@@ -281,61 +286,70 @@ export async function POST(
   //     degradar um nome bom quando a extração não classificou nada.
   //     A data do laudo é FATO impresso — preenche exam_date só quando extraída.
   const finalUpdate: Record<string, unknown> = { status: 'processed' }
-  if (result.examDate) finalUpdate.exam_date = result.examDate
-  if (result.patientName) finalUpdate.patient_name = result.patientName
 
+  // classifyExamDocument é DETERMINÍSTICO (regra sobre biomarcadores/texto). Usado para os
+  // metadados de extração sempre, e — só na 1ª vez — para estabelecer a identidade documental.
   const structure = classifyExamDocument({
     examType: result.examType,
     biomarkers: result.biomarkers.map(b => ({ name: b.name, sourceExamName: b.sourceExamName })),
     text: examTextForIssuer,
   })
-  finalUpdate.document_type = structure.documentType
-  finalUpdate.document_scope = structure.documentScope
 
-  // Metadados de extração (CEF) — completude RELATIVA AO EXTRATOR, não ao documento.
-  // Heurística interina (type-agnostic): cobertura de faixa de referência sinaliza o quanto
-  // foi estruturado; cada extrator especializado do CEF passará a computar isto propriamente.
+  // Metadados de extração (CEF) — SEMPRE atualizam (refletem a EXTRAÇÃO, não a identidade).
+  // Completude RELATIVA AO EXTRATOR; heurística interina (cobertura de faixa de referência).
   const bmN = result.biomarkers.length
   const bmWithRef = result.biomarkers.filter(b => b.rangeExtracted || b.referenceMin != null || b.referenceMax != null).length
   const completeness = bmN === 0 ? 'document_only' : (bmWithRef / bmN >= 0.5 ? 'structured' : 'partial')
   finalUpdate.extraction_completeness = completeness
   finalUpdate.structural_confidence = completeness === 'structured' ? 'high' : completeness === 'partial' ? 'medium' : 'low'
-  finalUpdate.extractor_family = structure.documentType
-  finalUpdate.extractor_version = structure.documentType === 'laboratory' ? 'laboratory-v1' : 'heuristic-v0'
+  // Quando a identidade já está travada, o family segue o document_type estabelecido.
+  const effectiveDocType = identityEstablished ? (exam.document_type ?? structure.documentType) : structure.documentType
+  finalUpdate.extractor_family = effectiveDocType
+  finalUpdate.extractor_version = effectiveDocType === 'laboratory' ? 'laboratory-v1' : 'heuristic-v0'
   finalUpdate.processed_at = new Date().toISOString()
-  // Só sobrescreve o nome do arquivo quando aprendemos estrutura de verdade:
-  // categoria não-laboratorial detectada, OU laboratório com ≥1 exame distinto real.
-  // Evita transformar um nome de arquivo bom em "indeterminado"/"metabolismo".
-  const confidentStructure = structure.documentType !== 'laboratory' || structure.examCount >= 1
-  if (confidentStructure) {
-    const displayTitle = deriveDisplayTitle(structure)
-    finalUpdate.display_title = displayTitle
-    // Enriquecimento (fundadora): nome do laboratório emissor. Ex.: "Exames
-    // laboratoriais • Hermes Pardini". display_title fica limpo; `type` (nome
-    // exibido) recebe a proveniência. Best-effort — nunca quebra a análise.
-    const issuer = await extractIssuer(examTextForIssuer)
-    if (issuer) finalUpdate.issuer = issuer
-    finalUpdate.type = issuer ? withProvenance(displayTitle, { issuer }) : displayTitle
-  } else if (result.biomarkers.length === 0) {
-    // Sem biomarcadores E sem estrutura confiável (ex.: PDF escaneado/imagem, exame de
-    // imagem, oftalmológico, pedido…): o Content Classifier LÊ o próprio documento para
-    // nomear — em vez de manter o nome do arquivo (ex.: "CamScanner …"). Best-effort.
-    const docMediaType = isImage
-      ? (filePath.endsWith('.png') ? 'image/png' : filePath.endsWith('.webp') ? 'image/webp' : 'image/jpeg')
-      : 'application/pdf'
-    const doc = await classifyDocumentAI({ base64: pdfBuffer.toString('base64'), mediaType: docMediaType })
-    if (doc?.displayName) {
-      // Passa pela mesma regra determinística (prefixo "Pedido —" p/ solicitações etc.).
-      const derived = deriveDisplayTitle({
-        documentType: doc.documentType as never,
-        documentScope: 'single', examCount: 0,
-        singleExamName: doc.displayName, modality: doc.displayName,
-      })
-      const title = derived === 'Documento' ? doc.displayName : derived
-      finalUpdate.document_type = doc.documentType
-      finalUpdate.display_title = title
-      finalUpdate.type = doc.issuer ? withProvenance(title, { issuer: doc.issuer }) : title
-      if (doc.issuer) finalUpdate.issuer = doc.issuer
+
+  // ── IDENTIDADE DOCUMENTAL — WRITE-ONCE (Princípio da Identidade Documental, GOVERNANCA) ──
+  // Estabelecida SÓ na 1ª extração; "Extrair novamente" NUNCA altera nome/type/scope/data/
+  // paciente — só os resultados estruturados (biomarcadores) e os metadados acima. Só uma
+  // ação explícita de correção pode mudar a identidade. Corrige o churn do Pentacam
+  // (reextrair mudava "Mapeamento ocular"/"OCULUS Pentacam"/… a cada clique).
+  if (!identityEstablished) {
+    // A data do laudo e o paciente são FATOS documentais — fixados na 1ª extração.
+    if (result.examDate) finalUpdate.exam_date = result.examDate
+    if (result.patientName) finalUpdate.patient_name = result.patientName
+    finalUpdate.document_type = structure.documentType
+    finalUpdate.document_scope = structure.documentScope
+
+    // Só sobrescreve o nome do arquivo quando aprendemos estrutura de verdade:
+    // categoria não-laboratorial detectada, OU laboratório com ≥1 exame distinto real.
+    const confidentStructure = structure.documentType !== 'laboratory' || structure.examCount >= 1
+    if (confidentStructure) {
+      const displayTitle = deriveDisplayTitle(structure)
+      finalUpdate.display_title = displayTitle
+      // Enriquecimento (fundadora): nome do laboratório emissor. Best-effort.
+      const issuer = await extractIssuer(examTextForIssuer)
+      if (issuer) finalUpdate.issuer = issuer
+      finalUpdate.type = issuer ? withProvenance(displayTitle, { issuer }) : displayTitle
+    } else if (result.biomarkers.length === 0) {
+      // Sem biomarcadores E sem estrutura confiável (imagem, oftalmológico, pedido…): o
+      // Content Classifier LÊ o próprio documento para nomear. Roda APENAS na 1ª extração
+      // (é uma chamada de IA — write-once garante que a reextração não a repita nem varie).
+      const docMediaType = isImage
+        ? (filePath.endsWith('.png') ? 'image/png' : filePath.endsWith('.webp') ? 'image/webp' : 'image/jpeg')
+        : 'application/pdf'
+      const doc = await classifyDocumentAI({ base64: pdfBuffer.toString('base64'), mediaType: docMediaType })
+      if (doc?.displayName) {
+        const derived = deriveDisplayTitle({
+          documentType: doc.documentType as never,
+          documentScope: 'single', examCount: 0,
+          singleExamName: doc.displayName, modality: doc.displayName,
+        })
+        const title = derived === 'Documento' ? doc.displayName : derived
+        finalUpdate.document_type = doc.documentType
+        finalUpdate.display_title = title
+        finalUpdate.type = doc.issuer ? withProvenance(title, { issuer: doc.issuer }) : title
+        if (doc.issuer) finalUpdate.issuer = doc.issuer
+      }
     }
   }
   await supabase.from('exams')
