@@ -20,7 +20,7 @@
 | **M3** | Split de CDUs no fluxo real (1 upload → N registros) | **15%** | ⬜ | E+1 |
 | **M4** | Identidade robusta (Clinical Identity Registry + estados) | **10%** | ⬜ | E+2 |
 | **M5** | Extratores especializados do CEF (por modalidade) | **5%** | ⬜ | E+3 |
-| **M6** | Datas semânticas (CEF §5) | **5%** | ⬜ | E+3 |
+| **M6** | Datas semânticas (CEF §5) | **75%** | 🔄 | E (ligada) |
 | **M7** | Captura de evidência completa (laudo + imagens) | **0%** | ⬜ | E+4 |
 | **M8** | Robustez operacional (timeout/retries/perf) | **0%** | ⬜ (backlog) | — |
 | **M9** | Certificação RI-001 (homologação + merge) | ⛔ pausada | ⛔ | após M1+M2 |

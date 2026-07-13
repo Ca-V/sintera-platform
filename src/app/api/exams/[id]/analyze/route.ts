@@ -12,6 +12,7 @@ import { classifyDocumentAI } from '@/lib/ai/document-classifier'
 import { representationFingerprint, isRepresentationCertified } from '@/lib/capture/reproducibility'
 import { structuralAnalysis } from '@/lib/capture/structural-analysis'
 import { computeCoverage } from '@/lib/capture/coverage'
+import { pickExamDate } from '@/lib/capture/semantic-dates'
 
 const ERROR_MESSAGES: Record<string, string> = {
   password_protected: 'O PDF está protegido por senha e não pode ser processado.',
@@ -356,7 +357,12 @@ export async function POST(
   // (reextrair mudava "Mapeamento ocular"/"OCULUS Pentacam"/… a cada clique).
   if (!identityEstablished) {
     // A data do laudo e o paciente são FATOS documentais — fixados na 1ª extração.
-    if (result.examDate) finalUpdate.exam_date = result.examDate
+    // Data SEMÂNTICA (CEF §5): prefere coleta/realização do texto (alta/média confiança) à data da IA —
+    // evita pegar nascimento/impressão/protocolo (bug do EEG "2002" e do laudo 2009). Baixa confiança
+    // ou sem texto → mantém a data da IA (§5.2: baixa confiança não sobrescreve).
+    const semDate = examTextForIssuer ? pickExamDate(examTextForIssuer) : null
+    const examDate = semDate && semDate.iso && semDate.confidence !== 'low' ? semDate.iso : result.examDate
+    if (examDate) finalUpdate.exam_date = examDate
     if (result.patientName) finalUpdate.patient_name = result.patientName
     finalUpdate.document_type = structure.documentType
     finalUpdate.document_scope = structure.documentScope
