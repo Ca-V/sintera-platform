@@ -21,7 +21,7 @@ import Section from '@/components/ui/Section'
 import Disclaimer from '@/components/ui/Disclaimer'
 import ProvenanceLine from '@/components/ui/ProvenanceLine'
 import { examProvenance } from '@/lib/provenance'
-import { useMultiPageCapture, MultiPageStaging } from '@/components/ui/MultiPageCapture'
+import { useDocumentBundle, DocumentBundleStaging } from '@/components/ui/DocumentBundleCapture'
 
 type Metric =
   | 'peso' | 'altura' | 'circunferencia_cintura'
@@ -237,7 +237,7 @@ export default function MedidasPage() {
   // IMC é calculado (não é registrado manualmente).
   const groups: Metric[] = ['peso', 'altura', 'circunferencia_cintura', 'gordura_corporal', 'massa_muscular', 'agua_corporal', 'gordura_visceral', 'massa_ossea', 'taxa_metabolica', 'outro']
 
-  const cap = useMultiPageCapture(onScanFile) // captura multipágina (padrão transversal)
+  const bundle = useDocumentBundle(onScanFile) // Document Bundle (padrão transversal)
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
@@ -252,7 +252,7 @@ export default function MedidasPage() {
             {showForm ? <X size={15} /> : <Plus size={15} />} {showForm ? 'Fechar' : 'Adicionar'}
           </button>
           <input ref={scanRef} type="file" accept="image/*" capture="environment" multiple className="hidden"
-            onChange={e => { const fs = Array.from(e.target.files ?? []); e.target.value = ''; cap.intake(fs) }} />
+            onChange={e => { const fs = Array.from(e.target.files ?? []); e.target.value = ''; bundle.intake(fs) }} />
           <button onClick={() => scanRef.current?.click()} disabled={scanning}
             className="flex items-center gap-2 px-4 py-2 rounded-full border border-petal/40 text-petal font-body text-sm font-medium hover:bg-blush transition-colors disabled:opacity-50">
             {scanning ? <Loader2 size={15} className="animate-spin" /> : <ScanLine size={15} />} Escanear bioimpedância
@@ -260,8 +260,8 @@ export default function MedidasPage() {
         </div>
       </div>
 
-      {cap.pages.length > 0 && (
-        <MultiPageStaging cap={cap} onAddCamera={() => scanRef.current?.click()} onAddGallery={() => scanRef.current?.click()} />
+      {bundle.pages.length > 0 && (
+        <DocumentBundleStaging bundle={bundle} onAddCamera={() => scanRef.current?.click()} onAddGallery={() => scanRef.current?.click()} />
       )}
 
       {/* Onde registrar bioimpedância (ex.: do nutricionista) */}

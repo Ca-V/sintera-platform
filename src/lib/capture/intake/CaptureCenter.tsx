@@ -19,7 +19,7 @@ import { classifyCheap } from '../classifier/classify'
 import { captureError } from '../result'
 import { logCapture } from '../telemetry'
 import type { DocumentKind, CaptureResult, ClassificationResult } from '../types'
-import { useMultiPageCapture, MultiPageStaging } from '@/components/ui/MultiPageCapture'
+import { useDocumentBundle, DocumentBundleStaging } from '@/components/ui/DocumentBundleCapture'
 
 const ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   FlaskConical, Pill, Glasses, HeartPulse, Dna, FileText,
@@ -132,8 +132,8 @@ export default function CaptureCenter({ className = '', onDone }: CaptureCenterP
     })()
   }, [])
 
-  // Captura multipágina (padrão transversal): imagens → 1 PDF → pickFile único.
-  const cap = useMultiPageCapture(pickFile)
+  // Document Bundle (padrão transversal): imagens → 1 PDF → pickFile único.
+  const bundle = useDocumentBundle(pickFile)
 
   function reset() {
     if (previewUrl) URL.revokeObjectURL(previewUrl)
@@ -204,19 +204,19 @@ export default function CaptureCenter({ className = '', onDone }: CaptureCenterP
     <div className={className}>
       {/* Inputs compartilhados (galeria multi + câmera) — a intake decide direto × staging. */}
       <input ref={inputRef} type="file" accept={ACCEPTED.join(',')} multiple className="hidden"
-        onChange={e => { const fs = Array.from(e.target.files ?? []); e.target.value = ''; cap.intake(fs) }} />
+        onChange={e => { const fs = Array.from(e.target.files ?? []); e.target.value = ''; bundle.intake(fs) }} />
       <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden"
-        onChange={e => { const fs = Array.from(e.target.files ?? []); e.target.value = ''; cap.intake(fs) }} />
+        onChange={e => { const fs = Array.from(e.target.files ?? []); e.target.value = ''; bundle.intake(fs) }} />
 
-      {cap.pages.length > 0 ? (
-        <MultiPageStaging cap={cap} onAddCamera={() => cameraRef.current?.click()} onAddGallery={() => inputRef.current?.click()} />
+      {bundle.pages.length > 0 ? (
+        <DocumentBundleStaging bundle={bundle} onAddCamera={() => cameraRef.current?.click()} onAddGallery={() => inputRef.current?.click()} />
       ) : !file ? (
         // ── Passo 1: selecionar / arrastar ──────────────────────────────────────
         <div>
           <div
             onDragOver={e => { e.preventDefault(); setDragOver(true) }}
             onDragLeave={() => setDragOver(false)}
-            onDrop={e => { e.preventDefault(); setDragOver(false); cap.intake(Array.from(e.dataTransfer.files ?? [])) }}
+            onDrop={e => { e.preventDefault(); setDragOver(false); bundle.intake(Array.from(e.dataTransfer.files ?? [])) }}
             onClick={() => inputRef.current?.click()}
             className={`rounded-2xl border-2 border-dashed p-8 text-center cursor-pointer transition-colors ${dragOver ? 'border-petal bg-blush/20' : 'border-border hover:border-petal/40'}`}
           >
