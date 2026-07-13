@@ -10,8 +10,8 @@ import { classifyExamDocument, deriveDisplayTitle, withProvenance } from '@/lib/
 import { extractIssuer } from '@/lib/ai/issuer'
 import { classifyDocumentAI } from '@/lib/ai/document-classifier'
 import { representationFingerprint, isRepresentationCertified } from '@/lib/capture/reproducibility'
-import { structuralAnalysis } from '@/lib/capture/structural-analysis'
 import { computeCoverage } from '@/lib/capture/coverage'
+import { processBundle } from '@/lib/capture/clinical-information-pipeline'
 import { pickExamDate } from '@/lib/capture/semantic-dates'
 import { identifyClinical } from '@/lib/capture/clinical-identity-registry'
 
@@ -114,6 +114,7 @@ export async function POST(
   let pageCount = 1
   let pdfQuality = 'image'
   let examTextForIssuer: string | null = null // texto do laudo p/ extrair o emissor
+  let bundlePages: string[] = []              // texto por página (reparado) → Bundle p/ o pipeline
 
   if (isImage) {
     // Caminho de imagem — modelo multimodal lê a foto. Sem extração de texto/PDF.
@@ -145,6 +146,7 @@ export async function POST(
     pageCount = extraction.pageCount
     pdfQuality = extraction.quality
     examTextForIssuer = extraction.text
+    bundlePages = extraction.pageTexts // páginas reparadas → Bundle para o ClinicalInformationPipeline
 
     // 7. Filtro de páginas (Epic 1.4A) — remove conteúdo administrativo antes da IA
     filterResult = filterRelevantPages(extraction.pageTexts, 3)
@@ -340,12 +342,21 @@ export async function POST(
   // nunca alega completude. A Análise Estrutural descobre nº de unidades (RESULTADO) no laudo; se o
   // extrator estruturou MENOS, não pode ser "structured" (mata a falsa completude do laudo de 6 exames).
   // Confiabilidade plena depende do extrator do CEF reportar unidades alinhadas (M5); aqui, conservador.
-  if (!isNarrativeLaudo && completeness === 'structured' && bmN > 0 && examTextForIssuer) {
-    const discovered = structuralAnalysis({ text: examTextForIssuer }).resultUnits
+  // ClinicalInformationPipeline: compreende o Bundle → CertifiedCDUs (M1). Hoje o registro representa o
+  // documento inteiro (split em N registros = M3), então a Cobertura soma as unidades descobertas de
+  // TODAS as CDUs. `discoveredCduCount` fica disponível para o M3 (1 registro por CDU).
+  const bundle = processBundle({
+    pageTexts: bundlePages.length ? bundlePages : (examTextForIssuer ? [examTextForIssuer] : []),
+    hasImages: isImage,
+  })
+  const discoveredCduCount = bundle.cdus.length
+  if (!isNarrativeLaudo && completeness === 'structured' && bmN > 0) {
+    const discovered = bundle.cdus.reduce((s, c) => s + (c.structure.resultUnits || 0), 0)
     const cov = computeCoverage({ cdu: { index: 1, discoveredUnits: discovered }, structuredUnits: bmN })
     if (discovered > 0 && !cov.certifiedComplete) completeness = 'partial'
   }
   finalUpdate.extraction_completeness = completeness
+  void discoveredCduCount // usado pelo M3 (split de CDUs)
   finalUpdate.structural_confidence = completeness === 'structured' ? 'high' : completeness === 'partial' ? 'medium' : 'low'
   finalUpdate.extractor_family = effectiveDocType
   finalUpdate.extractor_version = effectiveDocType === 'laboratory' ? 'laboratory-v1' : 'heuristic-v0'

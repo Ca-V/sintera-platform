@@ -15,7 +15,7 @@
 
 | # | Capacidade | % | Estado | Previsão |
 |---|---|---|---|---|
-| **M1** | Compreensão documental (Bundle → CertifiedCDUs) | **90%** | 🔄 | E (integração) |
+| **M1** | Compreensão documental (Bundle → CertifiedCDUs) | **100%** ✅ | ✅ | ligado ao analyze |
 | **M2** | Cobertura ligada (fim da falsa completude) | **70%** | 🔄 | E (confiab. plena em M5) |
 | **M3** | Split de CDUs no fluxo real (1 upload → N registros) | **15%** | ⬜ | E+1 |
 | **M4** | Identidade robusta (Clinical Identity Registry + estados) | **65%** | 🔄 | E+1 |
