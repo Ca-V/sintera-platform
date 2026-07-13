@@ -203,3 +203,29 @@ describe('ARCH-002 · imagem consistente mesmo com números raspados (regressão
     expect(s.documentType).toBe('laboratory')
   })
 })
+
+describe('ARCH-002 · laboratório com biomarcadores SEM source_exam_name (regressão "Resultado-Laudo")', () => {
+  it('vários biomarcadores sem source_exam_name → PAINEL → "Exames laboratoriais" (nunca nome de arquivo)', () => {
+    const s = classifyExamDocument({
+      examType: 'exame',
+      biomarkers: [
+        { name: 'CORTISOL', sourceExamName: null },
+        { name: 'HORMÔNIO DE CRESCIMENTO (GH)', sourceExamName: null },
+        { name: 'INSULINA', sourceExamName: null },
+        { name: 'PEPTÍDEO C', sourceExamName: null },
+      ],
+    })
+    expect(s.documentType).toBe('laboratory')
+    expect(s.documentScope).toBe('panel')
+    expect(deriveDisplayTitle(s)).toBe('Exames laboratoriais')
+  })
+
+  it('um único biomarcador sem source_exam_name → single (não vira painel)', () => {
+    const s = classifyExamDocument({
+      examType: 'HPV DETECÇÃO E GENOTIPAGEM',
+      biomarkers: [{ name: 'HPV alto risco', sourceExamName: null }],
+    })
+    expect(s.documentType).toBe('laboratory')
+    expect(s.documentScope).toBe('single')
+  })
+})

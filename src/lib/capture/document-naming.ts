@@ -234,9 +234,17 @@ export function classifyExamDocument(ex: ExamExtractionLike): DocumentStructure 
     return { documentType: 'anatomopathology', documentScope: 'single', examCount: 0 }
   }
 
-  // examCount = exames DISTINTOS reais; sem source_exam_name → 0 (não classificável).
+  // examCount = exames DISTINTOS por source_exam_name; pode ser 0 quando os biomarcadores não
+  // trazem source_exam_name. Nesse caso, se há VÁRIOS biomarcadores distintos, é um PAINEL
+  // (não um exame único) → "Exames laboratoriais". Evita cair no nome do arquivo.
+  const distinctBmNames = new Set(
+    ex.biomarkers.map(b => clean(b.name).toLowerCase()).filter(Boolean),
+  )
   const single = distinct[0] ?? (ex.biomarkers[0]?.sourceExamName ?? null) ?? (examType || null)
 
+  if (examCount === 0 && distinctBmNames.size > 1) {
+    return { documentType: 'laboratory', documentScope: 'panel', examCount: distinctBmNames.size, singleExamName: null }
+  }
   if (examCount <= 1) {
     return { documentType: 'laboratory', documentScope: 'single', examCount, singleExamName: single }
   }

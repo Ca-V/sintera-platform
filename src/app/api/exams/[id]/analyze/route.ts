@@ -350,8 +350,12 @@ export async function POST(
     finalUpdate.document_scope = structure.documentScope
 
     // Só sobrescreve o nome do arquivo quando aprendemos estrutura de verdade:
-    // categoria não-laboratorial detectada, OU laboratório com ≥1 exame distinto real.
-    const confidentStructure = structure.documentType !== 'laboratory' || structure.examCount >= 1
+    // categoria não-laboratorial detectada, OU laboratório com ≥1 exame distinto,
+    // OU laboratório com QUALQUER biomarcador (evita manter o nome do arquivo quando os
+    // biomarcadores não trazem source_exam_name → antes ficava "Resultado-Laudo-…").
+    const confidentStructure = structure.documentType !== 'laboratory'
+      || structure.examCount >= 1
+      || result.biomarkers.length > 0
     if (confidentStructure) {
       const displayTitle = deriveDisplayTitle(structure)
       finalUpdate.display_title = displayTitle
