@@ -120,8 +120,12 @@ medicina contemporânea e das tecnologias que ainda surgirão.
 
 ## Estado e revisão
 
-**Estado:** Draft v0.9 (proposta constitucional; NÃO congelar ainda). Após incorporar os
-refinamentos fundamentados em padrões e literatura, promover a **UCDA-001 v1.0** como pilar.
+**Estado:** Draft v0.9 (proposta constitucional; NÃO congelar ainda).
+
+**Critério objetivo para promover v0.9 → v1.0 (fundadora, 13/07/2026) — não congelar cedo demais:**
+(a) **HUB-001 operacional**; (b) **≥ 2 extratores especializados** implementados; (c) **GS-003 e
+GS-004 passando automaticamente** (CRC); (d) **revisão técnica** (FHIR/DICOM/… — `UCDA-001-REVIEW`)
+concluída e incorporada. Só então promover a **v1.0** como pilar constitucional.
 
 **Papel do Claude (revisor técnico, NÃO arquiteto) — instrução refinada (fundadora):**
 > Mapeie **cada conceito da UCDA** aos recursos e padrões internacionais existentes — **FHIR,

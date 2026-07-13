@@ -21,7 +21,7 @@ O nível indica **quão raramente o documento muda** e **quanto peso ele carrega
 | **CAP-002** | **Capture Hub** — domínio transversal de ingestão (🧊 congelado v1.0) |
 | **CEF-001** | **Clinical Extraction Framework** — como cada tipo de documento é compreendido (spec v1.0, par do Capture Hub) |
 | **UCDA-001** | **Universal Clinical Data Architecture** — como QUALQUER evidência clínica é representada (unidade = evidência, não exame). **Draft v0.9 (proposta; não congelada)** — aguarda revisão técnica antes de v1.0 |
-| **SIF-001** | **Structured Import Framework** — como arquivos estruturados (CSV/JSON/HL7/FHIR/VCF) são importados. Domínio novo (par do CEF); a especificar |
+| **SIF-001** | **Structured Import Framework** — arquivos estruturados (CSV/JSON/HL7/FHIR/VCF). ⏸️ **ADIADO** (freeze informal) — só criar quando houver caso real que o exija |
 | **KG v2** | Knowledge Graph (modelo científico) |
 | **SRL** | Scientific Retrieval Layer |
 | **SEC-001** | Projeto Shield — Segurança/Governança/Continuidade |
@@ -144,6 +144,40 @@ altera o status aqui.
 | **CEF-001A** | **1º extrator especializado** (neuro/oftalmo). Critério de aprovação: passa **GS-003** + **GS-004** · Confidence **HIGH** · **Bundle** correto · **data** correta · **zero regressões**. Prova a arquitetura onde a solução anterior falhava | ⏳ (após RI-001) |
 
 Legenda: ⏳ pendente · 🔧 em andamento · ✅ concluído.
+
+## Freeze arquitetural informal — o próximo ciclo é EXECUÇÃO (fundadora, 13/07/2026)
+
+O conjunto constitucional está **completo o suficiente** (BRD · KG · SRL · Capture Hub · CEF ·
+UCDA Draft · CRC · ARG · ADL · GOVERNANÇA · DOC-001 · RI-001). **Freeze informal:** **pausar a
+criação de novos documentos constitucionais** até a execução validar os conceitos atuais. Novos
+domínios (ex.: SIF-001) ficam **adiados** até haver caso real que os exija.
+
+**Regra "acomodar-antes-de-criar" (permanente):** *toda nova ideia arquitetural deve PRIMEIRO
+tentar ser acomodada pelos componentes existentes. Só quando isso não for possível cria-se um
+novo domínio constitucional.* Preserva a coerência e mantém a evolução por refinamentos
+compatíveis (coerente com o congelamento de princípios).
+
+**Sequência do próximo ciclo (código, não documentação):**
+1. Finalizar **RI-001** → 2. **Merge de Condições** → 3. **HUB-001** (backbone; `Document Bundle →
+CapturedDocument → Pipeline`) → 4. **1º extrator especializado do CEF** → 5. **validação automática
+contra o CRC** (GS-003/GS-004) → 6. **só então** revisar a UCDA Draft.
+
+**Critério objetivo p/ promover UCDA v0.9 → v1.0** (não congelar cedo): (a) HUB-001 operacional ·
+(b) ≥ 2 extratores especializados implementados · (c) GS-003 **e** GS-004 passando automaticamente ·
+(d) revisão técnica (FHIR/DICOM/… — `UCDA-001-REVIEW`) concluída e incorporada.
+
+**CRC como ativo VIVO (meta operacional):** todo bug de produção relevante gera um **novo caso no
+CRC em até 48h**; **nenhuma correção é "concluída" sem seu caso de regressão** (estende o Ciclo
+Bug → Corpus).
+
+**Indicador de reúso** (medir se a arquitetura reduz duplicação — atualizar ao longo do tempo):
+
+| Componente | Módulos que reutilizam |
+|---|---|
+| **Document Bundle** | Condições · Medicamentos · Exames (Novo exame + caixa) · CaptureCenter · Medidas · Recursos |
+| **Capture Hub / Content Classifier** | Exames · Condições · (pontos de captura) |
+| **CEF (nomenclatura/classificação)** | Exames · Condições · Pedidos |
+| **CRC** | regressão de todo extrator do CEF |
 
 ## Regras gerais
 

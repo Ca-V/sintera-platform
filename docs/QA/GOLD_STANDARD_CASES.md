@@ -72,6 +72,10 @@ Sempre que um **bug real for encontrado em produção**:
 4. **Escrever o teste de regressão** (compara extração × `expected.json`).
 5. **Nunca mais** permitir que o bug retorne.
 
+**Meta operacional (CRC como ativo VIVO, fundadora 13/07/2026):** todo **bug de produção relevante
+gera um novo caso no CRC em até 48h**; **nenhuma correção é considerada concluída sem seu caso de
+regressão**.
+
 Cada problema encontrado por usuários vira **aumento permanente de robustez**. O efeito
 acumulativo (centenas de documentos reais anotados, versionados, com resultado esperado,
 cobrindo várias especialidades) torna o CRC um dos **ativos mais valiosos do projeto** —
