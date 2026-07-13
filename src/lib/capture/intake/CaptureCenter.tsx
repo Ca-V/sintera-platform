@@ -19,6 +19,7 @@ import { classifyCheap } from '../classifier/classify'
 import { captureError } from '../result'
 import { logCapture } from '../telemetry'
 import type { DocumentKind, CaptureResult, ClassificationResult } from '../types'
+import { useMultiPageCapture, MultiPageStaging } from '@/components/ui/MultiPageCapture'
 
 const ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   FlaskConical, Pill, Glasses, HeartPulse, Dna, FileText,
@@ -131,6 +132,9 @@ export default function CaptureCenter({ className = '', onDone }: CaptureCenterP
     })()
   }, [])
 
+  // Captura multipágina (padrão transversal): imagens → 1 PDF → pickFile único.
+  const cap = useMultiPageCapture(pickFile)
+
   function reset() {
     if (previewUrl) URL.revokeObjectURL(previewUrl)
     setFile(null); setPreviewUrl(null); setKind(null); setError(null); setSending(false); setResult(null)
@@ -198,29 +202,32 @@ export default function CaptureCenter({ className = '', onDone }: CaptureCenterP
 
   return (
     <div className={className}>
-      {!file ? (
+      {/* Inputs compartilhados (galeria multi + câmera) — a intake decide direto × staging. */}
+      <input ref={inputRef} type="file" accept={ACCEPTED.join(',')} multiple className="hidden"
+        onChange={e => { const fs = Array.from(e.target.files ?? []); e.target.value = ''; cap.intake(fs) }} />
+      <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden"
+        onChange={e => { const fs = Array.from(e.target.files ?? []); e.target.value = ''; cap.intake(fs) }} />
+
+      {cap.pages.length > 0 ? (
+        <MultiPageStaging cap={cap} onAddCamera={() => cameraRef.current?.click()} onAddGallery={() => inputRef.current?.click()} />
+      ) : !file ? (
         // ── Passo 1: selecionar / arrastar ──────────────────────────────────────
         <div>
           <div
             onDragOver={e => { e.preventDefault(); setDragOver(true) }}
             onDragLeave={() => setDragOver(false)}
-            onDrop={e => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files?.[0]; if (f) pickFile(f) }}
+            onDrop={e => { e.preventDefault(); setDragOver(false); cap.intake(Array.from(e.dataTransfer.files ?? [])) }}
             onClick={() => inputRef.current?.click()}
             className={`rounded-2xl border-2 border-dashed p-8 text-center cursor-pointer transition-colors ${dragOver ? 'border-petal bg-blush/20' : 'border-border hover:border-petal/40'}`}
           >
             <UploadCloud size={28} className="text-petal mx-auto mb-2" />
             <p className="font-body text-sm text-onyx">Arraste um arquivo ou <span className="text-petal font-medium">selecione</span></p>
-            <p className="font-body text-xs text-mauve mt-1">PDF, JPG ou PNG · até 50 MB</p>
+            <p className="font-body text-xs text-mauve mt-1">PDF, foto ou várias fotos do mesmo documento · até 50 MB</p>
           </div>
           <button type="button" onClick={() => cameraRef.current?.click()}
             className="mt-2 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl border border-petal/40 text-petal font-body text-sm font-medium hover:bg-blush transition-colors">
             <Camera size={16} /> Tirar foto ou escanear
           </button>
-          <input ref={inputRef} type="file" accept={ACCEPTED.join(',')} className="hidden"
-            onChange={e => { const f = e.target.files?.[0]; if (f) pickFile(f); e.target.value = '' }} />
-          {/* Câmera: no celular abre direto a câmera (capture); no desktop, o seletor de arquivos. */}
-          <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden"
-            onChange={e => { const f = e.target.files?.[0]; if (f) pickFile(f); e.target.value = '' }} />
           {error && <p className="font-body text-xs text-red-600 mt-2">{error}</p>}
         </div>
       ) : (

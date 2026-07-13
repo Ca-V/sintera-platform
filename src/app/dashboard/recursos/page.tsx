@@ -26,6 +26,7 @@ import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import { useStickyView } from '@/lib/ui/useStickyView'
 import Card from '@/components/ui/Card'
 import Disclaimer from '@/components/ui/Disclaimer'
+import { useMultiPageCapture, MultiPageStaging } from '@/components/ui/MultiPageCapture'
 
 type ResourceType = 'correcao_visual' | 'dispositivo_medico' | 'protese_ortese' | 'auxilio' | 'compressao_suporte'
 type Status = 'em_uso' | 'suspenso' | 'encerrado'
@@ -321,6 +322,9 @@ export default function RecursosPage() {
       ? TYPES.map(t => ({ key: t.value, label: t.label, rows: items.filter(i => i.resourceType === t.value) })).filter(g => g.rows.length > 0)
       : STATUS.map(s => ({ key: s.value, label: s.label, rows: items.filter(i => i.status === s.value) })).filter(g => g.rows.length > 0)
 
+  // Captura multipágina (padrão transversal): escanear a receita em várias páginas.
+  const cap = useMultiPageCapture((f: File) => { if (!showForm) startAdd(); onScanFile(f) })
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
       <Link href="/dashboard" className="inline-flex items-center gap-1.5 font-body text-sm text-mauve hover:text-petal transition-colors">
@@ -332,8 +336,8 @@ export default function RecursosPage() {
         subtitle={<>Óculos, lentes, dispositivos e mais. <strong className="font-medium text-onyx/70">Escaneie a receita — a SINTERA preenche o grau por você.</strong></>}
         action={
           <div className="flex items-center gap-2">
-            <input ref={scanRef} type="file" accept="image/*" capture="environment" className="hidden"
-              onChange={e => { const file = e.target.files?.[0]; if (file) { if (!showForm) startAdd(); onScanFile(file) } e.target.value = '' }} />
+            <input ref={scanRef} type="file" accept="image/*" capture="environment" multiple className="hidden"
+              onChange={e => { const fs = Array.from(e.target.files ?? []); e.target.value = ''; cap.intake(fs) }} />
             <button onClick={() => scanRef.current?.click()}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-petal/40 text-petal font-body text-sm font-medium hover:bg-blush transition-colors flex-shrink-0">
               <Camera size={15} /> Escanear
@@ -345,6 +349,10 @@ export default function RecursosPage() {
           </div>
         }
       />
+
+      {cap.pages.length > 0 && (
+        <MultiPageStaging cap={cap} onAddCamera={() => scanRef.current?.click()} onAddGallery={() => scanRef.current?.click()} />
+      )}
 
       {showForm && (
         <Card className="space-y-3">

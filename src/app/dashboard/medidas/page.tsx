@@ -21,6 +21,7 @@ import Section from '@/components/ui/Section'
 import Disclaimer from '@/components/ui/Disclaimer'
 import ProvenanceLine from '@/components/ui/ProvenanceLine'
 import { examProvenance } from '@/lib/provenance'
+import { useMultiPageCapture, MultiPageStaging } from '@/components/ui/MultiPageCapture'
 
 type Metric =
   | 'peso' | 'altura' | 'circunferencia_cintura'
@@ -236,6 +237,8 @@ export default function MedidasPage() {
   // IMC é calculado (não é registrado manualmente).
   const groups: Metric[] = ['peso', 'altura', 'circunferencia_cintura', 'gordura_corporal', 'massa_muscular', 'agua_corporal', 'gordura_visceral', 'massa_ossea', 'taxa_metabolica', 'outro']
 
+  const cap = useMultiPageCapture(onScanFile) // captura multipágina (padrão transversal)
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -248,14 +251,18 @@ export default function MedidasPage() {
             className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity">
             {showForm ? <X size={15} /> : <Plus size={15} />} {showForm ? 'Fechar' : 'Adicionar'}
           </button>
-          <input ref={scanRef} type="file" accept="image/*" capture="environment" className="hidden"
-            onChange={e => { const file = e.target.files?.[0]; if (file) onScanFile(file); e.target.value = '' }} />
+          <input ref={scanRef} type="file" accept="image/*" capture="environment" multiple className="hidden"
+            onChange={e => { const fs = Array.from(e.target.files ?? []); e.target.value = ''; cap.intake(fs) }} />
           <button onClick={() => scanRef.current?.click()} disabled={scanning}
             className="flex items-center gap-2 px-4 py-2 rounded-full border border-petal/40 text-petal font-body text-sm font-medium hover:bg-blush transition-colors disabled:opacity-50">
             {scanning ? <Loader2 size={15} className="animate-spin" /> : <ScanLine size={15} />} Escanear bioimpedância
           </button>
         </div>
       </div>
+
+      {cap.pages.length > 0 && (
+        <MultiPageStaging cap={cap} onAddCamera={() => scanRef.current?.click()} onAddGallery={() => scanRef.current?.click()} />
+      )}
 
       {/* Onde registrar bioimpedância (ex.: do nutricionista) */}
       <div className="rounded-2xl border border-petal/30 bg-blush/30 px-4 py-3 flex items-start gap-3">
