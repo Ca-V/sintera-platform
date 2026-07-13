@@ -1,16 +1,21 @@
 # RI-001 — Homologação estruturada (Condições como Reference Implementation)
 
 > Executa o **Gate RI-001** (CAP-002-REF §4) como homologação **verificável**, não subjetiva.
-> Ao final, a decisão sobre o RI-001 é objetiva: todos os cenários obrigatórios aprovados,
-> sem regressões relevantes. Só então: **merge de Condições** + encerramento do marco RI-001.
+> **Objetivo (postura):** não é "mergear Condições" — é **certificar a primeira implementação de
+> referência da plataforma** (uma referência reutilizável, não uma feature). Ao final, a decisão é
+> objetiva: cenários obrigatórios aprovados, qualidade clínica dentro do escopo, sem regressões.
 > Preencher no **preview** da branch `feat/condicoes-captura` (já com o hotfix v1.0.1).
+>
+> **Duas partes:** **RI-001A — Funcional** (o fluxo funciona) · **RI-001B — Qualidade da
+> estruturação clínica** (a estruturação é confiável e honesta). A parte B é o que determina se a
+> arquitetura está pronta para evoluir ao CEF.
 
 **Ambiente:** preview `feat/condicoes-captura` · **Testador:** fundadora · **Data:** ____
 **Legenda:** ✅ aprovado · ❌ reprovado (abrir correção) · ⚠️ aprovado com ressalva (registrar)
 
 ---
 
-## 1. Matriz de cenários obrigatórios
+## 1. RI-001A — Matriz funcional (cenários obrigatórios)
 
 | # | Cenário | Resultado esperado | Status |
 |---|---|---|---|
@@ -37,6 +42,42 @@
 
 ---
 
+## 1B. RI-001B — Qualidade da estruturação clínica (revisão cruzada, 13/07/2026)
+
+Valida se a estruturação é **confiável e honesta**, não só se funciona. Avaliar **cada exame testado**
+com as 6 perguntas → registrar a régua. Alimenta o CRC diretamente.
+
+**As 6 perguntas**
+1. **Identificação** — o documento foi identificado no tipo **específico** (Pentacam, EEG, Hemograma,
+   Ecocardiograma), não apenas "imagem"/"laboratorial"?
+2. **Nome** — o título ficou correto (ex.: "Exames laboratoriais • Hermes Pardini", "Pentacam", "EEG
+   Digital com Mapeamento Cerebral") e **nunca** um biomarcador interno ("IgE látex")?
+3. **Estruturação** — os dados estruturados representam o documento? `representa bem / parcialmente / mal`.
+4. **Organização** — alguma informação importante ficou de fora? (ex.: Pentacam só K1/K2 → **gera caso GS**).
+5. **Sem-invenção** — existe informação **inventada**? A plataforma pode **deixar de extrair**; **nunca
+   inferir**. *(Verificação AUTOMÁTICA — ver §3B.)*
+6. **Honestidade** — quando não estruturou, deixa isso **claro** (sem falsa sensação de completude)?
+
+**Régua por exame** (repetir por documento testado):
+
+| Exame | Identificação | Nome | Estruturação | Organização | Honestidade | → CRC? |
+|---|---|---|---|---|---|---|
+| _(ex.: Pentacam)_ | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ |
+
+**Portão de merge (ressalva do Claude — protege o escopo congelado):** o RI-001 tem `IN=funcional` e
+`OUT=extração EEG/Pentacam/RM` (escopo fixado pela fundadora). Portanto:
+- **BLOQUEIAM (P0):** **Identificação · Nome · Honestidade · Sem-invenção · Proveniência**. Um ❌ aqui
+  impede a certificação.
+- **NÃO bloqueiam (diagnóstico → viram caso GS):** **Estruturação** e **Organização** profundas
+  (estruturar todos os grupos de um Pentacam é trabalho do **CEF**, deliberadamente adiado). Um ⚠️
+  aqui **não** impede o merge — vira caso no CRC.
+
+> Racional: bloquear o RI-001 por "o Pentacam não trouxe todos os grupos" seria bloquear pelo trabalho
+> que adiamos ao CEF. A régua **mede** tudo; o **portão** exige apenas o que é escopo do RI-001 +
+> as duas linhas invioláveis (honestidade e não-invenção).
+
+---
+
 ## 3. Verificação de proveniência (SQL de conferência)
 
 Após os cenários, conferir os registros criados no preview:
@@ -54,20 +95,90 @@ com o documento; condições com diagnóstico afirmado têm `source_exam_id` qua
 
 ---
 
+## 3B. Verificação AUTOMÁTICA da qualidade (RI-001B — o que o Claude roda no banco)
+
+Pré-preenche objetivamente as colunas automatizáveis da régua, antes da conferência clínica humana:
+
+- **Identificação + Nome + Honestidade** (leitura direta): por exame testado, listar
+  `display_title · document_type · document_scope · extraction_completeness`. Sinaliza:
+  título por biomarcador (❌ Nome), `document_type='laboratory'/'unknown'` em exame claramente
+  não-lab (⚠️ Identificação), `completeness` incoerente com o que a tela mostra (⚠️ Honestidade).
+- **Sem-invenção (não-alucinação) — a checagem que substitui o olho humano na pergunta 5:** para
+  cada biomarcador/resultado estruturado, confirmar que **nome e valor são rastreáveis ao TEXTO do
+  documento** (campo de texto extraído do exame). Todo item estruturado **sem correspondência** no
+  texto de origem é **sinalizado como suspeita de invenção (P0)**. A plataforma pode deixar de
+  extrair; nunca produzir o que não está no documento.
+
+```sql
+-- Identificação/Nome/Honestidade (por exame recente do preview)
+SELECT id, display_title, document_type, document_scope,
+       extraction_completeness, structural_confidence, status
+FROM exams ORDER BY created_at DESC LIMIT 15;
+
+-- Base da checagem de não-invenção: itens estruturados vs. existência de texto de origem
+SELECT e.id, e.display_title,
+       count(b.*)                              AS itens_estruturados,
+       (e.exam_text IS NOT NULL)               AS tem_texto_origem,
+       e.text_truncated
+FROM exams e LEFT JOIN biomarkers b ON b.exam_id = e.id
+GROUP BY e.id, e.display_title, e.exam_text, e.text_truncated
+ORDER BY e.id DESC LIMIT 15;
+-- Cruzamento nome/valor × exam_text é feito no relatório; item sem match = suspeita P0.
+-- (text_truncated=true → ausência de match pode ser truncamento, não invenção: reprocessar antes.)
+```
+
+> Casos já no CRC (**GS-003 EEG**, **GS-004 Pentacam**) têm `expected.json` → a comparação
+> estruturado × esperado é **automática** (regressão), sem julgamento humano a cada vez.
+
+---
+
 ## 4. Critério de aprovação do RI-001
 
-Marcar **Aprovado** somente quando:
+Marcar **Certificado** somente quando:
 
+**RI-001A (funcional):**
 - [ ] **Todos** os cenários obrigatórios (1–10) aprovados.
 - [ ] Casos específicos A–C aprovados.
 - [ ] Sem regressões relevantes.
 - [ ] Verificação de proveniência (§3) coerente.
 
-**Resultado do ARG:** ☐ Aprovado · ☐ Aprovado com ressalvas · ☐ Requer revisão · ☐ Requer ADR
+**RI-001B (qualidade clínica) — apenas as linhas invioláveis + escopo do RI-001 bloqueiam:**
+- [ ] **Identificação** correta do tipo em todos os exames testados.
+- [ ] **Nome** correto (nenhum título por biomarcador).
+- [ ] **Honestidade** — nenhuma falsa sensação de completude.
+- [ ] **Sem-invenção** — checagem automática (§3B) sem suspeita P0.
+- [ ] **Estruturação/Organização** avaliadas (⚠️ **não** bloqueia → vira caso GS no CRC).
 
-Ao aprovar → **merge de `feat/condicoes-captura`** + marcar **RI-001 = ✅** (GOVERNANCA) + ADL.
+**Resultado do ARG:** ☐ Certificado · ☐ Certificado com ressalvas · ☐ Requer revisão · ☐ Requer ADR
+
+Ao certificar → **merge de `feat/condicoes-captura`** (= **certificação da 1ª implementação de
+referência**) + marcar **RI-001 = ✅** (GOVERNANCA) + ADL + relatório §6 arquivado.
 Só **depois** disso inicia o **HUB-001** (contrato `CapturedDocument` extraído da ref. impl.
 já validada em produção — não de hipótese arquitetural).
+
+---
+
+## 6. Relatório RI-001 (modelo — o Claude preenche ao final)
+
+Primeira **evidência objetiva** de que a arquitetura saiu do papel. Arquivar após a certificação.
+
+```
+RI-001 — RESULTADO
+Exames testados:            __
+Certificados integralmente: __
+Certificados com ressalva:  __   (Estruturação/Organização ⚠️ → CRC)
+Bloqueios (P0):             __   (Identificação/Nome/Honestidade/Sem-invenção/Proveniência)
+
+Principais lacunas → casos GS gerados:
+ • ____________
+ • ____________
+
+Checagem de não-invenção (§3B): ☐ sem suspeitas · ☐ N itens sinalizados
+Regressões (CRC GS-003/GS-004):  ☐ nenhuma · ☐ ____
+Novos casos registrados no CRC:  __
+
+Pronto para certificar (merge): ☐ SIM · ☐ NÃO — motivo: ____
+```
 
 ---
 
