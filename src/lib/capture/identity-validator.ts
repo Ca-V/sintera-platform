@@ -22,8 +22,20 @@ export type ReviewType = 'technical' | 'clinical'
  *  os extratores existentes. Todo extrator declara a versão que consome. */
 export const CERTIFIED_CDU_CONTRACT_VERSION = 'v1' as const
 
+/** CONTEÚDO da CDU — fonte-agnóstico. Hoje: texto (PDF/imagem já reparados). Amanhã: outras `format`s
+ *  (DICOM, waveform, FHIR-resource) por novos adaptadores, SEM mudar os processadores existentes. É o que
+ *  torna a CertifiedCDU AUTOSSUFICIENTE: o Clinical Processing Engine consome só isto — nunca PDF/Bundle/OCR. */
+export interface CduContent {
+  format: 'text'
+  /** Texto-fonte da CDU (páginas concatenadas, já reparadas). */
+  text: string
+  pageCount: number
+}
+
 /** CONTRATO ÚNICO de entrada dos extratores do CEF (nunca mais um PDF). */
 export interface CertifiedCDU {
+  /** Conteúdo autossuficiente da CDU — única porta de entrada do Clinical Processing Engine. */
+  content: CduContent
   /** Versão do contrato (v1). */
   contractVersion: string
   index: number
@@ -112,6 +124,7 @@ export function validateSegmentation(seg: SegmentationResult): ValidatedSegmenta
     const confidence: Confidence = issues.length === 0 ? 'high' : issues.length === 1 ? 'medium' : 'low'
 
     return {
+      content: { format: 'text' as const, text: cdu.structure.sourceText, pageCount: cdu.pages.length },
       contractVersion: CERTIFIED_CDU_CONTRACT_VERSION,
       index: cdu.index,
       pages: cdu.pages,

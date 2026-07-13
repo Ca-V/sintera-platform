@@ -32,6 +32,9 @@ export interface StructuralRepresentation {
   pageCount: number
   hasText: boolean
   hasImages: boolean
+  /** Texto-fonte (JÁ reparado) que originou esta representação. É o CONTEÚDO que a CDU carrega para o
+   *  Clinical Processing Engine — assim o processador consome só a CertifiedCDU (nunca páginas/PDF/OCR). */
+  sourceText: string
   /** Natureza estrutural (results/narrative/unknown) — usada pela Segmentação. */
   kind: StructuralKind
   /** Ocorrências de "RESULTADO:" — unidades de resultado (base da COBERTURA em laboratório). */
@@ -149,6 +152,7 @@ export function structuralAnalysis(input: StructuralAnalysisInput): StructuralRe
     pageCount,
     hasText,
     hasImages: !!input.hasImages,
+    sourceText: input.text ?? '',
     kind: detectKind(input.text ?? ''),
     resultUnits,
     materialBlocks,

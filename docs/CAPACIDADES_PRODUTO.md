@@ -22,7 +22,7 @@
 | "Meus exames aparecem organizados no tempo" | ✅ | timeline por ano |
 | "Cada exame do documento vira um registro separado" | 🔄 | **split (M3) ligado** no backend (1 upload→N registros, cada um só com suas páginas); falta a **UX de confirmar/revisar** a divisão (decisão de produto) |
 | "Exames de laboratório: resultados estruturados" | ✅ | caminho maduro |
-| "Exames de imagem estruturados (achados por região)" | ⬜ | Clinical Processing Engine |
+| "Exames estruturados por modalidade (achados/parâmetros)" | 🔄 | CPE ligado; **1º processador: Pentacam** (parâmetros por olho). Ver `COBERTURA_CLINICA.md` |
 
 ## Uso e compartilhamento
 | Capacidade | Estado | Nota |
@@ -42,4 +42,7 @@
 
 **Ligação com o técnico:** cada capacidade acima é entregue por milestones em `EXECUCAO_MILESTONES.md`.
 Ex.: "nunca vejo incompleto como completo" ← M2 (Cobertura); "cada exame vira um registro" ← M3 (split
-de CDUs); "imagem estruturada" ← M5/Clinical Processing Engine.
+de CDUs); "exame estruturado por modalidade" ← M5/Clinical Processing Engine + **capacidades clínicas**.
+
+**3 painéis:** técnico (`EXECUCAO_MILESTONES.md`) · produto (este) · **clínico**
+(`COBERTURA_CLINICA.md` — % de modalidades médicas compreendidas de ponta a ponta).

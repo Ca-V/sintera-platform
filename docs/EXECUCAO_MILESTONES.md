@@ -5,6 +5,14 @@
 > % · bloqueadores · previsão relativa**. Atualizado a cada entrega. Foco: executar/auditar/validar/
 > consolidar (arquitetura congelada). Ver `GOVERNANCA.md` (pipeline de 9 etapas) e
 > `docs/QA/GOLD_STANDARD_CASES.md` (CRC).
+>
+> **🔁 MUDANÇA DE EIXO (13/07):** de "construir infraestrutura" → "entregar **inteligência clínica
+> utilizável**". A pergunta diária deixa de ser "qual componente implemento hoje?" e passa a ser "**qual
+> modalidade clínica fica completamente funcional hoje?**". M1–M4 e o Clinical Processing Engine são
+> **infraestrutura** (habilitam); as ENTREGAS de valor são **modalidades completas** (Mamografia, Pentacam,
+> EEG…), cada uma **dirigida por um caso do CRC** — ver o 3º painel `COBERTURA_CLINICA.md`. Regra
+> arquitetural permanente: **nenhum processador do CPE conhece PDF/Bundle/OCR — só `CertifiedCDU`**
+> (garantido por `ARCH-processor-decoupling`).
 
 **Legenda:** ✅ concluído · 🔄 em execução · ⬜ não iniciado · ⛔ bloqueado.
 **Convenção de previsão (relativa):** *E* = 1 entrega de execução; *E+n* = n entregas adiante.
@@ -19,7 +27,8 @@
 | **M2** | Cobertura ligada (fim da falsa completude) | **70%** | 🔄 | E (confiab. plena em M5) |
 | **M3** | Split de CDUs no fluxo real (1 upload → N registros) | **70%** | 🔄 | UX de confirmação (produto) |
 | **M4** | Identidade robusta (Clinical Identity Registry + estados) | **90%** | 🔄 | fusão LLM no M5 |
-| **M5** | Clinical Processing Engine (motor único · processadores por modalidade) | **20%** | 🔄 | E+3 |
+| **M5** | Clinical Processing Engine (INFRA: motor único + contrato + desacoplamento) | **35%** | 🔄 | habilita as modalidades |
+| **C·** | **CAPACIDADES CLÍNICAS (CRC-driven)** → ver `COBERTURA_CLINICA.md` | — | 🔄 | Pentacam→Mamografia→US→EEG |
 | **M6** | Datas semânticas (CEF §5) | **75%** | 🔄 | E (ligada) |
 | **M7** | Captura de evidência completa (laudo + imagens) | **0%** | ⬜ | E+4 |
 | **M8** | Robustez operacional (timeout/retries/perf) | **0%** | ⬜ (backlog) | — |
@@ -61,9 +70,15 @@ caminho de texto); (e) idempotência ✅ (raiz já-dividida não recria irmãos)
 `analyze` (planejar antes de extrair · restrição de páginas · materialização dos irmãos).
 **Testes:** `FUNC-bundle-split` ✅ (10) · `INT-split-cdus` ⬜ (homologação com IA real).
 **CRC:** bundle 3-laudos (AXIAL).
-**Falta (30%):** **DECISÃO DE PRODUTO** — a UX de **confirmar/revisar** a segmentação e **disparar** a
-análise dos irmãos (hoje ficam `pending`; abrir o registro dispara sozinho, como qualquer pending). Sem
-fan-out automático no servidor (evita timeout serverless + respeita a fronteira de produto).
+**Falta (30%):** **PASSO DE CONFIRMAÇÃO** (fundadora corrigiu: não é "só UX", é **governança**). Antes de
+criar N registros, o usuário vê o que a Segmentação encontrou e confirma:
+> Encontramos 3 exames neste documento:
+> ✓ Mamografia bilateral · ✓ Ultrassom mama direita · ✓ Ultrassom mama esquerda — **[Confirmar]**
+
+Isso resolve de uma vez OCR ruim, documento ambíguo, confiança, governança e evita registros errados —
+confirmação rápida que reforça "o documento é a fonte da verdade". Só **após confirmar** os irmãos são
+materializados/disparados. (Hoje o backend já materializa + isola por página; falta inserir esse gate de
+confirmação, que é a decisão de produto/UX remanescente.) Sem fan-out automático no servidor.
 
 ## M4 — Identidade robusta (Clinical Identity Registry + estados) · 90% · 🔄
 **Capacidade:** identificar a modalidade por **ensemble de evidências** (auditável), com estados
@@ -77,21 +92,31 @@ do LLM acontece no M5**, onde o LLM roda na extração (dependência técnica re
 **Testes:** `FUNC-clinical-identity-registry` ✅ (11 casos) · `INT` ⬜ (com M5). **CRC:** GS-004 · GS-010.
 **Bloqueadores:** nenhum para o escopo determinístico; item (d) segue naturalmente no M5.
 
-## M5 — Clinical Processing Engine (motor único · processadores por modalidade) · 20% · 🔄
-**Capacidade:** UM motor de processamento clínico com **processadores especializados por modalidade**,
-todos consumindo o mesmo contrato (`CertifiedCDU`, nunca PDF) e cada um produzindo o **modelo de resultado**
-da sua modalidade (biomarcador ≠ achado ≠ parâmetro por região).
-**Critérios:** (a) espinha de ROTEAMENTO pura (Identidade Clínica → processador) ✅ `routeProcessing`;
-(b) sem processador/identidade ambígua → `document_only` (revisão CLÍNICA, não bloqueia) ✅ (CEF §4.0);
-(c) processadores concretos por modalidade (imagem→achados · EEG→achados · Pentacam→parâmetros por olho) ⬜;
-(d) completude certificada por grupo (liga na Cobertura/M2) ⬜; (e) LLM = 1 evidência na identidade (fusão
-do M4) ⬜.
-**Feito:** `src/lib/capture/clinical-processing-engine.ts` (13 processadores mapeados, contrato versionado) +
-`FUNC-clinical-processing-engine` (9) + **ARCH invariante** (toda modalidade identificável tem processador —
-sem órfãos entre camadas).
-**Testes:** `FUNC-clinical-processing-engine` ✅ · `ARCH-identity-processor-coverage` ✅ · regressão CRC ⬜.
-**CRC:** GS-003 (EEG) · GS-004 (Pentacam).
-**Bloqueadores:** nenhum p/ a espinha; processadores concretos plugam incrementalmente (cada um puxado por CRC).
+## M5 — Clinical Processing Engine · INFRAESTRUTURA · 35% · 🔄
+**Papel:** NÃO é uma entrega de valor — é o MOTOR que habilita as modalidades. UM mecanismo, processadores
+especializados, todos consumindo `CertifiedCDU` (nunca PDF) e produzindo o modelo de resultado da modalidade.
+**Critérios de infra:** (a) roteamento puro (Identidade Clínica → processador) ✅ `routeProcessing`;
+(b) sem processador/ambíguo → `document_only` (revisão clínica, não bloqueia) ✅ (CEF §4.0);
+(c) **CertifiedCDU AUTOSSUFICIENTE** ✅ — carrega o conteúdo (`content: CduContent`); o processador não
+volta a páginas/PDF/OCR; (d) **desacoplamento garantido por teste** ✅ `ARCH-processor-decoupling` (nenhum
+processador importa PDF/Bundle/OCR/DB; só `./types` = a CDU); (e) contrato de processador (`ProcessorResult`,
+`parametric|narrative|structured`, `extractedUnits` p/ a Cobertura) ✅.
+**Feito:** `clinical-processing-engine.ts` (13 processadores mapeados) · `clinical-processors/` (contrato +
+executor + 1º processador) · `FUNC-clinical-processing-engine` (9) · `ARCH-identity-processor-coverage` ·
+`ARCH-processor-decoupling`.
+**Falta:** fusão do LLM como 1 evidência (item d do M4) quando os processadores rodarem; ligar a Cobertura
+por grupo (`extractedUnits` × descoberto) no `analyze`.
+
+## C — CAPACIDADES CLÍNICAS (dirigidas por CRC) · painel próprio: `COBERTURA_CLINICA.md`
+**Eixo de valor.** Cada modalidade é uma ENTREGA completa (upload PDF+imagens → segmentação → identificação
+→ título fiel → data → emissor → **resultado estruturado da modalidade** → original → cobertura →
+reprodutibilidade → **CRC verde**). Sobe para ✅ só quando o caso do CRC passa.
+**Em andamento — Pentacam (GS-004) · ~35%:** processador `runPentacam` ✅ (parâmetros tomográficos por olho:
+K1/K2/Kmax/espessura mínima/BAD-D/elevações; RDC 657 — transcreve, não interpreta) + `FUNC-pentacam-processor`
+(7). **Falta:** ligar o processador no `analyze` (persistir parâmetros como resultado, não biomarcadores) +
+fixture real GS-004 (`expected.json`) na homologação.
+**Fila (CRC dirige):** Mamografia (GS-012) → Ultrassom (GS-013) → EEG (GS-003) → Ecocardiograma (GS-007)…
+**Testes:** `FUNC-pentacam-processor` ✅ · por modalidade: 1 FUNC (processador) + regressão CRC.
 
 ## M6 — Datas semânticas (CEF §5) · 5% · ⬜
 **Capacidade:** data de realização correta por tipo; baixa confiança não sobrescreve.

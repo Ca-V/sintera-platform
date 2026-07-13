@@ -49,6 +49,8 @@ function aggregate(pages: { struct: StructuralRepresentation }[]): StructuralRep
     pageCount: pages.length,
     hasText: pages.some(p => p.struct.hasText),
     hasImages: pages.some(p => p.struct.hasImages),
+    // Conteúdo da CDU = texto-fonte das suas páginas (na ordem), separado por quebra de página (\f).
+    sourceText: pages.map(p => p.struct.sourceText).filter(Boolean).join('\n\f\n'),
     kind: pages.map(p => p.struct.kind).find(k => k !== 'unknown') ?? 'unknown',
     resultUnits: 0, materialBlocks: 0, examHeaders: [], distinctDates: [], distinctIssuers: [],
     pageMarkers: [], signatures: 0, blocks: [],
@@ -69,8 +71,8 @@ function aggregate(pages: { struct: StructuralRepresentation }[]): StructuralRep
 }
 
 const EMPTY_STRUCTURE: StructuralRepresentation = {
-  pageCount: 0, hasText: false, hasImages: false, kind: 'unknown', resultUnits: 0, materialBlocks: 0,
-  examHeaders: [], distinctDates: [], distinctIssuers: [], pageMarkers: [], signatures: 0, blocks: [],
+  pageCount: 0, hasText: false, hasImages: false, sourceText: '', kind: 'unknown', resultUnits: 0,
+  materialBlocks: 0, examHeaders: [], distinctDates: [], distinctIssuers: [], pageMarkers: [], signatures: 0, blocks: [],
 }
 
 /**
