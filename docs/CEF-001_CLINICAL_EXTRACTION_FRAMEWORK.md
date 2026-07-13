@@ -170,6 +170,20 @@ O resultado NÃO é sempre "biomarcador". Exemplos (campos = transcrição factu
 A UI e o Relatório adaptam a **terminologia** ao tipo (1ª casca já entregue: exames não-lab
 deixam de mostrar "biomarcadores" e apontam o laudo).
 
+### 4.0 Laudo/narrativo → `document_only` por DESIGN (fundadora, 13/07/2026)
+Para documentos do tipo **laudo/narrativo** (imagem e afins), o comportamento correto é **NÃO extrair
+campos** — **o laudo já É o resultado** (o texto de achados/conclusão é a informação). Fragmentá-lo em
+"campos" não acrescenta e arrisca distorcer. Então: **registrar o exame + apontar o documento original,
+sem forçar extração** (`extraction_completeness = document_only`). É o **Princípio da Rastreabilidade
+Documental** — a plataforma dá **acesso** ao original, não o substitui. Confirmado em produção: mamografia
+única → "Mamografia • Axial" + "Documento disponível para consulta".
+
+> **Confiabilidade:** hoje isso acontece de forma robusta **quando o documento é classificado como
+> imagem**; garantir para todo laudo (mesmo os que trazem números que o extrator de laboratório poderia
+> raspar) depende da **classificação-primeiro** (Clinical Identity Registry §3.0) — ciclo de execução.
+> **Futuro (só se houver evidência de valor):** extrair uns poucos **metadados** (modalidade · data ·
+> categoria BI-RADS · conclusão) para timeline/busca **sem** substituir nem fragmentar o laudo.
+
 ---
 
 ## 4.1 Modelo Clínico de Referência + completude CERTIFICADA por grupo (revisão cruzada, aprovado 13/07/2026)
