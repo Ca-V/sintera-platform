@@ -74,18 +74,27 @@ const INTERP_ORDER: Record<string, number> = {
 }
 
 const INTERP_CONFIG: Record<string, { label: string; color: string; bg: string; Icon: React.ComponentType<{ size: number; className?: string }> | null }> = {
-  acima_da_referencia:         { label: 'Acima da referência informada pelo laboratório',  color: 'text-orange-600', bg: 'bg-orange-50 border-orange-200', Icon: TrendingUp   },
-  abaixo_da_referencia:        { label: 'Abaixo da referência informada pelo laboratório', color: 'text-blue-600',   bg: 'bg-blue-50 border-blue-200',     Icon: TrendingDown },
-  dentro_da_referencia:        { label: 'Dentro da referência informada pelo laboratório', color: 'text-petal',       bg: 'bg-blush border-petal/30',   Icon: Minus        },
-  // Resultado presente; o laudo só não trouxe a faixa de referência para comparar.
-  sem_referencia_identificada: { label: 'O laboratório não informou uma faixa de referência', color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200', Icon: HelpCircle },
+  acima_da_referencia:         { label: 'Acima da referência informada no documento',  color: 'text-orange-600', bg: 'bg-orange-50 border-orange-200', Icon: TrendingUp   },
+  abaixo_da_referencia:        { label: 'Abaixo da referência informada no documento', color: 'text-blue-600',   bg: 'bg-blue-50 border-blue-200',     Icon: TrendingDown },
+  dentro_da_referencia:        { label: 'Dentro da referência informada no documento', color: 'text-petal',       bg: 'bg-blush border-petal/30',   Icon: Minus        },
+  // Resultado presente; o documento apenas não trouxe uma faixa de referência para comparar.
+  // Neutro (não é um alerta): nem todo exame tem faixa de referência, e nem todo documento é de laboratório.
+  sem_referencia_identificada: { label: 'Sem faixa de referência para comparação neste documento', color: 'text-mauve', bg: 'bg-ivory border-border', Icon: null },
   // Resultado PRESENTE e qualitativo (Negativo, Ausentes, Turvo…) — nunca "ausente".
   qualitative:                 { label: 'Resultado descritivo (em palavras, sem faixa numérica para comparar)', color: 'text-mauve', bg: 'bg-ivory border-border', Icon: null },
-  // Resultado realmente não trazido pelo laudo.
-  missing:                     { label: 'Este resultado não foi informado no laudo', color: 'text-mauve', bg: 'bg-ivory border-border', Icon: null },
-  extraction_failed:           { label: 'Não foi possível ler este item do laudo', color: 'text-red-500', bg: 'bg-red-50 border-red-200', Icon: AlertCircle },
+  // Resultado realmente não trazido pelo documento.
+  missing:                     { label: 'Este resultado não foi informado no documento', color: 'text-mauve', bg: 'bg-ivory border-border', Icon: null },
+  extraction_failed:           { label: 'Não foi possível ler este item do documento', color: 'text-red-500', bg: 'bg-red-50 border-red-200', Icon: AlertCircle },
   // Fallback neutro (numérico sem interpretação) — NÃO diz "ausente".
   indisponivel:                { label: 'Sem interpretação numérica disponível', color: 'text-mauve', bg: 'bg-ivory border-border', Icon: null },
+}
+
+// Origem dos resultados em linguagem humana (evita expor o código técnico "ai_extracted" ao usuário).
+const SOURCE_LABEL: Record<string, string> = {
+  ai_extracted: 'estruturados automaticamente a partir do documento',
+  laudo:        'informados no documento',
+  manual:       'inseridos manualmente',
+  catalog:      'estruturados a partir do documento',
 }
 
 // ── Índice Experimental ───────────────────────────────────────────────────────
@@ -334,7 +343,7 @@ export default function ExamDetailPage() {
   async function deleteExam() {
     if (!exam || deleting) return
     const ok = window.confirm(
-      `Excluir "${exam.type ?? 'Exame'}"?\n\nIsto remove o exame, seus biomarcadores e insights, e o arquivo enviado. ` +
+      `Excluir "${exam.type ?? 'Exame'}"?\n\nIsto remove o exame, seus resultados e insights, e o arquivo enviado. ` +
       `O seu Histórico será recalculado sem este exame. Esta ação não pode ser desfeita.`,
     )
     if (!ok) return
@@ -548,8 +557,8 @@ export default function ExamDetailPage() {
 
       {/* Rodapé de impressão — visível apenas no print */}
       <div className="print-footer hidden">
-        A SINTERA organiza e exibe dados de laudos laboratoriais. Não oferece diagnóstico, interpretação clínica ou recomendações médicas.
-        Os dados exibidos são reprodução estruturada do laudo original. Sempre consulte seu médico.
+        A SINTERA organiza e exibe dados de documentos de saúde. Não oferece diagnóstico, interpretação clínica ou recomendações médicas.
+        Os dados exibidos são reprodução estruturada do documento original. Sempre consulte seu médico.
         Impresso em {new Date().toLocaleDateString('pt-BR')}.
       </div>
 
@@ -659,7 +668,7 @@ export default function ExamDetailPage() {
               {hasResults && (
                 <div className="flex flex-wrap gap-3 mt-3">
                   <span className="font-body text-xs font-medium text-onyx/60">
-                    {counts.total} biomarcadores
+                    {counts.total} {counts.total === 1 ? 'resultado' : 'resultados'}
                   </span>
                   {counts.acima > 0 && (
                     <span className="font-body text-xs font-semibold text-orange-500">
@@ -761,10 +770,10 @@ export default function ExamDetailPage() {
           <div className="mt-4 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
             <AlertCircle size={14} className="text-amber-500 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="font-body text-xs font-semibold text-amber-800">Laudo parcialmente processado</p>
+              <p className="font-body text-xs font-semibold text-amber-800">Documento parcialmente processado</p>
               <p className="font-body text-xs text-amber-700 mt-0.5 leading-relaxed">
-                Este laudo é muito extenso e foi processado parcialmente. Alguns biomarcadores podem não ter sido extraídos.
-                Extraia os dados novamente ou confira o laudo original para garantir que todos os dados estão presentes.
+                Este documento é muito extenso e foi processado parcialmente. Alguns resultados podem não ter sido extraídos.
+                Extraia os dados novamente ou confira o documento original para garantir que todos os dados estão presentes.
               </p>
             </div>
           </div>
@@ -858,7 +867,7 @@ export default function ExamDetailPage() {
                           <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
                             {hasRange && (
                               <span className="font-body text-[11px] text-mauve">
-                                Referência do laboratório: {formatRef(b.reference_min, b.reference_max)}{b.unit ? ` ${b.unit}` : ''}
+                                Referência informada: {formatRef(b.reference_min, b.reference_max)}{b.unit ? ` ${b.unit}` : ''}
                               </span>
                             )}
                             <span className={`inline-flex items-center gap-1 font-body text-[11px] ${cfg.color}`}>
@@ -875,18 +884,23 @@ export default function ExamDetailPage() {
             </div>
           )})}
 
-          {/* Rodapé com contagem — E5 homologação */}
+          {/* Rodapé com contagem — E5 homologação. "Resultados" engloba qualquer tipo de exame
+              (nem todo resultado é biomarcador). A origem é descrita em linguagem humana, não técnica. */}
           <div className="px-5 py-3 bg-ivory border-t border-border/50">
             <p className="font-body text-xs text-mauve">
-              {counts.total} biomarcadores exibidos · fonte: {biomarkers[0]?.source ?? 'ai_extracted'}
+              {counts.total} {counts.total === 1 ? 'resultado estruturado' : 'resultados estruturados'} · {SOURCE_LABEL[biomarkers[0]?.source ?? ''] ?? 'estruturados a partir do documento'}
             </p>
           </div>
 
-          {/* Nota sobre a fonte da referência (regulatória) */}
-          <div className="px-5 py-3 border-t border-border/50 bg-amber-50/40">
+          {/* Nota sobre a fonte da referência (regulatória). Sem pressupor "laboratório": o documento
+              pode vir de laboratório, clínica, profissional de saúde ou outra origem; e a referência,
+              quando existe, varia por origem/equipamento/método/referência científica. */}
+          <div className="px-5 py-3 border-t border-border/50 bg-ivory/60">
             <p className="font-body text-[11px] text-mauve leading-relaxed">
-              As faixas de referência exibidas são as <strong className="text-onyx/70">impressas no laudo do seu laboratório</strong> e
-              podem variar conforme o laboratório e o método. A referência adequada ao seu caso <strong className="text-onyx/70">também
+              As faixas de referência, <strong className="text-onyx/70">quando disponíveis</strong>, são as informadas
+              no <strong className="text-onyx/70">documento de origem</strong> (laboratório, clínica, profissional de saúde
+              ou outra origem) e podem variar conforme a <strong className="text-onyx/70">origem, o equipamento, o método
+              e a referência científica</strong> adotados. A referência adequada ao seu caso <strong className="text-onyx/70">também
               depende de avaliação médica</strong> — esta informação organiza seus dados e não substitui a consulta com seu médico.
             </p>
           </div>
@@ -897,7 +911,7 @@ export default function ExamDetailPage() {
           padding="2xl" className="text-center">
           <Loader2 size={40} className="text-petal mx-auto mb-3 animate-spin" />
           <p className="font-body text-sm font-semibold text-onyx mb-1">Analisando seu exame…</p>
-          <p className="font-body text-xs text-mauve">A SINTERA está extraindo os biomarcadores do seu laudo. Isso leva alguns segundos.</p>
+          <p className="font-body text-xs text-mauve">A SINTERA está estruturando os resultados do seu documento. Isso leva alguns segundos.</p>
         </MotionCard>
       ) : (() => {
         // A UI reage à COMPLETUDE (não ao tipo do exame): document_only = nada estruturado
@@ -926,11 +940,11 @@ export default function ExamDetailPage() {
           <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
             padding="2xl" className="text-center">
             <FileText size={40} className="text-border mx-auto mb-3" />
-            <p className="font-body text-sm font-semibold text-onyx mb-1">Nenhum biomarcador encontrado</p>
+            <p className="font-body text-sm font-semibold text-onyx mb-1">Nenhum resultado estruturado</p>
             <p className="font-body text-xs text-mauve">
               {exam?.status === 'error'
                 ? `Última extração falhou (${exam.error_reason ?? 'erro desconhecido'}). Clique em "Extrair dados" para tentar novamente.`
-                : 'Clique em "Extrair dados" para extrair os biomarcadores deste exame.'}
+                : 'Clique em "Extrair dados" para estruturar os resultados deste exame.'}
             </p>
           </MotionCard>
         )
@@ -1022,7 +1036,7 @@ export default function ExamDetailPage() {
             {deleting ? 'Excluindo…' : 'Excluir exame'}
           </button>
           <p className="font-body text-[11px] text-mauve mt-1">
-            Remove o exame, seus biomarcadores e insights. O seu Histórico é recalculado.
+            Remove o exame, seus resultados e insights. O seu Histórico é recalculado.
           </p>
         </div>
       )}
