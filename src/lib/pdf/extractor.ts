@@ -136,6 +136,46 @@ function assessQuality(text: string): 'good_text' | 'corrupted_text' | 'insuffic
   return 'good_text'
 }
 
+// ── Reparo de texto UTF-16 com bytes trocados ───────────────────────────────
+// Alguns PDFs devolvem o texto com a ordem de bytes de cada unidade UTF-16 trocada:
+// 'C' (0x0043) chega como '䌀' (0x4300), "CARINA" vira "䌀䄀刀䤀一䄀". É recuperável —
+// basta trocar os bytes de volta. Sem isso, o exam_text fica ilegível (quebra a
+// rastreabilidade) e o texto é classificado como corrompido, forçando a via de visão.
+
+function swapBytes(cp: number): number {
+  return ((cp & 0x00ff) << 8) | ((cp >> 8) & 0x00ff)
+}
+
+// Após a troca, o code point cai em ASCII imprimível ou Latin-1 (acentos PT, µ)?
+function isRecoverableSwapped(cp: number): boolean {
+  if (cp <= 0x00ff) return false
+  const s = swapBytes(cp)
+  return (s >= 0x0020 && s <= 0x007e) || (s >= 0x00a0 && s <= 0x00ff)
+}
+
+// Repara o texto SÓ quando a maioria dos caracteres significativos é claramente
+// byte-swapped (evita mexer em texto normal ou em CJK legítimo).
+export function repairByteSwappedText(text: string): { text: string; repaired: boolean } {
+  if (!text) return { text, repaired: false }
+
+  let swappable = 0
+  let significant = 0
+  for (const ch of text) {
+    const cp = ch.codePointAt(0) ?? 0
+    if (cp <= 0x20) continue // ignora espaços/controle na proporção
+    significant++
+    if (isRecoverableSwapped(cp)) swappable++
+  }
+  if (significant === 0 || swappable / significant < 0.6) return { text, repaired: false }
+
+  let out = ''
+  for (const ch of text) {
+    const cp = ch.codePointAt(0) ?? 0
+    out += isRecoverableSwapped(cp) ? String.fromCodePoint(swapBytes(cp)) : ch
+  }
+  return { text: out, repaired: true }
+}
+
 export async function extractTextFromPdf(buffer: Buffer): Promise<PdfExtractionResult> {
   if (buffer.byteLength > MAX_PDF_BYTES) {
     return { ok: false, quality: 'too_large' }
@@ -169,10 +209,15 @@ export async function extractTextFromPdf(buffer: Buffer): Promise<PdfExtractionR
     return { ok: false, quality: 'corrupted' }
   }
 
-  // Fallback: se pagerender não foi chamado (versão sem suporte), tratar como página única
-  const finalPageTexts = pageTexts.length > 0 ? pageTexts : [parsed.text]
+  // Repara texto UTF-16 byte-swapped ANTES de avaliar a qualidade — recupera o
+  // conteúdo real (âncora de rastreabilidade) e pode reabilitar o Path A.
+  const mainText = repairByteSwappedText(parsed.text).text
 
-  const useful = parsed.text.replace(/\s+/g, ' ').trim()
+  // Fallback: se pagerender não foi chamado (versão sem suporte), tratar como página única
+  const finalPageTexts = (pageTexts.length > 0 ? pageTexts : [parsed.text])
+    .map(pt => repairByteSwappedText(pt).text)
+
+  const useful = mainText.replace(/\s+/g, ' ').trim()
   const quality = assessQuality(useful)
 
   return { ok: true, quality, text: useful, pageCount: parsed.numpages, pageTexts: finalPageTexts }
