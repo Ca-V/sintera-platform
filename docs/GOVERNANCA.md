@@ -341,6 +341,50 @@ nova extração. A evolução da identidade ocorre apenas por **eventos governad
 rastreáveis**.* Rege toda a plataforma e conversa com Capture Hub, CEF, UCDA, CRC e a camada cognitiva.
 Ver `CEF-001` e `principio_rastreabilidade_documental`.
 
+### Extensão — Representação Estruturada Certificada (fundadora, 13/07/2026)
+
+A imutabilidade **estende-se da identidade para os RESULTADOS**. O problema não é só o nome mudar — a
+**representação estruturada** mudava a cada reextração ("cada hora aparecia uma parte do exame"). Num
+sistema clínico, **reprodutibilidade é essencial**: o mesmo documento deve produzir a mesma
+representação, independentemente de quantas vezes seja processado.
+
+Hierarquia: `Documento → Identidade documental (imutável) → Representação estruturada (certificada) →
+Contextualização`. A representação também é **ativo permanente**.
+
+**Como funciona:** 1ª entrada → cria identidade → roda o extrator → gera resultados → **certifica** a
+extração → **congela**. "Extrair novamente" **não** substitui automaticamente:
+```
+Representação CERTIFIED  ×  nova extração (CANDIDATE)
+  iguais → descarta a candidata
+  diferentes → apresenta a diferença → confirmação do usuário OU extrator mais novo → governa a troca
+```
+
+**Estados (espelho do identity_status):** `CERTIFIED` (oficial) · `CANDIDATE` (nova extração aguardando
+comparação) · `SUPERSEDED` (antiga substituída após validação) — **histórico append-only** completo.
+
+**Refinamento Claude nº1 — reprodutibilidade por CONGELAMENTO, não por determinismo do LLM:** um LLM
+(sobretudo visão) não é bit-a-bit reprodutível nem a `temperature 0`. A garantia vem de **persistir a
+representação certificada e não re-derivá-la**. Logo: **reextração com o MESMO `extractor_version` NEM
+RODA** (retorna a certificada; rodar de novo só geraria ruído de jitter). O fluxo candidato+comparação
+é disparado **apenas por `extractor_version` mais novo** — nunca por um clique de "Extrair novamente".
+
+**Refinamento Claude nº2 — encaixa no existente:** gatilho = `extractor_version` (migração 104, já
+existe); casa com a **completude certificada** do CEF §4.1 (completude = *quanto* foi estruturado;
+representação certificada = *aquela estrutura, congelada e versionada*). Mensagem ao usuário quando há
+diferença real: *"Uma versão mais recente do extrator identificou diferenças neste exame. Deseja revisar
+a nova estruturação?"* — transparente, auditável, seguro.
+
+**Orientação (permanente, fundadora):** *a imutabilidade estende-se da identidade documental para a
+representação estruturada. A 1ª extração gera uma representação certificada; reextrações não a
+substituem automaticamente nem produzem conjuntos diferentes a cada execução. Um extrator novo produz
+uma representação **candidata**, comparada com a certificada, que só substitui a anterior por **evento
+governado** (nova versão do extrator, confirmação do usuário ou revisão administrativa). Identidade E
+resultados tornam-se ativos permanentes, auditáveis e reproduzíveis.*
+
+**Implementação:** *Passo 1b (imediato, escopo RI-001)* — congelar os resultados como a identidade: numa
+reextração de exame já certificado, **não sobrescrever** (mesmo `extractor_version`). *Passo 2 (pós-RI-001)*
+— máquina completa CERTIFIED/CANDIDATE/SUPERSEDED + diff + troca governada, junto do `identity_status`.
+
 ## Regras gerais
 
 - **Código estável:** uma vez atribuído, não muda; a versão vive no cabeçalho do doc.
