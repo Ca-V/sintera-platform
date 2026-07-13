@@ -164,6 +164,36 @@ depois procurar exemplos). O acervo oficial de regressão está em
 `docs/QA/GOLD_STANDARD_CASES.md` (GS-001..GS-009 + casos reais já capturados: EEG e Pentacam =
 GS-003/GS-004). Cada leitor do CEF é validado contra o caso GS correspondente.
 
+## 5.4 Metadados de extração + completude RELATIVA AO EXTRATOR (fundadora, 13/07/2026)
+
+Cada extração produz um **bloco de metadados** (não é novo domínio — organiza metadados que
+crescerão): `extractor_family` · `extractor_version` · `extraction_completeness` ·
+`structural_confidence` · `processed_at` (migration 104).
+
+**Princípio — a completude é relativa ao EXTRATOR, não ao documento.** Evita "FULL" absoluto (nunca
+verificável — até um hemograma pode ganhar parâmetros). Estados:
+- **`structured`** — tudo o que o extrator suporta HOJE foi estruturado.
+- **`partial`** — parte estruturada; o resto está no documento.
+- **`document_only`** — nada estruturado com segurança → o documento é a fonte.
+
+O mesmo exame muda de estado conforme o **conhecimento da plataforma** evolui (não o documento):
+`Pentacam → document_only/partial (hoje) → structured (extrator oftalmológico v1+)`. Mesma
+filosofia do CRC. O `extractor_version` habilita o **reprocessamento automático**: quando um
+extrator evolui, os exames processados por versão inferior são candidatos a reprocessar. Hoje o
+setter é **heurístico** (cobertura de faixa de referência, type-agnostic); cada extrator
+especializado passará a computar completude/confiança **propriamente**.
+
+**UI reage ao ATRIBUTO, não ao tipo** (a interface nada sabe de Pentacam/EEG/hemograma):
+`structured` → mostra normal · `partial` → "Resultados estruturados" + nota neutra ("informações
+adicionais no documento original") · `document_only` → "Documento disponível para consulta". O
+cabeçalho passa de "Biomarcadores extraídos" para **"Resultados estruturados"** (biomarcador é 1 tipo).
+
+**UI-alvo dos extratores (end-state):** **exposição progressiva** — resumo navegável → expandir por
+seção/olho/região → documento original sempre acessível. A SINTERA **não reproduz visualmente** o
+documento; **estrutura integralmente** a informação preservando a **lógica clínica da modalidade**,
+mantendo o documento como **fonte primária de conferência**. Saídas do CEF (§4): **medidas** ·
+**achados** · **conclusão documentada** (quando existir — nunca inventada).
+
 ## 6. Document Bundle (pertence ao Capture Hub, consumido pelo CEF)
 
 Dois PDFs/imagens podem ser **1 documento com N páginas**, não 2 exames. A captura multipágina
