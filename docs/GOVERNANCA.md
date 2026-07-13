@@ -274,10 +274,46 @@ permanece fiel; a plataforma classifica/estrutura/contextualiza/relaciona, **mas
 reinterpreta o conteúdo documental**. Aumenta confiabilidade, elimina inconsistência entre
 reprocessamentos, fortalece a rastreabilidade regulatória e preserva a confiança do usuário.
 
-**Modelo de dados alvo:** `document_title` (fiel; write-once) · `document_type`/`document_family`
-(classificação interna; write-once) · `canonical_title` (interno) · resultados estruturados (mutáveis
-na reextração) · contexto (mutável). Exibe-se `document_title`. Ver `CEF-001` (reextração idempotente
-na identidade) e `principio_rastreabilidade_documental`.
+**Implementação em 2 passos:**
+- **Passo 1 (FEITO, escopo RI-001) — write-once interino:** a identidade é gravada na 1ª extração e
+  imutável na reextração. Gatilho interino = `document_type != null` (frágil, **provisório**; será
+  substituído pelo `document_identity_status`). Mata o churn e permite concluir o RI-001.
+- **Passo 2 (modelo-alvo — APÓS o RI-001, ANTES do HUB-001):** estados de identidade + separação
+  documental × clínica (abaixo). Prioridade da fundadora: consolidar a referência primeiro, depois
+  fortalecer os fundamentos.
+
+### Modelo-alvo — 5 atributos permanentes (fundadora, 13/07/2026)
+
+Falta uma camada: hoje é `Documento → Identidade → Resultados`; o correto é **`Documento → Identidade
+DOCUMENTAL → Identidade CLÍNICA → Resultados`**. As duas identidades são diferentes: o documento diz
+*"OCULUS Pentacam"* (documental); clinicamente ele é *Tomografia de córnea / Pentacam* (clínica).
+
+| Atributo | Camada | Dono | Muda? |
+|---|---|---|---|
+| `document_title` | documental (transcrição fiel) | documento | só por correção |
+| `document_identity_status` | controle (`draft`/`validated`/`locked`/`corrected`) | plataforma | por validação/correção |
+| `clinical_family` (ex.: Oftalmologia) | clínica | **CEF · Exam Type Registry** | por versão de extrator/correção |
+| `clinical_type` (ex.: Pentacam) | clínica | **CEF** | idem |
+| `canonical_title` (ex.: Tomografia de córnea (Pentacam)) | representação | plataforma | interno |
+
+**Estados da identidade** — evita eternizar erro do write-once:
+- **`draft`** — provisória (1ª extração, confiança não confirmada).
+- **`validated`** — confirmada (por confiança alta OU pelo usuário).
+- **`locked`** — imutável.
+- **`corrected`** — alterada por correção explícita do usuário.
+
+**Regra do `draft` (refinamento Claude — sem isto o churn volta):** em `draft`, a identidade **NÃO
+muda por uma reextração do mesmo extrator**. Muda **apenas** por (a) promoção por confiança na 1ª
+extração, (b) confirmação do usuário, (c) correção do usuário, ou (d) um **extrator mais novo**
+(`extractor_version` maior, via reprocesso explícito). O gatilho de mudança deixa de ser "reextração"
+e passa a ser "ação de validação/correção ou versão nova de extrator".
+
+**Princípio de IA (permanente, fundadora):** *nenhuma informação produzida por IA substitui a
+informação documental original — apenas a complementa com uma representação estruturada e
+rastreável.* Forma operacional do "documento é a fonte da verdade": **a IA nunca substitui o
+documento; só cria camadas sobre ele.** `clinical_family`/`clinical_type` são a saída do **Exam Type
+Registry do CEF** — não é camada nova, é nomear como identidade o que o CEF já produz. Ver `CEF-001`
+e `principio_rastreabilidade_documental`.
 
 ## Regras gerais
 
