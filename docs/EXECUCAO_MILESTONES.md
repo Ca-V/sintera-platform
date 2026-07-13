@@ -16,7 +16,7 @@
 | # | Capacidade | % | Estado | Previsão |
 |---|---|---|---|---|
 | **M1** | Compreensão documental (Bundle → CertifiedCDUs) | **90%** | 🔄 | E (integração) |
-| **M2** | Cobertura ligada (fim da falsa completude) | **50%** | 🔄 | E |
+| **M2** | Cobertura ligada (fim da falsa completude) | **70%** | 🔄 | E (confiab. plena em M5) |
 | **M3** | Split de CDUs no fluxo real (1 upload → N registros) | **15%** | ⬜ | E+1 |
 | **M4** | Identidade robusta (Clinical Identity Registry + estados) | **10%** | ⬜ | E+2 |
 | **M5** | Extratores especializados do CEF (por modalidade) | **5%** | ⬜ | E+3 |
@@ -44,7 +44,10 @@ funções puras ✅; (b) `processBundle` devolve só `CertifiedCDU` ✅; (c) fai
 estruturado); (c) exame vira `partial` quando `structured<discovered`; (d) UI mostra parcial + original.
 **Testes:** `FUNC-coverage` ✅ · `INT-coverage-lab` (laudo 6 exames → partial) ⬜.
 **CRC:** GS-011 (6 descobertos × 4 estruturados → partial 67%).
-**Bloqueadores:** depende de M1(d).
+**Progresso:** ✅ Cobertura conservadora LIGADA ao `analyze` (só rebaixa `structured→partial` quando
+descoberto > estruturado — direção segura, §4.0.1). Confiabilidade PLENA depende de o extrator do CEF
+(M5) reportar unidades alinhadas com a Análise Estrutural.
+**Bloqueadores:** confiabilidade plena depende de M5 (unidades alinhadas).
 
 ## M3 — Split de CDUs no fluxo real (1 upload → N registros) · 15% · ⬜
 **Capacidade:** um upload com N exames distintos cria N registros (o PDF de 3 laudos → 3 registros).

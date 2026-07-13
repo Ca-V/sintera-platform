@@ -10,6 +10,8 @@ import { classifyExamDocument, deriveDisplayTitle, withProvenance } from '@/lib/
 import { extractIssuer } from '@/lib/ai/issuer'
 import { classifyDocumentAI } from '@/lib/ai/document-classifier'
 import { representationFingerprint, isRepresentationCertified } from '@/lib/capture/reproducibility'
+import { structuralAnalysis } from '@/lib/capture/structural-analysis'
+import { computeCoverage } from '@/lib/capture/coverage'
 
 const ERROR_MESSAGES: Record<string, string> = {
   password_protected: 'O PDF está protegido por senha e não pode ser processado.',
@@ -330,7 +332,17 @@ export async function POST(
   // Completude RELATIVA AO EXTRATOR; heurística interina (cobertura de faixa de referência).
   const bmN = isNarrativeLaudo ? 0 : result.biomarkers.length
   const bmWithRef = isNarrativeLaudo ? 0 : result.biomarkers.filter(b => b.rangeExtracted || b.referenceMin != null || b.referenceMax != null).length
-  const completeness = bmN === 0 ? 'document_only' : (bmWithRef / bmN >= 0.5 ? 'structured' : 'partial')
+  let completeness = bmN === 0 ? 'document_only' : (bmWithRef / bmN >= 0.5 ? 'structured' : 'partial')
+
+  // COBERTURA (comparador puro, §Princípio da Cobertura Documental) — direção SEGURA: só REBAIXA,
+  // nunca alega completude. A Análise Estrutural descobre nº de unidades (RESULTADO) no laudo; se o
+  // extrator estruturou MENOS, não pode ser "structured" (mata a falsa completude do laudo de 6 exames).
+  // Confiabilidade plena depende do extrator do CEF reportar unidades alinhadas (M5); aqui, conservador.
+  if (!isNarrativeLaudo && completeness === 'structured' && bmN > 0 && examTextForIssuer) {
+    const discovered = structuralAnalysis({ text: examTextForIssuer }).resultUnits
+    const cov = computeCoverage({ cdu: { index: 1, discoveredUnits: discovered }, structuredUnits: bmN })
+    if (discovered > 0 && !cov.certifiedComplete) completeness = 'partial'
+  }
   finalUpdate.extraction_completeness = completeness
   finalUpdate.structural_confidence = completeness === 'structured' ? 'high' : completeness === 'partial' ? 'medium' : 'low'
   finalUpdate.extractor_family = effectiveDocType
