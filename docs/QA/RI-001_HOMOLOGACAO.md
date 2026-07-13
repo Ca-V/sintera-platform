@@ -15,6 +15,42 @@
 
 ---
 
+## 0. Fechamento de escopo da certificação (a APROVAR pela fundadora, 13/07/2026)
+
+Decisão para destravar a execução: **certificar o RI-001 com o que está sólido; deferir imagem
+estruturada, segmentação e captura de imagem ao ciclo de execução — explicitamente.** Coerente com a
+Evidência Arquitetural (materializar > especificar) e com o Freeze.
+
+**✅ ENTRA na certificação (IN — validado nesta sessão):**
+- Captura **multipágina** do mesmo exame → **1 Document Bundle**.
+- **Classificação** da categoria (laboratório · pedido/guia · não-laboratorial).
+- **Nomenclatura fiel/determinística** — `document_title` = o documento; nunca um biomarcador.
+- `document_type` × `document_scope`; **proveniência** ("Ver documento original").
+- **Laboratório:** extração estruturada de biomarcadores (caminho maduro).
+- **Laudo/narrativo (imagem):** `document_only` — registra + aponta o original (§4.0 do CEF).
+- **Identidade imutável** (write-once) + **Reprodutibilidade** (representação certificada + fingerprint +
+  teste que quebra o CI) + **selo honesto por completude**.
+- Correções desta sessão: `exam_text` byte-swap · nome fiel de imagem · imagem → `document_only`.
+
+**⏳ SAI da certificação (OUT — ciclo de execução, NÃO bloqueia; tudo já desenhado):**
+- **Document Segmentation** (1 documento = N exames) — interino mitigado por *"um exame por vez"*.
+- **Extração estruturada de imagem** (achados por grupo) — hoje `document_only` (extrator do CEF).
+- **Identity Validator / Clinical Identity Registry** (identificação robusta por evidências).
+- **Datas semânticas** profundas (CEF §5) e **captura de imagem** (laudo + imagens no Bundle).
+- **Estados de identidade** (draft/validated) + **completude estrutural** (pilar 4).
+
+**Nota:** exames **antigos** (Pentacam, US pélvico) foram certificados **antes** das correções desta
+sessão e estão **travados no valor errado** — **não contam** contra a certificação; precisam **re-upload**.
+
+**Critério de certificação (com este escopo):** o **fluxo IN** passa o RI-001A + as linhas invioláveis do
+RI-001B (identificação · nome · honestidade · sem-invenção · proveniência). Imagem estruturada e
+multi-exame **não bloqueiam** — são OUT.
+
+> **Aprovação da fundadora:** ☐ Aprovo este fechamento de escopo → seguir para verificação + Relatório +
+> certificação (merge). ☐ Ajustar (o quê): __________
+
+---
+
 ## 1. RI-001A — Matriz funcional (cenários obrigatórios)
 
 | # | Cenário | Resultado esperado | Status |
