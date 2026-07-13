@@ -85,6 +85,13 @@ permite comparar versões de prompts, modelos e extratores de forma **objetiva**
 
 - **Regressão:** após implementar cada leitor do CEF, reprocessar o caso GS e comparar com o
   "Esperado". Nenhum deve regredir a "biomarcadores".
+- **Reprodutibilidade obrigatória (Princípio da Reprodutibilidade — GOVERNANCA):** para todo caso GS,
+  extrair, **reextrair várias vezes** com a **mesma versão do extrator** e verificar que o resultado
+  permanece **idêntico** (nome documental + classificação + resultados). A garantia é por
+  **congelamento** da representação certificada — não por determinismo do LLM. Trava determinística
+  (todo PR): `tests/capture-hub/func/FUNC-reproducibility.test.ts` (estabilidade da assinatura +
+  imutabilidade do exame certificado). Homologação (IA real): medir a *variância* do extrator entre
+  execuções, para vigiar drift. Qualquer diferença numa reextração de mesma versão = **regressão**.
 - **Orientação de design:** o protocolo de leitura de cada tipo (CEF §7) nasce olhando o
   documento real do caso GS correspondente.
 - **Expansão:** adicionar GS-005..GS-009 com documentos reais quando disponíveis.

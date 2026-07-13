@@ -9,6 +9,7 @@ import { loadCatalogIndex, resolveBiomarker } from '@/lib/ai/insights/resolver'
 import { classifyExamDocument, deriveDisplayTitle, withProvenance } from '@/lib/capture/document-naming'
 import { extractIssuer } from '@/lib/ai/issuer'
 import { classifyDocumentAI } from '@/lib/ai/document-classifier'
+import { representationFingerprint, isRepresentationCertified } from '@/lib/capture/reproducibility'
 
 const ERROR_MESSAGES: Record<string, string> = {
   password_protected: 'O PDF está protegido por senha e não pode ser processado.',
@@ -69,7 +70,7 @@ export async function POST(
   // nem sobrescreve resultados/identidade — a representação é um ativo permanente e reproduzível
   // (mesmo documento → mesma representação). Curto-circuita ANTES de baixar/processar. O Passo 2
   // (pós-RI-001) fará candidato+comparação quando houver `extractor_version` mais novo.
-  const representationCertified = previousStatus === 'processed' && identityEstablished
+  const representationCertified = isRepresentationCertified({ previousStatus, identityEstablished })
   if (representationCertified) {
     return NextResponse.json({
       certified: true,
@@ -370,6 +371,16 @@ export async function POST(
       }
     }
   }
+  // Assinatura da representação estruturada certificada (Princípio da Reprodutibilidade). Mesma versão
+  // de extrator + mesmo documento => mesma assinatura. Serve de prova permanente e base do evento de
+  // consistência do Passo 2 (comparar candidato × certificado sem substituir automaticamente).
+  finalUpdate.representation_fingerprint = representationFingerprint({
+    documentType:  (finalUpdate.document_type as string | undefined) ?? exam.document_type,
+    documentScope: finalUpdate.document_scope as string | undefined,
+    displayTitle:  finalUpdate.display_title as string | undefined,
+    results: result.biomarkers,
+  })
+
   await supabase.from('exams')
     .update(finalUpdate as never)
     .eq('id', examId)

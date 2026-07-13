@@ -385,6 +385,48 @@ resultados tornam-se ativos permanentes, auditáveis e reproduzíveis.*
 reextração de exame já certificado, **não sobrescrever** (mesmo `extractor_version`). *Passo 2 (pós-RI-001)*
 — máquina completa CERTIFIED/CANDIDATE/SUPERSEDED + diff + troca governada, junto do `identity_status`.
 
+---
+
+## Princípio da Reprodutibilidade (CONSTITUCIONAL — fundadora, 13/07/2026)
+
+> **Para o MESMO documento, usando a MESMA versão do extrator, a plataforma deve produzir exatamente a
+> MESMA representação estruturada** — o mesmo nome documental, a mesma classificação, os mesmos
+> resultados. **Qualquer diferença é uma REGRESSÃO.** Tão importante quanto a Rastreabilidade Documental
+> e a Evidência Arquitetural: a confiança na plataforma depende disto.
+
+Elevado a requisito **constitucional** porque o erro do Pentacam (reextrair mudava nome e resultados)
+**já havia sido decidido como proibido e regrediu** — sinal de que o princípio não estava protegido
+**pela arquitetura**, só por decisão. Um princípio de confiança precisa de **guarda permanente**.
+
+**Nota técnica (honesta):** reprodutibilidade **não** vem de determinismo do LLM (visão não é bit-a-bit
+reprodutível nem a `temperature 0`). Vem de **congelar a representação certificada e não re-derivá-la
+na mesma versão**. A garantia é arquitetural, não uma expectativa sobre o modelo.
+
+**Critério de segurança (na ARQUITETURA, não só na interface):**
+1. Na 1ª extração, gerar a **assinatura (fingerprint)** da representação estruturada
+   (`representation_fingerprint` — SHA-256 de nome + classificação + resultados canonizados; coluna
+   migração 105; `src/lib/capture/reproducibility.ts`).
+2. Uma reextração com a **mesma versão do extrator** deve produzir a **mesma assinatura**; a
+   representação certificada **não é re-derivada** (Passo 1b curto-circuita antes de processar).
+3. Se uma re-derivação produzir assinatura **diferente**, é **evento de consistência** — **nunca**
+   substitui automaticamente os dados existentes.
+
+**Reprocessamento — única exceção:** diferenças só são aceitas por **evento governado** — nova
+**versão do extrator**, **correção manual** ou **validação explícita do usuário**. Nunca por uma simples
+reextração.
+
+**Teste obrigatório (guarda permanente contra regressão):** faz parte do CRC e da suíte automatizada.
+- **Determinístico (todo PR):** a assinatura é estável para a mesma representação e muda a qualquer
+  alteração de nome/classificação/resultado; e um exame **certificado** nunca é re-executado/sobrescrito
+  numa reextração de mesma versão. `tests/capture-hub/func/FUNC-reproducibility.test.ts`. **Se falhar,
+  alguma evolução reintroduziu o comportamento proibido.**
+- **Homologação (IA real, informativo):** para cada caso do Gold Standard, medir a *variância* do
+  extrator entre execuções — não como pass/fail de "idêntico" (o LLM varia), mas para vigiar o drift; a
+  imutabilidade do usuário é garantida pelo congelamento, não pela repetição do modelo.
+
+Ver `CEF-001` §4.1 (completude certificada), `docs/QA/GOLD_STANDARD_CASES.md`,
+`principio_rastreabilidade_documental`.
+
 ## Regras gerais
 
 - **Código estável:** uma vez atribuído, não muda; a versão vive no cabeçalho do doc.
