@@ -348,12 +348,14 @@ OCR/leitura nunca viram identidades permanentes.**
 **NÃO depende do Exam Type Registry nem do CEF.** A identidade documental é uma camada **anterior e
 independente** da compreensão clínica — um documento existe e tem título/data/emissor/paciente **mesmo
 sem a plataforma saber o que ele é** (fabricante desconhecido, equipamento novo, hospital estrangeiro).
-O **Identity Validator** é **engenharia documental, não clínica**: `existe título? · texto íntegro? ·
-houve corrupção? · fabricante reconhecido? · caracteres estranhos? · confiança OCR? · conflito? · título
-curto/longo demais? · mistura de duas linhas?`. "Fabricante reconhecido (OCULUS)" = **lista de sanidade
-documental**, NÃO o registro clínico (saber que OCULUS é um fabricante real ≠ saber que é tomografia de
-córnea). Consequência de sequência: o Identity Validator **não espera o CEF/HUB-001** — pode ser
-construído **logo após o RI-001**. Fluxo com o estágio explícito:
+O **Identity Validator** é **engenharia da INFORMAÇÃO, não clínica** (fundadora, 13/07): `existe título? ·
+texto íntegro? · houve corrupção? · fabricante reconhecido? · caracteres estranhos? · confiança OCR? ·
+conflito? · título curto/longo demais? · mistura de duas linhas?`. **Vale para qualquer formato** —
+OCR·PDF·DICOM·HL7·FHIR·XML·JSON — é uma **camada universal de qualidade da informação** (conversa com a
+UCDA), não só documental. "Fabricante reconhecido (OCULUS)" = **lista de sanidade da informação**, NÃO o
+registro clínico (saber que OCULUS é um fabricante real ≠ saber que é tomografia de córnea). Consequência
+de sequência: o Identity Validator **não espera o CEF/HUB-001** — pode ser construído **logo após o
+RI-001**. Fluxo com o estágio explícito:
 ```
 Documento → OCR → Extração textual → Identity Validator → document_title certificado → (depois) Classificação clínica → CEF
 ```
@@ -488,6 +490,35 @@ estrutural esperado do tipo). Estado explícito: `reproducible=true` + `complete
 A SINTERA deixa de "usar IA para ler exames" e passa a **medir, governar, auditar e evoluir a qualidade
 da informação clínica** — diferencial difícil de copiar. O pilar 4 é trabalho do **ciclo do CEF**
 (pós-RI-001), pois depende do Modelo Clínico por tipo.
+
+---
+
+## Princípio da Validação entre Camadas (CONSTITUCIONAL — fundadora, 13/07/2026)
+
+> **Nenhuma camada valida a si própria.** Cada camada **produz** informação; a camada **seguinte** a
+> **valida antes que seja utilizada**. Elimina a **autocertificação** — o calcanhar de Aquiles dos
+> sistemas de IA. É a **abstração-mãe** de todas as guardas da plataforma.
+
+Exemplos: `OCR → Identity Validator` (o OCR não se declara correto) · `Extrator → Representation
+Validator` (o extrator não certifica a própria saída) · `Camada Cognitiva → Governance Validator` (a IA
+nunca valida a própria conclusão). Também já aplicado: o `representation_fingerprint` é conferido por um
+passo separado; a verificação adversarial não confia no próprio finder.
+
+**Os validadores são "engenharia da INFORMAÇÃO" (format-agnostic):** OCR·PDF·DICOM·HL7·FHIR·XML·JSON
+passam pela mesma família de validação de qualidade — camada universal, conversa com a UCDA.
+
+**O regresso TERMINA na Governança (âncora — refinamento Claude):** "cada camada validada pela seguinte"
+não é infinito. A **última camada é a Governança, validada por HUMANO/corpus — nunca por outra IA**
+(Responsável Clínico · CRC/Gold Standard · confirmação do usuário). É o fim proposital da corrente — o
+que mantém o RDC 657 e o aprendizado governado. Sem esse âncora humano, "validação entre camadas" viraria
+IA validando IA.
+
+**Pipeline completo (visão):**
+```
+Documento → Extração → Validação documental → Classificação clínica → Representação estruturada
+  → Validação estrutural → Contextualização científica → Camada cognitiva → Governança (humano/corpus)
+```
+Cada seta é também uma **validação**: a camada seguinte valida a informação da anterior antes do uso.
 
 ## Regras gerais
 

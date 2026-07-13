@@ -192,6 +192,22 @@ acessível para o restante. O **percentual é secundário/qualitativo**; nunca e
 como *score* do exame (a North Star proíbe "score de saúde" proprietário; a mensagem é **neutra e
 orientada a ação**, nunca "limitação da plataforma").
 
+### 4ª camada — Representation Validator (fundadora, 13/07/2026)
+Existe uma camada além da representação: a **validação da representação** — *"posso confiar nesta
+estrutura?"*. NÃO é confiança do OCR nem do LLM; é confiança da **estrutura produzida**. É um **validador
+separado do extrator** (Princípio da Validação entre Camadas — o extrator não certifica a própria saída).
+Não é máquina nova: seus **outputs já existem** — completude (`partial`/`structured`, abaixo) +
+`structural_confidence` (migração 104). A camada apenas os **produz num passo separado** de quem extraiu.
+
+**O CEF passa a responder 4 perguntas (distintas):**
+1. **O que é este documento?** (identidade clínica — Exam Type Registry)
+2. **Como deve ser estruturado?** (protocolo/modelo do tipo)
+3. **Quanto consegui estruturar?** (completude — mínimo estrutural)
+4. **Posso considerar esta representação certificada?** (Representation Validator → certifica ou não)
+
+Ex.: Pentacam com fabricante·data·OD·OE·K1·K2 mas sem BAD-D/elevações/mapas → *representação existe,
+validação: parcial*. Hemograma completo com referências → *validação: completa*.
+
 ### Duas garantias ortogonais — Reprodutibilidade × Completude estrutural (fundadora, 13/07/2026)
 A certificação tem **dois critérios independentes**; um não substitui o outro:
 1. **Reprodutibilidade** (Princípio da Reprodutibilidade, GOVERNANCA) — a representação **não muda**
