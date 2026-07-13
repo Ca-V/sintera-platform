@@ -152,6 +152,17 @@ UCDA Draft · CRC · ARG · ADL · GOVERNANÇA · DOC-001 · RI-001). **Freeze i
 criação de novos documentos constitucionais** até a execução validar os conceitos atuais. Novos
 domínios (ex.: SIF-001) ficam **adiados** até haver caso real que os exija.
 
+**PARAR DE ADICIONAR PRINCÍPIOS (fundadora, 13/07/2026 — encerramento da fase de arquitetura):** o nível
+de abstração é **suficiente**. Daqui para frente o risco deixa de ser *falta* de arquitetura e passa a
+ser *excesso*. **Próximo ciclo = MATERIALIZAÇÃO**, nesta ordem: (1) **RI-001** homologado/certificado
+(gate — depende da fundadora no preview); (2) **Identity Validator** existir (independe do CEF); (3) **1º
+extrator especializado do CEF** (identidade clínica + representação); (4) **validar GS-003/GS-004** no
+CRC; (5) **medir os indicadores** definidos; (6) **aprender com a execução**. Seis meses de implementação
+revelarão refinamentos mais valiosos que seis semanas de especificação — é o próprio **Princípio da
+Evidência Arquitetural** aplicado à governança. O arcabouço (5 pilares · 3 camadas de identidade · 4
+perguntas do CEF · validação entre camadas · Pipeline de Certificação da Informação Clínica) está
+**fechado**; só evolui por **evidência da execução**.
+
 **Regra "acomodar-antes-de-criar" (permanente):** *toda nova ideia arquitetural deve PRIMEIRO
 tentar ser acomodada pelos componentes existentes. Só quando isso não for possível cria-se um
 novo domínio constitucional.* Preserva a coerência e mantém a evolução por refinamentos
@@ -495,9 +506,27 @@ da informação clínica** — diferencial difícil de copiar. O pilar 4 é trab
 
 ## Princípio da Validação entre Camadas (CONSTITUCIONAL — fundadora, 13/07/2026)
 
-> **Nenhuma camada valida a si própria.** Cada camada **produz** informação; a camada **seguinte** a
-> **valida antes que seja utilizada**. Elimina a **autocertificação** — o calcanhar de Aquiles dos
-> sistemas de IA. É a **abstração-mãe** de todas as guardas da plataforma.
+> **Toda informação produzida pela plataforma deve ser validada por uma camada INDEPENDENTE antes de
+> poder ser utilizada pela camada seguinte.** *(Forma abrangente; "nenhuma camada valida a si própria"
+> é o corolário.)* Deixa de ser só "quem valida" e vira um **princípio de fluxo de informação**:
+> `Produção → Validação → Certificação → Uso`. Elimina a **autocertificação** — o calcanhar de Aquiles
+> dos sistemas de IA. É a **abstração-mãe** de todas as guardas da plataforma. Aproxima a SINTERA da
+> engenharia **aeronáutica/financeira/espacial**, não das aplicações de IA comuns (`Entrada → IA →
+> Resposta`).
+
+**Contratos entre camadas (ferramenta de engenharia — fundadora):** cada camada responde 3 perguntas —
+**o que recebe · o que garante · o que NUNCA garante**. O "nunca garante" é guardião do RDC 657.
+- **Identity Validator** — recebe OCR/texto/metadados · garante identidade documental consistente ·
+  **nunca** garante classificação clínica.
+- **CEF** — recebe documento certificado · garante representação estruturada · **nunca** garante
+  interpretação clínica.
+- **Camada Cognitiva** — recebe representação certificada · garante contexto científico · **nunca**
+  garante diagnóstico, conduta ou decisão clínica.
+
+**Nome que descreve o que já existe (não domínio novo):** **Pipeline de Certificação da Informação
+Clínica** — a informação clínica passa por sucessivas etapas de **produção → validação → certificação**
+antes de ser disponibilizada. Sintetiza Capture Hub · Identity Validator · CEF · Representation Validator
+· CRC · Governança.
 
 Exemplos: `OCR → Identity Validator` (o OCR não se declara correto) · `Extrator → Representation
 Validator` (o extrator não certifica a própria saída) · `Camada Cognitiva → Governance Validator` (a IA
