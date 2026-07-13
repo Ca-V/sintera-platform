@@ -77,6 +77,28 @@ tempo cronológica de TODAS as decisões arquiteturais, mesmo as sem ADR própri
 
 ---
 
+## Regra de ouro da execução (automação × confirmação)
+
+> **Automatizar toda execução técnica repetitiva. Solicitar confirmação apenas para decisões de
+> negócio, arquitetura ou operações potencialmente irreversíveis.** (fundadora, 13/07/2026)
+
+Consistente com ARG/ADL/CAP-002/RI-001: a ferramenta não interrompe o raciocínio por questões
+operacionais que podem ser executadas com segurança.
+
+| Automático (sem perguntar) | Confirmação explícita |
+|---|---|
+| ler arquivos · buscar no projeto · **editar código** · **criar arquivos** | **push para a main** |
+| testes · build · lint | **deploy em produção** |
+| **consultas de leitura** ao banco | **migrations destrutivas** |
+| trabalho em **branches de desenvolvimento** | **remoção de dados** |
+| **commits locais** (e push em branch de dev) | **alterações de infraestrutura** |
+| pesquisa/leitura externa (web) | **mudanças de credenciais/permissões** · decisões de **produto/arquitetura** |
+
+Nota: a allowlist técnica (`.claude/settings.local.json`) é grossa (não distingue conteúdo);
+a coluna "confirmação" é garantida por **disciplina de conduta** — ex.: mesmo com `git push`
+liberado, confirma-se todo push para a **main**; mesmo com `execute_sql` liberado, confirma-se
+DELETE/DROP/TRUNCATE e migrations destrutivas.
+
 ## Congelamento e evolução (formulação de governança)
 
 Não se diz "a arquitetura não será mais discutida". A formulação correta:
