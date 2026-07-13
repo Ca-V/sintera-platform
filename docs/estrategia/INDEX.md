@@ -9,6 +9,7 @@
 | Camada | Documento | Propósito |
 |---|---|---|
 | **Constituição Estratégica** | `SINTERA_ESTRATEGIA_MASTER.md` (v2.2) | Documento‑mãe: propósito, missão, tese, posicionamento, unidade fundamental, arquitetura, monetização, moat, métricas, hipóteses, princípios invioláveis, governança |
+| **Narrativa Estratégica** | `SINTERA-NARRATIVA-ESTRATEGICA.md` | Camada de **refinamento** (4 níveis + longitudinalidade‑ativo · escada semântica · Governed Knowledge Evolution · capacidade vs componente · leveza regulatória). **Fortalece, não substitui** Constituição/Branding |
 | **Branding** | `../branding/SINTERA_BRANDING.md` (v1.0) | Identidade de marca, tom de voz, identidade visual, paleta, tipografia, landing, diretrizes de comunicação — alinhado à Constituição |
 | **Design System** | `../DS-001_DESIGN_SYSTEM.md` | Fonte técnica de tokens/componentes (paleta canônica implementada) |
 
