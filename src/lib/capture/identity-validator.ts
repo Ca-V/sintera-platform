@@ -13,9 +13,19 @@ import type { CDU, CDUKind, SegmentationResult } from './segmentation'
 
 export type CDUStatus = 'certified' | 'needs_review'
 export type Confidence = 'high' | 'medium' | 'low'
+// Revisão TÉCNICA (ambiguidade ESTRUTURAL da CDU) → BLOQUEIA o processamento daquela CDU.
+// Revisão CLÍNICA (estrutura correta, mas falta extrator da modalidade) → NÃO bloqueia (segue como
+// document_only/partial, a jusante). O Identity Validator só produz revisão TÉCNICA (é documental).
+export type ReviewType = 'technical' | 'clinical'
+
+/** Versão do CONTRATO CertifiedCDU. Estável/versionado como API pública: evoluções → v2, sem quebrar
+ *  os extratores existentes. Todo extrator declara a versão que consome. */
+export const CERTIFIED_CDU_CONTRACT_VERSION = 'v1' as const
 
 /** CONTRATO ÚNICO de entrada dos extratores do CEF (nunca mais um PDF). */
 export interface CertifiedCDU {
+  /** Versão do contrato (v1). */
+  contractVersion: string
   index: number
   pages: number[]
   /** Modalidade DOCUMENTAL (results/narrative) — NÃO a clínica (essa é a etapa 5). */
@@ -26,6 +36,9 @@ export interface CertifiedCDU {
   issuer: string | null
   fingerprint: string
   status: CDUStatus
+  /** Presente quando `needs_review`. O Identity Validator só produz `technical` (ambiguidade estrutural
+   *  → BLOQUEIA). `clinical` (falta extrator) é decidido a jusante e NÃO bloqueia. */
+  reviewType?: ReviewType
   confidence: Confidence
   /** Motivos auditáveis (por que não certificou / ressalvas). */
   issues: string[]
@@ -99,8 +112,11 @@ export function validateSegmentation(seg: SegmentationResult): ValidatedSegmenta
     const confidence: Confidence = issues.length === 0 ? 'high' : issues.length === 1 ? 'medium' : 'low'
 
     return {
+      contractVersion: CERTIFIED_CDU_CONTRACT_VERSION,
       index: cdu.index,
       pages: cdu.pages,
+      // Toda revisão emitida aqui é TÉCNICA (ambiguidade estrutural) — bloqueia. Clínica é a jusante.
+      ...(status === 'needs_review' ? { reviewType: 'technical' as const } : {}),
       documentalModality: cdu.kind,
       title,
       discoveredUnits: cdu.discoveredUnits,
@@ -128,6 +144,7 @@ export function validateSegmentation(seg: SegmentationResult): ValidatedSegmenta
           c.issues.push('possível super-segmentação (mesmo exame dividido?)')
         }
         c.status = 'needs_review'
+        c.reviewType = 'technical' // ambiguidade ESTRUTURAL → bloqueia
         c.confidence = 'low'
       }
     }

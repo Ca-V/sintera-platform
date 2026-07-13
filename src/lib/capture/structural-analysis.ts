@@ -8,6 +8,11 @@
 // Format-agnostic por design (hoje: texto de PDF/imagem já reparado; amanhã: DICOM/HL7/FHIR/XML alimentam
 // a mesma StructuralRepresentation por outros adaptadores). Determinística: mesmo texto → mesma saída.
 
+// Natureza estrutural do documento (engenharia da informação, não clínica):
+//  results = laudo tabular (MATERIAL/RESULTADO/faixa de referência) · narrative = laudo textual
+//  (indicação/técnica/achados/conclusão) · unknown = sem sinal claro.
+export type StructuralKind = 'results' | 'narrative' | 'unknown'
+
 export type StructuralBlockKind =
   | 'exam_header'   // cabeçalho/nome de um exame (ex.: "GLICEMIA - JEJUM")
   | 'result'        // uma unidade de RESULTADO
@@ -27,6 +32,8 @@ export interface StructuralRepresentation {
   pageCount: number
   hasText: boolean
   hasImages: boolean
+  /** Natureza estrutural (results/narrative/unknown) — usada pela Segmentação. */
+  kind: StructuralKind
   /** Ocorrências de "RESULTADO:" — unidades de resultado (base da COBERTURA em laboratório). */
   resultUnits: number
   /** Blocos de "MATERIAL -" (amostras/materiais distintos citados). */
@@ -66,6 +73,16 @@ const KNOWN_ISSUERS = [
   'hermes pardini', 'fleury', 'dasa', 'sabin', 'lavoisier', 'delboni', 'axial', 'sava',
   'unimed', 'einstein', 'sírio', 'sirio', 'oswaldo cruz', 'cdb', 'alta diagnósticos', 'alta diagnosticos',
 ]
+
+// Natureza estrutural (results vs narrative) — sinais estruturais, não clínicos.
+const RE_RESULTS_KIND = /\bMATERIAL\s*[-–:]|\bRESULTADO\s*:|\bVALOR(?:ES)?\s+DE\s+REFER[ÊE]NCIA|\bM[ÉE]TODO\s*:/i
+const RE_NARRATIVE_KIND = /indica[çc][ãa]o\s+cl[íi]nica|achados|conclus[ãa]o|t[ée]cnica|impress[ãa]o\s+diagn|ecotextura|par[êe]nquima/i
+
+function detectKind(text: string): StructuralKind {
+  if (RE_RESULTS_KIND.test(text)) return 'results' // precedência (laudo lab pode citar "conclusão")
+  if (RE_NARRATIVE_KIND.test(text)) return 'narrative'
+  return 'unknown'
+}
 
 const RE_RESULT   = /\bRESULTADO\s*:/gi
 const RE_MATERIAL = /\bMATERIAL\s*[-–:]/gi
@@ -132,6 +149,7 @@ export function structuralAnalysis(input: StructuralAnalysisInput): StructuralRe
     pageCount,
     hasText,
     hasImages: !!input.hasImages,
+    kind: detectKind(input.text ?? ''),
     resultUnits,
     materialBlocks,
     examHeaders,

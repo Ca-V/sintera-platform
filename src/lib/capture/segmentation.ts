@@ -12,9 +12,11 @@
 //
 // A Cobertura é um COMPARADOR PURO a jusante — ela NÃO descobre nada aqui.
 
-import { structuralAnalysis, type StructuralRepresentation } from './structural-analysis'
+import type { StructuralRepresentation, StructuralKind } from './structural-analysis'
 
-export type CDUKind = 'results' | 'narrative' | 'unknown'
+// Componentes NÃO se chamam entre si — o pipeline coordena. A Segmentação recebe o ARTEFATO da
+// Análise Estrutural (StructuralRepresentation por página) e opera sobre ele; não recomputa estrutura.
+export type CDUKind = StructuralKind
 
 export interface CDU {
   index: number
@@ -35,18 +37,6 @@ export interface SegmentationResult {
   reason: string
 }
 
-const RE_RESULTS_KIND = /\bMATERIAL\s*[-–:]|\bRESULTADO\s*:|\bVALOR(?:ES)?\s+DE\s+REFER[ÊE]NCIA|\bM[ÉE]TODO\s*:/i
-const RE_NARRATIVE_KIND = /indica[çc][ãa]o\s+cl[íi]nica|achados|conclus[ãa]o|t[ée]cnica|impress[ãa]o\s+diagn|ecotextura|par[êe]nquima/i
-
-function detectKind(text: string): CDUKind {
-  const isResults = RE_RESULTS_KIND.test(text)
-  const isNarrative = RE_NARRATIVE_KIND.test(text)
-  // Results tem precedência quando ambos aparecem (laudo lab pode citar "conclusão").
-  if (isResults) return 'results'
-  if (isNarrative) return 'narrative'
-  return 'unknown'
-}
-
 // Título dominante da página: o 1º cabeçalho de exame detectado pela Análise Estrutural.
 function pickTitle(struct: StructuralRepresentation): string | null {
   return struct.examHeaders[0] ?? null
@@ -59,6 +49,7 @@ function aggregate(pages: { struct: StructuralRepresentation }[]): StructuralRep
     pageCount: pages.length,
     hasText: pages.some(p => p.struct.hasText),
     hasImages: pages.some(p => p.struct.hasImages),
+    kind: pages.map(p => p.struct.kind).find(k => k !== 'unknown') ?? 'unknown',
     resultUnits: 0, materialBlocks: 0, examHeaders: [], distinctDates: [], distinctIssuers: [],
     pageMarkers: [], signatures: 0, blocks: [],
   }
@@ -77,21 +68,18 @@ function aggregate(pages: { struct: StructuralRepresentation }[]): StructuralRep
   return acc
 }
 
-export interface SegmentationInput {
-  /** Texto por página (JÁ reparado). O Bundle já montado; nunca páginas cruas. */
-  pageTexts: string[]
-  hasImages?: boolean
+const EMPTY_STRUCTURE: StructuralRepresentation = {
+  pageCount: 0, hasText: false, hasImages: false, kind: 'unknown', resultUnits: 0, materialBlocks: 0,
+  examHeaders: [], distinctDates: [], distinctIssuers: [], pageMarkers: [], signatures: 0, blocks: [],
 }
 
 /**
- * Divide o Bundle em CDUs. Determinística. Não extrai; não classifica clinicamente.
+ * Divide o Bundle em CDUs a partir dos artefatos da Análise Estrutural (1 por página).
+ * Determinística. Não extrai; não classifica clinicamente; não recomputa estrutura.
  */
-export function segment(input: SegmentationInput): SegmentationResult {
-  const pageTexts = input.pageTexts.length > 0 ? input.pageTexts : ['']
-  const pages = pageTexts.map((t, i) => {
-    const struct = structuralAnalysis({ text: t, pageCount: 1, hasImages: input.hasImages })
-    return { page: i + 1, text: t, struct, kind: detectKind(t), title: pickTitle(struct) }
-  })
+export function segment(pageStructures: StructuralRepresentation[]): SegmentationResult {
+  const list = pageStructures.length > 0 ? pageStructures : [EMPTY_STRUCTURE]
+  const pages = list.map((struct, i) => ({ page: i + 1, struct, kind: struct.kind, title: pickTitle(struct) }))
 
   const cdus: CDU[] = []
   let cur: typeof pages | null = null
