@@ -34,6 +34,7 @@
 | **GS-007** | Ecocardiograma | Medidas cardíacas |
 | **GS-008** | Espirometria | Curvas e parâmetros funcionais |
 | **GS-009** | Eletrocardiograma | Medidas eletrofisiológicas |
+| **GS-010** | **Validação de identidade** (Pentacam mobile) | **Não certificar identidade de baixa qualidade** — título corrompido por OCR/LLM + data errada (regressão) |
 
 ---
 
@@ -60,6 +61,22 @@ correta**; nenhum "biomarcador".
 
 **Esperado com o CEF:** **1 documento (Bundle)** → 1 registro `ophthalmology`; resultado =
 **parâmetros tomográficos** (K1/K2/Kmax/espessura mínima/BAD-D/elevações); data correta.
+
+### GS-010 — Validação de identidade documental (OCULUS Pentacam via celular, 13/07/2026)
+Documento OCULUS Pentacam gravado com **título corrompido** e **data errada** — evidência de que falta
+uma etapa de **validação da identidade antes da certificação** (o write-once congelou o erro).
+
+| Sintoma observado | Correto |
+|---|---|
+| Título **"OCULUS – PANACAN Mastara 2 Exames"** (Pentacam→Panacan; Mosaic→Mastara; "2 Exames" no nome) | Transcrição fiel *"OCULUS Pentacam"*, ou fallback honesto *"Documento oftalmológico (título não identificado com confiança)"* + estado `draft` (não certificar) |
+| **`exam_date` = 20/06/2005** (documento é contemporâneo) | Data de realização semântica (CEF §5); baixa confiança → não sobrescreve (regra do EEG "2002") |
+| Selo **"Dados disponíveis" / "Dados extraídos"** (sugere completude) | Selo por completude — *"Estruturação parcial"* (**corrigido**: selo reage a `extraction_completeness`) |
+| UI: **"1 exame"** × título termina **"2 Exames"** | Apresentação separa documental (título) de estrutural (contagem/estado) |
+
+**Esperado (regressão):** com a validação de identidade (Exam Type Registry do CEF), um Pentacam com
+leitura de baixa confiança **não é certificado** — fica `draft`, título não é inventado, data não é
+assumida. **Genérico** (Zeiss/Heidelberg/Topcon/Humphrey/Ecocardiograma/Holter/MAPA). *(Fixture PDF a
+exportar do storage.)*
 
 ---
 

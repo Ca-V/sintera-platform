@@ -57,6 +57,17 @@ const STATUS_CONFIG: Record<string, {
   error:      { label: 'Erro',        color: 'text-red-400',    bg: 'bg-red-50',         icon: AlertCircle },
 }
 
+// Selo honesto por COMPLETUDE (não só "processed"): "Dados extraídos"/"disponíveis" sugeriam
+// completude que muitas vezes não existe (ex.: Pentacam parcial). Reage ao extraction_completeness.
+function processedSeal(c: string | null | undefined): { label: string; color: string; bg: string } {
+  switch (c) {
+    case 'structured':    return { label: 'Dados estruturados',   color: 'text-petal', bg: 'bg-blush' }
+    case 'partial':       return { label: 'Estruturação parcial', color: 'text-gold',  bg: 'bg-warm'  }
+    case 'document_only': return { label: 'Documento disponível', color: 'text-mauve', bg: 'bg-ivory' }
+    default:              return { label: 'Dados disponíveis',    color: 'text-petal', bg: 'bg-blush' }
+  }
+}
+
 const STATUS_FILTER_OPTIONS = [
   { value: 'all',       label: 'Todos os status' },
   { value: 'processed', label: 'Dados extraídos'  },
@@ -644,6 +655,10 @@ export default function ExamsPage() {
                           const displayStatus = isRunning ? 'processing' : exam.status
                           const cfg  = STATUS_CONFIG[displayStatus] ?? STATUS_CONFIG.pending
                           const Icon = cfg.icon
+                          // Selo honesto: quando processado, reflete a COMPLETUDE (não "extraídos" sempre).
+                          const seal = displayStatus === 'processed'
+                            ? processedSeal((exam as unknown as { extraction_completeness?: string | null }).extraction_completeness)
+                            : { label: cfg.label, color: cfg.color, bg: cfg.bg }
                           const hasFile     = !!(exam as unknown as { file_url: string | null }).file_url
                           const isProcessed = exam.status === 'processed'
                           const canAnalyze  = hasFile && !isRunning && !isProcessed && exam.status !== 'processing'
@@ -686,9 +701,9 @@ export default function ExamsPage() {
                                 title={exam.type ?? 'Exame'}
                                 onTitleClick={() => router.push('/dashboard/exams/' + exam.id)}
                                 trailing={
-                                  <span className={`inline-flex items-center gap-1 text-[11px] font-body font-medium px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.color}`}>
+                                  <span className={`inline-flex items-center gap-1 text-[11px] font-body font-medium px-2 py-0.5 rounded-full ${seal.bg} ${seal.color}`}>
                                     <Icon size={10} className={isRunning ? 'animate-spin' : ''} />
-                                    {cfg.label}
+                                    {seal.label}
                                   </span>
                                 }
                                 meta={
@@ -699,11 +714,8 @@ export default function ExamsPage() {
                                     )}
                                   </>
                                 }
-                                chips={(isProcessed && !isRunning) || isMismatch ? (
-                                  <>
-                                    {isProcessed && !isRunning && <CardChip tone="sage">Dados disponíveis</CardChip>}
-                                    {isMismatch && <CardChip tone="petal">Nome divergente do perfil</CardChip>}
-                                  </>
+                                chips={isMismatch ? (
+                                  <CardChip tone="petal">Nome divergente do perfil</CardChip>
                                 ) : undefined}
                                 actions={
                                   <>

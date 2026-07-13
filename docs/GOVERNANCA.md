@@ -328,6 +328,29 @@ por uma reextração do mesmo extrator**. Muda **apenas** por evento explícito:
 na 1ª extração, (b) confirmação do usuário, (c) correção, (d) **extrator mais novo** (`extractor_version`
 maior, reprocesso explícito), (e) intervenção administrativa. Nunca por uma simples reextração.
 
+**VALIDAÇÃO da identidade ANTES da certificação (fundadora, 13/07/2026 — evidência: OCULUS Pentacam
+mobile gravado como "OCULUS – PANACAN Mastara 2 Exames", data 2005).** O write-once resolveu a
+instabilidade, mas **congelou uma identidade incorreta** — porque falta uma etapa entre extração e
+certificação. O problema nunca foi "não mudar"; é **quando permitir congelar**. Fluxo correto:
+```
+OCR → LLM → VALIDAÇÃO da identidade → identidade certificada (validated) → write-once
+```
+A identidade só é promovida a `validated` (e congelada) quando atinge **critérios mínimos de qualidade**:
+confiança do OCR · coerência textual · **fabricante reconhecido** (OCULUS) · **modalidade reconhecida**
+(Pentacam) · comparação com **nomenclaturas conhecidas** · ausência de **erros típicos de OCR**. Se a
+confiança for baixa → **não certifica**: permanece `draft`, preservando o documento original e permitindo
+certificação futura por extrator mais evoluído ou confirmação do usuário. **`document_title` de baixa
+confiança nunca é inventado** — usa um fallback honesto (ex.: *"Documento oftalmológico (título não
+identificado com confiança)"*) ou solicita revisão. Objetivo: **erros de OCR/leitura nunca viram
+identidades permanentes.** É **genérico** — vale para Zeiss/Heidelberg/Topcon/Humphrey/Ecocardiograma/
+Holter/MAPA etc. (é o pipeline de identidade, não o Pentacam). Depende do reconhecimento de fabricante/
+modalidade/nomenclatura = **Exam Type Registry do CEF** → prioridade no ciclo do CEF (pós-RI-001).
+
+**Camada de apresentação — não misturar documental × plataforma (evidência: "1 exame" × título "2
+Exames"):** o título transcreve o documento (onde "2 Exames" veio como conteúdo/erro); a contagem "1
+exame" é o registro da plataforma. As duas não podem coexistir na mesma frase. A apresentação separa
+**informação documental** (título) de **informação estrutural da plataforma** (contagem/estado).
+
 **Princípio de IA (permanente, fundadora):** *nenhuma informação produzida por IA substitui a
 informação documental original — apenas a complementa com uma representação estruturada e rastreável.*
 Forma operacional do "documento é a fonte da verdade": **a IA nunca substitui o documento; só cria
