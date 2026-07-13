@@ -19,7 +19,7 @@
 | **M2** | Cobertura ligada (fim da falsa completude) | **70%** | 🔄 | E (confiab. plena em M5) |
 | **M3** | Split de CDUs no fluxo real (1 upload → N registros) | **70%** | 🔄 | UX de confirmação (produto) |
 | **M4** | Identidade robusta (Clinical Identity Registry + estados) | **90%** | 🔄 | fusão LLM no M5 |
-| **M5** | Extratores especializados do CEF (por modalidade) | **5%** | ⬜ | E+3 |
+| **M5** | Clinical Processing Engine (motor único · processadores por modalidade) | **20%** | 🔄 | E+3 |
 | **M6** | Datas semânticas (CEF §5) | **75%** | 🔄 | E (ligada) |
 | **M7** | Captura de evidência completa (laudo + imagens) | **0%** | ⬜ | E+4 |
 | **M8** | Robustez operacional (timeout/retries/perf) | **0%** | ⬜ (backlog) | — |
@@ -77,11 +77,21 @@ do LLM acontece no M5**, onde o LLM roda na extração (dependência técnica re
 **Testes:** `FUNC-clinical-identity-registry` ✅ (11 casos) · `INT` ⬜ (com M5). **CRC:** GS-004 · GS-010.
 **Bloqueadores:** nenhum para o escopo determinístico; item (d) segue naturalmente no M5.
 
-## M5 — Extratores especializados do CEF · 5% · ⬜
-**Capacidade:** cada modalidade tem seu leitor (achados/parâmetros), sobre `CertifiedCDU` — nunca PDF.
-**Critérios:** imagem→achados · EEG→achados · Pentacam→parâmetros por olho; completude certificada por grupo.
-**Testes:** regressão CRC. **CRC:** GS-003 (EEG) · GS-004 (Pentacam).
-**Bloqueadores:** depende de M4 (registry escolhe o extrator).
+## M5 — Clinical Processing Engine (motor único · processadores por modalidade) · 20% · 🔄
+**Capacidade:** UM motor de processamento clínico com **processadores especializados por modalidade**,
+todos consumindo o mesmo contrato (`CertifiedCDU`, nunca PDF) e cada um produzindo o **modelo de resultado**
+da sua modalidade (biomarcador ≠ achado ≠ parâmetro por região).
+**Critérios:** (a) espinha de ROTEAMENTO pura (Identidade Clínica → processador) ✅ `routeProcessing`;
+(b) sem processador/identidade ambígua → `document_only` (revisão CLÍNICA, não bloqueia) ✅ (CEF §4.0);
+(c) processadores concretos por modalidade (imagem→achados · EEG→achados · Pentacam→parâmetros por olho) ⬜;
+(d) completude certificada por grupo (liga na Cobertura/M2) ⬜; (e) LLM = 1 evidência na identidade (fusão
+do M4) ⬜.
+**Feito:** `src/lib/capture/clinical-processing-engine.ts` (13 processadores mapeados, contrato versionado) +
+`FUNC-clinical-processing-engine` (9) + **ARCH invariante** (toda modalidade identificável tem processador —
+sem órfãos entre camadas).
+**Testes:** `FUNC-clinical-processing-engine` ✅ · `ARCH-identity-processor-coverage` ✅ · regressão CRC ⬜.
+**CRC:** GS-003 (EEG) · GS-004 (Pentacam).
+**Bloqueadores:** nenhum p/ a espinha; processadores concretos plugam incrementalmente (cada um puxado por CRC).
 
 ## M6 — Datas semânticas (CEF §5) · 5% · ⬜
 **Capacidade:** data de realização correta por tipo; baixa confiança não sobrescreve.
