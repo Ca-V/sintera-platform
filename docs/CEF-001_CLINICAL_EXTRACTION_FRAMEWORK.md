@@ -142,6 +142,73 @@ deixam de mostrar "biomarcadores" e apontam o laudo).
 
 ---
 
+## 4.1 Modelo Clínico de Referência + completude CERTIFICADA por grupo (revisão cruzada, aprovado 13/07/2026)
+
+Detalhamento do §4 — **não é domínio novo**: é o modelo de resultado do tipo, tornado explícito.
+Cada modalidade possui um **Modelo Clínico de Referência**: os **grupos clínicos** que o exame pode
+conter, seus **parâmetros obrigatórios/opcionais**, e **regras de integridade e de completude**. O
+extrator passa a responder **contra esse modelo** — não "quais campos achei?", mas **"quais grupos
+clínicos consegui estruturar integralmente?"**.
+
+*(Ex.: Pentacam → Dados administrativos · Qualidade · Ceratometria (K1/K2/Kmax/eixo) · Paquimetria ·
+Elevação · Índices ectásicos · Aberrações · Imagens · Conclusão — por olho. Espirometria → Volumes
+(VEF1/CVF/VEF1-CVF) etc.)*
+
+**É um ATIVO GOVERNADO, não só código:** o Modelo Clínico é conteúdo clínico → exige **Responsável
+Clínico + versionamento** (mesmo aprendizado governado do CRC). **Começa mínimo** (1 grupo) e cresce.
+
+### Regra da Completude Certificada — com o denominador correto
+A plataforma **nunca apresenta uma estrutura clínica incompleta como se fosse completa**. Mas a
+completude é certificada **por grupo**, e o **denominador é o DOCUMENTO, não o modelo cheio da
+modalidade**. Cada grupo tem **três estados** (nunca dois):
+
+| Estado | Significado | Na tela |
+|---|---|---|
+| `estruturado` | grupo presente no documento e estruturado integralmente | ✔ grupo exibido/certificado |
+| `presente_nao_estruturado` | grupo **está no documento**, ainda não estruturado | ⬜ + "ver documento original" |
+| `nao_consta_neste_documento` | grupo **não existe neste documento** | **não aparece** (não é lacuna) |
+
+> **Correção nº 1 (crítica) — não repetir a desonestidade inversa.** Um "22%" calculado contra o
+> modelo cheio comunicaria que a plataforma **falhou no que nunca esteve no documento** (se o laudo só
+> trazia Ceratometria, isso é 100% do que havia, não 22%). O denominador é **o que este documento
+> contém** (detectado). Coerente com o princípio da fundadora: **completude é relativa ao que existe,
+> nunca a um ideal absoluto** (ver §5.4). O `⬜` só aparece para grupos **detectados** no documento.
+
+### Regra da Integridade Estrutural — ROTULA, não OCULTA
+Integridade governa **(a)** certificar um grupo como **completo** e **(b)** **computar valores
+derivados/relacionais** (índice VEF1/CVF, índices ectásicos) — que **nunca** se calculam a partir de
+conjunto incompleto. Integridade **não** governa a exibição do **dado bruto** já extraído.
+
+> **Correção nº 2 (crítica) — não apagar sinal.** "Se só há K1, esconda o grupo inteiro" **apagaria
+> dado que está no documento e foi extraído** — contra a missão de continuidade (não perder
+> informação) e com risco de ocultar grupo **completo** por cegueira do nosso modelo a um rótulo de
+> aparelho. Regra correta: **exibe o K1**, marca o grupo *"incompleto — conferir no documento
+> original"*, **nunca o apresenta como completo e nunca dele deriva**. A justificativa clínica
+> sustenta *"não derivar do incompleto"*; **não** sustenta *"esconder o bruto"*.
+
+### Apresentação
+Liderar pelo **positivo** — os grupos estruturados + o checklist — com o documento original sempre
+acessível para o restante. O **percentual é secundário/qualitativo**; nunca em destaque nem legível
+como *score* do exame (a North Star proíbe "score de saúde" proprietário; a mensagem é **neutra e
+orientada a ação**, nunca "limitação da plataforma").
+
+### Efeito no CRC (GS-004 etc.)
+O CRC passa a validar **integridade clínica por grupo** (Ceratometria ✔ completa · Paquimetria ✔
+completa …), não campos soltos ("K1 encontrado").
+
+### Enquadramento regulatório
+A plataforma afirma **"estes grupos clínicos foram estruturados integralmente"**, nunca "este exame
+foi extraído". Reforça a separação fatos/derivações e a leveza regulatória (RDC 657).
+
+### Execução (freeze)
+**Adotar o princípio agora; construir os Modelos Clínicos por modalidade no ciclo do CEF**
+(pós-HUB-001, junto de GS-003/GS-004) — **não nesta janela** (prioridade RI-001). **Evitar** um
+conjunto-obrigatório rígido que oculte grupos de fato presentes por limitação do nosso modelo (recria
+o "a plataforma esqueceu" que esta regra existe para eliminar). É a **exposição progressiva** do §5.4,
+agora com unidade = **grupo clínico íntegro**.
+
+---
+
 ## 5. Semântica de datas (por tipo)
 
 Hoje: "encontre uma data". Deveria ser:
@@ -195,8 +262,10 @@ Cada extração produz um **bloco de metadados** (não é novo domínio — orga
 crescerão): `extractor_family` · `extractor_version` · `extraction_completeness` ·
 `structural_confidence` · `processed_at` (migration 104).
 
-**Princípio — a completude é relativa ao EXTRATOR, não ao documento.** Evita "FULL" absoluto (nunca
-verificável — até um hemograma pode ganhar parâmetros). Estados:
+**Princípio — a completude é relativa ao EXTRATOR, não a um ideal absoluto.** Evita "FULL" absoluto
+(nunca verificável — até um hemograma pode ganhar parâmetros). *(Refinado em §4.1: quando houver Modelo
+Clínico, o **denominador visível é o que ESTE documento contém**, certificado por grupo — nunca o modelo
+cheio da modalidade, que comunicaria falha no que nunca esteve no laudo.)* Estados:
 - **`structured`** — tudo o que o extrator suporta HOJE foi estruturado.
 - **`partial`** — parte estruturada; o resto está no documento.
 - **`document_only`** — nada estruturado com segurança → o documento é a fonte.
