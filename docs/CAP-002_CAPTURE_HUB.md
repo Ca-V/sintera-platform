@@ -221,15 +221,12 @@ Trocar OCR/IA no futuro **não** invalida documentos nem quebra proveniência
   DICOM diagnóstico (perde resolução/metadados) — fidelidade máxima vem dos conectores DICOM/PACS. A
   imagem passa a ser **evidência clínica primária vinculada ao laudo** (não anexo) → habilita comparação
   longitudinal (mamografias/OCTs no tempo) na camada cognitiva. Design do ciclo de execução.
-- **Análise Estrutural + CDU (Clinical Document Unit) — fundadora, 13/07/2026.** Antes da segmentação,
-  a **Análise Estrutural** (engenharia da informação, format-agnostic — não interpreta medicina) observa
-  a organização física/lógica: páginas · anexos · texto · imagens · tabelas · laudos · assinaturas ·
-  blocos · cabeçalhos repetidos · datas/emissores diferentes. A **Segmentação** usa isso para criar uma
-  **CDU (Clinical Document Unit)** por unidade clínica independente. **O Bundle é o CONTÊINER; a CDU é a
-  unidade de PROCESSAMENTO** — cada CDU percorre todo o pipeline e é o que a **UCDA** representa como
-  evidência clínica. **Fronteira:** uma CDU = **uma identidade documental + uma modalidade**; sub-elementos
-  (resultados/olhos/grupos) vivem DENTRO da CDU (Segmentação = inter-CDU; Cobertura = intra-CDU). Painel de
-  1 lab/data = **1 CDU**; PDF com 3 laudos = **3 CDUs**. Ver GOVERNANCA (pipeline de 9 etapas).
+- **Fronteira Captura × Processamento (fundadora, 13/07/2026).** O Capture Hub produz o **Bundle
+  (CONTÊINER)** — a ingestão. A **compreensão documental** (Análise Estrutural → Segmentação → **CDU**) é a
+  **camada de PROCESSAMENTO, posterior** ao Bundle — **não é captura**. A **CDU (Clinical Document Unit)**
+  independe da origem (Bundle · FHIR · DICOM · HL7 · API · integração hospitalar) → é objeto do
+  processamento (vizinho da UCDA), não do Capture Hub. Definição autoritativa em `GOVERNANCA.md` (pipeline
+  de 9 etapas) e `UCDA-001`.
 - **Content Classifier** (transversal, TEMA C) — **classifica corretamente a CATEGORIA
   DOCUMENTAL** por CONTEÚDO →
   `exame | medicamento | condicao | vacina | omica | recurso | administrativo`.

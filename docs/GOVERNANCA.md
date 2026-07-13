@@ -565,13 +565,17 @@ reaparecem, em qualquer modalidade.**
 - **Análise Estrutural** (read-only, **engenharia da informação — não interpreta medicina**): a organização
   física e lógica do material — páginas · anexos · texto · imagens · tabelas · laudos · assinaturas ·
   blocos independentes · cabeçalhos repetidos · datas diferentes · emissores diferentes. **Format-agnostic**
-  (PDF/DICOM/HL7/FHIR/XML).
-- **Segmentação**: usa a estrutura para responder **quantas unidades clínicas independentes existem** e
+  (PDF/DICOM/HL7/FHIR/XML). *Observação (sem nome/domínio novo — respeita o freeze): a **Análise Estrutural
+  produz uma representação estrutural TRANSITÓRIA** (rede de blocos/relações) **sobre a qual a Segmentação
+  opera** — ela não trabalha diretamente sobre páginas. Materializar só quando a implementação pedir.*
+- **Segmentação**: usa essa estrutura para responder **quantas unidades clínicas independentes existem** e
   cria **uma unidade de processamento (CDU) para cada uma**.
 
-**CDU — Clinical Document Unit (novo objeto lógico):** o **Bundle é apenas o CONTÊINER**; após a
-Segmentação surgem **unidades independentes (CDUs)**, e **cada CDU percorre todo o pipeline** sozinha. A
-CDU é a ponte Captura→UCDA: **é o que a UCDA representa como "evidência clínica"**.
+**CDU — Clinical Document Unit (objeto da camada de PROCESSAMENTO, não da Captura — fundadora, 13/07):** o
+**Bundle é o CONTÊINER** (produto da Captura); após a Segmentação surgem **CDUs**, e **cada CDU percorre
+todo o pipeline** sozinha. A CDU **independe da origem** (Bundle · FHIR · DICOM · HL7 · API · integração
+hospitalar) — por isso **não pertence ao Capture Hub**; é objeto do **processamento**, vizinho da **UCDA**
+(**é o que a UCDA representa como "evidência clínica"**).
 **Fronteira da CDU (refinamento Claude — resolve "painel = 1 ou N CDUs"):** uma CDU = **uma identidade
 documental única + uma modalidade**; os sub-elementos (resultados de um painel, os 2 olhos do Pentacam,
 grupos do EEG) vivem **DENTRO** da CDU. Dois níveis de enumeração: **Segmentação = inter-CDU** ("quantos
