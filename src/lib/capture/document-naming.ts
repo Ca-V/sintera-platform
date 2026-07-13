@@ -126,7 +126,9 @@ export function normalizeModality(modality: string | null | undefined): string {
  */
 export function deriveDisplayTitle(s: DocumentStructure): string {
   switch (s.documentType) {
-    case 'imaging':          return normalizeModality(s.modality)
+    // Imagem: preserva o nome FIEL do documento (ex.: "Ultrassonografia das mamas e axilas") —
+    // Identidade Documental. Só cai no nome canônico quando não há um nome fiel específico.
+    case 'imaging':          return clean(s.singleExamName) || normalizeModality(s.modality)
     case 'anatomopathology': return 'Anatomopatológico'
     case 'medical_report':   return 'Relatório médico'
     case 'prescription':     return 'Receita médica'
@@ -207,20 +209,28 @@ export function classifyExamDocument(ex: ExamExtractionLike): DocumentStructure 
   const distinct = distinctExamNames(ex.biomarkers)
   const examCount = distinct.length
 
-  // Categoria por palavra-chave. Com biomarcadores, só o examType decide (é laboratorial);
-  // SEM biomarcadores, o texto do laudo também conta (EEG/oftalmo/pedido não têm biomarcador).
-  const haystack = examCount === 0
-    ? `${examType} ${clean(ex.text).slice(0, 2000)}`
-    : examType
-  const cat = detectCategory(haystack)
+  // Categoria por palavra-chave. Considera tipo + NOMES DOS EXAMES (sourceExamName é confiável)
+  // sempre; o TEXTO livre do laudo só entra quando NÃO há biomarcadores — com biomarcadores, o
+  // texto pode citar OUTROS exames no histórico (ex.: "ECG alterado") e causar falso-positivo.
+  // Isso corrige a US com medidas (o nome "ultrassonografia" vem no sourceExamName) sem quebrar
+  // o laboratório que menciona outro exame no histórico.
+  const names = distinct.join(' ')
+  const modalityHay = `${examType} ${names}`.trim()
+  const catHay = examCount === 0 ? `${modalityHay} ${clean(ex.text).slice(0, 2000)}`.trim() : modalityHay
+  const cat = detectCategory(catHay)
   if (cat) {
     return { documentType: cat.documentType, documentScope: 'single', examCount: 0, singleExamName: cat.name }
   }
 
-  if (examType && IMAGING_RE.test(examType)) {
-    return { documentType: 'imaging', documentScope: 'single', examCount: 0, modality: examType }
+  // Imagem/anatomo pelo NOME do exame (tipo ou nomes de origem) — nunca pelo texto livre.
+  // Preserva o nome FIEL mais específico (Identidade Documental).
+  if (IMAGING_RE.test(modalityHay)) {
+    const faithful = distinct.find(n => IMAGING_RE.test(n))
+      || (examType && IMAGING_RE.test(examType) ? examType : null)
+      || distinct[0] || examType
+    return { documentType: 'imaging', documentScope: 'single', examCount: 0, singleExamName: faithful, modality: faithful }
   }
-  if (examType && ANATOMO_RE.test(examType)) {
+  if (ANATOMO_RE.test(modalityHay)) {
     return { documentType: 'anatomopathology', documentScope: 'single', examCount: 0 }
   }
 

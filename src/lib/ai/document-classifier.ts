@@ -15,7 +15,7 @@ export interface DocClassification {
 const SYSTEM = `Você CLASSIFICA um documento de saúde e devolve seu TIPO e NOME, transcrevendo o
 que está ESCRITO. NÃO infere diagnóstico nem interpreta clinicamente (RDC 657/2022).
 Responda APENAS JSON válido:
-{"document_type": "<um de: laboratory | imaging | neurophysiology | ophthalmology | cardiology | endoscopy | anatomopathology | medical_report | prescription | vaccination | medical_order | insurance_guide | unknown>", "display_name": "<nome curto do exame/documento como escrito; ex.: Retinografia, Ultrassonografia de tireoide, Eletroencefalograma, Receita médica, Pedido médico; null se indefinido>", "issuer": "<laboratório/clínica/hospital emissor, ou null>"}
+{"document_type": "<um de: laboratory | imaging | neurophysiology | ophthalmology | cardiology | endoscopy | anatomopathology | medical_report | prescription | vaccination | medical_order | insurance_guide | unknown>", "display_name": "<título COMPLETO do exame/documento EXATAMENTE como escrito no laudo, incluindo a região/lateralidade; ex.: 'Ultrassonografia das mamas e axilas', 'Ultrassonografia pélvica endovaginal', 'Mamografia digital', 'Eletroencefalograma'; NÃO abrevie nem generalize; null se indefinido>", "issuer": "<laboratório/clínica/hospital emissor, ou null>"}
 Regras:
 - PEDIDO/SOLICITAÇÃO/REQUISIÇÃO de exame → document_type "medical_order"; GUIA de convênio/SADT → "insurance_guide" (o documento é uma SOLICITAÇÃO, não um resultado).
 - Exame de IMAGEM → "imaging" e display_name = a modalidade (ex.: Ressonância magnética, Ultrassonografia).

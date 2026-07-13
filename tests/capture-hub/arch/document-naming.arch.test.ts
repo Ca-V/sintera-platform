@@ -170,3 +170,36 @@ describe('ARCH-002 · enriquecimento opcional de proveniência', () => {
     expect(withProvenance('Hemograma')).toBe('Hemograma')
   })
 })
+
+describe('ARCH-002 · imagem consistente mesmo com números raspados (regressão AXIAL 13/07)', () => {
+  it('ultrassom com "medidas" raspadas → IMAGING (não laboratory) + nome FIEL', () => {
+    // Laudo de US pélvico: o extrator de laboratório raspou medidas com sourceExamName documental.
+    const biomarkers = [
+      { name: 'Volume ovário direito', sourceExamName: 'ULTRASSONOGRAFIA PÉLVICA ENDOVAGINAL' },
+      { name: 'Espessura endometrial', sourceExamName: 'ULTRASSONOGRAFIA PÉLVICA ENDOVAGINAL' },
+    ]
+    const s = classifyExamDocument({ examType: 'exame', biomarkers, text: 'ULTRASSONOGRAFIA PÉLVICA ENDOVAGINAL ...' })
+    expect(s.documentType).toBe('imaging')
+    // nome FIEL preservado (Identidade Documental) — não colapsa para "Ultrassonografia"
+    expect(deriveDisplayTitle(s)).toMatch(/ULTRASSONOGRAFIA PÉLVICA ENDOVAGINAL/i)
+  })
+
+  it('mamografia reconhecida pelo texto do laudo mesmo com números', () => {
+    const s = classifyExamDocument({
+      examType: 'exame',
+      biomarkers: [{ name: 'BI-RADS', sourceExamName: 'MAMOGRAFIA DIGITAL' }],
+      text: 'MAMOGRAFIA DIGITAL Sistema LORAD Selenia incidência crânio-caudal BI-RADS',
+    })
+    expect(s.documentType).toBe('imaging')
+    expect(deriveDisplayTitle(s)).toMatch(/mamografia/i)
+  })
+
+  it('laboratório NÃO é afetado — segue laboratory', () => {
+    const s = classifyExamDocument({
+      examType: 'laboratorial',
+      biomarkers: [{ name: 'Glicose', sourceExamName: 'Glicemia de jejum' }],
+      text: 'Glicose 92 mg/dL Referência 70 a 99',
+    })
+    expect(s.documentType).toBe('laboratory')
+  })
+})

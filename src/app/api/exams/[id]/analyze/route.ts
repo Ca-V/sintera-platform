@@ -314,15 +314,25 @@ export async function POST(
     text: examTextForIssuer,
   })
 
+  // Quando a identidade já está travada, o family/tipo segue o document_type estabelecido.
+  const effectiveDocType = identityEstablished ? (exam.document_type ?? structure.documentType) : structure.documentType
+
+  // §4.0 — LAUDO/NARRATIVO (imagem): o laudo É o resultado; não estruturar campos. Se o extrator
+  // de laboratório raspou "resultados" de um laudo de imagem, descarta-os (não são estruturação
+  // real) e o exame fica `document_only` — Rastreabilidade Documental. Garante que ultrassom/
+  // mamografia sigam o MESMO padrão, tenham ou não medidas no texto.
+  const isNarrativeLaudo = effectiveDocType === 'imaging'
+  if (isNarrativeLaudo && result.biomarkers.length > 0) {
+    await supabase.from('biomarkers').delete().eq('exam_id', examId)
+  }
+
   // Metadados de extração (CEF) — SEMPRE atualizam (refletem a EXTRAÇÃO, não a identidade).
   // Completude RELATIVA AO EXTRATOR; heurística interina (cobertura de faixa de referência).
-  const bmN = result.biomarkers.length
-  const bmWithRef = result.biomarkers.filter(b => b.rangeExtracted || b.referenceMin != null || b.referenceMax != null).length
+  const bmN = isNarrativeLaudo ? 0 : result.biomarkers.length
+  const bmWithRef = isNarrativeLaudo ? 0 : result.biomarkers.filter(b => b.rangeExtracted || b.referenceMin != null || b.referenceMax != null).length
   const completeness = bmN === 0 ? 'document_only' : (bmWithRef / bmN >= 0.5 ? 'structured' : 'partial')
   finalUpdate.extraction_completeness = completeness
   finalUpdate.structural_confidence = completeness === 'structured' ? 'high' : completeness === 'partial' ? 'medium' : 'low'
-  // Quando a identidade já está travada, o family segue o document_type estabelecido.
-  const effectiveDocType = identityEstablished ? (exam.document_type ?? structure.documentType) : structure.documentType
   finalUpdate.extractor_family = effectiveDocType
   finalUpdate.extractor_version = effectiveDocType === 'laboratory' ? 'laboratory-v1' : 'heuristic-v0'
   finalUpdate.processed_at = new Date().toISOString()
@@ -378,7 +388,7 @@ export async function POST(
     documentType:  (finalUpdate.document_type as string | undefined) ?? exam.document_type,
     documentScope: finalUpdate.document_scope as string | undefined,
     displayTitle:  finalUpdate.display_title as string | undefined,
-    results: result.biomarkers,
+    results: isNarrativeLaudo ? [] : result.biomarkers,
   })
 
   await supabase.from('exams')
