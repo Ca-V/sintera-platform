@@ -542,13 +542,36 @@ não é infinito. A **última camada é a Governança, validada por HUMANO/corpu
 que mantém o RDC 657 e o aprendizado governado. Sem esse âncora humano, "validação entre camadas" viraria
 IA validando IA.
 
-**Pipeline completo (visão):**
+**Pipeline completo (visão) — REORGANIZADO (fundadora, 13/07/2026: descoberta ANTES da extração):**
 ```
-Bundle → Segmentação documental (1 ou N documentos?) → [por documento:] COBERTURA documental (achei tudo?)
-  → Identidade → Classificação clínica → Extração/Representação estruturada → Validação estrutural
-  → Contextualização científica → Camada cognitiva → Governança (humano/corpus)
+Bundle → DESCOBERTA do conteúdo (quantos documentos? quantos exames? fronteiras? modalidade?)
+  → Segmentação (bundle → N registros clínicos) → [por registro:] Identidade → Classificação clínica
+  → Extração/Representação estruturada → COBERTURA (tudo que a Descoberta achou foi estruturado?)
+  → Validação estrutural → Contextualização científica → Camada cognitiva → Governança (humano/corpus)
 ```
 Cada seta é também uma **validação**: a camada seguinte valida a informação da anterior antes do uso.
+
+### Princípio da Descoberta antes da Extração (CONSTITUCIONAL — fundadora, 13/07/2026)
+
+> **A plataforma nunca deve extrair antes de compreender a ESTRUTURA do documento.** Operacional:
+> **primeiro descobrir o que existe; depois decidir como representar.**
+
+Unifica **todos** os defeitos dos testes numa causa só — antes de extrair, a plataforma **não determina
+quais entidades clínicas existem** no documento: Pentacam (não sabe que há 2 olhos) · bundle com
+mamografia + 2 US (não sabe que há 3 exames) · painel lab (não sabe que há 6 exames) · EEG (não separa
+achados de parâmetros). **Enquanto a Descoberta estiver incompleta, todos os problemas seguintes
+reaparecem, em qualquer modalidade.**
+
+**DESCOBERTA do conteúdo documental** (nova 1ª etapa, **read-only — não extrai**): identifica **quantos
+documentos clínicos** existem · **quantos exames** · suas **fronteiras** · sua **modalidade**. É o
+mecanismo do **contador independente** (antes atribuído à Cobertura) — enumera as entidades. Absorve a
+**Segmentação** (quantos documentos) e alimenta Identidade/Classificação. Imperfeita, mas **independente**
+da extração → o desacordo Descoberta × extração é sinal forte; Descoberta incerta → fail-safe INCOMPLETO.
+
+**Reorganização do roadmap de execução** (a Cobertura deixa de *descobrir* e passa a só *validar*):
+`Descoberta → Segmentação → Identidade → Classificação (Clinical Identity Registry) → CEF → COBERTURA
+(valida: descoberto × estruturado) → UCDA`. **Timeout / retries / performance = robustez operacional
+(backlog), NÃO prioridade** — só rendem valor depois que a base de ingestão/compreensão estiver sólida.
 
 ### Princípio da Cobertura Documental (CONSTITUCIONAL — fundadora, 13/07/2026)
 
@@ -573,9 +596,12 @@ encontradas 4 → 67% → INCOMPLETA`. **O denominador é a contagem do PRÓPRIO
 um "conjunto esperado" arbitrário — resolve honestamente o problema do denominador. Fail-safe: cobertura
 incerta → **INCOMPLETA** (nunca falsamente completa). Vale para **toda modalidade**.
 
-**Efeito:** a Cobertura é o **1º validador** da cadeia (Documento → Cobertura → Identidade → …). Protege
-todas as camadas posteriores. Um documento só recebe selo de representação **completa** quando a cobertura
-for afirmativa; senão, honesto-parcial ou `document_only`, sempre remetendo ao original (§4.0.1).
+**REFINAMENTO (fundadora, 13/07 — Descoberta × Cobertura):** o contador independente **pertence à
+DESCOBERTA** (enumera o que existe, 1ª etapa). A **Cobertura deixa de descobrir** e passa a só
+**COMPARAR**: *"tudo que a Descoberta achou foi efetivamente estruturado?"* (descoberto × estruturado).
+Vem **depois** da extração/CEF. Um documento só recebe selo de representação **completa** quando a
+cobertura fechar; senão, honesto-parcial ou `document_only`, sempre remetendo ao original (§4.0.1).
+"A Cobertura só diz *faltam 2 exames* se antes a Descoberta soube que existiam 6."
 A **Segmentação documental** (Capture Hub, `CAP-002` §6) é o **1º estágio** — nunca assumir `1 PDF = 1
 exame` nem `N páginas = 1 exame`; um bundle representa **1+ documentos** e a segmentação decide quantos
 registros existem. É **pré-requisito de todo o pipeline** (evidência: laudo com 3 exames de imagem
