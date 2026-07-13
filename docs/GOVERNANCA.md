@@ -157,10 +157,20 @@ tentar ser acomodada pelos componentes existentes. Só quando isso não for poss
 novo domínio constitucional.* Preserva a coerência e mantém a evolução por refinamentos
 compatíveis (coerente com o congelamento de princípios).
 
+**Critério do Sistema Cognitivo (permanente — fundadora, 13/07/2026):** a plataforma entra na
+fase de **execução / construção da inteligência** (a fundação — Capture Hub · Document Bundle · CEF
+· CRC · UCDA · KG · SRL · governança — vira infraestrutura permanente). **A partir do HUB-001, toda
+decisão técnica responde também a:** *"esta implementação APROXIMA a SINTERA de um Sistema Cognitivo
+Clínico governado, ou cria uma solução ISOLADA que dificulta essa evolução?"* Não é novo domínio —
+é critério de decisão, como o Princípio da Evidência Arquitetural. Ver
+`docs/VISION_SISTEMA_COGNITIVO_CLINICO.md` (inclui a **IA Governada**: aprende continuamente, mas
+auditável/rastreável/versionado; lógica clínica NUNCA evolui sozinha em produção).
+
 **Sequência do próximo ciclo (código, não documentação):**
 1. Finalizar **RI-001** → 2. **Merge de Condições** → 3. **HUB-001** (backbone; `Document Bundle →
-CapturedDocument → Pipeline`) → 4. **1º extrator especializado do CEF** → 5. **validação automática
-contra o CRC** (GS-003/GS-004) → 6. **só então** revisar a UCDA Draft.
+CapturedDocument → Pipeline`) → 4. **1º extrator especializado do CEF** (GS-003/GS-004) → 5. **validação automática
+contra o CRC** → 6. **revisar a UCDA** Draft → 7. **evolução INCREMENTAL da Camada Cognitiva**
+(visão de longo prazo — nunca em um único projeto/modelo; emerge conforme cada componente amadurece).
 
 **Após o RI-001 aprovado — `Lessons Learned — RI-001`** (retrospectiva técnica de 1–2 págs, **não
 constitucional**): o que a arquitetura **acomodou** naturalmente · o que precisou ser **refinado** ·
