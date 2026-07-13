@@ -96,6 +96,36 @@ Structured Result + Confidence   (resultado próprio do tipo + confiança estrut
 Cada **família de exame tem seu próprio extrator**. O laboratorial atual passa a ser **um**
 leitor do registro, não o único caminho.
 
+### 3.0 Como identificar o exame — ensemble de evidências → Clinical Identity Registry (fundadora, 13/07/2026)
+
+**Não existe mecanismo único confiável** para identificar qualquer exame (o laudo diz "Mamografia", não
+"exame de mamografia"). O estado da arte (Document AI) é **ensemble de evidências**: várias funções de
+sinal independentes combinadas num **score**, com **conflito → revisão**. Vantagem decisiva: **é
+auditável** (mostra *por que* classificou) — um LLM sozinho respondendo "que exame é esse?" é caixa-preta
+que não se audita (crítico p/ RDC 657). Ordem: **Extração documental (OCR+layout, reconstrói, não
+interpreta) → Segmentação → identificação por evidências → CEF**.
+
+O **Exam Type Registry evolui para um CLINICAL IDENTITY REGISTRY** — por modalidade: nomes oficiais ·
+sinônimos (Mamografia/Mastografia/Digital Mammography) · **evidências fortes** (BI-RADS · Lorad · Selenia
+· CC · MLO · Eklund) e **moderadas** (calcificações · parênquima mamário) com **pesos** · fabricantes
+(Hologic/GE/Siemens) · terminologia típica · **estrutura documental esperada** (indicação·técnica·achados·
+conclusão) · unidades · **padrões** (LOINC/DICOM/FHIR/SNOMED) · **extrator correspondente** · regras de
+validação. Produz um **score de identidade** (ex.: Mamografia 97% · Pentacam 99% · Desconhecido 42%) — o
+score importa **mais que a classificação**. Ex.: Pentacam nunca escreve "tomografia de córnea", mas
+OCULUS·Pentacam·K1·K2·BAD-D·Pachymetry·Belin identificam; EEG por ritmo alfa·hiperventilação·
+fotoestimulação. **Como um médico: olha o conjunto, nunca um termo só.**
+
+**O LLM é UMA evidência, não o juiz** (Validação entre Camadas): regras dizem Mamografia + LLM diz
+Mamografia → alta confiança; regras dizem Mamografia + LLM diz Ultrassom → **conflito** → revisão / baixa
+confiança. **Score → `identity_status`** (certifica / draft / desconhecido); limiar = parâmetro
+**governado**. **Multi-match ≠ ambiguidade:** casar forte com 3 modalidades distintas geralmente = **3
+documentos** → conversa direto com a **Segmentação** (CAP-002). **Ativo GOVERNADO** (versionado, RC,
+alimenta o CRC), como o Modelo Clínico. **Escala por CONTEÚDO, não código** (exame novo = novo registro;
+ex.: OCT → Macular·RNFL·Ganglion Cell·Cirrus·Spectralis·Topcon — pipeline idêntico). Começar pelas
+modalidades com **evidência real** (laboratório·mamografia·ultrassom·Pentacam·EEG) e crescer **puxado
+pelo CRC**. É o **HUB** que liga evidência documental → identidade clínica → extrator (CEF) → padrões
+(UCDA). Design do **ciclo de execução** (pós-RI-001).
+
 ---
 
 ## 3.1 Cada tipo traz sua própria REFERÊNCIA CIENTÍFICA (via SRL) — a "inteligência própria" por exame
