@@ -207,6 +207,20 @@ Trocar OCR/IA no futuro **não** invalida documentos nem quebra proveniência
   pipeline** — sem segmentar certo, qualquer extrator recebe páginas que não são do mesmo exame e
   produz representação errada. **Mais prioritário que o extrator de imagem.** Novo estágio no pipeline:
   `Bundle → Segmentação → [por documento] Identidade → Classificação → Representação`.
+- **Captura de EVIDÊNCIA COMPLETA — exames com imagem (fundadora, 13/07/2026).** Muitos exames NÃO são
+  só o laudo: US · mamografia · TC · RM · OCT · retinografia · Pentacam · ecocardiograma · endoscopia ·
+  colonoscopia têm um **conjunto inseparável** (laudo + imagens + eventualmente vídeos + futuramente
+  DICOM). Objetivo: **preservar o exame completo**, não só o PDF. **Fluxo (reusa o componente
+  multipágina/DocumentBundle já existente — acomodar-antes-de-criar):** 1) upload do PDF do laudo (já
+  existe); 2) se for exame de imagem, perguntar **"Este exame possui imagens diagnósticas?"**; 3) **Não**
+  → fluxo atual; **Sim** → **assistente de captura** das imagens → tudo vira **um único Document Bundle**
+  (laudo + imagens + sequência + origem). **Conectores de aquisição (futuro, sem mudar arquitetura — são
+  adaptadores de ingestão, modelo "Open Finance para evidência diagnóstica"):** extensão de navegador ·
+  DICOM/ZIP · PACS · RNDS · API do laboratório. A **extensão é UM conector, não o produto** — e **não é o
+  MVP** (barreira de adoção); o MVP é a **captura assistida**. Honestidade: imagem por captura de tela ≠
+  DICOM diagnóstico (perde resolução/metadados) — fidelidade máxima vem dos conectores DICOM/PACS. A
+  imagem passa a ser **evidência clínica primária vinculada ao laudo** (não anexo) → habilita comparação
+  longitudinal (mamografias/OCTs no tempo) na camada cognitiva. Design do ciclo de execução.
 - **Content Classifier** (transversal, TEMA C) — **classifica corretamente a CATEGORIA
   DOCUMENTAL** por CONTEÚDO →
   `exame | medicamento | condicao | vacina | omica | recurso | administrativo`.

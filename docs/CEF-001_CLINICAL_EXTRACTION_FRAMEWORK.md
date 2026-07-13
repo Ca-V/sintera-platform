@@ -184,6 +184,25 @@ Documental** — a plataforma dá **acesso** ao original, não o substitui. Conf
 > **Futuro (só se houver evidência de valor):** extrair uns poucos **metadados** (modalidade · data ·
 > categoria BI-RADS · conclusão) para timeline/busca **sem** substituir nem fragmentar o laudo.
 
+### 4.0.1 Nunca apresentar parcial como DEFINITIVO (princípio permanente — fundadora, 13/07/2026)
+
+> **A plataforma nunca apresenta uma representação estruturada INCOMPLETA como se fosse a representação
+> clínica DEFINITIVA do exame.** O invariante é **não dar a entender que está completo quando não está**
+> — não é "esconder tudo que não for 100%".
+
+`partial` continua **estado INTERNO** (governança · métricas · evolução do CEF); **não** significa,
+sozinho, "eis parte do seu exame" ao usuário. O comportamento visível depende do **modelo de resultado
+do tipo** (§4):
+- **Narrativo (laudo de imagem):** `document_only` — o laudo é o resultado (§4.0).
+- **Grupos/parâmetros (Pentacam):** só os **grupos íntegros** (§4.1 — "rotula, não oculta"); nunca um
+  grupo quebrado como completo.
+- **Atômico (biomarcadores de laboratório):** mostra os extraídos **com marca honesta** de não-certificado
+  (nunca alegando completude); **não esconde** dado válido (esconder 14 corretos por faltar 3 seria pior).
+
+A representação estruturada só é apresentada como **certificada** quando atinge completude suficiente para
+o tipo (Representation Validator, §4.1). Enquanto não, ou **document_only**, ou **honesto-parcial que
+jamais alega ser definitivo**. Reconcilia a proposta com o §4.1 (integridade) e evita **falsa completude**.
+
 ---
 
 ## 4.1 Modelo Clínico de Referência + completude CERTIFICADA por grupo (revisão cruzada, aprovado 13/07/2026)
