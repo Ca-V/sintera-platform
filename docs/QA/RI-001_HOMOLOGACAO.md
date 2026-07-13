@@ -46,8 +46,8 @@ sessão e estão **travados no valor errado** — **não contam** contra a certi
 RI-001B (identificação · nome · honestidade · sem-invenção · proveniência). Imagem estruturada e
 multi-exame **não bloqueiam** — são OUT.
 
-> **Aprovação da fundadora:** ☐ Aprovo este fechamento de escopo → seguir para verificação + Relatório +
-> certificação (merge). ☐ Ajustar (o quê): __________
+> **Aprovação da fundadora:** ✅ **APROVADO (13/07/2026)** → seguir para teste final do fluxo IN +
+> verificação do banco + Relatório RI-001 + certificação (merge). ☐ Ajustar (o quê): __________
 
 ---
 
