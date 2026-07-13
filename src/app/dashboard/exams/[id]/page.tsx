@@ -432,7 +432,7 @@ export default function ExamDetailPage() {
   async function loadData(silent = false) {
     if (!silent) setLoading(true)
     const [{ data: examData }, { data: bioData }, { data: logData }, { data: catData }] = await Promise.all([
-      supabase.from('exams').select('id,type,status,pdf_quality,page_count,created_at,exam_date,error_reason,text_truncated,file_url,patient_name,document_type,display_title')
+      supabase.from('exams').select('id,type,status,pdf_quality,page_count,created_at,exam_date,error_reason,text_truncated,file_url,patient_name,document_type,display_title,extraction_completeness')
         .eq('id', examId).single(),
       supabase.from('current_biomarkers')
         .select('id,name,value,value_text,unit,reference_min,reference_max,interpretation,result_type,range_extracted,reference_source,source,catalog_id,source_material,source_exam_name')
@@ -794,7 +794,16 @@ export default function ExamDetailPage() {
         <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
           padding="none" className="overflow-hidden">
           <div className="p-5 border-b border-border/50">
-            <h2 className="font-display text-base font-semibold text-onyx">Biomarcadores extraídos</h2>
+            <h2 className="font-display text-base font-semibold text-onyx">Resultados estruturados</h2>
+            {(exam as unknown as { extraction_completeness?: string | null })?.extraction_completeness === 'partial' && (
+              <p className="font-body text-xs text-mauve mt-1.5">
+                Este exame possui informações adicionais disponíveis no documento original.
+                {(exam as unknown as { file_url?: string | null })?.file_url && (
+                  <button type="button" onClick={() => window.open((exam as unknown as { file_url: string }).file_url, '_blank', 'noopener')}
+                    className="ml-1 text-petal-dark font-medium hover:underline">Ver documento original →</button>
+                )}
+              </p>
+            )}
           </div>
 
           {/* Agrupado por material (sangue/urina) e painel — deixa claro de qual exame
@@ -891,26 +900,18 @@ export default function ExamDetailPage() {
           <p className="font-body text-xs text-mauve">A SINTERA está extraindo os biomarcadores do seu laudo. Isso leva alguns segundos.</p>
         </MotionCard>
       ) : (() => {
-        // Nomenclatura por TIPO: biomarcadores são de exames de sangue/urina. Exames de
-        // imagem, neuro, oftalmo etc. têm o resultado NO LAUDO — não se força "biomarcador".
-        const dt = (exam as unknown as { document_type?: string | null })?.document_type ?? null
-        const NON_LAB: Record<string, string> = {
-          imaging: 'exame de imagem', neurophysiology: 'exame neurofisiológico',
-          ophthalmology: 'exame oftalmológico', cardiology: 'exame cardiológico',
-          endoscopy: 'exame endoscópico', anatomopathology: 'laudo anatomopatológico',
-          medical_report: 'relatório médico',
-        }
-        const nonLabLabel = dt ? NON_LAB[dt] : undefined
+        // A UI reage à COMPLETUDE (não ao tipo do exame): document_only = nada estruturado
+        // com segurança → o documento original é a fonte. (extraction_completeness, do CEF.)
+        const completeness = (exam as unknown as { extraction_completeness?: string | null })?.extraction_completeness ?? null
         const fileUrl = (exam as unknown as { file_url?: string | null })?.file_url ?? null
-        if (nonLabLabel && exam?.status !== 'error') {
+        if (completeness === 'document_only' && exam?.status !== 'error') {
           return (
             <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
               padding="2xl" className="text-center">
               <FileText size={40} className="text-petal/70 mx-auto mb-3" />
-              <p className="font-body text-sm font-semibold text-onyx mb-1">Este é um {nonLabLabel}</p>
+              <p className="font-body text-sm font-semibold text-onyx mb-1">Documento disponível para consulta</p>
               <p className="font-body text-xs text-mauve max-w-md mx-auto">
-                O resultado deste tipo de exame está no próprio laudo (não são biomarcadores de sangue/urina).
-                Consulte o documento original — a leitura estruturada por tipo de exame está em evolução.
+                O conteúdo deste exame está no documento original. A estruturação por tipo de exame está em evolução.
               </p>
               {fileUrl && (
                 <button type="button" onClick={() => window.open(fileUrl, '_blank', 'noopener')}

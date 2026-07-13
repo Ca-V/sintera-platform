@@ -291,6 +291,18 @@ export async function POST(
   })
   finalUpdate.document_type = structure.documentType
   finalUpdate.document_scope = structure.documentScope
+
+  // Metadados de extração (CEF) — completude RELATIVA AO EXTRATOR, não ao documento.
+  // Heurística interina (type-agnostic): cobertura de faixa de referência sinaliza o quanto
+  // foi estruturado; cada extrator especializado do CEF passará a computar isto propriamente.
+  const bmN = result.biomarkers.length
+  const bmWithRef = result.biomarkers.filter(b => b.rangeExtracted || b.referenceMin != null || b.referenceMax != null).length
+  const completeness = bmN === 0 ? 'document_only' : (bmWithRef / bmN >= 0.5 ? 'structured' : 'partial')
+  finalUpdate.extraction_completeness = completeness
+  finalUpdate.structural_confidence = completeness === 'structured' ? 'high' : completeness === 'partial' ? 'medium' : 'low'
+  finalUpdate.extractor_family = structure.documentType
+  finalUpdate.extractor_version = structure.documentType === 'laboratory' ? 'laboratory-v1' : 'heuristic-v0'
+  finalUpdate.processed_at = new Date().toISOString()
   // Só sobrescreve o nome do arquivo quando aprendemos estrutura de verdade:
   // categoria não-laboratorial detectada, OU laboratório com ≥1 exame distinto real.
   // Evita transformar um nome de arquivo bom em "indeterminado"/"metabolismo".
