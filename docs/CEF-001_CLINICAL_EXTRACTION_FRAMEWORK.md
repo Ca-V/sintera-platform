@@ -98,6 +98,31 @@ leitor do registro, não o único caminho.
 
 ---
 
+## 3.1 Cada tipo traz sua própria REFERÊNCIA CIENTÍFICA (via SRL) — a "inteligência própria" por exame
+
+**Requisito (fundadora, 13/07/2026):** cada exame tem **parâmetros e forma de análise diferentes**
+(laboratório × imagem × onda × coleta; com laudo × sem laudo). A plataforma precisa de um **PADRÃO**
+(representação) + uma **INTELIGÊNCIA PRÓPRIA por tipo** que, **ao entrar um exame, saiba buscar a
+REFERÊNCIA CIENTÍFICA adequada daquele tipo e como incorporá-lo**.
+
+A arquitetura já responde — é a razão de ser do **CEF + SRL**:
+```
+Exame entra → Content Classifier (categoria) → Exam Type Registry (reader do tipo) →
+   o reader do tipo:
+   (a) conhece a ESTRUTURA/parâmetros da modalidade (protocolo §7)
+   (b) BUSCA a referência científica do tipo no Scientific Retrieval Layer / KG
+       (padrões, valores de referência, semântica) — FACTUAL (o que a ciência/norma diz),
+       NÃO interpretação clínica (RDC 657)
+   (c) estrutura o resultado no modelo da modalidade (§4)
+   (d) representa na UCDA (universal)
+```
+- **Padrão** = **UCDA** (representação universal). **Inteligência própria por tipo** = **Exam Type
+  Registry + reader + SRL**. A "referência científica adequada" é a §7 elemento 7, servida pelo **SRL**.
+- **Tipo AINDA sem reader** → interim (`document_only`/`partial` + nota → documento) e o exame vira
+  **caso do CRC** → evidência → **novo reader** (aprendizado governado). Assim a "inteligência própria"
+  **cresce por tipo**, sem novo domínio — cada extrator do CEF nasce trazendo a referência científica
+  da sua modalidade.
+
 ## 4. Modelos de resultado por tipo (nomenclatura própria)
 
 O resultado NÃO é sempre "biomarcador". Exemplos (campos = transcrição factual do laudo):
