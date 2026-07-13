@@ -550,6 +550,28 @@ IA validando IA.
 ```
 Cada seta é também uma **validação**: a camada seguinte valida a informação da anterior antes do uso.
 
+**Cada etapa produz um ARTEFATO próprio (fundadora, 13/07 — explicita o que já era implícito):** os
+componentes deixam de "fazer uma transformação" e passam a **emitir um artefato auditável, reprocessável
+e versionável.**
+
+| Etapa | Artefato produzido |
+|---|---|
+| Ingestão | **Bundle** (contêiner) |
+| Análise Estrutural | **Representação estrutural transitória** |
+| Segmentação | **CDUs** |
+| Identidade Documental | **Documento identificado** |
+| Identidade Clínica | **Documento clinicamente classificado** |
+| Representação (CEF) | **Evidência estruturada** |
+| Validação da Representação | **Evidência certificada** |
+| Cobertura | **Relatório de cobertura** |
+| UCDA | **Evidência interoperável** |
+
+**Payoff (refinamento Claude):** cada artefato carrega **{produtor · versão · fingerprint · proveniência}**
+→ reprocessamento **granular**: quando muda a versão de UMA etapa (ex.: novo extrator do CEF),
+re-executa-se **só daquela etapa em diante**, reaproveitando os artefatos anteriores. É a Reprodutibilidade
++ reprocessamento-por-versão aplicados a **cada** etapa. Conecta com Rastreabilidade, Validação entre
+Camadas, CRC e Governança — **não é arquitetura nova; é tornar explícito o que já estava implícito.**
+
 ### Princípio da Descoberta antes da Extração (CONSTITUCIONAL — fundadora, 13/07/2026)
 
 > **A plataforma nunca deve extrair antes de compreender a ESTRUTURA do documento.** Operacional:
