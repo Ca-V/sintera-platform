@@ -394,6 +394,7 @@ export default function ExamsPage() {
               <p className="font-display text-lg font-semibold text-onyx mb-1">Arraste um arquivo ou toque para enviar</p>
               <p className="font-body text-sm text-mauve mb-1">PDF, foto ou <strong className="font-medium">várias fotos</strong> do mesmo laudo</p>
               <p className="text-xs font-body text-mauve">Ao tirar/escolher fotos, você adiciona quantas páginas quiser antes de concluir · Até 50 MB</p>
+              <p className="text-xs font-body text-gold bg-warm rounded-lg px-3 py-1.5 mt-2 inline-block">Envie <strong className="font-medium">um exame por vez</strong>. Se um mesmo exame tiver várias páginas, junte todas elas.</p>
             </>
           )}
         </motion.div>
