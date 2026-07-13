@@ -34,7 +34,7 @@
 | **GS-007** | Ecocardiograma | Medidas cardíacas |
 | **GS-008** | Espirometria | Curvas e parâmetros funcionais |
 | **GS-009** | Eletrocardiograma | Medidas eletrofisiológicas |
-| **GS-010** | **Validação de identidade** (Pentacam mobile) | **Não certificar identidade de baixa qualidade** — título corrompido por OCR/LLM + data errada (regressão) |
+| **GS-010** | **Certificação da Identidade Documental** (comportamento, não um exame) | **Não certificar identidade de baixa qualidade** — título corrompido/data errada. Vale p/ Pentacam·OCT·Holter·MAPA·Colonoscopia·Ecocardiograma·Ressonância. Camada **anterior e independente do CEF** |
 
 ---
 
@@ -62,9 +62,12 @@ correta**; nenhum "biomarcador".
 **Esperado com o CEF:** **1 documento (Bundle)** → 1 registro `ophthalmology`; resultado =
 **parâmetros tomográficos** (K1/K2/Kmax/espessura mínima/BAD-D/elevações); data correta.
 
-### GS-010 — Validação de identidade documental (OCULUS Pentacam via celular, 13/07/2026)
-Documento OCULUS Pentacam gravado com **título corrompido** e **data errada** — evidência de que falta
-uma etapa de **validação da identidade antes da certificação** (o write-once congelou o erro).
+### GS-010 — Certificação da Identidade Documental (comportamento; caso semente: OCULUS Pentacam mobile, 13/07/2026)
+Testa um **comportamento**, não um exame: a plataforma **não certifica** uma identidade de baixa
+qualidade. Vale para qualquer tipo (Pentacam·OCT·Holter·MAPA·Colonoscopia·Ecocardiograma·Ressonância) —
+a identidade documental é **camada anterior e independente do CEF**. Caso semente: OCULUS Pentacam via
+celular gravado com **título corrompido** e **data errada** (o write-once congelou o erro por faltar o
+Identity Validator). **Nome documental correto = "OCULUS Pentacam"** (confirmado pela fundadora).
 
 | Sintoma observado | Correto |
 |---|---|

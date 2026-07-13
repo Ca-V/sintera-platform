@@ -818,13 +818,17 @@ export default function ExamDetailPage() {
           <div className="p-5 border-b border-border/50">
             <h2 className="font-display text-base font-semibold text-onyx">Resultados estruturados</h2>
             {(exam as unknown as { extraction_completeness?: string | null })?.extraction_completeness === 'partial' && (
-              <p className="font-body text-xs text-mauve mt-1.5">
-                Este exame possui informações adicionais disponíveis no documento original.
-                {(exam as unknown as { file_url?: string | null })?.file_url && (
-                  <button type="button" onClick={() => window.open((exam as unknown as { file_url: string }).file_url, '_blank', 'noopener')}
-                    className="ml-1 text-petal-dark font-medium hover:underline">Ver documento original →</button>
-                )}
-              </p>
+              <div className="mt-1.5">
+                <span className="inline-flex items-center gap-1 text-[11px] font-body font-medium text-gold bg-warm px-2 py-0.5 rounded-full">Estruturação parcial</span>
+                <p className="font-body text-xs text-mauve mt-1.5">
+                  Parte das informações deste documento foi organizada automaticamente. Consulte o documento
+                  original para visualizar o conteúdo completo.
+                  {(exam as unknown as { file_url?: string | null })?.file_url && (
+                    <button type="button" onClick={() => window.open((exam as unknown as { file_url: string }).file_url, '_blank', 'noopener')}
+                      className="ml-1 text-petal-dark font-medium hover:underline">Ver documento original →</button>
+                  )}
+                </p>
+              </div>
             )}
           </div>
 

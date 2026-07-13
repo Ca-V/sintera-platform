@@ -59,12 +59,12 @@ const STATUS_CONFIG: Record<string, {
 
 // Selo honesto por COMPLETUDE (não só "processed"): "Dados extraídos"/"disponíveis" sugeriam
 // completude que muitas vezes não existe (ex.: Pentacam parcial). Reage ao extraction_completeness.
-function processedSeal(c: string | null | undefined): { label: string; color: string; bg: string } {
+function processedSeal(c: string | null | undefined): { label: string; color: string; bg: string; hint: string } {
   switch (c) {
-    case 'structured':    return { label: 'Dados estruturados',   color: 'text-petal', bg: 'bg-blush' }
-    case 'partial':       return { label: 'Estruturação parcial', color: 'text-gold',  bg: 'bg-warm'  }
-    case 'document_only': return { label: 'Documento disponível', color: 'text-mauve', bg: 'bg-ivory' }
-    default:              return { label: 'Dados disponíveis',    color: 'text-petal', bg: 'bg-blush' }
+    case 'structured':    return { label: 'Dados estruturados',   color: 'text-petal', bg: 'bg-blush', hint: 'As informações deste documento foram organizadas automaticamente.' }
+    case 'partial':       return { label: 'Estruturação parcial', color: 'text-gold',  bg: 'bg-warm',  hint: 'Parte das informações deste documento foi organizada automaticamente. Consulte o documento original para visualizar o conteúdo completo.' }
+    case 'document_only': return { label: 'Documento disponível', color: 'text-mauve', bg: 'bg-ivory', hint: 'O conteúdo está no documento original. A estruturação por tipo de exame está em evolução.' }
+    default:              return { label: 'Dados disponíveis',    color: 'text-petal', bg: 'bg-blush', hint: '' }
   }
 }
 
@@ -658,7 +658,7 @@ export default function ExamsPage() {
                           // Selo honesto: quando processado, reflete a COMPLETUDE (não "extraídos" sempre).
                           const seal = displayStatus === 'processed'
                             ? processedSeal((exam as unknown as { extraction_completeness?: string | null }).extraction_completeness)
-                            : { label: cfg.label, color: cfg.color, bg: cfg.bg }
+                            : { label: cfg.label, color: cfg.color, bg: cfg.bg, hint: '' }
                           const hasFile     = !!(exam as unknown as { file_url: string | null }).file_url
                           const isProcessed = exam.status === 'processed'
                           const canAnalyze  = hasFile && !isRunning && !isProcessed && exam.status !== 'processing'
@@ -701,7 +701,7 @@ export default function ExamsPage() {
                                 title={exam.type ?? 'Exame'}
                                 onTitleClick={() => router.push('/dashboard/exams/' + exam.id)}
                                 trailing={
-                                  <span className={`inline-flex items-center gap-1 text-[11px] font-body font-medium px-2 py-0.5 rounded-full ${seal.bg} ${seal.color}`}>
+                                  <span title={seal.hint || undefined} className={`inline-flex items-center gap-1 text-[11px] font-body font-medium px-2 py-0.5 rounded-full ${seal.bg} ${seal.color}`}>
                                     <Icon size={10} className={isRunning ? 'animate-spin' : ''} />
                                     {seal.label}
                                   </span>

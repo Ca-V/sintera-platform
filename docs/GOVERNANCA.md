@@ -336,15 +336,36 @@ certificação. O problema nunca foi "não mudar"; é **quando permitir congelar
 OCR → LLM → VALIDAÇÃO da identidade → identidade certificada (validated) → write-once
 ```
 A identidade só é promovida a `validated` (e congelada) quando atinge **critérios mínimos de qualidade**:
-confiança do OCR · coerência textual · **fabricante reconhecido** (OCULUS) · **modalidade reconhecida**
-(Pentacam) · comparação com **nomenclaturas conhecidas** · ausência de **erros típicos de OCR**. Se a
-confiança for baixa → **não certifica**: permanece `draft`, preservando o documento original e permitindo
-certificação futura por extrator mais evoluído ou confirmação do usuário. **`document_title` de baixa
-confiança nunca é inventado** — usa um fallback honesto (ex.: *"Documento oftalmológico (título não
-identificado com confiança)"*) ou solicita revisão. Objetivo: **erros de OCR/leitura nunca viram
-identidades permanentes.** É **genérico** — vale para Zeiss/Heidelberg/Topcon/Humphrey/Ecocardiograma/
-Holter/MAPA etc. (é o pipeline de identidade, não o Pentacam). Depende do reconhecimento de fabricante/
-modalidade/nomenclatura = **Exam Type Registry do CEF** → prioridade no ciclo do CEF (pós-RI-001).
+confiança do OCR · coerência textual · fabricante reconhecido (lista leve de sanidade) · ausência de
+**erros típicos de OCR** · caracteres estranhos · título curto/longo demais · parece mistura de duas
+linhas · conflito. Se a confiança for baixa → **não certifica**: permanece `draft`, preservando o
+documento original e permitindo certificação futura por extrator mais evoluído ou confirmação do usuário.
+**`document_title` de baixa confiança nunca é inventado** — usa um fallback honesto (ex.: *"Documento
+oftalmológico (título não identificado com confiança)"*) ou solicita revisão. Objetivo: **erros de
+OCR/leitura nunca viram identidades permanentes.**
+
+**CORREÇÃO ARQUITETURAL (fundadora, 13/07 — o Claude havia acoplado errado):** a validação da identidade
+**NÃO depende do Exam Type Registry nem do CEF.** A identidade documental é uma camada **anterior e
+independente** da compreensão clínica — um documento existe e tem título/data/emissor/paciente **mesmo
+sem a plataforma saber o que ele é** (fabricante desconhecido, equipamento novo, hospital estrangeiro).
+O **Identity Validator** é **engenharia documental, não clínica**: `existe título? · texto íntegro? ·
+houve corrupção? · fabricante reconhecido? · caracteres estranhos? · confiança OCR? · conflito? · título
+curto/longo demais? · mistura de duas linhas?`. "Fabricante reconhecido (OCULUS)" = **lista de sanidade
+documental**, NÃO o registro clínico (saber que OCULUS é um fabricante real ≠ saber que é tomografia de
+córnea). Consequência de sequência: o Identity Validator **não espera o CEF/HUB-001** — pode ser
+construído **logo após o RI-001**. Fluxo com o estágio explícito:
+```
+Documento → OCR → Extração textual → Identity Validator → document_title certificado → (depois) Classificação clínica → CEF
+```
+
+**Três camadas bem definidas (reduz acoplamento):**
+1. **Identidade documental** — *"o que o documento diz"* (título · data · emissor · número · paciente).
+   Simples, estável por décadas, **independente de qualquer extrator**.
+2. **Identidade clínica** — *"que tipo de exame isso representa"* (CEF · Exam Type Registry).
+3. **Representação clínica estruturada** — *"como organizar o conteúdo desse tipo"* (CEF).
+
+É **genérico** — Pentacam/OCT/Holter/MAPA/Colonoscopia/Ecocardiograma/Ressonância. GS-010 testa o
+**comportamento** (certificação de identidade), não um exame.
 
 **Camada de apresentação — não misturar documental × plataforma (evidência: "1 exame" × título "2
 Exames"):** o título transcreve o documento (onde "2 Exames" veio como conteúdo/erro); a contagem "1
