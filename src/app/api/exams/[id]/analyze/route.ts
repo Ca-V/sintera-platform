@@ -12,6 +12,7 @@ import { classifyDocumentAI } from '@/lib/ai/document-classifier'
 import { representationFingerprint, isRepresentationCertified } from '@/lib/capture/reproducibility'
 import { computeCoverage } from '@/lib/capture/coverage'
 import { processBundle } from '@/lib/capture/clinical-information-pipeline'
+import { planBundleSplit, restrictPages, type SplitPlan } from '@/lib/capture/bundle-split'
 import { pickExamDate } from '@/lib/capture/semantic-dates'
 import { identifyClinical } from '@/lib/capture/clinical-identity-registry'
 
@@ -42,10 +43,15 @@ export async function POST(
   // 2. Ownership + busca file_url e status anterior (para preservar 'processed' em caso de falha)
   const { data: exam } = await supabase
     .from('exams')
-    .select('id, file_url, status, display_title, document_type')
+    .select('id, type, file_url, status, display_title, document_type, source_bundle_exam_id, bundle_cdu_index, bundle_cdu_count, bundle_page_start, bundle_page_end')
     .eq('id', examId)
     .eq('user_id', userId)
-    .single() as { data: { id: string; file_url: string | null; status: string; display_title: string | null; document_type: string | null } | null }
+    .single() as { data: {
+      id: string; type: string | null; file_url: string | null; status: string
+      display_title: string | null; document_type: string | null
+      source_bundle_exam_id: string | null; bundle_cdu_index: number | null; bundle_cdu_count: number | null
+      bundle_page_start: number | null; bundle_page_end: number | null
+    } | null }
   const previousStatus = (exam as { status: string } | null)?.status ?? 'pending'
 
   if (!exam) {
@@ -115,6 +121,8 @@ export async function POST(
   let pdfQuality = 'image'
   let examTextForIssuer: string | null = null // texto do laudo p/ extrair o emissor
   let bundlePages: string[] = []              // texto por página (reparado) → Bundle p/ o pipeline
+  let pagesProcessed: string[] = []           // páginas que a IA de fato leu (após restrição de CDU — M3)
+  let splitPlan: SplitPlan | null = null      // plano de split do bundle (M3)
 
   if (isImage) {
     // Caminho de imagem — modelo multimodal lê a foto. Sem extração de texto/PDF.
@@ -148,11 +156,33 @@ export async function POST(
     examTextForIssuer = extraction.text
     bundlePages = extraction.pageTexts // páginas reparadas → Bundle para o ClinicalInformationPipeline
 
-    // 7. Filtro de páginas (Epic 1.4A) — remove conteúdo administrativo antes da IA
-    filterResult = filterRelevantPages(extraction.pageTexts, 3)
+    // ── M3 — Bundle Split: COMPREENDER a estrutura ANTES de extrair. Cada CDU/irmão processa só as SUAS
+    // páginas (isolamento por intervalo). Documento de 1 CDU (a maioria) → intervalo cobre tudo → sem
+    // qualquer mudança de comportamento. `isRoot`: upload ainda não dividido (não é irmão nem já-dividido).
+    const isRootBundle = exam.source_bundle_exam_id == null && exam.bundle_cdu_count == null
+    const existingRange = exam.bundle_page_start != null && exam.bundle_page_end != null
+      ? { start: exam.bundle_page_start, end: exam.bundle_page_end } : null
+    const understood = processBundle({ pageTexts: bundlePages, hasImages: false })
+    splitPlan = planBundleSplit({
+      cdus: understood.cdus.map(c => ({
+        index: c.index, pages: c.pages, title: c.title,
+        discoveredUnits: c.discoveredUnits, status: c.status, reviewType: c.reviewType,
+      })),
+      isRoot: isRootBundle,
+      existingRange,
+    })
+    const coversAll = !splitPlan.thisRange
+      || (splitPlan.thisRange.start === 0 && splitPlan.thisRange.end === bundlePages.length - 1)
+    const pagesForAI = coversAll ? extraction.pageTexts : restrictPages(bundlePages, splitPlan.thisRange)
+    if (!coversAll) examTextForIssuer = pagesForAI.join('\n')
+    pagesProcessed = pagesForAI
 
-    // 7b. Roteamento: Path A (texto) vs Path B (PDF nativo)
-    const useNative = extraction.quality !== 'good_text' && filterResult.pagesRelevant <= 20
+    // 7. Filtro de páginas (Epic 1.4A) — remove conteúdo administrativo antes da IA (páginas DESTA CDU)
+    filterResult = filterRelevantPages(pagesForAI, 3)
+
+    // 7b. Roteamento: Path A (texto) vs Path B (PDF nativo). CDU restrita força o caminho de TEXTO
+    // (o PDF nativo não é fatiável por página aqui) — usa exatamente o texto das páginas da CDU.
+    const useNative = coversAll && extraction.quality !== 'good_text' && filterResult.pagesRelevant <= 20
     const MAX_EXAM_CHARS = 40_000
     const filteredText = filterResult.filteredText.length > MAX_EXAM_CHARS
       ? filterResult.filteredText.slice(0, MAX_EXAM_CHARS)
@@ -342,21 +372,19 @@ export async function POST(
   // nunca alega completude. A Análise Estrutural descobre nº de unidades (RESULTADO) no laudo; se o
   // extrator estruturou MENOS, não pode ser "structured" (mata a falsa completude do laudo de 6 exames).
   // Confiabilidade plena depende do extrator do CEF reportar unidades alinhadas (M5); aqui, conservador.
-  // ClinicalInformationPipeline: compreende o Bundle → CertifiedCDUs (M1). Hoje o registro representa o
-  // documento inteiro (split em N registros = M3), então a Cobertura soma as unidades descobertas de
-  // TODAS as CDUs. `discoveredCduCount` fica disponível para o M3 (1 registro por CDU).
+  // ClinicalInformationPipeline: compreende o Bundle → CertifiedCDUs (M1). Com o split (M3), ESTE registro
+  // representa UMA CDU (as suas páginas), então a Cobertura soma as unidades descobertas apenas do que a IA
+  // leu (`pagesProcessed`) — mantém-se consistente com a extração isolada da CDU (não conta as CDUs-irmãs).
   const bundle = processBundle({
-    pageTexts: bundlePages.length ? bundlePages : (examTextForIssuer ? [examTextForIssuer] : []),
+    pageTexts: pagesProcessed.length ? pagesProcessed : (examTextForIssuer ? [examTextForIssuer] : []),
     hasImages: isImage,
   })
-  const discoveredCduCount = bundle.cdus.length
   if (!isNarrativeLaudo && completeness === 'structured' && bmN > 0) {
     const discovered = bundle.cdus.reduce((s, c) => s + (c.structure.resultUnits || 0), 0)
     const cov = computeCoverage({ cdu: { index: 1, discoveredUnits: discovered }, structuredUnits: bmN })
     if (discovered > 0 && !cov.certifiedComplete) completeness = 'partial'
   }
   finalUpdate.extraction_completeness = completeness
-  void discoveredCduCount // usado pelo M3 (split de CDUs)
   finalUpdate.structural_confidence = completeness === 'structured' ? 'high' : completeness === 'partial' ? 'medium' : 'low'
   finalUpdate.extractor_family = effectiveDocType
   finalUpdate.extractor_version = effectiveDocType === 'laboratory' ? 'laboratory-v1' : 'heuristic-v0'
@@ -438,9 +466,40 @@ export async function POST(
     results: isNarrativeLaudo ? [] : result.biomarkers,
   })
 
+  // ── M3 — Bundle Split (materialização) ──
+  // Este exame passa a ser a CDU#1 do bundle; grava a sua proveniência (aponta para si) + intervalo.
+  if (splitPlan && splitPlan.split && splitPlan.thisRange) {
+    finalUpdate.source_bundle_exam_id = examId
+    finalUpdate.bundle_cdu_index = 1
+    finalUpdate.bundle_cdu_count = splitPlan.count
+    finalUpdate.bundle_page_start = splitPlan.thisRange.start
+    finalUpdate.bundle_page_end = splitPlan.thisRange.end
+  }
+
   await supabase.from('exams')
     .update(finalUpdate as never)
     .eq('id', examId)
+
+  // Cria os registros-irmãos (CDUs 2..N) como 'pending', com proveniência do Bundle. Cada um, ao ser
+  // analisado, processa SÓ o seu intervalo de páginas (existingRange) — extração isolada por CDU. O
+  // disparo/confirmação da segmentação é a decisão de produto sinalizada; aqui apenas materializamos.
+  // Idempotente: na raiz já-dividida, isRootBundle=false → splitPlan.split=false → não recria.
+  if (splitPlan && splitPlan.split && splitPlan.siblings.length && exam.file_url) {
+    const rootName = exam.type ?? (finalUpdate.display_title as string | undefined) ?? 'Exame'
+    const siblingRows = splitPlan.siblings.map(s => ({
+      user_id: userId,
+      type: s.title || `${rootName} — parte ${s.index}/${splitPlan!.count}`,
+      exam_date: null,
+      file_url: exam.file_url,
+      status: 'pending',
+      source_bundle_exam_id: examId,
+      bundle_cdu_index: s.index,
+      bundle_cdu_count: splitPlan!.count,
+      bundle_page_start: s.range.start,
+      bundle_page_end: s.range.end,
+    }))
+    await supabase.from('exams').insert(siblingRows as never)
+  }
 
   return NextResponse.json({
     success:        true,

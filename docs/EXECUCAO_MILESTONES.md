@@ -17,7 +17,7 @@
 |---|---|---|---|---|
 | **M1** | Compreensão documental (Bundle → CertifiedCDUs) | **100%** ✅ | ✅ | ligado ao analyze |
 | **M2** | Cobertura ligada (fim da falsa completude) | **70%** | 🔄 | E (confiab. plena em M5) |
-| **M3** | Split de CDUs no fluxo real (1 upload → N registros) | **15%** | ⬜ | E+1 |
+| **M3** | Split de CDUs no fluxo real (1 upload → N registros) | **70%** | 🔄 | UX de confirmação (produto) |
 | **M4** | Identidade robusta (Clinical Identity Registry + estados) | **90%** | 🔄 | fusão LLM no M5 |
 | **M5** | Extratores especializados do CEF (por modalidade) | **5%** | ⬜ | E+3 |
 | **M6** | Datas semânticas (CEF §5) | **75%** | 🔄 | E (ligada) |
@@ -49,13 +49,21 @@ descoberto > estruturado — direção segura, §4.0.1). Confiabilidade PLENA de
 (M5) reportar unidades alinhadas com a Análise Estrutural.
 **Bloqueadores:** confiabilidade plena depende de M5 (unidades alinhadas).
 
-## M3 — Split de CDUs no fluxo real (1 upload → N registros) · 15% · ⬜
+## M3 — Split de CDUs no fluxo real (1 upload → N registros) · 70% · 🔄
 **Capacidade:** um upload com N exames distintos cria N registros (o PDF de 3 laudos → 3 registros).
-**Critérios:** (a) `analyze`/criação cria 1 registro por CertifiedCDU, com vínculo ao Bundle de origem;
-(b) CDUs em revisão técnica ficam retidas; (c) proveniência do Bundle preservada.
-**Testes:** `INT-split-cdus` ⬜.
+**Critérios:** (a) `analyze` cria 1 registro por CertifiedCDU, com vínculo ao Bundle de origem ✅ (raiz vira
+CDU#1; CDUs 2..N viram registros-irmãos `pending`); (b) CDUs em revisão técnica ficam retidas ✅ (o
+planejador NÃO divide quando há revisão técnica); (c) proveniência do Bundle preservada ✅
+(`source_bundle_exam_id` + `bundle_cdu_index/count` + `bundle_page_start/end`); (d) **extração ISOLADA por
+CDU** ✅ (cada registro processa só o seu intervalo de páginas — `restrictPages`; CDU restrita força o
+caminho de texto); (e) idempotência ✅ (raiz já-dividida não recria irmãos).
+**Feito:** planejador puro `planBundleSplit` (10 testes FUNC) · migration 108 (proveniência) · fiação no
+`analyze` (planejar antes de extrair · restrição de páginas · materialização dos irmãos).
+**Testes:** `FUNC-bundle-split` ✅ (10) · `INT-split-cdus` ⬜ (homologação com IA real).
 **CRC:** bundle 3-laudos (AXIAL).
-**Bloqueadores:** depende de M1. **Decisão de produto sinalizada** (1 upload → N registros).
+**Falta (30%):** **DECISÃO DE PRODUTO** — a UX de **confirmar/revisar** a segmentação e **disparar** a
+análise dos irmãos (hoje ficam `pending`; abrir o registro dispara sozinho, como qualquer pending). Sem
+fan-out automático no servidor (evita timeout serverless + respeita a fronteira de produto).
 
 ## M4 — Identidade robusta (Clinical Identity Registry + estados) · 90% · 🔄
 **Capacidade:** identificar a modalidade por **ensemble de evidências** (auditável), com estados

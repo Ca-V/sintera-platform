@@ -20,7 +20,7 @@
 |---|---|---|
 | "Envio PDF, foto ou várias fotos de um exame" | ✅ | captura multipágina |
 | "Meus exames aparecem organizados no tempo" | ✅ | timeline por ano |
-| "Cada exame do documento vira um registro separado" | 🔄→⬜ | Segmentação pronta; **split (M3) a ligar** |
+| "Cada exame do documento vira um registro separado" | 🔄 | **split (M3) ligado** no backend (1 upload→N registros, cada um só com suas páginas); falta a **UX de confirmar/revisar** a divisão (decisão de produto) |
 | "Exames de laboratório: resultados estruturados" | ✅ | caminho maduro |
 | "Exames de imagem estruturados (achados por região)" | ⬜ | Clinical Processing Engine |
 
