@@ -18,7 +18,7 @@
 | **M1** | Compreensão documental (Bundle → CertifiedCDUs) | **90%** | 🔄 | E (integração) |
 | **M2** | Cobertura ligada (fim da falsa completude) | **70%** | 🔄 | E (confiab. plena em M5) |
 | **M3** | Split de CDUs no fluxo real (1 upload → N registros) | **15%** | ⬜ | E+1 |
-| **M4** | Identidade robusta (Clinical Identity Registry + estados) | **55%** | 🔄 | E+1 |
+| **M4** | Identidade robusta (Clinical Identity Registry + estados) | **65%** | 🔄 | E+1 |
 | **M5** | Extratores especializados do CEF (por modalidade) | **5%** | ⬜ | E+3 |
 | **M6** | Datas semânticas (CEF §5) | **75%** | 🔄 | E (ligada) |
 | **M7** | Captura de evidência completa (laudo + imagens) | **0%** | ⬜ | E+4 |

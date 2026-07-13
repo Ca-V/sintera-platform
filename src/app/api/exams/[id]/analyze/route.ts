@@ -13,6 +13,7 @@ import { representationFingerprint, isRepresentationCertified } from '@/lib/capt
 import { structuralAnalysis } from '@/lib/capture/structural-analysis'
 import { computeCoverage } from '@/lib/capture/coverage'
 import { pickExamDate } from '@/lib/capture/semantic-dates'
+import { identifyClinical } from '@/lib/capture/clinical-identity-registry'
 
 const ERROR_MESSAGES: Record<string, string> = {
   password_protected: 'O PDF está protegido por senha e não pode ser processado.',
@@ -364,6 +365,15 @@ export async function POST(
     const examDate = semDate && semDate.iso && semDate.confidence !== 'low' ? semDate.iso : result.examDate
     if (examDate) finalUpdate.exam_date = examDate
     if (result.patientName) finalUpdate.patient_name = result.patientName
+
+    // Identidade CLÍNICA (Clinical Identity Registry, CEF §3.0) — "que tipo de exame é", por ensemble de
+    // evidências. Aditivo (não altera a classificação documental aqui); alimenta o extrator do CEF (M5).
+    // Write-once (dentro do bloco de identidade). Só grava quando a confiança não é baixa.
+    const clin = examTextForIssuer ? identifyClinical(examTextForIssuer) : null
+    if (clin && clin.clinicalType && clin.confidence !== 'low') {
+      finalUpdate.clinical_family = clin.clinicalFamily
+      finalUpdate.clinical_type = clin.clinicalType
+    }
     finalUpdate.document_type = structure.documentType
     finalUpdate.document_scope = structure.documentScope
 
