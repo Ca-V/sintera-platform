@@ -179,6 +179,31 @@ Bug → Corpus).
 | **CEF (nomenclatura/classificação)** | Exames · Condições · Pedidos |
 | **CRC** | regressão de todo extrator do CEF |
 
+## Princípio da Evidência Arquitetural (permanente — fundadora, 13/07/2026)
+
+> **A arquitetura da SINTERA evolui PRIORITARIAMENTE por evidências produzidas pela implementação,
+> não por hipóteses.** Um novo domínio arquitetural não nasce de uma ideia interessante — nasce
+> quando a implementação demonstra, de forma **recorrente**, que os componentes existentes já não
+> acomodam adequadamente uma necessidade real. **A implementação passa a ser a principal fonte de
+> refinamento da arquitetura** (inversão importante).
+
+**Ciclo permanente:**
+```
+Arquitetura → Implementação → Validação → Evidência → Refinamento (quando necessário) → Arquitetura
+```
+
+**Reframe da primeira pergunta** ao surgir uma proposta: não "**é uma boa arquitetura?**", e sim
+"**qual evidência prática mostra que a arquitetura atual NÃO acomoda este caso?**". Sem essa
+evidência, a resposta padrão é **reutilizar e adaptar** os componentes existentes (regra
+acomodar-antes-de-criar).
+
+**Disciplina a preservar — integração, não substituição:** a arquitetura cresceu **encaixando**
+camadas complementares (Capture Hub, CEF, CRC, UCDA, KG, SRL) **sem descartar decisões anteriores**.
+Cresce por **integração e refinamento**, não por substituição constante — é o que a mantém coerente
+e sustentável. **Marcos = entregas verificáveis** (RI-001 aprovado · HUB-001 operacional · 1º
+extrator do CEF · GS-003/GS-004 passando · cobertura do CRC · indicador de reúso), não quantidade
+de especificações.
+
 ## Regras gerais
 
 - **Código estável:** uma vez atribuído, não muda; a versão vive no cabeçalho do doc.
