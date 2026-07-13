@@ -220,6 +220,65 @@ e sustentável. **Marcos = entregas verificáveis** (RI-001 aprovado · HUB-001 
 extrator do CEF · GS-003/GS-004 passando · cobertura do CRC · indicador de reúso), não quantidade
 de especificações.
 
+---
+
+## Princípio da Identidade Documental (permanente — fundadora, 13/07/2026)
+
+> **Todo atributo proveniente do documento original deve permanecer FIEL ao documento. A plataforma
+> pode classificá-lo, estruturá-lo, contextualizá-lo e relacioná-lo — mas nunca substituir ou
+> reinterpretar o conteúdo documental original.**
+
+Motivado pela evidência do Pentacam (reextrair mudava nome e dados). O problema não era classificação
+instável — era **misturar identidade documental com interpretação da plataforma**. Torna EXPLÍCITA
+uma distinção antes implícita: **documento, classificação e representação clínica são entidades
+diferentes.** Complementa a Rastreabilidade Documental e a Evidência Arquitetural; não muda a missão.
+
+**1. O documento é a fonte da verdade.** O título principal exibido é o **nome documental** extraído
+do próprio documento, preservando ao máximo o texto original (ex.: *OCULUS Pentacam*, *EEG Digital
+com Mapeamento Cerebral*, *Hemograma Completo*, *PET-CT*, *Painel Respiratório RT-PCR*). A plataforma
+pode corrigir **erros evidentes de OCR** (acentuação, caracteres quebrados) — nunca reinterpretar ou
+substituir o título. *(Refinamento: preservar também o texto documental BRUTO ao lado do corrigido —
+toda correção de OCR fica rastreável e reversível.)*
+
+**2. Classificação clínica é OUTRO conceito** (uso interno): escolher o extrator · organizar a
+Timeline · interoperabilidade (FHIR/UCDA) · pesquisas · filtros · estatísticas · evolução do CEF.
+**Nunca** substitui o nome documental.
+
+**3. Nome canônico é OUTRO atributo** (`canonical_title`): padronização interna (ex.: documento diz
+*OCULUS Pentacam* → canônico *Tomografia de córnea (Pentacam)*). O usuário vê o documental; o canônico
+é interno. *(Refinamento — painéis: quando o documento NÃO tem título único (ex.: Hermes sangue+urina),
+o display cai numa regra determinística ("Exames laboratoriais") que vive como `canonical_title`, não
+como se fosse o nome documental.)*
+
+**4. A reextração NUNCA altera a identidade documental.** "Extrair novamente" = re-executar o extrator
+· atualizar os **resultados estruturados** · usar um extrator mais moderno. **Nunca** altera
+`document_title`, `document_type`, `document_family` nem a identidade. **Mecanismo:** identidade
+documental é **write-once** — gravada na 1ª extração, **imutável** nas reextrações; só muda por uma
+**ação explícita de correção**, nunca por nova chamada da IA.
+
+**5. Hierarquia de confiança** (cada camada deriva da anterior; **nenhuma altera a anterior**):
+```
+Documento original (fonte da verdade)
+  ↓ document_title (transcrição documental, fiel)
+  ↓ Classificação clínica (interna)
+  ↓ Nome canônico (canonical_title, interno)
+  ↓ Resultados estruturados (o que a reextração atualiza)
+  ↓ Contextualização clínica
+```
+
+**6. Compatível com a arquitetura** — reforça Rastreabilidade Documental · Capture Hub · CEF · UCDA ·
+Evidência Arquitetural. Não é domínio novo; explicita uma distinção já implícita.
+
+**7. Critério permanente (vale para TODA a plataforma):** todo atributo vindo do documento original
+permanece fiel; a plataforma classifica/estrutura/contextualiza/relaciona, **mas nunca substitui ou
+reinterpreta o conteúdo documental**. Aumenta confiabilidade, elimina inconsistência entre
+reprocessamentos, fortalece a rastreabilidade regulatória e preserva a confiança do usuário.
+
+**Modelo de dados alvo:** `document_title` (fiel; write-once) · `document_type`/`document_family`
+(classificação interna; write-once) · `canonical_title` (interno) · resultados estruturados (mutáveis
+na reextração) · contexto (mutável). Exibe-se `document_title`. Ver `CEF-001` (reextração idempotente
+na identidade) e `principio_rastreabilidade_documental`.
+
 ## Regras gerais
 
 - **Código estável:** uma vez atribuído, não muda; a versão vive no cabeçalho do doc.
