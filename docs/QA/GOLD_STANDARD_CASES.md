@@ -35,6 +35,7 @@
 | **GS-008** | Espirometria | Curvas e parâmetros funcionais |
 | **GS-009** | Eletrocardiograma | Medidas eletrofisiológicas |
 | **GS-010** | **Certificação da Identidade Documental** (comportamento, não um exame) | **Não certificar identidade de baixa qualidade** — título corrompido/data errada. Vale p/ Pentacam·OCT·Holter·MAPA·Colonoscopia·Ecocardiograma·Ressonância. Camada **anterior e independente do CEF** |
+| **GS-011** | **Cobertura Documental** (laudo lab 6 exames) | **Não certificar sem validar cobertura** — documento tem 6 exames de sangue, extraiu 4 (faltaram Glicemia + IGF-1), marcou `structured`/`high` (falsa completude). Contador estrutural independente: 6 `RESULTADO:` × 4 extraídos → INCOMPLETA |
 
 ---
 

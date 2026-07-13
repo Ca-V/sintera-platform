@@ -49,6 +49,13 @@ multi-exame **não bloqueiam** — são OUT.
 > **Aprovação da fundadora:** ✅ **APROVADO (13/07/2026)** → seguir para teste final do fluxo IN +
 > verificação do banco + Relatório RI-001 + certificação (merge). ☐ Ajustar (o quê): __________
 
+> **⛔ CERTIFICAÇÃO PAUSADA (fundadora, 13/07/2026 — achado P0 no teste final):** um laudo laboratorial
+> com **6 exames** foi extraído com **4** e marcado `structured`/`high` (**falsa completude** — faltaram
+> Glicemia e IGF-1). Revela falha **anterior à certificação e ao CEF**: o pipeline certifica **sem
+> validar a COBERTURA documental** ("achei tudo?"). **Novo pré-requisito da certificação: implementar a
+> Validação de Cobertura Documental** (GOVERNANCA — Princípio da Cobertura Documental) antes de retomar.
+> Este documento vira caso de regressão **GS-011**. Não apresentar parcial como definitivo (§4.0.1).
+
 ---
 
 ## 1. RI-001A — Matriz funcional (cenários obrigatórios)

@@ -544,11 +544,38 @@ IA validando IA.
 
 **Pipeline completo (visão):**
 ```
-Bundle → Segmentação documental (1 ou N documentos?) → [por documento:] Extração → Validação documental
-  → Classificação clínica → Representação estruturada → Validação estrutural → Contextualização
-  científica → Camada cognitiva → Governança (humano/corpus)
+Bundle → Segmentação documental (1 ou N documentos?) → [por documento:] COBERTURA documental (achei tudo?)
+  → Identidade → Classificação clínica → Extração/Representação estruturada → Validação estrutural
+  → Contextualização científica → Camada cognitiva → Governança (humano/corpus)
 ```
 Cada seta é também uma **validação**: a camada seguinte valida a informação da anterior antes do uso.
+
+### Princípio da Cobertura Documental (CONSTITUCIONAL — fundadora, 13/07/2026)
+
+> **Nenhuma representação pode ser certificada antes da validação da COBERTURA documental.** Antes de um
+> documento ser considerado "estruturado", a plataforma responde: **"Toda a informação clínica presente
+> neste documento foi identificada?"** Enquanto a resposta não for afirmativa, o documento **não é
+> certificado como completo.**
+
+Evidência (RI-001): laudo laboratorial com **6 exames** (Glicemia · Cortisol · IGF-1 · GH · Insulina ·
+Peptídeo C) → a plataforma extraiu **4** e marcou `structured`/`high` (falsa completude). O pipeline
+estava certificando **antes de saber quantos exames existiam**.
+
+**Duas responsabilidades DIFERENTES (separá-las torna a arquitetura robusta):**
+- **Cobertura documental** — *"encontrei TUDO o que existe?"* (descoberta). É anterior à extração e ao CEF.
+- **Extração estruturada** — *"estruturei corretamente o que encontrei?"* (estruturação).
+
+**Mecanismo (refinamento Claude — nenhuma camada valida a si própria):** o extrator NÃO valida a própria
+cobertura (não sabe o que perdeu). Um **contador estrutural INDEPENDENTE** conta as **unidades de
+evidência** do documento sem extraí-las (lab: blocos `MATERIAL -`, ocorrências de `RESULTADO:`,
+cabeçalhos; imagem: laudos/olhos/regiões/achados por tipo) e **compara** com o extraído. `esperadas 6 ×
+encontradas 4 → 67% → INCOMPLETA`. **O denominador é a contagem do PRÓPRIO documento** (descoberta), não
+um "conjunto esperado" arbitrário — resolve honestamente o problema do denominador. Fail-safe: cobertura
+incerta → **INCOMPLETA** (nunca falsamente completa). Vale para **toda modalidade**.
+
+**Efeito:** a Cobertura é o **1º validador** da cadeia (Documento → Cobertura → Identidade → …). Protege
+todas as camadas posteriores. Um documento só recebe selo de representação **completa** quando a cobertura
+for afirmativa; senão, honesto-parcial ou `document_only`, sempre remetendo ao original (§4.0.1).
 A **Segmentação documental** (Capture Hub, `CAP-002` §6) é o **1º estágio** — nunca assumir `1 PDF = 1
 exame` nem `N páginas = 1 exame`; um bundle representa **1+ documentos** e a segmentação decide quantos
 registros existem. É **pré-requisito de todo o pipeline** (evidência: laudo com 3 exames de imagem
