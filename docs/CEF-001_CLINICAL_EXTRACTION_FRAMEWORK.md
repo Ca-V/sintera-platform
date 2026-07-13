@@ -194,6 +194,17 @@ documento; **estrutura integralmente** a informação preservando a **lógica cl
 mantendo o documento como **fonte primária de conferência**. Saídas do CEF (§4): **medidas** ·
 **achados** · **conclusão documentada** (quando existir — nunca inventada).
 
+**Refinamentos FUTUROS (registrados; NÃO agora — evidência ainda não pede):**
+1. **Completude derivada** — no futuro, estudar calcular `extraction_completeness` a partir de
+   (extrator atual + resultado atual) em vez de persistir, evitando inconsistência quando um
+   extrator evoluir. Otimização futura.
+2. **Estado `needs_review`** (4º estado) — extrator estruturou mas NÃO confia (OCR ruim, página
+   cortada, conflito entre páginas, datas incompatíveis). Hoje coberto por `structural_confidence`
+   → não adicionar agora; deixar registrado.
+3. **Fluxo de reprocessamento** — com `extractor_version`, desenhar cedo: novo extrator publicado →
+   quais exames em versões anteriores → reprocessar automaticamente ou sugerir. Capacidade poderosa;
+   pensar desde já, implementar depois.
+
 ## 6. Document Bundle (pertence ao Capture Hub, consumido pelo CEF)
 
 Dois PDFs/imagens podem ser **1 documento com N páginas**, não 2 exames. A captura multipágina

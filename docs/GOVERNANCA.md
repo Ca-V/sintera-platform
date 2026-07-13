@@ -162,6 +162,12 @@ compatíveis (coerente com o congelamento de princípios).
 CapturedDocument → Pipeline`) → 4. **1º extrator especializado do CEF** → 5. **validação automática
 contra o CRC** (GS-003/GS-004) → 6. **só então** revisar a UCDA Draft.
 
+**Após o RI-001 aprovado — `Lessons Learned — RI-001`** (retrospectiva técnica de 1–2 págs, **não
+constitucional**): o que a arquitetura **acomodou** naturalmente · o que precisou ser **refinado** ·
+quais **componentes se provaram reutilizáveis** · quais **heurísticas** surgiram (ex.: setter de
+completude) e deverão ser substituídas pelos extratores do CEF · o que aprendemos para o **HUB-001**.
+Transforma a 1ª ref. impl. em conhecimento explícito para os próximos módulos.
+
 **Critério objetivo p/ promover UCDA v0.9 → v1.0** (não congelar cedo): (a) HUB-001 operacional ·
 (b) ≥ 2 extratores especializados implementados · (c) GS-003 **e** GS-004 passando automaticamente ·
 (d) revisão técnica (FHIR/DICOM/… — `UCDA-001-REVIEW`) concluída e incorporada.
