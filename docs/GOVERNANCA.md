@@ -20,6 +20,8 @@ O nível indica **quão raramente o documento muda** e **quanto peso ele carrega
 | **DS-001** | Design System (tokens, componentes, paleta) |
 | **CAP-002** | **Capture Hub** — domínio transversal de ingestão (🧊 congelado v1.0) |
 | **CEF-001** | **Clinical Extraction Framework** — como cada tipo de documento é compreendido (spec v1.0, par do Capture Hub) |
+| **UCDA-001** | **Universal Clinical Data Architecture** — como QUALQUER evidência clínica é representada (unidade = evidência, não exame). **Draft v0.9 (proposta; não congelada)** — aguarda revisão técnica antes de v1.0 |
+| **SIF-001** | **Structured Import Framework** — como arquivos estruturados (CSV/JSON/HL7/FHIR/VCF) são importados. Domínio novo (par do CEF); a especificar |
 | **KG v2** | Knowledge Graph (modelo científico) |
 | **SRL** | Scientific Retrieval Layer |
 | **SEC-001** | Projeto Shield — Segurança/Governança/Continuidade |
