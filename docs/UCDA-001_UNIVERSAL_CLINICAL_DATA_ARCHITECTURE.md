@@ -42,6 +42,15 @@ muda completamente a arquitetura.
    - **Estrutural** — como foi organizada (Document Bundle, CapturedDocument, Structured Import).
    - **Semântica** — o significado clínico produzido (biomarcadores, achados, parâmetros, curvas,
      sinais, imagens, volumes, segmentações, scores, medidas, séries temporais, conclusões documentadas).
+5. **Standards-first — padrões consolidados como base, não modelo paralelo (fundadora 13/07/2026).**
+   *A UCDA utiliza padrões internacionais consolidados como modelo de interoperabilidade sempre
+   que estes representarem adequadamente a informação clínica. A arquitetura interna da SINTERA
+   pode estender esses modelos quando necessário, preservando compatibilidade semântica.* A UCDA
+   **não copia** o FHIR nem cria um modelo paralelo desnecessário. O recurso **FHIR `Observation`**
+   já representa quase **qualquer** observação clínica (biomarcador, PA, FC, parâmetro de
+   espirometria, valor de Pentacam, achado de EEG, saturação contínua…) — é a **âncora primária**
+   do Modelo Universal de Evidência. A UCDA é a **linguagem interna** da SINTERA, mas uma linguagem
+   que **conversa naturalmente** com FHIR, DICOM, HL7 e os demais padrões.
 
 ---
 
@@ -76,12 +85,20 @@ Universal Evidence Model → Knowledge Graph → Prontuário Longitudinal → Li
 Motor Analítico → Aplicações Clínicas
 ```
 
-## Separação entre aquisição e compreensão (responsabilidade única por domínio)
+## Quatro estágios conceituais (fronteiras explícitas — a UCDA NÃO invade o Knowledge Graph)
 
-- **Capture Hub** — resolve **como a informação chega**.
-- **CEF (Clinical Extraction Framework)** — resolve **como documentos clínicos são estruturados**.
-- **Structured Import Framework** — resolve **como arquivos estruturados são importados** (novo domínio).
-- **UCDA** — resolve **como qualquer evidência clínica passa a existir dentro da plataforma**.
+```
+Aquisição  →  Estruturação  →  Representação Clínica  →  Conhecimento Longitudinal
+```
+| Estágio | Domínio | Responsabilidade |
+|---|---|---|
+| **Aquisição** | **Capture Hub** | como a informação **chega** |
+| **Estruturação** | **CEF** (documentos) · **SIF** (arquivos estruturados) | como a informação é **organizada** |
+| **Representação clínica** | **UCDA** | como uma evidência clínica **passa a existir** |
+| **Conhecimento longitudinal** | **Knowledge Graph (KG)** | **relações** longitudinais entre evidências |
+
+**Fronteira crítica:** a UCDA define **como uma evidência EXISTE** (representação); o **KG** cuida
+das **relações** entre evidências ao longo do tempo. A UCDA **não** assume responsabilidades do KG.
 
 ---
 
@@ -103,12 +120,20 @@ medicina contemporânea e das tecnologias que ainda surgirão.
 
 ## Estado e revisão
 
-**Estado:** Draft v0.9 (proposta constitucional; NÃO congelar ainda). **Papel do Claude
-(revisor técnico, não arquiteto):** revisar a UCDA-001 à luz da medicina atual, dos padrões
-internacionais (FHIR, DICOM, HL7, LOINC, SNOMED CT, OMOP, openEHR…) e das tendências para os
-próximos 20 anos; identificar **lacunas, famílias diagnósticas ausentes, padrões relevantes e
-oportunidades de refinamento** — **sem reprojetar**. Após incorporar os refinamentos
-fundamentados, promover a **UCDA-001 v1.0** como pilar constitucional.
+**Estado:** Draft v0.9 (proposta constitucional; NÃO congelar ainda). Após incorporar os
+refinamentos fundamentados em padrões e literatura, promover a **UCDA-001 v1.0** como pilar.
+
+**Papel do Claude (revisor técnico, NÃO arquiteto) — instrução refinada (fundadora):**
+> Mapeie **cada conceito da UCDA** aos recursos e padrões internacionais existentes — **FHIR,
+> especialmente `Observation`**, `DiagnosticReport`, `ImagingStudy`, `Media`, `DocumentReference`,
+> `MolecularSequence` (quando aplicável); além de **DICOM, HL7, LOINC, SNOMED CT, OMOP e openEHR**.
+> Identifique **convergências, lacunas, conflitos e oportunidades de alinhamento**, **preservando a
+> arquitetura da SINTERA**. Não reprojetar.
+
+Perguntas-guia (a partir do FHIR `Observation` como âncora): quais conceitos do Observation já
+resolvem nosso problema? quais **extensões** a SINTERA realmente precisa? quais categorias clínicas
+o FHIR já contempla? **onde a UCDA precisa ir além?** Objetivo: alinhar a linguagem interna da
+SINTERA aos padrões (menos retrabalho, integrações futuras mais fáceis) sem abrir mão das abstrações.
 
 Ver `docs/CAP-002_CAPTURE_HUB.md`, `docs/CEF-001_CLINICAL_EXTRACTION_FRAMEWORK.md`,
 `docs/GOVERNANCA.md`, [[modelo_canonico_plataforma]].
