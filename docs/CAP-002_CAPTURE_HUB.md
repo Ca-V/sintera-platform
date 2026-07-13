@@ -190,6 +190,23 @@ Trocar OCR/IA no futuro **não** invalida documentos nem quebra proveniência
   **1 documento, N páginas**, NÃO 2 exames. O Bundle é montado ANTES da extração; o Clinical
   Extraction Framework (CEF-001) consome o Bundle já montado. Resolve laudos longos, anexos,
   frente/verso, gráficos em páginas separadas.
+- **Document Segmentation** (novo estágio — fundadora, 13/07/2026; evidência: laudo AXIAL com 3
+  exames de imagem em 3 páginas foi mesclado num só). O Bundle resolveu "N páginas = MESMO exame",
+  mas não "N exames no MESMO documento". **Regra segura (princípio): nunca assumir `1 PDF = 1 exame`
+  nem `N páginas = 1 exame`. Um bundle representa 1+ documentos clínicos; a SEGMENTAÇÃO determina
+  quantos registros existem nele.** Estágio **anterior** à identidade e à classificação: decide se o
+  bundle é **1 ou N documentos** por sinais **documentais** (cabeçalho por página, títulos, datas,
+  "página X de Y", modalidades/solicitantes diferentes) — é **engenharia da INFORMAÇÃO, não clínica**
+  (mora no Capture Hub, não no CEF). Identificados N exames → cria **um registro por exame**,
+  **preservando o vínculo com o Bundle de origem** (proveniência); **cada registro segue o pipeline
+  individualmente** (identidade → classificação → representação). **Governada** (Validação entre
+  Camadas): a segmentação **propõe**, um passo valida; pode errar para os DOIS lados — sub-segmentar
+  (juntar distintos) ou super-segmentar (partir um só). **Baixa confiança → não decide sozinha:**
+  mantém 1 registro e **sinaliza/pergunta** ("este documento parece conter 3 exames — confirmar?"),
+  nunca parte/junta errado e congela. **PRIORIDADE** (fundadora): **é pré-requisito de todo o
+  pipeline** — sem segmentar certo, qualquer extrator recebe páginas que não são do mesmo exame e
+  produz representação errada. **Mais prioritário que o extrator de imagem.** Novo estágio no pipeline:
+  `Bundle → Segmentação → [por documento] Identidade → Classificação → Representação`.
 - **Content Classifier** (transversal, TEMA C) — **classifica corretamente a CATEGORIA
   DOCUMENTAL** por CONTEÚDO →
   `exame | medicamento | condicao | vacina | omica | recurso | administrativo`.

@@ -544,10 +544,15 @@ IA validando IA.
 
 **Pipeline completo (visão):**
 ```
-Documento → Extração → Validação documental → Classificação clínica → Representação estruturada
-  → Validação estrutural → Contextualização científica → Camada cognitiva → Governança (humano/corpus)
+Bundle → Segmentação documental (1 ou N documentos?) → [por documento:] Extração → Validação documental
+  → Classificação clínica → Representação estruturada → Validação estrutural → Contextualização
+  científica → Camada cognitiva → Governança (humano/corpus)
 ```
 Cada seta é também uma **validação**: a camada seguinte valida a informação da anterior antes do uso.
+A **Segmentação documental** (Capture Hub, `CAP-002` §6) é o **1º estágio** — nunca assumir `1 PDF = 1
+exame` nem `N páginas = 1 exame`; um bundle representa **1+ documentos** e a segmentação decide quantos
+registros existem. É **pré-requisito de todo o pipeline** (evidência: laudo com 3 exames de imagem
+mesclado num só). Governada e independente do CEF (engenharia da informação, não clínica).
 
 ## Regras gerais
 
