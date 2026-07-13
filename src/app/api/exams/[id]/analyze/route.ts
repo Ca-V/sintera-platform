@@ -51,8 +51,9 @@ export async function POST(
   // estabelecida na 1ª extração e imutável nas reextrações. `document_type` só é gravado pelo
   // bloco de identidade, então != null sinaliza que a identidade já foi estabelecida.
   // INTERINO (Passo 1, escopo RI-001): este gatilho é provisório. O modelo-alvo (pós-RI-001,
-  // antes do HUB-001) substitui isto por `document_identity_status` (draft/validated/locked/
-  // corrected) + separação identidade documental × clínica. Ver GOVERNANCA (modelo-alvo).
+  // antes do HUB-001) substitui isto por `document_identity_status` (draft/validated/locked) +
+  // `resolution` + `identity_source` por atributo + separação Identidade Documental × Identidade
+  // Semântica Clínica, num log de eventos append-only. Ver GOVERNANCA (modelo-alvo).
   const identityEstablished = exam.document_type != null
 
   // HTTP 409 — protege contra requisições duplicadas e chamadas diretas via DevTools
