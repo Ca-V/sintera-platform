@@ -192,9 +192,28 @@ acessível para o restante. O **percentual é secundário/qualitativo**; nunca e
 como *score* do exame (a North Star proíbe "score de saúde" proprietário; a mensagem é **neutra e
 orientada a ação**, nunca "limitação da plataforma").
 
+### Duas garantias ortogonais — Reprodutibilidade × Completude estrutural (fundadora, 13/07/2026)
+A certificação tem **dois critérios independentes**; um não substitui o outro:
+1. **Reprodutibilidade** (Princípio da Reprodutibilidade, GOVERNANCA) — a representação **não muda**
+   entre reextrações de mesma versão. Guarda: `representation_fingerprint` (conteúdo, inclui valores).
+2. **Completude estrutural** — a representação atende ao **mínimo estrutural esperado** do tipo (este
+   §4.1). Um exame pode ser **`reproducible=true` E `complete=false`** — *reprodutivelmente incompleto* —
+   e esse estado fica **explícito** (não passa por completo).
+
+O **Modelo Clínico de Referência** define o **mínimo estrutural esperado** por tipo — o **esqueleto**,
+não todo micro-parâmetro. Ex.: Pentacam → dois olhos (OD/OE) · parâmetros por olho · imagens · data ·
+fabricante · modalidade. **Isto resolve o denominador (§4.1 acima):** medir contra o **esqueleto** (o
+que o tipo SEMPRE tem) é honesto — faltar o esqueleto (ex.: só um olho) = incompletude real; faltar um
+micro-parâmetro que não estava no laudo ≠ falha. Reprodutibilidade do CONTEÚDO (fingerprint com
+valores) e completude da ESTRUTURA (esqueleto) são medidas **separadas**; se útil, o CEF pode manter
+também uma assinatura **só-estrutura**.
+
 ### Efeito no CRC (GS-004 etc.)
 O CRC passa a validar **integridade clínica por grupo** (Ceratometria ✔ completa · Paquimetria ✔
-completa …), não campos soltos ("K1 encontrado").
+completa …), não campos soltos ("K1 encontrado"). **Dois testes por caso GS:** (a) **reprodutibilidade**
+— reextrair N vezes → representação idêntica (já em `FUNC-reproducibility`); (b) **mínimo estrutural** —
+a representação atende ao esqueleto esperado do tipo (ex.: GS-004 → dois olhos · parâmetros por olho ·
+imagens · data · fabricante · modalidade). **Importa a estrutura, não os valores.**
 
 ### Enquadramento regulatório
 A plataforma afirma **"estes grupos clínicos foram estruturados integralmente"**, nunca "este exame

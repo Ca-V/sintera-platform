@@ -92,6 +92,11 @@ permite comparar versões de prompts, modelos e extratores de forma **objetiva**
   (todo PR): `tests/capture-hub/func/FUNC-reproducibility.test.ts` (estabilidade da assinatura +
   imutabilidade do exame certificado). Homologação (IA real): medir a *variância* do extrator entre
   execuções, para vigiar drift. Qualquer diferença numa reextração de mesma versão = **regressão**.
+- **Mínimo estrutural (Completude estrutural — CEF §4.1):** além de "não muda", validar que a
+  representação atende ao **esqueleto esperado** do tipo (ex.: GS-004 Pentacam → dois olhos ·
+  parâmetros por olho · imagens · data · fabricante · modalidade). **Importa a estrutura, não os
+  valores.** Um exame pode ser `reproducible=true` **e** `complete=false` (reprodutivelmente
+  incompleto) — estado explícito. Depende do Modelo Clínico por tipo (ciclo do CEF).
 - **Orientação de design:** o protocolo de leitura de cada tipo (CEF §7) nasce olhando o
   documento real do caso GS correspondente.
 - **Expansão:** adicionar GS-005..GS-009 com documentos reais quando disponíveis.

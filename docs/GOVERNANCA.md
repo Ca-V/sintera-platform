@@ -427,6 +427,24 @@ reextração.
 Ver `CEF-001` §4.1 (completude certificada), `docs/QA/GOLD_STANDARD_CASES.md`,
 `principio_rastreabilidade_documental`.
 
+**Reprodutibilidade ≠ Completude (fundadora, 13/07/2026):** reprodutibilidade protege que a
+representação **não muda**; **não** garante que ela esteja **completa**. Um exame pode ser
+**reprodutivelmente incompleto**. A completude é o **critério complementar** (CEF §4.1 — mínimo
+estrutural esperado do tipo). Estado explícito: `reproducible=true` + `complete=false`.
+
+**Os 5 pilares de garantia (complementares — nenhum substitui o outro):**
+1. **Rastreabilidade Documental** — o documento nunca é alterado. *(implementado)*
+2. **Identidade Documental** — nome/tipo não mudam automaticamente (write-once → estados). *(Passo 1 feito)*
+3. **Reprodutibilidade** — a representação não muda entre reextrações de mesma versão. *(implementado)*
+4. **Completude estrutural** — a plataforma sabe quando a representação ainda está incompleta (mínimo
+   estrutural do tipo, CEF §4.1). *(ciclo do CEF — falta)*
+5. **Confiança estrutural** — o quanto se pode confiar naquela estrutura (`structural_confidence`
+   HIGH/MEDIUM/LOW, migração 104). *(implementado)*
+
+A SINTERA deixa de "usar IA para ler exames" e passa a **medir, governar, auditar e evoluir a qualidade
+da informação clínica** — diferencial difícil de copiar. O pilar 4 é trabalho do **ciclo do CEF**
+(pós-RI-001), pois depende do Modelo Clínico por tipo.
+
 ## Regras gerais
 
 - **Código estável:** uma vez atribuído, não muda; a versão vive no cabeçalho do doc.
