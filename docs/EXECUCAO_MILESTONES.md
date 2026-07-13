@@ -18,7 +18,7 @@
 | **M1** | Compreensão documental (Bundle → CertifiedCDUs) | **100%** ✅ | ✅ | ligado ao analyze |
 | **M2** | Cobertura ligada (fim da falsa completude) | **70%** | 🔄 | E (confiab. plena em M5) |
 | **M3** | Split de CDUs no fluxo real (1 upload → N registros) | **15%** | ⬜ | E+1 |
-| **M4** | Identidade robusta (Clinical Identity Registry + estados) | **65%** | 🔄 | E+1 |
+| **M4** | Identidade robusta (Clinical Identity Registry + estados) | **90%** | 🔄 | fusão LLM no M5 |
 | **M5** | Extratores especializados do CEF (por modalidade) | **5%** | ⬜ | E+3 |
 | **M6** | Datas semânticas (CEF §5) | **75%** | 🔄 | E (ligada) |
 | **M7** | Captura de evidência completa (laudo + imagens) | **0%** | ⬜ | E+4 |
@@ -57,13 +57,17 @@ descoberto > estruturado — direção segura, §4.0.1). Confiabilidade PLENA de
 **CRC:** bundle 3-laudos (AXIAL).
 **Bloqueadores:** depende de M1. **Decisão de produto sinalizada** (1 upload → N registros).
 
-## M4 — Identidade robusta (Clinical Identity Registry + estados) · 10% · ⬜
+## M4 — Identidade robusta (Clinical Identity Registry + estados) · 90% · 🔄
 **Capacidade:** identificar a modalidade por **ensemble de evidências** (auditável), com estados
 `draft/validated`.
-**Critérios:** (a) registry por modalidade (nomes/sinônimos/evidências com peso/extrator); (b) score de
-identidade; (c) `document_identity_status`; (d) LLM = 1 evidência (conflito → revisão).
-**Testes:** `FUNC-clinical-identity-registry` ⬜ · `INT` ⬜. **CRC:** GS-004 · GS-010.
-**Bloqueadores:** depende de M1. Fundação pronta (Identity Validator).
+**Critérios:** (a) registry por modalidade (nomes/sinônimos/evidências com peso/extrator) ✅ **13
+modalidades** (mamografia, US, Pentacam, EEG, laboratório, RM, TC, ECG, ecocardiograma, Holter,
+anatomopatológico, OCT, densitometria); (b) score de identidade + auditoria (evidências que casaram) ✅;
+(c) `document_identity_status` (draft/validated) — migration 107 aplicada + fiado no `analyze` write-once ✅;
+(d) LLM = 1 evidência (conflito → revisão) — **arquitetura pronta (registry é o ensemble); a FUSÃO efetiva
+do LLM acontece no M5**, onde o LLM roda na extração (dependência técnica real, não decisão de produto).
+**Testes:** `FUNC-clinical-identity-registry` ✅ (11 casos) · `INT` ⬜ (com M5). **CRC:** GS-004 · GS-010.
+**Bloqueadores:** nenhum para o escopo determinístico; item (d) segue naturalmente no M5.
 
 ## M5 — Extratores especializados do CEF · 5% · ⬜
 **Capacidade:** cada modalidade tem seu leitor (achados/parâmetros), sobre `CertifiedCDU` — nunca PDF.

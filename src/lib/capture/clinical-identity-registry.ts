@@ -46,6 +46,47 @@ export const CLINICAL_IDENTITY_REGISTRY: ModalityEntry[] = [
     strong: [/valor(?:es)?\s+de\s+refer[êe]ncia/i, /\bmg\/dL\b/, /\bng\/mL\b/i, /material\s*[-–:]\s*(sangue|urina|soro)/i],
     moderate: [/m[ée]todo\s*:/i, /resultado\s*:/i, /coleta/i],
   },
+  {
+    clinicalType: 'Ressonância magnética', clinicalFamily: 'Imagem — RM', extractor: 'MRIExtractor',
+    strong: [/resson[âa]ncia\s+magn[ée]tica/i, /\bRM\s+de\b/, /sequ[êe]ncias?\s+(ponderadas|T1|T2|FLAIR)/i],
+    moderate: [/gadol[íi]nio/i, /impress[ãa]o\s+diagn/i, /cortes?\s+(axiais|sagitais|coronais)/i],
+  },
+  {
+    clinicalType: 'Tomografia computadorizada', clinicalFamily: 'Imagem — TC', extractor: 'CTExtractor',
+    strong: [/tomografia\s+computadorizada/i, /\bTC\s+de\b/, /unidades?\s+hounsfield/i],
+    moderate: [/contraste\s+(iodado|endovenoso)/i, /cortes?\s+(axiais|finos)/i],
+  },
+  {
+    clinicalType: 'Eletrocardiograma', clinicalFamily: 'Cardiologia', extractor: 'ECGExtractor',
+    strong: [/eletrocardiograma/i, /\bECG\b/, /ritmo\s+sinusal/i, /intervalo\s+(PR|QT)/i],
+    moderate: [/frequ[êe]ncia\s+card[íi]aca/i, /eixo\s+el[ée]trico/i],
+  },
+  {
+    clinicalType: 'Ecocardiograma', clinicalFamily: 'Cardiologia', extractor: 'EchoExtractor',
+    strong: [/ecocardiograma/i, /ecodopplercardiograma/i, /fra[çc][ãa]o\s+de\s+eje[çc][ãa]o/i],
+    moderate: [/[áa]trio\s+esquerdo/i, /ventr[íi]culo/i, /valva\s+(mitral|a[óo]rtica)/i],
+  },
+  {
+    clinicalType: 'Holter 24h', clinicalFamily: 'Cardiologia', extractor: 'HolterExtractor',
+    strong: [/\bholter\b/i, /monitoriza[çc][ãa]o\s+eletrocardiogr/i],
+    moderate: [/extrass[íi]stoles?/i, /24\s*horas/i],
+  },
+  {
+    clinicalType: 'Anatomopatológico', clinicalFamily: 'Anatomia patológica', extractor: 'PathologyExtractor',
+    strong: [/anatomopatol[óo]gic/i, /histopatol[óo]gic/i, /exame\s+microsc[óo]pico/i, /imuno-?histoqu[íi]mic/i],
+    moderate: [/macroscop/i, /microscop/i, /neoplasia/i, /bi[óo]psia/i],
+  },
+  {
+    clinicalType: 'OCT (tomografia de coerência óptica)', clinicalFamily: 'Oftalmologia', extractor: 'OCTExtractor',
+    strong: [/tomografia\s+de\s+coer[êe]ncia\s+[óo]ptica/i, /\bOCT\b/, /\bRNFL\b/, /ganglion\s+cell/i],
+    moderate: [/m[áa]cula/i, /retina/i],
+    manufacturers: [/cirrus/i, /spectralis/i, /topcon/i],
+  },
+  {
+    clinicalType: 'Densitometria óssea', clinicalFamily: 'Imagem — densitometria', extractor: 'DXAExtractor',
+    strong: [/densitometria\s+[óo]ssea/i, /\bT-?score\b/i, /\bZ-?score\b/i, /\bDXA\b/i],
+    moderate: [/coluna\s+lombar/i, /f[êe]mur/i, /osteopor/i],
+  },
 ]
 
 export interface ClinicalIdentity {

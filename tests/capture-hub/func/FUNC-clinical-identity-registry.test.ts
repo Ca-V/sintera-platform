@@ -42,6 +42,29 @@ describe('FUNC · identifyClinical', () => {
     expect(r.matched.length).toBeGreaterThan(0)
   })
 
+  it('ressonância magnética por RM + sequências ponderadas + gadolínio', () => {
+    const r = identifyClinical('RESSONÂNCIA MAGNÉTICA RM de crânio sequências ponderadas T2 FLAIR após gadolínio cortes axiais')
+    expect(r.clinicalType).toBe('Ressonância magnética')
+    expect(r.extractor).toBe('MRIExtractor')
+  })
+
+  it('ecocardiograma por ecocardiograma + fração de ejeção + ventrículo', () => {
+    const r = identifyClinical('ECOCARDIOGRAMA fração de ejeção 62% ventrículo esquerdo normal valva mitral')
+    expect(r.clinicalType).toBe('Ecocardiograma')
+    expect(r.clinicalFamily).toBe('Cardiologia')
+  })
+
+  it('anatomopatológico por histopatológico + exame microscópico + biópsia', () => {
+    const r = identifyClinical('EXAME ANATOMOPATOLÓGICO exame microscópico de biópsia neoplasia ausente macroscopia')
+    expect(r.clinicalType).toBe('Anatomopatológico')
+    expect(r.extractor).toBe('PathologyExtractor')
+  })
+
+  it('densitometria óssea por DXA + T-score + coluna lombar', () => {
+    const r = identifyClinical('DENSITOMETRIA ÓSSEA DXA T-score -1,8 Z-score coluna lombar fêmur osteopenia')
+    expect(r.clinicalType).toBe('Densitometria óssea')
+  })
+
   it('é DETERMINÍSTICA', () => {
     const t = 'MAMOGRAFIA BI-RADS LORAD'
     expect(JSON.stringify(identifyClinical(t))).toBe(JSON.stringify(identifyClinical(t)))

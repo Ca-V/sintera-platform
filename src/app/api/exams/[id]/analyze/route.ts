@@ -385,16 +385,20 @@ export async function POST(
       finalUpdate.clinical_family = clin.clinicalFamily
       finalUpdate.clinical_type = clin.clinicalType
     }
-    finalUpdate.document_type = structure.documentType
-    finalUpdate.document_scope = structure.documentScope
-
-    // Só sobrescreve o nome do arquivo quando aprendemos estrutura de verdade:
-    // categoria não-laboratorial detectada, OU laboratório com ≥1 exame distinto,
-    // OU laboratório com QUALQUER biomarcador (evita manter o nome do arquivo quando os
-    // biomarcadores não trazem source_exam_name → antes ficava "Resultado-Laudo-…").
+    // Estrutura confiável: categoria não-laboratorial detectada, OU laboratório com ≥1 exame distinto,
+    // OU laboratório com QUALQUER biomarcador (evita manter o nome do arquivo quando os biomarcadores
+    // não trazem source_exam_name → antes ficava "Resultado-Laudo-…").
     const confidentStructure = structure.documentType !== 'laboratory'
       || structure.examCount >= 1
       || result.biomarkers.length > 0
+    // Estado da identidade (M4) — write-once. 'validated' quando reconhecemos com confiança (estrutura
+    // confiável OU identidade clínica não-ambígua de confiança alta); senão 'draft' (sinaliza revisão).
+    const clinValidated = !!clin && clin.confidence === 'high' && !clin.ambiguous
+    finalUpdate.document_identity_status = (confidentStructure || clinValidated) ? 'validated' : 'draft'
+    finalUpdate.document_type = structure.documentType
+    finalUpdate.document_scope = structure.documentScope
+
+    // Só sobrescreve o nome do arquivo quando aprendemos estrutura de verdade (confidentStructure acima).
     if (confidentStructure) {
       const displayTitle = deriveDisplayTitle(structure)
       finalUpdate.display_title = displayTitle
