@@ -64,6 +64,20 @@ export async function POST(
     )
   }
 
+  // Representação Estruturada Certificada (GOVERNANCA — Passo 1b, escopo RI-001). Um exame com
+  // extração anterior bem-sucedida está CERTIFICADO: "Extrair novamente" NÃO re-executa o extrator
+  // nem sobrescreve resultados/identidade — a representação é um ativo permanente e reproduzível
+  // (mesmo documento → mesma representação). Curto-circuita ANTES de baixar/processar. O Passo 2
+  // (pós-RI-001) fará candidato+comparação quando houver `extractor_version` mais novo.
+  const representationCertified = previousStatus === 'processed' && identityEstablished
+  if (representationCertified) {
+    return NextResponse.json({
+      certified: true,
+      code: 'ALREADY_CERTIFIED',
+      notice: 'Este exame já possui uma representação estruturada certificada. "Extrair novamente" não altera os resultados — eles são um ativo permanente e reproduzível do documento.',
+    }, { status: 200 })
+  }
+
   if (!exam.file_url) {
     return NextResponse.json({ error: 'Arquivo PDF não encontrado para este exame.' }, { status: 422 })
   }

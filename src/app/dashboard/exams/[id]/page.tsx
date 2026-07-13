@@ -8,7 +8,7 @@ import {
   TrendingUp, TrendingDown, Minus, HelpCircle, AlertCircle,
   Download, Printer, ChevronDown, CalendarDays,
   Pencil, Check, X, Flag, Trash2,
-  Droplet, FlaskConical, TestTube,
+  Droplet, FlaskConical, TestTube, ShieldCheck,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { parseDateOnly } from '@/lib/agenda'
@@ -291,6 +291,7 @@ export default function ExamDetailPage() {
   const [loading, setLoading]     = useState(true)
   const [analyzing, setAnalyzing] = useState(false)
   const [analyzeError, setAnalyzeError] = useState<string | null>(null)
+  const [analyzeNotice, setAnalyzeNotice] = useState<string | null>(null)
   const [exportOpen, setExportOpen]     = useState(false)
   const [agendarOpen, setAgendarOpen]   = useState(false)
 
@@ -474,12 +475,16 @@ export default function ExamDetailPage() {
     if (analyzing) return
     setAnalyzing(true)
     setAnalyzeError(null)
+    setAnalyzeNotice(null)
     try {
       const res  = await fetch(`/api/exams/${examId}/analyze`, { method: 'POST' })
-      const data = await res.json() as { error?: string; code?: string }
+      const data = await res.json() as { error?: string; code?: string; certified?: boolean; notice?: string }
       // 409 ALREADY_PROCESSING (ex.: outra aba já iniciou) não é erro — reflete o estado real
       if (res.status === 409) { await loadData(true); return }
       if (!res.ok) throw new Error(data.error ?? 'Erro desconhecido')
+      // Representação já certificada: reextração não altera nada. Aviso neutro; NÃO conta como
+      // nova análise (não incrementa contagem nem dispara o evento de sucesso).
+      if (data.certified) { setAnalyzeNotice(data.notice ?? 'Este exame já está certificado; os resultados não mudam ao extrair novamente.'); await loadData(true); return }
       await loadData()
       // Tracking P2 — exam_analyzed_success + incrementa contagem para FeedbackModal
       fetch('/api/events', {
@@ -784,6 +789,14 @@ export default function ExamDetailPage() {
           <div className="mt-4 flex items-start gap-2 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
             <AlertCircle size={14} className="text-red-400 flex-shrink-0 mt-0.5" />
             <p className="font-body text-xs text-red-700">{analyzeError}</p>
+          </div>
+        )}
+
+        {/* Representação já certificada — aviso NEUTRO (não é erro): reextrair não altera os dados. */}
+        {analyzeNotice && (
+          <div className="mt-4 flex items-start gap-2 bg-ivory border border-border rounded-xl px-4 py-3">
+            <ShieldCheck size={14} className="text-petal-dark flex-shrink-0 mt-0.5" />
+            <p className="font-body text-xs text-mauve">{analyzeNotice}</p>
           </div>
         )}
       </MotionCard>
