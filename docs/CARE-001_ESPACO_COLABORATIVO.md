@@ -69,10 +69,33 @@ consulta. Reaproveita o princípio de **Reprodutibilidade / write-once** (um sna
 Valor **clínico · jurídico · auditoria · continuidade do cuidado**. O Snapshot permanece **imutável** mesmo
 que o paciente altere a plataforma depois.
 
-## 5. Dossiê Clínico (montado automaticamente)
-O profissional **nunca** recebe uma lista de PDFs. A plataforma monta um **Dossiê Clínico**: resumo clínico ·
-Timeline · evolução longitudinal · exames organizados · medicamentos · condições · cirurgias · gráficos de
-evolução · documentos originais. (Reusa Timeline + representação estruturada do CPE/UCDA.)
+## 5. Três camadas complementares (a estruturação NUNCA substitui o documento)
+O objetivo do CARE Space **não é substituir os documentos por uma representação estruturada**. O profissional
+vê **três camadas complementares**, e o **documento original permanece a fonte PRIMÁRIA** — a representação e a
+evolução existem para facilitar a compreensão, nunca para substituir (Princípio da Rastreabilidade Documental):
+
+1. **Representação estruturada** — a organização produzida pela SINTERA (leitura rápida de exames, parâmetros,
+   achados, informações clínicas). Vem do CPE/UCDA.
+2. **Evolução longitudinal** — toda a linha do tempo do paciente (tendências, estabilidade, progressão,
+   resposta a tratamentos).
+3. **Documento original** — cada informação estruturada mantém **acesso imediato ao original correspondente**
+   (PDF · imagem · DICOM · laudo…), exatamente como foi emitido.
+
+**Navegação na consulta:** resumo clínico → evolução longitudinal → gráficos/tendências → abrir qualquer exame
+**original com um clique** → imagens/laudos/documentos como emitidos. Essa combinação é o que entrega
+**segurança clínica**. O CARE Space dá acesso **organizado e contextualizado** à representação longitudinal
+E a todos os documentos originais que a sustentam.
+
+## 5.1 Dossiê Clínico — 4 áreas principais + Colaboração
+O profissional **nunca** recebe uma lista de PDFs. A plataforma monta um **Dossiê Clínico** estruturado
+(reusa Timeline + representação do CPE/UCDA + Evento Assistencial), sempre com o **original a um clique**:
+
+- **Visão Geral** — resumo clínico · principais condições · alertas · medicamentos atuais.
+- **Evolução** — Timeline · tendências · comparações · **eventos assistenciais**.
+- **Evidências Clínicas** — exames laboratoriais · exames de imagem · procedimentos · cirurgias.
+- **Documentos** — todos os documentos **originais** acessíveis.
+- **Colaboração** *(§8)* — comentários do profissional · recomendações · solicitações · **plano de
+  acompanhamento**.
 
 ## 6. Preparação da Consulta (um dos maiores diferenciais)
 Antes da consulta o paciente clica **"Preparar consulta"** e escolhe **médico · especialidade · objetivo**. A
