@@ -51,15 +51,22 @@ export function biomarkerToUcdaItem(b: LabBiomarkerRow): UcdaItem {
   }
 }
 
+/** Item sem valor a representar (result_type missing/extraction_failed, ou value/value_text vazios). */
+function hasValue(item: UcdaItem): boolean {
+  return item.valueText.trim() !== '' || item.valueNum != null
+}
+
 /**
  * Adapta o resultado laboratorial existente (linhas de `biomarkers`) para a representação canônica UCDA.
  * NÃO persiste nem migra — apenas apresenta o laboratório como UCDA para o restante do pipeline. Puro.
+ * Itens SEM valor (missing/extraction_failed) não entram na representação — "rotula, não oculta" vale para
+ * dado VÁLIDO; um não-resultado não é evidência a apresentar (validado contra os 446 biomarcadores reais).
  */
 export function laboratoryToUcda(rows: LabBiomarkerRow[]): UcdaRepresentation {
   return {
     clinicalModel: 'laboratory',
     resultKind: 'structured',
-    items: rows.map(biomarkerToUcdaItem),
+    items: rows.map(biomarkerToUcdaItem).filter(hasValue),
     provenance: { source: 'laboratory-adapter', contractVersion: 'v1' },
   }
 }

@@ -56,6 +56,17 @@ describe('FUNC · laboratoryToUcda (adapter transitório)', () => {
     expect(new Set(ucda.items.map(i => i.group))).toEqual(new Set(['HEMOGRAMA']))
   })
 
+  it('itens SEM valor (missing/extraction_failed) não entram na representação (validado nos 446 reais)', () => {
+    const rows = [
+      row({ name: 'GLICEMIA', value: '85', resultType: 'numeric' }),
+      row({ name: 'IGF-1', value: null, valueText: null, resultType: 'missing' }),
+      row({ name: 'FALHOU', value: null, valueText: '', resultType: 'extraction_failed' }),
+    ]
+    const ucda = laboratoryToUcda(rows)
+    expect(ucda.items).toHaveLength(1)
+    expect(ucda.items[0].name).toBe('GLICEMIA')
+  })
+
   it('é DETERMINÍSTICO', () => {
     const rows = [row({ name: 'CHCM', value: '34.1', unit: 'gNdl', referenceMin: '31.5', referenceMax: '36.5' })]
     expect(JSON.stringify(laboratoryToUcda(rows))).toBe(JSON.stringify(laboratoryToUcda(rows)))
