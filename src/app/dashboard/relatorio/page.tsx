@@ -37,7 +37,7 @@ import { useEventForm } from '@/components/eventForm' // serviço de domínio (q
 import { contraceptiveLabel } from '@/lib/cycle'       // SSOT dos métodos contraceptivos
 
 interface Med { name: string; kind: string; dose: string | null; frequency: string | null; startedOn: string | null; untilOn: string | null; status: string }
-interface Ev { title: string; eventType: string; prof: string | null; date: string; notes: string | null }
+interface Ev { title: string; eventType: string; prof: string | null; date: string; notes: string | null; status: string }
 interface Ex { id: string; type: string; date: string; fileUrl: string | null }
 interface Measure { metric: string; label: string | null; valueText: string; unit: string | null; date: string; examId: string | null }
 interface Condition { scope: string; name: string; relative: string | null; since: string | null; notes: string | null }
@@ -216,7 +216,7 @@ function LegacyReport() {
     const db = supabase as any
     const [medRes, evRes, exRes, mzRes, cdRes, hbRes, ewRes, omRes, ccRes, mpRes, finRes] = await Promise.all([
       db.from('medications').select('name, kind, dose, frequency, started_on, until_date, status').eq('user_id', user.id).order('status'),
-      db.from('health_events').select('title, event_type, professional_kind, event_date, notes').eq('user_id', user.id).eq('synthetic', false).order('event_date', { ascending: false }),
+      db.from('health_events').select('title, event_type, professional_kind, event_date, notes, status').eq('user_id', user.id).eq('synthetic', false).order('event_date', { ascending: false }),
       db.from('exams').select('id, type, exam_date, created_at, file_url').eq('user_id', user.id).order('created_at', { ascending: false }),
       db.from('body_metrics').select('metric, label, value_text, unit, measured_on, exam_id').eq('user_id', user.id).order('measured_on', { ascending: false }),
       db.from('health_conditions').select('scope, name, relative, since_label, notes').eq('user_id', user.id).order('created_at', { ascending: false }),
@@ -233,7 +233,7 @@ function LegacyReport() {
     })))
     setEvents(((evRes.data ?? []) as Array<Record<string, unknown>>).map(e => ({
       title: e.title as string, eventType: (e.event_type as string) ?? 'outro', prof: (e.professional_kind as string) ?? null,
-      date: e.event_date as string, notes: (e.notes as string) ?? null,
+      date: e.event_date as string, notes: (e.notes as string) ?? null, status: (e.status as string) ?? 'planejado',
     })))
     setExams(((exRes.data ?? []) as Array<Record<string, unknown>>).map(e => ({
       id: e.id as string, type: (e.type as string) || 'Exame', date: (e.exam_date as string) || (e.created_at as string),
@@ -345,6 +345,12 @@ function LegacyReport() {
   const rp = resolvePeriod(period)
   // Agenda: aplica período E a seleção por TIPO de evento (item a item).
   const perEvents = events.filter(e => inPeriod(e.date, rp) && isItemOn('eventos', e.eventType))
+  // Separação DEFINITIVA Agenda × Histórico (mesma regra do módulo Histórico/timeline):
+  // Agenda = futuro ainda planejado; Histórico = já aconteceu (realizado/cancelado, ou passado).
+  const todayISO = new Date().toISOString().slice(0, 10)
+  const isAgendaEvent = (e: Ev) => e.date.slice(0, 10) >= todayISO && e.status !== 'realizado' && e.status !== 'cancelado'
+  const perAgenda = perEvents.filter(isAgendaEvent)
+  const perHistorico = perEvents.filter(e => !isAgendaEvent(e))
   const perOmics = omics.filter(o => inPeriod(o.date, rp))
   const perMeasuresCorpo = measuresCorpo.filter(m => inPeriod(m.date, rp))
   const perMeasuresVitais = measuresVitais.filter(m => inPeriod(m.date, rp))
@@ -609,7 +615,8 @@ function LegacyReport() {
           <div className="grid grid-cols-2 gap-x-6 gap-y-1 font-body text-xs text-onyx">
             <p><span className="text-mauve">Registros incluídos:</span> <strong>{totalRegistros}</strong></p>
             {sections.exames && <p><span className="text-mauve">Exames:</span> {perVisExams.length}</p>}
-            {sections.eventos && <p><span className="text-mauve">Agenda:</span> {perEvents.length}</p>}
+            {sections.eventos && <p><span className="text-mauve">Agenda (previstos):</span> {perAgenda.length}</p>}
+            {sections.eventos && <p><span className="text-mauve">Histórico (realizados):</span> {perHistorico.length}</p>}
             {sections.medicamentos && <p><span className="text-mauve">Medicamentos em uso:</span> {visMedsEmUso.length}</p>}
             {sections.condicoes && <p><span className="text-mauve">Condições registradas:</span> {condProprias.length + condFamiliar.length}</p>}
             {sections.visao && <p><span className="text-mauve">Recursos de saúde:</span> {eyewear.length}</p>}
@@ -653,23 +660,56 @@ function LegacyReport() {
         {/* Consultas, procedimentos e eventos (Histórico) */}
         {sections.eventos && (
         <section id="sec-eventos" style={{ scrollMarginTop: 16 }}>
-          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Agenda</h2>
+          {/* Separação DEFINITIVA: Agenda (previstos) × Histórico (realizados). Nunca misturar. */}
           {perEvents.length === 0 ? (
-            <p className="font-body text-xs text-mauve">Nenhum evento registrado.</p>
+            <>
+              <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Agenda e Histórico</h2>
+              <p className="font-body text-xs text-mauve">Nenhum evento registrado.</p>
+            </>
           ) : (
-            <table className="w-full text-left">
-              <tbody>
-                {perEvents.map((e, i) => (
-                  <tr key={i} className="border-b border-border/50">
-                    <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(e.date)}</td>
-                    <td className="font-body text-xs text-onyx py-1.5">
-                      <span className="text-mauve">{typeLabel(e.eventType)}{e.prof && PROF_LABEL[e.prof] ? ` (${PROF_LABEL[e.prof]})` : ''}:</span> {e.title}
-                      {e.notes ? <span className="block text-xs text-mauve">{e.notes}</span> : null}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <>
+              <div>
+                <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Agenda <span className="font-body text-xs font-normal text-mauve">(previstos)</span></h2>
+                {perAgenda.length === 0 ? (
+                  <p className="font-body text-xs text-mauve mb-3">Nenhum evento previsto no período.</p>
+                ) : (
+                  <table className="w-full text-left mb-4">
+                    <tbody>
+                      {perAgenda.map((e, i) => (
+                        <tr key={i} className="border-b border-border/50">
+                          <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(e.date)}</td>
+                          <td className="font-body text-xs text-onyx py-1.5">
+                            <span className="text-mauve">{typeLabel(e.eventType)}{e.prof && PROF_LABEL[e.prof] ? ` (${PROF_LABEL[e.prof]})` : ''}:</span> {e.title}
+                            {e.notes ? <span className="block text-xs text-mauve">{e.notes}</span> : null}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+              <div>
+                <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Histórico <span className="font-body text-xs font-normal text-mauve">(realizados)</span></h2>
+                {perHistorico.length === 0 ? (
+                  <p className="font-body text-xs text-mauve">Nenhum evento realizado no período.</p>
+                ) : (
+                  <table className="w-full text-left">
+                    <tbody>
+                      {perHistorico.map((e, i) => (
+                        <tr key={i} className="border-b border-border/50">
+                          <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(e.date)}</td>
+                          <td className="font-body text-xs text-onyx py-1.5">
+                            <span className="text-mauve">{typeLabel(e.eventType)}{e.prof && PROF_LABEL[e.prof] ? ` (${PROF_LABEL[e.prof]})` : ''}:</span> {e.title}
+                            {e.status === 'cancelado' && <span className="text-mauve"> · cancelado</span>}
+                            {e.notes ? <span className="block text-xs text-mauve">{e.notes}</span> : null}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </>
           )}
         </section>
         )}

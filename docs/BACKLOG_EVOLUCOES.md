@@ -104,6 +104,9 @@ Itens que a fundadora pediu para manter REGISTRADOS no backlog de implementaçã
   agendamento · recorrência · compartilhamento futuro pelo Care Space. *(Rastreado em `docs/EXAMES_CONCLUSAO.md`
   — E1–E8 fechados; abertos: dedup, imagens, notificações (NOTIF-001), Care Space, UX/visual.)*
 - **Relatórios** — **separação definitiva entre Agenda e Histórico** (não misturar previsto × realizado).
+  ✅ **feito** (14/07): o relatório separa a seção de eventos em **Agenda (previstos)** × **Histórico
+  (realizados)**, aplicando a regra definitiva do módulo Histórico (futuro planejado = Agenda; realizado/
+  cancelado/passado = Histórico); contadores de resumo também separados.
 - **Medidas Corporais** — reorganização completa conforme documento enviado (Fase C · Medidas/avaliação geral).
 - **Sinais Vitais** — preparação para **integração automática com dispositivos externos** (Fase E1 · wearables).
 - **Notificações (NOTIF-001)** — infraestrutura ÚNICA e transversal; usuário configura por CATEGORIA o canal
