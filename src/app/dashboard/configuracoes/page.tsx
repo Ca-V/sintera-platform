@@ -3,10 +3,17 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import MotionCard from '@/components/ui/MotionCard'
-import { Shield, Mail, Key, AlertTriangle, Check, X, Loader2, ExternalLink, Download, MessageCircle } from 'lucide-react'
+import { Shield, Mail, Key, AlertTriangle, Check, X, Loader2, ExternalLink, Download, MessageCircle, Bell } from 'lucide-react'
 import { useUser } from '@/context/UserContext'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import {
+  NOTIFICATION_CATEGORIES, NOTIFICATION_CHANNELS, DEFAULT_CHANNEL, type NotificationChannel,
+} from '@/lib/notifications/preferences'
+
+const CHANNEL_LABEL: Record<NotificationChannel, string> = {
+  email: 'E-mail', whatsapp: 'WhatsApp', both: 'Ambos', none: 'Nenhum',
+}
 
 export default function ConfiguracoesPage() {
   const { user, signOut } = useUser()
@@ -58,6 +65,38 @@ export default function ConfiguracoesPage() {
       setWaSaved(true)
     } finally {
       setWaLoading(false)
+    }
+  }
+
+  // ── Central de Notificações (NOTIF-001) — canal por categoria ───────────────
+  const [notifPrefs, setNotifPrefs]   = useState<Record<string, NotificationChannel>>({})
+  const [notifLoading, setNotifLoading] = useState(false)
+  const [notifSaved, setNotifSaved]   = useState(false)
+
+  useEffect(() => {
+    if (!user) return
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(supabase as any).from('notification_preferences').select('category, channel').eq('user_id', user.id)
+      .then(({ data }: { data: { category: string; channel: NotificationChannel }[] | null }) => {
+        const next: Record<string, NotificationChannel> = {}
+        for (const c of NOTIFICATION_CATEGORIES) next[c.key] = DEFAULT_CHANNEL
+        for (const r of data ?? []) next[r.category] = r.channel
+        setNotifPrefs(next)
+      })
+  }, [user, supabase])
+
+  async function saveNotifPrefs() {
+    if (!user || notifLoading) return
+    setNotifLoading(true); setNotifSaved(false)
+    try {
+      const rows = NOTIFICATION_CATEGORIES.map(c => ({
+        user_id: user.id, category: c.key, channel: notifPrefs[c.key] ?? DEFAULT_CHANNEL, updated_at: new Date().toISOString(),
+      }))
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).from('notification_preferences').upsert(rows, { onConflict: 'user_id,category' })
+      setNotifSaved(true)
+    } finally {
+      setNotifLoading(false)
     }
   }
 
@@ -197,6 +236,51 @@ export default function ConfiguracoesPage() {
         {waOptIn && !phone.trim() && (
           <p className="font-body text-[11px] text-amber-600">Informe o telefone para ativar os lembretes por WhatsApp.</p>
         )}
+      </MotionCard>
+
+      {/* ── Central de Notificações (NOTIF-001) — canal por categoria ── */}
+      <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.09 }}
+        padding="lg" className="space-y-4">
+        <div className="flex items-center gap-3 mb-1">
+          <div className="w-8 h-8 rounded-lg bg-blush flex items-center justify-center">
+            <Bell size={15} className="text-petal" />
+          </div>
+          <h2 className="font-body text-sm font-semibold text-onyx">Central de Notificações</h2>
+        </div>
+        <p className="font-body text-xs text-mauve">
+          Escolha, para cada tipo de evento, como quer ser avisada. Vale para toda a plataforma —
+          exames, consultas, vacinas, medicamentos, avaliações e demais itens agendados. Para receber
+          por WhatsApp, cadastre o telefone acima.
+        </p>
+
+        <div className="space-y-2">
+          {NOTIFICATION_CATEGORIES.map(cat => (
+            <div key={cat.key} className="flex flex-wrap items-center justify-between gap-2 py-2 border-b border-border/40 last:border-0">
+              <p className="font-body text-sm text-onyx">{cat.label}</p>
+              <div className="flex gap-1 bg-ivory border border-border rounded-xl p-0.5" role="group" aria-label={`Canal para ${cat.label}`}>
+                {NOTIFICATION_CHANNELS.map(ch => {
+                  const active = (notifPrefs[cat.key] ?? DEFAULT_CHANNEL) === ch
+                  return (
+                    <button key={ch} type="button"
+                      onClick={() => setNotifPrefs(p => ({ ...p, [cat.key]: ch }))}
+                      aria-pressed={active}
+                      className={`px-2.5 py-1 rounded-lg font-body text-[11px] font-medium transition-colors ${active ? 'bg-white text-onyx shadow-sm' : 'text-mauve hover:text-onyx'}`}>
+                      {CHANNEL_LABEL[ch]}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex items-center justify-end gap-3">
+          {notifSaved && <span className="font-body text-xs text-petal flex items-center gap-1"><Check size={13} /> Salvo</span>}
+          <button onClick={saveNotifPrefs} disabled={notifLoading}
+            className="px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium disabled:opacity-40 hover:opacity-90 transition-opacity">
+            {notifLoading ? 'Salvando…' : 'Salvar preferências'}
+          </button>
+        </div>
       </MotionCard>
 
       {/* ── Privacidade & Dados ── */}

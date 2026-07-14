@@ -12,6 +12,7 @@ import { reminderEmailHtml, reminderEmailText } from '@/lib/email/reminder-templ
 import { sendWhatsAppReminder } from '@/lib/whatsapp/send'
 import { buildEventNotification } from '@/lib/agenda/notification'
 import { eventToNotificationInput, formatDateBR } from '@/lib/agenda/presentation'
+import { resolveChannelsForEvent, type NotificationChannel } from '@/lib/notifications/preferences'
 import { rowToHealthEvent, agendaRowToHealthEvent, isClosed, type HealthEvent, type HealthEventRow, type AgendaEventRow } from '@/lib/agenda/event'
 
 const FROM_ADDRESS = 'SINTERA <ola@sinteramais.com.br>'
@@ -158,6 +159,18 @@ export async function POST(req: NextRequest) {
     waOptInById.set(p.id, p.pref_whatsapp_reminder === true)
   }
 
+  // NOTIF-001 — preferências por CATEGORIA × canal (infra única). Ausência de linha = default do
+  // domínio (e-mail; ou continuidade do opt-in legado de WhatsApp). Uma consulta para todos.
+  const prefsByUser = new Map<string, Map<string, NotificationChannel>>()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: prefRows } = await (admin.from('notification_preferences') as any)
+    .select('user_id, category, channel').in('user_id', userIds)
+  for (const pr of (prefRows ?? []) as { user_id: string; category: string; channel: NotificationChannel }[]) {
+    let m = prefsByUser.get(pr.user_id)
+    if (!m) { m = new Map(); prefsByUser.set(pr.user_id, m) }
+    m.set(pr.category, pr.channel)
+  }
+
   // E-mails via Auth Admin (cache por usuária).
   const emailById = new Map<string, string | null>()
   for (const uid of userIds) {
@@ -177,8 +190,15 @@ export async function POST(req: NextRequest) {
     const subjectWhen = dateLabel(ev.date, today, tomorrow)
     let delivered = false
 
+    // NOTIF-001 — canais decididos pela preferência do usuário para a CATEGORIA deste evento.
+    const channels = resolveChannelsForEvent({
+      prefsByCategory: prefsByUser.get(userId) ?? new Map<string, NotificationChannel>(),
+      eventType: ev.type,
+      legacyWhatsAppOptIn: waOptInById.get(userId) === true,
+    })
+
     // Canal 1 — e-mail (projeção completa do domínio)
-    if (email) {
+    if (channels.email && email) {
       try {
         await resend.emails.send({
           from: FROM_ADDRESS,
@@ -191,12 +211,15 @@ export async function POST(req: NextRequest) {
       } catch { /* tenta o WhatsApp mesmo assim */ }
     }
 
-    // Canal 2 — WhatsApp (só com opt-in + telefone)
-    if (waOptInById.get(userId) && phoneById.get(userId)) {
+    // Canal 2 — WhatsApp (preferência inclui WhatsApp + telefone cadastrado)
+    if (channels.whatsapp && phoneById.get(userId)) {
       const wa = await sendWhatsAppReminder(phoneById.get(userId), { title: ev.title, dateLabel: formatDateBR(ev.date) })
       if (wa.status === 'sent') { delivered = true; whatsappSent++ }
       else if (wa.detail) whatsappDiag.push(`${ev.id.slice(0, 8)}:${wa.status}:${wa.detail}`)
     }
+
+    // Se a preferência é 'none', não há canal — o evento é marcado como processado (não re-tenta).
+    if (channels.channel === 'none') { sentByTable[table].push(ev.id); continue }
 
     if (delivered) sentByTable[table].push(ev.id)
     else failed++
