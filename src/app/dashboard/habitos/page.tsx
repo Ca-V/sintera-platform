@@ -20,6 +20,7 @@ import VoiceInput from '@/components/VoiceInput'
 import ListCard from '@/components/ListCard'
 import Card from '@/components/ui/Card'
 import Disclaimer from '@/components/ui/Disclaimer'
+import ConfirmDialog from '@/components/ConfirmDialog'
 
 type Category =
   | 'atividade_fisica' | 'sono' | 'tabagismo' | 'alcool'
@@ -53,6 +54,7 @@ export default function HabitosPage() {
   const [items, setItems] = useState<Habit[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [confirm, setConfirm] = useState<{ message: string; confirmLabel: string; onYes: () => void } | null>(null)
 
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -105,13 +107,14 @@ export default function HabitosPage() {
     reset(); setShowForm(false); await load()
   }
 
-  async function remove(h: Habit) {
+  function remove(h: Habit) {
     if (busyId) return
-    if (!window.confirm(`Remover "${h.description}"?`)) return
-    setBusyId(h.id)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from('life_habits').delete().eq('id', h.id)
-    await load(); setBusyId(null)
+    setConfirm({ message: `Remover "${h.description}"?`, confirmLabel: 'Remover', onYes: async () => {
+      setBusyId(h.id)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).from('life_habits').delete().eq('id', h.id)
+      await load(); setBusyId(null)
+    } })
   }
 
   function card(h: Habit) {
@@ -222,6 +225,14 @@ export default function HabitosPage() {
       )}
 
       <Disclaimer variant="geral" className="text-center" />
+
+      <ConfirmDialog
+        open={!!confirm}
+        message={confirm?.message ?? ''}
+        confirmLabel={confirm?.confirmLabel ?? 'Confirmar'}
+        onConfirm={() => { const c = confirm; setConfirm(null); c?.onYes() }}
+        onCancel={() => setConfirm(null)}
+      />
     </div>
   )
 }

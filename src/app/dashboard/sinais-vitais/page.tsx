@@ -17,6 +17,7 @@ import Sparkline, { parseNum } from '@/components/Sparkline'
 import ListCard from '@/components/ListCard'
 import Card from '@/components/ui/Card'
 import Disclaimer from '@/components/ui/Disclaimer'
+import ConfirmDialog from '@/components/ConfirmDialog'
 
 type Vital = 'pressao_arterial' | 'frequencia_cardiaca' | 'glicemia' | 'saturacao' | 'temperatura' | 'outro_sinal'
 
@@ -54,6 +55,7 @@ export default function SinaisVitaisPage() {
   const [items, setItems] = useState<Entry[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [confirm, setConfirm] = useState<{ message: string; confirmLabel: string; onYes: () => void } | null>(null)
 
   const [showForm, setShowForm] = useState(false)
   const [metric, setMetric] = useState<Vital>('pressao_arterial')
@@ -104,13 +106,14 @@ export default function SinaisVitaisPage() {
     reset(); setShowForm(false); await load()
   }
 
-  async function remove(id: string) {
+  function remove(id: string) {
     if (busyId) return
-    if (!window.confirm('Remover este registro?')) return
-    setBusyId(id)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from('body_metrics').delete().eq('id', id)
-    await load(); setBusyId(null)
+    setConfirm({ message: 'Remover este registro?', confirmLabel: 'Remover', onYes: async () => {
+      setBusyId(id)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).from('body_metrics').delete().eq('id', id)
+      await load(); setBusyId(null)
+    } })
   }
 
   return (
@@ -228,6 +231,14 @@ export default function SinaisVitaisPage() {
       )}
 
       <Disclaimer variant="geral" className="text-center" />
+
+      <ConfirmDialog
+        open={!!confirm}
+        message={confirm?.message ?? ''}
+        confirmLabel={confirm?.confirmLabel ?? 'Confirmar'}
+        onConfirm={() => { const c = confirm; setConfirm(null); c?.onYes() }}
+        onCancel={() => setConfirm(null)}
+      />
     </div>
   )
 }

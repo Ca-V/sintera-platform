@@ -17,6 +17,7 @@ import Card from '@/components/ui/Card'
 import MotionCard from '@/components/ui/MotionCard'
 import ActionCard from '@/components/ui/ActionCard'
 import Disclaimer from '@/components/ui/Disclaimer'
+import ConfirmDialog from '@/components/ConfirmDialog'
 import type { Database } from '@/lib/supabase/types'
 
 type Exam = Database['public']['Tables']['exams']['Row']
@@ -109,6 +110,7 @@ export default function ExamsPage() {
   const [analyzing, setAnalyzing]     = useState<Record<string, true>>({})
   const [examErrors, setExamErrors]   = useState<Record<string, string>>({})
   const [deletingId, setDeletingId]   = useState<string | null>(null)
+  const [confirm, setConfirm]         = useState<{ message: string; confirmLabel: string; onYes: () => void } | null>(null)
   // Edição inline do nome do exame na lista
   const [editingNameId, setEditingNameId] = useState<string | null>(null)
   const [nameDraft, setNameDraft]     = useState('')
@@ -251,28 +253,31 @@ export default function ExamsPage() {
   // ── Excluir exame ───────────────────────────────────────────────────────────
   // Remove o exame + biomarcadores + insights + arquivo. Histórico, jornada e
   // dashboard são derivados ao vivo dos dados → recalculam no próximo load.
-  async function deleteExam(exam: Exam) {
+  function deleteExam(exam: Exam) {
     if (deletingId) return
-    const ok = window.confirm(
-      `Excluir "${exam.type ?? 'Exame'}"?\n\nIsto remove o exame, seus biomarcadores e insights, e o arquivo enviado. ` +
-      `O seu Histórico será recalculado sem este exame. Esta ação não pode ser desfeita.`,
-    )
-    if (!ok) return
-    setDeletingId(exam.id)
-    setUploadError(null)
-    try {
-      const res = await fetch(`/api/exams/${exam.id}`, { method: 'DELETE' })
-      if (res.ok) {
-        await loadExams()
-      } else {
-        const j = await res.json().catch(() => ({}))
-        setUploadError(j.error ?? 'Falha ao excluir o exame.')
-      }
-    } catch {
-      setUploadError('Falha ao excluir o exame.')
-    } finally {
-      setDeletingId(null)
-    }
+    setConfirm({
+      message:
+        `Excluir "${exam.type ?? 'Exame'}"?\n\nIsto remove o exame, seus biomarcadores e insights, e o arquivo enviado. ` +
+        `O seu Histórico será recalculado sem este exame. Esta ação não pode ser desfeita.`,
+      confirmLabel: 'Excluir',
+      onYes: async () => {
+        setDeletingId(exam.id)
+        setUploadError(null)
+        try {
+          const res = await fetch(`/api/exams/${exam.id}`, { method: 'DELETE' })
+          if (res.ok) {
+            await loadExams()
+          } else {
+            const j = await res.json().catch(() => ({}))
+            setUploadError(j.error ?? 'Falha ao excluir o exame.')
+          }
+        } catch {
+          setUploadError('Falha ao excluir o exame.')
+        } finally {
+          setDeletingId(null)
+        }
+      },
+    })
   }
 
   // ── Renomear exame (inline na lista) ────────────────────────────────────────
@@ -777,6 +782,14 @@ export default function ExamsPage() {
       ))}
 
       <Disclaimer variant="laudo" className="text-center" />
+
+      <ConfirmDialog
+        open={!!confirm}
+        message={confirm?.message ?? ''}
+        confirmLabel={confirm?.confirmLabel ?? 'Confirmar'}
+        onConfirm={() => { const c = confirm; setConfirm(null); c?.onYes() }}
+        onCancel={() => setConfirm(null)}
+      />
     </div>
   )
 }

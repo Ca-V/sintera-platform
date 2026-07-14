@@ -19,6 +19,7 @@ import Card from '@/components/ui/Card'
 // Taxonomia de métodos contraceptivos = SSOT em @/lib/cycle (compartilhada com o Relatório).
 import { CONTRACEPTIVE_KINDS as KINDS, contraceptiveLabel as kindLabel } from '@/lib/cycle'
 import Disclaimer from '@/components/ui/Disclaimer'
+import ConfirmDialog from '@/components/ConfirmDialog'
 
 interface Method {
   id: string; kind: string; brand: string | null; startedOn: string | null
@@ -51,6 +52,7 @@ export default function CicloPage() {
   const [periods, setPeriods] = useState<Period[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [confirm, setConfirm] = useState<{ message: string; confirmLabel: string; onYes: () => void } | null>(null)
 
   // Formulário de contracepção
   const [showForm, setShowForm] = useState(false)
@@ -155,13 +157,14 @@ export default function CicloPage() {
     await load(); setBusyId(null)
   }
 
-  async function removeMethod(m: Method) {
+  function removeMethod(m: Method) {
     if (busyId) return
-    if (!window.confirm(`Remover "${kindLabel(m.kind)}"?`)) return
-    setBusyId(m.id)
-    if (m.reminderEventId) await db.from('agenda_events').delete().eq('id', m.reminderEventId)
-    await db.from('contraceptive_methods').delete().eq('id', m.id)
-    await load(); setBusyId(null)
+    setConfirm({ message: `Remover "${kindLabel(m.kind)}"?`, confirmLabel: 'Remover', onYes: async () => {
+      setBusyId(m.id)
+      if (m.reminderEventId) await db.from('agenda_events').delete().eq('id', m.reminderEventId)
+      await db.from('contraceptive_methods').delete().eq('id', m.id)
+      await load(); setBusyId(null)
+    } })
   }
 
   async function addPeriod() {
@@ -368,6 +371,14 @@ export default function CicloPage() {
           </div>
         </>
       )}
+
+      <ConfirmDialog
+        open={!!confirm}
+        message={confirm?.message ?? ''}
+        confirmLabel={confirm?.confirmLabel ?? 'Confirmar'}
+        onConfirm={() => { const c = confirm; setConfirm(null); c?.onYes() }}
+        onCancel={() => setConfirm(null)}
+      />
     </div>
   )
 }

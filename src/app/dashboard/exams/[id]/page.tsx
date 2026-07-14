@@ -21,6 +21,7 @@ import FeedbackModal from '@/components/FeedbackModal'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
 import MotionCard from '@/components/ui/MotionCard'
+import ConfirmDialog from '@/components/ConfirmDialog'
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -341,21 +342,25 @@ export default function ExamDetailPage() {
 
   // ── Excluir exame ───────────────────────────────────────────────────────────
   const [deleting, setDeleting] = useState(false)
-  async function deleteExam() {
+  const [confirm, setConfirm] = useState<{ message: string; confirmLabel: string; onYes: () => void } | null>(null)
+  function deleteExam() {
     if (!exam || deleting) return
-    const ok = window.confirm(
-      `Excluir "${exam.type ?? 'Exame'}"?\n\nIsto remove o exame, seus resultados e insights, e o arquivo enviado. ` +
-      `O seu Histórico será recalculado sem este exame. Esta ação não pode ser desfeita.`,
-    )
-    if (!ok) return
-    setDeleting(true)
-    try {
-      const res = await fetch(`/api/exams/${exam.id}`, { method: 'DELETE' })
-      if (res.ok) router.push('/dashboard/exams')
-      else { setDeleting(false); alert('Falha ao excluir o exame. Tente novamente.') }
-    } catch {
-      setDeleting(false); alert('Falha ao excluir o exame. Tente novamente.')
-    }
+    setConfirm({
+      message:
+        `Excluir "${exam.type ?? 'Exame'}"?\n\nIsto remove o exame, seus resultados e insights, e o arquivo enviado. ` +
+        `O seu Histórico será recalculado sem este exame. Esta ação não pode ser desfeita.`,
+      confirmLabel: 'Excluir',
+      onYes: async () => {
+        setDeleting(true)
+        try {
+          const res = await fetch(`/api/exams/${exam.id}`, { method: 'DELETE' })
+          if (res.ok) router.push('/dashboard/exams')
+          else { setDeleting(false); alert('Falha ao excluir o exame. Tente novamente.') }
+        } catch {
+          setDeleting(false); alert('Falha ao excluir o exame. Tente novamente.')
+        }
+      },
+    })
   }
 
   // ── Reportar problema ────────────────────────────────────────────────────
@@ -1057,6 +1062,14 @@ export default function ExamDetailPage() {
           </p>
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!confirm}
+        message={confirm?.message ?? ''}
+        confirmLabel={confirm?.confirmLabel ?? 'Confirmar'}
+        onConfirm={() => { const c = confirm; setConfirm(null); c?.onYes() }}
+        onCancel={() => setConfirm(null)}
+      />
     </div>
   )
 }

@@ -16,6 +16,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import Sparkline, { parseNum } from '@/components/Sparkline'
 import Card from '@/components/ui/Card'
+import ConfirmDialog from '@/components/ConfirmDialog'
 import { DOMAIN_LABEL, fmtOmicsDate, type OmicsDomain } from '@/lib/omics/domains'
 import { uploadAndIngest } from '@/lib/omics/ingestClient'
 
@@ -34,6 +35,7 @@ export default function OmicsPanelPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [confirm, setConfirm] = useState<{ message: string; confirmLabel: string; onYes: () => void } | null>(null)
 
   const [open, setOpen] = useState<string | null>(null)            // categoria expandida
   const [rowsByCat, setRowsByCat] = useState<Record<string, ResultRow[]>>({})
@@ -84,12 +86,13 @@ export default function OmicsPanelPage() {
     }
   }
 
-  async function removePanel() {
+  function removePanel() {
     if (!panel || !user) return
-    if (!window.confirm('Remover este painel e todos os seus resultados?')) return
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from('omics_panels').delete().eq('id', panel.id)
-    router.push('/dashboard/omics')
+    setConfirm({ message: 'Remover este painel e todos os seus resultados?', confirmLabel: 'Remover', onYes: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).from('omics_panels').delete().eq('id', panel.id)
+      router.push('/dashboard/omics')
+    } })
   }
 
   if (loading) return <div className="p-16 text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></div>
@@ -209,6 +212,14 @@ export default function OmicsPanelPage() {
       <p className="font-body text-[11px] text-mauve text-center leading-relaxed">
         Comparação factual ao longo do tempo. A SINTERA não indica melhora, piora ou normalização — apenas mostra os valores registrados.
       </p>
+
+      <ConfirmDialog
+        open={!!confirm}
+        message={confirm?.message ?? ''}
+        confirmLabel={confirm?.confirmLabel ?? 'Confirmar'}
+        onConfirm={() => { const c = confirm; setConfirm(null); c?.onYes() }}
+        onCancel={() => setConfirm(null)}
+      />
     </div>
   )
 }

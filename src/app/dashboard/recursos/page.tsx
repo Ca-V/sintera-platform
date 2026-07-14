@@ -27,6 +27,7 @@ import { useStickyView } from '@/lib/ui/useStickyView'
 import Card from '@/components/ui/Card'
 import Disclaimer from '@/components/ui/Disclaimer'
 import { useDocumentBundle, DocumentBundleStaging } from '@/components/ui/DocumentBundleCapture'
+import ConfirmDialog from '@/components/ConfirmDialog'
 
 type ResourceType = 'correcao_visual' | 'dispositivo_medico' | 'protese_ortese' | 'auxilio' | 'compressao_suporte'
 type Status = 'em_uso' | 'suspenso' | 'encerrado'
@@ -96,6 +97,7 @@ export default function RecursosPage() {
   const [items, setItems] = useState<Resource[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [confirm, setConfirm] = useState<{ message: string; confirmLabel: string; onYes: () => void } | null>(null)
   const [view, setView] = useStickyView<'tipo' | 'situacao'>('sintera:recursos-view', 'tipo')
 
   const [showForm, setShowForm] = useState(false)
@@ -259,13 +261,14 @@ export default function RecursosPage() {
     reset(); setShowForm(false); await load()
   }
 
-  async function remove(r: Resource) {
+  function remove(r: Resource) {
     if (busyId) return
-    if (!window.confirm(`Remover "${r.name}"?`)) return
-    setBusyId(r.id)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from('health_resources').delete().eq('id', r.id)
-    await load(); setBusyId(null)
+    setConfirm({ message: `Remover "${r.name}"?`, confirmLabel: 'Remover', onYes: async () => {
+      setBusyId(r.id)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).from('health_resources').delete().eq('id', r.id)
+      await load(); setBusyId(null)
+    } })
   }
 
   function card(r: Resource) {
@@ -529,6 +532,14 @@ export default function RecursosPage() {
       )}
 
       <Disclaimer variant="geral" className="text-center" />
+
+      <ConfirmDialog
+        open={!!confirm}
+        message={confirm?.message ?? ''}
+        confirmLabel={confirm?.confirmLabel ?? 'Confirmar'}
+        onConfirm={() => { const c = confirm; setConfirm(null); c?.onYes() }}
+        onCancel={() => setConfirm(null)}
+      />
     </div>
   )
 }

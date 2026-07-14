@@ -22,6 +22,7 @@ import Disclaimer from '@/components/ui/Disclaimer'
 import ProvenanceLine from '@/components/ui/ProvenanceLine'
 import { examProvenance } from '@/lib/provenance'
 import { useDocumentBundle, DocumentBundleStaging } from '@/components/ui/DocumentBundleCapture'
+import ConfirmDialog from '@/components/ConfirmDialog'
 
 type Metric =
   | 'peso' | 'altura' | 'circunferencia_cintura'
@@ -107,6 +108,7 @@ export default function MedidasPage() {
   const [exams, setExams] = useState<ExamRef[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [confirm, setConfirm] = useState<{ message: string; confirmLabel: string; onYes: () => void } | null>(null)
 
   const [showForm, setShowForm] = useState(false)
   const [metric, setMetric] = useState<Metric>('peso')
@@ -174,13 +176,14 @@ export default function MedidasPage() {
     reset(); setShowForm(false); await load()
   }
 
-  async function remove(id: string) {
+  function remove(id: string) {
     if (busyId) return
-    if (!window.confirm('Remover esta medida?')) return
-    setBusyId(id)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from('body_metrics').delete().eq('id', id)
-    await load(); setBusyId(null)
+    setConfirm({ message: 'Remover esta medida?', confirmLabel: 'Remover', onYes: async () => {
+      setBusyId(id)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).from('body_metrics').delete().eq('id', id)
+      await load(); setBusyId(null)
+    } })
   }
 
   // Escanear laudo de bioimpedância → pré-preenche várias medidas de uma vez.
@@ -491,6 +494,14 @@ export default function MedidasPage() {
       )}
 
       <Disclaimer variant="geral" className="text-center" />
+
+      <ConfirmDialog
+        open={!!confirm}
+        message={confirm?.message ?? ''}
+        confirmLabel={confirm?.confirmLabel ?? 'Confirmar'}
+        onConfirm={() => { const c = confirm; setConfirm(null); c?.onYes() }}
+        onCancel={() => setConfirm(null)}
+      />
     </div>
   )
 }

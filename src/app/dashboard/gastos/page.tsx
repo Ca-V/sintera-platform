@@ -18,6 +18,7 @@ import ListCard, { CardChip } from '@/components/ListCard'
 import PageHeader from '@/components/PageHeader'
 import EmptyState from '@/components/EmptyState'
 import Card from '@/components/ui/Card'
+import ConfirmDialog from '@/components/ConfirmDialog'
 
 function fmtBRL(cents: number): string {
   return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -35,6 +36,7 @@ export default function GastosPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [confirm, setConfirm] = useState<{ message: string; confirmLabel: string; onYes: () => void } | null>(null)
 
   useEffect(() => {
     if (authLoading) return
@@ -67,16 +69,17 @@ export default function GastosPage() {
     finally { setBusyId(null) }
   }
   // Excluir o lançamento (o evento) de vez.
-  async function deleteGasto(r: HealthEvent) {
+  function deleteGasto(r: HealthEvent) {
     if (busyId || !user) return
-    if (!window.confirm(`Excluir "${r.title}" das suas despesas? O evento é removido.`)) return
-    setBusyId(r.id); setActionError(null)
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any).from('health_events').delete().eq('id', r.id)
-      if (error) { setActionError(`Não foi possível excluir: ${error.message}`); return }
-      setReloadKey(k => k + 1)
-    } finally { setBusyId(null) }
+    setConfirm({ message: `Excluir "${r.title}" das suas despesas? O evento é removido.`, confirmLabel: 'Excluir', onYes: async () => {
+      setBusyId(r.id); setActionError(null)
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase as any).from('health_events').delete().eq('id', r.id)
+        if (error) { setActionError(`Não foi possível excluir: ${error.message}`); return }
+        setReloadKey(k => k + 1)
+      } finally { setBusyId(null) }
+    } })
   }
 
   const years = [...new Set(items.map(r => Number(r.date.slice(0, 4))))].sort((a, b) => b - a)
@@ -249,6 +252,14 @@ export default function GastosPage() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onSave={handleSave}
+      />
+
+      <ConfirmDialog
+        open={!!confirm}
+        message={confirm?.message ?? ''}
+        confirmLabel={confirm?.confirmLabel ?? 'Confirmar'}
+        onConfirm={() => { const c = confirm; setConfirm(null); c?.onYes() }}
+        onCancel={() => setConfirm(null)}
       />
     </div>
   )

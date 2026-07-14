@@ -14,6 +14,7 @@ import { useCallback, useEffect, useState, type ElementType } from 'react'
 import Link from 'next/link'
 import ReportEntry from '@/components/entry/ReportEntry'
 import Disclaimer from '@/components/ui/Disclaimer'
+import ConfirmDialog from '@/components/ConfirmDialog'
 import ProvenanceLine from '@/components/ui/ProvenanceLine'
 import SelectionToolbar from '@/components/ui/SelectionToolbar'
 import PeriodSelector from '@/components/ui/PeriodSelector'
@@ -125,6 +126,7 @@ function LegacyReport() {
   const [expenses, setExpenses] = useState<HealthEvent[]>([])
   const [shares, setShares] = useState<{ id: string; token: string; expiresAt: string }[]>([])
   const [shareBusy, setShareBusy] = useState(false)
+  const [confirm, setConfirm] = useState<{ message: string; confirmLabel: string; onYes: () => void } | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
   const [sections, setSections] = useState({ medicamentos: true, condicoes: true, habitos: true, visao: true, eventos: true, exames: true, omica: true, medidas: true, sinais: true, ciclo: true, gastos: true })
   const toggle = (k: keyof typeof sections) => setSections(s => ({ ...s, [k]: !s[k] }))
@@ -300,14 +302,15 @@ function LegacyReport() {
     setShareBusy(false)
   }
 
-  async function revokeShare(id: string) {
+  function revokeShare(id: string) {
     if (shareBusy) return
-    if (!window.confirm('Revogar este link? Quem o tiver não verá mais o relatório.')) return
-    setShareBusy(true)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from('report_shares').update({ revoked: true }).eq('id', id)
-    await load()
-    setShareBusy(false)
+    setConfirm({ message: 'Revogar este link? Quem o tiver não verá mais o relatório.', confirmLabel: 'Revogar', onYes: async () => {
+      setShareBusy(true)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).from('report_shares').update({ revoked: true }).eq('id', id)
+      await load()
+      setShareBusy(false)
+    } })
   }
 
   function copyLink(token: string) {
@@ -933,6 +936,14 @@ function LegacyReport() {
 
         <Disclaimer variant="relatorio" className="border-t border-border pt-3" />
       </div>
+
+      <ConfirmDialog
+        open={!!confirm}
+        message={confirm?.message ?? ''}
+        confirmLabel={confirm?.confirmLabel ?? 'Confirmar'}
+        onConfirm={() => { const c = confirm; setConfirm(null); c?.onYes() }}
+        onCancel={() => setConfirm(null)}
+      />
     </div>
   )
 }

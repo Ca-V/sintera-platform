@@ -24,6 +24,7 @@ import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import Card from '@/components/ui/Card'
 import Disclaimer from '@/components/ui/Disclaimer'
 import { healthEventToRow } from '@/lib/agenda/event'
+import ConfirmDialog from '@/components/ConfirmDialog'
 
 type Status = 'em_uso' | 'programado' | 'suspenso' | 'encerrado'
 type Kind = 'medicamento' | 'suplemento' | 'produto' | 'dispositivo' | 'outro'
@@ -90,6 +91,7 @@ export default function MedicamentosPage() {
   const [meds, setMeds] = useState<Med[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [confirm, setConfirm] = useState<{ message: string; confirmLabel: string; onYes: () => void } | null>(null)
   const [listView, setListView] = useStickyView<'tipo' | 'situacao'>('sintera:view:medicamentos', 'situacao')
 
   const [showForm, setShowForm] = useState(false)
@@ -375,16 +377,17 @@ export default function MedicamentosPage() {
   }
 
 
-  async function remove(m: Med) {
+  function remove(m: Med) {
     if (busyId) return
-    if (!window.confirm(`Remover "${m.name}" da sua lista?`)) return
-    setBusyId(m.id)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const db = supabase as any
-    if (m.repurchaseEventId) await db.from('agenda_events').delete().eq('id', m.repurchaseEventId)
-    if (m.purchaseEventId) await db.from('health_events').delete().eq('id', m.purchaseEventId)
-    await db.from('medications').delete().eq('id', m.id)
-    await load(); setBusyId(null)
+    setConfirm({ message: `Remover "${m.name}" da sua lista?`, confirmLabel: 'Remover', onYes: async () => {
+      setBusyId(m.id)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const db = supabase as any
+      if (m.repurchaseEventId) await db.from('agenda_events').delete().eq('id', m.repurchaseEventId)
+      if (m.purchaseEventId) await db.from('health_events').delete().eq('id', m.purchaseEventId)
+      await db.from('medications').delete().eq('id', m.id)
+      await load(); setBusyId(null)
+    } })
   }
 
   const KIND_LABEL: Record<Kind, string> = { medicamento: 'Medicamentos', suplemento: 'Suplementos', produto: 'Produtos', dispositivo: 'Dispositivos', outro: 'Outros' }
@@ -785,6 +788,14 @@ export default function MedicamentosPage() {
       )}
 
       <Disclaimer variant="medicamento" className="text-center" />
+
+      <ConfirmDialog
+        open={!!confirm}
+        message={confirm?.message ?? ''}
+        confirmLabel={confirm?.confirmLabel ?? 'Confirmar'}
+        onConfirm={() => { const c = confirm; setConfirm(null); c?.onYes() }}
+        onCancel={() => setConfirm(null)}
+      />
     </div>
   )
 }

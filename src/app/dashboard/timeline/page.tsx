@@ -220,18 +220,19 @@ function LegacyTimeline() {
     setModalOpen(false); setEditingEvent(null); await load()
   }
 
-  async function remove(rawId: string, label: string) {
+  function remove(rawId: string, label: string) {
     if (busyId) return
-    if (!window.confirm(`Excluir "${label}" do seu Histórico?`)) return
-    setBusyId(rawId); setActionError(null)
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any).from('health_events').delete().eq('id', rawId)
-      if (error) { setActionError(`Não foi possível excluir: ${error.message}`); return }
-      await load()
-    } finally {
-      setBusyId(null)
-    }
+    setConfirm({ message: `Excluir "${label}" do seu Histórico?`, confirmLabel: 'Excluir', onYes: async () => {
+      setBusyId(rawId); setActionError(null)
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase as any).from('health_events').delete().eq('id', rawId)
+        if (error) { setActionError(`Não foi possível excluir: ${error.message}`); return }
+        await load()
+      } finally {
+        setBusyId(null)
+      }
+    } })
   }
 
   // Marca um evento do Histórico como Realizado — atualização CIRÚRGICA (só status +

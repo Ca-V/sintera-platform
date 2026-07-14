@@ -24,6 +24,7 @@ import CreateRecordMenu from '@/components/ui/CreateRecordMenu'
 import { decideCaptureRouting } from '@/lib/capture/capture-routing'
 import ProvenanceLine from '@/components/ui/ProvenanceLine'
 import { examProvenance } from '@/lib/provenance'
+import ConfirmDialog from '@/components/ConfirmDialog'
 
 type Scope = 'propria' | 'familiar'
 
@@ -67,6 +68,7 @@ export default function CondicoesPage() {
   const [items, setItems] = useState<Condition[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [confirm, setConfirm] = useState<{ message: string; confirmLabel: string; onYes: () => void } | null>(null)
 
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -226,13 +228,14 @@ export default function CondicoesPage() {
     }
   }
 
-  async function remove(c: Condition) {
+  function remove(c: Condition) {
     if (busyId) return
-    if (!window.confirm(`Remover "${c.name}"?`)) return
-    setBusyId(c.id)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from('health_conditions').delete().eq('id', c.id)
-    await load(); setBusyId(null)
+    setConfirm({ message: `Remover "${c.name}"?`, confirmLabel: 'Remover', onYes: async () => {
+      setBusyId(c.id)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).from('health_conditions').delete().eq('id', c.id)
+      await load(); setBusyId(null)
+    } })
   }
 
   const proprias = items.filter(i => i.scope === 'propria')
@@ -382,6 +385,14 @@ export default function CondicoesPage() {
       )}
 
       <Disclaimer variant="geral" className="text-center" />
+
+      <ConfirmDialog
+        open={!!confirm}
+        message={confirm?.message ?? ''}
+        confirmLabel={confirm?.confirmLabel ?? 'Confirmar'}
+        onConfirm={() => { const c = confirm; setConfirm(null); c?.onYes() }}
+        onCancel={() => setConfirm(null)}
+      />
     </div>
   )
 }
