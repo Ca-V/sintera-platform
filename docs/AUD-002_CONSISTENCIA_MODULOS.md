@@ -22,13 +22,22 @@ Corporais · Sinais Vitais · Relatório · Despesas · Recursos. *(Cirurgias/Pr
 `ListCard` (mantém). 6. Estados: `EmptyState` · `StateView`(loading/erro) · `ErrorBanner`. 7. Destrutivo:
 `ConfirmDialog` (nunca `window.confirm`). 8. `Section` p/ títulos internos. 9. `Disclaimer` no rodapé.
 
-## Lotes de execução (maior consistência / menor esforço primeiro)
-- **L1 · Confirmação destrutiva** — `window.confirm` → `ConfirmDialog` em todos (Agenda já é o padrão). *[comportamento; ROI alto]*
-- **L2 · Cabeçalho** — adotar `PageHeader` + back-link + geometria do CTA + wrapper único.
-- **L3 · Estados** — `EmptyState` (vazio) · `StateView`/`LoadingCard` (loading) · `ErrorBanner` (erro) em todos.
-- **L4 · Utils compartilhados** — `downscaleImage` único; formatação de data única.
-- **L5 · UX Exames** — remover o duplo ponto de entrada (dropzone + CreateRecordMenu → um só).
-- **L6 · Dedup grande** — unificar Medidas + Sinais Vitais (`MetricSeriesPage`); convergir as 3 capturas
-  multipágina em `useDocumentBundle`. *[maior, faseado]*
+## Lotes de execução — STATUS
+- **L1 ✅** · `window.confirm` → `ConfirmDialog` (13 páginas).
+- **L2 ✅ + L2b ✅** · `PageHeader` + back-link + CTA + wrapper — todos os módulos-lista (relatorio pulado: h1
+  vive no bloco imprimível do PDF; home/perfil/config/insights/prevenção fora do padrão de módulo).
+- **L3a ✅** · `ErrorBanner` compartilhado (4 módulos). **L3b ✅** · `EmptyState` (4 módulos).
+- **L4a ✅** · `downscaleImageToPayload` compartilhado (dedup).
+- **L4b ⏸️** · dedup de formatação de data — *baixo ROI, risco de mudar formatos*; não executar sem necessidade.
+- **L5 → backlog C1** · duplo ponto de entrada de Exames = item **2.5 / C1 (fluxo único de inclusão)**, Fase C
+  (nova funcionalidade + decisão de produto). Não é desta passada.
+- **L6 ⏸️ ADIADO** · unificar Medidas + Sinais Vitais (`MetricSeriesPage`) — **evidência: `Medidas` será
+  reformada no backlog C4** (avaliação corporal geral + scan próprio); unificar agora criaria abstração
+  errada = retrabalho. Fazer **junto/depois do C4**. (Idem convergir as 3 capturas multipágina em
+  `useDocumentBundle` — refactor grande, faseado.)
+
+**Passada de consistência da Fase 1: substancialmente COMPLETA** (comportamento + apresentação padronizados nos
+módulos). Estados de loading já eram consistentes (Card+spinner). Restante = completude FUNCIONAL de módulos
+(ex.: Cirurgias/Procedimentos sem página própria) + backlog, na ordem da governança.
 
 Detalhe dos achados (categorias 1–6, com file:line) no histórico do commit desta auditoria.
