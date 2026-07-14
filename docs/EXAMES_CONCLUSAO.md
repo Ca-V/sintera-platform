@@ -50,7 +50,7 @@ NÃO está concluído** — faltam itens de Funcionalidade/Experiência/Integra�
 | Nota fiscal ou recibo | 2/4 | ✅ E7 |
 | Agendamento | 4 Integr | ✅ E8 |
 | Recorrência | 4 Integr | ✅ E8 |
-| **Confirmação automática de exame duplicado** | 2/3 | 🔄 **detecção feita** (`src/lib/exams/duplicates.ts` + teste `FUNC-exam-duplicates`: fingerprint OU paciente+data+emissor+título; marca só o mais novo). UI: chip "Possível duplicado" na lista (nunca duplica em silêncio). **Falta:** ação de confirmação (manter os dois / excluir / ver original) — modal de resolução |
+| **Confirmação automática de exame duplicado** | 2/3 | ✅ **feito** (`src/lib/exams/duplicates.ts` + teste `FUNC-exam-duplicates`: fingerprint OU paciente+data+emissor+título; marca só o mais novo). UI: chip "Possível duplicado" + aviso acionável no card — **Ver original** (comparar, não-destrutivo), excluir (controle existente) ou manter os dois (ignorar). Nunca duplica em silêncio |
 | **Upload de imagens além do PDF** | 2/3 | ✅ (fluxo único E6: imagens únicas/múltiplas montam bundle→1 PDF→1 registro, com reordenar/Galeria) |
 | **Notificações (e-mail/WhatsApp) por evento** | 4 Integr | ⬜ depende de **NOTIF-001** (infra única) |
 | **Compartilhamento futuro pelo Care Space** | 4 Integr | ⬜ depende de CARE-001 (fase 4) |

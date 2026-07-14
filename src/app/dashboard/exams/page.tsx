@@ -13,7 +13,7 @@ import { parseDateOnly } from '@/lib/agenda'
 import { useUser } from '@/context/UserContext'
 import { compareNames } from '@/lib/exams/nameMatch'
 import { categoryOf, FALLBACK_CATEGORY } from '@/lib/capture/exam-categories'
-import { findDuplicateIds, type DuplicateCandidate } from '@/lib/exams/duplicates'
+import { findDuplicateIds, originalIdFor, type DuplicateCandidate } from '@/lib/exams/duplicates'
 import { useDocumentBundle, DocumentBundleStaging } from '@/components/ui/DocumentBundleCapture'
 import ListCard, { CardChip } from '@/components/ListCard'
 import PageHeader from '@/components/PageHeader'
@@ -167,7 +167,8 @@ export default function ExamsPage() {
 
   // Possíveis duplicados (req_deteccao_duplicados): fingerprint OU paciente+data+emissor+título.
   // Marca só o registro mais novo do par; o original permanece. Nunca duplica em silêncio.
-  const duplicateIds = useMemo(() => {
+  // Além do Set de duplicados, mapeia cada duplicado → id do ORIGINAL (para "Ver original").
+  const { duplicateIds, originalById } = useMemo(() => {
     const candidates: DuplicateCandidate[] = exams.map(e => {
       const x = e as unknown as {
         id: string; created_at: string; patient_name?: string | null; exam_date?: string | null
@@ -179,7 +180,14 @@ export default function ExamsPage() {
         issuer: x.issuer, title: x.display_title ?? x.type, representationFingerprint: x.representation_fingerprint,
       }
     })
-    return findDuplicateIds(candidates)
+    const ids = findDuplicateIds(candidates)
+    const orig = new Map<string, string>()
+    for (const c of candidates) {
+      if (!ids.has(c.id)) continue
+      const o = originalIdFor(c, candidates)
+      if (o) orig.set(c.id, o)
+    }
+    return { duplicateIds: ids, originalById: orig }
   }, [exams])
 
   // ── Exames filtrados + agrupados por ano (SEM pedidos/guias) ──────────────
@@ -693,6 +701,15 @@ export default function ExamsPage() {
                                     )}
                                     {exam.requesting_physician && (
                                       <span className="text-mauve/40"> · Solicitante: {exam.requesting_physician}</span>
+                                    )}
+                                    {duplicateIds.has(exam.id) && originalById.get(exam.id) && (
+                                      <span className="block text-gold mt-0.5">
+                                        Possível duplicado de outro exame ·{' '}
+                                        <button type="button"
+                                          onClick={() => router.push('/dashboard/exams/' + originalById.get(exam.id))}
+                                          className="font-medium underline hover:text-onyx">Ver original</button>
+                                        {' · '}ou exclua este registro
+                                      </span>
                                     )}
                                   </>
                                 }
