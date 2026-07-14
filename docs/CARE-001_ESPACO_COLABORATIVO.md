@@ -69,33 +69,46 @@ consulta. Reaproveita o princípio de **Reprodutibilidade / write-once** (um sna
 Valor **clínico · jurídico · auditoria · continuidade do cuidado**. O Snapshot permanece **imutável** mesmo
 que o paciente altere a plataforma depois.
 
-## 5. Três camadas complementares (a estruturação NUNCA substitui o documento)
-O objetivo do CARE Space **não é substituir os documentos por uma representação estruturada**. O profissional
-vê **três camadas complementares**, e o **documento original permanece a fonte PRIMÁRIA** — a representação e a
-evolução existem para facilitar a compreensão, nunca para substituir (Princípio da Rastreabilidade Documental):
+## 5. Três camadas complementares — organizar, NUNCA interpretar nem substituir
+O CARE Space **não substitui os documentos por uma representação estruturada, nem produz resumos ou
+interpretações clínicas**. O profissional vê **três camadas complementares**; o **documento original permanece
+a fonte PRIMÁRIA**. A representação e a evolução existem para **organizar e facilitar o acesso**, **não para
+interpretar nem substituir** (RDC 657 · Rastreabilidade Documental):
 
-1. **Representação estruturada** — a organização produzida pela SINTERA (leitura rápida de exames, parâmetros,
-   achados, informações clínicas). Vem do CPE/UCDA.
-2. **Evolução longitudinal** — toda a linha do tempo do paciente (tendências, estabilidade, progressão,
-   resposta a tratamentos).
-3. **Documento original** — cada informação estruturada mantém **acesso imediato ao original correspondente**
-   (PDF · imagem · DICOM · laudo…), exatamente como foi emitido.
+1. **Representação estruturada** — organização **objetiva** das informações presentes nos documentos,
+   preservando **origem e rastreabilidade**. Vem do CPE/UCDA. (Sem juízo clínico.)
+2. **Evolução longitudinal** — visualização **cronológica** das informações estruturadas ao longo do tempo,
+   para o profissional **analisar a evolução por conta própria** (a plataforma mostra os dados no tempo; quem
+   conclui é o profissional).
+3. **Documentos originais** — todo elemento estruturado mantém **acesso imediato ao original correspondente**
+   (PDF · imagem · DICOM · laudo…), exatamente como foi emitido — a fonte primária.
 
-**Navegação na consulta:** resumo clínico → evolução longitudinal → gráficos/tendências → abrir qualquer exame
-**original com um clique** → imagens/laudos/documentos como emitidos. Essa combinação é o que entrega
-**segurança clínica**. O CARE Space dá acesso **organizado e contextualizado** à representação longitudinal
-E a todos os documentos originais que a sustentam.
+**Navegação na consulta:** Visão Geral → evolução longitudinal → gráficos ao longo do tempo → abrir qualquer
+exame **original com um clique** → imagens/laudos/documentos como emitidos. O CARE Space dá acesso
+**organizado e contextualizado** à representação longitudinal E a todos os documentos originais que a sustentam.
 
-## 5.1 Dossiê Clínico — 4 áreas principais + Colaboração
+### ⚖️ Princípio inegociável do domínio CARE-001 (explícito em todo o CARE)
+- O **documento original** continua sendo a fonte da verdade.
+- A plataforma **organiza** a informação e **evidencia relações temporais e estruturais**.
+- O **profissional de saúde é quem interpreta** e exerce o **julgamento clínico**.
+- A SINTERA **deliberadamente NÃO** gera texto interpretativo. **Proibido** no CARE Space: "Paciente apresenta
+  melhora…", "Histórico compatível com…", "Principais achados…", ou qualquer resumo/conclusão clínica. Gráficos,
+  tendências e comparações são **visualizações estruturais dos dados** (valores no tempo), nunca afirmações clínicas.
+
+## 5.1 Dossiê Clínico — 4 áreas principais + Colaboração (apenas informação objetiva/estruturada)
 O profissional **nunca** recebe uma lista de PDFs. A plataforma monta um **Dossiê Clínico** estruturado
-(reusa Timeline + representação do CPE/UCDA + Evento Assistencial), sempre com o **original a um clique**:
+(reusa Timeline + representação do CPE/UCDA + Evento Assistencial), sempre com o **original a um clique** e
+**sem qualquer texto gerado pela plataforma** que interprete a clínica:
 
-- **Visão Geral** — resumo clínico · principais condições · alertas · medicamentos atuais.
-- **Evolução** — Timeline · tendências · comparações · **eventos assistenciais**.
+- **Visão Geral** — *apenas objetivo/estruturado*: identificação do paciente · condições cadastradas ·
+  medicamentos em uso · procedimentos registrados · exames disponíveis · eventos assistenciais · linha do tempo.
+  **NÃO** contém "resumo clínico" nem texto interpretativo gerado pela plataforma.
+- **Evolução** — Timeline · gráficos ao longo do tempo · comparações de valores · **eventos assistenciais**
+  (visualização estrutural; o profissional analisa por conta própria).
 - **Evidências Clínicas** — exames laboratoriais · exames de imagem · procedimentos · cirurgias.
 - **Documentos** — todos os documentos **originais** acessíveis.
 - **Colaboração** *(§8)* — comentários do profissional · recomendações · solicitações · **plano de
-  acompanhamento**.
+  acompanhamento** (conteúdo do PROFISSIONAL, não da plataforma).
 
 ## 6. Preparação da Consulta (um dos maiores diferenciais)
 Antes da consulta o paciente clica **"Preparar consulta"** e escolhe **médico · especialidade · objetivo**. A
