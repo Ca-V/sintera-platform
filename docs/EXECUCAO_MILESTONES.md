@@ -19,6 +19,26 @@
 
 ---
 
+## 🗺️ Roadmap Estratégico por FASES (fundadora 14/07 — estrutura definitiva)
+
+A **unidade de entrega** deixa de ser o componente técnico e passa a ser a **modalidade clínica completa**. A
+infraestrutura (CPE/Registry/Validator) continua, mas não é mais a unidade de valor. Uma modalidade só está
+**concluída** quando atinge os **5 níveis**: Identificação · Representação · Validação · Cobertura · UCDA.
+
+| Fase | Nome | Conteúdo | Critério de saída |
+|---|---|---|---|
+| **1** | **Engenharia da Informação Clínica** *(atual)* | Capture Hub · Bundle · Análise Estrutural · Segmentação · CDU · Identity Validator · Clinical Identity Registry · CPE · Representation Validator · Cobertura · UCDA | **A plataforma compreende corretamente QUALQUER documento clínico** |
+| **2** | **Capacidades Clínicas** | Modalidades uma a uma, **dirigidas por CRC** (Laboratório · Mamografia · US · RM · TC · ECG · EEG · Holter · MAPA · Pentacam · Anatomopatológico…) | cada modalidade nos 5 níveis (ver `COBERTURA_CLINICA.md`) |
+| **3** | **Consolidação da Representação Longitudinal** | Timeline definitiva · evolução temporal · tendências · comparações · **correlação entre modalidades** · eventos clínicos | a **história clínica** está consolidada (pré-requisito do CARE) |
+| **4** | **CARE-001 — Espaço Colaborativo** | Care Space · Snapshot · Dossiê · Compartilhamento Inteligente · Sugestões · Colaboração · Continuidade | `CARE-001_ESPACO_COLABORATIVO.md` |
+| **5** | **Ecossistema** | Clínicas · Hospitais · Laboratórios · Convênios · Telemedicina · APIs · FHIR · RNDS · DICOM | conectores de aquisição/interoperabilidade |
+
+> **Por que a Fase 3 vem ANTES do CARE:** *o CARE-001 não compartilha exames — compartilha a história
+> clínica.* Essa história precisa estar consolidada (longitudinal, correlacionada) antes do compartilhamento.
+> Os milestones M1–M9 abaixo detalham a **Fase 1**; o painel `COBERTURA_CLINICA.md` acompanha a **Fase 2**.
+
+---
+
 ## Painel (visão rápida)
 
 | # | Capacidade | % | Estado | Previsão |

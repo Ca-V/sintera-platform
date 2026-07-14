@@ -38,6 +38,36 @@ Evento Assistencial — **nunca replicadas por módulo** (exame/consulta/cirurgi
 MESMAS capacidades). Arquitetura única, consistente, escalável. **A representação clínica permanece
 independente da administrativa.**
 
+## 0.1 — Evento Assistencial ORGANIZA A JORNADA (domínio próprio) · fundadora 14/07
+
+O Evento Assistencial vira o **domínio que organiza toda a jornada clínica** — não só um agregador de anexos.
+Tipos de evento: **consulta · retorno · cirurgia · procedimento · internação · solicitação de exame ·
+repetição de exame · acompanhamento** (além de exame/medicamento/etc.).
+
+**Fluxo canônico da plataforma** (conecta a Engenharia da Informação Clínica à continuidade do cuidado —
+missão da SINTERA):
+
+```
+Paciente
+  ↓
+Evento Assistencial        ← contexto clínico próprio: exames, recomendações, retornos, histórico
+  ↓
+Care Space                 ← criado EM TORNO de um Evento (não de um compartilhamento genérico)
+  ↓
+Snapshot Clínico           ← congelamento imutável do que foi compartilhado
+  ↓
+Compartilhamento
+  ↓
+Colaboração
+  ↓
+Continuidade do cuidado    ← recomendação do médico → recorrência/agendamento volta ao Evento Assistencial
+```
+
+**Por que registrar agora (mesmo implementando depois):** faz cada consulta ter seu próprio contexto clínico;
+o **CARE-001 passa a ser criado em torno de um Evento Assistencial**, não de um compartilhamento avulso. Isso
+**evita reorganizações arquiteturais futuras** e conecta naturalmente toda a engenharia da informação clínica
+com a continuidade do cuidado. O ciclo fecha no próprio Evento (a recomendação vira recorrência/agendamento).
+
 ---
 
 ## Requisitos permanentes

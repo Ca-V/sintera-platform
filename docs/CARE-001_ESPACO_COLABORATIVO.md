@@ -15,6 +15,17 @@
 
 ---
 
+## 0. Posição no fluxo — o Care Space nasce em torno de um EVENTO ASSISTENCIAL
+Fluxo canônico (fundadora 14/07): **Paciente → Evento Assistencial → Care Space → Snapshot Clínico →
+Compartilhamento → Colaboração → Continuidade do cuidado**. O CARE-001 é criado **em torno de um Evento
+Assistencial** (consulta/retorno/junta…), não de um compartilhamento genérico — cada consulta tem seu
+contexto clínico próprio. Isso evita reorganizações futuras e fecha o ciclo: a recomendação do profissional
+volta ao Evento como recorrência/agendamento. Ver [`EVENTO_ASSISTENCIAL.md`] §0.1.
+
+**Sequenciamento (roadmap 5 fases, `EXECUCAO_MILESTONES.md`):** o CARE-001 é a **Fase 4**, e vem **depois da
+Fase 3 (Consolidação da Representação Longitudinal)** — porque *o CARE não compartilha exames, compartilha a
+história clínica*, que precisa estar consolidada (Timeline definitiva, evolução, correlação) antes.
+
 ## 1. Terminologia — o profissional NUNCA "acessa o paciente"
 A SINTERA **cria um Care Space para uma relação específica** entre paciente e profissional (um episódio de
 cuidado). O médico **não entra na conta do paciente** — entra em um **espaço criado para aquele episódio**,
