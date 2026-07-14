@@ -18,6 +18,7 @@ import { useStickyView } from '@/lib/ui/useStickyView'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import ListCard, { CardChip } from '@/components/ListCard'
 import PageHeader from '@/components/PageHeader'
+import ErrorBanner from '@/components/ErrorBanner'
 import MotionCard from '@/components/ui/MotionCard'
 import Disclaimer from '@/components/ui/Disclaimer'
 
@@ -214,12 +215,7 @@ export default function AgendaPage() {
         />
       </motion.div>
 
-      {actionError && (
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-          <p className="font-body text-xs text-red-600">{actionError}</p>
-          <button onClick={() => setActionError(null)} className="text-red-400 hover:text-red-600 transition-colors flex-shrink-0"><X size={14} /></button>
-        </div>
-      )}
+      <ErrorBanner message={actionError} onDismiss={() => setActionError(null)} />
 
       {!loading && suggestion && !dismissed && (
         <MotionCard initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} padding="sm"

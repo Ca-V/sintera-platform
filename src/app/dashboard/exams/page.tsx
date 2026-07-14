@@ -14,6 +14,7 @@ import { useUser } from '@/context/UserContext'
 import { compareNames } from '@/lib/exams/nameMatch'
 import ListCard, { CardChip } from '@/components/ListCard'
 import PageHeader from '@/components/PageHeader'
+import ErrorBanner from '@/components/ErrorBanner'
 import CreateRecordMenu from '@/components/ui/CreateRecordMenu'
 import Card from '@/components/ui/Card'
 import MotionCard from '@/components/ui/MotionCard'
@@ -414,14 +415,7 @@ export default function ExamsPage() {
         </motion.div>
       )}
 
-      {uploadError && (
-        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-          className="flex items-start gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-xl">
-          <AlertCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
-          <p className="font-body text-xs text-red-700 flex-1">{uploadError}</p>
-          <button type="button" onClick={() => setUploadError(null)} className="text-red-300 hover:text-red-500"><X size={15} /></button>
-        </motion.div>
-      )}
+      <ErrorBanner message={uploadError} onDismiss={() => setUploadError(null)} />
 
       {/* Explicação convencional × ômica — barra NEUTRA, separada da de Ômica
           (para não parecer que o convencional faz parte da Ômica) */}

@@ -22,6 +22,7 @@ import { useStickyView } from '@/lib/ui/useStickyView'
 import ListCard, { CardChip } from '@/components/ListCard'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import PageHeader from '@/components/PageHeader'
+import ErrorBanner from '@/components/ErrorBanner'
 import Card from '@/components/ui/Card'
 import Disclaimer from '@/components/ui/Disclaimer'
 import { healthEventToRow } from '@/lib/agenda/event'
@@ -493,12 +494,7 @@ export default function MedicamentosPage() {
       />
 
       {/* Erro de leitura (foto/voz) — fica visível mesmo com o formulário fechado */}
-      {scanErr && (
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-          <p className="font-body text-xs text-red-600">{scanErr}</p>
-          <button onClick={() => setScanErr(null)} className="text-red-400 hover:text-red-600 transition-colors flex-shrink-0"><X size={14} /></button>
-        </div>
-      )}
+      <ErrorBanner message={scanErr} onDismiss={() => setScanErr(null)} />
 
       {/* Resultados do escaneamento — conferir antes de adicionar */}
       {scanResults.some(x => x !== scanEditing) && (

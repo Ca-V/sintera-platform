@@ -16,6 +16,7 @@ import { useStickyView } from '@/lib/ui/useStickyView'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import ListCard, { CardChip } from '@/components/ListCard'
 import PageHeader from '@/components/PageHeader'
+import ErrorBanner from '@/components/ErrorBanner'
 import EmptyState from '@/components/EmptyState'
 import Card from '@/components/ui/Card'
 import ConfirmDialog from '@/components/ConfirmDialog'
@@ -190,12 +191,7 @@ export default function GastosPage() {
         </p>
       </div>
 
-      {actionError && (
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-          <p className="font-body text-xs text-red-600">{actionError}</p>
-          <button onClick={() => setActionError(null)} className="text-red-400 hover:text-red-600 transition-colors flex-shrink-0"><X size={14} /></button>
-        </div>
-      )}
+      <ErrorBanner message={actionError} onDismiss={() => setActionError(null)} />
 
       {loading ? (
         <Card padding="2xl" className="text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
