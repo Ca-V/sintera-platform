@@ -43,6 +43,28 @@
 - **C4 · Medidas Corporais como avaliação geral** — evoluir de bioimpedância → **avaliação corporal geral**
   (renomear "Escanear Bioimpedância") + financeiro + agendamento/recorrência. *(§4)*
 
+### C5 · Central de Notificações e Lembretes ⭐ **(implementar APÓS consolidação dos módulos, ANTES do CARE-001)**
+Infraestrutura **ÚNICA** de notificações para toda a plataforma — nenhum módulo implementa lembrete próprio.
+Todos os tipos de evento usam o mesmo mecanismo (exames · consultas · procedimentos · cirurgias · vacinas ·
+medicamentos · suplementos · medidas corporais · eventos assistenciais · demais atividades agendadas).
+- **6.1 Mecanismo único** — um só sistema de notificações, reutilizado por todos os módulos.
+- **6.2 Canais** — o usuário escolhe, por lembrete, os canais: **e-mail · WhatsApp** (in-app e push =
+  futuro). Canais **independentes e combináveis** (só e-mail · só WhatsApp · e-mail+WhatsApp · todos).
+- **6.3 Configuração por evento** — cada evento tem sua própria estratégia de lembrete, sem alteração
+  arquitetural: *Medicamentos* (30min antes · no horário · repetir até confirmação) · *Suplementos* (diário ·
+  dias úteis · dias específicos) · *Exames* (30d/7d/1d/no dia) · *Consultas* (confirmação antecipada · véspera ·
+  horas antes) · *Vacinas* (reforços · campanhas · próximas doses).
+- **6.4 Confirmação de execução** — quando aplicável, o usuário confirma que a atividade foi realizada
+  (medicamento administrado · suplemento tomado · exame/consulta realizado · vacina aplicada) → alimenta
+  automaticamente **histórico + linha do tempo**.
+- **6.5 Arquitetura** — reutiliza **integralmente** Eventos Assistenciais · recorrência · agenda · histórico.
+  **Não** há mecanismo por módulo. *(Base: [[evento_assistencial_entidade_central]] §3.)*
+
+**Por que antes do CARE-001:** quando o Espaço Colaborativo for implementado, médicos e pacientes já usam a
+MESMA infra de agenda/recorrência/notificações — o CARE (recomendação → agendamento/lembrete) reutiliza tudo,
+sem retrabalho nem duplicidade. Ordenação: *consolidação dos módulos → backlog (inclui C5) → **C5 é pré-requisito
+do** → CARE-001*.
+
 ## Fase D — REDESIGN VISUAL (Design System)
 - **D1 · Identidade "Almond Blossom" (Van Gogh)** — **aqua** institucional (entre Verde Tiffany e Azul
   Turquesa); **trocar a sidebar verde escura**; **creme · branco · preto · marrom** secundários; **dourado
