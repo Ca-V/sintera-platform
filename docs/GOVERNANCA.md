@@ -646,6 +646,31 @@ exame` nem `N páginas = 1 exame`; um bundle representa **1+ documentos** e a se
 registros existem. É **pré-requisito de todo o pipeline** (evidência: laudo com 3 exames de imagem
 mesclado num só). Governada e independente do CEF (engenharia da informação, não clínica).
 
+## Princípio da Não-Produção de Conteúdo Clínico (CONSTITUCIONAL — fundadora, 14/07/2026)
+
+> **A SINTERA nunca produz conteúdo clínico. Ela apenas preserva, organiza, estrutura, relaciona e apresenta
+> conteúdo produzido pelo paciente ou por profissionais de saúde, mantendo sempre a origem e a autoria de
+> cada informação.**
+
+A plataforma **transcreve, organiza e evidencia relações temporais/estruturais** — nunca interpreta, conclui,
+resume nem emite juízo clínico (RDC 657). Toda informação apresentada tem **origem e autoria explícitas**:
+ou é dado do paciente, ou transcrição de documento, ou derivação por organização (cronologia/agrupamento/
+classificação) — nunca conclusão gerada por IA.
+
+**Consequências operacionais (valem em toda a plataforma, explícitas no domínio CARE-001):**
+1. **Documento original sempre acessível** — todo documento representado permanece acessível na forma original;
+   a representação organiza, **nunca substitui** a fonte documental.
+2. **Evolução = visualização, não conclusão** — mostrar a série no tempo (ex.: glicemia 210→170→130), nunca
+   "melhora/piora/controle inadequado". Quem interpreta é o profissional.
+3. **Camadas objetivas** — telas-síntese (ex.: "Visão Geral") só contêm dado cadastrado · transcrito ·
+   derivado por organização. Nunca conclusões/hipóteses/resumos de IA.
+4. **Autoria separada** — conteúdo da SINTERA (organizado) e conteúdo do profissional (observações/hipóteses/
+   plano) **nunca se misturam**; sempre fica claro quem produziu cada informação.
+
+Conecta e reforça: **Rastreabilidade Documental · Reprodutibilidade · Validação entre Camadas · Evidência
+Arquitetural · Governed Knowledge Evolution · UCDA · CARE-001**. Detalhe do domínio de compartilhamento em
+`docs/CARE-001_ESPACO_COLABORATIVO.md` §5.2.
+
 ## Regras gerais
 
 - **Código estável:** uma vez atribuído, não muda; a versão vive no cabeçalho do doc.

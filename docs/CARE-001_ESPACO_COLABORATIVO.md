@@ -110,6 +110,43 @@ O profissional **nunca** recebe uma lista de PDFs. A plataforma monta um **Dossi
 - **Colaboração** *(§8)* — comentários do profissional · recomendações · solicitações · **plano de
   acompanhamento** (conteúdo do PROFISSIONAL, não da plataforma).
 
+## 5.2 Fronteiras permanentes do domínio (regras — não ampliam escopo, tornam explícitas as fronteiras)
+
+**A. O original é sempre compartilhado e sempre acessível.** O Care Space compartilha os **documentos
+originais** + a representação estruturada deles + a evolução temporal — nunca só uma "história estruturada".
+> *Princípio:* **Todo documento representado na SINTERA permanece permanentemente acessível em sua forma
+> original. A representação estruturada existe para organizar a informação, nunca para substituir a fonte
+> documental.** (Rastreabilidade · segurança jurídica · confiança clínica.)
+
+**B. A evolução é uma VISUALIZAÇÃO, não uma conclusão.** A plataforma mostra valores no tempo (glicemia,
+ferritina, peso, pressão, exames em ordem cronológica). **Nunca** diz "houve melhora", "houve piora",
+"controle inadequado" — isso é interpretação. Ela apenas apresenta a série; **quem interpreta é o médico**:
+```
+Glicemia
+03/2023 → 210
+08/2023 → 170
+01/2024 → 130
+```
+
+**C. A "Visão Geral" é absolutamente objetiva.** Só pode conter **três tipos** de informação:
+(1) dados **cadastrados pelo paciente**; (2) informações **transcritas** dos documentos; (3) informações
+**derivadas por organização** (cronologia, agrupamento, classificação). **Nunca**: conclusões · hipóteses ·
+resumos produzidos por IA.
+
+**D. Duas fontes claramente SEPARADAS (autoria sempre explícita).** Dentro do Care Space há apenas dois tipos
+de conteúdo, que **nunca se misturam visualmente**:
+| Conteúdo da SINTERA (organizado automaticamente) | Conteúdo do PROFISSIONAL (produzido só por ele) |
+|---|---|
+| exames · documentos · medicamentos cadastrados · evolução cronológica · gráficos · eventos assistenciais | observações · hipóteses diagnósticas · plano terapêutico · recomendações · comentários |
+
+Fica sempre claro **quem produziu cada informação**.
+
+> ### 🏛️ Princípio constitucional (vale para toda a SINTERA — ver `GOVERNANCA.md`)
+> **A SINTERA nunca produz conteúdo clínico. Ela apenas preserva, organiza, estrutura, relaciona e apresenta
+> conteúdo produzido pelo paciente ou por profissionais de saúde, mantendo sempre a origem e a autoria de cada
+> informação.** Conversa com Rastreabilidade Documental · Reprodutibilidade · Validação entre Camadas ·
+> Governed Knowledge Evolution · UCDA · CARE-001.
+
 ## 6. Preparação da Consulta (um dos maiores diferenciais)
 Antes da consulta o paciente clica **"Preparar consulta"** e escolhe **médico · especialidade · objetivo**. A
 plataforma monta automaticamente o Dossiê (exames relevantes · evolução · medicamentos · condições ·
