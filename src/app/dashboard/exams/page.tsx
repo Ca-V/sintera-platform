@@ -721,6 +721,9 @@ export default function ExamsPage() {
                                     {exam.exam_date && exam.exam_date.slice(0, 10) !== exam.created_at.slice(0, 10) && (
                                       <span className="text-mauve/40"> · enviado {formatDate(exam.created_at)}</span>
                                     )}
+                                    {exam.requesting_physician && (
+                                      <span className="text-mauve/40"> · Solicitante: {exam.requesting_physician}</span>
+                                    )}
                                   </>
                                 }
                                 chips={isMismatch ? (

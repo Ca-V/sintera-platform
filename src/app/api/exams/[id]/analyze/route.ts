@@ -8,6 +8,7 @@ import { extractTextFromPdf, filterRelevantPages } from '@/lib/pdf/extractor'
 import { loadCatalogIndex, resolveBiomarker } from '@/lib/ai/insights/resolver'
 import { classifyExamDocument, deriveDisplayTitle, withProvenance } from '@/lib/capture/document-naming'
 import { extractIssuer } from '@/lib/ai/issuer'
+import { extractRequestingPhysician } from '@/lib/ai/requestingPhysician'
 import { classifyDocumentAI } from '@/lib/ai/document-classifier'
 import { representationFingerprint, isRepresentationCertified } from '@/lib/capture/reproducibility'
 import { computeCoverage } from '@/lib/capture/coverage'
@@ -435,6 +436,11 @@ export async function POST(
     const examDate = semDate && semDate.iso && semDate.confidence !== 'low' ? semDate.iso : result.examDate
     if (examDate) finalUpdate.exam_date = examDate
     if (result.patientName) finalUpdate.patient_name = result.patientName
+
+    // Médico SOLICITANTE (backlog A1) — fato documental, best-effort, write-once. Isolado (não toca o prompt
+    // governado); transcreve, não interpreta. Distinto do emissor e do assinante do laudo.
+    const solicitante = examTextForIssuer ? await extractRequestingPhysician(examTextForIssuer) : null
+    if (solicitante) finalUpdate.requesting_physician = solicitante
 
     // Identidade CLÍNICA (Clinical Identity Registry, CEF §3.0) — "que tipo de exame é", por ensemble de
     // evidências. Aditivo (não altera a classificação documental aqui); alimenta o extrator do CEF (M5).

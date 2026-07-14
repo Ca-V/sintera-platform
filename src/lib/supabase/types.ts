@@ -13,6 +13,7 @@ export interface Database {
           status: string
           notes: string | null
           created_at: string
+          requesting_physician: string | null
         }
         Insert: {
           id?: string
