@@ -17,6 +17,7 @@ import VoiceInput from '@/components/VoiceInput'
 import Sparkline, { parseNum } from '@/components/Sparkline'
 import ListCard from '@/components/ListCard'
 import PageHeader from '@/components/PageHeader'
+import EmptyState from '@/components/EmptyState'
 import Card from '@/components/ui/Card'
 import Disclaimer from '@/components/ui/Disclaimer'
 import ConfirmDialog from '@/components/ConfirmDialog'
@@ -198,7 +199,8 @@ export default function SinaisVitaisPage() {
       {loading ? (
         <Card padding="2xl" className="text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
       ) : items.length === 0 ? (
-        <Card padding="xl" className="text-center"><p className="font-body text-sm text-mauve">Nenhum sinal vital registrado. Use <strong>Adicionar</strong>.</p></Card>
+        <EmptyState icon={<HeartPulse size={28} className="text-petal" />} title="Nenhum sinal vital ainda"
+          message={<>Registre um sinal vital. Use <strong>Adicionar</strong>.</>} />
       ) : (
         <div className="space-y-6">
           {VITALS.map(g => {

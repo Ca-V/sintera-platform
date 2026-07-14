@@ -17,6 +17,7 @@ import VoiceInput from '@/components/VoiceInput'
 import Sparkline, { parseNum } from '@/components/Sparkline'
 import ListCard from '@/components/ListCard'
 import PageHeader from '@/components/PageHeader'
+import EmptyState from '@/components/EmptyState'
 import Card from '@/components/ui/Card'
 import Section from '@/components/ui/Section'
 import Disclaimer from '@/components/ui/Disclaimer'
@@ -446,7 +447,8 @@ export default function MedidasPage() {
       {loading ? (
         <Card padding="2xl" className="text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
       ) : items.length === 0 ? (
-        <Card padding="xl" className="text-center"><p className="font-body text-sm text-mauve">Nenhuma medida registrada. Use <strong>Adicionar</strong>.</p></Card>
+        <EmptyState icon={<Ruler size={28} className="text-petal" />} title="Nenhuma medida ainda"
+          message={<>Registre uma avaliação. Use <strong>Adicionar</strong>.</>} />
       ) : (
         <div className="space-y-6">
           {groups.map(g => {

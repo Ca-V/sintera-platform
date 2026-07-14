@@ -19,6 +19,7 @@ import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import ListCard, { CardChip } from '@/components/ListCard'
 import PageHeader from '@/components/PageHeader'
 import ErrorBanner from '@/components/ErrorBanner'
+import EmptyState from '@/components/EmptyState'
 import MotionCard from '@/components/ui/MotionCard'
 import Disclaimer from '@/components/ui/Disclaimer'
 
@@ -240,19 +241,14 @@ export default function AgendaPage() {
       {loading ? (
         <div className="flex items-center justify-center py-20 text-mauve"><Loader2 size={22} className="animate-spin" /></div>
       ) : events.length === 0 ? (
-        <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} padding="2xl" className="text-center">
-          <div className="w-16 h-16 rounded-2xl gradient-sintera-soft flex items-center justify-center mx-auto mb-5">
-            <CalendarDays size={28} className="text-petal" />
-          </div>
-          <h2 className="font-display text-lg font-semibold text-onyx mb-2">Nenhum evento futuro</h2>
-          <p className="font-body text-sm text-mauve max-w-sm mx-auto leading-relaxed mb-5">
-            Adicione um exame, consulta ou retorno para acompanhar seus próximos passos.
-          </p>
-          <button onClick={openAdd}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl gradient-sintera text-white text-sm font-body font-medium hover:opacity-90 transition-opacity">
-            <Plus size={16} /> Adicionar primeiro evento
-          </button>
-        </MotionCard>
+        <EmptyState icon={<CalendarDays size={28} className="text-petal" />} title="Nenhum evento futuro"
+          message="Adicione um exame, consulta ou retorno para acompanhar seus próximos passos."
+          action={
+            <button onClick={openAdd}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white text-sm font-body font-medium hover:opacity-90 transition-opacity">
+              <Plus size={16} /> Adicionar primeiro evento
+            </button>
+          } />
       ) : (
         <section className="space-y-3">
           <div className="flex items-center justify-between gap-2 flex-wrap">
