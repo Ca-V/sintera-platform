@@ -12,6 +12,7 @@ import { createClient } from '@/lib/supabase/client'
 import { parseDateOnly } from '@/lib/agenda'
 import { useUser } from '@/context/UserContext'
 import { compareNames } from '@/lib/exams/nameMatch'
+import { categoryOf, FALLBACK_CATEGORY } from '@/lib/capture/exam-categories'
 import ListCard, { CardChip } from '@/components/ListCard'
 import PageHeader from '@/components/PageHeader'
 import ErrorBanner from '@/components/ErrorBanner'
@@ -428,12 +429,14 @@ export default function ExamsPage() {
             <strong>Exame convencional</strong> — laudos laboratoriais comuns (sangue, urina, hormônios…) que você envia na caixa acima; a IA extrai os dados automaticamente.
           </p>
           <p className="font-body text-xs text-onyx leading-relaxed">
-            <strong>Exame ômico</strong> — também é um tipo de exame: metabolômica, proteômica, microbioma, genética. Reúne de centenas a milhares de marcadores e tem fluxo próprio, com catálogo e versionamento. Use a opção abaixo.
+            <strong>Exame ômico</strong> — é uma <strong>categoria</strong> de exame: metabolômica, proteômica, microbioma, genética. Reúne de centenas a milhares de marcadores; por isso sua visualização tem catálogo, versionamento e comparação no tempo, no espaço da categoria abaixo.
           </p>
         </div>
       </div>
 
-      {/* Barra de Ômica — elemento próprio, separado da explicação */}
+      {/* Categoria Ômica — a representação rica (catálogo/versionamento/comparação) da categoria.
+          NÃO é um fluxo paralelo (E5): é o espaço da categoria ômica. A unificação da ENTRADA
+          com o restante dos exames é E6 (fluxo único de upload). */}
       <ActionCard href="/dashboard/omics" padding="sm"
         className="flex items-center gap-3 group">
         <div className="w-10 h-10 rounded-2xl bg-lavender-light flex items-center justify-center flex-shrink-0">
@@ -441,7 +444,7 @@ export default function ExamsPage() {
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-body text-sm font-semibold text-onyx">Ômica</p>
-          <p className="font-body text-xs text-mauve mt-0.5">Registre e importe metabolômica, proteômica, microbioma e outros — com catálogo, versionamento e comparação no tempo</p>
+          <p className="font-body text-xs text-mauve mt-0.5">Categoria de exame com muitos marcadores — catálogo, versionamento e comparação no tempo</p>
         </div>
         <ChevronRight size={16} className="text-mauve/40 group-hover:text-lavender transition-colors flex-shrink-0" />
       </ActionCard>
@@ -728,9 +731,19 @@ export default function ExamsPage() {
                                     )}
                                   </>
                                 }
-                                chips={isMismatch ? (
-                                  <CardChip tone="petal">Nome divergente do perfil</CardChip>
-                                ) : undefined}
+                                chips={(() => {
+                                  // E5 — categoria (taxonomia aberta). Só quando o tipo é conhecido:
+                                  // exame ainda não analisado (sem document_type) não recebe rótulo genérico.
+                                  const cat = categoryOf((exam as unknown as { document_type?: string | null }).document_type)
+                                  const showCat = cat.key !== FALLBACK_CATEGORY.key
+                                  if (!isMismatch && !showCat) return undefined
+                                  return (
+                                    <>
+                                      {showCat && <CardChip tone="mauve">{cat.label}</CardChip>}
+                                      {isMismatch && <CardChip tone="petal">Nome divergente do perfil</CardChip>}
+                                    </>
+                                  )
+                                })()}
                                 actions={
                                   <>
                                     <button type="button" aria-label="Renomear" title="Renomear"
