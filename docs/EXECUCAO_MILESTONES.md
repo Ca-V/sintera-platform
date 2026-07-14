@@ -33,6 +33,7 @@
 | **M7** | Captura de evidência completa (laudo + imagens) | **0%** | ⬜ | E+4 |
 | **M8** | Robustez operacional (timeout/retries/perf) | **0%** | ⬜ (backlog) | — |
 | **M9** | Certificação RI-001 (homologação + merge) | ⛔ pausada | ⛔ | após M1+M2 |
+| **D·** | **DOMÍNIO — Evento Assistencial** (admin·recorrência·duplicados·estado binário) | registrado | ⬜ | consolidação (não interrompe) → `EVENTO_ASSISTENCIAL.md` |
 
 ---
 

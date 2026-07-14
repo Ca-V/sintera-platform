@@ -31,11 +31,21 @@
 | "Recebo lembretes / agenda de saúde" | ✅ | agenda + WhatsApp/e-mail |
 | "Guardo receitas, medicamentos, condições, vacinas" | ✅ | módulos existentes |
 
+## Domínio — Evento Assistencial (requisitos registrados 13/07; implementar na consolidação)
+| Capacidade | Estado | Nota |
+|---|---|---|
+| "Vejo 'Resultados estruturados' ou 'Documento disponível' (nunca 'parcial')" | ⬜ registrado | fim da estruturação parcial na UI (`EVENTO_ASSISTENCIAL.md` §1) |
+| "Guardo valor pago, nota fiscal, recibo e comprovantes no evento" | ⬜ registrado | admin vinculado ao Evento, separado do clínico (§2) |
+| "Registro recorrência/retorno (repetir em 6m, revisão anual…)" | ⬜ registrado | recorrência genérica; Timeline com futuro (§3) |
+| "Vejo o solicitante no card do exame" | ⬜ registrado | título + emissor + médico solicitante (§4) |
+| "A plataforma me avisa se o documento já existe" | ⬜ registrado | detecção de duplicados por fingerprint+evidências (§5) |
+
 ## Futuro (visão)
 | Capacidade | Estado | Nota |
 |---|---|---|
 | "Importo as imagens do exame (laudo + imagens)" | ⬜ | captura de evidência completa (M7) |
 | "Comparo mamografias/OCTs ao longo do tempo" | ⬜ | camada cognitiva (evidência longitudinal) |
+| "Reembolso / IR / gestão de despesas em saúde" | ⬜ | habilitado pela camada administrativa do Evento |
 | "Importo de FHIR/DICOM/HL7/hospital automaticamente" | ⬜ | conectores de aquisição |
 
 ---
