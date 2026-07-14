@@ -46,6 +46,7 @@
 | "Importo as imagens do exame (laudo + imagens)" | ⬜ | captura de evidência completa (M7) |
 | "Comparo mamografias/OCTs ao longo do tempo" | ⬜ | camada cognitiva (evidência longitudinal) |
 | "Reembolso / IR / gestão de despesas em saúde" | ⬜ | habilitado pela camada administrativa do Evento |
+| "Compartilho meu histórico com o médico num espaço controlado" | ⬜ registrado | **CARE-001** (Espaço Colaborativo): dossiê + snapshot imutável + revogação; após o núcleo clínico (`CARE-001_ESPACO_COLABORATIVO.md`) |
 | "Importo de FHIR/DICOM/HL7/hospital automaticamente" | ⬜ | conectores de aquisição |
 
 ---
