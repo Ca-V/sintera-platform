@@ -137,11 +137,12 @@ identidade → modelo → processador; (g) contrato de processador (`ProcessorRe
 reprodutibilidade → **CRC verde**). Sobe para ✅ só quando o caso do CRC passa.
 Maturidade por modalidade em `COBERTURA_CLINICA.md` (5 estágios: Identificação → Representação → Validação →
 Cobertura → UCDA).
-**Em andamento — `corneal-tomography` (GS-004) · estágio Representação:** modelo `runCornealTomography` ✅
-(parâmetros tomográficos por olho: K1/K2/Kmax/espessura mínima/BAD-D/elevações; RDC 657 — transcreve, não
-interpreta) + `FUNC-corneal-tomography-processor` (8, incl. fachada `processClinical` + multi-fabricante).
-**Falta:** ligar `processClinical` no `analyze` (persistir parâmetros como resultado, não biomarcadores) +
-fixture real GS-004 (`expected.json`) na homologação → sobe para Validação/Cobertura.
+**Em andamento — `corneal-tomography` (GS-004) · Representação LIGADA:** modelo `runCornealTomography` ✅ +
+fachada `processClinical` **ligada ao `analyze`** ✅ — os parâmetros por olho são persistidos em
+`clinical_results` (migration 109, tabela não-biomarcador; região OD/OE; RDC 657 — transcreve, não interpreta).
+`FUNC-corneal-tomography-processor` (8). **Falta:** Representation Validator no parametric (Validação) ·
+comparador de Cobertura parametric · fixture real GS-004 (`expected.json`) na homologação · **exibição por
+olho + evolução OD×OE = decisão de PRODUTO** (não bloqueia; CARE Fase 4 / Fase 3 longitudinal).
 **Fila (CRC dirige):** Mamografia (GS-012) → Ultrassom (GS-013) → EEG (GS-003) → Ecocardiograma (GS-007)…
 **Testes:** `FUNC-corneal-tomography-processor` ✅ · por modelo: 1 FUNC (processador) + regressão CRC.
 

@@ -12,6 +12,7 @@ import { classifyDocumentAI } from '@/lib/ai/document-classifier'
 import { representationFingerprint, isRepresentationCertified } from '@/lib/capture/reproducibility'
 import { computeCoverage } from '@/lib/capture/coverage'
 import { processBundle } from '@/lib/capture/clinical-information-pipeline'
+import { processClinical } from '@/lib/capture/clinical-processing-engine'
 import { planBundleSplit, restrictPages, type SplitPlan } from '@/lib/capture/bundle-split'
 import { pickExamDate } from '@/lib/capture/semantic-dates'
 import { identifyClinical } from '@/lib/capture/clinical-identity-registry'
@@ -389,6 +390,29 @@ export async function POST(
   finalUpdate.extractor_family = effectiveDocType
   finalUpdate.extractor_version = effectiveDocType === 'laboratory' ? 'laboratory-v1' : 'heuristic-v0'
   finalUpdate.processed_at = new Date().toISOString()
+
+  // ── Clinical Processing Engine — resultado por MODELO CLÍNICO (não-biomarcador) → clinical_results ──
+  // O analyze conhece SÓ o Engine: processClinical(cdu) identifica → seleciona o MODELO → executa o
+  // processador. Persistência ADITIVA e fiel (parâmetros por região; nunca disfarçados de biomarcador —
+  // evita o churn "Pentacam = N biomarcadores"). RDC 657: transcreve, não interpreta. Idempotente
+  // (delete-then-insert do próprio modelo). Não altera a UI atual — a exibição por olho é decisão de
+  // produto (o usuário continua vendo o documento original). Imagem sem texto → sem parâmetros (multimodal
+  // é etapa futura). Roda sobre a CDU certificada desta extração (conteúdo autossuficiente).
+  const primaryCdu = bundle.ready[0] ?? bundle.cdus[0]
+  if (primaryCdu) {
+    const cpe = processClinical(primaryCdu)
+    const out = cpe.result.output
+    if (out && out.kind === 'parametric' && cpe.result.extractedUnits > 0) {
+      const rows = out.parameters.map((p, i) => ({
+        exam_id: examId, user_id: userId,
+        clinical_model: cpe.result.clinicalModel, result_kind: 'parametric',
+        name: p.name, value_text: p.value, unit: p.unit ?? null, region: p.region ?? null,
+        sort_order: i, source: 'cpe', contract_version: cpe.result.contractVersion,
+      }))
+      await supabase.from('clinical_results').delete().eq('exam_id', examId).eq('clinical_model', cpe.result.clinicalModel)
+      await supabase.from('clinical_results').insert(rows as never)
+    }
+  }
 
   // ── IDENTIDADE DOCUMENTAL — WRITE-ONCE (Princípio da Identidade Documental, GOVERNANCA) ──
   // Estabelecida SÓ na 1ª extração; "Extrair novamente" NUNCA altera nome/type/scope/data/
