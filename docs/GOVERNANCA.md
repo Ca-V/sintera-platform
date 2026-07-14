@@ -853,6 +853,29 @@ serviço próprio** (como o CPE para o clínico), **completamente desacoplada do
   backlog · dependências · critério objetivo de encerramento**.
 - **Prioridade atual:** concluir integralmente o **módulo Exames** (`docs/EXAMES_CONCLUSAO.md`, E1–E8).
 
+## Pilar transversal — Plataforma de Integrações em Saúde (HIP-001) (fundadora, 14/07/2026)
+
+**Novo PILAR arquitetural: aquisição de dados externos por CONECTORES independentes.** Não é uma arquitetura
+para wearables específicos — é uma **infraestrutura universal**: qualquer fonte externa entra por um conector,
+que **traduz o formato/protocolo para a representação canônica (UCDA)**; o núcleo **nunca depende de fabricante
+ou formato original**. Novos fabricantes entram **sem mudança estrutural** (Modelo Aberto). Sincronização
+**rastreável·auditável·versionada** (Reprodutibilidade/Auditabilidade). O **usuário autoriza/revoga** cada
+integração (LGPD Art. 11). Alvos: wearables · plataformas esportivas · dispositivos de monitorização (CGM,
+pressão, oxímetro, balança/bioimpedância, sono…) · e preparada para FHIR/HL7/DICOM/RNDS/hospitais/laboratórios/
+operadoras/telemedicina. Detalhe: `docs/HIP-001_PLATAFORMA_INTEGRACOES.md`. **Sinais Vitais automáticos = 1º
+consumidor.** **Registrar agora, considerar na arquitetura desde já** (evitar acoplamento); implementar na fase 3/4.
+
+## Conjunto de capacidades TRANSVERSAIS + sequência de execução (fundadora, 14/07/2026)
+
+Pilares transversais da plataforma (não-modalidades): **Clinical Processing Engine · UCDA · CARE-001 ·
+Billing/Assinaturas · Sistema de Notificações (NOTIF-001) · Eventos Assistenciais · Plataforma de Integrações
+em Saúde (HIP-001)**.
+
+Sequência de implementação (não inverter): **(1) concluir integralmente os módulos existentes → (2) consolidar
+as capacidades transversais → (3) concluir a infraestrutura universal da plataforma → (4) só então ampliar
+modalidades clínicas e integrações.** HIP-001 e Billing são considerados na arquitetura desde já (evitar
+acoplamento/retrabalho), implementados na fase adequada.
+
 ## Regras gerais
 
 - **Código estável:** uma vez atribuído, não muda; a versão vive no cabeçalho do doc.

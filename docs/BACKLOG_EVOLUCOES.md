@@ -71,10 +71,17 @@ do** → CARE-001*.
   metálico** só como destaque (premium/badges/estados especiais/detalhes). Elegante, atemporal, sofisticada.
   *(§5; refina [[branding_paleta_v3_vangogh]])*
 
-## Fase E — INTEGRAÇÕES EXTERNAS
-- **E1 · Sinais Vitais automáticos** — integração com wearables · smartwatches · smartbands · apps de saúde ·
-  plataformas parceiras; **prioridade = integração automática** (reduzir lançamento manual). *(§3; conecta
-  Ecossistema / conectores de aquisição)*
+## Fase E — INTEGRAÇÕES EXTERNAS → pilar HIP-001 (Plataforma de Integrações em Saúde)
+> Reenquadrada (fundadora 14/07): NÃO é integração wearable isolada, é o **pilar transversal HIP-001** —
+> conectores independentes p/ QUALQUER fonte externa, todos produzindo a representação canônica (UCDA), sem
+> depender de fabricante/formato; usuário autoriza/revoga. Detalhe: `docs/HIP-001_PLATAFORMA_INTEGRACOES.md`.
+- **E1 · Sinais Vitais automáticos** = **1º consumidor de HIP-001** (não uma integração isolada). Prioridade =
+  aquisição automática (reduzir lançamento manual), via conector → UCDA → Sinais Vitais.
+- **E2 · Conectores** — wearables (Apple/Google Health, Garmin, Fitbit, Polar, Suunto, Coros, Amazfit, Huawei,
+  Samsung, Oura, Whoop) · esportivas (Strava, TrainingPeaks, Zwift, Wahoo, Runkeeper, Nike/Adidas Running) ·
+  monitorização (CGM, pressão, oxímetro, balança/bioimpedância, sono, respiratório).
+- **E3 · Preparação futura** (só arquitetura): FHIR · HL7 · DICOM · RNDS · hospitais · laboratórios · clínicas ·
+  operadoras · telemedicina. Precursor a reconciliar: tabela `wearable_connections` (RLS sem política).
 
 ---
 
