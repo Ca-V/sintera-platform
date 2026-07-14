@@ -102,7 +102,9 @@ especializados, todos consumindo `CertifiedCDU` (nunca PDF) e produzindo o model
 (c) **CertifiedCDU AUTOSSUFICIENTE** ✅ — carrega o conteúdo (`content: CduContent`); o processador não
 volta a páginas/PDF/OCR; (d) **desacoplamento garantido por teste** ✅ `ARCH-processor-decoupling`;
 (e) **modelos por MODALIDADE, não fabricante** ✅ (Pentacam/Galilei/Orbscan → `corneal-tomography`);
-(f) contrato de processador (`ProcessorResult`, `parametric|narrative|structured`, `extractedUnits`) ✅.
+(f) **Modelo Clínico (estrutura/conhecimento) SEPARADO do Processador (implementação)** ✅ —
+`clinical-processors/models.ts` declara campos/unidades/por-região; o processador só preenche; roteamento =
+identidade → modelo → processador; (g) contrato de processador (`ProcessorResult`, `extractedUnits`) ✅.
 **Feito:** `clinical-processing-engine.ts` (13 modelos mapeados + `processClinical`) · `clinical-processors/`
 (contrato + 1º modelo) · `FUNC-clinical-processing-engine` (9) · `ARCH-identity-processor-coverage` ·
 `ARCH-processor-decoupling`.

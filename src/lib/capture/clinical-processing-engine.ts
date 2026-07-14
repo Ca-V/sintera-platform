@@ -15,79 +15,51 @@
 
 import { identifyClinical, type ClinicalIdentity } from './clinical-identity-registry'
 import { runCornealTomography } from './clinical-processors/corneal-tomography'
-import type { CertifiedCDU, ClinicalProcessorFn, ProcessorResult } from './clinical-processors/types'
+import { getClinicalModel } from './clinical-processors/models'
+import type { CertifiedCDU, ClinicalModel, ClinicalProcessorFn, ProcessorResult, ResultKind } from './clinical-processors/types'
 
-/** Forma do resultado que uma modalidade produz — a heterogeneidade que o modelo universal acomoda. */
-export type ResultKind =
-  | 'structured'   // biomarcadores (valor + unidade + referência) — laboratório
-  | 'narrative'    // achados textuais/laudo — imagem, neurofisiologia, patologia
-  | 'parametric'   // parâmetros/medidas por região/olho/derivação — Pentacam, OCT, densitometria, ECG
+export type { ResultKind } from './clinical-processors/types'
 
 /** Revisão a jusante do processamento (não confundir com a revisão TÉCNICA da Identidade Documental). */
 export type ProcessingReview = 'none' | 'clinical'
 
-/** Descritor de um processador especializado. O `clinicalModel` casa com o nome eleito pela Identidade Clínica. */
-export interface ClinicalProcessor {
-  clinicalModel: string          // ex.: 'laboratory' — chave de roteamento (vinda do registry)
-  resultKind: ResultKind
-  /** Versão do contrato do processador (estável/versionada, como o CertifiedCDU). */
-  contractVersion: string
-}
-
-/** Registro de processadores por extrator. Cresce puxado pelo CRC — 1 processador por modalidade madura. */
-export const CLINICAL_PROCESSORS: ClinicalProcessor[] = [
-  { clinicalModel: 'laboratory',        resultKind: 'structured', contractVersion: 'v1' },
-  { clinicalModel: 'mammography',       resultKind: 'narrative',  contractVersion: 'v1' },
-  { clinicalModel: 'ultrasound',        resultKind: 'narrative',  contractVersion: 'v1' },
-  { clinicalModel: 'mri',               resultKind: 'narrative',  contractVersion: 'v1' },
-  { clinicalModel: 'ct',                resultKind: 'narrative',  contractVersion: 'v1' },
-  { clinicalModel: 'pathology',         resultKind: 'narrative',  contractVersion: 'v1' },
-  { clinicalModel: 'eeg',               resultKind: 'narrative',  contractVersion: 'v1' },
-  { clinicalModel: 'corneal-tomography',  resultKind: 'parametric', contractVersion: 'v1' },
-  { clinicalModel: 'oct',               resultKind: 'parametric', contractVersion: 'v1' },
-  { clinicalModel: 'densitometry',               resultKind: 'parametric', contractVersion: 'v1' },
-  { clinicalModel: 'ecg',               resultKind: 'parametric', contractVersion: 'v1' },
-  { clinicalModel: 'echocardiography',              resultKind: 'parametric', contractVersion: 'v1' },
-  { clinicalModel: 'holter',            resultKind: 'parametric', contractVersion: 'v1' },
-]
-
 export interface ProcessingRoute {
-  /** Processador escolhido, ou null quando nenhum atende (→ document_only). */
-  processor: ClinicalProcessor | null
-  /** Forma esperada do resultado (null quando document_only). */
+  /** MODELO CLÍNICO (estrutura da modalidade) escolhido, ou null quando não há estrutura conhecida. */
+  model: ClinicalModel | null
+  /** Forma esperada do resultado (do modelo; null quando document_only). */
   resultKind: ResultKind | null
-  /** 'clinical' quando não há processador (segue como document_only, sem bloquear). */
+  /** 'clinical' quando não há modelo/estrutura (segue como document_only, sem bloquear). */
   review: ProcessingReview
   /** Motivo auditável do roteamento. */
   reason: string
 }
 
 /**
- * Roteia uma CertifiedCDU (via a sua Identidade Clínica) ao processador especializado. Puro/determinístico.
- *
- * Sem identidade confiável, ambígua, ou sem processador correspondente → `document_only` (revisão CLÍNICA,
- * não bloqueia). Nunca "força" um processador — é melhor preservar o documento do que inventar estrutura.
+ * Roteia uma CertifiedCDU (via a sua Identidade Clínica) ao seu MODELO CLÍNICO (estrutura). Puro/determinístico.
+ * NÃO conhece a implementação (processador) — só a estrutura. Sem identidade confiável/ambígua/sem modelo →
+ * `document_only` (revisão CLÍNICA, não bloqueia). Nunca força — melhor preservar o documento que inventar.
  */
 export function routeProcessing(identity: ClinicalIdentity | null | undefined): ProcessingRoute {
   if (!identity || !identity.clinicalType || !identity.clinicalModel || identity.confidence === 'low') {
-    return { processor: null, resultKind: null, review: 'clinical',
+    return { model: null, resultKind: null, review: 'clinical',
       reason: 'sem identidade clínica confiável → document_only (preserva o documento; revisão clínica)' }
   }
   if (identity.ambiguous) {
-    return { processor: null, resultKind: null, review: 'clinical',
+    return { model: null, resultKind: null, review: 'clinical',
       reason: 'identidade clínica ambígua (2+ modalidades fortes) → document_only; possivelmente N documentos (Segmentação)' }
   }
-  const processor = CLINICAL_PROCESSORS.find(p => p.clinicalModel === identity.clinicalModel) ?? null
-  if (!processor) {
-    return { processor: null, resultKind: null, review: 'clinical',
-      reason: `modalidade "${identity.clinicalType}" identificada, mas sem processador (${identity.clinicalModel}) → document_only (revisão clínica, não bloqueia)` }
+  const model = getClinicalModel(identity.clinicalModel)
+  if (!model) {
+    return { model: null, resultKind: null, review: 'clinical',
+      reason: `modalidade "${identity.clinicalType}" identificada, mas sem MODELO CLÍNICO (${identity.clinicalModel}) → document_only` }
   }
-  return { processor, resultKind: processor.resultKind, review: 'none',
-    reason: `roteado ao modelo ${processor.clinicalModel} (${processor.resultKind}) — CEF contrato ${processor.contractVersion}` }
+  return { model, resultKind: model.resultKind, review: 'none',
+    reason: `roteado ao modelo ${model.id} (${model.resultKind}) — contrato ${model.contractVersion}` }
 }
 
-// ── Executor: Identidade Clínica → Modelo Clínico → processador. ÚNICO ponto que conhece os processadores
-// concretos. Cada modelo NASCE dirigido por um caso do CRC (GS-004 → corneal-tomography; …) e entra aqui.
+// ── Executor: Identidade Clínica → Modelo Clínico (estrutura) → PROCESSADOR (preenche). ÚNICO ponto que
+// conhece os processadores concretos. Cada processador NASCE dirigido por um caso do CRC (GS-004 →
+// corneal-tomography; …) e entra aqui. O modelo diz O QUE representar; o processador diz COMO preencher.
 const CLINICAL_MODEL_PROCESSORS: Record<string, ClinicalProcessorFn> = {
   'corneal-tomography': runCornealTomography, // GS-004
 }
@@ -103,21 +75,22 @@ export interface ClinicalProcessingResult {
 
 /**
  * FACHADA ÚNICA do CPE. Recebe uma CertifiedCDU, identifica a modalidade (Identidade Clínica), seleciona o
- * MODELO CLÍNICO e executa o processador. Sem modelo/processador → `document_only` (não bloqueia; preserva o
- * documento). Devolve também a identidade, para o chamador persistir família/tipo — sem conhecer modalidades.
+ * MODELO CLÍNICO (estrutura) e executa o PROCESSADOR (preenche). Sem modelo/processador → `document_only`
+ * (não bloqueia; preserva o documento). Devolve também a identidade, para o chamador persistir família/tipo
+ * — sem conhecer modalidades.
  */
 export function processClinical(cdu: CertifiedCDU): ClinicalProcessingResult {
   const identity = identifyClinical(cdu.content.text)
   const route = routeProcessing(identity)
-  const model = route.processor?.clinicalModel ?? null
+  const model = route.model
   if (!model) {
     return { identity, route, result: { output: null, clinicalModel: 'none', contractVersion: '-', extractedUnits: 0, notes: [route.reason] } }
   }
-  const fn = CLINICAL_MODEL_PROCESSORS[model]
+  const fn = CLINICAL_MODEL_PROCESSORS[model.id]
   if (!fn) {
     return { identity, route, result: {
-      output: null, clinicalModel: model, contractVersion: route.processor!.contractVersion,
-      extractedUnits: 0, notes: [`modelo clínico "${model}" identificado, mas sem processador → document_only`],
+      output: null, clinicalModel: model.id, contractVersion: model.contractVersion,
+      extractedUnits: 0, notes: [`modelo clínico "${model.id}" tem estrutura, mas ainda sem processador → document_only`],
     } }
   }
   return { identity, route, result: fn(cdu) }

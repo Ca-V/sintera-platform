@@ -1,26 +1,29 @@
 import { describe, it, expect } from 'vitest'
 import { CLINICAL_IDENTITY_REGISTRY } from '@/lib/capture/clinical-identity-registry'
-import { CLINICAL_PROCESSORS } from '@/lib/capture/clinical-processing-engine'
+import { CLINICAL_MODELS } from '@/lib/capture/clinical-processors/models'
+import { IMPLEMENTED_CLINICAL_MODELS } from '@/lib/capture/clinical-processing-engine'
 
-// ARCH — invariante entre camadas (Princípio da Validação entre Camadas): toda modalidade que a Identidade
-// Clínica sabe IDENTIFICAR precisa ter, no Clinical Processing Engine, um processador para onde ser ROTEADA.
-// Um extrator eleito pela identidade sem processador correspondente seria uma camada deixando a próxima
-// órfã. Se falhar: adicione o processador no CPE (ou remova a modalidade do registry de identidade).
+// ARCH — invariante entre camadas (Validação entre Camadas): toda modalidade que a Identidade Clínica sabe
+// IDENTIFICAR precisa ter um MODELO CLÍNICO (estrutura) para onde ser roteada; e todo processador
+// implementado preenche um modelo real. Assim identidade → modelo → processador nunca deixa a próxima órfã.
 
-describe('ARCH · cobertura Identidade Clínica → Clinical Processing Engine', () => {
-  it('todo extrator do Clinical Identity Registry tem um processador no CPE', () => {
-    const processors = new Set(CLINICAL_PROCESSORS.map(p => p.clinicalModel))
+const modelIds = new Set(CLINICAL_MODELS.map(m => m.id))
+
+describe('ARCH · Identidade Clínica → Modelo Clínico → Processador', () => {
+  it('todo id eleito pela Identidade Clínica existe como Modelo Clínico', () => {
     const orphans = CLINICAL_IDENTITY_REGISTRY
       .map(m => m.clinicalModel)
-      .filter(name => !processors.has(name))
-    expect(orphans, `modalidades sem processador no CPE: ${orphans.join(', ')}`).toEqual([])
+      .filter(id => !modelIds.has(id))
+    expect(orphans, `identidades sem Modelo Clínico: ${orphans.join(', ')}`).toEqual([])
   })
 
-  it('todo processador do CPE corresponde a uma modalidade conhecida (sem processador morto)', () => {
-    const identities = new Set(CLINICAL_IDENTITY_REGISTRY.map(m => m.clinicalModel))
-    const dead = CLINICAL_PROCESSORS
-      .map(p => p.clinicalModel)
-      .filter(name => !identities.has(name))
-    expect(dead, `processadores sem modalidade correspondente: ${dead.join(', ')}`).toEqual([])
+  it('todo processador implementado preenche um Modelo Clínico existente', () => {
+    const dangling = IMPLEMENTED_CLINICAL_MODELS.filter(id => !modelIds.has(id))
+    expect(dangling, `processadores sem modelo: ${dangling.join(', ')}`).toEqual([])
+  })
+
+  it('ids de modelo são únicos (sem duplicidade no catálogo)', () => {
+    const ids = CLINICAL_MODELS.map(m => m.id)
+    expect(ids.length).toBe(new Set(ids).size)
   })
 })
