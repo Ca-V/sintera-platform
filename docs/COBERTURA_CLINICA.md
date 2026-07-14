@@ -8,6 +8,17 @@
 > (conhecimento médico — `clinical-processors/models.ts`); o **Processador** só PREENCHE essa estrutura
 > (implementação). Conhecimento médico desacoplado de implementação.
 
+## Certificação da Plataforma — 6 dimensões (GATE de conclusão) · `docs/CERTIFICACAO_PLATAFORMA.md`
+Uma modalidade só é **CONCLUÍDA** quando passa as 6 dimensões sobre o corpus real. Primeira modalidade certificada:
+
+| Modalidade | 1·Univers. | 2·Fidelid. | 3·Reprod. | 4·Auditab. | 5·Cobert. | 6·Evolução | Certificação |
+|---|:--:|:--:|:--:|:--:|:--:|:--:|---|
+| **Laboratório** (via Laboratory Adapter) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | **CERTIFICADO** (`CERT-laboratory`) |
+| demais modalidades | — | — | — | — | — | — | herdam o GATE; certificam ao nascer |
+
+`CERT-laboratory.test.ts` é o **template** que toda modalidade futura reutiliza. Enquanto qualquer dimensão
+falhar, a capacidade permanece *em andamento* (nunca "concluída").
+
 ## Os 5 estágios de maturidade (cada MODELO percorre esta escada)
 1. **Identificação** — o Clinical Identity Registry reconhece a modalidade por ensemble de evidências.
 2. **Representação** — há **processador** que preenche o Modelo Clínico (a estrutura já é declarativa).

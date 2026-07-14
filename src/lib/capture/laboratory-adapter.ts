@@ -11,7 +11,7 @@
 // Puro/determinístico. RDC 657: transcreve, não interpreta.
 
 import type { UcdaItem, UcdaRepresentation } from './ucda'
-import { toNum } from './ucda'
+import { toNum, ENGINE_VERSION } from './ucda'
 
 // MODELO GENÉRICO (Princípio do Modelo Aberto): o adapter NÃO conhece uma lista de biomarcadores — opera
 // sobre CLASSES de campos. Um analito novo, ou um nome diferente para o mesmo analito, flui sem alteração
@@ -32,6 +32,9 @@ export interface LabBiomarkerRow {
   codeSystem?: string | null         // sistema do código (ex.: 'LOINC')
   method?: string | null             // método de análise
   context?: string | null            // contexto/condição de coleta (ex.: jejum)
+  // Auditabilidade (Certificação §4) — quando a linha de `biomarkers` trouxer.
+  rawText?: string | null            // trecho-fonte
+  page?: number | null               // página de origem
 }
 
 /** Faixa de referência COMO transcrita (não interpreta): "min – max" | "≥ min" | "≤ max" | undefined. */
@@ -60,6 +63,8 @@ export function biomarkerToUcdaItem(b: LabBiomarkerRow): UcdaItem {
     ...(b.context ? { context: b.context } : {}),
     ...(b.sourceExamName ? { group: b.sourceExamName } : {}),
     ...(ref ? { referenceText: ref } : {}),
+    ...(b.page != null ? { page: b.page } : {}),
+    ...(b.rawText ? { excerpt: b.rawText } : {}),
   }
 }
 
@@ -79,6 +84,6 @@ export function laboratoryToUcda(rows: LabBiomarkerRow[]): UcdaRepresentation {
     clinicalModel: 'laboratory',
     resultKind: 'structured',
     items: rows.map(biomarkerToUcdaItem).filter(hasValue),
-    provenance: { source: 'laboratory-adapter', processorVersion: 'v1' },
+    provenance: { source: 'laboratory-adapter', engineVersion: ENGINE_VERSION, processorVersion: 'v1' },
   }
 }
