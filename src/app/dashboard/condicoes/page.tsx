@@ -19,6 +19,7 @@ import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import ListCard from '@/components/ListCard'
 import PageHeader from '@/components/PageHeader'
+import { downscaleImageToPayload } from '@/lib/capture/downscaleImage'
 import Card from '@/components/ui/Card'
 import Disclaimer from '@/components/ui/Disclaimer'
 import CreateRecordMenu from '@/components/ui/CreateRecordMenu'
@@ -37,30 +38,6 @@ interface Condition {
   sinceLabel: string | null
   notes: string | null
   fileUrl: string | null
-}
-
-// Reduz imagem antes de enviar à IA (corta tokens/custo). PDF vai como está.
-async function fileToPayload(file: File): Promise<{ base64: string; mediaType: string }> {
-  const dataUrl = await new Promise<string>((res, rej) => {
-    const r = new FileReader(); r.onload = () => res(r.result as string); r.onerror = rej; r.readAsDataURL(file)
-  })
-  if (file.type === 'application/pdf') return { base64: dataUrl.split(',')[1] ?? '', mediaType: 'application/pdf' }
-  try {
-    const img = await new Promise<HTMLImageElement>((res, rej) => {
-      const i = new window.Image(); i.onload = () => res(i); i.onerror = rej; i.src = dataUrl
-    })
-    const scale = Math.min(1, 1400 / Math.max(img.width, img.height))
-    if (scale < 1) {
-      const canvas = document.createElement('canvas')
-      canvas.width = Math.round(img.width * scale); canvas.height = Math.round(img.height * scale)
-      const ctx = canvas.getContext('2d')
-      if (ctx) { ctx.drawImage(img, 0, 0, canvas.width, canvas.height); const out = canvas.toDataURL('image/jpeg', 0.85); return { base64: out.split(',')[1] ?? '', mediaType: 'image/jpeg' } }
-    }
-  } catch { /* usa original */ }
-  const t = file.type || 'image/jpeg'
-  const SUPPORTED = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-  if (!SUPPORTED.includes(t)) throw new Error('Formato de foto não suportado (ex.: HEIC do iPhone). Tire a foto como JPG ou envie PDF/PNG.')
-  return { base64: dataUrl.split(',')[1] ?? '', mediaType: t }
 }
 
 export default function CondicoesPage() {
@@ -129,7 +106,7 @@ export default function CondicoesPage() {
     if (file.size > 15 * 1024 * 1024) { setScanErr('Arquivo muito grande (máx. 15 MB).'); setShowForm(false); return }
     reset(); setScanning(true); setScanErr(null); setScanInfo(null); setShowForm(false)
     try {
-      const { base64, mediaType } = await fileToPayload(file)
+      const { base64, mediaType } = await downscaleImageToPayload(file)
       const resp = await fetch('/api/vision/condition', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fileBase64: base64, mediaType }),
