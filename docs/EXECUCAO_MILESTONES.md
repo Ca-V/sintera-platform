@@ -37,14 +37,16 @@ infraestrutura (CPE/Registry/Validator) continua, mas não é mais a unidade de 
 > clínica.* Essa história precisa estar consolidada (longitudinal, correlacionada) antes do compartilhamento.
 > Os milestones M1–M9 abaixo detalham a **Fase 1**; o painel `COBERTURA_CLINICA.md` acompanha a **Fase 2**.
 
-> **🔧 PRIORIDADE DE EXECUÇÃO (fundadora 14/07): PRIMEIRO A PLATAFORMA, depois as modalidades.** Consolidar,
-> nesta ordem, validando com o **laboratório real** (446 biomarcadores neste ambiente): **1)** Ingestão ·
-> **2)** processamento por CDU · **3)** Clinical Processing Engine · **4)** persistência canônica
-> (`clinical_results`) · **5)** UCDA · **6)** validar tudo com o laboratório · **7)** só então as modalidades
-> (cada uma dirigida por CRC). O **Pentacam** volta a ser **caso de validação (CRC), não prioridade**.
-> **`clinical_results` é canônico** (migration 110): representa QUALQUER informação clínica estruturada —
-> parâmetros numéricos/categóricos · achados · classificações (BI-RADS/PI-RADS/Bethesda) · medidas ·
-> estruturas anatômicas · lateralidade/região · grupos (evita 2ª migração). Ver
+> **🔧 PRIORIDADE DE EXECUÇÃO (fundadora 14/07): PRIMEIRO A PLATAFORMA, depois as modalidades.** Sequência:
+> **1)** consolidar o **CPE** como fachada única · **2)** **Laboratory Adapter** · **3)** validar o Engine com
+> os **446 biomarcadores reais** · **4)** consolidar a **UCDA** como contrato único de saída · **5)** só então
+> as modalidades (todas via CPE, dirigidas por CRC). O **Pentacam** volta a ser **validação (CRC), não prioridade**.
+>
+> **⚠️ Convergência PROGRESSIVA (princípio constitucional — `GOVERNANCA.md`):** a **UCDA é o ponto de
+> convergência** (contrato único de saída), **não** `clinical_results`. `clinical_results` (canônico, migration
+> 110) e `biomarkers` são **backends de persistência**. Domínio maduro (laboratório) **não migra** — o CPE o
+> **consome** via **Adapter transitório** (`laboratory-adapter.ts`: biomarkers → UCDA, sem tocar nos 446 nem no
+> caminho `current_biomarkers`→evolução). Ver [[principio_convergencia_progressiva]] ·
 > [[feedback_plataforma_antes_modalidades]]. **Sem decisões de UI agora** — persistir correto; interface depois.
 
 ---

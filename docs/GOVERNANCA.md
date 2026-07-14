@@ -671,6 +671,28 @@ Conecta e reforça: **Rastreabilidade Documental · Reprodutibilidade · Valida�
 Arquitetural · Governed Knowledge Evolution · UCDA · CARE-001**. Detalhe do domínio de compartilhamento em
 `docs/CARE-001_ESPACO_COLABORATIVO.md` §5.2.
 
+## Princípio da Convergência Progressiva (CONSTITUCIONAL — fundadora, 14/07/2026)
+
+> **A convergência da plataforma ocorre no Clinical Processing Engine e na UCDA, NUNCA por migração prematura
+> dos domínios maduros. Os domínios existentes permanecem estáveis até que exista evidência suficiente para
+> sua substituição.**
+
+A plataforma tem **um único modelo canônico de representação clínica** — mas isso é um **destino**, não uma
+migração imediata. Regras:
+1. **UCDA é o ponto de convergência** (contrato único de saída), não a persistência. Toda fonte
+   (Laboratório · Imagem · Patologia · EEG · DICOM · FHIR · Wearables) chega à UCDA **via CPE**; todo consumidor
+   (Timeline · Evolução · Care Space · Compartilhamento · Pesquisa · Analytics) lê UCDA.
+2. **`clinical_results` e `biomarkers` são BACKENDS de persistência** de certas modalidades — não o centro.
+3. **Modalidade NOVA nasce no modelo canônico** (via CPE); **nenhuma nova usa estrutura legada**.
+4. **Domínio MADURO não migra** por decisão arquitetural: o CPE o **consome** via **Adapter transitório**
+   (ex.: Laboratory Adapter — `biomarkers` → UCDA, sem tocar nos 446 registros nem no caminho `current_biomarkers`
+   → evolução). O adapter existe até haver evidência para convergir a persistência; a UCDA não muda.
+
+Preserva a estabilidade do laboratório, acelera a consolidação da plataforma e evita migração de alto risco
+antes de a infra universal estar validada. Conecta: Evidência Arquitetural · Reprodutibilidade · UCDA-001 ·
+Clinical Processing Engine. Sequência de execução: consolidar CPE (fachada única) → Laboratory Adapter →
+validar com o laboratório real → consolidar UCDA (contrato único) → só então modalidades (todas via CPE).
+
 ## Regras gerais
 
 - **Código estável:** uma vez atribuído, não muda; a versão vive no cabeçalho do doc.

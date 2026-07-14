@@ -1,0 +1,65 @@
+// Laboratory Adapter — o CPE CONSOME o laboratório, não o substitui (fundadora 14/07).
+//
+// O caminho laboratorial atual (Extração → biomarkers → current_biomarkers → evolução) está validado,
+// utilizado e é o domínio mais maduro — NÃO migrar. Este adapter TRANSFORMA o modelo laboratorial existente
+// na representação canônica UCDA, para que o laboratório participe do MESMO pipeline arquitetural das demais
+// modalidades (CPE → UCDA → Timeline/Evolução/Care/…), sem duplicar lógica e sem migrar os 446 biomarcadores.
+//
+// ADAPTER TRANSITÓRIO: existe enquanto a persistência laboratorial for `biomarkers`. Quando (e se) houver
+// evidência para convergir a persistência, ele é removido — a UCDA continua igual (contrato estável).
+//
+// Puro/determinístico. RDC 657: transcreve, não interpreta.
+
+import type { UcdaItem, UcdaRepresentation } from './ucda'
+import { toNum } from './ucda'
+
+/** Linha do modelo laboratorial existente (subconjunto de `biomarkers` que o adapter consome). */
+export interface LabBiomarkerRow {
+  name: string
+  value: string | null
+  valueText: string | null
+  unit: string | null
+  referenceMin: string | null
+  referenceMax: string | null
+  resultType: string | null          // 'numeric' | 'qualitative' | 'missing' | 'extraction_failed'
+  sourceMaterial: string | null      // amostra: SANGUE/URINA/FEZES…
+  sourceExamName: string | null      // painel/exame: HEMOGRAMA…
+}
+
+/** Faixa de referência COMO transcrita (não interpreta): "min – max" | "≥ min" | "≤ max" | undefined. */
+function referenceText(min: string | null, max: string | null): string | undefined {
+  if (min != null && max != null) return `${min} – ${max}`
+  if (min != null) return `≥ ${min}`
+  if (max != null) return `≤ ${max}`
+  return undefined
+}
+
+/** Um biomarcador → UcdaItem canônico. Numérico → measure; qualitativo → parameter. */
+export function biomarkerToUcdaItem(b: LabBiomarkerRow): UcdaItem {
+  const isNumeric = b.resultType === 'numeric'
+  const valueText = (b.valueText ?? b.value ?? '').toString()
+  const ref = referenceText(b.referenceMin, b.referenceMax)
+  return {
+    itemType: isNumeric ? 'measure' : 'parameter',
+    name: b.name,
+    valueText,
+    valueNum: isNumeric ? toNum(valueText) : null,
+    ...(b.unit ? { unit: b.unit } : {}),
+    ...(b.sourceMaterial ? { specimen: b.sourceMaterial } : {}),
+    ...(b.sourceExamName ? { group: b.sourceExamName } : {}),
+    ...(ref ? { referenceText: ref } : {}),
+  }
+}
+
+/**
+ * Adapta o resultado laboratorial existente (linhas de `biomarkers`) para a representação canônica UCDA.
+ * NÃO persiste nem migra — apenas apresenta o laboratório como UCDA para o restante do pipeline. Puro.
+ */
+export function laboratoryToUcda(rows: LabBiomarkerRow[]): UcdaRepresentation {
+  return {
+    clinicalModel: 'laboratory',
+    resultKind: 'structured',
+    items: rows.map(biomarkerToUcdaItem),
+    provenance: { source: 'laboratory-adapter', contractVersion: 'v1' },
+  }
+}
