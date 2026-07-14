@@ -812,6 +812,26 @@ redundantes · oportunidades de reúso de componentes.** A arquitetura está mad
 ponha em dúvida um princípio arquitetural já estabelecido.** O resto segue direto para implementação → testes
 → auditoria → certificação.
 
+## Pilar transversal — Assinaturas & Billing (BILLING-001) + disciplina de execução (fundadora, 14/07/2026)
+
+**Novo PILAR arquitetural: Billing & Assinaturas (SaaS).** Toda a lógica comercial fica **centralizada num
+serviço próprio** (como o CPE para o clínico), **completamente desacoplada dos módulos** — os módulos apenas
+**consultam entitlements/permissões**, nunca conhecem regra comercial (planos/preços/gateway). Gateway-agnóstico
+(adapters por meio de pagamento). Capacidade **transversal** (ao lado de CPE · UCDA · CARE · Eventos),
+**requisito de produção** (pronta antes do lançamento comercial). Detalhe: `docs/BILLING-001_ASSINATURAS.md`.
+**Registrar agora, implementar na fase adequada** — não interrompe a prioridade atual (concluir o módulo Exames).
+
+**Disciplina de execução (reforço):**
+- **Uma CAPACIDADE COMPLETA por vez** — ponta a ponta, validada e **encerrada antes de iniciar a próxima**;
+  **não abrir frentes paralelas**.
+- **Reutilizar antes de criar** — localizar capacidades existentes → estender → só criar estrutura nova quando
+  realmente necessário (ex.: `health_events` já sustenta financeiro/recorrência/lembretes).
+- **Consolidar antes de expandir** — módulos existentes completos → arquitetura consolidada → capacidades
+  transversais reutilizáveis (Eventos · Notificações · **Billing**) → só então modalidades clínicas.
+- **Backlog consolidado como única referência** — sem iniciativas paralelas. Cada entrega declara: **item do
+  backlog · dependências · critério objetivo de encerramento**.
+- **Prioridade atual:** concluir integralmente o **módulo Exames** (`docs/EXAMES_CONCLUSAO.md`, E1–E8).
+
 ## Regras gerais
 
 - **Código estável:** uma vez atribuído, não muda; a versão vive no cabeçalho do doc.
