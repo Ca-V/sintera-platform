@@ -21,6 +21,7 @@ function persist(rk: string, model: string, items: ReturnType<typeof representat
     code: it.code ?? null, code_system: it.codeSystem ?? null, value_code: it.valueCode ?? null,
     region: it.region ?? null, anatomy: it.anatomy ?? null, method: it.method ?? null,
     context: it.context ?? null, group_label: it.group ?? null, reference_text: it.referenceText ?? null,
+    page: it.page ?? null, raw_text: it.excerpt ?? null,
   }))
 }
 
@@ -45,6 +46,7 @@ describe('FUNC · UCDA contrato — round-trip processador → persistência →
       clinical_model: 'laboratory', result_kind: 'structured', item_type: 'measure', name: 'Glicose',
       value_text: '92', value_num: 92, unit: 'mg/dL', code: '2345-7', code_system: 'LOINC', value_code: null,
       region: null, anatomy: null, method: 'Hexoquinase', context: 'Jejum', group_label: null, reference_text: '70 – 99',
+      page: 1, raw_text: 'Glicose 92 mg/dL',
     }]
     const ucda = clinicalResultsToUcda(rows)!
     expect(ucda.items[0]).toMatchObject({ code: '2345-7', codeSystem: 'LOINC', method: 'Hexoquinase', context: 'Jejum', referenceText: '70 – 99' })

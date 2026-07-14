@@ -52,6 +52,9 @@ export interface ProcessedParameter {
   unit?: string
   /** Região/lateralidade (ex.: 'OD', 'OE') quando a medida é por olho/derivação/segmento. */
   region?: string
+  /** Auditabilidade (Certificação §4): página de origem (1-based) e trecho-fonte exato. */
+  page?: number
+  excerpt?: string
 }
 
 /** Resultado paramétrico (Pentacam, OCT, densitometria, ECG…). */

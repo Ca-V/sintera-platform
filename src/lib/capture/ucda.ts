@@ -19,6 +19,9 @@
 
 import type { ProcessorResult } from './clinical-processors/types'
 
+/** Versão do Clinical Processing Engine — proveniência/auditabilidade (Certificação §4). */
+export const ENGINE_VERSION = 'cpe-v1'
+
 // MODELO ABERTO (Princípio do Modelo Aberto, GOVERNANCA): representa CLASSES de informação clínica — nunca
 // listas fechadas de analitos/modalidades/fabricantes. Um analito novo, um nome diferente para o mesmo
 // analito, um equipamento/laboratório novo → representável SEM alteração estrutural. Todos os campos além do
@@ -52,9 +55,27 @@ export interface UcdaItem {
   group?: string
   /** Faixa/valor de referência COMO transcrito (não interpretativo). */
   referenceText?: string
+  // ── AUDITABILIDADE (Certificação §4) — proveniência por ELEMENTO ──
+  /** Página de origem (1-based) no documento. */
+  page?: number
+  /** Trecho-fonte exato de onde o elemento foi lido (transcrição/auditoria). */
+  excerpt?: string
 }
 
 export type UcdaResultKind = 'structured' | 'narrative' | 'parametric'
+
+/** Proveniência auditável de uma representação (Certificação §4). Fecha o ciclo de rastreabilidade. */
+export interface UcdaProvenance {
+  source: string
+  /** Versão do Engine que produziu. */
+  engineVersion?: string
+  /** Versão do processador/contrato que produziu. */
+  processorVersion?: string
+  /** Documento de origem (exam_id). */
+  documentId?: string
+  /** Quando foi produzido (ISO). Carimbado na persistência. */
+  producedAt?: string
+}
 
 /** Representação canônica de uma evidência clínica (a saída universal do CPE). */
 export interface UcdaRepresentation {
@@ -62,7 +83,7 @@ export interface UcdaRepresentation {
   resultKind: UcdaResultKind
   items: UcdaItem[]
   /** Proveniência auditável — de onde veio esta representação. */
-  provenance: { source: string; contractVersion?: string }
+  provenance: UcdaProvenance
 }
 
 /**
@@ -72,7 +93,7 @@ export interface UcdaRepresentation {
 export function representationFromProcessor(result: ProcessorResult): UcdaRepresentation | null {
   const out = result.output
   if (!out) return null
-  const provenance = { source: 'cpe', contractVersion: result.contractVersion }
+  const provenance: UcdaProvenance = { source: 'cpe', engineVersion: ENGINE_VERSION, processorVersion: result.contractVersion }
 
   if (out.kind === 'parametric') {
     return {
@@ -80,6 +101,7 @@ export function representationFromProcessor(result: ProcessorResult): UcdaRepres
       items: out.parameters.map(p => ({
         itemType: 'measure' as const, name: p.name, valueText: p.value,
         valueNum: toNum(p.value), ...(p.unit ? { unit: p.unit } : {}), ...(p.region ? { region: p.region } : {}),
+        ...(p.page != null ? { page: p.page } : {}), ...(p.excerpt ? { excerpt: p.excerpt } : {}),
       })),
     }
   }
@@ -126,6 +148,9 @@ export interface ClinicalResultRow {
   context: string | null
   group_label: string | null
   reference_text: string | null
+  // Auditabilidade
+  page: number | null
+  raw_text: string | null
 }
 
 const asItemType = (t: string | null): UcdaItem['itemType'] =>
@@ -148,6 +173,8 @@ function itemFromRow(r: ClinicalResultRow): UcdaItem {
     ...(r.context ? { context: r.context } : {}),
     ...(r.group_label ? { group: r.group_label } : {}),
     ...(r.reference_text ? { referenceText: r.reference_text } : {}),
+    ...(r.page != null ? { page: r.page } : {}),
+    ...(r.raw_text ? { excerpt: r.raw_text } : {}),
   }
 }
 

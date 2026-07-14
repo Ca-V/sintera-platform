@@ -43,6 +43,7 @@ export const runCornealTomography: ClinicalProcessorFn = (cdu: CertifiedCDU): Pr
   const parameters: ProcessedParameter[] = []
   const seen = new Set<string>()
   const fields = model?.fields ?? []
+  const page = cdu.pages[0] // auditabilidade: página de origem (CDU de página única — best-effort)
 
   for (const rawLine of text.split(/\r?\n/)) {
     const line = rawLine.replace(/\s+/g, ' ').trim()
@@ -63,6 +64,8 @@ export const runCornealTomography: ClinicalProcessorFn = (cdu: CertifiedCDU): Pr
         value: m[1].replace(',', '.'),
         ...(field.unit ? { unit: field.unit } : {}),
         ...(regionForField ? { region: regionForField } : {}),
+        ...(page != null ? { page } : {}),
+        excerpt: line, // auditabilidade: trecho-fonte exato de onde o valor foi lido
       })
     }
   }

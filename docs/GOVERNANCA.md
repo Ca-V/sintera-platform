@@ -740,6 +740,22 @@ quando, **sobre os exames laboratoriais REAIS**, forem demonstradas equivalênci
 · persistência · evolução longitudinal · reprodutibilidade · performance**. Até lá, **o caminho legado
 permanece ativo** e o CPE o **consome** via Laboratory Adapter (sem alterar comportamento).
 
+## Certificação da Plataforma — GATE de conclusão (CONSTITUCIONAL — fundadora, 14/07/2026)
+
+> **Toda nova capacidade só é considerada CONCLUÍDA após passar pela Certificação da Plataforma.**
+
+A fase deixa de ser "equivalência com o legado" e passa a ser **certificação contra os princípios
+constitucionais**. Seis dimensões (detalhe em `docs/CERTIFICACAO_PLATAFORMA.md`):
+**1. Universalidade** (representa qualquer exame da classe, inclusive futuros) · **2. Fidelidade** (sem perda/
+invenção/reorganização incorreta) · **3. Reprodutibilidade** (mesmo doc → mesma representação) ·
+**4. Auditabilidade** (por elemento: documento·página·trecho·versão do Engine·versão do processador·quando) ·
+**5. Cobertura** (nunca falsa completude) · **6. Evolução** (alimenta Timeline/Evolução/Care/UCDA/
+compartilhamento/pesquisa).
+
+Toda modalidade futura (Mamografia, EEG, Ecocardiograma, Anatomopatológico…) **nasce com este padrão** — só
+entra como concluída quando as 6 dimensões passam, com teste/evidência registrados. Os 446 exames reais são
+o **corpus** de certificação, nunca a referência do modelo.
+
 ## Regras gerais
 
 - **Código estável:** uma vez atribuído, não muda; a versão vive no cabeçalho do doc.

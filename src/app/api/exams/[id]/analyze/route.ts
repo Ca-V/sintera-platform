@@ -415,6 +415,9 @@ export async function POST(
         code: it.code ?? null, code_system: it.codeSystem ?? null, value_code: it.valueCode ?? null,
         method: it.method ?? null, context: it.context ?? null, group_label: it.group ?? null,
         reference_text: it.referenceText ?? null,
+        // Auditabilidade (Certificação §4): documento(exam_id) · página · trecho · Engine · processador · quando(created_at)
+        page: it.page ?? null, raw_text: it.excerpt ?? null,
+        engine_version: ucda.provenance.engineVersion ?? null,
         sort_order: i, source: 'cpe', contract_version: cpe.result.contractVersion,
       }))
       // Idempotente (delete-then-insert do próprio modelo): reprocessar não duplica.

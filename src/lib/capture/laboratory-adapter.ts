@@ -79,6 +79,6 @@ export function laboratoryToUcda(rows: LabBiomarkerRow[]): UcdaRepresentation {
     clinicalModel: 'laboratory',
     resultKind: 'structured',
     items: rows.map(biomarkerToUcdaItem).filter(hasValue),
-    provenance: { source: 'laboratory-adapter', contractVersion: 'v1' },
+    provenance: { source: 'laboratory-adapter', processorVersion: 'v1' },
   }
 }
