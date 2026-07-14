@@ -8,7 +8,7 @@ import {
   TrendingUp, TrendingDown, Minus, HelpCircle, AlertCircle,
   Download, Printer, ChevronDown, CalendarDays,
   Pencil, Check, X, Flag, Trash2,
-  Droplet, FlaskConical, TestTube, ShieldCheck,
+  Droplet, FlaskConical, TestTube, ShieldCheck, Receipt,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { parseDateOnly } from '@/lib/agenda'
@@ -295,6 +295,9 @@ export default function ExamDetailPage() {
   const [analyzeNotice, setAnalyzeNotice] = useState<string | null>(null)
   const [exportOpen, setExportOpen]     = useState(false)
   const [agendarOpen, setAgendarOpen]   = useState(false)
+  // E7/E8 reutilizam o Evento Assistencial (health_events): 'repeat' = agendar/lembrete
+  // (recorrência); 'expense' = registrar valor pago + NF/recibo do exame realizado (→ Despesas).
+  const [agendarMode, setAgendarMode]   = useState<'repeat' | 'expense'>('repeat')
 
   // ── Renomear exame ───────────────────────────────────────────────────────
   const [editingName, setEditingName]   = useState(false)
@@ -721,11 +724,18 @@ export default function ExamDetailPage() {
               <Flag size={14} /> Reportar
             </button>
 
-            {/* Agendar */}
+            {/* Agendar/lembrete (E8) */}
             <button
-              onClick={() => setAgendarOpen(true)}
+              onClick={() => { setAgendarMode('repeat'); setAgendarOpen(true) }}
               className="flex items-center gap-1.5 border border-border text-mauve font-body text-sm font-medium px-3 py-2.5 rounded-full hover:border-petal/40 hover:text-petal transition-colors">
               <CalendarDays size={14} /> Criar lembrete
+            </button>
+
+            {/* Registrar valor pago + NF/recibo (E7) — vira Despesa (health_events) */}
+            <button
+              onClick={() => { setAgendarMode('expense'); setAgendarOpen(true) }}
+              className="flex items-center gap-1.5 border border-border text-mauve font-body text-sm font-medium px-3 py-2.5 rounded-full hover:border-petal/40 hover:text-petal transition-colors">
+              <Receipt size={14} /> Registrar custo / NF
             </button>
 
             {/* Baixar/ver PDF original — disponível sempre que houver arquivo */}
@@ -1021,7 +1031,8 @@ export default function ExamDetailPage() {
       {/* FeedbackModal P2 — aparece após 1ª análise no Beta */}
       <FeedbackModal />
 
-      {/* AgendarModal — salva na Agenda (caminho único); "Repetir exame" cria evento de exame */}
+      {/* AgendarModal — Evento Assistencial único (health_events). E8 'repeat' = agendar/lembrete
+          (recorrência); E7 'expense' = valor pago + NF/recibo do exame realizado (→ Despesas). */}
       <AgendarModal
         open={agendarOpen}
         onClose={() => setAgendarOpen(false)}
@@ -1030,10 +1041,12 @@ export default function ExamDetailPage() {
           await saveEvent(user.id, input, null)
           setAgendarOpen(false)
         }}
-        onGoToHistory={() => router.push('/dashboard/timeline')}
-        defaultTitle={exam?.type ? `Repetir ${exam.type}` : ''}
+        onGoToHistory={() => router.push(agendarMode === 'expense' ? '/dashboard/gastos' : '/dashboard/timeline')}
+        defaultTitle={agendarMode === 'expense' ? (exam?.type ?? 'Exame') : (exam?.type ? `Repetir ${exam.type}` : '')}
         defaultNotes={`Referente ao exame: ${exam?.type ?? ''}`}
-        initialEvent={{ eventType: 'exame' }}
+        initialEvent={agendarMode === 'expense'
+          ? { eventType: 'exame', status: 'realizado', directExpense: true, date: (exam as unknown as { exam_date?: string | null })?.exam_date ?? undefined }
+          : { eventType: 'exame' }}
       />
 
       {/* Excluir exame — ação destrutiva */}
