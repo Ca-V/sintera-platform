@@ -13,7 +13,10 @@
 import type { UcdaItem, UcdaRepresentation } from './ucda'
 import { toNum } from './ucda'
 
-/** Linha do modelo laboratorial existente (subconjunto de `biomarkers` que o adapter consome). */
+// MODELO GENÉRICO (Princípio do Modelo Aberto): o adapter NÃO conhece uma lista de biomarcadores — opera
+// sobre CLASSES de campos. Um analito novo, ou um nome diferente para o mesmo analito, flui sem alteração
+// estrutural. Campos além de name/value são abertos e opcionais (código LOINC/outro, método, contexto…).
+/** Linha do modelo laboratorial existente (subconjunto genérico de `biomarkers` que o adapter consome). */
 export interface LabBiomarkerRow {
   name: string
   value: string | null
@@ -24,6 +27,11 @@ export interface LabBiomarkerRow {
   resultType: string | null          // 'numeric' | 'qualitative' | 'missing' | 'extraction_failed'
   sourceMaterial: string | null      // amostra: SANGUE/URINA/FEZES…
   sourceExamName: string | null      // painel/exame: HEMOGRAMA…
+  // Abertos/opcionais — preenchidos quando a fonte (catálogo/documento) fornecer; ausência não quebra nada.
+  code?: string | null               // código do analito (LOINC ou outro sistema aberto)
+  codeSystem?: string | null         // sistema do código (ex.: 'LOINC')
+  method?: string | null             // método de análise
+  context?: string | null            // contexto/condição de coleta (ex.: jejum)
 }
 
 /** Faixa de referência COMO transcrita (não interpreta): "min – max" | "≥ min" | "≤ max" | undefined. */
@@ -45,7 +53,11 @@ export function biomarkerToUcdaItem(b: LabBiomarkerRow): UcdaItem {
     valueText,
     valueNum: isNumeric ? toNum(valueText) : null,
     ...(b.unit ? { unit: b.unit } : {}),
+    ...(b.code ? { code: b.code } : {}),
+    ...(b.codeSystem ? { codeSystem: b.codeSystem } : {}),
     ...(b.sourceMaterial ? { specimen: b.sourceMaterial } : {}),
+    ...(b.method ? { method: b.method } : {}),
+    ...(b.context ? { context: b.context } : {}),
     ...(b.sourceExamName ? { group: b.sourceExamName } : {}),
     ...(ref ? { referenceText: ref } : {}),
   }

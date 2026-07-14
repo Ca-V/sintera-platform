@@ -693,6 +693,31 @@ antes de a infra universal estar validada. Conecta: Evidência Arquitetural · R
 Clinical Processing Engine. Sequência de execução: consolidar CPE (fachada única) → Laboratory Adapter →
 validar com o laboratório real → consolidar UCDA (contrato único) → só então modalidades (todas via CPE).
 
+## Princípio do Modelo Aberto (CONSTITUCIONAL — fundadora, 14/07/2026)
+
+> **Nenhum modelo de dados da SINTERA poderá depender de listas fechadas de biomarcadores, modalidades,
+> fabricantes ou equipamentos. A arquitetura deverá representar CLASSES de informação clínica, permitindo a
+> incorporação de novos elementos sem necessidade de alteração estrutural.**
+
+O domínio da SINTERA **não** é "laboratório" nem "446 biomarcadores" — é **informação clínica**. Os 446
+biomarcadores desta base são **dado de VALIDAÇÃO** (validar Engine · Cobertura · UCDA · persistência ·
+evolução · desempenho), **nunca referência do modelo**. A plataforma deve receber, sem alteração estrutural:
+qualquer biomarcador (atual ou futuro) · qualquer modalidade · qualquer documento · qualquer equipamento ·
+qualquer fabricante · qualquer laboratório · qualquer padrão (FHIR/HL7/DICOM…).
+
+**Consequências de implementação:**
+- Adapters e processadores operam sobre um **modelo genérico**, não sobre listas de itens. Ex.: o **Laboratory
+  Adapter** representa cada resultado por CLASSE de campos — *identificador/código do analito (LOINC ou outro,
+  quando existir) · nome apresentado no documento · valor · unidade · faixa de referência · método · material
+  biológico · contexto · proveniência* — e funciona para um analito novo ou um nome diferente do mesmo analito
+  **sem mudar estrutura**.
+- Enumerações existentes (Clinical Identity Registry, Clinical Models) são **registros EXTENSÍVEIS por
+  adição** (novo elemento = novo dado, jamais alteração estrutural); item desconhecido **degrada com
+  elegância** (`document_only`), nunca quebra.
+- Códigos (LOINC/SNOMED/BI-RADS/…) são **abertos** (`code` + `code_system`), nunca uma lista fixa.
+
+Conecta: Convergência Progressiva · UCDA-001 · Descoberta antes da Extração · Não-Produção de Conteúdo Clínico.
+
 ## Regras gerais
 
 - **Código estável:** uma vez atribuído, não muda; a versão vive no cabeçalho do doc.

@@ -67,6 +67,33 @@ describe('FUNC · laboratoryToUcda (adapter transitório)', () => {
     expect(ucda.items[0].name).toBe('GLICEMIA')
   })
 
+  it('MODELO ABERTO: analito arbitrário/inexistente flui sem lista fechada (nome nunca visto antes)', () => {
+    const inventado = biomarkerToUcdaItem(row({
+      name: 'BIOMARCADOR-QUE-AINDA-NAO-EXISTE-XYZ-2050', value: '42', unit: 'ng/mL', resultType: 'numeric',
+    }))
+    expect(inventado.name).toBe('BIOMARCADOR-QUE-AINDA-NAO-EXISTE-XYZ-2050') // representado fielmente, sem enum
+    expect(inventado.valueNum).toBe(42)
+  })
+
+  it('MODELO ABERTO: código (LOINC/outro), método e contexto passam quando a fonte fornece', () => {
+    const item = biomarkerToUcdaItem(row({
+      name: 'Glicose', value: '92', unit: 'mg/dL', resultType: 'numeric',
+      code: '2345-7', codeSystem: 'LOINC', method: 'Hexoquinase', context: 'Jejum 8h',
+    }))
+    expect(item.code).toBe('2345-7')
+    expect(item.codeSystem).toBe('LOINC')
+    expect(item.method).toBe('Hexoquinase')
+    expect(item.context).toBe('Jejum 8h')
+  })
+
+  it('MODELO ABERTO: mesmo analito com NOME diferente (sinônimo de laboratório) é representável', () => {
+    const a = biomarkerToUcdaItem(row({ name: 'TGP', value: '30', unit: 'U/L', code: '1742-6', codeSystem: 'LOINC' }))
+    const b = biomarkerToUcdaItem(row({ name: 'ALT', value: '30', unit: 'U/L', code: '1742-6', codeSystem: 'LOINC' }))
+    // nomes diferentes, mesmo código aberto — a plataforma representa ambos sem alteração estrutural
+    expect(a.name).not.toBe(b.name)
+    expect(a.code).toBe(b.code)
+  })
+
   it('é DETERMINÍSTICO', () => {
     const rows = [row({ name: 'CHCM', value: '34.1', unit: 'gNdl', referenceMin: '31.5', referenceMax: '36.5' })]
     expect(JSON.stringify(laboratoryToUcda(rows))).toBe(JSON.stringify(laboratoryToUcda(rows)))

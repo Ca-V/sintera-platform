@@ -19,27 +19,37 @@
 
 import type { ProcessorResult } from './clinical-processors/types'
 
+// MODELO ABERTO (Princípio do Modelo Aberto, GOVERNANCA): representa CLASSES de informação clínica — nunca
+// listas fechadas de analitos/modalidades/fabricantes. Um analito novo, um nome diferente para o mesmo
+// analito, um equipamento/laboratório novo → representável SEM alteração estrutural. Todos os campos além do
+// essencial são OPCIONAIS e ABERTOS (códigos por sistema livre: LOINC/SNOMED/BI-RADS/local).
 /** Item clínico canônico — qualquer informação clínica estruturada, independente de fonte/persistência. */
 export interface UcdaItem {
   itemType: 'measure' | 'parameter' | 'finding' | 'classification' | 'observation'
+  /** Nome apresentado no documento (transcrição). */
   name: string
   /** Transcrição FIEL do valor (como no documento). */
   valueText: string
   /** Valor numérico parseado (nullable) — habilita evolução/comparação. */
   valueNum?: number | null
   unit?: string
+  /** Código do ITEM/analito, sistema ABERTO (LOINC/SNOMED/local) — quando existir. */
+  code?: string
+  codeSystem?: string
+  /** Código do VALOR quando é categoria codificada (ex.: '2' de BI-RADS 2). */
+  valueCode?: string
   /** Lateralidade (OD/OE, direito/esquerdo, derivação). */
   region?: string
   /** Estrutura anatômica/órgão. */
   anatomy?: string
-  /** Material/amostra (laboratório: sangue/urina/fezes). */
+  /** Material/amostra biológico (laboratório: sangue/urina/fezes…). */
   specimen?: string
+  /** Método de análise/aquisição (quando informado). */
+  method?: string
+  /** Contexto clínico/da coleta (ex.: jejum, pós-esforço) — quando informado. */
+  context?: string
   /** Grupo dentro do exame (painel, quadrante, região agrupada). */
   group?: string
-  /** Código de classificação (ex.: '2' de BI-RADS 2). */
-  valueCode?: string
-  /** Sistema do código (BI-RADS/PI-RADS/Bethesda; futuro LOINC/SNOMED). */
-  codeSystem?: string
   /** Faixa/valor de referência COMO transcrito (não interpretativo). */
   referenceText?: string
 }
