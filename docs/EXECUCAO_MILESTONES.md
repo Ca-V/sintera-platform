@@ -37,6 +37,16 @@ infraestrutura (CPE/Registry/Validator) continua, mas não é mais a unidade de 
 > clínica.* Essa história precisa estar consolidada (longitudinal, correlacionada) antes do compartilhamento.
 > Os milestones M1–M9 abaixo detalham a **Fase 1**; o painel `COBERTURA_CLINICA.md` acompanha a **Fase 2**.
 
+> **🔧 PRIORIDADE DE EXECUÇÃO (fundadora 14/07): PRIMEIRO A PLATAFORMA, depois as modalidades.** Consolidar,
+> nesta ordem, validando com o **laboratório real** (446 biomarcadores neste ambiente): **1)** Ingestão ·
+> **2)** processamento por CDU · **3)** Clinical Processing Engine · **4)** persistência canônica
+> (`clinical_results`) · **5)** UCDA · **6)** validar tudo com o laboratório · **7)** só então as modalidades
+> (cada uma dirigida por CRC). O **Pentacam** volta a ser **caso de validação (CRC), não prioridade**.
+> **`clinical_results` é canônico** (migration 110): representa QUALQUER informação clínica estruturada —
+> parâmetros numéricos/categóricos · achados · classificações (BI-RADS/PI-RADS/Bethesda) · medidas ·
+> estruturas anatômicas · lateralidade/região · grupos (evita 2ª migração). Ver
+> [[feedback_plataforma_antes_modalidades]]. **Sem decisões de UI agora** — persistir correto; interface depois.
+
 ---
 
 ## Painel (visão rápida)

@@ -403,12 +403,17 @@ export async function POST(
     const cpe = processClinical(primaryCdu)
     const out = cpe.result.output
     if (out && out.kind === 'parametric' && cpe.result.extractedUnits > 0) {
-      const rows = out.parameters.map((p, i) => ({
-        exam_id: examId, user_id: userId,
-        clinical_model: cpe.result.clinicalModel, result_kind: 'parametric',
-        name: p.name, value_text: p.value, unit: p.unit ?? null, region: p.region ?? null,
-        sort_order: i, source: 'cpe', contract_version: cpe.result.contractVersion,
-      }))
+      const rows = out.parameters.map((p, i) => {
+        const num = Number(String(p.value).replace(',', '.'))
+        return {
+          exam_id: examId, user_id: userId,
+          clinical_model: cpe.result.clinicalModel, result_kind: 'parametric',
+          item_type: 'measure',                                   // modelo canônico: medida numérica por região
+          name: p.name, value_text: p.value, value_num: Number.isFinite(num) ? num : null,
+          unit: p.unit ?? null, region: p.region ?? null,
+          sort_order: i, source: 'cpe', contract_version: cpe.result.contractVersion,
+        }
+      })
       await supabase.from('clinical_results').delete().eq('exam_id', examId).eq('clinical_model', cpe.result.clinicalModel)
       await supabase.from('clinical_results').insert(rows as never)
     }
