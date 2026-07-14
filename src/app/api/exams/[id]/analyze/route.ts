@@ -12,7 +12,7 @@ import { classifyDocumentAI } from '@/lib/ai/document-classifier'
 import { representationFingerprint, isRepresentationCertified } from '@/lib/capture/reproducibility'
 import { computeCoverage } from '@/lib/capture/coverage'
 import { processBundle } from '@/lib/capture/clinical-information-pipeline'
-import { processClinical } from '@/lib/capture/clinical-processing-engine'
+import { processClinical, planRepresentation } from '@/lib/capture/clinical-processing-engine'
 import { representationFromProcessor } from '@/lib/capture/ucda'
 import { planBundleSplit, restrictPages, type SplitPlan } from '@/lib/capture/bundle-split'
 import { pickExamDate } from '@/lib/capture/semantic-dates'
@@ -355,41 +355,43 @@ export async function POST(
   // Quando a identidade já está travada, o family/tipo segue o document_type estabelecido.
   const effectiveDocType = identityEstablished ? (exam.document_type ?? structure.documentType) : structure.documentType
 
-  // §4.0 — LAUDO/NARRATIVO (imagem): o laudo É o resultado; não estruturar campos. Se o extrator
-  // de laboratório raspou "resultados" de um laudo de imagem, descarta-os (não são estruturação
-  // real) e o exame fica `document_only` — Rastreabilidade Documental. Garante que ultrassom/
-  // mamografia sigam o MESMO padrão, tenham ou não medidas no texto.
-  const isNarrativeLaudo = effectiveDocType === 'imaging'
-  if (isNarrativeLaudo && result.biomarkers.length > 0) {
-    await supabase.from('biomarkers').delete().eq('exam_id', examId)
-  }
-
-  // Metadados de extração (CEF) — SEMPRE atualizam (refletem a EXTRAÇÃO, não a identidade).
-  // Completude RELATIVA AO EXTRATOR; heurística interina (cobertura de faixa de referência).
-  const bmN = isNarrativeLaudo ? 0 : result.biomarkers.length
-  const bmWithRef = isNarrativeLaudo ? 0 : result.biomarkers.filter(b => b.rangeExtracted || b.referenceMin != null || b.referenceMax != null).length
-  let completeness = bmN === 0 ? 'document_only' : (bmWithRef / bmN >= 0.5 ? 'structured' : 'partial')
-
-  // COBERTURA (comparador puro, §Princípio da Cobertura Documental) — direção SEGURA: só REBAIXA,
-  // nunca alega completude. A Análise Estrutural descobre nº de unidades (RESULTADO) no laudo; se o
-  // extrator estruturou MENOS, não pode ser "structured" (mata a falsa completude do laudo de 6 exames).
-  // Confiabilidade plena depende do extrator do CEF reportar unidades alinhadas (M5); aqui, conservador.
-  // ClinicalInformationPipeline: compreende o Bundle → CertifiedCDUs (M1). Com o split (M3), ESTE registro
-  // representa UMA CDU (as suas páginas), então a Cobertura soma as unidades descobertas apenas do que a IA
-  // leu (`pagesProcessed`) — mantém-se consistente com a extração isolada da CDU (não conta as CDUs-irmãs).
+  // Bundle → CDUs (compreensão) — vem antes do plano de representação. Com o split (M3), ESTE registro
+  // representa UMA CDU; a Cobertura soma só as unidades do que a IA leu (não conta as CDUs-irmãs).
   const bundle = processBundle({
     pageTexts: pagesProcessed.length ? pagesProcessed : (examTextForIssuer ? [examTextForIssuer] : []),
     hasImages: isImage,
   })
-  if (!isNarrativeLaudo && completeness === 'structured' && bmN > 0) {
+  const primaryCdu = bundle.ready[0] ?? bundle.cdus[0]
+
+  // ── DELEGAÇÃO DE MODALIDADE AO ENGINE (Convergência Progressiva) ──
+  // O `analyze` NÃO decide modalidade. O ENGINE decide COMO representar a CDU. Daqui em diante o analyze
+  // opera SÓ sobre abstrações do plano — nunca "laboratório"/"imagem"/"Pentacam"/"mamografia". Comportamento
+  // EQUIVALENTE ao legado (só a decisão mudou de lugar); o caminho laboratorial permanece intacto.
+  const plan = planRepresentation(primaryCdu, {
+    documentType: effectiveDocType, examCount: structure.examCount, biomarkerCount: result.biomarkers.length,
+  })
+
+  // Laudo narrativo: o laudo É o resultado — se o extrator raspou "resultados", descarta-os (document_only,
+  // Rastreabilidade Documental). Decisão do PLANO do Engine, não de um `if` de modalidade no analyze.
+  if (!plan.structured && result.biomarkers.length > 0) {
+    await supabase.from('biomarkers').delete().eq('exam_id', examId)
+  }
+
+  // Metadados de extração (CEF) — SEMPRE atualizam (refletem a EXTRAÇÃO, não a identidade).
+  const bmN = plan.structured ? result.biomarkers.length : 0
+  const bmWithRef = plan.structured ? result.biomarkers.filter(b => b.rangeExtracted || b.referenceMin != null || b.referenceMax != null).length : 0
+  let completeness = bmN === 0 ? 'document_only' : (bmWithRef / bmN >= 0.5 ? 'structured' : 'partial')
+
+  // COBERTURA (comparador puro, §Cobertura Documental) — direção SEGURA: só REBAIXA, nunca alega completude.
+  if (plan.structured && completeness === 'structured' && bmN > 0) {
     const discovered = bundle.cdus.reduce((s, c) => s + (c.structure.resultUnits || 0), 0)
     const cov = computeCoverage({ cdu: { index: 1, discoveredUnits: discovered }, structuredUnits: bmN })
     if (discovered > 0 && !cov.certifiedComplete) completeness = 'partial'
   }
   finalUpdate.extraction_completeness = completeness
   finalUpdate.structural_confidence = completeness === 'structured' ? 'high' : completeness === 'partial' ? 'medium' : 'low'
-  finalUpdate.extractor_family = effectiveDocType
-  finalUpdate.extractor_version = effectiveDocType === 'laboratory' ? 'laboratory-v1' : 'heuristic-v0'
+  finalUpdate.extractor_family = plan.family
+  finalUpdate.extractor_version = plan.extractorVersion
   finalUpdate.processed_at = new Date().toISOString()
 
   // ── Clinical Processing Engine — resultado por MODELO CLÍNICO (não-biomarcador) → clinical_results ──
@@ -398,8 +400,7 @@ export async function POST(
   // evita o churn "Pentacam = N biomarcadores"). RDC 657: transcreve, não interpreta. Idempotente
   // (delete-then-insert do próprio modelo). Não altera a UI atual — a exibição por olho é decisão de
   // produto (o usuário continua vendo o documento original). Imagem sem texto → sem parâmetros (multimodal
-  // é etapa futura). Roda sobre a CDU certificada desta extração (conteúdo autossuficiente).
-  const primaryCdu = bundle.ready[0] ?? bundle.cdus[0]
+  // é etapa futura). Roda sobre a CDU certificada desta extração (a MESMA do plano de representação).
   if (primaryCdu) {
     const cpe = processClinical(primaryCdu)
     // A persistência fala UCDA: a saída do processador é convertida no CONTRATO canônico (UcdaRepresentation)
@@ -445,12 +446,9 @@ export async function POST(
       finalUpdate.clinical_family = clin.clinicalFamily
       finalUpdate.clinical_type = clin.clinicalType
     }
-    // Estrutura confiável: categoria não-laboratorial detectada, OU laboratório com ≥1 exame distinto,
-    // OU laboratório com QUALQUER biomarcador (evita manter o nome do arquivo quando os biomarcadores
-    // não trazem source_exam_name → antes ficava "Resultado-Laudo-…").
-    const confidentStructure = structure.documentType !== 'laboratory'
-      || structure.examCount >= 1
-      || result.biomarkers.length > 0
+    // Estrutura confiável (para nomear) — abstração vinda do PLANO do Engine (o analyze não interpreta
+    // modalidade): categoria estruturada detectada, OU ≥1 exame distinto, OU qualquer biomarcador.
+    const confidentStructure = plan.structureConfident
     // Estado da identidade (M4) — write-once. 'validated' quando reconhecemos com confiança (estrutura
     // confiável OU identidade clínica não-ambígua de confiança alta); senão 'draft' (sinaliza revisão).
     const clinValidated = !!clin && clin.confidence === 'high' && !clin.ambiguous
@@ -495,7 +493,7 @@ export async function POST(
     documentType:  (finalUpdate.document_type as string | undefined) ?? exam.document_type,
     documentScope: finalUpdate.document_scope as string | undefined,
     displayTitle:  finalUpdate.display_title as string | undefined,
-    results: isNarrativeLaudo ? [] : result.biomarkers,
+    results: plan.structured ? result.biomarkers : [],
   })
 
   // ── M3 — Bundle Split (materialização) ──

@@ -718,6 +718,28 @@ qualquer fabricante · qualquer laboratório · qualquer padrão (FHIR/HL7/DICOM
 
 Conecta: Convergência Progressiva · UCDA-001 · Descoberta antes da Extração · Não-Produção de Conteúdo Clínico.
 
+## Princípio da Delegação de Modalidade ao CPE (CONSTITUCIONAL — fundadora, 14/07/2026)
+
+> **Nenhum componente arquitetural deverá conhecer modalidades clínicas quando essa responsabilidade puder
+> ser delegada ao Clinical Processing Engine.**
+
+O conhecimento específico de modalidade fica restrito ao **Clinical Identity Registry** e aos **processadores
+especializados** do CPE. O restante da plataforma (`analyze`, persistência, consumidores) opera **apenas
+sobre abstrações**: Bundle · CDU · Identidade · Resultado Clínico · Evidência · UCDA. O `analyze` **não
+decide** se extrai biomarcadores, se gera parâmetros ou narrativa — entrega a CDU ao Engine e persiste a
+representação; **quem decide o tipo de representação é o processador correspondente** (via `planRepresentation`
++ `processClinical`).
+
+**Estado (14/07):** ✅ o `analyze` NÃO contém mais nenhuma decisão baseada em modalidade — `isNarrativeLaudo`
+e os checks `=== 'imaging'`/`=== 'laboratory'` foram movidos para `planRepresentation` no Engine (equivalência
+provada em `FUNC-representation-plan`). O caminho laboratorial permanece intacto (Convergência Progressiva).
+
+### Critério de aposentadoria do legado laboratorial (registrar — fundadora 14/07)
+O caminho atual (`extractBiomarkers → biomarkers → current_biomarkers → evolução`) **só poderá ser aposentado**
+quando, **sobre os exames laboratoriais REAIS**, forem demonstradas equivalências de: **funcional · cobertura
+· persistência · evolução longitudinal · reprodutibilidade · performance**. Até lá, **o caminho legado
+permanece ativo** e o CPE o **consome** via Laboratory Adapter (sem alterar comportamento).
+
 ## Regras gerais
 
 - **Código estável:** uma vez atribuído, não muda; a versão vive no cabeçalho do doc.

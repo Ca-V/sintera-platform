@@ -76,6 +76,61 @@ export interface ClinicalProcessingResult {
   verdict: RepresentationVerdict
 }
 
+// ── PLANO DE REPRESENTAÇÃO — o ÚNICO lugar que conhece modalidades (Princípio: nenhum componente arquitetural
+// conhece modalidades quando isso pode ser delegado ao CPE). O `analyze` não decide mais "se é laboratório /
+// imagem / Pentacam" nem "se extrai biomarcadores / gera parâmetros / narrativa" — ele consulta este plano e
+// opera sobre ABSTRAÇÕES. O conhecimento de modalidade fica encapsulado aqui (e nos processadores).
+export interface RepresentationPlan {
+  identity: ClinicalIdentity
+  /** um processador ESPECIALIZADO do CPE representa esta CDU (parâmetros/achados próprios; ex.: corneal). */
+  specialized: boolean
+  model: ClinicalModel | null
+  /** a representação é por RESULTADOS ESTRUTURADOS (caminho de biomarcadores existente — Laboratory Adapter). */
+  structured: boolean
+  /** preservar o documento como fonte; nada a estruturar em campos. */
+  documentOnly: boolean
+  /** estrutura reconhecida com confiança (para nomear) — abstração; o chamador não interpreta modalidade. */
+  structureConfident: boolean
+  /** rótulo de família p/ metadados de extração (classificação; o chamador não ramifica sobre isto). */
+  family: string
+  /** versão do extrator p/ metadados. */
+  extractorVersion: string
+  reason: string
+}
+
+/**
+ * Decide COMO representar uma CDU — a responsabilidade de modalidade sai do `analyze` e passa ao Engine.
+ * Puro/determinístico. Comportamento EQUIVALENTE ao legado (Convergência Progressiva: o caminho laboratorial
+ * não muda; só a DECISÃO muda de lugar). `ctx` traz os sinais de classificação/extração já computados.
+ */
+export function planRepresentation(
+  cdu: CertifiedCDU,
+  ctx: { documentType: string; examCount: number; biomarkerCount: number },
+): RepresentationPlan {
+  const identity = identifyClinical(cdu.content.text)
+  const route = routeProcessing(identity)
+  const specialized = !!route.model && route.model.id !== 'laboratory' && IMPLEMENTED_CLINICAL_MODELS.includes(route.model.id)
+
+  // Representação estruturada (biomarcadores) quando NÃO é laudo narrativo (imagem). Equivalente ao legado
+  // `isNarrativeLaudo = documentType === 'imaging'`. O conhecimento do rótulo fica AQUI, não no analyze.
+  const structured = ctx.documentType !== 'imaging'
+  const structureConfident = ctx.documentType !== 'laboratory' || ctx.examCount >= 1 || ctx.biomarkerCount > 0
+
+  return {
+    identity,
+    specialized,
+    model: route.model,
+    structured,
+    documentOnly: !structured,
+    structureConfident,
+    family: ctx.documentType,
+    extractorVersion: ctx.documentType === 'laboratory' ? 'laboratory-v1' : 'heuristic-v0',
+    reason: specialized
+      ? `processador especializado (${route.model!.id})`
+      : structured ? 'representação estruturada (biomarcadores)' : 'document_only (laudo narrativo)',
+  }
+}
+
 const EMPTY_VERDICT: RepresentationVerdict = {
   certified: false, completeness: 'empty', regions: [], presentFields: [], missing: [],
   reason: 'sem modelo/representação → document_only',

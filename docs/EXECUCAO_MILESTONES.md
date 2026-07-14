@@ -46,6 +46,12 @@ infraestrutura (CPE/Registry/Validator) continua, mas não é mais a unidade de 
 > ligar os consumidores VISUAIS** (Timeline/Evolução/Care lerem UCDA = UI, depois) · **5)** só então as
 > modalidades (todas via CPE, dirigidas por CRC). O **Pentacam** volta a ser **validação (CRC), não prioridade**.
 >
+> **✅ Integração aditiva do pipeline (14/07):** o `analyze` **deixou de conter QUALQUER decisão de modalidade**
+> (grep zero de `isNarrativeLaudo`/`imaging`/`laboratory`) — a decisão migrou para `planRepresentation` no
+> Engine (equivalência provada, `FUNC-representation-plan`). Caminho laboratorial INTACTO; legado só aposenta
+> com equivalência provada (funcional/cobertura/persistência/evolução/reprodutibilidade/performance). Ver
+> `GOVERNANCA.md` (Princípio da Delegação de Modalidade ao CPE + critério de aposentadoria).
+>
 > **⚠️ Convergência PROGRESSIVA (princípio constitucional — `GOVERNANCA.md`):** a **UCDA é o ponto de
 > convergência** (contrato único de saída), **não** `clinical_results`. `clinical_results` (canônico, migration
 > 110) e `biomarkers` são **backends de persistência**. Domínio maduro (laboratório) **não migra** — o CPE o
