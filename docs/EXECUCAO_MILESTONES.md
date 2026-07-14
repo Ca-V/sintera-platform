@@ -34,7 +34,7 @@
 | **M8** | Robustez operacional (timeout/retries/perf) | **0%** | ⬜ (backlog) | — |
 | **M9** | Certificação RI-001 (homologação + merge) | ⛔ pausada | ⛔ | após M1+M2 |
 | **D·** | **DOMÍNIO — Evento Assistencial** (admin·recorrência·duplicados·estado binário) | registrado | ⬜ | consolidação (não interrompe) → `EVENTO_ASSISTENCIAL.md` |
-| **CARE·** | **DOMÍNIO — Espaço Colaborativo de Cuidado (CARE-001)** | registrado | ⬜ | **após** estabilidade do núcleo clínico → `CARE-001_ESPACO_COLABORATIVO.md` |
+| **CARE·** | **PILAR — Espaço Colaborativo de Cuidado (CARE-001 · Care Space)** — orquestra a continuidade | registrado | ⬜ | **após** estabilidade do núcleo clínico → `CARE-001_ESPACO_COLABORATIVO.md` |
 
 ---
 

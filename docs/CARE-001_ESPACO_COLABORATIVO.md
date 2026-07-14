@@ -1,95 +1,120 @@
-# CARE-001 — Espaço Colaborativo de Cuidado (Care Collaboration)
+# CARE-001 — Espaço Colaborativo de Cuidado (Care Space)
 
-> Fundadora (14/07/2026): novo **domínio arquitetural permanente** da SINTERA. **Registrar agora,
-> implementar depois** — após a consolidação do pipeline de processamento clínico (Capture Hub → CPE →
-> extratores do CEF). **Não interrompe a execução atual.**
+> Fundadora (14/07/2026): novo **PILAR** da SINTERA — não uma funcionalidade de compartilhamento. Hoje a
+> plataforma **estrutura e representa** a informação clínica; com o CARE-001 ela passa a **orquestrar a
+> continuidade do cuidado** entre paciente e profissionais. **Registrar agora, implementar depois** — após a
+> consolidação do núcleo de processamento clínico. **Não interrompe a execução atual.**
 >
-> **Dependência técnica direta:** o valor do Espaço Colaborativo depende de a **representação longitudinal
-> já estar consistente, auditável e estruturada**. Implementá-lo antes = compartilhar informação incompleta.
-> Início: quando o núcleo do processamento clínico atingir estabilidade para dar uma representação confiável
-> ao profissional.
+> **Dependência técnica direta:** só tem valor sobre uma representação longitudinal já consistente,
+> auditável e estruturada. Antes disso = compartilhar informação incompleta.
 >
-> **Natureza:** é uma **camada de APRESENTAÇÃO e COMPARTILHAMENTO** da informação já produzida pela
-> arquitetura existente. **NENHUM pipeline novo.** Reutiliza: Capture Hub · Bundle · CDU · Identidade
-> Documental · Identidade Clínica · Clinical Processing Engine · Representation Validator · Cobertura · UCDA
-> · Timeline. Conecta com o domínio [`EVENTO_ASSISTENCIAL.md`].
+> **Natureza:** camada de **APRESENTAÇÃO e ORQUESTRAÇÃO** sobre a arquitetura existente. **NENHUM pipeline
+> novo.** Reutiliza: Capture Hub · Bundle · CDU · Identidade Documental · Identidade Clínica · Clinical
+> Processing Engine · Representation Validator · Cobertura · UCDA · Timeline · **Evento Assistencial**
+> (recorrência/agendamento — [`EVENTO_ASSISTENCIAL.md`]).
 
 ---
 
-## Objetivo
-Permitir que o paciente compartilhe **parte** da sua representação longitudinal de saúde com um ou mais
-profissionais, por um **período determinado** e uma **finalidade específica**. O profissional **não acessa a
-conta** do paciente — acessa apenas um **espaço compartilhado**, criado e controlado pelo paciente. (LGPD
-Art. 11 — dado sensível de saúde; controle pelo titular.)
+## 1. Terminologia — o profissional NUNCA "acessa o paciente"
+A SINTERA **cria um Care Space para uma relação específica** entre paciente e profissional (um episódio de
+cuidado). O médico **não entra na conta do paciente** — entra em um **espaço criado para aquele episódio**,
+com **início, finalidade, duração, histórico e auditoria próprios**. É, na prática, um **prontuário
+colaborativo temporário** (não um "compartilhamento de documentos").
 
-## Princípios obrigatórios
-1. **O paciente permanece proprietário do acesso** — todo compartilhamento é iniciado por ele; pode conceder,
-   limitar, alterar permissões e **revogar imediatamente**.
-2. **Compartilhamento por FINALIDADE** — sempre explícita: Consulta · Retorno · Segunda opinião · Junta
-   médica · Auditoria · Acompanhamento.
-3. **Compartilhamento CONTEXTUAL** — nunca só documentos; sempre um **contexto clínico organizado**.
-4. **Documento é a fonte da verdade** — toda informação estruturada mantém **acesso imediato ao original**
-   (Princípio da Rastreabilidade Documental).
-5. **Auditoria completa** — registrar tudo: quem acessou, quando, o que visualizou, downloads, comentários,
-   revogações.
+## 2. Care Space — entidade própria
+```
+Care Space
+├── Paciente
+├── Profissional         (nome · CRM · especialidade · instituição · contato)
+├── Finalidade           (Consulta · Retorno · Segunda opinião · Junta médica · Auditoria · Acompanhamento)
+├── Especialidade
+├── Status               (ativo · expirado · revogado)
+├── Criado em
+├── Expira em
+├── Snapshot Clínico     (imutável — §4)
+├── Permissões           (visualizar · baixar · imprimir · comentar · solicitar atualização)
+├── Histórico            (auditoria append-only)
+├── Comentários          (colaboração — separada da base do paciente)
+└── Arquivos compartilhados
+```
 
-## Estrutura do compartilhamento
-- **Identificação do profissional:** nome · CRM · especialidade · instituição · contato.
-- **Escopo** (o paciente escolhe): toda a plataforma · uma especialidade · um período · determinados exames ·
-  documentos · condições · medicamentos.
-- **Permissões** (separadas): visualizar · baixar · imprimir · comentar · solicitar atualização.
-  **Nunca** permitir alteração dos dados do paciente.
-- **Prazo:** permanente · temporário · **expiração automática** · revogação manual.
+## 3. Princípios obrigatórios
+1. **Paciente é dono do acesso** — todo Care Space é iniciado por ele; pode conceder, limitar, alterar
+   permissões e **revogar imediatamente**.
+2. **Por FINALIDADE** — sempre explícita.
+3. **Contextual** — nunca só documentos; sempre um **contexto clínico organizado** (Dossiê, §5).
+4. **Documento é a fonte da verdade** — toda informação estruturada mantém acesso imediato ao original.
+5. **Auditoria completa** — quem acessou · quando · o que visualizou · downloads · comentários · revogações.
+6. **Somente leitura** — o profissional **nunca** altera a base do paciente.
+7. **Nunca alterar dados do paciente** — permissões incluem comentar/solicitar, jamais editar.
 
-## Dossiê Clínico (montado automaticamente)
+## 4. Snapshot Clínico — o ativo mais importante
+Ao criar o Care Space, gerar um **Snapshot Clínico** = **congelamento** exato do que foi compartilhado naquela
+consulta. Reaproveita o princípio de **Reprodutibilidade / write-once** (um snapshot é um congelamento datado).
+
+> Consulta em 18/08/2027 → o médico viu exatamente exames A, B, C. Seis meses depois o paciente adicionou 80
+> novos exames. O profissional **continua podendo reconstruir exatamente o contexto daquela consulta**.
+
+Valor **clínico · jurídico · auditoria · continuidade do cuidado**. O Snapshot permanece **imutável** mesmo
+que o paciente altere a plataforma depois.
+
+## 5. Dossiê Clínico (montado automaticamente)
 O profissional **nunca** recebe uma lista de PDFs. A plataforma monta um **Dossiê Clínico**: resumo clínico ·
-linha do tempo (Timeline) · evolução longitudinal · exames organizados · medicamentos · condições · cirurgias
-· documentos originais. (Reusa Timeline + a representação estruturada do CPE/UCDA.)
+Timeline · evolução longitudinal · exames organizados · medicamentos · condições · cirurgias · gráficos de
+evolução · documentos originais. (Reusa Timeline + representação estruturada do CPE/UCDA.)
 
-## Inteligência de compartilhamento (sugestão pré-confirmação, rastreável)
-Antes de confirmar, a plataforma **sugere** o que provavelmente é relevante para aquele profissional, por
-**múltiplas evidências** — sempre como sugestão; **a decisão final é do paciente** (pode remover/adicionar):
+## 6. Preparação da Consulta (um dos maiores diferenciais)
+Antes da consulta o paciente clica **"Preparar consulta"** e escolhe **médico · especialidade · objetivo**. A
+plataforma monta automaticamente o Dossiê (exames relevantes · evolução · medicamentos · condições ·
+procedimentos · gráficos) e pergunta: *"Deseja compartilhar este dossiê com o Dr. João?"*. Reduz
+drasticamente o tempo que o médico gasta reconstruindo a história.
+
+## 7. Inteligência de sugestão (rastreável; decisão final do paciente)
+Antes de confirmar, a plataforma sugere o que provavelmente é relevante — sempre como sugestão pré-selecionada;
+**o paciente confirma, remove ou adiciona**. Cada sugestão é **consequência rastreável do pipeline**, nunca
+decisão implícita da IA ([`principio_ui_rastreavel`]).
+
 - **Por especialidade** — ex.: *Mastologista* → mamografias · ultrassonografias · biópsias · ressonâncias ·
-  histórico mamário.
-- **Por nome do profissional** — quando o nome coincide com documentos existentes, pré-selecionar: exames
-  **solicitados** por ele · **assinados** por ele · **laudos emitidos** por ele · documentos do acompanhamento
-  com esse profissional. (Depende de capturar `requesting_physician`/emissor — ver `EVENTO_ASSISTENCIAL.md` §4.)
+  histórico mamário. (Cruza a Identidade Clínica.)
+- **Por profissional (princípio próprio)** — cruza **CRM · nome · instituição · documentos emitidos ·
+  solicitados · laudos assinados** e sugere: *"Foram encontrados 14 documentos relacionados ao Dr. João."* —
+  **pré-selecionados**, o paciente apenas confirma. (Depende de capturar emissor/`requesting_physician` —
+  [`EVENTO_ASSISTENCIAL.md`] §4.)
 - **Evolução longitudinal** — exames mais recentes · exames alterados · evolução temporal dos principais
   parâmetros.
 
-Cada sugestão é **consequência rastreável do pipeline** (especialidade↔Identidade Clínica; nome↔emissor/
-solicitante; evolução↔representação longitudinal), nunca decisão implícita da IA ([`principio_ui_rastreavel`]).
+## 8. Colaboração BIDIRECIONAL — o cuidado não termina na consulta
+O profissional pode registrar comentários · sugestões · hipóteses · recomendações · **solicitação de novos
+exames** — tudo **separado** da representação do paciente. Isso inicia um **ciclo de continuidade**:
 
-## Snapshot Clínico (imutável)
-Ao criar o compartilhamento, gerar um **Snapshot Clínico** = exatamente o conjunto compartilhado naquela
-consulta. Mesmo que o paciente altere depois a plataforma, o **Snapshot permanece imutável** para auditoria e
-rastreabilidade. (Alinha com Reprodutibilidade/write-once: um snapshot é um congelamento datado.)
+> Médico solicita "repetir exame em 6 meses / nova mamografia / repetir vitamina D" → a SINTERA pergunta ao
+> paciente *"Deseja criar este acompanhamento?"* → se confirmado: **cria o agendamento futuro · registra a
+> recomendação · acompanha a execução · mostra ao médico na próxima consulta**.
 
-## Espaço do profissional (somente leitura)
-Ambiente próprio: resumo clínico · evolução longitudinal · Timeline · exames · documentos · gráficos de
-evolução · histórico compartilhado. **Somente leitura** — o profissional **nunca** altera a base do paciente.
+A recorrência/agendamento reutiliza o **Evento Assistencial** (recorrência genérica, [`EVENTO_ASSISTENCIAL.md`]
+§3). Incorporação **só por ação explícita do paciente**.
 
-## Colaboração (separada da representação do paciente)
-O profissional pode registrar: comentários · sugestões · hipóteses · recomendações · solicitação de novos
-exames. Essas informações ficam **separadas** da representação do paciente. A plataforma poderá depois
-**perguntar ao paciente** se deseja incorporar alguma sugestão (incorporação só por ação explícita do paciente).
+## 9. Bases legais e consentimento (capítulo próprio — LGPD)
+Todo Care Space registra o **consentimento**: **quem autorizou · quando · qual finalidade · quais informações
+· período de validade · revogação**. Fortalece a aderência à LGPD (Art. 11 — dado sensível de saúde) e a
+auditabilidade. Ações de compartilhamento são **outward-facing**, sempre sob controle explícito do paciente —
+nunca criadas por inferência da IA.
 
-## Integração com a arquitetura existente
-Reutiliza Capture Hub · Bundle · CDU · Identidade Documental · Identidade Clínica · Clinical Processing Engine
-· Representation Validator · Cobertura · UCDA · Timeline. **Nenhum pipeline novo** — Care Collaboration é
-camada de apresentação/compartilhamento sobre a informação já produzida.
+## 10. Integração com a arquitetura existente
+Reutiliza Capture Hub · Bundle · CDU · Identidade Documental · Identidade Clínica · CPE · Representation
+Validator · Cobertura · UCDA · Timeline · Evento Assistencial. **Nenhum pipeline novo** — CARE-001 é
+apresentação/orquestração sobre a informação já produzida.
 
-## Roadmap de implementação (após estabilidade do núcleo clínico)
-- **Fase 1 — Infraestrutura de compartilhamento:** convites · controle de acesso · escopo · auditoria ·
-  revogação · Snapshot.
-- **Fase 2 — Dossiê Clínico:** Timeline · evolução longitudinal · organização automática · sugestões por
-  especialidade · sugestões por médico.
-- **Fase 3 — Colaboração clínica:** comentários · solicitação de exames · compartilhamento entre equipes ·
-  histórico das interações.
-- **Fase 4 — Continuidade do cuidado:** compartilhamentos recorrentes · preparação automática para consultas ·
-  comparação entre snapshots · acompanhamento longitudinal entre paciente e equipe assistencial.
+## Roadmap (reorganizado por dependências técnicas; após estabilidade do núcleo clínico)
+- **Fase 1 — Infraestrutura:** entidade **Care Space** · convites · controle de acesso · auditoria · **Snapshot Clínico**.
+- **Fase 2 — Compartilhamento Inteligente:** Dossiê Clínico · sugestão por especialidade · sugestão por médico ·
+  seleção automática da evolução.
+- **Fase 3 — Continuidade do Cuidado:** comentários · recomendações · solicitação de novos exames · **agendamento
+  de repetição** · acompanhamento longitudinal.
+- **Fase 4 — Equipe Assistencial:** múltiplos profissionais · discussão multidisciplinar · histórico das
+  interações · **comparação entre snapshots**.
 
-## Segurança e governança (regras permanentes)
-Acesso externo por convite; permissões granulares; expiração/revogação imediatas; auditoria append-only;
-snapshot imutável; somente leitura; colaboração isolada da base. Toda ação de compartilhamento é
-**outward-facing** e passa pelo controle explícito do paciente — nunca criada por inferência da IA.
+## Avaliação estratégica
+CARE-001 inaugura um **novo pilar**: a SINTERA deixa de apenas estruturar/representar a informação clínica e
+passa a **orquestrar a continuidade do cuidado** entre paciente e profissionais — coerente com toda a
+arquitetura e reutilizando diretamente os componentes existentes, sem pipeline paralelo.
