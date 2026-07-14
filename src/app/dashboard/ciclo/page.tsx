@@ -16,6 +16,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import ListCard from '@/components/ListCard'
 import Card from '@/components/ui/Card'
+import PageHeader from '@/components/PageHeader'
 // Taxonomia de métodos contraceptivos = SSOT em @/lib/cycle (compartilhada com o Relatório).
 import { CONTRACEPTIVE_KINDS as KINDS, contraceptiveLabel as kindLabel } from '@/lib/cycle'
 import Disclaimer from '@/components/ui/Disclaimer'
@@ -202,14 +203,8 @@ export default function CicloPage() {
         <ArrowLeft size={15} /> Painel Inicial
       </Link>
 
-      <div>
-        <div className="inline-flex items-center gap-1.5 text-petal mb-2">
-          <Droplet size={16} />
-          <span className="font-body text-xs font-medium uppercase tracking-wider">Ciclo e Contracepção</span>
-        </div>
-        <h1 className="font-display text-2xl font-semibold text-onyx">Ciclo e Contracepção</h1>
-        <p className="font-body text-sm text-mauve mt-1">Acompanhe seu ciclo menstrual e seus métodos contraceptivos. A SINTERA organiza e lembra — não prescreve nem interpreta.</p>
-      </div>
+      <PageHeader icon={<Droplet size={16} />} eyebrow="Ciclo e Contracepção" title="Ciclo e Contracepção"
+        subtitle={<>Acompanhe seu ciclo menstrual e seus métodos contraceptivos. A SINTERA organiza e lembra — não prescreve nem interpreta.</>} />
 
       {loading ? (
         <Card padding="2xl" className="text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>

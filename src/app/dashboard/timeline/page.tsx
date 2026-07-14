@@ -10,9 +10,10 @@ import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   Clock, Plus, X, Stethoscope, Syringe, Activity, FlaskConical, CalendarDays,
-  Loader2, Pencil, Trash2, Paperclip, Info, Sparkles, Pill, Receipt, Dumbbell, Dna, CheckCircle2, RotateCcw,
+  Loader2, Pencil, Trash2, Paperclip, Info, Sparkles, Pill, Receipt, Dumbbell, Dna, CheckCircle2, RotateCcw, ArrowLeft,
 } from 'lucide-react'
 import Link from 'next/link'
+import PageHeader from '@/components/PageHeader'
 import { useRouter } from 'next/navigation'
 import TimelineEntry from '@/components/entry/TimelineEntry'
 import Disclaimer from '@/components/ui/Disclaimer'
@@ -322,16 +323,19 @@ function LegacyTimeline() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Histórico</h1>
-          <p className="font-body text-sm text-mauve">Seu acompanhamento longitudinal — a linha do tempo com exames, consultas, vacinas, procedimentos e medicamentos</p>
-        </div>
-        <button onClick={openCreate}
-          className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0">
-          <Plus size={15} /> Adicionar evento
-        </button>
+      <Link href="/dashboard" className="inline-flex items-center gap-1.5 font-body text-sm text-mauve hover:text-petal transition-colors">
+        <ArrowLeft size={15} /> Painel Inicial
+      </Link>
+
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+        <PageHeader icon={<Clock size={16} />} eyebrow="Histórico" title="Histórico"
+          subtitle={<>Seu acompanhamento longitudinal — a linha do tempo com exames, consultas, vacinas, procedimentos e medicamentos</>}
+          action={
+            <button onClick={openCreate}
+              className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0">
+              <Plus size={15} /> Adicionar evento
+            </button>
+          } />
       </motion.div>
 
       {/* Duas visões do mesmo registro longitudinal: Linha do Tempo (esta) · Evolução */}

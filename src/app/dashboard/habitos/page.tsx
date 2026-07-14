@@ -19,6 +19,7 @@ import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import ListCard from '@/components/ListCard'
 import Card from '@/components/ui/Card'
+import PageHeader from '@/components/PageHeader'
 import Disclaimer from '@/components/ui/Disclaimer'
 import ConfirmDialog from '@/components/ConfirmDialog'
 
@@ -152,16 +153,14 @@ export default function HabitosPage() {
         <ArrowLeft size={15} /> Painel Inicial
       </Link>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-semibold text-onyx">Hábitos de Vida</h1>
-          <p className="font-body text-sm text-mauve mt-1">Registre os fatores do seu dia a dia — a SINTERA organiza e acompanha sua evolução.</p>
-        </div>
-        <button onClick={() => (showForm ? (reset(), setShowForm(false)) : (reset(), setShowForm(true)))}
-          className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0">
-          {showForm ? <X size={15} /> : <Plus size={15} />} {showForm ? 'Fechar' : 'Adicionar'}
-        </button>
-      </div>
+      <PageHeader icon={<Sparkles size={16} />} eyebrow="Hábitos" title="Hábitos de Vida"
+        subtitle={<>Registre os fatores do seu dia a dia — a SINTERA organiza e acompanha sua evolução.</>}
+        action={
+          <button onClick={() => (showForm ? (reset(), setShowForm(false)) : (reset(), setShowForm(true)))}
+            className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0">
+            {showForm ? <X size={15} /> : <Plus size={15} />} {showForm ? 'Fechar' : 'Adicionar'}
+          </button>
+        } />
 
       {showForm && (
         <Card padding="md" className="space-y-3">
