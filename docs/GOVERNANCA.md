@@ -756,6 +756,27 @@ Toda modalidade futura (Mamografia, EEG, Ecocardiograma, Anatomopatológico…) 
 entra como concluída quando as 6 dimensões passam, com teste/evidência registrados. Os 446 exames reais são
 o **corpus** de certificação, nunca a referência do modelo.
 
+## GATE de CONCLUSÃO em 4 dimensões (CONSTITUCIONAL — fundadora, 14/07/2026)
+
+> **Uma capacidade só é CONCLUÍDA quando atende SIMULTANEAMENTE às quatro dimensões abaixo.**
+> Não declarar um módulo concluído apenas porque a infraestrutura técnica existe.
+
+A Certificação da Plataforma (6 dimensões acima) cobre a **dimensão 1**. A conclusão exige as quatro:
+
+1. **Infraestrutura** — arquitetura implementada · testes · auditorias · Certificação da Plataforma (6 dim.).
+2. **Funcionalidade** — TODOS os requisitos funcionais previstos para a capacidade implementados (não só os
+   técnicos), conferidos contra o **backlog funcional registrado** do módulo.
+3. **Experiência de uso** — fluxo consistente · nomenclatura · organização · usabilidade · **ausência de
+   comportamentos contraditórios**.
+4. **Integrações transversais** — notificações · financeiro · recorrência · compartilhamento (quando
+   aplicável) · histórico · evolução · demais capacidades reutilizáveis.
+
+**Motivo (fundadora):** risco de considerar um módulo pronto porque os componentes técnicos existem, enquanto
+ajustes de experiência, negócio e operação já levantados seguem abertos. **Aplicação:** toda entrega declara o
+estado nas 4 dimensões; com itens abertos em 2/3/4, o módulo é "infra pronta", **não** "concluído". Ex.:
+Exames E1–E8 = Infra+Funcionalidade em grande parte, mas Integrações transversais (Notificações, Care Space)
+e parte de UX seguem abertas → **Exames não está concluído** (ver `docs/EXAMES_CONCLUSAO.md`).
+
 ## Princípio da Capacidade Certificada (CONSTITUCIONAL — fundadora, 14/07/2026)
 
 > **A unidade de evolução da plataforma é a CAPACIDADE CERTIFICADA, não o código.**

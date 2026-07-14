@@ -81,3 +81,27 @@ do** → CARE-001*.
 **Rastreabilidade:** os `§x.y` referem-se à relação original por módulo (preservada no histórico do git).
 Vários itens reutilizam infra já certificada (Eventos Assistenciais · Modelo Aberto · Identidade Documental ·
 Bundle/CDU) — nascem sobre a base consolidada, sem retrabalho.
+
+---
+
+## Alinhamento 14/07/2026 — definição de CONCLUSÃO (4 dimensões) + backlog reforçado por módulo
+
+**GATE de conclusão (constitucional):** uma capacidade só é CONCLUÍDA com as 4 dimensões SIMULTÂNEAS —
+Infraestrutura · Funcionalidade · Experiência de uso · Integrações transversais. Não declarar concluído só
+porque a infra técnica existe. *(Ver `docs/GOVERNANCA.md` §GATE de CONCLUSÃO em 4 dimensões.)*
+
+Itens que a fundadora pediu para manter REGISTRADOS no backlog de implementação dos módulos:
+
+- **Exames** — confirmação automática de exame duplicado · upload de imagens além do PDF · médico solicitante ·
+  nomenclatura padronizada · política binária de estruturação · categorias de exame · valor pago · NF/recibo ·
+  agendamento · recorrência · compartilhamento futuro pelo Care Space. *(Rastreado em `docs/EXAMES_CONCLUSAO.md`
+  — E1–E8 fechados; abertos: dedup, imagens, notificações (NOTIF-001), Care Space, UX/visual.)*
+- **Relatórios** — **separação definitiva entre Agenda e Histórico** (não misturar previsto × realizado).
+- **Medidas Corporais** — reorganização completa conforme documento enviado (Fase C · Medidas/avaliação geral).
+- **Sinais Vitais** — preparação para **integração automática com dispositivos externos** (Fase E1 · wearables).
+- **Notificações (NOTIF-001)** — infraestrutura ÚNICA e transversal; usuário configura por CATEGORIA o canal
+  (e-mail · WhatsApp · ambos · nenhum), válido para toda a plataforma (exames, procedimentos, vacinas,
+  medicamentos, suplementos, consultas, avaliações corporais, eventos assistenciais, recorrências, lembretes,
+  qualquer agendado). Reutilizada por TODOS os módulos, sem implementações específicas. *(Detalhe: Fase C §C5 +
+  `notif_001_infraestrutura_unica`; reúso de Resend/WhatsApp/`buildEventNotification`/orquestrador de lembretes.)*
+- **Billing (SaaS)** — seguir o planejamento registrado (`docs/BILLING-001_ASSINATURAS.md`); pilar transversal.

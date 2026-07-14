@@ -26,20 +26,41 @@
   de eventos (Convergência Progressiva).
 - **E3** já é regra (`regra_estruturacao_binaria`); a lacuna é só o **mapeamento de UI** (2 estados).
 
-## Definição de "módulo Exames concluído"
-E1–E8 fechados (cada um com seu critério), sem regressão (tsc + suíte verdes), padrão de módulo do AUD-002
-aplicado. Só então avança-se para a próxima capacidade transversal.
+## Definição de "módulo Exames CONCLUÍDO" — 4 dimensões (fundadora 14/07)
+Uma capacidade só é CONCLUÍDA quando atende SIMULTANEAMENTE: **(1) Infraestrutura** (arquitetura+testes+
+auditorias+Certificação) · **(2) Funcionalidade** (todos os requisitos funcionais registrados) · **(3)
+Experiência de uso** (fluxo/nomenclatura/organização/usabilidade; sem contradições) · **(4) Integrações
+transversais** (notificações, financeiro, recorrência, compartilhamento, histórico, evolução, reúso).
+Não declarar concluído só porque a infra técnica existe.
 
-## Estado (14/07/2026) — E1–E8 ✅ concluídos
-Todas as oito sub-capacidades fechadas por implementação ou reúso certificado, sem regressão (tsc + eslint
-limpos; suíte 192 verdes). Decisões da fundadora tomadas no caminho: E5 (ômicas = categoria, capacidade
-preservada) e E6 (entrada única + continuação especializada).
+## Estado (14/07/2026) — E1–E8 = Infra + Funcionalidade (em grande parte). Módulo NÃO concluído.
+As oito sub-capacidades técnicas foram fechadas (implementação ou reúso certificado), sem regressão (tsc +
+eslint limpos; suíte 192 verdes). Decisões da fundadora: E5 (ômicas = categoria, capacidade preservada) e
+E6 (entrada única + continuação especializada). **Mas pela definição de 4 dimensões o módulo Exames ainda
+NÃO está concluído** — faltam itens de Funcionalidade/Experiência/Integrações abaixo.
 
-**Pendências de arquitetura registradas (NÃO bloqueiam o módulo; limpeza separada):**
-- `health_events` × `agenda_events` (duas tabelas de evento) — convergência a decidir antes de AMPLIAR o
-  wiring de eventos (Convergência Progressiva). E7/E8 já funcionam sobre a infra atual.
-- Vínculo duro exame ↔ evento (hoje o evento referencia o exame por título/nota) — avaliar `exam_id` se/quando
-  a convergência for resolvida.
+### Backlog de conclusão do módulo Exames (registrado — fundadora 14/07)
+| Item | Dimensão | Estado |
+|---|---|---|
+| Médico solicitante na identificação | 2 Func | ✅ E1 |
+| Nomenclatura padronizada | 2 Func | ✅ E2 |
+| Política binária de estruturação | 2/3 | ✅ E3 |
+| Categorias de exame | 2 Func | ✅ E5 |
+| Valor pago | 2/4 | ✅ E7 |
+| Nota fiscal ou recibo | 2/4 | ✅ E7 |
+| Agendamento | 4 Integr | ✅ E8 |
+| Recorrência | 4 Integr | ✅ E8 |
+| **Confirmação automática de exame duplicado** | 2/3 | ⬜ (regra `req_deteccao_duplicados` existe; validar wiring/UX) |
+| **Upload de imagens além do PDF** | 2/3 | 🔄 (imagens já viram bundle→PDF; confirmar cobertura/expectativa) |
+| **Notificações (e-mail/WhatsApp) por evento** | 4 Integr | ⬜ depende de **NOTIF-001** (infra única) |
+| **Compartilhamento futuro pelo Care Space** | 4 Integr | ⬜ depende de CARE-001 (fase 4) |
+| Melhorias visuais | 3 UX | ⬜ (homologação visual) |
 
-**Próximo:** homologação do módulo (tripé técnica/estrutural/visual) e, aprovado, seguir para a próxima
-capacidade transversal do backlog (Eventos · Notificações · Billing).
+### Pendências de arquitetura (NÃO bloqueiam; limpeza separada)
+- `health_events` × `agenda_events` (duas tabelas de evento) — convergir antes de AMPLIAR o wiring de eventos.
+- Vínculo duro exame ↔ evento (hoje por título/nota) — avaliar `exam_id` se a convergência for resolvida.
+
+**Próximo:** a dimensão 4 (Integrações) de Exames depende de **NOTIF-001** (Central de Notificações única) —
+que é também dependência transversal de todos os módulos com item agendado. Execução autônoma segue para
+NOTIF-001; Exames só será declarado CONCLUÍDO quando as 4 dimensões fecharem (dedup + imagens + notificações
++ UX; compartilhamento fica com CARE-001).
