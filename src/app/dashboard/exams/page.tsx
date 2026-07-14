@@ -20,7 +20,6 @@ import ErrorBanner from '@/components/ErrorBanner'
 import CreateRecordMenu from '@/components/ui/CreateRecordMenu'
 import Card from '@/components/ui/Card'
 import MotionCard from '@/components/ui/MotionCard'
-import ActionCard from '@/components/ui/ActionCard'
 import Disclaimer from '@/components/ui/Disclaimer'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import type { Database } from '@/lib/supabase/types'
@@ -321,9 +320,15 @@ export default function ExamsPage() {
           title="Exames"
           subtitle={<><strong className="font-medium text-onyx/70">Solte o laudo — a SINTERA lê e extrai os dados por você.</strong> Também guarda receitas e outros documentos.</>}
           action={
-            /* Menu de criação de registros (padrão oficial DS-001) — mesmo em todo módulo */
+            /* Menu de criação de registros (padrão oficial DS-001) — PONTO DE ENTRADA ÚNICO.
+               E6: ômica é uma CONTINUAÇÃO especializada do mesmo ponto de entrada (não um fork):
+               declarar "Exame ômico" segue para o passo de catálogo/versionamento. */
             <CreateRecordMenu label="Novo exame" methods={['file', 'camera']}
-              onSelect={(_m, file) => { if (file) processFile(file) }}
+              extras={[{ key: 'omics', label: 'Exame ômico (catálogo)', icon: Dna }]}
+              onSelect={(m, file) => {
+                if (m === 'omics') { router.push('/dashboard/omics'); return }
+                if (file) processFile(file)
+              }}
               fileAccept=".pdf,.jpg,.jpeg,.png" busy={uploading} busyLabel="Enviando…"
               className="flex-shrink-0" />
           }
@@ -372,34 +377,24 @@ export default function ExamsPage() {
 
       <ErrorBanner message={uploadError} onDismiss={() => setUploadError(null)} />
 
-      {/* Explicação convencional × ômica — barra NEUTRA, separada da de Ômica
-          (para não parecer que o convencional faz parte da Ômica) */}
+      {/* Explicação — TODO exame entra pelo mesmo ponto ("Novo exame"/caixa acima). Ômica é uma
+          CATEGORIA: como reúne centenas/milhares de marcadores, ao declará-la em "Novo exame →
+          Exame ômico" você segue para o passo especializado (catálogo/versionamento). E6: entrada
+          única + continuação especializada; sem fluxo paralelo. */}
       <div className="rounded-2xl border border-border bg-ivory px-4 py-3 flex items-start gap-3">
         <Info size={16} className="text-mauve flex-shrink-0 mt-0.5" />
-        <div className="space-y-2">
+        <div className="space-y-2 min-w-0">
           <p className="font-body text-xs text-onyx leading-relaxed">
-            <strong>Exame convencional</strong> — laudos laboratoriais comuns (sangue, urina, hormônios…) que você envia na caixa acima; a IA extrai os dados automaticamente.
+            <strong>Exame convencional</strong> — laudos comuns (sangue, urina, hormônios…) que você envia na caixa acima; a IA extrai os dados automaticamente.
           </p>
           <p className="font-body text-xs text-onyx leading-relaxed">
-            <strong>Exame ômico</strong> — é uma <strong>categoria</strong> de exame: metabolômica, proteômica, microbioma, genética. Reúne de centenas a milhares de marcadores; por isso sua visualização tem catálogo, versionamento e comparação no tempo, no espaço da categoria abaixo.
+            <strong>Exame ômico</strong> — é uma <strong>categoria</strong> (metabolômica, proteômica, microbioma, genética) com muitos marcadores. Cadastre por <strong>Novo exame → Exame ômico</strong>; o passo de catálogo, versionamento e comparação abre em seguida.
           </p>
+          <Link href="/dashboard/omics" className="inline-flex items-center gap-1 font-body text-xs font-medium text-lavender hover:underline">
+            <Dna size={13} /> Ver a categoria Ômica <ChevronRight size={13} />
+          </Link>
         </div>
       </div>
-
-      {/* Categoria Ômica — a representação rica (catálogo/versionamento/comparação) da categoria.
-          NÃO é um fluxo paralelo (E5): é o espaço da categoria ômica. A unificação da ENTRADA
-          com o restante dos exames é E6 (fluxo único de upload). */}
-      <ActionCard href="/dashboard/omics" padding="sm"
-        className="flex items-center gap-3 group">
-        <div className="w-10 h-10 rounded-2xl bg-lavender-light flex items-center justify-center flex-shrink-0">
-          <Dna size={19} className="text-lavender" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-body text-sm font-semibold text-onyx">Ômica</p>
-          <p className="font-body text-xs text-mauve mt-0.5">Categoria de exame com muitos marcadores — catálogo, versionamento e comparação no tempo</p>
-        </div>
-        <ChevronRight size={16} className="text-mauve/40 group-hover:text-lavender transition-colors flex-shrink-0" />
-      </ActionCard>
 
       {/* ── Abas: Resultados × Pedidos e solicitações (subcategoria) ────────── */}
       {exams.length > 0 && (
