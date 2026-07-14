@@ -5,9 +5,10 @@
 // projeção dos eventos passados. Sem juízo clínico (RDC 657/2022).
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { CalendarDays, Plus, Check, Pencil, Ban, Trash2, Loader2, CalendarClock, Sparkles, X } from 'lucide-react'
+import { CalendarDays, Plus, Check, Pencil, Ban, Trash2, Loader2, CalendarClock, Sparkles, X, ArrowLeft } from 'lucide-react'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { useEventForm, eventToInput } from '@/components/eventForm'
@@ -16,6 +17,7 @@ import { typeLabel, statusLabel, formatDateBR, formatTimeBR, type HealthEvent } 
 import { useStickyView } from '@/lib/ui/useStickyView'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import ListCard, { CardChip } from '@/components/ListCard'
+import PageHeader from '@/components/PageHeader'
 import MotionCard from '@/components/ui/MotionCard'
 import Disclaimer from '@/components/ui/Disclaimer'
 
@@ -192,16 +194,24 @@ export default function AgendaPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Agenda</h1>
-          <p className="font-body text-sm text-mauve">Seus próximos exames, consultas e retornos. O que já aconteceu fica no Histórico.</p>
-        </div>
-        <button onClick={openAdd}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl gradient-sintera text-white text-sm font-body font-medium hover:opacity-90 transition-opacity flex-shrink-0">
-          <Plus size={16} /> Adicionar
-        </button>
+    <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+      <Link href="/dashboard" className="inline-flex items-center gap-1.5 font-body text-sm text-mauve hover:text-petal transition-colors">
+        <ArrowLeft size={15} /> Painel Inicial
+      </Link>
+
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+        <PageHeader
+          icon={<CalendarDays size={16} />}
+          eyebrow="Agenda"
+          title="Agenda"
+          subtitle={<>Seus próximos exames, consultas e retornos. O que já aconteceu fica no Histórico.</>}
+          action={
+            <button onClick={openAdd}
+              className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white text-sm font-body font-medium hover:opacity-90 transition-opacity flex-shrink-0">
+              <Plus size={16} /> Adicionar
+            </button>
+          }
+        />
       </motion.div>
 
       {actionError && (

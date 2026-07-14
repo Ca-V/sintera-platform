@@ -1,17 +1,19 @@
 'use client'
 
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Upload, FileText, Clock, CheckCircle, AlertCircle,
-  X, Loader2, Zap, Search, ChevronDown, ChevronUp, Trash2, Pencil, Check, Dna, ChevronRight, Info, Camera,
+  X, Loader2, Zap, Search, ChevronDown, ChevronUp, Trash2, Pencil, Check, Dna, ChevronRight, Info, Camera, ArrowLeft, FlaskConical,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { parseDateOnly } from '@/lib/agenda'
 import { useUser } from '@/context/UserContext'
 import { compareNames } from '@/lib/exams/nameMatch'
 import ListCard, { CardChip } from '@/components/ListCard'
+import PageHeader from '@/components/PageHeader'
 import CreateRecordMenu from '@/components/ui/CreateRecordMenu'
 import Card from '@/components/ui/Card'
 import MotionCard from '@/components/ui/MotionCard'
@@ -323,18 +325,25 @@ export default function ExamsPage() {
   const onDragLeave = (e: React.DragEvent) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragging(false) }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Exames</h1>
-          <p className="font-body text-sm text-mauve"><strong className="font-medium text-onyx/70">Solte o laudo — a SINTERA lê e extrai os dados por você.</strong> Também guarda receitas e outros documentos.</p>
-        </div>
-        {/* Menu de criação de registros (padrão oficial DS-001) — mesmo em todo módulo */}
-        <CreateRecordMenu label="Novo exame" methods={['file', 'camera']}
-          onSelect={(_m, file) => { if (file) processFile(file) }}
-          fileAccept=".pdf,.jpg,.jpeg,.png" busy={uploading} busyLabel="Enviando…"
-          className="flex-shrink-0" />
+    <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+      <Link href="/dashboard" className="inline-flex items-center gap-1.5 font-body text-sm text-mauve hover:text-petal transition-colors">
+        <ArrowLeft size={15} /> Painel Inicial
+      </Link>
+
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+        <PageHeader
+          icon={<FlaskConical size={16} />}
+          eyebrow="Exames"
+          title="Exames"
+          subtitle={<><strong className="font-medium text-onyx/70">Solte o laudo — a SINTERA lê e extrai os dados por você.</strong> Também guarda receitas e outros documentos.</>}
+          action={
+            /* Menu de criação de registros (padrão oficial DS-001) — mesmo em todo módulo */
+            <CreateRecordMenu label="Novo exame" methods={['file', 'camera']}
+              onSelect={(_m, file) => { if (file) processFile(file) }}
+              fileAccept=".pdf,.jpg,.jpeg,.png" busy={uploading} busyLabel="Enviando…"
+              className="flex-shrink-0" />
+          }
+        />
       </motion.div>
 
       {/* ── Adicionar exame ──────────────────────────────────────────────── */}

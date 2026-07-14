@@ -9,12 +9,14 @@
 // ============================================================
 
 import { useCallback, useEffect, useState } from 'react'
-import { Loader2, Plus, X, Trash2 } from 'lucide-react'
+import Link from 'next/link'
+import { Loader2, Plus, X, Trash2, ArrowLeft, HeartPulse } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import Sparkline, { parseNum } from '@/components/Sparkline'
 import ListCard from '@/components/ListCard'
+import PageHeader from '@/components/PageHeader'
 import Card from '@/components/ui/Card'
 import Disclaimer from '@/components/ui/Disclaimer'
 import ConfirmDialog from '@/components/ConfirmDialog'
@@ -118,16 +120,22 @@ export default function SinaisVitaisPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-semibold text-onyx">Sinais vitais</h1>
-          <p className="font-body text-sm text-mauve mt-1">Acompanhe pressão arterial, frequência cardíaca, glicemia e outros ao longo do tempo.</p>
-        </div>
-        <button onClick={() => (showForm ? (reset(), setShowForm(false)) : (reset(), setShowForm(true)))}
-          className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0">
-          {showForm ? <X size={15} /> : <Plus size={15} />} {showForm ? 'Fechar' : 'Adicionar'}
-        </button>
-      </div>
+      <Link href="/dashboard" className="inline-flex items-center gap-1.5 font-body text-sm text-mauve hover:text-petal transition-colors">
+        <ArrowLeft size={15} /> Painel Inicial
+      </Link>
+
+      <PageHeader
+        icon={<HeartPulse size={16} />}
+        eyebrow="Sinais vitais"
+        title="Sinais vitais"
+        subtitle={<>Acompanhe pressão arterial, frequência cardíaca, glicemia e outros ao longo do tempo.</>}
+        action={
+          <button onClick={() => (showForm ? (reset(), setShowForm(false)) : (reset(), setShowForm(true)))}
+            className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0">
+            {showForm ? <X size={15} /> : <Plus size={15} />} {showForm ? 'Fechar' : 'Adicionar'}
+          </button>
+        }
+      />
 
       {showForm && (
         <Card padding="md" className="space-y-3">

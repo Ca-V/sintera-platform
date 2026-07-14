@@ -11,7 +11,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Loader2, X, ArrowLeft, Pencil, Trash2, ChevronDown } from 'lucide-react'
+import { Loader2, X, ArrowLeft, Pencil, Trash2, ChevronDown, Pill } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
@@ -21,6 +21,7 @@ import { scanMedicationImage, PENDING_MED_SCAN_KEY } from '@/lib/medications/sca
 import { useStickyView } from '@/lib/ui/useStickyView'
 import ListCard, { CardChip } from '@/components/ListCard'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
+import PageHeader from '@/components/PageHeader'
 import Card from '@/components/ui/Card'
 import Disclaimer from '@/components/ui/Disclaimer'
 import { healthEventToRow } from '@/lib/agenda/event'
@@ -467,27 +468,29 @@ export default function MedicamentosPage() {
         <ArrowLeft size={15} /> Painel Inicial
       </Link>
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="font-display text-2xl font-semibold text-onyx">Medicamentos e Suplementos</h1>
-          <p className="font-body text-sm text-mauve mt-1"><strong className="font-medium text-onyx/70">Fotografe a receita — a SINTERA lê e preenche os dados por você.</strong></p>
-        </div>
-        <div className="flex flex-row flex-wrap items-center gap-2 sm:flex-col sm:items-end flex-shrink-0">
-          {showForm ? (
-            <button onClick={() => { reset(); setShowForm(false) }}
-              className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity">
-              <X size={15} /> Fechar
-            </button>
-          ) : (
-            // Menu de criação de registros (padrão oficial DS-001) — MESMO em todo módulo.
-            <CreateRecordMenu label="Novo medicamento ou suplemento" methods={['file', 'camera', 'manual']}
-              onSelect={(m, file) => { if (file) handleScan(file); else if (m === 'manual') { reset(); setShowForm(true) } }}
-              fileAccept="application/pdf,image/*" busy={scanning} busyLabel="Lendo…"
-              voice={<VoiceInput onResult={(t) => handleVoiceAdd(t)} label="Falar" title="Adicionar por voz"
-                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-blush text-left font-body text-sm text-onyx transition-colors" />} />
-          )}
-        </div>
-      </div>
+      <PageHeader
+        icon={<Pill size={16} />}
+        eyebrow="Medicamentos"
+        title="Medicamentos e Suplementos"
+        subtitle={<><strong className="font-medium text-onyx/70">Fotografe a receita — a SINTERA lê e preenche os dados por você.</strong></>}
+        action={
+          <div className="flex flex-row flex-wrap items-center gap-2 sm:flex-col sm:items-end flex-shrink-0">
+            {showForm ? (
+              <button onClick={() => { reset(); setShowForm(false) }}
+                className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity">
+                <X size={15} /> Fechar
+              </button>
+            ) : (
+              // Menu de criação de registros (padrão oficial DS-001) — MESMO em todo módulo.
+              <CreateRecordMenu label="Novo medicamento ou suplemento" methods={['file', 'camera', 'manual']}
+                onSelect={(m, file) => { if (file) handleScan(file); else if (m === 'manual') { reset(); setShowForm(true) } }}
+                fileAccept="application/pdf,image/*" busy={scanning} busyLabel="Lendo…"
+                voice={<VoiceInput onResult={(t) => handleVoiceAdd(t)} label="Falar" title="Adicionar por voz"
+                  className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-blush text-left font-body text-sm text-onyx transition-colors" />} />
+            )}
+          </div>
+        }
+      />
 
       {/* Erro de leitura (foto/voz) — fica visível mesmo com o formulário fechado */}
       {scanErr && (

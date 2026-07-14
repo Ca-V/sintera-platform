@@ -10,12 +10,13 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Loader2, Plus, X, Activity, Trash2, Camera, ScanLine } from 'lucide-react'
+import { Loader2, Plus, X, Activity, Trash2, Camera, ScanLine, ArrowLeft, Ruler } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import Sparkline, { parseNum } from '@/components/Sparkline'
 import ListCard from '@/components/ListCard'
+import PageHeader from '@/components/PageHeader'
 import Card from '@/components/ui/Card'
 import Section from '@/components/ui/Section'
 import Disclaimer from '@/components/ui/Disclaimer'
@@ -244,24 +245,30 @@ export default function MedidasPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="font-display text-2xl font-semibold text-onyx">Medidas</h1>
-          <p className="font-body text-sm text-mauve mt-1">Acompanhe peso, altura, circunferência e composição corporal (bioimpedância) ao longo do tempo.</p>
-        </div>
-        <div className="flex flex-row flex-wrap items-center gap-2 sm:flex-col sm:items-end flex-shrink-0">
-          <button onClick={() => (showForm ? (reset(), setShowForm(false)) : (reset(), setShowForm(true)))}
-            className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity">
-            {showForm ? <X size={15} /> : <Plus size={15} />} {showForm ? 'Fechar' : 'Adicionar'}
-          </button>
-          <input ref={scanRef} type="file" accept="image/*" capture="environment" multiple className="hidden"
-            onChange={e => { const fs = Array.from(e.target.files ?? []); e.target.value = ''; bundle.intake(fs) }} />
-          <button onClick={() => scanRef.current?.click()} disabled={scanning}
-            className="flex items-center gap-2 px-4 py-2 rounded-full border border-petal/40 text-petal font-body text-sm font-medium hover:bg-blush transition-colors disabled:opacity-50">
-            {scanning ? <Loader2 size={15} className="animate-spin" /> : <ScanLine size={15} />} Escanear bioimpedância
-          </button>
-        </div>
-      </div>
+      <Link href="/dashboard" className="inline-flex items-center gap-1.5 font-body text-sm text-mauve hover:text-petal transition-colors">
+        <ArrowLeft size={15} /> Painel Inicial
+      </Link>
+
+      <PageHeader
+        icon={<Ruler size={16} />}
+        eyebrow="Medidas"
+        title="Medidas"
+        subtitle={<>Acompanhe peso, altura, circunferência e composição corporal (bioimpedância) ao longo do tempo.</>}
+        action={
+          <div className="flex flex-row flex-wrap items-center gap-2 sm:flex-col sm:items-end flex-shrink-0">
+            <button onClick={() => (showForm ? (reset(), setShowForm(false)) : (reset(), setShowForm(true)))}
+              className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity">
+              {showForm ? <X size={15} /> : <Plus size={15} />} {showForm ? 'Fechar' : 'Adicionar'}
+            </button>
+            <input ref={scanRef} type="file" accept="image/*" capture="environment" multiple className="hidden"
+              onChange={e => { const fs = Array.from(e.target.files ?? []); e.target.value = ''; bundle.intake(fs) }} />
+            <button onClick={() => scanRef.current?.click()} disabled={scanning}
+              className="flex items-center gap-2 px-4 py-2 rounded-full border border-petal/40 text-petal font-body text-sm font-medium hover:bg-blush transition-colors disabled:opacity-50">
+              {scanning ? <Loader2 size={15} className="animate-spin" /> : <ScanLine size={15} />} Escanear bioimpedância
+            </button>
+          </div>
+        }
+      />
 
       {bundle.pages.length > 0 && (
         <DocumentBundleStaging bundle={bundle} onAddCamera={() => scanRef.current?.click()} onAddGallery={() => scanRef.current?.click()} />

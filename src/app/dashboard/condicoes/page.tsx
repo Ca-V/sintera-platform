@@ -18,6 +18,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import ListCard from '@/components/ListCard'
+import PageHeader from '@/components/PageHeader'
 import Card from '@/components/ui/Card'
 import Disclaimer from '@/components/ui/Disclaimer'
 import CreateRecordMenu from '@/components/ui/CreateRecordMenu'
@@ -278,21 +279,23 @@ export default function CondicoesPage() {
         <ArrowLeft size={15} /> Painel Inicial
       </Link>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-semibold text-onyx">Condições de Saúde</h1>
-          <p className="font-body text-sm text-mauve mt-1">Carregue um laudo/exame (foto, arquivo ou scan) ou digite — a SINTERA lê e organiza. Se o documento for um exame, ele também é salvo em Exames.</p>
-        </div>
-        <CreateRecordMenu
-          label="Nova condição"
-          methods={['file', 'camera', 'manual']}
-          fileLabel="Selecionar laudo (PDF ou foto)"
-          busy={scanning}
-          busyLabel="Lendo documento…"
-          voice={<VoiceInput onResult={t => { reset(); setSourceHint('voice'); setName(t); setShowForm(true) }} />}
-          onSelect={onSelectMethod}
-        />
-      </div>
+      <PageHeader
+        icon={<Stethoscope size={16} />}
+        eyebrow="Condições"
+        title="Condições de Saúde"
+        subtitle={<>Carregue um laudo/exame (foto, arquivo ou scan) ou digite — a SINTERA lê e organiza. Se o documento for um exame, ele também é salvo em Exames.</>}
+        action={
+          <CreateRecordMenu
+            label="Nova condição"
+            methods={['file', 'camera', 'manual']}
+            fileLabel="Selecionar laudo (PDF ou foto)"
+            busy={scanning}
+            busyLabel="Lendo documento…"
+            voice={<VoiceInput onResult={t => { reset(); setSourceHint('voice'); setName(t); setShowForm(true) }} />}
+            onSelect={onSelectMethod}
+          />
+        }
+      />
 
       {scanErr && !showForm && <p className="font-body text-xs text-red-500">{scanErr}</p>}
       {scanInfo && !showForm && <p className="font-body text-xs text-onyx/60">{scanInfo}</p>}
