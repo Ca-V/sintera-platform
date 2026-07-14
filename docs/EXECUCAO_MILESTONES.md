@@ -96,28 +96,31 @@ do LLM acontece no M5**, onde o LLM roda na extração (dependência técnica re
 ## M5 — Clinical Processing Engine · INFRAESTRUTURA · 35% · 🔄
 **Papel:** NÃO é uma entrega de valor — é o MOTOR que habilita as modalidades. UM mecanismo, processadores
 especializados, todos consumindo `CertifiedCDU` (nunca PDF) e produzindo o modelo de resultado da modalidade.
-**Critérios de infra:** (a) roteamento puro (Identidade Clínica → processador) ✅ `routeProcessing`;
-(b) sem processador/ambíguo → `document_only` (revisão clínica, não bloqueia) ✅ (CEF §4.0);
+**Critérios de infra:** (a) **fachada ÚNICA** `processClinical(cdu)` ✅ — Identidade Clínica seleciona o
+**MODELO CLÍNICO** e só então o processador; o `analyze` conhece só o Engine (zero acoplamento a modalidade);
+(b) sem modelo/ambíguo → `document_only` (revisão clínica, não bloqueia) ✅ (CEF §4.0);
 (c) **CertifiedCDU AUTOSSUFICIENTE** ✅ — carrega o conteúdo (`content: CduContent`); o processador não
-volta a páginas/PDF/OCR; (d) **desacoplamento garantido por teste** ✅ `ARCH-processor-decoupling` (nenhum
-processador importa PDF/Bundle/OCR/DB; só `./types` = a CDU); (e) contrato de processador (`ProcessorResult`,
-`parametric|narrative|structured`, `extractedUnits` p/ a Cobertura) ✅.
-**Feito:** `clinical-processing-engine.ts` (13 processadores mapeados) · `clinical-processors/` (contrato +
-executor + 1º processador) · `FUNC-clinical-processing-engine` (9) · `ARCH-identity-processor-coverage` ·
+volta a páginas/PDF/OCR; (d) **desacoplamento garantido por teste** ✅ `ARCH-processor-decoupling`;
+(e) **modelos por MODALIDADE, não fabricante** ✅ (Pentacam/Galilei/Orbscan → `corneal-tomography`);
+(f) contrato de processador (`ProcessorResult`, `parametric|narrative|structured`, `extractedUnits`) ✅.
+**Feito:** `clinical-processing-engine.ts` (13 modelos mapeados + `processClinical`) · `clinical-processors/`
+(contrato + 1º modelo) · `FUNC-clinical-processing-engine` (9) · `ARCH-identity-processor-coverage` ·
 `ARCH-processor-decoupling`.
-**Falta:** fusão do LLM como 1 evidência (item d do M4) quando os processadores rodarem; ligar a Cobertura
-por grupo (`extractedUnits` × descoberto) no `analyze`.
+**Falta:** fusão do LLM como 1 evidência (item d do M4); ligar a Cobertura por grupo no `analyze`.
 
 ## C — CAPACIDADES CLÍNICAS (dirigidas por CRC) · painel próprio: `COBERTURA_CLINICA.md`
 **Eixo de valor.** Cada modalidade é uma ENTREGA completa (upload PDF+imagens → segmentação → identificação
 → título fiel → data → emissor → **resultado estruturado da modalidade** → original → cobertura →
 reprodutibilidade → **CRC verde**). Sobe para ✅ só quando o caso do CRC passa.
-**Em andamento — Pentacam (GS-004) · ~35%:** processador `runPentacam` ✅ (parâmetros tomográficos por olho:
-K1/K2/Kmax/espessura mínima/BAD-D/elevações; RDC 657 — transcreve, não interpreta) + `FUNC-pentacam-processor`
-(7). **Falta:** ligar o processador no `analyze` (persistir parâmetros como resultado, não biomarcadores) +
-fixture real GS-004 (`expected.json`) na homologação.
+Maturidade por modalidade em `COBERTURA_CLINICA.md` (5 estágios: Identificação → Representação → Validação →
+Cobertura → UCDA).
+**Em andamento — `corneal-tomography` (GS-004) · estágio Representação:** modelo `runCornealTomography` ✅
+(parâmetros tomográficos por olho: K1/K2/Kmax/espessura mínima/BAD-D/elevações; RDC 657 — transcreve, não
+interpreta) + `FUNC-corneal-tomography-processor` (8, incl. fachada `processClinical` + multi-fabricante).
+**Falta:** ligar `processClinical` no `analyze` (persistir parâmetros como resultado, não biomarcadores) +
+fixture real GS-004 (`expected.json`) na homologação → sobe para Validação/Cobertura.
 **Fila (CRC dirige):** Mamografia (GS-012) → Ultrassom (GS-013) → EEG (GS-003) → Ecocardiograma (GS-007)…
-**Testes:** `FUNC-pentacam-processor` ✅ · por modalidade: 1 FUNC (processador) + regressão CRC.
+**Testes:** `FUNC-corneal-tomography-processor` ✅ · por modelo: 1 FUNC (processador) + regressão CRC.
 
 ## M6 — Datas semânticas (CEF §5) · 5% · ⬜
 **Capacidade:** data de realização correta por tipo; baixa confiança não sobrescreve.

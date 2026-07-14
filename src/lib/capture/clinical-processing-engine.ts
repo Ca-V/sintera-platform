@@ -1,18 +1,21 @@
 // Clinical Processing Engine (CPE) — o MECANISMO ÚNICO de processamento clínico (reformula o M5).
 //
 // Fundadora (13/07): não há N extratores soltos — há UM motor com PROCESSADORES ESPECIALIZADOS por
-// modalidade. Todos consomem o MESMO contrato de entrada (CertifiedCDU, nunca um PDF) e cada um produz o
-// MODELO DE RESULTADO próprio da sua modalidade (biomarcador ≠ achado ≠ parâmetro por região). A Identidade
-// Clínica (Clinical Identity Registry) já elege o extrator; o CPE é quem ROTEIA a CDU ao processador certo.
+// MODELO CLÍNICO. Todos consomem o MESMO contrato de entrada (CertifiedCDU, nunca um PDF) e cada um produz o
+// MODELO DE RESULTADO próprio da sua modalidade (biomarcador ≠ achado ≠ parâmetro por região).
 //
-// Este arquivo é a ESPINHA de roteamento — pura, determinística e auditável. A extração de cada modalidade
-// (chamada de IA/parser) pluga como um processador concreto (incremental). Princípios:
-//  · CEF §4.0 — modalidade SEM processador → `document_only` (revisão CLÍNICA, NÃO bloqueia; preserva o
-//    documento inteiro, nunca força campos).
-//  · Identidade ambígua/baixa confiança → não escolhe processador (segue como document_only) — não inventa.
-//  · Nenhuma camada compensa a anterior: o CPE confia na Identidade Clínica; não re-identifica.
+// FACHADA ÚNICA (o `analyze` conhece SÓ isto): `processClinical(cdu)` → a Identidade Clínica seleciona o
+// MODELO CLÍNICO e, só então, o processador correspondente. O `analyze` permanece TOTALMENTE desacoplado das
+// modalidades — não conhece Pentacam, mamografia, EEG… só o Engine. Os modelos organizam-se por MODALIDADE,
+// não por fabricante (Pentacam/Galilei/Orbscan → o mesmo modelo `corneal-tomography`).
+//
+// Princípios: CEF §4.0 — modalidade SEM processador → `document_only` (revisão CLÍNICA, NÃO bloqueia;
+// preserva o documento). Identidade ambígua/baixa confiança → não escolhe modelo (document_only), não
+// inventa. Nenhuma camada compensa a anterior: o Engine confia na Identidade Clínica.
 
-import type { ClinicalIdentity } from './clinical-identity-registry'
+import { identifyClinical, type ClinicalIdentity } from './clinical-identity-registry'
+import { runCornealTomography } from './clinical-processors/corneal-tomography'
+import type { CertifiedCDU, ClinicalProcessorFn, ProcessorResult } from './clinical-processors/types'
 
 /** Forma do resultado que uma modalidade produz — a heterogeneidade que o modelo universal acomoda. */
 export type ResultKind =
@@ -23,9 +26,9 @@ export type ResultKind =
 /** Revisão a jusante do processamento (não confundir com a revisão TÉCNICA da Identidade Documental). */
 export type ProcessingReview = 'none' | 'clinical'
 
-/** Descritor de um processador especializado. O `extractor` casa com o nome eleito pela Identidade Clínica. */
+/** Descritor de um processador especializado. O `clinicalModel` casa com o nome eleito pela Identidade Clínica. */
 export interface ClinicalProcessor {
-  extractor: string          // ex.: 'LaboratoryExtractor' — chave de roteamento (vinda do registry)
+  clinicalModel: string          // ex.: 'laboratory' — chave de roteamento (vinda do registry)
   resultKind: ResultKind
   /** Versão do contrato do processador (estável/versionada, como o CertifiedCDU). */
   contractVersion: string
@@ -33,19 +36,19 @@ export interface ClinicalProcessor {
 
 /** Registro de processadores por extrator. Cresce puxado pelo CRC — 1 processador por modalidade madura. */
 export const CLINICAL_PROCESSORS: ClinicalProcessor[] = [
-  { extractor: 'LaboratoryExtractor',        resultKind: 'structured', contractVersion: 'v1' },
-  { extractor: 'MammographyExtractor',       resultKind: 'narrative',  contractVersion: 'v1' },
-  { extractor: 'UltrasoundExtractor',        resultKind: 'narrative',  contractVersion: 'v1' },
-  { extractor: 'MRIExtractor',               resultKind: 'narrative',  contractVersion: 'v1' },
-  { extractor: 'CTExtractor',                resultKind: 'narrative',  contractVersion: 'v1' },
-  { extractor: 'PathologyExtractor',         resultKind: 'narrative',  contractVersion: 'v1' },
-  { extractor: 'EEGExtractor',               resultKind: 'narrative',  contractVersion: 'v1' },
-  { extractor: 'CorneaTomographyExtractor',  resultKind: 'parametric', contractVersion: 'v1' },
-  { extractor: 'OCTExtractor',               resultKind: 'parametric', contractVersion: 'v1' },
-  { extractor: 'DXAExtractor',               resultKind: 'parametric', contractVersion: 'v1' },
-  { extractor: 'ECGExtractor',               resultKind: 'parametric', contractVersion: 'v1' },
-  { extractor: 'EchoExtractor',              resultKind: 'parametric', contractVersion: 'v1' },
-  { extractor: 'HolterExtractor',            resultKind: 'parametric', contractVersion: 'v1' },
+  { clinicalModel: 'laboratory',        resultKind: 'structured', contractVersion: 'v1' },
+  { clinicalModel: 'mammography',       resultKind: 'narrative',  contractVersion: 'v1' },
+  { clinicalModel: 'ultrasound',        resultKind: 'narrative',  contractVersion: 'v1' },
+  { clinicalModel: 'mri',               resultKind: 'narrative',  contractVersion: 'v1' },
+  { clinicalModel: 'ct',                resultKind: 'narrative',  contractVersion: 'v1' },
+  { clinicalModel: 'pathology',         resultKind: 'narrative',  contractVersion: 'v1' },
+  { clinicalModel: 'eeg',               resultKind: 'narrative',  contractVersion: 'v1' },
+  { clinicalModel: 'corneal-tomography',  resultKind: 'parametric', contractVersion: 'v1' },
+  { clinicalModel: 'oct',               resultKind: 'parametric', contractVersion: 'v1' },
+  { clinicalModel: 'densitometry',               resultKind: 'parametric', contractVersion: 'v1' },
+  { clinicalModel: 'ecg',               resultKind: 'parametric', contractVersion: 'v1' },
+  { clinicalModel: 'echocardiography',              resultKind: 'parametric', contractVersion: 'v1' },
+  { clinicalModel: 'holter',            resultKind: 'parametric', contractVersion: 'v1' },
 ]
 
 export interface ProcessingRoute {
@@ -66,7 +69,7 @@ export interface ProcessingRoute {
  * não bloqueia). Nunca "força" um processador — é melhor preservar o documento do que inventar estrutura.
  */
 export function routeProcessing(identity: ClinicalIdentity | null | undefined): ProcessingRoute {
-  if (!identity || !identity.clinicalType || !identity.extractor || identity.confidence === 'low') {
+  if (!identity || !identity.clinicalType || !identity.clinicalModel || identity.confidence === 'low') {
     return { processor: null, resultKind: null, review: 'clinical',
       reason: 'sem identidade clínica confiável → document_only (preserva o documento; revisão clínica)' }
   }
@@ -74,11 +77,48 @@ export function routeProcessing(identity: ClinicalIdentity | null | undefined): 
     return { processor: null, resultKind: null, review: 'clinical',
       reason: 'identidade clínica ambígua (2+ modalidades fortes) → document_only; possivelmente N documentos (Segmentação)' }
   }
-  const processor = CLINICAL_PROCESSORS.find(p => p.extractor === identity.extractor) ?? null
+  const processor = CLINICAL_PROCESSORS.find(p => p.clinicalModel === identity.clinicalModel) ?? null
   if (!processor) {
     return { processor: null, resultKind: null, review: 'clinical',
-      reason: `modalidade "${identity.clinicalType}" identificada, mas sem processador (${identity.extractor}) → document_only (revisão clínica, não bloqueia)` }
+      reason: `modalidade "${identity.clinicalType}" identificada, mas sem processador (${identity.clinicalModel}) → document_only (revisão clínica, não bloqueia)` }
   }
   return { processor, resultKind: processor.resultKind, review: 'none',
-    reason: `roteado ao ${processor.extractor} (${processor.resultKind}) — CEF contrato ${processor.contractVersion}` }
+    reason: `roteado ao modelo ${processor.clinicalModel} (${processor.resultKind}) — CEF contrato ${processor.contractVersion}` }
+}
+
+// ── Executor: Identidade Clínica → Modelo Clínico → processador. ÚNICO ponto que conhece os processadores
+// concretos. Cada modelo NASCE dirigido por um caso do CRC (GS-004 → corneal-tomography; …) e entra aqui.
+const CLINICAL_MODEL_PROCESSORS: Record<string, ClinicalProcessorFn> = {
+  'corneal-tomography': runCornealTomography, // GS-004
+}
+
+/** Modelos clínicos com processador implementado (alimenta o painel de maturidade — COBERTURA_CLINICA.md). */
+export const IMPLEMENTED_CLINICAL_MODELS = Object.keys(CLINICAL_MODEL_PROCESSORS)
+
+export interface ClinicalProcessingResult {
+  identity: ClinicalIdentity
+  route: ProcessingRoute
+  result: ProcessorResult
+}
+
+/**
+ * FACHADA ÚNICA do CPE. Recebe uma CertifiedCDU, identifica a modalidade (Identidade Clínica), seleciona o
+ * MODELO CLÍNICO e executa o processador. Sem modelo/processador → `document_only` (não bloqueia; preserva o
+ * documento). Devolve também a identidade, para o chamador persistir família/tipo — sem conhecer modalidades.
+ */
+export function processClinical(cdu: CertifiedCDU): ClinicalProcessingResult {
+  const identity = identifyClinical(cdu.content.text)
+  const route = routeProcessing(identity)
+  const model = route.processor?.clinicalModel ?? null
+  if (!model) {
+    return { identity, route, result: { output: null, clinicalModel: 'none', contractVersion: '-', extractedUnits: 0, notes: [route.reason] } }
+  }
+  const fn = CLINICAL_MODEL_PROCESSORS[model]
+  if (!fn) {
+    return { identity, route, result: {
+      output: null, clinicalModel: model, contractVersion: route.processor!.contractVersion,
+      extractedUnits: 0, notes: [`modelo clínico "${model}" identificado, mas sem processador → document_only`],
+    } }
+  }
+  return { identity, route, result: fn(cdu) }
 }

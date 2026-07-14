@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { runPentacam } from '@/lib/capture/clinical-processors/pentacam'
-import { runClinicalProcessing } from '@/lib/capture/clinical-processors'
-import { identifyClinical } from '@/lib/capture/clinical-identity-registry'
+import { runCornealTomography } from '@/lib/capture/clinical-processors/corneal-tomography'
+import { processClinical } from '@/lib/capture/clinical-processing-engine'
 import type { CertifiedCDU } from '@/lib/capture/identity-validator'
 
-// FUNC — Pentacam Processor, DIRIGIDO POR GS-004. Extrai parâmetros tomográficos por olho a partir da
-// CertifiedCDU (só o content.text). Não interpreta (RDC 657); transcreve os valores medidos.
+// FUNC — Modelo Clínico "corneal-tomography", DIRIGIDO POR GS-004. Extrai parâmetros tomográficos por olho
+// a partir da CertifiedCDU (só o content.text). Organizado por MODELO (não fabricante); não interpreta
+// (RDC 657). A fachada processClinical(cdu) identifica → seleciona o modelo → executa o processador.
 
 const cdu = (text: string): CertifiedCDU => ({
   content: { format: 'text', text, pageCount: 1 },
@@ -16,15 +16,15 @@ const cdu = (text: string): CertifiedCDU => ({
   structure: {} as any,
 })
 
-const PENTACAM_TEXT = [
+const CORNEAL_TEXT = [
   'OCULUS Pentacam - Belin/Ambrósio Enhanced Ectasia Display',
   'OD  K1 43,2 D   K2 44,1 D   Kmax 45,3 D   Thinnest 530 µm   BAD-D 1,25   Ele. Front 8   Ele. Back 15',
   'OE  K1 42,8 D   K2 43,6 D   Kmax 44,0 D   Thinnest 545 µm   BAD-D 0,98   Ele. Front 6   Ele. Back 11',
 ].join('\n')
 
-describe('FUNC · runPentacam (GS-004)', () => {
+describe('FUNC · runCornealTomography (GS-004)', () => {
   it('extrai K1/K2/Kmax/espessura mínima/BAD-D/elevações por olho (OD e OE)', () => {
-    const r = runPentacam(cdu(PENTACAM_TEXT))
+    const r = runCornealTomography(cdu(CORNEAL_TEXT))
     expect(r.output?.kind).toBe('parametric')
     const params = r.output?.kind === 'parametric' ? r.output.parameters : []
 
@@ -39,39 +39,48 @@ describe('FUNC · runPentacam (GS-004)', () => {
   })
 
   it('conta as unidades extraídas (alimenta a Cobertura) e não são biomarcadores', () => {
-    const r = runPentacam(cdu(PENTACAM_TEXT))
+    const r = runCornealTomography(cdu(CORNEAL_TEXT))
     expect(r.extractedUnits).toBeGreaterThanOrEqual(12) // 6+ parâmetros × 2 olhos
     expect(r.output?.kind).not.toBe('structured')
+    expect(r.clinicalModel).toBe('corneal-tomography')
   })
 
   it('vírgula decimal vira ponto (normalização de valor)', () => {
-    const r = runPentacam(cdu('OD K1 43,2 D'))
+    const r = runCornealTomography(cdu('OD K1 43,2 D'))
     const params = r.output?.kind === 'parametric' ? r.output.parameters : []
     expect(params[0].value).toBe('43.2')
   })
 
   it('texto sem parâmetros reconhecíveis → document_only (output null; não inventa)', () => {
-    const r = runPentacam(cdu('documento oftalmológico sem números reconhecíveis'))
+    const r = runCornealTomography(cdu('documento oftalmológico sem números reconhecíveis'))
     expect(r.output).toBeNull()
     expect(r.extractedUnits).toBe(0)
   })
 
   it('é DETERMINÍSTICO', () => {
-    const a = JSON.stringify(runPentacam(cdu(PENTACAM_TEXT)))
-    const b = JSON.stringify(runPentacam(cdu(PENTACAM_TEXT)))
+    const a = JSON.stringify(runCornealTomography(cdu(CORNEAL_TEXT)))
+    const b = JSON.stringify(runCornealTomography(cdu(CORNEAL_TEXT)))
     expect(a).toBe(b)
   })
+})
 
-  it('integração: Identidade Clínica (Pentacam) → runClinicalProcessing → Pentacam Processor', () => {
-    const identity = identifyClinical('OCULUS Pentacam K1 43,2 K2 44,1 Kmax 45 BAD-D 1,2 Pachymetry 540 Belin')
-    const r = runClinicalProcessing(cdu(PENTACAM_TEXT), identity)
-    expect(r.extractor).toBe('CorneaTomographyExtractor')
-    expect(r.output?.kind).toBe('parametric')
+describe('FUNC · processClinical (fachada única do CPE)', () => {
+  it('CDU de Pentacam → identifica corneal-tomography → executa o processador (parametric)', () => {
+    const r = processClinical(cdu(CORNEAL_TEXT))
+    expect(r.identity.clinicalModel).toBe('corneal-tomography')
+    expect(r.result.clinicalModel).toBe('corneal-tomography')
+    expect(r.result.output?.kind).toBe('parametric')
   })
 
-  it('runClinicalProcessing com identidade fraca → document_only', () => {
-    const identity = identifyClinical('documento genérico')
-    const r = runClinicalProcessing(cdu(PENTACAM_TEXT), identity)
-    expect(r.output).toBeNull()
+  it('CDU de Galilei (outro fabricante) → MESMO modelo corneal-tomography', () => {
+    const galilei = cdu('GALILEI G4 topografia de córnea Kmax 45,0 paquimetria 540 BAD-D 1,1 elevação')
+    const r = processClinical(galilei)
+    expect(r.identity.clinicalModel).toBe('corneal-tomography')
+  })
+
+  it('CDU sem identidade confiável → document_only (output null; não bloqueia)', () => {
+    const r = processClinical(cdu('documento genérico sem sinais claros'))
+    expect(r.result.output).toBeNull()
+    expect(r.route.review).toBe('clinical')
   })
 })

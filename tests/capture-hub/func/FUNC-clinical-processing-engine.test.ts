@@ -9,7 +9,7 @@ describe('FUNC · routeProcessing', () => {
   it('laboratório → LaboratoryExtractor (structured)', () => {
     const id = identifyClinical('MATERIAL - SANGUE GLICEMIA RESULTADO: 85 mg/dL VALORES DE REFERÊNCIA: 60 A 99')
     const r = routeProcessing(id)
-    expect(r.processor?.extractor).toBe('LaboratoryExtractor')
+    expect(r.processor?.clinicalModel).toBe('laboratory')
     expect(r.resultKind).toBe('structured')
     expect(r.review).toBe('none')
   })
@@ -17,14 +17,14 @@ describe('FUNC · routeProcessing', () => {
   it('mamografia → MammographyExtractor (narrative)', () => {
     const id = identifyClinical('MAMOGRAFIA DIGITAL LORAD crânio-caudal BI-RADS 2 calcificações')
     const r = routeProcessing(id)
-    expect(r.processor?.extractor).toBe('MammographyExtractor')
+    expect(r.processor?.clinicalModel).toBe('mammography')
     expect(r.resultKind).toBe('narrative')
   })
 
   it('Pentacam → CorneaTomographyExtractor (parametric)', () => {
     const id = identifyClinical('OCULUS Pentacam K1 43 K2 44 Kmax 45 BAD-D 1,2 Pachymetry 540 Belin')
     const r = routeProcessing(id)
-    expect(r.processor?.extractor).toBe('CorneaTomographyExtractor')
+    expect(r.processor?.clinicalModel).toBe('corneal-tomography')
     expect(r.resultKind).toBe('parametric')
   })
 
@@ -44,7 +44,7 @@ describe('FUNC · routeProcessing', () => {
 
   it('identidade ambígua → document_only (não escolhe processador; possivelmente N documentos)', () => {
     const r = routeProcessing({
-      clinicalType: 'Mamografia', clinicalFamily: 'Imagem — mama', extractor: 'MammographyExtractor',
+      clinicalType: 'Mamografia', clinicalFamily: 'Imagem — mama', clinicalModel: 'mammography',
       score: 0.8, confidence: 'high', matched: [], ambiguous: true,
     })
     expect(r.processor).toBeNull()
@@ -53,7 +53,7 @@ describe('FUNC · routeProcessing', () => {
 
   it('identidade com extrator SEM processador registrado → document_only', () => {
     const r = routeProcessing({
-      clinicalType: 'Modalidade nova', clinicalFamily: 'X', extractor: 'InexistenteExtractor',
+      clinicalType: 'Modalidade nova', clinicalFamily: 'X', clinicalModel: 'InexistenteExtractor',
       score: 0.9, confidence: 'high', matched: [], ambiguous: false,
     })
     expect(r.processor).toBeNull()
@@ -62,8 +62,8 @@ describe('FUNC · routeProcessing', () => {
 
   it('todo extrator do registry de identidade tem processador correspondente (sem órfãos)', () => {
     // Cada modalidade identificável precisa ter para onde ser roteada.
-    const extractors = new Set(CLINICAL_PROCESSORS.map(p => p.extractor))
-    for (const name of ['LaboratoryExtractor', 'MammographyExtractor', 'CorneaTomographyExtractor', 'EEGExtractor']) {
+    const extractors = new Set(CLINICAL_PROCESSORS.map(p => p.clinicalModel))
+    for (const name of ['laboratory', 'mammography', 'corneal-tomography', 'eeg']) {
       expect(extractors.has(name)).toBe(true)
     }
   })

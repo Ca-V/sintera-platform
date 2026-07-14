@@ -1,57 +1,56 @@
-# Cobertura Clínica — quão perto a SINTERA está de compreender toda a medicina (painel vivo)
+# Cobertura Clínica — maturidade por modalidade (painel vivo)
 
 > Fundadora (13/07/2026): além do progresso técnico (`EXECUCAO_MILESTONES.md`) e de produto
-> (`CAPACIDADES_PRODUTO.md`), acompanhar a **cobertura clínica** — o **percentual de modalidades médicas**
-> que a plataforma compreende de ponta a ponta. Indicador **estratégico** (usuários, parceiros,
-> investidores): não "M5 em 20%", e sim "quanto da medicina já é utilizável".
+> (`CAPACIDADES_PRODUTO.md`), acompanhar a **maturidade clínica por modalidade** — não um percentual global,
+> e sim **em que ESTÁGIO** cada modalidade está. Indicador estratégico: "quanto da medicina a SINTERA já
+> compreende, e com que profundidade".
 >
-> **Eixo de execução (a partir daqui):** cada modalidade nasce **dirigida por um caso do CRC** e só conta
-> como entregue quando **utilizável de ponta a ponta**. O CRC dirige o roadmap — não é só regressão.
+> **Eixo:** cada modalidade nasce **dirigida por um caso do CRC** e evolui pelos 5 estágios. Só é "utilizável"
+> quando chega à **Cobertura** com o **CRC verde**. Modelos organizam-se por **modalidade**, não por
+> fabricante (Pentacam/Galilei/Orbscan → o mesmo modelo `corneal-tomography`).
 
-## Rubrica (como o % é calculado — 10 critérios, 10% cada)
-Cada modalidade é medida pelos mesmos critérios de "capacidade completa":
+## Os 5 estágios de maturidade (cada modalidade percorre esta escada)
+1. **Identificação** — o Clinical Identity Registry reconhece a modalidade por ensemble de evidências.
+2. **Representação** — existe um **Modelo Clínico** (processador do CPE) que produz o modelo de resultado
+   próprio (biomarcador ≠ achado ≠ parâmetro por região).
+3. **Validação** — o Representation Validator (CEF, 4 perguntas) confere a representação (sem invenção).
+4. **Cobertura** — contador estrutural independente: **descoberto × estruturado** alinhado (sem falsa completude).
+5. **UCDA** — a evidência é persistida na arquitetura universal (modelo canônico), pronta para uso longitudinal.
 
-1. Upload (PDF + imagens) · 2. Segmentação (bundle → CDU) · 3. Identificação (Clinical Identity Registry) ·
-4. Título fiel (Identidade Documental) · 5. Data correta (datas semânticas, CEF §5) · 6. Emissor ·
-7. **Resultado estruturado da modalidade** (processador do CPE) · 8. Documento original acessível ·
-9. **Cobertura** (descoberto × estruturado) · 10. **Reprodutibilidade + caso do CRC verde**.
+**Legenda:** ✅ pronto · 🔄 em andamento · ⬜ não iniciado.
 
-Critérios 1–6, 8 são **infraestrutura compartilhada** (já funcionam para todas as modalidades). O que
-distingue cada modalidade é **7, 9 e 10** — o processador especializado, a cobertura alinhada e o CRC.
+## Painel de maturidade
 
-## Painel de Cobertura Clínica
+| Modalidade | Modelo Clínico | 1·Ident | 2·Repr | 3·Valid | 4·Cobert | 5·UCDA | Estágio atual |
+|---|---|:--:|:--:|:--:|:--:|:--:|---|
+| **Laboratório** | `laboratory` | ✅ | ✅ | 🔄 | ✅ | 🔄 | **Cobertura** (madura) |
+| **Tomografia de córnea** | `corneal-tomography` | ✅ | 🔄 | ⬜ | ⬜ | ⬜ | **Representação** (GS-004) |
+| **EEG / neurofisiologia** | `eeg` | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | Identificação (GS-003) |
+| **Mamografia** | `mammography` | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | Identificação (GS-012) |
+| **Ultrassonografia** | `ultrasound` | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | Identificação (GS-013) |
+| **Anatomopatológico** | `pathology` | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | Identificação (GS-005) |
+| **Ressonância magnética** | `mri` | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | Identificação (GS-006) |
+| **Tomografia computadorizada** | `ct` | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | Identificação |
+| **Ecocardiograma** | `echocardiography` | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | Identificação (GS-007) |
+| **Eletrocardiograma** | `ecg` | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | Identificação (GS-009) |
+| **Holter 24h** | `holter` | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | Identificação |
+| **OCT (oftalmologia)** | `oct` | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | Identificação |
+| **Densitometria óssea** | `densitometry` | ✅ | ⬜ | ⬜ | ⬜ | ⬜ | Identificação |
+| **Espirometria / função pulmonar** | — | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | — (GS-008; falta identificar) |
+| **MAPA** | — | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | — |
+| **Genética / genômica** | — | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | — (modelo próprio) |
 
-| Modalidade | Caso CRC | Processador | Cobertura | % | Estado |
-|---|---|---|---|---|---|
-| **Laboratório** (bioquímica/hemograma) | GS-001/002/011 | structured (maduro) | ligada (conservadora) | **80%** | 🔄 madura |
-| **Pentacam / córnea** | **GS-004** | **parametric ✅ (1º processador)** | por parâmetro | **35%** | 🔄 em andamento |
-| **EEG / neurofisiologia** | GS-003 | narrative ⬜ | — | **15%** | ⬜ identificável |
-| **Mamografia** | GS-012 (a criar) | narrative ⬜ | — | **15%** | ⬜ identificável |
-| **Ultrassonografia** | GS-013 (a criar) | narrative ⬜ | — | **15%** | ⬜ identificável |
-| **Anatomopatológico** | GS-005 | narrative ⬜ | — | **10%** | ⬜ identificável |
-| **Ressonância magnética** | GS-006 | narrative ⬜ | — | **10%** | ⬜ identificável |
-| **Tomografia computadorizada** | — | narrative ⬜ | — | **10%** | ⬜ identificável |
-| **Ecocardiograma** | GS-007 | parametric ⬜ | — | **10%** | ⬜ identificável |
-| **Eletrocardiograma** | GS-009 | parametric ⬜ | — | **10%** | ⬜ identificável |
-| **Holter 24h** | — | parametric ⬜ | — | **10%** | ⬜ identificável |
-| **OCT (oftalmologia)** | — | parametric ⬜ | — | **10%** | ⬜ identificável |
-| **Densitometria óssea** | — | parametric ⬜ | — | **10%** | ⬜ identificável |
-| **Espirometria / função pulmonar** | GS-008 | parametric ⬜ | — | **5%** | ⬜ não identificável ainda |
-| **MAPA** | — | parametric ⬜ | — | **0%** | ⬜ |
-| **Genética / genômica** | — | (modelo próprio) ⬜ | — | **0%** | ⬜ |
+**Leitura:** **13 modalidades no estágio Identificação** (Clinical Identity Registry) · **1 na Representação**
+(`corneal-tomography`, GS-004) · Laboratório é a mais madura (Cobertura). A subida de cada linha é o trabalho
+do Clinical Processing Engine, agora medido por **profundidade clínica real**, não por percentual.
 
-**Leitura:** 13 modalidades já **identificáveis** (Clinical Identity Registry); **1 com processador**
-(Pentacam, parametric). A subida de cada linha depende de **um processador dirigido por CRC** + ligação na
-Cobertura + reprodutibilidade — exatamente o trabalho do Clinical Processing Engine, agora medido por
-**valor clínico entregue**, não por componente.
-
-## Convenção de avanço (CRC dirige o roadmap)
+## Convenção de avanço (o CRC dirige o roadmap)
 ```
-GS-004  → Pentacam Processor    → testes verdes → capacidade entregue   (em andamento)
-GS-012  → Mamografia Processor  → testes verdes → capacidade entregue
-GS-013  → Ultrassom Processor   → testes verdes → capacidade entregue
-GS-003  → EEG Processor         → testes verdes → capacidade entregue
+GS-004  → corneal-tomography  → Repr → Valid → Cobert → UCDA → utilizável   (em Representação)
+GS-012  → mammography         → percorre os 5 estágios → utilizável
+GS-013  → ultrasound          → percorre os 5 estágios → utilizável
+GS-003  → eeg                 → percorre os 5 estágios → utilizável
 ...
 ```
-Cada modalidade só sobe para **✅ entregue** quando o caso do CRC correspondente passa (comparação com o
+Cada modalidade só é **utilizável** quando alcança a **Cobertura** com o caso do CRC verde (comparação com o
 `expected.json` do documento real — sem juízo humano a cada vez).

@@ -8,7 +8,7 @@ describe('FUNC · identifyClinical', () => {
   it('mamografia por BI-RADS + LORAD + crânio-caudal (não por 1 termo)', () => {
     const r = identifyClinical('MAMOGRAFIA DIGITAL Sistema LORAD Selenia incidência crânio-caudal BI-RADS 2 calcificações')
     expect(r.clinicalType).toBe('Mamografia')
-    expect(r.extractor).toBe('MammographyExtractor')
+    expect(r.clinicalModel).toBe('mammography')
     expect(r.confidence).toBe('high')
     expect(r.matched.length).toBeGreaterThanOrEqual(3)
   })
@@ -16,7 +16,7 @@ describe('FUNC · identifyClinical', () => {
   it('Pentacam por OCULUS + Pentacam + BAD-D + K1/K2 (título "tomografia de córnea" nunca aparece)', () => {
     const r = identifyClinical('OCULUS Pentacam K1 43,2 K2 44,1 Kmax 45 BAD-D 1,2 Pachymetry 540 Belin')
     expect(r.clinicalFamily).toBe('Oftalmologia')
-    expect(r.extractor).toBe('CorneaTomographyExtractor')
+    expect(r.clinicalModel).toBe('corneal-tomography')
   })
 
   it('EEG por eletroencefalograma + ritmo de base + hiperventilação', () => {
@@ -45,7 +45,7 @@ describe('FUNC · identifyClinical', () => {
   it('ressonância magnética por RM + sequências ponderadas + gadolínio', () => {
     const r = identifyClinical('RESSONÂNCIA MAGNÉTICA RM de crânio sequências ponderadas T2 FLAIR após gadolínio cortes axiais')
     expect(r.clinicalType).toBe('Ressonância magnética')
-    expect(r.extractor).toBe('MRIExtractor')
+    expect(r.clinicalModel).toBe('mri')
   })
 
   it('ecocardiograma por ecocardiograma + fração de ejeção + ventrículo', () => {
@@ -57,7 +57,7 @@ describe('FUNC · identifyClinical', () => {
   it('anatomopatológico por histopatológico + exame microscópico + biópsia', () => {
     const r = identifyClinical('EXAME ANATOMOPATOLÓGICO exame microscópico de biópsia neoplasia ausente macroscopia')
     expect(r.clinicalType).toBe('Anatomopatológico')
-    expect(r.extractor).toBe('PathologyExtractor')
+    expect(r.clinicalModel).toBe('pathology')
   })
 
   it('densitometria óssea por DXA + T-score + coluna lombar', () => {

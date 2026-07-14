@@ -30,7 +30,7 @@ export type ProcessorOutput = ParametricOutput | NarrativeOutput | StructuredOut
 export interface ProcessorResult {
   /** Saída da modalidade, ou null quando nada foi extraível com confiança → document_only (preserva o doc). */
   output: ProcessorOutput | null
-  extractor: string
+  clinicalModel: string
   contractVersion: string
   /** Unidades que o processador estruturou — alimenta a COBERTURA (descoberto × estruturado). */
   extractedUnits: number

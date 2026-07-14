@@ -1,14 +1,16 @@
-// Pentacam Processor — 1º processador do Clinical Processing Engine, DIRIGIDO PELO CRC (GS-004).
+// Modelo Clínico "corneal-tomography" — 1º processador do Clinical Processing Engine, DIRIGIDO PELO CRC
+// (GS-004). Organizado por MODELO CLÍNICO, não por fabricante: OCULUS Pentacam, Galilei, Orbscan… todos
+// usam ESTE modelo por representarem a mesma modalidade (tomografia de córnea).
 //
-// Modalidade: tomografia de córnea (OCULUS Pentacam). Resultado = PARÂMETROS tomográficos por olho
-// (K1/K2/Kmax/espessura mínima/BAD-D/elevações). NÃO são biomarcadores. RDC 657: transcreve os valores
-// medidos, não interpreta (não diz "ceratocone"; só reporta os números que o documento traz).
+// Resultado = PARÂMETROS tomográficos por olho (K1/K2/Kmax/espessura mínima/BAD-D/elevações). NÃO são
+// biomarcadores. RDC 657: transcreve os valores medidos, não interpreta (não diz "ceratocone"; só reporta
+// os números que o documento traz).
 //
 // Consome APENAS a CertifiedCDU (o seu `content.text`). Puro/determinístico. Sem PDF/Bundle/OCR/páginas.
 
 import type { CertifiedCDU, ClinicalProcessorFn, ProcessedParameter, ProcessorResult } from './types'
 
-const EXTRACTOR = 'CorneaTomographyExtractor'
+const CLINICAL_MODEL = 'corneal-tomography'
 const CONTRACT = 'v1'
 
 // Rótulo → regex do valor numérico logo após o rótulo (tolera separadores e unidade). Determinístico.
@@ -33,7 +35,7 @@ function eyeOf(line: string): string | undefined {
  * Extrai os parâmetros tomográficos da CDU (por olho quando a linha indica lateralidade). Puro.
  * Nada extraível com confiança → output null (document_only; preserva o documento, não inventa).
  */
-export const runPentacam: ClinicalProcessorFn = (cdu: CertifiedCDU): ProcessorResult => {
+export const runCornealTomography: ClinicalProcessorFn = (cdu: CertifiedCDU): ProcessorResult => {
   const text = cdu.content.text ?? ''
   const notes: string[] = []
   const parameters: ProcessedParameter[] = []
@@ -55,14 +57,14 @@ export const runPentacam: ClinicalProcessorFn = (cdu: CertifiedCDU): ProcessorRe
 
   if (parameters.length === 0) {
     notes.push('nenhum parâmetro tomográfico reconhecido no texto → document_only (preserva o documento)')
-    return { output: null, extractor: EXTRACTOR, contractVersion: CONTRACT, extractedUnits: 0, notes }
+    return { output: null, clinicalModel: CLINICAL_MODEL, contractVersion: CONTRACT, extractedUnits: 0, notes }
   }
 
   const eyes = new Set(parameters.map(p => p.region).filter(Boolean))
   notes.push(`${parameters.length} parâmetro(s)${eyes.size ? ` em ${[...eyes].join('/')}` : ''}`)
   return {
     output: { kind: 'parametric', parameters },
-    extractor: EXTRACTOR,
+    clinicalModel: CLINICAL_MODEL,
     contractVersion: CONTRACT,
     extractedUnits: parameters.length,
     notes,

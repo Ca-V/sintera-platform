@@ -9,17 +9,17 @@ import { CLINICAL_PROCESSORS } from '@/lib/capture/clinical-processing-engine'
 
 describe('ARCH · cobertura Identidade Clínica → Clinical Processing Engine', () => {
   it('todo extrator do Clinical Identity Registry tem um processador no CPE', () => {
-    const processors = new Set(CLINICAL_PROCESSORS.map(p => p.extractor))
+    const processors = new Set(CLINICAL_PROCESSORS.map(p => p.clinicalModel))
     const orphans = CLINICAL_IDENTITY_REGISTRY
-      .map(m => m.extractor)
+      .map(m => m.clinicalModel)
       .filter(name => !processors.has(name))
     expect(orphans, `modalidades sem processador no CPE: ${orphans.join(', ')}`).toEqual([])
   })
 
   it('todo processador do CPE corresponde a uma modalidade conhecida (sem processador morto)', () => {
-    const identities = new Set(CLINICAL_IDENTITY_REGISTRY.map(m => m.extractor))
+    const identities = new Set(CLINICAL_IDENTITY_REGISTRY.map(m => m.clinicalModel))
     const dead = CLINICAL_PROCESSORS
-      .map(p => p.extractor)
+      .map(p => p.clinicalModel)
       .filter(name => !identities.has(name))
     expect(dead, `processadores sem modalidade correspondente: ${dead.join(', ')}`).toEqual([])
   })
