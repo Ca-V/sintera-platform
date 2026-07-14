@@ -41,9 +41,10 @@ infraestrutura (CPE/Registry/Validator) continua, mas não é mais a unidade de 
 > **1)** consolidar o **CPE** como fachada única ✅ (`processClinical`) · **2)** **Laboratory Adapter** ✅
 > (`laboratory-adapter.ts`) · **3)** validar o Engine com os **446 biomarcadores reais** ✅ (adapter cobre 100%
 > da distribuição real: 352 numeric·89 qualitative·5 missing·116 sem-ref·8 materiais·79 grupos) · **4)**
-> consolidar a **UCDA** como contrato único de saída 🔄 (contrato `ucda.ts` definido; falta ligar consumidores)
-> · **5)** só então as modalidades (todas via CPE, dirigidas por CRC). O **Pentacam** volta a ser **validação
-> (CRC), não prioridade**.
+> consolidar a **UCDA** como contrato único de saída ✅ **dados** (escrita: processador→UCDA→persistência ·
+> leitura: persistência→UCDA · Laboratory Adapter: biomarkers→UCDA — todos convergem no contrato) 🔄 **falta
+> ligar os consumidores VISUAIS** (Timeline/Evolução/Care lerem UCDA = UI, depois) · **5)** só então as
+> modalidades (todas via CPE, dirigidas por CRC). O **Pentacam** volta a ser **validação (CRC), não prioridade**.
 >
 > **⚠️ Convergência PROGRESSIVA (princípio constitucional — `GOVERNANCA.md`):** a **UCDA é o ponto de
 > convergência** (contrato único de saída), **não** `clinical_results`. `clinical_results` (canônico, migration

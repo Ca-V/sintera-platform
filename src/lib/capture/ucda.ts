@@ -104,3 +104,65 @@ export function toNum(value: string): number | null {
   const n = Number(String(value).replace(',', '.').replace(/[^0-9.\-]/g, ''))
   return Number.isFinite(n) && /\d/.test(value) ? n : null
 }
+
+// ── LEITURA: persistência (clinical_results) → UCDA. O consumidor (Timeline/Evolução/Care/…) lê SEMPRE UCDA,
+// nunca o backend. Contrato fechado dos dois lados (escrita via representationFromProcessor; leitura aqui).
+
+/** Linha de `clinical_results` como vem do banco (snake_case). */
+export interface ClinicalResultRow {
+  clinical_model: string
+  result_kind: string
+  item_type: string | null
+  name: string
+  value_text: string | null
+  value_num: number | string | null
+  unit: string | null
+  code: string | null
+  code_system: string | null
+  value_code: string | null
+  region: string | null
+  anatomy: string | null
+  method: string | null
+  context: string | null
+  group_label: string | null
+  reference_text: string | null
+}
+
+const asItemType = (t: string | null): UcdaItem['itemType'] =>
+  t === 'measure' || t === 'parameter' || t === 'finding' || t === 'classification' || t === 'observation' ? t : 'observation'
+
+function itemFromRow(r: ClinicalResultRow): UcdaItem {
+  const num = r.value_num == null ? null : Number(r.value_num)
+  return {
+    itemType: asItemType(r.item_type),
+    name: r.name,
+    valueText: r.value_text ?? '',
+    valueNum: Number.isFinite(num as number) ? (num as number) : null,
+    ...(r.unit ? { unit: r.unit } : {}),
+    ...(r.code ? { code: r.code } : {}),
+    ...(r.code_system ? { codeSystem: r.code_system } : {}),
+    ...(r.value_code ? { valueCode: r.value_code } : {}),
+    ...(r.region ? { region: r.region } : {}),
+    ...(r.anatomy ? { anatomy: r.anatomy } : {}),
+    ...(r.method ? { method: r.method } : {}),
+    ...(r.context ? { context: r.context } : {}),
+    ...(r.group_label ? { group: r.group_label } : {}),
+    ...(r.reference_text ? { referenceText: r.reference_text } : {}),
+  }
+}
+
+/**
+ * Converte linhas de `clinical_results` (de UM exame/modelo) na representação canônica UCDA. Puro.
+ * Vazio → null. O consumidor lê UCDA, não o backend.
+ */
+export function clinicalResultsToUcda(rows: ClinicalResultRow[]): UcdaRepresentation | null {
+  if (!rows.length) return null
+  const first = rows[0]
+  return {
+    clinicalModel: first.clinical_model,
+    resultKind: (['structured', 'narrative', 'parametric'].includes(first.result_kind)
+      ? first.result_kind : 'structured') as UcdaResultKind,
+    items: rows.map(itemFromRow),
+    provenance: { source: 'clinical_results' },
+  }
+}

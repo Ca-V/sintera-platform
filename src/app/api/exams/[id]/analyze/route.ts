@@ -13,6 +13,7 @@ import { representationFingerprint, isRepresentationCertified } from '@/lib/capt
 import { computeCoverage } from '@/lib/capture/coverage'
 import { processBundle } from '@/lib/capture/clinical-information-pipeline'
 import { processClinical } from '@/lib/capture/clinical-processing-engine'
+import { representationFromProcessor } from '@/lib/capture/ucda'
 import { planBundleSplit, restrictPages, type SplitPlan } from '@/lib/capture/bundle-split'
 import { pickExamDate } from '@/lib/capture/semantic-dates'
 import { identifyClinical } from '@/lib/capture/clinical-identity-registry'
@@ -401,20 +402,22 @@ export async function POST(
   const primaryCdu = bundle.ready[0] ?? bundle.cdus[0]
   if (primaryCdu) {
     const cpe = processClinical(primaryCdu)
-    const out = cpe.result.output
-    if (out && out.kind === 'parametric' && cpe.result.extractedUnits > 0) {
-      const rows = out.parameters.map((p, i) => {
-        const num = Number(String(p.value).replace(',', '.'))
-        return {
-          exam_id: examId, user_id: userId,
-          clinical_model: cpe.result.clinicalModel, result_kind: 'parametric',
-          item_type: 'measure',                                   // modelo canônico: medida numérica por região
-          name: p.name, value_text: p.value, value_num: Number.isFinite(num) ? num : null,
-          unit: p.unit ?? null, region: p.region ?? null,
-          sort_order: i, source: 'cpe', contract_version: cpe.result.contractVersion,
-        }
-      })
-      await supabase.from('clinical_results').delete().eq('exam_id', examId).eq('clinical_model', cpe.result.clinicalModel)
+    // A persistência fala UCDA: a saída do processador é convertida no CONTRATO canônico (UcdaRepresentation)
+    // e gravada genericamente (qualquer kind/campo). clinical_results é apenas o BACKEND; UCDA é o contrato.
+    const ucda = representationFromProcessor(cpe.result)
+    if (ucda && ucda.items.length > 0) {
+      const rows = ucda.items.map((it, i) => ({
+        exam_id: examId, user_id: userId,
+        clinical_model: ucda.clinicalModel, result_kind: ucda.resultKind,
+        item_type: it.itemType, name: it.name, value_text: it.valueText, value_num: it.valueNum ?? null,
+        unit: it.unit ?? null, region: it.region ?? null, anatomy: it.anatomy ?? null,
+        code: it.code ?? null, code_system: it.codeSystem ?? null, value_code: it.valueCode ?? null,
+        method: it.method ?? null, context: it.context ?? null, group_label: it.group ?? null,
+        reference_text: it.referenceText ?? null,
+        sort_order: i, source: 'cpe', contract_version: cpe.result.contractVersion,
+      }))
+      // Idempotente (delete-then-insert do próprio modelo): reprocessar não duplica.
+      await supabase.from('clinical_results').delete().eq('exam_id', examId).eq('clinical_model', ucda.clinicalModel)
       await supabase.from('clinical_results').insert(rows as never)
     }
   }
