@@ -10,7 +10,7 @@
 | # | Capacidade | Backlog | Dependências | Critério de encerramento | Estado |
 |---|---|---|---|---|---|
 | E1 | **Identificação padronizada** (tipo · lab/clínica · **solicitante**) | A1 / §2.1 | captura do solicitante | card mostra os 3 campos; solicitante capturado (best-effort) e write-once | ✅ **feito** |
-| E2 | **Nomenclatura única** (identidade documental fiel, consistente) | A2 / §2.2 | Identidade Documental (existe) | nomes consistentes entre exames equivalentes; sem variação | 🔄 |
+| E2 | **Nomenclatura única** (identidade documental fiel, consistente) | A2 / §2.2 | Identidade Documental (existe) | nomes consistentes entre exames equivalentes; sem variação | ✅ **feito** (nome determinístico no domínio + fiado em todo caminho do analyze; consistência travada por `FUNC-nomenclature-consistency` — invariância a ordem/valores/idempotência) |
 | E3 | **Política definitiva de estruturação** (completa \| documento; **nunca parcial**) | A3 / §2.3 | `extraction_completeness` (existe) | UI só mostra 2 estados; `partial` não aparece como estado | ✅ **feito** (selo binário; `partial`→"Resultados estruturados" sem esconder dado; badge "parcial" removido) |
 | E4 | **Quantitativos × Qualitativos** | B1 / §2.4 | representação (existe) | quantitativo→estrutura/evolução/gráficos; qualitativo→documento/laudo, sem virar dado | ⬜ |
 | E5 | **Categorias de exame** (incl. **ômicas como categorias**) | A4 / §2.6 | classificação aberta (Modelo Aberto) | categorias abertas/escaláveis; ômicas = categoria (sem fluxo próprio) | ⬜ |
