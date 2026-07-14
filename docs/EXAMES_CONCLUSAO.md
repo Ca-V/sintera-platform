@@ -11,7 +11,7 @@
 |---|---|---|---|---|---|
 | E1 | **Identificação padronizada** (tipo · lab/clínica · **solicitante**) | A1 / §2.1 | captura do solicitante | card mostra os 3 campos; solicitante capturado (best-effort) e write-once | ✅ **feito** |
 | E2 | **Nomenclatura única** (identidade documental fiel, consistente) | A2 / §2.2 | Identidade Documental (existe) | nomes consistentes entre exames equivalentes; sem variação | 🔄 |
-| E3 | **Política definitiva de estruturação** (completa \| documento; **nunca parcial**) | A3 / §2.3 | `extraction_completeness` (existe) | UI só mostra 2 estados; `partial` não aparece como estado | 🔄 |
+| E3 | **Política definitiva de estruturação** (completa \| documento; **nunca parcial**) | A3 / §2.3 | `extraction_completeness` (existe) | UI só mostra 2 estados; `partial` não aparece como estado | ✅ **feito** (selo binário; `partial`→"Resultados estruturados" sem esconder dado; badge "parcial" removido) |
 | E4 | **Quantitativos × Qualitativos** | B1 / §2.4 | representação (existe) | quantitativo→estrutura/evolução/gráficos; qualitativo→documento/laudo, sem virar dado | ⬜ |
 | E5 | **Categorias de exame** (incl. **ômicas como categorias**) | A4 / §2.6 | classificação aberta (Modelo Aberto) | categorias abertas/escaláveis; ômicas = categoria (sem fluxo próprio) | ⬜ |
 | E6 | **Fluxo único de upload** (PDF/foto/scan/imagem única/múltiplas/multipágina) | C1 / §2.5 | Bundle→CDU (existe) · `useDocumentBundle` | um só ponto de entrada; sem dropzone duplicada; usa Bundle→CDU | ⬜ (decisão de produto: layout do fluxo) |

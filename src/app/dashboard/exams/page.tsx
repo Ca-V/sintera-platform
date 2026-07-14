@@ -61,14 +61,16 @@ const STATUS_CONFIG: Record<string, {
   error:      { label: 'Erro',        color: 'text-red-400',    bg: 'bg-red-50',         icon: AlertCircle },
 }
 
-// Selo honesto por COMPLETUDE (não só "processed"): "Dados extraídos"/"disponíveis" sugeriam
-// completude que muitas vezes não existe (ex.: Pentacam parcial). Reage ao extraction_completeness.
+// Selo BINÁRIO (regra_estruturacao_binaria / E3): só 2 estados ao usuário — "Resultados estruturados" |
+// "Documento disponível". NUNCA "estruturação parcial" (a completude/cobertura fica interna, para auditoria).
+// O `partial` interno cai em "Resultados estruturados": os dados extraídos permanecem visíveis (organizar é o
+// papel da plataforma) e o documento original continua acessível; apenas some a etiqueta enganosa "parcial".
 function processedSeal(c: string | null | undefined): { label: string; color: string; bg: string; hint: string } {
   switch (c) {
-    case 'structured':    return { label: 'Dados estruturados',   color: 'text-petal', bg: 'bg-blush', hint: 'As informações deste documento foram organizadas automaticamente.' }
-    case 'partial':       return { label: 'Estruturação parcial', color: 'text-gold',  bg: 'bg-warm',  hint: 'Parte das informações deste documento foi organizada automaticamente. Consulte o documento original para visualizar o conteúdo completo.' }
-    case 'document_only': return { label: 'Documento disponível', color: 'text-mauve', bg: 'bg-ivory', hint: 'O conteúdo está no documento original. A estruturação por tipo de exame está em evolução.' }
-    default:              return { label: 'Dados disponíveis',    color: 'text-petal', bg: 'bg-blush', hint: '' }
+    case 'document_only': return { label: 'Documento disponível',   color: 'text-mauve', bg: 'bg-ivory', hint: 'O conteúdo está no documento original — sempre acessível.' }
+    case 'structured':
+    case 'partial':
+    default:              return { label: 'Resultados estruturados', color: 'text-petal', bg: 'bg-blush', hint: 'As informações deste documento foram organizadas automaticamente. O documento original continua acessível.' }
   }
 }
 
