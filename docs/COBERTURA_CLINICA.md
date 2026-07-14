@@ -21,7 +21,7 @@
 
 | Modelo Clínico | Família | 1·Ident | 2·Repr | 3·Valid | 4·Cobert | 5·UCDA | Estágio |
 |---|---|:--:|:--:|:--:|:--:|:--:|---|
-| **Tomografia de córnea** `corneal-tomography` | Oftalmologia | ✅ | ✅ | 🔄 | ⬜ | 🔄 | **Representação ligada** (GS-004)† |
+| **Tomografia de córnea** `corneal-tomography` | Oftalmologia | ✅ | ✅ | ✅ | ✅ | 🔄 | **Cobertura (validada)** (GS-004)† |
 | **OCT** `oct` | Oftalmologia | ✅ | ▫︎ | ⬜ | ⬜ | ⬜ | Identificação |
 | **Mamografia** `mammography` | Imagem — mama | ✅ | ▫︎ | ⬜ | ⬜ | ⬜ | Identificação (GS-012) |
 | **Ultrassonografia** `ultrasound` | Imagem — ultrassom | ✅ | ▫︎ | ⬜ | ⬜ | ⬜ | Identificação (GS-013) |
@@ -42,10 +42,12 @@
 | **Vitamina D** `vitamin-d` | Laboratório | ⬜ | ▫︎ | ⬜ | ⬜ | ⬜ | estrutura declarada¹ |
 | *Laboratório (genérico, transitório)* `laboratory` | Laboratório | ✅ | 🔄 | 🔄 | 🔄 | ⬜ | rota atual (não distingue painel)² |
 
-† `corneal-tomography`: identificação + processador **ligados ao `analyze`** — os parâmetros por olho são
-persistidos em `clinical_results` (tabela 109, não-biomarcador). Falta: **Representation Validator** aplicado
-ao parametric (Validação), **comparador de Cobertura** parametric (descoberto×estruturado), e a **exibição**
-por olho + evolução OD×OE (decisão de PRODUTO / CARE Fase 4). Fixture real GS-004 (`expected.json`) na homologação.
+† `corneal-tomography`: identificação + processador **ligados ao `analyze`**; parâmetros por olho persistidos
+em `clinical_results` (tabela 109, não-biomarcador); **Representation Validator** (4ª camada, `representation-
+validator.ts`) integrado à fachada `processClinical` — valida a estrutura e mede a completude contra o
+**esqueleto do modelo** (denominador honesto do §4.1: `certified` × `complete` separados, nunca falsa completude).
+Falta para **utilizável**: **UCDA** (persistência canônica/longitudinal), **fixture real GS-004** (`expected.json`)
+na homologação, e a **exibição por olho + evolução OD×OE** (decisão de PRODUTO / CARE Fase 4 · Fase 3 longitudinal).
 
 ¹ O Modelo Clínico (estrutura) já existe; falta **identificar o painel específico** (a identificação de hoje
 resolve só a família "Laboratório") e o processador. Ao granularizar a identificação, cada painel sobe.

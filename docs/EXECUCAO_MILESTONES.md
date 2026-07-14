@@ -140,9 +140,11 @@ Cobertura → UCDA).
 **Em andamento — `corneal-tomography` (GS-004) · Representação LIGADA:** modelo `runCornealTomography` ✅ +
 fachada `processClinical` **ligada ao `analyze`** ✅ — os parâmetros por olho são persistidos em
 `clinical_results` (migration 109, tabela não-biomarcador; região OD/OE; RDC 657 — transcreve, não interpreta).
-`FUNC-corneal-tomography-processor` (8). **Falta:** Representation Validator no parametric (Validação) ·
-comparador de Cobertura parametric · fixture real GS-004 (`expected.json`) na homologação · **exibição por
-olho + evolução OD×OE = decisão de PRODUTO** (não bloqueia; CARE Fase 4 / Fase 3 longitudinal).
+`FUNC-corneal-tomography-processor` (8) + **Representation Validator** (4ª camada, `representation-validator.ts`,
+`FUNC-representation-validator` 7) integrado à `processClinical` — Validação ✅ + Cobertura ✅ (completude contra
+o esqueleto do modelo; `certified`×`complete` separados, nunca falsa completude). **Falta para utilizável:**
+UCDA (persistência canônica/longitudinal) · fixture real GS-004 (`expected.json`) na homologação · **exibição
+por olho + evolução OD×OE = decisão de PRODUTO** (não bloqueia; CARE Fase 4 / Fase 3 longitudinal).
 **Fila (CRC dirige):** Mamografia (GS-012) → Ultrassom (GS-013) → EEG (GS-003) → Ecocardiograma (GS-007)…
 **Testes:** `FUNC-corneal-tomography-processor` ✅ · por modelo: 1 FUNC (processador) + regressão CRC.
 

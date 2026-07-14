@@ -16,6 +16,7 @@
 import { identifyClinical, type ClinicalIdentity } from './clinical-identity-registry'
 import { runCornealTomography } from './clinical-processors/corneal-tomography'
 import { getClinicalModel } from './clinical-processors/models'
+import { validateRepresentation, type RepresentationVerdict } from './representation-validator'
 import type { CertifiedCDU, ClinicalModel, ClinicalProcessorFn, ProcessorResult, ResultKind } from './clinical-processors/types'
 
 export type { ResultKind } from './clinical-processors/types'
@@ -71,27 +72,36 @@ export interface ClinicalProcessingResult {
   identity: ClinicalIdentity
   route: ProcessingRoute
   result: ProcessorResult
+  /** Veredito da 4ª camada (Representation Validator) — separado do processador (Validação entre Camadas). */
+  verdict: RepresentationVerdict
+}
+
+const EMPTY_VERDICT: RepresentationVerdict = {
+  certified: false, completeness: 'empty', regions: [], presentFields: [], missing: [],
+  reason: 'sem modelo/representação → document_only',
 }
 
 /**
  * FACHADA ÚNICA do CPE. Recebe uma CertifiedCDU, identifica a modalidade (Identidade Clínica), seleciona o
- * MODELO CLÍNICO (estrutura) e executa o PROCESSADOR (preenche). Sem modelo/processador → `document_only`
- * (não bloqueia; preserva o documento). Devolve também a identidade, para o chamador persistir família/tipo
- * — sem conhecer modalidades.
+ * MODELO CLÍNICO (estrutura), executa o PROCESSADOR (preenche) e VALIDA a representação (4ª camada, separada).
+ * Sem modelo/processador → `document_only` (não bloqueia; preserva o documento). Devolve identidade + verdict.
  */
 export function processClinical(cdu: CertifiedCDU): ClinicalProcessingResult {
   const identity = identifyClinical(cdu.content.text)
   const route = routeProcessing(identity)
   const model = route.model
   if (!model) {
-    return { identity, route, result: { output: null, clinicalModel: 'none', contractVersion: '-', extractedUnits: 0, notes: [route.reason] } }
+    return { identity, route, verdict: EMPTY_VERDICT,
+      result: { output: null, clinicalModel: 'none', contractVersion: '-', extractedUnits: 0, notes: [route.reason] } }
   }
   const fn = CLINICAL_MODEL_PROCESSORS[model.id]
   if (!fn) {
-    return { identity, route, result: {
+    return { identity, route, verdict: EMPTY_VERDICT, result: {
       output: null, clinicalModel: model.id, contractVersion: model.contractVersion,
       extractedUnits: 0, notes: [`modelo clínico "${model.id}" tem estrutura, mas ainda sem processador → document_only`],
     } }
   }
-  return { identity, route, result: fn(cdu) }
+  const result = fn(cdu)
+  const verdict = validateRepresentation(result, model) // camada separada certifica a estrutura
+  return { identity, route, result, verdict }
 }
