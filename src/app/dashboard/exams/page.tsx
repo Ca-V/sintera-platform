@@ -13,6 +13,7 @@ import { parseDateOnly } from '@/lib/agenda'
 import { useUser } from '@/context/UserContext'
 import { compareNames } from '@/lib/exams/nameMatch'
 import { categoryOf, FALLBACK_CATEGORY } from '@/lib/capture/exam-categories'
+import { findDuplicateIds, type DuplicateCandidate } from '@/lib/exams/duplicates'
 import { useDocumentBundle, DocumentBundleStaging } from '@/components/ui/DocumentBundleCapture'
 import ListCard, { CardChip } from '@/components/ListCard'
 import PageHeader from '@/components/PageHeader'
@@ -163,6 +164,23 @@ export default function ExamsPage() {
     }
     return filtered
   }, [exams, searchName])
+
+  // Possíveis duplicados (req_deteccao_duplicados): fingerprint OU paciente+data+emissor+título.
+  // Marca só o registro mais novo do par; o original permanece. Nunca duplica em silêncio.
+  const duplicateIds = useMemo(() => {
+    const candidates: DuplicateCandidate[] = exams.map(e => {
+      const x = e as unknown as {
+        id: string; created_at: string; patient_name?: string | null; exam_date?: string | null
+        issuer?: string | null; display_title?: string | null; type?: string | null
+        representation_fingerprint?: string | null
+      }
+      return {
+        id: x.id, createdAt: x.created_at, patientName: x.patient_name, examDate: x.exam_date,
+        issuer: x.issuer, title: x.display_title ?? x.type, representationFingerprint: x.representation_fingerprint,
+      }
+    })
+    return findDuplicateIds(candidates)
+  }, [exams])
 
   // ── Exames filtrados + agrupados por ano (SEM pedidos/guias) ──────────────
   const examsByYear = useMemo(() => {
@@ -683,10 +701,12 @@ export default function ExamsPage() {
                                   // exame ainda não analisado (sem document_type) não recebe rótulo genérico.
                                   const cat = categoryOf((exam as unknown as { document_type?: string | null }).document_type)
                                   const showCat = cat.key !== FALLBACK_CATEGORY.key
-                                  if (!isMismatch && !showCat) return undefined
+                                  const isDup = duplicateIds.has(exam.id)
+                                  if (!isMismatch && !showCat && !isDup) return undefined
                                   return (
                                     <>
                                       {showCat && <CardChip tone="mauve">{cat.label}</CardChip>}
+                                      {isDup && <CardChip tone="gold">Possível duplicado</CardChip>}
                                       {isMismatch && <CardChip tone="petal">Nome divergente do perfil</CardChip>}
                                     </>
                                   )
