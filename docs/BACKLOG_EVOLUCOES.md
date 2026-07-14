@@ -1,75 +1,61 @@
-# Backlog de Evoluções (registro — executar na fase adequada)
+# Backlog de Evoluções — organizado por FASES de implementação
 
-> Fundadora (14/07/2026): itens de evolução/UX identificados na revisão da plataforma. **Registrar agora,
-> executar na fase mais adequada** — **sem interromper** a prioridade atual (consolidação da arquitetura:
-> pipeline · CPE · representação clínica · certificação). Assim as melhorias de interface são construídas
-> sobre uma arquitetura já consolidada e certificada, evitando retrabalho.
+> Fundadora (14/07/2026): o backlog deixa de ser lista de melhorias e passa a ser organizado por **fases de
+> implementação**, para acompanhar naturalmente a evolução da plataforma e evitar itens fora do momento. Já
+> documentado e **não volta para validação arquitetural** — segue direto para implementação → testes →
+> auditoria → certificação. Executar **após** a consolidação dos módulos existentes; **sem interromper** a
+> prioridade atual.
 
-## Ordem de prioridade (restated pela fundadora)
-1. **Consolidação da plataforma** (pipeline · CPE · persistência · certificação) — *atual*.
-2. **Estabilização das modalidades clínicas** (uma por vez, CRC).
-3. **CARE-001** (Espaço Colaborativo do Cuidado).
-4. **Redesign dos módulos e da interface**.
-5. **Evoluções listadas abaixo**.
+**Ordem de execução macro** (`GOVERNANCA.md` — Ponto de Inflexão): 1) consolidação dos módulos existentes →
+2) este backlog → 3) CARE-001 → 4) modalidades clínicas.
 
 ---
 
-## 1. Relatórios
-- **1.1 Histórico** — criar **módulo de Histórico** próprio dentro de Relatórios; **separar definitivamente
-  Agenda × Histórico** (hoje Histórico está acoplado à Agenda) e permitir acesso independente aos dois.
-  *Momento: redesign da navegação / organização dos módulos.*
+## Fase A — Ajustes ESTRUTURAIS dos módulos existentes
+- **A1 · Cards de Exames padronizados** — todo card: **tipo do exame · laboratório/clínica · médico
+  SOLICITANTE**. Executor/assinante do laudo **NÃO** é identificação principal (está no documento). *(§2.1;
+  refina [[req_display_card_exame]])*
+- **A2 · Nomenclatura única** — identidade documental fiel + nomenclatura consistente em toda a UI; sem
+  variações entre exames equivalentes. *(§2.2; [[regra_nomenclatura_documental]] · [[principio_identidade_documental]])*
+- **A3 · Política binária de extração** *(regra permanente)* — só **estruturada completa** OU **documento
+  disponível**; nunca parcial. *(§2.3; [[regra_estruturacao_binaria]])*
+- **A4 · Classificação aberta (ômicas = categorias)** — ômicas viram **categorias de exame** (Laboratorial ·
+  Imagem · Genético · Metabolômica · Proteômica · Transcriptômica · Microbioma · …), não fluxo próprio;
+  aberta/escalável. *(§2.6; [[principio_modelo_aberto]])*
+- **A5 · Relatórios: Histórico próprio** — módulo de Histórico separado da Agenda; acesso independente. *(§1.1)*
 
-## 2. Exames
-- **2.1 Identificação dos cards** — padronizar todos os cards com: **tipo do exame · laboratório/clínica ·
-  médico SOLICITANTE**. O médico executor/assinante do laudo **NÃO** compõe a identificação principal (já
-  está no documento original). *Refina [[req_display_card_exame]]. Momento: redesign do módulo Exames.*
-- **2.2 Nomenclatura única** — política única de nomenclatura: **identidade documental fiel** + nomenclatura
-  **consistente** em toda a UI; evitar variações entre exames equivalentes. *Momento: consolidação da
-  Identidade Documental. Conecta [[regra_nomenclatura_documental]] · [[principio_identidade_documental]].*
-- **2.3 Política única de extração** *(REGRA PERMANENTE — já constitucional)* — cada exame em **um** estado:
-  **extração estruturada completa** OU **documento original disponível**. **Não existe estruturação parcial**;
-  se não estruturar completamente, mantém só o documento para consulta. *Já registrado: [[regra_estruturacao_binaria]].*
-- **2.4 Quantitativos × Qualitativos** — diferenciar: **Quantitativos** permitem estruturação · comparação
-  histórica · evolução temporal · gráficos · indicadores. **Qualitativos** priorizam documento original ·
-  consulta ao laudo, **sem** transformar texto clínico em dados quantitativos. *Reforça
-  [[principio_nao_producao_conteudo_clinico]]. Momento: redesign do módulo Exames.*
-- **2.5 Fluxo único de inclusão** — unificar os dois pontos de entrada atuais ("Novo exame" + upload) num
-  **único fluxo** que recebe **PDF · foto · escaneamento · imagem única · múltiplas imagens · multipágina**,
-  usando toda a arquitetura **Bundle → CDU → Processamento**. *Conecta [[req_captura_documental]] (CAP-001).
-  Momento: redesign do módulo Exames.*
-- **2.6 Classificação (ômicas como categorias)** — ômicas deixam de ter fluxo próprio e viram **categorias de
-  exame**: Laboratorial · Imagem · Genético · Metabolômica · Proteômica · Transcriptômica · Microbioma · …
-  Classificação **aberta e escalável**. *Conecta [[principio_modelo_aberto]] (classes, não listas).*
-- **2.7 Informações financeiras** — por exame: **valor pago · upload de NF/recibo**, alimentando
-  automaticamente o módulo financeiro/despesas. **Mesmo padrão** para medicamentos/suplementos/cirurgias/
-  consultas/demais eventos. *Camada administrativa do [[evento_assistencial_entidade_central]] (§2).*
-- **2.8 Agendamento** — **agendar exame · reagendar · recorrência** (mensal/trimestral/semestral/anual/
-  intervalo personalizado), sobre a infraestrutura comum de **Eventos Assistenciais**. *[[evento_assistencial_entidade_central]] (§3, recorrência genérica).*
+## Fase B — Melhorias de EXPERIÊNCIA DO USUÁRIO
+- **B1 · Quantitativos × Qualitativos** — quantitativos: estruturação · comparação · evolução · gráficos ·
+  indicadores. Qualitativos: documento/laudo em 1º plano, **sem** virar dado. *(§2.4; [[principio_nao_producao_conteudo_clinico]])*
+- **B2 · Medidas Corporais em cards** — cada avaliação em **card** (padrão de Exames); abrir → dados completos ·
+  evolução · comparações; evitar uma avaliação sempre aberta na tela. *(§4)*
+- **B3 · Consistência de apresentação entre módulos** — mesmo padrão de card/detalhe/estados em todos os
+  módulos (saída da auditoria de consistência). *(transversal)*
 
-## 3. Sinais Vitais
-- **Integração automática com fontes externas** (wearables · smartwatches · smartbands · apps de saúde ·
-  plataformas parceiras). Prioridade = **integração automática**, reduzindo lançamento manual. Preparar a
-  arquitetura para isso. *Momento: após consolidação do pipeline universal (conecta Ecossistema — Fase 5 do
-  [[roadmap_5_fases]]).*
+## Fase C — Novas FUNCIONALIDADES (sobre Eventos Assistenciais)
+- **C1 · Fluxo ÚNICO de inclusão de exames** — unificar "Novo exame" + upload num só fluxo (PDF · foto ·
+  escaneamento · imagem única · múltiplas · multipágina) via **Bundle → CDU → Processamento**. *(§2.5;
+  [[req_captura_documental]])*
+- **C2 · Financeiro por evento** — valor pago · upload de NF/recibo → módulo financeiro/despesas. Mesmo padrão
+  p/ medicamentos · suplementos · cirurgias · consultas · demais eventos. *(§2.7; [[evento_assistencial_entidade_central]] §2)*
+- **C3 · Agendamento e recorrência** — agendar · reagendar · recorrência (mensal/trimestral/semestral/anual/
+  custom), via infra comum de **Eventos Assistenciais**. Aplica a Exames e Medidas Corporais. *(§2.8; §4)*
+- **C4 · Medidas Corporais como avaliação geral** — evoluir de bioimpedância → **avaliação corporal geral**
+  (renomear "Escanear Bioimpedância") + financeiro + agendamento/recorrência. *(§4)*
 
-## 4. Medidas Corporais
-- Evoluir de "bioimpedância" para **avaliação corporal em geral**: renomear "Escanear Bioimpedância" → algo
-  amplo ("Adicionar avaliação corporal"/"Adicionar laudo"); organizar cada avaliação em **cards** (padrão de
-  Exames); ao abrir o card, exibir **dados completos · evolução · comparações** (evitar uma avaliação sempre
-  aberta na tela principal). Também: **valor pago · NF/recibo · agendamento · reagendamento · recorrência** —
-  reutilizando a infra comum de **Eventos Assistenciais**. *[[evento_assistencial_entidade_central]].*
+## Fase D — REDESIGN VISUAL (Design System)
+- **D1 · Identidade "Almond Blossom" (Van Gogh)** — **aqua** institucional (entre Verde Tiffany e Azul
+  Turquesa); **trocar a sidebar verde escura**; **creme · branco · preto · marrom** secundários; **dourado
+  metálico** só como destaque (premium/badges/estados especiais/detalhes). Elegante, atemporal, sofisticada.
+  *(§5; refina [[branding_paleta_v3_vangogh]])*
 
-## 5. Design System (redesign visual)
-Referência estética: **Almond Blossom, de Vincent van Gogh**. Diretrizes:
-- **aqua** como cor institucional principal (entre Verde Tiffany e Azul Turquesa);
-- **substituir a sidebar verde escura** pelo novo tom institucional;
-- **creme · branco · preto · marrom** como paleta secundária;
-- **dourado metálico** apenas como destaque para elementos premium/badges/estados especiais/detalhes.
-Intenção: identidade mais **elegante, atemporal e sofisticada**. *Refina/confirma [[branding_paleta_v3_vangogh]].
-Momento: redesign visual.*
+## Fase E — INTEGRAÇÕES EXTERNAS
+- **E1 · Sinais Vitais automáticos** — integração com wearables · smartwatches · smartbands · apps de saúde ·
+  plataformas parceiras; **prioridade = integração automática** (reduzir lançamento manual). *(§3; conecta
+  Ecossistema / conectores de aquisição)*
 
 ---
 
-**Natureza:** todos os itens acima são **camada de produto/UI/domínio**, a executar após a consolidação +
-certificação da arquitetura. Vários já reutilizam infra registrada (Eventos Assistenciais, Modelo Aberto,
-Identidade Documental) — nascerão sobre a base já certificada, sem retrabalho.
+**Rastreabilidade:** os `§x.y` referem-se à relação original por módulo (preservada no histórico do git).
+Vários itens reutilizam infra já certificada (Eventos Assistenciais · Modelo Aberto · Identidade Documental ·
+Bundle/CDU) — nascem sobre a base consolidada, sem retrabalho.

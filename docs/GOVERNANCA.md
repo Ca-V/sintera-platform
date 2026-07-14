@@ -781,6 +781,37 @@ alterações arquiteturais**. Esse é o critério de conclusão de **toda** entr
 
 Assim evitamos construir capacidades sobre infra ainda em estabilização.
 
+## 🔻 PONTO DE INFLEXÃO — de construir arquitetura a ENTREGAR a plataforma (fundadora, 14/07/2026)
+
+**A fase de consolidação da infraestrutura está ENCERRADA.** A infra passa a ser a **base oficial da SINTERA**
+e só sofre alteração quando **evidência concreta durante a implementação** demonstrar necessidade real —
+**não** se expande nem refina a arquitetura sem necessidade prática identificada.
+
+**Novo indicador de progresso:** módulos **completos, consistentes e utilizáveis** sobre a infra certificada —
+não a expansão da arquitetura. O foco passa a ser transformar a arquitetura certificada em **capacidades
+concretas para o usuário.**
+
+**Ordem de execução (nova — substitui a anterior "modalidades antes de tudo"):**
+1. **Consolidação dos módulos existentes** — Exames · Medicações · Suplementos · Condições · Cirurgias ·
+   Procedimentos · Eventos Assistenciais · Medidas Corporais · Sinais Vitais · Relatórios. Padronizar
+   comportamento entre todos usando a infra certificada.
+2. **Backlog funcional** (`docs/BACKLOG_EVOLUCOES.md`, organizado por fases A–E) — já documentado, **não volta
+   para validação arquitetural**.
+3. **CARE-001** — mantendo os princípios; **inegociável:** compartilha documentos originais · exames ·
+   evolução objetiva · dados estruturados · comentários dos profissionais. **NÃO gera resumo/interpretação/
+   conclusão clínica** (interpretação é exclusiva do profissional — [[principio_nao_producao_conteudo_clinico]]).
+4. **Modalidades clínicas** — só após as fases anteriores; cada uma usa a infra certificada, nasce dirigida
+   por CRC e passa pela Certificação da Plataforma antes de concluída.
+
+**Novo foco da AUDITORIA:** deixa de procurar refinamentos arquiteturais e passa a identificar **inconsistências
+entre módulos · diferenças de comportamento · duplicidade de funcionalidades · problemas de UX · fluxos
+redundantes · oportunidades de reúso de componentes.** A arquitetura está madura; agora consolida-se a
+**experiência** da plataforma.
+
+**Autonomia:** máxima. Interromper só por **decisão de PRODUTO · decisão REGULATÓRIA · evidência concreta que
+ponha em dúvida um princípio arquitetural já estabelecido.** O resto segue direto para implementação → testes
+→ auditoria → certificação.
+
 ## Regras gerais
 
 - **Código estável:** uma vez atribuído, não muda; a versão vive no cabeçalho do doc.
