@@ -13,7 +13,7 @@ import { representationFingerprint, isRepresentationCertified } from '@/lib/capt
 import { computeCoverage } from '@/lib/capture/coverage'
 import { processBundle } from '@/lib/capture/clinical-information-pipeline'
 import { processClinical, planRepresentation } from '@/lib/capture/clinical-processing-engine'
-import { representationFromProcessor } from '@/lib/capture/ucda'
+import { representationFromProcessor, ucdaItemToRow } from '@/lib/capture/ucda'
 import { planBundleSplit, restrictPages, type SplitPlan } from '@/lib/capture/bundle-split'
 import { pickExamDate } from '@/lib/capture/semantic-dates'
 import { identifyClinical } from '@/lib/capture/clinical-identity-registry'
@@ -410,13 +410,8 @@ export async function POST(
       const rows = ucda.items.map((it, i) => ({
         exam_id: examId, user_id: userId,
         clinical_model: ucda.clinicalModel, result_kind: ucda.resultKind,
-        item_type: it.itemType, name: it.name, value_text: it.valueText, value_num: it.valueNum ?? null,
-        unit: it.unit ?? null, region: it.region ?? null, anatomy: it.anatomy ?? null,
-        code: it.code ?? null, code_system: it.codeSystem ?? null, value_code: it.valueCode ?? null,
-        method: it.method ?? null, context: it.context ?? null, group_label: it.group ?? null,
-        reference_text: it.referenceText ?? null,
-        // Auditabilidade (Certificação §4): documento(exam_id) · página · trecho · Engine · processador · quando(created_at)
-        page: it.page ?? null, raw_text: it.excerpt ?? null,
+        ...ucdaItemToRow(it),                     // mapeador ÚNICO/genérico (qualquer tipo, sem adaptação por modalidade)
+        // Proveniência de linha (Auditabilidade §4): Engine · processador · quando(created_at)
         engine_version: ucda.provenance.engineVersion ?? null,
         sort_order: i, source: 'cpe', contract_version: cpe.result.contractVersion,
       }))

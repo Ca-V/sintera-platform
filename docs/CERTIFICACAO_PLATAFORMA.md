@@ -51,3 +51,18 @@ permanece **em andamento** (nunca "concluída").
 **Relação com os painéis:** o painel de maturidade (`COBERTURA_CLINICA.md`) passa a refletir, por modalidade,
 o estado destas 6 dimensões (não só os 5 níveis anteriores). O laboratório é a **modalidade de referência**
 (corpus real disponível).
+
+## Certificação da INFRAESTRUTURA (não do laboratório) — o objetivo real
+O laboratório é apenas a **1ª evidência** de que a infra representa qualquer modalidade. A infra universal é
+certificada por (todos verdes):
+- **`CERT-laboratory`** — as 6 dimensões sobre o corpus laboratorial real (1ª modalidade certificada).
+- **`CERT-pipeline`** — o pipeline universal (Ingestão→Análise Estrutural→Segmentação→Identity Validator)
+  produz CDUs para documentos **heterogêneos** (laboratório · imagem · laudo narrativo · multipágina ·
+  múltiplos exames · sem resultados estruturáveis), sem conhecer modalidade e degradando com elegância.
+- **`CERT-persistence`** — a persistência canônica representa **qualquer** informação clínica (parâmetro ·
+  biomarcador · achado · classificação · medida · anatomia · lateralidade · grupo · material · texto · tipo
+  FUTURO) por um mapeador ÚNICO, sem adaptação por modalidade. *(Esta auditoria revelou e corrigiu a lacuna
+  do `specimen` — migration 113.)*
+- **`ARCH-layer-decoupling`** — Ingestão · Análise Estrutural · Segmentação · Identity Validator ·
+  Persistência · UCDA **não conhecem modalidade**; só o CPE e os processadores conhecem. **Arquitetura
+  universal atingida.**

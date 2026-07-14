@@ -756,6 +756,31 @@ Toda modalidade futura (Mamografia, EEG, Ecocardiograma, Anatomopatológico…) 
 entra como concluída quando as 6 dimensões passam, com teste/evidência registrados. Os 446 exames reais são
 o **corpus** de certificação, nunca a referência do modelo.
 
+## Princípio da Capacidade Certificada (CONSTITUCIONAL — fundadora, 14/07/2026)
+
+> **A unidade de evolução da plataforma é a CAPACIDADE CERTIFICADA, não o código.**
+
+Uma capacidade só é **ENTREGUE** quando: (1) **implementada**; (2) **testada**; (3) **auditada**; (4) passou
+pelas **6 dimensões da Certificação da Plataforma**; e (5) é **reutilizável por qualquer modalidade futura sem
+alterações arquiteturais**. Esse é o critério de conclusão de **toda** entrega daqui em diante.
+
+**Sequência de execução (antes de novas modalidades):**
+1. **Consolidação e certificação completa da INFRAESTRUTURA** (não do laboratório — o laboratório é a 1ª
+   evidência de que a infra representa qualquer modalidade). Quatro entregas:
+   (a) certificar a **infra** (capacidade de representar qualquer modalidade, não um domínio);
+   (b) certificar o **pipeline universal** com documentos reais **heterogêneos** (laboratório · imagem · laudo
+   narrativo · multipágina · múltiplos exames · sem resultados estruturáveis);
+   (c) auditar a **persistência canônica** (representa parâmetros · biomarcadores · achados · classificações ·
+   medidas · estruturas anatômicas · lateralidade · grupos · texto estruturado · qualquer tipo futuro — sem
+   adaptação por modalidade);
+   (d) certificar o **DESACOPLAMENTO** (Ingestão · Análise Estrutural · Segmentação · Identity Validator ·
+   Persistência · UCDA **não conhecem modalidades**; só o CPE e os processadores têm conhecimento clínico).
+2. **Certificação da arquitetura universal** (aprovação da auditoria de desacoplamento = arquitetura atingida).
+3. **Modalidades clínicas**, uma por vez, dirigidas por CRC — cada uma certificada ao nascer.
+4. **CARE-001**, sobre a infra já consolidada.
+
+Assim evitamos construir capacidades sobre infra ainda em estabilização.
+
 ## Regras gerais
 
 - **Código estável:** uma vez atribuído, não muda; a versão vive no cabeçalho do doc.

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { representationFromProcessor, clinicalResultsToUcda, type ClinicalResultRow } from '@/lib/capture/ucda'
+import { representationFromProcessor, clinicalResultsToUcda, ucdaItemToRow, type ClinicalResultRow } from '@/lib/capture/ucda'
 import type { ProcessorResult } from '@/lib/capture/clinical-processors/types'
 
 // FUNC — UCDA como CONTRATO ÚNICO de saída, fechado dos dois lados: escrita (processador → UCDA → persistência)
@@ -15,14 +15,7 @@ const parametric: ProcessorResult = {
 
 // Simula o mapeamento escrita→banco→leitura (o que o analyze grava em clinical_results).
 function persist(rk: string, model: string, items: ReturnType<typeof representationFromProcessor>): ClinicalResultRow[] {
-  return (items?.items ?? []).map(it => ({
-    clinical_model: model, result_kind: rk, item_type: it.itemType, name: it.name,
-    value_text: it.valueText, value_num: it.valueNum ?? null, unit: it.unit ?? null,
-    code: it.code ?? null, code_system: it.codeSystem ?? null, value_code: it.valueCode ?? null,
-    region: it.region ?? null, anatomy: it.anatomy ?? null, method: it.method ?? null,
-    context: it.context ?? null, group_label: it.group ?? null, reference_text: it.referenceText ?? null,
-    page: it.page ?? null, raw_text: it.excerpt ?? null,
-  }))
+  return (items?.items ?? []).map(it => ({ clinical_model: model, result_kind: rk, ...ucdaItemToRow(it) }))
 }
 
 describe('FUNC · UCDA contrato — round-trip processador → persistência → leitura', () => {
@@ -45,7 +38,7 @@ describe('FUNC · UCDA contrato — round-trip processador → persistência →
     const rows: ClinicalResultRow[] = [{
       clinical_model: 'laboratory', result_kind: 'structured', item_type: 'measure', name: 'Glicose',
       value_text: '92', value_num: 92, unit: 'mg/dL', code: '2345-7', code_system: 'LOINC', value_code: null,
-      region: null, anatomy: null, method: 'Hexoquinase', context: 'Jejum', group_label: null, reference_text: '70 – 99',
+      region: null, anatomy: null, specimen: null, method: 'Hexoquinase', context: 'Jejum', group_label: null, reference_text: '70 – 99',
       page: 1, raw_text: 'Glicose 92 mg/dL',
     }]
     const ucda = clinicalResultsToUcda(rows)!

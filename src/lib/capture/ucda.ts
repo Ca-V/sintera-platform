@@ -144,6 +144,7 @@ export interface ClinicalResultRow {
   value_code: string | null
   region: string | null
   anatomy: string | null
+  specimen: string | null
   method: string | null
   context: string | null
   group_label: string | null
@@ -169,12 +170,44 @@ function itemFromRow(r: ClinicalResultRow): UcdaItem {
     ...(r.value_code ? { valueCode: r.value_code } : {}),
     ...(r.region ? { region: r.region } : {}),
     ...(r.anatomy ? { anatomy: r.anatomy } : {}),
+    ...(r.specimen ? { specimen: r.specimen } : {}),
     ...(r.method ? { method: r.method } : {}),
     ...(r.context ? { context: r.context } : {}),
     ...(r.group_label ? { group: r.group_label } : {}),
     ...(r.reference_text ? { referenceText: r.reference_text } : {}),
     ...(r.page != null ? { page: r.page } : {}),
     ...(r.raw_text ? { excerpt: r.raw_text } : {}),
+  }
+}
+
+/** Colunas de `clinical_results` que descrevem UM item (sem chaves de exame/modelo/proveniência de linha). */
+export type ClinicalResultItemFields = Omit<ClinicalResultRow, 'clinical_model' | 'result_kind'>
+
+/**
+ * Mapeia um UcdaItem para as colunas de `clinical_results` — o ÚNICO ponto de persistência de item (usado
+ * pelo analyze e auditável por CERT-persistence). Genérico: representa QUALQUER tipo de item (parâmetro,
+ * biomarcador, achado, classificação, medida, anatomia, lateralidade, grupo, texto…) sem adaptação por
+ * modalidade (Princípio do Modelo Aberto).
+ */
+export function ucdaItemToRow(item: UcdaItem): ClinicalResultItemFields {
+  return {
+    item_type: item.itemType,
+    name: item.name,
+    value_text: item.valueText ?? null,
+    value_num: item.valueNum ?? null,
+    unit: item.unit ?? null,
+    code: item.code ?? null,
+    code_system: item.codeSystem ?? null,
+    value_code: item.valueCode ?? null,
+    region: item.region ?? null,
+    anatomy: item.anatomy ?? null,
+    specimen: item.specimen ?? null,
+    method: item.method ?? null,
+    context: item.context ?? null,
+    group_label: item.group ?? null,
+    reference_text: item.referenceText ?? null,
+    page: item.page ?? null,
+    raw_text: item.excerpt ?? null,
   }
 }
 
