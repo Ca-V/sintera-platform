@@ -401,9 +401,13 @@ export default function ExamsPage() {
           ) : (
             <>
               <p className="font-display text-lg font-semibold text-onyx mb-1">Arraste um arquivo ou toque para enviar</p>
-              <p className="font-body text-sm text-mauve mb-1">PDF, foto ou <strong className="font-medium">várias fotos</strong> do mesmo laudo</p>
+              <p className="font-body text-sm text-mauve mb-1">PDF, foto ou <strong className="font-medium">várias fotos</strong> do mesmo {activeTab === 'orders' ? 'pedido/guia' : 'laudo'}</p>
               <p className="text-xs font-body text-mauve">Ao tirar/escolher fotos, você adiciona quantas páginas quiser antes de concluir · Até 50 MB</p>
-              <p className="text-xs font-body text-gold bg-warm rounded-lg px-3 py-1.5 mt-2 inline-block">Envie <strong className="font-medium">um exame por vez</strong>. Se um mesmo exame tiver várias páginas, junte todas elas.</p>
+              <p className="text-xs font-body text-gold bg-warm rounded-lg px-3 py-1.5 mt-2 inline-block">
+                {activeTab === 'orders'
+                  ? <>Envie <strong className="font-medium">um pedido ou solicitação por vez</strong>. Várias páginas do mesmo documento? Junte todas.</>
+                  : <>Envie <strong className="font-medium">um exame por vez</strong>. Se um mesmo exame tiver várias páginas, junte todas elas.</>}
+              </p>
             </>
           )}
         </motion.div>
@@ -411,10 +415,8 @@ export default function ExamsPage() {
 
       <ErrorBanner message={uploadError} onDismiss={() => setUploadError(null)} />
 
-      {/* Explicação — TODO exame entra pelo mesmo ponto ("Novo exame"/caixa acima). Ômica é uma
-          CATEGORIA: como reúne centenas/milhares de marcadores, ao declará-la em "Novo exame →
-          Exame ômico" você segue para o passo especializado (catálogo/versionamento). E6: entrada
-          única + continuação especializada; sem fluxo paralelo. */}
+      {/* Explicação convencional × ômica — só na aba EXAMES (irrelevante para Pedidos/Solicitações). */}
+      {activeTab === 'results' && (
       <div className="rounded-2xl border border-border bg-ivory px-4 py-3 flex items-start gap-3">
         <Info size={16} className="text-mauve flex-shrink-0 mt-0.5" />
         <div className="space-y-2 min-w-0">
@@ -429,6 +431,7 @@ export default function ExamsPage() {
           </Link>
         </div>
       </div>
+      )}
 
       {/* ── Abas principais: Exames (realizados) × Pedidos e Solicitações ──────
           Objetos com ciclos de vida distintos (fundadora): resultados/laudos/histórico/evolução
