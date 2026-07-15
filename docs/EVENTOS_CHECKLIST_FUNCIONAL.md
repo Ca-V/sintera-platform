@@ -17,7 +17,7 @@
 | EVT-F003 | Recorrência | Implementado | ✅ | ✅ | ⬜ | `lib/recurrence` · `FUNC-recurrence` | freq/interval/until/count |
 | EVT-F004 | Lembretes/notificações do evento | Implementado | ✅ | ✅ | ⬜ | `reminder_enabled` · NOTIF-001 · `notification.test` | por categoria (e-mail/WhatsApp) |
 | EVT-F005 | Financeiro do evento (valor + NF → Despesas) | Implementado | ✅ | ✅ | ⬜ | `isFinancial/hasCost` · `agenda/money` · `FUNC-money` | directExpense/realizado → Gastos |
-| EVT-F006 | Vínculos evento ↔ entidades (`EventLink`) | Em desenvolvimento | 🔄 | 🔄 | ⬜ | `event.ts`/`related.ts` (modelo+leitura+UI "Relacionado") | **write-side NÃO fiado** (`links` sempre `[]`) → "Relacionado" vazio na prática — **NC-0006** (justificada: população = vínculo duro, adiado) |
+| EVT-F006 | Vínculos evento ↔ entidades (`EventLink`) | Implementado | ✅ | ✅ | ⬜ | `event.ts`/`related.ts` (modelo+leitura+UI "Relacionado") | Lacuna: **write-side NÃO fiado** (`links` sempre `[]`) → "Relacionado" vazio na prática. Registrada em **NC-0006** (justificada: população = vínculo duro, adiado); o estado funcional não muda por isso |
 | EVT-F007 | Anexo (comprovante/laudo/NF) | Implementado | ✅ | N/A | ⬜ | `attachmentUrl` (AgendarModal) | upload no modal |
 | EVT-F008 | Agenda (previsto) × Histórico (realizado) | Implementado | ✅ | ✅ | ⬜ | `event.ts` (isUpcoming/isPast) · timeline/relatório | separação definitiva |
 | EVT-F009 | Despesas (projeção financeira / Gastos) | Implementado | ✅ | ✅ | ⬜ | `service.query.listFinancial` · `gastos` | mesma fonte do módulo Gastos |
