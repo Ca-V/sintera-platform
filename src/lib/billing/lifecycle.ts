@@ -9,6 +9,7 @@ import type { SubscriptionStatus } from './entitlements'
 export type SubscriptionAction =
   | 'subscribe'      // contratar um plano pago → ativa
   | 'start_trial'    // iniciar período de avaliação → trial
+  | 'change_plan'    // upgrade/downgrade (migrar de plano) → mantém ativa; plano muda
   | 'renew'          // renovação bem-sucedida → ativa
   | 'cancel'         // cancelar → cancelada
   | 'suspend'        // suspender (ex.: inadimplência prolongada) → suspensa
@@ -20,6 +21,7 @@ export type SubscriptionAction =
 const TRANSITIONS: Record<SubscriptionAction, { from: (SubscriptionStatus | null)[]; to: SubscriptionStatus }> = {
   subscribe:     { from: [null, 'canceled', 'trial', 'past_due', 'suspended'], to: 'active' },
   start_trial:   { from: [null, 'canceled'], to: 'trial' },
+  change_plan:   { from: ['active', 'trial'], to: 'active' },  // upgrade/downgrade — só com assinatura vigente
   renew:         { from: ['active', 'trial', 'past_due'], to: 'active' },
   cancel:        { from: ['active', 'trial', 'past_due', 'suspended'], to: 'canceled' },
   suspend:       { from: ['active', 'trial', 'past_due'], to: 'suspended' },

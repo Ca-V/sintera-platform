@@ -52,6 +52,22 @@ export interface InvoiceRow {
   external_ref?: string | null
 }
 
+/**
+ * Crédito PROPORCIONAL (proration) ao migrar de plano no meio do ciclo: devolve o valor não usado
+ * do plano atual (dias restantes / dias do ciclo), limitado ao que foi pago. Determinístico; a
+ * definição de valores é comercial (parametrizada depois). Retorna cents (>= 0).
+ */
+export function prorationCreditCents(args: {
+  currentAmountCents: number   // valor do plano atual no ciclo
+  daysRemaining: number        // dias restantes do ciclo atual
+  cycleDays: number            // duração do ciclo (ex.: 30)
+}): number {
+  const cycle = Math.max(1, Math.round(args.cycleDays))
+  const remaining = Math.min(cycle, Math.max(0, Math.round(args.daysRemaining)))
+  const paid = Math.max(0, Math.round(args.currentAmountCents))
+  return Math.round(paid * (remaining / cycle))
+}
+
 /** Constrói uma fatura (cobrança). Valor/plano parametrizados pelo catálogo comercial (depois). */
 export function buildInvoice(args: {
   userId: string

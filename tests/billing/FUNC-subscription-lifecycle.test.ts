@@ -16,6 +16,8 @@ describe('BILLING-001 · transições válidas', () => {
     ['active', 'mark_past_due', 'past_due'],
     ['past_due', 'renew', 'active'],
     ['past_due', 'suspend', 'suspended'],
+    ['active', 'change_plan', 'active'],
+    ['trial', 'change_plan', 'active'],
     ['active', 'cancel', 'canceled'],
     ['suspended', 'reactivate', 'active'],
     ['canceled', 'reactivate', 'active'],
@@ -40,6 +42,12 @@ describe('BILLING-001 · transições inválidas lançam', () => {
 
   it('não suspende quem já cancelou', () => {
     expect(canApply('canceled', 'suspend')).toBe(false)
+  })
+
+  it('não migra de plano sem assinatura vigente (só active/trial)', () => {
+    expect(canApply(null, 'change_plan')).toBe(false)
+    expect(canApply('canceled', 'change_plan')).toBe(false)
+    expect(canApply('suspended', 'change_plan')).toBe(false)
   })
 
   it('não marca inadimplência em assinatura suspensa/cancelada', () => {

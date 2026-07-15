@@ -1,7 +1,7 @@
 // FUNC · BILLING-001 — serviço de assinatura (transição→histórico→fatura), lógica pura.
 
 import { describe, it, expect } from 'vitest'
-import { planTransition, buildInvoice } from '@/lib/billing/service'
+import { planTransition, buildInvoice, prorationCreditCents } from '@/lib/billing/service'
 
 describe('BILLING-001 · planTransition', () => {
   it('contratar sem assinatura → subscription ativa + evento com from=null', () => {
@@ -20,6 +20,20 @@ describe('BILLING-001 · planTransition', () => {
 
   it('transição inválida lança (não persiste estado inconsistente)', () => {
     expect(() => planTransition({ current: null, action: 'renew', planId: 'pro' })).toThrow()
+  })
+})
+
+describe('BILLING-001 · prorationCreditCents (crédito ao migrar de plano)', () => {
+  it('metade do ciclo restante → metade do valor pago como crédito', () => {
+    expect(prorationCreditCents({ currentAmountCents: 5000, daysRemaining: 15, cycleDays: 30 })).toBe(2500)
+  })
+  it('ciclo inteiro restante → crédito integral; nenhum dia → 0', () => {
+    expect(prorationCreditCents({ currentAmountCents: 5000, daysRemaining: 30, cycleDays: 30 })).toBe(5000)
+    expect(prorationCreditCents({ currentAmountCents: 5000, daysRemaining: 0, cycleDays: 30 })).toBe(0)
+  })
+  it('dias restantes acima do ciclo são limitados; valores negativos → 0', () => {
+    expect(prorationCreditCents({ currentAmountCents: 5000, daysRemaining: 99, cycleDays: 30 })).toBe(5000)
+    expect(prorationCreditCents({ currentAmountCents: -100, daysRemaining: 15, cycleDays: 30 })).toBe(0)
   })
 })
 
