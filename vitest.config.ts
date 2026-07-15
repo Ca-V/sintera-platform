@@ -9,7 +9,8 @@ import { fileURLToPath } from 'node:url'
 //  · FUNC (funcional do módulo) · INT (integração) · E2E (fluxo completo).
 export default defineConfig({
   test: {
-    include: ['tests/**/*.{test,spec}.ts'],
+    // NC-0004: inclui também os testes co-localizados em src/ (antes órfãos — não rodavam).
+    include: ['tests/**/*.{test,spec}.ts', 'src/**/*.{test,spec}.ts'],
     // Fast suite: exclui os testes de homologação (IA/serviços reais).
     exclude: ['node_modules/**', '.next/**', '**/*.homolog.test.ts'],
     environment: 'node',

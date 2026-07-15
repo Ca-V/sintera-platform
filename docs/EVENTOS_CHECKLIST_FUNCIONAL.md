@@ -1,0 +1,44 @@
+# Eventos Assistenciais — ESTADO do Domínio (Controle 1: Backlog Funcional)
+
+> **Processo:** `docs/LIFECYCLE_DOMINIOS.md` (ciclo de 8 passos, 2 gates, NCs, homologação/certificação).
+> Este documento contém apenas o **ESTADO** do domínio Eventos Assistenciais (prefixo de ID **`EVT`**).
+> É a **entidade CENTRAL** do domínio clínico-administrativo: o MESMO mecanismo (`health_events` + serviço
+> de domínio + `AgendarModal`/`eventForm`) atende exames · consultas · procedimentos · vacinas · medicamentos ·
+> suplementos · avaliações. Nenhum módulo replica lógica de evento.
+>
+> Estado global: **em desenvolvimento** (auditoria estática em curso; nenhum item `Homologado`).
+
+## Backlog / plano de execução (3 eixos: Código × Testes × Homologação)
+
+| ID | Funcionalidade | Estado | Cód | Test | Homol | Evidências | Observações |
+|---|---|---|:--:|:--:|:--:|---|---|
+| EVT-F001 | Criar/editar evento (todos os tipos, mesmo mecanismo) | Implementado | ✅ | ✅ | ⬜ | `service.ts` · `service.test` · `AgendarModal`/`eventForm` | consulta/exame/procedimento/vacina/plano/outro |
+| EVT-F002 | Estados do evento (planejado/realizado/cancelado/perdido) | Implementado | ✅ | ✅ | ⬜ | `event.ts` (`isConcluded/isClosed/isUpcoming`) · `event.test` | transições via serviço |
+| EVT-F003 | Recorrência | Implementado | ✅ | ✅ | ⬜ | `lib/recurrence` · `FUNC-recurrence` | freq/interval/until/count |
+| EVT-F004 | Lembretes/notificações do evento | Implementado | ✅ | ✅ | ⬜ | `reminder_enabled` · NOTIF-001 · `notification.test` | por categoria (e-mail/WhatsApp) |
+| EVT-F005 | Financeiro do evento (valor + NF → Despesas) | Implementado | ✅ | ✅ | ⬜ | `isFinancial/hasCost` · `agenda/money` · `FUNC-money` | directExpense/realizado → Gastos |
+| EVT-F006 | Vínculos evento ↔ entidades (`EventLink`) | Implementado | ✅ | 🔄 | ⬜ | `event.ts` (`EventLink`: exam/biomarker/medication…; origin/follow_up/generated_from) | modelo pronto; cobertura de wiring a auditar |
+| EVT-F007 | Anexo (comprovante/laudo/NF) | Implementado | ✅ | N/A | ⬜ | `attachmentUrl` (AgendarModal) | upload no modal |
+| EVT-F008 | Agenda (previsto) × Histórico (realizado) | Implementado | ✅ | ✅ | ⬜ | `event.ts` (isUpcoming/isPast) · timeline/relatório | separação definitiva |
+| EVT-F009 | Despesas (projeção financeira / Gastos) | Implementado | ✅ | ✅ | ⬜ | `service.query.listFinancial` · `gastos` | mesma fonte do módulo Gastos |
+| EVT-F010 | Sugestões de evento | Implementado | ✅ | 🔄 | ⬜ | `suggestions.ts` | auditar cobertura |
+| EVT-F011 | Coexistência `health_events` × `agenda_events` (dedup) | Implementado | ✅ | ✅ | ⬜ | `repository.ts` · `repository.test` | convergência = limpeza futura (não bloqueia) |
+
+**Leitura honesta:** domínio maduro e bem testado (event/service/repository/presentation/notification `.test`).
+`Testes` ✅ na maior parte; UI (AgendarModal/agenda) = N/A unitário. Nenhum item `Homologado` (não iniciada a
+homologação). **Pendência de arquitetura registrada (não-bloqueante):** convergência das duas tabelas de evento.
+
+## Registro de Não-Conformidades (NC) — sequência GLOBAL
+Descobertas na auditoria estática de Eventos (afetam a plataforma):
+
+| NC | Data | Resp. | Origem | Domínio | Func. | Tipo | Sev. | Estado | Evidência |
+|---|---|---|---|---|---|---|---|---|---|
+| NC-0004 | 15/07 | Claude | Auditoria estática | Plataforma/Testes | — | Funcional | alta | ✅ encerrada | `vitest.config.ts` (`include` passa a cobrir `src/**`); 26 arquivos órfãos voltaram a rodar (298→600 testes) |
+| NC-0005 | 15/07 | Claude | Teste automatizado | biomarkers | EXA-F012 (adj.) | Funcional | baixa | ✅ encerrada | `catalogLabels.test` atualizado ao rótulo canônico ("Exame de sangue"/"Exame de urina (24 horas)") — comportamento intencional |
+
+## Situação do domínio (passo a passo do LIFECYCLE)
+- **1. Implementação:** ✅ (domínio central maduro; não adicionar features — escopo do ciclo).
+- **2. Auditoria estática (código):** 🔄 em curso (jornadas: criar evento · concluir/reabrir · recorrência ·
+  financeiro · vínculos · Agenda×Histórico · sugestões).
+- **3. Gate Arquitetural / 4. Gate Regulatório:** pendentes (executar após auditoria estática).
+- **5–8:** não iniciados.

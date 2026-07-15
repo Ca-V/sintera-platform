@@ -98,7 +98,9 @@ describe('groupByMaterialExam — Material → Exame(opcional) → itens (ING-00
     ]
     const g = groupByMaterialExam(items, get, labels)
     expect(g).toHaveLength(1)
-    expect(g[0].label).toBe('Sangue venoso')
+    // Material canonicalizado (rótulos canônicos): "Sangue venoso" → "Exame de sangue";
+    // a especificidade "venosa" fica no NOME do exame ("Gasometria venosa").
+    expect(g[0].label).toBe('Exame de sangue')
     expect(g[0].exams).toHaveLength(1)
     expect(g[0].exams[0].label).toBe('Gasometria venosa')
     expect(g[0].exams[0].items).toHaveLength(2)
@@ -106,7 +108,7 @@ describe('groupByMaterialExam — Material → Exame(opcional) → itens (ING-00
 
   it('sem source_exam_name → itens diretos sob o material (exame label null)', () => {
     const g = groupByMaterialExam([{ id: 'ca', sourceMaterial: 'URINA DE 24 HORAS', specimen: null, sourceExamName: null }], get, labels)
-    expect(g[0].label).toBe('URINA DE 24 HORAS')
+    expect(g[0].label).toBe('Exame de urina (24 horas)') // material canonicalizado
     expect(g[0].exams[0].label).toBeNull()
   })
 
