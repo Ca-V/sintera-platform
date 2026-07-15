@@ -17,6 +17,7 @@ import { processClinical, planRepresentation } from '@/lib/capture/clinical-proc
 import { representationFromProcessor, ucdaItemToRow } from '@/lib/capture/ucda'
 import { planBundleSplit, restrictPages, type SplitPlan } from '@/lib/capture/bundle-split'
 import { pickExamDate } from '@/lib/capture/semantic-dates'
+import { planNarrativeDiscard } from '@/lib/exams/narrativeDiscard'
 import { identifyClinical } from '@/lib/capture/clinical-identity-registry'
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -237,6 +238,10 @@ export async function POST(
   //     (DELETE + INSERT numa única transação plpgsql). Se a gravação falhar,
   //     a transação é revertida e os biomarcadores anteriores ficam intactos —
   //     uma reanálise malsucedida não deixa o exame sem dados.
+  // `useCanonical` é hoistado: o descarte de laudo narrativo (adiante) precisa saber
+  // se a versão canônica foi promovida por escrita append-only (write_canonical_extraction)
+  // ou pelo caminho legado (replace_biomarkers, delete+replace) — NC-0008.
+  let useCanonical = false
   if (result.biomarkers.length > 0) {
     // Resolver (best-effort): preenche catalog_id ligando o biomarcador ao
     // catálogo canônico. SEM juízo clínico — só normalização + casamento.
@@ -286,7 +291,7 @@ export async function POST(
     // replace_biomarkers (INALTERADO). route_reason é gravado na telemetria (origem da escrita).
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: route } = await (supabase.rpc as any)('canonical_route', { p_exam_id: examId })
-    const useCanonical = route === 'allowlist' || route === 'percent'
+    useCanonical = route === 'allowlist' || route === 'percent'
 
     let replaceErr: { message?: string } | null = null
     if (useCanonical) {
@@ -374,9 +379,21 @@ export async function POST(
 
   // Laudo narrativo: o laudo É o resultado — se o extrator raspou "resultados", descarta-os (document_only,
   // Rastreabilidade Documental). Decisão do PLANO do Engine, não de um `if` de modalidade no analyze.
-  if (!plan.structured && result.biomarkers.length > 0) {
-    await supabase.from('biomarkers').delete().eq('exam_id', examId)
-  }
+  //
+  // NC-0008 (consistência de dados canônicos): tanto a escrita append-only (write_canonical_extraction)
+  // quanto a legada (replace_biomarkers, via ponte 070) já CRIARAM uma versão e PROMOVERAM o ponteiro
+  // `exams.current_extraction_version_id`. Descartar por `DELETE` cru corromperia o modelo canônico:
+  // na rota append-only apagaria linhas versionadas (viola append-only) e deixaria uma versão promovida
+  // órfã. O document_only correto é DE-PROMOVER o ponteiro para NULL — a MESMA semântica do estado
+  // pré-extração — de modo que a view `current_biomarkers` (filtra por current_extraction_version_id)
+  // retorne vazio. Assim preservamos append-only, rastreabilidade, auditabilidade e reprodutibilidade:
+  // a versão e seus biomarcadores permanecem no histórico (`extraction_versions`), apenas deixam de ser
+  // a representação corrente. Sem mudança de arquitetura (mecanismo de ponteiro já existente).
+  const discardPlan = planNarrativeDiscard({
+    structured: plan.structured, biomarkerCount: result.biomarkers.length, useCanonical,
+  })
+  if (discardPlan.depromotePointer) finalUpdate.current_extraction_version_id = null
+  if (discardPlan.deleteLegacyRows) await supabase.from('biomarkers').delete().eq('exam_id', examId)
 
   // Metadados de extração (CEF) — SEMPRE atualizam (refletem a EXTRAÇÃO, não a identidade).
   const bmN = plan.structured ? result.biomarkers.length : 0
