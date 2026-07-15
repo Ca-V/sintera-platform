@@ -777,6 +777,25 @@ estado nas 4 dimensões; com itens abertos em 2/3/4, o módulo é "infra pronta"
 Exames E1–E8 = Infra+Funcionalidade em grande parte, mas Integrações transversais (Notificações, Care Space)
 e parte de UX seguem abertas → **Exames não está concluído** (ver `docs/EXAMES_CONCLUSAO.md`).
 
+## Ciclo de Vida Obrigatório da Capacidade (CONSTITUCIONAL — fundadora, 15/07/2026)
+
+> **Nenhuma capacidade é concluída só porque tem código implementado.** Toda capacidade percorre,
+> obrigatoriamente, o ciclo completo: **Implementação → Testes → Auditoria → Homologação → Certificação.**
+
+Padrão UNIFORME para TODOS os domínios (Exames, Eventos, Financeiro, Billing, Medidas, Notificações,
+HIP-001, CARE-001, modalidades…). Cada domínio é acompanhado por **dois controles independentes e
+obrigatórios** (modelo consolidado no domínio Exames — `docs/EXAMES_CHECKLIST_FUNCIONAL.md`):
+- **Controle 1 — Backlog Funcional oficial** (fonte ÚNICA da verdade do domínio): cada item com ID ·
+  descrição · estado (Não iniciado/Em desenvolvimento/Implementado/Homologado, **sem %**) · dependências ·
+  responsável · **evidências verificáveis** (commit/teste/migration/homologação/CRC/certificação) ·
+  observações. Validação em **3 eixos**: Código × Testes × Homologação. Nada existe só em memória/conversa.
+- **Controle 2 — Matriz de Homologação** (validação com documentos reais).
+- **NC → item F:** toda não-conformidade que exige desenvolvimento origina/vincula um item do backlog
+  (NC → F → Implementação → Testes → Homologação → encerramento), com Origem da descoberta registrada.
+- **Encerrar um item** exige simultaneamente: Código · Testes (quando aplicável) · Homologação (quando
+  aplicável) · NCs relacionadas encerradas.
+- **Conclusão do domínio:** backlog todo `Homologado` + Matriz aprovada + Certificação da Plataforma.
+
 ## Princípio da Capacidade Certificada (CONSTITUCIONAL — fundadora, 14/07/2026)
 
 > **A unidade de evolução da plataforma é a CAPACIDADE CERTIFICADA, não o código.**

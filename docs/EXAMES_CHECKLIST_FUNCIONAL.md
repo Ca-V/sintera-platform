@@ -14,6 +14,21 @@
 > Certificação da Plataforma aprovada. Qualquer pendência → *em desenvolvimento*. Responsável de execução:
 > Claude; responsável de homologação/aprovação: Fundadora.
 
+## Regras de governança do backlog (fundadora 15/07)
+1. **Fonte ÚNICA da verdade.** Este documento é o oficial do domínio Exames. Nenhum item vive só em
+   memória, conversa ou backlog paralelo. **Toda** nova funcionalidade, correção, melhoria ou NC entra
+   AQUI **antes** de qualquer implementação.
+2. **Evidências OBJETIVAS.** A coluna Evidências registra referências verificáveis — commit, teste
+   automatizado, migration, documento de homologação/CRC, certificação. Nada de "implementado/corrigido".
+3. **NC gera item de backlog.** Quando uma NC exige desenvolvimento, ela origina/vincula um item `F`.
+   Fluxo: **NC → Item F → Implementação → Testes → Homologação → encerramento da NC**.
+4. **Critério para ENCERRAR um item F (todos simultâneos):** Código implementado · Testes automatizados
+   aprovados (quando aplicável) · Homologação aprovada (quando aplicável) · NCs relacionadas encerradas.
+   Enquanto qualquer um pender, o item continua aberto.
+
+**Ordem de execução atual (fundadora):** (1) fechar o eixo **Testes** dos itens implementados → (2)
+continuar a auditoria funcional → (3) corrigir NCs de imediato → (4) só então homologar com documentos reais.
+
 ## Backlog / plano de execução
 
 | ID | Funcionalidade | Estado | Cód | Test | Homol | Dependências | Evidências | Observações |
@@ -39,10 +54,10 @@ desenvolvimento*. Fechar os ⬜ de **Testes** (onde a lógica for extraível) é
 
 ## Registro de Não-Conformidades (NC)
 
-| NC | Descrição | Origem da descoberta | Ação | Estado |
-|---|---|---|---|---|
-| NC-01 | Detalhe do exame não exibia laboratório nem solicitante | Revisão funcional (Fundadora) | Query + exibição padronizada no detalhe | ✅ corrigida |
-| NC-02 | Aba Pedidos mostrava caixa/explicação de upload de *resultados* (copy + ômica) | Auditoria contínua / Revisão de UX | Copy e explicação contextuais por aba | ✅ corrigida |
+| NC | Descrição | Origem da descoberta | Item F | Evidência (verificável) | Estado |
+|---|---|---|---|---|---|
+| NC-01 | Detalhe do exame não exibia laboratório nem solicitante | Revisão funcional (Fundadora) | F3 (F1) | commit `a2f80e8` · `deriveExamIdentity` · `FUNC-exam-identification` | ✅ encerrada |
+| NC-02 | Aba Pedidos mostrava caixa/explicação de upload de *resultados* (copy + ômica) | Auditoria contínua / Revisão de UX | F4 | commit `8355009` | ✅ encerrada |
 
 _Origens possíveis: Revisão funcional · Revisão de UX · Homologação · Certificação · Documento CRC · Teste
 automatizado · Feedback de usuário._
