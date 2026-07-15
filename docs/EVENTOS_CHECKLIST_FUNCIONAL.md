@@ -47,3 +47,17 @@ Descobertas na auditoria estática de Eventos (afetam a plataforma):
   rastreabilidade (`EventLink`) · auditabilidade (source/created) · LGPD (RLS). 0 NC.
 - **5. Auditoria funcional (execução):** PENDENTE — ambiente executável (preview/staging), não exige produção.
 - **6–8 (Homologação · Certificação · Encerramento):** não iniciados.
+
+## Roteiro da Auditoria Funcional (execução no preview) — passo 5
+Percorrer no preview; divergência = NC (Tipo+Severidade → EVT-F → corrigir → evidência).
+
+| Jornada | Passos | Resultado esperado | Sinais de defeito |
+|---|---|---|---|
+| Criar evento | Agenda → Novo evento (cada tipo: consulta/exame/procedimento/vacina/plano/outro) | evento na Agenda com tipo/data/hora | tipo some · não salva |
+| Concluir/reabrir | marcar como Realizado; depois Reabrir | vai ao Histórico (e Gastos se tiver valor); reabrir volta à Agenda | fica na Agenda · não recalcula |
+| Recorrência | criar com frequência + até | próximas ocorrências previstas na Agenda | não gera série · datas erradas |
+| Financeiro | evento com valor + NF, status Realizado | entra em Despesas/Gastos | não entra · valor errado |
+| Lembrete | ativar lembrete + telefone/canal | respeita canal por categoria (NOTIF-001) | ignora preferência |
+| Agenda × Histórico | ver Agenda (previstos) e Histórico (realizados) | separados; agendado ≠ realizado | mistura previsto/realizado |
+| Vínculos | evento originado de exame/pedido (`EventLink`) | vínculo preservado (origem/follow_up) | vínculo perdido |
+| Sugestões | conferir sugestões de evento | coerentes com o contexto | sugestão inválida |

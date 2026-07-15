@@ -87,5 +87,28 @@ Estados e distinção estática × funcional: ver `docs/LIFECYCLE_DOMINIOS.md` (
 
 A maior fonte de descobertas nesta fase passa a ser o **uso real**, não o código.
 
+## Roteiro da Auditoria Funcional (execução no preview) — passo 5
+Percorrer no **ambiente executável** (preview da branch). Para cada jornada: seguir os passos, comparar com o
+**resultado esperado**; qualquer divergência = **NC** (registrar Tipo+Severidade → EXA-F → corrigir → evidência).
+
+| Jornada | Passos | Resultado esperado | Sinais de defeito |
+|---|---|---|---|
+| J1 Upload exame | Novo exame → PDF/foto; ou arrastar | vai ao detalhe; auto-análise inicia ("Analisando…") | erro técnico cru · trava · não analisa |
+| J2 Upload pedido | Aba Pedidos → adicionar guia/pedido | classifica em "Pedidos e Solicitações" | cai em Exames · copy de resultado |
+| J3 Exame único | abrir lab com 1 exame | card: nome/lab/solicitante; resultados agrupados | nome = arquivo · lab ausente |
+| J4 Multi-exame | enviar doc com vários exames | gera N registros ("— parte X/N") | 1 só registro · perde exames |
+| J5 Laboratorial | abrir painel | biomarcadores por material/painel; referência/status | material cru · valor sem unidade |
+| J6 Imagem | abrir laudo de imagem | "Documento disponível" + Ver original | tela vazia/quebrada · tenta estruturar |
+| J7 Qualitativo | abrir exame com resultado textual | texto exibido; nunca vira número/gráfico | qualitativo plotado |
+| J8 Duplicidade | enviar 2× o mesmo exame | 2º marca "Possível duplicado" + Ver original | não detecta · marca o original |
+| J9 Financeiro | detalhe → Registrar custo / NF | valor + NF (imediata) → aparece em Despesas | NF escondida · não entra em Gastos |
+| J10 Agend./recorr. | detalhe → Criar lembrete + repetir | evento na Agenda; recorrência gera ocorrências | save sem data · recorrência falha |
+| J11 Evolução | resultado → clicar biomarcador numérico | série no tempo em /saude/[slug] | link morto · série vazia |
+| J12 Notificações | Configurações → canal por categoria; evento do exame | respeita e-mail/WhatsApp/ambos/nenhum | ignora preferência |
+| J13 Exclusão | detalhe → Excluir | remove; Histórico recalcula; erro amigável se falhar | erro técnico cru · não remove |
+
+**Homologação (passo 6):** usar a matriz `tests/homolog/COVERAGE.md` + fixtures reais (formato em
+`tests/homolog/fixtures/exames/README.md`); `HOMOLOG=1 npm run test:homolog`. 8 dimensões, 0/8 hoje.
+
 ## Adiados (não retornam à fila antes de encerrar Exames)
 stepper visual do fluxo · Care Space · push notifications · demais funcionalidades de fases posteriores.
