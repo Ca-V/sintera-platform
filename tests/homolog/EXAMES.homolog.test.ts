@@ -15,6 +15,7 @@ import { describe, it, expect } from 'vitest'
 import { readdirSync, readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { classifyExamDocument, deriveDisplayTitle } from '@/lib/capture/document-naming'
+import { computeCoverage, renderCoverageTable } from './coverage'
 
 const FIXTURES_DIR = join(process.cwd(), 'tests', 'homolog', 'fixtures', 'exames')
 const HOMOLOG = process.env.HOMOLOG === '1'
@@ -48,6 +49,11 @@ function loadFixtures(): Fixture[] {
 
 const fixtures = loadFixtures()
 const shouldRun = HOMOLOG && fixtures.length > 0
+
+// Matriz de cobertura — impressa SEMPRE (homologando ou não), para visualizar o progresso
+// objetivamente sem ler testes individuais (fundadora 15/07).
+// eslint-disable-next-line no-console
+console.log('\n' + renderCoverageTable(computeCoverage(FIXTURES_DIR)) + '\n')
 
 describe.skipIf(!shouldRun)('HOMOLOG · Exames — representação determinística sobre documentos reais', () => {
   it('há casos de homologação carregados', () => {
