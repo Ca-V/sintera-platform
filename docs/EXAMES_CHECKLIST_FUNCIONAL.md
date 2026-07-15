@@ -78,35 +78,39 @@ desenvolvimento*. Fechar os ⬜ de **Testes** (onde a lógica for extraível) é
 _Origens possíveis: Revisão funcional · Revisão de UX · Homologação · Certificação · Documento CRC · Teste
 automatizado · Feedback de usuário._
 
-## Auditoria Funcional por JORNADAS (fundadora 15/07)
-A auditoria é por **jornadas completas do usuário** (início→fim), não por telas/componentes. Estados:
-`Não auditada` · `Em auditoria` · `Auditada` · `Homologada`. **Encerra** quando: todas `Auditada` · nenhuma
-NC aberta **crítica/alta** · NCs média/baixa tratadas ou justificadas. Só então → homologação com docs reais.
+## Auditoria por JORNADAS do usuário (fundadora 15/07)
+Auditoria por **jornadas completas do usuário** (início→fim), não por telas/componentes. **Auditoria estática
+(código) ≠ auditoria funcional (execução):** a estática inspeciona a implementação; a funcional valida o
+**comportamento percebido pelo usuário** no ambiente REAL, com documentos e interações reais.
 
-| # | Jornada | Estado | NCs | Evidência / observações |
+**5 estados (progressão por jornada):**
+`Não iniciada` → `Auditoria estática (código)` → `Auditoria funcional (execução)` → `Homologada` → `Certificada`.
+
+| # | Jornada | Estado | NCs | Evidência (auditoria estática) |
 |---|---|---|---|---|
-| J1 | Upload de exame | Auditada | NC-03 (encerrada) | auto-análise em `pending` ok; erro amigável; limite 50MB/MIME |
-| J2 | Upload de pedido/solicitação | Auditada | NC-02 (encerrada) | caixa/copy por aba; classificação `isOrderDocumentType` |
-| J3 | Documento com um único exame | Auditada | — | render de biomarcadores agrupados; nome = exame único |
-| J4 | Documento com múltiplos exames (segmentação) | Auditada | — | irmãos criados `pending` rotulados "— parte X/N"; auto-análise por CDU |
-| J5 | Exames laboratoriais | Auditada | — | lista de biomarcadores agrupada por material/painel; referência/interpretação |
-| J6 | Exames de imagem | Auditada | — | `document_only` → "Documento disponível" + Ver original (sem estado quebrado) |
-| J7 | Exames qualitativos | Auditada | — | `value_text` renderizado; nunca vira dado numérico; document_only tratado |
-| J8 | Duplicidade de exames | Auditada | — | detecção testada; caso mesmo `createdAt` = 1 marcado (estável, sem falha) |
-| J9 | Financeiro do exame | Auditada | — | "Registrar custo/NF"; data obrigatória (save bloqueado); NF visível |
-| J10 | Agendamento e recorrência | Auditada | — | AgendarModal (recorrência testada; save bloqueado sem data) |
-| J11 | Evolução longitudinal | Auditada | — | link numérico→`/saude/[slug]`; série filtra numéricos |
-| J12 | Notificações relacionadas ao exame | Auditada | — | evento do exame notifica por categoria (NOTIF-001); push adiado |
-| J13 | Exclusão e restauração | Auditada | — | exclusão via API + erro amigável; **restauração N/A** (exclusão definitiva por design) |
+| J1 | Upload de exame | Auditoria estática (código) | NC-03 (encerrada) | auto-análise em `pending`; erro amigável; limite 50MB/MIME |
+| J2 | Upload de pedido/solicitação | Auditoria estática (código) | NC-02 (encerrada) | caixa/copy por aba; `isOrderDocumentType` |
+| J3 | Documento com um único exame | Auditoria estática (código) | — | render de biomarcadores agrupados; nome = exame único |
+| J4 | Documento com múltiplos exames (segmentação) | Auditoria estática (código) | — | irmãos `pending` "— parte X/N"; análise por CDU sob demanda |
+| J5 | Exames laboratoriais | Auditoria estática (código) | — | biomarcadores agrupados por material/painel; referência/interpretação |
+| J6 | Exames de imagem | Auditoria estática (código) | — | `document_only` → "Documento disponível" + Ver original |
+| J7 | Exames qualitativos | Auditoria estática (código) | — | `value_text` renderizado; nunca vira dado numérico |
+| J8 | Duplicidade de exames | Auditoria estática (código) | — | detecção testada; mesmo `createdAt` = 1 marcado (estável) |
+| J9 | Financeiro do exame | Auditoria estática (código) | — | "Registrar custo/NF"; data obrigatória; NF visível |
+| J10 | Agendamento e recorrência | Auditoria estática (código) | — | AgendarModal; recorrência testada; save bloqueado sem data |
+| J11 | Evolução longitudinal | Auditoria estática (código) | — | link numérico→`/saude/[slug]`; série filtra numéricos |
+| J12 | Notificações relacionadas ao exame | Auditoria estática (código) | — | evento notifica por categoria (NOTIF-001); push adiado |
+| J13 | Exclusão e restauração | Auditoria estática (código) | — | exclusão via API + erro amigável; **restauração N/A** (definitiva por design) |
 
-**Nota de honestidade:** `Auditada` = caminho funcional **verificado por leitura de código** (jornada tracejada
-início→fim, sem estado quebrado). `Homologada` = validada com **documento real** (Controle 2). Nenhuma jornada
-está `Homologada` ainda.
+**Severidade das NCs:** `crítica` (bloqueia/perde dado) · `alta` (fluxo quebrado) · `média` (UX confusa) ·
+`baixa` (cosmético).
 
-**Severidade das NCs:** `crítica` (bloqueia uso / perda de dado) · `alta` (fluxo quebrado) · `média` (UX
-confusa, sem bloquear) · `baixa` (cosmético). Encerrar auditoria exige zero crítica/alta aberta.
-**Auditoria funcional (código): todas as 13 jornadas `Auditada`, 1 NC (NC-03, baixa) encerrada, 0 aberta.**
-Próximo passo do domínio: **homologação com documentos reais** (matriz 0/8).
+### Situação da auditoria (precisa)
+Foi concluída a **auditoria ESTÁTICA das jornadas**: todas as 13 revisadas no código; não foram encontradas
+novas NCs críticas ou altas; a única NC relevante (NC-03, baixa) foi corrigida. **A Auditoria FUNCIONAL
+permanece PENDENTE** — depende da execução das jornadas no ambiente real (documentos e interações reais) e
+**antecede a homologação**. Nenhuma jornada está em `Auditoria funcional (execução)`, `Homologada` nem
+`Certificada`. A maior fonte de descobertas nesta fase passa a ser o **uso real**, não o código.
 
 ## Processo de AUDITORIA CONTÍNUA
 Achou lacuna → **(1)** registra a NC (com Origem) → **(2)** corrige de imediato quando possível → **(3)**
