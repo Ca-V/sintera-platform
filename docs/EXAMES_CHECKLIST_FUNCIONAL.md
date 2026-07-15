@@ -38,7 +38,7 @@ continuar a auditoria funcional → (3) corrigir NCs de imediato → (4) só ent
 | F3 | Laboratório + médico solicitante | Em desenvolvimento | ✅ | ✅ | ⬜ | E1 · issuer/requesting_physician | `deriveExamIdentity` + `FUNC-exam-identification` | derivação lab testada (lista+detalhe) |
 | F4 | Reorganização (Exames × Pedidos) | Em desenvolvimento | ✅ | ⬜ | ⬜ | — | abas + ação contextual + caixa por aba | UI sem teste automatizado |
 | F5 | Fluxo de pedidos (Pedido→Agend.→Realiz.→Result.) | Em desenvolvimento | 🔄 | ✅ | ⬜ | Eventos Assistenciais | `careFlow` + `FUNC-care-flow` · "Agendar" | falta vínculo duro + stepper (adiado) |
-| F6 | Política binária de estruturação | Em desenvolvimento | ✅ | ⬜ | ⬜ | `regra_estruturacao_binaria` | E3 (selo/badge binários) | falta teste do selo binário |
+| F6 | Política binária de estruturação | Em desenvolvimento | ✅ | ✅ | ⬜ | `regra_estruturacao_binaria` | `binaryStructuringState` · `FUNC-exam-structuring` | decisão binária extraída/testada (nunca "parcial") |
 | F7 | Experiência completa de upload | Em desenvolvimento | ✅ | ⬜ | ⬜ | Bundle→CDU | E6 · `useDocumentBundle` | primitivo sem teste unitário |
 | F8 | Financeiro (valor + nota fiscal) | Em desenvolvimento | ✅ | ⬜ | ⬜ | `health_events` | E7 ("Registrar custo / NF") | fiação sem teste |
 | F9 | Recorrência e agendamento | Em desenvolvimento | ✅ | ⬜ | ⬜ | `health_events` | E8 (AgendarModal) | fiação sem teste |

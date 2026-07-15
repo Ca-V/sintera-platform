@@ -15,6 +15,7 @@ import { compareNames } from '@/lib/exams/nameMatch'
 import { categoryOf, FALLBACK_CATEGORY } from '@/lib/capture/exam-categories'
 import { findDuplicateIds, originalIdFor, type DuplicateCandidate } from '@/lib/exams/duplicates'
 import { deriveExamIdentity } from '@/lib/exams/identification'
+import { binaryStructuringState, STRUCTURING_LABEL } from '@/lib/exams/structuring'
 import { useDocumentBundle, DocumentBundleStaging } from '@/components/ui/DocumentBundleCapture'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
@@ -71,11 +72,10 @@ const STATUS_CONFIG: Record<string, {
 // O `partial` interno cai em "Resultados estruturados": os dados extraídos permanecem visíveis (organizar é o
 // papel da plataforma) e o documento original continua acessível; apenas some a etiqueta enganosa "parcial".
 function processedSeal(c: string | null | undefined): { label: string; color: string; bg: string; hint: string } {
-  switch (c) {
-    case 'document_only': return { label: 'Documento disponível',   color: 'text-mauve', bg: 'bg-ivory', hint: 'O conteúdo está no documento original — sempre acessível.' }
-    case 'structured':
-    case 'partial':
-    default:              return { label: 'Resultados estruturados', color: 'text-petal', bg: 'bg-blush', hint: 'As informações deste documento foram organizadas automaticamente. O documento original continua acessível.' }
+  // Estado binário derivado da função pura (F6) — o rótulo NUNCA é "parcial".
+  switch (binaryStructuringState(c)) {
+    case 'document_only': return { label: STRUCTURING_LABEL.document_only, color: 'text-mauve', bg: 'bg-ivory', hint: 'O conteúdo está no documento original — sempre acessível.' }
+    default:              return { label: STRUCTURING_LABEL.structured,    color: 'text-petal', bg: 'bg-blush', hint: 'As informações deste documento foram organizadas automaticamente. O documento original continua acessível.' }
   }
 }
 
