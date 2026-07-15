@@ -27,16 +27,9 @@ const toModalStatus = (s: string): AgendaEventInput['status'] =>
   s === 'realizado' ? 'realizado' : s === 'cancelado' ? 'cancelado' : 'planejado'
 
 // "150,00" | "R$ 1.500,00" | "150.5" → centavos. Vazio/inválido → null.
-export function parseAmountToCents(s: string): number | null {
-  let t = (s ?? '').trim().replace(/[R$\s]/g, '')
-  if (!t) return null
-  if (t.includes(',')) t = t.replace(/\./g, '').replace(',', '.')
-  const n = parseFloat(t)
-  return isFinite(n) && n >= 0 ? Math.round(n * 100) : null
-}
-function centsToAmount(cents: number | null): string {
-  return cents != null ? (cents / 100).toFixed(2).replace('.', ',') : ''
-}
+// Parsing financeiro movido para o domínio puro (testável): src/lib/agenda/money.ts.
+import { parseAmountToCents, centsToAmount } from '@/lib/agenda/money'
+export { parseAmountToCents }
 
 /** Evento de domínio → valores iniciais do formulário (edição). */
 export function eventToInput(ev: HealthEvent): Partial<AgendaEventInput> {
