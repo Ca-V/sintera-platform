@@ -33,11 +33,13 @@ desenvolvimento*. Fechar os ⬜ de **Testes** (onde a lógica for extraível) é
 
 ## Registro de Não-Conformidades (NC)
 
-| NC | Descrição | Origem | Sev. | Item F | Evidência (verificável) | Estado |
-|---|---|---|---|---|---|---|
-| NC-01 | Detalhe do exame não exibia laboratório nem solicitante | Revisão funcional (Fundadora) | média | F3 (F1) | commit `a2f80e8` · `deriveExamIdentity` · `FUNC-exam-identification` | ✅ encerrada |
-| NC-02 | Aba Pedidos mostrava caixa/explicação de upload de *resultados* (copy + ômica) | Auditoria / UX | baixa | F4 | commit `8355009` | ✅ encerrada |
-| NC-03 | Falha de upload exibia mensagem TÉCNICA crua ao usuário (`[insert] 23505…`) | Auditoria funcional | baixa | F7 | commit `95f3d3f` · msg amigável + `console.error` | ✅ encerrada |
+| NC | Descrição | Origem | Sev. | Tipo | Item F | Evidência (verificável) | Estado |
+|---|---|---|---|---|---|---|---|
+| NC-01 | Detalhe do exame não exibia laboratório nem solicitante | Revisão funcional | média | Funcional | F3 (F1) | commit `a2f80e8` · `deriveExamIdentity` · `FUNC-exam-identification` | ✅ encerrada |
+| NC-02 | Aba Pedidos mostrava caixa/explicação de upload de *resultados* (copy + ômica) | Auditoria / UX | baixa | UX | F4 | commit `8355009` | ✅ encerrada |
+| NC-03 | Falha de upload exibia mensagem TÉCNICA crua ao usuário (`[insert] 23505…`) | Auditoria funcional | baixa | UX | F7 | commit `95f3d3f` · msg amigável + `console.error` | ✅ encerrada |
+
+**Contagem por Tipo (abertas): Arquitetural 0 · Regulatória 0 · Funcional 0 · UX 0 · Segurança 0 · Dados 0 · Performance 0.**
 
 _Origens possíveis: Revisão funcional · Revisão de UX · Homologação · Certificação · Documento CRC · Teste
 automatizado · Feedback de usuário._
@@ -65,12 +67,18 @@ Estados e distinção estática × funcional: ver `docs/LIFECYCLE_DOMINIOS.md` (
 **Severidade das NCs:** `crítica` (bloqueia/perde dado) · `alta` (fluxo quebrado) · `média` (UX confusa) ·
 `baixa` (cosmético).
 
-### Situação da auditoria (precisa)
-Foi concluída a **auditoria ESTÁTICA das jornadas**: todas as 13 revisadas no código; não foram encontradas
-novas NCs críticas ou altas; a única NC relevante (NC-03, baixa) foi corrigida. **A Auditoria FUNCIONAL
-permanece PENDENTE** — depende da execução das jornadas no ambiente real (documentos e interações reais) e
-**antecede a homologação**. Nenhuma jornada está em `Auditoria funcional (execução)`, `Homologada` nem
-`Certificada`. A maior fonte de descobertas nesta fase passa a ser o **uso real**, não o código.
+### Situação do domínio (precisa) — passo a passo do LIFECYCLE
+- **Passo 1 — Implementação:** congelada.
+- **Passo 2 — Auditoria estática (código):** ✅ concluída — as 13 jornadas revisadas no código; 0 NC crítica/
+  alta nova; NC-03 (baixa, UX) corrigida.
+- **Passo 3 — Gate Arquitetural:** ✅ **PASSOU** — 51 testes `ARCH-*` verdes + checklist manual (desacoplado ·
+  CPE aditivo · UCDA · Modelo Aberto/taxonomia aberta · sem listas fechadas · modalidade só no CPE). **0 NC arquitetural.**
+- **Passo 4 — Auditoria funcional (execução):** **PENDENTE** — depende da execução das jornadas no ambiente
+  real (documentos e interações reais); **caça defeitos** e antecede a homologação. Nenhuma jornada está em
+  `Auditoria funcional (execução)`, `Homologada` nem `Certificada`.
+- **Passos 5–7 (Homologação · Certificação · Encerramento):** não iniciados.
+
+A maior fonte de descobertas nesta fase passa a ser o **uso real**, não o código.
 
 ## Adiados (não retornam à fila antes de encerrar Exames)
 stepper visual do fluxo · Care Space · push notifications · demais funcionalidades de fases posteriores.

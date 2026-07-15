@@ -781,8 +781,14 @@ e parte de UX seguem abertas → **Exames não está concluído** (ver `docs/EXA
 
 > **Nenhuma capacidade é concluída só porque tem código implementado.** Toda capacidade percorre,
 > obrigatoriamente, o ciclo completo — definido em `docs/LIFECYCLE_DOMINIOS.md` (processo ÚNICO da plataforma):
-> **1. Implementação → 2. Auditoria estática (código) → 3. Auditoria funcional (execução) → 4. Homologação
-> (docs reais) → 5. Certificação → 6. Encerramento.**
+> **1. Implementação → 2. Auditoria estática (código) → 3. Gate Arquitetural → 4. Auditoria funcional
+> (execução) → 5. Homologação (docs reais) → 6. Certificação → 7. Encerramento.** Painel de estado de todos
+> os domínios: `docs/DOMINIOS.md`.
+
+**Gate Arquitetural (passo 3):** revisão rápida que barra regressão ESTRUTURAL — continua desacoplado? respeita
+o CPE? usa UCDA? Modelo Aberto? sem listas fechadas? sem acoplamento de modalidade? Falha → NC arquitetural.
+Cada NC tem **Severidade** (crítica/alta/média/baixa) **e Tipo** (Funcional·UX·Arquitetural·Regulatória·
+Performance·Segurança·Dados).
 
 **Distinção crítica (3 × 4):** a **auditoria funcional CAÇA defeitos** (achar problemas; NC volta à
 implementação); a **homologação é ACEITE** (confirma o comportamento esperado + trata documentos reais) e só

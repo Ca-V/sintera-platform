@@ -6,38 +6,55 @@
 > redefinida a cada implementação. Este documento define o PROCESSO; o estado de cada domínio vive no seu
 > próprio doc (ex.: `docs/EXAMES_CHECKLIST_FUNCIONAL.md`).
 
-## Sequência oficial (6 passos)
+## Sequência oficial (7 passos)
 ```
 1. Implementação
       ↓
 2. Auditoria estática (código)
       ↓
-3. Auditoria funcional (execução)
-      ↓
-   Existem NCs?
+3. GATE ARQUITETURAL  ── (rápido; barra regressão estrutural)
+      │   continua desacoplado? respeita o CPE? usa UCDA? Modelo Aberto?
+      │   sem listas fechadas? sem acoplamento de modalidade?
+      ├── Falhou → NC arquitetural → Corrigir (volta à Implementação)
+      └── Passou
+             ↓
+4. Auditoria funcional (execução)   ── CAÇA defeitos
+      │   Existem NCs?
       ├── Sim → Corrigir (volta à Implementação) → Auditoria funcional novamente
       └── Não
              ↓
-4. Homologação com documentos reais
-             ↓
-   Todos os critérios aprovados?
+5. Homologação com documentos reais ── ACEITE
+      │   Todos os critérios aprovados?
       ├── Não → Corrigir → Homologação novamente
       └── Sim
              ↓
-5. Certificação da Plataforma
+6. Certificação da Plataforma
              ↓
-6. Encerramento do domínio (→ manutenção evolutiva)
+7. Encerramento do domínio (→ manutenção evolutiva)
 ```
+
+### Gate Arquitetural (passo 3) — checklist rápido (barra regressões estruturais)
+Não é auditoria de código nem certificação funcional — é **revisão arquitetural**. Uma resposta "não" gera
+**NC arquitetural** e o item volta à Implementação. Perguntas:
+- [ ] Continua **desacoplado** (módulos não conhecem PDF/OCR/modalidade/gateway)?
+- [ ] Continua respeitando o **CPE** (só `processClinical`/CertifiedCDU; nenhum processador conhece matéria-prima)?
+- [ ] Continua produzindo/consumindo **UCDA** (contrato canônico)?
+- [ ] Continua **Modelo Aberto** (representa CLASSES; extensível sem mudança estrutural)?
+- [ ] **Sem listas fechadas** (biomarcadores/modalidades/fabricantes)?
+- [ ] **Sem acoplamento de modalidade** fora do CPE/processadores?
+*(Automatizado em parte pelos testes `ARCH-*` — `ARCH-processor-decoupling`, `ARCH-layer-decoupling`,
+`ARCH-single-notification-infra`, `ARCH-billing-decoupling`, `exam-categories.arch`…)*
 
 ## O que cada passo significa (não confundir objetivos)
 | Passo | Objetivo | Como | Sai quando |
 |---|---|---|---|
 | **1. Implementação** | Construir a funcionalidade | Código + backlog oficial (fonte única) | funcionalidade `Implementado` no checklist |
 | **2. Auditoria estática (código)** | Inspecionar a implementação | Leitura de código; jornadas tracejadas início→fim | sem estado quebrado/inconsistência evidente |
-| **3. Auditoria funcional (execução)** | **PROCURAR DEFEITOS** | Percorrer as jornadas no app REAL (interações reais) | não encontra mais NC relevante (0 crítica/alta) |
-| **4. Homologação (docs reais)** | **CONFIRMAR o aceite** | Validar comportamento + documentos reais | todos os critérios aprovados |
-| **5. Certificação** | Validar princípios | Conferir princípios constitucionais/regulatórios | 6 dimensões aprovadas |
-| **6. Encerramento** | Domínio = capacidade certificada | — | sai da fila principal → manutenção |
+| **3. Gate Arquitetural** | Barrar regressão ESTRUTURAL | Checklist arquitetural rápido (+ testes `ARCH-*`) | todas as respostas "sim" (senão NC arquitetural) |
+| **4. Auditoria funcional (execução)** | **PROCURAR DEFEITOS** | Percorrer as jornadas no app REAL (interações reais) | não encontra mais NC relevante (0 crítica/alta) |
+| **5. Homologação (docs reais)** | **CONFIRMAR o aceite** | Validar comportamento + documentos reais | todos os critérios aprovados |
+| **6. Certificação** | Validar princípios | Conferir princípios constitucionais/regulatórios | 6 dimensões aprovadas |
+| **7. Encerramento** | Domínio = capacidade certificada | — | sai da fila principal → manutenção |
 
 **Distinção crítica 3 × 4:** a **auditoria funcional CAÇA bugs** (o objetivo é achar problemas; toda NC volta
 para implementação). A **homologação é ACEITE** (confirma que o comportamento está como esperado) e **só
@@ -63,9 +80,15 @@ começa quando a auditoria funcional já não acha problemas relevantes**. Não 
    `Não iniciada` → `Auditoria estática (código)` → `Auditoria funcional (execução)` → `Homologada` → `Certificada`.
 
 ## Não-Conformidades (NC)
-Fluxo: **NC → item F → Implementação → Testes → Homologação → encerramento da NC.** Cada NC registra
-**Origem da descoberta** (Revisão funcional · UX · Homologação · Certificação · CRC · Teste · Feedback) e
-**Severidade** (`crítica` bloqueia/perde dado · `alta` fluxo quebrado · `média` UX confusa · `baixa` cosmético).
+Fluxo: **NC → item F → Implementação → Testes → Homologação → encerramento da NC.** Cada NC registra:
+- **Origem da descoberta:** Revisão funcional · UX · Gate Arquitetural · Homologação · Certificação · CRC ·
+  Teste automatizado · Feedback de usuário.
+- **Severidade:** `crítica` (bloqueia/perde dado) · `alta` (fluxo quebrado) · `média` (UX confusa) · `baixa` (cosmético).
+- **Tipo:** `Funcional` (não funciona) · `UX` (fluxo confuso) · `Arquitetural` (acoplamento indevido) ·
+  `Regulatória` (interpretação clínica / RDC 657) · `Performance` (lentidão) · `Segurança` (autorização/acesso) ·
+  `Dados` (persistência inconsistente).
+
+*A classificação por Tipo responde rápido "quantas NCs arquiteturais/regulatórias ainda abertas?".*
 
 ## Critérios de encerramento
 - **Encerrar um item F:** Código · Testes (quando aplicável) · Homologação (quando aplicável) · NCs relacionadas
