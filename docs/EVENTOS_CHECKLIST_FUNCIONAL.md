@@ -17,7 +17,7 @@
 | EVT-F003 | Recorrência | Implementado | ✅ | ✅ | ⬜ | `lib/recurrence` · `FUNC-recurrence` | freq/interval/until/count |
 | EVT-F004 | Lembretes/notificações do evento | Implementado | ✅ | ✅ | ⬜ | `reminder_enabled` · NOTIF-001 · `notification.test` | por categoria (e-mail/WhatsApp) |
 | EVT-F005 | Financeiro do evento (valor + NF → Despesas) | Implementado | ✅ | ✅ | ⬜ | `isFinancial/hasCost` · `agenda/money` · `FUNC-money` | directExpense/realizado → Gastos |
-| EVT-F006 | Vínculos evento ↔ entidades (`EventLink`) | Implementado | ✅ | 🔄 | ⬜ | `event.ts` (`EventLink`: exam/biomarker/medication…; origin/follow_up/generated_from) | modelo pronto; cobertura de wiring a auditar |
+| EVT-F006 | Vínculos evento ↔ entidades (`EventLink`) | Em desenvolvimento | 🔄 | 🔄 | ⬜ | `event.ts`/`related.ts` (modelo+leitura+UI "Relacionado") | **write-side NÃO fiado** (`links` sempre `[]`) → "Relacionado" vazio na prática — **NC-0006** (justificada: população = vínculo duro, adiado) |
 | EVT-F007 | Anexo (comprovante/laudo/NF) | Implementado | ✅ | N/A | ⬜ | `attachmentUrl` (AgendarModal) | upload no modal |
 | EVT-F008 | Agenda (previsto) × Histórico (realizado) | Implementado | ✅ | ✅ | ⬜ | `event.ts` (isUpcoming/isPast) · timeline/relatório | separação definitiva |
 | EVT-F009 | Despesas (projeção financeira / Gastos) | Implementado | ✅ | ✅ | ⬜ | `service.query.listFinancial` · `gastos` | mesma fonte do módulo Gastos |
@@ -35,6 +35,7 @@ Descobertas na auditoria estática de Eventos (afetam a plataforma):
 |---|---|---|---|---|---|---|---|---|---|
 | NC-0004 | 15/07 | Claude | Auditoria estática | Plataforma/Testes | — | Funcional | alta | ✅ encerrada | `vitest.config.ts` (`include` passa a cobrir `src/**`); 26 arquivos órfãos voltaram a rodar (298→600 testes) |
 | NC-0005 | 15/07 | Claude | Teste automatizado | biomarkers | EXA-F012 (adj.) | Funcional | baixa | ✅ encerrada | `catalogLabels.test` atualizado ao rótulo canônico ("Exame de sangue"/"Exame de urina (24 horas)") — comportamento intencional |
+| NC-0006 | 15/07 | Claude | Auditoria estática | Eventos | EVT-F006 | Funcional | baixa | 🟡 justificada (adiada) | `EventLink` tem modelo+leitura+UI "Relacionado", mas nenhum fluxo GRAVA links (`health_events.links` sempre `[]`) → "Relacionado" vazio. População = vínculo duro (adiado por decisão da fundadora; não bloqueia) |
 
 ## Situação do domínio (passo a passo do LIFECYCLE)
 - **1. Implementação:** ✅ (domínio central maduro; não adicionar features — escopo do ciclo).
