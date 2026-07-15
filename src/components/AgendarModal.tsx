@@ -140,7 +140,9 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
     setOperadora(initialEvent?.operadora ?? '')
     setCarteirinha(initialEvent?.carteirinha ?? '')
     setAttachmentFile(null)
-    setShowDetails(false)
+    // Modo despesa (ex.: "Registrar custo / NF" do exame): abre com detalhes expandidos para que
+    // o campo Nota fiscal / comprovante fique imediatamente visível (sem exigir "Mais detalhes").
+    setShowDetails(initialEvent?.directExpense === true)
     setAdded(false); setSaving(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])

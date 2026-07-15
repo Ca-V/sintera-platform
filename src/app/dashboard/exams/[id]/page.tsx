@@ -17,6 +17,8 @@ import { useUser } from '@/context/UserContext'
 import { compareNames } from '@/lib/exams/nameMatch'
 import { loadCatalogLabels, buildCatalogLabels, type CatalogLabels } from '@/lib/biomarkers/catalogLabels'
 import { canonicalMaterial, materialRank } from '@/lib/biomarkers/canonicalLabels'
+import { normalizeName } from '@/lib/biomarkers/grouping'
+import Link from 'next/link'
 import FeedbackModal from '@/components/FeedbackModal'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
@@ -872,8 +874,17 @@ export default function ExamDetailPage() {
                           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.01 + i * 0.008 }}
                           className="px-5 py-3 hover:bg-blush/20 transition-colors">
 
-                          {/* Nome do biomarcador */}
-                          <p className="font-body text-sm font-medium text-onyx">{b.name}</p>
+                          {/* Nome do biomarcador — numérico linka para a EVOLUÇÃO (série no tempo) */}
+                          {b.result_type === 'numeric' ? (
+                            <Link href={`/dashboard/saude/${encodeURIComponent(normalizeName(b.name))}`}
+                              className="font-body text-sm font-medium text-onyx hover:text-petal inline-flex items-center gap-1 group/bm"
+                              title="Ver evolução no tempo">
+                              {b.name}
+                              <TrendingUp size={12} className="text-mauve/40 group-hover/bm:text-petal transition-colors" />
+                            </Link>
+                          ) : (
+                            <p className="font-body text-sm font-medium text-onyx">{b.name}</p>
+                          )}
 
                           {/* Resultado — protagonista; número e texto com o MESMO
                               tratamento (valor grande, unidade sempre pequena) */}
