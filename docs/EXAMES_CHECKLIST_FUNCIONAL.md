@@ -73,6 +73,7 @@ desenvolvimento*. Fechar os ⬜ de **Testes** (onde a lógica for extraível) é
 |---|---|---|---|---|---|
 | NC-01 | Detalhe do exame não exibia laboratório nem solicitante | Revisão funcional (Fundadora) | F3 (F1) | commit `a2f80e8` · `deriveExamIdentity` · `FUNC-exam-identification` | ✅ encerrada |
 | NC-02 | Aba Pedidos mostrava caixa/explicação de upload de *resultados* (copy + ômica) | Auditoria contínua / Revisão de UX | F4 | commit `8355009` | ✅ encerrada |
+| NC-03 | Falha de upload exibia mensagem TÉCNICA crua ao usuário (`[insert] 23505…`, `[storage]…`) | Auditoria funcional | F7 | commit (este) · msg amigável + `console.error` do detalhe técnico | ✅ encerrada |
 
 _Origens possíveis: Revisão funcional · Revisão de UX · Homologação · Certificação · Documento CRC · Teste
 automatizado · Feedback de usuário._

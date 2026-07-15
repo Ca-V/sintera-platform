@@ -282,8 +282,10 @@ export default function ExamsPage() {
       // P3 — vai direto ao exame enviado; a análise inicia sozinha lá (status 'pending')
       router.push(`/dashboard/exams/${examId}`)
     } catch (err: unknown) {
+      // NC-03: nunca expor mensagem técnica (storage/insert/código do banco) ao usuário.
       const msg = err instanceof Error ? err.message : String(err)
-      setUploadError(msg)
+      console.error('[exam upload]', msg)
+      setUploadError('Não foi possível enviar o arquivo agora. Tente novamente em instantes.')
       if (examId) { await supabase.from('exams').update({ status: 'error' } as unknown as never).eq('id', examId); await loadExams() }
     } finally { setUploading(false) }
   }, [user, supabase, loadExams, router])
