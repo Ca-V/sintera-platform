@@ -36,6 +36,7 @@ Descobertas na auditoria estática de Eventos (afetam a plataforma):
 | NC-0004 | 15/07 | Claude | Auditoria estática | Plataforma/Testes | — | Funcional | alta | ✅ encerrada | `vitest.config.ts` (`include` passa a cobrir `src/**`); 26 arquivos órfãos voltaram a rodar (298→600 testes) |
 | NC-0005 | 15/07 | Claude | Teste automatizado | biomarkers | EXA-F012 (adj.) | Funcional | baixa | ✅ encerrada | `catalogLabels.test` atualizado ao rótulo canônico ("Exame de sangue"/"Exame de urina (24 horas)") — comportamento intencional |
 | NC-0006 | 15/07 | Claude | Auditoria estática | Eventos | EVT-F006 | Funcional | baixa | 🟡 justificada (adiada) | `EventLink` tem modelo+leitura+UI "Relacionado", mas nenhum fluxo GRAVA links (`health_events.links` sempre `[]`) → "Relacionado" vazio. População = vínculo duro (adiado por decisão da fundadora; não bloqueia) |
+| NC-0007 | 15/07 | Claude | Auditoria estática | Eventos | EVT-F001/002 | UX | média | 🟠 aberta (decisão de UX) | `preparation` (preparo), `outcome` (desfecho), `modality` são capturados/editáveis no modal mas **nunca exibidos** in-app nem exportados (`buildDescription` só usa `notes`). Ex.: desfecho registrado "após realizar" não aparece no Histórico. **Correção altera UX** (onde/como surfacar) → decisão de produto; não corrigir sob escopo congelado sem definição |
 
 ## Situação do domínio (passo a passo do LIFECYCLE)
 - **1. Implementação:** ✅ (domínio central maduro; não adicionar features — escopo do ciclo).
