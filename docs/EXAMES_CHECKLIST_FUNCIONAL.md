@@ -18,9 +18,9 @@
 
 | ID | Funcionalidade | Estado | Cód | Test | Homol | Dependências | Evidências | Observações |
 |---|---|---|:--:|:--:|:--:|---|---|---|
-| F1 | Identificação padronizada (nome) | Em desenvolvimento | ✅ | ⬜ | ⬜ | E1/E2 | card lista + detalhe | falta teste da derivação do nome |
+| F1 | Identificação padronizada (nome) | Em desenvolvimento | ✅ | ✅ | ⬜ | E1/E2 | `deriveExamIdentity` + `FUNC-exam-identification` (lista+detalhe) | derivação extraída, testada e reutilizada |
 | F2 | Nomenclatura (único × painel) | Em desenvolvimento | ✅ | ✅ | ⬜ | Identidade Documental | `ARCH-002` · `FUNC-nomenclature-consistency` | regra travada; homologação = doc real |
-| F3 | Laboratório + médico solicitante | Em desenvolvimento | ✅ | ⬜ | ⬜ | E1 · issuer/requesting_physician | lista + detalhe | derivação lab/solicitante sem teste |
+| F3 | Laboratório + médico solicitante | Em desenvolvimento | ✅ | ✅ | ⬜ | E1 · issuer/requesting_physician | `deriveExamIdentity` + `FUNC-exam-identification` | derivação lab testada (lista+detalhe) |
 | F4 | Reorganização (Exames × Pedidos) | Em desenvolvimento | ✅ | ⬜ | ⬜ | — | abas + ação contextual + caixa por aba | UI sem teste automatizado |
 | F5 | Fluxo de pedidos (Pedido→Agend.→Realiz.→Result.) | Em desenvolvimento | 🔄 | ✅ | ⬜ | Eventos Assistenciais | `careFlow` + `FUNC-care-flow` · "Agendar" | falta vínculo duro + stepper (adiado) |
 | F6 | Política binária de estruturação | Em desenvolvimento | ✅ | ⬜ | ⬜ | `regra_estruturacao_binaria` | E3 (selo/badge binários) | falta teste do selo binário |

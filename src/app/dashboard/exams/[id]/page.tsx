@@ -18,6 +18,7 @@ import { compareNames } from '@/lib/exams/nameMatch'
 import { loadCatalogLabels, buildCatalogLabels, type CatalogLabels } from '@/lib/biomarkers/catalogLabels'
 import { canonicalMaterial, materialRank } from '@/lib/biomarkers/canonicalLabels'
 import { normalizeName } from '@/lib/biomarkers/grouping'
+import { deriveExamIdentity } from '@/lib/exams/identification'
 import Link from 'next/link'
 import FeedbackModal from '@/components/FeedbackModal'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
@@ -642,7 +643,7 @@ export default function ExamDetailPage() {
               ) : (
                 <div className="flex items-center gap-2 group/name">
                   <h1 className="font-display text-xl font-semibold text-onyx break-words min-w-0">
-                    {(exam?.type ?? 'Exame').split(' • ')[0]}
+                    {deriveExamIdentity(exam?.type, (exam as unknown as { issuer?: string | null })?.issuer).name}
                   </h1>
                   <button onClick={startEditName}
                     className="opacity-0 group-hover/name:opacity-100 transition-opacity text-mauve hover:text-petal flex-shrink-0 print:hidden">
@@ -653,13 +654,12 @@ export default function ExamDetailPage() {
               {/* Identificação padronizada (fundadora): laboratório/clínica + médico solicitante.
                   O assinante do laudo NÃO aparece aqui (está no documento original). */}
               {(() => {
-                const iss = (exam as unknown as { issuer?: string | null })?.issuer
-                  || (exam?.type?.includes(' • ') ? exam.type.split(' • ').slice(1).join(' • ').trim() : null)
+                const { lab } = deriveExamIdentity(exam?.type, (exam as unknown as { issuer?: string | null })?.issuer)
                 const req = (exam as unknown as { requesting_physician?: string | null })?.requesting_physician
-                if (!iss && !req) return null
+                if (!lab && !req) return null
                 return (
                   <div className="mt-0.5 space-y-0.5">
-                    {iss && <p className="font-body text-sm font-medium text-onyx/70">{iss}</p>}
+                    {lab && <p className="font-body text-sm font-medium text-onyx/70">{lab}</p>}
                     {req && <p className="font-body text-xs text-mauve">Solicitante: {req}</p>}
                   </div>
                 )

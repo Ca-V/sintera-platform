@@ -14,6 +14,7 @@ import { useUser } from '@/context/UserContext'
 import { compareNames } from '@/lib/exams/nameMatch'
 import { categoryOf, FALLBACK_CATEGORY } from '@/lib/capture/exam-categories'
 import { findDuplicateIds, originalIdFor, type DuplicateCandidate } from '@/lib/exams/duplicates'
+import { deriveExamIdentity } from '@/lib/exams/identification'
 import { useDocumentBundle, DocumentBundleStaging } from '@/components/ui/DocumentBundleCapture'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
@@ -673,9 +674,7 @@ export default function ExamsPage() {
                           // em linhas separadas. O nome vem do type sem a proveniência (" • lab"); o
                           // laboratório da coluna `issuer` (fallback: parte após " • " do type).
                           const examIssuer = (exam as unknown as { issuer?: string | null }).issuer ?? null
-                          const rawType    = exam.type ?? 'Exame'
-                          const examName   = (rawType.split(' • ')[0].trim()) || 'Exame'
-                          const examLab    = examIssuer || (rawType.includes(' • ') ? rawType.split(' • ').slice(1).join(' • ').trim() : null)
+                          const { name: examName, lab: examLab } = deriveExamIdentity(exam.type, examIssuer)
 
                           // Modo de edição inline do nome — cartão dedicado (o ListCard
                           // recebe o nome como string e não comporta o input embutido).
