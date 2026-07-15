@@ -1,50 +1,14 @@
-# Exames — BACKLOG OFICIAL do Domínio (Controle 1: Checklist Funcional)
+# Exames — ESTADO do Domínio (Controle 1: Backlog Funcional)
 
-> Fundadora (15/07): este é o **documento oficial e plano de execução** do domínio Exames (não apenas
-> uma lista de conferência) — evita que backlog e checklist se desalinhem. Coexiste com o **Controle 2 —
-> Matriz de Homologação** (`tests/homolog/COVERAGE.md`, 8 dimensões, só evolui com documentos reais).
+> **Processo (regra ÚNICA da plataforma):** `docs/LIFECYCLE_DOMINIOS.md` — ciclo de vida obrigatório,
+> os 2 controles, os 5 estados de jornada, NC→F, critérios de encerramento, homologação × certificação.
+> **Este documento contém apenas o ESTADO do domínio Exames** (backlog `F`, NCs, jornadas). Fonte ÚNICA da
+> verdade do domínio; nada vive só em memória/conversa; toda NC/funcionalidade entra aqui antes de implementar.
 >
-> **Estado (Controle 1):** `Não iniciado` · `Em desenvolvimento` · `Implementado` · `Homologado`. Sem
-> percentuais por funcionalidade.
-> **Validação em 3 eixos (separar implementado de validado):** **Código** (existe e verificado) ·
-> **Testes** (automação verde) · **Homologação** (validada com documento real — Controle 2).
-> Um item só chega a `Homologado` quando os 3 eixos estiverem ✅.
->
-> **Conclusão do domínio (objetiva):** todo o backlog em `Homologado` **+** Matriz aprovada **+**
-> Certificação da Plataforma aprovada. Qualquer pendência → *em desenvolvimento*. Responsável de execução:
-> Claude; responsável de homologação/aprovação: Fundadora.
+> **Escopo CONGELADO** (só correção/auditoria/homologação/certificação; ideias novas → `docs/BACKLOG_EVOLUCOES.md`).
+> **Objetivo = encerrar a capacidade.** Estado global: **em desenvolvimento** (nenhum item `Homologado`; matriz 0/8).
 
-## 🔒 ESCOPO CONGELADO — contrato de entrega (fundadora 15/07)
-- **Nenhuma nova funcionalidade** entra no domínio Exames. Permitido apenas: **correção de NC · fechar
-  eixo Testes · homologação · certificação.** Toda ideia/melhoria nova vai para o **backlog geral da
-  plataforma** (`docs/BACKLOG_EVOLUCOES.md`) para um ciclo futuro — **não** amplia esta versão.
-- **Backlog IMUTÁVEL:** itens só podem *mudar de estado*, *receber evidências* ou *receber vínculo de NC*.
-  **Não** criar novos itens `F`, exceto quando uma NC revelar a ausência de uma funcionalidade que já
-  fazia parte do escopo originalmente definido.
-- **Encerramento do domínio (simultâneo):** todos os `F` em `Homologado` · todas as NCs encerradas ·
-  Matriz de Homologação 100% aprovada · Certificação da Plataforma concluída. Depois → manutenção
-  evolutiva (sai da fila principal).
-- **Objetivo:** não "implementar funcionalidades", e sim **ENCERRAR CAPACIDADES**. Cada domínio encerrado =
-  1 capacidade certificada. Ao encerrar Exames, o MESMO ciclo se repete no próximo domínio (mesmo processo).
-
-**Roadmap por capacidade:** Exames 🔄 · Eventos Assistenciais ⬜ · Financeiro ⬜ · Medidas ⬜ · Sinais Vitais ⬜ · CARE-001 ⬜ · HIP-001 ⬜.
-
-## Regras de governança do backlog (fundadora 15/07)
-1. **Fonte ÚNICA da verdade.** Este documento é o oficial do domínio Exames. Nenhum item vive só em
-   memória, conversa ou backlog paralelo. **Toda** nova funcionalidade, correção, melhoria ou NC entra
-   AQUI **antes** de qualquer implementação.
-2. **Evidências OBJETIVAS.** A coluna Evidências registra referências verificáveis — commit, teste
-   automatizado, migration, documento de homologação/CRC, certificação. Nada de "implementado/corrigido".
-3. **NC gera item de backlog.** Quando uma NC exige desenvolvimento, ela origina/vincula um item `F`.
-   Fluxo: **NC → Item F → Implementação → Testes → Homologação → encerramento da NC**.
-4. **Critério para ENCERRAR um item F (todos simultâneos):** Código implementado · Testes automatizados
-   aprovados (quando aplicável) · Homologação aprovada (quando aplicável) · NCs relacionadas encerradas.
-   Enquanto qualquer um pender, o item continua aberto.
-
-**Ordem de execução atual (fundadora):** (1) fechar o eixo **Testes** dos itens implementados → (2)
-continuar a auditoria funcional → (3) corrigir NCs de imediato → (4) só então homologar com documentos reais.
-
-## Backlog / plano de execução
+## Backlog / plano de execução (Controle 1 — 3 eixos: Código × Testes × Homologação; ver LIFECYCLE)
 
 | ID | Funcionalidade | Estado | Cód | Test | Homol | Dependências | Evidências | Observações |
 |---|---|---|:--:|:--:|:--:|---|---|---|
@@ -78,13 +42,9 @@ desenvolvimento*. Fechar os ⬜ de **Testes** (onde a lógica for extraível) é
 _Origens possíveis: Revisão funcional · Revisão de UX · Homologação · Certificação · Documento CRC · Teste
 automatizado · Feedback de usuário._
 
-## Auditoria por JORNADAS do usuário (fundadora 15/07)
-Auditoria por **jornadas completas do usuário** (início→fim), não por telas/componentes. **Auditoria estática
-(código) ≠ auditoria funcional (execução):** a estática inspeciona a implementação; a funcional valida o
-**comportamento percebido pelo usuário** no ambiente REAL, com documentos e interações reais.
-
-**5 estados (progressão por jornada):**
-`Não iniciada` → `Auditoria estática (código)` → `Auditoria funcional (execução)` → `Homologada` → `Certificada`.
+## Auditoria por JORNADAS do usuário
+Estados e distinção estática × funcional: ver `docs/LIFECYCLE_DOMINIOS.md` (5 estados:
+`Não iniciada` → `Auditoria estática (código)` → `Auditoria funcional (execução)` → `Homologada` → `Certificada`).
 
 | # | Jornada | Estado | NCs | Evidência (auditoria estática) |
 |---|---|---|---|---|
@@ -111,11 +71,6 @@ novas NCs críticas ou altas; a única NC relevante (NC-03, baixa) foi corrigida
 permanece PENDENTE** — depende da execução das jornadas no ambiente real (documentos e interações reais) e
 **antecede a homologação**. Nenhuma jornada está em `Auditoria funcional (execução)`, `Homologada` nem
 `Certificada`. A maior fonte de descobertas nesta fase passa a ser o **uso real**, não o código.
-
-## Processo de AUDITORIA CONTÍNUA
-Achou lacuna → **(1)** registra a NC (com Origem) → **(2)** corrige de imediato quando possível → **(3)**
-atualiza este backlog → **(4)** retoma a fila. Não abrir novas frentes arquiteturais; o ganho vem de fechar
-cada domínio até os 3 critérios.
 
 ## Adiados (não retornam à fila antes de encerrar Exames)
 stepper visual do fluxo · Care Space · push notifications · demais funcionalidades de fases posteriores.

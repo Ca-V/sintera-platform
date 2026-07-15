@@ -780,7 +780,16 @@ e parte de UX seguem abertas → **Exames não está concluído** (ver `docs/EXA
 ## Ciclo de Vida Obrigatório da Capacidade (CONSTITUCIONAL — fundadora, 15/07/2026)
 
 > **Nenhuma capacidade é concluída só porque tem código implementado.** Toda capacidade percorre,
-> obrigatoriamente, o ciclo completo: **Implementação → Testes → Auditoria → Homologação → Certificação.**
+> obrigatoriamente, o ciclo completo — definido em `docs/LIFECYCLE_DOMINIOS.md` (processo ÚNICO da plataforma):
+> **1. Implementação → 2. Auditoria estática (código) → 3. Auditoria funcional (execução) → 4. Homologação
+> (docs reais) → 5. Certificação → 6. Encerramento.**
+
+**Distinção crítica (3 × 4):** a **auditoria funcional CAÇA defeitos** (achar problemas; NC volta à
+implementação); a **homologação é ACEITE** (confirma o comportamento esperado + trata documentos reais) e só
+começa quando a funcional não acha mais NC relevante. **Homologação** responde "a plataforma fez o que
+deveria, o usuário completa a jornada, o comportamento está correto, os documentos reais foram tratados?".
+**Certificação** responde "Modelo Aberto preservado, sem invenção de conteúdo, rastreabilidade/auditabilidade
+íntegras, representação universal, princípios constitucionais válidos?". Detalhe completo: `LIFECYCLE_DOMINIOS.md`.
 
 Padrão UNIFORME para TODOS os domínios (Exames, Eventos, Financeiro, Billing, Medidas, Notificações,
 HIP-001, CARE-001, modalidades…). Cada domínio é acompanhado por **dois controles independentes e
