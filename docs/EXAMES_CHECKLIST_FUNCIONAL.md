@@ -14,6 +14,21 @@
 > Certificação da Plataforma aprovada. Qualquer pendência → *em desenvolvimento*. Responsável de execução:
 > Claude; responsável de homologação/aprovação: Fundadora.
 
+## 🔒 ESCOPO CONGELADO — contrato de entrega (fundadora 15/07)
+- **Nenhuma nova funcionalidade** entra no domínio Exames. Permitido apenas: **correção de NC · fechar
+  eixo Testes · homologação · certificação.** Toda ideia/melhoria nova vai para o **backlog geral da
+  plataforma** (`docs/BACKLOG_EVOLUCOES.md`) para um ciclo futuro — **não** amplia esta versão.
+- **Backlog IMUTÁVEL:** itens só podem *mudar de estado*, *receber evidências* ou *receber vínculo de NC*.
+  **Não** criar novos itens `F`, exceto quando uma NC revelar a ausência de uma funcionalidade que já
+  fazia parte do escopo originalmente definido.
+- **Encerramento do domínio (simultâneo):** todos os `F` em `Homologado` · todas as NCs encerradas ·
+  Matriz de Homologação 100% aprovada · Certificação da Plataforma concluída. Depois → manutenção
+  evolutiva (sai da fila principal).
+- **Objetivo:** não "implementar funcionalidades", e sim **ENCERRAR CAPACIDADES**. Cada domínio encerrado =
+  1 capacidade certificada. Ao encerrar Exames, o MESMO ciclo se repete no próximo domínio (mesmo processo).
+
+**Roadmap por capacidade:** Exames 🔄 · Eventos Assistenciais ⬜ · Financeiro ⬜ · Medidas ⬜ · Sinais Vitais ⬜ · CARE-001 ⬜ · HIP-001 ⬜.
+
 ## Regras de governança do backlog (fundadora 15/07)
 1. **Fonte ÚNICA da verdade.** Este documento é o oficial do domínio Exames. Nenhum item vive só em
    memória, conversa ou backlog paralelo. **Toda** nova funcionalidade, correção, melhoria ou NC entra
