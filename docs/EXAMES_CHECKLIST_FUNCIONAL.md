@@ -78,11 +78,10 @@ Estados e distinção estática × funcional: ver `docs/LIFECYCLE_DOMINIOS.md` (
 - **Passo 4 — Gate Regulatório (conformidade):** ✅ **PASSOU** — transcreve/não interpreta (RDC 657) · Ver
   original (rastreabilidade) · proveniência em `clinical_results` (auditabilidade) · fingerprint (reprodutibilidade)
   · documento original preservado · RLS/LGPD. **0 NC regulatória.**
-- **Passo 5 — Auditoria funcional (execução):** **PENDENTE** — requer um **AMBIENTE EXECUTÁVEL fiel**
-  (o **preview da branch já é auto-implantado a cada push** — serve; ou staging/homologação). **NÃO exige
-  merge em produção** (produção = decisão estratégica separada, última alternativa numa plataforma de saúde).
-  Alguém com sessão percorre as 13 jornadas → cada achado vira NC global → EXA-F → correção → evidência.
-  **Caça defeitos**; antecede a homologação. Nenhuma jornada está em `Auditoria funcional`, `Homologada` nem `Certificada`.
+- **Passo 5 — Auditoria funcional (execução):** **DOMÍNIO PREPARADO** — roteiros, ambiente e critérios
+  concluídos; **não há trabalho de engenharia pendente**. Aguarda apenas a **execução operacional das 13
+  jornadas no preview** (ambiente executável já auto-implantado; **não exige produção**). Progresso: 0/13
+  (ver Registro de Execução). Cada achado vira NC global → EXA-F → correção imediata → evidência.
 - **Passos 6–8 (Homologação · Certificação · Encerramento):** não iniciados.
 
 A maior fonte de descobertas nesta fase passa a ser o **uso real**, não o código.
@@ -109,6 +108,27 @@ Percorrer no **ambiente executável** (preview da branch). Para cada jornada: se
 
 **Homologação (passo 6):** usar a matriz `tests/homolog/COVERAGE.md` + fixtures reais (formato em
 `tests/homolog/fixtures/exames/README.md`); `HOMOLOG=1 npm run test:homolog`. 8 dimensões, 0/8 hoje.
+
+### Registro de EXECUÇÃO da Auditoria Funcional (preencher conforme cada jornada roda no preview)
+Resultado: ⬜ não executada · ✅ aprovada · ❌ reprovada (gerou NC). Rastreável: quem · quando · NCs.
+
+| Jornada | Executor | Data | Resultado | NCs |
+|---|---|---|:--:|---|
+| J1 Upload de exame | — | — | ⬜ | — |
+| J2 Upload de pedido | — | — | ⬜ | — |
+| J3 Documento único | — | — | ⬜ | — |
+| J4 Documento múltiplo | — | — | ⬜ | — |
+| J5 Laboratoriais | — | — | ⬜ | — |
+| J6 Imagem | — | — | ⬜ | — |
+| J7 Qualitativos | — | — | ⬜ | — |
+| J8 Duplicidade | — | — | ⬜ | — |
+| J9 Financeiro | — | — | ⬜ | — |
+| J10 Agendamento/recorrência | — | — | ⬜ | — |
+| J11 Evolução | — | — | ⬜ | — |
+| J12 Notificações | — | — | ⬜ | — |
+| J13 Exclusão | — | — | ⬜ | — |
+
+**Progresso da Auditoria Funcional: 0/13 jornadas executadas.**
 
 ## Adiados (não retornam à fila antes de encerrar Exames)
 stepper visual do fluxo · Care Space · push notifications · demais funcionalidades de fases posteriores.

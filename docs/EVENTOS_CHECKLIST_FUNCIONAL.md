@@ -61,3 +61,20 @@ Percorrer no preview; divergência = NC (Tipo+Severidade → EVT-F → corrigir 
 | Agenda × Histórico | ver Agenda (previstos) e Histórico (realizados) | separados; agendado ≠ realizado | mistura previsto/realizado |
 | Vínculos | evento originado de exame/pedido (`EventLink`) | vínculo preservado (origem/follow_up) | vínculo perdido |
 | Sugestões | conferir sugestões de evento | coerentes com o contexto | sugestão inválida |
+
+### Registro de EXECUÇÃO da Auditoria Funcional (preencher conforme cada jornada roda no preview)
+Resultado: ⬜ não executada · ✅ aprovada · ❌ reprovada (gerou NC).
+
+| Jornada | Executor | Data | Resultado | NCs |
+|---|---|---|:--:|---|
+| Criar evento | — | — | ⬜ | — |
+| Concluir/reabrir | — | — | ⬜ | — |
+| Recorrência | — | — | ⬜ | — |
+| Financeiro | — | — | ⬜ | — |
+| Lembrete | — | — | ⬜ | — |
+| Agenda × Histórico | — | — | ⬜ | — |
+| Vínculos (`EventLink`) | — | — | ⬜ | — |
+| Sugestões | — | — | ⬜ | — |
+
+**Progresso da Auditoria Funcional: 0/8 jornadas executadas.** Domínio PREPARADO — sem engenharia pendente;
+aguarda apenas a execução das jornadas no preview.
