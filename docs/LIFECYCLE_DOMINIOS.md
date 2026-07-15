@@ -56,7 +56,7 @@
 | **2. Auditoria estática (código)** | Inspecionar a implementação | Leitura de código; jornadas tracejadas início→fim | sem estado quebrado/inconsistência evidente |
 | **3. Gate Arquitetural** | Barrar regressão de ENGENHARIA | Checklist arquitetural (+ testes `ARCH-*`) | todas "sim" (senão NC Arquitetural) |
 | **4. Gate Regulatório** | Barrar risco de CONFORMIDADE | Checklist regulatório (RDC 657/LGPD/rastreabilidade) | todas "sim" (senão NC Regulatória) |
-| **5. Auditoria funcional (execução)** | **PROCURAR DEFEITOS** | Percorrer as jornadas no app REAL (interações reais) | não encontra mais NC relevante (0 crítica/alta) |
+| **5. Auditoria funcional (execução)** | **PROCURAR DEFEITOS** | Percorrer as jornadas num AMBIENTE EXECUTÁVEL fiel (preview/staging/homologação — **NÃO** exige produção) com interações reais | não encontra mais NC relevante (0 crítica/alta) |
 | **6. Homologação (docs reais)** | **CONFIRMAR o aceite** | Validar comportamento + documentos reais | todos os critérios aprovados |
 | **7. Certificação** | Validar princípios | Conferir princípios constitucionais/regulatórios | 6 dimensões aprovadas |
 | **8. Encerramento** | Domínio = capacidade certificada | — | sai da fila principal → manutenção |

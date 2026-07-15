@@ -78,9 +78,11 @@ Estados e distinção estática × funcional: ver `docs/LIFECYCLE_DOMINIOS.md` (
 - **Passo 4 — Gate Regulatório (conformidade):** ✅ **PASSOU** — transcreve/não interpreta (RDC 657) · Ver
   original (rastreabilidade) · proveniência em `clinical_results` (auditabilidade) · fingerprint (reprodutibilidade)
   · documento original preservado · RLS/LGPD. **0 NC regulatória.**
-- **Passo 5 — Auditoria funcional (execução):** **PENDENTE** — depende da execução das jornadas no ambiente
-  real (documentos e interações reais); **caça defeitos** e antecede a homologação. Nenhuma jornada está em
-  `Auditoria funcional (execução)`, `Homologada` nem `Certificada`.
+- **Passo 5 — Auditoria funcional (execução):** **PENDENTE** — requer um **AMBIENTE EXECUTÁVEL fiel**
+  (o **preview da branch já é auto-implantado a cada push** — serve; ou staging/homologação). **NÃO exige
+  merge em produção** (produção = decisão estratégica separada, última alternativa numa plataforma de saúde).
+  Alguém com sessão percorre as 13 jornadas → cada achado vira NC global → EXA-F → correção → evidência.
+  **Caça defeitos**; antecede a homologação. Nenhuma jornada está em `Auditoria funcional`, `Homologada` nem `Certificada`.
 - **Passos 6–8 (Homologação · Certificação · Encerramento):** não iniciados.
 
 A maior fonte de descobertas nesta fase passa a ser o **uso real**, não o código.

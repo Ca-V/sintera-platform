@@ -11,7 +11,7 @@ ciclo) · **Estado**. Prefixo de ID por domínio entre parênteses. `—` = aind
 | Domínio (prefixo) | Func. | NCs abertas | Jornada / passo | Estado | Docs |
 |---|:--:|:--:|---|---|---|
 | **Exames** (`EXA`) | 13/13 | 0 | Gates ✅ · Auditoria funcional (execução) pendente | Em andamento | `EXAMES_CHECKLIST_FUNCIONAL.md` · `tests/homolog/COVERAGE.md` (0/8) |
-| **Eventos Assistenciais** (`EVT`) | 11/11 | 0 | Auditoria estática (em curso) | Em andamento | `EVENTOS_CHECKLIST_FUNCIONAL.md` · `EVENTO_ASSISTENCIAL.md` |
+| **Eventos Assistenciais** (`EVT`) | 11/11 | 0 | Gates ✅ · Auditoria funcional (execução) pendente | Em andamento | `EVENTOS_CHECKLIST_FUNCIONAL.md` · `EVENTO_ASSISTENCIAL.md` |
 | **Financeiro** (`FIN`) | — | 0 | Implementação (gastos/NF via evento) | Em andamento | (via Eventos + Billing) |
 | **Notificações** (`NOTIF`) | — | 0 | Implementação (infra única; push pendente) | Em andamento | `NOTIF-001_NOTIFICACOES.md` |
 | **Medicamentos** (`MED`) | — | 0 | Implementação | Em andamento | (backlog) |

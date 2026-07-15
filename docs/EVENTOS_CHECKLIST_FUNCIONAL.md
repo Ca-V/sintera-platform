@@ -38,7 +38,12 @@ Descobertas na auditoria estática de Eventos (afetam a plataforma):
 
 ## Situação do domínio (passo a passo do LIFECYCLE)
 - **1. Implementação:** ✅ (domínio central maduro; não adicionar features — escopo do ciclo).
-- **2. Auditoria estática (código):** 🔄 em curso (jornadas: criar evento · concluir/reabrir · recorrência ·
-  financeiro · vínculos · Agenda×Histórico · sugestões).
-- **3. Gate Arquitetural / 4. Gate Regulatório:** pendentes (executar após auditoria estática).
-- **5–8:** não iniciados.
+- **2. Auditoria estática (código):** ✅ concluída — domínio bem testado (event/service/repository/
+  presentation/notification `.test` **agora executados** após NC-0004; todos verdes) + jornadas tracejadas.
+  Nenhuma NC crítica/alta (NC-0004/0005 de plataforma, encerradas).
+- **3. Gate Arquitetural:** ✅ **PASSOU** — mecanismo único de evento (sem duplicação por módulo) · desacoplado
+  (`health_events`+serviço) · reúso · não acopla modalidade · `ARCH-*` verdes. 0 NC.
+- **4. Gate Regulatório:** ✅ **PASSOU** — organiza/agenda, não interpreta nem gera conteúdo clínico (RDC 657) ·
+  rastreabilidade (`EventLink`) · auditabilidade (source/created) · LGPD (RLS). 0 NC.
+- **5. Auditoria funcional (execução):** PENDENTE — ambiente executável (preview/staging), não exige produção.
+- **6–8 (Homologação · Certificação · Encerramento):** não iniciados.
