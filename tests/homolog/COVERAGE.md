@@ -1,20 +1,27 @@
-# Matriz de cobertura — Homologação de Exames
+# Matriz de cobertura — Homologação de Exames (INDICADOR OFICIAL)
 
-> Visão objetiva do progresso da homologação por categoria (fundadora 15/07). Fonte da verdade =
-> casos reais em `fixtures/exames/*.json`. Regenerável: a tabela é impressa ao rodar
-> `HOMOLOG=1 npm run test:homolog` (função `renderCoverageTable`). "Homologado" = ≥1 caso real
-> aprovado nos critérios objetivos; "pendente" = sem caso.
+> Indicador OFICIAL de progresso da capacidade **Exames** (fundadora 15/07): o avanço é medido pela
+> **% de dimensões homologadas com documentos reais**, não por quantidade de testes. Enquanto houver
+> dimensão pendente, **Exames = em desenvolvimento**; só é CONCLUÍDO quando **todas** estiverem
+> homologadas com documentos reais e aprovadas pela Certificação da Plataforma.
+>
+> Regenerável: a tabela é impressa por `HOMOLOG=1 npm run test:homolog` (`renderCoverageTable`).
+> "Homologado" = ≥1 caso real aprovado nos critérios objetivos. "Validação determinística" = a REGRA
+> já tem teste verde na suíte rápida (mas a homologação final exige documento real).
 
-Cobertura de homologação (Exames): **0%**
+**Exames homologado: 0% (0/8 dimensões) — Concluído: NÃO (em desenvolvimento)**
 
-| Categoria | Status | Casos |
-|---|---|---|
-| Laboratório — exame único | ⬜ pendente | 0 |
-| Laboratório — painel (vários) | ⬜ pendente | 0 |
-| Documento multi-exame (segmentação) | ⬜ pendente | 0 |
-| Exame de imagem | ⬜ pendente | 0 |
-| Documento qualitativo | ⬜ pendente | 0 |
-| Pedido / solicitação / guia | ⬜ pendente | 0 |
+| Dimensão | Homologação (doc real) | Casos | Validação determinística |
+|---|---|---|---|
+| Segmentação documental | ⬜ pendente | 0 | — |
+| Documentos com múltiplos exames | ⬜ pendente | 0 | — |
+| Exames de imagem | ⬜ pendente | 0 | — |
+| Exames qualitativos | ⬜ pendente | 0 | — |
+| Integração completa do CPE ao fluxo | ⬜ pendente | 0 | — |
+| Nomenclatura dos cards | ⬜ pendente | 0 | regra ✓ (ARCH-002 · FUNC-nomenclature-consistency) |
+| Identificação (nome/laboratório/solicitante) | ⬜ pendente | 0 | regra ✓ (card 3 linhas + E1 requesting_physician) |
+| Política binária de estruturação | ⬜ pendente | 0 | regra ✓ (E3 — nunca "parcial") |
 
-_Todas as categorias aguardam documentos reais. O código está pronto; a validação roda em paralelo
-ao desenvolvimento (não bloqueia a fila)._ Ver `fixtures/exames/README.md` para adicionar casos.
+_As 5 primeiras dimensões dependem de documentos reais. As 3 últimas já têm a REGRA validada por teste
+determinístico (verde), mas aguardam confirmação com documento real para a homologação final._
+Ver `fixtures/exames/README.md` para adicionar casos (`dimensions: [...]`) e `HOMOLOG=1 npm run test:homolog`.

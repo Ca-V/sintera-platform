@@ -28,8 +28,10 @@ Crie um arquivo `.json` aqui (um por documento real), no formato:
 }
 ```
 
-`category` ∈ `laboratorio_unico · laboratorio_painel · imagem · qualitativo · multi_exame · pedido`.
-Em `expected`, informe só os critérios que quer travar (`documentType`, `documentScope`,
+Use `dimensions: [...]` para dizer quais das **8 dimensões oficiais** este caso real homologa (um
+laudo pode cobrir várias). Dimensões: `segmentacao · multi_exame · imagem · qualitativo · cpe ·
+nomenclatura · identificacao · estruturacao`. (O campo antigo `category` ainda é aceito como 1 dimensão.)
+Em `expected`, informe só os critérios objetivos que quer travar (`documentType`, `documentScope`,
 `displayTitle` OU `displayTitleMatches` (regex), `minDistinctExams`).
 
 ## 2. Executar

@@ -25,7 +25,8 @@ const HOMOLOG = process.env.HOMOLOG === '1'
 interface Fixture {
   id: string
   crc?: string                        // referência ao caso do CRC, quando houver
-  category: 'laboratorio_unico' | 'laboratorio_painel' | 'imagem' | 'qualitativo' | 'multi_exame' | 'pedido'
+  category?: string                   // dimensão principal (compat); ou use `dimensions`
+  dimensions?: string[]               // 1+ dimensões oficiais cobertas por este caso real
   input: {
     examType: string | null
     text?: string | null
@@ -61,7 +62,7 @@ describe.skipIf(!shouldRun)('HOMOLOG · Exames — representação determinísti
   })
 
   for (const fx of fixtures) {
-    it(`[${fx.category}] ${fx.id}${fx.crc ? ` (CRC ${fx.crc})` : ''}`, () => {
+    it(`[${fx.category ?? (fx.dimensions ?? []).join(',')}] ${fx.id}${fx.crc ? ` (CRC ${fx.crc})` : ''}`, () => {
       const structure = classifyExamDocument(fx.input)
       const title = deriveDisplayTitle(structure)
 
