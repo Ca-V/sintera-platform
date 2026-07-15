@@ -33,7 +33,21 @@ Experiência de uso** (fluxo/nomenclatura/organização/usabilidade; sem contrad
 transversais** (notificações, financeiro, recorrência, compartilhamento, histórico, evolução, reúso).
 Não declarar concluído só porque a infra técnica existe.
 
-## Estado (14/07/2026) — E1–E8 = Infra + Funcionalidade (em grande parte). Módulo NÃO concluído.
+## Estado (15/07/2026) — Exames PARCIALMENTE concluído (fundadora)
+As sub-capacidades E1–E8 (identificação, nomenclatura, binário, quant×qual UI, categorias, fluxo único,
+financeiro, recorrência) + dedup + evolução estão implementadas. **Porém Exames NÃO é 100%** — faltam
+entregas mais profundas, tratadas nas fases seguintes:
+- **Homologação da segmentação documental** (validar em documentos reais).
+- **Documentos com MÚLTIPLOS exames** (segmentação → N registros / representação correta).
+- **Processamento de exames de IMAGEM** (modalidade imagem no CPE).
+- **Documentos QUALITATIVOS** (laudo/achados como documento, não dado).
+- **Integração completa ao Clinical Processing Engine (CPE)**.
+
+Reorganização da página (15/07, feita): abas **Exames** (realizados) × **Pedidos e Solicitações**; ação do
+topo contextual; card padronizado (nome / laboratório / solicitante em linhas). **Futuro:** um pedido poderá
+originar um exame realizado, preservando o vínculo entre os dois registros (Eventos Assistenciais).
+
+### Histórico (E1–E8) — Infra + Funcionalidade (em grande parte).
 As oito sub-capacidades técnicas foram fechadas (implementação ou reúso certificado), sem regressão (tsc +
 eslint limpos; suíte 192 verdes). Decisões da fundadora: E5 (ômicas = categoria, capacidade preservada) e
 E6 (entrada única + continuação especializada). **Mas pela definição de 4 dimensões o módulo Exames ainda
