@@ -69,14 +69,44 @@ desenvolvimento*. Fechar os ⬜ de **Testes** (onde a lógica for extraível) é
 
 ## Registro de Não-Conformidades (NC)
 
-| NC | Descrição | Origem da descoberta | Item F | Evidência (verificável) | Estado |
-|---|---|---|---|---|---|
-| NC-01 | Detalhe do exame não exibia laboratório nem solicitante | Revisão funcional (Fundadora) | F3 (F1) | commit `a2f80e8` · `deriveExamIdentity` · `FUNC-exam-identification` | ✅ encerrada |
-| NC-02 | Aba Pedidos mostrava caixa/explicação de upload de *resultados* (copy + ômica) | Auditoria contínua / Revisão de UX | F4 | commit `8355009` | ✅ encerrada |
-| NC-03 | Falha de upload exibia mensagem TÉCNICA crua ao usuário (`[insert] 23505…`, `[storage]…`) | Auditoria funcional | F7 | commit (este) · msg amigável + `console.error` do detalhe técnico | ✅ encerrada |
+| NC | Descrição | Origem | Sev. | Item F | Evidência (verificável) | Estado |
+|---|---|---|---|---|---|---|
+| NC-01 | Detalhe do exame não exibia laboratório nem solicitante | Revisão funcional (Fundadora) | média | F3 (F1) | commit `a2f80e8` · `deriveExamIdentity` · `FUNC-exam-identification` | ✅ encerrada |
+| NC-02 | Aba Pedidos mostrava caixa/explicação de upload de *resultados* (copy + ômica) | Auditoria / UX | baixa | F4 | commit `8355009` | ✅ encerrada |
+| NC-03 | Falha de upload exibia mensagem TÉCNICA crua ao usuário (`[insert] 23505…`) | Auditoria funcional | baixa | F7 | commit `95f3d3f` · msg amigável + `console.error` | ✅ encerrada |
 
 _Origens possíveis: Revisão funcional · Revisão de UX · Homologação · Certificação · Documento CRC · Teste
 automatizado · Feedback de usuário._
+
+## Auditoria Funcional por JORNADAS (fundadora 15/07)
+A auditoria é por **jornadas completas do usuário** (início→fim), não por telas/componentes. Estados:
+`Não auditada` · `Em auditoria` · `Auditada` · `Homologada`. **Encerra** quando: todas `Auditada` · nenhuma
+NC aberta **crítica/alta** · NCs média/baixa tratadas ou justificadas. Só então → homologação com docs reais.
+
+| # | Jornada | Estado | NCs | Evidência / observações |
+|---|---|---|---|---|
+| J1 | Upload de exame | Auditada | NC-03 (encerrada) | auto-análise em `pending` ok; erro amigável; limite 50MB/MIME |
+| J2 | Upload de pedido/solicitação | Auditada | NC-02 (encerrada) | caixa/copy por aba; classificação `isOrderDocumentType` |
+| J3 | Documento com um único exame | Auditada | — | render de biomarcadores agrupados; nome = exame único |
+| J4 | Documento com múltiplos exames (segmentação) | Auditada | — | irmãos criados `pending` rotulados "— parte X/N"; auto-análise por CDU |
+| J5 | Exames laboratoriais | Auditada | — | lista de biomarcadores agrupada por material/painel; referência/interpretação |
+| J6 | Exames de imagem | Auditada | — | `document_only` → "Documento disponível" + Ver original (sem estado quebrado) |
+| J7 | Exames qualitativos | Auditada | — | `value_text` renderizado; nunca vira dado numérico; document_only tratado |
+| J8 | Duplicidade de exames | Auditada | — | detecção testada; caso mesmo `createdAt` = 1 marcado (estável, sem falha) |
+| J9 | Financeiro do exame | Auditada | — | "Registrar custo/NF"; data obrigatória (save bloqueado); NF visível |
+| J10 | Agendamento e recorrência | Auditada | — | AgendarModal (recorrência testada; save bloqueado sem data) |
+| J11 | Evolução longitudinal | Auditada | — | link numérico→`/saude/[slug]`; série filtra numéricos |
+| J12 | Notificações relacionadas ao exame | Auditada | — | evento do exame notifica por categoria (NOTIF-001); push adiado |
+| J13 | Exclusão e restauração | Auditada | — | exclusão via API + erro amigável; **restauração N/A** (exclusão definitiva por design) |
+
+**Nota de honestidade:** `Auditada` = caminho funcional **verificado por leitura de código** (jornada tracejada
+início→fim, sem estado quebrado). `Homologada` = validada com **documento real** (Controle 2). Nenhuma jornada
+está `Homologada` ainda.
+
+**Severidade das NCs:** `crítica` (bloqueia uso / perda de dado) · `alta` (fluxo quebrado) · `média` (UX
+confusa, sem bloquear) · `baixa` (cosmético). Encerrar auditoria exige zero crítica/alta aberta.
+**Auditoria funcional (código): todas as 13 jornadas `Auditada`, 1 NC (NC-03, baixa) encerrada, 0 aberta.**
+Próximo passo do domínio: **homologação com documentos reais** (matriz 0/8).
 
 ## Processo de AUDITORIA CONTÍNUA
 Achou lacuna → **(1)** registra a NC (com Origem) → **(2)** corrige de imediato quando possível → **(3)**
