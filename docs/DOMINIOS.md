@@ -28,7 +28,7 @@ ciclo) · **Estado**. Prefixo de ID por domínio entre parênteses. `—` = aind
 auditoria: **NC-0008** (consistência canônica, corrigida com de-promoção append-only) e **NC-0019** (fix
 aditivo). Nenhuma aberta bloqueia o Lifecycle; a maioria são justificadas/adiadas (Convergência Progressiva,
 roadmap multi-exame, vínculo duro) ou dependem de ambiente executável / decisão de produto. Por Tipo: Dados 1 ·
-Funcional 4 · UX 5 · Arquitetural 1. Última NC: `NC-0019`.
+Funcional 4 · UX 5 · Arquitetural 1. Encerrada também **NC-0020** (idempotência de irmãos multi-exames, mesmo ciclo). Última NC: `NC-0020`.
 
 **Prioridade (um domínio por vez até `Encerrado`):** **Exames** é o foco atual; só após seu encerramento
 (Checklist `Homologado` + Matriz 100% + Certificação) o próximo domínio entra no ciclo. Cada domínio, ao
