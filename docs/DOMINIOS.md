@@ -31,10 +31,14 @@ ciclo) · **Estado**. Prefixo de ID por domínio entre parênteses. `—` = aind
 entrar, ganha seus próprios docs (`<DOMINIO>_CHECKLIST_FUNCIONAL.md`, `_HOMOLOGACAO`, `_CERTIFICACAO`) seguindo
 o LIFECYCLE, sem redefinir governança.
 
-## Estrutura de governança (referência)
+## Estrutura de governança — RESPONSABILIDADE ÚNICA por documento (não duplicar informação)
 ```
 GOVERNANCA.md          → princípios constitucionais · regras permanentes · referência ao Lifecycle
-LIFECYCLE_DOMINIOS.md  → ciclo obrigatório (7 passos) · critérios · NCs · homologação · certificação
-DOMINIOS.md            → este painel (estado de cada domínio + links)
-docs/<DOMINIO>_*.md    → estado e evidências de cada domínio
+LIFECYCLE_DOMINIOS.md  → ciclo obrigatório (8 passos) · gates · critérios · NCs (regra) · homologação · certificação
+DOMINIOS.md            → PAINEL EXECUTIVO do projeto (estado de cada domínio + links)
+<DOM>_CHECKLIST_FUNCIONAL.md → BACKLOG OFICIAL do domínio (itens F, estado, evidências)
+  └─ (seção) Registro de Execução → ACOMPANHAMENTO da Auditoria Funcional (jornada·executor·data·resultado·NCs)
+tests/homolog/COVERAGE.md   → MATRIZ DE HOMOLOGAÇÃO (aceite com documentos reais)
+<DOM>_CERTIFICACAO (quando houver) → validação contra os princípios constitucionais
 ```
+Cada documento tem UMA responsabilidade; o processo (regra) vive só no LIFECYCLE, o estado só no doc do domínio.

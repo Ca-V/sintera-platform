@@ -104,8 +104,12 @@ Fluxo: **NC → item F → Implementação → Testes → Homologação → ence
 ## Critérios de encerramento
 - **Encerrar um item F:** Código · Testes (quando aplicável) · Homologação (quando aplicável) · NCs relacionadas
   encerradas — todos simultâneos.
-- **Encerrar a Auditoria Funcional:** todas as jornadas em `Auditoria funcional (execução)` concluída · 0 NC
-  crítica/alta aberta · média/baixa tratadas ou justificadas.
+- **Auditoria Funcional é CONTÍNUA (não um evento único).** Ciclo por jornada: **executar → registrar
+  resultado → se NC, interromper SÓ aquela jornada → corrigir → reexecutar SÓ a jornada afetada → fechar →
+  próxima.** Não esperar terminar todas para depois corrigir (evita acumular NCs).
+- **Encerrar a Auditoria Funcional (avançar para Homologação):** TODAS as jornadas executadas e registradas
+  no Registro de Execução · 0 NC crítica/alta aberta · média/baixa resolvidas ou justificadas. **Avançar por
+  CONCLUSÃO efetiva das jornadas, nunca por percentual de progresso.**
 - **Encerrar o DOMÍNIO (simultâneo):** todo o backlog `Homologado` · todas as NCs encerradas · Matriz de
   Homologação 100% aprovada · Certificação da Plataforma aprovada.
 
