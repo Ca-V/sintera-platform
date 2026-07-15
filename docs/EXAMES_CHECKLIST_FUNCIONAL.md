@@ -12,19 +12,19 @@
 
 | ID | Funcionalidade | Estado | Cód | Test | Homol | Dependências | Evidências | Observações |
 |---|---|---|:--:|:--:|:--:|---|---|---|
-| F1 | Identificação padronizada (nome) | Em desenvolvimento | ✅ | ✅ | ⬜ | E1/E2 | `deriveExamIdentity` + `FUNC-exam-identification` (lista+detalhe) | derivação extraída, testada e reutilizada |
-| F2 | Nomenclatura (único × painel) | Em desenvolvimento | ✅ | ✅ | ⬜ | Identidade Documental | `ARCH-002` · `FUNC-nomenclature-consistency` | regra travada; homologação = doc real |
-| F3 | Laboratório + médico solicitante | Em desenvolvimento | ✅ | ✅ | ⬜ | E1 · issuer/requesting_physician | `deriveExamIdentity` + `FUNC-exam-identification` | derivação lab testada (lista+detalhe) |
-| F4 | Reorganização (Exames × Pedidos) | Em desenvolvimento | ✅ | ✅ | ⬜ | — | `isOrderDocumentType` · `FUNC-exam-classification` | classificação Exame×Pedido testada; abas UI = N/A unitário |
-| F5 | Fluxo de pedidos (Pedido→Agend.→Realiz.→Result.) | Em desenvolvimento | 🔄 | ✅ | ⬜ | Eventos Assistenciais | `careFlow` + `FUNC-care-flow` · "Agendar" | falta vínculo duro + stepper (adiado) |
-| F6 | Política binária de estruturação | Em desenvolvimento | ✅ | ✅ | ⬜ | `regra_estruturacao_binaria` | `binaryStructuringState` · `FUNC-exam-structuring` | decisão binária extraída/testada (nunca "parcial") |
-| F7 | Experiência completa de upload | Em desenvolvimento | ✅ | N/A | ⬜ | Bundle→CDU | E6 · `useDocumentBundle` | hook React stateful — teste unitário N/A (validado na homologação/uso); `imagesToPdf` é lib à parte |
-| F8 | Financeiro (valor + nota fiscal) | Em desenvolvimento | ✅ | ✅ | ⬜ | `health_events` | E7 · `parseAmountToCents` (`agenda/money`) · `FUNC-money` | parsing financeiro testado; fiação UI = N/A unitário |
-| F9 | Recorrência e agendamento | Em desenvolvimento | ✅ | ✅ | ⬜ | `health_events` · `lib/recurrence` | E8 · `FUNC-recurrence` (serialize/parse/addToDate/occurrences) | mecanismo de recorrência testado; agendar UI = N/A unitário |
-| F10 | Integração ao CPE | Em desenvolvimento | ✅ | ✅ | ⬜ | UCDA · CPE | `FUNC-clinical-processing-engine` · `FUNC-laboratory-adapter` | completude por modalidade = homologação |
-| F11 | Detecção/confirmação de duplicado | Em desenvolvimento | ✅ | ✅ | ⬜ | fingerprint | `FUNC-exam-duplicates` | chip + "Ver original" |
-| F12 | Evolução a partir do resultado | Em desenvolvimento | ✅ | 🔄 | ⬜ | grouping | `grouping.test` (série) | link do card sem teste |
-| F13 | Varredura contínua do backlog | Em desenvolvimento | 🔄 | — | — | — | este documento | processo permanente |
+| EXA-F001 | Identificação padronizada (nome) | Em desenvolvimento | ✅ | ✅ | ⬜ | E1/E2 | `deriveExamIdentity` + `FUNC-exam-identification` (lista+detalhe) | derivação extraída, testada e reutilizada |
+| EXA-F002 | Nomenclatura (único × painel) | Em desenvolvimento | ✅ | ✅ | ⬜ | Identidade Documental | `ARCH-002` · `FUNC-nomenclature-consistency` | regra travada; homologação = doc real |
+| EXA-F003 | Laboratório + médico solicitante | Em desenvolvimento | ✅ | ✅ | ⬜ | E1 · issuer/requesting_physician | `deriveExamIdentity` + `FUNC-exam-identification` | derivação lab testada (lista+detalhe) |
+| EXA-F004 | Reorganização (Exames × Pedidos) | Em desenvolvimento | ✅ | ✅ | ⬜ | — | `isOrderDocumentType` · `FUNC-exam-classification` | classificação Exame×Pedido testada; abas UI = N/A unitário |
+| EXA-F005 | Fluxo de pedidos (Pedido→Agend.→Realiz.→Result.) | Em desenvolvimento | 🔄 | ✅ | ⬜ | Eventos Assistenciais | `careFlow` + `FUNC-care-flow` · "Agendar" | falta vínculo duro + stepper (adiado) |
+| EXA-F006 | Política binária de estruturação | Em desenvolvimento | ✅ | ✅ | ⬜ | `regra_estruturacao_binaria` | `binaryStructuringState` · `FUNC-exam-structuring` | decisão binária extraída/testada (nunca "parcial") |
+| EXA-F007 | Experiência completa de upload | Em desenvolvimento | ✅ | N/A | ⬜ | Bundle→CDU | E6 · `useDocumentBundle` | hook React stateful — teste unitário N/A (validado na homologação/uso); `imagesToPdf` é lib à parte |
+| EXA-F008 | Financeiro (valor + nota fiscal) | Em desenvolvimento | ✅ | ✅ | ⬜ | `health_events` | E7 · `parseAmountToCents` (`agenda/money`) · `FUNC-money` | parsing financeiro testado; fiação UI = N/A unitário |
+| EXA-F009 | Recorrência e agendamento | Em desenvolvimento | ✅ | ✅ | ⬜ | `health_events` · `lib/recurrence` | E8 · `FUNC-recurrence` (serialize/parse/addToDate/occurrences) | mecanismo de recorrência testado; agendar UI = N/A unitário |
+| EXA-F010 | Integração ao CPE | Em desenvolvimento | ✅ | ✅ | ⬜ | UCDA · CPE | `FUNC-clinical-processing-engine` · `FUNC-laboratory-adapter` | completude por modalidade = homologação |
+| EXA-F011 | Detecção/confirmação de duplicado | Em desenvolvimento | ✅ | ✅ | ⬜ | fingerprint | `FUNC-exam-duplicates` | chip + "Ver original" |
+| EXA-F012 | Evolução a partir do resultado | Em desenvolvimento | ✅ | 🔄 | ⬜ | grouping | `grouping.test` (série) | link do card sem teste |
+| EXA-F013 | Varredura contínua do backlog | Em desenvolvimento | 🔄 | — | — | — | este documento | processo permanente |
 
 **Leitura honesta:** todos os itens têm **Código** ✅ (exceto F5/F13 parciais), mas **Testes** cobre só F2,
 F5(estados), F10, F11 (e F12 parcial) — os demais são UI/fiação **sem automação**. **Nenhum** item tem
@@ -33,13 +33,15 @@ desenvolvimento*. Fechar os ⬜ de **Testes** (onde a lógica for extraível) é
 
 ## Registro de Não-Conformidades (NC)
 
-| NC | Descrição | Origem | Sev. | Tipo | Item F | Evidência (verificável) | Estado |
-|---|---|---|---|---|---|---|---|
-| NC-01 | Detalhe do exame não exibia laboratório nem solicitante | Revisão funcional | média | Funcional | F3 (F1) | commit `a2f80e8` · `deriveExamIdentity` · `FUNC-exam-identification` | ✅ encerrada |
-| NC-02 | Aba Pedidos mostrava caixa/explicação de upload de *resultados* (copy + ômica) | Auditoria / UX | baixa | UX | F4 | commit `8355009` | ✅ encerrada |
-| NC-03 | Falha de upload exibia mensagem TÉCNICA crua ao usuário (`[insert] 23505…`) | Auditoria funcional | baixa | UX | F7 | commit `95f3d3f` · msg amigável + `console.error` | ✅ encerrada |
+Registro GLOBAL (sequência `NC-####` contínua entre domínios; ver `LIFECYCLE_DOMINIOS.md`).
 
-**Contagem por Tipo (abertas): Arquitetural 0 · Regulatória 0 · Funcional 0 · UX 0 · Segurança 0 · Dados 0 · Performance 0.**
+| NC | Data | Resp. | Origem | Domínio | Func. | Tipo | Sev. | Estado | Evidência |
+|---|---|---|---|---|---|---|---|---|---|
+| NC-0001 | 15/07 | Claude | Revisão funcional (Fundadora) | Exames | EXA-F003 | Funcional | média | ✅ encerrada | commit `a2f80e8` · `deriveExamIdentity` · `FUNC-exam-identification` |
+| NC-0002 | 15/07 | Claude | Auditoria / UX | Exames | EXA-F004 | UX | baixa | ✅ encerrada | commit `8355009` |
+| NC-0003 | 15/07 | Claude | Auditoria funcional | Exames | EXA-F007 | UX | baixa | ✅ encerrada | commit `95f3d3f` · msg amigável + `console.error` |
+
+**NCs ABERTAS por Tipo (todos os domínios): Arquitetural 0 · Regulatória 0 · Funcional 0 · UX 0 · Segurança 0 · Dados 0 · Performance 0. Total aberto: 0.**
 
 _Origens possíveis: Revisão funcional · Revisão de UX · Homologação · Certificação · Documento CRC · Teste
 automatizado · Feedback de usuário._
@@ -71,12 +73,15 @@ Estados e distinção estática × funcional: ver `docs/LIFECYCLE_DOMINIOS.md` (
 - **Passo 1 — Implementação:** congelada.
 - **Passo 2 — Auditoria estática (código):** ✅ concluída — as 13 jornadas revisadas no código; 0 NC crítica/
   alta nova; NC-03 (baixa, UX) corrigida.
-- **Passo 3 — Gate Arquitetural:** ✅ **PASSOU** — 51 testes `ARCH-*` verdes + checklist manual (desacoplado ·
-  CPE aditivo · UCDA · Modelo Aberto/taxonomia aberta · sem listas fechadas · modalidade só no CPE). **0 NC arquitetural.**
-- **Passo 4 — Auditoria funcional (execução):** **PENDENTE** — depende da execução das jornadas no ambiente
+- **Passo 3 — Gate Arquitetural (engenharia):** ✅ **PASSOU** — 51 testes `ARCH-*` verdes + checklist (desacoplado
+  · CPE aditivo · UCDA · Modelo Aberto · sem listas fechadas · modalidade só no CPE · reúso · camadas). **0 NC arquitetural.**
+- **Passo 4 — Gate Regulatório (conformidade):** ✅ **PASSOU** — transcreve/não interpreta (RDC 657) · Ver
+  original (rastreabilidade) · proveniência em `clinical_results` (auditabilidade) · fingerprint (reprodutibilidade)
+  · documento original preservado · RLS/LGPD. **0 NC regulatória.**
+- **Passo 5 — Auditoria funcional (execução):** **PENDENTE** — depende da execução das jornadas no ambiente
   real (documentos e interações reais); **caça defeitos** e antecede a homologação. Nenhuma jornada está em
   `Auditoria funcional (execução)`, `Homologada` nem `Certificada`.
-- **Passos 5–7 (Homologação · Certificação · Encerramento):** não iniciados.
+- **Passos 6–8 (Homologação · Certificação · Encerramento):** não iniciados.
 
 A maior fonte de descobertas nesta fase passa a ser o **uso real**, não o código.
 

@@ -5,21 +5,26 @@
 > `Planejamento` · `Não iniciado` · `Implementação` · `Auditoria estática` · `Gate Arquitetural` ·
 > `Auditoria funcional` · `Homologação` · `Certificação` · `Encerrado`.
 
-| Domínio | Estado | Estado / Backlog | Homologação | Especificação |
-|---|---|---|---|---|
-| **Exames** | Auditoria estática ✅ → Gate Arquitetural / Auditoria funcional (pendente) | `EXAMES_CHECKLIST_FUNCIONAL.md` | `tests/homolog/COVERAGE.md` (0/8) | `EXAMES_CONCLUSAO.md` · `CEF-001…` · `UCDA-001` |
-| **Eventos Assistenciais** | Implementação (consolidado; mesmo mecanismo `health_events`) | — | — | `EVENTO_ASSISTENCIAL.md` |
-| **Financeiro** | Implementação (gastos/NF via evento; assinatura = Billing) | — | — | (via Eventos + Billing) |
-| **Notificações (NOTIF-001)** | Implementação (infra única; push pendente) | — | — | `NOTIF-001_NOTIFICACOES.md` |
-| **Medicamentos** | Implementação | — | — | (backlog) |
-| **Suplementos** | Implementação | — | — | (backlog) |
-| **Vacinas** | Não iniciado (como domínio próprio; hoje via Eventos) | — | — | — |
-| **Procedimentos** | Implementação (via Eventos) | — | — | — |
-| **Medidas Corporais** | Implementação (reorg pendente) | — | — | `BACKLOG_EVOLUCOES.md` (Fase C) |
-| **Sinais Vitais** | Implementação (aquisição automática = HIP-001) | — | — | `BACKLOG_EVOLUCOES.md` (Fase E) |
-| **Billing (SaaS)** | Implementação (fundação: entitlements + ciclo + invoices) | — | — | `BILLING-001_ASSINATURAS.md` |
-| **HIP-001 (Integrações)** | Planejamento (registrado; implementar fase 3/4) | — | — | `HIP-001_PLATAFORMA_INTEGRACOES.md` |
-| **CARE-001 (Espaço Colaborativo)** | Planejamento (registrado; fase posterior) | — | — | `CARE-001_ESPACO_COLABORATIVO.md` |
+Indicadores por domínio: **Func.** (implementadas/total) · **NCs abertas** · **Jornada** (passo atual do
+ciclo) · **Estado**. Prefixo de ID por domínio entre parênteses. `—` = ainda não cataloga do (entra no ciclo depois).
+
+| Domínio (prefixo) | Func. | NCs abertas | Jornada / passo | Estado | Docs |
+|---|:--:|:--:|---|---|---|
+| **Exames** (`EXA`) | 13/13 | 0 | Gates ✅ · Auditoria funcional (execução) pendente | Em andamento | `EXAMES_CHECKLIST_FUNCIONAL.md` · `tests/homolog/COVERAGE.md` (0/8) |
+| **Eventos Assistenciais** (`EVT`) | — | 0 | Implementação (consolidado; `health_events`) | Em andamento | `EVENTO_ASSISTENCIAL.md` |
+| **Financeiro** (`FIN`) | — | 0 | Implementação (gastos/NF via evento) | Em andamento | (via Eventos + Billing) |
+| **Notificações** (`NOTIF`) | — | 0 | Implementação (infra única; push pendente) | Em andamento | `NOTIF-001_NOTIFICACOES.md` |
+| **Medicamentos** (`MED`) | — | 0 | Implementação | Em andamento | (backlog) |
+| **Suplementos** (`SUP`) | — | 0 | Implementação | Em andamento | (backlog) |
+| **Vacinas** (`VAC`) | — | 0 | Não iniciado (domínio próprio; hoje via Eventos) | — | — |
+| **Procedimentos** (`PROC`) | — | 0 | Implementação (via Eventos) | Em andamento | — |
+| **Medidas Corporais** (`MED-C`) | — | 0 | Implementação (reorg pendente) | Em andamento | `BACKLOG_EVOLUCOES.md` (Fase C) |
+| **Sinais Vitais** (`VIT`) | — | 0 | Implementação (aquisição = HIP-001) | Em andamento | `BACKLOG_EVOLUCOES.md` (Fase E) |
+| **Billing** (`BILL`) | — | 0 | Implementação (fundação: entitlements+ciclo+invoices) | Em andamento | `BILLING-001_ASSINATURAS.md` |
+| **HIP-001** (`HIP`) | — | 0 | Planejamento (implementar fase 3/4) | Planejado | `HIP-001_PLATAFORMA_INTEGRACOES.md` |
+| **CARE-001** (`CARE`) | — | 0 | Planejamento (fase posterior) | Planejado | `CARE-001_ESPACO_COLABORATIVO.md` |
+
+**NCs abertas na plataforma inteira: 0.** Sequência global de NC: `NC-0003` é a última registrada.
 
 **Prioridade (um domínio por vez até `Encerrado`):** **Exames** é o foco atual; só após seu encerramento
 (Checklist `Homologado` + Matriz 100% + Certificação) o próximo domínio entra no ciclo. Cada domínio, ao
