@@ -6,7 +6,7 @@ import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Upload, FileText, Clock, CheckCircle, AlertCircle,
-  X, Loader2, Zap, Search, ChevronDown, ChevronUp, Trash2, Pencil, Check, Dna, ChevronRight, Info, ArrowLeft, FlaskConical,
+  X, Loader2, Zap, Search, ChevronDown, ChevronUp, Trash2, Pencil, Check, Dna, ChevronRight, Info, ArrowLeft, FlaskConical, CalendarDays,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { parseDateOnly } from '@/lib/agenda'
@@ -15,6 +15,8 @@ import { compareNames } from '@/lib/exams/nameMatch'
 import { categoryOf, FALLBACK_CATEGORY } from '@/lib/capture/exam-categories'
 import { findDuplicateIds, originalIdFor, type DuplicateCandidate } from '@/lib/exams/duplicates'
 import { useDocumentBundle, DocumentBundleStaging } from '@/components/ui/DocumentBundleCapture'
+import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
+import { useEventForm } from '@/components/eventForm'
 import ListCard, { CardChip } from '@/components/ListCard'
 import PageHeader from '@/components/PageHeader'
 import ErrorBanner from '@/components/ErrorBanner'
@@ -102,6 +104,10 @@ function effDate(e: Exam): string {
 
 export default function ExamsPage() {
   const { user, profile } = useUser()
+  const { saveEvent } = useEventForm()
+  // Pedido → Evento Assistencial (fundadora 15/07): o pedido é a ORIGEM do fluxo assistencial
+  // (Pedido → Agendamento → Realização → Resultado → Histórico → Evolução). "Agendar" cria o evento.
+  const [agendarOrder, setAgendarOrder] = useState<Exam | null>(null)
   const router   = useRouter()
   const supabase = useRef(createClient()).current
 
@@ -570,9 +576,14 @@ export default function ExamsPage() {
                     meta={<>Adicionado em {formatDate(order.created_at)}</>}
                     actions={
                       <>
+                        {/* Origem do fluxo assistencial: agendar a realização a partir do pedido */}
+                        <button type="button" onClick={() => setAgendarOrder(order)}
+                          className="flex items-center gap-1 text-[11px] font-body font-medium text-petal-dark bg-blush border border-petal/30 px-2.5 py-1 rounded-full hover:bg-petal/10 transition-colors">
+                          <CalendarDays size={11} /> Agendar
+                        </button>
                         {fileUrl && (
                           <button type="button" onClick={() => window.open(fileUrl, '_blank', 'noopener')}
-                            className="flex items-center gap-1 text-[11px] font-body font-medium text-petal-dark bg-blush border border-petal/30 px-2.5 py-1 rounded-full hover:bg-petal/10 transition-colors">
+                            className="flex items-center gap-1 text-[11px] font-body font-medium text-onyx/60 border border-border px-2.5 py-1 rounded-full hover:bg-blush transition-colors">
                             Ver documento →
                           </button>
                         )}
@@ -809,6 +820,21 @@ export default function ExamsPage() {
         confirmLabel={confirm?.confirmLabel ?? 'Confirmar'}
         onConfirm={() => { const c = confirm; setConfirm(null); c?.onYes() }}
         onCancel={() => setConfirm(null)}
+      />
+
+      {/* Pedido → Evento Assistencial: agenda a realização do exame pedido (origem do fluxo) */}
+      <AgendarModal
+        open={!!agendarOrder}
+        onClose={() => setAgendarOrder(null)}
+        onSave={async (input: AgendaEventInput) => {
+          if (!user) return
+          await saveEvent(user.id, input, null)
+          setAgendarOrder(null)
+        }}
+        onGoToHistory={() => router.push('/dashboard/agenda')}
+        defaultTitle={agendarOrder?.type ? agendarOrder.type.split(' • ')[0] : 'Exame'}
+        defaultNotes={`A partir do pedido: ${agendarOrder?.type ?? ''}`}
+        initialEvent={{ eventType: 'exame', status: 'planejado' }}
       />
     </div>
   )
