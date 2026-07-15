@@ -536,20 +536,30 @@ export async function POST(
   // disparo/confirmação da segmentação é a decisão de produto sinalizada; aqui apenas materializamos.
   // Idempotente: na raiz já-dividida, isRootBundle=false → splitPlan.split=false → não recria.
   if (splitPlan && splitPlan.split && splitPlan.siblings.length && exam.file_url) {
-    const rootName = exam.type ?? (finalUpdate.display_title as string | undefined) ?? 'Exame'
-    const siblingRows = splitPlan.siblings.map(s => ({
-      user_id: userId,
-      type: s.title || `${rootName} — parte ${s.index}/${splitPlan!.count}`,
-      exam_date: null,
-      file_url: exam.file_url,
-      status: 'pending',
-      source_bundle_exam_id: examId,
-      bundle_cdu_index: s.index,
-      bundle_cdu_count: splitPlan!.count,
-      bundle_page_start: s.range.start,
-      bundle_page_end: s.range.end,
-    }))
-    await supabase.from('exams').insert(siblingRows as never)
+    // GUARDA DE IDEMPOTÊNCIA (robustez multi-exames): a marcação do root (finalUpdate acima) pode
+    // falhar silenciosamente (o cliente Supabase não lança). Se falhar mas os irmãos já tiverem sido
+    // criados, uma reanálise veria isRootBundle=true e RECRIARIA os irmãos → duplicatas. Antes de
+    // inserir, confirma que ainda não existem irmãos deste bundle. Não recria o que já existe.
+    const { count: existingSiblings } = await supabase.from('exams')
+      .select('id', { count: 'exact', head: true })
+      .eq('source_bundle_exam_id', examId)
+      .neq('id', examId)
+    if (!existingSiblings) {
+      const rootName = exam.type ?? (finalUpdate.display_title as string | undefined) ?? 'Exame'
+      const siblingRows = splitPlan.siblings.map(s => ({
+        user_id: userId,
+        type: s.title || `${rootName} — parte ${s.index}/${splitPlan!.count}`,
+        exam_date: null,
+        file_url: exam.file_url,
+        status: 'pending',
+        source_bundle_exam_id: examId,
+        bundle_cdu_index: s.index,
+        bundle_cdu_count: splitPlan!.count,
+        bundle_page_start: s.range.start,
+        bundle_page_end: s.range.end,
+      }))
+      await supabase.from('exams').insert(siblingRows as never)
+    }
   }
 
   return NextResponse.json({
