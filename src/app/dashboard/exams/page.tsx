@@ -349,8 +349,10 @@ export default function ExamsPage() {
             /* Menu de criação de registros (padrão oficial DS-001) — PONTO DE ENTRADA ÚNICO.
                E6: ômica é uma CONTINUAÇÃO especializada do mesmo ponto de entrada (não um fork):
                declarar "Exame ômico" segue para o passo de catálogo/versionamento. */
-            <CreateRecordMenu label="Novo exame" methods={['file', 'camera']}
-              extras={[{ key: 'omics', label: 'Exame ômico (catálogo)', icon: Dna }]}
+            <CreateRecordMenu
+              label={activeTab === 'orders' ? 'Adicionar pedido ou solicitação' : 'Adicionar exame realizado'}
+              methods={['file', 'camera']}
+              extras={activeTab === 'orders' ? [] : [{ key: 'omics', label: 'Exame ômico (catálogo)', icon: Dna }]}
               onSelect={(m, file) => {
                 if (m === 'omics') { router.push('/dashboard/omics'); return }
                 if (file) processFile(file)
@@ -422,16 +424,18 @@ export default function ExamsPage() {
         </div>
       </div>
 
-      {/* ── Abas: Resultados × Pedidos e solicitações (subcategoria) ────────── */}
+      {/* ── Abas principais: Exames (realizados) × Pedidos e Solicitações ──────
+          Objetos com ciclos de vida distintos (fundadora): resultados/laudos/histórico/evolução
+          de um lado; pedidos/guias/autorizações/pendentes do outro. */}
       {exams.length > 0 && (
         <div className="flex gap-1 p-1 bg-ivory border border-border rounded-2xl w-fit">
           <button type="button" onClick={() => setActiveTab('results')}
             className={`px-4 py-1.5 rounded-xl font-body text-sm font-medium transition-colors ${activeTab === 'results' ? 'bg-white text-onyx shadow-sm' : 'text-mauve hover:text-onyx'}`}>
-            Resultados
+            Exames
           </button>
           <button type="button" onClick={() => setActiveTab('orders')}
             className={`px-4 py-1.5 rounded-xl font-body text-sm font-medium transition-colors flex items-center gap-1.5 ${activeTab === 'orders' ? 'bg-white text-onyx shadow-sm' : 'text-mauve hover:text-onyx'}`}>
-            Pedidos e solicitações
+            Pedidos e Solicitações
             {orders.length > 0 && <span className="text-[11px] bg-warm text-gold px-1.5 py-0.5 rounded-full">{orders.length}</span>}
           </button>
         </div>
@@ -651,6 +655,13 @@ export default function ExamsPage() {
                           const canAnalyze  = hasFile && !isRunning && !isProcessed && exam.status !== 'processing'
                           const analyzeLabel = exam.status === 'error' ? 'Tentar novamente' : 'Extrair dados'
                           const isMismatch  = compareNames(profile?.name, (exam as unknown as { patient_name?: string | null }).patient_name) === 'mismatch'
+                          // Identificação padronizada do card (fundadora): NOME / LABORATÓRIO / SOLICITANTE
+                          // em linhas separadas. O nome vem do type sem a proveniência (" • lab"); o
+                          // laboratório da coluna `issuer` (fallback: parte após " • " do type).
+                          const examIssuer = (exam as unknown as { issuer?: string | null }).issuer ?? null
+                          const rawType    = exam.type ?? 'Exame'
+                          const examName   = (rawType.split(' • ')[0].trim()) || 'Exame'
+                          const examLab    = examIssuer || (rawType.includes(' • ') ? rawType.split(' • ').slice(1).join(' • ').trim() : null)
 
                           // Modo de edição inline do nome — cartão dedicado (o ListCard
                           // recebe o nome como string e não comporta o input embutido).
@@ -685,7 +696,7 @@ export default function ExamsPage() {
                                     <FileText size={17} className="text-petal" />
                                   </div>
                                 }
-                                title={exam.type ?? 'Exame'}
+                                title={examName}
                                 onTitleClick={() => router.push('/dashboard/exams/' + exam.id)}
                                 trailing={
                                   <span title={seal.hint || undefined} className={`inline-flex items-center gap-1 text-[11px] font-body font-medium px-2 py-0.5 rounded-full ${seal.bg} ${seal.color}`}>
@@ -695,13 +706,17 @@ export default function ExamsPage() {
                                 }
                                 meta={
                                   <>
-                                    Realizado em {formatDate(effDate(exam))}
-                                    {exam.exam_date && exam.exam_date.slice(0, 10) !== exam.created_at.slice(0, 10) && (
-                                      <span className="text-mauve/40"> · enviado {formatDate(exam.created_at)}</span>
-                                    )}
+                                    {/* Laboratório/clínica responsável — linha própria (identificação padronizada) */}
+                                    {examLab && <span className="block font-medium text-onyx/70">{examLab}</span>}
                                     {exam.requesting_physician && (
-                                      <span className="text-mauve/40"> · Solicitante: {exam.requesting_physician}</span>
+                                      <span className="block">Solicitante: {exam.requesting_physician}</span>
                                     )}
+                                    <span className="block text-mauve/70">
+                                      Realizado em {formatDate(effDate(exam))}
+                                      {exam.exam_date && exam.exam_date.slice(0, 10) !== exam.created_at.slice(0, 10) && (
+                                        <span className="text-mauve/40"> · enviado {formatDate(exam.created_at)}</span>
+                                      )}
+                                    </span>
                                     {duplicateIds.has(exam.id) && originalById.get(exam.id) && (
                                       <span className="block text-gold mt-0.5">
                                         Possível duplicado de outro exame ·{' '}
