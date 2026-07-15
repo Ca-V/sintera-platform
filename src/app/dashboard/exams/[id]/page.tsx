@@ -454,7 +454,7 @@ export default function ExamDetailPage() {
   async function loadData(silent = false) {
     if (!silent) setLoading(true)
     const [{ data: examData }, { data: bioData }, { data: logData }, { data: catData }] = await Promise.all([
-      supabase.from('exams').select('id,type,status,pdf_quality,page_count,created_at,exam_date,error_reason,text_truncated,file_url,patient_name,document_type,display_title,extraction_completeness')
+      supabase.from('exams').select('id,type,status,pdf_quality,page_count,created_at,exam_date,error_reason,text_truncated,file_url,patient_name,document_type,display_title,extraction_completeness,issuer,requesting_physician')
         .eq('id', examId).single(),
       supabase.from('current_biomarkers')
         .select('id,name,value,value_text,unit,reference_min,reference_max,interpretation,result_type,range_extracted,reference_source,source,catalog_id,source_material,source_exam_name')
@@ -642,7 +642,7 @@ export default function ExamDetailPage() {
               ) : (
                 <div className="flex items-center gap-2 group/name">
                   <h1 className="font-display text-xl font-semibold text-onyx break-words min-w-0">
-                    {exam?.type ?? 'Exame'}
+                    {(exam?.type ?? 'Exame').split(' • ')[0]}
                   </h1>
                   <button onClick={startEditName}
                     className="opacity-0 group-hover/name:opacity-100 transition-opacity text-mauve hover:text-petal flex-shrink-0 print:hidden">
@@ -650,6 +650,20 @@ export default function ExamDetailPage() {
                   </button>
                 </div>
               )}
+              {/* Identificação padronizada (fundadora): laboratório/clínica + médico solicitante.
+                  O assinante do laudo NÃO aparece aqui (está no documento original). */}
+              {(() => {
+                const iss = (exam as unknown as { issuer?: string | null })?.issuer
+                  || (exam?.type?.includes(' • ') ? exam.type.split(' • ').slice(1).join(' • ').trim() : null)
+                const req = (exam as unknown as { requesting_physician?: string | null })?.requesting_physician
+                if (!iss && !req) return null
+                return (
+                  <div className="mt-0.5 space-y-0.5">
+                    {iss && <p className="font-body text-sm font-medium text-onyx/70">{iss}</p>}
+                    {req && <p className="font-body text-xs text-mauve">Solicitante: {req}</p>}
+                  </div>
+                )
+              })()}
               {/* Data editável */}
               {editingDate ? (
                 <div className="flex items-center gap-2 mt-0.5">
