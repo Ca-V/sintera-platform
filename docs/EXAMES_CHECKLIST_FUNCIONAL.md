@@ -1,36 +1,41 @@
-# Exames — Checklist FUNCIONAL (controle de implementação)
+# Exames — Controle 1: Checklist FUNCIONAL
 
-> Fundadora (15/07): o domínio Exames tem **DOIS controles que coexistem** até o encerramento:
-> 1. **este checklist funcional** (as funcionalidades estão IMPLEMENTADAS?),
-> 2. a **matriz de homologação** (`tests/homolog/COVERAGE.md` — foram VALIDADAS com documentos reais?).
+> Fundadora (15/07): o domínio Exames é acompanhado por **DOIS controles independentes e obrigatórios**:
+> - **Controle 1 — Checklist Funcional** (este): *"a funcionalidade existe e está implementada?"*
+> - **Controle 2 — Matriz de Homologação** (`tests/homolog/COVERAGE.md`): *"foi validada com documentos reais?"* (8 dimensões).
 >
-> Não declarar "código completo" nem "Exames concluído" enquanto houver item funcional aberto.
-> **Conclusão** = todas as funcionalidades implementadas **E** todas as dimensões da matriz homologadas
-> com docs reais **E** Certificação da Plataforma aprovada.
+> **Estados (apenas estes quatro; SEM percentuais por funcionalidade):**
+> `Não iniciado` · `Em desenvolvimento` · `Implementado` · `Homologado`.
+> `Implementado` = código pronto e verificado, mas **ainda não** validado com documento real.
+> `Homologado` = a dimensão correspondente da Matriz foi aprovada com documentos reais.
+> **Um item só passa a `Homologado` quando o Controle 2 confirmar** — hoje o teto de todos é `Implementado`.
 >
-> Legenda: ✅ implementado e verificado · 🔄 parcial / a refinar · ⬜ pendente.
+> **Conclusão do domínio Exames (os 3 simultaneamente):** todo o Checklist em `Homologado` **E** todas as
+> dimensões da Matriz aprovadas **E** Certificação da Plataforma aprovada. Qualquer pendência → *em desenvolvimento*.
 
 | # | Funcionalidade | Estado | Evidência / pendência |
 |---|---|---|---|
-| F1 | Padronização definitiva da identificação dos cards | ✅ | Card da lista em 3 linhas (nome/lab/solicitante) + **detalhe** agora idem (issuer+requesting_physician) |
-| F2 | Nomenclatura (exame único × painel laboratorial) | ✅ | E2 domínio + `ARCH-002`/`FUNC-nomenclature-consistency` (regra validada; homologação final = doc real) |
-| F3 | Exibição de laboratório + médico solicitante | ✅ | Lista + detalhe; assinante do laudo fora da identificação (está no documento) |
-| F4 | Reorganização da página (Exames × Pedidos e Solicitações) | ✅ | Abas + ação do topo contextual |
-| F5 | Fluxo completo de pedidos (Pedido→Agendamento→Realização→Resultado) | 🔄 | Estados modelados (`careFlow`); pedido→"Agendar" cria evento. **Falta:** vínculo duro pedido↔evento↔resultado e o stepper (adiado pela fundadora p/ após homologação) |
-| F6 | Política binária de estruturação (nunca "parcial") | ✅ | E3 (selo/badge binários) |
-| F7 | Experiência completa de upload | ✅ | E6 fluxo único (PDF/foto/galeria/multipágina/reordenar) via DocumentBundle |
-| F8 | Financeiro do exame (valor + nota fiscal) | ✅ | E7 "Registrar custo / NF" (NF visível de imediato) → Despesas |
-| F9 | Recorrência e agendamento | ✅ | E8 (AgendarModal: recorrência + reagendar) |
-| F10 | Integração completa ao CPE | 🔄 | `processClinical`→UCDA→`clinical_results` (aditivo); coexiste com laboratório legado por Convergência Progressiva. **A validar:** cobertura por modalidade (homologação) |
-| F11 | Detecção/confirmação de duplicado | ✅ | `duplicates` + chip + "Ver original" |
-| F12 | Evolução a partir do resultado | ✅ | Biomarcador numérico → série no tempo |
-| F13 | Demais itens do backlog do domínio | 🔄 | Ver `EXAMES_CONCLUSAO.md`; itens abertos consolidados aqui conforme surgirem |
+| F1 | Identificação padronizada do exame (nome) | Implementado | card da lista + detalhe |
+| F2 | Nomenclatura (exame único × painel laboratorial) | Implementado | E2 (`ARCH-002` · `FUNC-nomenclature-consistency`) |
+| F3 | Exibição de laboratório + médico solicitante | Implementado | lista + detalhe; assinante do laudo fora da identificação |
+| F4 | Reorganização da página (Exames × Pedidos e Solicitações) | Implementado | abas + ação do topo contextual |
+| F5 | Fluxo completo de pedidos (Pedido→Agendamento→Realização→Resultado) | Em desenvolvimento | estados modelados (`careFlow`) + "Agendar" cria evento; **falta** vínculo duro pedido↔evento↔resultado (stepper adiado p/ pós-homologação) |
+| F6 | Política binária de estruturação (nunca "parcial") | Implementado | E3 |
+| F7 | Experiência completa de upload | Implementado | E6 (DocumentBundle: PDF/foto/galeria/multipágina/reordenar) |
+| F8 | Financeiro do exame (valor + nota fiscal) | Implementado | E7 ("Registrar custo / NF" → Despesas) |
+| F9 | Recorrência e agendamento | Implementado | E8 (AgendarModal) |
+| F10 | Integração ao CPE | Implementado | `processClinical`→UCDA→`clinical_results` (aditivo); completude por modalidade = Matriz (dim. `cpe`) |
+| F11 | Detecção/confirmação de duplicado | Implementado | `duplicates` + chip + "Ver original" |
+| F12 | Evolução a partir do resultado | Implementado | biomarcador numérico → série no tempo |
+| F13 | Varredura contínua do backlog do domínio | Em desenvolvimento | auditoria contínua; traz p/ cá qualquer não-conformidade encontrada |
 
-## Itens funcionais AINDA ABERTOS (foco da execução antes da homologação)
-- **F5** — completar o fluxo de pedidos: vínculo duro pedido↔evento↔resultado (hoje por nota) e a
-  visualização de etapa (stepper — a fundadora priorizou APÓS a homologação, então fica registrado, não bloqueia).
-- **F10** — a integração ao CPE existe; a "completude" por modalidade é confirmada na homologação (matriz).
-- **F13** — varrer o backlog do domínio e trazer para cá qualquer pendência funcional remanescente.
+**Resumo dos estados:** `Implementado` = F1,F2,F3,F4,F6,F7,F8,F9,F10,F11,F12 · `Em desenvolvimento` = F5,F13 ·
+`Homologado` = (nenhum ainda — depende do Controle 2, hoje 0/8). Nenhum `Não iniciado`.
 
-_À medida que cada item fecha, marca-se ✅ com evidência. Só quando F1–F13 = ✅ é que a etapa passa a
-depender exclusivamente da matriz de homologação._
+## Processo de AUDITORIA CONTÍNUA (fundadora)
+Sempre que uma auditoria encontrar lacuna real: **(1) registra a não-conformidade → (2) corrige de imediato
+quando possível → (3) atualiza este checklist → (4) só então retoma a fila normal.** *(Foi o que ocorreu com a
+identificação — laboratório e solicitante no detalhe — comportamento esperado.)*
+
+## Adiados (NÃO retornam à fila antes do encerramento de Exames)
+stepper visual do fluxo assistencial · Care Space · push notifications · demais funcionalidades de fases posteriores.
