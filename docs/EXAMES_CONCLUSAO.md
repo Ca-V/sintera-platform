@@ -33,6 +33,23 @@ Experiência de uso** (fluxo/nomenclatura/organização/usabilidade; sem contrad
 transversais** (notificações, financeiro, recorrência, compartilhamento, histórico, evolução, reúso).
 Não declarar concluído só porque a infra técnica existe.
 
+## INDICADOR OFICIAL de progresso (fundadora 15/07) — matriz de homologação
+O progresso de Exames é medido pela **% de dimensões homologadas com DOCUMENTOS REAIS**
+(`tests/homolog/COVERAGE.md`, regenerável por `HOMOLOG=1 npm run test:homolog`), NÃO por nº de
+testes. **8 dimensões:** segmentação · multi-exame · imagem · qualitativo · integração CPE ·
+nomenclatura · identificação · política binária de estruturação.
+
+**CRITÉRIO DE CONCLUSÃO:** enquanto a matriz indicar dimensão pendente, Exames = **em
+desenvolvimento**. Só é CONCLUÍDO quando **as 8 dimensões estiverem homologadas com documentos reais**
+e aprovadas pelos critérios da Certificação da Plataforma. Indicador atual: **0/8 (0%)**.
+
+**Estado do CÓDIGO (15/07):** completo nas 8 dimensões — CPE integrado ao fluxo de forma aditiva
+(`processClinical`→UCDA→clinical_results, coexistindo com o laboratório legado por Convergência
+Progressiva); as 3 dimensões de regra (nomenclatura/identificação/estruturação) têm validação
+determinística verde. **Falta apenas a homologação com documentos reais** (roda em paralelo; não há
+mais lacuna de código autônoma em Exames). O stepper visual do fluxo assistencial fica para DEPOIS
+da homologação (decisão da fundadora).
+
 ## Estado (15/07/2026) — Exames PARCIALMENTE concluído (fundadora)
 As sub-capacidades E1–E8 (identificação, nomenclatura, binário, quant×qual UI, categorias, fluxo único,
 financeiro, recorrência) + dedup + evolução estão implementadas. **Porém Exames NÃO é 100%** — faltam
