@@ -345,9 +345,11 @@ export default function ExamDetailPage() {
 
   // ── Excluir exame ───────────────────────────────────────────────────────────
   const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const [confirm, setConfirm] = useState<{ message: string; confirmLabel: string; onYes: () => void } | null>(null)
   function deleteExam() {
     if (!exam || deleting) return
+    setDeleteError(null)
     setConfirm({
       message:
         `Excluir "${exam.type ?? 'Exame'}"?\n\nIsto remove o exame, seus resultados e insights, e o arquivo enviado. ` +
@@ -358,9 +360,9 @@ export default function ExamDetailPage() {
         try {
           const res = await fetch(`/api/exams/${exam.id}`, { method: 'DELETE' })
           if (res.ok) router.push('/dashboard/exams')
-          else { setDeleting(false); alert('Falha ao excluir o exame. Tente novamente.') }
+          else { setDeleting(false); setDeleteError('Falha ao excluir o exame. Tente novamente.') }
         } catch {
-          setDeleting(false); alert('Falha ao excluir o exame. Tente novamente.')
+          setDeleting(false); setDeleteError('Falha ao excluir o exame. Tente novamente.')
         }
       },
     })
@@ -1060,6 +1062,7 @@ export default function ExamDetailPage() {
           <p className="font-body text-[11px] text-mauve mt-1">
             Remove o exame, seus resultados e insights. O seu Histórico é recalculado.
           </p>
+          {deleteError && <p className="font-body text-xs text-red-500 mt-1.5" role="alert">{deleteError}</p>}
         </div>
       )}
 
