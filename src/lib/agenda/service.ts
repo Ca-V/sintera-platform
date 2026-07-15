@@ -92,6 +92,11 @@ export function createEventCommandService(repo: EventRepository, bus: EventBus, 
     const occ: EventDraft = {
       ...ev, id: newId(), date: nextDate, status: 'planejado', completedAt: null,
       reminderSentAt: null, seriesId: ev.seriesId ?? newId(), source: 'recurrence',
+      // Rastreabilidade da cadeia (NC-0018): a ocorrência registra de QUAL evento rolou
+      // (`parentEventId`) e a RAIZ da série (`rootEventId`). Preenche a provenance no
+      // write-side (o read-side segue latente); inerte ao comportamento visível atual.
+      parentEventId: ev.id ?? null,
+      rootEventId: ev.rootEventId ?? ev.id ?? null,
     }
     await repo.save(userId, occ)
     await emit('EventCreated', userId, occ as HealthEvent)

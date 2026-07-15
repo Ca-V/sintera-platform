@@ -90,6 +90,9 @@ describe('EventCommandService (escrita + transições no bus)', () => {
     const all = getSavedAll()
     expect(all.map(e => e.status)).toEqual(['realizado', 'planejado'])
     expect(all[1].date).toBe('2026-08-18')
+    // Rastreabilidade da cadeia (NC-0018): a ocorrência registra a provenance.
+    expect(all[1].parentEventId).toBe('e1')   // rolou do evento concluído
+    expect(all[1].rootEventId).toBe('e1')     // raiz da série (1ª ocorrência)
   })
 
   it('concluir recorrente após o until NÃO gera próxima', async () => {
