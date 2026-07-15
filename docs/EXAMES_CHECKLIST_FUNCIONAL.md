@@ -45,7 +45,7 @@ Registro GLOBAL (sequência `NC-####` contínua entre domínios; ver `LIFECYCLE_
 | NC-0010 | 15/07 | Claude | Auditoria estática | Exames | EXA (segmentação, J4) | UX | média | 🟡 justificada (adiada) | Split de bundle grava `source_bundle_exam_id`/`bundle_cdu_index`/`bundle_cdu_count`/`bundle_page_*` (`analyze/route.ts:503-536`); irmãos "— parte X/N" aparecem **soltos** e a relação "partes do mesmo documento" nunca é reconstruída na UI. Roadmap multi-exame = PARCIAL |
 | NC-0011 | 15/07 | Claude | Auditoria estática | Exames | EXA (careFlow) | Funcional | baixa | 🟡 justificada | `careFlow.ts` (CareStage requested→scheduled→performed→resulted) sem consumidor de UI (só o teste `FUNC-care-flow`). Capacidade planejada (stepper de care-stage), não implementada em tela |
 
-**NCs ABERTAS por Tipo (todos os domínios):** Arquitetural **1** · Regulatória 0 · Funcional **3** · UX **3** · Segurança 0 · Dados **2** · Performance 0. **Total aberto: 9** (0 crítica/alta; 5 média, 4 baixa; 5 justificadas/adiadas, 4 em aberto). Detalhe de Eventos em `EVENTOS_CHECKLIST_FUNCIONAL.md`.
+**NCs ABERTAS de EXAMES por Tipo:** Arquitetural 0 · Regulatória 0 · Funcional **2** · UX **1** · Segurança 0 · Dados **1** · Performance 0. **Total aberto (Exames): 4** (0 crítica/alta; 3 média, 1 baixa; 3 justificadas/adiadas, 1 em aberto — NC-0008). Tally da plataforma inteira: `DOMINIOS.md`.
 
 _Origens possíveis: Revisão funcional · Revisão de UX · Homologação · Certificação · Documento CRC · Teste
 automatizado · Feedback de usuário._

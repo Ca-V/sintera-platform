@@ -11,7 +11,7 @@ ciclo) · **Estado**. Prefixo de ID por domínio entre parênteses. `—` = aind
 | Domínio (prefixo) | Func. | NCs abertas | Jornada / passo | Estado | Docs |
 |---|:--:|:--:|---|---|---|
 | **Exames** (`EXA`) | 13/13 | 4 (2 méd. + 2 baixa; 0 crít./alta) | Gates ✅ · Auditoria funcional (execução) pendente | Em andamento | `EXAMES_CHECKLIST_FUNCIONAL.md` · `tests/homolog/COVERAGE.md` (0/8) |
-| **Eventos Assistenciais** (`EVT`) | 11/11 | 9 (5 méd. + 4 baixa; 0 crít./alta) | Gates ✅ · Auditoria funcional (execução) pendente | Em andamento | `EVENTOS_CHECKLIST_FUNCIONAL.md` · `EVENTO_ASSISTENCIAL.md` |
+| **Eventos Assistenciais** (`EVT`) | 11/11 | 8 (5 méd. + 3 baixa; 0 crít./alta) | Gates ✅ · Auditoria funcional (execução) pendente | Em andamento | `EVENTOS_CHECKLIST_FUNCIONAL.md` · `EVENTO_ASSISTENCIAL.md` |
 | **Financeiro** (`FIN`) | — | 0 | Implementação (gastos/NF via evento) | Em andamento | (via Eventos + Billing) |
 | **Notificações** (`NOTIF`) | — | 0 | Implementação (infra única; push pendente) | Em andamento | `NOTIF-001_NOTIFICACOES.md` |
 | **Medicamentos** (`MED`) | — | 0 | Implementação | Em andamento | (backlog) |
@@ -24,10 +24,10 @@ ciclo) · **Estado**. Prefixo de ID por domínio entre parênteses. `—` = aind
 | **HIP-001** (`HIP`) | — | 0 | Planejamento (implementar fase 3/4) | Planejado | `HIP-001_PLATAFORMA_INTEGRACOES.md` |
 | **CARE-001** (`CARE`) | — | 0 | Planejamento (fase posterior) | Planejado | `CARE-001_ESPACO_COLABORATIVO.md` |
 
-**NCs abertas (crítica/alta) na plataforma: 0.** Total aberto: **13** (7 média + 6 baixa), descobertas na
-auditoria estática aprofundada de Exames (NC-0008–0011) e Eventos (NC-0006–0007, 0012–0019). Nenhuma bloqueia
-o Lifecycle; ~5 são justificadas/adiadas (Convergência Progressiva, roadmap multi-exame, vínculo duro). Por
-Tipo: Dados 3 · Funcional 4 · UX 5 · Arquitetural 1. Última NC: `NC-0019`.
+**NCs abertas (crítica/alta) na plataforma: 0.** Total aberto: **12** (7 média + 5 baixa), descobertas na
+auditoria estática aprofundada de Exames (NC-0008–0011) e Eventos (NC-0006–0007, 0012–0018). NC-0019 já
+encerrada (fix aditivo). Nenhuma bloqueia o Lifecycle; ~5 são justificadas/adiadas (Convergência Progressiva,
+roadmap multi-exame, vínculo duro). Por Tipo: Dados 2 · Funcional 4 · UX 5 · Arquitetural 1. Última NC: `NC-0019`.
 
 **Prioridade (um domínio por vez até `Encerrado`):** **Exames** é o foco atual; só após seu encerramento
 (Checklist `Homologado` + Matriz 100% + Certificação) o próximo domínio entra no ciclo. Cada domínio, ao
