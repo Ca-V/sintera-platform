@@ -32,7 +32,6 @@ interface Exam {
   id: string
   type: string | null
   status: string
-  pdf_quality: string | null
   page_count: number | null
   created_at: string
   error_reason: string | null
@@ -451,7 +450,7 @@ export default function ExamDetailPage() {
   async function loadData(silent = false) {
     if (!silent) setLoading(true)
     const [{ data: examData }, { data: bioData }, { data: logData }, { data: catData }] = await Promise.all([
-      supabase.from('exams').select('id,type,status,pdf_quality,page_count,created_at,exam_date,error_reason,text_truncated,file_url,patient_name,document_type,display_title,extraction_completeness,issuer,requesting_physician')
+      supabase.from('exams').select('id,type,status,page_count,created_at,exam_date,error_reason,text_truncated,file_url,patient_name,extraction_completeness,issuer,requesting_physician')
         .eq('id', examId).single(),
       supabase.from('current_biomarkers')
         .select('id,name,value,value_text,unit,reference_min,reference_max,interpretation,result_type,range_extracted,reference_source,source,catalog_id,source_material,source_exam_name')
