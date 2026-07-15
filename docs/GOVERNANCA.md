@@ -871,10 +871,23 @@ Pilares transversais da plataforma (não-modalidades): **Clinical Processing Eng
 Billing/Assinaturas · Sistema de Notificações (NOTIF-001) · Eventos Assistenciais · Plataforma de Integrações
 em Saúde (HIP-001)**.
 
-Sequência de implementação (não inverter): **(1) concluir integralmente os módulos existentes → (2) consolidar
-as capacidades transversais → (3) concluir a infraestrutura universal da plataforma → (4) só então ampliar
-modalidades clínicas e integrações.** HIP-001 e Billing são considerados na arquitetura desde já (evitar
-acoplamento/retrabalho), implementados na fase adequada.
+Sequência de implementação (não inverter): **(1) consolidação da plataforma (transversais: Exames · Relatórios
+· Agenda · Histórico · Notificações · Billing · Financeiro · Eventos · HIP-001 · CARE-001) → (2) experiência do
+usuário (fluxo único de upload · cards · nomenclatura · design system · identidade visual · responsividade ·
+consistência) → (3) infraestrutura clínica (CPE · UCDA · Validator · Coverage · Identity Registry · persistência
+· Certificação — já muito avançada) → (4) só então modalidades clínicas.** Não abrir novas modalidades enquanto
+a Fase 1 não terminar. HIP-001 e Billing são considerados na arquitetura desde já; implementados na fase adequada.
+
+## Princípio da Estabilidade Arquitetural (CONSTITUCIONAL — fundadora, 14/07/2026)
+
+> **Nenhuma nova abstração enquanto uma existente puder ser reutilizada ou estendida.** Antes de criar QUALQUER
+> tabela · documento · serviço · componente · pipeline · engine · modelo, verificar primeiro se algo existente
+> serve. Reduz duplicação/divergência no crescimento.
+
+Os grandes pilares já estão definidos; o ganho agora vem de transformá-los em funcionalidades completas,
+consistentes e utilizáveis — **não** de novas ideias arquiteturais. Postura de execução: **mais código, menos
+documentação** — não criar `.md` novo sem necessidade real; foco em **implementar · validar · auditar · corrigir**.
+Expansão arquitetural fica em 2º plano, salvo quando uma necessidade CONCRETA da implementação revelar lacuna real.
 
 ## Regras gerais
 
