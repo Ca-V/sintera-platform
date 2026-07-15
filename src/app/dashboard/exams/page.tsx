@@ -16,6 +16,7 @@ import { categoryOf, FALLBACK_CATEGORY } from '@/lib/capture/exam-categories'
 import { findDuplicateIds, originalIdFor, type DuplicateCandidate } from '@/lib/exams/duplicates'
 import { deriveExamIdentity } from '@/lib/exams/identification'
 import { binaryStructuringState, STRUCTURING_LABEL } from '@/lib/exams/structuring'
+import { isOrderDocumentType } from '@/lib/exams/classification'
 import { useDocumentBundle, DocumentBundleStaging } from '@/components/ui/DocumentBundleCapture'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
@@ -33,9 +34,8 @@ type Exam = Database['public']['Tables']['exams']['Row']
 
 // Pedidos/solicitações (medical_order) e guias de convênio (insurance_guide) são
 // SOLICITAÇÕES, não resultados — vão para a subseção própria, fora da lista de exames.
-const ORDER_DOC_TYPES = new Set(['medical_order', 'insurance_guide'])
 function isOrderExam(e: Exam): boolean {
-  return ORDER_DOC_TYPES.has((e as unknown as { document_type?: string | null }).document_type ?? '')
+  return isOrderDocumentType((e as unknown as { document_type?: string | null }).document_type)
 }
 
 const ERROR_MESSAGES: Record<string, string> = {
