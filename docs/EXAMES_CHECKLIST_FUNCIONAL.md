@@ -40,8 +40,12 @@ Registro GLOBAL (sequência `NC-####` contínua entre domínios; ver `LIFECYCLE_
 | NC-0001 | 15/07 | Claude | Revisão funcional (Fundadora) | Exames | EXA-F003 | Funcional | média | ✅ encerrada | commit `a2f80e8` · `deriveExamIdentity` · `FUNC-exam-identification` |
 | NC-0002 | 15/07 | Claude | Auditoria / UX | Exames | EXA-F004 | UX | baixa | ✅ encerrada | commit `8355009` |
 | NC-0003 | 15/07 | Claude | Auditoria funcional | Exames | EXA-F007 | UX | baixa | ✅ encerrada | commit `95f3d3f` · msg amigável + `console.error` |
+| NC-0008 | 15/07 | Claude | Auditoria estática | Exames | EXA-F005 (binário) | Dados | média | 🟠 aberta | Descarte de laudo narrativo só faz `delete` na tabela **legada** `biomarkers` (`analyze/route.ts:377-379`); na rota canônica ativa (`useCanonical`, `:288-301`) os biomarcadores canônicos (view `current_biomarkers`, exibida no detalhe) **permanecem** → laudo `document_only` pode exibir biomarcadores fantasma. Correção = versão canônica `document_only` (schema append-only) → decisão de engenharia canônica |
+| NC-0009 | 15/07 | Claude | Auditoria estática | Exames | EXA (CPE) | Funcional | média | 🟡 justificada (adiada) | `clinical_results` (parâmetros não-biomarcador via CPE, ex. Pentacam) é persistido; `clinicalResultsToUcda` (`ucda.ts:218`) existe mas **nenhum** fluxo o lê → dado clínico invisível. Read-side adiado por **Convergência Progressiva** (exibição por modalidade = etapa futura, E6) |
+| NC-0010 | 15/07 | Claude | Auditoria estática | Exames | EXA (segmentação, J4) | UX | média | 🟡 justificada (adiada) | Split de bundle grava `source_bundle_exam_id`/`bundle_cdu_index`/`bundle_cdu_count`/`bundle_page_*` (`analyze/route.ts:503-536`); irmãos "— parte X/N" aparecem **soltos** e a relação "partes do mesmo documento" nunca é reconstruída na UI. Roadmap multi-exame = PARCIAL |
+| NC-0011 | 15/07 | Claude | Auditoria estática | Exames | EXA (careFlow) | Funcional | baixa | 🟡 justificada | `careFlow.ts` (CareStage requested→scheduled→performed→resulted) sem consumidor de UI (só o teste `FUNC-care-flow`). Capacidade planejada (stepper de care-stage), não implementada em tela |
 
-**NCs ABERTAS por Tipo (todos os domínios): Arquitetural 0 · Regulatória 0 · Funcional 0 · UX 0 · Segurança 0 · Dados 0 · Performance 0. Total aberto: 0.**
+**NCs ABERTAS por Tipo (todos os domínios):** Arquitetural **1** · Regulatória 0 · Funcional **3** · UX **3** · Segurança 0 · Dados **2** · Performance 0. **Total aberto: 9** (0 crítica/alta; 5 média, 4 baixa; 5 justificadas/adiadas, 4 em aberto). Detalhe de Eventos em `EVENTOS_CHECKLIST_FUNCIONAL.md`.
 
 _Origens possíveis: Revisão funcional · Revisão de UX · Homologação · Certificação · Documento CRC · Teste
 automatizado · Feedback de usuário._
@@ -71,8 +75,10 @@ Estados e distinção estática × funcional: ver `docs/LIFECYCLE_DOMINIOS.md` (
 
 ### Situação do domínio (precisa) — passo a passo do LIFECYCLE
 - **Passo 1 — Implementação:** congelada.
-- **Passo 2 — Auditoria estática (código):** ✅ concluída — as 13 jornadas revisadas no código; 0 NC crítica/
-  alta nova; NC-03 (baixa, UX) corrigida.
+- **Passo 2 — Auditoria estática (código):** ✅ concluída + **aprofundada** — as 13 jornadas revisadas; varredura
+  de latências (campo persistido × exibido, capacidade só-modelo, código parcialmente conectado). **0 NC crítica/
+  alta**; NC-03 corrigida. Novas NC média/baixa registradas (NC-0008 a NC-0011): 1 Dados (descarte canônico),
+  1 CPE read-side (adiado), 1 segmentação multi-exame (adiado), 1 careFlow latente. Nenhuma bloqueia o avanço.
 - **Passo 3 — Gate Arquitetural (engenharia):** ✅ **PASSOU** — 51 testes `ARCH-*` verdes + checklist (desacoplado
   · CPE aditivo · UCDA · Modelo Aberto · sem listas fechadas · modalidade só no CPE · reúso · camadas). **0 NC arquitetural.**
 - **Passo 4 — Gate Regulatório (conformidade):** ✅ **PASSOU** — transcreve/não interpreta (RDC 657) · Ver

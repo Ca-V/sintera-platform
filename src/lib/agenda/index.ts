@@ -19,7 +19,7 @@ export {
 } from './service'
 
 export {
-  typeLabel, statusLabel, formatDateBR, formatTimeBR, parseDateOnly, eventToNotificationInput,
+  typeLabel, statusLabel, formatDateBR, formatDateLongBR, formatTimeBR, parseDateOnly, eventToNotificationInput,
   EVENT_TYPE_DEFS, EVENT_TYPE_LABELS, EVENT_STATUS_UI,
 } from './presentation'
 export { buildEventNotification, notificationToInline, type EventNotification } from './notification'

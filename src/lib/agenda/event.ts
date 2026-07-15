@@ -79,6 +79,7 @@ export interface HealthEvent {
 export type EventSource =
   | 'manual' | 'agenda_legacy' | 'exam' | 'protocol' | 'ai' | 'wearable'
   | 'device' | 'hospital' | 'lab' | 'import' | 'connector' | 'system'
+  | 'recurrence'   // NC-0019: ocorrência derivada por roll-forward de recorrência (service.ts)
 
 // ── Mapeadores persistência → domínio (a UI consome o domínio, não a linha crua) ──
 /** Forma da linha de `health_events` (snake_case). */

@@ -11,7 +11,7 @@ import {
   Droplet, FlaskConical, TestTube, ShieldCheck, Receipt,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { parseDateOnly } from '@/lib/agenda'
+import { parseDateOnly, formatDateLongBR as formatDate } from '@/lib/agenda'
 import { useModalA11y } from '@/lib/ui/useModalA11y'
 import { useUser } from '@/context/UserContext'
 import { compareNames } from '@/lib/exams/nameMatch'
@@ -193,10 +193,6 @@ function formatRef(min: number | null, max: number | null): string {
   if (min !== null) return `> ${fmtNum(min)}`
   if (max !== null) return `< ${fmtNum(max)}`
   return '—'
-}
-
-function formatDate(iso: string) {
-  return parseDateOnly(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 // ── Agrupamento por material (specimen) e painel (categoria) ───────────────────

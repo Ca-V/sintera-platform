@@ -66,6 +66,11 @@ export function parseDateOnly(iso: string): Date {
   return new Date((iso ?? '').length <= 10 ? `${iso}T00:00:00` : iso)
 }
 
+/** Data por extenso pt-BR ('03 de jul. de 2026'), segura para date-only (UTC). */
+export function formatDateLongBR(iso: string): string {
+  return parseDateOnly(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
 /** 'HH:MM[:SS]' → 'HH:MM'. Vazio → null. */
 export function formatTimeBR(time: string | null): string | null {
   if (!time) return null

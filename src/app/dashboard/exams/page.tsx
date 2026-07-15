@@ -9,7 +9,7 @@ import {
   X, Loader2, Zap, Search, ChevronDown, ChevronUp, Trash2, Pencil, Check, Dna, ChevronRight, Info, ArrowLeft, FlaskConical, CalendarDays,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { parseDateOnly } from '@/lib/agenda'
+import { parseDateOnly, formatDateLongBR as formatDate } from '@/lib/agenda'
 import { useUser } from '@/context/UserContext'
 import { compareNames } from '@/lib/exams/nameMatch'
 import { categoryOf, FALLBACK_CATEGORY } from '@/lib/capture/exam-categories'
@@ -88,10 +88,6 @@ const STATUS_FILTER_OPTIONS = [
 
 const ACCEPTED_MIME = ['application/pdf', 'image/jpeg', 'image/png']
 const MAX_BYTES     = 50 * 1024 * 1024
-
-function formatDate(iso: string) {
-  return parseDateOnly(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
-}
 
 function getYear(iso: string) {
   return parseDateOnly(iso).getFullYear()
