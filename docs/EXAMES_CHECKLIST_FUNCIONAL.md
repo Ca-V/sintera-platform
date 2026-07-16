@@ -62,6 +62,7 @@ Registro GLOBAL (sequência `NC-####` contínua entre domínios; ver `LIFECYCLE_
 - **Datas** (F001/F012): ✅ auditado, sem alteração — `pickExamDate` resolve rótulo por proximidade; exclui nascimento/impressão/protocolo.
 - **EXA-F012** (evolução/série longitudinal): ✅ auditado, sem alteração — `summarizeBiomarkers`/`computeReferenceIndex` guardam divisão por zero, tratam `unit_mismatch`, ordenação estável. Refino possível (agrupar por `catalog_id`) é comportamental → decisão de produto.
 - **Imagem** (F002/normalizeModality): ✅ auditado, sem alteração — nome fiel preservado (Identidade Documental); `normalizeModality` é fallback canônico, raramente acionado.
+- **Interpretação de referência** (F005/F010, `analyze` §biomarcadores): ✅ auditado, sem alteração — null→indisponível; <min→abaixo; >max→acima; tem ref→dentro; sem ref→sem_referencia; limite `value==min → dentro` correto.
 
 _Origens possíveis: Revisão funcional · Revisão de UX · Homologação · Certificação · Documento CRC · Teste
 automatizado · Feedback de usuário._
