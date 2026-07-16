@@ -7,6 +7,24 @@ import Anthropic from '@anthropic-ai/sdk'
 // retorna null. TRANSCREVE, não infere (RDC 657 / Não-Produção de Conteúdo Clínico).
 const MODEL = 'claude-haiku-4-5-20251001'
 
+// Rótulos que o modelo às vezes ecoa antes do nome (apesar da instrução) — só quando seguidos de ":"/"-".
+const LABEL_PREFIX = /^(m[ée]dico\s+solicitante|solicitante|requisitante|requerente|m[ée]dico)\s*[:\-–—]\s*/i
+// Respostas de "sem dado" que NÃO são um nome (além de "null") — devem virar null, nunca aparecer no card.
+const NO_DATA = /^(null|n\/?a|n[ãa]o\s+informad[oa]|n[ãa]o\s+consta|n[ãa]o\s+identificad[oa]|nenhum|n[ãa]o\s+h[áa]|indispon[íi]vel|sem\s+informa[çc][ãa]o|[-–—.]+)$/i
+
+/**
+ * Normaliza a resposta crua do extrator em um nome de solicitante confiável, ou `null`.
+ * PURA e determinística (sem I/O): apara pontuação, remove rótulo ecoado e descarta respostas
+ * de "sem dado" ou verbosas demais. TRANSCREVE — nunca infere (RDC 657).
+ */
+export function normalizeRequestingPhysician(raw: string | null | undefined): string | null {
+  let s = (raw ?? '').replace(/^["'.\s]+|["'.\s]+$/g, '').trim()
+  if (!s) return null
+  s = s.replace(LABEL_PREFIX, '').trim()          // remove rótulo ecoado ("Solicitante: Dr. X" → "Dr. X")
+  if (!s || NO_DATA.test(s) || s.length > 80) return null
+  return s
+}
+
 export async function extractRequestingPhysician(examText: string | null | undefined): Promise<string | null> {
   const text = (examText ?? '').trim()
   if (text.length < 20) return null
@@ -24,10 +42,8 @@ export async function extractRequestingPhysician(examText: string | null | undef
         + 'exatamente "null". Responda só o nome, sem rótulos nem pontuação extra.',
       messages: [{ role: 'user', content: `Texto do laudo:\n"""${head}"""\n\nNome do médico solicitante:` }],
     })
-    const raw = msg.content[0]?.type === 'text' ? msg.content[0].text.trim() : ''
-    const cleaned = raw.replace(/^["'.\s]+|["'.\s]+$/g, '')
-    if (!cleaned || /^null$/i.test(cleaned) || cleaned.length > 80) return null
-    return cleaned.slice(0, 80)
+    const raw = msg.content[0]?.type === 'text' ? msg.content[0].text : ''
+    return normalizeRequestingPhysician(raw)
   } catch {
     return null
   }
