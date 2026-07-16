@@ -47,6 +47,10 @@ conflito)** → transversais: `COMPLIANCE-001` (Fase 0 + Gate 9 eixos) · `DATA-
 (governança de dados) · `API-001` (APIs) · `AI-001` (IA, não-SaMD) · `EVENTS-001` (eventos de domínio) ·
 `ARCH-FEATURE-FLAGS` · `TENANT-001` (multitenancy) · `OPS-001` (observabilidade ≠ auditoria) · `SEC-001` ·
 `HIP-001` · `UCDA-001`. Todo documento referencia o ADR-000.
+**Verificabilidade:** `GOV-001` (Governance Coverage Matrix) — mede a governança: matriz princípio→evidência,
+**Governance Version** (v1.0), **Processo de Revisão Arquitetural** (novo domínio/modelo canônico/novo tipo de
+dado/novo fornecedor/regras de compartilhamento/posicionamento regulatório), **indicadores** e reserva de jurisdição (BR/UE/US).
+O ADR-000 passou a ser **normativo** (Constitutional Invariants — 7 regras obrigatórias que bloqueiam o `Done`).
 
 ## Estrutura de governança — RESPONSABILIDADE ÚNICA por documento (não duplicar informação)
 ```

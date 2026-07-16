@@ -20,6 +20,17 @@
 13. **Evolution without Breaking Changes** — evoluir sem quebrar: depreciar-não-apagar; quebra só por versão MAJOR + migração + Gate.
 14. **Não-SaMD (posicionamento regulatório)** — não interpreta/diagnostica/prognostica/prescreve (RDC 657; `GOVERNANCA.md`; COMP-06/11).
 
+## Constitutional Invariants (NORMATIVOS — obrigatórios, verificáveis)
+O ADR-000 não é só referência: impõe regras. Violar um invariante **bloqueia o `Done`** (Compliance Gate) e,
+quando possível, é barrado por teste automatizado (`ARCH-*`). Cobertura rastreada em `GOV-001`.
+1. **Nenhum componente grava dados fora do Modelo Canônico** (`DATA-001`) — normalização antes de persistir.
+2. **Nenhum documento original pode ser alterado** (imutável e sempre acessível).
+3. **Toda informação derivada mantém vínculo com a origem** (proveniência/lineage — DATA-002).
+4. **Todo dado possui proveniência obrigatória** (sem proveniência → não é dado estruturado).
+5. **Toda decisão arquitetural cita os princípios afetados** (ADR referencia os princípios que toca).
+6. **Todo novo domínio adere a UCDA + DATA-001 + COMPLIANCE-001** (Gate de Conformidade) antes de existir.
+7. **Nenhuma funcionalidade reduz garantias existentes** de privacidade, segurança ou rastreabilidade (só amplia ou mantém).
+
 ## Arquitetura orientada por CAPACIDADES (visão permanente, ≠ módulos)
 Os módulos (Exames, Eventos, Medicamentos…) são organizações de roadmap; as **capacidades** são permanentes e
 atravessam todos eles:
