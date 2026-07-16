@@ -73,7 +73,7 @@ Estado: ✅ evidenciado · 🟡 parcial · ⬜ pendente. Dep.: **A** autônomo �
 | COMP-02 | 🟡 | I+F | **parcialmente atendido** — infra Supabase/Vercel oferece AES-256 em repouso e TLS, mas SEM evidência de: (a) todos os dados relevantes efetivamente cifrados no nível da app, (b) versões/config seguras de TLS auditadas, (c) gestão/rotação de chaves. Ver Exceção EXC-02 |
 | COMP-03 | ⬜ | F+A | RLS é base; modelo formal de 6 perfis = design de produto+arquitetura |
 | COMP-04 | ⬜ | A+I | trilha append-only de ações do usuário = novo (autônomo); imutabilidade forte pode exigir infra |
-| COMP-05 | 🟡 | A | REL-001 compartilha por token; falta expiração/revogação/log de acesso/senha |
+| COMP-05 | 🟡 | A | **Evidenciado (auditoria 15/07):** token não-adivinhável ✓ (`relatorio/page.tsx:296`, 2×UUID ~244 bits) · expiração ✓ e revogação ✓ (validadas em `r/[token]/page.tsx:75`, tabela `report_shares.expires_at`/`revoked`). **Faltam:** registro de acessos (data/hora/dispositivo/IP) e senha opcional — o caminho público não loga acesso |
 | COMP-06 | ✅ | A | não interpreta/diagnostica (RDC 657, `GOVERNANCA.md`) + original sempre acessível (Rastreabilidade Documental). Evidência: princípio constitucional + Gate Regulatório |
 | COMP-07 | 🟡 | A+J | UCDA + Modelo Aberto miram LOINC/SNOMED; mapeamento FHIR futuro; SNOMED = licença → Exceção EXC-07 |
 | COMP-08 | ⬜ | A+J | técnicas rascunháveis por mim; jurídicas (privacidade) = J |
@@ -102,9 +102,10 @@ Critérios completos são definidos quando o COMP entra em execução; abaixo, o
 por RLS/trigger) · ✓ usuário identificado · ✓ timestamp em UTC · ✓ IP registrado · ✓ request id registrado ·
 ✓ teste automatizado · ✓ cobertura da trilha ≥ meta. **Evidência:** migration + `audit.spec.ts` + ADR.
 
-**COMP-05 — Compartilhamento Seguro.** ✓ link temporável com expiração configurável · ✓ revogação imediata
-(invalida acessos subsequentes) · ✓ todo acesso registrado (data/hora/dispositivo/IP) · ✓ senha opcional ·
-✓ token não adivinhável (entropia adequada) · ✓ teste automatizado. **Evidência:** `share.spec.ts` + migration + captura UI.
+**COMP-05 — Compartilhamento Seguro.** ✅ link temporável com expiração configurável (`report_shares.expires_at`) ·
+✅ revogação imediata (`revoked`, valida em `r/[token]:75`) · ⬜ todo acesso registrado (data/hora/dispositivo/IP) ·
+⬜ senha opcional · ✅ token não adivinhável (2×UUID ~244 bits, `relatorio:296`) · ⬜ teste automatizado.
+**Faltam (gap):** log de acessos + senha + teste. Implementar o log toca o caminho público → ciclo com verificação.
 
 ## COMP-13 — Ecossistema e Interoperabilidade Externa (requisito ARQUITETURAL da Fase 0)
 **Objetivo:** toda a arquitetura preparada para integração segura com dispositivos/apps de saúde e sistemas
