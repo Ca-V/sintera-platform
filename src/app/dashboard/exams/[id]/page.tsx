@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { parseDateOnly, formatDateLongBR as formatDate } from '@/lib/agenda'
+import { fmtNum, formatRef } from '@/lib/ui/number'
 import { useModalA11y } from '@/lib/ui/useModalA11y'
 import { useUser } from '@/context/UserContext'
 import { compareNames } from '@/lib/exams/nameMatch'
@@ -180,19 +181,6 @@ function sortBiomarkers(bms: Biomarker[]): Biomarker[] {
   })
 }
 
-/** Número em pt-BR: vírgula decimal + agrupamento de milhar, sem arredondar. */
-function fmtNum(n: number): string {
-  const [int, dec] = String(n).split('.')
-  const grouped = Number(int).toLocaleString('pt-BR')
-  return dec ? `${grouped},${dec}` : grouped
-}
-
-function formatRef(min: number | null, max: number | null): string {
-  if (min !== null && max !== null) return `${fmtNum(min)} – ${fmtNum(max)}`
-  if (min !== null) return `> ${fmtNum(min)}`
-  if (max !== null) return `< ${fmtNum(max)}`
-  return '—'
-}
 
 // ── Agrupamento por material (specimen) e painel (categoria) ───────────────────
 // Deixa claro de QUAL exame cada biomarcador veio (sangue x urina) e mantém as
