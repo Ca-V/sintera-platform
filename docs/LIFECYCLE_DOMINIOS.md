@@ -49,6 +49,17 @@
 - [ ] **LGPD** (dado sensível de saúde/PII protegido) · **consentimentos** (quando aplicável)?
 *(Separar de arquitetura evita passar na engenharia e introduzir risco regulatório.)*
 
+### GATE DE CONFORMIDADE (Definition of Done da plataforma — Fase 0 / COMPLIANCE-001)
+Fundadora (15/07/2026): **nenhuma funcionalidade é `Done` sem aprovar o Gate de Conformidade.** Ele
+**absorve e amplia** o Gate Regulatório acima, acrescentando os 8 impactos obrigatórios (item 12 do parecer):
+`Implementação → Testes → Review → GATE DE CONFORMIDADE → Merge/Homologação`.
+- [ ] **LGPD/Privacidade** · [ ] **Segurança** · [ ] **Autorização** · [ ] **Auditoria (trilha imutável)** ·
+  [ ] **Interoperabilidade** (FHIR/LOINC/SNOMED/UCUM) · [ ] **Impacto regulatório** (fora de SaMD) ·
+  [ ] **Arquitetura** · [ ] **Rastreabilidade** (original sempre acessível).
+
+Falha em qualquer item → NC (Regulatória/Segurança/Dados/…) antes do `Done`. Detalhe, backlog e estado da
+trilha paralela: **`docs/COMPLIANCE-001_GOVERNANCA.md`** (executada em paralelo a Exames, sem pausá-lo).
+
 ## O que cada passo significa (não confundir objetivos)
 | Passo | Objetivo | Como | Sai quando |
 |---|---|---|---|

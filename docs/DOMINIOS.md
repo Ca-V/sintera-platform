@@ -23,12 +23,18 @@ ciclo) · **Estado**. Prefixo de ID por domínio entre parênteses. `—` = aind
 | **Billing** (`BILL`) | — | 0 | Implementação (fundação: entitlements+ciclo+invoices) | Em andamento | `BILLING-001_ASSINATURAS.md` |
 | **HIP-001** (`HIP`) | — | 0 | Planejamento (implementar fase 3/4) | Planejado | `HIP-001_PLATAFORMA_INTEGRACOES.md` |
 | **CARE-001** (`CARE`) | — | 0 | Planejamento (fase posterior) | Planejado | `CARE-001_ESPACO_COLABORATIVO.md` |
+| **Fase 0 — Compliance & Governança** (`COMP`) | 2/12 ✅ · 6 🟡 · 4 ⬜ | 0 | **Trilha PARALELA oficial** · Gate de Conformidade ativo (Definition of Done) | Em andamento (paralelo a Exames) | `COMPLIANCE-001_GOVERNANCA.md` · `SEC-001_PROJETO_SHIELD.md` |
 
 **NCs abertas (crítica/alta) na plataforma: 0.** Total aberto: **11** (6 média + 5 baixa). Encerradas na
 auditoria: **NC-0008** (consistência canônica, corrigida com de-promoção append-only) e **NC-0019** (fix
 aditivo). Nenhuma aberta bloqueia o Lifecycle; a maioria são justificadas/adiadas (Convergência Progressiva,
 roadmap multi-exame, vínculo duro) ou dependem de ambiente executável / decisão de produto. Por Tipo: Dados 1 ·
 Funcional 4 · UX 5 · Arquitetural 1. Encerradas também **NC-0020** (idempotência de irmãos multi-exames), **NC-0021** (nomenclatura urina) e **NC-0022** (financeiro: milhar pt-BR em `parseAmountToCents`), todas no mesmo ciclo. Última NC: `NC-0022`.
+
+**Fase 0 (Compliance & Governança) — trilha PARALELA:** roda ao lado de Exames, sem pausá-lo. Seu **Gate de
+Conformidade** (8 impactos) é **Definition of Done de TODA a plataforma**: nenhuma funcionalidade é `Done` sem
+aprová-lo (`COMPLIANCE-001_GOVERNANCA.md`). Requisito da Fase 0 que impacte um item em andamento é incorporado
+antes de concluí-lo (não acumula dívida de compliance).
 
 **Prioridade (um domínio por vez até `Encerrado`):** **Exames** é o foco atual; só após seu encerramento
 (Checklist `Homologado` + Matriz 100% + Certificação) o próximo domínio entra no ciclo. Cada domínio, ao
