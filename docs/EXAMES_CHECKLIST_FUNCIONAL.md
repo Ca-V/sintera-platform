@@ -65,6 +65,7 @@ Registro GLOBAL (sequência `NC-####` contínua entre domínios; ver `LIFECYCLE_
 - **Imagem** (F002/normalizeModality): ✅ auditado, sem alteração — nome fiel preservado (Identidade Documental); `normalizeModality` é fallback canônico, raramente acionado.
 - **Interpretação de referência** (F005/F010, `analyze` §biomarcadores): ✅ auditado, sem alteração — null→indisponível; <min→abaixo; >max→acima; tem ref→dentro; sem ref→sem_referencia; limite `value==min → dentro` correto.
 - **Gateway de IA — parse/salvamento** (F007/F010): ✅ auditado — `extractJsonCandidate` ciente de strings/escapes (não corta em `}` dentro de string); salvamento em 3 níveis (parse→jsonrepair→salvar do 1º `{`). Robustez travada com `gateway.extractJson` (6 casos) + `rangeExtracted` simplificado (ciclo 5).
+- **Data do laudo** (F001/F012, `parseExamDate`): ✅ auditado — formato estrito + faixa de ano + roundtrip (rejeita 2026-02-30/mês inválido) + bissexto correto. Travado com `gateway.parseExamDate` (5 casos).
 
 _Origens possíveis: Revisão funcional · Revisão de UX · Homologação · Certificação · Documento CRC · Teste
 automatizado · Feedback de usuário._

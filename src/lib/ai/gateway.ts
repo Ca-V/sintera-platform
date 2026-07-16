@@ -137,7 +137,7 @@ export function parseBiomarker(raw: RawBiomarker): ExtractedBiomarker | null {
 
 // Valida a data extraída do laudo: aceita só YYYY-MM-DD real e não-futura distante.
 // É FATO (data impressa no laudo), não juízo clínico. Retorna null se ausente/inválida.
-function parseExamDate(raw: unknown): string | null {
+export function parseExamDate(raw: unknown): string | null {
   if (typeof raw !== 'string') return null
   const m = raw.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/)
   if (!m) return null
