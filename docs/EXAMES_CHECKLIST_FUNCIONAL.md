@@ -69,6 +69,7 @@ Registro GLOBAL (sequência `NC-####` contínua entre domínios; ver `LIFECYCLE_
 - **Data do laudo** (F001/F012, `parseExamDate`): ✅ auditado — formato estrito + faixa de ano + roundtrip (rejeita 2026-02-30/mês inválido) + bissexto correto. Travado com `gateway.parseExamDate` (5 casos).
 - **Conferência de identidade do paciente** (`nameMatch`): ✅ auditado — heurístico conservador (aviso, não bloqueio); acentos/conectivos normalizados. Travado com `FUNC-name-match` (importa a impl. real; antes só havia smoke `.mjs` com lógica duplicada → risco de drift eliminado).
 - **UCDA `toNum`** (F010, parser numérico canônico): 🔧 refinado — `"1.234,56"` (milhar+decimal pt-BR) virava NaN/null (perdia o valor); fix gatilhado por vírgula, **sem tocar** o caso ambíguo sem vírgula (densidade `1.028`/pH `7.35` preservados). `FUNC-laboratory-adapter` (+casos).
+- **CPE `planRepresentation`/`processClinical`** (F010, ponto único de modalidade): ✅ auditado, sem alteração — guardas corretos (sem identidade/ambíguo/sem modelo → document_only), modalidade encapsulada só aqui; coberto por `FUNC-clinical-processing-engine`.
 
 _Origens possíveis: Revisão funcional · Revisão de UX · Homologação · Certificação · Documento CRC · Teste
 automatizado · Feedback de usuário._
