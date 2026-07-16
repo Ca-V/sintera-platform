@@ -45,9 +45,21 @@ Registro GLOBAL (sequência `NC-####` contínua entre domínios; ver `LIFECYCLE_
 | NC-0010 | 15/07 | Claude | Auditoria estática | Exames | EXA (segmentação, J4) | UX | média | 🟡 justificada (adiada) | Split de bundle grava `source_bundle_exam_id`/`bundle_cdu_index`/`bundle_cdu_count`/`bundle_page_*` (`analyze/route.ts:503-536`); irmãos "— parte X/N" aparecem **soltos** e a relação "partes do mesmo documento" nunca é reconstruída na UI. Roadmap multi-exame = PARCIAL |
 | NC-0011 | 15/07 | Claude | Auditoria estática | Exames | EXA (careFlow) | Funcional | baixa | 🟡 justificada | `careFlow.ts` (CareStage requested→scheduled→performed→resulted) sem consumidor de UI (só o teste `FUNC-care-flow`). Capacidade planejada (stepper de care-stage), não implementada em tela |
 | NC-0020 | 15/07 | Claude | Auditoria estática | Exames | EXA-F004 (segmentação) | Dados | média | ✅ encerrada | commit `a5ffb9b` · criação de registros-irmãos de bundle sem guarda de idempotência: se a marcação do root falhasse em silêncio (Supabase não lança) após criar os irmãos, uma reanálise (`isRootBundle=true`) os RECRIARIA → "— parte X/N" duplicados. Fix: head-count de irmãos existentes antes de inserir; só cria quando não há. Encerrada no mesmo ciclo |
+| NC-0022 | 15/07 | Claude | Auditoria estática | Exames | EXA-F008 (financeiro) | Dados | média | ✅ encerrada | commit `194abb6` · `parseAmountToCents` tratava todo ponto sem vírgula como decimal → "1.234" (milhar pt-BR) virava R$ 1,23 em vez de R$ 1.234,00. Fix: ponto(s) separando grupos de 3 dígitos = milhar (removidos); ponto seguido de ≠3 dígitos segue decimal. `FUNC-money` (+milhar/decimal). Encerrada no mesmo ciclo |
 | NC-0021 | 15/07 | Claude | Auditoria estática | Exames | EXA-F002 (nomenclatura) | Dados | média | ✅ encerrada | commit `2b5d093` · `deriveDisplayTitle` colapsava TODA urina em "Urina tipo I" (`isUrine` casa urocultura/urina-24h/sedimento/EAS) → uma **urocultura** era renomeada "Urina tipo I", perdendo a Identidade Documental (fere RDC 657 "transcreve, não infere"). Fix: só urina de ROTINA vira "Urina tipo I"; urocultura e urina-24h preservam o nome fiel. Casos no `ARCH-002`. Encerrada no mesmo ciclo |
 
 **NCs ABERTAS de EXAMES por Tipo:** Arquitetural 0 · Regulatória 0 · Funcional **2** · UX **1** · Segurança 0 · Dados **0** · Performance 0. **Total aberto (Exames): 3** (0 crítica/alta; 2 média + 1 baixa; **todas justificadas/adiadas** — read-side canônico E6, multi-exame, careFlow). NC-0008 (Dados) **encerrada**. Tally da plataforma: `DOMINIOS.md`.
+
+### Registro de Auditoria Estática por item (varredura contínua — uma linha por item verificado)
+> Confirmar solidez também reduz incerteza. Itens auditados a fundo (borda/inconsistência/simplificação):
+- **EXA-F002** (nomenclatura): 🔧 corrigido — NC-0021 (urina distinta) + hardening emissor (NC via F003).
+- **EXA-F003** (identificação): 🔧 corrigido — emissor + solicitante endurecidos (rótulo ecoado / "sem dado"), normalizador comum DRY.
+- **EXA-F004** (Exame × Pedido): ✅ auditado, sem alteração — `isOrderDocumentType` correto; segmentação NC-0020 corrigida.
+- **EXA-F006** (estruturação binária): ✅ auditado, sem alteração — decisão correta, nunca "parcial".
+- **EXA-F008** (financeiro): 🔧 corrigido — NC-0022 (milhar pt-BR); título/valor/NF corretos.
+- **EXA-F010** (CPE/cobertura): ✅ auditado, sem alteração — `computeCoverage` puro, sem completude falsa.
+- **EXA-F011** (duplicados): ✅ auditado, sem alteração — `findDuplicateIds`/`originalIdFor` corretos (uso guardado).
+- **Datas** (F001/F012): ✅ auditado, sem alteração — `pickExamDate` resolve rótulo por proximidade; exclui nascimento/impressão/protocolo.
 
 _Origens possíveis: Revisão funcional · Revisão de UX · Homologação · Certificação · Documento CRC · Teste
 automatizado · Feedback de usuário._
