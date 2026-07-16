@@ -5,9 +5,11 @@
 > (roda ao lado de Exames, sem pausá-lo), com **backlog, critérios de aceite e entregáveis próprios**.
 > Requisito da Fase 0 que impacte um desenvolvimento em andamento é **incorporado antes de concluí-lo**.
 >
+> **Raiz constitucional: `ADR-000` (Architectural Principles)** — este e todos os demais o referenciam.
 > Processo: `LIFECYCLE_DOMINIOS.md` · Segurança: `SEC-001_PROJETO_SHIELD.md` · Clínico: `GOVERNANCA.md` ·
-> **Modelo canônico: `DATA-001`** · **Governança de APIs: `API-001`** · Conectores: `HIP-001` ·
-> Painel: `DOMINIOS.md` (prefixo **`COMP`**).
+> Modelo canônico: `DATA-001` · Governança de dados: `DATA-002` · APIs: `API-001` · IA: `AI-001` ·
+> Eventos: `EVENTS-001` · Flags: `ARCH-FEATURE-FLAGS` · Tenant: `TENANT-001` · Observabilidade: `OPS-001` ·
+> Conectores: `HIP-001` · Painel: `DOMINIOS.md` (prefixo **`COMP`**).
 
 ## Postura de classificação (regra de ouro)
 **Conservadora e baseada em EVIDÊNCIA.** Um requisito só é `✅` com **evidência técnica verificável** (teste,

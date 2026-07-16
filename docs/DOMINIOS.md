@@ -41,6 +41,13 @@ implícita); toda alteração passa por **Impact Assessment**. Postura conservad
 entrar, ganha seus próprios docs (`<DOMINIO>_CHECKLIST_FUNCIONAL.md`, `_HOMOLOGACAO`, `_CERTIFICACAO`) seguindo
 o LIFECYCLE, sem redefinir governança.
 
+## Camada de governança ARQUITETURAL (raiz: ADR-000)
+Governança agora é arquitetura. Hierarquia: **`ADR-000` (princípios permanentes — constitucional, prevalece em
+conflito)** → transversais: `COMPLIANCE-001` (Fase 0 + Gate 9 eixos) · `DATA-001` (modelo canônico) · `DATA-002`
+(governança de dados) · `API-001` (APIs) · `AI-001` (IA, não-SaMD) · `EVENTS-001` (eventos de domínio) ·
+`ARCH-FEATURE-FLAGS` · `TENANT-001` (multitenancy) · `OPS-001` (observabilidade ≠ auditoria) · `SEC-001` ·
+`HIP-001` · `UCDA-001`. Todo documento referencia o ADR-000.
+
 ## Estrutura de governança — RESPONSABILIDADE ÚNICA por documento (não duplicar informação)
 ```
 GOVERNANCA.md          → princípios constitucionais · regras permanentes · referência ao Lifecycle
