@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { normalizeExtractedName } from './extractedFieldNormalize'
 
 // Extrai o NOME do médico SOLICITANTE (quem pediu o exame) de um laudo, a partir do texto
 // já extraído. Isolado e best-effort — NÃO toca no prompt de extração (governado/versionado/
@@ -8,21 +9,15 @@ import Anthropic from '@anthropic-ai/sdk'
 const MODEL = 'claude-haiku-4-5-20251001'
 
 // Rótulos que o modelo às vezes ecoa antes do nome (apesar da instrução) — só quando seguidos de ":"/"-".
+// Seguro: um nome de médico não começa por "Solicitante/Requisitante/Médico:".
 const LABEL_PREFIX = /^(m[ée]dico\s+solicitante|solicitante|requisitante|requerente|m[ée]dico)\s*[:\-–—]\s*/i
-// Respostas de "sem dado" que NÃO são um nome (além de "null") — devem virar null, nunca aparecer no card.
-const NO_DATA = /^(null|n\/?a|n[ãa]o\s+informad[oa]|n[ãa]o\s+consta|n[ãa]o\s+identificad[oa]|nenhum|n[ãa]o\s+h[áa]|indispon[íi]vel|sem\s+informa[çc][ãa]o|[-–—.]+)$/i
 
 /**
  * Normaliza a resposta crua do extrator em um nome de solicitante confiável, ou `null`.
- * PURA e determinística (sem I/O): apara pontuação, remove rótulo ecoado e descarta respostas
- * de "sem dado" ou verbosas demais. TRANSCREVE — nunca infere (RDC 657).
+ * Remove rótulo ecoado ("Solicitante: Dr. X" → "Dr. X"); demais regras no normalizador comum.
  */
 export function normalizeRequestingPhysician(raw: string | null | undefined): string | null {
-  let s = (raw ?? '').replace(/^["'.\s]+|["'.\s]+$/g, '').trim()
-  if (!s) return null
-  s = s.replace(LABEL_PREFIX, '').trim()          // remove rótulo ecoado ("Solicitante: Dr. X" → "Dr. X")
-  if (!s || NO_DATA.test(s) || s.length > 80) return null
-  return s
+  return normalizeExtractedName(raw, LABEL_PREFIX)
 }
 
 export async function extractRequestingPhysician(examText: string | null | undefined): Promise<string | null> {

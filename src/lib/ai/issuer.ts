@@ -1,10 +1,20 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { normalizeExtractedName } from './extractedFieldNormalize'
 
 // Extrai o NOME do laboratório/clínica/hospital EMISSOR de um laudo, a partir do texto
 // já extraído. Isolado e best-effort: NÃO toca no prompt de extração (governado/versionado/
 // verificado por hash). Alimenta o enriquecimento do display_title ("Exames laboratoriais •
 // Hermes Pardini"). Falha nunca quebra a análise — retorna null.
 const MODEL = 'claude-haiku-4-5-20251001'
+
+// Rótulo ecoado SEGURO de remover: nomes de emissor NÃO começam por "Emissor:"/"Emitido por:".
+// NÃO incluímos "Laboratório/Clínica/Hospital" — nomes reais começam por essas palavras.
+const ISSUER_LABEL = /^(emissor|laudo\s+emitido\s+por|emitido\s+por)\s*[:\-–—]\s*/i
+
+/** Normaliza a resposta crua do extrator de emissor em nome confiável, ou `null`. PURA. */
+export function normalizeIssuer(raw: string | null | undefined): string | null {
+  return normalizeExtractedName(raw, ISSUER_LABEL)
+}
 
 export async function extractIssuer(examText: string | null | undefined): Promise<string | null> {
   const text = (examText ?? '').trim()
@@ -22,10 +32,8 @@ export async function extractIssuer(examText: string | null | undefined): Promis
         + 'Responda só o nome, sem rótulos nem pontuação extra.',
       messages: [{ role: 'user', content: `Texto do laudo:\n"""${head}"""\n\nNome do laboratório/clínica emissor:` }],
     })
-    const raw = msg.content[0]?.type === 'text' ? msg.content[0].text.trim() : ''
-    const cleaned = raw.replace(/^["'.\s]+|["'.\s]+$/g, '')
-    if (!cleaned || /^null$/i.test(cleaned) || cleaned.length > 80) return null
-    return cleaned.slice(0, 80)
+    const raw = msg.content[0]?.type === 'text' ? msg.content[0].text : ''
+    return normalizeIssuer(raw)
   } catch {
     return null
   }
