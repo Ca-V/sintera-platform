@@ -6,6 +6,7 @@
 > Requisito da Fase 0 que impacte um desenvolvimento em andamento é **incorporado antes de concluí-lo**.
 >
 > Processo: `LIFECYCLE_DOMINIOS.md` · Segurança: `SEC-001_PROJETO_SHIELD.md` · Clínico: `GOVERNANCA.md` ·
+> **Modelo canônico: `DATA-001`** · **Governança de APIs: `API-001`** · Conectores: `HIP-001` ·
 > Painel: `DOMINIOS.md` (prefixo **`COMP`**).
 
 ## Postura de classificação (regra de ouro)
@@ -22,10 +23,27 @@ Implementação → Testes → REVIEW TÉCNICO (correção/engenharia/simplifica
                               ↓
                             Merge / Homologação
 ```
-**Compliance Review — verifica APENAS (9 eixos):** LGPD · Segurança · Auditoria · Arquitetura · Regulação ·
-Privacidade · Interoperabilidade · Rastreabilidade · **Ecossistema externo** (9º: preserva o modelo canônico ·
-sem vendor lock-in · compatível com padrões internacionais · respeita consentimentos/permissões · preserva a
-proveniência da origem). Falha em qualquer eixo → **NC** (ou **Exceção registrada**, ver §Exceções) antes do `Done`.
+**Compliance Review — MATRIZ de 9 eixos** (não um checklist "passou/não passou": cada eixo tem Status +
+Evidência, produzindo histórico de conformidade). Cada funcionalidade preenche:
+
+| Eixo | Status | Evidência (exemplo) |
+|---|:--:|---|
+| LGPD | ✅/🟡/⬜ | COMP-01 |
+| Segurança | ✅/🟡/⬜ | SEC-001 |
+| Auditoria | ✅/🟡/⬜ | AUD-### / `audit.spec.ts` |
+| Regulação (fora de SaMD) | ✅/🟡/⬜ | COMP-06 / COMP-11 |
+| Arquitetura | ✅/🟡/⬜ | ADR-### |
+| Interoperabilidade | ✅/🟡/⬜ | DATA-001 / HIP-001 |
+| Ecossistema externo | ✅/🟡/⬜ | COMP-13 |
+| Privacidade | ✅/🟡/⬜ | COMP-01 |
+| Rastreabilidade | ✅/🟡/⬜ | AUD-### / original acessível |
+
+Eixo em ⬜/🟡 sem evidência → **NC** ou **Exceção registrada** (§Exceções) antes do `Done`. Nunca ✅ sem evidência.
+
+**Interoperabilidade ≠ Integração:** **interoperabilidade** é requisito PERMANENTE da arquitetura (o modelo
+canônico mapeia para FHIR/LOINC/UCUM/SNOMED desde já — ver `DATA-001`); **integrações** são implementações
+específicas do roadmap (conectores — `HIP-001`). A plataforma é interoperável por arquitetura, não por possuir
+conectores de fornecedores X ou Y. Governança de APIs dos conectores: `API-001`.
 
 ## Origem normativa (cada COMP aponta sua fonte — propaga mudança regulatória com menor esforço)
 | COMP | Bloco | Origem normativa |
@@ -103,8 +121,10 @@ Invariantes (verificados pelo 9º eixo do Gate):
 4. **Consentimento granular** — o usuário autoriza cada integração separadamente e escolhe quais categorias compartilhar.
 5. **Revogação** — interrompe novas sincronizações · mantém o histórico já importado (salvo pedido de exclusão) ·
    gera evento de auditoria.
-6. **Classificação da fonte** — laboratório · wearable · autorrelato · profissional · documento importado ·
-   dispositivo médico certificado (não tratar tudo com a mesma confiabilidade).
+6. **Classificação da fonte + origem regulatória** — laboratório · wearable · autorrelato · profissional ·
+   documento importado · dispositivo médico certificado (não tratar tudo com a mesma confiabilidade). A
+   **categoria regulatória** de cada fonte (Documento de saúde / Dado de monitoramento / Dispositivo médico /
+   Informação declarada / Conteúdo derivado) é definida em **`DATA-001` §7** e acompanha o dado (nunca elevada automaticamente).
 7. **Qualidade do dado** — medido automaticamente · informado manualmente · sincronizado · estimado · corrigido.
 8. **Interoperabilidade** — compatível com HL7 FHIR · LOINC · UCUM · SNOMED CT (quando licenciado) · IEEE 11073 (dispositivos).
 9. **Segurança** — OAuth 2.0 (ou equivalente do fornecedor) · cripto em trânsito · armazenamento seguro de tokens ·
@@ -119,6 +139,12 @@ Invariantes (verificados pelo 9º eixo do Gate):
 ✓ todo dado externo tem proveniência completa (§3) · ✓ consentimento por integração E por categoria · ✓ revogação
 para sincronização e audita · ✓ fonte + qualidade classificadas · ✓ token seguro (OAuth/rotação) · ✓ teste
 automatizado. **Evidência:** ADR da camada de conectores + migration (proveniência/consentimento) + `connectors.spec.ts`.
+
+**Connector Capability Matrix** — cada conector DECLARA formalmente suas capacidades (facilita manutenção/testes):
+| Conector | leitura | escrita | sync incremental | webhook | histórico completo | OAuth2 | revogação |
+|---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| _(ex.) Apple Health_ | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ |
+| _(preencher por conector ao implementar — HIP-001)_ | | | | | | | |
 
 ## Registro de Exceções (Exception Register — evita exceções implícitas)
 Requisito que não cumpre 100% agora entra AQUI (com mitigação e prazo), nunca fica em silêncio.
@@ -137,6 +163,18 @@ Toda alteração informa: afeta **LGPD?** · afeta **auditoria?** · afeta **int
 ⬜ Política de Segurança da Informação · ⬜ Política de Privacidade (J) · ⬜ Política de Compartilhamento ·
 ⬜ Política de Backup · ⬜ Plano de Resposta a Incidentes · ⬜ Plano de Continuidade · ⬜ Inventário de Dados ·
 ⬜ Matriz de Permissões · ⬜ Modelo de Governança de Dados.
+
+## Mapeamento para certificações futuras (organizar controles agora, certificar depois)
+Não é objetivo imediato implementar certificações — mas os controles são estruturados para **mapear** a
+referenciais reconhecidos, reduzindo esforço quando/se forem buscados:
+| Referencial | Escopo | COMP relacionados |
+|---|---|---|
+| **ISO/IEC 27001** | SGSI / segurança da informação | COMP-02, 03, 04, 09, 10, 12 |
+| **ISO/IEC 27701** | Privacidade (extensão da 27001) | COMP-01, 04, 05 |
+| **SOC 2 Type II** | Trust Services (segurança/disponibilidade/confidencialidade/privacidade) | COMP-02, 04, 05, 09, 10 |
+| **HITRUST** | Saúde (se houver expansão internacional) | COMP-01…04, 09, 10 |
+| **GDPR** | Usuários na União Europeia (se aplicável) | COMP-01, 04, 05, 11 |
+Cada COMP já registra **origem normativa** e **evidência**, o que serve de base para o mapeamento a esses frameworks.
 
 ## Critério de encerramento da Fase 0
 COMP-01…12 em ✅ ou 🟡-com-exceção-registrada · entregáveis do item 8 emitidos · Matriz de Rastreabilidade
