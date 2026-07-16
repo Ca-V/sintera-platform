@@ -527,9 +527,17 @@ export async function POST(
     finalUpdate.bundle_page_end = splitPlan.thisRange.end
   }
 
-  await supabase.from('exams')
+  const finalUpdateRes = await supabase.from('exams')
     .update(finalUpdate as never)
     .eq('id', examId)
+
+  // Observabilidade (robustez): esta persistência final NÃO pode falhar em silêncio — é ela que marca
+  // o exame como 'processed', grava datas/identidade e a proveniência de bundle. Uma falha aqui deixaria
+  // o exame em estado inconsistente (biomarcadores gravados via RPC, mas status/metadados desatualizados).
+  // O cliente Supabase não lança; logamos o erro para diagnóstico (NC-0020 nasceu justamente deste ponto cego).
+  if (finalUpdateRes.error) {
+    console.error('[analyze] falha ao gravar finalUpdate do exame', examId, finalUpdateRes.error.message)
+  }
 
   // Cria os registros-irmãos (CDUs 2..N) como 'pending', com proveniência do Bundle. Cada um, ao ser
   // analisado, processa SÓ o seu intervalo de páginas (existingRange) — extração isolada por CDU. O
