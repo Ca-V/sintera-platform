@@ -122,6 +122,14 @@ describe('FUNC · toNum', () => {
     expect(toNum('43,2')).toBe(43.2)
     expect(toNum('30.6')).toBe(30.6)
   })
+  it('milhar pt-BR com vírgula decimal (antes virava NaN)', () => {
+    expect(toNum('1.234,56')).toBe(1234.56)
+    expect(toNum('12.000,5')).toBe(12000.5)
+  })
+  it('SEM vírgula, ponto é decimal — não desfaz densidade/valor ambíguo', () => {
+    expect(toNum('1.028')).toBe(1.028)   // densidade urinária
+    expect(toNum('7.35')).toBe(7.35)     // pH
+  })
   it('não-número → null', () => {
     expect(toNum('Não reagente')).toBeNull()
     expect(toNum('')).toBeNull()

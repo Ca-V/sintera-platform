@@ -68,6 +68,7 @@ Registro GLOBAL (sequência `NC-####` contínua entre domínios; ver `LIFECYCLE_
 - **Gateway de IA — parse/salvamento** (F007/F010): ✅ auditado — `extractJsonCandidate` ciente de strings/escapes (não corta em `}` dentro de string); salvamento em 3 níveis (parse→jsonrepair→salvar do 1º `{`). Robustez travada com `gateway.extractJson` (6 casos) + `rangeExtracted` simplificado (ciclo 5).
 - **Data do laudo** (F001/F012, `parseExamDate`): ✅ auditado — formato estrito + faixa de ano + roundtrip (rejeita 2026-02-30/mês inválido) + bissexto correto. Travado com `gateway.parseExamDate` (5 casos).
 - **Conferência de identidade do paciente** (`nameMatch`): ✅ auditado — heurístico conservador (aviso, não bloqueio); acentos/conectivos normalizados. Travado com `FUNC-name-match` (importa a impl. real; antes só havia smoke `.mjs` com lógica duplicada → risco de drift eliminado).
+- **UCDA `toNum`** (F010, parser numérico canônico): 🔧 refinado — `"1.234,56"` (milhar+decimal pt-BR) virava NaN/null (perdia o valor); fix gatilhado por vírgula, **sem tocar** o caso ambíguo sem vírgula (densidade `1.028`/pH `7.35` preservados). `FUNC-laboratory-adapter` (+casos).
 
 _Origens possíveis: Revisão funcional · Revisão de UX · Homologação · Certificação · Documento CRC · Teste
 automatizado · Feedback de usuário._

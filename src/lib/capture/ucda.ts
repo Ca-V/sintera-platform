@@ -123,8 +123,13 @@ export function representationFromProcessor(result: ProcessorResult): UcdaRepres
 
 /** Parse numérico tolerante (vírgula decimal). Retorna null quando não é número. */
 export function toNum(value: string): number | null {
-  const n = Number(String(value).replace(',', '.').replace(/[^0-9.\-]/g, ''))
-  return Number.isFinite(n) && /\d/.test(value) ? n : null
+  const s = String(value)
+  // pt-BR: quando HÁ vírgula (decimal inequívoco), os pontos são separadores de milhar → removê-los
+  // e a vírgula vira ponto ("1.234,56" → 1234.56, antes virava NaN). SEM vírgula, o ponto é tratado
+  // como decimal — NÃO desfazemos "1.028" (densidade urinária) nem "42.5" (caso ambíguo, mantido).
+  const normalized = s.includes(',') ? s.replace(/\./g, '').replace(',', '.') : s
+  const n = Number(normalized.replace(/[^0-9.\-]/g, ''))
+  return Number.isFinite(n) && /\d/.test(s) ? n : null
 }
 
 // ── LEITURA: persistência (clinical_results) → UCDA. O consumidor (Timeline/Evolução/Care/…) lê SEMPRE UCDA,
