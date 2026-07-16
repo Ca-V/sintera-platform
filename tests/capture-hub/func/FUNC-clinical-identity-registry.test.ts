@@ -65,6 +65,11 @@ describe('FUNC · identifyClinical', () => {
     expect(r.clinicalType).toBe('Densitometria óssea')
   })
 
+  it('"CC" isolado (crânio-caudal genérico) NÃO basta para Mamografia (evita falso-positivo)', () => {
+    const r = identifyClinical('Relatório de procedimento. Volume aspirado: 20 CC. Sem intercorrências.')
+    expect(r.clinicalType).not.toBe('Mamografia')
+  })
+
   it('é DETERMINÍSTICA', () => {
     const t = 'MAMOGRAFIA BI-RADS LORAD'
     expect(JSON.stringify(identifyClinical(t))).toBe(JSON.stringify(identifyClinical(t)))

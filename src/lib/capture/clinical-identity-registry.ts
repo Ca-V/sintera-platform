@@ -21,8 +21,10 @@ export interface ModalityEntry {
 export const CLINICAL_IDENTITY_REGISTRY: ModalityEntry[] = [
   {
     clinicalType: 'Mamografia', clinicalFamily: 'Imagem — mama', clinicalModel: 'mammography',
-    strong: [/bi-?rads/i, /mamografia/i, /mastografia/i, /cr[âa]nio-?caudal/i, /\bMLO\b/, /\bCC\b/, /eklund/i, /digital\s+mammography/i],
-    moderate: [/calcifica[çc]/i, /par[êe]nquima\s+mam/i, /mama\s+(direita|esquerda)/i, /n[óo]dulo/i],
+    // `\bCC\b` (crânio-caudal) é genérico demais para evidência FORTE (colide com "CC" de outros contextos)
+    // → moderado. Mamografia real sempre traz mamografia/BI-RADS/MLO (fortes), então não perde recall.
+    strong: [/bi-?rads/i, /mamografia/i, /mastografia/i, /cr[âa]nio-?caudal/i, /\bMLO\b/, /eklund/i, /digital\s+mammography/i],
+    moderate: [/calcifica[çc]/i, /par[êe]nquima\s+mam/i, /mama\s+(direita|esquerda)/i, /n[óo]dulo/i, /\bCC\b/],
     manufacturers: [/hologic/i, /lorad/i, /selenia/i],
   },
   {
