@@ -35,4 +35,15 @@ describe('parseBiomarker — contexto do laudo (RF-01/RF-02)', () => {
     expect(r?.sourceMaterial).toBeNull()
     expect(r?.sourceExamName).toBeNull()
   })
+
+  it('rangeExtracted só é true com AMBOS os limites numéricos (flag do modelo é ignorado)', () => {
+    expect(parseBiomarker({ name: 'A', value: 1, reference_min: 10, reference_max: 20 })?.rangeExtracted).toBe(true)
+    expect(parseBiomarker({ name: 'B', value: 1, reference_min: 10 })?.rangeExtracted).toBe(false)
+    expect(parseBiomarker({ name: 'C', value: 1, reference_max: 20 })?.rangeExtracted).toBe(false)
+    expect(parseBiomarker({ name: 'D', value: 1 })?.rangeExtracted).toBe(false)
+    // flag do modelo NÃO força true sem os dois limites:
+    expect(parseBiomarker({ name: 'E', value: 1, reference_min: 10, range_extracted: true })?.rangeExtracted).toBe(false)
+    // ...nem força false quando os dois limites existem:
+    expect(parseBiomarker({ name: 'F', value: 1, reference_min: 10, reference_max: 20, range_extracted: false })?.rangeExtracted).toBe(true)
+  })
 })

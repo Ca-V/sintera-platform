@@ -78,10 +78,6 @@ function toStringOrNull(v: unknown): string | null {
   return typeof v === 'string' ? v.trim() || null : null
 }
 
-function toBoolean(v: unknown): boolean {
-  return v === true
-}
-
 function clamp01(v: unknown): number {
   const n = typeof v === 'number' ? v : 0
   return Math.min(1, Math.max(0, n))
@@ -110,10 +106,10 @@ export function parseBiomarker(raw: RawBiomarker): ExtractedBiomarker | null {
 
   const refMin = toNumber(raw.reference_min)
   const refMax = toNumber(raw.reference_max)
-  // range_extracted verdadeiro só quando ambos os limites são números (Prompt A4)
+  // range_extracted verdadeiro só quando AMBOS os limites são números (Prompt A4). O flag
+  // `raw.range_extracted` do modelo é ignorado por design: a faixa só é "extraída" se veio
+  // como par min+max numérico (evita alegar faixa sem os dois limites).
   const rangeExtracted = refMin !== null && refMax !== null
-    ? true
-    : toBoolean(raw.range_extracted) && refMin !== null && refMax !== null
 
   const value = toNumber(raw.value)
   const valueText = toStringOrNull(raw.value_text)?.slice(0, 200) ?? null
