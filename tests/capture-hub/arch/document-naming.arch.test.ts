@@ -35,9 +35,16 @@ describe('ARCH-002 · nome dirigido por CATEGORIA + ESCOPO (tabela de domínio)'
     expect(deriveDisplayTitle(lab({ documentScope: 'single', singleExamName: 'Hemograma' }))).toBe('Hemograma')
   })
 
-  it('urina isolada → "Urina tipo I"', () => {
+  it('urina de ROTINA (EAS/urinálise/sedimento) → "Urina tipo I"', () => {
     expect(deriveDisplayTitle(lab({ documentScope: 'single', singleExamName: 'URINA ROTINA' }))).toBe('Urina tipo I')
     expect(deriveDisplayTitle(lab({ documentScope: 'single', singleExamName: 'EAS' }))).toBe('Urina tipo I')
+    expect(deriveDisplayTitle(lab({ documentScope: 'single', singleExamName: 'Urinálise' }))).toBe('Urina tipo I')
+  })
+
+  it('urina DISTINTA (urocultura / 24h) preserva a identidade — NÃO vira "Urina tipo I"', () => {
+    expect(deriveDisplayTitle(lab({ documentScope: 'single', singleExamName: 'Urocultura' }))).toBe('Urocultura')
+    expect(deriveDisplayTitle(lab({ documentScope: 'single', singleExamName: 'Urina de 24 horas' }))).toBe('Urina de 24 horas')
+    expect(deriveDisplayTitle(lab({ documentScope: 'single', singleExamName: 'Proteinúria de 24h' }))).toBe('Proteinúria de 24h')
   })
 
   it('painel com categoria clínica → "Painel {categoria}"', () => {

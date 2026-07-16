@@ -150,7 +150,10 @@ export function deriveDisplayTitle(s: DocumentStructure): string {
     case 'laboratory': {
       if (s.documentScope === 'single') {
         const name = clean(s.singleExamName)
-        if (isUrine(name)) return 'Urina tipo I'
+        // Urina de ROTINA (EAS/urinálise/sedimento) → nome canônico "Urina tipo I". Mas NÃO colapsar
+        // exames de urina DISTINTOS — urocultura e urina de 24h são coletas/análises diferentes
+        // (Identidade Documental; a taxonomia de materiais já as separa). Preserva o nome fiel.
+        if (isUrine(name) && !/urocultura|24\s*h/i.test(name)) return 'Urina tipo I'
         return name || 'Exame laboratorial'
       }
       // panel | mixed → representa o CONJUNTO, nunca um resultado interno.
