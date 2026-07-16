@@ -49,6 +49,25 @@ describe('FUNC · segment', () => {
     expect(r.cdus[0].pages).toEqual([1, 2])
   })
 
+  it('laudo narrativo multipágina cujo título só aparece na 1ª página → 1 CDU (não sobre-segmenta)', () => {
+    const r = segment(structs([
+      `RESSONÂNCIA MAGNÉTICA DO CRÂNIO\nTécnica: cortes axiais.\nAchados: substância branca preservada.`,
+      `Achados (continuação): sistema ventricular de dimensões normais.\nConclusão: exame normal.`,
+    ]))
+    expect(r.cdus).toHaveLength(1)
+    expect(r.cdus[0].pages).toEqual([1, 2])
+    expect(r.cdus[0].kind).toBe('narrative')
+  })
+
+  it('laudo A + continuação sem título + laudo B → 2 CDUs (A[1,2] · B[3])', () => {
+    const r = segment(structs([
+      `TOMOGRAFIA DE TÓRAX\nTécnica: cortes finos.\nAchados: parênquima pulmonar preservado.`,
+      `Achados (continuação): sem linfonodomegalias.\nConclusão: normal.`,
+      `ULTRASSONOGRAFIA DE ABDOME\nAchados: fígado de dimensões normais.\nConclusão: normal.`,
+    ]))
+    expect(r.cdus.map(c => c.pages)).toEqual([[1, 2], [3]])
+  })
+
   it('é DETERMINÍSTICA', () => {
     expect(JSON.stringify(segment(structs(IMG_PAGES)))).toBe(JSON.stringify(segment(structs(IMG_PAGES))))
   })

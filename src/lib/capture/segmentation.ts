@@ -111,8 +111,11 @@ export function segment(pageStructures: StructuralRepresentation[]): Segmentatio
     //  • ambas as páginas são de RESULTADOS (um relatório laboratorial pode ocupar várias páginas → 1 CDU); OU
     //  • narrativo com o MESMO título (laudo multipágina).
     const sameResults = curKind === 'results' && p.kind === 'results'
+    // Narrativo continua a MESMA CDU quando repete o título OU quando a página NÃO tem título próprio
+    // (continuação de um laudo multipágina cujo cabeçalho só aparece na 1ª página). Um laudo DISTINTO
+    // sempre traz seu próprio título (princípio); página sem título não é laudo novo → não sobre-segmenta.
     const sameNarrative = curKind === 'narrative' && p.kind === 'narrative'
-      && curTitle !== '' && foldTitle(p.title) === curTitle
+      && (foldTitle(p.title) === '' || (curTitle !== '' && foldTitle(p.title) === curTitle))
     const continuationUnknown = p.kind === 'unknown' && curKind !== null // anexo/continuação sem sinal próprio
 
     if (sameResults || sameNarrative || continuationUnknown) {
