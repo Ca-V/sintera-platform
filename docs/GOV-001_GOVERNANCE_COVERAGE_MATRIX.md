@@ -34,6 +34,7 @@ MAJOR = altera/remove um invariante ou princípio (raro, exige ADR). MINOR = nov
 | Original Preservation | GOVERNANCA.md | original imutável/acessível | "Ver original" (REL-001) | ✅ |
 | Explainability | principio_ui_rastreavel | UI = consequência do pipeline | (revisão) | 🟡 |
 | Traceability | COMPLIANCE-001 COMP-04/DATA-002 | proveniência/lineage | proveniência de extração | 🟡 |
+| _Integridade da governança_ | ADR-000/GOV-001 | invariantes 5–6 (docs citam a raiz) | `ARCH-governance-integrity` (4 casos) ✅ | ✅ |
 | Backward Compatibility | DATA-001/API-001 | aditivo por padrão | política + versão | 🟡 |
 | Evolution w/o Breaking | DATA-001 | depreciar-não-apagar | política | 🟡 |
 | Não-SaMD | GOVERNANCA.md/COMP-06/11 | não interpreta/diagnostica | RDC 657 + Gate | ✅ |

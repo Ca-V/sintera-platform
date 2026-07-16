@@ -4,7 +4,8 @@
 > documentos, wearables, dispositivos médicos e apps, o **modelo canônico é um ativo arquitetural central**.
 > Defini-lo cedo reduz inconsistências, facilita novas integrações e evita acoplamento a formatos de fornecedor.
 >
-> **Relação com o UCDA** (`UCDA-001`): o UCDA é a **arquitetura/contrato** (a unidade permanente = EVIDÊNCIA
+> Raiz constitucional: **`ADR-000`** (princípios permanentes — Canonical Data Model, Vendor Neutrality,
+> Backward Compatibility, Evolution without Breaking Changes). **Relação com o UCDA** (`UCDA-001`): o UCDA é a **arquitetura/contrato** (a unidade permanente = EVIDÊNCIA
 > clínica, representável por adaptadores). **DATA-001 é a POLÍTICA DE EVOLUÇÃO** desse modelo canônico —
 > como ele é nomeado, versionado, estendido e depreciado ao longo do tempo. UCDA responde "qual é o contrato";
 > DATA-001 responde "como o contrato muda sem quebrar nada". Governado pelo Gate de Conformidade (`COMPLIANCE-001`).

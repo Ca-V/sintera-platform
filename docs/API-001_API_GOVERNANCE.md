@@ -1,5 +1,6 @@
 # API-001 — API Governance
 
+> Raiz constitucional: **`ADR-000`** (Backward Compatibility · Evolution without Breaking Changes · Security by Design).
 > **Decisão da fundadora (15/07/2026):** com integrações externas, a governança de APIs torna-se essencial
 > quando múltiplos conectores passam a consumir/alimentar a plataforma. Documento arquitetural referenciado pelo
 > Gate de Conformidade (`COMPLIANCE-001`, eixos Segurança · Auditoria · Interoperabilidade · Ecossistema).
