@@ -154,7 +154,7 @@ function parseExamDate(raw: unknown): string | null {
 // Robusto para: markdown code fences, texto antes/depois do JSON, objetos aninhados.
 // A estratégia de regex não-greedy foi descartada: (\{[\s\S]*?\}) para no primeiro }
 // e extrai JSON incompleto. Contagem balanceada é O(n) e provadamente correta.
-function extractJsonCandidate(raw: string): string | null {
+export function extractJsonCandidate(raw: string): string | null {
   const start = raw.indexOf('{')
   if (start === -1) return null
 
