@@ -54,9 +54,10 @@ Fundadora (15/07/2026): **nenhuma funcionalidade é `Done` sem passar pelo Compl
 dividido para delimitar responsabilidade:
 `Implementação → Testes → REVIEW TÉCNICO → COMPLIANCE REVIEW → Merge/Homologação`.
 - **Review Técnico:** correção · engenharia · robustez · simplificação (o Gate Arquitetural + revisão de código).
-- **Compliance Review — verifica APENAS conformidade (8 eixos):** [ ] LGPD · [ ] Segurança · [ ] Auditoria ·
+- **Compliance Review — verifica APENAS conformidade (9 eixos):** [ ] LGPD · [ ] Segurança · [ ] Auditoria ·
   [ ] Arquitetura · [ ] Regulação (fora de SaMD) · [ ] Privacidade · [ ] Interoperabilidade (FHIR/LOINC/SNOMED/UCUM)
-  · [ ] Rastreabilidade (original sempre acessível). Absorve e amplia o Gate Regulatório acima.
+  · [ ] Rastreabilidade (original sempre acessível) · [ ] **Ecossistema externo** (modelo canônico · sem vendor
+  lock-in · padrões internacionais · consentimentos · proveniência da origem — COMP-13). Absorve o Gate Regulatório.
 
 Falha → **NC** OU **Exceção registrada** (Exception Register) antes do `Done` — nunca exceção implícita. Toda
 alteração passa por **Impact Assessment** (afeta LGPD/auditoria/interop/arquitetura/segurança/compartilhamento/

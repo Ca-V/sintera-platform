@@ -23,7 +23,7 @@ ciclo) · **Estado**. Prefixo de ID por domínio entre parênteses. `—` = aind
 | **Billing** (`BILL`) | — | 0 | Implementação (fundação: entitlements+ciclo+invoices) | Em andamento | `BILLING-001_ASSINATURAS.md` |
 | **HIP-001** (`HIP`) | — | 0 | Planejamento (implementar fase 3/4) | Planejado | `HIP-001_PLATAFORMA_INTEGRACOES.md` |
 | **CARE-001** (`CARE`) | — | 0 | Planejamento (fase posterior) | Planejado | `CARE-001_ESPACO_COLABORATIVO.md` |
-| **Fase 0 — Compliance & Governança** (`COMP`) | 2 ✅ · 7 🟡 · 3 ⬜ | 0 (2 exceções) | **Trilha PARALELA oficial** · Compliance Review ativo (gate 2 partes = Definition of Done) | Em andamento (paralelo a Exames) | `COMPLIANCE-001_GOVERNANCA.md` · `SEC-001_PROJETO_SHIELD.md` |
+| **Fase 0 — Compliance & Governança** (`COMP`) | 2 ✅ · 8 🟡 · 3 ⬜ (13) | 0 (2 exceções) | **Trilha PARALELA oficial** · Compliance Review ativo (gate 2 partes, **9 eixos** = Definition of Done) | Em andamento (paralelo a Exames) | `COMPLIANCE-001_GOVERNANCA.md` · `SEC-001` · `HIP-001` |
 
 **NCs abertas (crítica/alta) na plataforma: 0.** Total aberto: **11** (6 média + 5 baixa). Encerradas na
 auditoria: **NC-0008** (consistência canônica, corrigida com de-promoção append-only) e **NC-0019** (fix

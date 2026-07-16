@@ -22,9 +22,10 @@ Implementação → Testes → REVIEW TÉCNICO (correção/engenharia/simplifica
                               ↓
                             Merge / Homologação
 ```
-**Compliance Review — verifica APENAS:** LGPD · Segurança · Auditoria · Arquitetura · Regulação · Privacidade ·
-Interoperabilidade · Rastreabilidade. Falha em qualquer eixo → **NC** (ou **Exceção registrada**, ver §Exceções)
-antes do `Done`.
+**Compliance Review — verifica APENAS (9 eixos):** LGPD · Segurança · Auditoria · Arquitetura · Regulação ·
+Privacidade · Interoperabilidade · Rastreabilidade · **Ecossistema externo** (9º: preserva o modelo canônico ·
+sem vendor lock-in · compatível com padrões internacionais · respeita consentimentos/permissões · preserva a
+proveniência da origem). Falha em qualquer eixo → **NC** (ou **Exceção registrada**, ver §Exceções) antes do `Done`.
 
 ## Origem normativa (cada COMP aponta sua fonte — propaga mudança regulatória com menor esforço)
 | COMP | Bloco | Origem normativa |
@@ -41,6 +42,7 @@ antes do `Done`.
 | COMP-10 | Infraestrutura | ISO/IEC 27001 A.8.14 (redundância)/A.8.13 (backup); NIST; LGPD Art. 46 |
 | COMP-11 | Conformidade Regulatória (SaMD) | RDC 657/751 (ANVISA); IMDRF SaMD Framework; Lei 6.360 |
 | COMP-12 | Critérios Arquiteturais (o Gate) | Transversal; LGPD Art. 46/50 (governança/boas práticas) |
+| COMP-13 | Ecossistema e Interoperabilidade Externa | HL7 FHIR; LOINC; UCUM; SNOMED CT (licença); IEEE 11073 (dispositivos); OAuth 2.0; LGPD Art. 7/8/18 (consentimento/revogação) |
 
 ## Backlog estrutural + estado
 Estado: ✅ evidenciado · 🟡 parcial · ⬜ pendente. Dep.: **A** autônomo · **F** fundadora · **I** infra/produção · **J** jurídico.
@@ -59,6 +61,7 @@ Estado: ✅ evidenciado · 🟡 parcial · ⬜ pendente. Dep.: **A** autônomo �
 | COMP-10 | 🟡 | I | HA/redundância/backup parciais (Supabase/Vercel); monitoramento/alertas/geo-backup/observabilidade plena = infra |
 | COMP-11 | 🟡 | A+F | estratégia não-SaMD é constitucional; falta o PROCESSO formal de revisão prévia = embutido no Compliance Review |
 | COMP-12 | ✅ | A | = o Gate em duas partes (Definition of Done). Evidência: este documento + wiring no Lifecycle |
+| COMP-13 | 🟡 | A+F | **requisito ARQUITETURAL agora** (não só quando integrar): UCDA + Modelo Aberto já dão a base canônica e o pilar `HIP-001` está registrado; falta a camada de conectores, proveniência de dispositivo, consentimento granular, classificação de fonte e qualidade do dado. Prontidão = autônoma (9º eixo do Gate); conectores concretos = futuro (HIP-001) |
 
 ## Matriz de Rastreabilidade (Requisito → Fonte → Implementação → Teste → Evidência)
 Preenchida à medida que cada COMP é executado; `—` = ainda não implementado.
@@ -82,6 +85,40 @@ por RLS/trigger) · ✓ usuário identificado · ✓ timestamp em UTC · ✓ IP 
 **COMP-05 — Compartilhamento Seguro.** ✓ link temporável com expiração configurável · ✓ revogação imediata
 (invalida acessos subsequentes) · ✓ todo acesso registrado (data/hora/dispositivo/IP) · ✓ senha opcional ·
 ✓ token não adivinhável (entropia adequada) · ✓ teste automatizado. **Evidência:** `share.spec.ts` + migration + captura UI.
+
+## COMP-13 — Ecossistema e Interoperabilidade Externa (requisito ARQUITETURAL da Fase 0)
+**Objetivo:** toda a arquitetura preparada para integração segura com dispositivos/apps de saúde e sistemas
+clínicos, preservando privacidade, rastreabilidade e governança — decidido **agora**, para que escolhas atuais
+não bloqueiem integrações futuras (Apple Health, Google Health Connect, Garmin, Oura, Fitbit, Whoop, Polar,
+Samsung Health, Dexcom, FreeStyle Libre, Omron, APIs de laboratório, plataformas FHIR). Implementação concreta =
+pilar **`HIP-001_PLATAFORMA_INTEGRACOES.md`** (futuro); aqui ficam os invariantes arquiteturais.
+
+Invariantes (verificados pelo 9º eixo do Gate):
+1. **Camada de conectores** — toda integração passa por conectores próprios: `Fonte externa → Conector →
+   Normalização → Modelo Canônico SINTERA → Timeline/Exames/Indicadores`. **Nenhum fornecedor grava direto no banco.**
+2. **Modelo canônico** — dado interno padronizado, independente do fabricante (FC, PA, passos, VO₂máx, glicemia,
+   sono, SpO₂, temperatura, peso, composição corporal…). O banco nunca depende do formato de um fabricante.
+3. **Proveniência** — cada dado registra: dispositivo · fabricante · modelo · app de origem · versão da API ·
+   horário de coleta · horário de importação · método de sincronização · identificador externo.
+4. **Consentimento granular** — o usuário autoriza cada integração separadamente e escolhe quais categorias compartilhar.
+5. **Revogação** — interrompe novas sincronizações · mantém o histórico já importado (salvo pedido de exclusão) ·
+   gera evento de auditoria.
+6. **Classificação da fonte** — laboratório · wearable · autorrelato · profissional · documento importado ·
+   dispositivo médico certificado (não tratar tudo com a mesma confiabilidade).
+7. **Qualidade do dado** — medido automaticamente · informado manualmente · sincronizado · estimado · corrigido.
+8. **Interoperabilidade** — compatível com HL7 FHIR · LOINC · UCUM · SNOMED CT (quando licenciado) · IEEE 11073 (dispositivos).
+9. **Segurança** — OAuth 2.0 (ou equivalente do fornecedor) · cripto em trânsito · armazenamento seguro de tokens ·
+   rotação/revogação de credenciais · menor privilégio.
+10. **Auditoria** — 1ª autorização · renovação · sincronizações · falhas · revogações · alterações de permissão.
+11. **Limites arquiteturais (não-SaMD, = COMP-06)** — mesmo com dados de wearable: não interpreta p/ diagnóstico ·
+    não diagnostica · não recomenda tratamento · não substitui avaliação profissional. Dados = histórico/acompanhamento.
+12. **Roadmap de conectores** — Apple Health · Google Health Connect · Garmin · Fitbit · Oura · Whoop · Polar ·
+    Samsung Health · Dexcom · FreeStyle Libre · Omron · APIs de laboratório · plataformas hospitalares FHIR.
+
+**Aceite objetivo (quando implementar):** ✓ nenhum fornecedor escreve no banco fora da camada de conector ·
+✓ todo dado externo tem proveniência completa (§3) · ✓ consentimento por integração E por categoria · ✓ revogação
+para sincronização e audita · ✓ fonte + qualidade classificadas · ✓ token seguro (OAuth/rotação) · ✓ teste
+automatizado. **Evidência:** ADR da camada de conectores + migration (proveniência/consentimento) + `connectors.spec.ts`.
 
 ## Registro de Exceções (Exception Register — evita exceções implícitas)
 Requisito que não cumpre 100% agora entra AQUI (com mitigação e prazo), nunca fica em silêncio.
@@ -110,4 +147,5 @@ completa · Gate em duas partes operante como Definition of Done em todo domíni
 (auto-avaliação conservadora): Governança/Arquitetura **alta**; Compliance **boa base, em evolução**; Segurança
 **boa base, requer validação contínua**; LGPD **estrutura definida, implementação em andamento**; Auditoria **em
 implantação**; Interoperabilidade **preparada**; Regulação **estratégia consistente, revisável por funcionalidade**.
-Próximos autônomos: COMP-05, COMP-04, COMP-01, COMP-09, COMP-08. Itens I/F/J aguardam decisão/recurso/jurídico.
+Estado COMP: **2 ✅ · 8 🟡 · 3 ⬜** (13 blocos). Próximos autônomos: COMP-05, COMP-04, COMP-01, COMP-09, COMP-08,
+e o **9º eixo do Gate (COMP-13) já ativo** para barrar vendor lock-in em qualquer feature. Itens I/F/J aguardam decisão/recurso/jurídico.
