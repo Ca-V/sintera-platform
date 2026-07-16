@@ -63,7 +63,10 @@ export interface ValidatedSegmentation {
 }
 
 // Palavras de LATERALIDADE/segmento — um mesmo exame pode vir dividido por olho/lado/mama.
-const LATERALITY_RE = /\b(olho\s+)?(direit[oa]|esquerd[oa]|bilateral|ambos|\bod\b|\boe\b|\bd\b|\be\b)\b/gi
+// NÃO incluir bare "D"/"E" isolados: colidem com "Vitamina D/E", "Hepatite D/E" e a conjunção "e"
+// (falso-positivo de super-segmentação que BLOQUEARIA exames distintos). Laterialidade real usa
+// OD/OE ou palavras completas (direito/esquerdo/bilateral/ambos), todas cobertas abaixo.
+const LATERALITY_RE = /\b(olho\s+)?(direit[oa]|esquerd[oa]|bilateral|ambos|od|oe)\b/gi
 function baseTitle(title: string | null): string {
   return (title ?? '')
     .toUpperCase()

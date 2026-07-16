@@ -51,6 +51,14 @@ describe('FUNC · validateSegmentation (via pipeline)', () => {
     expect(v.blockedTechnical).toHaveLength(2)
   })
 
+  it('NÃO confunde exames distintos terminados em D/E (Hepatite D × E) com super-segmentação', () => {
+    const v = processBundle({ pageTexts: [
+      `SOROLOGIA PARA HEPATITE D\nData: 01/03/2026\nAchados: não reagente.\nConclusão: negativo.`,
+      `SOROLOGIA PARA HEPATITE E\nData: 01/03/2026\nAchados: não reagente.\nConclusão: negativo.`,
+    ] })
+    expect(v.cdus.some(c => c.issues.some(i => /super-segmenta/.test(i)))).toBe(false)
+  })
+
   it('é DETERMINÍSTICA', () => {
     expect(JSON.stringify(processBundle({ pageTexts: IMG_3_DISTINTOS })))
       .toBe(JSON.stringify(processBundle({ pageTexts: IMG_3_DISTINTOS })))
