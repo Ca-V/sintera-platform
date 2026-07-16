@@ -26,6 +26,18 @@ describe('FUNC · representationFingerprint', () => {
     expect(representationFingerprint(reordered)).toBe(representationFingerprint(rep))
   })
 
+  it('ordem-independência mesmo com resultados EMPATADOS em name+value+valueText (unit/faixa diferentes)', () => {
+    const tied = {
+      documentType: 'laboratory', documentScope: 'panel', displayTitle: 'X',
+      results: [
+        { name: 'Anticorpo', value: null, valueText: 'REAGENTE', unit: 'UI/mL', referenceMin: 0, referenceMax: 1 },
+        { name: 'Anticorpo', value: null, valueText: 'REAGENTE', unit: 'index', referenceMin: 0, referenceMax: 9 },
+      ],
+    }
+    const reversed = { ...tied, results: [...tied.results].reverse() }
+    expect(representationFingerprint(reversed)).toBe(representationFingerprint(tied))
+  })
+
   it('mudança de VALOR → assinatura diferente (detecta drift)', () => {
     const changed = {
       ...rep,

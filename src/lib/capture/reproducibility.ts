@@ -42,11 +42,17 @@ export function representationFingerprint(rep: RepresentationInput): string {
       refMin:    norm(r.referenceMin),
       refMax:    norm(r.referenceMax),
     }))
-    .sort((a, b) =>
-      a.name !== b.name
-        ? a.name.localeCompare(b.name)
-        : (a.value + '|' + a.valueText).localeCompare(b.value + '|' + b.valueText),
-    )
+    // Ordem TOTAL — a mesma representação em qualquer ordem gera a MESMA assinatura. O desempate
+    // por unit/refMin/refMax é necessário: dois resultados idênticos em (name,value,valueText) mas
+    // com unidade/faixa diferentes ficariam na ordem de ENTRADA (sort estável) e quebrariam a
+    // ordem-independência. Preserva EXATAMENTE a ordem anterior nos casos não-empatados (fingerprints
+    // existentes inalterados); só ordena deterministicamente o caso antes ambíguo.
+    .sort((a, b) => {
+      if (a.name !== b.name) return a.name.localeCompare(b.name)
+      const av = a.value + '|' + a.valueText, bv = b.value + '|' + b.valueText
+      if (av !== bv) return av.localeCompare(bv)
+      return (a.unit + '|' + a.refMin + '|' + a.refMax).localeCompare(b.unit + '|' + b.refMin + '|' + b.refMax)
+    })
 
   const canonical = JSON.stringify({
     documentType:  norm(rep.documentType),
