@@ -15,6 +15,12 @@ describe('parseAmountToCents', () => {
   it('ponto decimal (sem vírgula) também vale', () => {
     expect(parseAmountToCents('1234.56')).toBe(123456)
     expect(parseAmountToCents('50')).toBe(5000)
+    expect(parseAmountToCents('1.5')).toBe(150)      // ponto+1 dígito = decimal (R$1,50)
+  })
+  it('ponto de milhar SEM decimais (pt-BR) → não é decimal', () => {
+    expect(parseAmountToCents('1.234')).toBe(123400)       // mil duzentos e trinta e quatro
+    expect(parseAmountToCents('1.234.567')).toBe(123456700)
+    expect(parseAmountToCents('R$ 2.000')).toBe(200000)
   })
   it('vazio/nulo/inválido/negativo → null', () => {
     expect(parseAmountToCents('')).toBeNull()
