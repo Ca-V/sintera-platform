@@ -57,6 +57,12 @@ describe('FUNC · runCornealTomography (GS-004)', () => {
     expect(r.extractedUnits).toBe(0)
   })
 
+  it('o artigo "os" NÃO é lido como olho esquerdo (OD/OS/OE são maiúsculos)', () => {
+    const r = runCornealTomography(cdu('Os valores tomográficos médios: K1 43,2 D'))
+    const params = r.output?.kind === 'parametric' ? r.output.parameters : []
+    expect(params.find(p => p.name === 'K1')?.region).toBeUndefined() // não OE
+  })
+
   it('é DETERMINÍSTICO', () => {
     const a = JSON.stringify(runCornealTomography(cdu(CORNEAL_TEXT)))
     const b = JSON.stringify(runCornealTomography(cdu(CORNEAL_TEXT)))

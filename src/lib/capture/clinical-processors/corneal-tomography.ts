@@ -27,9 +27,12 @@ const RULES: Record<string, RegExp> = {
 }
 
 // Olho da linha (lateralidade). OD = direito; OS/OE = esquerdo. Ausência → região indefinida.
+// As ABREVIAÇÕES (OD/OS/OE) são MAIÚSCULAS (oculus dexter/sinister) e casam case-SENSITIVE — senão o
+// artigo português "os" casaria como OE e atribuiria parâmetros ao olho errado. "olho direito/esquerdo"
+// segue case-insensitive.
 function eyeOf(line: string): string | undefined {
-  if (/\bOD\b|olho\s+direito/i.test(line)) return 'OD'
-  if (/\bO[SE]\b|olho\s+esquerdo/i.test(line)) return 'OE'
+  if (/\bOD\b/.test(line) || /olho\s+direito/i.test(line)) return 'OD'
+  if (/\bO[SE]\b/.test(line) || /olho\s+esquerdo/i.test(line)) return 'OE'
   return undefined
 }
 
