@@ -49,16 +49,19 @@
 - [ ] **LGPD** (dado sensível de saúde/PII protegido) · **consentimentos** (quando aplicável)?
 *(Separar de arquitetura evita passar na engenharia e introduzir risco regulatório.)*
 
-### GATE DE CONFORMIDADE (Definition of Done da plataforma — Fase 0 / COMPLIANCE-001)
-Fundadora (15/07/2026): **nenhuma funcionalidade é `Done` sem aprovar o Gate de Conformidade.** Ele
-**absorve e amplia** o Gate Regulatório acima, acrescentando os 8 impactos obrigatórios (item 12 do parecer):
-`Implementação → Testes → Review → GATE DE CONFORMIDADE → Merge/Homologação`.
-- [ ] **LGPD/Privacidade** · [ ] **Segurança** · [ ] **Autorização** · [ ] **Auditoria (trilha imutável)** ·
-  [ ] **Interoperabilidade** (FHIR/LOINC/SNOMED/UCUM) · [ ] **Impacto regulatório** (fora de SaMD) ·
-  [ ] **Arquitetura** · [ ] **Rastreabilidade** (original sempre acessível).
+### GATE EM DUAS PARTES (Definition of Done da plataforma — Fase 0 / COMPLIANCE-001)
+Fundadora (15/07/2026): **nenhuma funcionalidade é `Done` sem passar pelo Compliance Review.** O gate é
+dividido para delimitar responsabilidade:
+`Implementação → Testes → REVIEW TÉCNICO → COMPLIANCE REVIEW → Merge/Homologação`.
+- **Review Técnico:** correção · engenharia · robustez · simplificação (o Gate Arquitetural + revisão de código).
+- **Compliance Review — verifica APENAS conformidade (8 eixos):** [ ] LGPD · [ ] Segurança · [ ] Auditoria ·
+  [ ] Arquitetura · [ ] Regulação (fora de SaMD) · [ ] Privacidade · [ ] Interoperabilidade (FHIR/LOINC/SNOMED/UCUM)
+  · [ ] Rastreabilidade (original sempre acessível). Absorve e amplia o Gate Regulatório acima.
 
-Falha em qualquer item → NC (Regulatória/Segurança/Dados/…) antes do `Done`. Detalhe, backlog e estado da
-trilha paralela: **`docs/COMPLIANCE-001_GOVERNANCA.md`** (executada em paralelo a Exames, sem pausá-lo).
+Falha → **NC** OU **Exceção registrada** (Exception Register) antes do `Done` — nunca exceção implícita. Toda
+alteração passa por **Impact Assessment** (afeta LGPD/auditoria/interop/arquitetura/segurança/compartilhamento/
+retenção/RDC?). **Postura conservadora:** só `✅` com evidência verificável. Backlog, matriz de rastreabilidade,
+critérios objetivos, exceções e estado: **`docs/COMPLIANCE-001_GOVERNANCA.md`** (paralelo a Exames, sem pausá-lo).
 
 ## O que cada passo significa (não confundir objetivos)
 | Passo | Objetivo | Como | Sai quando |

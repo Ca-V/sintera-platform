@@ -1,69 +1,113 @@
 # COMPLIANCE-001 — Fase 0: Compliance & Platform Governance (trilha paralela oficial)
 
-> **Decisão da fundadora (parecer de Adequação Regulatória, 15/07/2026):** a conformidade é um
-> **requisito ESTRUTURAL do produto**, não uma camada final nem documentação jurídica separada.
-> A Fase 0 é uma **trilha OFICIAL e PARALELA** da roadmap: executada ao lado de Exames (sem pausá-lo),
-> com **backlog próprio, critérios de aceite próprios e entregáveis próprios**. Requisito da Fase 0 que
-> impacte um desenvolvimento em andamento é **incorporado antes da conclusão** daquela funcionalidade
-> (não acumula dívida de compliance).
+> **Decisão da fundadora (parecer de Adequação Regulatória + acréscimos, 15/07/2026):** a conformidade é
+> **requisito ESTRUTURAL do produto**, não camada final. A Fase 0 é **trilha OFICIAL e PARALELA** da roadmap
+> (roda ao lado de Exames, sem pausá-lo), com **backlog, critérios de aceite e entregáveis próprios**.
+> Requisito da Fase 0 que impacte um desenvolvimento em andamento é **incorporado antes de concluí-lo**.
 >
-> Processo: `docs/LIFECYCLE_DOMINIOS.md` · Segurança: `docs/SEC-001_PROJETO_SHIELD.md` ·
-> Princípios clínicos: `docs/GOVERNANCA.md` · Painel: `docs/DOMINIOS.md` (prefixo **`COMP`**).
+> Processo: `LIFECYCLE_DOMINIOS.md` · Segurança: `SEC-001_PROJETO_SHIELD.md` · Clínico: `GOVERNANCA.md` ·
+> Painel: `DOMINIOS.md` (prefixo **`COMP`**).
 
-## Regra constitucional — Definition of Done da plataforma
-**Nenhuma funcionalidade é considerada `Done` sem aprovação no GATE DE CONFORMIDADE.** A conformidade
-entra na definição de concluído de TODA a plataforma:
+## Postura de classificação (regra de ouro)
+**Conservadora e baseada em EVIDÊNCIA.** Um requisito só é `✅` com **evidência técnica verificável** (teste,
+migration, config, captura, ADR, PR) — nunca por intenção de projeto. Recurso oferecido pela infra ≠ requisito
+concluído: depende de **como a aplicação está configurada e opera**. Sem evidência → no máximo `🟡 parcial`.
+
+## Definition of Done + GATE EM DUAS PARTES
+**Nenhuma funcionalidade é `Done` sem passar pelo Compliance Review.** Responsabilidade delimitada:
 ```
-Implementação → Testes → Review → GATE DE CONFORMIDADE → Merge/Homologação
+Implementação → Testes → REVIEW TÉCNICO (correção/engenharia/simplificação)
+                              ↓
+                         COMPLIANCE REVIEW (só conformidade — 8 eixos abaixo)
+                              ↓
+                            Merge / Homologação
 ```
-O Gate de Conformidade **absorve e amplia** o Gate Regulatório do Lifecycle (que já cobria RDC 657/LGPD/
-rastreabilidade/auditabilidade/reprodutibilidade/original preservado) e acrescenta segurança, autorização,
-auditoria e interoperabilidade.
+**Compliance Review — verifica APENAS:** LGPD · Segurança · Auditoria · Arquitetura · Regulação · Privacidade ·
+Interoperabilidade · Rastreabilidade. Falha em qualquer eixo → **NC** (ou **Exceção registrada**, ver §Exceções)
+antes do `Done`.
 
-## GATE DE CONFORMIDADE — checklist obrigatório (item 12: os 8 impactos)
-Antes de aprovar qualquer funcionalidade nova, verificar e registrar:
-- [ ] **LGPD / Privacidade** — dado pessoal/sensível tratado com base legal, minimização, retenção definida?
-- [ ] **Segurança** — dados em repouso/trânsito protegidos; segredos fora do código; sem nova superfície de ataque?
-- [ ] **Autorização** — a ação exige perfil explícito? Respeita o modelo formal de acesso (perfis)?
-- [ ] **Auditoria** — operação relevante gera trilha imutável (quem·quando·o quê·dispositivo)?
-- [ ] **Interoperabilidade** — o modelo interno evita decisões que dificultem FHIR/LOINC/SNOMED/UCUM?
-- [ ] **Impacto regulatório** — permanece FORA de SaMD (não interpreta/diagnostica/prognostica/prescreve)?
-- [ ] **Arquitetura** — desacoplamento/CPE/UCDA/Modelo Aberto/camadas preservados?
-- [ ] **Rastreabilidade** — origem/autoria íntegras; documento original sempre acessível?
+## Origem normativa (cada COMP aponta sua fonte — propaga mudança regulatória com menor esforço)
+| COMP | Bloco | Origem normativa |
+|---|---|---|
+| COMP-01 | Governança de Dados (LGPD) | LGPD (Lei 13.709) Art. 37/46/48/18; ANPD; ISO/IEC 27701 |
+| COMP-02 | Segurança da Informação | ISO/IEC 27001 A.8.24 (cripto)/A.8.13 (backup)/A.8.24; LGPD Art. 46; NIST SP 800-57 (chaves) |
+| COMP-03 | Controle de Acesso | ISO/IEC 27001 A.5.15/A.8.2/A.8.3; LGPD Art. 46/50; RBAC |
+| COMP-04 | Auditoria (trilha imutável) | LGPD Art. 37; Lei 13.787 (digitalização/guarda de prontuário); ISO 27001 A.8.15/A.8.16; ISO 27701 |
+| COMP-05 | Compartilhamento Seguro | LGPD Art. 46/48; ISO 27001 A.5.14; CFM (sigilo/segredo médico) |
+| COMP-06 | Arquitetura Clínica (não-SaMD) | RDC 657/2022 e RDC 751/2022 (ANVISA); IMDRF SaMD; CFM 2.314/2022; Lei 12.842 (ato médico) |
+| COMP-07 | Interoperabilidade | HL7 FHIR R4/R5; LOINC (Regenstrief); SNOMED CT (licença); UCUM; RNDS (MS); openEHR |
+| COMP-08 | Documentação Técnica | ISO/IEC 27001 (SGSI); LGPD (governança); ANPD (boas práticas) |
+| COMP-09 | Secure SDLC | OWASP ASVS/SAMM; ISO/IEC 27001 A.8.25–A.8.28; LGPD Art. 46 (security by design) |
+| COMP-10 | Infraestrutura | ISO/IEC 27001 A.8.14 (redundância)/A.8.13 (backup); NIST; LGPD Art. 46 |
+| COMP-11 | Conformidade Regulatória (SaMD) | RDC 657/751 (ANVISA); IMDRF SaMD Framework; Lei 6.360 |
+| COMP-12 | Critérios Arquiteturais (o Gate) | Transversal; LGPD Art. 46/50 (governança/boas práticas) |
 
-Falha em qualquer item → **NC** (Tipo: Regulatória/Segurança/Dados/…) → volta à implementação antes do `Done`.
+## Backlog estrutural + estado
+Estado: ✅ evidenciado · 🟡 parcial · ⬜ pendente. Dep.: **A** autônomo · **F** fundadora · **I** infra/produção · **J** jurídico.
 
-## Backlog estrutural (os 12 blocos do parecer)
-Estado: ✅ existente · 🟡 parcial · ⬜ pendente. Dependência: **A** autônomo (código/registro) ·
-**F** decisão da fundadora · **I** infra/produção · **J** jurídico/externo.
+| ID | Estado | Dep. | Nota (com ressalva conservadora) |
+|---|:--:|:--:|---|
+| COMP-01 | 🟡 | A+J | RLS + dado sensível protegido; falta inventário/ROPA/retenção/anonimização/export-exclusão/consentimentos/DPIA |
+| COMP-02 | 🟡 | I+F | **parcialmente atendido** — infra Supabase/Vercel oferece AES-256 em repouso e TLS, mas SEM evidência de: (a) todos os dados relevantes efetivamente cifrados no nível da app, (b) versões/config seguras de TLS auditadas, (c) gestão/rotação de chaves. Ver Exceção EXC-02 |
+| COMP-03 | ⬜ | F+A | RLS é base; modelo formal de 6 perfis = design de produto+arquitetura |
+| COMP-04 | ⬜ | A+I | trilha append-only de ações do usuário = novo (autônomo); imutabilidade forte pode exigir infra |
+| COMP-05 | 🟡 | A | REL-001 compartilha por token; falta expiração/revogação/log de acesso/senha |
+| COMP-06 | ✅ | A | não interpreta/diagnostica (RDC 657, `GOVERNANCA.md`) + original sempre acessível (Rastreabilidade Documental). Evidência: princípio constitucional + Gate Regulatório |
+| COMP-07 | 🟡 | A+J | UCDA + Modelo Aberto miram LOINC/SNOMED; mapeamento FHIR futuro; SNOMED = licença → Exceção EXC-07 |
+| COMP-08 | ⬜ | A+J | técnicas rascunháveis por mim; jurídicas (privacidade) = J |
+| COMP-09 | 🟡 | A | review + TSC/ESLint + suíte existem; falta SAST, `npm audit` no CI, testes de autorização formais |
+| COMP-10 | 🟡 | I | HA/redundância/backup parciais (Supabase/Vercel); monitoramento/alertas/geo-backup/observabilidade plena = infra |
+| COMP-11 | 🟡 | A+F | estratégia não-SaMD é constitucional; falta o PROCESSO formal de revisão prévia = embutido no Compliance Review |
+| COMP-12 | ✅ | A | = o Gate em duas partes (Definition of Done). Evidência: este documento + wiring no Lifecycle |
 
-| ID | Bloco | Estado | Dep. | Nota de estado |
-|---|---|:--:|:--:|---|
-| COMP-01 | **Governança de Dados (LGPD)** — classificação, sensíveis, ROPA, retenção/descarte, anonimização, export/exclusão, consentimentos, DPIA | 🟡 | A+J | RLS + dado sensível protegido existem; falta inventário/ROPA/retenção formal; export/exclusão do usuário = código (A); ROPA/DPIA/consentimentos = J |
-| COMP-02 | **Segurança da Informação** — AES-256, TLS 1.3, cripto de backup, rotação de chaves, segregação de ambientes, segredos, restauração de backup, DR, RPO/RTO | 🟡 | I+F | AES-256 em repouso + TLS já providos (Supabase/Vercel); rotação/DR/RPO-RTO/segregação/segredos = infra/produção |
-| COMP-03 | **Controle de Acesso** — modelo formal de autorização; perfis: paciente·profissional·admin·suporte·laboratório·auditor; ação com autorização explícita | ⬜ | F+A | RLS é a base; modelo de 6 perfis = design de produto+arquitetura (F), depois implementação (A) |
-| COMP-04 | **Auditoria** — trilha IMUTÁVEL de login/logout/visualização/download/compartilhamento/revogação/upload/alteração cadastral/permissões; logs não editáveis | ⬜ | A+I | Logs técnicos parciais existem (`ai_processing_log`, telemetria); trilha de ações do usuário append-only = novo (A); imutabilidade forte = infra (I) |
-| COMP-05 | **Compartilhamento Seguro** — links temporários, expiração, revogação imediata, log de acessos, senha opcional, data/hora/dispositivo | 🟡 | A | REL-001 já compartilha por token; falta expiração/revogação/log de acesso/senha — majoritariamente código |
-| COMP-06 | **Arquitetura Clínica** — não interpreta/diagnostica/prognostica/prescreve; só armazena·organiza·indexa·correlaciona·disponibiliza·compartilha; original sempre acessível | ✅ | A | Já constitucional (`GOVERNANCA.md`, RDC 657); formalizar como invariante do Gate |
-| COMP-07 | **Interoperabilidade** — prontidão FHIR/LOINC/SNOMED/UCUM; modelos internos não bloqueiam evolução | 🟡 | A+J | UCDA + Modelo Aberto já miram códigos abertos (LOINC/SNOMED); mapeamento FHIR = futuro; SNOMED = licença (J) |
-| COMP-08 | **Documentação Técnica** — Política de Seg./Privacidade/Compartilhamento/Backup, Plano de Resposta a Incidentes, Continuidade, Inventário de Dados, Matriz de Permissões, Modelo de Governança | ⬜ | A+J | Técnicas (backup/incidente/inventário/matriz) = rascunháveis por mim (A); jurídicas (privacidade) = J |
-| COMP-09 | **Secure SDLC** — review obrigatório, SAST, dependências vulneráveis, testes de autz/autn/acesso, evidências | 🟡 | A | Review (esta auditoria) + TSC/ESLint + suíte existem; falta SAST, `npm audit` no CI, testes de autorização formais |
-| COMP-10 | **Infraestrutura** — segregação, monitoramento, alertas, alta disponibilidade, redundância, backup geo-separado, observabilidade | 🟡 | I | Vercel/Supabase dão HA/redundância/backup parciais; monitoramento/alertas/geo-separação/observabilidade plena = infra |
-| COMP-11 | **Conformidade Regulatória (processo SaMD)** — revisão prévia de toda funcionalidade quanto ao enquadramento; manter fora de SaMD (estratégia atual) ou abrir projeto de adequação | 🟡 | A+F | Estratégia não-SaMD já é constitucional; falta o PROCESSO formal de revisão prévia = embutido no Gate (A) |
-| COMP-12 | **Critérios Arquiteturais Obrigatórios** — os 8 impactos avaliados antes de aprovar qualquer funcionalidade | ✅ | A | = o **Gate de Conformidade** acima; passa a ser Definition of Done |
+## Matriz de Rastreabilidade (Requisito → Fonte → Implementação → Teste → Evidência)
+Preenchida à medida que cada COMP é executado; `—` = ainda não implementado.
 
-## Entregáveis da Fase 0 (item 8) — checklist
+| Requisito | Origem | Implementação | Teste | Evidência | Estado |
+|---|---|---|---|---|---|
+| COMP-04 | LGPD/Lei 13.787/ISO 27001 A.8.15 | AUD-### (a criar) | `audit.spec.ts` (a criar) | migration + ADR | ⬜ |
+| COMP-05 | LGPD/ISO 27001 A.5.14 | REL-001 (parcial) → SHARE-### | `share.spec.ts` (a criar) | migration + captura UI | 🟡 |
+| COMP-06 | RDC 657 | `GOVERNANCA.md` + Gate Regulatório | `ARCH-*`/`FUNC-*` (não-produção clínica) | doc constitucional | ✅ |
+| COMP-09 | OWASP/ISO 27001 A.8.28 | CI (SAST + `npm audit`) a adicionar | pipeline | log do CI | 🟡 |
+| COMP-12 | Governança | Gate no Lifecycle | — | `COMPLIANCE-001` + `LIFECYCLE_DOMINIOS.md` | ✅ |
+
+## Critérios OBJETIVOS de aceite (verificáveis; evitar "implementado")
+Regra: **todo COMP exige ≥ 1 EVIDÊNCIA** (teste automatizado · captura de UI · migration · documentação · PR · ADR).
+Critérios completos são definidos quando o COMP entra em execução; abaixo, os dois próximos autônomos já especificados:
+
+**COMP-04 — Auditoria.** ✓ toda operação relevante gera evento · ✓ evento imutável (append-only; sem UPDATE/DELETE
+por RLS/trigger) · ✓ usuário identificado · ✓ timestamp em UTC · ✓ IP registrado · ✓ request id registrado ·
+✓ teste automatizado · ✓ cobertura da trilha ≥ meta. **Evidência:** migration + `audit.spec.ts` + ADR.
+
+**COMP-05 — Compartilhamento Seguro.** ✓ link temporável com expiração configurável · ✓ revogação imediata
+(invalida acessos subsequentes) · ✓ todo acesso registrado (data/hora/dispositivo/IP) · ✓ senha opcional ·
+✓ token não adivinhável (entropia adequada) · ✓ teste automatizado. **Evidência:** `share.spec.ts` + migration + captura UI.
+
+## Registro de Exceções (Exception Register — evita exceções implícitas)
+Requisito que não cumpre 100% agora entra AQUI (com mitigação e prazo), nunca fica em silêncio.
+
+| ID | COMP | Motivo | Mitigação | Prazo | Responsável | Revisão |
+|---|---|---|---|---|---|---|
+| EXC-02 | COMP-02 | Cripto/TLS dependem de config da app + gestão de chaves; sem evidência auditada | Manter infra provida (AES-256 repouso/TLS); NÃO classificar como concluído; auditar config | a definir | Fundadora/Infra | — |
+| EXC-07 | COMP-07 | Licença SNOMED CT pendente | Usar **apenas LOINC/UCUM**; modelar aberto p/ acomodar SNOMED depois | a definir | Fundadora | — |
+
+## Impact Assessment (controle de mudanças — checklist de TODA alteração)
+Toda alteração informa: afeta **LGPD?** · afeta **auditoria?** · afeta **interoperabilidade?** · afeta
+**arquitetura?** · afeta **segurança?** · afeta **compartilhamento?** · afeta **retenção?** · afeta **RDC?**
+"Sim" em qualquer eixo → passa pelo Compliance Review correspondente antes do `Done`.
+
+## Entregáveis da Fase 0 (item 8)
 ⬜ Política de Segurança da Informação · ⬜ Política de Privacidade (J) · ⬜ Política de Compartilhamento ·
-⬜ Política de Backup · ⬜ Plano de Resposta a Incidentes · ⬜ Plano de Continuidade de Negócios ·
-⬜ Inventário de Dados · ⬜ Matriz de Permissões · ⬜ Modelo de Governança de Dados.
+⬜ Política de Backup · ⬜ Plano de Resposta a Incidentes · ⬜ Plano de Continuidade · ⬜ Inventário de Dados ·
+⬜ Matriz de Permissões · ⬜ Modelo de Governança de Dados.
 
 ## Critério de encerramento da Fase 0
-Fase 0 **não bloqueia** Exames, mas só é `Encerrada` quando: COMP-01…12 em ✅ ou 🟡-justificado com plano,
-os entregáveis do item 8 emitidos, e o Gate de Conformidade operante como Definition of Done em todo domínio.
+COMP-01…12 em ✅ ou 🟡-com-exceção-registrada · entregáveis do item 8 emitidos · Matriz de Rastreabilidade
+completa · Gate em duas partes operante como Definition of Done em todo domínio. **Não bloqueia Exames.**
 
 ## Estado global
-**Em andamento (trilha paralela recém-aberta).** Gate de Conformidade **ativo a partir de agora** como
-Definition of Done. Próximos passos autônomos (sem depender da fundadora): COMP-05 (expiração/revogação/log
-de compartilhamento), COMP-04 (trilha de auditoria append-only), COMP-01 (export/exclusão + inventário),
-COMP-09 (SAST/`npm audit`/testes de autorização), COMP-08 (rascunhos técnicos). Itens **I/F/J** aguardam
-decisão/recurso/jurídico e ficam sinalizados.
+**Em andamento (trilha paralela).** Compliance Review **ativo** como Definition of Done. Nível de maturidade
+(auto-avaliação conservadora): Governança/Arquitetura **alta**; Compliance **boa base, em evolução**; Segurança
+**boa base, requer validação contínua**; LGPD **estrutura definida, implementação em andamento**; Auditoria **em
+implantação**; Interoperabilidade **preparada**; Regulação **estratégia consistente, revisável por funcionalidade**.
+Próximos autônomos: COMP-05, COMP-04, COMP-01, COMP-09, COMP-08. Itens I/F/J aguardam decisão/recurso/jurídico.
