@@ -99,6 +99,26 @@ export function eventToNotificationInput(ev: HealthEvent): EventNotificationInpu
 // ── EVT-C2 (NC-0007): surfacar preparo/desfecho/modalidade na Agenda/Histórico ─────────────────
 // Antes só a notificação projetava estes campos; agora as telas os exibem a partir do MESMO domínio.
 
+// Tipos de profissional de saúde — FONTE ÚNICA (seletor no modal + rótulos em Agenda/Histórico/Relatório/
+// compartilhamento). Lista ABERTA: 'outro' cobre o que não está aqui; valor desconhecido degrada para null.
+export const PROFESSIONAL_KIND_DEFS = [
+  { id: 'medico',        label: 'Médico(a)' },
+  { id: 'dentista',      label: 'Dentista' },
+  { id: 'psicologo',     label: 'Psicólogo(a)' },
+  { id: 'nutricionista', label: 'Nutricionista' },
+  { id: 'fisioterapeuta', label: 'Fisioterapeuta' },
+  { id: 'outro',         label: 'Outro profissional' },
+] as const
+
+const PROFESSIONAL_KIND_LABELS: Record<string, string> =
+  Object.fromEntries(PROFESSIONAL_KIND_DEFS.map(d => [d.id, d.label]))
+
+/** Rótulo do tipo de profissional (null quando ausente/desconhecido). */
+export function professionalKindLabel(kind: string | null | undefined): string | null {
+  const k = (kind ?? '').trim()
+  return k ? (PROFESSIONAL_KIND_LABELS[k] ?? null) : null
+}
+
 /** Rótulo curto da modalidade (só quando informada). */
 export function modalityLabel(m: EventModality | null): string | null {
   return m === 'telemedicina' ? 'Telemedicina' : m === 'presencial' ? 'Presencial' : null

@@ -20,8 +20,8 @@ export {
 
 export {
   typeLabel, statusLabel, formatDateBR, formatDateLongBR, formatTimeBR, parseDateOnly, eventToNotificationInput,
-  modalityLabel, outcomeSummary, hasOutcome,
-  EVENT_TYPE_DEFS, EVENT_TYPE_LABELS, EVENT_STATUS_UI,
+  modalityLabel, outcomeSummary, hasOutcome, professionalKindLabel,
+  EVENT_TYPE_DEFS, EVENT_TYPE_LABELS, EVENT_STATUS_UI, PROFESSIONAL_KIND_DEFS,
 } from './presentation'
 export { buildEventNotification, notificationToInline, type EventNotification } from './notification'
 export type { DomainEvent, DomainEventType, EventActor, EventBus } from './bus'

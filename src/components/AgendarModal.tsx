@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Download, ExternalLink, CalendarDays, Loader2, Check, ChevronDown } from 'lucide-react'
-import { EVENT_TYPE_DEFS, EVENT_STATUS_UI } from '@/lib/agenda'
+import { EVENT_TYPE_DEFS, EVENT_STATUS_UI, PROFESSIONAL_KIND_DEFS } from '@/lib/agenda'
 import { useModalA11y } from '@/lib/ui/useModalA11y'
 
 // Tipos vêm da FONTE ÚNICA (@/lib/agenda) — Agenda e Histórico falam a mesma língua.
@@ -26,6 +26,7 @@ export interface AgendaEventInput {
   notes: string
   reminderEnabled: boolean
   modality: EventModality
+  professionalKind: string   // tipo de profissional (medico/dentista/…) — EVT-C3/NC-0012
   professionalName: string
   establishment: string
   location: string
@@ -94,6 +95,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
   const [notes, setNotes]   = useState(defaultNotes)
   const [reminderEnabled, setReminderEnabled] = useState(true)
   const [modality, setModality] = useState<EventModality>('')
+  const [professionalKind, setProfessionalKind] = useState('')
   const [professionalName, setProfessionalName] = useState('')
   const [establishment, setEstablishment] = useState('')
   const [location, setLocation] = useState('')
@@ -127,6 +129,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
     setNotes(initialEvent?.notes ?? defaultNotes)
     setReminderEnabled(initialEvent?.reminderEnabled ?? true)
     setModality(initialEvent?.modality ?? '')
+    setProfessionalKind(initialEvent?.professionalKind ?? '')
     setProfessionalName(initialEvent?.professionalName ?? '')
     setEstablishment(initialEvent?.establishment ?? '')
     setLocation(initialEvent?.location ?? '')
@@ -200,7 +203,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
         eventType, isReturn: eventType === 'consulta' ? isReturn : false,
         isSurgery: eventType === 'procedimento' ? isSurgery : false, status,
         title: fullTitle, date, time, durationMin: parseInt(duration), notes: notes.trim(), reminderEnabled,
-        modality, professionalName: professionalName.trim(), establishment: establishment.trim(), location: location.trim(),
+        modality, professionalKind, professionalName: professionalName.trim(), establishment: establishment.trim(), location: location.trim(),
         preparation: preparation.trim(), amount: amount.trim(),
         recurrenceFrequency: recurrence, recurrenceUntil, priority, directExpense,
         outcome: outcome.trim(), operadora: operadora.trim(), carteirinha: carteirinha.trim(),
@@ -372,8 +375,16 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                       </div>
 
                       {eventType !== 'plano' && (
-                      <div className="space-y-1.5"><label htmlFor="agendar-profissional" className={LABEL}>Profissional <span className="font-normal text-mauve normal-case">(opc.)</span></label>
-                        <input id="agendar-profissional" type="text" value={professionalName} onChange={e => setProfessionalName(e.target.value)} placeholder="Dr(a). …" className={FIELD} /></div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5"><label htmlFor="agendar-profissional" className={LABEL}>Profissional <span className="font-normal text-mauve normal-case">(opc.)</span></label>
+                          <input id="agendar-profissional" type="text" value={professionalName} onChange={e => setProfessionalName(e.target.value)} placeholder="Dr(a). …" className={FIELD} /></div>
+                        {/* EVT-C3 (NC-0012): tipo de profissional — capturado no modal e exibido em Agenda/Histórico/Relatório */}
+                        <div className="space-y-1.5"><label htmlFor="agendar-prof-kind" className={LABEL}>Tipo <span className="font-normal text-mauve normal-case">(opc.)</span></label>
+                          <select id="agendar-prof-kind" value={professionalKind} onChange={e => setProfessionalKind(e.target.value)} className={FIELD}>
+                            <option value="">—</option>
+                            {PROFESSIONAL_KIND_DEFS.map(d => <option key={d.id} value={d.id}>{d.label}</option>)}
+                          </select></div>
+                      </div>
                       )}
 
                       {eventType === 'plano' && (

@@ -21,7 +21,7 @@ import { useUser } from '@/context/UserContext'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { useEventForm, eventToInput } from '@/components/eventForm'
-import { rowToHealthEvent, eventServicesFor, modalityLabel, outcomeSummary, hasOutcome, type HealthEvent, type HealthEventRow } from '@/lib/agenda'
+import { rowToHealthEvent, eventServicesFor, modalityLabel, outcomeSummary, hasOutcome, professionalKindLabel, type HealthEvent, type HealthEventRow } from '@/lib/agenda'
 import HistoricoTabs from '@/components/HistoricoTabs'
 import { useStickyView } from '@/lib/ui/useStickyView'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
@@ -70,11 +70,6 @@ const TYPE_META: Record<string, { label: string; Icon: React.ElementType; cls: s
   exame:        { label: 'Exame',        Icon: FlaskConical, cls: 'bg-warm text-gold' },
   omica:        { label: 'Ômica',        Icon: Dna,          cls: 'bg-lavender-light text-lavender' },
   outro:        { label: 'Evento',       Icon: CalendarDays, cls: 'bg-ivory text-mauve' },
-}
-
-const PROF_LABEL: Record<string, string> = {
-  medico: 'Médico(a)', psicologo: 'Psicólogo(a)', nutricionista: 'Nutricionista',
-  fisioterapeuta: 'Fisioterapeuta', dentista: 'Dentista', outro: 'Outro profissional',
 }
 
 function fmt(date: string): string {
@@ -295,7 +290,7 @@ function LegacyTimeline() {
           onTitleClick={it.rawId ? () => openEdit(it) : undefined}
           meta={
             <>
-              {`${fmt(it.date)} · ${meta.label}${it.profKind && PROF_LABEL[it.profKind] ? ` · ${PROF_LABEL[it.profKind]}` : ''}${it.subtitle ? ` · ${it.subtitle}` : ''}`}
+              {`${fmt(it.date)} · ${meta.label}${professionalKindLabel(it.profKind) ? ` · ${professionalKindLabel(it.profKind)}` : ''}${it.subtitle ? ` · ${it.subtitle}` : ''}`}
               {/* EVT-C2 (NC-0007): preparo (planejado) e desfecho (realizado) fora da notificação */}
               {it.preparation?.trim() && it.status !== 'realizado' && it.status !== 'cancelado' && (
                 <span className="block text-petal/90 mt-0.5">📋 Preparo: {it.preparation.trim()}</span>

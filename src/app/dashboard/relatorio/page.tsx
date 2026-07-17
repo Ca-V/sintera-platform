@@ -32,7 +32,7 @@ import { createClient } from '@/lib/supabase/client'
 import { assembleOrganizedBiomarkers } from '@/lib/ai/insights/assembler'
 import { useUser } from '@/context/UserContext'
 import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
-import { typeLabel, type HealthEvent } from '@/lib/agenda' // fonte ÚNICA de rótulos de tipo de evento
+import { typeLabel, professionalKindLabel, type HealthEvent } from '@/lib/agenda' // fonte ÚNICA de rótulos de tipo/profissional
 import { useEventForm } from '@/components/eventForm' // serviço de domínio (query.listFinancial = Despesas)
 import { contraceptiveLabel } from '@/lib/cycle'       // SSOT dos métodos contraceptivos
 
@@ -71,10 +71,6 @@ const isVital = (m: string) => VITAL_METRICS.includes(m)
 const HABIT_LABEL: Record<string, string> = {
   atividade_fisica: 'Atividade física', sono: 'Sono', tabagismo: 'Tabagismo',
   alcool: 'Álcool', alimentacao: 'Alimentação', hidratacao: 'Hidratação', outro: 'Outro',
-}
-const PROF_LABEL: Record<string, string> = {
-  medico: 'Médico(a)', psicologo: 'Psicólogo(a)', nutricionista: 'Nutricionista',
-  fisioterapeuta: 'Fisioterapeuta', dentista: 'Dentista', outro: 'Outro profissional',
 }
 
 function periodo(start: string | null, until: string | null): string {
@@ -682,7 +678,7 @@ function LegacyReport() {
                         <tr key={i} className="border-b border-border/50">
                           <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(e.date)}</td>
                           <td className="font-body text-xs text-onyx py-1.5">
-                            <span className="text-mauve">{typeLabel(e.eventType)}{e.prof && PROF_LABEL[e.prof] ? ` (${PROF_LABEL[e.prof]})` : ''}:</span> {e.title}
+                            <span className="text-mauve">{typeLabel(e.eventType)}{professionalKindLabel(e.prof) ? ` (${professionalKindLabel(e.prof)})` : ''}:</span> {e.title}
                             {e.notes ? <span className="block text-xs text-mauve">{e.notes}</span> : null}
                           </td>
                         </tr>
@@ -702,7 +698,7 @@ function LegacyReport() {
                         <tr key={i} className="border-b border-border/50">
                           <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(e.date)}</td>
                           <td className="font-body text-xs text-onyx py-1.5">
-                            <span className="text-mauve">{typeLabel(e.eventType)}{e.prof && PROF_LABEL[e.prof] ? ` (${PROF_LABEL[e.prof]})` : ''}:</span> {e.title}
+                            <span className="text-mauve">{typeLabel(e.eventType)}{professionalKindLabel(e.prof) ? ` (${professionalKindLabel(e.prof)})` : ''}:</span> {e.title}
                             {e.status === 'cancelado' && <span className="text-mauve"> · cancelado</span>}
                             {e.notes ? <span className="block text-xs text-mauve">{e.notes}</span> : null}
                           </td>

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatDateBR, formatTimeBR, parseDateOnly, eventToNotificationInput, typeLabel, modalityLabel, outcomeSummary, hasOutcome } from './presentation'
+import { formatDateBR, formatTimeBR, parseDateOnly, eventToNotificationInput, typeLabel, modalityLabel, outcomeSummary, hasOutcome, professionalKindLabel, PROFESSIONAL_KIND_DEFS } from './presentation'
 import { buildEventNotification, notificationToInline } from './notification'
 import type { HealthEvent } from './event'
 
@@ -70,5 +70,19 @@ describe('EVT-C2 (NC-0007) — surfacar modalidade/desfecho na Agenda/Histórico
     expect(hasOutcome({ requestedExams: 'Hemograma' })).toBe(true)
     expect(hasOutcome({ summary: '   ' })).toBe(false)
     expect(hasOutcome(null)).toBe(false)
+  })
+})
+
+describe('EVT-C3 (NC-0012) — tipo de profissional: fonte única + rótulo', () => {
+  it('professionalKindLabel resolve os tipos conhecidos e degrada para null', () => {
+    expect(professionalKindLabel('medico')).toBe('Médico(a)')
+    expect(professionalKindLabel('fisioterapeuta')).toBe('Fisioterapeuta')
+    expect(professionalKindLabel('desconhecido')).toBeNull()
+    expect(professionalKindLabel('')).toBeNull()
+    expect(professionalKindLabel(null)).toBeNull()
+  })
+  it('os DEFS do seletor cobrem os rótulos usados nas telas (fonte única, sem duplicação)', () => {
+    expect(PROFESSIONAL_KIND_DEFS.map(d => d.id)).toContain('medico')
+    for (const d of PROFESSIONAL_KIND_DEFS) expect(professionalKindLabel(d.id)).toBe(d.label)
   })
 })

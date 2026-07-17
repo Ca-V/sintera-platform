@@ -10,7 +10,7 @@ import { createClient } from '@supabase/supabase-js'
 import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
 import { resolvePeriod, inPeriod, overlapsPeriod, type Period } from '@/lib/communication/period'
 import { selectFinancial } from '@/lib/agenda/event' // Despesas = mesma projeção financeira do domínio (SSOT)
-import { eventServicesFor } from '@/lib/agenda' // EVT-C1: leitura canônica (legado+canônico) também no compartilhamento
+import { eventServicesFor, professionalKindLabel } from '@/lib/agenda' // EVT-C1: leitura canônica (legado+canônico) também no compartilhamento
 import { contraceptiveLabel } from '@/lib/cycle' // SSOT dos métodos contraceptivos
 
 export const metadata = { robots: { index: false, follow: false } }
@@ -18,10 +18,6 @@ export const metadata = { robots: { index: false, follow: false } }
 const TYPE_LABEL: Record<string, string> = {
   consulta: 'Consulta', vacina: 'Vacina', procedimento: 'Procedimento',
   estetico: 'Procedimento estético', medicamento: 'Medicamento', exame: 'Exame', outro: 'Evento',
-}
-const PROF_LABEL: Record<string, string> = {
-  medico: 'Médico(a)', psicologo: 'Psicólogo(a)', nutricionista: 'Nutricionista',
-  fisioterapeuta: 'Fisioterapeuta', dentista: 'Dentista', outro: 'Outro profissional',
 }
 const METRIC_LABEL: Record<string, string> = {
   peso: 'Peso', altura: 'Altura', circunferencia_cintura: 'Circunferência (cintura)',
@@ -243,7 +239,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
                 <tr key={i} style={{ borderBottom: '1px solid #DCE8E3' }}>
                   <td style={{ padding: '6px 12px 6px 0', color: '#5F6A62', whiteSpace: 'nowrap', verticalAlign: 'top' }}>{fmt(e.date)}</td>
                   <td style={{ padding: '6px 0' }}>
-                    <span style={{ color: '#5F6A62' }}>{TYPE_LABEL[e.type] ?? 'Evento'}{e.professionalKind && PROF_LABEL[e.professionalKind] ? ` (${PROF_LABEL[e.professionalKind]})` : ''}:</span> {e.title}
+                    <span style={{ color: '#5F6A62' }}>{TYPE_LABEL[e.type] ?? 'Evento'}{professionalKindLabel(e.professionalKind) ? ` (${professionalKindLabel(e.professionalKind)})` : ''}:</span> {e.title}
                     {e.notes ? <span style={{ display: 'block', fontSize: 12, color: '#5F6A62' }}>{e.notes}</span> : null}
                   </td>
                 </tr>
