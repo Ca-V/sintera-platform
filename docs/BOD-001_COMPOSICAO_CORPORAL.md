@@ -71,9 +71,14 @@ plataforma mostra uma tabela **Indicador · Avaliação 1 · Avaliação 2 · Va
 Gordura 35%→29% = −6 p.p.; Massa muscular 29,8→30,5 = +0,7 kg). **Não é diagnóstico** — comparação objetiva entre
 medições. Fonte: pontos de `body_metrics` de cada avaliação (agrupados por `exam_id`/data/origem).
 
-**④ Jornada de tratamento (GLP-1).** Painel de acompanhamento: **peso inicial · peso atual · meta · perda
-acumulada · ritmo médio · % da meta atingido · data de início do acompanhamento**. *(Já implementado o núcleo —
-`weight-journey.ts` + painel "Acompanhamento de peso"; falta a "data de início do acompanhamento" explícita.)*
+**④ Jornada de Tratamento (GENÉRICA).** Painel **reutilizável para diferentes linhas de cuidado** — GLP-1,
+acompanhamento nutricional, bariátrica, ganho de massa muscular, reabilitação e futuros protocolos. **GLP-1 é
+apenas um contexto.** Nesta 1ª versão o objetivo é o **peso**, mas a estrutura é genérica (preparada para outros
+objetivos terapêuticos). Apresenta: **data de início do acompanhamento · peso inicial · peso atual · meta · % da
+meta atingido · perda acumulada · ritmo médio · tempo de acompanhamento · próxima meta (quanto falta)**. Inclui o
+indicador **"Última avaliação corporal"** (ex.: *Última bioimpedância: 15/07/2026* · *Última DEXA: 02/06/2026*) —
+mostra a **atualidade** dos dados. *(Implementado: `weight-journey.ts` + `lastAssessment` + painel "Jornada de
+Tratamento" com os 9 campos + última avaliação; a preservação de massa magra também é exibida.)*
 
 **⑤ Marcos da evolução (DIFERENCIAL).** Sobre os gráficos, exibir **eventos importantes da jornada** — ex.: início
 do GLP-1 · mudança de dose · início da musculação · consulta com nutricionista · nova bioimpedância. Assim, ao ver
@@ -124,7 +129,8 @@ Cada indicador exibe a origem (exame/manual/wearable). Rastreável até o exame-
 - **Ordem de entrega (fundadora 17/07):**
   1. **① Resumo atual** dedicado — cada indicador com **valor·unidade·data·origem·confiabilidade·tendência** vs.
      medição anterior (cartões no topo).
-  2. **④ Jornada GLP-1** — reusa quase os mesmos dados, alto valor; acrescentar **data de início** + **% da meta**.
+  2. **④ Jornada de Tratamento** (genérica; GLP-1 = contexto) — 9 campos + **Última avaliação corporal**; preparada
+     para futuros objetivos (ganho de massa, reabilitação). ✅ **feito**.
   3. **② Evolução** com **seletor de indicador** + gráfico temporal maior (hoje sparkline por grupo).
   4. **③ Comparação entre avaliações** (escolher 2 → tabela de variação; agrupar por `exam_id`/data/origem).
   5. **⑤ Marcos da evolução** (principal diferencial) — ler eventos-marco de Registros de Saúde e anotá-los.

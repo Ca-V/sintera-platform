@@ -16,7 +16,7 @@ import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import Sparkline, { parseNum } from '@/components/Sparkline'
 import { computeWeightJourney, type SeriesPoint } from '@/lib/body/weight-journey'
-import { currentSummary, sourceQuality, RELIABILITY_LABEL, type SummaryPoint } from '@/lib/body/summary'
+import { currentSummary, sourceQuality, RELIABILITY_LABEL, lastAssessment, type SummaryPoint } from '@/lib/body/summary'
 import ListCard from '@/components/ListCard'
 import PageHeader from '@/components/PageHeader'
 import EmptyState from '@/components/EmptyState'
@@ -254,6 +254,13 @@ export default function MedidasPage() {
   const SUMMARY_ORDER: Metric[] = ['peso', 'gordura_corporal', 'massa_muscular', 'massa_magra', 'agua_corporal', 'gordura_visceral', 'taxa_metabolica', 'massa_ossea', 'circunferencia_cintura', 'altura']
   const summaryCards = SUMMARY_ORDER.filter(m => summary[m]).map(m => ({ metric: m, s: summary[m] }))
 
+  // BOD-001 área ④ — Jornada de Tratamento (genérica; peso é o objetivo desta 1ª versão).
+  const lastAssess = lastAssessment(summaryPoints)   // última avaliação corporal (bioimpedância/DEXA)
+  // Tempo de acompanhamento (a partir da 1ª medição de peso). Semanas → meses quando ≥ 8 semanas.
+  const followupLabel = journey.spanWeeks == null ? null
+    : journey.spanWeeks < 8 ? `${journey.spanWeeks} sem`
+    : (() => { const mo = Math.round(journey.spanWeeks / 4.345); return `${mo} ${mo === 1 ? 'mês' : 'meses'}` })()
+
   // IMC é calculado (não é registrado manualmente).
   const groups: Metric[] = ['peso', 'altura', 'circunferencia_cintura', 'gordura_corporal', 'massa_muscular', 'massa_magra', 'agua_corporal', 'gordura_visceral', 'massa_ossea', 'taxa_metabolica', 'outro']
 
@@ -356,8 +363,9 @@ export default function MedidasPage() {
         </Card>
       )}
 
-      {/* FB-007 parte 2 — Acompanhamento de peso (útil para quem faz GLP-1). Aritmética factual sobre os
-          registros da própria pessoa: perda acumulada, ritmo, meta e preservação de massa magra. */}
+      {/* BOD-001 área ④ — Jornada de Tratamento (painel GENÉRICO, reutilizável p/ GLP-1, acompanhamento
+          nutricional, bariátrica, ganho de massa, reabilitação…). Nesta 1ª versão o objetivo é o PESO.
+          Aritmética factual sobre os registros da própria pessoa (RDC 657). */}
       {!loading && journey.currentWeight != null && (
         <Card padding="md" className="space-y-4">
           <div className="flex items-center justify-between gap-3">
@@ -366,8 +374,8 @@ export default function MedidasPage() {
                 <Target size={16} className="text-petal" />
               </div>
               <div>
-                <p className="font-display text-base font-semibold text-onyx leading-none">Acompanhamento de peso</p>
-                <p className="font-body text-[11px] text-mauve mt-0.5">A partir dos seus registros de peso e massa magra.</p>
+                <p className="font-display text-base font-semibold text-onyx leading-none">Jornada de Tratamento</p>
+                <p className="font-body text-[11px] text-mauve mt-0.5">Acompanhamento de peso e composição corporal ao longo do tempo.</p>
               </div>
             </div>
             {!goalEditing && (
@@ -377,6 +385,15 @@ export default function MedidasPage() {
               </button>
             )}
           </div>
+
+          {/* Contexto da jornada: início · tempo de acompanhamento · última avaliação corporal */}
+          {(journey.startDate || followupLabel || lastAssess) && (
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-body text-[11px] text-mauve">
+              {journey.startDate && <span>Início: <strong className="text-onyx/70 font-medium">{fmt(journey.startDate)}</strong></span>}
+              {followupLabel && <span>· {followupLabel} de acompanhamento</span>}
+              {lastAssess && <span>· Última {lastAssess.label}: <strong className="text-onyx/70 font-medium">{fmt(lastAssess.date)}</strong></span>}
+            </div>
+          )}
 
           {goalEditing && (
             <div className="flex items-end gap-2 rounded-xl bg-ivory border border-border p-3">

@@ -63,4 +63,9 @@ describe('FB-007 · computeWeightJourney', () => {
     expect(j.startWeight).toBe(90)
     expect(j.currentWeight).toBe(85)
   })
+
+  it('expõe a data de início (1ª medição) para a Jornada de Tratamento', () => {
+    const j = computeWeightJourney([{ value: 90, date: '2026-01-01' }, { value: 85, date: '2026-02-05' }], [], 80)
+    expect(j.startDate).toBe('2026-01-01')
+  })
 })

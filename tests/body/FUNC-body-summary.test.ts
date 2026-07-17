@@ -1,6 +1,6 @@
 // FUNC · BOD-001 área ① — Resumo atual + Qualidade do Dado. PURO.
 import { describe, it, expect } from 'vitest'
-import { currentSummary, sourceQuality, SOURCE_QUALITY, type SummaryPoint } from '@/lib/body/summary'
+import { currentSummary, sourceQuality, SOURCE_QUALITY, lastAssessment, type SummaryPoint } from '@/lib/body/summary'
 
 describe('BOD-001 · currentSummary', () => {
   const pts: SummaryPoint[] = [
@@ -65,5 +65,24 @@ describe('BOD-001 · Qualidade do Dado', () => {
       expect(q.label.length).toBeGreaterThan(0)
       expect(['alta', 'media', 'informado']).toContain(q.reliability)
     }
+  })
+})
+
+describe('BOD-001 · lastAssessment (última avaliação corporal)', () => {
+  it('retorna a avaliação (bioimpedância/DEXA) mais recente com rótulo', () => {
+    const r = lastAssessment([
+      { metric: 'peso', value: 80, unit: 'kg', date: '2026-07-20', source: 'manual' },       // não é avaliação
+      { metric: 'gordura_corporal', value: 30, unit: '%', date: '2026-06-02', source: 'dexa' },
+      { metric: 'gordura_corporal', value: 28, unit: '%', date: '2026-07-15', source: 'bioimpedancia' },
+    ])
+    expect(r).not.toBeNull()
+    expect(r!.source).toBe('bioimpedancia')     // 15/07 > 02/06
+    expect(r!.label).toBe('Bioimpedância')
+    expect(r!.date).toBe('2026-07-15')
+  })
+
+  it('sem avaliação (só manual) → null', () => {
+    const r = lastAssessment([{ metric: 'peso', value: 80, unit: 'kg', date: '2026-07-20', source: 'manual' }])
+    expect(r).toBeNull()
   })
 })

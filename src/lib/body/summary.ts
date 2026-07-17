@@ -48,6 +48,25 @@ export interface IndicatorSummary {
 
 function round(n: number, d = 1): number { const f = Math.pow(10, d); return Math.round(n * f) / f }
 
+// Origens que representam uma AVALIAÇÃO corporal completa (laudo), não um registro pontual de peso.
+export const ASSESSMENT_SOURCES = ['bioimpedancia', 'dexa'] as const
+
+export interface LastAssessment { source: string; label: string; date: string }
+
+/**
+ * Última AVALIAÇÃO corporal (bioimpedância/DEXA) — mostra a atualidade dos dados. Puro.
+ * Retorna a mais recente entre os pontos cuja origem é uma avaliação; null se não houver.
+ */
+export function lastAssessment(points: SummaryPoint[]): LastAssessment | null {
+  let best: { source: string; date: string } | null = null
+  for (const p of points) {
+    if (!p.source || !(ASSESSMENT_SOURCES as readonly string[]).includes(p.source) || !p.date) continue
+    if (!best || p.date > best.date) best = { source: p.source, date: p.date }
+  }
+  if (!best) return null
+  return { source: best.source, label: SOURCE_QUALITY[best.source]?.label ?? best.source, date: best.date }
+}
+
 /**
  * Estado atual por indicador: último ponto + tendência vs. o penúltimo. Puro/determinístico.
  * Ordena por data (entrada fora de ordem não quebra). Métricas sem ponto ficam de fora.

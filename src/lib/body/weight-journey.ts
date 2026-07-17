@@ -10,6 +10,7 @@ export interface SeriesPoint {
 }
 
 export interface WeightJourney {
+  startDate: string | null         // data da 1ª medição de peso (início do acompanhamento)
   startWeight: number | null
   currentWeight: number | null
   lostKg: number | null            // inicial − atual (positivo = perdeu)
@@ -47,7 +48,7 @@ export function computeWeightJourney(
   const w = sortAsc(weight)
   const l = sortAsc(lean)
   const empty: WeightJourney = {
-    startWeight: null, currentWeight: null, lostKg: null, spanWeeks: null, rateKgPerWeek: null,
+    startDate: null, startWeight: null, currentWeight: null, lostKg: null, spanWeeks: null, rateKgPerWeek: null,
     goalKg: goalKg ?? null, remainingKg: null, progressPct: null,
     leanStartKg: null, leanCurrentKg: null, leanDeltaKg: null,
   }
@@ -80,6 +81,7 @@ export function computeWeightJourney(
   const leanDelta = leanStart != null && leanCurrent != null ? leanCurrent - leanStart : null
 
   return {
+    startDate: start.date,
     startWeight: round(start.value),
     currentWeight: round(current.value),
     lostKg: round(lostKg),
