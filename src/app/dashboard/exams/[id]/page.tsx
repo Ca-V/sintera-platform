@@ -22,7 +22,8 @@ import { normalizeName } from '@/lib/biomarkers/grouping'
 import { deriveExamIdentity } from '@/lib/exams/identification'
 import { isOrderDocumentType } from '@/lib/exams/classification'
 import { careStageFor } from '@/lib/exams/careFlow'
-import { eventServicesFor } from '@/lib/agenda'
+import { eventServicesFor, isFinancial, type HealthEvent } from '@/lib/agenda'
+import { expenseDocLabel } from '@/lib/finance/expense'
 import { clinicalResultsToUcda, type ClinicalResultRow, type UcdaRepresentation } from '@/lib/capture/ucda'
 import CareFlowStepper from '@/components/CareFlowStepper'
 import ClinicalResultsCard from '@/components/ClinicalResultsCard'
@@ -293,15 +294,18 @@ export default function ExamDetailPage() {
   // (recorrência); 'expense' = registrar valor pago + NF/recibo do exame realizado (→ Despesas).
   const [agendarMode, setAgendarMode]   = useState<'repeat' | 'expense'>('repeat')
 
-  // ── Fluxo assistencial (EXA-C2 / NC-0011) — status dos eventos vinculados a este exame ──
-  const [linkedStatuses, setLinkedStatuses] = useState<string[]>([])
+  // ── Fluxo assistencial (EXA-C2 / NC-0011) — eventos assistenciais vinculados a este exame ──
+  const [linkedEvents, setLinkedEvents] = useState<HealthEvent[]>([])
 
   // Etapa atual do fluxo (Pedido→Agendamento→Realização→Resultado), resolvida no domínio.
   const careStage = useMemo(() => {
     if (!exam) return null
     const isOrder = isOrderDocumentType((exam as unknown as { document_type?: string | null }).document_type)
-    return careStageFor({ hasResult: biomarkers.length > 0, isOrder, linkedEventStatuses: linkedStatuses })
-  }, [exam, biomarkers.length, linkedStatuses])
+    return careStageFor({ hasResult: biomarkers.length > 0, isOrder, linkedEventStatuses: linkedEvents.map(e => e.status) })
+  }, [exam, biomarkers.length, linkedEvents])
+
+  // BETA-3: despesa vinculada ao exame (valor pago + documento fiscal) — fecha o loop no próprio exame.
+  const linkedExpense = useMemo(() => linkedEvents.find(isFinancial) ?? null, [linkedEvents])
 
   // ── Renomear exame ───────────────────────────────────────────────────────
   const [editingName, setEditingName]   = useState(false)
@@ -459,8 +463,8 @@ export default function ExamDetailPage() {
     if (!user?.id) return
     let alive = true
     eventServicesFor(supabase).query.listByExam(user.id, examId)
-      .then(evs => { if (alive) setLinkedStatuses(evs.map(e => e.status)) })
-      .catch(() => { if (alive) setLinkedStatuses([]) })
+      .then(evs => { if (alive) setLinkedEvents(evs) })
+      .catch(() => { if (alive) setLinkedEvents([]) })
     return () => { alive = false }
   }, [user?.id, examId, supabase])
 
@@ -636,6 +640,25 @@ export default function ExamDetailPage() {
       <div className="print:hidden">
         <CareFlowStepper stage={careStage} />
       </div>
+
+      {/* BETA-3: despesa vinculada ao exame (valor pago + documento fiscal) */}
+      {linkedExpense && (linkedExpense.amountCents ?? 0) > 0 && (
+        <div className="print:hidden rounded-2xl border border-petal/30 bg-blush/30 px-4 py-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <Receipt size={16} className="text-petal flex-shrink-0" />
+            <p className="font-body text-sm text-onyx">
+              Valor pago: <strong>{((linkedExpense.amountCents ?? 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>
+              <span className="text-mauve"> · aparece em <button onClick={() => router.push('/dashboard/gastos')} className="text-petal hover:underline">Despesas</button></span>
+            </p>
+          </div>
+          {linkedExpense.attachmentUrl && (
+            <a href={linkedExpense.attachmentUrl} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 font-body text-[11px] text-petal hover:underline flex-shrink-0">
+              {expenseDocLabel(linkedExpense.expenseDocType) ?? 'Documento'} →
+            </a>
+          )}
+        </div>
+      )}
 
       {/* Cabeçalho do exame */}
       <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
