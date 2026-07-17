@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatDateBR, formatTimeBR, parseDateOnly, eventToNotificationInput, typeLabel } from './presentation'
+import { formatDateBR, formatTimeBR, parseDateOnly, eventToNotificationInput, typeLabel, modalityLabel, outcomeSummary, hasOutcome } from './presentation'
 import { buildEventNotification, notificationToInline } from './notification'
 import type { HealthEvent } from './event'
 
@@ -50,5 +50,25 @@ describe('eventToNotificationInput → buildEventNotification (REQ-NOTIF-001)', 
     const n = buildEventNotification(eventToNotificationInput(ev({ time: null, professionalName: null })))
     expect(n.lines.some(l => l.icon === '🕒')).toBe(false)
     expect(n.lines.some(l => l.icon === '👨‍⚕️')).toBe(false)
+  })
+})
+
+describe('EVT-C2 (NC-0007) — surfacar modalidade/desfecho na Agenda/Histórico', () => {
+  it('modalityLabel: presencial/telemedicina/ausente', () => {
+    expect(modalityLabel('telemedicina')).toBe('Telemedicina')
+    expect(modalityLabel('presencial')).toBe('Presencial')
+    expect(modalityLabel(null)).toBeNull()
+  })
+  it('outcomeSummary prioriza resumo › diagnóstico › conduta › observações', () => {
+    expect(outcomeSummary({ diagnosis: 'HAS', conduct: 'Losartana' })).toBe('HAS')
+    expect(outcomeSummary({ conduct: 'Repouso' })).toBe('Repouso')
+    expect(outcomeSummary({})).toBeNull()
+    expect(outcomeSummary(null)).toBeNull()
+  })
+  it('hasOutcome detecta qualquer campo preenchido (inclui encaminhamentos/exames)', () => {
+    expect(hasOutcome({ referrals: 'Cardiologia' })).toBe(true)
+    expect(hasOutcome({ requestedExams: 'Hemograma' })).toBe(true)
+    expect(hasOutcome({ summary: '   ' })).toBe(false)
+    expect(hasOutcome(null)).toBe(false)
   })
 })

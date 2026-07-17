@@ -21,7 +21,7 @@
 
 ## BACKLOG — EVENTOS
 - ☑ **EVT-C1 — Eventos legados no Histórico/Relatório**: novo `EventQueryService.listAll` (expõe `repo.listAllEvents` = união legado+canônico com dedup, sem recorte temporal; +1 teste de delegação); `timeline`, `relatorio` e `r/[token]` deixam de consultar `health_events` direto e passam a ler pelo contrato canônico (o compartilhamento usa o mesmo caminho via client admin). Eventos legados voltam a aparecer nas 3 superfícies. Fecha NC-0013/0014. commit abaixo.
-- □ **EVT-C2 — Surfacar preparo/desfecho/modalidade** em Agenda/Histórico (hoje só na notificação). Fecha NC-0007.
+- ☑ **EVT-C2 — Surfacar preparo/desfecho/modalidade** — helpers puros `modalityLabel`/`outcomeSummary`/`hasOutcome` (presentation.ts, +3 testes) fiados na **Agenda** (chip de modalidade + linha "📋 Preparo" p/ planejado + "📝 Desfecho" p/ realizado) e no **Histórico** (mesmos sinais no card da Jornada). Projeção do MESMO domínio — nada inventado. Fecha NC-0007. commit abaixo.
 - □ **EVT-C3 — Capturar "tipo de profissional"** (campo no AgendarModal → `professional_kind`, já exibido em 3 telas). Fecha NC-0012.
 - □ **EVT-C4 — Marca visual de "retorno"** (respeitar o booleano `isReturn`, não só `event_type==='retorno'`). Fecha NC-0016.
 - □ **EVT-C5 — Exibir/ordenar por prioridade** na Agenda/Histórico (campo `priority` capturado, nunca exibido). Fecha NC-0017.

@@ -21,7 +21,7 @@ import { useUser } from '@/context/UserContext'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { useEventForm, eventToInput } from '@/components/eventForm'
-import { rowToHealthEvent, eventServicesFor, type HealthEvent, type HealthEventRow } from '@/lib/agenda'
+import { rowToHealthEvent, eventServicesFor, modalityLabel, outcomeSummary, hasOutcome, type HealthEvent, type HealthEventRow } from '@/lib/agenda'
 import HistoricoTabs from '@/components/HistoricoTabs'
 import { useStickyView } from '@/lib/ui/useStickyView'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
@@ -46,6 +46,11 @@ interface TimelineItem {
   profKind?: string | null
   status?: string           // status do health_event (só kind 'event')
   href?: string             // link para o painel (ômica)
+  // EVT-C2 (NC-0007): preparo/desfecho/modalidade — antes só na notificação
+  preparation?: string | null
+  outcomeText?: string | null
+  outcomePresent?: boolean
+  modalityText?: string | null
 }
 
 // Cobre a taxonomia única + tipos legados já gravados. NUNCA deve quebrar: o acesso
@@ -164,6 +169,10 @@ function LegacyTimeline() {
         amountCents: ev.amountCents ?? null,
         profKind: ev.professionalKind ?? null,
         status: ev.status ?? 'planejado',
+        preparation: ev.preparation ?? null,
+        outcomeText: outcomeSummary(ev.outcome),
+        outcomePresent: hasOutcome(ev.outcome),
+        modalityText: modalityLabel(ev.modality),
       })
     }
     for (const p of (omicsRes.data ?? []) as Array<Record<string, unknown>>) {
@@ -284,9 +293,21 @@ function LegacyTimeline() {
           title={it.title}
           titleHref={it.href}
           onTitleClick={it.rawId ? () => openEdit(it) : undefined}
-          meta={`${fmt(it.date)} · ${meta.label}${it.profKind && PROF_LABEL[it.profKind] ? ` · ${PROF_LABEL[it.profKind]}` : ''}${it.subtitle ? ` · ${it.subtitle}` : ''}`}
+          meta={
+            <>
+              {`${fmt(it.date)} · ${meta.label}${it.profKind && PROF_LABEL[it.profKind] ? ` · ${PROF_LABEL[it.profKind]}` : ''}${it.subtitle ? ` · ${it.subtitle}` : ''}`}
+              {/* EVT-C2 (NC-0007): preparo (planejado) e desfecho (realizado) fora da notificação */}
+              {it.preparation?.trim() && it.status !== 'realizado' && it.status !== 'cancelado' && (
+                <span className="block text-petal/90 mt-0.5">📋 Preparo: {it.preparation.trim()}</span>
+              )}
+              {it.kind === 'event' && it.status === 'realizado' && (it.outcomeText || it.outcomePresent) && (
+                <span className="block text-onyx/70 mt-0.5">📝 Desfecho{it.outcomeText ? `: ${it.outcomeText}` : ' registrado'}</span>
+              )}
+            </>
+          }
           chips={
             <>
+              {it.modalityText && <CardChip tone="neutral">{it.modalityText === 'Telemedicina' ? '💻' : '🏥'} {it.modalityText}</CardChip>}
               {it.amountCents != null && <CardChip tone="sage">{fmtBRL(it.amountCents)}</CardChip>}
               {it.kind === 'event' && it.status === 'realizado' && <CardChip tone="sage">✓ realizado</CardChip>}
               {it.kind === 'event' && it.status === 'cancelado' && <CardChip tone="neutral">cancelado</CardChip>}

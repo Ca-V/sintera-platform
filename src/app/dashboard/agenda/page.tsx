@@ -13,7 +13,7 @@ import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { useEventForm, eventToInput } from '@/components/eventForm'
 import { buildExamRecencySuggestion, type AgendaSuggestion } from '@/lib/agenda/suggestions'
-import { typeLabel, statusLabel, formatDateBR, formatTimeBR, type HealthEvent } from '@/lib/agenda'
+import { typeLabel, statusLabel, formatDateBR, formatTimeBR, modalityLabel, outcomeSummary, hasOutcome, type HealthEvent } from '@/lib/agenda'
 import { useStickyView } from '@/lib/ui/useStickyView'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import ListCard, { CardChip } from '@/components/ListCard'
@@ -161,6 +161,9 @@ export default function AgendaPage() {
   function agendaRow(ev: HealthEvent) {
     const overdue = ev.date < today
     const tone = ev.status === 'planejado' ? 'mauve' : (ev.status === 'cancelado' || ev.status === 'perdido') ? 'neutral' : 'sage'
+    const modLabel = modalityLabel(ev.modality)
+    const desfecho = outcomeSummary(ev.outcome)
+    const prep = ev.preparation?.trim()
     return (
       <ListCard key={ev.id}
         leading={<div className="text-xl leading-none">{TYPE_EMOJI[ev.type] ?? '📅'}</div>}
@@ -171,11 +174,19 @@ export default function AgendaPage() {
             {typeLabel(ev.type)} · {formatDateBR(ev.date)}{formatTimeBR(ev.time) ? ` · ${formatTimeBR(ev.time)}` : ''}
             {ev.directExpense && <span className="text-petal"> · despesa direta</span>}
             {overdue && <span className="text-petal font-medium"> · atrasado</span>}
+            {/* EVT-C2 (NC-0007): preparo (planejado) e desfecho (realizado) deixam de ficar só na notificação */}
+            {prep && ev.status === 'planejado' && (
+              <span className="block text-petal/90 mt-0.5">📋 Preparo: {prep}</span>
+            )}
+            {ev.status === 'realizado' && (desfecho || hasOutcome(ev.outcome)) && (
+              <span className="block text-onyx/70 mt-0.5">📝 Desfecho{desfecho ? `: ${desfecho}` : ' registrado'}</span>
+            )}
           </>
         }
         chips={
           <>
             <CardChip tone={tone}>{statusLabel(ev.status)}</CardChip>
+            {modLabel && <CardChip tone="neutral">{ev.modality === 'telemedicina' ? '💻' : '🏥'} {modLabel}</CardChip>}
             {ev.recurrenceRule && <CardChip tone="neutral">🔁 recorrente</CardChip>}
           </>
         }

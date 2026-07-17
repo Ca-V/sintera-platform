@@ -2,7 +2,7 @@
 // para UI e notificações. Mantém o domínio (event.ts) livre de texto/formato visual.
 // A notificação é uma projeção de CONTEÚDO do domínio (REQ-NOTIF-001).
 
-import type { HealthEvent, EventStatus } from './event'
+import type { HealthEvent, EventStatus, EventModality, Outcome } from './event'
 import type { EventNotificationInput } from './notification'
 
 // ── FONTE ÚNICA dos tipos de evento (Agenda E Histórico falam a mesma língua) ──
@@ -94,4 +94,26 @@ export function eventToNotificationInput(ev: HealthEvent): EventNotificationInpu
     modality: ev.modality,
     preparation: ev.preparation,
   }
+}
+
+// ── EVT-C2 (NC-0007): surfacar preparo/desfecho/modalidade na Agenda/Histórico ─────────────────
+// Antes só a notificação projetava estes campos; agora as telas os exibem a partir do MESMO domínio.
+
+/** Rótulo curto da modalidade (só quando informada). */
+export function modalityLabel(m: EventModality | null): string | null {
+  return m === 'telemedicina' ? 'Telemedicina' : m === 'presencial' ? 'Presencial' : null
+}
+
+/** Resumo curto do DESFECHO para exibição (prioriza resumo › diagnóstico › conduta › observações). Null se vazio. */
+export function outcomeSummary(o: Outcome | null): string | null {
+  if (!o) return null
+  const s = (o.summary ?? o.diagnosis ?? o.conduct ?? o.notes ?? '').trim()
+  return s || null
+}
+
+/** Há algum conteúdo de desfecho preenchido? (para decidir exibir a marca "Desfecho registrado"). */
+export function hasOutcome(o: Outcome | null): boolean {
+  if (!o) return false
+  return [o.summary, o.diagnosis, o.conduct, o.requestedExams, o.referrals, o.notes]
+    .some(v => (v ?? '').trim().length > 0)
 }
