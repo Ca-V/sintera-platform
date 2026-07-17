@@ -586,7 +586,7 @@ export default function RecursosPage() {
         onGoToHistory={() => { window.location.href = '/dashboard/gastos' }}
         defaultTitle={agendarResource?.name ?? 'Recurso'}
         defaultNotes={`Referente ao recurso: ${agendarResource?.name ?? ''}`}
-        initialEvent={{ eventType: 'outro', status: 'realizado', directExpense: true }}
+        initialEvent={{ eventType: 'outro', status: 'realizado' }}
       />
     </div>
   )

@@ -1143,7 +1143,7 @@ export default function ExamDetailPage() {
         defaultTitle={agendarMode === 'expense' ? (exam?.type ?? 'Exame') : (exam?.type ? `Repetir ${exam.type}` : '')}
         defaultNotes={`Referente ao exame: ${exam?.type ?? ''}`}
         initialEvent={agendarMode === 'expense'
-          ? { eventType: 'exame', status: 'realizado', directExpense: true, date: (exam as unknown as { exam_date?: string | null })?.exam_date ?? undefined }
+          ? { eventType: 'exame', status: 'realizado', date: (exam as unknown as { exam_date?: string | null })?.exam_date ?? undefined }
           : { eventType: 'exame' }}
       />
 
