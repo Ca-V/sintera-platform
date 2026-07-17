@@ -181,6 +181,14 @@ export function isClosed(ev: HealthEvent): boolean { return ev.status === 'reali
 export function isUpcoming(ev: HealthEvent, refDate: string): boolean { return !isClosed(ev) && ev.date >= refDate }
 export function isPast(ev: HealthEvent, refDate: string): boolean { return isConcluded(ev) || ev.date < refDate }
 export function hasActiveReminder(ev: HealthEvent): boolean { return ev.reminderEnabled && !isClosed(ev) }
+/**
+ * É uma consulta de RETORNO? Respeita o atributo canônico `isReturn` (modelo atual: consulta + boolean)
+ * E o tipo legado `retorno` (antes de migração 080). NC-0016: a UI deve marcar retorno pelo booleano,
+ * nunca só por `type === 'retorno'`.
+ */
+export function isReturnVisit(ev: Pick<HealthEvent, 'type' | 'isReturn'>): boolean {
+  return ev.isReturn === true || ev.type === 'retorno'
+}
 export function hasCost(ev: HealthEvent): boolean { return (ev.amountCents ?? 0) > 0 }
 /** Evento não criado manualmente pelo usuário (protocolo, exame, wearable, importação…). */
 export function isDerived(ev: HealthEvent): boolean { return ev.source !== 'manual' && ev.source !== 'agenda_legacy' }

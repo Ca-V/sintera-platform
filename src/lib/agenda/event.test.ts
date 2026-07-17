@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   rowToHealthEvent, agendaRowToHealthEvent,
-  isUpcoming, isPast, isConcluded, isClosed, hasActiveReminder, hasCost, isDerived,
+  isUpcoming, isPast, isConcluded, isClosed, hasActiveReminder, hasCost, isDerived, isReturnVisit,
   selectUpcoming, selectNextUpcoming, selectHistorical, selectByLink, selectFinancial, isFinancial,
   completeRule, cancelRule, rescheduleRule, canTransition,
   type HealthEvent, type HealthEventRow,
@@ -69,6 +69,12 @@ describe('predicados de projeção (telas só filtram por estes)', () => {
     expect(hasCost(ev({ amountCents: null }))).toBe(false)
     expect(isDerived(ev({ source: 'protocol' }))).toBe(true)
     expect(isDerived(ev({ source: 'manual' }))).toBe(false)
+  })
+  it('isReturnVisit respeita o booleano isReturn E o tipo legado (NC-0016)', () => {
+    expect(isReturnVisit(ev({ type: 'consulta', isReturn: true }))).toBe(true)   // modelo atual
+    expect(isReturnVisit(ev({ type: 'retorno', isReturn: false }))).toBe(true)   // legado
+    expect(isReturnVisit(ev({ type: 'consulta', isReturn: false }))).toBe(false)
+    expect(isReturnVisit(ev({ type: 'exame', isReturn: false }))).toBe(false)
   })
 })
 

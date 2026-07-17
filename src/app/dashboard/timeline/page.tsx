@@ -21,7 +21,7 @@ import { useUser } from '@/context/UserContext'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { useEventForm, eventToInput } from '@/components/eventForm'
-import { rowToHealthEvent, eventServicesFor, modalityLabel, outcomeSummary, hasOutcome, professionalKindLabel, type HealthEvent, type HealthEventRow } from '@/lib/agenda'
+import { rowToHealthEvent, eventServicesFor, modalityLabel, outcomeSummary, hasOutcome, professionalKindLabel, isReturnVisit, type HealthEvent, type HealthEventRow } from '@/lib/agenda'
 import HistoricoTabs from '@/components/HistoricoTabs'
 import { useStickyView } from '@/lib/ui/useStickyView'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
@@ -51,6 +51,7 @@ interface TimelineItem {
   outcomeText?: string | null
   outcomePresent?: boolean
   modalityText?: string | null
+  isReturn?: boolean        // EVT-C4 (NC-0016): marca de retorno pelo booleano, não só event_type
 }
 
 // Cobre a taxonomia única + tipos legados já gravados. NUNCA deve quebrar: o acesso
@@ -168,6 +169,7 @@ function LegacyTimeline() {
         outcomeText: outcomeSummary(ev.outcome),
         outcomePresent: hasOutcome(ev.outcome),
         modalityText: modalityLabel(ev.modality),
+        isReturn: isReturnVisit(ev),
       })
     }
     for (const p of (omicsRes.data ?? []) as Array<Record<string, unknown>>) {
@@ -302,6 +304,7 @@ function LegacyTimeline() {
           }
           chips={
             <>
+              {it.isReturn && <CardChip tone="neutral">📋 Retorno</CardChip>}
               {it.modalityText && <CardChip tone="neutral">{it.modalityText === 'Telemedicina' ? '💻' : '🏥'} {it.modalityText}</CardChip>}
               {it.amountCents != null && <CardChip tone="sage">{fmtBRL(it.amountCents)}</CardChip>}
               {it.kind === 'event' && it.status === 'realizado' && <CardChip tone="sage">✓ realizado</CardChip>}

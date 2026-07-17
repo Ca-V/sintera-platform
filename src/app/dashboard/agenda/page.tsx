@@ -13,7 +13,7 @@ import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { useEventForm, eventToInput } from '@/components/eventForm'
 import { buildExamRecencySuggestion, type AgendaSuggestion } from '@/lib/agenda/suggestions'
-import { typeLabel, statusLabel, formatDateBR, formatTimeBR, modalityLabel, outcomeSummary, hasOutcome, type HealthEvent } from '@/lib/agenda'
+import { typeLabel, statusLabel, formatDateBR, formatTimeBR, modalityLabel, outcomeSummary, hasOutcome, isReturnVisit, type HealthEvent } from '@/lib/agenda'
 import { useStickyView } from '@/lib/ui/useStickyView'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import ListCard, { CardChip } from '@/components/ListCard'
@@ -186,6 +186,7 @@ export default function AgendaPage() {
         chips={
           <>
             <CardChip tone={tone}>{statusLabel(ev.status)}</CardChip>
+            {isReturnVisit(ev) && <CardChip tone="neutral">📋 Retorno</CardChip>}
             {modLabel && <CardChip tone="neutral">{ev.modality === 'telemedicina' ? '💻' : '🏥'} {modLabel}</CardChip>}
             {ev.recurrenceRule && <CardChip tone="neutral">🔁 recorrente</CardChip>}
           </>
