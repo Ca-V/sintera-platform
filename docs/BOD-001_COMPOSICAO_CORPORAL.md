@@ -13,14 +13,19 @@ Segue a estrutura de [[ARCH-000]] §4.
 > tem um objetivo distinto e **não duplica responsabilidades**. Reutilizável em toda a plataforma.
 
 **Os três domínios longitudinais (sem sobreposição):**
-| Domínio | Unidade | O que faz | Origem/Visualização |
-|---|---|---|---|
-| **Registros de Saúde** | o evento | Linha do tempo de TODOS os eventos (consulta·exame·procedimento·vacina·medicamento·suplemento·internação·cirurgia·outros), em ordem cronológica. **Não é análise** — é a jornada. | visualização de eventos |
-| **Histórico de Exames** | o exame / biomarcador | Repositório oficial dos exames (documento original·extração·biomarcadores·laboratório·solicitante·data·valor·doc fiscal·rastreabilidade). Ao abrir um exame/biomarcador: **evolução dos resultados no tempo** (ex.: Ferritina 2022→28, 2023→41, 2024→52; HbA1c 5,9→5,7→5,5→5,3). | **fonte oficial** + evolução por exame |
-| **Composição Corporal** | o indicador corporal | **NÃO armazena exames.** Consolida indicadores corporais de várias origens e mostra a **evolução do corpo**. | visualização derivada (multi-origem) |
+| Domínio | Objeto Principal (de Governança) | Papel |
+|---|---|---|
+| **Registros de Saúde** | Evento de Saúde | Linha do tempo da jornada da usuária (consulta·exame·procedimento·vacina·medicamento·suplemento·internação·cirurgia·outros). **Não é análise** — é a jornada. |
+| **Histórico de Exames** | Exame / Biomarcador | **Fonte oficial** dos exames (documento original·extração·biomarcadores·laboratório·solicitante·data·valor·doc fiscal·rastreabilidade) e **evolução longitudinal dos resultados** (ex.: Ferritina 2022→28, 2023→41, 2024→52; HbA1c 5,9→5,7→5,5→5,3). |
+| **Composição Corporal** | Indicador Corporal | Painel consolidado da **evolução corporal proveniente de múltiplas fontes** — não armazena exames. |
 
-Regra de ouro: dado entra e é preservado no **Histórico de Exames** (o fato); **Composição Corporal** e demais
+Regra de ouro: o dado entra e é preservado no **Histórico de Exames** (o fato); **Composição Corporal** e demais
 painéis **leem** dele (+ outras fontes) e apresentam evolução — **nunca duplicam o armazenamento**.
+
+> **Não-fonte-primária + rastreabilidade (fundadora 17/07):** a **Composição Corporal NÃO constitui uma fonte
+> primária de dados.** Todos os indicadores apresentados devem possuir **rastreabilidade até sua origem** (exame,
+> registro manual, wearable ou outra integração), **preservando a proveniência** das informações. Nenhum painel
+> cria informação — apenas consolida e apresenta dados provenientes de fontes rastreáveis.
 
 ## 1. Objetivo
 Painel de **acompanhamento longitudinal da composição corporal**, útil para nutrição/endocrinologia e especialmente
