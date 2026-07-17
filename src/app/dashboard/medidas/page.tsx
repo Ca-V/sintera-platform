@@ -8,9 +8,9 @@
 // Sem juízo clínico. Sinais vitais (pressão, etc.) ficam em aba própria.
 // ============================================================
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Loader2, Plus, X, Activity, Trash2, Camera, ScanLine, ArrowLeft, Ruler } from 'lucide-react'
+import { Loader2, Activity, Trash2, Camera, ArrowLeft, Ruler } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
@@ -24,7 +24,7 @@ import Section from '@/components/ui/Section'
 import Disclaimer from '@/components/ui/Disclaimer'
 import ProvenanceLine from '@/components/ui/ProvenanceLine'
 import { examProvenance } from '@/lib/provenance'
-import { useDocumentBundle, DocumentBundleStaging } from '@/components/ui/DocumentBundleCapture'
+import CreateRecordMenu from '@/components/ui/CreateRecordMenu'
 import ConfirmDialog from '@/components/ConfirmDialog'
 
 type Metric =
@@ -99,7 +99,6 @@ export default function MedidasPage() {
   const [scanExamId, setScanExamId] = useState('')
   const [scanErr, setScanErr] = useState<string | null>(null)
   const [savingScan, setSavingScan] = useState(false)
-  const scanRef = useRef<HTMLInputElement>(null)
 
   const load = useCallback(async () => {
     if (!user) return
@@ -211,7 +210,6 @@ export default function MedidasPage() {
   // IMC é calculado (não é registrado manualmente).
   const groups: Metric[] = ['peso', 'altura', 'circunferencia_cintura', 'gordura_corporal', 'massa_muscular', 'agua_corporal', 'gordura_visceral', 'massa_ossea', 'taxa_metabolica', 'outro']
 
-  const bundle = useDocumentBundle(onScanFile) // Document Bundle (padrão transversal)
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
@@ -225,31 +223,31 @@ export default function MedidasPage() {
         title="Medidas"
         subtitle={<>Acompanhe peso, altura, circunferência e composição corporal (bioimpedância) ao longo do tempo.</>}
         action={
-          <div className="flex flex-row flex-wrap items-center gap-2 sm:flex-col sm:items-end flex-shrink-0">
-            <button onClick={() => (showForm ? (reset(), setShowForm(false)) : (reset(), setShowForm(true)))}
-              className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity">
-              {showForm ? <X size={15} /> : <Plus size={15} />} {showForm ? 'Fechar' : 'Adicionar'}
-            </button>
-            <input ref={scanRef} type="file" accept="image/*" capture="environment" multiple className="hidden"
-              onChange={e => { const fs = Array.from(e.target.files ?? []); e.target.value = ''; bundle.intake(fs) }} />
-            <button onClick={() => scanRef.current?.click()} disabled={scanning}
-              className="flex items-center gap-2 px-4 py-2 rounded-full border border-petal/40 text-petal font-body text-sm font-medium hover:bg-blush transition-colors disabled:opacity-50">
-              {scanning ? <Loader2 size={15} className="animate-spin" /> : <ScanLine size={15} />} Escanear bioimpedância
-            </button>
-          </div>
+          // BETA-2/BETA-5 (captura institucional): um ÚNICO "Adicionar medida" (foto/arquivo/manual).
+          // A bioimpedância é DETECTADA no processamento (onScanFile) — sem botão dedicado.
+          <CreateRecordMenu
+            label="Adicionar medida"
+            methods={['file', 'camera', 'manual']}
+            fileAccept="image/*"
+            cameraAccept="image/*"
+            fileLabel="Selecionar foto do laudo"
+            busy={scanning}
+            busyLabel="Lendo laudo…"
+            onSelect={(method, file) => {
+              if (method === 'manual') { reset(); setShowForm(true) }
+              else if (file) onScanFile(file)   // foto/laudo → detecta bioimpedância automaticamente
+            }}
+          />
         }
       />
-
-      {bundle.pages.length > 0 && (
-        <DocumentBundleStaging bundle={bundle} onAddCamera={() => scanRef.current?.click()} onAddGallery={() => scanRef.current?.click()} />
-      )}
 
       {/* Onde registrar bioimpedância (ex.: do nutricionista) */}
       <div className="rounded-2xl border border-petal/30 bg-blush/30 px-4 py-3 flex items-start gap-3">
         <Activity size={16} className="text-petal flex-shrink-0 mt-0.5" />
         <p className="font-body text-xs text-onyx leading-relaxed">
-          Fez <strong>bioimpedância</strong> (por exemplo, com seu nutricionista)? Registre cada resultado em
-          <strong> Adicionar → Bioimpedância</strong> (gordura corporal, massa muscular, água, IMC e outros).
+          Fez <strong>bioimpedância</strong> (por exemplo, com seu nutricionista)? Em <strong>Adicionar medida</strong>,
+          envie uma <strong>foto do laudo</strong> — o sistema reconhece a bioimpedância e pré-preenche as medidas
+          (gordura corporal, massa muscular, água, IMC e outros); ou registre manualmente.
           Para guardar o laudo completo, envie o arquivo em{' '}
           <Link href="/dashboard/exams" className="text-petal hover:underline font-medium">Exames</Link>.
         </p>
@@ -404,7 +402,11 @@ export default function MedidasPage() {
             </div>
           )}
           {err && <p className="font-body text-xs text-red-500">{err}</p>}
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
+            <button onClick={() => { reset(); setShowForm(false) }} disabled={saving}
+              className="px-4 py-2 rounded-full border border-border text-mauve font-body text-sm font-medium hover:bg-blush transition-colors disabled:opacity-40">
+              Cancelar
+            </button>
             <button onClick={save} disabled={saving || !value.trim() || !date}
               className="px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium disabled:opacity-40 hover:opacity-90 transition-opacity">
               {saving ? 'Salvando…' : 'Salvar'}
