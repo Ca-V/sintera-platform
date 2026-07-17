@@ -17,6 +17,8 @@ import VoiceInput from '@/components/VoiceInput'
 import Sparkline, { parseNum } from '@/components/Sparkline'
 import { computeWeightJourney, type SeriesPoint } from '@/lib/body/weight-journey'
 import { currentSummary, sourceQuality, RELIABILITY_LABEL, lastAssessment, type SummaryPoint } from '@/lib/body/summary'
+import { EVOLUTION_PERIODS, filterByPeriod, markerFor, type EvoPoint } from '@/lib/body/evolution'
+import EvolutionChart from '@/components/body/EvolutionChart'
 import ListCard from '@/components/ListCard'
 import PageHeader from '@/components/PageHeader'
 import EmptyState from '@/components/EmptyState'
@@ -95,6 +97,11 @@ export default function MedidasPage() {
   const [goalEditing, setGoalEditing] = useState(false)
   const [goalInput, setGoalInput] = useState('')
   const [goalSaving, setGoalSaving] = useState(false)
+
+  // BOD-001 área ② — Evolução Longitudinal (seletor de indicador · período · ponto selecionado).
+  const [evoMetric, setEvoMetric] = useState<Metric>('peso')
+  const [evoDays, setEvoDays] = useState<number | null>(90)
+  const [evoPoint, setEvoPoint] = useState<EvoPoint | null>(null)
 
   const [showForm, setShowForm] = useState(false)
   const [metric, setMetric] = useState<Metric>('peso')
@@ -260,6 +267,35 @@ export default function MedidasPage() {
   const followupLabel = journey.spanWeeks == null ? null
     : journey.spanWeeks < 8 ? `${journey.spanWeeks} sem`
     : (() => { const mo = Math.round(journey.spanWeeks / 4.345); return `${mo} ${mo === 1 ? 'mês' : 'meses'}` })()
+
+  // BOD-001 área ② — Evolução Longitudinal. Seletor horizontal de indicadores + gráfico + tabela cronológica.
+  const EVO_SHORT: Partial<Record<Metric, string>> = {
+    peso: 'Peso', gordura_corporal: 'Gordura', massa_muscular: 'Massa Muscular', massa_magra: 'Massa Magra',
+    agua_corporal: 'Água', gordura_visceral: 'Visceral', imc: 'IMC', taxa_metabolica: 'TMB',
+    massa_ossea: 'Massa óssea', circunferencia_cintura: 'Cintura',
+  }
+  const EVO_ORDER: Metric[] = ['peso', 'gordura_corporal', 'massa_muscular', 'massa_magra', 'agua_corporal', 'gordura_visceral', 'imc', 'taxa_metabolica', 'massa_ossea', 'circunferencia_cintura']
+  const EVO_GLYPH: Record<string, string> = { circle: '●', square: '■', triangle: '▲', diamond: '◆' }
+  const evoIndicators = EVO_ORDER.filter(m => m === 'imc' ? imcVal != null : !!summary[m])
+  const evoMetricActive: Metric = evoIndicators.includes(evoMetric) ? evoMetric : (evoIndicators[0] ?? 'peso')
+  // Série do indicador ativo (asc). IMC é derivado dos pontos de peso + altura do perfil.
+  const evoAll: EvoPoint[] = (() => {
+    if (evoMetricActive === 'imc') {
+      if (alturaCm == null) return []
+      return items.filter(i => i.metric === 'peso').map(i => {
+        const w = parseNum(i.valueText)
+        return w == null ? null : { key: i.id, date: i.measuredOn, value: Math.round((w / Math.pow(alturaCm / 100, 2)) * 10) / 10, source: i.source, examId: i.examId }
+      }).filter((p): p is EvoPoint => p != null).sort((a, b) => (a.date < b.date ? -1 : 1))
+    }
+    return items.filter(i => i.metric === evoMetricActive).map(i => {
+      const v = parseNum(i.valueText)
+      return v == null ? null : { key: i.id, date: i.measuredOn, value: v, source: i.source, examId: i.examId }
+    }).filter((p): p is EvoPoint => p != null).sort((a, b) => (a.date < b.date ? -1 : 1))
+  })()
+  const nowISO = new Date().toISOString().slice(0, 10)
+  const evoPoints = filterByPeriod(evoAll, evoDays, nowISO)
+  const evoUnit = evoMetricActive === 'imc' ? 'kg/m²' : (DEFAULT_UNIT[evoMetricActive] || '')
+  const evoSourcesPresent = [...new Set(evoPoints.map(p => p.source).filter(Boolean))] as string[]
 
   // IMC é calculado (não é registrado manualmente).
   const groups: Metric[] = ['peso', 'altura', 'circunferencia_cintura', 'gordura_corporal', 'massa_muscular', 'massa_magra', 'agua_corporal', 'gordura_visceral', 'massa_ossea', 'taxa_metabolica', 'outro']
@@ -472,6 +508,107 @@ export default function MedidasPage() {
                 {' '}({journey.leanDeltaKg >= 0 ? `+${journey.leanDeltaKg}` : journey.leanDeltaKg} kg no período).
                 {' '}<span className="text-mauve">Acompanhe se a perda de peso preserva a massa magra.</span>
               </p>
+            </div>
+          )}
+        </Card>
+      )}
+
+      {/* BOD-001 área ② — Evolução Longitudinal: seletor horizontal · gráfico com filtro de período ·
+          tabela cronológica · pontos CLICÁVEIS (rastreabilidade até o exame/registro). */}
+      {!loading && evoIndicators.length > 0 && (
+        <Card padding="md" className="space-y-4">
+          <div>
+            <p className="font-display text-base font-semibold text-onyx leading-none">Evolução</p>
+            <p className="font-body text-[11px] text-mauve mt-0.5">Como cada indicador evoluiu — clique num ponto para ver a origem.</p>
+          </div>
+
+          {/* Seletor horizontal de indicadores */}
+          <div className="flex flex-wrap gap-1.5">
+            {evoIndicators.map(m => {
+              const active = m === evoMetricActive
+              return (
+                <button key={m} type="button" onClick={() => { setEvoMetric(m); setEvoPoint(null) }}
+                  className={`px-2.5 py-1 rounded-full font-body text-xs font-medium transition-colors ${active ? 'gradient-sintera text-white' : 'bg-ivory border border-border text-mauve hover:border-petal/40'}`}>
+                  {EVO_SHORT[m] ?? METRIC_LABEL[m]}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Filtros de período */}
+          <div className="flex flex-wrap items-center gap-1">
+            {EVOLUTION_PERIODS.map(p => {
+              const active = p.days === evoDays
+              return (
+                <button key={p.key} type="button" onClick={() => { setEvoDays(p.days); setEvoPoint(null) }}
+                  className={`px-2 py-0.5 rounded-lg font-body text-[11px] transition-colors ${active ? 'bg-blush text-petal font-semibold' : 'text-mauve hover:text-onyx'}`}>
+                  {p.label}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Gráfico */}
+          <EvolutionChart points={evoPoints} unit={evoUnit} selectedKey={evoPoint?.key ?? null} onSelect={setEvoPoint} />
+
+          {/* Legenda de origem (o usuário percebe mudança de fonte) */}
+          {evoSourcesPresent.length > 0 && (
+            <div className="flex flex-wrap gap-3 font-body text-[10px] text-mauve">
+              {evoSourcesPresent.map(s => (
+                <span key={s} className="inline-flex items-center gap-1"><span className="text-petal">{EVO_GLYPH[markerFor(s)]}</span> {sourceQuality(s)?.label ?? s}</span>
+              ))}
+            </div>
+          )}
+
+          {/* Detalhe do ponto selecionado — rastreabilidade */}
+          {evoPoint && (
+            <div className="rounded-xl bg-blush/30 border border-petal/20 p-3 flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-display text-lg font-bold text-onyx leading-none">{evoPoint.value}<span className="text-xs font-normal text-mauve">{evoUnit ? ` ${evoUnit}` : ''}</span></p>
+                <p className="font-body text-[11px] text-mauve mt-1">
+                  <span className="text-petal mr-0.5">{EVO_GLYPH[markerFor(evoPoint.source)]}</span>
+                  {sourceQuality(evoPoint.source)?.label ?? evoPoint.source ?? 'Origem não informada'} · {fmt(evoPoint.date)}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {evoPoint.examId ? (
+                  <Link href={`/dashboard/exams/${evoPoint.examId}`} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-white border border-petal/30 font-body text-xs text-petal hover:bg-blush transition-colors">Abrir exame</Link>
+                ) : (
+                  <span className="font-body text-[11px] text-mauve">Registro manual</span>
+                )}
+                <button onClick={() => setEvoPoint(null)} className="text-mauve hover:text-onyx font-body text-lg leading-none" aria-label="Fechar detalhe">×</button>
+              </div>
+            </div>
+          )}
+
+          {/* Tabela cronológica — de onde veio cada ponto */}
+          {evoPoints.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left font-body text-xs">
+                <thead>
+                  <tr className="text-mauve">
+                    <th className="py-1 pr-2 font-medium">Data</th>
+                    <th className="py-1 pr-2 font-medium">Valor</th>
+                    <th className="py-1 pr-2 font-medium">Origem</th>
+                    <th className="py-1 font-medium">Avaliação</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...evoPoints].reverse().map(p => {
+                    const ex = p.examId ? exams.find(e => e.id === p.examId) : null
+                    const sel = p.key === evoPoint?.key
+                    return (
+                      <tr key={p.key} onClick={() => setEvoPoint(p)}
+                        className={`border-t border-border/50 cursor-pointer transition-colors ${sel ? 'bg-blush/30' : 'hover:bg-blush/15'}`}>
+                        <td className="py-1.5 pr-2 text-mauve whitespace-nowrap">{fmt(p.date)}</td>
+                        <td className="py-1.5 pr-2 text-onyx font-medium whitespace-nowrap">{p.value}{evoUnit ? ` ${evoUnit}` : ''}</td>
+                        <td className="py-1.5 pr-2 text-mauve whitespace-nowrap"><span className="text-petal mr-1">{EVO_GLYPH[markerFor(p.source)]}</span>{sourceQuality(p.source)?.label ?? p.source ?? '—'}</td>
+                        <td className="py-1.5 text-mauve">{ex ? <Link href={`/dashboard/exams/${ex.id}`} onClick={e => e.stopPropagation()} className="text-petal hover:underline">{ex.type}</Link> : '—'}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
         </Card>

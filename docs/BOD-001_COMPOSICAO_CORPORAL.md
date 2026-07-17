@@ -63,8 +63,14 @@ Massa magra · Água corporal · Gordura visceral · Metabolismo basal · Massa 
 Cada indicador exibe **valor + unidade · data da última atualização · origem · confiabilidade (§4.2) · tendência
 vs. a medição anterior** (↑/↓/– com a variação). *(Rótulo de origem já implementado — FB-003 subitem d.)*
 
-**② Evolução longitudinal.** Cada indicador tem seu **gráfico temporal** próprio; a usuária **escolhe** qual
-acompanhar (peso, gordura, massa muscular, água, gordura visceral, …). Série derivada de `body_metrics` por métrica.
+**② Evolução longitudinal.** Três níveis: **(a) seletor horizontal** de indicadores (Peso·Gordura·Massa
+Muscular·Massa Magra·Água·Visceral·IMC·TMB — um clique troca o painel); **(b) gráfico principal** grande com
+**filtros de período** (30d·90d·6m·1a·tudo) e **marcadores distintos por origem** (● bioimpedância · ■ manual ·
+▲ DEXA · ◆ balança); **(c) tabela cronológica** (Data·Valor·Origem·Avaliação). Cada **ponto é clicável** →
+detalhe com valor·origem·data e ação de rastreabilidade (**Abrir exame** quando veio de laudo). *(Implementado:
+`lib/body/evolution.ts` + componente `EvolutionChart` + seção na página; IMC derivado de peso+altura.
+**Follow-up menor:** "Editar" um ponto MANUAL — hoje o detalhe mostra "Registro manual"; a página ainda não tem
+fluxo de edição de medida (só add/remover pelo histórico abaixo).)*
 
 **③ Comparação entre avaliações.** A usuária escolhe **dois** exames/avaliações (ex.: duas bioimpedâncias) e a
 plataforma mostra uma tabela **Indicador · Avaliação 1 · Avaliação 2 · Variação** (ex.: Peso 82,4→76,8 = −5,6 kg;
@@ -131,7 +137,8 @@ Cada indicador exibe a origem (exame/manual/wearable). Rastreável até o exame-
      medição anterior (cartões no topo).
   2. **④ Jornada de Tratamento** (genérica; GLP-1 = contexto) — 9 campos + **Última avaliação corporal**; preparada
      para futuros objetivos (ganho de massa, reabilitação). ✅ **feito**.
-  3. **② Evolução** com **seletor de indicador** + gráfico temporal maior (hoje sparkline por grupo).
+  3. **② Evolução** — seletor horizontal + gráfico com período + tabela cronológica + pontos clicáveis
+     (rastreabilidade) + marcadores por origem. ✅ **feito** (falta só "editar" ponto manual).
   4. **③ Comparação entre avaliações** (escolher 2 → tabela de variação; agrupar por `exam_id`/data/origem).
   5. **⑤ Marcos da evolução** (principal diferencial) — ler eventos-marco de Registros de Saúde e anotá-los.
   6. Ingestão de **DEXA** como exame (FB-003 estende bioimpedância) alimentando os mesmos indicadores.
