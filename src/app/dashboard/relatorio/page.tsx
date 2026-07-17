@@ -187,7 +187,7 @@ function LegacyReport() {
     { title: 'Minha Saúde', items: [
       ['condicoes', 'Condições de Saúde', Stethoscope],
       ['visao', 'Recursos de Saúde (óculos e lentes)', Eye],
-      ['medidas', 'Medidas Corporais', Ruler],
+      ['medidas', 'Composição Corporal', Ruler],
       ['sinais', 'Monitoramento', Activity],
       ['habitos', 'Hábitos', HeartPulse],
       ['ciclo', 'Ciclo e Contracepção', Droplet],
@@ -848,7 +848,7 @@ function LegacyReport() {
         {/* Medidas corporais */}
         {sections.medidas && (
         <section id="sec-medidas" style={{ scrollMarginTop: 16 }}>
-          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Medidas Corporais</h2>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Composição Corporal</h2>
           {(latestPeso || alturaCm != null || imcVal != null) && (
             <p className="font-body text-xs text-onyx mb-2">
               {[
