@@ -26,10 +26,10 @@ import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import { useStickyView } from '@/lib/ui/useStickyView'
 import Card from '@/components/ui/Card'
 import Disclaimer from '@/components/ui/Disclaimer'
-import { useDocumentBundle, DocumentBundleStaging } from '@/components/ui/DocumentBundleCapture'
+import CreateRecordMenu from '@/components/ui/CreateRecordMenu'
 import ConfirmDialog from '@/components/ConfirmDialog'
 
-type ResourceType = 'correcao_visual' | 'dispositivo_medico' | 'protese_ortese' | 'auxilio' | 'compressao_suporte'
+type ResourceType = 'correcao_visual' | 'dispositivo_medico' | 'protese_ortese' | 'auxilio' | 'compressao_suporte' | 'outro'
 type Status = 'em_uso' | 'suspenso' | 'encerrado'
 
 const TYPES: { value: ResourceType; label: string; icon: React.ElementType; hint: string }[] = [
@@ -38,6 +38,7 @@ const TYPES: { value: ResourceType; label: string; icon: React.ElementType; hint
   { value: 'protese_ortese',     label: 'Próteses e órteses',   icon: Bone,          hint: 'prótese, órtese, palmilha, aparelho ortodôntico' },
   { value: 'auxilio',            label: 'Auxílios',             icon: Accessibility, hint: 'aparelho auditivo, bengala, muletas, andador, cadeira de rodas' },
   { value: 'compressao_suporte', label: 'Compressão e suporte', icon: Shirt,         hint: 'meia compressiva, colar cervical, faixa, colete' },
+  { value: 'outro',              label: 'Outros',               icon: Package,       hint: 'outros recursos de saúde não listados acima' },
 ]
 const TYPE_META = (v: string) => TYPES.find(t => t.value === v) ?? null
 
@@ -326,7 +327,6 @@ export default function RecursosPage() {
       : STATUS.map(s => ({ key: s.value, label: s.label, rows: items.filter(i => i.status === s.value) })).filter(g => g.rows.length > 0)
 
   // Document Bundle (padrão transversal): escanear a receita em várias páginas.
-  const bundle = useDocumentBundle((f: File) => { if (!showForm) startAdd(); onScanFile(f) })
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
@@ -338,24 +338,22 @@ export default function RecursosPage() {
         title="Recursos de Saúde"
         subtitle={<>Óculos, lentes, dispositivos e mais. <strong className="font-medium text-onyx/70">Escaneie a receita — a SINTERA preenche o grau por você.</strong></>}
         action={
-          <div className="flex items-center gap-2">
-            <input ref={scanRef} type="file" accept="image/*" capture="environment" multiple className="hidden"
-              onChange={e => { const fs = Array.from(e.target.files ?? []); e.target.value = ''; bundle.intake(fs) }} />
-            <button onClick={() => scanRef.current?.click()}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-petal/40 text-petal font-body text-sm font-medium hover:bg-blush transition-colors flex-shrink-0">
-              <Camera size={15} /> Escanear
-            </button>
-            <button onClick={() => (showForm ? (reset(), setShowForm(false)) : startAdd())}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0">
-              {showForm ? <X size={15} /> : <Plus size={15} />} {showForm ? 'Fechar' : 'Adicionar'}
-            </button>
-          </div>
+          // FB-004: um único fluxo institucional de inclusão (arquivo/foto/manual). Foto de receita → grau auto (visual).
+          <CreateRecordMenu
+            label="Adicionar recurso"
+            methods={['file', 'camera', 'manual']}
+            fileAccept="image/*"
+            cameraAccept="image/*"
+            fileLabel="Escanear receita (foto)"
+            busy={scanning}
+            busyLabel="Lendo…"
+            onSelect={(method, file) => {
+              if (method === 'manual') startAdd()
+              else if (file) { if (!showForm) startAdd(); onScanFile(file) }
+            }}
+          />
         }
       />
-
-      {bundle.pages.length > 0 && (
-        <DocumentBundleStaging bundle={bundle} onAddCamera={() => scanRef.current?.click()} onAddGallery={() => scanRef.current?.click()} />
-      )}
 
       {showForm && (
         <Card className="space-y-3">
@@ -483,11 +481,19 @@ export default function RecursosPage() {
                 <Paperclip size={13} /> Foto anexada
               </a>
             ) : (
-              <button onClick={() => scanRef.current?.click()}
-                className="inline-flex items-center gap-1.5 font-body text-xs text-mauve hover:text-petal transition-colors">
-                <Camera size={13} /> {isVisual ? 'Anexar / escanear receita' : 'Anexar foto'}
-              </button>
+              <>
+                <input ref={scanRef} type="file" accept="image/*" capture="environment" className="hidden"
+                  onChange={e => { const file = e.target.files?.[0]; e.target.value = ''; if (file) onScanFile(file) }} />
+                <button onClick={() => scanRef.current?.click()}
+                  className="inline-flex items-center gap-1.5 font-body text-xs text-mauve hover:text-petal transition-colors">
+                  <Camera size={13} /> {isVisual ? 'Anexar / escanear receita' : 'Anexar foto'}
+                </button>
+              </>
             )}
+            <button onClick={() => { reset(); setShowForm(false) }} disabled={saving}
+              className="px-4 py-2 rounded-full border border-border text-mauve font-body text-sm font-medium hover:bg-blush transition-colors disabled:opacity-40">
+              <X size={14} className="inline -mt-0.5" /> Cancelar
+            </button>
             <button onClick={save} disabled={saving || !f.name.trim()}
               className="px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium disabled:opacity-40 hover:opacity-90 transition-opacity">
               {saving ? 'Salvando…' : editingId ? 'Salvar alterações' : 'Salvar'}
