@@ -10,11 +10,12 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Loader2, Activity, Trash2, Camera, ArrowLeft, Ruler } from 'lucide-react'
+import { Loader2, Activity, Trash2, Camera, ArrowLeft, Ruler, Target, TrendingDown, Pencil } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import Sparkline, { parseNum } from '@/components/Sparkline'
+import { computeWeightJourney, type SeriesPoint } from '@/lib/body/weight-journey'
 import ListCard from '@/components/ListCard'
 import PageHeader from '@/components/PageHeader'
 import EmptyState from '@/components/EmptyState'
@@ -29,23 +30,23 @@ import ConfirmDialog from '@/components/ConfirmDialog'
 
 type Metric =
   | 'peso' | 'altura' | 'circunferencia_cintura'
-  | 'imc' | 'gordura_corporal' | 'massa_muscular' | 'agua_corporal' | 'gordura_visceral' | 'massa_ossea' | 'taxa_metabolica'
+  | 'imc' | 'gordura_corporal' | 'massa_muscular' | 'massa_magra' | 'agua_corporal' | 'gordura_visceral' | 'massa_ossea' | 'taxa_metabolica'
   | 'outro'
 
 const METRIC_LABEL: Record<Metric, string> = {
   peso: 'Peso', altura: 'Altura', circunferencia_cintura: 'Circunferência (cintura)',
-  imc: 'IMC', gordura_corporal: 'Gordura corporal', massa_muscular: 'Massa muscular',
+  imc: 'IMC', gordura_corporal: 'Gordura corporal', massa_muscular: 'Massa muscular', massa_magra: 'Massa magra',
   agua_corporal: 'Água corporal', gordura_visceral: 'Gordura visceral', massa_ossea: 'Massa óssea',
   taxa_metabolica: 'Taxa metabólica basal', outro: 'Outra medida',
 }
 const DEFAULT_UNIT: Record<Metric, string> = {
   peso: 'kg', altura: 'cm', circunferencia_cintura: 'cm',
-  imc: 'kg/m²', gordura_corporal: '%', massa_muscular: 'kg', agua_corporal: '%',
+  imc: 'kg/m²', gordura_corporal: '%', massa_muscular: 'kg', massa_magra: 'kg', agua_corporal: '%',
   gordura_visceral: 'nível', massa_ossea: 'kg', taxa_metabolica: 'kcal', outro: '',
 }
 const PLACEHOLDER: Record<Metric, string> = {
   peso: 'Ex.: 72,5', altura: 'Ex.: 165', circunferencia_cintura: 'Ex.: 84',
-  imc: 'Ex.: 24,2', gordura_corporal: 'Ex.: 28', massa_muscular: 'Ex.: 24', agua_corporal: 'Ex.: 55',
+  imc: 'Ex.: 24,2', gordura_corporal: 'Ex.: 28', massa_muscular: 'Ex.: 24', massa_magra: 'Ex.: 54', agua_corporal: 'Ex.: 55',
   gordura_visceral: 'Ex.: 7', massa_ossea: 'Ex.: 2,8', taxa_metabolica: 'Ex.: 1450', outro: 'Valor',
 }
 
@@ -77,7 +78,7 @@ function fmt(date: string): string {
 }
 
 // Métricas extraídas de um laudo de bioimpedância (IMC é calculado à parte).
-const BIO_METRICS: Metric[] = ['peso', 'gordura_corporal', 'massa_muscular', 'agua_corporal', 'gordura_visceral', 'massa_ossea', 'taxa_metabolica']
+const BIO_METRICS: Metric[] = ['peso', 'gordura_corporal', 'massa_muscular', 'massa_magra', 'agua_corporal', 'gordura_visceral', 'massa_ossea', 'taxa_metabolica']
 
 export default function MedidasPage() {
   const { user, profile, loading: authLoading } = useUser()
@@ -87,6 +88,12 @@ export default function MedidasPage() {
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [confirm, setConfirm] = useState<{ message: string; confirmLabel: string; onYes: () => void } | null>(null)
+
+  // FB-007 parte 2 — meta de peso (painel de acompanhamento GLP-1). Fato do usuário, salvo em profiles.
+  const [goalKg, setGoalKg] = useState<number | null>(null)
+  const [goalEditing, setGoalEditing] = useState(false)
+  const [goalInput, setGoalInput] = useState('')
+  const [goalSaving, setGoalSaving] = useState(false)
 
   const [showForm, setShowForm] = useState(false)
   const [metric, setMetric] = useState<Metric>('peso')
@@ -112,12 +119,15 @@ export default function MedidasPage() {
     setLoading(true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db = supabase as any
-    const [{ data }, exRes] = await Promise.all([
+    const [{ data }, exRes, profRes] = await Promise.all([
       db.from('body_metrics')
         .select('id, metric, label, value_text, unit, measured_on, notes, exam_id, source')
         .eq('user_id', user.id).order('measured_on', { ascending: false }),
       db.from('exams').select('id, type, exam_date, file_url').eq('user_id', user.id).order('created_at', { ascending: false }),
+      db.from('profiles').select('weight_goal_kg').eq('id', user.id).maybeSingle(),
     ])
+    const g = (profRes.data as { weight_goal_kg: number | null } | null)?.weight_goal_kg ?? null
+    setGoalKg(g != null ? Number(g) : null)
     setItems(((data ?? []) as Array<Record<string, unknown>>).map(m => ({
       id: m.id as string, metric: (m.metric as Metric) ?? 'outro', label: (m.label as string) ?? null,
       valueText: (m.value_text as string) ?? '', unit: (m.unit as string) ?? null,
@@ -161,6 +171,18 @@ export default function MedidasPage() {
       await (supabase as any).from('body_metrics').delete().eq('id', id)
       await load(); setBusyId(null)
     } })
+  }
+
+  // FB-007 — define/atualiza a meta de peso (profiles.weight_goal_kg). Vazio = remove a meta.
+  async function saveGoal() {
+    if (!user || goalSaving) return
+    setGoalSaving(true)
+    const raw = goalInput.trim().replace(',', '.')
+    const parsed = raw === '' ? null : Number(raw)
+    const value = parsed != null && Number.isFinite(parsed) && parsed > 0 ? parsed : null
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any).from('profiles').update({ weight_goal_kg: value }).eq('id', user.id)
+    setGoalKg(value); setGoalEditing(false); setGoalSaving(false)
   }
 
   // Escanear laudo de bioimpedância → pré-preenche várias medidas de uma vez.
@@ -214,8 +236,16 @@ export default function MedidasPage() {
   const pesoNum = latestPeso ? parseNum(latestPeso.valueText) : null
   const imcVal = pesoNum && alturaCm ? pesoNum / Math.pow(alturaCm / 100, 2) : null
 
+  // FB-007 parte 2 — jornada de peso (acompanhamento GLP-1): perda acumulada, ritmo, meta, preservação de
+  // massa magra. ARITMÉTICA factual sobre os registros da própria pessoa (não interpreta; RDC 657).
+  const toSeries = (m: Metric): SeriesPoint[] => items
+    .filter(i => i.metric === m)
+    .map(i => ({ value: parseNum(i.valueText), date: i.measuredOn }))
+    .filter((p): p is SeriesPoint => p.value != null)
+  const journey = computeWeightJourney(toSeries('peso'), toSeries('massa_magra'), goalKg)
+
   // IMC é calculado (não é registrado manualmente).
-  const groups: Metric[] = ['peso', 'altura', 'circunferencia_cintura', 'gordura_corporal', 'massa_muscular', 'agua_corporal', 'gordura_visceral', 'massa_ossea', 'taxa_metabolica', 'outro']
+  const groups: Metric[] = ['peso', 'altura', 'circunferencia_cintura', 'gordura_corporal', 'massa_muscular', 'massa_magra', 'agua_corporal', 'gordura_visceral', 'massa_ossea', 'taxa_metabolica', 'outro']
 
 
   return (
@@ -286,6 +316,110 @@ export default function MedidasPage() {
         </div>
       </Card>
 
+      {/* FB-007 parte 2 — Acompanhamento de peso (útil para quem faz GLP-1). Aritmética factual sobre os
+          registros da própria pessoa: perda acumulada, ritmo, meta e preservação de massa magra. */}
+      {!loading && journey.currentWeight != null && (
+        <Card padding="md" className="space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-blush flex items-center justify-center flex-shrink-0">
+                <Target size={16} className="text-petal" />
+              </div>
+              <div>
+                <p className="font-display text-base font-semibold text-onyx leading-none">Acompanhamento de peso</p>
+                <p className="font-body text-[11px] text-mauve mt-0.5">A partir dos seus registros de peso e massa magra.</p>
+              </div>
+            </div>
+            {!goalEditing && (
+              <button onClick={() => { setGoalInput(goalKg != null ? String(goalKg) : ''); setGoalEditing(true) }}
+                className="inline-flex items-center gap-1 font-body text-xs text-petal hover:underline flex-shrink-0">
+                <Pencil size={12} /> {goalKg != null ? 'Editar meta' : 'Definir meta'}
+              </button>
+            )}
+          </div>
+
+          {goalEditing && (
+            <div className="flex items-end gap-2 rounded-xl bg-ivory border border-border p-3">
+              <div className="flex-1">
+                <label htmlFor="peso-meta" className="font-body text-xs text-mauve block mb-1">Meta de peso (kg)</label>
+                <input id="peso-meta" type="text" inputMode="decimal" value={goalInput} onChange={e => setGoalInput(e.target.value)}
+                  placeholder="Ex.: 72 (deixe vazio para remover)"
+                  className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30" />
+              </div>
+              <button onClick={saveGoal} disabled={goalSaving}
+                className="px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium disabled:opacity-40 hover:opacity-90 transition-opacity">
+                {goalSaving ? '…' : 'Salvar'}
+              </button>
+              <button onClick={() => setGoalEditing(false)} disabled={goalSaving}
+                className="px-3 py-2 rounded-full border border-border text-mauve font-body text-sm hover:bg-blush transition-colors">
+                Cancelar
+              </button>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="rounded-xl bg-ivory border border-border p-3">
+              <p className="font-body text-[11px] text-mauve mb-0.5">Peso atual</p>
+              <p className="font-display text-xl font-bold text-onyx leading-none">{journey.currentWeight}<span className="text-xs font-normal text-mauve"> kg</span></p>
+              {journey.startWeight != null && <p className="font-body text-[11px] text-mauve mt-1">Inicial: {journey.startWeight} kg</p>}
+            </div>
+            <div className="rounded-xl bg-ivory border border-border p-3">
+              <p className="font-body text-[11px] text-mauve mb-0.5">Perda acumulada</p>
+              <p className="font-display text-xl font-bold text-onyx leading-none flex items-center gap-1">
+                {journey.lostKg != null && journey.lostKg > 0 && <TrendingDown size={15} className="text-petal" />}
+                {journey.lostKg != null ? Math.abs(journey.lostKg) : '—'}<span className="text-xs font-normal text-mauve"> kg</span>
+              </p>
+              {journey.lostKg != null && journey.lostKg < 0 && <p className="font-body text-[11px] text-mauve mt-1">ganho no período</p>}
+            </div>
+            <div className="rounded-xl bg-ivory border border-border p-3">
+              <p className="font-body text-[11px] text-mauve mb-0.5">Ritmo</p>
+              <p className="font-display text-xl font-bold text-onyx leading-none">
+                {journey.rateKgPerWeek != null ? journey.rateKgPerWeek : '—'}<span className="text-xs font-normal text-mauve"> kg/sem</span>
+              </p>
+              {journey.spanWeeks != null && <p className="font-body text-[11px] text-mauve mt-1">em {journey.spanWeeks} sem</p>}
+            </div>
+            <div className="rounded-xl bg-ivory border border-border p-3">
+              <p className="font-body text-[11px] text-mauve mb-0.5">Meta</p>
+              {journey.goalKg != null ? (
+                <>
+                  <p className="font-display text-xl font-bold text-onyx leading-none">{journey.goalKg}<span className="text-xs font-normal text-mauve"> kg</span></p>
+                  {journey.remainingKg != null && (
+                    <p className="font-body text-[11px] text-mauve mt-1">
+                      {journey.remainingKg > 0 ? `faltam ${journey.remainingKg} kg` : journey.remainingKg < 0 ? `${Math.abs(journey.remainingKg)} kg abaixo` : 'meta atingida'}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="font-body text-xs text-mauve leading-snug mt-1">Defina uma meta para acompanhar o progresso.</p>
+              )}
+            </div>
+          </div>
+
+          {journey.progressPct != null && (
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <p className="font-body text-[11px] text-mauve">Progresso até a meta</p>
+                <p className="font-body text-[11px] font-semibold text-onyx">{journey.progressPct}%</p>
+              </div>
+              <div className="h-2 rounded-full bg-blush overflow-hidden">
+                <div className="h-full gradient-sintera rounded-full" style={{ width: `${journey.progressPct}%` }} />
+              </div>
+            </div>
+          )}
+
+          {journey.leanDeltaKg != null && (
+            <div className="flex items-center gap-2 rounded-xl bg-blush/40 border border-petal/15 px-3 py-2">
+              <Activity size={14} className="text-petal flex-shrink-0" />
+              <p className="font-body text-xs text-onyx leading-snug">
+                <strong>Massa magra:</strong> {journey.leanStartKg} → {journey.leanCurrentKg} kg
+                {' '}({journey.leanDeltaKg >= 0 ? `+${journey.leanDeltaKg}` : journey.leanDeltaKg} kg no período).
+                {' '}<span className="text-mauve">Acompanhe se a perda de peso preserva a massa magra.</span>
+              </p>
+            </div>
+          )}
+        </Card>
+      )}
+
       {/* Revisão do laudo de bioimpedância escaneado */}
       {scanRows && (
         <Section padding="md" bodyClassName="space-y-3" icon={<Camera size={16} className="text-petal" />} title="Revise os dados lidos do laudo">
@@ -352,6 +486,7 @@ export default function MedidasPage() {
                 <optgroup label="Bioimpedância">
                   <option value="gordura_corporal">Gordura corporal</option>
                   <option value="massa_muscular">Massa muscular</option>
+                  <option value="massa_magra">Massa magra</option>
                   <option value="agua_corporal">Água corporal</option>
                   <option value="gordura_visceral">Gordura visceral</option>
                   <option value="massa_ossea">Massa óssea</option>
