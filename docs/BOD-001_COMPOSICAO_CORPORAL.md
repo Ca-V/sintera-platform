@@ -27,6 +27,12 @@ painéis **leem** dele (+ outras fontes) e apresentam evolução — **nunca dup
 > registro manual, wearable ou outra integração), **preservando a proveniência** das informações. Nenhum painel
 > cria informação — apenas consolida e apresenta dados provenientes de fontes rastreáveis.
 
+> **Comparação = confronto de snapshots, sem normalização (fundadora 17/07):** **A Comparação entre Avaliações
+> deve confrontar snapshots independentes da composição corporal, preservando a origem de cada indicador e
+> evidenciando indisponibilidades de medição sem inferências ou normalizações entre tecnologias distintas.** A
+> plataforma NÃO tenta "corrigir" ou "equalizar" uma DEXA para parecer uma bioimpedância — apenas apresenta os
+> dados medidos por cada método (RDC 657).
+
 > **Consolidação multi-fonte + contextualização por marcos (fundadora 17/07 — amplia "painel derivado"):**
 > **A Composição Corporal deve consolidar indicadores provenientes de múltiplas fontes e contextualizar sua
 > evolução com eventos relevantes da jornada de saúde, preservando sempre a rastreabilidade até a fonte original
@@ -72,10 +78,15 @@ detalhe com valor·origem·data e ação de rastreabilidade (**Abrir exame** qua
 **Follow-up menor:** "Editar" um ponto MANUAL — hoje o detalhe mostra "Registro manual"; a página ainda não tem
 fluxo de edição de medida (só add/remover pelo histórico abaixo).)*
 
-**③ Comparação entre avaliações.** A usuária escolhe **dois** exames/avaliações (ex.: duas bioimpedâncias) e a
-plataforma mostra uma tabela **Indicador · Avaliação 1 · Avaliação 2 · Variação** (ex.: Peso 82,4→76,8 = −5,6 kg;
-Gordura 35%→29% = −6 p.p.; Massa muscular 29,8→30,5 = +0,7 kg). **Não é diagnóstico** — comparação objetiva entre
-medições. Fonte: pontos de `body_metrics` de cada avaliação (agrupados por `exam_id`/data/origem).
+**③ Comparação entre avaliações (SNAPSHOTS).** Modelada como **snapshots**: cada avaliação (bioimpedância, DEXA,
+InBody, ou um lote manual de uma data) é um **retrato** da composição num momento. A usuária compara **dois
+snapshots** — *Comparar [A ▼] com [B ▼]* — **de qualquer tipo** (bio×bio, DEXA×DEXA, **bio×DEXA**), desde que o
+indicador exista. Tabela **Indicador · Avaliação A · Avaliação B · Δ · Status**: a coluna **Status** evidencia
+**indisponibilidade** ("Não disponível") quando um método não mede aquele indicador — sem parecer erro. Acima de
+cada coluna, a **origem** (tipo · data · Abrir exame). Um **resumo** acima da tabela sintetiza os deltas ("houve:
+Peso −4,4 kg; Gordura −6 p.p.; …"). Cada valor é **clicável** (rastreabilidade → Abrir exame / Registro manual).
+**Não é diagnóstico**; **sem inferências nem normalização entre tecnologias** (não "corrige" DEXA para parecer
+bioimpedância — apresenta o que cada método mediu). *(Implementado: `lib/body/snapshots.ts` + seção na página.)*
 
 **④ Jornada de Tratamento (GENÉRICA).** Painel **reutilizável para diferentes linhas de cuidado** — GLP-1,
 acompanhamento nutricional, bariátrica, ganho de massa muscular, reabilitação e futuros protocolos. **GLP-1 é
@@ -139,7 +150,7 @@ Cada indicador exibe a origem (exame/manual/wearable). Rastreável até o exame-
      para futuros objetivos (ganho de massa, reabilitação). ✅ **feito**.
   3. **② Evolução** — seletor horizontal + gráfico com período + tabela cronológica + pontos clicáveis
      (rastreabilidade) + marcadores por origem. ✅ **feito** (falta só "editar" ponto manual).
-  4. **③ Comparação entre avaliações** (escolher 2 → tabela de variação; agrupar por `exam_id`/data/origem).
+  4. **③ Comparação entre avaliações** (snapshots A×B, Status de disponibilidade, sem normalização). ✅ **feito**.
   5. **⑤ Marcos da evolução** (principal diferencial) — ler eventos-marco de Registros de Saúde e anotá-los.
   6. Ingestão de **DEXA** como exame (FB-003 estende bioimpedância) alimentando os mesmos indicadores.
 - **Sem nova tabela**; tudo por leitura/derivação preservando origem (invariantes §8).

@@ -19,6 +19,7 @@ import { computeWeightJourney, type SeriesPoint } from '@/lib/body/weight-journe
 import { currentSummary, sourceQuality, RELIABILITY_LABEL, lastAssessment, type SummaryPoint } from '@/lib/body/summary'
 import { EVOLUTION_PERIODS, filterByPeriod, markerFor, type EvoPoint } from '@/lib/body/evolution'
 import EvolutionChart from '@/components/body/EvolutionChart'
+import { buildSnapshots, compareSnapshots, type SnapPoint } from '@/lib/body/snapshots'
 import ListCard from '@/components/ListCard'
 import PageHeader from '@/components/PageHeader'
 import EmptyState from '@/components/EmptyState'
@@ -102,6 +103,10 @@ export default function MedidasPage() {
   const [evoMetric, setEvoMetric] = useState<Metric>('peso')
   const [evoDays, setEvoDays] = useState<number | null>(90)
   const [evoPoint, setEvoPoint] = useState<EvoPoint | null>(null)
+
+  // BOD-001 área ③ — Comparação entre Avaliações (snapshots A × B).
+  const [snapAKey, setSnapAKey] = useState<string | null>(null)
+  const [snapBKey, setSnapBKey] = useState<string | null>(null)
 
   const [showForm, setShowForm] = useState(false)
   const [metric, setMetric] = useState<Metric>('peso')
@@ -296,6 +301,19 @@ export default function MedidasPage() {
   const evoPoints = filterByPeriod(evoAll, evoDays, nowISO)
   const evoUnit = evoMetricActive === 'imc' ? 'kg/m²' : (DEFAULT_UNIT[evoMetricActive] || '')
   const evoSourcesPresent = [...new Set(evoPoints.map(p => p.source).filter(Boolean))] as string[]
+
+  // BOD-001 área ③ — snapshots (retrato por avaliação) e a comparação A × B.
+  const snapPoints: SnapPoint[] = items
+    .map(i => ({ metric: i.metric as string, value: parseNum(i.valueText), unit: i.unit, date: i.measuredOn, source: i.source, examId: i.examId }))
+    .filter(p => p.value != null) as SnapPoint[]
+  const snapshots = buildSnapshots(snapPoints)
+  const snapA = snapshots.find(s => s.key === snapAKey) ?? snapshots[0] ?? null
+  const snapB = snapshots.find(s => s.key === snapBKey) ?? snapshots[1] ?? null
+  const COMPARE_ORDER = ['peso', 'gordura_corporal', 'massa_muscular', 'massa_magra', 'agua_corporal', 'gordura_visceral', 'taxa_metabolica', 'massa_ossea', 'circunferencia_cintura']
+  const compareRows = compareSnapshots(snapA, snapB, COMPARE_ORDER)
+  const compareSummary = compareRows.filter(r => r.available && r.delta != null && r.delta !== 0)
+  const snapLabel = (s: typeof snapA) => s ? `${sourceQuality(s.source)?.label ?? s.source ?? 'Registro'} · ${fmt(s.date)}` : ''
+  const deltaUnit = (unit: string | null) => unit === '%' ? 'p.p.' : (unit ?? '')
 
   // IMC é calculado (não é registrado manualmente).
   const groups: Metric[] = ['peso', 'altura', 'circunferencia_cintura', 'gordura_corporal', 'massa_muscular', 'massa_magra', 'agua_corporal', 'gordura_visceral', 'massa_ossea', 'taxa_metabolica', 'outro']
@@ -611,6 +629,92 @@ export default function MedidasPage() {
               </table>
             </div>
           )}
+        </Card>
+      )}
+
+      {/* BOD-001 área ③ — Comparação entre Avaliações (snapshots A × B). Confronta retratos independentes,
+          preserva a origem, evidencia indisponibilidades e NÃO normaliza entre tecnologias. */}
+      {!loading && snapshots.length >= 2 && (
+        <Card padding="md" className="space-y-4">
+          <div>
+            <p className="font-display text-base font-semibold text-onyx leading-none">Comparar avaliações</p>
+            <p className="font-body text-[11px] text-mauve mt-0.5">Confronte dois retratos — cada valor mantém sua origem; sem ajuste entre tecnologias (ex.: DEXA × Bioimpedância).</p>
+          </div>
+
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="flex-1 min-w-[140px]">
+              <label htmlFor="snap-a" className="font-body text-[11px] text-mauve block mb-1">Avaliação A</label>
+              <select id="snap-a" value={snapA?.key ?? ''} onChange={e => setSnapAKey(e.target.value)}
+                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
+                {snapshots.map(s => <option key={s.key} value={s.key}>{snapLabel(s)}</option>)}
+              </select>
+            </div>
+            <span className="font-body text-xs text-mauve pb-2.5">com</span>
+            <div className="flex-1 min-w-[140px]">
+              <label htmlFor="snap-b" className="font-body text-[11px] text-mauve block mb-1">Avaliação B</label>
+              <select id="snap-b" value={snapB?.key ?? ''} onChange={e => setSnapBKey(e.target.value)}
+                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
+                {snapshots.map(s => <option key={s.key} value={s.key}>{snapLabel(s)}</option>)}
+              </select>
+            </div>
+          </div>
+
+          {snapA && snapB && snapA.key === snapB.key ? (
+            <p className="font-body text-xs text-mauve">Selecione duas avaliações diferentes para comparar.</p>
+          ) : snapA && snapB ? (
+            <>
+              {compareSummary.length > 0 && (
+                <div className="rounded-xl bg-blush/30 border border-petal/15 p-3">
+                  <p className="font-body text-[11px] font-semibold text-onyx mb-1">Entre essas duas avaliações houve:</p>
+                  <div className="flex flex-wrap gap-x-4 gap-y-0.5">
+                    {compareSummary.map(r => (
+                      <span key={r.metric} className="font-body text-xs text-onyx">
+                        {METRIC_LABEL[r.metric as Metric] ?? r.metric}: <strong>{r.delta! > 0 ? `+${r.delta}` : r.delta} {deltaUnit(r.unit)}</strong>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left font-body text-xs">
+                  <thead>
+                    <tr className="text-mauve align-bottom">
+                      <th className="py-1 pr-2 font-medium">Indicador</th>
+                      <th className="py-1 pr-2 font-medium">
+                        <span className="block text-onyx font-semibold">Avaliação A</span>
+                        <span className="block text-[10px] text-mauve font-normal">{sourceQuality(snapA.source)?.label ?? snapA.source ?? 'Registro'} · {fmt(snapA.date)}</span>
+                        {snapA.examId && <Link href={`/dashboard/exams/${snapA.examId}`} className="block text-[10px] text-petal hover:underline font-normal">Abrir exame</Link>}
+                      </th>
+                      <th className="py-1 pr-2 font-medium">
+                        <span className="block text-onyx font-semibold">Avaliação B</span>
+                        <span className="block text-[10px] text-mauve font-normal">{sourceQuality(snapB.source)?.label ?? snapB.source ?? 'Registro'} · {fmt(snapB.date)}</span>
+                        {snapB.examId && <Link href={`/dashboard/exams/${snapB.examId}`} className="block text-[10px] text-petal hover:underline font-normal">Abrir exame</Link>}
+                      </th>
+                      <th className="py-1 pr-2 font-medium">Δ</th>
+                      <th className="py-1 font-medium">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {compareRows.map(r => (
+                      <tr key={r.metric} className="border-t border-border/50">
+                        <td className="py-1.5 pr-2 text-mauve whitespace-nowrap">{METRIC_LABEL[r.metric as Metric] ?? r.metric}</td>
+                        <td className="py-1.5 pr-2 text-onyx whitespace-nowrap">
+                          {r.a != null ? (snapA.examId ? <Link href={`/dashboard/exams/${snapA.examId}`} className="hover:text-petal hover:underline">{r.a}{r.unit ? ` ${r.unit}` : ''}</Link> : <span title="Registro manual">{r.a}{r.unit ? ` ${r.unit}` : ''}</span>) : '—'}
+                        </td>
+                        <td className="py-1.5 pr-2 text-onyx whitespace-nowrap">
+                          {r.b != null ? (snapB.examId ? <Link href={`/dashboard/exams/${snapB.examId}`} className="hover:text-petal hover:underline">{r.b}{r.unit ? ` ${r.unit}` : ''}</Link> : <span title="Registro manual">{r.b}{r.unit ? ` ${r.unit}` : ''}</span>) : '—'}
+                        </td>
+                        <td className="py-1.5 pr-2 whitespace-nowrap font-medium text-onyx">{r.delta != null ? `${r.delta > 0 ? `+${r.delta}` : r.delta} ${deltaUnit(r.unit)}` : '—'}</td>
+                        <td className="py-1.5 whitespace-nowrap">{r.available ? <span className="text-petal">✓</span> : <span className="text-mauve">Não disponível</span>}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="font-body text-[10px] text-mauve">Valores como medidos por cada método — sem ajuste entre tecnologias. Δ = Avaliação A − Avaliação B.</p>
+            </>
+          ) : null}
         </Card>
       )}
 
