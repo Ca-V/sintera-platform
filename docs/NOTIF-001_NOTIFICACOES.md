@@ -15,6 +15,24 @@
 > provedor for provisionado. Próxima entrega = construir a Central de Notificações (UI de preferências + coluna(s)
 > de preferência por categoria) e ligar os módulos a ela.
 
+## Modelo DEFINITIVO — 4 conceitos independentes (fundadora 17/07)
+A Central evolui sobre **quatro conceitos ortogonais** (documentar o modelo completo, implementar por camadas):
+
+1. **Categoria** — agrupa o que a usuária reconhece: Consultas · Exames · Medicamentos · Suplementos · Vacinas ·
+   Hábitos · Compartilhamentos · (Conta e segurança) · … (aberto).
+2. **Evento** — cada categoria tem seus próprios eventos (ex.: *lembrete · alteração · confirmação · cancelamento
+   · resultado disponível · renovação de receita · estoque baixo*). Fase 2.
+3. **Canal** — por evento (ou, na camada 1, por categoria): **Não receber · E-mail · WhatsApp · Ambos**.
+4. **Prioridade** — **Obrigatórias** (segurança/acesso/LGPD: cadastro, senha, compartilhamento aceito) —
+   independem das preferências, sempre enviadas; **Configuráveis** — seguem as escolhas da usuária.
+
+**Camadas de implementação:**
+- **Camada 1 (beta, FEITA):** preferências por **categoria** + **canal** + **prioridade** (bloco "Sempre enviadas")
+  + botão **"Restaurar configurações recomendadas"** + **formulários exibem só o canal configurado com link
+  "Alterar preferências"** (sem duplicar configuração). NÃO toca o worker de despacho.
+- **Camada 2 (pós-estabilização):** configuração por **evento** (`event_key`) + reescrita da resolução do worker
+  (com fallback seguro). Documentada como evolução planejada — evita redesenho futuro.
+
 ## Princípio arquitetural
 Como o CPE concentra o clínico e o Billing concentra o comercial, a **notificação é um serviço único**:
 os módulos apenas geram eventos agendáveis (via Eventos Assistenciais); o worker de notificações decide

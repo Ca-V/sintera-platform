@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Download, ExternalLink, CalendarDays, Loader2, Check, ChevronDown } from 'lucide-react'
 import { EVENT_TYPE_DEFS, EVENT_STATUS_UI, PROFESSIONAL_KIND_DEFS } from '@/lib/agenda'
@@ -482,8 +483,16 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                     <div className="pt-1 space-y-2.5">
                       <label className="flex items-center gap-2.5 px-1 cursor-pointer select-none">
                         <input type="checkbox" checked={reminderEnabled} onChange={e => setReminderEnabled(e.target.checked)} className="w-4 h-4 rounded border-border accent-petal" />
-                        <span className="font-body text-xs text-onyx/80">Receber lembrete por e-mail no dia anterior</span>
+                        <span className="font-body text-xs text-onyx/80">Receber lembrete no dia anterior</span>
                       </label>
+                      {/* NOTIF-001/FB-011 — o CANAL vem da Central (fonte única); o formulário não duplica a
+                          configuração, só aponta para lá. */}
+                      {reminderEnabled && (
+                        <p className="font-body text-[11px] text-mauve px-1 -mt-1">
+                          Pelo canal definido nas suas{' '}
+                          <Link href="/dashboard/configuracoes" className="text-petal hover:underline">preferências de notificação</Link>.
+                        </p>
+                      )}
                       <button onClick={handleSave} disabled={!canExport || saving}
                         className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl gradient-sintera text-white text-sm font-body font-medium hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
                         {saving ? <><Loader2 size={15} className="animate-spin" /> Salvando…</> : <><Check size={15} /> {isEditing ? 'Salvar alterações' : 'Salvar na minha agenda'}</>}
