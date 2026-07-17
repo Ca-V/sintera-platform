@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatDateBR, formatTimeBR, parseDateOnly, eventToNotificationInput, typeLabel, modalityLabel, outcomeSummary, hasOutcome, professionalKindLabel, PROFESSIONAL_KIND_DEFS } from './presentation'
+import { formatDateBR, formatTimeBR, parseDateOnly, eventToNotificationInput, typeLabel, modalityLabel, outcomeSummary, hasOutcome, professionalKindLabel, PROFESSIONAL_KIND_DEFS, priorityBadge, priorityRank, byPriority } from './presentation'
 import { buildEventNotification, notificationToInline } from './notification'
 import type { HealthEvent } from './event'
 
@@ -84,5 +84,22 @@ describe('EVT-C3 (NC-0012) — tipo de profissional: fonte única + rótulo', ()
   it('os DEFS do seletor cobrem os rótulos usados nas telas (fonte única, sem duplicação)', () => {
     expect(PROFESSIONAL_KIND_DEFS.map(d => d.id)).toContain('medico')
     for (const d of PROFESSIONAL_KIND_DEFS) expect(professionalKindLabel(d.id)).toBe(d.label)
+  })
+})
+
+describe('EVT-C5 (NC-0017) — prioridade: exibir + ordenar', () => {
+  it('priorityBadge devolve rótulo+ícone (null quando ausente)', () => {
+    expect(priorityBadge('alta')).toEqual({ label: 'Alta', icon: '🔴' })
+    expect(priorityBadge('baixa')).toEqual({ label: 'Baixa', icon: '🟢' })
+    expect(priorityBadge(null)).toBeNull()
+  })
+  it('priorityRank ordena alta<media<baixa<ausente', () => {
+    expect(priorityRank('alta')).toBeLessThan(priorityRank('media'))
+    expect(priorityRank('media')).toBeLessThan(priorityRank('baixa'))
+    expect(priorityRank('baixa')).toBeLessThan(priorityRank(null))
+  })
+  it('byPriority é um comparador estável (alta primeiro; ausente por último)', () => {
+    const arr = [{ priority: 'baixa' as const }, { priority: null }, { priority: 'alta' as const }, { priority: 'media' as const }]
+    expect([...arr].sort(byPriority).map(x => x.priority)).toEqual(['alta', 'media', 'baixa', null])
   })
 })

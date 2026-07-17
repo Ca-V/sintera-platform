@@ -2,7 +2,7 @@
 // para UI e notificações. Mantém o domínio (event.ts) livre de texto/formato visual.
 // A notificação é uma projeção de CONTEÚDO do domínio (REQ-NOTIF-001).
 
-import type { HealthEvent, EventStatus, EventModality, Outcome } from './event'
+import type { HealthEvent, EventStatus, EventModality, EventPriority, Outcome } from './event'
 import type { EventNotificationInput } from './notification'
 
 // ── FONTE ÚNICA dos tipos de evento (Agenda E Histórico falam a mesma língua) ──
@@ -117,6 +117,29 @@ const PROFESSIONAL_KIND_LABELS: Record<string, string> =
 export function professionalKindLabel(kind: string | null | undefined): string | null {
   const k = (kind ?? '').trim()
   return k ? (PROFESSIONAL_KIND_LABELS[k] ?? null) : null
+}
+
+// EVT-C5 (NC-0017): prioridade (alta/média/baixa) — capturada mas nunca exibida/ordenada.
+const PRIORITY_META: Record<EventPriority, { label: string; icon: string; rank: number }> = {
+  alta:  { label: 'Alta',  icon: '🔴', rank: 0 },
+  media: { label: 'Média', icon: '🟡', rank: 1 },
+  baixa: { label: 'Baixa', icon: '🟢', rank: 2 },
+}
+
+/** Rótulo + ícone da prioridade (null quando ausente). */
+export function priorityBadge(p: EventPriority | null): { label: string; icon: string } | null {
+  const m = p ? PRIORITY_META[p] : null
+  return m ? { label: m.label, icon: m.icon } : null
+}
+
+/** Peso ordinal p/ ORDENAR (alta=0 antes; ausência = último). Determinístico. */
+export function priorityRank(p: EventPriority | null): number {
+  return p ? PRIORITY_META[p].rank : 99
+}
+
+/** Comparador de desempate por prioridade (alta primeiro). Não altera a ordenação primária de quem chama. */
+export function byPriority(a: { priority: EventPriority | null }, b: { priority: EventPriority | null }): number {
+  return priorityRank(a.priority) - priorityRank(b.priority)
 }
 
 /** Rótulo curto da modalidade (só quando informada). */

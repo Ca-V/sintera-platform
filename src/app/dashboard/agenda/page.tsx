@@ -13,7 +13,7 @@ import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { useEventForm, eventToInput } from '@/components/eventForm'
 import { buildExamRecencySuggestion, type AgendaSuggestion } from '@/lib/agenda/suggestions'
-import { typeLabel, statusLabel, formatDateBR, formatTimeBR, modalityLabel, outcomeSummary, hasOutcome, isReturnVisit, type HealthEvent } from '@/lib/agenda'
+import { typeLabel, statusLabel, formatDateBR, formatTimeBR, modalityLabel, outcomeSummary, hasOutcome, isReturnVisit, priorityBadge, byPriority, type HealthEvent } from '@/lib/agenda'
 import { useStickyView } from '@/lib/ui/useStickyView'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import ListCard, { CardChip } from '@/components/ListCard'
@@ -164,6 +164,7 @@ export default function AgendaPage() {
     const modLabel = modalityLabel(ev.modality)
     const desfecho = outcomeSummary(ev.outcome)
     const prep = ev.preparation?.trim()
+    const prio = priorityBadge(ev.priority)
     return (
       <ListCard key={ev.id}
         leading={<div className="text-xl leading-none">{TYPE_EMOJI[ev.type] ?? '📅'}</div>}
@@ -186,6 +187,7 @@ export default function AgendaPage() {
         chips={
           <>
             <CardChip tone={tone}>{statusLabel(ev.status)}</CardChip>
+            {prio && <CardChip tone={ev.priority === 'alta' ? 'petal' : 'neutral'}>{prio.icon} {prio.label}</CardChip>}
             {isReturnVisit(ev) && <CardChip tone="neutral">📋 Retorno</CardChip>}
             {modLabel && <CardChip tone="neutral">{ev.modality === 'telemedicina' ? '💻' : '🏥'} {modLabel}</CardChip>}
             {ev.recurrenceRule && <CardChip tone="neutral">🔁 recorrente</CardChip>}
@@ -283,7 +285,12 @@ export default function AgendaPage() {
             return entries.map(([label, evs]) => (
               <div key={label} className="space-y-2">
                 <p className="font-body text-[11px] font-semibold text-mauve uppercase tracking-wider mt-1">{label}</p>
-                {evs.map(agendaRow)}
+                {/* EVT-C5 (NC-0017): na visão "por tipo", ordena por prioridade (alta→baixa) e desempata por data;
+                    na visão "por data" mantém a ordem cronológica do domínio (não briga com a linha do tempo). */}
+                {(view === 'tipo'
+                  ? [...evs].sort((a, b) => byPriority(a, b) || (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+                  : evs
+                ).map(agendaRow)}
               </div>
             ))
           })()}

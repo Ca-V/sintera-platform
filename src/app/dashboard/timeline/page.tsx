@@ -21,7 +21,7 @@ import { useUser } from '@/context/UserContext'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { useEventForm, eventToInput } from '@/components/eventForm'
-import { rowToHealthEvent, eventServicesFor, modalityLabel, outcomeSummary, hasOutcome, professionalKindLabel, isReturnVisit, type HealthEvent, type HealthEventRow } from '@/lib/agenda'
+import { rowToHealthEvent, eventServicesFor, modalityLabel, outcomeSummary, hasOutcome, professionalKindLabel, isReturnVisit, priorityBadge, type HealthEvent, type HealthEventRow, type EventPriority } from '@/lib/agenda'
 import HistoricoTabs from '@/components/HistoricoTabs'
 import { useStickyView } from '@/lib/ui/useStickyView'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
@@ -52,6 +52,7 @@ interface TimelineItem {
   outcomePresent?: boolean
   modalityText?: string | null
   isReturn?: boolean        // EVT-C4 (NC-0016): marca de retorno pelo booleano, não só event_type
+  priority?: EventPriority | null   // EVT-C5 (NC-0017)
 }
 
 // Cobre a taxonomia única + tipos legados já gravados. NUNCA deve quebrar: o acesso
@@ -170,6 +171,7 @@ function LegacyTimeline() {
         outcomePresent: hasOutcome(ev.outcome),
         modalityText: modalityLabel(ev.modality),
         isReturn: isReturnVisit(ev),
+        priority: ev.priority,
       })
     }
     for (const p of (omicsRes.data ?? []) as Array<Record<string, unknown>>) {
@@ -304,6 +306,7 @@ function LegacyTimeline() {
           }
           chips={
             <>
+              {(() => { const p = priorityBadge(it.priority ?? null); return p && <CardChip tone={it.priority === 'alta' ? 'petal' : 'neutral'}>{p.icon} {p.label}</CardChip> })()}
               {it.isReturn && <CardChip tone="neutral">📋 Retorno</CardChip>}
               {it.modalityText && <CardChip tone="neutral">{it.modalityText === 'Telemedicina' ? '💻' : '🏥'} {it.modalityText}</CardChip>}
               {it.amountCents != null && <CardChip tone="sage">{fmtBRL(it.amountCents)}</CardChip>}
