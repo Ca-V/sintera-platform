@@ -60,8 +60,8 @@ factual, sem juízo clínico).
 
 **① Resumo atual.** Só o **estado mais recente** de cada indicador — Peso · IMC · % de gordura · Massa muscular ·
 Massa magra · Água corporal · Gordura visceral · Metabolismo basal · Massa óssea (circunferências quando houver).
-Cada indicador exibe sua **origem** (Bioimpedância · DEXA · Manual · Balança inteligente · Wearable). *(Rótulo de
-origem já implementado — FB-003 subitem d.)*
+Cada indicador exibe **valor + unidade · data da última atualização · origem · confiabilidade (§4.2) · tendência
+vs. a medição anterior** (↑/↓/– com a variação). *(Rótulo de origem já implementado — FB-003 subitem d.)*
 
 **② Evolução longitudinal.** Cada indicador tem seu **gráfico temporal** próprio; a usuária **escolhe** qual
 acompanhar (peso, gordura, massa muscular, água, gordura visceral, …). Série derivada de `body_metrics` por métrica.
@@ -82,6 +82,17 @@ em **Registros de Saúde**. **Integração entre domínios sem duplicação:** o
 `health_events`/`agenda_events` (a fonte é o Registro de Saúde), apenas **projetados** como anotações no gráfico.
 Definir os **tipos de evento** que contam como marco (medicamento/GLP-1, dose, atividade/musculação, consulta de
 nutrição, exame de bioimpedância/DEXA) — critério aberto e governado, sem nova tabela.
+
+## 4.2 Qualidade do Dado — origem + confiabilidade (fundadora 17/07)
+Cada indicador informa **de onde veio** (origem) **e o nível de confiabilidade associado àquela FONTE/método** —
+reforçando rastreabilidade e governança. É um atributo de **proveniência do dado** (qualidade da medição), **não**
+um juízo clínico (RDC 657). Níveis (do método, não do resultado):
+- **Alta** — DEXA (referência de composição corporal), exames laboratoriais.
+- **Média** — bioimpedância, balança inteligente, wearable (varia por aparelho/condição).
+- **Informado** — registro **manual** (valor informado pela usuária).
+
+A confiabilidade é **derivada da origem** (`source`), num mapa aberto no código (`lib/body/summary.ts`), e exibida
+de forma discreta junto ao indicador. Fonte desconhecida → confiabilidade não afirmada (nunca inventa).
 
 ## 5. Fluxos
 1. **Entrada** (sempre pela FONTE): bioimpedância/DEXA → **Exames** (FB-003) → processa → grava `body_metrics`;
@@ -110,11 +121,12 @@ Cada indicador exibe a origem (exame/manual/wearable). Rastreável até o exame-
 ## 10. Evolução (por área da §4.1)
 - **Feito:** rename Medidas→Composição Corporal; princípio dos três domínios; **① rótulo de origem** por indicador
   (FB-003 d); **② séries por indicador** (base via Sparkline); **④ núcleo GLP-1** (`weight-journey.ts` + painel).
-- **Próximo (incremental, nesta ordem sugerida):**
-  1. **① Resumo atual** dedicado (cartões do último valor por indicador + origem, no topo).
-  2. **② Evolução** com **seletor de indicador** + gráfico temporal maior (hoje é sparkline por grupo).
-  3. **④ GLP-1**: acrescentar **data de início do acompanhamento** + **% da meta** no painel.
+- **Ordem de entrega (fundadora 17/07):**
+  1. **① Resumo atual** dedicado — cada indicador com **valor·unidade·data·origem·confiabilidade·tendência** vs.
+     medição anterior (cartões no topo).
+  2. **④ Jornada GLP-1** — reusa quase os mesmos dados, alto valor; acrescentar **data de início** + **% da meta**.
+  3. **② Evolução** com **seletor de indicador** + gráfico temporal maior (hoje sparkline por grupo).
   4. **③ Comparação entre avaliações** (escolher 2 → tabela de variação; agrupar por `exam_id`/data/origem).
-  5. **⑤ Marcos da evolução**: ler eventos-marco de Registros de Saúde e anotá-los sobre os gráficos.
+  5. **⑤ Marcos da evolução** (principal diferencial) — ler eventos-marco de Registros de Saúde e anotá-los.
   6. Ingestão de **DEXA** como exame (FB-003 estende bioimpedância) alimentando os mesmos indicadores.
 - **Sem nova tabela**; tudo por leitura/derivação preservando origem (invariantes §8).

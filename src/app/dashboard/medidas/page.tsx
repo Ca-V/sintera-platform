@@ -10,12 +10,13 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Loader2, Activity, Trash2, Camera, ArrowLeft, Ruler, Target, TrendingDown, Pencil } from 'lucide-react'
+import { Loader2, Activity, Trash2, Camera, ArrowLeft, Ruler, Target, TrendingDown, TrendingUp, Minus, Pencil } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import Sparkline, { parseNum } from '@/components/Sparkline'
 import { computeWeightJourney, type SeriesPoint } from '@/lib/body/weight-journey'
+import { currentSummary, sourceQuality, RELIABILITY_LABEL, type SummaryPoint } from '@/lib/body/summary'
 import ListCard from '@/components/ListCard'
 import PageHeader from '@/components/PageHeader'
 import EmptyState from '@/components/EmptyState'
@@ -244,6 +245,15 @@ export default function MedidasPage() {
     .filter((p): p is SeriesPoint => p.value != null)
   const journey = computeWeightJourney(toSeries('peso'), toSeries('massa_magra'), goalKg)
 
+  // BOD-001 área ① — Resumo atual: último valor de cada indicador + origem + confiabilidade + tendência.
+  const summaryPoints: SummaryPoint[] = items
+    .map(i => ({ metric: i.metric as string, value: parseNum(i.valueText), date: i.measuredOn, unit: i.unit, source: i.source }))
+    .filter(p => p.value != null) as SummaryPoint[]
+  const summary = currentSummary(summaryPoints)
+  // Ordem de exibição dos indicadores no Resumo atual (só os que têm dado). IMC entra como calculado.
+  const SUMMARY_ORDER: Metric[] = ['peso', 'gordura_corporal', 'massa_muscular', 'massa_magra', 'agua_corporal', 'gordura_visceral', 'taxa_metabolica', 'massa_ossea', 'circunferencia_cintura', 'altura']
+  const summaryCards = SUMMARY_ORDER.filter(m => summary[m]).map(m => ({ metric: m, s: summary[m] }))
+
   // IMC é calculado (não é registrado manualmente).
   const groups: Metric[] = ['peso', 'altura', 'circunferencia_cintura', 'gordura_corporal', 'massa_muscular', 'massa_magra', 'agua_corporal', 'gordura_visceral', 'massa_ossea', 'taxa_metabolica', 'outro']
 
@@ -290,31 +300,61 @@ export default function MedidasPage() {
         </p>
       </div>
 
-      {/* IMC calculado automaticamente (peso ÷ altura²) */}
-      <Card padding="sm" className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="font-body text-[11px] text-mauve uppercase tracking-wider mb-0.5">IMC (calculado)</p>
-          {imcVal != null ? (
-            <>
-              <p className="font-display text-2xl font-bold text-onyx leading-none">
-                {imcVal.toFixed(1)} <span className="text-sm font-normal text-mauve">kg/m²</span>
-              </p>
-              <p className="font-body text-[11px] text-mauve mt-1">
-                A partir de {latestPeso!.valueText} kg ({fmt(latestPeso!.measuredOn)}) e {alturaCm} cm de altura.
-              </p>
-            </>
-          ) : (
-            <p className="font-body text-xs text-mauve leading-relaxed">
+      {/* BOD-001 área ① — Resumo atual: último valor por indicador + origem + confiabilidade + tendência.
+          IMC entra como indicador CALCULADO (peso ÷ altura²) — sem card duplicado. */}
+      {!loading && (summaryCards.length > 0 || imcVal != null) && (
+        <Card padding="md" className="space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-lavender-light flex items-center justify-center flex-shrink-0">
+              <Activity size={16} className="text-lavender" />
+            </div>
+            <div>
+              <p className="font-display text-base font-semibold text-onyx leading-none">Resumo atual</p>
+              <p className="font-body text-[11px] text-mauve mt-0.5">Último valor de cada indicador — origem, confiabilidade e tendência vs. a medição anterior.</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+            {imcVal != null && (
+              <div className="rounded-xl bg-ivory border border-border p-3">
+                <p className="font-body text-[11px] text-mauve mb-0.5 truncate">IMC</p>
+                <p className="font-display text-lg font-bold text-onyx leading-none">{imcVal.toFixed(1)}<span className="text-[11px] font-normal text-mauve"> kg/m²</span></p>
+                <p className="font-body text-[10px] text-mauve mt-1 truncate">Calculado · {fmt(latestPeso!.measuredOn)}</p>
+              </div>
+            )}
+            {summaryCards.map(({ metric, s }) => {
+              const q = sourceQuality(s.source)
+              const TrendIcon = s.trend === 'up' ? TrendingUp : s.trend === 'down' ? TrendingDown : s.trend === 'flat' ? Minus : null
+              return (
+                <div key={metric} className="rounded-xl bg-ivory border border-border p-3">
+                  <p className="font-body text-[11px] text-mauve mb-0.5 truncate">{METRIC_LABEL[metric]}</p>
+                  <div className="flex items-baseline gap-1.5 flex-wrap">
+                    <p className="font-display text-lg font-bold text-onyx leading-none">{s.value}<span className="text-[11px] font-normal text-mauve">{s.unit ? ` ${s.unit}` : ''}</span></p>
+                    {TrendIcon && s.delta != null && (
+                      <span className="inline-flex items-center gap-0.5 font-body text-[10px] text-mauve" title="Variação vs. a medição anterior">
+                        <TrendIcon size={11} />{s.delta > 0 ? `+${s.delta}` : s.delta}
+                      </span>
+                    )}
+                  </div>
+                  <p className="font-body text-[10px] text-mauve mt-1 truncate">{q?.label ?? s.source ?? '—'} · {fmt(s.date)}</p>
+                  {q && (
+                    <span className="inline-flex items-center gap-1 mt-1 font-body text-[10px] text-mauve" title={RELIABILITY_LABEL[q.reliability]}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${q.reliability === 'alta' ? 'bg-petal' : q.reliability === 'media' ? 'bg-gold' : 'bg-mauve/40'}`} />
+                      {q.reliability === 'alta' ? 'Alta' : q.reliability === 'media' ? 'Média' : 'Informado'}
+                    </span>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+          {imcVal == null && (
+            <p className="font-body text-[11px] text-mauve">
               {alturaCm == null
-                ? <>Informe sua <Link href="/dashboard/profile" className="text-petal hover:underline font-medium">altura no perfil</Link> e registre seu peso para o IMC ser calculado automaticamente.</>
-                : <>Registre seu <strong>peso</strong> para o IMC ser calculado automaticamente.</>}
+                ? <>Informe sua <Link href="/dashboard/profile" className="text-petal hover:underline font-medium">altura no perfil</Link> e registre o peso para calcular o IMC.</>
+                : <>Registre seu <strong>peso</strong> para calcular o IMC.</>}
             </p>
           )}
-        </div>
-        <div className="w-10 h-10 rounded-2xl bg-lavender-light flex items-center justify-center flex-shrink-0">
-          <Activity size={18} className="text-lavender" />
-        </div>
-      </Card>
+        </Card>
+      )}
 
       {/* FB-007 parte 2 — Acompanhamento de peso (útil para quem faz GLP-1). Aritmética factual sobre os
           registros da própria pessoa: perda acumulada, ritmo, meta e preservação de massa magra. */}
