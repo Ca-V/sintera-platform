@@ -78,6 +78,7 @@ Registro GLOBAL (sequência `NC-####` contínua entre domínios; ver `LIFECYCLE_
 - **`representation-validator`** (F010, 4ª camada): ✅ auditado, sem alteração — `certified` (estrutura) separado de `completeness` (nunca falsa completude, §4.0.1); ausência por região "rotula, não oculta". Coberto por `FUNC-representation-validator`.
 - **`clinical-identity-registry` + processador `corneal`** (F010): 🔧 corrigidos — NC-0027 (CC forte demais → Mamografia) + NC-0028 (artigo "os" → olho esquerdo). Ensemble de score e extração por olho sólidos.
 - **Detecção de emissor/data** (`structural-analysis`): ✅ auditado — dedup de datas por separador; `KNOWN_ISSUERS` = âncora leve (emissor do card vem do LLM). **Nota p/ homologação:** `'axial'` por substring pode colidir com o termo radiológico "plano axial" (fix seguro é ambíguo; baixo impacto por ser âncora leve).
+- **`laboratory-adapter`** (F010, biomarcador→UCDA): ✅ auditado, sem alteração — Modelo Aberto (campos genéricos); numérico→measure/qualitativo→parameter (nunca coage qualitativo a número); `hasValue` filtra não-resultados; faixa transcrita. Coberto por `FUNC-laboratory-adapter`.
 
 _Origens possíveis: Revisão funcional · Revisão de UX · Homologação · Certificação · Documento CRC · Teste
 automatizado · Feedback de usuário._
