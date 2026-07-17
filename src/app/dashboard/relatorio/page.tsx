@@ -26,7 +26,7 @@ import { applySort, type SortSpec } from '@/lib/listview'
 import {
   Loader2, Printer, ArrowLeft, FileText, Share2, Copy, Trash2, Check,
   CalendarDays, FlaskConical, Pill, Stethoscope, HeartPulse, Ruler, Activity, Eye,
-  ChevronDown, Minus, Droplet, Receipt,
+  ChevronDown, Minus, Droplet, Receipt, Leaf,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { assembleOrganizedBiomarkers } from '@/lib/ai/insights/assembler'
@@ -124,7 +124,7 @@ function LegacyReport() {
   const [shareBusy, setShareBusy] = useState(false)
   const [confirm, setConfirm] = useState<{ message: string; confirmLabel: string; onYes: () => void } | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
-  const [sections, setSections] = useState({ medicamentos: true, condicoes: true, habitos: true, visao: true, eventos: true, exames: true, omica: true, medidas: true, sinais: true, ciclo: true, gastos: true })
+  const [sections, setSections] = useState({ medicamentos: true, suplementos: true, condicoes: true, habitos: true, visao: true, eventos: true, exames: true, omica: true, medidas: true, sinais: true, ciclo: true, gastos: true })
   const toggle = (k: keyof typeof sections) => setSections(s => ({ ...s, [k]: !s[k] }))
   // Filtro temporal (capacidade transversal da Camada de Comunicação).
   const [period, setPeriod] = useState<Period>({ preset: 'all' })
@@ -192,7 +192,8 @@ function LegacyReport() {
     ] },
     { title: 'Minha Saúde', items: [
       ['condicoes', 'Condições de Saúde', Stethoscope],
-      ['medicamentos', 'Medicamentos e Suplementos', Pill],
+      ['medicamentos', 'Medicamentos', Pill],
+      ['suplementos', 'Suplementos', Leaf],
       ['visao', 'Recursos de Saúde (óculos e lentes)', Eye],
       ['habitos', 'Hábitos', HeartPulse],
       ['ciclo', 'Ciclo e Contracepção', Droplet],
@@ -202,7 +203,7 @@ function LegacyReport() {
     ] },
   ]
   // Comandos de seleção (via SelectionToolbar reutilizável).
-  const DEFAULT_SECTIONS = { medicamentos: true, condicoes: true, habitos: true, visao: true, eventos: true, exames: true, omica: true, medidas: true, sinais: true, ciclo: true, gastos: true }
+  const DEFAULT_SECTIONS = { medicamentos: true, suplementos: true, condicoes: true, habitos: true, visao: true, eventos: true, exames: true, omica: true, medidas: true, sinais: true, ciclo: true, gastos: true }
   const allSections = (v: boolean) => Object.fromEntries(Object.keys(sections).map(k => [k, v])) as typeof sections
   const selectAllSections = () => { setSections(allSections(true)); setExcluded({}) }
   const clearSections = () => setSections(allSections(false))
@@ -332,13 +333,18 @@ function LegacyReport() {
   // Aplicam a seleção item a item ao relatório exibido/impresso (PDF). O PERÍODO
   // propaga ao link (/r/[token], persistido no share); a exclusão item a item no
   // link é refinamento futuro (seção-nível e período já propagam).
-  const visMedsEmUso = medsEmUso.filter(m => isItemOn('medicamentos', m.name))
-  const visMedsSusp = medsSusp.filter(m => isItemOn('medicamentos', m.name))
+  // FB-010 — Medicamentos e Suplementos separados (espelho da Sidebar). Mesma tabela (`medications.kind`);
+  // Medicamentos = tudo que NÃO é suplemento; Suplementos = kind='suplemento'.
+  const isSup = (m: Med) => m.kind === 'suplemento'
+  const visMedsEmUso = medsEmUso.filter(m => !isSup(m) && isItemOn('medicamentos', m.name))
+  const visMedsSusp = medsSusp.filter(m => !isSup(m) && isItemOn('medicamentos', m.name))
+  const visSupEmUso = medsEmUso.filter(m => isSup(m) && isItemOn('suplementos', m.name))
+  const visSupSusp = medsSusp.filter(m => isSup(m) && isItemOn('suplementos', m.name))
   const visExams = exams.filter(e => isItemOn('exames', `${e.type}__${e.date}`))
   // Faixas de grupo (espelham a Sidebar, FB-010): exibidas se houver ao menos uma seção do grupo.
   const showAcompanhamento = sections.eventos || sections.medidas || sections.sinais
   const showDocumentos = sections.exames || sections.omica
-  const showMinhaSaude = sections.condicoes || sections.medicamentos || sections.visao || sections.habitos || sections.ciclo
+  const showMinhaSaude = sections.condicoes || sections.medicamentos || sections.suplementos || sections.visao || sections.habitos || sections.ciclo
   const showOrganizacao = sections.gastos
   const condProprias = conditions.filter(c => c.scope === 'propria')
   const condFamiliar = conditions.filter(c => c.scope === 'familiar')
@@ -361,6 +367,7 @@ function LegacyReport() {
   const perMeasuresVitais = measuresVitais.filter(m => inPeriod(m.date, rp))
   const perVisExams = visExams.filter(e => inPeriod(e.date, rp))
   const perMedsSusp = visMedsSusp.filter(m => overlapsPeriod(m.startedOn, m.untilOn, rp))
+  const perSupSusp = visSupSusp.filter(m => overlapsPeriod(m.startedOn, m.untilOn, rp))
   const perExpenses = expenses.filter(x => inPeriod(x.date, rp))       // Despesas (temporal)
   const perMenstruations = menstruations.filter(m => inPeriod(m.startedOn, rp)) // Ciclo — menstruação (temporal)
   // Métodos contraceptivos = estado atual (independentes do período, como condições/meds em uso).
@@ -400,6 +407,7 @@ function LegacyReport() {
     sections.exames && { label: 'exames', n: perVisExams.length },
     sections.omica && { label: 'ômica', n: perOmics.length },
     sections.medicamentos && { label: 'medicamentos', n: visMedsEmUso.length + perMedsSusp.length },
+    sections.suplementos && { label: 'suplementos', n: visSupEmUso.length + perSupSusp.length },
     sections.condicoes && { label: 'condições', n: condProprias.length + condFamiliar.length },
     sections.visao && { label: 'recursos', n: eyewear.length },
     sections.medidas && { label: 'medidas', n: perMeasuresCorpo.length },
@@ -623,6 +631,7 @@ function LegacyReport() {
             {sections.eventos && <p><span className="text-mauve">Agenda (previstos):</span> {perAgenda.length}</p>}
             {sections.eventos && <p><span className="text-mauve">Histórico (realizados):</span> {perHistorico.length}</p>}
             {sections.medicamentos && <p><span className="text-mauve">Medicamentos em uso:</span> {visMedsEmUso.length}</p>}
+            {sections.suplementos && <p><span className="text-mauve">Suplementos em uso:</span> {visSupEmUso.length}</p>}
             {sections.condicoes && <p><span className="text-mauve">Condições registradas:</span> {condProprias.length + condFamiliar.length}</p>}
             {sections.visao && <p><span className="text-mauve">Recursos de saúde:</span> {eyewear.length}</p>}
             <p><span className="text-mauve">Última atualização:</span> {lastUpdate ? fmt(lastUpdate) : hoje}</p>
@@ -852,10 +861,10 @@ function LegacyReport() {
         </section>
         )}
 
-        {/* Medicamentos e suplementos */}
+        {/* Medicamentos (FB-010: separado de Suplementos) */}
         {sections.medicamentos && (
         <section id="sec-medicamentos" style={{ scrollMarginTop: 16 }}>
-          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Medicamentos e Suplementos em uso</h2>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Medicamentos em uso</h2>
           {visMedsEmUso.length === 0 ? (
             <p className="font-body text-xs text-mauve">Nenhum registrado em uso.</p>
           ) : (
@@ -864,7 +873,7 @@ function LegacyReport() {
                 const detalhe = `${[m.dose, m.frequency].filter(Boolean).join(', ')}${periodo(m.startedOn, m.untilOn)}`.trim()
                 return (
                 <li key={i} className="font-body text-xs text-onyx">
-                  • <strong>{m.name}</strong>{m.kind === 'suplemento' ? ' (suplemento)' : ''}
+                  • <strong>{m.name}</strong>
                   {detalhe ? <span className="block text-xs text-mauve ml-3">{detalhe}</span> : null}
                 </li>
                 )
@@ -873,6 +882,31 @@ function LegacyReport() {
           )}
           {perMedsSusp.length > 0 && (
             <p className="font-body text-xs text-mauve mt-2">Suspensos: {perMedsSusp.map(m => m.name).join(', ')}.</p>
+          )}
+        </section>
+        )}
+
+        {/* Suplementos (FB-010: separado de Medicamentos; mesma tabela, kind='suplemento') */}
+        {sections.suplementos && (
+        <section id="sec-suplementos" style={{ scrollMarginTop: 16 }}>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Suplementos em uso</h2>
+          {visSupEmUso.length === 0 ? (
+            <p className="font-body text-xs text-mauve">Nenhum registrado em uso.</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {visSupEmUso.map((m, i) => {
+                const detalhe = `${[m.dose, m.frequency].filter(Boolean).join(', ')}${periodo(m.startedOn, m.untilOn)}`.trim()
+                return (
+                <li key={i} className="font-body text-xs text-onyx">
+                  • <strong>{m.name}</strong>
+                  {detalhe ? <span className="block text-xs text-mauve ml-3">{detalhe}</span> : null}
+                </li>
+                )
+              })}
+            </ul>
+          )}
+          {perSupSusp.length > 0 && (
+            <p className="font-body text-xs text-mauve mt-2">Suspensos: {perSupSusp.map(m => m.name).join(', ')}.</p>
           )}
         </section>
         )}

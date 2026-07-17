@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, FileText, Clock, Pill, Receipt, CalendarDays,
   HeartPulse, Stethoscope, ScrollText, Droplet, Activity, Ruler, Settings,
-  Accessibility, X, ChevronRight, TrendingUp,
+  Accessibility, X, ChevronRight, TrendingUp, Leaf,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUser } from '@/context/UserContext'
@@ -66,7 +66,8 @@ const navGroups: {
     chipBg: 'bg-lagoa',
     items: [
       { href: '/dashboard/condicoes',     icon: Stethoscope,   label: 'Condições de Saúde' },
-      { href: '/dashboard/medicamentos',  icon: Pill,          label: 'Medicamentos e Suplementos' },
+      { href: '/dashboard/medicamentos',  icon: Pill,          label: 'Medicamentos' },
+      { href: '/dashboard/suplementos',   icon: Leaf,          label: 'Suplementos' },
       { href: '/dashboard/recursos',      icon: Accessibility, label: 'Recursos de Saúde' },
       { href: '/dashboard/habitos',       icon: HeartPulse,    label: 'Hábitos' },
       { href: '/dashboard/ciclo',         icon: Droplet,       label: 'Ciclo e Contracepção' },

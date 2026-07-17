@@ -11,6 +11,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { Loader2, X, ArrowLeft, Pencil, Trash2, ChevronDown, Pill } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
@@ -91,6 +92,11 @@ function fmtShort(date: string): string { return `${date.slice(8, 10)}/${date.sl
 export default function MedicamentosPage() {
   const { user, loading: authLoading } = useUser()
   const supabase = createClient()
+  // FB-010 — split de navegação: a MESMA página serve dois módulos (Medicamentos e Suplementos), decidido
+  // pela rota (/dashboard/suplementos → modo suplemento). Mesmo modelo/dados (`medications.kind`); só a
+  // apresentação (filtro por kind, títulos, default do form) muda. Sem duplicar página.
+  const pathname = usePathname()
+  const isSupplements = (pathname ?? '').startsWith('/dashboard/suplementos')
   const [meds, setMeds] = useState<Med[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -271,7 +277,7 @@ export default function MedicamentosPage() {
   }, [meds])
 
   function reset() {
-    setEditingId(null); setName(''); setKind('medicamento'); setBrand(''); setDose(''); setFreq(''); setStartedOn(''); setUntilOn(''); setNotes('')
+    setEditingId(null); setName(''); setKind(isSupplements ? 'suplemento' : 'medicamento'); setBrand(''); setDose(''); setFreq(''); setStartedOn(''); setUntilOn(''); setNotes('')
     setAcquiredQty(''); setAmount(''); setPackQty(''); setDailyCons(''); setPurchasedOn(''); setPurchaseStatus(''); setRepurchase(false); setRepurchaseFreq(''); setErr(null)
     setForm(''); setRoute(''); setPackUnit(''); setPrescriber(''); setMedStatus('em_uso')
     setShowMoreDetails(false); setScanEditing(null)
@@ -397,8 +403,12 @@ export default function MedicamentosPage() {
   const STATUS_LABEL: Record<Status, string> = { em_uso: 'Em uso', programado: 'Programado', suspenso: 'Suspenso', encerrado: 'Encerrado' }
   const STATUS_TONE: Record<Status, string> = { em_uso: 'sage', programado: 'gold', suspenso: 'mauve', encerrado: 'neutral' }
 
+  // Itens visíveis neste MODO: Suplementos mostra só kind='suplemento'; Medicamentos mostra o resto
+  // (medicamento/produto/dispositivo/outro). Mesmo dado, apresentação separada por rota.
+  const modeMeds = meds.filter(m => isSupplements ? m.kind === 'suplemento' : m.kind !== 'suplemento')
+
   function kindSection(k: Kind) {
-    const list = meds.filter(m => m.kind === k)
+    const list = modeMeds.filter(m => m.kind === k)
     if (list.length === 0) return null
     const emUso = list.filter(m => m.status === 'em_uso')
     const suspensos = list.filter(m => m.status === 'suspenso')
@@ -424,7 +434,7 @@ export default function MedicamentosPage() {
 
   // Visão "Por situação": Em uso / Suspensos como agrupamento primário (lista corrida).
   function statusSection(s: Status) {
-    const list = meds.filter(m => m.status === s)
+    const list = modeMeds.filter(m => m.status === s)
     if (list.length === 0) return null
     return (
       <div key={s}>
@@ -472,9 +482,9 @@ export default function MedicamentosPage() {
 
       <PageHeader
         icon={<Pill size={16} />}
-        eyebrow="Medicamentos"
-        title="Medicamentos e Suplementos"
-        subtitle={<><strong className="font-medium text-onyx/70">Fotografe a receita — a SINTERA lê e preenche os dados por você.</strong></>}
+        eyebrow={isSupplements ? 'Suplementos' : 'Medicamentos'}
+        title={isSupplements ? 'Suplementos' : 'Medicamentos'}
+        subtitle={<><strong className="font-medium text-onyx/70">Fotografe a receita ou o rótulo — a SINTERA lê e preenche os dados por você.</strong></>}
         action={
           <div className="flex flex-row flex-wrap items-center gap-2 sm:flex-col sm:items-end flex-shrink-0">
             {showForm ? (
@@ -484,7 +494,7 @@ export default function MedicamentosPage() {
               </button>
             ) : (
               // Menu de criação de registros (padrão oficial DS-001) — MESMO em todo módulo.
-              <CreateRecordMenu label="Novo medicamento ou suplemento" methods={['file', 'camera', 'manual']}
+              <CreateRecordMenu label={isSupplements ? 'Novo suplemento' : 'Novo medicamento'} methods={['file', 'camera', 'manual']}
                 onSelect={(m, file) => { if (file) handleScan(file); else if (m === 'manual') { reset(); setShowForm(true) } }}
                 fileAccept="application/pdf,image/*" busy={scanning} busyLabel="Lendo…"
                 voice={<VoiceInput onResult={(t) => handleVoiceAdd(t)} label="Falar" title="Adicionar por voz"
@@ -762,21 +772,24 @@ export default function MedicamentosPage() {
 
       {loading ? (
         <Card padding="2xl" className="text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
-      ) : meds.length === 0 ? (
-        <EmptyState icon={<Pill size={28} className="text-petal" />} title="Nenhum medicamento ou suplemento ainda"
-          message={<>Registre o que você usa. Use o botão <strong>Adicionar</strong>.</>} />
+      ) : modeMeds.length === 0 ? (
+        <EmptyState icon={<Pill size={28} className="text-petal" />} title={isSupplements ? 'Nenhum suplemento ainda' : 'Nenhum medicamento ainda'}
+          message={<>Registre o que você usa. Use o botão <strong>{isSupplements ? 'Novo suplemento' : 'Novo medicamento'}</strong>.</>} />
       ) : (
         <div className="space-y-6">
           <ViewModeSwitcher active={listView} onChange={setListView} modes={[{ value: 'situacao', label: 'Por situação' }, { value: 'tipo', label: 'Por tipo' }]} />
           <div className="space-y-8">
             {listView === 'tipo' ? (
-              <>
-                {kindSection('medicamento')}
-                {kindSection('suplemento')}
-                {kindSection('produto')}
-                {kindSection('dispositivo')}
-                {kindSection('outro')}
-              </>
+              isSupplements ? (
+                <>{kindSection('suplemento')}</>
+              ) : (
+                <>
+                  {kindSection('medicamento')}
+                  {kindSection('produto')}
+                  {kindSection('dispositivo')}
+                  {kindSection('outro')}
+                </>
+              )
             ) : (
               <>
                 {(['em_uso', 'programado', 'suspenso', 'encerrado'] as const).map(statusSection)}

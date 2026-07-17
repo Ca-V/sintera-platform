@@ -100,7 +100,7 @@ Módulo → Lista → Detalhe → Edição
 - **Painel** — Painel Inicial.
 - **Acompanhamento** *(evolução temporal da saúde)* — Agenda · **Registros de Saúde** · **Histórico de Exames** · Composição Corporal · Monitoramento.
 - **📁 Documentos** *(repositório documental/operacional; [[DOC-001]])* — **duas fases:** FASE 1 (beta) = **Exames como item independente**, sem cabeçalho de grupo (evita "grupo de 1 item"), já documentado como futuro Documentos; FASE 2 (release) = grupo 📁 Documentos oficial ao surgir o 2º tipo (Vacinas · Receitas · Atestados · Encaminhamentos · Termos · outros).
-- **Minha Saúde** *(estado permanente da pessoa)* — Condições de Saúde · Medicamentos e Suplementos · **Recursos de Saúde** · Hábitos · Ciclo e Contracepção.
+- **Minha Saúde** *(estado permanente da pessoa)* — Condições de Saúde · **Medicamentos** · **Suplementos** · **Recursos de Saúde** · Hábitos · Ciclo e Contracepção. *(Medicamentos e Suplementos = duas VISÕES do mesmo modelo `medications` por `kind`; rotas `/dashboard/medicamentos` e `/dashboard/suplementos` reaproveitam a mesma página. Espelhado no Relatório como duas seções.)*
 - **🤝 Rede de Cuidado** *(governança do compartilhamento — [[CARE-001]], build adiado; não aparece no menu até existir a página)*.
 - **Organização** *("como organizo minha vida em saúde?")* — Despesas · Relatórios.
 - **Configurações**.
