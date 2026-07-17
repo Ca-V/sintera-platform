@@ -8,7 +8,8 @@ import { useUser } from '@/context/UserContext'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import {
-  NOTIFICATION_CATEGORIES, NOTIFICATION_CHANNELS, DEFAULT_CHANNEL, type NotificationChannel,
+  NOTIFICATION_CATEGORIES, NOTIFICATION_CHANNELS, DEFAULT_CHANNEL, MANDATORY_NOTIFICATIONS,
+  recommendedChannels, type NotificationChannel,
 } from '@/lib/notifications/preferences'
 
 const CHANNEL_LABEL: Record<NotificationChannel, string> = {
@@ -248,10 +249,19 @@ export default function ConfiguracoesPage() {
           <h2 className="font-body text-sm font-semibold text-onyx">Central de Notificações</h2>
         </div>
         <p className="font-body text-xs text-mauve">
-          Escolha, para cada tipo de evento, como quer ser avisada. Vale para toda a plataforma —
-          exames, consultas, vacinas, medicamentos, avaliações e demais itens agendados. Para receber
+          Esta é a <strong>fonte única</strong> das suas preferências: escolha, para cada categoria, se e como quer
+          ser avisada. Vale para toda a plataforma — os formulários usam o que você definir aqui. Para receber
           por WhatsApp, cadastre o telefone acima.
         </p>
+
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <p className="font-body text-[11px] font-semibold text-onyx/60 uppercase tracking-wider">Lembretes (você escolhe)</p>
+          <button type="button"
+            onClick={() => setNotifPrefs(recommendedChannels())}
+            className="font-body text-[11px] text-petal hover:underline">
+            Restaurar configurações recomendadas
+          </button>
+        </div>
 
         <div className="space-y-2">
           {NOTIFICATION_CATEGORIES.map(cat => (
@@ -272,6 +282,17 @@ export default function ConfiguracoesPage() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Prioridade (NOTIF-001/FB-011): obrigatórias são SEMPRE enviadas — fora das preferências. */}
+        <div className="rounded-xl bg-ivory border border-border p-3">
+          <p className="font-body text-[11px] font-semibold text-onyx/60 uppercase tracking-wider mb-1.5">Sempre enviadas</p>
+          <p className="font-body text-[11px] text-mauve mb-2">Avisos essenciais de conta e segurança — enviados por e-mail, sem opção de desativar.</p>
+          <ul className="flex flex-wrap gap-1.5">
+            {MANDATORY_NOTIFICATIONS.map(m => (
+              <li key={m.key} className="font-body text-[11px] text-onyx bg-white border border-border rounded-full px-2 py-0.5">{m.label}</li>
+            ))}
+          </ul>
         </div>
 
         <div className="flex items-center justify-end gap-3">

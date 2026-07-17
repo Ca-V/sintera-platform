@@ -10,6 +10,9 @@ import {
   resolveChannelsForEvent,
   categoryForEventType,
   DEFAULT_CHANNEL,
+  NOTIFICATION_CATEGORIES,
+  MANDATORY_NOTIFICATIONS,
+  recommendedChannels,
   type NotificationChannel,
 } from '@/lib/notifications/preferences'
 
@@ -75,5 +78,26 @@ describe('NOTIF-001 · resolveChannelsForEvent — preferência manda; sem ela, 
     const prefs = new Map<string, NotificationChannel>([['outro', 'both']])
     const r = resolveChannelsForEvent({ prefsByCategory: prefs, eventType: 'coisa-nova', legacyWhatsAppOptIn: false })
     expect(r.channel).toBe('both')
+  })
+})
+
+// FB-011 — enriquecimento da Central: prioridade (obrigatórias) + recomendados ("Restaurar recomendadas").
+describe('NOTIF-001 · obrigatórias e recomendados (FB-011)', () => {
+  it('recommendedChannels cobre TODAS as categorias com o canal default', () => {
+    const rec = recommendedChannels()
+    expect(Object.keys(rec).sort()).toEqual(NOTIFICATION_CATEGORIES.map(c => c.key).sort())
+    for (const c of NOTIFICATION_CATEGORIES) expect(rec[c.key]).toBe(DEFAULT_CHANNEL)
+  })
+
+  it('obrigatórias incluem cadastro, senha e compartilhamento aceito (críticas)', () => {
+    const keys = MANDATORY_NOTIFICATIONS.map(m => m.key)
+    expect(keys).toContain('cadastro')
+    expect(keys).toContain('senha')
+    expect(keys).toContain('compartilhamento')
+  })
+
+  it('obrigatórias NÃO colidem com categorias configuráveis (não entram nas preferências)', () => {
+    const catKeys = new Set(NOTIFICATION_CATEGORIES.map(c => c.key))
+    for (const m of MANDATORY_NOTIFICATIONS) expect(catKeys.has(m.key)).toBe(false)
   })
 })

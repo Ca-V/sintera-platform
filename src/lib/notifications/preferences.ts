@@ -37,6 +37,22 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   { key: 'outro',        label: 'Outros eventos assistenciais' },
 ]
 
+// NOTIF-001 (FB-011) — PRIORIDADE. Notificações OBRIGATÓRIAS (críticas) são SEMPRE enviadas e NÃO entram nas
+// preferências (a usuária não desliga). Distinguem-se das CONFIGURÁVEIS (as categorias acima, que obedecem à
+// preferência). Aqui só a lista para exibição transparente ("sempre enviadas"); o disparo dessas é do sistema.
+export const MANDATORY_NOTIFICATIONS: { key: string; label: string }[] = [
+  { key: 'cadastro',        label: 'Confirmação de cadastro' },
+  { key: 'senha',           label: 'Alteração de senha' },
+  { key: 'compartilhamento', label: 'Compartilhamento aceito' },
+]
+
+/** Preferências RECOMENDADAS (default) para todas as categorias configuráveis. Base do "Restaurar recomendadas". */
+export function recommendedChannels(): Record<string, NotificationChannel> {
+  const out: Record<string, NotificationChannel> = {}
+  for (const c of NOTIFICATION_CATEGORIES) out[c.key] = DEFAULT_CHANNEL
+  return out
+}
+
 // Mapa ABERTO tipo-de-evento → categoria de notificação. Tipos não mapeados caem em 'outro'
 // (nunca quebra). 'cirurgia'→procedimento, 'retorno'→consulta, 'atividade'/'estetico'→avaliacao,
 // 'omica'/'protocolo'→exame: mantém a config coerente com o que o usuário reconhece.

@@ -45,6 +45,16 @@ notificação: WhatsApp e E-mail · **Alterar canal**"* (link → Central de Not
 escolher o canal na própria ação (Enviar por e-mail? por WhatsApp?), porque a escolha vale só para aquela ação —
 não é preferência permanente.
 
+**Sequenciamento (decisão 17/07 — beta em estabilização).** O modelo-ALVO é o de 3 níveis (categoria→evento→
+canal) + prioridade. Como já existe uma Central por **categoria** integrada a um **worker de despacho vivo**
+(`api/agenda/reminders`), a evolução é em duas fases para não desestabilizar o envio real:
+- **FASE 1 (beta, feita):** enriquecer a Central de **categoria** existente — **Prioridade** (bloco "Sempre
+  enviadas" com as obrigatórias, fora das preferências) + botão **"Restaurar configurações recomendadas"** +
+  reaproveitar telefone/WhatsApp; sem tocar o worker. Lib: `MANDATORY_NOTIFICATIONS`, `recommendedChannels()`.
+- **FASE 2 (pós-estabilização):** evoluir a persistência para **nível-evento** (`event_key`) e reescrever a
+  resolução do worker por evento (com fallback seguro para o comportamento atual). Só então a granularidade
+  por tipo de evento passa a valer no despacho.
+
 **Detalhe arquitetural — separar CATEGORIA de EVENTO.** Uma **categoria** agrupa vários **tipos de evento**:
 - Medicamentos → *lembrete de horário · renovação de receita · estoque acabando (futuro)*
 - Exames → *exame agendado · lembrete de recorrência · resultado recebido (futuro)*
