@@ -231,3 +231,24 @@ export function clinicalResultsToUcda(rows: ClinicalResultRow[]): UcdaRepresenta
     provenance: { source: 'clinical_results' },
   }
 }
+
+/** Seção de exibição da UCDA: itens agrupados para leitura. */
+export interface UcdaDisplaySection { label: string | null; items: UcdaItem[] }
+
+/**
+ * Agrupa os itens de uma representação UCDA para exibição GENÉRICA — sem NENHUMA lógica por modalidade
+ * (Convergência Progressiva: a UI lê o contrato canônico, não conhece Pentacam/ECG/etc.). Chave de grupo:
+ * `group` › `region` › `anatomy` › null. Preserva a ordem de 1ª aparição dos grupos e a ordem original
+ * dos itens dentro de cada grupo. Determinístico.
+ */
+export function groupUcdaForDisplay(rep: UcdaRepresentation): UcdaDisplaySection[] {
+  const keyOf = (it: UcdaItem): string | null => it.group ?? it.region ?? it.anatomy ?? null
+  const order: (string | null)[] = []
+  const map = new Map<string | null, UcdaItem[]>()
+  for (const it of rep.items) {
+    const k = keyOf(it)
+    if (!map.has(k)) { map.set(k, []); order.push(k) }
+    map.get(k)!.push(it)
+  }
+  return order.map(k => ({ label: k, items: map.get(k)! }))
+}

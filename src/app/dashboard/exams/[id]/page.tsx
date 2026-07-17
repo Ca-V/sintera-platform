@@ -23,7 +23,9 @@ import { deriveExamIdentity } from '@/lib/exams/identification'
 import { isOrderDocumentType } from '@/lib/exams/classification'
 import { careStageFor } from '@/lib/exams/careFlow'
 import { eventServicesFor } from '@/lib/agenda'
+import { clinicalResultsToUcda, type ClinicalResultRow, type UcdaRepresentation } from '@/lib/capture/ucda'
 import CareFlowStepper from '@/components/CareFlowStepper'
+import ClinicalResultsCard from '@/components/ClinicalResultsCard'
 import Link from 'next/link'
 import FeedbackModal from '@/components/FeedbackModal'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
@@ -277,6 +279,8 @@ export default function ExamDetailPage() {
 
   const [exam, setExam]           = useState<Exam | null>(null)
   const [biomarkers, setBiomarkers] = useState<Biomarker[]>([])
+  // EXA-C3 (NC-0009): resultados clínicos não-laboratoriais (CPE) na representação canônica UCDA.
+  const [clinicalRep, setClinicalRep] = useState<UcdaRepresentation | null>(null)
   const [labels, setLabels]         = useState<CatalogLabels>(() => buildCatalogLabels([], []))
   const [lastLog, setLastLog]     = useState<LastLog | null>(null)
   const [loading, setLoading]     = useState(true)
@@ -462,7 +466,7 @@ export default function ExamDetailPage() {
 
   async function loadData(silent = false) {
     if (!silent) setLoading(true)
-    const [{ data: examData }, { data: bioData }, { data: logData }, { data: catData }] = await Promise.all([
+    const [{ data: examData }, { data: bioData }, { data: logData }, { data: catData }, { data: clinData }] = await Promise.all([
       supabase.from('exams').select('id,type,document_type,status,page_count,created_at,exam_date,error_reason,text_truncated,file_url,patient_name,extraction_completeness,issuer,requesting_physician')
         .eq('id', examId).single(),
       supabase.from('current_biomarkers')
@@ -475,6 +479,10 @@ export default function ExamDetailPage() {
         .order('started_at', { ascending: false })
         .limit(1),
       supabase.from('biomarker_catalog').select('id,specimen,category,display_name'),
+      // Resultados clínicos não-laboratoriais (CPE) — lidos SEMPRE como UCDA (contrato), nunca modalidade-específicos.
+      supabase.from('clinical_results')
+        .select('clinical_model,result_kind,item_type,name,value_text,value_num,unit,code,code_system,value_code,region,anatomy,specimen,method,context,group_label,reference_text,page,raw_text')
+        .eq('exam_id', examId),
     ])
     setLabels(await loadCatalogLabels(supabase))
     if (examData) setExam(examData as Exam)
@@ -489,6 +497,8 @@ export default function ExamDetailPage() {
       setBiomarkers(sortBiomarkers(enriched))
     }
     if (logData?.[0]) setLastLog(logData[0] as LastLog)
+    // clinical_results → UCDA (contrato). Só há representação quando o CPE gravou itens (ex.: Pentacam).
+    setClinicalRep(clinicalResultsToUcda((clinData ?? []) as ClinicalResultRow[]))
     if (!silent) setLoading(false)
   }
 
@@ -563,6 +573,7 @@ export default function ExamDetailPage() {
 
   const isProcessed  = exam?.status === 'processed'
   const hasResults   = biomarkers.length > 0
+  const hasClinical  = (clinicalRep?.items.length ?? 0) > 0   // resultados clínicos não-laboratoriais (CPE)
   const analyzeLabel = isProcessed ? 'Extrair novamente' : 'Extrair dados'
   const AnalyzeIcon  = isProcessed ? RefreshCw : Zap
 
@@ -964,7 +975,7 @@ export default function ExamDetailPage() {
             </p>
           </div>
         </MotionCard>
-      ) : (analyzing || exam?.status === 'processing' || exam?.status === 'pending') ? (
+      ) : hasClinical ? null : (analyzing || exam?.status === 'processing' || exam?.status === 'pending') ? (
         /* P3 — Estado de processamento (auto-análise em andamento; 'pending' evita flash do estado vazio) */
         <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
           padding="2xl" className="text-center">
@@ -1008,6 +1019,9 @@ export default function ExamDetailPage() {
           </MotionCard>
         )
       })()}
+
+      {/* Resultados clínicos não-laboratoriais (CPE) — EXA-C3 / NC-0009. Exibição genérica via UCDA. */}
+      {hasClinical && clinicalRep && <ClinicalResultsCard rep={clinicalRep} />}
 
       {/* Modal — Reportar problema */}
       {reportOpen && (
