@@ -123,6 +123,48 @@ export function groupByMaterialExam<T>(
   return groups.map(gm => ({ key: gm.key, label: gm.label, iconKey: gm.iconKey, exams: gm.exams }))
 }
 
+export interface ExamHistoryGroup<T> {
+  key: string
+  label: string            // nome do EXAME (fallback: material, quando o laudo não trouxe o nome do exame)
+  material: string | null  // rótulo do material como CONTEXTO do exame (null quando o grupo já é o material)
+  items: T[]
+}
+
+/**
+ * Agrupa por EXAME (fundadora 17/07) — fluxo **Exame → Histórico → Biomarcadores**: o TIPO de exame é o nível
+ * primário (como usuários/profissionais consultam), e os biomarcadores são acessados a partir dele. Exame =
+ * `source_exam_name` canonicalizado; sem nome de exame → agrupa pelo MATERIAL como exame (dado legado). Material
+ * vira apenas CONTEXTO. Rótulos do catálogo (SSOT). A rastreabilidade ao laudo é preservada pelo chamador
+ * (occorrências por `exam_id`). Ordena por rótulo (pt-BR). Sem juízo clínico (RDC 657).
+ */
+export function groupByExam<T>(
+  items: T[],
+  get: (t: T) => { sourceMaterial: string | null; specimen: string | null; sourceExamName: string | null },
+  labels: CatalogLabels,
+): ExamHistoryGroup<T>[] {
+  const matLabelOf = (g: { sourceMaterial: string | null; specimen: string | null }): string => {
+    if (g.specimen) return labels.materialLabel(g.specimen)
+    const c = canonicalMaterial(g.sourceMaterial)
+    const cat = labels.materialLabel(c.key)
+    return cat !== 'Outros exames' ? cat : c.label
+  }
+  const groups = new Map<string, ExamHistoryGroup<T>>()
+  for (const it of items) {
+    const g = get(it)
+    const ce = canonicalExamName(g.sourceExamName)
+    let key: string, label: string, material: string | null
+    if (ce) {
+      key = `ex:${ce.key}`; label = ce.label; material = matLabelOf(g)
+    } else {
+      const mk = g.specimen ?? canonicalMaterial(g.sourceMaterial).key
+      key = `mat:${mk}`; label = matLabelOf(g); material = null
+    }
+    if (!groups.has(key)) groups.set(key, { key, label, material, items: [] })
+    groups.get(key)!.items.push(it)
+  }
+  return [...groups.values()].sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'))
+}
+
 export interface PanelGroup<T> {
   key: string
   label: string

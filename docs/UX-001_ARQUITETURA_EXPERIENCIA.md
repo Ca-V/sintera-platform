@@ -114,6 +114,13 @@ Módulo → Lista → Detalhe → Edição
 > **Como decidir onde encaixar um módulo novo:** ele representa uma **atividade/evento de cuidado no tempo** → Acompanhamento; representa um **traço/estado do perfil de saúde** → Minha Saúde. (Se for um acontecimento numa data, reveja antes a §2/§7: pode ser um **evento**, não um módulo.)
 
 **Acesso rápido (Painel Inicial):** os módulos mais frequentes — Histórico · Agenda · Exames · Medicamentos · Relatórios · Despesas.
+**Histórico de Exames = Exame → Histórico → Biomarcadores (princípio, fundadora 17/07).** O módulo **Histórico de
+Exames** (`/dashboard/saude`) organiza-se pelo **TIPO de exame** (como usuários e profissionais consultam o
+histórico), **não** por biomarcador. Fluxo: **Exame → Histórico** (ocorrências/datas, rastreáveis ao **laudo
+original**) **→ Biomarcadores** (acessados **a partir** do exame, com evolução por biomarcador). Os biomarcadores
+continuam existindo — mudam apenas de **porta de entrada**: nunca o inverso. Preserva a rastreabilidade até o
+documento ([[principio_rastreabilidade_documental]]). Implementação: `groupByExam` (SSOT de rótulos do catálogo).
+
 **Relatório = taxonomia da navegação (princípio, FB-010).** O Relatório **não tem árvore própria**: reutiliza a
 **mesma taxonomia da Sidebar** (grupos, ordem e rótulos). Qualquer reorganização da Sidebar deve refletir
 **automaticamente** na geração de relatórios (`relatorio/page` — `SELECT_GROUPS` + faixas de banda espelham os
