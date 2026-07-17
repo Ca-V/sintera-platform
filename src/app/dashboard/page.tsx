@@ -137,7 +137,7 @@ function LegacyDashboard() {
           {greeting}, {displayName} 👋
         </h1>
         <p className="font-body text-sm text-mauve mt-1">
-          Você envia os documentos; a SINTERA cuida do resto.
+          Reúna seus exames, medicamentos e consultas num só lugar, acompanhe sua saúde ao longo do tempo e compartilhe com quem cuida de você.
         </p>
       </motion.div>
 
@@ -202,9 +202,9 @@ function LegacyDashboard() {
           <div className="w-16 h-16 rounded-2xl gradient-sintera-soft flex items-center justify-center mx-auto mb-4">
             <Upload size={28} className="text-petal" />
           </div>
-          <h2 className="font-display text-lg font-semibold text-onyx mb-2">Envie um documento. A SINTERA cuida do resto.</h2>
+          <h2 className="font-display text-lg font-semibold text-onyx mb-2">Comece enviando um documento</h2>
           <p className="font-body text-sm text-mauve max-w-sm mx-auto mb-6">
-            Um exame, uma receita ou um atestado — a SINTERA lê, extrai os dados e organiza tudo para você.
+            Um exame, uma receita ou um atestado — a SINTERA lê, transcreve os dados e organiza tudo para você acompanhar.
           </p>
           <button
             onClick={() => setIntakeOpen(true)}
