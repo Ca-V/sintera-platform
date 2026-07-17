@@ -214,9 +214,10 @@ function LegacyReport() {
     setLoading(true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db = supabase as any
-    const [medRes, evRes, exRes, mzRes, cdRes, hbRes, ewRes, omRes, ccRes, mpRes, finRes] = await Promise.all([
+    const [medRes, evAll, exRes, mzRes, cdRes, hbRes, ewRes, omRes, ccRes, mpRes, finRes] = await Promise.all([
       db.from('medications').select('name, kind, dose, frequency, started_on, until_date, status').eq('user_id', user.id).order('status'),
-      db.from('health_events').select('title, event_type, professional_kind, event_date, notes, status').eq('user_id', user.id).eq('synthetic', false).order('event_date', { ascending: false }),
+      // EVT-C1 (NC-0013/0014): leitura ÚNICA pelo contrato canônico — inclui eventos legados + canônicos (dedup).
+      services.query.listAll(user.id),
       db.from('exams').select('id, type, exam_date, created_at, file_url').eq('user_id', user.id).order('created_at', { ascending: false }),
       db.from('body_metrics').select('metric, label, value_text, unit, measured_on, exam_id').eq('user_id', user.id).order('measured_on', { ascending: false }),
       db.from('health_conditions').select('scope, name, relative, since_label, notes').eq('user_id', user.id).order('created_at', { ascending: false }),
@@ -231,10 +232,12 @@ function LegacyReport() {
       name: m.name as string, kind: (m.kind as string) ?? 'medicamento', dose: (m.dose as string) ?? null, frequency: (m.frequency as string) ?? null,
       startedOn: (m.started_on as string) ?? null, untilOn: (m.until_date as string) ?? null, status: (m.status as string) ?? 'em_uso',
     })))
-    setEvents(((evRes.data ?? []) as Array<Record<string, unknown>>).map(e => ({
-      title: e.title as string, eventType: (e.event_type as string) ?? 'outro', prof: (e.professional_kind as string) ?? null,
-      date: e.event_date as string, notes: (e.notes as string) ?? null, status: (e.status as string) ?? 'planejado',
-    })))
+    setEvents([...evAll]
+      .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))   // mais recentes primeiro (como antes)
+      .map(e => ({
+        title: e.title, eventType: e.type ?? 'outro', prof: e.professionalKind ?? null,
+        date: e.date, notes: e.notes ?? null, status: e.status ?? 'planejado',
+      })))
     setExams(((exRes.data ?? []) as Array<Record<string, unknown>>).map(e => ({
       id: e.id as string, type: (e.type as string) || 'Exame', date: (e.exam_date as string) || (e.created_at as string),
       fileUrl: (e.file_url as string) ?? null,

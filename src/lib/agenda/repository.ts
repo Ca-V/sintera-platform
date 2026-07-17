@@ -15,6 +15,8 @@ import {
 } from './event'
 
 export interface EventRepository {
+  /** TODOS os eventos (união legado+canônico, dedup), sem recorte temporal. Fonte única p/ Timeline/Relatório/compartilhamento. */
+  listAllEvents(userId: string): Promise<HealthEvent[]>
   listUpcomingEvents(userId: string, refDate: string): Promise<HealthEvent[]>
   listHistoricalEvents(userId: string, refDate: string): Promise<HealthEvent[]>
   listEventsByExam(userId: string, examId: string): Promise<HealthEvent[]>
@@ -51,6 +53,7 @@ export function createSupabaseEventRepository(supabase: SupabaseClient): EventRe
   }
 
   return {
+    listAllEvents:        async (u) => listAll(u),
     listUpcomingEvents:   async (u, ref) => selectUpcoming(await listAll(u), ref),
     listHistoricalEvents: async (u, ref) => selectHistorical(await listAll(u), ref),
     listEventsByExam:      async (u, id) => selectByLink(await listAll(u), 'exam' as EventLinkKind, id),

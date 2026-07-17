@@ -20,7 +20,7 @@
 - ⏸ **EXA-D2 — Auditoria Funcional** das 13 jornadas → depende de **ambiente executável logado**.
 
 ## BACKLOG — EVENTOS
-- □ **EVT-C1 — Eventos legados no Histórico/Relatório**: rotear as leituras pelo repositório canônico (dedup legado+canônico) — hoje `timeline`/`relatorio`/`r/[token]` consultam `health_events` direto e somem 9 eventos legados. Fecha NC-0013/0014.
+- ☑ **EVT-C1 — Eventos legados no Histórico/Relatório**: novo `EventQueryService.listAll` (expõe `repo.listAllEvents` = união legado+canônico com dedup, sem recorte temporal; +1 teste de delegação); `timeline`, `relatorio` e `r/[token]` deixam de consultar `health_events` direto e passam a ler pelo contrato canônico (o compartilhamento usa o mesmo caminho via client admin). Eventos legados voltam a aparecer nas 3 superfícies. Fecha NC-0013/0014. commit abaixo.
 - □ **EVT-C2 — Surfacar preparo/desfecho/modalidade** em Agenda/Histórico (hoje só na notificação). Fecha NC-0007.
 - □ **EVT-C3 — Capturar "tipo de profissional"** (campo no AgendarModal → `professional_kind`, já exibido em 3 telas). Fecha NC-0012.
 - □ **EVT-C4 — Marca visual de "retorno"** (respeitar o booleano `isReturn`, não só `event_type==='retorno'`). Fecha NC-0016.

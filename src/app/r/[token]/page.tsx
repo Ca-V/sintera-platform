@@ -9,7 +9,8 @@
 import { createClient } from '@supabase/supabase-js'
 import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
 import { resolvePeriod, inPeriod, overlapsPeriod, type Period } from '@/lib/communication/period'
-import { rowToHealthEvent, selectFinancial, type HealthEventRow } from '@/lib/agenda/event' // Despesas = mesma projeção financeira do domínio (SSOT)
+import { selectFinancial } from '@/lib/agenda/event' // Despesas = mesma projeção financeira do domínio (SSOT)
+import { eventServicesFor } from '@/lib/agenda' // EVT-C1: leitura canônica (legado+canônico) também no compartilhamento
 import { contraceptiveLabel } from '@/lib/cycle' // SSOT dos métodos contraceptivos
 
 export const metadata = { robots: { index: false, follow: false } }
@@ -81,10 +82,11 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
   const rp = resolvePeriod((share.period as Period | null) ?? { preset: 'all' })
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = admin as any
-  const [{ data: prof }, { data: meds }, { data: events }, { data: exams }, { data: measures }, { data: conditions }, { data: habits }, { data: eyewear }, { data: omics }, { data: contraceptives }, { data: menstruations }, { data: authUser }] = await Promise.all([
+  const [{ data: prof }, { data: meds }, eventsList, { data: exams }, { data: measures }, { data: conditions }, { data: habits }, { data: eyewear }, { data: omics }, { data: contraceptives }, { data: menstruations }, { data: authUser }] = await Promise.all([
     db.from('profiles').select('name, height_cm').eq('id', uid).maybeSingle(),
     db.from('medications').select('name, kind, dose, frequency, started_on, until_date, status').eq('user_id', uid).order('status'),
-    db.from('health_events').select('id, title, event_type, event_date, notes, professional_kind, status, amount_cents, direct_expense').eq('user_id', uid).eq('synthetic', false).order('event_date', { ascending: false }),
+    // EVT-C1 (NC-0013/0014): leitura ÚNICA pelo contrato canônico — inclui eventos legados + canônicos (dedup).
+    eventServicesFor(db).query.listAll(uid),
     db.from('exams').select('id, type, exam_date, created_at, file_url').eq('user_id', uid).order('created_at', { ascending: false }),
     db.from('body_metrics').select('metric, label, value_text, unit, measured_on, exam_id').eq('user_id', uid).order('measured_on', { ascending: false }),
     db.from('health_conditions').select('scope, name, relative, since_label, notes').eq('user_id', uid).order('created_at', { ascending: false }),
@@ -119,7 +121,8 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
   const medsArr = (meds ?? []) as Array<Record<string, unknown>>
   const medsEmUso = medsArr.filter(m => m.status === 'em_uso')
   const medsSusp = medsArr.filter(m => m.status === 'suspenso' && overlapsPeriod((m.started_on as string) ?? null, (m.until_date as string) ?? null, rp))
-  const evArr = ((events ?? []) as Array<Record<string, unknown>>).filter(e => inPeriod((e.event_date as string) ?? null, rp))
+  const evArr = eventsList.filter(e => inPeriod(e.date ?? null, rp))
+    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))   // mais recentes primeiro (como antes)
   const exArr = ((exams ?? []) as Array<Record<string, unknown>>).filter(e => inPeriod((e.exam_date as string) ?? (e.created_at as string) ?? null, rp))
   const mzAll = (measures ?? []) as Array<Record<string, unknown>>
   const mzArr = mzAll.filter(m => !isVital(m.metric as string) && inPeriod(m.measured_on as string, rp))
@@ -138,7 +141,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
   const condFamiliar = cdArr.filter(c => c.scope === 'familiar')
   const hbArr = (habits ?? []) as Array<Record<string, unknown>>
   // Despesas = MESMA projeção financeira do domínio (selectFinancial), sem reimplementar a regra.
-  const expArr = selectFinancial(((events ?? []) as HealthEventRow[]).map(rowToHealthEvent)).filter(x => inPeriod(x.date, rp))
+  const expArr = selectFinancial(eventsList).filter(x => inPeriod(x.date, rp))
   const ccArr = (contraceptives ?? []) as Array<Record<string, unknown>>
   const mpArr = ((menstruations ?? []) as Array<Record<string, unknown>>).filter(m => inPeriod(m.started_on as string, rp))
   const brl = (cents: number | null | undefined) => `R$ ${((cents ?? 0) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -238,10 +241,10 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
             <tbody>
               {evArr.map((e, i) => (
                 <tr key={i} style={{ borderBottom: '1px solid #DCE8E3' }}>
-                  <td style={{ padding: '6px 12px 6px 0', color: '#5F6A62', whiteSpace: 'nowrap', verticalAlign: 'top' }}>{fmt(e.event_date as string)}</td>
+                  <td style={{ padding: '6px 12px 6px 0', color: '#5F6A62', whiteSpace: 'nowrap', verticalAlign: 'top' }}>{fmt(e.date)}</td>
                   <td style={{ padding: '6px 0' }}>
-                    <span style={{ color: '#5F6A62' }}>{TYPE_LABEL[e.event_type as string] ?? 'Evento'}{e.professional_kind && PROF_LABEL[e.professional_kind as string] ? ` (${PROF_LABEL[e.professional_kind as string]})` : ''}:</span> {e.title as string}
-                    {e.notes ? <span style={{ display: 'block', fontSize: 12, color: '#5F6A62' }}>{e.notes as string}</span> : null}
+                    <span style={{ color: '#5F6A62' }}>{TYPE_LABEL[e.type] ?? 'Evento'}{e.professionalKind && PROF_LABEL[e.professionalKind] ? ` (${PROF_LABEL[e.professionalKind]})` : ''}:</span> {e.title}
+                    {e.notes ? <span style={{ display: 'block', fontSize: 12, color: '#5F6A62' }}>{e.notes}</span> : null}
                   </td>
                 </tr>
               ))}

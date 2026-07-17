@@ -21,7 +21,7 @@ import { useUser } from '@/context/UserContext'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { useEventForm, eventToInput } from '@/components/eventForm'
-import { rowToHealthEvent, type HealthEvent, type HealthEventRow } from '@/lib/agenda'
+import { rowToHealthEvent, eventServicesFor, type HealthEvent, type HealthEventRow } from '@/lib/agenda'
 import HistoricoTabs from '@/components/HistoricoTabs'
 import { useStickyView } from '@/lib/ui/useStickyView'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
@@ -127,15 +127,13 @@ function LegacyTimeline() {
   const load = useCallback(async () => {
     if (!user) return
     setLoading(true)
-    const [examsRes, eventsRes, omicsRes] = await Promise.all([
+    const [examsRes, events, omicsRes] = await Promise.all([
       supabase.from('exams')
         .select('id, type, exam_date, status, notes, created_at')
         .eq('user_id', user.id),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (supabase as any).from('health_events')
-        .select('id, event_type, title, event_date, notes, source, confidence, attachment_url, amount_cents, professional_kind, synthetic, status')
-        .eq('user_id', user.id)
-        .eq('synthetic', false),
+      // EVT-C1 (NC-0013/0014): leitura ÚNICA pelo contrato canônico — inclui eventos legados
+      // (agenda_events) + canônicos (health_events), com dedup. Nunca consulta a tabela direto.
+      eventServicesFor(supabase).query.listAll(user.id),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (supabase as any).from('omics_panels')
         .select('id, domain, laboratory, total_features, collected_on, created_at')
@@ -153,19 +151,19 @@ function LegacyTimeline() {
         href: `/dashboard/exams/${e.id as string}`,
       })
     }
-    for (const ev of (eventsRes.data ?? []) as Array<Record<string, unknown>>) {
+    for (const ev of events) {
       merged.push({
-        id: `event-${ev.id as string}`, rawId: ev.id as string, kind: 'event',
-        eventType: (ev.event_type as EventType) ?? 'outro',
-        title: (ev.title as string) ?? 'Evento',
-        subtitle: (ev.notes as string) ?? null,
-        date: ev.event_date as string,
-        source: (ev.source as string) ?? 'autorrelato',
-        confidence: (ev.confidence as string) ?? 'baixa',
-        attachmentUrl: (ev.attachment_url as string) ?? null,
-        amountCents: (ev.amount_cents as number) ?? null,
-        profKind: (ev.professional_kind as string) ?? null,
-        status: (ev.status as string) ?? 'planejado',
+        id: `event-${ev.id}`, rawId: ev.id, kind: 'event',
+        eventType: (ev.type as EventType) ?? 'outro',
+        title: ev.title ?? 'Evento',
+        subtitle: ev.notes ?? null,
+        date: ev.date,
+        source: ev.source ?? 'autorrelato',
+        confidence: 'baixa',   // sinal legado não persistido no contrato canônico (não renderizado)
+        attachmentUrl: ev.attachmentUrl ?? null,
+        amountCents: ev.amountCents ?? null,
+        profKind: ev.professionalKind ?? null,
+        status: ev.status ?? 'planejado',
       })
     }
     for (const p of (omicsRes.data ?? []) as Array<Record<string, unknown>>) {
