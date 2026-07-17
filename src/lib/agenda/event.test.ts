@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  rowToHealthEvent, agendaRowToHealthEvent,
+  rowToHealthEvent, agendaRowToHealthEvent, healthEventToRow,
   isUpcoming, isPast, isConcluded, isClosed, hasActiveReminder, hasCost, isDerived, isReturnVisit,
   selectUpcoming, selectNextUpcoming, selectHistorical, selectByLink, selectFinancial, isFinancial,
   completeRule, cancelRule, rescheduleRule, canTransition,
@@ -39,6 +39,20 @@ describe('rowToHealthEvent', () => {
     expect(e.modality).toBeNull()
     expect(e.source).toBe('manual')
     expect(e.links).toEqual([])
+  })
+})
+
+describe('EVT-C6 (NC-0006) — write-side do EventLink: evento nascido de um exame', () => {
+  it('healthEventToRow persiste os links; round-trip encontrável por selectByLink', () => {
+    const row = healthEventToRow('u1', {
+      type: 'exame', title: 'Repetir Hemograma', date: '2026-08-01',
+      links: [{ type: 'exam', id: 'exam-123', relationship: 'generated_from' }],
+    })
+    expect(row.links).toEqual([{ type: 'exam', id: 'exam-123', relationship: 'generated_from' }])
+    // persistência → leitura → o "Relacionado"/listByExam reconstrói a relação
+    const back = rowToHealthEvent({ id: 'ev1', event_type: 'exame', title: 'Repetir Hemograma', event_date: '2026-08-01', links: row.links })
+    expect(selectByLink([back], 'exam', 'exam-123')).toHaveLength(1)
+    expect(selectByLink([back], 'exam', 'outro')).toHaveLength(0)
   })
 })
 

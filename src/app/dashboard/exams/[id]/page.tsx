@@ -1092,7 +1092,9 @@ export default function ExamDetailPage() {
         onClose={() => setAgendarOpen(false)}
         onSave={async (input: AgendaEventInput) => {
           if (!user) return
-          await saveEvent(user.id, input, null)
+          // EVT-C6 (NC-0006): o evento nasce DESTE exame → grava o vínculo de origem (write-side do EventLink).
+          // O "Relacionado" do evento e o listByExam passam a reconstruir a relação.
+          await saveEvent(user.id, input, null, [{ type: 'exam', id: examId, relationship: 'generated_from' }])
           setAgendarOpen(false)
         }}
         onGoToHistory={() => router.push(agendarMode === 'expense' ? '/dashboard/gastos' : '/dashboard/timeline')}

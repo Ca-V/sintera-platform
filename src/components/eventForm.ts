@@ -7,7 +7,7 @@
 import { useMemo } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
-import { eventServicesFor, formatTimeBR, type HealthEvent } from '@/lib/agenda'
+import { eventServicesFor, formatTimeBR, type HealthEvent, type EventLink } from '@/lib/agenda'
 import { parseRule, serializeRule } from '@/lib/recurrence'
 import type { AgendaEventInput, EventType } from './AgendarModal'
 
@@ -77,7 +77,9 @@ export function useEventForm() {
 
   // Salva (criar OU editar). Ao editar, PRESERVA campos fora do formulário
   // (links, lineage, série, completed_at, anexo atual) mesclando o evento existente.
-  async function saveEvent(userId: string, input: AgendaEventInput, editing?: HealthEvent | null): Promise<void> {
+  // `links` (EVT-C6 / NC-0006): vínculos de origem quando o evento nasce de outra entidade (ex.: exame/pedido).
+  // Popula o write-side do EventLink → o "Relacionado" (read-side `listByExam`/`selectByLink`) passa a encontrar.
+  async function saveEvent(userId: string, input: AgendaEventInput, editing?: HealthEvent | null, links?: EventLink[]): Promise<void> {
     const isPlano = input.eventType === 'plano'
     const establishment = isPlano ? input.operadora : input.establishment
     const location = isPlano ? input.carteirinha : input.location
@@ -98,6 +100,8 @@ export function useEventForm() {
       outcome: input.outcome ? { summary: input.outcome } : null,
       directExpense: input.directExpense, isReturn: input.isReturn,
       status: input.status, source: editing?.source ?? 'manual',
+      // Preserva vínculos existentes na edição; aplica os de origem na criação a partir de outra entidade.
+      links: links ?? editing?.links ?? [],
     })
   }
 

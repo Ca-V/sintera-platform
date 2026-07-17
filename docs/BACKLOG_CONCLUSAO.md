@@ -25,7 +25,7 @@
 - ☑ **EVT-C3 — Capturar "tipo de profissional"** — select "Tipo" no AgendarModal (ao lado de Profissional) → `professionalKind` no input → `saveEvent` → `professional_kind`. Fonte ÚNICA `PROFESSIONAL_KIND_DEFS`/`professionalKindLabel` em presentation.ts (+2 testes); as 3 telas de exibição (timeline/relatorio/r[token]) deixam de duplicar o mapa `PROF_LABEL` e consomem o helper. Fecha NC-0012 (e reduz duplicação da família NC-0014). commit abaixo.
 - ☑ **EVT-C4 — Marca visual de "retorno"** — predicado de domínio `isReturnVisit(ev)` (respeita o booleano `isReturn` E o tipo legado `retorno`; +1 teste event.test) + chip "📋 Retorno" na Agenda e no Histórico. Fecha NC-0016. commit abaixo.
 - ☑ **EVT-C5 — Exibir/ordenar por prioridade** — helpers puros `priorityBadge`/`priorityRank`/`byPriority` (presentation.ts, +3 testes); chip "🔴/🟡/🟢 prioridade" na Agenda e no Histórico; ordenação por prioridade na visão "por tipo" da Agenda (desempate por data), mantendo a cronologia na visão "por data". Fecha NC-0017. commit abaixo.
-- □ **EVT-C6 — EventLink write-side**: popular "Relacionado" ao criar evento a partir de exame/pedido (read-side já existe). Fecha NC-0006 + parte da NC-0018.
+- ☑ **EVT-C6 — EventLink write-side**: `saveEvent(...,links?)` grava vínculos de origem; o detalhe do exame passa `{type:'exam', id, relationship:'generated_from'}` ao criar evento/despesa → "Relacionado"/`listByExam` reconstroem a relação (e alimentam o stepper do EXA-C2). Teste de round-trip write→persist→`selectByLink`. Fecha NC-0006 + parte da NC-0018. commit abaixo.
 - ⏸ **EVT-D1 — Cron de lembretes** → depende de **segredo/URL de produção** (Vault). NC-0015.
 
 ## Regra do ciclo (loop)
