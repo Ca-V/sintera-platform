@@ -2,7 +2,7 @@
 // Certifica que os estados são explícitos: agendado ≠ realizado ≠ resultado.
 
 import { describe, it, expect } from 'vitest'
-import { resolveCareStage, nextStage, stageReached, stageIndex, CARE_STAGES } from '@/lib/exams/careFlow'
+import { resolveCareStage, nextStage, stageReached, stageIndex, CARE_STAGES, careStageFor } from '@/lib/exams/careFlow'
 
 describe('careFlow · etapas em ordem', () => {
   it('a ordem é Pedido → Agendamento → Realização → Resultado', () => {
@@ -43,5 +43,23 @@ describe('careFlow · stageReached (stepper)', () => {
   })
   it('null não alcança nada', () => {
     expect(stageReached(null, 'requested')).toBe(false)
+  })
+})
+
+describe('careFlow · careStageFor (contexto do registro → etapa)', () => {
+  it('documento de pedido, sem eventos nem resultado → requested', () => {
+    expect(careStageFor({ hasResult: false, isOrder: true, linkedEventStatuses: [] })).toBe('requested')
+  })
+  it('pedido + evento planejado vinculado → scheduled', () => {
+    expect(careStageFor({ hasResult: false, isOrder: true, linkedEventStatuses: ['planejado'] })).toBe('scheduled')
+  })
+  it('evento realizado vinculado, ainda sem resultado → performed', () => {
+    expect(careStageFor({ hasResult: false, isOrder: false, linkedEventStatuses: ['realizado'] })).toBe('performed')
+  })
+  it('documento com resultado → resulted (independe dos eventos)', () => {
+    expect(careStageFor({ hasResult: true, isOrder: false, linkedEventStatuses: [] })).toBe('resulted')
+  })
+  it('sem nenhum sinal → null (nada a exibir)', () => {
+    expect(careStageFor({ hasResult: false, isOrder: false, linkedEventStatuses: [] })).toBeNull()
   })
 })

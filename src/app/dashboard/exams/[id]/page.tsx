@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
@@ -20,6 +20,10 @@ import { loadCatalogLabels, buildCatalogLabels, type CatalogLabels } from '@/lib
 import { canonicalMaterial, materialRank } from '@/lib/biomarkers/canonicalLabels'
 import { normalizeName } from '@/lib/biomarkers/grouping'
 import { deriveExamIdentity } from '@/lib/exams/identification'
+import { isOrderDocumentType } from '@/lib/exams/classification'
+import { careStageFor } from '@/lib/exams/careFlow'
+import { eventServicesFor } from '@/lib/agenda'
+import CareFlowStepper from '@/components/CareFlowStepper'
 import Link from 'next/link'
 import FeedbackModal from '@/components/FeedbackModal'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
@@ -285,6 +289,16 @@ export default function ExamDetailPage() {
   // (recorrência); 'expense' = registrar valor pago + NF/recibo do exame realizado (→ Despesas).
   const [agendarMode, setAgendarMode]   = useState<'repeat' | 'expense'>('repeat')
 
+  // ── Fluxo assistencial (EXA-C2 / NC-0011) — status dos eventos vinculados a este exame ──
+  const [linkedStatuses, setLinkedStatuses] = useState<string[]>([])
+
+  // Etapa atual do fluxo (Pedido→Agendamento→Realização→Resultado), resolvida no domínio.
+  const careStage = useMemo(() => {
+    if (!exam) return null
+    const isOrder = isOrderDocumentType((exam as unknown as { document_type?: string | null }).document_type)
+    return careStageFor({ hasResult: biomarkers.length > 0, isOrder, linkedEventStatuses: linkedStatuses })
+  }, [exam, biomarkers.length, linkedStatuses])
+
   // ── Renomear exame ───────────────────────────────────────────────────────
   const [editingName, setEditingName]   = useState(false)
   const [nameValue, setNameValue]       = useState('')
@@ -435,10 +449,21 @@ export default function ExamDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- registra a visualização uma vez por examId
   }, [examId])
 
+  // Eventos assistenciais vinculados a este exame → status para o fluxo (agendado ≠ realizado).
+  // Contrato público do módulo de Jornada (nunca consulta health_events direto).
+  useEffect(() => {
+    if (!user?.id) return
+    let alive = true
+    eventServicesFor(supabase).query.listByExam(user.id, examId)
+      .then(evs => { if (alive) setLinkedStatuses(evs.map(e => e.status)) })
+      .catch(() => { if (alive) setLinkedStatuses([]) })
+    return () => { alive = false }
+  }, [user?.id, examId, supabase])
+
   async function loadData(silent = false) {
     if (!silent) setLoading(true)
     const [{ data: examData }, { data: bioData }, { data: logData }, { data: catData }] = await Promise.all([
-      supabase.from('exams').select('id,type,status,page_count,created_at,exam_date,error_reason,text_truncated,file_url,patient_name,extraction_completeness,issuer,requesting_physician')
+      supabase.from('exams').select('id,type,document_type,status,page_count,created_at,exam_date,error_reason,text_truncated,file_url,patient_name,extraction_completeness,issuer,requesting_physician')
         .eq('id', examId).single(),
       supabase.from('current_biomarkers')
         .select('id,name,value,value_text,unit,reference_min,reference_max,interpretation,result_type,range_extracted,reference_source,source,catalog_id,source_material,source_exam_name')
@@ -595,6 +620,11 @@ export default function ExamDetailPage() {
           </p>
         )
       })()}
+
+      {/* Fluxo assistencial (EXA-C2) — Pedido → Agendamento → Realização → Resultado */}
+      <div className="print:hidden">
+        <CareFlowStepper stage={careStage} />
+      </div>
 
       {/* Cabeçalho do exame */}
       <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}

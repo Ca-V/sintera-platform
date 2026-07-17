@@ -14,7 +14,7 @@
 
 ## BACKLOG — EXAMES
 - ☑ **EXA-C1 — Multi-exame: agrupar "partes do mesmo documento"** — núcleo puro `bundleGroup` (`bundlePartInfo`/`bundlePartLabel`/`groupBundleParts`, `FUNC-bundle-group` 5 casos) + UI: partes adjacentes por ano + indicador "Parte X de N de um documento · ver documento" no card. Fecha NC-0010 (validação visual + homologação com doc real pendentes). commit abaixo.
-- □ **EXA-C2 — Care flow stepper** Pedido→Agendamento→Realização→Resultado no detalhe do exame/pedido (consumir `careFlow`/`resolveCareStage` já modelado+testado). Fecha EXA-F005/NC-0011.
+- ☑ **EXA-C2 — Care flow stepper** — mapeador puro `careStageFor` (contexto do registro → etapa, desacoplado de HealthEvent; +5 testes) + `CareFlowStepper` (componente apresentacional) fiado no detalhe: carrega status dos eventos vinculados via contrato público da Jornada (`eventServicesFor().query.listByExam`), resolve a etapa no domínio e exibe o stepper (agendado ≠ realizado ≠ resultado). Fecha EXA-F005/NC-0011. commit abaixo.
 - □ **EXA-C3 — Exibir resultados clínicos não-laboratoriais** (CPE `clinical_results`, ex. parâmetros por olho do Pentacam) via `clinicalResultsToUcda`. Fecha NC-0009. *(Avaliar se toca arquitetura/E6 → se sim, SPAGS antes.)*
 - ⏸ **EXA-D1 — Homologação** qualitativos/imagem/multi-exame → depende de **documentos reais**.
 - ⏸ **EXA-D2 — Auditoria Funcional** das 13 jornadas → depende de **ambiente executável logado**.

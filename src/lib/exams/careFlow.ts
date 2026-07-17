@@ -51,3 +51,23 @@ export function resolveCareStage(facts: {
 export function stageReached(current: CareStage | null, target: CareStage): boolean {
   return current != null && stageIndex(current) >= stageIndex(target)
 }
+
+/**
+ * Mapeia o CONTEXTO de um registro de exame para a etapa atual do fluxo. Puro e desacoplado do
+ * modelo de Evento (recebe apenas os STATUS dos eventos vinculados, não o tipo HealthEvent).
+ * - `hasResult`: o documento traz resultado (biomarcadores/resultados clínicos).
+ * - `isOrder`: o próprio documento é um PEDIDO/solicitação (medical_order/insurance_guide).
+ * - `linkedEventStatuses`: status dos eventos assistenciais vinculados a este exame ('realizado' etc.).
+ */
+export function careStageFor(input: {
+  hasResult: boolean
+  isOrder: boolean
+  linkedEventStatuses: readonly string[]
+}): CareStage | null {
+  return resolveCareStage({
+    hasResult: input.hasResult,
+    eventPerformed: input.linkedEventStatuses.includes('realizado'),
+    hasScheduledEvent: input.linkedEventStatuses.length > 0,
+    hasRequest: input.isOrder,
+  })
+}
