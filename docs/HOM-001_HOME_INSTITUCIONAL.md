@@ -33,10 +33,17 @@ reestruturar/completar.** Inventário × proposta:
 | "O que a SINTERA NÃO é" — lista explícita (telemedicina·prontuário·IA diagnóstica·score·substituto) | ⚠️ parcial | reforçar em `ScienceSection` ou bloco próprio |
 | **Módulos & benefícios** (grade concreta: Registros de Saúde·Histórico de Exames·Composição Corporal·Monitoramento·Medicamentos·Agenda·Relatórios) | ❌/⚠️ | avaliar adicionar (mostra "o que você recebe") |
 
-**Escopo real (reestruturação, não rebuild):**
-1. **Adicionar o Vídeo institucional** (seção dedicada "Veja a SINTERA em ação", após `Features`). *(Principal.)*
-2. **(Opcional, a validar)** Reforçar **"o que a SINTERA não é"** com a lista explícita dos 5 nãos.
-3. **(Opcional, a validar)** Adicionar uma **grade de Módulos & benefícios** (o que a pessoa recebe).
+**Escopo real (reestruturação, não rebuild) — ✅ IMPLEMENTADO 17/07 (aprovado pela fundadora):**
+1. ✅ **Vídeo institucional** — `VideoSection` (placeholder elegante 16:9 "em breve"; estrutura pronta p/ trocar
+   por `<video>`/embed quando houver o vídeo). Após `Features`.
+2. ✅ **"O que a SINTERA não é"** — `NotSection`: 5 nãos (telemedicina·prontuário·IA diagnóstica·score·substituto
+   do médico) + fecho "quem cuida é você e sua equipe" (RDC 657). Após `ScienceSection`.
+3. ✅ **Módulos & benefícios** — `ModulesSection`: grade completa agrupada pela taxonomia da nav (Acompanhamento·
+   Minha Saúde·Documentos & Organização). Após `Video`.
+4. ✅ **Quatro pilares institucionais** — `PillarsSection`: **Continuidade · Longitudinalidade · Governança ·
+   Rastreabilidade** (diferencial). Após `Ecosystem`.
+**Fluxo final da pública:** Hero → Features → Vídeo → Módulos → Sobre(propósito/missão/visão) → Ecosystem →
+**Pilares** → Science(confiança) → **O que não é** → Pricing → CTA → Footer. **Aguarda revisão completa da fundadora.**
 
 **Divisão pública × Painel Inicial (logado):**
 - **Pública (pré-login) = institucional** — já formulada; recebe os deltas acima.
