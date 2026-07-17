@@ -99,7 +99,7 @@ Módulo → Lista → Detalhe → Edição
 **Menu lateral** — organizado por **domínio de negócio** (FB-010); a estrutura em vigor:
 - **Painel** — Painel Inicial.
 - **Acompanhamento** *(evolução temporal da saúde)* — Agenda · **Registros de Saúde** · **Histórico de Exames** · Composição Corporal · Monitoramento.
-- **📁 Documentos** *(repositório documental/operacional)* — Exames *(hoje único item; ver [[DOC-001]])*.
+- **📁 Documentos** *(repositório documental/operacional; [[DOC-001]])* — **duas fases:** FASE 1 (beta) = **Exames como item independente**, sem cabeçalho de grupo (evita "grupo de 1 item"), já documentado como futuro Documentos; FASE 2 (release) = grupo 📁 Documentos oficial ao surgir o 2º tipo (Vacinas · Receitas · Atestados · Encaminhamentos · Termos · outros).
 - **Minha Saúde** *(estado permanente da pessoa)* — Condições de Saúde · Medicamentos e Suplementos · **Recursos de Saúde** · Hábitos · Ciclo e Contracepção.
 - **🤝 Rede de Cuidado** *(governança do compartilhamento — [[CARE-001]], build adiado; não aparece no menu até existir a página)*.
 - **Organização** *("como organizo minha vida em saúde?")* — Despesas · Relatórios.

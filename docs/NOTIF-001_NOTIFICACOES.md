@@ -26,6 +26,34 @@ Eventos (health_events/agenda_events) ─► Worker de notificações ─► res
                                                                    └► adapters: Resend (e-mail) · Meta (WhatsApp)
 ```
 
+## Refinamento 17/07/2026 (FB-010, fundadora) — fonte única + UX dos formulários
+
+**A Central é a fonte ÚNICA de DUAS coisas** (não só do canal):
+1. **Quais notificações** a usuária deseja receber, **por categoria** (liga/desliga por categoria).
+2. **Por qual canal**, por categoria: **não receber · e-mail · WhatsApp · ambos**.
+
+Exemplo: a usuária pode receber lembretes de **Consultas** e **Medicamentos**, e **não** receber de Suplementos/
+Hábitos — cada categoria com seu canal. Categorias (crescem): Consultas · Exames e recorrência de exames ·
+Medicamentos · Suplementos · Vacinas · Hábitos · Renovação de receitas (futuro) · Compartilhamentos (futuro).
+
+**UX dos formulários (regra):** os formulários **NÃO duplicam** essas configurações (nada de dois checkboxes
+"e-mail"/"WhatsApp" em cada tela). Eles **usam** a preferência da Central e, quando fizer sentido, apenas
+**exibem** o canal atual com um link para alterar. Ex.: ao marcar recorrência de um exame → *"Canal de
+notificação: WhatsApp e E-mail · **Alterar canal**"* (link → Central de Notificações).
+
+**Exceção — notificações PONTUAIS.** Ações one-off (ex.: *"compartilhar um relatório com um médico"*) **podem**
+escolher o canal na própria ação (Enviar por e-mail? por WhatsApp?), porque a escolha vale só para aquela ação —
+não é preferência permanente.
+
+**Detalhe arquitetural — separar CATEGORIA de EVENTO.** Uma **categoria** agrupa vários **tipos de evento**:
+- Medicamentos → *lembrete de horário · renovação de receita · estoque acabando (futuro)*
+- Exames → *exame agendado · lembrete de recorrência · resultado recebido (futuro)*
+- Consultas → *lembrete da consulta · alteração de horário · confirmação*
+
+A configuração começa **por categoria** (simples); o modelo já prevê **granularidade por tipo de evento** dentro
+da categoria, para evoluir **sem redesenhar** (compatibilidade retroativa). Persistência: `preferência(usuário ×
+categoria [× tipo_de_evento opcional] → canal)`; o default por categoria vale enquanto não houver override por evento.
+
 ## Reúso confirmado (descoberta 14/07 — não recriar)
 - **Conteúdo canônico único:** `src/lib/agenda/notification.ts` (`buildEventNotification`) — fonte de
   verdade do conteúdo, já consumida por e-mail e WhatsApp.

@@ -20,7 +20,8 @@ const homeItem = { href: '/dashboard', icon: LayoutDashboard, label: 'Painel Ini
 // Rede de Cuidado (CARE-001, ainda a construir) · Organização · Configurações.
 //   Acompanhamento = evolução temporal da saúde (Agenda, Registros de Saúde, Histórico de Exames,
 //                    Composição Corporal, Monitoramento).
-//   Documentos     = repositório documental/operacional (hoje só Exames; futuro: Vacinas, outros documentos).
+//   Documentos     = repositório documental/operacional. FASE 1 (beta): Exames como item independente (sem
+//                    cabeçalho de grupo); FASE 2 (release): grupo 📁 Documentos oficial ao surgir o 2º tipo.
 //   Minha Saúde    = estado permanente da pessoa (Condições, Medicamentos e Suplementos, Recursos, Hábitos, Ciclo).
 //   Organização    = finanças e documentos administrativos (Despesas, Relatórios).
 //   Configurações  = conta.
@@ -32,6 +33,7 @@ const navGroups: {
   title: string
   titleColor: string
   chipBg?: string
+  standalone?: boolean   // FB-010 fase 1: renderiza os itens SEM cabeçalho de grupo (evita "grupo de 1 item")
   items: { href: string; icon: React.ElementType; label: string; extra?: string[] }[]
 }[] = [
   {
@@ -47,9 +49,13 @@ const navGroups: {
     ],
   },
   {
+    // FB-010 — DUAS FASES (decisão da fundadora). Fase 1 (beta): Exames é item INDEPENDENTE, sem cabeçalho de
+    // grupo (não parecer "grupo vazio"), mas já documentado como pertencente ao FUTURO domínio 📁 Documentos.
+    // Fase 2 (release): oficializar o grupo Documentos quando existir o 2º tipo documental (Vacinas · Receitas ·
+    // Atestados · Encaminhamentos · Termos · outros documentos médicos). Ver [[DOC-001]] / [[UX-001]].
     title: 'Documentos',
+    standalone: true,
     titleColor: 'text-petal',
-    chipBg: 'bg-petal',
     items: [
       { href: '/dashboard/exams', icon: FileText, label: 'Exames' },
     ],
@@ -166,7 +172,7 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
         </div>
         {navGroups.map(group => (
           <div key={group.title} className="mb-1.5">
-            {group.chipBg ? (
+            {group.standalone ? null : group.chipBg ? (
               <div className={cn('mx-1 mt-2 mb-1.5 px-2.5 py-1 rounded-lg shadow-sm', group.chipBg)}>
                 <p className="text-[11px] font-body font-bold uppercase tracking-[0.14em] text-onyx/90">{group.title}</p>
               </div>

@@ -37,6 +37,13 @@ em Despesas (o bug FB-008: um fato aparecia duas vezes, um sem valor e outro com
   do fato, ou é um Evento avulso — nunca uma terceira tabela paralela.
 
 ### 3.2 Despesas = PROJEÇÃO sobre TODOS os fatos com valor
+
+> **Princípio (17/07, fundadora — espelha [[BOD-001]]).** **Despesas NÃO é uma fonte primária de dados.** É uma
+> **projeção financeira derivada de TODOS os fatos de saúde que possuem impacto financeiro** (exames, medicamentos,
+> recursos, eventos). O exame continua sendo exame; o medicamento, medicamento; o recurso, recurso — a página
+> Despesas apenas **apresenta** a visão financeira desses fatos, **sem criar novos fatos**. Mesmo princípio da
+> Composição Corporal: os painéis **consolidam/derivam**, nunca constituem a origem. Reutilizável em outras áreas.
+
 `/dashboard/gastos` **não cria registros**: projeta a **união** de (a) Eventos financeiros avulsos
 (`listFinancial`) **excluindo** os legados vinculados a um fato, com (b) **exames com valor**
 (`expense_amount_cents > 0`), cada fato **uma única vez**. Lançamentos de exame ligam de volta ao exame; excluir
@@ -76,8 +83,9 @@ fora do cliente. LGPD Art. 11 (dado sensível): consentimento no cadastro; exclu
 Precedência ADR-000 > SPAGS > FIN-001. **Invariantes (v1.1):** (i) **um fato = um registro**: o financeiro é
 atributo do fato; só despesa **avulsa** (sem fato) é Evento próprio; (ii) proibida tabela de despesa por domínio;
 (iii) Despesas é **projeção** (união de fatos com valor), nunca fonte, cada fato **uma vez**; (iv) toda despesa
-preserva proveniência da origem; (v) recorrência = **um** lembrete, nunca uma despesa. Mudança nesses invariantes
-= emenda ao SPAGS antes do código.
+preserva proveniência da origem; (v) recorrência = **um** lembrete, nunca uma despesa; (vi) **Despesas não é fonte
+primária** — é projeção financeira derivada dos fatos com impacto financeiro (não cria fatos). Mudança nesses
+invariantes = emenda ao SPAGS antes do código.
 
 ## 9. Auditoria
 Cada despesa é rastreável: origem (EventLink), data/hora, valor, tipo de documento, anexo. Reprocessável e
