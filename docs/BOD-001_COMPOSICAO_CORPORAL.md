@@ -117,6 +117,17 @@ anotações no `EvolutionChart` + toggles + lista rastreável na seção Evoluç
 - **Alteração de dose — automática a partir do histórico.** Não implementar enquanto não existir **histórico de
   doses**; quando existir, o marco é gerado **automaticamente** a partir dele, **sem lançamento manual**.
 
+## 4.3 Direção futura — Assessment Providers (fundadora 17/07, NÃO é prioridade do beta)
+Quando surgirem outras tecnologias de avaliação corporal, a arquitetura deve evoluir para um conceito de
+**Assessment Providers**: Bioimpedância · DEXA · Balanças inteligentes · wearables e futuros métodos são apenas
+**provedores de medições** da Composição Corporal. Cada provedor **declara**: (a) **indicadores disponíveis**;
+(b) **origem** (`source`); (c) **nível de confiabilidade**; (d) **metadados da avaliação**. Assim a lógica da
+Composição Corporal **não precisa conhecer cada tecnologia individualmente** — consome um **registro de provedores**
+(mesmo espírito do Laboratory Adapter / delegação de modalidade ao CPE). **Sementes já no código:**
+`bioimpedance-body-metrics.ts` e `dexa-body-metrics.ts` (mappers por tecnologia), `SOURCE_QUALITY`/`markerFor`
+(origem·confiabilidade·marcador), `ASSESSMENT_SOURCES` (o que conta como avaliação). Convergir esses artefatos num
+**registro `AssessmentProvider`** (por `source`) é a evolução — sem prioridade para o beta; registrado como direção.
+
 ## 4.2 Qualidade do Dado — origem + confiabilidade (fundadora 17/07)
 Cada indicador informa **de onde veio** (origem) **e o nível de confiabilidade associado àquela FONTE/método** —
 reforçando rastreabilidade e governança. É um atributo de **proveniência do dado** (qualidade da medição), **não**
