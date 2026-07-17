@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
@@ -76,6 +77,11 @@ function LegacyDashboard() {
   const intakeRef = useRef<HTMLDivElement>(null)
   useModalA11y(intakeRef, () => setIntakeOpen(false), intakeOpen)
 
+  // Guia "Como usar a SINTERA" — orientação de primeiros passos no Painel Inicial. Dispensável (localStorage).
+  const [showGuide, setShowGuide] = useState(false)
+  useEffect(() => { if (typeof window !== 'undefined' && localStorage.getItem('sintera:dash:guide') !== 'off') setShowGuide(true) }, [])
+  function dismissGuide() { try { localStorage.setItem('sintera:dash:guide', 'off') } catch { /* ignore */ } setShowGuide(false) }
+
   const hour        = new Date().getHours()
   const greeting    = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite'
   const displayName = profile?.name?.split(' ')[0] ?? 'por aqui'
@@ -140,6 +146,43 @@ function LegacyDashboard() {
           Uma plataforma para organizar, registrar e acompanhar suas informações de saúde ao longo do tempo, preservando o histórico e a rastreabilidade de cada registro.
         </p>
       </motion.div>
+
+      {/* Como usar a SINTERA — orientação de primeiros passos (dispensável) */}
+      {showGuide && (
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.01 }}>
+          <MotionCard padding="lg" className="relative border border-petal/15 bg-blush/15">
+            <button onClick={dismissGuide} aria-label="Dispensar"
+              className="absolute top-3 right-3 text-mauve/50 hover:text-onyx transition-colors"><X size={15} /></button>
+            <p className="font-display text-base font-semibold text-onyx mb-1">Como usar a SINTERA</p>
+            <p className="font-body text-xs text-mauve mb-4 max-w-2xl">
+              A SINTERA reúne e organiza suas informações de saúde num só lugar — ela transcreve e organiza, não
+              interpreta nem diagnostica. Veja como começar em 4 passos:
+            </p>
+            <div className="grid sm:grid-cols-2 gap-2.5">
+              {[
+                { icon: Upload,     title: '1. Adicione seus documentos', desc: 'Envie exames, receitas e laudos (foto ou arquivo) — a SINTERA lê e organiza.', onClick: () => setIntakeOpen(true) },
+                { icon: Pill,       title: '2. Registre o que você acompanha', desc: 'Medicamentos, consultas, condições, hábitos e medidas.', href: '/dashboard/medicamentos' },
+                { icon: Clock,      title: '3. Acompanhe ao longo do tempo', desc: 'Sua linha do tempo em Registros de Saúde e a evolução em Histórico de Exames.', href: '/dashboard/timeline' },
+                { icon: ScrollText, title: '4. Compartilhe com quem cuida de você', desc: 'Gere um relatório para levar ao seu médico.', href: '/dashboard/relatorio' },
+              ].map((s) => {
+                const Icon = s.icon
+                const inner = (
+                  <div className="flex items-start gap-3 p-3 rounded-xl bg-white/60 border border-border/60 hover:border-petal/40 transition-colors h-full">
+                    <div className="w-8 h-8 rounded-lg bg-blush flex items-center justify-center flex-shrink-0"><Icon size={15} className="text-petal" /></div>
+                    <div className="min-w-0">
+                      <p className="font-body text-xs font-semibold text-onyx">{s.title}</p>
+                      <p className="font-body text-[11px] text-mauve mt-0.5 leading-snug">{s.desc}</p>
+                    </div>
+                  </div>
+                )
+                return s.href
+                  ? <Link key={s.title} href={s.href} className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-petal/40 rounded-xl">{inner}</Link>
+                  : <button key={s.title} onClick={s.onClick} className="block text-left w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-petal/40 rounded-xl">{inner}</button>
+              })}
+            </div>
+          </MotionCard>
+        </motion.div>
+      )}
 
       {/* Centro de Entrada — entrada unificada de documentos */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.02 }}>

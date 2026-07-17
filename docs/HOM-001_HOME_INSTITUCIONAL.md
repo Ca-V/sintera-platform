@@ -44,6 +44,9 @@ reestruturar/completar.** Inventário × proposta:
   envio + atividade. Se estiver "só tópicos", o caminho é **enriquecer operacionalmente** (atividade recente,
   pendências, "estou em dia?", ações rápidas) — **tarefa separada**, não a Home institucional. **Não** duplicar o
   conteúdo institucional no logado.
+  - **✅ Feito 17/07 (pedido da fundadora):** card **"Como usar a SINTERA"** no Painel Inicial — breve explicação
+    (organiza/transcreve, não interpreta) + **4 primeiros passos** (adicionar documentos → registrar o que
+    acompanha → acompanhar no tempo → compartilhar), cada um com atalho ao módulo. Dispensável (localStorage).
 
 *(Os §1–§6 abaixo permanecem como REFERÊNCIA de conteúdo/posicionamento; a maior parte já está implementada na
 pública. A execução se limita aos deltas acima, após validação.)*
