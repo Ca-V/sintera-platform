@@ -13,6 +13,43 @@ Estratégica, Estratégia-Mestre, One-Pager, North Star, [[GOVERNANCA]] (RDC 657
 
 ---
 
+## ★ REAVALIAÇÃO (17/07) — a Home institucional JÁ EXISTE (pública, pré-login)
+A **página pública** (`/` → `landing/*`: Navbar·Hero·Features·**SobreSection**·EcosystemSection·ScienceSection·
+Pricing·CTA·Footer) **já é** a Home institucional e **já cobre** quase toda a proposta abaixo. **Não reconstruir —
+reestruturar/completar.** Inventário × proposta:
+
+| Bloco da proposta | Já existe na pública? | Onde |
+|---|---|---|
+| Proposta de valor (Hero) | ✅ | `Hero` |
+| Como funciona (passos) | ✅ | `Features` ("Como funciona": registre→organiza→lembra→compartilha) |
+| O que é a SINTERA | ✅ | `SobreSection` |
+| **Propósito · Missão · Visão** | ✅ | `SobreSection` |
+| Longitudinal / evolução / ecossistema | ✅ | `EcosystemSection` |
+| Confiança · governança · privacidade | ✅ | `ScienceSection` |
+| "Não é dispositivo médico · não diagnostica · não substitui o médico" (RDC 657) | ✅ (parcial) | `ScienceSection` |
+| Preço | ✅ | `PricingSection` |
+| CTA / lista de espera | ✅ | `CTASection` |
+| **Vídeo institucional** | ❌ | **— a adicionar (principal lacuna)** |
+| "O que a SINTERA NÃO é" — lista explícita (telemedicina·prontuário·IA diagnóstica·score·substituto) | ⚠️ parcial | reforçar em `ScienceSection` ou bloco próprio |
+| **Módulos & benefícios** (grade concreta: Registros de Saúde·Histórico de Exames·Composição Corporal·Monitoramento·Medicamentos·Agenda·Relatórios) | ❌/⚠️ | avaliar adicionar (mostra "o que você recebe") |
+
+**Escopo real (reestruturação, não rebuild):**
+1. **Adicionar o Vídeo institucional** (seção dedicada "Veja a SINTERA em ação", após `Features`). *(Principal.)*
+2. **(Opcional, a validar)** Reforçar **"o que a SINTERA não é"** com a lista explícita dos 5 nãos.
+3. **(Opcional, a validar)** Adicionar uma **grade de Módulos & benefícios** (o que a pessoa recebe).
+
+**Divisão pública × Painel Inicial (logado):**
+- **Pública (pré-login) = institucional** — já formulada; recebe os deltas acima.
+- **Painel Inicial (`/dashboard`, logado) = OPERACIONAL** — não institucional. Hoje mostra saudação + atalhos +
+  envio + atividade. Se estiver "só tópicos", o caminho é **enriquecer operacionalmente** (atividade recente,
+  pendências, "estou em dia?", ações rápidas) — **tarefa separada**, não a Home institucional. **Não** duplicar o
+  conteúdo institucional no logado.
+
+*(Os §1–§6 abaixo permanecem como REFERÊNCIA de conteúdo/posicionamento; a maior parte já está implementada na
+pública. A execução se limita aos deltas acima, após validação.)*
+
+---
+
 ## 0. Decisão de posicionamento a validar (a ÚNICA que depende de você antes do desenho fino)
 **Onde vive a Home Institucional?** Recomendação: **página institucional pública** (porta de entrada, ex.: `/` ou
 `/sobre`), **distinta** do **Painel Inicial operacional** (logado, `/dashboard`, que continua sendo a tela de uso
