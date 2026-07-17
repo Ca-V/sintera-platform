@@ -97,13 +97,20 @@ indicador **"Última avaliação corporal"** (ex.: *Última bioimpedância: 15/0
 mostra a **atualidade** dos dados. *(Implementado: `weight-journey.ts` + `lastAssessment` + painel "Jornada de
 Tratamento" com os 9 campos + última avaliação; a preservação de massa magra também é exibida.)*
 
-**⑤ Marcos da evolução (DIFERENCIAL).** Sobre os gráficos, exibir **eventos importantes da jornada** — ex.: início
-do GLP-1 · mudança de dose · início da musculação · consulta com nutricionista · nova bioimpedância. Assim, ao ver
-uma queda de gordura ou aumento de massa muscular, a usuária **correlaciona visualmente** com fatos já registrados
-em **Registros de Saúde**. **Integração entre domínios sem duplicação:** os marcos são **lidos** de
-`health_events`/`agenda_events` (a fonte é o Registro de Saúde), apenas **projetados** como anotações no gráfico.
-Definir os **tipos de evento** que contam como marco (medicamento/GLP-1, dose, atividade/musculação, consulta de
-nutrição, exame de bioimpedância/DEXA) — critério aberto e governado, sem nova tabela.
+**⑤ Marcos da evolução (DIFERENCIAL).** Sobre os gráficos, **linhas verticais** marcam eventos importantes da
+jornada; a usuária **correlaciona visualmente** quedas de gordura / ganhos de massa com fatos já registrados.
+**INVARIANTE — projeção sem tabela própria:** os marcos são **derivados automaticamente** de domínios existentes,
+preservando rastreabilidade ao registro original; **NÃO** há tabela de marcos nem nova fonte de dados. **Fontes
+(v1):** (a) **Medicamentos** — início (`started_on`) e suspensão (`until_date`), GLP-1 destacado mas **sem
+tratamento especial** na arquitetura; (b) **Suplementos** — idem (categoria própria); (c) **Avaliações corporais**
+— bioimpedância/DEXA/InBody (dos snapshots, rastreável ao exame); (d) **Consultas** de acompanhamento corporal
+(nutricionista/fisioterapeuta). **Controle da usuária:** mostrar/ocultar marcos **por categoria** (medicamentos ·
+suplementos · avaliações · consultas) **sem alterar os dados**. *(Implementado: `lib/body/milestones.ts` +
+anotações no `EvolutionChart` + toggles + lista rastreável na seção Evolução.)*
+**Limitações v1 (documentadas):** "alteração/mudança de dose" não é derivável (não há histórico de dose);
+Endocrinologia/Medicina do Esporte caem em "médico" genérico (sem especialidade distinta) → fora do filtro de
+consulta por ora — o **início do medicamento** (ex.: GLP-1) já cobre o marco; marcos de **Agenda** (planejados)
+ficam para uma evolução (não correlacionam com o passado da série).
 
 ## 4.2 Qualidade do Dado — origem + confiabilidade (fundadora 17/07)
 Cada indicador informa **de onde veio** (origem) **e o nível de confiabilidade associado àquela FONTE/método** —
@@ -151,6 +158,11 @@ Cada indicador exibe a origem (exame/manual/wearable). Rastreável até o exame-
   3. **② Evolução** — seletor horizontal + gráfico com período + tabela cronológica + pontos clicáveis
      (rastreabilidade) + marcadores por origem. ✅ **feito** (falta só "editar" ponto manual).
   4. **③ Comparação entre avaliações** (snapshots A×B, Status de disponibilidade, sem normalização). ✅ **feito**.
-  5. **⑤ Marcos da evolução** (principal diferencial) — ler eventos-marco de Registros de Saúde e anotá-los.
-  6. Ingestão de **DEXA** como exame (FB-003 estende bioimpedância) alimentando os mesmos indicadores.
+  5. **⑤ Marcos da evolução** (principal diferencial) — projeções de medicamentos/suplementos/avaliações/consultas
+     anotadas no gráfico, com toggle por categoria e rastreabilidade. ✅ **feito**.
+  6. Ingestão de **DEXA** como exame (FB-003 estende bioimpedância) alimentando os mesmos indicadores. *(pendente)*
+
+**As 5 áreas da §4.1 estão implementadas.** A Composição Corporal deixou de ser uma tela de indicadores e passou
+a ser uma **narrativa longitudinal** da jornada, rastreável até cada fato. Follow-ups menores: editar ponto manual
+(②); DEXA como exame; marcos de Agenda/dose quando houver histórico.
 - **Sem nova tabela**; tudo por leitura/derivação preservando origem (invariantes §8).

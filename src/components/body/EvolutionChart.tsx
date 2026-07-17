@@ -27,12 +27,13 @@ function Marker({ cx, cy, shape, selected }: { cx: number; cy: number; shape: st
 }
 
 export default function EvolutionChart({
-  points, unit, selectedKey, onSelect,
+  points, unit, selectedKey, onSelect, milestones = [],
 }: {
   points: EvoPoint[]         // já ordenados por data (asc)
   unit: string | null
   selectedKey: string | null
   onSelect: (p: EvoPoint) => void
+  milestones?: { date: string; color: string }[]   // BOD-001 ⑤ — anotações (projeções de outros domínios)
 }) {
   if (points.length === 0) {
     return <p className="font-body text-sm text-mauve py-8 text-center">Sem dados para o período selecionado.</p>
@@ -60,6 +61,18 @@ export default function EvolutionChart({
             <g key={i}>
               <line x1={PAD_L} y1={y} x2={W - PAD_R} y2={y} className="stroke-border" strokeWidth={0.5} strokeDasharray="3 3" />
               <text x={PAD_L - 5} y={y + 3} textAnchor="end" className="fill-mauve" style={{ fontSize: 10 }}>{Number(v.toFixed(1))}</text>
+            </g>
+          )
+        })}
+        {/* Marcos (BOD-001 ⑤): linhas verticais no tempo, coloridas por categoria. Só as dentro da janela. */}
+        {tmax !== tmin && milestones.map((m, i) => {
+          const t = new Date(`${m.date}T00:00:00Z`).getTime()
+          if (!Number.isFinite(t) || t < tmin || t > tmax) return null
+          const x = xOf(t)
+          return (
+            <g key={`ms-${i}`}>
+              <line x1={x} y1={PAD_T} x2={x} y2={H - PAD_B} stroke={m.color} strokeWidth={1} strokeDasharray="2 3" opacity={0.55} />
+              <polygon points={`${x},${PAD_T - 1} ${x - 3},${PAD_T - 6} ${x + 3},${PAD_T - 6}`} fill={m.color} opacity={0.85} />
             </g>
           )
         })}

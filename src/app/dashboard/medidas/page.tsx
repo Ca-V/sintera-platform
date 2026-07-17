@@ -20,6 +20,8 @@ import { currentSummary, sourceQuality, RELIABILITY_LABEL, lastAssessment, type 
 import { EVOLUTION_PERIODS, filterByPeriod, markerFor, type EvoPoint } from '@/lib/body/evolution'
 import EvolutionChart from '@/components/body/EvolutionChart'
 import { buildSnapshots, compareSnapshots, type SnapPoint } from '@/lib/body/snapshots'
+import { buildMilestones, MILESTONE_CATEGORIES, MILESTONE_COLOR, type MilestoneCategory, type MedInput, type ConsultaInput, type AssessmentInput } from '@/lib/body/milestones'
+import { professionalKindLabel } from '@/lib/agenda'
 import ListCard from '@/components/ListCard'
 import PageHeader from '@/components/PageHeader'
 import EmptyState from '@/components/EmptyState'
@@ -108,6 +110,11 @@ export default function MedidasPage() {
   const [snapAKey, setSnapAKey] = useState<string | null>(null)
   const [snapBKey, setSnapBKey] = useState<string | null>(null)
 
+  // BOD-001 área ⑤ — Marcos (projeções de Medicamentos/Suplementos/Consultas; avaliações vêm dos snapshots).
+  const [medRows, setMedRows] = useState<MedInput[]>([])
+  const [consultaRows, setConsultaRows] = useState<ConsultaInput[]>([])
+  const [msCats, setMsCats] = useState<Set<MilestoneCategory>>(new Set(MILESTONE_CATEGORIES.map(c => c.key)))
+
   const [showForm, setShowForm] = useState(false)
   const [metric, setMetric] = useState<Metric>('peso')
   const [label, setLabel] = useState('')
@@ -132,12 +139,15 @@ export default function MedidasPage() {
     setLoading(true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db = supabase as any
-    const [{ data }, exRes, profRes] = await Promise.all([
+    const [{ data }, exRes, profRes, medRes, evRes] = await Promise.all([
       db.from('body_metrics')
         .select('id, metric, label, value_text, unit, measured_on, notes, exam_id, source')
         .eq('user_id', user.id).order('measured_on', { ascending: false }),
       db.from('exams').select('id, type, exam_date, file_url').eq('user_id', user.id).order('created_at', { ascending: false }),
       db.from('profiles').select('weight_goal_kg').eq('id', user.id).maybeSingle(),
+      // BOD-001 ⑤ — fontes dos marcos (projeção; sem tabela própria).
+      db.from('medications').select('id, name, kind, started_on, until_date, status').eq('user_id', user.id),
+      db.from('health_events').select('id, event_type, event_date, professional_kind, title').eq('user_id', user.id).in('event_type', ['consulta', 'retorno']),
     ])
     const g = (profRes.data as { weight_goal_kg: number | null } | null)?.weight_goal_kg ?? null
     setGoalKg(g != null ? Number(g) : null)
@@ -150,6 +160,14 @@ export default function MedidasPage() {
     setExams(((exRes.data ?? []) as Array<Record<string, unknown>>).map(e => ({
       id: e.id as string, type: (e.type as string) || 'Exame',
       examDate: (e.exam_date as string) ?? null, fileUrl: (e.file_url as string) ?? null,
+    })))
+    setMedRows(((medRes.data ?? []) as Array<Record<string, unknown>>).map(m => ({
+      id: m.id as string, name: (m.name as string) ?? 'Medicamento', kind: (m.kind as string) ?? 'medicamento',
+      startedOn: (m.started_on as string) ?? null, untilOn: (m.until_date as string) ?? null, status: (m.status as string) ?? 'em_uso',
+    })))
+    setConsultaRows(((evRes.data ?? []) as Array<Record<string, unknown>>).map(e => ({
+      id: e.id as string, date: (e.event_date as string) ?? '', professionalKind: (e.professional_kind as string) ?? null,
+      professionalLabel: e.professional_kind ? professionalKindLabel(e.professional_kind as string) : null, title: (e.title as string) ?? null,
     })))
     setLoading(false)
   }, [user, supabase])
@@ -314,6 +332,16 @@ export default function MedidasPage() {
   const compareSummary = compareRows.filter(r => r.available && r.delta != null && r.delta !== 0)
   const snapLabel = (s: typeof snapA) => s ? `${sourceQuality(s.source)?.label ?? s.source ?? 'Registro'} · ${fmt(s.date)}` : ''
   const deltaUnit = (unit: string | null) => unit === '%' ? 'p.p.' : (unit ?? '')
+
+  // BOD-001 área ⑤ — Marcos (projeções de outros domínios; sem tabela própria). Avaliações vêm dos snapshots.
+  const assessInput: AssessmentInput[] = snapshots
+    .filter(s => !!s.examId || (s.source ? ['bioimpedancia', 'dexa'].includes(s.source) : false))
+    .map(s => ({ date: s.date, sourceLabel: sourceQuality(s.source)?.label ?? 'Avaliação', examId: s.examId }))
+  const allMilestones = buildMilestones({ meds: medRows, assessments: assessInput, consultas: consultaRows })
+  const msCatsPresent = MILESTONE_CATEGORIES.filter(c => allMilestones.some(m => m.category === c.key))
+  const evoMilestones = filterByPeriod(allMilestones.filter(m => msCats.has(m.category)), evoDays, nowISO)
+  const evoChartMs = evoMilestones.map(m => ({ date: m.date, color: MILESTONE_COLOR[m.category] }))
+  const toggleMsCat = (k: MilestoneCategory) => setMsCats(prev => { const n = new Set(prev); if (n.has(k)) n.delete(k); else n.add(k); return n })
 
   // IMC é calculado (não é registrado manualmente).
   const groups: Metric[] = ['peso', 'altura', 'circunferencia_cintura', 'gordura_corporal', 'massa_muscular', 'massa_magra', 'agua_corporal', 'gordura_visceral', 'massa_ossea', 'taxa_metabolica', 'outro']
@@ -566,8 +594,25 @@ export default function MedidasPage() {
             })}
           </div>
 
-          {/* Gráfico */}
-          <EvolutionChart points={evoPoints} unit={evoUnit} selectedKey={evoPoint?.key ?? null} onSelect={setEvoPoint} />
+          {/* Marcos (BOD-001 ⑤): a usuária mostra/oculta categorias sobre o gráfico — sem alterar os dados. */}
+          {msCatsPresent.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="font-body text-[10px] text-mauve mr-0.5">Marcos:</span>
+              {msCatsPresent.map(c => {
+                const on = msCats.has(c.key)
+                return (
+                  <button key={c.key} type="button" onClick={() => toggleMsCat(c.key)}
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-body text-[10px] border transition-colors ${on ? 'text-onyx' : 'text-mauve/50 line-through'} `}
+                    style={{ borderColor: on ? c.color : 'var(--border)' }}>
+                    <span className="w-2 h-2 rounded-full" style={{ background: on ? c.color : 'transparent', border: `1px solid ${c.color}` }} /> {c.label}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Gráfico (com anotações de marcos dentro do período) */}
+          <EvolutionChart points={evoPoints} unit={evoUnit} selectedKey={evoPoint?.key ?? null} onSelect={setEvoPoint} milestones={evoChartMs} />
 
           {/* Legenda de origem (o usuário percebe mudança de fonte) */}
           {evoSourcesPresent.length > 0 && (
@@ -575,6 +620,22 @@ export default function MedidasPage() {
               {evoSourcesPresent.map(s => (
                 <span key={s} className="inline-flex items-center gap-1"><span className="text-petal">{EVO_GLYPH[markerFor(s)]}</span> {sourceQuality(s)?.label ?? s}</span>
               ))}
+            </div>
+          )}
+
+          {/* Lista de marcos no período — narrativa da jornada, rastreável ao registro de origem */}
+          {evoMilestones.length > 0 && (
+            <div className="space-y-1">
+              <p className="font-body text-[11px] font-semibold text-onyx/70">Marcos no período</p>
+              <ul className="space-y-0.5">
+                {[...evoMilestones].reverse().map(m => (
+                  <li key={m.key} className="flex items-center gap-2 font-body text-[11px] text-onyx">
+                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: MILESTONE_COLOR[m.category] }} />
+                    <span className="text-mauve whitespace-nowrap">{fmt(m.date)}</span>
+                    {m.href ? <Link href={m.href} className="hover:text-petal hover:underline truncate">{m.title}</Link> : <span className="truncate">{m.title}</span>}
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 
