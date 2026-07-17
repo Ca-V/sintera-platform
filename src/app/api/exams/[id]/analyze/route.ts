@@ -16,6 +16,7 @@ import { processBundle } from '@/lib/capture/clinical-information-pipeline'
 import { processClinical, planRepresentation } from '@/lib/capture/clinical-processing-engine'
 import { representationFromProcessor, ucdaItemToRow } from '@/lib/capture/ucda'
 import { bioimpedanceToBodyMetrics } from '@/lib/capture/clinical-processors/bioimpedance-body-metrics'
+import { dexaBodyComposition } from '@/lib/capture/clinical-processors/dexa-body-metrics'
 import { planBundleSplit, restrictPages, type SplitPlan } from '@/lib/capture/bundle-split'
 import { pickExamDate } from '@/lib/capture/semantic-dates'
 import { planNarrativeDiscard } from '@/lib/exams/narrativeDiscard'
@@ -454,6 +455,22 @@ export async function POST(
         }))
         await supabase.from('body_metrics').delete().eq('exam_id', examId).eq('source', 'bioimpedancia')
         await supabase.from('body_metrics').insert(bmRows as never)
+      }
+    }
+
+    // FB-003 (extensão) — DEXA de corpo inteiro também alimenta a Composição Corporal (source='dexa',
+    // confiabilidade alta). ADITIVO e CONSERVADOR: `dexaBodyComposition` só retorna pontos se o laudo for
+    // DEXA/DXA E trouxer composição (um DEXA só de densidade óssea → []). Não modela densitometria; só projeta.
+    {
+      const dexaPoints = dexaBodyComposition(primaryCdu.content?.text ?? null)
+      if (dexaPoints.length > 0) {
+        const measuredOn = (finalUpdate.exam_date as string | undefined) ?? result.examDate ?? new Date().toISOString().slice(0, 10)
+        const dexaRows = dexaPoints.map(p => ({
+          user_id: userId, exam_id: examId, source: 'dexa',
+          metric: p.metric, label: p.label, value_text: p.value_text, unit: p.unit, measured_on: measuredOn,
+        }))
+        await supabase.from('body_metrics').delete().eq('exam_id', examId).eq('source', 'dexa')
+        await supabase.from('body_metrics').insert(dexaRows as never)
       }
     }
   }

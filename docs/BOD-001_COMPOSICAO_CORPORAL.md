@@ -168,7 +168,10 @@ Cada indicador exibe a origem (exame/manual/wearable). Rastreável até o exame-
   6. Ingestão de **DEXA** como exame (FB-003 estende bioimpedância) alimentando os mesmos indicadores. *(pendente)*
 
 **As 5 áreas da §4.1 estão implementadas.** A Composição Corporal deixou de ser uma tela de indicadores e passou
-a ser uma **narrativa longitudinal** da jornada, rastreável até cada fato. Follow-ups: **DEXA como exame** (FB-003);
-**consultas por linha de cuidado** (não por profissão); **marcos de Agenda** (só fatos consumados) e **alteração de
-dose** (auto, quando houver histórico de doses). *(Editar ponto manual — ✅ feito.)*
+a ser uma **narrativa longitudinal** da jornada, rastreável até cada fato. Follow-ups: **consultas por linha de cuidado** (não por profissão);
+**marcos de Agenda** (só fatos consumados) e **alteração de dose** (auto, quando houver histórico de doses).
+*(Editar ponto manual — ✅ feito. **DEXA como exame** — ✅ feito: extrator ADITIVO e conservador
+`dexa-body-metrics.ts` harvest a composição do laudo DEXA/DXA de corpo inteiro → `body_metrics` source='dexa'
+(confiabilidade alta), rastreável ao exame; NÃO modela densitometria — um DEXA só de densidade óssea não gera
+pontos. Habilita comparação bio×DEXA e marco/última avaliação DEXA.)*
 - **Sem nova tabela**; tudo por leitura/derivação preservando origem (invariantes §8).
