@@ -83,6 +83,7 @@ Metadados por documento: **Objetivo · Escopo · Responsável · Dependências �
 | **API-001** | API Governance | ADR-000 | ativo |
 | **AI-001** | AI Governance | ADR-000 | ativo |
 | **OPS-001** | Observability Governance | ADR-000 | ativo |
+| **OPS-002** | Runbook de Release, Backup e Restauração | ADR-000 · COMPLIANCE-001 · OPS-001 | ativo |
 | **TENANT-001** | Tenant Governance | ADR-000 | ativo |
 | **SEC-001** | Projeto Shield (Segurança) | ADR-000 | ativo |
 | **ARCH-FEATURE-FLAGS** | Feature Flags | ADR-000 | ativo |
