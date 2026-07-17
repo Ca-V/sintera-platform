@@ -35,8 +35,8 @@ begin
   delete from exams where user_id = uid;
 
   -- ── EXAME 1: Hemograma completo (com resultados estruturados) ──
-  insert into exams (id, user_id, type, exam_date, status, document_type, issuer, clinical_family, page_count, patient_name, synthetic, created_at)
-  values (ex_hemograma, uid, 'Hemograma completo', current_date - 20, 'processed', 'lab_result', 'Laboratório Demo', 'laboratory', 1, 'Usuária Demo', false, now());
+  insert into exams (id, user_id, type, exam_date, status, document_type, issuer, requesting_physician, clinical_family, page_count, patient_name, synthetic, created_at)
+  values (ex_hemograma, uid, 'Hemograma completo', current_date - 20, 'processed', 'lab_result', 'Laboratório Demo', 'Dra. Demo Clínica Geral', 'laboratory', 1, 'Usuária Demo', false, now());
   insert into extraction_versions (id, exam_id, user_id, version_number, status, origin)
   values (ev_hemograma, ex_hemograma, uid, 1, 'valid', 'fresh');
   update exams set current_extraction_version_id = ev_hemograma where id = ex_hemograma;
