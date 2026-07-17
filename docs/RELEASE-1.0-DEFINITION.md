@@ -38,6 +38,15 @@ RDC 657), com captura universal, linha do tempo, financeiro, compartilhamento e 
 - Conectores além de Strava/Garmin (labs, hospitais, EMR, farmácias, seguradoras — HIP-001 os comporta, 1.1+).
 - CARE-001 (Care Space), modalidades clínicas novas (Pentacam rica/E6), billing comercial ativo.
 
+## 3.1 Garantia de CONTINUIDADE DOS DADOS (beta → produção) — inviolável
+A usuária que entra no **beta** e adiciona exames/histórico/documentos **mantém todos os seus dados na versão
+final**, sem re-trabalho. Base arquitetural: dados no **banco de produção real** (não descartável); extrações
+*append-only*; identidade documental *write-once*; migrations **aditivas** (nunca destroem dados); Modelo Canônico
+preserva o documento original (princípios Preservação do Original · Backward Compatibility · Evolução sem Quebrar).
+**Condição operacional (decisão da fundadora):** o beta DEVE rodar sobre o **banco e as contas que seguem para
+produção** — nunca um ambiente jogado fora depois. Migração destrutiva ou troca de base que perca dados de usuária
+é **proibida**; qualquer evolução de schema é aditiva/reversível e preserva o histórico já inserido.
+
 ## 4. Critérios de ACEITE (cada item incluído)
 - Código de produção + TSC limpo + suíte verde + Compliance Gate (9 eixos) + commit rastreável.
 - Aderência ao Modelo Canônico, rastreabilidade e **não-duplicação**; reúso de componentes institucionais.
