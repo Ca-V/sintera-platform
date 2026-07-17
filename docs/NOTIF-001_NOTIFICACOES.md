@@ -15,6 +15,14 @@
 > provedor for provisionado. Próxima entrega = construir a Central de Notificações (UI de preferências + coluna(s)
 > de preferência por categoria) e ligar os módulos a ela.
 
+## Princípio de AUTORIDADE ÚNICA (fundadora 17/07 — invariante)
+> **A Central de Notificações é a ÚNICA AUTORIDADE para preferências de notificação da plataforma.** Nenhum
+> módulo pode manter configurações próprias de canal ou de opt-in. **Todas** as preferências (se notificar, por
+> qual canal, em que categoria/evento) são resolvidas pela Central. Um formulário pode **exibir** o canal atual e
+> **linkar** para a Central, mas **nunca** guardar sua própria configuração. Isso impede que, no futuro, um módulo
+> volte a criar um checkbox próprio de e-mail/WhatsApp. (O opt-in legado `profiles.pref_whatsapp_reminder` é
+> continuidade transitória do worker e converge para a Central — não é config de módulo.)
+
 ## Modelo DEFINITIVO — 4 conceitos independentes (fundadora 17/07)
 A Central evolui sobre **quatro conceitos ortogonais** (documentar o modelo completo, implementar por camadas):
 
@@ -32,6 +40,12 @@ A Central evolui sobre **quatro conceitos ortogonais** (documentar o modelo comp
   "Alterar preferências"** (sem duplicar configuração). NÃO toca o worker de despacho.
 - **Camada 2 (pós-estabilização):** configuração por **evento** (`event_key`) + reescrita da resolução do worker
   (com fallback seguro). Documentada como evolução planejada — evita redesenho futuro.
+- **Camada 3 — Horário de Silêncio (Quiet Hours), evolução futura.** A usuária define um período (ex.: **22:00–
+  07:00**, configurável) em que notificações **CONFIGURÁVEIS** não são enviadas (ficam retidas/reagendadas para
+  depois do período). **Exceção: obrigatórias** (segurança/acesso) passam sempre. É um 5º eixo ortogonal aos 4
+  conceitos (não altera categoria/evento/canal/prioridade — filtra o *quando*). Persistência prevista:
+  `profiles`/preferências globais (`quiet_hours_enabled`, `quiet_start`, `quiet_end`); o worker checa a janela
+  antes de despachar um evento configurável. Alto valor para lembretes de medicamentos/recorrências.
 
 ## Princípio arquitetural
 Como o CPE concentra o clínico e o Billing concentra o comercial, a **notificação é um serviço único**:
