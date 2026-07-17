@@ -111,9 +111,9 @@ export default function IndicadoresPage() {
             <Activity size={22} className="text-petal" />
           </div>
           <div>
-            <h1 className="font-display text-xl font-semibold text-onyx">Histórico — Evolução</h1>
+            <h1 className="font-display text-xl font-semibold text-onyx">Histórico de Exames</h1>
             <p className="font-body text-sm text-mauve mt-0.5">
-              Seus biomarcadores ao longo do tempo — clique para ver a evolução. Sem diagnóstico.
+              Seus exames e biomarcadores ao longo do tempo — clique para ver a evolução. Sem diagnóstico.
             </p>
           </div>
         </div>

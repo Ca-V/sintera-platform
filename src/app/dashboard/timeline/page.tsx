@@ -353,8 +353,8 @@ function LegacyTimeline() {
       </Link>
 
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-        <PageHeader icon={<Clock size={16} />} eyebrow="Histórico" title="Histórico"
-          subtitle={<>Seu acompanhamento longitudinal — a linha do tempo com exames, consultas, vacinas, procedimentos e medicamentos</>}
+        <PageHeader icon={<Clock size={16} />} eyebrow="Registros de Saúde" title="Registros de Saúde"
+          subtitle={<>Sua linha do tempo de saúde — exames, consultas, vacinas, procedimentos e medicamentos que já aconteceram</>}
           action={
             <button onClick={openCreate}
               className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0">
@@ -380,7 +380,7 @@ function LegacyTimeline() {
           <Info size={16} className="text-petal flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="font-body text-xs text-onyx leading-relaxed">
-              Este é o seu <strong>Histórico</strong>: o registro do que já aconteceu. Adicione seus
+              Estes são os seus <strong>Registros de Saúde</strong>: o registro do que já aconteceu. Adicione seus
               exames, consultas, vacinas e procedimentos para mantê-lo completo. O que ainda está por
               vir permanece na <Link href="/dashboard/agenda" className="text-petal hover:underline">Agenda</Link>{' '}
               e, ao ser concluído, passa para cá.
@@ -400,7 +400,7 @@ function LegacyTimeline() {
           <div className="w-14 h-14 rounded-2xl gradient-sintera-soft flex items-center justify-center mx-auto mb-4">
             <Clock size={26} className="text-petal" />
           </div>
-          <h2 className="font-display text-lg font-semibold text-onyx mb-1">Seu Histórico começa aqui</h2>
+          <h2 className="font-display text-lg font-semibold text-onyx mb-1">Seus Registros de Saúde começam aqui</h2>
           <p className="font-body text-sm text-mauve max-w-sm mx-auto">
             Envie um exame ou adicione uma consulta, vacina ou procedimento para começar a
             construir sua linha do tempo de saúde.

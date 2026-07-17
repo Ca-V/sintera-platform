@@ -45,13 +45,12 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
   error:      { label: 'Erro',            color: 'text-red-400',  bg: 'bg-red-50',         icon: AlertCircle },
 }
 
-// Acesso rápido — usa exatamente a nomenclatura do menu lateral esquerdo.
+// Acesso rápido — usa exatamente a nomenclatura do menu lateral esquerdo (FB-010).
 const QUICK_ACCESS: { href: string; icon: React.ElementType; label: string; desc: string; tile: string; tint: string }[] = [
-  // Ordem espelha a barra lateral: Minha Saúde primeiro, depois Contexto/Organização.
-  { href: '/dashboard/timeline',     icon: Clock,       label: 'Histórico',                 desc: 'Linha do tempo e evolução',      tile: 'bg-blush',     tint: 'text-petal' },
-  { href: '/dashboard/agenda',       icon: CalendarDays,label: 'Agenda',                   desc: 'Eventos e lembretes',            tile: 'bg-warm',           tint: 'text-gold' },
+  { href: '/dashboard/timeline',     icon: Clock,       label: 'Registros de Saúde',        desc: 'Sua linha do tempo de saúde',    tile: 'bg-blush',     tint: 'text-petal' },
+  { href: '/dashboard/agenda',       icon: CalendarDays,label: 'Agenda',                    desc: 'Eventos e lembretes',            tile: 'bg-warm',           tint: 'text-gold' },
   { href: '/dashboard/exams',        icon: FileText,    label: 'Exames',                    desc: 'Laudos e documentos',            tile: 'bg-blush',          tint: 'text-petal' },
-  { href: '/dashboard/medicamentos', icon: Pill,        label: 'Medicamentos e Suplementos', desc: 'Em uso, recompra e estoque',     tile: 'bg-blush',     tint: 'text-petal' },
+  { href: '/dashboard/medicamentos', icon: Pill,        label: 'Medicamentos',              desc: 'Em uso, recompra e estoque',     tile: 'bg-blush',     tint: 'text-petal' },
   { href: '/dashboard/relatorio',    icon: ScrollText,  label: 'Relatórios',                desc: 'Compartilhar com profissionais', tile: 'bg-lavender-light', tint: 'text-lavender' },
   { href: '/dashboard/gastos',       icon: Receipt,     label: 'Despesas',                  desc: 'Consultas, exames e medicamentos', tile: 'bg-blush',          tint: 'text-petal' },
 ]
