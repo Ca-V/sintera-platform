@@ -49,6 +49,19 @@ Base arquitetural que sustenta a decisão: extrações *append-only*; identidade
 do Original · Backward Compatibility · Evolução sem Quebrar). Migração destrutiva ou troca de base que perca dados
 de usuária é **proibida**. Isolamento/monitoramento/feature flags são permitidos; perda de histórico do beta, não.
 
+## 3.1.1 POLÍTICA DE AMBIENTES — Preview × Produção (ressalva da fundadora 17/07)
+O Preview da Vercel aponta hoje para o **mesmo banco** da produção. **Isso é aceitável APENAS enquanto** (i) esse
+banco ainda é o ambiente oficial do beta **e** (ii) **não há usuárias reais** usando a plataforma.
+
+**Gatilho — a partir da primeira usuária beta EXTERNA:** obrigatório **um** dos dois:
+- **(a) separar os ambientes** (Preview e Produção com bancos distintos), ou
+- **(b) no mínimo**, proteger **toda funcionalidade experimental/incompleta por feature flag**, de modo que um
+  deploy de Preview **nunca afete** os dados ou a experiência de usuárias reais.
+
+Consequência prática: **antes de onboarding de usuária externa, feature flags para o que está incompleto deixam de
+ser recomendação e passam a ser requisito** (reforça o §3.2 item 5). Preview com código experimental tocando dados
+reais de usuárias é proibido.
+
 ## 3.2 GATE DE PRIMEIRO PUSH / PREVIEW (pré-beta) — checklist obrigatório (fundadora 17/07)
 Antes de publicar a primeira URL (Vercel) para a fundadora ou usuárias, TODOS devem estar ✅ — para que a URL já
 represente um ambiente utilizável por usuárias reais, sem reinicializar a base depois:
