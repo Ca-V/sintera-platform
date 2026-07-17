@@ -8,6 +8,7 @@ function ev(id: string, date: string, time: string | null): HealthEvent {
     date, time, durationMin: null, reminderEnabled: true, reminderSentAt: null,
     professionalKind: null, professionalName: null, establishment: null, location: null,
     modality: null, preparation: null, notes: null, amountCents: null, directExpense: false, attachmentUrl: null,
+    expenseDocType: null,
     links: [], outcome: null, recurrenceRule: null, seriesId: null, parentEventId: null, rootEventId: null, completedAt: null,
   }
 }

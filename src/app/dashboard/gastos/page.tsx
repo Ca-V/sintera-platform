@@ -10,6 +10,7 @@ import Link from 'next/link'
 import { Loader2, Paperclip, Receipt, ArrowLeft, Info, Plus, X, RotateCcw, Trash2 } from 'lucide-react'
 import { useUser } from '@/context/UserContext'
 import { typeLabel, formatDateBR, type HealthEvent } from '@/lib/agenda'
+import { expenseDocLabel } from '@/lib/finance/expense'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
 import { useStickyView } from '@/lib/ui/useStickyView'
@@ -107,7 +108,7 @@ export default function GastosPage() {
             {r.attachmentUrl && (
               <a href={r.attachmentUrl} target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 font-body text-[11px] text-petal hover:underline">
-                <Paperclip size={10} /> Nota fiscal
+                <Paperclip size={10} /> {expenseDocLabel(r.expenseDocType) ?? 'Documento'}
               </a>
             )}
           </>

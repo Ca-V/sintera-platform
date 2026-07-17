@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Download, ExternalLink, CalendarDays, Loader2, Check, ChevronDown } from 'lucide-react'
 import { EVENT_TYPE_DEFS, EVENT_STATUS_UI, PROFESSIONAL_KIND_DEFS } from '@/lib/agenda'
+import { EXPENSE_DOC_TYPES } from '@/lib/finance/expense'
 import { useModalA11y } from '@/lib/ui/useModalA11y'
 
 // Tipos vêm da FONTE ÚNICA (@/lib/agenda) — Agenda e Histórico falam a mesma língua.
@@ -32,6 +33,7 @@ export interface AgendaEventInput {
   location: string
   preparation: string
   amount: string       // valor em reais, formato livre ("250,00")
+  expenseDocType: string   // FIN-001: tipo do documento fiscal (nota_fiscal|recibo|comprovante|outro)
   recurrenceFrequency: RecurrenceFreq
   recurrenceUntil: string   // '' ou 'YYYY-MM-DD'
   priority: PriorityInput
@@ -101,6 +103,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
   const [location, setLocation] = useState('')
   const [preparation, setPreparation] = useState('')
   const [amount, setAmount] = useState('')
+  const [expenseDocType, setExpenseDocType] = useState('')   // FIN-001: tipo do documento fiscal
   const [recurrence, setRecurrence] = useState<RecurrenceFreq>('none')
   const [recurrenceUntil, setRecurrenceUntil] = useState('')
   const [priority, setPriority] = useState<PriorityInput>('')
@@ -135,6 +138,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
     setLocation(initialEvent?.location ?? '')
     setPreparation(initialEvent?.preparation ?? '')
     setAmount(initialEvent?.amount ?? '')
+    setExpenseDocType(initialEvent?.expenseDocType ?? '')
     setRecurrence(initialEvent?.recurrenceFrequency ?? 'none')
     setRecurrenceUntil(initialEvent?.recurrenceUntil ?? '')
     setPriority(initialEvent?.priority ?? '')
@@ -204,7 +208,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
         isSurgery: eventType === 'procedimento' ? isSurgery : false, status,
         title: fullTitle, date, time, durationMin: parseInt(duration), notes: notes.trim(), reminderEnabled,
         modality, professionalKind, professionalName: professionalName.trim(), establishment: establishment.trim(), location: location.trim(),
-        preparation: preparation.trim(), amount: amount.trim(),
+        preparation: preparation.trim(), amount: amount.trim(), expenseDocType,
         recurrenceFrequency: recurrence, recurrenceUntil, priority, directExpense,
         outcome: outcome.trim(), operadora: operadora.trim(), carteirinha: carteirinha.trim(),
         attachmentFile, attachmentUrl: initialEvent?.attachmentUrl,
@@ -221,7 +225,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
 
   function resetFields() {
     setTitle(defaultTitle); setDate(''); setTime(''); setDuration('60'); setNotes(defaultNotes)
-    setEventType('consulta'); setIsReturn(false); setIsSurgery(false); setStatus('planejado'); setModality(''); setProfessionalName(''); setEstablishment(''); setLocation(''); setPreparation(''); setAmount('')
+    setEventType('consulta'); setIsReturn(false); setIsSurgery(false); setStatus('planejado'); setModality(''); setProfessionalName(''); setEstablishment(''); setLocation(''); setPreparation(''); setAmount(''); setExpenseDocType('')
     setRecurrence('none'); setRecurrenceUntil(''); setPriority(''); setDirectExpense(false); setOutcome(''); setOperadora(''); setCarteirinha(''); setAttachmentFile(null)
     setShowDetails(false); setSaveError(null)
   }
@@ -452,6 +456,14 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                           className="block w-full text-xs font-body text-mauve file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:bg-blush file:text-petal file:font-medium" />
                         {initialEvent?.attachmentUrl && !attachmentFile && (
                           <p className="font-body text-[11px] text-mauve">Anexo atual mantido. Escolha um arquivo para substituir.</p>
+                        )}
+                        {/* FIN-001: tipo do documento fiscal — habilita Relatórios (IR/reembolso) e auditoria */}
+                        {(attachmentFile || initialEvent?.attachmentUrl) && (
+                          <select aria-label="Tipo de documento fiscal" value={expenseDocType}
+                            onChange={e => setExpenseDocType(e.target.value)} className={`${FIELD} mt-1.5`}>
+                            <option value="">Tipo de documento (opcional)</option>
+                            {EXPENSE_DOC_TYPES.map(d => <option key={d.id} value={d.id}>{d.label}</option>)}
+                          </select>
                         )}
                       </div>
 

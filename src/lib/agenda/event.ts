@@ -66,6 +66,7 @@ export interface HealthEvent {
   amountCents: number | null
   directExpense: boolean          // despesa direta: conta como gasto sem precisar estar "realizado"
   attachmentUrl: string | null
+  expenseDocType: string | null   // FIN-001: tipo do documento fiscal do anexo (nota_fiscal|recibo|comprovante|outro)
   links: EventLink[]
   outcome: Outcome | null         // Desfecho
   recurrenceRule: string | null
@@ -106,6 +107,7 @@ export interface HealthEventRow {
   amount_cents?: number | null
   direct_expense?: boolean | null
   attachment_url?: string | null
+  expense_doc_type?: string | null
   links?: unknown
   outcome?: unknown
   recurrence_rule?: string | null
@@ -136,7 +138,7 @@ export function rowToHealthEvent(r: HealthEventRow): HealthEvent {
     establishment: r.establishment ?? null, location: r.location ?? null,
     modality: normModality(r.modality), preparation: r.preparation ?? null, notes: r.notes ?? null,
     amountCents: r.amount_cents ?? null, directExpense: r.direct_expense ?? false,
-    attachmentUrl: r.attachment_url ?? null,
+    attachmentUrl: r.attachment_url ?? null, expenseDocType: r.expense_doc_type ?? null,
     links: Array.isArray(r.links) ? (r.links as EventLink[]) : [],
     outcome: (r.outcome && typeof r.outcome === 'object') ? (r.outcome as Outcome) : null,
     recurrenceRule: r.recurrence_rule ?? null, seriesId: r.series_id ?? null,
@@ -169,7 +171,7 @@ export function agendaRowToHealthEvent(r: AgendaEventRow): HealthEvent {
     durationMin: r.duration_min ?? null, reminderEnabled: r.reminder_enabled ?? true, reminderSentAt: r.reminder_sent_at ?? null,
     professionalKind: null, professionalName: null, establishment: null, location: null,
     modality: null, preparation: null, notes: r.notes ?? null,
-    amountCents: null, directExpense: false, attachmentUrl: null, links: [], outcome: null,
+    amountCents: null, directExpense: false, attachmentUrl: null, expenseDocType: null, links: [], outcome: null,
     recurrenceRule: null, seriesId: null, parentEventId: null, rootEventId: null, completedAt: null,
   }
 }
@@ -256,6 +258,7 @@ export function healthEventToRow(userId: string, ev: Partial<HealthEvent> & { ty
     establishment: ev.establishment ?? null, location: ev.location ?? null,
     modality: ev.modality ?? null, preparation: ev.preparation ?? null, notes: ev.notes ?? null,
     amount_cents: ev.amountCents ?? null, direct_expense: ev.directExpense ?? false,
+    expense_doc_type: ev.expenseDocType ?? null,
     attachment_url: ev.attachmentUrl ?? null,
     links: ev.links ?? [], outcome: ev.outcome ?? null,
     recurrence_rule: ev.recurrenceRule ?? null, series_id: ev.seriesId ?? null,
