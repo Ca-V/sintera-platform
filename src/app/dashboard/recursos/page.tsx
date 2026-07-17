@@ -13,7 +13,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import {
-  Loader2, Plus, X, ArrowLeft, Pencil, Trash2, Camera, Paperclip,
+  Loader2, Plus, X, ArrowLeft, Pencil, Trash2, Camera, Paperclip, Receipt,
   Glasses, HeartPulse, Bone, Accessibility, Shirt, Package,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -28,6 +28,10 @@ import Card from '@/components/ui/Card'
 import Disclaimer from '@/components/ui/Disclaimer'
 import CreateRecordMenu from '@/components/ui/CreateRecordMenu'
 import ConfirmDialog from '@/components/ConfirmDialog'
+import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
+import { useEventForm } from '@/components/eventForm'
+import { eventServicesFor, isFinancial, selectByLink, type HealthEvent } from '@/lib/agenda'
+import { expenseDocLabel } from '@/lib/finance/expense'
 
 type ResourceType = 'correcao_visual' | 'dispositivo_medico' | 'protese_ortese' | 'auxilio' | 'compressao_suporte' | 'outro'
 type Status = 'em_uso' | 'suspenso' | 'encerrado'
@@ -108,6 +112,10 @@ export default function RecursosPage() {
   const [saving, setSaving] = useState(false)
   const [scanning, setScanning] = useState(false)
   const [err, setErr] = useState<string | null>(null)
+  // FB-004: despesa (valor pago + NF) do recurso via fluxo financeiro único (FIN-001).
+  const { saveEvent } = useEventForm()
+  const [expenses, setExpenses] = useState<HealthEvent[]>([])
+  const [agendarResource, setAgendarResource] = useState<Resource | null>(null)
   const scanRef = useRef<HTMLInputElement>(null)
 
   const set = (k: keyof typeof EMPTY, v: string) => setF(s => ({ ...s, [k]: v }))
@@ -133,6 +141,11 @@ export default function RecursosPage() {
       fileUrl: (r.file_url as string) ?? null,
       attributes: (r.attributes as Record<string, unknown>) ?? {},
     })))
+    // FB-004 (FIN-001): despesas vinculadas a recursos (valor pago) — pelo contrato canônico da Jornada.
+    try {
+      const evs = await eventServicesFor(supabase as never).query.listAll(user.id)
+      setExpenses(evs.filter(isFinancial))
+    } catch { setExpenses([]) }
     setLoading(false)
   }, [user, supabase])
 
@@ -276,6 +289,7 @@ export default function RecursosPage() {
     const tm = TYPE_META(r.resourceType)
     const Icon = tm?.icon ?? Package
     const sm = STATUS_META(r.status)
+    const exp = selectByLink(expenses, 'resource', r.id)[0] ?? null   // FB-004: despesa vinculada
     const metaParts = [
       r.brand,
       r.resourceType === 'correcao_visual' ? grauResumo(r.attributes) : null,
@@ -304,12 +318,24 @@ export default function RecursosPage() {
                   <Paperclip size={11} /> Ver foto
                 </a>
               )}
+              {exp && (exp.amountCents ?? 0) > 0 && (
+                <span className="block text-onyx/70 mt-0.5">
+                  💰 {((exp.amountCents ?? 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  {expenseDocLabel(exp.expenseDocType) ? ` · ${expenseDocLabel(exp.expenseDocType)}` : ''}
+                </span>
+              )}
             </>
+          ) : (exp && (exp.amountCents ?? 0) > 0) ? (
+            <span className="block text-onyx/70">
+              💰 {((exp.amountCents ?? 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            </span>
           ) : undefined
         }
         chips={view === 'situacao' ? <CardChip tone="mauve">{tm?.label ?? 'Recurso'}</CardChip> : undefined}
         actions={
           <>
+            <button onClick={() => setAgendarResource(r)} title="Registrar valor pago / nota fiscal"
+              className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-petal transition-colors"><Receipt size={12} /></button>
             <button onClick={() => startEdit(r)} title="Editar"
               className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-petal transition-colors"><Pencil size={12} /></button>
             <button onClick={() => remove(r)} disabled={busyId === r.id} title="Remover"
@@ -545,6 +571,22 @@ export default function RecursosPage() {
         confirmLabel={confirm?.confirmLabel ?? 'Confirmar'}
         onConfirm={() => { const c = confirm; setConfirm(null); c?.onYes() }}
         onCancel={() => setConfirm(null)}
+      />
+
+      {/* FB-004: valor pago + NF/recibo + recorrência do recurso, via fluxo financeiro único (FIN-001) */}
+      <AgendarModal
+        open={!!agendarResource}
+        onClose={() => setAgendarResource(null)}
+        onSave={async (input: AgendaEventInput) => {
+          if (!user || !agendarResource) return
+          await saveEvent(user.id, input, null, [{ type: 'resource', id: agendarResource.id }])
+          setAgendarResource(null)
+          await load()
+        }}
+        onGoToHistory={() => { window.location.href = '/dashboard/gastos' }}
+        defaultTitle={agendarResource?.name ?? 'Recurso'}
+        defaultNotes={`Referente ao recurso: ${agendarResource?.name ?? ''}`}
+        initialEvent={{ eventType: 'outro', status: 'realizado', directExpense: true }}
       />
     </div>
   )

@@ -9,7 +9,7 @@ export type {
 export {
   EVENT_STATUSES, EVENT_MODALITIES, EVENT_PRIORITIES, canTransition,
   isUpcoming, isPast, isClosed, isConcluded, hasActiveReminder, hasCost, isDerived, isFinancial, isDirectExpense,
-  isReturnVisit, rowToHealthEvent,
+  isReturnVisit, selectByLink, rowToHealthEvent,
 } from './event'
 export type { HealthEventRow } from './event'
 

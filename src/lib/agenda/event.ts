@@ -21,7 +21,7 @@ export type EventPriority = typeof EVENT_PRIORITIES[number]
 // Relacionamento da jornada — padrão único {id, type, source, metadata} (facilita
 // integrações futuras e a convergência ômica). Chaves previstas de `type`:
 //   exam · biomarker · protocol · medication · supplement · document · professional
-export type EventLinkKind = 'exam' | 'biomarker' | 'protocol' | 'medication' | 'supplement' | 'document' | 'professional'
+export type EventLinkKind = 'exam' | 'biomarker' | 'protocol' | 'medication' | 'supplement' | 'document' | 'professional' | 'resource'
 // Semântica da relação — permite navegar a cadeia da jornada.
 export type EventLinkRelationship = 'origin' | 'follow_up' | 'generated_from' | 'related'
 export interface EventLink {
