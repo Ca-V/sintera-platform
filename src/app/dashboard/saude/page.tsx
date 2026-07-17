@@ -14,7 +14,6 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { parseDateOnly } from '@/lib/agenda'
 import { useUser } from '@/context/UserContext'
-import HistoricoTabs from '@/components/HistoricoTabs'
 import ListCard from '@/components/ListCard'
 import { summarizeBiomarkers, computeReferenceIndex, type BiomarkerRow, type BiomarkerSummary, type Trend } from '@/lib/biomarkers/grouping'
 import { groupByMaterialExam, loadCatalogLabels, type CatalogLabels } from '@/lib/biomarkers/catalogLabels'
@@ -102,7 +101,6 @@ export default function IndicadoresPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-5">
       {/* Módulo Histórico — visão Evolução */}
-      <HistoricoTabs active="evolucao" />
 
       {/* Cabeçalho */}
       <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} padding="lg">
@@ -113,7 +111,8 @@ export default function IndicadoresPage() {
           <div>
             <h1 className="font-display text-xl font-semibold text-onyx">Histórico de Exames</h1>
             <p className="font-body text-sm text-mauve mt-0.5">
-              Seus exames e biomarcadores ao longo do tempo — clique para ver a evolução. Sem diagnóstico.
+              Cada exame ao longo do tempo — o panorama de todos os resultados do mesmo tipo, lado a lado,
+              para acompanhar e comparar a evolução. Sem diagnóstico.
             </p>
           </div>
         </div>

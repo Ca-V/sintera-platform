@@ -22,7 +22,6 @@ import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { useEventForm, eventToInput } from '@/components/eventForm'
 import { rowToHealthEvent, eventServicesFor, modalityLabel, outcomeSummary, hasOutcome, professionalKindLabel, isReturnVisit, priorityBadge, type HealthEvent, type HealthEventRow, type EventPriority } from '@/lib/agenda'
-import HistoricoTabs from '@/components/HistoricoTabs'
 import { useStickyView } from '@/lib/ui/useStickyView'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import ListCard, { CardChip } from '@/components/ListCard'
@@ -362,9 +361,6 @@ function LegacyTimeline() {
             </button>
           } />
       </motion.div>
-
-      {/* Duas visões do mesmo registro longitudinal: Linha do Tempo (esta) · Evolução */}
-      <HistoricoTabs active="linha" />
 
       {actionError && (
         <div className="flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
