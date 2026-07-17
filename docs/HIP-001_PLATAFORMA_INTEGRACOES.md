@@ -30,6 +30,14 @@ Fonte externa  ─►  Conector (adapter, por fonte)  ─►  Representação ca
  FHIR/RNDS…)      autorização + sync auditável/versionada
 ```
 
+> **Cláusula de generalidade (fundadora 17/07/2026 — reforço constitucional):** embora a implementação
+> inicial esteja focada em **wearables**, a Connector Layer deverá permanecer **totalmente genérica
+> (vendor-neutral E domain-neutral)**, preparada para integrar **qualquer origem externa de dados** da
+> plataforma — wearables · laboratórios · hospitais · clínicas · sistemas de Prontuário Eletrônico (PEP/EMR)
+> · plataformas de telemedicina · farmácias · seguradoras · equipamentos médicos · APIs públicas —
+> preservando o mesmo modelo arquitetural definido no HIP-001. É uma **infraestrutura corporativa de
+> integração**, não uma camada de wearables. Nenhum tipo de domínio de origem é privilegiado no núcleo.
+
 ## Alvos de integração (preparar a arquitetura para acomodar; não implementar tudo já)
 - **Wearables:** Apple Watch · Apple Health · Google Health Connect · Garmin · Fitbit · Polar · Suunto ·
   Coros · Amazfit · Huawei Health · Samsung Health · Oura Ring · Whoop.
@@ -55,6 +63,13 @@ Fonte externa  ─►  Conector (adapter, por fonte)  ─►  Representação ca
    conector, resultado); reprocessável; idempotente por faixa. Herda Reprodutibilidade/Auditabilidade.
 5. **Sinais Vitais como primeiro consumidor** — o backlog "Sinais Vitais automáticos" (Fase E1) passa a
    ser o **primeiro caso de uso** de HIP-001, não uma integração wearable isolada.
+6. **Histórico e monitoramento operacional (fundadora 17/07)** — cada conector registra um **histórico
+   completo de sincronizações** (origem · data/hora · status · nº de registros · erros · última sync
+   bem-sucedida) e um **modelo de reconciliação + deduplicação** de dados de múltiplos provedores que
+   **sempre preserva a proveniência**. Sobre isso, um **Painel Operacional de Integrações** por conector
+   (status: OK / credenciais pendentes / aguardando homologação / erro · última sincronização · última
+   atividade · nº de erros), servindo **suporte · debugging · auditoria · usuário · LGPD**. Genérico:
+   vale para wearable, laboratório, hospital, EMR, farmácia etc. — não só dispositivos.
 
 ## Posição no roadmap
 Pilar **transversal** (não uma modalidade), ao lado de: **Clinical Processing Engine · UCDA · CARE-001 ·

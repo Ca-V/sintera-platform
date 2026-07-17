@@ -81,11 +81,24 @@
 
 - **REFINAMENTO (fundadora 17/07):** NÃO pré-fixar o conector de referência. **Avaliação técnica** (feita, preliminar — re-verificar contra doc viva ao implementar): critérios = doc da API · processo de credencial/aprovação · facilidade de homologação · validação do fluxo completo no beta · estabilidade/maturidade. **Resultado: Strava = referência / 1º ao vivo** (self-service, sem aprovação, madura, validável 100% no beta) **e prioridade estratégica** (não descartável). **Garmin e Strava = prioridades estratégicas da fase 1:** implementar TODA a infra dos DOIS agora; **Garmin completo até auth+sync**, ativação condicionada só às credenciais de parceria (aprovação pode extrapolar o beta) → pronto quando a aprovação chegar, sem dev adicional.
 - **REQUISITOS ARQUITETURAIS ADICIONAIS na Connector Layer (fundadora 17/07):** (1) **histórico completo de sincronizações** — origem, data/hora, status, nº de registros, erros, última sync bem-sucedida; (2) modelo preparado para **reconciliação e deduplicação** de dados de múltiplos provedores, **sempre preservando a proveniência**; (3) **sync manual e automática**; (4) **propagação automática** p/ Timeline·Indicadores·Registros de Saúde; (5) aderência ao **Modelo Canônico** e aos princípios do **HIP-001**. Objetivo do beta = validar uma **infraestrutura robusta, reutilizável e escalável** que recebe novos conectores **sem mudança arquitetural**, não só uma integração pontual.
+- **REFINAMENTO 2 (fundadora 17/07) — Connector Layer NÃO é de wearables:** é a **camada de integração corporativa** da plataforma (vendor-neutral E **domain-neutral**), preparada p/ wearables · laboratórios · hospitais · clínicas · PEP/EMR · telemedicina · farmácias · seguradoras · equipamentos médicos · APIs públicas. Cláusula constitucional registrada no HIP-001. Wearables é só a 1ª implementação (WEA-001).
+- **REFINAMENTO 2 — Painel Operacional de Integrações:** dashboard por conector (Status OK/credenciais pendentes/aguardando homologação/erro · última sincronização · última atividade · nº de erros) p/ suporte·debugging·auditoria·usuário·LGPD. Genérico p/ qualquer origem. Registrado no HIP-001 §Modelo.6.
 
 ## Decisões da fundadora (17/07) — REGISTRADAS
 - **Nav (BETA-1):** Histórico→**Registros de Saúde** (módulo principal); Evolução→**Histórico de Exames** (submódulo).
 - **Arquitetura (BETA-2/6/7/14): ADRs INTERNOS AGORA** (Opção 1). Escrever ADRs para TODAS as decisões arquiteturais necessárias, **aderentes aos princípios** (arquitetura aberta, modelo canônico, reúso de componentes/serviços, **não-duplicação de dados**, rastreabilidade, Compliance by Design) e redigidos para o **SPAGS apenas os organizar depois** (integração de documentação, não de código). **Não aguardar o SPAGS.** Tratar como decisões arquiteturais PERMANENTES já: (a) componente único de captura p/ toda a plataforma; (b) modelo financeiro universal (valor·NF·recibo·comprovante); (c) domínio Despesas consolidado alimentado automaticamente; (d) integração Contracepção↔Medicamentos sem duplicação; (e) propagação automática p/ Timeline·Agenda·Histórico·Indicadores·Compartilhamentos·Relatórios quando pertinente; (f) reúso máximo de componentes/serviços entre domínios.
 - **Prioridade mantida:** **concluir Exames e Eventos primeiro** (EVT-C6), depois os itens de beta na ordem P1→P6. As decisões arquiteturais devem ACELERAR, não gerar retrabalho.
+
+## Convenção — Documentos de Domínio (fundadora 17/07)
+Cada grande domínio ganha um **documento arquitetural próprio** (~10–20 págs), no padrão do Capture Hub.
+O **SPAGS** continua o documento MESTRE; estes detalham decisões específicas. **Regra prática:** o "ADR interno"
+exigido para um item arquitetural **É** o documento do seu domínio (não criar ADR + doc separados — unificar).
+Criar cada um **quando o domínio for trabalhado** (não tudo de uma vez):
+- **HIP-001** — Connector Layer *(existe)* · **CAP-001** — Captura *(existe)* · **DATA-001** — Modelo Canônico *(existe)*
+- **FIN-001** — Financial Domain → criar AGORA com BETA-7 (é o ADR do financeiro universal)
+- **WEA-001** — Wearables Domain → criar com BETA-WEAR (implementação sobre HIP-001)
+- **RPT-001** — Reporting Domain → com BETA-8 · **HOM-001** — Home Experience → com BETA-9
+- **SHR-001** — Sharing Domain *(compartilhamento; doc quando revisitado)* · **MOB-001** — Mobile Domain *(app nativo futuro)*
 
 ## Pontos que ainda dependem da fundadora
 1. **Vídeo institucional** (BETA-10) — asset de conteúdo.
