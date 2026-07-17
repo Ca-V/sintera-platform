@@ -154,6 +154,11 @@ function LegacyTimeline() {
       })
     }
     for (const ev of events) {
+      // FB-008: o financeiro do exame é ATRIBUTO do exame (o fato), não um Evento próprio. Eventos
+      // legados vinculados a um exame (valor/NF) duplicariam o fato na timeline — o exame já aparece
+      // acima. Oculta-os aqui (o exame mantém o valor; Despesas projeta o exame). Um lembrete de
+      // repetição (sem valor) permanece visível.
+      if (ev.links?.some(l => l.type === 'exam') && (ev.amountCents ?? 0) > 0) continue
       merged.push({
         id: `event-${ev.id}`, rawId: ev.id, kind: 'event',
         eventType: (ev.type as EventType) ?? 'outro',

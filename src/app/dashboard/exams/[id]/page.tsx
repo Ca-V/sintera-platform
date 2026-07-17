@@ -23,7 +23,8 @@ import { deriveExamIdentity } from '@/lib/exams/identification'
 import { isOrderDocumentType } from '@/lib/exams/classification'
 import { careStageFor } from '@/lib/exams/careFlow'
 import { eventServicesFor, isFinancial, type HealthEvent } from '@/lib/agenda'
-import { expenseDocLabel } from '@/lib/finance/expense'
+import { expenseDocLabel, EXPENSE_DOC_TYPES } from '@/lib/finance/expense'
+import { parseAmountToCents, centsToAmount } from '@/lib/agenda/money'
 import { clinicalResultsToUcda, type ClinicalResultRow, type UcdaRepresentation } from '@/lib/capture/ucda'
 import CareFlowStepper from '@/components/CareFlowStepper'
 import ClinicalResultsCard from '@/components/ClinicalResultsCard'
@@ -307,6 +308,42 @@ export default function ExamDetailPage() {
   // BETA-3: despesa vinculada ao exame (valor pago + documento fiscal) — fecha o loop no próprio exame.
   const linkedExpense = useMemo(() => linkedEvents.find(isFinancial) ?? null, [linkedEvents])
 
+  // FB-008 (refina FIN-001): o financeiro é ATRIBUTO do próprio exame, não um Evento separado.
+  const examExpense = useMemo(() => {
+    const e = exam as unknown as { expense_amount_cents?: number | null; expense_doc_type?: string | null; expense_doc_url?: string | null } | null
+    if (!e) return null
+    return { amountCents: e.expense_amount_cents ?? null, docType: e.expense_doc_type ?? null, docUrl: e.expense_doc_url ?? null }
+  }, [exam])
+  const [expEditing, setExpEditing] = useState(false)
+  const [expAmount, setExpAmount]   = useState('')
+  const [expDocType, setExpDocType] = useState('')
+  const [expDocFile, setExpDocFile] = useState<File | null>(null)
+  const [expSaving, setExpSaving]   = useState(false)
+
+  function startEditExpense() {
+    setExpAmount(examExpense?.amountCents ? centsToAmount(examExpense.amountCents) : '')
+    setExpDocType(examExpense?.docType ?? '')
+    setExpDocFile(null)
+    setExpEditing(true)
+  }
+  async function saveExamExpense() {
+    if (!exam || expSaving) return
+    setExpSaving(true)
+    try {
+      let docUrl = examExpense?.docUrl ?? null
+      if (expDocFile) {
+        const ext = expDocFile.name.split('.').pop() ?? 'bin'
+        const path = `${user?.id}/exam-fiscal/${exam.id}-${Date.now()}.${ext}`
+        const { error: upErr } = await supabase.storage.from('exams').upload(path, expDocFile, { contentType: expDocFile.type, upsert: false })
+        if (!upErr) { const { data } = await supabase.storage.from('exams').createSignedUrl(path, 60 * 60 * 24 * 365); docUrl = data?.signedUrl ?? docUrl }
+      }
+      const cents = parseAmountToCents(expAmount)
+      await supabase.from('exams').update({ expense_amount_cents: cents, expense_doc_type: expDocType || null, expense_doc_url: docUrl } as never).eq('id', exam.id)
+      setExam(prev => prev ? ({ ...prev, expense_amount_cents: cents, expense_doc_type: expDocType || null, expense_doc_url: docUrl } as never) : prev)
+      setExpEditing(false); setExpDocFile(null)
+    } finally { setExpSaving(false) }
+  }
+
   // ── Renomear exame ───────────────────────────────────────────────────────
   const [editingName, setEditingName]   = useState(false)
   const [nameValue, setNameValue]       = useState('')
@@ -471,7 +508,7 @@ export default function ExamDetailPage() {
   async function loadData(silent = false) {
     if (!silent) setLoading(true)
     const [{ data: examData }, { data: bioData }, { data: logData }, { data: catData }, { data: clinData }] = await Promise.all([
-      supabase.from('exams').select('id,type,document_type,status,page_count,created_at,exam_date,error_reason,text_truncated,file_url,patient_name,extraction_completeness,issuer,requesting_physician')
+      supabase.from('exams').select('id,type,document_type,status,page_count,created_at,exam_date,error_reason,text_truncated,file_url,patient_name,extraction_completeness,issuer,requesting_physician,expense_amount_cents,expense_doc_type,expense_doc_url')
         .eq('id', examId).single(),
       supabase.from('current_biomarkers')
         .select('id,name,value,value_text,unit,reference_min,reference_max,interpretation,result_type,range_extracted,reference_source,source,catalog_id,source_material,source_exam_name')
@@ -647,35 +684,58 @@ export default function ExamDetailPage() {
           <Receipt size={16} className="text-petal" />
           <h2 className="font-display text-base font-semibold text-onyx">Financeiro e acompanhamento</h2>
         </div>
-        {linkedExpense && (linkedExpense.amountCents ?? 0) > 0 ? (
+        {/* FB-008: o financeiro é ATRIBUTO do próprio exame (não cria Evento). Edita as colunas do exame. */}
+        {expEditing ? (
+          <div className="rounded-xl border border-petal/30 bg-blush/20 px-4 py-3 space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1"><label htmlFor="exp-valor" className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Valor pago — R$</label>
+                <input id="exp-valor" type="text" inputMode="decimal" value={expAmount} onChange={e => setExpAmount(e.target.value)} placeholder="250,00"
+                  className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40" /></div>
+              <div className="space-y-1"><label htmlFor="exp-tipo" className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Tipo de documento</label>
+                <select id="exp-tipo" value={expDocType} onChange={e => setExpDocType(e.target.value)}
+                  className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/40">
+                  <option value="">—</option>
+                  {EXPENSE_DOC_TYPES.map(d => <option key={d.id} value={d.id}>{d.label}</option>)}
+                </select></div>
+            </div>
+            <div className="space-y-1"><label htmlFor="exp-anexo" className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Anexo (NF/recibo/comprovante) <span className="font-normal text-mauve normal-case">(PDF, JPG, PNG)</span></label>
+              <input id="exp-anexo" type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e => setExpDocFile(e.target.files?.[0] ?? null)}
+                className="block w-full text-xs font-body text-mauve file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:bg-blush file:text-petal file:font-medium" />
+              {examExpense?.docUrl && !expDocFile && <p className="font-body text-[11px] text-mauve">Documento atual mantido. Escolha um arquivo para substituir.</p>}
+            </div>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setExpEditing(false)} disabled={expSaving} className="px-3 py-1.5 rounded-full border border-border text-mauve font-body text-xs hover:bg-blush disabled:opacity-40">Cancelar</button>
+              <button onClick={saveExamExpense} disabled={expSaving} className="px-3 py-1.5 rounded-full gradient-sintera text-white font-body text-xs font-medium hover:opacity-90 disabled:opacity-40">{expSaving ? 'Salvando…' : 'Salvar'}</button>
+            </div>
+          </div>
+        ) : (examExpense && (examExpense.amountCents ?? 0) > 0) ? (
           <div className="flex items-center justify-between gap-3 rounded-xl bg-blush/30 border border-petal/30 px-4 py-3">
             <div className="min-w-0">
               <p className="font-body text-[11px] text-mauve uppercase tracking-wide">Valor pago</p>
               <p className="font-body text-xl font-semibold text-onyx leading-tight">
-                {((linkedExpense.amountCents ?? 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                {((examExpense.amountCents ?? 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
               </p>
               <p className="font-body text-[11px] text-mauve mt-0.5">
                 Aparece em <button onClick={() => router.push('/dashboard/gastos')} className="text-petal hover:underline">Despesas</button>
               </p>
             </div>
             <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-              {linkedExpense.attachmentUrl && (
-                <a href={linkedExpense.attachmentUrl} target="_blank" rel="noopener noreferrer"
+              {examExpense.docUrl && (
+                <a href={examExpense.docUrl} target="_blank" rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 font-body text-[11px] text-petal hover:underline">
-                  {expenseDocLabel(linkedExpense.expenseDocType) ?? 'Documento'} →
+                  {expenseDocLabel(examExpense.docType) ?? 'Documento'} →
                 </a>
               )}
-              <button onClick={() => { setAgendarMode('expense'); setAgendarOpen(true) }}
-                className="font-body text-[11px] text-mauve hover:text-petal transition-colors">Registrar outro pagamento</button>
+              <button onClick={startEditExpense} className="font-body text-[11px] text-mauve hover:text-petal transition-colors">Editar</button>
             </div>
           </div>
         ) : (
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-dashed border-border px-4 py-3">
             <p className="font-body text-sm text-mauve min-w-0">
               Registre o <strong className="text-onyx/70">valor pago</strong> e anexe a
-              <strong className="text-onyx/70"> nota fiscal, recibo ou comprovante</strong> — entra automaticamente em Despesas e nos Relatórios.
+              <strong className="text-onyx/70"> nota fiscal, recibo ou comprovante</strong> — fica no próprio exame e aparece em Despesas e Relatórios.
             </p>
-            <button onClick={() => { setAgendarMode('expense'); setAgendarOpen(true) }}
+            <button onClick={startEditExpense}
               className="flex-shrink-0 inline-flex items-center gap-1.5 gradient-sintera text-white font-body text-sm font-medium px-3 py-2 rounded-full hover:opacity-90 transition-opacity">
               <Receipt size={14} /> Registrar valor / NF
             </button>

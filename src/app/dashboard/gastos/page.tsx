@@ -26,6 +26,22 @@ function fmtBRL(cents: number): string {
   return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
+// FB-008: projeta um EXAME-com-valor como lançamento de despesa (o financeiro é atributo do exame, não Evento).
+// id prefixado 'exam:' distingue do evento — a exclusão limpa as colunas do exame (não apaga o exame).
+function examExpenseToEntry(e: Record<string, unknown>): HealthEvent {
+  return {
+    id: `exam:${e.id as string}`, type: 'exame', title: (e.type as string) || 'Exame', isReturn: false,
+    status: 'realizado', source: 'system', priority: null,
+    date: (e.exam_date as string) || String(e.created_at ?? '').slice(0, 10),
+    time: null, durationMin: null, reminderEnabled: false, reminderSentAt: null,
+    professionalKind: null, professionalName: null, establishment: (e.issuer as string) ?? null, location: null,
+    modality: null, preparation: null, notes: null, amountCents: (e.expense_amount_cents as number) ?? null,
+    directExpense: true, attachmentUrl: (e.expense_doc_url as string) ?? null, expenseDocType: (e.expense_doc_type as string) ?? null,
+    links: [{ type: 'exam', id: e.id as string }], outcome: null, recurrenceRule: null, seriesId: null,
+    parentEventId: null, rootEventId: null, completedAt: null,
+  }
+}
+
 export default function GastosPage() {
   const { user, loading: authLoading, } = useUser()
   const { services, saveEvent, supabase } = useEventForm()
@@ -46,8 +62,18 @@ export default function GastosPage() {
     ;(async () => {
       if (!user) { if (active) setLoading(false); return }
       const fin = await services.query.listFinancial(user.id)
+      // FB-008: Despesas = PROJEÇÃO sobre TODOS os fatos com valor. O financeiro do exame é atributo do
+      // próprio exame (não Evento) → projeta exames-com-valor; e exclui eventos legados vinculados a exame
+      // (evita duplicar o mesmo fato). Cada fato aparece UMA vez.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: exData } = await (supabase as any).from('exams')
+        .select('id,type,exam_date,created_at,issuer,expense_amount_cents,expense_doc_type,expense_doc_url')
+        .eq('user_id', user.id).gt('expense_amount_cents', 0)
       if (!active) return
-      const sorted = [...fin].sort((a, b) => (a.date < b.date ? 1 : -1))
+      const examEntries: HealthEvent[] = ((exData ?? []) as Array<Record<string, unknown>>).map(e => examExpenseToEntry(e))
+      const finNoExamLinked = fin.filter(e => !e.links?.some(l => l.type === 'exam'))
+      const merged = [...finNoExamLinked, ...examEntries]
+      const sorted = [...merged].sort((a, b) => (a.date < b.date ? 1 : -1))
       setItems(sorted)
       const years = [...new Set(sorted.map(r => Number(r.date.slice(0, 4))))].sort((a, b) => b - a)
       setYear(years[0] ?? new Date().getFullYear())
@@ -73,15 +99,25 @@ export default function GastosPage() {
   // Excluir o lançamento (o evento) de vez.
   function deleteGasto(r: HealthEvent) {
     if (busyId || !user) return
-    setConfirm({ message: `Excluir "${r.title}" das suas despesas? O evento é removido.`, confirmLabel: 'Excluir', onYes: async () => {
-      setBusyId(r.id); setActionError(null)
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error } = await (supabase as any).from('health_events').delete().eq('id', r.id)
-        if (error) { setActionError(`Não foi possível excluir: ${error.message}`); return }
-        setReloadKey(k => k + 1)
-      } finally { setBusyId(null) }
-    } })
+    const isExam = r.id.startsWith('exam:')
+    const examId = isExam ? r.id.slice('exam:'.length) : null
+    setConfirm({
+      message: isExam
+        ? `Remover o valor pago de "${r.title}"? O exame é mantido; apenas o registro financeiro sai das Despesas.`
+        : `Excluir "${r.title}" das suas despesas? O evento é removido.`,
+      confirmLabel: isExam ? 'Remover valor' : 'Excluir', onYes: async () => {
+        setBusyId(r.id); setActionError(null)
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const q = isExam
+            ? (supabase as any).from('exams').update({ expense_amount_cents: null, expense_doc_type: null, expense_doc_url: null }).eq('id', examId)
+            : (supabase as any).from('health_events').delete().eq('id', r.id)
+          const { error } = await q
+          if (error) { setActionError(`Não foi possível: ${error.message}`); return }
+          setReloadKey(k => k + 1)
+        } finally { setBusyId(null) }
+      },
+    })
   }
 
   const years = [...new Set(items.map(r => Number(r.date.slice(0, 4))))].sort((a, b) => b - a)
@@ -98,9 +134,12 @@ export default function GastosPage() {
   ).sort((a, b) => b.subtotal - a.subtotal)
 
   function expenseRow(r: HealthEvent) {
+    // FB-008: o lançamento de exame liga ao próprio exame (o fato). Eventos avulsos não têm destino.
+    const examId = r.id.startsWith('exam:') ? r.id.slice('exam:'.length) : null
     return (
       <ListCard key={r.id}
         title={r.title}
+        titleHref={examId ? `/dashboard/exams/${examId}` : undefined}
         meta={`${typeLabel(r.type)} · ${formatDateBR(r.date)}`}
         chips={
           <>
