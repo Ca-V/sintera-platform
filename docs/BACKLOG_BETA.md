@@ -57,7 +57,7 @@
 > da usuária); DS **essencial** (não a identidade inteira agora); "Outros" entra junto de Recursos. **Reúso
 > máximo** — nunca implementação específica quando um componente institucional atende múltiplos módulos.
 
-1. **BETA-2 · Captura única institucional (rollout completo)** `ARQ` — ADR interino ANTES; `CreateRecordMenu` como único ponto de "Adicionar" em todos os módulos (arquivo/arrastar/foto/manual/voz).
+1. **BETA-2 · Captura única institucional (rollout completo)** `ARQ` — **ADR gate = CAP-001** (spec congelada e aprovada pela fundadora; não duplicar). O componente `CreateRecordMenu` JÁ é completo (arquivo/foto/manual + **voz** via slot + **arrastar** via drop→bundle + multipágina) — BETA-2 é puro **rollout de adoção**. **Adoção atual:** ✅ Exames · ✅ Medicamentos · ✅ Condições · ❌ Recursos · ❌ Medidas · ❌ Contracepção(ciclo) · ❌ Agenda · ❌ Documentos · ❌ Sinais Vitais · ❌ Hábitos. Meta: `CreateRecordMenu` como ÚNICO "Adicionar" em cada um (os módulos com passo dedicado — Medidas/Contracepção/Recursos — recebem a captura ao chegar seu passo; os demais entram aqui). Nenhum `<input type=file>` avulso.
 2. **BETA-7 · Modelo financeiro universal** `ARQ` — ADR interino ANTES; valor·NF·recibo·comprovante → projeção automática p/ Despesas em qualquer módulo, sem duplicação.
 3. **BETA-3 · Exames com integração financeira** — valor + anexos financeiros vinculados ao exame; alimenta Despesas/Relatórios/Histórico/Agenda (consome o padrão do item 2).
 4. **BETA-5 · Medidas** — único "Adicionar Medida" via captura institucional; bioimpedância auto-detectada.
