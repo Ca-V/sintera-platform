@@ -137,7 +137,7 @@ function LegacyDashboard() {
           {greeting}, {displayName} 👋
         </h1>
         <p className="font-body text-sm text-mauve mt-1">
-          Reúna seus exames, medicamentos e consultas num só lugar, acompanhe sua saúde ao longo do tempo e compartilhe com quem cuida de você.
+          Uma plataforma para organizar, registrar e acompanhar suas informações de saúde ao longo do tempo, preservando o histórico e a rastreabilidade de cada registro.
         </p>
       </motion.div>
 
