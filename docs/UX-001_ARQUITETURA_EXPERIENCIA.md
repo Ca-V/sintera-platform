@@ -120,6 +120,14 @@ histórico), **não** por biomarcador. Fluxo: **Exame → Histórico** (ocorrên
 original**) **→ Biomarcadores** (acessados **a partir** do exame, com evolução por biomarcador). Os biomarcadores
 continuam existindo — mudam apenas de **porta de entrada**: nunca o inverso. Preserva a rastreabilidade até o
 documento ([[principio_rastreabilidade_documental]]). Implementação: `groupByExam` (SSOT de rótulos do catálogo).
+> **Princípio complementar — exame como ENTIDADE LONGITUDINAL (fundadora 17/07):** *Cada tipo de exame representa
+> uma entidade longitudinal da plataforma. Seu histórico é composto pelas sucessivas realizações desse exame,
+> enquanto os biomarcadores representam atributos derivados de cada realização, preservando sempre a
+> rastreabilidade até o laudo original.* Consequência de UX: cada exame exibe um **resumo longitudinal** derivado
+> (primeira/última realização · total de realizações · último laboratório · última solicitação/solicitante) —
+> **tudo derivado dos laudos existentes, sem duplicação de dados**. **Feito (v1):** resumo com primeira/última/
+> total + último laboratório/solicitante. **Evolução futura:** o exame pode virar uma entidade navegável própria
+> (página do tipo de exame) e o cabeçalho exibir mais derivados conforme o histórico crescer.
 
 **Relatório = taxonomia da navegação (princípio, FB-010).** O Relatório **não tem árvore própria**: reutiliza a
 **mesma taxonomia da Sidebar** (grupos, ordem e rótulos). Qualquer reorganização da Sidebar deve refletir
