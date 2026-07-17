@@ -79,6 +79,9 @@ Registro GLOBAL (sequência `NC-####` contínua entre domínios; ver `LIFECYCLE_
 - **`clinical-identity-registry` + processador `corneal`** (F010): 🔧 corrigidos — NC-0027 (CC forte demais → Mamografia) + NC-0028 (artigo "os" → olho esquerdo). Ensemble de score e extração por olho sólidos.
 - **Detecção de emissor/data** (`structural-analysis`): ✅ auditado — dedup de datas por separador; `KNOWN_ISSUERS` = âncora leve (emissor do card vem do LLM). **Nota p/ homologação:** `'axial'` por substring pode colidir com o termo radiológico "plano axial" (fix seguro é ambíguo; baixo impacto por ser âncora leve).
 - **`laboratory-adapter`** (F010, biomarcador→UCDA): ✅ auditado, sem alteração — Modelo Aberto (campos genéricos); numérico→measure/qualitativo→parameter (nunca coage qualitativo a número); `hasValue` filtra não-resultados; faixa transcrita. Coberto por `FUNC-laboratory-adapter`.
+- **`models` (registro de modelos clínicos)** (F010): ✅ auditado, sem alteração — ids únicos (sem colisão no Map), `getClinicalModel` correto, estrutura por modalidade.
+
+> **Marco da varredura estática:** a lógica pura da camada `capture/` está **essencialmente auditada** (reprodutibilidade · UCDA · CPE · segmentação · identity/representation validator · identidade clínica · processador corneal · structural-analysis · laboratory-adapter · models · gateway). Rendeu NC-0021→0028 + refinos (UCDA `toNum`, hardening F003, simplificação gateway). O que resta de Exames é **comportamental** (decisão de produto/ambiente) ou **homologação** (documentos reais) — fora do alcance autônomo seguro.
 
 _Origens possíveis: Revisão funcional · Revisão de UX · Homologação · Certificação · Documento CRC · Teste
 automatizado · Feedback de usuário._
