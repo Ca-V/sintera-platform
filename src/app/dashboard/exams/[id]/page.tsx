@@ -641,24 +641,55 @@ export default function ExamDetailPage() {
         <CareFlowStepper stage={careStage} />
       </div>
 
-      {/* BETA-3: despesa vinculada ao exame (valor pago + documento fiscal) */}
-      {linkedExpense && (linkedExpense.amountCents ?? 0) > 0 && (
-        <div className="print:hidden rounded-2xl border border-petal/30 bg-blush/30 px-4 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 min-w-0">
-            <Receipt size={16} className="text-petal flex-shrink-0" />
-            <p className="font-body text-sm text-onyx">
-              Valor pago: <strong>{((linkedExpense.amountCents ?? 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>
-              <span className="text-mauve"> · aparece em <button onClick={() => router.push('/dashboard/gastos')} className="text-petal hover:underline">Despesas</button></span>
-            </p>
-          </div>
-          {linkedExpense.attachmentUrl && (
-            <a href={linkedExpense.attachmentUrl} target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 font-body text-[11px] text-petal hover:underline flex-shrink-0">
-              {expenseDocLabel(linkedExpense.expenseDocType) ?? 'Documento'} →
-            </a>
-          )}
+      {/* FB-001: Financeiro do exame — seção proeminente (valor pago · documento fiscal · recorrência) */}
+      <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} padding="md" className="print:hidden">
+        <div className="flex items-center gap-2 mb-3">
+          <Receipt size={16} className="text-petal" />
+          <h2 className="font-display text-base font-semibold text-onyx">Financeiro e acompanhamento</h2>
         </div>
-      )}
+        {linkedExpense && (linkedExpense.amountCents ?? 0) > 0 ? (
+          <div className="flex items-center justify-between gap-3 rounded-xl bg-blush/30 border border-petal/30 px-4 py-3">
+            <div className="min-w-0">
+              <p className="font-body text-[11px] text-mauve uppercase tracking-wide">Valor pago</p>
+              <p className="font-body text-xl font-semibold text-onyx leading-tight">
+                {((linkedExpense.amountCents ?? 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              </p>
+              <p className="font-body text-[11px] text-mauve mt-0.5">
+                Aparece em <button onClick={() => router.push('/dashboard/gastos')} className="text-petal hover:underline">Despesas</button>
+              </p>
+            </div>
+            <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+              {linkedExpense.attachmentUrl && (
+                <a href={linkedExpense.attachmentUrl} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 font-body text-[11px] text-petal hover:underline">
+                  {expenseDocLabel(linkedExpense.expenseDocType) ?? 'Documento'} →
+                </a>
+              )}
+              <button onClick={() => { setAgendarMode('expense'); setAgendarOpen(true) }}
+                className="font-body text-[11px] text-mauve hover:text-petal transition-colors">Registrar outro pagamento</button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-dashed border-border px-4 py-3">
+            <p className="font-body text-sm text-mauve min-w-0">
+              Registre o <strong className="text-onyx/70">valor pago</strong> e anexe a
+              <strong className="text-onyx/70"> nota fiscal, recibo ou comprovante</strong> — entra automaticamente em Despesas e nos Relatórios.
+            </p>
+            <button onClick={() => { setAgendarMode('expense'); setAgendarOpen(true) }}
+              className="flex-shrink-0 inline-flex items-center gap-1.5 gradient-sintera text-white font-body text-sm font-medium px-3 py-2 rounded-full hover:opacity-90 transition-opacity">
+              <Receipt size={14} /> Registrar valor / NF
+            </button>
+          </div>
+        )}
+        {/* Recorrência / repetição do exame */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-3 pt-3 border-t border-border/50">
+          <p className="font-body text-xs text-mauve">Precisa repetir este exame periodicamente?</p>
+          <button onClick={() => { setAgendarMode('repeat'); setAgendarOpen(true) }}
+            className="flex-shrink-0 inline-flex items-center gap-1.5 border border-border text-mauve font-body text-xs font-medium px-3 py-1.5 rounded-full hover:border-petal/40 hover:text-petal transition-colors">
+            <CalendarDays size={13} /> Criar lembrete de repetição
+          </button>
+        </div>
+      </MotionCard>
 
       {/* Cabeçalho do exame */}
       <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
@@ -789,19 +820,7 @@ export default function ExamDetailPage() {
               <Flag size={14} /> Reportar
             </button>
 
-            {/* Agendar/lembrete (E8) */}
-            <button
-              onClick={() => { setAgendarMode('repeat'); setAgendarOpen(true) }}
-              className="flex items-center gap-1.5 border border-border text-mauve font-body text-sm font-medium px-3 py-2.5 rounded-full hover:border-petal/40 hover:text-petal transition-colors">
-              <CalendarDays size={14} /> Criar lembrete
-            </button>
-
-            {/* Registrar valor pago + NF/recibo (E7) — vira Despesa (health_events) */}
-            <button
-              onClick={() => { setAgendarMode('expense'); setAgendarOpen(true) }}
-              className="flex items-center gap-1.5 border border-border text-mauve font-body text-sm font-medium px-3 py-2.5 rounded-full hover:border-petal/40 hover:text-petal transition-colors">
-              <Receipt size={14} /> Registrar custo / NF
-            </button>
+            {/* Lembrete + valor/NF agora vivem na seção "Financeiro e acompanhamento" (FB-001) — sem duplicar aqui */}
 
             {/* Baixar/ver PDF original — disponível sempre que houver arquivo */}
             {(exam as unknown as { file_url?: string | null })?.file_url && (
