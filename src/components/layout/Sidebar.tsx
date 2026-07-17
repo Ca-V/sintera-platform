@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, FileText, Clock, Pill, Receipt, CalendarDays,
   HeartPulse, Stethoscope, ScrollText, Droplet, Activity, Ruler, Settings,
-  Accessibility, X, ChevronRight,
+  Accessibility, X, ChevronRight, TrendingUp,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUser } from '@/context/UserContext'
@@ -14,13 +14,20 @@ import { useUser } from '@/context/UserContext'
 // Painel Inicial — item avulso (sem grupo), primeiro do menu.
 const homeItem = { href: '/dashboard', icon: LayoutDashboard, label: 'Painel Inicial', extra: undefined as string[] | undefined }
 
-// Arquitetura de navegação (UX-001 §5). Ordem = sequência natural de uso; agrupamento
+// Arquitetura de navegação por DOMÍNIO de negócio (UX-001 §5; FB-010). Agrupamento
 // = organização da experiência, NÃO fusão de entidades (cada módulo preserva modelo/regras).
-//   Acompanhamento = "o que preciso acompanhar hoje?" (Agenda, Histórico, Exames, Medicamentos e Suplementos) — uso diário, vem primeiro.
-//   Minha Saúde    = "quem eu sou / meu estado de saúde?" (Condições, Recursos, Medidas, Sinais, Hábitos, Ciclo) — contexto permanente.
-//   Organização    = "como organizo minha vida em saúde?" (Despesas, Relatórios).
+// A plataforma caminha para 5 domínios de 1º nível: Acompanhamento · Minha Saúde ·
+// Rede de Cuidado (CARE-001, ainda a construir) · Organização · Configurações.
+//   Acompanhamento = evolução temporal da saúde (Agenda, Registros de Saúde, Histórico de Exames,
+//                    Composição Corporal, Monitoramento).
+//   Documentos     = repositório documental/operacional (hoje só Exames; futuro: Vacinas, outros documentos).
+//   Minha Saúde    = estado permanente da pessoa (Condições, Medicamentos e Suplementos, Recursos, Hábitos, Ciclo).
+//   Organização    = finanças e documentos administrativos (Despesas, Relatórios).
 //   Configurações  = conta.
-// "Histórico" reúne Linha do Tempo + Evolução (duas visões do registro longitudinal).
+// DISTINÇÃO-CHAVE (FB-010): "Exames" é o repositório OPERACIONAL (captura/OCR/laudo original/edição/valor/NF/
+// recorrência/reextração); "Histórico de Exames" (/dashboard/saude) é o ACOMPANHAMENTO longitudinal de
+// biomarcadores no tempo. São jornadas distintas e complementares — por isso itens separados.
+// PRINCÍPIO: toda alteração desta Sidebar reflete na taxonomia do Relatório (relatorio/page SELECT_GROUPS + bandas).
 const navGroups: {
   title: string
   titleColor: string
@@ -32,10 +39,19 @@ const navGroups: {
     titleColor: 'text-lavender',
     chipBg: 'bg-lavender',
     items: [
-      { href: '/dashboard/agenda',       icon: CalendarDays, label: 'Agenda' },
-      { href: '/dashboard/timeline',     icon: Clock,        label: 'Histórico', extra: ['/dashboard/saude', '/dashboard/historico'] },
-      { href: '/dashboard/exams',        icon: FileText,     label: 'Exames' },
-      { href: '/dashboard/medicamentos', icon: Pill,         label: 'Medicamentos e Suplementos' },
+      { href: '/dashboard/agenda',        icon: CalendarDays, label: 'Agenda' },
+      { href: '/dashboard/timeline',      icon: Clock,        label: 'Registros de Saúde', extra: ['/dashboard/historico'] },
+      { href: '/dashboard/saude',         icon: TrendingUp,   label: 'Histórico de Exames' },
+      { href: '/dashboard/medidas',       icon: Ruler,        label: 'Composição Corporal' },
+      { href: '/dashboard/sinais-vitais', icon: Activity,     label: 'Monitoramento' },
+    ],
+  },
+  {
+    title: 'Documentos',
+    titleColor: 'text-petal',
+    chipBg: 'bg-petal',
+    items: [
+      { href: '/dashboard/exams', icon: FileText, label: 'Exames' },
     ],
   },
   {
@@ -44,11 +60,10 @@ const navGroups: {
     chipBg: 'bg-lagoa',
     items: [
       { href: '/dashboard/condicoes',     icon: Stethoscope,   label: 'Condições de Saúde' },
+      { href: '/dashboard/medicamentos',  icon: Pill,          label: 'Medicamentos e Suplementos' },
       { href: '/dashboard/recursos',      icon: Accessibility, label: 'Recursos de Saúde' },
-      { href: '/dashboard/medidas',       icon: Ruler,       label: 'Composição Corporal' },
-      { href: '/dashboard/sinais-vitais', icon: Activity,    label: 'Monitoramento' },
-      { href: '/dashboard/habitos',       icon: HeartPulse,  label: 'Hábitos' },
-      { href: '/dashboard/ciclo',         icon: Droplet,     label: 'Ciclo e Contracepção' },
+      { href: '/dashboard/habitos',       icon: HeartPulse,    label: 'Hábitos' },
+      { href: '/dashboard/ciclo',         icon: Droplet,       label: 'Ciclo e Contracepção' },
     ],
   },
   {

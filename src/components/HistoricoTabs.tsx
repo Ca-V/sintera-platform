@@ -1,16 +1,16 @@
 'use client'
 
-// Cabeçalho de abas do módulo Histórico de Saúde — duas visões da MESMA jornada
-// longitudinal: Linha do Tempo (eventos no tempo) e Evolução (números no tempo).
-// Compartilhado pelas rotas /dashboard/timeline e /dashboard/saude para que se
-// apresentem como um único módulo. Sem lógica de dados — só navegação.
+// Cross-link entre dois módulos RELACIONADOS mas distintos (FB-010): Registros de Saúde
+// (eventos no tempo, /dashboard/timeline) e Histórico de Exames (biomarcadores no tempo,
+// /dashboard/saude). São jornadas diferentes — não uma fusão de dados; este cabeçalho só
+// facilita transitar entre elas. Sem lógica de dados — só navegação.
 
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 
 const TABS = [
-  { key: 'linha',    href: '/dashboard/timeline', label: 'Linha do Tempo' },
-  { key: 'evolucao', href: '/dashboard/saude',    label: 'Evolução' },
+  { key: 'linha',    href: '/dashboard/timeline', label: 'Registros de Saúde' },
+  { key: 'evolucao', href: '/dashboard/saude',    label: 'Histórico de Exames' },
 ] as const
 
 export default function HistoricoTabs({ active }: { active: 'linha' | 'evolucao' }) {

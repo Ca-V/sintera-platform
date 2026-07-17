@@ -177,18 +177,23 @@ function LegacyReport() {
   const isItemOn = (k: string, key: string): boolean => !(excluded[k]?.has(key))
   const toggleItem = (k: string, key: string) =>
     setExcluded(e => { const s = new Set(e[k] ?? []); if (s.has(key)) s.delete(key); else s.add(key); return { ...e, [k]: s } })
+  // Espelho da Sidebar (FB-010): mesma taxonomia por domínio. Acompanhamento (Agenda, Composição Corporal,
+  // Monitoramento) · Documentos (Exames, ômica) · Minha Saúde (Condições, Medicamentos, Recursos, Hábitos,
+  // Ciclo) · Organização (Despesas). Qualquer mudança na Sidebar deve refletir aqui.
   const SELECT_GROUPS: { title: string; items: [SectionKey, string, ElementType][] }[] = [
     { title: 'Acompanhamento', items: [
       ['eventos', 'Agenda', CalendarDays],
+      ['medidas', 'Composição Corporal', Ruler],
+      ['sinais', 'Monitoramento', Activity],
+    ] },
+    { title: 'Documentos', items: [
       ['exames', 'Exames', FileText],
       ['omica', 'Exames de ômica', FlaskConical],
-      ['medicamentos', 'Medicamentos e Suplementos', Pill],
     ] },
     { title: 'Minha Saúde', items: [
       ['condicoes', 'Condições de Saúde', Stethoscope],
+      ['medicamentos', 'Medicamentos e Suplementos', Pill],
       ['visao', 'Recursos de Saúde (óculos e lentes)', Eye],
-      ['medidas', 'Composição Corporal', Ruler],
-      ['sinais', 'Monitoramento', Activity],
       ['habitos', 'Hábitos', HeartPulse],
       ['ciclo', 'Ciclo e Contracepção', Droplet],
     ] },
@@ -330,9 +335,10 @@ function LegacyReport() {
   const visMedsEmUso = medsEmUso.filter(m => isItemOn('medicamentos', m.name))
   const visMedsSusp = medsSusp.filter(m => isItemOn('medicamentos', m.name))
   const visExams = exams.filter(e => isItemOn('exames', `${e.type}__${e.date}`))
-  // Faixas de grupo (espelham o menu): exibidas se houver ao menos uma seção do grupo.
-  const showAcompanhamento = sections.eventos || sections.exames || sections.omica || sections.medicamentos
-  const showMinhaSaude = sections.condicoes || sections.visao || sections.medidas || sections.sinais || sections.habitos || sections.ciclo
+  // Faixas de grupo (espelham a Sidebar, FB-010): exibidas se houver ao menos uma seção do grupo.
+  const showAcompanhamento = sections.eventos || sections.medidas || sections.sinais
+  const showDocumentos = sections.exames || sections.omica
+  const showMinhaSaude = sections.condicoes || sections.medicamentos || sections.visao || sections.habitos || sections.ciclo
   const showOrganizacao = sections.gastos
   const condProprias = conditions.filter(c => c.scope === 'propria')
   const condFamiliar = conditions.filter(c => c.scope === 'familiar')
@@ -713,138 +719,6 @@ function LegacyReport() {
         </section>
         )}
 
-        {/* Exames */}
-        {sections.exames && (
-        <section id="sec-exames" style={{ scrollMarginTop: 16 }}>
-          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Exames</h2>
-          {perVisExams.length > 1 && (
-            <ViewModeSwitcher className="mb-2 print:hidden"
-              modes={EXAM_SORTS.map(s => ({ value: s.key, label: s.label }))}
-              active={examSort} onChange={setExamSort} />
-          )}
-          {perVisExams.length === 0 ? (
-            <p className="font-body text-xs text-mauve">Nenhum exame enviado.</p>
-          ) : (
-            <ul className="space-y-1">
-              {sortedExams.map((e, i) => (
-                <li key={i} className="font-body text-xs text-onyx flex flex-wrap items-baseline gap-x-2">
-                  <span>• {fmt(e.date)} — {e.type}</span>
-                  <ProvenanceLine provenance={examProvenance({ fileUrl: e.fileUrl })} showOrigin={false} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-        )}
-
-        {/* Exames de ômica */}
-        {sections.omica && (
-        <section id="sec-omica" style={{ scrollMarginTop: 16 }}>
-          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Exames de ômica</h2>
-          {perOmics.length === 0 ? (
-            <p className="font-body text-xs text-mauve">Nenhum exame de ômica registrado.</p>
-          ) : (
-            <ul className="space-y-1">
-              {perOmics.map((o, i) => (
-                <li key={i} className="font-body text-xs text-onyx">
-                  • {o.date ? `${fmt(o.date)} — ` : ''}<strong>{DOMAIN_LABEL[o.domain as OmicsDomain] ?? 'Ômica'}</strong>
-                  {[o.laboratory, o.totalFeatures != null ? `${o.totalFeatures.toLocaleString('pt-BR')} marcadores` : null].filter(Boolean).length
-                    ? ` (${[o.laboratory, o.totalFeatures != null ? `${o.totalFeatures.toLocaleString('pt-BR')} marcadores` : null].filter(Boolean).join(', ')})` : ''}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-        )}
-
-        {/* Medicamentos e suplementos */}
-        {sections.medicamentos && (
-        <section id="sec-medicamentos" style={{ scrollMarginTop: 16 }}>
-          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Medicamentos e Suplementos em uso</h2>
-          {visMedsEmUso.length === 0 ? (
-            <p className="font-body text-xs text-mauve">Nenhum registrado em uso.</p>
-          ) : (
-            <ul className="space-y-1.5">
-              {visMedsEmUso.map((m, i) => {
-                const detalhe = `${[m.dose, m.frequency].filter(Boolean).join(', ')}${periodo(m.startedOn, m.untilOn)}`.trim()
-                return (
-                <li key={i} className="font-body text-xs text-onyx">
-                  • <strong>{m.name}</strong>{m.kind === 'suplemento' ? ' (suplemento)' : ''}
-                  {detalhe ? <span className="block text-xs text-mauve ml-3">{detalhe}</span> : null}
-                </li>
-                )
-              })}
-            </ul>
-          )}
-          {perMedsSusp.length > 0 && (
-            <p className="font-body text-xs text-mauve mt-2">Suspensos: {perMedsSusp.map(m => m.name).join(', ')}.</p>
-          )}
-        </section>
-        )}
-
-        {/* ══════════ MINHA SAÚDE ══════════ */}
-        {showMinhaSaude && <ReportBand>Minha Saúde</ReportBand>}
-
-        {/* Condições de saúde — próprias + histórico familiar */}
-        {sections.condicoes && (
-        <section id="sec-condicoes" style={{ scrollMarginTop: 16 }}>
-          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Condições de Saúde</h2>
-          {condProprias.length === 0 ? (
-            <p className="font-body text-xs text-mauve">Nenhuma condição registrada.</p>
-          ) : (
-            <ul className="space-y-1.5">
-              {condProprias.map((c, i) => (
-                <li key={i} className="font-body text-xs text-onyx">
-                  • <strong>{c.name}</strong>{c.since ? ` (desde ${c.since})` : ''}
-                  {c.notes ? <span className="block text-xs text-mauve ml-3">{c.notes}</span> : null}
-                </li>
-              ))}
-            </ul>
-          )}
-          {condFamiliar.length > 0 && (
-            <>
-              <h3 className="font-body text-xs font-bold text-mauve/80 mt-3 mb-1 uppercase tracking-wider">Histórico familiar</h3>
-              <ul className="space-y-1.5">
-                {condFamiliar.map((c, i) => (
-                  <li key={i} className="font-body text-xs text-onyx">
-                    • <strong>{c.name}</strong>{c.relative ? ` — ${c.relative}` : ''}{c.since ? ` (desde ${c.since})` : ''}
-                    {c.notes ? <span className="block text-xs text-mauve ml-3">{c.notes}</span> : null}
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-        </section>
-        )}
-
-        {/* Recursos de Saúde (correção visual: óculos e lentes de contato) */}
-        {sections.visao && (
-        <section id="sec-visao" style={{ scrollMarginTop: 16 }}>
-          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Recursos de Saúde</h2>
-          {eyewear.length === 0 ? (
-            <p className="font-body text-xs text-mauve">Nenhum recurso registrado.</p>
-          ) : (
-            <ul className="space-y-1.5">
-              {eyewear.map((e, i) => {
-                const extras = [
-                  e.dnp ? `DNP ${e.dnp}` : null, e.bc ? `BC ${e.bc}` : null, e.dia ? `DIA ${e.dia}` : null,
-                  e.prescribedOn ? fmt(e.prescribedOn) : null, e.prescriber,
-                ].filter(Boolean)
-                return (
-                  <li key={i} className="font-body text-xs text-onyx">
-                    • <strong>{EYEWEAR_LABEL[e.kind] ?? 'Óculos'}</strong>
-                    {grauStr(e.odSph, e.odCyl, e.odAxis, e.odAdd) ? <span className="block text-xs text-mauve ml-3">OD: {grauStr(e.odSph, e.odCyl, e.odAxis, e.odAdd)}</span> : null}
-                    {grauStr(e.oeSph, e.oeCyl, e.oeAxis, e.oeAdd) ? <span className="block text-xs text-mauve ml-3">OE: {grauStr(e.oeSph, e.oeCyl, e.oeAxis, e.oeAdd)}</span> : null}
-                    {extras.length ? <span className="block text-xs text-mauve ml-3">{extras.join(' · ')}</span> : null}
-                    {e.fileUrl ? <span className="block ml-3 mt-0.5"><ProvenanceLine provenance={resourceProvenance({ fileUrl: e.fileUrl, prescriber: e.prescriber })} showOrigin={false} /></span> : null}
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-        </section>
-        )}
-
         {/* Medidas corporais */}
         {sections.medidas && (
         <section id="sec-medidas" style={{ scrollMarginTop: 16 }}>
@@ -892,6 +766,141 @@ function LegacyReport() {
                 ))}
               </tbody>
             </table>
+          )}
+        </section>
+        )}
+
+        {/* ══════════ DOCUMENTOS ══════════ */}
+        {showDocumentos && <ReportBand>Documentos</ReportBand>}
+
+        {/* Exames */}
+        {sections.exames && (
+        <section id="sec-exames" style={{ scrollMarginTop: 16 }}>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Exames</h2>
+          {perVisExams.length > 1 && (
+            <ViewModeSwitcher className="mb-2 print:hidden"
+              modes={EXAM_SORTS.map(s => ({ value: s.key, label: s.label }))}
+              active={examSort} onChange={setExamSort} />
+          )}
+          {perVisExams.length === 0 ? (
+            <p className="font-body text-xs text-mauve">Nenhum exame enviado.</p>
+          ) : (
+            <ul className="space-y-1">
+              {sortedExams.map((e, i) => (
+                <li key={i} className="font-body text-xs text-onyx flex flex-wrap items-baseline gap-x-2">
+                  <span>• {fmt(e.date)} — {e.type}</span>
+                  <ProvenanceLine provenance={examProvenance({ fileUrl: e.fileUrl })} showOrigin={false} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+        )}
+
+        {/* Exames de ômica */}
+        {sections.omica && (
+        <section id="sec-omica" style={{ scrollMarginTop: 16 }}>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Exames de ômica</h2>
+          {perOmics.length === 0 ? (
+            <p className="font-body text-xs text-mauve">Nenhum exame de ômica registrado.</p>
+          ) : (
+            <ul className="space-y-1">
+              {perOmics.map((o, i) => (
+                <li key={i} className="font-body text-xs text-onyx">
+                  • {o.date ? `${fmt(o.date)} — ` : ''}<strong>{DOMAIN_LABEL[o.domain as OmicsDomain] ?? 'Ômica'}</strong>
+                  {[o.laboratory, o.totalFeatures != null ? `${o.totalFeatures.toLocaleString('pt-BR')} marcadores` : null].filter(Boolean).length
+                    ? ` (${[o.laboratory, o.totalFeatures != null ? `${o.totalFeatures.toLocaleString('pt-BR')} marcadores` : null].filter(Boolean).join(', ')})` : ''}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+        )}
+
+        {/* ══════════ MINHA SAÚDE ══════════ */}
+        {showMinhaSaude && <ReportBand>Minha Saúde</ReportBand>}
+
+        {/* Condições de saúde — próprias + histórico familiar */}
+        {sections.condicoes && (
+        <section id="sec-condicoes" style={{ scrollMarginTop: 16 }}>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Condições de Saúde</h2>
+          {condProprias.length === 0 ? (
+            <p className="font-body text-xs text-mauve">Nenhuma condição registrada.</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {condProprias.map((c, i) => (
+                <li key={i} className="font-body text-xs text-onyx">
+                  • <strong>{c.name}</strong>{c.since ? ` (desde ${c.since})` : ''}
+                  {c.notes ? <span className="block text-xs text-mauve ml-3">{c.notes}</span> : null}
+                </li>
+              ))}
+            </ul>
+          )}
+          {condFamiliar.length > 0 && (
+            <>
+              <h3 className="font-body text-xs font-bold text-mauve/80 mt-3 mb-1 uppercase tracking-wider">Histórico familiar</h3>
+              <ul className="space-y-1.5">
+                {condFamiliar.map((c, i) => (
+                  <li key={i} className="font-body text-xs text-onyx">
+                    • <strong>{c.name}</strong>{c.relative ? ` — ${c.relative}` : ''}{c.since ? ` (desde ${c.since})` : ''}
+                    {c.notes ? <span className="block text-xs text-mauve ml-3">{c.notes}</span> : null}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </section>
+        )}
+
+        {/* Medicamentos e suplementos */}
+        {sections.medicamentos && (
+        <section id="sec-medicamentos" style={{ scrollMarginTop: 16 }}>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Medicamentos e Suplementos em uso</h2>
+          {visMedsEmUso.length === 0 ? (
+            <p className="font-body text-xs text-mauve">Nenhum registrado em uso.</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {visMedsEmUso.map((m, i) => {
+                const detalhe = `${[m.dose, m.frequency].filter(Boolean).join(', ')}${periodo(m.startedOn, m.untilOn)}`.trim()
+                return (
+                <li key={i} className="font-body text-xs text-onyx">
+                  • <strong>{m.name}</strong>{m.kind === 'suplemento' ? ' (suplemento)' : ''}
+                  {detalhe ? <span className="block text-xs text-mauve ml-3">{detalhe}</span> : null}
+                </li>
+                )
+              })}
+            </ul>
+          )}
+          {perMedsSusp.length > 0 && (
+            <p className="font-body text-xs text-mauve mt-2">Suspensos: {perMedsSusp.map(m => m.name).join(', ')}.</p>
+          )}
+        </section>
+        )}
+
+        {/* Recursos de Saúde (correção visual: óculos e lentes de contato) */}
+        {sections.visao && (
+        <section id="sec-visao" style={{ scrollMarginTop: 16 }}>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Recursos de Saúde</h2>
+          {eyewear.length === 0 ? (
+            <p className="font-body text-xs text-mauve">Nenhum recurso registrado.</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {eyewear.map((e, i) => {
+                const extras = [
+                  e.dnp ? `DNP ${e.dnp}` : null, e.bc ? `BC ${e.bc}` : null, e.dia ? `DIA ${e.dia}` : null,
+                  e.prescribedOn ? fmt(e.prescribedOn) : null, e.prescriber,
+                ].filter(Boolean)
+                return (
+                  <li key={i} className="font-body text-xs text-onyx">
+                    • <strong>{EYEWEAR_LABEL[e.kind] ?? 'Óculos'}</strong>
+                    {grauStr(e.odSph, e.odCyl, e.odAxis, e.odAdd) ? <span className="block text-xs text-mauve ml-3">OD: {grauStr(e.odSph, e.odCyl, e.odAxis, e.odAdd)}</span> : null}
+                    {grauStr(e.oeSph, e.oeCyl, e.oeAxis, e.oeAdd) ? <span className="block text-xs text-mauve ml-3">OE: {grauStr(e.oeSph, e.oeCyl, e.oeAxis, e.oeAdd)}</span> : null}
+                    {extras.length ? <span className="block text-xs text-mauve ml-3">{extras.join(' · ')}</span> : null}
+                    {e.fileUrl ? <span className="block ml-3 mt-0.5"><ProvenanceLine provenance={resourceProvenance({ fileUrl: e.fileUrl, prescriber: e.prescriber })} showOrigin={false} /></span> : null}
+                  </li>
+                )
+              })}
+            </ul>
           )}
         </section>
         )}

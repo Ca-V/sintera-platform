@@ -4,6 +4,16 @@
 > configura, POR CATEGORIA de evento, o canal: **e-mail · WhatsApp · ambos · nenhum**. Reutilizada
 > por todos os módulos — **proibido** implementação específica por funcionalidade. É a dimensão
 > "Integrações transversais" (GATE de 4 dimensões) de todo módulo com item agendado.
+>
+> **Confirmação 17/07/2026 (FB-010).** A fundadora reforçou: a opção de **WhatsApp** deve estar disponível
+> **em tudo**, ao lado do e-mail, em todo ponto de notificação. **Decisão de arquitetura (aprovada):** isso se
+> realiza pela **Central de Notificações** (uma tela de preferências por categoria: e-mail/WhatsApp/ambos/nenhum),
+> para a qual **todos os formulários apontam** — e **NÃO** por uma caixinha de WhatsApp duplicada em cada
+> formulário (evita duplicação; padrão SINTERA de infra única). **Dependência operacional:** o **envio real** de
+> WhatsApp exige um **provedor** (Meta WhatsApp Business API ou Twilio) + telefone verificado + credenciais
+> (configuração da fundadora; nunca versionadas). A **preferência** fica salva desde já; o disparo liga quando o
+> provedor for provisionado. Próxima entrega = construir a Central de Notificações (UI de preferências + coluna(s)
+> de preferência por categoria) e ligar os módulos a ela.
 
 ## Princípio arquitetural
 Como o CPE concentra o clínico e o Billing concentra o comercial, a **notificação é um serviço único**:

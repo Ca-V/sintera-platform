@@ -86,10 +86,22 @@ Módulo → Lista → Detalhe → Edição
 
 **Agrupamento ≠ fusão.** Os grupos de menu são **organização da experiência**, não fusão de entidades. Cada módulo dentro de um grupo **preserva identidade, ciclo de vida, regras e modelo de dados próprios** — agrupar reduz itens de primeiro nível sem misturar dados. O grupo é rótulo de navegação; a taxonomia formal é a §3.
 
-**Menu lateral** — a **ordem segue a sequência natural de uso** (uso diário primeiro; perfil de saúde como contexto permanente):
+> **Emenda 2026-07-17 (FB-010, revisão explícita da fundadora).** A navegação passa a ser organizada por
+> **DOMÍNIO de negócio** (não por frequência), caminhando para **5 domínios de 1º nível**: Acompanhamento ·
+> Minha Saúde · **Rede de Cuidado** ([[CARE-001]], a construir) · Organização · Configurações. Decisões-chave:
+> (1) **"Histórico" → "Registros de Saúde"** (timeline de eventos); (2) surge **"Histórico de Exames"**
+> (`/dashboard/saude`, evolução longitudinal de biomarcadores) como item próprio; (3) **Exames NÃO se funde** com
+> Histórico de Exames — Exames é o **repositório documental/operacional** (captura/OCR/laudo/edição/valor/NF/
+> recorrência/reextração), num grupo **📁 Documentos** ([[DOC-001]]; futuro: Vacinas, outros documentos);
+> (4) **Composição Corporal** e **Monitoramento** sobem para Acompanhamento; **Medicamentos e Suplementos** e
+> **Recursos** ficam em Minha Saúde. **Rede de Cuidado** = governança do compartilhamento (documentada, build adiado).
+
+**Menu lateral** — organizado por **domínio de negócio** (FB-010); a estrutura em vigor:
 - **Painel** — Painel Inicial.
-- **Acompanhamento** *("o que preciso acompanhar hoje?" — a jornada no tempo e os registros)* — Agenda · Histórico · Exames · Medicamentos e Suplementos.
-- **Minha Saúde** *("quem eu sou / meu estado de saúde?" — estado-perfil contínuo)* — Condições de Saúde · **Recursos de Saúde** · Medidas Corporais · Sinais Vitais · Hábitos · Ciclo e Contracepção.
+- **Acompanhamento** *(evolução temporal da saúde)* — Agenda · **Registros de Saúde** · **Histórico de Exames** · Composição Corporal · Monitoramento.
+- **📁 Documentos** *(repositório documental/operacional)* — Exames *(hoje único item; ver [[DOC-001]])*.
+- **Minha Saúde** *(estado permanente da pessoa)* — Condições de Saúde · Medicamentos e Suplementos · **Recursos de Saúde** · Hábitos · Ciclo e Contracepção.
+- **🤝 Rede de Cuidado** *(governança do compartilhamento — [[CARE-001]], build adiado; não aparece no menu até existir a página)*.
 - **Organização** *("como organizo minha vida em saúde?")* — Despesas · Relatórios.
 - **Configurações**.
 
@@ -102,7 +114,10 @@ Módulo → Lista → Detalhe → Edição
 > **Como decidir onde encaixar um módulo novo:** ele representa uma **atividade/evento de cuidado no tempo** → Acompanhamento; representa um **traço/estado do perfil de saúde** → Minha Saúde. (Se for um acontecimento numa data, reveja antes a §2/§7: pode ser um **evento**, não um módulo.)
 
 **Acesso rápido (Painel Inicial):** os módulos mais frequentes — Histórico · Agenda · Exames · Medicamentos · Relatórios · Despesas.
-**Relatório:** espelha os módulos como seções, com os mesmos rótulos do menu.
+**Relatório = taxonomia da navegação (princípio, FB-010).** O Relatório **não tem árvore própria**: reutiliza a
+**mesma taxonomia da Sidebar** (grupos, ordem e rótulos). Qualquer reorganização da Sidebar deve refletir
+**automaticamente** na geração de relatórios (`relatorio/page` — `SELECT_GROUPS` + faixas de banda espelham os
+grupos do menu). Assim, evoluções futuras da navegação propagam para os relatórios sem retrabalho.
 **Rota ≠ rótulo:** URLs (`/dashboard/gastos`, `/dashboard/condicoes`) são estáveis; renomear o rótulo não muda a rota.
 
 ---

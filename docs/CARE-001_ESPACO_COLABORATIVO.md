@@ -1,4 +1,13 @@
-# CARE-001 — Espaço Colaborativo de Cuidado (Care Space)
+# CARE-001 — Espaço Colaborativo de Cuidado (Care Space) · **Rede de Cuidado**
+
+> **Nomenclatura e domínio (17/07/2026, FB-010).** A face do CARE-001 na navegação chama-se **"Rede de
+> Cuidado"** — um dos **5 domínios de 1º nível** da plataforma (Acompanhamento · Minha Saúde · **Rede de
+> Cuidado** · Organização · Configurações). Não é um dado de saúde nem pertence a "Minha Saúde"/"Acompanhamento":
+> é uma **capacidade transversal de governança do compartilhamento**. Página prevista: **Profissionais com
+> acesso · Familiares autorizados · Convites pendentes · Permissões por módulo · Compartilhamentos temporários
+> (por prazo) · Histórico de acessos (quem viu o quê e quando) · Equipe de cuidado**, com consentimento/LGPD e
+> revogação. **Decisão da fundadora: DOCUMENTAR agora, CONSTRUIR depois** — o item de menu só entra quando a
+> página existir (não adicionar navegação "morta" antes do beta). Prioridade do beta = estabilização.
 
 > Fundadora (14/07/2026): novo **PILAR** da SINTERA — não uma funcionalidade de compartilhamento. Hoje a
 > plataforma **estrutura e representa** a informação clínica; com o CARE-001 ela passa a **orquestrar a
