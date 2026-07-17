@@ -17,6 +17,7 @@ import { findDuplicateIds, originalIdFor, type DuplicateCandidate } from '@/lib/
 import { deriveExamIdentity } from '@/lib/exams/identification'
 import { binaryStructuringState, STRUCTURING_LABEL } from '@/lib/exams/structuring'
 import { isOrderDocumentType } from '@/lib/exams/classification'
+import { bundlePartInfo, bundlePartLabel, groupBundleParts } from '@/lib/exams/bundleGroup'
 import { useDocumentBundle, DocumentBundleStaging } from '@/components/ui/DocumentBundleCapture'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
@@ -219,7 +220,10 @@ export default function ExamsPage() {
       if (!groups.has(yr)) groups.set(yr, [])
       groups.get(yr)!.push(exam)
     }
-    return [...groups.entries()].sort((a, b) => b[0] - a[0])
+    // Multi-exame (EXA-C1): manter as PARTES do mesmo documento adjacentes e ordenadas por índice.
+    return [...groups.entries()]
+      .map(([yr, list]) => [yr, groupBundleParts(list)] as [number, Exam[]])
+      .sort((a, b) => b[0] - a[0])
   }, [exams, searchName, filterYear, filterStatus, filterFrom, filterTo])
 
   const totalFiltered = useMemo(() => examsByYear.reduce((s, [, g]) => s + g.length, 0), [examsByYear])
@@ -728,6 +732,21 @@ export default function ExamsPage() {
                                         <span className="text-mauve/40"> · enviado {formatDate(exam.created_at)}</span>
                                       )}
                                     </span>
+                                    {(() => {
+                                      const bp = bundlePartInfo(exam)
+                                      const lbl = bundlePartLabel(bp)
+                                      if (!lbl) return null
+                                      return (
+                                        <span className="block text-petal/80 mt-0.5">
+                                          {lbl}
+                                          {!bp.isRoot && bp.rootId && (
+                                            <> · <button type="button"
+                                              onClick={() => router.push('/dashboard/exams/' + bp.rootId)}
+                                              className="font-medium underline hover:text-onyx">ver documento</button></>
+                                          )}
+                                        </span>
+                                      )
+                                    })()}
                                     {duplicateIds.has(exam.id) && originalById.get(exam.id) && (
                                       <span className="block text-gold mt-0.5">
                                         Possível duplicado de outro exame ·{' '}
