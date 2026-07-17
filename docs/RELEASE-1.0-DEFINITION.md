@@ -38,14 +38,31 @@ RDC 657), com captura universal, linha do tempo, financeiro, compartilhamento e 
 - Conectores além de Strava/Garmin (labs, hospitais, EMR, farmácias, seguradoras — HIP-001 os comporta, 1.1+).
 - CARE-001 (Care Space), modalidades clínicas novas (Pentacam rica/E6), billing comercial ativo.
 
-## 3.1 Garantia de CONTINUIDADE DOS DADOS (beta → produção) — inviolável
-A usuária que entra no **beta** e adiciona exames/histórico/documentos **mantém todos os seus dados na versão
-final**, sem re-trabalho. Base arquitetural: dados no **banco de produção real** (não descartável); extrações
-*append-only*; identidade documental *write-once*; migrations **aditivas** (nunca destroem dados); Modelo Canônico
-preserva o documento original (princípios Preservação do Original · Backward Compatibility · Evolução sem Quebrar).
-**Condição operacional (decisão da fundadora):** o beta DEVE rodar sobre o **banco e as contas que seguem para
-produção** — nunca um ambiente jogado fora depois. Migração destrutiva ou troca de base que perca dados de usuária
-é **proibida**; qualquer evolução de schema é aditiva/reversível e preserva o histórico já inserido.
+## 3.1 DECISÃO ARQUITETURAL OBRIGATÓRIA — Base única Beta = Produção 1.0 (fundadora 17/07)
+> **O Beta Oficial da SINTERA utilizará a mesma base de dados que será promovida para Produção 1.0. Não haverá
+> migração entre um banco de beta e um banco de produção. O ambiente poderá possuir mecanismos de isolamento,
+> monitoramento e feature flags, mas os dados inseridos pelos usuários participantes do beta constituirão o
+> histórico oficial da plataforma e deverão ser preservados integralmente.**
+
+Base arquitetural que sustenta a decisão: extrações *append-only*; identidade documental *write-once*; migrations
+**aditivas/reversíveis** (nunca destrutivas); Modelo Canônico preserva o documento original (princípios Preservação
+do Original · Backward Compatibility · Evolução sem Quebrar). Migração destrutiva ou troca de base que perca dados
+de usuária é **proibida**. Isolamento/monitoramento/feature flags são permitidos; perda de histórico do beta, não.
+
+## 3.2 GATE DE PRIMEIRO PUSH / PREVIEW (pré-beta) — checklist obrigatório (fundadora 17/07)
+Antes de publicar a primeira URL (Vercel) para a fundadora ou usuárias, TODOS devem estar ✅ — para que a URL já
+represente um ambiente utilizável por usuárias reais, sem reinicializar a base depois:
+1. **Build de produção sem erros** (`next build`).
+2. **Testes automatizados passando** (suíte verde).
+3. **Migrations aplicadas e verificadas** (schema em dia; nenhuma pendente).
+4. **Seed inicial** (se necessário).
+5. **Feature flags** configuradas para funcionalidades ainda incompletas (ex.: Connector Layer/wearables sem
+   credenciais → oculto/rotulado, nunca quebrado).
+6. **Backup e restauração do banco** testados (política validada).
+7. **Observabilidade mínima** (logs, erros e monitoramento — OPS-001).
+
+**Foco de fase (fundadora 17/07):** a partir daqui, MENOS features novas e MAIS **estabilização, observabilidade e
+preparação do ambiente**. Novas ideias passam por "1.0 ou 1.1?" com viés conservador para a 1.0.
 
 ## 4. Critérios de ACEITE (cada item incluído)
 - Código de produção + TSC limpo + suíte verde + Compliance Gate (9 eixos) + commit rastreável.
