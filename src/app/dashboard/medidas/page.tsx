@@ -58,6 +58,13 @@ interface Entry {
   measuredOn: string
   notes: string | null
   examId: string | null
+  source: string | null
+}
+
+// FB-003/BOD-001: a Composição Corporal é VISUALIZAÇÃO — cada ponto mostra a ORIGEM de onde nasceu.
+const SOURCE_LABEL: Record<string, string> = {
+  bioimpedancia: 'Bioimpedância', dexa: 'DEXA', balanca: 'Balança', wearable: 'Dispositivo',
+  manual: 'Registro manual', outro: 'Outra origem',
 }
 
 // Exame (laudo) que a pessoa já enviou em Exames — usado para vincular a medida ao
@@ -107,7 +114,7 @@ export default function MedidasPage() {
     const db = supabase as any
     const [{ data }, exRes] = await Promise.all([
       db.from('body_metrics')
-        .select('id, metric, label, value_text, unit, measured_on, notes, exam_id')
+        .select('id, metric, label, value_text, unit, measured_on, notes, exam_id, source')
         .eq('user_id', user.id).order('measured_on', { ascending: false }),
       db.from('exams').select('id, type, exam_date, file_url').eq('user_id', user.id).order('created_at', { ascending: false }),
     ])
@@ -115,7 +122,7 @@ export default function MedidasPage() {
       id: m.id as string, metric: (m.metric as Metric) ?? 'outro', label: (m.label as string) ?? null,
       valueText: (m.value_text as string) ?? '', unit: (m.unit as string) ?? null,
       measuredOn: m.measured_on as string, notes: (m.notes as string) ?? null,
-      examId: (m.exam_id as string) ?? null,
+      examId: (m.exam_id as string) ?? null, source: (m.source as string) ?? null,
     })))
     setExams(((exRes.data ?? []) as Array<Record<string, unknown>>).map(e => ({
       id: e.id as string, type: (e.type as string) || 'Exame',
@@ -193,7 +200,7 @@ export default function MedidasPage() {
       rows.map(r => ({
         user_id: user.id, metric: r.metric, label: null,
         value_text: r.value.trim(), unit: r.unit || null, measured_on: scanDate,
-        notes: 'Importado de laudo de bioimpedância', exam_id: scanExamId || null,
+        notes: 'Importado de laudo de bioimpedância', exam_id: scanExamId || null, source: 'bioimpedancia',
       })),
     )
     setSavingScan(false)
@@ -442,13 +449,16 @@ export default function MedidasPage() {
                   {list.map(it => {
                     const prefix = it.metric === 'outro' && it.label ? `${it.label}: ` : ''
                     const ex = it.examId ? exams.find(e => e.id === it.examId) : null
+                    // Origem do indicador (BOD-001): rótulo derivado de `source`; se veio de exame, o laudo
+                    // aparece abaixo (rastreável ao documento). 'manual' sem laudo não precisa de rótulo redundante.
+                    const originLabel = it.source && it.source !== 'manual' ? SOURCE_LABEL[it.source] ?? SOURCE_LABEL.outro : null
                     return (
                       <ListCard
                         key={it.id}
                         title={`${prefix}${it.valueText}${it.unit ? ` ${it.unit}` : ''}`}
                         meta={
                           <>
-                            {fmt(it.measuredOn)}{it.notes ? ` · ${it.notes}` : ''}
+                            {fmt(it.measuredOn)}{originLabel ? ` · ${originLabel}` : ''}{it.notes ? ` · ${it.notes}` : ''}
                             {ex && (
                               <span className="block mt-0.5">
                                 Laudo: {ex.type}{ex.examDate ? ` · ${fmt(ex.examDate)}` : ''}{' '}

@@ -65,6 +65,18 @@ describe('FUNC · identifyClinical', () => {
     expect(r.clinicalType).toBe('Densitometria óssea')
   })
 
+  it('bioimpedância por bioimpedância/InBody + composição corporal + massa muscular/gordura visceral (FB-003)', () => {
+    const r = identifyClinical('LAUDO DE BIOIMPEDÂNCIA InBody 570 Composição corporal massa muscular 30 kg gordura visceral 8 água corporal 55%')
+    expect(r.clinicalType).toBe('Bioimpedância')
+    expect(r.clinicalFamily).toBe('Composição corporal')
+    expect(r.clinicalModel).toBe('bioimpedance')
+  })
+
+  it('densitometria (DXA) NÃO é classificada como bioimpedância (modalidades distintas)', () => {
+    const r = identifyClinical('DENSITOMETRIA ÓSSEA DXA T-score -1,8 Z-score coluna lombar fêmur osteopenia')
+    expect(r.clinicalModel).toBe('densitometry')
+  })
+
   it('"CC" isolado (crânio-caudal genérico) NÃO basta para Mamografia (evita falso-positivo)', () => {
     const r = identifyClinical('Relatório de procedimento. Volume aspirado: 20 CC. Sem intercorrências.')
     expect(r.clinicalType).not.toBe('Mamografia')

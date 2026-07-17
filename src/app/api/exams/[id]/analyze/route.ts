@@ -15,6 +15,7 @@ import { computeCoverage } from '@/lib/capture/coverage'
 import { processBundle } from '@/lib/capture/clinical-information-pipeline'
 import { processClinical, planRepresentation } from '@/lib/capture/clinical-processing-engine'
 import { representationFromProcessor, ucdaItemToRow } from '@/lib/capture/ucda'
+import { bioimpedanceToBodyMetrics } from '@/lib/capture/clinical-processors/bioimpedance-body-metrics'
 import { planBundleSplit, restrictPages, type SplitPlan } from '@/lib/capture/bundle-split'
 import { pickExamDate } from '@/lib/capture/semantic-dates'
 import { planNarrativeDiscard } from '@/lib/exams/narrativeDiscard'
@@ -436,6 +437,24 @@ export async function POST(
       // Idempotente (delete-then-insert do próprio modelo): reprocessar não duplica.
       await supabase.from('clinical_results').delete().eq('exam_id', examId).eq('clinical_model', ucda.clinicalModel)
       await supabase.from('clinical_results').insert(rows as never)
+    }
+
+    // FB-003 — projeção ADITIVA p/ Composição Corporal (BOD-001): um laudo de bioimpedância alimenta
+    // `body_metrics` (source='bioimpedancia', rastreável ao exame via exam_id). O EXAME segue sendo o FATO
+    // (clinical_results/UCDA acima); isto é só a VISUALIZAÇÃO longitudinal do indicador. Idempotente
+    // (delete-then-insert desta origem/exame). RDC 657: transcreve os pontos medidos, não interpreta.
+    if (cpe.result.clinicalModel === 'bioimpedance' && cpe.result.output?.kind === 'parametric') {
+      const points = bioimpedanceToBodyMetrics(cpe.result.output.parameters)
+      if (points.length > 0) {
+        // measured_on = data semântica do laudo (fato); fallback p/ hoje só se a extração não trouxe data.
+        const measuredOn = (finalUpdate.exam_date as string | undefined) ?? result.examDate ?? new Date().toISOString().slice(0, 10)
+        const bmRows = points.map(p => ({
+          user_id: userId, exam_id: examId, source: 'bioimpedancia',
+          metric: p.metric, label: p.label, value_text: p.value_text, unit: p.unit, measured_on: measuredOn,
+        }))
+        await supabase.from('body_metrics').delete().eq('exam_id', examId).eq('source', 'bioimpedancia')
+        await supabase.from('body_metrics').insert(bmRows as never)
+      }
     }
   }
 

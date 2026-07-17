@@ -90,6 +90,15 @@ export const CLINICAL_IDENTITY_REGISTRY: ModalityEntry[] = [
     strong: [/densitometria\s+[óo]ssea/i, /\bT-?score\b/i, /\bZ-?score\b/i, /\bDXA\b/i],
     moderate: [/coluna\s+lombar/i, /f[êe]mur/i, /osteopor/i],
   },
+  {
+    // FB-003: Bioimpedância é um EXAME (laudo de composição corporal). Alimenta a Composição Corporal (BOD-001).
+    // Evidências fortes = termos inequívocos do laudo; moderadas = parâmetros típicos. \bDXA\b fica com a
+    // densitometria; bioimpedância traz "bioimpedância/BIA/InBody" e a combinação massa muscular+gordura visceral.
+    clinicalType: 'Bioimpedância', clinicalFamily: 'Composição corporal', clinicalModel: 'bioimpedance',
+    strong: [/bioimped[âa]ncia/i, /\bBIA\b/, /composi[çc][ãa]o\s+corporal/i, /an[áa]lise\s+corporal/i],
+    moderate: [/massa\s+muscular/i, /massa\s+magra/i, /gordura\s+visceral/i, /[áa]gua\s+corporal/i, /metabolismo\s+basal/i, /percentual\s+de\s+gordura/i, /massa\s+[óo]ssea/i],
+    manufacturers: [/inbody/i, /tanita/i, /omron/i, /biod[yi]namics/i, /sece?a\s*mbca/i],
+  },
 ]
 
 export interface ClinicalIdentity {
