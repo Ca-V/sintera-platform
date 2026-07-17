@@ -116,6 +116,7 @@ export default function MedidasPage() {
   const [msCats, setMsCats] = useState<Set<MilestoneCategory>>(new Set(MILESTONE_CATEGORIES.map(c => c.key)))
 
   const [showForm, setShowForm] = useState(false)
+  const [editMeasureId, setEditMeasureId] = useState<string | null>(null)   // BOD-001 ② — editar medida existente
   const [metric, setMetric] = useState<Metric>('peso')
   const [label, setLabel] = useState('')
   const [value, setValue] = useState('')
@@ -178,17 +179,28 @@ export default function MedidasPage() {
   useEffect(() => { if (!authLoading) load() }, [authLoading, load])
 
   function chooseMetric(m: Metric) { setMetric(m); setUnit(DEFAULT_UNIT[m]) }
-  function reset() { setMetric('peso'); setLabel(''); setValue(''); setUnit('kg'); setDate(''); setNotes(''); setExamId(''); setErr(null) }
+  function reset() { setEditMeasureId(null); setMetric('peso'); setLabel(''); setValue(''); setUnit('kg'); setDate(''); setNotes(''); setExamId(''); setErr(null) }
+
+  // BOD-001 ② — abrir uma medida existente para edição (fecha o ciclo de rastreabilidade: nenhum ponto fica "solto").
+  function openEditMeasure(e: Entry) {
+    setEditMeasureId(e.id); setMetric(e.metric); setLabel(e.metric === 'outro' ? (e.label ?? '') : '')
+    setValue(e.valueText); setUnit(e.unit ?? DEFAULT_UNIT[e.metric] ?? ''); setDate(e.measuredOn)
+    setNotes(e.notes ?? ''); setExamId(e.examId ?? ''); setErr(null); setShowForm(true)
+  }
 
   async function save() {
     if (!user || saving || !value.trim() || !date) return
     setSaving(true); setErr(null)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any).from('body_metrics').insert({
-      user_id: user.id, metric, label: metric === 'outro' ? (label.trim() || 'Medida') : null,
+    const payload = {
+      metric, label: metric === 'outro' ? (label.trim() || 'Medida') : null,
       value_text: value.trim(), unit: unit.trim() || null, measured_on: date, notes: notes.trim() || null,
       exam_id: examId || null,
-    })
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const db = supabase as any
+    const { error } = editMeasureId
+      ? await db.from('body_metrics').update(payload).eq('id', editMeasureId)
+      : await db.from('body_metrics').insert({ user_id: user.id, ...payload })
     setSaving(false)
     if (error) { setErr(error.message); return }
     reset(); setShowForm(false); await load()
@@ -652,9 +664,13 @@ export default function MedidasPage() {
               <div className="flex items-center gap-2 flex-shrink-0">
                 {evoPoint.examId ? (
                   <Link href={`/dashboard/exams/${evoPoint.examId}`} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-white border border-petal/30 font-body text-xs text-petal hover:bg-blush transition-colors">Abrir exame</Link>
-                ) : (
-                  <span className="font-body text-[11px] text-mauve">Registro manual</span>
-                )}
+                ) : (() => {
+                  const it = items.find(i => i.id === evoPoint.key)
+                  return it ? (
+                    <button onClick={() => { openEditMeasure(it); setEvoPoint(null) }}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-white border border-petal/30 font-body text-xs text-petal hover:bg-blush transition-colors"><Pencil size={11} /> Editar</button>
+                  ) : <span className="font-body text-[11px] text-mauve">Registro manual</span>
+                })()}
                 <button onClick={() => setEvoPoint(null)} className="text-mauve hover:text-onyx font-body text-lg leading-none" aria-label="Fechar detalhe">×</button>
               </div>
             </div>
@@ -910,7 +926,7 @@ export default function MedidasPage() {
             </button>
             <button onClick={save} disabled={saving || !value.trim() || !date}
               className="px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium disabled:opacity-40 hover:opacity-90 transition-opacity">
-              {saving ? 'Salvando…' : 'Salvar'}
+              {saving ? 'Salvando…' : editMeasureId ? 'Atualizar' : 'Salvar'}
             </button>
           </div>
         </Card>
@@ -962,10 +978,16 @@ export default function MedidasPage() {
                           </>
                         }
                         actions={
-                          <button onClick={() => remove(it.id)} disabled={busyId === it.id} title="Remover"
-                            className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-red-400 hover:bg-red-50 transition-colors">
-                            <Trash2 size={12} />
-                          </button>
+                          <>
+                            <button onClick={() => openEditMeasure(it)} title="Editar"
+                              className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-petal hover:bg-blush transition-colors">
+                              <Pencil size={12} />
+                            </button>
+                            <button onClick={() => remove(it.id)} disabled={busyId === it.id} title="Remover"
+                              className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-red-400 hover:bg-red-50 transition-colors">
+                              <Trash2 size={12} />
+                            </button>
+                          </>
                         }
                       />
                     )

@@ -73,10 +73,9 @@ vs. a medição anterior** (↑/↓/– com a variação). *(Rótulo de origem j
 Muscular·Massa Magra·Água·Visceral·IMC·TMB — um clique troca o painel); **(b) gráfico principal** grande com
 **filtros de período** (30d·90d·6m·1a·tudo) e **marcadores distintos por origem** (● bioimpedância · ■ manual ·
 ▲ DEXA · ◆ balança); **(c) tabela cronológica** (Data·Valor·Origem·Avaliação). Cada **ponto é clicável** →
-detalhe com valor·origem·data e ação de rastreabilidade (**Abrir exame** quando veio de laudo). *(Implementado:
-`lib/body/evolution.ts` + componente `EvolutionChart` + seção na página; IMC derivado de peso+altura.
-**Follow-up menor:** "Editar" um ponto MANUAL — hoje o detalhe mostra "Registro manual"; a página ainda não tem
-fluxo de edição de medida (só add/remover pelo histórico abaixo).)*
+detalhe com valor·origem·data e ação de rastreabilidade: **Abrir exame** (veio de laudo) ou **Editar** (registro
+manual) — nenhum ponto fica "solto". *(Implementado: `lib/body/evolution.ts` + `EvolutionChart` + seção na página;
+IMC derivado de peso+altura; edição de medida manual — form em modo update + botão editar no histórico.)*
 
 **③ Comparação entre avaliações (SNAPSHOTS).** Modelada como **snapshots**: cada avaliação (bioimpedância, DEXA,
 InBody, ou um lote manual de uma data) é um **retrato** da composição num momento. A usuária compara **dois
@@ -107,10 +106,16 @@ tratamento especial** na arquitetura; (b) **Suplementos** — idem (categoria pr
 (nutricionista/fisioterapeuta). **Controle da usuária:** mostrar/ocultar marcos **por categoria** (medicamentos ·
 suplementos · avaliações · consultas) **sem alterar os dados**. *(Implementado: `lib/body/milestones.ts` +
 anotações no `EvolutionChart` + toggles + lista rastreável na seção Evolução.)*
-**Limitações v1 (documentadas):** "alteração/mudança de dose" não é derivável (não há histórico de dose);
-Endocrinologia/Medicina do Esporte caem em "médico" genérico (sem especialidade distinta) → fora do filtro de
-consulta por ora — o **início do medicamento** (ex.: GLP-1) já cobre o marco; marcos de **Agenda** (planejados)
-ficam para uma evolução (não correlacionam com o passado da série).
+**Limitações v1 + direção de evolução (fundadora 17/07):**
+- **Consultas — evoluir de PROFISSÃO para PROPÓSITO (linha de cuidado).** A identificação **não** deve depender da
+  especialidade. Futuramente o marco de consulta deriva do **propósito/classificação do atendimento** (linha de
+  cuidado — ex.: *acompanhamento de obesidade*), de modo que um **endocrinologista** que acompanha obesidade
+  apareça como marco **sem** depender de uma especialidade específica. (v1 usa nutricionista/fisioterapeuta como
+  aproximação até existir a classificação por linha de cuidado.)
+- **Marcos de Agenda — só FATOS CONSUMADOS.** Quando incorporados, devem representar **apenas eventos efetivamente
+  ocorridos**, nunca planejados/futuros. O gráfico reflete fatos consumados.
+- **Alteração de dose — automática a partir do histórico.** Não implementar enquanto não existir **histórico de
+  doses**; quando existir, o marco é gerado **automaticamente** a partir dele, **sem lançamento manual**.
 
 ## 4.2 Qualidade do Dado — origem + confiabilidade (fundadora 17/07)
 Cada indicador informa **de onde veio** (origem) **e o nível de confiabilidade associado àquela FONTE/método** —
@@ -163,6 +168,7 @@ Cada indicador exibe a origem (exame/manual/wearable). Rastreável até o exame-
   6. Ingestão de **DEXA** como exame (FB-003 estende bioimpedância) alimentando os mesmos indicadores. *(pendente)*
 
 **As 5 áreas da §4.1 estão implementadas.** A Composição Corporal deixou de ser uma tela de indicadores e passou
-a ser uma **narrativa longitudinal** da jornada, rastreável até cada fato. Follow-ups menores: editar ponto manual
-(②); DEXA como exame; marcos de Agenda/dose quando houver histórico.
+a ser uma **narrativa longitudinal** da jornada, rastreável até cada fato. Follow-ups: **DEXA como exame** (FB-003);
+**consultas por linha de cuidado** (não por profissão); **marcos de Agenda** (só fatos consumados) e **alteração de
+dose** (auto, quando houver histórico de doses). *(Editar ponto manual — ✅ feito.)*
 - **Sem nova tabela**; tudo por leitura/derivação preservando origem (invariantes §8).
