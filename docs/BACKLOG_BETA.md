@@ -34,8 +34,9 @@
 - □ **BETA-9 · Home institucional (Login → Home → Dashboard)** `IMPL` — nova página inicial com o que é a SINTERA, propósito, missão, visão, benefícios, como funciona, o que registrar, como compartilhar, segurança/privacidade. Copy a partir da narrativa estratégica (fundadora aprova).
 - □ **BETA-10 · Vídeo institucional na Home** `EXT` — vídeo curto (funcionamento, envio de docs, foto, voz, manual, indicadores, Timeline, compartilhamento, relatórios). **Depende de asset produzido pela fundadora/equipe**; deixo o slot pronto na Home.
 
-## PRIORIDADE 4 — DESIGN SYSTEM
-- □ **BETA-11 · Revisão da identidade visual (Almond Blossom / Van Gogh)** `DS` — paleta predominante aqua/azul-esverdeado/bege/branco/marrom/preto/**dourado**; **prioridade: sidebar** (contraste, item ativo, consistência); aplicar em botões, cards, gráficos, ícones, formulários, hover, alertas, indicadores, Timeline, Dashboard, Home. **Base já existe**; escopo = varredura de aderência + sidebar-first + inclusão do dourado. Sequenciar após P1 (não desestabilizar o funcional).
+## DESIGN SYSTEM — ESSENCIAL agora, resto durante o beta (fundadora rev.2)
+- □ **BETA-11-essencial · DS mínimo p/ beta** `DS` — SOMENTE: **sidebar** (contraste, item ativo, consistência), **cores principais**, **botões**, **cards**. Paleta Almond Blossom/Van Gogh (aqua/azul-esverdeado/bege/branco/marrom/preto/dourado) — base já existe; incluir dourado. Fazer JUNTO do rename de nav (BETA-1) para tocar a sidebar uma vez.
+- ⏸ **BETA-11-completo · Identidade visual completa** `DS` — gráficos, ícones, formulários, hover, alertas, indicadores, Timeline, Dashboard inteiros — **evolui durante o beta** (não bloqueia a liberação).
 
 ## PRIORIDADE 5 — GOVERNANÇA
 - □ **BETA-12 · Consistência arquitetural** `GOV` — requisito transversal aplicado a TODOS os itens acima: preservar SPAGS/ADRs/Modelo Canônico, rastreabilidade, alimentação automática (Timeline/Agenda/Histórico/Despesas), sem duplicação, reúso de componentes. (Não é tarefa isolada — é gate de cada merge.)
@@ -49,13 +50,27 @@
 ---
 
 ## Carryover do backlog anterior
-- □ **EVT-C6 — EventLink write-side** (popular "Relacionado" ao criar evento a partir de exame/pedido; fecha NC-0006). Pequeno; encaixar cedo ou junto ao BETA-3/BETA-7 (mesma família de vínculo).
+- ☑ **EVT-C6 — EventLink write-side** — concluído (commit f49b39f). Exames/Eventos 100% concluídos.
 
-## Sequência proposta (dentro da prioridade da fundadora)
-1. Rápidos/autônomos sem bloqueio: **BETA-4 → BETA-3 → BETA-5** (+ EVT-C6).
-2. **Notas de desenho (ADR interino)** para os `ARQ`: BETA-7 (projeção financeira universal), BETA-6 (registro compartilhado Contracepção↔Medicamentos), BETA-2 (captura institucional / CAP-001). Depois implementar.
-3. **BETA-1** após decisão de nav.
-4. **BETA-8** (relatórios) → **BETA-9/10** (Home/vídeo) → **BETA-11** (DS) → **BETA-13** (auditoria final).
+## ORDEM DE EXECUÇÃO — revisão 2 da fundadora (17/07)
+> Núcleo primeiro (captura + financeiro alimentam os demais módulos); Home antes de Relatórios (é a 1ª tela
+> da usuária); DS **essencial** (não a identidade inteira agora); "Outros" entra junto de Recursos. **Reúso
+> máximo** — nunca implementação específica quando um componente institucional atende múltiplos módulos.
+
+1. **BETA-2 · Captura única institucional (rollout completo)** `ARQ` — ADR interino ANTES; `CreateRecordMenu` como único ponto de "Adicionar" em todos os módulos (arquivo/arrastar/foto/manual/voz).
+2. **BETA-7 · Modelo financeiro universal** `ARQ` — ADR interino ANTES; valor·NF·recibo·comprovante → projeção automática p/ Despesas em qualquer módulo, sem duplicação.
+3. **BETA-3 · Exames com integração financeira** — valor + anexos financeiros vinculados ao exame; alimenta Despesas/Relatórios/Histórico/Agenda (consome o padrão do item 2).
+4. **BETA-5 · Medidas** — único "Adicionar Medida" via captura institucional; bioimpedância auto-detectada.
+5. **BETA-6 · Contracepção integrada a Medicamentos** `ARQ` — ADR interino ANTES; registro ÚNICO compartilhado (pílula), recorrência, reposição, lembretes, financeiro; propaga p/ Agenda/Histórico/Despesas/Relatórios.
+6. **BETA-4+Recursos · Recursos de Saúde (inclui restaurar "Tipo→Outros")** — "Outros" é simples e entra junto; aplicar captura institucional ao módulo.
+7. **BETA-9 · Home institucional** — Login→Home→Dashboard; copy da narrativa estratégica; slot p/ o vídeo (BETA-10, asset da fundadora). **Antes dos relatórios.**
+8. **BETA-1 + BETA-11-essencial · Nav + Design System essencial** — renomear nav (Histórico→Registros de Saúde; Evolução→Histórico de Exames) JUNTO com a revisão da **sidebar + cores principais + botões + cards** (tocar a sidebar uma vez só; reúso). Restante do DS evolui durante o beta.
+9. **BETA-8 · Relatórios** — Registros de Saúde, Histórico de Exames, Documentos Financeiros (download em lote de NFs p/ IR/contador). Depois da Home (relatório é uso posterior).
+10. **BETA-13 · Auditoria final de conformidade + relatório de prontidão para beta** `GOV`.
+
+**Regra transversal (BETA-12):** cada item preserva SPAGS/ADRs/Modelo Canônico, rastreabilidade, alimentação automática (Timeline/Agenda/Histórico/Despesas), **sem duplicação**, **reúso de componentes** — validado no Compliance Gate antes de cada merge.
+
+**+ BETA-14 (Despesas consolidado)** entra naturalmente com os itens 2/3 (já existe `/dashboard/gastos`; enriquecer com filtro/período/export IR ao chegar em Relatórios).
 
 ## Decisões da fundadora (17/07) — REGISTRADAS
 - **Nav (BETA-1):** Histórico→**Registros de Saúde** (módulo principal); Evolução→**Histórico de Exames** (submódulo).
