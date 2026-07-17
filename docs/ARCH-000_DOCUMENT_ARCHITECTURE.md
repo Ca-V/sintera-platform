@@ -61,7 +61,7 @@ Metadados por documento: **Objetivo · Escopo · Responsável · Dependências �
 | **CEF-001** | Clinical Extraction Framework (leitor por tipo de doc) | Extração | UCDA-001 | CAP-001 | ativo |
 | **CAP-001** | Captura documental institucional (componente único) | Entrada de registros | ADR-000, DATA-001 | DS-001, DOC-001 | 🔒 |
 | **HIP-001** | Connector Layer — integração corporativa (vendor+domain-neutral) | Aquisição externa | UCDA-001 | WEA-001, DATA-001 | ativo |
-| **WEA-001** | Wearables Domain (1ª implementação sobre HIP-001) | Wearables | HIP-001 | — | a criar (BETA-WEAR) |
+| **WEA-001** | Wearables Domain (1ª implementação sobre HIP-001) | Wearables | HIP-001, DATA-001 | Sinais Vitais, Timeline | ativo (17/07) |
 | **FIN-001** | Financial Domain (valor·NF·recibo·comprovante → Despesas) | Financeiro | ADR-000, EVENTS-001 | Evento Assistencial, `/gastos`, REL-001 | ativo (17/07) |
 | **EVENTS-001** | Domain Events / Evento Assistencial | Eventos assistenciais | DATA-001 | FIN-001, CARE-001 | ativo |
 | **CARE-001** | Care Space (continuidade do cuidado) | Episódio de cuidado | EVENTS-001 | — | ativo |
