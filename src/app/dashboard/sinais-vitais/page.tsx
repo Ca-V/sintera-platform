@@ -127,9 +127,9 @@ export default function SinaisVitaisPage() {
 
       <PageHeader
         icon={<HeartPulse size={16} />}
-        eyebrow="Sinais vitais"
-        title="Sinais vitais"
-        subtitle={<>Acompanhe pressão arterial, frequência cardíaca, glicemia e outros ao longo do tempo.</>}
+        eyebrow="Monitoramento"
+        title="Monitoramento"
+        subtitle={<>Acompanhe sinais vitais, atividade, sono e outros indicadores — manuais e, em breve, de dispositivos — ao longo do tempo.</>}
         action={
           <button onClick={() => (showForm ? (reset(), setShowForm(false)) : (reset(), setShowForm(true)))}
             className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0">

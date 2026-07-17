@@ -46,7 +46,7 @@ const navGroups: {
       { href: '/dashboard/condicoes',     icon: Stethoscope,   label: 'Condições de Saúde' },
       { href: '/dashboard/recursos',      icon: Accessibility, label: 'Recursos de Saúde' },
       { href: '/dashboard/medidas',       icon: Ruler,       label: 'Medidas Corporais' },
-      { href: '/dashboard/sinais-vitais', icon: Activity,    label: 'Sinais Vitais' },
+      { href: '/dashboard/sinais-vitais', icon: Activity,    label: 'Monitoramento' },
       { href: '/dashboard/habitos',       icon: HeartPulse,  label: 'Hábitos' },
       { href: '/dashboard/ciclo',         icon: Droplet,     label: 'Ciclo e Contracepção' },
     ],

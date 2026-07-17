@@ -309,7 +309,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
 
       {show('sinais') && (
       <section style={{ marginBottom: 22 }}>
-        <h2 style={{ fontSize: 15 }}>Sinais vitais</h2>
+        <h2 style={{ fontSize: 15 }}>Monitoramento</h2>
         {vitalArr.length === 0 ? <p style={{ color: '#5F6A62', fontSize: 14 }}>Nenhum registrado.</p> : (
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
             <tbody>

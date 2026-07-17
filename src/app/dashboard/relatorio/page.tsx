@@ -188,7 +188,7 @@ function LegacyReport() {
       ['condicoes', 'Condições de Saúde', Stethoscope],
       ['visao', 'Recursos de Saúde (óculos e lentes)', Eye],
       ['medidas', 'Medidas Corporais', Ruler],
-      ['sinais', 'Sinais Vitais', Activity],
+      ['sinais', 'Monitoramento', Activity],
       ['habitos', 'Hábitos', HeartPulse],
       ['ciclo', 'Ciclo e Contracepção', Droplet],
     ] },
@@ -876,7 +876,7 @@ function LegacyReport() {
         {/* Sinais vitais */}
         {sections.sinais && (
         <section id="sec-sinais" style={{ scrollMarginTop: 16 }}>
-          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Sinais Vitais</h2>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Monitoramento</h2>
           {perMeasuresVitais.length === 0 ? (
             <p className="font-body text-xs text-mauve">Nenhum sinal vital registrado.</p>
           ) : (
