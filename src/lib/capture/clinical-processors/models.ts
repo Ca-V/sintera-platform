@@ -55,6 +55,23 @@ export const CLINICAL_MODELS: ClinicalModel[] = [
     fields: [{ name: 'T-score', regionAware: true }, { name: 'Z-score', regionAware: true }],
   },
 
+  // ── Composição corporal (parametric) — FB-003: bioimpedância é um EXAME; seus resultados alimentam a
+  //    Composição Corporal (BOD-001). O exame é a FONTE/fato; o painel é a visualização. ──
+  {
+    id: 'bioimpedance', label: 'Bioimpedância', family: 'Composição corporal', resultKind: 'parametric', contractVersion: 'v1',
+    fields: [
+      { name: 'Peso', unit: 'kg' },
+      { name: 'IMC' },
+      { name: 'Percentual de gordura', unit: '%' },
+      { name: 'Massa muscular', unit: 'kg' },
+      { name: 'Massa magra', unit: 'kg' },
+      { name: 'Massa óssea', unit: 'kg' },
+      { name: 'Água corporal', unit: '%' },
+      { name: 'Gordura visceral' },
+      { name: 'Metabolismo basal', unit: 'kcal' },
+    ],
+  },
+
   // ── Laboratório: "Laboratório" é FAMÍLIA. Os MODELOS são os painéis. `laboratory` é TRANSITÓRIO enquanto
   //    a identificação não distingue o painel específico (rota genérica atual). Painéis abaixo = alvo real.
   { id: 'laboratory', label: 'Laboratório (painel não granularizado)', family: 'Laboratório', resultKind: 'structured', contractVersion: 'v1', fields: [] },

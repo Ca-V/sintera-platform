@@ -15,6 +15,7 @@
 
 import { identifyClinical, type ClinicalIdentity } from './clinical-identity-registry'
 import { runCornealTomography } from './clinical-processors/corneal-tomography'
+import { runBioimpedance } from './clinical-processors/bioimpedance'
 import { getClinicalModel } from './clinical-processors/models'
 import { validateRepresentation, type RepresentationVerdict } from './representation-validator'
 import type { CertifiedCDU, ClinicalModel, ClinicalProcessorFn, ProcessorResult, ResultKind } from './clinical-processors/types'
@@ -63,6 +64,7 @@ export function routeProcessing(identity: ClinicalIdentity | null | undefined): 
 // corneal-tomography; …) e entra aqui. O modelo diz O QUE representar; o processador diz COMO preencher.
 const CLINICAL_MODEL_PROCESSORS: Record<string, ClinicalProcessorFn> = {
   'corneal-tomography': runCornealTomography, // GS-004
+  'bioimpedance': runBioimpedance,            // FB-003 (composição corporal)
 }
 
 /** Modelos clínicos com processador implementado (alimenta o painel de maturidade — COBERTURA_CLINICA.md). */
