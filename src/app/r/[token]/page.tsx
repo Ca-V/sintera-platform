@@ -117,6 +117,10 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
   const medsArr = (meds ?? []) as Array<Record<string, unknown>>
   const medsEmUso = medsArr.filter(m => m.status === 'em_uso')
   const medsSusp = medsArr.filter(m => m.status === 'suspenso' && overlapsPeriod((m.started_on as string) ?? null, (m.until_date as string) ?? null, rp))
+  // FB-010 — Medicamentos e Suplementos são seções separadas (espelho da nav). Mesma tabela (`medications.kind`).
+  const isSup = (m: Record<string, unknown>) => m.kind === 'suplemento'
+  const medEmUso = medsEmUso.filter(m => !isSup(m)), supEmUso = medsEmUso.filter(isSup)
+  const medSusp = medsSusp.filter(m => !isSup(m)), supSusp = medsSusp.filter(isSup)
   const evArr = eventsList.filter(e => inPeriod(e.date ?? null, rp))
     .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))   // mais recentes primeiro (como antes)
   const exArr = ((exams ?? []) as Array<Record<string, unknown>>).filter(e => inPeriod((e.exam_date as string) ?? (e.created_at as string) ?? null, rp))
@@ -154,18 +158,36 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
 
       {show('medicamentos') && (
       <section style={{ marginBottom: 22 }}>
-        <h2 style={{ fontSize: 15 }}>Medicamentos e suplementos em uso</h2>
-        {medsEmUso.length === 0 ? <p style={{ color: '#5F6A62', fontSize: 14 }}>Nenhum registrado.</p> : (
+        <h2 style={{ fontSize: 15 }}>Medicamentos em uso</h2>
+        {medEmUso.length === 0 ? <p style={{ color: '#5F6A62', fontSize: 14 }}>Nenhum registrado.</p> : (
           <ul style={{ paddingLeft: 18, fontSize: 14 }}>
-            {medsEmUso.map((m, i) => {
+            {medEmUso.map((m, i) => {
               const d = `${[m.dose, m.frequency].filter(Boolean).join(', ')}${periodo((m.started_on as string) ?? null, (m.until_date as string) ?? null)}`.trim()
               return (
-              <li key={i}><strong>{m.name as string}</strong>{m.kind === 'suplemento' ? ' (suplemento)' : ''}{d ? <span style={{ display: 'block', fontSize: 12, color: '#5F6A62' }}>{d}</span> : null}</li>
+              <li key={i}><strong>{m.name as string}</strong>{d ? <span style={{ display: 'block', fontSize: 12, color: '#5F6A62' }}>{d}</span> : null}</li>
               )
             })}
           </ul>
         )}
-        {medsSusp.length > 0 && <p style={{ fontSize: 12, color: '#5F6A62' }}>Suspensos: {medsSusp.map(m => m.name as string).join(', ')}.</p>}
+        {medSusp.length > 0 && <p style={{ fontSize: 12, color: '#5F6A62' }}>Suspensos: {medSusp.map(m => m.name as string).join(', ')}.</p>}
+      </section>
+      )}
+
+      {/* Suplementos — seção própria (FB-010). Compat: links antigos (com 'medicamentos') ainda exibem. */}
+      {(!allowed || allowed.includes('suplementos') || allowed.includes('medicamentos')) && (supEmUso.length > 0 || supSusp.length > 0) && (
+      <section style={{ marginBottom: 22 }}>
+        <h2 style={{ fontSize: 15 }}>Suplementos em uso</h2>
+        {supEmUso.length === 0 ? <p style={{ color: '#5F6A62', fontSize: 14 }}>Nenhum registrado.</p> : (
+          <ul style={{ paddingLeft: 18, fontSize: 14 }}>
+            {supEmUso.map((m, i) => {
+              const d = `${[m.dose, m.frequency].filter(Boolean).join(', ')}${periodo((m.started_on as string) ?? null, (m.until_date as string) ?? null)}`.trim()
+              return (
+              <li key={i}><strong>{m.name as string}</strong>{d ? <span style={{ display: 'block', fontSize: 12, color: '#5F6A62' }}>{d}</span> : null}</li>
+              )
+            })}
+          </ul>
+        )}
+        {supSusp.length > 0 && <p style={{ fontSize: 12, color: '#5F6A62' }}>Suspensos: {supSusp.map(m => m.name as string).join(', ')}.</p>}
       </section>
       )}
 
