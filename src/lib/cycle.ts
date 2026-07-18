@@ -27,6 +27,36 @@ export const contraceptiveNature = (kind: string): ContraceptiveNature => CONTRA
 export const isHormonalContraceptive = (kind: string): boolean => contraceptiveNature(kind) === 'hormonal'
 export const isDeviceContraceptive = (kind: string): boolean => contraceptiveNature(kind) === 'dispositivo'
 
+// CTC-001 (Opção A) — CADÊNCIA de recompra/reaplicação dos métodos HORMONAIS (uso contínuo). Distinta da
+// "vida útil em meses" dos dispositivos. SSOT consumido pelo formulário do Ciclo e pela projeção em Medicamentos.
+export type ContraceptiveCadence = 'semanal' | 'mensal' | 'trimestral'
+export const CONTRACEPTIVE_CADENCES: { value: ContraceptiveCadence; label: string; days: number }[] = [
+  { value: 'semanal',    label: 'Semanal',    days: 7 },
+  { value: 'mensal',     label: 'Mensal',     days: 30 },
+  { value: 'trimestral', label: 'Trimestral', days: 90 },
+]
+export const cadenceLabel = (c: string | null | undefined): string =>
+  CONTRACEPTIVE_CADENCES.find(x => x.value === c)?.label ?? ''
+export const cadenceDays = (c: string | null | undefined): number | null =>
+  CONTRACEPTIVE_CADENCES.find(x => x.value === c)?.days ?? null
+
+/** Cadência sugerida por método hormonal (a usuária pode ajustar). Não-hormonais → null. */
+export const defaultCadenceFor = (kind: string): ContraceptiveCadence | null => {
+  switch (kind) {
+    case 'pilula':  return 'mensal'      // recompra da cartela
+    case 'anel':    return 'mensal'
+    case 'adesivo': return 'semanal'
+    case 'injecao': return 'trimestral'  // trimestral por padrão; mensal se ajustar
+    default:        return null
+  }
+}
+
+/** Rótulo curto de uso para listagens/projeção (ex.: "Recompra mensal"). Vazio se não houver cadência. */
+export const cadenceUsageLabel = (c: string | null | undefined): string => {
+  const l = cadenceLabel(c)
+  return l ? `Recompra ${l.toLowerCase()}` : ''
+}
+
 /** Rótulo de CATEGORIA para listagens (ex.: em Medicamentos, identificar claramente o uso contraceptivo). */
 export const contraceptiveCategoryLabel = (kind: string): string =>
   contraceptiveNature(kind) === 'hormonal' ? 'Contracepção hormonal'

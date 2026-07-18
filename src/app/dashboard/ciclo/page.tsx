@@ -18,7 +18,11 @@ import ListCard from '@/components/ListCard'
 import Card from '@/components/ui/Card'
 import PageHeader from '@/components/PageHeader'
 // Taxonomia de métodos contraceptivos = SSOT em @/lib/cycle (compartilhada com o Relatório).
-import { CONTRACEPTIVE_KINDS as KINDS, contraceptiveLabel as kindLabel } from '@/lib/cycle'
+// CTC-001 (Opção A): contracepção hormonal é registrada/editada AQUI (SSOT); Medicamentos apenas projeta.
+import {
+  CONTRACEPTIVE_KINDS as KINDS, contraceptiveLabel as kindLabel,
+  contraceptiveNature, defaultCadenceFor, CONTRACEPTIVE_CADENCES, cadenceUsageLabel, cadenceDays,
+} from '@/lib/cycle'
 import Disclaimer from '@/components/ui/Disclaimer'
 import ConfirmDialog from '@/components/ConfirmDialog'
 
@@ -26,6 +30,7 @@ interface Method {
   id: string; kind: string; brand: string | null; startedOn: string | null
   durationMonths: number | null; replaceOn: string | null; status: string
   reminderEnabled: boolean; reminderEventId: string | null; notes: string | null
+  usageCadence: string | null   // CTC-001: cadência de recompra/reaplicação (hormonais)
 }
 interface Period { id: string; startedOn: string; notes: string | null }
 
@@ -62,6 +67,7 @@ export default function CicloPage() {
   const [brand, setBrand] = useState('')
   const [startedOn, setStartedOn] = useState('')
   const [duration, setDuration] = useState<string>('60')
+  const [cadence, setCadence] = useState<string>('')   // CTC-001: cadência de recompra/reaplicação (hormonais)
   const [reminder, setReminder] = useState(true)
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
@@ -75,7 +81,7 @@ export default function CicloPage() {
     if (!user) return
     setLoading(true)
     const [mRes, pRes] = await Promise.all([
-      db.from('contraceptive_methods').select('id, kind, brand, started_on, duration_months, replace_on, status, reminder_enabled, reminder_event_id, notes').eq('user_id', user.id).order('created_at', { ascending: false }),
+      db.from('contraceptive_methods').select('id, kind, brand, started_on, duration_months, replace_on, status, reminder_enabled, reminder_event_id, notes, usage_cadence').eq('user_id', user.id).order('created_at', { ascending: false }),
       db.from('menstrual_periods').select('id, started_on, notes').eq('user_id', user.id).order('started_on', { ascending: false }).limit(24),
     ])
     setMethods(((mRes.data ?? []) as Array<Record<string, unknown>>).map(m => ({
@@ -83,6 +89,7 @@ export default function CicloPage() {
       startedOn: (m.started_on as string) ?? null, durationMonths: (m.duration_months as number) ?? null,
       replaceOn: (m.replace_on as string) ?? null, status: (m.status as string) ?? 'ativo',
       reminderEnabled: m.reminder_enabled === true, reminderEventId: (m.reminder_event_id as string) ?? null, notes: (m.notes as string) ?? null,
+      usageCadence: (m.usage_cadence as string) ?? null,
     })))
     setPeriods(((pRes.data ?? []) as Array<Record<string, unknown>>).map(p => ({
       id: p.id as string, startedOn: p.started_on as string, notes: (p.notes as string) ?? null,
@@ -96,29 +103,54 @@ export default function CicloPage() {
 
   function chooseKind(k: string) {
     setKind(k)
-    const def = KINDS.find(x => x.value === k)?.months
-    setDuration(def != null ? String(def) : '')
+    // Hormonal → cadência de recompra/reaplicação (uso contínuo); dispositivo → vida útil (meses).
+    if (contraceptiveNature(k) === 'hormonal') {
+      setCadence(defaultCadenceFor(k) ?? 'mensal'); setDuration('')
+    } else if (contraceptiveNature(k) === 'dispositivo') {
+      const def = KINDS.find(x => x.value === k)?.months; setDuration(def != null ? String(def) : ''); setCadence('')
+    } else {
+      setDuration(''); setCadence('')
+    }
   }
-  function reset() { setEditingId(null); setKind('diu_hormonal'); setBrand(''); setStartedOn(''); setDuration('60'); setReminder(true); setNotes(''); setErr(null) }
+  function reset() { setEditingId(null); setKind('diu_hormonal'); setBrand(''); setStartedOn(''); setDuration('60'); setCadence(''); setReminder(true); setNotes(''); setErr(null) }
 
   function startEdit(m: Method) {
     setEditingId(m.id); setKind(m.kind); setBrand(m.brand ?? ''); setStartedOn(m.startedOn ?? '')
-    setDuration(m.durationMonths != null ? String(m.durationMonths) : ''); setReminder(m.reminderEnabled); setNotes(m.notes ?? '')
+    setDuration(m.durationMonths != null ? String(m.durationMonths) : ''); setCadence(m.usageCadence ?? '')
+    setReminder(m.reminderEnabled); setNotes(m.notes ?? '')
     setErr(null); setShowForm(true)
   }
 
-  const replacePreview = (startedOn && duration && kind !== 'pilula' && kind !== 'outro')
+  const formNature = contraceptiveNature(kind)
+  // Dispositivo: troca prevista (início + vida útil). Hormonal: próxima recompra (início + cadência).
+  const replacePreview = (formNature === 'dispositivo' && startedOn && duration)
     ? addMonths(startedOn, Number(duration)) : null
+  const recompraPreview = (formNature === 'hormonal' && startedOn && cadence)
+    ? (() => { const d = cadenceDays(cadence) ?? 30; const cycles = Math.max(1, Math.floor(daysBetween(startedOn, todayISO()) / d) + 1); return addDays(startedOn, cycles * d) })()
+    : null
 
   async function saveMethod() {
     if (!user || saving) return
     setSaving(true); setErr(null)
-    const months = duration.trim() ? Math.round(Number(duration)) : null
-    const replaceOn = startedOn && months && kind !== 'pilula' ? addMonths(startedOn, months) : null
+    const nature = contraceptiveNature(kind)
+    const isHormonal = nature === 'hormonal'
+    // Dispositivo → vida útil em meses + próxima TROCA. Hormonal → cadência + próxima RECOMPRA/APLICAÇÃO.
+    const months = !isHormonal && duration.trim() ? Math.round(Number(duration)) : null
+    const cadValue = isHormonal ? (cadence || defaultCadenceFor(kind) || 'mensal') : null
+    const cadDays = isHormonal ? (cadenceDays(cadValue) ?? 30) : null
+    // Próxima data de ação: dispositivo = início + vida útil; hormonal = próxima recompra a partir do início
+    // (ou de hoje, se sem início) — menor múltiplo da cadência estritamente após hoje.
+    const replaceOn = isHormonal
+      ? (cadDays ? (() => {
+          if (!startedOn) return addDays(todayISO(), cadDays)
+          const cycles = Math.max(1, Math.floor(daysBetween(startedOn, todayISO()) / cadDays) + 1)
+          return addDays(startedOn, cycles * cadDays)
+        })() : null)
+      : (startedOn && months ? addMonths(startedOn, months) : null)
     const payload = {
       user_id: user.id, kind, brand: brand.trim() || null, started_on: startedOn || null,
       duration_months: months, replace_on: replaceOn, notes: notes.trim() || null,
-      reminder_enabled: reminder && !!replaceOn,
+      usage_cadence: cadValue, reminder_enabled: reminder && !!replaceOn,
     }
     const existing = editingId ? methods.find(m => m.id === editingId) : null
     const { data, error } = editingId
@@ -127,12 +159,14 @@ export default function CicloPage() {
     if (error || !data) { setSaving(false); setErr(error?.message ?? 'Falha ao salvar.'); return }
     const methodId = data.id as string
 
-    // Lembrete de troca (~30 dias antes; nunca no passado). Reaproveita agenda_events.
+    // Lembrete (nunca no passado). Reaproveita agenda_events. Dispositivo: ~30 dias antes da troca.
+    // Hormonal: ~3 dias antes da próxima recompra/aplicação (uso contínuo). Recorrência plena = evolução futura.
+    const leadDays = isHormonal ? 3 : 30
     const wantReminder = reminder && !!replaceOn
-    const reminderDate = replaceOn ? (() => { const d = addDays(replaceOn, -30); return d < todayISO() ? todayISO() : d })() : null
+    const reminderDate = replaceOn ? (() => { const d = addDays(replaceOn, -leadDays); return d < todayISO() ? todayISO() : d })() : null
     const existingEvent = existing?.reminderEventId ?? null
     if (wantReminder && reminderDate) {
-      const title = `Trocar ${kindLabel(kind)}`
+      const title = isHormonal ? `Recomprar/aplicar ${kindLabel(kind)}` : `Trocar ${kindLabel(kind)}`
       if (existingEvent) {
         await db.from('agenda_events').update({ title, event_date: reminderDate, status: 'pending', reminder_enabled: true, reminder_sent_at: null }).eq('id', existingEvent)
       } else {
@@ -239,9 +273,24 @@ export default function CicloPage() {
                       className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
                   </div>
                 </div>
-                {kind === 'pilula' ? (
-                  <p className="font-body text-[11px] text-mauve">Para pílula, registre dose, frequência e recompra em <Link href="/dashboard/medicamentos" className="text-petal hover:underline">Medicamentos e Suplementos</Link>.</p>
-                ) : (
+                {formNature === 'hormonal' ? (
+                  // CTC-001 (Opção A): pílula/injeção/adesivo/anel são registrados AQUI (uso contínuo:
+                  // início + cadência de recompra/reaplicação). Sem redirecionar para Medicamentos.
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label htmlFor="ciclo-inicio" className="font-body text-xs text-mauve block mb-1">Início do uso</label>
+                      <input id="ciclo-inicio" type="date" value={startedOn} onChange={e => setStartedOn(e.target.value)}
+                        className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                    </div>
+                    <div>
+                      <label htmlFor="ciclo-cadencia" className="font-body text-xs text-mauve block mb-1">Recompra / reaplicação</label>
+                      <select id="ciclo-cadencia" value={cadence} onChange={e => setCadence(e.target.value)}
+                        className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
+                        {CONTRACEPTIVE_CADENCES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                ) : formNature === 'dispositivo' ? (
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label htmlFor="ciclo-inicio" className="font-body text-xs text-mauve block mb-1">Início / colocação</label>
@@ -254,14 +303,26 @@ export default function CicloPage() {
                         className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
                     </div>
                   </div>
+                ) : (
+                  <div>
+                    <label htmlFor="ciclo-inicio" className="font-body text-xs text-mauve block mb-1">Início (opcional)</label>
+                    <input id="ciclo-inicio" type="date" value={startedOn} onChange={e => setStartedOn(e.target.value)}
+                      className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                  </div>
+                )}
+                {formNature === 'hormonal' && (
+                  <p className="font-body text-[11px] text-mauve">Aparece também em <Link href="/dashboard/medicamentos" className="text-petal hover:underline">Medicamentos</Link> como &quot;em uso&quot; (só leitura) — este é o local de edição.</p>
                 )}
                 {replacePreview && (
                   <p className="font-body text-[11px] text-petal">Troca prevista: <strong>{fmt(replacePreview)}</strong> (segundo a vida útil informada).</p>
                 )}
-                {kind !== 'pilula' && (
+                {recompraPreview && (
+                  <p className="font-body text-[11px] text-petal">Próxima recompra/aplicação: <strong>{fmt(recompraPreview)}</strong>.</p>
+                )}
+                {formNature !== 'outro' && (
                   <label className="flex items-center gap-2 font-body text-sm text-onyx cursor-pointer">
                     <input type="checkbox" checked={reminder} onChange={e => setReminder(e.target.checked)} className="accent-petal w-4 h-4" />
-                    <Bell size={13} className="text-petal" /> Lembrar da troca (~30 dias antes)
+                    <Bell size={13} className="text-petal" /> {formNature === 'hormonal' ? 'Lembrar da recompra/aplicação (~3 dias antes)' : 'Lembrar da troca (~30 dias antes)'}
                   </label>
                 )}
                 <div>
@@ -284,8 +345,10 @@ export default function CicloPage() {
             ) : (
               <div className="space-y-2">
                 {[...activeMethods, ...pastMethods].map(m => {
+                  const hormonal = contraceptiveNature(m.kind) === 'hormonal'
                   const meta = [m.startedOn ? `desde ${fmt(m.startedOn)}` : null,
-                    m.replaceOn && m.status === 'ativo' ? `troca ~${fmt(m.replaceOn)}` : null,
+                    hormonal ? (cadenceUsageLabel(m.usageCadence) || null) : null,
+                    m.replaceOn && m.status === 'ativo' ? `${hormonal ? 'recompra' : 'troca'} ~${fmt(m.replaceOn)}` : null,
                     m.reminderEnabled && m.status === 'ativo' ? 'lembrete ✓' : null,
                     m.notes || null].filter(Boolean).join(' · ')
                   return (

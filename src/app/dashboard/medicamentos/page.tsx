@@ -18,7 +18,7 @@ import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import CreateRecordMenu from '@/components/ui/CreateRecordMenu'
 import { runoutDate, nextRepurchaseDate } from '@/lib/medications/repurchase'
-import { isHormonalContraceptive, contraceptiveLabel, contraceptiveCategoryLabel } from '@/lib/cycle'
+import { isHormonalContraceptive, contraceptiveLabel, contraceptiveCategoryLabel, cadenceUsageLabel } from '@/lib/cycle'
 import { scanMedicationImage, PENDING_MED_SCAN_KEY } from '@/lib/medications/scanImage'
 import { useStickyView } from '@/lib/ui/useStickyView'
 import ListCard, { CardChip } from '@/components/ListCard'
@@ -88,6 +88,7 @@ interface Med {
   // aqui é só leitura/identificação (não duplica linha em `medications`; editar é no Ciclo).
   isContraceptive?: boolean
   contraceptiveKind?: string | null
+  contraceptiveCadence?: string | null   // CTC-001: cadência de recompra/reaplicação (só leitura; editar no Ciclo)
 }
 
 // CTC-001 — projeta um método contraceptivo HORMONAL como entrada de Medicamentos (REFERÊNCIA ao fato do Ciclo;
@@ -103,6 +104,7 @@ function contraceptiveToMed(c: Record<string, unknown>): Med {
     amountCents: null, repurchaseReminder: false, repurchaseFreq: null, repurchaseEventId: null, purchaseEventId: null,
     form: null, route: null, packUnit: null, prescriber: null,
     isContraceptive: true, contraceptiveKind: (c.kind as string),
+    contraceptiveCadence: (c.usage_cadence as string) ?? null,
   }
 }
 
@@ -245,7 +247,7 @@ export default function MedicamentosPage() {
       db.from('medications')
         .select('id, name, kind, brand, dose, frequency, started_on, until_date, status, notes, acquired_quantity, pack_quantity, daily_consumption, purchased_on, purchase_status, amount_cents, repurchase_reminder, repurchase_frequency, repurchase_event_id, purchase_event_id, pharmaceutical_form, administration_route, pack_unit, prescriber_name')
         .eq('user_id', user.id).order('created_at', { ascending: false }),
-      db.from('contraceptive_methods').select('id, kind, brand, started_on, status').eq('user_id', user.id),
+      db.from('contraceptive_methods').select('id, kind, brand, started_on, status, usage_cadence').eq('user_id', user.id),
     ])
     const realMeds: Med[] = ((data ?? []) as Array<Record<string, unknown>>).map(m => ({
       id: m.id as string,
@@ -485,7 +487,7 @@ export default function MedicamentosPage() {
           trailing={<CardChip tone={STATUS_TONE[m.status]}>{STATUS_LABEL[m.status]}</CardChip>}
           meta={
             <>
-              {m.startedOn ? `Desde ${fmtShort(m.startedOn)} · ` : ''}Método contraceptivo
+              {m.startedOn ? `Desde ${fmtShort(m.startedOn)} · ` : ''}{cadenceUsageLabel(m.contraceptiveCadence) || 'Método contraceptivo'}
               {/* CTC-001 — ponto único de edição: deixar EVIDENTE que este item pertence ao domínio Ciclo. */}
               <span className="block text-mauve/70 mt-0.5">
                 Gerenciado no <Link href="/dashboard/ciclo" className="text-petal hover:underline font-medium">Ciclo</Link> — método, recorrência, início e troca são editados lá.
