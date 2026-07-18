@@ -35,6 +35,7 @@ import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
 import { typeLabel, professionalKindLabel, type HealthEvent } from '@/lib/agenda' // fonte ÚNICA de rótulos de tipo/profissional
 import { useEventForm } from '@/components/eventForm' // serviço de domínio (query.listFinancial = Despesas)
 import { contraceptiveLabel } from '@/lib/cycle'       // SSOT dos métodos contraceptivos
+import { todayISO as currentISO } from '@/lib/date'    // SSOT dos cálculos de data
 
 interface Med { name: string; kind: string; dose: string | null; frequency: string | null; startedOn: string | null; untilOn: string | null; status: string }
 interface Ev { title: string; eventType: string; prof: string | null; date: string; notes: string | null; status: string }
@@ -358,8 +359,8 @@ function LegacyReport() {
   const perEvents = events.filter(e => inPeriod(e.date, rp) && isItemOn('eventos', e.eventType))
   // Separação DEFINITIVA Agenda × Histórico (mesma regra do módulo Histórico/timeline):
   // Agenda = futuro ainda planejado; Histórico = já aconteceu (realizado/cancelado, ou passado).
-  const todayISO = new Date().toISOString().slice(0, 10)
-  const isAgendaEvent = (e: Ev) => e.date.slice(0, 10) >= todayISO && e.status !== 'realizado' && e.status !== 'cancelado'
+  const today = currentISO()   // SSOT @/lib/date
+  const isAgendaEvent = (e: Ev) => e.date.slice(0, 10) >= today && e.status !== 'realizado' && e.status !== 'cancelado'
   const perAgenda = perEvents.filter(isAgendaEvent)
   const perHistorico = perEvents.filter(e => !isAgendaEvent(e))
   const perOmics = omics.filter(o => inPeriod(o.date, rp))

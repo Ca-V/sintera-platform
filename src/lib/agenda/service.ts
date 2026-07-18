@@ -12,11 +12,10 @@ import { createSupabaseEventRepository, type EventRepository } from './repositor
 import { createEventBus, type EventBus, type DomainEvent, type DomainEventType, type EventActor } from './bus'
 import { completeRule, cancelRule, rescheduleRule, canTransition, selectNextUpcoming, type HealthEvent, type EventStatus } from './event'
 import { parseRule, addToDate } from '../recurrence'
+import { todayISO, nowISO } from '../date'   // SSOT do relógio/datas — não reimplementar
 
 export type EventDraft = Partial<HealthEvent> & { type: string; title: string; date: string }
 
-function todayISO(): string { return new Date().toISOString().slice(0, 10) }
-function nowISO(): string { return new Date().toISOString() }
 type Clock = { today: () => string; now: () => string }
 const SYSTEM_CLOCK: Clock = { today: todayISO, now: nowISO }
 

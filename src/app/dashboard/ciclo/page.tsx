@@ -23,6 +23,8 @@ import {
   CONTRACEPTIVE_KINDS as KINDS, contraceptiveLabel as kindLabel,
   contraceptiveNature, defaultCadenceFor, CONTRACEPTIVE_CADENCES, cadenceUsageLabel, cadenceDays,
 } from '@/lib/cycle'
+// SSOT dos cálculos de data (fundadora 18/07): reutilizar sempre, nunca reimplementar.
+import { addDays, addMonths, todayISO, daysBetween, nextOccurrenceByDays } from '@/lib/date'
 import Disclaimer from '@/components/ui/Disclaimer'
 import ConfirmDialog from '@/components/ConfirmDialog'
 
@@ -34,19 +36,10 @@ interface Method {
 }
 interface Period { id: string; startedOn: string; notes: string | null }
 
+// Cálculo de datas = SSOT `@/lib/date` (addDays/addMonths/todayISO/nextOccurrenceByDays). `fmt` é só EXIBIÇÃO.
 function fmt(d: string | null): string {
   if (!d) return '—'
   return new Date(`${d}T00:00:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
-}
-function addMonths(date: string, n: number): string {
-  const d = new Date(`${date}T00:00:00`); d.setMonth(d.getMonth() + n); return d.toISOString().slice(0, 10)
-}
-function addDays(date: string, n: number): string {
-  const d = new Date(`${date}T00:00:00`); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10)
-}
-const todayISO = () => new Date().toISOString().slice(0, 10)
-function daysBetween(a: string, b: string): number {
-  return Math.round((new Date(`${b}T00:00:00`).getTime() - new Date(`${a}T00:00:00`).getTime()) / 86400000)
 }
 
 export default function CicloPage() {
@@ -126,7 +119,7 @@ export default function CicloPage() {
   const replacePreview = (formNature === 'dispositivo' && startedOn && duration)
     ? addMonths(startedOn, Number(duration)) : null
   const recompraPreview = (formNature === 'hormonal' && startedOn && cadence)
-    ? (() => { const d = cadenceDays(cadence) ?? 30; const cycles = Math.max(1, Math.floor(daysBetween(startedOn, todayISO()) / d) + 1); return addDays(startedOn, cycles * d) })()
+    ? nextOccurrenceByDays(startedOn, cadenceDays(cadence) ?? 30)
     : null
 
   async function saveMethod() {
@@ -141,11 +134,7 @@ export default function CicloPage() {
     // Próxima data de ação: dispositivo = início + vida útil; hormonal = próxima recompra a partir do início
     // (ou de hoje, se sem início) — menor múltiplo da cadência estritamente após hoje.
     const replaceOn = isHormonal
-      ? (cadDays ? (() => {
-          if (!startedOn) return addDays(todayISO(), cadDays)
-          const cycles = Math.max(1, Math.floor(daysBetween(startedOn, todayISO()) / cadDays) + 1)
-          return addDays(startedOn, cycles * cadDays)
-        })() : null)
+      ? (cadDays ? nextOccurrenceByDays(startedOn || todayISO(), cadDays) : null)
       : (startedOn && months ? addMonths(startedOn, months) : null)
     const payload = {
       user_id: user.id, kind, brand: brand.trim() || null, started_on: startedOn || null,

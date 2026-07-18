@@ -1,6 +1,11 @@
 // Mecanismo de RECORRÊNCIA reutilizável (componente de domínio) — NÃO exclusivo da
 // Agenda. Usado por Agenda · Plano de saúde · Medicamentos · Suplementos · Exercícios
 // · Vacinas · Protocolos · Exames periódicos. Um único mecanismo, puro e testável.
+//
+// Cálculo de datas delega ao SSOT `@/lib/date` (addDays/addMonths) — este módulo cuida da
+// REGRA de recorrência (frequência/intervalo/until/count), não da aritmética de calendário.
+
+import { addDays, addMonths } from '@/lib/date'
 
 export type RecurrenceFrequency = 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'yearly'
 
@@ -36,20 +41,17 @@ export function parseRule(s: string | null | undefined): RecurrenceRule {
   }
 }
 
-/** Soma um período à data 'YYYY-MM-DD' (UTC, determinístico). */
+/** Soma um período à data 'YYYY-MM-DD'. Delega a aritmética ao SSOT `@/lib/date` (UTC, determinístico). */
 export function addToDate(iso: string, frequency: RecurrenceFrequency, interval: number): string {
-  const [y, m, d] = iso.split('-').map(Number)
-  const dt = new Date(Date.UTC(y, m - 1, d))
   const n = Math.max(1, interval)
   switch (frequency) {
-    case 'daily':    dt.setUTCDate(dt.getUTCDate() + n); break
-    case 'weekly':   dt.setUTCDate(dt.getUTCDate() + 7 * n); break
-    case 'biweekly': dt.setUTCDate(dt.getUTCDate() + 14 * n); break
-    case 'monthly':  dt.setUTCMonth(dt.getUTCMonth() + n); break
-    case 'yearly':   dt.setUTCFullYear(dt.getUTCFullYear() + n); break
-    case 'none':     break
+    case 'daily':    return addDays(iso, n)
+    case 'weekly':   return addDays(iso, 7 * n)
+    case 'biweekly': return addDays(iso, 14 * n)
+    case 'monthly':  return addMonths(iso, n)
+    case 'yearly':   return addMonths(iso, 12 * n)
+    case 'none':     return iso
   }
-  return dt.toISOString().slice(0, 10)
 }
 
 /**
