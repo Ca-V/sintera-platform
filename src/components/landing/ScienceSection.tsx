@@ -34,8 +34,8 @@ export default function ScienceSection() {
             <span className="text-shimmer">de saúde à SINTERA?</span>
           </h2>
           <p className="font-body text-white/55 text-lg max-w-2xl mx-auto leading-relaxed">
-            A SINTERA organiza suas informações preservando seu conteúdo original, sem alterar
-            documentos, emitir diagnósticos ou substituir a avaliação dos profissionais de saúde.
+            A SINTERA organiza suas informações preservando o seu conteúdo original: não altera o documento,
+            não emite diagnósticos e não substitui a avaliação dos profissionais de saúde.
             Você permanece no controle das suas informações durante toda a sua jornada de cuidado.
           </p>
         </motion.div>
