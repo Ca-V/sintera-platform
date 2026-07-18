@@ -12,7 +12,7 @@ const pillars = [
   {
     icon: LayoutGrid,
     title: 'Visão integrada da saúde',
-    desc: 'Toda a sua história de saúde num único ambiente — para compreender a trajetória completa, e não informações soltas. É a principal entrega da SINTERA.',
+    desc: 'Toda a sua história de saúde num único ambiente — para compreender a trajetória completa, e não informações soltas.',
   },
   {
     icon: TrendingUp,
@@ -47,7 +47,7 @@ export default function PillarsSection() {
             Quatro pilares que sustentam <span className="text-gradient">sua história de saúde</span>
           </h2>
           <p className="font-body text-mauve text-lg max-w-2xl mx-auto leading-relaxed">
-            Mais do que guardar documentos, a SINTERA constrói uma história de saúde contínua, íntegra e sua.
+            Mais do que armazenar e organizar documentos, a SINTERA constrói uma história de saúde contínua, integrada e personalizada.
           </p>
         </motion.div>
 

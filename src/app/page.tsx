@@ -12,17 +12,18 @@ import PricingSection from '@/components/landing/PricingSection'
 import CTASection from '@/components/landing/CTASection'
 import Footer from '@/components/landing/Footer'
 
-// HOM-001 — fluxo institucional: valor → como funciona → vídeo → módulos → propósito/missão/visão →
-// evolução → 4 pilares (diferencial) → confiança → o que NÃO é (limites) → preço → ação.
+// HOM-001 — fluxo institucional (ordem fundadora 17/07): valor (Hero) → propósito/missão/visão → vídeo →
+// como funciona → módulos → evolução (cresce com você) → 4 pilares (diferencial) → confiança → o que NÃO é
+// (limites) → preço → ação.
 export default function LandingPage() {
   return (
     <main>
       <Navbar />
       <Hero />
-      <Features />
-      <VideoSection />
-      <ModulesSection />
       <SobreSection />
+      <VideoSection />
+      <Features />
+      <ModulesSection />
       <EcosystemSection />
       <PillarsSection />
       <ScienceSection />

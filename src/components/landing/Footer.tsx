@@ -23,9 +23,6 @@ export default function Footer() {
               </div>
               <span className="font-display text-lg font-semibold tracking-[0.2em] text-white">SINTERA</span>
             </div>
-            <p className="font-body text-sm text-white/60 leading-relaxed mb-4 max-w-xs">
-              O lar confiável da sua história de saúde.
-            </p>
             <p className="font-body text-xs text-white/60 leading-relaxed max-w-xs">
               A SINTERA organiza e exibe informações de saúde registradas pela própria pessoa.
               Não oferece diagnóstico, interpretação clínica ou recomendações médicas.
