@@ -24,7 +24,7 @@ export default function Footer() {
               <span className="font-display text-lg font-semibold tracking-[0.2em] text-white">SINTERA</span>
             </div>
             <p className="font-body text-sm text-white/60 leading-relaxed mb-4 max-w-xs">
-              Organize suas informações de saúde num só lugar e acompanhe a evolução ao longo do tempo.
+              O lar confiável da sua história de saúde.
             </p>
             <p className="font-body text-xs text-white/60 leading-relaxed max-w-xs">
               A SINTERA organiza e exibe informações de saúde registradas pela própria pessoa.
@@ -40,14 +40,17 @@ export default function Footer() {
               </p>
               <ul className="space-y-2.5">
                 {items.map(item => {
+                  // HOM-001 — cada link aponta para a SEÇÃO correspondente (âncora existente na home) ou para a
+                  // PÁGINA própria (conteúdo independente). Sem links mortos.
                   const href =
                     item === 'Privacidade' ? '/privacidade' :
                     item === 'Termos de uso' ? '/termos' :
                     item === 'LGPD' ? '/lgpd' :
                     item === 'Planos' ? '/#planos' :
-                    item === 'Como funciona' ? '/como-funciona' :
-                    item === 'Funcionalidades' ? '/#funcionalidades' :
-                    '#' + item.toLowerCase().replace(/\s+/g, '-')
+                    item === 'Como funciona' ? '/#como-funciona' :
+                    item === 'Funcionalidades' ? '/#modulos' :
+                    item === 'Pilares' ? '/#pilares' :
+                    '/'
                   return (
                     <li key={item}>
                       <Link href={href}

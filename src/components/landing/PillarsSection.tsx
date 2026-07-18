@@ -2,30 +2,32 @@
 
 import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
-import { Infinity as InfinityIcon, TrendingUp, ShieldCheck, Link2 } from 'lucide-react'
+import { LayoutGrid, TrendingUp, ShieldCheck, Link2 } from 'lucide-react'
 
-// HOM-001 — Os 4 pilares institucionais da SINTERA (principal diferencial). Fundamentados na Narrativa
-// Estratégica (continuidade = missão; longitudinalidade = ativo; governança = moat; rastreabilidade = proveniência).
+// HOM-001 — Os 4 pilares institucionais da SINTERA (principal diferencial). Revisão fundadora 17/07:
+// "Visão integrada" passa a ser o diferencial-líder; Continuidade + Longitudinalidade unificadas em
+// "Acompanhamento longitudinal" (removida a sobreposição); Governança e Rastreabilidade tornadas CONCRETAS
+// (capacidades, não conceitos): LGPD + RDC 657/2022; origem·documento·data·histórico de alterações.
 const pillars = [
   {
-    icon: InfinityIcon,
-    title: 'Continuidade',
-    desc: 'O cuidado acompanha você ao longo da vida — sem recomeçar do zero a cada consulta ou exame.',
+    icon: LayoutGrid,
+    title: 'Visão integrada da saúde',
+    desc: 'Toda a sua história de saúde num único ambiente — para compreender a trajetória completa, e não informações soltas. É a principal entrega da SINTERA.',
   },
   {
     icon: TrendingUp,
-    title: 'Longitudinalidade',
-    desc: 'O que importa é a trajetória: a evolução das suas informações no tempo, não o dado isolado.',
+    title: 'Acompanhamento longitudinal',
+    desc: 'O cuidado acompanha você ao longo do tempo: o valor está na evolução — a trajetória das suas informações, não o dado isolado.',
   },
   {
     icon: ShieldCheck,
     title: 'Governança',
-    desc: 'Suas informações são organizadas, estruturadas e preservadas com regras claras e consistentes.',
+    desc: 'Organiza e gerencia suas informações com boas práticas de segurança e privacidade, em conformidade com a LGPD e a RDC 657/2022 (ANVISA), preservando a integridade, a confiabilidade e a organização dos registros.',
   },
   {
     icon: Link2,
     title: 'Rastreabilidade',
-    desc: 'Cada informação volta à sua origem — o laudo ou registro original. Nada fica solto.',
+    desc: 'Cada informação mantém a origem preservada — vinculada ao documento original, à data do registro e ao histórico de alterações — permitindo acompanhar toda a sua trajetória ao longo do tempo.',
   },
 ]
 

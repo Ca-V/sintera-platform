@@ -3,13 +3,7 @@
 import Link from 'next/link'
 import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
-import { ArrowRight, Sparkles, TrendingUp, Bell } from 'lucide-react'
-
-const floatingChips = [
-  { icon: Sparkles,   text: 'Tudo organizado em um só lugar',       color: 'bg-white/10 text-[#A6DFE9] border-white/20'   },
-  { icon: TrendingUp, text: 'Sua história de saúde contínua',        color: 'bg-blush/20 text-petal border-petal/20'    },
-  { icon: Bell,       text: 'Lembretes por e-mail e WhatsApp',       color: 'bg-lavender-light/20 text-lavender border-lavender/20' },
-]
+import { ArrowRight } from 'lucide-react'
 
 export default function CTASection() {
   const ref = useRef(null)
@@ -26,12 +20,8 @@ export default function CTASection() {
             Organize hoje.<br />
             <span className="text-shimmer">Acompanhe por toda a vida.</span>
           </h2>
-          <p className="font-body text-white/60 text-lg max-w-2xl mx-auto leading-relaxed mb-10">
-            Cada informação registrada torna sua visão da saúde mais completa, facilitando seu
-            acompanhamento e o cuidado realizado junto aos profissionais que fazem parte da sua jornada.
-          </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-5">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-5 mt-10">
             <Link href="/onboarding">
               <button className="inline-flex items-center gap-2 gradient-sintera text-white font-body font-medium px-8 py-4 rounded-full hover:opacity-90 transition-opacity shadow-lg text-[0.95rem]">
                 Criar conta gratuitamente
@@ -48,18 +38,6 @@ export default function CTASection() {
             Prefere só acompanhar a evolução?{' '}
             <Link href="/lista-de-espera" className="text-white/80 font-medium hover:underline">Entre na lista de espera</Link>.
           </p>
-
-          <div className="flex flex-wrap justify-center gap-3">
-            {floatingChips.map(({ icon: Icon, text, color }) => (
-              <motion.span key={text}
-                initial={{ opacity: 0, y: 10 }} animate={inView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.4, delay: 0.3 }}
-                className={`inline-flex items-center gap-2 border rounded-full px-4 py-2 text-xs font-body font-medium backdrop-blur-sm ${color}`}>
-                <Icon size={12} />
-                {text}
-              </motion.span>
-            ))}
-          </div>
 
           <motion.p initial={{ opacity: 0 }} animate={inView ? { opacity: 1 } : {}}
             transition={{ duration: 0.8, delay: 0.5, ease: 'easeOut' }}
