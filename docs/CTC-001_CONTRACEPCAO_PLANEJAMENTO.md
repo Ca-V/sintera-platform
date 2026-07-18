@@ -55,12 +55,13 @@ documentado):** o domínio **Planejamento** completo e os demais subdomínios (g
 **O método contraceptivo é UM FATO** (fonte: `contraceptive_methods`, no domínio Ciclo). Ele é **referenciado**
 por outros domínios conforme sua natureza — **sem criar registro duplicado**:
 
-- **Métodos HORMONAIS que são medicamentos** (pílula · injeção · anel · adesivo): **projetados/vinculados** ao
-  módulo **Medicamentos**. Aparecem em "medicamentos em uso" como uma **referência** ao fato da contracepção
-  (link de volta ao Ciclo), com lembretes/recompra e na linha do tempo — **um fato, uma vez** (mesmo padrão de
-  Despesas projetar exames, [[FIN-001]]). **Identificação clara (fundadora):** na lista de Medicamentos, o item
-  deve ser **claramente reconhecível como contraceptivo** — ex.: *Yaz · **Contracepção hormonal*** (rótulo/chip),
-  para não se confundir com "mais um medicamento".
+- **Métodos HORMONAIS que são medicamentos** (pílula · injeção · anel · adesivo): **registrados e editados no
+  próprio Ciclo** (SSOT — decisão **Opção A** da fundadora, 18/07) e **projetados** (só leitura) no módulo
+  **Medicamentos**. O Ciclo captura início + **cadência de recompra/reaplicação** (semanal/mensal/trimestral,
+  coluna `usage_cadence`) + lembrete; Medicamentos apenas mostra "em uso" com a categoria **Contracepção
+  hormonal** e a nota *"Gerenciado no Ciclo"* — **um fato, uma vez** (mesmo padrão de Despesas projetar exames,
+  [[FIN-001]] / [[ADR-001]]). **Removido:** o antigo texto do Ciclo que mandava "registrar em Medicamentos" —
+  criava um `medications` solto, sem vínculo (violava "um fato = um registro").
 - **Métodos DISPOSITIVOS** (DIU de cobre/hormonal · implante): **vinculados** a **Recursos/Dispositivos** — têm
   vida útil + data de troca + lembrete (já existentes em `contraceptive_methods`). **Dispositivos = conceito AMPLO
   (fundadora):** Recursos/Dispositivos NÃO é orientado à contracepção — no futuro abriga **lentes esclerais · CPAP
