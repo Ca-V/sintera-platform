@@ -82,6 +82,7 @@ Metadados por documento: **Objetivo · Escopo · Responsável · Dependências �
 | **COMPLIANCE-001** | Conformidade estrutural + Gate de Conformidade (9 eixos) | ADR-000 | ativo |
 | **GOV-001** | Matriz de cobertura de governança | ADR-000 | ativo |
 | **DATA-002** | Data Governance | DATA-001 | ativo |
+| **DATE-001** | Infraestrutura Temporal Única (SSOT de datas: primitivos + regras) | ADR-000 · ADR-001 | ativo (18/07) |
 | **API-001** | API Governance | ADR-000 | ativo |
 | **AI-001** | AI Governance | ADR-000 | ativo |
 | **OPS-001** | Observability Governance | ADR-000 | ativo |
