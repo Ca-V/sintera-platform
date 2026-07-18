@@ -1,6 +1,6 @@
 # CTC-001 — Contracepção & Arquitetura de Planejamento (ESPECIFICAÇÃO para validação)
 
-**Status:** 🟡 **proposta — aguarda aprovação da fundadora** (antes do código) · **Versão:** 0.1 (17/07/2026).
+**Status:** ✅ **aprovada (fundadora 18/07) — em implementação incremental** · **Versão:** 1.0 (18/07/2026, +7 refinamentos).
 **Objetivo:** definir a **arquitetura funcional da contracepção** e sua relação com **Medicamentos**,
 **Recursos/Dispositivos**, **Ciclo**, **Agenda/Notificações** e o futuro domínio de **Planejamento** — **sem
 duplicação de dados** e **rastreável**. Escopo atual = **contracepção**; a arquitetura já **nasce compatível** com
@@ -9,7 +9,18 @@ a evolução para **Planejamento em Saúde**. Fontes: [[FIN-001]]/[[BOD-001]] (f
 
 ---
 
-## 1. Princípio de PLANEJAMENTO (fundadora 17/07) — domínio estratégico
+## 0. Princípio de PROPRIEDADE DE DOMÍNIO (fundadora 17/07 — reutilizável em toda a plataforma)
+> **Os domínios permanecem PROPRIETÁRIOS dos seus fatos. Outros módulos podem PROJETAR ou REFERENCIAR essas
+> informações, mas NUNCA assumir sua propriedade nem DUPLICAR seus registros.** Assim, a contracepção pertence ao
+> Ciclo/Planejamento Reprodutivo; Medicamentos apenas **projeta** o que é relevante ao gerenciamento
+> farmacológico; Recursos/Dispositivos apenas **referencia** os dispositivos. Vale para todo o modelo (exames,
+> despesas, indicadores corporais, marcos…) — reforça a consistência do modelo de dados.
+
+## 1. Princípio de PLANEJAMENTO (fundadora 17/07) — domínio estratégico (GENÉRICO, não é da contracepção)
+> **Planejamento NÃO pertence à contracepção.** É um **domínio estratégico** da plataforma que representa **todas
+> as ações FUTURAS de saúde**; a **contracepção é apenas UM dos seus componentes**. O CTC-001 **usa** essa
+> arquitetura, mas **não a define exclusivamente**. No futuro o mesmo domínio suportará: planejamento de exames ·
+> consultas · vacinação · terapêutico · gestação · preventivo · metas de saúde.
 > **Planejamento** representa **todas as ações FUTURAS relacionadas ao cuidado com a saúde**. É um **domínio
 > estratégico** da plataforma. Hierarquia:
 > - **Planejamento** (domínio) → engloba: planejamento reprodutivo/contraceptivo · gestação · exames periódicos ·
@@ -34,9 +45,13 @@ por outros domínios conforme sua natureza — **sem criar registro duplicado**:
 - **Métodos HORMONAIS que são medicamentos** (pílula · injeção · anel · adesivo): **projetados/vinculados** ao
   módulo **Medicamentos**. Aparecem em "medicamentos em uso" como uma **referência** ao fato da contracepção
   (link de volta ao Ciclo), com lembretes/recompra e na linha do tempo — **um fato, uma vez** (mesmo padrão de
-  Despesas projetar exames, [[FIN-001]]).
+  Despesas projetar exames, [[FIN-001]]). **Identificação clara (fundadora):** na lista de Medicamentos, o item
+  deve ser **claramente reconhecível como contraceptivo** — ex.: *Yaz · **Contracepção hormonal*** (rótulo/chip),
+  para não se confundir com "mais um medicamento".
 - **Métodos DISPOSITIVOS** (DIU de cobre/hormonal · implante): **vinculados** a **Recursos/Dispositivos** — têm
-  vida útil + data de troca + lembrete (já existentes em `contraceptive_methods`).
+  vida útil + data de troca + lembrete (já existentes em `contraceptive_methods`). **Dispositivos = conceito AMPLO
+  (fundadora):** Recursos/Dispositivos NÃO é orientado à contracepção — no futuro abriga **lentes esclerais · CPAP
+  · bombas de infusão · sensores contínuos de glicose (CGM) · próteses · órteses** etc. O DIU/implante é só um caso.
 - **Atributos do fato** (permanecem em `contraceptive_methods`): tipo (`kind`), marca, início, duração/vida útil,
   data de troca, status, lembrete, notas. **Novo (aditivo):** um discriminador de natureza derivado do `kind`
   (`hormonal` × `dispositivo`) — mapa no código (SSOT `lib/cycle.ts`), sem coluna nova obrigatória.
@@ -49,8 +64,14 @@ método é sempre no Ciclo (a fonte). Rastreabilidade: a referência preserva a 
 - **Medicamentos** (`/dashboard/medicamentos`) — **projeta** os métodos hormonais como "em uso" (referência),
   com CTA "gerenciar no Ciclo". Sem duplicar linha em `medications`.
 - **Recursos/Dispositivos** — DIU/implante como dispositivo com troca/vida útil.
-- **Agenda/Notificações** ([[NOTIF-001]]) — **execução**: lembrete de troca (DIU/injeção/anel/adesivo) e de
-  recompra (pílula) por CATEGORIA (`suplemento`? não — nova categoria/tipo de evento *contracepção*).
+- **Agenda/Notificações** ([[NOTIF-001]]) — **execução**. **Notificações por TIPO DE AÇÃO, não por domínio
+  (fundadora):** NÃO criar categoria "Contracepção". A Central organiza por ação — **Medicamentos · Exames ·
+  Consultas · Procedimentos · Dispositivos · Planejamento**. Assim: **recompra da pílula → Medicamento**; **troca
+  do DIU → Dispositivo (ou Planejamento)**, conforme a natureza da ação. Evita multiplicar categorias a cada novo
+  domínio.
+- **Timeline (princípio, fundadora):** a linha do tempo mostra o evento **no contexto em que ocorreu**,
+  preservando a **natureza original** — *"Início do anticoncepcional"*, *"Troca do método"*, *"Suspensão"*,
+  *"Inserção do DIU"*, *"Remoção do implante"* — **nunca** um genérico "Medicamento iniciado" (que perde contexto).
 - **Planejamento** (futuro) — a contracepção é um componente; a mesma referência serve ao guarda-chuva.
 
 ## 5. Fluxos
@@ -60,7 +81,8 @@ método é sempre no Ciclo (a fonte). Rastreabilidade: a referência preserva a 
 2. **Registrar dispositivo** (DIU/implante) → fato com vida útil + **lembrete de troca**; referência em
    Recursos/Dispositivos.
 3. **Editar/encerrar** → sempre na fonte (Ciclo); as projeções refletem.
-4. **Notificações** → categoria própria de contracepção (execução do planejamento), respeitando a Central.
+4. **Notificações** → por TIPO DE AÇÃO (recompra→Medicamento; troca de dispositivo→Dispositivo/Planejamento);
+   sem categoria "Contracepção". Respeita a Central ([[NOTIF-001]]).
 
 ## 6. Segurança & Governança
 RLS por usuária em `contraceptive_methods`. LGPD (dado sensível — saúde reprodutiva). RDC 657: **organiza e
@@ -75,5 +97,7 @@ projeção nos demais); (ii) sem duplicação; (iii) rastreabilidade à fonte; (
 
 ## 8. Implementação (SÓ após aprovação)
 Aditivo/reversível: discriminador hormonal×dispositivo no `lib/cycle.ts`; projeção dos métodos hormonais na lista
-de Medicamentos (união, cada fato uma vez, link ao Ciclo); categoria de notificação "contracepção"; nada
+de Medicamentos (união, cada fato uma vez, **rótulo "Contracepção hormonal"**, link ao Ciclo); **Timeline com
+rótulo contextual** por natureza; notificações **por tipo de ação** (Dispositivos/Planejamento como categorias de
+AÇÃO, não "Contracepção"); nada
 destrutivo em `contraceptive_methods`/`medications`. **Nada é implementado antes do seu aval** nesta spec.
