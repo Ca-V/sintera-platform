@@ -483,7 +483,15 @@ export default function MedicamentosPage() {
           titleHref="/dashboard/ciclo"
           dim={m.status === 'suspenso'}
           trailing={<CardChip tone={STATUS_TONE[m.status]}>{STATUS_LABEL[m.status]}</CardChip>}
-          meta={m.startedOn ? `Desde ${fmtShort(m.startedOn)}` : undefined}
+          meta={
+            <>
+              {m.startedOn ? `Desde ${fmtShort(m.startedOn)} · ` : ''}Método contraceptivo
+              {/* CTC-001 — ponto único de edição: deixar EVIDENTE que este item pertence ao domínio Ciclo. */}
+              <span className="block text-mauve/70 mt-0.5">
+                Gerenciado no <Link href="/dashboard/ciclo" className="text-petal hover:underline font-medium">Ciclo</Link> — método, recorrência, início e troca são editados lá.
+              </span>
+            </>
+          }
           chips={<CardChip tone="petal">{contraceptiveCategoryLabel(m.contraceptiveKind ?? '')}</CardChip>}
           actions={
             <Link href="/dashboard/ciclo" title="Gerenciar no Ciclo"
