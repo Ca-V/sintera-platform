@@ -18,6 +18,7 @@ import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import CreateRecordMenu from '@/components/ui/CreateRecordMenu'
 import { runoutDate, nextRepurchaseDate } from '@/lib/medications/repurchase'
+import { isHormonalContraceptive, contraceptiveLabel, contraceptiveCategoryLabel } from '@/lib/cycle'
 import { scanMedicationImage, PENDING_MED_SCAN_KEY } from '@/lib/medications/scanImage'
 import { useStickyView } from '@/lib/ui/useStickyView'
 import ListCard, { CardChip } from '@/components/ListCard'
@@ -83,6 +84,26 @@ interface Med {
   route: string | null
   packUnit: string | null
   prescriber: string | null
+  // CTC-001 — projeção (referência) de um método contraceptivo HORMONAL. O FATO pertence ao Ciclo;
+  // aqui é só leitura/identificação (não duplica linha em `medications`; editar é no Ciclo).
+  isContraceptive?: boolean
+  contraceptiveKind?: string | null
+}
+
+// CTC-001 — projeta um método contraceptivo HORMONAL como entrada de Medicamentos (REFERÊNCIA ao fato do Ciclo;
+// id 'ctc:<id>'). Somente leitura aqui — gerenciar/editar é no Ciclo (o domínio proprietário).
+function contraceptiveToMed(c: Record<string, unknown>): Med {
+  return {
+    id: `ctc:${c.id as string}`,
+    name: (c.brand as string) || contraceptiveLabel(c.kind as string),
+    kind: 'medicamento', brand: (c.brand as string) ?? null, dose: null, frequency: null,
+    startedOn: (c.started_on as string) ?? null, untilOn: null,
+    status: ((c.status as string) === 'suspenso' ? 'suspenso' : 'em_uso') as Status,
+    notes: null, acquiredQty: null, packQty: null, dailyCons: null, purchasedOn: null, purchaseStatus: null,
+    amountCents: null, repurchaseReminder: false, repurchaseFreq: null, repurchaseEventId: null, purchaseEventId: null,
+    form: null, route: null, packUnit: null, prescriber: null,
+    isContraceptive: true, contraceptiveKind: (c.kind as string),
+  }
 }
 
 function fmtFull(date: string): string {
@@ -217,11 +238,16 @@ export default function MedicamentosPage() {
     if (!user) return
     setLoading(true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (supabase as any).from('medications')
-      .select('id, name, kind, brand, dose, frequency, started_on, until_date, status, notes, acquired_quantity, pack_quantity, daily_consumption, purchased_on, purchase_status, amount_cents, repurchase_reminder, repurchase_frequency, repurchase_event_id, purchase_event_id, pharmaceutical_form, administration_route, pack_unit, prescriber_name')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-    setMeds(((data ?? []) as Array<Record<string, unknown>>).map(m => ({
+    const db = supabase as any
+    // CTC-001 — junto aos medicamentos, PROJETA os métodos contraceptivos HORMONAIS (o fato é do Ciclo; aqui é
+    // referência de leitura). Cada fato aparece UMA vez; sem duplicar linha em `medications`.
+    const [{ data }, ctcRes] = await Promise.all([
+      db.from('medications')
+        .select('id, name, kind, brand, dose, frequency, started_on, until_date, status, notes, acquired_quantity, pack_quantity, daily_consumption, purchased_on, purchase_status, amount_cents, repurchase_reminder, repurchase_frequency, repurchase_event_id, purchase_event_id, pharmaceutical_form, administration_route, pack_unit, prescriber_name')
+        .eq('user_id', user.id).order('created_at', { ascending: false }),
+      db.from('contraceptive_methods').select('id, kind, brand, started_on, status').eq('user_id', user.id),
+    ])
+    const realMeds: Med[] = ((data ?? []) as Array<Record<string, unknown>>).map(m => ({
       id: m.id as string,
       name: (m.name as string) ?? '',
       kind: (['suplemento', 'produto', 'dispositivo', 'outro'].includes(m.kind as string) ? (m.kind as string) : 'medicamento') as Kind,
@@ -246,7 +272,11 @@ export default function MedicamentosPage() {
       route: (m.administration_route as string) ?? null,
       packUnit: (m.pack_unit as string) ?? null,
       prescriber: (m.prescriber_name as string) ?? null,
-    })))
+    }))
+    const contraMeds: Med[] = ((ctcRes?.data ?? []) as Array<Record<string, unknown>>)
+      .filter(c => isHormonalContraceptive(c.kind as string) && (c.status as string) !== 'encerrado')
+      .map(contraceptiveToMed)
+    setMeds([...realMeds, ...contraMeds])
     setLoading(false)
   }, [user, supabase])
 
@@ -445,6 +475,23 @@ export default function MedicamentosPage() {
   }
 
   function card(m: Med) {
+    // CTC-001 — projeção contraceptiva: só leitura + identificação clara; gerenciar é no Ciclo (dono do fato).
+    if (m.isContraceptive) {
+      return (
+        <ListCard key={m.id}
+          title={m.name}
+          titleHref="/dashboard/ciclo"
+          dim={m.status === 'suspenso'}
+          trailing={<CardChip tone={STATUS_TONE[m.status]}>{STATUS_LABEL[m.status]}</CardChip>}
+          meta={m.startedOn ? `Desde ${fmtShort(m.startedOn)}` : undefined}
+          chips={<CardChip tone="petal">{contraceptiveCategoryLabel(m.contraceptiveKind ?? '')}</CardChip>}
+          actions={
+            <Link href="/dashboard/ciclo" title="Gerenciar no Ciclo"
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-blush font-body text-[11px] text-petal transition-colors">Gerenciar no Ciclo</Link>
+          }
+        />
+      )
+    }
     const meta = [formMetaOf(m.form ?? '')?.label, m.dose].filter(Boolean).join(' • ')
     const ro = runoutDate(m.purchasedOn, m.packQty, m.dailyCons, m.acquiredQty)
     const hasChips = m.purchaseStatus === 'a_comprar' || (m.purchaseStatus === 'comprado' && !!m.purchasedOn) || !!ro
