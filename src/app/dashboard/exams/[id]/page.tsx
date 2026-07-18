@@ -297,6 +297,11 @@ export default function ExamDetailPage() {
 
   // ── Fluxo assistencial (EXA-C2 / NC-0011) — eventos assistenciais vinculados a este exame ──
   const [linkedEvents, setLinkedEvents] = useState<HealthEvent[]>([])
+  // Q1 — pedidos disponíveis para vincular como ORIGEM deste resultado + estado da ação.
+  type OrderLite = { id: string; type: string | null; document_type: string | null; created_at: string; exam_date: string | null; requesting_physician: string | null; order_status: string | null }
+  const [orders, setOrders] = useState<OrderLite[]>([])
+  const [linkBusy, setLinkBusy] = useState(false)
+  const [linkPickerOpen, setLinkPickerOpen] = useState(false)
 
   // Etapa atual do fluxo (Pedido→Agendamento→Realização→Resultado), resolvida no domínio.
   const careStage = useMemo(() => {
@@ -304,6 +309,11 @@ export default function ExamDetailPage() {
     const isOrder = isOrderDocumentType((exam as unknown as { document_type?: string | null }).document_type)
     return careStageFor({ hasResult: biomarkers.length > 0, isOrder, linkedEventStatuses: linkedEvents.map(e => e.status) })
   }, [exam, biomarkers.length, linkedEvents])
+
+  // Q1 — este documento é um PEDIDO? Só RESULTADOS podem apontar para uma origem (pedido).
+  const isOrderDoc = isOrderDocumentType((exam as unknown as { document_type?: string | null })?.document_type)
+  const fulfillsOrderId = (exam as unknown as { fulfills_order_id?: string | null })?.fulfills_order_id ?? null
+  const linkedOrder = useMemo(() => orders.find(o => o.id === fulfillsOrderId) ?? null, [orders, fulfillsOrderId])
 
   // BETA-3: despesa vinculada ao exame (valor pago + documento fiscal) — fecha o loop no próprio exame.
   const linkedExpense = useMemo(() => linkedEvents.find(isFinancial) ?? null, [linkedEvents])
@@ -381,6 +391,26 @@ export default function ExamDetailPage() {
     setExam(prev => prev ? { ...prev, type: nameValue.trim() } : prev)
     setEditingName(false)
     setSavingName(false)
+  }
+
+  // ── Q1 — vínculo do RESULTADO à sua ORIGEM (pedido). O pedido permanece como registro histórico;
+  // o vínculo estabelece a rastreabilidade e faz o pedido constar como 'finalizado' (derivado). 1→N.
+  async function linkToOrder(orderId: string) {
+    if (!exam || linkBusy) return
+    setLinkBusy(true)
+    try {
+      await supabase.from('exams').update({ fulfills_order_id: orderId } as never).eq('id', exam.id)
+      setExam(prev => prev ? ({ ...prev, fulfills_order_id: orderId } as never) : prev)
+      setLinkPickerOpen(false)
+    } finally { setLinkBusy(false) }
+  }
+  async function unlinkOrder() {
+    if (!exam || linkBusy) return
+    setLinkBusy(true)
+    try {
+      await supabase.from('exams').update({ fulfills_order_id: null } as never).eq('id', exam.id)
+      setExam(prev => prev ? ({ ...prev, fulfills_order_id: null } as never) : prev)
+    } finally { setLinkBusy(false) }
   }
 
   function cancelEditName() {
@@ -507,8 +537,8 @@ export default function ExamDetailPage() {
 
   async function loadData(silent = false) {
     if (!silent) setLoading(true)
-    const [{ data: examData }, { data: bioData }, { data: logData }, { data: catData }, { data: clinData }] = await Promise.all([
-      supabase.from('exams').select('id,type,document_type,status,page_count,created_at,exam_date,error_reason,text_truncated,file_url,patient_name,extraction_completeness,issuer,requesting_physician,expense_amount_cents,expense_doc_type,expense_doc_url')
+    const [{ data: examData }, { data: bioData }, { data: logData }, { data: catData }, { data: clinData }, { data: ordersData }] = await Promise.all([
+      supabase.from('exams').select('id,type,document_type,status,page_count,created_at,exam_date,error_reason,text_truncated,file_url,patient_name,extraction_completeness,issuer,requesting_physician,expense_amount_cents,expense_doc_type,expense_doc_url,fulfills_order_id')
         .eq('id', examId).single(),
       supabase.from('current_biomarkers')
         .select('id,name,value,value_text,unit,reference_min,reference_max,interpretation,result_type,range_extracted,reference_source,source,catalog_id,source_material,source_exam_name')
@@ -524,9 +554,14 @@ export default function ExamDetailPage() {
       supabase.from('clinical_results')
         .select('clinical_model,result_kind,item_type,name,value_text,value_num,unit,code,code_system,value_code,region,anatomy,specimen,method,context,group_label,reference_text,page,raw_text')
         .eq('exam_id', examId),
+      // Q1 — pedidos do usuário, para vincular este resultado à sua ORIGEM (RLS já limita ao usuário).
+      supabase.from('exams').select('id,type,document_type,created_at,exam_date,requesting_physician,order_status')
+        .order('created_at', { ascending: false }),
     ])
     setLabels(await loadCatalogLabels(supabase))
     if (examData) setExam(examData as Exam)
+    // Só PEDIDOS (medical_order/insurance_guide), exceto o próprio doc — candidatos a origem deste resultado.
+    if (ordersData) setOrders((ordersData as OrderLite[]).filter(o => isOrderDocumentType(o.document_type) && o.id !== examId))
     if (bioData) {
       // Enriquece cada biomarcador com material/painel do catálogo (só apresentação).
       const cats   = (catData ?? []) as { id: string; specimen: string; category: string; display_name: string }[]
@@ -677,6 +712,56 @@ export default function ExamDetailPage() {
       <div className="print:hidden">
         <CareFlowStepper stage={careStage} />
       </div>
+
+      {/* Q1 — Pedido de ORIGEM (só para RESULTADOS). O pedido permanece como registro histórico; aqui só a
+          rastreabilidade origem↔resultado (quem solicitou, quando). Vincular marca o pedido como finalizado. */}
+      {!isOrderDoc && (
+        <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} padding="md" className="print:hidden">
+          <div className="flex items-center gap-2 mb-2">
+            <FileText size={15} className="text-gold" />
+            <h2 className="font-display text-base font-semibold text-onyx">Pedido de origem</h2>
+          </div>
+          {linkedOrder ? (
+            <div className="flex items-start justify-between gap-3">
+              <div className="font-body text-sm text-onyx">
+                <p className="font-medium">{linkedOrder.type ?? 'Pedido médico'}</p>
+                <p className="text-xs text-mauve mt-0.5">
+                  {linkedOrder.requesting_physician ? <>Solicitado por {linkedOrder.requesting_physician} · </> : null}
+                  {formatDate(linkedOrder.exam_date ?? linkedOrder.created_at)}
+                </p>
+              </div>
+              <button type="button" onClick={unlinkOrder} disabled={linkBusy}
+                className="flex-shrink-0 text-[11px] font-body text-mauve border border-border px-2.5 py-1 rounded-full hover:bg-blush transition-colors disabled:opacity-50">
+                Desvincular
+              </button>
+            </div>
+          ) : orders.length === 0 ? (
+            <p className="font-body text-xs text-mauve">Nenhum pedido cadastrado. Adicione o pedido em <Link href="/dashboard/exams" className="text-petal hover:underline">Exames › Pedidos de Exames</Link> para registrar a origem deste resultado.</p>
+          ) : linkPickerOpen ? (
+            <div className="flex flex-wrap items-center gap-2">
+              {/* eslint-disable-next-line jsx-a11y/no-autofocus */}
+              <select autoFocus aria-label="Pedido de origem" onChange={e => { if (e.target.value) linkToOrder(e.target.value) }} disabled={linkBusy}
+                className="flex-1 min-w-[220px] px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
+                <option value="">Selecione o pedido de origem…</option>
+                {orders.map(o => (
+                  <option key={o.id} value={o.id}>
+                    {(o.type ?? 'Pedido médico')}{o.requesting_physician ? ` — ${o.requesting_physician}` : ''} · {formatDate(o.exam_date ?? o.created_at)}
+                  </option>
+                ))}
+              </select>
+              <button type="button" onClick={() => setLinkPickerOpen(false)} className="text-[11px] font-body text-mauve px-2 py-1">Cancelar</button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-3">
+              <p className="font-body text-xs text-mauve">Vincule este resultado ao pedido que o originou — preserva a rastreabilidade (quem solicitou, quando) e marca o pedido como concluído.</p>
+              <button type="button" onClick={() => setLinkPickerOpen(true)}
+                className="flex-shrink-0 flex items-center gap-1 text-[11px] font-body font-medium text-petal-dark bg-blush border border-petal/30 px-2.5 py-1 rounded-full hover:bg-petal/10 transition-colors">
+                Vincular a um pedido
+              </button>
+            </div>
+          )}
+        </MotionCard>
+      )}
 
       {/* FB-001: Financeiro do exame — seção proeminente (valor pago · documento fiscal · recorrência) */}
       <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} padding="md" className="print:hidden">

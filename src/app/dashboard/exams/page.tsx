@@ -17,6 +17,7 @@ import { findDuplicateIds, originalIdFor, type DuplicateCandidate } from '@/lib/
 import { deriveExamIdentity } from '@/lib/exams/identification'
 import { binaryStructuringState, STRUCTURING_LABEL } from '@/lib/exams/structuring'
 import { isOrderDocumentType } from '@/lib/exams/classification'
+import { effectiveOrderStatus, orderStatusLabel } from '@/lib/exams/orderStatus'
 import { bundlePartInfo, bundlePartLabel, groupBundleParts } from '@/lib/exams/bundleGroup'
 import { useDocumentBundle, DocumentBundleStaging } from '@/components/ui/DocumentBundleCapture'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
@@ -168,6 +169,18 @@ export default function ExamsPage() {
     }
     return filtered
   }, [exams, searchName])
+
+  // Q1 — resultados vinculados por pedido (1→N). Origem↔resultado; o pedido permanece como histórico.
+  const resultsByOrder = useMemo(() => {
+    const map = new Map<string, Exam[]>()
+    for (const e of exams) {
+      const orderId = (e as unknown as { fulfills_order_id?: string | null }).fulfills_order_id
+      if (!orderId) continue
+      const arr = map.get(orderId) ?? []
+      arr.push(e); map.set(orderId, arr)
+    }
+    return map
+  }, [exams])
 
   // Possíveis duplicados (req_deteccao_duplicados): fingerprint OU paciente+data+emissor+título.
   // Marca só o registro mais novo do par; o original permanece. Nunca duplica em silêncio.
@@ -334,6 +347,22 @@ export default function ExamsPage() {
     }
   }
 
+  // ── Q1 — estado do pedido (pendente ⇄ realizado). "Marcar realizado" é só ESTADO: não cria evento
+  // nem exige o laudo (a realização e o resultado são momentos independentes). 'finalizado' é derivado
+  // do vínculo de resultado(s) e não se altera por aqui.
+  const [orderBusyId, setOrderBusyId] = useState<string | null>(null)
+  async function setOrderStatus(order: Exam, next: 'pendente' | 'realizado') {
+    if (orderBusyId) return
+    setOrderBusyId(order.id)
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).from('exams').update({ order_status: next }).eq('id', order.id)
+      setExams(prev => prev.map(e => e.id === order.id ? ({ ...e, order_status: next } as unknown as Exam) : e))
+    } finally {
+      setOrderBusyId(null)
+    }
+  }
+
   // Entrada unificada via primitivo transversal Document Bundle (E6): PDF processa direto
   // (já multipágina); IMAGENS montam o bundle (adicionar/reordenar páginas) — só ao Concluir
   // viram 1 PDF/1 registro. Uma implementação, reutilizada em todo ponto de captura.
@@ -447,7 +476,7 @@ export default function ExamsPage() {
           </button>
           <button type="button" onClick={() => setActiveTab('orders')}
             className={`px-4 py-1.5 rounded-xl font-body text-sm font-medium transition-colors flex items-center gap-1.5 ${activeTab === 'orders' ? 'bg-white text-onyx shadow-sm' : 'text-mauve hover:text-onyx'}`}>
-            Pedidos e Solicitações
+            Pedidos de Exames
             {orders.length > 0 && <span className="text-[11px] bg-warm text-gold px-1.5 py-0.5 rounded-full">{orders.length}</span>}
           </button>
         </div>
@@ -568,6 +597,10 @@ export default function ExamsPage() {
           <div className="flex flex-col gap-2">
             {orders.map((order, i) => {
               const fileUrl = (order as unknown as { file_url: string | null }).file_url
+              const rawStatus = (order as unknown as { order_status?: string | null }).order_status
+              const linkedResults = resultsByOrder.get(order.id) ?? []
+              const status = effectiveOrderStatus(rawStatus, linkedResults.length)
+              const statusTone = status === 'finalizado' ? 'sage' : status === 'realizado' ? 'petal' : 'gold'
               return (
                 <motion.div key={order.id}
                   initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
@@ -579,12 +612,35 @@ export default function ExamsPage() {
                     }
                     title={order.type ?? 'Pedido médico'}
                     onTitleClick={fileUrl ? () => window.open(fileUrl, '_blank', 'noopener') : undefined}
-                    meta={<>Adicionado em {formatDate(order.created_at)}</>}
+                    chips={<CardChip tone={statusTone}>{orderStatusLabel(status)}</CardChip>}
+                    meta={
+                      <>
+                        Adicionado em {formatDate(order.created_at)}
+                        {linkedResults.length > 0 && (
+                          <span className="block text-petal-dark mt-0.5">
+                            {linkedResults.length} resultado{linkedResults.length !== 1 ? 's' : ''} vinculado{linkedResults.length !== 1 ? 's' : ''} — origem preservada.
+                          </span>
+                        )}
+                      </>
+                    }
                     actions={
                       <>
-                        {/* Origem do fluxo assistencial: agendar a realização a partir do pedido */}
+                        {/* Q1: "Marcar como realizado" é só ESTADO (sem criar evento, sem exigir laudo). */}
+                        {status === 'pendente' && (
+                          <button type="button" onClick={() => setOrderStatus(order, 'realizado')} disabled={orderBusyId === order.id}
+                            className="flex items-center gap-1 text-[11px] font-body font-medium text-petal-dark bg-blush border border-petal/30 px-2.5 py-1 rounded-full hover:bg-petal/10 transition-colors disabled:opacity-50">
+                            {orderBusyId === order.id ? <Loader2 size={11} className="animate-spin" /> : <CheckCircle size={11} />} Marcar como realizado
+                          </button>
+                        )}
+                        {status === 'realizado' && (
+                          <button type="button" onClick={() => setOrderStatus(order, 'pendente')} disabled={orderBusyId === order.id}
+                            className="flex items-center gap-1 text-[11px] font-body font-medium text-mauve border border-border px-2.5 py-1 rounded-full hover:bg-blush transition-colors disabled:opacity-50">
+                            {orderBusyId === order.id ? <Loader2 size={11} className="animate-spin" /> : null} Desfazer
+                          </button>
+                        )}
+                        {/* Lembrete de um exame FUTURO (opcional) — evento planejado, não dá baixa no pedido. */}
                         <button type="button" onClick={() => setAgendarOrder(order)}
-                          className="flex items-center gap-1 text-[11px] font-body font-medium text-petal-dark bg-blush border border-petal/30 px-2.5 py-1 rounded-full hover:bg-petal/10 transition-colors">
+                          className="flex items-center gap-1 text-[11px] font-body font-medium text-onyx/60 border border-border px-2.5 py-1 rounded-full hover:bg-blush transition-colors">
                           <CalendarDays size={11} /> Agendar
                         </button>
                         {fileUrl && (
