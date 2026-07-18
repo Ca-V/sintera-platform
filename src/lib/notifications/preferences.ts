@@ -33,6 +33,8 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   { key: 'vacina',       label: 'Vacinas' },
   { key: 'medicamento',  label: 'Medicamentos' },
   { key: 'suplemento',   label: 'Suplementos' },
+  { key: 'dispositivo',  label: 'Dispositivos' },              // CTC-001 — troca de DIU/implante, CPAP, CGM… (por AÇÃO)
+  { key: 'planejamento', label: 'Planejamento' },              // CTC-001 — ações futuras planejadas (por AÇÃO)
   { key: 'avaliacao',    label: 'Avaliações corporais' },
   { key: 'outro',        label: 'Outros eventos assistenciais' },
 ]

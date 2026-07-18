@@ -10,8 +10,9 @@ import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   Clock, Plus, X, Stethoscope, Syringe, Activity, FlaskConical, CalendarDays,
-  Loader2, Pencil, Trash2, Paperclip, Info, Sparkles, Pill, Receipt, Dumbbell, Dna, CheckCircle2, RotateCcw, ArrowLeft,
+  Loader2, Pencil, Trash2, Paperclip, Info, Sparkles, Pill, Receipt, Dumbbell, Dna, CheckCircle2, RotateCcw, ArrowLeft, ShieldCheck,
 } from 'lucide-react'
+import { contraceptiveStartLabel } from '@/lib/cycle'
 import Link from 'next/link'
 import PageHeader from '@/components/PageHeader'
 import { useRouter } from 'next/navigation'
@@ -28,7 +29,7 @@ import ListCard, { CardChip } from '@/components/ListCard'
 import Card from '@/components/ui/Card'
 import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
 
-type EventType = 'consulta' | 'vacina' | 'procedimento' | 'estetico' | 'medicamento' | 'atividade' | 'exame' | 'omica' | 'outro'
+type EventType = 'consulta' | 'vacina' | 'procedimento' | 'estetico' | 'medicamento' | 'atividade' | 'exame' | 'omica' | 'contracepcao' | 'outro'
 
 interface TimelineItem {
   id: string
@@ -67,6 +68,7 @@ const TYPE_META: Record<string, { label: string; Icon: React.ElementType; cls: s
   medicacao:    { label: 'Medicamento',  Icon: Pill,         cls: 'bg-blush text-petal' },
   suplemento:   { label: 'Suplemento',   Icon: Pill,         cls: 'bg-blush text-petal' },
   atividade:    { label: 'Atividade física', Icon: Dumbbell, cls: 'bg-lavender-light text-lavender' },
+  contracepcao: { label: 'Contracepção',  Icon: ShieldCheck, cls: 'bg-blush text-petal' },
   plano:        { label: 'Plano de saúde', Icon: Receipt,    cls: 'bg-warm text-gold' },
   exame:        { label: 'Exame',        Icon: FlaskConical, cls: 'bg-warm text-gold' },
   omica:        { label: 'Ômica',        Icon: Dna,          cls: 'bg-lavender-light text-lavender' },
@@ -128,7 +130,7 @@ function LegacyTimeline() {
   const load = useCallback(async () => {
     if (!user) return
     setLoading(true)
-    const [examsRes, events, omicsRes] = await Promise.all([
+    const [examsRes, events, omicsRes, ctcRes] = await Promise.all([
       supabase.from('exams')
         .select('id, type, exam_date, status, notes, created_at')
         .eq('user_id', user.id),
@@ -139,6 +141,11 @@ function LegacyTimeline() {
       (supabase as any).from('omics_panels')
         .select('id, domain, laboratory, total_features, collected_on, created_at')
         .eq('user_id', user.id),
+      // CTC-001 — métodos contraceptivos projetados na timeline com CONTEXTO (Início do anticoncepcional,
+      // Inserção do DIU…). O fato pertence ao Ciclo; aqui é referência de leitura, rastreável (href).
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase as any).from('contraceptive_methods')
+        .select('id, kind, brand, started_on').eq('user_id', user.id),
     ])
 
     const merged: TimelineItem[] = []
@@ -176,6 +183,17 @@ function LegacyTimeline() {
         modalityText: modalityLabel(ev.modality),
         isReturn: isReturnVisit(ev),
         priority: ev.priority,
+      })
+    }
+    for (const c of (ctcRes?.data ?? []) as Array<Record<string, unknown>>) {
+      if (!c.started_on) continue
+      merged.push({
+        id: `ctc-${c.id as string}`, kind: 'event', eventType: 'contracepcao',
+        title: contraceptiveStartLabel(c.kind as string),
+        subtitle: (c.brand as string) ?? null,
+        date: c.started_on as string,
+        source: 'autorrelato', confidence: 'alta',
+        href: '/dashboard/ciclo',
       })
     }
     for (const p of (omicsRes.data ?? []) as Array<Record<string, unknown>>) {
