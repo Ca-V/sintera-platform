@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, type RefObject } from 'react'
+import { useEffect, useRef, type RefObject } from 'react'
 
 // Acessibilidade de MODAL/diálogo (TEMA G · G3), reutilizável — nenhuma tela
 // reimplementa foco/Escape. Enquanto `active`:
@@ -14,6 +14,12 @@ export function useModalA11y(
   onClose: () => void,
   active = true,
 ): void {
+  // `onClose` costuma ser recriado a cada render (arrow inline / função no componente). Guardamos a
+  // versão mais recente num ref para que o efeito de foco NÃO dependa dela — senão ele re-executaria a
+  // cada tecla e devolveria o foco ao 1º elemento do diálogo (foco "pulando" ao digitar). Deps = [active].
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+
   useEffect(() => {
     if (!active) return
     const node = ref.current
@@ -33,7 +39,7 @@ export function useModalA11y(
     ;(first ?? node)?.focus?.()
 
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { e.preventDefault(); onClose(); return }
+      if (e.key === 'Escape') { e.preventDefault(); onCloseRef.current(); return }
       if (e.key !== 'Tab') return
       const items = focusables()
       if (items.length === 0) { e.preventDefault(); node?.focus?.(); return }
@@ -48,5 +54,6 @@ export function useModalA11y(
       document.removeEventListener('keydown', onKey)
       previouslyFocused?.focus?.()
     }
-  }, [ref, onClose, active])
+    // Só re-executa ao ABRIR/FECHAR (active) — nunca a cada render/tecla. `onClose` vem do ref acima.
+  }, [ref, active])
 }
