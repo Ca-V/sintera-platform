@@ -86,7 +86,17 @@ verdes; Gate + Projeto Shield (segurança) + runbook OPS.
 Catálogo único de navegação (adiado); qualquer infra sem ≥2–3 consumidores; generalização do Planejamento; unificação de
 eventos legado (`agenda_events`) × canônico (`health_events`).
 
-## Processo
-Uma **versão por vez**. Cada decisão de arquitetura passa a ser tomada **em função da versão que estamos construindo**,
-priorizando valor ao usuário antes de refinamentos internos. Ao fim de cada versão: critérios objetivos atingidos +
-verificação verde + Gate de Conformidade + reavaliação de quais abstrações já se justificam.
+## Processo (permanente, todas as versões)
+**Planejar → Aprovar → Implementar → Validar → Encerrar → Próxima versão.** Uma **versão por vez**; nenhuma
+funcionalidade de versão futura contamina a atual. Cada decisão de arquitetura é tomada **em função da versão que
+estamos construindo**, priorizando valor ao usuário antes de refinamentos internos.
+
+**Toda versão responde 4 PERGUNTAS:** (1) Qual problema do usuário resolvemos? (2) Qual transformação esta versão
+entrega? (3) Como saberemos que foi concluída? (4) Por que precisa existir antes da próxima?
+
+**Todo plano de versão tem 6 campos:** objetivo · entregas · dependências · riscos (téc + UX) · critérios objetivos de
+conclusão · **CRITÉRIO DE SUCESSO** (o objetivo maior da versão — toda decisão se mede por "isso aproxima ou afasta
+desse resultado?"). Entregar sempre **experiências completas** ao usuário, não meio-módulos.
+
+Ao fim de cada versão: critério de sucesso + critérios objetivos atingidos · verificação verde (TSC+suíte+build) · Gate
+de Conformidade · reavaliação de quais abstrações já se justificam. Plano detalhado da V1: [[V1_PLANO_EXECUCAO]].
