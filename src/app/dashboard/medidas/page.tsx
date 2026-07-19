@@ -469,8 +469,8 @@ export default function MedidasPage() {
                 <Target size={16} className="text-petal" />
               </div>
               <div>
-                <p className="font-display text-base font-semibold text-onyx leading-none">Jornada de Tratamento</p>
-                <p className="font-body text-[11px] text-mauve mt-0.5">Acompanhamento de peso e composição corporal ao longo do tempo.</p>
+                <p className="font-display text-base font-semibold text-onyx leading-none">Acompanhamento de peso e composição corporal</p>
+                <p className="font-body text-[11px] text-mauve mt-0.5">Ao longo do tempo, a partir dos seus registros — sem diagnóstico nem interpretação.</p>
               </div>
             </div>
             {!goalEditing && (
@@ -577,8 +577,8 @@ export default function MedidasPage() {
       {!loading && evoIndicators.length > 0 && (
         <Card padding="md" className="space-y-4">
           <div>
-            <p className="font-display text-base font-semibold text-onyx leading-none">Evolução</p>
-            <p className="font-body text-[11px] text-mauve mt-0.5">Como cada indicador evoluiu — clique num ponto para ver a origem.</p>
+            <p className="font-display text-base font-semibold text-onyx leading-none">Indicadores ao longo do tempo</p>
+            <p className="font-body text-[11px] text-mauve mt-0.5">Como cada indicador evoluiu — clique num ponto para ver a origem. Abaixo, os marcos do período que podem se relacionar com a mudança.</p>
           </div>
 
           {/* Seletor horizontal de indicadores */}
