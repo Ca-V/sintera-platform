@@ -11,6 +11,7 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import { parseDateOnly } from '@/lib/agenda'
 import { useModalA11y } from '@/lib/ui/useModalA11y'
+import { navDescription } from '@/lib/ui/navDescriptions'
 import { useUser } from '@/context/UserContext'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
@@ -47,13 +48,14 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
 }
 
 // Acesso rápido — usa exatamente a nomenclatura do menu lateral esquerdo (FB-010).
-const QUICK_ACCESS: { href: string; icon: React.ElementType; label: string; desc: string; tile: string; tint: string }[] = [
-  { href: '/dashboard/timeline',     icon: Clock,       label: 'Histórico de Saúde',        desc: 'Registre e acompanhe toda a sua jornada de saúde',   tile: 'bg-blush',     tint: 'text-petal' },
-  { href: '/dashboard/agenda',       icon: CalendarDays,label: 'Agenda',                    desc: 'Planeje seus próximos exames, consultas e lembretes', tile: 'bg-warm',           tint: 'text-gold' },
-  { href: '/dashboard/exams',        icon: FileText,    label: 'Exames',                    desc: 'Reúna e organize seus laudos e documentos',          tile: 'bg-blush',          tint: 'text-petal' },
-  { href: '/dashboard/medicamentos', icon: Pill,        label: 'Medicamentos',              desc: 'Acompanhe seus medicamentos e lembretes de recompra', tile: 'bg-blush',     tint: 'text-petal' },
-  { href: '/dashboard/relatorio',    icon: ScrollText,  label: 'Relatórios',                desc: 'Reúna e compartilhe informações com seu profissional', tile: 'bg-lavender-light', tint: 'text-lavender' },
-  { href: '/dashboard/gastos',       icon: Receipt,     label: 'Despesas',                  desc: 'Acompanhe seus gastos com saúde e guarde comprovantes', tile: 'bg-blush',          tint: 'text-petal' },
+// Descrições vêm do SSOT @/lib/ui/navDescriptions (mesma voz da Sidebar).
+const QUICK_ACCESS: { href: string; icon: React.ElementType; label: string; tile: string; tint: string }[] = [
+  { href: '/dashboard/timeline',     icon: Clock,       label: 'Histórico de Saúde', tile: 'bg-blush',          tint: 'text-petal' },
+  { href: '/dashboard/agenda',       icon: CalendarDays,label: 'Agenda',             tile: 'bg-warm',           tint: 'text-gold' },
+  { href: '/dashboard/exams',        icon: FileText,    label: 'Exames',             tile: 'bg-blush',          tint: 'text-petal' },
+  { href: '/dashboard/medicamentos', icon: Pill,        label: 'Medicamentos',       tile: 'bg-blush',          tint: 'text-petal' },
+  { href: '/dashboard/relatorio',    icon: ScrollText,  label: 'Relatórios',         tile: 'bg-lavender-light', tint: 'text-lavender' },
+  { href: '/dashboard/gastos',       icon: Receipt,     label: 'Despesas',           tile: 'bg-blush',          tint: 'text-petal' },
 ]
 
 // Passo 7 (cutover) — a rota decide legacy × v2 pelo Entry. Default: legacy
@@ -245,9 +247,9 @@ function LegacyDashboard() {
           <div className="w-16 h-16 rounded-2xl gradient-sintera-soft flex items-center justify-center mx-auto mb-4">
             <Upload size={28} className="text-petal" />
           </div>
-          <h2 className="font-display text-lg font-semibold text-onyx mb-2">Comece enviando um documento</h2>
+          <h2 className="font-display text-lg font-semibold text-onyx mb-2">Comece a organizar a sua saúde</h2>
           <p className="font-body text-sm text-mauve max-w-sm mx-auto mb-6">
-            Um exame, uma receita ou um atestado — a SINTERA lê, transcreve os dados e organiza tudo para você acompanhar.
+            Registre um exame, um medicamento, uma consulta ou qualquer informação — a SINTERA organiza tudo para você acompanhar ao longo do tempo.
           </p>
           <button
             onClick={() => setIntakeOpen(true)}
@@ -279,7 +281,7 @@ function LegacyDashboard() {
                   </div>
                   <div className="min-w-0">
                     <p className="font-body text-sm font-semibold text-onyx leading-tight">{card.label}</p>
-                    <p className="font-body text-xs text-mauve mt-0.5">{card.desc}</p>
+                    <p className="font-body text-xs text-mauve mt-0.5">{navDescription(card.href)}</p>
                   </div>
                 </ActionCard>
               )
