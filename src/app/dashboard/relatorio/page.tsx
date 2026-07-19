@@ -26,7 +26,7 @@ import { applySort, type SortSpec } from '@/lib/listview'
 import {
   Loader2, Printer, ArrowLeft, FileText, Share2, Copy, Trash2, Check,
   CalendarDays, FlaskConical, Pill, Stethoscope, HeartPulse, Ruler, Activity, Eye,
-  ChevronDown, Minus, Droplet, Receipt, Leaf,
+  ChevronDown, Minus, Droplet, Receipt, Leaf, Clock,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { assembleOrganizedBiomarkers } from '@/lib/ai/insights/assembler'
@@ -125,7 +125,7 @@ function LegacyReport() {
   const [shareBusy, setShareBusy] = useState(false)
   const [confirm, setConfirm] = useState<{ message: string; confirmLabel: string; onYes: () => void } | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
-  const [sections, setSections] = useState({ medicamentos: true, suplementos: true, condicoes: true, habitos: true, visao: true, eventos: true, exames: true, omica: true, medidas: true, sinais: true, ciclo: true, gastos: true })
+  const [sections, setSections] = useState({ medicamentos: true, suplementos: true, condicoes: true, habitos: true, visao: true, eventos: true, registros: true, exames: true, omica: true, medidas: true, sinais: true, ciclo: true, gastos: true })
   const toggle = (k: keyof typeof sections) => setSections(s => ({ ...s, [k]: !s[k] }))
   // Filtro temporal (capacidade transversal da Camada de Comunicação).
   const [period, setPeriod] = useState<Period>({ preset: 'all' })
@@ -184,6 +184,7 @@ function LegacyReport() {
   const SELECT_GROUPS: { title: string; items: [SectionKey, string, ElementType][] }[] = [
     { title: 'Acompanhamento', items: [
       ['eventos', 'Agenda', CalendarDays],
+      ['registros', 'Histórico de Saúde', Clock],
       ['medidas', 'Composição Corporal', Ruler],
       ['sinais', 'Monitoramento', Activity],
     ] },
@@ -204,7 +205,7 @@ function LegacyReport() {
     ] },
   ]
   // Comandos de seleção (via SelectionToolbar reutilizável).
-  const DEFAULT_SECTIONS = { medicamentos: true, suplementos: true, condicoes: true, habitos: true, visao: true, eventos: true, exames: true, omica: true, medidas: true, sinais: true, ciclo: true, gastos: true }
+  const DEFAULT_SECTIONS = { medicamentos: true, suplementos: true, condicoes: true, habitos: true, visao: true, eventos: true, registros: true, exames: true, omica: true, medidas: true, sinais: true, ciclo: true, gastos: true }
   const allSections = (v: boolean) => Object.fromEntries(Object.keys(sections).map(k => [k, v])) as typeof sections
   const selectAllSections = () => { setSections(allSections(true)); setExcluded({}) }
   const clearSections = () => setSections(allSections(false))
@@ -343,7 +344,7 @@ function LegacyReport() {
   const visSupSusp = medsSusp.filter(m => isSup(m) && isItemOn('suplementos', m.name))
   const visExams = exams.filter(e => isItemOn('exames', `${e.type}__${e.date}`))
   // Faixas de grupo (espelham a Sidebar, FB-010): exibidas se houver ao menos uma seção do grupo.
-  const showAcompanhamento = sections.eventos || sections.medidas || sections.sinais
+  const showAcompanhamento = sections.eventos || sections.registros || sections.medidas || sections.sinais
   const showDocumentos = sections.exames || sections.omica
   const showMinhaSaude = sections.condicoes || sections.medicamentos || sections.suplementos || sections.visao || sections.habitos || sections.ciclo
   const showOrganizacao = sections.gastos
@@ -386,7 +387,9 @@ function LegacyReport() {
     period,
   })
   const applyConfig = (cfg: Record<string, unknown>) => {
-    if (cfg.sections) setSections(cfg.sections as typeof sections)
+    // Merge com o estado atual: templates salvos antes da separação Agenda×Histórico de Saúde não têm
+    // 'registros' — sem o merge, a nova seção ficaria oculta. Chaves ausentes herdam o default (on).
+    if (cfg.sections) setSections(s => ({ ...s, ...(cfg.sections as Partial<typeof sections>) }))
     setExcluded(Object.fromEntries(Object.entries((cfg.excluded as Record<string, string[]>) ?? {}).map(([k, v]) => [k, new Set(v)])))
     if (cfg.period) setPeriod(cfg.period as Period)
   }
@@ -404,7 +407,8 @@ function LegacyReport() {
 
   // Resumo/tamanho — o que está incluído (seções selecionadas, dentro do período).
   const resumoItems = [
-    sections.eventos && { label: 'agenda', n: perEvents.length },
+    sections.eventos && { label: 'agenda', n: perAgenda.length },
+    sections.registros && { label: 'histórico de saúde', n: perHistorico.length },
     sections.exames && { label: 'exames', n: perVisExams.length },
     sections.omica && { label: 'ômica', n: perOmics.length },
     sections.medicamentos && { label: 'medicamentos', n: visMedsEmUso.length + perMedsSusp.length },
@@ -630,7 +634,7 @@ function LegacyReport() {
             <p><span className="text-mauve">Registros incluídos:</span> <strong>{totalRegistros}</strong></p>
             {sections.exames && <p><span className="text-mauve">Exames:</span> {perVisExams.length}</p>}
             {sections.eventos && <p><span className="text-mauve">Agenda (previstos):</span> {perAgenda.length}</p>}
-            {sections.eventos && <p><span className="text-mauve">Histórico (realizados):</span> {perHistorico.length}</p>}
+            {sections.registros && <p><span className="text-mauve">Histórico de Saúde (realizados):</span> {perHistorico.length}</p>}
             {sections.medicamentos && <p><span className="text-mauve">Medicamentos em uso:</span> {visMedsEmUso.length}</p>}
             {sections.suplementos && <p><span className="text-mauve">Suplementos em uso:</span> {visSupEmUso.length}</p>}
             {sections.condicoes && <p><span className="text-mauve">Condições registradas:</span> {condProprias.length + condFamiliar.length}</p>}
@@ -672,59 +676,51 @@ function LegacyReport() {
         {/* ══════════ ACOMPANHAMENTO ══════════ */}
         {showAcompanhamento && <ReportBand>Acompanhamento</ReportBand>}
 
-        {/* Consultas, procedimentos e eventos (Histórico) */}
+        {/* Agenda — eventos FUTUROS ainda previstos (separação definitiva do Histórico de Saúde). */}
         {sections.eventos && (
         <section id="sec-eventos" style={{ scrollMarginTop: 16 }}>
-          {/* Separação DEFINITIVA: Agenda (previstos) × Histórico (realizados). Nunca misturar. */}
-          {perEvents.length === 0 ? (
-            <>
-              <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Agenda e Histórico</h2>
-              <p className="font-body text-xs text-mauve">Nenhum evento registrado.</p>
-            </>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Agenda <span className="font-body text-xs font-normal text-mauve">(previstos)</span></h2>
+          {perAgenda.length === 0 ? (
+            <p className="font-body text-xs text-mauve">Nenhum evento previsto no período.</p>
           ) : (
-            <>
-              <div>
-                <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Agenda <span className="font-body text-xs font-normal text-mauve">(previstos)</span></h2>
-                {perAgenda.length === 0 ? (
-                  <p className="font-body text-xs text-mauve mb-3">Nenhum evento previsto no período.</p>
-                ) : (
-                  <table className="w-full text-left mb-4">
-                    <tbody>
-                      {perAgenda.map((e, i) => (
-                        <tr key={i} className="border-b border-border/50">
-                          <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(e.date)}</td>
-                          <td className="font-body text-xs text-onyx py-1.5">
-                            <span className="text-mauve">{typeLabel(e.eventType)}{professionalKindLabel(e.prof) ? ` (${professionalKindLabel(e.prof)})` : ''}:</span> {e.title}
-                            {e.notes ? <span className="block text-xs text-mauve">{e.notes}</span> : null}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-              <div>
-                <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Histórico <span className="font-body text-xs font-normal text-mauve">(realizados)</span></h2>
-                {perHistorico.length === 0 ? (
-                  <p className="font-body text-xs text-mauve">Nenhum evento realizado no período.</p>
-                ) : (
-                  <table className="w-full text-left">
-                    <tbody>
-                      {perHistorico.map((e, i) => (
-                        <tr key={i} className="border-b border-border/50">
-                          <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(e.date)}</td>
-                          <td className="font-body text-xs text-onyx py-1.5">
-                            <span className="text-mauve">{typeLabel(e.eventType)}{professionalKindLabel(e.prof) ? ` (${professionalKindLabel(e.prof)})` : ''}:</span> {e.title}
-                            {e.status === 'cancelado' && <span className="text-mauve"> · cancelado</span>}
-                            {e.notes ? <span className="block text-xs text-mauve">{e.notes}</span> : null}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            </>
+            <table className="w-full text-left">
+              <tbody>
+                {perAgenda.map((e, i) => (
+                  <tr key={i} className="border-b border-border/50">
+                    <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(e.date)}</td>
+                    <td className="font-body text-xs text-onyx py-1.5">
+                      <span className="text-mauve">{typeLabel(e.eventType)}{professionalKindLabel(e.prof) ? ` (${professionalKindLabel(e.prof)})` : ''}:</span> {e.title}
+                      {e.notes ? <span className="block text-xs text-mauve">{e.notes}</span> : null}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
+        )}
+
+        {/* Histórico de Saúde — eventos que JÁ ACONTECERAM (consultas, procedimentos, vacinas…). */}
+        {sections.registros && (
+        <section id="sec-registros" style={{ scrollMarginTop: 16 }}>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Histórico de Saúde <span className="font-body text-xs font-normal text-mauve">(realizados)</span></h2>
+          {perHistorico.length === 0 ? (
+            <p className="font-body text-xs text-mauve">Nenhum evento realizado no período.</p>
+          ) : (
+            <table className="w-full text-left">
+              <tbody>
+                {perHistorico.map((e, i) => (
+                  <tr key={i} className="border-b border-border/50">
+                    <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(e.date)}</td>
+                    <td className="font-body text-xs text-onyx py-1.5">
+                      <span className="text-mauve">{typeLabel(e.eventType)}{professionalKindLabel(e.prof) ? ` (${professionalKindLabel(e.prof)})` : ''}:</span> {e.title}
+                      {e.status === 'cancelado' && <span className="text-mauve"> · cancelado</span>}
+                      {e.notes ? <span className="block text-xs text-mauve">{e.notes}</span> : null}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </section>
         )}
