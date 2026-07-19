@@ -17,7 +17,7 @@ const features = [
   {
     icon: Layers,
     title: 'Visualize sua saúde de forma integrada',
-    description: 'Acompanhe sua evolução ao longo do tempo — por ano, exame, procedimento ou tratamento — e compreenda toda a sua trajetória de saúde numa única visão integrada, pronta para compartilhar com a sua rede de cuidado.',
+    description: 'Acompanhe sua evolução ao longo do tempo — por ano, exame, consulta ou procedimento — e compreenda toda a sua trajetória de saúde numa única visão integrada, pronta para compartilhar com a sua rede de cuidado.',
     iconColor: 'text-petal', iconBg: 'bg-blush', highlight: true,
   },
   {

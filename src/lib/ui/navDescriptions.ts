@@ -1,9 +1,16 @@
-// SSOT das DESCRIÇÕES CONTEXTUAIS das áreas da plataforma (fundadora 18/07). Uma só fonte para a
+// SSOT das DESCRIÇÕES SEMÂNTICAS de cada área da plataforma (fundadora 18/07). Uma só fonte para a
 // Sidebar (tooltip por categoria) E os cards de Acesso Rápido do Painel — nunca divergem, voz única.
 //
-// Padrão (DS-001 §9): responde "O QUE EU CONSIGO FAZER AQUI?" (ação, não inventário) · começa com verbo ·
-// BENEFÍCIO/propósito antes da funcionalidade · exemplos quando agregam · linguagem simples e natural ·
-// máx. 2 linhas · reforça o acompanhamento longitudinal / continuidade do cuidado quando couber.
+// PRINCÍPIO (fundadora): cada texto é a descrição SEMÂNTICA da FINALIDADE do módulo — INDEPENDENTE do
+// contexto de exibição. Não é copy de um tooltip nem de um card; é "o que este módulo É/faz". Por isso o
+// mesmo texto poderá, no futuro, alimentar a BUSCA GLOBAL, um ASSISTENTE inteligente, o ONBOARDING
+// contextual e RECOMENDAÇÕES — quanto mais agnóstico do componente, maior o reaproveitamento. (Evolução
+// natural: promover este arquivo a um CATÁLOGO ÚNICO de navegação — ver docs/HUB/DS quando decidido.)
+//
+// Padrão do texto (DS-001 §9): responde "O QUE EU CONSIGO FAZER AQUI?" (ação, não inventário) · começa com
+// verbo · BENEFÍCIO/propósito antes da funcionalidade · exemplos quando agregam · linguagem simples ·
+// máx. 2 linhas · reforça o acompanhamento longitudinal / continuidade do cuidado quando couber ·
+// NUNCA usar "tratamento" (a SINTERA registra/organiza o cuidado, não acompanha tratamentos).
 export const NAV_DESCRIPTION: Record<string, string> = {
   '/dashboard':               'Veja o que precisa da sua atenção e comece qualquer registro de saúde num só lugar.',
   '/dashboard/agenda':        'Organize consultas, exames, procedimentos e lembretes para não perder nenhum compromisso importante.',

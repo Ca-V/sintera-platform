@@ -1,16 +1,17 @@
 // HUB-001 — Hub de Registro (ponto único de entrada da SINTERA). TAXONOMIA = SSOT aberta.
 //
 // Princípio: o usuário escolhe O QUE registrar; a SINTERA decide COMO capturar. As opções organizam-se
-// por NATUREZA da informação (documento/tratamento/registro), NUNCA pelo mecanismo. Adicionar um tipo =
+// por NATUREZA da informação (documento/cuidado/registro), NUNCA pelo mecanismo. Adicionar um tipo =
 // uma entrada aqui (configuração), sem tocar a UI. Camada de domínio: pura, sem IO nem React.
 
 import type { DocumentKind } from './types'
 
-export type IntentGroup = 'documento' | 'tratamento' | 'registro' | 'organizacao'
+// grupo 'cuidado' = medicamentos/suplementos/recursos; evita "tratamento" (a SINTERA registra/organiza, não trata).
+export type IntentGroup = 'documento' | 'cuidado' | 'registro' | 'organizacao'
 
 export const INTENT_GROUPS: { group: IntentGroup; label: string }[] = [
   { group: 'documento',   label: 'Documentos' },
-  { group: 'tratamento',  label: 'Tratamentos e recursos' },
+  { group: 'cuidado',     label: 'Cuidados e recursos' },
   { group: 'registro',    label: 'Registros de saúde' },
   { group: 'organizacao', label: 'Organização' },
 ]
@@ -42,11 +43,11 @@ export const REGISTRATION_INTENTS: RegistrationIntent[] = [
   { key: 'doc_clinico',  label: 'Atestado, relatório ou encaminhamento', icon: 'FileHeart', group: 'documento', available: true, mechanism: { type: 'capture' } },
   { key: 'omica',        label: 'Exame ômico',        icon: 'Dna',           group: 'documento', available: true, mechanism: { type: 'page', href: '/dashboard/omics' } },
 
-  // ── Tratamentos e recursos ────────────────────────────────────────────────
-  { key: 'medicamento',  label: 'Medicamento',        icon: 'Pill',          group: 'tratamento', available: true, mechanism: { type: 'choice', captureKind: 'medication_label', captureLabel: 'Enviar receita', pageHref: '/dashboard/medicamentos', pageLabel: 'Cadastrar manualmente' } },
-  { key: 'suplemento',   label: 'Suplemento',         icon: 'Leaf',          group: 'tratamento', available: true, mechanism: { type: 'page', href: '/dashboard/medicamentos' } },
-  { key: 'recurso',      label: 'Recurso de saúde',   icon: 'Package',       group: 'tratamento', available: true, mechanism: { type: 'page', href: '/dashboard/recursos' } },
-  { key: 'oculos',       label: 'Óculos / Lentes',    icon: 'Glasses',       group: 'tratamento', available: true, mechanism: { type: 'capture', documentKind: 'eyeglass_prescription' } },
+  // ── Cuidados e recursos ───────────────────────────────────────────────────
+  { key: 'medicamento',  label: 'Medicamento',        icon: 'Pill',          group: 'cuidado', available: true, mechanism: { type: 'choice', captureKind: 'medication_label', captureLabel: 'Enviar receita', pageHref: '/dashboard/medicamentos', pageLabel: 'Cadastrar manualmente' } },
+  { key: 'suplemento',   label: 'Suplemento',         icon: 'Leaf',          group: 'cuidado', available: true, mechanism: { type: 'page', href: '/dashboard/medicamentos' } },
+  { key: 'recurso',      label: 'Recurso de saúde',   icon: 'Package',       group: 'cuidado', available: true, mechanism: { type: 'page', href: '/dashboard/recursos' } },
+  { key: 'oculos',       label: 'Óculos / Lentes',    icon: 'Glasses',       group: 'cuidado', available: true, mechanism: { type: 'capture', documentKind: 'eyeglass_prescription' } },
 
   // ── Registros de saúde ────────────────────────────────────────────────────
   { key: 'consulta',     label: 'Consulta',           icon: 'Stethoscope',   group: 'registro', available: true,  mechanism: { type: 'page', href: '/dashboard/agenda' } },

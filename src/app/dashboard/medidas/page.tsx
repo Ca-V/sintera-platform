@@ -297,7 +297,7 @@ export default function MedidasPage() {
   const SUMMARY_ORDER: Metric[] = ['peso', 'gordura_corporal', 'massa_muscular', 'massa_magra', 'agua_corporal', 'gordura_visceral', 'taxa_metabolica', 'massa_ossea', 'circunferencia_cintura', 'altura']
   const summaryCards = SUMMARY_ORDER.filter(m => summary[m]).map(m => ({ metric: m, s: summary[m] }))
 
-  // BOD-001 área ④ — Jornada de Tratamento (genérica; peso é o objetivo desta 1ª versão).
+  // BOD-001 área ④ — Acompanhamento de peso e composição corporal (genérico; peso é o objetivo desta 1ª versão).
   const lastAssess = lastAssessment(summaryPoints)   // última avaliação corporal (bioimpedância/DEXA)
   // Tempo de acompanhamento (a partir da 1ª medição de peso). Semanas → meses quando ≥ 8 semanas.
   const followupLabel = journey.spanWeeks == null ? null
@@ -458,7 +458,7 @@ export default function MedidasPage() {
         </Card>
       )}
 
-      {/* BOD-001 área ④ — Jornada de Tratamento (painel GENÉRICO, reutilizável p/ GLP-1, acompanhamento
+      {/* BOD-001 área ④ — Acompanhamento de peso e composição corporal (painel GENÉRICO, reutilizável p/ GLP-1, acompanhamento
           nutricional, bariátrica, ganho de massa, reabilitação…). Nesta 1ª versão o objetivo é o PESO.
           Aritmética factual sobre os registros da própria pessoa (RDC 657). */}
       {!loading && journey.currentWeight != null && (
