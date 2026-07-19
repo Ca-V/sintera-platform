@@ -358,6 +358,10 @@ function LegacyTimeline() {
               <button aria-label="Excluir" disabled={busyId === it.rawId} onClick={() => remove(it.rawId!, it.title)}
                 className="w-6 h-6 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve/40 hover:text-red-400 transition-colors disabled:opacity-40"><Trash2 size={12} /></button>
             </>
+          ) : it.eventType === 'contracepcao' && it.href ? (
+            // Projeção do Ciclo (ADR-001: ponto único de edição). Editar leva ao domínio dono — não edita inline.
+            <Link href={it.href} aria-label="Editar no Ciclo" title="Editar no Ciclo"
+              className="w-6 h-6 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/40 hover:text-petal transition-colors"><Pencil size={12} /></Link>
           ) : undefined}
         />
       </motion.div>

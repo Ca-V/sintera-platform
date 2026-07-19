@@ -221,7 +221,7 @@ export default function AgendaPage() {
           icon={<CalendarDays size={16} />}
           eyebrow="Agenda"
           title="Agenda"
-          subtitle={<>Seus próximos exames, consultas e retornos. O que já aconteceu fica no Histórico.</>}
+          subtitle={<>Seus próximos exames, consultas e retornos. O que já aconteceu fica nos seus Registros de Saúde.</>}
           action={
             <button onClick={openAdd}
               className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white text-sm font-body font-medium hover:opacity-90 transition-opacity flex-shrink-0">
