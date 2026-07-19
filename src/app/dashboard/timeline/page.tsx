@@ -23,6 +23,7 @@ import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { useEventForm, eventToInput } from '@/components/eventForm'
 import { rowToHealthEvent, eventServicesFor, modalityLabel, outcomeSummary, hasOutcome, professionalKindLabel, isReturnVisit, priorityBadge, type HealthEvent, type HealthEventRow, type EventPriority } from '@/lib/agenda'
+import { todayISO } from '@/lib/date'   // SSOT de datas (DATE-001) — "hoje" consistente entre as telas
 import { useStickyView } from '@/lib/ui/useStickyView'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import ListCard, { CardChip } from '@/components/ListCard'
@@ -294,7 +295,7 @@ function LegacyTimeline() {
       onYes: () => withFullEvent(rawId, ev => services.command.reopen(user!.id, ev), 'Não foi possível reabrir o evento.'),
     })
 
-  const today = new Date().toISOString().slice(0, 10)
+  const today = todayISO()
   // Histórico = SÓ o que já aconteceu. Eventos futuros ainda planejados vivem na Agenda
   // (regra definitiva: Agenda = futuro · Histórico = passado). Exames/ômica e eventos
   // realizados/cancelados aparecem; um evento futuro ainda "planejado" não.

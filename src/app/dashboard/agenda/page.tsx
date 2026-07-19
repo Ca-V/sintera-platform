@@ -14,6 +14,7 @@ import ConfirmDialog from '@/components/ConfirmDialog'
 import { useEventForm, eventToInput } from '@/components/eventForm'
 import { buildExamRecencySuggestion, type AgendaSuggestion } from '@/lib/agenda/suggestions'
 import { typeLabel, statusLabel, formatDateBR, formatTimeBR, modalityLabel, outcomeSummary, hasOutcome, isReturnVisit, priorityBadge, byPriority, type HealthEvent } from '@/lib/agenda'
+import { todayISO } from '@/lib/date'   // SSOT de datas (DATE-001) — "hoje" consistente entre as telas
 import { useStickyView } from '@/lib/ui/useStickyView'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import ListCard, { CardChip } from '@/components/ListCard'
@@ -150,7 +151,7 @@ export default function AgendaPage() {
     setEditing(null); setPrefill({ eventType: s.suggestedEventType, title: s.suggestedTitle }); setModalOpen(true)
   }
 
-  const today = new Date().toISOString().slice(0, 10)
+  const today = todayISO()
   const editingInitial: Partial<AgendaEventInput> | undefined = editing ? eventToInput(editing) : prefill
 
   function monthLabel(date: string): string {

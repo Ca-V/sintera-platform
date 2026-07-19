@@ -22,6 +22,7 @@ import EvolutionChart from '@/components/body/EvolutionChart'
 import { buildSnapshots, compareSnapshots, type SnapPoint } from '@/lib/body/snapshots'
 import { buildMilestones, MILESTONE_CATEGORIES, MILESTONE_COLOR, type MilestoneCategory, type MedInput, type ConsultaInput, type AssessmentInput } from '@/lib/body/milestones'
 import { professionalKindLabel } from '@/lib/agenda'
+import { todayISO } from '@/lib/date'   // SSOT de datas (DATE-001) — "hoje" consistente entre as telas
 import ListCard from '@/components/ListCard'
 import PageHeader from '@/components/PageHeader'
 import EmptyState from '@/components/EmptyState'
@@ -247,7 +248,7 @@ export default function MedidasPage() {
         .map(m => ({ metric: m, value: String(r[m]), unit: DEFAULT_UNIT[m] }))
       if (rows.length === 0) { setScanErr('Não encontrei medidas no laudo. Tente outra foto ou registre manualmente.'); setScanning(false); return }
       setScanRows(rows)
-      setScanDate(r.measured_on || new Date().toISOString().slice(0, 10))
+      setScanDate(r.measured_on || todayISO())
     } catch (e) {
       setScanErr(e instanceof Error ? e.message : 'Falha ao processar a foto. Tente novamente ou registre manualmente.')
     } finally {
@@ -327,8 +328,8 @@ export default function MedidasPage() {
       return v == null ? null : { key: i.id, date: i.measuredOn, value: v, source: i.source, examId: i.examId }
     }).filter((p): p is EvoPoint => p != null).sort((a, b) => (a.date < b.date ? -1 : 1))
   })()
-  const nowISO = new Date().toISOString().slice(0, 10)
-  const evoPoints = filterByPeriod(evoAll, evoDays, nowISO)
+  const today = todayISO()
+  const evoPoints = filterByPeriod(evoAll, evoDays, today)
   const evoUnit = evoMetricActive === 'imc' ? 'kg/m²' : (DEFAULT_UNIT[evoMetricActive] || '')
   const evoSourcesPresent = [...new Set(evoPoints.map(p => p.source).filter(Boolean))] as string[]
 
@@ -351,7 +352,7 @@ export default function MedidasPage() {
     .map(s => ({ date: s.date, sourceLabel: sourceQuality(s.source)?.label ?? 'Avaliação', examId: s.examId }))
   const allMilestones = buildMilestones({ meds: medRows, assessments: assessInput, consultas: consultaRows })
   const msCatsPresent = MILESTONE_CATEGORIES.filter(c => allMilestones.some(m => m.category === c.key))
-  const evoMilestones = filterByPeriod(allMilestones.filter(m => msCats.has(m.category)), evoDays, nowISO)
+  const evoMilestones = filterByPeriod(allMilestones.filter(m => msCats.has(m.category)), evoDays, today)
   const evoChartMs = evoMilestones.map(m => ({ date: m.date, color: MILESTONE_COLOR[m.category] }))
   const toggleMsCat = (k: MilestoneCategory) => setMsCats(prev => { const n = new Set(prev); if (n.has(k)) n.delete(k); else n.add(k); return n })
 
