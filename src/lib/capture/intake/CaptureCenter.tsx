@@ -74,9 +74,11 @@ export interface CaptureCenterProps {
   className?: string
   /** Chamado após encaminhar com sucesso (ex.: fechar o modal). */
   onDone?: () => void
+  /** HUB-001: tipo declarado pelo usuário no Hub (pré-seleção). A classificação ainda refina em 2º plano. */
+  initialKind?: DocumentKind | null
 }
 
-export default function CaptureCenter({ className = '', onDone }: CaptureCenterProps) {
+export default function CaptureCenter({ className = '', onDone, initialKind = null }: CaptureCenterProps) {
   const router = useRouter()
   const { user } = useUser()
   const supabase = useRef(createClient()).current
@@ -85,7 +87,7 @@ export default function CaptureCenter({ className = '', onDone }: CaptureCenterP
 
   const [file, setFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [kind, setKind] = useState<DocumentKind | null>(null)
+  const [kind, setKind] = useState<DocumentKind | null>(initialKind)
   const [dragOver, setDragOver] = useState(false)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)

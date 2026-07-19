@@ -14,7 +14,7 @@ import { useModalA11y } from '@/lib/ui/useModalA11y'
 import { useUser } from '@/context/UserContext'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
-import CaptureCenter from '@/lib/capture/intake/CaptureCenter'
+import RegistrationHub from '@/components/RegistrationHub'
 import DashboardEntry from '@/components/entry/DashboardEntry'
 import Card from '@/components/ui/Card'
 import MotionCard from '@/components/ui/MotionCard'
@@ -192,8 +192,8 @@ function LegacyDashboard() {
             <FilePlus size={20} className="text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-body text-sm font-semibold text-onyx">Adicionar documento</p>
-            <p className="font-body text-xs text-mauve mt-0.5">Exame, receita de medicamento, recursos de saúde e outros — num só lugar</p>
+            <p className="font-body text-sm font-semibold text-onyx">Adicionar registro</p>
+            <p className="font-body text-xs text-mauve mt-0.5">Exame, medicamento, consulta, medida e mais — você escolhe o que registrar, a SINTERA cuida do resto</p>
           </div>
           <ChevronRight size={18} className="text-mauve/30 group-hover:text-petal transition-colors flex-shrink-0" />
         </ActionCard>
@@ -252,7 +252,7 @@ function LegacyDashboard() {
           <button
             onClick={() => setIntakeOpen(true)}
             className="inline-flex items-center gap-2 gradient-sintera text-white font-body text-sm font-medium px-6 py-2.5 rounded-full hover:opacity-90 transition-opacity shadow-sm">
-            <FilePlus size={15} /> Adicionar documento
+            <FilePlus size={15} /> Adicionar registro
           </button>
         </MotionCard>
       )}
@@ -372,18 +372,17 @@ function LegacyDashboard() {
         onGoToHistory={() => router.push('/dashboard/timeline')}
       />
 
-      {/* Centro de Entrada — modal de entrada de documentos */}
+      {/* HUB-001 — Hub de Registro (ponto único de entrada): "O que você deseja registrar?" */}
       {intakeOpen && (
-        <div ref={intakeRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Central de Entrada"
+        <div ref={intakeRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="O que você deseja registrar?"
           className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-onyx/30 backdrop-blur-sm outline-none"
           onClick={() => setIntakeOpen(false)}>
-          <Card padding="lg" className="w-full max-w-md" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <p className="font-display text-lg font-semibold text-onyx">Central de Entrada</p>
+          <Card padding="lg" className="w-full max-w-md max-h-[88vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-end -mt-1 -mr-1 mb-1">
               <button onClick={() => setIntakeOpen(false)} aria-label="Fechar"
                 className="text-mauve/40 hover:text-onyx transition-colors"><X size={18} /></button>
             </div>
-            <CaptureCenter onDone={() => setIntakeOpen(false)} />
+            <RegistrationHub onDone={() => setIntakeOpen(false)} />
           </Card>
         </div>
       )}

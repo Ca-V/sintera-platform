@@ -60,7 +60,8 @@ Metadados por documento: **Objetivo · Escopo · Responsável · Dependências �
 | **DATA-001** | Modelo Canônico de dados de saúde | Representação canônica | ADR-000 | UCDA-001, CEF-001 | ativo |
 | **UCDA-001** | Arquitetura Universal de Dados Clínicos (contrato de saída) | Evidência clínica | DATA-001 | CEF-001, CPE | ativo |
 | **CEF-001** | Clinical Extraction Framework (leitor por tipo de doc) | Extração | UCDA-001 | CAP-001 | ativo |
-| **CAP-001** | Captura documental institucional (componente único) | Entrada de registros | ADR-000, DATA-001 | DS-001, DOC-001 | 🔒 |
+| **HUB-001** | Hub de Registro (ponto único de entrada; intenção→mecanismo) | Entrada de registros | ADR-000 | CAP-001, todos os módulos | ativo (18/07) |
+| **CAP-001** | Captura documental institucional (componente único) | Entrada de registros | ADR-000, DATA-001 | HUB-001, DS-001, DOC-001 | 🔒 |
 | **HIP-001** | Connector Layer — integração corporativa (vendor+domain-neutral) | Aquisição externa | UCDA-001 | WEA-001, DATA-001 | ativo |
 | **WEA-001** | Wearables Domain (1ª implementação sobre HIP-001) | Wearables | HIP-001, DATA-001 | Sinais Vitais, Timeline | ativo (17/07) |
 | **BOD-001** | Composição Corporal (painel longitudinal) + princípio **Fato × Visualização** (3 domínios sem sobreposição) | Indicadores corporais | ADR-000, DATA-001, EVENTS-001 | Histórico de Exames, HIP-001 | ativo (17/07) |
