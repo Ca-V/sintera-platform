@@ -14,7 +14,7 @@ const groups: { domain: string; items: { icon: React.ElementType; name: string; 
     domain: 'Acompanhamento',
     items: [
       { icon: CalendarDays, name: 'Agenda', desc: 'Consultas, exames e lembretes.' },
-      { icon: Clock, name: 'Registros de Saúde', desc: 'Sua linha do tempo de saúde.' },
+      { icon: Clock, name: 'Histórico de Saúde', desc: 'Sua linha do tempo de saúde.' },
       { icon: TrendingUp, name: 'Histórico de Exames', desc: 'Cada exame ao longo do tempo.' },
       { icon: Ruler, name: 'Composição Corporal', desc: 'Evolução do corpo, de várias fontes.' },
       { icon: Activity, name: 'Monitoramento', desc: 'Sinais e atividades no tempo.' },

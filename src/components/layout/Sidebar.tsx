@@ -18,7 +18,7 @@ const homeItem = { href: '/dashboard', icon: LayoutDashboard, label: 'Painel Ini
 // = organização da experiência, NÃO fusão de entidades (cada módulo preserva modelo/regras).
 // A plataforma caminha para 5 domínios de 1º nível: Acompanhamento · Minha Saúde ·
 // Rede de Cuidado (CARE-001, ainda a construir) · Organização · Configurações.
-//   Acompanhamento = evolução temporal da saúde (Agenda, Registros de Saúde, Histórico de Exames,
+//   Acompanhamento = evolução temporal da saúde (Agenda, Histórico de Saúde, Histórico de Exames,
 //                    Composição Corporal, Monitoramento).
 //   Documentos     = repositório documental/operacional. FASE 1 (beta): Exames como item independente (sem
 //                    cabeçalho de grupo); FASE 2 (release): grupo 📁 Documentos oficial ao surgir o 2º tipo.
@@ -42,7 +42,7 @@ const navGroups: {
     chipBg: 'bg-lavender',
     items: [
       { href: '/dashboard/agenda',        icon: CalendarDays, label: 'Agenda' },
-      { href: '/dashboard/timeline',      icon: Clock,        label: 'Registros de Saúde', extra: ['/dashboard/historico'] },
+      { href: '/dashboard/timeline',      icon: Clock,        label: 'Histórico de Saúde', extra: ['/dashboard/historico'] },
       { href: '/dashboard/saude',         icon: TrendingUp,   label: 'Histórico de Exames' },
       { href: '/dashboard/medidas',       icon: Ruler,        label: 'Composição Corporal' },
       { href: '/dashboard/sinais-vitais', icon: Activity,     label: 'Monitoramento' },

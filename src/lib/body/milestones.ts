@@ -1,6 +1,6 @@
 // BOD-001 área ⑤ — Marcos da Evolução. PURO/FACTUAL.
 //
-// INVARIANTE: marcos são PROJEÇÕES de domínios já existentes (Registros de Saúde, Agenda, Medicamentos,
+// INVARIANTE: marcos são PROJEÇÕES de domínios já existentes (Histórico de Saúde, Agenda, Medicamentos,
 // Suplementos, Exames) — NÃO há tabela de marcos e NÃO se cria informação. Cada marco preserva rastreabilidade
 // até o registro original (href). São anotações sobre os gráficos para CONTEXTUALIZAR a evolução (RDC 657: não
 // interpreta; só posiciona no tempo fatos que a pessoa já registrou).

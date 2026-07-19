@@ -48,7 +48,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
 
 // Acesso rápido — usa exatamente a nomenclatura do menu lateral esquerdo (FB-010).
 const QUICK_ACCESS: { href: string; icon: React.ElementType; label: string; desc: string; tile: string; tint: string }[] = [
-  { href: '/dashboard/timeline',     icon: Clock,       label: 'Registros de Saúde',        desc: 'Sua linha do tempo de saúde',    tile: 'bg-blush',     tint: 'text-petal' },
+  { href: '/dashboard/timeline',     icon: Clock,       label: 'Histórico de Saúde',        desc: 'Sua linha do tempo de saúde',    tile: 'bg-blush',     tint: 'text-petal' },
   { href: '/dashboard/agenda',       icon: CalendarDays,label: 'Agenda',                    desc: 'Eventos e lembretes',            tile: 'bg-warm',           tint: 'text-gold' },
   { href: '/dashboard/exams',        icon: FileText,    label: 'Exames',                    desc: 'Laudos e documentos',            tile: 'bg-blush',          tint: 'text-petal' },
   { href: '/dashboard/medicamentos', icon: Pill,        label: 'Medicamentos',              desc: 'Em uso, recompra e estoque',     tile: 'bg-blush',     tint: 'text-petal' },
@@ -162,7 +162,7 @@ function LegacyDashboard() {
               {[
                 { icon: Upload,     title: '1. Adicione seus documentos', desc: 'Envie exames, receitas e laudos (foto ou arquivo) — a SINTERA lê e organiza.', onClick: () => setIntakeOpen(true) },
                 { icon: Pill,       title: '2. Registre a sua rotina de saúde', desc: 'Medicamentos, consultas, condições, hábitos e medidas.', href: '/dashboard/medicamentos' },
-                { icon: Clock,      title: '3. Acompanhe ao longo do tempo', desc: 'Sua linha do tempo em Registros de Saúde e a evolução em Histórico de Exames.', href: '/dashboard/timeline' },
+                { icon: Clock,      title: '3. Acompanhe ao longo do tempo', desc: 'Sua linha do tempo em Histórico de Saúde e a evolução em Histórico de Exames.', href: '/dashboard/timeline' },
                 { icon: ScrollText, title: '4. Compartilhe com quem cuida de você', desc: 'Reúna suas informações em um relatório e envie ao seu profissional de saúde.', href: '/dashboard/relatorio' },
               ].map((s) => {
                 const Icon = s.icon
