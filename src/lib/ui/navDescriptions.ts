@@ -19,7 +19,7 @@ export const NAV_DESCRIPTION: Record<string, string> = {
   '/dashboard/medidas':       'Acompanhe peso, IMC, gordura e massa muscular e veja como seu corpo muda ao longo do tempo.',
   '/dashboard/sinais-vitais': 'Registre pressão, glicemia e frequência cardíaca e acompanhe seus sinais vitais ao longo do tempo.',
   '/dashboard/exams':         'Centralize seus laudos e documentos de exames, com o original sempre preservado.',
-  '/dashboard/condicoes':     'Registre suas condições e diagnósticos, seus e da família, e acompanhe cada um ao longo do tempo.',
+  '/dashboard/condicoes':     'Registre suas condições de saúde, suas e da família, e acompanhe cada uma ao longo do tempo.',
   '/dashboard/medicamentos':  'Registre seus medicamentos, acompanhe o uso e receba lembretes de dose e recompra.',
   '/dashboard/suplementos':   'Registre seus suplementos, acompanhe o uso e receba lembretes na hora certa.',
   '/dashboard/recursos':      'Organize óculos, lentes, dispositivos e outros recursos que fazem parte do seu cuidado.',
