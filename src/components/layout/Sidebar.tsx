@@ -43,7 +43,7 @@ const navGroups: {
     chipBg: 'bg-lavender',
     items: [
       { href: '/dashboard/agenda',        icon: CalendarDays, label: 'Agenda', hint: 'Planeje e acompanhe seus próximos cuidados, como exames, consultas, retornos e lembretes.' },
-      { href: '/dashboard/timeline',      icon: Clock,        label: 'Histórico de Saúde', extra: ['/dashboard/historico'], hint: 'Registre e acompanhe toda a sua jornada de saúde, reunindo consultas, procedimentos, vacinas e internações num só histórico.' },
+      { href: '/dashboard/timeline',      icon: Clock,        label: 'Histórico de Saúde', extra: ['/dashboard/historico'], hint: 'Registre e acompanhe toda a sua jornada de saúde, como consultas, procedimentos, vacinas e internações.' },
       { href: '/dashboard/saude',         icon: TrendingUp,   label: 'Histórico de Exames', hint: 'Consulte seus exames e acompanhe a evolução dos resultados ao longo do tempo.' },
       { href: '/dashboard/medidas',       icon: Ruler,        label: 'Composição Corporal', hint: 'Acompanhe a composição do seu corpo ao longo do tempo, como peso, IMC, gordura e massa muscular.' },
       { href: '/dashboard/sinais-vitais', icon: Activity,     label: 'Monitoramento', hint: 'Acompanhe seus sinais vitais ao longo do tempo, como pressão, glicemia e frequência cardíaca.' },

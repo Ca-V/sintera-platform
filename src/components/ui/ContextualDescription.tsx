@@ -1,16 +1,22 @@
 'use client'
 
 // ============================================================
-// DESCRIÇÃO CONTEXTUAL — infraestrutura reutilizável da plataforma (fundadora 18/07)
+// DESCRIÇÃO CONTEXTUAL — primitivo transversal do Design System (fundadora 18/07)
 // ============================================================
-// CONCEITO (não é um "card de hover"): ajudar o usuário a compreender IMEDIATAMENTE a finalidade de uma
-// área — responde "quando eu uso isto?", orientando a AÇÃO. O gatilho visual pode evoluir (hover, clique,
-// popover, toque no mobile); o conceito permanece. Por isso o componente é desacoplado do gatilho.
+// CONCEITO (não é um "card de hover", nem específico da navegação): ajudar o usuário a compreender
+// IMEDIATAMENTE a finalidade de QUALQUER elemento da interface — responde "quando eu uso isto?",
+// orientando a AÇÃO e comunicando o BENEFÍCIO. É AGNÓSTICO de contexto: serve à barra lateral, mas
+// também a menus, dashboards, assistentes, cards, páginas, atalhos e qualquer outro ponto da UI.
+// O gatilho visual pode evoluir (hover, clique, popover, toque no mobile) sem mudar o conceito — por
+// isso o componente é totalmente desacoplado do gatilho e do consumidor (recebe só o texto).
 //
-// Uso genérico (qualquer menu/assistente/ponto da interface):
+// Uso (qualquer elemento):
 //   const { tip, bind } = useContextualDescription()
-//   <button {...bind('Registre e acompanhe…')}>Item</button>   // hover E foco por teclado (acessível)
-//   <ContextualDescriptionCard tip={tip} />                     // 1 card fixo por consumidor
+//   <button {...bind('Consulte seus exames e acompanhe a evolução…')}>Item</button>  // hover E foco (a11y)
+//   <ContextualDescriptionCard tip={tip} />                                            // 1 card por consumidor
+//
+// Padrão do TEXTO (voz única da plataforma): 1 frase · começa com verbo · BENEFÍCIO antes da funcionalidade
+// · exemplos só quando agregam · linguagem simples · máx. 2 linhas.
 //
 // Posição FIXED (via getBoundingClientRect) para NÃO ser cortada por containers com scroll/overflow.
 // Só desktop por ora (hidden lg:block); mobile terá outro gatilho quando fizer sentido.
