@@ -66,6 +66,7 @@ Metadados por documento: **Objetivo · Escopo · Responsável · Dependências �
 | **BOD-001** | Composição Corporal (painel longitudinal) + princípio **Fato × Visualização** (3 domínios sem sobreposição) | Indicadores corporais | ADR-000, DATA-001, EVENTS-001 | Histórico de Exames, HIP-001 | ativo (17/07) |
 | **FIN-001** | Financial Domain (valor·NF·recibo·comprovante → Despesas) | Financeiro | ADR-000, EVENTS-001 | Evento Assistencial, `/gastos`, REL-001 | ativo (17/07) |
 | **CTC-001** | Contracepção + arquitetura de Planejamento (vínculo por referência) | Contracepção/Planejamento | ADR-000, ADR-001 | Ciclo, Medicamentos, Recursos, NOTIF-001 | ativo (18/07) |
+| **ORD-001** | Pedidos ↔ Exames (origem histórica, 1→N, trajetória do cuidado) | Exames/Pedidos | ADR-000, ADR-001 | Exames, EVENTS-001, Timeline | ativo (18/07) |
 | **EVENTS-001** | Domain Events / Evento Assistencial | Eventos assistenciais | DATA-001 | FIN-001, CARE-001 | ativo |
 | **CARE-001** | Care Space (continuidade do cuidado) | Episódio de cuidado | EVENTS-001 | — | ativo |
 | **NOTIF-001** | Central de Notificações (infra única) | Notificações | ADR-000 | — | ativo |
