@@ -13,7 +13,7 @@ import { useState, type ComponentType } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   FlaskConical, ClipboardList, FileText, FileHeart, Dna, Pill, Leaf, Package, Glasses,
-  Stethoscope, HeartPulse, Ruler, Sparkles, Scissors, Syringe, Thermometer,
+  Stethoscope, HeartPulse, Ruler, Sparkles, Scissors, Syringe, Thermometer, Receipt,
   ArrowLeft, ChevronRight, UploadCloud, ArrowUpRight,
 } from 'lucide-react'
 import CaptureCenter from '@/lib/capture/intake/CaptureCenter'
@@ -23,7 +23,7 @@ import type { DocumentKind } from '@/lib/capture/types'
 type IconType = ComponentType<{ size?: number; className?: string }>
 const ICONS: Record<string, IconType> = {
   FlaskConical, ClipboardList, FileText, FileHeart, Dna, Pill, Leaf, Package, Glasses,
-  Stethoscope, HeartPulse, Ruler, Sparkles, Scissors, Syringe, Thermometer,
+  Stethoscope, HeartPulse, Ruler, Sparkles, Scissors, Syringe, Thermometer, Receipt,
 }
 
 type View =

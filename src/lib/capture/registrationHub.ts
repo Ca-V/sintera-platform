@@ -6,12 +6,13 @@
 
 import type { DocumentKind } from './types'
 
-export type IntentGroup = 'documento' | 'tratamento' | 'registro'
+export type IntentGroup = 'documento' | 'tratamento' | 'registro' | 'organizacao'
 
 export const INTENT_GROUPS: { group: IntentGroup; label: string }[] = [
-  { group: 'documento',  label: 'Documentos' },
-  { group: 'tratamento', label: 'Tratamentos e recursos' },
-  { group: 'registro',   label: 'Registros de saúde' },
+  { group: 'documento',   label: 'Documentos' },
+  { group: 'tratamento',  label: 'Tratamentos e recursos' },
+  { group: 'registro',    label: 'Registros de saúde' },
+  { group: 'organizacao', label: 'Organização' },
 ]
 
 /** COMO a SINTERA captura a intenção escolhida. A intenção declara; o Hub orquestra. */
@@ -54,7 +55,9 @@ export const REGISTRATION_INTENTS: RegistrationIntent[] = [
   { key: 'habito',       label: 'Hábito',             icon: 'Sparkles',      group: 'registro', available: true,  mechanism: { type: 'page', href: '/dashboard/habitos' } },
   { key: 'procedimento', label: 'Procedimento',       icon: 'Scissors',      group: 'registro', available: false, mechanism: { type: 'page', href: '/dashboard/agenda' } },
   { key: 'vacina',       label: 'Vacina',             icon: 'Syringe',       group: 'registro', available: false, mechanism: { type: 'page', href: '/dashboard/agenda' } },
-  { key: 'sintoma',      label: 'Sintoma',            icon: 'Thermometer',   group: 'registro', available: false, mechanism: { type: 'page', href: '/dashboard/condicoes' } },
+
+  // ── Organização (financeiro) ──────────────────────────────────────────────
+  { key: 'nf_comprovante', label: 'Nota fiscal / comprovante', icon: 'Receipt', group: 'organizacao', available: true, mechanism: { type: 'page', href: '/dashboard/gastos' } },
 ]
 
 /** Intenções de um grupo, na ordem declarada (disponíveis primeiro, "em breve" ao fim). */
