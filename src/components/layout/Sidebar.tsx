@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -12,7 +13,7 @@ import { cn } from '@/lib/utils'
 import { useUser } from '@/context/UserContext'
 
 // Painel Inicial — item avulso (sem grupo), primeiro do menu.
-const homeItem = { href: '/dashboard', icon: LayoutDashboard, label: 'Painel Inicial', extra: undefined as string[] | undefined }
+const homeItem = { href: '/dashboard', icon: LayoutDashboard, label: 'Painel Inicial', extra: undefined as string[] | undefined, hint: 'Seu ponto de partida: o que precisa de atenção e atalhos para registrar.' }
 
 // Arquitetura de navegação por DOMÍNIO de negócio (UX-001 §5; FB-010). Agrupamento
 // = organização da experiência, NÃO fusão de entidades (cada módulo preserva modelo/regras).
@@ -34,18 +35,18 @@ const navGroups: {
   titleColor: string
   chipBg?: string
   standalone?: boolean   // FB-010 fase 1: renderiza os itens SEM cabeçalho de grupo (evita "grupo de 1 item")
-  items: { href: string; icon: React.ElementType; label: string; extra?: string[] }[]
+  items: { href: string; icon: React.ElementType; label: string; extra?: string[]; hint?: string }[]
 }[] = [
   {
     title: 'Acompanhamento',
     titleColor: 'text-lavender',
     chipBg: 'bg-lavender',
     items: [
-      { href: '/dashboard/agenda',        icon: CalendarDays, label: 'Agenda' },
-      { href: '/dashboard/timeline',      icon: Clock,        label: 'Histórico de Saúde', extra: ['/dashboard/historico'] },
-      { href: '/dashboard/saude',         icon: TrendingUp,   label: 'Histórico de Exames' },
-      { href: '/dashboard/medidas',       icon: Ruler,        label: 'Composição Corporal' },
-      { href: '/dashboard/sinais-vitais', icon: Activity,     label: 'Monitoramento' },
+      { href: '/dashboard/agenda',        icon: CalendarDays, label: 'Agenda', hint: 'Planeje e acompanhe o que vem: próximos exames, consultas, retornos e lembretes.' },
+      { href: '/dashboard/timeline',      icon: Clock,        label: 'Histórico de Saúde', extra: ['/dashboard/historico'], hint: 'Registre seus eventos de saúde — consultas, procedimentos, vacinas, internações — e visualize todo o histórico do que já aconteceu.' },
+      { href: '/dashboard/saude',         icon: TrendingUp,   label: 'Histórico de Exames', hint: 'Veja seus exames realizados e a evolução dos resultados no tempo — um panorama longitudinal dos indicadores.' },
+      { href: '/dashboard/medidas',       icon: Ruler,        label: 'Composição Corporal', hint: 'Acompanhe peso, IMC, gordura, massa muscular e mais ao longo do tempo.' },
+      { href: '/dashboard/sinais-vitais', icon: Activity,     label: 'Monitoramento', hint: 'Registre e acompanhe sinais vitais como pressão, glicemia e frequência cardíaca.' },
     ],
   },
   {
@@ -57,7 +58,7 @@ const navGroups: {
     standalone: true,
     titleColor: 'text-petal',
     items: [
-      { href: '/dashboard/exams', icon: FileText, label: 'Exames' },
+      { href: '/dashboard/exams', icon: FileText, label: 'Exames', hint: 'Envie e organize seus laudos e documentos de exames — o repositório dos seus documentos, com o original sempre preservado.' },
     ],
   },
   {
@@ -65,12 +66,12 @@ const navGroups: {
     titleColor: 'text-lagoa',
     chipBg: 'bg-lagoa',
     items: [
-      { href: '/dashboard/condicoes',     icon: Stethoscope,   label: 'Condições de Saúde' },
-      { href: '/dashboard/medicamentos',  icon: Pill,          label: 'Medicamentos' },
-      { href: '/dashboard/suplementos',   icon: Leaf,          label: 'Suplementos' },
-      { href: '/dashboard/recursos',      icon: Accessibility, label: 'Recursos de Saúde' },
-      { href: '/dashboard/habitos',       icon: HeartPulse,    label: 'Hábitos' },
-      { href: '/dashboard/ciclo',         icon: Droplet,       label: 'Ciclo e Contracepção' },
+      { href: '/dashboard/condicoes',     icon: Stethoscope,   label: 'Condições de Saúde', hint: 'Registre suas condições e diagnósticos — seus e da família — e acompanhe ao longo do tempo.' },
+      { href: '/dashboard/medicamentos',  icon: Pill,          label: 'Medicamentos', hint: 'Registre os medicamentos que você usa, com dose, recompra e lembretes.' },
+      { href: '/dashboard/suplementos',   icon: Leaf,          label: 'Suplementos', hint: 'Registre os suplementos que você usa, com dose e lembretes.' },
+      { href: '/dashboard/recursos',      icon: Accessibility, label: 'Recursos de Saúde', hint: 'Óculos, lentes, dispositivos e outros recursos físicos usados na sua jornada de saúde.' },
+      { href: '/dashboard/habitos',       icon: HeartPulse,    label: 'Hábitos', hint: 'Registre e acompanhe hábitos da sua rotina de saúde.' },
+      { href: '/dashboard/ciclo',         icon: Droplet,       label: 'Ciclo e Contracepção', hint: 'Registre seu ciclo menstrual e seus métodos contraceptivos, com lembretes de troca e recompra.' },
     ],
   },
   {
@@ -78,15 +79,15 @@ const navGroups: {
     titleColor: 'text-gold',
     chipBg: 'bg-gold',
     items: [
-      { href: '/dashboard/gastos',    icon: Receipt,    label: 'Despesas' },
-      { href: '/dashboard/relatorio', icon: ScrollText, label: 'Relatórios' },
+      { href: '/dashboard/gastos',    icon: Receipt,    label: 'Despesas', hint: 'Acompanhe os gastos com sua saúde — exames, consultas, medicamentos — e guarde notas e comprovantes.' },
+      { href: '/dashboard/relatorio', icon: ScrollText, label: 'Relatórios', hint: 'Reúna suas informações num relatório para levar ou enviar ao seu profissional de saúde.' },
     ],
   },
   {
     title: 'Configurações',
     titleColor: 'text-white/45',
     items: [
-      { href: '/dashboard/configuracoes', icon: Settings, label: 'Configurações' },
+      { href: '/dashboard/configuracoes', icon: Settings, label: 'Configurações', hint: 'Sua conta, perfil e preferências de notificação.' },
     ],
   },
 ]
@@ -99,11 +100,23 @@ function isActive(pathname: string, href: string, extra?: string[]): boolean {
 
 interface SidebarProps { open: boolean; onClose: () => void }
 
-function NavItem({ href, icon: Icon, label, active, soon, onClose }: {
+// Tooltip = card explicativo por categoria (fundadora 18/07). Posição FIXED (via rect) para não ser
+// cortado pelo scroll da sidebar. Só desktop (hidden lg:block); on hover/focus.
+type TipState = { hint: string; top: number; left: number } | null
+
+function NavItem({ href, icon: Icon, label, active, soon, onClose, hint, onHint }: {
   href: string; icon: React.ElementType; label: string; active: boolean; soon?: boolean; onClose: () => void
+  hint?: string; onHint?: (tip: TipState) => void
 }) {
+  const showTip = (e: React.SyntheticEvent<HTMLElement>) => {
+    if (!hint || !onHint) return
+    const r = e.currentTarget.getBoundingClientRect()
+    onHint({ hint, top: r.top, left: r.right })
+  }
+  const hideTip = () => onHint?.(null)
   return (
     <Link href={href} onClick={onClose}
+      onMouseEnter={showTip} onMouseLeave={hideTip} onFocus={showTip} onBlur={hideTip}
       className={cn(
         'flex items-center gap-3 px-3 py-1.5 rounded-xl transition-all duration-200 text-sm font-body group',
         active
@@ -128,6 +141,7 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
   const { profile } = useUser()
   const displayName = profile?.name ?? 'Usuária'
   const initials    = displayName.charAt(0).toUpperCase()
+  const [tip, setTip] = useState<TipState>(null)
 
   return (
     <div className="flex flex-col h-full select-none" style={{ background: 'radial-gradient(ellipse 90% 35% at 50% 100%, rgba(196,160,106,0.16) 0%, transparent 72%), linear-gradient(to bottom, #1B7B85 0%, #0F565F 58%, #0A3E45 100%)' }}>
@@ -169,7 +183,8 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
       <nav className="flex-1 px-3 overflow-y-auto pb-3">
         <div className="mb-2">
           <NavItem href={homeItem.href} icon={homeItem.icon} label={homeItem.label}
-            active={isActive(pathname, homeItem.href, homeItem.extra)} onClose={onClose} />
+            active={isActive(pathname, homeItem.href, homeItem.extra)} onClose={onClose}
+            hint={homeItem.hint} onHint={setTip} />
         </div>
         {navGroups.map(group => (
           <div key={group.title} className="mb-1.5">
@@ -186,13 +201,24 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
               {group.items.map(item => (
                 <li key={item.href}>
                   <NavItem href={item.href} icon={item.icon} label={item.label}
-                    active={isActive(pathname, item.href, item.extra)} onClose={onClose} />
+                    active={isActive(pathname, item.href, item.extra)} onClose={onClose}
+                    hint={item.hint} onHint={setTip} />
                 </li>
               ))}
             </ul>
           </div>
         ))}
       </nav>
+
+      {/* Card explicativo da categoria (hover/foco). FIXED (via rect) p/ não ser cortado pelo scroll; só desktop. */}
+      {tip && (
+        <div className="hidden lg:block fixed z-[80] max-w-[264px] pointer-events-none"
+          style={{ top: tip.top, left: tip.left + 10 }}>
+          <div className="rounded-xl bg-white shadow-xl border border-border px-3 py-2.5">
+            <p className="font-body text-xs text-onyx leading-relaxed">{tip.hint}</p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
