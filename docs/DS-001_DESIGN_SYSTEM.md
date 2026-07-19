@@ -67,10 +67,16 @@ e só depois a funcionalidade. *"Registre e acompanhe toda a sua jornada de saú
 consultas, procedimentos…"*. **Padrão das descrições/microcopy:** 1 frase · começa com **verbo** · benefício antes ·
 exemplos só quando **agregam** · linguagem simples e natural · máx. 2 linhas · reforçar o posicionamento
 **longitudinal / continuidade do cuidado** quando couber. As descrições devem ser revisadas **em conjunto** (mesmo
-ritmo/estrutura/voz), para a plataforma inteira soar escrita pela mesma pessoa. **Regra léxica permanente:** nunca
-usar **"tratamento"** em texto ao usuário — a SINTERA **registra e organiza** informações do cuidado, **não
-acompanha tratamentos** (posicionamento factual, RDC 657). Use "uso", "utilização", "acompanhamento" ou "cuidado".
-Exceções válidas: disclaimers que **negam** prescrição/tratamento e o termo jurídico "tratamento de dados" (LGPD).
+ritmo/estrutura/voz), para a plataforma inteira soar escrita pela mesma pessoa.
+
+**REGRA LÉXICA OBJETIVA (permanente, fundadora 18/07):** toda ocorrência de **"tratamento", "diagnóstico",
+"terapia", "conduta", "prescrição"** (e equivalentes/flexões) em **texto visível ao usuário** é **inadequada por
+padrão** — a SINTERA **registra e organiza** informações do cuidado, não trata, não diagnostica, não prescreve.
+**Única exceção:** textos **legais, regulatórios ou de consentimento**, onde essas palavras são necessárias
+justamente para **delimitar o que a plataforma NÃO faz** (disclaimers RDC 657; "tratamento de dados" da LGPD).
+Fora disso, reescreva (ex.: "uso/utilização/acompanhamento/cuidado"; "quem indicou" em vez de "quem prescreveu";
+"orientações recebidas / próximos passos" em vez de "conduta"). Regra objetiva por design — não avaliar caso a caso.
+
 As descrições são **semânticas** (finalidade do módulo, agnósticas do componente) — reutilizáveis em busca,
 assistente, onboarding e recomendações; SSOT em `@/lib/ui/navDescriptions`.
 

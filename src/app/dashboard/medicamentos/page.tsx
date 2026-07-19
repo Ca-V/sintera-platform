@@ -673,7 +673,7 @@ export default function MedicamentosPage() {
             )}
           </div>
           <div>
-            <label htmlFor="med-prescriber" className="font-body text-xs text-mauve block mb-1">Médico(a) que prescreveu <span className="font-normal text-mauve">(opcional)</span></label>
+            <label htmlFor="med-prescriber" className="font-body text-xs text-mauve block mb-1">Médico(a) que indicou <span className="font-normal text-mauve">(opcional)</span></label>
             <input id="med-prescriber" type="text" value={prescriber} onChange={e => setPrescriber(e.target.value)} placeholder="Ex.: Dra. Ana Souza"
               className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
           </div>

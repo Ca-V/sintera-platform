@@ -436,7 +436,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
 
                       {status === 'realizado' && (
                         <div className="space-y-1.5"><label htmlFor="agendar-desfecho" className={LABEL}>Como foi</label>
-                          <textarea id="agendar-desfecho" value={outcome} onChange={e => setOutcome(e.target.value)} rows={2} placeholder="Resumo, conduta, encaminhamentos…" className={`${FIELD} resize-none`} /></div>
+                          <textarea id="agendar-desfecho" value={outcome} onChange={e => setOutcome(e.target.value)} rows={2} placeholder="Resumo, orientações recebidas, próximos passos…" className={`${FIELD} resize-none`} /></div>
                       )}
 
                       {eventType !== 'plano' && (
