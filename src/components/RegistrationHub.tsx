@@ -91,7 +91,7 @@ export default function RegistrationHub({ onDone }: { onDone?: () => void }) {
   return (
     <div>
       <p className="font-display text-lg font-semibold text-onyx mb-1">O que você deseja registrar?</p>
-      <p className="font-body text-xs text-mauve mb-4">Escolha o que quer adicionar — a SINTERA cuida do resto.</p>
+      <p className="font-body text-xs text-mauve mb-4">Você escolhe o que registrar; a SINTERA cuida de como capturar.</p>
       <div className="space-y-4">
         {INTENT_GROUPS.map(({ group, label }) => (
           <div key={group}>

@@ -48,12 +48,12 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
 
 // Acesso rápido — usa exatamente a nomenclatura do menu lateral esquerdo (FB-010).
 const QUICK_ACCESS: { href: string; icon: React.ElementType; label: string; desc: string; tile: string; tint: string }[] = [
-  { href: '/dashboard/timeline',     icon: Clock,       label: 'Histórico de Saúde',        desc: 'Sua linha do tempo de saúde',    tile: 'bg-blush',     tint: 'text-petal' },
-  { href: '/dashboard/agenda',       icon: CalendarDays,label: 'Agenda',                    desc: 'Eventos e lembretes',            tile: 'bg-warm',           tint: 'text-gold' },
-  { href: '/dashboard/exams',        icon: FileText,    label: 'Exames',                    desc: 'Laudos e documentos',            tile: 'bg-blush',          tint: 'text-petal' },
-  { href: '/dashboard/medicamentos', icon: Pill,        label: 'Medicamentos',              desc: 'Em uso, recompra e estoque',     tile: 'bg-blush',     tint: 'text-petal' },
-  { href: '/dashboard/relatorio',    icon: ScrollText,  label: 'Relatórios',                desc: 'Compartilhar com profissionais', tile: 'bg-lavender-light', tint: 'text-lavender' },
-  { href: '/dashboard/gastos',       icon: Receipt,     label: 'Despesas',                  desc: 'Consultas, exames e medicamentos', tile: 'bg-blush',          tint: 'text-petal' },
+  { href: '/dashboard/timeline',     icon: Clock,       label: 'Histórico de Saúde',        desc: 'Registre e acompanhe toda a sua jornada de saúde',   tile: 'bg-blush',     tint: 'text-petal' },
+  { href: '/dashboard/agenda',       icon: CalendarDays,label: 'Agenda',                    desc: 'Planeje seus próximos exames, consultas e lembretes', tile: 'bg-warm',           tint: 'text-gold' },
+  { href: '/dashboard/exams',        icon: FileText,    label: 'Exames',                    desc: 'Reúna e organize seus laudos e documentos',          tile: 'bg-blush',          tint: 'text-petal' },
+  { href: '/dashboard/medicamentos', icon: Pill,        label: 'Medicamentos',              desc: 'Acompanhe seus medicamentos e lembretes de recompra', tile: 'bg-blush',     tint: 'text-petal' },
+  { href: '/dashboard/relatorio',    icon: ScrollText,  label: 'Relatórios',                desc: 'Reúna e compartilhe informações com seu profissional', tile: 'bg-lavender-light', tint: 'text-lavender' },
+  { href: '/dashboard/gastos',       icon: Receipt,     label: 'Despesas',                  desc: 'Acompanhe seus gastos com saúde e guarde comprovantes', tile: 'bg-blush',          tint: 'text-petal' },
 ]
 
 // Passo 7 (cutover) — a rota decide legacy × v2 pelo Entry. Default: legacy
@@ -193,7 +193,7 @@ function LegacyDashboard() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-body text-sm font-semibold text-onyx">Adicionar registro</p>
-            <p className="font-body text-xs text-mauve mt-0.5">Exame, medicamento, consulta, medida e mais — você escolhe o que registrar, a SINTERA cuida do resto</p>
+            <p className="font-body text-xs text-mauve mt-0.5">Registre qualquer informação de saúde num só lugar — exame, medicamento, consulta, medida e mais</p>
           </div>
           <ChevronRight size={18} className="text-mauve/30 group-hover:text-petal transition-colors flex-shrink-0" />
         </ActionCard>
