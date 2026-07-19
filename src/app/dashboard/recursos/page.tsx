@@ -27,6 +27,7 @@ import { useStickyView } from '@/lib/ui/useStickyView'
 import Card from '@/components/ui/Card'
 import Disclaimer from '@/components/ui/Disclaimer'
 import CreateRecordMenu from '@/components/ui/CreateRecordMenu'
+import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MB } from '@/lib/capture/limits'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
@@ -183,8 +184,11 @@ export default function RecursosPage() {
   // grau via IA (transcrição factual — a pessoa revisa e confirma).
   async function onScanFile(file: File) {
     if (!user) return
-    if (!file.type.startsWith('image/')) { setErr('Envie uma imagem (foto).'); return }
-    if (file.size > 10 * 1024 * 1024) { setErr('Imagem muito grande (máx. 10 MB).'); return }
+    // Padrão de captura (fundadora): aceitar PDF OU foto. Imagem → extrai grau (correção visual);
+    // PDF → apenas anexa o documento ao recurso (sem leitura automática de grau).
+    const isImage = file.type.startsWith('image/')
+    if (!isImage && file.type !== 'application/pdf') { setErr('Envie um PDF ou uma imagem (foto).'); return }
+    if (file.size > MAX_UPLOAD_BYTES) { setErr(`Arquivo muito grande (máx. ${MAX_UPLOAD_MB} MB).`); return }
     setScanning(true); setErr(null); setShowForm(true)
     try {
       const ext = file.name.split('.').pop() ?? 'jpg'
@@ -194,8 +198,8 @@ export default function RecursosPage() {
         const { data: signed } = await supabase.storage.from('exams').createSignedUrl(path, 60 * 60 * 24 * 365)
         if (signed?.signedUrl) setF(s => ({ ...s, file_url: signed.signedUrl }))
       }
-      // Extração de grau só faz sentido em correção visual.
-      if (f.resource_type !== 'correcao_visual') { setScanning(false); return }
+      // Extração de grau só faz sentido em correção visual E a partir de imagem (PDF é só anexo).
+      if (!isImage || f.resource_type !== 'correcao_visual') { setScanning(false); return }
       const base64 = await new Promise<string>((res, rej) => {
         const reader = new FileReader()
         reader.onload = () => res(String(reader.result).split(',')[1] ?? '')
@@ -368,11 +372,13 @@ export default function RecursosPage() {
           <CreateRecordMenu
             label="Adicionar recurso"
             methods={['file', 'camera', 'manual']}
-            fileAccept="image/*"
+            fileAccept="application/pdf,image/*"
             cameraAccept="image/*"
-            fileLabel="Escanear receita (foto)"
             busy={scanning}
             busyLabel="Lendo…"
+            voice={<VoiceInput onResult={t => { if (!showForm) startAdd(); setF(s => ({ ...s, name: (s.name ? s.name + ' ' : '') + t })) }}
+              label="Falar" title="Adicionar por voz"
+              className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-blush text-left font-body text-sm text-onyx transition-colors" />}
             onSelect={(method, file) => {
               if (method === 'manual') startAdd()
               else if (file) { if (!showForm) startAdd(); onScanFile(file) }

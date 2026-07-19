@@ -195,7 +195,7 @@ function LegacyReport() {
       ['condicoes', 'Condições de Saúde', Stethoscope],
       ['medicamentos', 'Medicamentos', Pill],
       ['suplementos', 'Suplementos', Leaf],
-      ['visao', 'Recursos de Saúde (óculos e lentes)', Eye],
+      ['visao', 'Recursos de Saúde', Eye],
       ['habitos', 'Hábitos', HeartPulse],
       ['ciclo', 'Ciclo e Contracepção', Droplet],
     ] },

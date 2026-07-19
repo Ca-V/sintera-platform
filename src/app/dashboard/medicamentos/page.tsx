@@ -490,14 +490,14 @@ export default function MedicamentosPage() {
               {m.startedOn ? `Desde ${fmtShort(m.startedOn)} · ` : ''}{cadenceUsageLabel(m.contraceptiveCadence) || 'Método contraceptivo'}
               {/* CTC-001 — ponto único de edição: deixar EVIDENTE que este item pertence ao domínio Ciclo. */}
               <span className="block text-mauve/70 mt-0.5">
-                Gerenciado no <Link href="/dashboard/ciclo" className="text-petal hover:underline font-medium">Ciclo</Link> — método, recorrência, início e troca são editados lá.
+                Gerenciado no <Link href="/dashboard/ciclo" className="text-petal hover:underline font-medium">Ciclo e Contracepção</Link> — método, recorrência, início e troca são editados lá.
               </span>
             </>
           }
           chips={<CardChip tone="petal">{contraceptiveCategoryLabel(m.contraceptiveKind ?? '')}</CardChip>}
           actions={
-            <Link href="/dashboard/ciclo" title="Gerenciar no Ciclo"
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-blush font-body text-[11px] text-petal transition-colors">Gerenciar no Ciclo</Link>
+            <Link href="/dashboard/ciclo" title="Gerenciar no Ciclo e Contracepção"
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-blush font-body text-[11px] text-petal transition-colors">Gerenciar no Ciclo e Contracepção</Link>
           }
         />
       )
