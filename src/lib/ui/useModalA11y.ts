@@ -2,11 +2,19 @@
 
 import { useEffect, useRef, type RefObject } from 'react'
 
-// Acessibilidade de MODAL/diálogo (TEMA G · G3), reutilizável — nenhuma tela
-// reimplementa foco/Escape. Enquanto `active`:
-//   • foco inicial vai para o primeiro elemento focável do diálogo (ou o container);
+// Acessibilidade de MODAL/diálogo — IMPLEMENTAÇÃO OFICIAL da plataforma (fundadora 18/07). TODO modal
+// da SINTERA usa este hook; nenhuma tela reimplementa foco/Escape/trap. Infraestrutura reutilizável.
+//
+// PRINCÍPIO PERMANENTE (inviolável): o **foco inicial acontece SOMENTE quando o modal ABRE**. Nenhuma
+// atualização de estado, renderização, validação ou digitação pode mover o foco do usuário. Por isso o
+// efeito depende apenas de `[ref, active]` e lê `onClose` de um ref — nunca das deps (senão re-focaria a
+// cada tecla). Qualquer evolução deste hook deve preservar esse invariante.
+//
+// Enquanto `active`, garante (auditado nos 4 modais consumidores — AgendarModal, Hub de Registro,
+// ConfirmDialog, Reportar problema):
+//   • foco inicial no primeiro elemento focável do diálogo (ou o container) — só na abertura;
 //   • Escape chama `onClose`;
-//   • Tab fica APRISIONADO dentro do diálogo (não vaza para o fundo);
+//   • Tab fica APRISIONADO dentro do diálogo (não vaza para o fundo) — navegação completa por teclado;
 //   • ao fechar, o foco RETORNA para quem abriu o modal.
 // O container deve ter `tabIndex={-1}` (fallback de foco) + role="dialog"/aria-modal.
 export function useModalA11y(

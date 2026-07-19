@@ -265,7 +265,6 @@ export default function CondicoesPage() {
           <CreateRecordMenu
             label="Nova condição"
             methods={['file', 'camera', 'manual']}
-            fileLabel="Selecionar laudo (PDF ou foto)"
             busy={scanning}
             busyLabel="Lendo documento…"
             voice={<VoiceInput onResult={t => { reset(); setSourceHint('voice'); setName(t); setShowForm(true) }} />}

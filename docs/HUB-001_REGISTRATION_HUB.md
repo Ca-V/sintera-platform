@@ -4,12 +4,17 @@
 [[CAP-001]] (Captura Documental) como **um dos mecanismos**, não como o conceito. **Código:**
 `src/lib/capture/registrationHub.ts` (taxonomia SSOT) + `src/components/RegistrationHub.tsx` (UI).
 
-## Princípio da plataforma
+## Princípio da plataforma (permanente — orienta TODA evolução futura)
 > **O usuário escolhe O QUE deseja registrar. A SINTERA decide COMO esse registro será capturado.**
 
 A experiência de entrada é orientada pela **intenção do usuário**, nunca pela tecnologia de captura. A pergunta
 central é sempre **"O que você deseja registrar?"** — e, a partir da escolha, a própria SINTERA define o melhor
 fluxo (documento, formulário rápido, ou escolha entre eles).
+
+**O usuário NUNCA deve precisar decidir entre upload, câmera ou formulário.** Ele responde apenas *o que* quer
+registrar; o Hub resolve internamente o mecanismo. Este é um **princípio permanente da plataforma** — não uma
+característica desta versão. O Hub **não é** um "hub de upload" nem uma evolução do Capture Center: é o **principal
+ponto de entrada** da SINTERA.
 
 ## Visão de longo prazo
 O Hub é, desde já, concebido como o **ponto único de entrada** da plataforma: no futuro, praticamente **toda nova

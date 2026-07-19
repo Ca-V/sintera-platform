@@ -39,7 +39,7 @@ export const REGISTRATION_INTENTS: RegistrationIntent[] = [
   { key: 'exame',        label: 'Exame / Laudo',      icon: 'FlaskConical',  group: 'documento', available: true, mechanism: { type: 'capture', documentKind: 'exam' } },
   { key: 'pedido_exame', label: 'Pedido de exame',    icon: 'ClipboardList', group: 'documento', available: true, mechanism: { type: 'capture', documentKind: 'exam' } },
   { key: 'receita',      label: 'Receita médica',     icon: 'FileText',      group: 'documento', available: true, mechanism: { type: 'capture', documentKind: 'medication_label' } },
-  { key: 'doc_clinico',  label: 'Documento clínico',  icon: 'FileHeart',     group: 'documento', available: true, mechanism: { type: 'capture' } },
+  { key: 'doc_clinico',  label: 'Atestado, relatório ou encaminhamento', icon: 'FileHeart', group: 'documento', available: true, mechanism: { type: 'capture' } },
   { key: 'omica',        label: 'Exame ômico',        icon: 'Dna',           group: 'documento', available: true, mechanism: { type: 'page', href: '/dashboard/omics' } },
 
   // ── Tratamentos e recursos ────────────────────────────────────────────────
