@@ -30,36 +30,58 @@ o dado **cai nas visões longitudinais que já existem** (Monitoramento / Compos
 **integrado**, não um silo novo · **primeiro dado rápido** (não esperar dias). O sucesso da V2 se mede pela clareza
 desse momento.
 
-## 🔒 Princípio arquitetural permanente — TODA INTEGRAÇÃO É SUBSTITUÍVEL
-Já constitucional no [[HIP-001_PLATAFORMA_INTEGRACOES]]: **o usuário interage com a SINTERA; a SINTERA conversa com os
-conectores.** Nenhum wearable, laboratório ou provedor influencia a experiência. Todo conector é um **adaptador** que
-traduz a fonte para a **representação canônica (UCDA)**; trocar/remover um provedor **não muda a experiência**. Preserva
-a independência do produto no longo prazo.
+## 🔒 Princípios arquiteturais PERMANENTES das integrações
+1. **Toda integração é SUBSTITUÍVEL** (já constitucional no [[HIP-001_PLATAFORMA_INTEGRACOES]]): o usuário interage com a
+   SINTERA; a SINTERA conversa com os conectores. Nenhum wearable/lab/provedor influencia a experiência. Todo conector é
+   um **adaptador** → **representação canônica (UCDA)**; trocar/remover um provedor **não muda a experiência**.
+2. **Toda sincronização é IDEMPOTENTE** (fundadora 19/07): rodar 1×, 10× ou após falha → **resultado final idêntico**.
+   Sem duplicações nem inconsistências. Chave de idempotência por (fonte · faixa temporal · item canônico); *upsert*, nunca
+   *append* cego. Essencial ao integrar wearables + labs + prontuários ao mesmo tempo. (HIP-001 já prevê "idempotente por faixa".)
+3. **Toda integração tem ESTADO VISÍVEL ao usuário** (fundadora 19/07): **Conectado · Última sincronização · Sincronizando
+   · Atenção necessária · Erro de autenticação · Fonte dos dados.** O usuário **nunca** deve se perguntar se os dados estão
+   atualizados — a confiança na automação depende dessa transparência. (Alimenta o Painel Operacional de Integrações do HIP-001.)
 
-## Priorização de integrações POR VALOR PERCEBIDO (não por facilidade técnica)
-Classificação por: **frequência de uso · volume de dados · impacto na experiência · expectativa do usuário · potencial
-de demonstrar o diferencial.**
+## Estratégia (fundadora 19/07): PROVAR A ARQUITETURA end-to-end antes de multiplicar conectores
+O 1º épico não é "integrar um ecossistema" — é **provar que toda a arquitetura de sincronização funciona**, com **UM**
+fluxo impecável: **conectar → autorizar → sincronizar → persistir → rastrear origem → atualizar a Timeline → atualizar os
+indicadores → atualizar a Composição Corporal (quando aplicável) → mostrar ao usuário que tudo aconteceu automaticamente.**
+Quando esse fluxo estiver impecável, **adicionar novos conectores vira quase repetição** (a força do HIP-001).
 
-| Integração | Freq. | Volume | Impacto exp. | Expectativa | Diferencial | Ordem |
-|---|---|---|---|---|---|---|
-| **Agregador de saúde** (Apple Health / Google Health Connect) | 🟢 alta | 🟢 alto | 🟢 alto | 🟢 alta | 🟢 alto | **1º** |
-| **Balança/bioimpedância conectada** (peso/composição) | 🟡 média | 🟡 médio | 🟢 alto (alimenta a jornada de peso da V1) | 🟢 alta | 🟢 alto | **2º** |
-| **CGM / pressão** (crônicos) | 🟢 alta (segmento) | 🟢 alto | 🟢 alto (segmento) | 🟡 média | 🟢 alto | 3º (segmento) |
-| **Labs / FHIR / RNDS** (resultados) | 🟡 média | 🟢 alto | 🟢 alto | 🟢 alta | 🟢 alto | trilha própria (modalidade "resultado", não série contínua) |
+## ⚠️ DECISÃO DE ARQUITETURA — agregadores (Health Connect / Apple Health) são ON-DEVICE (mobile)
+Ponto crítico a validar com a fundadora: **Health Connect (Android) e Apple Health (iOS) são APIs on-device de apps
+NATIVOS — não têm API web.** A SINTERA é uma **plataforma web** (Next.js); um app web **não lê** o Health Connect nem o
+HealthKit diretamente. Portanto, começar por Health Connect implica **antes** ter o **app mobile companheiro** (MOB-001,
+hoje "a criar/futuro"). Duas rotas:
 
-**Estratégia:** começar pelo **AGREGADOR** — uma conexão libera muitos dados/dispositivos, maximizando o Aha com o
-menor esforço (alta alavancagem). Depois a **balança**, que dá **continuidade direta à Composição/jornada de peso da V1**.
+- **Rota A (recomendada) — provar o end-to-end AGORA, no web, com um conector CLOUD:** um provedor com **API de nuvem
+  (OAuth servidor-a-servidor)** — ex.: **Withings** (balança/composição + atividade → continuidade direta com a jornada de
+  peso da V1), Oura, Fitbit, Garmin. Prova **todo** o fluxo (consentimento OAuth → sync → UCDA → Timeline/indicadores/
+  Composição → estado visível → idempotência) **sem depender de mobile**. Health Connect/Apple Health entram **depois**,
+  como **camada agregadora**, quando o MOB-001 existir — reaproveitando exatamente a mesma arquitetura HIP-001.
+- **Rota B — Health Connect primeiro:** exige **construir o MOB-001 (app mobile) como pré-requisito da V2** — escopo
+  grande, adia o Aha e mistura duas transformações (mobile + captura automática) numa versão só.
 
-## Épicos (ordem ideal)
-- **Épico 1 — Fundação de integrações (HIP-001):** registro de conectores + **autorização/revogação** pelo usuário +
-  **mapeamento canônico → UCDA/`body_metrics`** + **log de sincronização** (fonte·quando·faixa·payload) + proveniência.
-  É a **única infra nova** (justificada por ≥2 consumidores). Validada com **um** conector real antes de generalizar.
-- **Épico 2 — Primeiro conector + Aha Moment:** fluxo de conexão do agregador + **1ª sincronização** + **feedback
-  visível** do 1º dado, que **aparece no Monitoramento** e nas visões longitudinais. Experiência COMPLETA: conectar →
-  ver dado.
-- **Épico 3 — Sincronização contínua + "a história cresceu sozinha":** sync recorrente (on-open + webhooks onde houver),
-  **indicador de atualização/última sincronização**, e o **2º conector (balança → Composição)**. Consolida o encantamento
-  de retorno.
+**Recomendação:** **Rota A.** Ela atende MELHOR ao seu objetivo #2 (provar a arquitetura end-to-end rapidamente e com
+baixo risco), mantém a neutralidade/substituição do HIP-001, e entrega o Aha **na plataforma que já existe hoje**. O
+Health Connect (sua escolha) continua sendo o **agregador certo** — só chega junto do app mobile, como evolução natural.
+
+## Priorização por VALOR PERCEBIDO (após a arquitetura provada)
+frequência · volume · impacto na experiência · expectativa · potencial de diferencial:
+1. **1º conector cloud** (provar o end-to-end) — recomendo **Withings** (peso/composição = continuidade com a V1 + atividade).
+2. **Agregadores** (Health Connect → depois Apple Health) — quando existir o **MOB-001**; máxima alavancagem (muitas fontes).
+3. **CGM / pressão** (crônicos) — segmento de alto valor.
+4. **Labs / FHIR / RNDS** — trilha própria (modalidade "resultado", não série contínua).
+
+## Épicos (ordem — provar antes de multiplicar)
+- **Épico 1 — Fundação HIP-001 (sem interface complexa):** registro de conectores + **autorização/revogação** +
+  **mapeamento → UCDA/`body_metrics`** + **log de sincronização idempotente** (chave fonte·faixa·item) + proveniência.
+  Única infra nova (≥2 consumidores). Validada com **um** conector real.
+- **Épico 2 — PRIMEIRA SINCRONIZAÇÃO END-TO-END (1º conector cloud):** o fluxo completo acima, impecável — consentimento →
+  dado automático **visível** na Timeline/Monitoramento/Composição, com **estado da integração** (Conectado/Última sync/
+  Sincronizando/Atenção/Erro/Fonte) e **idempotência** comprovada (rodar 2×/10× = mesmo resultado). Experiência COMPLETA.
+- **Épico 3 — Validação do Aha + sincronização contínua:** sync recorrente (on-open + webhooks onde houver); validar o
+  **tempo até o 1º benefício percebido**; "a história cresceu sozinha" no retorno.
+- **Depois (V2.2+):** Apple Health / Health Connect **com o MOB-001**; balanças/CGM/labs — repetição da arquitetura.
 
 ## Preparar a V3 (dados a COMEÇAR a capturar agora, mesmo sem exibir tudo)
 Para a Inteligência Longitudinal (V3) ser poderosa, a V2 deve **armazenar desde já** (mesmo que a UI mostre só resumos):
@@ -71,12 +93,15 @@ Para a Inteligência Longitudinal (V3) ser poderosa, a V2 deve **armazenar desde
 Tudo na **UCDA/`body_metrics` canônica com proveniência**. Regra: *capturar amplo agora, exibir o essencial na V2.*
 
 ## Indicadores de SUCESSO do produto (existem desde o planejamento)
+- ⭐ **TEMPO ATÉ O 1º BENEFÍCIO PERCEBIDO** (fundadora 19/07 — provavelmente o mais importante): quanto tempo entre
+  **conectar** e o usuário **perceber claramente que a plataforma ficou mais útil**. Se for longo, perde-se o encantamento.
+  O planejamento inteiro minimiza esse tempo.
 - **% de usuários que conectam um dispositivo sem ajuda.**
 - **Tempo médio até a 1ª sincronização.**
 - **Tempo até o 1º dado automático aparecer.**
 - **Volume médio de dados sincronizados.**
 - **Frequência de atualização automática.**
-- (+ **retenção da conexão** — % que mantém a fonte após 7/30 dias — saúde da integração.)
+- **Retenção da conexão** — % que mantém a fonte após 7/30 dias — saúde da integração.
 Ainda não medidos em produção, mas **definidos e instrumentáveis** desde já (onde entram os hooks de telemetria).
 
 ## Riscos (téc + UX)
@@ -96,7 +121,11 @@ Ainda não medidos em produção, mas **definidos e instrumentáveis** desde já
 2. **Sync on-open + webhooks** em vez de jobs de background nativos (web) — menos complexidade.
 3. **Reusar Monitoramento/Composição/`body_metrics`/UCDA** como destino — nada novo de exibição na V2.
 
-## Decisão sua necessária antes de implementar
-- Aprovar a **narrativa + Aha Moment + ordem de integrações** (agregador → balança → segmento/labs).
-- Confirmar o **agregador inicial** (Apple Health, Google Health Connect, ou ambos por plataforma) — decisão de produto
-  com impacto no alcance.
+## Decisão sua necessária antes de implementar (ARQUITETURA + produto)
+Narrativa e Aha Moment: **aprovados**. A decisão em aberto é o **1º conector**, por causa da restrição on-device:
+- **Rota A (recomendada):** 1º conector **cloud** (ex.: **Withings**) — prova o end-to-end **hoje, no web**; Health
+  Connect/Apple Health entram depois, com o **MOB-001** (app mobile).
+- **Rota B:** **Health Connect primeiro** → exige construir o **app mobile (MOB-001)** como pré-requisito da V2 (escopo
+  grande; adia o Aha; mistura duas transformações).
+
+Sua escolha (A ou B) e, se A, o **provedor cloud inicial** (recomendo Withings pela continuidade com a jornada de peso da V1).
