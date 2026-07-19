@@ -370,7 +370,7 @@ export default function MedidasPage() {
         icon={<Ruler size={16} />}
         eyebrow="Composição Corporal"
         title="Composição Corporal"
-        subtitle={<>Evolução longitudinal do seu corpo — peso, IMC, gordura, massa magra/muscular e mais — a partir de bioimpedância, exames e registros. Cada indicador mostra sua origem.</>}
+        subtitle={<>Panorama longitudinal do seu corpo — peso, IMC, gordura, massa magra/muscular e mais — a partir de bioimpedância, exames e registros. Cada indicador mostra sua origem.</>}
         action={
           // BETA-2/BETA-5 (captura institucional): um ÚNICO "Adicionar medida" (foto/arquivo/manual).
           // A bioimpedância é DETECTADA no processamento (onScanFile) — sem botão dedicado.

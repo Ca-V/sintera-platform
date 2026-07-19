@@ -1,3 +1,4 @@
+import { MAX_UPLOAD_BYTES } from '@/lib/capture/limits'
 // pdf-parse é CommonJS — import via require para compatibilidade com ESM do Next.js
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse = require('pdf-parse') as (
@@ -91,7 +92,7 @@ export function filterRelevantPages(pageTexts: string[], threshold = 3): PageFil
   }
 }
 
-const MAX_PDF_BYTES  = 50 * 1024 * 1024 // 50 MB (alinhado ao limite de upload)
+const MAX_PDF_BYTES  = MAX_UPLOAD_BYTES // alinhado ao limite de upload (SSOT @/lib/capture/limits)
 const MIN_USEFUL_CHARS = 200
 
 // Retorna true para caracteres fora dos ranges válidos em documentos médicos em português.

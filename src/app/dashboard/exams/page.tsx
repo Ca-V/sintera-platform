@@ -18,6 +18,7 @@ import { deriveExamIdentity } from '@/lib/exams/identification'
 import { binaryStructuringState, STRUCTURING_LABEL } from '@/lib/exams/structuring'
 import { isOrderDocumentType } from '@/lib/exams/classification'
 import { effectiveOrderStatus, orderStatusLabel } from '@/lib/exams/orderStatus'
+import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MB } from '@/lib/capture/limits'
 import { bundlePartInfo, bundlePartLabel, groupBundleParts } from '@/lib/exams/bundleGroup'
 import { useDocumentBundle, DocumentBundleStaging } from '@/components/ui/DocumentBundleCapture'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
@@ -44,7 +45,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   PDF_NO_TEXT_LAYER:       'Este PDF parece ser uma imagem escaneada. PDFs escaneados ainda não são suportados — tente um PDF com texto ou tire uma foto do laudo.',
   PDF_PASSWORD_PROTECTED:  'O PDF está protegido por senha. Remova a proteção e envie novamente.',
   PDF_CORRUPTED:           'O arquivo parece estar corrompido. Tente enviá-lo novamente.',
-  PDF_TOO_LARGE:           'O arquivo excede o limite de 50 MB.',
+  PDF_TOO_LARGE:           `O arquivo excede o limite de ${MAX_UPLOAD_MB} MB.`,
   STORAGE_DOWNLOAD_FAILED: 'Não foi possível acessar o arquivo. Tente novamente em alguns instantes.',
   RATE_LIMIT_EXCEEDED:     'Limite de extrações atingido. Aguarde 1 minuto.',
   PROVIDER_RATE_LIMITED:   'Muitas extrações em andamento no momento. Aguarde alguns instantes e tente novamente.',
@@ -89,7 +90,7 @@ const STATUS_FILTER_OPTIONS = [
 ]
 
 const ACCEPTED_MIME = ['application/pdf', 'image/jpeg', 'image/png']
-const MAX_BYTES     = 50 * 1024 * 1024
+const MAX_BYTES     = MAX_UPLOAD_BYTES   // SSOT em @/lib/capture/limits
 
 function getYear(iso: string) {
   return parseDateOnly(iso).getFullYear()
@@ -276,7 +277,7 @@ export default function ExamsPage() {
   const processFile = useCallback(async (file: File) => {
     if (!user) return
     if (!ACCEPTED_MIME.includes(file.type)) { setUploadError('Formato inválido. São aceitos PDF, JPG e PNG.'); return }
-    if (file.size > MAX_BYTES) { setUploadError('Arquivo muito grande. O limite é 50 MB.'); return }
+    if (file.size > MAX_BYTES) { setUploadError(`Arquivo muito grande. O limite é ${MAX_UPLOAD_MB} MB.`); return }
     setUploadError(null); setUploading(true)
     let examId: string | null = null
     try {
@@ -434,7 +435,7 @@ export default function ExamsPage() {
             <>
               <p className="font-display text-lg font-semibold text-onyx mb-1">Arraste um arquivo ou toque para enviar</p>
               <p className="font-body text-sm text-mauve mb-1">PDF, foto ou <strong className="font-medium">várias fotos</strong> do mesmo {activeTab === 'orders' ? 'pedido/guia' : 'laudo'}</p>
-              <p className="text-xs font-body text-mauve">Ao tirar/escolher fotos, você adiciona quantas páginas quiser antes de concluir · Até 50 MB</p>
+              <p className="text-xs font-body text-mauve">Ao tirar/escolher fotos, você adiciona quantas páginas quiser antes de concluir</p>
               <p className="text-xs font-body text-gold bg-warm rounded-lg px-3 py-1.5 mt-2 inline-block">
                 {activeTab === 'orders'
                   ? <>Envie <strong className="font-medium">um pedido ou solicitação por vez</strong>. Várias páginas do mesmo documento? Junte todas.</>

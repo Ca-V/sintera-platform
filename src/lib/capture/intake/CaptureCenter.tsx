@@ -20,12 +20,12 @@ import { captureError } from '../result'
 import { logCapture } from '../telemetry'
 import type { DocumentKind, CaptureResult, ClassificationResult } from '../types'
 import { useDocumentBundle, DocumentBundleStaging } from '@/components/ui/DocumentBundleCapture'
+import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MB } from '../limits'
 
 const ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   FlaskConical, Pill, Glasses, HeartPulse, Dna, FileText,
 }
 const ACCEPTED = ['application/pdf', 'image/jpeg', 'image/png']
-const MAX_BYTES = 50 * 1024 * 1024
 
 function fmtSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
@@ -103,7 +103,7 @@ export default function CaptureCenter({ className = '', onDone, initialKind = nu
   const pickFile = useCallback((f: File) => {
     setError(null)
     if (!ACCEPTED.includes(f.type)) { setError('Formato inválido. Aceitos: PDF, JPG e PNG.'); return }
-    if (f.size > MAX_BYTES) { setError('Arquivo muito grande (limite 50 MB).'); return }
+    if (f.size > MAX_UPLOAD_BYTES) { setError(`Arquivo muito grande (limite ${MAX_UPLOAD_MB} MB).`); return }
     setFile(f)
     setPreviewUrl(f.type.startsWith('image/') ? URL.createObjectURL(f) : null)
     setAutoConfident(false)
@@ -224,7 +224,7 @@ export default function CaptureCenter({ className = '', onDone, initialKind = nu
           >
             <UploadCloud size={28} className="text-petal mx-auto mb-2" />
             <p className="font-body text-sm text-onyx">Arraste um arquivo ou <span className="text-petal font-medium">selecione</span></p>
-            <p className="font-body text-xs text-mauve mt-1">PDF, foto ou várias fotos do mesmo documento · até 50 MB</p>
+            <p className="font-body text-xs text-mauve mt-1">PDF, foto ou várias fotos do mesmo documento</p>
           </div>
           <button type="button" onClick={() => cameraRef.current?.click()}
             className="mt-2 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl border border-petal/40 text-petal font-body text-sm font-medium hover:bg-blush transition-colors">

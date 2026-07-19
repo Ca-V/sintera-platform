@@ -7,6 +7,7 @@ import { extractBiomarkers, isGatewayError } from '@/lib/ai/gateway'
 import { extractTextFromPdf, filterRelevantPages } from '@/lib/pdf/extractor'
 import { loadCatalogIndex, resolveBiomarker } from '@/lib/ai/insights/resolver'
 import { classifyExamDocument, deriveDisplayTitle, withProvenance } from '@/lib/capture/document-naming'
+import { MAX_UPLOAD_MB } from '@/lib/capture/limits'
 import { extractIssuer } from '@/lib/ai/issuer'
 import { extractRequestingPhysician } from '@/lib/ai/requestingPhysician'
 import { classifyDocumentAI } from '@/lib/ai/document-classifier'
@@ -25,7 +26,7 @@ import { identifyClinical } from '@/lib/capture/clinical-identity-registry'
 const ERROR_MESSAGES: Record<string, string> = {
   password_protected: 'O PDF está protegido por senha e não pode ser processado.',
   corrupted:          'O arquivo PDF está corrompido.',
-  too_large:          'O arquivo PDF excede o limite de 50 MB.',
+  too_large:          `O arquivo PDF excede o limite de ${MAX_UPLOAD_MB} MB.`,
 }
 
 // Contrato de extração prompt↔app. v2 = Fidelidade da Ingestão (source_material +
