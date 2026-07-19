@@ -26,10 +26,11 @@ import { applySort, type SortSpec } from '@/lib/listview'
 import {
   Loader2, Printer, ArrowLeft, FileText, Share2, Copy, Trash2, Check,
   CalendarDays, FlaskConical, Pill, Stethoscope, HeartPulse, Ruler, Activity, Eye,
-  ChevronDown, Minus, Droplet, Receipt, Leaf, Clock,
+  ChevronDown, Minus, Droplet, Receipt, Leaf, Clock, TrendingUp, TrendingDown,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { assembleOrganizedBiomarkers } from '@/lib/ai/insights/assembler'
+import { summarizeBiomarkers, type BiomarkerSummary, type BiomarkerRow } from '@/lib/biomarkers/grouping'
 import { useUser } from '@/context/UserContext'
 import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
 import { typeLabel, professionalKindLabel, type HealthEvent } from '@/lib/agenda' // fonte ÚNICA de rótulos de tipo/profissional
@@ -125,7 +126,7 @@ function LegacyReport() {
   const [shareBusy, setShareBusy] = useState(false)
   const [confirm, setConfirm] = useState<{ message: string; confirmLabel: string; onYes: () => void } | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
-  const [sections, setSections] = useState({ medicamentos: true, suplementos: true, condicoes: true, habitos: true, visao: true, eventos: true, registros: true, exames: true, omica: true, medidas: true, sinais: true, ciclo: true, gastos: true })
+  const [sections, setSections] = useState({ medicamentos: true, suplementos: true, condicoes: true, habitos: true, visao: true, eventos: true, registros: true, histexames: true, exames: true, omica: true, medidas: true, sinais: true, ciclo: true, gastos: true })
   const toggle = (k: keyof typeof sections) => setSections(s => ({ ...s, [k]: !s[k] }))
   // Filtro temporal (capacidade transversal da Camada de Comunicação).
   const [period, setPeriod] = useState<Period>({ preset: 'all' })
@@ -140,6 +141,9 @@ function LegacyReport() {
   // /api/biomarkers/organized permanece apenas como adaptador p/ consumidores
   // externos. A tela não reagrupa; só exibe o resumo.
   const [bioOrg, setBioOrg] = useState<{ total: number; categories: number; outOfRange: number } | null>(null)
+  // A2 — Histórico de Exames: resumo LONGITUDINAL por indicador (último valor · tendência · última realização).
+  // Reutiliza a mesma view/summarize de /dashboard/saude (não reagrupa). Factual (RDC 657).
+  const [bioSummaries, setBioSummaries] = useState<BiomarkerSummary[]>([])
   useEffect(() => {
     if (!user?.id) return
     let alive = true
@@ -148,6 +152,13 @@ function LegacyReport() {
         if (alive) setBioOrg({ total: org.counts.total, categories: org.counts.categories, outOfRange: org.counts.outOfRange })
       })
       .catch(() => { /* silencioso — o resumo funciona sem a síntese */ })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(supabase as any).from('current_biomarkers')
+      .select('id,name,value,unit,result_type,reference_min,reference_max,interpretation,reference_source,catalog_id,source_material,source_exam_name,exam_id,exams(exam_date,created_at)')
+      .eq('user_id', user.id).eq('synthetic', false).eq('result_type', 'numeric')
+      .then((res: { data: unknown[] | null }) => {
+        if (alive && res.data) setBioSummaries(summarizeBiomarkers(res.data as BiomarkerRow[]))
+      })
     return () => { alive = false }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
@@ -185,6 +196,7 @@ function LegacyReport() {
     { title: 'Acompanhamento', items: [
       ['eventos', 'Agenda', CalendarDays],
       ['registros', 'Histórico de Saúde', Clock],
+      ['histexames', 'Histórico de Exames', TrendingUp],
       ['medidas', 'Composição Corporal', Ruler],
       ['sinais', 'Monitoramento', Activity],
     ] },
@@ -205,7 +217,7 @@ function LegacyReport() {
     ] },
   ]
   // Comandos de seleção (via SelectionToolbar reutilizável).
-  const DEFAULT_SECTIONS = { medicamentos: true, suplementos: true, condicoes: true, habitos: true, visao: true, eventos: true, registros: true, exames: true, omica: true, medidas: true, sinais: true, ciclo: true, gastos: true }
+  const DEFAULT_SECTIONS = { medicamentos: true, suplementos: true, condicoes: true, habitos: true, visao: true, eventos: true, registros: true, histexames: true, exames: true, omica: true, medidas: true, sinais: true, ciclo: true, gastos: true }
   const allSections = (v: boolean) => Object.fromEntries(Object.keys(sections).map(k => [k, v])) as typeof sections
   const selectAllSections = () => { setSections(allSections(true)); setExcluded({}) }
   const clearSections = () => setSections(allSections(false))
@@ -344,7 +356,7 @@ function LegacyReport() {
   const visSupSusp = medsSusp.filter(m => isSup(m) && isItemOn('suplementos', m.name))
   const visExams = exams.filter(e => isItemOn('exames', `${e.type}__${e.date}`))
   // Faixas de grupo (espelham a Sidebar, FB-010): exibidas se houver ao menos uma seção do grupo.
-  const showAcompanhamento = sections.eventos || sections.registros || sections.medidas || sections.sinais
+  const showAcompanhamento = sections.eventos || sections.registros || sections.histexames || sections.medidas || sections.sinais
   const showDocumentos = sections.exames || sections.omica
   const showMinhaSaude = sections.condicoes || sections.medicamentos || sections.suplementos || sections.visao || sections.habitos || sections.ciclo
   const showOrganizacao = sections.gastos
@@ -409,6 +421,7 @@ function LegacyReport() {
   const resumoItems = [
     sections.eventos && { label: 'agenda', n: perAgenda.length },
     sections.registros && { label: 'histórico de saúde', n: perHistorico.length },
+    sections.histexames && { label: 'histórico de exames', n: bioSummaries.length },
     sections.exames && { label: 'exames', n: perVisExams.length },
     sections.omica && { label: 'ômica', n: perOmics.length },
     sections.medicamentos && { label: 'medicamentos', n: visMedsEmUso.length + perMedsSusp.length },
@@ -635,6 +648,7 @@ function LegacyReport() {
             {sections.exames && <p><span className="text-mauve">Exames:</span> {perVisExams.length}</p>}
             {sections.eventos && <p><span className="text-mauve">Agenda (previstos):</span> {perAgenda.length}</p>}
             {sections.registros && <p><span className="text-mauve">Histórico de Saúde (realizados):</span> {perHistorico.length}</p>}
+            {sections.histexames && bioSummaries.length > 0 && <p><span className="text-mauve">Histórico de Exames (indicadores):</span> {bioSummaries.length}</p>}
             {sections.medicamentos && <p><span className="text-mauve">Medicamentos em uso:</span> {visMedsEmUso.length}</p>}
             {sections.suplementos && <p><span className="text-mauve">Suplementos em uso:</span> {visSupEmUso.length}</p>}
             {sections.condicoes && <p><span className="text-mauve">Condições registradas:</span> {condProprias.length + condFamiliar.length}</p>}
@@ -722,6 +736,57 @@ function LegacyReport() {
               </tbody>
             </table>
           )}
+        </section>
+        )}
+
+        {/* Histórico de Exames — resumo LONGITUDINAL por indicador (A2). Responde "como evoluiu / quando foi a
+            última", sem abrir cada exame. Factual (RDC 657): direção do valor e faixa do laudo, nunca conclusão clínica. */}
+        {sections.histexames && bioSummaries.length > 0 && (
+        <section id="sec-histexames" style={{ scrollMarginTop: 16 }}>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Histórico de Exames <span className="font-body text-xs font-normal text-mauve">(evolução dos resultados)</span></h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left font-body text-xs">
+              <thead>
+                <tr className="text-mauve align-bottom">
+                  <th className="py-1 pr-2 font-medium">Indicador</th>
+                  <th className="py-1 pr-2 font-medium">Último resultado</th>
+                  <th className="py-1 pr-2 font-medium">Última realização</th>
+                  <th className="py-1 font-medium">Evolução</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...bioSummaries].sort((a, b) => a.displayName.localeCompare(b.displayName)).map(s => {
+                  const L = s.latest
+                  const range = L == null ? null
+                    : (L.referenceMin != null && L.value < L.referenceMin) ? 'abaixo da faixa'
+                    : (L.referenceMax != null && L.value > L.referenceMax) ? 'acima da faixa'
+                    : (L.referenceMin != null || L.referenceMax != null) ? 'dentro da faixa' : null
+                  const TrendIcon = s.trend === 'up' ? TrendingUp : s.trend === 'down' ? TrendingDown : s.trend === 'stable' ? Minus : null
+                  const trendWord = s.trend === 'up' ? 'subiu' : s.trend === 'down' ? 'desceu' : s.trend === 'stable' ? 'estável' : null
+                  return (
+                    <tr key={s.canonicalName} className="border-t border-border/50 align-top">
+                      <td className="py-1.5 pr-2 text-mauve whitespace-nowrap">
+                        {s.latest?.examId ? <Link href={`/dashboard/exams/${s.latest.examId}`} className="hover:text-petal hover:underline">{s.displayName}</Link> : s.displayName}
+                      </td>
+                      <td className="py-1.5 pr-2 text-onyx whitespace-nowrap">
+                        {L ? <>{L.value}{L.unit ? ` ${L.unit}` : ''}{range ? <span className={`block text-[10px] ${range === 'dentro da faixa' ? 'text-mauve' : 'text-gold'}`}>{range}</span> : null}</> : '—'}
+                      </td>
+                      <td className="py-1.5 pr-2 text-mauve whitespace-nowrap">{L ? fmt(L.date) : '—'}</td>
+                      <td className="py-1.5 text-onyx whitespace-nowrap">
+                        {s.count > 1 && trendWord ? (
+                          <span className="inline-flex items-center gap-1">
+                            {TrendIcon && <TrendIcon size={12} className="text-mauve" />}{trendWord}
+                            {s.totalDeltaPercent != null ? ` ${s.totalDeltaPercent > 0 ? '+' : ''}${s.totalDeltaPercent}% desde a 1ª` : ''} · {s.count} medições
+                          </span>
+                        ) : <span className="text-mauve">medição única</span>}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+          <p className="font-body text-[10px] text-mauve mt-1">Evolução completa dos seus indicadores numéricos. &quot;Subiu/desceu&quot; indica apenas a direção do valor; &quot;dentro/acima/abaixo&quot; refere-se à faixa do laudo. Organização factual — não é diagnóstico.</p>
         </section>
         )}
 
