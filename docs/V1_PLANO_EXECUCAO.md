@@ -94,6 +94,36 @@ mais claramente a evolução (por isso A1/B1 cedo, e A2 como espinha de valor).
 - Composição **sem métricas duplicadas**, com bioimpedância **rastreável** e painel de peso completo.
 - TSC + suíte + build verdes · Gate de Conformidade · **zero** framing de diagnóstico/tratamento (regra léxica DS-001 §9).
 
+## ENCERRAMENTO DA V1 (validação + congelamento)
+
+### Changelog de PRODUTO — O que mudou para o usuário
+- O **relatório** agora distingue claramente **passado e futuro** (Histórico de Saúde × Agenda).
+- A **evolução dos exames** pode ser compreendida rapidamente (último resultado · tendência · última realização),
+  sem abrir cada exame.
+- A **Composição Corporal** passou a ser organizada pelas **perguntas** que o usuário quer responder.
+- A **experiência longitudinal** ficou muito mais clara e consistente.
+
+### Checklist de encerramento
+- ✅ **Critério de sucesso atingido** — compreende-se a evolução no tempo sem abrir dezenas de exames.
+- ✅ **Nenhuma inconsistência de navegação** — árvore do relatório = espelho 100% da navegação.
+- ⚠️ **Linguagem consistente** — Composição usa títulos-pergunta; relatório usa títulos descritivos (aceitável:
+  documento × tela). Registrado como limite consciente do princípio, não como defeito.
+- ✅ **Fluxos completos do ponto de vista do usuário** — relatório e Composição entregam experiências inteiras.
+- ✅ **Débitos técnicos documentados** (abaixo).
+- ✅ **Melhorias adiadas registradas** (abaixo).
+
+### Débitos técnicos / melhorias DELIBERADAMENTE ADIADAS (não fazer sob congelamento; abrir na próxima limpeza)
+1. **Relatório — redundância de biomarcadores:** a contagem no resumo do topo (sob "Exames") ficou redundante com a
+   seção dedicada *Histórico de Exames*. Remover a contagem (o Histórico de Exames responde melhor). *Pequeno; candidato
+   a limpeza na abertura da V2.*
+2. **Relatório — Histórico de Exames ignora o filtro de período** (mostra a evolução completa, enquanto o resto respeita
+   o período). Escolha deliberada e sinalizada na legenda; avaliar na V3 (Inteligência longitudinal) se deve respeitar o período.
+3. **Títulos-pergunta** (princípio DS-001 §10): avaliar estender a outras telas multi-bloco em versões futuras (não é V1).
+
+### Congelamento
+A V1 está **CONGELADA**: apenas correção de defeitos. Nenhuma nova funcionalidade, melhoria oportunista ou refatoração
+sem necessidade até o início oficial da V2.
+
 ## Decisões (estado)
 1. **A2 (Histórico de Exames):** simplificação **aprovada** — excelente resumo longitudinal, gráficos ficam para versão futura.
 2. **Composição (B1):** **sem decisão antecipada.** Primeiro a **auditoria B0** (orientada à experiência) → recomendação

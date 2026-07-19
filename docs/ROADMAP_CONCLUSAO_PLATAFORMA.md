@@ -100,3 +100,17 @@ desse resultado?"). Entregar sempre **experiências completas** ao usuário, nã
 
 Ao fim de cada versão: critério de sucesso + critérios objetivos atingidos · verificação verde (TSC+suíte+build) · Gate
 de Conformidade · reavaliação de quais abstrações já se justificam. Plano detalhado da V1: [[V1_PLANO_EXECUCAO]].
+
+**ENCERRAMENTO DE VERSÃO (padrão definitivo, fundadora 19/07).** Além da validação técnica contínua, toda versão
+termina com:
+1. **Validação de EXPERIÊNCIA** (olhar de produto, percorrendo como usuário): a transformação ficou evidente? há ponto
+   inconsistente na jornada? alguma tela com linguagem destoante? oportunidade simples de simplificar? algum detalhe
+   visual/UX que reduza a percepção de qualidade?
+2. **Checklist de encerramento:** ☐ critério de sucesso atingido · ☐ nenhuma inconsistência de navegação · ☐ linguagem
+   consistente · ☐ fluxos completos do ponto de vista do usuário · ☐ débitos técnicos documentados · ☐ melhorias
+   deliberadamente adiadas registradas para a próxima versão.
+3. **Changelog de PRODUTO** ("O que mudou para o usuário") — além do changelog técnico; legível por qualquer pessoa.
+4. **CONGELAMENTO:** após a validação, a versão congela — **apenas correção de defeitos**; nenhuma nova funcionalidade,
+   nenhuma melhoria oportunista, nenhuma refatoração sem necessidade. Evita a versão eterna "quase pronta".
+
+Só então inicia-se a próxima versão — repetindo o ciclo completo de planejamento antes de qualquer código.
