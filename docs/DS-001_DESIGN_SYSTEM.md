@@ -80,5 +80,20 @@ Fora disso, reescreva (ex.: "uso/utilização/acompanhamento/cuidado"; "quem ind
 As descrições são **semânticas** (finalidade do módulo, agnósticas do componente) — reutilizáveis em busca,
 assistente, onboarding e recomendações; SSOT em `@/lib/ui/navDescriptions`.
 
-## 10. Congelamento
+## 10. Arquitetura da experiência — ORGANIZAMOS PERGUNTAS, não componentes (princípio permanente)
+Princípio de produto (fundadora 19/07): **não organizamos componentes na tela — organizamos as PERGUNTAS que o
+usuário quer responder.** Cada bloco/seção deve responder a **uma única pergunta**, e o **título deve ser essa
+pergunta** (o usuário lê só o título e já sabe por que abrir aquela seção — o título faz parte da arquitetura da
+experiência, não só da UI). Ex. (Composição Corporal): *"Como você está hoje?" · "Como está o seu progresso?" ·
+"Como cada indicador evoluiu ao longo do tempo?" · "O que mudou entre duas avaliações?"* — deixa evidente por que um
+mesmo indicador aparece em mais de um lugar (perguntas diferentes).
+
+**Teste de manter / unificar / remover um bloco** (usar antes de comparar componentes ou indicadores):
+1. Qual pergunta este bloco responde? 2. Existe outro bloco respondendo **exatamente** à mesma pergunta? 3. Se ele
+sumir, qual pergunta fica sem resposta? Se a resposta for "nenhuma", aí sim unificar/remover. **Hierarquia = jornada
+mental do usuário** (do estado atual → progresso → evolução → detalhe avançado); o menos usado (ex.: comparação
+avançada) fica **secundário/recolhível**. Painéis contam **uma história** (progresso rumo ao objetivo), não repetem
+um número já mostrado.
+
+## 11. Congelamento
 Estes são os **únicos** primitivos e padrões visuais oficiais. Novas telas montam-se com eles; qualquer novo componente visual entra por revisão do DS-001. Alterações de tokens/tipografia são globais (aqui), nunca por página.

@@ -10,7 +10,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Loader2, Activity, Trash2, Camera, ArrowLeft, Ruler, Target, TrendingDown, TrendingUp, Minus, Pencil } from 'lucide-react'
+import { Loader2, Activity, Trash2, Camera, ArrowLeft, Ruler, Target, TrendingDown, TrendingUp, Minus, Pencil, ChevronDown } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
@@ -110,6 +110,8 @@ export default function MedidasPage() {
   // BOD-001 área ③ — Comparação entre Avaliações (snapshots A × B).
   const [snapAKey, setSnapAKey] = useState<string | null>(null)
   const [snapBKey, setSnapBKey] = useState<string | null>(null)
+  // B1: "Comparar avaliações" é SECUNDÁRIO (uso avançado, <20% dos usuários) — recolhível, fechado por padrão.
+  const [compareOpen, setCompareOpen] = useState(false)
 
   // BOD-001 área ⑤ — Marcos (projeções de Medicamentos/Suplementos/Consultas; avaliações vêm dos snapshots).
   const [medRows, setMedRows] = useState<MedInput[]>([])
@@ -411,7 +413,7 @@ export default function MedidasPage() {
               <Activity size={16} className="text-lavender" />
             </div>
             <div>
-              <p className="font-display text-base font-semibold text-onyx leading-none">Resumo atual</p>
+              <p className="font-display text-base font-semibold text-onyx leading-none">Como você está hoje?</p>
               <p className="font-body text-[11px] text-mauve mt-0.5">Último valor de cada indicador — origem, confiabilidade e tendência vs. a medição anterior.</p>
             </div>
           </div>
@@ -469,8 +471,8 @@ export default function MedidasPage() {
                 <Target size={16} className="text-petal" />
               </div>
               <div>
-                <p className="font-display text-base font-semibold text-onyx leading-none">Acompanhamento de peso e composição corporal</p>
-                <p className="font-body text-[11px] text-mauve mt-0.5">Ao longo do tempo, a partir dos seus registros — sem diagnóstico nem interpretação.</p>
+                <p className="font-display text-base font-semibold text-onyx leading-none">Como está o seu progresso?</p>
+                <p className="font-body text-[11px] text-mauve mt-0.5">Sua jornada de peso a partir dos seus registros — do ponto de partida à meta.</p>
               </div>
             </div>
             {!goalEditing && (
@@ -577,8 +579,8 @@ export default function MedidasPage() {
       {!loading && evoIndicators.length > 0 && (
         <Card padding="md" className="space-y-4">
           <div>
-            <p className="font-display text-base font-semibold text-onyx leading-none">Indicadores ao longo do tempo</p>
-            <p className="font-body text-[11px] text-mauve mt-0.5">Como cada indicador evoluiu — clique num ponto para ver a origem. Abaixo, os marcos do período que podem se relacionar com a mudança.</p>
+            <p className="font-display text-base font-semibold text-onyx leading-none">Como cada indicador evoluiu ao longo do tempo?</p>
+            <p className="font-body text-[11px] text-mauve mt-0.5">Clique num ponto para ver a origem. Abaixo, os marcos do período que podem se relacionar com a mudança.</p>
           </div>
 
           {/* Seletor horizontal de indicadores */}
@@ -714,11 +716,16 @@ export default function MedidasPage() {
           preserva a origem, evidencia indisponibilidades e NÃO normaliza entre tecnologias. */}
       {!loading && snapshots.length >= 2 && (
         <Card padding="md" className="space-y-4">
-          <div>
-            <p className="font-display text-base font-semibold text-onyx leading-none">Comparar avaliações</p>
-            <p className="font-body text-[11px] text-mauve mt-0.5">Confronte dois retratos — cada valor mantém sua origem; sem ajuste entre tecnologias (ex.: DEXA × Bioimpedância).</p>
-          </div>
+          <button type="button" onClick={() => setCompareOpen(o => !o)} aria-expanded={compareOpen}
+            className="w-full flex items-start justify-between gap-3 text-left">
+            <span>
+              <span className="block font-display text-base font-semibold text-onyx leading-none">O que mudou entre duas avaliações?</span>
+              <span className="block font-body text-[11px] text-mauve mt-0.5">Confronte dois retratos — cada valor mantém sua origem; sem ajuste entre tecnologias (ex.: DEXA × Bioimpedância).</span>
+            </span>
+            <ChevronDown size={18} className={`text-mauve flex-shrink-0 mt-0.5 transition-transform ${compareOpen ? 'rotate-180' : ''}`} />
+          </button>
 
+          {compareOpen && (<>
           <div className="flex flex-wrap items-end gap-2">
             <div className="flex-1 min-w-[140px]">
               <label htmlFor="snap-a" className="font-body text-[11px] text-mauve block mb-1">Avaliação A</label>
@@ -793,6 +800,7 @@ export default function MedidasPage() {
               <p className="font-body text-[10px] text-mauve">Valores como medidos por cada método — sem ajuste entre tecnologias. Δ = Avaliação A − Avaliação B.</p>
             </>
           ) : null}
+          </>)}
         </Card>
       )}
 
