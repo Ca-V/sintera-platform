@@ -20,18 +20,36 @@ export function createSupabasePersistClient(supabase: SupabaseClient): PersistCl
     async replaceBodyMetricPoints(userId: string, source: string, points: BodyMetricRow[]) {
       if (points.length === 0) return
       // Substitui SÓ os pontos desta origem nas chaves (métrica, dia) do lote — nunca toca manual/exame.
+      // PRESERVA created_at dos pontos INALTERADOS (mesmo valor no mesmo dia): reinserir mudaria a ingestão e
+      // quebraria o "novo desde a última visita". Só apaga/insere o que realmente mudou ou entrou (V2 Aha-R3).
       const orFilter = points
         .map((p) => `and(metric.eq.${p.metric},measured_on.eq.${p.measured_on})`)
         .join(',')
-      const del = await supabase
+      const existing = await supabase
         .from('body_metrics')
-        .delete()
+        .select('id, metric, measured_on, value_text')
         .eq('user_id', userId)
         .eq('source', source)
         .or(orFilter)
-      if (del.error) throw new Error(`replaceBodyMetricPoints/delete: ${del.error.message}`)
-      const ins = await supabase.from('body_metrics').insert(points)
-      if (ins.error) throw new Error(`replaceBodyMetricPoints/insert: ${ins.error.message}`)
+      if (existing.error) throw new Error(`replaceBodyMetricPoints/read: ${existing.error.message}`)
+      const key = (m: string, d: string, v: string) => `${m}|${d}|${v}`
+      const rows = (existing.data ?? []) as { id: string; metric: string; measured_on: string; value_text: string }[]
+      const existingIdByKey = new Map(rows.map((r) => [key(r.metric, r.measured_on, r.value_text), r.id]))
+      const preservedIds = new Set<string>()
+      const toInsert = points.filter((p) => {
+        const id = existingIdByKey.get(key(p.metric, p.measured_on, p.value_text))
+        if (id) { preservedIds.add(id); return false } // idêntico → mantém (created_at preservado)
+        return true
+      })
+      const toDeleteIds = [...new Set(rows.map((r) => r.id))].filter((id) => !preservedIds.has(id))
+      if (toDeleteIds.length > 0) {
+        const del = await supabase.from('body_metrics').delete().in('id', toDeleteIds)
+        if (del.error) throw new Error(`replaceBodyMetricPoints/delete: ${del.error.message}`)
+      }
+      if (toInsert.length > 0) {
+        const ins = await supabase.from('body_metrics').insert(toInsert)
+        if (ins.error) throw new Error(`replaceBodyMetricPoints/insert: ${ins.error.message}`)
+      }
     },
   }
 }

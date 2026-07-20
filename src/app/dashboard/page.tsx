@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useOnOpenSync } from '@/lib/connectors/useOnOpenSync'
+import { useOnOpenSync, readHistoryGrew, clearHistoryGrew } from '@/lib/connectors/useOnOpenSync'
 import HistoryGrewNotice from '@/components/connectors/HistoryGrewNotice'
 import { motion } from 'framer-motion'
 import {
@@ -89,9 +89,10 @@ function LegacyDashboard() {
   const hour        = new Date().getHours()
   const greeting    = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite'
 
-  // V2 Aha-R1 — no retorno, o Painel Inicial sincroniza sozinho e comunica o benefício de imediato.
+  // V2 Aha-R1 — no retorno, o Painel Inicial comunica o benefício de imediato (aviso vale em qualquer tela).
   const [grewCount, setGrewCount] = useState(0)
-  useOnOpenSync(({ newSince }) => { if (newSince > 0) setGrewCount(newSince) })
+  useEffect(() => { setGrewCount(readHistoryGrew()) }, [])
+  useOnOpenSync(({ newRecords }) => { if (newRecords > 0) setGrewCount(newRecords) })
   const displayName = profile?.name?.split(' ')[0] ?? 'por aqui'
 
   async function loadData() {
@@ -156,7 +157,7 @@ function LegacyDashboard() {
       </motion.div>
 
       {/* V2 Aha-R1 — "a SINTERA trabalhou por você": dado novo chegou automaticamente desde o último acesso. */}
-      <HistoryGrewNotice count={grewCount} onDismiss={() => setGrewCount(0)} />
+      <HistoryGrewNotice count={grewCount} onDismiss={() => { clearHistoryGrew(); setGrewCount(0) }} />
 
       {/* Como usar a SINTERA — orientação de primeiros passos (dispensável) */}
       {showGuide && (

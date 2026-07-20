@@ -43,6 +43,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ sour
     }
     back.searchParams.set('conexao', 'ok')
     back.searchParams.set('fonte', source)
+    if (outcome.status === 'ok' && outcome.recordsCount > 0) back.searchParams.set('novos', String(outcome.recordsCount))
     const res = NextResponse.redirect(back)
     res.cookies.delete(`oauth_state_${source}`)
     return res

@@ -7,6 +7,18 @@ import { useEffect } from 'react'
 
 const SESSION_KEY = 'sintera:onopen-sync-at'
 const CLIENT_THROTTLE_MS = 60_000 // no máximo uma chamada por minuto por sessão
+const GREW_KEY = 'sintera:grew'    // R1: aviso "sua história cresceu" — persiste entre telas até dispensar
+
+/** Nº de medições automáticas incorporadas (para o aviso), guardado na sessão — vale em qualquer tela. */
+export function readHistoryGrew(): number {
+  try { return Number(sessionStorage.getItem(GREW_KEY) ?? 0) || 0 } catch { return 0 }
+}
+export function setHistoryGrew(n: number): void {
+  try { if (n > 0) sessionStorage.setItem(GREW_KEY, String(n)) } catch { /* ignore */ }
+}
+export function clearHistoryGrew(): void {
+  try { sessionStorage.removeItem(GREW_KEY) } catch { /* ignore */ }
+}
 
 export interface OnOpenSyncResult {
   synced: string[]
@@ -32,8 +44,11 @@ export function useOnOpenSync(onSynced?: (result: OnOpenSyncResult) => void) {
       .then(r => (r.ok ? r.json() : null))
       .then((res: { synced?: string[]; newRecords?: number; newSince?: number; previousSeen?: string | null } | null) => {
         if (!active || !res) return
-        // Guarda a última visita anterior para o destaque "novo" (R3) nas telas de dados.
-        try { if (res.previousSeen) sessionStorage.setItem('sintera:prev-visit', res.previousSeen) } catch { /* ignore */ }
+        try {
+          if (res.previousSeen) sessionStorage.setItem('sintera:prev-visit', res.previousSeen) // R3: destaque "novo"
+          // R1: aviso cross-página — dado automático que chegou nesta sincronização (persiste até dispensar).
+          if ((res.newRecords ?? 0) > 0) sessionStorage.setItem(GREW_KEY, String(res.newRecords))
+        } catch { /* ignore */ }
         onSynced?.({ synced: res.synced ?? [], newRecords: res.newRecords ?? 0, newSince: res.newSince ?? 0, previousSeen: res.previousSeen ?? null })
       })
       .catch(() => { /* silencioso: sync automática nunca atrapalha a navegação */ })
