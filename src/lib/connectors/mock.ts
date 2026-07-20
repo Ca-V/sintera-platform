@@ -20,10 +20,19 @@ export interface MockMeasurement {
   externalId: string
 }
 
+/** V2 Épico 3.2 — série diária determinística: o "dispositivo" mede um pouco a cada dia (cresce no tempo). */
+export interface MockDailyConfig {
+  startDate: string      // 'YYYY-MM-DD' — 1ª medição
+  startWeightKg: number  // peso na 1ª medição
+  dailyDeltaKg: number   // variação por dia (ex.: -0.05 = tendência de perda)
+}
+
 /** Estado mutável do "provedor de demonstração" — o harness/teste/app controla os cenários. */
 export interface MockWorld {
-  /** Dados disponíveis na "nuvem do dispositivo" (crescem ao longo do tempo). */
+  /** Dados FIXOS disponíveis na "nuvem do dispositivo". */
   measurements: MockMeasurement[]
+  /** Série que CRESCE no tempo (uma medição por dia até "agora"); torna o retorno automático perceptível. */
+  daily?: MockDailyConfig
   /** nº das próximas buscas que devem FALHAR (falha temporária); decrementa a cada busca. */
   failNextFetches: number
   /** Se true, o refresh de token FALHA (simula expiração sem reconexão → auth_error). */
@@ -36,6 +45,25 @@ export interface MockWorld {
 
 export function createMockWorld(over: Partial<MockWorld> = {}): MockWorld {
   return { measurements: [], failNextFetches: 0, refreshFails: false, accessTokenTtlSeconds: 3600, authorizations: 0, ...over }
+}
+
+/**
+ * Gera uma medição de peso por DIA, de `startDate` até `untilISO` (inclusive) — DETERMINÍSTICO (valor = função do
+ * índice do dia; sem aleatoriedade). Cada dia tem `externalId` único → idempotente. É o que faz "a história crescer
+ * sozinha": a cada dia que passa, o sync incremental encontra um ponto novo.
+ */
+export function generateDailySeries(cfg: MockDailyConfig, untilISO: string): MockMeasurement[] {
+  const out: MockMeasurement[] = []
+  const until = new Date(untilISO)
+  const start = new Date(`${cfg.startDate}T08:00:00Z`)
+  if (Number.isNaN(until.getTime()) || Number.isNaN(start.getTime())) return out
+  const DAY = 24 * 60 * 60 * 1000
+  for (let day = 0, t = start.getTime(); t <= until.getTime() && day < 3650; day++, t += DAY) {
+    const date = new Date(t).toISOString().slice(0, 10)
+    const weight = Math.round((cfg.startWeightKg + cfg.dailyDeltaKg * day) * 10) / 10
+    out.push({ metric: 'peso', value: weight, unit: 'kg', recordedAt: `${date}T08:00:00Z`, externalId: `demo-peso-${date}` })
+  }
+  return out
 }
 
 function issueTokens(world: MockWorld, clock: Clock, tag: string): TokenSet {
@@ -77,7 +105,11 @@ export function createMockConnector(world: MockWorld): Connector {
         throw new Error('mock: falha temporária de rede')
       }
       const since = ctx.window.since
-      const inWindow = world.measurements.filter((m) => (since == null || m.recordedAt > since) && m.recordedAt <= ctx.window.until)
+      // Dados fixos + a série diária que cresce até "agora" (ctx.window.until).
+      const all = world.daily
+        ? [...world.measurements, ...generateDailySeries(world.daily, ctx.window.until)]
+        : world.measurements
+      const inWindow = all.filter((m) => (since == null || m.recordedAt > since) && m.recordedAt <= ctx.window.until)
       return inWindow.map((m) => ({
         metric: m.metric,
         value: m.value,

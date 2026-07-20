@@ -13,15 +13,15 @@ import type { OAuthProvider } from './oauth'
 import { createMockWorld, createMockConnector, createMockOAuthProvider, MOCK_SOURCE, type MockWorld } from './mock'
 
 // ── Conector(es) de demonstração ────────────────────────────────────────────────────────────────
-// Mundo do mock: seed com um histórico curto de peso/composição para o 1º sync ter o que trazer.
+// Mundo do mock: alguns pontos fixos de composição + uma SÉRIE DIÁRIA de peso que cresce até "agora"
+// (V2 Épico 3.2) — a cada dia que passa, o sync incremental traz um ponto novo ("a história cresce sozinha").
 const mockWorld: MockWorld = createMockWorld({
+  daily: { startDate: '2026-07-01', startWeightKg: 82.6, dailyDeltaKg: -0.06 },
   measurements: [
-    { metric: 'peso', value: 82.4, unit: 'kg', recordedAt: '2026-07-10T08:00:00Z', externalId: 'demo-peso-1' },
-    { metric: 'gordura_corporal', value: 24.1, unit: '%', recordedAt: '2026-07-10T08:00:00Z', externalId: 'demo-gc-1' },
-    { metric: 'peso', value: 81.6, unit: 'kg', recordedAt: '2026-07-15T08:00:00Z', externalId: 'demo-peso-2' },
-    { metric: 'gordura_corporal', value: 23.4, unit: '%', recordedAt: '2026-07-15T08:00:00Z', externalId: 'demo-gc-2' },
-    { metric: 'peso', value: 81.0, unit: 'kg', recordedAt: '2026-07-19T08:00:00Z', externalId: 'demo-peso-3' },
-    { metric: 'massa_muscular', value: 32.2, unit: 'kg', recordedAt: '2026-07-19T08:00:00Z', externalId: 'demo-mm-3' },
+    { metric: 'gordura_corporal', value: 24.1, unit: '%', recordedAt: '2026-07-05T08:00:00Z', externalId: 'demo-gc-1' },
+    { metric: 'gordura_corporal', value: 23.4, unit: '%', recordedAt: '2026-07-12T08:00:00Z', externalId: 'demo-gc-2' },
+    { metric: 'massa_muscular', value: 32.2, unit: 'kg', recordedAt: '2026-07-12T08:00:00Z', externalId: 'demo-mm-2' },
+    { metric: 'gordura_corporal', value: 22.8, unit: '%', recordedAt: '2026-07-19T08:00:00Z', externalId: 'demo-gc-3' },
   ],
 })
 

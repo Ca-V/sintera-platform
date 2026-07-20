@@ -1,7 +1,7 @@
 // FUNC · WEA-001/HIP-001 — MOCK COMPORTAMENTAL: os 7 cenários de uma integração real.
 import { describe, it, expect } from 'vitest'
 import {
-  createMockWorld, createMockConnector, createMockOAuthProvider, MOCK_SOURCE, type MockMeasurement,
+  createMockWorld, createMockConnector, createMockOAuthProvider, MOCK_SOURCE, generateDailySeries, type MockMeasurement,
 } from '@/lib/connectors/mock'
 import type { ConnectorContext } from '@/lib/connectors/registry'
 import type { Clock } from '@/lib/connectors/orchestrator'
@@ -46,6 +46,28 @@ describe('mock comportamental · dados', () => {
     const a = await conn.fetchSamples(ctx(null))
     const b = await conn.fetchSamples(ctx(null))
     expect(a.map((s) => s.provenance.externalId)).toEqual(b.map((s) => s.provenance.externalId))
+  })
+})
+
+describe('mock comportamental · série que CRESCE no tempo (3.2)', () => {
+  const cfg = { startDate: '2026-07-01', startWeightKg: 82.6, dailyDeltaKg: -0.1 }
+  it('gera uma medição por dia até o "until", determinístico', () => {
+    const s = generateDailySeries(cfg, '2026-07-03T12:00:00Z')
+    expect(s.map((m) => m.recordedAt)).toEqual(['2026-07-01T08:00:00Z', '2026-07-02T08:00:00Z', '2026-07-03T08:00:00Z'])
+    expect(s[0].value).toBe(82.6)
+    expect(s[2].value).toBe(82.4) // 82.6 - 0.1*2
+    // determinístico: mesma entrada, mesma saída
+    expect(generateDailySeries(cfg, '2026-07-03T12:00:00Z')).toEqual(s)
+  })
+  it('quando "hoje" avança, o sync incremental encontra o dia novo', async () => {
+    const world = createMockWorld({ daily: cfg })
+    const conn = createMockConnector(world)
+    // 1ª sync até 02/07
+    const d2 = await conn.fetchSamples(ctx(null, '2026-07-02T12:00:00Z'))
+    expect(d2).toHaveLength(2)
+    // retorno em 04/07 (incremental a partir do último) → só os dias novos
+    const d4 = await conn.fetchSamples(ctx('2026-07-02T08:00:00Z', '2026-07-04T12:00:00Z'))
+    expect(d4.map((m) => m.recordedAt)).toEqual(['2026-07-03T08:00:00Z', '2026-07-04T08:00:00Z'])
   })
 })
 
