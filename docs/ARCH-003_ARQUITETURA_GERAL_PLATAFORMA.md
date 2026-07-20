@@ -3,7 +3,7 @@
 **Objetivo:** consolidar, num só lugar, a arquitetura da SINTERA — a **referência principal** de arquitetura.
 **Escopo:** princípios, mobile-first/API-first, camada observacional, SSOT, sincronização, módulos, visão de longo prazo,
 diretrizes permanentes.
-**Status:** Approved · **Versão:** 1.0 · **Histórico:** v1.0 (2026-07-20) — consolidação.
+**Status:** Approved · **Architectural Baseline** · **Versão:** 1.0 · **Histórico:** v1.0 (2026-07-20) — consolidação.
 **Dependências:** [[ADR-000]] (raiz) · [[ARCH-002]] · [[HIP-007]] · [[HIP-009]]. **Impacto:** governa todos os módulos.
 
 ## 1. Princípios arquiteturais (raiz)

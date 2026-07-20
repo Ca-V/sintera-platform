@@ -1,7 +1,8 @@
 # HIP-009 — Arquitetura de Sincronização (Fase 2 · Etapa 3)
 
-**Status:** Approved · **Versão:** 1.0 · **Histórico:** v1.0 (2026-07-20) criação. Pré-requisito de QUALQUER código
-(inclusive `/mobile/ingest`). Sob [[ADR-000]] · [[ARCH-002]] · deriva de [[HIP-007]] (Observação).
+**Status:** Approved · **Architectural Baseline** · **Versão:** 1.0 · **Histórico:** v1.0 (2026-07-20) criação.
+Pré-requisito de QUALQUER código (inclusive `/mobile/ingest`). Sob [[ADR-000]] · [[ARCH-002]] · deriva de [[HIP-007]].
+Decisão: [[adr_008_arquitetura_sincronizacao|ADR-008]].
 **Escopo:** robusta para **toda aquisição observacional** (wearables, dispositivos médicos, sensores contínuos, apps,
 agregadores, FHIR, documentos) — não só wearables.
 

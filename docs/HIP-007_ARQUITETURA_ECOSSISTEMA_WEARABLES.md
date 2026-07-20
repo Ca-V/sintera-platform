@@ -1,7 +1,8 @@
 # HIP-007 — Arquitetura de Aquisição de Dados Observacionais (Fase 2 · Etapa 1 · referência universal)
 
-**Status:** Approved · **Versão:** 2.0 · **Histórico:** v1.0 (2026-07-20) criação; v2.0 (2026-07-20) 6 ajustes da
-fundadora (Observação; jornada; universal; Observação≠Indicador; confiabilidade/qualidade; entidade estrutural).
+**Status:** Approved · **Architectural Baseline** · **Versão:** 2.0 · **Histórico:** v1.0 (2026-07-20) criação; v2.0
+(2026-07-20) 6 ajustes da fundadora (Observação; jornada; universal; Observação≠Indicador; confiabilidade/qualidade;
+entidade estrutural). Decisões: [[adr_004_arquitetura_observacional|ADR-004]] · [[adr_005_ssot_bruto_imutavel|ADR-005]].
 **Documento de referência de TODA aquisição automática de dados observacionais da SINTERA** — não apenas wearables. Sob
 [[ADR-000]] · [[HIP-001]] · [[ucda_universal_clinical_data_architecture]] · [[compliance_001_fase0_gate]].
 **Fase 2 em 4 etapas:** **(1) esta — Aquisição Observacional** → (2) Arquitetura do App Móvel → (3) Arquitetura de

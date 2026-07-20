@@ -1,6 +1,7 @@
 # ARCH-002 — Mobile-First · API-First (princípio permanente)
 
-**Status:** PRINCÍPIO PERMANENTE (fundadora, 20/07). Orienta **toda** decisão arquitetural futura. Sob [[ADR-000]].
+**Status:** PRINCÍPIO PERMANENTE · **Architectural Baseline** (fundadora, 20/07). Orienta **toda** decisão arquitetural
+futura; mudança estrutural exige revisão formal (ADR). Sob [[ADR-000]]. Decisões: [[adr_002_mobile_first|ADR-002]] · [[adr_003_api_first|ADR-003]].
 
 ## Direcionamento
 - **O aplicativo móvel é o PRODUTO PRINCIPAL e a PRINCIPAL EXPERIÊNCIA do usuário da SINTERA.** Não é "mais um cliente"
