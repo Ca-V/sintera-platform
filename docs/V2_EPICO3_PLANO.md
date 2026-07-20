@@ -154,6 +154,15 @@ Priorizadas para que os conectores reais entrem sobre uma experiência **já val
 **Recomendação:** itens **1–3** valem a pena **antes** do Withings (fecham a percepção do benefício); 4–6 podem seguir em
 paralelo/depois. A arquitetura já suporta todos sem retrabalho (é comunicação/UX, não pipeline).
 
+### ✅ Refinamentos 1–3 IMPLEMENTADOS (20/07) — Aha mais perceptível
+- **R1** — aviso **"sua história cresceu"** no **Painel Inicial** (1º ponto do retorno; on-open + banner discreto).
+- **R2** — **`profiles.last_seen_at`** (migração 131) + a sync-open passa a contar **"novo desde a última visita"** (fiel,
+  cross-device) e marcar a visita; o aviso usa esse número.
+- **R3** — **selo "novo"** discreto nos registros de origem *Dispositivo* ingeridos **desde a última visita**, na tabela de
+  evolução da Composição Corporal.
+Restam (pós-Withings/opcionais): "sincronizando…" discreto · aviso proativo opt-in (NOTIF) · painel de leitura da telemetria.
+**Limpeza:** os dados de demonstração da conta de teste foram removidos (só os reais permaneceram).
+
 ## Critério de sucesso da V2 (fechado por este épico)
 > O usuário **conecta uma fonte e vê a história crescer sozinha**, sem registro manual — e **reconhece isso como o
 > motivo** para usar a SINTERA. O épico mede isso pelo **tempo até o 1º benefício percebido**.
