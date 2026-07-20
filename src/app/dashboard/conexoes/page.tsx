@@ -17,7 +17,7 @@ import PageHeader from '@/components/PageHeader'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import Disclaimer from '@/components/ui/Disclaimer'
-import { useOnOpenSync, readHistoryGrew, setHistoryGrew, clearHistoryGrew } from '@/lib/connectors/useOnOpenSync'
+import { useOnOpenSync, acknowledgeSeen } from '@/lib/connectors/useOnOpenSync'
 import HistoryGrewNotice from '@/components/connectors/HistoryGrewNotice'
 
 type Status = 'disconnected' | 'connected' | 'expired' | 'revoked' | 'error'
@@ -80,13 +80,8 @@ function ConexoesInner() {
 
   useEffect(() => { load() }, [load])
 
-  // V2 Aha-R1 — aviso do benefício: (a) vindo do connect (?novos), (b) da sessão, (c) da sync on-open.
-  useEffect(() => {
-    const novos = Number(params.get('novos') ?? 0) || 0
-    if (novos > 0) setHistoryGrew(novos)
-    setGrewCount(readHistoryGrew())
-  }, [params])
-  useOnOpenSync(({ newRecords }) => { load(); if (newRecords > 0) setGrewCount(newRecords) })
+  // V2 Aha — ao abrir, sincroniza sozinho, recarrega o estado e mostra o aviso pelo estado persistente do servidor.
+  useOnOpenSync(({ newCount }) => { load(); setGrewCount(newCount) })
 
   const syncNow = useCallback(async (source: string) => {
     setSyncing(source)
@@ -123,7 +118,7 @@ function ConexoesInner() {
         subtitle={<>Conecte uma fonte de dados e a sua história de saúde passa a se construir sozinha — as medições entram automaticamente no seu Monitoramento e na Composição Corporal.</>}
       />
 
-      <HistoryGrewNotice count={grewCount} onDismiss={() => { clearHistoryGrew(); setGrewCount(0) }} />
+      <HistoryGrewNotice count={grewCount} onDismiss={() => { acknowledgeSeen(); setGrewCount(0) }} />
 
       {justConnected && (
         <Card padding="md" className="border-petal/30 bg-blush/60">

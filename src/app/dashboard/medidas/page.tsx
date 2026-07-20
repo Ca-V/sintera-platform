@@ -18,6 +18,7 @@ import Sparkline, { parseNum } from '@/components/Sparkline'
 import { computeWeightJourney, type SeriesPoint } from '@/lib/body/weight-journey'
 import { currentSummary, sourceQuality, RELIABILITY_LABEL, lastAssessment, type SummaryPoint } from '@/lib/body/summary'
 import { EVOLUTION_PERIODS, filterByPeriod, markerFor, type EvoPoint } from '@/lib/body/evolution'
+import { useOnOpenSync } from '@/lib/connectors/useOnOpenSync'
 import EvolutionChart from '@/components/body/EvolutionChart'
 import { buildSnapshots, compareSnapshots, type SnapPoint } from '@/lib/body/snapshots'
 import { buildMilestones, MILESTONE_CATEGORIES, MILESTONE_COLOR, type MilestoneCategory, type MedInput, type ConsultaInput, type AssessmentInput } from '@/lib/body/milestones'
@@ -107,10 +108,10 @@ export default function MedidasPage() {
   const [evoMetric, setEvoMetric] = useState<Metric>('peso')
   const [evoDays, setEvoDays] = useState<number | null>(90)
   const [evoPoint, setEvoPoint] = useState<EvoPoint | null>(null)
-  // V2 Aha-R3: última visita anterior (definida pela sync on-open) — destaca os registros automáticos novos.
+  // V2 Aha (correção): "última visita" vem do SERVIDOR (persistente). Destaca os pontos automáticos novos —
+  // na 1ª visita (sem última visita) todos os do dispositivo contam como novos.
   const [previousSeen, setPreviousSeen] = useState<string | null>(null)
-  useEffect(() => { try { setPreviousSeen(sessionStorage.getItem('sintera:prev-visit')) } catch { /* ignore */ } }, [])
-  const isNewAuto = (p: EvoPoint) => p.source === 'wearable' && !!previousSeen && !!p.createdAt && p.createdAt > previousSeen
+  const isNewAuto = (p: EvoPoint) => p.source === 'wearable' && !!p.createdAt && (previousSeen == null || p.createdAt > previousSeen)
 
   // BOD-001 área ③ — Comparação entre Avaliações (snapshots A × B).
   const [snapAKey, setSnapAKey] = useState<string | null>(null)
@@ -185,6 +186,10 @@ export default function MedidasPage() {
   // é intencional.
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { if (!authLoading) load() }, [authLoading, load])
+
+  // V2 Aha (correção): ao abrir a Composição, sincroniza sozinho, obtém a "última visita" (para o selo "novo")
+  // e recarrega os dados — assim o dado automático aparece e o destaque fica consistente.
+  useOnOpenSync(({ since }) => { setPreviousSeen(since); load() })
 
   function chooseMetric(m: Metric) { setMetric(m); setUnit(DEFAULT_UNIT[m]) }
   function reset() { setEditMeasureId(null); setMetric('peso'); setLabel(''); setValue(''); setUnit('kg'); setDate(''); setNotes(''); setExamId(''); setErr(null) }
