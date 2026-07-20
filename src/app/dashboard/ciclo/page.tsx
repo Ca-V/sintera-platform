@@ -159,7 +159,8 @@ export default function CicloPage() {
       if (existingEvent) {
         await db.from('agenda_events').update({ title, event_date: reminderDate, status: 'pending', reminder_enabled: true, reminder_sent_at: null }).eq('id', existingEvent)
       } else {
-        const { data: ev } = await db.from('agenda_events').insert({ user_id: user.id, event_type: 'medicacao', title, event_date: reminderDate, status: 'pending', reminder_enabled: true }).select('id').single()
+        // FB-017: tipo próprio do domínio Ciclo e Contracepção (Central espelha a Sidebar).
+        const { data: ev } = await db.from('agenda_events').insert({ user_id: user.id, event_type: 'contracepcao', title, event_date: reminderDate, status: 'pending', reminder_enabled: true }).select('id').single()
         if (ev?.id) await db.from('contraceptive_methods').update({ reminder_event_id: ev.id }).eq('id', methodId)
       }
     } else if (existingEvent) {

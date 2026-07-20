@@ -194,6 +194,7 @@ export async function POST(req: NextRequest) {
     const channels = resolveChannelsForEvent({
       prefsByCategory: prefsByUser.get(userId) ?? new Map<string, NotificationChannel>(),
       eventType: ev.type,
+      links: ev.links,   // FB-017: roteia pelo DOMÍNIO de origem (ex.: lembrete de recurso → "Recursos de Saúde")
       legacyWhatsAppOptIn: waOptInById.get(userId) === true,
     })
 

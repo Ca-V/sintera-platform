@@ -375,7 +375,8 @@ export default function MedicamentosPage() {
           if (existingEvent) {
             await db.from('agenda_events').update({ title: `Recomprar: ${name.trim()}`, event_date: rec, status: 'pending', reminder_enabled: true, reminder_sent_at: null }).eq('id', existingEvent)
           } else {
-            const { data: ev } = await db.from('agenda_events').insert({ user_id: user.id, event_type: 'medicacao', title: `Recomprar: ${name.trim()}`, event_date: rec, status: 'pending', reminder_enabled: true }).select('id').single()
+            // FB-017: o tipo carrega o DOMÍNIO (Central de Notificações espelha a Sidebar): suplemento → 'suplemento'.
+            const { data: ev } = await db.from('agenda_events').insert({ user_id: user.id, event_type: kind === 'suplemento' ? 'suplemento' : 'medicacao', title: `Recomprar: ${name.trim()}`, event_date: rec, status: 'pending', reminder_enabled: true }).select('id').single()
             if (ev?.id) await db.from('medications').update({ repurchase_event_id: ev.id }).eq('id', medId)
           }
         } else if (existingEvent) {
