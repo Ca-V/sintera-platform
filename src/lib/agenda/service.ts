@@ -10,7 +10,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createSupabaseEventRepository, type EventRepository } from './repository'
 import { createEventBus, type EventBus, type DomainEvent, type DomainEventType, type EventActor } from './bus'
-import { completeRule, cancelRule, rescheduleRule, canTransition, selectNextUpcoming, type HealthEvent, type EventStatus } from './event'
+import { completeRule, cancelRule, rescheduleRule, canTransition, selectNextUpcoming, selectOverdue, type HealthEvent, type EventStatus } from './event'
 import { parseRule, addToDate } from '../recurrence'
 import { todayISO, nowISO } from '../date'   // SSOT do relógio/datas — não reimplementar
 
@@ -23,7 +23,9 @@ const SYSTEM_CLOCK: Clock = { today: todayISO, now: nowISO }
 export interface EventQueryService {
   /** TODOS os eventos (legado+canônico, dedup), sem recorte temporal — Timeline/Histórico/Relatório/compartilhamento. */
   listAll(userId: string): Promise<HealthEvent[]>
-  listUpcoming(userId: string): Promise<HealthEvent[]>      // Agenda
+  listUpcoming(userId: string): Promise<HealthEvent[]>      // Agenda (futuro)
+  /** Pendências em ATRASO (abertas e vencidas) — a Agenda mostra pendências, não só o futuro. */
+  listOverdue(userId: string): Promise<HealthEvent[]>
   /** "Próximo evento" — fonte ÚNICA (Dashboard, Agenda e afins consomem isto). */
   nextUpcoming(userId: string): Promise<HealthEvent | null>
   listHistorical(userId: string): Promise<HealthEvent[]>    // Histórico
@@ -38,6 +40,8 @@ export function createEventQueryService(repo: EventRepository, clock: Clock = SY
   return {
     listAll:        (u) => repo.listAllEvents(u),
     listUpcoming:   (u) => repo.listUpcomingEvents(u, clock.today()),
+    // Pendências vencidas: derivadas de TODOS os eventos (a lista de "próximos" não as inclui por definição).
+    listOverdue:    (u) => repo.listAllEvents(u).then(l => selectOverdue(l, clock.today())),
     // Mesma lista da Agenda → o "próximo" via função única (nunca duas definições).
     nextUpcoming:   (u) => repo.listUpcomingEvents(u, clock.today()).then(l => selectNextUpcoming(l, clock.today())),
     listHistorical: (u) => repo.listHistoricalEvents(u, clock.today()),

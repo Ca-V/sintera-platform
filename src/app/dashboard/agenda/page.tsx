@@ -35,6 +35,7 @@ export default function AgendaPage() {
 
   const [userId, setUserId]   = useState<string | null>(null)
   const [events, setEvents]   = useState<HealthEvent[]>([])
+  const [overdueEvents, setOverdueEvents] = useState<HealthEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId]   = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
@@ -57,9 +58,13 @@ export default function AgendaPage() {
       const uid = auth.user?.id ?? null
       setUserId(uid)
       if (!uid) { setLoading(false); return }
-      const upcoming = await services.query.listUpcoming(uid)
+      const [upcoming, overdueList] = await Promise.all([
+        services.query.listUpcoming(uid),
+        services.query.listOverdue(uid),
+      ])
       if (!active) return
       setEvents(upcoming)
+      setOverdueEvents(overdueList)
       const { data: examData } = await supabase.from('exams').select('type, exam_date, status, created_at').eq('user_id', uid)
       if (!active) return
       const examsLite = (examData ?? []).map(e => {
@@ -269,7 +274,19 @@ export default function AgendaPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-20 text-mauve"><Loader2 size={22} className="animate-spin" /></div>
-      ) : events.length === 0 ? (
+      ) : (
+        <>
+        {overdueEvents.length > 0 && (
+          <section className="space-y-3">
+            <div className="flex items-center gap-2">
+              <CalendarClock size={15} className="text-petal" />
+              <h2 className="font-body text-sm font-semibold text-onyx">Pendências ({overdueEvents.length})</h2>
+            </div>
+            <p className="font-body text-xs text-mauve">Itens que passaram da data e ainda aguardam uma ação. Conclua, cancele ou exclua cada um.</p>
+            {overdueEvents.map(agendaRow)}
+          </section>
+        )}
+        {events.length === 0 && overdueEvents.length === 0 ? (
         <EmptyState icon={<CalendarDays size={28} className="text-petal" />} title="Nenhum evento futuro"
           message="Adicione um exame, consulta ou retorno para acompanhar seus próximos passos."
           action={
@@ -278,7 +295,7 @@ export default function AgendaPage() {
               <Plus size={16} /> Adicionar primeiro evento
             </button>
           } />
-      ) : (
+      ) : events.length > 0 ? (
         <section className="space-y-3">
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <div className="flex items-center gap-2">
@@ -310,6 +327,8 @@ export default function AgendaPage() {
             ))
           })()}
         </section>
+      ) : null}
+        </>
       )}
 
       <Disclaimer variant="geral" className="text-center px-4" />

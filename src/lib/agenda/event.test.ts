@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   rowToHealthEvent, agendaRowToHealthEvent, healthEventToRow,
   isUpcoming, isPast, isConcluded, isClosed, hasActiveReminder, hasCost, isDerived, isReturnVisit,
-  selectUpcoming, selectNextUpcoming, selectHistorical, selectByLink, selectFinancial, isFinancial,
+  selectUpcoming, selectNextUpcoming, selectHistorical, selectByLink, selectFinancial, isFinancial, isOverdue, selectOverdue,
   completeRule, cancelRule, rescheduleRule, canTransition,
   type HealthEvent, type HealthEventRow,
 } from './event'
@@ -104,6 +104,24 @@ describe('seletores e regras de transição (puros)', () => {
     expect(selectUpcoming(list, ref).map(e => e.id).sort()).toEqual(['fut', 'lnk'])
     expect(selectHistorical(list, ref).map(e => e.id)).toEqual(['pas'])
     expect(selectByLink(list, 'exam', 'x1').map(e => e.id)).toEqual(['lnk'])
+  })
+  it('FB-015-1 · isOverdue / selectOverdue = pendência ABERTA e vencida (some do futuro, mas fica na Agenda)', () => {
+    // vencido e aberto → pendência (qualquer tipo)
+    expect(isOverdue(ev({ date: '2026-07-01', status: 'planejado' }), ref)).toBe(true)
+    expect(isOverdue(ev({ date: '2026-07-01', type: 'medicacao', status: 'planejado' }), ref)).toBe(true)
+    // fechado (concluído/cancelado/perdido) → não é pendência
+    expect(isOverdue(ev({ date: '2026-07-01', status: 'realizado' }), ref)).toBe(false)
+    expect(isOverdue(ev({ date: '2026-07-01', status: 'cancelado' }), ref)).toBe(false)
+    // futuro aberto → não é pendência (é "próximo")
+    expect(isOverdue(ev({ date: '2026-08-01', status: 'planejado' }), ref)).toBe(false)
+    const list = [
+      ev({ id: 'venc2', date: '2026-07-10', status: 'planejado' }),
+      ev({ id: 'venc1', date: '2026-07-01', status: 'planejado' }),
+      ev({ id: 'fut', date: '2026-08-01', status: 'planejado' }),
+      ev({ id: 'feito', date: '2026-07-01', status: 'realizado' }),
+    ]
+    // só as vencidas abertas, em ordem cronológica
+    expect(selectOverdue(list, ref).map(e => e.id)).toEqual(['venc1', 'venc2'])
   })
   it('isFinancial / selectFinancial = realizado-com-valor OU despesa direta (Gastos = projeção)', () => {
     expect(isFinancial(ev({ status: 'realizado', amountCents: 25000 }))).toBe(true)

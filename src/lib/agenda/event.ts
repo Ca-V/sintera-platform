@@ -182,6 +182,12 @@ export function isConcluded(ev: HealthEvent): boolean { return ev.status === 're
 export function isClosed(ev: HealthEvent): boolean { return ev.status === 'realizado' || ev.status === 'cancelado' || ev.status === 'perdido' }
 export function isUpcoming(ev: HealthEvent, refDate: string): boolean { return !isClosed(ev) && ev.date >= refDate }
 export function isPast(ev: HealthEvent, refDate: string): boolean { return isConcluded(ev) || ev.date < refDate }
+/**
+ * PENDÊNCIA em atraso: evento ainda ABERTO (não concluído/cancelado/perdido) cuja data já passou.
+ * A Agenda representa pendências, não só o futuro — um item vencido permanece visível até o usuário
+ * decidir (concluir / cancelar / excluir), em vez de sumir para o Histórico. Vale p/ TODOS os tipos.
+ */
+export function isOverdue(ev: HealthEvent, refDate: string): boolean { return !isClosed(ev) && ev.date < refDate }
 export function hasActiveReminder(ev: HealthEvent): boolean { return ev.reminderEnabled && !isClosed(ev) }
 /**
  * É uma consulta de RETORNO? Respeita o atributo canônico `isReturn` (modelo atual: consulta + boolean)
@@ -236,6 +242,10 @@ export function selectNextUpcoming(events: HealthEvent[], refDate: string): Heal
 }
 export function selectHistorical(events: HealthEvent[], refDate: string): HealthEvent[] {
   return events.filter(e => isPast(e, refDate))
+}
+/** Pendências em atraso (abertas e vencidas), na ordem canônica do tempo. Consumido pela Agenda. */
+export function selectOverdue(events: HealthEvent[], refDate: string): HealthEvent[] {
+  return sortByWhen(events.filter(e => isOverdue(e, refDate)))
 }
 export function selectByLink(events: HealthEvent[], type: EventLinkKind, id: string): HealthEvent[] {
   return events.filter(e => e.links.some(l => l.type === type && l.id === id))
