@@ -158,7 +158,7 @@ function LegacyDashboard() {
             <p className="font-display text-base font-semibold text-onyx mb-1">Como usar a SINTERA</p>
             <p className="font-body text-xs text-mauve mb-4 max-w-2xl">
               A SINTERA reúne e organiza suas informações de saúde num só lugar — ela transcreve e organiza, não
-              interpreta nem diagnostica. Veja como começar em 4 passos:
+              interpreta nem diagnostica. Veja como começar em 5 passos:
             </p>
             <div className="grid sm:grid-cols-2 gap-2.5">
               {[
@@ -166,6 +166,7 @@ function LegacyDashboard() {
                 { icon: Pill,       title: '2. Registre a sua rotina de saúde', desc: 'Medicamentos, consultas, condições, hábitos e composição corporal.', href: '/dashboard/medicamentos' },
                 { icon: Clock,      title: '3. Acompanhe ao longo do tempo', desc: 'Sua linha do tempo em Histórico de Saúde e a evolução em Histórico de Exames.', href: '/dashboard/timeline' },
                 { icon: ScrollText, title: '4. Compartilhe com quem cuida de você', desc: 'Reúna suas informações em um relatório e envie ao seu profissional de saúde.', href: '/dashboard/relatorio' },
+                { icon: Bell,       title: '5. Escolha como ser avisada', desc: 'Na Central de Notificações (em Configurações) você define se recebe lembretes por e-mail, WhatsApp, ambos ou nenhum.', href: '/dashboard/configuracoes' },
               ].map((s) => {
                 const Icon = s.icon
                 const inner = (
