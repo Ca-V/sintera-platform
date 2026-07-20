@@ -1,6 +1,6 @@
 # NOV-001 — Infraestrutura de Novidade (permanente · fonte única)
 
-**Status:** APROVADO (20/07) — em implementação. Sob [[ADR-000]]. Nasce da diretriz da fundadora (20/07): o conceito de
+**Status:** HOMOLOGADO (20/07) — validado no Preview; ambiente de homologação encerrado e limpo (só dados reais). Sob [[ADR-000]]. Nasce da diretriz da fundadora (20/07): o conceito de
 "novo" deve ser **infraestrutura reutilizável**, não uma solução pontual; reconhecido **naturalmente ao ver o
 conteúdo** (sem botão "dispensar"); **uma só fonte de verdade** para banner, selos "Novo" e futuras notificações.
 
