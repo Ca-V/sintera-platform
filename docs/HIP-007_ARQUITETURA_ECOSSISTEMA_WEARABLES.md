@@ -1,106 +1,135 @@
-# HIP-007 — Arquitetura do Ecossistema Wearables (Fase 2 · Etapa 1 · documento de referência)
+# HIP-007 — Arquitetura de Aquisição de Dados Observacionais (Fase 2 · Etapa 1 · referência universal)
 
-**Status:** ARQUITETURA para aprovação. **Documento de referência de TODA integração de dados automáticos.** Sob
-[[ADR-000]] · [[HIP-001]] · [[ucda_universal_clinical_data_architecture]] · [[compliance_001_fase0_gate]].
-**Fase 2 em 4 etapas:** **(1) esta — Ecossistema** → (2) Arquitetura do App Móvel → (3) Arquitetura de Sincronização →
-(4) Implementação. **Nenhum código antes das 3 primeiras aprovadas.**
+**Status:** ARQUITETURA para aprovação (rev. 2). **Documento de referência de TODA aquisição automática de dados
+observacionais da SINTERA** — não apenas wearables. Sob [[ADR-000]] · [[HIP-001]] ·
+[[ucda_universal_clinical_data_architecture]] · [[compliance_001_fase0_gate]].
+**Fase 2 em 4 etapas:** **(1) esta — Aquisição Observacional** → (2) Arquitetura do App Móvel → (3) Arquitetura de
+Sincronização → (4) Implementação. **Nenhum código antes das 3 primeiras aprovadas** (nem `/mobile/ingest`).
 
-## 1. Princípios (herdados, não novos)
-- **Convergência canônica:** toda fonte automática vira **Evento de Saúde** → projeções. Web/Mobile/Agregador são
-  **adaptadores**; nenhum muda a arquitetura ([[hip_001_plataforma_integracoes]]).
-- **Reúso antes de abstração** ([[principio_estabilidade_arquitetural]]): estende-se `CanonicalSample`/`propagateSamples`
-  existentes; não se cria pipeline paralelo.
-- **Modelo aberto** ([[principio_modelo_aberto]]): tipo/dispositivo desconhecido **degrada, não quebra**.
-- **Factual, não-SaMD** ([[principio_nao_producao_conteudo_clinico]]) · **Privacidade/LGPD by design** · **datas
-  determinísticas** ([[date_001_temporal_ssot]]).
+> **Escopo (ajuste 3):** este documento nasceu do ecossistema de wearables, mas descreve a **camada universal de
+> aquisição de dados observacionais** — vale para **qualquer origem**: wearables, dispositivos médicos domiciliares,
+> sensores contínuos (CGM, MAPA, Holter), apps de saúde, plataformas parceiras, integrações futuras via **FHIR**, e até
+> observações extraídas automaticamente de documentos quando fizer sentido. Não é "a arquitetura dos wearables".
 
-## 2. Domínios funcionais (espelham a Sidebar — [[sidebar_ssot_taxonomia]])
-Um **domínio** classifica o Evento de Saúde para projeção/UI/NOV-001. Aberto/extensível:
+## 1. Princípios (herdados)
+Convergência canônica · reúso antes de abstração ([[principio_estabilidade_arquitetural]]) · modelo aberto
+([[principio_modelo_aberto]]) · factual/não-SaMD ([[principio_nao_producao_conteudo_clinico]]) · privacidade/LGPD by
+design · datas determinísticas ([[date_001_temporal_ssot]]).
 
-| Domínio | Exemplos de sinais | Superfície de consumo | Natureza temporal |
-|---|---|---|---|
-| **Monitoramento contínuo** | FC, FC repouso, **HRV**, **sono**, SpO₂, resp., temperatura | Monitoramento | série/pontual |
-| **Atividade física** | treinos, passos, distância, calorias, FC de treino | Atividade Física (futuro) | **evento com duração** |
-| **Composição corporal** | peso, gordura, massa magra/muscular/óssea, água | Composição Corporal | pontual (dia) |
-| **Dispositivos médicos** | PA, glicemia (CGM), oximetria, ECG | Monitoramento/Exames | pontual/série |
-| *(aberto)* | novos domínios entram sem redesenho | — | — |
+## 2. Nomenclatura — a camada é a **OBSERVAÇÃO** (ajuste 1)
+Análise: "Evento de Saúde" colidiria com **Evento Assistencial**. O termo coerente com a linguagem da plataforma e com o
+padrão FHIR (que a UCDA já referencia) é **Observação** — em FHIR, `Observation` é justamente medições/sinais. Quatro
+camadas **distintas e não ambíguas**:
 
-> A classe do conector (fabricante/agregador/mobile) é **ortogonal** ao domínio: o mesmo domínio recebe dados de várias
-> classes; a mesma classe entrega vários domínios.
+| Camada SINTERA | Granularidade | Análogo FHIR |
+|---|---|---|
+| **Evento Assistencial** ([[evento_assistencial_entidade_central]], `health_events`) | encontro (consulta/exame/procedimento) | Encounter |
+| **Documento / Laudo** | artefato documental de origem | DocumentReference / DiagnosticReport |
+| **Unidade de evidência clínica (UCDA)** | evidência clínica canônica | (abstração própria) |
+| **Observação** ← *esta camada* | **medida no tempo**, de origem automática | **Observation** |
 
-## 3. Conceito central — **Evento de Saúde** (unidade do domínio longitudinal)
-> **Toda medida automática é um Evento de Saúde: uma observação com valor, tempo, origem, dispositivo, confiabilidade e
-> contexto.** Não modelamos "HRV", "sono", "peso", "glicemia" como entidades independentes — são todos Eventos de Saúde
-> com metadados. (Sugestão da fundadora, 20/07 — adotada como espinha do modelo longitudinal.)
+No código: **`CanonicalSample` permanece como a forma de transporte da Observação**; `wearable_readings` é o **SSOT
+bruto**; `body_metrics`/vitais são **projeções**. (Renomeações de rótulos ocorrem na implementação; a arquitetura fixa
+o conceito.)
 
-**Distinção essencial (evita taxonomia paralela):**
-- **Evento Assistencial** ([[evento_assistencial_entidade_central]], tabela `health_events`) = nível de **ENCONTRO**
-  (consulta, exame, procedimento) — clínico + administrativo + recorrência + timeline.
-- **Evento de Saúde / Observação** (este documento) = nível de **OBSERVAÇÃO** (uma medida no tempo, de fonte automática).
-- **UCDA** ([[ucda_universal_clinical_data_architecture]]) = a evidência clínica documental. O Evento de Saúde é a
-  **forma longitudinal atômica** dessa mesma filosofia; converge para a UCDA na maturidade (V3), sem forçar agora
-  ([[principio_convergencia_progressiva]]).
-- Nomes concretos no código: mantém-se `CanonicalSample` como **forma de transporte** do Evento de Saúde; a
-  persistência bruta (`wearable_readings`) é o **SSOT auditável**; `body_metrics`/vitais são **projeções de exibição**.
+## 3. A Observação (contrato canônico)
+> **Toda medida automática é uma Observação: um fato pontual/temporal com valor, origem, dispositivo, confiabilidade,
+> qualidade e contexto — nunca um indicador (§5).** Não modelamos "HRV/sono/peso/glicemia" como entidades separadas.
 
-**Metadados do Evento de Saúde (contrato canônico — evolução de `CanonicalSample`):**
 | Campo | Descrição |
 |---|---|
-| `domain` | domínio funcional (§2) |
-| `metric` | tipo do sinal (aberto; ex.: `hrv`, `sono`, `peso`, `glicemia`) |
-| `value` / `unit` | valor + unidade (nulo permitido → fica só no bruto) |
-| **contexto temporal** | `recordedAt` (instante) **e** `interval` opcional (início/fim) para eventos com duração (atividade/sono) |
-| **origem** | `source` (fabricante/app), `connectorClass` (web/mobile/aggregator), `connectorVersion` |
-| **dispositivo** | `deviceId`/`deviceModel` quando houver (multi-dispositivo — Etapa 3) |
-| **confiabilidade** | `reliability`/`confidence` (ex.: medido vs estimado; manual vs sensor) |
-| **proveniência/idempotência** | `externalId`, chave de dedup determinística |
-| **versionamento** | versão da leitura (correções/reprocessamento — detalhe na Etapa 3) |
+| `domain` | domínio funcional (§6) |
+| `metric` | tipo do sinal (aberto: `hrv`, `sono`, `peso`, `glicemia`…) |
+| `value` / `unit` | valor + unidade (nulo → fica só no bruto) |
+| **contexto temporal** | `recordedAt` (instante) **e** `interval` opcional (início/fim) p/ observações com duração |
+| **origem** | `source`, `connectorClass` (web/mobile/aggregator/document), `connectorVersion` |
+| **dispositivo** | `deviceId`/`deviceModel` quando houver (multi-dispositivo → Etapa 3) |
+| **confiabilidade** | `reliability`/`confidence` — medido vs estimado (nível da MEDIÇÃO) |
+| **qualidade / nível de evidência** | tier da ORIGEM (§4) |
+| **proveniência/idempotência** | `externalId` + chave de dedup determinística |
+| **versão** | versão da leitura (correção/reprocessamento → Etapa 3) |
 
-Campos novos (interval, deviceId, connectorClass, reliability, versão) são **aditivos e opcionais** — a infra atual
-continua válida; adaptadores preenchem o que a fonte oferece (modelo aberto).
+Campos novos são **aditivos e opcionais** (modelo aberto): a infra atual continua válida; cada adaptador preenche o que
+a fonte oferece.
 
-## 4. Tipos de conectores (como cada um produz Eventos de Saúde)
-- **Cat. 1 — Web / Fabricante** (OAuth nuvem, backend↔backend): **pull** com janela incremental + webhook. Ex.: Withings
-  (pronto, referência). Produz Eventos diretamente no backend.
-- **Cat. 2 — Mobile / Plataforma** (Apple Health, Health Connect): dado **on-device**; o **app SINTERA** lê e **push**
-  para o backend. **Pilar do monitoramento contínuo** (agrega Garmin/Oura/WHOOP/Fitbit via celular).
-- **Cat. 3 — Agregador** (Terra/Rook): **batch/stream** de muitas fontes por uma integração; **acelerador de largura**,
-  não substituto. Entra por gatilho ([[HIP-006]] §5).
-Todos emitem o **mesmo** Evento de Saúde → `propagateSamples`. Adicionar classe/fonte = novo adaptador, **zero** mudança
-no núcleo.
+## 4. Níveis de confiabilidade e QUALIDADE (ajuste 5)
+Além da confiabilidade da medição, a Observação carrega o **nível de evidência da origem** — aberto, **sem regras agora**,
+só espaço para a plataforma diferenciar no futuro:
 
-## 5. Fluxos de sincronização (visão; detalhe na Etapa 3)
-- **Pull (Web):** on-open/agendado, throttle, marca d'água (maior `recordedAt`), webhook para tempo quase real.
-- **Push (Mobile):** o app inicia (foreground + background), envia lotes idempotentes; **quem inicia, background,
-  conflito, multi-dispositivo, duplicidade, versionamento, offline, idempotência = ETAPA 3.**
-- **Batch/Stream (Agregador):** webhook/stream do agregador → mesmo ingest canônico.
-Invariantes já garantidos hoje: idempotência por `(user, provider, metric, recorded_at)`; projeção por dia preservando
-`created_at` (base do NOV-001).
+| Tier (aberto) | Exemplo |
+|---|---|
+| `manual` | informado pelo usuário |
+| `consumer_device` | wearable de consumo |
+| `medical_device` | dispositivo médico certificado |
+| `clinically_validated` | validado clinicamente |
+| `derived` | calculado/derivado de outras observações |
 
-## 6. Modelo canônico e projeções
-`Evento de Saúde (CanonicalSample++)` →
-- **SSOT bruto:** `wearable_readings` (série + proveniência + idempotência) — nunca sobrescreve a fonte.
-- **Projeções de exibição:** `body_metrics` (composição/vitais pontuais) + futura projeção de **atividade** (eventos com
-  duração) + **NOV-001** (`monitoramento`, `activity`, …).
-- **Convergência (V3+):** consolidação longitudinal e, quando fizer sentido, adaptação à UCDA — sem migração prematura.
+Isso permitirá, adiante, priorizar/ponderar fontes e explicitar a procedência ao usuário — sem reescrever a arquitetura.
 
-## 7. Evolução prevista (2 anos)
-1. **Vocabulário de vitais contínuos** (HRV, sono, FC repouso…) + domínio Monitoramento consolidado.
-2. **Mobile como pilar** (Apple/Health Connect) → cobertura ampla; depois **atividade física** (domínio + Strava, pós
-  gate jurídico) e **dispositivos médicos** (CGM/PA).
-3. **Agregador** para cauda longa/streaming/Garmin (por gatilho).
-4. **Inteligência longitudinal (V3):** tendências/adesão/lacunas sobre Eventos de Saúde — **não** sobre dados sob termos
-  proibitivos de IA (ex.: Strava). Convergência à UCDA.
-5. **Confiabilidade e multi-dispositivo** como cidadãos de 1ª classe (reconciliação entre fontes preservando origem).
+## 5. Observação × Indicador (ajuste 4)
+> **Uma Observação NUNCA é um Indicador. Indicadores são SEMPRE derivados de Observações.**
 
-## 8. Governança
-Este documento é a **referência** de toda futura integração: qualquer conector (fabricante, agregador, mobile) **adere**
-a ele — emite Evento de Saúde, respeita domínios, proveniência e projeções. Alterações estruturais aqui exigem revisão
-arquitetural. As Etapas 2 (app) e 3 (sincronização) **derivam** deste modelo.
+| | Observação | Indicador |
+|---|---|---|
+| FC agora = 72 bpm | ✅ fato pontual | — |
+| Média de FC em 7 dias | — | ✅ derivado |
+| Variabilidade ao longo do tempo | — | ✅ derivado |
+| Tendência | — | ✅ derivado |
 
-## 9. O que esta etapa NÃO decide (fica para as próximas)
-- **Etapa 2:** stack do app (RN+Expo × RN puro × Flutter × nativo) + arquitetura do app como **produto** (timeline,
-  notificações, captura, upload de exames, agenda, lembretes, interação com a web) — nascendo além de "coletor".
-- **Etapa 3:** estratégia completa de sincronização (iniciação, background, conflito, multi-dispositivo, duplicidade,
-  versionamento, offline, idempotência) — pré-requisito do `/mobile/ingest`.
-- **Etapa 4:** implementação e ordem, só após as três aprovadas.
+Os indicadores vivem numa **camada de cálculo separada** (base da **inteligência longitudinal / V3**
+[[visao_sistema_cognitivo_clinico]]), sempre **rastreável** às observações de origem, nunca gravada como se fosse
+observação. Esta separação mantém o SSOT limpo e a inteligência auditável.
+
+## 6. Domínios funcionais (espelham a Sidebar — [[sidebar_ssot_taxonomia]]; abertos)
+Monitoramento contínuo (FC, HRV, sono, SpO₂, resp., temperatura) · Atividade física (treinos/passos, com duração) ·
+Composição corporal (peso, gordura, massas, água) · Dispositivos médicos (PA/MAPA, glicemia/CGM, oximetria, Holter/ECG) ·
+*(aberto)*. A **classe do conector é ortogonal ao domínio** (o mesmo domínio recebe de várias classes; a mesma classe
+serve vários domínios).
+
+## 7. Tipos de conectores (todos produzem Observações)
+- **Web / Fabricante** (OAuth nuvem): pull incremental + webhook. Ex.: Withings (referência pronta).
+- **Mobile / Plataforma** (Apple Health, Health Connect): dado on-device → o **app SINTERA** faz push. Pilar do
+  monitoramento contínuo (agrega Garmin/Oura/WHOOP/Fitbit via celular).
+- **Agregador** (Terra/Rook): batch/stream de muitas fontes; acelerador de largura, não substituto.
+- **Documento** (futuro): observações extraídas automaticamente de laudos, quando fizer sentido — mesma Observação.
+Adicionar classe/fonte = **novo adaptador, zero mudança no núcleo**.
+
+## 8. Jornada completa do dado (ajuste 2)
+```
+Fonte (wearable · dispositivo médico · sensor contínuo · app · parceiro · FHIR · documento)
+  │
+  ▼ Conector (web pull/webhook · mobile push · agregador batch · extração de documento)
+  │
+  ▼ Normalização (adaptador isolado: unidades, tempo, dedup na fonte → Observação canônica)
+  │
+  ▼ Modelo Canônico (Observação = CanonicalSample++ → SSOT bruto wearable_readings)
+  │
+  ▼ Governança (idempotência, proveniência, confiabilidade/qualidade, versão, LGPD, validação entre camadas)
+  │
+  ▼ Projeções → Timeline / Monitoramento / Composição · NOV-001 (novidade)
+  │
+  ▼ Indicadores (camada de cálculo derivada — médias, variabilidade, tendências) [V3]
+  │
+  ▼ Funcionalidades SINTERA (acompanhamento, insights, Rede de Cuidado, relatórios…)
+```
+Este fluxo é a **referência** para toda futura integração.
+
+## 9. Modelo canônico e projeções
+Observação → **SSOT bruto** (`wearable_readings`) + **projeções de exibição** (`body_metrics`/vitais; futura projeção de
+atividade com duração) + **NOV-001**. Convergência à **UCDA** na maturidade (V3), sem migração prematura
+([[principio_convergencia_progressiva]]).
+
+## 10. Visão de longo prazo (ajuste 6)
+Esta arquitetura **não** existe para os conectores da Fase 2: é a **base permanente de toda aquisição automática de dados
+observacionais da SINTERA** pelos próximos anos. Deve absorver novas origens, domínios, dispositivos, padrões (FHIR/RNDS)
+e níveis de evidência **sem revisão estrutural** — só novos adaptadores e entradas abertas. Mudança estrutural aqui exige
+revisão arquitetural formal.
+
+## 11. Governança e relação com as próximas etapas
+Documento de **referência**: todo conector adere (emite Observação, respeita domínios/proveniência/qualidade/projeções).
+- **Etapa 2 (App Móvel):** stack (RN+Expo × RN puro × Flutter × nativo) sob lente **técnica + estratégica** (time,
+  contratação, reúso de contratos/regras da web, manutenção 5 anos…) + app como **produto** (timeline, notificações,
+  captura, upload de exames, agenda, lembretes, interação com a web), não coletor.
+- **Etapa 3 (Sincronização):** iniciação, background, conflito, multi-dispositivo, duplicidade, versionamento, offline,
+  idempotência — pré-requisito do `/mobile/ingest`.
+- **Etapa 4 (Implementação):** só após as três aprovadas.
