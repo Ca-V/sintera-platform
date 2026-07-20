@@ -3,6 +3,8 @@
 import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useOnOpenSync } from '@/lib/connectors/useOnOpenSync'
+import HistoryGrewNotice from '@/components/connectors/HistoryGrewNotice'
 import { motion } from 'framer-motion'
 import {
   FileText, Clock, Pill, ScrollText, CalendarDays, Receipt,
@@ -86,6 +88,10 @@ function LegacyDashboard() {
 
   const hour        = new Date().getHours()
   const greeting    = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite'
+
+  // V2 Aha-R1 — no retorno, o Painel Inicial sincroniza sozinho e comunica o benefício de imediato.
+  const [grewCount, setGrewCount] = useState(0)
+  useOnOpenSync(({ newRecords }) => { if (newRecords > 0) setGrewCount(newRecords) })
   const displayName = profile?.name?.split(' ')[0] ?? 'por aqui'
 
   async function loadData() {
@@ -148,6 +154,9 @@ function LegacyDashboard() {
           Uma plataforma para organizar, registrar e acompanhar suas informações de saúde ao longo do tempo, preservando o histórico e a rastreabilidade de cada registro.
         </p>
       </motion.div>
+
+      {/* V2 Aha-R1 — "a SINTERA trabalhou por você": dado novo chegou automaticamente desde o último acesso. */}
+      <HistoryGrewNotice count={grewCount} onDismiss={() => setGrewCount(0)} />
 
       {/* Como usar a SINTERA — orientação de primeiros passos (dispensável) */}
       {showGuide && (
