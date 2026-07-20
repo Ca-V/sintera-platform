@@ -4,9 +4,10 @@
 Orienta o **Design System único** (web + mobile).
 **Escopo:** filosofia, referências, linguagem visual, linguagem cromática (direção), tipografia, iconografia, ilustração,
 fotografia, movimento, princípios de interface, tom. **Não fixa tokens/cores definitivos** (isso é o 3B — Design System).
-**Status:** Draft — aguardando aprovação da fundadora · **Versão:** 1.0 · **Histórico:** v1.0 (2026-07-20).
-**Dependências:** [[ARCH-002]] · [[HIP-011]] · [[posicionamento_marca]]. **Impacto:** referência permanente de identidade
-para todo ponto de contato (web e mobile). Ao ser aprovado: Approved · Architectural Baseline · PDF.
+**Status:** Approved · **Architectural Baseline** · **Versão:** 1.1 · **Histórico:** v1.0 (2026-07-20) criação; v1.1
+(2026-07-20) 10 princípios da fundadora; tipografia diferida a [[BRAND-002]]. **Referência oficial da identidade da SINTERA.**
+**Dependências:** [[ARCH-002]] · [[HIP-011]] · [[posicionamento_marca]]. **Impacto:** todo o Design System (3B) implementa
+este documento; identidade permanente em todo ponto de contato (web e mobile).
 
 ## Decisões já aprovadas pela fundadora (permanentes)
 1. **Referência estética principal = obra _Almond Blossom_, de Vincent van Gogh** — como **atmosfera e linguagem**, não
@@ -16,11 +17,24 @@ para todo ponto de contato (web e mobile). Ao ser aprovado: Approved · Architec
 3. **Identidade e Design System ÚNICOS** (web + mobile); adaptações específicas de plataforma **só quando necessário**.
 4. **Nenhuma cor definitiva foi aprovada.** Aprovada apenas a **direção cromática** (§4). Tokens virão no 3B.
 
+## 0. Princípios de identidade (permanentes — fundadora)
+1. **Inspirada na arte, não parecer artística.** A referência a _Almond Blossom_ é **conceitual**; a inspiração aparece
+   **apenas na linguagem visual**. **Sem** texturas de tinta, pinceladas, fundos ilustrados ou elementos decorativos
+   extraídos da obra.
+2. **Saúde premium, não hospital** — e também **não** financeira/corporativa. Percepção de **saúde · ciência ·
+   organização · elegância · confiança · calma**, sem frieza.
+3. **Longitudinalidade** — a interface deve transmitir **continuidade**: a sensação de que a plataforma acompanha a
+   história de saúde da pessoa **ao longo dos anos**.
+4. **Tecnologia invisível** (o mais importante) — a complexidade **desaparece**; na frente, **simplicidade e
+   naturalidade**; por trás, arquitetura sofisticada.
+5. **A identidade nasce do CONJUNTO, não de uma cor.** O diferencial é a combinação de **cor · espaço · tipografia ·
+   ritmo · contraste · animação · silêncio visual** — nenhuma cor isolada define a marca.
+
 ## 1. Filosofia da marca
 - **Propósito:** dar continuidade ao cuidado — organizar e preservar a **história de saúde** da pessoa ao longo do
   tempo, de forma factual e humana ([[principio_nao_producao_conteudo_clinico]]).
-- **Atributos emocionais:** **serenidade · confiança · leveza · sofisticação · natureza · continuidade · longevidade ·
-  acolhimento.**
+- **Atributos emocionais:** **serenidade · confiança · leveza · sofisticação · natureza · esperança · continuidade ·
+  longevidade · acolhimento.**
 - **Personalidade:** calma e competente; próxima sem ser informal; cuidadosa, precisa, nunca alarmista.
 - **Linguagem:** factual e clara; vocabulário de "história" e "documento"; sem jargão clínico frio ([[posicionamento_marca]]).
 
@@ -47,24 +61,28 @@ Construída **inspirada** na obra, **não extraída** dela; será um **sistema c
 - **Semântica** (positivo/atenção/erro) será derivada com a mesma sobriedade, distinta da cor de marca.
 - **Provisório:** as cores hoje em `globals.css` são temporárias e **não** referência.
 
-## 5. Tipografia (direção; escolhas finais no 3B)
-- **Institucional (display):** com caráter e humanidade — sofisticação sem ostentação.
-- **Interface:** altamente legível, neutra-quente, confortável em telas pequenas.
-- **Hierarquia:** clara e calma; escala consistente; respiro entre blocos.
+## 5. Tipografia (DIFERIDA a [[BRAND-002]] — Estudo Tipográfico)
+A escolha da tipografia é uma etapa própria (**BRAND-002**), **anterior** ao Design System, por seu impacto diário na
+percepção de qualidade. Direção: par tipográfico (título + interface) **sofisticado, humano, altamente legível** em
+mobile e web, com hierarquia calma. **Após aprovado, o BRAND-002 integra este documento** e o Design System (3B) já
+nasce com a tipografia definitiva.
 
 ## 6. Iconografia
-Traço suave e consistente; cantos levemente arredondados; linguagem **natural e delicada**, alinhada à leveza da marca.
+**Finos · elegantes · consistentes · discretos.** Traço leve; **evitar ícones pesados ou excessivamente preenchidos**;
+linguagem natural, alinhada à leveza da marca.
 
 ## 7. Ilustrações
-Estilo **orgânico e sensível** (inspiração botânica/atmosférica), delicado, nunca infantil nem clínico. Suporte à
-narrativa, não decoração.
+**Poucas · minimalistas · sem excesso de informação · sem aparência infantil.** Estilo orgânico e sensível, delicado,
+nunca clínico; suporte à narrativa, não decoração.
 
-## 8. Fotografia (caso venha a existir)
-Luz **natural e suave**, humana e real; sem estética clínica fria; continuidade com a atmosfera da marca.
+## 8. Fotografia (caso venha a existir no futuro)
+**Pessoas reais · luz natural · diversidade · bem-estar · cotidiano.** **Evitar imagens excessivamente médicas**;
+continuidade com a atmosfera da marca.
 
 ## 9. Movimento
-Transições **calmas e orgânicas** (nada abrupto/alarmante); animação a serviço da compreensão, não do espetáculo;
-respeitar `prefers-reduced-motion` ([[tema_g_acessibilidade]]).
+**Continuidade em tudo:** nada abrupto, nada excessivamente rápido, nada chamativo. A interface deve parecer **fluida,
+quase orgânica**; animação a serviço da compreensão, não do espetáculo; respeitar `prefers-reduced-motion`
+([[tema_g_acessibilidade]]).
 
 ## 10. Princípios de interface
 Calma · clareza · acolhimento · factualidade (RDC 657) · acessibilidade desde a base · consistência web↔mobile.

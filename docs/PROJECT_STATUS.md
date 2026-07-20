@@ -15,11 +15,12 @@ SSOT, RN+Expo, Monorepo, Sincronização (ADR-002..008). Referência: [[ARCH-003
   Expo/RN fora do grafo (web protegida).
 - ✅ **Etapa B · Passo 2 (arquitetura interna) — APROVADO:** camadas ([[HIP-013]]); ADR-009 (domínio, não telas); portas
   em `@sintera/core` (Observability, SyncEngine offline-first, DomainModule); HIP-012 §15b Princípios de Evolução.
-- 🔵 **Etapa B · Passo 3A (Sistema de Identidade) — CONCLUÍDO, aguardando aprovação:** **[[BRAND-001]]** (identidade da
-  marca) + **ADR-010** (referência _Almond Blossom_; Design System ÚNICO web+mobile; paleta web atual = provisória; nenhuma
-  cor definitiva aprovada — só direção). HIP-011 v1.1 registra a diretriz de identidade. Doc de decisão (sem código).
-- ⏭️ **Próximo (após aprovar BRAND-001):** Passo 3B **Design System** (tokens 50–900 + componentes, implementando o
-  BRAND-001) → navegação → estado (**ADR**) → cliente API → auth → ambiente dev.
+- ✅ **Etapa B · Passo 3A (Sistema de Identidade) — APROVADO:** **[[BRAND-001]]** v1.1 (identidade + 10 princípios) +
+  **ADR-010** (Almond Blossom; Design System ÚNICO web+mobile; paleta web provisória; nenhuma cor definitiva).
+- 🔵 **Etapa B · Passo 3A′ (Estudo Tipográfico) — CONCLUÍDO, aguardando decisão:** **[[BRAND-002]]** compara 3 pares
+  (Fraunces+Hanken / Source Serif4+Sans3 / Figtree), OFL/variáveis; recomenda A. Escolha pendente → integra BRAND-001 §5.
+- ⏭️ **Próximo (após decidir a tipografia):** Passo 3B **Design System** (tokens 50–900 + componentes) → navegação →
+  estado (**ADR**) → cliente API → auth → ambiente dev.
 
 ## Marca / Identidade
 Direção aprovada: identidade inspirada em **Almond Blossom** (Van Gogh) — [[BRAND-001]] (Draft, aguardando aprovação) ·
