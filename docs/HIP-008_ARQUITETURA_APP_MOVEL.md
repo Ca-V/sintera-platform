@@ -1,7 +1,7 @@
 # HIP-008 — Arquitetura do App Móvel (Fase 2 · Etapa 2)
 
-**Status:** ARQUITETURA para aprovação. Sob [[ADR-000]] · [[HIP-001]] · deriva de [[HIP-007]] (Observação). Nenhum código
-antes das Etapas 1–3 aprovadas.
+**Status:** Approved · **Versão:** 1.0 · **Histórico:** v1.0 (2026-07-20) criação + reforço app-produto-principal. Sob
+[[ADR-000]] · [[ARCH-002]] · deriva de [[HIP-007]] (Observação).
 **Premissa (rev.):** a escolha de tecnologia é uma **decisão estratégica da empresa**. Sob [[ARCH-002]], o **app é o
 PRODUTO PRINCIPAL da SINTERA** (a web é interface complementar) e o backend é **API-first** (Mobile → API → Web). O MVP
 faz apenas auth + Apple Health + Health Connect + sync, mas a arquitetura já nasce de produto completo.

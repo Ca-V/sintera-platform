@@ -1,7 +1,8 @@
 # HIP-010 — Plano Executivo da Etapa 4 (implementação por ondas de valor)
 
-**Status:** PLANO EXECUTIVO para aprovação. **Pré-requisito de qualquer código funcional.** Sob [[ADR-000]] ·
-[[ARCH-002]] · deriva de [[HIP-007]]/[[HIP-008]]/[[HIP-009]]/[[HIP-011]].
+**Status:** Approved · **Versão:** 1.1 · **Histórico:** v1.0 (2026-07-20) criação; v1.1 (2026-07-20) 6 diretrizes finais
+(produto utilizável/aceite de experiência/DS fundação/distribuição/métricas/revisão pós-onda). Detalhado por [[HIP-012]].
+Sob [[ADR-000]] · [[ARCH-002]] · deriva de [[HIP-007]]/[[HIP-008]]/[[HIP-009]]/[[HIP-011]].
 **Princípio:** organizar por **entregas de VALOR**, não por tecnologia. Cada onda entrega experiência utilizável.
 **Refina** as ondas do [[HIP-006]]: Health Connect/Apple Health = **capacidades nativas** (Onda 3), conectores externos
 = Onda 4.

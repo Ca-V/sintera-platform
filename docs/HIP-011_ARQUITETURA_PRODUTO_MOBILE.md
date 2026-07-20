@@ -1,7 +1,7 @@
 # HIP-011 — Arquitetura do Produto Mobile (referência Produto · UX · Engenharia)
 
-**Status:** ARQUITETURA DE PRODUTO para aprovação. Referência conjunta (Produto/UX/Engenharia). Sob [[ADR-000]] ·
-[[ARCH-002]] (mobile-first). Não trata só de engenharia — descreve a **experiência**. Pré-implementação.
+**Status:** Approved · **Versão:** 1.0 · **Histórico:** v1.0 (2026-07-20) criação. Referência conjunta (Produto/UX/
+Engenharia). Sob [[ADR-000]] · [[ARCH-002]] (mobile-first). Descreve a **experiência**, não só engenharia.
 
 ## 1. Experiência principal
 O app é o **companheiro diário de saúde** da usuária: **"sua história de saúde, viva, sem trabalho"**. Ele mostra o que
