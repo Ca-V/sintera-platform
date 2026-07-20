@@ -24,6 +24,7 @@ muda só por evidência/revisão formal).
 | ADR-006 | React Native + Expo | Accepted ⛨ |
 | ADR-007 | Monorepo web↔mobile | Accepted ⛨ |
 | ADR-008 | Arquitetura de Sincronização | Accepted ⛨ |
+| ADR-009 | Arquitetura baseada em domínio + independência | Accepted ⛨ |
 
 ## 1. Constitucional / princípios permanentes
 | Doc | Finalidade | Versão | Status | Relações |
@@ -51,11 +52,12 @@ muda só por evidência/revisão formal).
 |---|---|---|---|---|
 | **HIP-011** | Arquitetura do Produto Mobile (experiência/navegação/UX/offline/notif/evolução) | 1.0 | Approved | HIP-008; ref. Produto/UX/Eng |
 | **HIP-008** | Arquitetura do App (stack RN+Expo; comparativo técnico+estratégico) | 1.0 | Approved | ARCH-002; HIP-012 |
+| **HIP-013** | Arquitetura Interna do App Móvel (módulos por domínio; camadas; portas) | 1.0 | Approved ⛨ | ADR-009; HIP-007/009 |
 
 ## 4. Implementação
 | Doc | Finalidade | Versão | Status | Relações |
 |---|---|---|---|---|
-| **HIP-012** | **Master Implementation Plan** (manual operacional — 16 tópicos) | 1.0 | Approved | consome todos; roadmap = IMPLEMENTATION_ROADMAP |
+| **HIP-012** | **Master Implementation Plan** (manual operacional — 16 tópicos + Princípios de Evolução) | 1.1 | Approved ⛨ | consome todos; roadmap = IMPLEMENTATION_ROADMAP |
 | **HIP-010** | Plano Executivo da Etapa 4 (ondas de valor + critérios de validação em 4 categorias) | 1.2 | Approved | detalhado por HIP-012 |
 | **IMPLEMENTATION_ROADMAP** | **Fonte ÚNICA do roadmap** (fases/ondas/marcos/entregáveis) | 1.0 | Approved | referenciado por todos |
 | **CATALOGO_PLATAFORMA** | Catálogo geral de módulos (MVP e futuros) | 1.0 | Approved | ARCH-003; Sidebar SSOT |

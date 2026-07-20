@@ -4,7 +4,8 @@
 Produto, Arquitetura, UX e Engenharia com o **mínimo de novas decisões estruturais**.
 **Escopo:** preparação de ambiente → app móvel (produto principal) → backend API-first → camada observacional →
 capacidades nativas → integrações → qualidade/publicação. Não contém código; contém arquitetura, sequência e critérios.
-**Status:** Approved · **Versão:** 1.0 · **Histórico:** v1.0 (2026-07-20) — criação, ao iniciar a Onda 1.
+**Status:** Approved · **Architectural Baseline** · **Versão:** 1.1 · **Histórico:** v1.0 (2026-07-20) criação; v1.1
+(2026-07-20) §4 estratégia evolutiva do monorepo + fronteiras; §15b Princípios de Evolução Arquitetural.
 **Fonte única de roadmap:** [[IMPLEMENTATION_ROADMAP]] (este documento **não** cria planejamento paralelo — referencia-o).
 **Consistência:** deriva de [[ADR-000]] · [[ARCH-002]] · [[HIP-007]] · [[HIP-008]] · [[HIP-009]] · [[HIP-010]] · [[HIP-011]].
 
@@ -141,6 +142,16 @@ distribuição começa na Onda 1.
 - **Produto:** app inflar além do MVP por onda; adoção/retenção incertas → guiar por métricas.
 - **Operacionais:** contas/certificados; sign-off jurídico (Strava); custo/dependência de agregador.
 - **Mitigação:** preparar contas/permissões cedo; MVP enxuto por onda; gates e revisões de aderência; contratos únicos.
+
+## 15b. Princípios de Evolução Arquitetural (guia de longo prazo)
+Regras para manter a arquitetura consistente à medida que equipe e base de código crescem:
+- **Extensibilidade > otimização prematura** — projetar para acomodar o novo, não para otimizar cedo demais.
+- **Evitar acoplamento entre domínios** — comunicação por contratos/serviços compartilhados ([[adr_009_arquitetura_baseada_em_dominio|ADR-009]]).
+- **Compatibilidade retroativa nas APIs** sempre que possível — evoluir por adição (modelo aberto).
+- **Toda decisão estrutural relevante gera um ADR** (`docs/adr/`) — registra o *porquê*.
+- **Nenhuma camada depende da interface gráfica** — domínio, sincronização e infraestrutura são UI-independent.
+- **Todo código compartilhado tem PROPRIETÁRIO funcional** — nada de pacotes/módulos "sem dono"; fronteiras claras
+  ([[adr_007_monorepo|ADR-007]]: `core`=domínio, `types`=contratos, etc.).
 
 ## 16. Critérios de Conclusão
 - **Etapa concluída:** critério da etapa (§7) atendido + verde (lint/tsc/testes) + observado em build.

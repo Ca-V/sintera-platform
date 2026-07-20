@@ -11,12 +11,15 @@ SSOT, RN+Expo, Monorepo, Sincronização (ADR-002..008). Referência: [[ARCH-003
 ## Implementação
 ▶ **Onda 1 — Fundação da plataforma móvel** em curso (estratégia evolutiva do monorepo, [[adr_007_monorepo|ADR-007]]).
 - ✅ **Etapa A (monorepo):** npm workspaces + `packages/*` (fronteiras claras); web intocada; verde.
-- 🔵 **Etapa B · Passo 1 (estrutura do app) — CONCLUÍDO, aguardando aprovação:** `apps/mobile` (RN+Expo Dev Client)
-  scaffolded no monorepo, consumindo `@sintera/*`; estrutura de módulos POR DOMÍNIO; config (app.json/tsconfig/babel/
-  metro monorepo-aware). **Deps Expo/RN mantidas FORA do grafo de instalação** (proteção do deploy web em produção).
-  Validado neste ambiente: estrutura + config + web intocada (tsc · 709 testes · build). PENDENTE (ambiente de dev):
-  instalar Expo/RN + validar alinhamento React 19 + rodar em device. Gate: **revisão/aprovação do Passo 1** antes do Passo 2.
-- ⏭️ **Próximo (após aprovação):** Passo 2 arquitetura interna → DS → navegação → estado → cliente API → auth → ambiente dev.
+- ✅ **Etapa B · Passo 1 (estrutura do app) — APROVADO:** `apps/mobile` RN+Expo no monorepo, módulos por domínio, deps
+  Expo/RN fora do grafo (web protegida).
+- 🔵 **Etapa B · Passo 2 (arquitetura interna) — CONCLUÍDO, aguardando aprovação:** camadas definidas ([[HIP-013]]);
+  **ADR-009** (domínio, não telas; independência por contratos); **portas de fundação em `@sintera/core`** (Observability,
+  SyncEngine offline-first/UI-independent, DomainModule) — tipadas e verdes; princípios sync-as-infra/offline/observabilidade
+  registrados; HIP-012 §15b Princípios de Evolução. Validado aqui: `@sintera/core` tsc verde + web intocada. PENDENTE dev:
+  app instalado/rodando.
+- ⏭️ **Próximo (após aprovação):** Passo 3 **Design System Mobile (doc próprio antes dos componentes)** → navegação →
+  estado (**ADR**) → cliente API → auth → ambiente dev.
 Ainda sem código funcional de produto. Critérios de validação por etapa: [[HIP-010]] (4 categorias).
 
 ## Documentação
