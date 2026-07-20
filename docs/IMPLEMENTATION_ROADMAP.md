@@ -32,6 +32,12 @@ cria planejamento paralelo; todos referenciam este.
 Cada onda encerra com: entregável **utilizável** · resposta a *"o que o usuário passa a conseguir fazer?"* · métricas
 coletando ([[HIP-010]]) · aprovação explícita · Gate de Conformidade · revisão de aderência. Detalhe operacional: [[HIP-012]].
 
+## Trilha PARALELA — Migração visual da web para a identidade A·E
+Identidade única aprovada ([[adr_010_identidade_visual_unica|ADR-010]] · [[COLOR-001]] · [[BRAND-001]]). A web **não espera
+o mobile**: migra **gradualmente** para a paleta **A·E** (e tipografia oficial após BRAND-002), convergindo com o app e
+evitando retrabalho. Entregável: substituir os tokens provisórios de `globals.css` pelos tokens A·E do Design System (3B),
+módulo a módulo, sem regressão. Marco: web e mobile com a **mesma linguagem visual**.
+
 ## Pós-construção (visão)
 - **V3 Inteligência longitudinal:** Indicadores derivados das Observações (tendências/adesão/lacunas), notificações
   inteligentes, IA contextual — sempre factual ([[principio_nao_producao_conteudo_clinico]]).

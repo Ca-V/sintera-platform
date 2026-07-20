@@ -4,8 +4,9 @@
 Orienta o **Design System único** (web + mobile).
 **Escopo:** filosofia, referências, linguagem visual, linguagem cromática (direção), tipografia, iconografia, ilustração,
 fotografia, movimento, princípios de interface, tom. **Não fixa tokens/cores definitivos** (isso é o 3B — Design System).
-**Status:** Approved · **Architectural Baseline** · **Versão:** 1.1 · **Histórico:** v1.0 (2026-07-20) criação; v1.1
-(2026-07-20) 10 princípios da fundadora; tipografia diferida a [[BRAND-002]]. **Referência oficial da identidade da SINTERA.**
+**Status:** Approved · **Architectural Baseline** · **Versão:** 1.2 · **Histórico:** v1.0 criação; v1.1 10 princípios +
+tipografia diferida a [[BRAND-002]]; v1.2 (2026-07-20) direção cromática **A·E** aprovada ([[COLOR-001]]). **Referência
+oficial da identidade da SINTERA.**
 **Dependências:** [[ARCH-002]] · [[HIP-011]] · [[posicionamento_marca]]. **Impacto:** todo o Design System (3B) implementa
 este documento; identidade permanente em todo ponto de contato (web e mobile).
 
@@ -51,15 +52,17 @@ reproduzida.
 - **Equilíbrio:** calmo e assimétrico-orgânico (como os ramos), sem rigidez.
 - **Sensação transmitida:** acolhimento e confiança duradoura.
 
-## 4. Linguagem cromática (DIREÇÃO — sem tokens definitivos)
-Construída **inspirada** na obra, **não extraída** dela; será um **sistema completo de tokens (50–900)** no 3B.
-- **Primária:** o **azul-esverdeado sereno do fundo** da pintura (teal tranquilo) — cor da marca.
-- **Neutros:** **tons quentes das flores** — off-white, ivory, warm white; **evitar branco puro** como predominante.
-  Os neutros carregam a leveza e o acolhimento.
-- **Secundária/auxiliar:** os **verdes acinzentados dos galhos** — para **estados positivos, indicadores e elementos
-  auxiliares**.
-- **Semântica** (positivo/atenção/erro) será derivada com a mesma sobriedade, distinta da cor de marca.
-- **Provisório:** as cores hoje em `globals.css` são temporárias e **não** referência.
+## 4. Linguagem cromática (DIREÇÃO A·E aprovada — tokens no 3B; ver [[COLOR-001]])
+Construída **inspirada** na obra, **não extraída** dela; sistema completo de tokens (50–900) no 3B.
+- **Primária = direção A·E** (azul-esverdeado suave/dessaturado, entre o Almond original e a variante luminosa) —
+  **usada com CONTENÇÃO**: ações, gráficos, elementos ativos, destaques, navegação ativa. **Não** preencher grandes áreas.
+- **Neutros (primeiro lugar):** **tons quentes das flores** — off-white, ivory, warm white, cinzas quentes muito suaves;
+  **evitar branco puro** predominante. Impactam a percepção premium **mais** que a primária.
+- **Secundária/auxiliar:** **verdes acinzentados dos galhos**.
+- **Semântica clara:** Informação → primária Almond · **Sucesso → verde sálvia** · **Atenção → âmbar discreto** ·
+  **Erro → terracota suave**. Não reusar a institucional para todos os estados.
+- **Identidade única** Web + Mobile ([[adr_010_identidade_visual_unica|ADR-010]]); a paleta atual da web é provisória.
+- **Regra:** congela-se a **direção**; valores finais de token podem ter ajuste técnico (contraste/acessibilidade/dark).
 
 ## 5. Tipografia (DIFERIDA a [[BRAND-002]] — Estudo Tipográfico)
 A escolha da tipografia é uma etapa própria (**BRAND-002**), **anterior** ao Design System, por seu impacto diário na

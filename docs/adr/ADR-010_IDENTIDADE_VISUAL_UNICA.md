@@ -11,9 +11,12 @@ separados) divergiriam com o tempo.
 1. **Referência estética principal = _Almond Blossom_ (Van Gogh)** — como **atmosfera/linguagem**, não cópia nem extração
    literal de cores. Atributos: serenidade, confiança, leveza, sofisticação, natureza, continuidade, longevidade, acolhimento.
 2. **Design System ÚNICO** para web e mobile (uma só identidade); adaptações de plataforma **só quando necessário**.
-3. A **paleta atual da web é provisória**; a futura web adota a identidade do app.
-4. **Nenhuma cor definitiva aprovada** — só a **direção** (primária azul-esverdeada do fundo; neutros quentes das flores,
-   evitando branco puro; secundária verde-acinzentada dos galhos). Tokens (50–900) definidos no Design System (Passo 3B).
+3. A **paleta atual da web é PROVISÓRIA e DESCONTINUADA**; a web **migra gradualmente** para a mesma identidade — **em
+   paralelo** ao mobile, sem esperar o app ficar pronto (tarefa no [[IMPLEMENTATION_ROADMAP]]), evitando retrabalho.
+4. **Direção cromática oficial = A·E** ([[COLOR-001]]) — inspirada na **atmosfera** de _Almond Blossom_ (não reprodução):
+   traduz serenidade, continuidade, sofisticação, natureza e leveza. Tom predominante **claro** (~p-400); escuros só em
+   texto/ação. **Congela-se a direção**; tokens 50–900 (com pequenos ajustes técnicos de contraste/acessibilidade/dark)
+   no Design System (Passo 3B).
 Sequência: **Sistema de Identidade ([[BRAND-001]], Passo 3A) → Design System (Passo 3B)**.
 
 ## Alternativas consideradas

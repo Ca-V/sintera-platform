@@ -51,9 +51,9 @@ muda só por evidência/revisão formal).
 ## 3. Produto Mobile
 | Doc | Finalidade | Versão | Status | Relações |
 |---|---|---|---|---|
-| **BRAND-001** | Sistema de Identidade da SINTERA (marca; ref. _Almond Blossom_; 10 princípios) | 1.1 | Approved ⛨ | orienta o Design System (web+mobile); ADR-010 |
-| **BRAND-002** | Estudo Tipográfico (análise de pares; recomendação) | 1.0 | Draft | integra BRAND-001 §5 após decisão |
-| **COLOR-001** | Estudo Cromático (5 direções _Almond Blossom_; rampas 50–900) | 1.0 | Draft | direção → tokens do Design System (3B) |
+| **BRAND-001** | Sistema de Identidade da SINTERA (marca; _Almond Blossom_; 10 princípios; direção A·E) | 1.2 | Approved ⛨ | orienta o Design System (web+mobile); ADR-010; COLOR-001 |
+| **BRAND-002** | Estudo Tipográfico (análise + specimen; recomendação) | 1.0 | Draft | integra BRAND-001 §5 após decisão conjunta |
+| **COLOR-001** | Direção cromática **A·E** (oficial; princípios; predominante claro p-400; teste denso) | 1.2 | Approved ⛨ | tokens 50–900 no DS (3B); web migra p/ A·E |
 | **HIP-013** | Arquitetura Interna do App Móvel | 1.0 | Approved ⛨ | ADR-009; HIP-007/009 |
 | **HIP-011** | Arquitetura do Produto Mobile (experiência/navegação/UX/offline/notif/evolução) | 1.1 | Approved | HIP-008; BRAND-001; ref. Produto/UX/Eng |
 | **HIP-008** | Arquitetura do App (stack RN+Expo; comparativo técnico+estratégico) | 1.0 | Approved | ARCH-002; HIP-012 |

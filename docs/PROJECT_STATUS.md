@@ -27,9 +27,12 @@ Identidade **aprovada**: [[BRAND-001]] v1.1 (Almond Blossom) · ADR-010 · **Des
 atual = **provisória**; **nenhuma cor definitiva aprovada**.
 - **Tipografia:** [[BRAND-002]] (estudo + specimen visual) — **decisão pendente** (candidatas: Fraunces+Hanken / Fraunces+
   Atkinson / Source / Figtree).
-- **Cor primária:** [[COLOR-001]] (estudo + specimen visual, 5 direções Almond Blossom, rampas 50–900) — **decisão
-  pendente**. A cor do 1º specimen (teal escuro) foi **descartada** (corporativa; próxima do verde provisório da web).
-Após decidir tipografia + cor → **Passo 3B Design System** constrói os tokens.
+- **Cor primária:** [[COLOR-001]] — **direção A·E APROVADA** (só a direção; valores finais no DS). Princípios: primária
+  com contenção; **neutros em 1º lugar** (quentes, sem branco puro); semântica sálvia/âmbar/terracota; identidade única
+  web+mobile. Teste em telas densas OK. Cor do 1º specimen (teal escuro) **descartada**.
+- **Tipografia:** [[BRAND-002]] — **decisão pendente** (aprovar JUNTO com a cor; candidatas no teste denso: Hanken ×
+  Atkinson). Sugestão: D (Fraunces + Atkinson) pela legibilidade em dados.
+Após aprovar **tipografia + cor juntas** → **Passo 3B Design System** constrói os tokens 50–900 e componentes.
 Ainda sem código funcional de produto. Critérios de validação por etapa: [[HIP-010]] (4 categorias).
 
 ## Documentação
