@@ -2,9 +2,9 @@
 
 **Status:** ARQUITETURA para aprovação. Sob [[ADR-000]] · [[HIP-001]] · deriva de [[HIP-007]] (Observação). Nenhum código
 antes das Etapas 1–3 aprovadas.
-**Premissa:** a escolha de tecnologia é uma **decisão estratégica da empresa**, não só um comparativo de frameworks. O
-app **nasce como produto da SINTERA** — o MVP faz apenas auth + Apple Health + Health Connect + sync, mas a arquitetura
-já suporta a evolução.
+**Premissa (rev.):** a escolha de tecnologia é uma **decisão estratégica da empresa**. Sob [[ARCH-002]], o **app é o
+PRODUTO PRINCIPAL da SINTERA** (a web é interface complementar) e o backend é **API-first** (Mobile → API → Web). O MVP
+faz apenas auth + Apple Health + Health Connect + sync, mas a arquitetura já nasce de produto completo.
 
 ## 1. Opções avaliadas
 1. **React Native + Expo** (dev client + EAS Build/Update)
@@ -53,16 +53,21 @@ gráficos pesados/tempo real crítico). Se algum módulo exigir performance nati
 **Descartados:** Flutter (isola o stack, sem reúso da web); Nativo (2 bases, evolução/ manutenção/contratação caras);
 RN puro (perde os ganhos de manutenção/OTA do Expo sem vantagem estratégica).
 
-## 5. O app como PRODUTO (não coletor) — arquitetura evolutiva
-Estrutura pensada para **crescer sem reconstrução**:
-- **Monorepo + pacote compartilhado** (`@sintera/core`): tipos da Observação, contratos de API, validação (ex.: zod),
-  cliente Supabase, regras de negócio — **um só contrato** entre web e app.
-- **Identidade única:** Supabase Auth (mesma conta da web) → sessão compartilhável e deep links web↔app.
+## 5. O app como PRODUTO PRINCIPAL (não coletor) — arquitetura evolutiva
+Estrutura pensada para **crescer sem reconstrução**, sob [[ARCH-002]] (mobile-first · API-first):
+- **Monorepo com compartilhamento MÁXIMO** (`@sintera/core` e afins) web↔mobile — além de contratos de API e tipos,
+  compartilhar sempre que fizer sentido: **modelos de domínio** (Observação — [[HIP-007]]), **validações**, **regras de
+  negócio**, **cliente de API** e **componentes reutilizáveis**. Fonte única → evolução sincronizada, duplicação mínima.
+- **API-first:** o app consome as APIs versionadas do backend; a **web consome as MESMAS APIs** (sem fluxo exclusivo de
+  navegador). Nenhuma regra de negócio duplicada entre plataformas.
+- **Identidade única:** Supabase Auth (mesma conta) → sessão compartilhável e deep links web↔app.
 - **Camadas do app:** (a) **auth/sessão**; (b) **camada de dados/offline** (cache local + fila de envio); (c) **módulo
   health-sync** (Apple Health/Health Connect → Observação → envio); (d) **módulos de feature** plugáveis.
-- **Encaixes previstos (MVP não implementa, arquitetura acomoda):** **timeline de saúde**, **notificações inteligentes**
-  ([[notif_001_infraestrutura_unica]]), **captura de documentos / upload de exames** ([[hub_001_registration_hub]]),
-  **agenda e lembretes**, **interação com a plataforma web** ([[care_001_espaco_colaborativo]]).
+- **Encaixes previstos (MVP não implementa, arquitetura acomoda) — evolução para produto completo:** **Timeline de
+  Saúde**, **Exames e Documentos**, **Agenda**, **Medicamentos**, **Suplementos**, **notificações inteligentes**
+  ([[notif_001_infraestrutura_unica]]), **captura de documentos**, **upload de exames**, **OCR**, **compartilhamento de
+  informações** ([[care_001_espaco_colaborativo]]) e **IA contextual** ([[visao_sistema_cognitivo_clinico]]) — reusando
+  os pilares existentes ([[hub_001_registration_hub]]). Nenhuma dessas exige reconstrução arquitetural.
 - **Missão do MVP:** autenticar · conectar Apple Health · conectar Health Connect · sincronizar (via a arquitetura da
   Etapa 3). Todo o resto evolui sobre a mesma base.
 
