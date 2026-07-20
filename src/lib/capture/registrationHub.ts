@@ -52,7 +52,7 @@ export const REGISTRATION_INTENTS: RegistrationIntent[] = [
   // ── Registros de saúde ────────────────────────────────────────────────────
   { key: 'consulta',     label: 'Consulta',           icon: 'Stethoscope',   group: 'registro', available: true,  mechanism: { type: 'page', href: '/dashboard/agenda' } },
   { key: 'condicao',     label: 'Condição de saúde',  icon: 'HeartPulse',    group: 'registro', available: true,  mechanism: { type: 'page', href: '/dashboard/condicoes' } },
-  { key: 'medida',       label: 'Medida',             icon: 'Ruler',         group: 'registro', available: true,  mechanism: { type: 'page', href: '/dashboard/medidas' } },
+  { key: 'medida',       label: 'Composição corporal', icon: 'Ruler',        group: 'registro', available: true,  mechanism: { type: 'page', href: '/dashboard/medidas' } },
   { key: 'habito',       label: 'Hábito',             icon: 'Sparkles',      group: 'registro', available: true,  mechanism: { type: 'page', href: '/dashboard/habitos' } },
   { key: 'procedimento', label: 'Procedimento',       icon: 'Scissors',      group: 'registro', available: false, mechanism: { type: 'page', href: '/dashboard/agenda' } },
   { key: 'vacina',       label: 'Vacina',             icon: 'Syringe',       group: 'registro', available: false, mechanism: { type: 'page', href: '/dashboard/agenda' } },

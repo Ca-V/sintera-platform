@@ -163,7 +163,7 @@ function LegacyDashboard() {
             <div className="grid sm:grid-cols-2 gap-2.5">
               {[
                 { icon: Upload,     title: '1. Adicione seus documentos', desc: 'Envie exames, receitas e laudos (foto ou arquivo) — a SINTERA lê e organiza.', onClick: () => setIntakeOpen(true) },
-                { icon: Pill,       title: '2. Registre a sua rotina de saúde', desc: 'Medicamentos, consultas, condições, hábitos e medidas.', href: '/dashboard/medicamentos' },
+                { icon: Pill,       title: '2. Registre a sua rotina de saúde', desc: 'Medicamentos, consultas, condições, hábitos e composição corporal.', href: '/dashboard/medicamentos' },
                 { icon: Clock,      title: '3. Acompanhe ao longo do tempo', desc: 'Sua linha do tempo em Histórico de Saúde e a evolução em Histórico de Exames.', href: '/dashboard/timeline' },
                 { icon: ScrollText, title: '4. Compartilhe com quem cuida de você', desc: 'Reúna suas informações em um relatório e envie ao seu profissional de saúde.', href: '/dashboard/relatorio' },
               ].map((s) => {

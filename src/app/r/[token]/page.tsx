@@ -304,7 +304,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
 
       {show('medidas') && (
       <section style={{ marginBottom: 22 }}>
-        <h2 style={{ fontSize: 15 }}>Medidas corporais</h2>
+        <h2 style={{ fontSize: 15 }}>Composição Corporal</h2>
         {(latestPeso || alturaCm != null || imcVal != null) && (
           <p style={{ fontSize: 14, margin: '0 0 6px' }}>
             {[

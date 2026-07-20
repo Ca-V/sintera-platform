@@ -19,7 +19,7 @@ const dmSans = DM_Sans({
 
 export const metadata: Metadata = {
   title: { default: 'SINTERA', template: '%s — SINTERA' },
-  description: 'Organize num só lugar exames, medicamentos, condições, hábitos e medidas. Acompanhe a evolução da sua saúde e compartilhe com seus profissionais. Gratuito.',
+  description: 'Organize num só lugar exames, medicamentos, condições, hábitos e composição corporal. Acompanhe a evolução da sua saúde e compartilhe com seus profissionais. Gratuito.',
   keywords: ['saúde', 'organização de saúde', 'exames', 'biomarcadores', 'histórico de saúde', 'medicamentos', 'saúde feminina', 'SINTERA'],
   metadataBase: new URL('https://sinteramais.com.br'),
   openGraph: {

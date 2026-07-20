@@ -43,7 +43,7 @@ export function welcomeEmailHtml(firstName: string): string {
               </h1>
 
               <p style="margin:0 0 16px;font-size:15px;color:#5A5068;line-height:1.7;">
-                Você está entre as primeiras pessoas a acessar a SINTERA — uma plataforma para organizar suas informações de saúde num só lugar (exames, medicamentos, condições, hábitos e medidas) e acompanhar a evolução ao longo do tempo.
+                Você está entre as primeiras pessoas a acessar a SINTERA — uma plataforma para organizar suas informações de saúde num só lugar (exames, medicamentos, condições, hábitos e composição corporal) e acompanhar a evolução ao longo do tempo.
               </p>
 
               <p style="margin:0 0 28px;font-size:15px;color:#5A5068;line-height:1.7;">
@@ -125,7 +125,7 @@ export function welcomeEmailText(firstName: string): string {
 
 Seu acesso à SINTERA está confirmado.
 
-Você está entre as primeiras pessoas a acessar a plataforma para organizar suas informações de saúde num só lugar (exames, medicamentos, condições, hábitos e medidas) e acompanhar a evolução ao longo do tempo.
+Você está entre as primeiras pessoas a acessar a plataforma para organizar suas informações de saúde num só lugar (exames, medicamentos, condições, hábitos e composição corporal) e acompanhar a evolução ao longo do tempo.
 
 Crie sua conta agora: https://sinteramais.com.br/onboarding
 
