@@ -1,6 +1,8 @@
 # NOV-001 — Infraestrutura de Novidade (permanente · fonte única)
 
-**Status:** HOMOLOGADO (20/07) — validado no Preview; ambiente de homologação encerrado e limpo (só dados reais). Sob [[ADR-000]]. Nasce da diretriz da fundadora (20/07): o conceito de
+**Status:** VALIDADO no Preview (20/07) — AGUARDANDO aprovação explícita da fundadora para homologar/congelar. Os
+dados de teste foram removidos (restauráveis reconectando o dispositivo de demonstração); a infraestrutura está
+100% intacta. Governança: nenhuma ação destrutiva/irreversível sem aprovação explícita após validação no Preview. Sob [[ADR-000]]. Nasce da diretriz da fundadora (20/07): o conceito de
 "novo" deve ser **infraestrutura reutilizável**, não uma solução pontual; reconhecido **naturalmente ao ver o
 conteúdo** (sem botão "dispensar"); **uma só fonte de verdade** para banner, selos "Novo" e futuras notificações.
 
