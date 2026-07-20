@@ -130,6 +130,40 @@ Cada passo direto **fortalece a infra** (auth, modelo de dados, limites, webhook
 - **D-B:** quando iniciar a trilha do **app móvel** (destrava Apple/Health Connect).
 - **D-C:** agregador — **Terra ou Rook**, e em que fase adotá-lo.
 
+## 8. Adendo — aprofundamento de ACESSO (20/07, revisão após ressalva da fundadora)
+
+Aprofundamento sobre "quem consegue se cadastrar e em que condições" — corrige/qualifica a §2:
+
+- **Oura — permite terceiros SIM**, ao contrário do receio inicial: registra-se um app OAuth2 (Client ID/Secret) e
+  "qualquer pessoa pode compartilhar seus dados Oura com um serviço de terceiros". **Porém:** limite de **10 usuários**
+  até aprovação, e para **desenvolver/homologar é preciso ter dados** — ou seja, **possuir um anel** (ou um usuário
+  com anel). Então: integra empresas, mas há a barreira prática de **possuir o dispositivo para construir**.
+- **WHOOP — confirmada a barreira:** para desenvolver, o **próprio desenvolvedor precisa ter assinatura + dispositivo
+  WHOOP**. Limite de 10 membros no dev; aprovação mensal para produção. Barreira de dispositivo **mais forte** que a Oura.
+- **Garmin — FECHADO a novos inscritos:** o Garmin Connect Developer Program (que cobre **tanto a Health API quanto a
+  Activity API**) está **pausado** — o formulário de novos parceiros foi removido, sem data de reabertura. Integrações
+  existentes seguem, mas **não é possível obter acesso novo hoje**. ⇒ Garmin direto **não é viável agora** (só via
+  agregador ou parceria); **não é questão de app móvel**.
+- **Strava — viável, self-serve, SEM dispositivo e SEM app móvel:** OAuth2 + webhooks server-side; conta grátis basta.
+  **Base enorme** e funciona como **agregador de atividade** (usuários sincronizam Garmin/Wahoo/Apple no Strava). **MAS:**
+  (a) é **atividade** (corridas/pedaladas/GPS/FC de treino) — **não** monitoramento contínuo (sem HRV/sono/SpO₂);
+  (b) **termos de API restritivos** para uso de saúde/médico e armazenamento (endurecidos em 2024) → **exige revisão
+  jurídica** antes de usar numa plataforma de saúde; (c) rate limit 200/15min, 2000/dia.
+
+**Releitura estratégica (importante):** **Apple Health e Health Connect já AGREGAM, no celular, os dados de Garmin,
+Oura, WHOOP, Fitbit** que o usuário sincroniza. Logo, o **caminho prático para "dados do Garmin" hoje** — com o
+programa dele fechado — é **via celular (Health Connect/HealthKit)** ou **via agregador**, não a API direta do Garmin.
+Isso reforça o **app móvel** como a peça de maior alavancagem de cobertura. Decisão da fundadora: **adicionar ao
+planejamento a construção do app móvel da SINTERA** (destrava Apple/Health Connect → e, por tabela, Garmin/Oura/WHOOP).
+
+### Sugestão revisada de sequência
+1. **Strava (direto, web, agora)** — 1º conector real self-serve, sem dispositivo/app; valida a infra com um terceiro
+   real e traz **atividade** (inclui Garmin exportado ao Strava). **Condição:** revisão dos termos de uso p/ saúde.
+2. **App móvel SINTERA + Health Connect (Android) + Apple Health (iOS)** — **espinha dorsal de cobertura**; captura
+   Garmin/Oura/WHOOP/Fitbit via celular sem depender de APIs fechadas.
+3. **Agregador (Terra/Rook)** — alternativa/aceleração para Garmin/Oura/WHOOP como fontes de nuvem sem esperar o app;
+   **única via de Garmin direto** hoje.
+
 ## 7. Fontes
 - Apple HealthKit (sem API de nuvem; on-device): developer.apple.com/documentation/healthkit · openwearables.io
 - Health Connect / fim do Google Fit: developer.android.com/health-and-fitness/health-connect · spikeapi.com
@@ -138,3 +172,7 @@ Cada passo direto **fortalece a infra** (auth, modelo de dados, limites, webhook
 - Garmin (programa suspenso; OAuth1.0a; parceria): developer.garmin.com/gc-developer-program/health-api · openwearables.io
 - Terra (agregador/pricing/SDK): tryterra.co · tryterra.co/pricing · healthapiguy.substack.com
 - Rook / Junction(Vital) / Metriport (alternativas): tryrook.io · openwearables.io/compare
+- Oura (terceiros permitidos; limite 10 + aprovação; portal 2025): partnersupport.ouraring.com · cloud.ouraring.com/docs
+- WHOOP (dev exige assinatura+dispositivo; aprovação mensal): developer.whoop.com/docs/developing/getting-started
+- Garmin (programa PAUSADO a novos; Health+Activity API): developer.garmin.com/gc-developer-program · themomentum.ai
+- Strava (OAuth2/webhooks server-side; termos; limites): developers.strava.com · openwearables.io/blog
