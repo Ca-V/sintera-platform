@@ -167,7 +167,11 @@ Monitoramento). **Recomendação (convergência progressiva):**
   seria abstração antecipada. HIP-001 §2 permanece honrado pelo `CanonicalSample` como contrato do núcleo.
 > *Requer seu aval antes do subitem 1.3.*
 
-## Épico 1 — Fundação HIP-001 (subitens verificáveis; cada um TSC + suíte + build verdes + commit)
+## Épico 1 — Fundação HIP-001 — ✅ CONCLUÍDO (20/07)
+Todos os 4 subitens verdes (tsc + suíte 646 + build) e commitados. Fundação vendor-neutral pronta; plugar a
+Withings (Épico 2) vira adapter `fetchSamples` + rotas OAuth/sync + UI. Entregues:
+`src/lib/connectors/{registry,persistence,supabase-persist,orchestrator}.ts` + testes FUNC (20 casos de conector);
+migrações 127/128 (esquema + segurança). Subitens (referência):
 - **1.1 — Reconciliação de esquema + segurança (migração aditiva):** `+ 'withings'` no CHECK de
   `wearable_connections.provider`; **política service-role-only** explícita em `wearable_connections` + **view de status
   sem tokens** (débito de SEC já sinalizado no WEA-001 §7). Sem tocar em dados. **Critério:** migração aplica; view expõe
