@@ -36,6 +36,10 @@ o conceito.)
 > **Toda medida automática é uma Observação: um fato pontual/temporal com valor, origem, dispositivo, confiabilidade,
 > qualidade e contexto — nunca um indicador (§5).** Não modelamos "HRV/sono/peso/glicemia" como entidades separadas.
 
+> **A Observação é uma ENTIDADE ESTRUTURAL da plataforma — não apenas um conceito das integrações.** Toda funcionalidade
+> futura que consuma **dados objetivos** trabalha **sobre Observações**: wearables, dispositivos médicos, observações
+> extraídas automaticamente de documentos, sensores contínuos e integrações futuras. É o substrato único do dado objetivo.
+
 | Campo | Descrição |
 |---|---|
 | `domain` | domínio funcional (§6) |
