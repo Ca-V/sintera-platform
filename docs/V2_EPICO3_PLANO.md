@@ -9,6 +9,21 @@ Fechar a experiência de **RETORNO automático**: depois de conectar, o usuário
 sozinha**, sem ação manual — e a plataforma torna esse benefício **percebido o quanto antes**. Este é o épico que
 consuma o **critério de sucesso da V2**.
 
+## ⭐ Diretriz de produto (fundadora 20/07) — a PERGUNTA que avalia tudo
+> **"O usuário percebe claramente que a SINTERA trabalhou por ele sem que ele precisasse fazer nada?"**
+
+Toda funcionalidade deste épico é avaliada por essa pergunta. **Sincronizar não basta — o usuário precisa PERCEBER que
+algo aconteceu.** A **comunicação do benefício** é preocupação de primeira classe (não um detalhe): a experiência de
+**retorno** deve tornar **evidente**, de forma natural e discreta (sem animações chamativas), que a plataforma está
+**continuamente construindo** a história de saúde. Formas a avaliar/propor:
+- **Indicação de que novos dados foram incorporados desde a última visita** (o "novo desde …").
+- **Destaque visual dos novos registros** (sutil — ex.: marcador "novo" nos pontos recém-chegados).
+- **Timeline / Histórico evidenciando o que mudou** (o que entrou sozinho aparece com clareza no lugar certo).
+- **Mensagens discretas** que reforçam que a plataforma **trabalhou em segundo plano** — sem ruído, sempre dispensáveis.
+
+Princípios de execução (mantidos): **reúso máximo** da infra existente · **consistência** com os padrões da plataforma ·
+**simplicidade** da experiência · **nenhum novo padrão de interação** se já existir um equivalente.
+
 ## Problema que resolve para o usuário
 No Épico 2, o dado só entra quando o usuário **clica "Sincronizar agora"**. O valor da captura automática só se realiza
 se ela acontecer **sozinha** e o usuário **perceber**. Sem isso, a promessa "a SINTERA constrói sua história" continua
@@ -97,7 +112,12 @@ dependente de ação manual — e o **Aha se perde**. O norte deste épico é **
 - **3.2** — Mock temporal (gera medições por data) + testes.
 - **3.3** — Feedback de retorno ("novo desde a última visita").
 - **3.4** — Telemetria do Aha (`usage_events`: conexão + 1º benefício).
-- **3.5** — Validação end-to-end + **encerramento da V2** (validação de experiência + changelog de produto + congelamento).
+- **3.5** — Validação end-to-end + **encerramento da V2** (validação de experiência + changelog de produto + congelamento)
+  + **avaliação crítica de produto** (obrigatória, fundadora 20/07) respondendo objetivamente:
+  1. **O Aha Moment realmente ficou perceptível?**
+  2. **Quais pontos ainda impedem que essa experiência seja considerada excelente?**
+  3. **Quais melhorias eu recomendaria ANTES da integração com os wearables reais (Withings)?**
+  Objetivo: a entrada dos conectores reais acontece sobre uma experiência **já validada do ponto de vista do usuário**.
 
 ## Critério de sucesso da V2 (fechado por este épico)
 > O usuário **conecta uma fonte e vê a história crescer sozinha**, sem registro manual — e **reconhece isso como o
