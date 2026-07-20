@@ -12,8 +12,8 @@ import type { SyncRun } from '@/lib/connectors/connector'
 
 const meas = (metric: string, v: number, at: string, id: string): MockMeasurement => ({ metric, value: v, unit: 'kg', recordedAt: at, externalId: id })
 
-function e2e(seed: MockMeasurement[] = []) {
-  const world = createMockWorld({ measurements: [...seed], accessTokenTtlSeconds: 3600 })
+function e2e(seed: MockMeasurement[] = [], daily?: { startDate: string; startWeightKg: number; dailyDeltaKg: number }) {
+  const world = createMockWorld({ measurements: [...seed], daily, accessTokenTtlSeconds: 3600 })
   const registry = createConnectorRegistry([createMockConnector(world)])
   const clockState = { t: Date.parse('2026-07-20T12:00:00Z') }
   const clock: Clock = { now: () => new Date(clockState.t).toISOString() }
@@ -140,5 +140,17 @@ describe('E2E · jornada de captura automática (mock comportamental)', () => {
     // prova documental: o SyncService nunca referencia MOCK_SOURCE/fabricante — usa registry.get(source).
     const registry = createConnectorRegistry([conn])
     expect(registry.descriptors()[0].source).toBe(MOCK_SOURCE)
+  })
+
+  it('V2 Épico 3: RETORNO automático — dias depois, a história cresce sozinha (sem ação manual)', async () => {
+    const t = e2e([], { startDate: '2026-07-18', startWeightKg: 82, dailyDeltaKg: -0.1 })  // clock em 20/07
+    await t.connect()                              // 1ª sync: 18, 19, 20
+    const afterConnect = t.body.length
+    expect(afterConnect).toBe(3)                   // 3 dias de peso
+    t.advance(2 * 24 * 3600)                        // usuário volta 2 dias depois → 22/07
+    const out = await t.sync()                     // incremental: só 21 e 22
+    expect(out.status).toBe('ok')
+    expect(out.recordsCount).toBe(2)               // 2 dias novos chegaram sozinhos
+    expect(t.body.length).toBe(afterConnect + 2)   // a composição cresceu
   })
 })

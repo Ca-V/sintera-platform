@@ -119,6 +119,41 @@ dependente de ação manual — e o **Aha se perde**. O norte deste épico é **
   3. **Quais melhorias eu recomendaria ANTES da integração com os wearables reais (Withings)?**
   Objetivo: a entrada dos conectores reais acontece sobre uma experiência **já validada do ponto de vista do usuário**.
 
+## ✅ Encerramento do Épico 3 — AVALIAÇÃO CRÍTICA (fundadora 20/07)
+Implementado e verde (tsc · suíte 691 · build): 3.1 on-open sync (throttle) · 3.2 mock que cresce no tempo · 3.3
+comunicação do benefício ("sua história cresceu", discreto) · 3.4 telemetria do Aha (`usage_events`) · 3.5 E2E do
+retorno + este encerramento.
+
+### 1. O Aha Moment realmente ficou perceptível?
+**Parcialmente — sim, a cadeia funciona; não, ainda não no nível "excelente".** Com o mock, o fluxo completo acontece:
+conectar → dado automático → **on-open sync** no retorno → aviso **discreto** "sua história cresceu (N medições)". O
+usuário **não precisa fazer nada** e há um sinal claro de que a plataforma trabalhou. **Mas** a percepção hoje depende de
+o usuário **abrir Conexões ou Monitoramento** — não o alcança no **Painel Inicial** (1º ponto do retorno), e **não há
+destaque visual** dos novos registros nas telas onde o dado vive (Composição/Timeline).
+
+### 2. O que ainda impede de ser EXCELENTE
+- **O aviso não está no Painel Inicial** — o retorno começa na Home; hoje o "cresceu" só aparece em Conexões/Monitoramento.
+- **Sem destaque visual dos novos pontos** (ex.: selo "novo") na Composição/Monitoramento/Timeline — entregamos a
+  *mensagem*, não o *realce no dado* (a fundadora pediu ambos).
+- **"Novo desde a última visita" é aproximado** por "novo neste on-open" — não há `last_seen` persistente por usuário;
+  quem abre várias vezes pode não ver o acumulado desde a visita real anterior.
+- **On-open é silencioso enquanto roda** — falta um "sincronizando…" sutil que reforce "a plataforma está trabalhando".
+- **Sem aviso proativo** (e-mail/WhatsApp) de dado novo — o benefício só é percebido se o usuário entrar (fora de escopo,
+  mas limita a percepção).
+- **Telemetria coleta, mas não há leitura** do "tempo até o 1º benefício" (sem painel) — mede-se, ainda não se observa.
+
+### 3. Melhorias recomendadas ANTES da integração real (Withings)
+Priorizadas para que os conectores reais entrem sobre uma experiência **já validada**:
+1. **Levar o "sua história cresceu" ao Painel Inicial** (alto impacto, baixo custo) — o retorno é percebido de imediato.
+2. **Destaque visual sutil dos novos registros** (selo "novo") na Composição/Monitoramento/Timeline.
+3. **Persistir "última visita"** (`profiles.last_seen_at`) para o "novo desde a última visita" ser fiel e cross-device.
+4. **Indicador "sincronizando…" discreto** durante o on-open.
+5. *(Depois, com NOTIF/V5)* aviso proativo **opt-in** de "dado novo" pela Central de Notificações.
+6. **Leitura da telemetria** (painel simples do tempo-até-1º-benefício) para validar com dados reais.
+
+**Recomendação:** itens **1–3** valem a pena **antes** do Withings (fecham a percepção do benefício); 4–6 podem seguir em
+paralelo/depois. A arquitetura já suporta todos sem retrabalho (é comunicação/UX, não pipeline).
+
 ## Critério de sucesso da V2 (fechado por este épico)
 > O usuário **conecta uma fonte e vê a história crescer sozinha**, sem registro manual — e **reconhece isso como o
 > motivo** para usar a SINTERA. O épico mede isso pelo **tempo até o 1º benefício percebido**.

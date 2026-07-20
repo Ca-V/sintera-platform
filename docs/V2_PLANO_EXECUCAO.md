@@ -81,9 +81,33 @@ frequência · volume · impacto na experiência · expectativa · potencial de 
   integração** (Conectado/Última sync/Sincronizando/Atenção/Erro/Fonte) e **idempotência** comprovada (rodar 2×/10× =
   mesmo resultado). Experiência COMPLETA. **O conector é escolhido por validar rápido a arquitetura inteira, não por
   fornecedor** — hoje Withings, amanhã pode ser outro; o núcleo permanece vendor-neutral (HIP-001).
-- **Épico 3 — Validação do Aha + sincronização contínua:** sync recorrente (on-open + webhooks onde houver); validar o
-  **tempo até o 1º benefício percebido**; "a história cresceu sozinha" no retorno.
+- **Épico 3 — ✅ CONCLUÍDO (20/07):** sincronização **on-open** (throttle) · mock que **cresce no tempo** · **comunicação
+  do benefício** ("sua história cresceu", discreto) · **telemetria do Aha** (`usage_events`) · E2E do retorno. Plano +
+  avaliação crítica em [[V2_EPICO3_PLANO]].
 - **Depois (V2.2+):** Apple Health / Health Connect **com o MOB-001**; balanças/CGM/labs — repetição da arquitetura.
+
+## ✅ ENCERRAMENTO DA V2 (20/07) — com o mock comportamental; Withings entra por troca de adapter
+
+### Changelog de PRODUTO — o que mudou para o usuário
+- Existe uma tela **Conexões** (a partir do Monitoramento): o usuário **conecta uma fonte** e a plataforma passa a
+  **construir a história sozinha** — as medições entram no **Monitoramento** e na **Composição Corporal** automaticamente.
+- **Estado sempre visível** por conexão (Conectado · Última sincronização · Sincronizando · Atenção · Fonte).
+- No **retorno**, a plataforma **sincroniza sozinha** (on-open) e avisa de forma **discreta** que **"sua história cresceu"**
+  — o usuário percebe que a SINTERA **trabalhou por ele sem fazer nada**.
+- Hoje a fonte é um **"Dispositivo de demonstração"**; **acender o Withings = trocar só o adapter** (prova de *"toda
+  integração é substituível"*).
+
+### Checklist de encerramento
+- ✅ **Critério de sucesso** atingido **com o mock**: conectar → história cresce sozinha → benefício comunicado.
+- ✅ Arquitetura vendor-neutral (HIP-001) · idempotência · estado visível · sincronização automática.
+- ✅ Verdes (tsc · suíte **691** · build) · migrações aplicadas · advisor de segurança sem novos alertas.
+- ⚠️ **Avaliação crítica registrada** ([[V2_EPICO3_PLANO]]): o Aha é perceptível, mas para ser **excelente** faltam
+  (recomendados **antes do Withings**): (1) aviso "cresceu" no **Painel Inicial**; (2) **destaque visual** dos novos
+  registros; (3) **`last_seen` persistente** ("novo desde a última visita" fiel).
+
+### Congelamento
+V2 **congelada** (só correção de defeito) até a decisão sobre os refinamentos pré-Withings e/ou a ativação do conector
+real. A entrada dos conectores reais acontece **sobre uma experiência já validada**.
 
 ## Preparar a V3 (dados a COMEÇAR a capturar agora, mesmo sem exibir tudo)
 Para a Inteligência Longitudinal (V3) ser poderosa, a V2 deve **armazenar desde já** (mesmo que a UI mostre só resumos):
