@@ -45,7 +45,7 @@ export const REGISTRATION_INTENTS: RegistrationIntent[] = [
 
   // ── Cuidados e recursos ───────────────────────────────────────────────────
   { key: 'medicamento',  label: 'Medicamento',        icon: 'Pill',          group: 'cuidado', available: true, mechanism: { type: 'choice', captureKind: 'medication_label', captureLabel: 'Enviar receita', pageHref: '/dashboard/medicamentos', pageLabel: 'Cadastrar manualmente' } },
-  { key: 'suplemento',   label: 'Suplemento',         icon: 'Leaf',          group: 'cuidado', available: true, mechanism: { type: 'page', href: '/dashboard/medicamentos' } },
+  { key: 'suplemento',   label: 'Suplemento',         icon: 'Leaf',          group: 'cuidado', available: true, mechanism: { type: 'choice', captureKind: 'medication_label', captureLabel: 'Enviar receita', pageHref: '/dashboard/suplementos', pageLabel: 'Cadastrar manualmente' } },
   { key: 'recurso',      label: 'Recurso de saúde',   icon: 'Package',       group: 'cuidado', available: true, mechanism: { type: 'page', href: '/dashboard/recursos' } },
   { key: 'oculos',       label: 'Óculos / Lentes',    icon: 'Glasses',       group: 'cuidado', available: true, mechanism: { type: 'capture', documentKind: 'eyeglass_prescription' } },
 
