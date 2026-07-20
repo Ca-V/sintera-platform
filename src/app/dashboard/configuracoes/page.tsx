@@ -42,16 +42,15 @@ export default function ConfiguracoesPage() {
 
   // ── Lembretes por WhatsApp ──────────────────────────────────────────────────
   const [phone, setPhone]         = useState('')
-  const [waOptIn, setWaOptIn]     = useState(false)
   const [waLoading, setWaLoading] = useState(false)
   const [waSaved, setWaSaved]     = useState(false)
 
   useEffect(() => {
     if (!user) return
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(supabase as any).from('profiles').select('phone, pref_whatsapp_reminder').eq('id', user.id).maybeSingle()
-      .then(({ data }: { data: { phone: string | null; pref_whatsapp_reminder: boolean | null } | null }) => {
-        if (data) { setPhone(data.phone ?? ''); setWaOptIn(data.pref_whatsapp_reminder === true) }
+    ;(supabase as any).from('profiles').select('phone').eq('id', user.id).maybeSingle()
+      .then(({ data }: { data: { phone: string | null } | null }) => {
+        if (data) setPhone(data.phone ?? '')
       })
   }, [user, supabase])
 
@@ -59,9 +58,11 @@ export default function ConfiguracoesPage() {
     if (!user || waLoading) return
     setWaLoading(true); setWaSaved(false)
     try {
+      // FB-016-3: o canal (e-mail/WhatsApp/ambos/nenhum) é governado pela Central de Notificações, por categoria.
+      // Aqui só cadastramos o CONTATO. `pref_whatsapp_reminder` = ter telefone (opt-in implícito; Central decide o resto).
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (supabase as any).from('profiles')
-        .update({ phone: phone.trim() || null, pref_whatsapp_reminder: waOptIn })
+        .update({ phone: phone.trim() || null, pref_whatsapp_reminder: !!phone.trim() })
         .eq('id', user.id)
       setWaSaved(true)
     } finally {
@@ -198,45 +199,42 @@ export default function ConfiguracoesPage() {
         {pwError && <p className="font-body text-xs text-red-500">{pwError}</p>}
       </MotionCard>
 
-      {/* ── Lembretes por WhatsApp ── */}
+      {/* ── Contatos cadastrados (FB-016-3) — os DESTINOS; o canal é escolhido na Central abaixo ── */}
       <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}
         padding="lg" className="space-y-4">
         <div className="flex items-center gap-3 mb-1">
           <div className="w-8 h-8 rounded-lg bg-blush flex items-center justify-center">
             <MessageCircle size={15} className="text-petal" />
           </div>
-          <h2 className="font-body text-sm font-semibold text-onyx">Lembretes por WhatsApp</h2>
+          <h2 className="font-body text-sm font-semibold text-onyx">Contatos cadastrados</h2>
+        </div>
+        <p className="font-body text-xs text-mauve">
+          Onde você pode receber notificações. <strong>O que</strong> você recebe e <strong>por qual canal</strong>
+          {' '}(e-mail, WhatsApp, ambos ou nenhum) é definido na <strong>Central de Notificações</strong>, abaixo.
+        </p>
+
+        {/* E-mail (do cadastro) */}
+        <div className="py-2 border-b border-border/50">
+          <p className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">E-mail</p>
+          <p className="font-body text-sm text-onyx mt-1">{user?.email ?? '—'}</p>
         </div>
 
-        <div className="flex items-center justify-between py-2">
-          <div className="pr-4">
-            <p className="font-body text-sm text-onyx">Receber lembretes por WhatsApp</p>
-            <p className="font-body text-xs text-mauve mt-0.5">Lembretes dos eventos da sua Agenda (consultas, exames). Você pode desativar quando quiser.</p>
-          </div>
-          <button onClick={() => setWaOptIn(v => !v)} aria-label="Ativar lembretes por WhatsApp"
-            className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${waOptIn ? 'bg-petal' : 'bg-border'}`}>
-            <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${waOptIn ? 'left-[22px]' : 'left-0.5'}`} />
-          </button>
-        </div>
-
+        {/* WhatsApp */}
         <div>
-          <label htmlFor="config-phone" className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Telefone (WhatsApp)</label>
+          <label htmlFor="config-phone" className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">WhatsApp</label>
           <input id="config-phone" type="tel" value={phone} onChange={e => setPhone(e.target.value)}
             placeholder="(11) 99999-9999"
             className="mt-1 w-full px-3 py-2.5 border border-border rounded-xl font-body text-sm text-onyx bg-ivory placeholder:text-mauve/40 focus:outline-none focus:ring-1 focus:ring-petal/30" />
-          <p className="font-body text-[11px] text-mauve mt-1">Com DDD. Usado apenas para enviar seus lembretes.</p>
+          <p className="font-body text-[11px] text-mauve mt-1">Com DDD. Necessário para receber notificações por WhatsApp.</p>
         </div>
 
         <div className="flex items-center justify-end gap-3">
           {waSaved && <span className="font-body text-xs text-petal flex items-center gap-1"><Check size={13} /> Salvo</span>}
-          <button onClick={saveWhatsApp} disabled={waLoading || (waOptIn && !phone.trim())}
+          <button onClick={saveWhatsApp} disabled={waLoading}
             className="px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium disabled:opacity-40 hover:opacity-90 transition-opacity">
             {waLoading ? 'Salvando…' : 'Salvar'}
           </button>
         </div>
-        {waOptIn && !phone.trim() && (
-          <p className="font-body text-[11px] text-amber-600">Informe o telefone para ativar os lembretes por WhatsApp.</p>
-        )}
       </MotionCard>
 
       {/* ── Central de Notificações (NOTIF-001) — canal por categoria ── */}
