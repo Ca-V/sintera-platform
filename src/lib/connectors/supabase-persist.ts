@@ -4,6 +4,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { PersistClient, WearableReadingRow, BodyMetricRow } from './persistence'
+import type { SyncRunRecorder } from './orchestrator'
 
 export function createSupabasePersistClient(supabase: SupabaseClient): PersistClient {
   return {
@@ -31,6 +32,25 @@ export function createSupabasePersistClient(supabase: SupabaseClient): PersistCl
       if (del.error) throw new Error(`replaceBodyMetricPoints/delete: ${del.error.message}`)
       const ins = await supabase.from('body_metrics').insert(points)
       if (ins.error) throw new Error(`replaceBodyMetricPoints/insert: ${ins.error.message}`)
+    },
+  }
+}
+
+/** Gravador real do histórico de sync (connector_sync_runs). IO fino; usado pelo orquestrador. */
+export function createSupabaseSyncRecorder(supabase: SupabaseClient): SyncRunRecorder {
+  return {
+    async record(run) {
+      const { error } = await supabase.from('connector_sync_runs').insert({
+        user_id: run.userId,
+        source: run.source,
+        started_at: run.startedAt,
+        finished_at: run.finishedAt,
+        status: run.status,
+        records_count: run.recordsCount,
+        error: run.error,
+        last_success_at: run.lastSuccessAt,
+      })
+      if (error) throw new Error(`recordSyncRun: ${error.message}`)
     },
   }
 }
