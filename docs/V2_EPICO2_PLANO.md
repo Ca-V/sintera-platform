@@ -1,7 +1,28 @@
-# V2 · Épico 2 — Primeiro conector cloud end-to-end (impl. inicial: Withings) — PLANO
+# V2 · Épico 2 — Primeiro conector cloud end-to-end (impl. inicial: Withings) — PLANO + ESTADO
 
-**Status:** PLANEJAMENTO — aguardando aprovação. **Nenhum código antes do aval.** Sob [[V2_PLANO_EXECUCAO]],
-[[HIP-001_PLATAFORMA_INTEGRACOES]]. Fundação (Épico 1) concluída: `registry` · `persistence` · `orchestrator`.
+**Status:** ✅ **Arquitetura completa com MOCK COMPORTAMENTAL (20/07)** — pronta para acender o Withings (só o adapter).
+Sob [[V2_PLANO_EXECUCAO]], [[HIP-001_PLATAFORMA_INTEGRACOES]]. Fundação (Épico 1) concluída.
+
+## ✅ Encerramento (Etapa 2 com mock) — subitens 2.1–2.5 verdes
+Entregue e verificado (tsc + suíte 676 + build): `oauth` · `connections`(+repo) · `mock`(comportamental, 7 cenários) ·
+`syncService` · `runtime.server` · rotas `connect/callback/sync/disconnect/webhook` · página `/dashboard/conexoes` +
+entrada no Monitoramento. **30 testes de conector** (FUNC + E2E dos 7 cenários + substituibilidade). Migração 129.
+
+### Changelog de PRODUTO — o que mudou para o usuário
+- Existe uma tela **Conexões** (a partir do Monitoramento): o usuário **conecta uma fonte** e a história passa a se
+  construir sozinha — as medições entram no **Monitoramento** e na **Composição Corporal** automaticamente.
+- **Estado sempre visível**: Conectado · Última sincronização · Sincronizando · Atenção · Reconexão necessária · Fonte.
+- **Feedback do 1º dado** ("Seu primeiro dado chegou").
+- Hoje a fonte é o **"Dispositivo de demonstração"** (mock); **acender o Withings = trocar só o adapter**, sem mudar
+  a experiência — prova de *"toda integração é substituível"*.
+
+### Ativação do Withings (quando você fornecer as credenciais) — só isto muda
+1. Implementar `WithingsConnector` (getmeas → CanonicalSample) + `WithingsOAuthProvider` (OAuth2 + refresh).
+2. Registrá-los em `runtime.server.ts` (1 linha cada) + `client_id/secret` em env + URL de callback + segredo do webhook.
+Nenhuma rota, UI, persistência ou teste de arquitetura muda.
+
+---
+
 
 ## Objetivo (a transformação, provada de ponta a ponta)
 Provar que **toda a arquitetura de sincronização funciona**, com UM fluxo impecável: **conectar → autorizar →
