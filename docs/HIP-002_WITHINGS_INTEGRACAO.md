@@ -151,12 +151,11 @@ sync runs, on-open, NOV-001, telemetria, tela Conexões) é **reaproveitado sem 
   sensível. Avaliar **cifragem em repouso** (Supabase Vault/coluna cifrada) além de RLS service-role. Gate de
   Conformidade antes do `Done`.
 
-### Decisões de arquitetura a tomar antes de implementar
-- **D1 · Escopo de métricas inicial:** só **Composição Corporal** (peso/gordura/músculo…) — alinhado à superfície já
-  homologada na NOV-001 — **ou** já incluir **Sinais Vitais** (PA/FC → Monitoramento)? *Recomendo começar por
-  composição corporal e adicionar sinais como fast-follow.*
-- **D2 · Ambiente de homologação do OAuth real:** produção (domínio estável) vs alias fixo de Preview. *Recomendo um
-  domínio/alias estável para os testes reais.*
+### Decisões de arquitetura (D1/D2 DEFINIDAS pela fundadora 20/07)
+- **D1 · Escopo inicial = SÓ Composição Corporal** ✔ (peso/gordura/músculo…), alinhado à superfície homologada na
+  NOV-001. Sinais Vitais (PA/FC → Monitoramento) = **fast-follow** posterior (só amplia `meastypes`, sem retrabalho).
+- **D2 · Homologação do OAuth real = domínio ESTÁVEL de PRODUÇÃO** ✔ (callback whitelistado no domínio de produção,
+  atrás de feature protegida). URLs de Preview dinâmicas não servem para o whitelist do Withings.
 - **D3 · Webhook:** generalizar a rota por `provider.parseWebhook()` (recomendado, mantém vendor-neutral) vs específico.
 - **D4 · Refresh concorrente:** aceitar (graça 8 h) + monitorar vs single-flight lock já no início. *Recomendo aceitar
   e observar.*
