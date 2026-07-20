@@ -1,6 +1,20 @@
 # HIP-002 — Integração Withings (Fase 2 · captura automática real)
 
-**Status:** PLANO — aguardando aprovação da fundadora. Sob [[ADR-000]] · [[HIP-001]] (plataforma de integrações) · [[COMPLIANCE-001]].
+**Status:** APROVADO (20/07) — implementação dos Épicos 2.1–2.4 (independentes de credenciais) em curso; homologação
+(2.5) bloqueada até haver credenciais reais. Sob [[ADR-000]] · [[HIP-001]] (plataforma de integrações) · [[COMPLIANCE-001]].
+
+## Diretrizes de execução (fundadora, na aprovação)
+1. **Infra × integração separadas:** implementar agora tudo que não depende de credenciais (client, OAuth, webhook,
+   mapeamento canônico, testes, erros, refresh, sync incremental, observabilidade); homologação espera as credenciais.
+2. **Orientado a CAPACIDADE:** diante de "lógica específica do Withings" vs "fortalecer a infra genérica de conectores",
+   preferir SEMPRE a infra genérica — desde que não aumente a complexidade desnecessariamente (como na NOV-001).
+3. **Isolar o fornecedor:** toda adaptação que existe só porque a API do Withings funciona de certo jeito fica
+   **isolada no adaptador** (`src/lib/connectors/withings/`); o núcleo da SINTERA não incorpora particularidades dele.
+4. **Critério de conclusão (ciclo real completo):** autenticação · sync inicial · sync incremental · webhook ·
+   atualização automática · NOV-001 · Composição Corporal · erros · reconexão · **revogação de acesso** — todos
+   demonstrados com dados reais. Só então: homologado.
+5. **Próxima ação:** eu construo 2.1–2.4 (com fakes); a fundadora provê registro/plano/Callback URIs/credenciais/conta
+   e dispositivo; então partimos para a integração real e a homologação completa.
 **Processo:** Planejamento → **Aprovação** → Implementação → Validação (Preview) → Homologação → Encerramento.
 Nenhuma ação destrutiva/irreversível ou homologação sem aprovação explícita após validação no Preview
 ([[governanca_aprovacao_acao_destrutiva]]).

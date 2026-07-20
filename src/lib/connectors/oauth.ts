@@ -8,6 +8,12 @@ export interface TokenSet {
   refreshToken: string
   expiresAt: string
   scope: string | null
+  /**
+   * Id do usuário NA FONTE (capacidade GENÉRICA, não específica de fornecedor): provedores cujo webhook chega
+   * chaveado pelo id interno deles (ex.: Withings `userid`) usam isto para resolver o usuário da plataforma.
+   * Opcional — provedores que não precisam disso deixam ausente/nulo.
+   */
+  externalUserId?: string | null
 }
 
 /** Provedor OAuth de UMA fonte. Fronteira onde o mock troca pelo real sem afetar rotas/UI/persistência. */
