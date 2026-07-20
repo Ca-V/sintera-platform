@@ -12,8 +12,10 @@ import { systemClock, isSyncStale } from './orchestrator'
 import type { OAuthProvider } from './oauth'
 import type { Connector } from './registry'
 import { createMockWorld, createMockConnector, createMockOAuthProvider, MOCK_SOURCE, type MockWorld } from './mock'
+import type { WebhookHandler, WebhookSubscriber } from './webhook'
 import { createWithingsConnector } from './withings/connector'
 import { createWithingsOAuthProvider } from './withings/oauth'
+import { createWithingsWebhookHandler, createWithingsWebhookSubscriber } from './withings/webhook'
 import { WITHINGS_SOURCE } from './withings/config'
 
 // ── Conector(es) de demonstração ────────────────────────────────────────────────────────────────
@@ -32,6 +34,8 @@ const mockWorld: MockWorld = createMockWorld({
 // ── Conectores registrados ──────────────────────────────────────────────────────────────────────
 const connectors: Connector[] = [createMockConnector(mockWorld)]
 const oauthEntries: Array<[string, OAuthProvider]> = [[MOCK_SOURCE, createMockOAuthProvider(mockWorld, systemClock)]]
+const webhookHandlers = new Map<string, WebhookHandler>()
+const webhookSubscribers = new Map<string, WebhookSubscriber>()
 
 // Withings (HIP-002): registrado SÓ quando há credenciais (env). Sem elas, não expõe um card quebrado na UI.
 // Nenhuma particularidade do Withings mora aqui — só a composição (registrar o adaptador isolado).
@@ -41,10 +45,25 @@ if (withingsClientId && withingsClientSecret) {
   const withingsConfig = { clientId: withingsClientId, clientSecret: withingsClientSecret, redirectUri: process.env.WITHINGS_REDIRECT_URI || undefined }
   connectors.push(createWithingsConnector())
   oauthEntries.push([WITHINGS_SOURCE, createWithingsOAuthProvider(withingsConfig, { clock: systemClock })])
+  webhookHandlers.set(WITHINGS_SOURCE, createWithingsWebhookHandler())
+  webhookSubscribers.set(WITHINGS_SOURCE, createWithingsWebhookSubscriber())
 }
 
 const registry: ConnectorRegistry = createConnectorRegistry(connectors)
 const oauthProviders = new Map<string, OAuthProvider>(oauthEntries)
+
+export function getWebhookHandler(source: string): WebhookHandler | undefined {
+  return webhookHandlers.get(source)
+}
+export function getWebhookSubscriber(source: string): WebhookSubscriber | undefined {
+  return webhookSubscribers.get(source)
+}
+
+/** URL pública do webhook desta fonte. Prefere a base estável de produção (env), senão o origin da requisição. */
+export function connectorWebhookUrl(source: string, origin: string): string {
+  const base = process.env.CONNECTOR_PUBLIC_BASE_URL || origin
+  return new URL(`/api/connectors/${source}/webhook`, base).toString()
+}
 
 // ── Cliente service-role ─────────────────────────────────────────────────────────────────────────
 export function adminClient(): SupabaseClient {

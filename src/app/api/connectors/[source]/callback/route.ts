@@ -1,7 +1,7 @@
 // WEA-001 / HIP-001 — V2 Épico 2.3: callback OAuth — troca code por tokens, salva a conexão e dispara a 1ª sync.
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { adminClient, getOAuthProvider, getConnectionStore, getSyncService, logConnectorEvent } from '@/lib/connectors/runtime.server'
+import { adminClient, getOAuthProvider, getConnectionStore, getSyncService, logConnectorEvent, getWebhookSubscriber, connectorWebhookUrl } from '@/lib/connectors/runtime.server'
 
 const CONEXOES = '/dashboard/conexoes'
 
@@ -36,6 +36,15 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ sour
     const tokens = await oauth.exchangeCode(code, redirectUri)
     await getConnectionStore(admin).saveTokens(user.id, source, tokens)
     await logConnectorEvent(admin, user.id, 'connector_connected', { source })   // marco: conectou
+
+    // Webhook (best-effort): se o provider assina notificações, assina agora com a URL pública. Nunca quebra o connect
+    // (Preview sem URL pública estável simplesmente falha em silêncio; o on-open sync cobre a atualização).
+    const subscriber = getWebhookSubscriber(source)
+    if (subscriber) {
+      try { await subscriber.subscribe(tokens.accessToken, connectorWebhookUrl(source, req.nextUrl.origin)) }
+      catch (e) { console.warn(`[connector.callback] ${source}: assinatura de webhook falhou (ignorado): ${e instanceof Error ? e.message : e}`) }
+    }
+
     const outcome = await getSyncService(admin).sync(user.id, source) // 1ª sync imediata (o dado já aparece)
     if (outcome.status === 'ok' && outcome.recordsCount > 0) {
       // marco: 1º benefício percebido (o 1º dado automático chegou) — só a 1ª vez
