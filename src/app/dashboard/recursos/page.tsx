@@ -14,7 +14,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import {
   Loader2, Plus, X, ArrowLeft, Pencil, Trash2, Camera, Paperclip, Receipt,
-  Glasses, HeartPulse, Bone, Accessibility, Shirt, Package,
+  Glasses, HeartPulse, Bone, Accessibility, Shirt, Package, CalendarClock,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
@@ -117,6 +117,8 @@ export default function RecursosPage() {
   const { saveEvent } = useEventForm()
   const [expenses, setExpenses] = useState<HealthEvent[]>([])
   const [agendarResource, setAgendarResource] = useState<Resource | null>(null)
+  // FB-004 = financeiro (valor/NF) · FB-015-8 = lembrete de troca/manutenção recorrente. Mesmo AgendarModal.
+  const [agendarMode, setAgendarMode] = useState<'expense' | 'reminder'>('expense')
   const scanRef = useRef<HTMLInputElement>(null)
 
   const set = (k: keyof typeof EMPTY, v: string) => setF(s => ({ ...s, [k]: v }))
@@ -338,7 +340,9 @@ export default function RecursosPage() {
         chips={view === 'situacao' ? <CardChip tone="mauve">{tm?.label ?? 'Recurso'}</CardChip> : undefined}
         actions={
           <>
-            <button onClick={() => setAgendarResource(r)} title="Registrar valor pago / nota fiscal"
+            <button onClick={() => { setAgendarMode('reminder'); setAgendarResource(r) }} title="Programar troca / lembrete de manutenção"
+              className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-petal transition-colors"><CalendarClock size={12} /></button>
+            <button onClick={() => { setAgendarMode('expense'); setAgendarResource(r) }} title="Registrar valor pago / nota fiscal"
               className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-petal transition-colors"><Receipt size={12} /></button>
             <button onClick={() => startEdit(r)} title="Editar"
               className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-petal transition-colors"><Pencil size={12} /></button>
@@ -579,7 +583,9 @@ export default function RecursosPage() {
         onCancel={() => setConfirm(null)}
       />
 
-      {/* FB-004: valor pago + NF/recibo + recorrência do recurso, via fluxo financeiro único (FIN-001) */}
+      {/* Mesmo AgendarModal (infra única @/lib/agenda), dois modos vinculados ao recurso (EventLink 'resource'):
+          - expense (FB-004): valor pago + NF via fluxo financeiro (FIN-001);
+          - reminder (FB-015-8): lembrete de troca/manutenção recorrente (reusa o campo "Repetir" do modal). */}
       <AgendarModal
         open={!!agendarResource}
         onClose={() => setAgendarResource(null)}
@@ -589,10 +595,12 @@ export default function RecursosPage() {
           setAgendarResource(null)
           await load()
         }}
-        onGoToHistory={() => { window.location.href = '/dashboard/gastos' }}
-        defaultTitle={agendarResource?.name ?? 'Recurso'}
+        onGoToHistory={() => { window.location.href = agendarMode === 'reminder' ? '/dashboard/agenda' : '/dashboard/gastos' }}
+        defaultTitle={agendarMode === 'reminder' ? `Trocar/renovar: ${agendarResource?.name ?? ''}` : (agendarResource?.name ?? 'Recurso')}
         defaultNotes={`Referente ao recurso: ${agendarResource?.name ?? ''}`}
-        initialEvent={{ eventType: 'outro', status: 'realizado' }}
+        initialEvent={agendarMode === 'reminder'
+          ? { eventType: 'outro', status: 'planejado', ...(agendarResource?.untilDate ? { date: agendarResource.untilDate } : {}) }
+          : { eventType: 'outro', status: 'realizado' }}
       />
     </div>
   )
