@@ -52,6 +52,24 @@ export default function ConfiguracoesPage() {
   const [phone, setPhone]         = useState('')      // só o número (sem DDI)
   const [waLoading, setWaLoading] = useState(false)
   const [waSaved, setWaSaved]     = useState(false)
+  // FB-016-3 (re-validação) — e-mail EDITÁVEL (e-mail da conta; alteração exige confirmação por link).
+  const [email, setEmail]           = useState('')
+  const [emailLoading, setEmailLoading] = useState(false)
+  const [emailSent, setEmailSent]   = useState(false)
+  const [emailError, setEmailError] = useState<string | null>(null)
+
+  useEffect(() => { if (user?.email) setEmail(user.email) }, [user])
+
+  async function saveEmail() {
+    if (!user || emailLoading) return
+    const next = email.trim()
+    if (!next || next === user.email) return
+    setEmailLoading(true); setEmailSent(false); setEmailError(null)
+    const { error } = await supabase.auth.updateUser({ email: next })
+    setEmailLoading(false)
+    if (error) { setEmailError(error.message); return }
+    setEmailSent(true)   // Supabase envia link de confirmação ao novo e-mail; só vale após confirmar.
+  }
 
   useEffect(() => {
     if (!user) return
@@ -178,17 +196,6 @@ export default function ConfiguracoesPage() {
           <h2 className="font-body text-sm font-semibold text-onyx">Conta</h2>
         </div>
 
-        {/* E-mail */}
-        <div className="flex items-center justify-between py-3 border-b border-border/50">
-          <div>
-            <p className="font-body text-sm text-onyx">E-mail</p>
-            <p className="font-body text-xs text-mauve mt-0.5">{user?.email ?? '—'}</p>
-          </div>
-          <span className="font-body text-xs text-mauve bg-ivory px-2.5 py-1 rounded-full border border-border">
-            Verificado
-          </span>
-        </div>
-
         {/* Alterar senha */}
         <div className="flex items-center justify-between py-3">
           <div>
@@ -224,10 +231,23 @@ export default function ConfiguracoesPage() {
           {' '}(e-mail, WhatsApp, ambos ou nenhum) é definido na <strong>Central de Notificações</strong>, abaixo.
         </p>
 
-        {/* E-mail (do cadastro) */}
+        {/* E-mail (da conta) — editável, com confirmação */}
         <div className="py-2 border-b border-border/50">
-          <p className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">E-mail</p>
-          <p className="font-body text-sm text-onyx mt-1">{user?.email ?? '—'}</p>
+          <label htmlFor="config-email" className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">E-mail</label>
+          <div className="mt-1 flex items-stretch gap-2">
+            <input id="config-email" type="email" value={email} onChange={e => { setEmail(e.target.value); setEmailSent(false); setEmailError(null) }}
+              placeholder="voce@email.com"
+              className="flex-1 min-w-0 px-3 py-2.5 border border-border rounded-xl font-body text-sm text-onyx bg-ivory placeholder:text-mauve/40 focus:outline-none focus:ring-1 focus:ring-petal/30" />
+            <button onClick={saveEmail} disabled={emailLoading || !email.trim() || email.trim() === user?.email}
+              className="px-4 py-2.5 rounded-xl border border-petal-light bg-blush text-petal-dark font-body text-sm font-medium disabled:opacity-40 hover:bg-petal-light transition-colors">
+              {emailLoading ? '…' : 'Alterar'}
+            </button>
+          </div>
+          {emailSent
+            ? <p className="font-body text-[11px] text-petal mt-1 flex items-center gap-1"><Check size={12} /> Enviamos um link de confirmação ao novo e-mail. A alteração vale após você confirmar.</p>
+            : emailError
+              ? <p className="font-body text-[11px] text-red-500 mt-1">{emailError}</p>
+              : <p className="font-body text-[11px] text-mauve mt-1">É o e-mail da sua conta. Alterá-lo pede confirmação por link no novo endereço.</p>}
         </div>
 
         {/* WhatsApp (com código do país) */}
