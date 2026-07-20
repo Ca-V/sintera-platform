@@ -141,6 +141,47 @@ Ainda não medidos em produção, mas **definidos e instrumentáveis** desde já
   segundos (Aha imediato). **Risco gerenciável (não bloqueia):** conta de parceiro exige aprovação para escala; webhook
   requer endpoint HTTPS público (temos). Núcleo permanece vendor-neutral — Withings é a 1ª implementação, não acoplamento.
 
-## Próximo passo
-Decompor o **Épico 1 — Fundação HIP-001** em subitens verificáveis (cada um TSC + suíte + build verdes + commit) e
-iniciar a implementação.
+## Estado apurado da fundação (evita reconstruir — product-first)
+**A fundação do HIP-001 já está parcialmente construída.** Reúso, não reconstrução:
+- **Núcleo puro e testado** — `src/lib/connectors/connector.ts` (vendor+domain-neutral): `ConnectorDescriptor`,
+  `CanonicalSample` (contrato de saída), `SampleProvenance`, `SyncRun`, `reconcileSamples`/`dedupWithinSource`, chave de
+  idempotência `metric|recordedAt|source`. Teste `tests/connectors/FUNC-connector-reconcile.test.ts`.
+- **3 tabelas já criadas** (migrações 025 + 120): `wearable_connections` (autorizações/tokens — RLS **sem política** =
+  só service-role), `wearable_readings` (série bruta + `external_id`/`connector_version` p/ idempotência),
+  `connector_sync_runs` (histórico auditável). *Inertes até a implementação do fluxo.*
+- **`body_metrics` já tem proveniência** (`source` text + `exam_id` FK); Monitoramento e Composição (V1) já reconhecem
+  `source='wearable'` (mapas `SOURCE_QUALITY`/`SOURCE_MARKER`). As métricas Withings (peso, gordura, massa magra/
+  muscular/óssea, água) **já estão no CHECK** de `body_metrics.metric` — sem ALTER necessário aqui.
+- **Segredos** = env (`client_id`/`client_secret`) + tokens de usuário em `wearable_connections` via **service-role**.
+- **UCDA** = `src/lib/capture/ucda.ts` (contrato canônico de evidência, backend `clinical_results`).
+
+## ⚠️ DECISÃO DE ARQUITETURA — onde a proveniência do conector é gravada (2 stores paralelos)
+Há **dois** stores hoje: `wearable_readings` (nativo do conector: `external_id`+`connector_version`, idempotente por
+usuário·provider·métrica·instante) e `body_metrics` (visualização BOD-001: `source`+`exam_id`, lido por Composição/
+Monitoramento). **Recomendação (convergência progressiva):**
+- **`wearable_readings` = SSOT bruto/auditável** do que o conector ingeriu (rastreio + reprocessamento + idempotência).
+- **`body_metrics` = projeção de exibição** — do `CanonicalSample` projeta-se um ponto com `source='wearable'` (mesmo
+  padrão de `bioimpedance-body-metrics.ts`), aparecendo **na hora** na Composição/Monitoramento da V1.
+- **UCDA agora?** O núcleo já é vendor-neutral (`CanonicalSample` nunca vaza payload). **Cunhar itens UCDA/`clinical_
+  results` para séries de wearable fica para a convergência** (V3+); forçar streams contínuos no contrato documental
+  seria abstração antecipada. HIP-001 §2 permanece honrado pelo `CanonicalSample` como contrato do núcleo.
+> *Requer seu aval antes do subitem 1.3.*
+
+## Épico 1 — Fundação HIP-001 (subitens verificáveis; cada um TSC + suíte + build verdes + commit)
+- **1.1 — Reconciliação de esquema + segurança (migração aditiva):** `+ 'withings'` no CHECK de
+  `wearable_connections.provider`; **política service-role-only** explícita em `wearable_connections` + **view de status
+  sem tokens** (débito de SEC já sinalizado no WEA-001 §7). Sem tocar em dados. **Critério:** migração aplica; view expõe
+  status sem segredo; verdes.
+- **1.2 — Registro de conectores (vendor-neutral):** `connectorRegistry` que lista `ConnectorDescriptor` e o núcleo
+  itera sobre ele (nunca conhece fabricante). Lib pura + teste `FUNC`. **Critério:** registrar/consultar um descriptor
+  sem acoplamento; teste verde.
+- **1.3 — Contrato de propagação `CanonicalSample → persistência`** *(carrega a decisão acima):* funções puras +
+  helper de persistência: grava bruto em `wearable_readings` (idempotente via `reconcileSamples`) e **projeta** em
+  `body_metrics` (`source='wearable'`, mapeamento de métrica). Teste `FUNC` de mapeamento + idempotência (rodar 2× =
+  mesmo resultado). **Critério:** amostra vira leitura bruta **e** ponto de composição, com proveniência; 2× = idêntico.
+- **1.4 — Orquestrador de sync (vendor-neutral):** recebe um conector (interface), executa buscar→dedup/reconciliar→
+  persistir→**registrar `connector_sync_runs`** (fonte·janela·status·nº·erro·últ. sucesso). Sem conhecer Withings.
+  **Critério:** um sync fake ponta-a-ponta grava histórico idempotente; verdes.
+
+Ao fim do Épico 1 a fundação está pronta e **plugar a Withings (Épico 2) vira quase repetição**: adapter OAuth2+REST →
+`CanonicalSample`, rotas de callback/sync, tela de consentimento e Painel/estado visível.
