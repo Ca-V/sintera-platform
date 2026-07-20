@@ -74,6 +74,20 @@ export default function AgendaPage() {
 
   const reload = () => setReloadKey(k => k + 1)
 
+  // Hub "Adicionar Registro": intenções tipo "Consulta" chegam com ?novo=<tipo> e ABREM direto o formulário
+  // de novo agendamento (não a lista). Reaproveita o prefill do AgendarModal. A URL é limpa para não reabrir.
+  useEffect(() => {
+    const novo = new URLSearchParams(window.location.search).get('novo')
+    if (!novo) return
+    const valid = new Set<AgendaEventInput['eventType']>(['consulta', 'exame', 'procedimento', 'vacina', 'plano', 'outro'])
+    if (valid.has(novo as AgendaEventInput['eventType'])) {
+      setEditing(null)
+      setPrefill({ eventType: novo as AgendaEventInput['eventType'] })
+      setModalOpen(true)
+    }
+    router.replace('/dashboard/agenda')
+  }, [router])
+
   // Concluir tem consequência (sai da Agenda → Histórico, e Gastos se tiver valor).
   // Pede confirmação explicativa antes — reversível depois via "Reabrir".
   function onComplete(ev: HealthEvent) {
