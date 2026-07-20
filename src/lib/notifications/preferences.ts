@@ -35,7 +35,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   { key: 'suplemento',   label: 'Suplementos' },
   { key: 'dispositivo',  label: 'Dispositivos' },              // CTC-001 — troca de DIU/implante, CPAP, CGM… (por AÇÃO)
   { key: 'planejamento', label: 'Planejamento' },              // CTC-001 — ações futuras planejadas (por AÇÃO)
-  { key: 'avaliacao',    label: 'Avaliações corporais' },
+  { key: 'avaliacao',    label: 'Composição Corporal' },       // FB-016-4 — nomenclatura idêntica à Sidebar
   { key: 'outro',        label: 'Outros eventos assistenciais' },
 ]
 
