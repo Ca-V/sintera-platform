@@ -26,6 +26,7 @@ function fakeRepo(initial?: ConnectionRow) {
     async read(u, p) { return rows.get(`${u}|${p}`) ?? null },
     async upsert(row) { rows.set(`${row.userId}|${row.provider}`, row) },
     async setStatus(u, p, status) { const r = rows.get(`${u}|${p}`); if (r) rows.set(`${u}|${p}`, { ...r, status }) },
+    async findByExternalId(provider, extId) { for (const r of rows.values()) if (r.provider === provider && r.externalUserId === extId) return { userId: r.userId }; return null },
   }
   return { repo, rows }
 }
@@ -41,7 +42,7 @@ const oauth = (impl?: Partial<OAuthProvider>): OAuthProvider => ({
 
 const row = (over: Partial<ConnectionRow> = {}): ConnectionRow => ({
   userId: 'u1', provider: 'mock', accessToken: 'a1', refreshToken: 'r1',
-  expiresAt: '2026-07-20T13:00:00Z', scope: null, status: 'connected', ...over,
+  expiresAt: '2026-07-20T13:00:00Z', scope: null, status: 'connected', externalUserId: null, ...over,
 })
 
 describe('connections · ConnectionStore', () => {

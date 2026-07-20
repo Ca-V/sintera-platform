@@ -12,12 +12,14 @@ interface DbRow {
   expires_at: string | null
   scope: string | null
   status: ConnectionStatus
+  external_user_id: string | null
 }
 
 const toRow = (r: DbRow): ConnectionRow => ({
   userId: r.user_id, provider: r.provider,
   accessToken: r.access_token, refreshToken: r.refresh_token,
   expiresAt: r.expires_at, scope: r.scope, status: r.status,
+  externalUserId: r.external_user_id ?? null,
 })
 
 export function createSupabaseConnectionRepo(supabase: SupabaseClient): ConnectionRepo {
@@ -25,7 +27,7 @@ export function createSupabaseConnectionRepo(supabase: SupabaseClient): Connecti
     async read(userId, provider) {
       const { data, error } = await supabase
         .from('wearable_connections')
-        .select('user_id, provider, access_token, refresh_token, expires_at, scope, status')
+        .select('user_id, provider, access_token, refresh_token, expires_at, scope, status, external_user_id')
         .eq('user_id', userId)
         .eq('provider', provider)
         .maybeSingle()
@@ -42,9 +44,21 @@ export function createSupabaseConnectionRepo(supabase: SupabaseClient): Connecti
         expires_at: row.expiresAt,
         scope: row.scope,
         status: row.status,
+        external_user_id: row.externalUserId,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'user_id,provider' })
       if (error) throw new Error(`connection.upsert: ${error.message}`)
+    },
+
+    async findByExternalId(provider, externalUserId) {
+      const { data, error } = await supabase
+        .from('wearable_connections')
+        .select('user_id')
+        .eq('provider', provider)
+        .eq('external_user_id', externalUserId)
+        .maybeSingle()
+      if (error) throw new Error(`connection.findByExternalId: ${error.message}`)
+      return data ? { userId: (data as { user_id: string }).user_id } : null
     },
 
     async setStatus(userId, provider, status) {

@@ -19,6 +19,8 @@ export interface ConnectionRow {
   expiresAt: string | null
   scope: string | null
   status: ConnectionStatus
+  /** Id do usuário NA FONTE (genérico) — resolve webhooks chaveados pelo id interno do provedor. */
+  externalUserId: string | null
 }
 
 /** Estado SEM tokens — seguro para expor (base do "estado visível"). */
@@ -35,6 +37,8 @@ export interface ConnectionRepo {
   read(userId: string, provider: string): Promise<ConnectionRow | null>
   upsert(row: ConnectionRow): Promise<void>
   setStatus(userId: string, provider: string, status: ConnectionStatus): Promise<void>
+  /** Resolve o usuário da plataforma a partir do id na fonte (genérico; para webhooks). Sem tokens. */
+  findByExternalId(provider: string, externalUserId: string): Promise<{ userId: string } | null>
 }
 
 /** Erro tipado: o usuário precisa reconectar (refresh falhou/inexistente/revogado). */
@@ -58,6 +62,8 @@ export interface ConnectionStore {
    * além da string de acesso.
    */
   resolveAccessToken(userId: string, provider: string, oauth: OAuthProvider): Promise<string>
+  /** Genérico: resolve o usuário da plataforma a partir do id na fonte (para webhooks). Sem tokens. */
+  resolveUserByExternalId(provider: string, externalUserId: string): Promise<string | null>
 }
 
 export function createConnectionStore(repo: ConnectionRepo, clock: Clock): ConnectionStore {
@@ -70,6 +76,7 @@ export function createConnectionStore(repo: ConnectionRepo, clock: Clock): Conne
         expiresAt: tokens.expiresAt,
         scope: tokens.scope,
         status: 'connected',
+        externalUserId: tokens.externalUserId ?? null,
       })
     },
 
@@ -106,8 +113,15 @@ export function createConnectionStore(repo: ConnectionRepo, clock: Clock): Conne
         expiresAt: renewed.expiresAt,
         scope: renewed.scope,
         status: 'connected',
+        // preserva o id na fonte se o refresh não o retornar (rotação não deve perder o mapeamento do webhook)
+        externalUserId: renewed.externalUserId ?? row.externalUserId,
       })
       return renewed.accessToken
+    },
+
+    async resolveUserByExternalId(provider, externalUserId) {
+      const found = await repo.findByExternalId(provider, externalUserId)
+      return found?.userId ?? null
     },
   }
 }

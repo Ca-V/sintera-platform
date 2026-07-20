@@ -16,12 +16,13 @@ function harness(opts: { world: ReturnType<typeof createMockWorld>; connRow?: Co
   const oauth = createMockOAuthProvider(opts.world, clock)
 
   const rows = new Map<string, ConnectionRow>()
-  const base: ConnectionRow = opts.connRow ?? { userId: 'u1', provider: MOCK_SOURCE, accessToken: 'tok', refreshToken: 'r', expiresAt: '2026-07-20T13:00:00Z', scope: 'body', status: 'connected' }
+  const base: ConnectionRow = opts.connRow ?? { userId: 'u1', provider: MOCK_SOURCE, accessToken: 'tok', refreshToken: 'r', expiresAt: '2026-07-20T13:00:00Z', scope: 'body', status: 'connected', externalUserId: null }
   rows.set(`u1|${MOCK_SOURCE}`, base)
   const repo: ConnectionRepo = {
     async read(u, p) { return rows.get(`${u}|${p}`) ?? null },
     async upsert(row) { rows.set(`${row.userId}|${row.provider}`, row) },
     async setStatus(u, p, s) { const r = rows.get(`${u}|${p}`); if (r) rows.set(`${u}|${p}`, { ...r, status: s }) },
+    async findByExternalId(provider, extId) { for (const r of rows.values()) if (r.provider === provider && r.externalUserId === extId) return { userId: r.userId }; return null },
   }
   const connections = createConnectionStore(repo, clock)
 
@@ -64,7 +65,7 @@ describe('SyncService', () => {
 
   it('reconexão necessária: run de erro, sem buscar dados', async () => {
     const world = createMockWorld({ refreshFails: true, measurements: [meas(81, '2026-07-18T08:00:00Z', 'w1')] })
-    const { svc, readings, runs } = harness({ world, connRow: { userId: 'u1', provider: MOCK_SOURCE, accessToken: 'old', refreshToken: 'r', expiresAt: '2026-07-20T11:00:00Z', scope: 'body', status: 'connected' } })
+    const { svc, readings, runs } = harness({ world, connRow: { userId: 'u1', provider: MOCK_SOURCE, accessToken: 'old', refreshToken: 'r', expiresAt: '2026-07-20T11:00:00Z', scope: 'body', status: 'connected', externalUserId: null } })
     const out = await svc.sync('u1', MOCK_SOURCE)
     expect(out.status).toBe('error')
     expect(readings.size).toBe(0)

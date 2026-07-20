@@ -10,7 +10,11 @@ import { createSupabasePersistClient, createSupabaseSyncRecorder, createSupabase
 import { createSyncService, type SyncService } from './syncService'
 import { systemClock, isSyncStale } from './orchestrator'
 import type { OAuthProvider } from './oauth'
+import type { Connector } from './registry'
 import { createMockWorld, createMockConnector, createMockOAuthProvider, MOCK_SOURCE, type MockWorld } from './mock'
+import { createWithingsConnector } from './withings/connector'
+import { createWithingsOAuthProvider } from './withings/oauth'
+import { WITHINGS_SOURCE } from './withings/config'
 
 // ── Conector(es) de demonstração ────────────────────────────────────────────────────────────────
 // Mundo do mock: alguns pontos fixos de composição + uma SÉRIE DIÁRIA de peso que cresce até "agora"
@@ -25,8 +29,22 @@ const mockWorld: MockWorld = createMockWorld({
   ],
 })
 
-const registry: ConnectorRegistry = createConnectorRegistry([createMockConnector(mockWorld)])
-const oauthProviders = new Map<string, OAuthProvider>([[MOCK_SOURCE, createMockOAuthProvider(mockWorld, systemClock)]])
+// ── Conectores registrados ──────────────────────────────────────────────────────────────────────
+const connectors: Connector[] = [createMockConnector(mockWorld)]
+const oauthEntries: Array<[string, OAuthProvider]> = [[MOCK_SOURCE, createMockOAuthProvider(mockWorld, systemClock)]]
+
+// Withings (HIP-002): registrado SÓ quando há credenciais (env). Sem elas, não expõe um card quebrado na UI.
+// Nenhuma particularidade do Withings mora aqui — só a composição (registrar o adaptador isolado).
+const withingsClientId = process.env.WITHINGS_CLIENT_ID
+const withingsClientSecret = process.env.WITHINGS_CLIENT_SECRET
+if (withingsClientId && withingsClientSecret) {
+  const withingsConfig = { clientId: withingsClientId, clientSecret: withingsClientSecret, redirectUri: process.env.WITHINGS_REDIRECT_URI || undefined }
+  connectors.push(createWithingsConnector())
+  oauthEntries.push([WITHINGS_SOURCE, createWithingsOAuthProvider(withingsConfig, { clock: systemClock })])
+}
+
+const registry: ConnectorRegistry = createConnectorRegistry(connectors)
+const oauthProviders = new Map<string, OAuthProvider>(oauthEntries)
 
 // ── Cliente service-role ─────────────────────────────────────────────────────────────────────────
 export function adminClient(): SupabaseClient {

@@ -88,11 +88,12 @@ describe('mock comportamental · OAuth/token', () => {
     const oauth = createMockOAuthProvider(world, clock)
     await expect(oauth.refresh('r')).rejects.toThrow()
     // integra com o store: token expirado + refresh falho → expired
-    const rows = new Map<string, ConnectionRow>([['u1|mock_demo', { userId: 'u1', provider: 'mock_demo', accessToken: 'old', refreshToken: 'r', expiresAt: '2026-07-20T11:00:00Z', scope: 'body', status: 'connected' }]])
+    const rows = new Map<string, ConnectionRow>([['u1|mock_demo', { userId: 'u1', provider: 'mock_demo', accessToken: 'old', refreshToken: 'r', expiresAt: '2026-07-20T11:00:00Z', scope: 'body', status: 'connected', externalUserId: null }]])
     const repo: ConnectionRepo = {
       async read(u, p) { return rows.get(`${u}|${p}`) ?? null },
       async upsert(row) { rows.set(`${row.userId}|${row.provider}`, row) },
       async setStatus(u, p, s) { const r = rows.get(`${u}|${p}`); if (r) rows.set(`${u}|${p}`, { ...r, status: s }) },
+      async findByExternalId(provider, extId) { for (const r of rows.values()) if (r.provider === provider && r.externalUserId === extId) return { userId: r.userId }; return null },
     }
     const store = createConnectionStore(repo, clock)
     await expect(store.resolveAccessToken('u1', 'mock_demo', oauth)).rejects.toThrow()

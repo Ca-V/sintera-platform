@@ -24,6 +24,7 @@ function e2e(seed: MockMeasurement[] = [], daily?: { startDate: string; startWei
     async read(u, p) { return rows.get(`${u}|${p}`) ?? null },
     async upsert(row) { rows.set(`${row.userId}|${row.provider}`, row) },
     async setStatus(u, p, s) { const r = rows.get(`${u}|${p}`); if (r) rows.set(`${u}|${p}`, { ...r, status: s }) },
+    async findByExternalId(provider, extId) { for (const r of rows.values()) if (r.provider === provider && r.externalUserId === extId) return { userId: r.userId }; return null },
   }
   const connections = createConnectionStore(repo, clock)
 
