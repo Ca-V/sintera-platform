@@ -2,9 +2,11 @@
 
 **Objetivo:** definir a **direção da cor primária** (não os tokens finais) por avaliação visual — 5 direções inspiradas
 em _Almond Blossom_. **Escopo:** só a **primária**; neutros quentes e verde-acinzentado (secundária) vêm do [[BRAND-001]].
-**Status:** Approved (DIREÇÃO) · **Architectural Baseline** · **Versão:** 1.2 · **Histórico:** v1.0 estudo 5 direções;
+**Status:** Approved (DIREÇÃO) · **Architectural Baseline** · **Versão:** 1.4 · **Histórico:** v1.0 estudo 5 direções;
 v1.1 direção **A·E aprovada** + comparativo + teste denso + 7 princípios; v1.2 (2026-07-20) Baseline + tom predominante
-**claro (entre a 3ª e a 4ª etapa da rampa, ~p-250)** + web migra para A·E (paleta atual descontinuada).
+claro; v1.3 (2026-07-20) refino em telas densas; v1.4 (2026-07-20) **tom-âncora fechado = `#4D8C9D`** (azulado, ~193°,
+entre a 5ª e a 6ª etapa) como **piso escuro** dos preenchimentos, **texto branco**; **tints claros puxam para o verde** —
+rampa com **gradiente de matiz verde (claros) → azul (âncora)**.
 **Dependências:** [[BRAND-001]] · [[adr_010_identidade_visual_unica|ADR-010]]. **Impacto:** a direção A·E gera os tokens
 50–900 do Design System (Passo 3B).
 
@@ -19,10 +21,17 @@ v1.1 direção **A·E aprovada** + comparativo + teste denso + 7 princípios; v1
 2. **A primária NÃO domina a interface** — usada em **ações principais · gráficos · elementos ativos · destaques ·
    navegação ativa**; evitar grandes áreas preenchidas com a cor institucional. A identidade nasce do **equilíbrio**
    (espaço · tipografia · neutros · contraste · cor).
-   - **Tom predominante CLARO:** quando a primária aparece (nós da Timeline, gráficos, elementos decorativos), o tom
-     predominante é **claro — entre a 3ª e a 4ª etapa da rampa (entre p-200 e p-300, ~p-250)**, um turquesa sereno, não
-     os escuros. Os tons escuros (p-600+) ficam **só** onde há necessidade de contraste: **texto e ações** (ex.: botão/CTA
-     com texto branco). Isso mantém a leveza sem perder legibilidade.
+   - **Tom-âncora = `#4D8C9D` (azulado, ~193°, entre a 5ª e a 6ª etapa) = piso escuro dos preenchimentos.** Os elementos
+     preenchidos com a primária — **botões/CTA, aba/item ativo da Sidebar, nós de evento da Timeline, pico dos gráficos,
+     marcador de Informação** — usam a **âncora `#4D8C9D`** com **texto branco**. **Nenhum preenchimento institucional é
+     mais escuro que a âncora** (o verde escuro `p-600+` sai de uso como fill; permanece só em texto/detalhe que exija
+     contraste).
+   - **Gradiente de matiz — claros puxam para o VERDE, escuros para o AZUL.** Os **fundos/tints mais claros** (fundo de
+     gráfico, chips, anéis dos nós, superfícies de apoio) têm matiz **mais verde** (~165–180°), **não** azul; à medida que
+     escurece em direção à âncora, o matiz **inclina para o azul** (~193°). Assim a rampa espelha a obra — **áreas leves
+     esverdeadas, áreas profundas azuladas**. Referência do tema claro: `#ECF6F3 · #D8ECE7 · #B8DBD4 · #A5D0C9 · #8DC3BF ·
+     #73B3B5 · #579DA8 · #4D8C9D (âncora)`. O **modo escuro** replica o mesmo gradiente verde→azul, a ser afinado nos
+     tokens definitivos (Passo 3B).
 3. **Neutros em primeiro lugar** — inspirados nas flores (off-white · ivory · warm white · cinzas quentes muito suaves);
    **evitar branco puro predominante**. Os neutros impactam a percepção premium **mais** que a primária.
 4. **Semântica clara** (não reusar a institucional para tudo): **Informação → primária Almond · Sucesso → verde sálvia
@@ -34,7 +43,7 @@ v1.1 direção **A·E aprovada** + comparativo + teste denso + 7 princípios; v1
 ## Teste em telas densas (A·E)
 A Home é sempre a tela mais favorável; o teste real é a densidade. Specimen com A·E aplicada a **Timeline (muitos
 eventos) · laboratório completo · histórico longitudinal · Agenda · Perfil · Login**, com toggle de tipografia (Hanken ×
-Atkinson) e claro/escuro: **→ https://claude.ai/code/artifact/e4b6b834-3367-4a04-98da-4c206beedc8f**
+Atkinson) e claro/escuro: **→ https://claude.ai/code/artifact/e0a0fd6b-cc6e-4f0f-a2cd-0f152e545b15**
 
 ## Contexto
 A cor usada no primeiro specimen (BRAND-002) estava **errada** — um teal escuro puxado para verde-petróleo, próximo do
