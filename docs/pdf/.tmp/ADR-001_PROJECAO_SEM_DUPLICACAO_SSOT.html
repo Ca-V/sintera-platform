@@ -1,0 +1,62 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><style>
+  @page { margin: 20mm 18mm; }
+  :root { --ink:#1a1a1a; --muted:#555; --rule:#dcdcdc; --accent:#0f766e; --code-bg:#f5f5f4; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--ink);
+    font-size: 10.5pt; line-height: 1.5; max-width: 100%; }
+  h1 { font-size: 20pt; border-bottom: 2px solid var(--accent); padding-bottom: 6px; }
+  h2 { font-size: 14pt; margin-top: 1.4em; border-bottom: 1px solid var(--rule); padding-bottom: 3px; }
+  h3 { font-size: 11.5pt; color:#333; }
+  a { color: var(--accent); text-decoration: none; }
+  code { background: var(--code-bg); padding: 1px 4px; border-radius: 3px; font-size: 9.5pt;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+  pre { background: var(--code-bg); padding: 10px 12px; border-radius: 6px; overflow-x: auto; font-size: 9pt; }
+  pre code { background: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 9.5pt; }
+  th, td { border: 1px solid var(--rule); padding: 5px 8px; text-align: left; vertical-align: top; }
+  th { background: #f0f5f4; }
+  blockquote { border-left: 3px solid var(--accent); margin: 0.6em 0; padding: 2px 12px; color: var(--muted); }
+  hr { border: none; border-top: 1px solid var(--rule); margin: 1.4em 0; }
+  .footer { margin-top: 24px; padding-top: 8px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 8pt; }
+</style></head><body><h1>ADR-001 — Projeção sem duplicação + Ponto único de edição (SSOT)</h1>
+<p><strong>Status:</strong> ✅ Aceito (18/07/2026) · Referencia ADR-000 · Reutilizável em TODA a plataforma.
+<strong>Origem:</strong> consolidado a partir de FIN-001 (Despesas projeta exames), BOD-001 (Composição Corporal projeta
+indicadores), BOD-001 ⑤ (Marcos projetam eventos) e CTC-001 (Medicamentos/Timeline projetam contracepção).</p>
+<h2>Contexto</h2>
+<p>A mesma informação de saúde é útil em <strong>vários contextos</strong> (Medicamentos, Registros de Saúde/Timeline, Relatório,
+Painel Inicial, Composição Corporal, Rede de Cuidado…). A tentação é <strong>copiar</strong> o registro para cada tela — o que
+gera <strong>duplicação</strong>, divergência e dupla edição. A SINTERA é orientada a <strong>domínios</strong>, e a governança exige um dado
+<strong>rastreável</strong> e <strong>consistente</strong>.</p>
+<h2>Decisão</h2>
+<ol>
+<li><strong>Propriedade de domínio.</strong> Cada <strong>domínio é DONO dos seus fatos</strong>. (Ex.: a contracepção pertence ao Ciclo; o
+exame ao Histórico de Exames; a despesa nasce do fato que a originou.)</li>
+<li><strong>Projeção/referência, nunca duplicação.</strong> Outros módulos <strong>apresentam</strong> a informação por <strong>projeção</strong> (leitura
+derivada) ou <strong>referência</strong> (link ao fato) — <strong>nunca criam um segundo registro</strong> nem assumem a propriedade.</li>
+<li><strong>SSOT + ponto único de edição.</strong> *As interfaces da SINTERA podem apresentar uma mesma informação em diferentes
+contextos, porém sempre preservando um <strong>único ponto de edição</strong> e uma <strong>única fonte de verdade (SSOT)</strong>.* Em
+termos práticos: <strong>Medicamentos mostra · Timeline mostra · Relatório mostra · Painel mostra · Rede de Cuidado
+mostra — mas existe apenas UM local onde aquela informação pode ser alterada</strong> (o domínio dono).</li>
+<li><strong>Rastreabilidade.</strong> Toda projeção/referência <strong>preserva a origem</strong> (link ao fato/documento). Nada fica &quot;solto&quot;.</li>
+<li><strong>Evidência de propriedade na UI.</strong> Quando um módulo projeta um fato de outro domínio, a interface deve deixar
+<strong>claro onde editar</strong> (ex.: contraceptivo em Medicamentos exibe &quot;Gerenciado no Ciclo&quot;).</li>
+</ol>
+<h2>Consequências</h2>
+<ul>
+<li><strong>Positivas:</strong> sem duplicação nem divergência; edição num só lugar; rastreabilidade; domínios coesos; telas
+compõem-se por leitura. Reduz erro do usuário (editar no lugar errado).</li>
+<li><strong>Custos:</strong> cada tela consumidora precisa saber <strong>projetar</strong> (query de leitura + link à fonte) e <strong>rotular</strong> a
+origem; mudanças no fato exigem que as projeções reflitam (por leitura, não por cópia).</li>
+</ul>
+<h2>Aplicações já no código (referência)</h2>
+<ul>
+<li><strong>Despesas</strong> projeta exames-com-valor + eventos (FIN-001).</li>
+<li><strong>Composição Corporal</strong> projeta indicadores de <code>body_metrics</code> de várias origens (BOD-001).</li>
+<li><strong>Marcos da Evolução</strong> projetam medicamentos/avaliações/consultas (BOD-001 ⑤).</li>
+<li><strong>Medicamentos</strong> e <strong>Timeline</strong> projetam a <strong>contracepção</strong> hormonal/dispositivo (CTC-001).</li>
+</ul>
+<h2>Governança</h2>
+<p>Precedência ADR-000 &gt; ADR-001. <strong>Invariante:</strong> um fato = um registro no seu domínio dono; consumidores projetam/
+referenciam, com origem preservada e um único ponto de edição. Violação = duplicação (proibida). Mudança = revisão
+explícita.</p>
+<div class="footer">SINTERA — documento oficial (PDF gerado do Markdown canônico ADR-001_PROJECAO_SEM_DUPLICACAO_SSOT.md). Fonte de verdade: Git.</div></body></html>

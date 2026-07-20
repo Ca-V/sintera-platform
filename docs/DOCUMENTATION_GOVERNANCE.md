@@ -36,6 +36,14 @@ o **impacto** de qualquer alteração.
 [[PROJECT_STATUS]] mantém a **visão executiva viva** (arquitetura, implementação, documentação, integrações, módulos,
 riscos, decisões pendentes, próximos marcos). Sempre atualizado.
 
-## 7. Manutenção
+## 7. Markdown canônico + PDF oficial (diretriz permanente)
+**Todo documento `Approved` ou `Frozen` gera também um PDF**, preservando a **mesma versão** do Markdown.
+- **Markdown (.md)** = documento **canônico** e vivo, versionado no Git (fonte da verdade).
+- **PDF** = versão **oficial** para distribuição, revisão executiva e arquivamento (sócios/investidores/parceiros/
+  consultores), sem depender do repositório.
+- Geração: `npm run docs:pdf` (script `scripts/docs-to-pdf.mjs`, Markdown → HTML → PDF via Chrome). PDFs em `docs/pdf/`.
+- Ao promover um doc a Approved/Frozen ou alterar sua versão: **regenerar o PDF** correspondente.
+
+## 8. Manutenção
 Ao criar/alterar documento: atualizar o [[MASTER_DOCUMENT_INDEX]] (nome/finalidade/versão/status/relações), o histórico
 de versões do próprio doc e — se estrutural — abrir ADR. Nenhum documento oficial existe fora do índice.

@@ -1,0 +1,296 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><style>
+  @page { margin: 20mm 18mm; }
+  :root { --ink:#1a1a1a; --muted:#555; --rule:#dcdcdc; --accent:#0f766e; --code-bg:#f5f5f4; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--ink);
+    font-size: 10.5pt; line-height: 1.5; max-width: 100%; }
+  h1 { font-size: 20pt; border-bottom: 2px solid var(--accent); padding-bottom: 6px; }
+  h2 { font-size: 14pt; margin-top: 1.4em; border-bottom: 1px solid var(--rule); padding-bottom: 3px; }
+  h3 { font-size: 11.5pt; color:#333; }
+  a { color: var(--accent); text-decoration: none; }
+  code { background: var(--code-bg); padding: 1px 4px; border-radius: 3px; font-size: 9.5pt;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+  pre { background: var(--code-bg); padding: 10px 12px; border-radius: 6px; overflow-x: auto; font-size: 9pt; }
+  pre code { background: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 9.5pt; }
+  th, td { border: 1px solid var(--rule); padding: 5px 8px; text-align: left; vertical-align: top; }
+  th { background: #f0f5f4; }
+  blockquote { border-left: 3px solid var(--accent); margin: 0.6em 0; padding: 2px 12px; color: var(--muted); }
+  hr { border: none; border-top: 1px solid var(--rule); margin: 1.4em 0; }
+  .footer { margin-top: 24px; padding-top: 8px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 8pt; }
+</style></head><body><h1>HIP-003 — Estudo do Ecossistema de Wearables (reorientação da Fase 2)</h1>
+<p><strong>Status:</strong> ESTUDO para decisão — aguardando escolha do 1º conector real. Sob ADR-000 · HIP-001.
+<strong>Reorientação (fundadora, 20/07):</strong> a prioridade da Fase 2 deixa de ser &quot;Withings&quot; e passa a ser a <strong>capacidade de
+monitoramento contínuo por wearables</strong>. A Composição Corporal segue existindo, mas nesta etapa é alimentada
+sobretudo por <strong>registro manual + importação de laudos de bioimpedância</strong> (fontes automáticas de composição = depois).
+Objetivo permanente: <strong>infraestrutura genérica, escalável e reutilizável de conectores</strong> — novos wearables entram
+sem redesenho (hip_001_plataforma_integracoes). O adaptador <strong>Withings (HIP-002) fica como conector de referência
+que já provou a arquitetura</strong>, não como prioridade.</p>
+<hr>
+<h2>1. O eixo que decide tudo: onde o dado vive</h2>
+<p>Antes de comparar fornecedores, uma distinção arquitetural separa o mercado em <strong>três classes</strong> — e ela, não a
+&quot;facilidade&quot;, governa a estratégia:</p>
+<table>
+<thead>
+<tr>
+<th>Classe</th>
+<th>Exemplos</th>
+<th>Como se acessa</th>
+<th>SINTERA (web) alcança HOJE?</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>A. Agregadores de SO (no aparelho)</strong></td>
+<td><strong>Apple Health</strong>, <strong>Health Connect (Android)</strong></td>
+<td>SÓ no dispositivo; exige <strong>app móvel nativo</strong> que lê on-device e envia ao backend. <strong>Não há API de nuvem, nem OAuth, nem REST.</strong></td>
+<td><strong>Não</strong> — depende de app móvel nativo</td>
+</tr>
+<tr>
+<td><strong>B. Nuvens de fabricante (server-to-server)</strong></td>
+<td><strong>Oura</strong>, <strong>WHOOP</strong>, <strong>Withings</strong>, Fitbit, Polar, (<strong>Garmin</strong> — ver ressalva)</td>
+<td>OAuth2 + REST + webhooks, backend↔backend</td>
+<td><strong>Sim</strong> — direto do backend web</td>
+</tr>
+<tr>
+<td><strong>C. Agregadores comerciais (SaaS)</strong></td>
+<td><strong>Terra</strong>, <strong>Rook</strong>, Junction(Vital), Spike, Metriport</td>
+<td>UMA integração → dezenas de fontes das classes A e B (Apple/Health Connect via <strong>SDK móvel</strong> deles)</td>
+<td><strong>Parcial</strong> — nuvens já; Apple/Health Connect ainda exigem app móvel (SDK deles)</td>
+</tr>
+</tbody></table>
+<p><strong>Consequência imediata:</strong> Apple Health e Health Connect — os de <strong>maior cobertura</strong> — são exatamente os que a SINTERA
+<strong>não</strong> consegue integrar hoje (é um app web). Começar por eles obrigaria a construir <strong>antes</strong> um app móvel nativo:
+um desvio grande, que atrasa a capacidade de monitoramento contínuo. As nuvens de fabricante (classe B) entregam a
+capacidade <strong>agora</strong>, do backend, reutilizando a infra já pronta.</p>
+<hr>
+<h2>2. Análise comparativa por plataforma</h2>
+<p>Notas de acesso e maturidade confirmadas na documentação oficial e em fontes de mercado (jul/2026 — ver §7 Fontes).</p>
+<table>
+<thead>
+<tr>
+<th>Plataforma</th>
+<th>Classe</th>
+<th>Cobertura de usuários</th>
+<th>Dados-chave</th>
+<th>API/OAuth/Webhook</th>
+<th>Maturidade</th>
+<th>Custo/restrição comercial</th>
+<th>Dependência</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Apple Health</strong></td>
+<td>A</td>
+<td><strong>Altíssima</strong> (base iOS; concentra dezenas de apps/dispositivos)</td>
+<td>HR, HRV, sono, atividade, SpO₂, temperatura, peso… (o que os apps escrevem)</td>
+<td><strong>Sem</strong> API de nuvem; só via app iOS nativo (HealthKit on-device)</td>
+<td>Framework maduro, mas <strong>device-side</strong></td>
+<td>Grátis, mas exige app iOS + revisão da App Store</td>
+<td>Apple + <strong>app móvel próprio</strong></td>
+</tr>
+<tr>
+<td><strong>Health Connect</strong></td>
+<td>A</td>
+<td><strong>Altíssima</strong> (base Android; sucede o Google Fit, cuja REST API foi descontinuada)</td>
+<td>idem Apple (agrega apps Android)</td>
+<td><strong>Sem</strong> API de nuvem; app Android nativo + permissões no app Health Connect</td>
+<td>Em consolidação (pós-Google Fit)</td>
+<td>Grátis, mas exige app Android nativo</td>
+<td>Google + <strong>app móvel próprio</strong></td>
+</tr>
+<tr>
+<td><strong>Oura</strong></td>
+<td>B</td>
+<td>Média (anel premium; usuários engajados em saúde/sono)</td>
+<td><strong>Sono (estágios), HRV (5min), HR + IBI bruto, prontidão, SpO₂, temperatura, atividade</strong></td>
+<td><strong>OAuth2 + webhooks (HMAC)</strong>; REST v2; ~5000 req/5min</td>
+<td><strong>Alta</strong> (docs excelentes)</td>
+<td>API grátis; requer o anel</td>
+<td>Oura</td>
+</tr>
+<tr>
+<td><strong>WHOOP</strong></td>
+<td>B</td>
+<td>Média (público performance/recuperação)</td>
+<td><strong>Recuperação (HRV, RHR), Strain, Sono, resp., temp. pele, SpO₂</strong></td>
+<td><strong>OAuth2 + webhooks</strong>; 100 req/min, 10k/dia (~60–80 usuários/app no padrão; ampliável sob pedido)</td>
+<td><strong>Alta</strong></td>
+<td>API grátis; requer assinatura WHOOP</td>
+<td>WHOOP</td>
+</tr>
+<tr>
+<td><strong>Withings</strong> <em>(já construído)</em></td>
+<td>B</td>
+<td>Média (balanças/relógios/PA — forte em <strong>composição corporal</strong> e PA)</td>
+<td>Peso/composição, PA, FC, sono, temperatura</td>
+<td><strong>OAuth2 + Notify (webhook)</strong>; 60 req/min</td>
+<td>Alta</td>
+<td>App grátis; <strong>produção pode exigir plano comercial</strong></td>
+<td>Withings</td>
+</tr>
+<tr>
+<td><strong>Garmin</strong></td>
+<td>B</td>
+<td><strong>Alta</strong> (grande base esportiva)</td>
+<td>Atividade, HR, HRV, sono, SpO₂, stress, Body Battery</td>
+<td>Push (webhook); <strong>OAuth 1.0a</strong> (legado)</td>
+<td>Alta, porém…</td>
+<td><strong>Programa de desenvolvedores SUSPENSO</strong> (sem novas contas); exige <strong>parceria/pessoa jurídica</strong>; algumas métricas com licença</td>
+<td>Garmin (<strong>bloqueado hoje</strong>)</td>
+</tr>
+<tr>
+<td><strong>Terra</strong> (agregador)</td>
+<td>C</td>
+<td><strong>500+ fontes</strong> numa integração (inclui A e B)</td>
+<td>atividade, sono, HR, <strong>HRV</strong>, VO₂max, body, ciclo, CGM; streaming em tempo real</td>
+<td>REST/GraphQL/streaming + <strong>SDK móvel</strong> (Apple/Health Connect)</td>
+<td>Alta; HIPAA/GDPR/SOC2</td>
+<td><strong>~US$399/mês</strong> (anual; 100k créditos) + uso</td>
+<td><strong>Terceiro no caminho do dado</strong></td>
+</tr>
+<tr>
+<td><strong>Rook</strong> (agregador)</td>
+<td>C</td>
+<td>Semelhante ao Terra; <strong>tração na América Latina</strong> (relevante p/ Brasil)</td>
+<td>idem classe C</td>
+<td>REST + SDK móvel</td>
+<td>Alta</td>
+<td>Pago (usage)</td>
+<td>Terceiro no caminho do dado</td>
+</tr>
+</tbody></table>
+<p>Observações:</p>
+<ul>
+<li><strong>Google Fit</strong> foi descontinuado (sem novas inscrições desde mai/2024; REST API encerrando) → não é opção; o caminho
+Android é o <strong>Health Connect</strong> (classe A).</li>
+<li><strong>Personal Access Tokens</strong> da Oura foram descontinuados (dez/2025) → OAuth2 é obrigatório (o que já temos).</li>
+<li>Agregadores alternativos: <strong>Junction (ex-Vital)</strong> agregou pedidos de laboratório; <strong>Metriport</strong> é open-source;
+<strong>Open Wearables</strong> oferece modelo self-hosted. Todos cobrem Apple/Health Connect via <strong>SDK móvel</strong> (não resolvem a
+ausência de app móvel — apenas encapsulam o SDK).</li>
+</ul>
+<hr>
+<h2>3. Aderência ao posicionamento da SINTERA</h2>
+<ul>
+<li><strong>Continuidade e história longitudinal</strong> (posicionamento_marca): monitoramento contínuo (HRV, sono, FC, atividade)
+é exatamente o sinal longitudinal que diferencia a plataforma → favorece <strong>Oura/WHOOP</strong> (dados densos no tempo).</li>
+<li><strong>Neutralidade de fornecedor</strong> (hip_001_plataforma_integracoes): a infra já converte tudo em <code>CanonicalSample</code>;
+qualquer classe entra pelo mesmo contrato. Um agregador é só <strong>mais um adaptador</strong> (não um novo pipeline).</li>
+<li><strong>Privacidade/LGPD</strong> (compliance_001_fase0_gate): classe B mantém o dado <strong>fabricante → SINTERA</strong> (sem
+intermediário). Classe C coloca um <strong>terceiro no caminho</strong> (mitigável: HIPAA/SOC2, mas é um processador a mais no
+RIPD). Classe A é a mais privada (on-device), mas exige app próprio.</li>
+<li><strong>Não-SaMD, factual</strong> (principio_nao_producao_conteudo_clinico): vale para todas — apresentamos/organizamos, não
+interpretamos.</li>
+</ul>
+<hr>
+<h2>4. Recomendação arquitetural</h2>
+<h3>Q1 — Quais integrações a SINTERA deve construir <strong>diretamente</strong>?</h3>
+<p>As <strong>nuvens de fabricante (classe B) maduras e acessíveis do backend web</strong>, de alto valor para monitoramento contínuo
+e onde o controle direto e o custo importam: <strong>Oura, WHOOP</strong> (e <strong>Withings</strong>, já feito). São baratas sobre a infra já
+provada (OAuth2 + webhook + <code>CanonicalSample</code>), sem dependência de terceiro nem de app móvel.</p>
+<h3>Q2 — Quando usar um <strong>agregador</strong> (Terra/Rook)?</h3>
+<p>Quando o objetivo é <strong>cobertura de mercado em largura</strong>, não profundidade num fabricante — e sobretudo para alcançar o
+que <strong>não dá para fazer direto</strong>: <strong>Apple Health, Health Connect</strong> (via SDK móvel deles), <strong>Garmin</strong> (programa suspenso)
+e a cauda longa (Fitbit, Polar, Samsung…). Um agregador troca <strong>N integrações frágeis</strong> por <strong>uma</strong>, com manutenção
+terceirizada — ao custo de mensalidade + um processador a mais (LGPD). Recomendado adotar <strong>quando</strong> (a) houver app
+móvel (para destravar Apple/Health Connect) e/ou (b) a demanda por largura justificar o custo. Para o Brasil, <strong>Rook</strong>
+merece avaliação (tração local).</p>
+<h3>Q3 — <strong>Três plataformas</strong> para a primeira fase (por valor + cobertura + sustentabilidade, não facilidade)</h3>
+<ol>
+<li><strong>Oura (direto)</strong> — dado longitudinal de maior densidade (sono, HRV, prontidão, SpO₂, temperatura), API madura com
+webhooks. Entrega a <strong>capacidade de monitoramento contínuo agora</strong>, do backend web. <em>Valor + sustentabilidade.</em></li>
+<li><strong>WHOOP (direto)</strong> — recuperação/strain/HRV; modelo de dados <strong>diferente</strong> (ciclos) e <strong>rate limits</strong> apertados →
+força a infra genérica a amadurecer (backoff, paginação, limites). <em>Endurece a arquitetura.</em></li>
+<li><strong>Agregador — Terra (ou Rook p/ Brasil)</strong> — o motor de <strong>cobertura</strong>: destrava Apple Health + Health Connect (com app
+móvel) + Garmin + cauda longa por <strong>uma</strong> integração. <em>Cobertura de mercado e escala sem redesenho.</em></li>
+</ol>
+<blockquote>
+<p>Withings (classe B, já pronto) permanece disponível como 4º, forte em <strong>composição corporal + PA</strong> — útil, mas não é o
+foco de &quot;monitoramento contínuo&quot;.</p>
+</blockquote>
+<h3>Q4 — <strong>Sequência</strong> que maximiza valor e fortalece a arquitetura</h3>
+<ol>
+<li><strong>Oura direto</strong> — 2º conector real sobre a infra atual; adiciona o <em>stream</em> de sinais vitais/monitoramento (fluxo
+NOV-001 <code>vital_signs</code>). Prova a genericidade além do Withings, entrega a capacidade.</li>
+<li><strong>WHOOP direto</strong> — 3º conector; o modelo por ciclos + limites exercita e consolida as <strong>capacidades genéricas</strong>
+(rate-limit/backoff, paginação, janelas), deixando a infra robusta.</li>
+<li><strong>Agregador (Terra/Rook)</strong> como <strong>novo <em>tipo</em> de adaptador</strong> atrás do mesmo <code>CanonicalSample</code> — multiplica a
+cobertura (inclui A e Garmin) <strong>sem</strong> redesenho.</li>
+<li><strong>App móvel (trilha separada)</strong> — destrava os agregadores de SO (Apple Health/Health Connect), a cobertura máxima.</li>
+</ol>
+<p>Cada passo direto <strong>fortalece a infra</strong> (auth, modelo de dados, limites, webhooks distintos); o agregador então
+<strong>multiplica cobertura</strong> sem tocar a arquitetura — exatamente o objetivo de &quot;incorporar novos wearables sem redesenho&quot;.</p>
+<h3>Decisão pedida: <strong>começar por agregadores de SO (Apple/Health Connect) ou por fabricantes?</strong></h3>
+<p><strong>Por fabricantes (nuvens diretas), começando pela Oura</strong> — justificativa técnica e estratégica:</p>
+<ul>
+<li><strong>Técnica:</strong> Apple Health/Health Connect <strong>não têm API de nuvem</strong>; exigem <strong>app móvel nativo</strong> que a SINTERA ainda
+não possui. Começar por eles obrigaria a construir um app antes de entregar qualquer capacidade — desvio caro. As
+nuvens diretas entregam <strong>agora</strong>, do backend, sobre a infra já pronta.</li>
+<li><strong>Estratégica:</strong> monitoramento contínuo de alto valor (HRV/sono/prontidão) chega primeiro pela Oura/WHOOP; a
+<strong>cobertura ampla</strong> (Apple/Health Connect/Garmin) vem depois via <strong>agregador</strong> — sem N integrações frágeis. Assim
+ganhamos valor cedo e preservamos a rota para a cobertura máxima, sem hipotecar a arquitetura.</li>
+</ul>
+<hr>
+<h2>5. Riscos e decisões em aberto</h2>
+<ul>
+<li><strong>R1 — App móvel é pré-requisito de cobertura máxima:</strong> Apple/Health Connect dependem dele. Decidir <em>quando</em> entra a
+trilha mobile (impacta o &quot;quando&quot; do agregador de SO).</li>
+<li><strong>R2 — Custo do agregador:</strong> ~US$399+/mês. Justifica-se com largura/tração; avaliar Rook (Brasil) vs Terra.</li>
+<li><strong>R3 — Garmin bloqueado:</strong> programa de desenvolvedores suspenso → só via agregador/parceria por ora.</li>
+<li><strong>R4 — LGPD com agregador:</strong> processador extra no caminho do dado (RIPD/DPA). Classe B evita isso.</li>
+<li><strong>R5 — Hardware pago (Oura/WHOOP):</strong> base menor que Apple/Android; é profundidade, não largura (por isso o agregador
+cobre a largura).</li>
+</ul>
+<h2>6. Decisões que a fundadora precisa tomar</h2>
+<ul>
+<li><strong>D-A:</strong> confirmar <strong>Oura como 1º conector real</strong> (recomendado) — ou WHOOP.</li>
+<li><strong>D-B:</strong> quando iniciar a trilha do <strong>app móvel</strong> (destrava Apple/Health Connect).</li>
+<li><strong>D-C:</strong> agregador — <strong>Terra ou Rook</strong>, e em que fase adotá-lo.</li>
+</ul>
+<h2>8. Adendo — aprofundamento de ACESSO (20/07, revisão após ressalva da fundadora)</h2>
+<p>Aprofundamento sobre &quot;quem consegue se cadastrar e em que condições&quot; — corrige/qualifica a §2:</p>
+<ul>
+<li><strong>Oura — permite terceiros SIM</strong>, ao contrário do receio inicial: registra-se um app OAuth2 (Client ID/Secret) e
+&quot;qualquer pessoa pode compartilhar seus dados Oura com um serviço de terceiros&quot;. <strong>Porém:</strong> limite de <strong>10 usuários</strong>
+até aprovação, e para <strong>desenvolver/homologar é preciso ter dados</strong> — ou seja, <strong>possuir um anel</strong> (ou um usuário
+com anel). Então: integra empresas, mas há a barreira prática de <strong>possuir o dispositivo para construir</strong>.</li>
+<li><strong>WHOOP — confirmada a barreira:</strong> para desenvolver, o <strong>próprio desenvolvedor precisa ter assinatura + dispositivo
+WHOOP</strong>. Limite de 10 membros no dev; aprovação mensal para produção. Barreira de dispositivo <strong>mais forte</strong> que a Oura.</li>
+<li><strong>Garmin — FECHADO a novos inscritos:</strong> o Garmin Connect Developer Program (que cobre <strong>tanto a Health API quanto a
+Activity API</strong>) está <strong>pausado</strong> — o formulário de novos parceiros foi removido, sem data de reabertura. Integrações
+existentes seguem, mas <strong>não é possível obter acesso novo hoje</strong>. ⇒ Garmin direto <strong>não é viável agora</strong> (só via
+agregador ou parceria); <strong>não é questão de app móvel</strong>.</li>
+<li><strong>Strava — viável, self-serve, SEM dispositivo e SEM app móvel:</strong> OAuth2 + webhooks server-side; conta grátis basta.
+<strong>Base enorme</strong> e funciona como <strong>agregador de atividade</strong> (usuários sincronizam Garmin/Wahoo/Apple no Strava). <strong>MAS:</strong>
+(a) é <strong>atividade</strong> (corridas/pedaladas/GPS/FC de treino) — <strong>não</strong> monitoramento contínuo (sem HRV/sono/SpO₂);
+(b) <strong>termos de API restritivos</strong> para uso de saúde/médico e armazenamento (endurecidos em 2024) → <strong>exige revisão
+jurídica</strong> antes de usar numa plataforma de saúde; (c) rate limit 200/15min, 2000/dia.</li>
+</ul>
+<p><strong>Releitura estratégica (importante):</strong> <strong>Apple Health e Health Connect já AGREGAM, no celular, os dados de Garmin,
+Oura, WHOOP, Fitbit</strong> que o usuário sincroniza. Logo, o <strong>caminho prático para &quot;dados do Garmin&quot; hoje</strong> — com o
+programa dele fechado — é <strong>via celular (Health Connect/HealthKit)</strong> ou <strong>via agregador</strong>, não a API direta do Garmin.
+Isso reforça o <strong>app móvel</strong> como a peça de maior alavancagem de cobertura. Decisão da fundadora: <strong>adicionar ao
+planejamento a construção do app móvel da SINTERA</strong> (destrava Apple/Health Connect → e, por tabela, Garmin/Oura/WHOOP).</p>
+<h3>Sugestão revisada de sequência</h3>
+<ol>
+<li><strong>Strava (direto, web, agora)</strong> — 1º conector real self-serve, sem dispositivo/app; valida a infra com um terceiro
+real e traz <strong>atividade</strong> (inclui Garmin exportado ao Strava). <strong>Condição:</strong> revisão dos termos de uso p/ saúde.</li>
+<li><strong>App móvel SINTERA + Health Connect (Android) + Apple Health (iOS)</strong> — <strong>espinha dorsal de cobertura</strong>; captura
+Garmin/Oura/WHOOP/Fitbit via celular sem depender de APIs fechadas.</li>
+<li><strong>Agregador (Terra/Rook)</strong> — alternativa/aceleração para Garmin/Oura/WHOOP como fontes de nuvem sem esperar o app;
+<strong>única via de Garmin direto</strong> hoje.</li>
+</ol>
+<h2>7. Fontes</h2>
+<ul>
+<li>Apple HealthKit (sem API de nuvem; on-device): developer.apple.com/documentation/healthkit · openwearables.io</li>
+<li>Health Connect / fim do Google Fit: developer.android.com/health-and-fitness/health-connect · spikeapi.com</li>
+<li>Oura API v2 (OAuth2/webhooks/dados): api.ouraring.com/v2/docs · support.ouraring.com · openwearables.io</li>
+<li>WHOOP (OAuth2/webhooks/limites): developer.whoop.com</li>
+<li>Garmin (programa suspenso; OAuth1.0a; parceria): developer.garmin.com/gc-developer-program/health-api · openwearables.io</li>
+<li>Terra (agregador/pricing/SDK): tryterra.co · tryterra.co/pricing · healthapiguy.substack.com</li>
+<li>Rook / Junction(Vital) / Metriport (alternativas): tryrook.io · openwearables.io/compare</li>
+<li>Oura (terceiros permitidos; limite 10 + aprovação; portal 2025): partnersupport.ouraring.com · cloud.ouraring.com/docs</li>
+<li>WHOOP (dev exige assinatura+dispositivo; aprovação mensal): developer.whoop.com/docs/developing/getting-started</li>
+<li>Garmin (programa PAUSADO a novos; Health+Activity API): developer.garmin.com/gc-developer-program · themomentum.ai</li>
+<li>Strava (OAuth2/webhooks server-side; termos; limites): developers.strava.com · openwearables.io/blog</li>
+</ul>
+<div class="footer">SINTERA — documento oficial (PDF gerado do Markdown canônico HIP-003_ECOSSISTEMA_WEARABLES_ESTUDO.md). Fonte de verdade: Git.</div></body></html>

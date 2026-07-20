@@ -1,0 +1,66 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><style>
+  @page { margin: 20mm 18mm; }
+  :root { --ink:#1a1a1a; --muted:#555; --rule:#dcdcdc; --accent:#0f766e; --code-bg:#f5f5f4; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--ink);
+    font-size: 10.5pt; line-height: 1.5; max-width: 100%; }
+  h1 { font-size: 20pt; border-bottom: 2px solid var(--accent); padding-bottom: 6px; }
+  h2 { font-size: 14pt; margin-top: 1.4em; border-bottom: 1px solid var(--rule); padding-bottom: 3px; }
+  h3 { font-size: 11.5pt; color:#333; }
+  a { color: var(--accent); text-decoration: none; }
+  code { background: var(--code-bg); padding: 1px 4px; border-radius: 3px; font-size: 9.5pt;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+  pre { background: var(--code-bg); padding: 10px 12px; border-radius: 6px; overflow-x: auto; font-size: 9pt; }
+  pre code { background: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 9.5pt; }
+  th, td { border: 1px solid var(--rule); padding: 5px 8px; text-align: left; vertical-align: top; }
+  th { background: #f0f5f4; }
+  blockquote { border-left: 3px solid var(--accent); margin: 0.6em 0; padding: 2px 12px; color: var(--muted); }
+  hr { border: none; border-top: 1px solid var(--rule); margin: 1.4em 0; }
+  .footer { margin-top: 24px; padding-top: 8px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 8pt; }
+</style></head><body><h1>PROJECT STATUS — SINTERA (visão executiva viva)</h1>
+<p><strong>Objetivo:</strong> refletir <strong>apenas o estado atual</strong> do projeto — visão executiva sempre atualizada.
+<strong>Status:</strong> Approved (vivo) · <strong>Versão:</strong> 1.0 · <strong>Atualizado:</strong> 2026-07-20.</p>
+<blockquote>
+<p>Documento de ESTADO — não guarda histórico nem planejamento (roadmap = IMPLEMENTATION_ROADMAP).</p>
+</blockquote>
+<h2>Arquitetura</h2>
+<p>✅ <strong>Fase de definição arquitetural e governança documental ENCERRADA.</strong> Baselines: Mobile-First, API-First, Observacional,
+SSOT, RN+Expo, Monorepo, Sincronização (ADR-002..008). Referência: ARCH-003.</p>
+<h2>Implementação</h2>
+<p>▶ <strong>Onda 1 — Fundação da plataforma móvel</strong> em curso (estratégia evolutiva do monorepo, ADR-007).</p>
+<ul>
+<li>✅ <strong>Etapa A (monorepo):</strong> npm workspaces + <code>packages/*</code> (core · api-client · types · validation · design-system ·
+config · utils) com fronteiras claras; <strong>web intocada</strong> (permanece na raiz/<code>src</code>); verde (tsc · 709 testes · build).</li>
+<li>⏭️ <strong>Próximo:</strong> <code>@sintera/core</code> (conteúdo do domínio) · base do app RN (<code>apps/mobile</code>) · Design System · navegação ·
+estado · cliente de API · autenticação · ambiente de dev · testes da fundação. Guia: HIP-012 §4–§7.
+Ainda sem código funcional de produto.</li>
+</ul>
+<h2>Documentação</h2>
+<p>✅ Conjunto oficial consolidado e versionado (índice: MASTER_DOCUMENT_INDEX; governança: DOCUMENTATION_GOVERNANCE).</p>
+<h2>Integrações</h2>
+<ul>
+<li>✅ Withings (conector web de <strong>referência</strong>, construído — HIP-002).</li>
+<li>⏳ Apple Health / Health Connect = capacidades nativas (Onda 3).</li>
+<li>⏳ Agregador (Terra/Rook) por gatilho; Strava = Atividade Física futura (gate jurídico); Garmin condicionado.
+Consolidado: ARCH-004.</li>
+</ul>
+<h2>Módulos</h2>
+<p>Catálogo: CATALOGO_PLATAFORMA. No app: nenhum ainda (fundação em curso). Na web (existentes): Exames, Eventos,
+Composição, Agenda, Medicamentos, Recursos, Relatórios, NOV-001, Notificações.</p>
+<h2>Riscos em aberto</h2>
+<p>Limites de background sync (SO); revisão HealthKit nas lojas; divergência web↔app (mitigada por monorepo); dependências
+externas (contas Apple/Play; sign-off jurídico Strava; custo agregador).</p>
+<h2>Decisões pendentes</h2>
+<ul>
+<li><strong>D-PLAT:</strong> MVP primeiro em Android/Health Connect ou iOS/Apple HealthKit.</li>
+<li><strong>Contas:</strong> Apple Developer · Google Play Console · Expo/EAS (em paralelo, não bloqueiam a fundação).</li>
+<li>Estrutura final de pastas do monorepo (a definir no início da Onda 1).</li>
+</ul>
+<h2>Próximos marcos</h2>
+<ol>
+<li>Monorepo definitivo + <code>@sintera/core</code> (fecha quando web e app importam o mesmo core).</li>
+<li>Base do app RN + Design System + navegação.</li>
+<li>Cliente de API + autenticação + testes da fundação → <strong>fim da Onda 1</strong> (app instalável, autenticado, navegável).</li>
+</ol>
+<div class="footer">SINTERA — documento oficial (PDF gerado do Markdown canônico PROJECT_STATUS.md). Fonte de verdade: Git.</div></body></html>

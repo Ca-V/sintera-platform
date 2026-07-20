@@ -1,0 +1,56 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><style>
+  @page { margin: 20mm 18mm; }
+  :root { --ink:#1a1a1a; --muted:#555; --rule:#dcdcdc; --accent:#0f766e; --code-bg:#f5f5f4; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--ink);
+    font-size: 10.5pt; line-height: 1.5; max-width: 100%; }
+  h1 { font-size: 20pt; border-bottom: 2px solid var(--accent); padding-bottom: 6px; }
+  h2 { font-size: 14pt; margin-top: 1.4em; border-bottom: 1px solid var(--rule); padding-bottom: 3px; }
+  h3 { font-size: 11.5pt; color:#333; }
+  a { color: var(--accent); text-decoration: none; }
+  code { background: var(--code-bg); padding: 1px 4px; border-radius: 3px; font-size: 9.5pt;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+  pre { background: var(--code-bg); padding: 10px 12px; border-radius: 6px; overflow-x: auto; font-size: 9pt; }
+  pre code { background: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 9.5pt; }
+  th, td { border: 1px solid var(--rule); padding: 5px 8px; text-align: left; vertical-align: top; }
+  th { background: #f0f5f4; }
+  blockquote { border-left: 3px solid var(--accent); margin: 0.6em 0; padding: 2px 12px; color: var(--muted); }
+  hr { border: none; border-top: 1px solid var(--rule); margin: 1.4em 0; }
+  .footer { margin-top: 24px; padding-top: 8px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 8pt; }
+</style></head><body><h1>ARCH-002 — Mobile-First · API-First (princípio permanente)</h1>
+<p><strong>Status:</strong> PRINCÍPIO PERMANENTE · <strong>Architectural Baseline</strong> (fundadora, 20/07). Orienta <strong>toda</strong> decisão arquitetural
+futura; mudança estrutural exige revisão formal (ADR). Sob ADR-000. Decisões: ADR-002 · ADR-003.</p>
+<h2>Direcionamento</h2>
+<ul>
+<li><strong>O aplicativo móvel é o PRODUTO PRINCIPAL e a PRINCIPAL EXPERIÊNCIA do usuário da SINTERA.</strong> Não é &quot;mais um cliente&quot;
+da plataforma — é o centro do produto. A plataforma web <strong>continua existindo</strong>, mas como <strong>interface complementar</strong>:
+tarefas administrativas, configurações avançadas, revisão de documentos e uso profissional (tela grande).</li>
+<li><strong>Toda nova funcionalidade nasce considerando PRIMEIRO a experiência móvel.</strong></li>
+<li><strong>Fluxo de concepção:</strong> <strong>Mobile → API → Web</strong> (nunca mais Web → Mobile). A web consome exatamente as <strong>mesmas APIs</strong>.</li>
+<li><strong>Backend API-first:</strong> o backend serve <strong>prioritariamente o app</strong>, com APIs versionadas e estáveis; <strong>sem fluxos
+exclusivos de navegador</strong>. A web é mais um cliente das mesmas APIs.</li>
+</ul>
+<h2>Regra permanente — nada existe só na web</h2>
+<p><strong>Nenhuma funcionalidade pode existir apenas na interface web.</strong> Toda capacidade da plataforma existe <strong>primeiro como
+serviço de backend (API)</strong>, consumida pelo app móvel e, quando necessário, também pela web. Isso mantém o <strong>backend
+desacoplado de qualquer interface</strong>. Uma tela (mobile ou web) nunca contém regra de negócio que não esteja na API.</p>
+<h2>Health Connect e Apple Health = capacidades NATIVAS do app (não &quot;conectores&quot;)</h2>
+<p>Health Connect e Apple HealthKit <strong>não são &quot;primeiros conectores&quot;</strong> — são <strong>capacidades nativas da plataforma móvel da
+SINTERA</strong> (fazem parte do app). Os <strong>conectores externos</strong> (fabricantes, agregadores, parceiros) são <strong>outra categoria</strong>,
+consumida via backend. Ambos produzem <strong>Observações</strong> (HIP-007), mas ocupam camadas distintas do produto.</p>
+<h2>Consequências arquiteturais (permanentes)</h2>
+<ol>
+<li><strong>Contrato único de API</strong> para mobile e web; nenhuma rota &quot;só web&quot; ou &quot;só mobile&quot; sem justificativa forte.</li>
+<li><strong>Monorepo com compartilhamento máximo</strong> web↔mobile: contratos de API, <strong>modelos de domínio</strong> (Observação — HIP-007),
+<strong>validações</strong>, <strong>regras de negócio</strong>, <strong>cliente de API</strong> e <strong>componentes</strong> reutilizáveis quando fizer sentido.
+Fonte única → evolução sincronizada, duplicação mínima.</li>
+<li><strong>Camada observacional universal</strong> (HIP-007) e <strong>NOV-001</strong> servem ambos os clientes pela mesma via.</li>
+<li><strong>Expansão sem revisão estrutural:</strong> novas funcionalidades entram como módulos sobre a mesma base (API-first +
+observacional + monorepo), sem reengenharia.</li>
+</ol>
+<h2>Regra de decisão</h2>
+<p>Toda decisão arquitetural futura deve <strong>fortalecer</strong>: mobile-first · backend API-first · arquitetura observacional
+universal · capacidade de expansão sem revisões estruturais. Decisões que criem acoplamento exclusivo à web, dupliquem
+regras entre plataformas ou tratem o app como &quot;cliente secundário&quot; <strong>contrariam este princípio</strong>.</p>
+<div class="footer">SINTERA — documento oficial (PDF gerado do Markdown canônico ARCH-002_MOBILE_FIRST_API_FIRST.md). Fonte de verdade: Git.</div></body></html>

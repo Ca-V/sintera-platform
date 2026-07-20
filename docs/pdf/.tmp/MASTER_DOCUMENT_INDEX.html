@@ -1,0 +1,326 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><style>
+  @page { margin: 20mm 18mm; }
+  :root { --ink:#1a1a1a; --muted:#555; --rule:#dcdcdc; --accent:#0f766e; --code-bg:#f5f5f4; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--ink);
+    font-size: 10.5pt; line-height: 1.5; max-width: 100%; }
+  h1 { font-size: 20pt; border-bottom: 2px solid var(--accent); padding-bottom: 6px; }
+  h2 { font-size: 14pt; margin-top: 1.4em; border-bottom: 1px solid var(--rule); padding-bottom: 3px; }
+  h3 { font-size: 11.5pt; color:#333; }
+  a { color: var(--accent); text-decoration: none; }
+  code { background: var(--code-bg); padding: 1px 4px; border-radius: 3px; font-size: 9.5pt;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+  pre { background: var(--code-bg); padding: 10px 12px; border-radius: 6px; overflow-x: auto; font-size: 9pt; }
+  pre code { background: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 9.5pt; }
+  th, td { border: 1px solid var(--rule); padding: 5px 8px; text-align: left; vertical-align: top; }
+  th { background: #f0f5f4; }
+  blockquote { border-left: 3px solid var(--accent); margin: 0.6em 0; padding: 2px 12px; color: var(--muted); }
+  hr { border: none; border-top: 1px solid var(--rule); margin: 1.4em 0; }
+  .footer { margin-top: 24px; padding-top: 8px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 8pt; }
+</style></head><body><h1>MASTER DOCUMENT INDEX — SINTERA</h1>
+<p><strong>Objetivo:</strong> índice ÚNICO e oficial de toda a documentação de arquitetura, produto e implementação da SINTERA.
+<strong>Porta de entrada</strong> da documentação técnica. Manter <strong>permanentemente atualizado</strong>.
+<strong>Status:</strong> Approved (vivo) · <strong>Versão:</strong> 1.0 · <strong>Histórico:</strong> v1.0 (2026-07-20) — criação ao iniciar a Onda 1.
+<strong>Convenção de status por documento:</strong> <code>Draft</code> (em elaboração) · <code>Approved</code> (aprovado, vigente) · <code>Frozen</code> (congelado,
+muda só por evidência/revisão formal).</p>
+<blockquote>
+<p>Precedência em conflito: <strong>ADR-000 &gt; ARCH-00x / princípios permanentes &gt; HIP (Fase 2) &gt; planos/backlog</strong>. O roadmap tem
+<strong>fonte única</strong>: IMPLEMENTATION_ROADMAP.
+<strong>Governança documental:</strong> DOCUMENTATION_GOVERNANCE (fonte única · hierarquia de 4 níveis · Architectural Baseline ·
+ADRs · rastreabilidade). <strong>Estado vivo do projeto:</strong> PROJECT_STATUS. Docs marcados <strong>⛨ Baseline</strong> exigem revisão
+formal para mudança estrutural.</p>
+</blockquote>
+<h2>0. Decisões Arquiteturais (ADRs) — o <em>porquê</em></h2>
+<table>
+<thead>
+<tr>
+<th>ADR</th>
+<th>Decisão</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ADR-000</td>
+<td>Princípios arquiteturais (raiz)</td>
+<td>Frozen ⛨</td>
+</tr>
+<tr>
+<td>ADR-001</td>
+<td>Projeção sem duplicação + SSOT</td>
+<td>Approved ⛨</td>
+</tr>
+<tr>
+<td>ADR-002</td>
+<td>Mobile-First (app = produto principal)</td>
+<td>Accepted ⛨</td>
+</tr>
+<tr>
+<td>ADR-003</td>
+<td>API-First (backend desacoplado)</td>
+<td>Accepted ⛨</td>
+</tr>
+<tr>
+<td>ADR-004</td>
+<td>Arquitetura Observacional (Observação como unidade)</td>
+<td>Accepted ⛨</td>
+</tr>
+<tr>
+<td>ADR-005</td>
+<td>SSOT bruto imutável + reconciliação na projeção</td>
+<td>Accepted ⛨</td>
+</tr>
+<tr>
+<td>ADR-006</td>
+<td>React Native + Expo</td>
+<td>Accepted ⛨</td>
+</tr>
+<tr>
+<td>ADR-007</td>
+<td>Monorepo web↔mobile</td>
+<td>Accepted ⛨</td>
+</tr>
+<tr>
+<td>ADR-008</td>
+<td>Arquitetura de Sincronização</td>
+<td>Accepted ⛨</td>
+</tr>
+</tbody></table>
+<h2>1. Constitucional / princípios permanentes</h2>
+<table>
+<thead>
+<tr>
+<th>Doc</th>
+<th>Finalidade</th>
+<th>Versão</th>
+<th>Status</th>
+<th>Relações</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ADR-000</td>
+<td>Princípios arquiteturais (raiz constitucional)</td>
+<td>—</td>
+<td>Frozen</td>
+<td>governa todos</td>
+</tr>
+<tr>
+<td>ADR-001</td>
+<td>Projeção sem duplicação + SSOT</td>
+<td>—</td>
+<td>Approved</td>
+<td>ARCH-003, HIP-009</td>
+</tr>
+<tr>
+<td>ARCH-002</td>
+<td><strong>Mobile-First · API-First</strong> (permanente)</td>
+<td>1.0</td>
+<td>Approved</td>
+<td>governa Fase 2; ARCH-003, HIP-008/010/012</td>
+</tr>
+<tr>
+<td>DATE-001</td>
+<td>Infraestrutura temporal única</td>
+<td>—</td>
+<td>Approved</td>
+<td>HIP-007/009</td>
+</tr>
+<tr>
+<td>COMPLIANCE-001</td>
+<td>Fase 0 + Gate de Conformidade</td>
+<td>—</td>
+<td>Approved</td>
+<td>todas as entregas</td>
+</tr>
+<tr>
+<td>Governança — ação destrutiva</td>
+<td>Aprovação explícita pós-Preview p/ ação irreversível</td>
+<td>1.0</td>
+<td>Approved</td>
+<td>HIP-010/012</td>
+</tr>
+</tbody></table>
+<h2>2. Arquitetura (referência)</h2>
+<table>
+<thead>
+<tr>
+<th>Doc</th>
+<th>Finalidade</th>
+<th>Versão</th>
+<th>Status</th>
+<th>Relações</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>ARCH-003</strong></td>
+<td><strong>Arquitetura Geral da Plataforma</strong> (referência principal)</td>
+<td>1.0</td>
+<td>Approved</td>
+<td>consolida ADR-000/ARCH-002/HIP-007/009</td>
+</tr>
+<tr>
+<td><strong>ARCH-004</strong></td>
+<td>Arquitetura de Integrações (capacidades nativas + externos + agregadores)</td>
+<td>1.0</td>
+<td>Approved</td>
+<td>HIP-001/002/003/006</td>
+</tr>
+<tr>
+<td><strong>HIP-007</strong></td>
+<td>Arquitetura de Dados Observacionais (Observação/Indicador/SSOT/rastreabilidade)</td>
+<td>2.0</td>
+<td>Approved</td>
+<td>ARCH-003; base de tudo</td>
+</tr>
+<tr>
+<td><strong>HIP-009</strong></td>
+<td>Arquitetura de Sincronização</td>
+<td>1.0</td>
+<td>Approved</td>
+<td>HIP-007; base do /ingest</td>
+</tr>
+<tr>
+<td>HIP-001</td>
+<td>Plataforma de Integrações (pilar vendor-neutral)</td>
+<td>—</td>
+<td>Approved</td>
+<td>ARCH-004</td>
+</tr>
+<tr>
+<td>HIP-003</td>
+<td>Estudo do ecossistema de wearables</td>
+<td>1.0</td>
+<td>Approved</td>
+<td>ARCH-004; base de decisão</td>
+</tr>
+<tr>
+<td>HIP-006</td>
+<td>Roadmap arquitetural de integrações</td>
+<td>1.0</td>
+<td>Approved</td>
+<td>refinado por HIP-010/IMPLEMENTATION_ROADMAP</td>
+</tr>
+</tbody></table>
+<h2>3. Produto Mobile</h2>
+<table>
+<thead>
+<tr>
+<th>Doc</th>
+<th>Finalidade</th>
+<th>Versão</th>
+<th>Status</th>
+<th>Relações</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>HIP-011</strong></td>
+<td>Arquitetura do Produto Mobile (experiência/navegação/UX/offline/notif/evolução)</td>
+<td>1.0</td>
+<td>Approved</td>
+<td>HIP-008; ref. Produto/UX/Eng</td>
+</tr>
+<tr>
+<td><strong>HIP-008</strong></td>
+<td>Arquitetura do App (stack RN+Expo; comparativo técnico+estratégico)</td>
+<td>1.0</td>
+<td>Approved</td>
+<td>ARCH-002; HIP-012</td>
+</tr>
+</tbody></table>
+<h2>4. Implementação</h2>
+<table>
+<thead>
+<tr>
+<th>Doc</th>
+<th>Finalidade</th>
+<th>Versão</th>
+<th>Status</th>
+<th>Relações</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>HIP-012</strong></td>
+<td><strong>Master Implementation Plan</strong> (manual operacional — 16 tópicos)</td>
+<td>1.0</td>
+<td>Approved</td>
+<td>consome todos; roadmap = IMPLEMENTATION_ROADMAP</td>
+</tr>
+<tr>
+<td><strong>HIP-010</strong></td>
+<td>Plano Executivo da Etapa 4 (ondas de valor: backlog/aceite/riscos/homolog/publicação/métricas)</td>
+<td>1.1</td>
+<td>Approved</td>
+<td>detalhado por HIP-012</td>
+</tr>
+<tr>
+<td><strong>IMPLEMENTATION_ROADMAP</strong></td>
+<td><strong>Fonte ÚNICA do roadmap</strong> (fases/ondas/marcos/entregáveis)</td>
+<td>1.0</td>
+<td>Approved</td>
+<td>referenciado por todos</td>
+</tr>
+<tr>
+<td><strong>CATALOGO_PLATAFORMA</strong></td>
+<td>Catálogo geral de módulos (MVP e futuros)</td>
+<td>1.0</td>
+<td>Approved</td>
+<td>ARCH-003; Sidebar SSOT</td>
+</tr>
+</tbody></table>
+<h2>5. Histórico da Fase 2 (contexto — decisões que levaram ao conjunto acima)</h2>
+<table>
+<thead>
+<tr>
+<th>Doc</th>
+<th>Finalidade</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>HIP-002</td>
+<td>Conector Withings (referência construída)</td>
+<td>Approved</td>
+</tr>
+<tr>
+<td>HIP-004</td>
+<td>Plano do conector Strava (Atividade Física futura; gates jurídico/produto)</td>
+<td>Draft</td>
+</tr>
+<tr>
+<td>HIP-005</td>
+<td>Plano inicial do app móvel (superado por HIP-008/011/012)</td>
+<td>Superseded</td>
+</tr>
+<tr>
+<td>NOV-001</td>
+<td>Infraestrutura de Novidade (implementada)</td>
+<td>Approved</td>
+</tr>
+</tbody></table>
+<h2>6. Domínios e pilares (docs de módulo)</h2>
+<p>Ver ARCH-000 (arquitetura documental) para o índice completo dos domínios já
+existentes (Exames, Eventos, Composição, Notificações NOTIF-001, Captura HUB-001, Care CARE-001, Billing BILLING-001,
+Design System, etc.). O catálogo de produto está em CATALOGO_PLATAFORMA.</p>
+<h2>7. Mapa de rastreabilidade (impacto entre documentos)</h2>
+<p>Para avaliar rapidamente o impacto de uma alteração:</p>
+<pre><code>ADR-002 Mobile-First ─┐
+ADR-003 API-First ─────┼─▶ ARCH-002 ─▶ HIP-008 ─▶ HIP-009 ─▶ HIP-012
+                       └─▶ ARCH-003 (arquitetura geral)
+
+ADR-004 Observacional ─▶ HIP-007 ─┬─▶ HIP-009 (sincronização)
+ADR-005 SSOT bruto ───────────────┤   └─▶ ARCH-004 (integrações)
+                                  └─▶ projeções/NOV-001/Timeline
+
+ADR-006 RN+Expo ─▶ HIP-008 ─▶ HIP-011 (produto) ─▶ HIP-012
+ADR-007 Monorepo ─▶ HIP-012 §4 (fundação Onda 1)
+ADR-008 Sincronização ≡ HIP-009 ─▶ /ingest (HIP-012 §9)
+
+HIP-012 (Master Plan) ─implementa▶ ARCH-003 · HIP-007 · HIP-008 · HIP-009 · HIP-010
+IMPLEMENTATION_ROADMAP ─fonte única do roadmap◀─ (referenciado por todos)
+</code></pre>
+<p>Regra: alterar um documento <strong>acima</strong> exige revisar os <strong>abaixo</strong> (impacto em cascata). Docs ⛨ Baseline → revisão formal.</p>
+<hr>
+<p><strong>Manutenção:</strong> ao criar/alterar um documento de arquitetura/implementação, atualizar este índice (nome, finalidade,
+versão, status, relações) e o PROJECT_STATUS. Este arquivo é a porta de entrada; nenhum documento oficial existe fora
+dele. Ver DOCUMENTATION_GOVERNANCE.</p>
+<div class="footer">SINTERA — documento oficial (PDF gerado do Markdown canônico MASTER_DOCUMENT_INDEX.md). Fonte de verdade: Git.</div></body></html>

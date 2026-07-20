@@ -1,0 +1,82 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><style>
+  @page { margin: 20mm 18mm; }
+  :root { --ink:#1a1a1a; --muted:#555; --rule:#dcdcdc; --accent:#0f766e; --code-bg:#f5f5f4; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--ink);
+    font-size: 10.5pt; line-height: 1.5; max-width: 100%; }
+  h1 { font-size: 20pt; border-bottom: 2px solid var(--accent); padding-bottom: 6px; }
+  h2 { font-size: 14pt; margin-top: 1.4em; border-bottom: 1px solid var(--rule); padding-bottom: 3px; }
+  h3 { font-size: 11.5pt; color:#333; }
+  a { color: var(--accent); text-decoration: none; }
+  code { background: var(--code-bg); padding: 1px 4px; border-radius: 3px; font-size: 9.5pt;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+  pre { background: var(--code-bg); padding: 10px 12px; border-radius: 6px; overflow-x: auto; font-size: 9pt; }
+  pre code { background: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 9.5pt; }
+  th, td { border: 1px solid var(--rule); padding: 5px 8px; text-align: left; vertical-align: top; }
+  th { background: #f0f5f4; }
+  blockquote { border-left: 3px solid var(--accent); margin: 0.6em 0; padding: 2px 12px; color: var(--muted); }
+  hr { border: none; border-top: 1px solid var(--rule); margin: 1.4em 0; }
+  .footer { margin-top: 24px; padding-top: 8px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 8pt; }
+</style></head><body><h1>DOCUMENTATION GOVERNANCE — SINTERA</h1>
+<p><strong>Objetivo:</strong> garantir que o patrimônio documental permaneça consistente durante toda a evolução da plataforma.
+<strong>Escopo:</strong> regras de organização, hierarquia, status, ADRs e rastreabilidade da documentação.
+<strong>Status:</strong> Approved · <strong>Architectural Baseline</strong> · <strong>Versão:</strong> 1.0 · <strong>Histórico:</strong> v1.0 (2026-07-20).
+<strong>Dependências:</strong> MASTER_DOCUMENT_INDEX (índice) · ARCH-000.</p>
+<h2>1. Fonte única da verdade</h2>
+<p>Cada assunto tem <strong>um</strong> documento canônico. Nenhum tema tem duas fontes de verdade. Um documento que <strong>depende</strong> de outro
+apenas o <strong>referencia</strong> (<code>...</code>), <strong>nunca duplica</strong> o conteúdo. Roadmap: fonte única = IMPLEMENTATION_ROADMAP.</p>
+<h2>2. Hierarquia documental (4 níveis)</h2>
+<table>
+<thead>
+<tr>
+<th>Nível</th>
+<th>Conteúdo</th>
+<th>Cadência</th>
+<th>Exemplos</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>1 — Princípios permanentes</strong></td>
+<td>arquitetura raiz, Mobile-First, API-First, Observacional, SSOT</td>
+<td>muda raramente</td>
+<td>ADR-000, ARCH-002, ADR-002..008, ARCH-003</td>
+</tr>
+<tr>
+<td><strong>2 — Arquitetura</strong></td>
+<td>app, integrações, sincronização, dados observacionais</td>
+<td>evolui lentamente</td>
+<td>HIP-007/008/009, ARCH-004</td>
+</tr>
+<tr>
+<td><strong>3 — Implementação</strong></td>
+<td>plano mestre, plano executivo, roadmap</td>
+<td>evolui com o desenvolvimento</td>
+<td>HIP-012, HIP-010, IMPLEMENTATION_ROADMAP</td>
+</tr>
+<tr>
+<td><strong>4 — Operacional</strong></td>
+<td>checklists, procedimentos, guias, runbooks</td>
+<td>muda com frequência</td>
+<td>(a criar por onda)</td>
+</tr>
+</tbody></table>
+<h2>3. Architectural Baseline</h2>
+<p>Documentos <strong>estruturais</strong> (níveis 1 e 2, e ADRs) recebem o status adicional <strong>Architectural Baseline</strong>: alterações
+<strong>estruturais</strong> neles exigem <strong>revisão formal</strong> (registrada como novo ADR ou nova versão do doc) <strong>antes</strong> da aprovação.
+Correções editoriais não exigem revisão formal, mas devem atualizar o histórico de versões.</p>
+<h2>4. Registro de decisões (ADRs)</h2>
+<p>Toda decisão arquitetural importante é registrada como <strong>ADR</strong> (<code>docs/adr/ADR-NNN_*.md</code>), com: contexto, decisão,
+<strong>alternativas consideradas</strong>, consequências e referências — preservando o <strong>porquê</strong>. ADRs vigentes: ADR-000 (raiz),
+ADR-001 (projeção/SSOT), ADR-002 (Mobile-First), ADR-003 (API-First), ADR-004 (Observacional), ADR-005 (SSOT bruto),
+ADR-006 (RN+Expo), ADR-007 (Monorepo), ADR-008 (Sincronização).</p>
+<h2>5. Rastreabilidade</h2>
+<p>O MASTER_DOCUMENT_INDEX mantém o <strong>mapa de relações</strong> (quem influencia/implementa/usa quem), para avaliar rapidamente
+o <strong>impacto</strong> de qualquer alteração.</p>
+<h2>6. Estado do projeto</h2>
+<p>PROJECT_STATUS mantém a <strong>visão executiva viva</strong> (arquitetura, implementação, documentação, integrações, módulos,
+riscos, decisões pendentes, próximos marcos). Sempre atualizado.</p>
+<h2>7. Manutenção</h2>
+<p>Ao criar/alterar documento: atualizar o MASTER_DOCUMENT_INDEX (nome/finalidade/versão/status/relações), o histórico
+de versões do próprio doc e — se estrutural — abrir ADR. Nenhum documento oficial existe fora do índice.</p>
+<div class="footer">SINTERA — documento oficial (PDF gerado do Markdown canônico DOCUMENTATION_GOVERNANCE.md). Fonte de verdade: Git.</div></body></html>

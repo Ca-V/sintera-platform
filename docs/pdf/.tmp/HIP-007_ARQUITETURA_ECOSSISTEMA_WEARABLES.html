@@ -1,0 +1,254 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><style>
+  @page { margin: 20mm 18mm; }
+  :root { --ink:#1a1a1a; --muted:#555; --rule:#dcdcdc; --accent:#0f766e; --code-bg:#f5f5f4; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--ink);
+    font-size: 10.5pt; line-height: 1.5; max-width: 100%; }
+  h1 { font-size: 20pt; border-bottom: 2px solid var(--accent); padding-bottom: 6px; }
+  h2 { font-size: 14pt; margin-top: 1.4em; border-bottom: 1px solid var(--rule); padding-bottom: 3px; }
+  h3 { font-size: 11.5pt; color:#333; }
+  a { color: var(--accent); text-decoration: none; }
+  code { background: var(--code-bg); padding: 1px 4px; border-radius: 3px; font-size: 9.5pt;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+  pre { background: var(--code-bg); padding: 10px 12px; border-radius: 6px; overflow-x: auto; font-size: 9pt; }
+  pre code { background: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 9.5pt; }
+  th, td { border: 1px solid var(--rule); padding: 5px 8px; text-align: left; vertical-align: top; }
+  th { background: #f0f5f4; }
+  blockquote { border-left: 3px solid var(--accent); margin: 0.6em 0; padding: 2px 12px; color: var(--muted); }
+  hr { border: none; border-top: 1px solid var(--rule); margin: 1.4em 0; }
+  .footer { margin-top: 24px; padding-top: 8px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 8pt; }
+</style></head><body><h1>HIP-007 — Arquitetura de Aquisição de Dados Observacionais (Fase 2 · Etapa 1 · referência universal)</h1>
+<p><strong>Status:</strong> Approved · <strong>Architectural Baseline</strong> · <strong>Versão:</strong> 2.0 · <strong>Histórico:</strong> v1.0 (2026-07-20) criação; v2.0
+(2026-07-20) 6 ajustes da fundadora (Observação; jornada; universal; Observação≠Indicador; confiabilidade/qualidade;
+entidade estrutural). Decisões: ADR-004 · ADR-005.
+<strong>Documento de referência de TODA aquisição automática de dados observacionais da SINTERA</strong> — não apenas wearables. Sob
+ADR-000 · HIP-001 · ucda_universal_clinical_data_architecture · compliance_001_fase0_gate.
+<strong>Fase 2 em 4 etapas:</strong> <strong>(1) esta — Aquisição Observacional</strong> → (2) Arquitetura do App Móvel → (3) Arquitetura de
+Sincronização → (4) Implementação. <strong>Nenhum código antes das 3 primeiras aprovadas</strong> (nem <code>/mobile/ingest</code>).</p>
+<blockquote>
+<p><strong>Escopo (ajuste 3):</strong> este documento nasceu do ecossistema de wearables, mas descreve a <strong>camada universal de
+aquisição de dados observacionais</strong> — vale para <strong>qualquer origem</strong>: wearables, dispositivos médicos domiciliares,
+sensores contínuos (CGM, MAPA, Holter), apps de saúde, plataformas parceiras, integrações futuras via <strong>FHIR</strong>, e até
+observações extraídas automaticamente de documentos quando fizer sentido. Não é &quot;a arquitetura dos wearables&quot;.</p>
+</blockquote>
+<h2>1. Princípios (herdados)</h2>
+<p>Convergência canônica · reúso antes de abstração (principio_estabilidade_arquitetural) · modelo aberto
+(principio_modelo_aberto) · factual/não-SaMD (principio_nao_producao_conteudo_clinico) · privacidade/LGPD by
+design · datas determinísticas (date_001_temporal_ssot).</p>
+<h2>2. Nomenclatura — a camada é a <strong>OBSERVAÇÃO</strong> (ajuste 1)</h2>
+<p>Análise: &quot;Evento de Saúde&quot; colidiria com <strong>Evento Assistencial</strong>. O termo coerente com a linguagem da plataforma e com o
+padrão FHIR (que a UCDA já referencia) é <strong>Observação</strong> — em FHIR, <code>Observation</code> é justamente medições/sinais. Quatro
+camadas <strong>distintas e não ambíguas</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Camada SINTERA</th>
+<th>Granularidade</th>
+<th>Análogo FHIR</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Evento Assistencial</strong> (evento_assistencial_entidade_central, <code>health_events</code>)</td>
+<td>encontro (consulta/exame/procedimento)</td>
+<td>Encounter</td>
+</tr>
+<tr>
+<td><strong>Documento / Laudo</strong></td>
+<td>artefato documental de origem</td>
+<td>DocumentReference / DiagnosticReport</td>
+</tr>
+<tr>
+<td><strong>Unidade de evidência clínica (UCDA)</strong></td>
+<td>evidência clínica canônica</td>
+<td>(abstração própria)</td>
+</tr>
+<tr>
+<td><strong>Observação</strong> ← <em>esta camada</em></td>
+<td><strong>medida no tempo</strong>, de origem automática</td>
+<td><strong>Observation</strong></td>
+</tr>
+</tbody></table>
+<p>No código: <strong><code>CanonicalSample</code> permanece como a forma de transporte da Observação</strong>; <code>wearable_readings</code> é o <strong>SSOT
+bruto</strong>; <code>body_metrics</code>/vitais são <strong>projeções</strong>. (Renomeações de rótulos ocorrem na implementação; a arquitetura fixa
+o conceito.)</p>
+<h2>3. A Observação (contrato canônico)</h2>
+<blockquote>
+<p><strong>Toda medida automática é uma Observação: um fato pontual/temporal com valor, origem, dispositivo, confiabilidade,
+qualidade e contexto — nunca um indicador (§5).</strong> Não modelamos &quot;HRV/sono/peso/glicemia&quot; como entidades separadas.</p>
+</blockquote>
+<blockquote>
+<p><strong>A Observação é uma ENTIDADE ESTRUTURAL da plataforma — não apenas um conceito das integrações.</strong> Toda funcionalidade
+futura que consuma <strong>dados objetivos</strong> trabalha <strong>sobre Observações</strong>: wearables, dispositivos médicos, observações
+extraídas automaticamente de documentos, sensores contínuos e integrações futuras. É o substrato único do dado objetivo.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Descrição</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>domain</code></td>
+<td>domínio funcional (§6)</td>
+</tr>
+<tr>
+<td><code>metric</code></td>
+<td>tipo do sinal (aberto: <code>hrv</code>, <code>sono</code>, <code>peso</code>, <code>glicemia</code>…)</td>
+</tr>
+<tr>
+<td><code>value</code> / <code>unit</code></td>
+<td>valor + unidade (nulo → fica só no bruto)</td>
+</tr>
+<tr>
+<td><strong>contexto temporal</strong></td>
+<td><code>recordedAt</code> (instante) <strong>e</strong> <code>interval</code> opcional (início/fim) p/ observações com duração</td>
+</tr>
+<tr>
+<td><strong>origem</strong></td>
+<td><code>source</code>, <code>connectorClass</code> (web/mobile/aggregator/document), <code>connectorVersion</code></td>
+</tr>
+<tr>
+<td><strong>dispositivo</strong></td>
+<td><code>deviceId</code>/<code>deviceModel</code> quando houver (multi-dispositivo → Etapa 3)</td>
+</tr>
+<tr>
+<td><strong>confiabilidade</strong></td>
+<td><code>reliability</code>/<code>confidence</code> — medido vs estimado (nível da MEDIÇÃO)</td>
+</tr>
+<tr>
+<td><strong>qualidade / nível de evidência</strong></td>
+<td>tier da ORIGEM (§4)</td>
+</tr>
+<tr>
+<td><strong>proveniência/idempotência</strong></td>
+<td><code>externalId</code> + chave de dedup determinística</td>
+</tr>
+<tr>
+<td><strong>versão</strong></td>
+<td>versão da leitura (correção/reprocessamento → Etapa 3)</td>
+</tr>
+</tbody></table>
+<p>Campos novos são <strong>aditivos e opcionais</strong> (modelo aberto): a infra atual continua válida; cada adaptador preenche o que
+a fonte oferece.</p>
+<h2>4. Níveis de confiabilidade e QUALIDADE (ajuste 5)</h2>
+<p>Além da confiabilidade da medição, a Observação carrega o <strong>nível de evidência da origem</strong> — aberto, <strong>sem regras agora</strong>,
+só espaço para a plataforma diferenciar no futuro:</p>
+<table>
+<thead>
+<tr>
+<th>Tier (aberto)</th>
+<th>Exemplo</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>manual</code></td>
+<td>informado pelo usuário</td>
+</tr>
+<tr>
+<td><code>consumer_device</code></td>
+<td>wearable de consumo</td>
+</tr>
+<tr>
+<td><code>medical_device</code></td>
+<td>dispositivo médico certificado</td>
+</tr>
+<tr>
+<td><code>clinically_validated</code></td>
+<td>validado clinicamente</td>
+</tr>
+<tr>
+<td><code>derived</code></td>
+<td>calculado/derivado de outras observações</td>
+</tr>
+</tbody></table>
+<p>Isso permitirá, adiante, priorizar/ponderar fontes e explicitar a procedência ao usuário — sem reescrever a arquitetura.</p>
+<h2>5. Observação × Indicador (ajuste 4)</h2>
+<blockquote>
+<p><strong>Uma Observação NUNCA é um Indicador. Indicadores são SEMPRE derivados de Observações.</strong></p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Observação</th>
+<th>Indicador</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>FC agora = 72 bpm</td>
+<td>✅ fato pontual</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Média de FC em 7 dias</td>
+<td>—</td>
+<td>✅ derivado</td>
+</tr>
+<tr>
+<td>Variabilidade ao longo do tempo</td>
+<td>—</td>
+<td>✅ derivado</td>
+</tr>
+<tr>
+<td>Tendência</td>
+<td>—</td>
+<td>✅ derivado</td>
+</tr>
+</tbody></table>
+<p>Os indicadores vivem numa <strong>camada de cálculo separada</strong> (base da <strong>inteligência longitudinal / V3</strong>
+visao_sistema_cognitivo_clinico), sempre <strong>rastreável</strong> às observações de origem, nunca gravada como se fosse
+observação. Esta separação mantém o SSOT limpo e a inteligência auditável.</p>
+<h2>6. Domínios funcionais (espelham a Sidebar — sidebar_ssot_taxonomia; abertos)</h2>
+<p>Monitoramento contínuo (FC, HRV, sono, SpO₂, resp., temperatura) · Atividade física (treinos/passos, com duração) ·
+Composição corporal (peso, gordura, massas, água) · Dispositivos médicos (PA/MAPA, glicemia/CGM, oximetria, Holter/ECG) ·
+<em>(aberto)</em>. A <strong>classe do conector é ortogonal ao domínio</strong> (o mesmo domínio recebe de várias classes; a mesma classe
+serve vários domínios).</p>
+<h2>7. Tipos de conectores (todos produzem Observações)</h2>
+<ul>
+<li><strong>Web / Fabricante</strong> (OAuth nuvem): pull incremental + webhook. Ex.: Withings (referência pronta).</li>
+<li><strong>Mobile / Plataforma</strong> (Apple Health, Health Connect): dado on-device → o <strong>app SINTERA</strong> faz push. Pilar do
+monitoramento contínuo (agrega Garmin/Oura/WHOOP/Fitbit via celular).</li>
+<li><strong>Agregador</strong> (Terra/Rook): batch/stream de muitas fontes; acelerador de largura, não substituto.</li>
+<li><strong>Documento</strong> (futuro): observações extraídas automaticamente de laudos, quando fizer sentido — mesma Observação.
+Adicionar classe/fonte = <strong>novo adaptador, zero mudança no núcleo</strong>.</li>
+</ul>
+<h2>8. Jornada completa do dado (ajuste 2)</h2>
+<pre><code>Fonte (wearable · dispositivo médico · sensor contínuo · app · parceiro · FHIR · documento)
+  │
+  ▼ Conector (web pull/webhook · mobile push · agregador batch · extração de documento)
+  │
+  ▼ Normalização (adaptador isolado: unidades, tempo, dedup na fonte → Observação canônica)
+  │
+  ▼ Modelo Canônico (Observação = CanonicalSample++ → SSOT bruto wearable_readings)
+  │
+  ▼ Governança (idempotência, proveniência, confiabilidade/qualidade, versão, LGPD, validação entre camadas)
+  │
+  ▼ Projeções → Timeline / Monitoramento / Composição · NOV-001 (novidade)
+  │
+  ▼ Indicadores (camada de cálculo derivada — médias, variabilidade, tendências) [V3]
+  │
+  ▼ Funcionalidades SINTERA (acompanhamento, insights, Rede de Cuidado, relatórios…)
+</code></pre>
+<p>Este fluxo é a <strong>referência</strong> para toda futura integração.</p>
+<h2>9. Modelo canônico e projeções</h2>
+<p>Observação → <strong>SSOT bruto</strong> (<code>wearable_readings</code>) + <strong>projeções de exibição</strong> (<code>body_metrics</code>/vitais; futura projeção de
+atividade com duração) + <strong>NOV-001</strong>. Convergência à <strong>UCDA</strong> na maturidade (V3), sem migração prematura
+(principio_convergencia_progressiva).</p>
+<h2>10. Visão de longo prazo (ajuste 6)</h2>
+<p>Esta arquitetura <strong>não</strong> existe para os conectores da Fase 2: é a <strong>base permanente de toda aquisição automática de dados
+observacionais da SINTERA</strong> pelos próximos anos. Deve absorver novas origens, domínios, dispositivos, padrões (FHIR/RNDS)
+e níveis de evidência <strong>sem revisão estrutural</strong> — só novos adaptadores e entradas abertas. Mudança estrutural aqui exige
+revisão arquitetural formal.</p>
+<h2>11. Governança e relação com as próximas etapas</h2>
+<p>Documento de <strong>referência</strong>: todo conector adere (emite Observação, respeita domínios/proveniência/qualidade/projeções).</p>
+<ul>
+<li><strong>Etapa 2 (App Móvel):</strong> stack (RN+Expo × RN puro × Flutter × nativo) sob lente <strong>técnica + estratégica</strong> (time,
+contratação, reúso de contratos/regras da web, manutenção 5 anos…) + app como <strong>produto</strong> (timeline, notificações,
+captura, upload de exames, agenda, lembretes, interação com a web), não coletor.</li>
+<li><strong>Etapa 3 (Sincronização):</strong> iniciação, background, conflito, multi-dispositivo, duplicidade, versionamento, offline,
+idempotência — pré-requisito do <code>/mobile/ingest</code>.</li>
+<li><strong>Etapa 4 (Implementação):</strong> só após as três aprovadas.</li>
+</ul>
+<div class="footer">SINTERA — documento oficial (PDF gerado do Markdown canônico HIP-007_ARQUITETURA_ECOSSISTEMA_WEARABLES.md). Fonte de verdade: Git.</div></body></html>

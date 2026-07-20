@@ -1,0 +1,135 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><style>
+  @page { margin: 20mm 18mm; }
+  :root { --ink:#1a1a1a; --muted:#555; --rule:#dcdcdc; --accent:#0f766e; --code-bg:#f5f5f4; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--ink);
+    font-size: 10.5pt; line-height: 1.5; max-width: 100%; }
+  h1 { font-size: 20pt; border-bottom: 2px solid var(--accent); padding-bottom: 6px; }
+  h2 { font-size: 14pt; margin-top: 1.4em; border-bottom: 1px solid var(--rule); padding-bottom: 3px; }
+  h3 { font-size: 11.5pt; color:#333; }
+  a { color: var(--accent); text-decoration: none; }
+  code { background: var(--code-bg); padding: 1px 4px; border-radius: 3px; font-size: 9.5pt;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+  pre { background: var(--code-bg); padding: 10px 12px; border-radius: 6px; overflow-x: auto; font-size: 9pt; }
+  pre code { background: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 9.5pt; }
+  th, td { border: 1px solid var(--rule); padding: 5px 8px; text-align: left; vertical-align: top; }
+  th { background: #f0f5f4; }
+  blockquote { border-left: 3px solid var(--accent); margin: 0.6em 0; padding: 2px 12px; color: var(--muted); }
+  hr { border: none; border-top: 1px solid var(--rule); margin: 1.4em 0; }
+  .footer { margin-top: 24px; padding-top: 8px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 8pt; }
+</style></head><body><h1>HIP-011 — Arquitetura do Produto Mobile (referência Produto · UX · Engenharia)</h1>
+<p><strong>Status:</strong> Approved · <strong>Versão:</strong> 1.0 · <strong>Histórico:</strong> v1.0 (2026-07-20) criação. Referência conjunta (Produto/UX/
+Engenharia). Sob ADR-000 · ARCH-002 (mobile-first). Descreve a <strong>experiência</strong>, não só engenharia.</p>
+<h2>1. Experiência principal</h2>
+<p>O app é o <strong>companheiro diário de saúde</strong> da usuária: <strong>&quot;sua história de saúde, viva, sem trabalho&quot;</strong>. Ele mostra o que
+a SINTERA organizou por ela (Observações que chegam sozinhas — HIP-007), permite registrar com fricção mínima
+(hub_001_registration_hub) e mantém a continuidade da história. <strong>Factual, nunca interpretativo</strong> (RDC 657 —
+principio_nao_producao_conteudo_clinico): apresenta e organiza, não conclui.</p>
+<h2>2. Navegação (espelha a taxonomia da Sidebar — sidebar_ssot_taxonomia)</h2>
+<p><strong>Bottom tab bar</strong> (padrão móvel), mapeando os domínios de 1º nível já definidos:</p>
+<table>
+<thead>
+<tr>
+<th>Tab</th>
+<th>Papel</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Início</strong></td>
+<td>resumo do dia + timeline recente + avisos de novidade (NOV-001)</td>
+</tr>
+<tr>
+<td><strong>Minha Saúde</strong></td>
+<td>Observações/Monitoramento · Composição · Medicamentos · Exames/Documentos</td>
+</tr>
+<tr>
+<td><strong>＋ Registrar</strong></td>
+<td>captura central (documento/foto/manual) — ação primária destacada</td>
+</tr>
+<tr>
+<td><strong>Agenda</strong></td>
+<td>consultas, lembretes, próximas ações</td>
+</tr>
+<tr>
+<td><strong>Perfil</strong></td>
+<td>conta, conexões/dispositivos, notificações, config</td>
+</tr>
+<tr>
+<td>Sem taxonomia paralela: os rótulos vêm da Sidebar. <strong>Rede de Cuidado</strong> entra sob Perfil/Início quando ativa.</td>
+<td></td>
+</tr>
+</tbody></table>
+<h2>3. Jornada diária</h2>
+<ul>
+<li><strong>Manhã:</strong> sync noturno já trouxe sono/HRV/FC → <strong>Início</strong> mostra &quot;sua história cresceu&quot; (NOV-001, reconhecimento
+natural ao ver). Sem trabalho da usuária.</li>
+<li><strong>Ao longo do dia:</strong> notificações contextuais (lembrete de medicamento, exame a agendar) — factuais, por categoria.</li>
+<li><strong>Registrar:</strong> foto de um exame/documento em segundos (fila offline → sincroniza depois).</li>
+<li><strong>Semana:</strong> indicadores longitudinais (derivados das Observações — nunca a própria observação) aparecem quando há
+base suficiente.</li>
+</ul>
+<h2>4. Hierarquia de funcionalidades</h2>
+<ul>
+<li><strong>Primárias (diárias):</strong> Início/timeline · Monitoramento (Observações) · Registrar.</li>
+<li><strong>Secundárias (frequentes):</strong> Exames/Documentos · Agenda · Medicamentos/Suplementos.</li>
+<li><strong>Terciárias (eventuais):</strong> Perfil/config · Conexões · Compartilhamento (Rede de Cuidado) · Relatórios.
+A hierarquia guia densidade visual, posição na navegação e o que ganha push.</li>
+</ul>
+<h2>5. Princípios de UX</h2>
+<ol>
+<li><strong>Sem trabalho:</strong> o valor chega sozinho; a usuária reconhece, não opera (NOV-001, sem botão artificial de dispensar).</li>
+<li><strong>Factual e rastreável:</strong> todo dado tem origem/dispositivo/versão visíveis sob demanda (principio_ui_rastreavel).</li>
+<li><strong>Calmo e pessoal:</strong> paleta Van Gogh/Almond Blossom (branding_paleta_v3_vangogh); sem alarmismo clínico.</li>
+<li><strong>Fricção mínima na captura</strong> (hub_001_registration_hub): intenção antes do mecanismo.</li>
+<li><strong>Acessibilidade</strong> desde o início (tema_g_acessibilidade): contraste, labels, foco, toque.</li>
+<li><strong>Consistência web↔app:</strong> mesmos conceitos/nomes (contratos compartilhados — ARCH-002).</li>
+</ol>
+<h2>6. Estados offline (offline-first)</h2>
+<ul>
+<li><strong>Leitura:</strong> o que já sincronizou fica disponível offline (cache local).</li>
+<li><strong>Captura/registro:</strong> enfileirado localmente; envia quando houver rede (idempotente — HIP-009).</li>
+<li><strong>Indicador de sincronização</strong> discreto (última sync, pendências) sem ansiedade.</li>
+<li><strong>Degradação graciosa:</strong> nunca bloquear a leitura por falta de rede; nunca perder um registro feito offline.</li>
+</ul>
+<h2>7. Comportamento das notificações</h2>
+<ul>
+<li><strong>Fonte de novidade:</strong> NOV-001 (o que chegou e ainda não foi visto) → some naturalmente ao ver.</li>
+<li><strong>Canais e categorias:</strong> NOTIF-001 (notif_001_infraestrutura_unica) — usuária escolhe por <strong>categoria</strong> (domínios
+da Sidebar) o canal (push/email/WhatsApp/nenhum). Push é 1º cidadão no mobile.</li>
+<li><strong>Contextual, não intrusivo:</strong> lembretes factuais (medicamento, exame a agendar); <strong>nunca</strong> interpretação clínica.</li>
+<li><strong>Silenciável por categoria</strong>; respeita horários.</li>
+</ul>
+<h2>8. Evolução do MVP ao produto completo</h2>
+<table>
+<thead>
+<tr>
+<th>Fase</th>
+<th>Entrega</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>MVP</strong></td>
+<td>auth · Apple Health/Health Connect (capacidades nativas) · sincronização · Início/timeline mínima</td>
+</tr>
+<tr>
+<td><strong>Experiência principal</strong></td>
+<td>Timeline completa · Exames/Documentos · Perfil · Agenda</td>
+</tr>
+<tr>
+<td><strong>Aquisição ampliada</strong></td>
+<td>conectores externos · atividade física · dispositivos médicos</td>
+</tr>
+<tr>
+<td><strong>Inteligência</strong></td>
+<td>indicadores longitudinais · notificações inteligentes · IA contextual (visao_sistema_cognitivo_clinico)</td>
+</tr>
+<tr>
+<td>Cada fase adiciona módulos sobre a <strong>mesma base</strong> (monorepo, Observação, API-first) — <strong>sem reconstrução</strong>.</td>
+<td></td>
+</tr>
+</tbody></table>
+<h2>9. Relação com engenharia</h2>
+<p>Deriva de HIP-008 (stack/arquitetura do app) e HIP-009 (sincronização); consome HIP-007 (Observação). O
+<strong>Plano Executivo da Etapa 4</strong> (HIP-010) organiza a construção por ondas de valor coerentes com esta experiência.</p>
+<div class="footer">SINTERA — documento oficial (PDF gerado do Markdown canônico HIP-011_ARQUITETURA_PRODUTO_MOBILE.md). Fonte de verdade: Git.</div></body></html>

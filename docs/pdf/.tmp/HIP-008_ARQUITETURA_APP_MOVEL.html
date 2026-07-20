@@ -1,0 +1,210 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><style>
+  @page { margin: 20mm 18mm; }
+  :root { --ink:#1a1a1a; --muted:#555; --rule:#dcdcdc; --accent:#0f766e; --code-bg:#f5f5f4; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--ink);
+    font-size: 10.5pt; line-height: 1.5; max-width: 100%; }
+  h1 { font-size: 20pt; border-bottom: 2px solid var(--accent); padding-bottom: 6px; }
+  h2 { font-size: 14pt; margin-top: 1.4em; border-bottom: 1px solid var(--rule); padding-bottom: 3px; }
+  h3 { font-size: 11.5pt; color:#333; }
+  a { color: var(--accent); text-decoration: none; }
+  code { background: var(--code-bg); padding: 1px 4px; border-radius: 3px; font-size: 9.5pt;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+  pre { background: var(--code-bg); padding: 10px 12px; border-radius: 6px; overflow-x: auto; font-size: 9pt; }
+  pre code { background: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 9.5pt; }
+  th, td { border: 1px solid var(--rule); padding: 5px 8px; text-align: left; vertical-align: top; }
+  th { background: #f0f5f4; }
+  blockquote { border-left: 3px solid var(--accent); margin: 0.6em 0; padding: 2px 12px; color: var(--muted); }
+  hr { border: none; border-top: 1px solid var(--rule); margin: 1.4em 0; }
+  .footer { margin-top: 24px; padding-top: 8px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 8pt; }
+</style></head><body><h1>HIP-008 — Arquitetura do App Móvel (Fase 2 · Etapa 2)</h1>
+<p><strong>Status:</strong> Approved · <strong>Architectural Baseline</strong> · <strong>Versão:</strong> 1.0 · <strong>Histórico:</strong> v1.0 (2026-07-20) criação + reforço
+app-produto-principal. Sob ADR-000 · ARCH-002 · deriva de HIP-007. Decisão: ADR-006.
+<strong>Premissa (rev.):</strong> a escolha de tecnologia é uma <strong>decisão estratégica da empresa</strong>. Sob ARCH-002, o <strong>app é o
+PRODUTO PRINCIPAL da SINTERA</strong> (a web é interface complementar) e o backend é <strong>API-first</strong> (Mobile → API → Web). O MVP
+faz apenas auth + Apple Health + Health Connect + sync, mas a arquitetura já nasce de produto completo.</p>
+<h2>1. Opções avaliadas</h2>
+<ol>
+<li><strong>React Native + Expo</strong> (dev client + EAS Build/Update)</li>
+<li><strong>React Native &quot;puro&quot;</strong> (bare, sem Expo)</li>
+<li><strong>Flutter</strong> (Dart)</li>
+<li><strong>Nativo</strong> (Swift/SwiftUI + Kotlin/Jetpack — duas bases)</li>
+</ol>
+<h2>2. Comparação — dimensões técnicas</h2>
+<p>Legenda: 🟢 forte · 🟡 adequado · 🔴 fraco/custoso.</p>
+<table>
+<thead>
+<tr>
+<th>Dimensão</th>
+<th>RN+Expo</th>
+<th>RN puro</th>
+<th>Flutter</th>
+<th>Nativo</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Health Connect</strong> (Android)</td>
+<td>🟢 lib madura (<code>react-native-health-connect</code>) via config plugin + dev build</td>
+<td>🟢 idem (config manual)</td>
+<td>🟢 <code>health</code> package</td>
+<td>🟢 acesso 1ª classe</td>
+</tr>
+<tr>
+<td><strong>Apple HealthKit</strong> (iOS)</td>
+<td>🟢 <code>react-native-health</code> via config plugin</td>
+<td>🟢 idem</td>
+<td>🟢 <code>health</code> package</td>
+<td>🟢 acesso 1ª classe</td>
+</tr>
+<tr>
+<td><strong>Sync em background</strong></td>
+<td>🟡 módulos nativos + background tasks (limites do SO)</td>
+<td>🟡 idem, mais config</td>
+<td>🟡 idem</td>
+<td>🟢 controle máximo</td>
+</tr>
+<tr>
+<td><strong>Notificações push</strong></td>
+<td>🟢 Expo Notifications (APNs/FCM) + OTA</td>
+<td>🟡 libs manuais</td>
+<td>🟢 libs maduras</td>
+<td>🟢 nativo</td>
+</tr>
+<tr>
+<td><strong>Segurança</strong></td>
+<td>🟢 SecureStore/Keychain/Keystore</td>
+<td>🟢 idem</td>
+<td>🟢 idem</td>
+<td>🟢 idem</td>
+</tr>
+<tr>
+<td><strong>Desempenho</strong></td>
+<td>🟡 suficiente (app de dados, não gráfico)</td>
+<td>🟡 idem</td>
+<td>🟢 alto</td>
+<td>🟢 máximo</td>
+</tr>
+<tr>
+<td><strong>Manutenção</strong></td>
+<td>🟢 EAS gerencia build/OTA; menos config nativa</td>
+<td>🟡 mais config nativa própria</td>
+<td>🟡 boa, mas stack isolado</td>
+<td>🔴 duas bases</td>
+</tr>
+<tr>
+<td><strong>Curva de evolução</strong></td>
+<td>🟢 rápida (dev build + OTA)</td>
+<td>🟡 boa</td>
+<td>🟡 boa</td>
+<td>🔴 mais lenta</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>Nota Expo: os módulos de saúde exigem <strong>development build</strong> (não Expo Go) — padrão atual via <code>expo prebuild</code> + EAS,
+<strong>não</strong> é bloqueio. Expo hoje <strong>suporta módulos nativos</strong>; o receio antigo está superado.</p>
+</blockquote>
+<h2>3. Comparação — dimensões ESTRATÉGICAS (decisivas)</h2>
+<table>
+<thead>
+<tr>
+<th>Dimensão</th>
+<th>RN+Expo</th>
+<th>RN puro</th>
+<th>Flutter</th>
+<th>Nativo</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Conhecimento do time atual</strong> (Next.js/React/TS)</td>
+<td>🟢 mesmo idioma</td>
+<td>🟢 mesmo idioma</td>
+<td>🔴 Dart novo</td>
+<td>🔴 Swift+Kotlin novos</td>
+</tr>
+<tr>
+<td><strong>Reúso de contratos/regras/tipos da web</strong></td>
+<td>🟢 <strong>alto</strong> (TS compartilhado: modelo da Observação, validação, contratos de API, cliente Supabase)</td>
+<td>🟢 alto</td>
+<td>🔴 nenhum (linguagem diferente)</td>
+<td>🔴 nenhum (+2 bases)</td>
+</tr>
+<tr>
+<td><strong>Velocidade de evolução</strong></td>
+<td>🟢 alta</td>
+<td>🟡 média</td>
+<td>🟡 média</td>
+<td>🔴 baixa</td>
+</tr>
+<tr>
+<td><strong>Contratação de devs</strong></td>
+<td>🟢 maior pool (JS/React)</td>
+<td>🟢 grande</td>
+<td>🟡 médio</td>
+<td>🔴 escasso/2 perfis</td>
+</tr>
+<tr>
+<td><strong>Maturidade do ecossistema</strong></td>
+<td>🟢 Meta + comunidade + EAS</td>
+<td>🟢 Meta + comunidade</td>
+<td>🟢 Google</td>
+<td>🟢 Apple/Google</td>
+</tr>
+<tr>
+<td><strong>Manutenção em 5 anos</strong></td>
+<td>🟢 gerenciada (OTA/EAS)</td>
+<td>🟡 própria</td>
+<td>🟡 estável, isolada</td>
+<td>🔴 maior custo</td>
+</tr>
+</tbody></table>
+<h2>4. Recomendação — <strong>React Native + Expo</strong> (dev client + EAS)</h2>
+<p><strong>Justificativa estratégica</strong> (além do técnico):</p>
+<ol>
+<li><strong>Reúso máximo com a plataforma web:</strong> compartilha <strong>TypeScript</strong> com o Next.js → um <strong>pacote compartilhado</strong>
+(monorepo) com o <strong>modelo canônico da Observação</strong> (HIP-007), validações, <strong>contratos de API</strong>, cliente Supabase e
+<strong>regras de negócio</strong>. Flutter/Nativo = <strong>zero reúso</strong> (linguagem diferente) e risco de divergência de contrato.</li>
+<li><strong>Time e contratação:</strong> o time já domina React/TS; maior pool de contratação; menor troca de contexto → <strong>velocidade</strong>.</li>
+<li><strong>Manutenção 5 anos:</strong> EAS gerencia builds/OTA e reduz a carga nativa; ecossistema mantido pela Meta + comunidade.</li>
+<li><strong>Capacidade nativa suficiente:</strong> Health Connect/HealthKit via config plugins + dev build; notificações via Expo;
+background workável (limites do SO valem para todos).
+<strong>Trade-off aceito:</strong> desempenho bruto inferior a Flutter/Nativo — <strong>irrelevante</strong> para um app de dados/saúde (sem
+gráficos pesados/tempo real crítico). Se algum módulo exigir performance nativa, RN permite <strong>módulo nativo pontual</strong>.
+<strong>Descartados:</strong> Flutter (isola o stack, sem reúso da web); Nativo (2 bases, evolução/ manutenção/contratação caras);
+RN puro (perde os ganhos de manutenção/OTA do Expo sem vantagem estratégica).</li>
+</ol>
+<h2>5. O app como PRODUTO PRINCIPAL (não coletor) — arquitetura evolutiva</h2>
+<p>Estrutura pensada para <strong>crescer sem reconstrução</strong>, sob ARCH-002 (mobile-first · API-first):</p>
+<ul>
+<li><strong>Monorepo com compartilhamento MÁXIMO</strong> (<code>@sintera/core</code> e afins) web↔mobile — além de contratos de API e tipos,
+compartilhar sempre que fizer sentido: <strong>modelos de domínio</strong> (Observação — HIP-007), <strong>validações</strong>, <strong>regras de
+negócio</strong>, <strong>cliente de API</strong> e <strong>componentes reutilizáveis</strong>. Fonte única → evolução sincronizada, duplicação mínima.</li>
+<li><strong>API-first:</strong> o app consome as APIs versionadas do backend; a <strong>web consome as MESMAS APIs</strong> (sem fluxo exclusivo de
+navegador). Nenhuma regra de negócio duplicada entre plataformas.</li>
+<li><strong>Identidade única:</strong> Supabase Auth (mesma conta) → sessão compartilhável e deep links web↔app.</li>
+<li><strong>Camadas do app:</strong> (a) <strong>auth/sessão</strong>; (b) <strong>camada de dados/offline</strong> (cache local + fila de envio); (c) <strong>módulo
+health-sync</strong> (Apple Health/Health Connect → Observação → envio); (d) <strong>módulos de feature</strong> plugáveis.</li>
+<li><strong>Encaixes previstos (MVP não implementa, arquitetura acomoda) — evolução para produto completo:</strong> <strong>Timeline de
+Saúde</strong>, <strong>Exames e Documentos</strong>, <strong>Agenda</strong>, <strong>Medicamentos</strong>, <strong>Suplementos</strong>, <strong>notificações inteligentes</strong>
+(notif_001_infraestrutura_unica), <strong>captura de documentos</strong>, <strong>upload de exames</strong>, <strong>OCR</strong>, <strong>compartilhamento de
+informações</strong> (care_001_espaco_colaborativo) e <strong>IA contextual</strong> (visao_sistema_cognitivo_clinico) — reusando
+os pilares existentes (hub_001_registration_hub). Nenhuma dessas exige reconstrução arquitetural.</li>
+<li><strong>Missão do MVP:</strong> autenticar · conectar Apple Health · conectar Health Connect · sincronizar (via a arquitetura da
+Etapa 3). Todo o resto evolui sobre a mesma base.</li>
+</ul>
+<h2>6. Riscos e mitigações</h2>
+<ul>
+<li><strong>Módulos de saúde exigem dev build</strong> (não Expo Go) → padrão via EAS; documentar o fluxo de build.</li>
+<li><strong>Background sync tem limites de SO</strong> → cadência realista definida na Etapa 3.</li>
+<li><strong>Revisão nas lojas</strong> (HealthKit exige justificativa de uso + política de privacidade) → preparar no MVP.</li>
+<li><strong>Divergência de contrato web/app</strong> → mitigada pelo pacote compartilhado (fonte única de tipos/regras).</li>
+</ul>
+<h2>7. Decisões pendentes da fundadora</h2>
+<ul>
+<li><strong>D-STACK:</strong> aprovar <strong>React Native + Expo</strong> (recomendado).</li>
+<li><strong>D-PLAT:</strong> MVP primeiro em <strong>Android/Health Connect</strong> ou <strong>iOS/Apple HealthKit</strong> (pela base das usuárias do beta).</li>
+<li><strong>Contas:</strong> Apple Developer (US$99/ano) + Google Play Console (US$25) + 1 dispositivo de cada.</li>
+<li><strong>Monorepo:</strong> aprovar a estratégia de pacote compartilhado web↔app.
+Após aprovação, seguimos para a <strong>Etapa 3 (Arquitetura de Sincronização)</strong> — pré-requisito de qualquer código.</li>
+</ul>
+<div class="footer">SINTERA — documento oficial (PDF gerado do Markdown canônico HIP-008_ARQUITETURA_APP_MOVEL.md). Fonte de verdade: Git.</div></body></html>

@@ -1,0 +1,380 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><style>
+  @page { margin: 20mm 18mm; }
+  :root { --ink:#1a1a1a; --muted:#555; --rule:#dcdcdc; --accent:#0f766e; --code-bg:#f5f5f4; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--ink);
+    font-size: 10.5pt; line-height: 1.5; max-width: 100%; }
+  h1 { font-size: 20pt; border-bottom: 2px solid var(--accent); padding-bottom: 6px; }
+  h2 { font-size: 14pt; margin-top: 1.4em; border-bottom: 1px solid var(--rule); padding-bottom: 3px; }
+  h3 { font-size: 11.5pt; color:#333; }
+  a { color: var(--accent); text-decoration: none; }
+  code { background: var(--code-bg); padding: 1px 4px; border-radius: 3px; font-size: 9.5pt;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+  pre { background: var(--code-bg); padding: 10px 12px; border-radius: 6px; overflow-x: auto; font-size: 9pt; }
+  pre code { background: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 9.5pt; }
+  th, td { border: 1px solid var(--rule); padding: 5px 8px; text-align: left; vertical-align: top; }
+  th { background: #f0f5f4; }
+  blockquote { border-left: 3px solid var(--accent); margin: 0.6em 0; padding: 2px 12px; color: var(--muted); }
+  hr { border: none; border-top: 1px solid var(--rule); margin: 1.4em 0; }
+  .footer { margin-top: 24px; padding-top: 8px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 8pt; }
+</style></head><body><h1>ARCH-000 — Document Architecture (índice oficial da documentação)</h1>
+<p><strong>Status:</strong> normativo · vivo. <strong>Versão:</strong> 1.0 (17/07/2026). <strong>Responsável:</strong> Fundadora (direção) · Claude (curadoria).
+<strong>Objetivo:</strong> ser o <strong>mapa único</strong> da documentação da SINTERA — o que existe, o que prevalece, quem depende de
+quem — para que qualquer pessoa (equipe atual ou novos desenvolvedores) saiba <strong>qual documento consultar</strong> sem
+depender do histórico de conversas. Criado quando o acervo passou de ~85 documentos (17/07/2026).</p>
+<blockquote>
+<p><strong>Regra de ouro:</strong> todo documento arquitetural novo entra neste índice <strong>no mesmo commit</strong> em que é criado.
+Documento fora do ARCH-000 é considerado rascunho, não normativo.</p>
+</blockquote>
+<hr>
+<h2>1. Precedência (ordem de prevalência em caso de conflito)</h2>
+<pre><code>ADR-000  (Constituição — princípios e invariantes inegociáveis)
+   ↓ prevalece sobre
+SPAGS    (Especificação Institucional — documento MESTRE da arquitetura)
+   ↓ prevalece sobre
+ARCH-000 (este índice) + documentos de DOMÍNIO (HIP-001, FIN-001, CAP-001, DATA-001, …)
+   ↓ prevalece sobre
+Backlogs / checklists / planos operacionais (BACKLOG_BETA, *_CHECKLIST_FUNCIONAL, …)
+</code></pre>
+<p>Em conflito, o documento de camada superior vence. Um documento de domínio <strong>nunca</strong> contraria o ADR-000 ou o
+SPAGS; se precisar, o superior é emendado PRIMEIRO (mudança de arquitetura permanente = SPAGS/ADR antes do código).</p>
+<h2>2. Hierarquia da documentação</h2>
+<pre><code>                         SPAGS  (mestre — a fornecer/consolidar)
+                           │
+                        ARCH-000  (este índice)
+        ┌──────────────────┼───────────────────────────────┐
+   CONSTITUIÇÃO         DOMÍNIOS                        GOVERNANÇA TRANSVERSAL
+   ADR-000              DATA-001  · CAP-001  · HIP-001   COMPLIANCE-001 · GOV-001
+   (invariantes)        UCDA-001  · CEF-001  · FIN-001   DATA-002 · API-001 · AI-001
+                        EVENTS-001· CARE-001 · WEA-001   OPS-001 · TENANT-001 · SEC-001
+                        NOTIF-001 · BILLING-001·DOC-001   ARCH-FEATURE-FLAGS
+                        REL-001(RPT) · HOM-001 · SHR-001
+                           │
+                        OPERACIONAL (não-normativo)
+                        BACKLOG_BETA · RELEASE-1.0 · *_CHECKLIST_FUNCIONAL · planos/QA
+</code></pre>
+<h2>3. Registro canônico — documentos principais</h2>
+<p>Metadados por documento: <strong>Objetivo · Escopo · Responsável · Dependências · Relacionado · Versão</strong>.
+(Documentos operacionais/históricos ficam na §5, sem metadados completos.)</p>
+<h3>Constituição</h3>
+<table>
+<thead>
+<tr>
+<th>Doc</th>
+<th>Objetivo</th>
+<th>Escopo</th>
+<th>Depende de</th>
+<th>Relacionado</th>
+<th>Versão</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>ADR-000</strong></td>
+<td>Princípios arquiteturais + invariantes constitucionais</td>
+<td>Toda a plataforma</td>
+<td>— (raiz)</td>
+<td>SPAGS, todos</td>
+<td>🔒</td>
+</tr>
+<tr>
+<td><strong>ADR-001</strong></td>
+<td>Projeção sem duplicação + ponto único de edição (SSOT)</td>
+<td>Toda a plataforma</td>
+<td>ADR-000</td>
+<td>FIN-001, BOD-001, CTC-001</td>
+<td>ativo (18/07)</td>
+</tr>
+</tbody></table>
+<h3>Domínios (cada um ganha doc próprio quando trabalhado — §4 define a estrutura)</h3>
+<table>
+<thead>
+<tr>
+<th>Doc</th>
+<th>Objetivo</th>
+<th>Escopo</th>
+<th>Depende de</th>
+<th>Relacionado</th>
+<th>Versão</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>DATA-001</strong></td>
+<td>Modelo Canônico de dados de saúde</td>
+<td>Representação canônica</td>
+<td>ADR-000</td>
+<td>UCDA-001, CEF-001</td>
+<td>ativo</td>
+</tr>
+<tr>
+<td><strong>UCDA-001</strong></td>
+<td>Arquitetura Universal de Dados Clínicos (contrato de saída)</td>
+<td>Evidência clínica</td>
+<td>DATA-001</td>
+<td>CEF-001, CPE</td>
+<td>ativo</td>
+</tr>
+<tr>
+<td><strong>CEF-001</strong></td>
+<td>Clinical Extraction Framework (leitor por tipo de doc)</td>
+<td>Extração</td>
+<td>UCDA-001</td>
+<td>CAP-001</td>
+<td>ativo</td>
+</tr>
+<tr>
+<td><strong>HUB-001</strong></td>
+<td>Hub de Registro (ponto único de entrada; intenção→mecanismo)</td>
+<td>Entrada de registros</td>
+<td>ADR-000</td>
+<td>CAP-001, todos os módulos</td>
+<td>ativo (18/07)</td>
+</tr>
+<tr>
+<td><strong>CAP-001</strong></td>
+<td>Captura documental institucional (componente único)</td>
+<td>Entrada de registros</td>
+<td>ADR-000, DATA-001</td>
+<td>HUB-001, DS-001, DOC-001</td>
+<td>🔒</td>
+</tr>
+<tr>
+<td><strong>HIP-001</strong></td>
+<td>Connector Layer — integração corporativa (vendor+domain-neutral)</td>
+<td>Aquisição externa</td>
+<td>UCDA-001</td>
+<td>WEA-001, DATA-001</td>
+<td>ativo</td>
+</tr>
+<tr>
+<td><strong>WEA-001</strong></td>
+<td>Wearables Domain (1ª implementação sobre HIP-001)</td>
+<td>Wearables</td>
+<td>HIP-001, DATA-001</td>
+<td>Sinais Vitais, Timeline</td>
+<td>ativo (17/07)</td>
+</tr>
+<tr>
+<td><strong>BOD-001</strong></td>
+<td>Composição Corporal (painel longitudinal) + princípio <strong>Fato × Visualização</strong> (3 domínios sem sobreposição)</td>
+<td>Indicadores corporais</td>
+<td>ADR-000, DATA-001, EVENTS-001</td>
+<td>Histórico de Exames, HIP-001</td>
+<td>ativo (17/07)</td>
+</tr>
+<tr>
+<td><strong>FIN-001</strong></td>
+<td>Financial Domain (valor·NF·recibo·comprovante → Despesas)</td>
+<td>Financeiro</td>
+<td>ADR-000, EVENTS-001</td>
+<td>Evento Assistencial, <code>/gastos</code>, REL-001</td>
+<td>ativo (17/07)</td>
+</tr>
+<tr>
+<td><strong>CTC-001</strong></td>
+<td>Contracepção + arquitetura de Planejamento (vínculo por referência)</td>
+<td>Contracepção/Planejamento</td>
+<td>ADR-000, ADR-001</td>
+<td>Ciclo, Medicamentos, Recursos, NOTIF-001</td>
+<td>ativo (18/07)</td>
+</tr>
+<tr>
+<td><strong>ORD-001</strong></td>
+<td>Pedidos ↔ Exames (origem histórica, 1→N, trajetória do cuidado)</td>
+<td>Exames/Pedidos</td>
+<td>ADR-000, ADR-001</td>
+<td>Exames, EVENTS-001, Timeline</td>
+<td>ativo (18/07)</td>
+</tr>
+<tr>
+<td><strong>EVENTS-001</strong></td>
+<td>Domain Events / Evento Assistencial</td>
+<td>Eventos assistenciais</td>
+<td>DATA-001</td>
+<td>FIN-001, CARE-001</td>
+<td>ativo</td>
+</tr>
+<tr>
+<td><strong>CARE-001</strong></td>
+<td>Care Space (continuidade do cuidado)</td>
+<td>Episódio de cuidado</td>
+<td>EVENTS-001</td>
+<td>—</td>
+<td>ativo</td>
+</tr>
+<tr>
+<td><strong>NOTIF-001</strong></td>
+<td>Central de Notificações (infra única)</td>
+<td>Notificações</td>
+<td>ADR-000</td>
+<td>—</td>
+<td>ativo</td>
+</tr>
+<tr>
+<td><strong>BILLING-001</strong></td>
+<td>Assinaturas/Billing (SaaS)</td>
+<td>Comercial</td>
+<td>ADR-000</td>
+<td>TENANT-001</td>
+<td>ativo</td>
+</tr>
+<tr>
+<td><strong>DOC-001</strong></td>
+<td>Repositório de Documentos</td>
+<td>Documentos-fonte</td>
+<td>CAP-001</td>
+<td>—</td>
+<td>ativo</td>
+</tr>
+<tr>
+<td><strong>REL-001</strong></td>
+<td>Central de Relatórios (Reporting = RPT-001)</td>
+<td>Relatórios</td>
+<td>DATA-001</td>
+<td>FIN-001</td>
+<td>ativo</td>
+</tr>
+<tr>
+<td><strong>HOM-001</strong></td>
+<td>Home Experience (institucional)</td>
+<td>1ª tela</td>
+<td>ADR-000</td>
+<td>DS-001</td>
+<td>a criar (BETA-9)</td>
+</tr>
+<tr>
+<td><strong>SHR-001</strong></td>
+<td>Sharing Domain (compartilhamento)</td>
+<td>Compartilhamento</td>
+<td>DATA-001</td>
+<td>REL-001</td>
+<td>a criar</td>
+</tr>
+<tr>
+<td><strong>MOB-001</strong></td>
+<td>Mobile Domain (app nativo)</td>
+<td>App nativo</td>
+<td>ADR-000</td>
+<td>HIP-001</td>
+<td>a criar (futuro)</td>
+</tr>
+</tbody></table>
+<h3>Governança transversal</h3>
+<table>
+<thead>
+<tr>
+<th>Doc</th>
+<th>Objetivo</th>
+<th>Depende de</th>
+<th>Versão</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>COMPLIANCE-001</strong></td>
+<td>Conformidade estrutural + Gate de Conformidade (9 eixos)</td>
+<td>ADR-000</td>
+<td>ativo</td>
+</tr>
+<tr>
+<td><strong>GOV-001</strong></td>
+<td>Matriz de cobertura de governança</td>
+<td>ADR-000</td>
+<td>ativo</td>
+</tr>
+<tr>
+<td><strong>DATA-002</strong></td>
+<td>Data Governance</td>
+<td>DATA-001</td>
+<td>ativo</td>
+</tr>
+<tr>
+<td><strong>DATE-001</strong></td>
+<td>Infraestrutura Temporal Única (SSOT de datas: primitivos + regras)</td>
+<td>ADR-000 · ADR-001</td>
+<td>ativo (18/07)</td>
+</tr>
+<tr>
+<td><strong>API-001</strong></td>
+<td>API Governance</td>
+<td>ADR-000</td>
+<td>ativo</td>
+</tr>
+<tr>
+<td><strong>AI-001</strong></td>
+<td>AI Governance</td>
+<td>ADR-000</td>
+<td>ativo</td>
+</tr>
+<tr>
+<td><strong>OPS-001</strong></td>
+<td>Observability Governance</td>
+<td>ADR-000</td>
+<td>ativo</td>
+</tr>
+<tr>
+<td><strong>OPS-002</strong></td>
+<td>Runbook de Release, Backup e Restauração</td>
+<td>ADR-000 · COMPLIANCE-001 · OPS-001</td>
+<td>ativo</td>
+</tr>
+<tr>
+<td><strong>TENANT-001</strong></td>
+<td>Tenant Governance</td>
+<td>ADR-000</td>
+<td>ativo</td>
+</tr>
+<tr>
+<td><strong>SEC-001</strong></td>
+<td>Projeto Shield (Segurança)</td>
+<td>ADR-000</td>
+<td>ativo</td>
+</tr>
+<tr>
+<td><strong>ARCH-FEATURE-FLAGS</strong></td>
+<td>Feature Flags</td>
+<td>ADR-000</td>
+<td>ativo</td>
+</tr>
+<tr>
+<td><strong>DS-001</strong></td>
+<td>Design System</td>
+<td>ADR-000</td>
+<td>ativo</td>
+</tr>
+<tr>
+<td><strong>UX-001</strong></td>
+<td>Arquitetura de Experiência</td>
+<td>ADR-000</td>
+<td>ativo</td>
+</tr>
+</tbody></table>
+<h2>4. Estrutura ÚNICA dos documentos de domínio (convenção obrigatória)</h2>
+<p>Todo documento de domínio segue <strong>exatamente</strong> esta ordem de seções (facilita manutenção e onboarding):</p>
+<pre><code>1. Objetivo          — o que o domínio resolve
+2. Escopo            — o que está dentro / fora
+3. Modelo de Dados   — entidades, tabelas, contrato canônico
+4. Componentes       — módulos/serviços que o compõem
+5. Fluxos            — jornadas ponta a ponta
+6. APIs              — contratos de entrada/saída
+7. Segurança         — LGPD, autorização, tokens, RLS
+8. Governança        — decisões, precedência, quem decide
+9. Auditoria         — rastreabilidade, versionamento, evidência
+10. Evolução         — roadmap do domínio, itens adiados
+</code></pre>
+<p><strong>Cabeçalho padrão</strong> (todo doc): <code>Status · Versão · Responsável · Objetivo</code> + linha de metadados
+(Escopo · Dependências · Relacionado a). Docs anteriores a esta convenção migram ao serem revisitados.</p>
+<h2>5. Demais documentos (operacionais/históricos — não-normativos)</h2>
+<p>Backlogs (<code>BACKLOG_BETA</code>, <code>BACKLOG_CONCLUSAO</code>, <code>BACKLOG_EVOLUCOES</code>), definição de release (<code>RELEASE-1.0</code>),
+checklists funcionais (<code>EXAMES_/EVENTOS_CHECKLIST_FUNCIONAL</code>), planos e QA (<code>HOMOLOGATION_PLAN</code>, <code>QA-001</code>,
+<code>PROCESSO_HOMOLOGACAO</code>), auditorias datadas, modelos de domínio/glossário, catálogos científicos e specs de
+Knowledge Graph. Consultáveis, mas <strong>subordinados</strong> às camadas superiores.</p>
+<h2>6. Convenção de nomenclatura</h2>
+<p><code>XXX-NNN_TITULO</code> — prefixo de 3 letras por área (<code>ADR</code>, <code>DATA</code>, <code>CAP</code>, <code>HIP</code>, <code>FIN</code>, <code>WEA</code>, <code>RPT</code>, <code>HOM</code>,
+<code>SHR</code>, <code>MOB</code>, <code>API</code>, <code>AI</code>, <code>OPS</code>, <code>SEC</code>, <code>GOV</code>, <code>DS</code>, <code>UX</code>, <code>NOTIF</code>, <code>BILLING</code>, <code>CARE</code>, <code>EVENTS</code>, <code>TENANT</code>,
+<code>COMPLIANCE</code>). Número sequencial por área. Um domínio = um prefixo.</p>
+<h2>7. Ciclo de vida de um documento</h2>
+<p><code>rascunho → ativo → 🔒 congelado (concepção encerrada) → emendado (só por revisão explícita)</code>. Congelamento
+sinaliza que o aprendizado passa a vir da implementação, não de nova documentação. Toda emenda registra data.</p>
+<hr>
+<p><strong>Relaciona:</strong> SPAGS (mestre) · ADR-000 (constituição) · GOV-001 (cobertura) · todos os documentos de domínio.</p>
+<div class="footer">SINTERA — documento oficial (PDF gerado do Markdown canônico ARCH-000_DOCUMENT_ARCHITECTURE.md). Fonte de verdade: Git.</div></body></html>
