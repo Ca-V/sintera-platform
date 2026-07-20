@@ -46,8 +46,10 @@ function issueTokens(world: MockWorld, clock: Clock, tag: string): TokenSet {
 export function createMockOAuthProvider(world: MockWorld, clock: Clock): OAuthProvider {
   return {
     source: MOCK_SOURCE,
+    // Demo: a "tela de autorização" do provedor devolve na hora ao nosso callback com um code — mesmo formato
+    // do fluxo real (connect → authorizeUrl → callback), sem depender de um provedor externo.
     getAuthorizeUrl: (state, redirectUri) =>
-      `https://mock.local/oauth?state=${encodeURIComponent(state)}&redirect_uri=${encodeURIComponent(redirectUri)}`,
+      `${redirectUri}?code=mock-${encodeURIComponent(state)}&state=${encodeURIComponent(state)}`,
     async exchangeCode() {
       world.authorizations += 1
       return issueTokens(world, clock, `a${world.authorizations}`)

@@ -36,6 +36,24 @@ export function createSupabasePersistClient(supabase: SupabaseClient): PersistCl
   }
 }
 
+/** Leitor da marca d'água (maior recorded_at já gravado) — define o `since` da sync incremental. */
+export function createSupabaseWatermarkReader(supabase: SupabaseClient) {
+  return {
+    async lastRecordedAt(userId: string, source: string): Promise<string | null> {
+      const { data, error } = await supabase
+        .from('wearable_readings')
+        .select('recorded_at')
+        .eq('user_id', userId)
+        .eq('provider', source)
+        .order('recorded_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      if (error) throw new Error(`watermark: ${error.message}`)
+      return (data?.recorded_at as string | undefined) ?? null
+    },
+  }
+}
+
 /** Gravador real do histórico de sync (connector_sync_runs). IO fino; usado pelo orquestrador. */
 export function createSupabaseSyncRecorder(supabase: SupabaseClient): SyncRunRecorder {
   return {
