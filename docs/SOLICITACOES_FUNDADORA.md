@@ -80,6 +80,21 @@ Validação de produto/UX da fundadora. Veredito por item + novos achados. Class
 | **FB-016-4** | Nomenclatura | Categorias da Central ≠ Sidebar. **Re-validação:** "Composição Corporal" ok; **"Dispositivos" e "Planejamento"** não existem na Sidebar. | (2) consistência | 🟢 feito 20/07 + **re-validação atendida:** "Avaliações corporais"→"Composição Corporal"; **removidas "Dispositivos" e "Planejamento"** (categorias MORTAS — nenhum tipo de evento roteia p/ elas + sem item na Sidebar). |
 | **FB-016-P** | Governança (princípio) | **Nomenclatura de cada item = idêntica em TODAS as páginas/categorias** (nav, notificações, relatório, formulários). **Padrão de lembrete = único** em toda a plataforma. Reforço da fundadora (20/07). | princípio | ✅ registrado; guia todas as correções acima. |
 
+## Reestruturação da Central de Notificações (FB-017) — 20/07/2026
+Fundadora: a Central **não deve ter taxonomia própria** — deve **espelhar os domínios da Sidebar**. **Princípio
+permanente:** a Sidebar é a referência oficial de taxonomia; notificações/permissões/preferências/filtros reusam sua
+nomenclatura e organização (sem taxonomias paralelas). Auditoria feita + proposta **aprovada** (estrutura por domínios +
+"Agenda" como preferência única).
+
+| ID | Item | Status |
+|---|---|---|
+| **FB-017-1** | Categorias = domínios da Sidebar (`preferences.ts`): Agenda · Medicamentos · Suplementos · Recursos de Saúde · Ciclo e Contracepção (+Outros), com `section`; `categoryForEvent` roteia por tipo+vínculo; removidas categorias mortas/órfãs. | 🟢 feito 20/07 (+testes) |
+| **FB-017-2** | Origens marcam o domínio: Suplementos→`'suplemento'`, Ciclo→`'contracepcao'` (migração 130 estende o CHECK do legado); worker passa `ev.links` → lembrete de Recurso cai em "Recursos de Saúde". | 🟢 feito 20/07 |
+| **FB-017-3** | UI da Central agrupada pelas seções da Sidebar (Acompanhamento/Minha Saúde) + **princípio Sidebar=SSOT** documentado (NOTIF-001 + memória). | 🟢 feito 20/07 |
+
+**Decisões:** "Agenda" = preferência única (absorve consultas/exames/procedimentos/vacinas); domínios sem eventos que
+notifiquem ficam de fora até gerarem (Composição Corporal, Hábitos, Exames/Doc, Monitoramento…). Aguarda **re-validação**.
+
 ### Observação transversal (fundadora — 17/07)
 > A maior parte das alterações desta etapa **ainda não ficou perceptível** no Preview. **Prioridade:** tornar as
 > funcionalidades já implementadas **claramente acessíveis na interface ANTES** de evoluir o restante do backlog.
