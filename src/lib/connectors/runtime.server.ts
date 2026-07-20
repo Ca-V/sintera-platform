@@ -8,7 +8,7 @@ import { createConnectionStore, type ConnectionStore } from './connections'
 import { createSupabaseConnectionRepo } from './supabase-connections'
 import { createSupabasePersistClient, createSupabaseSyncRecorder, createSupabaseWatermarkReader } from './supabase-persist'
 import { createSyncService, type SyncService } from './syncService'
-import { systemClock } from './orchestrator'
+import { systemClock, isSyncStale } from './orchestrator'
 import type { OAuthProvider } from './oauth'
 import { createMockWorld, createMockConnector, createMockOAuthProvider, MOCK_SOURCE, type MockWorld } from './mock'
 
@@ -68,6 +68,29 @@ export interface ConnectorStateDto {
   lastSyncAt: string | null
   lastSyncStatus: string | null
   lastError: string | null
+}
+
+/**
+ * V2 Épico 3.1 — sincronização ON-OPEN: ao abrir a plataforma, sincroniza as fontes CONECTADAS sozinho,
+ * com THROTTLE (não re-sincroniza se já sincronizou há menos de `throttleMs`). Idempotente; reusa o SyncService.
+ * Não lança por fonte (uma falha não impede as outras). `now` injetável para testes.
+ */
+export async function syncOpenConnections(
+  admin: SupabaseClient,
+  userId: string,
+  throttleMs = 15 * 60 * 1000,
+  now = Date.now(),
+): Promise<{ synced: string[]; skipped: string[] }> {
+  const states = await getConnectorStates(admin, userId)
+  const svc = getSyncService(admin)
+  const synced: string[] = []
+  const skipped: string[] = []
+  for (const s of states) {
+    if (s.status !== 'connected') { skipped.push(s.source); continue }        // só fontes ativas (não expirada/revogada)
+    if (!isSyncStale(s.lastSyncAt, throttleMs, now)) { skipped.push(s.source); continue } // sincronizou há pouco → não repete
+    try { await svc.sync(userId, s.source); synced.push(s.source) } catch { skipped.push(s.source) }
+  }
+  return { synced, skipped }
 }
 
 export async function getConnectorStates(admin: SupabaseClient, userId: string): Promise<ConnectorStateDto[]> {

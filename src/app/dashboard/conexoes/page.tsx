@@ -17,6 +17,7 @@ import PageHeader from '@/components/PageHeader'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import Disclaimer from '@/components/ui/Disclaimer'
+import { useOnOpenSync } from '@/lib/connectors/useOnOpenSync'
 
 type Status = 'disconnected' | 'connected' | 'expired' | 'revoked' | 'error'
 
@@ -76,6 +77,10 @@ function ConexoesInner() {
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  // V2 Épico 3.1 — ao abrir Conexões, sincroniza sozinho as fontes conectadas (throttle no servidor);
+  // quando chega dado novo, recarrega o estado. A SINTERA trabalha em segundo plano.
+  useOnOpenSync(() => { load() })
 
   const syncNow = useCallback(async (source: string) => {
     setSyncing(source)

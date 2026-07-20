@@ -19,6 +19,16 @@ export interface Clock {
 
 export const systemClock: Clock = { now: () => new Date().toISOString() }
 
+/**
+ * V2 Épico 3.1 — decisão de throttle da sincronização ON-OPEN (pura/testável): sincroniza se nunca sincronizou
+ * (`lastSyncAt` nulo) ou se a última sync foi há pelo menos `throttleMs`. Evita floodar o provedor/worker.
+ */
+export function isSyncStale(lastSyncAt: string | null, throttleMs: number, nowMs: number): boolean {
+  const last = lastSyncAt ? new Date(lastSyncAt).getTime() : 0
+  if (Number.isNaN(last)) return true
+  return nowMs - last >= throttleMs
+}
+
 export interface SyncDeps {
   persist: PersistClient
   recorder: SyncRunRecorder
