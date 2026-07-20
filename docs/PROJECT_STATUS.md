@@ -23,8 +23,13 @@ SSOT, RN+Expo, Monorepo, Sincronização (ADR-002..008). Referência: [[ARCH-003
   estado (**ADR**) → cliente API → auth → ambiente dev.
 
 ## Marca / Identidade
-Direção aprovada: identidade inspirada em **Almond Blossom** (Van Gogh) — [[BRAND-001]] (Draft, aguardando aprovação) ·
-ADR-010. **Design System único** (web+mobile). Paleta atual da web = **provisória**; **nenhuma cor definitiva aprovada**.
+Identidade **aprovada**: [[BRAND-001]] v1.1 (Almond Blossom) · ADR-010 · **Design System único** (web+mobile). Paleta web
+atual = **provisória**; **nenhuma cor definitiva aprovada**.
+- **Tipografia:** [[BRAND-002]] (estudo + specimen visual) — **decisão pendente** (candidatas: Fraunces+Hanken / Fraunces+
+  Atkinson / Source / Figtree).
+- **Cor primária:** [[COLOR-001]] (estudo + specimen visual, 5 direções Almond Blossom, rampas 50–900) — **decisão
+  pendente**. A cor do 1º specimen (teal escuro) foi **descartada** (corporativa; próxima do verde provisório da web).
+Após decidir tipografia + cor → **Passo 3B Design System** constrói os tokens.
 Ainda sem código funcional de produto. Critérios de validação por etapa: [[HIP-010]] (4 categorias).
 
 ## Documentação
