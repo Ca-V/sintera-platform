@@ -14,7 +14,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import {
   Loader2, Plus, X, ArrowLeft, Pencil, Trash2, Camera, Paperclip, Receipt,
-  Glasses, HeartPulse, Bone, Accessibility, Shirt, Package, CalendarClock,
+  Glasses, HeartPulse, Bone, Accessibility, Shirt, Package,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
@@ -29,10 +29,22 @@ import Disclaimer from '@/components/ui/Disclaimer'
 import CreateRecordMenu from '@/components/ui/CreateRecordMenu'
 import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MB } from '@/lib/capture/limits'
 import ConfirmDialog from '@/components/ConfirmDialog'
-import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
+import AgendarModal, { type AgendaEventInput, type RecurrenceFreq } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
 import { eventServicesFor, isFinancial, selectByLink, type HealthEvent } from '@/lib/agenda'
+import { parseRule } from '@/lib/recurrence'
+import { todayISO } from '@/lib/date'
 import { expenseDocLabel } from '@/lib/finance/expense'
+
+// FB-016-2 — frequências de troca (mesmo padrão inline do Medicamento), no conjunto canônico de recorrência.
+const TROCA_FREQ_OPTS: { v: RecurrenceFreq; l: string }[] = [
+  { v: 'weekly', l: 'Semanal' }, { v: 'biweekly', l: 'Quinzenal' }, { v: 'monthly', l: 'Mensal' }, { v: 'yearly', l: 'Anual' },
+]
+// Um evento é o LEMBRETE de troca do recurso r (não a despesa): vinculado, planejado, tipo 'outro' e não-financeiro.
+function isRenewalOf(e: HealthEvent, resourceId: string): boolean {
+  return e.type === 'outro' && e.status === 'planejado' && !isFinancial(e)
+    && e.links.some(l => l.type === 'resource' && l.id === resourceId)
+}
 
 type ResourceType = 'correcao_visual' | 'dispositivo_medico' | 'protese_ortese' | 'auxilio' | 'compressao_suporte' | 'outro'
 type Status = 'em_uso' | 'suspenso' | 'encerrado'
@@ -116,9 +128,11 @@ export default function RecursosPage() {
   // FB-004: despesa (valor pago + NF) do recurso via fluxo financeiro único (FIN-001).
   const { saveEvent } = useEventForm()
   const [expenses, setExpenses] = useState<HealthEvent[]>([])
-  const [agendarResource, setAgendarResource] = useState<Resource | null>(null)
-  // FB-004 = financeiro (valor/NF) · FB-015-8 = lembrete de troca/manutenção recorrente. Mesmo AgendarModal.
-  const [agendarMode, setAgendarMode] = useState<'expense' | 'reminder'>('expense')
+  const [renewalEvents, setRenewalEvents] = useState<HealthEvent[]>([])   // FB-016-2: lembretes de troca (health_events)
+  const [agendarResource, setAgendarResource] = useState<Resource | null>(null)   // FB-004: valor/NF
+  // FB-016-2 — recorrência de troca INLINE (padrão do Medicamento), persistida no canônico health_events.
+  const [trocaRecorrente, setTrocaRecorrente] = useState(false)
+  const [trocaFreq, setTrocaFreq] = useState<RecurrenceFreq>('monthly')
   const scanRef = useRef<HTMLInputElement>(null)
 
   const set = (k: keyof typeof EMPTY, v: string) => setF(s => ({ ...s, [k]: v }))
@@ -148,14 +162,15 @@ export default function RecursosPage() {
     try {
       const evs = await eventServicesFor(supabase as never).query.listAll(user.id)
       setExpenses(evs.filter(isFinancial))
-    } catch { setExpenses([]) }
+      setRenewalEvents(evs.filter(e => e.type === 'outro' && e.status === 'planejado' && !isFinancial(e) && e.links.some(l => l.type === 'resource')))
+    } catch { setExpenses([]); setRenewalEvents([]) }
     setLoading(false)
   }, [user, supabase])
 
   // eslint-disable-next-line react-hooks/set-state-in-effect -- carrega dados na montagem (data fetching)
   useEffect(() => { if (!authLoading) load() }, [authLoading, load])
 
-  function reset() { setEditingId(null); setEditingAttrs({}); setF({ ...EMPTY }); setErr(null) }
+  function reset() { setEditingId(null); setEditingAttrs({}); setF({ ...EMPTY }); setTrocaRecorrente(false); setTrocaFreq('monthly'); setErr(null) }
 
   function startAdd(type?: ResourceType) {
     reset()
@@ -179,6 +194,11 @@ export default function RecursosPage() {
       oe_sph: oe.sph ?? '', oe_cyl: oe.cyl ?? '', oe_axis: oe.axis ?? '', oe_add: oe.add ?? '',
       dnp: (a.dnp as string) ?? '', bc: (a.bc as string) ?? '', dia: (a.dia as string) ?? '',
     })
+    // FB-016-2: recupera o lembrete de troca existente (se houver) para o campo inline.
+    const rev = renewalEvents.find(e => isRenewalOf(e, r.id))
+    setTrocaRecorrente(!!rev)
+    const fr = rev ? parseRule(rev.recurrenceRule).frequency : 'none'
+    setTrocaFreq(fr && fr !== 'none' ? (fr as RecurrenceFreq) : 'monthly')
     setErr(null); setShowForm(true)
   }
 
@@ -275,9 +295,39 @@ export default function RecursosPage() {
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db = (supabase as any).from('health_resources')
-    const { error } = editingId ? await db.update(payload).eq('id', editingId) : await db.insert(payload)
+    let resourceId = editingId
+    if (editingId) {
+      const { error } = await db.update(payload).eq('id', editingId)
+      if (error) { setSaving(false); setErr(error.message); return }
+    } else {
+      const { data, error } = await db.insert(payload).select('id').single()
+      if (error) { setSaving(false); setErr(error.message); return }
+      resourceId = (data?.id as string) ?? null
+    }
+
+    // FB-016-2: lembrete de troca recorrente no canônico health_events, vinculado ao recurso (EventLink 'resource').
+    // Ligado → cria/atualiza (mesma infra saveEvent do Medicamento/Agenda). Desligado → remove o lembrete existente.
+    if (resourceId) {
+      const existing = renewalEvents.find(e => isRenewalOf(e, resourceId!)) ?? null
+      try {
+        if (trocaRecorrente) {
+          const input: AgendaEventInput = {
+            eventType: 'outro', isReturn: false, isSurgery: false, status: 'planejado',
+            title: `Trocar/renovar: ${f.name.trim()}`, date: f.until_date || todayISO(), time: '', durationMin: 60,
+            notes: `Lembrete de troca/manutenção do recurso: ${f.name.trim()}`, reminderEnabled: true,
+            modality: '', professionalKind: '', professionalName: '', establishment: '', location: '', preparation: '',
+            amount: '', expenseDocType: '', recurrenceFrequency: trocaFreq, recurrenceUntil: '',
+            priority: '', directExpense: false, outcome: '', operadora: '', carteirinha: '',
+          }
+          await saveEvent(user.id, input, existing, [{ type: 'resource', id: resourceId }])
+        } else if (existing) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabase as any).from('health_events').delete().eq('id', existing.id)
+        }
+      } catch { /* falha no lembrete não impede o salvamento do recurso */ }
+    }
+
     setSaving(false)
-    if (error) { setErr(error.message); return }
     reset(); setShowForm(false); await load()
   }
 
@@ -340,9 +390,7 @@ export default function RecursosPage() {
         chips={view === 'situacao' ? <CardChip tone="mauve">{tm?.label ?? 'Recurso'}</CardChip> : undefined}
         actions={
           <>
-            <button onClick={() => { setAgendarMode('reminder'); setAgendarResource(r) }} title="Programar troca / lembrete de manutenção"
-              className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-petal transition-colors"><CalendarClock size={12} /></button>
-            <button onClick={() => { setAgendarMode('expense'); setAgendarResource(r) }} title="Registrar valor pago / nota fiscal"
+            <button onClick={() => setAgendarResource(r)} title="Registrar valor pago / nota fiscal"
               className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-petal transition-colors"><Receipt size={12} /></button>
             <button onClick={() => startEdit(r)} title="Editar"
               className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-petal transition-colors"><Pencil size={12} /></button>
@@ -447,6 +495,28 @@ export default function RecursosPage() {
               <input id="recurso-troca" type="date" value={f.until_date} onChange={e => set('until_date', e.target.value)} className={inputCls} />
             </div>
           </div>
+
+          {/* FB-016-2: lembrete de troca recorrente — MESMO padrão inline do Medicamento (checkbox + frequência),
+              persistido no canônico health_events (vinculado ao recurso). Usa a data de troca prevista acima. */}
+          <label className="flex items-center gap-2 font-body text-sm text-onyx cursor-pointer">
+            <input type="checkbox" checked={trocaRecorrente} onChange={e => setTrocaRecorrente(e.target.checked)} className="accent-petal w-4 h-4" />
+            Programar troca recorrente (lembrete)
+          </label>
+          {trocaRecorrente && (
+            <div className="space-y-2 rounded-lg bg-blush/20 border border-petal/15 p-2.5">
+              <div>
+                <label htmlFor="recurso-troca-freq" className="font-body text-[11px] text-mauve block mb-1">Frequência da troca</label>
+                <select id="recurso-troca-freq" value={trocaFreq} onChange={e => setTrocaFreq(e.target.value as RecurrenceFreq)}
+                  className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30">
+                  {TROCA_FREQ_OPTS.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
+                </select>
+              </div>
+              <p className="font-body text-[11px] text-mauve leading-relaxed">
+                Cria um lembrete recorrente na sua Agenda a partir da <strong>troca prevista</strong> acima{f.until_date ? '' : ' (ou de hoje, se não informada)'}.
+                Você é avisada pelo canal definido nas suas preferências de notificação.
+              </p>
+            </div>
+          )}
 
           {/* Correção visual — grau por olho + scan de receita */}
           {isVisual && (
@@ -583,9 +653,8 @@ export default function RecursosPage() {
         onCancel={() => setConfirm(null)}
       />
 
-      {/* Mesmo AgendarModal (infra única @/lib/agenda), dois modos vinculados ao recurso (EventLink 'resource'):
-          - expense (FB-004): valor pago + NF via fluxo financeiro (FIN-001);
-          - reminder (FB-015-8): lembrete de troca/manutenção recorrente (reusa o campo "Repetir" do modal). */}
+      {/* FB-004: valor pago + NF/recibo do recurso, via fluxo financeiro único (FIN-001).
+          (O lembrete de troca recorrente é INLINE no formulário — FB-016-2 — não aqui.) */}
       <AgendarModal
         open={!!agendarResource}
         onClose={() => setAgendarResource(null)}
@@ -595,12 +664,10 @@ export default function RecursosPage() {
           setAgendarResource(null)
           await load()
         }}
-        onGoToHistory={() => { window.location.href = agendarMode === 'reminder' ? '/dashboard/agenda' : '/dashboard/gastos' }}
-        defaultTitle={agendarMode === 'reminder' ? `Trocar/renovar: ${agendarResource?.name ?? ''}` : (agendarResource?.name ?? 'Recurso')}
+        onGoToHistory={() => { window.location.href = '/dashboard/gastos' }}
+        defaultTitle={agendarResource?.name ?? 'Recurso'}
         defaultNotes={`Referente ao recurso: ${agendarResource?.name ?? ''}`}
-        initialEvent={agendarMode === 'reminder'
-          ? { eventType: 'outro', status: 'planejado', ...(agendarResource?.untilDate ? { date: agendarResource.untilDate } : {}) }
-          : { eventType: 'outro', status: 'realizado' }}
+        initialEvent={{ eventType: 'outro', status: 'realizado' }}
       />
     </div>
   )
