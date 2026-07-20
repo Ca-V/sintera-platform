@@ -298,25 +298,35 @@ export default function ConfiguracoesPage() {
           </button>
         </div>
 
-        <div className="space-y-2">
-          {NOTIFICATION_CATEGORIES.map(cat => (
-            <div key={cat.key} className="flex flex-wrap items-center justify-between gap-2 py-2 border-b border-border/40 last:border-0">
-              <p className="font-body text-sm text-onyx">{cat.label}</p>
-              <div className="flex gap-1 bg-ivory border border-border rounded-xl p-0.5" role="group" aria-label={`Canal para ${cat.label}`}>
-                {NOTIFICATION_CHANNELS.map(ch => {
-                  const active = (notifPrefs[cat.key] ?? DEFAULT_CHANNEL) === ch
-                  return (
-                    <button key={ch} type="button"
-                      onClick={() => setNotifPrefs(p => ({ ...p, [cat.key]: ch }))}
-                      aria-pressed={active}
-                      className={`px-2.5 py-1 rounded-lg font-body text-[11px] font-medium transition-colors ${active ? 'bg-white text-onyx shadow-sm' : 'text-mauve hover:text-onyx'}`}>
-                      {CHANNEL_LABEL[ch]}
-                    </button>
-                  )
-                })}
+        {/* FB-017: agrupado pelas SEÇÕES da Sidebar (a Central espelha a navegação — sem taxonomia própria). */}
+        <div className="space-y-4">
+          {['Acompanhamento', 'Minha Saúde'].map(section => {
+            const cats = NOTIFICATION_CATEGORIES.filter(c => c.section === section)
+            if (cats.length === 0) return null
+            return (
+              <div key={section} className="space-y-1">
+                <p className="font-body text-[11px] font-semibold text-mauve uppercase tracking-wider">{section}</p>
+                {cats.map(cat => (
+                  <div key={cat.key} className="flex flex-wrap items-center justify-between gap-2 py-2 border-b border-border/40 last:border-0">
+                    <p className="font-body text-sm text-onyx">{cat.label}</p>
+                    <div className="flex gap-1 bg-ivory border border-border rounded-xl p-0.5" role="group" aria-label={`Canal para ${cat.label}`}>
+                      {NOTIFICATION_CHANNELS.map(ch => {
+                        const active = (notifPrefs[cat.key] ?? DEFAULT_CHANNEL) === ch
+                        return (
+                          <button key={ch} type="button"
+                            onClick={() => setNotifPrefs(p => ({ ...p, [cat.key]: ch }))}
+                            aria-pressed={active}
+                            className={`px-2.5 py-1 rounded-lg font-body text-[11px] font-medium transition-colors ${active ? 'bg-white text-onyx shadow-sm' : 'text-mauve hover:text-onyx'}`}>
+                            {CHANNEL_LABEL[ch]}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
 
         {/* Prioridade (NOTIF-001/FB-011): obrigatórias são SEMPRE enviadas — fora das preferências. */}

@@ -1,5 +1,21 @@
 # NOTIF-001 — Central de Notificações (infraestrutura ÚNICA · transversal)
 
+> **PRINCÍPIO PERMANENTE (fundadora 20/07/2026 · FB-017) — A SIDEBAR É A REFERÊNCIA OFICIAL DE TAXONOMIA.**
+> Toda estrutura de **notificações, permissões, preferências, filtros** ou similar **reusa exatamente a
+> nomenclatura e a organização da Sidebar**. **Não existem taxonomias paralelas.** A Central de Notificações
+> **não tem categorias próprias**: ela ESPELHA os domínios da Sidebar. Cada categoria = um domínio real que
+> **efetivamente gera notificações** (nada de categoria vazia "porque existia antes"); domínios sem eventos que
+> notifiquem só entram quando passarem a gerar. Quando um domínio é criado/renomeado/removido na Sidebar, essas
+> estruturas permanecem automaticamente consistentes.
+>
+> **Modelo FB-017 (implementado):** categorias com `section` (= seção da Sidebar). Hoje notificam: **Acompanhamento →
+> Agenda**; **Minha Saúde → Medicamentos · Suplementos · Recursos de Saúde · Ciclo e Contracepção** (+ *Outros*
+> fallback). "Agenda" absorve todos os eventos agendados (consultas/exames/procedimentos/vacinas) — a Sidebar tem
+> "Agenda", não os tipos separados. A categoria vem do **domínio de origem** do evento (`categoryForEvent`: tipo +
+> vínculo — lembrete de Recurso → "Recursos de Saúde"). Fora por ora (sem eventos): Composição Corporal, Hábitos,
+> Exames/Documentos, Monitoramento, Condições, Históricos, Despesas, Relatórios. Ver `src/lib/notifications/preferences.ts`.
+
+
 > Fundadora (14/07/2026): uma SÓ infraestrutura de notificações para TODA a plataforma. O usuário
 > configura, POR CATEGORIA de evento, o canal: **e-mail · WhatsApp · ambos · nenhum**. Reutilizada
 > por todos os módulos — **proibido** implementação específica por funcionalidade. É a dimensão
