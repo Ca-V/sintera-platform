@@ -10,7 +10,9 @@ const CLIENT_THROTTLE_MS = 60_000 // no máximo uma chamada por minuto por sess�
 
 export interface OnOpenSyncResult {
   synced: string[]
-  newRecords: number   // medições NOVAS incorporadas nesta sincronização (base do "sua história cresceu")
+  newRecords: number       // medições NOVAS nesta sincronização (on-open)
+  newSince: number         // V2 Aha-R2: novas DESDE A ÚLTIMA VISITA (mais fiel para "sua história cresceu")
+  previousSeen: string | null // instante da última visita anterior (para destacar os registros novos — R3)
 }
 
 /**
@@ -28,8 +30,11 @@ export function useOnOpenSync(onSynced?: (result: OnOpenSyncResult) => void) {
 
     fetch('/api/connectors/sync-open', { method: 'POST' })
       .then(r => (r.ok ? r.json() : null))
-      .then((res: { synced?: string[]; newRecords?: number } | null) => {
-        if (active && res?.synced?.length) onSynced?.({ synced: res.synced, newRecords: res.newRecords ?? 0 })
+      .then((res: { synced?: string[]; newRecords?: number; newSince?: number; previousSeen?: string | null } | null) => {
+        if (!active || !res) return
+        // Guarda a última visita anterior para o destaque "novo" (R3) nas telas de dados.
+        try { if (res.previousSeen) sessionStorage.setItem('sintera:prev-visit', res.previousSeen) } catch { /* ignore */ }
+        onSynced?.({ synced: res.synced ?? [], newRecords: res.newRecords ?? 0, newSince: res.newSince ?? 0, previousSeen: res.previousSeen ?? null })
       })
       .catch(() => { /* silencioso: sync automática nunca atrapalha a navegação */ })
 

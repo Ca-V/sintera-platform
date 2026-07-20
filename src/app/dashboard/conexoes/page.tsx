@@ -82,7 +82,7 @@ function ConexoesInner() {
 
   // V2 Épico 3.1/3.3 — ao abrir, sincroniza sozinho (throttle no servidor), recarrega o estado e comunica
   // o benefício quando chega dado novo. A SINTERA trabalha em segundo plano.
-  useOnOpenSync(({ newRecords }) => { load(); if (newRecords > 0) setGrewCount(newRecords) })
+  useOnOpenSync(({ newSince }) => { load(); if (newSince > 0) setGrewCount(newSince) })
 
   const syncNow = useCallback(async (source: string) => {
     setSyncing(source)

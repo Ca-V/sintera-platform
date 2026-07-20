@@ -91,7 +91,7 @@ function LegacyDashboard() {
 
   // V2 Aha-R1 — no retorno, o Painel Inicial sincroniza sozinho e comunica o benefício de imediato.
   const [grewCount, setGrewCount] = useState(0)
-  useOnOpenSync(({ newRecords }) => { if (newRecords > 0) setGrewCount(newRecords) })
+  useOnOpenSync(({ newSince }) => { if (newSince > 0) setGrewCount(newSince) })
   const displayName = profile?.name?.split(' ')[0] ?? 'por aqui'
 
   async function loadData() {

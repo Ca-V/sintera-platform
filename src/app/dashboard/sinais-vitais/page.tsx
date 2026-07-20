@@ -98,7 +98,7 @@ export default function SinaisVitaisPage() {
   // V2 Épico 3.1/3.3 — ao abrir o Monitoramento, sincroniza sozinho as fontes conectadas e, se chegou dado
   // novo, recarrega e comunica o benefício (a SINTERA trabalhou em segundo plano).
   const [grewCount, setGrewCount] = useState(0)
-  useOnOpenSync(({ newRecords }) => { load(); if (newRecords > 0) setGrewCount(newRecords) })
+  useOnOpenSync(({ newSince }) => { load(); if (newSince > 0) setGrewCount(newSince) })
 
   function chooseMetric(m: Vital) { setMetric(m); setUnit(DEFAULT_UNIT[m]) }
   function reset() { setMetric('pressao_arterial'); setLabel(''); setValue(''); setUnit('mmHg'); setDate(''); setNotes(''); setErr(null) }
