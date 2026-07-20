@@ -14,8 +14,8 @@ separados) divergiriam com o tempo.
 3. A **paleta atual da web é PROVISÓRIA e DESCONTINUADA**; a web **migra gradualmente** para a mesma identidade — **em
    paralelo** ao mobile, sem esperar o app ficar pronto (tarefa no [[IMPLEMENTATION_ROADMAP]]), evitando retrabalho.
 4. **Direção cromática oficial = A·E** ([[COLOR-001]]) — inspirada na **atmosfera** de _Almond Blossom_ (não reprodução):
-   traduz serenidade, continuidade, sofisticação, natureza e leveza. Tom predominante **claro** (~p-400); escuros só em
-   texto/ação. **Congela-se a direção**; tokens 50–900 (com pequenos ajustes técnicos de contraste/acessibilidade/dark)
+   traduz serenidade, continuidade, sofisticação, natureza e leveza. Tom predominante **claro** (entre a 3ª e a 4ª etapa da
+   rampa, ~p-250); escuros só em texto/ação. **Congela-se a direção**; tokens 50–900 (com pequenos ajustes técnicos de contraste/acessibilidade/dark)
    no Design System (Passo 3B).
 Sequência: **Sistema de Identidade ([[BRAND-001]], Passo 3A) → Design System (Passo 3B)**.
 

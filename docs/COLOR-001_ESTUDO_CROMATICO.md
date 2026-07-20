@@ -4,7 +4,7 @@
 em _Almond Blossom_. **Escopo:** só a **primária**; neutros quentes e verde-acinzentado (secundária) vêm do [[BRAND-001]].
 **Status:** Approved (DIREÇÃO) · **Architectural Baseline** · **Versão:** 1.2 · **Histórico:** v1.0 estudo 5 direções;
 v1.1 direção **A·E aprovada** + comparativo + teste denso + 7 princípios; v1.2 (2026-07-20) Baseline + tom predominante
-**claro (~5ª etapa, p-400)** + web migra para A·E (paleta atual descontinuada).
+**claro (entre a 3ª e a 4ª etapa da rampa, ~p-250)** + web migra para A·E (paleta atual descontinuada).
 **Dependências:** [[BRAND-001]] · [[adr_010_identidade_visual_unica|ADR-010]]. **Impacto:** a direção A·E gera os tokens
 50–900 do Design System (Passo 3B).
 
@@ -20,8 +20,9 @@ v1.1 direção **A·E aprovada** + comparativo + teste denso + 7 princípios; v1
    navegação ativa**; evitar grandes áreas preenchidas com a cor institucional. A identidade nasce do **equilíbrio**
    (espaço · tipografia · neutros · contraste · cor).
    - **Tom predominante CLARO:** quando a primária aparece (nós da Timeline, gráficos, elementos decorativos), o tom
-     predominante é **claro — ~5ª etapa da rampa (p-400)**, não os escuros. Os tons escuros (p-600+) ficam **só** onde há
-     necessidade de contraste: **texto e ações** (ex.: botão/CTA com texto branco). Isso mantém a leveza sem perder legibilidade.
+     predominante é **claro — entre a 3ª e a 4ª etapa da rampa (entre p-200 e p-300, ~p-250)**, um turquesa sereno, não
+     os escuros. Os tons escuros (p-600+) ficam **só** onde há necessidade de contraste: **texto e ações** (ex.: botão/CTA
+     com texto branco). Isso mantém a leveza sem perder legibilidade.
 3. **Neutros em primeiro lugar** — inspirados nas flores (off-white · ivory · warm white · cinzas quentes muito suaves);
    **evitar branco puro predominante**. Os neutros impactam a percepção premium **mais** que a primária.
 4. **Semântica clara** (não reusar a institucional para tudo): **Informação → primária Almond · Sucesso → verde sálvia
