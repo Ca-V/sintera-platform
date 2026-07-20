@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   rowToHealthEvent, agendaRowToHealthEvent, healthEventToRow,
   isUpcoming, isPast, isConcluded, isClosed, hasActiveReminder, hasCost, isDerived, isReturnVisit,
-  selectUpcoming, selectNextUpcoming, selectHistorical, selectByLink, selectFinancial, isFinancial, isOverdue, selectOverdue,
+  selectUpcoming, selectNextUpcoming, selectHistorical, selectByLink, selectFinancial, isFinancial, isOverdue, selectOverdue, isClosedStatus, isHistorical,
   completeRule, cancelRule, rescheduleRule, canTransition,
   type HealthEvent, type HealthEventRow,
 } from './event'
@@ -122,6 +122,14 @@ describe('seletores e regras de transição (puros)', () => {
     ]
     // só as vencidas abertas, em ordem cronológica
     expect(selectOverdue(list, ref).map(e => e.id)).toEqual(['venc1', 'venc2'])
+  })
+  it('FB-016-1 · isClosedStatus / isHistorical = só o que ACONTECEU (fechado); aberto vencido NÃO é histórico', () => {
+    for (const s of ['realizado', 'cancelado', 'perdido']) expect(isClosedStatus(s)).toBe(true)
+    for (const s of ['planejado', 'reagendado', '']) expect(isClosedStatus(s)).toBe(false)
+    // um agendamento vencido e ABERTO não é histórico (fica na Agenda como pendência)
+    expect(isHistorical(ev({ date: '2026-07-01', status: 'planejado' }))).toBe(false)
+    expect(isHistorical(ev({ date: '2026-07-01', status: 'realizado' }))).toBe(true)
+    expect(isHistorical(ev({ date: '2026-08-01', status: 'cancelado' }))).toBe(true)
   })
   it('isFinancial / selectFinancial = realizado-com-valor OU despesa direta (Gastos = projeção)', () => {
     expect(isFinancial(ev({ status: 'realizado', amountCents: 25000 }))).toBe(true)

@@ -22,8 +22,7 @@ import { useUser } from '@/context/UserContext'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { useEventForm, eventToInput } from '@/components/eventForm'
-import { rowToHealthEvent, eventServicesFor, modalityLabel, outcomeSummary, hasOutcome, professionalKindLabel, isReturnVisit, priorityBadge, type HealthEvent, type HealthEventRow, type EventPriority } from '@/lib/agenda'
-import { todayISO } from '@/lib/date'   // SSOT de datas (DATE-001) — "hoje" consistente entre as telas
+import { rowToHealthEvent, eventServicesFor, modalityLabel, outcomeSummary, hasOutcome, professionalKindLabel, isReturnVisit, priorityBadge, isClosedStatus, type HealthEvent, type HealthEventRow, type EventPriority } from '@/lib/agenda'
 import { useStickyView } from '@/lib/ui/useStickyView'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import ListCard, { CardChip } from '@/components/ListCard'
@@ -295,13 +294,12 @@ function LegacyTimeline() {
       onYes: () => withFullEvent(rawId, ev => services.command.reopen(user!.id, ev), 'Não foi possível reabrir o evento.'),
     })
 
-  const today = todayISO()
-  // Histórico = SÓ o que já aconteceu. Eventos futuros ainda planejados vivem na Agenda
-  // (regra definitiva: Agenda = futuro · Histórico = passado). Exames/ômica e eventos
-  // realizados/cancelados aparecem; um evento futuro ainda "planejado" não.
-  const isFuturePlanned = (it: TimelineItem) =>
-    it.kind === 'event' && it.date.slice(0, 10) >= today && it.status !== 'realizado' && it.status !== 'cancelado'
-  const history = items.filter(it => !isFuturePlanned(it)) // já ordenado: mais recente primeiro
+  // Histórico = SÓ o que ACONTECEU de fato. Um evento entra apenas se estiver FECHADO
+  // (realizado/cancelado/perdido); um agendamento ainda ABERTO — futuro OU vencido — vive na
+  // Agenda (futuro=próximos · vencido=pendências), nunca aqui (FB-016-1). Fatos não-evento
+  // (exames/ômica/etc.) são sempre históricos. `isClosedStatus` = SSOT do "fechado".
+  const belongsToHistory = (it: TimelineItem) => it.kind !== 'event' || isClosedStatus(it.status ?? '')
+  const history = items.filter(belongsToHistory) // já ordenado: mais recente primeiro
 
   const renderItem = (it: TimelineItem, i: number) => {
     const meta = TYPE_META[it.eventType] ?? TYPE_META.outro

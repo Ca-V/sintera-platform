@@ -33,10 +33,9 @@ import { assembleOrganizedBiomarkers } from '@/lib/ai/insights/assembler'
 import { summarizeBiomarkers, type BiomarkerSummary, type BiomarkerRow } from '@/lib/biomarkers/grouping'
 import { useUser } from '@/context/UserContext'
 import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
-import { typeLabel, professionalKindLabel, type HealthEvent } from '@/lib/agenda' // fonte ÚNICA de rótulos de tipo/profissional
+import { typeLabel, professionalKindLabel, isClosedStatus, type HealthEvent } from '@/lib/agenda' // fonte ÚNICA de rótulos de tipo/profissional
 import { useEventForm } from '@/components/eventForm' // serviço de domínio (query.listFinancial = Despesas)
 import { contraceptiveLabel } from '@/lib/cycle'       // SSOT dos métodos contraceptivos
-import { todayISO as currentISO } from '@/lib/date'    // SSOT dos cálculos de data
 
 interface Med { name: string; kind: string; dose: string | null; frequency: string | null; startedOn: string | null; untilOn: string | null; status: string }
 interface Ev { title: string; eventType: string; prof: string | null; date: string; notes: string | null; status: string }
@@ -370,10 +369,11 @@ function LegacyReport() {
   const rp = resolvePeriod(period)
   // Agenda: aplica período E a seleção por TIPO de evento (item a item).
   const perEvents = events.filter(e => inPeriod(e.date, rp) && isItemOn('eventos', e.eventType))
-  // Separação DEFINITIVA Agenda × Histórico (mesma regra do módulo Histórico/timeline):
-  // Agenda = futuro ainda planejado; Histórico = já aconteceu (realizado/cancelado, ou passado).
-  const today = currentISO()   // SSOT @/lib/date
-  const isAgendaEvent = (e: Ev) => e.date.slice(0, 10) >= today && e.status !== 'realizado' && e.status !== 'cancelado'
+  // Separação DEFINITIVA Agenda × Histórico (mesma regra do módulo Histórico/timeline, FB-016-1):
+  // Agenda = evento ainda ABERTO (planejado/reagendado — futuro OU vencido/pendência);
+  // Histórico = já aconteceu = evento FECHADO (realizado/cancelado/perdido). Um agendamento
+  // não-realizado NUNCA entra no Histórico. `isClosedStatus` = SSOT do "fechado".
+  const isAgendaEvent = (e: Ev) => !isClosedStatus(e.status)
   const perAgenda = perEvents.filter(isAgendaEvent)
   const perHistorico = perEvents.filter(e => !isAgendaEvent(e))
   const perOmics = omics.filter(o => inPeriod(o.date, rp))

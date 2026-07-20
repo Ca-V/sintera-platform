@@ -179,7 +179,15 @@ export function agendaRowToHealthEvent(r: AgendaEventRow): HealthEvent {
 // ── Projeções técnicas (predicados) — as telas FILTRAM por estes, sem regra própria ──
 // Datas recebem `refDate` ('YYYY-MM-DD') para serem puras/testáveis.
 export function isConcluded(ev: HealthEvent): boolean { return ev.status === 'realizado' }
-export function isClosed(ev: HealthEvent): boolean { return ev.status === 'realizado' || ev.status === 'cancelado' || ev.status === 'perdido' }
+/** Status TERMINAL (o fato se resolveu): realizado/cancelado/perdido. SSOT do "fechado" (usado por Agenda×Histórico). */
+export function isClosedStatus(status: string): boolean { return status === 'realizado' || status === 'cancelado' || status === 'perdido' }
+export function isClosed(ev: HealthEvent): boolean { return isClosedStatus(ev.status) }
+/**
+ * Pertence ao HISTÓRICO (o registro do que ACONTECEU)? Só eventos FECHADOS entram — um evento ainda ABERTO
+ * (planejado/reagendado), seja futuro ou VENCIDO, vive na Agenda (futuro=próximos · vencido=pendências),
+ * nunca no Histórico. (FB-016-1: um agendamento não-realizado não é "o que aconteceu".)
+ */
+export function isHistorical(ev: HealthEvent, _refDate?: string): boolean { return isClosed(ev) }
 export function isUpcoming(ev: HealthEvent, refDate: string): boolean { return !isClosed(ev) && ev.date >= refDate }
 export function isPast(ev: HealthEvent, refDate: string): boolean { return isConcluded(ev) || ev.date < refDate }
 /**
