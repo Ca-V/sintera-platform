@@ -19,6 +19,15 @@ Legibilidade · personalidade da marca · acessibilidade · **leitura prolongada
 - **Português-BR:** cobertura completa de acentuação. **Algarismos tabulares** para os dados observacionais (colunas alinhadas).
 - **Pesos mínimos:** display 1–2; interface Regular/Medium/SemiBold (+ Light opcional).
 
+## Specimen visual (decidir olhando, não pela descrição)
+Artifact com as combinações aplicadas a **telas reais da SINTERA** (Início, Timeline, Exames, valores laboratoriais,
+indicadores, cartões, botões, alerta, formulário, navegação), com toggle e avaliação por combinação, claro/escuro:
+**→ https://claude.ai/code/artifact/d331cd4d-5ab8-4f41-bfaf-d5678da283dd** (fontes reais embutidas; cores só ilustrativas).
+
+> **Alerta de contexto (fundadora):** a SINTERA não é uma landing — são centenas de telas, milhares de exames, tabelas,
+> Timeline, valores laboratoriais, **leitura diária por anos**. Uma fonte linda numa landing pode cansar num app diário.
+> Por isso o peso de **legibilidade + conforto de leitura prolongada** é alto, sobretudo no **corpo/dados**.
+
 ## Pares candidatos (todos OFL / gratuitos)
 > Evitei deliberadamente os "defaults" (Inter/Space Grotesk) para não diluir a identidade.
 
@@ -33,28 +42,37 @@ Legibilidade · personalidade da marca · acessibilidade · **leitura prolongada
   de pesos; tabulares; PT-BR completo).
 - **Personalidade:** coesa, confiável, discreta, científica-serena. **Baixo risco**; leitura prolongada excelente.
 
-### C — "Tecnologia invisível" (humanista, um só sistema) · *mais minimalista*
-- **Título + Interface:** **Figtree** (geométrica-humanista amigável e calma) — a fonte "desaparece", máxima simplicidade.
-- **Personalidade:** simples, moderna, calma. **Risco:** menos "sofisticação de serifa"; menos distinção editorial.
+### D — "Sofisticação + usabilidade máxima" (serifa + fonte de acessibilidade) · *sugestão da fundadora*
+- **Título:** **Fraunces** (identidade/sofisticação) · **Interface/dados:** **Atkinson Hyperlegible** — desenhada
+  (Braille Institute) para **maximizar legibilidade e diferenciação de caracteres**; excelente em interfaces com muitos
+  dados e valores laboratoriais.
+- **Personalidade:** título elegante + corpo funcional e altamente legível. **Risco:** Atkinson tem personalidade mais
+  utilitária (menos "premium" que Hanken) e pesos mais discretos (não variável).
+  *(Nota: a versão "Next" (2024) é a evolução da família; o specimen usa a Atkinson Hyperlegible disponível em OFL.)*
 
 ## Comparativo
-| Critério | A · Fraunces + Hanken | B · Source Serif 4 + Sans 3 | C · Figtree |
-|---|---|---|---|
-| Legibilidade | 🟢 | 🟢 | 🟢 |
-| Personalidade (premium/natureza) | 🟢 forte | 🟡 sóbria | 🟡 discreta |
-| Acessibilidade | 🟢 | 🟢 | 🟢 |
-| Leitura prolongada | 🟢 | 🟢 | 🟢 |
-| Mobile | 🟢 | 🟢 | 🟢 |
-| Web | 🟢 | 🟢 | 🟢 |
-| Licença/variável | 🟢 OFL, variável | 🟢 OFL, variável | 🟢 OFL, variável |
-| "Tecnologia invisível" | 🟡 | 🟢 | 🟢 forte |
+| Critério | A · Fraunces+Hanken | D · Fraunces+Atkinson | B · Source Serif+Sans | C · Figtree |
+|---|---|---|---|---|
+| Legibilidade | 🟢 | 🟢 **máx.** | 🟢 | 🟢 |
+| Personalidade (premium/natureza) | 🟢 forte | 🟢 (título) | 🟡 sóbria | 🟡 discreta |
+| Acessibilidade | 🟢 | 🟢 **máx.** | 🟢 | 🟢 |
+| Leitura prolongada / dados | 🟢 | 🟢 **excelente** | 🟢 | 🟢 |
+| Mobile / Web | 🟢 | 🟢 | 🟢 | 🟢 |
+| "Tecnologia invisível" | 🟡 | 🟢 | 🟢 | 🟢 forte |
+| Licença/variável | OFL, variável | OFL (Atkinson estática) | OFL, variável | OFL, variável |
 
 ## Recomendação (decisão da fundadora)
-- **Lead: A (Fraunces + Hanken Grotesk)** — melhor equilíbrio entre **sofisticação/natureza** (título) e **legibilidade
-  calma** (interface), fiel ao BRAND-001 sem parecer artístico.
-- **Alternativa segura: B** — se preferir sobriedade máxima e menor risco.
-- **Se "tecnologia invisível" for o critério dominante: C.**
-Decisão **pendente**. Ao aprovar, integro a escolha ao [[BRAND-001]] (§5) e ao Design System (3B).
+Ranking conceitual (a confirmar no specimen):
+1. **A — Fraunces + Hanken Grotesk:** mais alinhada ao posicionamento **premium** e à inspiração _Almond Blossom_.
+2. **D — Fraunces + Atkinson Hyperlegible:** se a **prioridade máxima for legibilidade** num sistema de saúde de uso
+   diário (dados/exames) — une sofisticação (título) e usabilidade máxima (corpo).
+3. **B — Source Serif 4 + Source Sans 3:** muito sólida, porém personalidade mais tradicional/institucional.
+4. **C — Figtree:** ótima para simplicidade, mas não expressa a identidade sofisticada/atemporal da SINTERA.
+Decisão **pendente** (ver o specimen). Ao escolher, integro ao [[BRAND-001]] (§5) e o Design System (3B) nasce com a
+tipografia definitiva.
+
+## Próximo
+Após a escolha: atualizar BRAND-001 §5 com a tipografia oficial + gerar PDFs; então **Passo 3B — Design System**.
 
 ## Próximo
 Após a escolha: atualizar BRAND-001 §5 com a tipografia oficial + gerar PDFs; então **Passo 3B — Design System**.
