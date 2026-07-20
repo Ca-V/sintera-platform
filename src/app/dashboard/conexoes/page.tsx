@@ -148,7 +148,6 @@ function ConexoesInner() {
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <h2 className="font-display text-lg font-semibold text-onyx">{c.label}</h2>
-                  <p className="font-body text-xs text-mauve mt-0.5">Fonte dos dados: {c.label}</p>
                 </div>
                 {statusBadge(c)}
               </div>
