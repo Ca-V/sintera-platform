@@ -25,6 +25,7 @@ muda só por evidência/revisão formal).
 | ADR-007 | Monorepo web↔mobile | Accepted ⛨ |
 | ADR-008 | Arquitetura de Sincronização | Accepted ⛨ |
 | ADR-009 | Arquitetura baseada em domínio + independência | Accepted ⛨ |
+| ADR-010 | Identidade visual única + _Almond Blossom_ + Design System único | Accepted ⛨ |
 
 ## 1. Constitucional / princípios permanentes
 | Doc | Finalidade | Versão | Status | Relações |
@@ -50,7 +51,9 @@ muda só por evidência/revisão formal).
 ## 3. Produto Mobile
 | Doc | Finalidade | Versão | Status | Relações |
 |---|---|---|---|---|
-| **HIP-011** | Arquitetura do Produto Mobile (experiência/navegação/UX/offline/notif/evolução) | 1.0 | Approved | HIP-008; ref. Produto/UX/Eng |
+| **BRAND-001** | Sistema de Identidade da SINTERA (marca; ref. _Almond Blossom_) | 1.0 | Draft | orienta o Design System (web+mobile); ADR-010 |
+| **HIP-013** | Arquitetura Interna do App Móvel | 1.0 | Approved ⛨ | ADR-009; HIP-007/009 |
+| **HIP-011** | Arquitetura do Produto Mobile (experiência/navegação/UX/offline/notif/evolução) | 1.1 | Approved | HIP-008; BRAND-001; ref. Produto/UX/Eng |
 | **HIP-008** | Arquitetura do App (stack RN+Expo; comparativo técnico+estratégico) | 1.0 | Approved | ARCH-002; HIP-012 |
 | **HIP-013** | Arquitetura Interna do App Móvel (módulos por domínio; camadas; portas) | 1.0 | Approved ⛨ | ADR-009; HIP-007/009 |
 

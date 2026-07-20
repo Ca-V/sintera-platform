@@ -1,7 +1,12 @@
 # HIP-011 — Arquitetura do Produto Mobile (referência Produto · UX · Engenharia)
 
-**Status:** Approved · **Versão:** 1.0 · **Histórico:** v1.0 (2026-07-20) criação. Referência conjunta (Produto/UX/
-Engenharia). Sob [[ADR-000]] · [[ARCH-002]] (mobile-first). Descreve a **experiência**, não só engenharia.
+**Status:** Approved · **Versão:** 1.1 · **Histórico:** v1.0 (2026-07-20) criação; v1.1 (2026-07-20) diretriz permanente
+de identidade visual ([[BRAND-001]]). Referência conjunta (Produto/UX/Engenharia). Sob [[ADR-000]] · [[ARCH-002]].
+
+> **Identidade visual (diretriz permanente — [[BRAND-001]] · [[adr_010_identidade_visual_unica|ADR-010]]):** referência
+> estética = _Almond Blossom_ (Van Gogh), como atmosfera, não cópia. **Design System ÚNICO** web+mobile. A paleta atual
+> da web é **provisória** (não é referência). **Nenhuma cor definitiva aprovada** — só a direção (primária azul-esverdeada;
+> neutros quentes das flores, evitando branco puro; secundária verde-acinzentada). Tokens no Design System (Passo 3B).
 
 ## 1. Experiência principal
 O app é o **companheiro diário de saúde** da usuária: **"sua história de saúde, viva, sem trabalho"**. Ele mostra o que
@@ -37,7 +42,7 @@ A hierarquia guia densidade visual, posição na navegação e o que ganha push.
 ## 5. Princípios de UX
 1. **Sem trabalho:** o valor chega sozinho; a usuária reconhece, não opera (NOV-001, sem botão artificial de dispensar).
 2. **Factual e rastreável:** todo dado tem origem/dispositivo/versão visíveis sob demanda ([[principio_ui_rastreavel]]).
-3. **Calmo e pessoal:** paleta Van Gogh/Almond Blossom ([[branding_paleta_v3_vangogh]]); sem alarmismo clínico.
+3. **Calmo e pessoal:** identidade _Almond Blossom_ ([[BRAND-001]]) — atmosfera serena; sem alarmismo clínico.
 4. **Fricção mínima na captura** ([[hub_001_registration_hub]]): intenção antes do mecanismo.
 5. **Acessibilidade** desde o início ([[tema_g_acessibilidade]]): contraste, labels, foco, toque.
 6. **Consistência web↔app:** mesmos conceitos/nomes (contratos compartilhados — [[ARCH-002]]).

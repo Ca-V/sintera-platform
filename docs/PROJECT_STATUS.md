@@ -13,13 +13,17 @@ SSOT, RN+Expo, Monorepo, Sincronização (ADR-002..008). Referência: [[ARCH-003
 - ✅ **Etapa A (monorepo):** npm workspaces + `packages/*` (fronteiras claras); web intocada; verde.
 - ✅ **Etapa B · Passo 1 (estrutura do app) — APROVADO:** `apps/mobile` RN+Expo no monorepo, módulos por domínio, deps
   Expo/RN fora do grafo (web protegida).
-- 🔵 **Etapa B · Passo 2 (arquitetura interna) — CONCLUÍDO, aguardando aprovação:** camadas definidas ([[HIP-013]]);
-  **ADR-009** (domínio, não telas; independência por contratos); **portas de fundação em `@sintera/core`** (Observability,
-  SyncEngine offline-first/UI-independent, DomainModule) — tipadas e verdes; princípios sync-as-infra/offline/observabilidade
-  registrados; HIP-012 §15b Princípios de Evolução. Validado aqui: `@sintera/core` tsc verde + web intocada. PENDENTE dev:
-  app instalado/rodando.
-- ⏭️ **Próximo (após aprovação):** Passo 3 **Design System Mobile (doc próprio antes dos componentes)** → navegação →
-  estado (**ADR**) → cliente API → auth → ambiente dev.
+- ✅ **Etapa B · Passo 2 (arquitetura interna) — APROVADO:** camadas ([[HIP-013]]); ADR-009 (domínio, não telas); portas
+  em `@sintera/core` (Observability, SyncEngine offline-first, DomainModule); HIP-012 §15b Princípios de Evolução.
+- 🔵 **Etapa B · Passo 3A (Sistema de Identidade) — CONCLUÍDO, aguardando aprovação:** **[[BRAND-001]]** (identidade da
+  marca) + **ADR-010** (referência _Almond Blossom_; Design System ÚNICO web+mobile; paleta web atual = provisória; nenhuma
+  cor definitiva aprovada — só direção). HIP-011 v1.1 registra a diretriz de identidade. Doc de decisão (sem código).
+- ⏭️ **Próximo (após aprovar BRAND-001):** Passo 3B **Design System** (tokens 50–900 + componentes, implementando o
+  BRAND-001) → navegação → estado (**ADR**) → cliente API → auth → ambiente dev.
+
+## Marca / Identidade
+Direção aprovada: identidade inspirada em **Almond Blossom** (Van Gogh) — [[BRAND-001]] (Draft, aguardando aprovação) ·
+ADR-010. **Design System único** (web+mobile). Paleta atual da web = **provisória**; **nenhuma cor definitiva aprovada**.
 Ainda sem código funcional de produto. Critérios de validação por etapa: [[HIP-010]] (4 categorias).
 
 ## Documentação
