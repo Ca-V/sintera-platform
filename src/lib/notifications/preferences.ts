@@ -20,24 +20,29 @@ export const NOTIFICATION_CHANNELS: NotificationChannel[] = ['email', 'whatsapp'
 /** Default de canal quando não há preferência explícita nem opt-in legado. */
 export const DEFAULT_CHANNEL: NotificationChannel = 'email'
 
-/** Categorias configuráveis (abertas/escaláveis). Alinhadas às categorias de evento agendável. */
+/**
+ * Categorias configuráveis. **FB-017 (princípio permanente): a Central de Notificações NÃO tem taxonomia própria —
+ * ela ESPELHA os domínios da Sidebar.** Cada categoria = um domínio real que EFETIVAMENTE gera notificações; a
+ * `section` é a mesma seção da Sidebar. Domínios sem eventos que notifiquem NÃO entram (nada de categoria vazia);
+ * entram quando passarem a gerar eventos. A Sidebar é a referência oficial de taxonomia (sem taxonomias paralelas).
+ */
 export interface NotificationCategory {
   key: string
   label: string
+  section: string   // seção da Sidebar (Acompanhamento · Minha Saúde)
 }
 
 export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
-  { key: 'consulta',     label: 'Consultas' },
-  { key: 'exame',        label: 'Exames' },
-  { key: 'procedimento', label: 'Procedimentos' },
-  { key: 'vacina',       label: 'Vacinas' },
-  { key: 'medicamento',  label: 'Medicamentos' },
-  { key: 'suplemento',   label: 'Suplementos' },
-  // FB-016-4 (re-validação): removidas "Dispositivos" e "Planejamento" — categorias MORTAS (nenhum tipo de evento
-  // roteia para elas) e SEM item na Sidebar. A nomenclatura visível deve casar com a navegação real (troca de
-  // dispositivo cai em "Outros"; o domínio Planejamento entra quando for construído na Sidebar).
-  { key: 'avaliacao',    label: 'Composição Corporal' },       // FB-016-4 — nomenclatura idêntica à Sidebar
-  { key: 'outro',        label: 'Outros eventos assistenciais' },
+  // Acompanhamento
+  { key: 'agenda',      label: 'Agenda',               section: 'Acompanhamento' },  // consultas, exames, procedimentos, vacinas, retornos…
+  // Minha Saúde
+  { key: 'medicamento', label: 'Medicamentos',         section: 'Minha Saúde' },     // recompra
+  { key: 'suplemento',  label: 'Suplementos',          section: 'Minha Saúde' },     // recompra
+  { key: 'recurso',     label: 'Recursos de Saúde',    section: 'Minha Saúde' },     // troca/manutenção
+  { key: 'ciclo',       label: 'Ciclo e Contracepção', section: 'Minha Saúde' },     // troca/reaplicação
+  { key: 'outro',       label: 'Outros',               section: 'Minha Saúde' },     // fallback: evento sem domínio
+  // Fora por ora (sem eventos que notifiquem): Composição Corporal, Hábitos, Exames/Documentos, Monitoramento,
+  // Condições, Históricos, Despesas, Relatórios. Entram quando gerarem lembretes/notificações próprios.
 ]
 
 // NOTIF-001 (FB-011) — PRIORIDADE. Notificações OBRIGATÓRIAS (críticas) são SEMPRE enviadas e NÃO entram nas
@@ -56,26 +61,37 @@ export function recommendedChannels(): Record<string, NotificationChannel> {
   return out
 }
 
-// Mapa ABERTO tipo-de-evento → categoria de notificação. Tipos não mapeados caem em 'outro'
-// (nunca quebra). 'cirurgia'→procedimento, 'retorno'→consulta, 'atividade'/'estetico'→avaliacao,
-// 'omica'/'protocolo'→exame: mantém a config coerente com o que o usuário reconhece.
+// Mapa ABERTO tipo-de-evento → DOMÍNIO da Sidebar (FB-017). Tipos não mapeados caem em 'outro' (nunca quebra).
+// Todos os eventos AGENDADOS (consulta/exame/procedimento/vacina/retorno/cirurgia/plano/…) → 'agenda' (a Sidebar
+// tem "Agenda", não os tipos separados). Domínios específicos vêm da ORIGEM: 'medicacao'→medicamento,
+// 'suplemento'→suplemento, 'contracepcao'→ciclo. Recursos são roteados por VÍNCULO (ver categoryForEvent).
 const EVENT_TYPE_TO_CATEGORY: Record<string, string> = {
-  consulta: 'consulta', retorno: 'consulta',
-  exame: 'exame', omica: 'exame', protocolo: 'exame',
-  procedimento: 'procedimento', cirurgia: 'procedimento',
-  vacina: 'vacina',
+  consulta: 'agenda', retorno: 'agenda',
+  exame: 'agenda', omica: 'agenda', protocolo: 'agenda',
+  procedimento: 'agenda', cirurgia: 'agenda',
+  vacina: 'agenda',
+  plano: 'agenda', evento: 'agenda', outro: 'agenda',
+  avaliacao: 'agenda', atividade: 'agenda', estetico: 'agenda',
   medicamento: 'medicamento', medicacao: 'medicamento',
   suplemento: 'suplemento',
-  avaliacao: 'avaliacao', atividade: 'avaliacao', estetico: 'avaliacao',
-  outro: 'outro', evento: 'outro', plano: 'outro',
+  contracepcao: 'ciclo',
 }
 
 const FALLBACK_CATEGORY = 'outro'
 
-/** Categoria de notificação de um tipo de evento. Determinística; nunca lança. */
+/** Categoria (domínio) de um tipo de evento. Determinística; nunca lança. */
 export function categoryForEventType(eventType: string | null | undefined): string {
   const t = (eventType ?? '').trim().toLowerCase()
   return EVENT_TYPE_TO_CATEGORY[t] ?? FALLBACK_CATEGORY
+}
+
+/**
+ * Categoria (domínio) de um EVENTO, considerando tipo E vínculos. O domínio de origem prevalece: um lembrete
+ * vinculado a um RECURSO cai em "Recursos de Saúde" mesmo tendo tipo genérico ('outro'). Determinística.
+ */
+export function categoryForEvent(ev: { type?: string | null; links?: { type: string }[] | null }): string {
+  if (ev.links?.some(l => l.type === 'resource')) return 'recurso'
+  return categoryForEventType(ev.type)
 }
 
 /** Decompõe a escolha de canal nos canais efetivos. */
@@ -99,9 +115,11 @@ export function resolveChannels(channel: NotificationChannel): { email: boolean;
 export function resolveChannelsForEvent(args: {
   prefsByCategory: Map<string, NotificationChannel>
   eventType: string | null | undefined
+  /** Vínculos do evento — permitem rotear pelo DOMÍNIO de origem (ex.: recurso). Opcional (retrocompat). */
+  links?: { type: string }[] | null
   legacyWhatsAppOptIn: boolean
 }): { email: boolean; whatsapp: boolean; channel: NotificationChannel } {
-  const category = categoryForEventType(args.eventType)
+  const category = categoryForEvent({ type: args.eventType, links: args.links })
   const explicit = args.prefsByCategory.get(category)
   const channel: NotificationChannel = explicit ?? (args.legacyWhatsAppOptIn ? 'both' : DEFAULT_CHANNEL)
   return { ...resolveChannels(channel), channel }

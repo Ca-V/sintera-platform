@@ -29,13 +29,14 @@ describe('NOTIF-001 · resolveChannels — 4 opções', () => {
 })
 
 describe('NOTIF-001 · categoria por tipo de evento (mapa aberto)', () => {
-  it('mapeia tipos conhecidos para a categoria que o usuário reconhece', () => {
-    expect(categoryForEventType('consulta')).toBe('consulta')
-    expect(categoryForEventType('retorno')).toBe('consulta')
-    expect(categoryForEventType('cirurgia')).toBe('procedimento')
-    expect(categoryForEventType('omica')).toBe('exame')
+  it('FB-017: eventos agendados → domínio "agenda"; origem específica → seu domínio', () => {
+    expect(categoryForEventType('consulta')).toBe('agenda')
+    expect(categoryForEventType('retorno')).toBe('agenda')
+    expect(categoryForEventType('cirurgia')).toBe('agenda')
+    expect(categoryForEventType('omica')).toBe('agenda')
     expect(categoryForEventType('medicacao')).toBe('medicamento')
-    expect(categoryForEventType('atividade')).toBe('avaliacao')
+    expect(categoryForEventType('suplemento')).toBe('suplemento')
+    expect(categoryForEventType('contracepcao')).toBe('ciclo')
   })
 
   it('tipo desconhecido/nulo cai em "outro" (nunca quebra — Modelo Aberto)', () => {
@@ -45,7 +46,7 @@ describe('NOTIF-001 · categoria por tipo de evento (mapa aberto)', () => {
   })
 
   it('é insensível a caixa/espaços', () => {
-    expect(categoryForEventType('  EXAME ')).toBe('exame')
+    expect(categoryForEventType('  EXAME ')).toBe('agenda')
   })
 })
 
@@ -61,17 +62,23 @@ describe('NOTIF-001 · resolveChannelsForEvent — preferência manda; sem ela, 
   })
 
   it('preferência explícita da categoria SOBREPÕE o opt-in legado', () => {
-    const prefs = new Map<string, NotificationChannel>([['exame', 'none']])
+    const prefs = new Map<string, NotificationChannel>([['agenda', 'none']])   // exame → domínio 'agenda'
     const r = resolveChannelsForEvent({ prefsByCategory: prefs, eventType: 'exame', legacyWhatsAppOptIn: true })
     expect(r).toEqual({ email: false, whatsapp: false, channel: 'none' })
   })
 
-  it('preferência por categoria é isolada — outra categoria mantém o default', () => {
-    const prefs = new Map<string, NotificationChannel>([['exame', 'whatsapp']])
+  it('preferência por categoria é isolada — outro domínio mantém o default', () => {
+    const prefs = new Map<string, NotificationChannel>([['agenda', 'whatsapp']])
     const exame = resolveChannelsForEvent({ prefsByCategory: prefs, eventType: 'exame', legacyWhatsAppOptIn: false })
-    const vacina = resolveChannelsForEvent({ prefsByCategory: prefs, eventType: 'vacina', legacyWhatsAppOptIn: false })
-    expect(exame.channel).toBe('whatsapp')
-    expect(vacina.channel).toBe(DEFAULT_CHANNEL)
+    const med = resolveChannelsForEvent({ prefsByCategory: prefs, eventType: 'medicacao', legacyWhatsAppOptIn: false })
+    expect(exame.channel).toBe('whatsapp')          // agenda
+    expect(med.channel).toBe(DEFAULT_CHANNEL)        // medicamento (outro domínio)
+  })
+
+  it('FB-017: lembrete vinculado a recurso usa a preferência de "recurso"', () => {
+    const prefs = new Map<string, NotificationChannel>([['recurso', 'both']])
+    const r = resolveChannelsForEvent({ prefsByCategory: prefs, eventType: 'outro', links: [{ type: 'resource' }], legacyWhatsAppOptIn: false })
+    expect(r.channel).toBe('both')
   })
 
   it('a categoria de um tipo desconhecido usa a preferência de "outro" quando definida', () => {
