@@ -1,7 +1,7 @@
 // WEA-001 / HIP-001 — V2 Épico 2.3: callback OAuth — troca code por tokens, salva a conexão e dispara a 1ª sync.
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { adminClient, getOAuthProvider, getConnectionStore, getSyncService } from '@/lib/connectors/runtime.server'
+import { adminClient, getOAuthProvider, getConnectionStore, getSyncService, logConnectorEvent } from '@/lib/connectors/runtime.server'
 
 const CONEXOES = '/dashboard/conexoes'
 
@@ -35,7 +35,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ sour
     const redirectUri = new URL(`/api/connectors/${source}/callback`, req.nextUrl.origin).toString()
     const tokens = await oauth.exchangeCode(code, redirectUri)
     await getConnectionStore(admin).saveTokens(user.id, source, tokens)
-    await getSyncService(admin).sync(user.id, source) // 1ª sync imediata (o dado já aparece)
+    await logConnectorEvent(admin, user.id, 'connector_connected', { source })   // marco: conectou
+    const outcome = await getSyncService(admin).sync(user.id, source) // 1ª sync imediata (o dado já aparece)
+    if (outcome.status === 'ok' && outcome.recordsCount > 0) {
+      // marco: 1º benefício percebido (o 1º dado automático chegou) — só a 1ª vez
+      await logConnectorEvent(admin, user.id, 'connector_first_benefit', { source, records: outcome.recordsCount }, true)
+    }
     back.searchParams.set('conexao', 'ok')
     back.searchParams.set('fonte', source)
     const res = NextResponse.redirect(back)

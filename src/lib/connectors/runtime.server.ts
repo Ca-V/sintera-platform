@@ -39,6 +39,26 @@ export function getRegistry(): ConnectorRegistry {
   return registry
 }
 
+/**
+ * V2 Épico 3.4 — telemetria do Aha em `usage_events`. `once=true` registra só a 1ª vez (ex.: 1º benefício
+ * percebido). Nunca lança (telemetria não pode quebrar o fluxo). Base do indicador "tempo até o 1º benefício".
+ */
+export async function logConnectorEvent(
+  admin: SupabaseClient,
+  userId: string,
+  eventName: string,
+  metadata: Record<string, unknown> = {},
+  once = false,
+): Promise<void> {
+  try {
+    if (once) {
+      const { data } = await admin.from('usage_events').select('id').eq('user_id', userId).eq('event_name', eventName).limit(1).maybeSingle()
+      if (data) return
+    }
+    await admin.from('usage_events').insert({ user_id: userId, event_name: eventName, metadata })
+  } catch { /* telemetria é best-effort */ }
+}
+
 export function getOAuthProvider(source: string): OAuthProvider | undefined {
   return oauthProviders.get(source)
 }
