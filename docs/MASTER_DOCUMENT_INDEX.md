@@ -56,7 +56,7 @@ muda só por evidência/revisão formal).
 | Doc | Finalidade | Versão | Status | Relações |
 |---|---|---|---|---|
 | **HIP-012** | **Master Implementation Plan** (manual operacional — 16 tópicos) | 1.0 | Approved | consome todos; roadmap = IMPLEMENTATION_ROADMAP |
-| **HIP-010** | Plano Executivo da Etapa 4 (ondas de valor: backlog/aceite/riscos/homolog/publicação/métricas) | 1.1 | Approved | detalhado por HIP-012 |
+| **HIP-010** | Plano Executivo da Etapa 4 (ondas de valor + critérios de validação em 4 categorias) | 1.2 | Approved | detalhado por HIP-012 |
 | **IMPLEMENTATION_ROADMAP** | **Fonte ÚNICA do roadmap** (fases/ondas/marcos/entregáveis) | 1.0 | Approved | referenciado por todos |
 | **CATALOGO_PLATAFORMA** | Catálogo geral de módulos (MVP e futuros) | 1.0 | Approved | ARCH-003; Sidebar SSOT |
 

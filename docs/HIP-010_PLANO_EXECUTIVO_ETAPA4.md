@@ -1,8 +1,24 @@
 # HIP-010 — Plano Executivo da Etapa 4 (implementação por ondas de valor)
 
-**Status:** Approved · **Versão:** 1.1 · **Histórico:** v1.0 (2026-07-20) criação; v1.1 (2026-07-20) 6 diretrizes finais
-(produto utilizável/aceite de experiência/DS fundação/distribuição/métricas/revisão pós-onda). Detalhado por [[HIP-012]].
-Sob [[ADR-000]] · [[ARCH-002]] · deriva de [[HIP-007]]/[[HIP-008]]/[[HIP-009]]/[[HIP-011]].
+**Status:** Approved · **Versão:** 1.2 · **Histórico:** v1.0 (2026-07-20) criação; v1.1 (2026-07-20) 6 diretrizes finais;
+v1.2 (2026-07-20) critérios de validação em 4 categorias + "compilar≠validado" + execução incremental. Detalhado por
+[[HIP-012]]. Sob [[ADR-000]] · [[ARCH-002]] · deriva de [[HIP-007]]/[[HIP-008]]/[[HIP-009]]/[[HIP-011]].
+
+## Critérios de validação por etapa (permanente — reportar SEMPRE as 4 categorias)
+Toda etapa/marco informa explicitamente o estado nas **4 categorias**:
+1. **Arquitetura:** estrutura implementada · aderência aos princípios · documentação atualizada.
+2. **Código:** TypeScript · ESLint · testes · build.
+3. **Integração:** pacotes compartilhados · comunicação entre módulos · compatibilidade com a web.
+4. **Execução:** validado neste ambiente · pendente de device · validado em Android · validado em iOS.
+
+**Princípios permanentes:**
+- **Compilar ≠ validado:** nada é concluído só porque compila; conclusão = cumprir os critérios da funcionalidade,
+  incluindo, quando aplicável, **validação em dispositivo**.
+- **App é PLATAFORMA, não telas:** antes das funcionalidades, consolidar infra · arquitetura · Design System · navegação ·
+  sincronização · observabilidade · estado.
+- **Execução incremental:** pequenos marcos; após cada um, reportar: implementado · validado · pendente · riscos · próximos.
+- **Documentação por etapa:** docs atualizados · ADRs · [[PROJECT_STATUS]] · [[MASTER_DOCUMENT_INDEX]] · **PDFs regenerados**
+  quando muda versão/status.
 **Princípio:** organizar por **entregas de VALOR**, não por tecnologia. Cada onda entrega experiência utilizável.
 **Refina** as ondas do [[HIP-006]]: Health Connect/Apple Health = **capacidades nativas** (Onda 3), conectores externos
 = Onda 4.

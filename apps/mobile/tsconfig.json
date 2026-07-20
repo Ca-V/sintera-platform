@@ -1,0 +1,22 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["ES2021", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@sintera/core": ["../../packages/core/src"],
+      "@sintera/api-client": ["../../packages/api-client/src"],
+      "@sintera/types": ["../../packages/types/src"],
+      "@sintera/validation": ["../../packages/validation/src"],
+      "@sintera/design-system": ["../../packages/design-system/src"],
+      "@sintera/config": ["../../packages/config/src"],
+      "@sintera/utils": ["../../packages/utils/src"]
+    }
+  },
+  "include": ["src", "index.ts"]
+}

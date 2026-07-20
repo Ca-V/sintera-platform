@@ -10,11 +10,14 @@ SSOT, RN+Expo, Monorepo, Sincronização (ADR-002..008). Referência: [[ARCH-003
 
 ## Implementação
 ▶ **Onda 1 — Fundação da plataforma móvel** em curso (estratégia evolutiva do monorepo, [[adr_007_monorepo|ADR-007]]).
-- ✅ **Etapa A (monorepo):** npm workspaces + `packages/*` (core · api-client · types · validation · design-system ·
-  config · utils) com fronteiras claras; **web intocada** (permanece na raiz/`src`); verde (tsc · 709 testes · build).
-- ⏭️ **Próximo:** `@sintera/core` (conteúdo do domínio) · base do app RN (`apps/mobile`) · Design System · navegação ·
-  estado · cliente de API · autenticação · ambiente de dev · testes da fundação. Guia: [[HIP-012]] §4–§7.
-Ainda sem código funcional de produto.
+- ✅ **Etapa A (monorepo):** npm workspaces + `packages/*` (fronteiras claras); web intocada; verde.
+- 🔵 **Etapa B · Passo 1 (estrutura do app) — CONCLUÍDO, aguardando aprovação:** `apps/mobile` (RN+Expo Dev Client)
+  scaffolded no monorepo, consumindo `@sintera/*`; estrutura de módulos POR DOMÍNIO; config (app.json/tsconfig/babel/
+  metro monorepo-aware). **Deps Expo/RN mantidas FORA do grafo de instalação** (proteção do deploy web em produção).
+  Validado neste ambiente: estrutura + config + web intocada (tsc · 709 testes · build). PENDENTE (ambiente de dev):
+  instalar Expo/RN + validar alinhamento React 19 + rodar em device. Gate: **revisão/aprovação do Passo 1** antes do Passo 2.
+- ⏭️ **Próximo (após aprovação):** Passo 2 arquitetura interna → DS → navegação → estado → cliente API → auth → ambiente dev.
+Ainda sem código funcional de produto. Critérios de validação por etapa: [[HIP-010]] (4 categorias).
 
 ## Documentação
 ✅ Conjunto oficial consolidado e versionado (índice: [[MASTER_DOCUMENT_INDEX]]; governança: [[DOCUMENTATION_GOVERNANCE]]).

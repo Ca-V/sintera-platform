@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "SINTERA",
+    "slug": "sintera",
+    "scheme": "sintera",
+    "version": "0.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "health.sintera.app"
+    },
+    "android": {
+      "package": "health.sintera.app"
+    },
+    "plugins": [
+      "expo-dev-client",
+      "expo-secure-store"
+    ]
+  }
+}
