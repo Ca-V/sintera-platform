@@ -17,8 +17,7 @@ import PageHeader from '@/components/PageHeader'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import Disclaimer from '@/components/ui/Disclaimer'
-import { useOnOpenSync, acknowledgeSeen } from '@/lib/connectors/useOnOpenSync'
-import HistoryGrewNotice from '@/components/connectors/HistoryGrewNotice'
+import { useNovelty } from '@/lib/novelty/useNovelty'
 
 type Status = 'disconnected' | 'connected' | 'expired' | 'revoked' | 'error'
 
@@ -60,7 +59,6 @@ function ConexoesInner() {
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [grewCount, setGrewCount] = useState(0)   // V2 3.3: medições novas incorporadas no retorno
 
   const justConnected = params.get('conexao') === 'ok'
   const connectError = params.get('conexao') === 'erro'
@@ -80,8 +78,9 @@ function ConexoesInner() {
 
   useEffect(() => { load() }, [load])
 
-  // V2 Aha — ao abrir, sincroniza sozinho, recarrega o estado e mostra o aviso pelo estado persistente do servidor.
-  useOnOpenSync(({ newCount }) => { load(); setGrewCount(newCount) })
+  // NOV-001 — ao abrir, sincroniza sozinho as fontes e recarrega o estado das conexões. O AVISO de novidade fica
+  // no Painel Inicial; aqui a página apenas exibe o estado de cada conexão.
+  useNovelty(() => { load() })
 
   const syncNow = useCallback(async (source: string) => {
     setSyncing(source)
@@ -117,8 +116,6 @@ function ConexoesInner() {
         title="Dispositivos e conexões"
         subtitle={<>Conecte uma fonte de dados e a sua história de saúde passa a se construir sozinha — as medições entram automaticamente no seu Monitoramento e na Composição Corporal.</>}
       />
-
-      <HistoryGrewNotice count={grewCount} onDismiss={() => { acknowledgeSeen(); setGrewCount(0) }} />
 
       {justConnected && (
         <Card padding="md" className="border-petal/30 bg-blush/60">

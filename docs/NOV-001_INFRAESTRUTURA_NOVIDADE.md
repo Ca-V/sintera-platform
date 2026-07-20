@@ -1,8 +1,18 @@
 # NOV-001 — Infraestrutura de Novidade (permanente · fonte única)
 
-**Status:** DESENHO — aguardando aprovação. Sob [[ADR-000]]. Nasce da diretriz da fundadora (20/07): o conceito de
+**Status:** APROVADO (20/07) — em implementação. Sob [[ADR-000]]. Nasce da diretriz da fundadora (20/07): o conceito de
 "novo" deve ser **infraestrutura reutilizável**, não uma solução pontual; reconhecido **naturalmente ao ver o
 conteúdo** (sem botão "dispensar"); **uma só fonte de verdade** para banner, selos "Novo" e futuras notificações.
+
+## Diretrizes de produto (fundadora, na aprovação)
+1. **Conceito único de "novo" em TODA a SINTERA.** Nenhum módulo implementa lógica própria de novidade. A plataforma
+   inteira responde à mesma pergunta: **"o usuário já tomou conhecimento deste conteúdo?"**
+2. **Responsabilidade por superfície:** o **Painel Inicial é apenas resumo** — informa que há novidades, mas **não
+   consome nem marca visto**. O **reconhecimento acontece no módulo onde o conteúdo existe** (Composição, Exames,
+   Documentos…): ao acessar o domínio, aquele conteúdo passa a ser "visto".
+3. **Banner e selos derivam da MESMA fonte.** O Painel apenas reflete o estado; nunca o altera.
+4. **Capacidade transversal**, não específica de wearables: serve igualmente a novos exames, documentos, registros
+   importados automaticamente e qualquer conteúdo incorporado sem ação direta do usuário.
 
 ## Princípio
 > **Algo é "novo" enquanto o usuário ainda não VIU. O reconhecimento acontece naturalmente ao abrir a superfície onde

@@ -1,12 +1,13 @@
 'use client'
 
-// WEA-001 / HIP-001 — V2 Épico 3.3: comunicação DISCRETA do benefício de retorno.
-// "O usuário percebe que a SINTERA trabalhou por ele sem fazer nada." Sem animações; dispensável.
+// NOV-001 — banner de AVISO (Painel Inicial): comunicação DISCRETA de que a SINTERA incorporou conteúdo novo
+// sozinha. É uma superfície de AVISO: apenas REFLETE a novidade (fonte única = useNovelty). NÃO marca visto e NÃO
+// tem botão de "dispensar" — o aviso some naturalmente quando o usuário vê o conteúdo no módulo (Composição).
 import Link from 'next/link'
-import { Sparkles, X } from 'lucide-react'
+import { Sparkles } from 'lucide-react'
 import Card from '@/components/ui/Card'
 
-export default function HistoryGrewNotice({ count, onDismiss }: { count: number; onDismiss: () => void }) {
+export default function HistoryGrewNotice({ count }: { count: number }) {
   if (count <= 0) return null
   return (
     <Card padding="md" className="border-petal/30 bg-blush/50">
@@ -20,8 +21,6 @@ export default function HistoryGrewNotice({ count, onDismiss }: { count: number;
             {' '}e no <Link href="/dashboard/sinais-vitais" className="text-petal underline">Monitoramento</Link>.
           </p>
         </div>
-        <button onClick={onDismiss} title="Dispensar"
-          className="p-1 rounded-lg text-mauve hover:text-petal hover:bg-white/50 transition-colors flex-shrink-0"><X size={15} /></button>
       </div>
     </Card>
   )

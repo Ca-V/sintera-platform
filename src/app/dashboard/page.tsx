@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useOnOpenSync, acknowledgeSeen } from '@/lib/connectors/useOnOpenSync'
+import { useNovelty } from '@/lib/novelty/useNovelty'
 import HistoryGrewNotice from '@/components/connectors/HistoryGrewNotice'
 import { motion } from 'framer-motion'
 import {
@@ -89,9 +89,9 @@ function LegacyDashboard() {
   const hour        = new Date().getHours()
   const greeting    = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite'
 
-  // V2 Aha — o Painel Inicial mostra o benefício com base no estado PERSISTENTE do servidor (novo desde a última visita).
-  const [grewCount, setGrewCount] = useState(0)
-  useOnOpenSync(({ newCount }) => setGrewCount(newCount))
+  // NOV-001 — o Painel Inicial é superfície de AVISO: apenas REFLETE a novidade (fonte única). Não marca visto:
+  // o aviso some sozinho quando o usuário vê o conteúdo no módulo (Composição Corporal).
+  const novelty = useNovelty()
   const displayName = profile?.name?.split(' ')[0] ?? 'por aqui'
 
   async function loadData() {
@@ -155,8 +155,8 @@ function LegacyDashboard() {
         </p>
       </motion.div>
 
-      {/* V2 Aha-R1 — "a SINTERA trabalhou por você": dado novo chegou automaticamente desde o último acesso. */}
-      <HistoryGrewNotice count={grewCount} onDismiss={() => { acknowledgeSeen(); setGrewCount(0) }} />
+      {/* NOV-001 — "a SINTERA trabalhou por você": reflete conteúdo novo ainda não visto (fonte única). */}
+      <HistoryGrewNotice count={novelty.countOf('wearable_body')} />
 
       {/* Como usar a SINTERA — orientação de primeiros passos (dispensável) */}
       {showGuide && (

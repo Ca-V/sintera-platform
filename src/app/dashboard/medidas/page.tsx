@@ -18,7 +18,7 @@ import Sparkline, { parseNum } from '@/components/Sparkline'
 import { computeWeightJourney, type SeriesPoint } from '@/lib/body/weight-journey'
 import { currentSummary, sourceQuality, RELIABILITY_LABEL, lastAssessment, type SummaryPoint } from '@/lib/body/summary'
 import { EVOLUTION_PERIODS, filterByPeriod, markerFor, type EvoPoint } from '@/lib/body/evolution'
-import { useOnOpenSync } from '@/lib/connectors/useOnOpenSync'
+import { useNovelty } from '@/lib/novelty/useNovelty'
 import EvolutionChart from '@/components/body/EvolutionChart'
 import { buildSnapshots, compareSnapshots, type SnapPoint } from '@/lib/body/snapshots'
 import { buildMilestones, MILESTONE_CATEGORIES, MILESTONE_COLOR, type MilestoneCategory, type MedInput, type ConsultaInput, type AssessmentInput } from '@/lib/body/milestones'
@@ -108,11 +108,6 @@ export default function MedidasPage() {
   const [evoMetric, setEvoMetric] = useState<Metric>('peso')
   const [evoDays, setEvoDays] = useState<number | null>(90)
   const [evoPoint, setEvoPoint] = useState<EvoPoint | null>(null)
-  // V2 Aha (correção): "última visita" vem do SERVIDOR (persistente). Destaca os pontos automáticos novos —
-  // na 1ª visita (sem última visita) todos os do dispositivo contam como novos.
-  const [previousSeen, setPreviousSeen] = useState<string | null>(null)
-  const isNewAuto = (p: EvoPoint) => p.source === 'wearable' && !!p.createdAt && (previousSeen == null || p.createdAt > previousSeen)
-
   // BOD-001 área ③ — Comparação entre Avaliações (snapshots A × B).
   const [snapAKey, setSnapAKey] = useState<string | null>(null)
   const [snapBKey, setSnapBKey] = useState<string | null>(null)
@@ -187,9 +182,14 @@ export default function MedidasPage() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { if (!authLoading) load() }, [authLoading, load])
 
-  // V2 Aha (correção): ao abrir a Composição, sincroniza sozinho, obtém a "última visita" (para o selo "novo")
-  // e recarrega os dados — assim o dado automático aparece e o destaque fica consistente.
-  useOnOpenSync(({ since }) => { setPreviousSeen(since); load() })
+  // NOV-001 — Composição é a superfície de CONSUMO do fluxo 'wearable_body': ao abrir, sincroniza sozinho, recarrega
+  // os dados e MARCA o fluxo como visto (reconhecimento natural — sem botão de "dispensar"). O selo "novo" usa o
+  // instante DESTA visita (sinceOf); markSeen só avança o estado no servidor, então destaca agora e some na próxima.
+  const novelty = useNovelty(() => load())
+  const seenSince = novelty.sinceOf('wearable_body')
+  const isNewAuto = (p: EvoPoint) => novelty.ready && p.source === 'wearable' && !!p.createdAt && (seenSince == null || p.createdAt > seenSince)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (novelty.ready) novelty.markSeen('wearable_body') }, [novelty.ready])
 
   function chooseMetric(m: Metric) { setMetric(m); setUnit(DEFAULT_UNIT[m]) }
   function reset() { setEditMeasureId(null); setMetric('peso'); setLabel(''); setValue(''); setUnit('kg'); setDate(''); setNotes(''); setExamId(''); setErr(null) }
