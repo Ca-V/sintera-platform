@@ -35,21 +35,39 @@ Cada onda = **produto utilizável** + aprendizado + revisão de aderência.
 - **Permissões (declaração):** HealthKit (iOS entitlement + NSHealth*UsageDescription) · Health Connect (Android
   permissions + política de privacidade) · câmera/armazenamento/notificações.
 
-## 4. Estrutura do Monorepo
+## 4. Estrutura do Monorepo (estratégia EVOLUTIVA — baixo risco à web em produção)
+Como a web já está **em produção**, **não** fazemos migração estrutural grande agora. Evoluímos em 4 etapas (decisão da
+fundadora — [[adr_007_monorepo|ADR-007]]):
+- **Etapa A (agora):** criar **workspaces** (npm) + `packages/*`, mantendo a web **exatamente onde está** (`app/`,
+  `components/`, `lib/` na raiz). **Nada quebra.**
+- **Etapa B:** criar `apps/mobile` (RN+Expo) já **consumindo** `packages/*`.
+- **Etapa C:** **extrair progressivamente** para `packages/` o código compartilhável (ex.: `lib/auth.ts` →
+  `packages/core`); web e mobile passam a usar a mesma fonte.
+- **Etapa D:** quando ~70–80% do compartilhado estiver estabilizado, **mover a web para `apps/web`** — migração pequena,
+  segura e previsível.
+
+**Estrutura-alvo:**
 ```
-sintera/
-  apps/
-    mobile/      (React Native + Expo — produto principal)
-    web/         (Next.js — interface complementar)
+sintera-platform/            (raiz = web hoje; vira workspace root)
+  app/ components/ lib/ …    (web — permanece até a Etapa D → apps/web)
+  apps/mobile/               (RN+Expo — Etapa B)
   packages/
-    core/        (@sintera/core: modelo de domínio [Observação], contratos de API, validações, regras de negócio)
-    api-client/  (cliente de API tipado, compartilhado)
-    ui/          (design tokens + componentes compartilháveis quando fizer sentido)
-    config/      (tsconfig, eslint, tokens Van Gogh)
+    core/          domínio SINTERA: entidades, casos de uso, regras de negócio
+    api-client/    comunicação HTTP (consumo das APIs)
+    types/         contratos (tipos compartilhados)
+    validation/    schemas Zod
+    design-system/ tokens + componentes/lógica de UI compartilháveis
+    config/        constantes e configuração
+    utils/         APENAS utilidades genéricas
 ```
-- **Compartilhamento:** domínio/validações/regras/cliente/contratos em `packages/*`; apps só orquestram UI.
-- **Versionamento:** workspaces (pnpm/npm) + versionamento interno dos pacotes; convenções de commit; **um só contrato**.
+**Fronteiras de responsabilidade (regra permanente):** `packages/core` **não** é depósito de utilitários — tem
+responsabilidade clara (domínio). Cada pacote tem uma fronteira única; utilidades genéricas ficam em `utils`, não em
+`core`. Evita o "core sem fronteiras" (erro clássico de monorepo).
+- **Compartilhamento:** domínio/validações/regras/contratos/cliente em `packages/*`; apps só orquestram UI.
+- **Versionamento:** npm workspaces + versionamento interno; **um só contrato** web↔mobile.
 - **Convenções:** TypeScript estrito; nomes de domínio da Sidebar ([[sidebar_ssot_taxonomia]]).
+- **Nota design-system:** RN e web têm primitivas de UI distintas → compartilham **tokens + lógica**; camadas de
+  componente podem ter implementação por plataforma.
 
 ## 5. Arquitetura do Aplicativo (React Native)
 - **Organização:** por **feature module** (health-sync, timeline, exames, agenda, perfil…) sobre camadas: **auth/sessão**

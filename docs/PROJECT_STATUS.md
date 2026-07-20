@@ -9,9 +9,12 @@
 SSOT, RN+Expo, Monorepo, Sincronização (ADR-002..008). Referência: [[ARCH-003]].
 
 ## Implementação
-▶ **Onda 1 — Fundação da plataforma móvel** iniciada. Ordem aprovada: (1) monorepo · (2) `@sintera/core` · (3) base do app
-RN · (4) Design System · (5) navegação · (6) arquitetura de estado · (7) cliente de API · (8) autenticação · (9) ambiente
-de dev · (10) testes da fundação. Guia: [[HIP-012]]. Ainda sem código funcional de produto.
+▶ **Onda 1 — Fundação da plataforma móvel** em curso (estratégia evolutiva do monorepo, [[adr_007_monorepo|ADR-007]]).
+- ✅ **Etapa A (monorepo):** npm workspaces + `packages/*` (core · api-client · types · validation · design-system ·
+  config · utils) com fronteiras claras; **web intocada** (permanece na raiz/`src`); verde (tsc · 709 testes · build).
+- ⏭️ **Próximo:** `@sintera/core` (conteúdo do domínio) · base do app RN (`apps/mobile`) · Design System · navegação ·
+  estado · cliente de API · autenticação · ambiente de dev · testes da fundação. Guia: [[HIP-012]] §4–§7.
+Ainda sem código funcional de produto.
 
 ## Documentação
 ✅ Conjunto oficial consolidado e versionado (índice: [[MASTER_DOCUMENT_INDEX]]; governança: [[DOCUMENTATION_GOVERNANCE]]).
