@@ -121,11 +121,15 @@ Ainda não medidos em produção, mas **definidos e instrumentáveis** desde já
 2. **Sync on-open + webhooks** em vez de jobs de background nativos (web) — menos complexidade.
 3. **Reusar Monitoramento/Composição/`body_metrics`/UCDA** como destino — nada novo de exibição na V2.
 
-## Decisão sua necessária antes de implementar (ARQUITETURA + produto)
-Narrativa e Aha Moment: **aprovados**. A decisão em aberto é o **1º conector**, por causa da restrição on-device:
-- **Rota A (recomendada):** 1º conector **cloud** (ex.: **Withings**) — prova o end-to-end **hoje, no web**; Health
-  Connect/Apple Health entram depois, com o **MOB-001** (app mobile).
-- **Rota B:** **Health Connect primeiro** → exige construir o **app mobile (MOB-001)** como pré-requisito da V2 (escopo
-  grande; adia o Aha; mistura duas transformações).
+## Decisões (estado)
+- **Narrativa + Aha Moment:** ✅ aprovados.
+- **1º conector (ARQUITETURA + produto):** ✅ **ROTA A — Withings (cloud) primeiro** (fundadora 20/07). Prova o
+  end-to-end **hoje, no web** (OAuth servidor-a-servidor), sem depender de app mobile; traz **peso/composição** →
+  continuidade direta com a jornada de peso da V1. **Health Connect / Apple Health** ficam para depois, junto do
+  **MOB-001** (app mobile), reaproveitando a mesma fundação HIP-001. Rota B (Health Connect primeiro, exigindo o
+  MOB-001 como pré-requisito) foi **descartada** para a V2 por adiar o Aha e misturar duas transformações.
+- **Withings como 1º provedor:** ✅ confirmado (vs. Oura/Fitbit/Garmin) pela continuidade com a Composição da V1.
 
-Sua escolha (A ou B) e, se A, o **provedor cloud inicial** (recomendo Withings pela continuidade com a jornada de peso da V1).
+## Próximo passo
+Decompor o **Épico 1 — Fundação HIP-001** em subitens verificáveis (cada um TSC + suíte + build verdes + commit) e
+iniciar a implementação.
