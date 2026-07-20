@@ -10,7 +10,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Loader2, Plus, X, Trash2, ArrowLeft, HeartPulse } from 'lucide-react'
+import { Loader2, Plus, X, Trash2, ArrowLeft, HeartPulse, Link2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
@@ -137,6 +137,15 @@ export default function SinaisVitaisPage() {
           </button>
         }
       />
+
+      <Link href="/dashboard/conexoes"
+        className="flex items-center justify-between gap-3 rounded-2xl border border-petal-light bg-blush/50 px-4 py-3 hover:bg-blush transition-colors group">
+        <span className="inline-flex items-center gap-2.5 min-w-0">
+          <Link2 size={16} className="text-petal flex-shrink-0" />
+          <span className="font-body text-sm text-onyx">Conecte um dispositivo e deixe os dados entrarem sozinhos</span>
+        </span>
+        <span className="font-body text-xs text-petal font-medium flex-shrink-0 group-hover:underline">Conexões →</span>
+      </Link>
 
       {showForm && (
         <Card padding="md" className="space-y-3">
