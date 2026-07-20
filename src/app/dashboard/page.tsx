@@ -156,7 +156,7 @@ function LegacyDashboard() {
       </motion.div>
 
       {/* NOV-001 — "a SINTERA trabalhou por você": reflete conteúdo novo ainda não visto (fonte única). */}
-      <HistoryGrewNotice count={novelty.countOf('wearable_body')} />
+      <HistoryGrewNotice count={novelty.countOf('body_composition')} />
 
       {/* Como usar a SINTERA — orientação de primeiros passos (dispensável) */}
       {showGuide && (

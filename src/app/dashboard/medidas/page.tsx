@@ -186,10 +186,10 @@ export default function MedidasPage() {
   // os dados e MARCA o fluxo como visto (reconhecimento natural — sem botão de "dispensar"). O selo "novo" usa o
   // instante DESTA visita (sinceOf); markSeen só avança o estado no servidor, então destaca agora e some na próxima.
   const novelty = useNovelty(() => load())
-  const seenSince = novelty.sinceOf('wearable_body')
+  const seenSince = novelty.sinceOf('body_composition')
   const isNewAuto = (p: EvoPoint) => novelty.ready && p.source === 'wearable' && !!p.createdAt && (seenSince == null || p.createdAt > seenSince)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { if (novelty.ready) novelty.markSeen('wearable_body') }, [novelty.ready])
+  useEffect(() => { if (novelty.ready) novelty.markSeen('body_composition') }, [novelty.ready])
 
   function chooseMetric(m: Metric) { setMetric(m); setUnit(DEFAULT_UNIT[m]) }
   function reset() { setEditMeasureId(null); setMetric('peso'); setLabel(''); setValue(''); setUnit('kg'); setDate(''); setNotes(''); setExamId(''); setErr(null) }

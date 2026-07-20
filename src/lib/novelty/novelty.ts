@@ -11,25 +11,35 @@
 // ============================================================
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-/** Um fluxo declara apenas COMO contar o que ainda não foi visto. Nada além disso é específico do domínio. */
+/**
+ * Um fluxo é um DOMÍNIO DE NOVIDADE — um domínio da plataforma (alinhado à Sidebar) onde conteúdo pode chegar de
+ * forma automática: Composição Corporal, Exames, Documentos, Medicamentos, etc. NÃO é um tipo técnico de integração
+ * (wearable, conector X, upload) — o mecanismo pela qual o conteúdo chegou é detalhe de `countUnseen`, não a
+ * identidade do fluxo. Isso mantém a infraestrutura genérica: novos domínios entram sem redesenho, e um mesmo
+ * domínio acomoda várias fontes automáticas ao longo do tempo apenas ampliando o filtro de `countUnseen`.
+ */
 export interface NoveltyStream {
-  /** identificador estável do fluxo (persistido em content_seen.stream) */
+  /** identificador estável do DOMÍNIO (persistido em content_seen.stream). Ex.: 'body_composition', 'exams'. */
   key: string
-  /** conta os itens do fluxo incorporados após `since` (ou todos, se `since` for nulo) */
+  /** nome do domínio (Sidebar) — base para títulos de aviso/notificação. Ex.: 'Composição Corporal'. */
+  label: string
+  /** conta os itens AUTO-INCORPORADOS do domínio após `since` (ou todos, se `since` for nulo) */
   countUnseen(admin: SupabaseClient, userId: string, since: string | null): Promise<number>
 }
 
-/** Registro central dos fluxos. Ponto único de extensão para exames, documentos, sinais vitais, etc. */
+/** Registro central dos DOMÍNIOS de novidade. Ponto único de extensão (exames, documentos, medicamentos…). */
 export const NOVELTY_STREAMS: NoveltyStream[] = [
   {
-    // Dados corporais vindos de wearable (peso/composição). Superfície de consumo = Composição Corporal.
-    key: 'wearable_body',
+    // Domínio Composição Corporal. Hoje o conteúdo automático vem de wearable; se amanhã houver outra fonte
+    // automática, basta ampliar o filtro (mecanismo) — a identidade do fluxo (o domínio) não muda.
+    key: 'body_composition',
+    label: 'Composição Corporal',
     async countUnseen(admin, userId, since) {
       let q = admin
         .from('body_metrics')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', userId)
-        .eq('source', 'wearable')
+        .eq('source', 'wearable') // mecanismo automático atual do domínio (extensível sem mudar o fluxo)
       if (since) q = q.gt('created_at', since)
       const { count } = await q
       return count ?? 0
