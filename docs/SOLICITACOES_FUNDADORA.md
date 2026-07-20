@@ -51,7 +51,25 @@ Agenda + Conexões: sem rotas quebradas, sem palavras proibidas, Agenda funciona
 | **FB-014-E** | Conexões | `domain` do descriptor é carregado mas não exibido — decidir exibir (rótulo) ou remover. | (2) melhoria UX | 🔴 backlog (revisão de Conexões). |
 | **FB-014-F** | Hub | Ícone `Thermometer` importado sem uso (código morto). | limpeza trivial | ⏸ triado, aguarda aval (junto de A/C). |
 
-### Observação transversal (fundadora)
+## Rodada de validação do Preview pós-Épico 2 (V2) — 20/07/2026 (9 observações)
+Triagem com investigação de código (evidência arquivo:linha confirmada). Classes: (1) correção funcional · (2)
+inconsistência de UX (depende de análise de impacto) · (3) evolução/backlog. **Diretriz transversal da fundadora:**
+ao ver funcionalidade semelhante entre domínios (Medicamentos/Suplementos/Recursos/Agenda/Consultas/Hábitos),
+**reaproveitar a infra existente** (`AgendarModal` + `saveEvent` + `EventLink` de `@/lib/agenda`), não recriar.
+
+| ID | Área | Observação | Classe | Status / evidência |
+|---|---|---|---|---|
+| **FB-015-1** | Agenda | Item agendado que vence e não foi concluído **some** da Agenda (vai ao Histórico). Deve permanecer como **pendência** até o usuário decidir (concluir/não realizado/cancelar). Vale p/ todos os tipos. | (1) funcional | ⏸ aval. `isUpcoming` exige `date>=hoje` (`lib/agenda/event.ts:183`); vencidos caem em `isPast`. Badge `overdue` já existe na UI mas nunca dispara (`agenda/page.tsx:178`). Reuso: novo `selectOverdue` (não-fechado + `date<hoje`). |
+| **FB-015-2** | Hub · Suplemento | "Suplemento" vai **direto** a `/dashboard/medicamentos`, sem o passo "Como deseja registrar?" (receita/manual) e sem abrir Suplementos. | (1) funcional | ⏸ aval. `registrationHub.ts:48` href errado; `/dashboard/suplementos` já existe (modo por `usePathname`). Correção: mecanismo `choice` → `pageHref:'/dashboard/suplementos'`. |
+| **FB-015-3** | Hub · Consulta | "Consulta" leva à **lista** da Agenda, não a um formulário de cadastro. Decidir Opção A (lista) × B (form → agenda atualizada). | (2) UX (decisão) | ⏸ aval. Recomendação: **B**. Reuso pronto: `AgendarModal`+`prefill`/`openFromSuggestion`; falta a Agenda ler `?novo=consulta`. |
+| **FB-015-4** | Hub | "Procedimento" e "Vacina" aparecem como **"em breve"** (desabilitados). Princípio: tudo no Hub deve permitir concluir o registro → ocultar o indisponível em vez de mostrar "em breve". | (3) backlog | 🔴 revisão do Hub. `available:false` (`registrationHub.ts:57-58`). |
+| **FB-015-5** | Hub | "Óculos / Lentes" no Hub → Capture Center (`eyeglass_prescription`), mas o domínio já vive em **Recursos** (`correcao_visual`/`health_resources`). Redundância; risco de artefato paralelo. | (3) backlog | 🔴 revisão do Hub (verificar duplicação de dados). `registrationHub.ts:50`. |
+| **FB-015-6** | Nomenclatura | "Medidas" ainda visível em pontos fora da nav: Painel (`dashboard/page.tsx:166`), relatório público (`r/[token]:307/327`), estados vazios (`relatorio:816`, `medidas:947`), e-mail de boas-vindas, meta description (`layout.tsx:22`), rótulo do Hub "Medida". Rename oficial = **Composição Corporal**. | (2) consistência | ⏸ aval (troca de strings, baixo risco). Nav/Sidebar/relatório-heading já corretos. |
+| **FB-015-7** | Hub | Auditoria COMPLETA do Hub "Adicionar Registro" (fluxos·perguntas·destinos·taxonomia·redundâncias·indisponíveis) sob o princípio "o usuário escolhe O QUE; a SINTERA conduz COMO". | (3) backlog | 🔴 ciclo de revisão do Hub (não interromper a V2). |
+| **FB-015-8** | Recursos | Adicionar Recurso não oferece **recorrência** (troca/manutenção periódica). `until_date` é só rótulo estático. | (1) funcional/consistência | ⏸ aval. Reuso: `AgendarModal` (campo "Repetir") **já embutido** em Recursos p/ FB-004 + `EventLink 'resource'` → abrir em modo lembrete. |
+| **FB-015-9** | Hábitos de Vida | Evoluir de "cadastro em lista" p/ gestor: categorias agrupadas, **lembretes**, metas divisíveis (hidratação), anexo de dieta/plano, **integração com a Agenda** (recorrência/lembrete reusando a infra). | (3) evolução de produto | 🔴 backlog (versão apropriada; fundadora: **não** é imediato). Hoje `habitos/page.tsx`: categorias fixas, sem lembrete/recorrência/anexo/agenda. Reuso: `AgendarModal`/`saveEvent`/`EventLink`. |
+
+### Observação transversal (fundadora — 17/07)
 > A maior parte das alterações desta etapa **ainda não ficou perceptível** no Preview. **Prioridade:** tornar as
 > funcionalidades já implementadas **claramente acessíveis na interface ANTES** de evoluir o restante do backlog.
 > **Causa raiz (honesta):** muitas funcionalidades são **dirigidas por dados** (só aparecem com exames/eventos que
