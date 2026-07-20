@@ -10,6 +10,7 @@ export interface EvoPoint {
   value: number
   source: string | null
   examId: string | null  // quando o ponto veio de um exame/laudo (abrir original)
+  createdAt: string | null // V2 Aha-R3: instante de INGESTÃO (para destacar "novo desde a última visita")
 }
 
 export interface EvoPeriod { key: string; label: string; days: number | null }

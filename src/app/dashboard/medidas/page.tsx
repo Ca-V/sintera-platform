@@ -67,6 +67,7 @@ interface Entry {
   notes: string | null
   examId: string | null
   source: string | null
+  createdAt: string | null   // V2 Aha-R3: ingestão (destaque "novo desde a última visita")
 }
 
 // FB-003/BOD-001: a Composição Corporal é VISUALIZAÇÃO — cada ponto mostra a ORIGEM de onde nasceu.
@@ -106,6 +107,10 @@ export default function MedidasPage() {
   const [evoMetric, setEvoMetric] = useState<Metric>('peso')
   const [evoDays, setEvoDays] = useState<number | null>(90)
   const [evoPoint, setEvoPoint] = useState<EvoPoint | null>(null)
+  // V2 Aha-R3: última visita anterior (definida pela sync on-open) — destaca os registros automáticos novos.
+  const [previousSeen, setPreviousSeen] = useState<string | null>(null)
+  useEffect(() => { try { setPreviousSeen(sessionStorage.getItem('sintera:prev-visit')) } catch { /* ignore */ } }, [])
+  const isNewAuto = (p: EvoPoint) => p.source === 'wearable' && !!previousSeen && !!p.createdAt && p.createdAt > previousSeen
 
   // BOD-001 área ③ — Comparação entre Avaliações (snapshots A × B).
   const [snapAKey, setSnapAKey] = useState<string | null>(null)
@@ -145,7 +150,7 @@ export default function MedidasPage() {
     const db = supabase as any
     const [{ data }, exRes, profRes, medRes, evRes] = await Promise.all([
       db.from('body_metrics')
-        .select('id, metric, label, value_text, unit, measured_on, notes, exam_id, source')
+        .select('id, metric, label, value_text, unit, measured_on, notes, exam_id, source, created_at')
         .eq('user_id', user.id).order('measured_on', { ascending: false }),
       db.from('exams').select('id, type, exam_date, file_url').eq('user_id', user.id).order('created_at', { ascending: false }),
       db.from('profiles').select('weight_goal_kg').eq('id', user.id).maybeSingle(),
@@ -159,7 +164,7 @@ export default function MedidasPage() {
       id: m.id as string, metric: (m.metric as Metric) ?? 'outro', label: (m.label as string) ?? null,
       valueText: (m.value_text as string) ?? '', unit: (m.unit as string) ?? null,
       measuredOn: m.measured_on as string, notes: (m.notes as string) ?? null,
-      examId: (m.exam_id as string) ?? null, source: (m.source as string) ?? null,
+      examId: (m.exam_id as string) ?? null, source: (m.source as string) ?? null, createdAt: (m.created_at as string) ?? null,
     })))
     setExams(((exRes.data ?? []) as Array<Record<string, unknown>>).map(e => ({
       id: e.id as string, type: (e.type as string) || 'Exame',
@@ -322,12 +327,12 @@ export default function MedidasPage() {
       if (alturaCm == null) return []
       return items.filter(i => i.metric === 'peso').map(i => {
         const w = parseNum(i.valueText)
-        return w == null ? null : { key: i.id, date: i.measuredOn, value: Math.round((w / Math.pow(alturaCm / 100, 2)) * 10) / 10, source: i.source, examId: i.examId }
+        return w == null ? null : { key: i.id, date: i.measuredOn, value: Math.round((w / Math.pow(alturaCm / 100, 2)) * 10) / 10, source: i.source, examId: i.examId, createdAt: i.createdAt }
       }).filter((p): p is EvoPoint => p != null).sort((a, b) => (a.date < b.date ? -1 : 1))
     }
     return items.filter(i => i.metric === evoMetricActive).map(i => {
       const v = parseNum(i.valueText)
-      return v == null ? null : { key: i.id, date: i.measuredOn, value: v, source: i.source, examId: i.examId }
+      return v == null ? null : { key: i.id, date: i.measuredOn, value: v, source: i.source, examId: i.examId, createdAt: i.createdAt }
     }).filter((p): p is EvoPoint => p != null).sort((a, b) => (a.date < b.date ? -1 : 1))
   })()
   const today = todayISO()
@@ -700,7 +705,10 @@ export default function MedidasPage() {
                         className={`border-t border-border/50 cursor-pointer transition-colors ${sel ? 'bg-blush/30' : 'hover:bg-blush/15'}`}>
                         <td className="py-1.5 pr-2 text-mauve whitespace-nowrap">{fmt(p.date)}</td>
                         <td className="py-1.5 pr-2 text-onyx font-medium whitespace-nowrap">{p.value}{evoUnit ? ` ${evoUnit}` : ''}</td>
-                        <td className="py-1.5 pr-2 text-mauve whitespace-nowrap"><span className="text-petal mr-1">{EVO_GLYPH[markerFor(p.source)]}</span>{sourceQuality(p.source)?.label ?? p.source ?? '—'}</td>
+                        <td className="py-1.5 pr-2 text-mauve whitespace-nowrap">
+                          <span className="text-petal mr-1">{EVO_GLYPH[markerFor(p.source)]}</span>{sourceQuality(p.source)?.label ?? p.source ?? '—'}
+                          {isNewAuto(p) && <span className="ml-1.5 inline-block px-1.5 py-0.5 rounded-full bg-petal/10 text-petal text-[10px] font-medium align-middle">novo</span>}
+                        </td>
                         <td className="py-1.5 text-mauve">{ex ? <Link href={`/dashboard/exams/${ex.id}`} onClick={e => e.stopPropagation()} className="text-petal hover:underline">{ex.type}</Link> : '—'}</td>
                       </tr>
                     )
