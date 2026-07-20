@@ -8,11 +8,16 @@ import { useEffect } from 'react'
 const SESSION_KEY = 'sintera:onopen-sync-at'
 const CLIENT_THROTTLE_MS = 60_000 // no máximo uma chamada por minuto por sessão
 
+export interface OnOpenSyncResult {
+  synced: string[]
+  newRecords: number   // medições NOVAS incorporadas nesta sincronização (base do "sua história cresceu")
+}
+
 /**
- * Chama `/api/connectors/sync-open` ao montar. Quando a sincronização termina (algo foi sincronizado),
- * invoca `onSynced` — usado pela tela para recarregar e mostrar o dado novo.
+ * Chama `/api/connectors/sync-open` ao montar. Quando a sincronização termina e algo foi sincronizado,
+ * invoca `onSynced({ synced, newRecords })` — a tela recarrega e comunica o benefício ("a SINTERA trabalhou por você").
  */
-export function useOnOpenSync(onSynced?: (synced: string[]) => void) {
+export function useOnOpenSync(onSynced?: (result: OnOpenSyncResult) => void) {
   useEffect(() => {
     let active = true
     try {
@@ -23,8 +28,8 @@ export function useOnOpenSync(onSynced?: (synced: string[]) => void) {
 
     fetch('/api/connectors/sync-open', { method: 'POST' })
       .then(r => (r.ok ? r.json() : null))
-      .then((res: { synced?: string[] } | null) => {
-        if (active && res?.synced?.length) onSynced?.(res.synced)
+      .then((res: { synced?: string[]; newRecords?: number } | null) => {
+        if (active && res?.synced?.length) onSynced?.({ synced: res.synced, newRecords: res.newRecords ?? 0 })
       })
       .catch(() => { /* silencioso: sync automática nunca atrapalha a navegação */ })
 

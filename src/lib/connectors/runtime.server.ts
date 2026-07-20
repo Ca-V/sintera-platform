@@ -80,17 +80,22 @@ export async function syncOpenConnections(
   userId: string,
   throttleMs = 15 * 60 * 1000,
   now = Date.now(),
-): Promise<{ synced: string[]; skipped: string[] }> {
+): Promise<{ synced: string[]; skipped: string[]; newRecords: number }> {
   const states = await getConnectorStates(admin, userId)
   const svc = getSyncService(admin)
   const synced: string[] = []
   const skipped: string[] = []
+  let newRecords = 0   // V2 3.3: quantas medições NOVAS chegaram — base do "sua história cresceu"
   for (const s of states) {
     if (s.status !== 'connected') { skipped.push(s.source); continue }        // só fontes ativas (não expirada/revogada)
     if (!isSyncStale(s.lastSyncAt, throttleMs, now)) { skipped.push(s.source); continue } // sincronizou há pouco → não repete
-    try { await svc.sync(userId, s.source); synced.push(s.source) } catch { skipped.push(s.source) }
+    try {
+      const outcome = await svc.sync(userId, s.source)
+      synced.push(s.source)
+      if (outcome.status === 'ok') newRecords += outcome.recordsCount
+    } catch { skipped.push(s.source) }
   }
-  return { synced, skipped }
+  return { synced, skipped, newRecords }
 }
 
 export async function getConnectorStates(admin: SupabaseClient, userId: string): Promise<ConnectorStateDto[]> {

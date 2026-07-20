@@ -21,6 +21,8 @@ import EmptyState from '@/components/EmptyState'
 import Card from '@/components/ui/Card'
 import Disclaimer from '@/components/ui/Disclaimer'
 import ConfirmDialog from '@/components/ConfirmDialog'
+import { useOnOpenSync } from '@/lib/connectors/useOnOpenSync'
+import HistoryGrewNotice from '@/components/connectors/HistoryGrewNotice'
 
 type Vital = 'pressao_arterial' | 'frequencia_cardiaca' | 'glicemia' | 'saturacao' | 'temperatura' | 'outro_sinal'
 
@@ -93,6 +95,11 @@ export default function SinaisVitaisPage() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { if (!authLoading) load() }, [authLoading, load])
 
+  // V2 Épico 3.1/3.3 — ao abrir o Monitoramento, sincroniza sozinho as fontes conectadas e, se chegou dado
+  // novo, recarrega e comunica o benefício (a SINTERA trabalhou em segundo plano).
+  const [grewCount, setGrewCount] = useState(0)
+  useOnOpenSync(({ newRecords }) => { load(); if (newRecords > 0) setGrewCount(newRecords) })
+
   function chooseMetric(m: Vital) { setMetric(m); setUnit(DEFAULT_UNIT[m]) }
   function reset() { setMetric('pressao_arterial'); setLabel(''); setValue(''); setUnit('mmHg'); setDate(''); setNotes(''); setErr(null) }
 
@@ -137,6 +144,8 @@ export default function SinaisVitaisPage() {
           </button>
         }
       />
+
+      <HistoryGrewNotice count={grewCount} onDismiss={() => setGrewCount(0)} />
 
       <Link href="/dashboard/conexoes"
         className="flex items-center justify-between gap-3 rounded-2xl border border-petal-light bg-blush/50 px-4 py-3 hover:bg-blush transition-colors group">
