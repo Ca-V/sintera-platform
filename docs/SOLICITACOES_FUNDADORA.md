@@ -37,6 +37,20 @@ este log; ao concluir, atualizar o status com o commit. Subordinado a [[ARCH-000
 
 | **FB-011** | Notificações · NOTIF-001 | A Central deve ser a **fonte única** de (1) **quais** notificações receber (liga/desliga por categoria) e (2) **por qual canal** (não receber/e-mail/WhatsApp/ambos). Formulários **não duplicam** — mostram o canal atual + link "Alterar canal"; exceção = ações **pontuais** (compartilhar relatório) escolhem canal na hora. Separar **Categoria** de **Evento** (granularidade futura sem redesenho). | 🟡 spec ✅, a construir | Refinamento documentado em [[NOTIF-001]] (seção "Refinamento 17/07"). Categorias: Consultas · Exames e recorrência · Medicamentos · Suplementos · Vacinas · Hábitos · Renovação de receitas (fut.) · Compartilhamentos (fut.). Persistência prevista: `pref(usuário × categoria [× tipo_evento opcional] → canal)`. **Próxima entrega de build** = Central de Notificações (UI de preferências + persistência) + ligar módulos; envio real do WhatsApp depende de provedor (config da fundadora). **Refino 17/07 (3 níveis + prioridade):** modelo-alvo Categoria→Evento→Canal + Prioridade (obrigatória/configurável) + "Restaurar recomendadas". **DESCOBERTA:** já existe Central por **categoria** + `preferences.ts` + **worker de despacho vivo** (`api/agenda/reminders`) + `profiles.phone`/`pref_whatsapp_reminder` — NÃO duplicar. **Decisão de sequenciamento (fundadora): FASE 1 agora** (enriquecer a Central de categoria: bloco "Sempre enviadas"/obrigatórias fora das prefs + botão "Restaurar recomendadas" + reaproveitar telefone; sem tocar o worker vivo — feito, `MANDATORY_NOTIFICATIONS`/`recommendedChannels()`, +3 testes); **FASE 2 pós-estabilização** = nível-evento (`event_key`) + reescrever a resolução do worker. Revertida a duplicação `profiles.whatsapp_number` (reaproveita `profiles.phone`). **Modelo DEFINITIVO documentado** no NOTIF-001 (4 conceitos ortogonais: Categoria · Evento · Canal · Prioridade) — camada 1 (beta) implementada, camada 2 (evento) planejada. **Formulários não duplicam config:** o toggle de lembrete do `AgendarModal` deixou de dizer "por e-mail" e passou a mostrar "pelo canal definido nas suas **preferências de notificação**" (link → Central). TSC+suíte(696)+build verdes. |
 
+## Rodada de triagem pós-Épico 2 (V2) — 20/07/2026
+Triagem de produto/UX pedida pela fundadora antes do Épico 3 (classificar: (1) correção funcional/inconsistência =
+ajuste imediato · (2) melhoria de UX = backlog do Hub/Agenda). Auditoria automática de Hub "Adicionar Registro" +
+Agenda + Conexões: sem rotas quebradas, sem palavras proibidas, Agenda funcionalmente sólida.
+
+| ID | Área | Item | Classe | Status |
+|---|---|---|---|---|
+| **FB-014-A** | Conexões | Card repetia o rótulo em "Fonte dos dados: {mesmo rótulo}". | (1) inconsistência | 🟢 feito 20/07 (removida a linha redundante; título já é a fonte). |
+| **FB-014-B** | Agenda | Tooltip "Editar / exportar" no lápis, mas eventos de medicação/recompra redirecionam a `/medicamentos`. | (1) inconsistência de rótulo | ⏸ triado, aguarda aval (só A aprovado nesta leva). |
+| **FB-014-C** | Hub | "Pedido de exame" e "Exame/Laudo" usam o mesmo `documentKind:'exam'` → pedido pré-classificado como resultado (contra Q1). Correção: remover o hint de `pedido_exame`. | (1) inconsistência | ⏸ triado, aguarda aval. |
+| **FB-014-D** | Hub | Intenções tipo "page" (ex.: Consulta) caem na lista do módulo sem pré-preencher a intenção (= Fase 2 forms rápidos). | (2) melhoria UX | 🔴 backlog (revisão do Hub / HUB-001 Fase 2). |
+| **FB-014-E** | Conexões | `domain` do descriptor é carregado mas não exibido — decidir exibir (rótulo) ou remover. | (2) melhoria UX | 🔴 backlog (revisão de Conexões). |
+| **FB-014-F** | Hub | Ícone `Thermometer` importado sem uso (código morto). | limpeza trivial | ⏸ triado, aguarda aval (junto de A/C). |
+
 ### Observação transversal (fundadora)
 > A maior parte das alterações desta etapa **ainda não ficou perceptível** no Preview. **Prioridade:** tornar as
 > funcionalidades já implementadas **claramente acessíveis na interface ANTES** de evoluir o restante do backlog.
