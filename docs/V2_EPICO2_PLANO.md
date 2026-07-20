@@ -118,9 +118,8 @@ tem teste automatizado. *Se a arquitetura passa bem no mock, passa bem no proved
 - **2.4 — UI de Conexões + estado visível + feedback do 1º dado** + fiação à Composição/Monitoramento/Timeline.
 - **2.5 — Validação end-to-end com o mock** (7 cenários) + critérios + changelog de produto.
 
-## Decisões suas necessárias antes da Etapa 2
-- **UX-1 — Onde vive a tela de Conexões?** Recomendo **"Conexões / Dispositivos"** acessível a partir do **Monitoramento**
-  (que já antecipa "de dispositivos"), como superfície de captura automática. Alternativa: em **Configurações**. *(É a
-  única decisão de produto que afeta a navegação; o resto é infraestrutura.)*
-- **Nome ao usuário** da fonte no mock: sugiro rótulo neutro **"Dispositivo de demonstração"** (deixa claro que é mock,
-  sem prometer marca antes da ativação real).
+## Decisões (estado — fundadora 20/07)
+- **UX-1 — tela de Conexões:** ✅ **acessível a partir do Monitoramento** (superfície de captura automática; o
+  Monitoramento já antecipa "de dispositivos").
+- **Rótulo do mock:** ✅ **"Dispositivo de demonstração"** (neutro/honesto; não promete marca antes da ativação real).
+- **Plano do Épico 2:** ✅ aprovado — seguir para a Etapa 2 (implementar tudo com o mock comportamental).
