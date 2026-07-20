@@ -16,6 +16,13 @@ const CHANNEL_LABEL: Record<NotificationChannel, string> = {
   email: 'E-mail', whatsapp: 'WhatsApp', both: 'Ambos', none: 'Nenhum',
 }
 
+// FB-016-3 (re-validação) — código do país (DDI) do WhatsApp.
+const DDI_OPTS: { v: string; l: string }[] = [
+  { v: '+55', l: '🇧🇷 +55' }, { v: '+351', l: '🇵🇹 +351' }, { v: '+1', l: '🇺🇸 +1' },
+  { v: '+44', l: '🇬🇧 +44' }, { v: '+34', l: '🇪🇸 +34' }, { v: '+49', l: '🇩🇪 +49' },
+  { v: '+33', l: '🇫🇷 +33' }, { v: '+39', l: '🇮🇹 +39' }, { v: '+54', l: '🇦🇷 +54' }, { v: '+61', l: '🇦🇺 +61' },
+]
+
 export default function ConfiguracoesPage() {
   const { user, signOut } = useUser()
   const supabase = createClient()
@@ -40,8 +47,9 @@ export default function ConfiguracoesPage() {
     setPwLoading(false)
   }
 
-  // ── Lembretes por WhatsApp ──────────────────────────────────────────────────
-  const [phone, setPhone]         = useState('')
+  // ── Contatos: WhatsApp (com código do país) ─────────────────────────────────
+  const [ddi, setDdi]             = useState('+55')   // FB-016-3 (re-validação): código do país
+  const [phone, setPhone]         = useState('')      // só o número (sem DDI)
   const [waLoading, setWaLoading] = useState(false)
   const [waSaved, setWaSaved]     = useState(false)
 
@@ -50,7 +58,9 @@ export default function ConfiguracoesPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(supabase as any).from('profiles').select('phone').eq('id', user.id).maybeSingle()
       .then(({ data }: { data: { phone: string | null } | null }) => {
-        if (data) setPhone(data.phone ?? '')
+        const raw = (data?.phone ?? '').trim()
+        const m = raw.match(/^(\+\d{1,3})\s*(.*)$/)   // separa DDI do número, se houver
+        if (m) { setDdi(m[1]); setPhone(m[2].trim()) } else setPhone(raw)
       })
   }, [user, supabase])
 
@@ -59,10 +69,11 @@ export default function ConfiguracoesPage() {
     setWaLoading(true); setWaSaved(false)
     try {
       // FB-016-3: o canal (e-mail/WhatsApp/ambos/nenhum) é governado pela Central de Notificações, por categoria.
-      // Aqui só cadastramos o CONTATO. `pref_whatsapp_reminder` = ter telefone (opt-in implícito; Central decide o resto).
+      // Aqui só cadastramos o CONTATO (número em formato internacional: DDI + número).
+      const full = phone.trim() ? `${ddi} ${phone.trim()}` : null
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (supabase as any).from('profiles')
-        .update({ phone: phone.trim() || null, pref_whatsapp_reminder: !!phone.trim() })
+        .update({ phone: full, pref_whatsapp_reminder: !!full })
         .eq('id', user.id)
       setWaSaved(true)
     } finally {
@@ -219,13 +230,19 @@ export default function ConfiguracoesPage() {
           <p className="font-body text-sm text-onyx mt-1">{user?.email ?? '—'}</p>
         </div>
 
-        {/* WhatsApp */}
+        {/* WhatsApp (com código do país) */}
         <div>
           <label htmlFor="config-phone" className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">WhatsApp</label>
-          <input id="config-phone" type="tel" value={phone} onChange={e => setPhone(e.target.value)}
-            placeholder="(11) 99999-9999"
-            className="mt-1 w-full px-3 py-2.5 border border-border rounded-xl font-body text-sm text-onyx bg-ivory placeholder:text-mauve/40 focus:outline-none focus:ring-1 focus:ring-petal/30" />
-          <p className="font-body text-[11px] text-mauve mt-1">Com DDD. Necessário para receber notificações por WhatsApp.</p>
+          <div className="mt-1 flex items-stretch gap-2">
+            <select aria-label="Código do país" value={ddi} onChange={e => setDdi(e.target.value)}
+              className="px-2.5 py-2.5 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
+              {DDI_OPTS.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
+            </select>
+            <input id="config-phone" type="tel" value={phone} onChange={e => setPhone(e.target.value)}
+              placeholder="(11) 99999-9999"
+              className="flex-1 min-w-0 px-3 py-2.5 border border-border rounded-xl font-body text-sm text-onyx bg-ivory placeholder:text-mauve/40 focus:outline-none focus:ring-1 focus:ring-petal/30" />
+          </div>
+          <p className="font-body text-[11px] text-mauve mt-1">Código do país + DDD. Necessário para receber notificações por WhatsApp.</p>
         </div>
 
         <div className="flex items-center justify-end gap-3">

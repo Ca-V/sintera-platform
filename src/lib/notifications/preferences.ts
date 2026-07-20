@@ -33,8 +33,9 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   { key: 'vacina',       label: 'Vacinas' },
   { key: 'medicamento',  label: 'Medicamentos' },
   { key: 'suplemento',   label: 'Suplementos' },
-  { key: 'dispositivo',  label: 'Dispositivos' },              // CTC-001 — troca de DIU/implante, CPAP, CGM… (por AÇÃO)
-  { key: 'planejamento', label: 'Planejamento' },              // CTC-001 — ações futuras planejadas (por AÇÃO)
+  // FB-016-4 (re-validação): removidas "Dispositivos" e "Planejamento" — categorias MORTAS (nenhum tipo de evento
+  // roteia para elas) e SEM item na Sidebar. A nomenclatura visível deve casar com a navegação real (troca de
+  // dispositivo cai em "Outros"; o domínio Planejamento entra quando for construído na Sidebar).
   { key: 'avaliacao',    label: 'Composição Corporal' },       // FB-016-4 — nomenclatura idêntica à Sidebar
   { key: 'outro',        label: 'Outros eventos assistenciais' },
 ]
