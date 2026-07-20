@@ -76,9 +76,11 @@ frequência · volume · impacto na experiência · expectativa · potencial de 
 - **Épico 1 — Fundação HIP-001 (sem interface complexa):** registro de conectores + **autorização/revogação** +
   **mapeamento → UCDA/`body_metrics`** + **log de sincronização idempotente** (chave fonte·faixa·item) + proveniência.
   Única infra nova (≥2 consumidores). Validada com **um** conector real.
-- **Épico 2 — PRIMEIRA SINCRONIZAÇÃO END-TO-END (1º conector cloud):** o fluxo completo acima, impecável — consentimento →
-  dado automático **visível** na Timeline/Monitoramento/Composição, com **estado da integração** (Conectado/Última sync/
-  Sincronizando/Atenção/Erro/Fonte) e **idempotência** comprovada (rodar 2×/10× = mesmo resultado). Experiência COMPLETA.
+- **Épico 2 — PRIMEIRO CONECTOR CLOUD END-TO-END** *(implementação inicial: Withings)*: o fluxo completo acima,
+  impecável — consentimento → dado automático **visível** na Timeline/Monitoramento/Composição, com **estado da
+  integração** (Conectado/Última sync/Sincronizando/Atenção/Erro/Fonte) e **idempotência** comprovada (rodar 2×/10× =
+  mesmo resultado). Experiência COMPLETA. **O conector é escolhido por validar rápido a arquitetura inteira, não por
+  fornecedor** — hoje Withings, amanhã pode ser outro; o núcleo permanece vendor-neutral (HIP-001).
 - **Épico 3 — Validação do Aha + sincronização contínua:** sync recorrente (on-open + webhooks onde houver); validar o
   **tempo até o 1º benefício percebido**; "a história cresceu sozinha" no retorno.
 - **Depois (V2.2+):** Apple Health / Health Connect **com o MOB-001**; balanças/CGM/labs — repetição da arquitetura.
@@ -123,12 +125,21 @@ Ainda não medidos em produção, mas **definidos e instrumentáveis** desde já
 
 ## Decisões (estado)
 - **Narrativa + Aha Moment:** ✅ aprovados.
-- **1º conector (ARQUITETURA + produto):** ✅ **ROTA A — Withings (cloud) primeiro** (fundadora 20/07). Prova o
-  end-to-end **hoje, no web** (OAuth servidor-a-servidor), sem depender de app mobile; traz **peso/composição** →
-  continuidade direta com a jornada de peso da V1. **Health Connect / Apple Health** ficam para depois, junto do
-  **MOB-001** (app mobile), reaproveitando a mesma fundação HIP-001. Rota B (Health Connect primeiro, exigindo o
-  MOB-001 como pré-requisito) foi **descartada** para a V2 por adiar o Aha e misturar duas transformações.
-- **Withings como 1º provedor:** ✅ confirmado (vs. Oura/Fitbit/Garmin) pela continuidade com a Composição da V1.
+- **1º conector (ARQUITETURA + produto):** ✅ **ROTA A — primeiro conector CLOUD end-to-end** (fundadora 20/07). Prova o
+  end-to-end **hoje, no web** (OAuth servidor-a-servidor), sem depender de app mobile. **Health Connect / Apple Health**
+  ficam para depois, junto do **MOB-001** (app mobile), reaproveitando a mesma fundação HIP-001. Rota B (Health Connect
+  primeiro, exigindo o MOB-001 como pré-requisito) foi **descartada** para a V2 por adiar o Aha e misturar duas
+  transformações.
+- **Enquadramento (fundadora 20/07):** a decisão é **"primeiro conector cloud end-to-end"**, NÃO "Withings primeiro". O
+  conector é escolhido por **validar rápido a arquitetura inteira**, não por fornecedor. O núcleo permanece
+  vendor-neutral (HIP-001); trocar o fornecedor não muda a arquitetura.
+- **Implementação inicial = Withings** — ✅ **oficializada** (20/07); 4 critérios confirmados por fonte oficial
+  (developer.withings.com): (1) API pública versionada (v2/v3), bem documentada, SDKs ativos; (2) **OAuth 2.0
+  authorization-code** com troca de token **server-side** + refresh tokens + **webhook `Notify`** (POST com
+  userid·appli·start/enddate → `Measure/getmeas`); (3) `appli=1` entrega **peso · massa gorda · % gordura · massa magra ·
+  massa muscular · massa óssea · hidratação** → alimenta a Composição da V1; (4) uma pesagem → webhook → dado em
+  segundos (Aha imediato). **Risco gerenciável (não bloqueia):** conta de parceiro exige aprovação para escala; webhook
+  requer endpoint HTTPS público (temos). Núcleo permanece vendor-neutral — Withings é a 1ª implementação, não acoplamento.
 
 ## Próximo passo
 Decompor o **Épico 1 — Fundação HIP-001** em subitens verificáveis (cada um TSC + suíte + build verdes + commit) e
