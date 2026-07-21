@@ -138,7 +138,7 @@ export default function HabitosPage() {
           </div>
         }
         title={h.description}
-        meta={[meta.label, h.frequency, h.notes].filter(Boolean).join(' · ')}
+        meta={[h.frequency, h.notes].filter(Boolean).join(' · ')}
         actions={
           <>
             <button onClick={() => startEdit(h)} title="Editar"
@@ -223,7 +223,23 @@ export default function HabitosPage() {
       {loading ? (
         <Card padding="none" className="p-10 text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
       ) : items.length > 0 ? (
-        <div className="space-y-2">{items.map(card)}</div>
+        // Gestor: agrupado por categoria (na ordem de CATEGORIES), com cabeçalho + contagem.
+        <div className="space-y-5">
+          {CATEGORIES.filter(c => items.some(h => h.category === c.value)).map(c => {
+            const CatIcon = c.icon
+            const list = items.filter(h => h.category === c.value)
+            return (
+              <div key={c.value} className="space-y-2">
+                <div className="flex items-center gap-2 px-1">
+                  <CatIcon size={13} className="text-petal" />
+                  <p className="font-body text-[11px] font-semibold text-mauve uppercase tracking-wider">{c.label}</p>
+                  <span className="font-body text-[11px] text-mauve/50">{list.length}</span>
+                </div>
+                <div className="space-y-2">{list.map(card)}</div>
+              </div>
+            )
+          })}
+        </div>
       ) : (
         <Card padding="none" className="p-10 text-center space-y-1">
           <p className="font-body text-sm text-mauve">Nenhum hábito registrado ainda.</p>
