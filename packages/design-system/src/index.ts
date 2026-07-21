@@ -1,3 +1,5 @@
 // @sintera/design-system — Tokens e componentes/logica de UI compartilhaveis (RN e web compartilham tokens+logica).
 // Fronteira de responsabilidade: ver docs/HIP-012 §4 e docs/adr/ADR-007. NÃO exceder este escopo.
-export {}
+
+// Passo 3B · Etapa 1 — Design Tokens (SSOT). Subitem 1: cor.
+export * from './tokens/color'
