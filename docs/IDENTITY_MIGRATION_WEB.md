@@ -37,6 +37,16 @@ Toda a plataforma passa a exibir a **identidade definitiva** (sidebar, topbar, f
 o usuário deixa de ver "duas plataformas". Os **componentes** continuam migrando incrementalmente para o DS-002.
 `tsc` + `next build` + suíte verdes. **Validação visual pixel a pixel** fica para o ambiente da fundadora.
 
+## Referência oficial de harmonia = página de **Login** (fundadora, 2026-07-21)
+A tela de **Login** é a referência de melhor harmonia cromática; **todas as demais páginas aplicam as cores do mesmo modo**:
+- **Painel teal (assinatura):** `linear-gradient(150–160deg, #9BD8E0 0%, #6FC1CF 58%, #57B0BF 100%)` — aqua claro; **texto
+  ESCURO** por cima (onyx / `#123A40`), nunca bege. Usado em painéis de destaque e na **Sidebar** (mesmo gradiente + texto escuro).
+- **Área de conteúdo:** neutros quentes claros — `gradient-subtle` (`#FBF8F2 → #EEF7F4 → #D9EDE8`) / `bg-cream`.
+- **Ação (botões/CTA):** `gradient-sintera` (`#3D6C7B → #74B8B9`) + texto branco.
+- **Tipografia:** Fraunces (títulos) + Hanken (corpo). **Chips/labels de grupo:** neutros quentes (pedra/creme/areia).
+Regra: ao migrar qualquer página, **espelhar exatamente** esse tratamento (mesmo teal, texto escuro sobre teal, mesmos neutros
+e mesmo botão de ação) — sem variações locais.
+
 ## Ordem (revisada)
 1. **Migração global da identidade** ✅ (este documento).
 2. Continuação da migração incremental para o DS-002.
