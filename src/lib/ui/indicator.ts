@@ -11,13 +11,13 @@
 // Factual, sem juízo clínico (RDC 657): nunca "bom/ruim/excelente".
 // ============================================================
 
-import type { BadgeVariant } from './item'
+import type { BadgeTone } from '@sintera/design-system'
 
 export type ReferenceStatus = 'within' | 'outside' | 'unknown'
 
-export const REFERENCE_STATUS: Record<ReferenceStatus, { label: string; badge: BadgeVariant }> = {
-  within:  { label: 'dentro da faixa do laboratório', badge: 'sage' },
-  outside: { label: 'fora da faixa do laboratório',  badge: 'gold' }, // atenção, NÃO alarme
+export const REFERENCE_STATUS: Record<ReferenceStatus, { label: string; badge: BadgeTone }> = {
+  within:  { label: 'dentro da faixa do laboratório', badge: 'info' },   // preserva o azul histórico
+  outside: { label: 'fora da faixa do laboratório',  badge: 'attention' }, // atenção, NÃO alarme
   unknown: { label: 'faixa não informada',           badge: 'neutral' },
 }
 

@@ -9,7 +9,7 @@
 // ============================================================
 
 import { cn } from '@/lib/utils'
-import Button from '@/components/ui/Button'
+import { Button } from "@/lib/ui/ds"
 import ReportSection from '@/components/ui/ReportSection'
 import EventCard from '@/components/ui/EventCard'
 import ItemCard from '@/components/ui/ItemCard'

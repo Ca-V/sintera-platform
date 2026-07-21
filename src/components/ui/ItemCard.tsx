@@ -1,8 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import Badge from './Badge'
-import Button from './Button'
+import { Badge, Button } from "@/lib/ui/ds"
 import { clickableContainerProps, type ClickableCardProps } from '@/lib/ui/clickable'
 import { type CardAction } from '@/lib/ui/action'
 import { STATUS_BADGE, itemKindLabel, type ItemKind, type ItemStatus } from '@/lib/ui/item'
@@ -64,7 +63,7 @@ export default function ItemCard({ kind, title, subtitle, status, meta, onOpen, 
               <p className="truncate font-body font-medium text-onyx">{title}</p>
               <p className="text-xs text-mauve">{subtitle ?? itemKindLabel(kind)}</p>
             </div>
-            {status && <Badge variant={STATUS_BADGE[status].variant}>{STATUS_BADGE[status].label}</Badge>}
+            {status && <Badge tone={STATUS_BADGE[status].tone}>{STATUS_BADGE[status].label}</Badge>}
           </div>
 
           {meta && meta.length > 0 && (

@@ -6,6 +6,8 @@
 // APRESENTAÇÃO parametrizado por `kind` — não importa tabelas/Catálogo aqui.
 // ============================================================
 
+import type { BadgeTone } from '@sintera/design-system'
+
 export type ItemKind =
   | 'medication'
   | 'supplement'
@@ -29,14 +31,12 @@ export const ITEM_KIND_LABEL: Record<ItemKind, string> = {
   document: 'Documento',
 }
 
-/** Variante do Badge (componente existente) por status. */
-export type BadgeVariant = 'rose' | 'lavender' | 'sage' | 'gold' | 'neutral'
-
-export const STATUS_BADGE: Record<ItemStatus, { label: string; variant: BadgeVariant }> = {
-  active: { label: 'Ativo', variant: 'sage' },
-  suspended: { label: 'Suspenso', variant: 'gold' },
-  pending: { label: 'Pendente', variant: 'lavender' },
-  archived: { label: 'Arquivado', variant: 'neutral' },
+/** Tom do Badge (DS-002) por status — preserva a cor histórica (sage azul → info; lavender terracota → error). */
+export const STATUS_BADGE: Record<ItemStatus, { label: string; tone: BadgeTone }> = {
+  active: { label: 'Ativo', tone: 'info' },
+  suspended: { label: 'Suspenso', tone: 'attention' },
+  pending: { label: 'Pendente', tone: 'error' },
+  archived: { label: 'Arquivado', tone: 'neutral' },
 }
 
 export const ALL_ITEM_KINDS = Object.keys(ITEM_KIND_LABEL) as ItemKind[]

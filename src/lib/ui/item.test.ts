@@ -17,16 +17,16 @@ describe('ItemCard — modelo de apresentação', () => {
     expect(itemKindLabel('medication')).toBe('Medicamento')
   })
 
-  it('todo status mapeia para um Badge válido', () => {
-    const valid = ['rose', 'lavender', 'sage', 'gold', 'neutral']
+  it('todo status mapeia para um tom de Badge válido (DS-002)', () => {
+    const valid = ['info', 'success', 'attention', 'error', 'neutral']
     for (const s of Object.values(STATUS_BADGE)) {
       expect(s.label.length).toBeGreaterThan(0)
-      expect(valid).toContain(s.variant)
+      expect(valid).toContain(s.tone)
     }
   })
 
-  it('ativo é sage e suspenso é gold (tom de organização, não alarme)', () => {
-    expect(STATUS_BADGE.active.variant).toBe('sage')
-    expect(STATUS_BADGE.suspended.variant).toBe('gold')
+  it('ativo preserva o azul (info) e suspenso é atenção (organização, não alarme)', () => {
+    expect(STATUS_BADGE.active.tone).toBe('info')
+    expect(STATUS_BADGE.suspended.tone).toBe('attention')
   })
 })

@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import Button from './Button'
+import { Button } from "@/lib/ui/ds"
 import { clickableContainerProps, type ClickableCardProps } from '@/lib/ui/clickable'
 import { type CardAction } from '@/lib/ui/action'
 import { SITUATION_TONE, type SituationTone } from '@/lib/ui/situation'

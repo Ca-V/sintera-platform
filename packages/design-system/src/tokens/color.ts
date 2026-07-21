@@ -96,7 +96,7 @@ export interface ColorRoles {
   button: { primary: { background: string; text: string; hover: string } } // AÇÃO — sempre AA
   chart: { primary: string; grid: string; positive: string; alert: string }
   timeline: { event: string; node: string; medication: string }
-  badge: { info: SemanticColor; success: SemanticColor; attention: SemanticColor; error: SemanticColor }
+  badge: { info: SemanticColor; success: SemanticColor; attention: SemanticColor; error: SemanticColor; neutral: SemanticColor }
   link: { default: string }
 }
 
@@ -109,7 +109,7 @@ export const roles: Record<Theme, ColorRoles> = {
     button: { primary: { background: primary.light[700], text: '#FFFFFF', hover: primary.light[800] } },
     chart: { primary: primary.light[500], grid: neutral.light.line, positive: feedback.light.success.fill, alert: feedback.light.attention.fill },
     timeline: { event: primary.light[500], node: primary.light[400], medication: feedback.light.attention.fill },
-    badge: { info: { fill: primary.light[500], text: primary.light[700], soft: primary.light[100] }, success: feedback.light.success, attention: feedback.light.attention, error: feedback.light.error },
+    badge: { info: { fill: primary.light[500], text: primary.light[700], soft: primary.light[100] }, success: feedback.light.success, attention: feedback.light.attention, error: feedback.light.error, neutral: { fill: neutral.light.muted, text: neutral.light.muted, soft: neutral.light.surfaceAlt } },
     link: { default: primary.light[700] },
   },
   dark: {
@@ -120,7 +120,7 @@ export const roles: Record<Theme, ColorRoles> = {
     button: { primary: { background: primary.dark[600], text: '#10201C', hover: primary.dark[700] } },
     chart: { primary: primary.dark[500], grid: neutral.dark.line, positive: feedback.dark.success.fill, alert: feedback.dark.attention.fill },
     timeline: { event: primary.dark[500], node: primary.dark[400], medication: feedback.dark.attention.fill },
-    badge: { info: { fill: primary.dark[500], text: primary.dark[700], soft: primary.dark[100] }, success: feedback.dark.success, attention: feedback.dark.attention, error: feedback.dark.error },
+    badge: { info: { fill: primary.dark[500], text: primary.dark[700], soft: primary.dark[100] }, success: feedback.dark.success, attention: feedback.dark.attention, error: feedback.dark.error, neutral: { fill: neutral.dark.muted, text: neutral.dark.muted, soft: neutral.dark.surfaceAlt } },
     link: { default: primary.dark[700] },
   },
 }

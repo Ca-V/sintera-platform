@@ -4,11 +4,11 @@ import { describe, it, expect } from 'vitest'
 import {
   getTheme, contrastRatio, WCAG,
   button, text, heading, card, surface, badge, chip, divider, icon, avatar,
-  type Theme, type SemanticTone,
+  type Theme, type BadgeTone,
 } from '../../packages/design-system/src'
 
 const THEMES: Theme[] = ['light', 'dark']
-const TONES: SemanticTone[] = ['info', 'success', 'attention', 'error']
+const TONES: BadgeTone[] = ['info', 'success', 'attention', 'error', 'neutral']
 
 describe('ARCH · recipes — derivação do tema e acessibilidade', () => {
   for (const mode of THEMES) {

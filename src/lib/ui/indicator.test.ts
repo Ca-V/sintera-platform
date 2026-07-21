@@ -7,9 +7,9 @@ describe('IndicatorView — status de referência (factual, sem alarme)', () => 
     expect(keys).toEqual(['outside', 'unknown', 'within'])
   })
 
-  it('within é sage; outside é gold (atenção, não alarme vermelho)', () => {
-    expect(REFERENCE_STATUS.within.badge).toBe('sage')
-    expect(REFERENCE_STATUS.outside.badge).toBe('gold')
+  it('within preserva o azul (info); outside é atenção (não alarme vermelho)', () => {
+    expect(REFERENCE_STATUS.within.badge).toBe('info')
+    expect(REFERENCE_STATUS.outside.badge).toBe('attention')
   })
 
   it('todo status tem rótulo factual não vazio', () => {

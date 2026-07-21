@@ -29,17 +29,7 @@ export function Heading({ level = 'section', children, style }:
   return <Tag style={{ ...textStyle(spec), textWrap: 'balance', ...style } as CSSProperties}>{children}</Tag>
 }
 
-export function Button({ variant = 'primary', size = 'md', disabled, onClick, type = 'button', children, style }:
-  { variant?: ds.ButtonVariant; size?: ds.Size; disabled?: boolean; onClick?: () => void; type?: 'button' | 'submit' } & WithStyle) {
-  const t = useDs()
-  const spec = ds.button(t, { variant, size, state: disabled ? 'disabled' : 'default' })
-  return (
-    <button type={type} disabled={disabled} onClick={onClick}
-      style={{ ...boxStyle(t, spec.container), ...textStyle(spec.label), display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: disabled ? 'not-allowed' : 'pointer', ...style }}>
-      {children}
-    </button>
-  )
-}
+// Button — ver ./button.tsx (componente de CLASSE; estados de cascata na camada Web).
 
 // Card — CONTAINER estático. Identidade (superfície/borda/raio/sombra/padding) vem da recipe do DS; a TELA pode
 // acrescentar layout via `className`/props HTML (grid, alinhamento, overflow, onClick, aria) e usar `padding="none"`
@@ -81,7 +71,7 @@ export function Surface({ tone = 'base', children, style }:
 }
 
 export function Badge({ tone = 'info', children, style }:
-  { tone?: ds.SemanticTone } & WithStyle) {
+  { tone?: ds.BadgeTone } & WithStyle) {
   const t = useDs()
   const spec = ds.badge(t, { tone })
   return <span style={{ ...boxStyle(t, spec.container), ...textStyle(spec.label), display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap', ...style }}>{children}</span>

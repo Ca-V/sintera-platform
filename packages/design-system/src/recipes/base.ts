@@ -11,6 +11,7 @@ export type Size = 'sm' | 'md' | 'lg'
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost'
 export type InteractiveState = 'default' | 'hover' | 'pressed' | 'disabled'
 export type SemanticTone = 'info' | 'success' | 'attention' | 'error'
+export type BadgeTone = SemanticTone | 'neutral' // 'neutral' = estado sem carga semântica (ex.: "Desconectado")
 
 const TRANSPARENT = 'transparent'
 const MIN_TOUCH = 44 // alvo mínimo de toque (acessibilidade) para controles md+
@@ -71,7 +72,7 @@ export function surface(t: SinteraTheme, opts: { tone?: 'base' | 'app' | 'accent
 }
 
 // --- Dados / status ---------------------------------------------------------
-export function badge(t: SinteraTheme, opts: { tone?: SemanticTone } = {}): BadgeSpec {
+export function badge(t: SinteraTheme, opts: { tone?: BadgeTone } = {}): BadgeSpec {
   const fam = t.color.badge[opts.tone ?? 'info']
   return {
     container: { backgroundColor: fam.soft, borderColor: TRANSPARENT, borderWidth: 0, radius: t.radius.pill, paddingX: t.padding.tight, paddingY: t.padding.micro, opacity: 1, elevation: 'none' },

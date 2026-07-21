@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import Badge from './Badge'
+import { Badge } from "@/lib/ui/ds"
 import { REFERENCE_STATUS, type ReferenceStatus } from '@/lib/ui/indicator'
 import { clickableContainerProps, type ClickableCardProps } from '@/lib/ui/clickable'
 
@@ -33,7 +33,7 @@ export default function IndicatorSummaryCard({ name, value, unit, status, collec
     >
       <div className="flex items-start justify-between gap-3">
         <p className="font-body font-medium text-onyx">{name}</p>
-        <Badge variant={ref.badge}>{ref.label}</Badge>
+        <Badge tone={ref.badge}>{ref.label}</Badge>
       </div>
       <p className="mt-2 text-3xl font-medium text-onyx">
         {value}{unit && <span className="ml-1 text-base text-mauve">{unit}</span>}

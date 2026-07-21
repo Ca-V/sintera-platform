@@ -15,7 +15,7 @@ import { useSearchParams } from 'next/navigation'
 import { ArrowLeft, RefreshCw, Link2, Unlink, CheckCircle2, AlertTriangle, Loader2, Sparkles } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import { Card } from "@/lib/ui/ds"
-import Badge from '@/components/ui/Badge'
+import { Badge } from "@/lib/ui/ds"
 import Disclaimer from '@/components/ui/Disclaimer'
 import { useNovelty } from '@/lib/novelty/useNovelty'
 
@@ -41,15 +41,15 @@ function fmtDateTime(iso: string | null): string {
 function statusBadge(c: ConnectorState) {
   switch (c.status) {
     case 'connected':
-      return <Badge variant="sage">Conectado</Badge>
+      return <Badge tone="info">Conectado</Badge>
     case 'expired':
-      return <Badge variant="gold">Reconexão necessária</Badge>
+      return <Badge tone="attention">Reconexão necessária</Badge>
     case 'error':
-      return <Badge variant="gold">Atenção</Badge>
+      return <Badge tone="attention">Atenção</Badge>
     case 'revoked':
-      return <Badge variant="neutral">Desconectado</Badge>
+      return <Badge tone="neutral">Desconectado</Badge>
     default:
-      return <Badge variant="neutral">Não conectado</Badge>
+      return <Badge tone="neutral">Não conectado</Badge>
   }
 }
 

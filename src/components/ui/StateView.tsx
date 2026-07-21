@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import Button from './Button'
+import { Button } from "@/lib/ui/ds"
 import { stateSpec, type StateTone, type UIStateKind } from '@/lib/ui/states'
 import { type CardAction } from '@/lib/ui/action'
 import { type ReactNode } from 'react'
