@@ -52,7 +52,7 @@ muda só por evidência/revisão formal).
 | Doc | Finalidade | Versão | Status | Relações |
 |---|---|---|---|---|
 | **BRAND-001** | Sistema de Identidade da SINTERA (marca; _Almond Blossom_; princípios; direção A·E; gate de densidade) | 1.3 | Approved ⛨ | orienta o Design System (web+mobile); ADR-010; COLOR-001 |
-| **BRAND-002** | Estudo Tipográfico (5 pares; inclui Fraunces+Atkinson **Next**; specimen A·E) | 1.1 | Draft | integra BRAND-001 §5 após decisão conjunta |
+| **BRAND-002** | Estudo Tipográfico (5 pares; Fraunces+Atkinson **Next**; specimen A·E: histórico lab · Mobile) | 1.2 | Draft | integra BRAND-001 §5 após decisão conjunta |
 | **COLOR-001** | Direção cromática **A·E** (oficial/consolidada; âncora `#4D8C9D`; gradiente verde→azul; gate densidade) | 1.5 | Approved ⛨ | tokens 50–900 no DS (3B); web migra p/ A·E |
 | **HIP-013** | Arquitetura Interna do App Móvel | 1.0 | Approved ⛨ | ADR-009; HIP-007/009 |
 | **HIP-011** | Arquitetura do Produto Mobile (experiência/navegação/UX/offline/notif/evolução) | 1.1 | Approved | HIP-008; BRAND-001; ref. Produto/UX/Eng |

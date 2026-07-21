@@ -5,7 +5,9 @@
 Design System (3B) nasce com a tipografia definitiva.
 **Status:** Draft — aguardando decisão da fundadora · **Versão:** 1.1 · **Histórico:** v1.0 (2026-07-20); v1.1 (2026-07-20)
 estudo ampliado: par **E — Fraunces + Atkinson Hyperlegible Next** (a pedido da fundadora) + specimen com **cores A·E reais**
-(âncora `#4D8C9D`) + critério **harmonia com _Almond Blossom_**.
+(âncora `#4D8C9D`) + critério **harmonia com _Almond Blossom_**; v1.2 (2026-07-20) **decisão por experiência de uso** — specimen
+com a tela crítica **histórico laboratorial completo** (32 biomarcadores · unidades · referências · tendências · observações),
+**toggle Desktop/Mobile** (~390px) e painel de avaliação BRAND-001.
 **Dependências:** [[BRAND-001]] (identidade) · [[tema_g_acessibilidade]]. **Impacto:** define um dos elementos mais
 presentes na experiência diária.
 
@@ -13,6 +15,18 @@ presentes na experiência diária.
 Legibilidade · **leitura prolongada** · acessibilidade · **personalidade da marca** · comportamento em **Web e Mobile** ·
 **harmonia com a identidade inspirada em _Almond Blossom_** · licenciamento/disponibilidade. Princípios do [[BRAND-001]]:
 sofisticação sem parecer artística; saúde premium (não hospitalar, não corporativa); tecnologia invisível; calma.
+
+## Como a decisão será tomada (fundadora)
+A tipografia **não é escolhida pela beleza**, e sim pela **experiência de uso ao longo de anos** — o usuário passará horas
+lendo exames, Timeline, documentos, indicadores e histórico. **Conforto de leitura antes de personalidade.** Cenários de
+comparação, por prioridade: **(1) Timeline longitudinal** (escaneabilidade · separação data/evento · ritmo); **(2) Tabela de
+exames — o teste mais importante** (alinhamento e leitura dos números · contraste · localização); **(3) Leitura prolongada**
+(fadiga · velocidade · conforto após vários parágrafos); **(4) Mobile** — todas as comparações também em largura de
+smartphone (a maioria usará o app). **Tela crítica adicional:** o **histórico laboratorial completo** (dezenas de
+biomarcadores, valores, unidades, referências, tendências, observações) — se a fonte funcionar aqui, funciona em quase todo
+o sistema. Para cada par, responder às perguntas do [[BRAND-001]]: transmite **serenidade · confiança · sofisticação ·
+continuidade**? **Desaparece** na leitura ou chama atenção para si? É apropriada para **acompanhamento de saúde de longo
+prazo**? *A melhor tipografia é a que quase deixa de ser percebida.*
 
 ## Restrições técnicas (por serem mobile-first + web)
 - **Licença:** priorizar **open-source (SIL OFL)** → custo zero, **auto-hospedável** (bundling no app RN + self-host na
