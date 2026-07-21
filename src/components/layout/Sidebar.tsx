@@ -136,7 +136,7 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
   const { tip, bind } = useContextualDescription()
 
   return (
-    <div className="flex flex-col h-full select-none border-r border-border" style={{ background: 'radial-gradient(ellipse 90% 35% at 50% 100%, rgba(87,157,168,0.14) 0%, transparent 72%), linear-gradient(to bottom, #BFDDD6 0%, #A9D3CB 100%)' }}>
+    <div className="flex flex-col h-full select-none border-r border-border" style={{ background: 'radial-gradient(ellipse 90% 35% at 50% 100%, rgba(87,157,168,0.14) 0%, transparent 72%), linear-gradient(to bottom, #97C9C3 0%, #86C1BE 100%)' }}>
 
       {/* Logo — leva ao Painel Inicial (área logada) */}
       <div className="flex items-center justify-between px-5 py-4">
