@@ -44,7 +44,7 @@ export default function Testimonials() {
               <motion.div key={title}
                 initial={{ opacity: 0, y: 16 }} animate={inView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.5, delay: 0.2 }}
-                className="card-premium p-6 text-left">
+                className="ds-card p-6 text-left">
                 <span className="text-3xl block mb-3">{emoji}</span>
                 <h3 className="font-body text-sm font-semibold text-onyx mb-1">{title}</h3>
                 <p className="font-body text-xs text-mauve leading-relaxed">{desc}</p>

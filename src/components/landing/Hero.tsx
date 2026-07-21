@@ -87,7 +87,7 @@ function ProductPreview() {
   return (
     <div className="relative w-full max-w-[420px] ml-auto">
       {/* Browser-frame card */}
-      <div className="card-premium overflow-hidden">
+      <div className="ds-card overflow-hidden">
         <div className="flex items-center gap-2 px-4 py-3 bg-ivory border-b border-border">
           <div className="flex gap-1.5">
             <div className="w-2.5 h-2.5 rounded-full bg-red-300" />

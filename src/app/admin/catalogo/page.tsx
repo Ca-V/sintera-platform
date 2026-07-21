@@ -231,7 +231,7 @@ export default function CatalogoAdminPage() {
         </div>
 
         {/* Resumo do mapeamento */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="card-premium p-6">
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="ds-card p-6">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <FlaskConical size={16} className="text-petal" />
@@ -282,7 +282,7 @@ export default function CatalogoAdminPage() {
         ) : (
           <div className="space-y-6">
             {Object.entries(byCategory).map(([cat, items]) => (
-              <div key={cat} className="card-premium overflow-hidden">
+              <div key={cat} className="ds-card overflow-hidden">
                 <div className="px-5 py-3 border-b border-border/40 flex items-center justify-between">
                   <h2 className="font-body text-sm font-semibold text-onyx">{CATEGORY_LABELS[cat] ?? cat}</h2>
                   <span className="font-body text-[11px] text-mauve">{items.length}</span>

@@ -69,7 +69,7 @@ export default function ListaDeEsperaPage() {
             {state === 'idle' && (
               <motion.form key="form" onSubmit={handleSubmit}
                 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                className="card-premium p-6 space-y-4">
+                className="ds-card p-6 space-y-4">
                 <div className="space-y-1.5">
                   <label htmlFor="waitlist-nome" className="font-body text-xs font-medium text-onyx">Nome</label>
                   <input
@@ -113,7 +113,7 @@ export default function ListaDeEsperaPage() {
             {(state === 'success' || state === 'already') && (
               <motion.div key="success"
                 initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}
-                className="card-premium p-8 text-center space-y-4">
+                className="ds-card p-8 text-center space-y-4">
                 <div className="w-14 h-14 rounded-full bg-blush flex items-center justify-center mx-auto">
                   <Check size={24} className="text-petal" />
                 </div>
@@ -134,7 +134,7 @@ export default function ListaDeEsperaPage() {
 
             {state === 'error' && (
               <motion.div key="error" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                className="card-premium p-6 text-center space-y-4">
+                className="ds-card p-6 text-center space-y-4">
                 <p className="font-body text-sm text-red-500">Algo deu errado. Tente novamente.</p>
                 <button onClick={() => setState('idle')}
                   className="font-body text-sm text-petal hover:underline">

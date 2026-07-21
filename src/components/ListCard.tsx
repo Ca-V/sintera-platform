@@ -48,7 +48,7 @@ export default function ListCard({
       : <p className={titleCls}>{title}</p>
 
   return (
-    <div className={`card-premium p-3.5 ${dim ? 'opacity-70' : ''}`}>
+    <div className={`ds-card p-3.5 ${dim ? 'opacity-70' : ''}`}>
       <div className="flex items-start gap-2.5">
         {leading}
         <div className="min-w-0 flex-1">

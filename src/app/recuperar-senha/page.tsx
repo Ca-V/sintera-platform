@@ -58,7 +58,7 @@ export default function RecuperarSenhaPage() {
         </div>
 
         {sent ? (
-          <div className="card-premium p-8 text-center">
+          <div className="ds-card p-8 text-center">
             <div className="w-14 h-14 rounded-full bg-blush flex items-center justify-center mx-auto mb-4">
               <Check size={24} className="text-petal" />
             </div>
@@ -72,7 +72,7 @@ export default function RecuperarSenhaPage() {
             </p>
           </div>
         ) : (
-          <div className="card-premium p-8">
+          <div className="ds-card p-8">
             <h1 className="font-display text-2xl font-semibold text-onyx mb-2">Recuperar senha</h1>
             <p className="font-body text-sm text-mauve mb-6 leading-relaxed">
               Digite o e-mail da sua conta. Enviaremos um link para você criar uma nova senha.

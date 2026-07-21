@@ -83,11 +83,11 @@ export default function EcosystemSection() {
                 transition={{ duration: 0.5, delay: 0.2 + i * 0.1, ease: 'easeOut' }}>
                 {s.href ? (
                   <Link href={s.href}
-                    className="card-premium p-6 text-left relative block h-full transition-all hover:border-petal/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-petal/40">
+                    className="ds-card p-6 text-left relative block h-full transition-all hover:border-petal/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-petal/40">
                     {inner}
                   </Link>
                 ) : (
-                  <div className="card-premium p-6 text-left relative h-full">
+                  <div className="ds-card p-6 text-left relative h-full">
                     {inner}
                   </div>
                 )}

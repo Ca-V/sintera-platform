@@ -53,8 +53,15 @@ const PAD_CLASS: Record<string, string> = {
   none: '', cozy: 'p-3', default: 'p-4', relaxed: 'p-5',        // intenção (DS)
   sm: 'p-4', md: 'p-5', lg: 'p-6', xl: 'p-8', '2xl': 'p-10',    // compat DS-001 (px exato)
 }
-export type CardProps = { padding?: 'none' | 'cozy' | 'default' | 'relaxed' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' }
+export type CardPadding = keyof typeof PAD_CLASS
+export type CardProps = { padding?: CardPadding }
   & WithStyle & Omit<HTMLAttributes<HTMLDivElement>, 'style' | 'children'>
+
+/** Classe do cartão DS-002 (`.ds-card` + padding) — para componentes que precisam da CLASSE, não do <div>
+ *  (MotionCard animado, ActionCard clicável). Substitui o cardClassName do DS-001 (`.card-premium`). */
+export function cardClassName(padding: CardPadding = 'default', className?: string): string {
+  return cn('ds-card', PAD_CLASS[padding], className)
+}
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
   { padding = 'default', className, children, style, ...rest }, ref,

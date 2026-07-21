@@ -71,7 +71,7 @@ export default function ModulesSection() {
                 {g.items.map(m => {
                   const Icon = m.icon
                   return (
-                    <div key={m.name} className="card-premium p-5 flex items-start gap-3">
+                    <div key={m.name} className="ds-card p-5 flex items-start gap-3">
                       <div className="w-10 h-10 rounded-xl bg-blush flex items-center justify-center flex-shrink-0">
                         <Icon size={18} className="text-petal" />
                       </div>

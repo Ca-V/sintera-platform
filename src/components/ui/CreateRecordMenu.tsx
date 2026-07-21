@@ -20,7 +20,7 @@
 
 import { useRef, useState, type ReactNode, type ComponentType } from 'react'
 import { Plus, Loader2, Upload, Camera, Pencil, X } from 'lucide-react'
-import Card from './Card'
+import { Card } from '@/lib/ui/ds'
 import { useDocumentBundle } from './DocumentBundleCapture'
 
 type IconType = ComponentType<{ size?: number; className?: string }>

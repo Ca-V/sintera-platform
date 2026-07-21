@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils'
 import { type ReactNode } from 'react'
-import Card, { type CardProps } from './Card'
+import { Card, type CardProps } from '@/lib/ui/ds'
 
 interface SectionProps extends Omit<CardProps, 'title'> {
   /** Ícone do cabeçalho, renderizado numa caixa arredondada padrão. */
@@ -20,10 +20,10 @@ interface SectionProps extends Omit<CardProps, 'title'> {
 // painéis da SINTERA — [ícone em caixa] + título + ação — extraído do padrão real
 // (ex.: Configurações). Padroniza o "painel com título" hoje reimplementado à mão.
 // Container estático (herda o escopo do Card: sem polimorfismo/motion).
-export default function Section({ icon, iconBox, title, action, bodyClassName, children, ...props }: SectionProps) {
+export default function Section({ padding = 'md', icon, iconBox, title, action, bodyClassName, children, ...props }: SectionProps) {
   const hasHeader = icon != null || title != null || action != null
   return (
-    <Card {...props}>
+    <Card padding={padding} {...props}>
       {hasHeader && (
         <div className="flex items-center justify-between gap-3 mb-4">
           <div className="flex items-center gap-3 min-w-0">

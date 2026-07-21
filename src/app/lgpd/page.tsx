@@ -72,7 +72,7 @@ const rights: Right[] = [
 function RightCard({ right }: { right: Right }) {
   const Icon = right.icon
   return (
-    <div className="card-premium p-6 space-y-3">
+    <div className="ds-card p-6 space-y-3">
       <div className="flex items-start gap-3">
         <div className="w-9 h-9 rounded-xl bg-blush flex items-center justify-center flex-shrink-0 mt-0.5">
           <Icon size={16} className="text-petal" />
@@ -131,7 +131,7 @@ export default function LgpdPage() {
             </div>
           </div>
 
-          <div className="card-premium p-5 border-l-4 border-petal/40">
+          <div className="ds-card p-5 border-l-4 border-petal/40">
             <p className="font-body text-sm text-onyx/80 leading-relaxed">
               Como titular dos seus dados pessoais, você tem direitos garantidos pela LGPD.
               Na SINTERA, priorizamos transparência e controle: todos os direitos listados abaixo
@@ -148,7 +148,7 @@ export default function LgpdPage() {
         </div>
 
         {/* Controlador */}
-        <div className="card-premium p-6 space-y-4 mb-8">
+        <div className="ds-card p-6 space-y-4 mb-8">
           <h2 className="font-display text-base font-semibold text-onyx">Controladora de dados</h2>
           <div className="font-body text-sm text-onyx/70 space-y-1 leading-relaxed">
             <p className="font-semibold text-onyx">SINTERA Tecnologia em Saúde</p>

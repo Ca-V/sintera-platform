@@ -58,7 +58,7 @@ export default function PillarsSection() {
               <motion.div key={p.title}
                 initial={{ opacity: 0, y: 24 }} animate={inView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.5, delay: 0.1 + i * 0.09, ease: 'easeOut' }}
-                className="card-premium p-7 flex flex-col gap-4 h-full">
+                className="ds-card p-7 flex flex-col gap-4 h-full">
                 <div className="w-12 h-12 rounded-2xl gradient-sintera flex items-center justify-center flex-shrink-0">
                   <Icon size={22} className="text-white" />
                 </div>

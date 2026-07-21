@@ -11,7 +11,7 @@ export default function EmptyState({ icon, title, message, action }: {
   action?: ReactNode
 }) {
   return (
-    <div className="card-premium p-10 text-center">
+    <div className="ds-card p-10 text-center">
       <div className="w-16 h-16 rounded-2xl gradient-sintera-soft flex items-center justify-center mx-auto mb-5">
         {icon}
       </div>

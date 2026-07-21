@@ -91,7 +91,7 @@ export default function AtualizarSenhaPage() {
         </div>
 
         {done ? (
-          <div className="card-premium p-8 text-center">
+          <div className="ds-card p-8 text-center">
             <div className="w-14 h-14 rounded-full bg-blush flex items-center justify-center mx-auto mb-4">
               <Check size={24} className="text-petal" />
             </div>
@@ -99,12 +99,12 @@ export default function AtualizarSenhaPage() {
             <p className="font-body text-sm text-mauve">Redirecionando para o dashboard…</p>
           </div>
         ) : checking ? (
-          <div className="card-premium p-8 text-center">
+          <div className="ds-card p-8 text-center">
             <span className="inline-block w-6 h-6 border-2 border-petal border-t-transparent rounded-full animate-spin mb-3" />
             <p className="font-body text-sm text-mauve">Verificando o link de recuperação…</p>
           </div>
         ) : !canReset ? (
-          <div className="card-premium p-8 text-center">
+          <div className="ds-card p-8 text-center">
             <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
               <AlertCircle size={24} className="text-red-400" />
             </div>
@@ -118,7 +118,7 @@ export default function AtualizarSenhaPage() {
             </Link>
           </div>
         ) : (
-          <div className="card-premium p-8">
+          <div className="ds-card p-8">
             <h1 className="font-display text-2xl font-semibold text-onyx mb-2">Nova senha</h1>
             <p className="font-body text-sm text-mauve mb-6">Digite e confirme sua nova senha.</p>
 

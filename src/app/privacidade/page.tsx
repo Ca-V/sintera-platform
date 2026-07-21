@@ -22,7 +22,7 @@ export default function PrivacidadePage() {
           <p className="font-body text-sm text-mauve">Versão 2.0 · Vigente a partir de junho de 2026</p>
         </div>
 
-        <div className="card-premium p-8 space-y-8 font-body text-sm text-onyx/80 leading-relaxed">
+        <div className="ds-card p-8 space-y-8 font-body text-sm text-onyx/80 leading-relaxed">
 
           <section className="space-y-3">
             <h2 className="font-display text-lg font-semibold text-onyx">1. Quem somos</h2>

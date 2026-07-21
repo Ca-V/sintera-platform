@@ -148,18 +148,8 @@ input[type="range"].range-gold::-webkit-slider-thumb { background: var(--color-g
   animation: shimmer 4s linear infinite;
 }
 
-/* ─── Cards (DS-001 legado — a remover na eliminação do DS-001; já SEM hex, consomem tokens) ─── */
-.card-premium {
-  background: var(--color-surface);
-  border: 1px solid color-mix(in srgb, var(--color-onyx) 5%, transparent);
-  border-radius: var(--radius-scale-xl);
-  box-shadow: var(--shadow-card);
-  transition: box-shadow 0.3s ease, transform 0.3s ease;
-}
-.card-premium:hover {
-  box-shadow: var(--shadow-card-hover);
-  transform: translateY(-1px);
-}
+/* ─── Card escuro (efeito de plataforma; consome tokens do DS). O cartão claro (.ds-card) vive no
+       artefato gerado theme.generated.css (DS-002) — não aqui. ─── */
 .card-dark {
   background: var(--gradient-card-dark);
   border: 1px solid color-mix(in srgb, white 6%, transparent);
@@ -196,7 +186,7 @@ input[type="range"].range-gold::-webkit-slider-thumb { background: var(--color-g
   body { background: white !important; color: #1a1a1a !important; }
   main { padding: 0 !important; overflow: visible !important; }
 
-  .card-premium {
+  .ds-card {
     border: 1px solid #e5e5e5 !important;
     box-shadow: none !important;
     break-inside: avoid;

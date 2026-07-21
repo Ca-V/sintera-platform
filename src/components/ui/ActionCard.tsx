@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { type ButtonHTMLAttributes, type ComponentProps, type ReactNode } from 'react'
-import { cardClassName, type CardPadding } from './Card'
+import { cardClassName, type CardPadding } from '@/lib/ui/ds'
 
 // Afordância interativa padrão dos cards clicáveis.
 const INTERACTIVE = 'block w-full text-left transition-shadow hover:shadow-md'
@@ -15,7 +15,7 @@ type AsLink = Common & { href: string } & Omit<ComponentProps<typeof Link>, keyo
 // Card premium CLICÁVEL (Design System · TEMA B). Renderiza `<button>` (ação) ou
 // `<Link>` (quando recebe `href`), com o estilo canônico do card + hover. Para os
 // cards navegáveis/acionáveis que antes usavam
-// `<button|Link className="card-premium …hover:shadow-md group">`.
+// `<button|Link className="ds-card …hover:shadow-md group">`.
 export default function ActionCard(props: AsButton | AsLink) {
   if (props.href !== undefined) {
     const { padding, className, children, ...rest } = props

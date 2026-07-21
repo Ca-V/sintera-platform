@@ -50,7 +50,7 @@ function StatCard({ icon: Icon, label, value, sub, color, bg }: {
   sub?: string; color: string; bg: string
 }) {
   return (
-    <div className="card-premium p-5">
+    <div className="ds-card p-5">
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className={`w-9 h-9 rounded-xl ${bg} flex items-center justify-center flex-shrink-0`}>
           <Icon size={16} className={color} />
@@ -275,7 +275,7 @@ export default function AdminPage() {
               {/* Distribuição de feedback P2 */}
               {feedbacks.length > 0 && (
                 <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-                  className="card-premium p-6 space-y-4">
+                  className="ds-card p-6 space-y-4">
                   <h2 className="font-body text-sm font-semibold text-onyx">Feedback P2 — Distribuição</h2>
 
                   {[
@@ -312,7 +312,7 @@ export default function AdminPage() {
               {/* Eventos recentes */}
               {recentEvents.length > 0 && (
                 <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-                  className="card-premium overflow-hidden">
+                  className="ds-card overflow-hidden">
                   <div className="px-5 py-3.5 border-b border-border/40">
                     <h2 className="font-body text-sm font-semibold text-onyx">Eventos recentes</h2>
                   </div>
@@ -344,7 +344,7 @@ export default function AdminPage() {
 
             {/* Estado vazio */}
             {stats.totalExams === 0 && (
-              <div className="card-premium p-10 text-center">
+              <div className="ds-card p-10 text-center">
                 <TrendingUp size={32} className="text-border mx-auto mb-3" />
                 <p className="font-body text-sm font-semibold text-onyx mb-1">Nenhum dado ainda</p>
                 <p className="font-body text-xs text-mauve">As métricas aparecerão assim que as primeiras usuárias começarem a usar a plataforma.</p>
@@ -355,7 +355,7 @@ export default function AdminPage() {
 
         {/* ── Lista de espera ── */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-          className="card-premium overflow-hidden">
+          className="ds-card overflow-hidden">
           <div className="px-5 py-3.5 border-b border-border/40 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Clock size={14} className="text-mauve" />
@@ -388,7 +388,7 @@ export default function AdminPage() {
 
         {/* ── E-mail de boas-vindas ── */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-          className="card-premium p-6 space-y-5">
+          className="ds-card p-6 space-y-5">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-blush flex items-center justify-center">
               <Send size={14} className="text-petal" />
