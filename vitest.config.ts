@@ -18,6 +18,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      // Pacotes do monorepo consumidos por adaptadores (ex.: DS mobile) sob teste.
+      '@sintera/design-system': fileURLToPath(new URL('./packages/design-system/src', import.meta.url)),
     },
   },
 })
