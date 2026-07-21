@@ -6,7 +6,8 @@ em _Almond Blossom_. **Escopo:** só a **primária**; neutros quentes e verde-ac
 v1.1 direção **A·E aprovada** + comparativo + teste denso + 7 princípios; v1.2 (2026-07-20) Baseline + tom predominante
 claro; v1.3 (2026-07-20) refino em telas densas; v1.4 (2026-07-20) **tom-âncora fechado = `#4D8C9D`** (azulado, ~193°,
 entre a 5ª e a 6ª etapa) como **piso escuro** dos preenchimentos, **texto branco**; **tints claros puxam para o verde** —
-rampa com **gradiente de matiz verde (claros) → azul (âncora)**.
+rampa com **gradiente de matiz verde (claros) → azul (âncora)**; v1.5 (2026-07-20) **direção consolidada** (referência
+cromática oficial) + princípios reforçados: cor com **intenção** (2), **gate de validação em densidade** antes do 3B (7).
 **Dependências:** [[BRAND-001]] · [[adr_010_identidade_visual_unica|ADR-010]]. **Impacto:** a direção A·E gera os tokens
 50–900 do Design System (Passo 3B).
 
@@ -18,9 +19,11 @@ rampa com **gradiente de matiz verde (claros) → azul (âncora)**.
 
 ## Princípios cromáticos permanentes (fundadora)
 1. **Congela-se a direção, não os valores** — refinamentos técnicos de token são permitidos sem reabrir o branding.
-2. **A primária NÃO domina a interface** — usada em **ações principais · gráficos · elementos ativos · destaques ·
-   navegação ativa**; evitar grandes áreas preenchidas com a cor institucional. A identidade nasce do **equilíbrio**
-   (espaço · tipografia · neutros · contraste · cor).
+2. **A cor com INTENÇÃO — a primária NÃO domina a interface.** A interface **não é excessivamente colorida**: transmite
+   **serenidade e sofisticação**. A cor institucional **orienta o olhar** e destaca **apenas o que realmente importa**
+   (ações principais · gráficos · elementos ativos · destaques · navegação ativa) — **não compete com o conteúdo**;
+   evitar grandes áreas preenchidas com a cor institucional. A identidade nasce do **equilíbrio** (espaço · tipografia ·
+   neutros · contraste · cor).
    - **Tom-âncora = `#4D8C9D` (azulado, ~193°, entre a 5ª e a 6ª etapa) = piso escuro dos preenchimentos.** Os elementos
      preenchidos com a primária — **botões/CTA, aba/item ativo da Sidebar, nós de evento da Timeline, pico dos gráficos,
      marcador de Informação** — usam a **âncora `#4D8C9D`** com **texto branco**. **Nenhum preenchimento institucional é
@@ -39,6 +42,10 @@ rampa com **gradiente de matiz verde (claros) → azul (âncora)**.
 5. **Identidade única Web + Mobile** — a web evolui para esta mesma direção; sem duas identidades; só adaptações de
    plataforma quando necessário.
 6. **Tipografia + cor aprovadas EM CONJUNTO** ([[BRAND-002]]) antes de construir os tokens/componentes (Passo 3B).
+7. **Gate de validação em DENSIDADE (antes de congelar o 3B).** A Home é a tela mais limpa e **não é critério suficiente**.
+   A identidade só é congelada depois de validada, sob alta densidade de informação, em: **Timeline longitudinal (muitos
+   eventos) · resultado completo de exames laboratoriais · tela de detalhe de um exame · Agenda · Perfil · Configurações ·
+   Login**. A elegância tem de se manter quando há muito conteúdo — não só na vitrine.
 
 ## Teste em telas densas (A·E)
 A Home é sempre a tela mais favorável; o teste real é a densidade. Specimen com A·E aplicada a **Timeline (muitos

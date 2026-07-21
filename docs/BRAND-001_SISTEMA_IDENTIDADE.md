@@ -5,7 +5,8 @@ Orienta o **Design System único** (web + mobile).
 **Escopo:** filosofia, referências, linguagem visual, linguagem cromática (direção), tipografia, iconografia, ilustração,
 fotografia, movimento, princípios de interface, tom. **Não fixa tokens/cores definitivos** (isso é o 3B — Design System).
 **Status:** Approved · **Architectural Baseline** · **Versão:** 1.2 · **Histórico:** v1.0 criação; v1.1 10 princípios +
-tipografia diferida a [[BRAND-002]]; v1.2 (2026-07-20) direção cromática **A·E** aprovada ([[COLOR-001]]). **Referência
+tipografia diferida a [[BRAND-002]]; v1.2 (2026-07-20) direção cromática **A·E** aprovada ([[COLOR-001]]); v1.3 (2026-07-20)
+direção cromática **consolidada** (âncora `#4D8C9D`) + princípio 6 (**validação em densidade** antes de congelar). **Referência
 oficial da identidade da SINTERA.**
 **Dependências:** [[ARCH-002]] · [[HIP-011]] · [[posicionamento_marca]]. **Impacto:** todo o Design System (3B) implementa
 este documento; identidade permanente em todo ponto de contato (web e mobile).
@@ -30,6 +31,9 @@ este documento; identidade permanente em todo ponto de contato (web e mobile).
    naturalidade**; por trás, arquitetura sofisticada.
 5. **A identidade nasce do CONJUNTO, não de uma cor.** O diferencial é a combinação de **cor · espaço · tipografia ·
    ritmo · contraste · animação · silêncio visual** — nenhuma cor isolada define a marca.
+6. **Validação em DENSIDADE antes de congelar.** A Home é a tela mais limpa e não basta como prova. A identidade só é
+   congelada após validada sob alta densidade (Timeline longitudinal · exames laboratoriais completos · detalhe de exame ·
+   Agenda · Perfil · Configurações · Login) — tem de continuar elegante quando há muito conteúdo. Ver [[COLOR-001]] §7.
 
 ## 1. Filosofia da marca
 - **Propósito:** dar continuidade ao cuidado — organizar e preservar a **história de saúde** da pessoa ao longo do
