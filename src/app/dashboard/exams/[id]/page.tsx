@@ -34,7 +34,7 @@ import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
 import MotionCard from '@/components/ui/MotionCard'
 import ConfirmDialog from '@/components/ConfirmDialog'
-import { DsThemeProvider, LaboratoryTable, Card as DsCard, Text as DsText, Numeric as DsNumeric, useDs } from '@/lib/ui/ds'
+import { DsThemeProvider, LaboratoryTable, Card as DsCard, Text as DsText, Numeric as DsNumeric, Banner as DsBanner, useDs } from '@/lib/ui/ds'
 import type { LabRow, LabMaterialGroup } from '@/lib/ui/ds/domain'
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
@@ -1034,34 +1034,21 @@ export default function ExamDetailPage() {
           </div>
         </div>
 
-        {/* Banner de truncagem — text_truncated */}
+        {/* Avisos — Banner (DS-002). Copy preservada; tom semântico. */}
         {exam?.text_truncated && (
-          <div className="mt-4 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-            <AlertCircle size={14} className="text-amber-500 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="font-body text-xs font-semibold text-amber-800">Documento parcialmente processado</p>
-              <p className="font-body text-xs text-amber-700 mt-0.5 leading-relaxed">
-                Este documento é muito extenso e foi processado parcialmente. Alguns resultados podem não ter sido extraídos.
-                Extraia os dados novamente ou confira o documento original para garantir que todos os dados estão presentes.
-              </p>
-            </div>
+          <div className="mt-4">
+            <DsBanner tone="attention" icon={<AlertCircle size={14} />} title="Documento parcialmente processado">
+              Este documento é muito extenso e foi processado parcialmente. Alguns resultados podem não ter sido extraídos.
+              Extraia os dados novamente ou confira o documento original para garantir que todos os dados estão presentes.
+            </DsBanner>
           </div>
         )}
-
-        {/* Erro de análise */}
         {analyzeError && (
-          <div className="mt-4 flex items-start gap-2 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
-            <AlertCircle size={14} className="text-red-400 flex-shrink-0 mt-0.5" />
-            <p className="font-body text-xs text-red-700">{analyzeError}</p>
-          </div>
+          <div className="mt-4"><DsBanner tone="error" icon={<AlertCircle size={14} />}>{analyzeError}</DsBanner></div>
         )}
-
         {/* Representação já certificada — aviso NEUTRO (não é erro): reextrair não altera os dados. */}
         {analyzeNotice && (
-          <div className="mt-4 flex items-start gap-2 bg-ivory border border-border rounded-xl px-4 py-3">
-            <ShieldCheck size={14} className="text-petal-dark flex-shrink-0 mt-0.5" />
-            <p className="font-body text-xs text-mauve">{analyzeNotice}</p>
-          </div>
+          <div className="mt-4"><DsBanner tone="neutral" icon={<ShieldCheck size={14} />}>{analyzeNotice}</DsBanner></div>
         )}
       </MotionCard>
 

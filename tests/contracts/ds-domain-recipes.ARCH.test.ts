@@ -3,7 +3,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   getTheme, contrastRatio, WCAG,
-  classifyValue, statusTreatment, labValueCell, labGroupHeader, labName, timelineRow, biomarkerCard, indicator,
+  classifyValue, statusTreatment, labValueCell, labGroupHeader, labName, banner, timelineRow, biomarkerCard, indicator,
   healthEvent, longitudinalChart, clinicalDocumentCard, observationCard,
   type Theme, type ValueStatus,
 } from '../../packages/design-system/src'
@@ -66,6 +66,11 @@ describe('ARCH · domínio — tratamento visual e acessibilidade', () => {
       expect(labName(t, { interactive: false }).color).toBe(t.color.text.default)
       expect(labValueCell(t, { kind: 'numeric', status: 'above' }).statusLine.color).toBe(t.color.badge.attention.text)
       expect(labValueCell(t, { kind: 'numeric', status: 'within' }).statusLine.color).toBe(t.color.text.muted)
+      // Banner: texto com AA sobre o próprio fundo, em todos os tons
+      for (const tone of ['info', 'success', 'attention', 'error', 'neutral'] as const) {
+        const b = banner(t, { tone })
+        expect(contrastRatio(b.text.color, b.container.backgroundColor)).toBeGreaterThanOrEqual(WCAG.AA_NORMAL)
+      }
     })
 
     it(`[${mode}] demais componentes derivam do tema`, () => {

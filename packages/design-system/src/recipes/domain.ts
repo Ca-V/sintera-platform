@@ -93,6 +93,33 @@ export function labValueCell(t: SinteraTheme, opts: { kind?: LabResultKind; stat
 export function labName(t: SinteraTheme, opts: { interactive?: boolean } = {}): TextSpec {
   return { style: t.typography.bodySmall, color: opts.interactive ? t.color.text.link : t.color.text.default }
 }
+
+// --- Banner / aviso ---------------------------------------------------------
+// Conceito recorrente da interface (truncagem, erro, sucesso, aviso neutro). Tom semântico próprio;
+// a COPY é sempre da tela. Justifica-se como componente (recorrência + duplicação + semântica + consistência).
+export type BannerTone = 'info' | 'success' | 'attention' | 'error' | 'neutral'
+export interface BannerSpec {
+  container: { backgroundColor: string; borderColor: string; radius: number; paddingX: number; paddingY: number }
+  iconColor: string
+  title: TextSpec
+  text: TextSpec
+}
+export function banner(t: SinteraTheme, opts: { tone?: BannerTone } = {}): BannerSpec {
+  const tone = opts.tone ?? 'info'
+  const fam = tone === 'neutral' ? null
+    : tone === 'success' ? t.color.badge.success
+    : tone === 'attention' ? t.color.badge.attention
+    : tone === 'error' ? t.color.badge.error
+    : t.color.badge.info
+  const bg = fam ? fam.soft : t.color.surface.accent
+  const fg = fam ? fam.text : t.color.text.default
+  return {
+    container: { backgroundColor: bg, borderColor: fam ? 'transparent' : t.color.border.default, radius: t.radius.card, paddingX: t.padding.default, paddingY: t.padding.cozy },
+    iconColor: fam ? fam.text : t.color.identity.primary,
+    title: { style: t.typography.label, color: fg },
+    text: { style: t.typography.caption, color: fg },
+  }
+}
 export interface LabHeaderSpec { label: TextSpec; alignEnd: boolean }
 export function labHeader(t: SinteraTheme, opts: { alignEnd?: boolean } = {}): LabHeaderSpec {
   return { label: { style: t.typography.label, color: t.color.text.faint }, alignEnd: opts.alignEnd ?? false }
