@@ -41,7 +41,7 @@ const navGroups: {
   {
     title: 'Acompanhamento',
     titleColor: 'text-lavender',
-    chipBg: 'bg-[#D8CFC0]',
+    chipBg: 'bg-[#F5EFE4]',
     items: [
       { href: '/dashboard/agenda',        icon: CalendarDays, label: 'Agenda' },
       { href: '/dashboard/timeline',      icon: Clock,        label: 'Histórico de Saúde', extra: ['/dashboard/historico'] },
@@ -65,7 +65,7 @@ const navGroups: {
   {
     title: 'Minha Saúde',
     titleColor: 'text-lagoa',
-    chipBg: 'bg-[#CFC9BC]',
+    chipBg: 'bg-[#F5EFE4]',
     items: [
       { href: '/dashboard/condicoes',     icon: Stethoscope,   label: 'Condições de Saúde' },
       { href: '/dashboard/medicamentos',  icon: Pill,          label: 'Medicamentos' },
@@ -78,7 +78,7 @@ const navGroups: {
   {
     title: 'Organização',
     titleColor: 'text-gold',
-    chipBg: 'bg-[#DBCDB4]',
+    chipBg: 'bg-[#F5EFE4]',
     items: [
       { href: '/dashboard/gastos',    icon: Receipt,    label: 'Despesas' },
       { href: '/dashboard/relatorio', icon: ScrollText, label: 'Relatórios' },
@@ -112,13 +112,13 @@ function NavItem({ href, icon: Icon, label, active, soon, onClose, hintProps }: 
       className={cn(
         'flex items-center gap-3 px-3 py-1.5 rounded-xl transition-all duration-200 text-sm font-body group',
         active
-          ? 'nav-active-glow bg-white/45 text-onyx'
-          : 'text-onyx/80 hover:text-onyx hover:bg-white/25'
+          ? 'nav-active-glow bg-white/45 text-onyx font-semibold'
+          : 'text-onyx font-medium hover:bg-white/25'
       )}
     >
       <Icon size={16} className={cn('flex-shrink-0 transition-colors',
-        active ? 'text-petal' : 'text-onyx/60 group-hover:text-onyx')} />
-      <span className={cn('flex-1', active && 'font-medium')}>{label}</span>
+        active ? 'text-petal' : 'text-onyx/75 group-hover:text-onyx')} />
+      <span className="flex-1">{label}</span>
       {soon && (
         <span className="font-body text-[9px] font-medium text-onyx/70 bg-white/40 px-1.5 py-0.5 rounded-full border border-onyx/10">
           Em breve
@@ -190,7 +190,7 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
           <div key={group.title} className="mb-1.5">
             {group.standalone ? null : group.chipBg ? (
               <div className={cn('mx-1 mt-2 mb-1.5 px-2.5 py-1 rounded-lg shadow-sm', group.chipBg)}>
-                <p className="text-[11px] font-body font-bold uppercase tracking-[0.14em] text-onyx/90">{group.title}</p>
+                <p className="text-[11px] font-body font-bold uppercase tracking-[0.14em] text-onyx">{group.title}</p>
               </div>
             ) : (
               <p className={cn('text-[11px] font-body font-bold uppercase tracking-[0.16em] px-3 mt-1 mb-1', group.titleColor)}>
