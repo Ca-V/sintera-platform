@@ -38,6 +38,17 @@ function fmtDateTime(iso: string | null): string {
   return d.toLocaleString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
+// Rótulo amigável do domínio do conector (o que ele fornece). Modelo ABERTO: domínio desconhecido
+// degrada para o próprio valor, sem quebrar (FB-014-E: exibir o domain que já vinha do descriptor).
+const DOMAIN_LABEL: Record<string, string> = {
+  wearable: 'Dispositivo vestível',
+  scale: 'Balança',
+  medical_device: 'Dispositivo médico',
+}
+function domainLabel(d: string): string {
+  return DOMAIN_LABEL[d] ?? d
+}
+
 function statusBadge(c: ConnectorState) {
   switch (c.status) {
     case 'connected':
@@ -153,6 +164,7 @@ function ConexoesInner() {
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <h2 className="font-display text-lg font-semibold text-onyx">{c.label}</h2>
+                  <p className="font-body text-xs text-mauve mt-0.5">{domainLabel(c.domain)}</p>
                 </div>
                 {statusBadge(c)}
               </div>

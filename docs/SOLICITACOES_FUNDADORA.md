@@ -48,7 +48,7 @@ Agenda + Conexões: sem rotas quebradas, sem palavras proibidas, Agenda funciona
 | **FB-014-B** | Agenda | Tooltip "Editar / exportar" no lápis, mas eventos de medicação/recompra redirecionam a `/medicamentos`. | (1) inconsistência de rótulo | 🟢 feito 21/07 (lápis reflete o destino real: med/recompra → 'Abrir em Medicamentos') |
 | **FB-014-C** | Hub | "Pedido de exame" e "Exame/Laudo" usam o mesmo `documentKind:'exam'` → pedido pré-classificado como resultado (contra Q1). Correção: remover o hint de `pedido_exame`. | (1) inconsistência | 🟢 feito 21/07 (Hub consolidado FB-015-7 · 2d465e5) |
 | **FB-014-D** | Hub | Intenções tipo "page" (ex.: Consulta) caem na lista do módulo sem pré-preencher a intenção (= Fase 2 forms rápidos). | (2) melhoria UX | 🟢 feito 21/07 (Hub consolidado FB-015-7 · 2d465e5) |
-| **FB-014-E** | Conexões | `domain` do descriptor é carregado mas não exibido — decidir exibir (rótulo) ou remover. | (2) melhoria UX | 🔴 backlog (revisão de Conexões). |
+| **FB-014-E** | Conexões | `domain` do descriptor é carregado mas não exibido — decidir exibir (rótulo) ou remover. | (2) melhoria UX | 🟢 feito 21/07 — domínio do conector EXIBIDO com rótulo amigável (modelo aberto: desconhecido degrada) sob o título do card |
 | **FB-014-F** | Hub | Ícone `Thermometer` importado sem uso (código morto). | limpeza trivial | 🟢 feito 21/07 (Hub consolidado FB-015-7 · 2d465e5) |
 
 ## Rodada de validação do Preview pós-Épico 2 (V2) — 20/07/2026 (9 observações)
