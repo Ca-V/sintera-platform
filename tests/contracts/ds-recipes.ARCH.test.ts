@@ -49,6 +49,11 @@ describe('ARCH · recipes — derivação do tema e acessibilidade', () => {
     it(`[${mode}] superfícies e símbolos derivam do tema`, () => {
       expect(card(t).container.backgroundColor).toBe(t.color.surface.base)
       expect(card(t).container.borderWidth).toBe(t.border.hairline)
+      // padding por intenção; 'none' zera (a tela controla o próprio espaçamento na migração DS-001→DS-002).
+      expect(card(t, { padding: 'none' }).container.paddingX).toBe(0)
+      expect(card(t, { padding: 'default' }).container.paddingX).toBe(t.padding.default)
+      // cartão usa a sombra multi-camada `card` (igual ao .card-premium) — não a elevação fina.
+      expect(card(t).container.shadowRole).toBe('card')
       expect(surface(t, { tone: 'accent' }).backgroundColor).toBe(t.color.surface.accent)
       expect(divider(t).color).toBe(t.color.border.default)
       expect(icon(t, { tone: 'identity' }).color).toBe(t.color.identity.primary)

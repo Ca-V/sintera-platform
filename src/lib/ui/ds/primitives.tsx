@@ -1,7 +1,7 @@
 'use client'
 // Adaptador Web — componentes fundamentais (Etapa 3). Cada um consome a recipe do DS e aplica o VisualSpec.
 // Nenhuma decisão de design aqui (ADR-011): variantes/tamanhos/estados/cores vêm da recipe.
-import type { CSSProperties, ReactNode } from 'react'
+import { forwardRef, type CSSProperties, type HTMLAttributes, type ReactNode } from 'react'
 import * as ds from '@sintera/design-system'
 import { useDs } from './theme'
 import { boxStyle, textStyle, shadowCss } from './style'
@@ -40,11 +40,22 @@ export function Button({ variant = 'primary', size = 'md', disabled, onClick, ty
   )
 }
 
-export function Card({ elevation, padding, children, style }:
-  { elevation?: ds.ElevationLevel; padding?: 'cozy' | 'default' | 'relaxed' } & WithStyle) {
+// Card — CONTAINER estático. Identidade (superfície/borda/raio/sombra/padding) vem da recipe do DS; a TELA pode
+// acrescentar layout via `className`/props HTML (grid, alinhamento, overflow, onClick, aria) e usar `padding="none"`
+// quando controla o próprio espaçamento. `ref` encaminhado (scroll-to). Substitui o Card DS-001 (`.card-premium`).
+export type CardProps = { elevation?: ds.ElevationLevel; padding?: 'none' | 'cozy' | 'default' | 'relaxed' }
+  & WithStyle & Omit<HTMLAttributes<HTMLDivElement>, 'style' | 'children'>
+
+export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
+  { elevation, padding, children, style, ...rest }, ref,
+) {
   const t = useDs()
-  return <div style={{ ...boxStyle(t, ds.card(t, { elevation, padding }).container), ...style }}>{children}</div>
-}
+  return (
+    <div ref={ref} style={{ ...boxStyle(t, ds.card(t, { elevation, padding }).container), ...style }} {...rest}>
+      {children}
+    </div>
+  )
+})
 
 export function Surface({ tone = 'base', children, style }:
   { tone?: 'base' | 'app' | 'accent' } & WithStyle) {

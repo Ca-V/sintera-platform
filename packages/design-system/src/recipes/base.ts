@@ -59,9 +59,10 @@ export function heading(t: SinteraTheme, opts: { level?: HeadingLevel } = {}): T
 }
 
 // --- Superfícies ------------------------------------------------------------
-export function card(t: SinteraTheme, opts: { elevation?: ElevationLevel; padding?: 'cozy' | 'default' | 'relaxed' } = {}): CardSpec {
-  const pad = { cozy: t.padding.cozy, default: t.padding.default, relaxed: t.padding.relaxed }[opts.padding ?? 'default']
-  return { container: { backgroundColor: t.color.surface.base, borderColor: t.color.border.default, borderWidth: t.border.hairline, radius: t.radius.card, paddingX: pad, paddingY: pad, opacity: 1, elevation: opts.elevation ?? 'raised' } }
+export function card(t: SinteraTheme, opts: { elevation?: ElevationLevel; padding?: 'none' | 'cozy' | 'default' | 'relaxed' } = {}): CardSpec {
+  // 'none' = a TELA controla o padding (via layout próprio) — necessário na migração de cards densos/estruturais.
+  const pad = { none: 0, cozy: t.padding.cozy, default: t.padding.default, relaxed: t.padding.relaxed }[opts.padding ?? 'default']
+  return { container: { backgroundColor: t.color.surface.base, borderColor: t.color.border.default, borderWidth: t.border.hairline, radius: t.radius.card, paddingX: pad, paddingY: pad, opacity: 1, elevation: opts.elevation ?? 'raised', shadowRole: 'card' } }
 }
 
 export function surface(t: SinteraTheme, opts: { tone?: 'base' | 'app' | 'accent' } = {}): SurfaceSpec {

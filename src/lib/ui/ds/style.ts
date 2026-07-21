@@ -3,6 +3,7 @@
 import type { CSSProperties } from 'react'
 import type { SinteraTheme, BoxSpec, TextSpec, Shadow } from '@sintera/design-system'
 import { resolveFontFamily } from './fonts'
+import { toCSSBoxShadow } from './css'
 
 function rgba(hex: string, alpha: number): string {
   const n = parseInt(hex.replace('#', ''), 16)
@@ -21,7 +22,8 @@ export function boxStyle(t: SinteraTheme, spec: BoxSpec): CSSProperties {
     padding: `${spec.paddingY}px ${spec.paddingX}px`,
     minHeight: spec.minHeight,
     opacity: spec.opacity,
-    boxShadow: shadowCss(t.elevation[spec.elevation]),
+    // Web prefere a sombra multi-camada por papel (ex.: card = 2 camadas); sem papel, usa a elevação base.
+    boxShadow: spec.shadowRole ? toCSSBoxShadow(t.shadow[spec.shadowRole]) : shadowCss(t.elevation[spec.elevation]),
   }
 }
 
