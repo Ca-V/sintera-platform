@@ -44,15 +44,16 @@ export interface NeutralRoles {
   muted: string     // texto secundário
   faint: string     // texto terciário / rótulos discretos
   line: string      // divisores / bordas
+  detail: string    // marrom quente de estrutura/detalhe (discreto; nunca texto de corpo)
 }
 export const neutral: Record<Theme, NeutralRoles> = {
   light: {
     bg: '#F4EFE6', surface: '#FBF8F2', surfaceAlt: '#F0E9DC',
-    ink: '#241F1A', muted: '#6B6154', faint: '#938775', line: '#E4DBCB',
+    ink: '#241F1A', muted: '#6B6154', faint: '#938775', line: '#E4DBCB', detail: '#6F4E3D',
   },
   dark: {
     bg: '#141009', surface: '#1E1710', surfaceAlt: '#271F16',
-    ink: '#F0E9DC', muted: '#A99C88', faint: '#7C7061', line: '#332920',
+    ink: '#F0E9DC', muted: '#A99C88', faint: '#7C7061', line: '#332920', detail: '#B79A86',
   },
 }
 

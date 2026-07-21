@@ -1,9 +1,9 @@
 // ARCH — PARIDADE DE IDENTIDADE CROMÁTICA: Web ⇄ Design System (SSOT única web+mobile).
-// Diretriz da fundadora (2026-07-21): identidade de cor ÚNICA, equilibrada e homogênea entre Web e Mobile;
-// NENHUMA plataforma define o Design System — o DS é a fonte da verdade. O Mobile já consome os tokens do DS
-// (getTheme). A Web, por limitação do Tailwind v4 (@theme é CSS, não importa TS), declara as variáveis em
-// globals.css. Este contrato PRENDE essas variáveis aos tokens do DS: se divergirem, falha. Assim toda mudança
-// de cor nasce no DS (packages/design-system) e se propaga homogênea — a Web nunca vira dono paralelo da cor.
+// Diretriz da fundadora (2026-07-21): identidade de cor ÚNICA, homogênea Web+Mobile; o DS é a fonte da verdade.
+// O Mobile consome os tokens do DS (getTheme). A Web consome o ARTEFATO GERADO `src/app/theme.generated.css`
+// (produzido dos tokens do DS pelo gerador). Este contrato confere que o mapa var-Web → token-DS está correto —
+// e o drift-guard (theme-generated-css.ARCH) garante que o arquivo está sincronizado com o DS. A Web nunca
+// define cor: só consome o artefato gerado.
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, it, expect } from 'vitest'
@@ -29,6 +29,7 @@ const WEB_TO_DS: Record<string, string> = {
   'onyx':        neutral.light.ink,
   'mauve':       neutral.light.muted,
   'border':      neutral.light.line,
+  'brown':       neutral.light.detail,
   // Semânticas com família própria
   'sage':          feedback.light.success.fill,
   'sage-light':    feedback.light.success.soft,
@@ -38,7 +39,7 @@ const WEB_TO_DS: Record<string, string> = {
 }
 
 function readThemeColors(): Record<string, string> {
-  const css = readFileSync(fileURLToPath(new URL('../../src/app/globals.css', import.meta.url)), 'utf8')
+  const css = readFileSync(fileURLToPath(new URL('../../src/app/theme.generated.css', import.meta.url)), 'utf8')
   const out: Record<string, string> = {}
   // Captura apenas as declarações `--color-NAME: #HEX;` (bloco @theme).
   const re = /--color-([a-z0-9-]+):\s*(#[0-9a-fA-F]{6})\b/g

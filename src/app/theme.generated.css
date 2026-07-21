@@ -1,0 +1,151 @@
+/* ============================================================================
+ * ARQUIVO GERADO AUTOMATICAMENTE — NÃO EDITAR À MÃO.
+ * Fonte: packages/design-system (tokens) → src/lib/ui/ds/generateThemeCss.ts.
+ * Regenerar: WRITE_GENERATED=1 vitest run tests/contracts/theme-generated-css.ARCH.test.ts
+ * A identidade vive no Design System; este CSS é apenas a TRADUÇÃO para a Web.
+ * ==========================================================================*/
+
+@theme {
+  --color-petal: #3D6C7B;
+  --color-petal-light: #D9EDE8;
+  --color-petal-dark: #325562;
+  --color-blush: #D9EDE8;
+  --color-mist: #D9EDE8;
+  --color-lagoa: #579DA8;
+  --color-deep: #26404A;
+  --color-panel: #325562;
+  --color-cream: #F4EFE6;
+  --color-surface: #FBF8F2;
+  --color-ivory: #F0E9DC;
+  --color-warm: #F0E9DC;
+  --color-onyx: #241F1A;
+  --color-mauve: #6B6154;
+  --color-border: #E4DBCB;
+  --color-brown: #6F4E3D;
+  --color-sage: #7E9B6E;
+  --color-sage-light: #ECF2E9;
+  --color-gold: #B98A46;
+  --color-lavender: #B15C4C;
+  --color-lavender-light: #F5E9E6;
+}
+
+:root {
+  /* gradientes */
+  --gradient-action: linear-gradient(135deg, #3D6C7B 0%, #74B8B9 100%);
+  --gradient-brand: linear-gradient(135deg, #488593 0%, #74B8B9 100%);
+  --gradient-surface: linear-gradient(160deg, #FBF8F2 0%, #EEF7F4 45%, #D9EDE8 100%);
+  --gradient-surface-soft: linear-gradient(135deg, #D9EDE8 0%, #EEF7F4 100%);
+  --gradient-dark: linear-gradient(135deg, #26404A 0%, #325562 60%, #3D6C7B 100%);
+  --gradient-card-dark: linear-gradient(145deg, #325562 0%, #3D6C7B 100%);
+  --gradient-signature: linear-gradient(150deg, #9BD8E0 0%, #6FC1CF 58%, #57B0BF 100%);
+  --gradient-active-glow: linear-gradient(180deg, #579DA8 0%, #3D6C7B 100%);
+  --gradient-hero: radial-gradient(ellipse 80% 60% at 70% 50%, rgba(151,201,195,0.18) 0%, transparent 70%), radial-gradient(ellipse 60% 80% at 30% 80%, rgba(87,157,168,0.08) 0%, transparent 60%), linear-gradient(160deg, #FBF8F2 0%, #EEF7F4 100%);
+  --gradient-energy: linear-gradient(135deg, #B98A46 0%, #D4B37A 100%);
+  --gradient-sleep: linear-gradient(135deg, #579DA8 0%, #97C9C3 100%);
+  --gradient-cycle: linear-gradient(135deg, #B15C4C 0%, #CE8570 100%);
+  --gradient-hydration: linear-gradient(135deg, #7E9B6E 0%, #A6BE99 100%);
+  --gradient-text-brand: linear-gradient(135deg, #3D6C7B 0%, #579DA8 100%);
+  --gradient-text-gold: linear-gradient(135deg, #B98A46 0%, #D4B37A 100%);
+  --gradient-text-shimmer: linear-gradient(90deg, #3D6C7B 0%, #97C9C3 30%, #579DA8 60%, #97C9C3 80%, #3D6C7B 100%);
+  /* sombras */
+  --shadow-card: 0px 1px 2px rgba(36,31,26,0.035), 0px 6px 22px rgba(36,31,26,0.045);
+  --shadow-card-hover: 0px 2px 6px rgba(36,31,26,0.05), 0px 10px 30px rgba(36,31,26,0.07);
+  --shadow-overlay: 0px 4px 12px rgba(36,31,26,0.12);
+  --shadow-sheet: 0px 8px 28px rgba(36,31,26,0.16);
+  --shadow-focus: 0px 0px 0px 3px #FBF8F2, 0px 0px 0px 4px rgba(87,157,168,0.3);
+  --shadow-button: 0px 2px 8px rgba(61,108,123,0.2);
+  /* radius / borda */
+  --radius-control: 8px;
+  --radius-card: 12px;
+  --radius-sheet: 16px;
+  --radius-pill: 999px;
+  --radius-scale-none: 0px;
+  --radius-scale-xs: 4px;
+  --radius-scale-sm: 8px;
+  --radius-scale-md: 12px;
+  --radius-scale-lg: 16px;
+  --radius-scale-xl: 20px;
+  --radius-scale-pill: 999px;
+  --border-hairline: 1px;
+  --border-strong: 2px;
+  /* espaçamento */
+  --space-none: 0px;
+  --space-hair: 2px;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 20px;
+  --space-xxl: 28px;
+  --space-xxxl: 40px;
+  --space-x4: 56px;
+  --space-x5: 80px;
+  --space-inline: 8px;
+  --space-stack: 12px;
+  --space-group: 16px;
+  --space-section: 28px;
+  --space-page: 20px;
+  --padding-micro: 4px;
+  --padding-tight: 8px;
+  --padding-cozy: 12px;
+  --padding-default: 16px;
+  --padding-relaxed: 20px;
+  /* tipografia */
+  --font-family-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-family-text: 'Hanken Grotesk', system-ui, -apple-system, sans-serif;
+  --font-family-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --font-size-xs: 12px;
+  --font-size-sm: 13px;
+  --font-size-base: 15px;
+  --font-size-md: 17px;
+  --font-size-lg: 20px;
+  --font-size-xl: 24px;
+  --font-size-xxl: 30px;
+  --font-size-xxxl: 38px;
+  --font-size-display: 48px;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --line-height-tight: 1.06;
+  --line-height-snug: 1.2;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.62;
+  --line-height-loose: 1.72;
+  --letter-spacing-tighter: -0.02em;
+  --letter-spacing-tight: -0.012em;
+  --letter-spacing-normal: 0em;
+  --letter-spacing-wide: 0.02em;
+  --letter-spacing-wider: 0.16em;
+  --font-feature-tabular: 'tnum' 1, 'lnum' 1;
+  /* z-index */
+  --z-base: 0;
+  --z-raised: 10;
+  --z-sticky: 100;
+  --z-overlay: 1000;
+  --z-modal: 1100;
+  --z-toast: 1200;
+  /* durations */
+  --duration-instant: 0ms;
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+  /* easings */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-decelerate: cubic-bezier(0, 0, 0, 1);
+  --ease-accelerate: cubic-bezier(0.3, 0, 1, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Utilitárias de gradiente (nomes históricos) */
+.gradient-sintera { background: var(--gradient-action); }
+.gradient-aqua { background: var(--gradient-brand); }
+.gradient-sintera-soft { background: var(--gradient-surface-soft); }
+.gradient-subtle { background: var(--gradient-surface); }
+.gradient-dark { background: var(--gradient-dark); }
+.gradient-hero { background: var(--gradient-hero); }
+.gradient-card-dark { background: var(--gradient-card-dark); }
+.gradient-energy { background: var(--gradient-energy); }
+.gradient-sleep { background: var(--gradient-sleep); }
+.gradient-cycle { background: var(--gradient-cycle); }
+.gradient-hydration { background: var(--gradient-hydration); }

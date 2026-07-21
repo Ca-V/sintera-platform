@@ -1,41 +1,17 @@
 @import "tailwindcss";
+/* IDENTIDADE — gerada a partir dos tokens do Design System (NÃO editar aqui; ver theme.generated.css).
+   Regra arquitetural (DS-002): identidade (cores/gradientes/sombras/tokens) vive SÓ no Design System.
+   Este globals.css contém apenas responsabilidades de PLATAFORMA Web (reset, scrollbar, seleção, impressão,
+   animações, efeitos de navegador) e CONSOME os tokens via var(--…). */
+@import "./theme.generated.css";
 
-@theme {
-  /* IDENTIDADE OFICIAL DA SINTERA — direção cromática A·E (COLOR-001) inspirada na atmosfera de
-     Almond Blossom (Van Gogh). Âncora azulada #579DA8; ação (AA com texto branco) = primária-700
-     #3D6C7B (~5,2:1). Gradiente de matiz: claros puxam para o VERDE, escuros para o AZUL. Neutros
-     QUENTES (off-white/ivory/warm) — sem branco puro predominante. Semânticas próprias: Sucesso
-     = sálvia · Atenção = âmbar · Erro = terracota (RDC 657: apoio/superfície nunca significam
-     "resultado bom"). Só `petal` (ação) e `onyx` (texto) carregam AA; demais são superfície/acento. */
-  --color-petal: #3D6C7B;        /* AÇÃO/UI — primária-700 (texto branco AA ~5,2:1) */
-  --color-petal-light: #D9EDE8;  /* tinta clara — badges, fundos suaves (primária-100) */
-  --color-petal-dark: #325562;   /* hover / mais profundo (primária-800) */
-  --color-blush: #D9EDE8;        /* fundo suave do primário */
-  --color-lagoa: #579DA8;        /* ASSINATURA/AMBIENTE — âncora A·E (turquesa azulado) */
-  --color-lavender: #B15C4C;     /* ACENTO/ERRO — terracota suave, raro */
-  --color-lavender-light: #F5E9E6;
-  --color-sage: #7E9B6E;         /* APOIO/SUCESSO — sálvia (natureza/neutra) */
-  --color-sage-light: #ECF2E9;
-  --color-cream: #F4EFE6;        /* fundo quente da página (Almond) */
-  --color-ivory: #F0E9DC;        /* superfície alternativa quente */
-  --color-warm: #F0E9DC;
-  --color-brown: #6F4E3D;        /* estrutura/detalhe — marrom quente (discreto) */
-  --color-gold: #B98A46;         /* ATENÇÃO/premium — âmbar discreto */
-  --color-onyx: #241F1A;         /* texto principal — carvão quente */
-  --color-deep: #26404A;         /* superfície escura profunda (A·E-900) */
-  --color-panel: #325562;        /* painel escuro (A·E-800) */
-  --color-mauve: #6B6154;        /* texto secundário — quente (AA) */
-  --color-border: #E4DBCB;       /* borda — neutra quente */
-  --color-surface: #FBF8F2;      /* superfície de leitura — warm white */
-  --color-mist: #D9EDE8;
-}
-
+/* Wiring das utilitárias font-display/font-body para as fontes carregadas (next/font) — plataforma Web. */
 @theme inline {
   --font-display: var(--font-fraunces);
   --font-body: var(--font-hanken);
 }
 
-/* ─── Keyframes ─── */
+/* ─── Keyframes (animações — comportamento de plataforma) ─── */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(20px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -77,31 +53,32 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ─── Base ─── */
+/* ─── Base / reset ─── */
 *, *::before, *::after { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 
 body {
-  background-color: #F4EFE6;
-  color: #241F1A;
+  background-color: var(--color-cream);
+  color: var(--color-onyx);
   font-family: var(--font-body, "Hanken Grotesk", system-ui, sans-serif);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ─── Scrollbar / seleção (plataforma; cor consumida do DS) ─── */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(87,157,168,0.30); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(87,157,168,0.55); }
-::selection { background-color: #B8DBD4; color: #241F1A; }
+::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--color-lagoa) 30%, transparent); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--color-lagoa) 55%, transparent); }
+::selection { background-color: var(--color-petal-light); color: var(--color-onyx); }
 
-/* ─── Range input ─── */
+/* ─── Range input (plataforma; cor consumida do DS) ─── */
 input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
   height: 4px;
   border-radius: 2px;
-  background: #E4DBCB;
+  background: var(--color-border);
   cursor: pointer;
   width: 100%;
   outline: none;
@@ -112,19 +89,19 @@ input[type="range"]::-webkit-slider-thumb {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #3D6C7B;
+  background: var(--color-petal);
   cursor: pointer;
-  box-shadow: 0 0 0 3px #FBF8F2, 0 0 0 4px rgba(87,157,168,0.3);
+  box-shadow: 0 0 0 3px var(--color-surface), 0 0 0 4px color-mix(in srgb, var(--color-lagoa) 30%, transparent);
   transition: box-shadow 0.15s ease;
 }
 input[type="range"]::-webkit-slider-thumb:hover {
-  box-shadow: 0 0 0 3px #FBF8F2, 0 0 0 5px rgba(87,157,168,0.5);
+  box-shadow: 0 0 0 3px var(--color-surface), 0 0 0 5px color-mix(in srgb, var(--color-lagoa) 50%, transparent);
 }
-input[type="range"].range-lavender::-webkit-slider-thumb { background: #B15C4C; }
-input[type="range"].range-sage::-webkit-slider-thumb { background: #7E9B6E; }
-input[type="range"].range-gold::-webkit-slider-thumb { background: #B98A46; }
+input[type="range"].range-lavender::-webkit-slider-thumb { background: var(--color-lavender); }
+input[type="range"].range-sage::-webkit-slider-thumb { background: var(--color-sage); }
+input[type="range"].range-gold::-webkit-slider-thumb { background: var(--color-gold); }
 
-/* ─── Utility classes ─── */
+/* ─── Utilitárias de animação (plataforma) ─── */
 .animate-fade-in-up  { animation: fadeInUp 0.55s ease-out forwards; }
 .animate-fade-in     { animation: fadeIn 0.4s ease-out forwards; }
 .animate-scale-in    { animation: scaleIn 0.35s ease-out forwards; }
@@ -141,82 +118,62 @@ input[type="range"].range-gold::-webkit-slider-thumb { background: #B98A46; }
 .delay-400 { animation-delay: 0.40s; }
 .delay-500 { animation-delay: 0.50s; }
 
-/* ─── Glass ─── */
+/* ─── Glass (efeito de plataforma; superfícies consumidas do DS) ─── */
 .glass {
-  background: rgba(251,248,242,0.72);
+  background: color-mix(in srgb, var(--color-surface) 72%, transparent);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(151,201,195,0.32);
+  border: 1px solid color-mix(in srgb, var(--color-lagoa) 32%, transparent);
 }
 .glass-dark {
-  background: rgba(38, 64, 74, 0.82);
+  background: color-mix(in srgb, var(--color-deep) 82%, transparent);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(116,184,185,0.16);
+  border: 1px solid color-mix(in srgb, var(--color-lagoa) 16%, transparent);
 }
 
-/* ─── Gradients (A·E: verde nos claros → azul nos escuros) ─── */
-.gradient-sintera      { background: linear-gradient(135deg, #3D6C7B 0%, #74B8B9 100%); }
-.gradient-aqua         { background: linear-gradient(135deg, #488593 0%, #74B8B9 100%); }
-.gradient-sintera-soft { background: linear-gradient(135deg, #D9EDE8 0%, #EEF7F4 100%); }
-.gradient-subtle       { background: linear-gradient(160deg, #FBF8F2 0%, #EEF7F4 45%, #D9EDE8 100%); }
-.gradient-dark         { background: linear-gradient(135deg, #26404A 0%, #325562 60%, #3D6C7B 100%); }
-.gradient-hero         {
-  background:
-    radial-gradient(ellipse 80% 60% at 70% 50%, rgba(151,201,195,0.18) 0%, transparent 70%),
-    radial-gradient(ellipse 60% 80% at 30% 80%, rgba(87,157,168,0.08) 0%, transparent 60%),
-    linear-gradient(160deg, #FBF8F2 0%, #EEF7F4 100%);
-}
-.gradient-card-dark    { background: linear-gradient(145deg, #325562 0%, #3D6C7B 100%); }
-.gradient-energy       { background: linear-gradient(135deg, #B98A46 0%, #D4B37A 100%); }
-.gradient-sleep        { background: linear-gradient(135deg, #579DA8 0%, #97C9C3 100%); }
-.gradient-cycle        { background: linear-gradient(135deg, #B15C4C 0%, #CE8570 100%); }
-.gradient-hydration    { background: linear-gradient(135deg, #7E9B6E 0%, #A6BE99 100%); }
-
-/* ─── Text gradients ─── */
+/* ─── Text gradients (consomem os tokens de gradiente do DS) ─── */
 .text-gradient {
-  background: linear-gradient(135deg, #3D6C7B 0%, #579DA8 100%);
+  background: var(--gradient-text-brand);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
 .text-gradient-gold {
-  background: linear-gradient(135deg, #B98A46 0%, #D4B37A 100%);
+  background: var(--gradient-text-gold);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
 .text-shimmer {
-  background: linear-gradient(90deg, #3D6C7B 0%, #97C9C3 30%, #579DA8 60%, #97C9C3 80%, #3D6C7B 100%);
+  background: var(--gradient-text-shimmer);
   background-size: 200% auto;
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   animation: shimmer 4s linear infinite;
 }
 
-/* ─── Cards ─── */
-/* Menos ruído (fundadora 21/07): contorno = hairline QUENTE (harmoniza com os neutros Almond, sem anel frio
-   preto); sombra mais suave e difusa (ar em vez de peso). A elevação sinaliza, não pesa. */
+/* ─── Cards (DS-001 legado — a remover na eliminação do DS-001; já SEM hex, consomem tokens) ─── */
 .card-premium {
-  background: #FBF8F2;
-  border: 1px solid rgba(36,31,26,0.045);
-  border-radius: 20px;
-  box-shadow: 0 1px 2px rgba(36,31,26,0.035), 0 6px 22px rgba(36,31,26,0.045);
+  background: var(--color-surface);
+  border: 1px solid color-mix(in srgb, var(--color-onyx) 5%, transparent);
+  border-radius: var(--radius-scale-xl);
+  box-shadow: var(--shadow-card);
   transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
 .card-premium:hover {
-  box-shadow: 0 2px 6px rgba(36,31,26,0.05), 0 10px 30px rgba(36,31,26,0.07);
+  box-shadow: var(--shadow-card-hover);
   transform: translateY(-1px);
 }
 .card-dark {
-  background: linear-gradient(145deg, #325562 0%, #3D6C7B 100%);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 20px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04);
+  background: var(--gradient-card-dark);
+  border: 1px solid color-mix(in srgb, white 6%, transparent);
+  border-radius: var(--radius-scale-xl);
+  box-shadow: var(--shadow-sheet), inset 0 1px 0 color-mix(in srgb, white 4%, transparent);
 }
 
-/* ─── Marquee mask ─── */
+/* ─── Marquee mask (plataforma) ─── */
 .marquee-mask {
   -webkit-mask-image: linear-gradient(to right, transparent, black 12%, black 88%, transparent);
   mask-image: linear-gradient(to right, transparent, black 12%, black 88%, transparent);
 }
 
-/* ─── Sidebar nav active glow (A·E) ─── */
+/* ─── Sidebar nav active glow (consome o token de gradiente do DS) ─── */
 .nav-active-glow {
   position: relative;
 }
@@ -228,38 +185,32 @@ input[type="range"].range-gold::-webkit-slider-thumb { background: #B98A46; }
   bottom: 20%;
   width: 2.5px;
   border-radius: 0 2px 2px 0;
-  background: linear-gradient(180deg, #579DA8 0%, #3D6C7B 100%);
+  background: var(--gradient-active-glow);
 }
 
-/* ─── Print / Export PDF ─── */
+/* ─── Print / Export PDF (plataforma) ─── */
 @media print {
-  /* Ocultar elementos de navegação */
   aside, header, nav,
   .print\:hidden { display: none !important; }
 
-  /* Layout limpo */
   body { background: white !important; color: #1a1a1a !important; }
   main { padding: 0 !important; overflow: visible !important; }
 
-  /* Cards sem sombra */
   .card-premium {
     border: 1px solid #e5e5e5 !important;
     box-shadow: none !important;
     break-inside: avoid;
   }
 
-  /* Cabeçalho de impressão */
   .print-header {
     display: block !important;
     padding-bottom: 16px;
     margin-bottom: 16px;
-    border-bottom: 2px solid #3D6C7B;
+    border-bottom: 2px solid var(--color-petal);
   }
 
-  /* Forçar cores visíveis */
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
-  /* Rodapé com disclaimer */
   .print-footer {
     display: block !important;
     position: fixed;
