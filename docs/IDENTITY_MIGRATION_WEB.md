@@ -40,10 +40,10 @@ o usuário deixa de ver "duas plataformas". Os **componentes** continuam migrand
 ## Referência oficial de harmonia = página de **Login** (fundadora, 2026-07-21)
 A tela de **Login** é a referência de melhor harmonia cromática; **todas as demais páginas aplicam as cores do mesmo modo**:
 - **Painel teal (assinatura):** `linear-gradient(150–160deg, #9BD8E0 0%, #6FC1CF 58%, #57B0BF 100%)` — aqua claro; **texto
-  ESCURO** por cima (onyx / `#123A40`), nunca bege. Usado em **painéis de destaque** (ex.: painel lateral do Login).
-- **Sidebar (revisão 21/07 — "teal vira assinatura"):** para reduzir o excesso de azul e tornar os neutros _Almond_
-  protagonistas, o **corpo** da Sidebar é **neutro quente** (`linear-gradient(180deg, #FBF8F2 → #F4EFE6)`), com o **teal como
-  ACENTO** — logo, item ativo (wash `#E6F1EE` + barra-glow teal) e ícone ativo. Texto onyx; rótulos de grupo quietos (sem chips).
+  ESCURO** por cima (onyx / `#123A40`), nunca bege. Usado no painel esquerdo do Login e na **Sidebar** (mesmo campo aqua).
+- **"Flores" do _Almond Blossom_:** sobre o campo aqua, manchas desfocadas (`blur-3xl`) **creme** `rgba(246,242,234,.5)` ·
+  **sálvia** `rgba(167,185,140,.3)` · **terracota** `rgba(193,131,106,.2)` — decorativas, atrás do conteúdo. Presentes no
+  **painel do Login e na Sidebar** (a fundadora pediu, 21/07, a Sidebar na cor do painel esquerdo do Login + Almond Blossom).
 - **Área de conteúdo:** neutros quentes claros — `gradient-subtle` (`#FBF8F2 → #EEF7F4 → #D9EDE8`) / `bg-cream`.
 - **Ação (botões/CTA):** `gradient-sintera` (`#3D6C7B → #74B8B9`) + texto branco.
 - **Tipografia:** Fraunces (títulos) + Hanken (corpo). **Chips/labels de grupo:** neutros quentes (pedra/creme/areia).
