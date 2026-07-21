@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@sintera/design-system": ["./packages/design-system/src"]
     }
   },
   "include": [
