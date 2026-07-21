@@ -11,7 +11,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
-  Loader2, Plus, X, ArrowLeft, Trash2, Pencil,
+  Loader2, Plus, X, ArrowLeft, Trash2, Pencil, Paperclip,
   Dumbbell, Moon, Cigarette, Wine, Apple, Droplets, Sparkles,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -63,6 +63,23 @@ interface Habit {
   description: string
   frequency: string | null
   notes: string | null
+  goalAmount: number | null
+  goalUnit: string | null
+  goalDivisions: number | null
+  planUrl: string | null
+  planName: string | null
+}
+
+/** Resumo textual da meta divisível (ex.: "2000 ml · 8 partes de 250 ml"). Puro. */
+function goalSummary(h: Pick<Habit, 'goalAmount' | 'goalUnit' | 'goalDivisions'>): string | null {
+  if (h.goalAmount == null) return null
+  const unit = h.goalUnit?.trim() ? ` ${h.goalUnit.trim()}` : ''
+  const total = `${h.goalAmount}${unit}`
+  if (h.goalDivisions && h.goalDivisions > 1) {
+    const per = Math.round((h.goalAmount / h.goalDivisions) * 100) / 100
+    return `Meta: ${total} · ${h.goalDivisions} partes de ${per}${unit}`
+  }
+  return `Meta: ${total}`
 }
 
 export default function HabitosPage() {
@@ -85,18 +102,28 @@ export default function HabitosPage() {
   const [lembreteFreq, setLembreteFreq] = useState<RecurrenceFreq>('daily')
   const [reminderEvents, setReminderEvents] = useState<HealthEvent[]>([])
   const { saveEvent } = useEventForm()
+  // Meta divisível + anexo de plano/dieta (migration 134).
+  const [goalAmount, setGoalAmount] = useState('')
+  const [goalUnit, setGoalUnit] = useState('')
+  const [goalDivisions, setGoalDivisions] = useState('')
+  const [planUrl, setPlanUrl] = useState('')
+  const [planName, setPlanName] = useState('')
+  const [uploading, setUploading] = useState(false)
 
   const load = useCallback(async () => {
     if (!user) return
     setLoading(true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = await (supabase as any).from('life_habits')
-      .select('id, category, description, frequency, notes')
+      .select('id, category, description, frequency, notes, goal_amount, goal_unit, goal_divisions, plan_url, plan_name')
       .eq('user_id', user.id).order('created_at', { ascending: false })
     setItems(((data ?? []) as Array<Record<string, unknown>>).map(h => ({
       id: h.id as string, category: (h.category as Category) ?? 'outro',
       description: (h.description as string) ?? '',
       frequency: (h.frequency as string) ?? null, notes: (h.notes as string) ?? null,
+      goalAmount: (h.goal_amount as number) ?? null, goalUnit: (h.goal_unit as string) ?? null,
+      goalDivisions: (h.goal_divisions as number) ?? null,
+      planUrl: (h.plan_url as string) ?? null, planName: (h.plan_name as string) ?? null,
     })))
     // Lembretes de hábito (health_events) — para o campo inline saber o estado atual.
     const evs = await eventServicesFor(supabase as never).query.listAll(user.id)
@@ -118,23 +145,45 @@ export default function HabitosPage() {
   function reset() {
     setEditingId(null); setCategory('atividade_fisica'); setDescription(''); setFrequency(''); setNotes(''); setErr(null)
     setLembrete(false); setLembreteFreq('daily')
+    setGoalAmount(''); setGoalUnit(''); setGoalDivisions(''); setPlanUrl(''); setPlanName('')
   }
 
   function startEdit(h: Habit) {
     setEditingId(h.id); setCategory(h.category); setDescription(h.description)
     setFrequency(h.frequency ?? ''); setNotes(h.notes ?? ''); setErr(null); setShowForm(true)
+    setGoalAmount(h.goalAmount != null ? String(h.goalAmount) : ''); setGoalUnit(h.goalUnit ?? '')
+    setGoalDivisions(h.goalDivisions != null ? String(h.goalDivisions) : '')
+    setPlanUrl(h.planUrl ?? ''); setPlanName(h.planName ?? '')
     const rev = reminderEvents.find(e => isHabitReminder(e, h.id))
     setLembrete(!!rev)
     const fr = rev ? parseRule(rev.recurrenceRule).frequency : 'none'
     setLembreteFreq(fr && fr !== 'none' ? (fr as RecurrenceFreq) : 'daily')
   }
 
+  async function uploadPlan(file: File) {
+    if (!user || uploading) return
+    setUploading(true)
+    try {
+      const path = `${user.id}/habit-plans/${Date.now()}-${file.name}`
+      const { error } = await supabase.storage.from('exams').upload(path, file, { contentType: file.type, upsert: false })
+      if (error) { setErr('Falha ao anexar o arquivo.'); return }
+      const { data: signed } = await supabase.storage.from('exams').createSignedUrl(path, 60 * 60 * 24 * 365)
+      if (signed?.signedUrl) { setPlanUrl(signed.signedUrl); setPlanName(file.name) }
+    } finally { setUploading(false) }
+  }
+
   async function save() {
     if (!user || saving || !description.trim()) return
     setSaving(true); setErr(null)
+    const amt = goalAmount.trim() ? Number(goalAmount.replace(',', '.')) : null
+    const div = goalDivisions.trim() ? Math.trunc(Number(goalDivisions)) : null
     const payload = {
       user_id: user.id, category, description: description.trim(),
       frequency: frequency.trim() || null, notes: notes.trim() || null,
+      goal_amount: amt != null && Number.isFinite(amt) ? amt : null,
+      goal_unit: goalUnit.trim() || null,
+      goal_divisions: div != null && Number.isFinite(div) && div > 0 ? div : null,
+      plan_url: planUrl || null, plan_name: planName || null,
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db = (supabase as any).from('life_habits')
@@ -151,7 +200,8 @@ export default function HabitosPage() {
         if (lembrete) {
           const input: AgendaEventInput = {
             eventType: 'outro', isReturn: false, isSurgery: false, status: 'planejado',
-            title: `Hábito: ${description.trim()}`, date: todayISO(), time: '', durationMin: 30,
+            // Preserva a âncora do lembrete existente ao editar (não reancorar a recorrência); novo = hoje.
+            title: `Hábito: ${description.trim()}`, date: existing?.date || todayISO(), time: '', durationMin: 30,
             notes: `Lembrete do hábito: ${description.trim()}`, reminderEnabled: true,
             modality: '', professionalKind: '', professionalName: '', establishment: '', location: '', preparation: '',
             amount: '', expenseDocType: '', recurrenceFrequency: lembreteFreq, recurrenceUntil: '',
@@ -196,7 +246,7 @@ export default function HabitosPage() {
           </div>
         }
         title={h.description}
-        meta={[h.frequency, h.notes, hasReminder ? '🔔 lembrete' : ''].filter(Boolean).join(' · ')}
+        meta={[h.frequency, h.notes, goalSummary(h), h.planUrl ? '📎 plano' : '', hasReminder ? '🔔 lembrete' : ''].filter(Boolean).join(' · ')}
         actions={
           <>
             <button onClick={() => startEdit(h)} title="Editar"
@@ -288,6 +338,41 @@ export default function HabitosPage() {
               </p>
             </div>
           )}
+          {/* Meta divisível (opcional) — ex.: hidratação 2000 ml em 8 partes. A SINTERA só guarda a meta informada. */}
+          <div>
+            <label className="font-body text-xs text-mauve block mb-1">Meta (opcional)</label>
+            <div className="grid grid-cols-3 gap-2">
+              <input type="number" inputMode="decimal" value={goalAmount} onChange={e => setGoalAmount(e.target.value)} placeholder="Total (2000)" aria-label="Meta total"
+                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+              <input type="text" value={goalUnit} onChange={e => setGoalUnit(e.target.value)} placeholder="Unidade (ml)" aria-label="Unidade da meta"
+                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+              <input type="number" inputMode="numeric" value={goalDivisions} onChange={e => setGoalDivisions(e.target.value)} placeholder="Partes (8)" aria-label="Divisões da meta"
+                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+            </div>
+            {goalAmount.trim() && Number.isFinite(Number(goalAmount.replace(',', '.'))) && (
+              <p className="font-body text-[11px] text-mauve mt-1">
+                {goalSummary({ goalAmount: Number(goalAmount.replace(',', '.')), goalUnit, goalDivisions: goalDivisions.trim() ? Number(goalDivisions) : null })}
+              </p>
+            )}
+          </div>
+
+          {/* Anexo de plano/dieta (opcional) — arquivo no bucket privado. */}
+          <div>
+            <label className="font-body text-xs text-mauve block mb-1">Plano / dieta (opcional)</label>
+            {planUrl ? (
+              <div className="flex items-center gap-2 font-body text-sm">
+                <a href={planUrl} target="_blank" rel="noreferrer" className="text-petal hover:underline inline-flex items-center gap-1"><Paperclip size={13} /> {planName || 'Anexo'}</a>
+                <button type="button" onClick={() => { setPlanUrl(''); setPlanName('') }} aria-label="Remover anexo"
+                  className="text-mauve/50 hover:text-red-400 transition-colors"><X size={13} /></button>
+              </div>
+            ) : (
+              <label className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-ivory cursor-pointer font-body text-sm text-mauve hover:border-petal/40 transition-colors">
+                {uploading ? <Loader2 size={14} className="animate-spin" /> : <Paperclip size={14} />} {uploading ? 'Enviando…' : 'Anexar arquivo'}
+                <input type="file" className="hidden" disabled={uploading} onChange={e => { const f = e.target.files?.[0]; if (f) uploadPlan(f) }} />
+              </label>
+            )}
+          </div>
+
           {err && <p className="font-body text-xs text-red-500">{err}</p>}
           <div className="flex justify-end">
             <button onClick={save} disabled={saving || !description.trim()}
