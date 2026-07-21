@@ -86,7 +86,7 @@ const navGroups: {
   },
   {
     title: 'Configurações',
-    titleColor: 'text-white/45',
+    titleColor: 'text-mauve',
     items: [
       { href: '/dashboard/configuracoes', icon: Settings, label: 'Configurações' },
     ],
@@ -112,15 +112,15 @@ function NavItem({ href, icon: Icon, label, active, soon, onClose, hintProps }: 
       className={cn(
         'flex items-center gap-3 px-3 py-1.5 rounded-xl transition-all duration-200 text-sm font-body group',
         active
-          ? 'nav-active-glow bg-white/10 text-white'
-          : 'text-white/70 hover:text-white hover:bg-white/8'
+          ? 'nav-active-glow bg-petal/10 text-onyx'
+          : 'text-mauve hover:text-onyx hover:bg-onyx/5'
       )}
     >
       <Icon size={16} className={cn('flex-shrink-0 transition-colors',
-        active ? 'text-gold' : 'text-white/55 group-hover:text-white/80')} />
+        active ? 'text-petal' : 'text-mauve/70 group-hover:text-onyx')} />
       <span className={cn('flex-1', active && 'font-medium')}>{label}</span>
       {soon && (
-        <span className="font-body text-[9px] font-medium text-white/70 bg-white/10 px-1.5 py-0.5 rounded-full border border-white/12">
+        <span className="font-body text-[9px] font-medium text-mauve bg-onyx/5 px-1.5 py-0.5 rounded-full border border-border">
           Em breve
         </span>
       )}
@@ -136,7 +136,7 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
   const { tip, bind } = useContextualDescription()
 
   return (
-    <div className="flex flex-col h-full select-none" style={{ background: 'radial-gradient(ellipse 90% 35% at 50% 100%, rgba(196,160,106,0.16) 0%, transparent 72%), linear-gradient(to bottom, #1B7B85 0%, #0F565F 58%, #0A3E45 100%)' }}>
+    <div className="flex flex-col h-full select-none border-r border-border" style={{ background: 'radial-gradient(ellipse 90% 35% at 50% 100%, rgba(87,157,168,0.10) 0%, transparent 72%), linear-gradient(to bottom, #EDF6F3 0%, #DDECE7 100%)' }}>
 
       {/* Logo — leva ao Painel Inicial (área logada) */}
       <div className="flex items-center justify-between px-5 py-4">
@@ -148,24 +148,24 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
               <path d="M8 2.5 A5.5 5.5 0 0 1 13.5 8" stroke="white" strokeWidth="1.4" strokeLinecap="round"/>
             </svg>
           </div>
-          <span className="font-display text-lg font-semibold tracking-[0.2em] text-white">SINTERA</span>
+          <span className="font-display text-lg font-semibold tracking-[0.2em] text-onyx">SINTERA</span>
         </Link>
-        <button onClick={onClose} className="lg:hidden text-white/60 hover:text-white/80 transition-colors">
+        <button onClick={onClose} className="lg:hidden text-mauve hover:text-onyx transition-colors">
           <X size={17}/>
         </button>
       </div>
 
       {/* Perfil da usuária — atalho para o perfil (perfil/config/sair ficam no menu do topo) */}
       <Link href="/dashboard/profile" onClick={onClose}
-        className="mx-4 mb-3 p-3 rounded-2xl border border-white/8 bg-white/5 hover:bg-white/8 transition-colors">
+        className="mx-4 mb-3 p-3 rounded-2xl border border-border bg-onyx/5 hover:bg-onyx/8 transition-colors">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full gradient-aqua flex items-center justify-center flex-shrink-0 shadow-md">
             <span className="text-white text-sm font-display font-bold">{initials}</span>
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-body font-medium text-white leading-tight truncate">{displayName}</p>
+            <p className="text-sm font-body font-medium text-onyx leading-tight truncate">{displayName}</p>
           </div>
-          <ChevronRight size={13} className="text-white/60 flex-shrink-0"/>
+          <ChevronRight size={13} className="text-mauve flex-shrink-0"/>
         </div>
       </Link>
 
