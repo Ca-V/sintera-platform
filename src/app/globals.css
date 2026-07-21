@@ -190,15 +190,17 @@ input[type="range"].range-gold::-webkit-slider-thumb { background: #B98A46; }
 }
 
 /* ─── Cards ─── */
+/* Menos ruído (fundadora 21/07): contorno = hairline QUENTE (harmoniza com os neutros Almond, sem anel frio
+   preto); sombra mais suave e difusa (ar em vez de peso). A elevação sinaliza, não pesa. */
 .card-premium {
   background: #FBF8F2;
-  border: 1px solid rgba(0,0,0,0.06);
+  border: 1px solid rgba(36,31,26,0.045);
   border-radius: 20px;
-  box-shadow: 0 1px 2px rgba(36,31,26,0.05), 0 4px 16px rgba(36,31,26,0.06);
+  box-shadow: 0 1px 2px rgba(36,31,26,0.035), 0 6px 22px rgba(36,31,26,0.045);
   transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
 .card-premium:hover {
-  box-shadow: 0 2px 8px rgba(36,31,26,0.08), 0 12px 40px rgba(36,31,26,0.10);
+  box-shadow: 0 2px 6px rgba(36,31,26,0.05), 0 10px 30px rgba(36,31,26,0.07);
   transform: translateY(-1px);
 }
 .card-dark {
