@@ -87,6 +87,7 @@ const navGroups: {
   {
     title: 'Configurações',
     titleColor: 'text-onyx/60',
+    chipBg: 'bg-[#F5EFE4]',
     items: [
       { href: '/dashboard/configuracoes', icon: Settings, label: 'Configurações' },
     ],
