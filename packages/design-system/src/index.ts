@@ -6,6 +6,7 @@ export * from './tokens/color'
 export * from './tokens/typography'
 export * from './tokens/spacing'
 export * from './tokens/elevation'
+export * from './tokens/gradient'
 export * from './tokens/motion'
 export * from './tokens/layout'
 // Montagem semântica de alto nível (o que os componentes/tema consomem).

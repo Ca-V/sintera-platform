@@ -4,7 +4,8 @@
 import { roles, type ColorRoles, type Theme } from './tokens/color'
 import { typeRole, measure, type TypeRoles } from './tokens/typography'
 import { spacing, padding, density } from './tokens/spacing'
-import { radius, border, opacity, elevation, type Shadow, type ElevationLevel } from './tokens/elevation'
+import { radius, border, opacity, elevation, shadow, type Shadow, type ElevationLevel, type ShadowStack, type ShadowRole } from './tokens/elevation'
+import { gradient } from './tokens/gradient'
 import { motion } from './tokens/motion'
 import { breakpoint, grid, zIndex } from './tokens/layout'
 
@@ -12,6 +13,8 @@ export interface SinteraTheme {
   mode: Theme
   color: ColorRoles
   elevation: Record<ElevationLevel, Shadow>
+  shadow: Record<ShadowRole, ShadowStack>
+  gradient: typeof gradient
   typography: TypeRoles
   measure: typeof measure
   spacing: typeof spacing
@@ -29,6 +32,8 @@ function build(mode: Theme): SinteraTheme {
     mode,
     color: roles[mode],
     elevation: elevation[mode],
+    shadow: shadow[mode],
+    gradient, // gradientes de marca são independentes de modo (mesma identidade claro/escuro)
     typography: typeRole,
     measure,
     spacing,
