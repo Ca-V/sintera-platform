@@ -4,10 +4,11 @@
 Orienta o **Design System único** (web + mobile).
 **Escopo:** filosofia, referências, linguagem visual, linguagem cromática (direção), tipografia, iconografia, ilustração,
 fotografia, movimento, princípios de interface, tom. **Não fixa tokens/cores definitivos** (isso é o 3B — Design System).
-**Status:** Approved · **Architectural Baseline** · **Versão:** 1.2 · **Histórico:** v1.0 criação; v1.1 10 princípios +
+**Status:** Approved · **Architectural Baseline** · **Versão:** 1.4 · **Histórico:** v1.0 criação; v1.1 10 princípios +
 tipografia diferida a [[BRAND-002]]; v1.2 (2026-07-20) direção cromática **A·E** aprovada ([[COLOR-001]]); v1.3 (2026-07-20)
-direção cromática **consolidada** (âncora `#4D8C9D`) + princípio 6 (**validação em densidade** antes de congelar). **Referência
-oficial da identidade da SINTERA.**
+direção cromática **consolidada** (âncora `#4D8C9D`) + princípio 6 (**validação em densidade** antes de congelar); v1.4
+(2026-07-21) **tipografia DECIDIDA** (§5: Fraunces + Hanken Grotesk) + âncora ajustada p/ `#579DA8` — **identidade encerrada**.
+**Referência oficial da identidade da SINTERA.**
 **Dependências:** [[ARCH-002]] · [[HIP-011]] · [[posicionamento_marca]]. **Impacto:** todo o Design System (3B) implementa
 este documento; identidade permanente em todo ponto de contato (web e mobile).
 
@@ -68,11 +69,17 @@ Construída **inspirada** na obra, **não extraída** dela; sistema completo de 
 - **Identidade única** Web + Mobile ([[adr_010_identidade_visual_unica|ADR-010]]); a paleta atual da web é provisória.
 - **Regra:** congela-se a **direção**; valores finais de token podem ter ajuste técnico (contraste/acessibilidade/dark).
 
-## 5. Tipografia (DIFERIDA a [[BRAND-002]] — Estudo Tipográfico)
-A escolha da tipografia é uma etapa própria (**BRAND-002**), **anterior** ao Design System, por seu impacto diário na
-percepção de qualidade. Direção: par tipográfico (título + interface) **sofisticado, humano, altamente legível** em
-mobile e web, com hierarquia calma. **Após aprovado, o BRAND-002 integra este documento** e o Design System (3B) já
-nasce com a tipografia definitiva.
+## 5. Tipografia (DECIDIDA — ver [[BRAND-002]])
+**Par oficial da SINTERA: título Fraunces + corpo/interface/dados Hanken Grotesk** (ambas OFL, auto-hospedáveis).
+Decidido pela fundadora em 2026-07-21, **por experiência de uso** (conforto de leitura antes de personalidade), no
+specimen com telas densas + Mobile.
+- **Títulos — Fraunces** (serifa variável, eixo óptico, quente e suave): sofisticação humana alinhada à atmosfera _Almond
+  Blossom_, sem parecer artística. Uso comedido no display; peso ~500–560; `text-wrap: balance`.
+- **Corpo · interface · dados — Hanken Grotesk** (grotesca humanista, variável): excelente legibilidade em tela e em
+  leitura prolongada; **algarismos tabulares** para colunas de valores; cobertura PT-BR completa.
+- **Direção geral:** sofisticado, humano, altamente legível em mobile e web, com hierarquia calma. A tipografia deve
+  **desaparecer** durante a leitura.
+Os tokens tipográficos (escala, pesos, line-height, tabular-nums) são definidos no **Design System (3B)**.
 
 ## 6. Iconografia
 **Finos · elegantes · consistentes · discretos.** Traço leve; **evitar ícones pesados ou excessivamente preenchidos**;

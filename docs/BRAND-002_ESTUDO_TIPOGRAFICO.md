@@ -3,11 +3,13 @@
 **Objetivo:** comparar pares tipográficos adequados ao posicionamento da SINTERA e **recomendar** — **sem escolher ainda**.
 **Escopo:** análise (título + interface) por critérios; a decisão é da fundadora. Aprovada, integra o [[BRAND-001]] e o
 Design System (3B) nasce com a tipografia definitiva.
-**Status:** Draft — aguardando decisão da fundadora · **Versão:** 1.1 · **Histórico:** v1.0 (2026-07-20); v1.1 (2026-07-20)
+**Status:** **Approved (DECIDIDO)** · **Architectural Baseline** · **Versão:** 2.0 · **Decisão:** **Par 1 — Fraunces + Hanken
+Grotesk** (fundadora, 2026-07-21, por experiência de uso) → integrado ao [[BRAND-001]] §5. · **Histórico:** v1.0 (2026-07-20); v1.1 (2026-07-20)
 estudo ampliado: par **E — Fraunces + Atkinson Hyperlegible Next** (a pedido da fundadora) + specimen com **cores A·E reais**
 (âncora `#4D8C9D`) + critério **harmonia com _Almond Blossom_**; v1.2 (2026-07-20) **decisão por experiência de uso** — specimen
 com a tela crítica **histórico laboratorial completo** (32 biomarcadores · unidades · referências · tendências · observações),
-**toggle Desktop/Mobile** (~390px) e painel de avaliação BRAND-001.
+**toggle Desktop/Mobile** (~390px) e painel de avaliação BRAND-001; **v2.0 (2026-07-21) DECISÃO: Par 1 — Fraunces + Hanken
+Grotesk** (por experiência de uso; validado em Mobile) → integrado ao [[BRAND-001]] §5; Baseline.
 **Dependências:** [[BRAND-001]] (identidade) · [[tema_g_acessibilidade]]. **Impacto:** define um dos elementos mais
 presentes na experiência diária.
 
