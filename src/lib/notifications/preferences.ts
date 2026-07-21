@@ -40,8 +40,9 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
   { key: 'suplemento',  label: 'Suplementos',          section: 'Minha Saúde' },     // recompra
   { key: 'recurso',     label: 'Recursos de Saúde',    section: 'Minha Saúde' },     // troca/manutenção
   { key: 'ciclo',       label: 'Ciclo e Contracepção', section: 'Minha Saúde' },     // troca/reaplicação
+  { key: 'habito',      label: 'Hábitos',              section: 'Minha Saúde' },     // lembrete recorrente de hábito
   { key: 'outro',       label: 'Outros',               section: 'Minha Saúde' },     // fallback: evento sem domínio
-  // Fora por ora (sem eventos que notifiquem): Composição Corporal, Hábitos, Exames/Documentos, Monitoramento,
+  // Fora por ora (sem eventos que notifiquem): Composição Corporal, Exames/Documentos, Monitoramento,
   // Condições, Históricos, Despesas, Relatórios. Entram quando gerarem lembretes/notificações próprios.
 ]
 
@@ -91,6 +92,7 @@ export function categoryForEventType(eventType: string | null | undefined): stri
  */
 export function categoryForEvent(ev: { type?: string | null; links?: { type: string }[] | null }): string {
   if (ev.links?.some(l => l.type === 'resource')) return 'recurso'
+  if (ev.links?.some(l => l.type === 'habit')) return 'habito'
   return categoryForEventType(ev.type)
 }
 

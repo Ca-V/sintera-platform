@@ -22,6 +22,22 @@ import { Card } from "@/lib/ui/ds"
 import PageHeader from '@/components/PageHeader'
 import Disclaimer from '@/components/ui/Disclaimer'
 import ConfirmDialog from '@/components/ConfirmDialog'
+import { type AgendaEventInput, type RecurrenceFreq } from '@/components/AgendarModal'
+import { useEventForm } from '@/components/eventForm'
+import { eventServicesFor, isFinancial, type HealthEvent } from '@/lib/agenda'
+import { parseRule } from '@/lib/recurrence'
+import { todayISO } from '@/lib/date'
+
+// Lembrete de hábito = evento planejado no canônico health_events, vinculado ao hábito (EventLink 'habit').
+// Mesma infra recorrente de Medicamentos/Recursos — sem tabela nem worker próprios.
+function isHabitReminder(e: HealthEvent, habitId: string): boolean {
+  return e.type === 'outro' && e.status === 'planejado' && !isFinancial(e)
+    && e.links.some(l => l.type === 'habit' && l.id === habitId)
+}
+
+const LEMBRETE_FREQ_OPTS: { v: RecurrenceFreq; l: string }[] = [
+  { v: 'daily', l: 'Diário' }, { v: 'weekly', l: 'Semanal' }, { v: 'biweekly', l: 'Quinzenal' }, { v: 'monthly', l: 'Mensal' },
+]
 
 type Category =
   | 'atividade_fisica' | 'sono' | 'tabagismo' | 'alcool'
@@ -65,6 +81,10 @@ export default function HabitosPage() {
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
+  const [lembrete, setLembrete] = useState(false)
+  const [lembreteFreq, setLembreteFreq] = useState<RecurrenceFreq>('daily')
+  const [reminderEvents, setReminderEvents] = useState<HealthEvent[]>([])
+  const { saveEvent } = useEventForm()
 
   const load = useCallback(async () => {
     if (!user) return
@@ -78,6 +98,9 @@ export default function HabitosPage() {
       description: (h.description as string) ?? '',
       frequency: (h.frequency as string) ?? null, notes: (h.notes as string) ?? null,
     })))
+    // Lembretes de hábito (health_events) — para o campo inline saber o estado atual.
+    const evs = await eventServicesFor(supabase as never).query.listAll(user.id)
+    setReminderEvents(evs.filter(e => e.links.some(l => l.type === 'habit')))
     setLoading(false)
   }, [user, supabase])
 
@@ -92,11 +115,18 @@ export default function HabitosPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  function reset() { setEditingId(null); setCategory('atividade_fisica'); setDescription(''); setFrequency(''); setNotes(''); setErr(null) }
+  function reset() {
+    setEditingId(null); setCategory('atividade_fisica'); setDescription(''); setFrequency(''); setNotes(''); setErr(null)
+    setLembrete(false); setLembreteFreq('daily')
+  }
 
   function startEdit(h: Habit) {
     setEditingId(h.id); setCategory(h.category); setDescription(h.description)
     setFrequency(h.frequency ?? ''); setNotes(h.notes ?? ''); setErr(null); setShowForm(true)
+    const rev = reminderEvents.find(e => isHabitReminder(e, h.id))
+    setLembrete(!!rev)
+    const fr = rev ? parseRule(rev.recurrenceRule).frequency : 'none'
+    setLembreteFreq(fr && fr !== 'none' ? (fr as RecurrenceFreq) : 'daily')
   }
 
   async function save() {
@@ -108,11 +138,34 @@ export default function HabitosPage() {
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db = (supabase as any).from('life_habits')
-    const { error } = editingId
-      ? await db.update(payload).eq('id', editingId)
-      : await db.insert(payload)
+    const res = editingId
+      ? await db.update(payload).eq('id', editingId).select('id').single()
+      : await db.insert(payload).select('id').single()
+    if (res.error) { setSaving(false); setErr(res.error.message); return }
+    const habitId = (res.data?.id as string) ?? editingId
+
+    // Lembrete recorrente vinculado ao hábito (EventLink 'habit') — mesma infra saveEvent. Falha não bloqueia o hábito.
+    if (habitId) {
+      const existing = reminderEvents.find(e => isHabitReminder(e, habitId)) ?? null
+      try {
+        if (lembrete) {
+          const input: AgendaEventInput = {
+            eventType: 'outro', isReturn: false, isSurgery: false, status: 'planejado',
+            title: `Hábito: ${description.trim()}`, date: todayISO(), time: '', durationMin: 30,
+            notes: `Lembrete do hábito: ${description.trim()}`, reminderEnabled: true,
+            modality: '', professionalKind: '', professionalName: '', establishment: '', location: '', preparation: '',
+            amount: '', expenseDocType: '', recurrenceFrequency: lembreteFreq, recurrenceUntil: '',
+            priority: '', directExpense: false, outcome: '', operadora: '', carteirinha: '',
+          }
+          await saveEvent(user.id, input, existing, [{ type: 'habit', id: habitId }])
+        } else if (existing) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabase as any).from('health_events').delete().eq('id', existing.id)
+        }
+      } catch { /* lembrete opcional — não impede o registro do hábito */ }
+    }
+
     setSaving(false)
-    if (error) { setErr(error.message); return }
     reset(); setShowForm(false); await load()
   }
 
@@ -120,6 +173,10 @@ export default function HabitosPage() {
     if (busyId) return
     setConfirm({ message: `Remover "${h.description}"?`, confirmLabel: 'Remover', onYes: async () => {
       setBusyId(h.id)
+      // Remove também o lembrete recorrente vinculado (não deixar evento órfão na Agenda).
+      const rev = reminderEvents.find(e => isHabitReminder(e, h.id))
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (rev) await (supabase as any).from('health_events').delete().eq('id', rev.id)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (supabase as any).from('life_habits').delete().eq('id', h.id)
       await load(); setBusyId(null)
@@ -129,6 +186,7 @@ export default function HabitosPage() {
   function card(h: Habit) {
     const meta = catMeta(h.category)
     const Icon = meta.icon
+    const hasReminder = reminderEvents.some(e => isHabitReminder(e, h.id))
     return (
       <ListCard
         key={h.id}
@@ -138,7 +196,7 @@ export default function HabitosPage() {
           </div>
         }
         title={h.description}
-        meta={[h.frequency, h.notes].filter(Boolean).join(' · ')}
+        meta={[h.frequency, h.notes, hasReminder ? '🔔 lembrete' : ''].filter(Boolean).join(' · ')}
         actions={
           <>
             <button onClick={() => startEdit(h)} title="Editar"
@@ -210,6 +268,26 @@ export default function HabitosPage() {
               <VoiceInput onResult={t => setNotes(v => (v ? v + ' ' : '') + t)} />
             </div>
           </div>
+
+          {/* Lembrete recorrente — mesma infra da Agenda (Medicamentos/Recursos). Vinculado ao hábito. */}
+          <label className="flex items-center gap-2 font-body text-sm text-onyx cursor-pointer">
+            <input type="checkbox" checked={lembrete} onChange={e => setLembrete(e.target.checked)} className="accent-petal w-4 h-4" />
+            Criar lembrete recorrente
+          </label>
+          {lembrete && (
+            <div className="space-y-2 rounded-lg bg-blush/20 border border-petal/15 p-2.5">
+              <div>
+                <label htmlFor="habito-lembrete-freq" className="font-body text-[11px] text-mauve block mb-1">Frequência do lembrete</label>
+                <select id="habito-lembrete-freq" value={lembreteFreq} onChange={e => setLembreteFreq(e.target.value as RecurrenceFreq)}
+                  className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30">
+                  {LEMBRETE_FREQ_OPTS.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
+                </select>
+              </div>
+              <p className="font-body text-[11px] text-mauve leading-relaxed">
+                Cria um lembrete recorrente na sua Agenda a partir de hoje. Você é avisada pelo canal definido nas suas preferências de notificação.
+              </p>
+            </div>
+          )}
           {err && <p className="font-body text-xs text-red-500">{err}</p>}
           <div className="flex justify-end">
             <button onClick={save} disabled={saving || !description.trim()}
