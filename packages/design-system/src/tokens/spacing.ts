@@ -28,6 +28,7 @@ export const spacing = {
 
 // Espaçamento INTERNO (padding) por intenção — usado por superfícies/cartões/controles.
 export const padding = {
+  micro: space.xs,        // 4  — badges/pílulas (vertical)
   tight: space.sm,        // 8
   cozy: space.md,         // 12
   default: space.lg,      // 16

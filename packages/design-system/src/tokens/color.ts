@@ -67,9 +67,10 @@ export interface SemanticColor { fill: string; text: string; soft: string }
 // Camada 2 — FEEDBACK (base semântica de estados). Referenciada pelos papéis; não consumir direto.
 export const feedback: Record<Theme, { success: SemanticColor; attention: SemanticColor; error: SemanticColor }> = {
   light: {
-    success: { fill: '#7E9B6E', text: '#5D7A48', soft: '#ECF2E9' },
-    attention: { fill: '#B98A46', text: '#8D6A34', soft: '#F5EFE5' },
-    error: { fill: '#B15C4C', text: '#A35643', soft: '#F5E9E6' },
+    // `text` garante AA (≥4.5) tanto sobre a superfície quanto sobre o próprio `soft` (fundo de badge).
+    success: { fill: '#7E9B6E', text: '#587444', soft: '#ECF2E9' },
+    attention: { fill: '#B98A46', text: '#866432', soft: '#F5EFE5' },
+    error: { fill: '#B15C4C', text: '#98503E', soft: '#F5E9E6' },
   },
   dark: {
     success: { fill: '#A6BE99', text: '#A6BE99', soft: '#26362A' },

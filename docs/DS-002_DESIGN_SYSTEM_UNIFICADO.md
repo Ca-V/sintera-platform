@@ -6,10 +6,11 @@
 (retomadas só após o DS).
 **Relação com [[DS-001]]:** o DS-001 documenta o Design System **provisório da web atual** (Tailwind, paleta descontinuada);
 o **DS-002 é o definitivo**, unificado, e a web **migra** para ele (trilha paralela no [[IMPLEMENTATION_ROADMAP]]).
-**Status:** Approved · **Architectural Baseline** · **Versão:** 1.1 · **Histórico:** v1.0 (2026-07-21) sequenciamento
+**Status:** Approved · **Architectural Baseline** · **Versão:** 1.2 · **Histórico:** v1.0 (2026-07-21) sequenciamento
 arquitetural aprovado + Subitem 1 (cor); v1.1 (2026-07-21) **Etapa 1 (Design Tokens) COMPLETA** (7 subitens: cor ·
-tipografia · espaçamento · superfície/elevação · motion · layout + `getTheme`) + novo fluxo de entrega por etapa.
-**Dependências:** [[BRAND-001]] · [[COLOR-001]] · [[BRAND-002]] · [[adr_007_monorepo|ADR-007]] · [[HIP-012]] §4.
+tipografia · espaçamento · superfície/elevação · motion · layout + `getTheme`) + novo fluxo de entrega por etapa;
+v1.2 (2026-07-21) **Etapas 2 (composição) e 3 (componentes fundamentais) concluídas** — recipes headless ([[adr_011_arquitetura_componentes_crossplatform|ADR-011]]).
+**Dependências:** [[BRAND-001]] · [[COLOR-001]] · [[BRAND-002]] · [[adr_007_monorepo|ADR-007]] · [[adr_011_arquitetura_componentes_crossplatform|ADR-011]] · [[HIP-012]] §4.
 **Local (SSOT):** `packages/design-system` (compartilhado RN + Web). **Regra dura:** nenhum componente com valor
 **hardcoded** — tudo vem dos tokens.
 
@@ -55,12 +56,24 @@ sombras · motion · elevação · opacidade · bordas · grid · breakpoints.**
    z-index por intenção; **`getTheme(mode)`** compõe TODAS as camadas em um tema único (Web = Mobile).
 7. **Validação** — ✅ contratos ARCH consolidados (6 arquivos, 31 asserts) + autoauditoria.
 
-### Etapa 2 — Princípios de composição
-Definir **explicitamente**, antes dos componentes: hierarquia visual · densidade · ritmo vertical · uso de espaços · uso da
-cor · contraste · alinhamentos · comportamento responsivo. Os componentes apenas **materializam** estes princípios.
+### Etapa 2 — Princípios de composição ✅
+Regras **explícitas** que os componentes apenas materializam (parte executável em `src/composition.ts`):
+1. **Hierarquia por tipografia + espaço; cor secundária.** Diferenciar por papel tipográfico e ritmo antes de recorrer à cor.
+2. **Ritmo vertical.** Espaçamentos verticais são múltiplos da baseline (`rhythmBase` = 4; `verticalRhythm(n)`).
+3. **Densidade explícita.** Componentes ricos em dados escolhem `density`{compact/default/comfortable} — a densidade é decisão
+   do componente, não improviso.
+4. **Uso do espaço por intenção.** `spacing`{inline<stack<group<section<page} e `padding`; nunca medidas cruas.
+5. **Uso da cor com intenção.** Identidade × Ação separados; a primária orienta o olhar, não preenche áreas grandes.
+6. **Contraste estrutural.** AA como piso em texto e ação (garantido por contrato desde os tokens).
+7. **Alinhamento e leitura.** Números tabulares alinhados à direita; largura de coluna via `measure`{reading/form/table}.
+8. **Responsivo mobile-first.** `breakpoint`{sm/md/lg}; o mesmo componente adapta densidade/quebra sob Dynamic Type sem
+   sacrificar acessibilidade.
 
-### Etapa 3 — Componentes fundamentais
-Button · Text · Heading · Card · Surface · Badge · Chip · Divider · Icon · Avatar. Base de todos os demais.
+### Etapa 3 — Componentes fundamentais ✅
+Implementados como **recipes headless** ([[adr_011_arquitetura_componentes_crossplatform|ADR-011]]): `recipe(theme, props) →
+VisualSpec`, 100% derivado dos papéis do tema, sem hex cru e sem dependência de plataforma; adaptadores finos por plataforma.
+Cobertos: **Button** (primary/secondary/ghost · sm/md/lg · estados · alvo de toque ≥44) · **Text** · **Heading** · **Card** ·
+**Surface** · **Badge** (tons semânticos, texto AA sobre o soft) · **Chip** · **Divider** · **Icon** · **Avatar**.
 
 ### Etapa 4 — Componentes de domínio (identidade funcional da SINTERA)
 Timeline · Laboratory Table · Biomarker Card · Indicator · Health Event · Longitudinal Chart · Clinical Document Card ·
@@ -82,5 +95,8 @@ motion · layout). Ponto único de consumo: **`getTheme(mode)`** (Web = Mobile).
   escalas, montagem de tema.
 - **Fluxo de trabalho:** a partir daqui, entrega por **ETAPA** (não subitem), com autoauditoria; fundadora valida só
   decisões estruturais.
-- **Próximo:** **Etapa 2 — Princípios de composição** (hierarquia · densidade · ritmo vertical · uso de espaço/cor ·
-  contraste · alinhamentos · responsivo) antes dos componentes (Etapa 3).
+- **Etapa 2 (composição)** ✅ e **Etapa 3 (componentes fundamentais)** ✅ concluídas — recipes headless ([[adr_011_arquitetura_componentes_crossplatform|ADR-011]]),
+  com contratos de acessibilidade (contraste + alvo de toque) por tema.
+- **Próximo:** **Etapa 4 — Componentes de domínio** (Timeline · Laboratory Table · Biomarker Card · Indicator · Health Event ·
+  Longitudinal Chart · Clinical Document Card · Observation Card) e depois **Etapa 5 — Templates**. Adaptadores de plataforma
+  (web/RN) entram na fiação de cada app.

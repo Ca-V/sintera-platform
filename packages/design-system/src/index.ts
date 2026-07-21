@@ -10,3 +10,6 @@ export * from './tokens/motion'
 export * from './tokens/layout'
 // Montagem semântica de alto nível (o que os componentes/tema consomem).
 export * from './theme'
+// Etapa 2 — composição (helpers) · Etapa 3 — recipes dos componentes fundamentais (ADR-011).
+export * from './composition'
+export * from './recipes'

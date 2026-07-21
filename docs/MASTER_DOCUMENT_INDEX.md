@@ -26,6 +26,7 @@ muda só por evidência/revisão formal).
 | ADR-008 | Arquitetura de Sincronização | Accepted ⛨ |
 | ADR-009 | Arquitetura baseada em domínio + independência | Accepted ⛨ |
 | ADR-010 | Identidade visual única + _Almond Blossom_ + Design System único | Accepted ⛨ |
+| ADR-011 | Componentes cross-platform: recipes headless + adaptadores finos | Accepted ⛨ |
 
 ## 1. Constitucional / princípios permanentes
 | Doc | Finalidade | Versão | Status | Relações |

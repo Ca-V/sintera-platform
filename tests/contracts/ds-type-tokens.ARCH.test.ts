@@ -14,7 +14,7 @@ describe('ARCH · tipografia — base e papéis por intenção', () => {
       expect(typeRole[r]).toBeDefined()
       expect(typeRole[r].fontSize).toBeGreaterThan(0)
     }
-    expect((typeRole as Record<string, unknown>).heading1).toBeUndefined()
+    expect((typeRole as unknown as Record<string, unknown>).heading1).toBeUndefined()
   })
 
   it('títulos usam a serifa (Fraunces); corpo/dados usam a de interface (Hanken)', () => {
