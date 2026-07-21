@@ -2,12 +2,14 @@
 
 **Objetivo:** definir a **direção da cor primária** (não os tokens finais) por avaliação visual — 5 direções inspiradas
 em _Almond Blossom_. **Escopo:** só a **primária**; neutros quentes e verde-acinzentado (secundária) vêm do [[BRAND-001]].
-**Status:** Approved (DIREÇÃO) · **Architectural Baseline** · **Versão:** 1.4 · **Histórico:** v1.0 estudo 5 direções;
+**Status:** Approved (DIREÇÃO) · **Architectural Baseline** · **Versão:** 1.6 · **Histórico:** v1.0 estudo 5 direções;
 v1.1 direção **A·E aprovada** + comparativo + teste denso + 7 princípios; v1.2 (2026-07-20) Baseline + tom predominante
 claro; v1.3 (2026-07-20) refino em telas densas; v1.4 (2026-07-20) **tom-âncora fechado = `#4D8C9D`** (azulado, ~193°,
 entre a 5ª e a 6ª etapa) como **piso escuro** dos preenchimentos, **texto branco**; **tints claros puxam para o verde** —
 rampa com **gradiente de matiz verde (claros) → azul (âncora)**; v1.5 (2026-07-20) **direção consolidada** (referência
-cromática oficial) + princípios reforçados: cor com **intenção** (2), **gate de validação em densidade** antes do 3B (7).
+cromática oficial) + princípios reforçados: cor com **intenção** (2), **gate de validação em densidade** antes do 3B (7);
+v1.6 (2026-07-21) **âncora ajustada para a 7ª etapa `#579DA8`** (um passo mais clara, validada em Mobile); `#4D8C9D`
+reservado a texto/detalhe.
 **Dependências:** [[BRAND-001]] · [[adr_010_identidade_visual_unica|ADR-010]]. **Impacto:** a direção A·E gera os tokens
 50–900 do Design System (Passo 3B).
 
@@ -24,17 +26,17 @@ cromática oficial) + princípios reforçados: cor com **intenção** (2), **gat
    (ações principais · gráficos · elementos ativos · destaques · navegação ativa) — **não compete com o conteúdo**;
    evitar grandes áreas preenchidas com a cor institucional. A identidade nasce do **equilíbrio** (espaço · tipografia ·
    neutros · contraste · cor).
-   - **Tom-âncora = `#4D8C9D` (azulado, ~193°, entre a 5ª e a 6ª etapa) = piso escuro dos preenchimentos.** Os elementos
+   - **Tom-âncora = `#579DA8` (azulado suave, ~188°, 7ª etapa da rampa) = piso escuro dos preenchimentos.** Os elementos
      preenchidos com a primária — **botões/CTA, aba/item ativo da Sidebar, nós de evento da Timeline, pico dos gráficos,
-     marcador de Informação** — usam a **âncora `#4D8C9D`** com **texto branco**. **Nenhum preenchimento institucional é
-     mais escuro que a âncora** (o verde escuro `p-600+` sai de uso como fill; permanece só em texto/detalhe que exija
-     contraste).
+     marcador de Informação** — usam a **âncora `#579DA8`** com **texto branco** (contraste ~3,1:1 — ok para o negrito dos
+     controles; usar texto escuro onde precisar de folga). **Nenhum preenchimento institucional é mais escuro que a
+     âncora**; o tom mais escuro `#4D8C9D` (e `p-600+`) fica **só** em texto/detalhe que exija contraste.
    - **Gradiente de matiz — claros puxam para o VERDE, escuros para o AZUL.** Os **fundos/tints mais claros** (fundo de
      gráfico, chips, anéis dos nós, superfícies de apoio) têm matiz **mais verde** (~165–180°), **não** azul; à medida que
      escurece em direção à âncora, o matiz **inclina para o azul** (~193°). Assim a rampa espelha a obra — **áreas leves
      esverdeadas, áreas profundas azuladas**. Referência do tema claro: `#ECF6F3 · #D8ECE7 · #B8DBD4 · #A5D0C9 · #8DC3BF ·
-     #73B3B5 · #579DA8 · #4D8C9D (âncora)`. O **modo escuro** replica o mesmo gradiente verde→azul, a ser afinado nos
-     tokens definitivos (Passo 3B).
+     #73B3B5 · #579DA8 (âncora) · #4D8C9D (tom mais escuro — só texto/detalhe)`. O **modo escuro** replica o mesmo
+     gradiente verde→azul, a ser afinado nos tokens definitivos (Passo 3B).
 3. **Neutros em primeiro lugar** — inspirados nas flores (off-white · ivory · warm white · cinzas quentes muito suaves);
    **evitar branco puro predominante**. Os neutros impactam a percepção premium **mais** que a primária.
 4. **Semântica clara** (não reusar a institucional para tudo): **Informação → primária Almond · Sucesso → verde sálvia
