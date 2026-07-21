@@ -64,47 +64,62 @@ export const neutral: Record<Theme, NeutralRoles> = {
 // ---------------------------------------------------------------------------
 export interface SemanticColor { fill: string; text: string; soft: string }
 
-export interface ColorTheme extends NeutralRoles {
-  // Marca / ação
-  primary: string       // âncora (fill de botões/CTA, item ativo) — 500
-  primaryStrong: string // fill mais escuro (700 no light): usar quando o texto branco precisa de AA normal (≥4.5)
-  onPrimary: string     // texto sobre `primary`/`primaryStrong`
-  primaryText: string   // primária como TEXTO/links sobre a superfície (700) — AA
-  primarySoft: string   // tint claro da primária (100): fundo de estados ativos/realces
-  focusRing: string     // anel de foco (teclado/acessibilidade)
-  // Estados semânticos (família própria — NÃO reutilizar a institucional para tudo)
-  info: SemanticColor
-  success: SemanticColor
-  attention: SemanticColor
-  error: SemanticColor
-}
-
-export const colorTheme: Record<Theme, ColorTheme> = {
+// Camada 2 — FEEDBACK (base semântica de estados). Referenciada pelos papéis; não consumir direto.
+export const feedback: Record<Theme, { success: SemanticColor; attention: SemanticColor; error: SemanticColor }> = {
   light: {
-    ...neutral.light,
-    primary: primary.light[500],       // #579DA8 — âncora (texto branco = AA large / negrito)
-    primaryStrong: primary.light[700], // #3D6C7B — ação com texto branco em AA normal (≥4.5)
-    onPrimary: '#FFFFFF',
-    primaryText: primary.light[700],   // #3D6C7B
-    primarySoft: primary.light[100],   // #D9EDE8
-    focusRing: primary.light[600],
-    info: { fill: primary.light[500], text: primary.light[700], soft: primary.light[100] },
     success: { fill: '#7E9B6E', text: '#5D7A48', soft: '#ECF2E9' },
     attention: { fill: '#B98A46', text: '#8D6A34', soft: '#F5EFE5' },
     error: { fill: '#B15C4C', text: '#A35643', soft: '#F5E9E6' },
   },
   dark: {
-    ...neutral.dark,
-    primary: primary.dark[500],        // #5FA7B2
-    primaryStrong: primary.dark[600],  // #7EBABE
-    onPrimary: '#10201C',              // texto escuro sobre o teal claro do dark
-    primaryText: primary.dark[700],    // #9ACBC9
-    primarySoft: primary.dark[100],    // #274049
-    focusRing: primary.dark[500],
-    info: { fill: primary.dark[500], text: primary.dark[700], soft: primary.dark[100] },
     success: { fill: '#A6BE99', text: '#A6BE99', soft: '#26362A' },
     attention: { fill: '#D4A96A', text: '#D4A96A', soft: '#3A2F1C' },
     error: { fill: '#D68A7E', text: '#D68A7E', soft: '#3A241F' },
+  },
+}
+
+// ---------------------------------------------------------------------------
+// Camada 3 — PAPÉIS (roles): a ÚNICA camada que os COMPONENTES consomem.
+// Distinção arquitetural (fundadora): IDENTIDADE × USO.
+//   • IDENTIDADE (marca) → `identity.primary` (500): gráficos, Timeline, badges, indicadores, destaques.
+//     NÃO carrega regra de cor de texto.
+//   • AÇÃO → `button.primary` (fill 700 + texto branco): SEMPRE AA. Button/CTA/FAB/clicáveis.
+// REGRA DURA: nenhum componente referencia primary[500]/primary[700] (nem hexes) diretamente — só papéis.
+// ---------------------------------------------------------------------------
+export interface ColorRoles {
+  surface: { app: string; base: string; raised: string; accent: string }
+  text: { default: string; muted: string; faint: string; onAction: string; onAccent: string; link: string }
+  border: { default: string; focus: string }
+  identity: { primary: string; soft: string }                       // MARCA — sem regra de texto
+  button: { primary: { background: string; text: string; hover: string } } // AÇÃO — sempre AA
+  chart: { primary: string; grid: string; positive: string; alert: string }
+  timeline: { event: string; node: string; medication: string }
+  badge: { info: SemanticColor; success: SemanticColor; attention: SemanticColor; error: SemanticColor }
+  link: { default: string }
+}
+
+export const roles: Record<Theme, ColorRoles> = {
+  light: {
+    surface: { app: neutral.light.bg, base: neutral.light.surface, raised: neutral.light.surface, accent: primary.light[100] },
+    text: { default: neutral.light.ink, muted: neutral.light.muted, faint: neutral.light.faint, onAction: '#FFFFFF', onAccent: primary.light[800], link: primary.light[700] },
+    border: { default: neutral.light.line, focus: primary.light[600] },
+    identity: { primary: primary.light[500], soft: primary.light[100] },
+    button: { primary: { background: primary.light[700], text: '#FFFFFF', hover: primary.light[800] } },
+    chart: { primary: primary.light[500], grid: neutral.light.line, positive: feedback.light.success.fill, alert: feedback.light.attention.fill },
+    timeline: { event: primary.light[500], node: primary.light[400], medication: feedback.light.attention.fill },
+    badge: { info: { fill: primary.light[500], text: primary.light[700], soft: primary.light[100] }, success: feedback.light.success, attention: feedback.light.attention, error: feedback.light.error },
+    link: { default: primary.light[700] },
+  },
+  dark: {
+    surface: { app: neutral.dark.bg, base: neutral.dark.surface, raised: neutral.dark.surfaceAlt, accent: primary.dark[100] },
+    text: { default: neutral.dark.ink, muted: neutral.dark.muted, faint: neutral.dark.faint, onAction: '#10201C', onAccent: primary.dark[800], link: primary.dark[700] },
+    border: { default: neutral.dark.line, focus: primary.dark[500] },
+    identity: { primary: primary.dark[500], soft: primary.dark[100] },
+    button: { primary: { background: primary.dark[600], text: '#10201C', hover: primary.dark[700] } },
+    chart: { primary: primary.dark[500], grid: neutral.dark.line, positive: feedback.dark.success.fill, alert: feedback.dark.attention.fill },
+    timeline: { event: primary.dark[500], node: primary.dark[400], medication: feedback.dark.attention.fill },
+    badge: { info: { fill: primary.dark[500], text: primary.dark[700], soft: primary.dark[100] }, success: feedback.dark.success, attention: feedback.dark.attention, error: feedback.dark.error },
+    link: { default: primary.dark[700] },
   },
 }
 

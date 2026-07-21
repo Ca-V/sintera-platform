@@ -20,15 +20,20 @@ arquitetural aprovado pela fundadora; Etapa 1 · Subitem 1 (cor) implementado.
    nunca decorativa. *A melhor animação quase não é percebida.* Respeitar `prefers-reduced-motion`.
 3. **Acessibilidade ESTRUTURAL (nasce nos tokens, não é etapa posterior):** **WCAG AA como mínimo, AAA quando possível**;
    **Dynamic Type**; **alto contraste**; **foco por teclado** (Web); **VoiceOver/TalkBack** (Mobile). Verificada por testes
-   de contrato desde o Subitem 1.
+   de contrato desde o Subitem 1. **Backlog de ampliação dos contratos** (fundadora): validar também **foco · contraste em
+   Dark Mode · Hover · Disabled · Pressed · High Contrast** — automatizar à medida que os estados existirem nos componentes.
 
 ## Sequenciamento (ordem arquitetural — aprovada)
 ### Etapa 1 — Design Tokens (SSOT)
 Estabelece toda a linguagem visual. Tokens compartilhados Web + Mobile: **cores · tipografia · espaçamento · raios ·
 sombras · motion · elevação · opacidade · bordas · grid · breakpoints.** **Sub-ordem (revisão após cada item):**
-1. **Tokens de cor** — *implementado* (`src/tokens/color.ts`): rampa A·E 50–900 (light+dark) · neutros quentes ·
-   semânticas com variante de texto AA · papéis por tema · helper de contraste. Contrato WCAG AA.
-2. Tokens tipográficos (Fraunces + Hanken; escala, pesos, line-height, `tabular-nums`; Dynamic Type).
+1. **Tokens de cor** — ✅ *implementado* (`src/tokens/color.ts`): 3 camadas — **primitivos** (rampa A·E 50–900 light+dark,
+   neutros quentes, feedback) → **papéis (roles)** consumidos pelos componentes. **Separação IDENTIDADE × USO** (fundadora):
+   `identity.primary` (500, marca — sem regra de texto) × `button.primary` (700 + branco, ação — SEMPRE AA). Helper de
+   contraste; contrato WCAG AA.
+2. **Tokens tipográficos** — ✅ *implementado* (`src/tokens/typography.ts`): primitivos (Fraunces + Hanken; escala, pesos,
+   line-height, letter-spacing, `tabular-nums`) → papéis `typeRole` (display · heading1-3 · body · bodyStrong · label ·
+   caption · overline · numeric). Dynamic Type (`scaleTextStyle` com clamp). Contrato ARCH.
 3. Tokens de espaçamento (ritmo vertical / escala).
 4. Tokens de superfície e elevação (sombras, bordas, opacidade, raios).
 5. Tokens de motion (durações, curvas; `prefers-reduced-motion`).
@@ -54,8 +59,10 @@ Cada subitem entrega: **tsc verde** (`tsc -p packages/design-system/tsconfig.jso
 (`tests/contracts/*.ARCH.test.ts`, na suíte `npm test`) + **revisão da fundadora** antes de avançar. O app RN roda no
 ambiente de desenvolvimento (o sandbox valida tsc/testes/contraste, não executa o app).
 
-## Estado atual — Etapa 1 · Subitem 1 (cor)
-Entregue em `packages/design-system/src/tokens/color.ts` (+ contrato `tests/contracts/ds-color-tokens.ARCH.test.ts`,
-12 asserts verdes). **Ponto para decisão da fundadora:** a âncora `#579DA8` com **texto branco** rende **AA large/negrito**
-(3,1:1); para AA **normal** com branco há o papel `primaryStrong` (mais escuro). Alternativa: texto **escuro** sobre a
-âncora (5,3:1, AA pleno). Aguardando revisão para seguir ao Subitem 2 (tipografia).
+## Estado atual — Etapa 1 (Subitens 1 e 2 concluídos)
+- **Subitem 1 — cor** ✅ aprovado. Decisão da fundadora: **IDENTIDADE × USO** como tokens distintos — `identity.primary`
+  (500) para marca (gráficos/Timeline/badges/indicadores/destaques, sem regra de texto) e `button.primary` (700 + branco,
+  **sempre AA**) para ações (Button/CTA/FAB). Componentes consomem **apenas papéis**. Contrato: 12 asserts.
+- **Subitem 2 — tipografia** ✅ implementado (aguardando revisão): Fraunces + Hanken; papéis `typeRole`; tabular-nums;
+  Dynamic Type. Contrato: 6 asserts.
+- **Próximo:** Subitem 3 — tokens de espaçamento (ritmo vertical / escala), após revisão.
