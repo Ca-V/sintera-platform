@@ -1,6 +1,6 @@
 'use client'
 // Adaptador Web — componentes de DOMÍNIO (Etapa 4). Consomem as recipes de produto do DS.
-import type { CSSProperties, ReactNode } from 'react'
+import { Fragment, type CSSProperties, type ReactNode } from 'react'
 import * as ds from '@sintera/design-system'
 import { useDs } from './theme'
 import { boxStyle, textStyle } from './style'
@@ -8,59 +8,83 @@ import { boxStyle, textStyle } from './style'
 const glyph = (d: ds.Trend) => (d === 'up' ? '↑' : d === 'down' ? '↓' : d === 'stable' ? '→' : '')
 
 // --- Laboratory Table -------------------------------------------------------
+// Cobre o domínio real: tipos de resultado (numérico/qualitativo/ausente/falha) e agrupamento material→exame.
+// A COPY (rótulos de flag, notas) é fornecida pela TELA — o adaptador nunca inventa texto (RDC 657).
 export interface LabRow {
   name: string
-  value: string
+  value: string                 // já formatado (número ou texto qualitativo)
+  kind?: ds.LabResultKind       // default 'numeric'
   numericValue?: number
   unit?: string
   refLow?: number
   refHigh?: number
   refText?: string
   trend?: ds.Trend
-  group?: string
+  flagLabel?: string            // rótulo do destaque, vindo da tela (ex.: 'alto'/'abaixo')
+  note?: string                 // nota da tela p/ qualitativo/ausente/falha/sem-referência
 }
-export function LaboratoryTable({ rows }: { rows: LabRow[] }) {
+export interface LabExamGroup { label?: string | null; rows: LabRow[] }
+export interface LabMaterialGroup { material: string; exams: LabExamGroup[] }
+
+function Row({ r, index }: { r: LabRow; index: number }) {
   const t = useDs()
-  const th = (label: string, end?: boolean): CSSProperties => ({
-    ...textStyle({ style: ds.labHeader(t).label.style, color: t.color.text.faint }),
-    textAlign: end ? 'right' : 'left', padding: '0 8px 8px', borderBottom: `1px solid ${t.color.border.default}`,
-  })
+  const kind = r.kind ?? 'numeric'
+  const status = kind === 'numeric' && r.numericValue != null ? ds.classifyValue(r.numericValue, r.refLow, r.refHigh) : 'unknown'
+  const cell = ds.labValueCell(t, { kind, status, trend: r.trend })
   const cellPad = `${t.density.default.rowY}px 8px`
+  return (
+    <tr style={{ borderTop: index === 0 ? undefined : `1px solid ${t.color.border.default}` }}>
+      <td style={{ padding: cellPad, ...textStyle(ds.text(t, { role: 'bodySmall' })), opacity: cell.subdued ? 0.85 : 1 }}>{r.name}</td>
+      <td style={{ padding: cellPad, textAlign: cell.alignEnd ? 'right' : 'left' }}>
+        <span style={textStyle(cell.value)}>{r.value || r.note || '—'}</span>
+        {r.unit && <span style={{ ...textStyle(cell.unit), marginLeft: 4 }}>{r.unit}</span>}
+        {cell.flag && r.flagLabel && (
+          <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 999, backgroundColor: cell.flag.backgroundColor, color: cell.flag.textColor }}>
+            {r.flagLabel}
+          </span>
+        )}
+      </td>
+      <td style={{ padding: cellPad, textAlign: 'right', ...textStyle(cell.reference) }}>
+        {r.refText ?? (r.refLow != null && r.refHigh != null ? `${r.refLow}–${r.refHigh}` : '—')}
+      </td>
+      <td style={{ padding: cellPad, textAlign: 'center', color: cell.trend?.color ?? t.color.text.faint }}>
+        {cell.trend ? glyph(cell.trend.direction) : '—'}
+      </td>
+    </tr>
+  )
+}
+
+export function LaboratoryTable({ rows, groups }: { rows?: LabRow[]; groups?: LabMaterialGroup[] }) {
+  const t = useDs()
+  const th = (end?: boolean, center?: boolean): CSSProperties => ({
+    ...textStyle({ style: ds.labHeader(t).label.style, color: t.color.text.faint }),
+    textAlign: center ? 'center' : end ? 'right' : 'left', padding: '0 8px 8px', borderBottom: `1px solid ${t.color.border.default}`,
+  })
+  const materialHead = ds.labGroupHeader(t, { level: 'material' })
+  const examHead = ds.labGroupHeader(t, { level: 'exam' })
   return (
     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
       <thead>
         <tr>
-          <th style={th('Analito')}>Analito</th>
-          <th style={th('Resultado', true)}>Resultado</th>
-          <th style={th('Referência', true)}>Referência</th>
-          <th style={{ ...th('Tend.'), textAlign: 'center' }}>Tend.</th>
+          <th style={th()}>Analito</th>
+          <th style={th(true)}>Resultado</th>
+          <th style={th(true)}>Referência</th>
+          <th style={th(false, true)}>Tend.</th>
         </tr>
       </thead>
       <tbody>
-        {rows.map((r, i) => {
-          const status = r.numericValue != null ? ds.classifyValue(r.numericValue, r.refLow, r.refHigh) : 'unknown'
-          const cell = ds.labValueCell(t, { status, trend: r.trend })
-          return (
-            <tr key={i} style={{ borderTop: `1px solid ${t.color.border.default}` }}>
-              <td style={{ padding: cellPad, ...textStyle(ds.text(t, { role: 'bodySmall' })) }}>{r.name}</td>
-              <td style={{ padding: cellPad, textAlign: 'right' }}>
-                <span style={textStyle(cell.value)}>{r.value}</span>
-                {r.unit && <span style={{ ...textStyle(cell.unit), marginLeft: 4 }}>{r.unit}</span>}
-                {cell.flag && (
-                  <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 999, backgroundColor: cell.flag.backgroundColor, color: cell.flag.textColor }}>
-                    {status === 'above' ? 'alto' : 'baixo'}
-                  </span>
-                )}
-              </td>
-              <td style={{ padding: cellPad, textAlign: 'right', ...textStyle(cell.reference) }}>
-                {r.refText ?? (r.refLow != null && r.refHigh != null ? `${r.refLow}–${r.refHigh}` : '—')}
-              </td>
-              <td style={{ padding: cellPad, textAlign: 'center', color: cell.trend?.color ?? t.color.text.faint }}>
-                {cell.trend ? glyph(cell.trend.direction) : '—'}
-              </td>
-            </tr>
-          )
-        })}
+        {rows?.map((r, i) => <Row key={i} r={r} index={i} />)}
+        {groups?.map((g, gi) => (
+          <Fragment key={`m-${gi}`}>
+            <tr><td colSpan={4} style={{ padding: `${t.spacing.stack}px 8px 4px`, ...textStyle({ style: materialHead.title.style, color: materialHead.title.color }) }}>{g.material}</td></tr>
+            {g.exams.map((ex, ei) => (
+              <Fragment key={`e-${gi}-${ei}`}>
+                {ex.label && <tr><td colSpan={4} style={{ padding: '2px 8px', ...textStyle({ style: examHead.title.style, color: examHead.title.color }) }}>{ex.label}</td></tr>}
+                {ex.rows.map((r, ri) => <Row key={`r-${gi}-${ei}-${ri}`} r={r} index={ri} />)}
+              </Fragment>
+            ))}
+          </Fragment>
+        ))}
       </tbody>
     </table>
   )

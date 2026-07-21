@@ -3,7 +3,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   getTheme, contrastRatio, WCAG,
-  classifyValue, statusTreatment, labValueCell, timelineRow, biomarkerCard, indicator,
+  classifyValue, statusTreatment, labValueCell, labGroupHeader, timelineRow, biomarkerCard, indicator,
   healthEvent, longitudinalChart, clinicalDocumentCard, observationCard,
   type Theme, type ValueStatus,
 } from '../../packages/design-system/src'
@@ -45,6 +45,22 @@ describe('ARCH · domínio — tratamento visual e acessibilidade', () => {
       expect(biomarkerCard(t, { status: 'above' }).sparklineColor).toBe(t.color.chart.alert)
       expect(biomarkerCard(t, { status: 'within' }).sparklineColor).toBe(t.color.chart.primary)
       expect(biomarkerCard(t).value.style).toBe(t.typography.numeric.large)
+    })
+
+    it(`[${mode}] Laboratory cobre os TIPOS de resultado (numérico/qualitativo/ausente/falha)`, () => {
+      // numérico dentro: sem flag, não discreto, alinhado à direita
+      const within = labValueCell(t, { kind: 'numeric', status: 'within' })
+      expect(within.flag).toBeNull(); expect(within.subdued).toBe(false); expect(within.alignEnd).toBe(true)
+      // numérico acima: flag presente
+      expect(labValueCell(t, { kind: 'numeric', status: 'above' }).flag).not.toBeNull()
+      // qualitativo: discreto, sem flag, alinhado à esquerda (texto)
+      const qual = labValueCell(t, { kind: 'qualitative' })
+      expect(qual.subdued).toBe(true); expect(qual.flag).toBeNull(); expect(qual.alignEnd).toBe(false)
+      // ausente e falha: discretos, sem flag
+      expect(labValueCell(t, { kind: 'missing' }).subdued).toBe(true)
+      expect(labValueCell(t, { kind: 'failed' }).flag).toBeNull()
+      // cabeçalho de grupo: material e exame com tratamentos distintos
+      expect(labGroupHeader(t, { level: 'material' }).title.style).not.toBe(labGroupHeader(t, { level: 'exam' }).title.style)
     })
 
     it(`[${mode}] demais componentes derivam do tema`, () => {

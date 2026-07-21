@@ -38,29 +38,61 @@ function trendIcon(t: SinteraTheme, trend: Trend): (IconSpec & { direction: Tren
 }
 
 // --- Laboratory Table -------------------------------------------------------
+// TIPO de resultado (fato do documento, não interpretação clínica): numérico (comparável à referência),
+// qualitativo (descrição em palavras), ausente (não informado) e falha de leitura. A recipe dá o TRATAMENTO
+// VISUAL; a COPY (rótulos, notas RDC 657) é sempre da tela — o DS não fixa texto humano.
+export type LabResultKind = 'numeric' | 'qualitative' | 'missing' | 'failed'
+
 export interface LabCellSpec {
   value: TextSpec
   unit: TextSpec
   reference: TextSpec
-  flag: { backgroundColor: string; textColor: string } | null
+  flag: { backgroundColor: string; textColor: string } | null // só numérico fora da referência
   trend: (IconSpec & { direction: Trend }) | null
-  alignEnd: true
+  alignEnd: boolean
+  subdued: boolean // qualitativo/ausente/falha → apresentação discreta (não é destaque)
 }
-export function labValueCell(t: SinteraTheme, opts: { status?: ValueStatus; trend?: Trend } = {}): LabCellSpec {
-  const status = opts.status ?? 'within'
-  const tr = statusTreatment(t, status)
+export function labValueCell(t: SinteraTheme, opts: { kind?: LabResultKind; status?: ValueStatus; trend?: Trend } = {}): LabCellSpec {
+  const kind = opts.kind ?? 'numeric'
+  if (kind === 'numeric') {
+    const tr = statusTreatment(t, opts.status ?? 'within')
+    return {
+      value: { style: t.typography.numeric.primary, color: tr.textColor },
+      unit: { style: t.typography.numeric.secondary, color: t.color.text.muted },
+      reference: { style: t.typography.numeric.reference, color: t.color.text.faint },
+      flag: tr.soft && tr.flagText ? { backgroundColor: tr.soft, textColor: tr.flagText } : null,
+      trend: trendIcon(t, opts.trend ?? 'none'),
+      alignEnd: true,
+      subdued: false,
+    }
+  }
+  // Não-numérico: discreto, sem flag. `failed` recebe tom de atenção (qualidade do dado, não erro clínico).
+  const color = kind === 'failed' ? t.color.badge.attention.text : t.color.text.muted
   return {
-    value: { style: t.typography.numeric.primary, color: tr.textColor },
-    unit: { style: t.typography.numeric.secondary, color: t.color.text.muted },
+    value: { style: kind === 'qualitative' ? t.typography.bodySmall : t.typography.numeric.reference, color },
+    unit: { style: t.typography.numeric.secondary, color: t.color.text.faint },
     reference: { style: t.typography.numeric.reference, color: t.color.text.faint },
-    flag: tr.soft && tr.flagText ? { backgroundColor: tr.soft, textColor: tr.flagText } : null,
-    trend: trendIcon(t, opts.trend ?? 'none'),
-    alignEnd: true,
+    flag: null,
+    trend: null,
+    alignEnd: kind !== 'qualitative',
+    subdued: true,
   }
 }
 export interface LabHeaderSpec { label: TextSpec; alignEnd: boolean }
 export function labHeader(t: SinteraTheme, opts: { alignEnd?: boolean } = {}): LabHeaderSpec {
   return { label: { style: t.typography.label, color: t.color.text.faint }, alignEnd: opts.alignEnd ?? false }
+}
+// Cabeçalho de grupo da tabela — agrupamento material → exame (fiel ao documento). A tela fornece os rótulos.
+export interface LabGroupHeaderSpec { title: TextSpec; iconColor: string; level: 'material' | 'exam' }
+export function labGroupHeader(t: SinteraTheme, opts: { level?: 'material' | 'exam' } = {}): LabGroupHeaderSpec {
+  const level = opts.level ?? 'material'
+  return {
+    title: level === 'material'
+      ? { style: t.typography.label, color: t.color.text.default }
+      : { style: t.typography.caption, color: t.color.text.muted },
+    iconColor: t.color.identity.primary,
+    level,
+  }
 }
 
 // --- Timeline ---------------------------------------------------------------

@@ -3,7 +3,7 @@
 // Presentation-only: recebe os dados já carregados; a busca/mutação permanece na página (Supabase).
 import * as ds from '@sintera/design-system'
 import * as UI from '@/lib/ui/ds'
-import type { LabRow } from '@/lib/ui/ds/domain'
+import type { LabRow, LabMaterialGroup } from '@/lib/ui/ds/domain'
 
 export interface ExamResultData {
   title: string
@@ -13,7 +13,8 @@ export interface ExamResultData {
   collectedAt?: string
   material?: string
   indicators: { value: string; label: string; trend?: ds.Trend }[]
-  labRows: LabRow[]
+  labRows?: LabRow[]
+  labGroups?: LabMaterialGroup[] // agrupamento material→exame (fiel ao documento)
   onViewOriginal?: () => void
 }
 
@@ -51,7 +52,7 @@ function Inner({ data }: { data: ExamResultData }) {
         <UI.Card>
           <UI.Heading level="card">Resultados laboratoriais</UI.Heading>
           <div style={{ marginTop: 12, overflowX: 'auto' }}>
-            <UI.LaboratoryTable rows={data.labRows} />
+            <UI.LaboratoryTable rows={data.labGroups ? undefined : data.labRows} groups={data.labGroups} />
           </div>
         </UI.Card>
       </div>
