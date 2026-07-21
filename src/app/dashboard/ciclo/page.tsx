@@ -15,7 +15,7 @@ import { Loader2, Plus, X, ArrowLeft, Trash2, Pencil, Droplet, ShieldCheck, Bell
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import ListCard from '@/components/ListCard'
-import Card from '@/components/ui/Card'
+import { Card } from "@/lib/ui/ds"
 import PageHeader from '@/components/PageHeader'
 // Taxonomia de métodos contraceptivos = SSOT em @/lib/cycle (compartilhada com o Relatório).
 // CTC-001 (Opção A): contracepção hormonal é registrada/editada AQUI (SSOT); Medicamentos apenas projeta.

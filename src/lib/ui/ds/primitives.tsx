@@ -43,15 +43,24 @@ export function Button({ variant = 'primary', size = 'md', disabled, onClick, ty
 // Card — CONTAINER estático. Identidade (superfície/borda/raio/sombra/padding) vem da recipe do DS; a TELA pode
 // acrescentar layout via `className`/props HTML (grid, alinhamento, overflow, onClick, aria) e usar `padding="none"`
 // quando controla o próprio espaçamento. `ref` encaminhado (scroll-to). Substitui o Card DS-001 (`.card-premium`).
-export type CardProps = { elevation?: ds.ElevationLevel; padding?: 'none' | 'cozy' | 'default' | 'relaxed' }
+//
+// COMPAT de migração: aceita também os nomes de padding do DS-001 (sm/md/lg/xl/2xl) mapeados ao px exato, para
+// a troca dos ~20 consumidores ser só a do import (sem reescrever JSX). Após migrar tudo, os call sites podem
+// convergir para a escala de INTENÇÃO do DS ('none'/'cozy'/'default'/'relaxed') e este shim é removido.
+const LEGACY_PAD_PX: Record<string, number> = { sm: 16, md: 20, lg: 24, xl: 32, '2xl': 40 }
+export type CardProps = { elevation?: ds.ElevationLevel; padding?: 'none' | 'cozy' | 'default' | 'relaxed' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' }
   & WithStyle & Omit<HTMLAttributes<HTMLDivElement>, 'style' | 'children'>
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
   { elevation, padding, children, style, ...rest }, ref,
 ) {
   const t = useDs()
+  const legacyPx = padding ? LEGACY_PAD_PX[padding] : undefined
+  const recipePad = legacyPx !== undefined ? 'none' : (padding as 'none' | 'cozy' | 'default' | 'relaxed' | undefined)
+  const box = boxStyle(t, ds.card(t, { elevation, padding: recipePad }).container)
+  if (legacyPx !== undefined) box.padding = legacyPx
   return (
-    <div ref={ref} style={{ ...boxStyle(t, ds.card(t, { elevation, padding }).container), ...style }} {...rest}>
+    <div ref={ref} style={{ ...box, ...style }} {...rest}>
       {children}
     </div>
   )

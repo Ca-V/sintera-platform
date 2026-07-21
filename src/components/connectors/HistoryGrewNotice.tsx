@@ -5,7 +5,7 @@
 // tem botão de "dispensar" — o aviso some naturalmente quando o usuário vê o conteúdo no módulo (Composição).
 import Link from 'next/link'
 import { Sparkles } from 'lucide-react'
-import Card from '@/components/ui/Card'
+import { Card } from "@/lib/ui/ds"
 
 export default function HistoryGrewNotice({ count }: { count: number }) {
   if (count <= 0) return null

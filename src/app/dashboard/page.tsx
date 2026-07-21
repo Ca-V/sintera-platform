@@ -19,7 +19,7 @@ import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
 import RegistrationHub from '@/components/RegistrationHub'
 import DashboardEntry from '@/components/entry/DashboardEntry'
-import Card from '@/components/ui/Card'
+import { Card } from "@/lib/ui/ds"
 import MotionCard from '@/components/ui/MotionCard'
 import ActionCard from '@/components/ui/ActionCard'
 

@@ -19,7 +19,7 @@ import ListCard, { CardChip } from '@/components/ListCard'
 import PageHeader from '@/components/PageHeader'
 import ErrorBanner from '@/components/ErrorBanner'
 import EmptyState from '@/components/EmptyState'
-import Card from '@/components/ui/Card'
+import { Card } from "@/lib/ui/ds"
 import ConfirmDialog from '@/components/ConfirmDialog'
 
 function fmtBRL(cents: number): string {

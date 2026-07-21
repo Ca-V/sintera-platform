@@ -17,7 +17,7 @@ import { useUser } from '@/context/UserContext'
 import { DOMAIN_LABEL, DOMAINS, fmtOmicsDate, type OmicsDomain } from '@/lib/omics/domains'
 import { uploadAndIngest } from '@/lib/omics/ingestClient'
 import ListCard from '@/components/ListCard'
-import Card from '@/components/ui/Card'
+import { Card } from "@/lib/ui/ds"
 import PageHeader from '@/components/PageHeader'
 import Disclaimer from '@/components/ui/Disclaimer'
 

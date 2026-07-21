@@ -27,7 +27,7 @@ import ListCard, { CardChip } from '@/components/ListCard'
 import PageHeader from '@/components/PageHeader'
 import ErrorBanner from '@/components/ErrorBanner'
 import CreateRecordMenu from '@/components/ui/CreateRecordMenu'
-import Card from '@/components/ui/Card'
+import { Card } from "@/lib/ui/ds"
 import MotionCard from '@/components/ui/MotionCard'
 import Disclaimer from '@/components/ui/Disclaimer'
 import ConfirmDialog from '@/components/ConfirmDialog'

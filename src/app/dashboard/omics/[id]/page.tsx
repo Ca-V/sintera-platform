@@ -15,7 +15,7 @@ import { Loader2, ArrowLeft, Dna, ChevronRight, ChevronDown, Plus, X, Trash2, Ex
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import Sparkline, { parseNum } from '@/components/Sparkline'
-import Card from '@/components/ui/Card'
+import { Card } from "@/lib/ui/ds"
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { DOMAIN_LABEL, fmtOmicsDate, type OmicsDomain } from '@/lib/omics/domains'
 import { uploadAndIngest } from '@/lib/omics/ingestClient'

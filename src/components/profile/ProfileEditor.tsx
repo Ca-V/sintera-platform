@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { X, Check } from 'lucide-react'
 import { useUser } from '@/context/UserContext'
 import type { Profile } from '@/lib/supabase/types'
-import Card from '@/components/ui/Card'
+import { Card } from "@/lib/ui/ds"
 
 interface Props {
   profile: Profile

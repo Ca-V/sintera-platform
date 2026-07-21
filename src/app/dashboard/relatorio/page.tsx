@@ -21,7 +21,7 @@ import PeriodSelector from '@/components/ui/PeriodSelector'
 import { examProvenance, resourceProvenance } from '@/lib/provenance'
 import { type Period, resolvePeriod, inPeriod, overlapsPeriod, periodLabel } from '@/lib/communication/period'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
-import Card from '@/components/ui/Card'
+import { Card } from "@/lib/ui/ds"
 import { applySort, type SortSpec } from '@/lib/listview'
 import {
   Loader2, Printer, ArrowLeft, FileText, Share2, Copy, Trash2, Check,

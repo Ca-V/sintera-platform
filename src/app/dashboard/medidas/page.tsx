@@ -28,7 +28,7 @@ import ListCard from '@/components/ListCard'
 import PageHeader from '@/components/PageHeader'
 import EmptyState from '@/components/EmptyState'
 import { downscaleImageToPayload } from '@/lib/capture/downscaleImage'
-import Card from '@/components/ui/Card'
+import { Card } from "@/lib/ui/ds"
 import Section from '@/components/ui/Section'
 import Disclaimer from '@/components/ui/Disclaimer'
 import ProvenanceLine from '@/components/ui/ProvenanceLine'

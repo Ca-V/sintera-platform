@@ -26,7 +26,7 @@ import { rowToHealthEvent, eventServicesFor, modalityLabel, outcomeSummary, hasO
 import { useStickyView } from '@/lib/ui/useStickyView'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import ListCard, { CardChip } from '@/components/ListCard'
-import Card from '@/components/ui/Card'
+import { Card } from "@/lib/ui/ds"
 import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
 
 type EventType = 'consulta' | 'vacina' | 'procedimento' | 'estetico' | 'medicamento' | 'atividade' | 'exame' | 'omica' | 'contracepcao' | 'outro'

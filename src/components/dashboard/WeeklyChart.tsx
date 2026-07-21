@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { useState } from 'react'
-import Card from '@/components/ui/Card'
+import { Card } from "@/lib/ui/ds"
 
 const days = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
 const datasets = {
@@ -51,7 +51,7 @@ export default function WeeklyChart() {
   }))
 
   return (
-    <Card>
+    <Card padding="md">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>

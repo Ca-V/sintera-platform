@@ -20,7 +20,7 @@ import VoiceInput from '@/components/VoiceInput'
 import ListCard from '@/components/ListCard'
 import PageHeader from '@/components/PageHeader'
 import { downscaleImageToPayload } from '@/lib/capture/downscaleImage'
-import Card from '@/components/ui/Card'
+import { Card } from "@/lib/ui/ds"
 import Disclaimer from '@/components/ui/Disclaimer'
 import CreateRecordMenu from '@/components/ui/CreateRecordMenu'
 import { decideCaptureRouting } from '@/lib/capture/capture-routing'

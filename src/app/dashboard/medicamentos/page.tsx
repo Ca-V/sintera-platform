@@ -26,7 +26,7 @@ import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import PageHeader from '@/components/PageHeader'
 import ErrorBanner from '@/components/ErrorBanner'
 import EmptyState from '@/components/EmptyState'
-import Card from '@/components/ui/Card'
+import { Card } from "@/lib/ui/ds"
 import Disclaimer from '@/components/ui/Disclaimer'
 import { healthEventToRow } from '@/lib/agenda/event'
 import ConfirmDialog from '@/components/ConfirmDialog'

@@ -24,7 +24,7 @@ import EmptyState from '@/components/EmptyState'
 import ListCard, { CardChip } from '@/components/ListCard'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import { useStickyView } from '@/lib/ui/useStickyView'
-import Card from '@/components/ui/Card'
+import { Card } from "@/lib/ui/ds"
 import Disclaimer from '@/components/ui/Disclaimer'
 import CreateRecordMenu from '@/components/ui/CreateRecordMenu'
 import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MB } from '@/lib/capture/limits'
@@ -440,7 +440,7 @@ export default function RecursosPage() {
       />
 
       {showForm && (
-        <Card className="space-y-3">
+        <Card padding="md" className="space-y-3">
           {scanning && (
             <div className="flex items-center gap-2 text-petal font-body text-xs">
               <Loader2 size={14} className="animate-spin" /> Lendo a foto…

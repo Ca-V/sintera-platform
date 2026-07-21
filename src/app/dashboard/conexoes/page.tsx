@@ -14,7 +14,7 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { ArrowLeft, RefreshCw, Link2, Unlink, CheckCircle2, AlertTriangle, Loader2, Sparkles } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
-import Card from '@/components/ui/Card'
+import { Card } from "@/lib/ui/ds"
 import Badge from '@/components/ui/Badge'
 import Disclaimer from '@/components/ui/Disclaimer'
 import { useNovelty } from '@/lib/novelty/useNovelty'

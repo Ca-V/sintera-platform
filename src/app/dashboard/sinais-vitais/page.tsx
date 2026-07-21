@@ -18,7 +18,7 @@ import Sparkline, { parseNum } from '@/components/Sparkline'
 import ListCard from '@/components/ListCard'
 import PageHeader from '@/components/PageHeader'
 import EmptyState from '@/components/EmptyState'
-import Card from '@/components/ui/Card'
+import { Card } from "@/lib/ui/ds"
 import Disclaimer from '@/components/ui/Disclaimer'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { useNovelty } from '@/lib/novelty/useNovelty'
