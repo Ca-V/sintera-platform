@@ -12,3 +12,8 @@ export {
   type RNFontWeight,
   type RNFontVariant,
 } from './typography'
+export {
+  toRNShadow,
+  rnElevation,
+  type RNShadowStyle,
+} from './elevation'
