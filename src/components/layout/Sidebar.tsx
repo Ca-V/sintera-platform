@@ -41,7 +41,7 @@ const navGroups: {
   {
     title: 'Acompanhamento',
     titleColor: 'text-lavender',
-    chipBg: 'bg-lavender',
+    chipBg: 'bg-[#D6B2AE]',
     items: [
       { href: '/dashboard/agenda',        icon: CalendarDays, label: 'Agenda' },
       { href: '/dashboard/timeline',      icon: Clock,        label: 'Histórico de Saúde', extra: ['/dashboard/historico'] },
@@ -65,7 +65,7 @@ const navGroups: {
   {
     title: 'Minha Saúde',
     titleColor: 'text-lagoa',
-    chipBg: 'bg-lagoa',
+    chipBg: 'bg-[#A7B98C]',
     items: [
       { href: '/dashboard/condicoes',     icon: Stethoscope,   label: 'Condições de Saúde' },
       { href: '/dashboard/medicamentos',  icon: Pill,          label: 'Medicamentos' },
@@ -78,7 +78,7 @@ const navGroups: {
   {
     title: 'Organização',
     titleColor: 'text-gold',
-    chipBg: 'bg-gold',
+    chipBg: 'bg-[#C9B48F]',
     items: [
       { href: '/dashboard/gastos',    icon: Receipt,    label: 'Despesas' },
       { href: '/dashboard/relatorio', icon: ScrollText, label: 'Relatórios' },
@@ -112,8 +112,8 @@ function NavItem({ href, icon: Icon, label, active, soon, onClose, hintProps }: 
       className={cn(
         'flex items-center gap-3 px-3 py-1.5 rounded-xl transition-all duration-200 text-sm font-body group',
         active
-          ? 'nav-active-glow bg-petal/15 text-onyx'
-          : 'text-onyx/85 hover:text-onyx hover:bg-onyx/5'
+          ? 'nav-active-glow bg-white/25 text-onyx'
+          : 'text-onyx/90 hover:text-onyx hover:bg-white/10'
       )}
     >
       <Icon size={16} className={cn('flex-shrink-0 transition-colors',
@@ -136,7 +136,7 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
   const { tip, bind } = useContextualDescription()
 
   return (
-    <div className="flex flex-col h-full select-none border-r border-border" style={{ background: 'radial-gradient(ellipse 90% 35% at 50% 100%, rgba(87,157,168,0.14) 0%, transparent 72%), linear-gradient(to bottom, #97C9C3 0%, #86C1BE 100%)' }}>
+    <div className="flex flex-col h-full select-none border-r border-border" style={{ background: 'radial-gradient(ellipse 90% 40% at 50% 0%, rgba(255,255,255,0.12) 0%, transparent 70%), linear-gradient(to bottom, #74B8B9 0%, #579DA8 100%)' }}>
 
       {/* Logo — leva ao Painel Inicial (área logada) */}
       <div className="flex items-center justify-between px-5 py-4">
