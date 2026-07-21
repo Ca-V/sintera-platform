@@ -17,10 +17,10 @@ export const opacityScale = { transparent: 0, subtle: 0.06, soft: 0.12, muted: 0
 // Camada 2 — PAPÉIS (roles) por intenção.
 // ---------------------------------------------------------------------------
 export const radius = {
-  control: radiusScale.sm,  // botões, campos, chips
-  card: radiusScale.md,     // cartões/superfícies
-  sheet: radiusScale.lg,    // folhas/modais
-  pill: radiusScale.pill,   // badges/toggles arredondados
+  control: radiusScale.sm,  // 8  — botões, campos, chips
+  card: radiusScale.xl,     // 20 — cartões/superfícies (identidade validada no produto; a Web valida o comportamento)
+  sheet: radiusScale.xl,    // 20 — folhas/modais (≥ card)
+  pill: radiusScale.pill,   // 999 — badges/toggles arredondados
 } as const
 
 export const border = {

@@ -56,8 +56,8 @@
   --shadow-button: 0px 2px 8px rgba(61,108,123,0.2);
   /* radius / borda */
   --radius-control: 8px;
-  --radius-card: 12px;
-  --radius-sheet: 16px;
+  --radius-card: 20px;
+  --radius-sheet: 20px;
   --radius-pill: 999px;
   --radius-scale-none: 0px;
   --radius-scale-xs: 4px;

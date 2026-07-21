@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
-import Card from '@/components/ui/Card'
+import { Card } from '@/lib/ui/ds'
 import MotionCard from '@/components/ui/MotionCard'
 import ActionCard from '@/components/ui/ActionCard'
 import Disclaimer from '@/components/ui/Disclaimer'
@@ -142,7 +142,7 @@ export default function InsightsPage() {
       )}
 
       {loading ? (
-        <Card padding="2xl" className="text-center">
+        <Card padding="none" className="p-10 text-center">
           <p className="font-body text-sm text-mauve">Carregando…</p>
         </Card>
       ) : insights.length === 0 ? (
