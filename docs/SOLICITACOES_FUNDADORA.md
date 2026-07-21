@@ -45,7 +45,7 @@ Agenda + Conexões: sem rotas quebradas, sem palavras proibidas, Agenda funciona
 | ID | Área | Item | Classe | Status |
 |---|---|---|---|---|
 | **FB-014-A** | Conexões | Card repetia o rótulo em "Fonte dos dados: {mesmo rótulo}". | (1) inconsistência | 🟢 feito 20/07 (removida a linha redundante; título já é a fonte). |
-| **FB-014-B** | Agenda | Tooltip "Editar / exportar" no lápis, mas eventos de medicação/recompra redirecionam a `/medicamentos`. | (1) inconsistência de rótulo | ⏸ triado, aguarda aval (só A aprovado nesta leva). |
+| **FB-014-B** | Agenda | Tooltip "Editar / exportar" no lápis, mas eventos de medicação/recompra redirecionam a `/medicamentos`. | (1) inconsistência de rótulo | 🟢 feito 21/07 (lápis reflete o destino real: med/recompra → 'Abrir em Medicamentos') |
 | **FB-014-C** | Hub | "Pedido de exame" e "Exame/Laudo" usam o mesmo `documentKind:'exam'` → pedido pré-classificado como resultado (contra Q1). Correção: remover o hint de `pedido_exame`. | (1) inconsistência | 🟢 feito 21/07 (Hub consolidado FB-015-7 · 2d465e5) |
 | **FB-014-D** | Hub | Intenções tipo "page" (ex.: Consulta) caem na lista do módulo sem pré-preencher a intenção (= Fase 2 forms rápidos). | (2) melhoria UX | 🟢 feito 21/07 (Hub consolidado FB-015-7 · 2d465e5) |
 | **FB-014-E** | Conexões | `domain` do descriptor é carregado mas não exibido — decidir exibir (rótulo) ou remover. | (2) melhoria UX | 🔴 backlog (revisão de Conexões). |

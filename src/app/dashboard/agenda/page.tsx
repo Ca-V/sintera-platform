@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { CalendarDays, Plus, Check, Pencil, Ban, Trash2, Loader2, CalendarClock, Sparkles, X, ArrowLeft } from 'lucide-react'
+import { CalendarDays, Plus, Check, Pencil, Ban, Trash2, Loader2, CalendarClock, Sparkles, X, ArrowLeft, ArrowUpRight } from 'lucide-react'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { useEventForm, eventToInput } from '@/components/eventForm'
@@ -185,6 +185,9 @@ export default function AgendaPage() {
     const desfecho = outcomeSummary(ev.outcome)
     const prep = ev.preparation?.trim()
     const prio = priorityBadge(ev.priority)
+    // FB-014-B: lembretes de medicação/recompra abrem em Medicamentos (não o modal de editar/exportar) — o
+    // tooltip reflete o destino REAL para não induzir a erro. Detecção síncrona (tipo/título); o openEdit confirma.
+    const medLinked = ev.type === 'medicacao' || ev.type === 'medicamento' || ev.type === 'suplemento' || /^recomprar/i.test((ev.title ?? '').trim())
     return (
       <ListCard key={ev.id}
         leading={<div className="text-xl leading-none">{TYPE_EMOJI[ev.type] ?? '📅'}</div>}
@@ -217,8 +220,9 @@ export default function AgendaPage() {
           <>
             <button onClick={() => onComplete(ev)} disabled={busyId === ev.id} title="Concluir"
               className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-petal hover:bg-blush transition-colors disabled:opacity-40">{busyId === ev.id ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}</button>
-            <button onClick={() => openEdit(ev)} title="Editar / exportar"
-              className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-petal hover:bg-blush/40 transition-colors"><Pencil size={12} /></button>
+            <button onClick={() => openEdit(ev)} title={medLinked ? 'Abrir em Medicamentos' : 'Editar / exportar'}
+              className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-petal hover:bg-blush/40 transition-colors">
+              {medLinked ? <ArrowUpRight size={12} /> : <Pencil size={12} />}</button>
             <button onClick={() => onCancel(ev)} disabled={busyId === ev.id} title="Cancelar (marca como cancelado — fica no Histórico)"
               className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-amber-500 hover:bg-amber-500/8 transition-colors disabled:opacity-40"><Ban size={12} /></button>
             <button onClick={() => onDelete(ev)} disabled={busyId === ev.id} title="Excluir (apaga de vez — Agenda, Histórico e Despesas)"
