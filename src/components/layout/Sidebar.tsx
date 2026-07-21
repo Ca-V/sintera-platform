@@ -113,11 +113,11 @@ function NavItem({ href, icon: Icon, label, active, soon, onClose, hintProps }: 
         'flex items-center gap-3 px-3 py-1.5 rounded-xl transition-all duration-200 text-sm font-body group',
         active
           ? 'nav-active-glow bg-petal/15 text-onyx'
-          : 'text-onyx/70 hover:text-onyx hover:bg-onyx/5'
+          : 'text-onyx/85 hover:text-onyx hover:bg-onyx/5'
       )}
     >
       <Icon size={16} className={cn('flex-shrink-0 transition-colors',
-        active ? 'text-petal' : 'text-onyx/55 group-hover:text-onyx')} />
+        active ? 'text-petal' : 'text-onyx/70 group-hover:text-onyx')} />
       <span className={cn('flex-1', active && 'font-medium')}>{label}</span>
       {soon && (
         <span className="font-body text-[9px] font-medium text-onyx/70 bg-onyx/5 px-1.5 py-0.5 rounded-full border border-onyx/10">
