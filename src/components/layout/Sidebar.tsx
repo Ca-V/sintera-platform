@@ -86,7 +86,7 @@ const navGroups: {
   },
   {
     title: 'Configurações',
-    titleColor: 'text-mauve',
+    titleColor: 'text-onyx/60',
     items: [
       { href: '/dashboard/configuracoes', icon: Settings, label: 'Configurações' },
     ],
@@ -112,15 +112,15 @@ function NavItem({ href, icon: Icon, label, active, soon, onClose, hintProps }: 
       className={cn(
         'flex items-center gap-3 px-3 py-1.5 rounded-xl transition-all duration-200 text-sm font-body group',
         active
-          ? 'nav-active-glow bg-petal/10 text-onyx'
-          : 'text-mauve hover:text-onyx hover:bg-onyx/5'
+          ? 'nav-active-glow bg-petal/15 text-onyx'
+          : 'text-onyx/70 hover:text-onyx hover:bg-onyx/5'
       )}
     >
       <Icon size={16} className={cn('flex-shrink-0 transition-colors',
-        active ? 'text-petal' : 'text-mauve/70 group-hover:text-onyx')} />
+        active ? 'text-petal' : 'text-onyx/55 group-hover:text-onyx')} />
       <span className={cn('flex-1', active && 'font-medium')}>{label}</span>
       {soon && (
-        <span className="font-body text-[9px] font-medium text-mauve bg-onyx/5 px-1.5 py-0.5 rounded-full border border-border">
+        <span className="font-body text-[9px] font-medium text-onyx/70 bg-onyx/5 px-1.5 py-0.5 rounded-full border border-onyx/10">
           Em breve
         </span>
       )}
@@ -136,7 +136,7 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
   const { tip, bind } = useContextualDescription()
 
   return (
-    <div className="flex flex-col h-full select-none border-r border-border" style={{ background: 'radial-gradient(ellipse 90% 35% at 50% 100%, rgba(87,157,168,0.10) 0%, transparent 72%), linear-gradient(to bottom, #EDF6F3 0%, #DDECE7 100%)' }}>
+    <div className="flex flex-col h-full select-none border-r border-border" style={{ background: 'radial-gradient(ellipse 90% 35% at 50% 100%, rgba(87,157,168,0.14) 0%, transparent 72%), linear-gradient(to bottom, #BFDDD6 0%, #A9D3CB 100%)' }}>
 
       {/* Logo — leva ao Painel Inicial (área logada) */}
       <div className="flex items-center justify-between px-5 py-4">
@@ -150,7 +150,7 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
           </div>
           <span className="font-display text-lg font-semibold tracking-[0.2em] text-onyx">SINTERA</span>
         </Link>
-        <button onClick={onClose} className="lg:hidden text-mauve hover:text-onyx transition-colors">
+        <button onClick={onClose} className="lg:hidden text-onyx/60 hover:text-onyx transition-colors">
           <X size={17}/>
         </button>
       </div>
@@ -165,7 +165,7 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
           <div className="min-w-0 flex-1">
             <p className="text-sm font-body font-medium text-onyx leading-tight truncate">{displayName}</p>
           </div>
-          <ChevronRight size={13} className="text-mauve flex-shrink-0"/>
+          <ChevronRight size={13} className="text-onyx/50 flex-shrink-0"/>
         </div>
       </Link>
 
