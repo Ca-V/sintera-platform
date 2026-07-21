@@ -3,16 +3,23 @@
 // Componentes consomem apenas os PAPÉIS por INTENÇÃO (`typeRole.sectionTitle`), nunca tamanhos/pesos soltos
 // e nunca nomes ligados à implementação (heading1/2/3): se a escala mudar, o papel continua válido.
 //
-// Tipografia oficial (docs/BRAND-002 v2.0, Baseline): título Fraunces + corpo/interface/dados Hanken Grotesk.
+// Tipografia oficial (docs/BRAND-002 v2.1, Baseline) — TRÊS camadas por INTENÇÃO:
+//   • Títulos ...................... Fraunces (serifa editorial — confiança, cuidado, elegância)
+//   • Interface / leitura .......... Hanken Grotesk (corpo, formulários, navegação)
+//   • Dados científicos ............ IBM Plex Mono (valores lab., índices, %, biomarcadores, IDs,
+//                                    protocolos, hashes, códigos) — NUNCA em texto corrido.
+// A "ciência" não vem da fonte, e sim do RIGOR visual: alinhamento, colunas tabulares, hierarquia,
+// ausência de ruído. O mono entra só onde há DADO, dando precisão e alinhamento de colunas.
 // Filosofia (DS-002): orientado a dados; a hierarquia nasce de TIPOGRAFIA + ESPAÇO, e só secundariamente de cor.
-// Números tabulares nas colunas de valores. Acessibilidade: Dynamic Type desde o token.
+// Números tabulares + lining (tnum/lnum) nas colunas de valores. Acessibilidade: Dynamic Type desde o token.
 
 // ---------------------------------------------------------------------------
 // Camada 1 — PRIMITIVOS (não consumir direto em componentes).
 // ---------------------------------------------------------------------------
 export const fontFamily = {
-  display: "'Fraunces', Georgia, 'Times New Roman', serif",       // títulos
-  text: "'Hanken Grotesk', system-ui, -apple-system, sans-serif", // corpo · interface · dados
+  display: "'Fraunces', Georgia, 'Times New Roman', serif",             // títulos
+  text: "'Hanken Grotesk', system-ui, -apple-system, sans-serif",       // corpo · interface · leitura
+  mono: "'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace", // DADOS científicos (valores/índices/IDs/códigos)
 } as const
 
 export const fontWeight = { regular: 400, medium: 500, semibold: 600, bold: 700 } as const
@@ -64,7 +71,8 @@ export interface TypeRoles {
   caption: TextStyle
   // Leitura prolongada (documentos, laudos, conteúdo científico) — line-height e coluna próprios.
   reading: ReadingStyle
-  // Dados numéricos — família própria (SINTERA é orientada a dados). SEMPRE tabular.
+  // Dados científicos — família MONO própria (IBM Plex Mono). SEMPRE tabular + lining.
+  // Valores laboratoriais, índices, percentuais, biomarcadores, IDs, protocolos, hashes, códigos.
   numeric: { primary: TextStyle; secondary: TextStyle; reference: TextStyle; large: TextStyle }
 }
 
@@ -85,10 +93,10 @@ export const typeRole: TypeRoles = {
   reading:     { fontFamily: fontFamily.text, fontSize: fontSize.md, fontWeight: fontWeight.regular, lineHeight: lineHeight.loose, letterSpacing: letterSpacing.normal, maxMeasureCh: measure.reading },
 
   numeric: {
-    primary:   { fontFamily: fontFamily.text, fontSize: fontSize.base, fontWeight: fontWeight.semibold, lineHeight: lineHeight.normal, letterSpacing: letterSpacing.normal, fontFeatureSettings: tnum },
-    secondary: { fontFamily: fontFamily.text, fontSize: fontSize.sm,   fontWeight: fontWeight.regular,  lineHeight: lineHeight.normal, letterSpacing: letterSpacing.normal, fontFeatureSettings: tnum },
-    reference: { fontFamily: fontFamily.text, fontSize: fontSize.xs,   fontWeight: fontWeight.regular,  lineHeight: lineHeight.snug,   letterSpacing: letterSpacing.normal, fontFeatureSettings: tnum },
-    large:     { fontFamily: fontFamily.text, fontSize: fontSize.xxl,  fontWeight: fontWeight.semibold, lineHeight: lineHeight.tight,  letterSpacing: letterSpacing.tight,  fontFeatureSettings: tnum },
+    primary:   { fontFamily: fontFamily.mono, fontSize: fontSize.base, fontWeight: fontWeight.medium,   lineHeight: lineHeight.normal, letterSpacing: letterSpacing.normal, fontFeatureSettings: tnum },
+    secondary: { fontFamily: fontFamily.mono, fontSize: fontSize.sm,   fontWeight: fontWeight.regular,  lineHeight: lineHeight.normal, letterSpacing: letterSpacing.normal, fontFeatureSettings: tnum },
+    reference: { fontFamily: fontFamily.mono, fontSize: fontSize.xs,   fontWeight: fontWeight.regular,  lineHeight: lineHeight.snug,   letterSpacing: letterSpacing.normal, fontFeatureSettings: tnum },
+    large:     { fontFamily: fontFamily.mono, fontSize: fontSize.xxl,  fontWeight: fontWeight.medium,   lineHeight: lineHeight.tight,  letterSpacing: letterSpacing.tight,  fontFeatureSettings: tnum },
   },
 }
 

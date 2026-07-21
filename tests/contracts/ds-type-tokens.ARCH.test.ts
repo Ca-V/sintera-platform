@@ -4,9 +4,10 @@ import { describe, it, expect } from 'vitest'
 import { fontFamily, typeRole, measure, scaleTextStyle, dynamicType } from '../../packages/design-system/src'
 
 describe('ARCH · tipografia — base e papéis por intenção', () => {
-  it('família oficial: Fraunces (títulos) + Hanken Grotesk (texto)', () => {
+  it('família oficial: Fraunces (títulos) + Hanken Grotesk (texto) + IBM Plex Mono (dados)', () => {
     expect(fontFamily.display).toContain('Fraunces')
     expect(fontFamily.text).toContain('Hanken Grotesk')
+    expect(fontFamily.mono).toContain('IBM Plex Mono')
   })
 
   it('papéis são por INTENÇÃO (sem nomes de implementação heading1/2/3)', () => {
@@ -17,12 +18,15 @@ describe('ARCH · tipografia — base e papéis por intenção', () => {
     expect((typeRole as unknown as Record<string, unknown>).heading1).toBeUndefined()
   })
 
-  it('títulos usam a serifa (Fraunces); corpo/dados usam a de interface (Hanken)', () => {
+  it('três camadas: títulos=Fraunces · corpo/interface/leitura=Hanken · dados=IBM Plex Mono', () => {
     for (const r of ['display', 'pageTitle', 'sectionTitle', 'cardTitle'] as const) {
       expect(typeRole[r].fontFamily).toBe(fontFamily.display)
     }
     for (const r of ['body', 'bodyStrong', 'bodySmall', 'label', 'caption', 'reading'] as const) {
       expect(typeRole[r].fontFamily).toBe(fontFamily.text)
+    }
+    for (const n of ['primary', 'secondary', 'reference', 'large'] as const) {
+      expect(typeRole.numeric[n].fontFamily).toBe(fontFamily.mono)
     }
   })
 
@@ -33,10 +37,11 @@ describe('ARCH · tipografia — base e papéis por intenção', () => {
     expect(typeRole.cardTitle.fontSize).toBeGreaterThan(typeRole.body.fontSize)
   })
 
-  it('família numérica própria — todos os níveis com algarismos tabulares', () => {
+  it('família de dados (mono) — todos os níveis tabulares (tnum) + lining (lnum)', () => {
     for (const n of ['primary', 'secondary', 'reference', 'large'] as const) {
-      expect(typeRole.numeric[n].fontFamily).toBe(fontFamily.text)
+      expect(typeRole.numeric[n].fontFamily).toBe(fontFamily.mono)
       expect(typeRole.numeric[n].fontFeatureSettings).toContain('tnum')
+      expect(typeRole.numeric[n].fontFeatureSettings).toContain('lnum')
     }
     expect(typeRole.numeric.large.fontSize).toBeGreaterThan(typeRole.numeric.primary.fontSize)
   })
