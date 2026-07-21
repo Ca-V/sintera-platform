@@ -22,6 +22,7 @@
 // Só desktop por ora (hidden lg:block); mobile terá outro gatilho quando fizer sentido.
 
 import { useState, type SyntheticEvent } from 'react'
+import { createPortal } from 'react-dom'
 
 export type ContextualTip = { text: string; top: number; left: number } | null
 
@@ -40,15 +41,17 @@ export function useContextualDescription() {
   return { tip, bind }
 }
 
-/** Card da descrição — 1 por consumidor. Posicionado ao lado do elemento (fixed, escapa o clip do scroll). */
+/** Card da descrição — 1 por consumidor. `fixed` + PORTAL para o body: escapa de qualquer ancestral com
+ *  overflow/transform/filter (ex.: a Sidebar com `overflow-hidden` das "flores"), garantindo que apareça. */
 export function ContextualDescriptionCard({ tip, gap = 10 }: { tip: ContextualTip; gap?: number }) {
-  if (!tip) return null
-  return (
+  if (!tip || typeof document === 'undefined') return null
+  return createPortal(
     <div className="hidden lg:block fixed z-[80] max-w-[264px] pointer-events-none"
       style={{ top: tip.top, left: tip.left + gap }}>
       <div className="rounded-xl bg-white shadow-xl border border-border px-3 py-2.5">
         <p className="font-body text-xs text-onyx leading-relaxed">{tip.text}</p>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

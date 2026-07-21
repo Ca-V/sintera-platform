@@ -15,8 +15,9 @@ import { createClient } from '@/lib/supabase/client'
 import { parseDateOnly } from '@/lib/agenda'
 import { useUser } from '@/context/UserContext'
 import ListCard from '@/components/ListCard'
-import { summarizeBiomarkers, computeReferenceIndex, type BiomarkerRow, type BiomarkerSummary, type Trend } from '@/lib/biomarkers/grouping'
+import { summarizeBiomarkers, type BiomarkerRow, type BiomarkerSummary, type Trend } from '@/lib/biomarkers/grouping'
 import { groupByExam, loadCatalogLabels, type CatalogLabels } from '@/lib/biomarkers/catalogLabels'
+import { isOrderDocumentType } from '@/lib/exams/classification'
 import MotionCard from '@/components/ui/MotionCard'
 import Disclaimer from '@/components/ui/Disclaimer'
 
@@ -61,9 +62,13 @@ export default function IndicadoresPage() {
   // Metadados do laudo por exam_id (derivados; sem duplicação) — laboratório e solicitante do resumo por exame.
   const [examMeta, setExamMeta] = useState<Map<string, { issuer: string | null; requester: string | null }>>(new Map())
   // Todos os exames (para o histórico DOCUMENTAL dos que não têm biomarcadores quantitativos).
-  const [exams, setExams] = useState<{ id: string; type: string; date: string; issuer: string | null; requester: string | null }[]>([])
+  const [exams, setExams] = useState<{ id: string; type: string; date: string; documentType: string | null; issuer: string | null; requester: string | null }[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  // Filtros de DESCOBERTA (escaláveis: novos filtros entram neste mesmo conjunto, sem redesenho).
+  const [typeFilter, setTypeFilter] = useState('all')
+  const [period, setPeriod] = useState<'all' | '30d' | '90d' | '1y'>('all')
+  const [sortDir, setSortDir] = useState<'recent' | 'oldest'>('recent')
 
   useEffect(() => {
     if (!user) return
@@ -76,7 +81,7 @@ export default function IndicadoresPage() {
         supabase.from('biomarker_catalog').select('id,specimen,category,display_name'),
         loadCatalogLabels(supabase),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (supabase as any).from('exams').select('id, type, exam_date, created_at, issuer, requesting_physician').eq('user_id', user.id),
+        (supabase as any).from('exams').select('id, type, exam_date, created_at, document_type, issuer, requesting_physician').eq('user_id', user.id),
       ])
       if (!active) return
       if (bio.error) console.error('[SINTERA] indicadores fetch:', bio.error.message)
@@ -86,13 +91,14 @@ export default function IndicadoresPage() {
       setCatalog(cmap)
       setLabels(lbls)
       const emap = new Map<string, { issuer: string | null; requester: string | null }>()
-      const exList: { id: string; type: string; date: string; issuer: string | null; requester: string | null }[] = []
+      const exList: { id: string; type: string; date: string; documentType: string | null; issuer: string | null; requester: string | null }[] = []
       for (const e of ((ex?.data ?? []) as Array<Record<string, unknown>>)) {
         const issuer = (e.issuer as string) ?? null, requester = (e.requesting_physician as string) ?? null
         emap.set(e.id as string, { issuer, requester })
         exList.push({
           id: e.id as string, type: ((e.type as string) ?? '').trim() || 'Exame',
-          date: ((e.exam_date as string) ?? (e.created_at as string) ?? '').slice(0, 10), issuer, requester,
+          date: ((e.exam_date as string) ?? (e.created_at as string) ?? '').slice(0, 10),
+          documentType: (e.document_type as string) ?? null, issuer, requester,
         })
       }
       setExamMeta(emap)
@@ -103,7 +109,6 @@ export default function IndicadoresPage() {
   }, [user, supabase])
 
   const summaries = useMemo(() => summarizeBiomarkers(rows), [rows])
-  const refIndex = useMemo(() => computeReferenceIndex(rows), [rows])
   // Nome curado + material/painel do catálogo (nomenclatura consistente + segmentação).
   const nameOf  = (s: BiomarkerSummary) => catalog.get(s.catalogId ?? '')?.display_name ?? s.displayName
   const panelOf = (s: BiomarkerSummary) => {
@@ -141,7 +146,8 @@ export default function IndicadoresPage() {
   const biomarkerExamIds = useMemo(() => new Set(rows.map(r => r.exam_id)), [rows])
   const documentalGroups = useMemo(() => {
     const q = search.trim().toLowerCase()
-    const docs = exams.filter(e => !biomarkerExamIds.has(e.id))
+    // Exclui PEDIDOS/solicitações (medical_order/insurance_guide): o Histórico é só de exames REALIZADOS.
+    const docs = exams.filter(e => !biomarkerExamIds.has(e.id) && !isOrderDocumentType(e.documentType))
     const byType = new Map<string, { type: string; occ: { examId: string; date: string }[]; issuer: string | null; requester: string | null }>()
     for (const e of docs) {
       if (!byType.has(e.type)) byType.set(e.type, { type: e.type, occ: [], issuer: null, requester: null })
@@ -154,6 +160,40 @@ export default function IndicadoresPage() {
     }).sort((a, b) => (a.occ[0].date < b.occ[0].date ? 1 : a.occ[0].date > b.occ[0].date ? -1 : 0))
     return q ? list.filter(g => g.type.toLowerCase().includes(q)) : list
   }, [exams, biomarkerExamIds, search])
+
+  // ── Descoberta: filtro por tipo · período · ordenação (aplicados a laboratoriais E documentais) ──────────
+  const periodCutoff = useMemo(() => {
+    if (period === 'all') return null
+    const days = period === '30d' ? 30 : period === '90d' ? 90 : 365
+    const d = new Date(); d.setDate(d.getDate() - days)
+    return d.toISOString().slice(0, 10)
+  }, [period])
+  // Tipos disponíveis para o seletor (laboratoriais pelo rótulo do painel + documentais pelo tipo).
+  const availableTypes = useMemo(() => {
+    const s = new Set<string>()
+    examGroups.forEach(g => s.add(g.label))
+    documentalGroups.forEach(g => s.add(g.type))
+    return [...s].sort((a, b) => a.localeCompare(b, 'pt-BR'))
+  }, [examGroups, documentalGroups])
+  const cmp = (a: string | undefined, b: string | undefined) =>
+    sortDir === 'recent' ? ((a ?? '') < (b ?? '') ? 1 : (a ?? '') > (b ?? '') ? -1 : 0)
+                         : ((a ?? '') < (b ?? '') ? -1 : (a ?? '') > (b ?? '') ? 1 : 0)
+  const inPeriod = (occ: { date: string }[]) => !periodCutoff || occ.some(o => o.date >= periodCutoff)
+  // Laboratoriais visíveis (occ já resolvido) após tipo/período/ordenação.
+  const quantView = useMemo(() => {
+    let list = examGroups.map(g => ({ g, occ: occurrencesOf(g.items) }))
+    if (typeFilter !== 'all') list = list.filter(x => x.g.label === typeFilter)
+    list = list.filter(x => inPeriod(x.occ))
+    return list.sort((a, b) => cmp(a.occ[0]?.date, b.occ[0]?.date))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [examGroups, typeFilter, periodCutoff, sortDir])
+  const docView = useMemo(() => {
+    let list = documentalGroups
+    if (typeFilter !== 'all') list = list.filter(g => g.type === typeFilter)
+    list = list.filter(g => inPeriod(g.occ))
+    return [...list].sort((a, b) => cmp(a.occ[0]?.date, b.occ[0]?.date))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [documentalGroups, typeFilter, periodCutoff, sortDir])
 
   if (loading || !labels) return (
     <div className="flex items-center justify-center min-h-[60vh]"><Loader2 size={28} className="animate-spin text-petal" /></div>
@@ -178,12 +218,34 @@ export default function IndicadoresPage() {
           </div>
         </div>
         {(summaries.length > 0 || exams.length > 0) && (
-          <div className="mt-4 relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-mauve" />
-            <input
-              type="text" aria-label="Buscar exame ou biomarcador" placeholder="Buscar exame ou biomarcador…" value={search} onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 bg-ivory border border-border rounded-xl font-body text-sm text-onyx placeholder-mauve/40 focus:outline-none focus:ring-1 focus:ring-petal/40"
-            />
+          <div className="mt-4 space-y-2">
+            <div className="relative">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-mauve" />
+              <input
+                type="text" aria-label="Buscar exame ou biomarcador" placeholder="Buscar exame ou biomarcador…" value={search} onChange={e => setSearch(e.target.value)}
+                className="w-full pl-9 pr-4 py-2.5 bg-ivory border border-border rounded-xl font-body text-sm text-onyx placeholder-mauve/40 focus:outline-none focus:ring-1 focus:ring-petal/40"
+              />
+            </div>
+            {/* Descoberta: tipo · período · ordenação. Escalável — novos filtros entram nesta barra. */}
+            <div className="flex flex-wrap gap-2">
+              <select aria-label="Filtrar por tipo de exame" value={typeFilter} onChange={e => setTypeFilter(e.target.value)}
+                className="flex-1 min-w-[130px] px-3 py-2 bg-ivory border border-border rounded-xl font-body text-xs text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40">
+                <option value="all">Todos os tipos</option>
+                {availableTypes.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+              <select aria-label="Filtrar por período" value={period} onChange={e => setPeriod(e.target.value as typeof period)}
+                className="px-3 py-2 bg-ivory border border-border rounded-xl font-body text-xs text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40">
+                <option value="all">Qualquer data</option>
+                <option value="30d">Últimos 30 dias</option>
+                <option value="90d">Últimos 90 dias</option>
+                <option value="1y">Último ano</option>
+              </select>
+              <select aria-label="Ordenar" value={sortDir} onChange={e => setSortDir(e.target.value as typeof sortDir)}
+                className="px-3 py-2 bg-ivory border border-border rounded-xl font-body text-xs text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40">
+                <option value="recent">Mais recentes</option>
+                <option value="oldest">Mais antigos</option>
+              </select>
+            </div>
           </div>
         )}
       </MotionCard>
@@ -200,37 +262,13 @@ export default function IndicadoresPage() {
         </MotionCard>
       ) : (
         <>
-          {/* Índice Experimental — proporção dentro da referência por exame (relocado do Histórico, T2-B1b) */}
-          {refIndex.length > 0 && (
-            <MotionCard initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 }}
-              padding="none" className="overflow-hidden">
-              <div className="px-5 py-3 border-b border-border/40">
-                <p className="font-body text-sm font-semibold text-onyx">Proporção dentro da referência</p>
-              </div>
-              <div className="px-5 py-4 space-y-3">
-                {refIndex.map((idx) => {
-                  const barColor  = idx.pct >= 80 ? 'bg-petal' : idx.pct >= 60 ? 'bg-amber-400' : 'bg-orange-400'
-                  const textColor = idx.pct >= 80 ? 'text-petal' : idx.pct >= 60 ? 'text-amber-600' : 'text-orange-500'
-                  return (
-                    <div key={idx.examId} className="flex items-center gap-3">
-                      <span className="font-body text-xs text-mauve w-14 flex-shrink-0">{formatDate(idx.date)}</span>
-                      <div className="flex-1 bg-border/30 rounded-full h-2"><div className={`h-2 rounded-full ${barColor}`} style={{ width: `${idx.pct}%` }} /></div>
-                      <span className={`font-body text-sm font-semibold ${textColor} w-10 text-right flex-shrink-0`}>{idx.pct}%</span>
-                      <span className="font-body text-xs text-mauve flex-shrink-0">{idx.num}/{idx.den}</span>
-                    </div>
-                  )
-                })}
-                <p className="font-body text-[11px] text-mauve/40 pt-1">
-                  De cada exame, quantos biomarcadores numéricos estão dentro da faixa do laudo. Experimental; não representa diagnóstico ou estado de saúde.
-                </p>
-              </div>
-            </MotionCard>
-          )}
+          {/* O índice experimental "Proporção dentro da referência" foi REMOVIDO desta tela (fundadora 21/07):
+              é métrica experimental/interpretativa e não deve ocupar destaque no Histórico (RDC 657 — organiza/
+              apresenta, sem sugerir diagnóstico). O Histórico foca organizar/localizar/evoluir/acessar exames. */}
 
           {/* Exame → Histórico → Biomarcadores: cada EXAME (laboratorial) é um card; dentro dele, o histórico
               de ocorrências (datas, rastreáveis ao laudo) e os biomarcadores medidos naquele exame. */}
-          {examGroups.map((g, gi) => {
-            const occ = occurrencesOf(g.items)
+          {quantView.map(({ g, occ }, gi) => {
             // Resumo longitudinal (derivado; sem duplicação): o exame como ENTIDADE ao longo do tempo.
             const total = occ.length
             const lastMeta = total ? examMeta.get(occ[0].examId) : null
@@ -300,10 +338,10 @@ export default function IndicadoresPage() {
           })}
 
           {/* Exames DOCUMENTAIS (sem biomarcadores quantitativos) — histórico longitudinal por tipo. */}
-          {documentalGroups.length > 0 && examGroups.length > 0 && (
+          {docView.length > 0 && quantView.length > 0 && (
             <p className="font-body text-[11px] font-semibold text-mauve uppercase tracking-wider pt-1">Outros exames</p>
           )}
-          {documentalGroups.map((g, gi) => (
+          {docView.map((g, gi) => (
             <MotionCard key={`doc:${g.type}`} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 + Math.min(gi, 6) * 0.02 }}
               padding="none" className="overflow-hidden">
               <div className="px-5 py-4">
@@ -336,8 +374,8 @@ export default function IndicadoresPage() {
             </MotionCard>
           ))}
 
-          {examGroups.length === 0 && documentalGroups.length === 0 && (
-            <MotionCard padding="none" className="p-10 text-center"><p className="font-body text-xs text-mauve">Nenhum exame encontrado.</p></MotionCard>
+          {quantView.length === 0 && docView.length === 0 && (
+            <MotionCard padding="none" className="p-10 text-center"><p className="font-body text-xs text-mauve">Nenhum exame encontrado com os filtros atuais.</p></MotionCard>
           )}
 
           <div className="text-center pb-4 space-y-1">
