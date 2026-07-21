@@ -3,6 +3,7 @@
 // Nenhuma decisão de design aqui (ADR-011): variantes/tamanhos/estados/cores vêm da recipe.
 import { forwardRef, type CSSProperties, type HTMLAttributes, type ReactNode } from 'react'
 import * as ds from '@sintera/design-system'
+import { cn } from '@/lib/utils'
 import { useDs } from './theme'
 import { boxStyle, textStyle, shadowCss } from './style'
 
@@ -44,23 +45,22 @@ export function Button({ variant = 'primary', size = 'md', disabled, onClick, ty
 // acrescentar layout via `className`/props HTML (grid, alinhamento, overflow, onClick, aria) e usar `padding="none"`
 // quando controla o próprio espaçamento. `ref` encaminhado (scroll-to). Substitui o Card DS-001 (`.card-premium`).
 //
-// COMPAT de migração: aceita também os nomes de padding do DS-001 (sm/md/lg/xl/2xl) mapeados ao px exato, para
-// a troca dos ~20 consumidores ser só a do import (sem reescrever JSX). Após migrar tudo, os call sites podem
-// convergir para a escala de INTENÇÃO do DS ('none'/'cozy'/'default'/'relaxed') e este shim é removido.
-const LEGACY_PAD_PX: Record<string, number> = { sm: 16, md: 20, lg: 24, xl: 32, '2xl': 40 }
-export type CardProps = { elevation?: ds.ElevationLevel; padding?: 'none' | 'cozy' | 'default' | 'relaxed' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' }
+// Renderizado por CLASSE (`.ds-card`, gerada dos tokens em @layer components) — não inline —, para que
+// utilitárias de override (bg-*/border-*) da tela vençam e o hover/tint/contorno sejam idênticos ao antigo
+// `.card-premium` (zero-drift). O `padding` vira classe utilitária: aceita a escala de INTENÇÃO do DS e, por
+// COMPAT de migração, os nomes do DS-001 (sm/md/lg/xl/2xl); ao final da migração os call sites convergem.
+const PAD_CLASS: Record<string, string> = {
+  none: '', cozy: 'p-3', default: 'p-4', relaxed: 'p-5',        // intenção (DS)
+  sm: 'p-4', md: 'p-5', lg: 'p-6', xl: 'p-8', '2xl': 'p-10',    // compat DS-001 (px exato)
+}
+export type CardProps = { padding?: 'none' | 'cozy' | 'default' | 'relaxed' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' }
   & WithStyle & Omit<HTMLAttributes<HTMLDivElement>, 'style' | 'children'>
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
-  { elevation, padding, children, style, ...rest }, ref,
+  { padding = 'default', className, children, style, ...rest }, ref,
 ) {
-  const t = useDs()
-  const legacyPx = padding ? LEGACY_PAD_PX[padding] : undefined
-  const recipePad = legacyPx !== undefined ? 'none' : (padding as 'none' | 'cozy' | 'default' | 'relaxed' | undefined)
-  const box = boxStyle(t, ds.card(t, { elevation, padding: recipePad }).container)
-  if (legacyPx !== undefined) box.padding = legacyPx
   return (
-    <div ref={ref} style={{ ...box, ...style }} {...rest}>
+    <div ref={ref} className={cn('ds-card', PAD_CLASS[padding], className)} style={style} {...rest}>
       {children}
     </div>
   )

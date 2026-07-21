@@ -98,5 +98,20 @@ export function generateThemeCss(): string {
     .map(([cls, tok]) => `.${cls} { background: var(--gradient-${kebab(tok as string)}); }`)
     .join('\n')
 
-  return [header, '', themeColors, '', root, '', '/* Utilitárias de gradiente (nomes históricos) */', gradientClasses, ''].join('\n')
+  // Classe do CARTÃO (superfície premium) — o container base do DS-002 na Web. Em @layer components para que
+  // utilitárias de override (bg-*/border-*) SEMPRE vençam (tints de destaque). Consome os tokens do DS.
+  const cardClass = [
+    '@layer components {',
+    '  .ds-card {',
+    '    background: var(--color-surface);',
+    '    border: 1px solid color-mix(in srgb, var(--color-onyx) 5%, transparent);',
+    '    border-radius: var(--radius-card);',
+    '    box-shadow: var(--shadow-card);',
+    '    transition: box-shadow 0.3s ease, transform 0.3s ease;',
+    '  }',
+    '  .ds-card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px); }',
+    '}',
+  ].join('\n')
+
+  return [header, '', themeColors, '', root, '', '/* Utilitárias de gradiente (nomes históricos) */', gradientClasses, '', cardClass, ''].join('\n')
 }

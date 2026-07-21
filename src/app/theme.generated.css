@@ -149,3 +149,14 @@
 .gradient-sleep { background: var(--gradient-sleep); }
 .gradient-cycle { background: var(--gradient-cycle); }
 .gradient-hydration { background: var(--gradient-hydration); }
+
+@layer components {
+  .ds-card {
+    background: var(--color-surface);
+    border: 1px solid color-mix(in srgb, var(--color-onyx) 5%, transparent);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+  }
+  .ds-card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px); }
+}
