@@ -33,11 +33,15 @@ const homeItem = { href: '/dashboard', icon: LayoutDashboard, label: 'Painel Ini
 // PRINCÍPIO: toda alteração desta Sidebar reflete na taxonomia do Relatório (relatorio/page SELECT_GROUPS + bandas).
 const navGroups: {
   title: string
+  titleColor: string
+  chipBg?: string
   standalone?: boolean   // FB-010 fase 1: renderiza os itens SEM cabeçalho de grupo (evita "grupo de 1 item")
   items: { href: string; icon: React.ElementType; label: string; extra?: string[] }[]
 }[] = [
   {
     title: 'Acompanhamento',
+    titleColor: 'text-lavender',
+    chipBg: 'bg-[#D8CFC0]',
     items: [
       { href: '/dashboard/agenda',        icon: CalendarDays, label: 'Agenda' },
       { href: '/dashboard/timeline',      icon: Clock,        label: 'Histórico de Saúde', extra: ['/dashboard/historico'] },
@@ -53,12 +57,15 @@ const navGroups: {
     // Atestados · Encaminhamentos · Termos · outros documentos médicos). Ver [[DOC-001]] / [[UX-001]].
     title: 'Documentos',
     standalone: true,
+    titleColor: 'text-petal',
     items: [
       { href: '/dashboard/exams', icon: FileText, label: 'Exames' },
     ],
   },
   {
     title: 'Minha Saúde',
+    titleColor: 'text-lagoa',
+    chipBg: 'bg-[#CFC9BC]',
     items: [
       { href: '/dashboard/condicoes',     icon: Stethoscope,   label: 'Condições de Saúde' },
       { href: '/dashboard/medicamentos',  icon: Pill,          label: 'Medicamentos' },
@@ -70,6 +77,8 @@ const navGroups: {
   },
   {
     title: 'Organização',
+    titleColor: 'text-gold',
+    chipBg: 'bg-[#DBCDB4]',
     items: [
       { href: '/dashboard/gastos',    icon: Receipt,    label: 'Despesas' },
       { href: '/dashboard/relatorio', icon: ScrollText, label: 'Relatórios' },
@@ -77,6 +86,7 @@ const navGroups: {
   },
   {
     title: 'Configurações',
+    titleColor: 'text-onyx/60',
     items: [
       { href: '/dashboard/configuracoes', icon: Settings, label: 'Configurações' },
     ],
@@ -102,15 +112,15 @@ function NavItem({ href, icon: Icon, label, active, soon, onClose, hintProps }: 
       className={cn(
         'flex items-center gap-3 px-3 py-1.5 rounded-xl transition-all duration-200 text-sm font-body group',
         active
-          ? 'nav-active-glow bg-[#E6F1EE] text-petal'
-          : 'text-onyx/75 hover:text-onyx hover:bg-onyx/[0.035]'
+          ? 'nav-active-glow bg-white/45 text-onyx'
+          : 'text-onyx/80 hover:text-onyx hover:bg-white/25'
       )}
     >
       <Icon size={16} className={cn('flex-shrink-0 transition-colors',
-        active ? 'text-petal' : 'text-onyx/45 group-hover:text-onyx/70')} />
+        active ? 'text-petal' : 'text-onyx/60 group-hover:text-onyx')} />
       <span className={cn('flex-1', active && 'font-medium')}>{label}</span>
       {soon && (
-        <span className="font-body text-[9px] font-medium text-onyx/60 bg-onyx/5 px-1.5 py-0.5 rounded-full border border-onyx/10">
+        <span className="font-body text-[9px] font-medium text-onyx/70 bg-white/40 px-1.5 py-0.5 rounded-full border border-onyx/10">
           Em breve
         </span>
       )}
@@ -126,10 +136,18 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
   const { tip, bind } = useContextualDescription()
 
   return (
-    <div className="flex flex-col h-full select-none border-r border-onyx/[0.07]" style={{ background: 'linear-gradient(180deg, #FBF8F2 0%, #F4EFE6 100%)' }}>
+    <div className="relative overflow-hidden flex flex-col h-full select-none border-r border-black/5" style={{ background: 'linear-gradient(160deg, #9BD8E0 0%, #6FC1CF 58%, #57B0BF 100%)' }}>
+
+      {/* "Flores" do Almond Blossom (mesmas do painel esquerdo do Login) — manchas desfocadas
+          creme · sálvia · terracota sobre o campo aqua. Puramente decorativas (atrás do conteúdo). */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0" aria-hidden="true">
+        <div className="absolute -top-16 -right-12 w-56 h-56 rounded-full blur-3xl" style={{ background: 'rgba(246,242,234,0.50)' }} />
+        <div className="absolute top-1/3 -left-12 w-52 h-52 rounded-full blur-3xl" style={{ background: 'rgba(167,185,140,0.30)' }} />
+        <div className="absolute -bottom-16 right-1/4 w-56 h-56 rounded-full blur-3xl" style={{ background: 'rgba(193,131,106,0.20)' }} />
+      </div>
 
       {/* Logo — leva ao Painel Inicial (área logada) */}
-      <div className="flex items-center justify-between px-5 py-4">
+      <div className="relative z-10 flex items-center justify-between px-5 py-4">
         <Link href="/dashboard" onClick={onClose} className="flex items-center gap-2.5">
           <div className="w-7 h-7 rounded-full gradient-aqua flex items-center justify-center shadow-lg">
             <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
@@ -147,7 +165,7 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
 
       {/* Perfil da usuária — atalho para o perfil (perfil/config/sair ficam no menu do topo) */}
       <Link href="/dashboard/profile" onClick={onClose}
-        className="mx-4 mb-3 p-3 rounded-2xl border border-onyx/[0.07] bg-white/55 hover:bg-white transition-colors shadow-sm">
+        className="relative z-10 mx-4 mb-3 p-3 rounded-2xl border border-onyx/10 bg-white/35 hover:bg-white/50 transition-colors">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full gradient-aqua flex items-center justify-center flex-shrink-0 shadow-md">
             <span className="text-white text-sm font-display font-bold">{initials}</span>
@@ -162,7 +180,7 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
       {/* Navegação principal — todos os tópicos visíveis sem rolagem.
           Painel Inicial é item avulso; os grupos vêm em seguida (títulos com mais
           destaque, itens mais compactos para caber mais sem rolagem). */}
-      <nav className="flex-1 px-3 overflow-y-auto pb-3">
+      <nav className="relative z-10 flex-1 px-3 overflow-y-auto pb-3">
         <div className="mb-2">
           <NavItem href={homeItem.href} icon={homeItem.icon} label={homeItem.label}
             active={isActive(pathname, homeItem.href, homeItem.extra)} onClose={onClose}
@@ -170,9 +188,12 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
         </div>
         {navGroups.map(group => (
           <div key={group.title} className="mb-1.5">
-            {group.standalone ? null : (
-              // Rótulo de grupo QUIETO (sem chip preenchido) — menos ruído; a divisão vem do espaço, não de caixas.
-              <p className="text-[10.5px] font-body font-semibold uppercase tracking-[0.16em] px-3 mt-3 mb-1 text-onyx/40">
+            {group.standalone ? null : group.chipBg ? (
+              <div className={cn('mx-1 mt-2 mb-1.5 px-2.5 py-1 rounded-lg shadow-sm', group.chipBg)}>
+                <p className="text-[11px] font-body font-bold uppercase tracking-[0.14em] text-onyx/90">{group.title}</p>
+              </div>
+            ) : (
+              <p className={cn('text-[11px] font-body font-bold uppercase tracking-[0.16em] px-3 mt-1 mb-1', group.titleColor)}>
                 {group.title}
               </p>
             )}
