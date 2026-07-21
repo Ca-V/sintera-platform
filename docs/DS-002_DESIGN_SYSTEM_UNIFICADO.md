@@ -6,8 +6,9 @@
 (retomadas só após o DS).
 **Relação com [[DS-001]]:** o DS-001 documenta o Design System **provisório da web atual** (Tailwind, paleta descontinuada);
 o **DS-002 é o definitivo**, unificado, e a web **migra** para ele (trilha paralela no [[IMPLEMENTATION_ROADMAP]]).
-**Status:** Approved (plano) · **Architectural Baseline** · **Versão:** 1.0 · **Histórico:** v1.0 (2026-07-21) sequenciamento
-arquitetural aprovado pela fundadora; Etapa 1 · Subitem 1 (cor) implementado.
+**Status:** Approved · **Architectural Baseline** · **Versão:** 1.1 · **Histórico:** v1.0 (2026-07-21) sequenciamento
+arquitetural aprovado + Subitem 1 (cor); v1.1 (2026-07-21) **Etapa 1 (Design Tokens) COMPLETA** (7 subitens: cor ·
+tipografia · espaçamento · superfície/elevação · motion · layout + `getTheme`) + novo fluxo de entrega por etapa.
 **Dependências:** [[BRAND-001]] · [[COLOR-001]] · [[BRAND-002]] · [[adr_007_monorepo|ADR-007]] · [[HIP-012]] §4.
 **Local (SSOT):** `packages/design-system` (compartilhado RN + Web). **Regra dura:** nenhum componente com valor
 **hardcoded** — tudo vem dos tokens.
@@ -46,10 +47,13 @@ sombras · motion · elevação · opacidade · bordas · grid · breakpoints.**
 3. **Tokens de espaçamento** — ✅ *implementado* (`src/tokens/spacing.ts`): primitivos de **ritmo** → papéis por intenção
    `spacing`{inline/stack/group/section/page} · `padding`{tight/cozy/default/relaxed} · `density`{compact/default/comfortable}
    (para tabelas/Timeline). Contrato ARCH.
-4. Tokens de superfície e elevação (sombras, bordas, opacidade, raios).
-5. Tokens de motion (durações, curvas; `prefers-reduced-motion`).
-6. Tokens semânticos (papéis de alto nível; grid/breakpoints).
-7. Validação (contrato + revisão consolidada).
+4. **Superfície e elevação** — ✅ (`src/tokens/elevation.ts`): raios/bordas/opacidade + `elevation` (por tema, sombra
+   NEUTRA de plataforma: y/blur/spread/color/opacity + androidElevation) — profundidade **sutil** (orientado a dados).
+5. **Motion** — ✅ (`src/tokens/motion.ts`): `duration`/`easing` → papéis `motion`{tap/enter/exit/emphasis}; `motionDuration`
+   respeita `prefers-reduced-motion` (zera a animação, preserva a troca de estado).
+6. **Layout + semântica de alto nível** — ✅ (`src/tokens/layout.ts` + `src/theme.ts`): breakpoints mobile-first, grid,
+   z-index por intenção; **`getTheme(mode)`** compõe TODAS as camadas em um tema único (Web = Mobile).
+7. **Validação** — ✅ contratos ARCH consolidados (6 arquivos, 31 asserts) + autoauditoria.
 
 ### Etapa 2 — Princípios de composição
 Definir **explicitamente**, antes dos componentes: hierarquia visual · densidade · ritmo vertical · uso de espaços · uso da
@@ -70,12 +74,13 @@ Cada subitem entrega: **tsc verde** (`tsc -p packages/design-system/tsconfig.jso
 (`tests/contracts/*.ARCH.test.ts`, na suíte `npm test`) + **revisão da fundadora** antes de avançar. O app RN roda no
 ambiente de desenvolvimento (o sandbox valida tsc/testes/contraste, não executa o app).
 
-## Estado atual — Etapa 1 (Subitens 1–3 concluídos)
-- **Subitem 1 — cor** ✅ aprovado. **IDENTIDADE × USO** distintos: `identity.primary` (500, marca) × `button.primary`
-  (700 + branco, **sempre AA**). Componentes consomem **apenas papéis**.
-- **Subitem 2 — tipografia** ✅ aprovado (com refinamentos): papéis por **intenção** (não heading1/2/3), família **numeric**
-  própria, papel **reading** (leitura prolongada + `measure`), Dynamic Type com regra anti-quebra.
-- **Subitem 3 — espaçamento** ✅ implementado (aguardando revisão): ritmo por intenção (`spacing`/`padding`/`density`).
-- **Próximo:** Subitem 4 — superfície e elevação (sombras, bordas, opacidade, raios), após revisão.
-- Contratos: **23 asserts** verdes (cor 11 · tipografia 8 · espaçamento 4). Futuro (fundadora): papéis `measure.form`/
-  `measure.table` conforme os componentes de formulário/tabela forem construídos.
+## Estado atual — Etapa 1 (Design Tokens) **COMPLETA** ✅
+Todos os 7 subitens implementados em `packages/design-system` sobre o modelo **primitivos → papéis**, com a separação
+**IDENTIDADE × USO** e **consumo por intenção** em todas as dimensões (cor · tipografia · espaçamento · superfície ·
+motion · layout). Ponto único de consumo: **`getTheme(mode)`** (Web = Mobile).
+- Contratos ARCH: **31 asserts** verdes (6 arquivos) — WCAG AA, Dynamic Type, reduced-motion, elevação sutil, ordenação de
+  escalas, montagem de tema.
+- **Fluxo de trabalho:** a partir daqui, entrega por **ETAPA** (não subitem), com autoauditoria; fundadora valida só
+  decisões estruturais.
+- **Próximo:** **Etapa 2 — Princípios de composição** (hierarquia · densidade · ritmo vertical · uso de espaço/cor ·
+  contraste · alinhamentos · responsivo) antes dos componentes (Etapa 3).
