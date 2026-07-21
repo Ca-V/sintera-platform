@@ -129,6 +129,20 @@ documento ([[principio_rastreabilidade_documental]]). Implementação: `groupByE
 > total + último laboratório/solicitante. **Evolução futura:** o exame pode virar uma entidade navegável própria
 > (página do tipo de exame) e o cabeçalho exibir mais derivados conforme o histórico crescer.
 
+**Histórico UNIVERSAL — todos os tipos de exame (FB-018, fundadora 21/07).** O Histórico de Exames representa
+**todos** os exames, com ou sem biomarcadores. **Laboratoriais** (com biomarcadores numéricos) mantêm gráficos,
+evolução e comparação; os **demais** (imagem, gráficos, densitometria, EEG/ECG/OCT, fundo de olho etc.) aparecem
+como **histórico longitudinal DOCUMENTAL** — card por exame com nome · nº de realizações · datas · abrir cada
+exame (rastreável ao laudo). **Modelo GERAL** (qualquer categoria), sem tratamento específico por tipo.
+Implementação v1: agrupa os exames sem biomarcador numérico pelo campo `type` (nome), aditivo, sem schema.
+
+> **Observação de arquitetura — identidade longitudinal (fundadora 21/07, EVOLUÇÃO FUTURA, não implementar agora):**
+> o conceito a preservar é a **linha longitudinal de um EXAME**, não de um `type` textual. No futuro, a identidade
+> do agrupamento deve basear-se no **identificador CANÔNICO do exame (quando existir)**, usando o `type` apenas
+> como **apresentação**. Isso evita **fragmentação** caso o mesmo exame apareça com nomenclaturas diferentes. Por
+> ora, mantém-se o agrupamento por `type` (v1). Relaciona: [[principio_rastreabilidade_documental]] · nomenclatura
+> canônica do catálogo.
+
 **Relatório = taxonomia da navegação (princípio, FB-010).** O Relatório **não tem árvore própria**: reutiliza a
 **mesma taxonomia da Sidebar** (grupos, ordem e rótulos). Qualquer reorganização da Sidebar deve refletir
 **automaticamente** na geração de relatórios (`relatorio/page` — `SELECT_GROUPS` + faixas de banda espelham os
