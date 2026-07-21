@@ -6,10 +6,11 @@
 (retomadas só após o DS).
 **Relação com [[DS-001]]:** o DS-001 documenta o Design System **provisório da web atual** (Tailwind, paleta descontinuada);
 o **DS-002 é o definitivo**, unificado, e a web **migra** para ele (trilha paralela no [[IMPLEMENTATION_ROADMAP]]).
-**Status:** Approved · **Architectural Baseline** · **Versão:** 1.2 · **Histórico:** v1.0 (2026-07-21) sequenciamento
+**Status:** Approved · **Architectural Baseline** · **Versão:** 1.3 · **Histórico:** v1.0 (2026-07-21) sequenciamento
 arquitetural aprovado + Subitem 1 (cor); v1.1 (2026-07-21) **Etapa 1 (Design Tokens) COMPLETA** (7 subitens: cor ·
 tipografia · espaçamento · superfície/elevação · motion · layout + `getTheme`) + novo fluxo de entrega por etapa;
-v1.2 (2026-07-21) **Etapas 2 (composição) e 3 (componentes fundamentais) concluídas** — recipes headless ([[adr_011_arquitetura_componentes_crossplatform|ADR-011]]).
+v1.2 (2026-07-21) **Etapas 2 (composição) e 3 (componentes fundamentais) concluídas** — recipes headless ([[adr_011_arquitetura_componentes_crossplatform|ADR-011]]);
+v1.3 (2026-07-21) **Etapas 4 (componentes de domínio) e 5 (templates) concluídas** — camada headless completa.
 **Dependências:** [[BRAND-001]] · [[COLOR-001]] · [[BRAND-002]] · [[adr_007_monorepo|ADR-007]] · [[adr_011_arquitetura_componentes_crossplatform|ADR-011]] · [[HIP-012]] §4.
 **Local (SSOT):** `packages/design-system` (compartilhado RN + Web). **Regra dura:** nenhum componente com valor
 **hardcoded** — tudo vem dos tokens.
@@ -75,12 +76,17 @@ VisualSpec`, 100% derivado dos papéis do tema, sem hex cru e sem dependência d
 Cobertos: **Button** (primary/secondary/ghost · sm/md/lg · estados · alvo de toque ≥44) · **Text** · **Heading** · **Card** ·
 **Surface** · **Badge** (tons semânticos, texto AA sobre o soft) · **Chip** · **Divider** · **Icon** · **Avatar**.
 
-### Etapa 4 — Componentes de domínio (identidade funcional da SINTERA)
-Timeline · Laboratory Table · Biomarker Card · Indicator · Health Event · Longitudinal Chart · Clinical Document Card ·
-Observation Card.
+### Etapa 4 — Componentes de domínio ✅
+Componentes de **produto** (recipes headless, mesma arquitetura da Etapa 3): **Timeline · Laboratory Table · Biomarker Card ·
+Indicator · Health Event · Longitudinal Chart · Clinical Document Card · Observation Card**. Carregam o comportamento do
+domínio (números tabulares, referências, tendências, **destaque de alterações**, acessibilidade) sempre de forma **factual**
+(RDC 657 — sem interpretação clínica): `classifyValue(valor, refLow, refHigh)` compara com a referência fornecida e
+`statusTreatment` dá o tratamento visual por papéis (dentro→sem destaque; abaixo/acima→flag AA).
 
-### Etapa 5 — Templates (páginas completas)
-Dashboard · Timeline · Resultado de exame · Histórico longitudinal · Agenda · Perfil · Configurações.
+### Etapa 5 — Templates ✅
+**Dashboard · Timeline · Resultado de exame · Histórico longitudinal · Agenda · Perfil · Configurações** como **composição
+headless**: `template(tema, tipo)` define fundo, largura de conteúdo, respiro, ritmo entre seções e a ordem semântica das
+regiões. O arranjo concreto e a fiação das recipes ficam no adaptador de plataforma — **sem decisões de design no adaptador**.
 
 ## Validação (por item)
 Cada subitem entrega: **tsc verde** (`tsc -p packages/design-system/tsconfig.json`) + **testes de contrato verdes**
@@ -95,8 +101,8 @@ motion · layout). Ponto único de consumo: **`getTheme(mode)`** (Web = Mobile).
   escalas, montagem de tema.
 - **Fluxo de trabalho:** a partir daqui, entrega por **ETAPA** (não subitem), com autoauditoria; fundadora valida só
   decisões estruturais.
-- **Etapa 2 (composição)** ✅ e **Etapa 3 (componentes fundamentais)** ✅ concluídas — recipes headless ([[adr_011_arquitetura_componentes_crossplatform|ADR-011]]),
-  com contratos de acessibilidade (contraste + alvo de toque) por tema.
-- **Próximo:** **Etapa 4 — Componentes de domínio** (Timeline · Laboratory Table · Biomarker Card · Indicator · Health Event ·
-  Longitudinal Chart · Clinical Document Card · Observation Card) e depois **Etapa 5 — Templates**. Adaptadores de plataforma
-  (web/RN) entram na fiação de cada app.
+- **Etapas 2–5 concluídas** ✅ — composição, componentes fundamentais, componentes de domínio (produto, factual/RDC 657) e
+  templates, todos como recipes/composição headless ([[adr_011_arquitetura_componentes_crossplatform|ADR-011]]), com contratos
+  de acessibilidade por tema.
+- **DS-002 completo na camada headless.** Pendências planejadas (roadmap, não bloqueiam): **adaptadores de plataforma**
+  (React Web · React Native) e **migração da web** provisória para o DS-002.
