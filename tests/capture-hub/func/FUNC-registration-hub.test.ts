@@ -26,18 +26,30 @@ describe('HUB-001 · taxonomia', () => {
       if (i.mechanism.type === 'choice') expect(i.mechanism.pageHref.startsWith('/dashboard/')).toBe(true)
     }
   })
-  it('intentsByGroup ordena disponíveis antes de "em breve"', () => {
+  it('todo grupo declarado tem ao menos um intent (nada vazio)', () => {
     for (const g of INTENT_GROUPS.map(x => x.group) as IntentGroup[]) {
-      const list = intentsByGroup(g)
-      const firstUnavailable = list.findIndex(i => !i.available)
-      if (firstUnavailable === -1) continue
-      // nenhum "disponível" depois do primeiro "em breve"
-      expect(list.slice(firstUnavailable).every(i => !i.available)).toBe(true)
+      expect(intentsByGroup(g).length).toBeGreaterThan(0)
     }
   })
-  it('os três grupos têm ao menos um intent disponível', () => {
-    for (const g of INTENT_GROUPS.map(x => x.group) as IntentGroup[]) {
-      expect(intentsByGroup(g).some(i => i.available)).toBe(true)
+  it('nenhuma intenção é indisponível — toda opção conclui o registro (sem "em breve")', () => {
+    for (const i of REGISTRATION_INTENTS) {
+      expect((i as unknown as { available?: boolean }).available).toBeUndefined()
+    }
+  })
+  it('pedido de exame NÃO é pré-classificado como resultado (Q1: pedido ≠ resultado)', () => {
+    const pedido = REGISTRATION_INTENTS.find(i => i.key === 'pedido_exame')!
+    expect(pedido.mechanism.type).toBe('capture')
+    if (pedido.mechanism.type === 'capture') expect(pedido.mechanism.documentKind).toBeUndefined()
+  })
+  it('Óculos/Lentes vai para Recursos (correção visual) — sem artefato paralelo', () => {
+    const oculos = REGISTRATION_INTENTS.find(i => i.key === 'oculos')!
+    expect(oculos.mechanism.type).toBe('page')
+    if (oculos.mechanism.type === 'page') expect(oculos.mechanism.href).toContain('/dashboard/recursos')
+  })
+  it('destinos de página que registram pré-abrem o formulário (?novo=1)', () => {
+    for (const key of ['condicao', 'medida', 'habito', 'recurso', 'oculos']) {
+      const i = REGISTRATION_INTENTS.find(x => x.key === key)!
+      if (i.mechanism.type === 'page') expect(i.mechanism.href).toContain('novo=')
     }
   })
 })

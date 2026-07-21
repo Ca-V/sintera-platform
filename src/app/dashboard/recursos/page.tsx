@@ -170,6 +170,16 @@ export default function RecursosPage() {
   // eslint-disable-next-line react-hooks/set-state-in-effect -- carrega dados na montagem (data fetching)
   useEffect(() => { if (!authLoading) load() }, [authLoading, load])
 
+  // Hub "Adicionar Registro": ?novo=1 abre o formulário; ?tipo=<resource_type> pré-seleciona (Óculos → correção visual).
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search)
+    if (q.get('novo') !== '1') return
+    const tipo = q.get('tipo')
+    startAdd(tipo ? (tipo as ResourceType) : undefined)
+    window.history.replaceState(null, '', window.location.pathname)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   function reset() { setEditingId(null); setEditingAttrs({}); setF({ ...EMPTY }); setTrocaRecorrente(false); setTrocaFreq('monthly'); setErr(null) }
 
   function startAdd(type?: ResourceType) {

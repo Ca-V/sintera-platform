@@ -182,6 +182,14 @@ export default function MedidasPage() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { if (!authLoading) load() }, [authLoading, load])
 
+  // Hub "Adicionar Registro": ?novo=1 abre direto o formulário de nova medida (conclui o registro; não só a lista).
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('novo') !== '1') return
+    reset(); setShowForm(true)
+    window.history.replaceState(null, '', window.location.pathname)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // NOV-001 — Composição é a superfície de CONSUMO do fluxo 'wearable_body': ao abrir, sincroniza sozinho, recarrega
   // os dados e MARCA o fluxo como visto (reconhecimento natural — sem botão de "dispensar"). O selo "novo" usa o
   // instante DESTA visita (sinceOf); markSeen só avança o estado no servidor, então destaca agora e some na próxima.

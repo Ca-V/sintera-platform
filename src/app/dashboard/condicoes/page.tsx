@@ -86,6 +86,14 @@ export default function CondicoesPage() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { if (!authLoading) load() }, [authLoading, load])
 
+  // Hub "Adicionar Registro": ?novo=1 abre direto o formulário de nova condição (conclui o registro; não só a lista).
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('novo') !== '1') return
+    reset(); setShowForm(true)
+    window.history.replaceState(null, '', window.location.pathname)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   function reset() {
     setEditingId(null); setScope('propria'); setName(''); setRelative(''); setSince(''); setNotes('')
     setErr(null); setPendingFile(null); setKind(null); setDocMeta(null); setScanErr(null); setScanInfo(null); setSourceHint('manual')

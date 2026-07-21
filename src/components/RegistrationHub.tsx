@@ -13,7 +13,7 @@ import { useState, type ComponentType } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   FlaskConical, ClipboardList, FileText, FileHeart, Dna, Pill, Leaf, Package, Glasses,
-  Stethoscope, HeartPulse, Ruler, Sparkles, Scissors, Syringe, Thermometer, Receipt,
+  Stethoscope, HeartPulse, Ruler, Sparkles, Receipt,
   ArrowLeft, ChevronRight, UploadCloud, ArrowUpRight,
 } from 'lucide-react'
 import CaptureCenter from '@/lib/capture/intake/CaptureCenter'
@@ -23,7 +23,7 @@ import type { DocumentKind } from '@/lib/capture/types'
 type IconType = ComponentType<{ size?: number; className?: string }>
 const ICONS: Record<string, IconType> = {
   FlaskConical, ClipboardList, FileText, FileHeart, Dna, Pill, Leaf, Package, Glasses,
-  Stethoscope, HeartPulse, Ruler, Sparkles, Scissors, Syringe, Thermometer, Receipt,
+  Stethoscope, HeartPulse, Ruler, Sparkles, Receipt,
 }
 
 type View =
@@ -38,7 +38,6 @@ export default function RegistrationHub({ onDone }: { onDone?: () => void }) {
   function goToPage(href: string) { onDone?.(); router.push(href) }
 
   function choose(intent: RegistrationIntent) {
-    if (!intent.available) return
     const m = intent.mechanism
     if (m.type === 'capture') setView({ mode: 'capture', kind: m.documentKind ?? null })
     else if (m.type === 'page') goToPage(m.href)
@@ -99,18 +98,12 @@ export default function RegistrationHub({ onDone }: { onDone?: () => void }) {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {intentsByGroup(group).map(intent => {
                 const Icon = ICONS[intent.icon] ?? FileText
-                const disabled = !intent.available
                 return (
-                  <button key={intent.key} type="button" onClick={() => choose(intent)} disabled={disabled}
-                    aria-label={intent.label + (disabled ? ' (em breve)' : '')}
-                    className={`relative flex flex-col items-start gap-2 p-3 rounded-2xl border text-left transition-colors ${
-                      disabled
-                        ? 'border-border/60 bg-ivory/50 cursor-not-allowed'
-                        : 'border-border bg-ivory hover:border-petal/40 hover:bg-blush/20'
-                    }`}>
-                    <Icon size={18} className={disabled ? 'text-mauve/40' : 'text-petal'} />
-                    <span className={`font-body text-xs font-medium leading-tight ${disabled ? 'text-mauve/50' : 'text-onyx'}`}>{intent.label}</span>
-                    {disabled && <span className="absolute top-2 right-2 font-body text-[9px] text-mauve/60 bg-mauve/10 rounded-full px-1.5 py-0.5">em breve</span>}
+                  <button key={intent.key} type="button" onClick={() => choose(intent)}
+                    aria-label={intent.label}
+                    className="relative flex flex-col items-start gap-2 p-3 rounded-2xl border border-border bg-ivory text-left transition-colors hover:border-petal/40 hover:bg-blush/20">
+                    <Icon size={18} className="text-petal" />
+                    <span className="font-body text-xs font-medium leading-tight text-onyx">{intent.label}</span>
                   </button>
                 )
               })}

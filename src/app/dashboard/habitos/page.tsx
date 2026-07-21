@@ -84,6 +84,14 @@ export default function HabitosPage() {
   // eslint-disable-next-line react-hooks/set-state-in-effect -- carrega dados na montagem (data fetching)
   useEffect(() => { if (!authLoading) load() }, [authLoading, load])
 
+  // Hub "Adicionar Registro": ?novo=1 abre direto o formulário de novo hábito (conclui o registro; não só a lista).
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('novo') !== '1') return
+    reset(); setShowForm(true)
+    window.history.replaceState(null, '', window.location.pathname)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   function reset() { setEditingId(null); setCategory('atividade_fisica'); setDescription(''); setFrequency(''); setNotes(''); setErr(null) }
 
   function startEdit(h: Habit) {
