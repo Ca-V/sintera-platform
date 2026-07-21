@@ -6,9 +6,9 @@ import Card from '@/components/ui/Card'
 type Phase = { name: string; startDay: number; endDay: number; color: string; label: string; active?: boolean }
 
 const PHASES: Phase[] = [
-  { name: 'Menstrual',  startDay: 1,  endDay: 5,  color: '#C1836A', label: 'Dias 1–5' },
-  { name: 'Folicular',  startDay: 6,  endDay: 13, color: '#6BC0CE', label: 'Dias 6–13', active: true },
-  { name: 'Ovulatória', startDay: 14, endDay: 16, color: '#A7B98C', label: 'Dias 14–16' },
+  { name: 'Menstrual',  startDay: 1,  endDay: 5,  color: '#B15C4C', label: 'Dias 1–5' },
+  { name: 'Folicular',  startDay: 6,  endDay: 13, color: '#579DA8', label: 'Dias 6–13', active: true },
+  { name: 'Ovulatória', startDay: 14, endDay: 16, color: '#7E9B6E', label: 'Dias 14–16' },
   { name: 'Lútea',      startDay: 17, endDay: 28, color: '#C9A97A', label: 'Dias 17–28' },
 ]
 
@@ -36,8 +36,8 @@ function dayMarker(day: number) {
 }
 
 const hormones = [
-  { label: 'Estrogênio', values: [20,30,45,65,80,95,72,50,40,35,38,42,46,48,50,48,45,42,38,35,32,30,28,26,24,22,20,18], color: '#C1836A' },
-  { label: 'Progesterona', values: [8,8,9,10,12,14,16,18,22,28,35,42,50,58,65,70,75,78,80,76,68,58,45,30,20,14,10,8], color: '#6BC0CE' },
+  { label: 'Estrogênio', values: [20,30,45,65,80,95,72,50,40,35,38,42,46,48,50,48,45,42,38,35,32,30,28,26,24,22,20,18], color: '#B15C4C' },
+  { label: 'Progesterona', values: [8,8,9,10,12,14,16,18,22,28,35,42,50,58,65,70,75,78,80,76,68,58,45,30,20,14,10,8], color: '#579DA8' },
 ]
 
 const CHART_W = 200, CHART_H = 48
@@ -90,7 +90,7 @@ export default function CycleArc() {
             <text x={CX} y={CY - 8} textAnchor="middle" fontSize="26" fontWeight="600"
               fontFamily="serif" fill="#1E1820">{CURRENT_DAY}</text>
             <text x={CX} y={CY + 8} textAnchor="middle" fontSize="9" fill="#7A6470" fontFamily="sans-serif">DIA</text>
-            <text x={CX} y={CY + 20} textAnchor="middle" fontSize="8" fill="#0E7580" fontFamily="sans-serif">FOLICULAR</text>
+            <text x={CX} y={CY + 20} textAnchor="middle" fontSize="8" fill="#3D6C7B" fontFamily="sans-serif">FOLICULAR</text>
 
             {/* Current day marker */}
             <motion.circle

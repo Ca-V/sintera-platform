@@ -15,7 +15,7 @@ const steps = [
     description: 'Cadastre suas informações e adicione documentos e registros recebidos ao longo da sua jornada de saúde.',
     detail: 'Exames, receitas, laudos, consultas, medicamentos, hábitos — tudo em um só lugar.',
     color: '#CDEAE4',
-    iconColor: '#0E7580',
+    iconColor: '#3D6C7B',
   },
   {
     number: '02',
@@ -24,7 +24,7 @@ const steps = [
     description: 'Suas informações passam a compor uma visão organizada e contínua da sua saúde, fácil de consultar sempre que precisar.',
     detail: 'Sem digitação e sem planilha — a organização acontece automaticamente.',
     color: '#E7F3EF',
-    iconColor: '#14746B',
+    iconColor: '#488593',
   },
   {
     number: '03',
@@ -32,7 +32,7 @@ const steps = [
     title: 'Compreenda sua evolução e compartilhe',
     description: 'Visualize sua trajetória de saúde ao longo do tempo, acompanhe seus compromissos e compartilhe suas informações com os profissionais que participam do seu cuidado.',
     detail: 'Uma visão clara para levar à consulta — a decisão permanece com os profissionais.',
-    color: '#D7E1C6',
+    color: '#ECF2E9',
     iconColor: '#4A8F7A',
   },
 ]

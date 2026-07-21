@@ -47,7 +47,7 @@ export default function WelcomeBanner() {
         <div className="hidden sm:flex flex-col items-center gap-1 flex-shrink-0">
           <div className="relative w-16 h-16">
             <svg viewBox="0 0 56 56" className="w-full h-full -rotate-90">
-              <circle cx="28" cy="28" r="22" fill="none" stroke="#DCE8E3" strokeWidth="4" />
+              <circle cx="28" cy="28" r="22" fill="none" stroke="#E4DBCB" strokeWidth="4" />
               <circle
                 cx="28" cy="28" r="22"
                 fill="none"

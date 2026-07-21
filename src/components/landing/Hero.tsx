@@ -18,10 +18,10 @@ export default function Hero() {
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <motion.div animate={{ rotate: 360 }} transition={{ duration: 80, repeat: Infinity, ease: 'linear' }}
           className="absolute top-1/2 right-[-10%] -translate-y-1/2 w-[700px] h-[700px] rounded-full"
-          style={{ border: '1px solid rgba(107,192,206,0.16)' }} />
+          style={{ border: '1px solid rgba(151, 201, 195,0.16)' }} />
         <motion.div animate={{ rotate: -360 }} transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
           className="absolute top-1/2 right-[-6%] -translate-y-1/2 w-[540px] h-[540px] rounded-full"
-          style={{ border: '1.5px dashed rgba(14,117,128,0.13)' }} />
+          style={{ border: '1.5px dashed rgba(87, 157, 168,0.13)' }} />
         <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-petal-light/20 blur-3xl animate-breathe" />
         <div className="absolute -bottom-48 left-[20%] w-[500px] h-[500px] rounded-full bg-lavender-light/25 blur-3xl animate-breathe delay-300" />
       </div>

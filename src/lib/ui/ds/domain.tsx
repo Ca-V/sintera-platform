@@ -105,17 +105,25 @@ export function LaboratoryTable({ rows, groups, descriptive, renderLink }: { row
 }
 
 // --- Banner / aviso ---------------------------------------------------------
-export function Banner({ tone = 'info', title, icon, children }:
-  { tone?: ds.BannerTone; title?: ReactNode; icon?: ReactNode; children?: ReactNode }) {
+// Linguagem OFICIAL de comunicação da plataforma (nasce completo): informação · sucesso · atenção · erro ·
+// aviso regulatório/neutro (persistente) · indisponibilidade · processamento (ícone animado da tela) ·
+// mensagens persistentes (sem onDismiss) E transitórias (com onDismiss). Copy sempre da tela.
+export function Banner({ tone = 'info', title, icon, children, onDismiss }:
+  { tone?: ds.BannerTone; title?: ReactNode; icon?: ReactNode; children?: ReactNode; onDismiss?: () => void }) {
   const t = useDs()
   const s = ds.banner(t, { tone })
   return (
-    <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', backgroundColor: s.container.backgroundColor, border: `1px solid ${s.container.borderColor}`, borderRadius: s.container.radius, padding: `${s.container.paddingY}px ${s.container.paddingX}px` }}>
+    <div role={tone === 'error' ? 'alert' : 'status'}
+      style={{ display: 'flex', gap: 8, alignItems: 'flex-start', backgroundColor: s.container.backgroundColor, border: `1px solid ${s.container.borderColor}`, borderRadius: s.container.radius, padding: `${s.container.paddingY}px ${s.container.paddingX}px` }}>
       {icon && <span aria-hidden style={{ color: s.iconColor, flexShrink: 0, marginTop: 2, display: 'inline-flex' }}>{icon}</span>}
-      <div>
+      <div style={{ flex: 1, minWidth: 0 }}>
         {title && <div style={textStyle({ style: s.title.style, color: s.title.color })}>{title}</div>}
         <div style={{ ...textStyle({ style: s.text.style, color: s.text.color }), marginTop: title ? 2 : 0, lineHeight: 1.5 }}>{children}</div>
       </div>
+      {onDismiss && (
+        <button type="button" onClick={onDismiss} aria-label="Dispensar aviso"
+          style={{ flexShrink: 0, background: 'none', border: 'none', color: s.text.color, cursor: 'pointer', lineHeight: 1, fontSize: 16, padding: 0, opacity: 0.7 }}>×</button>
+      )}
     </div>
   )
 }

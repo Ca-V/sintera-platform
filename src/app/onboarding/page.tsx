@@ -25,7 +25,7 @@ const leftPanels = [
   {
     bg:          'linear-gradient(150deg, #A6DCE3 0%, #72C3D0 58%, #5AB2C0 100%)',
     accentGlow:  'rgba(167,185,140,0.40)',
-    accent2:     'rgba(107,192,206,0.30)',
+    accent2:     'rgba(151, 201, 195,0.30)',
   },
   {
     bg:          'linear-gradient(150deg, #9BD8E0 0%, #6FC1CF 58%, #57B0BF 100%)',
@@ -142,7 +142,7 @@ export default function OnboardingPage() {
                     transition={{ duration: 30 + i * 15, repeat: Infinity, ease: 'linear' }} />
                 ))}
                 <motion.div className="w-20 h-20 rounded-full"
-                  style={{ background: 'radial-gradient(circle, rgba(193,131,106,0.5) 0%, rgba(107,192,206,0.3) 50%, transparent 70%)' }}
+                  style={{ background: 'radial-gradient(circle, rgba(193,131,106,0.5) 0%, rgba(151, 201, 195,0.3) 50%, transparent 70%)' }}
                   animate={{ scale: [1, 1.15, 1], opacity: [0.6, 1, 0.6] }}
                   transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }} />
               </div>
@@ -151,9 +151,9 @@ export default function OnboardingPage() {
             {step === 1 && (
               <div className="flex flex-col items-center gap-5 px-10">
                 {[
-                  { icon: Upload,       label: 'Upload do laudo em PDF',           color: '#C1836A', delay: 0    },
-                  { icon: FlaskConical, label: 'IA extrai os biomarcadores',        color: '#6BC0CE', delay: 0.15 },
-                  { icon: TrendingUp,   label: 'Histórico longitudinal organizado', color: '#A7B98C', delay: 0.30 },
+                  { icon: Upload,       label: 'Upload do laudo em PDF',           color: '#B15C4C', delay: 0    },
+                  { icon: FlaskConical, label: 'IA extrai os biomarcadores',        color: '#579DA8', delay: 0.15 },
+                  { icon: TrendingUp,   label: 'Histórico longitudinal organizado', color: '#7E9B6E', delay: 0.30 },
                 ].map(({ icon: Icon, label, color, delay }, i) => (
                   <motion.div key={i}
                     initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
@@ -227,7 +227,7 @@ export default function OnboardingPage() {
         {/* Dots de progresso */}
         <div className="absolute top-1/2 right-6 -translate-y-1/2 hidden lg:flex flex-col gap-2">
           {stepMeta.map((s, i) => (
-            <div key={i} className={`rounded-full transition-all duration-300 ${i === step ? 'w-2 h-2 bg-petal shadow-[0_0_6px_rgba(14,117,128,0.7)]' : i < step ? 'w-1.5 h-1.5 bg-onyx/35' : 'w-1.5 h-1.5 bg-onyx/15'}`}/>
+            <div key={i} className={`rounded-full transition-all duration-300 ${i === step ? 'w-2 h-2 bg-petal shadow-[0_0_6px_rgba(87, 157, 168,0.7)]' : i < step ? 'w-1.5 h-1.5 bg-onyx/35' : 'w-1.5 h-1.5 bg-onyx/15'}`}/>
           ))}
         </div>
       </motion.div>
@@ -364,21 +364,21 @@ export default function OnboardingPage() {
                         icon: Upload,
                         title: '1. Faça upload do laudo',
                         desc: 'Envie qualquer laudo laboratorial em PDF — de qualquer laboratório.',
-                        color: '#C1836A',
+                        color: '#B15C4C',
                         bg: 'bg-blush',
                       },
                       {
                         icon: FlaskConical,
                         title: '2. A IA extrai os biomarcadores',
                         desc: 'Glicemia, colesterol, vitaminas, hormônios — extraídos automaticamente com os valores e referências do seu laudo.',
-                        color: '#6BC0CE',
+                        color: '#579DA8',
                         bg: 'bg-lavender-light',
                       },
                       {
                         icon: TrendingUp,
                         title: '3. Acompanhe sua evolução',
                         desc: 'Veja como cada biomarcador mudou ao longo do tempo. Leve essa visão para sua próxima consulta.',
-                        color: '#A7B98C',
+                        color: '#7E9B6E',
                         bg: 'bg-blush',
                       },
                     ].map(({ icon: Icon, title, desc, color, bg }) => (

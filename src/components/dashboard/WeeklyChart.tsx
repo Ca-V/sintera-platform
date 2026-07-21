@@ -7,8 +7,8 @@ import Card from '@/components/ui/Card'
 const days = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
 const datasets = {
   Energia: { values: [72, 68, 84, 89, 84, 61, 78], color: '#C9A97A', gradient: ['#C9A97A', '#E2C49A'] },
-  Humor:   { values: [75, 70, 82, 88, 80, 65, 85], color: '#C1836A', gradient: ['#C1836A', '#D6A48D'] },
-  Sono:    { values: [65, 70, 75, 72, 68, 80, 77], color: '#6BC0CE', gradient: ['#6BC0CE', '#A6DFE9'] },
+  Humor:   { values: [75, 70, 82, 88, 80, 65, 85], color: '#B15C4C', gradient: ['#B15C4C', '#CE8570'] },
+  Sono:    { values: [65, 70, 75, 72, 68, 80, 77], color: '#579DA8', gradient: ['#579DA8', '#97C9C3'] },
 }
 
 type DataKey = keyof typeof datasets

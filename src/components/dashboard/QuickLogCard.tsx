@@ -6,9 +6,9 @@ import { Check } from 'lucide-react'
 
 const items = [
   { id: 'energy', emoji: '⚡', label: 'Energia',  max: 10, rangeClass: 'range-gold',    color: '#C9A97A', gradColor: 'linear-gradient(90deg,#C9A97A,#E2C49A)' },
-  { id: 'sleep',  emoji: '🌙', label: 'Sono (h)', max: 10, rangeClass: 'range-lavender', color: '#6BC0CE', gradColor: 'linear-gradient(90deg,#6BC0CE,#A6DFE9)' },
-  { id: 'water',  emoji: '💧', label: 'Água (L)', max: 4,  rangeClass: 'range-sage',     color: '#A7B98C', gradColor: 'linear-gradient(90deg,#A7B98C,#C2D4AC)' },
-  { id: 'mood',   emoji: '🌸', label: 'Humor',    max: 10, rangeClass: '',               color: '#C1836A', gradColor: 'linear-gradient(90deg,#C1836A,#D6A48D)' },
+  { id: 'sleep',  emoji: '🌙', label: 'Sono (h)', max: 10, rangeClass: 'range-lavender', color: '#579DA8', gradColor: 'linear-gradient(90deg,#579DA8,#97C9C3)' },
+  { id: 'water',  emoji: '💧', label: 'Água (L)', max: 4,  rangeClass: 'range-sage',     color: '#7E9B6E', gradColor: 'linear-gradient(90deg,#7E9B6E,#A6BE99)' },
+  { id: 'mood',   emoji: '🌸', label: 'Humor',    max: 10, rangeClass: '',               color: '#B15C4C', gradColor: 'linear-gradient(90deg,#B15C4C,#CE8570)' },
 ]
 
 const moods = [

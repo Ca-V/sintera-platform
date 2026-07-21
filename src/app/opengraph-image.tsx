@@ -26,13 +26,13 @@ export default function OgImage() {
         <div style={{
           position: 'absolute', top: '-100px', right: '-100px',
           width: '500px', height: '500px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(107,192,206,0.15) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(151, 201, 195,0.15) 0%, transparent 70%)',
           display: 'flex',
         }} />
         <div style={{
           position: 'absolute', bottom: '-80px', left: '-80px',
           width: '400px', height: '400px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(14,117,128,0.12) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(87, 157, 168,0.12) 0%, transparent 70%)',
           display: 'flex',
         }} />
 
@@ -42,7 +42,7 @@ export default function OgImage() {
         }}>
           <div style={{
             width: '56px', height: '56px', borderRadius: '50%',
-            background: 'linear-gradient(135deg, #0E7580, #6BC0CE)',
+            background: 'linear-gradient(135deg, #3D6C7B, #579DA8)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '28px', color: 'white',
           }}>
@@ -50,7 +50,7 @@ export default function OgImage() {
           </div>
           <span style={{
             fontSize: '42px', fontWeight: '700', letterSpacing: '0.2em',
-            color: '#26201C',
+            color: '#241F1A',
           }}>
             SINTERA
           </span>
@@ -62,11 +62,11 @@ export default function OgImage() {
           textAlign: 'center', maxWidth: '800px',
         }}>
           <span style={{
-            fontSize: '56px', fontWeight: '700', color: '#26201C',
+            fontSize: '56px', fontWeight: '700', color: '#241F1A',
             lineHeight: '1.1', textAlign: 'center',
           }}>
             Sua saúde tem{' '}
-            <span style={{ color: '#0E7580' }}>uma história.</span>
+            <span style={{ color: '#3D6C7B' }}>uma história.</span>
           </span>
           <span style={{
             fontSize: '26px', color: '#5B6B67', fontWeight: '400',
@@ -80,11 +80,11 @@ export default function OgImage() {
         <div style={{
           marginTop: '48px',
           display: 'flex', alignItems: 'center', gap: '8px',
-          background: 'rgba(107,192,206,0.15)',
-          border: '1px solid rgba(107,192,206,0.4)',
+          background: 'rgba(151, 201, 195,0.15)',
+          border: '1px solid rgba(151, 201, 195,0.4)',
           borderRadius: '50px', padding: '10px 24px',
         }}>
-          <span style={{ fontSize: '16px', color: '#0E7580', fontWeight: '600', letterSpacing: '0.08em' }}>
+          <span style={{ fontSize: '16px', color: '#3D6C7B', fontWeight: '600', letterSpacing: '0.08em' }}>
             ✦  ACESSO GRATUITO  ✦
           </span>
         </div>

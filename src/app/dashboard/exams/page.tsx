@@ -668,7 +668,7 @@ export default function ExamsPage() {
       {/* ── Aba: Resultados (lista agrupada por ano) ───────────────────────── */}
       {activeTab === 'results' && (loadingExams ? (
         <div className="flex flex-col gap-3">
-          {[1, 2, 3].map(i => <Card key={i} padding="none" className="h-[72px] rounded-2xl animate-pulse" style={{ background: '#EDE6DA' }} />)}
+          {[1, 2, 3].map(i => <Card key={i} padding="none" className="h-[72px] rounded-2xl animate-pulse" style={{ background: '#F0E9DC' }} />)}
         </div>
       ) : exams.length === 0 ? (
         <Card padding="2xl" className="text-center">

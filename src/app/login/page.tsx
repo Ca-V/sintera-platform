@@ -56,7 +56,7 @@ export default function LoginPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: 'easeOut' }}
           className="relative text-center"
-          style={{ color: '#0A2E34' }}
+          style={{ color: '#26404A' }}
         >
           <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-6" style={{ background: 'rgba(11,90,99,0.92)' }}>
             <svg width="22" height="22" viewBox="0 0 16 16" fill="none">
@@ -69,7 +69,7 @@ export default function LoginPage() {
           <p className="font-display text-2xl font-light leading-snug mb-4 italic" style={{ color: '#123A40' }}>
             &ldquo;Sua saúde tem<br/>uma história.<br/>A SINTERA te ajuda a<br/>organizá-la e compreendê-la.&rdquo;
           </p>
-          <p className="font-body text-sm" style={{ color: 'rgba(10,46,52,0.68)' }}>Toda a sua saúde, organizada em um só lugar</p>
+          <p className="font-body text-sm" style={{ color: 'rgba(38, 64, 74,0.68)' }}>Toda a sua saúde, organizada em um só lugar</p>
         </motion.div>
       </div>
 

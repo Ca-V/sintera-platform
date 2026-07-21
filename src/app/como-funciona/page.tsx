@@ -100,7 +100,7 @@ function MockupHistory() {
               style={{
                 height: `${h}%`,
                 background: i === bars.length - 1
-                  ? 'linear-gradient(to top, #0E7580, #14746B)'
+                  ? 'linear-gradient(to top, #3D6C7B, #488593)'
                   : 'rgba(232,164,184,0.25)',
               }} />
           ))}

@@ -24,7 +24,7 @@ export function reminderEmailHtml(d: ReminderData): string {
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
         <tr><td align="center" style="padding-bottom:28px;">
           <table cellpadding="0" cellspacing="0"><tr>
-            <td style="background:linear-gradient(135deg,#0E7580,#14746B);width:32px;height:32px;border-radius:50%;text-align:center;vertical-align:middle;">
+            <td style="background:linear-gradient(135deg,#3D6C7B,#488593);width:32px;height:32px;border-radius:50%;text-align:center;vertical-align:middle;">
               <span style="color:#fff;font-size:16px;line-height:32px;">◎</span>
             </td>
             <td style="padding-left:9px;font-size:18px;font-weight:700;letter-spacing:0.2em;color:#1C1C1E;">SINTERA</td>
