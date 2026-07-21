@@ -8,7 +8,7 @@ import {
   TrendingUp, TrendingDown, Minus, HelpCircle, AlertCircle,
   Download, Printer, ChevronDown, CalendarDays,
   Pencil, Check, X, Flag, Trash2,
-  Droplet, FlaskConical, TestTube, ShieldCheck, Receipt,
+  ShieldCheck, Receipt,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { parseDateOnly, formatDateLongBR as formatDate } from '@/lib/agenda'
@@ -34,6 +34,8 @@ import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
 import MotionCard from '@/components/ui/MotionCard'
 import ConfirmDialog from '@/components/ConfirmDialog'
+import { DsThemeProvider, LaboratoryTable } from '@/lib/ui/ds'
+import type { LabRow, LabMaterialGroup } from '@/lib/ui/ds/domain'
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -195,15 +197,6 @@ function sortBiomarkers(bms: Biomarker[]): Biomarker[] {
 // variáveis de um mesmo painel juntas, em vez de uma lista solta. Só apresentação:
 // rótulos legíveis para os códigos que já existem em biomarker_catalog.
 
-// Ícone por material. Fallback cobre qualquer tipo futuro (fezes, saliva, líquor…).
-// (rótulo/ordem do material vêm do catálogo via CatalogLabels — ícone é presentação.)
-const SPECIMEN_META: Record<string, { Icon: React.ComponentType<{ size?: number; className?: string }>; color: string }> = {
-  sangue:    { Icon: Droplet,      color: 'text-red-400' },
-  urina:     { Icon: FlaskConical, color: 'text-amber-500' },
-  urina_24h: { Icon: FlaskConical, color: 'text-amber-500' },
-}
-const SPECIMEN_FALLBACK = { Icon: TestTube, color: 'text-mauve' }
-
 /** Suaviza valores descritivos em CAIXA ALTA (comuns em laudos) para caixa de frase. */
 function prettyValueText(s: string): string {
   const t = s.trim()
@@ -265,6 +258,41 @@ function groupByExam(bms: Biomarker[], labels: CatalogLabels): ExamGroup[] {
   return [...mats.values()]
     .sort((a, b) => a.rank - b.rank || a.label.localeCompare(b.label, 'pt-BR'))
     .map(g => ({ key: g.key, label: g.label, iconKey: g.iconKey, exams: g.exams }))
+}
+
+// Mapeamento FIEL biomarcador → linha da LaboratoryTable (DS-002). Preserva a interpretação já calculada
+// (não recomputa), os tipos de resultado, a referência do laudo e o link para a Evolução. A copy (rótulo
+// descritivo, unidade) continua vindo daqui — o DS só dá o tratamento visual.
+const INTERP_TO_STATUS: Record<string, 'within' | 'below' | 'above' | 'unknown'> = {
+  acima_da_referencia: 'above', abaixo_da_referencia: 'below', dentro_da_referencia: 'within',
+}
+function biomarkerKind(b: Biomarker): 'numeric' | 'qualitative' | 'missing' | 'failed' {
+  return b.result_type === 'qualitative' ? 'qualitative'
+    : b.result_type === 'missing' ? 'missing'
+    : b.result_type === 'extraction_failed' ? 'failed' : 'numeric'
+}
+function toLabGroups(bms: Biomarker[], labels: CatalogLabels): LabMaterialGroup[] {
+  return groupByExam(bms, labels).map(mat => ({
+    material: mat.label,
+    exams: mat.exams.map(ex => ({
+      label: ex.label,
+      rows: ex.items.map((b): LabRow => {
+        const dv = displayValue(b)
+        const cfg = getInterpConfig(b)
+        const hasRange = b.reference_source !== 'ausente' && (b.reference_min !== null || b.reference_max !== null)
+        return {
+          name: b.name,
+          value: dv.main ?? '',
+          unit: dv.unit ?? undefined,
+          kind: biomarkerKind(b),
+          status: INTERP_TO_STATUS[b.interpretation ?? ''] ?? 'unknown',
+          statusText: cfg.label,
+          refText: hasRange ? `${formatRef(b.reference_min, b.reference_max)}${b.unit ? ` ${b.unit}` : ''}` : undefined,
+          href: b.result_type === 'numeric' ? `/dashboard/saude/${encodeURIComponent(normalizeName(b.name))}` : undefined,
+        }
+      }),
+    })),
+  }))
 }
 
 // ── Componente principal ──────────────────────────────────────────────────────
@@ -1063,83 +1091,17 @@ export default function ExamDetailPage() {
             <h2 className="font-display text-base font-semibold text-onyx">Resultados estruturados</h2>
           </div>
 
-          {/* Agrupado por material (sangue/urina) e painel — deixa claro de qual exame
-              cada biomarcador veio e mantém as variáveis do mesmo painel juntas */}
-          {groupByExam(biomarkers, labels).map(mat => {
-            const sm = SPECIMEN_META[mat.iconKey] ?? SPECIMEN_FALLBACK
-            const SpecIcon = sm.Icon
-            return (
-            <div key={mat.key}>
-              {/* Cabeçalho do MATERIAL (do laudo; fallback ao catálogo no legado) */}
-              <div className="px-5 py-2.5 bg-ivory border-b border-border/50 flex items-center gap-2">
-                <SpecIcon size={15} className={`${sm.color} flex-shrink-0`} />
-                <h3 className="font-body text-xs font-semibold text-onyx/70 uppercase tracking-wider">{mat.label}</h3>
-              </div>
-
-              {mat.exams.map(ex => (
-                <div key={ex.key}>
-                  {/* Nome do EXAME informado no laudo (ausente no legado) */}
-                  {ex.label && (
-                    <p className="px-5 pt-3 pb-1 font-body text-[11px] font-semibold text-mauve uppercase tracking-wide">
-                      {ex.label}
-                    </p>
-                  )}
-
-                  <div className="divide-y divide-border/30">
-                    {ex.items.map((b, i) => {
-                      const cfg  = getInterpConfig(b)
-                      const Icon = cfg.Icon
-                      const dv   = displayValue(b)
-                      // A faixa só é mostrada quando o laudo realmente a trouxe.
-                      const hasRange = b.reference_source !== 'ausente' &&
-                        (b.reference_min !== null || b.reference_max !== null)
-
-                      return (
-                        <motion.div key={b.id}
-                          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.01 + i * 0.008 }}
-                          className="px-5 py-3 hover:bg-blush/20 transition-colors">
-
-                          {/* Nome do biomarcador — numérico linka para a EVOLUÇÃO (série no tempo) */}
-                          {b.result_type === 'numeric' ? (
-                            <Link href={`/dashboard/saude/${encodeURIComponent(normalizeName(b.name))}`}
-                              className="font-body text-sm font-medium text-onyx hover:text-petal inline-flex items-center gap-1 group/bm"
-                              title="Ver evolução no tempo">
-                              {b.name}
-                              <TrendingUp size={12} className="text-mauve/40 group-hover/bm:text-petal transition-colors" />
-                            </Link>
-                          ) : (
-                            <p className="font-body text-sm font-medium text-onyx">{b.name}</p>
-                          )}
-
-                          {/* Resultado — protagonista; número e texto com o MESMO
-                              tratamento (valor grande, unidade sempre pequena) */}
-                          <p className="font-body text-xl font-semibold text-onyx mt-0.5 leading-tight">
-                            {dv.main !== null
-                              ? <>{dv.main}{dv.unit ? <span className="text-mauve text-sm font-normal ml-1">{dv.unit}</span> : null}</>
-                              : <span className="text-mauve/40 font-normal">—</span>
-                            }
-                          </p>
-
-                          {/* Referência + status numa linha discreta (não rouba atenção do valor) */}
-                          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
-                            {hasRange && (
-                              <span className="font-body text-[11px] text-mauve">
-                                Referência informada: {formatRef(b.reference_min, b.reference_max)}{b.unit ? ` ${b.unit}` : ''}
-                              </span>
-                            )}
-                            <span className={`inline-flex items-center gap-1 font-body text-[11px] ${cfg.color}`}>
-                              {Icon && <Icon size={11} className="flex-shrink-0" />}
-                              {cfg.label}
-                            </span>
-                          </div>
-                        </motion.div>
-                      )
-                    })}
-                  </div>
-                </div>
-              ))}
+          {/* Resultados — LaboratoryTable (DS-002): leitura densa agrupada por material→exame, com tipos de
+              resultado, status descritivo (copy da tela) e nome numérico linkado à Evolução. Fiel ao laudo. */}
+          <DsThemeProvider mode="light">
+            <div className="px-5 py-4 overflow-x-auto">
+              <LaboratoryTable
+                descriptive
+                groups={toLabGroups(biomarkers, labels)}
+                renderLink={({ href, style, children }) => <Link href={href} style={style}>{children}</Link>}
+              />
             </div>
-          )})}
+          </DsThemeProvider>
 
           {/* Rodapé com contagem — E5 homologação. "Resultados" engloba qualquer tipo de exame
               (nem todo resultado é biomarcador). A origem é descrita em linguagem humana, não técnica. */}

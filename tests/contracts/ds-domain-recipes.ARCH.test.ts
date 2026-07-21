@@ -3,7 +3,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   getTheme, contrastRatio, WCAG,
-  classifyValue, statusTreatment, labValueCell, labGroupHeader, timelineRow, biomarkerCard, indicator,
+  classifyValue, statusTreatment, labValueCell, labGroupHeader, labName, timelineRow, biomarkerCard, indicator,
   healthEvent, longitudinalChart, clinicalDocumentCard, observationCard,
   type Theme, type ValueStatus,
 } from '../../packages/design-system/src'
@@ -61,6 +61,11 @@ describe('ARCH · domínio — tratamento visual e acessibilidade', () => {
       expect(labValueCell(t, { kind: 'failed' }).flag).toBeNull()
       // cabeçalho de grupo: material e exame com tratamentos distintos
       expect(labGroupHeader(t, { level: 'material' }).title.style).not.toBe(labGroupHeader(t, { level: 'exam' }).title.style)
+      // capacidades opcionais por props: nome interativo (link) e linha de status descritivo
+      expect(labName(t, { interactive: true }).color).toBe(t.color.text.link)
+      expect(labName(t, { interactive: false }).color).toBe(t.color.text.default)
+      expect(labValueCell(t, { kind: 'numeric', status: 'above' }).statusLine.color).toBe(t.color.badge.attention.text)
+      expect(labValueCell(t, { kind: 'numeric', status: 'within' }).statusLine.color).toBe(t.color.text.muted)
     })
 
     it(`[${mode}] demais componentes derivam do tema`, () => {

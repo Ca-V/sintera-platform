@@ -49,19 +49,28 @@ export interface LabCellSpec {
   reference: TextSpec
   flag: { backgroundColor: string; textColor: string } | null // só numérico fora da referência
   trend: (IconSpec & { direction: Trend }) | null
+  statusLine: TextSpec // modo descritivo: cor do rótulo de status (o TEXTO vem da tela)
   alignEnd: boolean
   subdued: boolean // qualitativo/ausente/falha → apresentação discreta (não é destaque)
 }
 export function labValueCell(t: SinteraTheme, opts: { kind?: LabResultKind; status?: ValueStatus; trend?: Trend } = {}): LabCellSpec {
   const kind = opts.kind ?? 'numeric'
+  const status = opts.status ?? 'within'
+  const statusColor = kind === 'failed'
+    ? t.color.badge.attention.text
+    : kind !== 'numeric'
+      ? t.color.text.muted
+      : status === 'below' ? t.color.badge.info.text : status === 'above' ? t.color.badge.attention.text : t.color.text.muted
+  const statusLine: TextSpec = { style: t.typography.caption, color: statusColor }
   if (kind === 'numeric') {
-    const tr = statusTreatment(t, opts.status ?? 'within')
+    const tr = statusTreatment(t, status)
     return {
       value: { style: t.typography.numeric.primary, color: tr.textColor },
       unit: { style: t.typography.numeric.secondary, color: t.color.text.muted },
       reference: { style: t.typography.numeric.reference, color: t.color.text.faint },
       flag: tr.soft && tr.flagText ? { backgroundColor: tr.soft, textColor: tr.flagText } : null,
       trend: trendIcon(t, opts.trend ?? 'none'),
+      statusLine,
       alignEnd: true,
       subdued: false,
     }
@@ -74,9 +83,15 @@ export function labValueCell(t: SinteraTheme, opts: { kind?: LabResultKind; stat
     reference: { style: t.typography.numeric.reference, color: t.color.text.faint },
     flag: null,
     trend: null,
+    statusLine,
     alignEnd: kind !== 'qualitative',
     subdued: true,
   }
+}
+// Nome do analito — opcionalmente INTERATIVO (link para a Evolução). O href/handler é do adaptador/tela;
+// a recipe só define a affordance visual (cor de link vs texto padrão).
+export function labName(t: SinteraTheme, opts: { interactive?: boolean } = {}): TextSpec {
+  return { style: t.typography.bodySmall, color: opts.interactive ? t.color.text.link : t.color.text.default }
 }
 export interface LabHeaderSpec { label: TextSpec; alignEnd: boolean }
 export function labHeader(t: SinteraTheme, opts: { alignEnd?: boolean } = {}): LabHeaderSpec {
