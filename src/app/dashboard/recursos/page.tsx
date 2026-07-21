@@ -440,7 +440,7 @@ export default function RecursosPage() {
       />
 
       {showForm && (
-        <Card padding="md" className="space-y-3">
+        <Card padding="relaxed" className="space-y-3">
           {scanning && (
             <div className="flex items-center gap-2 text-petal font-body text-xs">
               <Loader2 size={14} className="animate-spin" /> Lendo a foto…
@@ -619,7 +619,7 @@ export default function RecursosPage() {
       )}
 
       {loading ? (
-        <Card padding="2xl" className="text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
+        <Card padding="none" className="p-10 text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
       ) : items.length === 0 ? (
         <EmptyState
           icon={<Package size={26} className="text-petal" />}

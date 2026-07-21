@@ -409,11 +409,11 @@ function LegacyTimeline() {
       )}
 
       {loading ? (
-        <Card padding="2xl" className="text-center flex items-center justify-center">
+        <Card padding="none" className="p-10 text-center flex items-center justify-center">
           <Loader2 size={24} className="animate-spin text-petal" />
         </Card>
       ) : history.length === 0 ? (
-        <Card padding="2xl" className="text-center">
+        <Card padding="none" className="p-10 text-center">
           <div className="w-14 h-14 rounded-2xl gradient-sintera-soft flex items-center justify-center mx-auto mb-4">
             <Clock size={26} className="text-petal" />
           </div>

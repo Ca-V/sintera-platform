@@ -110,7 +110,7 @@ export default function OmicsPanelPage() {
       </Link>
 
       {/* Nível 1 — resumo do painel */}
-      <Card padding="lg">
+      <Card padding="none" className="p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-4 min-w-0">
             <div className="w-12 h-12 rounded-2xl bg-lavender-light flex items-center justify-center flex-shrink-0">
@@ -155,7 +155,7 @@ export default function OmicsPanelPage() {
 
       {/* Níveis 2 e 3 — categorias → features */}
       {categories.length === 0 ? (
-        <Card padding="xl" className="text-center">
+        <Card padding="none" className="p-8 text-center">
           <p className="font-body text-sm text-mauve">Nenhum resultado neste painel ainda.</p>
           <p className="font-body text-xs text-mauve mt-1">Use <strong>Adicionar resultado</strong> acima.</p>
         </Card>
@@ -322,7 +322,7 @@ function AddResult({ panelId, domain, defaultDate, onSaved }: {
   )
 
   return (
-    <Card padding="md" className="space-y-3 w-full">
+    <Card padding="relaxed" className="space-y-3 w-full">
       <div className="flex items-center justify-between">
         <p className="font-body text-sm font-semibold text-onyx">Adicionar resultado</p>
         <button onClick={() => setShow(false)} className="text-mauve hover:text-onyx"><X size={16} /></button>
@@ -437,7 +437,7 @@ function ImportResults({ panelId, onDone }: { panelId: string; onDone: () => voi
       {msg && <p className="font-body text-xs text-petal mt-2">{msg}</p>}
       {err && <p className="font-body text-xs text-red-500 mt-2">{err}</p>}
       {showVersions && versions.length > 0 && (
-        <Card padding="sm" className="mt-2 space-y-1.5">
+        <Card padding="default" className="mt-2 space-y-1.5">
           {versions.map(v => (
             <div key={v.version_number} className="flex items-center justify-between gap-3">
               <div className="min-w-0">

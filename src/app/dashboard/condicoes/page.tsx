@@ -277,7 +277,7 @@ export default function CondicoesPage() {
       {scanInfo && !showForm && <p className="font-body text-xs text-onyx/60">{scanInfo}</p>}
 
       {showForm && (
-        <Card padding="md" className="space-y-3">
+        <Card padding="relaxed" className="space-y-3">
           {pendingFile && (
             <div className="flex items-start gap-2.5 rounded-xl border border-petal/30 bg-blush px-3 py-2.5">
               <FileText size={16} className="text-petal flex-shrink-0 mt-0.5" />
@@ -341,7 +341,7 @@ export default function CondicoesPage() {
       )}
 
       {loading ? (
-        <Card padding="2xl" className="text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
+        <Card padding="none" className="p-10 text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
       ) : (
         <div className="space-y-6">
           <div>

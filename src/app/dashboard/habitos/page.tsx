@@ -163,7 +163,7 @@ export default function HabitosPage() {
         } />
 
       {showForm && (
-        <Card padding="md" className="space-y-3">
+        <Card padding="relaxed" className="space-y-3">
           <div>
             <label className="font-body text-xs text-mauve block mb-1.5">Categoria</label>
             <div className="flex flex-wrap gap-1.5">
@@ -213,11 +213,11 @@ export default function HabitosPage() {
       )}
 
       {loading ? (
-        <Card padding="2xl" className="text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
+        <Card padding="none" className="p-10 text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
       ) : items.length > 0 ? (
         <div className="space-y-2">{items.map(card)}</div>
       ) : (
-        <Card padding="2xl" className="text-center space-y-1">
+        <Card padding="none" className="p-10 text-center space-y-1">
           <p className="font-body text-sm text-mauve">Nenhum hábito registrado ainda.</p>
           <p className="font-body text-xs text-mauve">Use “Adicionar” para registrar atividade física, sono, alimentação e outros.</p>
         </Card>

@@ -118,7 +118,7 @@ function ConexoesInner() {
       />
 
       {justConnected && (
-        <Card padding="md" className="border-petal/30 bg-blush/60">
+        <Card padding="relaxed" className="border-petal/30 bg-blush/60">
           <div className="flex items-start gap-3">
             <Sparkles size={20} className="text-petal flex-shrink-0 mt-0.5" />
             <div className="space-y-1">
@@ -134,7 +134,7 @@ function ConexoesInner() {
       )}
 
       {connectError && (
-        <Card padding="md" className="border-gold/40 bg-warm/50">
+        <Card padding="relaxed" className="border-gold/40 bg-warm/50">
           <div className="flex items-start gap-3">
             <AlertTriangle size={20} className="text-gold flex-shrink-0 mt-0.5" />
             <p className="font-body text-sm text-onyx">Não foi possível concluir a conexão. Tente novamente.</p>
@@ -143,13 +143,13 @@ function ConexoesInner() {
       )}
 
       {loading ? (
-        <Card padding="2xl" className="text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
+        <Card padding="none" className="p-10 text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
       ) : error ? (
-        <Card padding="lg" className="text-center"><p className="font-body text-sm text-mauve">{error}</p></Card>
+        <Card padding="none" className="p-6 text-center"><p className="font-body text-sm text-mauve">{error}</p></Card>
       ) : (
         <div className="space-y-4">
           {connectors.map((c) => (
-            <Card key={c.source} padding="lg" className="space-y-4">
+            <Card key={c.source} padding="none" className="p-6 space-y-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <h2 className="font-display text-lg font-semibold text-onyx">{c.label}</h2>
@@ -213,7 +213,7 @@ function ConexoesInner() {
 
 export default function ConexoesPage() {
   return (
-    <Suspense fallback={<div className="max-w-2xl mx-auto px-4 py-8"><Card padding="2xl" className="text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card></div>}>
+    <Suspense fallback={<div className="max-w-2xl mx-auto px-4 py-8"><Card padding="none" className="p-10 text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card></div>}>
       <ConexoesInner />
     </Suspense>
   )

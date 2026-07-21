@@ -736,7 +736,7 @@ export default function ExamDetailPage() {
       {/* Q1 — Pedido de ORIGEM (só para RESULTADOS). O pedido permanece como registro histórico; aqui só a
           rastreabilidade origem↔resultado (quem solicitou, quando). Vincular marca o pedido como finalizado. */}
       {!isOrderDoc && (
-        <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} padding="md" className="print:hidden">
+        <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} padding="relaxed" className="print:hidden">
           <div className="flex items-center gap-2 mb-2">
             <FileText size={15} className="text-gold" />
             <h2 className="font-display text-base font-semibold text-onyx">Pedido de origem</h2>
@@ -784,7 +784,7 @@ export default function ExamDetailPage() {
       )}
 
       {/* FB-001: Financeiro do exame — seção proeminente (valor pago · documento fiscal · recorrência) */}
-      <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} padding="md" className="print:hidden">
+      <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} padding="relaxed" className="print:hidden">
         <div className="flex items-center gap-2 mb-3">
           <Receipt size={16} className="text-petal" />
           <h2 className="font-display text-base font-semibold text-onyx">Financeiro e acompanhamento</h2>
@@ -858,7 +858,7 @@ export default function ExamDetailPage() {
 
       {/* Cabeçalho do exame */}
       <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-        padding="lg">
+        padding="none" className="p-6">
         <div className="flex flex-col gap-4">
           <div className="flex items-start gap-4 min-w-0">
             <div className="w-12 h-12 rounded-2xl bg-blush flex items-center justify-center flex-shrink-0">
@@ -1106,7 +1106,7 @@ export default function ExamDetailPage() {
       ) : hasClinical ? null : (analyzing || exam?.status === 'processing' || exam?.status === 'pending') ? (
         /* P3 — Estado de processamento (auto-análise em andamento; 'pending' evita flash do estado vazio) */
         <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          padding="2xl" className="text-center">
+          padding="none" className="p-10 text-center">
           <Loader2 size={40} className="text-petal mx-auto mb-3 animate-spin" />
           <p className="font-body text-sm font-semibold text-onyx mb-1">Analisando seu exame…</p>
           <p className="font-body text-xs text-mauve">A SINTERA está estruturando os resultados do seu documento. Isso leva alguns segundos.</p>
@@ -1119,7 +1119,7 @@ export default function ExamDetailPage() {
         if (completeness === 'document_only' && exam?.status !== 'error') {
           return (
             <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-              padding="2xl" className="text-center">
+              padding="none" className="p-10 text-center">
               <FileText size={40} className="text-petal/70 mx-auto mb-3" />
               <p className="font-body text-sm font-semibold text-onyx mb-1">Documento disponível para consulta</p>
               <p className="font-body text-xs text-mauve max-w-md mx-auto">
@@ -1136,7 +1136,7 @@ export default function ExamDetailPage() {
         }
         return (
           <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-            padding="2xl" className="text-center">
+            padding="none" className="p-10 text-center">
             <FileText size={40} className="text-border mx-auto mb-3" />
             <p className="font-body text-sm font-semibold text-onyx mb-1">Nenhum resultado estruturado</p>
             <p className="font-body text-xs text-mauve">

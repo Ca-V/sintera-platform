@@ -84,7 +84,7 @@ const priorityDot: Record<Priority, string> = {
 
 export default function InsightsPanel() {
   return (
-    <Card padding="md">
+    <Card padding="relaxed">
       <div className="flex items-center justify-between mb-5">
         <div>
           <h3 className="text-sm font-body font-semibold text-onyx">Insights</h3>

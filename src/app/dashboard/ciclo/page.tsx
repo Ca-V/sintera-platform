@@ -231,7 +231,7 @@ export default function CicloPage() {
         subtitle={<>Acompanhe seu ciclo menstrual e seus métodos contraceptivos. A SINTERA organiza e lembra — não prescreve nem interpreta.</>} />
 
       {loading ? (
-        <Card padding="2xl" className="text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
+        <Card padding="none" className="p-10 text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
       ) : (
         <>
           {/* ───────── Contracepção ───────── */}
@@ -248,7 +248,7 @@ export default function CicloPage() {
             </div>
 
             {showForm && (
-              <Card padding="sm" className="space-y-3 mb-3">
+              <Card padding="default" className="space-y-3 mb-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label htmlFor="ciclo-metodo" className="font-body text-xs text-mauve block mb-1">Método</label>
@@ -376,15 +376,15 @@ export default function CicloPage() {
 
             {periods.length > 0 && (
               <div className="grid grid-cols-3 gap-2 mb-3">
-                <Card padding="sm" className="text-center">
+                <Card padding="default" className="text-center">
                   <p className="font-display text-lg font-bold text-onyx leading-none">{cycleStats.last ? fmt(cycleStats.last) : '—'}</p>
                   <p className="font-body text-[11px] text-mauve mt-1">Última menstruação</p>
                 </Card>
-                <Card padding="sm" className="text-center">
+                <Card padding="default" className="text-center">
                   <p className="font-display text-lg font-bold text-onyx leading-none">{cycleStats.avg != null ? `${cycleStats.avg} d` : '—'}</p>
                   <p className="font-body text-[11px] text-mauve mt-1">Ciclo médio</p>
                 </Card>
-                <Card padding="sm" className="text-center">
+                <Card padding="default" className="text-center">
                   <p className="font-display text-lg font-bold text-onyx leading-none">{cycleStats.next ? fmt(cycleStats.next) : '—'}</p>
                   <p className="font-body text-[11px] text-mauve mt-1">Próxima (estimada)</p>
                 </Card>

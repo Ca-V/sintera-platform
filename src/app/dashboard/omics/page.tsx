@@ -106,7 +106,7 @@ export default function OmicsListPage() {
         } />
 
       {showForm && (
-        <Card padding="md" className="space-y-3">
+        <Card padding="relaxed" className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label htmlFor="omics-tipo" className="font-body text-xs text-mauve block mb-1">Tipo de ômica</label>
@@ -175,9 +175,9 @@ export default function OmicsListPage() {
       )}
 
       {loading ? (
-        <Card padding="2xl" className="text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
+        <Card padding="none" className="p-10 text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
       ) : panels.length === 0 ? (
-        <Card padding="xl" className="text-center space-y-1">
+        <Card padding="none" className="p-8 text-center space-y-1">
           <p className="font-body text-sm text-mauve">Nenhum exame de ômica registrado ainda.</p>
           <p className="font-body text-xs text-mauve">Toque em <strong>Adicionar exame</strong> e anexe o laudo (PDF, foto, CSV ou JSON).</p>
         </Card>

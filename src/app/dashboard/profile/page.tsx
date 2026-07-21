@@ -88,7 +88,7 @@ export default function ProfilePage() {
 
       {/* Avatar + info principal */}
       <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-        padding="lg">
+        padding="none" className="p-6">
         <div className="flex items-center gap-5">
           <div className="w-16 h-16 rounded-full gradient-sintera flex items-center justify-center shadow-lg flex-shrink-0">
             <span className="text-white font-display text-2xl font-semibold">{initials}</span>
@@ -157,7 +157,7 @@ export default function ProfilePage() {
 
       {/* Informações da conta */}
       <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-        padding="lg" className="space-y-4">
+        padding="none" className="p-6 space-y-4">
         <h2 className="font-body text-xs font-semibold text-onyx/50 uppercase tracking-wider">Informações da conta</h2>
 
         <div className="grid sm:grid-cols-2 gap-3">
@@ -187,7 +187,7 @@ export default function ProfilePage() {
       {/* Link para configurações */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
         <ActionCard href="/dashboard/configuracoes"
-          padding="sm" className="flex items-center justify-between">
+          padding="default" className="flex items-center justify-between">
           <div>
             <p className="font-body text-sm font-semibold text-onyx">Configurações da conta</p>
             <p className="font-body text-xs text-mauve mt-0.5">Alterar senha, privacidade, excluir conta</p>

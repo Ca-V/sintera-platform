@@ -51,7 +51,7 @@ export default function WeeklyChart() {
   }))
 
   return (
-    <Card padding="md">
+    <Card padding="relaxed">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>

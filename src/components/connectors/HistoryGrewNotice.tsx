@@ -10,7 +10,7 @@ import { Card } from "@/lib/ui/ds"
 export default function HistoryGrewNotice({ count }: { count: number }) {
   if (count <= 0) return null
   return (
-    <Card padding="md" className="border-petal/30 bg-blush/50">
+    <Card padding="relaxed" className="border-petal/30 bg-blush/50">
       <div className="flex items-start gap-3">
         <Sparkles size={18} className="text-petal flex-shrink-0 mt-0.5" />
         <div className="flex-1 min-w-0 space-y-0.5">

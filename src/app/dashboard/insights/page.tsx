@@ -149,7 +149,7 @@ export default function InsightsPage() {
         // ── Estado vazio honesto ─────────────────────────────────────────────
         <>
           <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-            padding="2xl" className="text-center">
+            padding="none" className="p-10 text-center">
             <div className="w-16 h-16 rounded-2xl gradient-sintera-soft flex items-center justify-center mx-auto mb-5">
               <Sparkles size={28} className="text-petal" />
             </div>
@@ -164,7 +164,7 @@ export default function InsightsPage() {
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
             className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <ActionCard onClick={() => router.push('/dashboard/historico')}
-              padding="md" className="flex items-center gap-4 group">
+              padding="relaxed" className="flex items-center gap-4 group">
               <div className="w-10 h-10 rounded-2xl bg-blush flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
                 <TrendingUp size={18} className="text-petal" />
               </div>
@@ -176,7 +176,7 @@ export default function InsightsPage() {
             </ActionCard>
 
             <ActionCard onClick={() => router.push('/dashboard/exams')}
-              padding="md" className="flex items-center gap-4 group">
+              padding="relaxed" className="flex items-center gap-4 group">
               <div className="w-10 h-10 rounded-2xl bg-blush flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
                 <FlaskConical size={18} className="text-petal" />
               </div>
@@ -198,7 +198,7 @@ export default function InsightsPage() {
             return (
               <MotionCard key={it.id}
                 initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-                padding="md">
+                padding="relaxed">
                 <div className="flex items-start justify-between gap-3 mb-2">
                   {flag && (
                     <span className={`font-body text-xs font-semibold px-2.5 py-1 rounded-full border ${flag.cls}`}>

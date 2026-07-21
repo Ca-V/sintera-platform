@@ -18,7 +18,7 @@ type AsLink = Common & { href: string } & Omit<ComponentProps<typeof Link>, keyo
 // `<button|Link className="ds-card …hover:shadow-md group">`.
 export default function ActionCard(props: AsButton | AsLink) {
   if (props.href !== undefined) {
-    const { padding, className, children, ...rest } = props
+    const { padding = 'relaxed', className, children, ...rest } = props
     return (
       <Link className={cardClassName(padding, cn(INTERACTIVE, className))} {...rest}>
         {children}
@@ -27,7 +27,7 @@ export default function ActionCard(props: AsButton | AsLink) {
   }
   // href descartado no ramo button (discriminante da união); não vai ao <button>.
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { padding, className, children, href: _href, ...rest } = props
+  const { padding = 'relaxed', className, children, href: _href, ...rest } = props
   return (
     <button className={cardClassName(padding, cn(INTERACTIVE, className))} {...rest}>
       {children}

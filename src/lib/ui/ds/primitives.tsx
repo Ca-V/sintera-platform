@@ -37,11 +37,10 @@ export function Heading({ level = 'section', children, style }:
 //
 // Renderizado por CLASSE (`.ds-card`, gerada dos tokens em @layer components) — não inline —, para que
 // utilitárias de override (bg-*/border-*) da tela vençam e o hover/tint/contorno sejam idênticos ao antigo
-// `.card-premium` (zero-drift). O `padding` vira classe utilitária: aceita a escala de INTENÇÃO do DS e, por
-// COMPAT de migração, os nomes do DS-001 (sm/md/lg/xl/2xl); ao final da migração os call sites convergem.
+// `.card-premium` (zero-drift). O `padding` é a escala de INTENÇÃO do DS (o shim de compat do DS-001 foi removido
+// ao fim da migração; call sites com espaçamento fora da escala usam `padding="none"` + classe própria).
 const PAD_CLASS: Record<string, string> = {
-  none: '', cozy: 'p-3', default: 'p-4', relaxed: 'p-5',        // intenção (DS)
-  sm: 'p-4', md: 'p-5', lg: 'p-6', xl: 'p-8', '2xl': 'p-10',    // compat DS-001 (px exato)
+  none: '', cozy: 'p-3', default: 'p-4', relaxed: 'p-5',
 }
 export type CardPadding = keyof typeof PAD_CLASS
 export type CardProps = { padding?: CardPadding }

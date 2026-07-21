@@ -153,7 +153,7 @@ export default function SinaisVitaisPage() {
       </Link>
 
       {showForm && (
-        <Card padding="md" className="space-y-3">
+        <Card padding="relaxed" className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label htmlFor="vital-metric" className="font-body text-xs text-mauve block mb-1">Sinal vital</label>
@@ -211,7 +211,7 @@ export default function SinaisVitaisPage() {
       )}
 
       {loading ? (
-        <Card padding="2xl" className="text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
+        <Card padding="none" className="p-10 text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
       ) : items.length === 0 ? (
         <EmptyState icon={<HeartPulse size={28} className="text-petal" />} title="Nenhum sinal vital ainda"
           message={<>Registre um sinal vital. Use <strong>Adicionar</strong>.</>} />

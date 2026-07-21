@@ -417,7 +417,7 @@ export default function MedidasPage() {
       {/* BOD-001 área ① — Resumo atual: último valor por indicador + origem + confiabilidade + tendência.
           IMC entra como indicador CALCULADO (peso ÷ altura²) — sem card duplicado. */}
       {!loading && (summaryCards.length > 0 || imcVal != null) && (
-        <Card padding="md" className="space-y-3">
+        <Card padding="relaxed" className="space-y-3">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-lavender-light flex items-center justify-center flex-shrink-0">
               <Activity size={16} className="text-lavender" />
@@ -474,7 +474,7 @@ export default function MedidasPage() {
           nutricional, bariátrica, ganho de massa, reabilitação…). Nesta 1ª versão o objetivo é o PESO.
           Aritmética factual sobre os registros da própria pessoa (RDC 657). */}
       {!loading && journey.currentWeight != null && (
-        <Card padding="md" className="space-y-4">
+        <Card padding="relaxed" className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-xl bg-blush flex items-center justify-center flex-shrink-0">
@@ -587,7 +587,7 @@ export default function MedidasPage() {
       {/* BOD-001 área ② — Evolução Longitudinal: seletor horizontal · gráfico com filtro de período ·
           tabela cronológica · pontos CLICÁVEIS (rastreabilidade até o exame/registro). */}
       {!loading && evoIndicators.length > 0 && (
-        <Card padding="md" className="space-y-4">
+        <Card padding="relaxed" className="space-y-4">
           <div>
             <p className="font-display text-base font-semibold text-onyx leading-none">Como cada indicador evoluiu ao longo do tempo?</p>
             <p className="font-body text-[11px] text-mauve mt-0.5">Clique num ponto para ver a origem. Abaixo, os marcos do período que podem se relacionar com a mudança.</p>
@@ -728,7 +728,7 @@ export default function MedidasPage() {
       {/* BOD-001 área ③ — Comparação entre Avaliações (snapshots A × B). Confronta retratos independentes,
           preserva a origem, evidencia indisponibilidades e NÃO normaliza entre tecnologias. */}
       {!loading && snapshots.length >= 2 && (
-        <Card padding="md" className="space-y-4">
+        <Card padding="relaxed" className="space-y-4">
           <button type="button" onClick={() => setCompareOpen(o => !o)} aria-expanded={compareOpen}
             className="w-full flex items-start justify-between gap-3 text-left">
             <span>
@@ -819,7 +819,7 @@ export default function MedidasPage() {
 
       {/* Revisão do laudo de bioimpedância escaneado */}
       {scanRows && (
-        <Section padding="md" bodyClassName="space-y-3" icon={<Camera size={16} className="text-petal" />} title="Revise os dados lidos do laudo">
+        <Section padding="relaxed" bodyClassName="space-y-3" icon={<Camera size={16} className="text-petal" />} title="Revise os dados lidos do laudo">
           <div>
             <label htmlFor="medida-scan-date" className="font-body text-xs text-mauve block mb-1">Data do exame</label>
             <input id="medida-scan-date" type="date" value={scanDate} onChange={e => setScanDate(e.target.value)}
@@ -869,7 +869,7 @@ export default function MedidasPage() {
       {scanErr && !scanRows && <p className="font-body text-xs text-red-500">{scanErr}</p>}
 
       {showForm && (
-        <Card padding="md" className="space-y-3">
+        <Card padding="relaxed" className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label htmlFor="medida-metric" className="font-body text-xs text-mauve block mb-1">Medida</label>
@@ -955,7 +955,7 @@ export default function MedidasPage() {
       )}
 
       {loading ? (
-        <Card padding="2xl" className="text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
+        <Card padding="none" className="p-10 text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
       ) : items.length === 0 ? (
         <EmptyState icon={<Ruler size={28} className="text-petal" />} title="Nenhuma medida ainda"
           message={<>Registre uma avaliação. Use <strong>Adicionar</strong>.</>} />

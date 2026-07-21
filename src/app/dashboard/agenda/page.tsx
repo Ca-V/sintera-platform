@@ -253,7 +253,7 @@ export default function AgendaPage() {
       <ErrorBanner message={actionError} onDismiss={() => setActionError(null)} />
 
       {!loading && suggestion && !dismissed && (
-        <MotionCard initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} padding="sm"
+        <MotionCard initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} padding="default"
           className="flex items-start gap-3 border border-petal/20 bg-blush/20">
           <div className="w-9 h-9 rounded-2xl gradient-sintera-soft flex items-center justify-center flex-shrink-0">
             <Sparkles size={17} className="text-petal" />

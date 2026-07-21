@@ -118,7 +118,7 @@ export default function IndicadorDrilldownPage() {
       </Link>
 
       {!model || model.measurements.length === 0 ? (
-        <MotionCard initial={{ opacity: 0 }} animate={{ opacity: 1 }} padding="2xl" className="text-center">
+        <MotionCard initial={{ opacity: 0 }} animate={{ opacity: 1 }} padding="none" className="p-10 text-center">
           <FlaskConical size={40} className="text-border mx-auto mb-3" />
           <p className="font-body text-sm font-semibold text-onyx mb-1">Indicador não encontrado</p>
           <p className="font-body text-xs text-mauve">{model?.hasUnitMismatch ? 'Unidades diferentes entre exames — série não comparável.' : 'Não há medições numéricas para este biomarcador.'}</p>
@@ -126,7 +126,7 @@ export default function IndicadorDrilldownPage() {
       ) : (
         <>
           {/* Cabeçalho + resumo factual */}
-          <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} padding="lg">
+          <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} padding="none" className="p-6">
             <h1 className="font-body text-xl font-semibold text-onyx">{catalogNames.get(model.catalogId ?? '') ?? model.displayName}</h1>
             <p className="font-body text-sm text-mauve mt-0.5">
               {model.unit ? `${model.unit} · ` : ''}{model.measurements.length} mediç{model.measurements.length !== 1 ? 'ões' : 'ão'}
@@ -157,7 +157,7 @@ export default function IndicadorDrilldownPage() {
           </MotionCard>
 
           {/* Gráfico temporal */}
-          <MotionCard initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} padding="md">
+          <MotionCard initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} padding="relaxed">
             <p className="font-body text-sm font-semibold text-onyx mb-3">Evolução temporal</p>
             <TemporalChart points={model.measurements} />
             <p className="font-body text-[11px] text-mauve mt-2">

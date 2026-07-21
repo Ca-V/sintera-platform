@@ -188,7 +188,7 @@ export default function ConfiguracoesPage() {
 
       {/* ── Conta ── */}
       <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-        padding="lg" className="space-y-4">
+        padding="none" className="p-6 space-y-4">
         <div className="flex items-center gap-3 mb-1">
           <div className="w-8 h-8 rounded-lg bg-blush flex items-center justify-center">
             <Key size={15} className="text-petal" />
@@ -219,7 +219,7 @@ export default function ConfiguracoesPage() {
 
       {/* ── Contatos cadastrados (FB-016-3) — os DESTINOS; o canal é escolhido na Central abaixo ── */}
       <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}
-        padding="lg" className="space-y-4">
+        padding="none" className="p-6 space-y-4">
         <div className="flex items-center gap-3 mb-1">
           <div className="w-8 h-8 rounded-lg bg-blush flex items-center justify-center">
             <MessageCircle size={15} className="text-petal" />
@@ -276,7 +276,7 @@ export default function ConfiguracoesPage() {
 
       {/* ── Central de Notificações (NOTIF-001) — canal por categoria ── */}
       <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.09 }}
-        padding="lg" className="space-y-4">
+        padding="none" className="p-6 space-y-4">
         <div className="flex items-center gap-3 mb-1">
           <div className="w-8 h-8 rounded-lg bg-blush flex items-center justify-center">
             <Bell size={15} className="text-petal" />
@@ -351,7 +351,7 @@ export default function ConfiguracoesPage() {
 
       {/* ── Privacidade & Dados ── */}
       <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-        padding="lg" className="space-y-1">
+        padding="none" className="p-6 space-y-1">
         <div className="flex items-center gap-3 mb-3">
           <div className="w-8 h-8 rounded-lg bg-blush flex items-center justify-center">
             <Shield size={15} className="text-petal" />
@@ -399,7 +399,7 @@ export default function ConfiguracoesPage() {
 
       {/* ── Excluir conta ── */}
       <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-        padding="lg" className="border border-red-100">
+        padding="none" className="p-6 border border-red-100">
         <div className="flex items-center gap-3 mb-3">
           <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center">
             <AlertTriangle size={15} className="text-red-400" />

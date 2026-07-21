@@ -471,7 +471,7 @@ function LegacyReport() {
       </div>
 
       {/* Compartilhar com profissional — link revogável, somente leitura */}
-      <Card padding="md" className="mb-6 print:hidden">
+      <Card padding="relaxed" className="mb-6 print:hidden">
         <div className="flex items-center gap-2 mb-2">
           <Share2 size={16} className="text-petal" />
           <h2 className="font-display text-base font-semibold text-onyx">Compartilhar com um profissional</h2>
@@ -503,7 +503,7 @@ function LegacyReport() {
       </Card>
 
       {/* Período — parâmetro da Camada de Comunicação (aplica a todos os módulos temporais) */}
-      <Card padding="md" className="mb-6 print:hidden">
+      <Card padding="relaxed" className="mb-6 print:hidden">
         <p className="font-body text-sm font-semibold text-onyx mb-3">Período</p>
         <PeriodSelector period={period} onChange={setPeriod} />
         <p className="font-body text-[11px] text-mauve mt-3">Recorte aplicado ao relatório, à impressão/PDF e ao link compartilhado. Condições atuais e itens em uso aparecem independentemente do período.</p>
@@ -511,7 +511,7 @@ function LegacyReport() {
 
       {/* Seleção = árvore do menu lateral (UX-001): grupos expansíveis, seleção por
           grupo (tri-state) e por item, com a mesma ordem, nomenclatura e ícones. */}
-      <Card padding="md" className="mb-6 print:hidden">
+      <Card padding="relaxed" className="mb-6 print:hidden">
         <p className="font-body text-sm font-semibold text-onyx mb-2">Mostrar no relatório</p>
         <SelectionToolbar className="mb-3"
           onSelectAll={selectAllSections} onClear={clearSections} onReset={resetSections}
@@ -593,7 +593,7 @@ function LegacyReport() {
       </Card>
 
       {/* Configurações de relatório — salvar/reutilizar (discreto, recolhido por padrão) */}
-      <Card padding="sm" className="mb-6 print:hidden">
+      <Card padding="default" className="mb-6 print:hidden">
         <button type="button" onClick={() => setConfigOpen(o => !o)} aria-expanded={configOpen} className="w-full flex items-center justify-between gap-2 text-left">
           <div className="min-w-0">
             <p className="font-body text-sm font-semibold text-onyx">Configurações de relatório</p>

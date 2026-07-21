@@ -161,7 +161,7 @@ function LegacyDashboard() {
       {/* Como usar a SINTERA — orientação de primeiros passos (dispensável) */}
       {showGuide && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.01 }}>
-          <MotionCard padding="lg" className="relative border border-petal/15 bg-blush/15">
+          <MotionCard padding="none" className="p-6 relative border border-petal/15 bg-blush/15">
             <button onClick={dismissGuide} aria-label="Dispensar"
               className="absolute top-3 right-3 text-mauve/50 hover:text-onyx transition-colors"><X size={15} /></button>
             <p className="font-display text-base font-semibold text-onyx mb-1">Como usar a SINTERA</p>
@@ -198,7 +198,7 @@ function LegacyDashboard() {
 
       {/* Centro de Entrada — entrada unificada de documentos */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.02 }}>
-        <ActionCard onClick={() => setIntakeOpen(true)} padding="sm"
+        <ActionCard onClick={() => setIntakeOpen(true)} padding="default"
           className="flex items-center gap-3 group">
           <div className="w-11 h-11 rounded-2xl gradient-sintera flex items-center justify-center flex-shrink-0">
             <FilePlus size={20} className="text-white" />
@@ -216,7 +216,7 @@ function LegacyDashboard() {
       {/* Próximo na Agenda — sensível ao tempo */}
       {!loading && journey.next && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 }}>
-          <ActionCard onClick={() => router.push('/dashboard/agenda')} padding="md"
+          <ActionCard onClick={() => router.push('/dashboard/agenda')} padding="relaxed"
             className="flex items-center gap-4 group gradient-sintera-soft">
             <div className="w-12 h-12 rounded-2xl bg-white/70 flex items-center justify-center flex-shrink-0">
               <CalendarDays size={22} className="text-petal" />
@@ -234,7 +234,7 @@ function LegacyDashboard() {
       {/* Exames aguardando extração — sensível ao tempo */}
       {!loading && stats && stats.pendingExams > 0 && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}>
-          <ActionCard onClick={() => router.push('/dashboard/exams')} padding="sm"
+          <ActionCard onClick={() => router.push('/dashboard/exams')} padding="default"
             className="flex items-center gap-3 group">
             <div className="w-9 h-9 rounded-xl bg-warm flex items-center justify-center flex-shrink-0">
               <Bell size={16} className="text-gold" />
@@ -253,7 +253,7 @@ function LegacyDashboard() {
       {/* ───────────────────────── Estado vazio ───────────────────────── */}
       {isEmpty && (
         <MotionCard initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          padding="2xl" className="text-center">
+          padding="none" className="p-10 text-center">
           <div className="w-16 h-16 rounded-2xl gradient-sintera-soft flex items-center justify-center mx-auto mb-4">
             <Upload size={28} className="text-petal" />
           </div>
@@ -285,7 +285,7 @@ function LegacyDashboard() {
               return (
                 <ActionCard key={card.href}
                   onClick={() => router.push(card.href)}
-                  padding="sm" className="flex flex-col gap-2.5 group">
+                  padding="default" className="flex flex-col gap-2.5 group">
                   <div className={`w-10 h-10 rounded-2xl ${card.tile} flex items-center justify-center group-hover:scale-105 transition-transform`}>
                     <Icon size={19} className={card.tint} />
                   </div>
@@ -305,28 +305,28 @@ function LegacyDashboard() {
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
           <p className="font-body text-sm font-semibold text-onyx mb-2.5">Resumo</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Card padding="sm" className="text-center">
+            <Card padding="default" className="text-center">
               <div className="w-9 h-9 rounded-xl bg-blush flex items-center justify-center mx-auto mb-2">
                 <FileText size={17} className="text-petal" />
               </div>
               <p className="font-display text-2xl font-bold text-onyx">{stats.totalExams}</p>
               <p className="font-body text-xs text-mauve mt-0.5">Exame{stats.totalExams !== 1 ? 's' : ''}</p>
             </Card>
-            <Card padding="sm" className="text-center">
+            <Card padding="default" className="text-center">
               <div className="w-9 h-9 rounded-xl bg-blush flex items-center justify-center mx-auto mb-2">
                 <CheckCircle size={17} className="text-petal" />
               </div>
               <p className="font-display text-2xl font-bold text-onyx">{stats.processedExams}</p>
               <p className="font-body text-xs text-mauve mt-0.5">Extraído{stats.processedExams !== 1 ? 's' : ''}</p>
             </Card>
-            <Card padding="sm" className="text-center">
+            <Card padding="default" className="text-center">
               <div className="w-9 h-9 rounded-xl bg-lavender-light flex items-center justify-center mx-auto mb-2">
                 <FlaskConical size={17} className="text-lavender" />
               </div>
               <p className="font-display text-2xl font-bold text-onyx">{stats.totalBiomarkers}</p>
               <p className="font-body text-xs text-mauve mt-0.5">Biomarcadores</p>
             </Card>
-            <Card padding="sm" className="text-center">
+            <Card padding="default" className="text-center">
               <div className="w-9 h-9 rounded-xl bg-warm flex items-center justify-center mx-auto mb-2">
                 <Clock size={17} className="text-gold" />
               </div>
@@ -389,7 +389,7 @@ function LegacyDashboard() {
         <div ref={intakeRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="O que você deseja registrar?"
           className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-onyx/30 backdrop-blur-sm outline-none"
           onClick={() => setIntakeOpen(false)}>
-          <Card padding="lg" className="w-full max-w-md max-h-[88vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+          <Card padding="none" className="p-6 w-full max-w-md max-h-[88vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex justify-end -mt-1 -mr-1 mb-1">
               <button onClick={() => setIntakeOpen(false)} aria-label="Fechar"
                 className="text-mauve/40 hover:text-onyx transition-colors"><X size={18} /></button>

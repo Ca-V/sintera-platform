@@ -11,7 +11,7 @@ interface MotionCardProps extends ComponentProps<typeof motion.div> {
 
 // Card ANIMADO (DS-002). `motion.div` + a classe do cartão DS-002 (`.ds-card`). Repassa todas as props de
 // motion (initial/animate/transition/…) e herda a escala de padding. Substitui o antigo MotionCard (DS-001).
-export default function MotionCard({ padding = 'md', className, children, ...props }: MotionCardProps) {
+export default function MotionCard({ padding = "relaxed", className, children, ...props }: MotionCardProps) {
   return (
     <motion.div className={cardClassName(padding, className)} {...props}>
       {children}

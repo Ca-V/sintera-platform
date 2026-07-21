@@ -57,7 +57,7 @@ export default function CycleArc() {
   const activePhase = PHASES.find(p => p.active)
 
   return (
-    <Card padding="md">
+    <Card padding="relaxed">
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div>

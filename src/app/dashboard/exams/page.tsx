@@ -510,7 +510,7 @@ export default function ExamsPage() {
       {/* ── Filtros (Epic Fase 1) ────────────────────────────────────────── */}
       {activeTab === 'results' && exams.length > 0 && (
         <MotionCard initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-          padding="sm" className="space-y-3">
+          padding="default" className="space-y-3">
           <div className="flex flex-wrap gap-2">
             {/* Busca por nome */}
             <div className="relative flex-1 min-w-[160px]">
@@ -585,7 +585,7 @@ export default function ExamsPage() {
 
       {/* ── Aba: Pedidos e solicitações ────────────────────────────────────── */}
       {activeTab === 'orders' && (orders.length === 0 ? (
-        <Card padding="2xl" className="text-center">
+        <Card padding="none" className="p-10 text-center">
           <FileText size={32} className="text-border mx-auto mb-3" />
           <p className="font-body text-sm font-semibold text-onyx mb-1">Nenhum pedido ou solicitação</p>
           <p className="font-body text-xs text-mauve">Pedidos médicos e guias de convênio aparecem aqui quando você os envia.</p>
@@ -671,13 +671,13 @@ export default function ExamsPage() {
           {[1, 2, 3].map(i => <Card key={i} padding="none" className="h-[72px] rounded-2xl animate-pulse" style={{ background: '#F0E9DC' }} />)}
         </div>
       ) : exams.length === 0 ? (
-        <Card padding="2xl" className="text-center">
+        <Card padding="none" className="p-10 text-center">
           <FileText size={36} className="text-border mx-auto mb-3" />
           <p className="font-body text-sm text-mauve">Nenhum exame ainda</p>
           <p className="font-body text-xs text-mauve mt-1">Adicione o primeiro exame acima</p>
         </Card>
       ) : examsByYear.length === 0 && orders.length === 0 ? (
-        <Card padding="2xl" className="text-center">
+        <Card padding="none" className="p-10 text-center">
           <Search size={32} className="text-border mx-auto mb-3" />
           <p className="font-body text-sm font-semibold text-onyx mb-1">Nenhum exame encontrado</p>
           <p className="font-body text-xs text-mauve">Tente ajustar os filtros de busca.</p>
@@ -739,7 +739,7 @@ export default function ExamsPage() {
                           // recebe o nome como string e não comporta o input embutido).
                           if (editingNameId === exam.id) {
                             return (
-                              <Card key={exam.id} padding="sm" className="flex items-center gap-2.5">
+                              <Card key={exam.id} padding="default" className="flex items-center gap-2.5">
                                 <div className="w-9 h-9 rounded-xl bg-blush flex items-center justify-center flex-shrink-0">
                                   <FileText size={17} className="text-petal" />
                                 </div>

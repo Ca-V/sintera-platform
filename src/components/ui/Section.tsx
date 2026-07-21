@@ -20,7 +20,7 @@ interface SectionProps extends Omit<CardProps, 'title'> {
 // painéis da SINTERA — [ícone em caixa] + título + ação — extraído do padrão real
 // (ex.: Configurações). Padroniza o "painel com título" hoje reimplementado à mão.
 // Container estático (herda o escopo do Card: sem polimorfismo/motion).
-export default function Section({ padding = 'md', icon, iconBox, title, action, bodyClassName, children, ...props }: SectionProps) {
+export default function Section({ padding = "relaxed", icon, iconBox, title, action, bodyClassName, children, ...props }: SectionProps) {
   const hasHeader = icon != null || title != null || action != null
   return (
     <Card padding={padding} {...props}>

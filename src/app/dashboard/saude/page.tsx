@@ -133,7 +133,7 @@ export default function IndicadoresPage() {
       {/* Módulo Histórico — visão Evolução */}
 
       {/* Cabeçalho */}
-      <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} padding="lg">
+      <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} padding="none" className="p-6">
         <div className="flex items-start gap-4">
           <div className="w-12 h-12 rounded-2xl bg-blush flex items-center justify-center flex-shrink-0">
             <Activity size={22} className="text-petal" />
@@ -158,7 +158,7 @@ export default function IndicadoresPage() {
       </MotionCard>
 
       {summaries.length === 0 ? (
-        <MotionCard initial={{ opacity: 0 }} animate={{ opacity: 1 }} padding="2xl" className="text-center">
+        <MotionCard initial={{ opacity: 0 }} animate={{ opacity: 1 }} padding="none" className="p-10 text-center">
           <FlaskConical size={40} className="text-border mx-auto mb-3" />
           <p className="font-body text-sm font-semibold text-onyx mb-1">Nenhum indicador disponível ainda</p>
           <p className="font-body text-xs text-mauve mb-5">Extraia os dados de um exame para acompanhar seus biomarcadores aqui.</p>
@@ -199,7 +199,7 @@ export default function IndicadoresPage() {
           {/* Exame → Histórico → Biomarcadores: cada EXAME é um card; dentro dele, o histórico de
               ocorrências (datas, rastreáveis ao laudo) e os biomarcadores medidos naquele exame. */}
           {examGroups.length === 0 ? (
-            <MotionCard padding="2xl" className="text-center"><p className="font-body text-xs text-mauve">Nenhum exame encontrado.</p></MotionCard>
+            <MotionCard padding="none" className="p-10 text-center"><p className="font-body text-xs text-mauve">Nenhum exame encontrado.</p></MotionCard>
           ) : examGroups.map((g, gi) => {
             const occ = occurrencesOf(g.items)
             // Resumo longitudinal (derivado; sem duplicação): o exame como ENTIDADE ao longo do tempo.

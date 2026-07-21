@@ -188,7 +188,7 @@ export default function GastosPage() {
       />
 
       {showAddInfo && (
-        <Card padding="md" className="flex items-start gap-3 border border-petal/20 bg-blush/15">
+        <Card padding="relaxed" className="flex items-start gap-3 border border-petal/20 bg-blush/15">
           <Info size={17} className="text-petal flex-shrink-0 mt-0.5" />
           <div className="flex-1 space-y-3">
             <p className="font-body text-xs text-mauve leading-relaxed">A despesa é o <strong className="text-onyx">valor pago</strong> de um evento ou de uma compra.</p>
@@ -234,7 +234,7 @@ export default function GastosPage() {
       <ErrorBanner message={actionError} onDismiss={() => setActionError(null)} />
 
       {loading ? (
-        <Card padding="2xl" className="text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
+        <Card padding="none" className="p-10 text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
       ) : items.length === 0 ? (
         <EmptyState
           icon={<Receipt size={28} className="text-petal" />}
@@ -244,7 +244,7 @@ export default function GastosPage() {
       ) : (
         <>
           {/* Seletor de ano + total */}
-          <Card padding="lg">
+          <Card padding="none" className="p-6">
             <div className="flex flex-wrap items-center gap-2 mb-4">
               {years.map(y => (
                 <button key={y} onClick={() => setYear(y)}

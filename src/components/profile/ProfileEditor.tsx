@@ -48,7 +48,7 @@ export default function ProfileEditor({ profile, onCancel, onSaved }: Props) {
   }
 
   return (
-    <Card padding="lg" className="space-y-5">
+    <Card padding="none" className="p-6 space-y-5">
       <h2 className="font-body text-sm font-semibold text-onyx/60 uppercase tracking-widest">
         Editar perfil
       </h2>
