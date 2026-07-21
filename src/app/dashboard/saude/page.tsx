@@ -9,7 +9,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Activity, TrendingUp, TrendingDown, Minus, Search, Loader2, FlaskConical } from 'lucide-react'
+import { Activity, TrendingUp, TrendingDown, Minus, Search, Loader2, FlaskConical, FileText } from 'lucide-react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { parseDateOnly } from '@/lib/agenda'
@@ -60,6 +60,8 @@ export default function IndicadoresPage() {
   const [labels, setLabels] = useState<CatalogLabels | null>(null)
   // Metadados do laudo por exam_id (derivados; sem duplicação) — laboratório e solicitante do resumo por exame.
   const [examMeta, setExamMeta] = useState<Map<string, { issuer: string | null; requester: string | null }>>(new Map())
+  // Todos os exames (para o histórico DOCUMENTAL dos que não têm biomarcadores quantitativos).
+  const [exams, setExams] = useState<{ id: string; type: string; date: string; issuer: string | null; requester: string | null }[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
 
@@ -74,7 +76,7 @@ export default function IndicadoresPage() {
         supabase.from('biomarker_catalog').select('id,specimen,category,display_name'),
         loadCatalogLabels(supabase),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (supabase as any).from('exams').select('id, issuer, requesting_physician').eq('user_id', user.id),
+        (supabase as any).from('exams').select('id, type, exam_date, created_at, issuer, requesting_physician').eq('user_id', user.id),
       ])
       if (!active) return
       if (bio.error) console.error('[SINTERA] indicadores fetch:', bio.error.message)
@@ -84,8 +86,17 @@ export default function IndicadoresPage() {
       setCatalog(cmap)
       setLabels(lbls)
       const emap = new Map<string, { issuer: string | null; requester: string | null }>()
-      for (const e of ((ex?.data ?? []) as Array<Record<string, unknown>>)) emap.set(e.id as string, { issuer: (e.issuer as string) ?? null, requester: (e.requesting_physician as string) ?? null })
+      const exList: { id: string; type: string; date: string; issuer: string | null; requester: string | null }[] = []
+      for (const e of ((ex?.data ?? []) as Array<Record<string, unknown>>)) {
+        const issuer = (e.issuer as string) ?? null, requester = (e.requesting_physician as string) ?? null
+        emap.set(e.id as string, { issuer, requester })
+        exList.push({
+          id: e.id as string, type: ((e.type as string) ?? '').trim() || 'Exame',
+          date: ((e.exam_date as string) ?? (e.created_at as string) ?? '').slice(0, 10), issuer, requester,
+        })
+      }
       setExamMeta(emap)
+      setExams(exList)
       setLoading(false)
     })()
     return () => { active = false }
@@ -124,6 +135,26 @@ export default function IndicadoresPage() {
     return [...seen.values()].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
   }
 
+  // DOCUMENTAL — exames SEM biomarcadores quantitativos: histórico longitudinal por TIPO de exame
+  // (nome · nº realizados · datas · abrir cada exame). Modelo GERAL para qualquer categoria (imagem,
+  // gráficos, densitometria etc.), sem tratamento específico por tipo. Rastreável ao laudo.
+  const biomarkerExamIds = useMemo(() => new Set(rows.map(r => r.exam_id)), [rows])
+  const documentalGroups = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    const docs = exams.filter(e => !biomarkerExamIds.has(e.id))
+    const byType = new Map<string, { type: string; occ: { examId: string; date: string }[]; issuer: string | null; requester: string | null }>()
+    for (const e of docs) {
+      if (!byType.has(e.type)) byType.set(e.type, { type: e.type, occ: [], issuer: null, requester: null })
+      byType.get(e.type)!.occ.push({ examId: e.id, date: e.date })
+    }
+    const list = [...byType.values()].map(g => {
+      g.occ.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
+      const last = docs.find(e => e.id === g.occ[0].examId)
+      return { ...g, issuer: last?.issuer ?? null, requester: last?.requester ?? null }
+    }).sort((a, b) => (a.occ[0].date < b.occ[0].date ? 1 : a.occ[0].date > b.occ[0].date ? -1 : 0))
+    return q ? list.filter(g => g.type.toLowerCase().includes(q)) : list
+  }, [exams, biomarkerExamIds, search])
+
   if (loading || !labels) return (
     <div className="flex items-center justify-center min-h-[60vh]"><Loader2 size={28} className="animate-spin text-petal" /></div>
   )
@@ -141,12 +172,12 @@ export default function IndicadoresPage() {
           <div>
             <h1 className="font-display text-xl font-semibold text-onyx">Histórico de Exames</h1>
             <p className="font-body text-sm text-mauve mt-0.5">
-              Cada exame ao longo do tempo — o panorama de todos os resultados do mesmo tipo, lado a lado,
-              para acompanhar e comparar a evolução. Sem diagnóstico.
+              Todos os seus exames ao longo do tempo — laboratoriais (com evolução e comparação dos biomarcadores)
+              e os demais (imagem, gráficos e outros) como histórico documental. Sem diagnóstico.
             </p>
           </div>
         </div>
-        {summaries.length > 0 && (
+        {(summaries.length > 0 || exams.length > 0) && (
           <div className="mt-4 relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-mauve" />
             <input
@@ -157,11 +188,11 @@ export default function IndicadoresPage() {
         )}
       </MotionCard>
 
-      {summaries.length === 0 ? (
+      {summaries.length === 0 && exams.length === 0 ? (
         <MotionCard initial={{ opacity: 0 }} animate={{ opacity: 1 }} padding="none" className="p-10 text-center">
           <FlaskConical size={40} className="text-border mx-auto mb-3" />
-          <p className="font-body text-sm font-semibold text-onyx mb-1">Nenhum indicador disponível ainda</p>
-          <p className="font-body text-xs text-mauve mb-5">Extraia os dados de um exame para acompanhar seus biomarcadores aqui.</p>
+          <p className="font-body text-sm font-semibold text-onyx mb-1">Nenhum exame ainda</p>
+          <p className="font-body text-xs text-mauve mb-5">Adicione um exame — laboratorial ou de imagem — para começar seu histórico.</p>
           <button onClick={() => router.push('/dashboard/exams')}
             className="inline-flex items-center gap-2 gradient-sintera text-white font-body text-sm font-medium px-6 py-2.5 rounded-full hover:opacity-90 transition-opacity">
             Enviar exame
@@ -196,11 +227,9 @@ export default function IndicadoresPage() {
             </MotionCard>
           )}
 
-          {/* Exame → Histórico → Biomarcadores: cada EXAME é um card; dentro dele, o histórico de
-              ocorrências (datas, rastreáveis ao laudo) e os biomarcadores medidos naquele exame. */}
-          {examGroups.length === 0 ? (
-            <MotionCard padding="none" className="p-10 text-center"><p className="font-body text-xs text-mauve">Nenhum exame encontrado.</p></MotionCard>
-          ) : examGroups.map((g, gi) => {
+          {/* Exame → Histórico → Biomarcadores: cada EXAME (laboratorial) é um card; dentro dele, o histórico
+              de ocorrências (datas, rastreáveis ao laudo) e os biomarcadores medidos naquele exame. */}
+          {examGroups.map((g, gi) => {
             const occ = occurrencesOf(g.items)
             // Resumo longitudinal (derivado; sem duplicação): o exame como ENTIDADE ao longo do tempo.
             const total = occ.length
@@ -269,6 +298,47 @@ export default function IndicadoresPage() {
               </MotionCard>
             )
           })}
+
+          {/* Exames DOCUMENTAIS (sem biomarcadores quantitativos) — histórico longitudinal por tipo. */}
+          {documentalGroups.length > 0 && examGroups.length > 0 && (
+            <p className="font-body text-[11px] font-semibold text-mauve uppercase tracking-wider pt-1">Outros exames</p>
+          )}
+          {documentalGroups.map((g, gi) => (
+            <MotionCard key={`doc:${g.type}`} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 + Math.min(gi, 6) * 0.02 }}
+              padding="none" className="overflow-hidden">
+              <div className="px-5 py-4">
+                <div className="flex items-start justify-between gap-2 flex-wrap">
+                  <div className="min-w-0">
+                    <p className="font-body text-sm font-semibold text-onyx flex items-center gap-1.5"><FileText size={14} className="text-petal flex-shrink-0" /> {g.type}</p>
+                    <p className="font-body text-[11px] text-mauve mt-0.5">Histórico documental</p>
+                  </div>
+                  <span className="font-body text-[11px] text-mauve flex-shrink-0">{g.occ.length} realizaç{g.occ.length !== 1 ? 'ões' : 'ão'}</span>
+                </div>
+
+                <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1.5">
+                  <div className="min-w-0"><p className="font-body text-[10px] text-mauve uppercase tracking-wide">Primeira realização</p><p className="font-body text-xs text-onyx font-medium truncate">{fmtFull(g.occ[g.occ.length - 1].date)}</p></div>
+                  <div className="min-w-0"><p className="font-body text-[10px] text-mauve uppercase tracking-wide">Última realização</p><p className="font-body text-xs text-onyx font-medium truncate">{fmtFull(g.occ[0].date)}</p></div>
+                  <div className="min-w-0"><p className="font-body text-[10px] text-mauve uppercase tracking-wide">Total de exames</p><p className="font-body text-xs text-onyx font-medium truncate">{g.occ.length}</p></div>
+                  {g.issuer && <div className="min-w-0"><p className="font-body text-[10px] text-mauve uppercase tracking-wide">Último local</p><p className="font-body text-xs text-onyx font-medium truncate">{g.issuer}</p></div>}
+                  {g.requester && <div className="min-w-0"><p className="font-body text-[10px] text-mauve uppercase tracking-wide">Última solicitação</p><p className="font-body text-xs text-onyx font-medium truncate">{g.requester}</p></div>}
+                </div>
+
+                <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                  <span className="font-body text-[11px] text-mauve">Histórico:</span>
+                  {g.occ.map(o => (
+                    <Link key={o.examId} href={`/dashboard/exams/${o.examId}`}
+                      className="inline-flex items-center px-2 py-0.5 rounded-full bg-ivory border border-border font-body text-[11px] text-petal hover:border-petal/40 transition-colors">
+                      {o.date ? formatDate(o.date) : 'sem data'}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </MotionCard>
+          ))}
+
+          {examGroups.length === 0 && documentalGroups.length === 0 && (
+            <MotionCard padding="none" className="p-10 text-center"><p className="font-body text-xs text-mauve">Nenhum exame encontrado.</p></MotionCard>
+          )}
 
           <div className="text-center pb-4 space-y-1">
             <p className="font-body text-xs text-mauve/40">

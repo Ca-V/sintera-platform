@@ -110,3 +110,7 @@ notifiquem ficam de fora até gerarem (Composição Corporal, Hábitos, Exames/D
 - **FB-005 (nome da seção):** sugestões — **"Dados de Dispositivos"**, **"Monitoramento Contínuo"**, **"Dados de
   Wearables"** ou **"Sinais e Atividades"**. Recomendo **"Monitoramento Contínuo"** (abrange sinais vitais,
   atividade, sono, composição corporal) e é neutro a fabricante (coerente com HIP-001).
+
+## Validação funcional pré-RN — 21/07/2026
+| ID | Área | Solicitação | Status | Notas |
+| **FB-018** | Histórico de Exames | Representar TODOS os tipos de exame (não só laboratoriais com biomarcadores). Cada tipo = card próprio (nome · nº realizados · datas · abrir histórico). Laboratoriais mantêm gráficos/evolução/comparação; demais (imagem, gráficos, densitometria etc.) = histórico longitudinal DOCUMENTAL. Modelo GERAL, não específico de mamografia. | 🟢 feito 21/07 | Auditoria: a página lia só `current_biomarkers` (numéricos) → exames sem biomarcador ficavam de fora. Menor evolução (ADITIVA, sem schema): carrega todos os `exams`; os SEM biomarcador numérico viram cards documentais agrupados por `type` (nome · nº · datas · abrir cada exame, rastreável ao laudo). Laboratoriais inalterados. Busca cobre ambos; estado vazio unificado. DS-002 preservado. tsc+suíte(798)+build verdes. |
