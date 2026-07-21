@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
   ArrowLeft, FileText, Loader2, RefreshCw, Zap,
-  TrendingUp, TrendingDown, Minus, HelpCircle, AlertCircle,
+  TrendingUp, TrendingDown, Minus, AlertCircle,
   Download, Printer, ChevronDown, CalendarDays,
   Pencil, Check, X, Flag, Trash2,
   ShieldCheck, Receipt,
@@ -34,7 +34,7 @@ import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
 import MotionCard from '@/components/ui/MotionCard'
 import ConfirmDialog from '@/components/ConfirmDialog'
-import { DsThemeProvider, LaboratoryTable } from '@/lib/ui/ds'
+import { DsThemeProvider, LaboratoryTable, Card as DsCard, Text as DsText, Numeric as DsNumeric, useDs } from '@/lib/ui/ds'
 import type { LabRow, LabMaterialGroup } from '@/lib/ui/ds/domain'
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
@@ -126,51 +126,43 @@ function calcExperimentalIndex(bms: Biomarker[]): { numerator: number; denominat
 }
 
 function IndexCard({ index }: { index: { numerator: number; denominator: number; pct: number } }) {
-  const color    = index.pct >= 80 ? 'text-petal' : index.pct >= 60 ? 'text-amber-600' : 'text-orange-500'
-  const bg       = index.pct >= 80 ? 'bg-blush border-petal/30' : index.pct >= 60 ? 'bg-amber-50 border-amber-200' : 'bg-orange-50 border-orange-200'
+  const t = useDs()
   const [tip, setTip] = useState(false)
+  // Tom factual por faixa (proporção): alto → identidade; médio → atenção; baixo → erro suave.
+  const tone = index.pct >= 80 ? t.color.identity.primary : index.pct >= 60 ? t.color.badge.attention.text : t.color.badge.error.text
   return (
-    <div className={`rounded-2xl border px-5 py-4 ${bg}`}>
-      <div className="flex items-start justify-between gap-4">
+    <DsCard>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
         <div>
-          <div className="flex items-center gap-2 mb-0.5">
-            <span className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Proporção dentro da referência</span>
-          </div>
-          <p className={`font-display text-3xl font-bold ${color}`}>{index.pct}%</p>
-          <p className="font-body text-xs text-mauve mt-0.5">{index.numerator} de {index.denominator} biomarcadores dentro da referência</p>
+          <DsText role="label" tone="muted" style={{ textTransform: 'uppercase' }}>Proporção dentro da referência</DsText>
+          <div style={{ marginTop: 2 }}><DsNumeric level="large" color={tone}>{index.pct}%</DsNumeric></div>
+          <DsText role="caption" tone="muted" block style={{ marginTop: 2 }}>{index.numerator} de {index.denominator} biomarcadores dentro da referência</DsText>
         </div>
-        {/* Tooltip — O que é isso? */}
-        <div className="relative flex-shrink-0">
-          <button
-            onClick={() => setTip(t => !t)}
-            className="w-6 h-6 rounded-full bg-white/70 border border-current/20 flex items-center justify-center text-mauve hover:text-onyx transition-colors"
-            aria-label="O que é este índice?">
-            <HelpCircle size={14} />
-          </button>
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          <button onClick={() => setTip(v => !v)} aria-label="O que é este índice?"
+            style={{ width: 24, height: 24, borderRadius: 999, border: `1px solid ${t.color.border.default}`, background: t.color.surface.base, color: t.color.text.muted, cursor: 'pointer', fontWeight: 700 }}>?</button>
           {tip && (
-            <div className="absolute right-0 top-8 z-20 w-72 bg-white rounded-2xl shadow-xl border border-border p-4">
-              <p className="font-body text-xs font-semibold text-onyx mb-2">O que é a Proporção dentro da referência?</p>
-              <p className="font-body text-xs text-mauve leading-relaxed mb-2">
+            <div style={{ position: 'absolute', right: 0, top: 32, zIndex: 20, width: 288, background: t.color.surface.base, borderRadius: 16, boxShadow: '0 8px 28px rgba(0,0,0,.16)', border: `1px solid ${t.color.border.default}`, padding: 16 }}>
+              <DsText role="bodySmall" block style={{ fontWeight: 600, marginBottom: 8 }}>O que é a Proporção dentro da referência?</DsText>
+              <DsText role="caption" tone="muted" block style={{ marginBottom: 8 }}>
                 É uma contagem simples: de todos os biomarcadores numéricos com referência impressa neste laudo, quantos estão dentro da faixa informada pelo laboratório.
-              </p>
-              <p className="font-body text-xs text-mauve leading-relaxed mb-2">
-                <strong className="text-onyx">Importante:</strong> cada laboratório usa referências próprias. Um mesmo valor pode estar “dentro” em um laudo e “fora” em outro.
-              </p>
-              <p className="font-body text-xs text-amber-700 bg-amber-50 rounded-xl px-3 py-2 leading-relaxed">
+              </DsText>
+              <DsText role="caption" tone="muted" block style={{ marginBottom: 8 }}>
+                <strong>Importante:</strong> cada laboratório usa referências próprias. Um mesmo valor pode estar “dentro” em um laudo e “fora” em outro.
+              </DsText>
+              <DsText role="caption" block style={{ color: t.color.badge.attention.text, background: t.color.badge.attention.soft, borderRadius: 12, padding: '8px 12px' }}>
                 Esta métrica não representa diagnóstico, risco ou estado geral de saúde. Não substitui avaliação médica.
-              </p>
-              <button onClick={() => setTip(false)} className="mt-2 w-full text-center font-body text-xs text-mauve hover:text-petal transition-colors">
-                Fechar
-              </button>
+              </DsText>
+              <button onClick={() => setTip(false)} style={{ marginTop: 8, width: '100%', textAlign: 'center', background: 'none', border: 'none', color: t.color.text.muted, cursor: 'pointer', font: 'inherit' }}>Fechar</button>
             </div>
           )}
         </div>
       </div>
-      <p className="font-body text-[11px] text-mauve mt-3 leading-relaxed">
+      <DsText role="caption" tone="muted" block style={{ marginTop: 12 }}>
         Métrica informativa baseada apenas na proporção de resultados numéricos dentro das referências impressas neste laudo.
         Não representa diagnóstico, risco ou estado geral de saúde. Não substitui avaliação médica.
-      </p>
-    </div>
+      </DsText>
+    </DsCard>
   )
 }
 

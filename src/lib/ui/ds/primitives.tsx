@@ -15,6 +15,12 @@ export function Text({ role = 'body', tone = 'default', block, children, style }
   return <Tag style={{ ...textStyle(spec), ...style }}>{children}</Tag>
 }
 
+export function Numeric({ level = 'primary', color, children, style }:
+  { level?: 'primary' | 'secondary' | 'reference' | 'large'; color?: string } & WithStyle) {
+  const t = useDs()
+  return <span style={{ ...textStyle({ style: t.typography.numeric[level], color: color ?? t.color.text.default }), ...style }}>{children}</span>
+}
+
 export function Heading({ level = 'section', children, style }:
   { level?: ds.HeadingLevel } & WithStyle) {
   const spec = ds.heading(useDs(), { level })
