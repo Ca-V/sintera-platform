@@ -17,6 +17,12 @@
     "plugins": [
       "expo-dev-client",
       "expo-secure-store"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "366cec46-5431-4601-9b2d-5f685f96d8bc"
+      }
+    },
+    "owner": "sintera-health-tech"
   }
 }
