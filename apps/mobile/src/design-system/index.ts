@@ -15,5 +15,13 @@ export {
 export {
   toRNShadow,
   rnElevation,
+  toRNShadowStack,
+  rnShadow,
   type RNShadowStyle,
 } from './elevation'
+export {
+  toRNGradient,
+  rnGradient,
+  angleToStartEnd,
+  type RNGradient,
+} from './gradient'
