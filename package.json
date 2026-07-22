@@ -6,9 +6,6 @@
     "packages/*",
     "apps/*"
   ],
-  "overrides": {
-    "@types/react": "$@types/react"
-  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
