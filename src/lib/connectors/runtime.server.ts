@@ -17,6 +17,7 @@ import { createWithingsConnector } from './withings/connector'
 import { createWithingsOAuthProvider } from './withings/oauth'
 import { createWithingsWebhookHandler, createWithingsWebhookSubscriber } from './withings/webhook'
 import { WITHINGS_SOURCE } from './withings/config'
+import { demoFeaturesEnabled } from '@/lib/demo'
 
 // ── Conector(es) de demonstração ────────────────────────────────────────────────────────────────
 // Mundo do mock: alguns pontos fixos de composição + uma SÉRIE DIÁRIA de peso que cresce até "agora"
@@ -32,8 +33,11 @@ const mockWorld: MockWorld = createMockWorld({
 })
 
 // ── Conectores registrados ──────────────────────────────────────────────────────────────────────
-const connectors: Connector[] = [createMockConnector(mockWorld)]
-const oauthEntries: Array<[string, OAuthProvider]> = [[MOCK_SOURCE, createMockOAuthProvider(mockWorld, systemClock)]]
+// O conector MOCK é de DEMONSTRAÇÃO: só é registrado quando demo está habilitado (dev ou flag explícita).
+// Em produção sem a flag, NÃO aparece em Conexões — nenhum usuário real pode conectá-lo/gerar dado sintético.
+const mockEnabled = demoFeaturesEnabled()
+const connectors: Connector[] = mockEnabled ? [createMockConnector(mockWorld)] : []
+const oauthEntries: Array<[string, OAuthProvider]> = mockEnabled ? [[MOCK_SOURCE, createMockOAuthProvider(mockWorld, systemClock)]] : []
 const webhookHandlers = new Map<string, WebhookHandler>()
 const webhookSubscribers = new Map<string, WebhookSubscriber>()
 

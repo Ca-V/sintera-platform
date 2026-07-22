@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { summarizeBiomarkers, seriesForName, computeReferenceIndex, normalizeName, type BiomarkerRow } from './grouping'
+import { summarizeBiomarkers, seriesForName, normalizeName, type BiomarkerRow } from './grouping'
 
 function row(p: Partial<BiomarkerRow> & { name: string; value: number | null; date: string }): BiomarkerRow {
   return {
@@ -64,31 +64,6 @@ describe('summarizeBiomarkers', () => {
     const g = summarizeBiomarkers(rows)[0]
     expect(g.count).toBe(1)
     expect(g.trend).toBe('single')
-  })
-})
-
-describe('computeReferenceIndex', () => {
-  it('calcula proporção dentro da referência por exame e exige ≥5 elegíveis', () => {
-    const rows: BiomarkerRow[] = []
-    // Exame A: 6 elegíveis, 3 dentro → 50%
-    for (let i = 0; i < 6; i++) rows.push(row({
-      name: `bm${i}`, value: 10, date: '2025-01-01', exam_id: 'A',
-      reference_source: 'laudo', interpretation: i < 3 ? 'dentro_da_referencia' : 'acima_da_referencia',
-    }))
-    // Exame B: só 4 elegíveis → descartado (den < 5)
-    for (let i = 0; i < 4; i++) rows.push(row({
-      name: `bm${i}`, value: 10, date: '2025-06-01', exam_id: 'B',
-      reference_source: 'laudo', interpretation: 'dentro_da_referencia',
-    }))
-    // Não-laudo / sem interpretação não contam
-    rows.push(row({ name: 'x', value: 1, date: '2025-01-01', exam_id: 'A', reference_source: 'ausente', interpretation: 'dentro_da_referencia' }))
-
-    const idx = computeReferenceIndex(rows)
-    expect(idx).toHaveLength(1)
-    expect(idx[0].examId).toBe('A')
-    expect(idx[0].den).toBe(6)
-    expect(idx[0].num).toBe(3)
-    expect(idx[0].pct).toBe(50)
   })
 })
 

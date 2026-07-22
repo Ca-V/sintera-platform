@@ -11,6 +11,7 @@ import { Card } from '@/lib/ui/ds'
 import MotionCard from '@/components/ui/MotionCard'
 import ActionCard from '@/components/ui/ActionCard'
 import Disclaimer from '@/components/ui/Disclaimer'
+import { demoFeaturesEnabled } from '@/lib/demo'
 
 // ai_insights tem colunas de governança que não estão nos tipos manuais
 // (ver supabase/types.generated.ts). Definimos a forma que consumimos aqui.
@@ -59,8 +60,9 @@ export default function InsightsPage() {
   const [generating, setGenerating] = useState(false)
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // Demo só liga se as funcionalidades de demonstração estiverem habilitadas (dev ou flag) E com ?demo=1.
       // eslint-disable-next-line react-hooks/set-state-in-effect -- leitura única do query param (demo) na montagem
-      setDemoMode(new URLSearchParams(window.location.search).get('demo') === '1')
+      setDemoMode(demoFeaturesEnabled() && new URLSearchParams(window.location.search).get('demo') === '1')
     }
   }, [])
 

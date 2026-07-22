@@ -4,8 +4,13 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { generateFactualDemoInsights } from '@/lib/ai/insights/demo-factual'
+import { demoFeaturesEnabled } from '@/lib/demo'
 
 export async function POST() {
+  // Geração de demonstração é bloqueada em produção (só dev ou flag explícita do desenvolvedor).
+  if (!demoFeaturesEnabled()) {
+    return NextResponse.json({ error: 'Demonstração desabilitada' }, { status: 403 })
+  }
   const supabase = await createClient()
 
   const { data: authData, error: authErr } = await supabase.auth.getUser()
