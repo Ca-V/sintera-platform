@@ -107,6 +107,43 @@ Ao transferir, garantir que o novo time tenha:
 - [ ] Entender o ciclo de trabalho (§7) e os critérios de aceite (§8).
 - [ ] Saber onde documentar decisões (§10) e como funciona a precedência (ARCH-000).
 
+## 14. Regras de Continuidade Operacional (diretriz de engenharia — OBRIGATÓRIA)
+Detalha o [[ADR-012]]. Todo componente entregue deve satisfazer o **critério orientador**:
+> *"Se um novo dev receber acesso ao repositório, à documentação e às credenciais autorizadas, deve conseguir
+> instalar, compreender, executar, manter e evoluir o sistema sem depender de explicações do dev original."*
+
+1. **Código-fonte** — tudo versionado no Git; nada importante fora do repo; sem dependência do ambiente pessoal.
+2. **Documentação contínua** — cada funcionalidade acompanha doc: finalidade · arquitetura · fluxo de execução ·
+   arquivos principais · dependências · impacto em outros módulos · decisões relevantes.
+3. **Decisões arquiteturais** — registrar problema · alternativas · justificativa · consequências (ADR ou doc de domínio).
+4. **Banco de dados** — alteração estrutural **só por migration versionada** (`supabase/migrations/`); nada manual
+   irreprodutível no painel.
+5. **Ambiente reproduzível** — recriável por: clone → instalar deps → configurar env → rodar migrations → comandos documentados.
+6. **Variáveis de ambiente** — documentadas (nome · finalidade · obrigatoriedade · serviço); **nunca** credenciais no código.
+7. **Serviços externos** — cada integração: finalidade · fluxo de auth · dependências · configuração · procedimento de substituição.
+8. **Organização do código** — estrutura consistente; evitar arquivos gigantes · duplicação · funções multi-responsabilidade · dependências circulares.
+9. **Comentários** — explicam **decisões**, não o óbvio; priorizar código legível.
+10. **Logs e erros** — tratamento consistente; logs úteis para diagnóstico **sem** expor dados sensíveis.
+11. **Deploy** — reproduzível; sem etapa manual não documentada.
+12. **Registro de mudanças** — commits descritivos; mudança estrutural reflete na documentação correspondente.
+13. **Independência do dev** — nenhuma funcionalidade depende de conhecimento exclusivo de quem a implementou.
+
+### Documentação mínima do projeto (rastreio de cobertura)
+| Tema | Documento | Status |
+|---|---|---|
+| Arquitetura geral | [ARCH-003](./ARCH-003_ARQUITETURA_GERAL_PLATAFORMA.md) · [ARCH-000](./ARCH-000_DOCUMENT_ARCHITECTURE.md) | ✅ |
+| Estrutura de pastas | GOV-002 §2 | ✅ |
+| Fluxo de autenticação | — | ⬜ a documentar (Onda 1 — Auth) |
+| Fluxo de upload | [CAP-001](./CAP-001_CAPTURA_DOCUMENTAL.md) · [CAP-002](./CAP-002_CAPTURE_HUB.md) | ✅ |
+| Processamento de documentos | [CEF-001](./CEF-001_CLINICAL_EXTRACTION_FRAMEWORK.md) · [UCDA-001](./UCDA-001_UNIVERSAL_CLINICAL_DATA_ARCHITECTURE.md) | ✅ |
+| Fluxo da IA | [AI-001](./AI-001_AI_GOVERNANCE.md) | ✅ |
+| Banco de dados | [DATA-001](./DATA-001_CANONICAL_HEALTH_DATA_MODEL.md) · [DATA-002](./DATA-002_DATA_GOVERNANCE.md) · `supabase/migrations/` | ✅ |
+| Serviços externos | [HIP-001](./HIP-001_PLATAFORMA_INTEGRACOES.md) · [ARCH-004](./ARCH-004_ARQUITETURA_INTEGRACOES.md) | ✅ |
+| Deploy · Backup · Restauração | [OPS-002](./OPS-002_RELEASE_BACKUP_RUNBOOK.md) | ✅ |
+| Convenções de desenvolvimento | GOV-002 §7–§9 + esta §14 | ✅ |
+
+Lacunas marcadas `⬜` viram entregável da fase que as tocar (ex.: fluxo de autenticação = parte do aceite da Onda 1).
+
 ---
 
 **Manutenção:** este documento é atualizado ao final de cada grande fase. Se algo aqui divergir da realidade do
