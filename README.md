@@ -1,36 +1,36 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SINTERA
 
-## Getting Started
+Plataforma de **continuidade da saúde**, centrada na pessoa ao longo do tempo. **Factual**: organiza e transcreve o
+que está nos documentos, **sem interpretação clínica** (RDC 657/2022; LGPD Art. 11). Mobile-first · API-first · B2B2C.
 
-First, run the development server:
+Monorepo (npm workspaces): **Web** (Next.js, na raiz) + **`packages/*`** (núcleo compartilhado `@sintera/*`) +
+**`apps/mobile`** (React Native + Expo).
+
+## 👉 Comece por aqui
+
+**[docs/GOV-002 — Onboarding e Handover](docs/GOV-002_ONBOARDING_HANDOVER.md)** é o primeiro documento a ler: visão,
+organização do repositório, como rodar (Web e Mobile), portões de validação, fluxo de desenvolvimento, critérios de
+aceite, estratégia de testes/documentação, handover e checklist de onboarding.
+
+Fundação obrigatória: **[docs/ADR-000 — Princípios Arquiteturais](docs/ADR-000_ARCHITECTURAL_PRINCIPLES.md)**
+(constituição) · **[docs/ARCH-000 — Arquitetura Documental](docs/ARCH-000_DOCUMENT_ARCHITECTURE.md)** (índice e
+precedência) · **[docs/adr/ADR-012 — Continuidade Operacional](docs/adr/ADR-012_CONTINUIDADE_OPERACIONAL.md)**
+(transferibilidade).
+
+## Rodar a Web (resumo)
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install    # na raiz (workspaces)
+npm run dev    # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Validação: `npx tsc --noEmit` · `npx vitest run` · `npx next build` (todos devem passar).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Rodar o Mobile
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Ver **[docs/MOBILE-003 — Provisionamento do Ambiente Expo/EAS](docs/MOBILE-003_PROVISIONAMENTO_EXPO_EAS.md)**.
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+> Conhecimento estrutural vive **no repositório**, não na memória de quem implementou (ADR-012). Ao mudar algo
+> relevante, atualize a documentação **junto** com o código.
