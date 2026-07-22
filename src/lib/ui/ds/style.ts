@@ -2,8 +2,9 @@
 // ADR-011: aqui NÃO há decisão de design, token ou regra de negócio — só o mapeamento para CSS.
 import type { CSSProperties } from 'react'
 import type { SinteraTheme, BoxSpec, TextSpec, Shadow } from '@sintera/design-system'
+import { gradient } from '@sintera/design-system'
 import { resolveFontFamily } from './fonts'
-import { toCSSBoxShadow } from './css'
+import { toCSSBoxShadow, toCSSGradient } from './css'
 
 function rgba(hex: string, alpha: number): string {
   const n = parseInt(hex.replace('#', ''), 16)
@@ -17,6 +18,8 @@ export function shadowCss(s: Shadow): string {
 export function boxStyle(t: SinteraTheme, spec: BoxSpec): CSSProperties {
   return {
     backgroundColor: spec.backgroundColor,
+    // Preenchimento por gradiente do DS quando o papel pede (ex.: botão primário = 'action'); senão, cor sólida.
+    background: spec.backgroundGradient ? toCSSGradient(gradient[spec.backgroundGradient]) : undefined,
     border: spec.borderWidth ? `${spec.borderWidth}px solid ${spec.borderColor}` : undefined,
     borderRadius: spec.radius,
     padding: `${spec.paddingY}px ${spec.paddingX}px`,

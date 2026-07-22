@@ -21,6 +21,12 @@ describe('ARCH · recipes — derivação do tema e acessibilidade', () => {
       expect(contrastRatio(b.label.color, b.container.backgroundColor)).toBeGreaterThanOrEqual(WCAG.AA_NORMAL)
     })
 
+    it(`[${mode}] button.primary usa o gradiente de AÇÃO (identidade única web/mobile); cor sólida = fallback`, () => {
+      expect(button(t, { variant: 'primary' }).container.backgroundGradient).toBe('action')
+      expect(button(t, { variant: 'secondary' }).container.backgroundGradient).toBeUndefined()
+      expect(button(t, { variant: 'ghost' }).container.backgroundGradient).toBeUndefined()
+    })
+
     it(`[${mode}] button.secondary tem texto com AA sobre o fundo`, () => {
       const b = button(t, { variant: 'secondary' })
       expect(contrastRatio(b.label.color, b.container.backgroundColor)).toBeGreaterThanOrEqual(WCAG.AA_NORMAL)

@@ -3,6 +3,7 @@
 // Sem react-dom / react-native / hex cru. Adaptadores de plataforma mapeiam o VisualSpec para estilo.
 import type { SinteraTheme } from '../theme'
 import type { ElevationLevel } from '../tokens/elevation'
+import type { GradientToken } from '../tokens/gradient'
 import type {
   ButtonSpec, ChipSpec, BadgeSpec, CardSpec, SurfaceSpec, DividerSpec, IconSpec, AvatarSpec, TextSpec,
 } from './spec'
@@ -27,9 +28,12 @@ export function button(t: SinteraTheme, opts: { variant?: ButtonVariant; size?: 
   }[opts.size ?? 'md']
   const active = state === 'hover' || state === 'pressed'
   let backgroundColor: string, color: string, borderColor: string = TRANSPARENT, borderWidth = 0
+  // Primário = gradiente de AÇÃO (identidade validada na Web); a cor sólida abaixo é fallback (RN sem gradiente/estados).
+  let backgroundGradient: GradientToken | undefined
   if (variant === 'primary') {
     backgroundColor = active ? t.color.button.primary.hover : t.color.button.primary.background
     color = t.color.button.primary.text
+    backgroundGradient = 'action'
   } else if (variant === 'secondary') {
     backgroundColor = t.color.surface.accent
     color = t.color.text.onAccent
@@ -40,7 +44,7 @@ export function button(t: SinteraTheme, opts: { variant?: ButtonVariant; size?: 
     color = t.color.text.link
   }
   return {
-    container: { backgroundColor, borderColor, borderWidth, radius: t.radius.control, paddingX: dims.px, paddingY: dims.py, minHeight: dims.minH, opacity: state === 'disabled' ? t.opacity.disabled : 1, elevation: 'none' },
+    container: { backgroundColor, backgroundGradient, borderColor, borderWidth, radius: t.radius.control, paddingX: dims.px, paddingY: dims.py, minHeight: dims.minH, opacity: state === 'disabled' ? t.opacity.disabled : 1, elevation: 'none' },
     label: { style: dims.text, color },
   }
 }

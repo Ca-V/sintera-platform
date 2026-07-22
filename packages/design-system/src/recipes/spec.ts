@@ -3,10 +3,14 @@
 // e cada adaptador (web/RN) mapeia para o seu sistema de estilo. Todos os valores derivam dos papéis do tema.
 import type { TextStyle } from '../tokens/typography'
 import type { ElevationLevel, ShadowRole } from '../tokens/elevation'
+import type { GradientToken } from '../tokens/gradient'
 
 /** Caixa/superfície: cores, contorno, raio, espaçamento interno, alvo e profundidade. */
 export interface BoxSpec {
   backgroundColor: string
+  // Preenchimento por GRADIENTE (token do DS, ex.: 'action' no botão primário). Quando presente, o adaptador o prefere
+  // sobre `backgroundColor` (que fica como fallback sólido). Web → CSS gradient; RN → expo-linear-gradient. Identidade única.
+  backgroundGradient?: GradientToken
   borderColor: string
   borderWidth: number
   radius: number
