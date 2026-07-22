@@ -16,7 +16,10 @@
     },
     "plugins": [
       "expo-dev-client",
-      "expo-secure-store"
+      [
+        "expo-secure-store",
+        { "configureAndroidBackup": false }
+      ]
     ],
     "extra": {
       "eas": {
