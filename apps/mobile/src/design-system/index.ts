@@ -25,3 +25,10 @@ export {
   angleToStartEnd,
   type RNGradient,
 } from './gradient'
+export {
+  toRNBox,
+  toRNText,
+  type RNBox,
+  type RNText,
+  type RNViewStyle,
+} from './box'
