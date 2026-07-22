@@ -33,7 +33,11 @@ Monorepo **npm workspaces** (`package-lock.json` na raiz):
 - Governança mensurável: [[GOV-001]] (Governance Coverage Matrix) · [COMPLIANCE-001](./COMPLIANCE-001_GOVERNANCA.md).
 
 ## 4. Como rodar (Web) — ambiente local
-Pré-requisito: **Node 22 LTS** (faixa oficial do Expo 53; o Node ≥18 serve para a Web).
+**Versão oficial do Node.js: 22 LTS** — referência no [`.nvmrc`](../.nvmrc), decisão em [[ADR-013]]. Antes de tudo,
+confirme a versão (mudanças de versão são deliberadas e documentadas, nunca "porque funcionou na minha máquina"):
+```bash
+node -v                # esperado: v22.x.x
+```
 ```bash
 npm install            # na RAIZ (workspaces instalam packages/* e apps/*)
 npm run dev            # Next.js em http://localhost:3000

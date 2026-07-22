@@ -19,6 +19,13 @@ precedência) · **[docs/adr/ADR-012 — Continuidade Operacional](docs/adr/ADR-
 
 ## Rodar a Web (resumo)
 
+**Versão oficial do Node.js: 22 LTS** (pinada em [`.nvmrc`](.nvmrc); decisão em
+[ADR-013](docs/adr/ADR-013_PADRAO_VERSAO_NODE.md)). Antes de rodar, confirme:
+
+```bash
+node -v        # esperado: v22.x.x
+```
+
 ```bash
 npm install    # na raiz (workspaces)
 npm run dev    # http://localhost:3000
