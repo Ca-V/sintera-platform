@@ -15,6 +15,13 @@ uma versão diferente ("funcionou na minha máquina"), violando a reprodutibilid
   a decisão (novo ADR ou emenda a este), nunca por conveniência local.
 - A verificação (`node -v` → `v22.x.x`) e o padrão ficam documentados em **GOV-002 §4** e no **README** (porta de entrada).
 
+### Critério para futuras atualizações de versão
+> A atualização da versão oficial do Node somente poderá ocorrer após **validação completa** do ambiente de
+> desenvolvimento, do pipeline de CI/CD, das dependências críticas e do processo de deploy, devendo resultar em
+> **atualização simultânea** do `.nvmrc`, da documentação e, se aplicável, do campo `engines`.
+
+Enquanto essa validação completa não for realizada e registrada, o padrão permanece **Node 22 LTS**.
+
 ## Alternativas consideradas
 - **Node 24 (Current)**: rejeitada — fora da faixa testada pelo Expo 53; risco em builds nativos.
 - **Node 20 LTS**: aceitável (amplamente suportado), mas 22 é a LTS mais recente dentro da faixa do Expo 53 → escolhida.
