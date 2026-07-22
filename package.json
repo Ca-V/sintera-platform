@@ -3,8 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "apps/*"
   ],
+  "overrides": {
+    "@types/react": "$@types/react"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
