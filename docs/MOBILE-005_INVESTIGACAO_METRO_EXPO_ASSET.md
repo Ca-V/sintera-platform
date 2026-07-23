@@ -2,7 +2,9 @@
 
 > **Natureza:** log de investigação (diagnóstico por evidência). Continuidade operacional ([[ADR-012]]).
 > **Independente de [[MOBILE-004]]** — não assumir "mesmo root cause" (é hipótese até prova).
-> **Branch:** `investig/mobile-lockfile-hoisting`. **Status:** cadeia causal **demonstrada**; **nenhuma alteração feita** (aguardando autorização).
+> **Branch:** `investig/mobile-lockfile-hoisting`. **Status: ENCERRADO** — correção C-001 aplicada ([[ADR-014]]) e validada:
+> o Metro passou a **resolver `expo-asset`** e o **bundle conclui** (681 módulos). Um problema **novo e distinto** (módulos
+> NATIVOS `ExpoAsset`/`ExponentConstants` ausentes do APK) foi separado em **MOBILE-006**.
 
 ## Sintoma
 Após resolvido o problema do autolinking (MOBILE-004), o app **passa da inicialização nativa** e falha no bundle JS:
@@ -51,6 +53,28 @@ Metro não resolve expo-asset
 Alinhar à orientação oficial do SDK 52+: **remover a configuração manual de Metro** (`watchFolders`, `resolver.nodeModulesPaths`, `resolver.disableHierarchicalLookup`), deixando `getDefaultConfig()` tratar o monorepo; então `npx expo start --clear` e revalidar o bundle.
 - Alternativa mínima (se quiser mudança cirúrgica): remover **apenas** `disableHierarchicalLookup = true`.
 - **Critério de sucesso:** o Metro resolve `expo-asset`, o bundle conclui, o app renderiza e permanece rodando (fechando também o critério pendente de V-001).
+
+## C-001 — Correção de conformidade do Metro (executada e validada)
+Protocolo: registrar config atual → substituir pela config oficial mínima do SDK 52+ (`getDefaultConfig(__dirname)`,
+sem config manual) → `npx expo start --clear` → validar. **Decisão/ADR: [[ADR-014]].**
+**Resultado:**
+- ✅ **bundle JS conclui** — `Android Bundled 21018ms (681 modules)`
+- ✅ **`expo-asset` resolvido** (some o `Unable to resolve "expo-asset"`)
+- ✅ **Dev Client carrega** e o **app permanece rodando** (sem crash nativo)
+- ❌ **app não renderiza** — mas por **problema novo e distinto** (módulos nativos ausentes), não pela config do Metro.
+
+→ **MOBILE-005 cumpriu seu propósito e está ENCERRADO.**
+
+## Problema seguinte → MOBILE-006 (não reutilizar hipóteses)
+Erro JS em runtime (com o bundle já carregado):
+```
+Cannot find native module 'ExpoAsset'  ·  No native ExponentConstants module found
+Invariant Violation: "main" has not been registered
+```
+Sintoma na camada JS, mas **causa provável na camada NATIVA**: os módulos `ExpoAsset`/`ExponentConstants` **não foram
+autolinkados no APK** (build de validação teve 10 módulos; `expo-asset`/`expo-constants` **não** estavam — ambos
+**aninhados** em `node_modules/expo/node_modules`). É a **mesma família** de MOBILE-004 (aninhado → autolinking Android
+perde o módulo nativo), porém para **outros pacotes** — a tratar em **MOBILE-006**, sem assumir mesma origem até prova.
 
 ## Relação com MOBILE-004 (hipótese, não conclusão)
 Ambos envolvem topologia aninhada, mas as **causas imediatas são distintas**: MOBILE-004 = autolinking do Gradle (SDK 53 só varre node_modules de topo); MOBILE-005 = config manual do Metro (`disableHierarchicalLookup`). Se um dia se provar que a **origem** (por que o npm aninha) é comum, isso será registrado — por ora, tratadas como independentes.
