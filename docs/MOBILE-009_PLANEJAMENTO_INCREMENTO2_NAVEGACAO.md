@@ -133,4 +133,44 @@ Implementação dos domínios · Upload · Histórico · formulários · regras 
 2. Introduzir `NavigationContainer` dentro do `AuthProvider`; migrar o gate para `{AuthStack | AppNavigator}` (bloco reversível).
 3. `AuthStack` envolvendo a `LoginScreen`.
 4. `AppNavigator` (Bottom Tabs + Stacks, §3.1) com placeholders projetando os grupos do SSOT.
-5. Validar os 9 critérios de aceite (§5) no emulador; relatório executivo; congelar.
+5. Validar os 10 critérios de aceite (§5) no emulador; relatório executivo; congelar.
+
+## 8. Preparação técnica de dependências (de-risking R1/R3 — fatos verificados 2026-07-23)
+
+> Levantamento **read-only** contra a stack congelada atual (`expo ^54.0.0` · `react-native 0.81.5` ·
+> `react 19.1.0`). Nenhuma instalação executada; serve para tornar a execução pós-merge imediata e sem surpresas.
+
+**Conjunto mínimo de dependências (para Bottom Tabs + native-stack, D6):**
+
+| Pacote | Tipo | Versão | Origem da versão |
+|--------|------|--------|------------------|
+| `@react-navigation/native` | JS | v7 (atual) | npm (compatível com RN 0.81) |
+| `@react-navigation/bottom-tabs` | JS | v7 | npm |
+| `@react-navigation/native-stack` | JS | v7 | npm |
+| `react-native-screens` | **NATIVO** | **~4.16.0** | **fixado pelo Expo SDK 54** (`bundledNativeModules.json`) |
+| `react-native-safe-area-context` | **NATIVO** | **~5.6.0** | **fixado pelo Expo SDK 54** |
+
+**Comando de instalação (execução pós-merge):**
+```
+npx expo install @react-navigation/native @react-navigation/native-stack @react-navigation/bottom-tabs react-native-screens react-native-safe-area-context
+```
+`expo install` resolve os nativos para as versões fixadas pelo SDK (sem conflito com a stack congelada) e
+repassa os JS ao npm.
+
+**Decisão de minimização (escopo nativo):** `react-native-gesture-handler` (~2.28.0) e
+`react-native-reanimated` (~4.1.1) **NÃO** são necessários para Bottom Tabs + native-stack e ficam **fora**
+do Incremento 2 — evitando o babel-plugin do Reanimated e reduzindo a pegada nativa a **apenas 2 módulos**
+(`react-native-screens`, `react-native-safe-area-context`). Reintroduzir só se um incremento futuro exigir
+gestos/drawer/animações JS.
+
+**Verificações obrigatórias após instalar (antes de prosseguir):**
+1. **Topologia** ([ARCH-001](ARCH-001_ARQUITETURA_DEPENDENCIAS_WORKSPACE.md)/INV-DEP-001): autolinking deve
+   listar `react-native-screens` e `react-native-safe-area-context` (contagem de módulos sobe em 2).
+2. **React único** ([ADR-016](adr/ADR-016_INSTANCIA_UNICA_REACT.md)): os `@react-navigation/*` importam
+   `react`; o guard do Metro já força a cópia do mobile — confirmar ausência de "Invalid hook call" no
+   primeiro *bundle*.
+3. **Rebuild nativo** (`npx expo run:android`) — os 2 módulos nativos exigem novo binário (não é *hot reload*).
+
+**Confirmação de não-violação do congelamento (R2):** adicionar estas dependências de *feature* + *rebuild*
+nativo **não** é *upgrade* de Expo/RN nem `expo install --fix` de rotina; a stack (SDK 54 / RN 0.81.5 /
+react 19.1.0) permanece intacta.
