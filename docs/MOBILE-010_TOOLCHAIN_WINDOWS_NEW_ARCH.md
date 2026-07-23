@@ -1,6 +1,6 @@
 # MOBILE-010 — Toolchain Windows / New Architecture: limitação de comprimento de caminho
 
-- **Status:** **CAUSA RAIZ CONFIRMADA** por fonte oficial (§2.1) — aguardando aplicação e **validação experimental** da solução S1 (atualizar o CMake do Android SDK). Investigação encerra quando o build passar.
+- **Status:** **CAUSA RAIZ IDENTIFICADA** (combinação de fatores — §2.1), corroborada por relatos independentes e por fonte oficial. **Hipótese de solução pendente de validação experimental** (S1 — alinhar a toolchain Android a uma combinação suportada). A investigação encerra quando o build passar **e** a baseline de toolchain for registrada.
 - **Origem:** Incremento 2 (Navegação) — bloqueio na compilação nativa de `react-native-screens` / `react-native-safe-area-context`.
 - **Investigação anterior (ENCERRADA):** hipótese "`LongPathsEnabled` isoladamente resolve" — **REJEITADA** (ver §1).
 - **Relaciona-se com:** [MOBILE-009](MOBILE-009_PLANEJAMENTO_INCREMENTO2_NAVEGACAO.md) (R6) · [MOBILE-003 §0.1](MOBILE-003_PROVISIONAMENTO_EXPO_EAS.md) · [ADR-015](adr/ADR-015_MIGRACAO_EXPO_SDK54.md)
@@ -46,9 +46,16 @@ Task :app:buildCMakeDebug[arm64-v8a] FAILED
 | AGP | (padrão do Expo SDK 54) | |
 | React Native | 0.81.5 (New Arch / Fabric) | gera o codegen C++ `react_codegen_*` |
 
-### 2.1 Causa raiz — CONFIRMADA por fonte oficial
+### 2.1 Causa raiz identificada (formulação precisa)
 
-> **O bug está no `ninja` 1.10, empacotado no CMake 3.22.1 — que é o default do Android Gradle Plugin.**
+> **A causa raiz identificada até o momento é a COMBINAÇÃO da toolchain Android distribuída por padrão
+> (CMake 3.22.1 + Ninja 1.10.x) com o padrão de geração de caminhos do codegen da New Architecture, em
+> projetos cujo caminho total excede o limite de 260 caracteres.**
+
+O defeito **emerge da interação** de quatro fatores — toolchain padrão · Windows · codegen da New
+Architecture · profundidade do caminho do projeto — e **não** de um único componente isolado. Não é correto
+afirmar "o Ninja 1.10 é a causa raiz": ele é o ponto onde a falha se manifesta e o elemento cuja atualização
+é apontada como remédio, mas isoladamente não explica o fenômeno.
 
 Declaração do mantenedor do Expo (**@zoontek**) ao encerrar a issue oficial
 [expo/expo#36274](https://github.com/expo/expo/issues/36274):
@@ -57,6 +64,12 @@ Declaração do mantenedor do Expo (**@zoontek**) ao encerrar a issue oficial
 - **CMake 3.22.1 (default do AGP) empacota ninja 1.10, que contém o bug**;
 - **CMake 3.30.x, 3.31.x e 4.x** (disponíveis no Android SDK) trazem **ninja 1.12+ com a correção**;
 - Conclusão do time: *"There's nothing we can change on our side"* → a correção é **atualizar o CMake do Android SDK**.
+
+> ⚠️ **Status epistemológico desta afirmação.** A declaração acima é **fonte oficial**, mas para ESTE projeto
+> ela é tratada como **hipótese de trabalho**: *uma versão mais recente da toolchain Android (incluindo uma
+> versão mais recente do Ninja) elimina o problema*. Essa hipótese só será considerada **confirmada após
+> validação experimental** neste ambiente. Não registrar "CMake 3.30/3.31 elimina o problema" como fato
+> antes do build passar.
 
 **Consistência com nossos experimentos:** a mensagem é emitida pelo próprio ninja; o SO já estava com
 `LongPathsEnabled=1` (verificado pós-reboot) e o erro persistiu — exatamente o comportamento esperado de um
@@ -87,15 +100,34 @@ Nenhuma delas altera a arquitetura da aplicação.
 | — | Mover o repositório | **Não resolve** | Rejeitado por cálculo (§2.1): estrutura fixa 262 chars → total > 260 mesmo em caminho mínimo |
 | — | Desabilitar a New Architecture | Contorna | **Não autorizado.** Alterar arquitetura para contornar limitação de infraestrutura (ver §4) |
 
+### Definição da solução (formulação correta)
+
+> **Atualizar a toolchain Android para uma versão oficialmente suportada cuja combinação CMake/Ninja elimine
+> este defeito, validando experimentalmente o resultado.**
+
+O que interessa ao projeto **não é o número da versão**, e sim a **combinação validada**. Por isso o
+procedimento termina em medição, não em pressuposto.
+
 **Procedimento S1 (a executar):**
 1. Android Studio → `Settings` → `Languages & Frameworks` → `Android SDK` → aba **SDK Tools** →
    **"Show Package Details"** → **CMake**: instalar a versão mais recente oferecida oficialmente.
 2. Apontar o AGP para ela (`android { externalNativeBuild { cmake { version "<versão>" } } }`).
 3. **Validar experimentalmente** que o erro desaparece (não presumir).
+4. Registrar a **toolchain mínima validada** (abaixo) no runbook [MOBILE-003](MOBILE-003_PROVISIONAMENTO_EXPO_EAS.md) — passa a ser a **baseline oficial do projeto**.
+
+**Toolchain mínima validada** *(preencher SOMENTE após o build passar):*
+```
+Android SDK Platform : <a preencher>
+NDK                  : <a preencher>   (atual: 27.1.12297006)
+CMake                : <a preencher>   (atual: 3.22.1 — DEFEITUOSA para este caso)
+Ninja                : <a preencher>   (atual: 1.10.2 — DEFEITUOSA para este caso)
+AGP / Gradle         : <a preencher>   (Gradle atual: 8.14.3)
+Validado em          : <data> · evidência: assembleDebug sem erro de MAX_PATH
+```
 
 **Critério de encerramento do MOBILE-010:** `assembleDebug` conclui sem o erro de MAX_PATH, com a New
-Architecture mantida, sem alteração arquitetural e **com a versão da toolchain validada e registrada** no
-runbook ([MOBILE-003](MOBILE-003_PROVISIONAMENTO_EXPO_EAS.md)) como versão mínima.
+Architecture mantida, sem alteração arquitetural e **com a combinação de toolchain validada e registrada**
+como baseline mínima no runbook.
 
 ## 3.1 Fontes
 
