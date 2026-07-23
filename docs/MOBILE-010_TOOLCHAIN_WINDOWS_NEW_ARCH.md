@@ -1,6 +1,6 @@
 # MOBILE-010 — Toolchain Windows / New Architecture: limitação de comprimento de caminho
 
-- **Status:** **INVESTIGAÇÃO ABERTA** (2026-07-23)
+- **Status:** **CAUSA RAIZ CONFIRMADA** por fonte oficial (§2.1) — aguardando aplicação e **validação experimental** da solução S1 (atualizar o CMake do Android SDK). Investigação encerra quando o build passar.
 - **Origem:** Incremento 2 (Navegação) — bloqueio na compilação nativa de `react-native-screens` / `react-native-safe-area-context`.
 - **Investigação anterior (ENCERRADA):** hipótese "`LongPathsEnabled` isoladamente resolve" — **REJEITADA** (ver §1).
 - **Relaciona-se com:** [MOBILE-009](MOBILE-009_PLANEJAMENTO_INCREMENTO2_NAVEGACAO.md) (R6) · [MOBILE-003 §0.1](MOBILE-003_PROVISIONAMENTO_EXPO_EAS.md) · [ADR-015](adr/ADR-015_MIGRACAO_EXPO_SDK54.md)
@@ -46,12 +46,30 @@ Task :app:buildCMakeDebug[arm64-v8a] FAILED
 | AGP | (padrão do Expo SDK 54) | |
 | React Native | 0.81.5 (New Arch / Fabric) | gera o codegen C++ `react_codegen_*` |
 
-**Componente identificado como limitante (fortemente evidenciado):** o **`ninja` 1.10.2**.
-Fundamento: a mensagem *"Filename longer than 260 characters"* é emitida **pelo próprio ninja** (guarda interna
-de `MAX_PATH` nas versões antigas), **não** pelo sistema operacional. Evidência de controle decisiva: o SO já
-está com `LongPathsEnabled=1` (caminhos longos permitidos, verificado pós-reboot) e **ainda assim** o erro
-persiste com a mensagem autoral do ninja — ou seja, o limite é imposto **dentro** da ferramenta, independente
-da configuração do SO. Versões modernas do ninja (≥1.11) removeram/relaxaram essa guarda.
+### 2.1 Causa raiz — CONFIRMADA por fonte oficial
+
+> **O bug está no `ninja` 1.10, empacotado no CMake 3.22.1 — que é o default do Android Gradle Plugin.**
+
+Declaração do mantenedor do Expo (**@zoontek**) ao encerrar a issue oficial
+[expo/expo#36274](https://github.com/expo/expo/issues/36274):
+
+- O Expo **não controla** qual versão de ninja/CMake o desenvolvedor recebe;
+- **CMake 3.22.1 (default do AGP) empacota ninja 1.10, que contém o bug**;
+- **CMake 3.30.x, 3.31.x e 4.x** (disponíveis no Android SDK) trazem **ninja 1.12+ com a correção**;
+- Conclusão do time: *"There's nothing we can change on our side"* → a correção é **atualizar o CMake do Android SDK**.
+
+**Consistência com nossos experimentos:** a mensagem é emitida pelo próprio ninja; o SO já estava com
+`LongPathsEnabled=1` (verificado pós-reboot) e o erro persistiu — exatamente o comportamento esperado de um
+bug **interno da ferramenta**, não do SO. Nossa evidência local e a fonte oficial convergem.
+
+**Por que ocorre aqui e não em todo projeto (evidência de cálculo):** a estrutura *fixa* do caminho do objeto
+soma **262 chars** neste monorepo (≈250 num projeto não-monorepo). Somando o caminho do projeto (58 chars,
+`...\OneDrive\Desktop\SINTERA\sintera-platform`, contado **duas vezes** pelo espelhamento do codegen), chega-se
+a **378**. Projetos rasos (`C:\a`) ficam perto do limite e às vezes passam; projetos profundos (OneDrive/Desktop
++ monorepo) estouram sempre. Isso explica por que o problema é **recorrente e amplamente reportado** no
+ecossistema Windows — há issues abertas em `react-native-screens` (#3471), `react-native-safe-area-context`
+(#424), `react-native-keyboard-controller` (#1247, #931), RocketChat (#6923) e Expo (#36274) — **sem ser
+universal**.
 
 **Fator agravante (não causa):** o codegen C++ da New Architecture espelha o caminho absoluto da fonte dentro
 do caminho do objeto (`.../react_codegen_safeareacontext.dir/C_/<caminho absoluto da fonte>/...`), o que
@@ -63,12 +81,31 @@ Nenhuma delas altera a arquitetura da aplicação.
 
 | # | Solução | Efeito | Custo/risco |
 |---|---------|--------|-------------|
-| **S1** | **Atualizar o CMake do Android SDK** para versão que empacote **ninja ≥ 1.11** (ex.: CMake 3.31.x via SDK Manager) e apontar o AGP para ela | Remove a guarda artificial — o SO já permite caminhos longos | **Recomendada.** Instalação de componente first-party via SDK Manager; permanente; sem alterar workflow nem arquitetura |
-| **S2** | Encurtar os caminhos: `subst` de uma letra de unidade para a raiz do projeto **+** relocar o `.cxx` (`externalNativeBuild.cmake.buildStagingDirectory`) | Reduz o total de ~378 → ~239 (< 260) | Funciona sem instalar nada, mas **frágil**: o `subst` precisa ser reaplicado/persistido e muda o caminho de trabalho dos builds; vira uma verruga permanente no runbook |
-| S3 | Fornecer um `ninja` moderno via `CMAKE_MAKE_PROGRAM` | Mesmo efeito de S1 | Exige baixar binário avulso; menos rastreável que S1 |
+| **S1** | **Atualizar o CMake do Android SDK** para uma versão disponibilizada oficialmente pelo SDK Manager que empacote **ninja 1.12+** (o mantenedor do Expo cita **3.30.x / 3.31.x / 4.x**) e apontar o AGP para ela | Corrige o bug na origem | **ADOTADA.** Componente **first-party**, sustentada por fonte oficial (§2.1); permanente e reprodutível; sem workaround, sem alterar workflow nem arquitetura |
+| S2 | Encurtar caminhos: `subst` + relocar o `.cxx` (`buildStagingDirectory`) | ~378 → ~239 | **Apenas contingência.** Frágil: `subst` reaplicado a cada reboot e muda o caminho de trabalho — verruga permanente no runbook |
+| S3 | Substituir manualmente o `ninja.exe` na pasta do CMake | Mesmo efeito de S1 | Binário avulso fora do SDK Manager; menos rastreável/reprodutível que S1 |
+| — | Mover o repositório | **Não resolve** | Rejeitado por cálculo (§2.1): estrutura fixa 262 chars → total > 260 mesmo em caminho mínimo |
+| — | Desabilitar a New Architecture | Contorna | **Não autorizado.** Alterar arquitetura para contornar limitação de infraestrutura (ver §4) |
+
+**Procedimento S1 (a executar):**
+1. Android Studio → `Settings` → `Languages & Frameworks` → `Android SDK` → aba **SDK Tools** →
+   **"Show Package Details"** → **CMake**: instalar a versão mais recente oferecida oficialmente.
+2. Apontar o AGP para ela (`android { externalNativeBuild { cmake { version "<versão>" } } }`).
+3. **Validar experimentalmente** que o erro desaparece (não presumir).
 
 **Critério de encerramento do MOBILE-010:** `assembleDebug` conclui sem o erro de MAX_PATH, com a New
-Architecture mantida e sem alteração arquitetural.
+Architecture mantida, sem alteração arquitetural e **com a versão da toolchain validada e registrada** no
+runbook ([MOBILE-003](MOBILE-003_PROVISIONAMENTO_EXPO_EAS.md)) como versão mínima.
+
+## 3.1 Fontes
+
+- [expo/expo#36274](https://github.com/expo/expo/issues/36274) — **fonte primária**: resposta do mantenedor
+  (@zoontek) atribuindo o bug ao ninja 1.10 do CMake 3.22.1 (default do AGP) e indicando CMake 3.30.x/3.31.x/4.x
+  (ninja 1.12+) como correção.
+- [software-mansion/react-native-screens#3471](https://github.com/software-mansion/react-native-screens/issues/3471) — mesmo erro, RN 0.81 / CMake 3.22.x / NDK 27.x.
+- [AppAndFlow/react-native-safe-area-context#424](https://github.com/AppAndFlow/react-native-safe-area-context/issues/424) — mesmo erro no pacote exato que falha aqui.
+- [react-native-keyboard-controller — Troubleshooting](https://kirillzyusko.github.io/react-native-keyboard-controller/docs/troubleshooting) — procedimento comunitário (ninja atualizado + CMake 3.31.1 no `build.gradle` + Long Paths), consistente com S1.
+- [ninja-build/ninja#2359](https://github.com/ninja-build/ninja/issues/2359), [#1900](https://github.com/ninja-build/ninja/issues/1900) — histórico do limite de `MAX_PATH` no ninja.
 
 ## 4. Contingência arquitetural (NÃO é próximo passo)
 
