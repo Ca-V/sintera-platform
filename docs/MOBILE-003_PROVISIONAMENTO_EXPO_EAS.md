@@ -35,7 +35,7 @@ file C++ que, somados ao caminho do projeto no monorepo, ultrapassam o limite pa
 Windows. Afeta módulos nativos com componentes Fabric (ex.: `react-native-screens`,
 `react-native-safe-area-context`, introduzidos no Incremento 2 de Navegação).
 
-**Correção (uma vez por máquina):**
+**Passo 1 — habilitar caminhos longos no SO (necessário, porém NÃO suficiente — ver aviso abaixo):**
 1. PowerShell **como Administrador**:
    ```
    reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v LongPathsEnabled /t REG_DWORD /d 1 /f
@@ -43,8 +43,16 @@ Windows. Afeta módulos nativos com componentes Fabric (ex.: `react-native-scree
 2. **Reiniciar o Windows** (para todos os processos herdarem a mudança).
 3. Git (por repositório, não exige admin): `git config core.longpaths true`.
 
-**Não** desabilitar a New Architecture para contornar isto: é problema de **ambiente**, não de arquitetura —
-a New Arch faz parte da baseline aceita (Incremento 1). Ver [[ADR-015]] (SDK 54) e o Incremento 2 (MOBILE-009, risco R6).
+> ⚠️ **ATENÇÃO — verificado em 2026-07-23: isto sozinho NÃO resolve.** Com `LongPathsEnabled=1` **e** reboot
+> completo **e** daemons Gradle zerados, o build **continua falhando** com o mesmo erro. Motivo: a mensagem é
+> emitida pelo **`ninja` 1.10.2** (empacotado no CMake 3.22.1 do Android SDK), que possui **guarda interna
+> própria de `MAX_PATH`**, independente da configuração do SO. **Passo 2 obrigatório:** usar um CMake do
+> Android SDK que empacote **ninja ≥ 1.11**. Investigação e solução em
+> [MOBILE-010](MOBILE-010_TOOLCHAIN_WINDOWS_NEW_ARCH.md).
+
+**Não** desabilitar a New Architecture para contornar isto: é problema de **cadeia de ferramentas**, não de
+arquitetura — a New Arch faz parte da baseline aceita (Incremento 1). Ver [[ADR-015]] (SDK 54), o Incremento 2
+(MOBILE-009, risco R6) e [MOBILE-010](MOBILE-010_TOOLCHAIN_WINDOWS_NEW_ARCH.md).
 
 ---
 

@@ -150,11 +150,16 @@ de escopo durante a codificação. Reintroduzir qualquer um exige incremento/ADR
 - **R6 — Desenvolvimento em Windows (pré-requisito de ambiente).** Em ambientes Windows, a implementação da
   New Architecture do React Native pode gerar caminhos de arquivos superiores ao limite padrão do sistema
   operacional (260 caracteres). É **pré-requisito** habilitar `LongPathsEnabled` (+ `git config core.longpaths true`)
-  **antes** da compilação. **Confirmado na prática (2026-07-23):** com `LongPathsEnabled=0`, o
-  `buildCMakeDebug` falha com *"Filename longer than 260 characters"* (object file de 378 chars) ao compilar
-  `react-native-screens`/`react-native-safe-area-context`. **Decisão (fundadora):** resolver no **ambiente**
-  (habilitar Long Paths), **não** desabilitar a New Architecture — problema de ambiente resolve-se no ambiente.
-  Procedimento operacional em [MOBILE-003 §0.1](MOBILE-003_PROVISIONAMENTO_EXPO_EAS.md).
+  **antes** da compilação. **Confirmado na prática (2026-07-23):** o `buildCMakeDebug` falha com
+  *"Filename longer than 260 characters"* (object file de 378 chars) ao compilar
+  `react-native-screens`/`react-native-safe-area-context`. **Decisão (fundadora):** resolver no **ambiente/cadeia
+  de ferramentas**, **não** desabilitar a New Architecture.
+  **⚠️ Atualização (mesma data):** habilitar `LongPathsEnabled` (+ reboot) é **necessário, mas NÃO suficiente** —
+  a hipótese "Long Paths isoladamente resolve" foi **REJEITADA** por experimento controlado (reboot completo +
+  daemons zerados → mesmo erro). O limite é imposto pelo **`ninja` 1.10.2** do Android SDK (guarda interna de
+  `MAX_PATH`, independente do SO). Investigação e solução em
+  [MOBILE-010](MOBILE-010_TOOLCHAIN_WINDOWS_NEW_ARCH.md); procedimento em
+  [MOBILE-003 §0.1](MOBILE-003_PROVISIONAMENTO_EXPO_EAS.md).
 
 ## 7. Sequência de implementação proposta (para execução PÓS-merge)
 
