@@ -210,13 +210,28 @@ governança construída (marco verificável · ramo de planejamento · futura br
 5. **Criação da branch de implementação** do Incremento 2 (a partir do marco integrado).
 6. **Somente então** iniciar a codificação, seguindo a sequência de implementação da §7.
 
-Hierarquia de branches estabelecida (escalável para os próximos incrementos):
+### 9.1 Regra de governança da Onda 1 (fundadora 2026-07-23)
+
+> **Durante a Onda 1, cada incremento aceito constitui um marco verificável (tag) e serve como base para o
+> incremento seguinte. A integração ao ramo principal permanece condicionada ao encerramento da Onda 1 e aos
+> critérios de integração previamente definidos.**
+
+Decisões consolidadas de integração (fundadora 2026-07-23):
+
+| Tema | Decisão |
+|------|---------|
+| Merge para `main` | **Não agora** — alvo de integração em aberto até a revisão da estratégia de integração da Onda 1 (conflito histórico `main` × `feat/condicoes-captura` a reconciliar) |
+| Gate pós-Onda 1 / REL-001 | **Mantido** |
+| Base do Incremento 2 | **`mobile-inc1-accepted` (`0d2a1f3`)** — não `main` |
+| Squash / normalização de histórico | **Somente na integração da Onda 1** (dev = histórico completo p/ auditoria/bisect; integração = squash, se seguir a política do repo) |
+
+Hierarquia de branches (escalável; cada incremento nasce do marco anterior, não de `main`):
 
 ```
-main
-│
-├── upg/expo-sdk-54            (Incremento 1 — ACCEPTED / congelado · tag mobile-inc1-accepted)
-│
-└── plan/mobile-inc2-navegacao (Planejamento do Incremento 2 — APPROVED)
-      └── (futura) branch de implementação do Incremento 2
+main  (base estável; NÃO recebe merge da Onda 1 até o encerramento dela)
+ ⋮
+mobile-inc1-accepted  (0d2a1f3 · Incremento 1 ACCEPTED/congelado)
+ ├── plan/mobile-inc2-navegacao      (Planejamento do Incremento 2 — APPROVED)
+ └── feat/mobile-inc2-navegacao      (Implementação do Incremento 2 — nasce de 0d2a1f3)
+        └── (futuro) marco Incremento 2 → base do Incremento 3 …
 ```
