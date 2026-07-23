@@ -4,7 +4,11 @@
 // resolver.disableHierarchicalLookup) é necessária nem recomendada.
 // Ref: https://docs.expo.dev/guides/monorepos/
 //
-// GUARD DE REACT ÚNICO (ADR-016): este monorepo fixa versões DIFERENTES de react POR PLATAFORMA —
+// GUARD DE REACT ÚNICO (ADR-016) — SOLUÇÃO TEMPORÁRIA, não arquitetura definitiva.
+// Válida ENQUANTO coexistirem React 19.2.x (Web/Next) e 19.1.x (Mobile/RN). Reavaliar/remover na
+// convergência de versões ou evolução do monorepo (gatilho: qualquer bump de React). É um alias de
+// resolução, não um princípio.
+// Este monorepo fixa versões DIFERENTES de react POR PLATAFORMA —
 //   • web  → react 19.2.4 (Next 16), na RAIZ node_modules;
 //   • mobile → react 19.1.0 (RN 0.81.5 exige ESSA versão no react-native-renderer), em apps/mobile/node_modules.
 // Pacotes RN hasteados para a raiz (expo-linear-gradient, @expo-google-fonts, expo-*) importam `react`

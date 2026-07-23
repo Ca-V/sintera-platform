@@ -1,9 +1,16 @@
 # ADR-016 — Instância Única de React no bundle do app móvel
 
-- **Status:** Aceito
+- **Status:** Aceito — **solução TEMPORÁRIA (não arquitetura definitiva).** Ver "Natureza temporária" abaixo.
 - **Data:** 2026-07-23
 - **Contexto de origem:** Onda 1 · Incremento 1 (Autenticação) — validação funcional no emulador
 - **Relaciona-se com:** [ADR-014](ADR-014_ADERENCIA_CONFIG_METRO.md) (config oficial do Metro), [ADR-015](ADR-015_MIGRACAO_EXPO_SDK54.md) (SDK 54), [ARCH-001](../ARCH-001_ARQUITETURA_DEPENDENCIAS_WORKSPACE.md) (topologia de dependências do monorepo)
+
+> **Natureza temporária (condição de validade).** Este guard é a solução adotada **enquanto coexistirem
+> React 19.2.x (Web/Next) e React 19.1.x (Mobile/RN)**. Ele NÃO deve ser tratado pela equipe como parte
+> permanente da arquitetura. **Reavaliar — e provavelmente remover —** quando houver convergência das
+> versões de React ou evolução do monorepo (ex.: RN/Expo passar a exigir a mesma major.minor que a Web,
+> ou a Web recuar para a versão do Mobile). Enquanto existir, é apenas um *alias de resolução*, não um
+> princípio. Gatilho de reavaliação: qualquer bump de React em qualquer lado do monorepo.
 
 ## Contexto (FATOS observados)
 
