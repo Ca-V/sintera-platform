@@ -1,6 +1,11 @@
 # ADR-015 — Migração para Expo SDK 54
 
-**Status:** Aprovado · 2026-07-23 · **Ref:** [[ARCH-001]] · [[MOBILE-004]] · [[MOBILE-005]] · [[MOBILE-006]] · UPG-001 (protocolo de execução)
+**Status:** Aprovado · **Confirmado por validação prática (UPG-001, 8/8)** · 2026-07-23 · **Ref:** [[ARCH-001]] · [[MOBILE-004]] · [[MOBILE-005]] · [[MOBILE-006]] · [[MOBILE-007]] · [[UPG-001]]
+
+> **Resultado da validação prática:** a migração foi executada e validada (UPG-001, 8/8 itens). O autolinking do
+> SDK 54 **encontra os módulos nativos aninhados** (`expo-asset`/`expo-constants`), e o app **executa no emulador**
+> (`MainActivity` em foreground, Hermes + `main` OK). Um bloqueador intermediário de resolução do `babel-preset-expo`
+> foi corrigido por conformidade com o template oficial ([[MOBILE-007]]). **Decisão confirmada.**
 
 ## Motivação
 Eliminar uma **limitação arquitetural observada no Expo SDK 53** relacionada ao **autolinking em monorepos**:

@@ -28,7 +28,27 @@ Todos os itens da fase 7 verdes. Em especial: a **topologia** deixa de aninhar m
 SDK 54 passa a encontrá-los mesmo aninhados (qualquer dos dois satisfaz [[ARCH-001|INV-DEP-001]] no nível do produto).
 
 ## Registro de execução
-*(preenchido durante a execução — versões antes/depois, localização de `expo-asset`/`expo-constants`, resultado de
-cada item da fase 7.)*
+- **Baseline (fase 1):** expo `53.0.27` · react-native `0.79.6` · `expo-asset`/`expo-constants` **ANINHADOS**.
+- **Pós-upgrade (fase 3–4):** expo `54.0.36` · react `19.1.0` · react-native `0.81.5` · dev-client `6.0.21` · secure-store `15.0.8`.
+- **Autolinking:** de **10 → 15** módulos; **`expo-asset` e `expo-constants` agora encontrados** (mesmo aninhados) — revamp do SDK 54.
+- **Bloqueador intermediário (resolvido):** `Cannot find module 'babel-preset-expo'` — ver [[MOBILE-007]]; corrigido declarando o preset como devDep direta (commit `586dcfb`).
 
-- **Baseline (fase 1):** expo `53.0.27` · react-native `0.79.6` · `expo-asset`/`expo-constants` **ANINHADOS** em `node_modules/expo/node_modules`.
+### Fase 7 — Validação (RESULTADO: 8/8 ✅)
+| # | Item | Evidência |
+|---|---|---|
+| 1 | Build Gradle | ✅ BUILD SUCCESSFUL (22m11s inicial; 54s incremental pós-fix) |
+| 2 | APK gerado/instalado | ✅ `app-debug.apk` instalado |
+| 3 | Metro inicia | ✅ 8081 up |
+| 4 | Bundle JS | ✅ `Android Bundled (690 modules)` |
+| 5 | ExpoAsset runtime | ✅ sem `Cannot find native module 'ExpoAsset'` |
+| 6 | ExpoConstants runtime | ✅ sem `No native ExponentConstants module found` |
+| 7 | Hermes | ✅ `libhermes_executor_so` registrado |
+| 8 | `main` registra + tela abre | ✅ `Running "main"` · **`MainActivity` em foreground** · app permanece vivo (66s+) |
+
+**Observação não-fatal:** `ClassNotFoundException: expo.modules.splashscreen.SplashScreenManager` — `expo-splash-screen`
+**não** é dependência do app; o DevLauncher apenas sonda opcionalmente e segue. Não bloqueia; app roda normalmente.
+
+## Encerramento (fase 8)
+**UPG-001 CONCLUÍDO** — 8/8 itens verdes; o app **executa no emulador**. Confirma na prática o [[ADR-015]] e valida o
+[[ARCH-001]] (o autolinking do SDK 54 encontra módulos nativos aninhados). Encerra também [[MOBILE-006]] (ExpoAsset/
+ExpoConstants presentes no runtime).
