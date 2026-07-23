@@ -11,6 +11,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@expo-google-fonts/fraunces": "^0.4.1",
+    "@expo-google-fonts/hanken-grotesk": "^0.4.3",
     "@sintera/api-client": "*",
     "@sintera/config": "*",
     "@sintera/core": "*",
@@ -20,6 +22,7 @@
     "@sintera/validation": "*",
     "expo": "^54.0.0",
     "expo-dev-client": "~6.0.21",
+    "expo-linear-gradient": "~15.0.8",
     "expo-secure-store": "~15.0.8",
     "expo-status-bar": "~3.0.9",
     "react": "19.1.0",
