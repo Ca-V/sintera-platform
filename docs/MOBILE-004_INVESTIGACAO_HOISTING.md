@@ -2,7 +2,9 @@
 
 > **Natureza:** log de investigação (diagnóstico por evidência). Continuidade operacional ([[ADR-012]]).
 > **Branch:** `investig/mobile-lockfile-hoisting` · snapshot de retorno: commit `476b21d`.
-> **Status:** causa-raiz **provada** no nível de resolução de dependências; **build de confirmação ainda não executado**.
+> **Status: ENCERRADO.** H3 **confirmada**; **V-001 validou o propósito** (Problema A resolvido). O erro
+> `:expo-dev-menu-interface could not be found` e a `ClassNotFoundException` nativa **não ocorrem mais**.
+> Um problema **novo e independente** (Metro não resolve `expo-asset`) foi separado em **[MOBILE-005]** — não é o mesmo root até prova.
 
 ## Sintoma
 Primeiro Development Build (Android, monorepo npm, SDK 53) falha/instala incompleto; app crasha no início.
@@ -56,7 +58,16 @@ Nota honesta: isto **não prova** que o `expo install --fix` esteja "errado" —
 ## Efeito colateral registrado
 Remover o override **reintroduz a duplicação de `@types/react`** (19.0.14 + 19.2.17) — o problema que o override resolvia no tsc do app móvel. **A re-solução correta** (sem a sintaxe `$name` frágil) fica como item a tratar (ex.: alinhar a versão no `apps/mobile` ou usar override concreto compatível).
 
-## Pendências / próximo passo (aguardando autorização)
-1. **Build de confirmação** (não executado — parada do protocolo): validar que, com a topologia hoisted, o `:expo-dev-menu-interface` entra no grafo, o build empacota tudo e o app inicia sem o crash.
-2. **Re-solver `@types/react`** de forma robusta (substituir o override `$name`).
-3. Consolidar a correção definitiva de dependências e portá-la para a branch de trabalho.
+## Validação V-001 (executada) — RESULTADO
+Protocolo de validação da fundadora. Resultado:
+- ✅ `npm install` concluiu · autolinking 10 módulos · **`gradlew projects` inclui `:expo-dev-menu-interface`** (BUILD SUCCESSFUL 32s)
+- ✅ **build limpo OK** (BUILD SUCCESSFUL 9m15s) · **APK instala** · **sem `ClassNotFoundException`/crash nativo**
+- ⚠️ app **não permanece** rodando — mas por **falha independente na camada JS** (Metro não resolve `expo-asset`), **não** pelo problema original.
+
+**Conclusão:** V-001 **cumpriu seu propósito** (validar H3 no nível do produto). O Problema A está **resolvido**. A falha do Metro é tratada em **[MOBILE-005]** como investigação separada (JS-001) — sem assumir mesma origem.
+
+## Pendências herdadas (não bloqueiam o encerramento de A)
+1. **Re-solver `@types/react`** de forma robusta (substituir o override `$name`, que quebra `npm install`/`dedupe`) — investigação própria.
+2. Consolidar a correção de dependências (topologia hoisted) e **portar para a branch de trabalho** — somente após MOBILE-005 e a solução de `@types/react`.
+
+[MOBILE-005]: ./MOBILE-005_INVESTIGACAO_METRO_EXPO_ASSET.md
