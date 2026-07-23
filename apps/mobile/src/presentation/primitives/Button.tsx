@@ -10,17 +10,18 @@ type ButtonProps = {
   onPress?: () => void
   variant?: 'primary' | 'secondary' | 'ghost'
   loading?: boolean
+  loadingLabel?: string
   disabled?: boolean
 }
 
-export function Button({ label, onPress, variant = 'primary', loading = false, disabled = false }: ButtonProps) {
+export function Button({ label, onPress, variant = 'primary', loading = false, loadingLabel = 'Entrando…', disabled = false }: ButtonProps) {
   const t = useTheme()
   const inactive = disabled || loading
   const spec = button(t, { variant, state: inactive ? 'disabled' : 'default' })
   return (
     <Pressable onPress={onPress} disabled={inactive} accessibilityRole="button" accessibilityState={{ disabled: inactive, busy: loading }}>
       <Box spec={spec.container} style={{ alignItems: 'center', justifyContent: 'center' }}>
-        <Text spec={spec.label}>{loading ? 'Entrando…' : label}</Text>
+        <Text spec={spec.label}>{loading ? loadingLabel : label}</Text>
       </Box>
     </Pressable>
   )
