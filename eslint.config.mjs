@@ -13,6 +13,12 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  // Arquivos de configuração CommonJS (Metro/Babel) usam `require()` por design — é o formato
+  // oficial do Expo (ver ADR-014). A regra genérica no-require-imports não se aplica a eles.
+  {
+    files: ["**/metro.config.js", "**/babel.config.js"],
+    rules: { "@typescript-eslint/no-require-imports": "off" },
+  },
 ]);
 
 export default eslintConfig;
