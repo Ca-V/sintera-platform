@@ -1,6 +1,6 @@
 # MOBILE-009 — Planejamento do Incremento 2 (Navegação)
 
-- **Status:** **PLANEJAMENTO** — nenhuma implementação neste documento (decisões, escopo, critérios de aceite e riscos).
+- **Status:** **APPROVED** (fundadora, 2026-07-23) — planejamento aprovado, com os 4 comentários de revisão incorporados (§2 responsabilidade do AppNavigator · §3.2 estratégia de crescimento · §4.1 Fora de decisão · critério de aceite 11). Nenhuma implementação neste documento. Início da codificação **gated** na sequência de integração (§9).
 - **Onda:** 1 · **Incremento:** 2 (Navegação)
 - **Pré-condição:** Incremento 1 [ACCEPTED](MOBILE-008_INCREMENTO1_ACEITE.md) e **congelado**. A implementação do Incremento 2 só começa **após a integração (merge) da branch atual** — este documento é a atividade administrativa autorizada nesse intervalo.
 - **Relaciona-se com:** [MOBILE-001](MOBILE-001_PLANO_EXECUTIVO_RN.md) (ordem fixa dos incrementos) · [ADR-010](adr/ADR-010_IDENTIDADE_VISUAL_UNICA.md) · [ADR-011](adr/ADR-011_ARQUITETURA_COMPONENTES_CROSSPLATFORM.md) · [ADR-016](adr/ADR-016_INSTANCIA_UNICA_REACT.md) · `src/components/layout/Sidebar.tsx` (SSOT de taxonomia)
@@ -60,6 +60,7 @@ App
 
 - O **gate de sessão** deixa de escolher `Login | Home` diretamente e passa a escolher **`AuthStack | AppNavigator`**. O `AuthProvider` permanece o ponto único de verdade da sessão — **nenhuma mudança na camada de auth do Incremento 1**.
 - O **entrypoint (`index.ts` → `App`) não muda**. `NavigationContainer` entra **dentro** do `AuthProvider`, abaixo do gate de carregamento de fontes/sessão já existente.
+- **Responsabilidade do `AppNavigator` (orquestração apenas).** O `AppNavigator` é um componente de **orquestração de navegação**. Ele **não contém regras de negócio, lógica de autorização ou conhecimento de domínio**, limitando-se à composição e coordenação dos fluxos de navegação. Espelha o mesmo princípio do `AuthProvider` (ponto único de sessão, sem lógica de domínio) e evita que o Navigator se torne, no futuro, um ponto de concentração de lógica.
 
 ## 3. Projeção da taxonomia SSOT (D3)
 
@@ -89,6 +90,15 @@ Motivação: é o padrão esperado pelos usuários em mobile; reduz profundidade
 memória espacial; e mantém a taxonomia SSOT por **correspondência conceitual**, não visual (ver D7, §3.1
 acima). Rótulos e ordem dos grupos derivam do SSOT; a apresentação segue a convenção da plataforma.
 
+### 3.2 Estratégia de crescimento (estabilidade da navegação ao longo das ondas)
+
+> **Novos módulos deverão ser incorporados à navegação preservando a taxonomia SSOT e sem alterar a
+> estrutura dos fluxos já estabilizados, salvo decisão arquitetural documentada em ADR.**
+
+Isto protege a estabilidade da navegação nas próximas ondas: a incorporação de um novo domínio é uma
+adição dentro do grupo correspondente do SSOT, não uma reorganização dos fluxos existentes. Reestruturações
+de fluxo exigem ADR próprio.
+
 ## 4. Escopo
 
 ### Dentro do escopo
@@ -104,6 +114,18 @@ acima). Rótulos e ordem dos grupos derivam do SSOT; a apresentação segue a co
 ### Fora do escopo
 Implementação dos domínios · Upload · Histórico · formulários · regras clínicas · deep linking · notificações · analytics · qualquer tela de conteúdo real (apenas placeholders).
 
+### 4.1 Fora de decisão (não revisitar durante a implementação)
+
+Temas explicitamente **fora deste incremento** — decididos como ausentes para reduzir o risco de expansão
+de escopo durante a codificação. Reintroduzir qualquer um exige incremento/ADR próprios:
+
+- Deep Linking
+- Universal Links
+- Push Notifications
+- Analytics de navegação
+- Persistência de estado da navegação
+- Feature Flags
+
 ## 5. Critérios de aceite (mesma disciplina do Incremento 1)
 
 1. **Build** nativo verde (react-navigation traz deps **nativas** — ver Risco R1 — exigindo *rebuild*).
@@ -116,6 +138,7 @@ Implementação dos domínios · Upload · Histórico · formulários · regras 
 8. **Auditoria arquitetural:** taxonomia derivada do SSOT (sem taxonomia mobile paralela); zero acesso direto ao SDK Supabase em `apps/mobile`; identidade DS-002 preservada.
 9. **Relatório executivo** objetivo (funcionalidade · contratos evoluídos · impactos web · impactos mobile · evidências · riscos).
 10. **Navegação sem conhecimento de domínio.** A estrutura de navegação **não contém conhecimento de domínio** — apenas orquestra a navegação entre módulos definidos pela taxonomia SSOT. Nenhuma regra de negócio, consulta de dados ou lógica clínica na camada de navegação (preserva a separação de responsabilidades e evita que a navegação acumule lógica de negócio).
+11. **Sem regressão de autenticação (critério técnico — principal risco da migração do gate).** Após a introdução da infraestrutura de navegação, **não há regressão na autenticação nem na restauração de sessão**. Concretamente, os fluxos aceitos do Incremento 1 continuam válidos: login válido → `AppNavigator`; login inválido → erro no `AuthStack`; `force-stop` + reabertura autenticada → `AppNavigator` (sessão restaurada); logout → `AuthStack`; guarda de reentrância do logout preservada.
 
 ## 6. Riscos e pontos de atenção
 
@@ -174,3 +197,26 @@ gestos/drawer/animações JS.
 **Confirmação de não-violação do congelamento (R2):** adicionar estas dependências de *feature* + *rebuild*
 nativo **não** é *upgrade* de Expo/RN nem `expo install --fix` de rotina; a stack (SDK 54 / RN 0.81.5 /
 react 19.1.0) permanece intacta.
+
+## 9. Sequência de integração e início da implementação (governança — fundadora 2026-07-23)
+
+A codificação do Incremento 2 **só começa** após esta sequência, nesta ordem. Cada passo preserva a
+governança construída (marco verificável · ramo de planejamento · futura branch de implementação):
+
+1. **Merge do Incremento 1** (estratégia de destino/timing = decisão estratégica da fundadora).
+2. **Normalização do histórico** (opcional — *squash* que normaliza, entre outros, os assuntos de commit com o `@`).
+3. **Congelamento definitivo** desse marco integrado.
+4. **Revisão final do MOBILE-009** — concluída (este documento, APPROVED com os 4 ajustes incorporados).
+5. **Criação da branch de implementação** do Incremento 2 (a partir do marco integrado).
+6. **Somente então** iniciar a codificação, seguindo a sequência de implementação da §7.
+
+Hierarquia de branches estabelecida (escalável para os próximos incrementos):
+
+```
+main
+│
+├── upg/expo-sdk-54            (Incremento 1 — ACCEPTED / congelado · tag mobile-inc1-accepted)
+│
+└── plan/mobile-inc2-navegacao (Planejamento do Incremento 2 — APPROVED)
+      └── (futura) branch de implementação do Incremento 2
+```
