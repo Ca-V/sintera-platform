@@ -19,7 +19,8 @@
       [
         "expo-secure-store",
         { "configureAndroidBackup": false }
-      ]
+      ],
+      "./plugins/withAndroidCmakeVersion"
     ],
     "extra": {
       "eas": {
