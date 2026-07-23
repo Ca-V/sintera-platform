@@ -19,12 +19,32 @@
 | **JDK** | **17** (Temurin/Adoptium) | React Native 0.79 exige JDK 17. |
 | **Android Studio** | Última estável + **Android SDK Platform 35** (Android 15) e Platform 34 | Compilar/rodar o dev build e o emulador. |
 | **Git** | qualquer recente | Já em uso. |
+| **Long Paths (somente Windows)** | **`LongPathsEnabled=1`** + `git config core.longpaths true` | **Obrigatório.** A New Architecture do RN gera object files C++ >260 chars ao compilar módulos nativos com componentes Fabric (ex.: `react-native-screens`, `react-native-safe-area-context`). Sem Long Paths, o `buildCMakeDebug` falha com *"Filename longer than 260 characters"*. Ver §0.1. |
 | **Conta Expo** | criar em https://expo.dev | Dá acesso a EAS Build/Update/Submit. |
 | **Conta Apple Developer** | https://developer.apple.com/programs/ — **só quando for testar em iPhone** | Provisionamento de device iOS. Criar já pela demora de aprovação. |
 | **Conta Google Play Console** | https://play.google.com/console — criar já | Publicação Android futura. |
 
 > **Importante:** NÃO instalar o `expo-cli` global (descontinuado). O Expo já é dependência **local** do app —
 > use sempre **`npx expo …`** a partir de `apps/mobile`. Apenas o **`eas-cli`** é global.
+
+### 0.1 Pré-requisito Windows — habilitar Long Paths (obrigatório antes de compilar)
+
+**Sintoma sem esta configuração:** `Task :app:buildCMakeDebug[...] FAILED` → `ninja: error: Stat(...): Filename
+longer than 260 characters`. **Causa:** a New Architecture (Fabric) do React Native gera caminhos de object
+file C++ que, somados ao caminho do projeto no monorepo, ultrapassam o limite padrão de 260 caracteres do
+Windows. Afeta módulos nativos com componentes Fabric (ex.: `react-native-screens`,
+`react-native-safe-area-context`, introduzidos no Incremento 2 de Navegação).
+
+**Correção (uma vez por máquina):**
+1. PowerShell **como Administrador**:
+   ```
+   reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v LongPathsEnabled /t REG_DWORD /d 1 /f
+   ```
+2. **Reiniciar o Windows** (para todos os processos herdarem a mudança).
+3. Git (por repositório, não exige admin): `git config core.longpaths true`.
+
+**Não** desabilitar a New Architecture para contornar isto: é problema de **ambiente**, não de arquitetura —
+a New Arch faz parte da baseline aceita (Incremento 1). Ver [[ADR-015]] (SDK 54) e o Incremento 2 (MOBILE-009, risco R6).
 
 ---
 

@@ -147,6 +147,14 @@ de escopo durante a codificação. Reintroduzir qualquer um exige incremento/ADR
 - **R3 — Instância única de React já protegida.** Os pacotes do React Navigation importam `react`. O guard do [ADR-016](adr/ADR-016_INSTANCIA_UNICA_REACT.md) já força todo `react`/`react/*` para a cópia do mobile — cobre esses pacotes sem ação adicional. Validar a topologia após a instalação confirma isso.
 - **R4 — Mapeamento taxonomia agrupada → padrão mobile.** Padrão **decidido** (Bottom Tabs + Stacks, §3.1). Atenção residual: a projeção dos ~15 itens em tabs+stacks deve preservar a taxonomia SSOT por correspondência conceitual (D7), sem recriá-la nem embutir lógica de domínio (critério 10).
 - **R5 — SafeArea / status bar.** A navegação introduz *headers*/*tab bars*; tratar *insets* de área segura (hoje o `LoginScreen` usa padding fixo). Incluir `react-native-safe-area-context` (já dependência do React Navigation) e revisar o `StatusBar`.
+- **R6 — Desenvolvimento em Windows (pré-requisito de ambiente).** Em ambientes Windows, a implementação da
+  New Architecture do React Native pode gerar caminhos de arquivos superiores ao limite padrão do sistema
+  operacional (260 caracteres). É **pré-requisito** habilitar `LongPathsEnabled` (+ `git config core.longpaths true`)
+  **antes** da compilação. **Confirmado na prática (2026-07-23):** com `LongPathsEnabled=0`, o
+  `buildCMakeDebug` falha com *"Filename longer than 260 characters"* (object file de 378 chars) ao compilar
+  `react-native-screens`/`react-native-safe-area-context`. **Decisão (fundadora):** resolver no **ambiente**
+  (habilitar Long Paths), **não** desabilitar a New Architecture — problema de ambiente resolve-se no ambiente.
+  Procedimento operacional em [MOBILE-003 §0.1](MOBILE-003_PROVISIONAMENTO_EXPO_EAS.md).
 
 ## 7. Sequência de implementação proposta (para execução PÓS-merge)
 
