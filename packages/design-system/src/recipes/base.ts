@@ -5,7 +5,7 @@ import type { SinteraTheme } from '../theme'
 import type { ElevationLevel } from '../tokens/elevation'
 import type { GradientToken } from '../tokens/gradient'
 import type {
-  ButtonSpec, ChipSpec, BadgeSpec, CardSpec, SurfaceSpec, DividerSpec, IconSpec, AvatarSpec, TextSpec,
+  ButtonSpec, ChipSpec, BadgeSpec, CardSpec, SurfaceSpec, DividerSpec, IconSpec, AvatarSpec, TextSpec, InputSpec,
 } from './spec'
 
 export type Size = 'sm' | 'md' | 'lg'
@@ -94,6 +94,23 @@ export function chip(t: SinteraTheme, opts: { selected?: boolean } = {}): ChipSp
 
 export function divider(t: SinteraTheme): DividerSpec {
   return { color: t.color.border.default, thickness: t.border.hairline }
+}
+
+// --- Formulários ------------------------------------------------------------
+export type InputState = 'default' | 'focus' | 'error'
+// Campo de entrada. Foco = realce na âncora de identidade; erro = cor de feedback de erro. 100% derivado dos papéis.
+export function input(t: SinteraTheme, opts: { state?: InputState } = {}): InputSpec {
+  const state = opts.state ?? 'default'
+  const borderColor =
+    state === 'focus' ? t.color.identity.primary :
+    state === 'error' ? t.color.badge.error.text :
+    t.color.border.default
+  const borderWidth = state === 'default' ? t.border.hairline : t.border.strong
+  return {
+    container: { backgroundColor: t.color.surface.base, borderColor, borderWidth, radius: t.radius.control, paddingX: t.padding.cozy, paddingY: t.padding.cozy, minHeight: MIN_TOUCH, opacity: 1, elevation: 'none' },
+    text: { style: t.typography.body, color: t.color.text.default },
+    placeholderColor: t.color.text.faint,
+  }
 }
 
 // --- Mídia / símbolos -------------------------------------------------------

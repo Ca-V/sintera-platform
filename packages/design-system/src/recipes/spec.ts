@@ -28,6 +28,8 @@ export interface BoxSpec {
 export interface TextSpec { style: TextStyle; color: string }
 
 export interface ButtonSpec { container: BoxSpec; label: TextSpec }
+/** Campo de entrada: caixa + estilo do texto digitado + cor do placeholder (por papel). */
+export interface InputSpec { container: BoxSpec; text: TextSpec; placeholderColor: string }
 export interface ChipSpec { container: BoxSpec; label: TextSpec }
 export interface BadgeSpec { container: BoxSpec; label: TextSpec }
 export interface CardSpec { container: BoxSpec }

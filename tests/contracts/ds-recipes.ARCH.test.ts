@@ -3,7 +3,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   getTheme, contrastRatio, WCAG,
-  button, text, heading, card, surface, badge, chip, divider, icon, avatar,
+  button, text, heading, card, surface, badge, chip, divider, icon, avatar, input,
   type Theme, type BadgeTone,
 } from '../../packages/design-system/src'
 
@@ -69,6 +69,22 @@ describe('ARCH · recipes — derivação do tema e acessibilidade', () => {
     it(`[${mode}] chip selecionado usa o realce; não selecionado tem contorno`, () => {
       expect(chip(t, { selected: true }).container.backgroundColor).toBe(t.color.surface.accent)
       expect(chip(t, { selected: false }).container.borderWidth).toBe(t.border.hairline)
+    })
+
+    it(`[${mode}] input deriva dos papéis; foco realça a identidade; erro usa feedback; alvo ≥ 44; texto AA`, () => {
+      const base = input(t)
+      expect(base.container.backgroundColor).toBe(t.color.surface.base)
+      expect(base.container.borderColor).toBe(t.color.border.default)
+      expect(base.container.borderWidth).toBe(t.border.hairline)
+      expect(base.text.color).toBe(t.color.text.default)
+      expect(base.placeholderColor).toBe(t.color.text.faint)
+      expect(base.container.minHeight).toBeGreaterThanOrEqual(44)
+      // foco = âncora de identidade + borda forte; erro = cor de erro
+      expect(input(t, { state: 'focus' }).container.borderColor).toBe(t.color.identity.primary)
+      expect(input(t, { state: 'focus' }).container.borderWidth).toBe(t.border.strong)
+      expect(input(t, { state: 'error' }).container.borderColor).toBe(t.color.badge.error.text)
+      // texto legível sobre o fundo do campo
+      expect(contrastRatio(base.text.color, base.container.backgroundColor)).toBeGreaterThanOrEqual(WCAG.AA_NORMAL)
     })
   }
 })
