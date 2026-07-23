@@ -1,0 +1,136 @@
+# MOBILE-009 — Planejamento do Incremento 2 (Navegação)
+
+- **Status:** **PLANEJAMENTO** — nenhuma implementação neste documento (decisões, escopo, critérios de aceite e riscos).
+- **Onda:** 1 · **Incremento:** 2 (Navegação)
+- **Pré-condição:** Incremento 1 [ACCEPTED](MOBILE-008_INCREMENTO1_ACEITE.md) e **congelado**. A implementação do Incremento 2 só começa **após a integração (merge) da branch atual** — este documento é a atividade administrativa autorizada nesse intervalo.
+- **Relaciona-se com:** [MOBILE-001](MOBILE-001_PLANO_EXECUTIVO_RN.md) (ordem fixa dos incrementos) · [ADR-010](adr/ADR-010_IDENTIDADE_VISUAL_UNICA.md) · [ADR-011](adr/ADR-011_ARQUITETURA_COMPONENTES_CROSSPLATFORM.md) · [ADR-016](adr/ADR-016_INSTANCIA_UNICA_REACT.md) · `src/components/layout/Sidebar.tsx` (SSOT de taxonomia)
+
+## 1. Decisões arquiteturais (fundadora, 2026-07-23)
+
+| # | Decisão | Valor |
+|---|---------|-------|
+| D1 | Biblioteca de navegação | **React Navigation** |
+| D2 | Modelo estrutural | `NavigationContainer` → **`AuthStack`** (não autenticado) + **`AppNavigator`** (autenticado) |
+| D3 | Fonte da verdade da taxonomia | **Taxonomia SSOT compartilhada com a Web** (`Sidebar.tsx`) — a nav mobile PROJETA, não cria taxonomia própria |
+| D4 | Escopo | **Somente infraestrutura de navegação** + telas placeholder |
+| D5 | Este documento | Planejamento apenas — nenhuma linha de código |
+| D6 | Padrão de navegação | **Bottom Tabs + Stacks internos** (Opção A) |
+| D7 | Natureza da projeção | A navegação é **projeção**, não representação literal, do SSOT (ver §3.1) |
+
+### Decisão de arquitetura — projeção não literal (D7)
+
+> **A navegação é uma projeção da taxonomia SSOT, não sua representação literal. A arquitetura de
+> informação permanece única; a organização visual pode variar conforme a plataforma para respeitar as
+> convenções de uso.**
+
+Consequência prática da separação de responsabilidades:
+
+- **SSOT → define O QUE existe** (a organização conceitual do domínio, compartilhada por Web e Mobile).
+- **Mobile UX → define COMO isso é acessado** (a apresentação, que pode seguir convenções da plataforma).
+
+Essas responsabilidades **não precisam ser idênticas**. Web e Mobile compartilham a mesma **arquitetura
+conceitual**; não são obrigados a compartilhar a mesma **estrutura visual**. Isto evita a conclusão
+equivocada de que a interface mobile deva copiar 1:1 o Sidebar Web.
+
+### Fundamentação de D1 (React Navigation × Expo Router)
+
+Escolhido React Navigation por consistência com os princípios já estabilizados: arquitetura **explícita**,
+separação domínio/infra, transição **incremental** sem alterar o entrypoint. O Expo Router inverteria a
+relação (a estrutura de diretórios passaria a definir parte da navegação; o entrypoint mudaria; regras
+futuras dependeriam da convenção do Router) — uma variável arquitetural ainda não necessária. O principal
+argumento do Expo Router (deep linking/URLs) **não é decisivo agora**: o React Navigation oferece suporte
+maduro a deep linking quando Care Space/notificações/compartilhamento entrarem no roadmap. Não se otimiza
+hoje para um requisito ainda não utilizado.
+
+## 2. Arquitetura-alvo
+
+Evolução **incremental** do gate atual (`App → AuthProvider → Gate → {Login | Home}`):
+
+```
+App
+ └── AuthProvider                     (SSOT de sessão — INALTERADO; getSession + onAuthStateChange)
+      └── NavigationContainer         (React Navigation)
+           ├── AuthStack              (renderizado quando session == null)
+           │     └── LoginScreen      (já existente, DS-002)
+           │
+           └── AppNavigator           (renderizado quando session != null)
+                 ├── HomePlaceholder  (já existente)
+                 └── …placeholders navegáveis projetando a taxonomia SSOT
+```
+
+- O **gate de sessão** deixa de escolher `Login | Home` diretamente e passa a escolher **`AuthStack | AppNavigator`**. O `AuthProvider` permanece o ponto único de verdade da sessão — **nenhuma mudança na camada de auth do Incremento 1**.
+- O **entrypoint (`index.ts` → `App`) não muda**. `NavigationContainer` entra **dentro** do `AuthProvider`, abaixo do gate de carregamento de fontes/sessão já existente.
+
+## 3. Projeção da taxonomia SSOT (D3)
+
+Fonte única = `Sidebar.tsx` (Web). Estrutura atual a ser projetada no mobile:
+
+| Grupo (SSOT) | Itens (SSOT) |
+|--------------|--------------|
+| *(topo)* | Painel Inicial |
+| Acompanhamento | Agenda · Histórico de Saúde · Histórico de Exames · Composição Corporal · Monitoramento |
+| Documentos | Exames |
+| Minha Saúde | Condições de Saúde · Medicamentos · Suplementos · Recursos de Saúde · Hábitos · Ciclo e Contracepção |
+| Organização | Despesas · Relatórios |
+| Configurações | Configurações |
+
+**Princípio:** a navegação mobile reflete a **mesma organização conceitual** da Web (SSOT → taxonomia → {Web, Mobile}), nunca uma taxonomia "mobile" paralela. Divergência de taxonomia entre plataformas é um anti-objetivo explícito.
+
+<a id="secao-3-1"></a>
+### 3.1 Padrão de navegação — DECIDIDO: Bottom Tabs + Stacks internos (Opção A)
+
+O Sidebar Web é uma **lista agrupada** (5 grupos, ~15 itens). A decisão (fundadora, 2026-07-23) é
+**Bottom Tabs + Stacks internos**:
+
+- **Opção A (ADOTADA):** **bottom tabs** para os grupos de topo (projetando os grupos como destinos primários) + stacks internos por grupo.
+- Opção B (descartada): drawer espelhando o Sidebar Web 1:1 (fidelidade visual máxima, menos idiomático em mobile).
+
+Motivação: é o padrão esperado pelos usuários em mobile; reduz profundidade de navegação; favorece a
+memória espacial; e mantém a taxonomia SSOT por **correspondência conceitual**, não visual (ver D7, §3.1
+acima). Rótulos e ordem dos grupos derivam do SSOT; a apresentação segue a convenção da plataforma.
+
+## 4. Escopo
+
+### Dentro do escopo
+- Escolha e instalação da biblioteca (React Navigation + dependências nativas).
+- `NavigationContainer`.
+- `AuthStack` (envolvendo a `LoginScreen` existente).
+- `AppNavigator` (shell de navegação autenticada projetando os grupos da taxonomia SSOT).
+- Transição do gate atual (`{Login|Home}` → `{AuthStack|AppNavigator}`).
+- Telas **placeholder** navegáveis (uma por destino de topo; sem conteúdo de domínio).
+- Preservação da sessão e integração com o `AuthProvider` (inclusive logout retornando ao `AuthStack`).
+- Identidade DS-002 aplicada aos elementos de navegação (cores/tipografia via tokens do DS).
+
+### Fora do escopo
+Implementação dos domínios · Upload · Histórico · formulários · regras clínicas · deep linking · notificações · analytics · qualquer tela de conteúdo real (apenas placeholders).
+
+## 5. Critérios de aceite (mesma disciplina do Incremento 1)
+
+1. **Build** nativo verde (react-navigation traz deps **nativas** — ver Risco R1 — exigindo *rebuild*).
+2. **tsc(mobile)** verde; suíte/contratos existentes inalterados e verdes.
+3. **Topologia de dependências íntegra** após as novas deps (autolinking encontra os módulos nativos; contagem de módulos verificada — [ARCH-001](ARCH-001_ARQUITETURA_DEPENDENCIAS_WORKSPACE.md)/INV-DEP-001).
+4. **Gate:** sem sessão → `AuthStack`/Login; com sessão → `AppNavigator`.
+5. **Navegação:** placeholders de topo alcançáveis; rótulos/ordem **derivados do SSOT** (`Sidebar.tsx`).
+6. **Sessão preservada:** `force-stop` + reabertura autenticada → retorna ao `AppNavigator` (não ao Login).
+7. **Logout** de dentro do `AppNavigator` → retorna ao `AuthStack` (comportamento do Incremento 1 preservado, incluindo a guarda de reentrância).
+8. **Auditoria arquitetural:** taxonomia derivada do SSOT (sem taxonomia mobile paralela); zero acesso direto ao SDK Supabase em `apps/mobile`; identidade DS-002 preservada.
+9. **Relatório executivo** objetivo (funcionalidade · contratos evoluídos · impactos web · impactos mobile · evidências · riscos).
+10. **Navegação sem conhecimento de domínio.** A estrutura de navegação **não contém conhecimento de domínio** — apenas orquestra a navegação entre módulos definidos pela taxonomia SSOT. Nenhuma regra de negócio, consulta de dados ou lógica clínica na camada de navegação (preserva a separação de responsabilidades e evita que a navegação acumule lógica de negócio).
+
+## 6. Riscos e pontos de atenção
+
+- **R1 — Dependências nativas / *rebuild*.** `react-native-screens` e `react-native-safe-area-context` são **nativos**. Adicioná-los exige *build* nativo novo + verificação de topologia (mesma diligência aplicada a `expo-linear-gradient`/`expo-secure-store` no Incremento 1). Fluxo: `expo install` → checar autolinking → `expo run:android`.
+- **R2 — Congelamento da stack (Onda 1).** Adicionar bibliotecas de **feature** (react-navigation) **não** viola a regra de congelamento — que proíbe *upgrade* de Expo/RN e `expo install --fix` de rotina, não a adição de dependências de produto. Registrar explicitamente para não confundir *rebuild* nativo com mudança de stack.
+- **R3 — Instância única de React já protegida.** Os pacotes do React Navigation importam `react`. O guard do [ADR-016](adr/ADR-016_INSTANCIA_UNICA_REACT.md) já força todo `react`/`react/*` para a cópia do mobile — cobre esses pacotes sem ação adicional. Validar a topologia após a instalação confirma isso.
+- **R4 — Mapeamento taxonomia agrupada → padrão mobile.** Padrão **decidido** (Bottom Tabs + Stacks, §3.1). Atenção residual: a projeção dos ~15 itens em tabs+stacks deve preservar a taxonomia SSOT por correspondência conceitual (D7), sem recriá-la nem embutir lógica de domínio (critério 10).
+- **R5 — SafeArea / status bar.** A navegação introduz *headers*/*tab bars*; tratar *insets* de área segura (hoje o `LoginScreen` usa padding fixo). Incluir `react-native-safe-area-context` (já dependência do React Navigation) e revisar o `StatusBar`.
+
+## 7. Sequência de implementação proposta (para execução PÓS-merge)
+
+> Registro do plano; **não executar** enquanto a branch estiver congelada / antes do merge.
+
+1. Instalar React Navigation + deps nativas (`expo install`); verificar topologia; *rebuild* nativo.
+2. Introduzir `NavigationContainer` dentro do `AuthProvider`; migrar o gate para `{AuthStack | AppNavigator}` (bloco reversível).
+3. `AuthStack` envolvendo a `LoginScreen`.
+4. `AppNavigator` (Bottom Tabs + Stacks, §3.1) com placeholders projetando os grupos do SSOT.
+5. Validar os 9 critérios de aceite (§5) no emulador; relatório executivo; congelar.
