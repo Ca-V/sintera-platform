@@ -20,10 +20,11 @@ após a captura; (c) antes de cada commit verificou-se `git diff` **limpo** no `
 commitado da etapa anterior). Os commits E1–E5 contêm apenas o gate correto (`session ? <AppNavigator/> :
 <AuthStack/>`).
 
-**Homologação funcional pendente** (critério de aceite mais importante, depende de autenticação real):
-persistência de sessão através das tabs · logout de dentro do AppNavigator → AuthStack · ausência de
-regressão do fluxo Login → Home → Logout (**critério 11**). Nenhuma etapa estrutural deve ser reaberta;
-o trabalho restante é exclusivamente a validação funcional autenticada.
+**Homologação funcional CONCLUÍDA (2026-07-24) — Incremento 2 ACCEPTED.** A fundadora exercitou no emulador o
+ciclo completo: Login → Home → navegação por todas as abas → Logout → Login (sessão removida) → novo Login →
+**force-stop** → **restauração direta no AppNavigator** (não no Login). Critério 11 e restauração de sessão
+validados em app real. Registro de aceite: [MOBILE-013](MOBILE-013_INCREMENTO2_ACEITE.md); tag
+`mobile-inc2-accepted`.
 
 ## 1. Decisões arquiteturais (fundadora, 2026-07-23)
 
