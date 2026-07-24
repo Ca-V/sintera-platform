@@ -1,8 +1,19 @@
-// Incremento 2 · Etapa 2 — AppNavigator (ramo autenticado do gate). Contém apenas a Home (placeholder).
-// Nesta etapa é um componente simples; a conversão para navegador e a introdução de Bottom Tabs + stacks
-// internos são as Etapas 3–5. Objetivo da Etapa 2: migrar o gate SEM alterar comportamento.
+// Incremento 2 · Etapa 3 — AppNavigator como navegador React Navigation (native-stack), uma única tela.
+// `headerShown: false` mantém o comportamento idêntico ao Incremento 1 (Home ocupa a tela toda).
+// Bottom Tabs (Etapa 4) e stacks internos por tab (Etapa 5) entram nas próximas etapas.
+import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { HomePlaceholder } from '../screens/HomePlaceholder'
 
+export type AppStackParamList = {
+  Home: undefined
+}
+
+const Stack = createNativeStackNavigator<AppStackParamList>()
+
 export function AppNavigator() {
-  return <HomePlaceholder />
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Home" component={HomePlaceholder} />
+    </Stack.Navigator>
+  )
 }
