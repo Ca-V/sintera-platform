@@ -10,14 +10,7 @@ import { HomeShell } from '../home/HomeShell'
 import { PlaceholderScreen } from './PlaceholderScreen'
 import { SSOT_TABS } from './ssotTabs'
 import { useTheme } from '../theme'
-
-export type AppTabParamList = {
-  Inicio: undefined
-  Acompanhamento: undefined
-  Documentos: undefined
-  MinhaSaude: undefined
-  Mais: undefined
-}
+import type { AppTabParamList } from './types'
 
 const Tab = createBottomTabNavigator<AppTabParamList>()
 

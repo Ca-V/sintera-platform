@@ -7,7 +7,7 @@ import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs'
 import { text } from '@sintera/design-system'
 import { Text } from '../../primitives'
 import { useTheme } from '../../theme'
-import type { AppTabParamList } from '../../navigation/AppNavigator'
+import type { AppTabParamList } from '../../navigation/types'
 
 // Rótulos/alvos derivados dos grupos do SSOT (mesmos da navegação). Só navegação.
 const ENTRIES: { label: string; target: keyof AppTabParamList }[] = [
