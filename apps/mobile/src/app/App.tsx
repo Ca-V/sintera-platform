@@ -11,8 +11,8 @@ import { ActivityIndicator, View } from 'react-native'
 import { NavigationContainer } from '@react-navigation/native'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { AuthProvider, useAuth } from '../state/AuthProvider'
-import { LoginScreen } from '../presentation/screens/LoginScreen'
-import { HomePlaceholder } from '../presentation/screens/HomePlaceholder'
+import { AuthStack } from '../presentation/navigation/AuthStack'
+import { AppNavigator } from '../presentation/navigation/AppNavigator'
 import { useTheme } from '../presentation/theme'
 
 /** Escolhe a tela conforme o estado de sessão. Mostra Loading enquanto a sessão é restaurada. */
@@ -26,7 +26,9 @@ function Gate() {
       </View>
     )
   }
-  return session ? <HomePlaceholder /> : <LoginScreen />
+  // Etapa 2: o gate delega para AuthStack | AppNavigator (antes: LoginScreen | HomePlaceholder).
+  // Comportamento idêntico — nesta etapa cada um envolve exatamente a mesma tela de antes.
+  return session ? <AppNavigator /> : <AuthStack />
 }
 
 export function App() {
