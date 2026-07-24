@@ -70,6 +70,11 @@ todo o restante é **compartilhável até prova em contrário**, e a prova preci
 | **4 — Integrações adicionais** | Conectores externos (Withings pronto) · atividade física (após sign-off jurídico) · dispositivos médicos | fontes além do celular ampliam a cobertura sem mudança estrutural |
 
 **MVP da Onda 1 — funcionalidades observáveis (critério de aceite da 1ª versão navegável, fundadora):**
+
+> ⚠️ **Ordem oficial atualizada:** o roadmap de incrementos vigente é o **[MOBILE-015](MOBILE-015_ROADMAP_INCREMENTOS.md)**
+> (fundadora, 2026-07-24), que refina a lista abaixo (adiciona RegistrationHub · Composição Corporal · Agenda ·
+> Insights após os domínios fundamentais). Seguir MOBILE-015 para a sequência atual.
+
 1. **Autenticação** (login/logout, sessão persistente, deep links).
 2. **Navegação completa** (bottom tabs operando entre todos os domínios).
 3. **Home** (Painel Inicial).
