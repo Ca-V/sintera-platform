@@ -5,6 +5,26 @@
 - **Pré-condição:** Incremento 1 [ACCEPTED](MOBILE-008_INCREMENTO1_ACEITE.md) e **congelado**. A implementação do Incremento 2 só começa **após a integração (merge) da branch atual** — este documento é a atividade administrativa autorizada nesse intervalo.
 - **Relaciona-se com:** [MOBILE-001](MOBILE-001_PLANO_EXECUTIVO_RN.md) (ordem fixa dos incrementos) · [ADR-010](adr/ADR-010_IDENTIDADE_VISUAL_UNICA.md) · [ADR-011](adr/ADR-011_ARQUITETURA_COMPONENTES_CROSSPLATFORM.md) · [ADR-016](adr/ADR-016_INSTANCIA_UNICA_REACT.md) · `src/components/layout/Sidebar.tsx` (SSOT de taxonomia)
 
+## 0. Registro de execução (2026-07-24)
+
+Implementação em **5 etapas isoladas e reversíveis** (uma mudança estrutural por commit, ordem refinada
+pela fundadora): E1 `ae03b5e` NavigationContainer+SafeAreaProvider · E2 `8fa138a` gate→AuthStack|AppNavigator ·
+E3 `72515a5` navegadores reais (native-stack) · E4 `d686f7f` Bottom Tabs projetando o SSOT · E5 `ec4c3bc`
+native-stack interno por tab.
+
+**Nota metodológica — preview temporário (para rastreabilidade).** Como as telas autenticadas só aparecem
+com sessão (que exige senha, fora do alcance do agente), a validação visual das tabs foi feita por um
+**preview temporário** — forçar `return <AppNavigator/>` no gate. **Regras seguidas, e por isso nenhum commit
+publicado depende do artifício:** (a) o preview **nunca foi commitado**; (b) foi **sempre revertido** logo
+após a captura; (c) antes de cada commit verificou-se `git diff` **limpo** no `App.tsx` (idêntico ao estado
+commitado da etapa anterior). Os commits E1–E5 contêm apenas o gate correto (`session ? <AppNavigator/> :
+<AuthStack/>`).
+
+**Homologação funcional pendente** (critério de aceite mais importante, depende de autenticação real):
+persistência de sessão através das tabs · logout de dentro do AppNavigator → AuthStack · ausência de
+regressão do fluxo Login → Home → Logout (**critério 11**). Nenhuma etapa estrutural deve ser reaberta;
+o trabalho restante é exclusivamente a validação funcional autenticada.
+
 ## 1. Decisões arquiteturais (fundadora, 2026-07-23)
 
 | # | Decisão | Valor |
