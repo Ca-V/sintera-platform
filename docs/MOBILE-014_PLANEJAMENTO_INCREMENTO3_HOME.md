@@ -85,6 +85,18 @@ redesenho) e a independência (§2.1).
 Os slots reservados ficam **visualmente vazios** (ou com um marcador neutro), **sem** conteúdo de domínio. O
 `RegistrationHub` (HUB-001) **não** ocupa nenhum destes slots no Incremento 3 — terá incremento próprio.
 
+**Cuidado de implementação (fundadora):** cada slot é implementado como um **componente real** — mesmo os
+reservados —, ainda que retornem apenas um estado vazio. A Home compõe **componentes nomeados**, não `View`s
+anônimas:
+```
+<HomeShell>
+  <WelcomeSlot />      <QuickActionsSlot />   <SummarySlot />
+  <TimelineSlot />     <InsightsSlot />       <FooterSlot />
+</HomeShell>
+```
+Isso preserva o contrato arquitetural e **reduz o retrabalho** quando os domínios forem adicionados (um
+incremento futuro apenas preenche o corpo do slot correspondente).
+
 ## 4. Projeção da referência Web (sem copiar a lógica)
 
 A Web (`Painel Inicial`) é um dashboard **orientado a dados** que agrega muitos domínios. A Home Shell mobile
