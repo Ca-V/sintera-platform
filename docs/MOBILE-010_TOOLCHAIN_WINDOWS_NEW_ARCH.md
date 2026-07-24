@@ -1,6 +1,50 @@
 # MOBILE-010 — Toolchain Windows / New Architecture: limitação de comprimento de caminho
 
-- **Status:** **AGUARDANDO VALIDAÇÃO FUNCIONAL** — solução validada experimentalmente (build limpo + Cold Provisioning + `prebuild --clean` aprovados); falta o 4º critério de encerramento.
+- **Status:** ✅ **ENCERRADO — VALIDADO** (2026-07-23)
+
+## 0. Escopo da validação (leia primeiro)
+
+> **Esta investigação valida exclusivamente a correção do problema de compilação da toolchain Android
+> (CMake/Ninja).** A autenticação foi exercitada **até o fluxo de erro** (credenciais inválidas), confirmando
+> a integridade da pilha nativa e de comunicação. O **fluxo autenticado (Login → Home → Logout) permanece
+> coberto pelos critérios de aceite do Incremento 2** (critério 11) e será revalidado durante essa etapa.
+
+Declaração deliberada de limite: **não se afirma** que o fluxo autenticado foi testado nesta investigação.
+
+### Critérios de encerramento
+
+| # | Critério | Resultado |
+|---|----------|-----------|
+| 1 | Build limpo (*cold build*) concluído com sucesso | ✅ 3 builds independentes: 3m20s · **Cold Provisioning** 3m32s · **`prebuild --clean`** 2m37s |
+| 2 | Nenhuma ocorrência de `Filename longer than 260 characters` | ✅ **0 ocorrências** em todos os logs |
+| 3 | Aplicativo inicia normalmente | ✅ inicia e renderiza; **sem crashes nativos** |
+| 4 | Sem regressão funcional vs. Incremento 1 | ✅ **no escopo validado** (§0): gate de sessão operante, `expo-secure-store` funcional, comunicação com o Supabase e tratamento de erro na UI íntegros. Fluxo autenticado → Incremento 2, critério 11 |
+
+**Evidência do critério 4 (teste negativo de autenticação, sem credenciais reais):** credencial inexistente →
+erro real retornado pelo Supabase → *"Credenciais inválidas. Verifique e tente novamente."* exibido na UI.
+Isso demonstra que, após a troca da toolchain, o app inicializa, o **gate de autenticação funciona**, o módulo
+nativo **`expo-secure-store` está operacional** (o `getSession()` resolveu — caso contrário o app ficaria preso
+no estado de carregamento), a **comunicação com o Supabase ocorre** e o **tratamento de erro na UI permanece
+funcional**. A pilha de autenticação está íntegra **até o ramo de erro**.
+
+### Observação ambiental (registrada separadamente — sem relação causal com esta correção)
+
+Durante o teste negativo ocorreu um **ANR** no app. Diagnóstico por log:
+`ANR ... Reason: Input dispatching timed out (Waited 5006ms for KeyEvent)` concomitante a
+`lowmemorykiller: Kill 'android.process.media' ... reason: low watermark is breached` (e mais 3 processos do
+sistema mortos por falta de memória). Verificação explícita: **0** ocorrências de `FATAL EXCEPTION`, `SIGABRT`,
+`SIGSEGV`, `UnsatisfiedLinkError`, `NativeModule not found`, `Cannot find native module`, `libc Fatal`. As
+entradas de `tombstoned` referentes ao PID do app são do tipo **`kDebuggerdJavaBacktrace`** — mecanismo padrão
+de coleta de stack do **ANR**, não um crash. **O processo permaneceu vivo.**
+**Classificação: problema do ambiente de teste (AVD com pouca memória), não regressão da correção da
+toolchain.** Ação recomendada (fora deste documento): aumentar a RAM do AVD antes da validação do Incremento 2.
+
+### Critério de reabertura
+
+> O MOBILE-010 somente deve ser reaberto se um desenvolvedor conseguir reproduzir o erro
+> `Filename longer than 260 characters` **utilizando a baseline oficial da toolchain e seguindo integralmente
+> o runbook do projeto**. Falhas decorrentes de desvios da baseline ou de configurações locais **não**
+> caracterizam regressão do defeito.
 - **Origem:** Incremento 2 (Navegação) — bloqueio na compilação nativa de `react-native-screens` / `react-native-safe-area-context`.
 - **Investigação anterior (ENCERRADA):** hipótese "`LongPathsEnabled` isoladamente resolve" — **REJEITADA** (ver §1).
 - **Relaciona-se com:** [MOBILE-009](MOBILE-009_PLANEJAMENTO_INCREMENTO2_NAVEGACAO.md) (R6) · [MOBILE-003 §0.1](MOBILE-003_PROVISIONAMENTO_EXPO_EAS.md) · [ADR-015](adr/ADR-015_MIGRACAO_EXPO_SDK54.md)
@@ -48,9 +92,11 @@ Task :app:buildCMakeDebug[arm64-v8a] FAILED
 
 ### 2.1 Causa raiz identificada (formulação precisa)
 
-> **A causa raiz identificada até o momento é a COMBINAÇÃO da toolchain Android distribuída por padrão
-> (CMake 3.22.1 + Ninja 1.10.x) com o padrão de geração de caminhos do codegen da New Architecture, em
-> projetos cujo caminho total excede o limite de 260 caracteres.**
+> **Causa raiz (formulação oficial):** a combinação da **toolchain Android padrão (CMake 3.22.1 / Ninja 1.10.2)**
+> com a **geração de código da React Native New Architecture** em um **projeto Expo CNG** produzia caminhos de
+> compilação incompatíveis com essa toolchain. A atualização para **CMake 4.1.2 / Ninja 1.12.1**, aplicada de
+> forma **persistente por meio de um Config Plugin do Expo**, eliminou o problema e foi **validada em builds
+> limpos e reproduzíveis**.
 
 O defeito **emerge da interação** de quatro fatores — toolchain padrão · Windows · codegen da New
 Architecture · profundidade do caminho do projeto — e **não** de um único componente isolado. Não é correto
@@ -97,13 +143,23 @@ duplica o caminho do projeto e leva o total a **378 chars**.
 
 Nenhuma delas altera a arquitetura da aplicação.
 
-| # | Solução | Efeito | Custo/risco |
-|---|---------|--------|-------------|
-| **S1** | **Atualizar o CMake do Android SDK** para uma versão disponibilizada oficialmente pelo SDK Manager que empacote **ninja 1.12+** (o mantenedor do Expo cita **3.30.x / 3.31.x / 4.x**) e apontar o AGP para ela | Corrige o bug na origem | **ADOTADA.** Componente **first-party**, sustentada por fonte oficial (§2.1); permanente e reprodutível; sem workaround, sem alterar workflow nem arquitetura |
-| S2 | Encurtar caminhos: `subst` + relocar o `.cxx` (`buildStagingDirectory`) | ~378 → ~239 | **Apenas contingência.** Frágil: `subst` reaplicado a cada reboot e muda o caminho de trabalho — verruga permanente no runbook |
-| S3 | Substituir manualmente o `ninja.exe` na pasta do CMake | Mesmo efeito de S1 | Binário avulso fora do SDK Manager; menos rastreável/reprodutível que S1 |
-| — | Mover o repositório | **Não resolve** | Rejeitado por cálculo (§2.1): estrutura fixa 262 chars → total > 260 mesmo em caminho mínimo |
-| — | Desabilitar a New Architecture | Contorna | **Não autorizado.** Alterar arquitetura para contornar limitação de infraestrutura (ver §4) |
+### ✅ Solução oficial ADOTADA (única)
+
+**Atualizar o CMake do Android SDK** para uma versão oficialmente disponibilizada pelo SDK Manager que
+empacote **ninja 1.12+**, e **persistir a configuração via Config Plugin do Expo** (obrigatório em projeto
+CNG — ver §3.2). Componente **first-party**, sustentado por fonte oficial (§2.1), permanente e reprodutível.
+**Versão validada: CMake 4.1.2 / Ninja 1.12.1.**
+
+### ❌ Alternativas avaliadas e REJEITADAS — não fazem parte da solução oficial
+
+Registradas apenas como histórico da investigação. **Nenhuma deve ser adotada**; não constam do runbook.
+
+| Alternativa | Por que foi rejeitada |
+|---|---|
+| `subst` de unidade + relocar o `.cxx` | Workaround operacional frágil: exigiria reaplicação a cada reboot e mudaria o caminho de trabalho dos builds — verruga permanente no processo |
+| Substituir manualmente o `ninja.exe` | Binário avulso fora do SDK Manager; não rastreável nem reprodutível |
+| Mover o repositório para caminho curto | **Não resolve** — rejeitado por cálculo (§2.1): a estrutura fixa soma 262 chars, logo o total excede 260 mesmo em caminho mínimo |
+| Desabilitar a New Architecture | Alterar decisão **arquitetural** para contornar limitação de **infraestrutura**. Não autorizado (§4) |
 
 ### Definição da solução (formulação correta)
 
@@ -113,12 +169,32 @@ Nenhuma delas altera a arquitetura da aplicação.
 O que interessa ao projeto **não é o número da versão**, e sim a **combinação validada**. Por isso o
 procedimento termina em medição, não em pressuposto.
 
-**Procedimento S1 (a executar):**
-1. Android Studio → `Settings` → `Languages & Frameworks` → `Android SDK` → aba **SDK Tools** →
-   **"Show Package Details"** → **CMake**: instalar a versão mais recente oferecida oficialmente.
-2. Apontar o AGP para ela (`android { externalNativeBuild { cmake { version "<versão>" } } }`).
-3. **Validar experimentalmente** que o erro desaparece (não presumir).
-4. Registrar a **toolchain mínima validada** (abaixo) no runbook [MOBILE-003](MOBILE-003_PROVISIONAMENTO_EXPO_EAS.md) — passa a ser a **baseline oficial do projeto**.
+**Procedimento executado:**
+1. ✅ Android Studio → `SDK Tools` → *Show Package Details* → **CMake 4.1.2** instalado.
+2. ✅ AGP apontado para ela — **via Config Plugin** (§3.2), não por edição manual.
+3. ✅ **Validado experimentalmente** (3 builds, incl. `prebuild --clean`).
+4. ✅ Baseline registrada no runbook [MOBILE-003](MOBILE-003_PROVISIONAMENTO_EXPO_EAS.md).
+
+### 3.2 Persistência da configuração — Config Plugin (mecanismo oficial)
+
+**Descoberta crítica:** `apps/mobile/android/` é **gerado por `expo prebuild`** e está no `.gitignore`
+(projeto **Expo CNG**). Uma edição manual em `android/app/build.gradle`:
+- **não é versionada** (outro desenvolvedor não a recebe);
+- é **destruída no próximo `prebuild`**.
+
+Ou seja, funcionaria na máquina e **desapareceria no projeto** — falha de continuidade operacional.
+
+**Mecanismo oficial adotado:** config plugin próprio e versionado
+[`apps/mobile/plugins/withAndroidCmakeVersion.js`](../apps/mobile/plugins/withAndroidCmakeVersion.js),
+registrado em `app.json` → `plugins`. Ele injeta
+`android { externalNativeBuild { cmake { version "4.1.2" } } }` no `build.gradle` **a cada prebuild**
+(idempotente; falha explicitamente se a âncora `android {` mudar de forma).
+
+*Nota:* `expo-build-properties` **não** possui opção de CMake nem aceita gradle properties arbitrárias
+(confirmado na documentação oficial) — daí o plugin próprio.
+
+**Prova de reprodutibilidade:** `expo prebuild --clean` apagou e regenerou `android/` do zero; o
+`app/build.gradle` gerado veio com `version "4.1.2"` injetado, e o build subsequente passou (2m37s).
 
 ### Baseline de toolchain — tabela completa
 

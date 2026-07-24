@@ -19,7 +19,8 @@
 | **JDK** | **17** (Temurin/Adoptium) | React Native 0.79 exige JDK 17. |
 | **Android Studio** | Última estável + **Android SDK Platform 35** (Android 15) e Platform 34 | Compilar/rodar o dev build e o emulador. |
 | **Git** | qualquer recente | Já em uso. |
-| **Long Paths (somente Windows)** | **`LongPathsEnabled=1`** + `git config core.longpaths true` | **Obrigatório.** A New Architecture do RN gera object files C++ >260 chars ao compilar módulos nativos com componentes Fabric (ex.: `react-native-screens`, `react-native-safe-area-context`). Sem Long Paths, o `buildCMakeDebug` falha com *"Filename longer than 260 characters"*. Ver §0.1. |
+| **CMake (Android SDK)** | **4.1.2** (traz **ninja 1.12.1**) | **Obrigatório no Windows.** O default do AGP (CMake 3.22.1 / ninja 1.10.2) quebra o build da New Architecture com *"Filename longer than 260 characters"*. Instalar pelo SDK Manager; o projeto fixa a versão via Config Plugin. Ver §0.1. |
+| **Long Paths (somente Windows)** | **`LongPathsEnabled=1`** + `git config core.longpaths true` | **Obrigatório** — porém **não suficiente sozinho** (precisa do CMake acima). Ver §0.1. |
 | **Conta Expo** | criar em https://expo.dev | Dá acesso a EAS Build/Update/Submit. |
 | **Conta Apple Developer** | https://developer.apple.com/programs/ — **só quando for testar em iPhone** | Provisionamento de device iOS. Criar já pela demora de aprovação. |
 | **Conta Google Play Console** | https://play.google.com/console — criar já | Publicação Android futura. |
@@ -35,7 +36,7 @@ file C++ que, somados ao caminho do projeto no monorepo, ultrapassam o limite pa
 Windows. Afeta módulos nativos com componentes Fabric (ex.: `react-native-screens`,
 `react-native-safe-area-context`, introduzidos no Incremento 2 de Navegação).
 
-**Passo 1 — habilitar caminhos longos no SO (necessário, porém NÃO suficiente — ver aviso abaixo):**
+**Passo 1 — habilitar caminhos longos no SO (necessário, porém NÃO suficiente sozinho):**
 1. PowerShell **como Administrador**:
    ```
    reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v LongPathsEnabled /t REG_DWORD /d 1 /f
@@ -43,16 +44,53 @@ Windows. Afeta módulos nativos com componentes Fabric (ex.: `react-native-scree
 2. **Reiniciar o Windows** (para todos os processos herdarem a mudança).
 3. Git (por repositório, não exige admin): `git config core.longpaths true`.
 
-> ⚠️ **ATENÇÃO — verificado em 2026-07-23: isto sozinho NÃO resolve.** Com `LongPathsEnabled=1` **e** reboot
-> completo **e** daemons Gradle zerados, o build **continua falhando** com o mesmo erro. Motivo: a mensagem é
-> emitida pelo **`ninja` 1.10.2** (empacotado no CMake 3.22.1 do Android SDK), que possui **guarda interna
-> própria de `MAX_PATH`**, independente da configuração do SO. **Passo 2 obrigatório:** usar um CMake do
-> Android SDK que empacote **ninja ≥ 1.11**. Investigação e solução em
-> [MOBILE-010](MOBILE-010_TOOLCHAIN_WINDOWS_NEW_ARCH.md).
+**Passo 2 — instalar o CMake da baseline (OBRIGATÓRIO):**
+Android Studio → `Settings` → `Languages & Frameworks` → `Android SDK` → aba **SDK Tools** →
+marcar **"Show Package Details"** → em **CMake**, instalar **4.1.2** (ou superior **revalidada**) → **Apply**.
 
-**Não** desabilitar a New Architecture para contornar isto: é problema de **cadeia de ferramentas**, não de
-arquitetura — a New Arch faz parte da baseline aceita (Incremento 1). Ver [[ADR-015]] (SDK 54), o Incremento 2
-(MOBILE-009, risco R6) e [MOBILE-010](MOBILE-010_TOOLCHAIN_WINDOWS_NEW_ARCH.md).
+> O projeto **fixa** essa versão automaticamente via Config Plugin (ver §0.2) — você só precisa **instalá-la**.
+
+### Baseline oficial da toolchain — versões mínimas suportadas
+
+Combinação **validada experimentalmente** em 2026-07-23 (builds limpos e reproduzíveis, incl. `prebuild --clean`).
+**Não reduzir nenhuma destas versões sem revalidar o build no Windows.**
+
+| Componente | Versão validada |
+|---|---|
+| Android Studio | AI-261.25134.95.2612.15822958 |
+| Android Gradle Plugin (AGP) | 8.11.0 |
+| Gradle | 8.14.3 |
+| JDK | OpenJDK 21.0.10 (JBR do Android Studio) |
+| Android SDK Build Tools | 36.0.0 |
+| Android Platform SDK | android-36 (compileSdk/targetSdk 36 · minSdk 24) |
+| NDK | 27.1.12297006 |
+| **CMake** | **4.1.2** ← mínimo suportado |
+| **Ninja** | **1.12.1** (vem com o CMake 4.1.2) ← mínimo suportado |
+| Expo SDK | 54 |
+| React Native | 0.81.5 (New Architecture **ativa**) |
+| Kotlin | 2.1.20 |
+| Windows `LongPathsEnabled` | 1 |
+
+**Por que o CMake é crítico:** o default do AGP (**CMake 3.22.1**) empacota **ninja 1.10.2**, cuja combinação
+com o codegen da New Architecture em projeto Expo CNG produz caminhos de compilação incompatíveis, quebrando o
+build no Windows com `ninja: error: Stat(...): Filename longer than 260 characters`. Habilitar `LongPathsEnabled`
+**não** basta. Diagnóstico completo: [MOBILE-010](MOBILE-010_TOOLCHAIN_WINDOWS_NEW_ARCH.md).
+
+### 0.2 Princípio operacional — NÃO editar `apps/mobile/android/` manualmente
+
+> **Não editar manualmente arquivos dentro de `apps/mobile/android/`.** Em projetos **Expo CNG**, alterações
+> persistentes na configuração nativa devem ser implementadas por **Config Plugins** ou por mecanismos
+> oficialmente suportados pelo `expo prebuild`. Alterações diretas na pasta `android/` são **transitórias** e
+> serão **sobrescritas** no próximo prebuild (a pasta é gerada e está no `.gitignore`).
+
+Aplicação concreta: a versão do CMake é fixada pelo config plugin versionado
+[`apps/mobile/plugins/withAndroidCmakeVersion.js`](../apps/mobile/plugins/withAndroidCmakeVersion.js),
+registrado em `app.json` → `plugins`. Ele reaplica a configuração a cada prebuild — por isso a correção
+**acompanha o repositório** e vale para qualquer desenvolvedor.
+
+**Não** desabilitar a New Architecture: o problema é de **cadeia de ferramentas**, não de arquitetura — a
+New Arch faz parte da baseline aceita (Incremento 1). Ver [[ADR-015]] (SDK 54) e
+[MOBILE-010](MOBILE-010_TOOLCHAIN_WINDOWS_NEW_ARCH.md).
 
 ---
 

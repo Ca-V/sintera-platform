@@ -154,12 +154,12 @@ de escopo durante a codificação. Reintroduzir qualquer um exige incremento/ADR
   *"Filename longer than 260 characters"* (object file de 378 chars) ao compilar
   `react-native-screens`/`react-native-safe-area-context`. **Decisão (fundadora):** resolver no **ambiente/cadeia
   de ferramentas**, **não** desabilitar a New Architecture.
-  **⚠️ Atualização (mesma data):** habilitar `LongPathsEnabled` (+ reboot) é **necessário, mas NÃO suficiente** —
-  a hipótese "Long Paths isoladamente resolve" foi **REJEITADA** por experimento controlado (reboot completo +
-  daemons zerados → mesmo erro). O limite é imposto pelo **`ninja` 1.10.2** do Android SDK (guarda interna de
-  `MAX_PATH`, independente do SO). Investigação e solução em
-  [MOBILE-010](MOBILE-010_TOOLCHAIN_WINDOWS_NEW_ARCH.md); procedimento em
-  [MOBILE-003 §0.1](MOBILE-003_PROVISIONAMENTO_EXPO_EAS.md).
+  **✅ RESOLVIDO (mesma data) — [MOBILE-010](MOBILE-010_TOOLCHAIN_WINDOWS_NEW_ARCH.md) Encerrado/Validado.**
+  Habilitar `LongPathsEnabled` (+ reboot) é **necessário, mas NÃO suficiente** (hipótese rejeitada por
+  experimento controlado). Causa raiz: combinação da **toolchain padrão (CMake 3.22.1 / Ninja 1.10.2)** com a
+  geração de código da New Architecture em projeto **Expo CNG**. Solução: **CMake 4.1.2 / Ninja 1.12.1**,
+  persistida via **Config Plugin versionado** (`plugins/withAndroidCmakeVersion.js`). Baseline oficial em
+  [MOBILE-003](MOBILE-003_PROVISIONAMENTO_EXPO_EAS.md). Este risco **não bloqueia mais** o Incremento 2.
 
 ## 7. Sequência de implementação proposta (para execução PÓS-merge)
 
