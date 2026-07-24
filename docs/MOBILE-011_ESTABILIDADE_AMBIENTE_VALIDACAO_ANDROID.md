@@ -1,6 +1,7 @@
 # MOBILE-011 — Estabilidade do ambiente de validação Android (AVD)
 
-- **Status:** **ABERTO** — sintoma-alvo (`lowmemorykiller`) eliminado com `hw.ramSize=3072`; aguardando revalidação pós-upgrade de RAM do host (7,7 GB → 16 GB) com `hw.ramSize=4096`. Não bloqueante.
+- **Status:** **ABERTO** — sintoma-alvo (`lowmemorykiller`) eliminado com `hw.ramSize=3072`; ANR residual do SystemUI é **hipótese** (pressão de memória do host) a confirmar na revalidação pós-upgrade (7,7 GB → 16 GB, `hw.ramSize=4096`). Não bloqueante.
+- **Ver também:** [MOBILE-012](MOBILE-012_ANALISE_AMBIENTE_VS_ENGENHARIA.md) — análise formal separando ruído de ambiente × estado da engenharia.
 - **Origem:** observação ambiental separada do [MOBILE-010](MOBILE-010_TOOLCHAIN_WINDOWS_NEW_ARCH.md) (que ficou restrito à toolchain).
 - **Natureza:** qualidade do ambiente de homologação — **não** é defeito da aplicação.
 
@@ -45,11 +46,13 @@ do MOBILE-010.**
 **Conclusão parcial:** o aumento de `hw.ramSize` de 2048 → 3072 MB **eliminou a pressão de memória do GUEST**
 (`lowmemorykiller`), que era o sintoma que motivou esta investigação.
 
-**Ressalva — ANR do SystemUI persiste, mas é do HOST, não do guest/app.** Mesmo após o ajuste, aparece
-`ANR ... com.android.systemui` esporádico. Análise: com `lowmemorykiller` zerado e `MemAvailable` folgado no
-guest, a causa remanescente é a **RAM física do host (7,7 GB)** — rodar `qemu` (3 GB) + Metro (node) + Windows
-+ tooling nesse host provoca **swap**, o guest perde tempo de CPU e o SystemUI estoura o deadline de input.
-É limitação do hardware hospedeiro, **não** do AVD nem do aplicativo. Será resolvida pelo upgrade para 16 GB.
+**Ressalva — ANR do SystemUI persiste; hipótese mais consistente = pressão de memória do HOST (a confirmar).**
+Mesmo após o ajuste, aparece `ANR ... com.android.systemui` esporádico. Análise: com `lowmemorykiller` zerado e
+`MemAvailable` folgado no guest, a explicação **mais consistente** é a **RAM física do host (7,7 GB)** — rodar
+`qemu` (3 GB) + Metro (node) + Windows + tooling nesse host provavelmente provoca **swap**, o guest perde tempo
+de CPU e o SystemUI estoura o deadline de input. **Ainda falta o experimento que isola a variável "RAM do
+host"**; portanto é **hipótese**, não fato. Será **confirmada ou rejeitada** na revalidação com 16 GB (mesmo
+projeto/AVD/toolchain/Windows, mudando só a RAM do host). Não há evidência de que seja do AVD nem do aplicativo.
 
 **Gotcha de ambiente (não é bug):** após um **cold boot** do emulador, o túnel **`adb reverse tcp:8081 tcp:8081`
 se perde** → o dev-client falha com `java.net.ConnectException: Failed to connect to /127.0.0.1:8081`
@@ -74,5 +77,6 @@ MOBILE-011 permanece **ABERTO** até a revalidação pós-upgrade de 16 GB:
 4. Confirmar: **0** `lowmemorykiller` **e** ausência de ANR do SystemUI por pressão de memória.
 Satisfeito isto, registrar 4096 MB como config oficial para hosts de 16 GB e **encerrar**.
 
-> Estado atual (2026-07-24): sintoma-alvo (`lowmemorykiller`) **eliminado**; ANR residual é do host de 7,7 GB,
-> a ser confirmado resolvido após o upgrade de 16 GB agendado para hoje.
+> Estado atual (2026-07-24): sintoma-alvo (`lowmemorykiller`) **eliminado**; ANR residual **mais
+> consistentemente explicado** pela pressão de memória do host de 7,7 GB — **hipótese** a confirmar ou
+> rejeitar na revalidação com 16 GB.
