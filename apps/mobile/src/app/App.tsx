@@ -8,6 +8,8 @@ import { useFonts, Fraunces_600SemiBold } from '@expo-google-fonts/fraunces'
 import { HankenGrotesk_400Regular, HankenGrotesk_600SemiBold } from '@expo-google-fonts/hanken-grotesk'
 import { StatusBar } from 'expo-status-bar'
 import { ActivityIndicator, View } from 'react-native'
+import { NavigationContainer } from '@react-navigation/native'
+import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { AuthProvider, useAuth } from '../state/AuthProvider'
 import { LoginScreen } from '../presentation/screens/LoginScreen'
 import { HomePlaceholder } from '../presentation/screens/HomePlaceholder'
@@ -37,10 +39,18 @@ export function App() {
   // Sem as fontes da marca, o texto renderiza na fonte do sistema — segura até carregarem.
   if (!fontsLoaded) return null
 
+  // Incremento 2 · Etapa 1: infraestrutura de navegação introduzida SEM alterar comportamento.
+  // AuthProvider permanece o mais externo; NavigationContainer + SafeAreaProvider apenas envolvem o
+  // Gate inalterado (Login | Home). Ainda não há navegadores/telas novas — o gate escolhe as telas
+  // exatamente como no Incremento 1. (A migração do gate para AuthStack | AppNavigator é a Etapa 2.)
   return (
     <AuthProvider>
-      <StatusBar style="light" />
-      <Gate />
+      <SafeAreaProvider>
+        <NavigationContainer>
+          <StatusBar style="light" />
+          <Gate />
+        </NavigationContainer>
+      </SafeAreaProvider>
     </AuthProvider>
   )
 }
