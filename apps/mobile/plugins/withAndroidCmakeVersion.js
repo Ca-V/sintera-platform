@@ -26,26 +26,35 @@ const BLOCK = `    // MOBILE-010: CMake do Android SDK que empacota ninja 1.12.1
     }
 `
 
+/**
+ * Transformação PURA: recebe o conteúdo de um `app/build.gradle` (Groovy) e devolve o conteúdo com
+ * `externalNativeBuild { cmake { version } }` injetado no bloco `android { }`.
+ * Idempotente. Lança se a âncora `android {` não existir (protege contra mudança de forma do template).
+ * Exportada separadamente para permitir teste de regressão sem rodar `expo prebuild` (ver tests/mobile).
+ */
+function injectCmakeVersion(contents) {
+  // Idempotência: se já houver a versão correta fixada, não faz nada.
+  if (contents.includes(`version "${CMAKE_VERSION}"`)) return contents
+
+  // Âncora: o bloco `android {` de nível superior (início de linha).
+  const anchor = /^android\s*\{[ \t]*$/m
+  if (!anchor.test(contents)) {
+    throw new Error('withAndroidCmakeVersion: bloco `android {` não encontrado em app/build.gradle.')
+  }
+
+  return contents.replace(anchor, (match) => `${match}\n${BLOCK}`)
+}
+
 /** Injeta `externalNativeBuild { cmake { version } }` no bloco `android { }` do app/build.gradle. */
 const withAndroidCmakeVersion = (config) =>
   withAppBuildGradle(config, (cfg) => {
     if (cfg.modResults.language !== 'groovy') {
       throw new Error('withAndroidCmakeVersion: esperado app/build.gradle em Groovy.')
     }
-
-    const contents = cfg.modResults.contents
-
-    // Idempotência: se já houver externalNativeBuild com a versão correta, não faz nada.
-    if (contents.includes(`version "${CMAKE_VERSION}"`)) return cfg
-
-    // Âncora: o bloco `android {` de nível superior (início de linha).
-    const anchor = /^android\s*\{[ \t]*$/m
-    if (!anchor.test(contents)) {
-      throw new Error('withAndroidCmakeVersion: bloco `android {` não encontrado em app/build.gradle.')
-    }
-
-    cfg.modResults.contents = contents.replace(anchor, (match) => `${match}\n${BLOCK}`)
+    cfg.modResults.contents = injectCmakeVersion(cfg.modResults.contents)
     return cfg
   })
 
 module.exports = withAndroidCmakeVersion
+module.exports.injectCmakeVersion = injectCmakeVersion
+module.exports.CMAKE_VERSION = CMAKE_VERSION

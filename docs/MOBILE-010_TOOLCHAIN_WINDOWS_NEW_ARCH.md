@@ -45,6 +45,18 @@ toolchain.** Ação recomendada (fora deste documento): aumentar a RAM do AVD an
 > `Filename longer than 260 characters` **utilizando a baseline oficial da toolchain e seguindo integralmente
 > o runbook do projeto**. Falhas decorrentes de desvios da baseline ou de configurações locais **não**
 > caracterizam regressão do defeito.
+
+### Governança da baseline
+
+- **Tag `mobile-toolchain-baseline` é IMUTÁVEL** — referência histórica desta baseline validada. **Não mover
+  nem reutilizar.** Quando a baseline evoluir (ex.: Expo SDK 55, novo AGP/CMake), criar uma **nova** tag
+  (`mobile-toolchain-baseline-v2`, `mobile-toolchain-sdk55`, `mobile-toolchain-2026Q3`), preservando a
+  rastreabilidade.
+- **Proteção automática (CI):** a persistência depende do config plugin (§3.2). O teste de regressão
+  [`tests/mobile/withAndroidCmakeVersion.test.ts`](../tests/mobile/withAndroidCmakeVersion.test.ts) valida
+  que a transformação continua injetando `version "${CMAKE_VERSION}"` e **falha imediatamente** se um upgrade
+  futuro do Expo/RN mudar a forma do `app/build.gradle` e a âncora deixar de casar.
+- **ANR observado durante a validação:** tratado em item separado — [MOBILE-011](MOBILE-011_ESTABILIDADE_AMBIENTE_VALIDACAO_ANDROID.md) (ambiente de validação Android), sem relação com esta correção.
 - **Origem:** Incremento 2 (Navegação) — bloqueio na compilação nativa de `react-native-screens` / `react-native-safe-area-context`.
 - **Investigação anterior (ENCERRADA):** hipótese "`LongPathsEnabled` isoladamente resolve" — **REJEITADA** (ver §1).
 - **Relaciona-se com:** [MOBILE-009](MOBILE-009_PLANEJAMENTO_INCREMENTO2_NAVEGACAO.md) (R6) · [MOBILE-003 §0.1](MOBILE-003_PROVISIONAMENTO_EXPO_EAS.md) · [ADR-015](adr/ADR-015_MIGRACAO_EXPO_SDK54.md)
