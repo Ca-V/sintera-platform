@@ -1,12 +1,12 @@
 // Incremento 2 · Etapa 5 — AppNavigator = Bottom Tabs (grupos do SSOT, MOBILE-009 D3/D6), e CADA tab
 // envolve sua tela num native-stack próprio (Bottom Tabs + Stacks internos). Isso permite, no futuro,
 // empilhar telas de detalhe dentro de cada grupo sem alterar a estrutura de tabs. `headerShown: false`
-// mantém o visual idêntico à Etapa 4. A tab "Início" mantém a HomePlaceholder do Incremento 1 (logout
-// intacto — preserva o critério 11). Cores/tipografia via tokens do DS (identidade DS-002).
+// mantém o visual idêntico à Etapa 4. A tab "Início" renderiza a HomeShell (Incremento 3), que mantém o
+// logout no FooterSlot (preserva o critério 11). Cores/tipografia via tokens do DS (identidade DS-002).
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import type { ComponentType } from 'react'
-import { HomePlaceholder } from '../screens/HomePlaceholder'
+import { HomeShell } from '../home/HomeShell'
 import { PlaceholderScreen } from './PlaceholderScreen'
 import { SSOT_TABS } from './ssotTabs'
 import { useTheme } from '../theme'
@@ -34,11 +34,11 @@ function makeTabStack(RootComponent: ComponentType): ComponentType {
 }
 
 // Componentes de tela ESTÁVEIS (definidos uma vez, no nível de módulo — evita remontagem por render).
-// "Início" reusa a HomePlaceholder (logout); os demais projetam os itens do grupo SSOT. Cada um é a raiz
+// "Início" renderiza a HomeShell (Incremento 3); os demais projetam os itens do grupo SSOT. Cada um é a raiz
 // de um native-stack (Etapa 5).
 const TAB_SCREENS = SSOT_TABS.map((tab) => {
   const Root: ComponentType =
-    tab.name === 'Inicio' ? HomePlaceholder : function TabPlaceholder() {
+    tab.name === 'Inicio' ? HomeShell : function TabPlaceholder() {
       return <PlaceholderScreen tab={tab} />
     }
   return { name: tab.name as keyof AppTabParamList, label: tab.label, Component: makeTabStack(Root) }
