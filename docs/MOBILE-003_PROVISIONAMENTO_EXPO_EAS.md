@@ -76,6 +76,27 @@ com o codegen da New Architecture em projeto Expo CNG produz caminhos de compila
 build no Windows com `ninja: error: Stat(...): Filename longer than 260 characters`. Habilitar `LongPathsEnabled`
 **não** basta. Diagnóstico completo: [MOBILE-010](MOBILE-010_TOOLCHAIN_WINDOWS_NEW_ARCH.md).
 
+### 0.3 Configuração recomendada do AVD (memória) — evita ANRs ambientais
+
+Não é requisito funcional do aplicativo — é higiene do **ambiente de validação**. Um AVD com pouca RAM (o
+default de 2048 MB para imagens API 35 Play Store) sofre `lowmemorykiller`, derrubando processos do sistema e
+gerando ANRs espúrios durante a homologação. Ajuste `hw.ramSize` conforme a RAM do host (via Android Studio →
+Device Manager → Edit → *Show Advanced Settings*, ou editando `~/.android/avd/<AVD>.avd/config.ini` com o
+emulador **parado**, seguido de **cold boot**):
+
+| Host RAM | `hw.ramSize` recomendado |
+|----------|--------------------------|
+| ~8 GB | **3072 MB** (validado — elimina `lowmemorykiller`) |
+| 16 GB | **4096 MB** (validação pós-upgrade — ver [MOBILE-011](MOBILE-011_ESTABILIDADE_AMBIENTE_VALIDACAO_ANDROID.md)) |
+
+Demais parâmetros do AVD (heap, GPU, versão do Android, ABI, snapshots) — **não alterar sem necessidade**.
+Investigação e evidências: [MOBILE-011](MOBILE-011_ESTABILIDADE_AMBIENTE_VALIDACAO_ANDROID.md).
+
+> **Gotcha — `adb reverse` após cold boot.** O túnel `adb reverse tcp:8081 tcp:8081` (que faz o dev-client
+> alcançar o Metro em `127.0.0.1:8081`) **se perde a cada cold boot** do emulador. Sintoma: tela de erro do
+> dev-launcher com `java.net.ConnectException: Failed to connect to /127.0.0.1:8081`. **Correção:** re-executar
+> `adb reverse tcp:8081 tcp:8081`, ou lançar via `npx expo run:android` (que o refaz automaticamente).
+
 ### 0.2 Princípio operacional — NÃO editar `apps/mobile/android/` manualmente
 
 > **Não editar manualmente arquivos dentro de `apps/mobile/android/`.** Em projetos **Expo CNG**, alterações
