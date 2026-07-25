@@ -1,0 +1,44 @@
+# CI de qualidade — roda a cada push/PR. Protege permanentemente typecheck (web + mobile) e a suíte de testes
+# (inclui os guardas de arquitetura mobile: config plugin do CMake, Home é composição, contrato de slots).
+#
+# Bloqueantes: typecheck (web) · typecheck (mobile) · testes. Todos VERDES hoje.
+# Informativo (não bloqueia): lint — há débito PRÉ-EXISTENTE na Web congelada (regras de hooks em
+# useNovelty/useModalA11y etc.), fora do escopo de correção como "preenchimento". A triar à parte antes de
+# tornar o lint bloqueante.
+name: ci
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Typecheck (web)
+        run: npm run typecheck
+
+      - name: Typecheck (mobile)
+        run: npm run typecheck:mobile
+
+      - name: Testes (web + mobile)
+        run: npm test
+
+      - name: Lint (informativo — ver débito pré-existente da Web)
+        run: npm run lint
+        continue-on-error: true

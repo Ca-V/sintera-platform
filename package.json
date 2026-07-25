@@ -11,6 +11,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "typecheck:mobile": "tsc --noEmit -p apps/mobile/tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:homolog": "vitest run --config vitest.homolog.config.ts",
