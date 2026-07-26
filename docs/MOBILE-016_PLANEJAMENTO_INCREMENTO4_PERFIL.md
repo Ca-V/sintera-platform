@@ -37,10 +37,14 @@ exames/insights. Concretamente:
 - `Input` (recipe `input`, Inc. 1) — campos de texto (nome, telefone).
 - `Button` (recipe `button`) — salvar.
 - `Text`/`Box`, tokens de cor/tipografia/espaçamento — identidade DS-002.
-- **Lacuna provável (DS evolui ANTES da tela):** as preferências são **toggles**; o DS **não tem** um
-  primitivo Switch. Pelo princípio [[principio_ds_promovido_antes_da_aplicacao]], o **DS ganha um `switch`
-  (recipe headless + adaptador RN)** e a tela o consome — a tela não improvisa o controle. Isso é uma
-  **tarefa do incremento** (ver §9).
+- **Lacunas de DS confirmadas por auditoria (2026-07-24) — o DS evolui ANTES da tela** ([[principio_ds_promovido_antes_da_aplicacao]]):
+  1. **Switch (novo):** não existe recipe de toggle no DS (verificado). O **DS ganha um `switch`** (recipe
+     headless + adaptador RN) e a tela o consome — não improvisa o controle. *(Preferências.)*
+  2. **Primitivo Avatar (RN):** o **recipe `avatar` já existe** no DS, mas **não há primitivo RN** para ele —
+     o mobile tem só 4 primitivos (Box/Button/Input/Text) para 11 recipes base. Para **exibir** o avatar
+     (§2.2), criar o **adaptador RN `Avatar`** (consome o recipe existente, como Box/Text).
+  - *Contexto:* os demais recipes sem primitivo RN (badge/card/chip/divider/icon/surface) serão promovidos
+    conforme os incrementos futuros precisarem — não neste.
 
 ## 4. Contrato de dados — CONGELADO (via `@sintera/api-client`, nunca Supabase direto)
 
@@ -54,6 +58,10 @@ campos de outros domínios (ciclo/altura/peso) **não vazam** para o tipo do Per
 |----------|------------------------|--------|
 | Ler | `getProfile(): Promise<ProfileDTO \| null>` | `select` da linha do usuário. **`null`** se não houver linha (usuário novo). Sem rede além desta leitura. |
 | Gravar | `updateProfile(patch: ProfileEditable): Promise<{ error: Error \| null }>` | **`upsert`** (a linha pode não existir) dos campos editáveis. |
+
+> **Convenção do `@sintera/api-client` (auditoria 2026-07-24 — tornar explícita):** **leituras** retornam
+> `T | null` (como `getSession`); **escritas** retornam `{ error: Error | null }` (como `signOut`). O contrato
+> acima **segue** essa convenção — todo domínio futuro deve segui-la para consistência.
 
 ### 4.2 `ProfileDTO` — campos (valores reais de `profiles`, verificados 2026-07-24)
 
@@ -130,8 +138,8 @@ justificativa forte de UX — descartado no Inc. 4. É **só navegação** (sem 
 
 ## 9. Dependências entre tarefas (ordem sugerida de implementação, pós-aprovação)
 
-1. **DS:** recipe `switch` (headless) + adaptador RN + contrato de teste. *(Bloqueia a edição de preferências.)*
-2. **api-client:** `getProfile`/`updateProfile` + tipo `Profile` (campos centrais) + testes unitários. *(Bloqueia a tela.)*
+1. **DS:** recipe `switch` (headless) + adaptador RN **e** primitivo RN `Avatar` (recipe já existe) + contratos de teste. *(Bloqueia edição de preferências e exibição do avatar.)*
+2. **api-client:** `getProfile`/`updateProfile` + tipo `ProfileDTO` (campos centrais, §4) seguindo a convenção do api-client + testes unitários. *(Bloqueia a tela.)*
 3. **Mobile:** tela de Perfil (form: Input + Switch), consumindo o api-client. *(Depende de 1 e 2.)*
 4. **Navegação:** ponto de entrada (§5, opção confirmada). *(Depende de 3.)*
 5. **Validação:** CI verde + homologação autenticada com a fundadora.
