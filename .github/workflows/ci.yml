@@ -39,6 +39,14 @@ jobs:
       - name: Testes (web + mobile)
         run: npm test
 
+      - name: Build da Web (integridade)
+        # Env dummy: o CI verifica a INTEGRIDADE do build, não conexão. As NEXT_PUBLIC_* são inlined no
+        # build; as rotas pesadas em dados são dinâmicas (ƒ), não geradas no build → não tocam o Supabase.
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy-anon-key-for-ci-build
+        run: npm run build
+
       - name: Lint (informativo — ver débito pré-existente da Web)
         run: npm run lint
         continue-on-error: true
