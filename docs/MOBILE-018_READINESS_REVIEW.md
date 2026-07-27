@@ -127,9 +127,14 @@ os toggles no Perfil (legado, simples) **ou** deferir as preferências de notifi
 identificação da sessão. Preferências de notificação: fora. Alinhado à Web atual (que também edita só o nome).
 
 **Ações pré‑implementação restantes (todas Prioridade A, sem emulador):**
-1. **DS:** promover o **Field Row** (rótulo + `Input` + texto de erro/ajuda) — única lacuna de DS do escopo enxuto.
-2. **api‑client:** construir `getProfile`/`updateProfile` + `ProfileDTO` (campos centrais) seguindo a convenção; aplicar D2.
+1. ~~**DS:** promover o **Field Row**~~ ✅ **FEITO (2026‑07‑27, commit `b05a355`)** — recipe `field` + primitivo
+   `FieldRow` + testes + DS‑003. Era a única lacuna de DS do escopo enxuto. **DS 100% pronto para o Inc 4.**
+2. **api‑client:** construir `getProfile`/`updateProfile` + `ProfileDTO` (campos centrais) seguindo a convenção;
+   aplicar D2. **É implementação funcional do Inc 4 — travada pelo gate (pós‑homologação do Inc 3).**
 3. Nenhuma outra pendência: contrato, banco, navegação, auth, CI e testes já ✅.
+
+**Prontidão de DS do Inc 4: 100%.** O que resta (ops do api‑client + montagem da tela) é a implementação
+funcional do Inc 4, que só começa após a homologação do Inc 3.
 
 ## Veredito (original, pré‑decisões)
 
