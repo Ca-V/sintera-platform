@@ -5,6 +5,8 @@ import type { ApiClient, ApiClientConfig } from './types'
 import { signIn } from './login'
 import { signOut } from './logout'
 import { getSession, onAuthStateChange } from './session'
+import { getProfile } from '../profile/get'
+import { updateProfile } from '../profile/update'
 
 /**
  * >>> ÚNICO ponto de `createClient()` em todo o ecossistema SINTERA. <<<
@@ -16,9 +18,9 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
     auth: {
       // Ponte: StorageAdapter genérico (get/set/remove) → interface de storage do supabase-js (getItem/setItem/removeItem).
       storage: {
-        getItem: (key) => config.storage.get(key),
-        setItem: (key, value) => config.storage.set(key, value),
-        removeItem: (key) => config.storage.remove(key),
+        getItem: (key: string) => config.storage.get(key),
+        setItem: (key: string, value: string) => config.storage.set(key, value),
+        removeItem: (key: string) => config.storage.remove(key),
       },
       autoRefreshToken: true,
       persistSession: true,
@@ -32,6 +34,10 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       signOut: () => signOut(supabase),
       getSession: () => getSession(supabase),
       onAuthStateChange: (listener) => onAuthStateChange(supabase, listener),
+    },
+    profile: {
+      getProfile: (signal) => getProfile(supabase, signal),
+      updateProfile: (patch, signal) => updateProfile(supabase, patch, signal),
     },
   }
 }

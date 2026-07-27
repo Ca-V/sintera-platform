@@ -13,3 +13,6 @@ export type {
   User,
 } from './auth/types'
 export type { StorageAdapter } from './storage/adapter'
+// Domínio Perfil (Inc 4) — contrato congelado (MOBILE-019). Web/Mobile consomem via ApiClient.profile.
+export type { ProfileApi, ProfileDTO, ProfileEditable } from './profile/types'
+export { withTimeout, TimeoutError, DEFAULT_TIMEOUT_MS } from './net/timeout'
