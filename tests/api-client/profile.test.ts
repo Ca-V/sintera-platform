@@ -107,6 +107,14 @@ describe('api-client · withTimeout — composição de signal + timeout (D2)', 
     cleanup()
   })
 
+  it('se o signal externo JÁ nasce abortado, o resultante já vem abortado (unmount antes da chamada)', () => {
+    const external = new AbortController()
+    external.abort(new Error('já cancelado'))
+    const { signal, cleanup } = withTimeout(external.signal, 10_000)
+    expect(signal.aborted).toBe(true)
+    cleanup()
+  })
+
   it('cleanup limpa o timer — não aborta depois de finalizado', () => {
     vi.useFakeTimers()
     const { signal, cleanup } = withTimeout(undefined, 50)
