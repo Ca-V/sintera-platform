@@ -37,3 +37,5 @@ export interface SurfaceSpec { backgroundColor: string; radius: number; elevatio
 export interface DividerSpec { color: string; thickness: number }
 export interface IconSpec { size: number; color: string }
 export interface AvatarSpec { size: number; radius: number; backgroundColor: string; color: string; label: TextStyle }
+/** Controle liga/desliga (toggle/switch): cores da trilha (on/off), do polegar, e opacidade (disabled). */
+export interface ToggleSpec { trackOn: string; trackOff: string; thumb: string; opacity: number }

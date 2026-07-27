@@ -3,7 +3,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   getTheme, contrastRatio, WCAG,
-  button, text, heading, card, surface, badge, chip, divider, icon, avatar, input,
+  button, text, heading, card, surface, badge, chip, divider, icon, avatar, input, toggle,
   type Theme, type BadgeTone,
 } from '../../packages/design-system/src'
 
@@ -85,6 +85,18 @@ describe('ARCH · recipes — derivação do tema e acessibilidade', () => {
       expect(input(t, { state: 'error' }).container.borderColor).toBe(t.color.badge.error.text)
       // texto legível sobre o fundo do campo
       expect(contrastRatio(base.text.color, base.container.backgroundColor)).toBeGreaterThanOrEqual(WCAG.AA_NORMAL)
+    })
+
+    it(`[${mode}] toggle: ON usa a identidade; OFF é distinto; disabled reduz a opacidade`, () => {
+      const on = toggle(t)
+      expect(on.trackOn).toBe(t.color.identity.primary)
+      expect(on.trackOff).toBe(t.color.border.default)
+      expect(on.thumb).toBe(t.color.surface.base)
+      expect(on.opacity).toBe(1)
+      // ON e OFF precisam ser visualmente distinguíveis
+      expect(on.trackOn).not.toBe(on.trackOff)
+      // disabled reduz a opacidade (sinal de indisponível)
+      expect(toggle(t, { disabled: true }).opacity).toBeLessThan(1)
     })
   }
 })
