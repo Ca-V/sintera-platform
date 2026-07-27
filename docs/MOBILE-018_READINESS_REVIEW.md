@@ -114,7 +114,24 @@ os toggles no Perfil (legado, simples) **ou** deferir as preferências de notifi
 | Navegação/Auth/Permissões/CI/Testes | ✅ | Sem bloqueios |
 | Toggles de notificação no Perfil | ⚠️ **D3** | Diverge da Web/NOTIF‑001 — decidir escopo |
 
-## Veredito
+## Decisões da fundadora (2026‑07‑27) — escopo do Inc 4 travado
+
+- **D1 = descopar.** `age_range` e `goals` entram como **exibição‑apenas** (como o avatar). Sem definir enum
+  nem criar seletor no DS agora; a edição vira incremento próprio quando houver decisão de produto.
+- **D3 = deferir.** As preferências de notificação **saem do Inc 4** e espelham a Web (futura "Central" no
+  Mobile, tabela `notification_preferences`). Preserva NOTIF‑001 (autoridade única) e a paridade.
+- **D2** (timeout do api‑client): em aberto; **recomendação** = envolver as ops de perfil num timeout simples
+  (`AbortController`) no momento da implementação — decidir junto com a construção das ops.
+
+**Escopo resultante do Inc 4:** **nome + telefone (edição)** + `age_range`/`goals`/`avatar` (exibição) +
+identificação da sessão. Preferências de notificação: fora. Alinhado à Web atual (que também edita só o nome).
+
+**Ações pré‑implementação restantes (todas Prioridade A, sem emulador):**
+1. **DS:** promover o **Field Row** (rótulo + `Input` + texto de erro/ajuda) — única lacuna de DS do escopo enxuto.
+2. **api‑client:** construir `getProfile`/`updateProfile` + `ProfileDTO` (campos centrais) seguindo a convenção; aplicar D2.
+3. Nenhuma outra pendência: contrato, banco, navegação, auth, CI e testes já ✅.
+
+## Veredito (original, pré‑decisões)
 
 **O Inc 4 NÃO está pronto para começar "como planejado" — mas está perto, e o que falta são DECISÕES, não
 infraestrutura ausente.** A fundação (contrato verificado, banco, navegação, auth, CI, testes) é sólida.
