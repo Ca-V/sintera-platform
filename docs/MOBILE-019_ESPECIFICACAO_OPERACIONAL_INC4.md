@@ -41,6 +41,17 @@ flowchart TD
 // @sintera/api-client — leitura do perfil do usuário autenticado.
 getProfile(signal?: AbortSignal): Promise<ProfileDTO | null>
 ```
+
+**Regra do contrato (RATIFICADA — Alternativa A, fundadora 2026‑07‑27):**
+- retorna **`ProfileDTO`** quando a linha existe;
+- retorna **`null`** quando a linha **não existe** (resposta válida do domínio: usuário novo);
+- **lança exceção** para **falhas operacionais** (rede, timeout, banco ou autenticação);
+- **nunca** retorna `null` para representar erro.
+
+> *Justificativa:* uma chamada remota tem três resultados — sucesso com dados · sucesso sem dados · falha.
+> `ProfileDTO | null` cobre os dois primeiros; a exceção cobre o terceiro. Responsabilidades: **api-client**
+> executa e lança em falha; **hook** converte exceção → estado de UI; **tela** apenas renderiza. Mantém a
+> assinatura já congelada (MOBILE‑016 §4.1) — não reabre decisão arquitetural.
 | Aspecto | Decisão |
 |---|---|
 | **Retorno** | `ProfileDTO` da linha do usuário; **`null` quando não há linha** (usuário novo) — vazio legítimo, **não** é erro. |
@@ -117,13 +128,27 @@ fila) · `timeout` (= erro após 10 s). Transições dirigidas pelo `useProfile`
 ## 8. Decisões congeladas (nada pendente para a quarta)
 
 1. **`ApiClient`: `{auth}` → `{auth, profile}`** (`profile = { getProfile, updateProfile }`); módulo `profile` espelha a estrutura de `auth`.
-2. **`getProfile`: `null` = vazio, exceção = falha** (refina a convenção de leitura para rede). ← *único ponto que refina a convenção do pacote; ver §2.*
+2. **`getProfile`: `null` = vazio, exceção = falha** (refina a convenção de leitura para rede). **RATIFICADA (Alternativa A) — ver a regra explícita no §2.**
 3. **`updateProfile`: whitelist `{name, phone}` + `upsert` + `{error}`**; proteção por coluna no api-client.
 4. **Timeout = 10 s via `AbortController`**; **sem retry automático**; **abortável**; **sem cache**; **last‑write‑wins**; **sem fila offline**.
 5. **Validação é da tela**, não do api-client.
 6. **Escopo:** editável `name`+`phone`; demais exibição; notificações fora (D1/D3).
 
 **Resultado:** na quarta, a implementação segue o §7 direto — sem abrir nenhuma decisão arquitetural.
+
+## 9. Definition of Ready — o Inc 4 pode iniciar quando:
+
+> Checklist objetivo e **durável** (não envelhece com refatoração, ao contrário de um checklist por arquivo).
+
+- [ ] **Inc 3 homologado** (pós‑instalação da memória 16 GB, quarta)
+- [ ] **MOBILE‑018 aprovado** (Readiness Review)
+- [x] **MOBILE‑019 aprovado** (esta especificação — contrato `getProfile` ratificado, 2026‑07‑27)
+- [x] **DS pronto** (Switch · Avatar · FieldRow — DS‑003)
+- [x] **CI verde**
+- [ ] **Branch criada** (de `mobile-inc3-accepted`, no início da implementação)
+
+Marcados aqui os itens já concluídos na preparação. Os três abertos dependem exclusivamente da homologação do
+Inc 3 na quarta — **nenhuma decisão arquitetural** entre este ponto e a primeira linha de código.
 
 ---
 *Referências: MOBILE‑016 (plano/decisões) · MOBILE‑018 (readiness) · DS‑003 (primitivos) · ADR‑001/011/017 · NOTIF‑001 (por que notificação fica fora).*
