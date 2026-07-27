@@ -7,6 +7,8 @@ import { signOut } from './logout'
 import { getSession, onAuthStateChange } from './session'
 import { getProfile } from '../profile/get'
 import { updateProfile } from '../profile/update'
+import { listExams } from '../exams/list'
+import { getExam } from '../exams/get'
 
 /**
  * >>> ÚNICO ponto de `createClient()` em todo o ecossistema SINTERA. <<<
@@ -38,6 +40,10 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
     profile: {
       getProfile: (signal) => getProfile(supabase, signal),
       updateProfile: (patch, signal) => updateProfile(supabase, patch, signal),
+    },
+    exams: {
+      listExams: (signal) => listExams(supabase, signal),
+      getExam: (id, signal) => getExam(supabase, id, signal),
     },
   }
 }

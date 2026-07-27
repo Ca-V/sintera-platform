@@ -2,6 +2,7 @@
 import type { Session, User } from '@supabase/supabase-js'
 import type { StorageAdapter } from '../storage/adapter'
 import type { ProfileApi } from '../profile/types'
+import type { ExamsApi } from '../exams/types'
 
 export type { Session, User }
 
@@ -36,4 +37,5 @@ export interface AuthApi {
 export interface ApiClient {
   auth: AuthApi
   profile: ProfileApi
+  exams: ExamsApi
 }

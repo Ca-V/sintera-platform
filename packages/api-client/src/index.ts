@@ -15,4 +15,6 @@ export type {
 export type { StorageAdapter } from './storage/adapter'
 // Domínio Perfil (Inc 4) — contrato congelado (MOBILE-019). Web/Mobile consomem via ApiClient.profile.
 export type { ProfileApi, ProfileDTO, ProfileEditable } from './profile/types'
+// Domínio Exames (leitura) — infra compartilhada; de-risca o Inc 5 (Histórico de Exames).
+export type { ExamsApi, ExamDTO } from './exams/types'
 export { withTimeout, TimeoutError, DEFAULT_TIMEOUT_MS } from './net/timeout'
