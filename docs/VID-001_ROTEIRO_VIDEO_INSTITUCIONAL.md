@@ -15,6 +15,18 @@ narrativa — comunica que tudo é **uma mesma jornada**, não módulos soltos:
 Prevenção → Saúde Feminina → Gestação → Infância → Hábitos → Wearables → Rede de Cuidado → IA → Prevenção contínua
 ```
 
+**Camada de convergência (motivo visual mestre).** Além da linha, um segundo elemento constante: fontes que
+começam **separadas** e **convergem** para um único núcleo ao longo do vídeo — comunica a proposta **sem depender
+da narração**. No início dispersas; no fim, um só centro: **Jornada de Saúde**.
+
+```
+Exames        ╲
+Wearables      ╲
+Hábitos     ────►  Jornada de Saúde
+Medicamentos   ╱
+Rede de Cuidado╱
+```
+
 ## Storyboard (8 cenas)
 
 ### Cena 1 — O problema (~30s)
@@ -55,10 +67,11 @@ nutricionista, educador físico, familiares, cuidadores ao redor. Linhas finas m
 
 ### Cena 6 — Inteligência preventiva (~25s)
 **Visual:** a plataforma **conecta** pontos já existentes (não cria fatos): destaca o que merece atenção, na fase certa.
-**VO (enquadramento factual — a IA NÃO diagnostica):**
-> "A inteligência da SINTERA **não substitui o profissional** — ela dá a ele, e a você, o **contexto completo**.
-> Ela organiza, conecta e **prioriza o que merece atenção**, lembra do que não pode passar, e liga cada dado à
-> **fase** da sua jornada. Não é um chatbot. É uma **camada de inteligência preventiva**."
+**VO (enquadramento factual — a IA NÃO diagnostica; capacidade primeiro, fronteira depois):**
+> "A inteligência da SINTERA **identifica relações** entre informações que normalmente permaneceriam dispersas,
+> **organiza** esses sinais no contexto da sua jornada e **prioriza o que merece atenção** — lembrando do que não
+> pode passar. Ela **não substitui o profissional**: dá a ele, e a você, o **contexto completo**. Não é um
+> chatbot — é uma **camada de inteligência preventiva**."
 
 ### Cena 7 — A cena do alerta contextualizado (~20s) · *o coração da tese*
 **Visual:** um cartão de alerta. **Importante:** mostra **fatos conectados**, não um palpite clínico.
@@ -66,10 +79,10 @@ nutricionista, educador físico, familiares, cuidadores ao redor. Linhas finas m
 > "Nas últimas 3 semanas, seus registros mostram: atividade física ↓, sono ↓, frequência cardíaca de repouso
 > alterada — e o início de uma nova fase da sua jornada. **Reunimos esses sinais em um só lugar.**"
 > *[ação real da plataforma]* → "Compartilhar com Dra. Ana na sua Rede de Cuidado · Registrar para a próxima consulta"
-**VO:**
-> "A SINTERA **não diz o que você tem** — nenhum app deveria. Ela faz o que ninguém faz: **conecta os sinais
-> dispersos, no contexto da sua fase de vida, e coloca isso — organizado — nas mãos de quem decide: você e os
-> seus profissionais de saúde.** O diferencial não é reunir dados. É **transformar dados em contexto para decidir**."
+**VO (capacidade primeiro, fronteira depois — refinamento da fundadora):**
+> "A SINTERA **reúne, organiza e contextualiza os sinais da sua jornada de saúde**. Em vez de substituir decisões
+> humanas, ela **entrega contexto para que você e a sua Rede de Cuidado tomem decisões mais bem informadas.** O
+> diferencial não é reunir dados — é **transformar dados em contexto para decidir**."
 
 ### Cena 8 — Encerramento (~18s)
 **Visual:** a linha da jornada se fecha em ciclo (→ prevenção contínua); logo SINTERA.
