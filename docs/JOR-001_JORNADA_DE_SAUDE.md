@@ -28,8 +28,8 @@ um registro**; a Jornada nunca duplica — projeta.
 
 ## 2. Taxonomia (Sidebar = SSOT)
 
-**Proposta de taxonomia definitiva** — "Jornada de Saúde" como **domínio de 1º nível** (lente), ao lado dos
-existentes (Acompanhamento · Minha Saúde · Rede de Cuidado · Organização · Configurações):
+**Taxonomia DEFINITIVA (congelada 2026-07-27 — muda só por ADR)** — "Jornada de Saúde" como **domínio de 1º
+nível** (lente), ao lado dos existentes (Acompanhamento · Minha Saúde · Rede de Cuidado · Organização · Configurações):
 
 ```
 Jornada de Saúde
@@ -54,9 +54,10 @@ Jornada de Saúde
     └── Fatores de risco
 ```
 
-**Decisões de taxonomia a ratificar (§7):** (D-JOR-1) Ciclo/Contracepção **saem** de "Minha Saúde" e passam a
-"Saúde Feminina"? (D-JOR-2) "Saúde Preventiva → Exames" é **projeção** (recomendado; o dado permanece no domínio
-Exames) e não uma segunda cópia? (D-JOR-3) "Saúde Infantil" aparece **por dependente** (um recorte por criança)?
+**Decisões de taxonomia — RATIFICADAS (congeladas):** (D-JOR-1 ✔) Ciclo/Contracepção **saem** de "Minha Saúde" e
+passam a "Saúde Feminina"; (D-JOR-2 ✔) "Saúde Preventiva → Exames" e "Vacinação" são **projeções** (o dado
+permanece no domínio dono); (D-JOR-3 ✔) "Saúde Infantil" **por dependente**. *(A organização VISUAL da Sidebar é
+"Estável para MVP" — revisável por UX; ver [ARC-000 §6](ARC-000_ARQUITETURA_DE_PRODUTO.md).)*
 
 ## 3. Entidades de domínio
 
@@ -108,19 +109,20 @@ dentista · pediatra · familiares · cuidadores — cada um com permissão por 
 - A plataforma segue **factual** (RDC 657) e privada por design (LGPD; dependente = dado sensível de terceiro,
   sob tutela da titular — a modelar com o mesmo rigor de consentimento do CARE-001).
 
-## 7. Decisões a ratificar (fundadora)
+## 7. Decisões RATIFICADAS (congeladas · 2026-07-27)
 
-- **D-JOR-1** — Ciclo/Contracepção migram de "Minha Saúde" para "Jornada de Saúde › Saúde Feminina"? *(recomendo sim — coerência da lente.)*
-- **D-JOR-2** — "Exames" e "Vacinação" sob a Jornada são **projeção** dos domínios donos (recomendado), não cópia?
-- **D-JOR-3** — Multi-sujeito: confirmar a entidade **Dependente** e o recorte "Saúde Infantil por criança".
-- **D-JOR-4** — "Jornada de Saúde" é **domínio de 1º nível** na Sidebar (vs. seção dentro de "Minha Saúde")?
+- **D-JOR-1 ✔** — Ciclo/Contracepção migram de "Minha Saúde" para "Jornada de Saúde › Saúde Feminina".
+- **D-JOR-2 ✔** — "Exames" e "Vacinação" sob a Jornada são **projeção** dos domínios donos (não cópia).
+- **D-JOR-3 ✔** — Multi-sujeito: entidade **Dependente** + recorte "Saúde Infantil por dependente" ([MUL-001](MUL-001_MODELO_MULTISSUJEITO.md)).
+- **D-JOR-4 ✔** — "Jornada de Saúde" é **domínio de 1º nível**.
 
-Ratificadas, o modelo vira o **SSOT de produto**; a Rede de Cuidado (próximo passo) e o vídeo se apoiam nele.
+**Congeladas** (mudança só por ADR — [ARC-000 §5/§6](ARC-000_ARQUITETURA_DE_PRODUTO.md)). A organização **visual**
+da Sidebar é "Estável para MVP" (revisável por UX). Este doc é o **SSOT de produto** da Jornada.
 
 ## 8. Consolidação (taxonomia definitiva · módulos · navegação · entidades)
 
-> Guardrail [REG-001](REG-001_GUARDRAIL_REGULATORIO.md) aplicado. Taxonomia **proposta como definitiva** (defaults
-> das decisões §7; ajustável). A Jornada **não muda o propósito** da plataforma — organiza o que já existe por fase.
+> Guardrail [REG-001](REG-001_GUARDRAIL_REGULATORIO.md) aplicado. Taxonomia **DEFINITIVA** (congelada 2026-07-27;
+> muda só por ADR). A Jornada **não muda o propósito** da plataforma — organiza o que já existe por fase.
 
 ### 8.1 Taxonomia definitiva (proposta)
 

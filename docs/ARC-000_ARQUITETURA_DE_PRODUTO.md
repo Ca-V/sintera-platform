@@ -70,10 +70,58 @@ Descoberta / UX
 - **Verbos da IA:** padronizados na lista oficial fechada (REG-001 §5); a revisão P8 já corrigiu "interpreta/prevê risco" no JOR-001 §5.
 - **REG-001** promovido a **normativo**; seção de **Conformidade** padrão adotada.
 
-## 5. Decisões abertas (aguardando ratificação)
+**Relatório de correções (consolidação final · 2026-07-27):**
+- **Núcleo arquitetural e taxonomia CONGELADOS** (§5/§6); JOR-001/SID-001 atualizados (removido "proposta/a ratificar" → "definitiva/congelada").
+- **Auditoria de linguagem (verbos da IA):** varredura completa dos 11 docs da visão — **0 usos indevidos**; todas as
+  ocorrências de "interpreta/diagnostica/prevê risco" estão em **contexto seguro** (negação · tabela do guardrail ·
+  "quem interpreta é o profissional"). Únicas correções reais do ciclo: JOR-001 §5 (P8) e fio condutor do VID-001.
+- **Duplicação:** nenhuma — WEA-002 consolida (não reescreve) os baselines; CARE-002 estende CARE-001; MAP-001/MOD-001 referenciam as fontes.
+- **Checklist de governança** (§7) padronizado como canônico; **Conformidade** presente nos 11 docs (§3).
+- **Sem novos documentos de domínio** nesta fase (só ARC-000 como hub) — objetivo de consolidação cumprido.
 
-`D-JOR-1..4 · D-RC-1..4 · D-MUL-1..4 · D-ROT-1..4 · D-WEA-1..3`. Enquanto **provisórias**, ficam marcadas nos docs
-de origem (§ decisões). Ao ratificar, **consolido** a taxonomia definitiva e removo o caráter provisório (item 5 da fila de consolidação).
+## 5. Núcleo arquitetural CONGELADO (só muda por ADR)
+
+Ratificado pela fundadora (2026-07-27). **Estes itens só podem ser alterados por um ADR** — não por edição de doc:
+
+`Jornada de Saúde` (domínio principal) · `Modelo Multi-Sujeito` · `Dependente` · `Responsável Legal` ·
+`Rede de Cuidado` · `princípio do menor privilégio` · `Evento Assistencial` · `Projeções (ADR-001)` ·
+`REG-001 (guardrail)` · `LGPD` · `fronteira factual (RDC 657)`.
+
+## 6. Decisões — CONGELADAS × Estável para MVP
+
+**Congeladas (definitivas; mudança só por ADR):**
+
+| Decisão | Congelada |
+|---|---|
+| D-JOR-4 · Jornada de Saúde = domínio de 1º nível | ✔ |
+| D-JOR-1 · Ciclo/Contracepção sob Saúde Feminina | ✔ |
+| D-JOR-2 / D-ROT-2 · Exames e Vacinação = **projeções** (não duplicam) | ✔ |
+| D-MUL-1/2 · entidade **Dependente** + dimensão `sujeito` nos fatos | ✔ |
+| D-RC-1 · perfis de **menor privilégio** (sobrescritíveis) | ✔ |
+| D-RC-2/3/4 · rede pessoal no modelo · alertas só via NOTIF-001 · consentimento de dependente pela titular/tutor | ✔ |
+| D-WEA-2/3 · atribuição de `sujeito` na Observação · contexto de fase | ✔ |
+
+**Estável para MVP (revisável por UX — não exige ADR):**
+
+| Item | Estável p/ MVP |
+|---|---|
+| D-ROT-1 · "Hábitos" → "Rotinas" (rename/ampliação) | ✔ (revisável por UX) |
+| Organização **visual** da Sidebar | ✔ |
+| Agrupamento **visual** dos módulos | ✔ |
+| D-MUL-3 · "graduação" do dependente (modelada agora, implementada depois) | ✔ |
+| D-MUL-4 · escopo inicial de dependente = filhos | ✔ |
+| D-WEA-1 · matriz de cobertura de vendors (ajustável por HIP-003) | ✔ |
+
+## 7. Checklist de governança (obrigatório por documento)
+
+Todo documento novo/alterado declara (junto à Conformidade):
+
+- [ ] **não duplica** outro documento;
+- [ ] **reutiliza conceitos do ARC-000** (fontes canônicas);
+- [ ] **respeita REG-001** (verbos oficiais · fronteira factual);
+- [ ] **não altera o núcleo arquitetural** (§5) — se alterar, exige **ADR**;
+- [ ] **referencia os documentos-fonte**;
+- [ ] **novos conceitos exigem ADR**.
 
 ---
 **Conformidade:** ✔ REG-001 · ✔ LGPD · ✔ ADR-001 · ✔ RDC 657

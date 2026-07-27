@@ -83,9 +83,11 @@ Cada módulo tem uma ficha padrão (fundadora):
 
 ## 3. Regras de manutenção
 
-- Voz única (verbo primeiro · benefício antes da função · factual · sem promessa clínica).
-- Módulos em revisão de taxonomia (D-JOR, D-ROT) recebem a copy final **após** a ratificação (evita retrabalho).
-- Quando o card evoluir para as 4 partes, o mesmo texto-fonte alimenta a versão completa (nada se reescreve).
+- Voz única (verbo primeiro · benefício antes da função · factual · sem promessa clínica — REG-001).
+- **Taxonomia RATIFICADA** (D-JOR/D-MUL congeladas — [ARC-000 §6](ARC-000_ARQUITETURA_DE_PRODUTO.md)); a copy dos
+  módulos da Jornada/Rede/Rotinas está estável. A **organização visual** da Sidebar é **"Estável para MVP"**
+  (revisável por UX — não exige ADR).
+- Quando o card evoluir para as 4 partes + Frequência, o mesmo texto-fonte alimenta a versão completa (nada se reescreve).
 
 ---
 **Conformidade:** ✔ REG-001 · ✔ ADR-001 · ✔ RDC 657
