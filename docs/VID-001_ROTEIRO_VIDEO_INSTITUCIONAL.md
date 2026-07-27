@@ -12,7 +12,7 @@ Uma **linha da jornada** aparece discretamente no rodapé/lateral ao longo de to
 narrativa — comunica que tudo é **uma mesma jornada**, não módulos soltos:
 
 ```
-Prevenção → Saúde Feminina → Gestação → Infância → Hábitos → Wearables → Rede de Cuidado → IA → Prevenção contínua
+Prevenção → Saúde Feminina → Gestação → Infância → Rotinas → Wearables → Rede de Cuidado → IA → Prevenção contínua
 ```
 
 **Camada de convergência (motivo visual mestre).** Além da linha, um segundo elemento constante: fontes que
@@ -22,7 +22,7 @@ da narração**. No início dispersas; no fim, um só centro: **Jornada de Saúd
 ```
 Exames        ╲
 Wearables      ╲
-Hábitos     ────►  Jornada de Saúde
+Rotinas     ────►  Jornada de Saúde
 Medicamentos   ╱
 Rede de Cuidado╱
 ```
@@ -128,4 +128,6 @@ nutricionista, educador físico, familiares, cuidadores ao redor. Linhas finas m
 - **Storyboard visual** de referência: artefato HTML já produzido (frames, VO e convergência).
 
 ---
+**Conformidade:** ✔ REG-001 · ✔ RDC 657
+
 *Relaciona: JOR-001 (jornada/fases) · CARE-002 (rede) · NOTIF-001 (alertas) · ADR-000 + RDC 657 (fronteira factual) · frase-identidade (VID §0 e [[visao_plataforma_expandida]]).*

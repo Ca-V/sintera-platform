@@ -62,5 +62,7 @@ agregador (Health Connect/Apple Health) quando o vendor não expõe API direta. 
 - **D-WEA-3** — Contexto de **fase** na leitura das Observações (sem tocar HIP-009) confirmado?
 
 ---
+**Conformidade:** ✔ REG-001 · ✔ LGPD · ✔ ADR-001 · ✔ RDC 657
+
 *Relaciona: HIP-007 (Observação/canônico) · HIP-009 (sync/conflitos) · WEA-001 (connectors) · HIP-001 (permissões) ·
 HIP-003 (estudo) · MUL-001 (sujeito) · JOR-001 (fase) · REG-001 (guardrail).*

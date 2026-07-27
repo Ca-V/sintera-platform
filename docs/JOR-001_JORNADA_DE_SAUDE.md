@@ -166,5 +166,7 @@ flowchart TD
 - **Notificações:** os templates de fase geram **lembretes factuais** (calendário vacinal, pré-natal) via NOTIF-001.
 
 ---
+**Conformidade:** ✔ REG-001 · ✔ LGPD · ✔ ADR-001 · ✔ RDC 657
+
 *Relaciona: identidade da plataforma (§0) · REG-001 (guardrail) · ADR-001 (projeção) · Evento Assistencial · HUB-001 ·
 CARE-001/002 · HIP-007 (Observação) · NOTIF-001 (lembretes) · Sidebar SSOT · princípio "não produz conteúdo clínico" (RDC 657).*

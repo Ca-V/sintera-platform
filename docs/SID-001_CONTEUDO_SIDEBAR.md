@@ -88,4 +88,6 @@ Cada módulo tem uma ficha padrão (fundadora):
 - Quando o card evoluir para as 4 partes, o mesmo texto-fonte alimenta a versão completa (nada se reescreve).
 
 ---
+**Conformidade:** ✔ REG-001 · ✔ ADR-001 · ✔ RDC 657
+
 *Relaciona: ContextualDescription (mecanismo existente) · Sidebar SSOT · JOR-001 · CARE-002 · ROT-001 · NOTIF-001 · gate de paridade (aplicação na Web) · RDC 657.*

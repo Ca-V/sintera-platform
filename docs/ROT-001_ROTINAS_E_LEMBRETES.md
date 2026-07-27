@@ -61,4 +61,6 @@ do profissional** (via Rede de Cuidado), não da plataforma.
 - **D-ROT-4** — Onde Rotinas vive na Sidebar: em "Minha Saúde" (onde Hábitos está hoje) ou promovido?
 
 ---
+**Conformidade:** ✔ REG-001 · ✔ ADR-001 · ✔ RDC 657
+
 *Relaciona: Evento Assistencial (recorrência) · NOTIF-001 (lembrete) · JOR-001 (sujeito/fase) · CARE-002 (alertas à rede) · DATE-001 (infra temporal) · Modelo Aberto · RDC 657.*

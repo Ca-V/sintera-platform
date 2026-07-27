@@ -55,5 +55,7 @@ flowchart LR
 - **Sujeito e fase** atravessam todo o fluxo (MUL-001 · JOR-001) sem alterar os pipelines existentes.
 
 ---
+**Conformidade:** ✔ REG-001 · ✔ LGPD · ✔ ADR-001 · ✔ RDC 657
+
 *Relaciona: Capture Hub/CEF · HIP-007/009 (Observação) · HUB-001 · Evento Assistencial · ADR-001 (projeção) ·
 JOR-001 (fase) · MUL-001 (sujeito) · IA (REG-001) · NOTIF-001 · CARE-002 · Timeline.*

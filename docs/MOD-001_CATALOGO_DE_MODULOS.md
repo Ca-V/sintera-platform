@@ -34,4 +34,6 @@ prioriza — nunca diagnostica) · **Wear** (recebe Observação) · **Rede** (c
 - **Manutenção:** ao criar um módulo, preencher a linha e validar contra o teste de coerência (REG-001 §guardrail).
 
 ---
+**Conformidade:** ✔ REG-001 · ✔ ADR-001 · ✔ RDC 657
+
 *Relaciona: Sidebar SSOT · JOR-001 · CARE-002 · MUL-001 · ROT-001 · WEA-002 · NOTIF-001 · FIN-001 · REG-001 · CATALOGO_PLATAFORMA (catálogo descritivo — este é a matriz de capacidades).*

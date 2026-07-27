@@ -43,5 +43,35 @@ Rotinas, Wearables, IA), o guardrail impede que o enriquecimento extrapole o pos
 - Em caso de dúvida: se a frase **decide algo clínico pela pessoa**, é proibida; se **organiza/apresenta o fato
   para a pessoa decidir**, é permitida.
 
+## 5. Verbos OFICIAIS da IA (lista fechada)
+
+A IA da SINTERA descreve-se **apenas** com estes verbos. Qualquer verbo fora desta lista **precisa de
+justificativa explícita** (e provavelmente indica violação da fronteira):
+
+1. **Organizar** informações.
+2. **Contextualizar** informações.
+3. **Correlacionar** informações.
+4. **Priorizar** informações para atenção.
+5. **Lembrar** eventos, rotinas e acompanhamentos.
+6. **Facilitar o compartilhamento** com a Rede de Cuidado.
+
+> **Proibidos sem exceção:** interpretar · avaliar (clinicamente) · diagnosticar · prever/predizer risco ·
+> recomendar conduta · concluir. "Conectar/destacar" são aceitos como sinônimos de organizar/correlacionar.
+
+## 6. Status normativo
+
+**REG-001 é documento NORMATIVO e obrigatório.** Todo novo artefato (doc, copy, alerta) **deve** observá-lo, e
+toda revisão verifica a conformidade. A auditoria de linguagem (§4) roda a cada lote de docs novos.
+
+## 7. Seção de Conformidade (padrão — incluir em todo documento)
+
+Todo documento passa a trazer, ao final, a linha:
+
+> **Conformidade:** ✔ REG-001 · ✔ LGPD · ✔ ADR-001 · ✔ RDC 657 *(+ outros princípios aplicáveis)*
+
+Marca rapidamente, em qualquer revisão futura, quais princípios aquele documento já observa.
+
 ---
-*Relaciona: ADR-000 · RDC 657 · CARE-001/002 · JOR-001 · ROT-001 · VID-001 · princípio "não produz conteúdo clínico".*
+**Conformidade:** ✔ REG-001 (este) · ✔ LGPD · ✔ ADR-001 · ✔ RDC 657 · ✔ ADR-000
+
+*Relaciona: ADR-000 · RDC 657 · CARE-001/002 · JOR-001 · ROT-001 · VID-001 · MUL-001 · WEA-002 · MOD-001 · MAP-001 · SID-001.*

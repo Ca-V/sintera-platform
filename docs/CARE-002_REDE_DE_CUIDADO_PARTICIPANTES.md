@@ -113,5 +113,7 @@ stateDiagram-v2
 - **D-RC-4** — Consentimento de dependente exercido pela titular/tutor (LGPD) — confirmado?
 
 ---
+**Conformidade:** ✔ REG-001 · ✔ LGPD · ✔ ADR-001 · ✔ RDC 657
+
 *Relaciona: CARE-001 (base) · JOR-001 (multi-sujeito/dependente) · NOTIF-001 (alertas) · Evento Assistencial ·
 Modelo Aberto · RDC 657 · LGPD.*

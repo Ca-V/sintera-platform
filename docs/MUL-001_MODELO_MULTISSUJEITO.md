@@ -71,5 +71,7 @@ flowchart TD
 - **D-MUL-4** — Escopo inicial de dependente = **filhos**; outros (idosos/terceiros) ficam para fase posterior?
 
 ---
+**Conformidade:** ✔ REG-001 · ✔ LGPD · ✔ ADR-001 · ✔ RDC 657
+
 *Relaciona: JOR-001 (fase+sujeito) · CARE-001/002 (acesso por sujeito) · NOTIF-001 (alertas) · HIP-007/009 (wearables) ·
 COMPLIANCE-001 (LGPD) · REG-001 (guardrail) · ADR-001 (não duplica — atribui).*
