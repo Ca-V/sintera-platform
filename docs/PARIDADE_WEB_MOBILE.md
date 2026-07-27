@@ -106,7 +106,26 @@ Estes não têm "versão Web" e "versão Mobile" — são **um só ativo** consu
 | Inc 4 | Perfil | 📋 Planejado (MOBILE‑016); DS Switch/Avatar já prontos |
 | Inc 5+ | Demais domínios | 📋 Roadmap (MOBILE‑015) |
 
-## 7. Manutenção deste documento
+## 7. Registro de avaliações (o gate em uso)
+
+> A Matriz **não é só documento — é gate de decisão.** Nenhuma evolução relevante da Web começa sem passar por aqui. Cada avaliação fica registrada com data, respostas objetivas e veredito.
+
+### FB‑011 — Central de Notificações, Camada 2 (`event_key`) — avaliado 2026‑07‑27
+
+| Pergunta | Resposta | Evidência |
+|---|---|---|
+| **1. O domínio "Notificações" já existe no roadmap do Mobile?** | ❌ **Não** | MOBILE‑015 tem 11 incrementos (Auth→…→Insights); nenhum é Notificações. A Central só chegaria embutida em "Configurações" (rótulo da aba *Mais*), sem incremento dedicado. |
+| **2. O modelo de dados será exatamente o mesmo?** | ⚠️ **Parcial / ambíguo** | O contrato de **preferências** (categoria × canal → `event_key`) está bem definido e a lib de resolução `src/lib/notifications/preferences.ts` é **pura/determinística** (100% reutilizável). Porém os campos "status de leitura · timestamps · dedup" **não** são a Camada 2: *dedup* vive no worker de despacho (marca enviado), e *status de leitura* é o **NOV‑001** (`content_seen`) — **outro SSOT**. Há ambiguidade de escopo (preferências × inbox) a resolver **antes** de congelar contrato. |
+| **3. A UX é portável?** | ✅ **Sim (comportamento/regras/estados/contrato)** | A lib pura é compartilhável; só o layout difere (matriz categoria×canal no desktop × lista no mobile). O que precisa ser compartilhado — comportamento, regras, estados, contratos — é portável. |
+| **4. Há dependência ainda não pronta?** | ❌ **Sim, há** | Camada 2 = *reescrita da resolução do worker de despacho VIVO* (`api/agenda/reminders`, pg_cron+pg_net) + pendência aberta "generalizar o worker além da Agenda". O próprio NOTIF‑001 sequenciou a Camada 2 como **"pós‑estabilização"** para não desestabilizar o envio real. WhatsApp em produção depende de pré‑requisitos de negócio (fundadora). |
+
+**Veredito:** 🔴 **reprovado no gate por ora** (Q1 e Q4 negativas; Q2 com ambiguidade de escopo). Classe **B** — **manter no roadmap**, **não implementar** nestes dois dias; aguardar a homologação do Inc 3.
+
+**Condição para reabrir:** resolver a ambiguidade de escopo da Q2 (preferências × inbox/read‑status) e **congelar o contrato** (Etapa 1) — categoria · `event_key` · canal · prioridade · fallback do worker · critérios de aceite · estratégia de portabilidade — **antes** de qualquer código (Etapa 2). Assim Web e Mobile implementam o **mesmo contrato**, e o Mobile não "copia a Web".
+
+**Ação de paridade recomendada (quando FB‑011 for feito, não agora):** mover a lib pura de resolução (`preferences.ts`) para um pacote compartilhado (`@sintera/*`) para o Mobile reusar sem cópia.
+
+## 8. Manutenção deste documento
 
 - Atualizar a coluna **Mobile** a cada incremento aceito (🟠→🟡→🟢).
 - Ao **planejar** uma alteração na Web, registrar aqui a resposta às 5 perguntas da §2 e a classe (A/B/C).
