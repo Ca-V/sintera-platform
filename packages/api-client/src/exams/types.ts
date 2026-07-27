@@ -16,14 +16,13 @@ export interface ExamDTO {
   created_at: string | null       // quando entrou na plataforma
 }
 
-/** Filtros/paginação da lista de exames (todos opcionais; sem paginação = todos). */
-export interface ExamsQuery {
-  from?: string        // exam_date >= (YYYY-MM-DD)
-  to?: string          // exam_date <= (YYYY-MM-DD)
+import type { PageRequest, DateRange } from '@sintera/types'
+
+/** Filtros/paginação da lista de exames (todos opcionais; sem paginação = todos).
+ *  Reusa os contratos compartilhados `DateRange` (from/to) e `PageRequest` (limit/offset) de @sintera/types. */
+export interface ExamsQuery extends PageRequest, DateRange {
   type?: string        // document_type
   family?: string      // clinical_family
-  limit?: number       // paginação: tamanho da página
-  offset?: number      // paginação: início (default 0)
 }
 
 /** API pública do domínio Exames — leitura. Web/Mobile consomem via ApiClient.exams (nunca Supabase direto). */

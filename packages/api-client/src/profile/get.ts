@@ -4,10 +4,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { withTimeout } from '../net/timeout'
 import { PROFILE_COLUMNS, type ProfileDTO } from './types'
-
-function asError(e: unknown): Error {
-  return e instanceof Error ? e : new Error(typeof e === 'string' ? e : 'Erro desconhecido')
-}
+import { asError } from '../net/errors'
 
 /** Projeta a linha do banco no DTO central (só os campos do contrato; ignora quaisquer extras). */
 function toProfileDTO(row: Record<string, unknown>): ProfileDTO {

@@ -4,10 +4,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { withTimeout } from '../net/timeout'
 import type { ProfileEditable } from './types'
-
-function asError(e: unknown): Error {
-  return e instanceof Error ? e : new Error(typeof e === 'string' ? e : 'Erro desconhecido')
-}
+import { asError } from '../net/errors'
 
 export async function updateProfile(
   client: SupabaseClient,

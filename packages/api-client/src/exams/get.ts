@@ -3,7 +3,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { withTimeout } from '../net/timeout'
 import { EXAM_COLUMNS, type ExamDTO } from './types'
-import { asError, toExamDTO } from './map'
+import { toExamDTO } from './map'
+import { asError } from '../net/errors'
 
 export async function getExam(client: SupabaseClient, id: string, signal?: AbortSignal): Promise<ExamDTO | null> {
   const { signal: s, cleanup } = withTimeout(signal)

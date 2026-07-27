@@ -1,9 +1,5 @@
-// @sintera/api-client — helpers internos do domínio Exames (mapeamento + normalização de erro).
+// @sintera/api-client — helpers internos do domínio Exames (mapeamento). Erro uniforme vem de ../net/errors.
 import type { ExamDTO } from './types'
-
-export function asError(e: unknown): Error {
-  return e instanceof Error ? e : new Error(typeof e === 'string' ? e : 'Erro desconhecido')
-}
 
 /** Projeta a linha do banco no DTO central (só os campos do contrato; ignora extras internos/financeiros). */
 export function toExamDTO(row: Record<string, unknown>): ExamDTO {

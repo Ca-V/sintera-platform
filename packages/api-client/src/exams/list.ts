@@ -4,7 +4,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { withTimeout } from '../net/timeout'
 import { EXAM_COLUMNS, type ExamDTO, type ExamsQuery } from './types'
-import { asError, toExamDTO } from './map'
+import { toExamDTO } from './map'
+import { asError } from '../net/errors'
 
 export async function listExams(
   client: SupabaseClient,
