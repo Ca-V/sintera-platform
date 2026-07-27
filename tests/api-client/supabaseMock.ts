@@ -14,7 +14,8 @@ export type PgResult = { data?: unknown; error: unknown }
 export function mockQueryBuilder(result: PgResult) {
   const calls: Record<string, unknown[]> = {}
   const builder: Record<string, unknown> = {}
-  const methods = ['select', 'insert', 'update', 'upsert', 'delete', 'eq', 'order', 'limit', 'single', 'maybeSingle', 'abortSignal']
+  const methods = ['select', 'insert', 'update', 'upsert', 'delete', 'eq', 'neq', 'gt', 'gte', 'lt', 'lte',
+    'in', 'ilike', 'like', 'order', 'limit', 'range', 'single', 'maybeSingle', 'abortSignal']
   for (const m of methods) {
     builder[m] = vi.fn((...args: unknown[]) => { calls[m] = args; return builder })
   }

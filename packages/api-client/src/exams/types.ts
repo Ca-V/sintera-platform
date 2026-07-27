@@ -16,10 +16,20 @@ export interface ExamDTO {
   created_at: string | null       // quando entrou na plataforma
 }
 
+/** Filtros/paginação da lista de exames (todos opcionais; sem paginação = todos). */
+export interface ExamsQuery {
+  from?: string        // exam_date >= (YYYY-MM-DD)
+  to?: string          // exam_date <= (YYYY-MM-DD)
+  type?: string        // document_type
+  family?: string      // clinical_family
+  limit?: number       // paginação: tamanho da página
+  offset?: number      // paginação: início (default 0)
+}
+
 /** API pública do domínio Exames — leitura. Web/Mobile consomem via ApiClient.exams (nunca Supabase direto). */
 export interface ExamsApi {
-  /** Lista os exames do usuário autenticado (mais recentes primeiro). `[]` se não houver. LANÇA em falha. */
-  listExams(signal?: AbortSignal): Promise<ExamDTO[]>
+  /** Lista os exames do usuário (mais recentes primeiro), com filtros/paginação. `[]` se não houver. LANÇA em falha. */
+  listExams(query?: ExamsQuery, signal?: AbortSignal): Promise<ExamDTO[]>
   /** Lê um exame por id. `null` se não existir/for de outro usuário (RLS). LANÇA em falha. */
   getExam(id: string, signal?: AbortSignal): Promise<ExamDTO | null>
 }

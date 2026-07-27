@@ -42,7 +42,7 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       updateProfile: (patch, signal) => updateProfile(supabase, patch, signal),
     },
     exams: {
-      listExams: (signal) => listExams(supabase, signal),
+      listExams: (query, signal) => listExams(supabase, query, signal),
       getExam: (id, signal) => getExam(supabase, id, signal),
     },
   }

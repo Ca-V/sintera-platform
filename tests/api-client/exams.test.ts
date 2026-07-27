@@ -50,6 +50,31 @@ describe('api-client · exams.listExams', () => {
   it('não autenticado → LANÇA', async () => {
     await expect(listExams(mockSupabase({ session: null }))).rejects.toThrow('Não autenticado')
   })
+
+  it('filtros (data/tipo/família) aplicam gte/lte/eq no builder', async () => {
+    const builder = mockQueryBuilder({ data: [], error: null })
+    const client = mockSupabase({ session: fakeSession('u1'), from: () => builder })
+    await listExams(client, { from: '2026-01-01', to: '2026-12-31', type: 'lab', family: 'hematologia' })
+    const c = calls(builder)
+    expect(c.gte).toEqual(['exam_date', '2026-01-01'])
+    expect(c.lte).toEqual(['exam_date', '2026-12-31'])
+    // eq é chamado para user_id, document_type e clinical_family — o harness guarda o último (family)
+    expect(c.eq).toEqual(['clinical_family', 'hematologia'])
+  })
+
+  it('paginação usa range inclusivo [offset, offset+limit-1]', async () => {
+    const builder = mockQueryBuilder({ data: [], error: null })
+    const client = mockSupabase({ session: fakeSession(), from: () => builder })
+    await listExams(client, { limit: 20, offset: 40 })
+    expect(calls(builder).range).toEqual([40, 59])
+  })
+
+  it('sem paginação → não chama range', async () => {
+    const builder = mockQueryBuilder({ data: [], error: null })
+    const client = mockSupabase({ session: fakeSession(), from: () => builder })
+    await listExams(client)
+    expect(calls(builder).range).toBeUndefined()
+  })
 })
 
 describe('api-client · exams.getExam', () => {
