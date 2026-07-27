@@ -119,8 +119,10 @@ fila) · `timeout` (= erro após 10 s). Transições dirigidas pelo `useProfile`
 
 | # | Commit | Conteúdo | Verificação |
 |---|---|---|---|
-| 1 | **api-client: módulo `profile`** | `src/profile/{types.ts (ProfileDTO/ProfileEditable), get.ts, update.ts}` + util de timeout (`withTimeout`) + estender `ApiClient` de `{auth}` → `{auth, profile}` + fiar em `createApiClient`. | tsc + unitários (Supabase mockado). |
-| 2 | **hook `useProfile`** | Busca no mount (com abort) + máquina de estados (§4) + salvar. Sem UI. | tsc + testes de transição (api-client mockado). |
+| 1 | ✅ **api-client: módulo `profile`** — **FEITO (2026‑07‑27, commit `032cef7`)** | `src/profile/{types,get,update}` + `net/timeout` (`withTimeout`) + `ApiClient` `{auth}`→`{auth, profile}` + fiado em `createApiClient`. **Antecipado como infra compartilhada** (exceção de gate). +13 testes. | ✅ api-client/web/mobile tsc + 856 testes verdes. |
+| — | ✅ **harness de teste do api-client + cobertura de Auth** — **FEITO (commit `680b017`)** | Mock do Supabase reutilizável + testes de `signIn`/`signOut`/`getSession`. Corrige déficit estrutural. | ✅ 6 testes. |
+| — | ✅ **máquina de estados (reducer puro)** — **FEITO (commit `9634302`)** | `profileMachine.ts` (idle→loading→ready→saving→saved/erro; retry). Base pura do hook. | ✅ 14 testes; mobile tsc. |
+| 2 | **hook `useProfile`** | **Encapsular** o reducer pronto: busca no mount (com abort) + salvar. Sem UI. | tsc + testes de integração (api-client mockado). |
 | 3 | **tela `ProfileScreen`** | `FieldRow`+`Input` (name/phone editáveis) + exibição (age_range/goals/avatar) + `Button` salvar; consome o hook. | tsc + estáticos (sem supabase; sem campos de outro domínio). |
 | 4 | **navegação** | Ponto de entrada no stack da aba "Mais" (§5 MOBILE‑016). | tsc + testes de navegação. |
 | 5 | **validação + homologação** | CI verde + roteiro de homologação autenticada (editar → salvar → reabrir → persistido; sem regressão auth/nav/Home). | CI + homologação com a fundadora. |
@@ -144,11 +146,13 @@ fila) · `timeout` (= erro após 10 s). Transições dirigidas pelo `useProfile`
 - [ ] **MOBILE‑018 aprovado** (Readiness Review)
 - [x] **MOBILE‑019 aprovado** (esta especificação — contrato `getProfile` ratificado, 2026‑07‑27)
 - [x] **DS pronto** (Switch · Avatar · FieldRow — DS‑003)
+- [x] **api-client pronto** (módulo `profile` + harness + reducer puro — antecipados sob a exceção de gate)
 - [x] **CI verde**
 - [ ] **Branch criada** (de `mobile-inc3-accepted`, no início da implementação)
 
-Marcados aqui os itens já concluídos na preparação. Os três abertos dependem exclusivamente da homologação do
-Inc 3 na quarta — **nenhuma decisão arquitetural** entre este ponto e a primeira linha de código.
+Marcados os itens já concluídos na preparação. Os três abertos dependem exclusivamente da homologação do
+Inc 3 na quarta. **A camada de dados (Commit 1) + a lógica pura (máquina de estados) já estão prontas e testadas** —
+na quarta resta só o que depende do Android: **encapsular o hook · montar a tela · navegação · homologar**.
 
 ---
 *Referências: MOBILE‑016 (plano/decisões) · MOBILE‑018 (readiness) · DS‑003 (primitivos) · ADR‑001/011/017 · NOTIF‑001 (por que notificação fica fora).*

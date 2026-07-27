@@ -44,6 +44,13 @@ A sequência segue quatro fases, do estável para o dependente:
 
 - **Nenhum incremento funcional novo começa antes da homologação/aceite do anterior.** O Incremento 4 (Perfil)
   só inicia após o aceite do Incremento 3.
+  - **Exceção (fundadora, 2026‑07‑27) — infraestrutura compartilhada.** Camadas de **infra compartilhada**
+    (**Design System** e **`@sintera/api-client`**), **desde que independentes da UI e integralmente cobertas por
+    testes unitários**, **podem** ser desenvolvidas **antes** da homologação do incremento anterior. O gate protege
+    contra empilhar **implementação de UI funcional** sobre uma base não homologada — não contra evoluir camadas
+    inferiores, verificáveis sem emulador e reversíveis. Foi o que justificou antecipar **Switch/Avatar/FieldRow**
+    (DS) e o **módulo `profile` do api-client** (getProfile/updateProfile/withTimeout). **Permanecem travados até o
+    aceite:** tela RN, wiring do hook, navegação e homologação funcional (dependem do Android + base do Inc 3).
 - Cada incremento aceito = **marco verificável (tag)**, base do seguinte (nasce do tag do anterior).
 - Integração ao ramo principal permanece condicionada ao **encerramento da Onda 1** + critérios de integração.
 - Reordenações futuras deste roadmap são decisão de produto da fundadora (documentar a mudança).
