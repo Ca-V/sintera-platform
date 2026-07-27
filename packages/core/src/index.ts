@@ -8,3 +8,6 @@ export * from './ports/sync'
 
 // Contrato de módulo de domínio (capacidade da plataforma; ADR-009).
 export * from './domain/module'
+
+// Projeção cronológica (Timeline) — lógica pura reutilizável por qualquer domínio datado.
+export * from './domain/timeline'
