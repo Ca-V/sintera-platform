@@ -84,10 +84,11 @@ Exames) e não uma segunda cópia? (D-JOR-3) "Saúde Infantil" aparece **por dep
 
 ## 5. Impactos (o que a Jornada muda em cada pilar)
 
-**IA preventiva.** Ganha dois contextos que hoje não tem: **fase** e **sujeito**. Insights passam a ser
-"certos para o momento" (ex.: rastreamentos por faixa etária; sinais a observar no pós-parto) e por pessoa
-(titular × filho). Mantém a fronteira: **interpreta/prioriza/lembra/prevê risco a partir do que existe**, sem
-produzir diagnóstico (RDC 657). A Jornada é o que dá à IA o "mapa" para ser preventiva de verdade.
+**IA preventiva.** Ganha dois contextos que hoje não tem: **fase** e **sujeito**. O que a plataforma passa a
+mostrar fica "certo para o momento" (ex.: lembrar de rastreamentos por faixa etária como **referência pública**;
+destacar sinais registrados no período) e por pessoa (titular × filho). Mantém a fronteira ([REG-001](REG-001_GUARDRAIL_REGULATORIO.md)):
+a IA **organiza, correlaciona, prioriza e lembra** a partir do que existe — **não** interpreta, **não** prevê
+risco clínico e **não** produz diagnóstico (RDC 657). A Jornada dá à IA o "mapa" para **organizar** o preventivo — quem decide é a pessoa e o profissional.
 
 **Wearables.** A Observação (HIP-007) passa a ter endereço na jornada: sono/HRV/atividade **da fase** (ex.:
 sono na gestação, atividade na menopausa). Nenhuma mudança na arquitetura de sincronização (HIP-009) — só o
