@@ -1,0 +1,121 @@
+# JOR-001 — Jornada de Saúde (modelo de domínio · SSOT de produto)
+
+> **Status:** modelagem de produto (fundadora, 2026-07-27) — **redefine o posicionamento da SINTERA**. Sem UI,
+> sem código. Branch `docs/visao-expandida` (isolada da `pre-inc4-ready`). Reusa a arquitetura existente
+> ([ADR-001](ADR-001_PROJECAO_SEM_DUPLICACAO_SSOT.md) projeção · [Evento Assistencial](EVENTO_ASSISTENCIAL.md) ·
+> [HUB-001](HUB-001_REGISTRATION_HUB.md) · [CARE-001](CARE-001_ESPACO_COLABORATIVO.md) · Sidebar SSOT · UCDA).
+
+## 0. Identidade da plataforma (teste de coerência)
+
+> **A SINTERA é uma plataforma de inteligência preventiva que integra dados clínicos, hábitos, dispositivos,
+> profissionais e a rede de cuidado para acompanhar a jornada de saúde de cada pessoa ao longo da vida.**
+
+Toda decisão de produto passa por este teste: *cabe nessa proposta?* Wearables (sim), Rede de Cuidado (sim),
+IA (sim), vacinação infantil (sim), menopausa (sim), lembretes de hábitos (sim). Se um recurso futuro **não**
+puder ser explicado dentro dessa frase, reavaliar se pertence ao produto.
+
+## 1. O que é a Jornada de Saúde
+
+Uma **LENTE de organização por FASE DE VIDA** — não um novo silo de dados. A Jornada **projeta e referencia**
+fatos que continuam sendo donos de seus domínios (Exames, Eventos, Medidas, Observações), organizando-os pela
+fase/jornada a que pertencem e adicionando o que é **específico da fase** (calendário vacinal, cronograma de
+pré-natal, rastreamentos por idade). Princípio [ADR-001](ADR-001_PROJECAO_SEM_DUPLICACAO_SSOT.md): **um fato =
+um registro**; a Jornada nunca duplica — projeta.
+
+**Dois eixos novos que a Jornada introduz:**
+1. **Fase de vida** — o *quando* da saúde (prevenção, ciclo, gestação, infância…).
+2. **Multi-sujeito** — o *de quem*: a titular **e seus dependentes** (a saúde da família, não só a própria).
+
+## 2. Taxonomia (Sidebar = SSOT)
+
+**Proposta de taxonomia definitiva** — "Jornada de Saúde" como **domínio de 1º nível** (lente), ao lado dos
+existentes (Acompanhamento · Minha Saúde · Rede de Cuidado · Organização · Configurações):
+
+```
+Jornada de Saúde
+├── Saúde Feminina
+│   ├── Ciclo              ← relocado de "Minha Saúde"
+│   ├── Contracepção       ← relocado de "Minha Saúde" (CTC-001)
+│   ├── Tentante
+│   ├── Gestação
+│   ├── Pós-parto
+│   ├── Menopausa
+│   └── Histórico ginecológico
+├── Saúde Infantil                 (por dependente)
+│   ├── Vacinação
+│   ├── Crescimento
+│   ├── Pediatria
+│   ├── Odontopediatria
+│   └── Desenvolvimento
+└── Saúde Preventiva
+    ├── Check-ups
+    ├── Rastreamentos
+    ├── Exames             ← PROJEÇÃO do domínio Exames (não move o dado)
+    └── Fatores de risco
+```
+
+**Decisões de taxonomia a ratificar (§7):** (D-JOR-1) Ciclo/Contracepção **saem** de "Minha Saúde" e passam a
+"Saúde Feminina"? (D-JOR-2) "Saúde Preventiva → Exames" é **projeção** (recomendado; o dado permanece no domínio
+Exames) e não uma segunda cópia? (D-JOR-3) "Saúde Infantil" aparece **por dependente** (um recorte por criança)?
+
+## 3. Entidades de domínio
+
+| Entidade | Papel | Nova? | Reuso |
+|---|---|---|---|
+| **Sujeito do cuidado** | A pessoa a quem o fato se refere: **titular** ou **dependente**. | **Sim** (hoje tudo é o titular) | Liga-se a `profiles` (titular) e a CARE-001 (familiares/cuidadores). |
+| **Dependente** | Pessoa sob cuidado da titular (filho, e futuramente outros). Nome, data de nascimento, relação. | **Sim** | Um "perfil reduzido"; herda RLS via titular. |
+| **Fase / Jornada** | Contexto temporal de saúde (Gestação, Menopausa, Infância-de-X): período, status, sujeito. | **Sim** (dado pequeno) | Agrega fatos por projeção; gera templates. |
+| **Template de fase** | Conjunto de marcos/recorrências da fase (calendário vacinal, pré-natal, rastreamentos por idade). | **Sim** (conteúdo) | Materializa-se em **Eventos Assistenciais** (recorrência + lembrete). |
+| Exame · Evento · Medida · Observação · Condição · Medicação | Os fatos em si. | Não | **Donos permanecem**; a Jornada só projeta/filtra por sujeito + fase. |
+
+> **Fronteira factual (RDC 657):** a Jornada **organiza e apresenta**; não interpreta nem produz conteúdo
+> clínico. Um "template de fase" (ex.: calendário vacinal do PNI) é **referência pública**, com origem citada —
+> não recomendação da SINTERA.
+
+## 4. Relacionamento entre módulos (tudo por projeção)
+
+- **Exames** → aparecem em "Saúde Preventiva" e dentro de uma fase (ex.: exames do pré-natal), filtrados por
+  sujeito + período. O dado vive no domínio Exames.
+- **Agenda / Eventos Assistenciais** → consultas de pediatra, retorno pós-parto, doses de vacina: **Eventos**
+  com `sujeito` + `fase`. A recorrência e o lembrete **já existem**.
+- **Medidas / Composição Corporal** → peso na gestação, crescimento infantil (percentis): **Medidas** por sujeito.
+- **Monitoramento / Observações (wearables)** → sono/atividade na fase (HIP-007). Alimentam a IA da fase.
+- **Condições / Medicações** → projetadas por sujeito e fase quando relevantes.
+
+## 5. Impactos (o que a Jornada muda em cada pilar)
+
+**IA preventiva.** Ganha dois contextos que hoje não tem: **fase** e **sujeito**. Insights passam a ser
+"certos para o momento" (ex.: rastreamentos por faixa etária; sinais a observar no pós-parto) e por pessoa
+(titular × filho). Mantém a fronteira: **interpreta/prioriza/lembra/prevê risco a partir do que existe**, sem
+produzir diagnóstico (RDC 657). A Jornada é o que dá à IA o "mapa" para ser preventiva de verdade.
+
+**Wearables.** A Observação (HIP-007) passa a ter endereço na jornada: sono/HRV/atividade **da fase** (ex.:
+sono na gestação, atividade na menopausa). Nenhuma mudança na arquitetura de sincronização (HIP-009) — só o
+**contexto** de leitura. Vendors (Health Connect/Apple Health pilares; Garmin/Oura/Whoop/Fitbit) inalterados.
+
+**Rede de Cuidado (CARE-001).** É aqui que o **multi-sujeito** fecha o modelo: os "Familiares autorizados" e a
+"Equipe de cuidado" do CARE-001 passam a ter **objeto** — os dependentes. Um **pediatra** entra num Care Space
+da **Saúde Infantil** de um filho; um **obstetra** num Care Space da **Gestação** da titular. Participantes
+possíveis (CARE-001 estende): titular · médico · psicólogo · nutricionista · fisioterapeuta · educador físico ·
+dentista · pediatra · familiares · cuidadores — cada um com permissão por módulo/fase e auditoria (já em CARE-001).
+
+## 6. O que NÃO muda
+
+- Nenhum pipeline novo; nenhum dado duplicado (ADR-001).
+- Evento Assistencial continua a entidade central (recorrência/agenda/timeline).
+- HUB-001 continua decidindo **como** capturar (a Jornada só diz **em que fase/para quem**).
+- A plataforma segue **factual** (RDC 657) e privada por design (LGPD; dependente = dado sensível de terceiro,
+  sob tutela da titular — a modelar com o mesmo rigor de consentimento do CARE-001).
+
+## 7. Decisões a ratificar (fundadora)
+
+- **D-JOR-1** — Ciclo/Contracepção migram de "Minha Saúde" para "Jornada de Saúde › Saúde Feminina"? *(recomendo sim — coerência da lente.)*
+- **D-JOR-2** — "Exames" e "Vacinação" sob a Jornada são **projeção** dos domínios donos (recomendado), não cópia?
+- **D-JOR-3** — Multi-sujeito: confirmar a entidade **Dependente** e o recorte "Saúde Infantil por criança".
+- **D-JOR-4** — "Jornada de Saúde" é **domínio de 1º nível** na Sidebar (vs. seção dentro de "Minha Saúde")?
+
+Ratificadas, o modelo vira o **SSOT de produto**; a Rede de Cuidado (próximo passo) e o vídeo se apoiam nele.
+
+---
+*Relaciona: identidade da plataforma (§0) · ADR-001 (projeção) · Evento Assistencial · HUB-001 · CARE-001 ·
+HIP-007 (Observação) · NOTIF-001 (lembretes) · Sidebar SSOT · princípio "não produz conteúdo clínico" (RDC 657).*
