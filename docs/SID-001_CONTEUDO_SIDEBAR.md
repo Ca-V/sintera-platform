@@ -6,16 +6,34 @@
 
 ## 1. Estrutura padrão (4 partes) + derivação para o card atual
 
-Cada módulo tem uma ficha de 4 campos (fundadora):
+Cada módulo tem uma ficha padrão (fundadora):
 
 - **Objetivo** — para que serve.
 - **O que acompanha** — que informação reúne.
 - **Como funciona** — como a informação entra/é organizada.
 - **Benefício** — o ganho para a pessoa.
+- **Frequência** — com que ritmo a informação se atualiza (ver tabela §2.1).
 
 > **Card atual** = 1 frase (máx. 2 linhas, começa com verbo, benefício antes da função — voz única já definida
 > em `ContextualDescription`). Deriva-se do **Objetivo + Benefício**. Quando o card evoluir (Web+DS), mostra as 4
 > partes. Regra de voz mantida: factual, sem promessa clínica (RDC 657).
+
+### 2.1 Frequência de atualização por módulo
+
+| Módulo | Frequência |
+|---|---|
+| Início / Painel | a cada acesso (reflete os demais) |
+| Exames | a cada novo documento adicionado |
+| Agenda / Histórico | a cada evento/recorrência |
+| Composição Corporal | a cada registro (manual ou dispositivo) |
+| Monitoramento / Wearables | **contínua** (sincronização dos dispositivos) |
+| Medicamentos · Suplementos | a cada dose/registro |
+| Condições · Recursos | quando você registra |
+| Jornada de Saúde | reflete os fatos da fase (contínua/por evento) |
+| Rotinas | conforme a recorrência programada |
+| Rede de Cuidado | a cada acesso/alteração de permissão |
+| Despesas · Relatórios | a cada fato com valor / sob demanda |
+| Central de Notificações | quando você ajusta preferências |
 
 ## 2. Fichas por módulo (fonte da copy)
 

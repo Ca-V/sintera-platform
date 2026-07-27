@@ -103,5 +103,29 @@ nutricionista, educador físico, familiares, cuidadores ao redor. Linhas finas m
 - **Trilha/ritmo:** cresce do problema (cena 1, contido) ao encerramento (cena 8, esperançoso); a linha da
   jornada é a âncora visual entre cenas.
 
+## Transições e ritmo (storyboard completo — P9)
+
+| De → Para | Transição | Duração aprox. |
+|---|---|---|
+| 1 → 2 | **Convergência** (transição-mestre): os fragmentos se atraem para o centro | ~1,5s |
+| 2 → 3 | O ponto central "abre" na linha da jornada | ~1s |
+| 3 → 4 | Cross-dissolve; a linha "respira" com dados entrando | ~1s |
+| 4 → 5 | Zoom-out revela o grafo da rede em torno da jornada | ~1,5s |
+| 5 → 6 | Os nós acendem conexões (IA "acende" relações) | ~1s |
+| 6 → 7 | Foco em um cartão de alerta (fatos conectados) | ~1s |
+| 7 → 8 | A linha se fecha em ciclo; convergência culmina no núcleo | ~2s |
+
+**Duração total-alvo:** ~2min. Ritmo: cena 1 mais lenta (identificação), cenas 3–6 em cadência, cena 7 pausa
+(peso da tese), cena 8 respira.
+
+## Assets necessários (P9)
+
+- **Motion graphics:** (a) convergência das fontes → núcleo; (b) linha da jornada (fio condutor); (c) grafo da
+  Rede de Cuidado com acessos autorizados; (d) cartão de alerta (fatos conectados + ação real).
+- **Mockups de UI** fiéis à identidade (Van Gogh; Fraunces/Hanken) — **representações**, não capturas reais.
+- **Locução** PT-BR (VO das 8 cenas) · **trilha** com a curva de ritmo acima · **paleta** âncora aqua (COLOR-001).
+- **Selo de fronteira** discreto nas cenas 6–7 (opcional): "organiza e contextualiza — não diagnostica".
+- **Storyboard visual** de referência: artefato HTML já produzido (frames, VO e convergência).
+
 ---
 *Relaciona: JOR-001 (jornada/fases) · CARE-002 (rede) · NOTIF-001 (alertas) · ADR-000 + RDC 657 (fronteira factual) · frase-identidade (VID §0 e [[visao_plataforma_expandida]]).*
