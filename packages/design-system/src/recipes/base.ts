@@ -5,7 +5,7 @@ import type { SinteraTheme } from '../theme'
 import type { ElevationLevel } from '../tokens/elevation'
 import type { GradientToken } from '../tokens/gradient'
 import type {
-  ButtonSpec, ChipSpec, BadgeSpec, CardSpec, SurfaceSpec, DividerSpec, IconSpec, AvatarSpec, TextSpec, InputSpec, ToggleSpec,
+  ButtonSpec, ChipSpec, BadgeSpec, CardSpec, SurfaceSpec, DividerSpec, IconSpec, AvatarSpec, TextSpec, InputSpec, ToggleSpec, FieldSpec,
 } from './spec'
 
 export type Size = 'sm' | 'md' | 'lg'
@@ -110,6 +110,21 @@ export function input(t: SinteraTheme, opts: { state?: InputState } = {}): Input
     container: { backgroundColor: t.color.surface.base, borderColor, borderWidth, radius: t.radius.control, paddingX: t.padding.cozy, paddingY: t.padding.cozy, minHeight: MIN_TOUCH, opacity: 1, elevation: 'none' },
     text: { style: t.typography.body, color: t.color.text.default },
     placeholderColor: t.color.text.faint,
+  }
+}
+
+/** Campo de formulário (rótulo + controle + auxiliar). INFRA de DS: só orquestra papéis de texto e espaçamento;
+ *  NÃO conhece validação/máscara/API/domínio (o controle vem por composição). Rótulo = papel `label`; ajuda =
+ *  `caption` discreto; erro = `caption` na cor de feedback de erro; marcador de obrigatório na mesma cor de erro
+ *  (convenção "*"). `disabled` reduz a opacidade do conjunto. Reutilizável em qualquer formulário (Perfil, Config…). */
+export function field(t: SinteraTheme, opts: { disabled?: boolean } = {}): FieldSpec {
+  return {
+    label: text(t, { role: 'label', tone: 'default' }),
+    requiredMark: { color: t.color.badge.error.text },
+    helper: text(t, { role: 'caption', tone: 'muted' }),
+    error: { style: t.typography.caption, color: t.color.badge.error.text },
+    gap: t.padding.micro,
+    opacity: opts.disabled ? t.opacity.disabled : 1,
   }
 }
 
