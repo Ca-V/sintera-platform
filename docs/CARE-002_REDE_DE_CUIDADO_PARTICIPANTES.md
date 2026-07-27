@@ -78,7 +78,34 @@ um participante **autorizado** pode receber **alertas específicos** — sempre 
 - Documento original = fonte da verdade; Snapshot imutável; menor privilégio; auditoria total.
 - Nenhum pipeline novo — orquestração sobre CARE-001 + JOR-001 + NOTIF-001 + Evento Assistencial.
 
-## 8. Decisões a ratificar (fundadora)
+## 8. Ciclo de vínculo (convite → aceite → revogação)
+
+Estados de um vínculo participante × sujeito, reusando CARE-001 (paciente é dono; revogação imediata; snapshot imutável):
+
+```mermaid
+stateDiagram-v2
+  [*] --> Convidado: titular cria convite (participante · sujeito · escopo · prazo)
+  Convidado --> Recusado: participante recusa
+  Convidado --> Ativo: participante aceita (consentimento registrado)
+  Ativo --> Ativo: uso (tudo auditado — CARE-001)
+  Ativo --> Revogado: titular revoga (imediato)
+  Ativo --> Expirado: prazo atingido
+  Recusado --> [*]
+  Revogado --> [*]
+  Expirado --> [*]
+```
+
+- **Convite** — a titular define **quem** (participante), **sobre quem** (sujeito: titular ou dependente — MUL-001),
+  **o quê** (escopo por módulo/fase), **por quanto tempo** (prazo). Nada é acessível antes do aceite.
+- **Aceite** — o participante aceita; o **consentimento** fica registrado (para dependente, exercido pela
+  titular/tutor). Só então há acesso, sempre de **menor privilégio** (§4).
+- **Uso** — todo acesso, comentário e alerta entram na **auditoria append-only** (CARE-001).
+- **Revogação** (imediata, a qualquer tempo) ou **expiração** (prazo) — encerram visualização, comentários e
+  **alertas**; o **Snapshot** já compartilhado permanece imutável (registro histórico da consulta).
+- **Compartilhamento por sujeito** — cada vínculo é **sobre um sujeito**; um pediatra ativo na Saúde Infantil de
+  um filho **não** vê os dados da titular nem de outro dependente.
+
+## 9. Decisões a ratificar (fundadora)
 
 - **D-RC-1** — Perfis padrão da §4 (menor privilégio) ok como ponto de partida?
 - **D-RC-2** — "Rede pessoal" (familiar/cuidador/tutor) entra já no modelo, junto com os profissionais?

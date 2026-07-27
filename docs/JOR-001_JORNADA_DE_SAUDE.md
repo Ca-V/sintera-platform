@@ -116,6 +116,54 @@ dentista · pediatra · familiares · cuidadores — cada um com permissão por 
 
 Ratificadas, o modelo vira o **SSOT de produto**; a Rede de Cuidado (próximo passo) e o vídeo se apoiam nele.
 
+## 8. Consolidação (taxonomia definitiva · módulos · navegação · entidades)
+
+> Guardrail [REG-001](REG-001_GUARDRAIL_REGULATORIO.md) aplicado. Taxonomia **proposta como definitiva** (defaults
+> das decisões §7; ajustável). A Jornada **não muda o propósito** da plataforma — organiza o que já existe por fase.
+
+### 8.1 Taxonomia definitiva (proposta)
+
+`Jornada de Saúde` = domínio de 1º nível (lente). **Possui** contexto de fase + templates; **projeta** os fatos.
+
+| Área | Módulos | Natureza | Dono do fato |
+|---|---|---|---|
+| **Saúde Feminina** | Ciclo · Contracepção · Tentante · Gestação · Pós-parto · Menopausa · Histórico ginecológico | possui contexto; projeta exames/eventos/medidas | Ciclo/CTC-001 + domínios de fato |
+| **Saúde Infantil** (por dependente) | Vacinação · Crescimento · Pediatria · Odontopediatria · Desenvolvimento | possui contexto+templates (calendário vacinal); projeta eventos/medidas | Evento Assistencial · Medidas |
+| **Saúde Preventiva** | Check-ups · Rastreamentos · Exames (projeção) · Fatores de risco | projeção + templates por faixa etária | Exames · Agenda |
+
+### 8.2 Navegação conceitual (sem tela — só o fluxo)
+
+`Jornada de Saúde` → escolher **sujeito** (titular ou dependente) → escolher **área/fase** → ver os **fatos
+projetados** daquela fase (exames, eventos, medidas, observações) + os **marcos da fase** (templates) → de um
+marco, **agir** (registrar · agendar · compartilhar na Rede de Cuidado). Nenhuma interpretação — só organização e ação.
+
+### 8.3 Entidades e projeção (diagrama)
+
+```mermaid
+flowchart TD
+  Tit[Titular] -->|tutela / consentimento| Dep[Dependente]
+  Tit -->|é um| Suj[Sujeito do cuidado]
+  Dep -->|é um| Suj
+  Suj --> Fase[Fase / Jornada  (período · status)]
+  Fase --> Tmpl[Template de fase  (calendário vacinal · pré-natal · rastreamentos)]
+  Tmpl -->|materializa| Ev[Evento Assistencial  (recorrência + lembrete)]
+  Fase -. projeta .-> Exames
+  Fase -. projeta .-> Ev
+  Fase -. projeta .-> Medidas
+  Fase -. projeta .-> Obs[Observações  (wearables · HIP-007)]
+  Ev --> Notif[NOTIF-001  (lembrete por canal)]
+  Fase -. contexto .-> IA[IA  (organiza · prioriza — REG-001)]
+  Suj -. compartilhável .-> Rede[Rede de Cuidado  (CARE-002)]
+```
+
+### 8.4 Impactos consolidados (verbos seguros — REG-001)
+
+- **IA:** ganha contexto de **fase + sujeito**; **organiza, correlaciona e prioriza** o que merece atenção naquele
+  momento; **não** diagnostica nem recomenda conduta.
+- **Wearables:** a Observação passa a ter endereço na fase (contexto de leitura); arquitetura de sync inalterada.
+- **Rede de Cuidado:** o **dependente** dá objeto aos "familiares/equipe" do CARE-001/002 (pediatra ↔ Saúde Infantil).
+- **Notificações:** os templates de fase geram **lembretes factuais** (calendário vacinal, pré-natal) via NOTIF-001.
+
 ---
-*Relaciona: identidade da plataforma (§0) · ADR-001 (projeção) · Evento Assistencial · HUB-001 · CARE-001 ·
-HIP-007 (Observação) · NOTIF-001 (lembretes) · Sidebar SSOT · princípio "não produz conteúdo clínico" (RDC 657).*
+*Relaciona: identidade da plataforma (§0) · REG-001 (guardrail) · ADR-001 (projeção) · Evento Assistencial · HUB-001 ·
+CARE-001/002 · HIP-007 (Observação) · NOTIF-001 (lembretes) · Sidebar SSOT · princípio "não produz conteúdo clínico" (RDC 657).*
