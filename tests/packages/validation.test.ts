@@ -1,7 +1,7 @@
 // @sintera/validation — validadores puros do Perfil + infra de resultado.
 import { describe, it, expect } from 'vitest'
 import {
-  ok, err, all,
+  ok, err,
   normalizeName, normalizePhone, validateName, validatePhone, validateProfileEditable, NAME_MAX,
 } from '../../packages/validation/src'
 
@@ -9,12 +9,6 @@ describe('validation · infra (ValidationResult)', () => {
   it('ok/err carregam valor e mensagem', () => {
     expect(ok(5)).toEqual({ ok: true, value: 5 })
     expect(err('x')).toEqual({ ok: false, error: 'x' })
-  })
-  it('all encadeia e para no primeiro erro', () => {
-    const inc = (n: number) => ok(n + 1)
-    const fail = () => err('parou')
-    expect(all(0, inc, inc)).toEqual({ ok: true, value: 2 })
-    expect(all(0, inc, fail, inc)).toEqual({ ok: false, error: 'parou' })
   })
 })
 

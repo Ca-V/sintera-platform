@@ -7,14 +7,3 @@ export type ValidationResult<T> = Result<T, string>
 
 export const ok = <T>(value: T): ValidationResult<T> => ({ ok: true, value })
 export const err = (error: string): ValidationResult<never> => ({ ok: false, error })
-
-/** Combinador: aplica os validadores em ordem; retorna o primeiro erro ou o valor do último `ok`. */
-export function all<T>(input: T, ...validators: ReadonlyArray<(v: T) => ValidationResult<T>>): ValidationResult<T> {
-  let current = input
-  for (const validate of validators) {
-    const r = validate(current)
-    if (!r.ok) return r
-    current = r.value
-  }
-  return ok(current)
-}
