@@ -104,3 +104,50 @@ describe('api-client · exams.getExam', () => {
     await expect(getExam(mockSupabase({ session: null }), 'e1')).rejects.toThrow('Não autenticado')
   })
 })
+
+describe('api-client · exams — contratos e casos extremos', () => {
+  it('listExams: query VAZIA não aplica gte/lte (só o filtro obrigatório de user_id)', async () => {
+    const builder = mockQueryBuilder({ data: [], error: null })
+    const client = mockSupabase({ session: fakeSession('u1'), from: () => builder })
+    await listExams(client, {})
+    const c = calls(builder)
+    expect(c.gte).toBeUndefined()
+    expect(c.lte).toBeUndefined()
+    expect(c.range).toBeUndefined()
+    expect(c.eq).toEqual(['user_id', 'u1']) // único eq
+    expect(c.order?.[0]).toBe('exam_date')
+  })
+
+  it('listExams: só "from" aplica gte, sem lte', async () => {
+    const builder = mockQueryBuilder({ data: [], error: null })
+    const client = mockSupabase({ session: fakeSession(), from: () => builder })
+    await listExams(client, { from: '2026-01-01' })
+    expect(calls(builder).gte).toEqual(['exam_date', '2026-01-01'])
+    expect(calls(builder).lte).toBeUndefined()
+  })
+
+  it('listExams: paginação sem offset → range a partir de 0', async () => {
+    const builder = mockQueryBuilder({ data: [], error: null })
+    const client = mockSupabase({ session: fakeSession(), from: () => builder })
+    await listExams(client, { limit: 10 })
+    expect(calls(builder).range).toEqual([0, 9])
+  })
+
+  it('listExams: DTO preserva nulls e ignora chaves ausentes', async () => {
+    const partial = { id: 'e2' } // só o id
+    const client = mockSupabase({ session: fakeSession(), from: () => mockQueryBuilder({ data: [partial], error: null }) })
+    const [dto] = await listExams(client)
+    expect(dto).toEqual({ id: 'e2', exam_date: null, display_title: null, document_type: null, clinical_family: null, status: null, issuer: null, requesting_physician: null, file_url: null, created_at: null })
+  })
+
+  it('getExam: id vazio ainda consulta (RLS decide) → null se sem linha', async () => {
+    const builder = mockQueryBuilder({ data: null, error: null })
+    const client = mockSupabase({ session: fakeSession('u1'), from: () => builder })
+    expect(await getExam(client, '')).toBeNull()
+  })
+
+  it('getExam: erro textual do Supabase é normalizado em Error', async () => {
+    const client = mockSupabase({ session: fakeSession(), from: () => mockQueryBuilder({ data: null, error: 'boom textual' }) })
+    await expect(getExam(client, 'e1')).rejects.toThrow('boom textual')
+  })
+})

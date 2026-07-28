@@ -63,3 +63,47 @@ describe('validation · validateProfileEditable', () => {
     expect(validateProfileEditable({})).toEqual({ ok: true, value: { name: null, phone: null } })
   })
 })
+
+describe('validation · robustez do nome (unicode/acentos/emoji/hífen/compostos)', () => {
+  it('acentos e ç preservados', () => {
+    expect(validateName('José Conceição')).toEqual({ ok: true, value: 'José Conceição' })
+  })
+  it('nome composto com hífen preservado', () => {
+    expect(validateName('Ana-Maria Souza-Lima')).toEqual({ ok: true, value: 'Ana-Maria Souza-Lima' })
+  })
+  it('emoji não quebra (preservado; espaços colapsados)', () => {
+    expect(validateName('  Ana   😀  Maria ')).toEqual({ ok: true, value: 'Ana 😀 Maria' })
+  })
+  it('tabs/quebras de linha viram espaço único', () => {
+    expect(validateName('Ana\tMaria\nSouza')).toEqual({ ok: true, value: 'Ana Maria Souza' })
+  })
+  it('undefined → null (opcional)', () => {
+    expect(validateName(undefined)).toEqual({ ok: true, value: null })
+  })
+  it('exatamente 120 chars é aceito; 121 rejeita (fronteira)', () => {
+    expect(validateName('a'.repeat(120)).ok).toBe(true)
+    expect(validateName('a'.repeat(121)).ok).toBe(false)
+  })
+})
+
+describe('validation · robustez do telefone (DDI/DDD/máscara/malformado)', () => {
+  it('DDI + DDD + máscara → dígitos com +', () => {
+    expect(validatePhone('+55 (11) 99999-8888')).toEqual({ ok: true, value: '+5511999998888' })
+  })
+  it('DDD sem DDI (sem +) → só dígitos', () => {
+    expect(validatePhone('(11) 3555-1234')).toEqual({ ok: true, value: '1135551234' })
+  })
+  it('letras/prefixo são descartados', () => {
+    expect(validatePhone('tel: 11 3555 1234')).toEqual({ ok: true, value: '1135551234' })
+  })
+  it('só "+" → null (sem dígitos = opcional)', () => {
+    expect(validatePhone('+')).toEqual({ ok: true, value: null })
+  })
+  it('poucos dígitos (malformado) → erro', () => {
+    expect(validatePhone('11 999').ok).toBe(false)
+  })
+  it('undefined/espaços → null', () => {
+    expect(validatePhone(undefined)).toEqual({ ok: true, value: null })
+    expect(validatePhone('   ')).toEqual({ ok: true, value: null })
+  })
+})

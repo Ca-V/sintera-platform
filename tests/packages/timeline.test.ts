@@ -46,3 +46,36 @@ describe('timeline · groupByPeriod', () => {
     expect(g[0].items).toHaveLength(3)
   })
 })
+
+describe('timeline · casos extremos', () => {
+  it('lista vazia → [] (sort e group)', () => {
+    expect(sortByDate([])).toEqual([])
+    expect(groupByPeriod([], 'month')).toEqual([])
+  })
+
+  it('datas IGUAIS → ordem relativa preservada (sort estável)', () => {
+    const same: Item[] = [{ id: 'a', date: '2026-07-01' }, { id: 'b', date: '2026-07-01' }, { id: 'c', date: '2026-07-01' }]
+    expect(sortByDate(same).map((i) => i.id)).toEqual(['a', 'b', 'c'])
+    expect(sortByDate(same, 'asc').map((i) => i.id)).toEqual(['a', 'b', 'c'])
+  })
+
+  it('todos sem data → um grupo "sem-data"', () => {
+    const nulls: Item[] = [{ id: 'a', date: null }, { id: 'b', date: null }]
+    const g = groupByPeriod(nulls, 'month')
+    expect(g).toHaveLength(1)
+    expect(g[0].key).toBe('sem-data')
+    expect(g[0].items.map((i) => i.id)).toEqual(['a', 'b'])
+  })
+
+  it('periodKey com ISO parcial/atípico não quebra', () => {
+    expect(periodKey('2026', 'month')).toBe('2026')      // sem mês → cai no ano
+    expect(periodKey('2026-07', 'day')).toBe('2026-07')  // sem dia → devolve o que há
+    expect(periodKey('', 'year')).toBe('')               // vazio não lança
+  })
+
+  it('groupByPeriod com uma data atípica não lança', () => {
+    const g = groupByPeriod([{ id: 'x', date: 'sem-formato' }], 'month')
+    expect(g).toHaveLength(1)
+    expect(g[0].items[0].id).toBe('x')
+  })
+})

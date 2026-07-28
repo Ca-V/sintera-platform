@@ -85,6 +85,70 @@ describe('api-client · profile.updateProfile — escrita (whitelist + { error }
   })
 })
 
+describe('api-client · profile — contratos e casos extremos', () => {
+  const calls = (b: unknown) => (b as { __calls: Record<string, unknown[]> }).__calls
+
+  it('getProfile: mapeia TODOS os campos centrais, preservando nulls', async () => {
+    const row = { id: 'u1', name: null, phone: null, age_range: null, goals: null, avatar_url: null, updated_at: null }
+    const client = mockSupabase({ session: fakeSession('u1'), from: () => mockQueryBuilder({ data: row, error: null }) })
+    expect(await getProfile(client)).toEqual({ id: 'u1', name: null, phone: null, age_range: null, goals: null, avatar_url: null, updated_at: null })
+  })
+
+  it('getProfile: linha com CHAVES AUSENTES → DTO com nulls (não undefined)', async () => {
+    const client = mockSupabase({ session: fakeSession('u1'), from: () => mockQueryBuilder({ data: { id: 'u1' }, error: null }) })
+    const dto = await getProfile(client)
+    expect(dto).toEqual({ id: 'u1', name: null, phone: null, age_range: null, goals: null, avatar_url: null, updated_at: null })
+  })
+
+  it('getProfile: compõe o signal externo (abortSignal é passado mesmo com signal do chamador)', async () => {
+    const builder = mockQueryBuilder({ data: null, error: null })
+    const client = mockSupabase({ session: fakeSession('u1'), from: () => builder })
+    await getProfile(client, new AbortController().signal)
+    expect(calls(builder).abortSignal?.[0]).toBeInstanceOf(AbortSignal)
+  })
+
+  it('updateProfile: só NOME → payload tem name, NÃO tem phone', async () => {
+    const builder = mockQueryBuilder({ data: null, error: null })
+    const client = mockSupabase({ session: fakeSession('u1'), from: () => builder })
+    await updateProfile(client, { name: 'Ana' })
+    const p = calls(builder).upsert[0] as Record<string, unknown>
+    expect(p).toHaveProperty('name', 'Ana')
+    expect(p).not.toHaveProperty('phone')
+  })
+
+  it('updateProfile: só TELEFONE → payload tem phone, NÃO tem name', async () => {
+    const builder = mockQueryBuilder({ data: null, error: null })
+    const client = mockSupabase({ session: fakeSession('u1'), from: () => builder })
+    await updateProfile(client, { phone: '+5511' })
+    const p = calls(builder).upsert[0] as Record<string, unknown>
+    expect(p).toHaveProperty('phone', '+5511')
+    expect(p).not.toHaveProperty('name')
+  })
+
+  it('updateProfile: name:null LIMPA o campo (payload.name === null)', async () => {
+    const builder = mockQueryBuilder({ data: null, error: null })
+    const client = mockSupabase({ session: fakeSession('u1'), from: () => builder })
+    await updateProfile(client, { name: null })
+    expect((calls(builder).upsert[0] as Record<string, unknown>).name).toBeNull()
+  })
+
+  it('updateProfile: patch VAZIO → payload só com id + updated_at', async () => {
+    const builder = mockQueryBuilder({ data: null, error: null })
+    const client = mockSupabase({ session: fakeSession('u7'), from: () => builder })
+    await updateProfile(client, {})
+    const p = calls(builder).upsert[0] as Record<string, unknown>
+    expect(Object.keys(p).sort()).toEqual(['id', 'updated_at'])
+    expect(p.id).toBe('u7')
+  })
+
+  it('updateProfile: string não-Error do Supabase vira Error normalizado', async () => {
+    const client = mockSupabase({ session: fakeSession(), from: () => mockQueryBuilder({ data: null, error: 'falha textual' }) })
+    const r = await updateProfile(client, { name: 'Ana' })
+    expect(r.error).toBeInstanceOf(Error)
+    expect(r.error?.message).toBe('falha textual')
+  })
+})
+
 describe('api-client · withTimeout — composição de signal + timeout (D2)', () => {
   afterEach(() => vi.useRealTimers())
 
