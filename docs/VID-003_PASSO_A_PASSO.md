@@ -4,13 +4,19 @@
 > Base: [VID-001](VID-001_ROTEIRO_VIDEO_INSTITUCIONAL.md) (roteiro) + [VID-002](VID-002_KIT_DE_PRODUCAO.md) (kit).
 > Regra permanente: nada que sugira diagnóstico/juízo clínico (REG-001). Formato: **16:9 · ~3 min · 1080p (ou 4K)**.
 
-**Ordem (importante):** Narração → Música → Cenas → Refino → Grafismos de marca → Montagem → Exportar.
-*(A narração primeiro porque a duração dela define o tempo de cada ato.)*
+**Ordem (importante):** Direção de arte → Master Prompt → Narração → Música → **Telas reais (Figma)** → Cenas → Refino → Grafismos → Montagem → **QA (visual · técnico · regulatório)** → Exportar → Versões derivadas.
+*(Identidade PRIMEIRO — consistência de marca; e narração antes das cenas, porque a duração dela define o tempo de cada ato.)*
 
-## FASE 0 — Preparação (15 min)
-1. Junte os **assets de marca**: logotipo (PNG/SVG com fundo transparente), a paleta (acento **aqua #579DA8** sobre neutros claros), as fontes **Fraunces** (títulos) e **Hanken Grotesk** (texto), e a frase‑identidade.
-2. Crie pastas: `01_narracao/` · `02_musica/` · `03_cenas/` · `04_grafismos/` · `05_montagem/` · `final/`.
-3. Convenção de nome: `ato1_...`, `ato2_...` etc. (facilita alinhar tudo na montagem).
+## FASE -1 — Direção de arte + Master Prompt (fundação — ANTES de tudo)
+Tenha prontos e abertos ao lado durante toda a produção:
+- **[VID-000 — Direção de Arte](VID-000_DIRECAO_DE_ARTE.md):** cores · tipografia · espessura de linha · animações · cinematografia. **Fonte da verdade visual.**
+- **[VID-004 — Master Prompt](VID-004_MASTER_PROMPT.md):** o bloco fixo (regras + proibições) colado no **início de TODA** cena → garante que toda cena tenha o mesmo look.
+
+## FASE 0 — Preparação: pastas + Design Pack (30–45 min)
+1. **Assets de marca:** logotipo (SVG + PNG transparente), paleta (aqua **#579DA8** + tints), fontes **Fraunces**/**Hanken Grotesk**/**IBM Plex Mono**, frase‑identidade.
+2. **Design Pack (no Figma — reutilizável):** logotipo, ícones de linha, gradientes, componentes, **sidebar**, **cards**, **botões**, **gráficos**. Fica a base para as telas (Fase 3.5) e os grafismos (Fase 5).
+3. **Biblioteca visual (elementos recorrentes):** gere/colete uma vez e **reutilize** para consistência — laboratório · consultório · smartwatch · celular · família · médica · nutricionista · atleta · criança · idoso.
+4. Pastas: `00_design_pack/` · `01_narracao/` · `02_musica/` · `03_telas/` · `03_cenas/` · `04_grafismos/` · `05_montagem/` · `final/`. Nomes: `ato1_...`, `ato2_...`.
 
 ## FASE 1 — Narração · **ElevenLabs** (30–45 min)
 **O que fazer:**
@@ -41,8 +47,12 @@
 **Saída:** `02_musica/trilha.wav`.
 
 ## FASE 3 — Cenas / atmosfera · **Google Flow (Veo 3)** (1–2 h)
-> As cenas AI entram como **fundo/atmosfera**. Grafismos e telas vêm na Fase 5. Clipes de IA são curtos
-> (~5–8s) → gere **vários por ato** para cobrir a duração (da Fase 1) e escolha os melhores.
+> **Roteamento por TIPO de cena (não misturar tudo no Veo — reduz qualidade):**
+> **humanas** → Google Flow / **Kling** · **animações/transições** → Runway · **grafismos** → Jitter (Fase 5) ·
+> **UI/telas** → **Figma** (Fase 3.5 — telas reais, nunca IA).
+>
+> As cenas AI entram como **fundo/atmosfera/pessoas**. Clipes de IA são curtos (~5–8s) → gere **vários por ato**
+> para cobrir a duração (da Fase 1) e escolha os melhores. **Sempre** com o Master Prompt (VID-004) + o complemento do ato.
 
 **O que fazer (para CADA ato):**
 1. No Flow, cole **o style anchor + o prompt do ato** (abaixo). Formato **16:9**. Gere 3–4 variações.
@@ -59,6 +69,18 @@
 - **Ato 5:** *[anchor] O núcleo de luz central pulsa; a câmera recua revelando um ciclo contínuo de luz aqua. Fundo branco sereno. Espaço central limpo reservado para o logotipo.*
 
 **Saída:** `03_cenas/ato1_*.mp4 … ato5_*.mp4`.
+
+## FASE 3.5 — Telas do produto · **Figma** (1 h) — *nunca IA para UI*
+> Ao mostrar a SINTERA, **não invente telas**. Use **telas reais** onde existem (Web/mobile atuais); para módulos
+> da visão ainda não construídos (Jornada de Saúde, Rede de Cuidado), monte **mockups fiéis ao Design System**
+> (Design Pack da Fase 0 — mesmas cores/fontes/componentes). Regra de honestidade (VID-000 §5).
+
+**O que fazer:**
+1. No Figma, componha as telas que o vídeo mostra (ou exporte as reais): exame no histórico, agenda/lembrete, rede de cuidado (permissões), etc.
+2. **Export PNG** (2x) com fundo transparente ou sobre plate claro.
+3. (Opcional) leve o PNG ao **Runway** para um leve movimento/parallax; ou anime no Jitter (Fase 5).
+
+**Saída:** `03_telas/*.png`.
 
 ## FASE 4 — Refino · **Runway Gen‑4** (45 min)
 **O que fazer:**
@@ -110,25 +132,47 @@
 
 **Saída:** timeline pronta.
 
-## FASE 7 — QA + Exportar (30 min)
-1. **QA de fronteira (REG‑001):** assista inteiro — nenhuma cena/tela sugere diagnóstico, risco clínico ou conduta. Verbos/mensagens só factuais.
-2. Cheque níveis de áudio, cortes, ortografia dos cards.
-3. **Deliver (Render):** H.264, 1080p (ou 4K), ~10–20 Mbps → `final/sintera_institucional.mp4`.
-4. Exporte também uma versão com **legendas queimadas** (para redes) se precisar.
+## FASE 7 — QA (visual · técnico · regulatório) + Exportar (45 min)
+Passar pelos **três** antes de renderizar:
+
+**7a · QA Visual** (identidade): mesma **fonte** · mesma **cor** (só o acento aqua) · mesma **velocidade**/timing ·
+mesma **iluminação** (claro/high‑key) · mesmas **transições** · mesma **espessura de linha** · identidade coerente do 1º ao último frame.
+
+**7b · QA Técnico:** áudio (níveis: voz ~‑3 dB, música ~‑18 dB) · **sincronismo** voz↔imagem · legendas (ortografia/tempo) ·
+resolução/fps corretos · **contraste** e legibilidade · **acessibilidade** (legendas, sem depender só de cor) · compressão sem artefatos.
+
+**7c · QA Regulatório (REG‑001):** nenhuma cena/tela sugere diagnóstico, risco clínico, laudo interpretado ou conduta. Só factual.
+
+**Render:** H.264/H.265, 1080p (ou 4K), ~10–20 Mbps → `final/sintera_institucional_3min.mp4`.
+
+## FASE 8 — Versões derivadas (30 min · custo marginal baixo, muito reuso)
+Da timeline do 3 min, gere cortes menores (reaproveitando cenas + narração/legendas):
+- **90s** — pitch (problema → solução → Rede de Cuidado → encerramento).
+- **30s** — teaser (solução + convergência + assinatura).
+- **15s** — social (uma frase‑chave + logo).
+- Exportar cada uma em 16:9 e, se for para redes, também **9:16** (vertical) com legendas queimadas.
+
+**Saída:** `final/sintera_{3min,90s,30s,15s}.mp4` (+ variações 9:16).
 
 ---
-### Resumo do pipeline
-| Fase | Plataforma | Entrega |
+### Resumo do pipeline (fluxo de estúdio)
+| Fase | Plataforma / Doc | Entrega |
 |---|---|---|
+| -1 | VID-000 (Direção de Arte) + VID-004 (Master Prompt) | fundação visual |
+| 0 | Figma | Design Pack + biblioteca visual + pastas |
 | 1 | ElevenLabs | narração (5 clipes) |
 | 2 | Suno/Udio | trilha |
-| 3 | Google Flow (Veo 3) | cenas/atmosfera |
+| 3 | Google Flow (Veo 3) — humanas/atmosfera | cenas |
+| 3.5 | **Figma** | telas reais/mockups do DS (PNG) |
 | 4 | Runway Gen‑4 (+ Kling p/ pessoas) | cenas refinadas + transições |
 | 5 | Jitter/Canva/After Effects | grafismos de marca (alfa) |
 | 6 | DaVinci Resolve | montagem |
-| 7 | DaVinci Resolve | MP4 final + QA REG‑001 |
+| 7 | DaVinci Resolve | QA **visual + técnico + regulatório** → MP4 3 min |
+| 8 | DaVinci Resolve | versões 90s / 30s / 15s (+ 9:16) |
 
-**Tempo total estimado:** ~1 a 1,5 dia de trabalho. **Custo:** DaVinci grátis; ElevenLabs/Suno/Flow/Runway em planos pagos (confirmar limites de export em alta resolução).
+**Tempo total estimado:** ~1,5 a 2 dias. **Custo:** DaVinci e Figma (plano free) grátis; ElevenLabs/Suno/Flow/Runway/Jitter em planos pagos (confirmar limites de export em alta resolução).
+
+> **Regra‑mestra do estúdio:** identidade e consistência **antes** de gerar. O Master Prompt (VID-004) é idêntico em toda cena; a Direção de Arte (VID-000) governa cor/fonte/luz/traço; UI sempre real (Figma), nunca IA.
 
 ---
 **Conformidade:** ✔ REG-001 · ✔ RDC 657
