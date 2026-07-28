@@ -1,135 +1,79 @@
 # VID-001 — Roteiro + storyboard do vídeo institucional
 
-> **Público:** primário = investidores · parceiros · operadoras · clínicas · profissionais de saúde. Secundário
-> = usuárias. **Tom:** híbrido — escrito como tese de produto (o "porquê"), sustentado por exemplos concretos
-> (o "como"). **Duração-alvo:** ~2min. **Idioma:** PT-BR. **Não** é tutorial de funcionalidades.
-> **Fronteira inegociável (ADR-000 · RDC 657):** a plataforma **organiza e contextualiza fatos**; **nunca**
-> interpreta nem recomenda conduta clínica. O vídeo comunica isso como um **diferencial**, não como limitação.
+> **Público:** híbrido — primário investidores/parceiros/operadoras/clínicas/profissionais; secundário usuárias.
+> **Tom:** tese de produto sustentada por exemplos concretos. **Duração‑alvo:** ~3 min · 5 atos. **Idioma:** PT‑BR.
+> **Fronteira inegociável ([REG-001](REG-001_GUARDRAIL_REGULATORIO.md) · RDC 657):** a plataforma **organiza,
+> contextualiza, conecta, prioriza, lembra e facilita o compartilhamento** — **nunca** interpreta, diagnostica,
+> prevê risco nem recomenda conduta. Isso é comunicado como **diferencial** (human‑in‑the‑loop), não como limitação.
 
-## Fio condutor visual (recorrente)
+## Fio condutor visual
 
-Uma **linha da jornada** aparece discretamente no rodapé/lateral ao longo de todo o vídeo, avançando conforme a
-narrativa — comunica que tudo é **uma mesma jornada**, não módulos soltos:
-
-```
-Prevenção → Saúde Feminina → Gestação → Infância → Rotinas → Wearables → Rede de Cuidado → IA → Prevenção contínua
-```
-
-**Camada de convergência (motivo visual mestre).** Além da linha, um segundo elemento constante: fontes que
-começam **separadas** e **convergem** para um único núcleo ao longo do vídeo — comunica a proposta **sem depender
-da narração**. No início dispersas; no fim, um só centro: **Jornada de Saúde**.
+Dois motivos constantes: a **linha da jornada** (fases da vida avançando) e a **convergência** (fontes dispersas
+→ um único núcleo "visão da pessoa"). Comunicam a proposta **sem depender da narração**.
 
 ```
-Exames        ╲
-Wearables      ╲
-Rotinas     ────►  Jornada de Saúde
-Medicamentos   ╱
-Rede de Cuidado╱
+Exames · Wearables · Hábitos/Rotinas · Medicamentos · Rede de Cuidado  ─►  Visão única da pessoa
 ```
 
-## Storyboard (8 cenas)
+## Ato 1 — O problema (~30s)
+**Visual:** a realidade fragmentada — exames num portal, consultas em outro, um relógio gerando dados que ninguém lê, apps soltos.
+**VO:**
+> "Hoje, as informações de saúde de uma pessoa vivem **dispersas**. Exames em um lugar. Consultas em outro.
+> Dispositivos gerando milhares de dados que raramente chegam a quem cuida. Hábitos, medicamentos e histórico da
+> família, espalhados. **Ninguém tem a visão completa.**"
 
-### Cena 1 — O problema (~30s)
-**Visual:** não abre em telas. Abre na **realidade fragmentada** — exames num portal, mensagens de consulta em
-outro, um relógio gerando dados que ninguém lê, apps soltos.
-**Narração (VO):**
-> "Hoje, a nossa saúde está fragmentada. Exames ficam em um sistema. Consultas em outro. Relógios inteligentes
-> geram milhares de dados que raramente chegam aos profissionais de saúde. Hábitos, medicamentos e histórico
-> ficam espalhados em aplicativos diferentes. O resultado: **ninguém tem uma visão completa da jornada de saúde**."
-
-### Cena 2 — A virada (~12s)
+## Ato 2 — A solução (~25s)
 **Visual:** os fragmentos convergem para um único ponto — a SINTERA.
 **VO:**
-> "A SINTERA nasceu para mudar essa lógica. Não é mais um aplicativo de saúde. É **uma nova forma de organizar a
-> saúde ao longo da vida**."
+> "A SINTERA organiza **toda a jornada de saúde em um único lugar** — de forma factual, contínua e ao longo da
+> vida. Não é mais um aplicativo de saúde: é a camada que **reúne, organiza e dá contexto** ao que já existe."
 
-### Cena 3 — A Jornada de Saúde (~25s)
-**Visual:** a linha da jornada ganha o primeiro plano; fases acendem em sequência.
+## Ato 3 — Os módulos (~70s · montagem ritmada, ~8s cada)
+**Visual:** cada módulo acende na linha da jornada; nome + uma frase factual + um vislumbre da tela.
+
+| Módulo | VO (linguagem REG-001) |
+|---|---|
+| **Jornada de Saúde** | "Sua saúde organizada **por fase da vida** — da mulher, da família, ao longo do tempo." |
+| **Hábitos de Vida** | "Seus hábitos acompanhados, com o contexto que importa." |
+| **Exames** | "Todos os exames num **histórico rastreável** — o documento original a um clique." |
+| **Medicamentos** | "O que você usa, organizado, com **lembretes** de dose." |
+| **Rotinas** | "Programe **qualquer atividade recorrente** e seja lembrada no momento certo." |
+| **Rede de Cuidado** | "Compartilhe **contexto** com quem cuida de você — com consentimento e auditoria." |
+| **Profissionais de Saúde** | "Cada profissional acessa **exatamente o que foi autorizado** — nada além." |
+| **Wearables** | "Seus dispositivos **conectados**, trazendo os sinais do dia a dia." |
+| **Notificações** | "Avisos no **seu canal** — e‑mail ou WhatsApp — só do que você escolheu." |
+
+## Ato 4 — Como tudo se conecta (~35s) · *o diferencial*
+**Visual:** a convergência em primeiro plano — fontes separadas fluindo para uma visão única; a rede de pessoas
+(paciente no centro; ginecologista, pediatra, nutricionista, familiares) com acessos autorizados.
 **VO:**
-> "Porque saúde não é um momento — é uma jornada. Prevenção. Saúde feminina. Gestação. Infância. Menopausa.
-> Vacinação. Acompanhamento contínuo. A SINTERA acompanha **cada fase** — da pessoa **e de quem ela cuida**."
-**On-screen:** Jornada de Saúde › Saúde Feminina · Saúde Infantil · Saúde Preventiva.
+> "Exames, dispositivos, registros, profissionais — dados que hoje vivem separados **entram na SINTERA e são
+> organizados numa visão única da pessoa**. A plataforma **não decide por você**: ela **reúne, organiza e
+> contextualiza**, para que **você e os seus profissionais** decidam com o quadro completo. Não é compartilhar um
+> PDF — é **compartilhar contexto**, com segurança e controle."
 
-### Cena 4 — Dados vivos (~20s)
-**Visual:** wearables, exames, hábitos, rotinas e medicamentos fluindo para a linha do tempo — a jornada "respira".
+## Ato 5 — Encerramento (~20s)
+**Visual:** a linha da jornada se fecha em ciclo (acompanhamento contínuo); logo SINTERA.
 **VO:**
-> "E a cada dia, a jornada ganha contexto: exames, medicamentos, hábitos e rotinas, e os sinais contínuos dos
-> seus dispositivos. Tudo **reunido, organizado e rastreável** — no lugar certo da sua história."
-
-### Cena 5 — Rede de Cuidado (~25s) · *o diferencial*
-**Visual:** um grafo de pessoas em torno da jornada — paciente no centro; ginecologista, pediatra,
-nutricionista, educador físico, familiares, cuidadores ao redor. Linhas finas mostram **acessos autorizados**
-(cada um vê só o seu recorte).
-**VO:**
-> "Saúde se faz em rede. Ginecologista, pediatra, nutricionista, educador físico — e também a família e os
-> cuidadores. Na SINTERA, cada um acessa **exatamente o que foi autorizado** — nada além. Não é 'compartilhar um
-> PDF'. É **compartilhar contexto**, com consentimento e auditoria."
-
-### Cena 6 — Inteligência preventiva (~25s)
-**Visual:** a plataforma **conecta** pontos já existentes (não cria fatos): destaca o que merece atenção, na fase certa.
-**VO (enquadramento factual — a IA NÃO diagnostica; capacidade primeiro, fronteira depois):**
-> "A inteligência da SINTERA **identifica relações** entre informações que normalmente permaneceriam dispersas,
-> **organiza** esses sinais no contexto da sua jornada e **prioriza o que merece atenção** — lembrando do que não
-> pode passar. Ela **não substitui o profissional**: dá a ele, e a você, o **contexto completo**. Não é um
-> chatbot — é uma **camada de inteligência preventiva**."
-
-### Cena 7 — A cena do alerta contextualizado (~20s) · *o coração da tese*
-**Visual:** um cartão de alerta. **Importante:** mostra **fatos conectados**, não um palpite clínico.
-**On-screen (o que a plataforma mostra):**
-> "Nas últimas 3 semanas, seus registros mostram: atividade física ↓, sono ↓, frequência cardíaca de repouso
-> alterada — e o início de uma nova fase da sua jornada. **Reunimos esses sinais em um só lugar.**"
-> *[ação real da plataforma]* → "Compartilhar com Dra. Ana na sua Rede de Cuidado · Registrar para a próxima consulta"
-**VO (capacidade primeiro, fronteira depois — refinamento da fundadora):**
-> "A SINTERA **reúne, organiza e contextualiza os sinais da sua jornada de saúde**. Em vez de substituir decisões
-> humanas, ela **entrega contexto para que você e a sua Rede de Cuidado tomem decisões mais bem informadas.** O
-> diferencial não é reunir dados — é **transformar dados em contexto para decidir**."
-
-### Cena 8 — Encerramento (~18s)
-**Visual:** a linha da jornada se fecha em ciclo (→ prevenção contínua); logo SINTERA.
-**VO:**
-> "Acreditamos que prevenir é melhor do que tratar. E prevenir exige **contexto, continuidade e colaboração**. A
-> SINTERA conecta pessoas, profissionais, dispositivos e inteligência em **uma única jornada de saúde** —
-> transformando dados dispersos em **decisões preventivas**."
+> "**Continuidade do cuidado.** **Compartilhamento seguro** com as pessoas que você autoriza. **Acompanhamento
+> ao longo da vida.** A SINTERA conecta pessoas, profissionais e dispositivos em uma única jornada de saúde."
 **Assinatura:** *SINTERA — inteligência preventiva para a jornada de saúde de cada pessoa, ao longo da vida.*
 
 ## Notas de produção
 
-- **Reformulações de fronteira (obrigatórias):** cena 6 (IA "organiza/prioriza/conecta", não "interpreta
-  clinicamente") e cena 7 (alerta = **fatos conectados + ação real da plataforma**, jamais "isso justifica…" ou
-  "antecipe sua avaliação clínica"). Mantém a força e respeita ADR-000/RDC 657 — e é **tese mais defensável** para investidor.
-- **Sem promessas de diagnóstico/tratamento** em nenhuma tela ou VO. Human-in-the-loop é parte do pitch.
-- **Consistência com o produto:** taxonomia da cena 3 = JOR-001; rede da cena 5 = CARE-002; alerta da cena 7
-  respeita CARE-002 §5 (alertas factuais) e NOTIF-001.
-- **Trilha/ritmo:** cresce do problema (cena 1, contido) ao encerramento (cena 8, esperançoso); a linha da
-  jornada é a âncora visual entre cenas.
-
-## Transições e ritmo (storyboard completo — P9)
-
-| De → Para | Transição | Duração aprox. |
-|---|---|---|
-| 1 → 2 | **Convergência** (transição-mestre): os fragmentos se atraem para o centro | ~1,5s |
-| 2 → 3 | O ponto central "abre" na linha da jornada | ~1s |
-| 3 → 4 | Cross-dissolve; a linha "respira" com dados entrando | ~1s |
-| 4 → 5 | Zoom-out revela o grafo da rede em torno da jornada | ~1,5s |
-| 5 → 6 | Os nós acendem conexões (IA "acende" relações) | ~1s |
-| 6 → 7 | Foco em um cartão de alerta (fatos conectados) | ~1s |
-| 7 → 8 | A linha se fecha em ciclo; convergência culmina no núcleo | ~2s |
-
-**Duração total-alvo:** ~2min. Ritmo: cena 1 mais lenta (identificação), cenas 3–6 em cadência, cena 7 pausa
-(peso da tese), cena 8 respira.
-
-## Assets necessários (P9)
-
-- **Motion graphics:** (a) convergência das fontes → núcleo; (b) linha da jornada (fio condutor); (c) grafo da
-  Rede de Cuidado com acessos autorizados; (d) cartão de alerta (fatos conectados + ação real).
-- **Mockups de UI** fiéis à identidade (Van Gogh; Fraunces/Hanken) — **representações**, não capturas reais.
-- **Locução** PT-BR (VO das 8 cenas) · **trilha** com a curva de ritmo acima · **paleta** âncora aqua (COLOR-001).
-- **Selo de fronteira** discreto nas cenas 6–7 (opcional): "organiza e contextualiza — não diagnostica".
-- **Storyboard visual** de referência: artefato HTML já produzido (frames, VO e convergência).
+- **Fronteira (obrigatória):** nenhuma tela/VO sugere diagnóstico, risco clínico ou conduta. Verbos permitidos
+  apenas os oficiais (REG-001 §5). Ex.: a IA, se aparecer, **organiza/prioriza/conecta** — nunca "interpreta".
+- **Consistência com o produto:** Ato 3 = módulos reais (JOR‑001 · ROT‑001 · CARE‑002 · WEA‑002 · NOTIF‑001);
+  Ato 4 = convergência + Rede de Cuidado (CARE‑002 permissões/consentimento/auditoria).
+- **Ritmo:** Ato 1 contido → Ato 3 em cadência (montagem) → Ato 4 pausa (a tese) → Ato 5 respira (visão).
+- **Assets:** motion graphics (convergência, linha da jornada, grafo da rede) · mockups fiéis à identidade
+  (Van Gogh; Fraunces/Hanken — **representações**, não capturas reais) · locução PT‑BR · trilha · selo de fronteira
+  discreto onde a IA aparecer. **Storyboard visual de referência:** artefato HTML (atualizado com estes 5 atos).
 
 ---
 **Conformidade:** ✔ REG-001 · ✔ RDC 657
 
 **Governança:** ✔ não duplica · ✔ reutiliza conceitos do ARC-000 · ✔ respeita REG-001 · ✔ não altera o núcleo arquitetural · ✔ referencia documentos-fonte · ✔ novos conceitos exigem ADR
 
-*Relaciona: JOR-001 (jornada/fases) · CARE-002 (rede) · NOTIF-001 (alertas) · ADR-000 + RDC 657 (fronteira factual) · frase-identidade (VID §0 e [[visao_plataforma_expandida]]).*
+*Relaciona: JOR-001 (jornada/fases) · ROT-001 (rotinas) · CARE-002 (rede/profissionais) · WEA-002 (wearables) ·
+NOTIF-001 (notificações) · ADR-000 + RDC 657 (fronteira factual) · frase-identidade ([[visao_plataforma_expandida]]).*
