@@ -92,4 +92,6 @@ Cada módulo tem uma ficha padrão (fundadora):
 ---
 **Conformidade:** ✔ REG-001 · ✔ ADR-001 · ✔ RDC 657
 
+**Governança:** ✔ não duplica · ✔ reutiliza conceitos do ARC-000 · ✔ respeita REG-001 · ✔ não altera o núcleo arquitetural · ✔ referencia documentos-fonte · ✔ novos conceitos exigem ADR
+
 *Relaciona: ContextualDescription (mecanismo existente) · Sidebar SSOT · JOR-001 · CARE-002 · ROT-001 · NOTIF-001 · gate de paridade (aplicação na Web) · RDC 657.*

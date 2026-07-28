@@ -63,4 +63,6 @@ do profissional** (via Rede de Cuidado), não da plataforma.
 ---
 **Conformidade:** ✔ REG-001 · ✔ ADR-001 · ✔ RDC 657
 
+**Governança:** ✔ não duplica · ✔ reutiliza conceitos do ARC-000 · ✔ respeita REG-001 · ✔ não altera o núcleo arquitetural · ✔ referencia documentos-fonte · ✔ novos conceitos exigem ADR
+
 *Relaciona: Evento Assistencial (recorrência) · NOTIF-001 (lembrete) · JOR-001 (sujeito/fase) · CARE-002 (alertas à rede) · DATE-001 (infra temporal) · Modelo Aberto · RDC 657.*

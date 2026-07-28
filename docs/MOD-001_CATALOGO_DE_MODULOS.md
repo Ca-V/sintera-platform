@@ -36,4 +36,6 @@ prioriza — nunca diagnostica) · **Wear** (recebe Observação) · **Rede** (c
 ---
 **Conformidade:** ✔ REG-001 · ✔ ADR-001 · ✔ RDC 657
 
+**Governança:** ✔ não duplica · ✔ reutiliza conceitos do ARC-000 · ✔ respeita REG-001 · ✔ não altera o núcleo arquitetural · ✔ referencia documentos-fonte · ✔ novos conceitos exigem ADR
+
 *Relaciona: Sidebar SSOT · JOR-001 · CARE-002 · MUL-001 · ROT-001 · WEA-002 · NOTIF-001 · FIN-001 · REG-001 · CATALOGO_PLATAFORMA (catálogo descritivo — este é a matriz de capacidades).*

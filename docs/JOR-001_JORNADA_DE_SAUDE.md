@@ -170,5 +170,7 @@ flowchart TD
 ---
 **Conformidade:** ✔ REG-001 · ✔ LGPD · ✔ ADR-001 · ✔ RDC 657
 
+**Governança:** ✔ não duplica · ✔ reutiliza conceitos do ARC-000 · ✔ respeita REG-001 · ✔ não altera o núcleo arquitetural · ✔ referencia documentos-fonte · ✔ novos conceitos exigem ADR
+
 *Relaciona: identidade da plataforma (§0) · REG-001 (guardrail) · ADR-001 (projeção) · Evento Assistencial · HUB-001 ·
 CARE-001/002 · HIP-007 (Observação) · NOTIF-001 (lembretes) · Sidebar SSOT · princípio "não produz conteúdo clínico" (RDC 657).*

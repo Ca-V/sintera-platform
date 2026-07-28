@@ -78,6 +78,9 @@ Descoberta / UX
 - **Duplicação:** nenhuma — WEA-002 consolida (não reescreve) os baselines; CARE-002 estende CARE-001; MAP-001/MOD-001 referenciam as fontes.
 - **Checklist de governança** (§7) padronizado como canônico; **Conformidade** presente nos 11 docs (§3).
 - **Sem novos documentos de domínio** nesta fase (só ARC-000 como hub) — objetivo de consolidação cumprido.
+- **Item 5 (governança documental) — completo:** além da Conformidade, o **checklist de governança (§7)** foi
+  adicionado **literalmente a cada documento** da visão (JOR/MUL/CARE-002/WEA-002/ROT/MOD/MAP/SID/VID; ARC-000 e
+  REG-001 já o mantêm no §7). Fonte canônica = ARC-000 §7; cópia por doc = verificação rápida em revisão.
 
 ## 5. Núcleo arquitetural CONGELADO (só muda por ADR)
 

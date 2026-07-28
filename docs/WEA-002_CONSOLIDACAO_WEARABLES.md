@@ -64,5 +64,7 @@ agregador (Health Connect/Apple Health) quando o vendor não expõe API direta. 
 ---
 **Conformidade:** ✔ REG-001 · ✔ LGPD · ✔ ADR-001 · ✔ RDC 657
 
+**Governança:** ✔ não duplica · ✔ reutiliza conceitos do ARC-000 · ✔ respeita REG-001 · ✔ não altera o núcleo arquitetural · ✔ referencia documentos-fonte · ✔ novos conceitos exigem ADR
+
 *Relaciona: HIP-007 (Observação/canônico) · HIP-009 (sync/conflitos) · WEA-001 (connectors) · HIP-001 (permissões) ·
 HIP-003 (estudo) · MUL-001 (sujeito) · JOR-001 (fase) · REG-001 (guardrail).*

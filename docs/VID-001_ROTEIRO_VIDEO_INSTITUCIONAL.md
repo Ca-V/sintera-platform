@@ -130,4 +130,6 @@ nutricionista, educador físico, familiares, cuidadores ao redor. Linhas finas m
 ---
 **Conformidade:** ✔ REG-001 · ✔ RDC 657
 
+**Governança:** ✔ não duplica · ✔ reutiliza conceitos do ARC-000 · ✔ respeita REG-001 · ✔ não altera o núcleo arquitetural · ✔ referencia documentos-fonte · ✔ novos conceitos exigem ADR
+
 *Relaciona: JOR-001 (jornada/fases) · CARE-002 (rede) · NOTIF-001 (alertas) · ADR-000 + RDC 657 (fronteira factual) · frase-identidade (VID §0 e [[visao_plataforma_expandida]]).*

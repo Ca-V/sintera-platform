@@ -73,5 +73,7 @@ flowchart TD
 ---
 **Conformidade:** ✔ REG-001 · ✔ LGPD · ✔ ADR-001 · ✔ RDC 657
 
+**Governança:** ✔ não duplica · ✔ reutiliza conceitos do ARC-000 · ✔ respeita REG-001 · ✔ não altera o núcleo arquitetural · ✔ referencia documentos-fonte · ✔ novos conceitos exigem ADR
+
 *Relaciona: JOR-001 (fase+sujeito) · CARE-001/002 (acesso por sujeito) · NOTIF-001 (alertas) · HIP-007/009 (wearables) ·
 COMPLIANCE-001 (LGPD) · REG-001 (guardrail) · ADR-001 (não duplica — atribui).*

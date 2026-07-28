@@ -57,5 +57,7 @@ flowchart LR
 ---
 **Conformidade:** ✔ REG-001 · ✔ LGPD · ✔ ADR-001 · ✔ RDC 657
 
+**Governança:** ✔ não duplica · ✔ reutiliza conceitos do ARC-000 · ✔ respeita REG-001 · ✔ não altera o núcleo arquitetural · ✔ referencia documentos-fonte · ✔ novos conceitos exigem ADR
+
 *Relaciona: Capture Hub/CEF · HIP-007/009 (Observação) · HUB-001 · Evento Assistencial · ADR-001 (projeção) ·
 JOR-001 (fase) · MUL-001 (sujeito) · IA (REG-001) · NOTIF-001 · CARE-002 · Timeline.*

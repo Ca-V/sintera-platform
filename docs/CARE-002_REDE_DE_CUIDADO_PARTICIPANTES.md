@@ -115,5 +115,7 @@ stateDiagram-v2
 ---
 **Conformidade:** ✔ REG-001 · ✔ LGPD · ✔ ADR-001 · ✔ RDC 657
 
+**Governança:** ✔ não duplica · ✔ reutiliza conceitos do ARC-000 · ✔ respeita REG-001 · ✔ não altera o núcleo arquitetural · ✔ referencia documentos-fonte · ✔ novos conceitos exigem ADR
+
 *Relaciona: CARE-001 (base) · JOR-001 (multi-sujeito/dependente) · NOTIF-001 (alertas) · Evento Assistencial ·
 Modelo Aberto · RDC 657 · LGPD.*
