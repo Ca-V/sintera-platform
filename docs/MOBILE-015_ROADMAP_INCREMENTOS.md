@@ -21,7 +21,7 @@ A sequência segue quatro fases, do estável para o dependente:
 |---|------------|--------|---------------------------|
 | 1 | **Autenticação** | ✅ ACCEPTED ([MOBILE-008](MOBILE-008_INCREMENTO1_ACEITE.md)) | Base da experiência autenticada. |
 | 2 | **Navegação** | ✅ ACCEPTED ([MOBILE-013](MOBILE-013_INCREMENTO2_ACEITE.md)) | Infraestrutura de navegação (Bottom Tabs + stacks; projeção do SSOT). |
-| 3 | **Home Shell** | ⏳ implementado; homologação pós-16 GB ([MOBILE-014](MOBILE-014_PLANEJAMENTO_INCREMENTO3_HOME.md)) | Casca da Home como composição de slots (ADR-018). |
+| 3 | **Home Shell** | ⏳ implementado; homologação via **EAS Build + dispositivo físico** (nuvem-first — ver §Política de Validação) ([MOBILE-014](MOBILE-014_PLANEJAMENTO_INCREMENTO3_HOME.md)) | Casca da Home como composição de slots (ADR-018). |
 | 4 | **Perfil** | ⬜ próximo | Domínio autocontido; fornece dados que vários módulos usarão; não depende de exames/insights; completa a base autenticada. |
 | 5 | **Histórico de Exames** | ⬜ | Pilar da proposta de valor da SINTERA; base para diversos recursos posteriores. |
 | 6 | **Upload de Exames** | ⬜ | Complementa o histórico (visualizar → adicionar); sequência intuitiva para o usuário. |
@@ -47,3 +47,37 @@ A sequência segue quatro fases, do estável para o dependente:
 - Cada incremento aceito = **marco verificável (tag)**, base do seguinte (nasce do tag do anterior).
 - Integração ao ramo principal permanece condicionada ao **encerramento da Onda 1** + critérios de integração.
 - Reordenações futuras deste roadmap são decisão de produto da fundadora (documentar a mudança).
+
+## Política de Validação (nuvem-first) — 2026-07-29
+
+> **Decisão da fundadora (ratifica [ADR-012](adr/ADR-012_CONTINUIDADE_OPERACIONAL.md) / [GOV-002](GOV-002_ONBOARDING_HANDOVER.md)):** o notebook de
+> desenvolvimento é **apenas um ponto de acesso** ao projeto; o projeto vive no **GitHub (fonte única da
+> verdade)**. A infraestrutura de desenvolvimento se adapta ao projeto — nunca o contrário.
+
+**Princípio:** **nenhum incremento é bloqueado por limitação de hardware do notebook** (ex.: RAM insuficiente
+para o emulador Android local). Editar código, `typecheck` e testes rodam **localmente e sem limite**; o
+**build pesado e a homologação** rodam **na nuvem (EAS Build) + dispositivo físico**.
+
+**Fluxo oficial de validação:**
+
+```
+edição local → GitHub → EAS Build (Expo Cloud) → APK → celular Android → homologação → tag de aceite → próximo incremento
+```
+
+**Definição de "incremento concluído"** (encaixa no LIFECYCLE existente — não é régua paralela). Um
+incremento só é ACCEPTED quando reúne, todos:
+1. **código no GitHub** (branch do incremento, nascida do tag do anterior);
+2. **documentação atualizada** (planejamento + aceite + roteiro de homologação);
+3. **`typecheck` verde** (`npm run typecheck:mobile`);
+4. **testes verdes** (arquitetura/contrato — `tests/mobile`, `tests/contracts`);
+5. **build EAS bem-sucedido** (perfil `preview` → APK);
+6. **homologação em dispositivo físico** (roteiro do incremento) sem regressões;
+7. **tag de aceite** (`mobile-incN-accepted`).
+
+**Notas operacionais:**
+- **EAS grátis tem limite mensal de builds** → validar **por incremento** (em lote), não a cada commit. O ciclo
+  de código (editar/typecheck/testar) permanece local e contínuo.
+- **Transferibilidade:** os **templates de ambiente** (`.env.example`, sem valores) são **versionados**; segredos
+  (`.env`, chaves, certificados) **nunca**. Assim qualquer dev clona o repo e sabe o que preencher.
+- **Ambiente remoto (VM/nuvem) = último recurso**, só se o notebook deixar de dar conta até de editar/testar —
+  não é o caso hoje. Só a compilação já está na nuvem (EAS).

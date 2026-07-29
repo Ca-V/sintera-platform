@@ -145,6 +145,7 @@ Detalha o [[ADR-012]]. Todo componente entregue deve satisfazer o **critério or
 | Serviços externos | [HIP-001](./HIP-001_PLATAFORMA_INTEGRACOES.md) · [ARCH-004](./ARCH-004_ARQUITETURA_INTEGRACOES.md) | ✅ |
 | Deploy · Backup · Restauração | [OPS-002](./OPS-002_RELEASE_BACKUP_RUNBOOK.md) | ✅ |
 | Convenções de desenvolvimento | GOV-002 §7–§9 + esta §14 | ✅ |
+| Validação mobile (nuvem-first) | [MOBILE-015 §Política de Validação](./MOBILE-015_ROADMAP_INCREMENTOS.md) — notebook = ponto de acesso; build/homologação via EAS + dispositivo; `.env.example` versionado | ✅ |
 
 Lacunas marcadas `⬜` viram entregável da fase que as tocar (ex.: fluxo de autenticação = parte do aceite da Onda 1).
 

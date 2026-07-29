@@ -35,6 +35,9 @@ yarn-error.log*
 .env.local
 .env.production
 .env.production.local
+# ...but DO version the templates (sem valores) — transferibilidade (ADR-012 / GOV-002)
+!.env.example
+!.env.*.example
 
 # vercel
 .vercel
