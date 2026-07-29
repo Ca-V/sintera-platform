@@ -187,6 +187,9 @@ Criar/ajustar o **`apps/mobile/eas.json`** com um perfil de **development build*
 > o notebook edita/typecheck/testa; o **build pesado roda na nuvem (EAS)** e a **homologação é em Android físico**.
 > Este runbook é a sequência **reproduzível** — qualquer dev executa sem depender de histórico de conversa (ADR-012).
 
+> **Baseline validado (2026-07-29):** `eas-cli 21.4.0` · `Node v22.23.1` · perfis em `eas.json` = `development, preview, production`.
+> Registrar aqui a versão da CLI ajuda a reproduzir o comportamento (ex.: disponibilidade de `eas project:info`) em máquinas futuras.
+
 **Pré-build (custo ~zero — evita gastar crédito na conta/projeto errados):**
 
 ```bash
