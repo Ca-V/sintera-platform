@@ -181,6 +181,56 @@ Criar/ajustar o **`apps/mobile/eas.json`** com um perfil de **development build*
 
 ---
 
+## 3.1 Runbook de build/homologação **nuvem-first** (por incremento) — política oficial
+
+> Fluxo oficial da SINTERA Mobile (ver [MOBILE-015 §Política de Validação](./MOBILE-015_ROADMAP_INCREMENTOS.md)):
+> o notebook edita/typecheck/testa; o **build pesado roda na nuvem (EAS)** e a **homologação é em Android físico**.
+> Este runbook é a sequência **reproduzível** — qualquer dev executa sem depender de histórico de conversa (ADR-012).
+
+**Pré-build (custo ~zero — evita gastar crédito na conta/projeto errados):**
+
+```bash
+cd apps/mobile
+
+# 1) Autenticar (o login é do desenvolvedor; nunca commitar senha/token)
+npx eas-cli login
+
+# 2) Confirmar QUEM está logado (deve ser membro da org do projeto)
+npx eas-cli whoami
+
+# 3) Confirmar QUAL projeto está vinculado — deve bater com o app.json:
+#    Owner: sintera-health-tech · Slug: sintera · Project ID: 366cec46-5431-4601-9b2d-5f685f96d8bc
+npx eas-cli project:info
+```
+
+> Se `whoami` ou `project:info` não baterem, **não faça o build** — o alvo é o `owner`/`projectId` do `app.json`;
+> um usuário sem acesso à org gera **erro de permissão** (não um build silencioso na conta errada).
+
+**Build em nuvem (gera o APK de homologação):**
+
+```bash
+npx eas-cli build --platform android --profile preview
+```
+
+- `Generate a new Android Keystore?` → **Yes** no 1º build (o EAS gerencia a keystore na nuvem). Se já existir, a
+  CLI reutiliza/orienta.
+- O build roda nos servidores da Expo (~10–20 min) e retorna **link/QR** para baixar o **APK**.
+- **EAS grátis tem cota mensal de builds** → validar **por incremento** (em lote), não a cada commit.
+
+**Homologação em dispositivo físico:**
+
+1. Abrir o link/QR no **Android**, baixar e instalar o APK (permitir "fontes desconhecidas" se pedido).
+2. Executar o **roteiro de homologação do incremento** (ex.: [MOBILE-017](./MOBILE-017_ROTEIRO_HOMOLOGACAO_INCREMENTO3.md) para o Inc3).
+3. Sem regressões → criar a **tag de aceite** `mobile-incN-accepted` → liberar o próximo incremento.
+
+Resumo do fluxo:
+
+```
+eas login → eas whoami → eas project:info → eas build (preview) → APK → Android físico → roteiro de homologação → tag de aceite
+```
+
+---
+
 ## 4. Android Studio e emulador
 
 1. Instalar **Android Studio** → no *SDK Manager*, marcar **Android SDK Platform 35** (e 34), **Android SDK

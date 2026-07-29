@@ -64,6 +64,8 @@ para o emulador Android local). Editar código, `typecheck` e testes rodam **loc
 edição local → GitHub → EAS Build (Expo Cloud) → APK → celular Android → homologação → tag de aceite → próximo incremento
 ```
 
+> **Runbook de comandos reproduzível** (login → whoami → project:info → build → homologação): [MOBILE-003 §3.1](./MOBILE-003_PROVISIONAMENTO_EXPO_EAS.md).
+
 **Definição de "incremento concluído"** (encaixa no LIFECYCLE existente — não é régua paralela). Um
 incremento só é ACCEPTED quando reúne, todos:
 1. **código no GitHub** (branch do incremento, nascida do tag do anterior);
