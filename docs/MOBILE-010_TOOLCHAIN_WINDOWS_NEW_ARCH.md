@@ -310,6 +310,27 @@ A tabela **Baseline de toolchain** (§3) — em especial **CMake 4.1.2 / Ninja 1
 - [react-native-keyboard-controller — Troubleshooting](https://kirillzyusko.github.io/react-native-keyboard-controller/docs/troubleshooting) — procedimento comunitário (ninja atualizado + CMake 3.31.1 no `build.gradle` + Long Paths), consistente com S1.
 - [ninja-build/ninja#2359](https://github.com/ninja-build/ninja/issues/2359), [#1900](https://github.com/ninja-build/ninja/issues/1900) — histórico do limite de `MAX_PATH` no ninja.
 
+## 3.3 Atualização (2026-07-30) — pin do CMake condicionado ao Windows (build em nuvem / EAS)
+
+Com a adoção da validação **nuvem-first** (build no EAS + dispositivo físico — [MOBILE-015 §Política de Validação](./MOBILE-015_ROADMAP_INCREMENTOS.md)),
+o primeiro build no EAS **falhou** no `Run gradlew`:
+
+```
+Execution failed for task ':app:configureCMakeRelWithDebInfo[arm64-v8a]'.
+> [CXX1300] CMake '4.1.2' was not found in SDK, PATH, or by cmake.dir property.
+```
+
+**Causa:** o pin de CMake 4.1.2 (injetado por `plugins/withAndroidCmakeVersion.js`) é um **workaround de Windows**
+(bug de MAX_PATH do ninja). O builder **Linux do EAS não possui** o CMake 4.1.2 e não precisa dele (o limite de
+260 caracteres não existe em Linux). Forçá-lo lá quebra o `gradlew`.
+
+**Correção (mínima):** a injeção passou a ser **condicional à plataforma** — aplica-se só quando
+`process.platform === 'win32'` (ou `SINTERA_FORCE_CMAKE_PIN=1` para diagnóstico). Assim:
+- **Windows local:** pin aplicado → bug de MAX_PATH evitado (comportamento MOBILE-010 preservado);
+- **EAS/Linux/macOS:** pin ignorado → usa o CMake padrão do ambiente → `gradlew` compila.
+
+Testes puros de `injectCmakeVersion` inalterados (11/11 verdes); a condição vive no wrapper do plugin.
+
 ## 4. Contingência arquitetural (NÃO é próximo passo)
 
 > Caso esta investigação demonstre que a limitação decorre da cadeia de ferramentas **e** não exista solução
