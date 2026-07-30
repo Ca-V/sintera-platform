@@ -331,6 +331,16 @@ Execution failed for task ':app:configureCMakeRelWithDebInfo[arm64-v8a]'.
 
 Testes puros de `injectCmakeVersion` inalterados (11/11 verdes); a condição vive no wrapper do plugin.
 
+**2ª iteração — o "pular no Linux" não bastou (build `6b38f5d8`).** O build seguinte falhou com o MESMO
+`[CXX1300] CMake '4.1.2' was not found`, embora o plugin comprovadamente pule no Linux e `android/` NÃO seja
+versionado. **Causa raiz:** o **cache do EAS** reaproveitou o `app/build.gradle` de um build anterior (gerado
+quando o plugin ainda injetava o pin em qualquer plataforma) e o prebuild não regenerou o arquivo — o pin
+persistiu no cache. "Não injetar" não **remove** um pin que já está lá. **Correção definitiva (2 camadas):**
+(1) o plugin agora, em plataformas != Windows, **REMOVE ativamente** o bloco `externalNativeBuild { cmake }`
+(`removeCmakeVersion`), rodando o mod SEMPRE — neutraliza qualquer build.gradle de cache; (2) rebuild com
+`eas build --clear-cache` para forçar regeneração limpa. Testes 13/13 verdes (round-trip inject→remove).
+Diagnóstico obtido baixando o log do build (`eas build:view --json` → `logFiles[0]`, comprimido em **brotli**).
+
 ## 4. Contingência arquitetural (NÃO é próximo passo)
 
 > Caso esta investigação demonstre que a limitação decorre da cadeia de ferramentas **e** não exista solução

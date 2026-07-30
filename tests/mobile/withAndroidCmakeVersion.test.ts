@@ -16,9 +16,10 @@ const require = createRequire(import.meta.url)
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const plugin = require('../../apps/mobile/plugins/withAndroidCmakeVersion.js') as {
   injectCmakeVersion: (contents: string) => string
+  removeCmakeVersion: (contents: string) => string
   CMAKE_VERSION: string
 }
-const { injectCmakeVersion, CMAKE_VERSION } = plugin
+const { injectCmakeVersion, removeCmakeVersion, CMAKE_VERSION } = plugin
 
 // Trecho representativo do app/build.gradle gerado pelo Expo prebuild (bloco `android {` no início da linha).
 const SAMPLE_BUILD_GRADLE = `apply plugin: "com.android.application"
@@ -62,5 +63,25 @@ describe('withAndroidCmakeVersion (MOBILE-010 — persistência da baseline de t
   it('LANÇA se a âncora `android {` mudar de forma (protege contra mudança de template do Expo/RN)', () => {
     const semAncora = SAMPLE_BUILD_GRADLE.replace('android {', 'androidConfig.apply {')
     expect(() => injectCmakeVersion(semAncora)).toThrow(/android \{/)
+  })
+})
+
+// Remoção ATIVA do pin (usada em Linux/EAS) — neutraliza um build.gradle vindo de cache com o pin.
+describe('removeCmakeVersion (política Linux/EAS — build 6b38f5d8)', () => {
+  it('round-trip: injetar e depois remover elimina o pin (bloco, versão e comentário MOBILE-010)', () => {
+    const comPin = injectCmakeVersion(SAMPLE_BUILD_GRADLE)
+    const semPin = removeCmakeVersion(comPin)
+    expect(semPin).not.toContain('externalNativeBuild')
+    expect(semPin).not.toContain(`version "${CMAKE_VERSION}"`)
+    expect(semPin).not.toContain('MOBILE-010')
+    // preserva o resto do arquivo
+    expect(semPin).toContain('android {')
+    expect(semPin).toContain('namespace')
+  })
+
+  it('é idempotente e no-op quando não há pin (não altera um build.gradle limpo)', () => {
+    expect(removeCmakeVersion(SAMPLE_BUILD_GRADLE)).toBe(SAMPLE_BUILD_GRADLE)
+    const comPin = injectCmakeVersion(SAMPLE_BUILD_GRADLE)
+    expect(removeCmakeVersion(removeCmakeVersion(comPin))).toBe(removeCmakeVersion(comPin))
   })
 })
