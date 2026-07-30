@@ -209,6 +209,22 @@ npx eas-cli project:info
 > Se `whoami` ou `project:info` não baterem, **não faça o build** — o alvo é o `owner`/`projectId` do `app.json`;
 > um usuário sem acesso à org gera **erro de permissão** (não um build silencioso na conta errada).
 
+**Pré-requisito de ambiente (uma vez por projeto): variáveis `EXPO_PUBLIC_*` no EAS.**
+O `.env` local é gitignored e **não sobe** para o EAS; se as variáveis não estiverem no ambiente do EAS, o
+build compila mas o app **trava no início** (`apiClient.ts` lança se `EXPO_PUBLIC_SUPABASE_URL`/`ANON_KEY`
+faltarem). Configure-as por ambiente (valores públicos — chave anon protegida por RLS):
+
+```bash
+# a partir de apps/mobile, com login feito
+eas env:set --environment preview --name EXPO_PUBLIC_SUPABASE_URL --value "https://<projeto>.supabase.co" --visibility plaintext --scope project --non-interactive
+eas env:set --environment preview --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "<anon key>" --visibility sensitive --scope project --non-interactive
+eas env:list --environment preview   # conferir
+```
+
+> As variáveis são "fotografadas" na **criação** do build. Se você as criar DEPOIS de disparar um build, esse
+> build **não** as terá — cancele (`eas build:cancel <id>`) e dispare de novo. Os nomes estão versionados em
+> `apps/mobile/.env.example` (transferibilidade); os **valores** vivem só no EAS/`.env` local (nunca no repo).
+
 **Build em nuvem (gera o APK de homologação):**
 
 ```bash
