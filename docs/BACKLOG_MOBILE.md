@@ -18,7 +18,8 @@
 | Revalidação AVD pós-16 GB | [MOBILE-011](MOBILE-011_ESTABILIDADE_AMBIENTE_VALIDACAO_ANDROID.md) | `hw.ramSize` 3072→4096 + cold boot; confirmar sumiço dos ANRs de host. **Pendente do upgrade (terça).** |
 | Gate de release em monorepo | [REL-001](REL-001_RELEASE_BUNDLE_MONOREPO.md) | `assembleRelease` não resolve `./index.ts`; adiado para a fase de distribuição (pós-Onda 1). |
 | CI — tornar `lint` bloqueante | [ci.yml](../.github/workflows/ci.yml) | Após sanear o QA-002. |
-| CI — não consegui assistir ao run (gh sem credencial) | — | Confirmar o 1º run verde em Actions (build Web com env dummy). |
+| CI — status via API pública (gh sem credencial no sandbox) | — | **Resolvido:** os runs do Actions são consultáveis pela API pública (`api.github.com/repos/.../actions/runs?branch=...`) — usado para verificar CI de cada commit. |
+| **Empacotamento do APK** (`preview`) — EAS entrega `.tar.gz` (debug+release) apesar de `gradleCommand: :app:assembleRelease` | [MOBILE-025 §3](MOBILE-025_INCREMENTO4_ACEITE.md) | Homologa-se extraindo o `app-release.apk` do tar (workflow provado). Investigar por que o `assembleDebug` roda; alvo = "Install de 1 toque". **Não bloqueia** (infra, não governança). |
 
 ## 🎨 Design System (evoluções — "DS antes da tela")
 | Item | Quando | Nota |

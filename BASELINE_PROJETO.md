@@ -3,8 +3,8 @@
 Documento **vivo** (fundadora, 2026-07-31). Consolida o estado do sistema num ponto no tempo, para auditoria e
 retomada por qualquer dev. **Atualizado após cada Aceito** de incremento (etapa obrigatória — [MOBILE-022](docs/MOBILE-022_TEMPLATE_EVIDENCIAS_INCREMENTO.md)).
 
-- **Última atualização:** 2026-07-31 · **após:** Inc3 Aceito (Inc4 em Verificado)
-- **Branch de trabalho Mobile:** `feat/mobile-inc4-perfil`
+- **Última atualização:** 2026-07-31 · **após:** **Inc4 Aceito** (tag `mobile-inc4-accepted`); Inc5 Em Implementação
+- **Branch de trabalho Mobile:** `feat/mobile-inc4-perfil` (base do Inc5)
 
 ## 1. Roadmap / estados (Mobile — Onda 1)
 
@@ -13,8 +13,8 @@ retomada por qualquer dev. **Atualizado após cada Aceito** de incremento (etapa
 | 1 | Autenticação | ✅ Aceito | — |
 | 2 | Navegação | ✅ Aceito | — |
 | 3 | Home Shell | ✅ Aceito | — |
-| 4 | Perfil | 🔄 **Verificado** | Homologação Android (build EAS `5b3df1fb`) |
-| 5 | Histórico de Exames | 📋 **Planejado** | **Aceite do Inc4** |
+| 4 | Perfil | ✅ **Aceito** (tag `mobile-inc4-accepted`) | — |
+| 5 | Histórico de Exames | 🔄 **Em Implementação** | — (gate liberado) |
 | 6–11 | Upload · Registro Manual · RegistrationHub · Composição Corporal · Agenda · Insights | ⬜ | aceite do anterior |
 
 Detalhe: [MOBILE-015](docs/MOBILE-015_ROADMAP_INCREMENTOS.md). Estados: [MOBILE-022](docs/MOBILE-022_TEMPLATE_EVIDENCIAS_INCREMENTO.md).

@@ -22,8 +22,8 @@ A sequência segue quatro fases, do estável para o dependente:
 | 1 | **Autenticação** | ✅ ACCEPTED ([MOBILE-008](MOBILE-008_INCREMENTO1_ACEITE.md)) | Base da experiência autenticada. |
 | 2 | **Navegação** | ✅ ACCEPTED ([MOBILE-013](MOBILE-013_INCREMENTO2_ACEITE.md)) | Infraestrutura de navegação (Bottom Tabs + stacks; projeção do SSOT). |
 | 3 | **Home Shell** | ✅ ACCEPTED (2026-07-30, dispositivo físico via nuvem-first — [MOBILE-021](MOBILE-021_INCREMENTO3_ACEITE.md); tag `mobile-inc3-accepted`) | Casca da Home como composição de slots (ADR-018). |
-| 4 | **Perfil** | 🔄 **Verificado** (código+typecheck+testes+CI ✅; **homologação pendente** — [MOBILE-023](MOBILE-023_ROTEIRO_HOMOLOGACAO_INCREMENTO4.md)) — estados formais em [MOBILE-022](MOBILE-022_TEMPLATE_EVIDENCIAS_INCREMENTO.md) | Domínio autocontido; fornece dados que vários módulos usarão; não depende de exames/insights; completa a base autenticada. |
-| 5 | **Histórico de Exames** | ⬜ planejado ([MOBILE-024](MOBILE-024_PLANEJAMENTO_INCREMENTO5_EXAMES.md); Readiness ✅, fundação de dados pronta) | Pilar da proposta de valor da SINTERA; base para diversos recursos posteriores. |
+| 4 | **Perfil** | ✅ **Aceito** (2026-07-31, homologação Android T1–T7 — [MOBILE-025](MOBILE-025_INCREMENTO4_ACEITE.md); tag `mobile-inc4-accepted`) | Domínio autocontido; fornece dados que vários módulos usarão; não depende de exames/insights; completa a base autenticada. |
+| 5 | **Histórico de Exames** | 🔄 **Em Implementação** ([MOBILE-024](MOBILE-024_PLANEJAMENTO_INCREMENTO5_EXAMES.md); nasce de `mobile-inc4-accepted`) | Pilar da proposta de valor da SINTERA; base para diversos recursos posteriores. |
 | 6 | **Upload de Exames** | ⬜ | Complementa o histórico (visualizar → adicionar); sequência intuitiva para o usuário. |
 | 7 | **Registro Manual** | ⬜ | Outra forma de alimentar o mesmo domínio de dados. |
 | 8 | **RegistrationHub** | ⬜ | Orquestração — só faz sentido quando já houver **destinos úteis reais** (não placeholders). HUB-001. |
@@ -38,8 +38,8 @@ Estados formais em [MOBILE-022](MOBILE-022_TEMPLATE_EVIDENCIAS_INCREMENTO.md) (P
 
 | Incremento | Estado atual | Gate para "Em Implementação" |
 |------------|--------------|------------------------------|
-| Inc4 Perfil | **Verificado** | Homologação Android (build EAS `5b3df1fb`) → Aceito |
-| Inc5 Exames | **Planejado** | **Aceite do Inc4** + baseline do projeto atualizada |
+| Inc4 Perfil | ✅ **Aceito** | — (concluído) |
+| Inc5 Exames | 🔄 **Em Implementação** | gate liberado (Inc4 Aceito + baseline atualizada) |
 | Inc6+ | ⬜ | Aceite do incremento anterior |
 
 ## Notas de sequenciamento

@@ -12,16 +12,19 @@ têm linhas de versão próprias; enquanto pré-lançamento, o Mobile agrupa por
 - **Navegação** (Inc.2) — Bottom Tabs projetando a taxonomia SSOT.
 - **Home** (Inc.3) — tela inicial como composição de slots (saudação + acessos rápidos).
 - **Perfil** (Inc.4) — ver e editar **nome** e **telefone**; exibição de avatar/faixa etária/objetivos; acesso
-  via **Mais → Perfil**. *(Estado: Verificado — homologação em dispositivo pendente.)*
+  via **Mais → Perfil**. *(Estado: **Aceito** — homologado em Android físico, tag `mobile-inc4-accepted`.)*
 
 ### Alterado
 - **Build/validação Android → nuvem-first** (EAS Build + dispositivo físico), sem depender do emulador/RAM local.
 
 ### Corrigido
 - **CMake** no build em nuvem (pin 4.1.2 só no Windows; Linux/EAS usa o padrão).
-- **Empacotamento do APK** (`preview` com `gradleCommand: :app:assembleRelease`) — na config atual, produz o APK
-  esperado (a verificar no build).
 - **EAS** — variáveis `EXPO_PUBLIC_*` (Supabase) no ambiente `preview`.
+
+### Infra (aberto)
+- **Empacotamento do APK** — o artefato do EAS ainda vem `.tar.gz` (debug+release) mesmo com
+  `gradleCommand: :app:assembleRelease`; instala-se extraindo o `app-release.apk`. "Install de 1 toque"
+  segue em aberto (backlog).
 
 ## [v1.0.1] — 2026-07-12 · hotfix de domínio
 
