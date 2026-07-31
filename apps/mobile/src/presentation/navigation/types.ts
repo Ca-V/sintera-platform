@@ -16,3 +16,9 @@ export type MaisStackParamList = {
   MaisMenu: undefined
   Perfil: undefined
 }
+
+/** Stack interno da aba "Documentos" (Inc.5): lista de exames + detalhe empilhável. Só navegação. */
+export type DocumentosStackParamList = {
+  ExamsList: undefined
+  ExamDetail: { id: string }
+}
