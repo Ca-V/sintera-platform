@@ -13,7 +13,7 @@ controla mudanças. **Nenhuma tela acessa o Supabase direto**: tudo por `ApiClie
 - **auth** — `getSession` · `onAuthStateChange` · `signIn` · `signOut`. (Inc.1)
 - **profile** — `getProfile(signal?) → ProfileDTO | null` · `updateProfile(patch: ProfileEditable, signal?) → { error }`. (Inc.4)
 - **exams** — `listExams(query?, signal?) → ExamDTO[]` · `getExam(id, signal?) → ExamDTO | null`. (Inc.5, leitura)
-- **exams — escrita (DEFINIDO, Inc.6; pré-implementação)** — `uploadExam(file, signal?) → { data: UploadResult | null, error }` · `createExam(input, signal?) → { data: { id } | null, error }`. Contrato aprovado (fundadora 31/07); **operações separadas** e **fluxo em 2 etapas** (`uploadExam → createExam`). **ALINHADO à regra da Web** (`src/lib/capture/processors/exam.ts`): bucket `exams`, path `${userId}/${uuid}.${ext}` (id gerado, nome ≠ id), signed URL, insert `{ id, user_id, type, exam_date, file_url, status:'pending' }`; `CreateExamInput = { file_url, type, exam_date? }` (campos ricos são DERIVADOS pela extração — REG-001). Entra no `ApiClient` concreto com **bump MINOR (v1.1)** na implementação (pós-aceite do Inc.5). Tipos: `exams/write.ts`; port `device/documentPicker.ts`; validação `exams/validateUpload.ts`; orquestração `screens/exams/uploadController.ts`. Ver [MOBILE-027](MOBILE-027_READINESS_INCREMENTO6_UPLOAD.md).
+- **exams — escrita (v1.1, IMPLEMENTADO no Inc.6)** — `uploadExam(file, signal?) → { data: UploadResult | null, error }` · `createExam(input, signal?) → { data: { id } | null, error }`. **operações separadas** e **fluxo em 2 etapas** (`uploadExam → createExam`). Impl: `exams/upload.ts` (bucket `exams`, path user-scoped + id gerado, signed URL) · `exams/create.ts` (insert `status:'pending'`; id/status/created_at por default do banco). **ALINHADO à regra da Web** (`src/lib/capture/processors/exam.ts`): bucket `exams`, path `${userId}/${uuid}.${ext}` (id gerado, nome ≠ id), signed URL, insert `{ id, user_id, type, exam_date, file_url, status:'pending' }`; `CreateExamInput = { file_url, type, exam_date? }` (campos ricos são DERIVADOS pela extração — REG-001). Entra no `ApiClient` concreto com **bump MINOR (v1.1)** na implementação (pós-aceite do Inc.5). Tipos: `exams/write.ts`; port `device/documentPicker.ts`; validação `exams/validateUpload.ts`; orquestração `screens/exams/uploadController.ts`. Ver [MOBILE-027](MOBILE-027_READINESS_INCREMENTO6_UPLOAD.md).
 - *(futuros: Registro Manual, Composição, Agenda, Insights — entram com bump de versão.)*
 
 **Convenções (congeladas):** leitura → `T | null` (null = linha inexistente) ou `T[]`, **LANÇA** em falha
@@ -26,7 +26,7 @@ campos internos/financeiros/de outros domínios **não vazam**). Tipos: `package
 |---------|--------|--------|------------------|---------------------|----------------|
 | `auth` | v1 | **Estável** | 2026-07 (Inc.1) | `mobile-inc1-accepted` | Web `>=0.1.0` · Mobile `>=0.0.0` |
 | `profile` | v1 | **Estável** | 2026-07-31 | `c65b4cb` (consumo Mobile) | Web `>=0.1.0` (a migrar) · Mobile `>=0.0.0` |
-| `exams` | v1 | **Estável (leitura)** | 2026-07-31 | `483692c` (merge p/ Mobile) | Web `>=0.1.0` · Mobile `>=0.0.0` (Inc.5) |
+| `exams` | v1.1 | **Estável** (leitura + escrita) | 2026-07-31 | Inc.6 (uploadExam/createExam) | Web `>=0.1.0` · Mobile `>=0.0.0` (Inc.5/6) |
 
 > **Nota de paridade:** a **Web** ainda **não migrou** para o `@sintera/api-client` (predata o cliente
 > compartilhado, nascido no Mobile Inc.1). Ao descongelar a Web, alinhá-la aos contratos v1 (Prioridade B) —

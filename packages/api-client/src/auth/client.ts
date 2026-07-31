@@ -9,6 +9,8 @@ import { getProfile } from '../profile/get'
 import { updateProfile } from '../profile/update'
 import { listExams } from '../exams/list'
 import { getExam } from '../exams/get'
+import { uploadExam } from '../exams/upload'
+import { createExam } from '../exams/create'
 
 /**
  * >>> ÚNICO ponto de `createClient()` em todo o ecossistema SINTERA. <<<
@@ -44,6 +46,8 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
     exams: {
       listExams: (query, signal) => listExams(supabase, query, signal),
       getExam: (id, signal) => getExam(supabase, id, signal),
+      uploadExam: (file, signal) => uploadExam(supabase, file), // storage não usa abortSignal; signal ignorado
+      createExam: (input, signal) => createExam(supabase, input, signal),
     },
   }
 }
