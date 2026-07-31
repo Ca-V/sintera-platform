@@ -20,6 +20,11 @@
 | CI — tornar `lint` bloqueante | [ci.yml](../.github/workflows/ci.yml) | Após sanear o QA-002. |
 | CI — não consegui assistir ao run (gh sem credencial) | — | Confirmar o 1º run verde em Actions (build Web com env dummy). |
 
+## 🔐 Distribuição / reputação do APK
+| Item | Doc | Nota |
+|------|-----|------|
+| **AVG/Avast `APK:CloudRep [Susp]`** — falso positivo de reputação | [MOBILE-021 §2](MOBILE-021_INCREMENTO3_ACEITE.md) | Não bloqueia dev/homologação (app novo, sideload, sem reputação). **Tratar ANTES de distribuição ampla:** (1) checar o APK no **VirusTotal**; (2) confirmar a **assinatura de release** (keystore EAS); (3) entender por que o CloudRep atribuiu baixa reputação; (4) solicitar **revisão ao AVG/Avast** se confirmado falso positivo. Só relevante quando sair do círculo interno. |
+
 ## 🎨 Design System (evoluções — "DS antes da tela")
 | Item | Quando | Nota |
 |------|--------|------|
@@ -28,7 +33,7 @@
 | Primitivos RN faltantes: badge·card·chip·divider·icon·surface | conforme necessidade | 11 recipes base × 4 primitivos RN; promover quando o incremento precisar. |
 
 ## 🚀 Incrementos futuros (roadmap [MOBILE-015](MOBILE-015_ROADMAP_INCREMENTOS.md))
-3 Home Shell (homologação pendente) · **4 Perfil** ([MOBILE-016](MOBILE-016_PLANEJAMENTO_INCREMENTO4_PERFIL.md), planejado) · 5 Histórico de Exames · 6 Upload · 7 Registro Manual · 8 RegistrationHub · 9 Composição Corporal · 10 Agenda · 11 Insights.
+3 Home Shell ✅ ACCEPTED ([MOBILE-021](MOBILE-021_INCREMENTO3_ACEITE.md)) · **4 Perfil** ([MOBILE-016](MOBILE-016_PLANEJAMENTO_INCREMENTO4_PERFIL.md), planejado — PRÓXIMO) · 5 Histórico de Exames · 6 Upload · 7 Registro Manual · 8 RegistrationHub · 9 Composição Corporal · 10 Agenda · 11 Insights.
 
 ## ⏸️ Adiados por decisão (não antecipar)
 - Edição/upload de **avatar** (Storage/permissões) — incremento próprio ([MOBILE-016 §2.2](MOBILE-016_PLANEJAMENTO_INCREMENTO4_PERFIL.md)).
