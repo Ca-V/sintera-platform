@@ -91,3 +91,72 @@ ficam travados até o aceite do Inc.5.
 > Tudo em 1–4 é **integração** dos artefatos puros já entregues; nenhuma regra de negócio nova a inventar.
 > A camada pura do Upload está **completa** (contrato · validação · reducer · orquestração · telemetria ·
 > mensagens · apresentação), toda testada e alinhada à Web.
+
+## 7. Readiness de Integração (fundadora 31/07 — re-verificação contra a Web)
+
+### 7.1 Fluxo de integração (completo, com fronteira do Inc.6)
+```
+Selecionar documento (pickDocument | captureImage)   → PICK  → (CANCEL se fechar)
+        ↓
+Validação local (validateUpload: vazio·extensão·tamanho·MIME) → PICKED | FAILURE(reason)
+        ↓
+uploadExam()  → Storage (bucket 'exams', path ${userId}/${uuid}.${ext})  → UPLOADED | FAILURE(step=upload)
+        ↓
+Receber URL/identificador (UploadResult: storagePath, url)
+        ↓
+createExam()  → insert { id, user_id, type, exam_date, file_url, status:'pending' } → CREATED | FAILURE(step=create)
+        ↓
+Histórico de Exames (Inc.5): o exame aparece como 'pending'      ◀── FRONTEIRA DO INC.6 (termina aqui)
+        ┊
+        ┊ (FORA do Inc.6 — capacidade futura)
+        ▼
+Processamento assíncrono: POST /api/exams/{id}/analyze  → status 'processing' → 'processed' | 'error'
+```
+Cada transição tem **estado** (reducer `uploadMachine`), **erro** (`FAILURE` com `step`/`reason` + mensagem
+acionável) e **retorno** (evento + telemetria `exam_upload`). **Sem lacunas** no trecho do Inc.6.
+
+### 7.2 Paridade com a Web (regra ÚNICA — confirmada)
+| Aspecto | Web (fonte da verdade) | Refletido no contrato Mobile? |
+|---|---|---|
+| **Estados do exame** | `pending → processing → processed \| error` (coluna `status`) | ✅ `ExamDTO.status` (leitura, Inc.5); Upload cria `pending` |
+| **Metadados na criação** | insert mínimo `{ id, user_id, type, exam_date, file_url, status }` | ✅ `CreateExamInput { file_url, type, exam_date? }` (+ id/user_id/status na impl) |
+| **`type`** | nome do arquivo sem extensão | ✅ `nameWithoutExt` no controller |
+| **Nomenclatura** | colunas `snake_case`; `file_url`, `exam_date` | ✅ DTOs de banco `snake_case`; transporte `camelCase` |
+| **Tratamento de falhas** | upload/insert erro → captura de erro; `status:'error'` em falha | ✅ `FAILURE(step)` + retomada; telemetria `failed` |
+| **Câmera** | `<input capture="environment">` (galeria + câmera) | ✅ `DocumentPickerPort.captureImage` (paridade + D-INC6-2) |
+| **Processamento pós-upload** | **server-side** `POST /api/exams/{id}/analyze`, **auto-disparado no DETALHE** em `pending`, com **polling** | ⚠️ **FORA do Inc.6** — ver 7.2.1 |
+
+**7.2.1 Fronteira explícita — extração NÃO é Upload.** Na Web a análise dispara sozinha ao abrir o detalhe de um
+exame `pending` e roda no servidor (o cliente faz polling). O **Inc.6 entrega só até o `pending`** no Histórico.
+A extração no Mobile é uma **capacidade futura** (operação `analyzeExam(id)` = `POST /api/exams/{id}/analyze`) —
+**não implementar agora** (não decidida; fora do escopo). **Gap conhecido e esperado:** um exame enviado pelo
+Mobile fica `pending` até ser aberto na Web (que dispara a análise) ou até o incremento futuro de extração. Isso
+**não é regressão** — é o limite de escopo do Inc.6. Nenhuma regra de negócio de extração foi (nem deve ser)
+duplicada no Mobile.
+
+### 7.3 Checklist operacional de integração (executar após o aceite do Inc.5 — sem código agora)
+Ordem = padrão da casa (Contrato→…→Testes). Cada item nasce da tag `mobile-inc5-accepted`.
+1. **Dep nativa** — adicionar `expo-document-picker` + `expo-image-picker` (SDK 54) via config plugin (CNG).
+2. **Adaptador `DocumentPicker`** — implementa `DocumentPickerPort` (`pickDocument`/`captureImage`) → `PickedFile`.
+3. **`uploadExam` concreto** no `ApiClient` — `storage.from('exams').upload(${userId}/${uuid}.${ext})` + `createSignedUrl` → `UploadResult`.
+4. **`createExam` concreto** no `ApiClient` — insert `{ id: uuid, user_id: sessão, type, exam_date, file_url, status:'pending' }` → `{ id }`. **Bump MINOR** em `API_CONTRACTS`.
+5. **Hook `useExamUpload`** — `useReducer(uploadReducer)` + injeta portas reais + `observability.telemetry` no `startUpload`/`resumeUpload`; expõe `pick/retry/reset`.
+6. **Tela de Upload** — consome o hook + `uploadPhaseLabel`/`isUploadBusy`/`isUploadDone` + `acceptedFormatsHint`; DS primitives; fronteira REG-001.
+7. **Navegação** — rota `ExamUpload` no `DocumentosStack` (+ tipo em `types.ts`) e ponto de entrada na lista.
+8. **Testes de integração** — boundary (já cobre a pasta) + fluxo do hook; `exams-boundary` continua verde.
+9. **Typecheck · suíte · CI · Build EAS (preview)**.
+10. **Homologação** (Android) — roteiro: enviar PDF e imagem; validações; falhas (rede/401/500); cancelar; exame aparece `pending`; **sem regressão** Inc.1–5. Depois: evidências → tag `mobile-inc6-accepted` → baseline.
+
+### 7.4 Revisão de consistência (auditoria — resultado)
+- **Sem duplicação Web↔Mobile:** a regra de upload vive no contrato compartilhado; o Mobile consome via
+  `apiClient`. *(A Web ainda tem a regra inline em 2 lugares — `capture/processors/exam.ts` e `exams/page.tsx` —
+  dívida pré-existente da Web, R-008; o Inc.6 não a agrava nem duplica no Mobile.)*
+- **Nomenclatura consistente:** `snake_case` (colunas) × `camelCase` (transporte) — documentado.
+- **Regra de negócio única:** validação em `validateUpload`; fluxo em `uploadController`; contrato em `write.ts`.
+  Nenhuma regra espalhada.
+- **Toda abstração tem consumidor no Inc.6:** `DocumentPickerPort`(+`captureImage`)→adaptador; `validateUpload`/
+  `constraints`→controller; `uploadMachine`/`uploadController`→hook; `uploadPresentation`/`acceptedFormatsHint`→
+  tela; telemetria→hook. **Nada órfão → nada a simplificar** nesta revisão.
+
+**Conclusão:** a integração do Inc.6 é **curta, previsível e aderente à Web** — só os 10 itens de 7.3, sem novas
+decisões de arquitetura.
