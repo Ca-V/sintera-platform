@@ -75,6 +75,8 @@ export function ExamsListScreen({ navigation }: Props) {
         Seus exames ao longo do tempo. Abra um para ver o documento original.
       </Text>
 
+      <Button label="Adicionar exame" onPress={() => navigation.navigate('ExamUpload')} />
+
       {exams.length === 0 ? (
         <View style={styles.empty}>
           <Text spec={text(t, { role: 'body', tone: 'muted' })}>Nenhum exame ainda.</Text>

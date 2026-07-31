@@ -3,6 +3,7 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { ExamsListScreen } from '../screens/exams/ExamsListScreen'
 import { ExamDetailScreen } from '../screens/exams/ExamDetailScreen'
+import { ExamUploadScreen } from '../screens/exams/ExamUploadScreen'
 import { useTheme } from '../theme'
 import type { DocumentosStackParamList } from './types'
 
@@ -19,6 +20,18 @@ export function DocumentosStack() {
         options={{
           headerShown: true,
           title: 'Exame',
+          headerStyle: { backgroundColor: t.color.surface.app },
+          headerTintColor: t.color.text.default,
+          headerTitleStyle: { fontFamily: 'HankenGrotesk_600SemiBold' },
+          headerShadowVisible: false,
+        }}
+      />
+      <Stack.Screen
+        name="ExamUpload"
+        component={ExamUploadScreen}
+        options={{
+          headerShown: true,
+          title: 'Adicionar exame',
           headerStyle: { backgroundColor: t.color.surface.app },
           headerTintColor: t.color.text.default,
           headerTitleStyle: { fontFamily: 'HankenGrotesk_600SemiBold' },

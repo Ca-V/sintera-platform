@@ -20,6 +20,13 @@
         "expo-secure-store",
         { "configureAndroidBackup": false }
       ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Permite anexar imagens de exames da sua galeria.",
+          "cameraPermission": "Permite fotografar o documento do seu exame."
+        }
+      ],
       "./plugins/withAndroidCmakeVersion"
     ],
     "extra": {

@@ -17,8 +17,9 @@ export type MaisStackParamList = {
   Perfil: undefined
 }
 
-/** Stack interno da aba "Documentos" (Inc.5): lista de exames + detalhe empilhável. Só navegação. */
+/** Stack interno da aba "Documentos" (Inc.5/6): lista + detalhe + upload de exame. Só navegação. */
 export type DocumentosStackParamList = {
   ExamsList: undefined
   ExamDetail: { id: string }
+  ExamUpload: undefined
 }
