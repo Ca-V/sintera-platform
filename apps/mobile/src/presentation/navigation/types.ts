@@ -9,3 +9,10 @@ export type AppTabParamList = {
   MinhaSaude: undefined
   Mais: undefined
 }
+
+/** Stack interno da aba "Mais" (Inc.4): menu do grupo + telas de detalhe empilháveis (ex.: Perfil).
+ *  Como a Web consolidou (Mais → Perfil) — MOBILE-016 §5. É só navegação (sem regra de negócio). */
+export type MaisStackParamList = {
+  MaisMenu: undefined
+  Perfil: undefined
+}

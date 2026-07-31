@@ -7,6 +7,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import type { ComponentType } from 'react'
 import { HomeShell } from '../home/HomeShell'
+import { MaisStack } from './MaisStack'
 import { PlaceholderScreen } from './PlaceholderScreen'
 import { SSOT_TABS } from './ssotTabs'
 import { useTheme } from '../theme'
@@ -30,11 +31,17 @@ function makeTabStack(RootComponent: ComponentType): ComponentType {
 // "Início" renderiza a HomeShell (Incremento 3); os demais projetam os itens do grupo SSOT. Cada um é a raiz
 // de um native-stack (Etapa 5).
 const TAB_SCREENS = SSOT_TABS.map((tab) => {
-  const Root: ComponentType =
-    tab.name === 'Inicio' ? HomeShell : function TabPlaceholder() {
-      return <PlaceholderScreen tab={tab} />
-    }
-  return { name: tab.name as keyof AppTabParamList, label: tab.label, Component: makeTabStack(Root) }
+  // "Início" = HomeShell; "Mais" = MaisStack (menu do grupo + Perfil, Inc.4 — já é um stack, não reembrulha);
+  // demais = placeholder do grupo. Cada tab é a raiz de um native-stack próprio (Etapa 5).
+  const Component: ComponentType =
+    tab.name === 'Inicio'
+      ? makeTabStack(HomeShell)
+      : tab.name === 'Mais'
+        ? MaisStack
+        : makeTabStack(function TabPlaceholder() {
+            return <PlaceholderScreen tab={tab} />
+          })
+  return { name: tab.name as keyof AppTabParamList, label: tab.label, Component }
 })
 
 export function AppNavigator() {
