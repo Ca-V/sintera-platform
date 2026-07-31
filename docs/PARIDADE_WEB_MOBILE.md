@@ -13,10 +13,13 @@ Consequência operacional: **nenhuma alteração na Web pode ser considerada con
 
 ### 1.1 Princípios de execução (fundadora, 2026-07-31)
 
-- **"Web First, Contrato Primeiro, Mobile Depois"** — por incremento novo: definir/revisar o **contrato
-  funcional** → ajustar o **contrato da API** se necessário → implementar/consolidar a **lógica compartilhada**
-  → **validar a regra de negócio** → implementar a **Web** → implementar o **Mobile reusando os mesmos
-  contratos** → **homologar ambas**. Mantém as plataformas sincronizadas e a lógica centralizada.
+- **"Contrato Primeiro, Plataforma Depois"** — o elemento central é o **contrato**, não qual plataforma
+  implementa primeiro (princípio perene; escala p/ API pública, portal profissional, integrações de terceiros).
+  Fluxo por capacidade nova: (1) **definir o contrato** → (2) **validar a regra de negócio** → (3) **atualizar a
+  documentação do contrato** ([API_CONTRACTS](./API_CONTRACTS.md)) → (4) **implementar na(s) plataforma(s)
+  aplicável(is)** reusando o mesmo contrato → (5) **verificar paridade** → (6) **homologar**. Assim, capacidades
+  que nasceram na Web e a biblioteca compartilhada que nasceu no Mobile **não violam** o princípio — o contrato
+  é o eixo, e a Web se alinha depois.
 - **"Nenhuma funcionalidade exclusiva do Mobile"** — salvo necessidade de **dispositivo** (câmera, biometria,
   push, recursos nativos), toda função nova nasce como **capacidade de plataforma** (Web+Mobile), não como dois
   produtos distintos.
