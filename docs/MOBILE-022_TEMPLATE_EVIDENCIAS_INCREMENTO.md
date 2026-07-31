@@ -9,12 +9,22 @@ Cada incremento tem **um** estado explícito. "Concluído" é proibido (esconde 
 
 | Estado | Critério | Evidência que sustenta |
 |--------|----------|------------------------|
+| **Planejado** | Escopo aprovado + **Readiness Review concluída**. | doc de planejamento + readiness |
 | **Implementado** | Código concluído e **versionado**. | commit(s) + branch |
 | **Verificado** | Typecheck + testes automatizados + **CI aprovados**. | link do run do Actions + saída de tsc/testes |
 | **Homologado** | Validado em **dispositivo físico** conforme o roteiro. | prints/gravação + build id + roteiro executado |
 | **Aceito** | Homologação concluída + documentação finalizada + **tag** criada. | tag `mobile-incN-accepted` + doc de aceite + bloco de rastreabilidade |
 
 Um estado só é atingido quando **todos** os anteriores foram. Sempre indicar o estado atual do incremento.
+"Planejado" ≠ "iniciar": planejar (Readiness) é permitido antes do aceite do anterior; a **implementação
+funcional** ("Em Implementação") só começa após o incremento anterior estar **Aceito** + baseline atualizada.
+
+### Etapa obrigatória APÓS cada Aceito: atualizar a BASELINE do projeto
+
+Ao criar a tag do incremento, atualizar a **baseline** ([BASELINE_PROJETO.md](../BASELINE_PROJETO.md)),
+consolidando: roadmap · ADRs · contratos · backlog · **riscos conhecidos** ([RISK_REGISTER.md](../RISK_REGISTER.md)) ·
+versão Web · versão Mobile. Facilita auditoria e retomada por qualquer dev. Só então o próximo incremento
+muda para **Em Implementação**.
 
 ## Princípio: **registro ≠ evidência**
 

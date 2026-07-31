@@ -31,6 +31,17 @@ A sequência segue quatro fases, do estável para o dependente:
 | 10 | **Agenda** | ⬜ | Depende de base existente. |
 | 11 | **Insights** | ⬜ | Consome informações de **múltiplos domínios** — precisa da consolidação dos dados. |
 
+## Gates de início (por que o próximo ainda não começou)
+
+Estados formais em [MOBILE-022](MOBILE-022_TEMPLATE_EVIDENCIAS_INCREMENTO.md) (Planejado→Implementado→Verificado→Homologado→Aceito).
+"Planejar" (Readiness) é permitido antes; **implementar** (Em Implementação) só após o gate.
+
+| Incremento | Estado atual | Gate para "Em Implementação" |
+|------------|--------------|------------------------------|
+| Inc4 Perfil | **Verificado** | Homologação Android (build EAS `5b3df1fb`) → Aceito |
+| Inc5 Exames | **Planejado** | **Aceite do Inc4** + baseline do projeto atualizada |
+| Inc6+ | ⬜ | Aceite do incremento anterior |
+
 ## Notas de sequenciamento
 
 - **RegistrationHub adiado para o #8 (e não agora):** embora central para a experiência, hoje ele apontaria
