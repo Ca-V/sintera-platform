@@ -19,6 +19,10 @@ Um estado só é atingido quando **todos** os anteriores foram. Sempre indicar o
 "Planejado" ≠ "iniciar": planejar (Readiness) é permitido antes do aceite do anterior; a **implementação
 funcional** ("Em Implementação") só começa após o incremento anterior estar **Aceito** + baseline atualizada.
 
+**Critério final de encerramento (pergunta única, além dos estados):** *"Se um dev novo entrar amanhã, ele
+consegue **entender, reproduzir, validar e evoluir** este incremento apenas consultando o repositório?"* Se
+**sim**, está pronto para ser Aceito. É o teste prático da continuidade (ADR-012) e da auditabilidade.
+
 ### Etapa obrigatória APÓS cada Aceito: atualizar a BASELINE do projeto
 
 Ao criar a tag do incremento, atualizar a **baseline** ([BASELINE_PROJETO.md](../BASELINE_PROJETO.md)),

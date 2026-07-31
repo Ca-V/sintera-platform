@@ -11,6 +11,21 @@ O **app móvel é o produto principal** (mais acessado). A Web permanece como **
 
 Consequência operacional: **nenhuma alteração na Web pode ser considerada concluída sem um plano explícito de como será refletida no Mobile** (mesmo contrato de dados, mesma modelagem, UX da Web como referência da UX do Mobile). Esta matriz é o **checklist** que se consulta *antes* de mexer em qualquer módulo da Web.
 
+### 1.1 Princípios de execução (fundadora, 2026-07-31)
+
+- **"Web First, Contrato Primeiro, Mobile Depois"** — por incremento novo: definir/revisar o **contrato
+  funcional** → ajustar o **contrato da API** se necessário → implementar/consolidar a **lógica compartilhada**
+  → **validar a regra de negócio** → implementar a **Web** → implementar o **Mobile reusando os mesmos
+  contratos** → **homologar ambas**. Mantém as plataformas sincronizadas e a lógica centralizada.
+- **"Nenhuma funcionalidade exclusiva do Mobile"** — salvo necessidade de **dispositivo** (câmera, biometria,
+  push, recursos nativos), toda função nova nasce como **capacidade de plataforma** (Web+Mobile), não como dois
+  produtos distintos.
+
+> **Nota de fase (honesta):** os incrementos da **Onda 1** são o **Mobile alcançando paridade** — a Web já tem
+> essas funções, e ainda **não consome** o `@sintera/api-client` (dívida de paridade, [R-008](../RISK_REGISTER.md)).
+> O "Web First" governa capacidades **net-new / pós-paridade**; enquanto a Web está congelada, o padrão prático é
+> **contrato compartilhado + Mobile**, com a Web a alinhar ao descongelar.
+
 ## 2. Como usar (antes de alterar a Web)
 
 Para o domínio que você vai tocar, responda com esta matriz em mãos:
