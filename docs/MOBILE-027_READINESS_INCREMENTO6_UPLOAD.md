@@ -61,9 +61,13 @@ ficam travados até o aceite do Inc.5.
 | Abstração do picker (`DocumentPickerPort`, `PickedFile`) | `packages/api-client/src/device/documentPicker.ts` | interface (port) |
 | Validação (`validateUpload` + `DEFAULT_UPLOAD_CONSTRAINTS`) | `packages/api-client/src/exams/validateUpload.ts` | função pura + testes |
 | Máquina de estados do upload (`uploadReducer`) | `apps/mobile/.../exams/uploadMachine.ts` | reducer puro + testes |
-| Testes | `tests/contracts/exams-upload-validate.test.ts` · `tests/mobile/upload-machine.test.ts` | 12 casos ✅ |
+| Orquestração do fluxo (`startUpload`/`resumeUpload`/`toCreateInput`) | `apps/mobile/.../exams/uploadController.ts` | núcleo puro do hook (portas injetadas) + testes |
+| Testes | `exams-upload-validate` · `upload-machine` · `upload-controller` | 22 casos ✅ |
 
-**Falta para a implementação do Inc.6 (pós-aceite do Inc.5):** adaptador nativo do picker (implementa
-`DocumentPickerPort`), `uploadExam`/`createExam` concretos no `ApiClient` (Supabase Storage + bucket/RLS),
-o hook que liga picker→validate→upload→create ao reducer, a tela e o wiring de navegação — cada um com bump
-MINOR do contrato em `API_CONTRACTS.md` na entrada.
+**Falta para a implementação do Inc.6 (pós-aceite do Inc.5) — só INTEGRAÇÃO, a lógica já existe:**
+1. **Adaptador nativo** do picker (implementa `DocumentPickerPort` com `expo-document-picker`/`image-picker`) — recurso de dispositivo (gate).
+2. **`uploadExam`/`createExam` concretos** no `ApiClient` (Supabase Storage: bucket user-scoped + id gerado + RLS) — infra (gate) + bump MINOR do contrato.
+3. **Hook `useExamUpload`** — invólucro fino: `useReducer(uploadReducer)` + injeta as portas reais no `startUpload`/`resumeUpload` (controller pronto).
+4. **Tela + navegação** — rota `ExamUpload` no `DocumentosStack` (arquivo hoje congelado pelo Inc.5) + tela consumindo o hook e os estados de UX já definidos.
+
+> Tudo em 1–4 é **integração** dos artefatos puros já entregues; nenhuma regra de negócio nova a inventar.
