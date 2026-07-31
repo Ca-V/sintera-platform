@@ -36,6 +36,7 @@ rastreabilidade)** · DS-002 (Design System congelado) · REG-001 (fronteira fac
 - Registro de riscos: [RISK_REGISTER.md](RISK_REGISTER.md) (8 riscos; R-001 AVG Aberto; R-002 EAS Monitorado).
 - Rastreabilidade (requisito↔inc↔evidência↔estado): [TRACEABILITY_MATRIX.md](TRACEABILITY_MATRIX.md).
 - Contratos de API versionados: [docs/API_CONTRACTS.md](docs/API_CONTRACTS.md) (**v1.0**: auth·profile·exams).
+- Evolução funcional do produto: [CHANGELOG.md](CHANGELOG.md) (Web `v1.x` + Mobile `0.0.x`).
 
 ## 5. Versões
 - **Mobile:** app version `0.0.0` (build 1) · Expo SDK 54 · RN 0.81.5 · React 19.1.0 · eas-cli 21.4.0 · Node 22.x.

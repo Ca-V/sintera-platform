@@ -19,10 +19,18 @@ controla mudanças. **Nenhuma tela acessa o Supabase direto**: tudo por `ApiClie
 operacional; escrita → `{ error: Error | null }` (não lança). DTOs **enxutos** (só campos centrais de exibição;
 campos internos/financeiros/de outros domínios **não vazam**). Tipos: `packages/api-client/src/{profile,exams}/types.ts`.
 
-**Compatível com:**
-- **Web** `0.1.0` (consumo pleno pendente — a Web ainda não migrou para o `@sintera/api-client`; ver
-  [PARIDADE_WEB_MOBILE](PARIDADE_WEB_MOBILE.md) e [BACKLOG_MOBILE §Paridade](BACKLOG_MOBILE.md))
-- **Mobile** `0.0.0` (consome `auth`+`profile`; `exams` no Inc.5)
+**Estado e compatibilidade por domínio:**
+
+| Domínio | Versão | Status | Última alteração | Commit (referência) | Compatível com |
+|---------|--------|--------|------------------|---------------------|----------------|
+| `auth` | v1 | **Estável** | 2026-07 (Inc.1) | `mobile-inc1-accepted` | Web `>=0.1.0` · Mobile `>=0.0.0` |
+| `profile` | v1 | **Estável** | 2026-07-31 | `c65b4cb` (consumo Mobile) | Web `>=0.1.0` (a migrar) · Mobile `>=0.0.0` |
+| `exams` | v1 | **Estável (leitura)** | 2026-07-31 | `483692c` (merge p/ Mobile) | Web `>=0.1.0` · Mobile `>=0.0.0` (Inc.5) |
+
+> **Nota de paridade:** a **Web** ainda **não migrou** para o `@sintera/api-client` (predata o cliente
+> compartilhado, nascido no Mobile Inc.1). Ao descongelar a Web, alinhá-la aos contratos v1 (Prioridade B) —
+> ver [PARIDADE_WEB_MOBILE](PARIDADE_WEB_MOBILE.md) e [BACKLOG_MOBILE §Paridade](BACKLOG_MOBILE.md). Registrado
+> como risco [R-008](../RISK_REGISTER.md).
 
 ## Controle de mudança
 - **PATCH** (ex.: v1.0 → v1.0.1): correção sem alterar assinatura/semântica.
