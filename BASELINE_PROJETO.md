@@ -21,8 +21,9 @@ Detalhe: [MOBILE-015](docs/MOBILE-015_ROADMAP_INCREMENTOS.md). Estados: [MOBILE-
 
 ## 2. ADRs / princípios estruturais em vigor
 ADR-012 (Continuidade Operacional) · ADR-016 (React único temporário) · ADR-017 (guarda de logout) · ADR-018
-(Home = composição de slots) · DS-002 (Design System congelado) · REG-001 (fronteira factual) · política de
-validação **nuvem-first** ([MOBILE-015](docs/MOBILE-015_ROADMAP_INCREMENTOS.md)).
+(Home = composição de slots) · **ADR-019 (governança do ciclo de incrementos: 5 estados · baseline · gates ·
+rastreabilidade)** · DS-002 (Design System congelado) · REG-001 (fronteira factual) · política de validação
+**nuvem-first** ([MOBILE-015](docs/MOBILE-015_ROADMAP_INCREMENTOS.md)).
 
 ## 3. Contratos compartilhados (`@sintera/*`) — Web e Mobile consomem os mesmos
 - **api-client:** `auth` · `profile` (getProfile/updateProfile) · `exams` (listExams/getExam). Fronteira: nenhum
@@ -30,9 +31,11 @@ validação **nuvem-first** ([MOBILE-015](docs/MOBILE-015_ROADMAP_INCREMENTOS.md
 - **validation** (validateName/Phone/ProfileEditable) · **types** (Result/PageRequest/DateRange) · **core**
   (timeline) · **utils** (initials/string) · **design-system** (DS-002).
 
-## 4. Backlog e Riscos
+## 4. Backlog, Riscos, Rastreabilidade e Contratos
 - Backlog Mobile: [docs/BACKLOG_MOBILE.md](docs/BACKLOG_MOBILE.md).
 - Registro de riscos: [RISK_REGISTER.md](RISK_REGISTER.md) (8 riscos; R-001 AVG Aberto; R-002 EAS Monitorado).
+- Rastreabilidade (requisito↔inc↔evidência↔estado): [TRACEABILITY_MATRIX.md](TRACEABILITY_MATRIX.md).
+- Contratos de API versionados: [docs/API_CONTRACTS.md](docs/API_CONTRACTS.md) (**v1.0**: auth·profile·exams).
 
 ## 5. Versões
 - **Mobile:** app version `0.0.0` (build 1) · Expo SDK 54 · RN 0.81.5 · React 19.1.0 · eas-cli 21.4.0 · Node 22.x.
