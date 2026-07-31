@@ -23,6 +23,11 @@ funcional** ("Em Implementação") só começa após o incremento anterior estar
 consegue **entender, reproduzir, validar e evoluir** este incremento apenas consultando o repositório?"* Se
 **sim**, está pronto para ser Aceito. É o teste prático da continuidade (ADR-012) e da auditabilidade.
 
+**Princípio de regressão (PERMANENTE, todo incremento homologado):** a homologação deve comprovar **duas** coisas
+— (a) a **funcionalidade nova** do incremento; (b) a **ausência de regressão relevante** nos incrementos já
+Aceitos. O roteiro de cada incremento inclui pelo menos um caso de não-regressão do fluxo homologado anterior
+(ex.: T7 do Inc.4 = navegação + auth + Home dos Inc.1–3). Isso mantém a suíte de homologação enxuta e focada.
+
 ### Etapa obrigatória APÓS cada Aceito: atualizar a BASELINE do projeto
 
 Ao criar a tag do incremento, atualizar a **baseline** ([BASELINE_PROJETO.md](../BASELINE_PROJETO.md)),
