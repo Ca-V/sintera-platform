@@ -51,6 +51,15 @@ No detalhe/lista de Exames, permitir ao usuário **adicionar um exame** (documen
   **RLS** aplicada. (Validação no cliente é conveniência; o **backend revalida** — defesa em profundidade.)
 - **UX (estados sempre visíveis):** `Selecionando → Enviando → Processando → Concluído` · `Erro → Tentar novamente`.
 
+### Paridade com a Web (Contrato Primeiro — verificado 31/07)
+A Web já tem a regra de negócio (`src/lib/capture/processors/exam.ts`). O contrato do Inc.6 foi **alinhado a
+ela** (uma única regra, sem divergência): bucket `exams`, path `${userId}/${uuid}.${ext}` (**id gerado; nome
+do arquivo nunca é id** — bate com o requisito de segurança), signed URL (1 ano), insert mínimo
+`{ id, user_id, type, exam_date, file_url, status:'pending' }`. O `type` = **nome do arquivo sem extensão**
+(o `uploadController` deriva igual à Web). Campos ricos (título/emissor/família) são **derivados pela extração**
+depois — nunca informados na criação (REG-001). Ao implementar, o Mobile replica esse fluxo via `ApiClient`
+(nunca Supabase direto); a Web migra para o mesmo contrato quando descongelar (R-008).
+
 ## 6. Preparação executada (camada pura/verificável — sem implementação funcional)
 Conforme a fundadora ("preparar, não implementar ainda"). Tudo abaixo é **puro + testado**; nativo/Storage/tela
 ficam travados até o aceite do Inc.5.

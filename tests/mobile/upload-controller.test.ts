@@ -2,7 +2,7 @@
 // SEQUÊNCIA de eventos emitida em cada caminho, com fakes (sem React/nativo/Storage). Espelha o padrão da casa
 // de testar a lógica do hook sem renderHook.
 import { describe, it, expect, vi } from 'vitest'
-import { startUpload, resumeUpload, toCreateInput, type UploadDeps } from '../../apps/mobile/src/presentation/screens/exams/uploadController'
+import { startUpload, resumeUpload, toCreateInput, nameWithoutExt, type UploadDeps } from '../../apps/mobile/src/presentation/screens/exams/uploadController'
 import { DEFAULT_UPLOAD_CONSTRAINTS } from '../../packages/api-client/src/exams/write'
 import type { PickedFile } from '../../packages/api-client/src/device/documentPicker'
 
@@ -28,16 +28,30 @@ function deps(over: Partial<{ pick: PickedFile | null; pickThrows: boolean; uplo
 const types = (calls: { type: string }[]) => calls.map((c) => c.type)
 
 describe('uploadController — orquestração pura do Inc.6', () => {
-  it('toCreateInput deriva o input de createExam do resultado do upload', () => {
-    expect(toCreateInput(uploadResult, { display_title: 'Hemograma' })).toMatchObject({
-      storagePath: 'exams/gen-id', url: 'https://x/gen-id', display_title: 'Hemograma', exam_date: null,
+  it('toCreateInput monta o input ALINHADO à Web (file_url + type + exam_date)', () => {
+    expect(toCreateInput(uploadResult, { type: 'laudo' })).toEqual({
+      file_url: 'https://x/gen-id', type: 'laudo', exam_date: null,
     })
+  })
+
+  it('nameWithoutExt espelha a regra da Web (nome sem extensão)', () => {
+    expect(nameWithoutExt('laudo.pdf')).toBe('laudo')
+    expect(nameWithoutExt('exame.final.jpg')).toBe('exame.final')
   })
 
   it('caminho feliz: PICK → PICKED → UPLOADED → CREATED', async () => {
     const d = vi.fn()
     await startUpload('document', {}, deps(), d)
     expect(types(d.mock.calls.map((c) => c[0]))).toEqual(['PICK', 'PICKED', 'UPLOADED', 'CREATED'])
+  })
+
+  it('paridade: createExam recebe type derivado do nome do arquivo (sem extensão)', async () => {
+    const dp = deps() // arquivo 'laudo.pdf'
+    await startUpload('document', {}, dp, vi.fn())
+    expect(dp.write.createExam).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'laudo', file_url: uploadResult.url }),
+      undefined,
+    )
   })
 
   it('câmera usa captureImage', async () => {
@@ -84,14 +98,14 @@ describe('uploadController — orquestração pura do Inc.6', () => {
   it('resume com upload já feito: RETRY → CREATED (NÃO repete uploadExam)', async () => {
     const d = vi.fn()
     const dp = deps()
-    await resumeUpload({ file: null, upload: uploadResult }, {}, dp, d)
+    await resumeUpload({ file: null, upload: uploadResult }, { type: 'laudo' }, dp, d)
     expect(types(d.mock.calls.map((c) => c[0]))).toEqual(['RETRY', 'CREATED'])
     expect(dp.write.uploadExam).not.toHaveBeenCalled()
   })
 
   it('resume com arquivo (upload falhara): RETRY → UPLOADED → CREATED', async () => {
     const d = vi.fn()
-    await resumeUpload({ file: { uri: 'file://x', mimeType: 'application/pdf', sizeBytes: 2048 }, upload: null }, {}, deps(), d)
+    await resumeUpload({ file: { uri: 'file://x', mimeType: 'application/pdf', sizeBytes: 2048 }, upload: null }, { type: 'laudo' }, deps(), d)
     expect(types(d.mock.calls.map((c) => c[0]))).toEqual(['RETRY', 'UPLOADED', 'CREATED'])
   })
 })

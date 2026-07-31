@@ -17,17 +17,16 @@ export interface UploadResult {
   sizeBytes: number
 }
 
-/** Metadados do exame a persistir, referenciando o arquivo já enviado. Enxuto e FACTUAL (REG-001: documento,
- *  não resultado interpretado). Campos de exibição opcionais; a referência ao arquivo é obrigatória. */
+/** Metadados do exame a persistir, referenciando o arquivo já enviado. ALINHADO ao insert da Web
+ *  (`src/lib/capture/processors/exam.ts`) — MESMA regra de negócio, sem divergência:
+ *    insert exams { id, user_id, type, exam_date, file_url, status:'pending' }.
+ *  `id`/`user_id`/`status` são responsabilidade da IMPLEMENTAÇÃO (id gerado, user da sessão, status inicial),
+ *  não do input. FACTUAL (REG-001): os campos ricos (display_title, issuer, clinical_family, document_type)
+ *  são DERIVADOS pela extração depois — NUNCA informados na criação. */
 export interface CreateExamInput {
-  storagePath: string
-  url: string
-  mimeType: string
-  sizeBytes: number
-  display_title?: string | null
-  exam_date?: string | null
-  document_type?: string | null
-  issuer?: string | null
+  file_url: string          // URL (assinada) do documento — referência à fonte da verdade
+  type: string              // rótulo factual (nome do arquivo sem extensão) — NÃO é interpretação clínica
+  exam_date?: string | null // opcional; a extração pode preenchê-la depois
 }
 
 /** Restrições validadas ANTES do upload (requisito não-funcional — fundadora 31/07). */
