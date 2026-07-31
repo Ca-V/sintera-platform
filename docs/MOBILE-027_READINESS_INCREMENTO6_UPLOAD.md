@@ -185,8 +185,9 @@ consulta read-only (não presumido).
 nem tamanho no servidor — a validação é só no cliente. Impacto **limitado**: a RLS confina cada usuário à
 **própria pasta** (não afeta terceiros), e é a **mesma postura da Web** hoje (bucket sem limites) — o Inc.6 **não
 introduz** o gap. Como o bucket é **infra compartilhada Web+Mobile**, endurecê-lo é **decisão de escalonamento**
-(afeta as duas plataformas). **Recomendação:** migration curta setando `allowed_mime_types` (pdf/jpeg/png/heic) e
-`file_size_limit` (~20 MB) no bucket `exams` — aplico **se aprovado**. **Não bloqueia a homologação** do Inc.6.
+(afeta as duas plataformas). **Decisão da fundadora (2026-07-31): NÃO aplicar nesta etapa** — registrado como
+melhoria de infra compartilhada em [RISK_REGISTER R-009](../RISK_REGISTER.md), a executar em **janela própria**
+após **avaliação de impacto** e **homologação cruzada** (Web+Mobile). **Não bloqueia a homologação** do Inc.6.
 
 ## 9. Estado do Inc.6 (classificação precisa — fundadora 31/07)
 - **Camada pura:** ✅ **Verificada** (contrato · validação · reducer · orquestração · telemetria · apresentação;
