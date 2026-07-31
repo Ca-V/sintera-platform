@@ -71,6 +71,13 @@ Estados formais em [MOBILE-022](MOBILE-022_TEMPLATE_EVIDENCIAS_INCREMENTO.md) (P
 - Cada incremento aceito = **marco verificável (tag)**, base do seguinte (nasce do tag do anterior).
 - Integração ao ramo principal permanece condicionada ao **encerramento da Onda 1** + critérios de integração.
 - Reordenações futuras deste roadmap são decisão de produto da fundadora (documentar a mudança).
+- **Convenção de branch (fundadora, 2026-07-31):** a **Onda 1** conclui na branch de trabalho atual
+  (`feat/mobile-inc4-perfil`) — **não** se cria branch só para renomear. As **tags** (`mobile-incN-accepted`)
+  são o mecanismo de identificação de cada aceite. **Próximas ondas:** nomear por onda/release
+  (ex.: `feature/mobile-onda2` ou `release/mobile-wave2`), não por incremento.
+- **Recipe de implementação (padrão do Inc.5, seguir no Inc.6+):** `loadMachine (reducer puro)` → `boundary
+  (teste de fronteira)` → `hooks (via apiClient)` → `screens (composição DS)` → `navigator (stack da aba)` →
+  `tests`. Reduz variabilidade e facilita revisão.
 
 ## Política de Validação (nuvem-first) — 2026-07-29
 
