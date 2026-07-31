@@ -21,7 +21,7 @@ A sequência segue quatro fases, do estável para o dependente:
 |---|------------|--------|---------------------------|
 | 1 | **Autenticação** | ✅ ACCEPTED ([MOBILE-008](MOBILE-008_INCREMENTO1_ACEITE.md)) | Base da experiência autenticada. |
 | 2 | **Navegação** | ✅ ACCEPTED ([MOBILE-013](MOBILE-013_INCREMENTO2_ACEITE.md)) | Infraestrutura de navegação (Bottom Tabs + stacks; projeção do SSOT). |
-| 3 | **Home Shell** | ⏳ implementado; homologação via **EAS Build + dispositivo físico** (nuvem-first — ver §Política de Validação) ([MOBILE-014](MOBILE-014_PLANEJAMENTO_INCREMENTO3_HOME.md)) | Casca da Home como composição de slots (ADR-018). |
+| 3 | **Home Shell** | ✅ ACCEPTED (2026-07-30, dispositivo físico via nuvem-first — [MOBILE-021](MOBILE-021_INCREMENTO3_ACEITE.md); tag `mobile-inc3-accepted`) | Casca da Home como composição de slots (ADR-018). |
 | 4 | **Perfil** | ⬜ próximo | Domínio autocontido; fornece dados que vários módulos usarão; não depende de exames/insights; completa a base autenticada. |
 | 5 | **Histórico de Exames** | ⬜ | Pilar da proposta de valor da SINTERA; base para diversos recursos posteriores. |
 | 6 | **Upload de Exames** | ⬜ | Complementa o histórico (visualizar → adicionar); sequência intuitiva para o usuário. |
