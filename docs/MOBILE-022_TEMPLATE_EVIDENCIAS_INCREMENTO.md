@@ -3,6 +3,19 @@
 - **Status:** PADRÃO ADOTADO (fundadora, 2026-07-31). Estrutura fixa de evidências para **todo** incremento
   Mobile — reduz ambiguidade e facilita auditoria. Ratifica auditabilidade/reprodutibilidade ([ADR-012](adr/ADR-012_CONTINUIDADE_OPERACIONAL.md)).
 
+## Estados formais do incremento (não usar "concluído" ambíguo)
+
+Cada incremento tem **um** estado explícito. "Concluído" é proibido (esconde estados diferentes).
+
+| Estado | Critério | Evidência que sustenta |
+|--------|----------|------------------------|
+| **Implementado** | Código concluído e **versionado**. | commit(s) + branch |
+| **Verificado** | Typecheck + testes automatizados + **CI aprovados**. | link do run do Actions + saída de tsc/testes |
+| **Homologado** | Validado em **dispositivo físico** conforme o roteiro. | prints/gravação + build id + roteiro executado |
+| **Aceito** | Homologação concluída + documentação finalizada + **tag** criada. | tag `mobile-incN-accepted` + doc de aceite + bloco de rastreabilidade |
+
+Um estado só é atingido quando **todos** os anteriores foram. Sempre indicar o estado atual do incremento.
+
 ## Princípio: **registro ≠ evidência**
 
 Um documento que *afirma* "typecheck verde / 185 testes / CI success" é **registro**. Vira **evidência**
@@ -44,6 +57,30 @@ Incremento N — <nome>
 5. Critério formal de ACEITE
    - só ACCEPTED com engenharia verde **E** homologação funcional em dispositivo físico sem regressão.
 ```
+
+## Bloco de RASTREABILIDADE (obrigatório em todo doc de aceite)
+
+Permite reconstruir exatamente o estado do sistema no momento do aceite — inclusive anos depois.
+
+```
+Incremento:
+Estado:                 (Implementado | Verificado | Homologado | Aceito)
+Branch:
+Commit(s):              (SHA completo)
+Tag:
+Pull Request:
+GitHub Actions:         (link do run + conclusion)
+EAS Build:              (id + link)
+APK SHA-256:            (hash do binário homologado)
+Versão do aplicativo:   (app version / build number)
+Versão do banco:        (migração aplicada / N/A)
+Contrato da API:        (versão/commit dos tipos @sintera/api-client relevantes)
+Data da homologação:
+Responsável pela homologação:
+```
+
+> **APK SHA-256:** calcular do binário efetivamente homologado (ex.: `sha256sum <arquivo>.apk`) e registrar —
+> garante que o APK testado é o mesmo que se afirma ter testado.
 
 ## Comando de verificação reproduzível (Mobile)
 
