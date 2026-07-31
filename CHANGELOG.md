@@ -13,6 +13,9 @@ têm linhas de versão próprias; enquanto pré-lançamento, o Mobile agrupa por
 - **Home** (Inc.3) — tela inicial como composição de slots (saudação + acessos rápidos).
 - **Perfil** (Inc.4) — ver e editar **nome** e **telefone**; exibição de avatar/faixa etária/objetivos; acesso
   via **Mais → Perfil**. *(Estado: **Aceito** — homologado em Android físico, tag `mobile-inc4-accepted`.)*
+- **Histórico de Exames** (Inc.5) — lista agrupada por ano + detalhe + **abrir documento original**; leitura via
+  `apiClient.exams`; estados vazio/erro+retry/404; fronteira REG-001 (sem resultado interpretado). *(Estado:
+  **Aceito** — homologado em Android físico, tag `mobile-inc5-accepted`.)*
 
 ### Alterado
 - **Build/validação Android → nuvem-first** (EAS Build + dispositivo físico), sem depender do emulador/RAM local.

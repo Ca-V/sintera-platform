@@ -23,8 +23,8 @@ A sequência segue quatro fases, do estável para o dependente:
 | 2 | **Navegação** | ✅ ACCEPTED ([MOBILE-013](MOBILE-013_INCREMENTO2_ACEITE.md)) | Infraestrutura de navegação (Bottom Tabs + stacks; projeção do SSOT). |
 | 3 | **Home Shell** | ✅ ACCEPTED (2026-07-30, dispositivo físico via nuvem-first — [MOBILE-021](MOBILE-021_INCREMENTO3_ACEITE.md); tag `mobile-inc3-accepted`) | Casca da Home como composição de slots (ADR-018). |
 | 4 | **Perfil** | ✅ **Aceito** (2026-07-31, homologação Android T1–T7 — [MOBILE-025](MOBILE-025_INCREMENTO4_ACEITE.md); tag `mobile-inc4-accepted`) | Domínio autocontido; fornece dados que vários módulos usarão; não depende de exames/insights; completa a base autenticada. |
-| 5 | **Histórico de Exames** | 🔄 **Em Implementação** ([MOBILE-024](MOBILE-024_PLANEJAMENTO_INCREMENTO5_EXAMES.md); nasce de `mobile-inc4-accepted`) | Pilar da proposta de valor da SINTERA; base para diversos recursos posteriores. |
-| 6 | **Upload de Exames** | ⬜ | Complementa o histórico (visualizar → adicionar); sequência intuitiva para o usuário. |
+| 5 | **Histórico de Exames** | ✅ **Aceito** (2026-07-31, homologação Android T1–T5 + fronteira — [MOBILE-028](MOBILE-028_INCREMENTO5_ACEITE.md); tag `mobile-inc5-accepted`) | Pilar da proposta de valor da SINTERA; base para diversos recursos posteriores. |
+| 6 | **Upload de Exames** | 🔄 **Em Implementação** (camada pura pronta + Readiness de integração — [MOBILE-027](MOBILE-027_READINESS_INCREMENTO6_UPLOAD.md); nasce de `mobile-inc5-accepted`) | Complementa o histórico (visualizar → adicionar); sequência intuitiva para o usuário. |
 | 7 | **Registro Manual** | ⬜ | Outra forma de alimentar o mesmo domínio de dados. |
 | 8 | **RegistrationHub** | ⬜ | Orquestração — só faz sentido quando já houver **destinos úteis reais** (não placeholders). HUB-001. |
 | 9 | **Composição Corporal** | ⬜ | Depende de base de saúde existente. |
@@ -39,8 +39,9 @@ Estados formais em [MOBILE-022](MOBILE-022_TEMPLATE_EVIDENCIAS_INCREMENTO.md) (P
 | Incremento | Estado atual | Gate para "Em Implementação" |
 |------------|--------------|------------------------------|
 | Inc4 Perfil | ✅ **Aceito** | — (concluído) |
-| Inc5 Exames | 🔄 **Em Implementação** | gate liberado (Inc4 Aceito + baseline atualizada) |
-| Inc6+ | ⬜ | Aceite do incremento anterior |
+| Inc5 Exames | ✅ **Aceito** | — (concluído; tag `mobile-inc5-accepted`) |
+| Inc6 Upload | 🔄 **Em Implementação** | gate liberado (Inc5 Aceito + baseline atualizada) |
+| Inc7+ | ⬜ | Aceite do incremento anterior |
 
 ## Notas de sequenciamento
 

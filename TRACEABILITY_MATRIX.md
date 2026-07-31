@@ -19,8 +19,8 @@ existem por exigência regulatória / evolução de produto / eliminação de d�
 | Navegação (Bottom Tabs, projeção SSOT) | Arquitetural | Inc2 | — | — (MOBILE-009) | [MOBILE-013](docs/MOBILE-013_INCREMENTO2_ACEITE.md) + tag `mobile-inc2-accepted` | ✅ **Aceito** |
 | Home Shell (composição de slots) | Arquitetural | Inc3 | — | ADR-018 | [MOBILE-021](docs/MOBILE-021_INCREMENTO3_ACEITE.md) + tag `mobile-inc3-accepted` | ✅ **Aceito** |
 | **Perfil** (editar nome+telefone; exibir avatar/faixa/objetivos) | Produto | Inc4 | `profile` v1 | ADR-019 | [MOBILE-025](docs/MOBILE-025_INCREMENTO4_ACEITE.md) + tag `mobile-inc4-accepted` · build `5b3df1fb` (APK SHA `45d1cda3…`) | ✅ **Aceito** |
-| **Histórico de Exames** (lista + documento original) | Negócio + Regulatório (REG-001) | Inc5 | `exams` v1 | — | [MOBILE-024](docs/MOBILE-024_PLANEJAMENTO_INCREMENTO5_EXAMES.md) (plano + Readiness) | 🔄 **Em Implementação** |
-| Upload de Exames | Produto | Inc6 | (futuro) | — | — | ⬜ |
+| **Histórico de Exames** (lista + documento original) | Negócio + Regulatório (REG-001) | Inc5 | `exams` v1 | — | [MOBILE-028](docs/MOBILE-028_INCREMENTO5_ACEITE.md) + tag `mobile-inc5-accepted` · build `b1f7c91b` (APK SHA `2abe21e6…`) | ✅ **Aceito** |
+| Upload de Exames | Produto | Inc6 | `exams`-escrita (definido, pré-impl) | — | [MOBILE-027](docs/MOBILE-027_READINESS_INCREMENTO6_UPLOAD.md) (Readiness + integração §7) | 🔄 **Em Implementação** |
 | Registro Manual | Produto | Inc7 | (futuro) | — | — | ⬜ |
 | RegistrationHub | Arquitetural | Inc8 | — | HUB-001 | — | ⬜ |
 | Composição Corporal | Negócio | Inc9 | (futuro) | — | — | ⬜ |

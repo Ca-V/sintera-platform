@@ -3,8 +3,8 @@
 Documento **vivo** (fundadora, 2026-07-31). Consolida o estado do sistema num ponto no tempo, para auditoria e
 retomada por qualquer dev. **Atualizado após cada Aceito** de incremento (etapa obrigatória — [MOBILE-022](docs/MOBILE-022_TEMPLATE_EVIDENCIAS_INCREMENTO.md)).
 
-- **Última atualização:** 2026-07-31 · **após:** **Inc4 Aceito** (tag `mobile-inc4-accepted`); Inc5 Em Implementação
-- **Branch de trabalho Mobile:** `feat/mobile-inc4-perfil` (base do Inc5)
+- **Última atualização:** 2026-07-31 · **após:** **Inc5 Aceito** (tag `mobile-inc5-accepted`); Inc6 integração iniciada
+- **Branch de trabalho Mobile:** `feat/mobile-inc4-perfil` (base do Inc6)
 
 ## 1. Roadmap / estados (Mobile — Onda 1)
 
@@ -14,8 +14,9 @@ retomada por qualquer dev. **Atualizado após cada Aceito** de incremento (etapa
 | 2 | Navegação | ✅ Aceito | — |
 | 3 | Home Shell | ✅ Aceito | — |
 | 4 | Perfil | ✅ **Aceito** (tag `mobile-inc4-accepted`) | — |
-| 5 | Histórico de Exames | 🔄 **Em Implementação** | — (gate liberado) |
-| 6–11 | Upload · Registro Manual · RegistrationHub · Composição Corporal · Agenda · Insights | ⬜ | aceite do anterior |
+| 5 | Histórico de Exames | ✅ **Aceito** (tag `mobile-inc5-accepted`) | — |
+| 6 | Upload de Exames | 🔄 **Em Implementação** (integração; camada pura pronta — MOBILE-027) | — (gate liberado) |
+| 7–11 | Registro Manual · RegistrationHub · Composição Corporal · Agenda · Insights | ⬜ | aceite do anterior |
 
 Detalhe: [MOBILE-015](docs/MOBILE-015_ROADMAP_INCREMENTOS.md). Estados: [MOBILE-022](docs/MOBILE-022_TEMPLATE_EVIDENCIAS_INCREMENTO.md).
 
@@ -26,8 +27,9 @@ rastreabilidade)** · DS-002 (Design System congelado) · REG-001 (fronteira fac
 **nuvem-first** ([MOBILE-015](docs/MOBILE-015_ROADMAP_INCREMENTOS.md)).
 
 ## 3. Contratos compartilhados (`@sintera/*`) — Web e Mobile consomem os mesmos
-- **api-client:** `auth` · `profile` (getProfile/updateProfile) · `exams` (listExams/getExam). Fronteira: nenhum
-  Supabase direto nas telas (ponto único de cliente). DTOs enxutos (só campos centrais).
+- **api-client:** `auth` · `profile` (getProfile/updateProfile) · `exams` (listExams/getExam) · `exams`-escrita
+  (uploadExam/createExam — **definido, pré-impl Inc6**). Fronteira: nenhum Supabase direto nas telas (ponto único
+  de cliente). DTOs enxutos (só campos centrais).
 - **validation** (validateName/Phone/ProfileEditable) · **types** (Result/PageRequest/DateRange) · **core**
   (timeline) · **utils** (initials/string) · **design-system** (DS-002).
 
