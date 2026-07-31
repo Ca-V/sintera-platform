@@ -73,7 +73,8 @@ ficam travados até o aceite do Inc.5.
 | Orquestração do fluxo (`startUpload`/`resumeUpload`/`toCreateInput`) | `apps/mobile/.../exams/uploadController.ts` | núcleo puro do hook (portas injetadas) + testes |
 | Telemetria do fluxo (evento `exam_upload` + outcome) | `uploadController.ts` (porta `Telemetry` de `@sintera/core`) | reusa porta existente; **sem PII** (LGPD); à prova de falha |
 | Mensagens de erro acionáveis (`acceptedFormatsHint`) | `exams/validateUpload.ts` | derivadas das restrições; FACTUAL (REG-001) |
-| Testes | `exams-upload-validate` · `upload-machine` · `upload-controller` | 30 casos ✅ |
+| Apresentação (fase→texto de UX; `isUploadBusy`/`isUploadDone`) | `exams/uploadPresentation.ts` | cópia dos estados definidos pela fundadora, centralizada + testada |
+| Testes | `exams-upload-validate` · `upload-machine` · `upload-controller` · `upload-presentation` | 33 casos ✅ |
 
 **Consolidação (fundadora 31/07 — sem tocar no binário do Inc.5):**
 - **Telemetria:** reusa a porta `Telemetry` de `@sintera/core` (default no-op; impl real injetada na integração). Emite um único evento `exam_upload` com `outcome` (`started`/`cancelled`/`rejected`/`succeeded`/`failed`) + `step`/`reason`/`source` — **paridade** com `CaptureTelemetryEvent` da Web. **Só códigos, nunca nome de arquivo/conteúdo/dado pessoal** (LGPD); telemetria com try/catch (nunca quebra o fluxo).
@@ -84,6 +85,9 @@ ficam travados até o aceite do Inc.5.
 1. **Adaptador nativo** do picker (implementa `DocumentPickerPort` com `expo-document-picker`/`image-picker`) — recurso de dispositivo (gate).
 2. **`uploadExam`/`createExam` concretos** no `ApiClient` (Supabase Storage: bucket user-scoped + id gerado + RLS) — infra (gate) + bump MINOR do contrato.
 3. **Hook `useExamUpload`** — invólucro fino: `useReducer(uploadReducer)` + injeta as portas reais no `startUpload`/`resumeUpload` (controller pronto).
-4. **Tela + navegação** — rota `ExamUpload` no `DocumentosStack` (arquivo hoje congelado pelo Inc.5) + tela consumindo o hook e os estados de UX já definidos.
+4. **Tela + navegação** — rota `ExamUpload` no `DocumentosStack` (arquivo hoje congelado pelo Inc.5) + tela
+   fina consumindo o hook + `uploadPhaseLabel`/`isUploadBusy`/`isUploadDone` (a cópia de UX já existe).
 
 > Tudo em 1–4 é **integração** dos artefatos puros já entregues; nenhuma regra de negócio nova a inventar.
+> A camada pura do Upload está **completa** (contrato · validação · reducer · orquestração · telemetria ·
+> mensagens · apresentação), toda testada e alinhada à Web.
