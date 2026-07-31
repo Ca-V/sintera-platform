@@ -160,3 +160,38 @@ Ordem = padrão da casa (Contrato→…→Testes). Cada item nasce da tag `mobil
 
 **Conclusão:** a integração do Inc.6 é **curta, previsível e aderente à Web** — só os 10 itens de 7.3, sem novas
 decisões de arquitetura.
+
+## 8. Revisão de segurança do Upload (verificada no servidor — 2026-07-31)
+Primeiro incremento com envio de dados → revisão específica **antes da homologação**. Servidor confirmado por
+consulta read-only (não presumido).
+
+| Item | Situação | Evidência |
+|---|---|---|
+| MIME validado no **cliente** | ✅ | `validateUpload` (extensão + MIME + tamanho + vazio) |
+| Extensão validada | ✅ | `validateUpload` |
+| Tamanho validado (cliente) | ✅ | `DEFAULT_UPLOAD_CONSTRAINTS.maxBytes` (20 MB) |
+| **Bucket privado** | ✅ | `storage.buckets.exams.public = false` |
+| **RLS validando owner (Storage)** | ✅ | policies `storage_exams_{insert,select,delete}`: `auth.uid() = folder[1]` — só a própria pasta |
+| **RLS validando owner (tabela)** | ✅ | policies `exams_{insert,select,update}`: `auth.uid() = user_id` |
+| Nome do arquivo nunca é id | ✅ | path `${userId}/<id-gerado>.<ext>` (`upload.ts`) |
+| UUID/equivalente | ✅ | id do arquivo gerado; `exams.id = gen_random_uuid()` (default) |
+| Signed URL | ✅ | `createSignedUrl` (bucket privado) |
+| Caminhos internos fora dos logs | ✅ | telemetria não carrega `storagePath`; sem `console.log` de path |
+| Sem PII na telemetria | ✅ | só códigos (`outcome`/`step`/`reason`/`source`) |
+| **MIME validado no servidor** | ⚠️ **NÃO** | `storage.buckets.exams.allowed_mime_types = null` |
+| **Tamanho validado no servidor** | ⚠️ **NÃO** | `storage.buckets.exams.file_size_limit = null` |
+
+**8.1 Achados (⚠️) — defesa em profundidade, ESCALONADOS (não aplicar sozinho).** O bucket não restringe MIME
+nem tamanho no servidor — a validação é só no cliente. Impacto **limitado**: a RLS confina cada usuário à
+**própria pasta** (não afeta terceiros), e é a **mesma postura da Web** hoje (bucket sem limites) — o Inc.6 **não
+introduz** o gap. Como o bucket é **infra compartilhada Web+Mobile**, endurecê-lo é **decisão de escalonamento**
+(afeta as duas plataformas). **Recomendação:** migration curta setando `allowed_mime_types` (pdf/jpeg/png/heic) e
+`file_size_limit` (~20 MB) no bucket `exams` — aplico **se aprovado**. **Não bloqueia a homologação** do Inc.6.
+
+## 9. Estado do Inc.6 (classificação precisa — fundadora 31/07)
+- **Camada pura:** ✅ **Verificada** (contrato · validação · reducer · orquestração · telemetria · apresentação;
+  unitários + **teste de integração** com mocks + reducer real).
+- **Integração:** 🔧 **Implementada** (adaptador nativo · uploadExam/createExam · hook · tela · navegação;
+  typecheck + boundary verdes). **Ainda NÃO verificada em runtime** (picker nativo · `fetch(file://)` no Android ·
+  Storage/RLS · permissão de câmera).
+- **Homologação:** ⏳ **Pendente** (build `d9858c74`; roteiro [MOBILE-029](MOBILE-029_ROTEIRO_HOMOLOGACAO_INCREMENTO6.md)).

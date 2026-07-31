@@ -24,7 +24,7 @@ A sequência segue quatro fases, do estável para o dependente:
 | 3 | **Home Shell** | ✅ ACCEPTED (2026-07-30, dispositivo físico via nuvem-first — [MOBILE-021](MOBILE-021_INCREMENTO3_ACEITE.md); tag `mobile-inc3-accepted`) | Casca da Home como composição de slots (ADR-018). |
 | 4 | **Perfil** | ✅ **Aceito** (2026-07-31, homologação Android T1–T7 — [MOBILE-025](MOBILE-025_INCREMENTO4_ACEITE.md); tag `mobile-inc4-accepted`) | Domínio autocontido; fornece dados que vários módulos usarão; não depende de exames/insights; completa a base autenticada. |
 | 5 | **Histórico de Exames** | ✅ **Aceito** (2026-07-31, homologação Android T1–T5 + fronteira — [MOBILE-028](MOBILE-028_INCREMENTO5_ACEITE.md); tag `mobile-inc5-accepted`) | Pilar da proposta de valor da SINTERA; base para diversos recursos posteriores. |
-| 6 | **Upload de Exames** | 🔄 **Em Implementação** (camada pura pronta + Readiness de integração — [MOBILE-027](MOBILE-027_READINESS_INCREMENTO6_UPLOAD.md); nasce de `mobile-inc5-accepted`) | Complementa o histórico (visualizar → adicionar); sequência intuitiva para o usuário. |
+| 6 | **Upload de Exames** | 🔄 Camada pura **Verificada** · Integração **Implementada** · Homologação **Pendente** ([MOBILE-027](MOBILE-027_READINESS_INCREMENTO6_UPLOAD.md) §7-8 + [MOBILE-029](MOBILE-029_ROTEIRO_HOMOLOGACAO_INCREMENTO6.md); build `d9858c74`; nasce de `mobile-inc5-accepted`) | Complementa o histórico (visualizar → adicionar); sequência intuitiva para o usuário. |
 | 7 | **Registro Manual** | ⬜ | Outra forma de alimentar o mesmo domínio de dados. |
 | 8 | **RegistrationHub** | ⬜ | Orquestração — só faz sentido quando já houver **destinos úteis reais** (não placeholders). HUB-001. |
 | 9 | **Composição Corporal** | ⬜ | Depende de base de saúde existente. |

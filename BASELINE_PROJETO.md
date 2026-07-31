@@ -15,7 +15,7 @@ retomada por qualquer dev. **Atualizado após cada Aceito** de incremento (etapa
 | 3 | Home Shell | ✅ Aceito | — |
 | 4 | Perfil | ✅ **Aceito** (tag `mobile-inc4-accepted`) | — |
 | 5 | Histórico de Exames | ✅ **Aceito** (tag `mobile-inc5-accepted`) | — |
-| 6 | Upload de Exames | 🔄 **Em Implementação** (integração; camada pura pronta — MOBILE-027) | — (gate liberado) |
+| 6 | Upload de Exames | 🔄 Camada pura **Verificada** · Integração **Implementada** · Homologação **Pendente** (MOBILE-027/029) | — (gate liberado) |
 | 7–11 | Registro Manual · RegistrationHub · Composição Corporal · Agenda · Insights | ⬜ | aceite do anterior |
 
 Detalhe: [MOBILE-015](docs/MOBILE-015_ROADMAP_INCREMENTOS.md). Estados: [MOBILE-022](docs/MOBILE-022_TEMPLATE_EVIDENCIAS_INCREMENTO.md).
@@ -27,9 +27,9 @@ rastreabilidade)** · DS-002 (Design System congelado) · REG-001 (fronteira fac
 **nuvem-first** ([MOBILE-015](docs/MOBILE-015_ROADMAP_INCREMENTOS.md)).
 
 ## 3. Contratos compartilhados (`@sintera/*`) — Web e Mobile consomem os mesmos
-- **api-client:** `auth` · `profile` (getProfile/updateProfile) · `exams` (listExams/getExam) · `exams`-escrita
-  (uploadExam/createExam — **definido, pré-impl Inc6**). Fronteira: nenhum Supabase direto nas telas (ponto único
-  de cliente). DTOs enxutos (só campos centrais).
+- **api-client:** `auth` · `profile` (getProfile/updateProfile) · `exams` **v1.0** (listExams/getExam +
+  **escrita Implementada** uploadExam/createExam — sem bump: a escrita já era parte do contrato v1 definido).
+  Fronteira: nenhum Supabase direto nas telas (ponto único de cliente). DTOs enxutos (só campos centrais).
 - **validation** (validateName/Phone/ProfileEditable) · **types** (Result/PageRequest/DateRange) · **core**
   (timeline) · **utils** (initials/string) · **design-system** (DS-002).
 
