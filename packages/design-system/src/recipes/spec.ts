@@ -37,3 +37,17 @@ export interface SurfaceSpec { backgroundColor: string; radius: number; elevatio
 export interface DividerSpec { color: string; thickness: number }
 export interface IconSpec { size: number; color: string }
 export interface AvatarSpec { size: number; radius: number; backgroundColor: string; color: string; label: TextStyle }
+/** Controle liga/desliga (toggle/switch): cores da trilha (on/off), do polegar, e opacidade (disabled). */
+export interface ToggleSpec { trackOn: string; trackOff: string; thumb: string; opacity: number }
+
+/** Campo de formulário (rótulo + controle + auxiliar). Descreve só os PAPÉIS de texto (rótulo/ajuda/erro),
+ *  o marcador de obrigatório, o espaçamento vertical e a opacidade (disabled). NÃO conhece o controle nem
+ *  regra de validação/domínio — o adaptador orquestra o controle recebido por composição. */
+export interface FieldSpec {
+  label: TextSpec
+  requiredMark: { color: string }
+  helper: TextSpec
+  error: TextSpec
+  gap: number
+  opacity: number
+}

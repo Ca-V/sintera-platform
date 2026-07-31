@@ -1,5 +1,15 @@
 # MOBILE-016 — Planejamento do Incremento 4 (Perfil)
 
+> **⚠️ REVISÃO DE ESCOPO (2026‑07‑27, pós [MOBILE‑018](./MOBILE-018_READINESS_REVIEW.md) — decisões da fundadora, PREVALECEM sobre o texto abaixo):**
+> - **D1 — `age_range` e `goals` = EXIBIÇÃO‑APENAS** (como o avatar). Não há lista canônica no repo; a edição vira
+>   incremento próprio. **Sai do conjunto editável** (§2.1/§4.2): não há seletor a criar no DS neste incremento.
+> - **D3 — preferências de notificação (`pref_*`) FORA do Inc 4.** Espelham a Web via futura "Central" no Mobile
+>   (`notification_preferences`); NOTIF‑001 é autoridade única. **Removidos os 4 toggles** de §2.1/§3/§4.2/§6‑crit.3.
+> - **D2 — timeout do api‑client:** envolver as ops de perfil num timeout simples (`AbortController`) na implementação.
+> - **Escopo enxuto resultante:** **editável = `name`, `phone`**; **exibição = `age_range`, `goals`, `avatar_url`** +
+>   identificação da sessão. Única lacuna de DS restante = **Field Row** (rótulo + Input + erro). Demais dependências ✅.
+
+
 - **Status:** **PLANEJAMENTO — refinamentos da fundadora incorporados** (2026-07-24): contrato `ProfileDTO` **congelado** (§4, valores reais do DB) · critérios objetivos de comportamento (§6.1: persistência·pessimista·offline·conflito·erros·loading·vazio·timeout) · decisões resolvidas (Perfil sob "Mais"; avatar **exibição-apenas**). **Nenhuma implementação.** (Gate: início só após homologação/aceite do Incremento 3 — [MOBILE-015](MOBILE-015_ROADMAP_INCREMENTOS.md).)
 - **Onda:** 1 · **Incremento:** 4 (Perfil) · **branch de impl. (futura):** de `mobile-inc3-accepted`.
 - **Relaciona-se com:** [MOBILE-015](MOBILE-015_ROADMAP_INCREMENTOS.md) (roadmap) · [ADR-018](adr/ADR-018_HOME_COMPOSICAO_DE_SLOTS.md) (composição) · [MOBILE-013](MOBILE-013_INCREMENTO2_ACEITE.md) (fronteira api-client) · Referência Web: `src/app/dashboard/configuracoes/page.tsx`, `src/app/api/profile/route.ts`, tabela `profiles`.

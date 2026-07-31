@@ -44,6 +44,19 @@ A sequência segue quatro fases, do estável para o dependente:
 
 - **Nenhum incremento funcional novo começa antes da homologação/aceite do anterior.** O Incremento 4 (Perfil)
   só inicia após o aceite do Incremento 3.
+  - **Exceção (fundadora, 2026‑07‑27) — antecipação restrita.** Podem ser antecipadas **apenas** implementações
+    que atendam **simultaneamente a TODOS** os critérios abaixo:
+    1. **independentes da UI**;
+    2. **independentes da navegação**;
+    3. **independentes da homologação funcional do incremento anterior**;
+    4. **totalmente verificáveis por testes automatizados**.
+
+    Falhando **qualquer um** dos quatro, a antecipação **não** é permitida. O gate protege contra empilhar
+    **implementação de UI funcional** sobre base não homologada; os quatro critérios delimitam com precisão o que
+    fica fora dessa proteção. Foi o que permitiu antecipar **Switch/Avatar/FieldRow** (DS) e o **módulo `profile`
+    do api-client** (getProfile/updateProfile/withTimeout + harness de mocks + reducer puro). **NÃO se enquadram
+    nesta exceção (travados até o aceite):** tela RN, **wiring do hook, código de integração**, navegação e
+    homologação funcional — dependem do Android + base do Inc 3.
 - Cada incremento aceito = **marco verificável (tag)**, base do seguinte (nasce do tag do anterior).
 - Integração ao ramo principal permanece condicionada ao **encerramento da Onda 1** + critérios de integração.
 - Reordenações futuras deste roadmap são decisão de produto da fundadora (documentar a mudança).

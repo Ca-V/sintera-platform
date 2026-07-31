@@ -5,7 +5,7 @@ import type { SinteraTheme } from '../theme'
 import type { ElevationLevel } from '../tokens/elevation'
 import type { GradientToken } from '../tokens/gradient'
 import type {
-  ButtonSpec, ChipSpec, BadgeSpec, CardSpec, SurfaceSpec, DividerSpec, IconSpec, AvatarSpec, TextSpec, InputSpec,
+  ButtonSpec, ChipSpec, BadgeSpec, CardSpec, SurfaceSpec, DividerSpec, IconSpec, AvatarSpec, TextSpec, InputSpec, ToggleSpec, FieldSpec,
 } from './spec'
 
 export type Size = 'sm' | 'md' | 'lg'
@@ -113,6 +113,21 @@ export function input(t: SinteraTheme, opts: { state?: InputState } = {}): Input
   }
 }
 
+/** Campo de formulário (rótulo + controle + auxiliar). INFRA de DS: só orquestra papéis de texto e espaçamento;
+ *  NÃO conhece validação/máscara/API/domínio (o controle vem por composição). Rótulo = papel `label`; ajuda =
+ *  `caption` discreto; erro = `caption` na cor de feedback de erro; marcador de obrigatório na mesma cor de erro
+ *  (convenção "*"). `disabled` reduz a opacidade do conjunto. Reutilizável em qualquer formulário (Perfil, Config…). */
+export function field(t: SinteraTheme, opts: { disabled?: boolean } = {}): FieldSpec {
+  return {
+    label: text(t, { role: 'label', tone: 'default' }),
+    requiredMark: { color: t.color.badge.error.text },
+    helper: text(t, { role: 'caption', tone: 'muted' }),
+    error: { style: t.typography.caption, color: t.color.badge.error.text },
+    gap: t.padding.micro,
+    opacity: opts.disabled ? t.opacity.disabled : 1,
+  }
+}
+
 // --- Mídia / símbolos -------------------------------------------------------
 export function icon(t: SinteraTheme, opts: { size?: Size; tone?: 'default' | 'muted' | 'identity' | 'onAction' } = {}): IconSpec {
   const size = { sm: 16, md: 20, lg: 24 }[opts.size ?? 'md']
@@ -123,6 +138,17 @@ export function icon(t: SinteraTheme, opts: { size?: Size; tone?: 'default' | 'm
 export function avatar(t: SinteraTheme, opts: { size?: Size } = {}): AvatarSpec {
   const size = { sm: 28, md: 40, lg: 56 }[opts.size ?? 'md']
   return { size, radius: t.radius.pill, backgroundColor: t.color.identity.soft, color: t.color.identity.primary, label: t.typography.label }
+}
+
+/** Controle liga/desliga (toggle/switch). `toggle` porque `switch` é palavra reservada. Trilha ON = cor de
+ *  identidade; OFF = borda neutra; polegar = superfície clara; opacidade reduzida quando desabilitado. */
+export function toggle(t: SinteraTheme, opts: { disabled?: boolean } = {}): ToggleSpec {
+  return {
+    trackOn: t.color.identity.primary,
+    trackOff: t.color.border.default,
+    thumb: t.color.surface.base,
+    opacity: opts.disabled ? 0.5 : 1,
+  }
 }
 
 export * from './spec'

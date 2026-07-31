@@ -3,7 +3,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   getTheme, contrastRatio, WCAG,
-  button, text, heading, card, surface, badge, chip, divider, icon, avatar, input,
+  button, text, heading, card, surface, badge, chip, divider, icon, avatar, input, toggle, field,
   type Theme, type BadgeTone,
 } from '../../packages/design-system/src'
 
@@ -85,6 +85,37 @@ describe('ARCH · recipes — derivação do tema e acessibilidade', () => {
       expect(input(t, { state: 'error' }).container.borderColor).toBe(t.color.badge.error.text)
       // texto legível sobre o fundo do campo
       expect(contrastRatio(base.text.color, base.container.backgroundColor)).toBeGreaterThanOrEqual(WCAG.AA_NORMAL)
+    })
+
+    it(`[${mode}] toggle: ON usa a identidade; OFF é distinto; disabled reduz a opacidade`, () => {
+      const on = toggle(t)
+      expect(on.trackOn).toBe(t.color.identity.primary)
+      expect(on.trackOff).toBe(t.color.border.default)
+      expect(on.thumb).toBe(t.color.surface.base)
+      expect(on.opacity).toBe(1)
+      // ON e OFF precisam ser visualmente distinguíveis
+      expect(on.trackOn).not.toBe(on.trackOff)
+      // disabled reduz a opacidade (sinal de indisponível)
+      expect(toggle(t, { disabled: true }).opacity).toBeLessThan(1)
+    })
+
+    it(`[${mode}] field: rótulo/ajuda/erro derivam de papéis; erro usa a cor de erro; disabled reduz a opacidade`, () => {
+      const f = field(t)
+      // rótulo usa papel de texto padrão (cor de texto legível)
+      expect(f.label.color).toBe(t.color.text.default)
+      // ajuda é discreta (muted); distinta do rótulo
+      expect(f.helper.color).toBe(t.color.text.muted)
+      expect(f.helper.color).not.toBe(f.label.color)
+      // erro e marcador de obrigatório usam a cor de feedback de erro
+      expect(f.error.color).toBe(t.color.badge.error.text)
+      expect(f.requiredMark.color).toBe(t.color.badge.error.text)
+      // texto de erro tem contraste AA sobre a superfície onde aparece
+      expect(contrastRatio(f.error.color, t.color.surface.base)).toBeGreaterThanOrEqual(WCAG.AA_NORMAL)
+      // espaçamento vertical > 0 e opacidade plena por padrão
+      expect(f.gap).toBeGreaterThan(0)
+      expect(f.opacity).toBe(1)
+      // disabled reduz a opacidade do conjunto
+      expect(field(t, { disabled: true }).opacity).toBeLessThan(1)
     })
   }
 })

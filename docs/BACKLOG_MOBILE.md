@@ -23,9 +23,15 @@
 ## 🎨 Design System (evoluções — "DS antes da tela")
 | Item | Quando | Nota |
 |------|--------|------|
-| Primitivo `switch` (recipe + RN) | **Inc. 4** | Preferências do Perfil; recipe não existe. [MOBILE-016 §3.2](MOBILE-016_PLANEJAMENTO_INCREMENTO4_PERFIL.md). |
-| Primitivo RN `Avatar` | **Inc. 4** | Exibir avatar; recipe `avatar` já existe, falta adaptador RN. |
-| Primitivos RN faltantes: badge·card·chip·divider·icon·surface | conforme necessidade | 11 recipes base × 4 primitivos RN; promover quando o incremento precisar. |
+| ✅ Primitivo `Switch` (recipe `toggle` + RN) | feito 27/07 | Preferências; commit `f983b5a`. [DS-003](DS-003_PRIMITIVOS_RN_CHECKLIST.md). |
+| ✅ Primitivo RN `Avatar` | feito 27/07 | Exibição; consome o recipe `avatar`; commit `f983b5a`. |
+| ✅ Primitivo `FieldRow` (recipe `field` + RN) | feito 27/07 | Linha de formulário (infra pura); commit `b05a355`. |
+| Primitivos RN faltantes: badge·card·chip·divider·icon·surface | conforme necessidade | promover quando um incremento precisar (não antecipar). |
+
+## 🔀 Paridade Web↔Mobile (divergências → [Matriz](PARIDADE_WEB_MOBILE.md))
+| Divergência | Detectada | Nota |
+|------|-----------|------|
+| **Camada de perfil: Mobile mais moderno que a Web.** O `@sintera/api-client` `profile` (getProfile/updateProfile — **upsert**, whitelist de coluna, timeout, contrato `T\|null`+throw) é mais correto que a Web (`src/app/api/profile/route.ts`: `createClient` direto, `.update()`, mistura domínios ciclo/altura, sem timeout). | 27/07 (auditoria de consistência) | Ao **descongelar** a Web, alinhá-la ao api-client compartilhado (**Prioridade B** — passa pelo gate de paridade). Não fazer agora. Contexto maior: a Web ainda **não** consome `@sintera/api-client` (predata o cliente compartilhado, nascido no Mobile Inc 1). |
 
 ## 🚀 Incrementos futuros (roadmap [MOBILE-015](MOBILE-015_ROADMAP_INCREMENTOS.md))
 3 Home Shell (homologação pendente) · **4 Perfil** ([MOBILE-016](MOBILE-016_PLANEJAMENTO_INCREMENTO4_PERFIL.md), planejado) · 5 Histórico de Exames · 6 Upload · 7 Registro Manual · 8 RegistrationHub · 9 Composição Corporal · 10 Agenda · 11 Insights.
