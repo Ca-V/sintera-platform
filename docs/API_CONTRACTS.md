@@ -13,7 +13,8 @@ controla mudanças. **Nenhuma tela acessa o Supabase direto**: tudo por `ApiClie
 - **auth** — `getSession` · `onAuthStateChange` · `signIn` · `signOut`. (Inc.1)
 - **profile** — `getProfile(signal?) → ProfileDTO | null` · `updateProfile(patch: ProfileEditable, signal?) → { error }`. (Inc.4)
 - **exams** — `listExams(query?, signal?) → ExamDTO[]` · `getExam(id, signal?) → ExamDTO | null`. (Inc.5, leitura)
-- *(futuros: Documents/Upload, Registro Manual, Composição, Agenda, Insights — entram com bump de versão.)*
+- **exams — escrita (DEFINIDO, Inc.6; pré-implementação)** — `uploadExam(file, signal?) → { data: UploadResult | null, error }` · `createExam(input, signal?) → { data: { id } | null, error }`. Contrato aprovado (fundadora 31/07); **operações separadas** e **fluxo em 2 etapas** (`uploadExam → createExam`). Entra no `ApiClient` concreto com **bump MINOR (v1.1)** na implementação (pós-aceite do Inc.5). Tipos: `exams/write.ts`; port de seleção `device/documentPicker.ts`; validação `exams/validateUpload.ts`. Ver [MOBILE-027](MOBILE-027_READINESS_INCREMENTO6_UPLOAD.md).
+- *(futuros: Registro Manual, Composição, Agenda, Insights — entram com bump de versão.)*
 
 **Convenções (congeladas):** leitura → `T | null` (null = linha inexistente) ou `T[]`, **LANÇA** em falha
 operacional; escrita → `{ error: Error | null }` (não lança). DTOs **enxutos** (só campos centrais de exibição;

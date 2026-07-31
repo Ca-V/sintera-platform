@@ -36,12 +36,34 @@ No detalhe/lista de Exames, permitir ao usuário **adicionar um exame** (documen
   prematura (princípio Estabilidade Arquitetural).
 - **Não antecipável** (travado até o aceite do Inc.5 + suas decisões): dep nativa, upload real ao Storage, tela.
 
-## 5. Decisões que aguardam a fundadora (não bloqueiam o Inc.5)
-- **D-INC6-1:** confirmar Upload como Inc.6 (ou reordenar).
-- **D-INC6-2:** aprovar adicionar a dep nativa de seleção de arquivo/câmera (e qual — recomendação:
-  `expo-document-picker` + `expo-image-picker`, alinhadas ao SDK 54).
-- **D-INC6-3:** validar a regra de negócio do upload (campos mínimos + doc fiscal opcional + fronteira REG-001)
-  para eu fixar o contrato `exams.createExam`.
+## 5. Decisões da fundadora — **APROVADAS (2026-07-31)**
+- **D-INC6-1 (Upload como Inc.6): APROVADO.** Segue como próximo incremento.
+- **D-INC6-2 (dep nativa de seleção): APROVADO** — atrás de **abstração própria** (`DocumentPickerPort`):
+  Android e iOS usam a mesma abstração; o app **não conhece** a lib; trocar a lib muda **só o adaptador**.
+  Recomendação de lib: `expo-document-picker` + `expo-image-picker` (SDK 54). *Instalação = parte da
+  implementação (pós-aceite do Inc.5).*
+- **D-INC6-3 (contrato de escrita): APROVADO** com **separação clara de operações** e **fluxo em 2 etapas**:
+  `Selecionar → uploadExam (Storage) → URL/id → createExam (metadados)`. Desacopla armazenamento e negócio.
 
-> Enquanto essas decisões não vierem, **não há implementação do Inc.6** — nem pelo gate (aceite do Inc.5) nem
-> pelas dependências acima. Este doc deixa o caminho pronto para execução rápida assim que forem tomadas.
+### Requisitos não-funcionais fixados pela fundadora (primeiro incremento com envio de dados)
+- **Validação (antes do upload):** extensão permitida · tamanho máximo · MIME type.
+- **Segurança:** nome do arquivo **nunca** é identificador → gerar id próprio; validar permissões no backend;
+  **RLS** aplicada. (Validação no cliente é conveniência; o **backend revalida** — defesa em profundidade.)
+- **UX (estados sempre visíveis):** `Selecionando → Enviando → Processando → Concluído` · `Erro → Tentar novamente`.
+
+## 6. Preparação executada (camada pura/verificável — sem implementação funcional)
+Conforme a fundadora ("preparar, não implementar ainda"). Tudo abaixo é **puro + testado**; nativo/Storage/tela
+ficam travados até o aceite do Inc.5.
+
+| Artefato | Onde | Natureza |
+|---|---|---|
+| Contrato de escrita (`ExamsWriteApi`, `UploadResult`, `CreateExamInput`, `UploadConstraints`) | `packages/api-client/src/exams/write.ts` | tipos (contrato definido) |
+| Abstração do picker (`DocumentPickerPort`, `PickedFile`) | `packages/api-client/src/device/documentPicker.ts` | interface (port) |
+| Validação (`validateUpload` + `DEFAULT_UPLOAD_CONSTRAINTS`) | `packages/api-client/src/exams/validateUpload.ts` | função pura + testes |
+| Máquina de estados do upload (`uploadReducer`) | `apps/mobile/.../exams/uploadMachine.ts` | reducer puro + testes |
+| Testes | `tests/contracts/exams-upload-validate.test.ts` · `tests/mobile/upload-machine.test.ts` | 12 casos ✅ |
+
+**Falta para a implementação do Inc.6 (pós-aceite do Inc.5):** adaptador nativo do picker (implementa
+`DocumentPickerPort`), `uploadExam`/`createExam` concretos no `ApiClient` (Supabase Storage + bucket/RLS),
+o hook que liga picker→validate→upload→create ao reducer, a tela e o wiring de navegação — cada um com bump
+MINOR do contrato em `API_CONTRACTS.md` na entrada.
