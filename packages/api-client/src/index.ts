@@ -20,7 +20,7 @@ export type { ExamsApi, ExamDTO, ExamsQuery } from './exams/types'
 // Domínio Exames (ESCRITA) — contrato DEFINIDO p/ Inc.6 (Upload); implementação após aceite do Inc.5.
 export type { ExamsWriteApi, UploadResult, CreateExamInput, UploadConstraints } from './exams/write'
 export { DEFAULT_UPLOAD_CONSTRAINTS } from './exams/write'
-export { validateUpload, type UploadValidation } from './exams/validateUpload'
+export { validateUpload, acceptedFormatsHint, type UploadValidation } from './exams/validateUpload'
 // PORT de seleção de documento (device) — abstração injetada por plataforma (app não conhece a lib).
 export type { DocumentPickerPort, PickedFile } from './device/documentPicker'
 export { withTimeout, TimeoutError, DEFAULT_TIMEOUT_MS } from './net/timeout'

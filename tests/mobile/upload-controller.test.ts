@@ -108,4 +108,49 @@ describe('uploadController — orquestração pura do Inc.6', () => {
     await resumeUpload({ file: { uri: 'file://x', mimeType: 'application/pdf', sizeBytes: 2048 }, upload: null }, { type: 'laudo' }, deps(), d)
     expect(types(d.mock.calls.map((c) => c[0]))).toEqual(['RETRY', 'UPLOADED', 'CREATED'])
   })
+
+  describe('telemetria (porta @sintera/core, sem PII)', () => {
+    // Coletor fake — captura os eventos emitidos.
+    function withTelemetry(over: Parameters<typeof deps>[0] = {}) {
+      const events: Array<{ name: string; props?: Record<string, unknown> }> = []
+      const d = deps(over)
+      d.telemetry = { event: (name, props) => events.push({ name, props }) }
+      return { deps: d, events }
+    }
+
+    it('caminho feliz emite exam_upload started → succeeded', async () => {
+      const { deps: dp, events } = withTelemetry()
+      await startUpload('document', {}, dp, vi.fn())
+      expect(events.map((e) => e.props?.outcome)).toEqual(['started', 'succeeded'])
+      expect(events[0].name).toBe('exam_upload')
+    })
+
+    it('cancelamento emite outcome cancelled', async () => {
+      const { deps: dp, events } = withTelemetry({ pick: null })
+      await startUpload('document', {}, dp, vi.fn())
+      expect(events.map((e) => e.props?.outcome)).toEqual(['started', 'cancelled'])
+    })
+
+    it('arquivo inválido emite rejected com reason (código, sem nome do arquivo)', async () => {
+      const { deps: dp, events } = withTelemetry({ pick: { uri: 'f', name: 'x.exe', sizeBytes: 10, mimeType: 'application/octet-stream' } })
+      await startUpload('document', {}, dp, vi.fn())
+      expect(events[1]).toMatchObject({ props: { outcome: 'rejected', reason: 'extension' } })
+      // garante ausência de PII: nenhuma prop carrega o nome do arquivo
+      expect(JSON.stringify(events)).not.toContain('x.exe')
+    })
+
+    it('falha no upload emite failed com step=upload', async () => {
+      const { deps: dp, events } = withTelemetry({ upload: { data: null, error: new Error('500') } })
+      await startUpload('document', {}, dp, vi.fn())
+      expect(events.at(-1)).toMatchObject({ props: { outcome: 'failed', step: 'upload' } })
+    })
+
+    it('telemetria que lança NÃO quebra o fluxo', async () => {
+      const dp = deps()
+      dp.telemetry = { event: () => { throw new Error('sink caiu') } }
+      const d = vi.fn()
+      await expect(startUpload('document', {}, dp, d)).resolves.toBeUndefined()
+      expect(types(d.mock.calls.map((c) => c[0]))).toEqual(['PICK', 'PICKED', 'UPLOADED', 'CREATED'])
+    })
+  })
 })

@@ -71,7 +71,14 @@ ficam travados até o aceite do Inc.5.
 | Validação (`validateUpload` + `DEFAULT_UPLOAD_CONSTRAINTS`) | `packages/api-client/src/exams/validateUpload.ts` | função pura + testes |
 | Máquina de estados do upload (`uploadReducer`) | `apps/mobile/.../exams/uploadMachine.ts` | reducer puro + testes |
 | Orquestração do fluxo (`startUpload`/`resumeUpload`/`toCreateInput`) | `apps/mobile/.../exams/uploadController.ts` | núcleo puro do hook (portas injetadas) + testes |
-| Testes | `exams-upload-validate` · `upload-machine` · `upload-controller` | 22 casos ✅ |
+| Telemetria do fluxo (evento `exam_upload` + outcome) | `uploadController.ts` (porta `Telemetry` de `@sintera/core`) | reusa porta existente; **sem PII** (LGPD); à prova de falha |
+| Mensagens de erro acionáveis (`acceptedFormatsHint`) | `exams/validateUpload.ts` | derivadas das restrições; FACTUAL (REG-001) |
+| Testes | `exams-upload-validate` · `upload-machine` · `upload-controller` | 30 casos ✅ |
+
+**Consolidação (fundadora 31/07 — sem tocar no binário do Inc.5):**
+- **Telemetria:** reusa a porta `Telemetry` de `@sintera/core` (default no-op; impl real injetada na integração). Emite um único evento `exam_upload` com `outcome` (`started`/`cancelled`/`rejected`/`succeeded`/`failed`) + `step`/`reason`/`source` — **paridade** com `CaptureTelemetryEvent` da Web. **Só códigos, nunca nome de arquivo/conteúdo/dado pessoal** (LGPD); telemetria com try/catch (nunca quebra o fluxo).
+- **Mensagens de erro:** revisadas para serem **acionáveis** (dizem o que fazer) e derivadas das restrições via `acceptedFormatsHint` — sem hardcode, consistentes Web/Mobile.
+- **Nomenclatura/contrato:** convenção mantida — DTOs de banco em `snake_case` (`file_url`, `exam_date`, espelham colunas), tipos de transporte em `camelCase` (`storagePath`, `mimeType`, `sizeBytes`).
 
 **Falta para a implementação do Inc.6 (pós-aceite do Inc.5) — só INTEGRAÇÃO, a lógica já existe:**
 1. **Adaptador nativo** do picker (implementa `DocumentPickerPort` com `expo-document-picker`/`image-picker`) — recurso de dispositivo (gate).
