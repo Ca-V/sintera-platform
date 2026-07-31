@@ -35,9 +35,12 @@ saíram daqui (todas documentadas e versionadas):
    **remoção ativa** no Linux (neutraliza cache do EAS). Ver [MOBILE-010 §3.3](MOBILE-010_TOOLCHAIN_WINDOWS_NEW_ARCH.md).
 2. **Variáveis de ambiente ausentes no EAS** — `.env` local não sobe para a nuvem; sem `EXPO_PUBLIC_SUPABASE_*`
    o app trava no início. Configuradas via `eas env:set` no ambiente `preview`. Runbook em MOBILE-003 §3.1.
-3. **Artefato vinha como `.tar.gz` (debug+release)** — o glob padrão pegava os dois APKs. `eas.json` do perfil
-   `preview` passou a coletar só `release/*.apk` → "Install" serve um `.apk` direto (1 toque) do próximo build
-   em diante.
+3. **Artefato vinha como `.tar.gz` (debug+release)** — o EAS empacotou os dois APKs; instalou-se extraindo o
+   `release/app-release.apk` do tar. **Correção (com ressalva):** uma 1ª tentativa (`applicationArchivePath`)
+   era **campo inválido** no eas-cli 21.4.0 e quebrou o eas.json (corrigido no commit `8dd0d5b`); adotou-se
+   `android.gradleCommand: ":app:assembleRelease"` no perfil `preview` — o que, **na configuração atual do
+   projeto**, deve produzir o APK esperado (instalação direta). **Ainda a verificar** no próximo build EAS
+   (não afirmar como fato até a evidência do artefato).
 
 **Nota operacional:** antivírus (ex.: AVG) marcam o APK como `APK:CloudRep [Susp]` — **falso positivo** por ser
 app novo/sem reputação (sideload), não malware. Ação: **Ignorar** (nunca "Solucionar", que remove o app).
