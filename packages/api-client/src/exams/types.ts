@@ -6,7 +6,8 @@
 export interface ExamDTO {
   id: string
   exam_date: string | null        // data do exame (YYYY-MM-DD)
-  display_title: string | null    // nome de exibição derivado (document-naming)
+  display_title: string | null    // nome de exibição derivado (document-naming; null até a extração)
+  type: string | null             // rótulo bruto (nome do arquivo no upload) — fallback antes de display_title
   document_type: string | null    // categoria/mídia do documento
   clinical_family: string | null  // família clínica (aberta)
   status: string | null           // estado de processamento (exibição)
@@ -35,4 +36,4 @@ export interface ExamsApi {
 
 /** Colunas centrais lidas do banco (explícitas — não `*` — para não trazer campos internos/financeiros). */
 export const EXAM_COLUMNS =
-  'id, exam_date, display_title, document_type, clinical_family, status, issuer, requesting_physician, file_url, created_at' as const
+  'id, exam_date, display_title, type, document_type, clinical_family, status, issuer, requesting_physician, file_url, created_at' as const

@@ -18,6 +18,7 @@ export type LoadEvent<T> =
   | { type: 'SUCCESS'; data: T }
   | { type: 'FAILURE'; error: string }
   | { type: 'RETRY' }
+  | { type: 'SET'; data: T } // atualização SILENCIOSA (refresh em segundo plano): vai a 'ready' sem piscar 'loading'
 
 export function initialLoadState<T>(): LoadState<T> {
   return { phase: 'idle', data: null, error: null }
@@ -25,6 +26,8 @@ export function initialLoadState<T>(): LoadState<T> {
 
 /** Reducer puro e determinístico. Eventos inválidos para a fase atual são ignorados (retorna o mesmo estado). */
 export function loadReducer<T>(state: LoadState<T>, event: LoadEvent<T>): LoadState<T> {
+  // SET aplica dados frescos a partir de QUALQUER fase (refresh silencioso ao refocar a tela) → 'ready'.
+  if (event.type === 'SET') return { phase: 'ready', data: event.data, error: null }
   switch (state.phase) {
     case 'idle':
       if (event.type === 'LOAD') return { phase: 'loading', data: null, error: null }

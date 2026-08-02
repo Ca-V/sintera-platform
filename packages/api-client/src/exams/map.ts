@@ -7,6 +7,7 @@ export function toExamDTO(row: Record<string, unknown>): ExamDTO {
     id: row.id as string,
     exam_date: (row.exam_date as string | null) ?? null,
     display_title: (row.display_title as string | null) ?? null,
+    type: (row.type as string | null) ?? null,
     document_type: (row.document_type as string | null) ?? null,
     clinical_family: (row.clinical_family as string | null) ?? null,
     status: (row.status as string | null) ?? null,

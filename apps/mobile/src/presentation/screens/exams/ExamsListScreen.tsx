@@ -92,12 +92,14 @@ export function ExamsListScreen({ navigation }: Props) {
                 accessibilityRole="button"
                 style={[styles.card, { backgroundColor: t.color.surface.base, borderColor: t.color.border.default }]}
               >
-                <Text spec={text(t, { role: 'bodyStrong' })}>{e.display_title ?? 'Exame'}</Text>
+                <Text spec={text(t, { role: 'bodyStrong' })}>{e.display_title ?? e.type ?? 'Exame'}</Text>
                 <Text spec={text(t, { role: 'caption', tone: 'muted' })}>
                   {formatDate(e.exam_date)}
                   {e.issuer ? ` · ${e.issuer}` : ''}
                 </Text>
-                {e.status ? (
+                {e.status === 'pending' || e.status === 'processing' ? (
+                  <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Processando…</Text>
+                ) : e.status ? (
                   <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{e.status}</Text>
                 ) : null}
               </Pressable>

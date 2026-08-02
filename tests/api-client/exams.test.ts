@@ -5,7 +5,7 @@ import { getExam } from '../../packages/api-client/src/exams/get'
 import { mockSupabase, mockQueryBuilder, fakeSession } from './supabaseMock'
 
 const ROW = {
-  id: 'e1', exam_date: '2026-07-01', display_title: 'Hemograma', document_type: 'lab',
+  id: 'e1', exam_date: '2026-07-01', display_title: 'Hemograma', type: 'hemograma_lab.pdf', document_type: 'lab',
   clinical_family: 'hematologia', status: 'ready', issuer: 'Lab X', requesting_physician: 'Dra. Y',
   file_url: 'https://x/e1.pdf', created_at: '2026-07-02T00:00:00Z',
   // campos internos/financeiros que NÃO devem vazar:
@@ -20,7 +20,7 @@ describe('api-client · exams.listExams', () => {
     const list = await listExams(client)
     expect(list).toHaveLength(1)
     expect(list[0]).toEqual({
-      id: 'e1', exam_date: '2026-07-01', display_title: 'Hemograma', document_type: 'lab',
+      id: 'e1', exam_date: '2026-07-01', display_title: 'Hemograma', type: 'hemograma_lab.pdf', document_type: 'lab',
       clinical_family: 'hematologia', status: 'ready', issuer: 'Lab X', requesting_physician: 'Dra. Y',
       file_url: 'https://x/e1.pdf', created_at: '2026-07-02T00:00:00Z',
     })
@@ -137,7 +137,7 @@ describe('api-client · exams — contratos e casos extremos', () => {
     const partial = { id: 'e2' } // só o id
     const client = mockSupabase({ session: fakeSession(), from: () => mockQueryBuilder({ data: [partial], error: null }) })
     const [dto] = await listExams(client)
-    expect(dto).toEqual({ id: 'e2', exam_date: null, display_title: null, document_type: null, clinical_family: null, status: null, issuer: null, requesting_physician: null, file_url: null, created_at: null })
+    expect(dto).toEqual({ id: 'e2', exam_date: null, display_title: null, type: null, document_type: null, clinical_family: null, status: null, issuer: null, requesting_physician: null, file_url: null, created_at: null })
   })
 
   it('getExam: id vazio ainda consulta (RLS decide) → null se sem linha', async () => {

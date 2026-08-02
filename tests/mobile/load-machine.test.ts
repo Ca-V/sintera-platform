@@ -32,4 +32,13 @@ describe('loadReducer (carga read-only do Inc.5)', () => {
     const ready: LoadState<number[]> = { phase: 'ready', data: [9], error: null }
     expect(loadReducer(ready, { type: 'SUCCESS', data: [0] })).toBe(ready)
   })
+
+  it('SET aplica dados frescos silenciosamente a partir de QUALQUER fase (refresh sem piscar)', () => {
+    // de 'ready' → atualiza os dados sem passar por 'loading'
+    const ready: LoadState<number[]> = { phase: 'ready', data: [1], error: null }
+    expect(loadReducer(ready, { type: 'SET', data: [1, 2, 3] })).toEqual({ phase: 'ready', data: [1, 2, 3], error: null })
+    // de 'error' → recupera para 'ready' com dados (refresh que deu certo)
+    const err: LoadState<number[]> = { phase: 'error', data: null, error: 'x' }
+    expect(loadReducer(err, { type: 'SET', data: [9] })).toEqual({ phase: 'ready', data: [9], error: null })
+  })
 })
