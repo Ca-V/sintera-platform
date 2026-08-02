@@ -267,7 +267,7 @@ export async function extractBiomarkers(
   }
 
   // 2. Carregar prompt ativo
-  const prompt = await loadActivePrompt('extraction')
+  const prompt = await loadActivePrompt('extraction', supabase)
   if (!prompt) {
     return { code: 'NO_ACTIVE_PROMPT', message: 'Nenhum prompt de extração ativo configurado.', httpStatus: 500 }
   }

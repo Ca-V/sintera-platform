@@ -1,4 +1,5 @@
 import { createHash } from 'crypto'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 
 export interface LoadedPrompt {
@@ -10,8 +11,11 @@ export interface LoadedPrompt {
   contentHash: string
 }
 
-export async function loadActivePrompt(operation: string): Promise<LoadedPrompt | null> {
-  const supabase = await createClient()
+// `client` (opcional): use o cliente AUTENTICADO da requisição (Cookie=Web · Bearer=Mobile). Sem ele, cai no
+// cliente por cookie (compat). Corrige NO_ACTIVE_PROMPT em requisições Bearer, onde um cliente cookie novo seria
+// anônimo e a RLS de `prompt_registry` bloquearia a leitura. Ponte ADR-020.
+export async function loadActivePrompt(operation: string, client?: SupabaseClient): Promise<LoadedPrompt | null> {
+  const supabase = client ?? await createClient()
 
   const { data, error } = await supabase
     .from('prompt_registry')
