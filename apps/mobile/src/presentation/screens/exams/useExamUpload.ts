@@ -1,7 +1,7 @@
 // Hook do UPLOAD de exame (Inc.6) — invólucro FINO: liga o reducer puro (`uploadMachine`) à orquestração pura
 // (`uploadController`), injetando as PORTAS reais (picker nativo + `apiClient.exams` + telemetria). FRONTEIRA
 // Inc.1: nenhum Supabase direto — tudo via `apiClient`. Toda a lógica já é testada nos módulos puros.
-import { useReducer, useCallback } from 'react'
+import { useReducer, useCallback, useEffect, useRef } from 'react'
 import { DEFAULT_UPLOAD_CONSTRAINTS } from '@sintera/api-client'
 import { noopObservability } from '@sintera/core'
 import { apiClient } from '../../../infrastructure/apiClient'
@@ -19,6 +19,17 @@ const deps: UploadDeps = {
 
 export function useExamUpload() {
   const [state, dispatch] = useReducer(uploadReducer, initialUploadState)
+  const analyzedRef = useRef(false)
+
+  // Ao concluir (createExam ok), dispara a extração — PONTE TRANSITÓRIA (ADR-020): reusa a rota /analyze da Web.
+  // Fire-and-forget: não bloqueia o "Concluído"; o status (pending→processing→processed) aparece no refresh da
+  // lista. Falha na análise NÃO reverte o upload (o documento já está salvo e visível).
+  useEffect(() => {
+    if (state.phase === 'done' && state.examId && !analyzedRef.current) {
+      analyzedRef.current = true
+      void apiClient.exams.analyzeExam(state.examId)
+    }
+  }, [state.phase, state.examId])
 
   const pick = useCallback((source: 'document' | 'camera') => {
     void startUpload(source, {}, deps, dispatch)

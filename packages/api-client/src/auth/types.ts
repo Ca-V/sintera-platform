@@ -16,6 +16,8 @@ export interface ApiClientConfig {
   url: string
   key: string
   storage: StorageAdapter
+  /** URL base da Web para rotas de API reusadas — PONTE TRANSITÓRIA (ADR-020), ex.: análise de exames. Opcional. */
+  webBaseUrl?: string
   options?: ApiClientOptions
 }
 

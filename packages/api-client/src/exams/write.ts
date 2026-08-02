@@ -50,4 +50,7 @@ export interface ExamsWriteApi {
   uploadExam(file: { uri: string; mimeType: string; sizeBytes: number }, signal?: AbortSignal): Promise<{ data: UploadResult | null; error: Error | null }>
   /** Persiste os metadados do exame apontando para o arquivo enviado. */
   createExam(input: CreateExamInput, signal?: AbortSignal): Promise<{ data: { id: string } | null; error: Error | null }>
+  /** Dispara a extração/análise do exame. PONTE TRANSITÓRIA (ADR-020): reusa a rota `/analyze` da Web (regra
+   *  ÚNICA de extração) por Bearer; alvo pós-Onda-1 = camada compartilhada. O status é acompanhado pela lista. */
+  analyzeExam(id: string): Promise<{ error: Error | null }>
 }

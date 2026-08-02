@@ -16,4 +16,6 @@ export const apiClient: ApiClient = createApiClient({
   url,
   key,
   storage: secureStoreAdapter,
+  // PONTE TRANSITÓRIA (ADR-020): URL da Web p/ reusar a rota /analyze (extração). Ausente → análise indisponível.
+  webBaseUrl: process.env.EXPO_PUBLIC_WEB_URL,
 })
