@@ -44,6 +44,22 @@ Contratos versionados: [API_CONTRACTS.md](../API_CONTRACTS.md). Evolução funci
 - **Custo:** pequena sobrecarga documental por incremento (investimento de continuidade — ADR-012). **O
   arcabouço está fechado — evitar novos artefatos de governança sem necessidade concreta; foco em execução.**
 
+## Cadência operacional — desenvolvimento contínuo + homologação humana mínima (fundadora 2026-07-31)
+**Modelo permanente.** A participação humana deixa de ser "testar cada etapa" e passa a ser **aprovar só o que
+exige julgamento humano ou dispositivo real**. O desenvolvimento **não para** para esperar homologação.
+- **Automatizar tudo o que for possível.** Cada incremento chega já com **typecheck · testes unitários · testes
+  de integração · CI · build** aprovados (a qualidade é garantida por automação, não por revisão passo a passo).
+- **Homologação humana = spot-check de 2–5 min**, restrito ao que **nenhuma automação alcança**: recursos
+  **nativos** (câmera, picker, biometria, push, gestos) e **comportamento em device** (upload real, render).
+- **Fluxo contínuo:** (1) implemento o incremento completo → (2) rodo toda a validação automática → (3) **enquanto
+  o build gera / aguarda spot-check, adianto o próximo incremento** no que for permitido (contratos · lógica pura ·
+  testes · abstrações · componentes) **sem alterar o binário em teste nem violar gates** → (4) no device, você faz
+  o spot-check curto → (5) passou = Aceito, e a esteira segue imediatamente.
+- **Relatório:** um **resumo consolidado por incremento** + o pedido de spot-check — não passo a passo. Commits/
+  typecheck/CI ficam no repositório para auditoria, fora do caminho da fundadora.
+- **Gates preservados:** Homologado/Aceito ainda exigem device; escalonamento (contrato/arquitetura/infra/
+  segurança/regulatório) ainda para. Os gates **filtram**, não interrompem o ritmo.
+
 ## Exceções
 **Antecipação restrita** (planejar/implementar antes do aceite do anterior) só quando **simultaneamente**:
 UI-independente · navegação-independente · independente da homologação anterior · totalmente test-verificável
