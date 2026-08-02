@@ -39,14 +39,13 @@ export async function POST(
 ) {
   const { id: examId } = await params
   // Auth COMPARTILHADA (Cookie=Web · Bearer=Mobile) — ponte transitória ADR-020; regra de negócio inalterada.
-  const supabase = await getAuthedSupabase(request)
+  const { supabase, user } = await getAuthedSupabase(request)
 
   // 1. Auth
-  const { data: authData, error: authErr } = await supabase.auth.getUser()
-  if (authErr || !authData.user) {
+  if (!user) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
   }
-  const userId = authData.user.id
+  const userId = user.id
 
   // 2. Ownership + busca file_url e status anterior (para preservar 'processed' em caso de falha)
   const { data: exam } = await supabase
