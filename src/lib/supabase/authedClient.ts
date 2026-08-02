@@ -39,3 +39,4 @@ export async function getAuthedSupabase(
 }
 
 // Deploy de produção: camada de auth compartilhada (ADR-020). Ver RISK_REGISTER R-010.
+// (deploy de produção acionado exclusivamente por main — sem dedupe cross-branch)
