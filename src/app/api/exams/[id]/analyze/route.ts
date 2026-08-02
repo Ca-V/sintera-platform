@@ -2,7 +2,7 @@
 // URLs assinadas existem apenas em memória, nunca são persistidas.
 // Reprocessamento: replace_biomarkers() — atômico via RPC (DELETE + INSERT em transação).
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { getAuthedSupabase } from '@/lib/supabase/authedClient'
 import { extractBiomarkers, isGatewayError } from '@/lib/ai/gateway'
 import { extractTextFromPdf, filterRelevantPages } from '@/lib/pdf/extractor'
 import { loadCatalogIndex, resolveBiomarker } from '@/lib/ai/insights/resolver'
@@ -19,18 +19,18 @@ const ERROR_MESSAGES: Record<string, string> = {
 const EXTRACTION_SCHEMA_VERSION = 2
 
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id: examId } = await params
-  const supabase = await createClient()
+  // Auth COMPARTILHADA (Cookie=Web · Bearer=Mobile) — ponte transitória ADR-020; regra de negócio inalterada.
+  const { supabase, user } = await getAuthedSupabase(request)
 
   // 1. Auth
-  const { data: authData, error: authErr } = await supabase.auth.getUser()
-  if (authErr || !authData.user) {
+  if (!user) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
   }
-  const userId = authData.user.id
+  const userId = user.id
 
   // 2. Ownership + busca file_url e status anterior (para preservar 'processed' em caso de falha)
   const { data: exam } = await supabase
