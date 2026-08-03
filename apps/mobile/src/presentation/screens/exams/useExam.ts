@@ -48,6 +48,17 @@ export function useExam(id: string) {
     return () => clearTimeout(t)
   }, [state.data, load])
 
+  // Auto-processar exame PENDENTE ao abrir (paridade com a Web) — recupera órfãos cujo disparo de extração não
+  // ocorreu (ex.: enviados antes da ponte). Uma vez; o servidor deduplica (409 ALREADY_PROCESSING se já rodando).
+  const autoRef = useRef(false)
+  useEffect(() => {
+    if (state.data?.status === 'pending' && !autoRef.current) {
+      autoRef.current = true
+      void apiClient.exams.analyzeExam(id)
+      dispatch({ type: 'SET', data: { ...state.data, status: 'processing' } })
+    }
+  }, [state.data, id])
+
   // Reprocessar (recuperação de falha). Otimista: marca 'processing' local → o polling assume e busca o real.
   const reanalyze = useCallback(() => {
     void apiClient.exams.analyzeExam(id)
