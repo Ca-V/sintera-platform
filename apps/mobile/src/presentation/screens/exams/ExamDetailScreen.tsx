@@ -1,12 +1,13 @@
 // Detalhe do Exame (Inc.5) — COMPOSIÇÃO de primitivos DS + `useExam` (sem rede/domínio aqui). FRONTEIRA
 // REG-001: exibe os campos centrais + leva ao DOCUMENTO ORIGINAL (`file_url`, fonte da verdade). NUNCA
 // resultado interpretado/diagnóstico. Read-only.
-import { ScrollView, View, ActivityIndicator, Linking, StyleSheet } from 'react-native'
+import { ScrollView, View, ActivityIndicator, Linking, Alert, StyleSheet } from 'react-native'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import { Button, FieldRow, Text } from '../../primitives'
 import { useTheme } from '../../theme'
+import { featureFlags } from '../../../infrastructure/featureFlags'
 import type { DocumentosStackParamList } from '../../navigation/types'
 import { useExam } from './useExam'
 import { examStatusLabel, isExamFailed } from './examStatus'
@@ -19,10 +20,29 @@ function formatDate(iso: string | null): string {
   return y && m && d ? `${d}/${m}/${y}` : iso
 }
 
-export function ExamDetailScreen({ route }: Props) {
+export function ExamDetailScreen({ route, navigation }: Props) {
   const t = useTheme()
   const insets = useSafeAreaInsets()
   const p = useExam(route.params.id)
+
+  // Exclusão pelo dono (gated — MOBILE-030): confirmação irreversível; sucesso volta à lista (que re-busca ao focar).
+  const onDelete = () => {
+    Alert.alert('Excluir exame', 'Esta ação é irreversível. O documento e os dados extraídos serão apagados.', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Excluir',
+        style: 'destructive',
+        onPress: async () => {
+          const { error } = await p.remove()
+          if (error) {
+            Alert.alert('Não foi possível excluir', 'Tente novamente mais tarde.')
+            return
+          }
+          navigation.goBack()
+        },
+      },
+    ])
+  }
 
   if (p.phase === 'idle' || p.phase === 'loading') {
     return (
@@ -99,6 +119,10 @@ export function ExamDetailScreen({ route }: Props) {
       ) : (
         <Text spec={text(t, { role: 'bodySmall', tone: 'muted' })}>Documento original não disponível.</Text>
       )}
+
+      {featureFlags.examsDelete ? (
+        <Button label="Excluir exame" variant="secondary" onPress={onDelete} />
+      ) : null}
 
       <Text spec={text(t, { role: 'caption', tone: 'faint' })} style={{ marginTop: 8 }}>
         O documento original é a fonte da verdade. A SINTERA organiza e dá acesso — não interpreta resultados

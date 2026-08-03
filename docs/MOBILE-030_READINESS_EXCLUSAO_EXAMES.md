@@ -20,12 +20,19 @@ apagam exames. É uma lacuna, não um bug do Mobile.
    — mesmo padrão owner-scoped das existentes. Sem ela, `deleteExam` retorna erro (RLS bloqueia). *(MCP `apply_migration`.)*
 2. ✅ **FEITO — `api-client` `exams.deleteExam(id)`** (`exams/delete.ts`): remove o arquivo do Storage (best-effort,
    via `storagePathFromUrl`) + `delete().eq('id', id)` (cascata FK cuida do resto). Wired no `ApiClient`. +testes.
-3. ⏸️ **AGUARDA (1) — botão "Excluir exame"** no `ExamDetailScreen` + confirmação: não é adicionado enquanto a RLS
-   não existir (evita um botão que falharia). Ao aprovar a RLS: migration → botão → build → homologação.
+3. ✅ **FEITO (gated) — botão "Excluir exame"** no `ExamDetailScreen` + confirmação irreversível (`Alert`) +
+   `useExam.remove()`. Fica **atrás de flag** `featureFlags.examsDelete` (`EXPO_PUBLIC_EXAMS_DELETE_ENABLED`),
+   **default DESLIGADO** — não expõe um botão que falharia sem a RLS. Sucesso → volta à lista.
 4. ✅ **FEITO — testes** (`storagePathFromUrl` + guarda de sessão); typecheck + suíte verdes.
 
-> **Resumo:** tudo que **não depende de infra compartilhada** está implementado. Falta só a **migration RLS**
-> (D-DEL-1) e o **botão** (que só faz sentido depois da RLS). Assim que você aprovar, é migration + botão + 1 build.
+## 3b. Runbook de ativação (quando abrir a janela de infra — 1 passo de infra + 1 build)
+1. **Migration RLS** (MCP `apply_migration`): `create policy exams_delete on public.exams for delete to public
+   using (auth.uid() = user_id);`
+2. **Ligar o flag:** `eas env:set --environment preview EXPO_PUBLIC_EXAMS_DELETE_ENABLED true` (plaintext).
+3. **Rebuild** (o botão aparece e a exclusão fica **imediatamente operacional**) → homologar.
+
+> **Resumo:** TODO o código está pronto (api-client + UI + testes). Falta só a **política RLS** (infra compartilhada,
+> isolada para a janela apropriada). Ativar = migration + flag + build. Nada mais bloqueia.
 
 ## 4. Impacto / risco
 - **LGPD-positivo:** a pessoa passa a apagar o **próprio** dado (direito de eliminação). RLS confina ao dono.

@@ -63,7 +63,11 @@ export function useExam(id: string) {
     }
   }, [id, state.data])
 
+  // Exclusão (mecanismo do próprio dono). Requer política RLS de DELETE (isolada — MOBILE-030); a UI que a
+  // aciona fica atrás de flag até a RLS existir. Retorna { error } para a tela decidir (voltar / avisar).
+  const remove = useCallback(() => apiClient.exams.deleteExam(id), [id])
+
   const retry = useCallback(() => load(false), [load])
 
-  return { phase: state.phase, exam: state.data, error: state.error, retry, reanalyze }
+  return { phase: state.phase, exam: state.data, error: state.error, retry, reanalyze, remove }
 }
