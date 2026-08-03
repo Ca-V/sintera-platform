@@ -32,6 +32,22 @@ Expo Document Picker · Expo Image Picker · **permissão de câmera** · leitur
 Android) · **upload ao Storage** · **RLS** (só a própria pasta) · atualização do Histórico. Se algo falhar,
 **anotar o passo + a mensagem** (e print) — provável ajuste pontual (é a 1ª integração nativa/Storage).
 
+## 4b. Extração (ponte ADR-020) + atualização de status — validado 2026-08-02/03
+Após o upload, o Mobile dispara a extração reusando a rota `/analyze` da Web (produção `sinteramais.com.br`), via
+`getAuthedSupabase` (Bearer). Fluxo esperado no aparelho:
+- Exame entra na lista como **pendente** → **"Processando…"** → em segundos, **nomeado + data + emissor** (`processed`).
+- A lista atualiza **sozinha** enquanto processa (polling a cada 4 s; build `c56eda78`) — sem trocar de aba.
+- **Escopo (universal):** a extração ATUAL é orientada a **laudos laboratoriais** (biomarcadores); exames complexos
+  não-lab (Pentacam/OCT/ECG) ainda **não extraem dados** — é a evolução da extração universal (trilha UCDA/CEF),
+  fora da Onda 1. Testar o fluxo com **laudo laboratorial**.
+- **Evidência de banco (02/08→03/08):** `e29daf37` "Exames laboratoriais" → `processed`, `exam_date=2023-12-16`,
+  2 biomarcadores. Ponte funcional ponta a ponta.
+
+## 4c. Lacuna conhecida — exclusão de exames (decisão pendente)
+`exams` não tem política RLS de DELETE (só insert/select/update) → nem Web nem Mobile apagam. Habilitar exclusão
+pelo dono = migration (RLS `auth.uid()=user_id` + cascata biomarkers/logs + Storage) + botão. **Infra/segurança/
+LGPD → decisão da fundadora** (recomendado: habilitar, é LGPD-positivo). Ver Readiness [MOBILE-030](MOBILE-030_READINESS_EXCLUSAO_EXAMES.md).
+
 ## 5. Critério de aprovação
 U1–U4 + U9–U11 **PASS**; U5–U8 com o comportamento esperado (bloqueio/erro acionável, sem crash, sem duplicação).
 **Sem regressão** dos Inc.1–5. Fronteira REG-001 mantida.
