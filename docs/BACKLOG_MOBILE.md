@@ -38,6 +38,11 @@
 3 Home Shell (homologação pendente) · **4 Perfil** ([MOBILE-016](MOBILE-016_PLANEJAMENTO_INCREMENTO4_PERFIL.md), planejado) · 5 Histórico de Exames · 6 Upload · 7 Registro Manual · 8 RegistrationHub · 9 Composição Corporal · 10 Agenda · 11 Insights.
 
 ## ⏸️ Adiados por decisão (não antecipar)
+- **[Exames · pós-aceite] Extrair `usePollWhile`** — o polling é duplicado (quase idêntico) entre `useExamsList` e
+  `useExam`. Classificado **B** (só reduz duplicação; mexe em efeitos do React / comportamento de sincronização →
+  risco de regressão sutil pré-homologação). Fazer com calma **após o aceite do domínio de Exames** (fundadora 2026-08-03).
+- **[Exames · pós-aceite / infra] Política RLS de DELETE** em `exams` + ligar flag `EXPO_PUBLIC_EXAMS_DELETE_ENABLED`
+  → ativa a exclusão pelo dono (código já pronto — [MOBILE-030](MOBILE-030_READINESS_EXCLUSAO_EXAMES.md)). Janela de infra.
 - Edição/upload de **avatar** (Storage/permissões) — incremento próprio ([MOBILE-016 §2.2](MOBILE-016_PLANEJAMENTO_INCREMENTO4_PERFIL.md)).
 - **Offline-first** de gravação (fila/sync) — onda futura.
 - Deep linking · notificações · analytics — fora do escopo atual.
