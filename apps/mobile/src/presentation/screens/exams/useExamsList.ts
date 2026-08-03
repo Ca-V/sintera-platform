@@ -1,17 +1,19 @@
 // Hook da LISTA de exames (Inc.5/6). Reducer de carga + `apiClient.exams.listExams` (FRONTEIRA Inc.1). Read-only.
 // `exams = []` = sem exames (estado vazio, não erro). Re-busca ao FOCAR (spinner no 1º; refresh silencioso nos
-// refocos, mantendo dados se o refresh falhar) e faz POLLING enquanto algum exame processa (status atualiza sozinho).
-import { useReducer, useCallback, useRef, useEffect } from 'react'
+// refocos, mantendo dados se o refresh falhar), POLLING enquanto algum exame processa, e PUXAR-PARA-ATUALIZAR
+// (refresh manual confiável — a extração é server-side e pode levar dezenas de segundos).
+import { useReducer, useCallback, useRef, useEffect, useState } from 'react'
 import { useFocusEffect } from '@react-navigation/native'
 import type { ExamDTO } from '@sintera/api-client'
 import { apiClient } from '../../../infrastructure/apiClient'
 import { loadReducer, initialLoadState, loadErrorMessage } from './loadMachine'
 
 const LIST_ERROR = 'Não foi possível carregar seus exames. Tente novamente.'
-const MAX_POLLS = 20 // ~80 s de teto
+const MAX_POLLS = 45 // ~3 min de teto — cobre extrações lentas (observado: até ~53 s + overhead)
 
 export function useExamsList() {
   const [state, dispatch] = useReducer(loadReducer<ExamDTO[]>, initialLoadState<ExamDTO[]>())
+  const [refreshing, setRefreshing] = useState(false)
   const hasData = useRef(false)
   hasData.current = state.data !== null
 
@@ -33,6 +35,19 @@ export function useExamsList() {
   // Ao FOCAR: sem dados → spinner; com dados → refresh silencioso. Cobre o 1º load e os refocos.
   useFocusEffect(useCallback(() => load(hasData.current), [load]))
 
+  // Puxar-para-atualizar: refresh manual (indicador próprio; mantém a lista se falhar).
+  const refresh = useCallback(async () => {
+    setRefreshing(true)
+    try {
+      const data = await apiClient.exams.listExams()
+      dispatch({ type: 'SET', data })
+    } catch {
+      /* mantém a lista atual */
+    } finally {
+      setRefreshing(false)
+    }
+  }, [])
+
   // Polling enquanto algum exame está processando.
   const pollsRef = useRef(0)
   useEffect(() => {
@@ -51,5 +66,5 @@ export function useExamsList() {
 
   const retry = useCallback(() => load(false), [load])
 
-  return { phase: state.phase, exams: state.data, error: state.error, retry }
+  return { phase: state.phase, exams: state.data, error: state.error, retry, refresh, refreshing }
 }

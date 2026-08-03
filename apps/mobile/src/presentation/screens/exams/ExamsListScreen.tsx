@@ -1,7 +1,7 @@
 // Lista de Exames (Inc.5) — COMPOSIÇÃO de primitivos DS + `useExamsList` (sem rede/domínio aqui; tudo via
 // apiClient). FRONTEIRA REG-001: exibe LISTA (título/data/emissor/status) e leva ao documento — NUNCA
 // resultado interpretado/diagnóstico/risco. Paridade com a tela de Exames da Web. Agrupada por ano.
-import { ScrollView, View, Pressable, ActivityIndicator, StyleSheet } from 'react-native'
+import { ScrollView, View, Pressable, ActivityIndicator, RefreshControl, StyleSheet } from 'react-native'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { ExamDTO } from '@sintera/api-client'
@@ -65,6 +65,7 @@ export function ExamsListScreen({ navigation }: Props) {
     <ScrollView
       style={{ backgroundColor: t.color.surface.app }}
       contentContainerStyle={[styles.content, { paddingTop: styles.content.padding + insets.top, paddingBottom: styles.content.padding + insets.bottom }]}
+      refreshControl={<RefreshControl refreshing={p.refreshing} onRefresh={p.refresh} tintColor={t.color.identity.primary} />}
     >
       <Text spec={heading(t, { level: 'page' })}>Histórico de Exames</Text>
       <Text spec={text(t, { role: 'bodySmall', tone: 'muted' })}>

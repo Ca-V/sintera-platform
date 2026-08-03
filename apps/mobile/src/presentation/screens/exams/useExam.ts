@@ -9,7 +9,7 @@ import { loadReducer, initialLoadState, loadErrorMessage } from './loadMachine'
 import { isExamProcessing } from './examStatus'
 
 const DETAIL_ERROR = 'Não foi possível carregar o exame. Tente novamente.'
-const MAX_POLLS = 20 // ~80 s de teto
+const MAX_POLLS = 45 // ~3 min de teto — cobre extrações lentas (server-side; observado até ~53 s + overhead)
 
 export function useExam(id: string) {
   const [state, dispatch] = useReducer(loadReducer<ExamDTO | null>, initialLoadState<ExamDTO | null>())
