@@ -14,14 +14,18 @@ apagam exames. É uma lacuna, não um bug do Mobile.
   dependentes automaticamente, sem lógica extra.
 - **Storage:** política `storage_exams_delete` já permite o dono apagar o próprio arquivo (`folder[1]=auth.uid()`).
 
-## 3. O que falta (plano de execução — 4 passos, ~1 build)
-1. **Migration** (única linha de política): `create policy exams_delete on public.exams for delete to public
-   using (auth.uid() = user_id);` — mesmo padrão owner-scoped das políticas existentes. *(Supabase MCP `apply_migration`.)*
-2. **api-client** `exams.deleteExam(id)`: `storage.from('exams').remove([storagePath])` (best-effort) +
-   `from('exams').delete().eq('id', id)` (a cascata cuida do resto). Convenção de escrita `{ error }`.
-3. **Mobile** — botão **"Excluir exame"** no `ExamDetailScreen` + **confirmação** (ação irreversível); ao excluir,
-   volta à lista (que já re-busca ao focar). Fronteira Inc.1 preservada (via `apiClient`).
-4. **Testes** (deleteExam: sucesso/erro/sem sessão) + typecheck + suíte + build + homologação.
+## 3. Plano de execução — estado
+1. ⛔ **PENDENTE (infra isolada — decisão D-DEL-1):** migration da política RLS:
+   `create policy exams_delete on public.exams for delete to public using (auth.uid() = user_id);`
+   — mesmo padrão owner-scoped das existentes. Sem ela, `deleteExam` retorna erro (RLS bloqueia). *(MCP `apply_migration`.)*
+2. ✅ **FEITO — `api-client` `exams.deleteExam(id)`** (`exams/delete.ts`): remove o arquivo do Storage (best-effort,
+   via `storagePathFromUrl`) + `delete().eq('id', id)` (cascata FK cuida do resto). Wired no `ApiClient`. +testes.
+3. ⏸️ **AGUARDA (1) — botão "Excluir exame"** no `ExamDetailScreen` + confirmação: não é adicionado enquanto a RLS
+   não existir (evita um botão que falharia). Ao aprovar a RLS: migration → botão → build → homologação.
+4. ✅ **FEITO — testes** (`storagePathFromUrl` + guarda de sessão); typecheck + suíte verdes.
+
+> **Resumo:** tudo que **não depende de infra compartilhada** está implementado. Falta só a **migration RLS**
+> (D-DEL-1) e o **botão** (que só faz sentido depois da RLS). Assim que você aprovar, é migration + botão + 1 build.
 
 ## 4. Impacto / risco
 - **LGPD-positivo:** a pessoa passa a apagar o **próprio** dado (direito de eliminação). RLS confina ao dono.

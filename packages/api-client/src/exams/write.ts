@@ -53,4 +53,7 @@ export interface ExamsWriteApi {
   /** Dispara a extração/análise do exame. PONTE TRANSITÓRIA (ADR-020): reusa a rota `/analyze` da Web (regra
    *  ÚNICA de extração) por Bearer; alvo pós-Onda-1 = camada compartilhada. O status é acompanhado pela lista. */
   analyzeExam(id: string): Promise<{ error: Error | null }>
+  /** Exclui o exame (arquivo + registro; cascata de FKs limpa os dependentes). LGPD-positivo. PENDÊNCIA isolada
+   *  (MOBILE-030): requer política RLS de DELETE em `exams` — sem ela, retorna erro. */
+  deleteExam(id: string, signal?: AbortSignal): Promise<{ error: Error | null }>
 }
