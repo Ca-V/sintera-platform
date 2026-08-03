@@ -7,7 +7,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import { Button, FieldRow, Text } from '../../primitives'
 import { useTheme } from '../../theme'
-import { featureFlags } from '../../../infrastructure/featureFlags'
 import type { DocumentosStackParamList } from '../../navigation/types'
 import { useExam } from './useExam'
 import { examStatusLabel, isExamFailed } from './examStatus'
@@ -115,9 +114,7 @@ export function ExamDetailScreen({ route, navigation }: Props) {
         <Text spec={text(t, { role: 'bodySmall', tone: 'muted' })}>Documento original não disponível.</Text>
       )}
 
-      {featureFlags.examsDelete ? (
-        <Button label="Excluir exame" variant="secondary" onPress={onDelete} />
-      ) : null}
+      <Button label="Excluir exame" variant="secondary" onPress={onDelete} />
 
       <Text spec={text(t, { role: 'caption', tone: 'faint' })} style={{ marginTop: 8 }}>
         O documento original é a fonte da verdade. A SINTERA organiza e dá acesso — não interpreta resultados
