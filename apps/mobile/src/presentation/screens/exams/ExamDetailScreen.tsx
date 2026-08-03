@@ -104,7 +104,7 @@ export function ExamDetailScreen({ route, navigation }: Props) {
         </FieldRow>
       ) : null}
 
-      {isExamFailed(exam.status) && exam.file_url ? (
+      {(isExamFailed(exam.status) || !exam.display_title) && exam.file_url ? (
         <Button label="Tentar processar novamente" variant="secondary" onPress={p.reanalyze} />
       ) : null}
 
