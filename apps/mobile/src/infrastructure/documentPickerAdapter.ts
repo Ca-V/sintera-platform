@@ -25,11 +25,15 @@ export const documentPicker: DocumentPickerPort = {
     if (res.canceled) return null
     const a = res.assets[0]
     if (!a) return null
+    // O nome do device p/ foto costuma ser IMG_xxxx ou um UUID (sem valor p/ o usuário). Usamos um nome
+    // AMIGÁVEL e genérico (com extensão válida p/ a validação/Storage); a extração define o nome real depois.
+    const mimeType = a.mimeType ?? 'image/jpeg'
+    const ext = mimeType === 'image/png' ? 'png' : mimeType === 'image/heic' ? 'heic' : 'jpg'
     return {
       uri: a.uri,
-      name: a.fileName ?? `foto-${a.assetId ?? 'exame'}.jpg`,
+      name: `Exame (foto).${ext}`,
       sizeBytes: a.fileSize ?? 0,
-      mimeType: a.mimeType ?? 'image/jpeg',
+      mimeType,
     }
   },
 }

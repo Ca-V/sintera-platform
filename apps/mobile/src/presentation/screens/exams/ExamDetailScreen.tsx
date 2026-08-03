@@ -9,6 +9,7 @@ import { Button, FieldRow, Text } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { DocumentosStackParamList } from '../../navigation/types'
 import { useExam } from './useExam'
+import { examStatusLabel, isExamFailed } from './examStatus'
 
 type Props = NativeStackScreenProps<DocumentosStackParamList, 'ExamDetail'>
 
@@ -58,7 +59,7 @@ export function ExamDetailScreen({ route }: Props) {
       contentContainerStyle={[styles.content, { paddingTop: styles.content.padding + insets.top, paddingBottom: styles.content.padding + insets.bottom }]}
     >
       <FieldRow label="Exame">
-        <Text spec={text(t, { role: 'bodyStrong' })}>{exam.display_title ?? '—'}</Text>
+        <Text spec={text(t, { role: 'bodyStrong' })}>{exam.display_title ?? exam.type ?? '—'}</Text>
       </FieldRow>
       <FieldRow label="Data">
         <Text spec={text(t, { role: 'body' })}>{formatDate(exam.exam_date)}</Text>
@@ -78,10 +79,19 @@ export function ExamDetailScreen({ route }: Props) {
           <Text spec={text(t, { role: 'body' })}>{exam.clinical_family}</Text>
         </FieldRow>
       ) : null}
-      {exam.status ? (
+      {examStatusLabel(exam.status) ? (
         <FieldRow label="Situação">
-          <Text spec={text(t, { role: 'body', tone: 'muted' })}>{exam.status}</Text>
+          <Text
+            spec={text(t, { role: 'body', tone: 'muted' })}
+            style={isExamFailed(exam.status) ? { color: t.color.badge.error.text } : undefined}
+          >
+            {examStatusLabel(exam.status)}
+          </Text>
         </FieldRow>
+      ) : null}
+
+      {isExamFailed(exam.status) ? (
+        <Button label="Tentar processar novamente" variant="secondary" onPress={p.reanalyze} />
       ) : null}
 
       {exam.file_url ? (

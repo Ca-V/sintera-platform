@@ -10,6 +10,7 @@ import { Button, Text } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { DocumentosStackParamList } from '../../navigation/types'
 import { useExamsList } from './useExamsList'
+import { examStatusLabel, isExamFailed } from './examStatus'
 
 type Props = NativeStackScreenProps<DocumentosStackParamList, 'ExamsList'>
 
@@ -97,10 +98,13 @@ export function ExamsListScreen({ navigation }: Props) {
                   {formatDate(e.exam_date)}
                   {e.issuer ? ` · ${e.issuer}` : ''}
                 </Text>
-                {e.status === 'pending' || e.status === 'processing' ? (
-                  <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Processando…</Text>
-                ) : e.status ? (
-                  <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{e.status}</Text>
+                {examStatusLabel(e.status) ? (
+                  <Text
+                    spec={text(t, { role: 'caption', tone: 'faint' })}
+                    style={isExamFailed(e.status) ? { color: t.color.badge.error.text } : undefined}
+                  >
+                    {examStatusLabel(e.status)}
+                  </Text>
                 ) : null}
               </Pressable>
             ))}
