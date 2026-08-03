@@ -11,14 +11,9 @@ import { featureFlags } from '../../../infrastructure/featureFlags'
 import type { DocumentosStackParamList } from '../../navigation/types'
 import { useExam } from './useExam'
 import { examStatusLabel, isExamFailed } from './examStatus'
+import { formatExamDate } from './examFormat'
 
 type Props = NativeStackScreenProps<DocumentosStackParamList, 'ExamDetail'>
-
-function formatDate(iso: string | null): string {
-  if (!iso) return '—'
-  const [y, m, d] = iso.slice(0, 10).split('-')
-  return y && m && d ? `${d}/${m}/${y}` : iso
-}
 
 export function ExamDetailScreen({ route, navigation }: Props) {
   const t = useTheme()
@@ -82,7 +77,7 @@ export function ExamDetailScreen({ route, navigation }: Props) {
         <Text spec={text(t, { role: 'bodyStrong' })}>{exam.display_title ?? exam.type ?? '—'}</Text>
       </FieldRow>
       <FieldRow label="Data">
-        <Text spec={text(t, { role: 'body' })}>{formatDate(exam.exam_date)}</Text>
+        <Text spec={text(t, { role: 'body' })}>{formatExamDate(exam.exam_date)}</Text>
       </FieldRow>
       {exam.issuer ? (
         <FieldRow label="Emissor">

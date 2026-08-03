@@ -1,24 +1,16 @@
-// Hook da LISTA de exames (Inc.5). Encapsula o reducer de carga + `apiClient.exams.listExams` (FRONTEIRA
-// Inc.1: nenhum Supabase direto). Read-only. `exams = []` = usuário sem exames (estado vazio, não erro).
-//
-// Inc.6: RE-BUSCA ao FOCAR a tela (após upload, troca de aba, voltar do detalhe) para a lista ficar sempre
-// fresca. O 1º foco (sem dados) carrega com spinner; refocos fazem refresh SILENCIOSO (evento SET) — e se o
-// refresh falhar com dados já em tela, MANTÉM os dados (não "some" a lista). Corrige o some/reaparece observado.
-//
-// POLLING (Inc.6): enquanto houver exame em `pending`/`processing` (a extração roda no servidor após o upload),
-// re-busca em segundo plano a cada 4 s para o status atualizar sozinho (pending→processing→processed), como a
-// Web. Para ao estabilizar; teto de segurança para não pollar indefinidamente se algo ficar preso.
-import { useReducer, useCallback, useRef, useEffect } from 'react'
+// Hook da LISTA de exames (Inc.5/6). Reducer de carga + `apiClient.exams.listExams` (FRONTEIRA Inc.1). Read-only.
+// `exams = []` = sem exames (estado vazio, não erro). Re-busca ao FOCAR (spinner no 1º; refresh silencioso nos
+// refocos, mantendo dados se o refresh falhar) e faz POLLING enquanto algum exame processa. As peças de carga/
+// polling/erro são compartilhadas (loadMachine · usePollWhile) — sem duplicação com o hook de detalhe.
+import { useReducer, useCallback, useRef } from 'react'
 import { useFocusEffect } from '@react-navigation/native'
 import type { ExamDTO } from '@sintera/api-client'
 import { apiClient } from '../../../infrastructure/apiClient'
-import { loadReducer, initialLoadState } from './loadMachine'
+import { loadReducer, initialLoadState, loadErrorMessage } from './loadMachine'
+import { usePollWhile } from './usePollWhile'
+import { isExamProcessing } from './examStatus'
 
 const LIST_ERROR = 'Não foi possível carregar seus exames. Tente novamente.'
-
-function messageFor(e: unknown, fallback: string): string {
-  return e instanceof Error && e.message ? e.message : fallback
-}
 
 export function useExamsList() {
   const [state, dispatch] = useReducer(loadReducer<ExamDTO[]>, initialLoadState<ExamDTO[]>())
@@ -34,31 +26,18 @@ export function useExamsList() {
       .then((data) => dispatch(silent ? { type: 'SET', data } : { type: 'SUCCESS', data }))
       .catch((e) => {
         if (controller.signal.aborted) return
-        if (silent && hasData.current) return // refresh falhou mas já há lista → mantém (não some)
-        dispatch({ type: 'FAILURE', error: messageFor(e, LIST_ERROR) })
+        if (silent && hasData.current) return // refresh falhou com lista em tela → mantém (não some)
+        dispatch({ type: 'FAILURE', error: loadErrorMessage(e, LIST_ERROR) })
       })
     return () => controller.abort()
   }, [])
 
-  // Ao FOCAR: sem dados → carga com spinner; com dados → refresh silencioso. Cobre o 1º load e os refocos.
+  // Ao FOCAR: sem dados → spinner; com dados → refresh silencioso. Cobre o 1º load e os refocos.
   useFocusEffect(useCallback(() => load(hasData.current), [load]))
 
-  // Polling enquanto algum exame está em processamento (atualiza o status sozinho, sem piscar).
-  const pollsRef = useRef(0)
-  const MAX_POLLS = 20 // ~80 s de teto; evita polling infinito se o servidor deixar preso em 'processing'
-  useEffect(() => {
-    const active = (state.data ?? []).some((e) => e.status === 'pending' || e.status === 'processing')
-    if (!active) {
-      pollsRef.current = 0
-      return
-    }
-    if (pollsRef.current >= MAX_POLLS) return
-    const id = setTimeout(() => {
-      pollsRef.current += 1
-      load(true)
-    }, 4000)
-    return () => clearTimeout(id)
-  }, [state.data, load])
+  // Atualiza sozinho enquanto algum exame está processando.
+  const poll = useCallback(() => load(true), [load])
+  usePollWhile((state.data ?? []).some((e) => isExamProcessing(e.status)), poll, state.data)
 
   const retry = useCallback(() => load(false), [load])
 

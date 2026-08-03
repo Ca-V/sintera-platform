@@ -11,6 +11,7 @@ import { useTheme } from '../../theme'
 import type { DocumentosStackParamList } from '../../navigation/types'
 import { useExamsList } from './useExamsList'
 import { examStatusLabel, isExamFailed } from './examStatus'
+import { formatExamDate } from './examFormat'
 
 type Props = NativeStackScreenProps<DocumentosStackParamList, 'ExamsList'>
 
@@ -30,12 +31,6 @@ function groupByYear(exams: readonly ExamDTO[]): { year: string; items: ExamDTO[
       return b[0].localeCompare(a[0])
     })
     .map(([year, items]) => ({ year, items }))
-}
-
-function formatDate(iso: string | null): string {
-  if (!iso) return 'Sem data'
-  const [y, m, d] = iso.slice(0, 10).split('-')
-  return y && m && d ? `${d}/${m}/${y}` : iso
 }
 
 export function ExamsListScreen({ navigation }: Props) {
@@ -95,7 +90,7 @@ export function ExamsListScreen({ navigation }: Props) {
               >
                 <Text spec={text(t, { role: 'bodyStrong' })}>{e.display_title ?? e.type ?? 'Exame'}</Text>
                 <Text spec={text(t, { role: 'caption', tone: 'muted' })}>
-                  {formatDate(e.exam_date)}
+                  {formatExamDate(e.exam_date)}
                   {e.issuer ? ` · ${e.issuer}` : ''}
                 </Text>
                 {examStatusLabel(e.status) ? (

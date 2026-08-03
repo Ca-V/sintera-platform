@@ -23,8 +23,3 @@ export function uploadPhaseLabel(phase: UploadPhase): string {
 export function isUploadBusy(phase: UploadPhase): boolean {
   return phase === 'selecting' || phase === 'uploading' || phase === 'processing'
 }
-
-/** Terminal de sucesso (para a tela decidir mostrar "Concluído"/navegar). */
-export function isUploadDone(phase: UploadPhase): boolean {
-  return phase === 'done'
-}

@@ -24,6 +24,12 @@ export function initialLoadState<T>(): LoadState<T> {
   return { phase: 'idle', data: null, error: null }
 }
 
+/** Mensagem de erro para o estado `error`: usa a do Error quando houver, senão o fallback. Fonte ÚNICA (antes
+ *  duplicada nos hooks de lista/detalhe). */
+export function loadErrorMessage(e: unknown, fallback: string): string {
+  return e instanceof Error && e.message ? e.message : fallback
+}
+
 /** Reducer puro e determinístico. Eventos inválidos para a fase atual são ignorados (retorna o mesmo estado). */
 export function loadReducer<T>(state: LoadState<T>, event: LoadEvent<T>): LoadState<T> {
   // SET aplica dados frescos a partir de QUALQUER fase (refresh silencioso ao refocar a tela) → 'ready'.
