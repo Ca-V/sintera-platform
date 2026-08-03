@@ -1,15 +1,15 @@
 // Hook do DETALHE de um exame (Inc.5/6). Reducer de carga + `apiClient.exams` (FRONTEIRA Inc.1). `exam = null` na
-// fase `ready` = inexistente/de outro usuário (RLS) → tela mostra "não encontrado". Compartilha carga/polling/erro
-// com o hook de lista (loadMachine · usePollWhile · loadErrorMessage). Inc.6: POLLING enquanto processa +
-// REPROCESSAR (`reanalyze`, recuperação de falha) + EXCLUIR (`remove`, gated na UI — MOBILE-030).
+// fase `ready` = inexistente/de outro usuário (RLS) → tela mostra "não encontrado". Inc.6: POLLING enquanto
+// processa (status atualiza sozinho) + REPROCESSAR (`reanalyze`, recuperação de falha) + EXCLUIR (`remove`,
+// gated na UI — MOBILE-030).
 import { useReducer, useEffect, useCallback, useRef } from 'react'
 import type { ExamDTO } from '@sintera/api-client'
 import { apiClient } from '../../../infrastructure/apiClient'
 import { loadReducer, initialLoadState, loadErrorMessage } from './loadMachine'
-import { usePollWhile } from './usePollWhile'
 import { isExamProcessing } from './examStatus'
 
 const DETAIL_ERROR = 'Não foi possível carregar o exame. Tente novamente.'
+const MAX_POLLS = 20 // ~80 s de teto
 
 export function useExam(id: string) {
   const [state, dispatch] = useReducer(loadReducer<ExamDTO | null>, initialLoadState<ExamDTO | null>())
@@ -33,9 +33,20 @@ export function useExam(id: string) {
   // Carga inicial + quando o id muda (com spinner).
   useEffect(() => load(false), [load])
 
-  // Atualiza sozinho enquanto o exame processa.
-  const poll = useCallback(() => load(true), [load])
-  usePollWhile(isExamProcessing(state.data?.status), poll, state.data)
+  // Polling enquanto o exame processa.
+  const pollsRef = useRef(0)
+  useEffect(() => {
+    if (!isExamProcessing(state.data?.status)) {
+      pollsRef.current = 0
+      return
+    }
+    if (pollsRef.current >= MAX_POLLS) return
+    const t = setTimeout(() => {
+      pollsRef.current += 1
+      load(true)
+    }, 4000)
+    return () => clearTimeout(t)
+  }, [state.data, load])
 
   // Reprocessar (recuperação de falha). Otimista: marca 'processing' local → o polling assume e busca o real.
   const reanalyze = useCallback(() => {
