@@ -8,7 +8,7 @@ import { extractTextFromPdf, filterRelevantPages } from '@/lib/pdf/extractor'
 import { loadCatalogIndex, resolveBiomarker } from '@/lib/ai/insights/resolver'
 import { classifyExamDocument, deriveDisplayTitle, withProvenance } from '@/lib/capture/document-naming'
 import { MAX_UPLOAD_MB } from '@/lib/capture/limits'
-import { extractIssuer } from '@/lib/ai/issuer'
+import { extractIssuer, extractIssuerFromImage } from '@/lib/ai/issuer'
 import { extractRequestingPhysician } from '@/lib/ai/requestingPhysician'
 import { classifyDocumentAI } from '@/lib/ai/document-classifier'
 import { representationFingerprint, isRepresentationCertified } from '@/lib/capture/reproducibility'
@@ -518,8 +518,13 @@ export async function POST(
     if (confidentStructure) {
       const displayTitle = deriveDisplayTitle(structure)
       finalUpdate.display_title = displayTitle
-      // Enriquecimento (fundadora): nome do laboratório emissor. Best-effort.
-      const issuer = await extractIssuer(examTextForIssuer)
+      // Enriquecimento (fundadora): nome do laboratório emissor. Best-effort. Texto quando há;
+      // laudo em imagem (foto/escaneado com biomarcadores) → multimodal (fecha a lacuna do caminho texto).
+      const issuer = examTextForIssuer
+        ? await extractIssuer(examTextForIssuer)
+        : isImage
+          ? await extractIssuerFromImage(pdfBuffer, filePath.endsWith('.png') ? 'image/png' : filePath.endsWith('.webp') ? 'image/webp' : 'image/jpeg')
+          : null
       if (issuer) finalUpdate.issuer = issuer
       finalUpdate.type = issuer ? withProvenance(displayTitle, { issuer }) : displayTitle
     } else if (result.biomarkers.length === 0) {
