@@ -17,10 +17,17 @@ function fmtBRL(cents: number): string {
   return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
-export function DespesasScreen() {
+export function DespesasScreen({ navigation }: Props) {
   const t = useTheme()
   const insets = useSafeAreaInsets()
   const d = useDespesas()
+
+  // Editar um lançamento de EVENTO (não-exame) → formulário de evento (na aba Acompanhamento).
+  const editEvent = (item: HealthEvent) => {
+    if (item.id.startsWith('exam:')) return
+    ;(navigation.getParent() as { navigate: (n: string, p: unknown) => void } | undefined)
+      ?.navigate('Acompanhamento', { screen: 'EventForm', params: { event: item } })
+  }
 
   if (d.phase === 'loading') {
     return (
@@ -84,9 +91,15 @@ export function DespesasScreen() {
               </View>
               <View style={{ alignItems: 'flex-end', gap: 4 }}>
                 <Text spec={text(t, { role: 'bodyStrong' })}>{fmtBRL(e.amountCents ?? 0)}</Text>
-                <Pressable onPress={() => confirmRemove(e)}>
-                  <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>Remover</Text>
-                </Pressable>
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  {!e.id.startsWith('exam:') ? (
+                    <>
+                      <Pressable onPress={() => editEvent(e)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Editar</Text></Pressable>
+                      <Pressable onPress={() => d.reopen(e)}><Text spec={text(t, { role: 'caption', tone: 'muted' })}>Reabrir</Text></Pressable>
+                    </>
+                  ) : null}
+                  <Pressable onPress={() => confirmRemove(e)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>Remover</Text></Pressable>
+                </View>
               </View>
             </View>
           ))}

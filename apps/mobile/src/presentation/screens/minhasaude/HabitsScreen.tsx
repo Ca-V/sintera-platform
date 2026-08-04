@@ -2,7 +2,7 @@
 // (Evento Assistencial vinculado 'habit', via infra única syncReminder). Reutiliza apiClient.habits + apiClient.agenda
 // + taxonomia/regra do @sintera/core. FACTUAL (REG-001).
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ScrollView, View, ActivityIndicator, RefreshControl, Pressable, Alert, StyleSheet } from 'react-native'
+import { ScrollView, View, ActivityIndicator, RefreshControl, Pressable, Alert, Linking, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import type { HabitDTO, HabitInput } from '@sintera/api-client'
@@ -13,6 +13,7 @@ import {
 import { Text, Button, Input } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
+import { documentPicker } from '../../../infrastructure/documentPickerAdapter'
 
 export function HabitsScreen() {
   const t = useTheme()
@@ -34,6 +35,9 @@ export function HabitsScreen() {
   const [goalDivisions, setGoalDivisions] = useState('')
   const [notes, setNotes] = useState('')
   const [reminderFreq, setReminderFreq] = useState<RecurrenceFrequency>('none')
+  const [planUrl, setPlanUrl] = useState<string | null>(null)
+  const [planName, setPlanName] = useState<string | null>(null)
+  const [uploadingPlan, setUploadingPlan] = useState(false)
   const [saving, setSaving] = useState(false)
 
   const load = useCallback((silent: boolean) => {
@@ -52,13 +56,23 @@ export function HabitsScreen() {
 
   function startNew() {
     setEditing(null); setCategory('atividade_fisica'); setDescription(''); setFrequency('')
-    setGoalAmount(''); setGoalUnit(''); setGoalDivisions(''); setNotes(''); setReminderFreq('none'); setOpen(true)
+    setGoalAmount(''); setGoalUnit(''); setGoalDivisions(''); setNotes(''); setReminderFreq('none')
+    setPlanUrl(null); setPlanName(null); setOpen(true)
   }
   function startEdit(h: HabitDTO) {
     setEditing(h); setCategory(h.category); setDescription(h.description); setFrequency(h.frequency ?? '')
     setGoalAmount(h.goal_amount != null ? String(h.goal_amount) : ''); setGoalUnit(h.goal_unit ?? '')
     setGoalDivisions(h.goal_divisions != null ? String(h.goal_divisions) : ''); setNotes(h.notes ?? '')
-    setReminderFreq(reminderFreqFor(h.id)); setOpen(true)
+    setReminderFreq(reminderFreqFor(h.id)); setPlanUrl(h.plan_url); setPlanName(h.plan_name); setOpen(true)
+  }
+  async function pickPlan() {
+    setUploadingPlan(true)
+    try {
+      const file = await documentPicker.pickDocument()
+      if (!file) return
+      const { data, error: err } = await apiClient.exams.uploadExam({ uri: file.uri, mimeType: file.mimeType ?? 'application/octet-stream', sizeBytes: file.sizeBytes })
+      if (!err && data) { setPlanUrl(data.url); setPlanName(file.name) }
+    } finally { setUploadingPlan(false) }
   }
 
   async function save() {
@@ -71,6 +85,7 @@ export function HabitsScreen() {
         id: editing?.id, category, description, frequency,
         goal_amount: amount != null && Number.isFinite(amount) ? amount : null,
         goal_unit: goalUnit, goal_divisions: div != null && Number.isFinite(div) && div > 0 ? div : null, notes,
+        plan_url: planUrl, plan_name: planName,
       }
       const { data, error: err } = await apiClient.habits.saveHabit(input)
       if (err) { Alert.alert('Não foi possível salvar', err.message || 'Tente novamente.'); return }
@@ -128,6 +143,7 @@ export function HabitsScreen() {
             <Input value={goalDivisions} onChangeText={setGoalDivisions} placeholder="Partes" keyboardType="number-pad" style={{ flex: 1 }} />
           </View>
           <Input value={notes} onChangeText={setNotes} placeholder="Observações…" multiline style={{ minHeight: 60, textAlignVertical: 'top' }} />
+          <Button label={planUrl ? `Plano anexado${planName ? `: ${planName}` : ''}` : 'Anexar plano (opcional)'} variant="secondary" onPress={pickPlan} loading={uploadingPlan} loadingLabel="Enviando…" />
           <Text spec={text(t, { role: 'label', tone: 'muted' })}>LEMBRETE</Text>
           <Chips options={freqOptions} value={reminderFreq} onChange={(v) => setReminderFreq(v as RecurrenceFrequency)} />
           <View style={styles.actions}>
@@ -151,6 +167,11 @@ export function HabitsScreen() {
             {habitCategoryLabel(h.category)}{h.frequency ? ` · ${h.frequency}` : ''}{habitGoalSummary(h.goal_amount, h.goal_unit, h.goal_divisions) ? ` · ${habitGoalSummary(h.goal_amount, h.goal_unit, h.goal_divisions)}` : ''}
           </Text>
           {reminderFreqFor(h.id) !== 'none' ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>🔔 {FREQUENCY_LABELS[reminderFreqFor(h.id)]}</Text> : null}
+          {h.plan_url ? (
+            <Pressable onPress={() => Linking.openURL(h.plan_url as string)}>
+              <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>{h.plan_name || 'Plano'} →</Text>
+            </Pressable>
+          ) : null}
           {h.notes ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{h.notes}</Text> : null}
           <Pressable onPress={() => remove(h)} style={{ alignSelf: 'flex-start', marginTop: 4 }}>
             <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>Excluir</Text>

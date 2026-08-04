@@ -74,10 +74,13 @@ export function EventFormScreen({ route, navigation }: Props) {
     }
     setSaving(true)
     try {
+      // Regra de negócio (paridade Web/serviço): nascer/virar "realizado" carimba completed_at (entra no
+      // Histórico/Gastos); sair de realizado limpa. completed_at é MARCADOR (as projeções usam o status).
+      const completedAt = status === 'realizado' ? (ev?.completedAt ?? new Date().toISOString()) : null
       const draft: EventDraft = {
         ...(ev ?? {}),
         type, title: title.trim(), date, time: time.trim() || null,
-        status, isReturn, source: ev?.source ?? 'manual',
+        status, completedAt, isReturn, source: ev?.source ?? 'manual',
         professionalKind: profKind || null, professionalName: profName.trim() || null,
         establishment: (isPlano ? establishment : establishment).trim() || null,
         location: location.trim() || null,
