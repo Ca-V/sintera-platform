@@ -39,3 +39,6 @@ export * from './domain/habits'
 
 // Taxonomia de Recursos de Saúde — fonte única Web↔Mobile.
 export * from './domain/resources'
+
+// Taxonomia de Medicamentos/Suplementos — fonte única Web↔Mobile.
+export * from './domain/medications'

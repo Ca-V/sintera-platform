@@ -5,6 +5,7 @@ import { MinhaSaudeMenuScreen } from '../screens/minhasaude/MinhaSaudeMenuScreen
 import { ConditionsScreen } from '../screens/minhasaude/ConditionsScreen'
 import { HabitsScreen } from '../screens/minhasaude/HabitsScreen'
 import { ResourcesScreen } from '../screens/minhasaude/ResourcesScreen'
+import { MedicationsScreen } from '../screens/minhasaude/MedicationsScreen'
 import { useTheme } from '../theme'
 import type { MinhaSaudeStackParamList } from './types'
 
@@ -25,6 +26,7 @@ export function MinhaSaudeStack() {
       <Stack.Screen name="Conditions" component={ConditionsScreen} options={{ ...detail, title: 'Condições de Saúde' }} />
       <Stack.Screen name="Habits" component={HabitsScreen} options={{ ...detail, title: 'Hábitos' }} />
       <Stack.Screen name="Resources" component={ResourcesScreen} options={{ ...detail, title: 'Recursos de Saúde' }} />
+      <Stack.Screen name="Medications" component={MedicationsScreen} options={{ ...detail, title: 'Medicamentos' }} />
     </Stack.Navigator>
   )
 }

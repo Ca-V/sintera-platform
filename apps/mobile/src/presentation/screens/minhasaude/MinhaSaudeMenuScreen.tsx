@@ -15,8 +15,8 @@ export function MinhaSaudeMenuScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets()
   const rows: readonly { label: string; onPress?: () => void }[] = [
     { label: 'Condições de Saúde', onPress: () => navigation.navigate('Conditions') },
-    { label: 'Medicamentos' },
-    { label: 'Suplementos' },
+    { label: 'Medicamentos', onPress: () => navigation.navigate('Medications', { supplements: false }) },
+    { label: 'Suplementos', onPress: () => navigation.navigate('Medications', { supplements: true }) },
     { label: 'Recursos de Saúde', onPress: () => navigation.navigate('Resources') },
     { label: 'Hábitos', onPress: () => navigation.navigate('Habits') },
     { label: 'Ciclo e Contracepção' },

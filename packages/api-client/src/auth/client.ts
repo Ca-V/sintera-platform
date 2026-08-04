@@ -23,6 +23,7 @@ import { syncLinkedReminder } from '../agenda/reminder'
 import { listConditions, saveCondition, deleteCondition } from '../conditions/conditions'
 import { listHabits, saveHabit, deleteHabit } from '../habits/habits'
 import { listResources, saveResource, deleteResource } from '../resources/resources'
+import { listMedications, saveMedication, deleteMedication } from '../medications/medications'
 
 /**
  * >>> ÚNICO ponto de `createClient()` em todo o ecossistema SINTERA. <<<
@@ -90,6 +91,11 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       listResources: (signal) => listResources(supabase, signal),
       saveResource: (input) => saveResource(supabase, input),
       deleteResource: (id) => deleteResource(supabase, id),
+    },
+    medications: {
+      listMedications: (signal) => listMedications(supabase, signal),
+      saveMedication: (input) => saveMedication(supabase, input),
+      deleteMedication: (id) => deleteMedication(supabase, id),
     },
   }
 }

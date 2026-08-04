@@ -10,6 +10,7 @@ import type { LinkedReminderOptions } from '../agenda/reminder'
 import type { ConditionDTO, ConditionInput } from '../conditions/conditions'
 import type { HabitDTO, HabitInput } from '../habits/habits'
 import type { ResourceDTO, ResourceInput } from '../resources/resources'
+import type { MedicationDTO, MedicationInput } from '../medications/medications'
 
 export type { Session, User }
 
@@ -75,6 +76,13 @@ export interface ResourcesApi {
   deleteResource(id: string): Promise<{ error: Error | null }>
 }
 
+/** Domínio Medicamentos/Suplementos (medications) — CRUD clínico + estoque + recompra. */
+export interface MedicationsApi {
+  listMedications(signal?: AbortSignal): Promise<MedicationDTO[]>
+  saveMedication(input: MedicationInput): Promise<{ data: { id: string } | null; error: Error | null }>
+  deleteMedication(id: string): Promise<{ error: Error | null }>
+}
+
 /** Domínio Condições de Saúde (health_conditions) — CRUD do estado permanente da pessoa/familiares. */
 export interface ConditionsApi {
   listConditions(signal?: AbortSignal): Promise<ConditionDTO[]>
@@ -91,4 +99,5 @@ export interface ApiClient {
   conditions: ConditionsApi
   habits: HabitsApi
   resources: ResourcesApi
+  medications: MedicationsApi
 }
