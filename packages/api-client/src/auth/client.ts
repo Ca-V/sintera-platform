@@ -16,6 +16,7 @@ import { analyzeExam } from '../exams/analyze'
 import { deleteExam } from '../exams/delete'
 import { updateExam } from '../exams/update'
 import { getExamClinicalResults } from '../exams/clinical'
+import { listExamExpenses } from '../exams/expenses'
 import { logUsageEvent } from '../events/log'
 import { listEvents, saveEvent, deleteEvent } from '../agenda/events'
 
@@ -55,6 +56,7 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       getExam: (id, signal) => getExam(supabase, id, signal),
       getExamBiomarkers: (examId, signal) => getExamBiomarkers(supabase, examId, signal),
       getExamClinicalResults: (examId, signal) => getExamClinicalResults(supabase, examId, signal),
+      listExamExpenses: (signal) => listExamExpenses(supabase, signal),
       uploadExam: (file, signal) => uploadExam(supabase, file), // storage não usa abortSignal; signal ignorado
       createExam: (input, signal) => createExam(supabase, input, signal),
       analyzeExam: (id) => analyzeExam(supabase, config.webBaseUrl, id), // ponte transitória (ADR-020)

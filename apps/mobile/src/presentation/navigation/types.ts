@@ -15,6 +15,7 @@ export type AppTabParamList = {
 export type MaisStackParamList = {
   MaisMenu: undefined
   Perfil: undefined
+  Despesas: undefined
 }
 
 /** Stack interno da aba "Documentos" (Inc.5/6): lista + detalhe + upload de exame. Só navegação. */

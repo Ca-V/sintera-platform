@@ -10,6 +10,7 @@ import Link from 'next/link'
 import { Loader2, Paperclip, Receipt, ArrowLeft, Info, Plus, X, RotateCcw, Trash2 } from 'lucide-react'
 import { useUser } from '@/context/UserContext'
 import { typeLabel, formatDateBR, type HealthEvent } from '@/lib/agenda'
+import { projectExpenses, type ExamExpenseRow } from '@sintera/core'
 import { expenseDocLabel } from '@/lib/finance/expense'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
@@ -24,22 +25,6 @@ import ConfirmDialog from '@/components/ConfirmDialog'
 
 function fmtBRL(cents: number): string {
   return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-}
-
-// FB-008: projeta um EXAME-com-valor como lançamento de despesa (o financeiro é atributo do exame, não Evento).
-// id prefixado 'exam:' distingue do evento — a exclusão limpa as colunas do exame (não apaga o exame).
-function examExpenseToEntry(e: Record<string, unknown>): HealthEvent {
-  return {
-    id: `exam:${e.id as string}`, type: 'exame', title: (e.type as string) || 'Exame', isReturn: false,
-    status: 'realizado', source: 'system', priority: null,
-    date: (e.exam_date as string) || String(e.created_at ?? '').slice(0, 10),
-    time: null, durationMin: null, reminderEnabled: false, reminderSentAt: null,
-    professionalKind: null, professionalName: null, establishment: (e.issuer as string) ?? null, location: null,
-    modality: null, preparation: null, notes: null, amountCents: (e.expense_amount_cents as number) ?? null,
-    directExpense: true, attachmentUrl: (e.expense_doc_url as string) ?? null, expenseDocType: (e.expense_doc_type as string) ?? null,
-    links: [{ type: 'exam', id: e.id as string }], outcome: null, recurrenceRule: null, seriesId: null,
-    parentEventId: null, rootEventId: null, completedAt: null,
-  }
 }
 
 export default function GastosPage() {
@@ -70,10 +55,7 @@ export default function GastosPage() {
         .select('id,type,exam_date,created_at,issuer,expense_amount_cents,expense_doc_type,expense_doc_url')
         .eq('user_id', user.id).gt('expense_amount_cents', 0)
       if (!active) return
-      const examEntries: HealthEvent[] = ((exData ?? []) as Array<Record<string, unknown>>).map(e => examExpenseToEntry(e))
-      const finNoExamLinked = fin.filter(e => !e.links?.some(l => l.type === 'exam'))
-      const merged = [...finNoExamLinked, ...examEntries]
-      const sorted = [...merged].sort((a, b) => (a.date < b.date ? 1 : -1))
+      const sorted = projectExpenses(fin, ((exData ?? []) as unknown) as ExamExpenseRow[])
       setItems(sorted)
       const years = [...new Set(sorted.map(r => Number(r.date.slice(0, 4))))].sort((a, b) => b - a)
       setYear(years[0] ?? new Date().getFullYear())

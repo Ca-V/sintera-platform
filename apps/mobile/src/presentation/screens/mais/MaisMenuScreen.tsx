@@ -19,7 +19,7 @@ export function MaisMenuScreen({ navigation }: Props) {
   // `onPress` presente = destino existe (navegável); ausente = "em breve".
   const rows: readonly { label: string; onPress?: () => void }[] = [
     { label: 'Perfil', onPress: () => navigation.navigate('Perfil') },
-    { label: 'Despesas' },
+    { label: 'Despesas', onPress: () => navigation.navigate('Despesas') },
     { label: 'Relatórios' },
     { label: 'Configurações' },
   ]

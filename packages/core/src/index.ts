@@ -25,6 +25,7 @@ export * from './domain/exams/nameMatch'
 // Financeiro puro (parsing de valor, documento fiscal) — fonte única Web↔Mobile.
 export * from './domain/finance/money'
 export * from './domain/finance/expense'
+export * from './domain/finance/expenseProjection'
 
 // Domínio Agenda / Evento Assistencial (health_events) — modelo, mapeadores, seletores PUROS. Fonte única.
 export * from './domain/agenda/event'
