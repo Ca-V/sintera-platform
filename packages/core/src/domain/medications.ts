@@ -59,3 +59,21 @@ export function estimatedRunoutDays(acquired: number | null, dailyConsumption: n
   if (acquired == null || dailyConsumption == null || dailyConsumption <= 0) return null
   return Math.max(0, Math.floor(acquired / dailyConsumption))
 }
+
+// Vocabulário de RECOMPRA compartilhado com a Web (coluna medications.repurchase_frequency guarda strings PT).
+// Evita corrupção cross-plataforma: o Mobile NÃO deve gravar o enum de recorrência genérico nessa coluna.
+// value = string PT gravada · freq = RecurrenceFrequency equivalente p/ o lembrete (Evento). null = não repetir.
+export const MED_REPURCHASE_FREQUENCIES: { value: string; label: string; freq: 'weekly' | 'biweekly' | 'monthly' | 'yearly' }[] = [
+  { value: 'semanal',   label: 'Semanal',   freq: 'weekly' },
+  { value: 'quinzenal', label: 'Quinzenal', freq: 'biweekly' },
+  { value: 'mensal',    label: 'Mensal',    freq: 'monthly' },
+  { value: 'bimestral', label: 'Bimestral', freq: 'monthly' },   // aprox. no lembrete genérico (mensal)
+  { value: 'trimestral', label: 'Trimestral', freq: 'monthly' },
+  { value: 'semestral', label: 'Semestral', freq: 'yearly' },
+  { value: 'anual',     label: 'Anual',     freq: 'yearly' },
+]
+
+/** RecurrenceFrequency do lembrete a partir do valor PT de recompra (para serializar o Evento). */
+export function repurchaseFreqToRecurrence(ptValue: string | null | undefined): 'none' | 'weekly' | 'biweekly' | 'monthly' | 'yearly' {
+  return MED_REPURCHASE_FREQUENCIES.find(m => m.value === (ptValue ?? '').trim())?.freq ?? 'none'
+}

@@ -111,7 +111,7 @@ export function ResourcesScreen() {
       const { data, error: err } = await apiClient.resources.saveResource(input)
       if (err) { Alert.alert('Não foi possível salvar', err.message || 'Tente novamente.'); return }
       const id = data?.id
-      if (id) await apiClient.agenda.syncReminder({ type: 'resource', id }, { enabled: reminderFreq !== 'none', frequency: reminderFreq, title: `Trocar: ${name.trim()}`, notes: `Troca do recurso: ${name.trim()}` })
+      if (id) await apiClient.agenda.syncReminder({ type: 'resource', id }, { enabled: reminderFreq !== 'none', frequency: reminderFreq, title: `Trocar: ${name.trim()}`, notes: `Troca do recurso: ${name.trim()}`, date: untilDate || undefined })
       setOpen(false); load(true)
     } finally { setSaving(false) }
   }

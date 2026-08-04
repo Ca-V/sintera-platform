@@ -43,7 +43,7 @@ export async function listResources(client: SupabaseClient, signal?: AbortSignal
     const { data: { session } } = await client.auth.getSession()
     if (!session) throw new Error('Não autenticado')
     const { data, error } = await client.from('health_resources').select(COLUMNS)
-      .eq('user_id', session.user.id).order('name').abortSignal(s)
+      .eq('user_id', session.user.id).order('created_at', { ascending: false }).abortSignal(s)
     if (error) throw asError(error)
     return (data as ResourceDTO[] | null) ?? []
   } finally {
