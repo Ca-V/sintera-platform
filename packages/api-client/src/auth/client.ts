@@ -17,6 +17,7 @@ import { deleteExam } from '../exams/delete'
 import { updateExam } from '../exams/update'
 import { getExamClinicalResults } from '../exams/clinical'
 import { logUsageEvent } from '../events/log'
+import { listEvents, saveEvent, deleteEvent } from '../agenda/events'
 
 /**
  * >>> ÚNICO ponto de `createClient()` em todo o ecossistema SINTERA. <<<
@@ -62,6 +63,11 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
     },
     events: {
       logEvent: (eventName, metadata) => logUsageEvent(supabase, eventName, metadata),
+    },
+    agenda: {
+      listEvents: (signal) => listEvents(supabase, signal),
+      saveEvent: (draft) => saveEvent(supabase, draft),
+      deleteEvent: (id) => deleteEvent(supabase, id),
     },
   }
 }

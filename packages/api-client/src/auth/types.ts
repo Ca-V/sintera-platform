@@ -4,6 +4,8 @@ import type { StorageAdapter } from '../storage/adapter'
 import type { ProfileApi } from '../profile/types'
 import type { ExamsApi } from '../exams/types'
 import type { ExamsWriteApi } from '../exams/write'
+import type { HealthEvent } from '@sintera/core'
+import type { EventDraft } from '../agenda/events'
 
 export type { Session, User }
 
@@ -43,9 +45,20 @@ export interface EventsApi {
   logEvent(eventName: string, metadata?: Record<string, unknown> | null): Promise<{ error: Error | null }>
 }
 
+/** Domínio AGENDA / Evento Assistencial (health_events) — Web/Mobile consomem via ApiClient.agenda. */
+export interface AgendaApi {
+  /** TODOS os eventos do usuário (legado+canônico, dedup, ordem canônica). `[]` se não houver. LANÇA em falha. */
+  listEvents(signal?: AbortSignal): Promise<HealthEvent[]>
+  /** Cria/atualiza um evento (upsert no canônico). `{ error }`, NÃO lança. */
+  saveEvent(draft: EventDraft): Promise<{ error: Error | null }>
+  /** Exclui um evento canônico (por id, dono via RLS). `{ error }`, NÃO lança. */
+  deleteEvent(id: string): Promise<{ error: Error | null }>
+}
+
 export interface ApiClient {
   auth: AuthApi
   profile: ProfileApi
   exams: ExamsApi & ExamsWriteApi
   events: EventsApi
+  agenda: AgendaApi
 }
