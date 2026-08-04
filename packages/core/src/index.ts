@@ -11,3 +11,6 @@ export * from './domain/module'
 
 // Projeção cronológica (Timeline) — lógica pura reutilizável por qualquer domínio datado.
 export * from './domain/timeline'
+
+// Apresentação PURA de resultados (biomarcadores) — fonte única Web↔Mobile (paridade Exames).
+export * from './domain/exams/biomarkerView'
