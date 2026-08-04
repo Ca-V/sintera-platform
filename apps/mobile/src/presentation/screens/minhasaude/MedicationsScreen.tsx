@@ -54,6 +54,7 @@ export function MedicationsScreen({ route, navigation }: Props) {
   const [packQtyInput, setPackQtyInput] = useState('')
   const [repurchaseFreq, setRepurchaseFreq] = useState('') // valor PT ('' = não repetir)
   const [saving, setSaving] = useState(false)
+  const [view, setView] = useState<'situacao' | 'tipo'>('situacao')
 
   const load = useCallback((silent: boolean) => {
     if (silent) setRefreshing(true); else setPhase('loading')
@@ -208,15 +209,31 @@ export function MedicationsScreen({ route, navigation }: Props) {
         <View style={[styles.card, card]}><Text spec={text(t, { role: 'body', tone: 'muted' })} style={{ textAlign: 'center' }}>Nenhum registro. Toque em “Adicionar”.</Text></View>
       ) : null}
 
-      {/* Agrupado por situação (paridade Web): Em uso / Programado / Suspenso / Encerrado, com contagem e
-          esmaecimento de suspenso/encerrado. */}
-      {MED_STATUSES.map(st => {
-        const group = shown.filter(m => m.status === st.value)
+      {/* Alternador de visão (paridade Web): Por situação / Por tipo. */}
+      {shown.length > 0 && !open ? (
+        <View style={styles.chips}>
+          {([['situacao', 'Por situação'], ['tipo', 'Por tipo']] as const).map(([v, label]) => {
+            const on = view === v
+            return (
+              <Pressable key={v} onPress={() => setView(v)} style={[styles.chip, { borderColor: on ? t.color.identity.primary : t.color.border.default, backgroundColor: on ? t.color.badge.info.soft : 'transparent' }]}>
+                <Text spec={text(t, { role: 'caption', tone: on ? 'default' : 'muted' })}>{label}</Text>
+              </Pressable>
+            )
+          })}
+        </View>
+      ) : null}
+
+      {/* Agrupado por situação OU tipo (paridade Web), com contagem; esmaece suspenso/encerrado na visão situação. */}
+      {(view === 'situacao'
+        ? MED_STATUSES.map(x => ({ key: x.label, dim: x.value === 'suspenso' || x.value === 'encerrado', items: shown.filter(m => m.status === x.value) }))
+        : MED_KINDS.map(x => ({ key: x.label, dim: false, items: shown.filter(m => m.kind === x.value) }))
+      ).map(grp => {
+        const group = grp.items
         if (group.length === 0) return null
-        const dim = st.value === 'suspenso' || st.value === 'encerrado'
+        const dim = grp.dim
         return (
-          <View key={st.value} style={{ gap: 8 }}>
-            <Text spec={text(t, { role: 'label', tone: 'muted' })}>{st.label.toUpperCase()} ({group.length})</Text>
+          <View key={grp.key} style={{ gap: 8 }}>
+            <Text spec={text(t, { role: 'label', tone: 'muted' })}>{grp.key.toUpperCase()} ({group.length})</Text>
             {group.map(m => (
               <View key={m.id} style={[styles.card, card, { gap: 4, opacity: dim ? 0.6 : 1 }]}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>

@@ -54,6 +54,7 @@ export function ResourcesScreen() {
   const [expDocUrl, setExpDocUrl] = useState<string | null>(null)
   const [uploadingExp, setUploadingExp] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [view, setView] = useState<'tipo' | 'situacao'>('tipo')
 
   const load = useCallback((silent: boolean) => {
     if (silent) setRefreshing(true); else setPhase('loading')
@@ -237,13 +238,30 @@ export function ResourcesScreen() {
         <View style={[styles.card, card]}><Text spec={text(t, { role: 'body', tone: 'muted' })} style={{ textAlign: 'center' }}>Nenhum recurso registrado. Toque em “Adicionar”.</Text></View>
       ) : null}
 
-      {/* Agrupado por tipo (paridade Web), na ordem de RESOURCE_TYPES, com contagem. */}
-      {RESOURCE_TYPES.map(rt => {
-        const group = items.filter(r => r.resource_type === rt.value)
+      {/* Alternador de visão (paridade Web): Por tipo / Por situação. */}
+      {items.length > 0 && !open ? (
+        <View style={styles.chips}>
+          {([['tipo', 'Por tipo'], ['situacao', 'Por situação']] as const).map(([v, label]) => {
+            const on = view === v
+            return (
+              <Pressable key={v} onPress={() => setView(v)} style={[styles.chip, { borderColor: on ? t.color.identity.primary : t.color.border.default, backgroundColor: on ? t.color.badge.info.soft : 'transparent' }]}>
+                <Text spec={text(t, { role: 'caption', tone: on ? 'default' : 'muted' })}>{label}</Text>
+              </Pressable>
+            )
+          })}
+        </View>
+      ) : null}
+
+      {/* Agrupado por tipo OU situação (paridade Web), com contagem. */}
+      {(view === 'tipo'
+        ? RESOURCE_TYPES.map(x => ({ key: x.label, items: items.filter(r => r.resource_type === x.value) }))
+        : RESOURCE_STATUSES.map(x => ({ key: x.label, items: items.filter(r => r.status === x.value) }))
+      ).map(grp => {
+        const group = grp.items
         if (group.length === 0) return null
         return (
-          <View key={rt.value} style={{ gap: 8 }}>
-            <Text spec={text(t, { role: 'label', tone: 'muted' })}>{rt.label.toUpperCase()} ({group.length})</Text>
+          <View key={grp.key} style={{ gap: 8 }}>
+            <Text spec={text(t, { role: 'label', tone: 'muted' })}>{grp.key.toUpperCase()} ({group.length})</Text>
             {group.map(r => (
               <View key={r.id} style={[styles.card, card, { gap: 4 }]}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
