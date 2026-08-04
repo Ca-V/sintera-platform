@@ -28,3 +28,4 @@ export * from './domain/finance/expense'
 
 // Domínio Agenda / Evento Assistencial (health_events) — modelo, mapeadores, seletores PUROS. Fonte única.
 export * from './domain/agenda/event'
+export * from './domain/agenda/presentation'
