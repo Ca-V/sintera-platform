@@ -5,13 +5,13 @@ export type ResourceType = 'correcao_visual' | 'dispositivo_medico' | 'protese_o
 export type ResourceStatus = 'em_uso' | 'suspenso' | 'encerrado'
 export type VisionKind = 'oculos' | 'lentes_contato'
 
-export const RESOURCE_TYPES: { value: ResourceType; label: string }[] = [
-  { value: 'correcao_visual',    label: 'Correção visual' },
-  { value: 'dispositivo_medico', label: 'Dispositivo médico' },
-  { value: 'protese_ortese',     label: 'Prótese / órtese' },
-  { value: 'auxilio',            label: 'Auxílio' },
-  { value: 'compressao_suporte', label: 'Compressão / suporte' },
-  { value: 'outro',              label: 'Outro' },
+export const RESOURCE_TYPES: { value: ResourceType; label: string; hint: string }[] = [
+  { value: 'correcao_visual',    label: 'Correção visual',    hint: 'óculos, lentes de contato, lente esclera' },
+  { value: 'dispositivo_medico', label: 'Dispositivo médico', hint: 'medidores, monitores, aparelhos' },
+  { value: 'protese_ortese',     label: 'Prótese / órtese',   hint: 'próteses, órteses, palmilhas' },
+  { value: 'auxilio',            label: 'Auxílio',            hint: 'bengala, andador, cadeira de rodas' },
+  { value: 'compressao_suporte', label: 'Compressão / suporte', hint: 'meias de compressão, cintas, faixas' },
+  { value: 'outro',              label: 'Outro',              hint: 'outros recursos de saúde' },
 ]
 
 export const RESOURCE_STATUSES: { value: ResourceStatus; label: string }[] = [

@@ -187,6 +187,7 @@ export function ResourcesScreen() {
         <View style={[styles.card, card, { gap: 12 }]}>
           <Text spec={text(t, { role: 'bodyStrong' })}>{editing ? 'Editar recurso' : 'Novo recurso'}</Text>
           <Chips options={RESOURCE_TYPES.map(r => ({ id: r.value, label: r.label }))} value={type} onChange={(v) => setType(v as ResourceType)} />
+          <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Ex.: {RESOURCE_TYPES.find(r => r.value === type)?.hint}</Text>
           <Input value={name} onChangeText={setName} placeholder="Nome (ex.: Óculos de grau)" />
           <Input value={brand} onChangeText={setBrand} placeholder="Marca / fabricante" />
           <Input value={prescriber} onChangeText={setPrescriber} placeholder="Prescritor" />
