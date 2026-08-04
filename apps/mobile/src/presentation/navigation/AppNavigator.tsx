@@ -8,6 +8,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import type { ComponentType } from 'react'
 import { HomeShell } from '../home/HomeShell'
 import { DocumentosStack } from './DocumentosStack'
+import { AcompanhamentoStack } from './AcompanhamentoStack'
 import { MaisStack } from './MaisStack'
 import { PlaceholderScreen } from './PlaceholderScreen'
 import { SSOT_TABS } from './ssotTabs'
@@ -41,9 +42,11 @@ const TAB_SCREENS = SSOT_TABS.map((tab) => {
         ? MaisStack
         : tab.name === 'Documentos'
           ? DocumentosStack
-          : makeTabStack(function TabPlaceholder() {
-              return <PlaceholderScreen tab={tab} />
-            })
+          : tab.name === 'Acompanhamento'
+            ? AcompanhamentoStack
+            : makeTabStack(function TabPlaceholder() {
+                return <PlaceholderScreen tab={tab} />
+              })
   return { name: tab.name as keyof AppTabParamList, label: tab.label, Component }
 })
 

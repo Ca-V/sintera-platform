@@ -7,7 +7,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import type { ExamDTO } from '@sintera/api-client'
-import { deriveExamIdentity, isOrderDocumentType, careStageFor, CARE_STAGES, compareNames } from '@sintera/core'
+import { deriveExamIdentity, isOrderDocumentType, careStageFor, CARE_STAGES, compareNames, selectByLink } from '@sintera/core'
 import { Button, FieldRow, Input, Text } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { DocumentosStackParamList } from '../../navigation/types'
@@ -35,6 +35,7 @@ export function ExamDetailScreen({ route, navigation }: Props) {
   const [orders, setOrders] = useState<ExamDTO[]>([])
   const [pickOrder, setPickOrder] = useState(false)
   const [profileName, setProfileName] = useState<string | null>(null)
+  const [linkedStatuses, setLinkedStatuses] = useState<string[]>([])
 
   // Nome do perfil — para a conferência de identidade (exame de outra pessoa).
   useEffect(() => {
@@ -42,6 +43,17 @@ export function ExamDetailScreen({ route, navigation }: Props) {
     apiClient.profile.getProfile().then(pr => { if (alive) setProfileName(pr?.name ?? null) }).catch(() => {})
     return () => { alive = false }
   }, [])
+
+  // Eventos vinculados a este exame (Agenda) — status para o fluxo assistencial (agendado ≠ realizado).
+  useEffect(() => {
+    const ex = p.exam
+    if (!ex) return
+    let alive = true
+    apiClient.agenda.listEvents()
+      .then(evs => { if (alive) setLinkedStatuses(selectByLink(evs, 'exam', ex.id).map(e => e.status)) })
+      .catch(() => {})
+    return () => { alive = false }
+  }, [p.exam])
 
   const exam = p.exam
   const isOrderDoc = isOrderDocumentType(exam?.document_type)
@@ -109,7 +121,7 @@ export function ExamDetailScreen({ route, navigation }: Props) {
 
   const { name, lab } = deriveExamIdentity(exam.type, exam.issuer)
   const hasResults = p.biomarkers.length > 0 || (p.clinical?.items.length ?? 0) > 0
-  const stage = careStageFor({ hasResult: hasResults, isOrder: isOrderDoc, linkedEventStatuses: [] })
+  const stage = careStageFor({ hasResult: hasResults, isOrder: isOrderDoc, linkedEventStatuses: linkedStatuses })
   const isProcessed = exam.status === 'processed'
   const linkedOrder = orders.find(o => o.id === exam.fulfills_order_id) ?? null
   const card = { backgroundColor: t.color.surface.base, borderColor: t.color.border.default }
@@ -211,6 +223,17 @@ export function ExamDetailScreen({ route, navigation }: Props) {
 
       {/* Financeiro */}
       <FinancialSection exam={exam} onSave={p.updateFields} />
+
+      {/* Recorrência — cria um Evento Assistencial (lembrete) no domínio Agenda, vinculado a este exame. */}
+      <View style={[styles.card, card, { gap: 8 }]}>
+        <Text spec={text(t, { role: 'bodyStrong' })}>Repetir este exame</Text>
+        <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Crie um lembrete de repetição periódica — aparece na sua Agenda.</Text>
+        <Button label="Criar lembrete de repetição" variant="secondary"
+          onPress={() => (navigation.getParent() as { navigate: (n: string, p: unknown) => void } | undefined)?.navigate('Acompanhamento', {
+            screen: 'EventForm',
+            params: { prefill: { type: 'exame', title: `Repetir ${name}`, examId: exam.id, recurrence: true } },
+          })} />
+      </View>
 
       {/* Pedido de origem (Q1) — só para resultados (não-pedido) */}
       {!isOrderDoc ? (
