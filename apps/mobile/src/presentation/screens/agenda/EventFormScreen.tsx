@@ -30,7 +30,9 @@ export function EventFormScreen({ route, navigation }: Props) {
   const editing = !!ev
   const rec = parseRule(ev?.recurrenceRule)
 
-  const [type, setType] = useState(ev?.type ?? prefill?.type ?? 'consulta')
+  // Cirurgia é subtipo de Procedimento (event_type 'cirurgia'): no form aparece como Procedimento + flag.
+  const [type, setType] = useState(ev?.type === 'cirurgia' ? 'procedimento' : (ev?.type ?? prefill?.type ?? 'consulta'))
+  const [isSurgery, setIsSurgery] = useState(ev?.type === 'cirurgia')
   const [title, setTitle] = useState(ev?.title ?? prefill?.title ?? '')
   const [date, setDate] = useState(ev?.date ?? prefill?.date ?? new Date().toISOString().slice(0, 10))
   const [time, setTime] = useState(ev?.time ?? '')
@@ -79,7 +81,8 @@ export function EventFormScreen({ route, navigation }: Props) {
       const completedAt = status === 'realizado' ? (ev?.completedAt ?? new Date().toISOString()) : null
       const draft: EventDraft = {
         ...(ev ?? {}),
-        type, title: title.trim(), date, time: time.trim() || null,
+        type: type === 'procedimento' && isSurgery ? 'cirurgia' : type,
+        title: title.trim(), date, time: time.trim() || null,
         status, completedAt, isReturn, source: ev?.source ?? 'manual',
         professionalKind: profKind || null, professionalName: profName.trim() || null,
         establishment: (isPlano ? establishment : establishment).trim() || null,
@@ -124,9 +127,21 @@ export function EventFormScreen({ route, navigation }: Props) {
       {type === 'consulta' ? (
         <Row><Text spec={text(t, { role: 'body' })}>É retorno</Text><Switch value={isReturn} onValueChange={setIsReturn} /></Row>
       ) : null}
+      {type === 'procedimento' ? (
+        <Row><Text spec={text(t, { role: 'body' })}>É uma cirurgia</Text><Switch value={isSurgery} onValueChange={setIsSurgery} /></Row>
+      ) : null}
 
       <Field label="Título"><Input value={title} onChangeText={setTitle} placeholder="Ex.: Cardiologista" /></Field>
-      <Field label="Data (AAAA-MM-DD)"><Input value={date} onChangeText={setDate} placeholder="2026-09-01" /></Field>
+      <Field label="Data (AAAA-MM-DD)">
+        <Input value={date} onChangeText={(v) => {
+          setDate(v)
+          // Automação (paridade Web): data no passado com status "Agendado" → passa a "Realizado".
+          if (/^\d{4}-\d{2}-\d{2}$/.test(v) && v < new Date().toISOString().slice(0, 10) && status === 'planejado') setStatus('realizado')
+        }} placeholder="2026-09-01" />
+        {/^\d{4}-\d{2}-\d{2}$/.test(date) && date < new Date().toISOString().slice(0, 10) && status === 'realizado' ? (
+          <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Data no passado — marcado como Realizado (entra no Histórico e nas Despesas, se tiver valor).</Text>
+        ) : null}
+      </Field>
       <Field label="Horário (opcional)"><Input value={time} onChangeText={setTime} placeholder="14:30" /></Field>
 
       <Field label="Situação"><Chips options={EVENT_STATUS_UI} value={status} onChange={(v) => setStatus(v as EventStatus)} /></Field>
