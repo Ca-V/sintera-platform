@@ -2,7 +2,7 @@
 // Notificações (NOTIF-001: canal por categoria) + obrigatórias. Reutiliza apiClient.auth/profile/settings +
 // taxonomia do @sintera/core. Exportar/Excluir conta ficam para quando as rotas aceitarem Bearer (ADR-020).
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ScrollView, View, ActivityIndicator, Pressable, StyleSheet } from 'react-native'
+import { ScrollView, View, ActivityIndicator, Pressable, Share, Alert, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import {
@@ -22,8 +22,11 @@ const DDI_OPTS = ['+55', '+351', '+1', '+44', '+34', '+49', '+33', '+39', '+54',
 export function ConfiguracoesScreen() {
   const t = useTheme()
   const insets = useSafeAreaInsets()
-  const { session } = useAuth()
+  const { session, signOut } = useAuth()
   const accountEmail = session?.user?.email ?? ''
+  const [exportBusy, setExportBusy] = useState(false)
+  const [deleteText, setDeleteText] = useState('')
+  const [deleteBusy, setDeleteBusy] = useState(false)
 
   const [phase, setPhase] = useState<'loading' | 'ready'>('loading')
   const alive = useRef(true)
@@ -84,6 +87,27 @@ export function ConfiguracoesScreen() {
     setPrefsMsg(error ? 'Não foi possível salvar.' : 'Preferências salvas.')
   }
   function restoreRecommended() { setPrefs(recommendedChannels()) }
+  async function doExport() {
+    setExportBusy(true)
+    try {
+      const { data, error } = await apiClient.settings.exportAccountData()
+      if (error || !data) { Alert.alert('Não foi possível exportar', error?.message ?? 'Tente novamente.'); return }
+      await Share.share({ message: JSON.stringify(data, null, 2) })
+    } finally { setExportBusy(false) }
+  }
+  function confirmDelete() {
+    if (deleteText.trim().toUpperCase() !== 'EXCLUIR') { Alert.alert('Confirmação', 'Digite EXCLUIR para confirmar.'); return }
+    Alert.alert('Excluir conta', 'Isto apaga permanentemente sua conta e TODOS os seus dados. Esta ação é irreversível.', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Excluir tudo', style: 'destructive', onPress: async () => {
+        setDeleteBusy(true)
+        const { error } = await apiClient.settings.deleteAccount()
+        setDeleteBusy(false)
+        if (error) { Alert.alert('Não foi possível excluir', error.message || 'Tente novamente.'); return }
+        await signOut()
+      } },
+    ])
+  }
 
   if (phase === 'loading') {
     return <View style={[styles.center, { backgroundColor: t.color.surface.app, paddingTop: insets.top }]}><ActivityIndicator color={t.color.identity.primary} /></View>
@@ -155,6 +179,21 @@ export function ConfiguracoesScreen() {
         <Text spec={text(t, { role: 'bodyStrong' })}>Sempre enviadas</Text>
         <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Avisos essenciais de conta e segurança — por e-mail, sem opção de desativar.</Text>
         {MANDATORY_NOTIFICATIONS.map(n => <Text key={n.key} spec={text(t, { role: 'caption', tone: 'muted' })}>• {n.label}</Text>)}
+      </View>
+
+      {/* Seus dados */}
+      <View style={[styles.card, card, { gap: 8 }]}>
+        <Text spec={text(t, { role: 'bodyStrong' })}>Seus dados</Text>
+        <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Baixe uma cópia de todos os seus dados (LGPD).</Text>
+        <Button label="Exportar meus dados" variant="secondary" onPress={doExport} loading={exportBusy} loadingLabel="Preparando…" />
+      </View>
+
+      {/* Zona sensível */}
+      <View style={[styles.card, { backgroundColor: t.color.badge.error.soft, borderColor: t.color.badge.error.text, gap: 8 }]}>
+        <Text spec={text(t, { role: 'bodyStrong' })} style={{ color: t.color.badge.error.text }}>Excluir conta</Text>
+        <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Apaga permanentemente sua conta e TODOS os dados. Irreversível. Digite EXCLUIR para confirmar.</Text>
+        <Input value={deleteText} onChangeText={setDeleteText} placeholder="EXCLUIR" autoCapitalize="characters" />
+        <Button label="Excluir minha conta" variant="secondary" onPress={confirmDelete} loading={deleteBusy} loadingLabel="Excluindo…" />
       </View>
     </ScrollView>
   )

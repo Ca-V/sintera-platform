@@ -28,6 +28,7 @@ import { listMedications, saveMedication, deleteMedication } from '../medication
 import { listContraceptives, saveContraceptive, toggleContraceptiveStatus, deleteContraceptive } from '../cycle/contraception'
 import { listPeriods, addPeriod, deletePeriod } from '../cycle/menstrual'
 import { listNotificationPrefs, saveNotificationPrefs } from '../settings/notifications'
+import { exportAccountData, deleteAccount } from '../settings/account'
 import { asError } from '../net/errors'
 
 /**
@@ -127,6 +128,8 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
     settings: {
       listNotificationPrefs: (signal) => listNotificationPrefs(supabase, signal),
       saveNotificationPrefs: (prefs) => saveNotificationPrefs(supabase, prefs),
+      exportAccountData: () => exportAccountData(supabase, config.webBaseUrl),
+      deleteAccount: () => deleteAccount(supabase, config.webBaseUrl),
     },
   }
 }

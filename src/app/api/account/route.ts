@@ -1,14 +1,12 @@
-import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { NextResponse, type NextRequest } from 'next/server'
+import { getAuthedSupabase } from '@/lib/supabase/authedClient'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 
-export async function DELETE() {
+export async function DELETE(request: NextRequest) {
   try {
-    const supabase = await createClient()
-
-    // 1. Auth
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
+    // Auth COMPARTILHADA (Cookie=Web · Bearer=Mobile) — ponte transitória ADR-020; regra inalterada.
+    const { user } = await getAuthedSupabase(request)
+    if (!user) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
     }
     const userId = user.id

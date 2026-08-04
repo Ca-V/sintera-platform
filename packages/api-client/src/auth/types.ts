@@ -125,8 +125,12 @@ export interface ApiClient {
   settings: SettingsApi
 }
 
-/** Configurações — Central de Notificações (canal por categoria). */
+/** Configurações — Central de Notificações (canal por categoria) + operações de conta. */
 export interface SettingsApi {
   listNotificationPrefs(signal?: AbortSignal): Promise<NotificationPrefRow[]>
   saveNotificationPrefs(prefs: NotificationPrefRow[]): Promise<{ error: Error | null }>
+  /** Exporta todos os dados do usuário (JSON). PONTE ADR-020. */
+  exportAccountData(): Promise<{ data: unknown; error: Error | null }>
+  /** Exclui a conta e TODOS os dados (irreversível). PONTE ADR-020. */
+  deleteAccount(): Promise<{ error: Error | null }>
 }
