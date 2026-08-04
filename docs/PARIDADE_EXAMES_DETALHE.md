@@ -55,4 +55,9 @@ Cada item = incremento verificável (typecheck+suíte+commit); nenhum reimplemen
 9. **Índice Experimental (#17)** + **avisos** (#16 truncated, #11 última extração, #9 páginas).
 10. **Exportar (#14)** — avaliar "compartilhar" nativo em vez de imprimir.
 
-Itens que exigem decisão da fundadora (negócio/produto): #5 (escopo do upload fiscal no mobile), #14 (exportar × compartilhar). Demais = reprodução direta com contratos compartilhados → execução autônoma.
+## Decisões de negócio (fundadora, 04/08)
+
+- **#5 Financeiro** → **paridade total AGORA, com upload do anexo fiscal** (NF/recibo via câmera/arquivo no celular). Reproduzir a seção inteira da Web (valor pago + tipo de documento fiscal `EXPENSE_DOC_TYPES` + anexo + recorrência/lembrete). Atributos `expense_*` no próprio exame (FB-008).
+- **#14 Exportar** → **compartilhar nativo** (share sheet do device com CSV/arquivo), em vez de imprimir/PDF. Mais natural no mobile.
+
+Demais itens = reprodução direta com contratos compartilhados → execução autônoma.
