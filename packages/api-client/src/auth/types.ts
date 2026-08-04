@@ -37,8 +37,15 @@ export interface AuthApi {
   onAuthStateChange(listener: SessionListener): () => void
 }
 
+/** Telemetria de produto + "reportar problema" (usage_events). */
+export interface EventsApi {
+  /** Registra um evento de uso do próprio usuário. Best-effort — `{ error }`, nunca lança. */
+  logEvent(eventName: string, metadata?: Record<string, unknown> | null): Promise<{ error: Error | null }>
+}
+
 export interface ApiClient {
   auth: AuthApi
   profile: ProfileApi
   exams: ExamsApi & ExamsWriteApi
+  events: EventsApi
 }

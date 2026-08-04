@@ -15,6 +15,8 @@ import { createExam } from '../exams/create'
 import { analyzeExam } from '../exams/analyze'
 import { deleteExam } from '../exams/delete'
 import { updateExam } from '../exams/update'
+import { getExamClinicalResults } from '../exams/clinical'
+import { logUsageEvent } from '../events/log'
 
 /**
  * >>> ÚNICO ponto de `createClient()` em todo o ecossistema SINTERA. <<<
@@ -51,11 +53,15 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       listExams: (query, signal) => listExams(supabase, query, signal),
       getExam: (id, signal) => getExam(supabase, id, signal),
       getExamBiomarkers: (examId, signal) => getExamBiomarkers(supabase, examId, signal),
+      getExamClinicalResults: (examId, signal) => getExamClinicalResults(supabase, examId, signal),
       uploadExam: (file, signal) => uploadExam(supabase, file), // storage não usa abortSignal; signal ignorado
       createExam: (input, signal) => createExam(supabase, input, signal),
       analyzeExam: (id) => analyzeExam(supabase, config.webBaseUrl, id), // ponte transitória (ADR-020)
       deleteExam: (id, signal) => deleteExam(supabase, id, signal), // requer RLS DELETE (isolado — MOBILE-030)
       updateExam: (id, patch, signal) => updateExam(supabase, id, patch, signal),
+    },
+    events: {
+      logEvent: (eventName, metadata) => logUsageEvent(supabase, eventName, metadata),
     },
   }
 }

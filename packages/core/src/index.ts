@@ -19,6 +19,7 @@ export * from './domain/exams/biomarkerView'
 export * from './domain/exams/identity'
 export * from './domain/exams/classification'
 export * from './domain/exams/careFlow'
+export * from './domain/exams/ucda'
 
 // Financeiro puro (parsing de valor, documento fiscal) — fonte única Web↔Mobile.
 export * from './domain/finance/money'
