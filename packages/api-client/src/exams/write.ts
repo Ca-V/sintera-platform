@@ -56,4 +56,10 @@ export interface ExamsWriteApi {
   /** Exclui o exame (arquivo + registro; cascata de FKs limpa os dependentes). LGPD-positivo. PENDÊNCIA isolada
    *  (MOBILE-030): requer política RLS de DELETE em `exams` — sem ela, retorna erro. */
   deleteExam(id: string, signal?: AbortSignal): Promise<{ error: Error | null }>
+  /** Atualiza campos editáveis do exame (renomear/data/financeiro/vínculo de origem) — whitelist. Espelha as
+   *  edições do detalhe da Web. `{ error: null }` em sucesso. NÃO lança. */
+  updateExam(id: string, patch: ExamFieldsPatch, signal?: AbortSignal): Promise<{ error: Error | null }>
 }
+
+import type { ExamFieldsPatch } from './update'
+export type { ExamFieldsPatch } from './update'

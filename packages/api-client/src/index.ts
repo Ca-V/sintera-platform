@@ -19,7 +19,7 @@ export type { ProfileApi, ProfileDTO, ProfileEditable } from './profile/types'
 export type { ExamsApi, ExamDTO, ExamsQuery } from './exams/types'
 export type { BiomarkerDTO } from './exams/biomarkers'
 // Domínio Exames (ESCRITA) — contrato DEFINIDO p/ Inc.6 (Upload); implementação após aceite do Inc.5.
-export type { ExamsWriteApi, UploadResult, CreateExamInput, UploadConstraints } from './exams/write'
+export type { ExamsWriteApi, UploadResult, CreateExamInput, UploadConstraints, ExamFieldsPatch } from './exams/write'
 export { DEFAULT_UPLOAD_CONSTRAINTS } from './exams/write'
 export { validateUpload, acceptedFormatsHint, type UploadValidation } from './exams/validateUpload'
 // PORT de seleção de documento (device) — abstração injetada por plataforma (app não conhece a lib).

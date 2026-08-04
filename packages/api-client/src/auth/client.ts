@@ -14,6 +14,7 @@ import { uploadExam } from '../exams/upload'
 import { createExam } from '../exams/create'
 import { analyzeExam } from '../exams/analyze'
 import { deleteExam } from '../exams/delete'
+import { updateExam } from '../exams/update'
 
 /**
  * >>> ÚNICO ponto de `createClient()` em todo o ecossistema SINTERA. <<<
@@ -54,6 +55,7 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       createExam: (input, signal) => createExam(supabase, input, signal),
       analyzeExam: (id) => analyzeExam(supabase, config.webBaseUrl, id), // ponte transitória (ADR-020)
       deleteExam: (id, signal) => deleteExam(supabase, id, signal), // requer RLS DELETE (isolado — MOBILE-030)
+      updateExam: (id, patch, signal) => updateExam(supabase, id, patch, signal),
     },
   }
 }
