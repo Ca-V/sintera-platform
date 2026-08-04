@@ -104,8 +104,14 @@ export function ExamDetailScreen({ route, navigation }: Props) {
         </FieldRow>
       ) : null}
 
-      {(isExamFailed(exam.status) || !exam.display_title) && exam.file_url ? (
-        <Button label="Tentar processar novamente" variant="secondary" onPress={p.reanalyze} />
+      {/* Reprocessar (paridade Web: "Extrair novamente"). SEMPRE disponível com documento — atualiza a
+          extração (ex.: emissor de exames antigos). Rótulo de recuperação quando falhou/sem nome. */}
+      {exam.file_url ? (
+        <Button
+          label={isExamFailed(exam.status) || !exam.display_title ? 'Tentar processar novamente' : 'Extrair novamente'}
+          variant="secondary"
+          onPress={p.reanalyze}
+        />
       ) : null}
 
       {exam.file_url ? (
