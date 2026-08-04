@@ -18,6 +18,7 @@ export interface ExamDTO {
 }
 
 import type { PageRequest, DateRange } from '@sintera/types'
+import type { BiomarkerDTO } from './biomarkers'
 
 /** Filtros/paginação da lista de exames (todos opcionais; sem paginação = todos).
  *  Reusa os contratos compartilhados `DateRange` (from/to) e `PageRequest` (limit/offset) de @sintera/types. */
@@ -32,6 +33,8 @@ export interface ExamsApi {
   listExams(query?: ExamsQuery, signal?: AbortSignal): Promise<ExamDTO[]>
   /** Lê um exame por id. `null` se não existir/for de outro usuário (RLS). LANÇA em falha. */
   getExam(id: string, signal?: AbortSignal): Promise<ExamDTO | null>
+  /** Lê os RESULTADOS estruturados (biomarcadores) de um exame. `[]` se não houver. LANÇA em falha. */
+  getExamBiomarkers(examId: string, signal?: AbortSignal): Promise<BiomarkerDTO[]>
 }
 
 /** Colunas centrais lidas do banco (explícitas — não `*` — para não trazer campos internos/financeiros). */

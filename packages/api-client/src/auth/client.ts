@@ -9,6 +9,7 @@ import { getProfile } from '../profile/get'
 import { updateProfile } from '../profile/update'
 import { listExams } from '../exams/list'
 import { getExam } from '../exams/get'
+import { getExamBiomarkers } from '../exams/biomarkers'
 import { uploadExam } from '../exams/upload'
 import { createExam } from '../exams/create'
 import { analyzeExam } from '../exams/analyze'
@@ -48,6 +49,7 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
     exams: {
       listExams: (query, signal) => listExams(supabase, query, signal),
       getExam: (id, signal) => getExam(supabase, id, signal),
+      getExamBiomarkers: (examId, signal) => getExamBiomarkers(supabase, examId, signal),
       uploadExam: (file, signal) => uploadExam(supabase, file), // storage não usa abortSignal; signal ignorado
       createExam: (input, signal) => createExam(supabase, input, signal),
       analyzeExam: (id) => analyzeExam(supabase, config.webBaseUrl, id), // ponte transitória (ADR-020)
