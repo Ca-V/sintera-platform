@@ -55,6 +55,9 @@ export function AgendaScreen({ navigation }: Props) {
         <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 22 }}>Agenda</Text>
         <Button label="Novo evento" onPress={newEvent} />
       </View>
+      <Pressable onPress={() => navigation.navigate('Timeline')} style={{ alignSelf: 'flex-start' }}>
+        <Text spec={text(t, { role: 'bodySmall' })} style={{ color: t.color.identity.primary }}>Ver Histórico de Saúde →</Text>
+      </Pressable>
 
       {empty ? (
         <View style={[styles.card, { backgroundColor: t.color.surface.base, borderColor: t.color.border.default }]}>

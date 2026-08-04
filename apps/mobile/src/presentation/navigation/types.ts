@@ -28,6 +28,7 @@ export type DocumentosStackParamList = {
  *  `EventForm` recebe o evento para EDITAR ou um `prefill` para CRIAR (ex.: lembrete a partir de um exame). */
 export type AcompanhamentoStackParamList = {
   Agenda: undefined
+  Timeline: undefined
   EventForm: {
     event?: import('@sintera/core').HealthEvent
     prefill?: { type?: string; title?: string; date?: string; examId?: string; recurrence?: boolean }
