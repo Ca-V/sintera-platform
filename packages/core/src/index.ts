@@ -51,3 +51,6 @@ export * from './domain/cycle'
 
 // Matemática de datas pura + estatística do ciclo menstrual — fonte única Web↔Mobile.
 export * from './domain/cycleStats'
+
+// Preferências de notificação (NOTIF-001) — taxonomia/canais puros, fonte única Web↔Mobile.
+export * from './domain/notificationPrefs'

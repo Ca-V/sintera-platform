@@ -27,6 +27,8 @@ import { listResources, saveResource, deleteResource } from '../resources/resour
 import { listMedications, saveMedication, deleteMedication } from '../medications/medications'
 import { listContraceptives, saveContraceptive, toggleContraceptiveStatus, deleteContraceptive } from '../cycle/contraception'
 import { listPeriods, addPeriod, deletePeriod } from '../cycle/menstrual'
+import { listNotificationPrefs, saveNotificationPrefs } from '../settings/notifications'
+import { asError } from '../net/errors'
 
 /**
  * >>> ÚNICO ponto de `createClient()` em todo o ecossistema SINTERA. <<<
@@ -54,6 +56,18 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       signOut: () => signOut(supabase),
       getSession: () => getSession(supabase),
       onAuthStateChange: (listener) => onAuthStateChange(supabase, listener),
+      updateEmail: async (email) => {
+        const { error } = await supabase.auth.updateUser({ email })
+        return { error: error ? asError(error) : null }
+      },
+      sendPasswordReset: async () => {
+        const { data: { session } } = await supabase.auth.getSession()
+        const mail = session?.user.email
+        if (!mail) return { error: new Error('Sem e-mail na sessão') }
+        const opts = config.webBaseUrl ? { redirectTo: `${config.webBaseUrl}/atualizar-senha` } : undefined
+        const { error } = await supabase.auth.resetPasswordForEmail(mail, opts)
+        return { error: error ? asError(error) : null }
+      },
     },
     profile: {
       getProfile: (signal) => getProfile(supabase, signal),
@@ -109,6 +123,10 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       listPeriods: (signal) => listPeriods(supabase, signal),
       addPeriod: (startedOn) => addPeriod(supabase, startedOn),
       deletePeriod: (id) => deletePeriod(supabase, id),
+    },
+    settings: {
+      listNotificationPrefs: (signal) => listNotificationPrefs(supabase, signal),
+      saveNotificationPrefs: (prefs) => saveNotificationPrefs(supabase, prefs),
     },
   }
 }

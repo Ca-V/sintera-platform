@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { MaisMenuScreen } from '../screens/mais/MaisMenuScreen'
 import { ProfileScreen } from '../screens/profile/ProfileScreen'
 import { DespesasScreen } from '../screens/despesas/DespesasScreen'
+import { ConfiguracoesScreen } from '../screens/mais/ConfiguracoesScreen'
 import { useTheme } from '../theme'
 import type { MaisStackParamList } from './types'
 
@@ -33,6 +34,18 @@ export function MaisStack() {
         options={{
           headerShown: true,
           title: 'Despesas',
+          headerStyle: { backgroundColor: t.color.surface.app },
+          headerTintColor: t.color.text.default,
+          headerTitleStyle: { fontFamily: 'HankenGrotesk_600SemiBold' },
+          headerShadowVisible: false,
+        }}
+      />
+      <Stack.Screen
+        name="Configuracoes"
+        component={ConfiguracoesScreen}
+        options={{
+          headerShown: true,
+          title: 'Configurações',
           headerStyle: { backgroundColor: t.color.surface.app },
           headerTintColor: t.color.text.default,
           headerTitleStyle: { fontFamily: 'HankenGrotesk_600SemiBold' },

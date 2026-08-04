@@ -14,6 +14,7 @@ import type { ResourceDTO, ResourceInput } from '../resources/resources'
 import type { MedicationDTO, MedicationInput } from '../medications/medications'
 import type { ContraceptiveDTO, ContraceptiveInput } from '../cycle/contraception'
 import type { PeriodDTO } from '../cycle/menstrual'
+import type { NotificationPrefRow } from '../settings/notifications'
 
 export type { Session, User }
 
@@ -45,6 +46,10 @@ export interface AuthApi {
   getSession(): Promise<Session | null>
   /** Registra um observador de mudança de sessão; retorna a função de cancelamento (unsubscribe). */
   onAuthStateChange(listener: SessionListener): () => void
+  /** Altera o e-mail da conta (Supabase envia link de confirmação ao NOVO e-mail; só vale após confirmar). */
+  updateEmail(email: string): Promise<{ error: Error | null }>
+  /** Envia o e-mail de redefinição de senha para o e-mail da conta atual. */
+  sendPasswordReset(): Promise<{ error: Error | null }>
 }
 
 /** Telemetria de produto + "reportar problema" (usage_events). */
@@ -117,4 +122,11 @@ export interface ApiClient {
   resources: ResourcesApi
   medications: MedicationsApi
   cycle: CycleApi
+  settings: SettingsApi
+}
+
+/** Configurações — Central de Notificações (canal por categoria). */
+export interface SettingsApi {
+  listNotificationPrefs(signal?: AbortSignal): Promise<NotificationPrefRow[]>
+  saveNotificationPrefs(prefs: NotificationPrefRow[]): Promise<{ error: Error | null }>
 }

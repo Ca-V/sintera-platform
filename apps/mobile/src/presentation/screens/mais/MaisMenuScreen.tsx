@@ -21,7 +21,7 @@ export function MaisMenuScreen({ navigation }: Props) {
     { label: 'Perfil', onPress: () => navigation.navigate('Perfil') },
     { label: 'Despesas', onPress: () => navigation.navigate('Despesas') },
     { label: 'Relatórios' },
-    { label: 'Configurações' },
+    { label: 'Configurações', onPress: () => navigation.navigate('Configuracoes') },
   ]
 
   return (
