@@ -7,6 +7,7 @@ import { extractBiomarkers, isGatewayError } from '@/lib/ai/gateway'
 import { extractTextFromPdf, filterRelevantPages } from '@/lib/pdf/extractor'
 import { loadCatalogIndex, resolveBiomarker } from '@/lib/ai/insights/resolver'
 import { classifyExamDocument, deriveDisplayTitle } from '@/lib/capture/document-naming'
+import { extractIssuer, extractIssuerFromImage } from '@/lib/ai/issuer'
 
 const ERROR_MESSAGES: Record<string, string> = {
   password_protected: 'O PDF está protegido por senha e não pode ser processado.',
@@ -83,6 +84,11 @@ export async function POST(
   let filterResult: ReturnType<typeof filterRelevantPages> | null = null
   let pageCount = 1
   let pdfQuality = 'image'
+  // Fonte para a extração best-effort do EMISSOR (laboratório/clínica) — texto quando há,
+  // imagem quando o laudo é foto/escaneado (ex.: Pentacam). Consumido no finalUpdate.
+  let issuerImage: Buffer | null = null
+  let issuerImageMediaType = 'image/jpeg'
+  let issuerText: string | null = null
 
   if (isImage) {
     // Caminho de imagem — modelo multimodal lê a foto. Sem extração de texto/PDF.
@@ -90,6 +96,8 @@ export async function POST(
       : filePath.endsWith('.webp') ? 'image/webp' : 'image/jpeg'
     await supabase.from('exams').update({ pdf_quality: 'image', page_count: 1 } as never).eq('id', examId)
     gatewayParams = { examId, userId, imageBuffer: pdfBuffer, imageMediaType: mediaType, pdfQualityDetected: 'image' }
+    issuerImage = pdfBuffer
+    issuerImageMediaType = mediaType
   } else {
     // 5. Quality Assessment — classifica o PDF e decide o caminho
     const extraction = await extractTextFromPdf(pdfBuffer)
@@ -113,6 +121,7 @@ export async function POST(
 
     pageCount = extraction.pageCount
     pdfQuality = extraction.quality
+    issuerText = extraction.text
 
     // 7. Filtro de páginas (Epic 1.4A) — remove conteúdo administrativo antes da IA
     filterResult = filterRelevantPages(extraction.pageTexts, 3)
@@ -279,6 +288,13 @@ export async function POST(
   const finalUpdate: Record<string, unknown> = { status: 'processed' }
   if (result.examDate) finalUpdate.exam_date = result.examDate
   if (result.patientName) finalUpdate.patient_name = result.patientName
+
+  // Emissor (laboratório/clínica) — TRANSCRITO do cabeçalho, best-effort. Texto quando há;
+  // imagem para laudos escaneados/fotografados. Falha nunca degrada a análise (retorna null).
+  const issuer = issuerImage
+    ? await extractIssuerFromImage(issuerImage, issuerImageMediaType)
+    : await extractIssuer(issuerText)
+  if (issuer) finalUpdate.issuer = issuer
 
   const structure = classifyExamDocument({
     examType: result.examType,
