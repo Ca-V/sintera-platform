@@ -6,6 +6,7 @@ import type { ExamsApi } from '../exams/types'
 import type { ExamsWriteApi } from '../exams/write'
 import type { HealthEvent } from '@sintera/core'
 import type { EventDraft } from '../agenda/events'
+import type { ConditionDTO, ConditionInput } from '../conditions/conditions'
 
 export type { Session, User }
 
@@ -55,10 +56,18 @@ export interface AgendaApi {
   deleteEvent(id: string): Promise<{ error: Error | null }>
 }
 
+/** Domínio Condições de Saúde (health_conditions) — CRUD do estado permanente da pessoa/familiares. */
+export interface ConditionsApi {
+  listConditions(signal?: AbortSignal): Promise<ConditionDTO[]>
+  saveCondition(input: ConditionInput): Promise<{ error: Error | null }>
+  deleteCondition(id: string): Promise<{ error: Error | null }>
+}
+
 export interface ApiClient {
   auth: AuthApi
   profile: ProfileApi
   exams: ExamsApi & ExamsWriteApi
   events: EventsApi
   agenda: AgendaApi
+  conditions: ConditionsApi
 }

@@ -25,6 +25,12 @@ export type DocumentosStackParamList = {
   ExamUpload: undefined
 }
 
+/** Stack interno da aba "Minha Saúde": menu do grupo + telas de domínio (Condições, …). Só navegação. */
+export type MinhaSaudeStackParamList = {
+  MinhaSaudeMenu: undefined
+  Conditions: undefined
+}
+
 /** Stack interno da aba "Acompanhamento" (domínio Agenda): agenda + formulário de evento. Só navegação.
  *  `EventForm` recebe o evento para EDITAR ou um `prefill` para CRIAR (ex.: lembrete a partir de um exame). */
 export type AcompanhamentoStackParamList = {

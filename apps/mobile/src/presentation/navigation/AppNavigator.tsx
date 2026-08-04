@@ -9,6 +9,7 @@ import type { ComponentType } from 'react'
 import { HomeShell } from '../home/HomeShell'
 import { DocumentosStack } from './DocumentosStack'
 import { AcompanhamentoStack } from './AcompanhamentoStack'
+import { MinhaSaudeStack } from './MinhaSaudeStack'
 import { MaisStack } from './MaisStack'
 import { PlaceholderScreen } from './PlaceholderScreen'
 import { SSOT_TABS } from './ssotTabs'
@@ -44,9 +45,11 @@ const TAB_SCREENS = SSOT_TABS.map((tab) => {
           ? DocumentosStack
           : tab.name === 'Acompanhamento'
             ? AcompanhamentoStack
-            : makeTabStack(function TabPlaceholder() {
-                return <PlaceholderScreen tab={tab} />
-              })
+            : tab.name === 'MinhaSaude'
+              ? MinhaSaudeStack
+              : makeTabStack(function TabPlaceholder() {
+                  return <PlaceholderScreen tab={tab} />
+                })
   return { name: tab.name as keyof AppTabParamList, label: tab.label, Component }
 })
 
