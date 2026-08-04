@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { EventDraft } from '@sintera/api-client'
 import {
   type HealthEvent, selectOverdue, selectUpcoming, selectHistorical, sortByWhen, isOverdue,
+  completeRule, cancelRule,
 } from '@sintera/core'
 import { apiClient } from '../../../infrastructure/apiClient'
 
@@ -53,6 +54,10 @@ export function useAgenda() {
     return { error: err }
   }, [load])
 
+  // Transições (paridade Web) via regras do domínio (core): Concluir → Histórico/Gastos; Cancelar.
+  const complete = useCallback((ev: HealthEvent) => save(completeRule(ev, new Date().toISOString())), [save])
+  const cancel = useCallback((ev: HealthEvent) => save(cancelRule(ev)), [save])
+
   const ref = today()
   const overdue = selectOverdue(events, ref)
   const overdueIds = new Set(overdue.map(e => e.id))
@@ -62,5 +67,5 @@ export function useAgenda() {
     historical: sortByWhen(selectHistorical(events, ref)).reverse(), // histórico mais recente primeiro
   }
 
-  return { phase, refreshing, error, events, lists, refresh, save, remove, retry: () => load(false) }
+  return { phase, refreshing, error, events, lists, refresh, save, remove, complete, cancel, retry: () => load(false) }
 }

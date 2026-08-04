@@ -1,6 +1,7 @@
 // Despesas (FB-008 — paridade Web /dashboard/gastos). PROJEÇÃO dos fatos com valor (eventos financeiros +
 // exames-com-valor), agrupada por ano com total. Cada lançamento leva ao anexo fiscal e pode ser removido
 // (evento → exclui; exame → limpa o valor, mantém o exame). Não cria registros próprios.
+import { useState } from 'react'
 import { ScrollView, View, ActivityIndicator, RefreshControl, Pressable, Linking, Alert, StyleSheet } from 'react-native'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -21,6 +22,14 @@ export function DespesasScreen({ navigation }: Props) {
   const t = useTheme()
   const insets = useSafeAreaInsets()
   const d = useDespesas()
+  const [view, setView] = useState<'data' | 'tipo'>('data')
+
+  // Agrupa por tipo (mesma projeção, outra visão — paridade "Por tipo" da Web).
+  const byType = (() => {
+    const map = new Map<string, HealthEvent[]>()
+    for (const e of d.items) { const k = typeLabel(e.type); const arr = map.get(k) ?? []; arr.push(e); map.set(k, arr) }
+    return [...map.entries()].sort((a, b) => expensesTotalCents(b[1]) - expensesTotalCents(a[1])).map(([key, items]) => ({ key, items }))
+  })()
 
   // Editar um lançamento de EVENTO (não-exame) → formulário de evento (na aba Acompanhamento).
   const editEvent = (item: HealthEvent) => {
@@ -64,6 +73,19 @@ export function DespesasScreen({ navigation }: Props) {
         <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 24 }}>{fmtBRL(d.totalCents)}</Text>
       </View>
 
+      {d.items.length > 0 ? (
+        <View style={styles.toggle}>
+          {(['data', 'tipo'] as const).map(v => {
+            const on = view === v
+            return (
+              <Pressable key={v} onPress={() => setView(v)} style={[styles.toggleBtn, { borderColor: on ? t.color.identity.primary : t.color.border.default, backgroundColor: on ? t.color.badge.info.soft : 'transparent' }]}>
+                <Text spec={text(t, { role: 'caption', tone: on ? 'default' : 'muted' })}>{v === 'data' ? 'Por data' : 'Por tipo'}</Text>
+              </Pressable>
+            )
+          })}
+        </View>
+      ) : null}
+
       {d.items.length === 0 ? (
         <View style={[styles.card, { backgroundColor: t.color.surface.base, borderColor: t.color.border.default }]}>
           <Text spec={text(t, { role: 'body', tone: 'muted' })} style={{ textAlign: 'center' }}>
@@ -72,7 +94,7 @@ export function DespesasScreen({ navigation }: Props) {
         </View>
       ) : null}
 
-      {d.byYear.map(g => (
+      {(view === 'data' ? d.byYear : byType).map(g => (
         <View key={g.key} style={{ gap: 8 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
             <Text spec={text(t, { role: 'label', tone: 'muted' })}>{g.key}</Text>
@@ -118,5 +140,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12 },
   card: { borderWidth: 1, borderRadius: 16, padding: 16 },
   totalCard: { borderWidth: 1, borderRadius: 16, padding: 16, gap: 2 },
+  toggle: { flexDirection: 'row', gap: 8 },
+  toggleBtn: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6 },
   row: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', borderWidth: 1, borderRadius: 14, padding: 14 },
 })

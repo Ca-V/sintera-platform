@@ -2,7 +2,7 @@
 // HISTÓRICO (seleção/ordem do @sintera/core). Cada item leva ao formulário (editar); "Novo evento" cria.
 // COMPOSIÇÃO de primitivos DS; sem regra aqui.
 import { useCallback } from 'react'
-import { ScrollView, View, ActivityIndicator, RefreshControl, Pressable, StyleSheet } from 'react-native'
+import { ScrollView, View, ActivityIndicator, RefreshControl, Pressable, Alert, StyleSheet } from 'react-native'
 import { useFocusEffect } from '@react-navigation/native'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -25,6 +25,13 @@ export function AgendaScreen({ navigation }: Props) {
 
   const openEvent = (event: HealthEvent) => navigation.navigate('EventForm', { event })
   const newEvent = () => navigation.navigate('EventForm', {})
+
+  // Concluir tem consequência (sai da Agenda → Histórico, e Despesas se tiver valor) — mesma copy da Web.
+  const onComplete = (ev: HealthEvent) => Alert.alert('Concluir evento',
+    'Concluir este evento? Ele sai da Agenda e passa para o Histórico — e para as Despesas, se tiver valor. Você pode reabri-lo depois.',
+    [{ text: 'Cancelar', style: 'cancel' }, { text: 'Concluir', onPress: () => a.complete(ev) }])
+  const onCancel = (ev: HealthEvent) => Alert.alert('Cancelar evento', `Cancelar "${ev.title}"?`,
+    [{ text: 'Voltar', style: 'cancel' }, { text: 'Cancelar evento', style: 'destructive', onPress: () => a.cancel(ev) }])
 
   if (a.phase === 'loading') {
     return (
@@ -67,15 +74,16 @@ export function AgendaScreen({ navigation }: Props) {
         </View>
       ) : null}
 
-      <Section title="Pendências" hint="Vencidas e ainda abertas" events={a.lists.overdue} onOpen={openEvent} tone="attention" />
-      <Section title="Próximos" events={a.lists.upcoming} onOpen={openEvent} />
+      <Section title="Pendências" hint="Vencidas e ainda abertas" events={a.lists.overdue} onOpen={openEvent} onComplete={onComplete} onCancel={onCancel} tone="attention" />
+      <Section title="Próximos" events={a.lists.upcoming} onOpen={openEvent} onComplete={onComplete} onCancel={onCancel} />
       <Section title="Histórico" events={a.lists.historical} onOpen={openEvent} tone="muted" />
     </ScrollView>
   )
 }
 
-function Section({ title, hint, events, onOpen, tone }: {
-  title: string; hint?: string; events: HealthEvent[]; onOpen: (e: HealthEvent) => void; tone?: 'attention' | 'muted'
+function Section({ title, hint, events, onOpen, onComplete, onCancel, tone }: {
+  title: string; hint?: string; events: HealthEvent[]; onOpen: (e: HealthEvent) => void
+  onComplete?: (e: HealthEvent) => void; onCancel?: (e: HealthEvent) => void; tone?: 'attention' | 'muted'
 }) {
   const t = useTheme()
   if (events.length === 0) return null
@@ -87,16 +95,24 @@ function Section({ title, hint, events, onOpen, tone }: {
         {hint ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{hint}</Text> : null}
       </View>
       {events.map(e => (
-        <Pressable key={e.id} onPress={() => onOpen(e)}
-          style={[styles.row, { backgroundColor: t.color.surface.base, borderColor: t.color.border.default }]}>
-          <View style={{ flex: 1, paddingRight: 8 }}>
-            <Text spec={text(t, { role: 'body' })}>{e.title}</Text>
-            <Text spec={text(t, { role: 'caption', tone: 'muted' })}>
-              {typeLabel(e.type)} · {formatDateLongBR(e.date)}{formatTimeBR(e.time) ? ` · ${formatTimeBR(e.time)}` : ''}
-            </Text>
-          </View>
-          <Text spec={text(t, { role: 'caption' })} style={{ color: accent }}>{statusLabel(e.status)}</Text>
-        </Pressable>
+        <View key={e.id} style={[styles.row, { backgroundColor: t.color.surface.base, borderColor: t.color.border.default, flexDirection: 'column', alignItems: 'stretch', gap: 8 }]}>
+          <Pressable onPress={() => onOpen(e)} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <View style={{ flex: 1, paddingRight: 8 }}>
+              <Text spec={text(t, { role: 'body' })}>{e.title}</Text>
+              <Text spec={text(t, { role: 'caption', tone: 'muted' })}>
+                {typeLabel(e.type)} · {formatDateLongBR(e.date)}{formatTimeBR(e.time) ? ` · ${formatTimeBR(e.time)}` : ''}
+              </Text>
+            </View>
+            <Text spec={text(t, { role: 'caption' })} style={{ color: accent }}>{statusLabel(e.status)}</Text>
+          </Pressable>
+          {onComplete && onCancel ? (
+            <View style={{ flexDirection: 'row', gap: 16 }}>
+              <Pressable onPress={() => onComplete(e)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.success.text }}>Concluir</Text></Pressable>
+              <Pressable onPress={() => onCancel(e)}><Text spec={text(t, { role: 'caption', tone: 'muted' })}>Cancelar</Text></Pressable>
+              <Pressable onPress={() => onOpen(e)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Editar</Text></Pressable>
+            </View>
+          ) : null}
+        </View>
       ))}
     </View>
   )
