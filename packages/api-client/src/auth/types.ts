@@ -12,6 +12,8 @@ import type { ConditionDTO, ConditionInput } from '../conditions/conditions'
 import type { HabitDTO, HabitInput } from '../habits/habits'
 import type { ResourceDTO, ResourceInput } from '../resources/resources'
 import type { MedicationDTO, MedicationInput } from '../medications/medications'
+import type { ContraceptiveDTO, ContraceptiveInput } from '../cycle/contraception'
+import type { PeriodDTO } from '../cycle/menstrual'
 
 export type { Session, User }
 
@@ -86,6 +88,17 @@ export interface MedicationsApi {
   deleteMedication(id: string): Promise<{ error: Error | null }>
 }
 
+/** Domínio Ciclo e Contracepção — métodos contraceptivos (com lembrete de troca) + ciclo menstrual. */
+export interface CycleApi {
+  listContraceptives(signal?: AbortSignal): Promise<ContraceptiveDTO[]>
+  saveContraceptive(input: ContraceptiveInput): Promise<{ error: Error | null }>
+  toggleContraceptiveStatus(m: ContraceptiveDTO): Promise<{ error: Error | null }>
+  deleteContraceptive(m: ContraceptiveDTO): Promise<{ error: Error | null }>
+  listPeriods(signal?: AbortSignal): Promise<PeriodDTO[]>
+  addPeriod(startedOn: string): Promise<{ error: Error | null }>
+  deletePeriod(id: string): Promise<{ error: Error | null }>
+}
+
 /** Domínio Condições de Saúde (health_conditions) — CRUD do estado permanente da pessoa/familiares. */
 export interface ConditionsApi {
   listConditions(signal?: AbortSignal): Promise<ConditionDTO[]>
@@ -103,4 +116,5 @@ export interface ApiClient {
   habits: HabitsApi
   resources: ResourcesApi
   medications: MedicationsApi
+  cycle: CycleApi
 }

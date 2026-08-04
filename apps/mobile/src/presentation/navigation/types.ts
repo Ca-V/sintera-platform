@@ -32,6 +32,7 @@ export type MinhaSaudeStackParamList = {
   Habits: undefined
   Resources: undefined
   Medications: { supplements?: boolean } | undefined
+  Ciclo: undefined
 }
 
 /** Stack interno da aba "Acompanhamento" (domínio Agenda): agenda + formulário de evento. Só navegação.

@@ -45,3 +45,9 @@ export * from './domain/resources'
 
 // Taxonomia de Medicamentos/Suplementos — fonte única Web↔Mobile.
 export * from './domain/medications'
+
+// Taxonomia de contracepção (CTC-001) — fonte única Web↔Mobile.
+export * from './domain/cycle'
+
+// Matemática de datas pura + estatística do ciclo menstrual — fonte única Web↔Mobile.
+export * from './domain/cycleStats'

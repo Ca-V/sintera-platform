@@ -6,11 +6,12 @@ import { ScrollView, View, ActivityIndicator, RefreshControl, Pressable, Alert, 
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
-import type { MedicationDTO, MedicationInput } from '@sintera/api-client'
+import type { MedicationDTO, MedicationInput, ContraceptiveDTO } from '@sintera/api-client'
 import {
   MED_KINDS, MED_STATUSES, MED_FORMS, MED_ROUTES, medKindLabel, medFormLabel, medFormUnit,
   estimatedRunoutDays, parseAmountToCents, centsToAmount,
   type MedKind, type MedStatus, MED_REPURCHASE_FREQUENCIES, repurchaseFreqToRecurrence,
+  isHormonalContraceptive, contraceptiveLabel, contraceptiveCategoryLabel, cadenceUsageLabel,
 } from '@sintera/core'
 import { Text, Button, Input } from '../../primitives'
 import { useTheme } from '../../theme'
@@ -27,6 +28,7 @@ export function MedicationsScreen({ route, navigation }: Props) {
   useLayoutEffect(() => { navigation.setOptions({ title }) }, [navigation, title])
 
   const [items, setItems] = useState<MedicationDTO[]>([])
+  const [contraceptives, setContraceptives] = useState<ContraceptiveDTO[]>([])
   const [phase, setPhase] = useState<'loading' | 'ready' | 'error'>('loading')
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -58,11 +60,12 @@ export function MedicationsScreen({ route, navigation }: Props) {
 
   const load = useCallback((silent: boolean) => {
     if (silent) setRefreshing(true); else setPhase('loading')
-    apiClient.medications.listMedications()
-      .then((ms) => { if (!alive.current) return; setItems(ms); setPhase('ready'); setError(null) })
+    // Medicamentos projeta (read-only) os contraceptivos HORMONAIS do Ciclo (CTC-001: o fato pertence ao Ciclo).
+    Promise.all([apiClient.medications.listMedications(), supplements ? Promise.resolve([]) : apiClient.cycle.listContraceptives()])
+      .then(([ms, cs]) => { if (!alive.current) return; setItems(ms); setContraceptives(cs); setPhase('ready'); setError(null) })
       .catch((e) => { if (alive.current && !silent) { setError(e instanceof Error ? e.message : 'Não foi possível carregar.'); setPhase('error') } })
       .finally(() => { if (alive.current) setRefreshing(false) })
-  }, [])
+  }, [supplements])
   useEffect(() => { alive.current = true; load(false); return () => { alive.current = false } }, [load])
 
   const shown = items.filter(m => supplements ? m.kind === 'suplemento' : m.kind !== 'suplemento')
@@ -252,6 +255,20 @@ export function MedicationsScreen({ route, navigation }: Props) {
           </View>
         )
       })}
+
+      {/* Projeção read-only dos contraceptivos HORMONAIS (CTC-001): o fato pertence ao Ciclo; aqui só referência. */}
+      {!supplements && contraceptives.some(c => isHormonalContraceptive(c.kind) && c.status === 'ativo') ? (
+        <View style={{ gap: 8 }}>
+          <Text spec={text(t, { role: 'label', tone: 'muted' })}>CONTRACEPÇÃO (GERENCIADO NO CICLO)</Text>
+          {contraceptives.filter(c => isHormonalContraceptive(c.kind) && c.status === 'ativo').map(c => (
+            <Pressable key={c.id} onPress={() => navigation.navigate('Ciclo')} style={[styles.card, card, { gap: 4, opacity: 0.85 }]}>
+              <Text spec={text(t, { role: 'body' })}>{contraceptiveLabel(c.kind)}{c.brand ? ` · ${c.brand}` : ''}</Text>
+              <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{contraceptiveCategoryLabel(c.kind)}{cadenceUsageLabel(c.usage_cadence) ? ` · ${cadenceUsageLabel(c.usage_cadence)}` : ''}</Text>
+              <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Gerenciar no Ciclo →</Text>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
     </ScrollView>
   )
 }

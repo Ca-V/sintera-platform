@@ -25,6 +25,8 @@ import { listConditions, saveCondition, deleteCondition } from '../conditions/co
 import { listHabits, saveHabit, deleteHabit } from '../habits/habits'
 import { listResources, saveResource, deleteResource } from '../resources/resources'
 import { listMedications, saveMedication, deleteMedication } from '../medications/medications'
+import { listContraceptives, saveContraceptive, toggleContraceptiveStatus, deleteContraceptive } from '../cycle/contraception'
+import { listPeriods, addPeriod, deletePeriod } from '../cycle/menstrual'
 
 /**
  * >>> ÚNICO ponto de `createClient()` em todo o ecossistema SINTERA. <<<
@@ -98,6 +100,15 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       listMedications: (signal) => listMedications(supabase, signal),
       saveMedication: (input) => saveMedication(supabase, input),
       deleteMedication: (id) => deleteMedication(supabase, id),
+    },
+    cycle: {
+      listContraceptives: (signal) => listContraceptives(supabase, signal),
+      saveContraceptive: (input) => saveContraceptive(supabase, input),
+      toggleContraceptiveStatus: (m) => toggleContraceptiveStatus(supabase, m),
+      deleteContraceptive: (m) => deleteContraceptive(supabase, m),
+      listPeriods: (signal) => listPeriods(supabase, signal),
+      addPeriod: (startedOn) => addPeriod(supabase, startedOn),
+      deletePeriod: (id) => deletePeriod(supabase, id),
     },
   }
 }
