@@ -176,9 +176,15 @@ export function MedicationsScreen({ route, navigation }: Props) {
               <Input value={packQtyInput} onChangeText={setPackQtyInput} placeholder={`Conteúdo (${medFormUnit(form) || 'un'}/emb.)`} keyboardType="decimal-pad" style={{ flex: 1 }} />
               <Input value={dailyCons} onChangeText={setDailyCons} placeholder="Consumo/dia" keyboardType="decimal-pad" style={{ flex: 1 }} />
             </View>
-            {estimatedRunoutDays((num(acquiredQty) ?? 0) * (num(packQtyInput) ?? 1) || num(acquiredQty), num(dailyCons)) != null ? (
-              <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Estimativa: ~{estimatedRunoutDays((num(acquiredQty) ?? 0) * (num(packQtyInput) ?? 1) || num(acquiredQty), num(dailyCons))} dias de estoque</Text>
-            ) : null}
+            {(() => {
+              const total = (num(acquiredQty) ?? 0) * (num(packQtyInput) ?? 1) || num(acquiredQty)
+              const days = estimatedRunoutDays(total, num(dailyCons))
+              if (days == null) return null
+              const base = purchasedOn || startedOn || new Date().toISOString().slice(0, 10)
+              const d = new Date(`${base}T00:00:00`); d.setDate(d.getDate() + days)
+              const dateStr = /^\d{4}-\d{2}-\d{2}$/.test(base) ? d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : null
+              return <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Estimativa: ~{days} dias de estoque{dateStr ? ` · acaba por volta de ${dateStr}` : ''}</Text>
+            })()}
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <Input value={purchasedOn} onChangeText={setPurchasedOn} placeholder="Compra (AAAA-MM-DD)" style={{ flex: 1 }} />
               <Input value={amount} onChangeText={setAmount} placeholder="Valor (R$)" keyboardType="decimal-pad" style={{ flex: 1 }} />
