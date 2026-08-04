@@ -4,9 +4,11 @@ import type { StorageAdapter } from '../storage/adapter'
 import type { ProfileApi } from '../profile/types'
 import type { ExamsApi } from '../exams/types'
 import type { ExamsWriteApi } from '../exams/write'
-import type { HealthEvent } from '@sintera/core'
+import type { HealthEvent, EventLink } from '@sintera/core'
 import type { EventDraft } from '../agenda/events'
+import type { LinkedReminderOptions } from '../agenda/reminder'
 import type { ConditionDTO, ConditionInput } from '../conditions/conditions'
+import type { HabitDTO, HabitInput } from '../habits/habits'
 
 export type { Session, User }
 
@@ -54,6 +56,15 @@ export interface AgendaApi {
   saveEvent(draft: EventDraft): Promise<{ error: Error | null }>
   /** Exclui um evento canônico (por id, dono via RLS). `{ error }`, NÃO lança. */
   deleteEvent(id: string): Promise<{ error: Error | null }>
+  /** Sincroniza um lembrete recorrente vinculado a um fato (hábito/recurso/medicamento…). `{ error }`, NÃO lança. */
+  syncReminder(link: EventLink, opts: LinkedReminderOptions): Promise<{ error: Error | null }>
+}
+
+/** Domínio Hábitos (life_habits) — CRUD do estado permanente + meta. */
+export interface HabitsApi {
+  listHabits(signal?: AbortSignal): Promise<HabitDTO[]>
+  saveHabit(input: HabitInput): Promise<{ data: { id: string } | null; error: Error | null }>
+  deleteHabit(id: string): Promise<{ error: Error | null }>
 }
 
 /** Domínio Condições de Saúde (health_conditions) — CRUD do estado permanente da pessoa/familiares. */
@@ -70,4 +81,5 @@ export interface ApiClient {
   events: EventsApi
   agenda: AgendaApi
   conditions: ConditionsApi
+  habits: HabitsApi
 }

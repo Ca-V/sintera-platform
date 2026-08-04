@@ -18,9 +18,11 @@ export type { ProfileApi, ProfileDTO, ProfileEditable } from './profile/types'
 // Domínio Exames (leitura) — infra compartilhada; de-risca o Inc 5 (Histórico de Exames).
 export type { ExamsApi, ExamDTO, ExamDetailDTO, ExamsQuery } from './exams/types'
 export type { BiomarkerDTO } from './exams/biomarkers'
-export type { EventsApi, AgendaApi, ConditionsApi } from './auth/types'
+export type { EventsApi, AgendaApi, ConditionsApi, HabitsApi } from './auth/types'
 export type { EventDraft } from './agenda/events'
+export type { LinkedReminderOptions } from './agenda/reminder'
 export type { ConditionDTO, ConditionInput, ConditionScope } from './conditions/conditions'
+export type { HabitDTO, HabitInput } from './habits/habits'
 // Domínio Exames (ESCRITA) — contrato DEFINIDO p/ Inc.6 (Upload); implementação após aceite do Inc.5.
 export type { ExamsWriteApi, UploadResult, CreateExamInput, UploadConstraints, ExamFieldsPatch } from './exams/write'
 export { DEFAULT_UPLOAD_CONSTRAINTS } from './exams/write'

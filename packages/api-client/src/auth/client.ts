@@ -19,7 +19,9 @@ import { getExamClinicalResults } from '../exams/clinical'
 import { listExamExpenses } from '../exams/expenses'
 import { logUsageEvent } from '../events/log'
 import { listEvents, saveEvent, deleteEvent } from '../agenda/events'
+import { syncLinkedReminder } from '../agenda/reminder'
 import { listConditions, saveCondition, deleteCondition } from '../conditions/conditions'
+import { listHabits, saveHabit, deleteHabit } from '../habits/habits'
 
 /**
  * >>> ÚNICO ponto de `createClient()` em todo o ecossistema SINTERA. <<<
@@ -71,11 +73,17 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       listEvents: (signal) => listEvents(supabase, signal),
       saveEvent: (draft) => saveEvent(supabase, draft),
       deleteEvent: (id) => deleteEvent(supabase, id),
+      syncReminder: (link, opts) => syncLinkedReminder(supabase, link, opts),
     },
     conditions: {
       listConditions: (signal) => listConditions(supabase, signal),
       saveCondition: (input) => saveCondition(supabase, input),
       deleteCondition: (id) => deleteCondition(supabase, id),
+    },
+    habits: {
+      listHabits: (signal) => listHabits(supabase, signal),
+      saveHabit: (input) => saveHabit(supabase, input),
+      deleteHabit: (id) => deleteHabit(supabase, id),
     },
   }
 }

@@ -33,3 +33,6 @@ export * from './domain/agenda/presentation'
 
 // Regra de recorrência PURA (serialização/labels) — fonte única Web↔Mobile.
 export * from './domain/recurrence'
+
+// Taxonomia de Hábitos — fonte única Web↔Mobile.
+export * from './domain/habits'

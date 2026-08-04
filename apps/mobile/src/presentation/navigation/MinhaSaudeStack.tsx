@@ -3,6 +3,7 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { MinhaSaudeMenuScreen } from '../screens/minhasaude/MinhaSaudeMenuScreen'
 import { ConditionsScreen } from '../screens/minhasaude/ConditionsScreen'
+import { HabitsScreen } from '../screens/minhasaude/HabitsScreen'
 import { useTheme } from '../theme'
 import type { MinhaSaudeStackParamList } from './types'
 
@@ -21,6 +22,7 @@ export function MinhaSaudeStack() {
     <Stack.Navigator>
       <Stack.Screen name="MinhaSaudeMenu" component={MinhaSaudeMenuScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Conditions" component={ConditionsScreen} options={{ ...detail, title: 'Condições de Saúde' }} />
+      <Stack.Screen name="Habits" component={HabitsScreen} options={{ ...detail, title: 'Hábitos' }} />
     </Stack.Navigator>
   )
 }
