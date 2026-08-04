@@ -7,7 +7,10 @@ import { useFocusEffect } from '@react-navigation/native'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
-import { type HealthEvent, typeLabel, statusLabel, formatDateLongBR, formatTimeBR } from '@sintera/core'
+import {
+  type HealthEvent, typeLabel, statusLabel, formatDateLongBR, formatTimeBR,
+  priorityBadge, modalityLabel, isReturnVisit, outcomeSummary,
+} from '@sintera/core'
 import { Text, Button } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { AcompanhamentoStackParamList } from '../../navigation/types'
@@ -102,6 +105,19 @@ function Section({ title, hint, events, onOpen, onComplete, onCancel, tone }: {
               <Text spec={text(t, { role: 'caption', tone: 'muted' })}>
                 {typeLabel(e.type)} · {formatDateLongBR(e.date)}{formatTimeBR(e.time) ? ` · ${formatTimeBR(e.time)}` : ''}
               </Text>
+              {(() => {
+                const bits = [
+                  isReturnVisit(e) ? 'Retorno' : null,
+                  modalityLabel(e.modality),
+                  e.recurrenceRule ? '🔁 recorrente' : null,
+                  priorityBadge(e.priority) ? `${priorityBadge(e.priority)!.icon} ${priorityBadge(e.priority)!.label}` : null,
+                  (e.amountCents ?? 0) > 0 ? ((e.amountCents ?? 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : null,
+                ].filter(Boolean)
+                if (bits.length === 0) return null
+                return <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{bits.join(' · ')}</Text>
+              })()}
+              {e.preparation ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Preparo: {e.preparation}</Text> : null}
+              {outcomeSummary(e.outcome) ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Desfecho: {outcomeSummary(e.outcome)}</Text> : null}
             </View>
             <Text spec={text(t, { role: 'caption' })} style={{ color: accent }}>{statusLabel(e.status)}</Text>
           </Pressable>
