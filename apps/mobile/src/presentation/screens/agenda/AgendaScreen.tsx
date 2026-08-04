@@ -50,7 +50,7 @@ export function AgendaScreen({ navigation }: Props) {
     )
   }
 
-  const empty = a.lists.overdue.length === 0 && a.lists.upcoming.length === 0 && a.lists.historical.length === 0
+  const empty = a.lists.overdue.length === 0 && a.lists.upcoming.length === 0
 
   return (
     <ScrollView
@@ -76,7 +76,7 @@ export function AgendaScreen({ navigation }: Props) {
 
       <Section title="Pendências" hint="Vencidas e ainda abertas" events={a.lists.overdue} onOpen={openEvent} onComplete={onComplete} onCancel={onCancel} tone="attention" />
       <Section title="Próximos" events={a.lists.upcoming} onOpen={openEvent} onComplete={onComplete} onCancel={onCancel} />
-      <Section title="Histórico" events={a.lists.historical} onOpen={openEvent} tone="muted" />
+      {/* Histórico (consolidado: exames + eventos) vive na TimelineScreen — a Agenda mostra só futuro/pendências. */}
     </ScrollView>
   )
 }

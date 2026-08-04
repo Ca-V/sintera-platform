@@ -12,6 +12,9 @@ export * from './domain/module'
 // Projeção cronológica (Timeline) — lógica pura reutilizável por qualquer domínio datado.
 export * from './domain/timeline'
 
+// Histórico de Saúde — projeção UNIFICADA (eventos + exames + …) para a linha do tempo. Aditiva.
+export * from './domain/timelineProjection'
+
 // Apresentação PURA de resultados (biomarcadores) — fonte única Web↔Mobile (paridade Exames).
 export * from './domain/exams/biomarkerView'
 
