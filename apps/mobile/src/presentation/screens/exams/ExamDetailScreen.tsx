@@ -1,16 +1,22 @@
-// Detalhe do Exame (Inc.5) — COMPOSIÇÃO de primitivos DS + `useExam` (sem rede/domínio aqui). FRONTEIRA
-// REG-001: exibe os campos centrais + leva ao DOCUMENTO ORIGINAL (`file_url`, fonte da verdade). NUNCA
-// resultado interpretado/diagnóstico. Read-only.
-import { ScrollView, View, ActivityIndicator, Linking, Alert, StyleSheet } from 'react-native'
+// Detalhe do Exame — PARIDADE com a Web (src/app/dashboard/exams/[id]). COMPOSIÇÃO de primitivos DS + `useExam`
+// (sem rede/domínio aqui). FRONTEIRA REG-001: exibe os campos + resultados + leva ao DOCUMENTO ORIGINAL (fonte
+// da verdade); nunca interpreta. Regras puras vêm do @sintera/core (fonte única com a Web).
+import { useEffect, useState } from 'react'
+import { ScrollView, View, ActivityIndicator, Linking, Alert, Share, Pressable, StyleSheet } from 'react-native'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
-import { Button, FieldRow, Text } from '../../primitives'
+import type { ExamDTO } from '@sintera/api-client'
+import { deriveExamIdentity, isOrderDocumentType, careStageFor, CARE_STAGES } from '@sintera/core'
+import { Button, FieldRow, Input, Text } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { DocumentosStackParamList } from '../../navigation/types'
+import { apiClient } from '../../../infrastructure/apiClient'
 import { useExam } from './useExam'
 import { examStatusLabel, isExamFailed } from './examStatus'
 import { formatExamDate } from './examFormat'
+import { ResultsSection } from './ResultsSection'
+import { FinancialSection } from './FinancialSection'
 
 type Props = NativeStackScreenProps<DocumentosStackParamList, 'ExamDetail'>
 
@@ -19,23 +25,52 @@ export function ExamDetailScreen({ route, navigation }: Props) {
   const insets = useSafeAreaInsets()
   const p = useExam(route.params.id)
 
-  // Exclusão pelo dono (gated — MOBILE-030): confirmação irreversível; sucesso volta à lista (que re-busca ao focar).
+  const [editingName, setEditingName] = useState(false)
+  const [nameValue, setNameValue] = useState('')
+  const [editingDate, setEditingDate] = useState(false)
+  const [dateValue, setDateValue] = useState('')
+  const [reportOpen, setReportOpen] = useState(false)
+  const [reportText, setReportText] = useState('')
+  const [reportSent, setReportSent] = useState(false)
+  const [orders, setOrders] = useState<ExamDTO[]>([])
+  const [pickOrder, setPickOrder] = useState(false)
+
+  const exam = p.exam
+  const isOrderDoc = isOrderDocumentType(exam?.document_type)
+
+  // Pedidos candidatos a ORIGEM (Q1) — só para RESULTADOS. Reusa listExams (RLS limita ao usuário).
+  useEffect(() => {
+    if (!exam || isOrderDoc) return
+    let alive = true
+    apiClient.exams.listExams()
+      .then(list => { if (alive) setOrders(list.filter(o => isOrderDocumentType(o.document_type) && o.id !== exam.id)) })
+      .catch(() => {})
+    return () => { alive = false }
+  }, [exam, isOrderDoc])
+
   const onDelete = () => {
-    Alert.alert('Excluir exame', 'Esta ação é irreversível. O documento e os dados extraídos serão apagados.', [
+    Alert.alert('Excluir exame', 'Esta ação é irreversível. O documento e os dados extraídos serão apagados. O seu Histórico é recalculado.', [
       { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Excluir',
-        style: 'destructive',
-        onPress: async () => {
-          const { error } = await p.remove()
-          if (error) {
-            Alert.alert('Não foi possível excluir', 'Tente novamente mais tarde.')
-            return
-          }
-          navigation.goBack()
-        },
-      },
+      { text: 'Excluir', style: 'destructive', onPress: async () => {
+        const { error } = await p.remove()
+        if (error) { Alert.alert('Não foi possível excluir', 'Tente novamente mais tarde.'); return }
+        navigation.goBack()
+      } },
     ])
+  }
+
+  const onShare = () => {
+    if (!exam) return
+    const { name, lab } = deriveExamIdentity(exam.type, exam.issuer)
+    const parts = [`${name}${lab ? ` · ${lab}` : ''}`, `Realizado em ${formatExamDate(exam.exam_date)}`, exam.file_url ?? '']
+    void Share.share({ message: parts.filter(Boolean).join('\n') })
+  }
+
+  async function submitReport() {
+    if (!reportText.trim()) return
+    await p.reportProblem(reportText.trim())
+    setReportSent(true); setReportText('')
+    setTimeout(() => { setReportOpen(false); setReportSent(false) }, 2000)
   }
 
   if (p.phase === 'idle' || p.phase === 'loading') {
@@ -46,7 +81,6 @@ export function ExamDetailScreen({ route, navigation }: Props) {
       </View>
     )
   }
-
   if (p.phase === 'error') {
     return (
       <View style={[styles.center, { backgroundColor: t.color.surface.app, paddingTop: insets.top }]}>
@@ -57,8 +91,6 @@ export function ExamDetailScreen({ route, navigation }: Props) {
       </View>
     )
   }
-
-  const exam = p.exam
   if (!exam) {
     return (
       <View style={[styles.center, { backgroundColor: t.color.surface.app, paddingTop: insets.top }]}>
@@ -67,70 +99,187 @@ export function ExamDetailScreen({ route, navigation }: Props) {
     )
   }
 
+  const { name, lab } = deriveExamIdentity(exam.type, exam.issuer)
+  const hasResults = p.biomarkers.length > 0 || (p.clinical?.items.length ?? 0) > 0
+  const stage = careStageFor({ hasResult: hasResults, isOrder: isOrderDoc, linkedEventStatuses: [] })
+  const isProcessed = exam.status === 'processed'
+  const linkedOrder = orders.find(o => o.id === exam.fulfills_order_id) ?? null
+  const card = { backgroundColor: t.color.surface.base, borderColor: t.color.border.default }
+
   return (
-    <ScrollView
-      style={{ backgroundColor: t.color.surface.app }}
+    <ScrollView style={{ backgroundColor: t.color.surface.app }}
       contentContainerStyle={[styles.content, { paddingTop: styles.content.padding + insets.top, paddingBottom: styles.content.padding + insets.bottom }]}
-    >
-      <FieldRow label="Exame">
-        <Text spec={text(t, { role: 'bodyStrong' })}>{exam.display_title ?? exam.type ?? '—'}</Text>
-      </FieldRow>
-      <FieldRow label="Data">
-        <Text spec={text(t, { role: 'body' })}>{formatExamDate(exam.exam_date)}</Text>
-      </FieldRow>
-      {exam.issuer ? (
-        <FieldRow label="Emissor">
-          <Text spec={text(t, { role: 'body' })}>{exam.issuer}</Text>
-        </FieldRow>
+      keyboardShouldPersistTaps="handled">
+
+      {/* Conferência de identidade (paciente no laudo) */}
+      {exam.patient_name ? (
+        <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Paciente no laudo: {exam.patient_name}</Text>
       ) : null}
-      {exam.requesting_physician ? (
-        <FieldRow label="Solicitante">
-          <Text spec={text(t, { role: 'body' })}>{exam.requesting_physician}</Text>
-        </FieldRow>
+
+      {/* Fluxo assistencial */}
+      {stage ? (
+        <View style={styles.stepper}>
+          {CARE_STAGES.map((s, i) => {
+            const reached = CARE_STAGES.findIndex(x => x.key === stage) >= i
+            return (
+              <View key={s.key} style={styles.step}>
+                <Text spec={text(t, { role: 'caption', tone: reached ? 'default' : 'faint' })}
+                  style={reached ? { color: t.color.identity.primary } : undefined}>{s.label}</Text>
+                {i < CARE_STAGES.length - 1 ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>›</Text> : null}
+              </View>
+            )
+          })}
+        </View>
       ) : null}
-      {exam.clinical_family ? (
-        <FieldRow label="Família clínica">
-          <Text spec={text(t, { role: 'body' })}>{exam.clinical_family}</Text>
-        </FieldRow>
-      ) : null}
-      {examStatusLabel(exam.status) ? (
-        <FieldRow label="Situação">
-          <Text
-            spec={text(t, { role: 'body', tone: 'muted' })}
-            style={isExamFailed(exam.status) ? { color: t.color.badge.error.text } : undefined}
-          >
+
+      {/* Cabeçalho: nome (editável) + lab + solicitante + data (editável) + páginas */}
+      <View style={[styles.card, card, { gap: 8 }]}>
+        {editingName ? (
+          <View style={styles.editRow}>
+            <Input value={nameValue} onChangeText={setNameValue} placeholder="Nome do exame" style={{ flex: 1 }} autoFocus />
+            <Button label="OK" onPress={async () => { if (nameValue.trim()) await p.updateFields({ type: nameValue.trim() }); setEditingName(false) }} />
+            <Button label="Cancelar" variant="secondary" onPress={() => setEditingName(false)} />
+          </View>
+        ) : (
+          <Pressable onLongPress={() => { setNameValue(exam.type ?? name); setEditingName(true) }}>
+            <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 20 }}>{name}</Text>
+          </Pressable>
+        )}
+        {lab ? <Text spec={text(t, { role: 'body', tone: 'muted' })}>{lab}</Text> : null}
+        {exam.requesting_physician ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Solicitante: {exam.requesting_physician}</Text> : null}
+
+        {editingDate ? (
+          <View style={styles.editRow}>
+            <Input value={dateValue} onChangeText={setDateValue} placeholder="AAAA-MM-DD" style={{ flex: 1 }} autoFocus />
+            <Button label="OK" onPress={async () => { if (/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) await p.updateFields({ exam_date: dateValue }); setEditingDate(false) }} />
+            <Button label="Cancelar" variant="secondary" onPress={() => setEditingDate(false)} />
+          </View>
+        ) : (
+          <Pressable onLongPress={() => { setDateValue(exam.exam_date ?? ''); setEditingDate(true) }}>
+            <Text spec={text(t, { role: 'caption', tone: 'muted' })}>
+              Realizado em {formatExamDate(exam.exam_date)}{exam.page_count ? ` · ${exam.page_count} página${exam.page_count > 1 ? 's' : ''}` : ''}
+            </Text>
+          </Pressable>
+        )}
+        <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Toque e segure no nome ou na data para editar.</Text>
+
+        {examStatusLabel(exam.status) ? (
+          <Text spec={text(t, { role: 'caption', tone: 'muted' })} style={isExamFailed(exam.status) ? { color: t.color.badge.error.text } : undefined}>
             {examStatusLabel(exam.status)}
           </Text>
-        </FieldRow>
+        ) : null}
+      </View>
+
+      {/* Avisos */}
+      {exam.text_truncated ? (
+        <View style={[styles.banner, { backgroundColor: t.color.badge.attention.soft, borderColor: t.color.badge.attention.text }]}>
+          <Text spec={text(t, { role: 'bodySmall' })} style={{ color: t.color.badge.attention.text }}>
+            Documento extenso, processado parcialmente. Alguns resultados podem não ter sido extraídos — use "Extrair novamente" ou confira o documento original.
+          </Text>
+        </View>
+      ) : null}
+      {p.analyze.error ? (
+        <View style={[styles.banner, { backgroundColor: t.color.badge.error.soft, borderColor: t.color.badge.error.text }]}>
+          <Text spec={text(t, { role: 'bodySmall' })} style={{ color: t.color.badge.error.text }}>{p.analyze.error}</Text>
+        </View>
+      ) : null}
+      {p.analyze.notice ? (
+        <View style={[styles.banner, card]}>
+          <Text spec={text(t, { role: 'bodySmall', tone: 'muted' })}>{p.analyze.notice}</Text>
+        </View>
       ) : null}
 
-      {/* Reprocessar (paridade Web: "Extrair novamente"). SEMPRE disponível com documento — atualiza a
-          extração (ex.: emissor de exames antigos). Rótulo de recuperação quando falhou/sem nome. */}
-      {exam.file_url ? (
-        <Button
-          label={isExamFailed(exam.status) || !exam.display_title ? 'Tentar processar novamente' : 'Extrair novamente'}
-          variant="secondary"
-          onPress={p.reanalyze}
-        />
+      {/* Resultados */}
+      <ResultsSection exam={exam} biomarkers={p.biomarkers} clinical={p.clinical} analyzing={p.analyze.running} />
+
+      {/* Financeiro */}
+      <FinancialSection exam={exam} onSave={p.updateFields} />
+
+      {/* Pedido de origem (Q1) — só para resultados (não-pedido) */}
+      {!isOrderDoc ? (
+        <View style={[styles.card, card, { gap: 8 }]}>
+          <Text spec={text(t, { role: 'bodyStrong' })}>Pedido de origem</Text>
+          {linkedOrder ? (
+            <View style={styles.editRow}>
+              <Text spec={text(t, { role: 'bodySmall' })} style={{ flex: 1 }}>
+                {linkedOrder.type ?? 'Pedido médico'}{linkedOrder.requesting_physician ? ` · ${linkedOrder.requesting_physician}` : ''}
+              </Text>
+              <Button label="Desvincular" variant="secondary" onPress={() => p.updateFields({ fulfills_order_id: null })} />
+            </View>
+          ) : orders.length === 0 ? (
+            <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Nenhum pedido cadastrado para vincular.</Text>
+          ) : pickOrder ? (
+            <View style={{ gap: 6 }}>
+              {orders.map(o => (
+                <Pressable key={o.id} onPress={() => { p.updateFields({ fulfills_order_id: o.id }); setPickOrder(false) }}
+                  style={[styles.orderRow, { borderColor: t.color.border.default }]}>
+                  <Text spec={text(t, { role: 'bodySmall' })}>
+                    {o.type ?? 'Pedido médico'}{o.requesting_physician ? ` — ${o.requesting_physician}` : ''} · {formatExamDate(o.exam_date)}
+                  </Text>
+                </Pressable>
+              ))}
+              <Button label="Cancelar" variant="secondary" onPress={() => setPickOrder(false)} />
+            </View>
+          ) : (
+            <>
+              <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Vincule este resultado ao pedido que o originou (rastreabilidade).</Text>
+              <Button label="Vincular a um pedido" variant="secondary" onPress={() => setPickOrder(true)} />
+            </>
+          )}
+        </View>
       ) : null}
 
-      {exam.file_url ? (
-        <Button label="Abrir documento original" onPress={() => Linking.openURL(exam.file_url as string)} />
-      ) : (
-        <Text spec={text(t, { role: 'bodySmall', tone: 'muted' })}>Documento original não disponível.</Text>
-      )}
+      {/* Ações */}
+      <View style={{ gap: 8 }}>
+        {exam.file_url ? (
+          <Button label={isProcessed ? 'Extrair novamente' : 'Extrair dados'} variant="secondary"
+            onPress={p.reanalyze} loading={p.analyze.running} loadingLabel="Extraindo…" />
+        ) : null}
+        {exam.file_url ? <Button label="Abrir documento original" onPress={() => Linking.openURL(exam.file_url as string)} /> : (
+          <Text spec={text(t, { role: 'bodySmall', tone: 'muted' })}>Documento original não disponível.</Text>
+        )}
+        <Button label="Compartilhar" variant="secondary" onPress={onShare} />
+        <Button label="Reportar problema" variant="secondary" onPress={() => setReportOpen(v => !v)} />
+      </View>
+
+      {/* Reportar problema (inline) */}
+      {reportOpen ? (
+        <View style={[styles.card, card, { gap: 8 }]}>
+          {reportSent ? (
+            <Text spec={text(t, { role: 'bodySmall' })} style={{ color: t.color.badge.success.text }}>Obrigada pelo relato! Vamos investigar.</Text>
+          ) : (
+            <>
+              <Text spec={text(t, { role: 'bodySmall', tone: 'muted' })}>
+                Encontrou um valor incorreto, resultado ausente ou outro problema? Descreva abaixo — ajuda a melhorar a extração.
+              </Text>
+              <Input value={reportText} onChangeText={setReportText} placeholder="Descreva o problema…" multiline
+                style={{ minHeight: 80, textAlignVertical: 'top' }} />
+              <View style={styles.actions}>
+                <Button label="Cancelar" variant="secondary" onPress={() => setReportOpen(false)} />
+                <Button label="Enviar relato" onPress={submitReport} />
+              </View>
+            </>
+          )}
+        </View>
+      ) : null}
 
       <Button label="Excluir exame" variant="secondary" onPress={onDelete} />
 
-      <Text spec={text(t, { role: 'caption', tone: 'faint' })} style={{ marginTop: 8 }}>
-        O documento original é a fonte da verdade. A SINTERA organiza e dá acesso — não interpreta resultados
-        (RDC 657/2022).
+      <Text spec={text(t, { role: 'caption', tone: 'faint' })}>
+        O documento original é a fonte da verdade. A SINTERA organiza e dá acesso — não interpreta resultados (RDC 657/2022).
       </Text>
     </ScrollView>
   )
 }
 
 const styles = StyleSheet.create({
-  content: { padding: 24, gap: 16 },
+  content: { padding: 20, gap: 14 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12 },
+  card: { borderWidth: 1, borderRadius: 16, padding: 16 },
+  banner: { borderWidth: 1, borderRadius: 12, padding: 12 },
+  editRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },
+  stepper: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
+  step: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  orderRow: { borderWidth: 1, borderRadius: 12, padding: 10 },
 })

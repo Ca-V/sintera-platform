@@ -17,6 +17,22 @@ export interface ExamDTO {
   created_at: string | null       // quando entrou na plataforma
 }
 
+/** Exame no DETALHE — estende o DTO enxuto com os campos que só o detalhe exibe/edita (paridade com a Web).
+ *  A LISTA permanece enxuta (ExamDTO); só `getExam` traz estes campos extras. */
+export interface ExamDetailDTO extends ExamDTO {
+  patient_name: string | null     // nome do paciente no laudo (conferência de identidade)
+  page_count: number | null       // nº de páginas do documento
+  document_scope: string | null   // escopo do documento (single/bundle…)
+  extraction_completeness: string | null // 'document_only' etc. (CEF) — dirige o estado da tela de resultados
+  error_reason: string | null     // motivo do erro de extração (exibição)
+  text_truncated: boolean | null  // documento processado parcialmente (aviso)
+  fulfills_order_id: string | null // vínculo ao pedido de ORIGEM (Q1)
+  // Financeiro do exame (FB-008: atributo do próprio exame, não Evento separado)
+  expense_amount_cents: number | null
+  expense_doc_type: string | null
+  expense_doc_url: string | null
+}
+
 import type { PageRequest, DateRange } from '@sintera/types'
 import type { BiomarkerDTO } from './biomarkers'
 import type { ClinicalResultRow } from '@sintera/core'
@@ -32,8 +48,8 @@ export interface ExamsQuery extends PageRequest, DateRange {
 export interface ExamsApi {
   /** Lista os exames do usuário (mais recentes primeiro), com filtros/paginação. `[]` se não houver. LANÇA em falha. */
   listExams(query?: ExamsQuery, signal?: AbortSignal): Promise<ExamDTO[]>
-  /** Lê um exame por id. `null` se não existir/for de outro usuário (RLS). LANÇA em falha. */
-  getExam(id: string, signal?: AbortSignal): Promise<ExamDTO | null>
+  /** Lê um exame por id (DETALHE — inclui campos extras). `null` se não existir/for de outro usuário (RLS). LANÇA. */
+  getExam(id: string, signal?: AbortSignal): Promise<ExamDetailDTO | null>
   /** Lê os RESULTADOS estruturados (biomarcadores) de um exame. `[]` se não houver. LANÇA em falha. */
   getExamBiomarkers(examId: string, signal?: AbortSignal): Promise<BiomarkerDTO[]>
   /** Lê os RESULTADOS clínicos não-laboratoriais (CPE) de um exame — linhas de clinical_results (→ UCDA no core). */
@@ -43,3 +59,7 @@ export interface ExamsApi {
 /** Colunas centrais lidas do banco (explícitas — não `*` — para não trazer campos internos/financeiros). */
 export const EXAM_COLUMNS =
   'id, exam_date, display_title, type, document_type, clinical_family, status, issuer, requesting_physician, file_url, created_at' as const
+
+/** Colunas do DETALHE — as centrais + os campos extras (paciente, páginas, financeiro, vínculo…). Só `getExam`. */
+export const EXAM_DETAIL_COLUMNS =
+  `${EXAM_COLUMNS}, patient_name, page_count, document_scope, extraction_completeness, error_reason, text_truncated, fulfills_order_id, expense_amount_cents, expense_doc_type, expense_doc_url` as const
