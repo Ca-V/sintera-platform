@@ -20,7 +20,8 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
-      "@sintera/design-system": ["./packages/design-system/src"]
+      "@sintera/design-system": ["./packages/design-system/src"],
+      "@sintera/core": ["./packages/core/src"]
     }
   },
   "include": [

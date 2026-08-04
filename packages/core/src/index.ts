@@ -14,3 +14,12 @@ export * from './domain/timeline'
 
 // Apresentação PURA de resultados (biomarcadores) — fonte única Web↔Mobile (paridade Exames).
 export * from './domain/exams/biomarkerView'
+
+// Regras puras do domínio Exames (identidade, classificação, fluxo assistencial) — fonte única Web↔Mobile.
+export * from './domain/exams/identity'
+export * from './domain/exams/classification'
+export * from './domain/exams/careFlow'
+
+// Financeiro puro (parsing de valor, documento fiscal) — fonte única Web↔Mobile.
+export * from './domain/finance/money'
+export * from './domain/finance/expense'

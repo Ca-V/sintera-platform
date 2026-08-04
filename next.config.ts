@@ -5,8 +5,8 @@ const nextConfig: NextConfig = {
   // durante o bundling do Next.js. Marcar como externo faz o Node.js carregar o módulo
   // nativamente em runtime, evitando o erro de build.
   serverExternalPackages: ['pdf-parse'],
-  // DS-002: o pacote exporta TS cru (headless recipes+tokens). O Next transpila em build.
-  transpilePackages: ['@sintera/design-system'],
+  // DS-002 + @sintera/core: pacotes exportam TS cru (recipes/tokens; domínio puro). O Next transpila em build.
+  transpilePackages: ['@sintera/design-system', '@sintera/core'],
 };
 
 export default nextConfig;
