@@ -72,7 +72,14 @@ identidade (compareNames — aviso de exame de outra pessoa), financeiro complet
 pedido de origem (vincular/desvincular), reportar problema (usage_events), compartilhar nativo, abrir documento,
 excluir, fluxo assistencial (stepper). typecheck raiz+mobile+pacotes verde; suíte verde; build Web verde.
 
-### Dependência arquitetural CONFIRMADA por código (04/08)
+### RESOLVIDO (04/08) — domínio Agenda implementado no Mobile
+A dependência abaixo foi ELIMINADA na mesma sessão (durante a fila do build): o domínio Agenda/health_events
+foi trazido ao Mobile (modelo+apresentação+recorrência em @sintera/core; api-client agenda listEvents/saveEvent/
+deleteEvent; tela Agenda pendências/próximos/histórico; formulário de evento; **"Criar lembrete de repetição"
+no exame** cria o Evento Assistencial vinculado; fluxo assistencial do exame passa a usar os eventos vinculados).
+→ Detalhe do exame agora em paridade TOTAL, sem exceções. Um único build cobre Exames + Agenda.
+
+### Dependência arquitetural CONFIRMADA por código (04/08) [histórico]
 Evidência: `src/components/eventForm.ts:82` `saveEvent` → `services.command.create` → `src/lib/agenda/repository.ts:65`
 `upsert('health_events')` + `event_links`. O "Lembrete de repetição" é um **Evento Assistencial** (health_events,
 entidade central ADR-001), NÃO um atributo do exame — modelá-lo em Exames violaria FB-008 (recorrência = 1 evento).
