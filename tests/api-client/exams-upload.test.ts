@@ -15,8 +15,15 @@ function makeClient(
 }
 
 const okStorage = () => ({
-  upload: vi.fn(async () => ({ error: null })),
-  createSignedUrl: vi.fn(async () => ({ data: { signedUrl: 'https://x/signed?token=t' }, error: null })),
+  upload: vi.fn(
+    async (_path: string, _body: unknown, _opts?: unknown): Promise<{ error: Error | null }> => ({ error: null }),
+  ),
+  createSignedUrl: vi.fn(
+    async (_path: string, _ttl: number): Promise<{ data: { signedUrl: string } | null; error: Error | null }> => ({
+      data: { signedUrl: 'https://x/signed?token=t' },
+      error: null,
+    }),
+  ),
 })
 
 describe('exams.uploadExam', () => {

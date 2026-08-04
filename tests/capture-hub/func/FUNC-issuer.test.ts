@@ -3,7 +3,7 @@
 // legitimamente começam com "Laboratório/Clínica/Hospital".
 
 import { describe, it, expect } from 'vitest'
-import { normalizeIssuer } from '@/lib/ai/issuer'
+import { normalizeIssuer, extractIssuerFromImage } from '@/lib/ai/issuer'
 
 describe('normalizeIssuer (EXA-F003)', () => {
   it('mantém o nome transcrito, aparando aspas/pontuação', () => {
@@ -32,5 +32,12 @@ describe('normalizeIssuer (EXA-F003)', () => {
     expect(normalizeIssuer('')).toBeNull()
     expect(normalizeIssuer(null)).toBeNull()
     expect(normalizeIssuer('x'.repeat(81))).toBeNull()
+  })
+
+  it('extractIssuerFromImage (multimodal) é best-effort: sem API key → null, não lança', async () => {
+    const prev = process.env.ANTHROPIC_API_KEY
+    delete process.env.ANTHROPIC_API_KEY
+    await expect(extractIssuerFromImage(Buffer.from('x'), 'image/jpeg')).resolves.toBeNull()
+    if (prev) process.env.ANTHROPIC_API_KEY = prev
   })
 })
