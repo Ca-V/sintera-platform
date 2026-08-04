@@ -7,6 +7,7 @@ import type { ExamsWriteApi } from '../exams/write'
 import type { HealthEvent, EventLink } from '@sintera/core'
 import type { EventDraft } from '../agenda/events'
 import type { LinkedReminderOptions } from '../agenda/reminder'
+import type { LinkedExpenseOptions } from '../agenda/expense'
 import type { ConditionDTO, ConditionInput } from '../conditions/conditions'
 import type { HabitDTO, HabitInput } from '../habits/habits'
 import type { ResourceDTO, ResourceInput } from '../resources/resources'
@@ -60,6 +61,8 @@ export interface AgendaApi {
   deleteEvent(id: string): Promise<{ error: Error | null }>
   /** Sincroniza um lembrete recorrente vinculado a um fato (hábito/recurso/medicamento…). `{ error }`, NÃO lança. */
   syncReminder(link: EventLink, opts: LinkedReminderOptions): Promise<{ error: Error | null }>
+  /** Sincroniza uma DESPESA vinculada a um fato (recurso/medicamento…) → Gastos/Histórico. `{ error }`, NÃO lança. */
+  syncExpense(link: EventLink, opts: LinkedExpenseOptions): Promise<{ error: Error | null }>
 }
 
 /** Domínio Hábitos (life_habits) — CRUD do estado permanente + meta. */

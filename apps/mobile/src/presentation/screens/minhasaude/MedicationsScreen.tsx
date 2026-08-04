@@ -50,6 +50,7 @@ export function MedicationsScreen({ route, navigation }: Props) {
   const [dailyCons, setDailyCons] = useState('')
   const [purchasedOn, setPurchasedOn] = useState('')
   const [amount, setAmount] = useState('')
+  const [purchaseStatus, setPurchaseStatus] = useState('')
   const [packQtyInput, setPackQtyInput] = useState('')
   const [repurchaseFreq, setRepurchaseFreq] = useState('') // valor PT ('' = não repetir)
   const [saving, setSaving] = useState(false)
@@ -70,7 +71,7 @@ export function MedicationsScreen({ route, navigation }: Props) {
   function startNew() {
     setEditing(null); setName(''); setKind(supplements ? 'suplemento' : 'medicamento'); setBrand(''); setDose(''); setFrequency('')
     setForm(''); setAdminRoute(''); setPrescriber(''); setStatus('em_uso'); setStartedOn(''); setUntilDate(''); setNotes('')
-    setAcquiredQty(''); setPackQtyInput(''); setDailyCons(''); setPurchasedOn(''); setAmount(''); setRepurchaseFreq(''); setOpen(true)
+    setAcquiredQty(''); setPackQtyInput(''); setDailyCons(''); setPurchasedOn(''); setAmount(''); setPurchaseStatus(''); setRepurchaseFreq(''); setOpen(true)
   }
   function startEdit(m: MedicationDTO) {
     setEditing(m); setName(m.name); setKind(m.kind); setBrand(m.brand ?? ''); setDose(m.dose ?? ''); setFrequency(m.frequency ?? '')
@@ -78,7 +79,7 @@ export function MedicationsScreen({ route, navigation }: Props) {
     setStatus(m.status); setStartedOn(m.started_on ?? ''); setUntilDate(m.until_date ?? ''); setNotes(m.notes ?? '')
     setAcquiredQty(m.acquired_quantity != null ? String(m.acquired_quantity) : ''); setPackQtyInput(m.pack_quantity != null ? String(m.pack_quantity) : '')
     setDailyCons(m.daily_consumption != null ? String(m.daily_consumption) : ''); setPurchasedOn(m.purchased_on ?? '')
-    setAmount(m.amount_cents ? centsToAmount(m.amount_cents) : ''); setRepurchaseFreq(m.repurchase_frequency ?? ''); setOpen(true)
+    setAmount(m.amount_cents ? centsToAmount(m.amount_cents) : ''); setPurchaseStatus(m.purchase_status ?? ''); setRepurchaseFreq(m.repurchase_frequency ?? ''); setOpen(true)
   }
 
   async function save() {
@@ -94,16 +95,24 @@ export function MedicationsScreen({ route, navigation }: Props) {
         started_on: startedOn, until_date: untilDate, notes,
         acquired_quantity: num(acquiredQty), pack_quantity: num(packQtyInput), daily_consumption: num(dailyCons),
         pack_unit: medFormUnit(form) || null, purchased_on: purchasedOn, amount_cents: parseAmountToCents(amount),
+        purchase_status: purchaseStatus || null,
         repurchase_reminder: wantsReminder, repurchase_frequency: repurchaseFreq || null,
       }
       const { data, error: err } = await apiClient.medications.saveMedication(input)
       if (err) { Alert.alert('Não foi possível salvar', err.message || 'Tente novamente.'); return }
       const id = data?.id
-      // Lembrete ativo só quando "em uso" (mesma regra da Web). Frequência do Evento derivada do vocabulário PT.
-      if (id) await apiClient.agenda.syncReminder({ type: 'medication', id }, {
-        enabled: wantsReminder && status === 'em_uso', frequency: repurchaseFreqToRecurrence(repurchaseFreq),
-        title: `Recomprar: ${name.trim()}`, notes: `Recompra de ${name.trim()}`,
-      })
+      if (id) {
+        // Lembrete ativo só quando "em uso" (mesma regra da Web). Frequência do Evento derivada do vocabulário PT.
+        await apiClient.agenda.syncReminder({ type: 'medication', id }, {
+          enabled: wantsReminder && status === 'em_uso', frequency: repurchaseFreqToRecurrence(repurchaseFreq),
+          title: `Recomprar: ${name.trim()}`, notes: `Recompra de ${name.trim()}`,
+        })
+        // Compra realizada → despesa em Gastos (só quando 'comprado' com valor; 'a comprar' não gera gasto).
+        await apiClient.agenda.syncExpense({ type: 'medication', id }, {
+          amountCents: purchaseStatus === 'comprado' ? parseAmountToCents(amount) : null,
+          title: `Compra: ${name.trim()}`, date: purchasedOn || undefined, eventType: 'outro',
+        })
+      }
       setOpen(false); load(true)
     } finally { setSaving(false) }
   }
@@ -174,6 +183,8 @@ export function MedicationsScreen({ route, navigation }: Props) {
               <Input value={purchasedOn} onChangeText={setPurchasedOn} placeholder="Compra (AAAA-MM-DD)" style={{ flex: 1 }} />
               <Input value={amount} onChangeText={setAmount} placeholder="Valor (R$)" keyboardType="decimal-pad" style={{ flex: 1 }} />
             </View>
+            <Chips options={[{ id: 'a_comprar', label: 'A comprar' }, { id: 'comprado', label: 'Comprado' }]} value={purchaseStatus} onChange={setPurchaseStatus} />
+            {purchaseStatus === 'comprado' && amount.trim() ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>O valor pago aparece em Despesas.</Text> : null}
           </View>
 
           <Input value={notes} onChangeText={setNotes} placeholder="Observações…" multiline style={{ minHeight: 60, textAlignVertical: 'top' }} />

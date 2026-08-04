@@ -10,6 +10,7 @@ import {
   RESOURCE_TYPES, RESOURCE_STATUSES, resourceStatusLabel, visionSummary,
   type ResourceType, type ResourceStatus, type VisionKind,
   FREQUENCY_LABELS, type RecurrenceFrequency, selectByLink, parseRule, type HealthEvent,
+  EXPENSE_DOC_TYPES, expenseDocLabel, parseAmountToCents, centsToAmount,
 } from '@sintera/core'
 import { Text, Button, Input } from '../../primitives'
 import { useTheme } from '../../theme'
@@ -48,6 +49,10 @@ export function ResourcesScreen() {
   const [bc, setBc] = useState('')
   const [dia, setDia] = useState('')
   const [reminderFreq, setReminderFreq] = useState<RecurrenceFrequency>('none')
+  const [expAmount, setExpAmount] = useState('')
+  const [expDocType, setExpDocType] = useState('')
+  const [expDocUrl, setExpDocUrl] = useState<string | null>(null)
+  const [uploadingExp, setUploadingExp] = useState(false)
   const [saving, setSaving] = useState(false)
 
   const load = useCallback((silent: boolean) => {
@@ -60,9 +65,11 @@ export function ResourcesScreen() {
   useEffect(() => { alive.current = true; load(false); return () => { alive.current = false } }, [load])
 
   const reminderFreqFor = (id: string): RecurrenceFrequency => {
-    const ev = selectByLink(events, 'resource', id)[0]
+    const ev = selectByLink(events, 'resource', id).find(e => (e.amountCents ?? 0) === 0)
     return ev ? parseRule(ev.recurrenceRule).frequency : 'none'
   }
+  // Despesa vinculada ao recurso (FB-004): o evento vinculado COM valor.
+  const expenseFor = (id: string): HealthEvent | null => selectByLink(events, 'resource', id).find(e => (e.amountCents ?? 0) > 0) ?? null
   const eyeFrom = (o: unknown): Eye => {
     const r = (o ?? {}) as Record<string, string>
     return { sph: r.sph ?? '', cyl: r.cyl ?? '', axis: r.axis ?? '', add: r.add ?? '' }
@@ -71,9 +78,12 @@ export function ResourcesScreen() {
   function startNew() {
     setEditing(null); setType('correcao_visual'); setName(''); setBrand(''); setPrescriber(''); setStartedOn(''); setUntilDate('')
     setStatus('em_uso'); setNotes(''); setFileUrl(null); setVisionKind('oculos'); setOd(emptyEye()); setOe(emptyEye())
-    setDnp(''); setBc(''); setDia(''); setReminderFreq('none'); setOpen(true)
+    setDnp(''); setBc(''); setDia(''); setReminderFreq('none')
+    setExpAmount(''); setExpDocType(''); setExpDocUrl(null); setOpen(true)
   }
   function startEdit(r: ResourceDTO) {
+    const exp = expenseFor(r.id)
+    setExpAmount(exp?.amountCents ? centsToAmount(exp.amountCents) : ''); setExpDocType(exp?.expenseDocType ?? ''); setExpDocUrl(exp?.attachmentUrl ?? null)
     setEditing(r); setType(r.resource_type); setName(r.name); setBrand(r.brand ?? ''); setPrescriber(r.prescriber ?? '')
     setStartedOn(r.started_on ?? ''); setUntilDate(r.until_date ?? ''); setStatus(r.status); setNotes(r.notes ?? ''); setFileUrl(r.file_url)
     const a = r.attributes ?? {}
@@ -89,6 +99,16 @@ export function ResourcesScreen() {
       const { data, error: err } = await apiClient.exams.uploadExam({ uri: file.uri, mimeType: file.mimeType ?? 'application/octet-stream', sizeBytes: file.sizeBytes })
       if (!err && data) setFileUrl(data.url)
     } finally { setUploading(false) }
+  }
+
+  async function pickExpDoc() {
+    setUploadingExp(true)
+    try {
+      const file = await documentPicker.pickDocument()
+      if (!file) return
+      const { data, error: err } = await apiClient.exams.uploadExam({ uri: file.uri, mimeType: file.mimeType ?? 'application/octet-stream', sizeBytes: file.sizeBytes })
+      if (!err && data) setExpDocUrl(data.url)
+    } finally { setUploadingExp(false) }
   }
 
   function buildAttributes(): Record<string, unknown> {
@@ -111,7 +131,11 @@ export function ResourcesScreen() {
       const { data, error: err } = await apiClient.resources.saveResource(input)
       if (err) { Alert.alert('Não foi possível salvar', err.message || 'Tente novamente.'); return }
       const id = data?.id
-      if (id) await apiClient.agenda.syncReminder({ type: 'resource', id }, { enabled: reminderFreq !== 'none', frequency: reminderFreq, title: `Trocar: ${name.trim()}`, notes: `Troca do recurso: ${name.trim()}`, date: untilDate || undefined })
+      if (id) {
+        await apiClient.agenda.syncReminder({ type: 'resource', id }, { enabled: reminderFreq !== 'none', frequency: reminderFreq, title: `Trocar: ${name.trim()}`, notes: `Troca do recurso: ${name.trim()}`, date: untilDate || undefined })
+        // Despesa vinculada (FB-004) → Gastos. Valor vazio remove.
+        await apiClient.agenda.syncExpense({ type: 'resource', id }, { amountCents: parseAmountToCents(expAmount), docType: expDocType || null, docUrl: expDocUrl, title: `Compra: ${name.trim()}`, eventType: 'outro' })
+      }
       setOpen(false); load(true)
     } finally { setSaving(false) }
   }
@@ -188,6 +212,18 @@ export function ResourcesScreen() {
 
           <Input value={notes} onChangeText={setNotes} placeholder="Observações…" multiline style={{ minHeight: 60, textAlignVertical: 'top' }} />
           <Button label={fileUrl ? 'Anexo ✓ (trocar)' : 'Anexar documento (opcional)'} variant="secondary" onPress={pickFile} loading={uploading} loadingLabel="Enviando…" />
+
+          <View style={[styles.subCard, { borderColor: t.color.border.default }]}>
+            <Text spec={text(t, { role: 'label', tone: 'muted' })}>FINANCEIRO (aparece em Despesas)</Text>
+            <Input value={expAmount} onChangeText={setExpAmount} placeholder="Valor pago (R$)" keyboardType="decimal-pad" />
+            {expAmount.trim() ? (
+              <>
+                <Chips options={EXPENSE_DOC_TYPES.map(d => ({ id: d.id, label: d.label }))} value={expDocType} onChange={setExpDocType} />
+                <Button label={expDocUrl ? 'NF/recibo ✓ (trocar)' : 'Anexar NF/recibo'} variant="secondary" onPress={pickExpDoc} loading={uploadingExp} loadingLabel="Enviando…" />
+              </>
+            ) : null}
+          </View>
+
           <Text spec={text(t, { role: 'label', tone: 'muted' })}>LEMBRETE DE TROCA</Text>
           <Chips options={freqOptions} value={reminderFreq} onChange={(v) => setReminderFreq(v as RecurrenceFrequency)} />
           <View style={styles.actions}>
@@ -217,6 +253,7 @@ export function ResourcesScreen() {
                 <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{resourceStatusLabel(r.status)}{r.brand ? ` · ${r.brand}` : ''}</Text>
                 {r.resource_type === 'correcao_visual' && visionSummary(r.attributes) ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{visionSummary(r.attributes)}</Text> : null}
                 {reminderFreqFor(r.id) !== 'none' ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>🔔 troca {FREQUENCY_LABELS[reminderFreqFor(r.id)]}</Text> : null}
+                {expenseFor(r.id) ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>💰 {((expenseFor(r.id)?.amountCents ?? 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}{expenseDocLabel(expenseFor(r.id)?.expenseDocType) ? ` · ${expenseDocLabel(expenseFor(r.id)?.expenseDocType)}` : ''}</Text> : null}
                 {r.file_url ? <Pressable onPress={() => Linking.openURL(r.file_url as string)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Documento →</Text></Pressable> : null}
                 <Pressable onPress={() => remove(r)} style={{ alignSelf: 'flex-start', marginTop: 4 }}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>Excluir</Text></Pressable>
               </View>

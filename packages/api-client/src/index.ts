@@ -23,6 +23,7 @@ export type { ResourceDTO, ResourceInput } from './resources/resources'
 export type { MedicationDTO, MedicationInput } from './medications/medications'
 export type { EventDraft } from './agenda/events'
 export type { LinkedReminderOptions } from './agenda/reminder'
+export type { LinkedExpenseOptions } from './agenda/expense'
 export type { ConditionDTO, ConditionInput, ConditionScope } from './conditions/conditions'
 export type { HabitDTO, HabitInput } from './habits/habits'
 // Domínio Exames (ESCRITA) — contrato DEFINIDO p/ Inc.6 (Upload); implementação após aceite do Inc.5.

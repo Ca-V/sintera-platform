@@ -142,10 +142,15 @@ export function HabitsScreen() {
             <Input value={goalUnit} onChangeText={setGoalUnit} placeholder="Unidade (ml)" style={{ flex: 1 }} />
             <Input value={goalDivisions} onChangeText={setGoalDivisions} placeholder="Partes" keyboardType="number-pad" style={{ flex: 1 }} />
           </View>
+          {/* Prévia ao vivo da meta divisível (paridade Web). */}
+          {habitGoalSummary(goalAmount.trim() ? Number(goalAmount.replace(',', '.')) : null, goalUnit || null, goalDivisions.trim() ? Number(goalDivisions) : null) ? (
+            <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{habitGoalSummary(Number(goalAmount.replace(',', '.')), goalUnit || null, goalDivisions.trim() ? Number(goalDivisions) : null)}</Text>
+          ) : null}
           <Input value={notes} onChangeText={setNotes} placeholder="Observações…" multiline style={{ minHeight: 60, textAlignVertical: 'top' }} />
           <Button label={planUrl ? `Plano anexado${planName ? `: ${planName}` : ''}` : 'Anexar plano (opcional)'} variant="secondary" onPress={pickPlan} loading={uploadingPlan} loadingLabel="Enviando…" />
           <Text spec={text(t, { role: 'label', tone: 'muted' })}>LEMBRETE</Text>
           <Chips options={freqOptions} value={reminderFreq} onChange={(v) => setReminderFreq(v as RecurrenceFrequency)} />
+          <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Cria um lembrete recorrente na sua Agenda a partir de hoje. Você é avisada pelo canal definido nas suas preferências de notificação.</Text>
           <View style={styles.actions}>
             <Button label="Cancelar" variant="secondary" onPress={() => setOpen(false)} />
             <Button label="Salvar" onPress={save} loading={saving} loadingLabel="Salvando…" />
@@ -154,7 +159,10 @@ export function HabitsScreen() {
       ) : null}
 
       {items.length === 0 && !open ? (
-        <View style={[styles.card, card]}><Text spec={text(t, { role: 'body', tone: 'muted' })} style={{ textAlign: 'center' }}>Nenhum hábito registrado. Toque em “Adicionar”.</Text></View>
+        <View style={[styles.card, card, { gap: 4 }]}>
+          <Text spec={text(t, { role: 'body', tone: 'muted' })} style={{ textAlign: 'center' }}>Nenhum hábito registrado.</Text>
+          <Text spec={text(t, { role: 'caption', tone: 'faint' })} style={{ textAlign: 'center' }}>Registre hábitos como atividade física, sono, hidratação ou alimentação — com meta e lembrete.</Text>
+        </View>
       ) : null}
 
       {/* Agrupado por categoria (paridade Web) na ordem de HABIT_CATEGORIES, com cabeçalho + contagem. */}

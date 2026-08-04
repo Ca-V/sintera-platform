@@ -20,6 +20,7 @@ import { listExamExpenses } from '../exams/expenses'
 import { logUsageEvent } from '../events/log'
 import { listEvents, saveEvent, deleteEvent } from '../agenda/events'
 import { syncLinkedReminder } from '../agenda/reminder'
+import { syncLinkedExpense } from '../agenda/expense'
 import { listConditions, saveCondition, deleteCondition } from '../conditions/conditions'
 import { listHabits, saveHabit, deleteHabit } from '../habits/habits'
 import { listResources, saveResource, deleteResource } from '../resources/resources'
@@ -76,6 +77,7 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       saveEvent: (draft) => saveEvent(supabase, draft),
       deleteEvent: (id) => deleteEvent(supabase, id),
       syncReminder: (link, opts) => syncLinkedReminder(supabase, link, opts),
+      syncExpense: (link, opts) => syncLinkedExpense(supabase, link, opts),
     },
     conditions: {
       listConditions: (signal) => listConditions(supabase, signal),
