@@ -36,3 +36,6 @@ export * from './domain/recurrence'
 
 // Taxonomia de Hábitos — fonte única Web↔Mobile.
 export * from './domain/habits'
+
+// Taxonomia de Recursos de Saúde — fonte única Web↔Mobile.
+export * from './domain/resources'

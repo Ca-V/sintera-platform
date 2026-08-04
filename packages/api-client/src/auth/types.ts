@@ -9,6 +9,7 @@ import type { EventDraft } from '../agenda/events'
 import type { LinkedReminderOptions } from '../agenda/reminder'
 import type { ConditionDTO, ConditionInput } from '../conditions/conditions'
 import type { HabitDTO, HabitInput } from '../habits/habits'
+import type { ResourceDTO, ResourceInput } from '../resources/resources'
 
 export type { Session, User }
 
@@ -67,6 +68,13 @@ export interface HabitsApi {
   deleteHabit(id: string): Promise<{ error: Error | null }>
 }
 
+/** Domínio Recursos de Saúde (health_resources) — CRUD + atributos por tipo. */
+export interface ResourcesApi {
+  listResources(signal?: AbortSignal): Promise<ResourceDTO[]>
+  saveResource(input: ResourceInput): Promise<{ data: { id: string } | null; error: Error | null }>
+  deleteResource(id: string): Promise<{ error: Error | null }>
+}
+
 /** Domínio Condições de Saúde (health_conditions) — CRUD do estado permanente da pessoa/familiares. */
 export interface ConditionsApi {
   listConditions(signal?: AbortSignal): Promise<ConditionDTO[]>
@@ -82,4 +90,5 @@ export interface ApiClient {
   agenda: AgendaApi
   conditions: ConditionsApi
   habits: HabitsApi
+  resources: ResourcesApi
 }

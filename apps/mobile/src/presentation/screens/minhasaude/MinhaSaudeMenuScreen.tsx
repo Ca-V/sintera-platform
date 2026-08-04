@@ -17,7 +17,7 @@ export function MinhaSaudeMenuScreen({ navigation }: Props) {
     { label: 'Condições de Saúde', onPress: () => navigation.navigate('Conditions') },
     { label: 'Medicamentos' },
     { label: 'Suplementos' },
-    { label: 'Recursos de Saúde' },
+    { label: 'Recursos de Saúde', onPress: () => navigation.navigate('Resources') },
     { label: 'Hábitos', onPress: () => navigation.navigate('Habits') },
     { label: 'Ciclo e Contracepção' },
   ]
