@@ -20,6 +20,7 @@ export * from './domain/exams/identity'
 export * from './domain/exams/classification'
 export * from './domain/exams/careFlow'
 export * from './domain/exams/ucda'
+export * from './domain/exams/nameMatch'
 
 // Financeiro puro (parsing de valor, documento fiscal) — fonte única Web↔Mobile.
 export * from './domain/finance/money'

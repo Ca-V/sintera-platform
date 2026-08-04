@@ -61,3 +61,21 @@ Cada item = incremento verificável (typecheck+suíte+commit); nenhum reimplemen
 - **#14 Exportar** → **compartilhar nativo** (share sheet do device com CSV/arquivo), em vez de imprimir/PDF. Mais natural no mobile.
 
 Demais itens = reprodução direta com contratos compartilhados → execução autônoma.
+
+## STATUS FINAL (04/08) — detalhe do exame em paridade
+
+Implementado no Mobile, reutilizando contratos/lógica do @sintera/core + api-client (fonte única com a Web):
+resultados estruturados (biomarcadores agrupados, situação/referência, índice experimental, rodapé regulatório),
+resultados clínicos (UCDA), estados (processando/document_only/vazio/erro), contagens, editar nome/data,
+extrair novamente com feedback (extraindo/erro/aviso "certificado"), aviso de truncado, conferência de
+identidade (compareNames — aviso de exame de outra pessoa), financeiro completo (valor+tipo fiscal+upload+ver),
+pedido de origem (vincular/desvincular), reportar problema (usage_events), compartilhar nativo, abrir documento,
+excluir, fluxo assistencial (stepper). typecheck raiz+mobile+pacotes verde; suíte verde; build Web verde.
+
+### Dependência cross-domain remanescente (para decisão de sequência)
+- **Criar lembrete de repetição** (recorrência) e **progressão do fluxo assistencial por eventos vinculados**
+  (agendado/realizado) dependem do domínio **Agenda / health_events**, que ainda NÃO tem superfície no Mobile
+  (api-client + UI equivalente ao AgendarModal). Isso é um DOMÍNIO próprio, não uma lacuna do detalhe do exame.
+  O stepper já exibe as etapas com os fatos disponíveis (pedido/resultado); a progressão via eventos entra quando
+  a Agenda chegar ao Mobile.
+- Menor: "última extração" (ai_processing_log) — informação secundária, não implementada.

@@ -7,7 +7,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import type { ExamDTO } from '@sintera/api-client'
-import { deriveExamIdentity, isOrderDocumentType, careStageFor, CARE_STAGES } from '@sintera/core'
+import { deriveExamIdentity, isOrderDocumentType, careStageFor, CARE_STAGES, compareNames } from '@sintera/core'
 import { Button, FieldRow, Input, Text } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { DocumentosStackParamList } from '../../navigation/types'
@@ -34,6 +34,14 @@ export function ExamDetailScreen({ route, navigation }: Props) {
   const [reportSent, setReportSent] = useState(false)
   const [orders, setOrders] = useState<ExamDTO[]>([])
   const [pickOrder, setPickOrder] = useState(false)
+  const [profileName, setProfileName] = useState<string | null>(null)
+
+  // Nome do perfil — para a conferência de identidade (exame de outra pessoa).
+  useEffect(() => {
+    let alive = true
+    apiClient.profile.getProfile().then(pr => { if (alive) setProfileName(pr?.name ?? null) }).catch(() => {})
+    return () => { alive = false }
+  }, [])
 
   const exam = p.exam
   const isOrderDoc = isOrderDocumentType(exam?.document_type)
@@ -111,9 +119,18 @@ export function ExamDetailScreen({ route, navigation }: Props) {
       contentContainerStyle={[styles.content, { paddingTop: styles.content.padding + insets.top, paddingBottom: styles.content.padding + insets.bottom }]}
       keyboardShouldPersistTaps="handled">
 
-      {/* Conferência de identidade (paciente no laudo) */}
+      {/* Conferência de identidade (paciente no laudo × perfil) */}
       {exam.patient_name ? (
-        <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Paciente no laudo: {exam.patient_name}</Text>
+        compareNames(profileName, exam.patient_name) === 'mismatch' ? (
+          <View style={[styles.banner, { backgroundColor: t.color.badge.error.soft, borderColor: t.color.badge.error.text }]}>
+            <Text spec={text(t, { role: 'bodySmall' })} style={{ color: t.color.badge.error.text }}>
+              Confira: este exame parece ser de outra pessoa. Nome no laudo: {exam.patient_name}
+              {profileName ? ` · seu perfil: ${profileName}` : ''}. Se não for seu, exclua-o.
+            </Text>
+          </View>
+        ) : (
+          <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Paciente no laudo: {exam.patient_name}</Text>
+        )
       ) : null}
 
       {/* Fluxo assistencial */}
