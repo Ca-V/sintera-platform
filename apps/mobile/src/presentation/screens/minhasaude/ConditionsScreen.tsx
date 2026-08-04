@@ -118,30 +118,38 @@ export function ConditionsScreen() {
         </View>
       ) : null}
 
-      {items.length === 0 && !open ? (
-        <View style={[styles.card, card]}><Text spec={text(t, { role: 'body', tone: 'muted' })} style={{ textAlign: 'center' }}>Nenhuma condição registrada. Toque em “Adicionar”.</Text></View>
-      ) : null}
-
-      {items.map(c => (
-        <View key={c.id} style={[styles.card, card, { gap: 4 }]}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <Text spec={text(t, { role: 'body' })} style={{ flex: 1, paddingRight: 8 }}>{c.name}</Text>
-            <Pressable onPress={() => startEdit(c)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Editar</Text></Pressable>
+      {/* Agrupado por escopo (paridade Web: "Minhas condições" × "Histórico familiar"), cada seção com vazio próprio. */}
+      {(['propria', 'familiar'] as const).map(sc => {
+        const group = items.filter(c => c.scope === sc)
+        if (open && group.length === 0) return null
+        return (
+          <View key={sc} style={{ gap: 8 }}>
+            <Text spec={text(t, { role: 'label', tone: 'muted' })}>{sc === 'propria' ? 'MINHAS CONDIÇÕES' : 'HISTÓRICO FAMILIAR'}</Text>
+            {group.length === 0 ? (
+              <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{sc === 'propria' ? 'Nenhuma registrada.' : 'Nenhum registrado.'}</Text>
+            ) : group.map(c => (
+              <View key={c.id} style={[styles.card, card, { gap: 4 }]}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <Text spec={text(t, { role: 'body' })} style={{ flex: 1, paddingRight: 8 }}>{c.name}</Text>
+                  <Pressable onPress={() => startEdit(c)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Editar</Text></Pressable>
+                </View>
+                <Text spec={text(t, { role: 'caption', tone: 'muted' })}>
+                  {c.scope === 'familiar' ? `Familiar${c.relative ? `: ${c.relative}` : ''}` : 'Minha'}{c.since_label ? ` · desde ${c.since_label}` : ''}
+                </Text>
+                {c.notes ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{c.notes}</Text> : null}
+                {c.file_url ? (
+                  <Pressable onPress={() => Linking.openURL(c.file_url as string)}>
+                    <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Documento anexado →</Text>
+                  </Pressable>
+                ) : null}
+                <Pressable onPress={() => remove(c)} style={{ alignSelf: 'flex-start', marginTop: 4 }}>
+                  <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>Excluir</Text>
+                </Pressable>
+              </View>
+            ))}
           </View>
-          <Text spec={text(t, { role: 'caption', tone: 'muted' })}>
-            {c.scope === 'familiar' ? `Familiar${c.relative ? `: ${c.relative}` : ''}` : 'Minha'}{c.since_label ? ` · desde ${c.since_label}` : ''}
-          </Text>
-          {c.notes ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{c.notes}</Text> : null}
-          {c.file_url ? (
-            <Pressable onPress={() => Linking.openURL(c.file_url as string)}>
-              <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Documento anexado →</Text>
-            </Pressable>
-          ) : null}
-          <Pressable onPress={() => remove(c)} style={{ alignSelf: 'flex-start', marginTop: 4 }}>
-            <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>Excluir</Text>
-          </Pressable>
-        </View>
-      ))}
+        )
+      })}
 
       <Text spec={text(t, { role: 'caption', tone: 'faint' })}>
         A SINTERA registra o que você informa, de forma factual — não é diagnóstico nem avaliação clínica (RDC 657/2022).

@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import type { HabitDTO, HabitInput } from '@sintera/api-client'
 import {
-  HABIT_CATEGORIES, habitCategoryLabel, habitGoalSummary, type HabitCategory,
+  HABIT_CATEGORIES, habitGoalSummary, type HabitCategory,
   FREQUENCY_LABELS, type RecurrenceFrequency, selectByLink, parseRule, type HealthEvent,
 } from '@sintera/core'
 import { Text, Button, Input } from '../../primitives'
@@ -157,27 +157,37 @@ export function HabitsScreen() {
         <View style={[styles.card, card]}><Text spec={text(t, { role: 'body', tone: 'muted' })} style={{ textAlign: 'center' }}>Nenhum hábito registrado. Toque em “Adicionar”.</Text></View>
       ) : null}
 
-      {items.map(h => (
-        <View key={h.id} style={[styles.card, card, { gap: 4 }]}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <Text spec={text(t, { role: 'body' })} style={{ flex: 1, paddingRight: 8 }}>{h.description}</Text>
-            <Pressable onPress={() => startEdit(h)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Editar</Text></Pressable>
+      {/* Agrupado por categoria (paridade Web) na ordem de HABIT_CATEGORIES, com cabeçalho + contagem. */}
+      {HABIT_CATEGORIES.map(cat => {
+        const group = items.filter(h => h.category === cat.value)
+        if (group.length === 0) return null
+        return (
+          <View key={cat.value} style={{ gap: 8 }}>
+            <Text spec={text(t, { role: 'label', tone: 'muted' })}>{cat.label.toUpperCase()} ({group.length})</Text>
+            {group.map(h => (
+              <View key={h.id} style={[styles.card, card, { gap: 4 }]}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <Text spec={text(t, { role: 'body' })} style={{ flex: 1, paddingRight: 8 }}>{h.description}</Text>
+                  <Pressable onPress={() => startEdit(h)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Editar</Text></Pressable>
+                </View>
+                <Text spec={text(t, { role: 'caption', tone: 'muted' })}>
+                  {h.frequency ? h.frequency : 'Sem frequência definida'}{habitGoalSummary(h.goal_amount, h.goal_unit, h.goal_divisions) ? ` · ${habitGoalSummary(h.goal_amount, h.goal_unit, h.goal_divisions)}` : ''}
+                </Text>
+                {reminderFreqFor(h.id) !== 'none' ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>🔔 {FREQUENCY_LABELS[reminderFreqFor(h.id)]}</Text> : null}
+                {h.plan_url ? (
+                  <Pressable onPress={() => Linking.openURL(h.plan_url as string)}>
+                    <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>{h.plan_name || 'Plano'} →</Text>
+                  </Pressable>
+                ) : null}
+                {h.notes ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{h.notes}</Text> : null}
+                <Pressable onPress={() => remove(h)} style={{ alignSelf: 'flex-start', marginTop: 4 }}>
+                  <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>Excluir</Text>
+                </Pressable>
+              </View>
+            ))}
           </View>
-          <Text spec={text(t, { role: 'caption', tone: 'muted' })}>
-            {habitCategoryLabel(h.category)}{h.frequency ? ` · ${h.frequency}` : ''}{habitGoalSummary(h.goal_amount, h.goal_unit, h.goal_divisions) ? ` · ${habitGoalSummary(h.goal_amount, h.goal_unit, h.goal_divisions)}` : ''}
-          </Text>
-          {reminderFreqFor(h.id) !== 'none' ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>🔔 {FREQUENCY_LABELS[reminderFreqFor(h.id)]}</Text> : null}
-          {h.plan_url ? (
-            <Pressable onPress={() => Linking.openURL(h.plan_url as string)}>
-              <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>{h.plan_name || 'Plano'} →</Text>
-            </Pressable>
-          ) : null}
-          {h.notes ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{h.notes}</Text> : null}
-          <Pressable onPress={() => remove(h)} style={{ alignSelf: 'flex-start', marginTop: 4 }}>
-            <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>Excluir</Text>
-          </Pressable>
-        </View>
-      ))}
+        )
+      })}
     </ScrollView>
   )
 }

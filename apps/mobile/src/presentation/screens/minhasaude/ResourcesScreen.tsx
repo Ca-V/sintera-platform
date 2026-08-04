@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import type { ResourceDTO, ResourceInput } from '@sintera/api-client'
 import {
-  RESOURCE_TYPES, RESOURCE_STATUSES, resourceTypeLabel, resourceStatusLabel, visionSummary,
+  RESOURCE_TYPES, RESOURCE_STATUSES, resourceStatusLabel, visionSummary,
   type ResourceType, type ResourceStatus, type VisionKind,
   FREQUENCY_LABELS, type RecurrenceFrequency, selectByLink, parseRule, type HealthEvent,
 } from '@sintera/core'
@@ -201,21 +201,29 @@ export function ResourcesScreen() {
         <View style={[styles.card, card]}><Text spec={text(t, { role: 'body', tone: 'muted' })} style={{ textAlign: 'center' }}>Nenhum recurso registrado. Toque em “Adicionar”.</Text></View>
       ) : null}
 
-      {items.map(r => (
-        <View key={r.id} style={[styles.card, card, { gap: 4 }]}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <Text spec={text(t, { role: 'body' })} style={{ flex: 1, paddingRight: 8 }}>{r.name}</Text>
-            <Pressable onPress={() => startEdit(r)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Editar</Text></Pressable>
+      {/* Agrupado por tipo (paridade Web), na ordem de RESOURCE_TYPES, com contagem. */}
+      {RESOURCE_TYPES.map(rt => {
+        const group = items.filter(r => r.resource_type === rt.value)
+        if (group.length === 0) return null
+        return (
+          <View key={rt.value} style={{ gap: 8 }}>
+            <Text spec={text(t, { role: 'label', tone: 'muted' })}>{rt.label.toUpperCase()} ({group.length})</Text>
+            {group.map(r => (
+              <View key={r.id} style={[styles.card, card, { gap: 4 }]}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <Text spec={text(t, { role: 'body' })} style={{ flex: 1, paddingRight: 8 }}>{r.name}</Text>
+                  <Pressable onPress={() => startEdit(r)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Editar</Text></Pressable>
+                </View>
+                <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{resourceStatusLabel(r.status)}{r.brand ? ` · ${r.brand}` : ''}</Text>
+                {r.resource_type === 'correcao_visual' && visionSummary(r.attributes) ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{visionSummary(r.attributes)}</Text> : null}
+                {reminderFreqFor(r.id) !== 'none' ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>🔔 troca {FREQUENCY_LABELS[reminderFreqFor(r.id)]}</Text> : null}
+                {r.file_url ? <Pressable onPress={() => Linking.openURL(r.file_url as string)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Documento →</Text></Pressable> : null}
+                <Pressable onPress={() => remove(r)} style={{ alignSelf: 'flex-start', marginTop: 4 }}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>Excluir</Text></Pressable>
+              </View>
+            ))}
           </View>
-          <Text spec={text(t, { role: 'caption', tone: 'muted' })}>
-            {resourceTypeLabel(r.resource_type)} · {resourceStatusLabel(r.status)}{r.brand ? ` · ${r.brand}` : ''}
-          </Text>
-          {r.resource_type === 'correcao_visual' && visionSummary(r.attributes) ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{visionSummary(r.attributes)}</Text> : null}
-          {reminderFreqFor(r.id) !== 'none' ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>🔔 troca {FREQUENCY_LABELS[reminderFreqFor(r.id)]}</Text> : null}
-          {r.file_url ? <Pressable onPress={() => Linking.openURL(r.file_url as string)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Documento →</Text></Pressable> : null}
-          <Pressable onPress={() => remove(r)} style={{ alignSelf: 'flex-start', marginTop: 4 }}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>Excluir</Text></Pressable>
-        </View>
-      ))}
+        )
+      })}
     </ScrollView>
   )
 }

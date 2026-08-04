@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import type { MedicationDTO, MedicationInput } from '@sintera/api-client'
 import {
-  MED_KINDS, MED_STATUSES, MED_FORMS, MED_ROUTES, medKindLabel, medStatusLabel, medFormLabel, medFormUnit,
+  MED_KINDS, MED_STATUSES, MED_FORMS, MED_ROUTES, medKindLabel, medFormLabel, medFormUnit,
   estimatedRunoutDays, parseAmountToCents, centsToAmount,
   type MedKind, type MedStatus, MED_REPURCHASE_FREQUENCIES, repurchaseFreqToRecurrence,
 } from '@sintera/core'
@@ -191,20 +191,33 @@ export function MedicationsScreen({ route, navigation }: Props) {
         <View style={[styles.card, card]}><Text spec={text(t, { role: 'body', tone: 'muted' })} style={{ textAlign: 'center' }}>Nenhum registro. Toque em “Adicionar”.</Text></View>
       ) : null}
 
-      {shown.map(m => (
-        <View key={m.id} style={[styles.card, card, { gap: 4 }]}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <Text spec={text(t, { role: 'body' })} style={{ flex: 1, paddingRight: 8 }}>{m.name}</Text>
-            <Pressable onPress={() => startEdit(m)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Editar</Text></Pressable>
+      {/* Agrupado por situação (paridade Web): Em uso / Programado / Suspenso / Encerrado, com contagem e
+          esmaecimento de suspenso/encerrado. */}
+      {MED_STATUSES.map(st => {
+        const group = shown.filter(m => m.status === st.value)
+        if (group.length === 0) return null
+        const dim = st.value === 'suspenso' || st.value === 'encerrado'
+        return (
+          <View key={st.value} style={{ gap: 8 }}>
+            <Text spec={text(t, { role: 'label', tone: 'muted' })}>{st.label.toUpperCase()} ({group.length})</Text>
+            {group.map(m => (
+              <View key={m.id} style={[styles.card, card, { gap: 4, opacity: dim ? 0.6 : 1 }]}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <Text spec={text(t, { role: 'body' })} style={{ flex: 1, paddingRight: 8 }}>{m.name}</Text>
+                  <Pressable onPress={() => startEdit(m)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Editar</Text></Pressable>
+                </View>
+                <Text spec={text(t, { role: 'caption', tone: 'muted' })}>
+                  {medKindLabel(m.kind)}{m.dose ? ` · ${m.dose}` : ''}{m.frequency ? ` · ${m.frequency}` : ''}{medFormLabel(m.pharmaceutical_form) ? ` · ${medFormLabel(m.pharmaceutical_form)}` : ''}
+                </Text>
+                {m.purchase_status === 'a_comprar' ? <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.attention.text }}>A comprar</Text> : null}
+                {repurchaseLabel(m.repurchase_frequency) ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>🔔 recompra {repurchaseLabel(m.repurchase_frequency)}</Text> : null}
+                {m.notes ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{m.notes}</Text> : null}
+                <Pressable onPress={() => remove(m)} style={{ alignSelf: 'flex-start', marginTop: 4 }}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>Excluir</Text></Pressable>
+              </View>
+            ))}
           </View>
-          <Text spec={text(t, { role: 'caption', tone: 'muted' })}>
-            {medKindLabel(m.kind)} · {medStatusLabel(m.status)}{m.dose ? ` · ${m.dose}` : ''}{m.frequency ? ` · ${m.frequency}` : ''}{medFormLabel(m.pharmaceutical_form) ? ` · ${medFormLabel(m.pharmaceutical_form)}` : ''}
-          </Text>
-          {repurchaseLabel(m.repurchase_frequency) ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>🔔 recompra {repurchaseLabel(m.repurchase_frequency)}</Text> : null}
-          {m.notes ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{m.notes}</Text> : null}
-          <Pressable onPress={() => remove(m)} style={{ alignSelf: 'flex-start', marginTop: 4 }}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>Excluir</Text></Pressable>
-        </View>
-      ))}
+        )
+      })}
     </ScrollView>
   )
 }
