@@ -22,7 +22,9 @@ describe('ARCH · artefato gerado — theme.generated.css em sincronia com o DS'
   }
 
   it('o arquivo commitado está sincronizado com os tokens do DS', () => {
-    const actual = readFileSync(OUT, 'utf8')
+    // Compara CONTEÚDO, não fim de linha: no checkout Windows o arquivo vem CRLF (git autocrlf),
+    // enquanto `generateThemeCss` produz LF. O drift-guard é sobre tokens, não EOL.
+    const actual = readFileSync(OUT, 'utf8').replace(/\r\n/g, '\n')
     expect(actual, 'theme.generated.css desatualizado — rode WRITE_GENERATED=1 para regenerar').toBe(expected)
   })
 
