@@ -72,6 +72,13 @@ identidade (compareNames — aviso de exame de outra pessoa), financeiro complet
 pedido de origem (vincular/desvincular), reportar problema (usage_events), compartilhar nativo, abrir documento,
 excluir, fluxo assistencial (stepper). typecheck raiz+mobile+pacotes verde; suíte verde; build Web verde.
 
+### Dependência arquitetural CONFIRMADA por código (04/08)
+Evidência: `src/components/eventForm.ts:82` `saveEvent` → `services.command.create` → `src/lib/agenda/repository.ts:65`
+`upsert('health_events')` + `event_links`. O "Lembrete de repetição" é um **Evento Assistencial** (health_events,
+entidade central ADR-001), NÃO um atributo do exame — modelá-lo em Exames violaria FB-008 (recorrência = 1 evento).
+A Web reutiliza o DOMÍNIO Agenda (services/repository), não só um componente; o Mobile não tem contrato de
+health_events. → Acoplamento de arquitetura, não de implementação. Decisão: homologar Exames agora; Agenda = próximo domínio.
+
 ### Dependência cross-domain remanescente (para decisão de sequência)
 - **Criar lembrete de repetição** (recorrência) e **progressão do fluxo assistencial por eventos vinculados**
   (agendado/realizado) dependem do domínio **Agenda / health_events**, que ainda NÃO tem superfície no Mobile
