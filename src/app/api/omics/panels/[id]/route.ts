@@ -3,9 +3,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { omicsAuth } from '@/lib/omics/server'
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const { error, supabase, userId } = await omicsAuth()
+  const { error, supabase, userId } = await omicsAuth(req)
   if (error) return error
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

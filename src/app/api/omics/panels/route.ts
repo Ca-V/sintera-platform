@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { omicsAuth, pageParams, validDomain } from '@/lib/omics/server'
 
 export async function GET(req: NextRequest) {
-  const { error, supabase, userId } = await omicsAuth()
+  const { error, supabase, userId } = await omicsAuth(req)
   if (error) return error
   const url = new URL(req.url)
   const domain = validDomain(url.searchParams.get('domain'))

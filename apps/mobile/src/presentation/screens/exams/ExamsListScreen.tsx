@@ -73,6 +73,9 @@ export function ExamsListScreen({ navigation }: Props) {
       </Text>
 
       <Button label="Adicionar exame" onPress={() => navigation.navigate('ExamUpload')} />
+      <Pressable onPress={() => navigation.navigate('OmicsList')}>
+        <Text spec={text(t, { role: 'bodySmall' })} style={{ color: t.color.identity.primary }}>Exames de ômica →</Text>
+      </Pressable>
 
       {exams.length === 0 ? (
         <View style={styles.empty}>

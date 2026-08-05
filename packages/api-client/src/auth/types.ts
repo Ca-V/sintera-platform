@@ -17,6 +17,7 @@ import type { PeriodDTO } from '../cycle/menstrual'
 import type { NotificationPrefRow } from '../settings/notifications'
 import type { BodyMetricDTO, BodyMetricInput } from '../body/body'
 import type { ShareDTO, TemplateDTO, OmicsPanelDTO } from '../report/report'
+import type { OmicsPanelDTO as OmicsPanel, OmicsPanelDetail, OmicsResultDTO, OmicsHistoryPoint, OmicsCatalogMatch, OmicsResultInput } from '../omics/omics'
 import type { Period } from '@sintera/core'
 
 export type { Session, User }
@@ -128,6 +129,20 @@ export interface ApiClient {
   settings: SettingsApi
   body: BodyApi
   report: ReportApi
+  omics: OmicsApi
+}
+
+/** Exames de Ômica — leituras via ponte /api/omics (reusa joins/catálogo do servidor); escritas diretas (RLS dono). */
+export interface OmicsApi {
+  listPanels(domain?: string): Promise<OmicsPanel[]>
+  getPanel(id: string): Promise<OmicsPanelDetail>
+  getResults(panelId: string, categoryId?: string | null): Promise<OmicsResultDTO[]>
+  getFeatureHistory(featureId: string): Promise<OmicsHistoryPoint[]>
+  searchCatalog(term: string, domain: string): Promise<{ resolved: OmicsCatalogMatch | null; matches: OmicsCatalogMatch[] }>
+  createPanel(input: { domain: string; laboratory?: string | null; technology?: string | null; collectedOn?: string | null }): Promise<{ data: { id: string } | null; error: Error | null }>
+  addResult(panelId: string, input: OmicsResultInput): Promise<{ error: Error | null }>
+  deleteResult(id: string): Promise<{ error: Error | null }>
+  deletePanel(id: string): Promise<{ error: Error | null }>
 }
 
 /** Relatório (Camada de Comunicação) — links públicos, perfis salvos e leitura de ômica p/ a compilação.

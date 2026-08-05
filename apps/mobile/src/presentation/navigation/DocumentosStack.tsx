@@ -4,6 +4,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { ExamsListScreen } from '../screens/exams/ExamsListScreen'
 import { ExamDetailScreen } from '../screens/exams/ExamDetailScreen'
 import { ExamUploadScreen } from '../screens/exams/ExamUploadScreen'
+import { OmicsListScreen } from '../screens/omics/OmicsListScreen'
+import { OmicsPanelScreen } from '../screens/omics/OmicsPanelScreen'
 import { useTheme } from '../theme'
 import type { DocumentosStackParamList } from './types'
 
@@ -38,6 +40,10 @@ export function DocumentosStack() {
           headerShadowVisible: false,
         }}
       />
+      <Stack.Screen name="OmicsList" component={OmicsListScreen}
+        options={{ headerShown: true, title: 'Exames de ômica', headerStyle: { backgroundColor: t.color.surface.app }, headerTintColor: t.color.text.default, headerTitleStyle: { fontFamily: 'HankenGrotesk_600SemiBold' }, headerShadowVisible: false }} />
+      <Stack.Screen name="OmicsPanel" component={OmicsPanelScreen}
+        options={{ headerShown: true, title: 'Painel de ômica', headerStyle: { backgroundColor: t.color.surface.app }, headerTintColor: t.color.text.default, headerTitleStyle: { fontFamily: 'HankenGrotesk_600SemiBold' }, headerShadowVisible: false }} />
     </Stack.Navigator>
   )
 }

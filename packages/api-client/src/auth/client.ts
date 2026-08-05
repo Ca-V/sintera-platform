@@ -31,6 +31,7 @@ import { listNotificationPrefs, saveNotificationPrefs } from '../settings/notifi
 import { exportAccountData, deleteAccount } from '../settings/account'
 import { listBodyMetrics, saveBodyMetric, deleteBodyMetric, getHeightCm, getWeightGoal, setWeightGoal } from '../body/body'
 import { listShares, createShare, revokeShare, listTemplates, saveTemplate, deleteTemplate, listOmicsPanels } from '../report/report'
+import { listOmicsPanels as omicsList, getOmicsPanel, getOmicsResults, getOmicsFeatureHistory, searchOmicsCatalog, createOmicsPanel, addOmicsResult, deleteOmicsResult, deleteOmicsPanel } from '../omics/omics'
 import { asError } from '../net/errors'
 
 /**
@@ -150,6 +151,17 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       saveTemplate: (input) => saveTemplate(supabase, input),
       deleteTemplate: (id) => deleteTemplate(supabase, id),
       listOmicsPanels: (signal) => listOmicsPanels(supabase, signal),
+    },
+    omics: {
+      listPanels: (domain) => omicsList(supabase, config.webBaseUrl, domain),
+      getPanel: (id) => getOmicsPanel(supabase, config.webBaseUrl, id),
+      getResults: (panelId, categoryId) => getOmicsResults(supabase, config.webBaseUrl, panelId, categoryId),
+      getFeatureHistory: (featureId) => getOmicsFeatureHistory(supabase, config.webBaseUrl, featureId),
+      searchCatalog: (term, domain) => searchOmicsCatalog(supabase, config.webBaseUrl, term, domain),
+      createPanel: (input) => createOmicsPanel(supabase, input),
+      addResult: (panelId, input) => addOmicsResult(supabase, panelId, input),
+      deleteResult: (id) => deleteOmicsResult(supabase, id),
+      deletePanel: (id) => deleteOmicsPanel(supabase, id),
     },
   }
 }

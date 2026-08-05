@@ -25,6 +25,8 @@ export type DocumentosStackParamList = {
   ExamsList: undefined
   ExamDetail: { id: string }
   ExamUpload: undefined
+  OmicsList: undefined
+  OmicsPanel: { id: string; domain?: string }
 }
 
 /** Stack interno da aba "Minha Saúde": menu do grupo + telas de domínio (Condições, …). Só navegação. */

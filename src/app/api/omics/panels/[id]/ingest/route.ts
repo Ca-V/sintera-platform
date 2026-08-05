@@ -69,7 +69,7 @@ function normalizeJson(raw: unknown): Row[] {
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const { error, supabase, userId } = await omicsAuth()
+  const { error, supabase, userId } = await omicsAuth(req)
   if (error) return error
 
   let body: { format?: string; content?: string; rows?: Row[]; source_file?: string; measured_on?: string; note?: string }
