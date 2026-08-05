@@ -30,6 +30,7 @@ import { listPeriods, addPeriod, deletePeriod } from '../cycle/menstrual'
 import { listNotificationPrefs, saveNotificationPrefs } from '../settings/notifications'
 import { exportAccountData, deleteAccount } from '../settings/account'
 import { listBodyMetrics, saveBodyMetric, deleteBodyMetric, getHeightCm, getWeightGoal, setWeightGoal } from '../body/body'
+import { listShares, createShare, revokeShare, listTemplates, saveTemplate, deleteTemplate, listOmicsPanels } from '../report/report'
 import { asError } from '../net/errors'
 
 /**
@@ -140,6 +141,15 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       getHeightCm: (signal) => getHeightCm(supabase, signal),
       getWeightGoal: (signal) => getWeightGoal(supabase, signal),
       setWeightGoal: (kg) => setWeightGoal(supabase, kg),
+    },
+    report: {
+      listShares: (signal) => listShares(supabase, signal),
+      createShare: (input) => createShare(supabase, input),
+      revokeShare: (id) => revokeShare(supabase, id),
+      listTemplates: (signal) => listTemplates(supabase, signal),
+      saveTemplate: (input) => saveTemplate(supabase, input),
+      deleteTemplate: (id) => deleteTemplate(supabase, id),
+      listOmicsPanels: (signal) => listOmicsPanels(supabase, signal),
     },
   }
 }

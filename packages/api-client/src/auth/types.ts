@@ -16,6 +16,8 @@ import type { ContraceptiveDTO, ContraceptiveInput } from '../cycle/contraceptio
 import type { PeriodDTO } from '../cycle/menstrual'
 import type { NotificationPrefRow } from '../settings/notifications'
 import type { BodyMetricDTO, BodyMetricInput } from '../body/body'
+import type { ShareDTO, TemplateDTO, OmicsPanelDTO } from '../report/report'
+import type { Period } from '@sintera/core'
 
 export type { Session, User }
 
@@ -125,6 +127,20 @@ export interface ApiClient {
   cycle: CycleApi
   settings: SettingsApi
   body: BodyApi
+  report: ReportApi
+}
+
+/** Relatório (Camada de Comunicação) — links públicos, perfis salvos e leitura de ômica p/ a compilação.
+ *  A MONTAGEM/formatação vive no @sintera/core (assembleReport); esta API só persiste/lê. */
+export interface ReportApi {
+  listShares(signal?: AbortSignal): Promise<ShareDTO[]>
+  /** Cria um link público (30 dias por padrão) das seções + período; retorna o token gerado. */
+  createShare(input: { sections: string[]; period: Period; days?: number }): Promise<{ data: { token: string } | null; error: Error | null }>
+  revokeShare(id: string): Promise<{ error: Error | null }>
+  listTemplates(signal?: AbortSignal): Promise<TemplateDTO[]>
+  saveTemplate(input: { name: string; selection: Record<string, unknown> }): Promise<{ error: Error | null }>
+  deleteTemplate(id: string): Promise<{ error: Error | null }>
+  listOmicsPanels(signal?: AbortSignal): Promise<OmicsPanelDTO[]>
 }
 
 /** Composição Corporal (body_metrics) — série temporal + meta de peso (GLP-1). */
