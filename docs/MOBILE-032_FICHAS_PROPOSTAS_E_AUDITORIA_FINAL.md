@@ -105,6 +105,38 @@ de timeline; e uma lista canônica única de frequências. Cada um habilita vár
 
 ---
 
+## §A.1 — Reauditoria pós-correção (confirmação)
+
+Após corrigir os P0/P1, 3 verificadores independentes reauditaram. **Resultado: todos os P0/P1 ELIMINADOS.**
+
+| Item | Sev | Status |
+|---|---|---|
+| Timeline — eventos abertos vazando p/ Histórico | P0 | ✅ RESOLVIDO (selectHistory no core; 4 fontes; densidade; dedup FB-008) |
+| Histórico de Exames — trilha documental ausente | P0 | ✅ RESOLVIDO (trilha documental + filtros tipo/período/ordenação + ocorrências→laudo) |
+| Exames lista — "Pedidos" ausentes | P0 | ✅ RESOLVIDO (Resultados × Pedidos via isOrderDocumentType) |
+| Exames lista — filtros + duplicados | P1 | ✅ RESOLVIDO (busca/status/ano + findDuplicateIds no core) |
+| Upload — auto-análise/feedback | P1 | ✅ RESOLVIDO (vai ao detalhe; analyze disparado no done) |
+| Despesas — adicionar despesa | P1 | ✅ RESOLVIDO (guia novo evento/medicamento) |
+| Agenda — recência + views + erro silencioso | P1 | ✅ RESOLVIDO (buildExamRecencySuggestion no core; por data/tipo; erro reportado) |
+| Timeline — ômicas/contracepção/densidade | P1 | ✅ RESOLVIDO |
+| Histórico de Exames — filtros + resumo + laudo | P1 | ✅ RESOLVIDO |
+| Configurações — links legais LGPD/Privacidade/Termos | P1 | ✅ RESOLVIDO |
+| Configurações — logout na própria tela | P1 | ✅ RESOLVIDO (botão "Sair da conta") |
+
+### P2/P3 remanescentes (backlog — não bloqueiam a homologação)
+- Exames lista: duplicado sem link "Ver original" (só o selo); seção Pedidos read-only (sem ciclo "marcar realizado/agendar/contagem", Q1); busca não aplicada aos Pedidos.
+- Despesas: ramo "já registrei, só faltou o valor" (ir ao Histórico/Medicamentos) do guia da Web; semântica de total por ano (Mobile = total geral); erros de remover/reabrir ainda sem banner.
+- Agenda: ação "Excluir de vez" inline no card (Mobile só Concluir/Cancelar/Editar; exclusão existe no formulário); ordenação por prioridade dentro de "Por tipo".
+- Histórico de Exames: metadados longitudinais mais rasos (sem "último laboratório/última solicitação" por exame).
+- Medicamentos: datas de compra/término/recompra no card; unidade de embalagem editável; view sticky.
+- Ciclo: prévia ao vivo de "troca prevista/próxima recompra"; stats em 3 cards; notas de referência cruzada.
+- Configurações: agrupar notificações por seção da Sidebar (FB-017).
+- Exame detalhe: exportar CSV dos biomarcadores; "última extração"; tooltip metodológico completo do Índice.
+- Condições: "salvar exame sem condição" (roteamento de captura).
+- (C) compartilhadas: lista canônica única de frequências no core (Recursos/Hábitos); mover ao core
+  `friendlyError`/`ERROR_MESSAGES`, `exam-categories`, estado de estruturação binária, e os "bits" do item de
+  timeline — cada um habilita vários P2 de uma vez.
+
 ## §B — Fichas das propostas (dependem de decisão)
 
 ### Ficha 1 — Editar altura no Perfil (Mobile) para habilitar o IMC

@@ -201,6 +201,9 @@ export function ConfiguracoesScreen() {
         <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Seus dados são armazenados de forma segura e nunca compartilhados com terceiros. Você pode excluir sua conta e todos os dados a qualquer momento.</Text>
       </View>
 
+      {/* Sair da conta (controle próprio, como na Web) */}
+      <Button label="Sair da conta" variant="secondary" onPress={() => Alert.alert('Sair da conta', 'Deseja sair? Você precisará entrar novamente.', [{ text: 'Cancelar', style: 'cancel' }, { text: 'Sair', onPress: () => { void signOut() } }])} />
+
       {/* Zona sensível */}
       <View style={[styles.card, { backgroundColor: t.color.badge.error.soft, borderColor: t.color.badge.error.text, gap: 8 }]}>
         <Text spec={text(t, { role: 'bodyStrong' })} style={{ color: t.color.badge.error.text }}>Excluir conta</Text>
