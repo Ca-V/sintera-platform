@@ -60,13 +60,15 @@ export function RelatorioScreen() {
       apiClient.exams.getAllBiomarkers(),
       apiClient.report.listShares(),
       apiClient.report.listTemplates(),
-    ]).then(([meds, events, exams, measures, conditions, habits, resources, omics, contraceptives, periods, bio, sh, tpls]) => {
+      apiClient.body.getHeightCm(),
+    ]).then(([meds, events, exams, measures, conditions, habits, resources, omics, contraceptives, periods, bio, sh, tpls, heightCm]) => {
       if (!alive.current) return
       const eyewear = resources.filter(r => r.resource_type === 'correcao_visual').map(r => {
         const a = (r.attributes ?? {}) as Record<string, unknown>
         return {
-          kind: (a.kind as string) ?? 'oculos', prescribedOn: r.started_on, prescriber: r.prescriber,
+          kind: (a.vision_kind as string) ?? 'oculos', prescribedOn: r.started_on, prescriber: r.prescriber,
           grauOD: grauStr(a.od as Record<string, unknown> | undefined), grauOE: grauStr(a.oe as Record<string, unknown> | undefined),
+          dnp: (a.dnp as string) ?? null, bc: (a.bc as string) ?? null, dia: (a.dia as string) ?? null,
         }
       })
       setData({
@@ -82,6 +84,7 @@ export function RelatorioScreen() {
         menstruations: periods.map(p => ({ startedOn: p.started_on, notes: p.notes })),
         expenses: selectFinancial(events),
         bioSummaries: summarizeBiomarkers(bio),
+        heightCm,
       })
       setShares(sh); setTemplates(tpls); setPhase('ready'); setError(null)
     }).catch((e) => { if (alive.current && !silent) { setError(e instanceof Error ? e.message : 'Não foi possível carregar.'); setPhase('error') } })
@@ -89,7 +92,7 @@ export function RelatorioScreen() {
   }, [])
   useEffect(() => { alive.current = true; load(false); return () => { alive.current = false } }, [load])
 
-  const model = useMemo(() => data ? assembleReport(data, { sections, excluded, period }) : null, [data, sections, excluded, period])
+  const model = useMemo(() => data ? assembleReport(data, { sections, excluded, period, showEmpty: true }) : null, [data, sections, excluded, period])
 
   // Itens para seleção item a item (exames/medicamentos/suplementos/eventos) — espelha a Web.
   const sectionItems = (k: ReportSectionKey): { key: string; label: string }[] => {

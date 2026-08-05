@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ScrollView, View, ActivityIndicator, RefreshControl, Pressable, Alert, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useNavigation } from '@react-navigation/native'
 import { text } from '@sintera/design-system'
 import type { BodyMetricDTO, ExamDTO } from '@sintera/api-client'
 import type { HealthEvent } from '@sintera/core'
@@ -30,6 +31,8 @@ const COMPARE_ORDER = ['peso', 'gordura_corporal', 'massa_muscular', 'massa_magr
 export function ComposicaoScreen() {
   const t = useTheme()
   const insets = useSafeAreaInsets()
+  const navigation = useNavigation()
+  const openExam = (id: string | null | undefined) => { if (id) (navigation.getParent() as { navigate: (n: string, p: unknown) => void } | undefined)?.navigate('Documentos', { screen: 'ExamDetail', params: { id } }) }
   const [items, setItems] = useState<BodyMetricDTO[]>([])
   const [meds, setMeds] = useState<MedInput[]>([])
   const [consultas, setConsultas] = useState<ConsultaInput[]>([])
@@ -87,6 +90,9 @@ export function ComposicaoScreen() {
   const summary = useMemo(() => currentSummary(summaryPoints), [summaryPoints])
   const series = useCallback((met: string): SeriesPoint[] => summaryPoints.filter(p => p.metric === met).map(p => ({ value: p.value, date: p.date })), [summaryPoints])
   const journey = useMemo(() => computeWeightJourney(series('peso'), series('massa_magra'), goal), [series, goal])
+  const followupLabel = journey.spanWeeks == null ? null
+    : journey.spanWeeks < 8 ? `${journey.spanWeeks} sem`
+    : (() => { const mo = Math.round(journey.spanWeeks / 4.345); return `${mo} ${mo === 1 ? 'mês' : 'meses'}` })()
   const lastAval = useMemo(() => lastAssessment(summaryPoints), [summaryPoints])
 
   // IMC = peso ÷ altura² (calculado, factual — não é registrado). Usa o peso mais recente e a altura do perfil.
@@ -104,11 +110,23 @@ export function ComposicaoScreen() {
     ? series('peso').map(p => ({ date: p.date, value: imc(p.value) ?? 0 })).filter(p => p.value > 0)
     : series(evoActive)
   const evoPoints = filterByPeriod(evoSeries.map(p => ({ date: p.date, value: p.value })), evoDays, today())
+  // Série DETALHADA (data · valor · origem · exame) p/ a tabela cronológica clicável — rastreabilidade BOD-001.
+  const evoDetail = filterByPeriod(
+    items.filter(m => evoActive === 'imc' ? m.metric === 'peso' : m.metric === evoActive)
+      .map(m => { const v = parseNum(m.value_text); return { date: m.measured_on, value: evoActive === 'imc' ? (imc(v) ?? 0) : v, unit: evoActive === 'imc' ? 'kg/m²' : (m.unit ?? ''), source: m.source, examId: m.exam_id } })
+      .filter(p => Number.isFinite(p.value) && p.value > 0),
+    evoDays, today(),
+  ).slice().sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''))
+  const evoSources = [...new Set(evoDetail.map(p => p.source).filter(Boolean))] as string[]
 
   const snapshots: Snapshot[] = useMemo(() => buildSnapshots(items.map((m): SnapPoint => ({ metric: m.metric, value: parseNum(m.value_text), unit: m.unit, date: m.measured_on, source: m.source, examId: m.exam_id })).filter(p => Number.isFinite(p.value))), [items])
   const snapA = snapshots.find(s => s.key === snapAKey) ?? snapshots[0] ?? null
   const snapB = snapshots.find(s => s.key === snapBKey) ?? snapshots[1] ?? null
-  const compareRows = useMemo(() => compareSnapshots(snapA, snapB, COMPARE_ORDER).filter(r => r.available), [snapA, snapB])
+  // Mostra TODAS as métricas (as ausentes marcadas "Não disponível") — evidencia indisponibilidades sem
+  // normalizar entre tecnologias (BOD-001 ③). Não filtra por r.available.
+  const compareRows = useMemo(() => compareSnapshots(snapA, snapB, COMPARE_ORDER), [snapA, snapB])
+  const compareRelevant = compareRows.filter(r => r.available && r.delta != null && r.delta !== 0)
+  const sameSnap = !!snapA && !!snapB && snapA.key === snapB.key
   const snapLabel = (s: Snapshot | null) => s ? `${sourceQuality(s.source)?.label ?? s.source ?? 'Registro'} · ${fmt(s.date)}` : '—'
 
   const assessments: AssessmentInput[] = useMemo(() => snapshots
@@ -116,7 +134,9 @@ export function ComposicaoScreen() {
     .map(s => ({ date: s.date, sourceLabel: sourceQuality(s.source)?.label ?? 'Avaliação', examId: s.examId ?? null })), [snapshots])
   const allMilestones = useMemo(() => buildMilestones({ meds, assessments, consultas }), [meds, assessments, consultas])
   const catsPresent = MILESTONE_CATEGORIES.filter(c => allMilestones.some(m => m.category === c.key))
-  const milestones = allMilestones.filter(m => msCats.has(m.category))
+  // Marcos respeitam o período selecionado (como a evolução) e as categorias marcadas.
+  const milestones = filterByPeriod(allMilestones.filter(m => msCats.has(m.category)), evoDays, today())
+  const openMilestone = (href: string | null) => { const m = href?.match(/\/exams?\/([\w-]+)/); if (m) openExam(m[1]) }
 
   const examLabel = (e: ExamDTO) => `${e.display_title || e.type || 'Exame'}${e.exam_date ? ` · ${fmt(e.exam_date)}` : ''}`
   function startNew() { setEditing(null); setMetric('peso'); setLabel(''); setValue(''); setUnit('kg'); setDate(today()); setExamId(''); setNotes(''); setOpen(true) }
@@ -178,14 +198,15 @@ export function ComposicaoScreen() {
           <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
             <Input value={goalInput} onChangeText={setGoalInput} placeholder="Meta (kg) — vazio remove" keyboardType="decimal-pad" style={{ flex: 1 }} />
             <Button label="Salvar" onPress={saveGoal} />
+            <Button label="Cancelar" variant="secondary" onPress={() => setGoalEditing(false)} />
           </View>
         ) : null}
         {journey.currentWeight != null ? (
           <>
-            <Text spec={text(t, { role: 'body' })}>Atual: {journey.currentWeight} kg{journey.startWeight != null ? ` · início ${journey.startWeight} kg` : ''}</Text>
-            {journey.lostKg != null ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{journey.lostKg > 0 ? `−${journey.lostKg}` : `${journey.lostKg}`} kg{journey.rateKgPerWeek != null ? ` · ${journey.rateKgPerWeek} kg/semana` : ''}</Text> : null}
-            {journey.remainingKg != null ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Faltam {journey.remainingKg} kg{journey.progressPct != null ? ` · ${journey.progressPct}% do caminho` : ''}</Text> : null}
-            {journey.leanDeltaKg != null ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Massa magra: {journey.leanDeltaKg > 0 ? '+' : ''}{journey.leanDeltaKg} kg</Text> : null}
+            <Text spec={text(t, { role: 'body' })}>Atual: {journey.currentWeight} kg{journey.startWeight != null ? ` · início ${journey.startWeight} kg` : ''}{journey.startDate ? ` (${fmt(journey.startDate)})` : ''}</Text>
+            {journey.lostKg != null ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{journey.lostKg > 0 ? `−${journey.lostKg}` : `${journey.lostKg}`} kg{journey.rateKgPerWeek != null ? ` · ${journey.rateKgPerWeek} kg/semana` : ''}{followupLabel ? ` · ${followupLabel} de acompanhamento` : ''}</Text> : null}
+            {journey.remainingKg != null ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Faltam {journey.remainingKg} kg{journey.progressPct != null ? ` · ${journey.progressPct}% do caminho` : ''}</Text> : goal == null ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Defina uma meta para acompanhar o progresso.</Text> : null}
+            {journey.leanDeltaKg != null ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Massa magra: {journey.leanStartKg != null ? `${journey.leanStartKg} → ${journey.leanCurrentKg} kg (` : ''}{journey.leanDeltaKg > 0 ? '+' : ''}{journey.leanDeltaKg} kg{journey.leanStartKg != null ? ')' : ''} — acompanhe se a perda preserva a massa magra</Text> : null}
           </>
         ) : <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Registre seu peso para acompanhar a jornada.</Text>}
         {lastAval ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Última avaliação: {lastAval.label} · {fmt(lastAval.date)}</Text> : null}
@@ -206,12 +227,13 @@ export function ComposicaoScreen() {
           {exams.length > 0 ? (
             <View style={{ gap: 6 }}>
               <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Vincular a um exame (opcional)</Text>
-              <Chips options={[{ id: '', label: 'Nenhum' }, ...exams.slice(0, 12).map(e => ({ id: e.id, label: examLabel(e) }))]} value={examId} onChange={setExamId} />
+              <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Veio de um exame/laudo já enviado em Exames? Vincule para abrir o documento original a partir daqui.</Text>
+              <Chips options={[{ id: '', label: 'Nenhum' }, ...exams.map(e => ({ id: e.id, label: examLabel(e) }))]} value={examId} onChange={setExamId} />
             </View>
           ) : null}
           <View style={styles.actions}>
             <Button label="Cancelar" variant="secondary" onPress={() => setOpen(false)} />
-            <Button label="Salvar" onPress={save} loading={saving} loadingLabel="Salvando…" />
+            <Button label={editing ? 'Atualizar' : 'Salvar'} onPress={save} loading={saving} loadingLabel="Salvando…" />
           </View>
         </View>
       ) : null}
@@ -242,6 +264,7 @@ export function ComposicaoScreen() {
               </View>
             )
           })}
+          {imcVal == null && summary['peso'] ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Informe sua altura no perfil (na Web) para calcular o IMC.</Text> : null}
         </View>
       ) : null}
 
@@ -257,6 +280,14 @@ export function ComposicaoScreen() {
             </View>
           ) : <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Poucos pontos no período para desenhar a evolução.</Text>}
           {evoPoints.length > 0 ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{evoActive === 'imc' ? 'IMC' : bodyMetricLabel(evoActive)} · {evoPoints[0].value} → {evoPoints[evoPoints.length - 1].value} · {evoPoints.length} {evoPoints.length === 1 ? 'ponto' : 'pontos'} no período.</Text> : <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Sem pontos no período selecionado.</Text>}
+          {evoSources.length > 0 ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Origem: {evoSources.map(s => sourceQuality(s)?.label ?? s).join(' · ')}</Text> : null}
+          {/* Tabela cronológica (mais recente primeiro): data · valor · origem — toque abre o exame de origem. */}
+          {evoDetail.map((p, i) => (
+            <Pressable key={i} onPress={() => openExam(p.examId)} disabled={!p.examId} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2 }}>
+              <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{fmt(p.date)}</Text>
+              <Text spec={text(t, { role: 'caption' })} style={{ color: p.examId ? t.color.identity.primary : t.color.text.default }}>{p.value}{p.unit ? ` ${p.unit}` : ''}{p.source ? ` · ${sourceQuality(p.source)?.label ?? p.source}` : ''}{p.examId ? ' ›' : ''}</Text>
+            </Pressable>
+          ))}
         </View>
       ) : null}
 
@@ -265,17 +296,36 @@ export function ComposicaoScreen() {
         <View style={[styles.card, card, { gap: 10 }]}>
           <Text spec={text(t, { role: 'bodyStrong' })}>Comparar avaliações</Text>
           <View style={{ gap: 6 }}>
-            <Text spec={text(t, { role: 'caption', tone: 'muted' })}>A: {snapLabel(snapA)}</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <Text spec={text(t, { role: 'caption', tone: 'muted' })}>A: {snapLabel(snapA)}</Text>
+              {snapA?.examId ? <Pressable onPress={() => openExam(snapA.examId)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Abrir exame</Text></Pressable> : null}
+            </View>
             <Chips options={snapshots.map(s => ({ id: s.key, label: snapLabel(s) }))} value={snapA?.key ?? ''} onChange={setSnapAKey} />
-            <Text spec={text(t, { role: 'caption', tone: 'muted' })}>B: {snapLabel(snapB)}</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <Text spec={text(t, { role: 'caption', tone: 'muted' })}>B: {snapLabel(snapB)}</Text>
+              {snapB?.examId ? <Pressable onPress={() => openExam(snapB.examId)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Abrir exame</Text></Pressable> : null}
+            </View>
             <Chips options={snapshots.map(s => ({ id: s.key, label: snapLabel(s) }))} value={snapB?.key ?? ''} onChange={setSnapBKey} />
           </View>
-          {compareRows.length > 0 ? compareRows.map(r => (
-            <View key={r.metric} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Text spec={text(t, { role: 'body' })}>{bodyMetricLabel(r.metric)}</Text>
-              <Text spec={text(t, { role: 'caption' })}>{r.a ?? '—'} → {r.b ?? '—'}{r.delta != null && r.delta !== 0 ? `  (${r.delta > 0 ? '+' : ''}${r.delta}${r.unit === '%' ? ' p.p.' : r.unit ? ` ${r.unit}` : ''})` : ''}</Text>
-            </View>
-          )) : <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Sem indicadores em comum entre as duas avaliações.</Text>}
+          {sameSnap ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Selecione duas avaliações diferentes para comparar.</Text> : (
+            <>
+              {compareRelevant.length > 0 ? (
+                <View style={{ gap: 2 }}>
+                  <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Entre essas duas avaliações houve:</Text>
+                  {compareRelevant.map(r => <Text key={r.metric} spec={text(t, { role: 'caption' })}>• {bodyMetricLabel(r.metric)}: {r.delta! > 0 ? '+' : ''}{r.delta}{r.unit === '%' ? ' p.p.' : r.unit ? ` ${r.unit}` : ''}</Text>)}
+                </View>
+              ) : null}
+              {compareRows.map(r => (
+                <View key={r.metric} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                  <Text spec={text(t, { role: 'body' })}>{bodyMetricLabel(r.metric)}</Text>
+                  {r.available ? (
+                    <Text spec={text(t, { role: 'caption' })}>{r.a ?? '—'} → {r.b ?? '—'}{r.delta != null && r.delta !== 0 ? `  (${r.delta > 0 ? '+' : ''}${r.delta}${r.unit === '%' ? ' p.p.' : r.unit ? ` ${r.unit}` : ''})` : ''}</Text>
+                  ) : <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Não disponível</Text>}
+                </View>
+              ))}
+              <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Valores como medidos por cada método — sem ajuste entre tecnologias. Δ = A − B.</Text>
+            </>
+          )}
         </View>
       ) : null}
 
@@ -289,29 +339,41 @@ export function ComposicaoScreen() {
               return <Pressable key={c.key} onPress={() => toggleCat(c.key)} style={[styles.chip, { borderColor: on ? MILESTONE_COLOR[c.key] : t.color.border.default, backgroundColor: on ? t.color.badge.info.soft : 'transparent' }]}><Text spec={text(t, { role: 'caption', tone: on ? 'default' : 'muted' })}>{c.label}</Text></Pressable>
             })}
           </View>
-          {milestones.length > 0 ? milestones.map(m => (
-            <View key={m.key} style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: MILESTONE_COLOR[m.category] }} />
-              <Text spec={text(t, { role: 'caption', tone: 'muted' })} style={{ width: 72 }}>{fmt(m.date)}</Text>
-              <Text spec={text(t, { role: 'body' })} style={{ flex: 1 }}>{m.title}</Text>
-            </View>
-          )) : <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Nenhum marco nas categorias selecionadas.</Text>}
+          {milestones.length > 0 ? milestones.map(m => {
+            const linkable = /\/exams?\//.test(m.href ?? '')
+            return (
+              <Pressable key={m.key} onPress={() => openMilestone(m.href)} disabled={!linkable} style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: MILESTONE_COLOR[m.category] }} />
+                <Text spec={text(t, { role: 'caption', tone: 'muted' })} style={{ width: 72 }}>{fmt(m.date)}</Text>
+                <Text spec={text(t, { role: 'body' })} style={{ flex: 1, color: linkable ? t.color.identity.primary : t.color.text.default }}>{m.title}{linkable ? ' ›' : ''}</Text>
+              </Pressable>
+            )
+          }) : <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Nenhum marco nas categorias selecionadas no período.</Text>}
         </View>
       ) : null}
 
       {/* ① Histórico de medidas */}
       {items.length > 0 ? <Text spec={text(t, { role: 'label', tone: 'muted' })}>REGISTROS</Text> : null}
-      {items.map(m => (
-        <View key={m.id} style={[styles.card, card, { gap: 2 }]}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <Text spec={text(t, { role: 'body' })}>{bodyMetricLabel(m.metric)}: {m.value_text}{m.unit ? ` ${m.unit}` : ''}</Text>
-            <Pressable onPress={() => startEdit(m)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Editar</Text></Pressable>
+      {items.length === 0 ? (
+        <View style={[styles.card, card]}><Text spec={text(t, { role: 'body', tone: 'muted' })} style={{ textAlign: 'center' }}>Nenhuma medida ainda. Registre uma avaliação em “Nova medida”.</Text></View>
+      ) : null}
+      {items.map(m => {
+        const laudo = m.exam_id ? exams.find(e => e.id === m.exam_id) : null
+        return (
+          <View key={m.id} style={[styles.card, card, { gap: 2 }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <Text spec={text(t, { role: 'body' })}>{m.metric === 'outro' ? (m.label ?? 'Medida') : bodyMetricLabel(m.metric)}: {m.value_text}{m.unit ? ` ${m.unit}` : ''}</Text>
+              <Pressable onPress={() => startEdit(m)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Editar</Text></Pressable>
+            </View>
+            <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{fmt(m.measured_on)}{sourceQuality(m.source) ? ` · ${sourceQuality(m.source)!.label}` : ''}</Text>
+            {m.notes ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{m.notes}</Text> : null}
+            <View style={{ flexDirection: 'row', gap: 16, marginTop: 2 }}>
+              {m.exam_id ? <Pressable onPress={() => openExam(m.exam_id)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Laudo{laudo ? `: ${laudo.display_title || laudo.type}` : ''} ›</Text></Pressable> : null}
+              <Pressable onPress={() => remove(m)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>Excluir</Text></Pressable>
+            </View>
           </View>
-          <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{fmt(m.measured_on)}{sourceQuality(m.source) ? ` · ${sourceQuality(m.source)!.label}` : ''}</Text>
-          {m.notes ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{m.notes}</Text> : null}
-          <Pressable onPress={() => remove(m)} style={{ alignSelf: 'flex-start', marginTop: 2 }}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>Excluir</Text></Pressable>
-        </View>
-      ))}
+        )
+      })}
 
       <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Valores informados pela própria pessoa ou lidos de laudos. Não substitui avaliação profissional.</Text>
     </ScrollView>

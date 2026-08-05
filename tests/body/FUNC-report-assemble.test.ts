@@ -67,6 +67,33 @@ describe('core · report · assembleReport', () => {
     expect(acomp.sections.find(s => s.key === 'sinais')?.lines.some(l => l.includes('95'))).toBe(true)
   })
 
+  it('despesas incluem linha de Total somada', () => {
+    const data = emptyData()
+    data.expenses = [
+      ev({ id: 'x1', type: 'consulta', title: 'A', date: '2026-08-01', amountCents: 10000 }),
+      ev({ id: 'x2', type: 'exame', title: 'B', date: '2026-08-02', amountCents: 5000 }),
+    ]
+    const model = assembleReport(data, { sections: defaultSections(), period: { preset: 'all' } })
+    const gastos = model.groups.find(g => g.title === 'Organização')!.sections.find(s => s.key === 'gastos')!
+    expect(gastos.lines.some(l => l.includes('Total') && l.includes('150'))).toBe(true)
+  })
+
+  it('showEmpty inclui seção selecionada porém vazia com aviso "sem registros"', () => {
+    const model = assembleReport(emptyData(), { sections: defaultSections(), period: { preset: 'all' }, showEmpty: true })
+    const flat = model.groups.flatMap(g => g.sections)
+    expect(flat.length).toBeGreaterThan(0)
+    expect(flat.every(s => s.lines.length > 0)).toBe(true)
+    expect(flat.some(s => s.lines[0].includes('sem registros'))).toBe(true)
+  })
+
+  it('ciclo mostra troca prevista (replaceOn) do contraceptivo', () => {
+    const data = emptyData()
+    data.contraceptives = [{ kind: 'diu_hormonal', brand: 'Mirena', startedOn: '2024-01-01', replaceOn: '2029-01-01', status: 'ativo' }]
+    const model = assembleReport(data, { sections: defaultSections(), period: { preset: 'all' } })
+    const ciclo = model.groups.find(g => g.title === 'Minha Saúde')!.sections.find(s => s.key === 'ciclo')!
+    expect(ciclo.lines.some(l => l.includes('troca prevista') && l.includes('2029'))).toBe(true)
+  })
+
   it('seção desligada não aparece; serializeReportText inclui período e cabeçalho', () => {
     const data = emptyData()
     data.expenses = [ev({ id: 'x', type: 'consulta', title: 'Consulta', date: '2026-08-01', amountCents: 12000 })]

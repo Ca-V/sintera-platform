@@ -8,6 +8,7 @@ import { isClosedStatus, type HealthEvent } from '../agenda/event'
 import { contraceptiveLabel } from '../cycle'
 import { DOMAIN_LABEL, type OmicsDomain } from '../omics/domains'
 import { bodyMetricLabel } from '../body/metrics'
+import { currentSummary, type SummaryPoint } from '../body/summary'
 import type { BiomarkerSummary } from '../biomarkerGrouping'
 
 // ── Entradas (espelham as tabelas; o api-client/página mapeia o banco para cá) ───────────────────────────────
@@ -16,7 +17,7 @@ export interface ReportExam { id: string; type: string; date: string; fileUrl?: 
 export interface ReportMeasure { metric: string; label: string | null; valueText: string; unit: string | null; date: string; examId?: string | null }
 export interface ReportCondition { scope: string; name: string; relative: string | null; since: string | null; notes: string | null }
 export interface ReportHabit { category: string; description: string; frequency: string | null; notes: string | null }
-export interface ReportEyewear { kind: string; prescribedOn: string | null; prescriber: string | null; grauOD: string; grauOE: string }
+export interface ReportEyewear { kind: string; prescribedOn: string | null; prescriber: string | null; grauOD: string; grauOE: string; dnp: string | null; bc: string | null; dia: string | null }
 export interface ReportOmics { domain: string; laboratory: string | null; totalFeatures: number | null; date: string | null }
 export interface ReportContraceptive { kind: string; brand: string | null; startedOn: string | null; replaceOn: string | null; status: string }
 export interface ReportMenstruation { startedOn: string; notes: string | null }
@@ -34,6 +35,8 @@ export interface ReportData {
   menstruations: ReportMenstruation[]
   expenses: HealthEvent[]
   bioSummaries: BiomarkerSummary[]
+  /** Altura (cm) do perfil — base do IMC calculado no resumo de Composição Corporal. */
+  heightCm?: number | null
 }
 
 // ── Seleção (espelha a Sidebar / menu lateral — FB-010) ──────────────────────────────────────────────────────
@@ -73,6 +76,9 @@ export interface ReportSelection {
   /** Itens desmarcados por seção (exames/medicamentos/suplementos por nome; eventos por tipo). */
   excluded?: Partial<Record<string, string[]>>
   period: Period
+  /** Inclui seções SELECIONADAS mas vazias (com aviso "sem registros"), como faz a Web — sinaliza ao
+   *  profissional que a seção foi considerada. Default false (omite seções vazias). */
+  showEmpty?: boolean
 }
 
 // ── Modelo de saída ──────────────────────────────────────────────────────────────────────────────────────────
@@ -109,7 +115,25 @@ function medLine(m: ReportMed): string {
 function eventLine(e: HealthEvent): string {
   const prof = professionalKindLabel(e.professionalKind)
   const head = `${fmt(e.date)} — ${typeLabel(e.type)}${e.title ? `: ${e.title}` : ''}`
-  return `${head}${prof ? ` · ${prof}` : ''}`
+  const cancel = e.status === 'cancelado' ? ' · cancelado' : ''
+  const notes = e.notes?.trim() ? ` — ${e.notes.trim()}` : ''
+  return `${head}${prof ? ` · ${prof}` : ''}${cancel}${notes}`
+}
+/** Posição do último valor na faixa de referência do laudo (factual — a faixa é a do documento). */
+function rangeText(m: BiomarkerSummary['latest']): string {
+  if (!m || m.value == null) return ''
+  if (m.referenceMin != null && m.value < m.referenceMin) return ' · abaixo da faixa'
+  if (m.referenceMax != null && m.value > m.referenceMax) return ' · acima da faixa'
+  if (m.referenceMin != null || m.referenceMax != null) return ' · dentro da faixa'
+  return ''
+}
+/** Tendência longitudinal entre as duas últimas medições (direção + %). */
+function trendText(tr: BiomarkerSummary['trend'], delta: number | null): string {
+  if (tr === 'up') return delta != null ? ` · ▲ +${delta}%` : ' · ▲'
+  if (tr === 'down') return delta != null ? ` · ▼ ${delta}%` : ' · ▼'
+  if (tr === 'stable') return delta != null ? ` · estável (${delta > 0 ? '+' : ''}${delta}%)` : ' · estável'
+  if (tr === 'single') return ' · medição única'
+  return ''
 }
 
 /** Monta o relatório factual aplicando seleção (seções + itens) e período. Determinístico (injete `now` p/ testes). */
@@ -144,34 +168,54 @@ export function assembleReport(data: ReportData, sel: ReportSelection, now?: Dat
   const condProprias = data.conditions.filter(c => c.scope === 'propria')
   const condFamiliar = data.conditions.filter(c => c.scope === 'familiar')
 
+  // Composição Corporal (resumo antropométrico): ÚLTIMO valor de cada indicador (não medida a medida) + IMC
+  // calculado (peso ÷ altura², da altura do perfil). Espelha a Web (compilação = panorama, não série completa).
+  const compSummary = currentSummary(measuresCorpo
+    .map(m => ({ metric: m.metric, value: Number(String(m.valueText).replace(',', '.').replace(/[^\d.-]/g, '')), unit: m.unit, date: m.date, source: null }))
+    .filter(p => Number.isFinite(p.value)) as SummaryPoint[])
+  const latestPeso = compSummary['peso']?.value ?? null
+  const imcVal = latestPeso != null && data.heightCm ? Math.round((latestPeso / Math.pow(data.heightCm / 100, 2)) * 10) / 10 : null
+  const compOrder = ['peso', 'gordura_corporal', 'massa_muscular', 'massa_magra', 'agua_corporal', 'gordura_visceral', 'taxa_metabolica', 'massa_ossea', 'circunferencia_cintura', 'altura']
+  const medidasLines = [
+    ...compOrder.filter(m => compSummary[m]).map(m => `${bodyMetricLabel(m)}: ${compSummary[m].value}${compSummary[m].unit ? ` ${compSummary[m].unit}` : ''} (${fmt(compSummary[m].date)})`),
+    ...(imcVal != null ? [`IMC: ${imcVal} kg/m² (calculado)`] : []),
+  ]
+
   const sectionLines: Record<ReportSectionKey, string[]> = {
     eventos: agenda.map(eventLine),
     registros: historico.map(eventLine),
-    histexames: data.bioSummaries.map(s => `${s.displayName}: ${s.latest ? `${s.latest.value}${s.unit ? ` ${s.unit}` : ''}` : '—'}${s.latest ? ` (${fmt(s.latest.date)})` : ''} · ${s.count} ${s.count === 1 ? 'medição' : 'medições'}`),
-    medidas: measuresCorpo.map(m => `${fmt(m.date)} — ${m.metric === 'outro' ? (m.label ?? 'Medida') : bodyMetricLabel(m.metric)}: ${m.valueText}${m.unit ? ` ${m.unit}` : ''}`),
-    sinais: measuresVitais.map(m => `${fmt(m.date)} — ${bodyMetricLabel(m.metric)}: ${m.valueText}${m.unit ? ` ${m.unit}` : ''}`),
+    histexames: data.bioSummaries.map(s => `${s.displayName}: ${s.latest ? `${s.latest.value}${s.unit ? ` ${s.unit}` : ''}` : '—'}${s.latest ? ` (${fmt(s.latest.date)})` : ''}${rangeText(s.latest)}${trendText(s.trend, s.deltaPercent)} · ${s.count} ${s.count === 1 ? 'medição' : 'medições'}`),
+    medidas: medidasLines,
+    sinais: measuresVitais.map(m => `${fmt(m.date)} — ${m.metric === 'outro_sinal' ? (m.label ?? 'Outro sinal') : bodyMetricLabel(m.metric)}: ${m.valueText}${m.unit ? ` ${m.unit}` : ''}`),
     exames: exams.map(e => `${fmt(e.date)} — ${e.type}`),
     omica: omics.map(o => `${DOMAIN_LABEL[o.domain as OmicsDomain] ?? o.domain}${o.laboratory ? ` · ${o.laboratory}` : ''}${o.totalFeatures ? ` · ${o.totalFeatures} marcadores` : ''}${o.date ? ` (${fmt(o.date)})` : ''}`),
     condicoes: [
       ...condProprias.map(c => `${c.name}${c.since ? ` (desde ${c.since})` : ''}${c.notes ? ` — ${c.notes}` : ''}`),
-      ...condFamiliar.map(c => `Familiar${c.relative ? ` (${c.relative})` : ''}: ${c.name}`),
+      ...condFamiliar.map(c => `Familiar${c.relative ? ` (${c.relative})` : ''}: ${c.name}${c.since ? ` (desde ${c.since})` : ''}${c.notes ? ` — ${c.notes}` : ''}`),
     ],
     medicamentos: medsOut(false, 'medicamentos'),
     suplementos: medsOut(true, 'suplementos'),
-    visao: data.eyewear.map(e => `${e.kind === 'lentes_contato' ? 'Lentes de contato' : 'Óculos'}${e.prescribedOn ? ` (${fmt(e.prescribedOn)})` : ''}${e.grauOD ? ` · OD: ${e.grauOD}` : ''}${e.grauOE ? ` · OE: ${e.grauOE}` : ''}`),
-    habitos: data.habits.map(h => `${HABIT_LABEL[h.category] ?? h.category}: ${h.description}${h.frequency ? ` · ${h.frequency}` : ''}`),
+    visao: data.eyewear.map(e => {
+      const extra = [e.dnp && `DNP ${e.dnp}`, e.bc && `BC ${e.bc}`, e.dia && `DIA ${e.dia}`].filter(Boolean).join(', ')
+      return `${e.kind === 'lentes_contato' ? 'Lentes de contato' : 'Óculos'}${e.prescribedOn ? ` (${fmt(e.prescribedOn)})` : ''}${e.grauOD ? ` · OD: ${e.grauOD}` : ''}${e.grauOE ? ` · OE: ${e.grauOE}` : ''}${extra ? ` · ${extra}` : ''}${e.prescriber ? ` · ${e.prescriber}` : ''}`
+    }),
+    habitos: data.habits.map(h => `${HABIT_LABEL[h.category] ?? h.category}: ${h.description}${h.frequency ? ` · ${h.frequency}` : ''}${h.notes ? ` — ${h.notes}` : ''}`),
     ciclo: [
-      ...data.contraceptives.map(c => `${contraceptiveLabel(c.kind)}${c.brand ? ` (${c.brand})` : ''}${c.status !== 'ativo' ? ` — ${c.status}` : ''}${c.startedOn ? ` · desde ${fmt(c.startedOn)}` : ''}`),
+      ...data.contraceptives.map(c => `${contraceptiveLabel(c.kind)}${c.brand ? ` (${c.brand})` : ''}${c.status !== 'ativo' ? ` — ${c.status}` : ''}${c.startedOn ? ` · desde ${fmt(c.startedOn)}` : ''}${c.replaceOn ? ` · troca prevista ${fmt(c.replaceOn)}` : ''}`),
       ...menstr.map(m => `Menstruação: ${fmt(m.startedOn)}${m.notes ? ` — ${m.notes}` : ''}`),
     ],
-    gastos: expenses.map(x => `${fmt(x.date)} — ${x.title || typeLabel(x.type)}: ${fmtCents(x.amountCents)}`),
+    gastos: (() => {
+      const lines = expenses.map(x => `${fmt(x.date)} — ${x.title || typeLabel(x.type)}: ${fmtCents(x.amountCents)}`)
+      if (lines.length > 0) { const total = expenses.reduce((s, x) => s + (x.amountCents ?? 0), 0); lines.push(`Total: ${fmtCents(total)}`) }
+      return lines
+    })(),
   }
 
   const groups: ReportGroupOut[] = REPORT_GROUPS.map(g => ({
     title: g.title,
     sections: g.items
-      .filter(it => on(it.key) && sectionLines[it.key].length > 0)
-      .map(it => ({ key: it.key, heading: it.label, lines: sectionLines[it.key] })),
+      .filter(it => on(it.key) && (sectionLines[it.key].length > 0 || sel.showEmpty))
+      .map(it => ({ key: it.key, heading: it.label, lines: sectionLines[it.key].length > 0 ? sectionLines[it.key] : ['— sem registros no período'] })),
   })).filter(g => g.sections.length > 0)
 
   return { periodLabel: periodLabel(sel.period), groups }
