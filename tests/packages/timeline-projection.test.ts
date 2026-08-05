@@ -1,6 +1,6 @@
 // @sintera/core — Histórico de Saúde: projeção unificada (eventos + exames), ordem cronológica, aditiva.
 import { describe, it, expect } from 'vitest'
-import { mergeTimeline, examToTimelineEntry, eventToTimelineEntry, type ExamTimelineLike } from '../../packages/core/src/domain/timelineProjection'
+import { mergeTimeline, selectHistory, examToTimelineEntry, eventToTimelineEntry, omicsToTimelineEntry, contraceptiveToTimelineEntry, type ExamTimelineLike } from '../../packages/core/src/domain/timelineProjection'
 import type { HealthEvent } from '../../packages/core/src/domain/agenda/event'
 
 function ev(p: Partial<HealthEvent>): HealthEvent {
@@ -28,5 +28,25 @@ describe('mergeTimeline (Histórico unificado)', () => {
   it('evento é encerrado só quando fechado (realizado/cancelado/perdido)', () => {
     expect(eventToTimelineEntry(ev({ status: 'planejado' })).closed).toBe(false)
     expect(eventToTimelineEntry(ev({ status: 'realizado' })).closed).toBe(true)
+  })
+  it('selectHistory descarta eventos ABERTOS (só fatos fechados no Histórico)', () => {
+    const merged = mergeTimeline([ev({ id: 'aberto', status: 'planejado', date: '2026-08-10' }), ev({ id: 'feito', status: 'realizado', date: '2026-05-01' })], [exam])
+    const hist = selectHistory(merged)
+    expect(hist.some(e => e.id === 'event:aberto')).toBe(false)
+    expect(hist.some(e => e.id === 'event:feito')).toBe(true)
+    expect(hist.some(e => e.id === 'exam:x1')).toBe(true) // exame sempre histórico
+  })
+  it('projeta ômicas e contracepção (fontes adicionais, sempre fechadas)', () => {
+    const out = mergeTimeline([], [],
+      [{ id: 'p1', domain: 'metabolomics', laboratory: 'Lab', total_features: 200, collected_on: '2026-04-01' }],
+      [{ id: 'c1', kind: 'diu_hormonal', brand: 'Mirena', started_on: '2026-03-01' }])
+    expect(out.find(e => e.domain === 'omics')).toMatchObject({ refId: 'p1', title: 'Metabolômica', closed: true })
+    expect(out.find(e => e.domain === 'contraceptive')).toMatchObject({ refId: 'c1', closed: true })
+  })
+  it('DEDUP FB-008: evento vinculado a exame COM valor é ocultado (o exame é o fato)', () => {
+    const linked = ev({ id: 'dup', status: 'realizado', amountCents: 5000, links: [{ type: 'exam', id: 'x1' }] as never })
+    const out = mergeTimeline([linked], [exam])
+    expect(out.some(e => e.id === 'event:dup')).toBe(false)
+    expect(out.some(e => e.id === 'exam:x1')).toBe(true)
   })
 })
