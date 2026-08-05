@@ -18,6 +18,7 @@ export type { ProfileApi, ProfileDTO, ProfileEditable } from './profile/types'
 // Domínio Exames (leitura) — infra compartilhada; de-risca o Inc 5 (Histórico de Exames).
 export type { ExamsApi, ExamDTO, ExamDetailDTO, ExamsQuery } from './exams/types'
 export type { BiomarkerDTO } from './exams/biomarkers'
+export type { BiomarkerRow, BiomarkerSummary, Trend } from '@sintera/core'
 export type { EventsApi, AgendaApi, ConditionsApi, HabitsApi, ResourcesApi, MedicationsApi, CycleApi } from './auth/types'
 export type { ContraceptiveDTO, ContraceptiveInput } from './cycle/contraception'
 export type { PeriodDTO } from './cycle/menstrual'

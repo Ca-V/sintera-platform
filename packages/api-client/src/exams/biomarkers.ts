@@ -3,6 +3,7 @@
 // Contrato do pacote: `[]` se não houver; LANÇA em falha operacional (rede/timeout/DB/auth). SÓ leitura/
 // projeção — a interpretação já vem calculada do backend (nunca recomputada aqui). REG-001: FACTUAL.
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { BiomarkerRow } from '@sintera/core'
 import { withTimeout } from '../net/timeout'
 import { asError } from '../net/errors'
 
@@ -69,6 +70,28 @@ export async function getExamBiomarkers(
 
     if (error) throw asError(error)
     return ((data as Record<string, unknown>[] | null) ?? []).map(toBiomarkerDTO)
+  } finally {
+    cleanup()
+  }
+}
+
+// Colunas p/ a visão LONGITUDINAL (Histórico de Exames): inclui a data do laudo via join `exams(...)`.
+const ALL_BIOMARKER_COLUMNS =
+  'id, name, value, unit, result_type, reference_min, reference_max, interpretation, reference_source, catalog_id, source_material, source_exam_name, exam_id, exams(exam_date, created_at)' as const
+
+/** Lê TODOS os biomarcadores numéricos do usuário (com a data do laudo) — para tendência/evolução. LANÇA em falha. */
+export async function getAllBiomarkers(client: SupabaseClient, signal?: AbortSignal): Promise<BiomarkerRow[]> {
+  const { signal: s, cleanup } = withTimeout(signal)
+  try {
+    const { data: { session } } = await client.auth.getSession()
+    if (!session) throw new Error('Não autenticado')
+    const { data, error } = await client
+      .from('current_biomarkers')
+      .select(ALL_BIOMARKER_COLUMNS)
+      .eq('user_id', session.user.id).eq('synthetic', false).eq('result_type', 'numeric')
+      .abortSignal(s)
+    if (error) throw asError(error)
+    return (data as unknown as BiomarkerRow[] | null) ?? []
   } finally {
     cleanup()
   }

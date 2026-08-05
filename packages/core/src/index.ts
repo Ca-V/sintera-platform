@@ -18,6 +18,9 @@ export * from './domain/timelineProjection'
 // Apresentação PURA de resultados (biomarcadores) — fonte única Web↔Mobile (paridade Exames).
 export * from './domain/exams/biomarkerView'
 
+// Agrupamento/sumarização LONGITUDINAL de biomarcadores (tendência/evolução) — fonte única Web↔Mobile.
+export * from './domain/biomarkerGrouping'
+
 // Regras puras do domínio Exames (identidade, classificação, fluxo assistencial) — fonte única Web↔Mobile.
 export * from './domain/exams/identity'
 export * from './domain/exams/classification'

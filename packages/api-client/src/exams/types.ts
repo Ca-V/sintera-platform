@@ -35,7 +35,7 @@ export interface ExamDetailDTO extends ExamDTO {
 
 import type { PageRequest, DateRange } from '@sintera/types'
 import type { BiomarkerDTO } from './biomarkers'
-import type { ClinicalResultRow, ExamExpenseRow } from '@sintera/core'
+import type { ClinicalResultRow, ExamExpenseRow, BiomarkerRow } from '@sintera/core'
 
 /** Filtros/paginação da lista de exames (todos opcionais; sem paginação = todos).
  *  Reusa os contratos compartilhados `DateRange` (from/to) e `PageRequest` (limit/offset) de @sintera/types. */
@@ -56,6 +56,8 @@ export interface ExamsApi {
   getExamClinicalResults(examId: string, signal?: AbortSignal): Promise<ClinicalResultRow[]>
   /** Lê os EXAMES-com-valor do usuário (Despesas, FB-008). `[]` se não houver. LANÇA em falha. */
   listExamExpenses(signal?: AbortSignal): Promise<ExamExpenseRow[]>
+  /** Lê TODOS os biomarcadores numéricos (com data do laudo) — visão longitudinal/tendência. LANÇA em falha. */
+  getAllBiomarkers(signal?: AbortSignal): Promise<BiomarkerRow[]>
 }
 
 /** Colunas centrais lidas do banco (explícitas — não `*` — para não trazer campos internos/financeiros). */
