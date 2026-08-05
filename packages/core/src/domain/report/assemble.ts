@@ -7,7 +7,7 @@ import { typeLabel, professionalKindLabel } from '../agenda/presentation'
 import { isClosedStatus, type HealthEvent } from '../agenda/event'
 import { contraceptiveLabel } from '../cycle'
 import { DOMAIN_LABEL, type OmicsDomain } from '../omics/domains'
-import { bodyMetricLabel } from '../body/metrics'
+import { bodyMetricLabel, isVital } from '../body/metrics'
 import { currentSummary, type SummaryPoint } from '../body/summary'
 import type { BiomarkerSummary } from '../biomarkerGrouping'
 
@@ -86,8 +86,6 @@ export interface ReportSectionOut { key: ReportSectionKey; heading: string; line
 export interface ReportGroupOut { title: string; sections: ReportSectionOut[] }
 export interface ReportModel { periodLabel: string; groups: ReportGroupOut[] }
 
-const VITAL_METRICS = ['pressao_arterial', 'frequencia_cardiaca', 'glicemia', 'saturacao', 'temperatura', 'outro_sinal']
-const isVital = (m: string) => VITAL_METRICS.includes(m)
 const HABIT_LABEL: Record<string, string> = {
   atividade_fisica: 'Atividade física', sono: 'Sono', tabagismo: 'Tabagismo',
   alcool: 'Álcool', alimentacao: 'Alimentação', hidratacao: 'Hidratação', outro: 'Outro',

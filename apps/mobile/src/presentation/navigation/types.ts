@@ -44,6 +44,7 @@ export type AcompanhamentoStackParamList = {
   Timeline: undefined
   HistoricoExames: undefined
   Composicao: undefined
+  Monitoramento: undefined
   EventForm: {
     event?: import('@sintera/core').HealthEvent
     prefill?: { type?: string; title?: string; date?: string; examId?: string; recurrence?: boolean }

@@ -11,7 +11,7 @@ import { text } from '@sintera/design-system'
 import type { BodyMetricDTO, ExamDTO } from '@sintera/api-client'
 import type { HealthEvent } from '@sintera/core'
 import {
-  BODY_METRICS, bodyMetricLabel, bodyMetricUnit, type BodyMetric,
+  BODY_METRICS, bodyMetricLabel, bodyMetricUnit, isVital, type BodyMetric,
   currentSummary, computeWeightJourney, lastAssessment, sourceQuality, RELIABILITY_LABEL,
   EVOLUTION_PERIODS, filterByPeriod, type SummaryPoint, type SeriesPoint,
   buildSnapshots, compareSnapshots, type SnapPoint, type Snapshot,
@@ -86,7 +86,9 @@ export function ComposicaoScreen() {
   }, [])
   useEffect(() => { alive.current = true; load(false); return () => { alive.current = false } }, [load])
 
-  const summaryPoints: SummaryPoint[] = useMemo(() => items.map(m => ({ metric: m.metric, value: parseNum(m.value_text), unit: m.unit, date: m.measured_on, source: m.source })).filter(p => Number.isFinite(p.value)), [items])
+  // Composição Corporal = só medidas corporais; sinais vitais (mesma tabela) vivem no Monitoramento (isVital).
+  const bodyItems = useMemo(() => items.filter(m => !isVital(m.metric)), [items])
+  const summaryPoints: SummaryPoint[] = useMemo(() => bodyItems.map(m => ({ metric: m.metric, value: parseNum(m.value_text), unit: m.unit, date: m.measured_on, source: m.source })).filter(p => Number.isFinite(p.value)), [bodyItems])
   const summary = useMemo(() => currentSummary(summaryPoints), [summaryPoints])
   const series = useCallback((met: string): SeriesPoint[] => summaryPoints.filter(p => p.metric === met).map(p => ({ value: p.value, date: p.date })), [summaryPoints])
   const journey = useMemo(() => computeWeightJourney(series('peso'), series('massa_magra'), goal), [series, goal])
@@ -112,14 +114,14 @@ export function ComposicaoScreen() {
   const evoPoints = filterByPeriod(evoSeries.map(p => ({ date: p.date, value: p.value })), evoDays, today())
   // Série DETALHADA (data · valor · origem · exame) p/ a tabela cronológica clicável — rastreabilidade BOD-001.
   const evoDetail = filterByPeriod(
-    items.filter(m => evoActive === 'imc' ? m.metric === 'peso' : m.metric === evoActive)
+    bodyItems.filter(m => evoActive === 'imc' ? m.metric === 'peso' : m.metric === evoActive)
       .map(m => { const v = parseNum(m.value_text); return { date: m.measured_on, value: evoActive === 'imc' ? (imc(v) ?? 0) : v, unit: evoActive === 'imc' ? 'kg/m²' : (m.unit ?? ''), source: m.source, examId: m.exam_id } })
       .filter(p => Number.isFinite(p.value) && p.value > 0),
     evoDays, today(),
   ).slice().sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''))
   const evoSources = [...new Set(evoDetail.map(p => p.source).filter(Boolean))] as string[]
 
-  const snapshots: Snapshot[] = useMemo(() => buildSnapshots(items.map((m): SnapPoint => ({ metric: m.metric, value: parseNum(m.value_text), unit: m.unit, date: m.measured_on, source: m.source, examId: m.exam_id })).filter(p => Number.isFinite(p.value))), [items])
+  const snapshots: Snapshot[] = useMemo(() => buildSnapshots(bodyItems.map((m): SnapPoint => ({ metric: m.metric, value: parseNum(m.value_text), unit: m.unit, date: m.measured_on, source: m.source, examId: m.exam_id })).filter(p => Number.isFinite(p.value))), [bodyItems])
   const snapA = snapshots.find(s => s.key === snapAKey) ?? snapshots[0] ?? null
   const snapB = snapshots.find(s => s.key === snapBKey) ?? snapshots[1] ?? null
   // Mostra TODAS as métricas (as ausentes marcadas "Não disponível") — evidencia indisponibilidades sem
@@ -353,11 +355,11 @@ export function ComposicaoScreen() {
       ) : null}
 
       {/* ① Histórico de medidas */}
-      {items.length > 0 ? <Text spec={text(t, { role: 'label', tone: 'muted' })}>REGISTROS</Text> : null}
-      {items.length === 0 ? (
+      {bodyItems.length > 0 ? <Text spec={text(t, { role: 'label', tone: 'muted' })}>REGISTROS</Text> : null}
+      {bodyItems.length === 0 ? (
         <View style={[styles.card, card]}><Text spec={text(t, { role: 'body', tone: 'muted' })} style={{ textAlign: 'center' }}>Nenhuma medida ainda. Registre uma avaliação em “Nova medida”.</Text></View>
       ) : null}
-      {items.map(m => {
+      {bodyItems.map(m => {
         const laudo = m.exam_id ? exams.find(e => e.id === m.exam_id) : null
         return (
           <View key={m.id} style={[styles.card, card, { gap: 2 }]}>
