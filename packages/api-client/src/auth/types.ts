@@ -15,6 +15,7 @@ import type { MedicationDTO, MedicationInput } from '../medications/medications'
 import type { ContraceptiveDTO, ContraceptiveInput } from '../cycle/contraception'
 import type { PeriodDTO } from '../cycle/menstrual'
 import type { NotificationPrefRow } from '../settings/notifications'
+import type { BodyMetricDTO, BodyMetricInput } from '../body/body'
 
 export type { Session, User }
 
@@ -123,6 +124,18 @@ export interface ApiClient {
   medications: MedicationsApi
   cycle: CycleApi
   settings: SettingsApi
+  body: BodyApi
+}
+
+/** Composição Corporal (body_metrics) — série temporal + meta de peso (GLP-1). */
+export interface BodyApi {
+  listBodyMetrics(signal?: AbortSignal): Promise<BodyMetricDTO[]>
+  saveBodyMetric(input: BodyMetricInput): Promise<{ error: Error | null }>
+  deleteBodyMetric(id: string): Promise<{ error: Error | null }>
+  /** Altura (cm) do perfil — base do IMC calculado. `null` se ausente. */
+  getHeightCm(signal?: AbortSignal): Promise<number | null>
+  getWeightGoal(signal?: AbortSignal): Promise<number | null>
+  setWeightGoal(kg: number | null): Promise<{ error: Error | null }>
 }
 
 /** Configurações — Central de Notificações (canal por categoria) + operações de conta. */

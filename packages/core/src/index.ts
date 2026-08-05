@@ -57,3 +57,12 @@ export * from './domain/cycleStats'
 
 // Preferências de notificação (NOTIF-001) — taxonomia/canais puros, fonte única Web↔Mobile.
 export * from './domain/notificationPrefs'
+
+// Composição Corporal (BOD-001) — taxonomia de métricas, jornada de peso, sumário/confiabilidade, evolução,
+// snapshots, marcos. PUROS.
+export * from './domain/body/metrics'
+export * from './domain/body/weight-journey'
+export * from './domain/body/summary'
+export * from './domain/body/evolution'
+export * from './domain/body/snapshots'
+export * from './domain/body/milestones'

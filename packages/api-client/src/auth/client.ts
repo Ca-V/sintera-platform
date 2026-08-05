@@ -29,6 +29,7 @@ import { listContraceptives, saveContraceptive, toggleContraceptiveStatus, delet
 import { listPeriods, addPeriod, deletePeriod } from '../cycle/menstrual'
 import { listNotificationPrefs, saveNotificationPrefs } from '../settings/notifications'
 import { exportAccountData, deleteAccount } from '../settings/account'
+import { listBodyMetrics, saveBodyMetric, deleteBodyMetric, getHeightCm, getWeightGoal, setWeightGoal } from '../body/body'
 import { asError } from '../net/errors'
 
 /**
@@ -131,6 +132,14 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       saveNotificationPrefs: (prefs) => saveNotificationPrefs(supabase, prefs),
       exportAccountData: () => exportAccountData(supabase, config.webBaseUrl),
       deleteAccount: () => deleteAccount(supabase, config.webBaseUrl),
+    },
+    body: {
+      listBodyMetrics: (signal) => listBodyMetrics(supabase, signal),
+      saveBodyMetric: (input) => saveBodyMetric(supabase, input),
+      deleteBodyMetric: (id) => deleteBodyMetric(supabase, id),
+      getHeightCm: (signal) => getHeightCm(supabase, signal),
+      getWeightGoal: (signal) => getWeightGoal(supabase, signal),
+      setWeightGoal: (kg) => setWeightGoal(supabase, kg),
     },
   }
 }

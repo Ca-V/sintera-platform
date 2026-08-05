@@ -72,6 +72,9 @@ export function AgendaScreen({ navigation }: Props) {
         <Pressable onPress={() => navigation.navigate('HistoricoExames')}>
           <Text spec={text(t, { role: 'bodySmall' })} style={{ color: t.color.identity.primary }}>Ver Histórico de Exames →</Text>
         </Pressable>
+        <Pressable onPress={() => navigation.navigate('Composicao')}>
+          <Text spec={text(t, { role: 'bodySmall' })} style={{ color: t.color.identity.primary }}>Composição Corporal →</Text>
+        </Pressable>
       </View>
 
       {empty ? (
