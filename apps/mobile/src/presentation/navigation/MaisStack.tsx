@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { MaisMenuScreen } from '../screens/mais/MaisMenuScreen'
 import { ProfileScreen } from '../screens/profile/ProfileScreen'
 import { DespesasScreen } from '../screens/despesas/DespesasScreen'
+import { RelatorioScreen } from '../screens/relatorio/RelatorioScreen'
 import { ConfiguracoesScreen } from '../screens/mais/ConfiguracoesScreen'
 import { useTheme } from '../theme'
 import type { MaisStackParamList } from './types'
@@ -34,6 +35,18 @@ export function MaisStack() {
         options={{
           headerShown: true,
           title: 'Despesas',
+          headerStyle: { backgroundColor: t.color.surface.app },
+          headerTintColor: t.color.text.default,
+          headerTitleStyle: { fontFamily: 'HankenGrotesk_600SemiBold' },
+          headerShadowVisible: false,
+        }}
+      />
+      <Stack.Screen
+        name="Relatorio"
+        component={RelatorioScreen}
+        options={{
+          headerShown: true,
+          title: 'Relatório',
           headerStyle: { backgroundColor: t.color.surface.app },
           headerTintColor: t.color.text.default,
           headerTitleStyle: { fontFamily: 'HankenGrotesk_600SemiBold' },

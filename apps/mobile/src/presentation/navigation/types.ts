@@ -16,6 +16,7 @@ export type MaisStackParamList = {
   MaisMenu: undefined
   Perfil: undefined
   Despesas: undefined
+  Relatorio: undefined
   Configuracoes: undefined
 }
 
