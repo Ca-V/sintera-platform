@@ -26,7 +26,7 @@ report/assemble; api-client body/report). Ver [[mobile_paridade_execucao_estado]
 
 ## 2. Rotas Web NÃO surgidas na Sidebar / com trava de governança
 
-- **/dashboard/omics (Exames de ômica)** — acessada A PARTIR de Exames. User-facing. **Requer decisão** (§3).
+- **/dashboard/omics (Exames de ômica)** — ✅ **ENTREGUE** (decisão: bridge). Ver §3.
 - **/dashboard/conexoes** — HIP-001 (captura automática / wearables) = **Fase 2**. Governança: nenhum código de
   Fase 2 antes das etapas do ecossistema aprovadas → **não construir** agora. O banner "Conexões" do
   Monitoramento foi omitido no Mobile (sem destino); substituído por aviso "captura por dispositivo em breve".
@@ -34,7 +34,17 @@ report/assemble; api-client body/report). Ver [[mobile_paridade_execucao_estado]
   **não** estão na Sidebar nem linkadas na UI de produção. Não são paridade de produto no momento (rotas
   internas/preview). Reavaliar se/quando forem promovidas ao produto.
 
-## 3. DECISÃO ABERTA — Exames de ômica (omics) no Mobile
+## 3. Exames de ômica (omics) — RESOLVIDO: bridge (ADR-020) ✅
+
+Decisão da fundadora (2026-08-05): **Opção 1 — bridge**. Entregue: rotas `/api/omics/*` autenticam por Cookie OU
+Bearer (`omicsAuth` → `getAuthedSupabase`), o Mobile reusa a lógica de servidor; módulo `@sintera/api-client/omics`
+(leituras via ponte; escritas diretas RLS); telas `OmicsListScreen` + `OmicsPanelScreen` (N1–N4 + entrada manual
+com resolução de catálogo + exclusão), ligadas ao DocumentosStack e a partir de Exames. A **ingestão por IA do
+laudo** (upload PDF/foto/CSV/JSON → transcrição) permanece captura de device + edge (exceção de plataforma) — no
+Mobile, cria-se o painel e adicionam-se resultados manualmente (ou importa-se na Web). Registro histórico das
+opções abaixo.
+
+### (histórico) Opções avaliadas
 
 O domínio ômica é o único item user-facing ainda sem paridade. Ele é substancialmente diferente dos demais:
 
