@@ -88,6 +88,15 @@ Opção 2 como convergência de fundo posterior. Aguardando decisão.
    blocos reversíveis (proibido rewrite de 1093 linhas de uma vez).
 4. **Proveniência por item no Relatório** (link ao documento de origem por exame/medida) — hoje textual; on-device
    exigiria navegação cross-tab a partir de uma tela de compilação. Avaliar valor vs. ruído.
+5. **Enriquecer a Home Shell (slots Summary/Timeline/Insights).** O dashboard Web mostra estatísticas (exames,
+   pendentes, biomarcadores), jornada (próximo/último evento) e exames recentes. Hoje esses slots do Mobile são
+   reservados (Home Shell aceita no Inc3). **Restrição arquitetural:** `INV-HOME-001` (tests/mobile/
+   home-is-composition.test.ts) PROÍBE qualquer import de `@sintera/api-client`/Supabase dentro de
+   `apps/mobile/src/presentation/home/` — a Home é composição pura. Portanto, preencher os slots exige um
+   **padrão de injeção** (um container acima da Home lê os dados via api-client e injeta nos slots por props, ou
+   os slots recebem render-props dos módulos de domínio) definido em ADR-018/MOBILE-014. É um **incremento de
+   arquitetura próprio** (não um "fill" rápido) — proposto para decisão, sem implementação unilateral. Alinha com
+   o roadmap ("cada domínio preenche um slot da Home") e melhora a UX de entrada do app.
 
 ## 5. Estado do APK
 
