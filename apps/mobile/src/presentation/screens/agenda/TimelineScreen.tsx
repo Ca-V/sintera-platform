@@ -49,8 +49,15 @@ export function TimelineScreen({ navigation }: Props) {
 
   const load = useCallback((silent: boolean) => {
     if (silent) setRefreshing(true); else setPhase('loading')
-    // Histórico de Saúde = 4 fontes (eventos + exames + ômicas + contracepção), SÓ fatos fechados (selectHistory).
-    Promise.all([apiClient.agenda.listEvents(), apiClient.exams.listExams(), apiClient.omics.listPanels(), apiClient.cycle.listContraceptives()])
+    // Histórico de Saúde = 4 fontes. PRIMÁRIAS (eventos + exames) definem sucesso/erro da tela; AUXILIARES (ômicas +
+    // contracepção) são NÃO‑FATAIS — se falharem (ex.: ponte /api/omics ainda sem Bearer em produção → 401), a tela
+    // carrega mesmo assim com eventos+exames (degradação controlada, sem blank). SÓ fatos fechados (selectHistory).
+    Promise.all([
+      apiClient.agenda.listEvents(),
+      apiClient.exams.listExams(),
+      apiClient.omics.listPanels().catch(() => []),          // auxiliar — não derruba a tela
+      apiClient.cycle.listContraceptives().catch(() => []),  // auxiliar — não derruba a tela
+    ])
       .then(([events, exams, omics, ctc]) => {
         if (!alive.current) return
         setEntries(selectHistory(mergeTimeline(events, exams, omics, ctc)))
