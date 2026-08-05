@@ -31,12 +31,19 @@ export function DespesasScreen({ navigation }: Props) {
     return [...map.entries()].sort((a, b) => expensesTotalCents(b[1]) - expensesTotalCents(a[1])).map(([key, items]) => ({ key, items }))
   })()
 
+  const parentNav = () => navigation.getParent() as { navigate: (n: string, p: unknown) => void } | undefined
   // Editar um lançamento de EVENTO (não-exame) → formulário de evento (na aba Acompanhamento).
   const editEvent = (item: HealthEvent) => {
     if (item.id.startsWith('exam:')) return
-    ;(navigation.getParent() as { navigate: (n: string, p: unknown) => void } | undefined)
-      ?.navigate('Acompanhamento', { screen: 'EventForm', params: { event: item } })
+    parentNav()?.navigate('Acompanhamento', { screen: 'EventForm', params: { event: item } })
   }
+  // Adicionar despesa (guia, paridade Web): a despesa é ATRIBUTO de um fato — cria-se pelo fato (evento com valor
+  // ou medicamento). Despesa avulsa = novo evento com valor.
+  const addExpense = () => Alert.alert('Adicionar despesa', 'A despesa é registrada no fato a que pertence.', [
+    { text: 'Novo evento com valor', onPress: () => parentNav()?.navigate('Acompanhamento', { screen: 'EventForm', params: {} }) },
+    { text: 'Novo medicamento', onPress: () => parentNav()?.navigate('MinhaSaude', { screen: 'Medications' }) },
+    { text: 'Cancelar', style: 'cancel' },
+  ])
 
   if (d.phase === 'loading') {
     return (
@@ -67,7 +74,10 @@ export function DespesasScreen({ navigation }: Props) {
     <ScrollView style={{ backgroundColor: t.color.surface.app }}
       contentContainerStyle={[styles.content, { paddingTop: styles.content.padding + insets.top, paddingBottom: styles.content.padding + insets.bottom }]}
       refreshControl={<RefreshControl refreshing={d.refreshing} onRefresh={d.refresh} tintColor={t.color.identity.primary} />}>
-      <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 22 }}>Despesas</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+        <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 22 }}>Despesas</Text>
+        <Button label="Adicionar despesa" onPress={addExpense} />
+      </View>
       <View style={[styles.totalCard, { backgroundColor: t.color.badge.info.soft, borderColor: t.color.border.default }]}>
         <Text spec={text(t, { role: 'label', tone: 'muted' })}>TOTAL</Text>
         <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 24 }}>{fmtBRL(d.totalCents)}</Text>

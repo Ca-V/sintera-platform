@@ -20,12 +20,16 @@ export function ExamUploadScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets()
   const { state, pick, retry, reset } = useExamUpload()
 
-  // Sucesso: retorna ao histórico (o novo exame aparece como 'pending'; a extração é posterior — MOBILE-027 §7.2.1).
+  // Sucesso: vai direto ao DETALHE do exame (paridade Web) — lá a extração já foi disparada (useExamUpload) e o
+  // usuário vê o estado de processamento/polling imediatamente, em vez de voltar à lista sem feedback.
   useEffect(() => {
     if (state.phase !== 'done') return
-    const id = setTimeout(() => navigation.navigate('ExamsList'), 1000)
+    const id = setTimeout(() => {
+      if (state.examId) navigation.replace('ExamDetail', { id: state.examId })
+      else navigation.navigate('ExamsList')
+    }, 900)
     return () => clearTimeout(id)
-  }, [state.phase, navigation])
+  }, [state.phase, state.examId, navigation])
 
   const busy = isUploadBusy(state.phase)
 

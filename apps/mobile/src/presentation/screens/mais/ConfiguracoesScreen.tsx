@@ -2,7 +2,7 @@
 // Notificações (NOTIF-001: canal por categoria) + obrigatórias. Reutiliza apiClient.auth/profile/settings +
 // taxonomia do @sintera/core. Exportar/Excluir conta ficam para quando as rotas aceitarem Bearer (ADR-020).
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ScrollView, View, ActivityIndicator, Pressable, Share, Alert, StyleSheet } from 'react-native'
+import { ScrollView, View, ActivityIndicator, Pressable, Share, Alert, Linking, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import {
@@ -14,6 +14,7 @@ import { useTheme } from '../../theme'
 import { useAuth } from '../../../state/AuthProvider'
 import { apiClient } from '../../../infrastructure/apiClient'
 
+const WEB_URL = process.env.EXPO_PUBLIC_WEB_URL
 const CHANNELS: { id: NotificationChannel; label: string }[] = [
   { id: 'email', label: 'E-mail' }, { id: 'whatsapp', label: 'WhatsApp' }, { id: 'both', label: 'Ambos' }, { id: 'none', label: 'Nenhum' },
 ]
@@ -188,6 +189,18 @@ export function ConfiguracoesScreen() {
         <Button label="Exportar meus dados" variant="secondary" onPress={doExport} loading={exportBusy} loadingLabel="Preparando…" />
       </View>
 
+      {/* Legal e privacidade (LGPD/COMPLIANCE-001) */}
+      <View style={[styles.card, card, { gap: 4 }]}>
+        <Text spec={text(t, { role: 'bodyStrong' })}>Legal e privacidade</Text>
+        {[{ label: 'Seus direitos (LGPD)', path: '/lgpd' }, { label: 'Política de Privacidade', path: '/privacidade' }, { label: 'Termos de Uso', path: '/termos' }].map(l => (
+          <Pressable key={l.path} onPress={() => WEB_URL ? Linking.openURL(`${WEB_URL}${l.path}`) : Alert.alert('Indisponível', 'Abra em sintera.app.')} style={styles.linkRow}>
+            <Text spec={text(t, { role: 'body' })}>{l.label}</Text>
+            <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Abrir ›</Text>
+          </Pressable>
+        ))}
+        <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Seus dados são armazenados de forma segura e nunca compartilhados com terceiros. Você pode excluir sua conta e todos os dados a qualquer momento.</Text>
+      </View>
+
       {/* Zona sensível */}
       <View style={[styles.card, { backgroundColor: t.color.badge.error.soft, borderColor: t.color.badge.error.text, gap: 8 }]}>
         <Text spec={text(t, { role: 'bodyStrong' })} style={{ color: t.color.badge.error.text }}>Excluir conta</Text>
@@ -206,4 +219,5 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
   actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8, flexWrap: 'wrap' },
+  linkRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 },
 })
