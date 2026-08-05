@@ -2,10 +2,10 @@
 // Opera sobre a abstração `{ date }` — NÃO conhece o tipo concreto (cada domínio mapeia o seu fato para cá).
 // Sem React/Supabase/RN. DATE-001-safe: usa a string ISO 'YYYY-MM-DD' por fatiamento (sem Date/timezone).
 
-export type Period = 'day' | 'month' | 'year'
+export type TimeGranularity = 'day' | 'month' | 'year'
 
 /** Chave de período de uma data ISO ('2026-07-01'): year='2026' · month='2026-07' · day='2026-07-01'. */
-export function periodKey(isoDate: string, period: Period): string {
+export function periodKey(isoDate: string, period: TimeGranularity): string {
   const [y = '', m = ''] = isoDate.split('-')
   if (period === 'year') return y
   if (period === 'month') return m ? `${y}-${m}` : y
@@ -34,7 +34,7 @@ export interface TimelineGroup<T> {
 /** Agrupa itens por período, já em ordem cronológica (desc por padrão). Sem data → grupo 'sem-data' (ao fim). */
 export function groupByPeriod<T extends { date: string | null }>(
   items: readonly T[],
-  period: Period,
+  period: TimeGranularity,
   dir: 'asc' | 'desc' = 'desc',
 ): TimelineGroup<T>[] {
   const sorted = sortByDate(items, dir)
