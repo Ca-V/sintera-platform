@@ -4,6 +4,12 @@ Lista **consolidada** dos defeitos/ajustes de **paridade e estabilidade** encont
 Regra: **registrar tudo → corrigir em UM ciclo → nova build → validação rápida → RC1**. Roadmap (evolução) fica em
 `MOBILE-038`. Build homologado: `3aa2825e` (HEAD `29578bf`+).
 
+> **Numeração canônica a partir de D‑17:** consolidada em **`docs/UX-002`** (parecer de refinamento, aprovado pela
+> fundadora). D‑17 = **Auditoria de Layout/Hierarquia** (a formatação da Composição é caso dentro dele) · D‑18 =
+> **Redesign do Histórico de Exames (arquitetura B — página dedicada por exame; decisão da fundadora)** · D‑19 =
+> **Select universal (>4 opções)** · D‑20 = **arquitetura documental×longitudinal** · D‑21 = **auditoria completa de
+> UX**. Este MOBILE‑037 permanece como o log bruto da homologação; o **plano executável** vive no UX‑002.
+
 | ID | Severidade | Módulo | Descrição | Correção planejada | Status |
 |---|---|---|---|---|---|
 | D‑00 | P0 | Histórico de Saúde | 401 + blank total ao abrir (ponte ômica derrubava a tela) | Fontes auxiliares (ômica/contracepção) não‑fatais — carrega com eventos+exames | ✅ **corrigido** — validar na próxima build |
