@@ -39,8 +39,9 @@ describe('Home é composição, não dona de lógica de domínio (MOBILE-014 §2
   it('encontra os componentes da Home (sanidade)', () => {
     expect(files.length).toBeGreaterThan(0)
     const base = files.map((f) => f.split(/[\\/]/).pop())
-    // Os 6 slots nomeados + HomeShell devem existir (contrato de slots §3.4).
-    for (const name of ['HomeShell.tsx', 'WelcomeSlot.tsx', 'QuickActionsSlot.tsx', 'SummarySlot.tsx', 'TimelineSlot.tsx', 'InsightsSlot.tsx', 'FooterSlot.tsx']) {
+    // Slots nomeados da Home-hub (UX-002) + HomeShell devem existir. Resumo/Linha do tempo/Insights saíram da Home
+    // (pertencem aos módulos); a Home é hub de navegação, não relatório.
+    for (const name of ['HomeShell.tsx', 'WelcomeSlot.tsx', 'QuickActionsSlot.tsx', 'ComoUsarSlot.tsx', 'FooterSlot.tsx']) {
       expect(base).toContain(name)
     }
   })

@@ -1,14 +1,14 @@
-// Incremento 3 · Home Shell — a "casca" permanente da tela inicial (MOBILE-014). É uma COMPOSIÇÃO de slots
-// nomeados (§3.4), nunca dona de lógica de domínio (§2.1). Layout/espaçamento/hierarquia + safe-area (DS-002).
-// Os slots reservados renderizam estado vazio; os domínios futuros preenchem cada slot sem redesenhar a Home.
+// Home Shell — a "casca" permanente da tela inicial. HUB DE NAVEGAÇÃO (UX-002), não um relatório: cada slot ajuda o
+// usuário a INICIAR uma ação; não repete informação que já vive em outro módulo. COMPOSIÇÃO de slots nomeados,
+// nunca dona de lógica de domínio (MOBILE-014 §2.1 / INV-HOME-001). Layout/espaçamento/hierarquia + safe-area (DS-002).
+// Slots: saudação · acesso rápido · como usar (onboarding permanente) · rodapé (logout). Resumo/Linha do tempo/
+// Insights saíram da Home (pertencem aos respectivos módulos). Próximos Compromissos entra por INJEÇÃO (container).
 import { ScrollView, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '../theme'
 import { WelcomeSlot } from './slots/WelcomeSlot'
 import { QuickActionsSlot } from './slots/QuickActionsSlot'
-import { SummarySlot } from './slots/SummarySlot'
-import { TimelineSlot } from './slots/TimelineSlot'
-import { InsightsSlot } from './slots/InsightsSlot'
+import { ComoUsarSlot } from './slots/ComoUsarSlot'
 import { FooterSlot } from './slots/FooterSlot'
 
 export function HomeShell() {
@@ -21,9 +21,7 @@ export function HomeShell() {
     >
       <WelcomeSlot />
       <QuickActionsSlot />
-      <SummarySlot />
-      <TimelineSlot />
-      <InsightsSlot />
+      <ComoUsarSlot />
       <FooterSlot />
     </ScrollView>
   )

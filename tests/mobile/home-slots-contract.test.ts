@@ -9,10 +9,11 @@ import { resolve } from 'node:path'
 const HOME = resolve(process.cwd(), 'apps/mobile/src/presentation/home')
 const read = (rel: string) => readFileSync(resolve(HOME, rel), 'utf-8')
 
-describe('Contrato dos slots da Home (MOBILE-014 §3.4)', () => {
-  it('HomeShell compõe os 6 slots nomeados', () => {
+describe('Contrato dos slots da Home (MOBILE-014 §3.4 · Home-hub UX-002)', () => {
+  it('HomeShell compõe os slots da Home-hub (saudação · acesso rápido · como usar · rodapé)', () => {
     const shell = read('HomeShell.tsx')
-    for (const slot of ['WelcomeSlot', 'QuickActionsSlot', 'SummarySlot', 'TimelineSlot', 'InsightsSlot', 'FooterSlot']) {
+    // Home = HUB de navegação (UX-002). Resumo/Linha do tempo/Insights saíram (pertencem aos módulos).
+    for (const slot of ['WelcomeSlot', 'QuickActionsSlot', 'ComoUsarSlot', 'FooterSlot']) {
       expect(shell, `HomeShell deve compor <${slot} />`).toMatch(new RegExp(`<${slot}\\s*/>`))
     }
   })
@@ -26,9 +27,15 @@ describe('Contrato dos slots da Home (MOBILE-014 §3.4)', () => {
   it('QuickActionsSlot apenas navega (useNavigation + navigate), sem regra de negócio', () => {
     const src = read('slots/QuickActionsSlot.tsx')
     expect(src).toContain('useNavigation')
-    expect(src).toMatch(/navigation\.navigate\(/)
+    expect(src).toMatch(/\.navigate\(/)
     // Não deve conter estado de domínio nem efeitos de dados (só navegação).
     expect(src, 'Quick Actions não deve carregar dados (useEffect/useState de dados)').not.toMatch(/useEffect|useState/)
+  })
+
+  it('ComoUsarSlot é onboarding por navegação (useNavigation), sem dados de domínio', () => {
+    const src = read('slots/ComoUsarSlot.tsx')
+    expect(src).toContain('useNavigation')
+    expect(src, 'Como usar não deve carregar dados').not.toMatch(/useEffect|useState/)
   })
 
   it('FooterSlot dispara o logout (useAuth + signOut) com guarda de reentrância', () => {
@@ -36,12 +43,5 @@ describe('Contrato dos slots da Home (MOBILE-014 §3.4)', () => {
     expect(src).toContain('useAuth')
     expect(src).toMatch(/signOut\(/)
     expect(src, 'guarda de reentrância (ADR-017)').toMatch(/isSigningOut/)
-  })
-
-  it('slots reservados usam ReservedRegion (sem conteúdo de domínio)', () => {
-    for (const slot of ['SummarySlot', 'TimelineSlot', 'InsightsSlot']) {
-      const src = read(`slots/${slot}.tsx`)
-      expect(src, `${slot} deve ser um slot reservado`).toMatch(/ReservedRegion/)
-    }
   })
 })

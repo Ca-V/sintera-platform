@@ -1,6 +1,6 @@
-// Slot Quick Actions — pontos de entrada. APENAS navegação para funcionalidades já existentes (as abas do
-// AppNavigator), SEM qualquer decisão ou priorização por regra de negócio (MOBILE-014 §3.1). Não é um
-// RegistrationHub: não decide "o que registrar" nem "qual prioridade". Sem lógica de domínio.
+// Slot Quick Actions — acessos rápidos às funcionalidades de MAIOR frequência (hub de navegação, não um segundo
+// menu). APENAS navegação (MOBILE-014 §3.1 / UX-002): sem regra de negócio, sem dados de domínio. Alvos podem ser
+// uma aba ou uma tela dentro do stack da aba (ex.: Compartilhamento = Mais→Relatório; Adicionar Registro = Exames→Upload).
 import { View, StyleSheet, Pressable } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs'
@@ -9,28 +9,30 @@ import { Text } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { AppTabParamList } from '../../navigation/types'
 
-// Rótulos/alvos derivados dos grupos do SSOT (mesmos da navegação). Só navegação.
-const ENTRIES: { label: string; target: keyof AppTabParamList }[] = [
-  { label: 'Agenda', target: 'Agenda' },
-  { label: 'Exames', target: 'Exames' },
-  { label: 'Minha Saúde', target: 'MinhaSaude' },
-  { label: 'Mais', target: 'Mais' },
+type Entry = { label: string; tab: keyof AppTabParamList; screen?: string }
+
+// Alta frequência (UX-002): Agenda · Exames · Minha Saúde · Compartilhamento · Adicionar Registro.
+const ENTRIES: readonly Entry[] = [
+  { label: 'Agenda', tab: 'Agenda' },
+  { label: 'Exames', tab: 'Exames' },
+  { label: 'Minha Saúde', tab: 'MinhaSaude' },
+  { label: 'Compartilhamento', tab: 'Mais', screen: 'Relatorio' },
+  { label: 'Adicionar Registro', tab: 'Exames', screen: 'ExamUpload' },
 ]
 
 export function QuickActionsSlot() {
   const t = useTheme()
   const navigation = useNavigation<BottomTabNavigationProp<AppTabParamList>>()
+  // Navegação aninhada (aba → tela do stack) — cast fino, sem regra de negócio (padrão do projeto p/ nav por string).
+  const go = (e: Entry) => (navigation as unknown as { navigate: (n: string, p?: unknown) => void })
+    .navigate(e.tab, e.screen ? { screen: e.screen } : undefined)
   return (
     <View style={styles.wrap}>
       <Text spec={text(t, { role: 'label', tone: 'muted' })}>Acesso rápido</Text>
       <View style={styles.grid}>
         {ENTRIES.map((e) => (
-          <Pressable
-            key={e.target}
-            onPress={() => navigation.navigate(e.target)}
-            accessibilityRole="button"
-            style={[styles.card, { backgroundColor: t.color.surface.base, borderColor: t.color.border.default }]}
-          >
+          <Pressable key={e.label} onPress={() => go(e)} accessibilityRole="button"
+            style={[styles.card, { backgroundColor: t.color.surface.base, borderColor: t.color.border.default }]}>
             <Text spec={text(t, { role: 'bodyStrong' })}>{e.label}</Text>
           </Pressable>
         ))}
