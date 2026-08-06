@@ -6,11 +6,16 @@ Regra: **registrar tudo → corrigir em UM ciclo → nova build → validação 
 
 | ID | Severidade | Módulo | Descrição | Correção planejada | Status |
 |---|---|---|---|---|---|
-| D‑00 | P0 | Histórico de Saúde | 401 + blank total ao abrir (ponte ômica derrubava a tela) | Fontes auxiliares (ômica/contracepção) não‑fatais — carrega com eventos+exames | ✅ **corrigido** (build 3aa2825e) |
-| D‑01 | P1 | Exames · Compartilhar | Compartilhar por e‑mail/WhatsApp traz **só os dados**, não o **documento original** | Incluir no Share o **link seguro do documento** (ou o próprio arquivo, quando adequado) — via e‑mail/WhatsApp/Share nativo. Simples e equivalente à expectativa de "Compartilhar exame". | ⏳ a corrigir |
-| D‑02 | P1 | Ômica | "Falha ao carregar ômica (401)" — tela inacessível | **Deploy do Bearer** (`omicsAuth → getAuthedSupabase`) na **Web de produção** → re‑homologar. (Bloqueado: preciso do caminho de deploy da produção.) | ⏳ bloqueado (deploy) |
-| D‑03 | P1 | Histórico de Exames | "Parede de chips" com nomes de biomarcadores no topo → excesso de informação, difícil navegar | Alinhar à Web: **remover a parede de chips**; usar **seletores compactos (dropdown)** para tipo e data; **manter busca**; manter filtros tipo/data | ⏳ a corrigir |
-| D‑04 | P1 | Histórico de Saúde | Falta busca/filtros; só agrupa por mês | Alinhar à Web: **busca** + **filtro por tipo** + **filtro por data** (Por data / Por tipo) + organização equivalente | ⏳ a corrigir |
+| D‑00 | P0 | Histórico de Saúde | 401 + blank total ao abrir (ponte ômica derrubava a tela) | Fontes auxiliares (ômica/contracepção) não‑fatais — carrega com eventos+exames | ✅ **corrigido** — validar na próxima build |
+| D‑01 | P1 | Exames · Compartilhar | Compartilhar por e‑mail/WhatsApp traz **só os dados**, não o **documento original** | Incluir no Share o **link seguro do documento** (ou o próprio arquivo, quando adequado) — via e‑mail/WhatsApp/Share nativo. Simples e equivalente à expectativa de "Compartilhar exame". | ⏳ **ciclo único** |
+| D‑02 | P1 | Ômica | "Falha ao carregar ômica (401)" — tela inacessível | **Deploy do Bearer** (`omicsAuth → getAuthedSupabase`) na **Web de produção** → re‑homologar. Código **já commitado** e backward‑compatible (cookie+bearer). **Deploy pode ser PREPARADO; execução só com autorização** da fundadora (produção); fluxo de publicação a confirmar. | ⏳ **aguardando autorização de deploy** |
+| D‑03 | P1 | Histórico de Exames | "Parede de chips" com nomes de biomarcadores no topo → excesso de informação, difícil navegar | Alinhar à Web: **remover a parede de chips**; usar **seletores compactos (dropdown)** para tipo e data; **manter busca**; manter filtros tipo/data | ⏳ **ciclo único** |
+| D‑04 | P1 | Histórico de Saúde | Falta busca/filtros; só agrupa por mês | Alinhar à Web: **busca** + **filtro por tipo** + **filtro por data** (Por data / Por tipo) + organização equivalente | ⏳ **ciclo único** |
+
+> **Estratégia confirmada (fundadora):** registrar TODOS os achados aqui durante a homologação → **um único ciclo**
+> de correção ao final (D‑01/D‑03/D‑04 + demais) → **uma build** de validação → RC1. **D‑02:** o Bearer já está pronto
+> na branch; deploy em produção só **após autorização** e confirmação do fluxo de publicação — a homologação do resto
+> do app segue normalmente, deixando só a ômica pendente dessa etapa.
 
 ## Critérios de aceite (por item)
 - **D‑01:** ao "Compartilhar exame", o destinatário recebe **acesso ao documento original** (link seguro clicável ou o arquivo), não apenas os dados extraídos; funciona por e‑mail, WhatsApp e Share nativo.
