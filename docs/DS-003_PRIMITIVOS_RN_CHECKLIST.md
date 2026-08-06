@@ -30,6 +30,8 @@ Um componente só entra no DS quando responde **sim** a todos:
 | `Switch` | `toggle` | Liga/desliga (preferências) | 2026‑07‑27 |
 | `Avatar` | `avatar` | Imagem (uri) ou iniciais | 2026‑07‑27 |
 | `FieldRow` | `field` | Linha de formulário (rótulo + controle + ajuda/erro) | 2026‑07‑27 |
+| `Select` | — (composição sobre `input`/`text`) | Seletor compacto: bottom‑sheet rolável + busca (substitui parede de chips/listas abertas) | 2026‑08‑06 (D‑16) |
+| `MetricRow` | — (composição sobre `text`+`spacing`) | Hierarquia de métrica: valor em destaque + rótulo + metadados subordinados (A6) | 2026‑08‑06 (ADR‑021) |
 
 > Recipes com primitivo RN ainda pendente (promover quando um incremento precisar): `badge`, `card`, `chip`,
 > `divider`, `icon`, `surface`.

@@ -18,7 +18,7 @@ import {
   buildMilestones, MILESTONE_CATEGORIES, MILESTONE_COLOR, type MilestoneCategory,
   type MedInput, type AssessmentInput, type ConsultaInput, professionalKindLabel,
 } from '@sintera/core'
-import { Text, Button, Input } from '../../primitives'
+import { Text, Button, Input, MetricRow } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 
@@ -244,28 +244,14 @@ export function ComposicaoScreen() {
       {Object.keys(summary).length > 0 || imcVal != null ? (
         <View style={[styles.card, card, { gap: 10 }]}>
           <Text spec={text(t, { role: 'bodyStrong' })}>Estado atual</Text>
-          {imcVal != null ? (
-            <View style={{ gap: 2 }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
-                <Text spec={text(t, { role: 'body' })} style={{ flex: 1 }}>IMC</Text>
-                <Text spec={text(t, { role: 'bodyStrong' })}>{imcVal} kg/m²</Text>
-              </View>
-              <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Calculado (peso ÷ altura²)</Text>
-            </View>
-          ) : null}
+          {/* Hierarquia A6 via MetricRow (DS): valor em destaque, metadados subordinados — mesma leitura em toda a plataforma. */}
+          {imcVal != null ? <MetricRow label="IMC" value={`${imcVal} kg/m²`} meta="Calculado (peso ÷ altura²)" /> : null}
           {SUMMARY_ORDER.filter(m => summary[m]).map(m => {
             const s = summary[m]
             const q = sourceQuality(s.source)
-            return (
-              // Rótulo + valor na 1ª linha; origem/data/confiabilidade na 2ª (largura total, quebra sem estourar) — D-17.
-              <View key={m} style={{ gap: 2 }}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
-                  <Text spec={text(t, { role: 'body' })} style={{ flex: 1 }}>{bodyMetricLabel(m)}</Text>
-                  <Text spec={text(t, { role: 'bodyStrong' })} style={{ color: trendColor(s.trend) }}>{s.value}{s.unit ? ` ${s.unit}` : ''}{s.delta != null && s.delta !== 0 ? ` (${s.delta > 0 ? '+' : ''}${s.delta})` : ''}</Text>
-                </View>
-                <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{q?.label ?? s.source ?? '—'} · {fmt(s.date)}{q ? ` · ${RELIABILITY_LABEL[q.reliability]}` : ''}</Text>
-              </View>
-            )
+            const value = `${s.value}${s.unit ? ` ${s.unit}` : ''}${s.delta != null && s.delta !== 0 ? ` (${s.delta > 0 ? '+' : ''}${s.delta})` : ''}`
+            const meta = `${q?.label ?? s.source ?? '—'} · ${fmt(s.date)}${q ? ` · ${RELIABILITY_LABEL[q.reliability]}` : ''}`
+            return <MetricRow key={m} label={bodyMetricLabel(m)} value={value} valueColor={trendColor(s.trend)} meta={meta} />
           })}
           {imcVal == null && summary['peso'] ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Informe sua altura no perfil (na Web) para calcular o IMC.</Text> : null}
         </View>
