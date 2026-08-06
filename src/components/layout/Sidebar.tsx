@@ -1,99 +1,73 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, FileText, Clock, Pill, Receipt, CalendarDays,
   HeartPulse, Stethoscope, ScrollText, Droplet, Activity, Ruler, Settings,
-  Accessibility, X, ChevronRight, TrendingUp, Leaf,
+  Accessibility, X, ChevronRight, ChevronDown, TrendingUp, Leaf, Heart, Users,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUser } from '@/context/UserContext'
 import { useContextualDescription, ContextualDescriptionCard } from '@/components/ui/ContextualDescription'
 import { navDescription } from '@/lib/ui/navDescriptions'
 
-// Painel Inicial — item avulso (sem grupo), primeiro do menu.
-const homeItem = { href: '/dashboard', icon: LayoutDashboard, label: 'Painel Inicial', extra: undefined as string[] | undefined }
+// TAXONOMIA OFICIAL DA PLATAFORMA (ADR-021 / MOBILE-036 — rev. 2026-08-06). Organizada pelo MODELO MENTAL do usuário,
+// não pela natureza da tela: "Exames" deixa de ser módulo e vira um REGISTRO dentro de Minha Saúde; "Compartilhamento"
+// (ação) dá lugar a "Rede de Cuidado" (entidade permanente). Web e Mobile espelham esta mesma taxonomia.
+//   Painel Inicial · Agenda (diretos, 1 tela — sem clique redundante).
+//   Minha Saúde (expansível) = Registros (o que a pessoa cadastra: Exames, Medicamentos, Suplementos, Recursos) ·
+//                              Saúde (estado atual: Condições, Composição, Ciclo, Monitoramento, Hábitos) ·
+//                              Histórico (linha do tempo: Histórico de Exames, Histórico de Saúde).
+//   Rede de Cuidado (expansível) = Relatórios hoje; Profissionais/Compartilhamentos entram com a CARE-002.
+//   Organização = Despesas (e Documentos, futuro). · Configurações (direta).
+// Follow-up (reorganização funcional): alinhar a taxonomia do Relatório (SELECT_GROUPS + core REPORT_GROUPS).
+type Leaf = { href: string; icon: React.ElementType; label: string; extra?: string[] }
+type Section = { label?: string; items: Leaf[] }
+type NavNode =
+  | { type: 'link'; leaf: Leaf }
+  | { type: 'group'; icon: React.ElementType; label: string; sections: Section[] }
 
-// TAXONOMIA OFICIAL DA PLATAFORMA (ADR-021 / MOBILE-036 — 2026-08-06). Esta Sidebar deixou de ser "a navegação da
-// Web": é a arquitetura de informação ÚNICA que Web e Mobile espelham. Toda nova funcionalidade primeiro encontra
-// seu lugar aqui. Convergente com as 5 abas do Mobile (Início · Agenda · Exames · Minha Saúde · Mais); na Web, "Mais"
-// se abre em Compartilhamento · Organização · Configurações.
-//   Agenda        = compromissos (calendário + próximos/pendências).
-//   Exames        = repositório documental/operacional + Histórico de Exames (acompanhamento longitudinal de
-//                   biomarcadores, /dashboard/saude). Ômica entra ao existir rota Web dedicada (paridade).
-//   Minha Saúde   = estado da pessoa (Condições, Medicamentos, Suplementos, Recursos, Hábitos, Ciclo, Composição
-//                   Corporal, Monitoramento) + Histórico de Saúde (/dashboard/timeline).
-//   Compartilhamento = Relatórios (+ Rede de Cuidado, CARE-002, oculta até existir).
-//   Organização   = Despesas (e futuros módulos administrativos/financeiros).
-//   Configurações = conta.
-// DISTINÇÃO-CHAVE: "Exames" é o repositório OPERACIONAL; "Histórico de Exames" é o acompanhamento longitudinal.
-// Follow-up (fase de reorganização funcional): alinhar a taxonomia do Relatório (SELECT_GROUPS + core REPORT_GROUPS).
-const navGroups: {
-  title: string
-  titleColor: string
-  chipBg?: string
-  standalone?: boolean   // FB-010 fase 1: renderiza os itens SEM cabeçalho de grupo (evita "grupo de 1 item")
-  items: { href: string; icon: React.ElementType; label: string; extra?: string[] }[]
-}[] = [
+const NAV: readonly NavNode[] = [
+  { type: 'link', leaf: { href: '/dashboard', icon: LayoutDashboard, label: 'Painel Inicial' } },
+  { type: 'link', leaf: { href: '/dashboard/agenda', icon: CalendarDays, label: 'Agenda' } },
   {
-    title: 'Agenda',
-    standalone: true,
-    titleColor: 'text-lavender',
-    items: [
-      { href: '/dashboard/agenda', icon: CalendarDays, label: 'Agenda' },
+    type: 'group', icon: Heart, label: 'Minha Saúde',
+    sections: [
+      { label: 'Registros', items: [
+        { href: '/dashboard/exams',        icon: FileText,      label: 'Exames' },
+        { href: '/dashboard/medicamentos', icon: Pill,          label: 'Medicamentos' },
+        { href: '/dashboard/suplementos',  icon: Leaf,          label: 'Suplementos' },
+        { href: '/dashboard/recursos',     icon: Accessibility, label: 'Recursos de Saúde' },
+      ] },
+      { label: 'Saúde', items: [
+        { href: '/dashboard/condicoes',     icon: Stethoscope, label: 'Condições de Saúde' },
+        { href: '/dashboard/medidas',       icon: Ruler,       label: 'Composição Corporal' },
+        { href: '/dashboard/ciclo',         icon: Droplet,     label: 'Ciclo e Contracepção' },
+        { href: '/dashboard/sinais-vitais', icon: Activity,    label: 'Monitoramento' },
+        { href: '/dashboard/habitos',       icon: HeartPulse,  label: 'Hábitos' },
+      ] },
+      { label: 'Histórico', items: [
+        { href: '/dashboard/saude',    icon: TrendingUp, label: 'Histórico de Exames' },
+        { href: '/dashboard/timeline', icon: Clock,      label: 'Histórico de Saúde', extra: ['/dashboard/historico'] },
+      ] },
     ],
   },
   {
-    title: 'Exames',
-    titleColor: 'text-petal',
-    chipBg: 'bg-[#F5EFE4]',
-    items: [
-      { href: '/dashboard/exams', icon: FileText,   label: 'Exames' },
-      { href: '/dashboard/saude', icon: TrendingUp, label: 'Histórico de Exames' },
+    type: 'group', icon: Users, label: 'Rede de Cuidado',
+    sections: [
+      { items: [ { href: '/dashboard/relatorio', icon: ScrollText, label: 'Relatórios' } ] },
     ],
   },
   {
-    title: 'Minha Saúde',
-    titleColor: 'text-lagoa',
-    chipBg: 'bg-[#F5EFE4]',
-    items: [
-      { href: '/dashboard/condicoes',     icon: Stethoscope,   label: 'Condições de Saúde' },
-      { href: '/dashboard/medicamentos',  icon: Pill,          label: 'Medicamentos' },
-      { href: '/dashboard/suplementos',   icon: Leaf,          label: 'Suplementos' },
-      { href: '/dashboard/recursos',      icon: Accessibility, label: 'Recursos de Saúde' },
-      { href: '/dashboard/habitos',       icon: HeartPulse,    label: 'Hábitos' },
-      { href: '/dashboard/ciclo',         icon: Droplet,       label: 'Ciclo e Contracepção' },
-      { href: '/dashboard/medidas',       icon: Ruler,         label: 'Composição Corporal' },
-      { href: '/dashboard/sinais-vitais', icon: Activity,      label: 'Monitoramento' },
-      { href: '/dashboard/timeline',      icon: Clock,         label: 'Histórico de Saúde', extra: ['/dashboard/historico'] },
+    type: 'group', icon: Receipt, label: 'Organização',
+    sections: [
+      { items: [ { href: '/dashboard/gastos', icon: Receipt, label: 'Despesas' } ] },
     ],
   },
-  {
-    title: 'Compartilhamento',
-    titleColor: 'text-petal',
-    chipBg: 'bg-[#F5EFE4]',
-    items: [
-      { href: '/dashboard/relatorio', icon: ScrollText, label: 'Relatórios' },
-    ],
-  },
-  {
-    title: 'Organização',
-    titleColor: 'text-gold',
-    chipBg: 'bg-[#F5EFE4]',
-    items: [
-      { href: '/dashboard/gastos', icon: Receipt, label: 'Despesas' },
-    ],
-  },
-  {
-    title: 'Configurações',
-    titleColor: 'text-onyx/60',
-    chipBg: 'bg-[#F5EFE4]',
-    items: [
-      { href: '/dashboard/configuracoes', icon: Settings, label: 'Configurações' },
-    ],
-  },
+  { type: 'link', leaf: { href: '/dashboard/configuracoes', icon: Settings, label: 'Configurações' } },
 ]
 
 function isActive(pathname: string, href: string, extra?: string[]): boolean {
@@ -101,11 +75,13 @@ function isActive(pathname: string, href: string, extra?: string[]): boolean {
   if (pathname === href || pathname.startsWith(href + '/')) return true
   return (extra ?? []).some(e => pathname === e || pathname.startsWith(e + '/'))
 }
+function groupActive(node: Extract<NavNode, { type: 'group' }>, pathname: string): boolean {
+  return node.sections.some(s => s.items.some(it => isActive(pathname, it.href, it.extra)))
+}
 
 interface SidebarProps { open: boolean; onClose: () => void }
 
 // Descrição contextual da navegação = infraestrutura reutilizável (@/components/ui/ContextualDescription).
-// A Sidebar apenas fornece o texto de cada item; o gatilho (hover/foco) e o card vêm do componente.
 function NavItem({ href, icon: Icon, label, active, soon, onClose, hintProps }: {
   href: string; icon: React.ElementType; label: string; active: boolean; soon?: boolean; onClose: () => void
   hintProps?: React.HTMLAttributes<HTMLElement>
@@ -131,18 +107,59 @@ function NavItem({ href, icon: Icon, label, active, soon, onClose, hintProps }: 
   )
 }
 
+// Grupo EXPANSÍVEL (Minha Saúde · Rede de Cuidado · Organização). O rótulo do módulo é o único cabeçalho; as
+// subdivisões (Registros/Saúde/Histórico) são divisões internas discretas — reduz poluição visual (sem caixa-alta grande).
+function NavGroup({ node, pathname, open, onToggle, onClose, bind }: {
+  node: Extract<NavNode, { type: 'group' }>; pathname: string; open: boolean; onToggle: () => void
+  onClose: () => void; bind: (text: string) => React.HTMLAttributes<HTMLElement>
+}) {
+  const active = groupActive(node, pathname)
+  const Icon = node.icon
+  return (
+    <div className="mb-1">
+      <button type="button" onClick={onToggle}
+        className={cn('w-full flex items-center gap-3 px-3 py-1.5 rounded-xl transition-all duration-200 text-sm font-body group',
+          active ? 'text-onyx font-semibold' : 'text-onyx font-medium hover:bg-white/25')}>
+        <Icon size={16} className={cn('flex-shrink-0 transition-colors', active ? 'text-petal' : 'text-onyx/75 group-hover:text-onyx')} />
+        <span className="flex-1 text-left">{node.label}</span>
+        <ChevronDown size={14} className={cn('text-onyx/50 transition-transform duration-200', open ? '' : '-rotate-90')} />
+      </button>
+      {open && (
+        <div className="mt-0.5 ml-3.5 pl-2 border-l border-white/30 flex flex-col gap-1">
+          {node.sections.map((sec, i) => (
+            <div key={i} className="flex flex-col gap-0.5">
+              {sec.label ? (
+                <p className="text-[10px] font-body font-semibold uppercase tracking-[0.12em] text-onyx/55 px-3 mt-1.5">{sec.label}</p>
+              ) : null}
+              {sec.items.map(item => (
+                <NavItem key={item.href} href={item.href} icon={item.icon} label={item.label}
+                  active={isActive(pathname, item.href, item.extra)} onClose={onClose}
+                  hintProps={bind(navDescription(item.href))} />
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function SidebarContent({ onClose }: { onClose: () => void }) {
   const pathname = usePathname()
   const { profile } = useUser()
   const displayName = profile?.name ?? 'Usuária'
   const initials    = displayName.charAt(0).toUpperCase()
   const { tip, bind } = useContextualDescription()
+  // Grupos expansíveis abertos por padrão (mostram os itens); a pessoa pode recolher para uma sidebar mais limpa.
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(
+    () => Object.fromEntries(NAV.filter((n): n is Extract<NavNode, { type: 'group' }> => n.type === 'group').map(n => [n.label, true]))
+  )
+  const toggle = (label: string) => setOpenGroups(o => ({ ...o, [label]: !(o[label] ?? true) }))
 
   return (
     <div className="relative overflow-hidden flex flex-col h-full select-none border-r border-black/5" style={{ background: 'linear-gradient(160deg, #9BD8E0 0%, #6FC1CF 58%, #57B0BF 100%)' }}>
 
-      {/* "Flores" do Almond Blossom (mesmas do painel esquerdo do Login) — manchas desfocadas
-          creme · sálvia · terracota sobre o campo aqua. Puramente decorativas (atrás do conteúdo). */}
+      {/* "Flores" do Almond Blossom — manchas desfocadas creme · sálvia · terracota sobre o campo aqua (decorativas). */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0" aria-hidden="true">
         <div className="absolute -top-16 -right-12 w-56 h-56 rounded-full blur-3xl" style={{ background: 'rgba(246,242,234,0.50)' }} />
         <div className="absolute top-1/3 -left-12 w-52 h-52 rounded-full blur-3xl" style={{ background: 'rgba(167,185,140,0.30)' }} />
@@ -166,7 +183,7 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
         </button>
       </div>
 
-      {/* Perfil da usuária — atalho para o perfil (perfil/config/sair ficam no menu do topo) */}
+      {/* Perfil da usuária — atalho para o perfil */}
       <Link href="/dashboard/profile" onClick={onClose}
         className="relative z-10 mx-4 mb-3 p-3 rounded-2xl border border-onyx/10 bg-white/35 hover:bg-white/50 transition-colors">
         <div className="flex items-center gap-3">
@@ -180,40 +197,19 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
         </div>
       </Link>
 
-      {/* Navegação principal — todos os tópicos visíveis sem rolagem.
-          Painel Inicial é item avulso; os grupos vêm em seguida (títulos com mais
-          destaque, itens mais compactos para caber mais sem rolagem). */}
-      <nav className="relative z-10 flex-1 px-3 overflow-y-auto pb-3">
-        <div className="mb-2">
-          <NavItem href={homeItem.href} icon={homeItem.icon} label={homeItem.label}
-            active={isActive(pathname, homeItem.href, homeItem.extra)} onClose={onClose}
-            hintProps={bind(navDescription(homeItem.href))} />
-        </div>
-        {navGroups.map(group => (
-          <div key={group.title} className="mb-1.5">
-            {group.standalone ? null : group.chipBg ? (
-              <div className={cn('mx-1 mt-2 mb-1.5 px-2.5 py-1 rounded-lg shadow-sm', group.chipBg)}>
-                <p className="text-[11px] font-body font-bold uppercase tracking-[0.14em] text-onyx">{group.title}</p>
-              </div>
-            ) : (
-              <p className={cn('text-[11px] font-body font-bold uppercase tracking-[0.16em] px-3 mt-1 mb-1', group.titleColor)}>
-                {group.title}
-              </p>
-            )}
-            <ul className="flex flex-col gap-0.5">
-              {group.items.map(item => (
-                <li key={item.href}>
-                  <NavItem href={item.href} icon={item.icon} label={item.label}
-                    active={isActive(pathname, item.href, item.extra)} onClose={onClose}
-                    hintProps={bind(navDescription(item.href))} />
-                </li>
-              ))}
-            </ul>
-          </div>
+      {/* Navegação principal — modelo mental do usuário: itens diretos + módulos expansíveis. */}
+      <nav className="relative z-10 flex-1 px-3 overflow-y-auto pb-3 flex flex-col gap-0.5">
+        {NAV.map(node => node.type === 'link' ? (
+          <NavItem key={node.leaf.href} href={node.leaf.href} icon={node.leaf.icon} label={node.leaf.label}
+            active={isActive(pathname, node.leaf.href, node.leaf.extra)} onClose={onClose}
+            hintProps={bind(navDescription(node.leaf.href))} />
+        ) : (
+          <NavGroup key={node.label} node={node} pathname={pathname} open={openGroups[node.label] ?? true}
+            onToggle={() => toggle(node.label)} onClose={onClose} bind={bind} />
         ))}
       </nav>
 
-      {/* Descrição contextual da categoria (hover/foco) — infraestrutura reutilizável, desacoplada do gatilho. */}
+      {/* Descrição contextual da categoria (hover/foco). */}
       <ContextualDescriptionCard tip={tip} />
     </div>
   )
