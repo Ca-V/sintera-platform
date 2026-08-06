@@ -44,6 +44,27 @@
 - **Excelência sobre paridade literal:** quando uma solução melhor que a Web beneficiar ambas, adotá‑la e documentá‑la
   (P9) — alinhado a [[feedback_questionar_web_propor_melhorias]].
 
+## Diretrizes de execução (adendo — fundadora, 2026‑08‑06)
+Refinam **como** executar sob os 10 princípios:
+1. **Evoluir, não só padronizar.** Reavaliar cada módulo criticamente; ao identificar arquitetura/fluxo/experiência
+   superior à planejada, **propor e adotar a solução tecnicamente mais robusta**. O objetivo não é reproduzir a
+   plataforma atual com componentes novos — é **evoluir o produto**.
+2. **Escalabilidade obrigatória.** Antes de criar componente compartilhado, validar que se sustenta com **centenas de
+   categorias, milhares de exames, dezenas de milhares de documentos, múltiplos idiomas, múltiplos países e módulos
+   futuros**. Proibido o que só funciona para o estado atual (ex.: i18n‑ready, listas virtualizadas/paginadas, chaves
+   estáveis, sem enumerações fechadas — [[principio_modelo_aberto]]).
+3. **Três níveis de mudança por entrega:** classificar tudo em **Correção** (bug/inconsistência) · **Padronização**
+   (paridade/DS/SSOT) · **Evolução de produto** (melhoria funcional/UX). Facilita homologações futuras.
+4. **Simplicidade.** Entre duas soluções corretas, a **mais simples**. Reduzir regras, exceções, estados, componentes,
+   dependências. Menos complexidade estrutural = mais capacidade de evolução.
+5. **Auditoria contínua.** Não limitar aos itens registrados; enquanto reestrutura, registrar e propor oportunidades
+   relevantes (arquitetura/UX/consistência/desempenho).
+6. **Governança das decisões — interromper só** quando a decisão alterar: arquitetura do produto · modelo de dados ·
+   UX · comportamento funcional · regras de negócio · priorização do roadmap. Questões **exclusivamente técnicas** =
+   autônomas.
+7. **Evidências por entrega:** testes · builds · typecheck · validações · impacto nos módulos · critérios de aceite
+   atendidos. Sem passo a passo — só a comprovação de integridade.
+
 ## Fora de escopo / a consolidar depois
 - O **ADR de Governança v1.0** (framework de certificação G1–G4 / matriz de paridade) permanece para consolidar
   **pós‑RC1**, registrando a arquitetura validada — este ADR‑021 registra os **princípios diretores** declarados agora.
