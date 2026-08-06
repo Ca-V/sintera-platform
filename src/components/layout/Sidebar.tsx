@@ -16,21 +16,20 @@ import { navDescription } from '@/lib/ui/navDescriptions'
 // Painel Inicial — item avulso (sem grupo), primeiro do menu.
 const homeItem = { href: '/dashboard', icon: LayoutDashboard, label: 'Painel Inicial', extra: undefined as string[] | undefined }
 
-// Arquitetura de navegação por DOMÍNIO de negócio (UX-001 §5; FB-010). Agrupamento
-// = organização da experiência, NÃO fusão de entidades (cada módulo preserva modelo/regras).
-// A plataforma caminha para 5 domínios de 1º nível: Acompanhamento · Minha Saúde ·
-// Rede de Cuidado (CARE-001, ainda a construir) · Organização · Configurações.
-//   Acompanhamento = evolução temporal da saúde (Agenda, Histórico de Saúde, Histórico de Exames,
-//                    Composição Corporal, Monitoramento).
-//   Documentos     = repositório documental/operacional. FASE 1 (beta): Exames como item independente (sem
-//                    cabeçalho de grupo); FASE 2 (release): grupo 📁 Documentos oficial ao surgir o 2º tipo.
-//   Minha Saúde    = estado permanente da pessoa (Condições, Medicamentos e Suplementos, Recursos, Hábitos, Ciclo).
-//   Organização    = finanças e documentos administrativos (Despesas, Relatórios).
-//   Configurações  = conta.
-// DISTINÇÃO-CHAVE (FB-010): "Exames" é o repositório OPERACIONAL (captura/OCR/laudo original/edição/valor/NF/
-// recorrência/reextração); "Histórico de Exames" (/dashboard/saude) é o ACOMPANHAMENTO longitudinal de
-// biomarcadores no tempo. São jornadas distintas e complementares — por isso itens separados.
-// PRINCÍPIO: toda alteração desta Sidebar reflete na taxonomia do Relatório (relatorio/page SELECT_GROUPS + bandas).
+// TAXONOMIA OFICIAL DA PLATAFORMA (ADR-021 / MOBILE-036 — 2026-08-06). Esta Sidebar deixou de ser "a navegação da
+// Web": é a arquitetura de informação ÚNICA que Web e Mobile espelham. Toda nova funcionalidade primeiro encontra
+// seu lugar aqui. Convergente com as 5 abas do Mobile (Início · Agenda · Exames · Minha Saúde · Mais); na Web, "Mais"
+// se abre em Compartilhamento · Organização · Configurações.
+//   Agenda        = compromissos (calendário + próximos/pendências).
+//   Exames        = repositório documental/operacional + Histórico de Exames (acompanhamento longitudinal de
+//                   biomarcadores, /dashboard/saude). Ômica entra ao existir rota Web dedicada (paridade).
+//   Minha Saúde   = estado da pessoa (Condições, Medicamentos, Suplementos, Recursos, Hábitos, Ciclo, Composição
+//                   Corporal, Monitoramento) + Histórico de Saúde (/dashboard/timeline).
+//   Compartilhamento = Relatórios (+ Rede de Cuidado, CARE-002, oculta até existir).
+//   Organização   = Despesas (e futuros módulos administrativos/financeiros).
+//   Configurações = conta.
+// DISTINÇÃO-CHAVE: "Exames" é o repositório OPERACIONAL; "Histórico de Exames" é o acompanhamento longitudinal.
+// Follow-up (fase de reorganização funcional): alinhar a taxonomia do Relatório (SELECT_GROUPS + core REPORT_GROUPS).
 const navGroups: {
   title: string
   titleColor: string
@@ -39,27 +38,20 @@ const navGroups: {
   items: { href: string; icon: React.ElementType; label: string; extra?: string[] }[]
 }[] = [
   {
-    title: 'Acompanhamento',
+    title: 'Agenda',
+    standalone: true,
     titleColor: 'text-lavender',
-    chipBg: 'bg-[#F5EFE4]',
     items: [
-      { href: '/dashboard/agenda',        icon: CalendarDays, label: 'Agenda' },
-      { href: '/dashboard/timeline',      icon: Clock,        label: 'Histórico de Saúde', extra: ['/dashboard/historico'] },
-      { href: '/dashboard/saude',         icon: TrendingUp,   label: 'Histórico de Exames' },
-      { href: '/dashboard/medidas',       icon: Ruler,        label: 'Composição Corporal' },
-      { href: '/dashboard/sinais-vitais', icon: Activity,     label: 'Monitoramento' },
+      { href: '/dashboard/agenda', icon: CalendarDays, label: 'Agenda' },
     ],
   },
   {
-    // FB-010 — DUAS FASES (decisão da fundadora). Fase 1 (beta): Exames é item INDEPENDENTE, sem cabeçalho de
-    // grupo (não parecer "grupo vazio"), mas já documentado como pertencente ao FUTURO domínio 📁 Documentos.
-    // Fase 2 (release): oficializar o grupo Documentos quando existir o 2º tipo documental (Vacinas · Receitas ·
-    // Atestados · Encaminhamentos · Termos · outros documentos médicos). Ver [[DOC-001]] / [[UX-001]].
-    title: 'Documentos',
-    standalone: true,
+    title: 'Exames',
     titleColor: 'text-petal',
+    chipBg: 'bg-[#F5EFE4]',
     items: [
-      { href: '/dashboard/exams', icon: FileText, label: 'Exames' },
+      { href: '/dashboard/exams', icon: FileText,   label: 'Exames' },
+      { href: '/dashboard/saude', icon: TrendingUp, label: 'Histórico de Exames' },
     ],
   },
   {
@@ -73,6 +65,17 @@ const navGroups: {
       { href: '/dashboard/recursos',      icon: Accessibility, label: 'Recursos de Saúde' },
       { href: '/dashboard/habitos',       icon: HeartPulse,    label: 'Hábitos' },
       { href: '/dashboard/ciclo',         icon: Droplet,       label: 'Ciclo e Contracepção' },
+      { href: '/dashboard/medidas',       icon: Ruler,         label: 'Composição Corporal' },
+      { href: '/dashboard/sinais-vitais', icon: Activity,      label: 'Monitoramento' },
+      { href: '/dashboard/timeline',      icon: Clock,         label: 'Histórico de Saúde', extra: ['/dashboard/historico'] },
+    ],
+  },
+  {
+    title: 'Compartilhamento',
+    titleColor: 'text-petal',
+    chipBg: 'bg-[#F5EFE4]',
+    items: [
+      { href: '/dashboard/relatorio', icon: ScrollText, label: 'Relatórios' },
     ],
   },
   {
@@ -80,8 +83,7 @@ const navGroups: {
     titleColor: 'text-gold',
     chipBg: 'bg-[#F5EFE4]',
     items: [
-      { href: '/dashboard/gastos',    icon: Receipt,    label: 'Despesas' },
-      { href: '/dashboard/relatorio', icon: ScrollText, label: 'Relatórios' },
+      { href: '/dashboard/gastos', icon: Receipt, label: 'Despesas' },
     ],
   },
   {
