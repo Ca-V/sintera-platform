@@ -9,11 +9,11 @@ import { acceptedFormatsHint, DEFAULT_UPLOAD_CONSTRAINTS } from '@sintera/api-cl
 import { heading, text } from '@sintera/design-system'
 import { Button, Text } from '../../primitives'
 import { useTheme } from '../../theme'
-import type { ExamesStackParamList } from '../../navigation/types'
+import type { MinhaSaudeStackParamList } from '../../navigation/types'
 import { useExamUpload } from './useExamUpload'
 import { uploadPhaseLabel, isUploadBusy } from './uploadPresentation'
 
-type Props = NativeStackScreenProps<ExamesStackParamList, 'ExamUpload'>
+type Props = NativeStackScreenProps<MinhaSaudeStackParamList, 'ExamUpload'>
 
 export function ExamUploadScreen({ navigation }: Props) {
   const t = useTheme()

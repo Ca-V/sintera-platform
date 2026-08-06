@@ -17,9 +17,9 @@ type GuideKind = 'onboarding' | 'tip' | 'novidade' | 'descoberta'
 type Tip = { kind: GuideKind; title: string; body: string; cta?: string; tab?: keyof AppTabParamList; screen?: string }
 
 const TIPS: readonly Tip[] = [
-  { kind: 'onboarding', title: 'Adicionar um registro', body: 'Envie um exame por foto ou arquivo e a SINTERA organiza para você.', cta: 'Adicionar agora', tab: 'Exames', screen: 'ExamUpload' },
-  { kind: 'onboarding', title: 'Compartilhar com um profissional', body: 'Monte um relatório factual e gere um link seguro em Compartilhamento.', cta: 'Ir para Compartilhamento', tab: 'Mais', screen: 'Relatorio' },
-  { kind: 'onboarding', title: 'Como a plataforma se organiza', body: 'Sua vida de saúde vive em Agenda, Exames e Minha Saúde — cada coisa em seu lugar.' },
+  { kind: 'onboarding', title: 'Adicionar um registro', body: 'Envie um exame por foto ou arquivo e a SINTERA organiza para você.', cta: 'Adicionar agora', tab: 'MinhaSaude', screen: 'ExamUpload' },
+  { kind: 'onboarding', title: 'Levar à sua Rede de Cuidado', body: 'Monte um relatório factual e gere um link seguro para quem cuida de você.', cta: 'Ir para Rede de Cuidado', tab: 'RedeCuidado', screen: 'Relatorio' },
+  { kind: 'onboarding', title: 'Como a plataforma se organiza', body: 'Sua vida de saúde vive em Agenda e Minha Saúde (Registros · Saúde · Histórico) — cada coisa em seu lugar.' },
   { kind: 'tip', title: 'Dica rápida', body: 'Dentro de cada módulo, use a busca e os filtros para encontrar rápido o que precisa.' },
 ]
 

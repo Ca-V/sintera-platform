@@ -1,6 +1,6 @@
-// Stack interno da aba "Minha Saúde": menu do grupo (raiz) + Dados de Saúde (Condições, Medicamentos, …) +
-// Histórico de Saúde (Timeline) + Composição Corporal + Monitoramento — que passaram a viver aqui na
-// arquitetura de 5 abas (MOBILE-036). Só navegação — sem regra de negócio.
+// Stack interno da aba "Minha Saúde" (domínio central da IA por modelo mental — MOBILE-036). Reúne, na mesma
+// ordem/terminologia da Sidebar Web: menu (Registros/Saúde/Histórico) + as telas de domínio + os EXAMES
+// (lista/detalhe/upload/ômica) e os dois Históricos. "Exames" deixou de ser aba: é um Registro daqui. Só navegação.
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { MinhaSaudeMenuScreen } from '../screens/minhasaude/MinhaSaudeMenuScreen'
 import { ConditionsScreen } from '../screens/minhasaude/ConditionsScreen'
@@ -11,6 +11,12 @@ import { CicloScreen } from '../screens/minhasaude/CicloScreen'
 import { TimelineScreen } from '../screens/agenda/TimelineScreen'
 import { ComposicaoScreen } from '../screens/composicao/ComposicaoScreen'
 import { MonitoramentoScreen } from '../screens/monitoramento/MonitoramentoScreen'
+import { ExamsListScreen } from '../screens/exams/ExamsListScreen'
+import { ExamDetailScreen } from '../screens/exams/ExamDetailScreen'
+import { ExamUploadScreen } from '../screens/exams/ExamUploadScreen'
+import { OmicsListScreen } from '../screens/omics/OmicsListScreen'
+import { OmicsPanelScreen } from '../screens/omics/OmicsPanelScreen'
+import { HistoricoExamesScreen } from '../screens/agenda/HistoricoExamesScreen'
 import { useTheme } from '../theme'
 import type { MinhaSaudeStackParamList } from './types'
 
@@ -28,14 +34,23 @@ export function MinhaSaudeStack() {
   return (
     <Stack.Navigator>
       <Stack.Screen name="MinhaSaudeMenu" component={MinhaSaudeMenuScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="Conditions" component={ConditionsScreen} options={{ ...detail, title: 'Condições de Saúde' }} />
-      <Stack.Screen name="Habits" component={HabitsScreen} options={{ ...detail, title: 'Hábitos' }} />
-      <Stack.Screen name="Resources" component={ResourcesScreen} options={{ ...detail, title: 'Recursos de Saúde' }} />
+      {/* Registros */}
+      <Stack.Screen name="ExamsList" component={ExamsListScreen} options={{ ...detail, title: 'Exames' }} />
+      <Stack.Screen name="ExamDetail" component={ExamDetailScreen} options={{ ...detail, title: 'Exame' }} />
+      <Stack.Screen name="ExamUpload" component={ExamUploadScreen} options={{ ...detail, title: 'Adicionar exame' }} />
+      <Stack.Screen name="OmicsList" component={OmicsListScreen} options={{ ...detail, title: 'Exames de ômica' }} />
+      <Stack.Screen name="OmicsPanel" component={OmicsPanelScreen} options={{ ...detail, title: 'Painel de ômica' }} />
       <Stack.Screen name="Medications" component={MedicationsScreen} options={{ ...detail, title: 'Medicamentos' }} />
-      <Stack.Screen name="Ciclo" component={CicloScreen} options={{ ...detail, title: 'Ciclo e Contracepção' }} />
-      <Stack.Screen name="Timeline" component={TimelineScreen} options={{ ...detail, title: 'Histórico de Saúde' }} />
+      <Stack.Screen name="Resources" component={ResourcesScreen} options={{ ...detail, title: 'Recursos de Saúde' }} />
+      {/* Saúde */}
+      <Stack.Screen name="Conditions" component={ConditionsScreen} options={{ ...detail, title: 'Condições de Saúde' }} />
       <Stack.Screen name="Composicao" component={ComposicaoScreen} options={{ ...detail, title: 'Composição Corporal' }} />
+      <Stack.Screen name="Ciclo" component={CicloScreen} options={{ ...detail, title: 'Ciclo e Contracepção' }} />
       <Stack.Screen name="Monitoramento" component={MonitoramentoScreen} options={{ ...detail, title: 'Monitoramento' }} />
+      <Stack.Screen name="Habits" component={HabitsScreen} options={{ ...detail, title: 'Hábitos' }} />
+      {/* Histórico */}
+      <Stack.Screen name="HistoricoExames" component={HistoricoExamesScreen} options={{ ...detail, title: 'Histórico de Exames' }} />
+      <Stack.Screen name="Timeline" component={TimelineScreen} options={{ ...detail, title: 'Histórico de Saúde' }} />
     </Stack.Navigator>
   )
 }

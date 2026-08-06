@@ -10,7 +10,7 @@ import type { ExamDTO } from '@sintera/api-client'
 import { deriveExamIdentity, isOrderDocumentType, careStageFor, CARE_STAGES, compareNames, selectByLink } from '@sintera/core'
 import { Button, FieldRow, Input, Text } from '../../primitives'
 import { useTheme } from '../../theme'
-import type { ExamesStackParamList } from '../../navigation/types'
+import type { MinhaSaudeStackParamList } from '../../navigation/types'
 import { apiClient } from '../../../infrastructure/apiClient'
 import { useExam } from './useExam'
 import { examStatusLabel, isExamFailed } from './examStatus'
@@ -18,7 +18,7 @@ import { formatExamDate } from './examFormat'
 import { ResultsSection } from './ResultsSection'
 import { FinancialSection } from './FinancialSection'
 
-type Props = NativeStackScreenProps<ExamesStackParamList, 'ExamDetail'>
+type Props = NativeStackScreenProps<MinhaSaudeStackParamList, 'ExamDetail'>
 
 export function ExamDetailScreen({ route, navigation }: Props) {
   const t = useTheme()

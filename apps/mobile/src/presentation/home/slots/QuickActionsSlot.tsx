@@ -14,10 +14,10 @@ type Entry = { label: string; tab: keyof AppTabParamList; screen?: string }
 // Alta frequência (UX-002): Agenda · Exames · Minha Saúde · Compartilhamento · Adicionar Registro.
 const ENTRIES: readonly Entry[] = [
   { label: 'Agenda', tab: 'Agenda' },
-  { label: 'Exames', tab: 'Exames' },
+  { label: 'Exames', tab: 'MinhaSaude', screen: 'ExamsList' },
   { label: 'Minha Saúde', tab: 'MinhaSaude' },
-  { label: 'Compartilhamento', tab: 'Mais', screen: 'Relatorio' },
-  { label: 'Adicionar Registro', tab: 'Exames', screen: 'ExamUpload' },
+  { label: 'Rede de Cuidado', tab: 'RedeCuidado' },
+  { label: 'Adicionar Registro', tab: 'MinhaSaude', screen: 'ExamUpload' },
 ]
 
 export function QuickActionsSlot() {

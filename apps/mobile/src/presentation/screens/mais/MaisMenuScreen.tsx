@@ -20,7 +20,6 @@ export function MaisMenuScreen({ navigation }: Props) {
   const rows: readonly { label: string; onPress?: () => void }[] = [
     { label: 'Perfil', onPress: () => navigation.navigate('Perfil') },
     { label: 'Despesas', onPress: () => navigation.navigate('Despesas') },
-    { label: 'Relatórios', onPress: () => navigation.navigate('Relatorio') },
     { label: 'Configurações', onPress: () => navigation.navigate('Configuracoes') },
   ]
 

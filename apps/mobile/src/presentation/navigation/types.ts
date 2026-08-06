@@ -1,49 +1,54 @@
 // Tipos de navegação (ParamLists) — módulo de tipos dedicado, para que consumidores (ex.: slots da Home)
 // não precisem importar de arquivos de componente (evita acoplamento a `AppNavigator`).
 //
-// Arquitetura de navegação CONFIRMADA (2026-08-06, ADR-021 / MOBILE-036): 5 abas —
-// Início · Agenda · Exames · Minha Saúde · Mais. "Acompanhamento" e "Documentos" deixaram de existir:
-// Histórico de Exames → Exames; Histórico de Saúde + Composição + Monitoramento → Minha Saúde.
+// IA CONFIRMADA (2026-08-06, ADR-021 / MOBILE-036 — modelo mental do usuário): 5 abas —
+// Início · Agenda · Minha Saúde · Rede de Cuidado · Mais. "Exames" DEIXA de ser aba: vira um REGISTRO dentro de
+// Minha Saúde (Registros/Saúde/Histórico). "Compartilhamento" (ação) → "Rede de Cuidado" (entidade). Espelha a Sidebar Web.
 
-/** Abas de topo do AppNavigator (5 grupos — MOBILE-036). */
+/** Abas de topo do AppNavigator (5 grupos — modelo mental). */
 export type AppTabParamList = {
   Inicio: undefined
   Agenda: undefined
-  Exames: undefined
   MinhaSaude: undefined
+  RedeCuidado: undefined
   Mais: undefined
 }
 
-/** Stack interno da aba "Mais": menu do grupo + telas de detalhe empilháveis. Só navegação. */
+/** Stack interno da aba "Mais": funções secundárias (Perfil, Organização/Despesas, Configurações). Só navegação. */
 export type MaisStackParamList = {
   MaisMenu: undefined
   Perfil: undefined
   Despesas: undefined
-  Relatorio: undefined
   Configuracoes: undefined
 }
 
-/** Stack interno da aba "Exames" (ex-"Documentos"): exames + ômica + Histórico de Exames. Só navegação. */
-export type ExamesStackParamList = {
+/** Stack interno da aba "Rede de Cuidado" (entidade — CARE-002 futura): hoje Relatórios. Só navegação. */
+export type RedeCuidadoStackParamList = {
+  RedeMenu: undefined
+  Relatorio: undefined
+}
+
+/** Stack interno da aba "Minha Saúde" (domínio central): menu (Registros/Saúde/Histórico) + telas de domínio +
+ *  os EXAMES (lista/detalhe/upload/ômica/Histórico de Exames), que passaram a viver aqui como "Registros". Só navegação. */
+export type MinhaSaudeStackParamList = {
+  MinhaSaudeMenu: undefined
+  // Registros
   ExamsList: undefined
   ExamDetail: { id: string }
   ExamUpload: undefined
   OmicsList: undefined
   OmicsPanel: { id: string; domain?: string }
-  HistoricoExames: undefined
-}
-
-/** Stack interno da aba "Minha Saúde": Dados de Saúde + Histórico de Saúde + Composição + Monitoramento. */
-export type MinhaSaudeStackParamList = {
-  MinhaSaudeMenu: undefined
-  Conditions: undefined
-  Habits: undefined
-  Resources: undefined
   Medications: { supplements?: boolean } | undefined
-  Ciclo: undefined
-  Timeline: undefined
+  Resources: undefined
+  // Saúde
+  Conditions: undefined
   Composicao: undefined
+  Ciclo: undefined
   Monitoramento: undefined
+  Habits: undefined
+  // Histórico
+  HistoricoExames: undefined
+  Timeline: undefined
 }
 
 /** Stack interno da aba "Agenda" (domínio Agenda): agenda + formulário de evento. Só navegação.

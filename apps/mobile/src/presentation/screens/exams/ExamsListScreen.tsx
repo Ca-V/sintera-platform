@@ -11,12 +11,12 @@ import { isOrderDocumentType, findDuplicateIds, type DuplicateCandidate } from '
 import { heading, text } from '@sintera/design-system'
 import { Button, Text, Input } from '../../primitives'
 import { useTheme } from '../../theme'
-import type { ExamesStackParamList } from '../../navigation/types'
+import type { MinhaSaudeStackParamList } from '../../navigation/types'
 import { useExamsList } from './useExamsList'
 import { examStatusLabel, isExamFailed } from './examStatus'
 import { formatExamDate } from './examFormat'
 
-type Props = NativeStackScreenProps<ExamesStackParamList, 'ExamsList'>
+type Props = NativeStackScreenProps<MinhaSaudeStackParamList, 'ExamsList'>
 
 const STATUS_FILTERS: { id: string; label: string }[] = [
   { id: 'all', label: 'Todos' }, { id: 'processed', label: 'Estruturados' },

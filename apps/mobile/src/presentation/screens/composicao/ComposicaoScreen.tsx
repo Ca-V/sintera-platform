@@ -32,7 +32,8 @@ export function ComposicaoScreen() {
   const t = useTheme()
   const insets = useSafeAreaInsets()
   const navigation = useNavigation()
-  const openExam = (id: string | null | undefined) => { if (id) (navigation.getParent() as { navigate: (n: string, p: unknown) => void } | undefined)?.navigate('Exames', { screen: 'ExamDetail', params: { id } }) }
+  // Composição e Exames vivem no mesmo stack (Minha Saúde) — abre o detalhe no próprio stack.
+  const openExam = (id: string | null | undefined) => { if (id) (navigation as { navigate: (n: string, p: unknown) => void }).navigate('ExamDetail', { id }) }
   const [items, setItems] = useState<BodyMetricDTO[]>([])
   const [meds, setMeds] = useState<MedInput[]>([])
   const [consultas, setConsultas] = useState<ConsultaInput[]>([])

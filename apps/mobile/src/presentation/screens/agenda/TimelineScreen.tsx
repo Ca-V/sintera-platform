@@ -72,9 +72,9 @@ export function TimelineScreen({ navigation }: Props) {
   const parentNav = () => navigation.getParent() as { navigate: (n: string, p?: unknown) => void } | undefined
   const open = (e: TimelineEntry) => {
     if (e.domain === 'exam') {
-      parentNav()?.navigate('Exames', { screen: 'ExamDetail', params: { id: e.refId } })
+      navigation.navigate('ExamDetail', { id: e.refId }) // Timeline e Exames vivem no mesmo stack (Minha Saúde)
     } else if (e.domain === 'omics') {
-      parentNav()?.navigate('Exames', { screen: 'OmicsPanel', params: { id: e.refId } })
+      navigation.navigate('OmicsPanel', { id: e.refId })
     } else if (e.domain === 'contraceptive') {
       navigation.navigate('Ciclo') // Timeline vive no stack de Minha Saúde — navega no próprio stack
     } else {

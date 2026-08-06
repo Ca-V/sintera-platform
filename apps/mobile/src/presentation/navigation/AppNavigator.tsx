@@ -7,7 +7,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import type { ComponentType } from 'react'
 import { HomeContainer } from '../screens/home/HomeContainer'
-import { ExamesStack } from './ExamesStack'
+import { RedeCuidadoStack } from './RedeCuidadoStack'
 import { AgendaStack } from './AgendaStack'
 import { MinhaSaudeStack } from './MinhaSaudeStack'
 import { MaisStack } from './MaisStack'
@@ -41,8 +41,8 @@ const TAB_SCREENS = SSOT_TABS.map((tab) => {
       ? makeTabStack(HomeContainer)
       : tab.name === 'Mais'
         ? MaisStack
-        : tab.name === 'Exames'
-          ? ExamesStack
+        : tab.name === 'RedeCuidado'
+          ? RedeCuidadoStack
           : tab.name === 'Agenda'
             ? AgendaStack
             : tab.name === 'MinhaSaude'
