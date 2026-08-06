@@ -62,6 +62,42 @@ Composição Corporal · Monitoramento`
 - **INV‑HOME‑001:** a Home continua composição; o dashboard de atalhos consome dados por injeção (ver MOBILE‑032 §B‑4).
 - Fazer por **blocos reversíveis** (nav é estrutural) — não um rewrite de uma vez.
 
+## 7. Sidebar Web (contraparte — consistência Web↔Mobile)
+Reorganizar a Sidebar da Web espelhando a IA do Mobile. **A Sidebar é SSOT de taxonomia** (notificações,
+permissões e filtros reusam sua nomenclatura) → mudança tem efeito em cascata; fazer por blocos reversíveis.
+
+**Estrutura principal:**
+`Painel Inicial · Agenda · Exames · Minha Saúde · Compartilhamento · Organização · Configurações`
+
+```
+Painel Inicial
+Agenda
+Exames
+Minha Saúde
+├── Dados de Saúde
+│   ├── Condições de Saúde · Medicamentos · Suplementos · Recursos de Saúde
+│   └── Hábitos · Ciclo e Contracepção · Composição Corporal · Monitoramento
+└── Histórico
+    ├── Histórico de Saúde
+    └── Histórico de Exames
+Compartilhamento
+├── Relatórios
+└── Rede de Cuidado            (oculto até CARE-002 existir)
+Organização
+└── Despesas                   (acomoda futuros módulos admin/financeiros)
+Configurações
+├── Perfil · Conta · Preferências · Segurança
+```
+
+**Notas:**
+- **Dados de Saúde × Histórico:** distingue *estado atual* (condições/meds/hábitos…) de *evolução longitudinal*
+  (históricos) — recomendado (reduz carga cognitiva). ✅
+- **Rede de Cuidado** permanece **oculta** até ser implementada (CARE‑002), preservando a estrutura para o futuro.
+- **Organização** isola Despesas (e futuros módulos financeiros/administrativos) sem sobrecarregar Configurações.
+- **Configurações** ganha subitens (Perfil/Conta/Preferências/Segurança) — hoje é uma tela; avaliar desdobramento.
+- **Paridade:** como Sidebar (Web) e nav (Mobile) passam a espelhar a mesma taxonomia, tratar como mudança
+  **compartilhada** na Matriz de Paridade — Web e Mobile evoluem juntas, com a regra de negócio/rotas no core.
+
 ## Itens a contemplar (checklist da proposta)
 - [ ] Nova barra inferior (5 ou 6 abas — decidir em device).
 - [ ] Home como dashboard de atalhos.
