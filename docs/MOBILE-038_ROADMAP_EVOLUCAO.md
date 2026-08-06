@@ -50,6 +50,12 @@ busca) **generalizando o mecanismo existente** (`sections`/`excluded`/`period`),
 (`assembleReport`) para eliminar as **3 implementações paralelas** (Web inline · view pública `/r/[token]` · Mobile/core).
 Detalhe e decisão de escopo em **`docs/REL-002`**. Bug do período no "Histórico de Exames" pode entrar no ciclo/RC1.
 
+## 5d. Indicador de conteúdo nos accordions (Sidebar/Minha Saúde) — origem: aprovação da IA (06/08)
+Quando um grupo/subdivisão estiver **recolhido**, exibir um **contador opcional** (ex.: `▶ Registros 24 · ▶ Saúde 5
+· ▶ Histórico 183`) ou indicadores contextuais (exames, medicamentos ativos, eventos). Ajuda a pessoa a perceber
+onde há conteúdo sem expandir. **Não é prioridade desta versão** — evolução futura. Dado por INJEÇÃO (contadores
+vêm de fora da camada de navegação; a Sidebar/menu só apresenta). Aplicar Web+Mobile (paridade).
+
 ## 6. Backlog técnico (P2/P3) + dependências arquiteturais + propostas §B
 - **P2/P3 + oportunidades de infra compartilhada:** `docs/MOBILE-032` §A.1 (backlog) e §C.
 - **Propostas que dependem de decisão (§B):** altura no Perfil (IMC); resumo/síntese de biomarcadores no Relatório;

@@ -112,7 +112,7 @@ function NavGroup({ node, pathname, open, onToggle, onClose, bind }: {
   const toggleSub = (k: string) => setOpenSub(s => ({ ...s, [k]: !(s[k] ?? false) }))
   return (
     <div className="mb-1">
-      <button type="button" onClick={onToggle}
+      <button type="button" onClick={onToggle} aria-expanded={open} aria-label={`${node.label} — ${open ? 'recolher' : 'expandir'}`}
         className={cn('w-full flex items-center gap-3 px-3 py-1.5 rounded-xl transition-all duration-200 text-sm font-body group',
           active ? 'text-onyx font-semibold' : 'text-onyx font-medium hover:bg-white/25')}>
         <Icon size={16} className={cn('flex-shrink-0 transition-colors', active ? 'text-petal' : 'text-onyx/75 group-hover:text-onyx')} />
@@ -131,7 +131,7 @@ function NavGroup({ node, pathname, open, onToggle, onClose, bind }: {
             const subOpen = openSub[sec.label] ?? sec.items.some(it => isActive(pathname, it.href, it.extra))
             return (
               <div key={sec.label} className="flex flex-col gap-0.5">
-                <button type="button" onClick={() => toggleSub(sec.label!)}
+                <button type="button" onClick={() => toggleSub(sec.label!)} aria-expanded={subOpen} aria-label={`${sec.label} — ${subOpen ? 'recolher' : 'expandir'}`}
                   className="flex items-center gap-1.5 px-3 mt-1 text-[10px] font-body font-semibold uppercase tracking-[0.12em] text-onyx/55 hover:text-onyx transition-colors">
                   <ChevronDown size={11} className={cn('transition-transform duration-200', subOpen ? '' : '-rotate-90')} />
                   <span className="flex-1 text-left">{sec.label}</span>
