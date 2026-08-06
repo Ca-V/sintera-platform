@@ -9,7 +9,7 @@ import { contraceptiveLabel } from '../cycle'
 import { DOMAIN_LABEL, type OmicsDomain } from '../omics/domains'
 import { bodyMetricLabel, isVital } from '../body/metrics'
 import { currentSummary, type SummaryPoint } from '../body/summary'
-import type { BiomarkerSummary } from '../biomarkerGrouping'
+import { summarizeBiomarkers, examDate, type BiomarkerSummary, type BiomarkerRow } from '../biomarkerGrouping'
 
 // ── Entradas (espelham as tabelas; o api-client/página mapeia o banco para cá) ───────────────────────────────
 export interface ReportMed { name: string; kind: string; dose: string | null; frequency: string | null; startedOn: string | null; untilOn: string | null; status: string }
@@ -34,7 +34,9 @@ export interface ReportData {
   contraceptives: ReportContraceptive[]
   menstruations: ReportMenstruation[]
   expenses: HealthEvent[]
-  bioSummaries: BiomarkerSummary[]
+  /** Biomarcadores CRUS (view current_biomarkers). O Histórico de Exames os resume DENTRO do período
+   *  selecionado (assembleReport chama summarizeBiomarkers já filtrado por data) — antes ignorava o período. */
+  biomarkers: BiomarkerRow[]
   /** Altura (cm) do perfil — base do IMC calculado no resumo de Composição Corporal. */
   heightCm?: number | null
 }
@@ -165,6 +167,10 @@ export function assembleReport(data: ReportData, sel: ReportSelection, now?: Dat
   const expenses = data.expenses.filter(x => inPeriod(x.date, rp))
   const condProprias = data.conditions.filter(c => c.scope === 'propria')
   const condFamiliar = data.conditions.filter(c => c.scope === 'familiar')
+  // Histórico de Exames = resumo LONGITUDINAL por indicador, DENTRO do período (corrige FB: antes ignorava o
+  // período e mostrava tudo). Filtra as medições cruas por data e resume — latest/tendência/contagem passam a
+  // refletir a janela escolhida, como as demais seções temporais.
+  const bioSummaries = summarizeBiomarkers(data.biomarkers.filter(r => inPeriod(examDate(r), rp)))
 
   // Composição Corporal (resumo antropométrico): ÚLTIMO valor de cada indicador (não medida a medida) + IMC
   // calculado (peso ÷ altura², da altura do perfil). Espelha a Web (compilação = panorama, não série completa).
@@ -182,7 +188,7 @@ export function assembleReport(data: ReportData, sel: ReportSelection, now?: Dat
   const sectionLines: Record<ReportSectionKey, string[]> = {
     eventos: agenda.map(eventLine),
     registros: historico.map(eventLine),
-    histexames: data.bioSummaries.map(s => `${s.displayName}: ${s.latest ? `${s.latest.value}${s.unit ? ` ${s.unit}` : ''}` : '—'}${s.latest ? ` (${fmt(s.latest.date)})` : ''}${rangeText(s.latest)}${trendText(s.trend, s.deltaPercent)} · ${s.count} ${s.count === 1 ? 'medição' : 'medições'}`),
+    histexames: bioSummaries.map(s => `${s.displayName}: ${s.latest ? `${s.latest.value}${s.unit ? ` ${s.unit}` : ''}` : '—'}${s.latest ? ` (${fmt(s.latest.date)})` : ''}${rangeText(s.latest)}${trendText(s.trend, s.deltaPercent)} · ${s.count} ${s.count === 1 ? 'medição' : 'medições'}`),
     medidas: medidasLines,
     sinais: measuresVitais.map(m => `${fmt(m.date)} — ${m.metric === 'outro_sinal' ? (m.label ?? 'Outro sinal') : bodyMetricLabel(m.metric)}: ${m.valueText}${m.unit ? ` ${m.unit}` : ''}`),
     exames: exams.map(e => `${fmt(e.date)} — ${e.type}`),

@@ -65,7 +65,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: share } = await (admin.from('report_shares') as any)
-    .select('user_id, expires_at, revoked, sections, period')
+    .select('user_id, expires_at, revoked, sections, excluded, period')
     .eq('token', token)
     .maybeSingle()
 
@@ -76,6 +76,9 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
   const uid = share.user_id as string
   // Contexto Temporal do compartilhamento — mesmo recorte do relatório que gerou o link.
   const rp = resolvePeriod((share.period as Period | null) ?? { preset: 'all' })
+  // Filtro item a item persistido no link (mesmo do relatório que o gerou). itemOn = incluído se não estiver excluído.
+  const excl = (share.excluded && typeof share.excluded === 'object' ? share.excluded : {}) as Record<string, string[]>
+  const itemOn = (k: string, key: string) => !(excl[k]?.includes(key))
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = admin as any
   const [{ data: prof }, { data: meds }, eventsList, { data: exams }, { data: measures }, { data: conditions }, { data: habits }, { data: eyewear }, { data: omics }, { data: contraceptives }, { data: menstruations }, { data: authUser }] = await Promise.all([
@@ -119,11 +122,12 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
   const medsSusp = medsArr.filter(m => m.status === 'suspenso' && overlapsPeriod((m.started_on as string) ?? null, (m.until_date as string) ?? null, rp))
   // FB-010 — Medicamentos e Suplementos são seções separadas (espelho da nav). Mesma tabela (`medications.kind`).
   const isSup = (m: Record<string, unknown>) => m.kind === 'suplemento'
-  const medEmUso = medsEmUso.filter(m => !isSup(m)), supEmUso = medsEmUso.filter(isSup)
-  const medSusp = medsSusp.filter(m => !isSup(m)), supSusp = medsSusp.filter(isSup)
-  const evArr = eventsList.filter(e => inPeriod(e.date ?? null, rp))
+  const medEmUso = medsEmUso.filter(m => !isSup(m) && itemOn('medicamentos', m.name as string)), supEmUso = medsEmUso.filter(m => isSup(m) && itemOn('suplementos', m.name as string))
+  const medSusp = medsSusp.filter(m => !isSup(m) && itemOn('medicamentos', m.name as string)), supSusp = medsSusp.filter(m => isSup(m) && itemOn('suplementos', m.name as string))
+  const evArr = eventsList.filter(e => inPeriod(e.date ?? null, rp) && itemOn('eventos', e.type))
     .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))   // mais recentes primeiro (como antes)
-  const exArr = ((exams ?? []) as Array<Record<string, unknown>>).filter(e => inPeriod((e.exam_date as string) ?? (e.created_at as string) ?? null, rp))
+  const exArr = ((exams ?? []) as Array<Record<string, unknown>>).filter(e => inPeriod((e.exam_date as string) ?? (e.created_at as string) ?? null, rp)
+    && itemOn('exames', `${(e.type as string) || 'Exame'}__${(e.exam_date as string) || (e.created_at as string)}`))
   const mzAll = (measures ?? []) as Array<Record<string, unknown>>
   const mzArr = mzAll.filter(m => !isVital(m.metric as string) && inPeriod(m.measured_on as string, rp))
   const vitalArr = mzAll.filter(m => isVital(m.metric as string) && inPeriod(m.measured_on as string, rp))

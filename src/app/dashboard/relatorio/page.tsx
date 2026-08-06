@@ -30,7 +30,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { assembleOrganizedBiomarkers } from '@/lib/ai/insights/assembler'
-import { summarizeBiomarkers, type BiomarkerSummary, type BiomarkerRow } from '@/lib/biomarkers/grouping'
+import { summarizeBiomarkers, examDate, type BiomarkerRow } from '@/lib/biomarkers/grouping'
 import { useUser } from '@/context/UserContext'
 import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
 import { typeLabel, professionalKindLabel, isClosedStatus, type HealthEvent } from '@/lib/agenda' // fonte ÚNICA de rótulos de tipo/profissional
@@ -142,7 +142,7 @@ function LegacyReport() {
   const [bioOrg, setBioOrg] = useState<{ total: number; categories: number; outOfRange: number } | null>(null)
   // A2 — Histórico de Exames: resumo LONGITUDINAL por indicador (último valor · tendência · última realização).
   // Reutiliza a mesma view/summarize de /dashboard/saude (não reagrupa). Factual (RDC 657).
-  const [bioSummaries, setBioSummaries] = useState<BiomarkerSummary[]>([])
+  const [bioRows, setBioRows] = useState<BiomarkerRow[]>([]) // crus — o Histórico de Exames resume DENTRO do período
   useEffect(() => {
     if (!user?.id) return
     let alive = true
@@ -156,7 +156,7 @@ function LegacyReport() {
       .select('id,name,value,unit,result_type,reference_min,reference_max,interpretation,reference_source,catalog_id,source_material,source_exam_name,exam_id,exams(exam_date,created_at)')
       .eq('user_id', user.id).eq('synthetic', false).eq('result_type', 'numeric')
       .then((res: { data: unknown[] | null }) => {
-        if (alive && res.data) setBioSummaries(summarizeBiomarkers(res.data as BiomarkerRow[]))
+        if (alive && res.data) setBioRows(res.data as BiomarkerRow[])
       })
     return () => { alive = false }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -314,8 +314,10 @@ function LegacyReport() {
     const token = (crypto.randomUUID() + crypto.randomUUID()).replace(/-/g, '')
     const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
     const sel = (Object.keys(sections) as (keyof typeof sections)[]).filter(k => sections[k])
+    // Filtro item a item (por seção) também vai ao link — o /r/[token] aplica as mesmas exclusões.
+    const excludedSer = Object.fromEntries(Object.entries(excluded).map(([k, v]) => [k, [...v]]))
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from('report_shares').insert({ user_id: user.id, token, expires_at: expires, sections: sel, period })
+    await (supabase as any).from('report_shares').insert({ user_id: user.id, token, expires_at: expires, sections: sel, excluded: excludedSer, period })
     await load()
     setShareBusy(false)
   }
@@ -367,6 +369,9 @@ function LegacyReport() {
   // medicamentos suspensos por sobreposição). Estados atuais (condições, meds em
   // uso, recursos, hábitos) aparecem independentemente do período.
   const rp = resolvePeriod(period)
+  // Histórico de Exames = resumo por indicador DENTRO do período (corrige: antes ignorava o período e listava tudo).
+  // Resume as medições cruas já filtradas por data — latest/tendência/contagem refletem a janela, como as demais seções.
+  const perBioSummaries = summarizeBiomarkers(bioRows.filter(r => inPeriod(examDate(r), rp)))
   // Agenda: aplica período E a seleção por TIPO de evento (item a item).
   const perEvents = events.filter(e => inPeriod(e.date, rp) && isItemOn('eventos', e.eventType))
   // Separação DEFINITIVA Agenda × Histórico (mesma regra do módulo Histórico/timeline, FB-016-1):
@@ -421,7 +426,7 @@ function LegacyReport() {
   const resumoItems = [
     sections.eventos && { label: 'agenda', n: perAgenda.length },
     sections.registros && { label: 'histórico de saúde', n: perHistorico.length },
-    sections.histexames && { label: 'histórico de exames', n: bioSummaries.length },
+    sections.histexames && { label: 'histórico de exames', n: perBioSummaries.length },
     sections.exames && { label: 'exames', n: perVisExams.length },
     sections.omica && { label: 'ômica', n: perOmics.length },
     sections.medicamentos && { label: 'medicamentos', n: visMedsEmUso.length + perMedsSusp.length },
@@ -648,7 +653,7 @@ function LegacyReport() {
             {sections.exames && <p><span className="text-mauve">Exames:</span> {perVisExams.length}</p>}
             {sections.eventos && <p><span className="text-mauve">Agenda (previstos):</span> {perAgenda.length}</p>}
             {sections.registros && <p><span className="text-mauve">Histórico de Saúde (realizados):</span> {perHistorico.length}</p>}
-            {sections.histexames && bioSummaries.length > 0 && <p><span className="text-mauve">Histórico de Exames (indicadores):</span> {bioSummaries.length}</p>}
+            {sections.histexames && perBioSummaries.length > 0 && <p><span className="text-mauve">Histórico de Exames (indicadores):</span> {perBioSummaries.length}</p>}
             {sections.medicamentos && <p><span className="text-mauve">Medicamentos em uso:</span> {visMedsEmUso.length}</p>}
             {sections.suplementos && <p><span className="text-mauve">Suplementos em uso:</span> {visSupEmUso.length}</p>}
             {sections.condicoes && <p><span className="text-mauve">Condições registradas:</span> {condProprias.length + condFamiliar.length}</p>}
@@ -741,7 +746,7 @@ function LegacyReport() {
 
         {/* Histórico de Exames — resumo LONGITUDINAL por indicador (A2). Responde "como evoluiu / quando foi a
             última", sem abrir cada exame. Factual (RDC 657): direção do valor e faixa do laudo, nunca conclusão clínica. */}
-        {sections.histexames && bioSummaries.length > 0 && (
+        {sections.histexames && perBioSummaries.length > 0 && (
         <section id="sec-histexames" style={{ scrollMarginTop: 16 }}>
           <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Histórico de Exames <span className="font-body text-xs font-normal text-mauve">(evolução dos resultados)</span></h2>
           <div className="overflow-x-auto">
@@ -755,7 +760,7 @@ function LegacyReport() {
                 </tr>
               </thead>
               <tbody>
-                {[...bioSummaries].sort((a, b) => a.displayName.localeCompare(b.displayName)).map(s => {
+                {[...perBioSummaries].sort((a, b) => a.displayName.localeCompare(b.displayName)).map(s => {
                   const L = s.latest
                   const range = L == null ? null
                     : (L.referenceMin != null && L.value < L.referenceMin) ? 'abaixo da faixa'

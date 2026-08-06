@@ -150,7 +150,7 @@ export interface OmicsApi {
 export interface ReportApi {
   listShares(signal?: AbortSignal): Promise<ShareDTO[]>
   /** Cria um link público (30 dias por padrão) das seções + período; retorna o token gerado. */
-  createShare(input: { sections: string[]; period: Period; days?: number }): Promise<{ data: { token: string } | null; error: Error | null }>
+  createShare(input: { sections: string[]; excluded?: Partial<Record<string, string[]>>; period: Period; days?: number }): Promise<{ data: { token: string } | null; error: Error | null }>
   revokeShare(id: string): Promise<{ error: Error | null }>
   listTemplates(signal?: AbortSignal): Promise<TemplateDTO[]>
   saveTemplate(input: { name: string; selection: Record<string, unknown> }): Promise<{ error: Error | null }>

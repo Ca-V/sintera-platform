@@ -19,12 +19,12 @@ describe('api-client · report (Camada de Comunicação)', () => {
   it('createShare gera token e grava seções + período do dono', async () => {
     const builder = mockQueryBuilder({ data: null, error: null })
     const client = mockSupabase({ session: fakeSession('u1'), from: () => builder })
-    const { data, error } = await createShare(client, { sections: ['exames', 'gastos'], period: { preset: 'all' } })
+    const { data, error } = await createShare(client, { sections: ['exames', 'gastos'], excluded: { exames: ['Hemograma__2026-01-01'] }, period: { preset: 'all' } })
     expect(error).toBeNull()
     expect(typeof data?.token).toBe('string')
     expect((data?.token.length ?? 0)).toBeGreaterThan(16)
     const row = (builder as unknown as Calls).__calls.insert?.[0] as Record<string, unknown>
-    expect(row).toMatchObject({ user_id: 'u1', sections: ['exames', 'gastos'], revoked: false })
+    expect(row).toMatchObject({ user_id: 'u1', sections: ['exames', 'gastos'], excluded: { exames: ['Hemograma__2026-01-01'] }, revoked: false })
     expect(row.token).toBe(data?.token)
   })
 

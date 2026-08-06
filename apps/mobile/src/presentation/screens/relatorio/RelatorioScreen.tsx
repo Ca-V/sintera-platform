@@ -10,7 +10,7 @@ import { text } from '@sintera/design-system'
 import {
   assembleReport, serializeReportText, defaultSections, REPORT_GROUPS, REPORT_SECTIONS,
   type ReportData, type ReportSectionKey, PERIOD_PRESETS, type Period, periodLabel,
-  summarizeBiomarkers, selectFinancial, typeLabel, type HealthEvent,
+  selectFinancial, typeLabel, type HealthEvent,
 } from '@sintera/core'
 import type { ShareDTO, TemplateDTO } from '@sintera/api-client'
 import { Text, Button, Input } from '../../primitives'
@@ -83,7 +83,7 @@ export function RelatorioScreen() {
         contraceptives: contraceptives.map(c => ({ kind: c.kind, brand: c.brand, startedOn: c.started_on, replaceOn: c.replace_on, status: c.status })),
         menstruations: periods.map(p => ({ startedOn: p.started_on, notes: p.notes })),
         expenses: selectFinancial(events),
-        bioSummaries: summarizeBiomarkers(bio),
+        biomarkers: bio, // crus — assembleReport resume DENTRO do período (Histórico de Exames respeita a janela)
         heightCm,
       })
       setShares(sh); setTemplates(tpls); setPhase('ready'); setError(null)
@@ -122,7 +122,7 @@ export function RelatorioScreen() {
     if (busy) return
     setBusy(true)
     const sel = REPORT_SECTIONS.filter(k => sections[k])
-    const { data: res, error: err } = await apiClient.report.createShare({ sections: sel, period })
+    const { data: res, error: err } = await apiClient.report.createShare({ sections: sel, excluded, period })
     setBusy(false)
     if (err || !res) { Alert.alert('Não foi possível criar o link', err?.message ?? 'Tente novamente.'); return }
     load(true)

@@ -39,10 +39,10 @@ export async function listShares(client: SupabaseClient, signal?: AbortSignal): 
   }
 }
 
-/** Cria um link público (30 dias por padrão) com as seções selecionadas e o período. Retorna o token. */
+/** Cria um link público (30 dias por padrão) com as seções, o filtro por item (excluded) e o período. Retorna o token. */
 export async function createShare(
   client: SupabaseClient,
-  input: { sections: string[]; period: Period; days?: number },
+  input: { sections: string[]; excluded?: Partial<Record<string, string[]>>; period: Period; days?: number },
 ): Promise<{ data: { token: string } | null; error: Error | null }> {
   try {
     const { data: { session } } = await client.auth.getSession()
@@ -50,7 +50,7 @@ export async function createShare(
     const token = randomToken()
     const expires_at = new Date(Date.now() + (input.days ?? 30) * DAY_MS).toISOString()
     const { error } = await client.from('report_shares').insert({
-      user_id: session.user.id, token, expires_at, sections: input.sections, period: input.period, revoked: false,
+      user_id: session.user.id, token, expires_at, sections: input.sections, excluded: input.excluded ?? {}, period: input.period, revoked: false,
     } as never)
     return { data: error ? null : { token }, error: error ? asError(error) : null }
   } catch (e) {

@@ -3,6 +3,7 @@
 import { describe, it, expect } from 'vitest'
 import { assembleReport, serializeReportText, defaultSections, type ReportData, type ReportSelection } from '../../packages/core/src/domain/report/assemble'
 import type { HealthEvent } from '../../packages/core/src/domain/agenda/event'
+import type { BiomarkerRow } from '../../packages/core/src/domain/biomarkerGrouping'
 
 const ev = (p: Partial<HealthEvent>): HealthEvent => ({
   id: 'e', type: 'consulta', title: '', isReturn: false, status: 'planejado', source: 'manual', priority: null,
@@ -15,7 +16,12 @@ const ev = (p: Partial<HealthEvent>): HealthEvent => ({
 
 const emptyData = (): ReportData => ({
   meds: [], events: [], exams: [], measures: [], conditions: [], habits: [], eyewear: [],
-  omics: [], contraceptives: [], menstruations: [], expenses: [], bioSummaries: [],
+  omics: [], contraceptives: [], menstruations: [], expenses: [], biomarkers: [],
+})
+
+const bio = (over: Partial<BiomarkerRow>): BiomarkerRow => ({
+  id: 'b', name: 'Glicose', value: 90, unit: 'mg/dL', result_type: 'numeric', reference_min: 70, reference_max: 99,
+  exam_id: 'x', exams: { exam_date: '2020-01-01', created_at: '2020-01-01' }, ...over,
 })
 
 describe('core · report · assembleReport', () => {
@@ -40,6 +46,15 @@ describe('core · report · assembleReport', () => {
     const now = new Date('2026-08-04T12:00:00Z')
     const model = assembleReport(data, { sections: defaultSections(), period: { preset: '7d' } }, now)
     expect(model.groups.length).toBe(0) // nada nos últimos 7 dias
+  })
+
+  it('Histórico de Exames respeita o período (biomarcador fora da janela some do relatório)', () => {
+    const data = emptyData()
+    data.biomarkers = [bio({})] // medição em 2020 → fora dos últimos 7 dias
+    const now = new Date('2026-08-04T12:00:00Z')
+    const histOf = (m: ReturnType<typeof assembleReport>) => m.groups.flatMap(g => g.sections).find(s => s.key === 'histexames')
+    expect(histOf(assembleReport(data, { sections: defaultSections(), period: { preset: 'all' } }, now))?.lines.some(l => l.includes('Glicose'))).toBe(true)
+    expect(histOf(assembleReport(data, { sections: defaultSections(), period: { preset: '7d' } }, now))).toBeUndefined()
   })
 
   it('medicamentos × suplementos separados; seleção item a item exclui por nome', () => {
