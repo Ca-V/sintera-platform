@@ -245,24 +245,25 @@ export function ComposicaoScreen() {
         <View style={[styles.card, card, { gap: 10 }]}>
           <Text spec={text(t, { role: 'bodyStrong' })}>Estado atual</Text>
           {imcVal != null ? (
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <Text spec={text(t, { role: 'body' })}>IMC</Text>
-              <View style={{ alignItems: 'flex-end' }}>
+            <View style={{ gap: 2 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+                <Text spec={text(t, { role: 'body' })} style={{ flex: 1 }}>IMC</Text>
                 <Text spec={text(t, { role: 'bodyStrong' })}>{imcVal} kg/m²</Text>
-                <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Calculado (peso ÷ altura²)</Text>
               </View>
+              <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Calculado (peso ÷ altura²)</Text>
             </View>
           ) : null}
           {SUMMARY_ORDER.filter(m => summary[m]).map(m => {
             const s = summary[m]
             const q = sourceQuality(s.source)
             return (
-              <View key={m} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <Text spec={text(t, { role: 'body' })}>{bodyMetricLabel(m)}</Text>
-                <View style={{ alignItems: 'flex-end' }}>
+              // Rótulo + valor na 1ª linha; origem/data/confiabilidade na 2ª (largura total, quebra sem estourar) — D-17.
+              <View key={m} style={{ gap: 2 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+                  <Text spec={text(t, { role: 'body' })} style={{ flex: 1 }}>{bodyMetricLabel(m)}</Text>
                   <Text spec={text(t, { role: 'bodyStrong' })} style={{ color: trendColor(s.trend) }}>{s.value}{s.unit ? ` ${s.unit}` : ''}{s.delta != null && s.delta !== 0 ? ` (${s.delta > 0 ? '+' : ''}${s.delta})` : ''}</Text>
-                  <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{q?.label ?? s.source ?? '—'} · {fmt(s.date)}{q ? ` · ${RELIABILITY_LABEL[q.reliability]}` : ''}</Text>
                 </View>
+                <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{q?.label ?? s.source ?? '—'} · {fmt(s.date)}{q ? ` · ${RELIABILITY_LABEL[q.reliability]}` : ''}</Text>
               </View>
             )
           })}

@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import { summarizeBiomarkers, isOrderDocumentType, type BiomarkerSummary, type Trend } from '@sintera/core'
 import type { ExamDTO } from '@sintera/api-client'
-import { Text, Button, Input } from '../../primitives'
+import { Text, Button, Input, Select } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 
@@ -128,14 +128,20 @@ export function HistoricoExamesScreen() {
       <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 22 }}>Histórico de Exames</Text>
       <Input value={query} onChangeText={setQuery} placeholder="Buscar por biomarcador ou exame…" autoCapitalize="none" />
 
-      {/* Filtros de descoberta */}
+      {/* Filtros de descoberta — seletores compactos (D-16): toca, rola e escolhe (sem parede de chips). */}
       {availableTypes.length > 0 ? (
-        <View style={{ gap: 8 }}>
-          <Chips options={[{ id: 'all', label: 'Todos os tipos' }, ...availableTypes.map(ty => ({ id: ty, label: ty }))]} value={typeFilter} onChange={setTypeFilter} />
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Chips options={PERIODS.map(p => ({ id: p.key, label: p.label }))} value={period} onChange={setPeriod} />
-            <Pressable onPress={() => setSortDir(d => d === 'recent' ? 'old' : 'recent')}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>{sortDir === 'recent' ? 'Recentes ↓' : 'Antigos ↑'}</Text></Pressable>
+        <View style={{ gap: 10 }}>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <View style={{ flex: 1, gap: 4 }}>
+              <Text spec={text(t, { role: 'label', tone: 'muted' })}>TIPO</Text>
+              <Select options={[{ id: 'all', label: 'Todos os tipos' }, ...availableTypes.map(ty => ({ id: ty, label: ty }))]} value={typeFilter} onChange={setTypeFilter} title="Filtrar por tipo" searchable />
+            </View>
+            <View style={{ flex: 1, gap: 4 }}>
+              <Text spec={text(t, { role: 'label', tone: 'muted' })}>PERÍODO</Text>
+              <Select options={PERIODS.map(p => ({ id: p.key, label: p.label }))} value={period} onChange={setPeriod} title="Filtrar por período" />
+            </View>
           </View>
+          <Pressable onPress={() => setSortDir(d => d === 'recent' ? 'old' : 'recent')} style={{ alignSelf: 'flex-end' }}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>{sortDir === 'recent' ? 'Ordenar: Recentes ↓' : 'Ordenar: Antigos ↑'}</Text></Pressable>
         </View>
       ) : null}
 
@@ -152,20 +158,22 @@ export function HistoricoExamesScreen() {
             const open = expanded === s.canonicalName
             const vals = s.measurements.map(m => m.value); const min = Math.min(...vals), max = Math.max(...vals)
             return (
-              <Pressable key={s.canonicalName} onPress={() => setExpanded(open ? null : s.canonicalName)} style={[styles.card, card, { gap: 6 }]}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <Pressable key={s.canonicalName} onPress={() => setExpanded(open ? null : s.canonicalName)} style={[styles.card, card, { gap: 8 }]}>
+                {/* Colapsado = só nome + nº de medições. Valor/tendência/evolução aparecem ao TOCAR (D-18). */}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Text spec={text(t, { role: 'body' })} style={{ flex: 1, paddingRight: 8 }}>{s.displayName}</Text>
-                  <Text spec={text(t, { role: 'bodyStrong' })}>{s.latest ? `${s.latest.value}${s.unit ? ` ${s.unit}` : ''}` : '—'}</Text>
-                </View>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                  <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{s.count} {s.count === 1 ? 'medição' : 'medições'}{s.latest ? ` · última em ${fmtDate(s.latest.date)}` : ''}</Text>
-                  <View style={{ flexDirection: 'row', gap: 8 }}>
-                    {rm ? <Text spec={text(t, { role: 'caption' })} style={{ color: trendColor(rm.kind) }}>{rm.s}</Text> : null}
-                    <Text spec={text(t, { role: 'caption' })} style={{ color: trendColor(tr.kind) }}>{tr.s}</Text>
-                  </View>
+                  <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{s.count} {s.count === 1 ? 'medição' : 'medições'} {open ? '▾' : '›'}</Text>
                 </View>
                 {open ? (
-                  <View style={{ gap: 6, marginTop: 4 }}>
+                  <View style={{ gap: 8, marginTop: 2 }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{s.latest ? `última em ${fmtDate(s.latest.date)}` : 'sem data'}</Text>
+                      <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                        <Text spec={text(t, { role: 'bodyStrong' })}>{s.latest ? `${s.latest.value}${s.unit ? ` ${s.unit}` : ''}` : '—'}</Text>
+                        {rm ? <Text spec={text(t, { role: 'caption' })} style={{ color: trendColor(rm.kind) }}>{rm.s}</Text> : null}
+                        <Text spec={text(t, { role: 'caption' })} style={{ color: trendColor(tr.kind) }}>{tr.s}</Text>
+                      </View>
+                    </View>
                     {s.measurements.length > 1 && max > min ? (
                       <View style={styles.spark}>
                         {s.measurements.map((m, i) => <View key={i} style={{ flex: 1, height: 40, justifyContent: 'flex-end' }}><View style={{ height: Math.max(3, ((m.value - min) / (max - min)) * 40), backgroundColor: t.color.identity.primary, borderRadius: 2 }} /></View>)}
@@ -204,18 +212,6 @@ export function HistoricoExamesScreen() {
         </View>
       ) : null}
     </ScrollView>
-  )
-}
-
-function Chips({ options, value, onChange }: { options: readonly { id: string; label: string }[]; value: string; onChange: (v: string) => void }) {
-  const t = useTheme()
-  return (
-    <View style={styles.chips}>
-      {options.map(o => {
-        const on = value === o.id
-        return <Pressable key={o.id} onPress={() => onChange(o.id)} style={[styles.pill, { borderColor: on ? t.color.identity.primary : t.color.border.default, backgroundColor: on ? t.color.badge.info.soft : 'transparent' }]}><Text spec={text(t, { role: 'caption', tone: on ? 'default' : 'muted' })}>{o.label}</Text></Pressable>
-      })}
-    </View>
   )
 }
 
