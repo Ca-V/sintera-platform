@@ -13,8 +13,8 @@ describe('Contrato dos slots da Home (MOBILE-014 §3.4 · Home-hub UX-002)', () 
   it('HomeShell compõe os slots da Home-hub (saudação · acesso rápido · como usar · rodapé)', () => {
     const shell = read('HomeShell.tsx')
     // Home = HUB de navegação (UX-002). Resumo/Linha do tempo/Insights saíram (pertencem aos módulos).
-    for (const slot of ['WelcomeSlot', 'QuickActionsSlot', 'ComoUsarSlot', 'FooterSlot']) {
-      expect(shell, `HomeShell deve compor <${slot} />`).toMatch(new RegExp(`<${slot}\\s*/>`))
+    for (const slot of ['WelcomeSlot', 'QuickActionsSlot', 'ProximosCompromissosSlot', 'ComoUsarSlot', 'FooterSlot']) {
+      expect(shell, `HomeShell deve compor <${slot} />`).toMatch(new RegExp(`<${slot}[^>]*/>`))
     }
   })
 

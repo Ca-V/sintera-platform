@@ -6,7 +6,7 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import type { ComponentType } from 'react'
-import { HomeShell } from '../home/HomeShell'
+import { HomeContainer } from '../screens/home/HomeContainer'
 import { ExamesStack } from './ExamesStack'
 import { AgendaStack } from './AgendaStack'
 import { MinhaSaudeStack } from './MinhaSaudeStack'
@@ -38,7 +38,7 @@ const TAB_SCREENS = SSOT_TABS.map((tab) => {
   // demais = placeholder do grupo. Cada tab é a raiz de um native-stack próprio (Etapa 5).
   const Component: ComponentType =
     tab.name === 'Inicio'
-      ? makeTabStack(HomeShell)
+      ? makeTabStack(HomeContainer)
       : tab.name === 'Mais'
         ? MaisStack
         : tab.name === 'Exames'

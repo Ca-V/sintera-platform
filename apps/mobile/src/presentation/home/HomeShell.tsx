@@ -8,10 +8,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '../theme'
 import { WelcomeSlot } from './slots/WelcomeSlot'
 import { QuickActionsSlot } from './slots/QuickActionsSlot'
+import { ProximosCompromissosSlot, type UpcomingItem } from './slots/ProximosCompromissosSlot'
 import { ComoUsarSlot } from './slots/ComoUsarSlot'
 import { FooterSlot } from './slots/FooterSlot'
 
-export function HomeShell() {
+/** Dados de outros módulos chegam por INJEÇÃO (HomeContainer, fora de home/) — a Home permanece apresentação pura. */
+export function HomeShell({ upcoming = [] }: { upcoming?: UpcomingItem[] }) {
   const t = useTheme()
   const insets = useSafeAreaInsets()
   return (
@@ -21,6 +23,7 @@ export function HomeShell() {
     >
       <WelcomeSlot />
       <QuickActionsSlot />
+      <ProximosCompromissosSlot items={upcoming} />
       <ComoUsarSlot />
       <FooterSlot />
     </ScrollView>
