@@ -32,15 +32,15 @@ export function DespesasScreen({ navigation }: Props) {
   })()
 
   const parentNav = () => navigation.getParent() as { navigate: (n: string, p: unknown) => void } | undefined
-  // Editar um lançamento de EVENTO (não-exame) → formulário de evento (na aba Acompanhamento).
+  // Editar um lançamento de EVENTO (não-exame) → formulário de evento (na aba Agenda).
   const editEvent = (item: HealthEvent) => {
     if (item.id.startsWith('exam:')) return
-    parentNav()?.navigate('Acompanhamento', { screen: 'EventForm', params: { event: item } })
+    parentNav()?.navigate('Agenda', { screen: 'EventForm', params: { event: item } })
   }
   // Adicionar despesa (guia, paridade Web): a despesa é ATRIBUTO de um fato — cria-se pelo fato (evento com valor
   // ou medicamento). Despesa avulsa = novo evento com valor.
   const addExpense = () => Alert.alert('Adicionar despesa', 'A despesa é registrada no fato a que pertence.', [
-    { text: 'Novo evento com valor', onPress: () => parentNav()?.navigate('Acompanhamento', { screen: 'EventForm', params: {} }) },
+    { text: 'Novo evento com valor', onPress: () => parentNav()?.navigate('Agenda', { screen: 'EventForm', params: {} }) },
     { text: 'Novo medicamento', onPress: () => parentNav()?.navigate('MinhaSaude', { screen: 'Medications' }) },
     { text: 'Cancelar', style: 'cancel' },
   ])

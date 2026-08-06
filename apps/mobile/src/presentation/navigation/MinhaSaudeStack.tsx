@@ -1,5 +1,6 @@
-// Stack interno da aba "Minha Saúde": menu do grupo (raiz, sem header) + telas de domínio (Condições, …).
-// Só navegação — sem regra de negócio.
+// Stack interno da aba "Minha Saúde": menu do grupo (raiz) + Dados de Saúde (Condições, Medicamentos, …) +
+// Histórico de Saúde (Timeline) + Composição Corporal + Monitoramento — que passaram a viver aqui na
+// arquitetura de 5 abas (MOBILE-036). Só navegação — sem regra de negócio.
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { MinhaSaudeMenuScreen } from '../screens/minhasaude/MinhaSaudeMenuScreen'
 import { ConditionsScreen } from '../screens/minhasaude/ConditionsScreen'
@@ -7,6 +8,9 @@ import { HabitsScreen } from '../screens/minhasaude/HabitsScreen'
 import { ResourcesScreen } from '../screens/minhasaude/ResourcesScreen'
 import { MedicationsScreen } from '../screens/minhasaude/MedicationsScreen'
 import { CicloScreen } from '../screens/minhasaude/CicloScreen'
+import { TimelineScreen } from '../screens/agenda/TimelineScreen'
+import { ComposicaoScreen } from '../screens/composicao/ComposicaoScreen'
+import { MonitoramentoScreen } from '../screens/monitoramento/MonitoramentoScreen'
 import { useTheme } from '../theme'
 import type { MinhaSaudeStackParamList } from './types'
 
@@ -29,6 +33,9 @@ export function MinhaSaudeStack() {
       <Stack.Screen name="Resources" component={ResourcesScreen} options={{ ...detail, title: 'Recursos de Saúde' }} />
       <Stack.Screen name="Medications" component={MedicationsScreen} options={{ ...detail, title: 'Medicamentos' }} />
       <Stack.Screen name="Ciclo" component={CicloScreen} options={{ ...detail, title: 'Ciclo e Contracepção' }} />
+      <Stack.Screen name="Timeline" component={TimelineScreen} options={{ ...detail, title: 'Histórico de Saúde' }} />
+      <Stack.Screen name="Composicao" component={ComposicaoScreen} options={{ ...detail, title: 'Composição Corporal' }} />
+      <Stack.Screen name="Monitoramento" component={MonitoramentoScreen} options={{ ...detail, title: 'Monitoramento' }} />
     </Stack.Navigator>
   )
 }

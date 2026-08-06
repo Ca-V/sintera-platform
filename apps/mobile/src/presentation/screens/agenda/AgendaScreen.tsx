@@ -14,11 +14,11 @@ import {
 } from '@sintera/core'
 import { Text, Button } from '../../primitives'
 import { useTheme } from '../../theme'
-import type { AcompanhamentoStackParamList } from '../../navigation/types'
+import type { AgendaStackParamList } from '../../navigation/types'
 import { useAgenda } from './useAgenda'
 import { apiClient } from '../../../infrastructure/apiClient'
 
-type Props = NativeStackScreenProps<AcompanhamentoStackParamList, 'Agenda'>
+type Props = NativeStackScreenProps<AgendaStackParamList, 'Agenda'>
 type UpcomingView = 'date' | 'type'
 
 export function AgendaScreen({ navigation }: Props) {
@@ -79,20 +79,8 @@ export function AgendaScreen({ navigation }: Props) {
         <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 22 }}>Agenda</Text>
         <Button label="Novo evento" onPress={newEvent} />
       </View>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
-        <Pressable onPress={() => navigation.navigate('Timeline')}>
-          <Text spec={text(t, { role: 'bodySmall' })} style={{ color: t.color.identity.primary }}>Ver Histórico de Saúde →</Text>
-        </Pressable>
-        <Pressable onPress={() => navigation.navigate('HistoricoExames')}>
-          <Text spec={text(t, { role: 'bodySmall' })} style={{ color: t.color.identity.primary }}>Ver Histórico de Exames →</Text>
-        </Pressable>
-        <Pressable onPress={() => navigation.navigate('Composicao')}>
-          <Text spec={text(t, { role: 'bodySmall' })} style={{ color: t.color.identity.primary }}>Composição Corporal →</Text>
-        </Pressable>
-        <Pressable onPress={() => navigation.navigate('Monitoramento')}>
-          <Text spec={text(t, { role: 'bodySmall' })} style={{ color: t.color.identity.primary }}>Monitoramento →</Text>
-        </Pressable>
-      </View>
+      {/* Histórico de Saúde/Exames, Composição e Monitoramento migraram para as abas Minha Saúde e Exames
+          (arquitetura de 5 abas — MOBILE-036). A Agenda foca em calendário + próximos/pendências. */}
 
       {/* Sugestão temporal de recência de exame (opcional, factual — confirme com seu médico). */}
       {suggestion ? (

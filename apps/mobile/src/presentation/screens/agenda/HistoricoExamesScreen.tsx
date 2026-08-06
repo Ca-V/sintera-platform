@@ -41,7 +41,8 @@ export function HistoricoExamesScreen() {
   const t = useTheme()
   const insets = useSafeAreaInsets()
   const navigation = useNavigation()
-  const openExam = (id: string) => (navigation.getParent() as { navigate: (n: string, p: unknown) => void } | undefined)?.navigate('Documentos', { screen: 'ExamDetail', params: { id } })
+  // HistoricoExames vive no stack de Exames — abre o detalhe no próprio stack (mesma aba).
+  const openExam = (id: string) => (navigation as { navigate: (n: string, p: unknown) => void }).navigate('ExamDetail', { id })
   const [summaries, setSummaries] = useState<BiomarkerSummary[]>([])
   const [exams, setExams] = useState<ExamDTO[]>([])
   const [phase, setPhase] = useState<'loading' | 'ready' | 'error'>('loading')

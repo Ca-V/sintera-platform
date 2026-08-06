@@ -10,7 +10,7 @@ import type { ExamDTO } from '@sintera/api-client'
 import { deriveExamIdentity, isOrderDocumentType, careStageFor, CARE_STAGES, compareNames, selectByLink } from '@sintera/core'
 import { Button, FieldRow, Input, Text } from '../../primitives'
 import { useTheme } from '../../theme'
-import type { DocumentosStackParamList } from '../../navigation/types'
+import type { ExamesStackParamList } from '../../navigation/types'
 import { apiClient } from '../../../infrastructure/apiClient'
 import { useExam } from './useExam'
 import { examStatusLabel, isExamFailed } from './examStatus'
@@ -18,7 +18,7 @@ import { formatExamDate } from './examFormat'
 import { ResultsSection } from './ResultsSection'
 import { FinancialSection } from './FinancialSection'
 
-type Props = NativeStackScreenProps<DocumentosStackParamList, 'ExamDetail'>
+type Props = NativeStackScreenProps<ExamesStackParamList, 'ExamDetail'>
 
 export function ExamDetailScreen({ route, navigation }: Props) {
   const t = useTheme()
@@ -229,7 +229,7 @@ export function ExamDetailScreen({ route, navigation }: Props) {
         <Text spec={text(t, { role: 'bodyStrong' })}>Repetir este exame</Text>
         <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Crie um lembrete de repetição periódica — aparece na sua Agenda.</Text>
         <Button label="Criar lembrete de repetição" variant="secondary"
-          onPress={() => (navigation.getParent() as { navigate: (n: string, p: unknown) => void } | undefined)?.navigate('Acompanhamento', {
+          onPress={() => (navigation.getParent() as { navigate: (n: string, p: unknown) => void } | undefined)?.navigate('Agenda', {
             screen: 'EventForm',
             params: { prefill: { type: 'exame', title: `Repetir ${name}`, examId: exam.id, recurrence: true } },
           })} />

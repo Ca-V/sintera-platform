@@ -7,8 +7,8 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import type { ComponentType } from 'react'
 import { HomeShell } from '../home/HomeShell'
-import { DocumentosStack } from './DocumentosStack'
-import { AcompanhamentoStack } from './AcompanhamentoStack'
+import { ExamesStack } from './ExamesStack'
+import { AgendaStack } from './AgendaStack'
 import { MinhaSaudeStack } from './MinhaSaudeStack'
 import { MaisStack } from './MaisStack'
 import { PlaceholderScreen } from './PlaceholderScreen'
@@ -41,10 +41,10 @@ const TAB_SCREENS = SSOT_TABS.map((tab) => {
       ? makeTabStack(HomeShell)
       : tab.name === 'Mais'
         ? MaisStack
-        : tab.name === 'Documentos'
-          ? DocumentosStack
-          : tab.name === 'Acompanhamento'
-            ? AcompanhamentoStack
+        : tab.name === 'Exames'
+          ? ExamesStack
+          : tab.name === 'Agenda'
+            ? AgendaStack
             : tab.name === 'MinhaSaude'
               ? MinhaSaudeStack
               : makeTabStack(function TabPlaceholder() {

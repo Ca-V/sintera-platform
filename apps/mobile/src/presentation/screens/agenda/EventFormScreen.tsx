@@ -13,11 +13,11 @@ import {
 } from '@sintera/core'
 import { Text, Button, Input, Switch } from '../../primitives'
 import { useTheme } from '../../theme'
-import type { AcompanhamentoStackParamList } from '../../navigation/types'
+import type { AgendaStackParamList } from '../../navigation/types'
 import { apiClient } from '../../../infrastructure/apiClient'
 import { documentPicker } from '../../../infrastructure/documentPickerAdapter'
 
-type Props = NativeStackScreenProps<AcompanhamentoStackParamList, 'EventForm'>
+type Props = NativeStackScreenProps<AgendaStackParamList, 'EventForm'>
 
 const MODALITIES = [{ id: 'presencial', label: 'Presencial' }, { id: 'telemedicina', label: 'Telemedicina' }] as const
 const PRIORITIES = [{ id: 'alta', label: 'Alta' }, { id: 'media', label: 'Média' }, { id: 'baixa', label: 'Baixa' }] as const

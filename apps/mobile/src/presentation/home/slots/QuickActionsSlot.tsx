@@ -11,8 +11,8 @@ import type { AppTabParamList } from '../../navigation/types'
 
 // Rótulos/alvos derivados dos grupos do SSOT (mesmos da navegação). Só navegação.
 const ENTRIES: { label: string; target: keyof AppTabParamList }[] = [
-  { label: 'Acompanhamento', target: 'Acompanhamento' },
-  { label: 'Documentos', target: 'Documentos' },
+  { label: 'Agenda', target: 'Agenda' },
+  { label: 'Exames', target: 'Exames' },
   { label: 'Minha Saúde', target: 'MinhaSaude' },
   { label: 'Mais', target: 'Mais' },
 ]

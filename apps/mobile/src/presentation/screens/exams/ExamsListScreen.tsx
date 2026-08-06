@@ -11,12 +11,12 @@ import { isOrderDocumentType, findDuplicateIds, type DuplicateCandidate } from '
 import { heading, text } from '@sintera/design-system'
 import { Button, Text, Input } from '../../primitives'
 import { useTheme } from '../../theme'
-import type { DocumentosStackParamList } from '../../navigation/types'
+import type { ExamesStackParamList } from '../../navigation/types'
 import { useExamsList } from './useExamsList'
 import { examStatusLabel, isExamFailed } from './examStatus'
 import { formatExamDate } from './examFormat'
 
-type Props = NativeStackScreenProps<DocumentosStackParamList, 'ExamsList'>
+type Props = NativeStackScreenProps<ExamesStackParamList, 'ExamsList'>
 
 const STATUS_FILTERS: { id: string; label: string }[] = [
   { id: 'all', label: 'Todos' }, { id: 'processed', label: 'Estruturados' },
@@ -92,9 +92,14 @@ export function ExamsListScreen({ navigation }: Props) {
       <Text spec={text(t, { role: 'bodySmall', tone: 'muted' })}>Seus exames ao longo do tempo. Abra um para ver o documento original.</Text>
 
       <Button label="Adicionar exame" onPress={() => navigation.navigate('ExamUpload')} />
-      <Pressable onPress={() => navigation.navigate('OmicsList')}>
-        <Text spec={text(t, { role: 'bodySmall' })} style={{ color: t.color.identity.primary }}>Exames de ômica →</Text>
-      </Pressable>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
+        <Pressable onPress={() => navigation.navigate('HistoricoExames')}>
+          <Text spec={text(t, { role: 'bodySmall' })} style={{ color: t.color.identity.primary }}>Histórico de Exames →</Text>
+        </Pressable>
+        <Pressable onPress={() => navigation.navigate('OmicsList')}>
+          <Text spec={text(t, { role: 'bodySmall' })} style={{ color: t.color.identity.primary }}>Exames de ômica →</Text>
+        </Pressable>
+      </View>
 
       {all.length === 0 ? (
         <View style={styles.empty}><Text spec={text(t, { role: 'body', tone: 'muted' })}>Nenhum exame ainda.</Text></View>

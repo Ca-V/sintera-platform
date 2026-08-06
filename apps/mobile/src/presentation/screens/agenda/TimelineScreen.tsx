@@ -10,10 +10,10 @@ import { text } from '@sintera/design-system'
 import { mergeTimeline, selectHistory, groupByPeriod, statusLabel, formatDateLongBR, type TimelineEntry, type TimelineMeta } from '@sintera/core'
 import { Text, Button } from '../../primitives'
 import { useTheme } from '../../theme'
-import type { AcompanhamentoStackParamList } from '../../navigation/types'
+import type { MinhaSaudeStackParamList } from '../../navigation/types'
 import { apiClient } from '../../../infrastructure/apiClient'
 
-type Props = NativeStackScreenProps<AcompanhamentoStackParamList, 'Timeline'>
+type Props = NativeStackScreenProps<MinhaSaudeStackParamList, 'Timeline'>
 
 function fmtCents(c: number | null | undefined): string { return c == null ? '' : (c / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }
 /** Chips de densidade do fato (prioridade/retorno/modalidade/valor/anexo) — só os presentes. */
@@ -72,16 +72,16 @@ export function TimelineScreen({ navigation }: Props) {
   const parentNav = () => navigation.getParent() as { navigate: (n: string, p?: unknown) => void } | undefined
   const open = (e: TimelineEntry) => {
     if (e.domain === 'exam') {
-      parentNav()?.navigate('Documentos', { screen: 'ExamDetail', params: { id: e.refId } })
+      parentNav()?.navigate('Exames', { screen: 'ExamDetail', params: { id: e.refId } })
     } else if (e.domain === 'omics') {
-      parentNav()?.navigate('Documentos', { screen: 'OmicsPanel', params: { id: e.refId } })
+      parentNav()?.navigate('Exames', { screen: 'OmicsPanel', params: { id: e.refId } })
     } else if (e.domain === 'contraceptive') {
-      parentNav()?.navigate('MinhaSaude', { screen: 'Ciclo' })
+      navigation.navigate('Ciclo') // Timeline vive no stack de Minha Saúde — navega no próprio stack
     } else {
-      // Evento: reabre no formulário — buscamos o evento cru na lista de eventos.
+      // Evento: reabre no formulário (EventForm vive no stack de Agenda — navegação entre abas).
       apiClient.agenda.listEvents().then(evs => {
         const ev = evs.find(x => x.id === e.refId)
-        if (ev) navigation.navigate('EventForm', { event: ev })
+        if (ev) parentNav()?.navigate('Agenda', { screen: 'EventForm', params: { event: ev } })
       }).catch(() => {})
     }
   }

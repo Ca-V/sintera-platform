@@ -20,6 +20,9 @@ export function MinhaSaudeMenuScreen({ navigation }: Props) {
     { label: 'Recursos de Saúde', onPress: () => navigation.navigate('Resources') },
     { label: 'Hábitos', onPress: () => navigation.navigate('Habits') },
     { label: 'Ciclo e Contracepção', onPress: () => navigation.navigate('Ciclo') },
+    { label: 'Composição Corporal', onPress: () => navigation.navigate('Composicao') },
+    { label: 'Monitoramento', onPress: () => navigation.navigate('Monitoramento') },
+    { label: 'Histórico de Saúde', onPress: () => navigation.navigate('Timeline') },
   ]
   return (
     <ScrollView style={{ backgroundColor: t.color.surface.app }} contentContainerStyle={[styles.content, { paddingTop: styles.content.padding + insets.top }]}>

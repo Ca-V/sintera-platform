@@ -2,11 +2,14 @@
 //
 // PRINCÍPIO (MOBILE-009 D7): a navegação é uma PROJEÇÃO da taxonomia SSOT, não sua representação literal.
 // A arquitetura de informação é única (mesma organização conceitual da Web); a apresentação pode variar
-// conforme a plataforma. Aqui os 5 grupos da Web + "Painel Inicial" são projetados em 5 bottom tabs
-// idiomáticos, com "Mais" agregando Organização + Configurações (convenção de overflow mobile).
+// conforme a plataforma.
 //
-// CRITÉRIO 10 (MOBILE-009): esta camada NÃO contém conhecimento de domínio — apenas rótulos da taxonomia
-// (o QUE existe), sem regras de negócio, consultas de dados ou lógica clínica.
+// Arquitetura CONFIRMADA (2026-08-06, ADR-021 / MOBILE-036): 5 abas idiomáticas.
+// - Exames absorve os Documentos (exames + ômica) e o Histórico de Exames.
+// - Minha Saúde absorve Histórico de Saúde, Composição Corporal e Monitoramento.
+// - Mais agrega Despesas + Relatórios (Compartilhamento) + Configurações.
+//
+// CRITÉRIO 10 (MOBILE-009): esta camada NÃO contém conhecimento de domínio — apenas rótulos da taxonomia.
 
 export type SsotTab = {
   /** Nome da rota (estável, sem espaços/acentos). */
@@ -19,16 +22,12 @@ export type SsotTab = {
 
 export const SSOT_TABS: readonly SsotTab[] = [
   { name: 'Inicio', label: 'Início', items: ['Painel Inicial'] },
-  {
-    name: 'Acompanhamento',
-    label: 'Acompanhamento',
-    items: ['Agenda', 'Histórico de Saúde', 'Histórico de Exames', 'Composição Corporal', 'Monitoramento'],
-  },
-  { name: 'Documentos', label: 'Documentos', items: ['Exames'] },
+  { name: 'Agenda', label: 'Agenda', items: ['Agenda'] },
+  { name: 'Exames', label: 'Exames', items: ['Exames', 'Exames de ômica', 'Histórico de Exames'] },
   {
     name: 'MinhaSaude',
     label: 'Minha Saúde',
-    items: ['Condições de Saúde', 'Medicamentos', 'Suplementos', 'Recursos de Saúde', 'Hábitos', 'Ciclo e Contracepção'],
+    items: ['Condições de Saúde', 'Medicamentos', 'Suplementos', 'Recursos de Saúde', 'Hábitos', 'Ciclo e Contracepção', 'Composição Corporal', 'Monitoramento', 'Histórico de Saúde'],
   },
   { name: 'Mais', label: 'Mais', items: ['Despesas', 'Relatórios', 'Configurações'] },
 ]

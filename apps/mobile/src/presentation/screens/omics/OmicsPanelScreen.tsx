@@ -12,9 +12,9 @@ import { DOMAIN_LABEL, fmtOmicsDate, type OmicsDomain } from '@sintera/core'
 import { Text, Button, Input } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
-import type { DocumentosStackParamList } from '../../navigation/types'
+import type { ExamesStackParamList } from '../../navigation/types'
 
-type Props = NativeStackScreenProps<DocumentosStackParamList, 'OmicsPanel'>
+type Props = NativeStackScreenProps<ExamesStackParamList, 'OmicsPanel'>
 
 function fmt(d: string | null): string { if (!d) return '—'; const [y, m, dd] = d.slice(0, 10).split('-'); return y ? `${dd}/${m}/${y}` : '—' }
 function resultText(r: OmicsResultDTO): string {

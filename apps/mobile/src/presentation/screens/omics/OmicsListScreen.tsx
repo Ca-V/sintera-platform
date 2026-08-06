@@ -12,9 +12,9 @@ import { DOMAINS, DOMAIN_LABEL, fmtOmicsDate, type OmicsDomain } from '@sintera/
 import { Text, Button, Input } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
-import type { DocumentosStackParamList } from '../../navigation/types'
+import type { ExamesStackParamList } from '../../navigation/types'
 
-type Props = NativeStackScreenProps<DocumentosStackParamList, 'OmicsList'>
+type Props = NativeStackScreenProps<ExamesStackParamList, 'OmicsList'>
 
 export function OmicsListScreen({ navigation }: Props) {
   const t = useTheme()
