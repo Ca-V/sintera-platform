@@ -1,8 +1,31 @@
-# MOBILE-036 — Proposta de Reorganização da Navegação (v1.1)
+# MOBILE-036 — Reorganização da Navegação (v1.1)
 
-> **Fora do ciclo de homologação da v1.0.** Evolução de **arquitetura de informação (UX)** — NÃO é correção de
-> paridade. Base para implementação quando iniciar a fase de evolução do produto (pós‑RC1). Origem: testes da
+> **Fora do ciclo de homologação da v1.0.** Evolução de **arquitetura de informação (UX)**. Origem: testes da
 > fundadora no APK v1.0 (2026-08-05).
+
+## ✅ DECISÃO CONFIRMADA (fundadora, 2026‑08‑06) — CONTRATO de navegação (ADR‑021 · fase de consolidação)
+**5 abas** (Mobile) + **Sidebar Web espelhada** (taxonomia = SSOT compartilhada; as duas mudam juntas):
+
+`Início · Agenda · Exames · Minha Saúde · Mais`
+
+**Mapeamento preciso de telas → aba (o refactor implementa exatamente isto):**
+| Aba | Telas / stack |
+|---|---|
+| **Início** | HomeShell (nova Home — acessos rápidos + "Como usar" + remover Resumo/Timeline/Insights) |
+| **Agenda** | Agenda + EventForm (sai de "Acompanhamento") |
+| **Exames** | ExamsList · ExamDetail · ExamUpload · OmicsList · OmicsPanel · **Histórico de Exames** (o *histórico do exame* pertence a Exames) · Busca/Filtros · **página dedicada do exame** (D‑18/D‑20) |
+| **Minha Saúde** | *Dados de Saúde:* Condições · Medicamentos · Suplementos · Recursos · Hábitos · Ciclo · **Composição Corporal** · **Monitoramento**; *Histórico:* **Histórico de Saúde** (timeline) |
+| **Mais** | Perfil · Configurações · Despesas · **Relatórios** (Compartilhamento) · Ajuda(futuro). Compartilhamento também = acesso rápido na Home |
+
+**Notas:** "Acompanhamento" e "Documentos" **deixam de existir** como abas. `Histórico de Exames` → **Exames**;
+`Histórico de Saúde` + `Composição` + `Monitoramento` → **Minha Saúde**. **Rede de Cuidado** permanece oculta até
+CARE‑002. **Risco de execução:** a navegação entre abas usa strings não‑tipadas (`getParent().navigate('…')`) →
+o refactor exige **varredura de todas as strings de aba** (`Documentos`/`Acompanhamento`/`MinhaSaude`) além do
+typecheck; vai como **unidade única verificada**. Refs cruzadas conhecidas: Despesas · Composição · ExamDetail ·
+HistoricoExames · Timeline · Home (QuickActionsSlot).
+
+---
+
 
 ## 1. Barra inferior
 **Preferencial (6 abas, se suportar bem em telas menores):**
