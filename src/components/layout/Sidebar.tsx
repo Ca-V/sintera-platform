@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, FileText, Clock, Pill, Receipt, CalendarDays,
-  HeartPulse, Stethoscope, ScrollText, Droplet, Activity, Ruler, Settings,
+  HeartPulse, Stethoscope, Droplet, Activity, Ruler, Settings,
   Accessibility, X, ChevronRight, ChevronDown, TrendingUp, Leaf, Heart, Users,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -21,8 +21,9 @@ import { navDescription } from '@/lib/ui/navDescriptions'
 //   Minha Saúde (expansível) = Registros (o que a pessoa cadastra: Exames, Medicamentos, Suplementos, Recursos) ·
 //                              Saúde (estado atual: Condições, Composição, Ciclo, Monitoramento, Hábitos) ·
 //                              Histórico (linha do tempo: Histórico de Exames, Histórico de Saúde).
-//   Rede de Cuidado (expansível) = Relatórios hoje; Profissionais/Compartilhamentos entram com a CARE-002.
-//   Organização = Despesas (e Documentos, futuro). · Configurações (direta).
+//   Rede de Cuidado / Organização = HOJE link DIRETO (1 item: Relatórios / Despesas — sem clique redundante);
+//   viram grupo expansível ao ganhar mais itens (Profissionais/Compartilhamentos na CARE-002; Documentos/Arquivos).
+//   Configurações (direta). As subdivisões de Minha Saúde (Registros/Saúde/Histórico) recolhem por padrão (altura).
 // Follow-up (reorganização funcional): alinhar a taxonomia do Relatório (SELECT_GROUPS + core REPORT_GROUPS).
 type Leaf = { href: string; icon: React.ElementType; label: string; extra?: string[] }
 type Section = { label?: string; items: Leaf[] }
@@ -55,18 +56,9 @@ const NAV: readonly NavNode[] = [
       ] },
     ],
   },
-  {
-    type: 'group', icon: Users, label: 'Rede de Cuidado',
-    sections: [
-      { items: [ { href: '/dashboard/relatorio', icon: ScrollText, label: 'Relatórios' } ] },
-    ],
-  },
-  {
-    type: 'group', icon: Receipt, label: 'Organização',
-    sections: [
-      { items: [ { href: '/dashboard/gastos', icon: Receipt, label: 'Despesas' } ] },
-    ],
-  },
+  // 1 item hoje → LINK direto (evita expandir para um único item). Viram grupo expansível quando crescerem.
+  { type: 'link', leaf: { href: '/dashboard/relatorio', icon: Users, label: 'Rede de Cuidado' } },
+  { type: 'link', leaf: { href: '/dashboard/gastos', icon: Receipt, label: 'Organização' } },
   { type: 'link', leaf: { href: '/dashboard/configuracoes', icon: Settings, label: 'Configurações' } },
 ]
 
@@ -115,6 +107,9 @@ function NavGroup({ node, pathname, open, onToggle, onClose, bind }: {
 }) {
   const active = groupActive(node, pathname)
   const Icon = node.icon
+  // Subdivisões (Registros/Saúde/Histórico) recolhidas por padrão — abrem no clique OU se contiverem a rota ativa.
+  const [openSub, setOpenSub] = useState<Record<string, boolean>>({})
+  const toggleSub = (k: string) => setOpenSub(s => ({ ...s, [k]: !(s[k] ?? false) }))
   return (
     <div className="mb-1">
       <button type="button" onClick={onToggle}
@@ -125,19 +120,26 @@ function NavGroup({ node, pathname, open, onToggle, onClose, bind }: {
         <ChevronDown size={14} className={cn('text-onyx/50 transition-transform duration-200', open ? '' : '-rotate-90')} />
       </button>
       {open && (
-        <div className="mt-0.5 ml-3.5 pl-2 border-l border-white/30 flex flex-col gap-1">
-          {node.sections.map((sec, i) => (
-            <div key={i} className="flex flex-col gap-0.5">
-              {sec.label ? (
-                <p className="text-[10px] font-body font-semibold uppercase tracking-[0.12em] text-onyx/55 px-3 mt-1.5">{sec.label}</p>
-              ) : null}
-              {sec.items.map(item => (
-                <NavItem key={item.href} href={item.href} icon={item.icon} label={item.label}
-                  active={isActive(pathname, item.href, item.extra)} onClose={onClose}
-                  hintProps={bind(navDescription(item.href))} />
-              ))}
-            </div>
-          ))}
+        <div className="mt-0.5 ml-3.5 pl-2 border-l border-white/30 flex flex-col gap-0.5">
+          {node.sections.map((sec, i) => {
+            const items = sec.items.map(item => (
+              <NavItem key={item.href} href={item.href} icon={item.icon} label={item.label}
+                active={isActive(pathname, item.href, item.extra)} onClose={onClose}
+                hintProps={bind(navDescription(item.href))} />
+            ))
+            if (!sec.label) return <div key={i} className="flex flex-col gap-0.5">{items}</div>
+            const subOpen = openSub[sec.label] ?? sec.items.some(it => isActive(pathname, it.href, it.extra))
+            return (
+              <div key={sec.label} className="flex flex-col gap-0.5">
+                <button type="button" onClick={() => toggleSub(sec.label!)}
+                  className="flex items-center gap-1.5 px-3 mt-1 text-[10px] font-body font-semibold uppercase tracking-[0.12em] text-onyx/55 hover:text-onyx transition-colors">
+                  <ChevronDown size={11} className={cn('transition-transform duration-200', subOpen ? '' : '-rotate-90')} />
+                  <span className="flex-1 text-left">{sec.label}</span>
+                </button>
+                {subOpen ? items : null}
+              </div>
+            )
+          })}
         </div>
       )}
     </div>
