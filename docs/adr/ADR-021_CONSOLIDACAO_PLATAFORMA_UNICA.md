@@ -65,6 +65,23 @@ Refinam **como** executar sob os 10 princípios:
 7. **Evidências por entrega:** testes · builds · typecheck · validações · impacto nos módulos · critérios de aceite
    atendidos. Sem passo a passo — só a comprovação de integridade.
 
+## Regra de governança — PARIDADE OBRIGATÓRIA (Definition of Done) — fundadora, 2026‑08‑06
+**5ª regra, vinculante.** Nenhuma funcionalidade é **CONCLUÍDA** se:
+- (a) existir em **apenas uma** plataforma; ou
+- (b) apresentar diferença de **nomenclatura · texto · título · botão · mensagem · opção · fluxo · componente ·
+  comportamento** entre Web e Mobile —
+**SALVO** quando a diferença decorrer de **limitação inerente ao dispositivo** (ex.: câmera, gestos nativos).
+
+**Correção por PADRÃO DE SISTEMA, não página a página:** sempre que houver um **seletor**, um **formulário**, uma
+**ação de adicionar**, uma **nomenclatura** ou um **fluxo equivalente**, aplica‑se o mesmo padrão em **toda** a Web e
+**todo** o Mobile — não só onde o problema foi visto. Padrões operacionais em **`docs/UX-003`** (PS‑1 seletor universal
+· PS‑2 protocolo único de "Adicionar" · PS‑3 nomenclatura/copy idênticas).
+
+**Critério de aceite (antes de cada build de homologação):** varredura completa de consistência — nomenclaturas ·
+botões · componentes de seleção · fluxos de inclusão · Web↔Mobile. **A homologação NÃO se conclui** enquanto houver
+diferença de UX entre plataformas para funcionalidade equivalente. Reforça [[principio_paridade_total_web_mobile]] e a
+matriz de paridade (G4) — agora como **gate de conclusão**, não só princípio.
+
 ## Fora de escopo / a consolidar depois
 - O **ADR de Governança v1.0** (framework de certificação G1–G4 / matriz de paridade) permanece para consolidar
   **pós‑RC1**, registrando a arquitetura validada — este ADR‑021 registra os **princípios diretores** declarados agora.

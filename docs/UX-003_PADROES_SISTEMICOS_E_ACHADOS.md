@@ -37,3 +37,15 @@ Rótulos de botão, **frases (copy)**, opções e taxonomia **iguais** nas duas 
 > A fundadora seguirá informando mais achados; todos entram nesta lista e nos padrões acima, para correção no ciclo
 > da evolução funcional (módulo a módulo: Agenda → Exames → Minha Saúde…), reusando `Select` (existe) e o novo
 > componente de captura (protocolo único). Sem builds soltas — um ciclo, uma build.
+
+## Critério de aceite (gate — antes de cada build de homologação)
+Estes padrões são **regra de sistema**, não correção pontual: aplicam‑se a **todas as telas existentes e futuras**.
+Antes de considerar a build pronta, **varredura completa** verificando:
+- [ ] **Nomenclaturas** consistentes (botões, títulos, rótulos) Web↔Mobile.
+- [ ] **Componentes de seleção** = seletor único em todo campo com opções (PS‑1) — nenhuma lista aberta.
+- [ ] **Fluxos de "Adicionar"** = protocolo único idêntico nas duas plataformas (PS‑2).
+- [ ] **Textos/copy/mensagens/estados** idênticos para funcionalidade equivalente (PS‑3).
+- [ ] **Paridade de funcionalidade** — nada existe em só uma plataforma (ex.: Pedidos de Exame no Mobile).
+
+**Definition of Done (ADR‑021, 5ª regra):** nenhuma funcionalidade é concluída com diferença de UX entre Web e Mobile,
+salvo limitação inerente ao dispositivo (câmera, gestos nativos). A homologação não se conclui enquanto houver diferença.
