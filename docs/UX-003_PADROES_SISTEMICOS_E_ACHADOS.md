@@ -59,6 +59,20 @@ deve ser replicado **exatamente** como na Web (`/dashboard/saude` + `/dashboard/
 > da evolução funcional (módulo a módulo: Agenda → Exames → Minha Saúde…), reusando `Select` (existe) e o novo
 > componente de captura (protocolo único). Sem builds soltas — um ciclo, uma build.
 
+## Achados — rodada 3 (H‑12…H‑20)
+| ID | Módulo · plataforma | Achado | Padrão/decisão |
+|---|---|---|---|
+| H‑12 | **Histórico de Exames** — filtro de período | Copy ruim ("Tudo" → algo como **"Período completo"**); só 30/90 dias/1 ano → **mais opções** (6 meses, 2 anos, personalizado); via **seletor** | PS‑1 + PS‑3 |
+| H‑13 | **Histórico de Saúde (Mobile)** | Falta **"adicionar evento"**; falta **frase explicativa** (R‑PAGE); divisão só **por data** → **por data E por tipo** (seletor); faltam as ações **Reabrir (desfazer conclusão) · Editar · Incluir** que a Web tem | PS‑1 + R‑PAGE + paridade |
+| H‑14 | **R‑ATTACH** (Web+Mobile) | Card de evento no Mobile não tem o **link "anexo"** (Web tem — abre a nota fiscal/laudo original). Instância do princípio R‑ATTACH acima. | **R‑ATTACH** |
+| H‑15 | **Rede de Cuidado** (Web×Mobile) | Web abre **direto** o painel de Relatórios; Mobile abre um **menu** (Relatórios + Profissionais/Compartilhamento "em breve"); e a página de Relatório tem **formatação divergente**. Alinhar (decisão: ambos diretos × ambos menu) + aplicar padrões (cards/ordem) | Paridade + **decisão** |
+| H‑16 | **Relatórios** — Histórico de Exames | Ao incluir, mostrar **nome do exame + link ao arquivo**, não toda a extração/biomarcadores; + **busca/filtro** por exame específico | **R‑REPORT‑ENXUTO** |
+| H‑17 | **Modelo de dados — Bioimpedância** | Bioimpedância vive em **Composição Corporal** (não listar todas as medidas — só nome+data+link) **mas também é Exame** → deve **projetar em Exames** (lá gera relatório com extração como qualquer exame). Projeção sem duplicação. | **[coerência de dados] [[adr_001_projecao_ssot]]** |
+| H‑18 | **BUG — Criar link (compartilhar relatório) Mobile** | "Não foi possível criar — ambiente sem gerador de aleatoriedade seguro" → `randomToken()` falha no RN (sem `crypto.getRandomValues`). **Corrigir** (polyfill/expo‑crypto). O relatório do link deve conter as infos da tela **+ todos os anexos vinculados** (arquivo original). | **BUG + R‑ATTACH** |
+| H‑19 | **Configurações** — código de país (telefone) | Códigos **expostos** na tela → **seletor rolável com busca** (todos os códigos) | PS‑1 |
+| H‑20 | **Central de notificações** | Só alguns itens → ou **todas** as categorias (email/WhatsApp/ambos/nenhum por categoria) **ou** uma **única** opção central (email/WhatsApp/ambos/nenhum). Avaliar melhor e **padronizar** nas 2 plataformas | PS‑3 + **decisão** |
+| H‑21 | **Histórico de Exames (Mobile)** — intervalo personalizado | Data personalizada só **digitável** → falta o **calendário** (date picker) como na Web | PS‑1/paridade |
+
 ## Princípios elevados na homologação (regras de sistema, não itens) + H‑11
 - **R‑FORM (de H‑6):** TODOS os formulários usam o mesmo padrão de entrada (PS‑1/2/3) — nomenclatura, **hierarquia
   dos botões, componentes de seleção, espaçamento e alinhamento visual**. Sem exceção por módulo.
@@ -74,6 +88,13 @@ deve ser replicado **exatamente** como na Web (`/dashboard/saude` + `/dashboard/
   **mesmo modelo conceitual** — Página de exame · Página de indicador · Timeline · Longitudinal · Formulários ·
   Seletores · Fluxo de adicionar. **Proibido** implementações paralelas com comportamento diferente. **Web = referência
   funcional; Mobile reusa a lógica (core/SSOT), adaptando só a apresentação ao dispositivo.** Reforça [[adr_001_projecao_ssot]].
+- **R‑ATTACH (novo) — anexo sempre acessível:** qualquer registro (evento · exame · medicamento · qualquer produto) que
+  tenha um **documento anexado** (nota fiscal, laudo, resultado, comprovante…) exibe, **onde o nome do registro aparece**,
+  um **link clicável** para o **arquivo original**. Vale Web **e** Mobile, em todos os módulos e no Relatório.
+- **R‑REPORT‑ENXUTO (de H‑16/H‑17) — relatório referencia, não despeja:** ao incluir exames/laudos no Relatório, listar
+  **nome do exame + data + link ao arquivo original** — **não** despejar toda a extração/biomarcadores (um laboratorial
+  pode ter 50). Extração completa só na **página do exame**. Oferecer **busca/filtro** para gerar relatório de exame(s)
+  específico(s) (ex.: só Vitamina D, só ultrassom). Mesmo tratamento para bioimpedância (nome+data+link, não a lista de medidas).
 
 ### Gate adicional — COERÊNCIA DO MODELO DE DADOS
 Muitos achados (esp. H‑9/H‑10) não são de interface, e sim de **como o dado é representado**. **Critério:** nenhuma
