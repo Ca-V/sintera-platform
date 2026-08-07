@@ -63,8 +63,8 @@ export function ExamUploadScreen({ navigation }: Props) {
           </View>
         ) : (
           <View style={styles.actions}>
-            <Button label="Escolher documento" onPress={() => pick('document')} />
-            <Button label="Usar a câmera" variant="secondary" onPress={() => pick('camera')} />
+            <Button label="Selecionar arquivo (PDF ou foto)" onPress={() => pick('document')} />
+            <Button label="Tirar foto" variant="secondary" onPress={() => pick('camera')} />
             <Text spec={text(t, { role: 'caption', tone: 'faint' })} style={styles.centerText}>
               Aceitos: {acceptedFormatsHint(DEFAULT_UPLOAD_CONSTRAINTS)} · até{' '}
               {Math.round(DEFAULT_UPLOAD_CONSTRAINTS.maxBytes / (1024 * 1024))} MB.
