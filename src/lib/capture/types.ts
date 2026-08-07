@@ -1,72 +1,26 @@
 // ============================================================
-// Centro de Entrada de Documentos — CONTRATOS (Trilha B, sem domínio)
+// Centro de Entrada de Documentos — CONTRATOS (Trilha B)
 // ============================================================
-// Camadas isoladas (PO 30/06):
-//   Documento → Intake (UX) → Classifier (identifica) → Processor (encaminha) → Pipeline
-// Esta camada NÃO cria evento, NÃO escreve catálogo, NÃO decide domínio (Estado 2).
-// CONTRATO ÚNICO: todo processador devolve um CaptureResult; o Hub só renderiza —
-// estados, resultado e erro ficam UNIFORMES, independentemente do pipeline.
-// ============================================================
-
+// Os contratos PUROS (DocumentKind, IntakeMethod, ClassificationResult, CaptureResult…) vivem em @sintera/core
+// (SSOT Web↔Mobile) e são reexportados aqui para preservar os import sites. O que depende de plataforma
+// (SupabaseClient/File) — CaptureContext e DocumentProcessor — permanece nesta camada.
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { DocumentKind, CaptureResult } from '@sintera/core'
 
-/** O que a usuária deseja adicionar (intenção) + classificações auxiliares. */
-export type DocumentKind =
-  | 'exam'
-  | 'medication_label'
-  | 'eyeglass_prescription'
-  | 'omics'
-  | 'other'
-  | 'unknown'
+export type {
+  DocumentKind, IntakeMethod, ClassificationSource, ClassificationResult, CaptureErrorReason, CaptureResult,
+} from '@sintera/core'
 
-/** Como a usuária deseja enviar (método de entrada). */
-export type IntakeMethod = 'pdf' | 'photo' | 'gallery'
-
-/** De onde veio a classificação — debug · métricas · melhoria contínua · auditoria. */
-export type ClassificationSource = 'filename' | 'mime' | 'signature' | 'content_ai' | 'none'
-
-/** Resultado FACTUAL da classificação — a UI mostra e pede confirmação. */
-export interface ClassificationResult {
-  kind: DocumentKind
-  confidence: 'high' | 'medium' | 'low'
-  reason?: string
-  /** Subtipo curto quando evidente (ex.: 'hemograma', 'bula', 'receita', 'omica'). */
-  subtype?: string
-  /** Origem do sinal que decidiu a classificação. */
-  source?: ClassificationSource
-}
-
-/** Motivo de erro NORMALIZADO (o Hub traduz qualquer falha de pipeline para isto). */
-export type CaptureErrorReason = 'unreadable' | 'protected' | 'incompatible' | 'temporary' | 'unknown'
-
-/** Contexto passado aos processadores (sem acoplar a React). */
+/** Contexto passado aos processadores (acopla à plataforma — Supabase). */
 export interface CaptureContext {
   supabase: SupabaseClient
   userId: string
 }
 
-/** CONTRATO ÚNICO de retorno — todo processador devolve isto; o Hub só renderiza. */
-export interface CaptureResult {
-  status: 'success' | 'forwarded' | 'error'
-  kind: DocumentKind
-  /** Título unificado ("Exame criado", "Documento encaminhado", "Não foi possível processar"). */
-  title: string
-  /** Detalhe factual para a usuária. */
-  message: string
-  /** Rótulo da próxima ação ("Abrir exame", "Continuar"). */
-  nextActionLabel?: string
-  /** Destino da próxima ação. */
-  nextHref?: string
-  /** Id da entidade criada (quando houver). */
-  entityId?: string
-  /** Preenchido quando status='error'. */
-  errorReason?: CaptureErrorReason
-}
-
 /**
  * Contrato de um processador de documento. O Intake conversa SÓ com esta interface;
  * cada processador encaminha para o pipeline EXISTENTE (sem alterá-lo) e devolve o
- * CaptureResult único.
+ * CaptureResult único (do core).
  */
 export interface DocumentProcessor {
   kind: Exclude<DocumentKind, 'unknown' | 'other'>

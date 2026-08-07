@@ -20,10 +20,11 @@ describe('HUB-001 · taxonomia', () => {
       if (i.mechanism.type === 'choice') expect(valid.has(i.mechanism.captureKind)).toBe(true)
     }
   })
-  it('page/choice apontam para rota de dashboard', () => {
+  it('page/choice referenciam um destino de DOMÍNIO válido (a rota é mapeada na plataforma)', () => {
+    const dests = new Set(['omics', 'medications', 'supplements', 'resources', 'resources-vision', 'consulta', 'conditions', 'body', 'habits', 'expenses'])
     for (const i of REGISTRATION_INTENTS) {
-      if (i.mechanism.type === 'page') expect(i.mechanism.href.startsWith('/dashboard/')).toBe(true)
-      if (i.mechanism.type === 'choice') expect(i.mechanism.pageHref.startsWith('/dashboard/')).toBe(true)
+      if (i.mechanism.type === 'page') expect(dests.has(i.mechanism.destination)).toBe(true)
+      if (i.mechanism.type === 'choice') expect(dests.has(i.mechanism.pageDestination)).toBe(true)
     }
   })
   it('todo grupo declarado tem ao menos um intent (nada vazio)', () => {
@@ -44,12 +45,14 @@ describe('HUB-001 · taxonomia', () => {
   it('Óculos/Lentes vai para Recursos (correção visual) — sem artefato paralelo', () => {
     const oculos = REGISTRATION_INTENTS.find(i => i.key === 'oculos')!
     expect(oculos.mechanism.type).toBe('page')
-    if (oculos.mechanism.type === 'page') expect(oculos.mechanism.href).toContain('/dashboard/recursos')
+    if (oculos.mechanism.type === 'page') expect(oculos.mechanism.destination).toBe('resources-vision')
   })
-  it('destinos de página que registram pré-abrem o formulário (?novo=1)', () => {
-    for (const key of ['condicao', 'medida', 'habito', 'recurso', 'oculos']) {
+  it('destinos de registro apontam para o domínio correto (rota/?novo=1 é mapeada na plataforma)', () => {
+    const expected: Record<string, string> = { condicao: 'conditions', medida: 'body', habito: 'habits', recurso: 'resources', oculos: 'resources-vision' }
+    for (const [key, dest] of Object.entries(expected)) {
       const i = REGISTRATION_INTENTS.find(x => x.key === key)!
-      if (i.mechanism.type === 'page') expect(i.mechanism.href).toContain('novo=')
+      expect(i.mechanism.type).toBe('page')
+      if (i.mechanism.type === 'page') expect(i.mechanism.destination).toBe(dest)
     }
   })
 })

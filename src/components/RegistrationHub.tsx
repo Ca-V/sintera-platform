@@ -17,8 +17,22 @@ import {
   ArrowLeft, ChevronRight, UploadCloud, ArrowUpRight,
 } from 'lucide-react'
 import CaptureCenter from '@/lib/capture/intake/CaptureCenter'
-import { INTENT_GROUPS, intentsByGroup, type RegistrationIntent } from '@/lib/capture/registrationHub'
+import { INTENT_GROUPS, intentsByGroup, type RegistrationIntent, type RegistrationDestination } from '@/lib/capture/registrationHub'
 import type { DocumentKind } from '@/lib/capture/types'
+
+// Mapeia o destino de domínio → rota da Web (apresentação). O Mobile terá o seu próprio mapa (aba/tela).
+const WEB_HREF: Record<RegistrationDestination, string> = {
+  omics: '/dashboard/omics',
+  medications: '/dashboard/medicamentos',
+  supplements: '/dashboard/suplementos',
+  resources: '/dashboard/recursos?novo=1',
+  'resources-vision': '/dashboard/recursos?novo=1&tipo=correcao_visual',
+  consulta: '/dashboard/agenda?novo=consulta',
+  conditions: '/dashboard/condicoes?novo=1',
+  body: '/dashboard/medidas?novo=1',
+  habits: '/dashboard/habitos?novo=1',
+  expenses: '/dashboard/gastos',
+}
 
 type IconType = ComponentType<{ size?: number; className?: string }>
 const ICONS: Record<string, IconType> = {
@@ -40,7 +54,7 @@ export default function RegistrationHub({ onDone }: { onDone?: () => void }) {
   function choose(intent: RegistrationIntent) {
     const m = intent.mechanism
     if (m.type === 'capture') setView({ mode: 'capture', kind: m.documentKind ?? null })
-    else if (m.type === 'page') goToPage(m.href)
+    else if (m.type === 'page') goToPage(WEB_HREF[m.destination])
     else setView({ mode: 'choice', intent })
   }
 
@@ -75,7 +89,7 @@ export default function RegistrationHub({ onDone }: { onDone?: () => void }) {
             <span className="font-body text-sm text-onyx flex-1">{m.captureLabel}</span>
             <ChevronRight size={15} className="text-mauve" />
           </button>
-          <button type="button" onClick={() => goToPage(m.pageHref)}
+          <button type="button" onClick={() => goToPage(WEB_HREF[m.pageDestination])}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl border border-border hover:border-petal/40 hover:bg-blush/30 transition-colors text-left">
             <Pill size={18} className="text-petal flex-shrink-0" />
             <span className="font-body text-sm text-onyx flex-1">{m.pageLabel}</span>
