@@ -94,6 +94,23 @@ reutiliza o **mesmo modelo conceitual e a mesma lógica** (core), variando só a
 link/exportar/abrir anexo/histórico por tipo…), salvo limitação de device. UX‑003 + ADR‑021 constituem o **Product
 System da SINTERA** (arquitetura · componentes · comportamento · modelo de dados · representação · paridade).
 
+## Princípio orientador — Desenvolvimento orientado ao DOMÍNIO (não à tela) — fundadora, 2026‑08‑06
+**A referência da SINTERA deixa de ser a tela e passa a ser o DOMÍNIO.** Ao implementar qualquer funcionalidade,
+pensa‑se **primeiro no objeto de domínio** (Exame · Indicador · Evento · Medicamento · Documento · Relatório…) e só
+depois na tela. Decorre daí:
+- **Comportamento** pertence ao **domínio**, não à interface.
+- **Lógica** pertence ao **core**, não à página.
+- **Representação do dado** é **única** (uma só verdade).
+- **Telas apenas consomem** essa lógica e apresentam a informação adequada ao contexto/dispositivo.
+
+Consequência: Web e Mobile **deixam de ser dois produtos** e passam a ser **duas interfaces para o mesmo sistema**.
+**Regra de decisão:** diante da escolha entre *solução específica de tela* × *fortalecer um componente / regra de
+domínio / lógica compartilhada*, a prioridade é **sempre fortalecer a base**. Reduz manutenção, evita regressões e faz
+as próximas funcionalidades **nascerem consistentes**. É o degrau de maturidade que unifica IA · Design System ·
+governança de UX · paridade (4 níveis) · coerência do modelo de dados · SSOT de componentes · gates de validação —
+tudo já formalizado neste ADR e em `docs/UX-003`. **Meta pós‑entrega:** o esforço de desenvolvimento migra de "corrigir
+diferenças/inconsistências" para "**agregar novas capacidades**".
+
 ## Fora de escopo / a consolidar depois
 - O **ADR de Governança v1.0** (framework de certificação G1–G4 / matriz de paridade) permanece para consolidar
   **pós‑RC1**, registrando a arquitetura validada — este ADR‑021 registra os **princípios diretores** declarados agora.
