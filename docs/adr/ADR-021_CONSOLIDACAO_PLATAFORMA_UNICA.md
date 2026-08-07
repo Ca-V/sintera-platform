@@ -89,6 +89,11 @@ defeitos (ex.: extração bruta exibida como estruturada; longitudinal ausente n
 dado**, não da interface. Operacionaliza‑se com **H‑11 (SSOT de componentes)**: funcionalidade em ambas as plataformas
 reutiliza o **mesmo modelo conceitual e a mesma lógica** (core), variando só a apresentação. Detalhe em `docs/UX-003`.
 
+**Quatro níveis de paridade (gate completo):** (1) **visual** · (2) **componentes** · (3) **modelo de dados** ·
+(4) **funcional** — *qualquer AÇÃO* disponível numa plataforma existe na outra (adicionar/reabrir/editar/incluir/criar
+link/exportar/abrir anexo/histórico por tipo…), salvo limitação de device. UX‑003 + ADR‑021 constituem o **Product
+System da SINTERA** (arquitetura · componentes · comportamento · modelo de dados · representação · paridade).
+
 ## Fora de escopo / a consolidar depois
 - O **ADR de Governança v1.0** (framework de certificação G1–G4 / matriz de paridade) permanece para consolidar
   **pós‑RC1**, registrando a arquitetura validada — este ADR‑021 registra os **princípios diretores** declarados agora.

@@ -59,19 +59,20 @@ deve ser replicado **exatamente** como na Web (`/dashboard/saude` + `/dashboard/
 > da evolução funcional (módulo a módulo: Agenda → Exames → Minha Saúde…), reusando `Select` (existe) e o novo
 > componente de captura (protocolo único). Sem builds soltas — um ciclo, uma build.
 
-## Achados — rodada 3 (H‑12…H‑20)
+## Achados — rodada 3 (H‑12…H‑22)
 | ID | Módulo · plataforma | Achado | Padrão/decisão |
 |---|---|---|---|
 | H‑12 | **Histórico de Exames** — filtro de período | Copy ruim ("Tudo" → algo como **"Período completo"**); só 30/90 dias/1 ano → **mais opções** (6 meses, 2 anos, personalizado); via **seletor** | PS‑1 + PS‑3 |
 | H‑13 | **Histórico de Saúde (Mobile)** | Falta **"adicionar evento"**; falta **frase explicativa** (R‑PAGE); divisão só **por data** → **por data E por tipo** (seletor); faltam as ações **Reabrir (desfazer conclusão) · Editar · Incluir** que a Web tem | PS‑1 + R‑PAGE + paridade |
 | H‑14 | **R‑ATTACH** (Web+Mobile) | Card de evento no Mobile não tem o **link "anexo"** (Web tem — abre a nota fiscal/laudo original). Instância do princípio R‑ATTACH acima. | **R‑ATTACH** |
-| H‑15 | **Rede de Cuidado** (Web×Mobile) | Web abre **direto** o painel de Relatórios; Mobile abre um **menu** (Relatórios + Profissionais/Compartilhamento "em breve"); e a página de Relatório tem **formatação divergente**. Alinhar (decisão: ambos diretos × ambos menu) + aplicar padrões (cards/ordem) | Paridade + **decisão** |
+| H‑15 | **Rede de Cuidado** (Web×Mobile) | Web abre **direto** o painel de Relatórios; Mobile abre um **menu** (Relatórios + Profissionais/Compartilhamento "em breve"); e a página de Relatório tem **formatação divergente**. + aplicar padrões (cards/ordem/formatação). | ✅ **RESOLVIDO:** ambos **DIRETO → Relatórios** (sem tela intermediária) até a CARE‑002; depois vira menu (Relatórios·Profissionais·Compartilhamentos) |
 | H‑16 | **Relatórios** — Histórico de Exames | Ao incluir, mostrar **nome do exame + link ao arquivo**, não toda a extração/biomarcadores; + **busca/filtro** por exame específico | **R‑REPORT‑ENXUTO** |
 | H‑17 | **Modelo de dados — Bioimpedância** | Bioimpedância vive em **Composição Corporal** (não listar todas as medidas — só nome+data+link) **mas também é Exame** → deve **projetar em Exames** (lá gera relatório com extração como qualquer exame). Projeção sem duplicação. | **[coerência de dados] [[adr_001_projecao_ssot]]** |
 | H‑18 | **BUG — Criar link (compartilhar relatório) Mobile** | "Não foi possível criar — ambiente sem gerador de aleatoriedade seguro" → `randomToken()` falha no RN (sem `crypto.getRandomValues`). **Corrigir** (polyfill/expo‑crypto). O relatório do link deve conter as infos da tela **+ todos os anexos vinculados** (arquivo original). | **BUG + R‑ATTACH** |
 | H‑19 | **Configurações** — código de país (telefone) | Códigos **expostos** na tela → **seletor rolável com busca** (todos os códigos) | PS‑1 |
-| H‑20 | **Central de notificações** | Só alguns itens → ou **todas** as categorias (email/WhatsApp/ambos/nenhum por categoria) **ou** uma **única** opção central (email/WhatsApp/ambos/nenhum). Avaliar melhor e **padronizar** nas 2 plataformas | PS‑3 + **decisão** |
+| H‑20 | **Central de notificações** | Só alguns itens → ou **todas** as categorias (email/WhatsApp/ambos/nenhum por categoria) **ou** uma única opção central. | ✅ **RESOLVIDO:** manter **POR CATEGORIA** (Agenda→WhatsApp, Exames→e‑mail, Medicamentos→ambos, Marketing→nenhum…), com **todas** as categorias — NÃO simplificar para canal único global (evita redesenho futuro). Padronizar nas 2 plataformas |
 | H‑21 | **Histórico de Exames (Mobile)** — intervalo personalizado | Data personalizada só **digitável** → falta o **calendário** (date picker) como na Web | PS‑1/paridade |
+| **H‑22** | **Exportar meus dados** (Web+Mobile) — **requisito funcional crítico** | Erro **401** ao exportar. Não é só bug: a exportação é crítica para a **confiança**. Deve **funcionar nas 2 plataformas**, exportar **exatamente os mesmos dados**, **incluir todos os anexos originais** quando pertinente, e dar **mensagens de erro compreensíveis** em falha de auth. O 401 é tratado **na origem** (autenticação/autorização), não escondido na UI. | **BUG + requisito + R‑PARIDADE FUNCIONAL + R‑DOCUMENTO** |
 
 ## Princípios elevados na homologação (regras de sistema, não itens) + H‑11
 - **R‑FORM (de H‑6):** TODOS os formulários usam o mesmo padrão de entrada (PS‑1/2/3) — nomenclatura, **hierarquia
@@ -95,6 +96,18 @@ deve ser replicado **exatamente** como na Web (`/dashboard/saude` + `/dashboard/
   **nome do exame + data + link ao arquivo original** — **não** despejar toda a extração/biomarcadores (um laboratorial
   pode ter 50). Extração completa só na **página do exame**. Oferecer **busca/filtro** para gerar relatório de exame(s)
   específico(s) (ex.: só Vitamina D, só ultrassom). Mesmo tratamento para bioimpedância (nome+data+link, não a lista de medidas).
+- **R‑DOCUMENTO (novo) — o documento é a origem, ativo permanente:** todo documento original é **ativo permanente** da
+  plataforma. Sempre que houver documento associado a registro/exame/evento/medicamento/composição/relatório, ele
+  **permanece acessível** por **link ao arquivo original**. As extrações são **derivações** do documento (fundamenta R‑ATTACH/R‑EXTRACT).
+- **R‑REPRESENTAÇÃO (novo) — representar o OBJETO, não os atributos internos:** a interface mostra o **objeto principal**
+  (ex.: *"Bioimpedância · 08/08/2026 · Abrir arquivo"*), **não** a lista dos seus atributos (Peso/Massa magra/Água/
+  Gordura/Taxa metabólica…). Vale para Ultrassom · Ressonância · Tomografia · Laboratório · Ecocardiograma · Bioimpedância.
+- **R‑EXAME (novo) — Exame ≠ Biomarcador:** um **Exame** (ex.: "Laboratório Fleury · 15/07/2026") CONTÉM biomarcadores
+  (Creatinina, Glicemia, Vitamina D, PCR, TSH…). O Relatório (e a navegação) opera **primeiro no nível do EXAME**; só
+  depois, se solicitado, no nível do **biomarcador**. Resolve o laboratorial com dezenas de resultados.
+- **R‑PARIDADE FUNCIONAL (novo) — 4º nível de paridade:** além de visual · componentes · modelo de dados, **qualquer
+  AÇÃO** disponível numa plataforma deve existir na outra (salvo limitação de device). Ex.: adicionar evento · reabrir ·
+  editar · incluir · criar link · exportar dados · abrir anexo · histórico por tipo. É funcionalidade, não interface.
 
 ### Gate adicional — COERÊNCIA DO MODELO DE DADOS
 Muitos achados (esp. H‑9/H‑10) não são de interface, e sim de **como o dado é representado**. **Critério:** nenhuma
