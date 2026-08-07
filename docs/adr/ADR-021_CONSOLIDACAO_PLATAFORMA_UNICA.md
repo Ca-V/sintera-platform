@@ -82,6 +82,13 @@ botões · componentes de seleção · fluxos de inclusão · Web↔Mobile. **A 
 diferença de UX entre plataformas para funcionalidade equivalente. Reforça [[principio_paridade_total_web_mobile]] e a
 matriz de paridade (G4) — agora como **gate de conclusão**, não só princípio.
 
+**Gate adicional — COERÊNCIA DO MODELO DE DADOS:** nenhuma informação pode ser apresentada de forma diferente entre Web
+e Mobile quando representar o **mesmo objeto de domínio** (Exame · Indicador · Medição · Medicamento · Evento…). A
+diferença entre plataformas limita‑se a **layout/adaptação ao device**, **nunca** ao modelo conceitual — porque vários
+defeitos (ex.: extração bruta exibida como estruturada; longitudinal ausente no Mobile) nascem da **representação do
+dado**, não da interface. Operacionaliza‑se com **H‑11 (SSOT de componentes)**: funcionalidade em ambas as plataformas
+reutiliza o **mesmo modelo conceitual e a mesma lógica** (core), variando só a apresentação. Detalhe em `docs/UX-003`.
+
 ## Fora de escopo / a consolidar depois
 - O **ADR de Governança v1.0** (framework de certificação G1–G4 / matriz de paridade) permanece para consolidar
   **pós‑RC1**, registrando a arquitetura validada — este ADR‑021 registra os **princípios diretores** declarados agora.

@@ -59,6 +59,28 @@ deve ser replicado **exatamente** como na Web (`/dashboard/saude` + `/dashboard/
 > da evolução funcional (módulo a módulo: Agenda → Exames → Minha Saúde…), reusando `Select` (existe) e o novo
 > componente de captura (protocolo único). Sem builds soltas — um ciclo, uma build.
 
+## Princípios elevados na homologação (regras de sistema, não itens) + H‑11
+- **R‑FORM (de H‑6):** TODOS os formulários usam o mesmo padrão de entrada (PS‑1/2/3) — nomenclatura, **hierarquia
+  dos botões, componentes de seleção, espaçamento e alinhamento visual**. Sem exceção por módulo.
+- **R‑MONITOR (de H‑7):** Monitoramento sempre responde, de imediato, a **duas** perguntas: *"como registrar
+  manualmente?"* e *"como conectar um dispositivo?"* — os dois caminhos percebidos na hora.
+- **R‑PAGE (de H‑8):** **toda página principal** segue o mesmo esqueleto: **título · frase explicativa · ação principal**.
+- **R‑EXTRACT (de H‑9):** a plataforma **NUNCA** apresenta como *"resultado estruturado"* algo ainda não estruturado.
+  Etapas distintas: **Imagem → Arquivo → OCR → Extração → Validação → Resultado estruturado**. Extração bruta ≠ exame
+  estruturado (confiança; factual — RDC 657).
+- **R‑LONGITUDINAL (de H‑10):** o acompanhamento longitudinal é **componente central** e usa **exatamente o mesmo
+  componente** (mesma lógica, navegação, interação e **estrutura de dados**) em Web e Mobile — nunca duas versões.
+- **H‑11 — Componentes únicos (SSOT de componentes):** toda funcionalidade que exista nas duas plataformas reutiliza o
+  **mesmo modelo conceitual** — Página de exame · Página de indicador · Timeline · Longitudinal · Formulários ·
+  Seletores · Fluxo de adicionar. **Proibido** implementações paralelas com comportamento diferente. **Web = referência
+  funcional; Mobile reusa a lógica (core/SSOT), adaptando só a apresentação ao dispositivo.** Reforça [[adr_001_projecao_ssot]].
+
+### Gate adicional — COERÊNCIA DO MODELO DE DADOS
+Muitos achados (esp. H‑9/H‑10) não são de interface, e sim de **como o dado é representado**. **Critério:** nenhuma
+informação pode ser apresentada de forma diferente entre Web e Mobile quando representar o **mesmo objeto de domínio**
+(Exame · Indicador · Medição · Medicamento · Evento…). A diferença limita‑se a **layout/adaptação ao device**, nunca ao
+**modelo conceitual**. Este gate soma‑se ao de paridade (ADR‑021).
+
 ## Critério de aceite (gate — antes de cada build de homologação)
 Estes padrões são **regra de sistema**, não correção pontual: aplicam‑se a **todas as telas existentes e futuras**.
 Antes de considerar a build pronta, **varredura completa** verificando:
