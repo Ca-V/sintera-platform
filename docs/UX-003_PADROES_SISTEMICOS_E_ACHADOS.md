@@ -126,3 +126,16 @@ Antes de considerar a build pronta, **varredura completa** verificando:
 
 **Definition of Done (ADR‑021, 5ª regra):** nenhuma funcionalidade é concluída com diferença de UX entre Web e Mobile,
 salvo limitação inerente ao dispositivo (câmera, gestos nativos). A homologação não se conclui enquanto houver diferença.
+
+### Validação funcional pré‑build (NÃO basta compilar / testes passarem) — obrigatória
+Antes de disponibilizar a build, revisão **funcional** comparando Web×Mobile na experiência real. Confirmar:
+- [ ] **Componentes compartilhados** de fato **reutilizados** pelas duas plataformas (não só existentes).
+- [ ] **Zero implementações paralelas** para funcionalidades equivalentes (H‑11).
+- [ ] **Paridade validada** em: arquitetura · comportamento · nomenclatura · componentes · **modelo de dados**.
+- [ ] **Documentos originais acessíveis** em **todos** os pontos onde são referenciados (R‑ATTACH/R‑DOCUMENTO).
+- [ ] **Acompanhamento longitudinal** usa o **mesmo componente e a mesma lógica** nas duas plataformas (R‑LONGITUDINAL).
+- [ ] **Correção por causa, não sintoma:** onde o mesmo componente/padrão/lógica aparece em **outros** módulos (mesmo
+      não citados na homologação), a correção foi aplicada também.
+- [ ] Os **novos padrões** passam a ser a **referência** para implementações futuras (este doc + ADR‑021).
+> Objetivo desta build: **comportamento consistente por construção** — a próxima homologação deve ser de refinamento,
+> não de novas inconsistências estruturais.
