@@ -11,13 +11,12 @@ import type { AppTabParamList } from '../../navigation/types'
 
 type Entry = { label: string; tab: keyof AppTabParamList; screen?: string }
 
-// Alta frequência (UX-002): Agenda · Exames · Minha Saúde · Compartilhamento · Adicionar Registro.
+// Alta frequência (UX-002): Agenda · Exames · Minha Saúde · Rede de Cuidado. ("Adicionar registro" é card-herói próprio.)
 const ENTRIES: readonly Entry[] = [
   { label: 'Agenda', tab: 'Agenda' },
   { label: 'Exames', tab: 'MinhaSaude', screen: 'ExamsList' },
   { label: 'Minha Saúde', tab: 'MinhaSaude' },
   { label: 'Rede de Cuidado', tab: 'RedeCuidado' },
-  { label: 'Adicionar Registro', tab: 'MinhaSaude', screen: 'ExamUpload' },
 ]
 
 export function QuickActionsSlot() {

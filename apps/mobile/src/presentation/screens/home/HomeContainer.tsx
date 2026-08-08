@@ -1,6 +1,6 @@
-// HomeContainer — a raiz da aba "Início". FICA FORA de presentation/home/ (por isso PODE acessar dados): busca os
-// próximos compromissos da Agenda e os INJETA na HomeShell por prop. Mantém a Home como camada de apresentação pura
-// (INV-HOME-001). Este é o padrão para QUALQUER dado de outro módulo que a Home precise exibir (ADR-021/UX-002).
+// HomeContainer — raiz da aba "Início". FICA FORA de presentation/home/ (por isso PODE acessar dados): busca os
+// próximos compromissos da Agenda e o NOME do perfil, e os INJETA na HomeShell por prop. Mantém a Home como
+// apresentação pura (INV-HOME-001). Padrão para QUALQUER dado de outro módulo que a Home precise exibir (ADR-021/UX-002).
 import { useEffect, useRef, useState } from 'react'
 import { isClosedStatus, typeLabel, formatDateLongBR, type HealthEvent } from '@sintera/core'
 import { HomeShell } from '../../home/HomeShell'
@@ -18,12 +18,17 @@ function toUpcoming(events: HealthEvent[]): UpcomingItem[] {
 }
 
 export function HomeContainer() {
-  const [upcoming, setUpcoming] = useState<UpcomingItem[]>([])
+  const [data, setData] = useState<{ upcoming: UpcomingItem[]; name: string | null }>({ upcoming: [], name: null })
   const alive = useRef(true)
   useEffect(() => {
     alive.current = true
-    apiClient.agenda.listEvents().then((evs) => { if (alive.current) setUpcoming(toUpcoming(evs)) }).catch(() => { /* Home resiliente: sem compromissos se falhar */ })
+    Promise.all([
+      apiClient.agenda.listEvents().catch(() => [] as HealthEvent[]),
+      apiClient.profile.getProfile().catch(() => null),
+    ]).then(([evs, prof]) => {
+      if (alive.current) setData({ upcoming: toUpcoming(evs), name: prof?.name ?? null })
+    })
     return () => { alive.current = false }
   }, [])
-  return <HomeShell upcoming={upcoming} />
+  return <HomeShell upcoming={data.upcoming} name={data.name} />
 }

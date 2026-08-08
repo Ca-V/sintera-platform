@@ -13,15 +13,15 @@ describe('Contrato dos slots da Home (MOBILE-014 §3.4 · Home-hub UX-002)', () 
   it('HomeShell compõe os slots da Home-hub (saudação · acesso rápido · como usar · rodapé)', () => {
     const shell = read('HomeShell.tsx')
     // Home = HUB de navegação (UX-002). Resumo/Linha do tempo/Insights saíram (pertencem aos módulos).
-    for (const slot of ['WelcomeSlot', 'QuickActionsSlot', 'ProximosCompromissosSlot', 'ComoUsarSlot', 'FooterSlot']) {
+    for (const slot of ['WelcomeSlot', 'AdicionarRegistroSlot', 'QuickActionsSlot', 'ProximosCompromissosSlot', 'ComoUsarSlot', 'FooterSlot']) {
       expect(shell, `HomeShell deve compor <${slot} />`).toMatch(new RegExp(`<${slot}[^>]*/>`))
     }
   })
 
-  it('WelcomeSlot usa apenas a sessão (useAuth), sem navegação', () => {
+  it('WelcomeSlot é apresentação pura (nome por injeção; sem navegação, sem sessão/rede)', () => {
     const src = read('slots/WelcomeSlot.tsx')
-    expect(src).toContain('useAuth')
     expect(src, 'Welcome não deve importar navegação').not.toMatch(/useNavigation|@react-navigation/)
+    expect(src, 'Welcome não deve carregar dados (useEffect/useState)').not.toMatch(/useEffect|useState/)
   })
 
   it('QuickActionsSlot apenas navega (useNavigation + navigate), sem regra de negócio', () => {

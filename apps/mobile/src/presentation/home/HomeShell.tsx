@@ -1,32 +1,40 @@
-// Home Shell — a "casca" permanente da tela inicial. HUB DE NAVEGAÇÃO (UX-002), não um relatório: cada slot ajuda o
-// usuário a INICIAR uma ação; não repete informação que já vive em outro módulo. COMPOSIÇÃO de slots nomeados,
-// nunca dona de lógica de domínio (MOBILE-014 §2.1 / INV-HOME-001). Layout/espaçamento/hierarquia + safe-area (DS-002).
-// Slots: saudação · acesso rápido · como usar (onboarding permanente) · rodapé (logout). Resumo/Linha do tempo/
-// Insights saíram da Home (pertencem aos respectivos módulos). Próximos Compromissos entra por INJEÇÃO (container).
+// Home Shell — HUB DE NAVEGAÇÃO (UX-002), estrutura unificada Web↔Mobile: Identidade+Saudação → Adicionar registro →
+// Próximos compromissos → Acesso rápido → Como usar → Rodapé. COMPOSIÇÃO pura (INV-HOME-001): dados de outros
+// módulos (nome do perfil, próximos eventos) chegam por INJEÇÃO (HomeContainer). "Adicionar registro" abre o hub
+// único de captura (taxonomia do core). Resumo/Linha do tempo/Insights saíram da Home (pertencem aos módulos).
+import { useState } from 'react'
 import { ScrollView, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '../theme'
 import { WelcomeSlot } from './slots/WelcomeSlot'
-import { QuickActionsSlot } from './slots/QuickActionsSlot'
+import { AdicionarRegistroSlot } from './slots/AdicionarRegistroSlot'
 import { ProximosCompromissosSlot, type UpcomingItem } from './slots/ProximosCompromissosSlot'
+import { QuickActionsSlot } from './slots/QuickActionsSlot'
 import { ComoUsarSlot } from './slots/ComoUsarSlot'
 import { FooterSlot } from './slots/FooterSlot'
+import { RegistrationHubSheet } from '../screens/capture/RegistrationHubSheet'
 
-/** Dados de outros módulos chegam por INJEÇÃO (HomeContainer, fora de home/) — a Home permanece apresentação pura. */
-export function HomeShell({ upcoming = [] }: { upcoming?: UpcomingItem[] }) {
+export function HomeShell({ upcoming = [], name }: { upcoming?: UpcomingItem[]; name?: string | null }) {
   const t = useTheme()
   const insets = useSafeAreaInsets()
+  const [addOpen, setAddOpen] = useState(false)
+  const openAdd = () => setAddOpen(true)
+  const closeAdd = () => setAddOpen(false)
   return (
-    <ScrollView
-      style={{ backgroundColor: t.color.surface.app }}
-      contentContainerStyle={[styles.content, { paddingTop: styles.content.padding + insets.top }]}
-    >
-      <WelcomeSlot />
-      <QuickActionsSlot />
-      <ProximosCompromissosSlot items={upcoming} />
-      <ComoUsarSlot />
-      <FooterSlot />
-    </ScrollView>
+    <>
+      <ScrollView
+        style={{ backgroundColor: t.color.surface.app }}
+        contentContainerStyle={[styles.content, { paddingTop: styles.content.padding + insets.top }]}
+      >
+        <WelcomeSlot name={name} />
+        <AdicionarRegistroSlot onPress={openAdd} />
+        <ProximosCompromissosSlot items={upcoming} />
+        <QuickActionsSlot />
+        <ComoUsarSlot />
+        <FooterSlot />
+      </ScrollView>
+      <RegistrationHubSheet visible={addOpen} onClose={closeAdd} />
+    </>
   )
 }
 
