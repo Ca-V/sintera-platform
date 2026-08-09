@@ -21,6 +21,8 @@ import {
 import { Text, Button, Input, MetricRow, Disclaimer, DatePicker } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
+import { useAssistedCapture } from '../capture/useAssistedCapture'
+import { AssistedBatchReview, type ReviewItem } from '../capture/AssistedBatchReview'
 
 function parseNum(v: string): number { return Number(String(v).replace(',', '.').replace(/[^\d.-]/g, '')) }
 function fmt(d: string): string { const [y, m, dd] = (d || '').slice(0, 10).split('-'); return y ? `${dd}/${m}/${y}` : '—' }
@@ -141,6 +143,36 @@ export function ComposicaoScreen() {
   const milestones = filterByPeriod(allMilestones.filter(m => msCats.has(m.category)), evoDays, today())
   const openMilestone = (href: string | null) => { const m = href?.match(/\/exams?\/([\w-]+)/); if (m) openExam(m[1]) }
 
+  // T1 — captura assistida da BIOIMPEDÂNCIA: um laudo gera MÚLTIPLAS medidas → revisão em lote (proposta → salvar).
+  const capture = useAssistedCapture()
+  const [batch, setBatch] = useState<ReviewItem[]>([])
+  const [batchDate, setBatchDate] = useState(today())
+  const [batchSaving, setBatchSaving] = useState(false)
+  async function scanBioimpedance() {
+    const r = await capture.run((input) => apiClient.vision.readBioimpedance(input))
+    if (!r) return
+    const fields: [BodyMetric, string | null][] = [
+      ['peso', r.peso], ['gordura_corporal', r.gordura_corporal], ['massa_muscular', r.massa_muscular],
+      ['agua_corporal', r.agua_corporal], ['gordura_visceral', r.gordura_visceral], ['massa_ossea', r.massa_ossea],
+      ['taxa_metabolica', r.taxa_metabolica],
+    ]
+    const items: ReviewItem[] = fields.filter(([, v]) => v != null && String(v).trim())
+      .map(([k, v]) => ({ key: k, label: bodyMetricLabel(k), value: String(v).trim(), unit: bodyMetricUnit(k) }))
+    if (items.length === 0) { Alert.alert('Nada reconhecido', 'Não consegui ler medidas neste laudo.'); return }
+    setBatchDate(r.measured_on && /^\d{4}-\d{2}-\d{2}$/.test(r.measured_on) ? r.measured_on : today())
+    setBatch(items)
+  }
+  async function saveBatch() {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(batchDate)) { Alert.alert('Data obrigatória', 'Informe a data da avaliação.'); return }
+    setBatchSaving(true)
+    try {
+      for (const it of batch) {
+        await apiClient.body.saveBodyMetric({ metric: it.key as BodyMetric, value_text: it.value, unit: it.unit ?? null, measured_on: batchDate, source: 'bioimpedancia' })
+      }
+      setBatch([]); load(true)
+    } finally { setBatchSaving(false) }
+  }
+
   const examLabel = (e: ExamDTO) => `${e.display_title || e.type || 'Exame'}${e.exam_date ? ` · ${fmt(e.exam_date)}` : ''}`
   function startNew() { setEditing(null); setMetric('peso'); setLabel(''); setValue(''); setUnit('kg'); setDate(today()); setExamId(''); setNotes(''); setOpen(true) }
   function startEdit(m: BodyMetricDTO) { setEditing(m); setMetric(m.metric); setLabel(m.metric === 'outro' ? (m.label ?? '') : ''); setValue(m.value_text); setUnit(m.unit ?? bodyMetricUnit(m.metric)); setDate(m.measured_on); setExamId(m.exam_id ?? ''); setNotes(m.notes ?? ''); setOpen(true) }
@@ -190,6 +222,12 @@ export function ComposicaoScreen() {
         <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 22 }}>Composição Corporal</Text>
         {!open ? <Button label="Nova medida" onPress={startNew} /> : null}
       </View>
+      {!open ? <Button label="Escanear laudo de bioimpedância" variant="secondary" loading={capture.busy} loadingLabel="Lendo…" onPress={scanBioimpedance} /> : null}
+      <AssistedBatchReview
+        visible={batch.length > 0} title="Medidas lidas do laudo" items={batch} date={batchDate}
+        onDateChange={setBatchDate} onConfirm={saveBatch} onCancel={() => setBatch([])} busy={batchSaving}
+        confirmLabel={`Salvar ${batch.length} ${batch.length === 1 ? 'medida' : 'medidas'}`}
+      />
 
       {/* ② Jornada de peso (GLP-1) */}
       <View style={[styles.card, card, { gap: 6 }]}>
