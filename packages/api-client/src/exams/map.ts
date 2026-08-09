@@ -14,6 +14,7 @@ export function toExamDTO(row: Record<string, unknown>): ExamDTO {
     issuer: (row.issuer as string | null) ?? null,
     requesting_physician: (row.requesting_physician as string | null) ?? null,
     file_url: (row.file_url as string | null) ?? null,
+    extraction_completeness: (row.extraction_completeness as string | null) ?? null,
     created_at: (row.created_at as string | null) ?? null,
   }
 }

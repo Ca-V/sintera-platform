@@ -14,6 +14,7 @@ export interface ExamDTO {
   issuer: string | null           // emissor (laboratório/clínica)
   requesting_physician: string | null // solicitante
   file_url: string | null         // referência ao documento original (fonte da verdade)
+  extraction_completeness: string | null // 'document_only' etc. (CEF) — dirige o selo binário na LISTA (paridade Web)
   created_at: string | null       // quando entrou na plataforma
 }
 
@@ -23,7 +24,6 @@ export interface ExamDetailDTO extends ExamDTO {
   patient_name: string | null     // nome do paciente no laudo (conferência de identidade)
   page_count: number | null       // nº de páginas do documento
   document_scope: string | null   // escopo do documento (single/bundle…)
-  extraction_completeness: string | null // 'document_only' etc. (CEF) — dirige o estado da tela de resultados
   error_reason: string | null     // motivo do erro de extração (exibição)
   text_truncated: boolean | null  // documento processado parcialmente (aviso)
   fulfills_order_id: string | null // vínculo ao pedido de ORIGEM (Q1)
@@ -62,8 +62,8 @@ export interface ExamsApi {
 
 /** Colunas centrais lidas do banco (explícitas — não `*` — para não trazer campos internos/financeiros). */
 export const EXAM_COLUMNS =
-  'id, exam_date, display_title, type, document_type, clinical_family, status, issuer, requesting_physician, file_url, created_at' as const
+  'id, exam_date, display_title, type, document_type, clinical_family, status, issuer, requesting_physician, file_url, extraction_completeness, created_at' as const
 
 /** Colunas do DETALHE — as centrais + os campos extras (paciente, páginas, financeiro, vínculo…). Só `getExam`. */
 export const EXAM_DETAIL_COLUMNS =
-  `${EXAM_COLUMNS}, patient_name, page_count, document_scope, extraction_completeness, error_reason, text_truncated, fulfills_order_id, expense_amount_cents, expense_doc_type, expense_doc_url` as const
+  `${EXAM_COLUMNS}, patient_name, page_count, document_scope, error_reason, text_truncated, fulfills_order_id, expense_amount_cents, expense_doc_type, expense_doc_url` as const
