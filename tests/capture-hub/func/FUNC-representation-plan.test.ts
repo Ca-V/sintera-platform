@@ -42,6 +42,20 @@ describe('FUNC · planRepresentation (equivalência ao legado)', () => {
     expect(p.structureConfident).toBe(true)
   })
 
+  it("tipo NULO/desconhecido SEM evidência → document_only (preserva o documento; D-11/12)", () => {
+    for (const dt of ['', null as unknown as string, undefined as unknown as string]) {
+      const p = planRepresentation(cdu('documento sem sinais'), { documentType: dt, examCount: 0, biomarkerCount: 0 })
+      expect(p.structured, `documentType=${JSON.stringify(dt)}`).toBe(false)
+      expect(p.documentOnly).toBe(true)
+    }
+  })
+
+  it("tipo NULO/desconhecido COM biomarcadores extraídos → estruturado (evidência positiva)", () => {
+    const p = planRepresentation(cdu('RESULTADO: 85'), { documentType: '', examCount: 0, biomarkerCount: 5 })
+    expect(p.structured).toBe(true)
+    expect(p.documentOnly).toBe(false)
+  })
+
   it("CDU com identidade especializada (Pentacam) → specialized=true (processador do CPE)", () => {
     const p = planRepresentation(
       cdu('OCULUS Pentacam K1 43,2 K2 44,1 Kmax 45 BAD-D 1,2 Pachymetry 540 Belin'),

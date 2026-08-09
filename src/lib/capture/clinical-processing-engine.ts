@@ -113,9 +113,15 @@ export function planRepresentation(
   const route = routeProcessing(identity)
   const specialized = !!route.model && route.model.id !== 'laboratory' && IMPLEMENTED_CLINICAL_MODELS.includes(route.model.id)
 
-  // Representação estruturada (biomarcadores) quando NÃO é laudo narrativo (imagem). Equivalente ao legado
-  // `isNarrativeLaudo = documentType === 'imaging'`. O conhecimento do rótulo fica AQUI, não no analyze.
-  const structured = ctx.documentType !== 'imaging'
+  // Representação estruturada (biomarcadores):
+  //  • imagem/laudo narrativo → document_only (equivalente ao legado `isNarrativeLaudo`);
+  //  • tipo CONHECIDO não-imagem (laboratory, medical_order…) → estruturado (legado inalterado);
+  //  • tipo NULO/desconhecido → só afirma "estruturado" com EVIDÊNCIA positiva (resultados extraídos ou
+  //    processador especializado); sem evidência, PRESERVA o documento em vez de alegar "estruturado" vazio
+  //    (D-11/12 — robustez do default). Convergir os dois classificadores de modalidade = item arquitetural à parte.
+  const hasResults = ctx.examCount >= 1 || ctx.biomarkerCount > 0
+  const unknownType = (ctx.documentType ?? '').trim() === ''
+  const structured = ctx.documentType === 'imaging' ? false : unknownType ? (hasResults || specialized) : true
   const structureConfident = ctx.documentType !== 'laboratory' || ctx.examCount >= 1 || ctx.biomarkerCount > 0
 
   return {
