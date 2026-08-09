@@ -2,15 +2,19 @@
 
 // Select universal (PS-1) — paridade com o primitivo Mobile (D-16). Em vez do <select> nativo (aparência
 // inconsistente entre navegadores/SO) ou de paredes de opções abertas, mostra um campo COMPACTO que abre um
-// popover ROLÁVEL com BUSCA quando a lista é grande. Sem regra de negócio (DS-003): reutilizável em qualquer
-// campo com mais de uma opção (filtros, tipo, recorrência, unidade…). Mesmo contrato de comportamento da Web
-// e do Mobile — só a apresentação é adaptada por plataforma.
+// popover ROLÁVEL com BUSCA quando a lista é grande. Aceita lista PLANA (`options`) ou AGRUPADA (`groups`,
+// equivalente a <optgroup>). Sem regra de negócio (DS-003): reutilizável em qualquer campo com mais de uma
+// opção. Mesmo contrato de comportamento da Web e do Mobile — só a apresentação é adaptada por plataforma.
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 export type SelectOption = { value: string; label: string }
+export type SelectGroup = { label: string; options: readonly SelectOption[] }
 
 type Props = {
-  options: readonly SelectOption[]
+  /** Lista plana. Use OU `options` OU `groups`. */
+  options?: readonly SelectOption[]
+  /** Lista agrupada (cabeçalhos por grupo — equivale a <optgroup>). */
+  groups?: readonly SelectGroup[]
   value: string
   onChange: (v: string) => void
   placeholder?: string
@@ -24,18 +28,29 @@ type Props = {
 }
 
 export default function Select({
-  options, value, onChange, placeholder = 'Selecionar…', title, searchable, disabled,
+  options, groups, value, onChange, placeholder = 'Selecionar…', title, searchable, disabled,
   'aria-label': ariaLabel, className = '',
 }: Props) {
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState('')
   const rootRef = useRef<HTMLDivElement>(null)
-  const current = options.find(o => o.value === value)
-  const canSearch = searchable ?? options.length > 8
-  const filtered = useMemo(() => {
+
+  // Normaliza para grupos (lista plana = um grupo sem rótulo). `flat` serve à busca de rótulo atual e à contagem.
+  const allGroups: readonly SelectGroup[] = useMemo(
+    () => groups ?? (options ? [{ label: '', options }] : []),
+    [groups, options],
+  )
+  const flat = useMemo(() => allGroups.flatMap(g => g.options), [allGroups])
+  const current = flat.find(o => o.value === value)
+  const canSearch = searchable ?? flat.length > 8
+
+  const filteredGroups = useMemo(() => {
     const s = q.trim().toLowerCase()
-    return s ? options.filter(o => o.label.toLowerCase().includes(s)) : options
-  }, [options, q])
+    if (!s) return allGroups
+    return allGroups
+      .map(g => ({ label: g.label, options: g.options.filter(o => o.label.toLowerCase().includes(s)) }))
+      .filter(g => g.options.length > 0)
+  }, [allGroups, q])
 
   useEffect(() => {
     if (!open) return
@@ -47,6 +62,7 @@ export default function Select({
   }, [open])
 
   const toggle = () => { if (disabled) return; setQ(''); setOpen(o => !o) }
+  const hasResults = filteredGroups.some(g => g.options.length > 0)
 
   return (
     <div ref={rootRef} className={`relative ${className}`}>
@@ -69,20 +85,25 @@ export default function Select({
               />
             </div>
           )}
-          {filtered.length === 0 ? (
+          {!hasResults ? (
             <div className="px-3 py-2 font-body text-sm text-mauve">Nada encontrado</div>
-          ) : filtered.map(o => {
-            const active = o.value === value
-            return (
-              <button
-                key={o.value} type="button" role="option" aria-selected={active}
-                onClick={() => { onChange(o.value); setOpen(false) }}
-                className={`w-full text-left px-3 py-2 font-body text-sm hover:bg-petal/10 ${active ? 'text-petal font-medium' : 'text-onyx'}`}
-              >
-                {o.label}
-              </button>
-            )
-          })}
+          ) : filteredGroups.map((g, gi) => (
+            <div key={g.label || `g${gi}`}>
+              {g.label && <div className="px-3 pt-2 pb-0.5 font-body text-[11px] font-semibold uppercase tracking-wide text-mauve/70">{g.label}</div>}
+              {g.options.map(o => {
+                const active = o.value === value
+                return (
+                  <button
+                    key={o.value} type="button" role="option" aria-selected={active}
+                    onClick={() => { onChange(o.value); setOpen(false) }}
+                    className={`w-full text-left px-3 py-2 font-body text-sm hover:bg-petal/10 ${active ? 'text-petal font-medium' : 'text-onyx'}`}
+                  >
+                    {o.label}
+                  </button>
+                )
+              })}
+            </div>
+          ))}
         </div>
       )}
     </div>

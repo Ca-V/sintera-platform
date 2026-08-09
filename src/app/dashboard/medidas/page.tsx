@@ -34,6 +34,7 @@ import Disclaimer from '@/components/ui/Disclaimer'
 import ProvenanceLine from '@/components/ui/ProvenanceLine'
 import { examProvenance } from '@/lib/provenance'
 import CreateRecordMenu from '@/components/ui/CreateRecordMenu'
+import Select from '@/components/ui/Select'
 import ConfirmDialog from '@/components/ConfirmDialog'
 
 type Metric =
@@ -749,19 +750,15 @@ export default function MedidasPage() {
           {compareOpen && (<>
           <div className="flex flex-wrap items-end gap-2">
             <div className="flex-1 min-w-[140px]">
-              <label htmlFor="snap-a" className="font-body text-[11px] text-mauve block mb-1">Avaliação A</label>
-              <select id="snap-a" value={snapA?.key ?? ''} onChange={e => setSnapAKey(e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
-                {snapshots.map(s => <option key={s.key} value={s.key}>{snapLabel(s)}</option>)}
-              </select>
+              <label className="font-body text-[11px] text-mauve block mb-1">Avaliação A</label>
+              <Select aria-label="Avaliação A" value={snapA?.key ?? ''} onChange={setSnapAKey}
+                options={snapshots.map(s => ({ value: s.key, label: snapLabel(s) }))} />
             </div>
             <span className="font-body text-xs text-mauve pb-2.5">com</span>
             <div className="flex-1 min-w-[140px]">
-              <label htmlFor="snap-b" className="font-body text-[11px] text-mauve block mb-1">Avaliação B</label>
-              <select id="snap-b" value={snapB?.key ?? ''} onChange={e => setSnapBKey(e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
-                {snapshots.map(s => <option key={s.key} value={s.key}>{snapLabel(s)}</option>)}
-              </select>
+              <label className="font-body text-[11px] text-mauve block mb-1">Avaliação B</label>
+              <Select aria-label="Avaliação B" value={snapB?.key ?? ''} onChange={setSnapBKey}
+                options={snapshots.map(s => ({ value: s.key, label: snapLabel(s) }))} />
             </div>
           </div>
 
@@ -835,14 +832,9 @@ export default function MedidasPage() {
           </div>
           {exams.length > 0 && (
             <div>
-              <label htmlFor="medida-scan-exam" className="font-body text-xs text-mauve block mb-1">Vincular ao laudo em Exames (opcional)</label>
-              <select id="medida-scan-exam" value={scanExamId} onChange={e => setScanExamId(e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
-                <option value="">Nenhum</option>
-                {exams.map(ex => (
-                  <option key={ex.id} value={ex.id}>{ex.type}{ex.examDate ? ` · ${fmt(ex.examDate)}` : ''}</option>
-                ))}
-              </select>
+              <label className="font-body text-xs text-mauve block mb-1">Vincular ao laudo em Exames (opcional)</label>
+              <Select aria-label="Vincular ao laudo em Exames" value={scanExamId} onChange={setScanExamId}
+                options={[{ value: '', label: 'Nenhum' }, ...exams.map(ex => ({ value: ex.id, label: `${ex.type}${ex.examDate ? ` · ${fmt(ex.examDate)}` : ''}` }))]} />
             </div>
           )}
           <div className="space-y-2">
@@ -881,24 +873,24 @@ export default function MedidasPage() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label htmlFor="medida-metric" className="font-body text-xs text-mauve block mb-1">Medida</label>
-              <select id="medida-metric" value={metric} onChange={e => chooseMetric(e.target.value as Metric)}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
-                <optgroup label="Corpo">
-                  <option value="peso">Peso</option>
-                  <option value="altura">Altura</option>
-                  <option value="circunferencia_cintura">Circunferência (cintura)</option>
-                </optgroup>
-                <optgroup label="Bioimpedância">
-                  <option value="gordura_corporal">Gordura corporal</option>
-                  <option value="massa_muscular">Massa muscular</option>
-                  <option value="massa_magra">Massa magra</option>
-                  <option value="agua_corporal">Água corporal</option>
-                  <option value="gordura_visceral">Gordura visceral</option>
-                  <option value="massa_ossea">Massa óssea</option>
-                  <option value="taxa_metabolica">Taxa metabólica basal</option>
-                </optgroup>
-                <option value="outro">Outra medida</option>
-              </select>
+              <Select aria-label="Tipo de medida" value={metric} onChange={(v) => chooseMetric(v as Metric)}
+                groups={[
+                  { label: 'Corpo', options: [
+                    { value: 'peso', label: 'Peso' },
+                    { value: 'altura', label: 'Altura' },
+                    { value: 'circunferencia_cintura', label: 'Circunferência (cintura)' },
+                  ] },
+                  { label: 'Bioimpedância', options: [
+                    { value: 'gordura_corporal', label: 'Gordura corporal' },
+                    { value: 'massa_muscular', label: 'Massa muscular' },
+                    { value: 'massa_magra', label: 'Massa magra' },
+                    { value: 'agua_corporal', label: 'Água corporal' },
+                    { value: 'gordura_visceral', label: 'Gordura visceral' },
+                    { value: 'massa_ossea', label: 'Massa óssea' },
+                    { value: 'taxa_metabolica', label: 'Taxa metabólica basal' },
+                  ] },
+                  { label: '', options: [{ value: 'outro', label: 'Outra medida' }] },
+                ]} />
             </div>
             <div>
               <label htmlFor="medida-date" className="font-body text-xs text-mauve block mb-1">Data</label>
@@ -935,14 +927,9 @@ export default function MedidasPage() {
           </div>
           {exams.length > 0 && (
             <div>
-              <label htmlFor="medida-exam" className="font-body text-xs text-mauve block mb-1">Vincular a um laudo (opcional)</label>
-              <select id="medida-exam" value={examId} onChange={e => setExamId(e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
-                <option value="">Nenhum</option>
-                {exams.map(ex => (
-                  <option key={ex.id} value={ex.id}>{ex.type}{ex.examDate ? ` · ${fmt(ex.examDate)}` : ''}</option>
-                ))}
-              </select>
+              <label className="font-body text-xs text-mauve block mb-1">Vincular a um laudo (opcional)</label>
+              <Select aria-label="Vincular a um laudo" value={examId} onChange={setExamId}
+                options={[{ value: '', label: 'Nenhum' }, ...exams.map(ex => ({ value: ex.id, label: `${ex.type}${ex.examDate ? ` · ${fmt(ex.examDate)}` : ''}` }))]} />
               <p className="font-body text-[11px] text-mauve mt-1">
                 Veio de um exame/laudo já enviado em <Link href="/dashboard/exams" className="text-petal hover:underline">Exames</Link>? Vincule para abrir o documento original aqui e no relatório.
               </p>

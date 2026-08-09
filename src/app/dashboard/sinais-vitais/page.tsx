@@ -20,6 +20,7 @@ import PageHeader from '@/components/PageHeader'
 import EmptyState from '@/components/EmptyState'
 import { Card } from "@/lib/ui/ds"
 import Disclaimer from '@/components/ui/Disclaimer'
+import Select from '@/components/ui/Select'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { useNovelty } from '@/lib/novelty/useNovelty'
 
@@ -156,16 +157,20 @@ export default function SinaisVitaisPage() {
         <Card padding="relaxed" className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="vital-metric" className="font-body text-xs text-mauve block mb-1">Sinal vital</label>
-              <select id="vital-metric" value={metric} onChange={e => chooseMetric(e.target.value as Vital)}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
-                <option value="pressao_arterial">Pressão arterial</option>
-                <option value="frequencia_cardiaca">Frequência cardíaca</option>
-                <option value="glicemia">Glicemia</option>
-                <option value="saturacao">Saturação (SpO₂)</option>
-                <option value="temperatura">Temperatura</option>
-                <option value="outro_sinal">Outro sinal</option>
-              </select>
+              <label className="font-body text-xs text-mauve block mb-1">Sinal vital</label>
+              <Select
+                aria-label="Sinal vital"
+                value={metric}
+                onChange={(v) => chooseMetric(v as Vital)}
+                options={[
+                  { value: 'pressao_arterial', label: 'Pressão arterial' },
+                  { value: 'frequencia_cardiaca', label: 'Frequência cardíaca' },
+                  { value: 'glicemia', label: 'Glicemia' },
+                  { value: 'saturacao', label: 'Saturação (SpO₂)' },
+                  { value: 'temperatura', label: 'Temperatura' },
+                  { value: 'outro_sinal', label: 'Outro sinal' },
+                ]}
+              />
             </div>
             <div>
               <label htmlFor="vital-date" className="font-body text-xs text-mauve block mb-1">Data</label>
