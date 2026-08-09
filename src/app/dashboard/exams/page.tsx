@@ -30,6 +30,7 @@ import CreateRecordMenu from '@/components/ui/CreateRecordMenu'
 import { Card } from "@/lib/ui/ds"
 import MotionCard from '@/components/ui/MotionCard'
 import Disclaimer from '@/components/ui/Disclaimer'
+import Select from '@/components/ui/Select'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import type { Database } from '@/lib/supabase/types'
 
@@ -525,30 +526,25 @@ export default function ExamsPage() {
               />
             </div>
 
-            {/* Filtro por ano */}
-            <select
+            {/* Filtro por ano — Select universal (PS-1) */}
+            <Select
               aria-label="Filtrar por ano"
+              title="Filtrar por ano"
+              className="w-full sm:w-40"
               value={filterYear}
-              onChange={e => setFilterYear(e.target.value)}
-              className="py-2 px-3 bg-ivory border border-border rounded-xl font-body text-sm text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40"
-            >
-              <option value="all">Todos os anos</option>
-              {availableYears.map(yr => (
-                <option key={yr} value={String(yr)}>{yr}</option>
-              ))}
-            </select>
+              onChange={setFilterYear}
+              options={[{ value: 'all', label: 'Todos os anos' }, ...availableYears.map(yr => ({ value: String(yr), label: String(yr) }))]}
+            />
 
-            {/* Filtro por status */}
-            <select
+            {/* Filtro por status — Select universal (PS-1) */}
+            <Select
               aria-label="Filtrar por status"
+              title="Filtrar por status"
+              className="w-full sm:w-48"
               value={filterStatus}
-              onChange={e => setFilterStatus(e.target.value)}
-              className="py-2 px-3 bg-ivory border border-border rounded-xl font-body text-sm text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40"
-            >
-              {STATUS_FILTER_OPTIONS.map(o => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
+              onChange={setFilterStatus}
+              options={STATUS_FILTER_OPTIONS}
+            />
 
             {/* Período por data de realização — linha inteira no mobile p/ caber no card */}
             <div className="flex items-center gap-1.5 w-full sm:w-auto">
