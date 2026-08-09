@@ -48,6 +48,7 @@ export type MinhaSaudeStackParamList = {
   Habits: undefined
   // Histórico
   HistoricoExames: undefined
+  IndicadorDetail: { name: string } // página longitudinal de UM indicador (paridade Web /dashboard/saude/[slug])
   Timeline: undefined
 }
 

@@ -17,6 +17,7 @@ import { ExamUploadScreen } from '../screens/exams/ExamUploadScreen'
 import { OmicsListScreen } from '../screens/omics/OmicsListScreen'
 import { OmicsPanelScreen } from '../screens/omics/OmicsPanelScreen'
 import { HistoricoExamesScreen } from '../screens/agenda/HistoricoExamesScreen'
+import { IndicadorDetailScreen } from '../screens/exams/IndicadorDetailScreen'
 import { useTheme } from '../theme'
 import type { MinhaSaudeStackParamList } from './types'
 
@@ -50,6 +51,7 @@ export function MinhaSaudeStack() {
       <Stack.Screen name="Habits" component={HabitsScreen} options={{ ...detail, title: 'Hábitos' }} />
       {/* Histórico */}
       <Stack.Screen name="HistoricoExames" component={HistoricoExamesScreen} options={{ ...detail, title: 'Histórico de Exames' }} />
+      <Stack.Screen name="IndicadorDetail" component={IndicadorDetailScreen} options={{ ...detail, title: 'Indicador' }} />
       <Stack.Screen name="Timeline" component={TimelineScreen} options={{ ...detail, title: 'Histórico de Saúde' }} />
     </Stack.Navigator>
   )

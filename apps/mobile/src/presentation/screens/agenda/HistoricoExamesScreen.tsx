@@ -8,29 +8,13 @@ import { ScrollView, View, ActivityIndicator, RefreshControl, Pressable, StyleSh
 import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
-import { summarizeBiomarkers, isOrderDocumentType, type BiomarkerSummary, type Trend } from '@sintera/core'
+import { summarizeBiomarkers, isOrderDocumentType, type BiomarkerSummary } from '@sintera/core'
 import type { ExamDTO } from '@sintera/api-client'
 import { Text, Button, Input, Select } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 
 function fmtDate(iso: string): string { if (!iso) return '—'; const [y, m, d] = iso.slice(0, 10).split('-'); return `${d}/${m}/${y}` }
-function trendText(tr: Trend, delta: number | null): { s: string; kind: 'up' | 'down' | 'flat' } {
-  if (tr === 'up') return { s: delta !== null ? `▲ +${delta}%` : '▲', kind: 'up' }
-  if (tr === 'down') return { s: delta !== null ? `▼ ${delta}%` : '▼', kind: 'down' }
-  if (tr === 'stable') return { s: delta !== null ? `— ${delta > 0 ? '+' : ''}${delta}%` : '—', kind: 'flat' }
-  if (tr === 'single') return { s: '1ª medição', kind: 'flat' }
-  return { s: 'unidades ≠', kind: 'flat' }
-}
-/** Posição do valor na faixa de referência do laudo (▲ acima · ▼ abaixo · ✓ dentro). */
-function refMark(s: BiomarkerSummary): { s: string; kind: 'up' | 'down' | 'flat' } | null {
-  const m = s.latest
-  if (!m || m.value == null) return null
-  if (m.referenceMin != null && m.value < m.referenceMin) return { s: '▼ abaixo', kind: 'down' }
-  if (m.referenceMax != null && m.value > m.referenceMax) return { s: '▲ acima', kind: 'up' }
-  if (m.referenceMin != null || m.referenceMax != null) return { s: '✓ dentro', kind: 'flat' }
-  return null
-}
 
 const PERIODS: { key: string; label: string; days: number | null }[] = [
   { key: 'all', label: 'Tudo', days: null }, { key: '30d', label: '30 dias', days: 30 },
@@ -41,8 +25,10 @@ export function HistoricoExamesScreen() {
   const t = useTheme()
   const insets = useSafeAreaInsets()
   const navigation = useNavigation()
-  // HistoricoExames vive no stack de Exames — abre o detalhe no próprio stack (mesma aba).
-  const openExam = (id: string) => (navigation as { navigate: (n: string, p: unknown) => void }).navigate('ExamDetail', { id })
+  // HistoricoExames vive no stack de Minha Saúde — abre exame/indicador no próprio stack (mesma aba).
+  const nav = navigation as { navigate: (n: string, p: unknown) => void }
+  const openExam = (id: string) => nav.navigate('ExamDetail', { id })
+  const openIndicador = (name: string) => nav.navigate('IndicadorDetail', { name })
   const [summaries, setSummaries] = useState<BiomarkerSummary[]>([])
   const [exams, setExams] = useState<ExamDTO[]>([])
   const [phase, setPhase] = useState<'loading' | 'ready' | 'error'>('loading')
@@ -52,7 +38,6 @@ export function HistoricoExamesScreen() {
   const [typeFilter, setTypeFilter] = useState('all')
   const [period, setPeriod] = useState('all')
   const [sortDir, setSortDir] = useState<'recent' | 'old'>('recent')
-  const [expanded, setExpanded] = useState<string | null>(null)
   const alive = useRef(true)
 
   const load = useCallback((silent: boolean) => {
@@ -109,8 +94,6 @@ export function HistoricoExamesScreen() {
     return [...s].sort((a, b) => a.localeCompare(b, 'pt-BR'))
   }, [labGroups, docGroups])
 
-  const trendColor = (kind: 'up' | 'down' | 'flat') => kind === 'up' ? t.color.badge.attention.text : kind === 'down' ? t.color.badge.info.text : t.color.text.muted
-
   if (phase === 'loading') {
     return <View style={[styles.center, { backgroundColor: t.color.surface.app, paddingTop: insets.top }]}><ActivityIndicator color={t.color.identity.primary} /><Text spec={text(t, { role: 'body', tone: 'muted' })}>Carregando…</Text></View>
   }
@@ -154,44 +137,17 @@ export function HistoricoExamesScreen() {
       {labGroups.map(g => (
         <View key={`lab:${g.name}`} style={{ gap: 8 }}>
           <Text spec={text(t, { role: 'label', tone: 'muted' })}>{g.name.toUpperCase()}</Text>
-          {g.items.map(s => {
-            const tr = trendText(s.trend, s.deltaPercent); const rm = refMark(s)
-            const open = expanded === s.canonicalName
-            const vals = s.measurements.map(m => m.value); const min = Math.min(...vals), max = Math.max(...vals)
-            return (
-              <Pressable key={s.canonicalName} onPress={() => setExpanded(open ? null : s.canonicalName)} style={[styles.card, card, { gap: 8 }]}>
-                {/* Colapsado = só nome + nº de medições. Valor/tendência/evolução aparecem ao TOCAR (D-18). */}
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Text spec={text(t, { role: 'body' })} style={{ flex: 1, paddingRight: 8 }}>{s.displayName}</Text>
-                  <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{s.count} {s.count === 1 ? 'medição' : 'medições'} {open ? '▾' : '›'}</Text>
-                </View>
-                {open ? (
-                  <View style={{ gap: 8, marginTop: 2 }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{s.latest ? `última em ${fmtDate(s.latest.date)}` : 'sem data'}</Text>
-                      <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-                        <Text spec={text(t, { role: 'bodyStrong' })}>{s.latest ? `${s.latest.value}${s.unit ? ` ${s.unit}` : ''}` : '—'}</Text>
-                        {rm ? <Text spec={text(t, { role: 'caption' })} style={{ color: trendColor(rm.kind) }}>{rm.s}</Text> : null}
-                        <Text spec={text(t, { role: 'caption' })} style={{ color: trendColor(tr.kind) }}>{tr.s}</Text>
-                      </View>
-                    </View>
-                    {s.measurements.length > 1 && max > min ? (
-                      <View style={styles.spark}>
-                        {s.measurements.map((m, i) => <View key={i} style={{ flex: 1, height: 40, justifyContent: 'flex-end' }}><View style={{ height: Math.max(3, ((m.value - min) / (max - min)) * 40), backgroundColor: t.color.identity.primary, borderRadius: 2 }} /></View>)}
-                      </View>
-                    ) : null}
-                    {[...s.measurements].reverse().map((m, i) => (
-                      <Pressable key={i} onPress={() => m.examId && openExam(m.examId)} disabled={!m.examId} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                        <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{fmtDate(m.date)}{m.examId ? ' · abrir laudo ›' : ''}</Text>
-                        <Text spec={text(t, { role: 'caption' })} style={{ color: m.examId ? t.color.identity.primary : t.color.text.default }}>{m.value}{m.unit ? ` ${m.unit}` : ''}</Text>
-                      </Pressable>
-                    ))}
-                    <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Faixas de referência, quando presentes, são as do documento. Não substitui avaliação médica.</Text>
-                  </View>
-                ) : null}
-              </Pressable>
-            )
-          })}
+          {g.items.map(s => (
+            <Pressable key={s.canonicalName} onPress={() => openIndicador(s.canonicalName)} accessibilityRole="button"
+              style={[styles.card, card, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+              {/* Só nome + nº de medições; toque → PÁGINA do indicador (gráfico/medições/comparativo — arquitetura B). */}
+              <View style={{ flex: 1, paddingRight: 8 }}>
+                <Text spec={text(t, { role: 'body' })}>{s.displayName}</Text>
+                <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{s.count} {s.count === 1 ? 'medição' : 'medições'}{s.latest ? ` · última em ${fmtDate(s.latest.date)}` : ''}</Text>
+              </View>
+              <Text spec={text(t, { role: 'caption', tone: 'muted' })}>›</Text>
+            </Pressable>
+          ))}
         </View>
       ))}
 
@@ -222,5 +178,4 @@ const styles = StyleSheet.create({
   card: { borderWidth: 1, borderRadius: 14, padding: 14 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   pill: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
-  spark: { flexDirection: 'row', alignItems: 'flex-end', gap: 3, height: 40 },
 })
