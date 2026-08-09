@@ -18,7 +18,9 @@
       "expo-dev-client",
       [
         "expo-secure-store",
-        { "configureAndroidBackup": false }
+        {
+          "configureAndroidBackup": false
+        }
       ],
       [
         "expo-image-picker",
@@ -27,7 +29,8 @@
           "cameraPermission": "Permite fotografar o documento do seu exame."
         }
       ],
-      "./plugins/withAndroidCmakeVersion"
+      "./plugins/withAndroidCmakeVersion",
+      "@react-native-community/datetimepicker"
     ],
     "extra": {
       "eas": {
