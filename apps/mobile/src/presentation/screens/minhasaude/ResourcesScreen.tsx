@@ -13,6 +13,7 @@ import {
   EXPENSE_DOC_TYPES, expenseDocLabel, parseAmountToCents, centsToAmount,
 } from '@sintera/core'
 import { Text, Button, Input, AttachmentLink, DatePicker, Disclaimer } from '../../primitives'
+import { useAssistedCapture } from '../capture/useAssistedCapture'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 import { documentPicker } from '../../../infrastructure/documentPickerAdapter'
@@ -55,6 +56,7 @@ export function ResourcesScreen() {
   const [uploadingExp, setUploadingExp] = useState(false)
   const [saving, setSaving] = useState(false)
   const [view, setView] = useState<'tipo' | 'situacao'>('tipo')
+  const capture = useAssistedCapture() // T1: lê a receita de óculos e propõe o preenchimento (revisão → salvar)
 
   const load = useCallback((silent: boolean) => {
     if (silent) setRefreshing(true); else setPhase('loading')
@@ -200,6 +202,18 @@ export function ResourcesScreen() {
           {type === 'correcao_visual' ? (
             <View style={[styles.subCard, { borderColor: t.color.border.default }]}>
               <Text spec={text(t, { role: 'label', tone: 'muted' })}>PRESCRIÇÃO</Text>
+              <Button label="Preencher a partir da receita" variant="secondary" loading={capture.busy} loadingLabel="Lendo…"
+                onPress={async () => {
+                  const r = await capture.run((input) => apiClient.vision.readEyeglasses(input))
+                  if (!r) return
+                  setOd({ sph: r.od.sph ?? '', cyl: r.od.cyl ?? '', axis: r.od.axis ?? '', add: r.od.add ?? '' })
+                  setOe({ sph: r.oe.sph ?? '', cyl: r.oe.cyl ?? '', axis: r.oe.axis ?? '', add: r.oe.add ?? '' })
+                  if (r.dnp) setDnp(r.dnp)
+                  if (r.bc) setBc(r.bc)
+                  if (r.dia) setDia(r.dia)
+                  if (r.prescriber) setPrescriber(r.prescriber)
+                  if (r.prescribed_on) setStartedOn(r.prescribed_on)
+                }} />
               <Chips options={[{ id: 'oculos', label: 'Óculos' }, { id: 'lentes_contato', label: 'Lentes de contato' }]} value={visionKind} onChange={(v) => setVisionKind(v as VisionKind)} />
               {eyeRow('Olho direito (OD)', od, setOd)}
               {eyeRow('Olho esquerdo (OE)', oe, setOe)}

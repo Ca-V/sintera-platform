@@ -14,6 +14,7 @@ import {
   isHormonalContraceptive, contraceptiveLabel, contraceptiveCategoryLabel, cadenceUsageLabel,
 } from '@sintera/core'
 import { Text, Button, Input, DatePicker, Disclaimer } from '../../primitives'
+import { useAssistedCapture } from '../capture/useAssistedCapture'
 import { useTheme } from '../../theme'
 import type { MinhaSaudeStackParamList } from '../../navigation/types'
 import { apiClient } from '../../../infrastructure/apiClient'
@@ -56,6 +57,7 @@ export function MedicationsScreen({ route, navigation }: Props) {
   const [packQtyInput, setPackQtyInput] = useState('')
   const [repurchaseFreq, setRepurchaseFreq] = useState('') // valor PT ('' = não repetir)
   const [saving, setSaving] = useState(false)
+  const capture = useAssistedCapture() // T1: lê receita/rótulo e propõe o preenchimento (revisão → salvar)
   const [view, setView] = useState<'situacao' | 'tipo'>('situacao')
 
   const load = useCallback((silent: boolean) => {
@@ -155,6 +157,19 @@ export function MedicationsScreen({ route, navigation }: Props) {
       {open ? (
         <View style={[styles.card, card, { gap: 12 }]}>
           <Text spec={text(t, { role: 'bodyStrong' })}>{editing ? 'Editar' : `Novo ${supplements ? 'suplemento' : 'medicamento'}`}</Text>
+          <Button label="Preencher a partir de um documento" variant="secondary" loading={capture.busy} loadingLabel="Lendo…"
+            onPress={async () => {
+              const items = await capture.run((input) => apiClient.vision.scanMedications(input))
+              if (!items || items.length === 0) return
+              const m = items[0]
+              setName(m.name)
+              if (m.dose) setDose(m.dose)
+              if (m.frequency) setFrequency(m.frequency)
+              if (m.form) setForm(m.form)
+              if (m.route) setAdminRoute(m.route)
+              if (m.prescriber) setPrescriber(m.prescriber)
+              if (m.startedOn) setStartedOn(m.startedOn)
+            }} />
           <Input value={name} onChangeText={setName} placeholder="Nome" />
           <Chips options={MED_KINDS.map(k => ({ id: k.value, label: k.label }))} value={kind} onChange={(v) => setKind(v as MedKind)} />
           <View style={{ flexDirection: 'row', gap: 8 }}>
