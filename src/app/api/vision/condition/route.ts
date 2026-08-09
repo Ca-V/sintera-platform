@@ -11,7 +11,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
-import { createClient } from '@/lib/supabase/server'
+import { getAuthedSupabase } from '@/lib/supabase/authedClient'
 
 const MODEL = 'claude-haiku-4-5-20251001'
 
@@ -53,9 +53,9 @@ NÃO forneça diagnóstico nem orientação médica — só transcreva o que o d
 const isDate = (s: unknown): s is string => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s.trim())
 
 export async function POST(req: NextRequest) {
-  const supabase = await createClient()
-  const { data: auth } = await supabase.auth.getUser()
-  if (!auth.user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  // Auth COMPARTILHADA (Cookie=Web · Bearer=Mobile) — ponte transitória ADR-020 (T1 captura assistida).
+  const { user } = await getAuthedSupabase(req)
+  if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
   let body: { fileBase64?: string; imageBase64?: string; mediaType?: string }
   try { body = await req.json() } catch { return NextResponse.json({ error: 'Corpo inválido' }, { status: 400 }) }
