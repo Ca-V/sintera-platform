@@ -10,7 +10,7 @@ import {
   HABIT_CATEGORIES, habitGoalSummary, type HabitCategory,
   FREQUENCY_LABELS, type RecurrenceFrequency, selectByLink, parseRule, type HealthEvent,
 } from '@sintera/core'
-import { Text, Button, Input, AttachmentLink } from '../../primitives'
+import { Text, Button, Input, AttachmentLink, Disclaimer } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 import { documentPicker } from '../../../infrastructure/documentPickerAdapter'
@@ -192,6 +192,7 @@ export function HabitsScreen() {
           </View>
         )
       })}
+      <Disclaimer variant="geral" />
     </ScrollView>
   )
 }

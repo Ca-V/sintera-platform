@@ -12,7 +12,7 @@ import {
   FREQUENCY_LABELS, type RecurrenceFrequency, selectByLink, parseRule, type HealthEvent,
   EXPENSE_DOC_TYPES, expenseDocLabel, parseAmountToCents, centsToAmount,
 } from '@sintera/core'
-import { Text, Button, Input, AttachmentLink, DatePicker } from '../../primitives'
+import { Text, Button, Input, AttachmentLink, DatePicker, Disclaimer } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 import { documentPicker } from '../../../infrastructure/documentPickerAdapter'
@@ -280,6 +280,7 @@ export function ResourcesScreen() {
           </View>
         )
       })}
+      <Disclaimer variant="geral" />
     </ScrollView>
   )
 }

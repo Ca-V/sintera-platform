@@ -13,7 +13,7 @@ import {
   type MedKind, type MedStatus, MED_REPURCHASE_FREQUENCIES, repurchaseFreqToRecurrence,
   isHormonalContraceptive, contraceptiveLabel, contraceptiveCategoryLabel, cadenceUsageLabel,
 } from '@sintera/core'
-import { Text, Button, Input, DatePicker } from '../../primitives'
+import { Text, Button, Input, DatePicker, Disclaimer } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { MinhaSaudeStackParamList } from '../../navigation/types'
 import { apiClient } from '../../../infrastructure/apiClient'
@@ -269,6 +269,7 @@ export function MedicationsScreen({ route, navigation }: Props) {
           ))}
         </View>
       ) : null}
+      <Disclaimer variant="medicamento" />
     </ScrollView>
   )
 }

@@ -10,7 +10,7 @@ import {
   CONTRACEPTIVE_KINDS, contraceptiveLabel, contraceptiveNature, CONTRACEPTIVE_CADENCES, defaultCadenceFor,
   cadenceUsageLabel, cycleStats,
 } from '@sintera/core'
-import { Text, Button, Input, Switch, DatePicker } from '../../primitives'
+import { Text, Button, Input, Switch, DatePicker, Disclaimer } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 
@@ -179,6 +179,7 @@ export function CicloScreen() {
           </View>
         ))}
       </View>
+      <Disclaimer variant="ciclo" />
     </ScrollView>
   )
 }

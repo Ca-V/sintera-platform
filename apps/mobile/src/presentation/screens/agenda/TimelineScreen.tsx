@@ -8,7 +8,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import { mergeTimeline, selectHistory, groupByPeriod, statusLabel, formatDateLongBR, type TimelineEntry, type TimelineMeta } from '@sintera/core'
-import { Text, Button } from '../../primitives'
+import { Text, Button, Disclaimer } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { MinhaSaudeStackParamList } from '../../navigation/types'
 import { apiClient } from '../../../infrastructure/apiClient'
@@ -137,6 +137,7 @@ export function TimelineScreen({ navigation }: Props) {
           })}
         </View>
       ))}
+      <Disclaimer variant="geral" />
     </ScrollView>
   )
 }

@@ -12,7 +12,7 @@ import {
   priorityBadge, modalityLabel, isReturnVisit, outcomeSummary, isClosedStatus,
   buildExamRecencySuggestion, type ExamLite,
 } from '@sintera/core'
-import { Text, Button } from '../../primitives'
+import { Text, Button, Disclaimer } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { AgendaStackParamList } from '../../navigation/types'
 import { useAgenda } from './useAgenda'
@@ -124,6 +124,7 @@ export function AgendaScreen({ navigation }: Props) {
         </View>
       ) : null}
       {/* Histórico (consolidado: exames + eventos) vive na TimelineScreen — a Agenda mostra só futuro/pendências. */}
+      <Disclaimer variant="geral" />
     </ScrollView>
   )
 }
