@@ -8,7 +8,7 @@ import HistoryGrewNotice from '@/components/connectors/HistoryGrewNotice'
 import { motion } from 'framer-motion'
 import {
   FileText, Clock, Pill, ScrollText, CalendarDays, Receipt,
-  Upload, CheckCircle, AlertCircle, FlaskConical, Bell, ChevronRight, FilePlus, X,
+  Upload, FlaskConical, Bell, ChevronRight, FilePlus, X,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { parseDateOnly } from '@/lib/agenda'
@@ -42,13 +42,6 @@ function formatDate(iso: string) {
   return parseDateOnly(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
-  processed:  { label: 'Dados extraídos', color: 'text-petal',     bg: 'bg-blush',     icon: CheckCircle },
-  pending:    { label: 'Aguardando',      color: 'text-gold',     bg: 'bg-warm',           icon: Clock       },
-  processing: { label: 'Processando',     color: 'text-lavender', bg: 'bg-lavender-light', icon: Clock       },
-  error:      { label: 'Erro',            color: 'text-red-400',  bg: 'bg-red-50',         icon: AlertCircle },
-}
-
 // Acesso rápido — usa exatamente a nomenclatura do menu lateral esquerdo (FB-010).
 // Descrições vêm do SSOT @/lib/ui/navDescriptions (mesma voz da Sidebar).
 const QUICK_ACCESS: { href: string; icon: React.ElementType; label: string; tile: string; tint: string }[] = [
@@ -73,7 +66,6 @@ function LegacyDashboard() {
   const { saveEvent, services } = useEventForm()
 
   const [stats, setStats]         = useState<Stats | null>(null)
-  const [recentExams, setRecent]   = useState<ExamSummary[]>([])
   const [journey, setJourney]     = useState<{ count: number; last: { title: string; date: string } | null; next: { title: string; date: string } | null }>({ count: 0, last: null, next: null })
   const [loading, setLoading]     = useState(true)
   const [agendarOpen, setAgendar] = useState(false)
@@ -122,7 +114,6 @@ function LegacyDashboard() {
       totalBiomarkers,
       pendingExams:   exams.filter(e => e.status === 'pending' || e.status === 'processing').length,
     })
-    setRecent(exams.slice(0, 4))
     setLoading(false)
   }
 
