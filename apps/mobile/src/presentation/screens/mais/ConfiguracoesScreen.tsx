@@ -157,15 +157,21 @@ export function ConfiguracoesScreen() {
       <View style={[styles.card, card, { gap: 12 }]}>
         <Text spec={text(t, { role: 'bodyStrong' })}>Central de Notificações</Text>
         <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Escolha o canal de cada categoria de aviso.</Text>
-        {NOTIFICATION_CATEGORIES.map(cat => (
-          <View key={cat.key} style={{ gap: 4 }}>
-            <Text spec={text(t, { role: 'body' })}>{cat.label}</Text>
-            <View style={styles.chips}>
-              {CHANNELS.map(ch => {
-                const on = (prefs[cat.key] ?? DEFAULT_CHANNEL) === ch.id
-                return <Pressable key={ch.id} onPress={() => setPrefs(p => ({ ...p, [cat.key]: ch.id }))} style={[styles.chip, { borderColor: on ? t.color.identity.primary : t.color.border.default, backgroundColor: on ? t.color.badge.info.soft : 'transparent' }]}><Text spec={text(t, { role: 'caption', tone: on ? 'default' : 'muted' })}>{ch.label}</Text></Pressable>
-              })}
-            </View>
+        {/* Agrupado pelas SEÇÕES da Sidebar (FB-017): a Central espelha a navegação. */}
+        {[...new Set(NOTIFICATION_CATEGORIES.map(c => c.section))].map(section => (
+          <View key={section} style={{ gap: 8 }}>
+            <Text spec={text(t, { role: 'label', tone: 'muted' })}>{section.toUpperCase()}</Text>
+            {NOTIFICATION_CATEGORIES.filter(c => c.section === section).map(cat => (
+              <View key={cat.key} style={{ gap: 4 }}>
+                <Text spec={text(t, { role: 'body' })}>{cat.label}</Text>
+                <View style={styles.chips}>
+                  {CHANNELS.map(ch => {
+                    const on = (prefs[cat.key] ?? DEFAULT_CHANNEL) === ch.id
+                    return <Pressable key={ch.id} onPress={() => setPrefs(p => ({ ...p, [cat.key]: ch.id }))} style={[styles.chip, { borderColor: on ? t.color.identity.primary : t.color.border.default, backgroundColor: on ? t.color.badge.info.soft : 'transparent' }]}><Text spec={text(t, { role: 'caption', tone: on ? 'default' : 'muted' })}>{ch.label}</Text></Pressable>
+                  })}
+                </View>
+              </View>
+            ))}
           </View>
         ))}
         <View style={styles.actions}>
