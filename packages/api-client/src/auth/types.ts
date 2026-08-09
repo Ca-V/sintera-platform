@@ -9,6 +9,7 @@ import type { EventDraft } from '../agenda/events'
 import type { LinkedReminderOptions } from '../agenda/reminder'
 import type { LinkedExpenseOptions } from '../agenda/expense'
 import type { ConditionDTO, ConditionInput } from '../conditions/conditions'
+import type { CaptureInput, ConditionScan, BioimpedanceScan, EyeglassesScan, MedicationScanItem } from '../vision/vision'
 import type { HabitDTO, HabitInput } from '../habits/habits'
 import type { ResourceDTO, ResourceInput } from '../resources/resources'
 import type { MedicationDTO, MedicationInput } from '../medications/medications'
@@ -115,6 +116,15 @@ export interface ConditionsApi {
   deleteCondition(id: string): Promise<{ error: Error | null }>
 }
 
+/** Captura assistida (T1) — capacidade TRANSVERSAL de OCR/IA: envia um documento (base64) e devolve os campos
+ *  pré-preenchidos para a usuária revisar. Reusa os serviços da Web via ponte Bearer (ADR-020). */
+export interface VisionApi {
+  readCondition(input: CaptureInput): Promise<{ data: ConditionScan | null; error: Error | null }>
+  readBioimpedance(input: CaptureInput): Promise<{ data: BioimpedanceScan | null; error: Error | null }>
+  readEyeglasses(input: CaptureInput): Promise<{ data: EyeglassesScan | null; error: Error | null }>
+  scanMedications(input: CaptureInput): Promise<{ data: MedicationScanItem[]; error: Error | null }>
+}
+
 export interface ApiClient {
   auth: AuthApi
   profile: ProfileApi
@@ -130,6 +140,7 @@ export interface ApiClient {
   body: BodyApi
   report: ReportApi
   omics: OmicsApi
+  vision: VisionApi
 }
 
 /** Exames de Ômica — leituras via ponte /api/omics (reusa joins/catálogo do servidor); escritas diretas (RLS dono). */
