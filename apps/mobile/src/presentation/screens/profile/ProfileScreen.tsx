@@ -2,9 +2,10 @@
 // domínio nem acesso a rede aqui (tudo via `useProfile`→`apiClient`; fronteira do Inc.1). Escopo congelado
 // (MOBILE-016/019): EDITÁVEL = nome + telefone; faixa etária/objetivos/avatar = EXIBIÇÃO; preferências de
 // notificação = deferidas (Central). Estados: carga → erro-de-carga → form (com salvar pessimista + feedback).
-import { ScrollView, View, ActivityIndicator, StyleSheet } from 'react-native'
+import { ScrollView, View, ActivityIndicator, Pressable, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { text } from '@sintera/design-system'
+import { useNavigation } from '@react-navigation/native'
+import { text, heading } from '@sintera/design-system'
 import { Avatar, Button, FieldRow, Input, Text } from '../../primitives'
 import { useTheme } from '../../theme'
 import { useAuth } from '../../../state/AuthProvider'
@@ -15,6 +16,7 @@ export function ProfileScreen() {
   const insets = useSafeAreaInsets()
   const { session } = useAuth()
   const p = useProfile()
+  const nav = useNavigation() as { navigate: (n: string) => void }
 
   const email = session?.user?.email ?? null
 
@@ -52,6 +54,9 @@ export function ProfileScreen() {
       ]}
       keyboardShouldPersistTaps="handled"
     >
+      <Text spec={heading(t, { level: 'page' })}>Meu Perfil</Text>
+      <Text spec={text(t, { role: 'bodySmall', tone: 'muted' })}>Seus dados na SINTERA.</Text>
+
       <View style={styles.header}>
         <Avatar uri={data?.avatar_url} name={p.name || data?.name} size="lg" />
       </View>
@@ -97,6 +102,10 @@ export function ProfileScreen() {
       ) : null}
 
       <Button label="Salvar" onPress={p.save} loading={saving} loadingLabel="Salvando…" />
+
+      <Pressable onPress={() => nav.navigate('Configuracoes')} style={{ paddingVertical: 4 }}>
+        <Text spec={text(t, { role: 'bodySmall' })} style={{ color: t.color.identity.primary }}>Configurações da conta →</Text>
+      </Pressable>
 
       {p.phase === 'saved' ? (
         <Text
