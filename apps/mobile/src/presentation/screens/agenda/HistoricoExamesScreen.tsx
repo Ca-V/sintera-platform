@@ -17,8 +17,8 @@ import { apiClient } from '../../../infrastructure/apiClient'
 function fmtDate(iso: string): string { if (!iso) return '—'; const [y, m, d] = iso.slice(0, 10).split('-'); return `${d}/${m}/${y}` }
 
 const PERIODS: { key: string; label: string; days: number | null }[] = [
-  { key: 'all', label: 'Tudo', days: null }, { key: '30d', label: '30 dias', days: 30 },
-  { key: '90d', label: '90 dias', days: 90 }, { key: '1a', label: '1 ano', days: 365 },
+  { key: 'all', label: 'Qualquer data', days: null }, { key: '30d', label: 'Últimos 30 dias', days: 30 },
+  { key: '90d', label: 'Últimos 90 dias', days: 90 }, { key: '1a', label: 'Último ano', days: 365 },
 ]
 
 export function HistoricoExamesScreen() {

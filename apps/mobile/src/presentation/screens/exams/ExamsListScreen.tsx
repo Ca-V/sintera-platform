@@ -19,7 +19,7 @@ import { formatExamDate } from './examFormat'
 type Props = NativeStackScreenProps<MinhaSaudeStackParamList, 'ExamsList'>
 
 const STATUS_FILTERS: { id: string; label: string }[] = [
-  { id: 'all', label: 'Todos' }, { id: 'processed', label: 'Estruturados' },
+  { id: 'all', label: 'Todos os status' }, { id: 'processed', label: 'Dados extraídos' },
   { id: 'pending', label: 'Aguardando' }, { id: 'error', label: 'Com erro' },
 ]
 function statusBucket(s: string | null): string {
@@ -127,7 +127,9 @@ export function ExamsListScreen({ navigation }: Props) {
                   {dup ? <View style={[styles.pill, { backgroundColor: t.color.badge.attention.soft }]}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.attention.text }}>Possível duplicado</Text></View> : null}
                 </View>
                 <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{formatExamDate(e.exam_date)}{e.issuer ? ` · ${e.issuer}` : ''}{e.requesting_physician ? ` · Solic.: ${e.requesting_physician}` : ''}</Text>
-                {examStatusLabel(e.status) ? <Text spec={text(t, { role: 'caption', tone: 'faint' })} style={isExamFailed(e.status) ? { color: t.color.badge.error.text } : undefined}>{examStatusLabel(e.status)}</Text> : null}
+                {e.status === 'processed'
+                  ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{e.extraction_completeness === 'document_only' ? 'Documento disponível' : 'Resultados estruturados'}</Text>
+                  : examStatusLabel(e.status) ? <Text spec={text(t, { role: 'caption', tone: 'faint' })} style={isExamFailed(e.status) ? { color: t.color.badge.error.text } : undefined}>{examStatusLabel(e.status)}</Text> : null}
               </Pressable>
             )
           })}
