@@ -7,9 +7,9 @@ import { ScrollView, View, Pressable, ActivityIndicator, RefreshControl, StyleSh
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { ExamDTO } from '@sintera/api-client'
-import { isOrderDocumentType, findDuplicateIds, type DuplicateCandidate } from '@sintera/core'
+import { isOrderDocumentType, findDuplicateIds, originalIdFor, type DuplicateCandidate } from '@sintera/core'
 import { heading, text } from '@sintera/design-system'
-import { Button, Text, Input, Disclaimer } from '../../primitives'
+import { Button, Text, Input, Disclaimer, DatePicker } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { MinhaSaudeStackParamList } from '../../navigation/types'
 import { useExamsList } from './useExamsList'
@@ -45,21 +45,32 @@ export function ExamsListScreen({ navigation }: Props) {
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState('all')
   const [year, setYear] = useState('all')
+  const [from, setFrom] = useState('')
+  const [to, setTo] = useState('')
 
   const all = p.exams ?? []
   const results = useMemo(() => all.filter(e => !isOrderDocumentType(e.document_type)), [all])
   const orders = useMemo(() => all.filter(e => isOrderDocumentType(e.document_type)), [all])
-  const dupIds = useMemo(() => findDuplicateIds(results.map((e): DuplicateCandidate => ({
+  const candidates = useMemo(() => results.map((e): DuplicateCandidate => ({
     id: e.id, createdAt: e.created_at ?? '', examDate: e.exam_date, issuer: e.issuer, title: e.display_title ?? e.type,
-  }))), [results])
+  })), [results])
+  const dupIds = useMemo(() => findDuplicateIds(candidates), [candidates])
+  // Duplicado → id do exame ORIGINAL (para o link "Ver original", paridade Web).
+  const originalOf = useMemo(() => {
+    const m = new Map<string, string>()
+    for (const c of candidates) { if (dupIds.has(c.id)) { const o = originalIdFor(c, candidates); if (o) m.set(c.id, o) } }
+    return m
+  }, [candidates, dupIds])
   const years = useMemo(() => [...new Set(results.map(e => (e.exam_date ?? e.created_at ?? '').slice(0, 4)).filter(Boolean))].sort((a, b) => b.localeCompare(a)), [results])
   const q = query.trim().toLowerCase()
   const filteredResults = useMemo(() => results.filter(e => {
     if (q && !`${e.display_title ?? ''} ${e.type ?? ''} ${e.issuer ?? ''}`.toLowerCase().includes(q)) return false
     if (status !== 'all' && statusBucket(e.status) !== status) return false
     if (year !== 'all' && (e.exam_date ?? e.created_at ?? '').slice(0, 4) !== year) return false
+    if (from && e.exam_date && e.exam_date < from) return false
+    if (to && e.exam_date && e.exam_date > to) return false
     return true
-  }), [results, q, status, year])
+  }), [results, q, status, year, from, to])
 
   if (p.phase === 'idle' || p.phase === 'loading') {
     return (
@@ -111,6 +122,11 @@ export function ExamsListScreen({ navigation }: Props) {
           <Input value={query} onChangeText={setQuery} placeholder="Buscar por nome, tipo ou laboratório…" autoCapitalize="none" />
           <Chips options={STATUS_FILTERS} value={status} onChange={setStatus} />
           {years.length > 1 ? <Chips options={[{ id: 'all', label: 'Todos os anos' }, ...years.map(y => ({ id: y, label: y }))]} value={year} onChange={setYear} /> : null}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Período:</Text>
+            <DatePicker value={from} onChange={setFrom} placeholder="De" max={to || undefined} style={{ flex: 1 }} />
+            <DatePicker value={to} onChange={setTo} placeholder="Até" min={from || undefined} style={{ flex: 1 }} />
+          </View>
         </View>
       ) : null}
 
@@ -130,6 +146,9 @@ export function ExamsListScreen({ navigation }: Props) {
                 {e.status === 'processed'
                   ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{e.extraction_completeness === 'document_only' ? 'Documento disponível' : 'Resultados estruturados'}</Text>
                   : examStatusLabel(e.status) ? <Text spec={text(t, { role: 'caption', tone: 'faint' })} style={isExamFailed(e.status) ? { color: t.color.badge.error.text } : undefined}>{examStatusLabel(e.status)}</Text> : null}
+                {dup && originalOf.get(e.id)
+                  ? <Pressable onPress={() => navigation.navigate('ExamDetail', { id: originalOf.get(e.id)! })}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Ver original →</Text></Pressable>
+                  : null}
               </Pressable>
             )
           })}
