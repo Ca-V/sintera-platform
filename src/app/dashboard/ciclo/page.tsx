@@ -27,6 +27,7 @@ import {
 import { addDays, addMonths, todayISO, daysBetween, nextOccurrenceByDays } from '@/lib/date'
 import Disclaimer from '@/components/ui/Disclaimer'
 import ConfirmDialog from '@/components/ConfirmDialog'
+import Select from '@/components/ui/Select'
 
 interface Method {
   id: string; kind: string; brand: string | null; startedOn: string | null
@@ -251,11 +252,9 @@ export default function CicloPage() {
               <Card padding="default" className="space-y-3 mb-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label htmlFor="ciclo-metodo" className="font-body text-xs text-mauve block mb-1">Método</label>
-                    <select id="ciclo-metodo" value={kind} onChange={e => chooseKind(e.target.value)}
-                      className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
-                      {KINDS.map(k => <option key={k.value} value={k.value}>{k.label}</option>)}
-                    </select>
+                    <label className="font-body text-xs text-mauve block mb-1">Método</label>
+                    <Select aria-label="Método" value={kind} onChange={chooseKind}
+                      options={KINDS.map(k => ({ value: k.value, label: k.label }))} />
                   </div>
                   <div>
                     <label htmlFor="ciclo-marca" className="font-body text-xs text-mauve block mb-1">Marca (opcional)</label>
@@ -273,11 +272,9 @@ export default function CicloPage() {
                         className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
                     </div>
                     <div>
-                      <label htmlFor="ciclo-cadencia" className="font-body text-xs text-mauve block mb-1">Recompra / reaplicação</label>
-                      <select id="ciclo-cadencia" value={cadence} onChange={e => setCadence(e.target.value)}
-                        className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
-                        {CONTRACEPTIVE_CADENCES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                      </select>
+                      <label className="font-body text-xs text-mauve block mb-1">Recompra / reaplicação</label>
+                      <Select aria-label="Recompra / reaplicação" value={cadence} onChange={setCadence}
+                        options={CONTRACEPTIVE_CADENCES.map(c => ({ value: c.value, label: c.label }))} />
                     </div>
                   </div>
                 ) : formNature === 'dispositivo' ? (

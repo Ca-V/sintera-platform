@@ -7,6 +7,7 @@ import { X, Download, ExternalLink, CalendarDays, Loader2, Check, ChevronDown } 
 import { EVENT_TYPE_DEFS, EVENT_STATUS_UI, PROFESSIONAL_KIND_DEFS } from '@/lib/agenda'
 import { EXPENSE_DOC_TYPES } from '@/lib/finance/expense'
 import { useModalA11y } from '@/lib/ui/useModalA11y'
+import Select from '@/components/ui/Select'
 
 // Tipos vêm da FONTE ÚNICA (@/lib/agenda) — Agenda e Histórico falam a mesma língua.
 export type EventType = typeof EVENT_TYPE_DEFS[number]['id']
@@ -367,9 +368,8 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                       {/* Repetir (recorrência única para qualquer tipo) */}
                       <div className="space-y-1.5 pt-3">
                         <label htmlFor="agendar-repetir" className={LABEL}>Repetir</label>
-                        <select id="agendar-repetir" value={recurrence} onChange={e => setRecurrence(e.target.value as RecurrenceFreq)} className={FIELD}>
-                          {RECURRENCE_OPTS.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
-                        </select>
+                        <Select aria-label="Repetir" value={recurrence} onChange={(v) => setRecurrence(v as RecurrenceFreq)}
+                          options={RECURRENCE_OPTS.map(o => ({ value: o.v, label: o.l }))} />
                         {recurrence !== 'none' && (
                           <div className="flex items-center gap-2 pt-1">
                             <span className="font-body text-xs text-mauve">até (opcional):</span>
@@ -385,10 +385,8 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                           <input id="agendar-profissional" type="text" value={professionalName} onChange={e => setProfessionalName(e.target.value)} placeholder="Dr(a). …" className={FIELD} /></div>
                         {/* EVT-C3 (NC-0012): tipo de profissional — capturado no modal e exibido em Agenda/Histórico/Relatório */}
                         <div className="space-y-1.5"><label htmlFor="agendar-prof-kind" className={LABEL}>Tipo <span className="font-normal text-mauve normal-case">(opc.)</span></label>
-                          <select id="agendar-prof-kind" value={professionalKind} onChange={e => setProfessionalKind(e.target.value)} className={FIELD}>
-                            <option value="">—</option>
-                            {PROFESSIONAL_KIND_DEFS.map(d => <option key={d.id} value={d.id}>{d.label}</option>)}
-                          </select></div>
+                          <Select aria-label="Tipo de profissional" placeholder="—" value={professionalKind} onChange={setProfessionalKind}
+                            options={PROFESSIONAL_KIND_DEFS.map(d => ({ value: d.id, label: d.label }))} /></div>
                       </div>
                       )}
 
@@ -460,11 +458,9 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                         )}
                         {/* FIN-001: tipo do documento fiscal — habilita Relatórios (IR/reembolso) e auditoria */}
                         {(attachmentFile || initialEvent?.attachmentUrl) && (
-                          <select aria-label="Tipo de documento fiscal" value={expenseDocType}
-                            onChange={e => setExpenseDocType(e.target.value)} className={`${FIELD} mt-1.5`}>
-                            <option value="">Tipo de documento (opcional)</option>
-                            {EXPENSE_DOC_TYPES.map(d => <option key={d.id} value={d.id}>{d.label}</option>)}
-                          </select>
+                          <Select aria-label="Tipo de documento fiscal" placeholder="Tipo de documento (opcional)" className="mt-1.5"
+                            value={expenseDocType} onChange={setExpenseDocType}
+                            options={EXPENSE_DOC_TYPES.map(d => ({ value: d.id, label: d.label }))} />
                         )}
                       </div>
 

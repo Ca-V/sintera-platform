@@ -7,6 +7,7 @@ import { Shield, Mail, Key, AlertTriangle, Check, X, Loader2, ExternalLink, Down
 import { useUser } from '@/context/UserContext'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import Select from '@/components/ui/Select'
 import {
   NOTIFICATION_CATEGORIES, NOTIFICATION_CHANNELS, DEFAULT_CHANNEL, MANDATORY_NOTIFICATIONS,
   recommendedChannels, type NotificationChannel,
@@ -254,10 +255,8 @@ export default function ConfiguracoesPage() {
         <div>
           <label htmlFor="config-phone" className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">WhatsApp</label>
           <div className="mt-1 flex items-stretch gap-2">
-            <select aria-label="Código do país" value={ddi} onChange={e => setDdi(e.target.value)}
-              className="px-2.5 py-2.5 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
-              {DDI_OPTS.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
-            </select>
+            <Select aria-label="Código do país" title="Código do país" className="w-32 flex-shrink-0"
+              value={ddi} onChange={setDdi} options={DDI_OPTS.map(o => ({ value: o.v, label: o.l }))} />
             <input id="config-phone" type="tel" value={phone} onChange={e => setPhone(e.target.value)}
               placeholder="(11) 99999-9999"
               className="flex-1 min-w-0 px-3 py-2.5 border border-border rounded-xl font-body text-sm text-onyx bg-ivory placeholder:text-mauve/40 focus:outline-none focus:ring-1 focus:ring-petal/30" />

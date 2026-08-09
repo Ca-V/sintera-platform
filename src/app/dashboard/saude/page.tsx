@@ -20,6 +20,7 @@ import { groupByExam, loadCatalogLabels, type CatalogLabels } from '@/lib/biomar
 import { isOrderDocumentType } from '@/lib/exams/classification'
 import MotionCard from '@/components/ui/MotionCard'
 import Disclaimer from '@/components/ui/Disclaimer'
+import Select from '@/components/ui/Select'
 
 interface CatalogEntry { id: string; specimen: string | null; category: string | null; display_name: string }
 
@@ -228,23 +229,18 @@ export default function IndicadoresPage() {
             </div>
             {/* Descoberta: tipo · período · ordenação. Escalável — novos filtros entram nesta barra. */}
             <div className="flex flex-wrap gap-2">
-              <select aria-label="Filtrar por tipo de exame" value={typeFilter} onChange={e => setTypeFilter(e.target.value)}
-                className="flex-1 min-w-[130px] px-3 py-2 bg-ivory border border-border rounded-xl font-body text-xs text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40">
-                <option value="all">Todos os tipos</option>
-                {availableTypes.map(t => <option key={t} value={t}>{t}</option>)}
-              </select>
-              <select aria-label="Filtrar por período" value={period} onChange={e => setPeriod(e.target.value as typeof period)}
-                className="px-3 py-2 bg-ivory border border-border rounded-xl font-body text-xs text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40">
-                <option value="all">Qualquer data</option>
-                <option value="30d">Últimos 30 dias</option>
-                <option value="90d">Últimos 90 dias</option>
-                <option value="1y">Último ano</option>
-              </select>
-              <select aria-label="Ordenar" value={sortDir} onChange={e => setSortDir(e.target.value as typeof sortDir)}
-                className="px-3 py-2 bg-ivory border border-border rounded-xl font-body text-xs text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40">
-                <option value="recent">Mais recentes</option>
-                <option value="oldest">Mais antigos</option>
-              </select>
+              <Select aria-label="Filtrar por tipo de exame" title="Filtrar por tipo" className="flex-1 min-w-[130px]"
+                value={typeFilter} onChange={setTypeFilter}
+                options={[{ value: 'all', label: 'Todos os tipos' }, ...availableTypes.map(t => ({ value: t, label: t }))]} />
+              <Select aria-label="Filtrar por período" className="w-44" value={period} onChange={(v) => setPeriod(v as typeof period)}
+                options={[
+                  { value: 'all', label: 'Qualquer data' },
+                  { value: '30d', label: 'Últimos 30 dias' },
+                  { value: '90d', label: 'Últimos 90 dias' },
+                  { value: '1y', label: 'Último ano' },
+                ]} />
+              <Select aria-label="Ordenar" className="w-44" value={sortDir} onChange={(v) => setSortDir(v as typeof sortDir)}
+                options={[{ value: 'recent', label: 'Mais recentes' }, { value: 'oldest', label: 'Mais antigos' }]} />
             </div>
           </div>
         )}

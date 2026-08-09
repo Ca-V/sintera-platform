@@ -30,6 +30,7 @@ import { Card } from "@/lib/ui/ds"
 import Disclaimer from '@/components/ui/Disclaimer'
 import { healthEventToRow } from '@/lib/agenda/event'
 import ConfirmDialog from '@/components/ConfirmDialog'
+import Select from '@/components/ui/Select'
 
 type Status = 'em_uso' | 'programado' | 'suspenso' | 'encerrado'
 type Kind = 'medicamento' | 'suplemento' | 'produto' | 'dispositivo' | 'outro'
@@ -610,25 +611,25 @@ export default function MedicamentosPage() {
         <Card ref={formRef} padding="relaxed" className="space-y-3 scroll-mt-20">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label htmlFor="med-kind" className="font-body text-xs text-mauve block mb-1">Tipo</label>
-              <select id="med-kind" value={kind} onChange={e => setKind(e.target.value as Kind)}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
-                <option value="medicamento">Medicamento</option>
-                <option value="suplemento">Suplemento</option>
-                <option value="produto">Produto</option>
-                <option value="dispositivo">Dispositivo</option>
-                <option value="outro">Outro</option>
-              </select>
+              <label className="font-body text-xs text-mauve block mb-1">Tipo</label>
+              <Select aria-label="Tipo" value={kind} onChange={(v) => setKind(v as Kind)}
+                options={[
+                  { value: 'medicamento', label: 'Medicamento' },
+                  { value: 'suplemento', label: 'Suplemento' },
+                  { value: 'produto', label: 'Produto' },
+                  { value: 'dispositivo', label: 'Dispositivo' },
+                  { value: 'outro', label: 'Outro' },
+                ]} />
             </div>
             <div>
-              <label htmlFor="med-status" className="font-body text-xs text-mauve block mb-1">Situação</label>
-              <select id="med-status" value={medStatus} onChange={e => setMedStatus(e.target.value as Status)}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
-                <option value="em_uso">Em uso</option>
-                <option value="programado">Programado</option>
-                <option value="suspenso">Suspenso</option>
-                <option value="encerrado">Encerrado</option>
-              </select>
+              <label className="font-body text-xs text-mauve block mb-1">Situação</label>
+              <Select aria-label="Situação" value={medStatus} onChange={(v) => setMedStatus(v as Status)}
+                options={[
+                  { value: 'em_uso', label: 'Em uso' },
+                  { value: 'programado', label: 'Programado' },
+                  { value: 'suspenso', label: 'Suspenso' },
+                  { value: 'encerrado', label: 'Encerrado' },
+                ]} />
             </div>
           </div>
           <div>
@@ -642,20 +643,15 @@ export default function MedicamentosPage() {
           {(kind === 'medicamento' || kind === 'suplemento') && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label htmlFor="med-form" className="font-body text-xs text-mauve block mb-1">Forma farmacêutica</label>
-              <select id="med-form" value={form} onChange={e => { setForm(e.target.value); setPackUnit(formMetaOf(e.target.value)?.unit ?? '') }}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
-                <option value="">Selecione…</option>
-                {FORMS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
-              </select>
+              <label className="font-body text-xs text-mauve block mb-1">Forma farmacêutica</label>
+              <Select aria-label="Forma farmacêutica" placeholder="Selecione…" value={form}
+                onChange={(v) => { setForm(v); setPackUnit(formMetaOf(v)?.unit ?? '') }}
+                options={FORMS.map(f => ({ value: f.value, label: f.label }))} />
             </div>
             <div>
-              <label htmlFor="med-route" className="font-body text-xs text-mauve block mb-1">Via de administração <span className="font-normal text-mauve">(opcional)</span></label>
-              <select id="med-route" value={route} onChange={e => setRoute(e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
-                <option value="">Selecione…</option>
-                {ROUTES.map(r => <option key={r} value={r}>{r}</option>)}
-              </select>
+              <label className="font-body text-xs text-mauve block mb-1">Via de administração <span className="font-normal text-mauve">(opcional)</span></label>
+              <Select aria-label="Via de administração" placeholder="Selecione…" value={route} onChange={setRoute}
+                options={ROUTES.map(r => ({ value: r, label: r }))} />
             </div>
           </div>
           )}
@@ -754,13 +750,9 @@ export default function MedicamentosPage() {
                   className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30" />
               </div>
               <div>
-                <label htmlFor="med-purchase-status" className="font-body text-[11px] text-mauve block mb-1">Situação</label>
-                <select id="med-purchase-status" value={purchaseStatus} onChange={e => setPurchaseStatus(e.target.value)}
-                  className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30">
-                  <option value="">—</option>
-                  <option value="a_comprar">A comprar</option>
-                  <option value="comprado">Comprado</option>
-                </select>
+                <label className="font-body text-[11px] text-mauve block mb-1">Situação</label>
+                <Select aria-label="Situação da compra" placeholder="—" value={purchaseStatus} onChange={setPurchaseStatus}
+                  options={[{ value: 'a_comprar', label: 'A comprar' }, { value: 'comprado', label: 'Comprado' }]} />
               </div>
             </div>
             <label className="flex items-center gap-2 font-body text-sm text-onyx cursor-pointer">
@@ -770,18 +762,18 @@ export default function MedicamentosPage() {
             {repurchase && (
               <div className="space-y-3 rounded-lg bg-blush/20 border border-petal/15 p-2.5">
                 <div>
-                  <label htmlFor="med-repurchase-freq" className="font-body text-[11px] text-mauve block mb-1">Frequência da compra</label>
-                  <select id="med-repurchase-freq" value={repurchaseFreq} onChange={e => setRepurchaseFreq(e.target.value)}
-                    className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30">
-                    <option value="">Com que frequência você recompra?</option>
-                    <option value="semanal">Semanal</option>
-                    <option value="quinzenal">Quinzenal</option>
-                    <option value="mensal">Mensal</option>
-                    <option value="bimestral">Bimestral</option>
-                    <option value="trimestral">Trimestral</option>
-                    <option value="semestral">Semestral</option>
-                    <option value="anual">Anual</option>
-                  </select>
+                  <label className="font-body text-[11px] text-mauve block mb-1">Frequência da compra</label>
+                  <Select aria-label="Frequência da compra" placeholder="Com que frequência você recompra?"
+                    value={repurchaseFreq} onChange={setRepurchaseFreq}
+                    options={[
+                      { value: 'semanal', label: 'Semanal' },
+                      { value: 'quinzenal', label: 'Quinzenal' },
+                      { value: 'mensal', label: 'Mensal' },
+                      { value: 'bimestral', label: 'Bimestral' },
+                      { value: 'trimestral', label: 'Trimestral' },
+                      { value: 'semestral', label: 'Semestral' },
+                      { value: 'anual', label: 'Anual' },
+                    ]} />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>

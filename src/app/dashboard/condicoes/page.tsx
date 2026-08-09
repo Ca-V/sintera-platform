@@ -27,6 +27,7 @@ import { decideCaptureRouting } from '@/lib/capture/capture-routing'
 import ProvenanceLine from '@/components/ui/ProvenanceLine'
 import { examProvenance } from '@/lib/provenance'
 import ConfirmDialog from '@/components/ConfirmDialog'
+import Select from '@/components/ui/Select'
 
 type Scope = 'propria' | 'familiar'
 
@@ -301,12 +302,9 @@ export default function CondicoesPage() {
           {scanErr && <p className="font-body text-xs text-red-500">{scanErr}</p>}
           {scanInfo && <p className="font-body text-xs text-onyx/60">{scanInfo}</p>}
           <div>
-            <label htmlFor="cond-tipo" className="font-body text-xs text-mauve block mb-1">Tipo</label>
-            <select id="cond-tipo" value={scope} onChange={e => setScope(e.target.value as Scope)}
-              className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
-              <option value="propria">Minha condição</option>
-              <option value="familiar">Histórico familiar</option>
-            </select>
+            <label className="font-body text-xs text-mauve block mb-1">Tipo</label>
+            <Select aria-label="Tipo" value={scope} onChange={(v) => setScope(v as Scope)}
+              options={[{ value: 'propria', label: 'Minha condição' }, { value: 'familiar', label: 'Histórico familiar' }]} />
           </div>
           <div>
             <label htmlFor="cond-nome" className="font-body text-xs text-mauve block mb-1">Condição</label>

@@ -34,6 +34,7 @@ import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
 import MotionCard from '@/components/ui/MotionCard'
 import AttachmentLink from '@/components/ui/AttachmentLink'
+import Select from '@/components/ui/Select'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { DsThemeProvider, LaboratoryTable, Card as DsCard, Text as DsText, Numeric as DsNumeric, Banner as DsBanner, useDs } from '@/lib/ui/ds'
 import type { LabRow, LabMaterialGroup } from '@/lib/ui/ds/domain'
@@ -760,16 +761,9 @@ export default function ExamDetailPage() {
             <p className="font-body text-xs text-mauve">Nenhum pedido cadastrado. Adicione o pedido em <Link href="/dashboard/exams" className="text-petal hover:underline">Exames › Pedidos de Exames</Link> para registrar a origem deste resultado.</p>
           ) : linkPickerOpen ? (
             <div className="flex flex-wrap items-center gap-2">
-              {/* eslint-disable-next-line jsx-a11y/no-autofocus */}
-              <select autoFocus aria-label="Pedido de origem" onChange={e => { if (e.target.value) linkToOrder(e.target.value) }} disabled={linkBusy}
-                className="flex-1 min-w-[220px] px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
-                <option value="">Selecione o pedido de origem…</option>
-                {orders.map(o => (
-                  <option key={o.id} value={o.id}>
-                    {(o.type ?? 'Pedido médico')}{o.requesting_physician ? ` — ${o.requesting_physician}` : ''} · {formatDate(o.exam_date ?? o.created_at)}
-                  </option>
-                ))}
-              </select>
+              <Select aria-label="Pedido de origem" placeholder="Selecione o pedido de origem…" className="flex-1 min-w-[220px]"
+                value="" disabled={linkBusy} onChange={(v) => { if (v) linkToOrder(v) }}
+                options={orders.map(o => ({ value: o.id, label: `${o.type ?? 'Pedido médico'}${o.requesting_physician ? ` — ${o.requesting_physician}` : ''} · ${formatDate(o.exam_date ?? o.created_at)}` }))} />
               <button type="button" onClick={() => setLinkPickerOpen(false)} className="text-[11px] font-body text-mauve px-2 py-1">Cancelar</button>
             </div>
           ) : (
@@ -798,11 +792,8 @@ export default function ExamDetailPage() {
                 <input id="exp-valor" type="text" inputMode="decimal" value={expAmount} onChange={e => setExpAmount(e.target.value)} placeholder="250,00"
                   className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40" /></div>
               <div className="space-y-1"><label htmlFor="exp-tipo" className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Tipo de documento</label>
-                <select id="exp-tipo" value={expDocType} onChange={e => setExpDocType(e.target.value)}
-                  className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/40">
-                  <option value="">—</option>
-                  {EXPENSE_DOC_TYPES.map(d => <option key={d.id} value={d.id}>{d.label}</option>)}
-                </select></div>
+                <Select aria-label="Tipo de documento" placeholder="—" value={expDocType} onChange={setExpDocType}
+                  options={EXPENSE_DOC_TYPES.map(d => ({ value: d.id, label: d.label }))} /></div>
             </div>
             <div className="space-y-1"><label htmlFor="exp-anexo" className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Anexo (NF/recibo/comprovante) <span className="font-normal text-mauve normal-case">(PDF, JPG, PNG)</span></label>
               <input id="exp-anexo" type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e => setExpDocFile(e.target.files?.[0] ?? null)}

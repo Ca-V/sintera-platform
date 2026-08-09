@@ -27,6 +27,7 @@ import { useEventForm } from '@/components/eventForm'
 import { eventServicesFor, isFinancial, type HealthEvent } from '@/lib/agenda'
 import { parseRule } from '@/lib/recurrence'
 import { todayISO } from '@/lib/date'
+import Select from '@/components/ui/Select'
 
 // Lembrete de hábito = evento planejado no canônico health_events, vinculado ao hábito (EventLink 'habit').
 // Mesma infra recorrente de Medicamentos/Recursos — sem tabela nem worker próprios.
@@ -327,11 +328,9 @@ export default function HabitosPage() {
           {lembrete && (
             <div className="space-y-2 rounded-lg bg-blush/20 border border-petal/15 p-2.5">
               <div>
-                <label htmlFor="habito-lembrete-freq" className="font-body text-[11px] text-mauve block mb-1">Frequência do lembrete</label>
-                <select id="habito-lembrete-freq" value={lembreteFreq} onChange={e => setLembreteFreq(e.target.value as RecurrenceFreq)}
-                  className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30">
-                  {LEMBRETE_FREQ_OPTS.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
-                </select>
+                <label className="font-body text-[11px] text-mauve block mb-1">Frequência do lembrete</label>
+                <Select aria-label="Frequência do lembrete" value={lembreteFreq} onChange={(v) => setLembreteFreq(v as RecurrenceFreq)}
+                  options={LEMBRETE_FREQ_OPTS.map(o => ({ value: o.v, label: o.l }))} />
               </div>
               <p className="font-body text-[11px] text-mauve leading-relaxed">
                 Cria um lembrete recorrente na sua Agenda a partir de hoje. Você é avisada pelo canal definido nas suas preferências de notificação.

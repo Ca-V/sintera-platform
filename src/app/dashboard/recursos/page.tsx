@@ -29,6 +29,7 @@ import Disclaimer from '@/components/ui/Disclaimer'
 import CreateRecordMenu from '@/components/ui/CreateRecordMenu'
 import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MB } from '@/lib/capture/limits'
 import ConfirmDialog from '@/components/ConfirmDialog'
+import Select from '@/components/ui/Select'
 import AgendarModal, { type AgendaEventInput, type RecurrenceFreq } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
 import { eventServicesFor, isFinancial, selectByLink, type HealthEvent } from '@/lib/agenda'
@@ -459,16 +460,14 @@ export default function RecursosPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label htmlFor="recurso-tipo" className="font-body text-xs text-mauve block mb-1">Tipo de recurso</label>
-              <select id="recurso-tipo" value={f.resource_type} onChange={e => set('resource_type', e.target.value)} className={inputCls}>
-                {TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-              </select>
+              <label className="font-body text-xs text-mauve block mb-1">Tipo de recurso</label>
+              <Select aria-label="Tipo de recurso" value={f.resource_type} onChange={(v) => set('resource_type', v)}
+                options={TYPES.map(t => ({ value: t.value, label: t.label }))} />
             </div>
             <div>
-              <label htmlFor="recurso-situacao" className="font-body text-xs text-mauve block mb-1">Situação</label>
-              <select id="recurso-situacao" value={f.status} onChange={e => set('status', e.target.value)} className={inputCls}>
-                {STATUS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-              </select>
+              <label className="font-body text-xs text-mauve block mb-1">Situação</label>
+              <Select aria-label="Situação" value={f.status} onChange={(v) => set('status', v)}
+                options={STATUS.map(s => ({ value: s.value, label: s.label }))} />
             </div>
           </div>
 
@@ -515,11 +514,9 @@ export default function RecursosPage() {
           {trocaRecorrente && (
             <div className="space-y-2 rounded-lg bg-blush/20 border border-petal/15 p-2.5">
               <div>
-                <label htmlFor="recurso-troca-freq" className="font-body text-[11px] text-mauve block mb-1">Frequência da troca</label>
-                <select id="recurso-troca-freq" value={trocaFreq} onChange={e => setTrocaFreq(e.target.value as RecurrenceFreq)}
-                  className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30">
-                  {TROCA_FREQ_OPTS.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
-                </select>
+                <label className="font-body text-[11px] text-mauve block mb-1">Frequência da troca</label>
+                <Select aria-label="Frequência da troca" value={trocaFreq} onChange={(v) => setTrocaFreq(v as RecurrenceFreq)}
+                  options={TROCA_FREQ_OPTS.map(o => ({ value: o.v, label: o.l }))} />
               </div>
               <p className="font-body text-[11px] text-mauve leading-relaxed">
                 Cria um lembrete recorrente na sua Agenda a partir da <strong>troca prevista</strong> acima{f.until_date ? '' : ' (ou de hoje, se não informada)'}.
@@ -532,11 +529,9 @@ export default function RecursosPage() {
           {isVisual && (
             <div className="rounded-xl border border-border/70 bg-ivory/40 p-3 space-y-3">
               <div>
-                <label htmlFor="recurso-formato" className="font-body text-xs text-mauve block mb-1">Formato</label>
-                <select id="recurso-formato" value={f.vision_kind} onChange={e => set('vision_kind', e.target.value)} className={gradeCls}>
-                  <option value="oculos">Óculos</option>
-                  <option value="lentes_contato">Lentes de contato</option>
-                </select>
+                <label className="font-body text-xs text-mauve block mb-1">Formato</label>
+                <Select aria-label="Formato" value={f.vision_kind} onChange={(v) => set('vision_kind', v)}
+                  options={[{ value: 'oculos', label: 'Óculos' }, { value: 'lentes_contato', label: 'Lentes de contato' }]} />
               </div>
               <div className="space-y-2">
                 <div className="grid grid-cols-[2.2rem_1fr_1fr_1fr_1fr] items-center gap-1.5">

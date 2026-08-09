@@ -20,6 +20,7 @@ import ListCard from '@/components/ListCard'
 import { Card } from "@/lib/ui/ds"
 import PageHeader from '@/components/PageHeader'
 import Disclaimer from '@/components/ui/Disclaimer'
+import Select from '@/components/ui/Select'
 
 interface Panel {
   id: string
@@ -109,11 +110,9 @@ export default function OmicsListPage() {
         <Card padding="relaxed" className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="omics-tipo" className="font-body text-xs text-mauve block mb-1">Tipo de ômica</label>
-              <select id="omics-tipo" value={domain} onChange={e => setDomain(e.target.value as OmicsDomain)}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
-                {DOMAINS.map(d => <option key={d} value={d}>{DOMAIN_LABEL[d]}</option>)}
-              </select>
+              <label className="font-body text-xs text-mauve block mb-1">Tipo de ômica</label>
+              <Select aria-label="Tipo de ômica" value={domain} onChange={(v) => setDomain(v as OmicsDomain)}
+                options={DOMAINS.map(d => ({ value: d, label: DOMAIN_LABEL[d] }))} />
             </div>
             <div>
               <label htmlFor="omics-data" className="font-body text-xs text-mauve block mb-1">Data do exame</label>
