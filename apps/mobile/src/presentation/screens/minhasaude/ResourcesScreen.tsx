@@ -2,7 +2,7 @@
 // visual OD/OE) + LEMBRETE de troca (Evento vinculado 'resource', via syncReminder). Reutiliza apiClient.resources
 // + apiClient.agenda + taxonomia @sintera/core. FACTUAL (REG-001).
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ScrollView, View, ActivityIndicator, RefreshControl, Pressable, Alert, Linking, StyleSheet } from 'react-native'
+import { ScrollView, View, ActivityIndicator, RefreshControl, Pressable, Alert, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import type { ResourceDTO, ResourceInput } from '@sintera/api-client'
@@ -12,7 +12,7 @@ import {
   FREQUENCY_LABELS, type RecurrenceFrequency, selectByLink, parseRule, type HealthEvent,
   EXPENSE_DOC_TYPES, expenseDocLabel, parseAmountToCents, centsToAmount,
 } from '@sintera/core'
-import { Text, Button, Input } from '../../primitives'
+import { Text, Button, Input, AttachmentLink } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 import { documentPicker } from '../../../infrastructure/documentPickerAdapter'
@@ -273,7 +273,7 @@ export function ResourcesScreen() {
                 {r.resource_type === 'correcao_visual' && visionSummary(r.attributes) ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{visionSummary(r.attributes)}</Text> : null}
                 {reminderFreqFor(r.id) !== 'none' ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>🔔 troca {FREQUENCY_LABELS[reminderFreqFor(r.id)]}</Text> : null}
                 {expenseFor(r.id) ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>💰 {((expenseFor(r.id)?.amountCents ?? 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}{expenseDocLabel(expenseFor(r.id)?.expenseDocType) ? ` · ${expenseDocLabel(expenseFor(r.id)?.expenseDocType)}` : ''}</Text> : null}
-                {r.file_url ? <Pressable onPress={() => Linking.openURL(r.file_url as string)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Documento →</Text></Pressable> : null}
+                <AttachmentLink url={r.file_url} variant="inline" label="Documento" />
                 <Pressable onPress={() => remove(r)} style={{ alignSelf: 'flex-start', marginTop: 4 }}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>Excluir</Text></Pressable>
               </View>
             ))}

@@ -28,6 +28,7 @@ import { eventServicesFor, isFinancial, type HealthEvent } from '@/lib/agenda'
 import { parseRule } from '@/lib/recurrence'
 import { todayISO } from '@/lib/date'
 import Select from '@/components/ui/Select'
+import AttachmentLink from '@/components/ui/AttachmentLink'
 
 // Lembrete de hábito = evento planejado no canônico health_events, vinculado ao hábito (EventLink 'habit').
 // Mesma infra recorrente de Medicamentos/Recursos — sem tabela nem worker próprios.
@@ -360,7 +361,7 @@ export default function HabitosPage() {
             <label className="font-body text-xs text-mauve block mb-1">Plano / dieta (opcional)</label>
             {planUrl ? (
               <div className="flex items-center gap-2 font-body text-sm">
-                <a href={planUrl} target="_blank" rel="noreferrer" className="text-petal hover:underline inline-flex items-center gap-1"><Paperclip size={13} /> {planName || 'Anexo'}</a>
+                <AttachmentLink url={planUrl} variant="inline" label={planName || 'Anexo'} icon={<Paperclip size={13} />} />
                 <button type="button" onClick={() => { setPlanUrl(''); setPlanName('') }} aria-label="Remover anexo"
                   className="text-mauve/50 hover:text-red-400 transition-colors"><X size={13} /></button>
               </div>

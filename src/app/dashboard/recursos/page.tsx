@@ -30,6 +30,7 @@ import CreateRecordMenu from '@/components/ui/CreateRecordMenu'
 import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MB } from '@/lib/capture/limits'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import Select from '@/components/ui/Select'
+import AttachmentLink from '@/components/ui/AttachmentLink'
 import AgendarModal, { type AgendaEventInput, type RecurrenceFreq } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
 import { eventServicesFor, isFinancial, selectByLink, type HealthEvent } from '@/lib/agenda'
@@ -379,12 +380,7 @@ export default function RecursosPage() {
             <>
               {metaParts.length > 0 && <span>{metaParts.join(' • ')}</span>}
               {r.notes && <span className={metaParts.length ? 'block mt-0.5 text-mauve' : 'text-mauve'}>{r.notes}</span>}
-              {r.fileUrl && (
-                <a href={r.fileUrl} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-petal hover:underline mt-0.5">
-                  <Paperclip size={11} /> Ver foto
-                </a>
-              )}
+              <AttachmentLink url={r.fileUrl} variant="inline" label="Ver foto" icon={<Paperclip size={11} />} className="mt-0.5" />
               {exp && (exp.amountCents ?? 0) > 0 && (
                 <span className="block text-onyx/70 mt-0.5">
                   💰 {((exp.amountCents ?? 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
@@ -587,10 +583,7 @@ export default function RecursosPage() {
 
           <div className="flex items-center justify-between gap-3">
             {f.file_url ? (
-              <a href={f.file_url} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 font-body text-xs text-petal hover:underline">
-                <Paperclip size={13} /> Foto anexada
-              </a>
+              <AttachmentLink url={f.file_url} variant="inline" label="Foto anexada" icon={<Paperclip size={13} />} />
             ) : (
               <>
                 <input ref={scanRef} type="file" accept="image/*" capture="environment" className="hidden"

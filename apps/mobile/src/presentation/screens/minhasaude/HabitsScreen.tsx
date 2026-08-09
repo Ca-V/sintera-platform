@@ -2,7 +2,7 @@
 // (Evento Assistencial vinculado 'habit', via infra única syncReminder). Reutiliza apiClient.habits + apiClient.agenda
 // + taxonomia/regra do @sintera/core. FACTUAL (REG-001).
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ScrollView, View, ActivityIndicator, RefreshControl, Pressable, Alert, Linking, StyleSheet } from 'react-native'
+import { ScrollView, View, ActivityIndicator, RefreshControl, Pressable, Alert, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import type { HabitDTO, HabitInput } from '@sintera/api-client'
@@ -10,7 +10,7 @@ import {
   HABIT_CATEGORIES, habitGoalSummary, type HabitCategory,
   FREQUENCY_LABELS, type RecurrenceFrequency, selectByLink, parseRule, type HealthEvent,
 } from '@sintera/core'
-import { Text, Button, Input } from '../../primitives'
+import { Text, Button, Input, AttachmentLink } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 import { documentPicker } from '../../../infrastructure/documentPickerAdapter'
@@ -182,11 +182,7 @@ export function HabitsScreen() {
                   {h.frequency ? h.frequency : 'Sem frequência definida'}{habitGoalSummary(h.goal_amount, h.goal_unit, h.goal_divisions) ? ` · ${habitGoalSummary(h.goal_amount, h.goal_unit, h.goal_divisions)}` : ''}
                 </Text>
                 {reminderFreqFor(h.id) !== 'none' ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>🔔 {FREQUENCY_LABELS[reminderFreqFor(h.id)]}</Text> : null}
-                {h.plan_url ? (
-                  <Pressable onPress={() => Linking.openURL(h.plan_url as string)}>
-                    <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>{h.plan_name || 'Plano'} →</Text>
-                  </Pressable>
-                ) : null}
+                <AttachmentLink url={h.plan_url} variant="inline" label={h.plan_name || 'Plano'} />
                 {h.notes ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{h.notes}</Text> : null}
                 <Pressable onPress={() => remove(h)} style={{ alignSelf: 'flex-start', marginTop: 4 }}>
                   <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>Excluir</Text>
