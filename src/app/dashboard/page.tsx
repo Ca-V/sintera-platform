@@ -158,45 +158,7 @@ function LegacyDashboard() {
       {/* NOV-001 — "a SINTERA trabalhou por você": reflete conteúdo novo ainda não visto (fonte única). */}
       <HistoryGrewNotice count={novelty.countOf('body_composition')} />
 
-      {/* Como usar a SINTERA — orientação de primeiros passos (dispensável) */}
-      {showGuide && (
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.01 }}>
-          <MotionCard padding="none" className="p-6 relative border border-petal/15 bg-blush/15">
-            <button onClick={dismissGuide} aria-label="Dispensar"
-              className="absolute top-3 right-3 text-mauve/50 hover:text-onyx transition-colors"><X size={15} /></button>
-            <p className="font-display text-base font-semibold text-onyx mb-1">Como usar a SINTERA</p>
-            <p className="font-body text-xs text-mauve mb-4 max-w-2xl">
-              A SINTERA reúne e organiza suas informações de saúde num só lugar — ela transcreve e organiza, não
-              interpreta nem diagnostica. Veja como começar em 5 passos:
-            </p>
-            <div className="grid sm:grid-cols-2 gap-2.5">
-              {[
-                { icon: Upload,     title: '1. Adicione seus documentos', desc: 'Envie exames, receitas e laudos (foto ou arquivo) — a SINTERA lê e organiza.', onClick: () => setIntakeOpen(true) },
-                { icon: Pill,       title: '2. Registre a sua rotina de saúde', desc: 'Medicamentos, consultas, condições, hábitos e composição corporal.', href: '/dashboard/medicamentos' },
-                { icon: Clock,      title: '3. Acompanhe ao longo do tempo', desc: 'Sua linha do tempo em Histórico de Saúde e a evolução em Histórico de Exames.', href: '/dashboard/timeline' },
-                { icon: ScrollText, title: '4. Compartilhe com quem cuida de você', desc: 'Reúna suas informações em um relatório e envie ao seu profissional de saúde.', href: '/dashboard/relatorio' },
-                { icon: Bell,       title: '5. Escolha como ser avisada', desc: 'Na Central de Notificações (em Configurações) você define se recebe lembretes por e-mail, WhatsApp, ambos ou nenhum.', href: '/dashboard/configuracoes' },
-              ].map((s) => {
-                const Icon = s.icon
-                const inner = (
-                  <div className="flex items-start gap-3 p-3 rounded-xl bg-white/60 border border-border/60 hover:border-petal/40 transition-colors h-full">
-                    <div className="w-8 h-8 rounded-lg bg-blush flex items-center justify-center flex-shrink-0"><Icon size={15} className="text-petal" /></div>
-                    <div className="min-w-0">
-                      <p className="font-body text-xs font-semibold text-onyx">{s.title}</p>
-                      <p className="font-body text-[11px] text-mauve mt-0.5 leading-snug">{s.desc}</p>
-                    </div>
-                  </div>
-                )
-                return s.href
-                  ? <Link key={s.title} href={s.href} className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-petal/40 rounded-xl">{inner}</Link>
-                  : <button key={s.title} onClick={s.onClick} className="block text-left w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-petal/40 rounded-xl">{inner}</button>
-              })}
-            </div>
-          </MotionCard>
-        </motion.div>
-      )}
-
-      {/* Centro de Entrada — entrada unificada de documentos */}
+      {/* Centro de Entrada — entrada unificada de documentos (ação principal, logo após a saudação) */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.02 }}>
         <ActionCard onClick={() => setIntakeOpen(true)} padding="default"
           className="flex items-center gap-3 group">
@@ -300,80 +262,42 @@ function LegacyDashboard() {
         </motion.div>
       )}
 
-      {/* ───────────────────────── Resumo (números) ───────────────────────── */}
-      {!isEmpty && !loading && stats && (
+      {/* Como usar a SINTERA — onboarding (por último; dispensável). Ordem unificada UX-002 (paridade com o Mobile). */}
+      {showGuide && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
-          <p className="font-body text-sm font-semibold text-onyx mb-2.5">Resumo</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Card padding="default" className="text-center">
-              <div className="w-9 h-9 rounded-xl bg-blush flex items-center justify-center mx-auto mb-2">
-                <FileText size={17} className="text-petal" />
-              </div>
-              <p className="font-display text-2xl font-bold text-onyx">{stats.totalExams}</p>
-              <p className="font-body text-xs text-mauve mt-0.5">Exame{stats.totalExams !== 1 ? 's' : ''}</p>
-            </Card>
-            <Card padding="default" className="text-center">
-              <div className="w-9 h-9 rounded-xl bg-blush flex items-center justify-center mx-auto mb-2">
-                <CheckCircle size={17} className="text-petal" />
-              </div>
-              <p className="font-display text-2xl font-bold text-onyx">{stats.processedExams}</p>
-              <p className="font-body text-xs text-mauve mt-0.5">Extraído{stats.processedExams !== 1 ? 's' : ''}</p>
-            </Card>
-            <Card padding="default" className="text-center">
-              <div className="w-9 h-9 rounded-xl bg-lavender-light flex items-center justify-center mx-auto mb-2">
-                <FlaskConical size={17} className="text-lavender" />
-              </div>
-              <p className="font-display text-2xl font-bold text-onyx">{stats.totalBiomarkers}</p>
-              <p className="font-body text-xs text-mauve mt-0.5">Biomarcadores</p>
-            </Card>
-            <Card padding="default" className="text-center">
-              <div className="w-9 h-9 rounded-xl bg-warm flex items-center justify-center mx-auto mb-2">
-                <Clock size={17} className="text-gold" />
-              </div>
-              <p className="font-display text-2xl font-bold text-onyx">{stats.pendingExams}</p>
-              <p className="font-body text-xs text-mauve mt-0.5">Aguardando</p>
-            </Card>
-          </div>
-        </motion.div>
-      )}
-
-      {/* ───────────────────────── Exames recentes ───────────────────────── */}
-      {!isEmpty && !loading && recentExams.length > 0 && (
-        <MotionCard initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }}
-          padding="none" className="overflow-hidden">
-          <div className="px-5 py-3.5 border-b border-border/40 flex items-center justify-between">
-            <p className="font-body text-sm font-semibold text-onyx">Exames recentes</p>
-            <button onClick={() => router.push('/dashboard/exams')}
-              className="font-body text-xs text-petal hover:underline">
-              Ver todos →
-            </button>
-          </div>
-          <div className="divide-y divide-border/30">
-            {recentExams.map((exam) => {
-              const cfg  = STATUS_CONFIG[exam.status] ?? STATUS_CONFIG.pending
-              const Icon = cfg.icon
-              return (
-                <button key={exam.id}
-                  onClick={() => router.push('/dashboard/exams/' + exam.id)}
-                  className="w-full flex items-start gap-3 px-5 py-3.5 hover:bg-blush/20 transition-colors text-left">
-                  <div className="w-8 h-8 rounded-xl bg-blush flex items-center justify-center flex-shrink-0">
-                    <FileText size={15} className="text-petal" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-body text-sm font-medium text-onyx break-words line-clamp-2">{exam.type ?? 'Exame'}</p>
-                    <div className="flex items-center gap-2 flex-wrap mt-0.5">
-                      <p className="font-body text-xs text-mauve">Realizado em {formatDate(exam.exam_date ?? exam.created_at)}</p>
-                      <span className={`inline-flex items-center gap-1 text-[11px] font-body font-medium px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.color}`}>
-                        <Icon size={9} />
-                        {cfg.label}
-                      </span>
+          <MotionCard padding="none" className="p-6 relative border border-petal/15 bg-blush/15">
+            <button onClick={dismissGuide} aria-label="Dispensar"
+              className="absolute top-3 right-3 text-mauve/50 hover:text-onyx transition-colors"><X size={15} /></button>
+            <p className="font-display text-base font-semibold text-onyx mb-1">Como usar a SINTERA</p>
+            <p className="font-body text-xs text-mauve mb-4 max-w-2xl">
+              A SINTERA reúne e organiza suas informações de saúde num só lugar — ela transcreve e organiza, não
+              interpreta nem diagnostica. Veja como começar em 5 passos:
+            </p>
+            <div className="grid sm:grid-cols-2 gap-2.5">
+              {[
+                { icon: Upload,     title: '1. Adicione seus documentos', desc: 'Envie exames, receitas e laudos (foto ou arquivo) — a SINTERA lê e organiza.', onClick: () => setIntakeOpen(true) },
+                { icon: Pill,       title: '2. Registre a sua rotina de saúde', desc: 'Medicamentos, consultas, condições, hábitos e composição corporal.', href: '/dashboard/medicamentos' },
+                { icon: Clock,      title: '3. Acompanhe ao longo do tempo', desc: 'Sua linha do tempo em Histórico de Saúde e a evolução em Histórico de Exames.', href: '/dashboard/timeline' },
+                { icon: ScrollText, title: '4. Compartilhe com quem cuida de você', desc: 'Reúna suas informações em um relatório e envie ao seu profissional de saúde.', href: '/dashboard/relatorio' },
+                { icon: Bell,       title: '5. Escolha como ser avisada', desc: 'Na Central de Notificações (em Configurações) você define se recebe lembretes por e-mail, WhatsApp, ambos ou nenhum.', href: '/dashboard/configuracoes' },
+              ].map((s) => {
+                const Icon = s.icon
+                const inner = (
+                  <div className="flex items-start gap-3 p-3 rounded-xl bg-white/60 border border-border/60 hover:border-petal/40 transition-colors h-full">
+                    <div className="w-8 h-8 rounded-lg bg-blush flex items-center justify-center flex-shrink-0"><Icon size={15} className="text-petal" /></div>
+                    <div className="min-w-0">
+                      <p className="font-body text-xs font-semibold text-onyx">{s.title}</p>
+                      <p className="font-body text-[11px] text-mauve mt-0.5 leading-snug">{s.desc}</p>
                     </div>
                   </div>
-                </button>
-              )
-            })}
-          </div>
-        </MotionCard>
+                )
+                return s.href
+                  ? <Link key={s.title} href={s.href} className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-petal/40 rounded-xl">{inner}</Link>
+                  : <button key={s.title} onClick={s.onClick} className="block text-left w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-petal/40 rounded-xl">{inner}</button>
+              })}
+            </div>
+          </MotionCard>
+        </motion.div>
       )}
 
       {/* AgendarModal — salva na Agenda (caminho único) e oferece exportar depois */}
