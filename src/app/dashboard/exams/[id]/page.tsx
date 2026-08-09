@@ -33,6 +33,7 @@ import FeedbackModal from '@/components/FeedbackModal'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
 import MotionCard from '@/components/ui/MotionCard'
+import AttachmentLink from '@/components/ui/AttachmentLink'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { DsThemeProvider, LaboratoryTable, Card as DsCard, Text as DsText, Numeric as DsNumeric, Banner as DsBanner, useDs } from '@/lib/ui/ds'
 import type { LabRow, LabMaterialGroup } from '@/lib/ui/ds/domain'
@@ -825,12 +826,10 @@ export default function ExamDetailPage() {
               </p>
             </div>
             <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-              {examExpense.docUrl && (
-                <a href={examExpense.docUrl} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 font-body text-[11px] text-petal hover:underline">
-                  {expenseDocLabel(examExpense.docType) ?? 'Documento'} →
-                </a>
-              )}
+              <AttachmentLink
+                url={examExpense.docUrl} variant="inline"
+                label={expenseDocLabel(examExpense.docType) ?? 'Documento'}
+              />
               <button onClick={startEditExpense} className="font-body text-[11px] text-mauve hover:text-petal transition-colors">Editar</button>
             </div>
           </div>
@@ -987,13 +986,11 @@ export default function ExamDetailPage() {
 
             {/* Lembrete + valor/NF agora vivem na seção "Financeiro e acompanhamento" (FB-001) — sem duplicar aqui */}
 
-            {/* Baixar/ver PDF original — disponível sempre que houver arquivo */}
-            {(exam as unknown as { file_url?: string | null })?.file_url && (
-              <a href={(exam as unknown as { file_url: string }).file_url} target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-1.5 border border-border text-mauve font-body text-sm font-medium px-3 py-2.5 rounded-full hover:border-petal/40 hover:text-petal transition-colors">
-                <Download size={14} /> Baixar PDF
-              </a>
-            )}
+            {/* Baixar/ver PDF original — afordância única (R-ATTACH) */}
+            <AttachmentLink
+              url={(exam as unknown as { file_url?: string | null })?.file_url}
+              label="Baixar PDF" icon={<Download size={14} />}
+            />
 
             {/* Export */}
             {isProcessed && biomarkers.length > 0 && (

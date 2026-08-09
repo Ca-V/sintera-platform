@@ -2,13 +2,13 @@
 // (sem rede/domínio aqui). FRONTEIRA REG-001: exibe os campos + resultados + leva ao DOCUMENTO ORIGINAL (fonte
 // da verdade); nunca interpreta. Regras puras vêm do @sintera/core (fonte única com a Web).
 import { useEffect, useState } from 'react'
-import { ScrollView, View, ActivityIndicator, Linking, Alert, Share, Pressable, StyleSheet } from 'react-native'
+import { ScrollView, View, ActivityIndicator, Alert, Share, Pressable, StyleSheet } from 'react-native'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import type { ExamDTO } from '@sintera/api-client'
 import { deriveExamIdentity, isOrderDocumentType, careStageFor, CARE_STAGES, compareNames, selectByLink } from '@sintera/core'
-import { Button, FieldRow, Input, Text } from '../../primitives'
+import { AttachmentLink, Button, FieldRow, Input, Text } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { MinhaSaudeStackParamList } from '../../navigation/types'
 import { apiClient } from '../../../infrastructure/apiClient'
@@ -275,9 +275,7 @@ export function ExamDetailScreen({ route, navigation }: Props) {
           <Button label={isProcessed ? 'Extrair novamente' : 'Extrair dados'} variant="secondary"
             onPress={p.reanalyze} loading={p.analyze.running} loadingLabel="Extraindo…" />
         ) : null}
-        {exam.file_url ? <Button label="Abrir documento original" onPress={() => Linking.openURL(exam.file_url as string)} /> : (
-          <Text spec={text(t, { role: 'bodySmall', tone: 'muted' })}>Documento original não disponível.</Text>
-        )}
+        <AttachmentLink url={exam.file_url} />
         <Button label="Compartilhar" variant="secondary" onPress={onShare} />
         <Button label="Reportar problema" variant="secondary" onPress={() => setReportOpen(v => !v)} />
       </View>
