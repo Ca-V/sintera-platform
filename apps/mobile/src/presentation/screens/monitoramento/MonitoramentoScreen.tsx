@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import type { BodyMetricDTO } from '@sintera/api-client'
 import { VITAL_SIGNS, bodyMetricLabel, isVital, type VitalMetric } from '@sintera/core'
-import { Text, Button, Input } from '../../primitives'
+import { Text, Button, Input, Disclaimer } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 
@@ -137,7 +137,7 @@ export function MonitoramentoScreen() {
         )
       })}
 
-      <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Registro factual da própria pessoa. Não substitui avaliação profissional.</Text>
+      <Disclaimer variant="geral" />
     </ScrollView>
   )
 }

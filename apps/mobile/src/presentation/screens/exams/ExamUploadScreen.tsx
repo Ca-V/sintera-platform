@@ -7,7 +7,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { acceptedFormatsHint, DEFAULT_UPLOAD_CONSTRAINTS } from '@sintera/api-client'
 import { heading, text } from '@sintera/design-system'
-import { Button, Text } from '../../primitives'
+import { Button, Text, Disclaimer } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { MinhaSaudeStackParamList } from '../../navigation/types'
 import { useExamUpload } from './useExamUpload'
@@ -37,9 +37,8 @@ export function ExamUploadScreen({ navigation }: Props) {
     <View style={[styles.root, { backgroundColor: t.color.surface.app, paddingTop: insets.top + 8, paddingBottom: insets.bottom + 24 }]}>
       <View style={styles.body}>
         <Text spec={heading(t, { level: 'page' })}>Adicionar exame</Text>
-        <Text spec={text(t, { role: 'bodySmall', tone: 'muted' })}>
-          Envie o documento do seu exame. A SINTERA organiza e dá acesso — não interpreta resultados (RDC 657/2022).
-        </Text>
+        <Text spec={text(t, { role: 'bodySmall', tone: 'muted' })}>Envie o documento do seu exame.</Text>
+        <Disclaimer variant="laudo" />
 
         {busy ? (
           <View style={styles.center}>

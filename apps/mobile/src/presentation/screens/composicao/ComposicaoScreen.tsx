@@ -18,7 +18,7 @@ import {
   buildMilestones, MILESTONE_CATEGORIES, MILESTONE_COLOR, type MilestoneCategory,
   type MedInput, type AssessmentInput, type ConsultaInput, professionalKindLabel,
 } from '@sintera/core'
-import { Text, Button, Input, MetricRow } from '../../primitives'
+import { Text, Button, Input, MetricRow, Disclaimer } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 
@@ -365,7 +365,7 @@ export function ComposicaoScreen() {
         )
       })}
 
-      <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Valores informados pela própria pessoa ou lidos de laudos. Não substitui avaliação profissional.</Text>
+      <Disclaimer variant="geral" />
     </ScrollView>
   )
 }

@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { ExamDTO } from '@sintera/api-client'
 import { isOrderDocumentType, findDuplicateIds, type DuplicateCandidate } from '@sintera/core'
 import { heading, text } from '@sintera/design-system'
-import { Button, Text, Input } from '../../primitives'
+import { Button, Text, Input, Disclaimer } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { MinhaSaudeStackParamList } from '../../navigation/types'
 import { useExamsList } from './useExamsList'
@@ -150,10 +150,7 @@ export function ExamsListScreen({ navigation }: Props) {
         </View>
       ) : null}
 
-      <Text spec={text(t, { role: 'caption', tone: 'faint' })} style={{ marginTop: 8 }}>
-        A SINTERA organiza e dá acesso aos seus exames. Não interpreta resultados nem substitui a avaliação de um
-        profissional de saúde (RDC 657/2022).
-      </Text>
+      <Disclaimer variant="laudo" />
     </ScrollView>
   )
 }

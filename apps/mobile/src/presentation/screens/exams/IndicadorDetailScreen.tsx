@@ -8,7 +8,7 @@ import { useNavigation, useRoute } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import { seriesForName, type BiomarkerSummary, type Trend } from '@sintera/core'
-import { Text, Button } from '../../primitives'
+import { Text, Button, Disclaimer } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 
@@ -114,7 +114,7 @@ export function IndicadorDetailScreen() {
         ))}
       </View>
 
-      <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Faixas de referência, quando presentes, são as do documento. Compilação factual — não substitui avaliação médica.</Text>
+      <Disclaimer variant="laudo" />
     </ScrollView>
   )
 }

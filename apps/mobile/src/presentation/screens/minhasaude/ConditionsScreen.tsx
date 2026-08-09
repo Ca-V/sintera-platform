@@ -6,7 +6,7 @@ import { ScrollView, View, ActivityIndicator, RefreshControl, Pressable, Alert, 
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import type { ConditionDTO, ConditionScope, ConditionInput } from '@sintera/api-client'
-import { Text, Button, Input } from '../../primitives'
+import { Text, Button, Input, Disclaimer } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 import { documentPicker } from '../../../infrastructure/documentPickerAdapter'
@@ -151,9 +151,7 @@ export function ConditionsScreen() {
         )
       })}
 
-      <Text spec={text(t, { role: 'caption', tone: 'faint' })}>
-        A SINTERA registra o que você informa, de forma factual — não é diagnóstico nem avaliação clínica (RDC 657/2022).
-      </Text>
+      <Disclaimer variant="geral" />
     </ScrollView>
   )
 }

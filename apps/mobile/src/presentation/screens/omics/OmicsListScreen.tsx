@@ -9,7 +9,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { text } from '@sintera/design-system'
 import type { OmicsPanel } from '@sintera/api-client'
 import { DOMAINS, DOMAIN_LABEL, fmtOmicsDate, type OmicsDomain } from '@sintera/core'
-import { Text, Button, Input } from '../../primitives'
+import { Text, Button, Input, Disclaimer } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 import type { MinhaSaudeStackParamList } from '../../navigation/types'
@@ -102,7 +102,7 @@ export function OmicsListScreen({ navigation }: Props) {
         </Pressable>
       ))}
 
-      <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Compilação factual de resultados — não é laudo, diagnóstico nem parecer.</Text>
+      <Disclaimer variant="laudo" />
     </ScrollView>
   )
 }

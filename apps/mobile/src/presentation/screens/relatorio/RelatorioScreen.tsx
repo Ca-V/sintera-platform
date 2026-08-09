@@ -13,7 +13,7 @@ import {
   selectFinancial, typeLabel, type HealthEvent,
 } from '@sintera/core'
 import type { ShareDTO, TemplateDTO } from '@sintera/api-client'
-import { Text, Button, Input } from '../../primitives'
+import { Text, Button, Input, Disclaimer } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 
@@ -279,7 +279,7 @@ export function RelatorioScreen() {
         <View style={[styles.card, card]}><Text spec={text(t, { role: 'body', tone: 'muted' })} style={{ textAlign: 'center' }}>Nada a exibir para a seleção e o período atuais.</Text></View>
       )}
 
-      <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Compilação factual de registros — não é laudo, diagnóstico nem parecer.</Text>
+      <Disclaimer variant="relatorio" />
     </ScrollView>
   )
 }

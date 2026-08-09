@@ -10,7 +10,7 @@ import {
   experimentalIndex, groupByMaterialExam, biomarkerSourceLabel, groupUcdaForDisplay,
   type UcdaRepresentation,
 } from '@sintera/core'
-import { Text } from '../../primitives'
+import { Text, Disclaimer } from '../../primitives'
 import { useTheme } from '../../theme'
 import { statusColor } from './examDetailFormat'
 
@@ -156,9 +156,7 @@ function ClinicalCard({ rep }: { rep: UcdaRepresentation }) {
           ))}
         </View>
       ))}
-      <Text spec={text(t, { role: 'caption', tone: 'faint' })}>
-        Reprodução estruturada do documento original — a SINTERA organiza e exibe, não interpreta (RDC 657/2022).
-      </Text>
+      <Disclaimer variant="laudo" />
     </View>
   )
 }
