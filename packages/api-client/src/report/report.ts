@@ -10,18 +10,6 @@ export interface ShareDTO { id: string; token: string; expires_at: string }
 export interface TemplateDTO { id: string; name: string; selection: Record<string, unknown> }
 export interface OmicsPanelDTO { domain: string; laboratory: string | null; total_features: number | null; collected_on: string | null; created_at: string | null }
 
-/** Gera um token aleatório seguro (link público). Usa a Web Crypto (Node/Web/Expo SDK 54+). */
-type WebCrypto = { randomUUID?: () => string; getRandomValues?: <T extends Uint8Array>(a: T) => T }
-function randomToken(): string {
-  const c = (globalThis as { crypto?: WebCrypto }).crypto
-  if (c?.randomUUID) return (c.randomUUID() + c.randomUUID()).replace(/-/g, '')
-  if (c?.getRandomValues) {
-    const a = new Uint8Array(32); c.getRandomValues(a)
-    return Array.from(a, b => b.toString(16).padStart(2, '0')).join('')
-  }
-  throw new Error('Ambiente sem gerador de aleatoriedade seguro para o link.')
-}
-
 const DAY_MS = 24 * 60 * 60 * 1000
 
 export async function listShares(client: SupabaseClient, signal?: AbortSignal): Promise<ShareDTO[]> {
@@ -47,12 +35,15 @@ export async function createShare(
   try {
     const { data: { session } } = await client.auth.getSession()
     if (!session) return { data: null, error: new Error('Não autenticado') }
-    const token = randomToken()
     const expires_at = new Date(Date.now() + (input.days ?? 30) * DAY_MS).toISOString()
-    const { error } = await client.from('report_shares').insert({
-      user_id: session.user.id, token, expires_at, sections: input.sections, excluded: input.excluded ?? {}, period: input.period, revoked: false,
-    } as never)
-    return { data: error ? null : { token }, error: error ? asError(error) : null }
+    // Token gerado pelo BANCO (default pgcrypto — H-18): sem dependência de Web Crypto no cliente (ausente no
+    // Hermes/Expo por padrão). Insere sem token e LÊ o token gerado de volta. Mesmo caminho Web e Mobile.
+    const { data, error } = await client.from('report_shares').insert({
+      user_id: session.user.id, expires_at, sections: input.sections, excluded: input.excluded ?? {}, period: input.period, revoked: false,
+    } as never).select('token').single()
+    if (error) return { data: null, error: asError(error) }
+    const token = (data as { token: string } | null)?.token
+    return token ? { data: { token }, error: null } : { data: null, error: new Error('Falha ao gerar o link.') }
   } catch (e) {
     return { data: null, error: asError(e) }
   }

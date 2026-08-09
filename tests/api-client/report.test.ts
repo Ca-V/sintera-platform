@@ -16,16 +16,17 @@ describe('api-client · report (Camada de Comunicação)', () => {
     expect(calls.eq).toEqual(['revoked', false]) // último eq encadeado
   })
 
-  it('createShare gera token e grava seções + período do dono', async () => {
-    const builder = mockQueryBuilder({ data: null, error: null })
+  it('createShare grava seções + período do dono e retorna o token gerado pelo BANCO (sem Web Crypto no cliente)', async () => {
+    const builder = mockQueryBuilder({ data: { token: 'srv-token-abcdef0123456789' }, error: null })
     const client = mockSupabase({ session: fakeSession('u1'), from: () => builder })
     const { data, error } = await createShare(client, { sections: ['exames', 'gastos'], excluded: { exames: ['Hemograma__2026-01-01'] }, period: { preset: 'all' } })
     expect(error).toBeNull()
-    expect(typeof data?.token).toBe('string')
-    expect((data?.token.length ?? 0)).toBeGreaterThan(16)
-    const row = (builder as unknown as Calls).__calls.insert?.[0] as Record<string, unknown>
+    expect(data?.token).toBe('srv-token-abcdef0123456789')
+    const calls = (builder as unknown as Calls).__calls
+    const row = calls.insert?.[0] as Record<string, unknown>
     expect(row).toMatchObject({ user_id: 'u1', sections: ['exames', 'gastos'], excluded: { exames: ['Hemograma__2026-01-01'] }, revoked: false })
-    expect(row.token).toBe(data?.token)
+    expect(row.token).toBeUndefined()       // token NÃO é gerado no cliente (H-18)
+    expect(calls.select).toEqual(['token'])  // lê o token gerado pelo banco (default pgcrypto)
   })
 
   it('revokeShare marca revoked=true por id+dono', async () => {
