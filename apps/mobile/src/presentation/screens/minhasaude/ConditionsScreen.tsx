@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import type { ConditionDTO, ConditionScope, ConditionInput } from '@sintera/api-client'
 import { Text, Button, Input, Disclaimer } from '../../primitives'
+import { useAssistedCapture } from '../capture/useAssistedCapture'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 import { documentPicker } from '../../../infrastructure/documentPickerAdapter'
@@ -31,6 +32,7 @@ export function ConditionsScreen() {
   const [fileUrl, setFileUrl] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const capture = useAssistedCapture() // T1: preenche o formulário a partir de um documento (proposta → revisão → salvar)
 
   const load = useCallback((silent: boolean) => {
     if (silent) setRefreshing(true); else setPhase('loading')
@@ -106,6 +108,14 @@ export function ConditionsScreen() {
               )
             })}
           </View>
+          <Button label="Preencher a partir de um documento" variant="secondary" loading={capture.busy} loadingLabel="Lendo…"
+            onPress={async () => {
+              const r = await capture.run((input) => apiClient.vision.readCondition(input))
+              if (!r) return
+              if (r.name) setName(r.name)
+              if (r.since) setSince(r.since)
+              if (r.notes) setNotes(r.notes)
+            }} />
           <Input value={name} onChangeText={setName} placeholder="Nome da condição (ex.: Hipotireoidismo)" />
           {scope === 'familiar' ? <Input value={relative} onChangeText={setRelative} placeholder="Familiar (ex.: mãe)" /> : null}
           <Input value={since} onChangeText={setSince} placeholder="Desde (ex.: 2019, infância)" />
