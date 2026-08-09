@@ -75,3 +75,4 @@ export * from './domain/agenda/suggestions'
 // Captura de documentos (HUB-001) — contratos puros + taxonomia de intenções. Fonte única Web↔Mobile.
 export * from './domain/capture/types'
 export * from './domain/capture/intents'
+export * from './domain/copy'

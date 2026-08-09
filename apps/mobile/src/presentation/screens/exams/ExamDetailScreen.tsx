@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import type { ExamDTO } from '@sintera/api-client'
 import { deriveExamIdentity, isOrderDocumentType, careStageFor, CARE_STAGES, compareNames, selectByLink } from '@sintera/core'
-import { AttachmentLink, Button, FieldRow, Input, Text } from '../../primitives'
+import { AttachmentLink, Button, Disclaimer, FieldRow, Input, Text } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { MinhaSaudeStackParamList } from '../../navigation/types'
 import { apiClient } from '../../../infrastructure/apiClient'
@@ -303,9 +303,7 @@ export function ExamDetailScreen({ route, navigation }: Props) {
 
       <Button label="Excluir exame" variant="secondary" onPress={onDelete} />
 
-      <Text spec={text(t, { role: 'caption', tone: 'faint' })}>
-        O documento original é a fonte da verdade. A SINTERA organiza e dá acesso — não interpreta resultados (RDC 657/2022).
-      </Text>
+      <Disclaimer variant="laudo" />
     </ScrollView>
   )
 }
