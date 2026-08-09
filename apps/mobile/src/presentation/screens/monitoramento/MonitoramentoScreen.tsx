@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import type { BodyMetricDTO } from '@sintera/api-client'
 import { VITAL_SIGNS, bodyMetricLabel, isVital, type VitalMetric } from '@sintera/core'
-import { Text, Button, Input, Disclaimer } from '../../primitives'
+import { Text, Button, Input, Disclaimer, DatePicker } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 
@@ -96,7 +96,7 @@ export function MonitoramentoScreen() {
             <Input value={value} onChangeText={setValue} placeholder={VITAL_SIGNS.find(v => v.value === metric)?.placeholder} style={{ flex: 2 }} />
             <Input value={unit} onChangeText={setUnit} placeholder="unidade" style={{ flex: 1 }} />
           </View>
-          <Input value={date} onChangeText={setDate} placeholder="Data (AAAA-MM-DD)" />
+          <DatePicker value={date} onChange={setDate} placeholder="Data" />
           <Input value={notes} onChangeText={setNotes} placeholder="Observações…" multiline style={{ minHeight: 50, textAlignVertical: 'top' }} />
           <View style={styles.actions}>
             <Button label="Cancelar" variant="secondary" onPress={() => setOpen(false)} />

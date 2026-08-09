@@ -13,7 +13,7 @@ import {
   selectFinancial, typeLabel, type HealthEvent,
 } from '@sintera/core'
 import type { ShareDTO, TemplateDTO } from '@sintera/api-client'
-import { Text, Button, Input, Disclaimer } from '../../primitives'
+import { Text, Button, Input, Disclaimer, DatePicker } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 
@@ -187,8 +187,8 @@ export function RelatorioScreen() {
         </View>
         {period.preset === 'custom' ? (
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <Input value={period.from ?? ''} onChangeText={(v) => setPeriod(pd => ({ ...pd, preset: 'custom', from: v || null }))} placeholder="De (AAAA-MM-DD)" style={{ flex: 1 }} />
-            <Input value={period.to ?? ''} onChangeText={(v) => setPeriod(pd => ({ ...pd, preset: 'custom', to: v || null }))} placeholder="Até (AAAA-MM-DD)" style={{ flex: 1 }} />
+            <DatePicker value={period.from ?? ''} onChange={(v) => setPeriod(pd => ({ ...pd, preset: 'custom', from: v || null }))} placeholder="De" style={{ flex: 1 }} />
+            <DatePicker value={period.to ?? ''} onChange={(v) => setPeriod(pd => ({ ...pd, preset: 'custom', to: v || null }))} placeholder="Até" style={{ flex: 1 }} />
           </View>
         ) : null}
       </View>

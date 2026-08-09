@@ -13,7 +13,7 @@ import {
   type MedKind, type MedStatus, MED_REPURCHASE_FREQUENCIES, repurchaseFreqToRecurrence,
   isHormonalContraceptive, contraceptiveLabel, contraceptiveCategoryLabel, cadenceUsageLabel,
 } from '@sintera/core'
-import { Text, Button, Input } from '../../primitives'
+import { Text, Button, Input, DatePicker } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { MinhaSaudeStackParamList } from '../../navigation/types'
 import { apiClient } from '../../../infrastructure/apiClient'
@@ -169,8 +169,8 @@ export function MedicationsScreen({ route, navigation }: Props) {
           <Input value={prescriber} onChangeText={setPrescriber} placeholder="Prescritor" />
           <Chips options={MED_STATUSES.map(s => ({ id: s.value, label: s.label }))} value={status} onChange={(v) => setStatus(v as MedStatus)} />
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <Input value={startedOn} onChangeText={setStartedOn} placeholder="Início (AAAA-MM-DD)" style={{ flex: 1 }} />
-            <Input value={untilDate} onChangeText={setUntilDate} placeholder="Até (AAAA-MM-DD)" style={{ flex: 1 }} />
+            <DatePicker value={startedOn} onChange={setStartedOn} placeholder="Início" style={{ flex: 1 }} />
+            <DatePicker value={untilDate} onChange={setUntilDate} placeholder="Até" style={{ flex: 1 }} />
           </View>
 
           <View style={[styles.subCard, { borderColor: t.color.border.default }]}>
@@ -190,7 +190,7 @@ export function MedicationsScreen({ route, navigation }: Props) {
               return <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Estimativa: ~{days} dias de estoque{dateStr ? ` · acaba por volta de ${dateStr}` : ''}</Text>
             })()}
             <View style={{ flexDirection: 'row', gap: 8 }}>
-              <Input value={purchasedOn} onChangeText={setPurchasedOn} placeholder="Compra (AAAA-MM-DD)" style={{ flex: 1 }} />
+              <DatePicker value={purchasedOn} onChange={setPurchasedOn} placeholder="Compra" style={{ flex: 1 }} />
               <Input value={amount} onChangeText={setAmount} placeholder="Valor (R$)" keyboardType="decimal-pad" style={{ flex: 1 }} />
             </View>
             <Chips options={[{ id: 'a_comprar', label: 'A comprar' }, { id: 'comprado', label: 'Comprado' }]} value={purchaseStatus} onChange={setPurchaseStatus} />

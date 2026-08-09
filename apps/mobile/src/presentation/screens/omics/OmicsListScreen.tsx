@@ -9,7 +9,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { text } from '@sintera/design-system'
 import type { OmicsPanel } from '@sintera/api-client'
 import { DOMAINS, DOMAIN_LABEL, fmtOmicsDate, type OmicsDomain } from '@sintera/core'
-import { Text, Button, Input, Disclaimer } from '../../primitives'
+import { Text, Button, Input, Disclaimer, DatePicker } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 import type { MinhaSaudeStackParamList } from '../../navigation/types'
@@ -78,7 +78,7 @@ export function OmicsListScreen({ navigation }: Props) {
               return <Pressable key={d} onPress={() => setDomain(d)} style={[styles.chip, { borderColor: on ? t.color.identity.primary : t.color.border.default, backgroundColor: on ? t.color.badge.info.soft : 'transparent' }]}><Text spec={text(t, { role: 'caption', tone: on ? 'default' : 'muted' })}>{DOMAIN_LABEL[d]}</Text></Pressable>
             })}
           </View>
-          <Input value={date} onChangeText={setDate} placeholder="Data do exame (AAAA-MM-DD)" />
+          <DatePicker value={date} onChange={setDate} placeholder="Data do exame" />
           <Input value={lab} onChangeText={setLab} placeholder="Laboratório (opcional)" />
           <Input value={tech} onChangeText={setTech} placeholder="Tecnologia (ex.: LC-MS/MS)" />
           <View style={styles.actions}>

@@ -18,7 +18,7 @@ import {
   buildMilestones, MILESTONE_CATEGORIES, MILESTONE_COLOR, type MilestoneCategory,
   type MedInput, type AssessmentInput, type ConsultaInput, professionalKindLabel,
 } from '@sintera/core'
-import { Text, Button, Input, MetricRow, Disclaimer } from '../../primitives'
+import { Text, Button, Input, MetricRow, Disclaimer, DatePicker } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 
@@ -225,7 +225,7 @@ export function ComposicaoScreen() {
             <Input value={value} onChangeText={setValue} placeholder={BODY_METRICS.find(m => m.value === metric)?.placeholder} keyboardType="decimal-pad" style={{ flex: 2 }} />
             <Input value={unit} onChangeText={setUnit} placeholder="unidade" style={{ flex: 1 }} />
           </View>
-          <Input value={date} onChangeText={setDate} placeholder="Data (AAAA-MM-DD)" />
+          <DatePicker value={date} onChange={setDate} placeholder="Data" />
           <Input value={notes} onChangeText={setNotes} placeholder="Observações…" multiline style={{ minHeight: 50, textAlignVertical: 'top' }} />
           {exams.length > 0 ? (
             <View style={{ gap: 6 }}>

@@ -11,7 +11,7 @@ import {
   EVENT_TYPE_DEFS, EVENT_STATUS_UI, PROFESSIONAL_KIND_DEFS, EXPENSE_DOC_TYPES, FREQUENCY_LABELS,
   serializeRule, parseRule, parseAmountToCents, centsToAmount, type RecurrenceFrequency, type EventStatus,
 } from '@sintera/core'
-import { Text, Button, Input, Switch } from '../../primitives'
+import { Text, Button, Input, Switch, DatePicker } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { AgendaStackParamList } from '../../navigation/types'
 import { apiClient } from '../../../infrastructure/apiClient'
@@ -132,12 +132,12 @@ export function EventFormScreen({ route, navigation }: Props) {
       ) : null}
 
       <Field label="Título"><Input value={title} onChangeText={setTitle} placeholder="Ex.: Cardiologista" /></Field>
-      <Field label="Data (AAAA-MM-DD)">
-        <Input value={date} onChangeText={(v) => {
+      <Field label="Data">
+        <DatePicker value={date} onChange={(v) => {
           setDate(v)
           // Automação (paridade Web): data no passado com status "Agendado" → passa a "Realizado".
           if (/^\d{4}-\d{2}-\d{2}$/.test(v) && v < new Date().toISOString().slice(0, 10) && status === 'planejado') setStatus('realizado')
-        }} placeholder="2026-09-01" />
+        }} placeholder="Selecionar data…" />
         {/^\d{4}-\d{2}-\d{2}$/.test(date) && date < new Date().toISOString().slice(0, 10) && status === 'realizado' ? (
           <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Data no passado — marcado como Realizado (entra no Histórico e nas Despesas, se tiver valor).</Text>
         ) : null}

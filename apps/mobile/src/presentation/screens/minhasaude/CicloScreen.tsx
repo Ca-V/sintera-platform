@@ -10,7 +10,7 @@ import {
   CONTRACEPTIVE_KINDS, contraceptiveLabel, contraceptiveNature, CONTRACEPTIVE_CADENCES, defaultCadenceFor,
   cadenceUsageLabel, cycleStats,
 } from '@sintera/core'
-import { Text, Button, Input, Switch } from '../../primitives'
+import { Text, Button, Input, Switch, DatePicker } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 
@@ -135,7 +135,7 @@ export function CicloScreen() {
           <Text spec={text(t, { role: 'bodyStrong' })}>{editing ? 'Editar método' : 'Novo método contraceptivo'}</Text>
           <Chips options={CONTRACEPTIVE_KINDS.map(k => ({ id: k.value, label: k.label }))} value={kind} onChange={chooseKind} />
           <Input value={brand} onChangeText={setBrand} placeholder="Marca (ex.: Mirena)" />
-          <Input value={startedOn} onChangeText={setStartedOn} placeholder="Início (AAAA-MM-DD)" />
+          <DatePicker value={startedOn} onChange={setStartedOn} placeholder="Início" />
           {nature === 'dispositivo' ? (
             <View>
               <Text spec={text(t, { role: 'label', tone: 'muted' })}>VIDA ÚTIL (MESES)</Text>
@@ -169,7 +169,7 @@ export function CicloScreen() {
           <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Registre ao menos 2 datas para ver a média e a previsão.</Text>
         )}
         <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-          <Input value={periodDate} onChangeText={setPeriodDate} placeholder="Início (AAAA-MM-DD) — vazio = hoje" style={{ flex: 1 }} />
+          <DatePicker value={periodDate} onChange={setPeriodDate} placeholder="Início (vazio = hoje)" style={{ flex: 1 }} />
           <Button label="Registrar" onPress={registerPeriod} loading={savingPeriod} loadingLabel="…" />
         </View>
         {periods.map(p => (

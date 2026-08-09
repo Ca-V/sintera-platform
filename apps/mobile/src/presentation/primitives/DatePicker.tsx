@@ -3,7 +3,7 @@
 // "AAAA-MM-DD". Valor em ISO (YYYY-MM-DD), MESMO contrato da Web (que usa o <input type="date"> nativo). A lógica
 // de datas de DOMÍNIO permanece na sua SSOT; aqui é só apresentação/entrada. Sem regra de negócio (DS-003).
 import { useState } from 'react'
-import { Platform, Pressable } from 'react-native'
+import { Platform, Pressable, type ViewStyle } from 'react-native'
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import { text } from '@sintera/design-system'
 import { Text } from './Text'
@@ -41,9 +41,10 @@ type Props = {
   max?: string
   disabled?: boolean
   'aria-label'?: string
+  style?: ViewStyle
 }
 
-export function DatePicker({ value, onChange, placeholder = 'Selecionar data…', min, max, disabled, 'aria-label': ariaLabel }: Props) {
+export function DatePicker({ value, onChange, placeholder = 'Selecionar data…', min, max, disabled, 'aria-label': ariaLabel, style }: Props) {
   const t = useTheme()
   const [open, setOpen] = useState(false)
 
@@ -57,7 +58,7 @@ export function DatePicker({ value, onChange, placeholder = 'Selecionar data…'
     <>
       <Pressable
         accessibilityRole="button" aria-label={ariaLabel} disabled={disabled} onPress={() => setOpen(true)}
-        style={{ borderWidth: 1, borderColor: t.color.border.default, backgroundColor: t.color.surface.base, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, opacity: disabled ? 0.5 : 1 }}
+        style={[{ borderWidth: 1, borderColor: t.color.border.default, backgroundColor: t.color.surface.base, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, opacity: disabled ? 0.5 : 1 }, style]}
       >
         <Text spec={text(t, { role: 'body', tone: value ? 'default' : 'muted' })}>{value ? fmtBR(value) : placeholder}</Text>
       </Pressable>

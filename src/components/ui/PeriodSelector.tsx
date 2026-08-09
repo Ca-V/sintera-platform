@@ -5,8 +5,8 @@
 // compartilhamento/impressão/exportações/Timeline/Dashboards.
 
 import { type Period, PERIOD_PRESETS } from '@/lib/communication/period'
+import DatePicker from '@/components/ui/DatePicker'
 
-const inputCls = 'px-2 py-1 border border-border rounded-lg font-body text-xs text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30'
 
 export default function PeriodSelector({ period, onChange, className = '' }: {
   period: Period
@@ -30,11 +30,11 @@ export default function PeriodSelector({ period, onChange, className = '' }: {
       </div>
       {period.preset === 'custom' && (
         <div className="flex flex-wrap items-center gap-2 mt-2">
-          <label className="font-body text-[11px] text-mauve">De
-            <input type="date" value={period.from ?? ''} onChange={e => onChange({ ...period, preset: 'custom', from: e.target.value })} className={`${inputCls} ml-1.5`} />
+          <label className="font-body text-[11px] text-mauve flex items-center gap-1.5">De
+            <DatePicker value={period.from ?? ''} onChange={(v) => onChange({ ...period, preset: 'custom', from: v })} className="w-auto" aria-label="Data inicial" />
           </label>
-          <label className="font-body text-[11px] text-mauve">até
-            <input type="date" value={period.to ?? ''} onChange={e => onChange({ ...period, preset: 'custom', to: e.target.value })} className={`${inputCls} ml-1.5`} />
+          <label className="font-body text-[11px] text-mauve flex items-center gap-1.5">até
+            <DatePicker value={period.to ?? ''} onChange={(v) => onChange({ ...period, preset: 'custom', to: v })} className="w-auto" aria-label="Data final" />
           </label>
         </div>
       )}

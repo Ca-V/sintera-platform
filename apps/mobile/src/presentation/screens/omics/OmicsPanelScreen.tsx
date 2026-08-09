@@ -9,7 +9,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { text } from '@sintera/design-system'
 import type { OmicsPanelDetail, OmicsCategoryDTO, OmicsResultDTO, OmicsHistoryPoint, OmicsCatalogMatch } from '@sintera/api-client'
 import { DOMAIN_LABEL, fmtOmicsDate, type OmicsDomain } from '@sintera/core'
-import { Text, Button, Input } from '../../primitives'
+import { Text, Button, Input, DatePicker } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 import type { MinhaSaudeStackParamList } from '../../navigation/types'
@@ -159,7 +159,7 @@ export function OmicsPanelScreen({ route, navigation }: Props) {
             <Input value={unit} onChangeText={setUnit} placeholder="unidade" style={{ flex: 1 }} />
           </View>
           <Input value={method} onChangeText={setMethod} placeholder="Método (opcional)" />
-          <Input value={rdate} onChangeText={setRdate} placeholder="Data (AAAA-MM-DD)" />
+          <DatePicker value={rdate} onChange={setRdate} placeholder="Data" />
           <View style={styles.actions}>
             <Button label="Cancelar" variant="secondary" onPress={() => setAddOpen(false)} />
             <Button label="Salvar" onPress={saveResult} loading={saving} loadingLabel="Salvando…" />

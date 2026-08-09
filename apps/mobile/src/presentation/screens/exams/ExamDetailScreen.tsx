@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import type { ExamDTO } from '@sintera/api-client'
 import { deriveExamIdentity, isOrderDocumentType, careStageFor, CARE_STAGES, compareNames, selectByLink } from '@sintera/core'
-import { AttachmentLink, Button, Disclaimer, FieldRow, Input, Text } from '../../primitives'
+import { AttachmentLink, Button, Disclaimer, FieldRow, Input, Text, DatePicker } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { MinhaSaudeStackParamList } from '../../navigation/types'
 import { apiClient } from '../../../infrastructure/apiClient'
@@ -179,7 +179,7 @@ export function ExamDetailScreen({ route, navigation }: Props) {
 
         {editingDate ? (
           <View style={styles.editRow}>
-            <Input value={dateValue} onChangeText={setDateValue} placeholder="AAAA-MM-DD" style={{ flex: 1 }} autoFocus />
+            <DatePicker value={dateValue} onChange={setDateValue} placeholder="Data" style={{ flex: 1 }} />
             <Button label="OK" onPress={async () => { if (/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) await p.updateFields({ exam_date: dateValue }); setEditingDate(false) }} />
             <Button label="Cancelar" variant="secondary" onPress={() => setEditingDate(false)} />
           </View>

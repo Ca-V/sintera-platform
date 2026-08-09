@@ -12,7 +12,7 @@ import {
   FREQUENCY_LABELS, type RecurrenceFrequency, selectByLink, parseRule, type HealthEvent,
   EXPENSE_DOC_TYPES, expenseDocLabel, parseAmountToCents, centsToAmount,
 } from '@sintera/core'
-import { Text, Button, Input, AttachmentLink } from '../../primitives'
+import { Text, Button, Input, AttachmentLink, DatePicker } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 import { documentPicker } from '../../../infrastructure/documentPickerAdapter'
@@ -192,8 +192,8 @@ export function ResourcesScreen() {
           <Input value={brand} onChangeText={setBrand} placeholder="Marca / fabricante" />
           <Input value={prescriber} onChangeText={setPrescriber} placeholder="Prescritor" />
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <Input value={startedOn} onChangeText={setStartedOn} placeholder="Início (AAAA-MM-DD)" style={{ flex: 1 }} />
-            <Input value={untilDate} onChangeText={setUntilDate} placeholder="Validade (AAAA-MM-DD)" style={{ flex: 1 }} />
+            <DatePicker value={startedOn} onChange={setStartedOn} placeholder="Início" style={{ flex: 1 }} />
+            <DatePicker value={untilDate} onChange={setUntilDate} placeholder="Validade" style={{ flex: 1 }} />
           </View>
           <Chips options={RESOURCE_STATUSES.map(r => ({ id: r.value, label: r.label }))} value={status} onChange={(v) => setStatus(v as ResourceStatus)} />
 
