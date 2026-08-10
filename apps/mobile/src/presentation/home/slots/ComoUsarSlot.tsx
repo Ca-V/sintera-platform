@@ -1,7 +1,6 @@
-// Slot "Como usar a SINTERA" — ONBOARDING PERMANENTE (UX-002), não texto estático nem informação repetida de
-// outro módulo. Orienta AÇÕES: como adicionar um registro, como compartilhar, como a plataforma se organiza e
-// dicas rápidas. Cada item pode levar direto à ação. Só navegação/apresentação — sem dado de domínio (INV-HOME-001).
-// Estrutura estável: no futuro pode virar guia contextual sem redesenhar a Home.
+// "Como usar a SINTERA" — onboarding permanente (UX-002). MESMOS 5 passos da Web (paridade de conteúdo e ordem):
+// adicionar documentos → registrar rotina → acompanhar → compartilhar → escolher como ser avisada. Cada passo
+// leva à ação correspondente. Só navegação/apresentação — sem dado de domínio (INV-HOME-001).
 import { View, StyleSheet, Pressable } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs'
@@ -10,37 +9,30 @@ import { Text } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { AppTabParamList } from '../../navigation/types'
 
-// Modelo EXTENSÍVEL do guia (UX-002 / diretriz da fundadora): a estrutura já nasce pronta para evoluir sem
-// redesenhar a Home. Hoje: 'onboarding' e 'tip'. Futuro (mesma estrutura): 'novidade' (novidades da plataforma) e
-// 'descoberta' (orientar recursos ainda não utilizados pelo usuário) — bastará acrescentar itens/kinds e a fonte.
-type GuideKind = 'onboarding' | 'tip' | 'novidade' | 'descoberta'
-type Tip = { kind: GuideKind; title: string; body: string; cta?: string; tab?: keyof AppTabParamList; screen?: string }
+type Step = { title: string; body: string; tab: keyof AppTabParamList; screen: string }
 
-const TIPS: readonly Tip[] = [
-  { kind: 'onboarding', title: 'Adicionar um registro', body: 'Envie um exame por foto ou arquivo e a SINTERA organiza para você.', cta: 'Adicionar agora', tab: 'MinhaSaude', screen: 'ExamUpload' },
-  { kind: 'onboarding', title: 'Levar à sua Rede de Cuidado', body: 'Monte um relatório factual e gere um link seguro para quem cuida de você.', cta: 'Ir para Rede de Cuidado', tab: 'RedeCuidado', screen: 'Relatorio' },
-  { kind: 'onboarding', title: 'Como a plataforma se organiza', body: 'Sua vida de saúde vive em Agenda e Minha Saúde (Registros · Saúde · Histórico) — cada coisa em seu lugar.' },
-  { kind: 'tip', title: 'Dica rápida', body: 'Dentro de cada módulo, use a busca e os filtros para encontrar rápido o que precisa.' },
+const STEPS: readonly Step[] = [
+  { title: '1. Adicione seus documentos', body: 'Envie exames, receitas e laudos (foto ou arquivo) — a SINTERA lê e organiza.', tab: 'MinhaSaude', screen: 'ExamUpload' },
+  { title: '2. Registre a sua rotina de saúde', body: 'Medicamentos, consultas, condições, hábitos e composição corporal.', tab: 'MinhaSaude', screen: 'Medications' },
+  { title: '3. Acompanhe ao longo do tempo', body: 'Sua linha do tempo em Histórico de Saúde e a evolução em Histórico de Exames.', tab: 'MinhaSaude', screen: 'Timeline' },
+  { title: '4. Compartilhe com quem cuida de você', body: 'Reúna suas informações em um relatório e envie ao seu profissional de saúde.', tab: 'RedeCuidado', screen: 'Relatorio' },
+  { title: '5. Escolha como ser avisada', body: 'Na Central de Notificações (em Configurações) você define se recebe lembretes por e-mail, WhatsApp, ambos ou nenhum.', tab: 'Mais', screen: 'Configuracoes' },
 ]
 
 export function ComoUsarSlot() {
   const t = useTheme()
   const navigation = useNavigation<BottomTabNavigationProp<AppTabParamList>>()
-  const go = (tip: Tip) => { if (tip.tab) (navigation as unknown as { navigate: (n: string, p?: unknown) => void }).navigate(tip.tab, tip.screen ? { screen: tip.screen } : undefined) }
+  const go = (s: Step) => (navigation as unknown as { navigate: (n: string, p?: unknown) => void }).navigate(s.tab, { screen: s.screen })
   return (
     <View style={styles.wrap}>
       <Text spec={text(t, { role: 'label', tone: 'muted' })}>Como usar a SINTERA</Text>
       <View style={{ gap: 12 }}>
-        {TIPS.map((tip) => (
-          <View key={tip.title} style={[styles.card, { backgroundColor: t.color.surface.base, borderColor: t.color.border.default }]}>
-            <Text spec={text(t, { role: 'bodyStrong' })}>{tip.title}</Text>
-            <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{tip.body}</Text>
-            {tip.cta ? (
-              <Pressable onPress={() => go(tip)} accessibilityRole="button" style={{ alignSelf: 'flex-start' }}>
-                <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>{tip.cta} →</Text>
-              </Pressable>
-            ) : null}
-          </View>
+        {STEPS.map((s) => (
+          <Pressable key={s.title} onPress={() => go(s)} accessibilityRole="button"
+            style={[styles.card, { backgroundColor: t.color.surface.base, borderColor: t.color.border.default }]}>
+            <Text spec={text(t, { role: 'bodyStrong' })}>{s.title}</Text>
+            <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{s.body}</Text>
+          </Pressable>
         ))}
       </View>
     </View>

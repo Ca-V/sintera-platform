@@ -9,10 +9,10 @@ export function AdicionarRegistroSlot({ onPress }: { onPress: () => void }) {
   const t = useTheme()
   return (
     <Pressable onPress={onPress} accessibilityRole="button"
-      style={[styles.card, { backgroundColor: t.color.identity.primary }]}>
+      style={[styles.card, { backgroundColor: t.color.identity.soft }]}>
       <View style={{ flex: 1 }}>
-        <Text spec={text(t, { role: 'bodyStrong' })} style={{ color: t.color.text.onAccent }}>+ Adicionar registro</Text>
-        <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.text.onAccent, opacity: 0.9 }}>Exame, medicamento, consulta, medida e mais — num só lugar.</Text>
+        <Text spec={text(t, { role: 'bodyStrong' })}>+ Adicionar registro</Text>
+        <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Exame, medicamento, consulta, medida e mais — num só lugar.</Text>
       </View>
     </Pressable>
   )

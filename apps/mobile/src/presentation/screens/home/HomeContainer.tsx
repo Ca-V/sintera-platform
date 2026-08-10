@@ -7,13 +7,13 @@ import { HomeShell } from '../../home/HomeShell'
 import type { UpcomingItem } from '../../home/slots/ProximosCompromissosSlot'
 import { apiClient } from '../../../infrastructure/apiClient'
 
-/** Próximos = eventos ABERTOS (não fechados) com data de hoje em diante, os 3 mais próximos. */
+/** Próximo = evento ABERTO (não fechado) com data de hoje em diante, o MAIS próximo (paridade Web: um só). */
 function toUpcoming(events: HealthEvent[]): UpcomingItem[] {
   const today = new Date().toISOString().slice(0, 10)
   return events
     .filter((e) => !isClosedStatus(e.status) && (e.date ?? '') >= today)
     .sort((a, b) => (a.date ?? '').localeCompare(b.date ?? ''))
-    .slice(0, 3)
+    .slice(0, 1)
     .map((e) => ({ id: e.id, title: e.title || typeLabel(e.type), dateLabel: formatDateLongBR(e.date), typeLabel: typeLabel(e.type) }))
 }
 

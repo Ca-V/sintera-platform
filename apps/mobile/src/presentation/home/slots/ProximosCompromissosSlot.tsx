@@ -1,6 +1,6 @@
-// Slot "Próximos compromissos" — mostra os próximos eventos da Agenda para ORIENTAR uma ação (abrir a Agenda),
-// não como relatório. PURO (INV-HOME-001): recebe os itens já prontos por PROP (injeção pelo HomeContainer, fora
-// de home/) — não importa api-client nem acessa dados. Só apresentação + navegação.
+// "Agenda · próximo" — mostra APENAS o próximo compromisso (paridade com a Web); não lista (a tela do celular é
+// menor que a do notebook). Cartão de orientação para abrir a Agenda. PURO (INV-HOME-001): recebe os itens por
+// PROP (injeção pelo HomeContainer, fora de home/) — não importa api-client nem acessa dados.
 import { View, StyleSheet, Pressable } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs'
@@ -15,29 +15,31 @@ export function ProximosCompromissosSlot({ items }: { items: UpcomingItem[] }) {
   const t = useTheme()
   const navigation = useNavigation<BottomTabNavigationProp<AppTabParamList>>()
   const goAgenda = () => navigation.navigate('Agenda')
-  const card = { backgroundColor: t.color.surface.base, borderColor: t.color.border.default }
+  const next = items[0]
+  const eyebrow = (
+    <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary, textTransform: 'uppercase', letterSpacing: 0.5 }}>Agenda · próximo</Text>
+  )
+  if (!next) {
+    return (
+      <Pressable onPress={goAgenda} accessibilityRole="button" style={[styles.card, { backgroundColor: t.color.surface.base, borderColor: t.color.border.default }]}>
+        {eyebrow}
+        <Text spec={text(t, { role: 'body', tone: 'muted' })}>Sem compromissos próximos.</Text>
+        <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Ir para a Agenda →</Text>
+      </Pressable>
+    )
+  }
   return (
-    <View style={styles.wrap}>
-      <Text spec={text(t, { role: 'label', tone: 'muted' })}>Próximos compromissos</Text>
-      {items.length === 0 ? (
-        <Pressable onPress={goAgenda} accessibilityRole="button" style={[styles.card, card, { gap: 4 }]}>
-          <Text spec={text(t, { role: 'body', tone: 'muted' })}>Sem compromissos próximos.</Text>
-          <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Ir para a Agenda →</Text>
-        </Pressable>
-      ) : items.map((it) => (
-        <Pressable key={it.id} onPress={goAgenda} accessibilityRole="button" style={[styles.card, card, { gap: 4 }]}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
-            <Text spec={text(t, { role: 'body' })} style={{ flex: 1 }}>{it.title}</Text>
-            <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{it.dateLabel}</Text>
-          </View>
-          <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{it.typeLabel}</Text>
-        </Pressable>
-      ))}
-    </View>
+    <Pressable onPress={goAgenda} accessibilityRole="button" style={[styles.card, { backgroundColor: t.color.identity.soft, borderColor: 'transparent' }]}>
+      {eyebrow}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+        <Text spec={text(t, { role: 'body' })} style={{ flex: 1 }}>{next.title}</Text>
+        <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{next.dateLabel}</Text>
+      </View>
+      <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{next.typeLabel}</Text>
+    </Pressable>
   )
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: 8 },
-  card: { borderWidth: 1, borderRadius: 12, padding: 16 },
+  card: { borderWidth: 1, borderRadius: 12, padding: 16, gap: 4 },
 })
