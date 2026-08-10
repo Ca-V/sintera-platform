@@ -7,7 +7,7 @@ import { ScrollView, View, ActivityIndicator, Pressable, StyleSheet } from 'reac
 import { useNavigation, useRoute } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
-import { seriesForName, type BiomarkerSummary, type Trend } from '@sintera/core'
+import { seriesForName, interpretationSymbol, type BiomarkerSummary, type Trend } from '@sintera/core'
 import { Text, Button, Disclaimer } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
@@ -19,6 +19,13 @@ function trendLabel(tr: Trend, delta: number | null): string {
   if (tr === 'stable') return delta != null ? `estável (${delta > 0 ? '+' : ''}${delta}%)` : 'estável'
   if (tr === 'single') return '1ª medição'
   return 'unidades diferentes'
+}
+/** Faixa de referência por medição (paridade Web): "ref min–max" / "ref ≥ min" / "ref ≤ max". */
+function refText(min: number | null, max: number | null): string | null {
+  if (min != null && max != null) return `ref ${min}–${max}`
+  if (min != null) return `ref ≥ ${min}`
+  if (max != null) return `ref ≤ ${max}`
+  return null
 }
 type Nav = { navigate: (n: string, p?: unknown) => void }
 
@@ -65,6 +72,17 @@ export function IndicadorDetailScreen() {
       : (s.latest.referenceMin != null || s.latest.referenceMax != null) ? '✓ dentro da faixa' : null
     : null
   const card = { backgroundColor: t.color.surface.base, borderColor: t.color.border.default }
+  const symColor = (interp: string | null | undefined): string =>
+    interp === 'acima_da_referencia' ? '#f97316' : interp === 'abaixo_da_referencia' ? '#2563eb'
+      : interp === 'dentro_da_referencia' ? t.color.identity.primary : t.color.text.muted
+  // Faixa de referência no gráfico (paridade Web): mapeia [refMin, refMax] da medição mais recente na mesma
+  // escala das barras (0..120px). Só quando a referência é numérica e cabe na escala.
+  const refMin = s.latest?.referenceMin ?? null
+  const refMax = s.latest?.referenceMax ?? null
+  const span = max - min
+  const yOf = (v: number) => Math.max(0, Math.min(120, ((v - min) / (span || 1)) * 120))
+  const bandLo = refMin != null ? yOf(refMin) : (refMax != null ? 0 : null)
+  const bandHi = refMax != null ? yOf(refMax) : (refMin != null ? 120 : null)
 
   return (
     <ScrollView style={{ backgroundColor: t.color.surface.app }}
@@ -89,29 +107,45 @@ export function IndicadorDetailScreen() {
         <View style={[styles.card, card, { gap: 8 }]}>
           <Text spec={text(t, { role: 'label', tone: 'muted' })}>EVOLUÇÃO</Text>
           <View style={styles.chart}>
+            {/* Faixa de referência (zona "dentro da referência") atrás das barras — paridade Web. */}
+            {bandLo != null && bandHi != null && bandHi > bandLo ? (
+              <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 20 + bandLo, height: bandHi - bandLo, backgroundColor: t.color.badge.success.soft, borderRadius: 3 }} />
+            ) : null}
             {measurements.map((m, i) => (
               <View key={i} style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
-                <View style={{ width: '70%', height: Math.max(4, ((m.value - min) / (max - min)) * 120), backgroundColor: t.color.identity.primary, borderRadius: 3 }} />
+                <View style={{ width: '70%', height: Math.max(4, ((m.value - min) / (max - min)) * 120), backgroundColor: symColor(m.interpretation), borderRadius: 3 }} />
                 <Text spec={text(t, { role: 'caption', tone: 'faint' })} style={{ fontSize: 9 }}>{m.date.slice(5, 10).replace('-', '/')}</Text>
               </View>
             ))}
           </View>
+          {refText(refMin, refMax) ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Faixa de referência: {refText(refMin, refMax)}{s.unit ? ` ${s.unit}` : ''}</Text> : null}
           {s.totalDeltaPercent != null ? (
             <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Da 1ª à última: {s.first?.value} → {s.latest?.value}{s.unit ? ` ${s.unit}` : ''} ({s.totalDeltaPercent > 0 ? '+' : ''}{s.totalDeltaPercent}%)</Text>
           ) : null}
         </View>
       ) : null}
 
-      {/* Todas as medições (comparativo cronológico) — toque abre o exame de origem */}
+      {/* Exames utilizados (comparativo cronológico) — cada medição traz ref + interpretação; toque abre o laudo. */}
       <View style={[styles.card, card, { gap: 8 }]}>
-        <Text spec={text(t, { role: 'label', tone: 'muted' })}>TODAS AS MEDIÇÕES</Text>
-        {[...measurements].reverse().map((m, i) => (
-          <Pressable key={i} onPress={() => openExam(m.examId)} disabled={!m.examId}
-            style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 }}>
-            <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{fmtDate(m.date)}{m.examId ? ' · abrir laudo ›' : ''}</Text>
-            <Text spec={text(t, { role: 'body' })} style={{ color: m.examId ? t.color.identity.primary : t.color.text.default }}>{m.value}{m.unit ? ` ${m.unit}` : ''}</Text>
-          </Pressable>
-        ))}
+        <Text spec={text(t, { role: 'label', tone: 'muted' })}>EXAMES UTILIZADOS</Text>
+        {s.hasUnitMismatch ? (
+          <Text spec={text(t, { role: 'caption', tone: 'muted' })}>As medições usam unidades diferentes e não podem ser comparadas em um gráfico. Abaixo, cada exame com sua unidade.</Text>
+        ) : null}
+        {[...measurements].reverse().map((m, i) => {
+          const ref = refText(m.referenceMin, m.referenceMax)
+          return (
+            <Pressable key={i} onPress={() => openExam(m.examId)} disabled={!m.examId}
+              style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingVertical: 4, gap: 8 }}>
+              <View style={{ flex: 1 }}>
+                <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{fmtDate(m.date)}{m.examId ? ' · abrir laudo ›' : ''}</Text>
+                {ref ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{ref}</Text> : null}
+              </View>
+              <Text spec={text(t, { role: 'body' })} style={{ color: m.examId ? t.color.identity.primary : t.color.text.default }}>
+                {m.value}{m.unit ? ` ${m.unit}` : ''} <Text spec={text(t, { role: 'caption' })} style={{ color: symColor(m.interpretation) }}>{interpretationSymbol(m.interpretation)}</Text>
+              </Text>
+            </Pressable>
+          )
+        })}
       </View>
 
       <Disclaimer variant="laudo" />
