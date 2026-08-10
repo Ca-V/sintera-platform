@@ -15,6 +15,9 @@ export function toExamDTO(row: Record<string, unknown>): ExamDTO {
     requesting_physician: (row.requesting_physician as string | null) ?? null,
     file_url: (row.file_url as string | null) ?? null,
     extraction_completeness: (row.extraction_completeness as string | null) ?? null,
+    patient_name: (row.patient_name as string | null) ?? null,
+    order_status: (row.order_status as string | null) ?? null,
+    fulfills_order_id: (row.fulfills_order_id as string | null) ?? null,
     created_at: (row.created_at as string | null) ?? null,
   }
 }
@@ -23,13 +26,10 @@ export function toExamDTO(row: Record<string, unknown>): ExamDTO {
 export function toExamDetailDTO(row: Record<string, unknown>): ExamDetailDTO {
   return {
     ...toExamDTO(row),
-    patient_name: (row.patient_name as string | null) ?? null,
     page_count: (row.page_count as number | null) ?? null,
     document_scope: (row.document_scope as string | null) ?? null,
-    extraction_completeness: (row.extraction_completeness as string | null) ?? null,
     error_reason: (row.error_reason as string | null) ?? null,
     text_truncated: (row.text_truncated as boolean | null) ?? null,
-    fulfills_order_id: (row.fulfills_order_id as string | null) ?? null,
     expense_amount_cents: (row.expense_amount_cents as number | null) ?? null,
     expense_doc_type: (row.expense_doc_type as string | null) ?? null,
     expense_doc_url: (row.expense_doc_url as string | null) ?? null,

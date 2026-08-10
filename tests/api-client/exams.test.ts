@@ -7,9 +7,9 @@ import { mockSupabase, mockQueryBuilder, fakeSession } from './supabaseMock'
 const ROW = {
   id: 'e1', exam_date: '2026-07-01', display_title: 'Hemograma', type: 'hemograma_lab.pdf', document_type: 'lab',
   clinical_family: 'hematologia', status: 'ready', issuer: 'Lab X', requesting_physician: 'Dra. Y',
-  file_url: 'https://x/e1.pdf', created_at: '2026-07-02T00:00:00Z',
+  file_url: 'https://x/e1.pdf', created_at: '2026-07-02T00:00:00Z', patient_name: 'Fulana',
   // campos internos/financeiros que NÃO devem vazar:
-  exam_text: '...', document_sha256: 'abc', expense_amount_cents: 5000, patient_name: 'Fulana', page_count: 3,
+  exam_text: '...', document_sha256: 'abc', expense_amount_cents: 5000, page_count: 3,
 }
 const calls = (b: unknown) => (b as { __calls: Record<string, unknown[]> }).__calls
 
@@ -22,11 +22,12 @@ describe('api-client · exams.listExams', () => {
     expect(list[0]).toEqual({
       id: 'e1', exam_date: '2026-07-01', display_title: 'Hemograma', type: 'hemograma_lab.pdf', document_type: 'lab',
       clinical_family: 'hematologia', status: 'ready', issuer: 'Lab X', requesting_physician: 'Dra. Y',
-      file_url: 'https://x/e1.pdf', extraction_completeness: null, created_at: '2026-07-02T00:00:00Z',
+      file_url: 'https://x/e1.pdf', extraction_completeness: null,
+      patient_name: 'Fulana', order_status: null, fulfills_order_id: null, created_at: '2026-07-02T00:00:00Z',
     })
     expect(list[0]).not.toHaveProperty('exam_text')
     expect(list[0]).not.toHaveProperty('expense_amount_cents')
-    expect(list[0]).not.toHaveProperty('patient_name')
+    expect(list[0]).not.toHaveProperty('page_count')
     expect(calls(builder).eq).toEqual(['user_id', 'u1'])
     expect(calls(builder).order?.[0]).toBe('exam_date')
     expect(calls(builder).abortSignal?.[0]).toBeInstanceOf(AbortSignal)
@@ -137,7 +138,7 @@ describe('api-client · exams — contratos e casos extremos', () => {
     const partial = { id: 'e2' } // só o id
     const client = mockSupabase({ session: fakeSession(), from: () => mockQueryBuilder({ data: [partial], error: null }) })
     const [dto] = await listExams(client)
-    expect(dto).toEqual({ id: 'e2', exam_date: null, display_title: null, type: null, document_type: null, clinical_family: null, status: null, issuer: null, requesting_physician: null, file_url: null, extraction_completeness: null, created_at: null })
+    expect(dto).toEqual({ id: 'e2', exam_date: null, display_title: null, type: null, document_type: null, clinical_family: null, status: null, issuer: null, requesting_physician: null, file_url: null, extraction_completeness: null, patient_name: null, order_status: null, fulfills_order_id: null, created_at: null })
   })
 
   it('getExam: id vazio ainda consulta (RLS decide) → null se sem linha', async () => {

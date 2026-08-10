@@ -15,18 +15,20 @@ export interface ExamDTO {
   requesting_physician: string | null // solicitante
   file_url: string | null         // referência ao documento original (fonte da verdade)
   extraction_completeness: string | null // 'document_only' etc. (CEF) — dirige o selo binário na LISTA (paridade Web)
+  patient_name: string | null     // nome do paciente no laudo (aviso de nome divergente na LISTA — paridade Web)
+  order_status: string | null     // Q1: estado do PEDIDO (pendente/realizado/finalizado) — ações na LISTA
+  fulfills_order_id: string | null // Q1: vínculo do RESULTADO ao pedido de origem (contagem de vinculados na LISTA)
   created_at: string | null       // quando entrou na plataforma
 }
 
 /** Exame no DETALHE — estende o DTO enxuto com os campos que só o detalhe exibe/edita (paridade com a Web).
  *  A LISTA permanece enxuta (ExamDTO); só `getExam` traz estes campos extras. */
 export interface ExamDetailDTO extends ExamDTO {
-  patient_name: string | null     // nome do paciente no laudo (conferência de identidade)
+  // patient_name / fulfills_order_id herdados do ExamDTO base (usados também na LISTA — paridade Web).
   page_count: number | null       // nº de páginas do documento
   document_scope: string | null   // escopo do documento (single/bundle…)
   error_reason: string | null     // motivo do erro de extração (exibição)
   text_truncated: boolean | null  // documento processado parcialmente (aviso)
-  fulfills_order_id: string | null // vínculo ao pedido de ORIGEM (Q1)
   // Financeiro do exame (FB-008: atributo do próprio exame, não Evento separado)
   expense_amount_cents: number | null
   expense_doc_type: string | null
@@ -62,8 +64,8 @@ export interface ExamsApi {
 
 /** Colunas centrais lidas do banco (explícitas — não `*` — para não trazer campos internos/financeiros). */
 export const EXAM_COLUMNS =
-  'id, exam_date, display_title, type, document_type, clinical_family, status, issuer, requesting_physician, file_url, extraction_completeness, created_at' as const
+  'id, exam_date, display_title, type, document_type, clinical_family, status, issuer, requesting_physician, file_url, extraction_completeness, patient_name, order_status, fulfills_order_id, created_at' as const
 
-/** Colunas do DETALHE — as centrais + os campos extras (paciente, páginas, financeiro, vínculo…). Só `getExam`. */
+/** Colunas do DETALHE — as centrais + os campos extras (páginas, escopo, erro, financeiro). Só `getExam`. */
 export const EXAM_DETAIL_COLUMNS =
-  `${EXAM_COLUMNS}, patient_name, page_count, document_scope, error_reason, text_truncated, fulfills_order_id, expense_amount_cents, expense_doc_type, expense_doc_url` as const
+  `${EXAM_COLUMNS}, page_count, document_scope, error_reason, text_truncated, expense_amount_cents, expense_doc_type, expense_doc_url` as const

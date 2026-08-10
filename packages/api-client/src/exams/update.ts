@@ -14,10 +14,11 @@ export interface ExamFieldsPatch {
   expense_doc_type?: string | null
   expense_doc_url?: string | null
   fulfills_order_id?: string | null   // vínculo ao pedido de origem (Q1)
+  order_status?: string | null        // Q1: estado do PEDIDO (marcar realizado/desfazer)
 }
 
 const ALLOWED: (keyof ExamFieldsPatch)[] = [
-  'type', 'exam_date', 'expense_amount_cents', 'expense_doc_type', 'expense_doc_url', 'fulfills_order_id',
+  'type', 'exam_date', 'expense_amount_cents', 'expense_doc_type', 'expense_doc_url', 'fulfills_order_id', 'order_status',
 ]
 
 /** Atualiza os campos editáveis do exame (whitelist). `{ error: null }` em sucesso. NÃO lança. */
