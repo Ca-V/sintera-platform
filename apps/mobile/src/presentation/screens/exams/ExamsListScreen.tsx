@@ -7,7 +7,7 @@ import { ScrollView, View, Pressable, ActivityIndicator, RefreshControl, StyleSh
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { ExamDTO } from '@sintera/api-client'
-import { isOrderDocumentType, findDuplicateIds, originalIdFor, type DuplicateCandidate } from '@sintera/core'
+import { isOrderDocumentType, findDuplicateIds, originalIdFor, categoryOf, type DuplicateCandidate } from '@sintera/core'
 import { heading, text } from '@sintera/design-system'
 import { Button, Text, Input, Disclaimer, DatePicker } from '../../primitives'
 import { useTheme } from '../../theme'
@@ -140,7 +140,10 @@ export function ExamsListScreen({ navigation }: Props) {
               <Pressable key={e.id} onPress={() => navigation.navigate('ExamDetail', { id: e.id })} accessibilityRole="button" style={[styles.card, card]}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                   <Text spec={text(t, { role: 'bodyStrong' })} style={{ flex: 1 }}>{e.display_title ?? e.type ?? 'Exame'}</Text>
-                  {dup ? <View style={[styles.pill, { backgroundColor: t.color.badge.attention.soft }]}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.attention.text }}>Possível duplicado</Text></View> : null}
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'flex-end' }}>
+                    <View style={[styles.pill, { borderWidth: 1, borderColor: t.color.border.default }]}><Text spec={text(t, { role: 'caption', tone: 'muted' })}>{categoryOf(e.document_type).label}</Text></View>
+                    {dup ? <View style={[styles.pill, { backgroundColor: t.color.badge.attention.soft }]}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.attention.text }}>Possível duplicado</Text></View> : null}
+                  </View>
                 </View>
                 <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{formatExamDate(e.exam_date)}{e.issuer ? ` · ${e.issuer}` : ''}{e.requesting_physician ? ` · Solic.: ${e.requesting_physician}` : ''}</Text>
                 {e.status === 'processed'
