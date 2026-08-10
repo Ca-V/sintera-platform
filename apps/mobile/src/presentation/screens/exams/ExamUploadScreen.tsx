@@ -95,6 +95,7 @@ export function ExamUploadScreen({ navigation }: Props) {
             <Button label="Selecionar arquivo (PDF ou foto)" onPress={() => pick('document')} />
             <Button label="Tirar foto" variant="secondary" onPress={() => pick('camera')} />
             <Button label="Montar documento (várias páginas)" variant="secondary" onPress={bundle.addFromGallery} />
+            <Button label="Exame ômico (catálogo)" variant="secondary" onPress={() => navigation.navigate('OmicsList')} />
             <Text spec={text(t, { role: 'caption', tone: 'faint' })} style={styles.centerText}>
               Aceitos: {acceptedFormatsHint(DEFAULT_UPLOAD_CONSTRAINTS)} · até{' '}
               {Math.round(DEFAULT_UPLOAD_CONSTRAINTS.maxBytes / (1024 * 1024))} MB. Para várias páginas, monte um documento.

@@ -163,7 +163,7 @@ export function ExamsListScreen({ navigation }: Props) {
       <Text spec={heading(t, { level: 'page' })}>Exames</Text>
       <Text spec={text(t, { role: 'bodySmall', tone: 'muted' })}>Seus exames ao longo do tempo. Abra um para ver o documento original.</Text>
 
-      <Button label="Adicionar exame" onPress={() => navigation.navigate('ExamUpload')} />
+      <Button label="Adicionar exame realizado" onPress={() => navigation.navigate('ExamUpload')} />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
         <Pressable onPress={() => navigation.navigate('HistoricoExames')}>
           <Text spec={text(t, { role: 'bodySmall' })} style={{ color: t.color.identity.primary }}>Histórico de Exames →</Text>

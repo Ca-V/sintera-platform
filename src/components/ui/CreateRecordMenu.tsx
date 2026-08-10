@@ -19,21 +19,23 @@
 // CONFIGURAÇÃO (extras), sem alterar a estrutura. Herda UX-001 §1.10/§1.11, DS-001.
 
 import { useRef, useState, type ReactNode, type ComponentType } from 'react'
-import { Plus, Loader2, Upload, Camera, Pencil, X } from 'lucide-react'
+import { Plus, Loader2, Upload, Camera, Pencil, X, Files } from 'lucide-react'
 import { Card } from '@/lib/ui/ds'
 import { useDocumentBundle } from './DocumentBundleCapture'
 
 type IconType = ComponentType<{ size?: number; className?: string }>
-export type RecordMethod = 'file' | 'camera' | 'manual'
+export type RecordMethod = 'file' | 'camera' | 'bundle' | 'manual'
 export interface ExtraMethod { key: string; label: string; icon?: IconType }
 
 // Definições dos meios padrão (rótulo + ícone). A ORDEM é fixa (ORDER), nunca varia.
+// `bundle` = montar UM documento de VÁRIAS páginas (fotos ou vários arquivos) — mesma nomenclatura no Mobile.
 const STD: Record<RecordMethod, { label: string; icon: IconType }> = {
   file:   { label: 'Selecionar arquivo (PDF ou foto)', icon: Upload },
   camera: { label: 'Tirar foto', icon: Camera },
+  bundle: { label: 'Montar documento (várias páginas)', icon: Files },
   manual: { label: 'Digitar manualmente', icon: Pencil },
 }
-const ORDER: RecordMethod[] = ['file', 'camera', 'manual']
+const ORDER: RecordMethod[] = ['file', 'camera', 'bundle', 'manual']
 const ITEM = 'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-blush text-left font-body text-sm text-onyx transition-colors'
 
 export default function CreateRecordMenu({
@@ -78,7 +80,8 @@ export default function CreateRecordMenu({
   const single = total === 1
 
   const trigger = (m: RecordMethod) => {
-    if (m === 'file') fileRef.current?.click()
+    // 'bundle' abre o MESMO seletor de arquivos (múltiplo); imagens escolhidas → painel de montagem (staging).
+    if (m === 'file' || m === 'bundle') fileRef.current?.click()
     else if (m === 'camera') cameraRef.current?.click()
     else onSelect(m)
   }
@@ -89,7 +92,7 @@ export default function CreateRecordMenu({
     else setOpen(true) // voz única (interativa) → abre o menu
   }
 
-  const hasFile = methods.includes('file')
+  const hasFile = methods.includes('file') || methods.includes('bundle')
   const hasCamera = methods.includes('camera')
 
   return (

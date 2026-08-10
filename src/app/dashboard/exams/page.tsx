@@ -392,7 +392,7 @@ export default function ExamsPage() {
                declarar "Exame ômico" segue para o passo de catálogo/versionamento. */
             <CreateRecordMenu
               label={activeTab === 'orders' ? 'Adicionar pedido ou solicitação' : 'Adicionar exame realizado'}
-              methods={['file', 'camera']}
+              methods={activeTab === 'orders' ? ['file', 'camera'] : ['file', 'camera', 'bundle']}
               extras={activeTab === 'orders' ? [] : [{ key: 'omics', label: 'Exame ômico (catálogo)', icon: Dna }]}
               onSelect={(m, file) => {
                 if (m === 'omics') { router.push('/dashboard/omics'); return }
