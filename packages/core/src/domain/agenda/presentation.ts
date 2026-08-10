@@ -122,6 +122,22 @@ export function byPriority(a: { priority: EventPriority | null }, b: { priority:
   return priorityRank(a.priority) - priorityRank(b.priority)
 }
 
+const MONTHS_PT = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro']
+/** Rótulo "Mês de Ano" (pt-BR) DETERMINÍSTICO — sem toLocaleDateString (compat Hermes). Usado no agrupamento "Por data". */
+export function monthLabel(date: string): string {
+  const [y, m] = (date || '').slice(0, 10).split('-').map(Number)
+  if (!y || !m || m < 1 || m > 12) return '—'
+  const s = `${MONTHS_PT[m - 1]} de ${y}`
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
+const TYPE_GROUP_ORDER = ['Consulta', 'Exame', 'Procedimento', 'Cirurgia', 'Medicamento', 'Suplemento', 'Vacina']
+/** Rank do GRUPO por rótulo de tipo (ordena a visão "Por tipo"); fora da lista = último. Fonte única Web+Mobile. */
+export function typeGroupRank(label: string): number {
+  const i = TYPE_GROUP_ORDER.findIndex(o => label.startsWith(o))
+  return i < 0 ? 99 : i
+}
+
 /** Rótulo curto da modalidade (só quando informada). */
 export function modalityLabel(m: EventModality | null): string | null {
   return m === 'telemedicina' ? 'Telemedicina' : m === 'presencial' ? 'Presencial' : null

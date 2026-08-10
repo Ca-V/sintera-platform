@@ -11,6 +11,7 @@ import {
   type HealthEvent, typeLabel, statusLabel, formatDateLongBR, formatTimeBR,
   priorityBadge, modalityLabel, isReturnVisit, outcomeSummary, isClosedStatus,
   buildExamRecencySuggestion, type ExamLite,
+  monthLabel, byPriority, typeGroupRank,
 } from '@sintera/core'
 import { Text, Button, Disclaimer } from '../../primitives'
 import { useTheme } from '../../theme'
@@ -77,8 +78,11 @@ export function AgendaScreen({ navigation }: Props) {
     >
       <View style={styles.headerRow}>
         <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 22 }}>Agenda</Text>
-        <Button label="Novo evento" onPress={newEvent} />
+        <Button label="Adicionar" onPress={newEvent} />
       </View>
+      <Text spec={text(t, { role: 'caption', tone: 'muted' })} style={{ marginTop: -10 }}>
+        Seus próximos exames, consultas e retornos. O que já aconteceu fica no seu Histórico de Saúde.
+      </Text>
       {/* Histórico de Saúde/Exames, Composição e Monitoramento migraram para as abas Minha Saúde e Exames
           (arquitetura de 5 abas — MOBILE-036). A Agenda foca em calendário + próximos/pendências. */}
 
@@ -94,33 +98,32 @@ export function AgendaScreen({ navigation }: Props) {
 
       {empty ? (
         <View style={[styles.card, { backgroundColor: t.color.surface.base, borderColor: t.color.border.default, gap: 10 }]}>
+          <Text spec={text(t, { role: 'bodyStrong' })} style={{ textAlign: 'center' }}>Nenhum evento futuro</Text>
           <Text spec={text(t, { role: 'body', tone: 'muted' })} style={{ textAlign: 'center' }}>
-            Nenhum evento ainda. Toque em “Novo evento” para agendar uma consulta, exame, vacina ou lembrete.
+            Adicione um exame, consulta ou retorno para acompanhar seus próximos passos.
           </Text>
           <Button label="Adicionar primeiro evento" onPress={newEvent} />
         </View>
       ) : null}
 
-      <Section title="Pendências" hint="Vencidas e ainda abertas" events={a.lists.overdue} onOpen={openEvent} onComplete={onComplete} onCancel={onCancel} tone="attention" />
+      <Section title={`Pendências (${a.lists.overdue.length})`} hint="Itens que passaram da data e ainda aguardam uma ação. Conclua, cancele ou exclua cada um." events={a.lists.overdue} onOpen={openEvent} onComplete={onComplete} onCancel={onCancel} tone="attention" />
 
       {a.lists.upcoming.length > 0 ? (
         <View style={{ gap: 8 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Text spec={text(t, { role: 'label', tone: 'muted' })}>PRÓXIMOS</Text>
+            <Text spec={text(t, { role: 'label', tone: 'muted' })}>PRÓXIMOS ({a.lists.upcoming.length})</Text>
             <View style={{ flexDirection: 'row', gap: 12 }}>
               {(['date', 'type'] as UpcomingView[]).map(v => (
                 <Pressable key={v} onPress={() => setUpcomingView(v)}><Text spec={text(t, { role: 'caption', tone: upcomingView === v ? 'default' : 'faint' })} style={upcomingView === v ? { color: t.color.identity.primary } : undefined}>{v === 'date' ? 'Por data' : 'Por tipo'}</Text></Pressable>
               ))}
             </View>
           </View>
-          {upcomingView === 'date'
-            ? a.lists.upcoming.map(e => <EventRow key={e.id} e={e} onOpen={openEvent} onComplete={onComplete} onCancel={onCancel} />)
-            : groupByType(a.lists.upcoming).map(g => (
-                <View key={g.type} style={{ gap: 8 }}>
-                  <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{g.label}</Text>
-                  {g.items.map(e => <EventRow key={e.id} e={e} onOpen={openEvent} onComplete={onComplete} onCancel={onCancel} />)}
-                </View>
-              ))}
+          {groupUpcoming(a.lists.upcoming, upcomingView).map(g => (
+            <View key={g.label} style={{ gap: 8 }}>
+              <Text spec={text(t, { role: 'caption', tone: 'faint' })} style={{ textTransform: 'uppercase' }}>{g.label}</Text>
+              {g.items.map(e => <EventRow key={e.id} e={e} onOpen={openEvent} onComplete={onComplete} onCancel={onCancel} />)}
+            </View>
+          ))}
         </View>
       ) : null}
       {/* Histórico (consolidado: exames + eventos) vive na TimelineScreen — a Agenda mostra só futuro/pendências. */}
@@ -129,11 +132,26 @@ export function AgendaScreen({ navigation }: Props) {
   )
 }
 
-/** Agrupa eventos por TIPO (rótulo canônico), em ordem alfabética do rótulo. */
-function groupByType(events: HealthEvent[]): { type: string; label: string; items: HealthEvent[] }[] {
+/**
+ * Agrupa os PRÓXIMOS conforme a visão escolhida — MESMA lógica da Web (paridade):
+ * • 'date' → por MÊS (monthLabel), em ordem cronológica (a lista já chega ordenada por data).
+ * • 'type' → por rótulo de tipo, grupos na ORDEM CANÔNICA (typeGroupRank) e, dentro do grupo,
+ *   prioridade primeiro (byPriority) com desempate por data.
+ */
+function groupUpcoming(events: HealthEvent[], view: UpcomingView): { label: string; items: HealthEvent[] }[] {
   const map = new Map<string, HealthEvent[]>()
-  for (const e of events) { const arr = map.get(e.type) ?? []; arr.push(e); map.set(e.type, arr) }
-  return [...map.entries()].map(([type, items]) => ({ type, label: typeLabel(type), items })).sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'))
+  for (const e of events) {
+    const key = view === 'date' ? monthLabel(e.date) : typeLabel(e.type)
+    const arr = map.get(key) ?? []; arr.push(e); map.set(key, arr)
+  }
+  const entries = [...map.entries()]
+  if (view === 'type') entries.sort(([a], [b]) => typeGroupRank(a) - typeGroupRank(b))
+  return entries.map(([label, items]) => ({
+    label,
+    items: view === 'type'
+      ? [...items].sort((a, b) => byPriority(a, b) || (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+      : items,
+  }))
 }
 
 function Section({ title, hint, events, onOpen, onComplete, onCancel, tone }: {

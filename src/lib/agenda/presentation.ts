@@ -9,6 +9,7 @@ export {
   EVENT_TYPE_DEFS, EVENT_TYPE_LABELS, EVENT_STATUS_LABELS, EVENT_STATUS_UI,
   typeLabel, statusLabel, formatDateBR, parseDateOnly, formatDateLongBR, formatTimeBR,
   PROFESSIONAL_KIND_DEFS, professionalKindLabel, priorityBadge, priorityRank, byPriority,
+  monthLabel, typeGroupRank,
   modalityLabel, outcomeSummary, hasOutcome,
 } from '@sintera/core'
 
