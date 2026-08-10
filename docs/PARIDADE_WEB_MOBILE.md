@@ -1,154 +1,73 @@
-# Matriz de Paridade Web ↔ Mobile
+# Matriz de Paridade Web × Mobile
 
-> **Status:** vivo · **Origem:** decisão da fundadora (2026‑07‑24) · **Governa:** toda alteração na Web enquanto o Mobile está em construção.
-> **Princípio‑raiz:** [ARCH‑002 — Mobile‑First · API‑First](./ARCH-002_MOBILE_FIRST_API_FIRST.md) · refinado pelo princípio de paridade abaixo.
+**Estado:** Build 2 (homologação) gerada · branch `feat/mobile-inc4-perfil` · **sem merge para `main`**.
+**Última atualização:** 2026-08-09 (encerramento da consolidação arquitetural).
+**Relaciona-se com:** [[principio_paridade_total_web_mobile]] · ADR-011 (componentes cross-platform) · ADR-021 (consolidação) · ADR-022 (entrada de datas) · governança de merge (abaixo).
 
-## 1. Por que este documento existe
+## Princípio
+Web = referência funcional; Mobile reproduz **integralmente** comportamento/regras/informação — só o **layout** adapta. O núcleo de domínio (`@sintera/core`) e o acesso a dados (`@sintera/api-client`) são **fonte única**, consumidos pelas duas plataformas.
 
-O **app móvel é o produto principal** (mais acessado). A Web permanece como **referência funcional** (valida comportamento, SSOT de UX), mas **não evolui de forma independente**. A regra‑mestra:
+## Matriz por domínio
 
-> **Toda alteração feita na Web deve REDUZIR — e não aumentar — o trabalho futuro do Mobile.**
+| Domínio | Web | Mobile | Paridade | Observações |
+|---|:--:|:--:|:--:|---|
+| Home | ✅ | ✅ | ✅ | ordem unificada UX-002; diferenças menores = P2 |
+| Agenda | ✅ | ✅ | ✅ | Disclaimer RDC adicionado |
+| Histórico de Saúde (Timeline) | ✅ | ✅ | ✅ | Disclaimer RDC adicionado; ações inline = P2 |
+| Perfil | ✅ | ✅ | ✅ | título + link Configurações; estatísticas = P2 (escopo congelado MOBILE-016/019) |
+| Exames — lista | ✅ | ✅ | ✅ | selo binário · "Ver original" · período de/até; gestão de estado dos Pedidos = P2 |
+| Exame — detalhe | ✅ | ✅ | ✅ | regras via core; export CSV/PDF = P2 |
+| Exame — upload | ✅ | ✅ | ✅ | bundle multipágina = P2 |
+| Histórico de Exames | ✅ | ✅ | ✅ | **arquitetura B** (índice → página do indicador); detalhe longitudinal na página do indicador |
+| Indicador (longitudinal) | ✅ | ✅ | ✅ | consome `seriesForName` do core; faixa de ref. no gráfico = P2 |
+| Medicamentos / Suplementos | ✅ | ✅ | ✅ | captura assistida aplicada; Disclaimer RDC |
+| Composição Corporal | ✅ | ✅ | ✅ | captura assistida (bioimpedância) via revisão em lote |
+| Monitoramento (sinais vitais) | ✅ | ✅ | ✅ | — |
+| Condições de Saúde | ✅ | ✅ | ✅ | captura assistida aplicada; salvamento-duplo = P2 |
+| Hábitos | ✅ | ✅ | ✅ | Disclaimer RDC adicionado |
+| Recursos de Saúde | ✅ | ✅ | ✅ | captura assistida (grau dos óculos); Disclaimer RDC |
+| Ciclo e Contracepção | ✅ | ✅ | ✅ | Disclaimer RDC adicionado |
+| Ômica | ✅ | ✅ | ✅ | ingestão/versões = P2 |
+| Relatório / Rede de Cuidado | ✅ | ✅ | ✅ | Web=PDF/impressão · Mobile=Share nativo (decisão); resumo/índice = P2 |
+| Despesas | ✅ | ✅ | ✅ | projeção única de fatos com valor |
+| Configurações | ✅ | ✅ | ✅ | Central agrupada por seção da Sidebar (FB-017) |
 
-Consequência operacional: **nenhuma alteração na Web pode ser considerada concluída sem um plano explícito de como será refletida no Mobile** (mesmo contrato de dados, mesma modelagem, UX da Web como referência da UX do Mobile). Esta matriz é o **checklist** que se consulta *antes* de mexer em qualquer módulo da Web.
+## Componentes compartilhados (SSOT)
 
-### 1.1 Princípios de execução (fundadora, 2026-07-31)
+| Componente | Contrato | Web | Mobile |
+|---|---|:--:|:--:|
+| **Select** (PS-1) | gatilho compacto + popover c/ busca + grupos | `components/ui/Select` | primitivo `Select` (D-16) |
+| **DatePicker** (ADR-022) | contrato único ISO; nativo por plataforma | `input type=date` | `@react-native-community/datetimepicker` |
+| **AttachmentLink** (R-ATTACH) | abrir documento (pill/inline) | `components/ui/AttachmentLink` | primitivo `AttachmentLink` |
+| **Disclaimer / copy RDC** (PS-3) | `DISCLAIMERS`/`COPY` no core | `<Disclaimer variant>` | primitivo `<Disclaimer variant>` |
+| **Captura assistida** (T1) | `apiClient.vision.*` + `useAssistedCapture` + `AssistedBatchReview` | rotas `/api/vision/*`, `/medications/scan` | consumida por Condições/Recursos/Medicamentos/Composição |
 
-- **"Contrato Primeiro, Plataforma Depois"** — o elemento central é o **contrato**, não qual plataforma
-  implementa primeiro (princípio perene; escala p/ API pública, portal profissional, integrações de terceiros).
-  Fluxo por capacidade nova: (1) **definir o contrato** → (2) **validar a regra de negócio** → (3) **atualizar a
-  documentação do contrato** ([API_CONTRACTS](./API_CONTRACTS.md)) → (4) **implementar na(s) plataforma(s)
-  aplicável(is)** reusando o mesmo contrato → (5) **verificar paridade** → (6) **homologar**. Assim, capacidades
-  que nasceram na Web e a biblioteca compartilhada que nasceu no Mobile **não violam** o princípio — o contrato
-  é o eixo, e a Web se alinha depois.
-- **"Nenhuma funcionalidade exclusiva do Mobile"** — salvo necessidade de **dispositivo** (câmera, biometria,
-  push, recursos nativos), toda função nova nasce como **capacidade de plataforma** (Web+Mobile), não como dois
-  produtos distintos.
+**Regra de plataforma (captura assistida):** a IA **propõe** o preenchimento; o usuário **revisa e confirma** antes de qualquer persistência. A IA nunca grava diretamente.
 
-> **Nota de fase (honesta):** os incrementos da **Onda 1** são o **Mobile alcançando paridade** — a Web já tem
-> essas funções, e ainda **não consome** o `@sintera/api-client` (dívida de paridade, [R-008](../RISK_REGISTER.md)).
-> O "Web First" governa capacidades **net-new / pós-paridade**; enquanto a Web está congelada, o padrão prático é
-> **contrato compartilhado + Mobile**, com a Web a alinhar ao descongelar.
+## Backlog P2 (pós-merge — evolução funcional)
 
-## 2. Como usar (antes de alterar a Web)
-
-Para o domínio que você vai tocar, responda com esta matriz em mãos:
-
-1. **O Mobile já prevê este domínio?** (está no roadmap de incrementos?)
-2. **A modelagem/contrato de dados será a mesma** que o Mobile vai consumir?
-3. **A Fonte da Verdade** é única e compartilhada (não há duplicação por plataforma)?
-4. **A UX da Web servirá de referência** direta à UX do Mobile?
-5. **O esforço agora poupa trabalho** quando o Mobile chegar neste domínio?
-
-Se **todas** = sim → a mudança é segura (tende a **Prioridade A/B**). Se **alguma** = não → **risco de divergência** → não fazer sem decisão estratégica.
-
-### Classificação do trabalho
-
-| Classe | Quando | Exemplos |
+| Item | Motivo | Categoria |
 |---|---|---|
-| **A — pode fazer agora** | Ativo compartilhado, risco ~zero de desalinhamento | Design System (recipes + primitivos RN), `@sintera/api-client`, tipos/contratos, correções de arquitetura que beneficiam ambas |
-| **B — só com plano de sincronização** | Mudança na Web que o Mobile vai herdar; exige as 5 respostas = sim | FB‑011 (Central de Notificações camada 2) |
-| **C — evitar** | Aumenta a distância entre as plataformas | Componentes exclusivos da Web, UX só‑desktop, exceções sem doc, comportamento sem contrato |
+| Voz na captura (T1b) | Escopo | Evolução funcional |
+| Gestão de estado dos Pedidos (Exames) | Escopo | Evolução funcional |
+| Resumo executivo + índice (Relatório) | Escopo | Evolução funcional |
+| Estatísticas + bloco de conta (Perfil) | Escopo congelado (MOBILE-016/019) | Evolução funcional |
+| Salvamento-duplo em Condições (documento que é exame) | Escopo | Evolução funcional |
+| Lote de vários medicamentos (scan) | Refinamento | Evolução funcional |
+| Bundle multipágina no upload (Mobile) | Escopo | Evolução funcional |
+| Export CSV/PDF no detalhe do exame (Mobile) | Escopo | Evolução funcional |
+| Faixa de referência no gráfico do indicador (Mobile) | Fidelidade | Evolução funcional |
+| Aviso "nome divergente" na lista de Exames | Baixo retorno (exige DTO extra) | Dívida técnica |
+| Adoção do wrapper DatePicker nos 23 `input date` Web | Baixo retorno (Web já nativo) | Dívida técnica |
+| Ingestão/versionamento de ômica no Mobile | Escopo | Evolução funcional |
+| Convergência dos 2 classificadores de modalidade (D-11/12) | Arquitetura | Pesquisa futura |
 
-## 3. Legenda de status de paridade
+## Governança de merge
+Fluxo: **Implementação → Revisão funcional → Build 2 → Homologação 2 → Aprovação → Merge**. O merge para `main` é condicionado à **aprovação da Homologação 2**. Durante a homologação, apontamentos são tratados **exclusivamente como ajuste** (sem novas funcionalidades, alterações arquiteturais ou expansão de escopo).
 
-| Símbolo | Significado |
-|---|---|
-| 🟢 **Pareado** | Web e Mobile consomem a mesma Fonte da Verdade com o mesmo contrato; tela Mobile entregue/aceita |
-| 🟡 **Preparado** | Contrato/DS/api‑client prontos e compartilháveis; tela Mobile ainda não implementada (planejada) |
-| 🟠 **A projetar** | Domínio existe na Web; Mobile ainda não tem contrato/tela; entra por incremento futuro |
-| 🔵 **Estrutural** | Camada de navegação/shell já projeta o domínio (rótulo/aba), sem lógica de domínio |
+### Critério de aceite da Homologação 2
+A arquitetura é aprovada quando: **(1)** sem bloqueadores P0 · **(2)** sem divergências arquiteturais Web↔Mobile · **(3)** componentes compartilhados conforme especificado · **(4)** captura assistida com comportamento consistente · **(5)** fluxos principais sem regressões. Atendidos → **congelamento oficial da arquitetura de navegação + merge para `main`** → início da evolução funcional.
 
-> A coluna **Fonte da Verdade** aponta o **domínio dono do fato** ([ADR‑001](./ADR-001_PROJECAO_SEM_DUPLICACAO_SSOT.md): quem é dono edita; os demais projetam/referenciam, nunca duplicam). É o mesmo dado nas duas plataformas — por construção, não por sincronização manual.
-
-## 4. Matriz por grupo da taxonomia SSOT
-
-> A navegação do Mobile é uma **projeção** da taxonomia única da Web (`Sidebar` = SSOT; ver `apps/mobile/src/presentation/navigation/ssotTabs.ts`). Os grupos abaixo são exatamente os 5 destinos + Painel Inicial.
-
-### Início
-| Domínio | Web (rota) | Mobile | Fonte da Verdade | Paridade |
-|---|---|---|---|---|
-| Painel Inicial | `/dashboard` | Aba **Início** · Home shell (slots) — Inc 3 (impl., homolog. pendente) | Composição de projeções (ADR‑018) — não é dono de fato | 🔵→🟡 |
-
-### Acompanhamento
-| Domínio | Web (rota) | Mobile | Fonte da Verdade | Paridade |
-|---|---|---|---|---|
-| Agenda | `/dashboard/agenda` | Aba **Acompanhamento** (rótulo) | Evento Assistencial (`health_events`) | 🟠 |
-| Histórico de Saúde | `/dashboard/historico` | idem | Evento Assistencial (`health_events`) | 🟠 |
-| Histórico de Exames | `/dashboard/exams` (timeline) | idem | Domínio Exames | 🟠 |
-| Composição Corporal | `/dashboard/medidas` | idem | `body_metrics` (com source/rastreabilidade) | 🟠 |
-| Monitoramento | `/dashboard/sinais-vitais` | idem | Observação (HIP‑007, FHIR Observation) | 🟠 |
-
-### Documentos
-| Domínio | Web (rota) | Mobile | Fonte da Verdade | Paridade |
-|---|---|---|---|---|
-| Exames | `/dashboard/exams` | Aba **Documentos** (rótulo) | Domínio Exames + Capture Hub / CEF | 🟠 |
-
-### Minha Saúde
-| Domínio | Web (rota) | Mobile | Fonte da Verdade | Paridade |
-|---|---|---|---|---|
-| Condições de Saúde | `/dashboard/condicoes` | Aba **Minha Saúde** (rótulo) | Domínio Condições | 🟠 |
-| Medicamentos | `/dashboard/medicamentos` | idem | Domínio Medicamentos | 🟠 |
-| Suplementos | `/dashboard/suplementos` | idem | Domínio Suplementos | 🟠 |
-| Recursos de Saúde | `/dashboard/recursos` | idem | Domínio Recursos | 🟠 |
-| Hábitos | `/dashboard/habitos` | idem | Domínio Hábitos | 🟠 |
-| Ciclo e Contracepção | `/dashboard/ciclo` | idem | Domínio Ciclo (Saúde da Mulher) | 🟠 |
-
-### Mais (overflow: Organização + Configurações)
-| Domínio | Web (rota) | Mobile | Fonte da Verdade | Paridade |
-|---|---|---|---|---|
-| Despesas | `/dashboard/gastos` | Aba **Mais** (rótulo) | Projeção financeira sobre os fatos (FIN‑001) | 🟠 |
-| Relatórios | `/dashboard/relatorios` | idem | Projeção sobre domínios (espelha o domínio) | 🟠 |
-| Configurações | `/dashboard/configuracoes` | idem | Preferências do usuário (`profiles.pref_*`) | 🟠 |
-| **Perfil** | `/dashboard/profile` | **Inc 4 (planejado, MOBILE‑016)** — DS Switch/Avatar prontos | `profiles` (SSOT do Perfil) | 🟡 |
-
-## 5. Ativos compartilhados (a base da paridade)
-
-Estes não têm "versão Web" e "versão Mobile" — são **um só ativo** consumido pelas duas plataformas. Evoluí‑los é sempre **Prioridade A**.
-
-| Ativo | Papel | Estado |
-|---|---|---|
-| **Design System** (`@sintera/design-system`) | Recipes headless (`recipe(theme,props)→VisualSpec`) — identidade única | Congelado (DS‑002); evolui por lacuna motivada pelo produto |
-| Primitivos RN (`apps/mobile/.../primitives`) | Adaptadores finos que consomem as recipes | Box · Text · Button · Input · **Switch** · **Avatar** |
-| `@sintera/api-client` | Acesso a dados com contrato único | Compartilhado |
-| `@sintera/types` · `@sintera/validation` | Contratos e regras de validação | Compartilhados |
-
-**Switch + Avatar** (branch `feat/ds-switch-avatar`) foram os primeiros ativos entregues sob este princípio: nasceram compartilhados, desbloqueiam o Inc 4 (Perfil) e não abriram nenhuma dívida de sincronização.
-
-## 6. Estado do Mobile (referência para a coluna "Mobile")
-
-| Incremento | Domínio | Estado |
-|---|---|---|
-| Inc 1 | Autenticação | ✅ Aceito (`mobile-inc1-accepted`) |
-| Inc 2 | Navegação (projeção SSOT) | ✅ Aceito (`mobile-inc2-accepted`) |
-| Inc 3 | Home Shell (slots) | 🔧 Implementado — homologação pendente (RAM 16GB) |
-| Inc 4 | Perfil | 📋 Planejado (MOBILE‑016); DS Switch/Avatar já prontos |
-| Inc 5+ | Demais domínios | 📋 Roadmap (MOBILE‑015) |
-
-## 7. Registro de avaliações (o gate em uso)
-
-> A Matriz **não é só documento — é gate de decisão.** Nenhuma evolução relevante da Web começa sem passar por aqui. Cada avaliação fica registrada com data, respostas objetivas e veredito.
-
-### FB‑011 — Central de Notificações, Camada 2 (`event_key`) — avaliado 2026‑07‑27
-
-| Pergunta | Resposta | Evidência |
-|---|---|---|
-| **1. O domínio "Notificações" já existe no roadmap do Mobile?** | ❌ **Não** | MOBILE‑015 tem 11 incrementos (Auth→…→Insights); nenhum é Notificações. A Central só chegaria embutida em "Configurações" (rótulo da aba *Mais*), sem incremento dedicado. |
-| **2. O modelo de dados será exatamente o mesmo?** | ⚠️ **Parcial / ambíguo** | O contrato de **preferências** (categoria × canal → `event_key`) está bem definido e a lib de resolução `src/lib/notifications/preferences.ts` é **pura/determinística** (100% reutilizável). Porém os campos "status de leitura · timestamps · dedup" **não** são a Camada 2: *dedup* vive no worker de despacho (marca enviado), e *status de leitura* é o **NOV‑001** (`content_seen`) — **outro SSOT**. Há ambiguidade de escopo (preferências × inbox) a resolver **antes** de congelar contrato. |
-| **3. A UX é portável?** | ✅ **Sim (comportamento/regras/estados/contrato)** | A lib pura é compartilhável; só o layout difere (matriz categoria×canal no desktop × lista no mobile). O que precisa ser compartilhado — comportamento, regras, estados, contratos — é portável. |
-| **4. Há dependência ainda não pronta?** | ❌ **Sim, há** | Camada 2 = *reescrita da resolução do worker de despacho VIVO* (`api/agenda/reminders`, pg_cron+pg_net) + pendência aberta "generalizar o worker além da Agenda". O próprio NOTIF‑001 sequenciou a Camada 2 como **"pós‑estabilização"** para não desestabilizar o envio real. WhatsApp em produção depende de pré‑requisitos de negócio (fundadora). |
-
-**Veredito:** 🔴 **reprovado no gate por ora** (Q1 e Q4 negativas; Q2 com ambiguidade de escopo). Classe **B** — **manter no roadmap**, **não implementar** nestes dois dias; aguardar a homologação do Inc 3.
-
-**Condição para reabrir:** resolver a ambiguidade de escopo da Q2 (preferências × inbox/read‑status) e **congelar o contrato** (Etapa 1) — categoria · `event_key` · canal · prioridade · fallback do worker · critérios de aceite · estratégia de portabilidade — **antes** de qualquer código (Etapa 2). Assim Web e Mobile implementam o **mesmo contrato**, e o Mobile não "copia a Web".
-
-**Ação de paridade recomendada (quando FB‑011 for feito, não agora):** mover a lib pura de resolução (`preferences.ts`) para um pacote compartilhado (`@sintera/*`) para o Mobile reusar sem cópia.
-
-## 8. Manutenção deste documento
-
-- Atualizar a coluna **Mobile** a cada incremento aceito (🟠→🟡→🟢).
-- Ao **planejar** uma alteração na Web, registrar aqui a resposta às 5 perguntas da §2 e a classe (A/B/C).
-- Quando um domínio ficar **🟢 Pareado**, registrar a tag/aceite do incremento correspondente.
-- Divergências detectadas (Web mudou sem reflexo no Mobile) entram como **dívida de paridade** e são tratadas antes de novas alterações no mesmo domínio.
-
----
-*Referências: [principio_paridade_web_mobile] (memória) · ARCH‑002 · ADR‑001 (SSOT) · ADR‑011 (recipes) · ADR‑018 (agregação por slots) · MOBILE‑015 (roadmap) · MOBILE‑016 (Inc 4).*
+### Observações da revisão funcional (baixa severidade, não bloqueantes)
+1. Condições — salvamento-duplo (documento que é exame → criar registro em Exames) não reproduzido no Mobile → P2.
+2. Medicamentos — forma por OCR já validada no servidor (`/medications/scan`) contra o vocabulário → não-issue.
