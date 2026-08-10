@@ -49,15 +49,15 @@ describe('api-client · profile.getProfile — leitura (null=vazio, exceção=fa
 })
 
 describe('api-client · profile.updateProfile — escrita (whitelist + { error })', () => {
-  it('upsert com WHITELIST (id + updated_at + name + phone) — descarta chaves de outros domínios', async () => {
+  it('upsert com WHITELIST (id + updated_at + name + phone + age_range + goals) — descarta chaves de outros domínios', async () => {
     const builder = mockQueryBuilder({ data: null, error: null })
     const client = mockSupabase({ session: fakeSession('u9'), from: () => builder })
     // passa chaves extras (fora do contrato) de propósito — devem ser IGNORADAS
-    await updateProfile(client, { name: 'Bea', phone: '+5521', age_range: 'x', pref_daily_reminder: false } as never)
+    await updateProfile(client, { name: 'Bea', phone: '+5521', age_range: '36-45', goals: ['sono'], pref_daily_reminder: false, cycle_length: 30 } as never)
     const payload = (builder as unknown as { __calls: Record<string, unknown[]> }).__calls.upsert[0] as Record<string, unknown>
-    expect(payload).toMatchObject({ id: 'u9', name: 'Bea', phone: '+5521' })
+    expect(payload).toMatchObject({ id: 'u9', name: 'Bea', phone: '+5521', age_range: '36-45', goals: ['sono'] })
     expect(payload).toHaveProperty('updated_at')
-    expect(payload).not.toHaveProperty('age_range')
+    expect(payload).not.toHaveProperty('cycle_length')
     expect(payload).not.toHaveProperty('pref_daily_reminder')
   })
 

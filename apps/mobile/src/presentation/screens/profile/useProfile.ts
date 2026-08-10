@@ -3,7 +3,8 @@
 // PESSIMISTA (MOBILE-016 §6.1): a UI só reflete "salvo" após confirmação do backend. Sem atualização otimista,
 // sem fila offline. Validação/normalização via @sintera/validation (contrato compartilhado com a Web).
 import { useReducer, useEffect, useState, useCallback, useRef } from 'react'
-import { validateName, validatePhone } from '@sintera/validation'
+import { validateName, validatePhone, validateAgeRange, validateGoals, parseGoals, goalsToInput } from '@sintera/validation'
+import type { ProfileStats } from '@sintera/api-client'
 import { apiClient } from '../../../infrastructure/apiClient'
 import {
   profileReducer,
@@ -22,6 +23,8 @@ function messageFor(e: unknown, fallback: string): string {
 export interface ProfileFieldErrors {
   name?: string
   phone?: string
+  age_range?: string
+  goals?: string
 }
 
 export interface UseProfile {
@@ -31,9 +34,15 @@ export interface UseProfile {
   error: string | null
   name: string
   phone: string
+  ageRange: string
+  goalsText: string
   setName: (v: string) => void
   setPhone: (v: string) => void
+  setAgeRange: (v: string) => void
+  setGoals: (v: string) => void
   fieldErrors: ProfileFieldErrors
+  /** Estatísticas (exames·biomarcadores·membro desde) — exibição; null enquanto carrega ou se falhar. */
+  stats: ProfileStats | null
   save: () => void
   retry: () => void
 }
@@ -47,13 +56,27 @@ export function useProfile(): UseProfile {
   const [state, dispatch] = useReducer(profileReducer, initialProfileState)
   const [name, setNameRaw] = useState('')
   const [phone, setPhoneRaw] = useState('')
+  const [ageRange, setAgeRangeRaw] = useState('')
+  const [goalsText, setGoalsRaw] = useState('')
   const [fieldErrors, setFieldErrors] = useState<ProfileFieldErrors>({})
+  const [stats, setStats] = useState<ProfileStats | null>(null)
   // Patch validado/normalizado capturado no Salvar (o efeito de 'saving' o consome — evita closure obsoleto).
-  const patchRef = useRef<{ name: string | null; phone: string | null }>({ name: null, phone: null })
+  const patchRef = useRef<{ name: string | null; phone: string | null; age_range: string | null; goals: string[] | null }>({ name: null, phone: null, age_range: null, goals: null })
 
   // Dispara a carga inicial uma única vez.
   useEffect(() => {
     dispatch({ type: 'LOAD' })
+  }, [])
+
+  // Estatísticas — carga independente (exibição). Falha NÃO quebra o Perfil (fica sem os números).
+  useEffect(() => {
+    const controller = new AbortController()
+    let alive = true
+    apiClient.profile
+      .getProfileStats(controller.signal)
+      .then((s) => { if (alive) setStats(s) })
+      .catch(() => { /* estatísticas são exibição; silencioso */ })
+    return () => { alive = false; controller.abort() }
   }, [])
 
   // Efeito de CARGA (fase 'loading'). Aborta em desmontagem/retry.
@@ -67,6 +90,8 @@ export function useProfile(): UseProfile {
         if (!alive) return
         setNameRaw(data?.name ?? '')
         setPhoneRaw(data?.phone ?? '')
+        setAgeRangeRaw(data?.age_range ?? '')
+        setGoalsRaw(goalsToInput(data?.goals))
         setFieldErrors({})
         dispatch({ type: 'LOAD_SUCCESS', data })
       })
@@ -112,18 +137,30 @@ export function useProfile(): UseProfile {
     setPhoneRaw(v)
     dispatch({ type: 'EDIT' })
   }, [])
+  const setAgeRange = useCallback((v: string) => {
+    setAgeRangeRaw(v)
+    dispatch({ type: 'EDIT' })
+  }, [])
+  const setGoals = useCallback((v: string) => {
+    setGoalsRaw(v)
+    dispatch({ type: 'EDIT' })
+  }, [])
 
   const save = useCallback(() => {
     const nres = validateName(name)
     const pres = validatePhone(phone)
+    const ares = validateAgeRange(ageRange)
+    const gres = validateGoals(parseGoals(goalsText))
     const errs: ProfileFieldErrors = {}
     if (!nres.ok) errs.name = nres.error
     if (!pres.ok) errs.phone = pres.error
+    if (!ares.ok) errs.age_range = ares.error
+    if (!gres.ok) errs.goals = gres.error
     setFieldErrors(errs)
-    if (!nres.ok || !pres.ok) return
-    patchRef.current = { name: nres.value, phone: pres.value }
+    if (!nres.ok || !pres.ok || !ares.ok || !gres.ok) return
+    patchRef.current = { name: nres.value, phone: pres.value, age_range: ares.value, goals: gres.value }
     dispatch({ type: 'SAVE' })
-  }, [name, phone])
+  }, [name, phone, ageRange, goalsText])
 
   const retry = useCallback(() => dispatch({ type: 'RETRY' }), [])
 
@@ -133,9 +170,14 @@ export function useProfile(): UseProfile {
     error: state.error,
     name,
     phone,
+    ageRange,
+    goalsText,
     setName,
     setPhone,
+    setAgeRange,
+    setGoals,
     fieldErrors,
+    stats,
     save,
     retry,
   }

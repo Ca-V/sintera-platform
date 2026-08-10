@@ -171,6 +171,7 @@ export interface Database {
         Row: {
           id: string
           name: string | null
+          phone: string | null
           age_range: string | null
           cycle_length: number | null
           last_period: string | null
@@ -187,6 +188,7 @@ export interface Database {
         Insert: {
           id: string
           name?: string | null
+          phone?: string | null
           age_range?: string | null
           cycle_length?: number | null
           last_period?: string | null
@@ -200,6 +202,7 @@ export interface Database {
         }
         Update: {
           name?: string | null
+          phone?: string | null
           age_range?: string | null
           cycle_length?: number | null
           last_period?: string | null

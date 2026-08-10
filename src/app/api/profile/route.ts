@@ -43,6 +43,7 @@ export async function PATCH(request: Request) {
   const payload: ProfileUpdate = { updated_at: new Date().toISOString() }
 
   if ('name' in body)               payload.name               = body.name as string | null
+  if ('phone' in body)              payload.phone              = body.phone as string | null
   if ('age_range' in body)          payload.age_range          = body.age_range as string | null
   if ('cycle_length' in body)       payload.cycle_length       = body.cycle_length as number | null
   if ('last_period' in body)        payload.last_period        = body.last_period as string | null

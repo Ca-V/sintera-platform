@@ -42,7 +42,7 @@ describe('integração · validation → api-client (fluxo do Perfil)', () => {
     const client = mockSupabase({ session: fakeSession('u1'), from: () => mockQueryBuilder({ data: row, error: null }) })
     const dto = await getProfile(client)
     // os campos editáveis (name, phone) do DTO alimentam a validação de volta sem perda
-    const v = validateProfileEditable({ name: dto?.name, phone: dto?.phone })
-    expect(v).toEqual({ ok: true, value: { name: 'Ana', phone: '+5511999998888' } })
+    const v = validateProfileEditable({ name: dto?.name, phone: dto?.phone, age_range: dto?.age_range, goals: dto?.goals })
+    expect(v).toEqual({ ok: true, value: { name: 'Ana', phone: '+5511999998888', age_range: null, goals: null } })
   })
 })
