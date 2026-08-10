@@ -115,6 +115,7 @@ export default function ExamsPage() {
   const [dragging, setDragging]         = useState(false)
   const [exams, setExams]               = useState<Exam[]>([])
   const [loadingExams, setLoadingExams] = useState(true)
+  const [examsError, setExamsError]     = useState<string | null>(null)
   const [uploading, setUploading]       = useState(false)
   const [uploadError, setUploadError]   = useState<string | null>(null)
   // Captura multipágina: agora pelo primitivo transversal Document Bundle (Bundle→CDU).
@@ -148,8 +149,8 @@ export default function ExamsPage() {
     const { data, error } = await supabase
       .from('exams').select('*').eq('user_id', user.id)
       .order('created_at', { ascending: false })
-    if (error) console.error('[SINTERA] exams fetch:', error.message)
-    else setExams((data ?? []) as Exam[])
+    if (error) { console.error('[SINTERA] exams fetch:', error.message); setExamsError('Não foi possível carregar seus exames. Tente novamente.') }
+    else { setExams((data ?? []) as Exam[]); setExamsError(null) }
     setLoadingExams(false)
   }, [user, supabase])
 
@@ -666,6 +667,12 @@ export default function ExamsPage() {
         <div className="flex flex-col gap-3">
           {[1, 2, 3].map(i => <Card key={i} padding="none" className="h-[72px] rounded-2xl animate-pulse" style={{ background: '#F0E9DC' }} />)}
         </div>
+      ) : examsError ? (
+        <Card padding="none" className="p-10 text-center">
+          <p className="font-body text-sm text-red-500 mb-3">{examsError}</p>
+          <button type="button" onClick={() => loadExams()}
+            className="font-body text-sm font-medium text-petal border border-petal/30 px-4 py-2 rounded-full hover:bg-blush transition-colors">Tentar novamente</button>
+        </Card>
       ) : exams.length === 0 ? (
         <Card padding="none" className="p-10 text-center">
           <FileText size={36} className="text-border mx-auto mb-3" />
