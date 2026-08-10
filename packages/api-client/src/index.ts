@@ -18,7 +18,7 @@ export type { ProfileApi, ProfileDTO, ProfileEditable, ProfileStats } from './pr
 // Função standalone das estatísticas — a Web (que consome Supabase direto) reusa a MESMA consulta (SSOT).
 export { getProfileStats } from './profile/get-stats'
 // Domínio Exames (leitura) — infra compartilhada; de-risca o Inc 5 (Histórico de Exames).
-export type { ExamsApi, ExamDTO, ExamDetailDTO, ExamsQuery } from './exams/types'
+export type { ExamsApi, ExamDTO, ExamDetailDTO, ExamsQuery, ExamExtractionLog } from './exams/types'
 export type { BiomarkerDTO } from './exams/biomarkers'
 export type { BiomarkerRow, BiomarkerSummary, Trend } from '@sintera/core'
 export type { EventsApi, AgendaApi, ConditionsApi, HabitsApi, ResourcesApi, MedicationsApi, CycleApi } from './auth/types'

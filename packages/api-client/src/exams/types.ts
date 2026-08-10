@@ -39,6 +39,13 @@ import type { PageRequest, DateRange } from '@sintera/types'
 import type { BiomarkerDTO } from './biomarkers'
 import type { ClinicalResultRow, ExamExpenseRow, BiomarkerRow } from '@sintera/core'
 
+/** Última extração bem-sucedida de um exame (ai_processing_log) — informativo no detalhe (paridade Web). */
+export interface ExamExtractionLog {
+  started_at: string
+  parse_repaired: boolean
+  extraction_path: string | null
+}
+
 /** Filtros/paginação da lista de exames (todos opcionais; sem paginação = todos).
  *  Reusa os contratos compartilhados `DateRange` (from/to) e `PageRequest` (limit/offset) de @sintera/types. */
 export interface ExamsQuery extends PageRequest, DateRange {
@@ -60,6 +67,8 @@ export interface ExamsApi {
   listExamExpenses(signal?: AbortSignal): Promise<ExamExpenseRow[]>
   /** Lê TODOS os biomarcadores numéricos (com data do laudo) — visão longitudinal/tendência. LANÇA em falha. */
   getAllBiomarkers(signal?: AbortSignal): Promise<BiomarkerRow[]>
+  /** Última extração bem-sucedida do exame (informativo). `null` se nunca extraiu. LANÇA em falha. */
+  getLastExtractionLog(examId: string, signal?: AbortSignal): Promise<ExamExtractionLog | null>
 }
 
 /** Colunas centrais lidas do banco (explícitas — não `*` — para não trazer campos internos/financeiros). */

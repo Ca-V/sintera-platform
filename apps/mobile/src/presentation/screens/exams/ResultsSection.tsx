@@ -2,7 +2,8 @@
 // material→exame, com situação/referência (copy única do @sintera/core), índice experimental, rodapé
 // regulatório e resultados clínicos não-laboratoriais (UCDA). Estados: processando · document_only · vazio/erro.
 // COMPOSIÇÃO de primitivos DS; NENHUMA regra aqui (interpretação vem calculada do backend — REG-001).
-import { View, StyleSheet } from 'react-native'
+import { useState } from 'react'
+import { View, Pressable, StyleSheet } from 'react-native'
 import { text } from '@sintera/design-system'
 import type { BiomarkerDTO, ExamDetailDTO } from '@sintera/api-client'
 import {
@@ -67,6 +68,7 @@ export function ResultsSection({ exam, biomarkers, clinical, analyzing }: {
 
 function ResultsCard({ exam, biomarkers }: { exam: ExamDetailDTO; biomarkers: BiomarkerDTO[] }) {
   const t = useTheme()
+  const [tip, setTip] = useState(false)
   const idx = experimentalIndex(biomarkers)
   const counts = biomarkerCounts(biomarkers)
   const groups = groupByMaterialExam(biomarkers)
@@ -76,12 +78,33 @@ function ResultsCard({ exam, biomarkers }: { exam: ExamDetailDTO; biomarkers: Bi
     <View style={{ gap: 16 }}>
       {idx ? (
         <View style={[styles.card, card]}>
-          <Text spec={text(t, { role: 'label', tone: 'muted' })}>PROPORÇÃO DENTRO DA REFERÊNCIA</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <Text spec={text(t, { role: 'label', tone: 'muted' })}>PROPORÇÃO DENTRO DA REFERÊNCIA</Text>
+            {/* Explicador "?" (paridade Web IndexCard) — mesma copy. */}
+            <Pressable onPress={() => setTip(v => !v)} accessibilityRole="button" accessibilityLabel="O que é este índice?"
+              style={{ width: 24, height: 24, borderRadius: 999, borderWidth: 1, borderColor: t.color.border.default, alignItems: 'center', justifyContent: 'center' }}>
+              <Text spec={text(t, { role: 'caption' })} style={{ fontWeight: '700', color: t.color.text.muted }}>?</Text>
+            </Pressable>
+          </View>
           <Text spec={text(t, { role: 'bodyStrong' })} style={{ color: t.color.identity.primary, fontSize: 28 }}>{idx.pct}%</Text>
           <Text spec={text(t, { role: 'caption', tone: 'muted' })}>
             {idx.numerator} de {idx.denominator} biomarcadores dentro da referência. Métrica informativa — não é
             diagnóstico nem estado de saúde; não substitui avaliação médica.
           </Text>
+          {tip ? (
+            <View style={{ gap: 8, marginTop: 8, backgroundColor: t.color.surface.app, borderRadius: 12, padding: 12 }}>
+              <Text spec={text(t, { role: 'bodySmall' })} style={{ fontWeight: '600' }}>O que é a Proporção dentro da referência?</Text>
+              <Text spec={text(t, { role: 'caption', tone: 'muted' })}>
+                É uma contagem simples: de todos os biomarcadores numéricos com referência impressa neste laudo, quantos estão dentro da faixa informada pelo laboratório.
+              </Text>
+              <Text spec={text(t, { role: 'caption', tone: 'muted' })}>
+                Importante: cada laboratório usa referências próprias. Um mesmo valor pode estar “dentro” em um laudo e “fora” em outro.
+              </Text>
+              <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.attention.text, backgroundColor: t.color.badge.attention.soft, borderRadius: 10, padding: 8 }}>
+                Esta métrica não representa diagnóstico, risco ou estado geral de saúde. Não substitui avaliação médica.
+              </Text>
+            </View>
+          ) : null}
         </View>
       ) : null}
 

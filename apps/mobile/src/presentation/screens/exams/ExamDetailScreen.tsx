@@ -6,7 +6,7 @@ import { ScrollView, View, ActivityIndicator, Alert, Share, Pressable, StyleShee
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
-import type { ExamDTO } from '@sintera/api-client'
+import type { ExamDTO, ExamExtractionLog } from '@sintera/api-client'
 import { deriveExamIdentity, isOrderDocumentType, careStageFor, CARE_STAGES, compareNames, selectByLink } from '@sintera/core'
 import { AttachmentLink, Button, Disclaimer, FieldRow, Input, Text, DatePicker } from '../../primitives'
 import { useTheme } from '../../theme'
@@ -36,6 +36,7 @@ export function ExamDetailScreen({ route, navigation }: Props) {
   const [pickOrder, setPickOrder] = useState(false)
   const [profileName, setProfileName] = useState<string | null>(null)
   const [linkedStatuses, setLinkedStatuses] = useState<string[]>([])
+  const [lastLog, setLastLog] = useState<ExamExtractionLog | null>(null)
 
   // Nome do perfil — para a conferência de identidade (exame de outra pessoa).
   useEffect(() => {
@@ -51,6 +52,17 @@ export function ExamDetailScreen({ route, navigation }: Props) {
     let alive = true
     apiClient.agenda.listEvents()
       .then(evs => { if (alive) setLinkedStatuses(selectByLink(evs, 'exam', ex.id).map(e => e.status)) })
+      .catch(() => {})
+    return () => { alive = false }
+  }, [p.exam])
+
+  // Última extração bem-sucedida (informativo — paridade Web). Falha silenciosa.
+  useEffect(() => {
+    const ex = p.exam
+    if (!ex) return
+    let alive = true
+    apiClient.exams.getLastExtractionLog(ex.id)
+      .then(l => { if (alive) setLastLog(l) })
       .catch(() => {})
     return () => { alive = false }
   }, [p.exam])
@@ -220,6 +232,13 @@ export function ExamDetailScreen({ route, navigation }: Props) {
 
       {/* Resultados */}
       <ResultsSection exam={exam} biomarkers={p.biomarkers} clinical={p.clinical} analyzing={p.analyze.running} />
+
+      {/* Última extração (informativo — paridade Web) */}
+      {lastLog ? (
+        <Text spec={text(t, { role: 'caption', tone: 'faint' })}>
+          Última extração: {formatExamDate(lastLog.started_at)}{lastLog.parse_repaired ? ' · reparado automaticamente' : ''}{lastLog.extraction_path === 'pdf_native' ? ' · leitura nativa PDF' : ''}
+        </Text>
+      ) : null}
 
       {/* Financeiro */}
       <FinancialSection exam={exam} onSave={p.updateFields} />
