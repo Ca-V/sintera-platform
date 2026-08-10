@@ -1,13 +1,14 @@
 // Hook do UPLOAD de exame (Inc.6) — invólucro FINO: liga o reducer puro (`uploadMachine`) à orquestração pura
 // (`uploadController`), injetando as PORTAS reais (picker nativo + `apiClient.exams` + telemetria). FRONTEIRA
 // Inc.1: nenhum Supabase direto — tudo via `apiClient`. Toda a lógica já é testada nos módulos puros.
-import { useReducer, useCallback, useEffect, useRef } from 'react'
-import { DEFAULT_UPLOAD_CONSTRAINTS } from '@sintera/api-client'
+import { useReducer, useCallback, useEffect, useRef, useState } from 'react'
+import { DEFAULT_UPLOAD_CONSTRAINTS, type PickedImage } from '@sintera/api-client'
 import { noopObservability } from '@sintera/core'
 import { apiClient } from '../../../infrastructure/apiClient'
 import { documentPicker } from '../../../infrastructure/documentPickerAdapter'
+import { imagesToPdf } from '../../../infrastructure/imagesToPdf'
 import { uploadReducer, initialUploadState } from './uploadMachine'
-import { startUpload, resumeUpload, nameWithoutExt, type UploadDeps } from './uploadController'
+import { startUpload, startUploadWithFile, resumeUpload, nameWithoutExt, type UploadDeps } from './uploadController'
 
 // Portas reais (singletons). Telemetria = no-op por ora (impl real entra atrás da mesma porta @sintera/core).
 const deps: UploadDeps = {
@@ -46,5 +47,46 @@ export function useExamUpload() {
 
   const reset = useCallback(() => dispatch({ type: 'RESET' }), [])
 
-  return { state, pick, retry, reset }
+  // ── Bundle multipágina (paridade Web): monta um documento a partir de VÁRIAS imagens → 1 PDF → upload único. ──
+  const [pages, setPages] = useState<PickedImage[]>([])
+  const [combining, setCombining] = useState(false)
+
+  const addFromGallery = useCallback(async () => {
+    const imgs = await documentPicker.pickImages()
+    if (imgs?.length) setPages(prev => [...prev, ...imgs])
+  }, [])
+  const addFromCamera = useCallback(async () => {
+    const img = await documentPicker.captureImagePage()
+    if (img) setPages(prev => [...prev, img])
+  }, [])
+  const removePage = useCallback((i: number) => setPages(prev => prev.filter((_, j) => j !== i)), [])
+  const movePage = useCallback((i: number, dir: -1 | 1) => setPages(prev => {
+    const j = i + dir
+    if (j < 0 || j >= prev.length) return prev
+    const n = [...prev]; [n[i], n[j]] = [n[j], n[i]]; return n
+  }), [])
+  const resetBundle = useCallback(() => setPages([]), [])
+
+  // Conclui o documento: 1 página → envia a própria imagem; >1 → combina em PDF (expo-print) e envia como 1 arquivo.
+  const submitBundle = useCallback(async () => {
+    if (!pages.length || combining) return
+    setCombining(true)
+    try {
+      const uri = await imagesToPdf(pages.map(p => ({ base64: p.base64, mime: p.mime })))
+      const count = pages.length
+      setPages([])
+      await startUploadWithFile(
+        { uri, name: `Documento (${count} página${count !== 1 ? 's' : ''}).pdf`, sizeBytes: 0, mimeType: 'application/pdf' },
+        {}, deps, dispatch,
+      )
+    } catch (e) {
+      dispatch({ type: 'FAILURE', error: e instanceof Error ? e.message : 'Não foi possível montar o documento.' })
+    } finally {
+      setCombining(false)
+    }
+  }, [pages, combining])
+
+  const bundle = { pages, combining, addFromGallery, addFromCamera, removePage, movePage, resetBundle, submitBundle }
+
+  return { state, pick, retry, reset, bundle }
 }

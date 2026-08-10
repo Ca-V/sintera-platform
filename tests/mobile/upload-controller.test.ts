@@ -16,6 +16,8 @@ function deps(over: Partial<{ pick: PickedFile | null; pickThrows: boolean; uplo
         ? vi.fn().mockRejectedValue(new Error('device'))
         : vi.fn().mockResolvedValue('pick' in over ? over.pick : validFile),
       captureImage: vi.fn().mockResolvedValue('pick' in over ? over.pick : validFile),
+      pickImages: vi.fn().mockResolvedValue(null),
+      captureImagePage: vi.fn().mockResolvedValue(null),
     },
     write: {
       uploadExam: vi.fn().mockResolvedValue(over.upload ?? { data: uploadResult, error: null }),

@@ -14,7 +14,7 @@
 // Padrão da casa: lógica pura separada do React (como loadMachine/uploadMachine). O hook `useExamUpload`
 // (a construir junto da tela, pós-aceite) será um invólucro fino que injeta as portas reais e o dispatch.
 
-import { validateUpload, type DocumentPickerPort, type ExamsWriteApi, type UploadConstraints, type UploadResult } from '@sintera/api-client'
+import { validateUpload, type DocumentPickerPort, type ExamsWriteApi, type UploadConstraints, type UploadResult, type PickedFile } from '@sintera/api-client'
 import type { CreateExamInput } from '@sintera/api-client'
 import type { Telemetry } from '@sintera/core'
 import type { UploadEvent } from './uploadMachine'
@@ -116,6 +116,21 @@ export async function startUpload(source: 'document' | 'camera', meta: UploadMet
     return dispatch({ type: 'FAILURE', error: v.message })
   }
 
+  dispatch({ type: 'PICKED', file })
+  const fields: CreateFields = { type: meta.type ?? nameWithoutExt(file.name), exam_date: meta.exam_date ?? null }
+  await doUploadThenCreate({ uri: file.uri, mimeType: file.mimeType as string, sizeBytes: file.sizeBytes }, fields, deps, dispatch, signal)
+}
+
+/** Início do fluxo com um arquivo JÁ MONTADO (ex.: PDF de várias páginas combinado no aparelho). Sem picker —
+ *  valida → envia → cria. Mesma sequência do startUpload após a seleção. */
+export async function startUploadWithFile(file: PickedFile, meta: UploadMeta, deps: UploadDeps, dispatch: Dispatch, signal?: AbortSignal): Promise<void> {
+  track(deps, 'started', { source: 'bundle' })
+  dispatch({ type: 'PICK' })
+  const v = validateUpload(file, deps.constraints)
+  if (!v.ok) {
+    track(deps, 'rejected', { reason: v.reason })
+    return dispatch({ type: 'FAILURE', error: v.message })
+  }
   dispatch({ type: 'PICKED', file })
   const fields: CreateFields = { type: meta.type ?? nameWithoutExt(file.name), exam_date: meta.exam_date ?? null }
   await doUploadThenCreate({ uri: file.uri, mimeType: file.mimeType as string, sizeBytes: file.sizeBytes }, fields, deps, dispatch, signal)

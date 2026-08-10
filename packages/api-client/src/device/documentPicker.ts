@@ -12,8 +12,20 @@ export interface PickedFile {
   mimeType: string | null
 }
 
+/** Uma PÁGINA de imagem para montar um documento de várias páginas (bundle). Carrega o base64 para a montagem
+ *  do PDF no aparelho + o uri para a miniatura. Espelha o bundle da Web (imagens → 1 PDF → upload único). */
+export interface PickedImage {
+  uri: string
+  base64: string
+  mime: string
+}
+
 /** Port de seleção. Retorna `null` quando o usuário CANCELA (não é erro). LANÇA só em falha real do device. */
 export interface DocumentPickerPort {
   pickDocument(): Promise<PickedFile | null>
   captureImage(): Promise<PickedFile | null>
+  /** Seleciona VÁRIAS imagens da galeria (com base64) para montar um documento multipágina. `null` = cancelou. */
+  pickImages(): Promise<PickedImage[] | null>
+  /** Captura UMA imagem pela câmera (com base64) como página do documento. `null` = cancelou. */
+  captureImagePage(): Promise<PickedImage | null>
 }

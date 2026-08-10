@@ -42,5 +42,5 @@ export type { ExamsWriteApi, UploadResult, CreateExamInput, UploadConstraints, E
 export { DEFAULT_UPLOAD_CONSTRAINTS } from './exams/write'
 export { validateUpload, acceptedFormatsHint, type UploadValidation } from './exams/validateUpload'
 // PORT de seleção de documento (device) — abstração injetada por plataforma (app não conhece a lib).
-export type { DocumentPickerPort, PickedFile } from './device/documentPicker'
+export type { DocumentPickerPort, PickedFile, PickedImage } from './device/documentPicker'
 export { withTimeout, TimeoutError, DEFAULT_TIMEOUT_MS } from './net/timeout'

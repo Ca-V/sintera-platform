@@ -28,6 +28,8 @@ function deps(over: Partial<{ pick: PickedFile | null; upload: unknown; create: 
     picker: {
       pickDocument: vi.fn().mockResolvedValue('pick' in over ? over.pick : PDF),
       captureImage: vi.fn().mockResolvedValue('pick' in over ? over.pick : PDF),
+      pickImages: vi.fn().mockResolvedValue(null),
+      captureImagePage: vi.fn().mockResolvedValue(null),
     },
     write: {
       uploadExam: vi.fn().mockResolvedValue(over.upload ?? { data: RESULT, error: null }),
