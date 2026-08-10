@@ -57,7 +57,7 @@ const NAV: readonly NavNode[] = [
     ],
   },
   // 1 item hoje → LINK direto (evita expandir para um único item). Viram grupo expansível quando crescerem.
-  { type: 'link', leaf: { href: '/dashboard/relatorio', icon: Users, label: 'Rede de Cuidado' } },
+  { type: 'link', leaf: { href: '/dashboard/rede-de-cuidado', icon: Users, label: 'Rede de Cuidado', extra: ['/dashboard/relatorio', '/dashboard/relatorios'] } },
   { type: 'link', leaf: { href: '/dashboard/gastos', icon: Receipt, label: 'Organização' } },
   { type: 'link', leaf: { href: '/dashboard/configuracoes', icon: Settings, label: 'Configurações' } },
 ]

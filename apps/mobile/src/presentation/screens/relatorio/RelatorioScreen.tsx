@@ -13,7 +13,7 @@ import {
   selectFinancial, typeLabel, type HealthEvent,
 } from '@sintera/core'
 import type { ShareDTO, TemplateDTO } from '@sintera/api-client'
-import { Text, Button, Input, Disclaimer, DatePicker } from '../../primitives'
+import { Text, Button, Input, Disclaimer, DatePicker, Select } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 
@@ -176,15 +176,15 @@ export function RelatorioScreen() {
       </View>
       <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Compilação factual dos seus registros para levar a um profissional. Você escolhe o período e o que incluir.</Text>
 
-      {/* Período (presets + intervalo personalizado) */}
+      {/* Período — seletor COMPACTO (adaptação de dispositivo: tela curta) + intervalo quando "Personalizado" */}
       <View style={[styles.card, card, { gap: 8 }]}>
         <Text spec={text(t, { role: 'bodyStrong' })}>Período</Text>
-        <View style={styles.chips}>
-          {PERIOD_PRESETS.map(p => {
-            const on = period.preset === p.value
-            return <Pressable key={p.value} onPress={() => setPeriod(p.value === 'custom' ? { preset: 'custom', from: period.from ?? null, to: period.to ?? null } : { preset: p.value })} style={[styles.chip, { borderColor: on ? t.color.identity.primary : t.color.border.default, backgroundColor: on ? t.color.badge.info.soft : 'transparent' }]}><Text spec={text(t, { role: 'caption', tone: on ? 'default' : 'muted' })}>{p.label}</Text></Pressable>
-          })}
-        </View>
+        <Select
+          aria-label="Período"
+          value={period.preset}
+          onChange={(v) => setPeriod(v === 'custom' ? { preset: 'custom', from: period.from ?? null, to: period.to ?? null } : { preset: v as Period['preset'] })}
+          options={PERIOD_PRESETS.map(p => ({ id: p.value, label: p.label }))}
+        />
         {period.preset === 'custom' ? (
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <DatePicker value={period.from ?? ''} onChange={(v) => setPeriod(pd => ({ ...pd, preset: 'custom', from: v || null }))} placeholder="De" style={{ flex: 1 }} />
@@ -193,53 +193,54 @@ export function RelatorioScreen() {
         ) : null}
       </View>
 
-      {/* Configuração de seleção */}
+      {/* Mostrar no relatório — seleção de seções + item a item, PROMINENTE (paridade Web: "Mostrar no relatório"). */}
+      <View style={[styles.card, card, { gap: 12 }]}>
+        <Text spec={text(t, { role: 'bodyStrong' })}>Mostrar no relatório</Text>
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          <Pressable onPress={() => allSections(true)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Selecionar tudo</Text></Pressable>
+          <Pressable onPress={() => allSections(false)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Limpar</Text></Pressable>
+          <Pressable onPress={() => { setSections(defaultSections()); setExcluded({}) }}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Padrão</Text></Pressable>
+        </View>
+        {REPORT_GROUPS.map(g => (
+          <View key={g.title} style={{ gap: 8 }}>
+            <Text spec={text(t, { role: 'label', tone: 'muted' })}>{g.title.toUpperCase()}</Text>
+            {g.items.map(it => (
+              <View key={it.key} style={{ gap: 6 }}>
+                <Pressable onPress={() => toggleSection(it.key)} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <View style={[styles.box, { borderColor: sections[it.key] ? t.color.identity.primary : t.color.border.default, backgroundColor: sections[it.key] ? t.color.identity.primary : 'transparent' }]} />
+                  <Text spec={text(t, { role: 'body' })}>{it.label}</Text>
+                </Pressable>
+                {sections[it.key] && hasItems(it.key) && sectionItems(it.key).length > 0 ? (
+                  <View style={[styles.chips, { paddingLeft: 26 }]}>
+                    {sectionItems(it.key).map(item => {
+                      const on = itemOn(it.key, item.key)
+                      return <Pressable key={item.key} onPress={() => toggleItem(it.key, item.key)} style={[styles.chip, { borderColor: on ? t.color.identity.primary : t.color.border.default, backgroundColor: on ? t.color.badge.info.soft : 'transparent' }]}><Text spec={text(t, { role: 'caption', tone: on ? 'default' : 'faint' })}>{item.label}</Text></Pressable>
+                    })}
+                  </View>
+                ) : null}
+              </View>
+            ))}
+          </View>
+        ))}
+      </View>
+
+      {/* Configurações de relatório — perfis salvos (discreto, recolhido por padrão; paridade Web). */}
       <Pressable onPress={() => setConfigOpen(o => !o)} style={[styles.card, card, { flexDirection: 'row', justifyContent: 'space-between' }]}>
-        <Text spec={text(t, { role: 'bodyStrong' })}>O que incluir</Text>
+        <Text spec={text(t, { role: 'bodyStrong' })}>Configurações de relatório</Text>
         <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>{configOpen ? 'Ocultar' : 'Ajustar'}</Text>
       </Pressable>
       {configOpen ? (
-        <View style={[styles.card, card, { gap: 12 }]}>
-          <View style={{ flexDirection: 'row', gap: 12 }}>
-            <Pressable onPress={() => allSections(true)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Selecionar tudo</Text></Pressable>
-            <Pressable onPress={() => allSections(false)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Limpar</Text></Pressable>
-            <Pressable onPress={() => { setSections(defaultSections()); setExcluded({}) }}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Padrão</Text></Pressable>
-          </View>
-          {REPORT_GROUPS.map(g => (
-            <View key={g.title} style={{ gap: 8 }}>
-              <Text spec={text(t, { role: 'label', tone: 'muted' })}>{g.title.toUpperCase()}</Text>
-              {g.items.map(it => (
-                <View key={it.key} style={{ gap: 6 }}>
-                  <Pressable onPress={() => toggleSection(it.key)} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <View style={[styles.box, { borderColor: sections[it.key] ? t.color.identity.primary : t.color.border.default, backgroundColor: sections[it.key] ? t.color.identity.primary : 'transparent' }]} />
-                    <Text spec={text(t, { role: 'body' })}>{it.label}</Text>
-                  </Pressable>
-                  {sections[it.key] && hasItems(it.key) && sectionItems(it.key).length > 0 ? (
-                    <View style={[styles.chips, { paddingLeft: 26 }]}>
-                      {sectionItems(it.key).map(item => {
-                        const on = itemOn(it.key, item.key)
-                        return <Pressable key={item.key} onPress={() => toggleItem(it.key, item.key)} style={[styles.chip, { borderColor: on ? t.color.identity.primary : t.color.border.default, backgroundColor: on ? t.color.badge.info.soft : 'transparent' }]}><Text spec={text(t, { role: 'caption', tone: on ? 'default' : 'faint' })}>{item.label}</Text></Pressable>
-                      })}
-                    </View>
-                  ) : null}
-                </View>
-              ))}
+        <View style={[styles.card, card, { gap: 8 }]}>
+          <Text spec={text(t, { role: 'label', tone: 'muted' })}>PERFIS SALVOS</Text>
+          {templates.map(tpl => (
+            <View key={tpl.id} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Pressable onPress={() => applyTemplate(tpl)}><Text spec={text(t, { role: 'body' })} style={{ color: t.color.identity.primary }}>{tpl.name}</Text></Pressable>
+              <Pressable onPress={() => deleteTemplate(tpl.id)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>Excluir</Text></Pressable>
             </View>
           ))}
-
-          {/* Perfis de comunicação salvos */}
-          <View style={{ gap: 8, borderTopWidth: 1, borderTopColor: t.color.border.default, paddingTop: 12 }}>
-            <Text spec={text(t, { role: 'label', tone: 'muted' })}>PERFIS SALVOS</Text>
-            {templates.map(tpl => (
-              <View key={tpl.id} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Pressable onPress={() => applyTemplate(tpl)}><Text spec={text(t, { role: 'body' })} style={{ color: t.color.identity.primary }}>{tpl.name}</Text></Pressable>
-                <Pressable onPress={() => deleteTemplate(tpl.id)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>Excluir</Text></Pressable>
-              </View>
-            ))}
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              <Input value={tplName} onChangeText={setTplName} placeholder="Nome do perfil…" style={{ flex: 1 }} />
-              <Button label="Salvar" variant="secondary" onPress={saveTemplate} />
-            </View>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Input value={tplName} onChangeText={setTplName} placeholder="Nome do perfil…" style={{ flex: 1 }} />
+            <Button label="Salvar" variant="secondary" onPress={saveTemplate} />
           </View>
         </View>
       ) : null}
@@ -247,8 +248,8 @@ export function RelatorioScreen() {
       {/* Link público */}
       <View style={[styles.card, card, { gap: 10 }]}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text spec={text(t, { role: 'bodyStrong' })}>Link para o profissional</Text>
-          <Button label="Criar link" variant="secondary" onPress={createLink} loading={busy} loadingLabel="Criando…" />
+          <Text spec={text(t, { role: 'bodyStrong' })}>Compartilhar com um profissional</Text>
+          <Button label="Gerar link" variant="secondary" onPress={createLink} loading={busy} loadingLabel="Gerando…" />
         </View>
         <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Link válido por 30 dias, revogável a qualquer momento.</Text>
         {shares.map(s => (
