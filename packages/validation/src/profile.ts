@@ -6,6 +6,15 @@ import { ok, err, type ValidationResult } from './result'
 export const NAME_MAX = 120
 export const PHONE_MIN_DIGITS = 8
 
+// Faixa etária — vocabulário canônico (buckets já usados pelos dados/Prevenção). Lista ABERTA a null
+// (não informado). SSOT do seletor no Perfil (Web + Mobile).
+export const AGE_RANGE_OPTIONS = ['18-25', '26-35', '36-45', '46+'] as const
+export type AgeRange = (typeof AGE_RANGE_OPTIONS)[number]
+
+// Objetivos — texto livre (sem taxonomia fechada): a usuária escreve, separando por vírgula. Limites de sanidade.
+export const GOALS_MAX = 10
+export const GOAL_MAX_LEN = 60
+
 /** Normaliza o nome: colapsa espaços internos e apara as bordas. */
 export function normalizeName(raw: string | null | undefined): string {
   return (raw ?? '').replace(/\s+/g, ' ').trim()
@@ -36,12 +45,45 @@ export function validatePhone(raw: string | null | undefined): ValidationResult<
   return ok(phone)
 }
 
-/** Valida o conjunto editável do Perfil (name + phone). Retorna os valores normalizados ou o primeiro erro. */
-export function validateProfileEditable(input: { name?: string | null; phone?: string | null }):
-  ValidationResult<{ name: string | null; phone: string | null }> {
+/** Valida/normaliza a faixa etária. Vazio → `null` (opcional). Presente → deve estar no vocabulário canônico. */
+export function validateAgeRange(raw: string | null | undefined): ValidationResult<string | null> {
+  const v = (raw ?? '').trim()
+  if (v.length === 0) return ok(null)
+  if (!(AGE_RANGE_OPTIONS as readonly string[]).includes(v)) return err('Faixa etária inválida.')
+  return ok(v)
+}
+
+/** Converte o texto do campo Objetivos (itens por vírgula) em lista normalizada — para consumo em qualquer tela. */
+export function parseGoals(raw: string | null | undefined): string[] {
+  return (raw ?? '')
+    .split(',')
+    .map(s => s.replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
+}
+/** Projeta a lista de objetivos de volta no texto do campo (SSOT da apresentação do input). */
+export function goalsToInput(goals: string[] | null | undefined): string {
+  return (goals ?? []).join(', ')
+}
+
+/** Valida/normaliza objetivos. Vazio → `null` (opcional). Presente → ≤10 itens, cada ≤60 chars. */
+export function validateGoals(input: string[] | null | undefined): ValidationResult<string[] | null> {
+  const list = (input ?? []).map(s => s.replace(/\s+/g, ' ').trim()).filter(Boolean)
+  if (list.length === 0) return ok(null)
+  if (list.length > GOALS_MAX) return err(`Informe no máximo ${GOALS_MAX} objetivos.`)
+  if (list.some(s => s.length > GOAL_MAX_LEN)) return err(`Cada objetivo deve ter no máximo ${GOAL_MAX_LEN} caracteres.`)
+  return ok(list)
+}
+
+/** Valida o conjunto editável do Perfil (name + phone + faixa etária + objetivos). Normaliza ou retorna o 1º erro. */
+export function validateProfileEditable(input: { name?: string | null; phone?: string | null; age_range?: string | null; goals?: string[] | null }):
+  ValidationResult<{ name: string | null; phone: string | null; age_range: string | null; goals: string[] | null }> {
   const name = validateName(input.name)
   if (!name.ok) return name
   const phone = validatePhone(input.phone)
   if (!phone.ok) return phone
-  return ok({ name: name.value, phone: phone.value })
+  const ageRange = validateAgeRange(input.age_range)
+  if (!ageRange.ok) return ageRange
+  const goals = validateGoals(input.goals)
+  if (!goals.ok) return goals
+  return ok({ name: name.value, phone: phone.value, age_range: ageRange.value, goals: goals.value })
 }

@@ -3,6 +3,7 @@ import { describe, it, expect } from 'vitest'
 import {
   ok, err,
   normalizeName, normalizePhone, validateName, validatePhone, validateProfileEditable, NAME_MAX,
+  validateAgeRange, validateGoals, parseGoals, goalsToInput,
 } from '../../packages/validation/src'
 
 describe('validation · infra (ValidationResult)', () => {
@@ -52,15 +53,35 @@ describe('validation · validatePhone', () => {
 })
 
 describe('validation · validateProfileEditable', () => {
-  it('name+phone válidos → normalizados', () => {
-    expect(validateProfileEditable({ name: ' Ana ', phone: '11 99999-8888' }))
-      .toEqual({ ok: true, value: { name: 'Ana', phone: '11999998888' } })
+  it('name+phone+faixa+objetivos válidos → normalizados', () => {
+    expect(validateProfileEditable({ name: ' Ana ', phone: '11 99999-8888', age_range: '26-35', goals: [' Sono ', 'Energia'] }))
+      .toEqual({ ok: true, value: { name: 'Ana', phone: '11999998888', age_range: '26-35', goals: ['Sono', 'Energia'] } })
   })
   it('para no primeiro erro (nome longo)', () => {
     expect(validateProfileEditable({ name: 'a'.repeat(200), phone: '11999998888' }).ok).toBe(false)
   })
-  it('ambos vazios → nulls', () => {
-    expect(validateProfileEditable({})).toEqual({ ok: true, value: { name: null, phone: null } })
+  it('faixa etária fora do vocabulário → erro', () => {
+    expect(validateProfileEditable({ age_range: '99-100' }).ok).toBe(false)
+  })
+  it('todos vazios → nulls', () => {
+    expect(validateProfileEditable({})).toEqual({ ok: true, value: { name: null, phone: null, age_range: null, goals: null } })
+  })
+})
+
+describe('validation · faixa etária e objetivos', () => {
+  it('validateAgeRange: vazio → null; válido → valor; inválido → erro', () => {
+    expect(validateAgeRange('')).toEqual({ ok: true, value: null })
+    expect(validateAgeRange('46+')).toEqual({ ok: true, value: '46+' })
+    expect(validateAgeRange('x').ok).toBe(false)
+  })
+  it('parseGoals/goalsToInput: round-trip por vírgula, apara e descarta vazios', () => {
+    expect(parseGoals(' Sono , , Energia ')).toEqual(['Sono', 'Energia'])
+    expect(goalsToInput(['Sono', 'Energia'])).toBe('Sono, Energia')
+    expect(goalsToInput(null)).toBe('')
+  })
+  it('validateGoals: vazio → null; muitos itens → erro', () => {
+    expect(validateGoals([])).toEqual({ ok: true, value: null })
+    expect(validateGoals(Array.from({ length: 11 }, (_, i) => `g${i}`)).ok).toBe(false)
   })
 })
 

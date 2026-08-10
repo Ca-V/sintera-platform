@@ -6,6 +6,7 @@ import { signIn } from './login'
 import { signOut } from './logout'
 import { getSession, onAuthStateChange } from './session'
 import { getProfile } from '../profile/get'
+import { getProfileStats } from '../profile/get-stats'
 import { updateProfile } from '../profile/update'
 import { listExams } from '../exams/list'
 import { getExam } from '../exams/get'
@@ -76,6 +77,7 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
     },
     profile: {
       getProfile: (signal) => getProfile(supabase, signal),
+      getProfileStats: (signal) => getProfileStats(supabase, signal),
       updateProfile: (patch, signal) => updateProfile(supabase, patch, signal),
     },
     exams: {

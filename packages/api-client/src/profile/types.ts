@@ -13,10 +13,20 @@ export interface ProfileDTO {
   updated_at: string | null   // informativo
 }
 
-/** Campos EDITÁVEIS pelo Perfil (Inc 4). Whitelist estrita — a proteção por coluna vive aqui (RLS é por linha). */
+/** Campos EDITÁVEIS pelo Perfil (spec canônica única Web+Mobile). Whitelist estrita — a proteção por coluna vive
+ *  aqui (RLS é por linha). age_range/goals passaram de exibição a editáveis (paridade Perfil). */
 export type ProfileEditable = {
   name?: string | null
   phone?: string | null
+  age_range?: string | null
+  goals?: string[] | null
+}
+
+/** Estatísticas do Perfil (mesma fonte para as duas plataformas). memberSince = criação da conta (auth). */
+export interface ProfileStats {
+  totalExams: number
+  totalBiomarkers: number
+  memberSince: string | null
 }
 
 /** API pública do domínio Perfil — o que Web e Mobile consomem. Convenção do pacote:
@@ -24,6 +34,8 @@ export type ProfileEditable = {
 export interface ProfileApi {
   /** Lê o perfil do usuário autenticado. `null` = sem linha (usuário novo). LANÇA em falha (rede/timeout/DB/auth). */
   getProfile(signal?: AbortSignal): Promise<ProfileDTO | null>
+  /** Estatísticas do usuário (exames, biomarcadores reais, membro desde). LANÇA em falha. Fonte única Web+Mobile. */
+  getProfileStats(signal?: AbortSignal): Promise<ProfileStats>
   /** Grava (upsert) os campos editáveis. Retorna `{ error }` — nunca lança. */
   updateProfile(patch: ProfileEditable, signal?: AbortSignal): Promise<{ error: Error | null }>
 }
