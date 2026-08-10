@@ -110,6 +110,29 @@ export function ExamsListScreen({ navigation }: Props) {
       .navigate('Agenda', { screen: 'EventForm', params: { prefill: { type: 'exame', title: order.type ?? order.display_title ?? 'Exame' } } })
   }
 
+  // Ações do card do RESULTADO (paridade Web: renomear · extrair/tentar novamente · ver dados · excluir).
+  const [editingNameId, setEditingNameId] = useState<string | null>(null)
+  const [nameDraft, setNameDraft] = useState('')
+  const [savingName, setSavingName] = useState(false)
+  const [analyzingIds, setAnalyzingIds] = useState<Set<string>>(new Set())
+  async function saveName(id: string) {
+    if (!nameDraft.trim()) return
+    setSavingName(true)
+    try { await apiClient.exams.updateExam(id, { type: nameDraft.trim() }); setEditingNameId(null); await p.refresh() } finally { setSavingName(false) }
+  }
+  async function runAnalyze(id: string) {
+    setAnalyzingIds(prev => new Set(prev).add(id))
+    try { await apiClient.exams.analyzeExam(id) } catch { /* status refletirá no refresh */ }
+    await p.refresh()
+    setAnalyzingIds(prev => { const n = new Set(prev); n.delete(id); return n })
+  }
+  function confirmDeleteExam(id: string, label: string) {
+    Alert.alert('Excluir exame', `Excluir "${label}"? Esta ação é irreversível.`, [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Excluir', style: 'destructive', onPress: async () => { setBusyId(id); try { await apiClient.exams.deleteExam(id); await p.refresh() } finally { setBusyId(null) } } },
+    ])
+  }
+
   if (p.phase === 'idle' || p.phase === 'loading') {
     return (
       <View style={[styles.center, { backgroundColor: t.color.surface.app, paddingTop: insets.top }]}>
@@ -183,24 +206,54 @@ export function ExamsListScreen({ navigation }: Props) {
           <Text spec={text(t, { role: 'label', tone: 'muted' })}>{g.year}</Text>
           {g.items.map((e) => {
             const dup = dupIds.has(e.id)
+            const running = analyzingIds.has(e.id) || e.status === 'processing'
+            const isProcessed = e.status === 'processed'
+            const canAnalyze = !!e.file_url && !running && !isProcessed
+            const analyzeLabel = e.status === 'error' ? 'Tentar novamente' : 'Extrair dados'
+            const label = e.display_title ?? e.type ?? 'Exame'
+            const editing = editingNameId === e.id
             return (
-              <Pressable key={e.id} onPress={() => navigation.navigate('ExamDetail', { id: e.id })} accessibilityRole="button" style={[styles.card, card]}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                  <Text spec={text(t, { role: 'bodyStrong' })} style={{ flex: 1 }}>{e.display_title ?? e.type ?? 'Exame'}</Text>
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'flex-end' }}>
-                    <View style={[styles.pill, { borderWidth: 1, borderColor: t.color.border.default }]}><Text spec={text(t, { role: 'caption', tone: 'muted' })}>{categoryOf(e.document_type).label}</Text></View>
-                    {mismatchIds.has(e.id) ? <View style={[styles.pill, { backgroundColor: t.color.badge.attention.soft }]}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.attention.text }}>Nome diferente</Text></View> : null}
-                    {dup ? <View style={[styles.pill, { backgroundColor: t.color.badge.attention.soft }]}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.attention.text }}>Possível duplicado</Text></View> : null}
+              <View key={e.id} style={[styles.card, card]}>
+                <Pressable onPress={() => navigation.navigate('ExamDetail', { id: e.id })} accessibilityRole="button" style={{ gap: 4 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                    <Text spec={text(t, { role: 'bodyStrong' })} style={{ flex: 1 }}>{label}</Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'flex-end' }}>
+                      <View style={[styles.pill, { borderWidth: 1, borderColor: t.color.border.default }]}><Text spec={text(t, { role: 'caption', tone: 'muted' })}>{categoryOf(e.document_type).label}</Text></View>
+                      {mismatchIds.has(e.id) ? <View style={[styles.pill, { backgroundColor: t.color.badge.attention.soft }]}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.attention.text }}>Nome diferente</Text></View> : null}
+                      {dup ? <View style={[styles.pill, { backgroundColor: t.color.badge.attention.soft }]}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.attention.text }}>Possível duplicado</Text></View> : null}
+                    </View>
                   </View>
-                </View>
-                <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{formatExamDate(e.exam_date)}{e.issuer ? ` · ${e.issuer}` : ''}{e.requesting_physician ? ` · Solic.: ${e.requesting_physician}` : ''}</Text>
-                {e.status === 'processed'
-                  ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{e.extraction_completeness === 'document_only' ? 'Documento disponível' : 'Resultados estruturados'}</Text>
-                  : examStatusLabel(e.status) ? <Text spec={text(t, { role: 'caption', tone: 'faint' })} style={isExamFailed(e.status) ? { color: t.color.badge.error.text } : undefined}>{examStatusLabel(e.status)}</Text> : null}
+                  <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{formatExamDate(e.exam_date)}{e.issuer ? ` · ${e.issuer}` : ''}{e.requesting_physician ? ` · Solic.: ${e.requesting_physician}` : ''}</Text>
+                  {isProcessed
+                    ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{e.extraction_completeness === 'document_only' ? 'Documento disponível' : 'Resultados estruturados'}</Text>
+                    : examStatusLabel(e.status) ? <Text spec={text(t, { role: 'caption', tone: 'faint' })} style={isExamFailed(e.status) ? { color: t.color.badge.error.text } : undefined}>{examStatusLabel(e.status)}</Text> : null}
+                </Pressable>
                 {dup && originalOf.get(e.id)
                   ? <Pressable onPress={() => navigation.navigate('ExamDetail', { id: originalOf.get(e.id)! })}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Ver original →</Text></Pressable>
                   : null}
-              </Pressable>
+
+                {editing ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                    <Input value={nameDraft} onChangeText={setNameDraft} placeholder="Nome do exame" autoFocus editable={!savingName} style={{ flex: 1 }} />
+                    <Pressable onPress={() => saveName(e.id)} disabled={savingName}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.success.text }}>{savingName ? '…' : 'Salvar'}</Text></Pressable>
+                    <Pressable onPress={() => setEditingNameId(null)} disabled={savingName}><Text spec={text(t, { role: 'caption', tone: 'muted' })}>Cancelar</Text></Pressable>
+                  </View>
+                ) : (
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 16, marginTop: 4 }}>
+                    <Pressable onPress={() => { setNameDraft(e.type ?? ''); setEditingNameId(e.id) }}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Renomear</Text></Pressable>
+                    {isProcessed && !running ? (
+                      <Pressable onPress={() => navigation.navigate('ExamDetail', { id: e.id })}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Ver dados →</Text></Pressable>
+                    ) : null}
+                    {canAnalyze ? (
+                      <Pressable onPress={() => runAnalyze(e.id)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>{analyzeLabel}</Text></Pressable>
+                    ) : null}
+                    {running ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Extraindo…</Text> : null}
+                    {!running ? (
+                      <Pressable onPress={() => confirmDeleteExam(e.id, label)} disabled={busyId === e.id}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>Excluir</Text></Pressable>
+                    ) : null}
+                  </View>
+                )}
+              </View>
             )
           })}
         </View>

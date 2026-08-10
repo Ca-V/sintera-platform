@@ -7,7 +7,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import type { ExamDTO, ExamExtractionLog } from '@sintera/api-client'
-import { deriveExamIdentity, isOrderDocumentType, careStageFor, CARE_STAGES, compareNames, selectByLink } from '@sintera/core'
+import { deriveExamIdentity, isOrderDocumentType, careStageFor, CARE_STAGES, compareNames, selectByLink, biomarkerStatusLabel } from '@sintera/core'
 import { AttachmentLink, Button, Disclaimer, FieldRow, Input, Text, DatePicker } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { MinhaSaudeStackParamList } from '../../navigation/types'
@@ -91,10 +91,22 @@ export function ExamDetailScreen({ route, navigation }: Props) {
     ])
   }
 
+  // Compartilhar nativo COM os dados (equivalente ao "exportar dados/CSV" da Web, pelo mecanismo do dispositivo):
+  // além do documento, inclui os resultados estruturados (nome · valor · unidade · situação).
   const onShare = () => {
     if (!exam) return
     const { name, lab } = deriveExamIdentity(exam.type, exam.issuer)
-    const parts = [`${name}${lab ? ` · ${lab}` : ''}`, `Realizado em ${formatExamDate(exam.exam_date)}`, exam.file_url ?? '']
+    const results = p.biomarkers.map(b => {
+      const v = b.value != null ? String(b.value) : (b.value_text ?? '')
+      const situ = biomarkerStatusLabel(b)
+      return `• ${b.name}: ${v}${b.unit ? ` ${b.unit}` : ''}${situ ? ` (${situ})` : ''}`
+    })
+    const parts = [
+      `${name}${lab ? ` · ${lab}` : ''}`,
+      `Realizado em ${formatExamDate(exam.exam_date)}`,
+      ...(results.length ? ['', 'Resultados:', ...results] : []),
+      exam.file_url ?? '',
+    ]
     void Share.share({ message: parts.filter(Boolean).join('\n') })
   }
 
