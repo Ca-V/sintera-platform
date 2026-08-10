@@ -8,7 +8,7 @@ import { ScrollView, View, ActivityIndicator, RefreshControl, Pressable, StyleSh
 import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
-import { summarizeBiomarkers, isOrderDocumentType, type BiomarkerSummary } from '@sintera/core'
+import { summarizeBiomarkers, isOrderDocumentType, interpretationSymbol, trendDeltaText, type BiomarkerSummary } from '@sintera/core'
 import type { ExamDTO } from '@sintera/api-client'
 import { Text, Button, Input, Select } from '../../primitives'
 import { useTheme } from '../../theme'
@@ -94,6 +94,17 @@ export function HistoricoExamesScreen() {
     return [...s].sort((a, b) => a.localeCompare(b, 'pt-BR'))
   }, [labGroups, docGroups])
 
+  // Metadados do laudo por exam_id (laboratório/solicitante) — para o resumo longitudinal por exame (paridade Web).
+  const examMeta = useMemo(() => {
+    const m = new Map<string, { issuer: string | null; requester: string | null }>()
+    for (const e of exams) m.set(e.id, { issuer: e.issuer, requester: e.requesting_physician })
+    return m
+  }, [exams])
+  // Cor do símbolo de interpretação (mesma leitura da Web: acima=laranja · abaixo=azul · dentro=âncora · s/ref=neutro).
+  const symColor = (interp: string | null | undefined): string =>
+    interp === 'acima_da_referencia' ? '#f97316' : interp === 'abaixo_da_referencia' ? '#2563eb'
+      : interp === 'dentro_da_referencia' ? t.color.identity.primary : t.color.text.muted
+
   if (phase === 'loading') {
     return <View style={[styles.center, { backgroundColor: t.color.surface.app, paddingTop: insets.top }]}><ActivityIndicator color={t.color.identity.primary} /><Text spec={text(t, { role: 'body', tone: 'muted' })}>Carregando…</Text></View>
   }
@@ -130,26 +141,62 @@ export function HistoricoExamesScreen() {
       ) : null}
 
       {empty ? (
-        <View style={[styles.card, card]}><Text spec={text(t, { role: 'body', tone: 'muted' })} style={{ textAlign: 'center' }}>Nenhum exame ainda. Envie exames para acompanhar a evolução.</Text></View>
+        <View style={[styles.card, card, { gap: 10 }]}>
+          <Text spec={text(t, { role: 'body', tone: 'muted' })} style={{ textAlign: 'center' }}>Nenhum exame ainda. Envie exames para acompanhar a evolução.</Text>
+          <Button label="Enviar exame" onPress={() => nav.navigate('ExamUpload', undefined)} />
+        </View>
       ) : null}
 
-      {/* LABORATORIAIS */}
-      {labGroups.map(g => (
-        <View key={`lab:${g.name}`} style={{ gap: 8 }}>
-          <Text spec={text(t, { role: 'label', tone: 'muted' })}>{g.name.toUpperCase()}</Text>
-          {g.items.map(s => (
-            <Pressable key={s.canonicalName} onPress={() => openIndicador(s.canonicalName)} accessibilityRole="button"
-              style={[styles.card, card, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
-              {/* Só nome + nº de medições; toque → PÁGINA do indicador (gráfico/medições/comparativo — arquitetura B). */}
-              <View style={{ flex: 1, paddingRight: 8 }}>
-                <Text spec={text(t, { role: 'body' })}>{s.displayName}</Text>
-                <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{s.count} {s.count === 1 ? 'medição' : 'medições'}{s.latest ? ` · última em ${fmtDate(s.latest.date)}` : ''}</Text>
+      {/* LABORATORIAIS — cada EXAME é um grupo com resumo longitudinal + ocorrências (laudo) + seus biomarcadores. */}
+      {labGroups.map(g => {
+        const total = g.occs.length
+        const lastMeta = total ? examMeta.get(g.occs[0].examId) : null
+        const summary: { label: string; value: string }[] = [
+          ...(total ? [{ label: 'Primeira realização', value: fmtDate(g.occs[total - 1].date) }] : []),
+          ...(total ? [{ label: 'Última realização', value: fmtDate(g.occs[0].date) }] : []),
+          { label: 'Total de exames', value: String(total) },
+          ...(lastMeta?.issuer ? [{ label: 'Último laboratório', value: lastMeta.issuer }] : []),
+          ...(lastMeta?.requester ? [{ label: 'Última solicitação', value: lastMeta.requester }] : []),
+        ]
+        return (
+          <View key={`lab:${g.name}`} style={{ gap: 8 }}>
+            <Text spec={text(t, { role: 'label', tone: 'muted' })}>{g.name.toUpperCase()}</Text>
+            {/* Resumo longitudinal do exame (entidade ao longo do tempo — tudo derivado dos laudos). */}
+            <View style={[styles.card, card, { gap: 8 }]}>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                {summary.map(s => (
+                  <View key={s.label} style={{ width: '50%', paddingVertical: 3, paddingRight: 8 }}>
+                    <Text spec={text(t, { role: 'caption', tone: 'faint' })} style={{ textTransform: 'uppercase' }}>{s.label}</Text>
+                    <Text spec={text(t, { role: 'caption' })}>{s.value}</Text>
+                  </View>
+                ))}
               </View>
-              <Text spec={text(t, { role: 'caption', tone: 'muted' })}>›</Text>
-            </Pressable>
-          ))}
-        </View>
-      ))}
+              {total > 0 ? (
+                <View style={styles.chips}>
+                  <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Histórico:</Text>
+                  {g.occs.map(o => <Pressable key={`${o.examId}|${o.date}`} onPress={() => openExam(o.examId)} style={[styles.pill, { borderColor: t.color.border.default }]}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>{fmtDate(o.date)} ›</Text></Pressable>)}
+                </View>
+              ) : null}
+            </View>
+            {/* Biomarcadores medidos — valor recente + símbolo + tendência (paridade Web). Toque → página do indicador. */}
+            {g.items.map(s => (
+              <Pressable key={s.canonicalName} onPress={() => openIndicador(s.canonicalName)} accessibilityRole="button"
+                style={[styles.card, card, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+                <View style={{ flex: 1, paddingRight: 8 }}>
+                  <Text spec={text(t, { role: 'body' })}>{s.displayName}</Text>
+                  <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{s.count} {s.count === 1 ? 'medição' : 'medições'}{s.latest ? ` · última em ${fmtDate(s.latest.date)}` : ''}</Text>
+                </View>
+                {s.latest ? (
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text spec={text(t, { role: 'bodyStrong' })}>{s.latest.value} <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{s.unit}</Text> <Text spec={text(t, { role: 'caption' })} style={{ color: symColor(s.latest.interpretation) }}>{interpretationSymbol(s.latest.interpretation)}</Text></Text>
+                    <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{trendDeltaText(s.trend, s.deltaPercent)}</Text>
+                  </View>
+                ) : <Text spec={text(t, { role: 'caption', tone: 'muted' })}>›</Text>}
+              </Pressable>
+            ))}
+          </View>
+        )
+      })}
 
       {/* DOCUMENTAIS */}
       {docGroups.length > 0 ? (

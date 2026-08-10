@@ -24,6 +24,27 @@ export interface BiomarkerRow {
 
 export type Trend = 'up' | 'down' | 'stable' | 'single' | 'unit_mismatch'
 
+/** Símbolo do valor recente vs. referência (paridade Web+Mobile). ▲ acima · ▼ abaixo · ✓ dentro · – s/ ref. */
+export function interpretationSymbol(interpretation: string | null | undefined): string {
+  switch (interpretation) {
+    case 'acima_da_referencia': return '▲'
+    case 'abaixo_da_referencia': return '▼'
+    case 'dentro_da_referencia': return '✓'
+    default: return '–'
+  }
+}
+
+/** Texto curto da tendência entre as duas últimas medições (paridade Web+Mobile). Fonte única do rótulo. */
+export function trendDeltaText(trend: Trend, delta: number | null): string {
+  switch (trend) {
+    case 'up': return delta !== null ? `+${delta}%` : '↑'
+    case 'down': return delta !== null ? `${delta}%` : '↓'
+    case 'stable': return delta !== null ? `${delta > 0 ? '+' : ''}${delta}%` : '—'
+    case 'single': return '1ª medição'
+    default: return 'unidades ≠'
+  }
+}
+
 export interface Measurement {
   examId: string
   date: string

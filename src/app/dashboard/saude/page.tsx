@@ -15,7 +15,7 @@ import { createClient } from '@/lib/supabase/client'
 import { parseDateOnly } from '@/lib/agenda'
 import { useUser } from '@/context/UserContext'
 import ListCard from '@/components/ListCard'
-import { summarizeBiomarkers, type BiomarkerRow, type BiomarkerSummary, type Trend } from '@/lib/biomarkers/grouping'
+import { summarizeBiomarkers, interpretationSymbol, trendDeltaText, type BiomarkerRow, type BiomarkerSummary, type Trend } from '@/lib/biomarkers/grouping'
 import { groupByExam, loadCatalogLabels, type CatalogLabels } from '@/lib/biomarkers/catalogLabels'
 import { isOrderDocumentType } from '@/lib/exams/classification'
 import MotionCard from '@/components/ui/MotionCard'
@@ -24,12 +24,13 @@ import Select from '@/components/ui/Select'
 
 interface CatalogEntry { id: string; specimen: string | null; category: string | null; display_name: string }
 
-const INTERP_CFG: Record<string, { sym: string; cls: string }> = {
-  acima_da_referencia:         { sym: '▲', cls: 'text-orange-500' },
-  abaixo_da_referencia:        { sym: '▼', cls: 'text-blue-600' },
-  dentro_da_referencia:        { sym: '✓', cls: 'text-petal' },
-  sem_referencia_identificada: { sym: '–', cls: 'text-mauve' },
-  indisponivel:                { sym: '–', cls: 'text-mauve/40' },
+// Só a COR fica local (Tailwind); o SÍMBOLO vem do core (interpretationSymbol) — fonte única Web+Mobile.
+const INTERP_CLS: Record<string, string> = {
+  acima_da_referencia:         'text-orange-500',
+  abaixo_da_referencia:        'text-blue-600',
+  dentro_da_referencia:        'text-petal',
+  sem_referencia_identificada: 'text-mauve',
+  indisponivel:                'text-mauve/40',
 }
 
 function formatDate(iso: string): string {
@@ -42,15 +43,17 @@ function fmtFull(iso: string): string {
 }
 
 function TrendBadge({ trend, delta }: { trend: Trend; delta: number | null }) {
+  // Texto do core (trendDeltaText) — fonte única Web+Mobile; aqui só o ícone/cor por plataforma.
+  const label = trendDeltaText(trend, delta)
   if (trend === 'up')
-    return <span className="flex items-center gap-1 text-orange-500 font-body text-xs font-semibold"><TrendingUp size={12} /> {delta !== null ? `+${delta}%` : '↑'}</span>
+    return <span className="flex items-center gap-1 text-orange-500 font-body text-xs font-semibold"><TrendingUp size={12} /> {label}</span>
   if (trend === 'down')
-    return <span className="flex items-center gap-1 text-blue-600 font-body text-xs font-semibold"><TrendingDown size={12} /> {delta !== null ? `${delta}%` : '↓'}</span>
+    return <span className="flex items-center gap-1 text-blue-600 font-body text-xs font-semibold"><TrendingDown size={12} /> {label}</span>
   if (trend === 'stable')
-    return <span className="flex items-center gap-1 text-mauve font-body text-xs"><Minus size={12} /> {delta !== null ? `${delta > 0 ? '+' : ''}${delta}%` : '—'}</span>
+    return <span className="flex items-center gap-1 text-mauve font-body text-xs"><Minus size={12} /> {label}</span>
   if (trend === 'single')
-    return <span className="font-body text-xs text-mauve">1ª medição</span>
-  return <span className="font-body text-xs text-amber-600">unidades ≠</span>
+    return <span className="font-body text-xs text-mauve">{label}</span>
+  return <span className="font-body text-xs text-amber-600">{label}</span>
 }
 
 export default function IndicadoresPage() {
@@ -312,7 +315,7 @@ export default function IndicadoresPage() {
                 </div>
                 <div className="space-y-3 px-4 py-3">
                   {g.items.map((s) => {
-                    const interp = INTERP_CFG[s.latest?.interpretation ?? ''] ?? INTERP_CFG.indisponivel
+                    const interpCls = INTERP_CLS[s.latest?.interpretation ?? ''] ?? INTERP_CLS.indisponivel
                     return (
                       <ListCard key={s.canonicalName}
                         title={nameOf(s)}
@@ -321,7 +324,7 @@ export default function IndicadoresPage() {
                         trailing={s.latest ? (
                           <span className="font-body text-sm font-semibold text-onyx">
                             {s.latest.value} <span className="text-xs font-normal text-mauve">{s.unit}</span>
-                            <span className={`ml-1.5 text-xs font-semibold ${interp.cls}`}>{interp.sym}</span>
+                            <span className={`ml-1.5 text-xs font-semibold ${interpCls}`}>{interpretationSymbol(s.latest.interpretation)}</span>
                           </span>
                         ) : undefined}
                         chips={<TrendBadge trend={s.trend} delta={s.deltaPercent} />}
