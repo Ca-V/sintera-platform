@@ -265,6 +265,31 @@ export function RelatorioScreen() {
 
       {/* Prévia do relatório compilado */}
       <Input value={name} onChangeText={setName} placeholder="Seu nome (opcional, aparece no relatório)" />
+
+      {/* Resumo do relatório + Índice — cabeçalho executivo factual (paridade Web). Contagens vêm do MESMO
+          model do @sintera/core (assembleReport) — batem com a Web por construção. */}
+      {model && model.groups.length > 0 ? (
+        <>
+          <View style={[styles.card, card, { gap: 6 }]}>
+            <Text spec={text(t, { role: 'bodyStrong' })}>Resumo do relatório</Text>
+            <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Período considerado: {periodLabel(period)}</Text>
+            <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Registros incluídos: {model.groups.reduce((n, g) => n + g.sections.reduce((m, s) => m + s.lines.length, 0), 0)}</Text>
+            {model.groups.flatMap(g => g.sections).map(s => (
+              <Text key={s.key} spec={text(t, { role: 'caption', tone: 'muted' })}>{s.heading}: {s.lines.length}</Text>
+            ))}
+          </View>
+          <View style={[styles.card, card, { gap: 6 }]}>
+            <Text spec={text(t, { role: 'bodyStrong' })}>Índice</Text>
+            {model.groups.map(g => (
+              <View key={g.title} style={{ gap: 2 }}>
+                <Text spec={text(t, { role: 'label', tone: 'muted' })}>{g.title.toUpperCase()}</Text>
+                {g.sections.map(s => <Text key={s.key} spec={text(t, { role: 'caption', tone: 'muted' })}>· {s.heading}</Text>)}
+              </View>
+            ))}
+          </View>
+        </>
+      ) : null}
+
       <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Período: {periodLabel(period)}</Text>
       {model && model.groups.length > 0 ? model.groups.map(g => (
         <View key={g.title} style={{ gap: 8 }}>
