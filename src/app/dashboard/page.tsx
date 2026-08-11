@@ -14,6 +14,7 @@ import { createClient } from '@/lib/supabase/client'
 import { parseDateOnly } from '@/lib/agenda'
 import { useModalA11y } from '@/lib/ui/useModalA11y'
 import { navDescription } from '@/lib/ui/navDescriptions'
+import { isExamReady, isExamProcessing } from '@sintera/core'
 import { useUser } from '@/context/UserContext'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
@@ -110,9 +111,9 @@ function LegacyDashboard() {
 
     setStats({
       totalExams:     exams.length,
-      processedExams: exams.filter(e => e.status === 'processed').length,
+      processedExams: exams.filter(e => isExamReady(e.status)).length,
       totalBiomarkers,
-      pendingExams:   exams.filter(e => e.status === 'pending' || e.status === 'processing').length,
+      pendingExams:   exams.filter(e => isExamProcessing(e.status)).length,
     })
     setLoading(false)
   }

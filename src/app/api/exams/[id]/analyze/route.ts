@@ -21,6 +21,7 @@ import { dexaBodyComposition } from '@/lib/capture/clinical-processors/dexa-body
 import { planBundleSplit, restrictPages, type SplitPlan } from '@/lib/capture/bundle-split'
 import { pickExamDate } from '@/lib/capture/semantic-dates'
 import { planNarrativeDiscard } from '@/lib/exams/narrativeDiscard'
+import { examProcessingState } from '@sintera/core'
 import { identifyClinical } from '@/lib/capture/clinical-identity-registry'
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -75,7 +76,7 @@ export async function POST(
   const identityEstablished = exam.document_type != null
 
   // HTTP 409 — protege contra requisições duplicadas e chamadas diretas via DevTools
-  if (exam.status === 'processing') {
+  if (examProcessingState(exam.status) === 'processing') {
     return NextResponse.json(
       { error: 'Este exame já está sendo processado.', code: 'ALREADY_PROCESSING' },
       { status: 409 },
