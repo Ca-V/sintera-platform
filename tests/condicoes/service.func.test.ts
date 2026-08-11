@@ -2,12 +2,13 @@
 // Garante que a extração da lógica para @/lib/condicoes/service preserva as
 // regras que antes viviam dentro da página.
 import { describe, it, expect } from 'vitest'
-import { buildConditionPayload, ConditionValidationError } from '@/lib/condicoes/service'
+import { buildConditionPayload } from '@/lib/condicoes/service'
+import { ValidationError } from '@/lib/api/http'
 
 describe('buildConditionPayload', () => {
-  it('exige nome — vazio lança ConditionValidationError', () => {
+  it('exige nome — vazio lança ValidationError', () => {
     expect(() => buildConditionPayload('u1', { scope: 'propria', name: '   ' }))
-      .toThrow(ConditionValidationError)
+      .toThrow(ValidationError)
   })
 
   it('faz trim do nome e carimba o user_id', () => {

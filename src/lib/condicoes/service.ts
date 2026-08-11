@@ -16,6 +16,8 @@
 // ============================================================
 
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { fromTable } from '@/lib/api/db'
+import { ValidationError } from '@/lib/api/http'
 
 export type ConditionScope = 'propria' | 'familiar'
 
@@ -61,14 +63,6 @@ interface ConditionPayload {
   notes: string | null
 }
 
-/** Erro de validação de entrada — mapeado para HTTP 422 na rota. */
-export class ConditionValidationError extends Error {
-  constructor(message: string) {
-    super(message)
-    this.name = 'ConditionValidationError'
-  }
-}
-
 function toDomain(r: ConditionRow): Condition {
   return {
     id: r.id,
@@ -87,7 +81,7 @@ function toDomain(r: ConditionRow): Condition {
  */
 export function buildConditionPayload(userId: string, input: ConditionInput): ConditionPayload {
   const name = (input.name ?? '').trim()
-  if (!name) throw new ConditionValidationError('Informe o nome da condição.')
+  if (!name) throw new ValidationError('Informe o nome da condição.')
   const scope: ConditionScope = input.scope === 'familiar' ? 'familiar' : 'propria'
   return {
     user_id: userId,
@@ -99,17 +93,10 @@ export function buildConditionPayload(userId: string, input: ConditionInput): Co
   }
 }
 
-// ── Repositório (I/O) — cast contido num único ponto ──────────────────────────
-
-// health_conditions não está nos tipos gerados do Supabase; o cast fica isolado aqui.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function table(supabase: SupabaseClient): any {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (supabase as any).from(TABLE)
-}
+// ── Repositório (I/O) — acesso à tabela pela fundação (fromTable) ─────────────
 
 export async function listConditions(supabase: SupabaseClient, userId: string): Promise<Condition[]> {
-  const { data, error } = await table(supabase)
+  const { data, error } = await fromTable(supabase, TABLE)
     .select(COLUMNS)
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
@@ -119,18 +106,18 @@ export async function listConditions(supabase: SupabaseClient, userId: string): 
 
 export async function createCondition(supabase: SupabaseClient, userId: string, input: ConditionInput): Promise<void> {
   const payload = buildConditionPayload(userId, input)
-  const { error } = await table(supabase).insert(payload)
+  const { error } = await fromTable(supabase, TABLE).insert(payload)
   if (error) throw new Error(error.message)
 }
 
 export async function updateCondition(supabase: SupabaseClient, userId: string, id: string, input: ConditionInput): Promise<void> {
   const payload = buildConditionPayload(userId, input)
   // Filtro por user_id além do id — defesa em profundidade sobre a RLS.
-  const { error } = await table(supabase).update(payload).eq('id', id).eq('user_id', userId)
+  const { error } = await fromTable(supabase, TABLE).update(payload).eq('id', id).eq('user_id', userId)
   if (error) throw new Error(error.message)
 }
 
 export async function removeCondition(supabase: SupabaseClient, userId: string, id: string): Promise<void> {
-  const { error } = await table(supabase).delete().eq('id', id).eq('user_id', userId)
+  const { error } = await fromTable(supabase, TABLE).delete().eq('id', id).eq('user_id', userId)
   if (error) throw new Error(error.message)
 }

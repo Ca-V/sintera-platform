@@ -1,17 +1,18 @@
 // FUNC — serviço de domínio de Sinais vitais (lógica pura de payload).
 // Garante que a extração da lógica preserva as regras que viviam na página.
 import { describe, it, expect } from 'vitest'
-import { buildVitalPayload, VitalValidationError } from '@/lib/sinais-vitais/service'
+import { buildVitalPayload } from '@/lib/sinais-vitais/service'
+import { ValidationError } from '@/lib/api/http'
 
 describe('buildVitalPayload', () => {
-  it('exige valor — vazio lança VitalValidationError', () => {
+  it('exige valor — vazio lança ValidationError', () => {
     expect(() => buildVitalPayload('u1', { metric: 'glicemia', value: '  ', measuredOn: '2026-08-11' }))
-      .toThrow(VitalValidationError)
+      .toThrow(ValidationError)
   })
 
-  it('exige data — vazia lança VitalValidationError', () => {
+  it('exige data — vazia lança ValidationError', () => {
     expect(() => buildVitalPayload('u1', { metric: 'glicemia', value: '95', measuredOn: '' }))
-      .toThrow(VitalValidationError)
+      .toThrow(ValidationError)
   })
 
   it('normaliza valor (trim) e carimba user_id/metric/data', () => {

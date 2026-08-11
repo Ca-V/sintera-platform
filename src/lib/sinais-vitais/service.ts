@@ -12,6 +12,8 @@
 // ============================================================
 
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { fromTable } from '@/lib/api/db'
+import { ValidationError } from '@/lib/api/http'
 
 export type Vital =
   | 'pressao_arterial'
@@ -75,13 +77,6 @@ interface VitalPayload {
   notes: string | null
 }
 
-export class VitalValidationError extends Error {
-  constructor(message: string) {
-    super(message)
-    this.name = 'VitalValidationError'
-  }
-}
-
 function toDomain(r: VitalRow): VitalEntry {
   return {
     id: r.id,
@@ -102,9 +97,9 @@ function toDomain(r: VitalRow): VitalEntry {
 export function buildVitalPayload(userId: string, input: VitalInput): VitalPayload {
   const metric = toVital(input.metric)
   const valueText = (input.value ?? '').trim()
-  if (!valueText) throw new VitalValidationError('Informe o valor do sinal vital.')
+  if (!valueText) throw new ValidationError('Informe o valor do sinal vital.')
   const measuredOn = (input.measuredOn ?? '').trim()
-  if (!measuredOn) throw new VitalValidationError('Informe a data da medição.')
+  if (!measuredOn) throw new ValidationError('Informe a data da medição.')
   return {
     user_id: userId,
     metric,
@@ -116,17 +111,10 @@ export function buildVitalPayload(userId: string, input: VitalInput): VitalPaylo
   }
 }
 
-// ── Repositório (I/O) — cast contido; sempre escopado a VITALS ────────────────
-
-// body_metrics não está nos tipos gerados; o cast fica isolado aqui.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function table(supabase: SupabaseClient): any {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (supabase as any).from(TABLE)
-}
+// ── Repositório (I/O) — acesso pela fundação (fromTable), sempre escopado a VITALS ──
 
 export async function listVitals(supabase: SupabaseClient, userId: string): Promise<VitalEntry[]> {
-  const { data, error } = await table(supabase)
+  const { data, error } = await fromTable(supabase, TABLE)
     .select(COLUMNS)
     .eq('user_id', userId)
     .in('metric', VITALS)
@@ -137,12 +125,12 @@ export async function listVitals(supabase: SupabaseClient, userId: string): Prom
 
 export async function createVital(supabase: SupabaseClient, userId: string, input: VitalInput): Promise<void> {
   const payload = buildVitalPayload(userId, input)
-  const { error } = await table(supabase).insert(payload)
+  const { error } = await fromTable(supabase, TABLE).insert(payload)
   if (error) throw new Error(error.message)
 }
 
 export async function removeVital(supabase: SupabaseClient, userId: string, id: string): Promise<void> {
   // Escopo a VITALS + user_id — impede remover uma métrica corporal (Medidas) por engano.
-  const { error } = await table(supabase).delete().eq('id', id).eq('user_id', userId).in('metric', VITALS)
+  const { error } = await fromTable(supabase, TABLE).delete().eq('id', id).eq('user_id', userId).in('metric', VITALS)
   if (error) throw new Error(error.message)
 }

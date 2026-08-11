@@ -1,13 +1,14 @@
 // FUNC — serviço de domínio de Medidas corporais (lógica pura de payload).
 import { describe, it, expect } from 'vitest'
-import { buildMeasurePayload, MeasureValidationError } from '@/lib/medidas/service'
+import { buildMeasurePayload } from '@/lib/medidas/service'
+import { ValidationError } from '@/lib/api/http'
 
 describe('buildMeasurePayload', () => {
   it('exige valor e data', () => {
     expect(() => buildMeasurePayload('u1', { metric: 'peso', value: ' ', measuredOn: '2026-08-11' }))
-      .toThrow(MeasureValidationError)
+      .toThrow(ValidationError)
     expect(() => buildMeasurePayload('u1', { metric: 'peso', value: '72', measuredOn: '' }))
-      .toThrow(MeasureValidationError)
+      .toThrow(ValidationError)
   })
 
   it('normaliza valor e carimba user_id/metric/data', () => {

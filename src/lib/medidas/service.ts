@@ -13,6 +13,8 @@
 // ============================================================
 
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { fromTable } from '@/lib/api/db'
+import { ValidationError } from '@/lib/api/http'
 
 export type Metric =
   | 'peso' | 'altura' | 'circunferencia_cintura'
@@ -94,13 +96,6 @@ interface MeasurePayload {
   exam_id: string | null
 }
 
-export class MeasureValidationError extends Error {
-  constructor(message: string) {
-    super(message)
-    this.name = 'MeasureValidationError'
-  }
-}
-
 function toDomain(r: MeasureRow): MeasureEntry {
   return {
     id: r.id,
@@ -122,9 +117,9 @@ function toDomain(r: MeasureRow): MeasureEntry {
 export function buildMeasurePayload(userId: string, input: MeasureInput): MeasurePayload {
   const metric = toMetric(input.metric)
   const valueText = (input.value ?? '').trim()
-  if (!valueText) throw new MeasureValidationError('Informe o valor da medida.')
+  if (!valueText) throw new ValidationError('Informe o valor da medida.')
   const measuredOn = (input.measuredOn ?? '').trim()
-  if (!measuredOn) throw new MeasureValidationError('Informe a data da medição.')
+  if (!measuredOn) throw new ValidationError('Informe a data da medição.')
   return {
     user_id: userId,
     metric,
@@ -137,15 +132,10 @@ export function buildMeasurePayload(userId: string, input: MeasureInput): Measur
   }
 }
 
-// ── Repositório (I/O) — casts contidos; body_metrics sempre escopado a MEASURES ──
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function db(supabase: SupabaseClient): any {
-  return supabase
-}
+// ── Repositório (I/O) — acesso pela fundação (fromTable), escopado a MEASURES ──
 
 export async function listMeasures(supabase: SupabaseClient, userId: string): Promise<MeasureEntry[]> {
-  const { data, error } = await db(supabase).from(TABLE)
+  const { data, error } = await fromTable(supabase, TABLE)
     .select(COLUMNS)
     .eq('user_id', userId)
     .in('metric', MEASURES)
@@ -156,7 +146,7 @@ export async function listMeasures(supabase: SupabaseClient, userId: string): Pr
 
 /** Laudos da usuária para o vínculo opcional (dropdown). */
 export async function listExamRefs(supabase: SupabaseClient, userId: string): Promise<ExamRef[]> {
-  const { data, error } = await db(supabase).from('exams')
+  const { data, error } = await fromTable(supabase, 'exams')
     .select('id, type, exam_date, file_url')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
@@ -170,12 +160,12 @@ export async function listExamRefs(supabase: SupabaseClient, userId: string): Pr
 export async function createMeasures(supabase: SupabaseClient, userId: string, inputs: MeasureInput[]): Promise<void> {
   const rows = inputs.map(i => buildMeasurePayload(userId, i))
   if (rows.length === 0) return
-  const { error } = await db(supabase).from(TABLE).insert(rows)
+  const { error } = await fromTable(supabase, TABLE).insert(rows)
   if (error) throw new Error(error.message)
 }
 
 export async function removeMeasure(supabase: SupabaseClient, userId: string, id: string): Promise<void> {
   // Escopo a MEASURES + user_id — impede remover um sinal vital por engano.
-  const { error } = await db(supabase).from(TABLE).delete().eq('id', id).eq('user_id', userId).in('metric', MEASURES)
+  const { error } = await fromTable(supabase, TABLE).delete().eq('id', id).eq('user_id', userId).in('metric', MEASURES)
   if (error) throw new Error(error.message)
 }
