@@ -13,6 +13,7 @@ import ConfirmDialog from '@/components/ConfirmDialog'
 import { useEventForm, eventToInput } from '@/components/eventForm'
 import { buildExamRecencySuggestion, type AgendaSuggestion } from '@/lib/agenda/suggestions'
 import { typeLabel, statusLabel, formatDateBR, formatTimeBR, type HealthEvent } from '@/lib/agenda'
+import { effectiveExamDate } from '@/lib/exams/model'
 import { useStickyView } from '@/lib/ui/useStickyView'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import ListCard, { CardChip } from '@/components/ListCard'
@@ -59,7 +60,7 @@ export default function AgendaPage() {
       if (!active) return
       const examsLite = (examData ?? []).map(e => {
         const r = e as { type: string | null; exam_date: string | null; status: string | null; created_at: string | null }
-        return { type: r.type, status: r.status, date: (r.exam_date ?? r.created_at ?? '').slice(0, 10) }
+        return { type: r.type, status: r.status, date: effectiveExamDate(r).slice(0, 10) }
       })
       setSuggestion(buildExamRecencySuggestion(examsLite, upcoming.some(e => e.type === 'exame')))
       setLoading(false)

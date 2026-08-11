@@ -13,6 +13,7 @@ import { interpretationToStatus } from './indicator'
 import { fmtDayMonthYear, fmtMonthYear } from '../date'
 import { summarizeBiomarkers, type BiomarkerRow } from '../../biomarkers/grouping'
 import type { HealthEvent } from '../../agenda/event'
+import { effectiveExamDate } from '../../exams/model' // regra de domínio: data efetiva do exame
 import type { ReportViewProps } from '@/components/report/ReportView'
 
 export interface ExamRow {
@@ -25,7 +26,7 @@ export interface ExamRow {
 
 export type ReportModel = Omit<ReportViewProps, 'className'>
 
-function examDate(e: ExamRow): string { return e.exam_date ?? e.created_at ?? '' }
+function examDate(e: ExamRow): string { return effectiveExamDate(e) }
 
 export interface ReportInput {
   name: string

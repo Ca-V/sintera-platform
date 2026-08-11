@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { parseDateOnly } from '@/lib/agenda'
+import { effectiveExamDate } from '@/lib/exams/model'
 import { useModalA11y } from '@/lib/ui/useModalA11y'
 import { useUser } from '@/context/UserContext'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
@@ -301,7 +302,7 @@ function LegacyDashboard() {
                   <div className="flex-1 min-w-0">
                     <p className="font-body text-sm font-medium text-onyx break-words line-clamp-2">{exam.type ?? 'Exame'}</p>
                     <div className="flex items-center gap-2 flex-wrap mt-0.5">
-                      <p className="font-body text-xs text-mauve">Realizado em {formatDate(exam.exam_date ?? exam.created_at)}</p>
+                      <p className="font-body text-xs text-mauve">Realizado em {formatDate(effectiveExamDate(exam))}</p>
                       <ExamStatusChip status={exam.status} size={9} spinning={exam.status === 'processing'} />
                     </div>
                   </div>

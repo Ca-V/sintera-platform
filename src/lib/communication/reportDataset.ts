@@ -21,6 +21,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { rowToHealthEvent, type HealthEvent, type HealthEventRow } from '../agenda/event'
+import { effectiveExamDate } from '../exams/model' // regra de domínio: data efetiva do exame
 
 // ── Formas normalizadas (camelCase) — contrato de apresentação do relatório ──────
 export interface ReportProfile { name: string | null; heightCm: number | null }
@@ -74,7 +75,7 @@ export function toMed(r: Row): ReportMed {
 export function toExam(r: Row): ReportExam {
   return {
     id: r.id as string, type: (r.type as string) || 'Exame',
-    date: (r.exam_date as string) || (r.created_at as string) || '', fileUrl: str(r.file_url),
+    date: effectiveExamDate(r as { exam_date?: string | null; created_at?: string | null }), fileUrl: str(r.file_url),
   }
 }
 export function toMeasure(r: Row): ReportMeasure {

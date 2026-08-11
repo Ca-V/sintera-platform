@@ -21,6 +21,7 @@ import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { useEventForm, eventToInput } from '@/components/eventForm'
 import { rowToHealthEvent, type HealthEvent, type HealthEventRow } from '@/lib/agenda'
+import { effectiveExamDate } from '@/lib/exams/model'
 import HistoricoTabs from '@/components/HistoricoTabs'
 import { useStickyView } from '@/lib/ui/useStickyView'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
@@ -147,7 +148,7 @@ function LegacyTimeline() {
         id: `exam-${e.id as string}`, kind: 'exam', eventType: 'exame',
         title: (e.type as string) || 'Exame laboratorial',
         subtitle: (e.status as string) === 'processed' ? 'Dados extraídos' : (e.status as string) ?? null,
-        date: (e.exam_date as string) || (e.created_at as string),
+        date: effectiveExamDate(e as { exam_date?: string | null; created_at?: string | null }),
         source: 'upload', confidence: 'alta',
         href: `/dashboard/exams/${e.id as string}`,
       })

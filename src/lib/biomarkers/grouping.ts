@@ -4,6 +4,8 @@
 // Compartilhado entre saude/page.tsx (lista) e saude/[slug]/page.tsx (drill-down)
 // para evitar duplicação de responsabilidades (T2-B1).
 
+import { effectiveExamDate } from '@/lib/exams/model' // regra de domínio: data efetiva do exame
+
 export interface BiomarkerRow {
   id: string
   name: string
@@ -68,7 +70,7 @@ export function normalizeName(name: string): string {
 }
 
 export function examDate(r: BiomarkerRow): string {
-  return r.exams?.exam_date ?? r.exams?.created_at ?? ''
+  return effectiveExamDate(r.exams ?? {})
 }
 
 function calcTrend(ms: Measurement[]): { trend: Trend; deltaPercent: number | null } {

@@ -15,6 +15,7 @@ import { parseDateOnly } from '@/lib/agenda'
 import { useModalA11y } from '@/lib/ui/useModalA11y'
 import { useUser } from '@/context/UserContext'
 import { compareNames } from '@/lib/exams/nameMatch'
+import { effectiveExamDate } from '@/lib/exams/model'
 import { loadCatalogLabels, buildCatalogLabels, type CatalogLabels } from '@/lib/biomarkers/catalogLabels'
 import FeedbackModal from '@/components/FeedbackModal'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
@@ -533,7 +534,7 @@ export default function ExamDetailPage() {
           <span style={{ fontSize: '11px', color: '#888' }}>Relatório de Exame</span>
         </div>
         <p style={{ fontSize: '11px', color: '#555', margin: 0 }}>
-          {exam?.type ?? 'Exame'} · {exam ? formatDate((exam as unknown as { exam_date?: string | null }).exam_date ?? exam.created_at) : ''}
+          {exam?.type ?? 'Exame'} · {exam ? formatDate(effectiveExamDate(exam as unknown as { exam_date?: string | null; created_at?: string | null })) : ''}
           {exam?.page_count ? ` · ${exam.page_count} páginas` : ''}
         </p>
       </div>
@@ -637,7 +638,7 @@ export default function ExamDetailPage() {
               ) : (
                 <div className="flex items-center gap-1.5 group/date mt-0.5">
                   <p className="font-body text-sm text-mauve">
-                    Realizado em {exam ? formatDate((exam as unknown as { exam_date?: string | null }).exam_date ?? exam.created_at) : ''}
+                    Realizado em {exam ? formatDate(effectiveExamDate(exam as unknown as { exam_date?: string | null; created_at?: string | null })) : ''}
                     {exam?.page_count ? ` · ${exam.page_count} páginas` : ''}
                   </p>
                   <button onClick={startEditDate}

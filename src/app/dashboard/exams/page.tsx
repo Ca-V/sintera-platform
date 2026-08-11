@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/client'
 import { parseDateOnly } from '@/lib/agenda'
 import { useUser } from '@/context/UserContext'
 import { compareNames } from '@/lib/exams/nameMatch'
+import { effectiveExamDate } from '@/lib/exams/model'
 import ListCard, { CardChip } from '@/components/ListCard'
 import ExamStatusChip from '@/components/ui/ExamStatusChip'
 import { EXAM_STATUS_META } from '@/lib/exams/presentation'
@@ -66,7 +67,7 @@ function getYear(iso: string) {
 // Data de REALIZAÇÃO do exame (o que importa para histórico/dashboard);
 // cai para a data de entrada (created_at) só se a realização não existir.
 function effDate(e: Exam): string {
-  return e.exam_date ?? e.created_at
+  return effectiveExamDate(e)
 }
 
 export default function ExamsPage() {
