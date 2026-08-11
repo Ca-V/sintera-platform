@@ -22,6 +22,9 @@ const SYSTEM_CLOCK: Clock = { today: todayISO, now: nowISO }
 
 // ── Leitura ───────────────────────────────────────────────────────────────────
 export interface EventQueryService {
+  /** TODA a jornada como HealthEvent[] — fonte ÚNICA das projeções de apresentação
+   *  (Dashboard/Timeline/Relatório consomem isto e passam aos adapters puros). */
+  listAll(userId: string): Promise<HealthEvent[]>
   listUpcoming(userId: string): Promise<HealthEvent[]>      // Agenda
   /** "Próximo evento" — fonte ÚNICA (Dashboard, Agenda e afins consomem isto). */
   nextUpcoming(userId: string): Promise<HealthEvent | null>
@@ -37,6 +40,7 @@ export interface EventQueryService {
 
 export function createEventQueryService(repo: EventRepository, clock: Clock = SYSTEM_CLOCK): EventQueryService {
   return {
+    listAll:        (u) => repo.listAllEvents(u),
     listUpcoming:   (u) => repo.listUpcomingEvents(u, clock.today()),
     // Mesma lista da Agenda → o "próximo" via função única (nunca duas definições).
     nextUpcoming:   (u) => repo.listUpcomingEvents(u, clock.today()).then(l => selectNextUpcoming(l, clock.today())),

@@ -9,7 +9,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import type { BiomarkerRow } from '@/lib/biomarkers/grouping'
-import type { HealthEventRow } from '@/lib/agenda/event'
+import { eventServicesFor, type HealthEvent } from '@/lib/agenda' // leitura ÚNICA de eventos (domínio)
 import { buildReport, type ReportModel, type ExamRow } from '@/lib/ui/adapters/report'
 import { todayIso } from '@/lib/ui/date'
 import ReportView from '@/components/report/ReportView'
@@ -31,19 +31,18 @@ export default function ReportNew() {
         supabase.from('current_biomarkers')
           .select('id,name,value,unit,result_type,reference_min,reference_max,interpretation,exam_id,exams(exam_date,created_at)')
           .eq('user_id', user.id).eq('synthetic', false).eq('result_type', 'numeric'),
-        supabase.from('health_events')
-          .select('id,event_type,title,event_date,event_time,status,amount_cents,professional_name,establishment,links')
-          .eq('user_id', user.id).eq('synthetic', false),
+        // Eventos: leitura ÚNICA do domínio (coexistência legado+canônico, já como HealthEvent).
+        eventServicesFor(supabase).query.listAll(user.id),
         supabase.from('exams').select('id,type,status,created_at,exam_date').eq('user_id', user.id),
       ])
       if (!active) return
 
       const bioOk = bio.status === 'fulfilled' && !bio.value.error
-      const evOk = events.status === 'fulfilled' && !events.value.error
+      const evOk = events.status === 'fulfilled'
       const examOk = exams.status === 'fulfilled' && !exams.value.error
 
       const bioRows = bioOk ? ((bio as PromiseFulfilledResult<{ data: unknown }>).value.data ?? []) as unknown as BiomarkerRow[] : []
-      const eventRows = evOk ? ((events as PromiseFulfilledResult<{ data: unknown }>).value.data ?? []) as unknown as HealthEventRow[] : []
+      const eventList = evOk ? (events as PromiseFulfilledResult<HealthEvent[]>).value : []
       const examRows = examOk ? ((exams as PromiseFulfilledResult<{ data: unknown }>).value.data ?? []) as unknown as ExamRow[] : []
 
       setBioState(bioOk ? 'ok' : 'error')
@@ -51,7 +50,7 @@ export default function ReportNew() {
       setExamState(examOk ? 'ok' : 'error')
       setModel(buildReport({
         name: profile?.name ?? 'Você', objective: 'consulta',
-        bioRows, eventRows, examRows, generatedAt: todayIso(),
+        bioRows, events: eventList, examRows, generatedAt: todayIso(),
       }))
     })()
     return () => { active = false }

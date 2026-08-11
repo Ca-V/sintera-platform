@@ -41,7 +41,7 @@ describe('adapter timeline — DETERMINISMO (desempate fixo do domínio)', () =>
   ]
 
   it('mesma entrada → mesma saída (recente 1º; desempate = reverso do canônico data→hora→id)', () => {
-    const out = eventsToTimeline(rows).map((e) => `${e.when} ${e.title}`)
+    const out = eventsToTimeline(rows.map(rowToHealthEvent)).map((e) => `${e.when} ${e.title}`)
     // canônico asc: 02/07 Compra · 03/07 Consulta(a) · 03/07 Exame(c)
     // exibição (reverse, recente 1º): 03/07 Exame(c) · 03/07 Consulta(a) · 02/07 Compra
     expect(out).toEqual(['03 jul 2026 Exame', '03 jul 2026 Consulta', '02 jul 2026 Compra'])
@@ -49,6 +49,6 @@ describe('adapter timeline — DETERMINISMO (desempate fixo do domínio)', () =>
 
   it('ordem de entrada não altera a saída', () => {
     const shuffled = [rows[2], rows[0], rows[1]]
-    expect(eventsToTimeline(shuffled)).toEqual(eventsToTimeline(rows))
+    expect(eventsToTimeline(shuffled.map(rowToHealthEvent))).toEqual(eventsToTimeline(rows.map(rowToHealthEvent)))
   })
 })

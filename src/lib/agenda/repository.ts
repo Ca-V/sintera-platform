@@ -21,6 +21,10 @@ export interface DueReminder {
 }
 
 export interface EventRepository {
+  /** TODA a jornada do usuário como domínio (coexistência legada+canônica, ordenada).
+   *  Fonte ÚNICA de leitura de eventos para as PROJEÇÕES de apresentação (Dashboard,
+   *  Timeline, Relatório) — a UI recebe HealthEvent[], nunca a linha crua. */
+  listAllEvents(userId: string): Promise<HealthEvent[]>
   listUpcomingEvents(userId: string, refDate: string): Promise<HealthEvent[]>
   listHistoricalEvents(userId: string, refDate: string): Promise<HealthEvent[]>
   listEventsByExam(userId: string, examId: string): Promise<HealthEvent[]>
@@ -65,6 +69,7 @@ export function createSupabaseEventRepository(supabase: SupabaseClient): EventRe
   }
 
   return {
+    listAllEvents:        (u) => listAll(u),
     listUpcomingEvents:   async (u, ref) => selectUpcoming(await listAll(u), ref),
     listHistoricalEvents: async (u, ref) => selectHistorical(await listAll(u), ref),
     listEventsByExam:      async (u, id) => selectByLink(await listAll(u), 'exam' as EventLinkKind, id),

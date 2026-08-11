@@ -8,7 +8,7 @@
 // depende do EventLink real) → related sai indefinido por ora.
 // ============================================================
 
-import { rowToHealthEvent, sortByWhen, type HealthEvent, type HealthEventRow } from '../../agenda/event'
+import { sortByWhen, type HealthEvent } from '../../agenda/event'
 import { fmtDayMonthYear } from '../date'
 import type { EventNature } from '@/lib/ui/event'
 import type { TimelineEvent } from '@/components/timeline/Timeline'
@@ -45,8 +45,7 @@ export function healthEventToTimelineEvent(ev: HealthEvent): TimelineEvent {
   }
 }
 
-/** Linhas reais de health_events → TimelineEvents, ordem canônica DESC (recente 1º). */
-export function eventsToTimeline(rows: HealthEventRow[]): TimelineEvent[] {
-  const domain = rows.map(rowToHealthEvent)
-  return sortByWhen(domain).reverse().map(healthEventToTimelineEvent)
+/** Eventos do domínio → TimelineEvents, ordem canônica DESC (recente 1º). */
+export function eventsToTimeline(events: HealthEvent[]): TimelineEvent[] {
+  return sortByWhen(events).reverse().map(healthEventToTimelineEvent)
 }

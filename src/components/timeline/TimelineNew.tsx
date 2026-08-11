@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
-import type { HealthEventRow } from '@/lib/agenda/event'
+import { eventServicesFor } from '@/lib/agenda' // leitura ÚNICA de eventos (domínio)
 import { eventsToTimeline } from '@/lib/ui/adapters/timeline'
 import Timeline, { type TimelineEvent } from '@/components/timeline/Timeline'
 import StateView from '@/components/ui/StateView'
@@ -24,16 +24,15 @@ export default function TimelineNew() {
     let active = true
     ;(async () => {
       const supabase = createClient() as unknown as SupabaseClient
-      const { data, error } = await supabase
-        .from('health_events')
-        .select('id,event_type,title,event_date,event_time,status,amount_cents,professional_name,establishment,links')
-        .eq('user_id', user.id).eq('synthetic', false)
-      if (!active) return
-      if (error) { setPhase('error'); return }
-      const rows = (data ?? []) as unknown as HealthEventRow[]
-      if (rows.length === 0) { setPhase('empty'); return }
-      setEvents(eventsToTimeline(rows))
-      setPhase('ready')
+      try {
+        const events = await eventServicesFor(supabase).query.listAll(user.id)
+        if (!active) return
+        if (events.length === 0) { setPhase('empty'); return }
+        setEvents(eventsToTimeline(events))
+        setPhase('ready')
+      } catch {
+        if (active) setPhase('error')
+      }
     })()
     return () => { active = false }
   }, [user])

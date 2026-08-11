@@ -54,7 +54,7 @@ describe('buildUpcoming — só futuros, ordenados, rótulo relativo', () => {
 
 describe('buildDashboard — Estado 2 sai vazio (continuing, programs)', () => {
   it('continuing e programs vazios até o Estado 2', () => {
-    const model = buildDashboard({ bioRows: [], eventRows: [], pendingExams: 0, refDate: REF })
+    const model = buildDashboard({ bioRows: [], events: [], pendingExams: 0, refDate: REF })
     expect(model.continuing).toEqual([])
     expect(model.programs).toEqual([])
     expect(model.today).toHaveLength(5)

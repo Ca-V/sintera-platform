@@ -18,6 +18,7 @@ function fakeRepo() {
   const calls: { method: string; args: unknown[] }[] = []
   const savedAll: (Partial<HealthEvent> & { type: string })[] = []
   const repo: EventRepository = {
+    listAllEvents: async (...a) => { calls.push({ method: 'listAllEvents', args: a }); return [] },
     listUpcomingEvents: async (...a) => { calls.push({ method: 'listUpcomingEvents', args: a }); return [] },
     listHistoricalEvents: async (...a) => { calls.push({ method: 'listHistoricalEvents', args: a }); return [] },
     listEventsByExam: async () => [],

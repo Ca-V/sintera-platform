@@ -7,7 +7,7 @@
 // Prioridade de "Requer atenção" é DETERMINÍSTICA (rank fixo no adapter).
 // ============================================================
 
-import { rowToHealthEvent, sortByWhen, isClosed, type HealthEvent, type HealthEventRow } from '../../agenda/event'
+import { sortByWhen, isClosed, type HealthEvent } from '../../agenda/event'
 import { summarizeBiomarkers, type BiomarkerRow } from '../../biomarkers/grouping'
 import { eventNatureOf } from './timeline'
 import { dayDiff, fmtDayMonth } from '../date'
@@ -24,7 +24,7 @@ export interface DashboardModel {
 
 export interface DashboardInput {
   bioRows: BiomarkerRow[]
-  eventRows: HealthEventRow[]
+  events: HealthEvent[]            // domínio Agenda (query.listAll) — nunca a linha crua
   pendingExams: number
   /** data de referência 'YYYY-MM-DD' (pura/testável) */
   refDate: string
@@ -80,7 +80,7 @@ export function buildToday(model: Omit<DashboardModel, 'today'>, pendingExams: n
 }
 
 export function buildDashboard(input: DashboardInput): DashboardModel {
-  const events = input.eventRows.map(rowToHealthEvent)
+  const events = input.events
   const indicators = buildIndicators(input.bioRows)
   const upcoming = buildUpcoming(events, input.refDate)
   const attention = buildAttention(events, input.pendingExams, input.refDate)

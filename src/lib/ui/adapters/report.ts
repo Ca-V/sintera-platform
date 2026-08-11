@@ -12,7 +12,7 @@ import { eventsToTimeline } from './timeline'
 import { interpretationToStatus } from './indicator'
 import { fmtDayMonthYear, fmtMonthYear } from '../date'
 import { summarizeBiomarkers, type BiomarkerRow } from '../../biomarkers/grouping'
-import type { HealthEventRow } from '../../agenda/event'
+import type { HealthEvent } from '../../agenda/event'
 import type { ReportViewProps } from '@/components/report/ReportView'
 
 export interface ExamRow {
@@ -31,13 +31,13 @@ export interface ReportInput {
   name: string
   objective: string
   bioRows: BiomarkerRow[]
-  eventRows: HealthEventRow[]
+  events: HealthEvent[]           // domínio Agenda (query.listAll) — nunca a linha crua
   examRows: ExamRow[]
   generatedAt: string // 'YYYY-MM-DD'
 }
 
-export function buildTimeline(eventRows: HealthEventRow[]): ReportModel['timeline'] {
-  return eventsToTimeline(eventRows).slice(0, 6).map(({ nature, title, when, context }) => ({ nature, title, when, context }))
+export function buildTimeline(events: HealthEvent[]): ReportModel['timeline'] {
+  return eventsToTimeline(events).slice(0, 6).map(({ nature, title, when, context }) => ({ nature, title, when, context }))
 }
 
 export function buildEvolution(bioRows: BiomarkerRow[]): ReportModel['evolution'] {
@@ -63,19 +63,19 @@ export function buildDocuments(examRows: ExamRow[]): ReportModel['documents'] {
     .map((e) => ({ type: 'Exame', title: e.type ?? 'Exame', description: fmtDayMonthYear(examDate(e)) }))
 }
 
-export function buildSummary(examRows: ExamRow[], eventRows: HealthEventRow[]): ReportModel['summary'] {
+export function buildSummary(examRows: ExamRow[], events: HealthEvent[]): ReportModel['summary'] {
   return [
     { label: 'condições', value: '—' },          // Catálogo = Estado 2
     { label: 'medicamentos', value: '—' },       // Catálogo = Estado 2
     { label: 'dispositivos', value: '—' },        // Catálogo = Estado 2
     { label: 'exames no período', value: String(examRows.length) },
-    { label: 'eventos', value: String(eventRows.length) },
+    { label: 'eventos', value: String(events.length) },
   ]
 }
 
 function coverPeriod(input: ReportInput): string {
   const dates = [
-    ...input.eventRows.map((e) => e.event_date),
+    ...input.events.map((e) => e.date),
     ...input.examRows.map(examDate),
   ].filter(Boolean).sort()
   if (dates.length === 0) return '—'
@@ -85,8 +85,8 @@ function coverPeriod(input: ReportInput): string {
 export function buildReport(input: ReportInput): ReportModel {
   return {
     cover: { name: input.name, period: coverPeriod(input), generatedAt: fmtDayMonthYear(input.generatedAt), objective: input.objective },
-    summary: buildSummary(input.examRows, input.eventRows),
-    timeline: buildTimeline(input.eventRows),
+    summary: buildSummary(input.examRows, input.events),
+    timeline: buildTimeline(input.events),
     situation: [], // Catálogo (condições/medicamentos/dispositivos) = Estado 2
     evolution: buildEvolution(input.bioRows),
     documents: buildDocuments(input.examRows),
