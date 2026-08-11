@@ -14,16 +14,14 @@ import {
   Loader2, Plus, X, ArrowLeft, Trash2, Pencil,
   Dumbbell, Moon, Cigarette, Wine, Apple, Droplets, Sparkles,
 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import ListCard from '@/components/ListCard'
 import Card from '@/components/ui/Card'
 import Disclaimer from '@/components/ui/Disclaimer'
+import type { Habit, HabitCategory } from '@/lib/habitos/service'
 
-type Category =
-  | 'atividade_fisica' | 'sono' | 'tabagismo' | 'alcool'
-  | 'alimentacao' | 'hidratacao' | 'outro'
+type Category = HabitCategory
 
 const CATEGORIES: { value: Category; label: string; icon: React.ElementType }[] = [
   { value: 'atividade_fisica', label: 'Atividade física', icon: Dumbbell },
@@ -39,17 +37,8 @@ function catMeta(c: Category) {
   return CATEGORIES.find(x => x.value === c) ?? CATEGORIES[CATEGORIES.length - 1]
 }
 
-interface Habit {
-  id: string
-  category: Category
-  description: string
-  frequency: string | null
-  notes: string | null
-}
-
 export default function HabitosPage() {
   const { user, loading: authLoading } = useUser()
-  const supabase = createClient()
   const [items, setItems] = useState<Habit[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -66,17 +55,11 @@ export default function HabitosPage() {
   const load = useCallback(async () => {
     if (!user) return
     setLoading(true)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (supabase as any).from('life_habits')
-      .select('id, category, description, frequency, notes')
-      .eq('user_id', user.id).order('created_at', { ascending: false })
-    setItems(((data ?? []) as Array<Record<string, unknown>>).map(h => ({
-      id: h.id as string, category: (h.category as Category) ?? 'outro',
-      description: (h.description as string) ?? '',
-      frequency: (h.frequency as string) ?? null, notes: (h.notes as string) ?? null,
-    })))
+    const res = await fetch('/api/habitos')
+    const data = res.ok ? await res.json() : { habits: [] }
+    setItems((data.habits ?? []) as Habit[])
     setLoading(false)
-  }, [user, supabase])
+  }, [user])
 
   // eslint-disable-next-line react-hooks/set-state-in-effect -- carrega dados na montagem (data fetching)
   useEffect(() => { if (!authLoading) load() }, [authLoading, load])
@@ -91,17 +74,12 @@ export default function HabitosPage() {
   async function save() {
     if (!user || saving || !description.trim()) return
     setSaving(true); setErr(null)
-    const payload = {
-      user_id: user.id, category, description: description.trim(),
-      frequency: frequency.trim() || null, notes: notes.trim() || null,
-    }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const db = (supabase as any).from('life_habits')
-    const { error } = editingId
-      ? await db.update(payload).eq('id', editingId)
-      : await db.insert(payload)
+    const body = { category, description, frequency, notes }
+    const res = editingId
+      ? await fetch('/api/habitos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: editingId, ...body }) })
+      : await fetch('/api/habitos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
     setSaving(false)
-    if (error) { setErr(error.message); return }
+    if (!res.ok) { const e = await res.json().catch(() => ({})); setErr((e.error as string) ?? 'Falha ao salvar.'); return }
     reset(); setShowForm(false); await load()
   }
 
@@ -109,8 +87,7 @@ export default function HabitosPage() {
     if (busyId) return
     if (!window.confirm(`Remover "${h.description}"?`)) return
     setBusyId(h.id)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from('life_habits').delete().eq('id', h.id)
+    await fetch(`/api/habitos?id=${encodeURIComponent(h.id)}`, { method: 'DELETE' })
     await load(); setBusyId(null)
   }
 
