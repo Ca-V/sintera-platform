@@ -9,10 +9,16 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
-  agendaRowToHealthEvent, rowToHealthEvent, healthEventToRow,
+  agendaRowToHealthEvent, rowToHealthEvent, healthEventToRow, isClosed,
   selectUpcoming, selectHistorical, selectByLink, selectFinancial, sortByWhen,
   type AgendaEventRow, type HealthEventRow, type HealthEvent, type EventLinkKind,
 } from './event'
+
+/** Item de lembrete vencendo, já como domínio + a dona (uso por jobs/cron/integrações). */
+export interface DueReminder {
+  event: HealthEvent
+  userId: string
+}
 
 export interface EventRepository {
   listUpcomingEvents(userId: string, refDate: string): Promise<HealthEvent[]>
@@ -25,6 +31,11 @@ export interface EventRepository {
   deleteEvent(userId: string, id: string): Promise<void>
   /** Cria/atualiza um evento-LEMBRETE (agenda_events legado) e devolve o id. */
   upsertReminder(userId: string, r: { id?: string | null; title: string; date: string; eventType?: string }): Promise<string>
+  /** Lembretes vencendo (entre refToday e refTomorrow), ainda não enviados — CROSS-USER
+   *  (jobs/cron/integrações). Coexistência: canônico + legado, dedup por id (canônico vence). */
+  listDueReminders(refToday: string, refTomorrow: string): Promise<DueReminder[]>
+  /** Marca lembretes como enviados — coexistência-aware (atualiza ambas as tabelas; idempotente). */
+  markRemindersSent(ids: string[], sentAt: string): Promise<void>
 }
 
 // `sortByWhen` (ordem cronológica canônica) vive no DOMÍNIO (event.ts) — o
@@ -96,6 +107,37 @@ export function createSupabaseEventRepository(supabase: SupabaseClient): EventRe
         .select('id').single()
       if (error || !data) throw new Error(error?.message || 'Falha ao criar o lembrete')
       return (data as { id: string }).id
+    },
+    listDueReminders: async (refToday, refTomorrow) => {
+      const [h, a] = await Promise.all([
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (supabase.from('health_events') as any)
+          .select('*').eq('reminder_enabled', true).is('reminder_sent_at', null)
+          .gte('event_date', refToday).lte('event_date', refTomorrow).eq('synthetic', false),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (supabase.from('agenda_events') as any)
+          .select('id, user_id, event_type, title, event_date, event_time, duration_min, notes, status, reminder_enabled, reminder_sent_at')
+          .eq('status', 'pending').eq('reminder_enabled', true).is('reminder_sent_at', null)
+          .gte('event_date', refToday).lte('event_date', refTomorrow),
+      ])
+      if (h.error || a.error) throw new Error(h.error?.message ?? a.error?.message ?? 'Falha ao listar lembretes')
+      const byId = new Map<string, DueReminder>()
+      for (const r of (a.data ?? []) as (AgendaEventRow & { user_id: string })[]) {
+        byId.set(r.id, { event: agendaRowToHealthEvent(r), userId: r.user_id })
+      }
+      for (const r of (h.data ?? []) as (HealthEventRow & { user_id: string })[]) {
+        const e = rowToHealthEvent(r)
+        if (!isClosed(e)) byId.set(e.id, { event: e, userId: r.user_id }) // canônico vence
+      }
+      return [...byId.values()]
+    },
+    markRemindersSent: async (ids, sentAt) => {
+      if (ids.length === 0) return
+      for (const table of ['health_events', 'agenda_events'] as const) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase.from(table) as any).update({ reminder_sent_at: sentAt }).in('id', ids)
+        if (error) throw new Error(error.message || `Falha ao marcar lembretes (${table})`)
+      }
     },
   }
 }

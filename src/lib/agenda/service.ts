@@ -8,7 +8,7 @@
 // assinantes do bus — sem mudar o serviço.
 
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { createSupabaseEventRepository, type EventRepository } from './repository'
+import { createSupabaseEventRepository, type EventRepository, type DueReminder } from './repository'
 import { createEventBus, type EventBus, type DomainEvent, type DomainEventType, type EventActor } from './bus'
 import { completeRule, cancelRule, rescheduleRule, canTransition, selectNextUpcoming, type HealthEvent, type EventStatus } from './event'
 import { parseRule, addToDate } from '../recurrence'
@@ -31,6 +31,8 @@ export interface EventQueryService {
   listByProtocol(userId: string, protocolId: string): Promise<HealthEvent[]>
   /** Gastos = projeção: eventos realizados com valor. */
   listFinancial(userId: string): Promise<HealthEvent[]>
+  /** Lembretes vencendo (hoje/amanhã) — CROSS-USER (jobs/cron/integrações). */
+  listDueReminders(refToday: string, refTomorrow: string): Promise<DueReminder[]>
 }
 
 export function createEventQueryService(repo: EventRepository, clock: Clock = SYSTEM_CLOCK): EventQueryService {
@@ -43,6 +45,7 @@ export function createEventQueryService(repo: EventRepository, clock: Clock = SY
     listByBiomarker: (u, b)  => repo.listEventsByBiomarker(u, b),
     listByProtocol:  (u, id) => repo.listEventsByProtocol(u, id),
     listFinancial:   (u) => repo.listFinancialEntries(u),
+    listDueReminders: (t, tm) => repo.listDueReminders(t, tm),
   }
 }
 
@@ -60,6 +63,8 @@ export interface EventCommandService {
   upsertReminder(userId: string, r: { id?: string | null; title: string; date: string }): Promise<string>
   /** Remove um lembrete (coexistência-aware). */
   clearReminder(userId: string, id: string): Promise<void>
+  /** Marca lembretes como enviados (jobs/cron/integrações). Coexistência-aware. */
+  markRemindersSent(ids: string[], sentAt: string): Promise<void>
 }
 
 function newId(): string {
@@ -142,6 +147,7 @@ export function createEventCommandService(repo: EventRepository, bus: EventBus, 
     // ora (não há HealthEvent completo); a tabela é escondida do consumidor pelo domínio.
     upsertReminder: (userId, r) => repo.upsertReminder(userId, r),
     clearReminder: (userId, id) => repo.deleteEvent(userId, id),
+    markRemindersSent: (ids, sentAt) => repo.markRemindersSent(ids, sentAt),
   }
 }
 

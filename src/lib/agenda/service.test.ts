@@ -28,6 +28,8 @@ function fakeRepo() {
     save: async (_u, e) => { savedAll.push(e as any) },
     deleteEvent: async (...a) => { calls.push({ method: 'deleteEvent', args: a }) },
     upsertReminder: async (_u, r) => { calls.push({ method: 'upsertReminder', args: [r] }); return r.id ?? 'reminder-new' },
+    listDueReminders: async (...a) => { calls.push({ method: 'listDueReminders', args: a }); return [] },
+    markRemindersSent: async (...a) => { calls.push({ method: 'markRemindersSent', args: a }) },
   }
   return { repo, calls, getSaved: () => savedAll[savedAll.length - 1] ?? null, getSavedAll: () => savedAll }
 }
