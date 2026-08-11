@@ -168,11 +168,9 @@ export function ExamsListScreen({ navigation }: Props) {
 
       <Button label="Adicionar exame realizado" onPress={() => navigation.navigate('ExamUpload')} />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
+        {/* Histórico: atalho de navegação no Mobile (a Web o alcança pela sidebar — adaptação de dispositivo). */}
         <Pressable onPress={() => navigation.navigate('HistoricoExames')}>
           <Text spec={text(t, { role: 'bodySmall' })} style={{ color: t.color.identity.primary }}>Histórico de Exames →</Text>
-        </Pressable>
-        <Pressable onPress={() => navigation.navigate('OmicsList')}>
-          <Text spec={text(t, { role: 'bodySmall' })} style={{ color: t.color.identity.primary }}>Exames de ômica →</Text>
         </Pressable>
       </View>
 
@@ -199,6 +197,19 @@ export function ExamsListScreen({ navigation }: Props) {
 
       {activeTab === 'results' ? (
       <>
+      {/* Explicação convencional × ômica (paridade Web — mesmo conteúdo; texto adaptado ao ponto de entrada Mobile). */}
+      <View style={[styles.card, card, { gap: 8 }]}>
+        <Text spec={text(t, { role: 'caption' })}>
+          <Text spec={text(t, { role: 'caption' })} style={{ fontWeight: '700' }}>Exame convencional</Text> — laudos comuns (sangue, urina, hormônios…) que você envia em “Adicionar exame realizado”; a IA extrai os dados automaticamente.
+        </Text>
+        <Text spec={text(t, { role: 'caption' })}>
+          <Text spec={text(t, { role: 'caption' })} style={{ fontWeight: '700' }}>Exame ômico</Text> — é uma categoria (metabolômica, proteômica, microbioma, genética) com muitos marcadores. Cadastre por “Adicionar exame realizado → Exame ômico (catálogo)”; o passo de catálogo, versionamento e comparação abre em seguida.
+        </Text>
+        <Pressable onPress={() => navigation.navigate('OmicsList')}>
+          <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Ver a categoria Ômica →</Text>
+        </Pressable>
+      </View>
+
       {/* Aviso de nome divergente do perfil (paridade Web) — mesmo texto/hierarquia. Conta só RESULTADOS. */}
       {mismatchIds.size > 0 ? (
         <View style={[styles.card, { backgroundColor: t.color.badge.error.soft, borderColor: t.color.badge.error.text, gap: 4 }]}>
