@@ -221,17 +221,9 @@ function LegacyTimeline() {
   }
 
   async function remove(rawId: string, label: string) {
-    if (busyId) return
     if (!window.confirm(`Excluir "${label}" do seu Histórico?`)) return
-    setBusyId(rawId); setActionError(null)
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any).from('health_events').delete().eq('id', rawId)
-      if (error) { setActionError(`Não foi possível excluir: ${error.message}`); return }
-      await load()
-    } finally {
-      setBusyId(null)
-    }
+    // Exclusão pelo domínio dono (coexistência-aware). Mesmo padrão de complete/reopen.
+    await withFullEvent(rawId, ev => services.command.remove(user!.id, ev), `Não foi possível excluir "${label}".`)
   }
 
   // Marca um evento do Histórico como Realizado — atualização CIRÚRGICA (só status +

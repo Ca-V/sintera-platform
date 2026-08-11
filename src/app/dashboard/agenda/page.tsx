@@ -107,12 +107,8 @@ export default function AgendaPage() {
     if (!userId) return
     setBusyId(ev.id); setActionError(null)
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any).from('health_events').delete().eq('id', ev.id)
-      if (error) throw error
-      // Legado: a Agenda também mostra lembretes de agenda_events (recompra/ciclo).
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase as any).from('agenda_events').delete().eq('id', ev.id)
+      // Exclusão pelo domínio dono — coexistência-aware (health_events + agenda_events legado).
+      await services.command.remove(userId, ev)
       reload()
     } catch (e) { setActionError(e instanceof Error ? e.message : 'Não foi possível excluir o evento.') }
     finally { setBusyId(null) }
