@@ -48,6 +48,9 @@ export function ExamsListScreen({ navigation }: Props) {
   const [year, setYear] = useState('all')
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
+  // Abas Resultados × Pedidos (paridade Web — mesma organização conceitual; decisão consciente: 2 abas funcionam
+  // bem no Mobile e dão acesso a Pedidos em 1 toque, vs rolar toda a lista de resultados).
+  const [activeTab, setActiveTab] = useState<'results' | 'orders'>('results')
 
   const all = p.exams ?? []
   const results = useMemo(() => all.filter(e => !isOrderDocumentType(e.document_type)), [all])
@@ -177,6 +180,25 @@ export function ExamsListScreen({ navigation }: Props) {
         <View style={styles.empty}><Text spec={text(t, { role: 'body', tone: 'muted' })}>Nenhum exame ainda.</Text></View>
       ) : null}
 
+      {/* Abas principais: Exames (realizados) × Pedidos de Exames — MESMA organização conceitual da Web. */}
+      {all.length > 0 ? (
+        <View style={[styles.tabs, { backgroundColor: t.color.surface.base, borderColor: t.color.border.default }]}>
+          {(['results', 'orders'] as const).map((tab) => {
+            const on = activeTab === tab
+            return (
+              <Pressable key={tab} onPress={() => setActiveTab(tab)} style={[styles.tab, on ? { backgroundColor: t.color.identity.soft } : null]}>
+                <Text spec={text(t, { role: 'bodySmall', tone: on ? 'default' : 'muted' })} style={on ? { color: t.color.identity.primary } : undefined}>{tab === 'results' ? 'Exames' : 'Pedidos de Exames'}</Text>
+                {tab === 'orders' && orders.length > 0 ? (
+                  <View style={[styles.pill, { backgroundColor: t.color.badge.attention.soft, paddingHorizontal: 7, paddingVertical: 1 }]}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.attention.text }}>{orders.length}</Text></View>
+                ) : null}
+              </Pressable>
+            )
+          })}
+        </View>
+      ) : null}
+
+      {activeTab === 'results' ? (
+      <>
       {/* Aviso de nome divergente do perfil (paridade Web) — mesmo texto/hierarquia. Conta só RESULTADOS. */}
       {mismatchIds.size > 0 ? (
         <View style={[styles.card, { backgroundColor: t.color.badge.error.soft, borderColor: t.color.badge.error.text, gap: 4 }]}>
@@ -268,12 +290,13 @@ export function ExamsListScreen({ navigation }: Props) {
       {results.length > 0 && filteredResults.length === 0 ? (
         <Text spec={text(t, { role: 'caption', tone: 'muted' })} style={{ textAlign: 'center' }}>Nenhum resultado para os filtros atuais.</Text>
       ) : null}
+      </>
+      ) : null}
 
-      {/* PEDIDOS E SOLICITAÇÕES (guias/pedidos médicos — objeto distinto do exame realizado). Q1: o pedido é a
-          ORIGEM, não é substituído pelo exame. Mesmo ciclo/ações da Web. */}
-      {orders.length > 0 ? (
+      {/* Aba PEDIDOS — mesmo objeto/ações da Web (Q1: o pedido é a ORIGEM, não é substituído pelo exame). */}
+      {activeTab === 'orders' ? (
+        orders.length > 0 ? (
         <View style={{ gap: 8 }}>
-          <Text spec={text(t, { role: 'label', tone: 'muted' })}>PEDIDOS E SOLICITAÇÕES</Text>
           <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Pedidos médicos e guias de convênio — documentos de solicitação, guardados à parte dos resultados.</Text>
           {orders.map((e) => {
             const linked = linkedCountByOrder.get(e.id) ?? 0
@@ -303,6 +326,9 @@ export function ExamsListScreen({ navigation }: Props) {
             )
           })}
         </View>
+        ) : (
+          <View style={styles.empty}><Text spec={text(t, { role: 'body', tone: 'muted' })} style={{ textAlign: 'center' }}>Nenhum pedido ou solicitação. Pedidos médicos e guias de convênio aparecem aqui quando você os envia.</Text></View>
+        )
       ) : null}
 
       <Disclaimer variant="laudo" />
@@ -315,6 +341,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12 },
   empty: { paddingVertical: 24, alignItems: 'center' },
   card: { padding: 16, borderRadius: 12, borderWidth: 1, gap: 4 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   pill: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
+  tabs: { flexDirection: 'row', alignSelf: 'flex-start', gap: 4, padding: 4, borderRadius: 16, borderWidth: 1 },
+  tab: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 6, borderRadius: 12 },
 })
