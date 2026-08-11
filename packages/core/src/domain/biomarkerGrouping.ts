@@ -181,5 +181,16 @@ export function summarizeBiomarkers(rows: BiomarkerRow[]): BiomarkerSummary[] {
 export function seriesForName(rows: BiomarkerRow[], normalizedName: string): BiomarkerSummary | null {
   return summarizeBiomarkers(rows).find(s => s.canonicalName === normalizedName) ?? null
 }
+
+/**
+ * Série da unidade PRINCIPAL (a de mais medições) — para uma visão de GRÁFICO ÚNICO que não pode mostrar várias
+ * séries (ex.: card/preview/relatório resumido). NUNCA mistura unidades. Consumidores de gráfico único devem usar
+ * ISTO em vez de `summary.measurements` (que contém todas as unidades). Regra oficial: não comparar entre unidades.
+ */
+export function primaryUnitSeries(s: BiomarkerSummary): UnitSeries {
+  const groups = s.unitGroups && s.unitGroups.length ? s.unitGroups : []
+  if (groups.length) return [...groups].sort((a, b) => b.count - a.count)[0]
+  return { unit: s.unit, measurements: s.measurements, first: s.first, latest: s.latest, count: s.count, trend: s.trend, deltaPercent: s.deltaPercent, totalDeltaPercent: s.totalDeltaPercent }
+}
 // (Índice Experimental "proporção dentro da referência" removido — era experimental/interpretativo e saiu do
 //  Histórico de Exames por decisão de produto, 21/07. Se retornar, será em contexto explicitamente analítico.)

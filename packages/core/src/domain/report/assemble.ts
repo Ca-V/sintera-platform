@@ -188,7 +188,7 @@ export function assembleReport(data: ReportData, sel: ReportSelection, now?: Dat
   const sectionLines: Record<ReportSectionKey, string[]> = {
     eventos: agenda.map(eventLine),
     registros: historico.map(eventLine),
-    histexames: bioSummaries.map(s => `${s.displayName}: ${s.latest ? `${s.latest.value}${s.unit ? ` ${s.unit}` : ''}` : '—'}${s.latest ? ` (${fmt(s.latest.date)})` : ''}${rangeText(s.latest)}${trendText(s.trend, s.deltaPercent)} · ${s.count} ${s.count === 1 ? 'medição' : 'medições'}`),
+    histexames: bioSummaries.map(s => `${s.displayName}: ${s.latest ? `${s.latest.value}${s.latest.unit ? ` ${s.latest.unit}` : ''}` : '—'}${s.latest ? ` (${fmt(s.latest.date)})` : ''}${rangeText(s.latest)}${trendText(s.trend, s.deltaPercent)} · ${s.count} ${s.count === 1 ? 'medição' : 'medições'}`),
     medidas: medidasLines,
     sinais: measuresVitais.map(m => `${fmt(m.date)} — ${m.metric === 'outro_sinal' ? (m.label ?? 'Outro sinal') : bodyMetricLabel(m.metric)}: ${m.valueText}${m.unit ? ` ${m.unit}` : ''}`),
     exames: exams.map(e => `${fmt(e.date)} — ${e.type}`),

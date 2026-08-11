@@ -9,6 +9,7 @@
 // ============================================================
 
 import { fmtDayMonthYear, fmtMonthShortYear } from '../date'
+import { primaryUnitSeries } from '@/lib/biomarkers/grouping'
 import type { BiomarkerSummary } from '@/lib/biomarkers/grouping'
 import type { ReferenceStatus } from '@/lib/ui/indicator'
 import type { IndicatorViewProps } from '@/components/indicator/IndicatorView'
@@ -29,14 +30,16 @@ const TREND_READING: Record<string, { icon: 'down' | 'up' | 'flat'; text: string
 
 /** Projeção real → contrato das 5 perguntas. Q4/Q5 vazios até o Estado 2. */
 export function biomarkerToIndicatorView(s: BiomarkerSummary): IndicatorViewProps {
-  const latest = s.latest
-  const ms = s.measurements
+  // Visão de GRÁFICO ÚNICO → série da unidade principal (regra oficial: nunca misturar/comparar unidades diferentes).
+  const g = primaryUnitSeries(s)
+  const latest = g.latest
+  const ms = g.measurements
 
   const readings: IndicatorViewProps['readings'] = []
-  const t = TREND_READING[s.trend] ?? TREND_READING.single
+  const t = TREND_READING[g.trend] ?? TREND_READING.single
   readings.push({ icon: t.icon, text: ms.length >= 2 ? `${t.text} nas últimas ${ms.length} medições` : t.text })
-  if (s.totalDeltaPercent !== null) {
-    readings.push({ icon: 'flat', text: `variação total de ${s.totalDeltaPercent > 0 ? '+' : ''}${s.totalDeltaPercent}% no período` })
+  if (g.totalDeltaPercent !== null) {
+    readings.push({ icon: 'flat', text: `variação total de ${g.totalDeltaPercent > 0 ? '+' : ''}${g.totalDeltaPercent}% no período` })
   }
   const withRef = ms.filter((m) => m.interpretation === 'dentro_da_referencia' || m.interpretation === 'acima_da_referencia' || m.interpretation === 'abaixo_da_referencia')
   if (withRef.length > 0) {
@@ -51,7 +54,7 @@ export function biomarkerToIndicatorView(s: BiomarkerSummary): IndicatorViewProp
   return {
     name: s.displayName,
     value: latest ? latest.value.toLocaleString('pt-BR') : '—',
-    unit: s.unit || undefined,
+    unit: g.unit || undefined,
     status: interpretationToStatus(latest?.interpretation),
     collectedAt: latest ? fmtDayMonthYear(latest.date) : '—',
     readings,

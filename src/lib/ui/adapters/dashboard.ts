@@ -44,7 +44,8 @@ export function buildIndicators(bioRows: BiomarkerRow[]): IndicatorData[] {
   return summarizeBiomarkers(bioRows)
     .filter((s) => s.latest)
     .slice(0, 5)
-    .map((s) => ({ label: s.displayName, value: `${s.latest!.value.toLocaleString('pt-BR')}${s.unit ? ' ' + s.unit : ''}` }))
+    // Unidade da própria medição mais recente (correto mesmo com unidades diferentes na série).
+    .map((s) => ({ label: s.displayName, value: `${s.latest!.value.toLocaleString('pt-BR')}${s.latest!.unit ? ' ' + s.latest!.unit : ''}` }))
 }
 
 export function buildUpcoming(events: HealthEvent[], refDate: string): UpcomingData[] {

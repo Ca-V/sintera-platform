@@ -11,7 +11,7 @@
 import { eventsToTimeline } from './timeline'
 import { interpretationToStatus } from './indicator'
 import { fmtDayMonthYear, fmtMonthYear } from '../date'
-import { summarizeBiomarkers, type BiomarkerRow } from '../../biomarkers/grouping'
+import { summarizeBiomarkers, primaryUnitSeries, type BiomarkerRow } from '../../biomarkers/grouping'
 import type { HealthEventRow } from '../../agenda/event'
 import type { ReportViewProps } from '@/components/report/ReportView'
 
@@ -43,15 +43,18 @@ export function buildTimeline(eventRows: HealthEventRow[]): ReportModel['timelin
 export function buildEvolution(bioRows: BiomarkerRow[]): ReportModel['evolution'] {
   const top = summarizeBiomarkers(bioRows).filter((s) => s.latest).sort((a, b) => b.measurements.length - a.measurements.length)[0]
   if (!top || !top.latest) return undefined
-  const refMaxs = top.measurements.map((m) => m.referenceMax).filter((v): v is number => v !== null)
-  const reference = refMaxs.length === top.measurements.length && top.measurements.length > 0 && new Set(refMaxs).size === 1 ? refMaxs[0] : undefined
+  // Gráfico ÚNICO no relatório → série da unidade principal (regra oficial: nunca misturar unidades).
+  const g = primaryUnitSeries(top)
+  if (!g.latest) return undefined
+  const refMaxs = g.measurements.map((m) => m.referenceMax).filter((v): v is number => v !== null)
+  const reference = refMaxs.length === g.measurements.length && g.measurements.length > 0 && new Set(refMaxs).size === 1 ? refMaxs[0] : undefined
   return {
     name: top.displayName,
-    value: top.latest.value.toLocaleString('pt-BR'),
-    unit: top.unit || undefined,
-    status: interpretationToStatus(top.latest.interpretation),
-    collectedAt: fmtDayMonthYear(top.latest.date),
-    series: top.measurements.map((m) => ({ x: fmtMonthYear(m.date), y: m.value })),
+    value: g.latest.value.toLocaleString('pt-BR'),
+    unit: g.unit || undefined,
+    status: interpretationToStatus(g.latest.interpretation),
+    collectedAt: fmtDayMonthYear(g.latest.date),
+    series: g.measurements.map((m) => ({ x: fmtMonthYear(m.date), y: m.value })),
     reference,
   }
 }
