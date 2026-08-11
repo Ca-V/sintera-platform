@@ -16,7 +16,7 @@
 // ============================================================
 
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { fromTable } from '@/lib/api/db'
+import { selectUserRows, insertRows, updateUserRow, deleteUserRow } from '@/lib/api/db'
 import { ValidationError } from '@/lib/api/http'
 
 export type ConditionScope = 'propria' | 'familiar'
@@ -93,31 +93,21 @@ export function buildConditionPayload(userId: string, input: ConditionInput): Co
   }
 }
 
-// ── Repositório (I/O) — acesso à tabela pela fundação (fromTable) ─────────────
+// ── Repositório (I/O) — pela fundação (helpers escopados por usuária) ─────────
 
 export async function listConditions(supabase: SupabaseClient, userId: string): Promise<Condition[]> {
-  const { data, error } = await fromTable(supabase, TABLE)
-    .select(COLUMNS)
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-  if (error) throw new Error(error.message)
-  return ((data ?? []) as ConditionRow[]).map(toDomain)
+  const rows = await selectUserRows<ConditionRow>(supabase, TABLE, userId, { columns: COLUMNS, orderBy: 'created_at' })
+  return rows.map(toDomain)
 }
 
 export async function createCondition(supabase: SupabaseClient, userId: string, input: ConditionInput): Promise<void> {
-  const payload = buildConditionPayload(userId, input)
-  const { error } = await fromTable(supabase, TABLE).insert(payload)
-  if (error) throw new Error(error.message)
+  await insertRows(supabase, TABLE, [buildConditionPayload(userId, input)])
 }
 
 export async function updateCondition(supabase: SupabaseClient, userId: string, id: string, input: ConditionInput): Promise<void> {
-  const payload = buildConditionPayload(userId, input)
-  // Filtro por user_id além do id — defesa em profundidade sobre a RLS.
-  const { error } = await fromTable(supabase, TABLE).update(payload).eq('id', id).eq('user_id', userId)
-  if (error) throw new Error(error.message)
+  await updateUserRow(supabase, TABLE, userId, id, buildConditionPayload(userId, input))
 }
 
 export async function removeCondition(supabase: SupabaseClient, userId: string, id: string): Promise<void> {
-  const { error } = await fromTable(supabase, TABLE).delete().eq('id', id).eq('user_id', userId)
-  if (error) throw new Error(error.message)
+  await deleteUserRow(supabase, TABLE, userId, id)
 }

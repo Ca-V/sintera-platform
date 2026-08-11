@@ -13,7 +13,7 @@
 // ============================================================
 
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { fromTable } from '@/lib/api/db'
+import { selectUserRows, insertRows, deleteUserRow } from '@/lib/api/db'
 import { ValidationError } from '@/lib/api/http'
 
 export type Metric =
@@ -132,40 +132,31 @@ export function buildMeasurePayload(userId: string, input: MeasureInput): Measur
   }
 }
 
-// ── Repositório (I/O) — acesso pela fundação (fromTable), escopado a MEASURES ──
+// ── Repositório (I/O) — pela fundação, escopado a MEASURES ────────────────────
 
 export async function listMeasures(supabase: SupabaseClient, userId: string): Promise<MeasureEntry[]> {
-  const { data, error } = await fromTable(supabase, TABLE)
-    .select(COLUMNS)
-    .eq('user_id', userId)
-    .in('metric', MEASURES)
-    .order('measured_on', { ascending: false })
-  if (error) throw new Error(error.message)
-  return ((data ?? []) as MeasureRow[]).map(toDomain)
+  const rows = await selectUserRows<MeasureRow>(supabase, TABLE, userId, {
+    columns: COLUMNS, scopeIn: { column: 'metric', values: MEASURES }, orderBy: 'measured_on',
+  })
+  return rows.map(toDomain)
 }
 
 /** Laudos da usuária para o vínculo opcional (dropdown). */
 export async function listExamRefs(supabase: SupabaseClient, userId: string): Promise<ExamRef[]> {
-  const { data, error } = await fromTable(supabase, 'exams')
-    .select('id, type, exam_date, file_url')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-  if (error) throw new Error(error.message)
-  return ((data ?? []) as ExamRow[]).map(e => ({
+  const rows = await selectUserRows<ExamRow>(supabase, 'exams', userId, {
+    columns: 'id, type, exam_date, file_url', orderBy: 'created_at',
+  })
+  return rows.map(e => ({
     id: e.id, type: e.type || 'Exame', examDate: e.exam_date ?? null, fileUrl: e.file_url ?? null,
   }))
 }
 
 /** Cria uma ou várias medidas (o scan de bioimpedância envia várias de uma vez). */
 export async function createMeasures(supabase: SupabaseClient, userId: string, inputs: MeasureInput[]): Promise<void> {
-  const rows = inputs.map(i => buildMeasurePayload(userId, i))
-  if (rows.length === 0) return
-  const { error } = await fromTable(supabase, TABLE).insert(rows)
-  if (error) throw new Error(error.message)
+  await insertRows(supabase, TABLE, inputs.map(i => buildMeasurePayload(userId, i)))
 }
 
 export async function removeMeasure(supabase: SupabaseClient, userId: string, id: string): Promise<void> {
-  // Escopo a MEASURES + user_id — impede remover um sinal vital por engano.
-  const { error } = await fromTable(supabase, TABLE).delete().eq('id', id).eq('user_id', userId).in('metric', MEASURES)
-  if (error) throw new Error(error.message)
+  // Escopo a MEASURES — impede remover um sinal vital por engano.
+  await deleteUserRow(supabase, TABLE, userId, id, { column: 'metric', values: MEASURES })
 }

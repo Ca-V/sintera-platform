@@ -12,7 +12,7 @@
 // ============================================================
 
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { fromTable } from '@/lib/api/db'
+import { selectUserRows, insertRows, deleteUserRow } from '@/lib/api/db'
 import { ValidationError } from '@/lib/api/http'
 
 export type Vital =
@@ -111,26 +111,20 @@ export function buildVitalPayload(userId: string, input: VitalInput): VitalPaylo
   }
 }
 
-// ── Repositório (I/O) — acesso pela fundação (fromTable), sempre escopado a VITALS ──
+// ── Repositório (I/O) — pela fundação, sempre escopado a VITALS ───────────────
 
 export async function listVitals(supabase: SupabaseClient, userId: string): Promise<VitalEntry[]> {
-  const { data, error } = await fromTable(supabase, TABLE)
-    .select(COLUMNS)
-    .eq('user_id', userId)
-    .in('metric', VITALS)
-    .order('measured_on', { ascending: false })
-  if (error) throw new Error(error.message)
-  return ((data ?? []) as VitalRow[]).map(toDomain)
+  const rows = await selectUserRows<VitalRow>(supabase, TABLE, userId, {
+    columns: COLUMNS, scopeIn: { column: 'metric', values: VITALS }, orderBy: 'measured_on',
+  })
+  return rows.map(toDomain)
 }
 
 export async function createVital(supabase: SupabaseClient, userId: string, input: VitalInput): Promise<void> {
-  const payload = buildVitalPayload(userId, input)
-  const { error } = await fromTable(supabase, TABLE).insert(payload)
-  if (error) throw new Error(error.message)
+  await insertRows(supabase, TABLE, [buildVitalPayload(userId, input)])
 }
 
 export async function removeVital(supabase: SupabaseClient, userId: string, id: string): Promise<void> {
-  // Escopo a VITALS + user_id — impede remover uma métrica corporal (Medidas) por engano.
-  const { error } = await fromTable(supabase, TABLE).delete().eq('id', id).eq('user_id', userId).in('metric', VITALS)
-  if (error) throw new Error(error.message)
+  // Escopo a VITALS — impede remover uma métrica corporal (Medidas) por engano.
+  await deleteUserRow(supabase, TABLE, userId, id, { column: 'metric', values: VITALS })
 }
