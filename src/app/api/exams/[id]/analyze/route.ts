@@ -8,6 +8,7 @@ import { extractTextFromPdf, filterRelevantPages } from '@/lib/pdf/extractor'
 import { loadCatalogIndex, resolveBiomarker } from '@/lib/ai/insights/resolver'
 import { classifyExamDocument, deriveDisplayTitle } from '@/lib/capture/document-naming'
 import { extractIssuer, extractIssuerFromImage } from '@/lib/ai/issuer'
+import { runPostIngestion } from '@/lib/ingestion/pipeline'
 
 const ERROR_MESSAGES: Record<string, string> = {
   password_protected: 'O PDF está protegido por senha e não pode ser processado.',
@@ -314,6 +315,12 @@ export async function POST(
   await supabase.from('exams')
     .update(finalUpdate as never)
     .eq('id', examId)
+
+  // Pós-ingestão (source-agnostic) — geração de insights rule-based.
+  // Gated OFF por padrão (INSIGHTS_POST_INGESTION): com o flag ausente é no-op,
+  // não toca o banco e NÃO altera a resposta abaixo. Best-effort (nunca lança);
+  // resultado deliberadamente descartado. Wearables (Fase 2) usarão o MESMO hook.
+  await runPostIngestion(supabase, { userId, source: { kind: 'exam', examId } })
 
   return NextResponse.json({
     success:        true,

@@ -1,0 +1,109 @@
+# Pipeline de Ingestão — Infraestrutura Permanente
+
+**Status:** implementado, **desabilitado por padrão em produção**.
+**Escopo:** infraestrutura permanente da plataforma — **não** pertence ao Sprint 2.
+**Código:** `src/lib/ingestion/` · **Testes:** `src/lib/ingestion/__smoke__/pipeline.mjs`
+
+---
+
+## 1. O que é
+
+Um contrato único que representa o evento:
+
+> *"uma nova informação clínica estruturada foi incorporada à SINTERA"*
+
+— **independente de quem a produziu.** A origem muda; o pipeline permanece o mesmo.
+Serve hoje exames laboratoriais e, sem reescrita, servirá wearables (Oura, Garmin,
+Strava), Apple Health, Google Health Connect, WHOOP, dispositivos médicos e
+integrações futuras.
+
+```
+Exame ─────────┐
+Wearable ──────┤
+Apple Health ──┼──►  runPostIngestion(IngestionEvent)  ──►  geração de insights
+Google Health ─┤          (source-agnostic)
+Dispositivo ───┘
+```
+
+## 2. Contrato
+
+```ts
+type IngestionSource =
+  | { kind: 'exam'; examId: string }
+  | { kind: 'wearable'; provider: string; readingBatchId?: string }  // Fase 2
+
+interface IngestionEvent { userId: string; source: IngestionSource }
+
+runPostIngestion(supabase, event, deps?) → Promise<PostIngestionResult>  // NUNCA lança
+```
+
+- **O produtor não conhece o consumidor.** Quem dispara só monta o `IngestionEvent`.
+  Adicionar uma origem = acrescentar um membro à união discriminada; nenhum chamador muda.
+- **O hook não é específico de Exames.** O dispatch por origem é interno.
+
+## 3. Garantias de infraestrutura
+
+| Garantia | Como |
+|---|---|
+| **Best-effort** | `runPostIngestion` **nunca lança**. Todo erro é capturado e devolvido em `outcome:'error'`. A ingestão do chamador jamais quebra por causa daqui. |
+| **Idempotência** | Garantida na **persistência**: dedup por `(exam_id, content_hash)` via `upsert(..., ignoreDuplicates)` + índice único `ai_insights_exam_hash_uidx` sobre um `content_hash` **determinístico** (`persistence.contentHashFor`). Disparar N vezes para o mesmo recurso **não** cria insights duplicados nem inconsistências. *Nota:* o recomputo (assembler+engine) não é deduplicado — é seguro e barato; um guard de "já processado" pode ser adicionado depois se o custo justificar. |
+| **Footprint zero com a flag off** | Flag desligada → retorna na hora, **sem banco, sem resposta alterada e sem log** (o sink default silencia o estado estacionário `flag_off`). |
+| **Fronteira regulatória** | Nenhum juízo clínico aqui. Com regras/templates clínicos vazios (estado atual), mesmo ligado gera **0** — `outcome:'no_active_rules'`. |
+
+## 4. Feature flag — `INSIGHTS_POST_INGESTION`
+
+Desliga **apenas a geração automática** (o disparo pós-ingestão). Default: **OFF**
+(qualquer valor fora de `on`/`1`/`true` = desligado).
+
+**Não** bloqueia:
+- **execução manual** — `POST /api/exams/[id]/insights` chama o orquestrador **direto**, sem passar pelo hook;
+- **testes / smoke tests** — injetam `isEnabled: () => true` via `deps`;
+- **desenvolvimento/homologação** — basta `INSIGHTS_POST_INGESTION=on`.
+
+Assim toda a infraestrutura é validável **antes** da ativação em produção.
+
+> **Evolução:** quando a ativação for aprovada, este env flag pode dar lugar ao mesmo
+> padrão de **rollout controlado** já usado na escrita canônica (`canonical_route` →
+> `allowlist`/`percent`), sem alterar o contrato do hook.
+
+## 5. Observabilidade (telemetria)
+
+Cada execução emite um `PostIngestionResult` completo — **não apenas erros**:
+
+| Campo | Responde |
+|---|---|
+| `userId` | quem disparou (dona dos dados) |
+| `source` + `sourceRef` | qual a origem (exam/wearable + examId/provider) |
+| `durationMs` | tempo de execução |
+| `insightsGenerated` | quantos insights saíram |
+| `outcome` | **por que (não) gerou**: `generated` · `no_active_rules` · `flag_off` · `unsupported_source` · `error` |
+| `rulesActive` / `candidates` | contexto do zero (ex.: 0 regras ativas) |
+| `error` | mensagem, quando `outcome:'error'` |
+
+Sink default: log estruturado `[ingestion:telemetry] {…}` (greppável). Um sink
+injetável (`deps.telemetry`) permite plugar observabilidade externa ou persistência
+(ex.: `usage_events`) sem tocar o pipeline.
+
+> **Nota:** o desfecho de **QA** (reprovação da narrativa) pertence ao caminho
+> `ai_generated` (narrativa + gate `qa`), **ainda não implementado**. Quando existir,
+> entra como novo `outcome` — o contrato é extensível.
+
+## 6. Onde toca produção
+
+Um único ponto: `src/app/api/exams/[id]/analyze/route.ts`, **após** a persistência dos
+biomarcadores, uma chamada best-effort com resultado descartado:
+
+```ts
+await runPostIngestion(supabase, { userId, source: { kind: 'exam', examId } })
+```
+
+Com a flag off (produção), é no-op: **não altera** os biomarcadores, o status do exame,
+a resposta da API nem o banco. O Resolver (preenchimento de `catalog_id`) **já** fazia
+parte desta rota e permanece inalterado.
+
+## 7. Extensão para wearables (Fase 2)
+
+Quando `wearable_readings` existir (ver `docs/FASE-2-WEARABLES.md`), o sync do provedor
+emitirá `{ kind: 'wearable', provider, readingBatchId }` para o **mesmo** hook. Falta
+apenas mapear essa origem à geração (hoje retorna `unsupported_source`) — o contrato,
+a flag, a telemetria e a idempotência já valem para ela.

@@ -53,9 +53,15 @@ const results = await resolveBiomarkers(supabase, [{ name: 'Hemoglobina', unit: 
 - **Templates rule-based**, **Narrativa** e **Gate de QA**: dependem da aprovação dos prompts `narrative`/`qa` (hoje `draft`).
 - **Persistência em `ai_insights`** e **ativação na UI**: vêm depois dos itens acima.
 
-## Ainda não conectado em produção
+## Estado de conexão com produção
 
-Estes módulos são a fundação testada, mas **ainda não são chamados** por nenhuma rota.
-A integração (ex.: rodar o Resolver após a extração para preencher `biomarkers.catalog_id`
-em exames novos) é um passo seguinte, a ser revisado antes de tocar a rota de produção
-`src/app/api/exams/[id]/analyze/route.ts`.
+- **Resolver** — **conectado**: `analyze/route.ts` preenche `biomarkers.catalog_id` em toda extração.
+- **Assembler** — conectado em leitura: `GET /api/biomarkers/organized` (organização factual).
+- **Geração rule-based (orchestrator)** — disponível por dois caminhos:
+  - **manual**: `POST /api/exams/[id]/insights` (chama o orquestrador direto — não passa por flag);
+  - **automático (pós-ingestão)**: via o hook source-agnostic `runPostIngestion`
+    (`src/lib/ingestion/`), ligado em `analyze/route.ts` mas **desligado por padrão**
+    (`INSIGHTS_POST_INGESTION`). Ver **`docs/INGESTAO-PIPELINE.md`**.
+
+Enquanto `CLINICAL_RULESET`/`TEMPLATE_LIBRARY` estiverem vazios, qualquer caminho gera **0**
+insights — comportamento seguro e intencional até a aprovação clínica.
