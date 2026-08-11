@@ -59,10 +59,6 @@ export interface EventCommandService {
   reopen(userId: string, event: HealthEvent): Promise<void>
   /** Exclui o evento de vez (ex.: remover um lançamento de Despesas). Emite EventDeleted. */
   remove(userId: string, event: HealthEvent): Promise<void>
-  /** Cria/atualiza um LEMBRETE (conceito permanente de evento). Devolve o id do lembrete. */
-  upsertReminder(userId: string, r: { id?: string | null; title: string; date: string }): Promise<string>
-  /** Remove um lembrete (coexistência-aware). */
-  clearReminder(userId: string, id: string): Promise<void>
   /** Marca lembretes como enviados (jobs/cron/integrações). Coexistência-aware. */
   markRemindersSent(ids: string[], sentAt: string): Promise<void>
   /**
@@ -155,8 +151,6 @@ export function createEventCommandService(repo: EventRepository, bus: EventBus, 
     },
     // Lembretes: conceito de evento leve (agenda_events legado). Não emitem no bus por
     // ora (não há HealthEvent completo); a tabela é escondida do consumidor pelo domínio.
-    upsertReminder: (userId, r) => repo.upsertReminder(userId, r),
-    clearReminder: (userId, id) => repo.deleteEvent(userId, id),
     markRemindersSent: (ids, sentAt) => repo.markRemindersSent(ids, sentAt),
     async syncReminder(userId, { existingId, desired }) {
       if (desired) return repo.upsertReminder(userId, { id: existingId, title: desired.title, date: desired.date })
