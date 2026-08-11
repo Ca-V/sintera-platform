@@ -84,14 +84,18 @@ export interface BiomarkerSummary {
   latest: Measurement | null
   first: Measurement | null
   count: number
+  /** Tendência TOP-LEVEL. Com >1 unidade é SEMPRE 'unit_mismatch' (não existe tendência agregada entre unidades).
+   *  Para gráfico/tendência REAIS use `unitGroups` (várias séries) ou `primaryUnitSeries()` (gráfico único). */
   trend: Trend
-  deltaPercent: number | null       // entre as duas últimas medições
-  totalDeltaPercent: number | null  // entre a primeira e a última
+  deltaPercent: number | null       // top-level; null quando há unidades diferentes
+  totalDeltaPercent: number | null  // top-level; null quando há unidades diferentes
   hasUnitMismatch: boolean
   units: string[]
-  measurements: Measurement[]        // TODAS as medições (todas as unidades) — nunca descartadas
-  /** Séries por unidade compatível (gráfico/tendência SÓ dentro de cada grupo). 1 grupo = sem mismatch.
-   *  Opcional só para não quebrar mocks de teste — summarizeBiomarkers SEMPRE preenche. */
+  /** TODAS as medições (TODAS as unidades) — nunca descartadas. **NÃO usar para gráfico nem tendência** (misturaria
+   *  unidades); serve só para LISTAR. Gráfico/tendência: `unitGroups` (por unidade) ou `primaryUnitSeries()`. */
+  measurements: Measurement[]
+  /** CAMINHO OFICIAL para gráfico/tendência: uma série por unidade compatível (nunca mistura). 1 grupo = sem
+   *  mismatch. Opcional só para não quebrar mocks — summarizeBiomarkers SEMPRE preenche. */
   unitGroups?: UnitSeries[]
 }
 

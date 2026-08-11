@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { summarizeBiomarkers, seriesForName, normalizeName, type BiomarkerRow } from './grouping'
+import { summarizeBiomarkers, seriesForName, primaryUnitSeries, normalizeName, type BiomarkerRow } from './grouping'
 
 function row(p: Partial<BiomarkerRow> & { name: string; value: number | null; date: string }): BiomarkerRow {
   return {
@@ -43,6 +43,30 @@ describe('summarizeBiomarkers', () => {
     expect(g.trend).toBe('up')
     expect(g.deltaPercent).toBe(30)
     expect(g.totalDeltaPercent).toBe(30)
+  })
+
+  // Blindagem arquitetural: invariantes que impedem regressão da regra de unidades incompatíveis.
+  it('INVARIANTE: nunca descarta — measurements = soma das medições dos unitGroups', () => {
+    const rows = [
+      row({ name: 'Ferritina', value: 30, unit: 'ng/mL', date: '2025-01-01' }),
+      row({ name: 'Ferritina', value: 40, unit: 'ng/mL', date: '2025-06-01' }),
+      row({ name: 'Ferritina', value: 90, unit: 'µg/L', date: '2025-09-01' }),
+    ]
+    const s = summarizeBiomarkers(rows)[0]
+    const soma = (s.unitGroups ?? []).reduce((n, g) => n + g.measurements.length, 0)
+    expect(s.measurements.length).toBe(3)
+    expect(soma).toBe(3) // nada descartado
+  })
+  it('INVARIANTE: primaryUnitSeries nunca mistura unidades (série da unidade principal)', () => {
+    const rows = [
+      row({ name: 'Ferritina', value: 30, unit: 'ng/mL', date: '2025-01-01' }),
+      row({ name: 'Ferritina', value: 40, unit: 'ng/mL', date: '2025-06-01' }),
+      row({ name: 'Ferritina', value: 90, unit: 'µg/L', date: '2025-09-01' }),
+    ]
+    const g = primaryUnitSeries(summarizeBiomarkers(rows)[0])
+    expect(new Set(g.measurements.map(m => m.unit)).size).toBe(1) // uma só unidade
+    expect(g.unit).toBe('ng/mL') // a de mais medições
+    expect(g.measurements).toHaveLength(2)
   })
 
   it('unidades diferentes: NÃO descarta dados, agrupa por unidade e não compara entre unidades', () => {
