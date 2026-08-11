@@ -120,7 +120,28 @@ por exame. **Consequência:** adicionar uma origem hoje exige editar `pipeline.t
 adaptador. As garantias (best-effort, idempotência, telemetria, flag) já são source-agnostic; o
 **dispatch** não é.
 
-**Alvo (fecha a causa):** um **registry de adaptadores**. O núcleo passa a conhecer só:
+**Alvo real (mais profundo que o registry): o Evento Clínico Canônico.** O registry resolve o
+*dispatch*; mas o contrato compartilhado deveria ser **anterior** a ele. No desenho-alvo:
+
+```
+ClinicalDataProducer  →  Normalizer  →  CanonicalClinicalEvent  →  Pipeline
+     (Exam, Wearable,     (por produtor,   (observações clínicas       (source-blind:
+      Vision, Omics,       fora do núcleo)  normalizadas: sujeito,       um único caminho,
+      FHIR, IoT…)                           conceito/LOINC, valor,       sem dispatch)
+                                            unidade, tempo, proveniência)
+```
+
+O pipeline **sequer sabe que adaptadores existem** — recebe só o evento canônico e roda um único
+caminho (normalização já feita → organização → geração → persistência). O adaptador/normalizador
+**sobe** para a camada do produtor. Isso reduz o acoplamento **mais** que o registry: o registry
+esconde os *nomes* das origens atrás de um mapa; o evento canônico remove o *conceito de origem* do
+núcleo. **Pré-condição honesta:** o "zero alteração por origem" só se realiza se a camada de insights
+também operar por **conceito canônico (LOINC-like)** em vez de `biomarker_catalog`/`current_biomarkers`
+— hoje ela é modelada por biomarcador de exame. Alinha com o rumo já previsto nos docs de
+Knowledge Graph V2 / Scientific Catalog (e o `loincCode` já presente em `RuleProvenance`).
+
+**Registry (subordinado):** se ainda houver necessidade de dispatch (ex.: geração difere por
+modalidade), ele vira detalhe *interno* da normalização, não o contrato central. Núcleo conhece só:
 
 ```ts
 type SourceHandler = (supabase, event) => Promise<GenerationOutput>
