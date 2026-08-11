@@ -65,6 +65,16 @@ export interface EventCommandService {
   clearReminder(userId: string, id: string): Promise<void>
   /** Marca lembretes como enviados (jobs/cron/integrações). Coexistência-aware. */
   markRemindersSent(ids: string[], sentAt: string): Promise<void>
+  /**
+   * Sincroniza um lembrete ao estado desejado — SOBE a máquina de estado que os
+   * consumidores duplicavam: `desired` presente → cria/atualiza; `desired` null →
+   * remove o existente. Devolve o id do lembrete (ou null). Qualquer origem de evento
+   * usa isto; o consumidor só guarda o id devolvido na sua própria tabela.
+   */
+  syncReminder(
+    userId: string,
+    params: { existingId?: string | null; desired: { title: string; date: string } | null },
+  ): Promise<string | null>
 }
 
 function newId(): string {
@@ -148,6 +158,11 @@ export function createEventCommandService(repo: EventRepository, bus: EventBus, 
     upsertReminder: (userId, r) => repo.upsertReminder(userId, r),
     clearReminder: (userId, id) => repo.deleteEvent(userId, id),
     markRemindersSent: (ids, sentAt) => repo.markRemindersSent(ids, sentAt),
+    async syncReminder(userId, { existingId, desired }) {
+      if (desired) return repo.upsertReminder(userId, { id: existingId, title: desired.title, date: desired.date })
+      if (existingId) { await repo.deleteEvent(userId, existingId); return null }
+      return null
+    },
   }
 }
 
