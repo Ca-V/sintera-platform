@@ -12,7 +12,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Loader2, X, ArrowLeft, Pencil, Trash2, ChevronDown } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import CreateRecordMenu from '@/components/ui/CreateRecordMenu'
@@ -23,7 +22,6 @@ import ListCard, { CardChip } from '@/components/ListCard'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import Card from '@/components/ui/Card'
 import Disclaimer from '@/components/ui/Disclaimer'
-import { healthEventToRow } from '@/lib/agenda/event'
 
 type Status = 'em_uso' | 'programado' | 'suspenso' | 'encerrado'
 type Kind = 'medicamento' | 'suplemento' | 'produto' | 'dispositivo' | 'outro'
@@ -86,7 +84,6 @@ function fmtFull(date: string): string {
 function fmtShort(date: string): string { return `${date.slice(8, 10)}/${date.slice(5, 7)}` }
 export default function MedicamentosPage() {
   const { user, loading: authLoading } = useUser()
-  const supabase = createClient()
   const [meds, setMeds] = useState<Med[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -205,39 +202,11 @@ export default function MedicamentosPage() {
   const load = useCallback(async () => {
     if (!user) return
     setLoading(true)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (supabase as any).from('medications')
-      .select('id, name, kind, brand, dose, frequency, started_on, until_date, status, notes, acquired_quantity, pack_quantity, daily_consumption, purchased_on, purchase_status, amount_cents, repurchase_reminder, repurchase_frequency, repurchase_event_id, purchase_event_id, pharmaceutical_form, administration_route, pack_unit, prescriber_name')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-    setMeds(((data ?? []) as Array<Record<string, unknown>>).map(m => ({
-      id: m.id as string,
-      name: (m.name as string) ?? '',
-      kind: (['suplemento', 'produto', 'dispositivo', 'outro'].includes(m.kind as string) ? (m.kind as string) : 'medicamento') as Kind,
-      brand: (m.brand as string) ?? null,
-      dose: (m.dose as string) ?? null,
-      frequency: (m.frequency as string) ?? null,
-      startedOn: (m.started_on as string) ?? null,
-      untilOn: (m.until_date as string) ?? null,
-      status: (m.status as Status) ?? 'em_uso',
-      notes: (m.notes as string) ?? null,
-      acquiredQty: m.acquired_quantity != null ? Number(m.acquired_quantity) : null,
-      packQty: m.pack_quantity != null ? Number(m.pack_quantity) : null,
-      dailyCons: m.daily_consumption != null ? Number(m.daily_consumption) : null,
-      purchasedOn: (m.purchased_on as string) ?? null,
-      purchaseStatus: (m.purchase_status as string) ?? null,
-      amountCents: m.amount_cents != null ? Number(m.amount_cents) : null,
-      repurchaseReminder: m.repurchase_reminder === true,
-      repurchaseFreq: (m.repurchase_frequency as string) ?? null,
-      repurchaseEventId: (m.repurchase_event_id as string) ?? null,
-      purchaseEventId: (m.purchase_event_id as string) ?? null,
-      form: (m.pharmaceutical_form as string) ?? null,
-      route: (m.administration_route as string) ?? null,
-      packUnit: (m.pack_unit as string) ?? null,
-      prescriber: (m.prescriber_name as string) ?? null,
-    })))
+    const res = await fetch('/api/medicamentos')
+    const data = res.ok ? await res.json() : { meds: [] }
+    setMeds((data.meds ?? []) as Med[])
     setLoading(false)
-  }, [user, supabase])
+  }, [user])
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { if (!authLoading) load() }, [authLoading, load])
@@ -289,86 +258,18 @@ export default function MedicamentosPage() {
       setErr('Selecione a forma farmacêutica.'); return
     }
     setSaving(true); setErr(null)
-    const num = (s: string) => { const v = parseFloat(s.replace(',', '.')); return isFinite(v) && v > 0 ? v : null }
-    // "250,00" | "R$ 1.500,00" → centavos. Vazio/inválido → null.
-    const toCents = (s: string) => {
-      let t = s.trim().replace(/[R$\s]/g, ''); if (!t) return null
-      if (t.includes(',')) t = t.replace(/\./g, '').replace(',', '.')
-      const v = parseFloat(t); return isFinite(v) && v >= 0 ? Math.round(v * 100) : null
-    }
-    const payload = {
-      name: name.trim(), kind, brand: brand.trim() || null, dose: dose.trim() || null, frequency: freq.trim() || null,
-      started_on: startedOn || null, until_date: untilOn || null, notes: notes.trim() || null,
-      acquired_quantity: num(acquiredQty), pack_quantity: num(packQty), daily_consumption: num(dailyCons),
-      purchased_on: purchasedOn || null, purchase_status: purchaseStatus || null, amount_cents: toCents(amount),
-      repurchase_reminder: repurchase, repurchase_frequency: repurchase ? (repurchaseFreq || null) : null,
-      pharmaceutical_form: form || null, administration_route: route || null, pack_unit: packUnit.trim() || null,
-      prescriber_name: prescriber.trim() || null, status: medStatus,
-    }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const db = supabase as any
-    const existing = editingId ? meds.find(m => m.id === editingId) : null
-    const status: Status = medStatus
-    let medId: string | null = editingId
-    if (editingId) {
-      const { error } = await db.from('medications').update({ ...payload, updated_at: new Date().toISOString() }).eq('id', editingId)
-      if (error) { setErr(error.message); setSaving(false); return }
-    } else {
-      const { data, error } = await db.from('medications').insert({ ...payload, user_id: user.id }).select('id').single()
-      if (error) { setErr(error.message); setSaving(false); return }
-      medId = (data?.id as string) ?? null
-    }
-
-    // Lembrete de recompra (reaproveita o worker de lembretes via agenda_events).
-    // Data pela HIERARQUIA oficial: cálculo por consumo tem prioridade; na ausência
-    // dele, usa a recorrência declarada (mensal…anual) — antes só o consumo agendava,
-    // então uma recorrência "trimestral" sem consumo nunca gerava evento (bug corrigido).
-    if (medId) {
-      const rec = nextRepurchaseDate(purchasedOn || null, num(packQty), num(dailyCons), num(acquiredQty), repurchaseFreq || null)
-      const wants = repurchase && status === 'em_uso' && !!rec
-      const existingEvent = existing?.repurchaseEventId ?? null
-      try {
-        if (wants) {
-          if (existingEvent) {
-            await db.from('agenda_events').update({ title: `Recomprar: ${name.trim()}`, event_date: rec, status: 'pending', reminder_enabled: true, reminder_sent_at: null }).eq('id', existingEvent)
-          } else {
-            const { data: ev } = await db.from('agenda_events').insert({ user_id: user.id, event_type: 'medicacao', title: `Recomprar: ${name.trim()}`, event_date: rec, status: 'pending', reminder_enabled: true }).select('id').single()
-            if (ev?.id) await db.from('medications').update({ repurchase_event_id: ev.id }).eq('id', medId)
-          }
-        } else if (existingEvent) {
-          await db.from('agenda_events').delete().eq('id', existingEvent)
-          await db.from('medications').update({ repurchase_event_id: null }).eq('id', medId)
-        }
-      } catch { /* lembrete é best-effort, não bloqueia o salvamento */ }
-    }
-
-    // Evento canônico de COMPRA (Opção A): marcar "comprado" emite um health_events
-    // que alimenta Gastos + Histórico + Dashboard por origem única. Idempotente via
-    // purchase_event_id (editar atualiza o mesmo evento; despublicar remove).
-    if (medId) {
-      const wantsPurchase = purchaseStatus === 'comprado' && !!purchasedOn
-      const existingPurchase = existing?.purchaseEventId ?? null
-      // kind → event_type válido (CHECK health_events): produto/dispositivo → 'outro'
-      const evType = kind === 'medicamento' ? 'medicamento' : kind === 'suplemento' ? 'suplemento' : 'outro'
-      try {
-        if (wantsPurchase) {
-          const row = healthEventToRow(user.id, {
-            ...(existingPurchase ? { id: existingPurchase } : {}),
-            type: evType, title: `Compra: ${name.trim()}`, date: purchasedOn,
-            status: 'realizado', source: 'system', directExpense: true,
-            amountCents: toCents(amount),
-          })
-          const { data: pev } = await db.from('health_events').upsert(row).select('id').single()
-          if (pev?.id && pev.id !== existingPurchase) {
-            await db.from('medications').update({ purchase_event_id: pev.id }).eq('id', medId)
-          }
-        } else if (existingPurchase) {
-          await db.from('health_events').delete().eq('id', existingPurchase)
-          await db.from('medications').update({ purchase_event_id: null }).eq('id', medId)
-        }
-      } catch { /* projeção best-effort: não bloqueia o salvamento do medicamento */ }
-    }
-    // Só agora (salvo com sucesso) o item do scan sai da lista de detectados.
+    // Toda a lógica (payload + recompra→lembrete + compra→evento canônico) vive no
+    // serviço/rota; a Agenda é a dona do ciclo de vida dos eventos. A UI só envia os campos.
+    const res = await fetch('/api/medicamentos', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: editingId, name, kind, brand, dose, frequency: freq, startedOn, untilOn, notes, status: medStatus,
+        acquiredQty, packQty, dailyCons, purchasedOn, purchaseStatus, amount, repurchase, repurchaseFreq,
+        form, route, packUnit, prescriber,
+      }),
+    })
+    if (!res.ok) { setSaving(false); const e = await res.json().catch(() => ({})); setErr((e.error as string) ?? 'Falha ao salvar.'); return }
+    // Só após salvar com sucesso o item do scan sai da lista de detectados.
     if (scanEditing) setScanResults(prev => prev.filter(x => x !== scanEditing))
     setSaving(false)
     reset(); setShowForm(false); await load()
@@ -379,11 +280,7 @@ export default function MedicamentosPage() {
     if (busyId) return
     if (!window.confirm(`Remover "${m.name}" da sua lista?`)) return
     setBusyId(m.id)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const db = supabase as any
-    if (m.repurchaseEventId) await db.from('agenda_events').delete().eq('id', m.repurchaseEventId)
-    if (m.purchaseEventId) await db.from('health_events').delete().eq('id', m.purchaseEventId)
-    await db.from('medications').delete().eq('id', m.id)
+    await fetch(`/api/medicamentos?id=${encodeURIComponent(m.id)}`, { method: 'DELETE' })
     await load(); setBusyId(null)
   }
 
