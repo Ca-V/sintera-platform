@@ -82,6 +82,9 @@ const CATEGORY_RULES: { type: DocumentType; re: RegExp; label: string }[] = [
   // Oftalmologia.
   { type: 'ophthalmology', re: /retinografia|mapeamento\s*de\s*retina/i, label: 'Mapeamento de retina' },
   { type: 'ophthalmology', re: /(topografia|tomografia|paquimetria)\s*(de\s*)?c[óo]rnea/i, label: 'Exame de córnea' },
+  // Microscopia especular de córnea (contagem/densidade de células endoteliais) — modalidade oftalmológica de
+  // equipamento, na mesma família de OCT/topografia. Termos PT+EN (o valor pode vir rotulado em inglês).
+  { type: 'ophthalmology', re: /microscopia\s*especular|c[ée]lulas?\s*endotelia(l|is)|endothelial\s*cells?|densidade\s*endotelial|contagem\s*endotelial|specular\s*microscopy/i, label: 'Microscopia especular de córnea' },
   { type: 'ophthalmology', re: /\boct\b|tomografia\s*de\s*coer[êe]ncia\s*[óo]ptica/i, label: 'OCT (tomografia de coerência óptica)' },
   { type: 'ophthalmology', re: /campimetria|campo\s*visual/i, label: 'Campimetria' },
   { type: 'ophthalmology', re: /fundoscopia|fundo\s*de\s*olho|biomicroscopia|mapeamento\s*de\s*fundo/i, label: 'Exame oftalmológico' },

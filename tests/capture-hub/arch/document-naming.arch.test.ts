@@ -149,6 +149,34 @@ describe('ARCH-002 · cobertura de exames não-laboratoriais + pedidos', () => {
   })
 })
 
+// Regressão do bug de homologação: microscopia especular/endotelial (oftalmológica, de equipamento) era
+// classificada como "laboratory" por não estar no vocabulário → caía no padrão. A regra explícita de modalidade
+// deve reconhecê-la como oftalmologia SEM afetar laboratoriais/imagem reais.
+describe('ARCH-002 · regressão: microscopia especular/endotelial → oftalmologia (não laboratorial)', () => {
+  it('microscopia especular de córnea → ophthalmology', () => {
+    const s = classifyExamDocument({ examType: 'Microscopia especular de córnea', biomarkers: [], text: '' })
+    expect(s.documentType).toBe('ophthalmology')
+  })
+  it('contagem/densidade de células endoteliais (PT) → ophthalmology', () => {
+    const s = classifyExamDocument({ examType: null, biomarkers: [], text: 'Contagem de células endoteliais da córnea — densidade endotelial 2600 céls/mm²' })
+    expect(s.documentType).toBe('ophthalmology')
+  })
+  it('"Endothelial cells" (EN, caso real da homologação) → ophthalmology, NÃO laboratory', () => {
+    const s = classifyExamDocument({ examType: 'Endothelial cells', biomarkers: [{ name: 'Endothelial cells', sourceExamName: 'Endothelial cells' }], text: '' })
+    expect(s.documentType).toBe('ophthalmology')
+    expect(s.documentType).not.toBe('laboratory')
+  })
+  it('NÃO regride laboratoriais reais (elastase, ácido 5-hidroxi, painel de sangue)', () => {
+    expect(classifyExamDocument({ examType: null, biomarkers: [{ name: 'Elastase pancreática fecal', sourceExamName: 'ELASTASE PANCREÁTICA FECAL' }], text: '' }).documentType).toBe('laboratory')
+    expect(classifyExamDocument({ examType: null, biomarkers: [{ name: 'Ácido 5-hidroxi-indolacético', sourceExamName: 'ÁCIDO 5 HIDROXI INDOLACÉTICO' }], text: '' }).documentType).toBe('laboratory')
+    expect(classifyExamDocument({ examType: 'laboratorial', biomarkers: [{ name: 'Glicose', sourceExamName: 'GLICOSE' }, { name: 'Ureia', sourceExamName: 'UREIA' }], text: '' }).documentType).toBe('laboratory')
+  })
+  it('NÃO regride exames de imagem (ultrassom, mamografia)', () => {
+    expect(classifyExamDocument({ examType: 'Ultrassonografia pélvica endovaginal', biomarkers: [], text: '' }).documentType).toBe('imaging')
+    expect(classifyExamDocument({ examType: 'Mamografia digital', biomarkers: [], text: '' }).documentType).toBe('imaging')
+  })
+})
+
 describe('ARCH-002 · caso real Hermes Pardini (sangue + urina, vários exames)', () => {
   it('documento composto → "Exames laboratoriais" (regressão do bug "IgE látex")', () => {
     const biomarkers = [
