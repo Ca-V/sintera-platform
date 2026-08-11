@@ -38,8 +38,11 @@ runPostIngestion(supabase, event, deps?) → Promise<PostIngestionResult>  // NU
 ```
 
 - **O produtor não conhece o consumidor.** Quem dispara só monta o `IngestionEvent`.
-  Adicionar uma origem = acrescentar um membro à união discriminada; nenhum chamador muda.
-- **O hook não é específico de Exames.** O dispatch por origem é interno.
+  Nenhum produtor muda quando outra origem é adicionada.
+- **Estado atual (honesto):** o dispatch por origem vive **dentro do pipeline** (`if kind === 'exam'`).
+  Logo, adicionar uma origem hoje toca `types.ts` (novo membro da união) **e** `pipeline.ts`
+  (novo ramo). Ver **§8 — limitação conhecida e evolução para registry de adaptadores**, onde o
+  núcleo passa a ser cego à origem e cada fonte vira um adaptador (pipeline intocado).
 
 ## 3. Garantias de infraestrutura
 
@@ -107,3 +110,42 @@ Quando `wearable_readings` existir (ver `docs/FASE-2-WEARABLES.md`), o sync do p
 emitirá `{ kind: 'wearable', provider, readingBatchId }` para o **mesmo** hook. Falta
 apenas mapear essa origem à geração (hoje retorna `unsupported_source`) — o contrato,
 a flag, a telemetria e a idempotência já valem para ela.
+
+## 8. Limitação conhecida e evolução → registry de adaptadores
+
+**Limitação (auditada):** o núcleo do pipeline ainda **conhece "exam"**. Em `pipeline.ts`:
+`sourceRefOf` tem `case 'exam'`; o dispatch tem `if (event.source.kind === 'exam')` e importa
+`generateRuleBasedInsights` (camada de insights); `PostIngestionDeps.generateForExam` é nomeado
+por exame. **Consequência:** adicionar uma origem hoje exige editar `pipeline.ts`, não só um
+adaptador. As garantias (best-effort, idempotência, telemetria, flag) já são source-agnostic; o
+**dispatch** não é.
+
+**Alvo (fecha a causa):** um **registry de adaptadores**. O núcleo passa a conhecer só:
+
+```ts
+type SourceHandler = (supabase, event) => Promise<GenerationOutput>
+// registry: Map<IngestionSource['kind'], SourceHandler>
+```
+
+O pipeline: resolve o handler por `source.kind`; sem handler → `unsupported_source`; com handler →
+executa (timing + telemetria + best-effort). Cada origem vira um **adaptador** que registra seu
+handler **fora** do núcleo. Efeitos:
+
+- `pipeline.ts` passa a ter **zero** referências a "exam" e **deixa de importar** a camada de insights.
+- **Adicionar Apple Health / Google Health Connect / Garmin / WHOOP / Oura / lab parceiro / HL7-FHIR /
+  IoT = criar um adaptador + registrá-lo.** Pipeline e produtores intocados. (O membro da união em
+  `types.ts` é a única adição de tipo — ou `kind: string` no registry, trocando type-safety por
+  abertura total.)
+
+> Enquanto o registry não existe, esta é a **única** dívida estrutural aberta desta infraestrutura.
+
+## 9. Princípio permanente: infraestrutura ≠ conhecimento clínico
+
+A camada de ingestão **transporta eventos**; ela **nunca** conhece:
+biomarcadores específicos · doenças · especialidades · regras clínicas · interpretação médica.
+
+Toda inteligência clínica fica encapsulada na camada de insights (`src/lib/ai/insights/`), atrás de
+**uma** chamada opaca (`generateRuleBasedInsights`), cujo resultado o pipeline lê apenas como
+contadores (`rulesActive`, `candidates`, `upserted`) para telemetria. Auditoria: não há nome de
+biomarcador, doença, especialidade ou limiar clínico em `src/lib/ingestion/`. No estado-alvo (§8),
+o núcleo deixa até de importar a camada de insights — a separação passa a ser também de dependência.
