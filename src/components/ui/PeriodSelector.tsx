@@ -5,8 +5,10 @@
 // compartilhamento/impressão/exportações/Timeline/Dashboards.
 
 import { type Period, PERIOD_PRESETS } from '@/lib/communication/period'
+import { fieldClass } from '@/components/ui/field'
 
-const inputCls = 'px-2 py-1 border border-border rounded-lg font-body text-xs text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30'
+// Variante COMPACTA e de largura automática da superfície de campo canônica (DS).
+const inputCls = fieldClass({ className: 'w-auto px-2 py-1 rounded-lg text-xs' })
 
 export default function PeriodSelector({ period, onChange, className = '' }: {
   period: Period

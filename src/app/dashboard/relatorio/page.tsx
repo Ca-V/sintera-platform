@@ -21,6 +21,7 @@ import { examProvenance, resourceProvenance } from '@/lib/provenance'
 import { type Period, resolvePeriod, inPeriod, overlapsPeriod, periodLabel } from '@/lib/communication/period'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import Card from '@/components/ui/Card'
+import { fieldClass } from '@/components/ui/field'
 import { applySort, type SortSpec } from '@/lib/listview'
 import {
   Loader2, Printer, ArrowLeft, FileText, Share2, Copy, Trash2, Check,
@@ -521,7 +522,7 @@ function LegacyReport() {
             )}
             <div className="flex items-center gap-2">
               <input type="text" aria-label="Nome da configuração de relatório" value={tplName} onChange={e => setTplName(e.target.value)} placeholder="Ex.: Consulta endócrino, Viagem…"
-                className="flex-1 min-w-0 px-3 py-1.5 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                className={fieldClass({ className: 'flex-1 min-w-0 py-1.5' })} />
               <button type="button" onClick={saveTemplate} disabled={!tplName.trim()}
                 className="px-3 py-1.5 rounded-full gradient-sintera text-white font-body text-xs font-medium disabled:opacity-40 hover:opacity-90 transition-opacity flex-shrink-0">
                 Salvar configuração

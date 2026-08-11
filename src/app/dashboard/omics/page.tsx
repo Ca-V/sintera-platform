@@ -18,6 +18,7 @@ import { DOMAIN_LABEL, DOMAINS, fmtOmicsDate, type OmicsDomain } from '@/lib/omi
 import { uploadAndIngest } from '@/lib/omics/ingestClient'
 import ListCard from '@/components/ListCard'
 import Card from '@/components/ui/Card'
+import { fieldClass } from '@/components/ui/field'
 import Disclaimer from '@/components/ui/Disclaimer'
 
 interface Panel {
@@ -116,26 +117,26 @@ export default function OmicsListPage() {
             <div>
               <label htmlFor="omics-tipo" className="font-body text-xs text-mauve block mb-1">Tipo de ômica</label>
               <select id="omics-tipo" value={domain} onChange={e => setDomain(e.target.value as OmicsDomain)}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
+                className={fieldClass()}>
                 {DOMAINS.map(d => <option key={d} value={d}>{DOMAIN_LABEL[d]}</option>)}
               </select>
             </div>
             <div>
               <label htmlFor="omics-data" className="font-body text-xs text-mauve block mb-1">Data do exame</label>
               <input id="omics-data" type="date" value={date} onChange={e => setDate(e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                className={fieldClass()} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label htmlFor="omics-laboratorio" className="font-body text-xs text-mauve block mb-1">Laboratório</label>
               <input id="omics-laboratorio" type="text" value={lab} onChange={e => setLab(e.target.value)} placeholder="Opcional"
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                className={fieldClass()} />
             </div>
             <div>
               <label htmlFor="omics-tecnologia" className="font-body text-xs text-mauve block mb-1">Tecnologia</label>
               <input id="omics-tecnologia" type="text" value={tech} onChange={e => setTech(e.target.value)} placeholder="Ex.: LC-MS/MS"
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                className={fieldClass()} />
             </div>
           </div>
           {/* Upload do laudo (opcional) — selecionar arquivo ou tirar foto */}

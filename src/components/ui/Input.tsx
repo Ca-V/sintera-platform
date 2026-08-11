@@ -1,6 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
+import { fieldClass } from './field'
 import { type InputHTMLAttributes, forwardRef, useId } from 'react'
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -34,16 +35,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             id={inputId}
             aria-invalid={error ? true : undefined}
             aria-describedby={error ? errorId : undefined}
-            className={cn(
-              'w-full rounded-xl border border-border bg-white px-4 py-3',
-              'text-sm text-onyx placeholder:text-mauve font-body',
-              'transition-all duration-200',
-              'focus:outline-none focus:ring-2 focus:ring-petal/30 focus:border-petal',
-              'hover:border-petal-light',
-              icon && 'pl-10',
-              error && 'border-red-300 focus:ring-red-200 focus:border-red-400',
-              className
-            )}
+            // Reusa a SUPERFÍCIE canônica do campo (não reimplementa o estilo).
+            className={fieldClass({ error: !!error, className: cn(icon && 'pl-10', className) })}
             {...props}
           />
         </div>

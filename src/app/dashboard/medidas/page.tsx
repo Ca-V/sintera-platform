@@ -19,6 +19,7 @@ import Card from '@/components/ui/Card'
 import Section from '@/components/ui/Section'
 import Disclaimer from '@/components/ui/Disclaimer'
 import ProvenanceLine from '@/components/ui/ProvenanceLine'
+import { fieldClass } from '@/components/ui/field'
 import { examProvenance } from '@/lib/provenance'
 import { type Metric, type MeasureEntry, type ExamRef } from '@/lib/medidas/service'
 
@@ -263,13 +264,13 @@ export default function MedidasPage() {
           <div>
             <label htmlFor="medida-scan-date" className="font-body text-xs text-mauve block mb-1">Data do exame</label>
             <input id="medida-scan-date" type="date" value={scanDate} onChange={e => setScanDate(e.target.value)}
-              className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+              className={fieldClass()} />
           </div>
           {exams.length > 0 && (
             <div>
               <label htmlFor="medida-scan-exam" className="font-body text-xs text-mauve block mb-1">Vincular ao laudo em Exames (opcional)</label>
               <select id="medida-scan-exam" value={scanExamId} onChange={e => setScanExamId(e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
+                className={fieldClass()}>
                 <option value="">Nenhum</option>
                 {exams.map(ex => (
                   <option key={ex.id} value={ex.id}>{ex.type}{ex.examDate ? ` · ${fmt(ex.examDate)}` : ''}</option>
@@ -283,7 +284,7 @@ export default function MedidasPage() {
                 <span className="font-body text-xs text-onyx w-40 flex-shrink-0">{METRIC_LABEL[row.metric]}</span>
                 <input value={row.value} aria-label={METRIC_LABEL[row.metric]}
                   onChange={e => setScanRows(rows => rows!.map((r, j) => j === i ? { ...r, value: e.target.value } : r))}
-                  className="flex-1 px-2 py-1.5 border border-border rounded-lg font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                  className={fieldClass({ className: 'flex-1 px-2 py-1.5 rounded-lg' })} />
                 <span className="font-body text-xs text-mauve w-12 flex-shrink-0">{row.unit}</span>
                 <button onClick={() => setScanRows(rows => rows!.filter((_, j) => j !== i))} title="Descartar"
                   className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center text-mauve hover:text-red-500 flex-shrink-0">
@@ -314,7 +315,7 @@ export default function MedidasPage() {
             <div>
               <label htmlFor="medida-metric" className="font-body text-xs text-mauve block mb-1">Medida</label>
               <select id="medida-metric" value={metric} onChange={e => chooseMetric(e.target.value as Metric)}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
+                className={fieldClass()}>
                 <optgroup label="Corpo">
                   <option value="peso">Peso</option>
                   <option value="altura">Altura</option>
@@ -334,33 +335,33 @@ export default function MedidasPage() {
             <div>
               <label htmlFor="medida-date" className="font-body text-xs text-mauve block mb-1">Data</label>
               <input id="medida-date" type="date" value={date} onChange={e => setDate(e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                className={fieldClass()} />
             </div>
           </div>
           {metric === 'outro' && (
             <div>
               <label htmlFor="medida-label" className="font-body text-xs text-mauve block mb-1">Nome da medida</label>
               <input id="medida-label" type="text" value={label} onChange={e => setLabel(e.target.value)} placeholder="Ex.: Glicemia capilar"
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                className={fieldClass()} />
             </div>
           )}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label htmlFor="medida-value" className="font-body text-xs text-mauve block mb-1">Valor</label>
               <input id="medida-value" type="text" value={value} onChange={e => setValue(e.target.value)} placeholder={PLACEHOLDER[metric]}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                className={fieldClass()} />
             </div>
             <div>
               <label htmlFor="medida-unit" className="font-body text-xs text-mauve block mb-1">Unidade</label>
               <input id="medida-unit" type="text" value={unit} onChange={e => setUnit(e.target.value)} placeholder="kg, mmHg, cm…"
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                className={fieldClass()} />
             </div>
           </div>
           <div>
             <label htmlFor="medida-notes" className="font-body text-xs text-mauve block mb-1">Observações (opcional)</label>
             <div className="flex items-start gap-2">
               <textarea id="medida-notes" value={notes} onChange={e => setNotes(e.target.value)} rows={2}
-                className="flex-1 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                className={fieldClass({ className: 'flex-1' })} />
               <VoiceInput onResult={t => setNotes(v => (v ? v + ' ' : '') + t)} />
             </div>
           </div>
@@ -368,7 +369,7 @@ export default function MedidasPage() {
             <div>
               <label htmlFor="medida-exam" className="font-body text-xs text-mauve block mb-1">Vincular a um laudo (opcional)</label>
               <select id="medida-exam" value={examId} onChange={e => setExamId(e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
+                className={fieldClass()}>
                 <option value="">Nenhum</option>
                 {exams.map(ex => (
                   <option key={ex.id} value={ex.id}>{ex.type}{ex.examDate ? ` · ${fmt(ex.examDate)}` : ''}</option>

@@ -15,6 +15,7 @@ import VoiceInput from '@/components/VoiceInput'
 import ListCard from '@/components/ListCard'
 import Card from '@/components/ui/Card'
 import Disclaimer from '@/components/ui/Disclaimer'
+import { fieldClass } from '@/components/ui/field'
 import type { Condition, ConditionScope } from '@/lib/condicoes/service'
 
 export default function CondicoesPage() {
@@ -129,7 +130,7 @@ export default function CondicoesPage() {
           <div>
             <label htmlFor="cond-tipo" className="font-body text-xs text-mauve block mb-1">Tipo</label>
             <select id="cond-tipo" value={scope} onChange={e => setScope(e.target.value as ConditionScope)}
-              className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
+              className={fieldClass()}>
               <option value="propria">Minha condição</option>
               <option value="familiar">Histórico familiar</option>
             </select>
@@ -138,7 +139,7 @@ export default function CondicoesPage() {
             <label htmlFor="cond-nome" className="font-body text-xs text-mauve block mb-1">Condição</label>
             <div className="flex items-center gap-2">
               <input id="cond-nome" type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Ex.: Hipertensão"
-                className="flex-1 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                className={fieldClass({ className: 'flex-1' })} />
               <VoiceInput onResult={t => setName(v => (v ? v + ' ' : '') + t)} />
             </div>
           </div>
@@ -146,19 +147,19 @@ export default function CondicoesPage() {
             <div>
               <label htmlFor="cond-parente" className="font-body text-xs text-mauve block mb-1">Parente</label>
               <input id="cond-parente" type="text" value={relative} onChange={e => setRelative(e.target.value)} placeholder="Ex.: Mãe, avô paterno"
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                className={fieldClass()} />
             </div>
           )}
           <div>
             <label htmlFor="cond-desde" className="font-body text-xs text-mauve block mb-1">Desde quando (opcional)</label>
             <input id="cond-desde" type="text" value={since} onChange={e => setSince(e.target.value)} placeholder="Ex.: 2020, infância"
-              className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+              className={fieldClass()} />
           </div>
           <div>
             <label htmlFor="cond-notas" className="font-body text-xs text-mauve block mb-1">Observações (opcional)</label>
             <div className="flex items-start gap-2">
               <textarea id="cond-notas" value={notes} onChange={e => setNotes(e.target.value)} rows={2}
-                className="flex-1 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                className={fieldClass({ className: 'flex-1' })} />
               <VoiceInput onResult={t => setNotes(v => (v ? v + ' ' : '') + t)} />
             </div>
           </div>

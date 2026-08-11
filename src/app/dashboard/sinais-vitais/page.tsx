@@ -16,6 +16,7 @@ import Sparkline, { parseNum } from '@/components/Sparkline'
 import ListCard from '@/components/ListCard'
 import Card from '@/components/ui/Card'
 import Disclaimer from '@/components/ui/Disclaimer'
+import { fieldClass } from '@/components/ui/field'
 import { VITALS, type Vital, type VitalEntry } from '@/lib/sinais-vitais/service'
 
 const VITAL_LABEL: Record<Vital, string> = {
@@ -108,7 +109,7 @@ export default function SinaisVitaisPage() {
             <div>
               <label htmlFor="vital-metric" className="font-body text-xs text-mauve block mb-1">Sinal vital</label>
               <select id="vital-metric" value={metric} onChange={e => chooseMetric(e.target.value as Vital)}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
+                className={fieldClass()}>
                 <option value="pressao_arterial">Pressão arterial</option>
                 <option value="frequencia_cardiaca">Frequência cardíaca</option>
                 <option value="glicemia">Glicemia</option>
@@ -120,33 +121,33 @@ export default function SinaisVitaisPage() {
             <div>
               <label htmlFor="vital-date" className="font-body text-xs text-mauve block mb-1">Data</label>
               <input id="vital-date" type="date" value={date} onChange={e => setDate(e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                className={fieldClass()} />
             </div>
           </div>
           {metric === 'outro_sinal' && (
             <div>
               <label htmlFor="vital-label" className="font-body text-xs text-mauve block mb-1">Nome do sinal</label>
               <input id="vital-label" type="text" value={label} onChange={e => setLabel(e.target.value)} placeholder="Ex.: Saturação em exercício"
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                className={fieldClass()} />
             </div>
           )}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label htmlFor="vital-value" className="font-body text-xs text-mauve block mb-1">Valor</label>
               <input id="vital-value" type="text" value={value} onChange={e => setValue(e.target.value)} placeholder={PLACEHOLDER[metric]}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                className={fieldClass()} />
             </div>
             <div>
               <label htmlFor="vital-unit" className="font-body text-xs text-mauve block mb-1">Unidade</label>
               <input id="vital-unit" type="text" value={unit} onChange={e => setUnit(e.target.value)} placeholder="mmHg, bpm, mg/dL…"
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                className={fieldClass()} />
             </div>
           </div>
           <div>
             <label htmlFor="vital-notes" className="font-body text-xs text-mauve block mb-1">Observações (opcional)</label>
             <div className="flex items-start gap-2">
               <textarea id="vital-notes" value={notes} onChange={e => setNotes(e.target.value)} rows={2}
-                className="flex-1 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                className={fieldClass({ className: 'flex-1' })} />
               <VoiceInput onResult={t => setNotes(v => (v ? v + ' ' : '') + t)} />
             </div>
           </div>

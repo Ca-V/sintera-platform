@@ -22,6 +22,7 @@ import ListCard, { CardChip } from '@/components/ListCard'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import Card from '@/components/ui/Card'
 import Disclaimer from '@/components/ui/Disclaimer'
+import { fieldClass } from '@/components/ui/field'
 
 type Status = 'em_uso' | 'programado' | 'suspenso' | 'encerrado'
 type Kind = 'medicamento' | 'suplemento' | 'produto' | 'dispositivo' | 'outro'
@@ -438,7 +439,7 @@ export default function MedicamentosPage() {
             <div>
               <label htmlFor="med-kind" className="font-body text-xs text-mauve block mb-1">Tipo</label>
               <select id="med-kind" value={kind} onChange={e => setKind(e.target.value as Kind)}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
+                className={fieldClass()}>
                 <option value="medicamento">Medicamento</option>
                 <option value="suplemento">Suplemento</option>
                 <option value="produto">Produto</option>
@@ -449,7 +450,7 @@ export default function MedicamentosPage() {
             <div>
               <label htmlFor="med-status" className="font-body text-xs text-mauve block mb-1">Situação</label>
               <select id="med-status" value={medStatus} onChange={e => setMedStatus(e.target.value as Status)}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
+                className={fieldClass()}>
                 <option value="em_uso">Em uso</option>
                 <option value="programado">Programado</option>
                 <option value="suspenso">Suspenso</option>
@@ -461,7 +462,7 @@ export default function MedicamentosPage() {
             <label htmlFor="med-name" className="font-body text-xs text-mauve block mb-1">Nome do {kind === 'suplemento' ? 'suplemento' : kind === 'produto' ? 'produto' : kind === 'dispositivo' ? 'dispositivo' : 'medicamento'}</label>
             <div className="flex items-center gap-2">
               <input id="med-name" type="text" value={name} onChange={e => setName(e.target.value)} placeholder={kind === 'suplemento' ? 'Ex.: Vitamina D' : kind === 'produto' ? 'Ex.: Lente de contato' : kind === 'dispositivo' ? 'Ex.: Medidor de glicose' : 'Ex.: Losartana'}
-                className="flex-1 min-w-0 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                className={fieldClass({ className: 'flex-1 min-w-0' })} />
               <VoiceInput onResult={t => setName(v => (v ? v + ' ' : '') + t)} />
             </div>
           </div>
@@ -470,7 +471,7 @@ export default function MedicamentosPage() {
             <div>
               <label htmlFor="med-form" className="font-body text-xs text-mauve block mb-1">Forma farmacêutica</label>
               <select id="med-form" value={form} onChange={e => { setForm(e.target.value); setPackUnit(formMetaOf(e.target.value)?.unit ?? '') }}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
+                className={fieldClass()}>
                 <option value="">Selecione…</option>
                 {FORMS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
               </select>
@@ -478,7 +479,7 @@ export default function MedicamentosPage() {
             <div>
               <label htmlFor="med-route" className="font-body text-xs text-mauve block mb-1">Via de administração <span className="font-normal text-mauve">(opcional)</span></label>
               <select id="med-route" value={route} onChange={e => setRoute(e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
+                className={fieldClass()}>
                 <option value="">Selecione…</option>
                 {ROUTES.map(r => <option key={r} value={r}>{r}</option>)}
               </select>
@@ -489,25 +490,25 @@ export default function MedicamentosPage() {
             <div>
               <label htmlFor="med-brand" className="font-body text-xs text-mauve block mb-1">Marca / Fabricante (opcional)</label>
               <input id="med-brand" type="text" value={brand} onChange={e => setBrand(e.target.value)} placeholder="Ex.: EMS, Bayer…"
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                className={fieldClass()} />
             </div>
             {kind !== 'produto' && (
               <div>
                 <label htmlFor="med-dose" className="font-body text-xs text-mauve block mb-1">{kind === 'dispositivo' ? 'Modelo / especificação' : 'Dose ou especificação'} <span className="font-normal text-mauve">(opcional)</span></label>
                 <input id="med-dose" type="text" value={dose} onChange={e => setDose(e.target.value)} placeholder={kind === 'dispositivo' ? 'Ex.: modelo / grau' : 'Ex.: 50 mg'}
-                  className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                  className={fieldClass()} />
               </div>
             )}
           </div>
           <div>
             <label htmlFor="med-prescriber" className="font-body text-xs text-mauve block mb-1">Médico(a) que prescreveu <span className="font-normal text-mauve">(opcional)</span></label>
             <input id="med-prescriber" type="text" value={prescriber} onChange={e => setPrescriber(e.target.value)} placeholder="Ex.: Dra. Ana Souza"
-              className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+              className={fieldClass()} />
           </div>
           <div>
             <label htmlFor="med-amount" className="font-body text-xs text-mauve block mb-1">Valor pago — R$ <span className="font-normal text-mauve">(opcional)</span></label>
             <input id="med-amount" type="text" inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder="Ex.: 250,00"
-              className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+              className={fieldClass()} />
           </div>
           <button type="button" onClick={() => setShowMoreDetails(v => !v)}
             className="w-full flex items-center justify-between px-1 py-1.5 font-body text-sm text-petal hover:text-petal/80 transition-colors">
@@ -520,7 +521,7 @@ export default function MedicamentosPage() {
             <div>
               <label htmlFor="med-freq" className="font-body text-xs text-mauve block mb-1">Frequência de uso (opcional)</label>
               <input id="med-freq" type="text" value={freq} onChange={e => setFreq(e.target.value)} placeholder="Ex.: 1x ao dia"
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                className={fieldClass()} />
             </div>
           )}
           {!repurchase && (
@@ -528,12 +529,12 @@ export default function MedicamentosPage() {
             <div>
               <label htmlFor="med-inicio" className="font-body text-xs text-mauve block mb-1">Início de uso (opcional)</label>
               <input id="med-inicio" type="date" value={startedOn} onChange={e => setStartedOn(e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                className={fieldClass()} />
             </div>
             <div>
               <label htmlFor="med-limite" className="font-body text-xs text-mauve block mb-1">Data limite (opcional)</label>
               <input id="med-limite" type="date" value={untilOn} onChange={e => setUntilOn(e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                className={fieldClass()} />
               <p className="font-body text-[11px] text-mauve mt-1">Em branco = sem previsão.</p>
             </div>
           </div>
@@ -542,7 +543,7 @@ export default function MedicamentosPage() {
             <label htmlFor="med-notes" className="font-body text-xs text-mauve block mb-1">Observações (opcional)</label>
             <div className="flex items-start gap-2">
               <textarea id="med-notes" value={notes} onChange={e => setNotes(e.target.value)} rows={2}
-                className="flex-1 min-w-0 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                className={fieldClass({ className: 'flex-1 min-w-0' })} />
               <VoiceInput onResult={t => setNotes(v => (v ? v + ' ' : '') + t)} />
             </div>
           </div>
@@ -554,15 +555,15 @@ export default function MedicamentosPage() {
               <div>
                 <label htmlFor="med-acquired-qty" className="font-body text-[11px] text-mauve block mb-1">Quantidade adquirida</label>
                 <input id="med-acquired-qty" type="text" inputMode="decimal" value={acquiredQty} onChange={e => setAcquiredQty(e.target.value)} placeholder="Ex.: 2 caixas"
-                  className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                  className={fieldClass({ className: 'bg-white' })} />
               </div>
               <div>
                 <label htmlFor="med-pack-qty" className="font-body text-[11px] text-mauve block mb-1">Conteúdo da embalagem</label>
                 <div className="flex items-center gap-1.5">
                   <input id="med-pack-qty" type="text" inputMode="decimal" value={packQty} onChange={e => setPackQty(e.target.value)} placeholder="Ex.: 30"
-                    className="flex-1 min-w-0 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                    className={fieldClass({ className: 'flex-1 min-w-0 bg-white' })} />
                   <input type="text" value={packUnit} onChange={e => setPackUnit(e.target.value)} placeholder="un." aria-label="Unidade do conteúdo" title="Unidade (definida pela forma; editável)"
-                    className="w-20 flex-shrink-0 px-2 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white text-center focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                    className={fieldClass({ className: 'w-20 flex-shrink-0 px-2 bg-white text-center' })} />
                 </div>
               </div>
             </div>
@@ -570,19 +571,19 @@ export default function MedicamentosPage() {
               <div>
                 <label htmlFor="med-daily-cons" className="font-body text-[11px] text-mauve block mb-1">Consumo por dia{packUnit ? <span className="font-normal text-mauve"> (em {packUnit})</span> : null}</label>
                 <input id="med-daily-cons" type="text" inputMode="decimal" value={dailyCons} onChange={e => setDailyCons(e.target.value)} placeholder="Ex.: 2"
-                  className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                  className={fieldClass({ className: 'bg-white' })} />
               </div>
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label htmlFor="med-purchased-on" className="font-body text-[11px] text-mauve block mb-1">Comprado em</label>
                 <input id="med-purchased-on" type="date" value={purchasedOn} onChange={e => setPurchasedOn(e.target.value)}
-                  className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                  className={fieldClass({ className: 'bg-white' })} />
               </div>
               <div>
                 <label htmlFor="med-purchase-status" className="font-body text-[11px] text-mauve block mb-1">Situação</label>
                 <select id="med-purchase-status" value={purchaseStatus} onChange={e => setPurchaseStatus(e.target.value)}
-                  className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30">
+                  className={fieldClass({ className: 'bg-white' })}>
                   <option value="">—</option>
                   <option value="a_comprar">A comprar</option>
                   <option value="comprado">Comprado</option>
@@ -598,7 +599,7 @@ export default function MedicamentosPage() {
                 <div>
                   <label htmlFor="med-repurchase-freq" className="font-body text-[11px] text-mauve block mb-1">Frequência da compra</label>
                   <select id="med-repurchase-freq" value={repurchaseFreq} onChange={e => setRepurchaseFreq(e.target.value)}
-                    className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30">
+                    className={fieldClass({ className: 'bg-white' })}>
                     <option value="">Com que frequência você recompra?</option>
                     <option value="semanal">Semanal</option>
                     <option value="quinzenal">Quinzenal</option>
@@ -613,12 +614,12 @@ export default function MedicamentosPage() {
                   <div>
                     <label htmlFor="med-recompra-inicio" className="font-body text-[11px] text-mauve block mb-1">A partir de</label>
                     <input id="med-recompra-inicio" type="date" value={startedOn} onChange={e => setStartedOn(e.target.value)}
-                      className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                      className={fieldClass({ className: 'bg-white' })} />
                   </div>
                   <div>
                     <label htmlFor="med-recompra-ate" className="font-body text-[11px] text-mauve block mb-1">Até <span className="font-normal text-mauve">(opcional)</span></label>
                     <input id="med-recompra-ate" type="date" value={untilOn} onChange={e => setUntilOn(e.target.value)}
-                      className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-white focus:outline-none focus:ring-1 focus:ring-petal/30" />
+                      className={fieldClass({ className: 'bg-white' })} />
                   </div>
                 </div>
                 <p className="font-body text-[11px] text-mauve leading-relaxed">A previsão de recompra considera o uso conforme a orientação médica. Caso o consumo real seja diferente, a data prevista poderá variar e poderá haver sobra ou término antecipado do produto.</p>

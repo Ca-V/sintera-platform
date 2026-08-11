@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
+import { fieldClass } from '@/components/ui/field'
 
 // E-mail autorizado a acessar o dashboard operacional
 const ADMIN_EMAIL = 'carinaleite.br@gmail.com'
@@ -406,7 +407,7 @@ export default function AdminPage() {
                   placeholder="Nome"
                   value={r.firstName}
                   onChange={e => updateRecipient(i, 'firstName', e.target.value)}
-                  className="w-28 px-3 py-2 border border-border rounded-xl font-body text-xs text-onyx focus:outline-none focus:ring-1 focus:ring-petal/30 bg-ivory"
+                  className={fieldClass({ className: 'w-28 text-xs' })}
                 />
                 <input
                   type="email"
@@ -414,7 +415,7 @@ export default function AdminPage() {
                   placeholder="email@exemplo.com"
                   value={r.email}
                   onChange={e => updateRecipient(i, 'email', e.target.value)}
-                  className="flex-1 px-3 py-2 border border-border rounded-xl font-body text-xs text-onyx focus:outline-none focus:ring-1 focus:ring-petal/30 bg-ivory"
+                  className={fieldClass({ className: 'flex-1 text-xs' })}
                 />
                 {recipients.length > 1 && (
                   <button onClick={() => removeRecipient(i)}
@@ -438,7 +439,7 @@ export default function AdminPage() {
             placeholder="Admin secret (ADMIN_SECRET do .env)"
             value={adminSecret}
             onChange={e => setAdminSecret(e.target.value)}
-            className="w-full px-3 py-2 border border-border rounded-xl font-body text-xs text-onyx focus:outline-none focus:ring-1 focus:ring-petal/30 bg-ivory"
+            className={fieldClass({ className: 'text-xs' })}
           />
 
           {/* Resultado / erro */}

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import MotionCard from '@/components/ui/MotionCard'
+import { fieldClass } from '@/components/ui/field'
 import { Shield, Mail, Key, AlertTriangle, Check, X, Loader2, ExternalLink, Download, MessageCircle } from 'lucide-react'
 import { useUser } from '@/context/UserContext'
 import { createClient } from '@/lib/supabase/client'
@@ -183,7 +184,7 @@ export default function ConfiguracoesPage() {
           <label htmlFor="config-phone" className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Telefone (WhatsApp)</label>
           <input id="config-phone" type="tel" value={phone} onChange={e => setPhone(e.target.value)}
             placeholder="(11) 99999-9999"
-            className="mt-1 w-full px-3 py-2.5 border border-border rounded-xl font-body text-sm text-onyx bg-ivory placeholder:text-mauve/40 focus:outline-none focus:ring-1 focus:ring-petal/30" />
+            className={fieldClass({ className: 'mt-1 py-2.5 placeholder:text-mauve/40' })} />
           <p className="font-body text-[11px] text-mauve mt-1">Com DDD. Usado apenas para enviar seus lembretes.</p>
         </div>
 

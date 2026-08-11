@@ -16,6 +16,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import Sparkline, { parseNum } from '@/components/Sparkline'
 import Card from '@/components/ui/Card'
+import { fieldClass } from '@/components/ui/field'
 import { DOMAIN_LABEL, fmtOmicsDate, type OmicsDomain } from '@/lib/omics/domains'
 import { uploadAndIngest } from '@/lib/omics/ingestClient'
 
@@ -319,7 +320,7 @@ function AddResult({ panelId, domain, defaultDate, onSaved }: {
       <div>
         <label htmlFor="omics-result-feature" className="font-body text-xs text-mauve block mb-1">Feature (nome, sinônimo ou ID externo)</label>
         <input id="omics-result-feature" value={name} onChange={e => setName(e.target.value)} onBlur={resolve} placeholder="Ex.: Leucine, L-Leucine ou HMDB0000687"
-          className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+          className={fieldClass()} />
         {resolving && <p className="font-body text-[11px] text-mauve mt-1">Resolvendo no catálogo…</p>}
         {resolved && (
           <p className="font-body text-[11px] text-petal mt-1">
@@ -334,23 +335,23 @@ function AddResult({ panelId, domain, defaultDate, onSaved }: {
         <div>
           <label htmlFor="omics-result-valor" className="font-body text-xs text-mauve block mb-1">Valor</label>
           <input id="omics-result-valor" value={value} onChange={e => setValue(e.target.value)} placeholder="420"
-            className="w-full px-2 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+            className={fieldClass({ className: 'px-2' })} />
         </div>
         <div>
           <label htmlFor="omics-result-unidade" className="font-body text-xs text-mauve block mb-1">Unidade</label>
           <input id="omics-result-unidade" value={unit} onChange={e => setUnit(e.target.value)} placeholder="µmol/L"
-            className="w-full px-2 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+            className={fieldClass({ className: 'px-2' })} />
         </div>
         <div>
           <label htmlFor="omics-result-data" className="font-body text-xs text-mauve block mb-1">Data</label>
           <input id="omics-result-data" type="date" value={date} onChange={e => setDate(e.target.value)}
-            className="w-full px-2 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+            className={fieldClass({ className: 'px-2' })} />
         </div>
       </div>
       <div>
         <label htmlFor="omics-result-metodo" className="font-body text-xs text-mauve block mb-1">Método (opcional)</label>
         <input id="omics-result-metodo" value={method} onChange={e => setMethod(e.target.value)} placeholder="Ex.: LC-MS/MS"
-          className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+          className={fieldClass()} />
       </div>
       {err && <p className="font-body text-xs text-red-500">{err}</p>}
       <div className="flex justify-end">

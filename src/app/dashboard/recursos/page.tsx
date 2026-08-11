@@ -17,6 +17,7 @@ import {
   Glasses, HeartPulse, Bone, Accessibility, Shirt, Package,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { fieldClass } from '@/components/ui/field'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import PageHeader from '@/components/PageHeader'
@@ -72,8 +73,9 @@ function grauResumo(a: Record<string, unknown>): string {
   return [eye('od'), eye('oe')].filter(Boolean).join(' · ')
 }
 
-const inputCls = 'w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30'
-const gradeCls = 'w-full px-2 py-1.5 border border-border rounded-lg font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30'
+// Superfície de campo canônica (DS). `gradeCls` = variante compacta da MESMA superfície.
+const inputCls = fieldClass()
+const gradeCls = fieldClass({ className: 'px-2 py-1.5 rounded-lg' })
 
 export default function RecursosPage() {
   const { user, loading: authLoading } = useUser()
