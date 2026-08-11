@@ -13,7 +13,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { parseDateOnly } from '@/lib/agenda'
 import { useUser } from '@/context/UserContext'
-import { seriesForName, type BiomarkerRow, type Measurement } from '@/lib/biomarkers/grouping'
+import { seriesForName, interpretationSymbol, type BiomarkerRow, type Measurement, type UnitSeries } from '@/lib/biomarkers/grouping'
 import MotionCard from '@/components/ui/MotionCard'
 
 function formatDateFull(iso: string): string {
@@ -29,10 +29,7 @@ const INTERP_COLORS: Record<string, string> = {
   acima_da_referencia: 'text-orange-500', abaixo_da_referencia: 'text-blue-600',
   dentro_da_referencia: 'text-petal', sem_referencia_identificada: 'text-mauve', indisponivel: 'text-mauve/40',
 }
-const INTERP_SYM: Record<string, string> = {
-  acima_da_referencia: '▲', abaixo_da_referencia: '▼', dentro_da_referencia: '✓',
-  sem_referencia_identificada: '–', indisponivel: '–',
-}
+// (símbolo de interpretação vem de @sintera/core interpretationSymbol — SSOT, sem reimplementação local)
 
 // ── Gráfico temporal (SVG inline, sem dependência) ─────────────────────────────
 function TemporalChart({ points }: { points: Measurement[] }) {
@@ -121,85 +118,111 @@ export default function IndicadorDrilldownPage() {
         <MotionCard initial={{ opacity: 0 }} animate={{ opacity: 1 }} padding="none" className="p-10 text-center">
           <FlaskConical size={40} className="text-border mx-auto mb-3" />
           <p className="font-body text-sm font-semibold text-onyx mb-1">Indicador não encontrado</p>
-          <p className="font-body text-xs text-mauve">{model?.hasUnitMismatch ? 'Unidades diferentes entre exames — série não comparável.' : 'Não há medições numéricas para este biomarcador.'}</p>
+          <p className="font-body text-xs text-mauve">Não há medições numéricas para este biomarcador.</p>
         </MotionCard>
-      ) : (
+      ) : (() => {
+        // Regra oficial (unidades incompatíveis): SEMPRE por grupo de unidade — gráfico/tendência só dentro do
+        // grupo, nunca mistura unidades, nunca esconde dados. 1 grupo = sem mismatch.
+        const groups: UnitSeries[] = model.unitGroups && model.unitGroups.length
+          ? model.unitGroups
+          : [{ unit: model.unit, measurements: model.measurements, first: model.first, latest: model.latest, count: model.count, trend: model.trend, deltaPercent: model.deltaPercent, totalDeltaPercent: model.totalDeltaPercent }]
+        return (
         <>
-          {/* Cabeçalho + resumo factual */}
+          {/* Cabeçalho */}
           <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} padding="none" className="p-6">
             <h1 className="font-body text-xl font-semibold text-onyx">{catalogNames.get(model.catalogId ?? '') ?? model.displayName}</h1>
             <p className="font-body text-sm text-mauve mt-0.5">
-              {model.unit ? `${model.unit} · ` : ''}{model.measurements.length} mediç{model.measurements.length !== 1 ? 'ões' : 'ão'}
-            </p>
-            {model.first && model.latest && model.measurements.length >= 2 && (
-              <div className="grid grid-cols-3 gap-3 mt-4">
-                <div className="rounded-2xl bg-ivory/60 py-3 px-3">
-                  <p className="font-body text-[11px] text-mauve uppercase tracking-wider mb-0.5">Primeira</p>
-                  <p className="font-body text-sm font-semibold text-onyx">{model.first.value} <span className="text-xs font-normal text-mauve">{model.unit}</span></p>
-                  <p className="font-body text-[11px] text-mauve">{formatDateFull(model.first.date)}</p>
-                </div>
-                <div className="rounded-2xl bg-ivory/60 py-3 px-3">
-                  <p className="font-body text-[11px] text-mauve uppercase tracking-wider mb-0.5">Última</p>
-                  <p className="font-body text-sm font-semibold text-onyx">{model.latest.value} <span className="text-xs font-normal text-mauve">{model.unit}</span></p>
-                  <p className="font-body text-[11px] text-mauve">{formatDateFull(model.latest.date)}</p>
-                </div>
-                <div className="rounded-2xl bg-ivory/60 py-3 px-3">
-                  <p className="font-body text-[11px] text-mauve uppercase tracking-wider mb-0.5">Variação total</p>
-                  {model.totalDeltaPercent !== null ? (
-                    <p className={`font-body text-sm font-semibold ${model.totalDeltaPercent > 0 ? 'text-orange-500' : model.totalDeltaPercent < 0 ? 'text-blue-600' : 'text-mauve'}`}>
-                      {model.totalDeltaPercent > 0 ? '+' : ''}{model.totalDeltaPercent}%
-                    </p>
-                  ) : <p className="font-body text-sm text-mauve/40">—</p>}
-                  <p className="font-body text-[11px] text-mauve">no período</p>
-                </div>
-              </div>
-            )}
-          </MotionCard>
-
-          {/* Gráfico temporal */}
-          <MotionCard initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} padding="relaxed">
-            <p className="font-body text-sm font-semibold text-onyx mb-3">Evolução temporal</p>
-            <TemporalChart points={model.measurements} />
-            <p className="font-body text-[11px] text-mauve mt-2">
-              Faixa verde = referência impressa no laudo (quando constante). Valores factuais; não indicam melhora ou piora clínica.
+              {model.measurements.length} mediç{model.measurements.length !== 1 ? 'ões' : 'ão'}{model.hasUnitMismatch ? ` · ${model.units.length} unidades` : model.unit ? ` · ${model.unit}` : ''}
             </p>
           </MotionCard>
 
-          {/* Exames utilizados */}
-          <MotionCard initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} padding="none" className="overflow-hidden">
-            <div className="px-5 py-3 border-b border-border/40">
-              <p className="font-body text-sm font-semibold text-onyx">Exames utilizados</p>
+          {/* Aviso de unidades diferentes — regra oficial: não comparar entre unidades; cada unidade na própria série. */}
+          {model.hasUnitMismatch && (
+            <MotionCard initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} padding="none" className="p-4 border-2 border-amber-200 bg-amber-50">
+              <p className="font-body text-sm font-semibold text-amber-700 mb-1">Unidades diferentes</p>
+              <p className="font-body text-xs text-amber-600 leading-relaxed">Este indicador tem medições em unidades diferentes; elas não podem ser comparadas diretamente. Cada unidade aparece na sua própria série abaixo.</p>
+            </MotionCard>
+          )}
+
+          {groups.map((g) => (
+            <div key={g.unit || 'sem-unidade'} className="space-y-5">
+              {model.hasUnitMismatch && <p className="font-body text-sm font-semibold text-onyx">{g.unit || 'Sem unidade'}</p>}
+
+              {/* Resumo factual da unidade */}
+              {g.first && g.latest && g.measurements.length >= 2 && (
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="rounded-2xl bg-ivory/60 py-3 px-3">
+                    <p className="font-body text-[11px] text-mauve uppercase tracking-wider mb-0.5">Primeira</p>
+                    <p className="font-body text-sm font-semibold text-onyx">{g.first.value} <span className="text-xs font-normal text-mauve">{g.unit}</span></p>
+                    <p className="font-body text-[11px] text-mauve">{formatDateFull(g.first.date)}</p>
+                  </div>
+                  <div className="rounded-2xl bg-ivory/60 py-3 px-3">
+                    <p className="font-body text-[11px] text-mauve uppercase tracking-wider mb-0.5">Última</p>
+                    <p className="font-body text-sm font-semibold text-onyx">{g.latest.value} <span className="text-xs font-normal text-mauve">{g.unit}</span></p>
+                    <p className="font-body text-[11px] text-mauve">{formatDateFull(g.latest.date)}</p>
+                  </div>
+                  <div className="rounded-2xl bg-ivory/60 py-3 px-3">
+                    <p className="font-body text-[11px] text-mauve uppercase tracking-wider mb-0.5">Variação total</p>
+                    {g.totalDeltaPercent !== null ? (
+                      <p className={`font-body text-sm font-semibold ${g.totalDeltaPercent > 0 ? 'text-orange-500' : g.totalDeltaPercent < 0 ? 'text-blue-600' : 'text-mauve'}`}>
+                        {g.totalDeltaPercent > 0 ? '+' : ''}{g.totalDeltaPercent}%
+                      </p>
+                    ) : <p className="font-body text-sm text-mauve/40">—</p>}
+                    <p className="font-body text-[11px] text-mauve">no período</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Gráfico temporal — só dentro do grupo de unidade */}
+              {g.measurements.length >= 2 ? (
+                <MotionCard initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} padding="relaxed">
+                  <p className="font-body text-sm font-semibold text-onyx mb-3">Evolução temporal</p>
+                  <TemporalChart points={g.measurements} />
+                  <p className="font-body text-[11px] text-mauve mt-2">
+                    Faixa verde = referência impressa no laudo (quando constante). Valores factuais; não indicam melhora ou piora clínica.
+                  </p>
+                </MotionCard>
+              ) : (
+                <p className="font-body text-xs text-mauve">Uma única medição{g.unit ? ` em ${g.unit}` : ''} — sem série para comparar.</p>
+              )}
+
+              {/* Exames utilizados desta unidade */}
+              <MotionCard initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} padding="none" className="overflow-hidden">
+                <div className="px-5 py-3 border-b border-border/40">
+                  <p className="font-body text-sm font-semibold text-onyx">Exames utilizados</p>
+                </div>
+                <div className="divide-y divide-border/20">
+                  {[...g.measurements].reverse().map((p) => {
+                    const interpColor = INTERP_COLORS[p.interpretation ?? ''] ?? 'text-mauve'
+                    return (
+                      <Link key={p.examId + p.date} href={`/dashboard/exams/${p.examId}`}
+                        className="flex items-center gap-3 px-5 py-3 hover:bg-blush/10 transition-colors group">
+                        <span className="font-body text-xs text-mauve w-24 flex-shrink-0">{formatDateFull(p.date)}</span>
+                        <span className="font-body text-sm font-semibold text-onyx">{p.value}</span>
+                        <span className="font-body text-xs text-mauve flex-shrink-0">{p.unit}</span>
+                        {(p.referenceMin !== null || p.referenceMax !== null) && (
+                          <span className="font-body text-xs text-mauve/40 ml-1">
+                            ref {p.referenceMin !== null && p.referenceMax !== null
+                              ? `${p.referenceMin}–${p.referenceMax}`
+                              : p.referenceMin !== null ? `>${p.referenceMin}` : `<${p.referenceMax}`}
+                          </span>
+                        )}
+                        <span className={`ml-auto font-body text-xs font-semibold ${interpColor}`}>{interpretationSymbol(p.interpretation)}</span>
+                        <ArrowRight size={14} className="text-mauve/30 group-hover:text-petal transition-colors flex-shrink-0" />
+                      </Link>
+                    )
+                  })}
+                </div>
+              </MotionCard>
             </div>
-            <div className="divide-y divide-border/20">
-              {[...model.measurements].reverse().map((p) => {
-                const interpColor = INTERP_COLORS[p.interpretation ?? ''] ?? 'text-mauve'
-                const sym = INTERP_SYM[p.interpretation ?? ''] ?? '–'
-                return (
-                  <Link key={p.examId + p.date} href={`/dashboard/exams/${p.examId}`}
-                    className="flex items-center gap-3 px-5 py-3 hover:bg-blush/10 transition-colors group">
-                    <span className="font-body text-xs text-mauve w-24 flex-shrink-0">{formatDateFull(p.date)}</span>
-                    <span className="font-body text-sm font-semibold text-onyx">{p.value}</span>
-                    <span className="font-body text-xs text-mauve flex-shrink-0">{p.unit}</span>
-                    {(p.referenceMin !== null || p.referenceMax !== null) && (
-                      <span className="font-body text-xs text-mauve/40 ml-1">
-                        ref {p.referenceMin !== null && p.referenceMax !== null
-                          ? `${p.referenceMin}–${p.referenceMax}`
-                          : p.referenceMin !== null ? `>${p.referenceMin}` : `<${p.referenceMax}`}
-                      </span>
-                    )}
-                    <span className={`ml-auto font-body text-xs font-semibold ${interpColor}`}>{sym}</span>
-                    <ArrowRight size={14} className="text-mauve/30 group-hover:text-petal transition-colors flex-shrink-0" />
-                  </Link>
-                )
-              })}
-            </div>
-          </MotionCard>
+          ))}
 
           <p className="font-body text-xs text-mauve/40 text-center pb-4">
             Esta visão organiza os dados dos seus laudos. Não substitui avaliação profissional nem constitui diagnóstico (RDC 657/2022).
           </p>
         </>
-      )}
+        )
+      })()}
     </div>
   )
 }
