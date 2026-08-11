@@ -14,7 +14,7 @@ import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 import type { MinhaSaudeStackParamList } from '../../navigation/types'
 import { useExamsList } from './useExamsList'
-import { examStatusLabel, isExamFailed } from './examStatus'
+import { examStatusLabel, isExamFailed, examCompletenessLabel } from './examStatus'
 import { formatExamDate } from './examFormat'
 
 type Props = NativeStackScreenProps<MinhaSaudeStackParamList, 'ExamsList'>
@@ -265,7 +265,7 @@ export function ExamsListScreen({ navigation }: Props) {
                   </View>
                   <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{formatExamDate(e.exam_date)}{e.issuer ? ` · ${e.issuer}` : ''}{e.requesting_physician ? ` · Solic.: ${e.requesting_physician}` : ''}</Text>
                   {isProcessed
-                    ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{e.extraction_completeness === 'document_only' ? 'Documento disponível' : 'Resultados estruturados'}</Text>
+                    ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{examCompletenessLabel(e.extraction_completeness)}</Text>
                     : examStatusLabel(e.status) ? <Text spec={text(t, { role: 'caption', tone: 'faint' })} style={isExamFailed(e.status) ? { color: t.color.badge.error.text } : undefined}>{examStatusLabel(e.status)}</Text> : null}
                 </Pressable>
                 {dup && originalOf.get(e.id)

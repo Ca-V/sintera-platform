@@ -17,6 +17,7 @@ import { findDuplicateIds, originalIdFor, type DuplicateCandidate } from '@/lib/
 import { deriveExamIdentity } from '@/lib/exams/identification'
 import { binaryStructuringState, STRUCTURING_LABEL } from '@/lib/exams/structuring'
 import { isOrderDocumentType } from '@/lib/exams/classification'
+import { EXAM_STATE_LABEL } from '@sintera/core'
 import { effectiveOrderStatus, orderStatusLabel } from '@/lib/exams/orderStatus'
 import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MB } from '@/lib/capture/limits'
 import { bundlePartInfo, bundlePartLabel, groupBundleParts } from '@/lib/exams/bundleGroup'
@@ -61,14 +62,15 @@ function friendlyError(code?: string, fallback?: string): string {
   return fallback ?? 'Ocorreu um erro durante a extração. Tente novamente.'
 }
 
+// Rótulos vêm do core (EXAM_STATE_LABEL — FONTE ÚNICA Web+Mobile, Causa C1); cor/ícone ficam locais (Design System).
 const STATUS_CONFIG: Record<string, {
   label: string; color: string; bg: string
   icon: React.ComponentType<{ size: number; className?: string }>
 }> = {
-  processed:  { label: 'Dados extraídos', color: 'text-petal',    bg: 'bg-blush',     icon: CheckCircle },
-  pending:    { label: 'Aguardando',  color: 'text-gold',       bg: 'bg-warm',           icon: Clock       },
-  processing: { label: 'Processando', color: 'text-lavender',   bg: 'bg-lavender-light', icon: Loader2     },
-  error:      { label: 'Erro',        color: 'text-red-400',    bg: 'bg-red-50',         icon: AlertCircle },
+  processed:  { label: 'Dados extraídos',                 color: 'text-petal',    bg: 'bg-blush',          icon: CheckCircle },
+  pending:    { label: EXAM_STATE_LABEL.pending ?? '',    color: 'text-gold',     bg: 'bg-warm',           icon: Clock       },
+  processing: { label: EXAM_STATE_LABEL.processing ?? '', color: 'text-lavender', bg: 'bg-lavender-light', icon: Loader2     },
+  error:      { label: EXAM_STATE_LABEL.failed ?? '',     color: 'text-red-400',  bg: 'bg-red-50',         icon: AlertCircle },
 }
 
 // Selo BINÁRIO (regra_estruturacao_binaria / E3): só 2 estados ao usuário — "Resultados estruturados" |

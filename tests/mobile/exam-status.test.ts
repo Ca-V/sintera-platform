@@ -9,10 +9,10 @@ import {
 } from '../../apps/mobile/src/presentation/screens/exams/examStatus'
 
 describe('examStatus (rótulos genéricos por estado)', () => {
-  it('mapeia os códigos conhecidos', () => {
+  it('mapeia os códigos conhecidos (modelo canônico único — C1)', () => {
     expect(examProcessingState('processed')).toBe('ready')
     expect(examProcessingState('error')).toBe('failed')
-    expect(examProcessingState('pending')).toBe('processing')
+    expect(examProcessingState('pending')).toBe('pending')       // pending distinto de processing (paridade Web)
     expect(examProcessingState('processing')).toBe('processing')
     expect(examProcessingState(null)).toBe('none')
     expect(examProcessingState('')).toBe('none')
@@ -23,11 +23,11 @@ describe('examStatus (rótulos genéricos por estado)', () => {
     expect(isExamFailed('queued_v2')).toBe(false)
   })
 
-  it('rótulos amigáveis — nunca expõe o código cru', () => {
-    expect(examStatusLabel('processing')).toBe('Processando…')
-    expect(examStatusLabel('pending')).toBe('Processando…')
+  it('rótulos amigáveis — nunca expõe o código cru; MESMOS da Web (C1)', () => {
+    expect(examStatusLabel('processing')).toBe('Processando')
+    expect(examStatusLabel('pending')).toBe('Aguardando')
     expect(examStatusLabel('error')).toBe('Não foi possível ler o documento')
-    expect(examStatusLabel('processed')).toBeNull() // pronto → sem ruído
+    expect(examStatusLabel('processed')).toBeNull() // pronto → sem ruído (o selo de completude cobre)
     expect(examStatusLabel(null)).toBeNull()
   })
 
