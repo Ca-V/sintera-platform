@@ -26,6 +26,7 @@ function fakeRepo() {
     listFinancialEntries: async () => [],
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     save: async (_u, e) => { savedAll.push(e as any) },
+    deleteEvent: async (...a) => { calls.push({ method: 'deleteEvent', args: a }) },
   }
   return { repo, calls, getSaved: () => savedAll[savedAll.length - 1] ?? null, getSavedAll: () => savedAll }
 }

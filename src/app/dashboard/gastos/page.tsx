@@ -25,7 +25,7 @@ function fmtBRL(cents: number): string {
 
 export default function GastosPage() {
   const { user, loading: authLoading, } = useUser()
-  const { services, saveEvent, supabase } = useEventForm()
+  const { services, saveEvent } = useEventForm()
   const [items, setItems] = useState<HealthEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [year, setYear] = useState<number | null>(null)
@@ -72,10 +72,10 @@ export default function GastosPage() {
     if (!window.confirm(`Excluir "${r.title}" das suas despesas? O evento é removido.`)) return
     setBusyId(r.id); setActionError(null)
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any).from('health_events').delete().eq('id', r.id)
-      if (error) { setActionError(`Não foi possível excluir: ${error.message}`); return }
+      await services.command.remove(user.id, r)
       setReloadKey(k => k + 1)
+    } catch (e) {
+      setActionError(`Não foi possível excluir: ${e instanceof Error ? e.message : String(e)}`)
     } finally { setBusyId(null) }
   }
 

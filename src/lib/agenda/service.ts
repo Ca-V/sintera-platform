@@ -54,6 +54,8 @@ export interface EventCommandService {
   reschedule(userId: string, event: HealthEvent, date: string, time: string | null): Promise<void>
   /** Desfaz conclusão/cancelamento (correção): volta para "planejado" e limpa completed_at. */
   reopen(userId: string, event: HealthEvent): Promise<void>
+  /** Exclui o evento de vez (ex.: remover um lançamento de Despesas). Emite EventDeleted. */
+  remove(userId: string, event: HealthEvent): Promise<void>
 }
 
 function newId(): string {
@@ -126,6 +128,12 @@ export function createEventCommandService(repo: EventRepository, bus: EventBus, 
       const next = { ...ev, status: 'planejado' as EventStatus, completedAt: null }
       await repo.save(userId, next)
       await emit('EventRescheduled', userId, next, ev.status)
+    },
+    async remove(userId, ev) {
+      // Exclusão definitiva — o domínio dono de health_events. A UI (ex.: Despesas)
+      // nunca toca a tabela direto.
+      await repo.deleteEvent(userId, ev.id ?? '')
+      await emit('EventDeleted', userId, ev, ev.status)
     },
   }
 }

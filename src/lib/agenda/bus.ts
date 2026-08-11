@@ -6,7 +6,7 @@
 
 import type { HealthEvent, EventStatus } from './event'
 
-export type DomainEventType = 'EventCreated' | 'EventCompleted' | 'EventCancelled' | 'EventRescheduled'
+export type DomainEventType = 'EventCreated' | 'EventCompleted' | 'EventCancelled' | 'EventRescheduled' | 'EventDeleted'
 
 /** Quem causou a transição (usuário, sistema, IA). */
 export type EventActor = { kind: 'user' | 'system' | 'ai'; id?: string }

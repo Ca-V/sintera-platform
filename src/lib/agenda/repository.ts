@@ -22,6 +22,7 @@ export interface EventRepository {
   listEventsByProtocol(userId: string, protocolId: string): Promise<HealthEvent[]>
   listFinancialEntries(userId: string): Promise<HealthEvent[]>
   save(userId: string, event: Partial<HealthEvent> & { type: string; title: string; date: string }): Promise<void>
+  deleteEvent(userId: string, id: string): Promise<void>
 }
 
 // `sortByWhen` (ordem cronológica canônica) vive no DOMÍNIO (event.ts) — o
@@ -63,6 +64,13 @@ export function createSupabaseEventRepository(supabase: SupabaseClient): EventRe
       // NUNCA engolir falha de gravação — propaga para a UI avisar a usuária
       // (evita "salvei e não apareceu"). Ver AgendarModal: exibe a mensagem.
       if (error) throw new Error(error.message || 'Falha ao salvar o evento')
+    },
+    // Exclusão do evento canônico (escopada por user_id). Legados em agenda_events
+    // não são removidos aqui — coexistência (ver topo); a Fase 3 migra e unifica.
+    deleteEvent: async (userId, id) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.from('health_events') as any).delete().eq('id', id).eq('user_id', userId)
+      if (error) throw new Error(error.message || 'Falha ao excluir o evento')
     },
   }
 }
