@@ -17,7 +17,7 @@ import { findDuplicateIds, originalIdFor, type DuplicateCandidate } from '@/lib/
 import { deriveExamIdentity } from '@/lib/exams/identification'
 import { binaryStructuringState, STRUCTURING_LABEL } from '@/lib/exams/structuring'
 import { isOrderDocumentType } from '@/lib/exams/classification'
-import { EXAM_STATE_LABEL } from '@sintera/core'
+import { EXAM_STATE_LABEL, EXAM_STATE_TONE, examProcessingState, examAnalyzeLabel, isExamReady, EXAM_STATUS_FILTER_OPTIONS, matchesExamStatusFilter, type ExamStateTone } from '@sintera/core'
 import { effectiveOrderStatus, orderStatusLabel } from '@/lib/exams/orderStatus'
 import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MB } from '@/lib/capture/limits'
 import { bundlePartInfo, bundlePartLabel, groupBundleParts } from '@/lib/exams/bundleGroup'
@@ -62,15 +62,21 @@ function friendlyError(code?: string, fallback?: string): string {
   return fallback ?? 'Ocorreu um erro durante a extração. Tente novamente.'
 }
 
-// Rótulos vêm do core (EXAM_STATE_LABEL — FONTE ÚNICA Web+Mobile, Causa C1); cor/ícone ficam locais (Design System).
-const STATUS_CONFIG: Record<string, {
-  label: string; color: string; bg: string
-  icon: React.ComponentType<{ size: number; className?: string }>
-}> = {
-  processed:  { label: 'Dados extraídos',                 color: 'text-petal',    bg: 'bg-blush',          icon: CheckCircle },
-  pending:    { label: EXAM_STATE_LABEL.pending ?? '',    color: 'text-gold',     bg: 'bg-warm',           icon: Clock       },
-  processing: { label: EXAM_STATE_LABEL.processing ?? '', color: 'text-lavender', bg: 'bg-lavender-light', icon: Loader2     },
-  error:      { label: EXAM_STATE_LABEL.failed ?? '',     color: 'text-red-400',  bg: 'bg-red-50',         icon: AlertCircle },
+// Blindagem C1: rótulo E semântica (estado→tom) vêm do CORE. O consumidor NÃO decide texto/tom — só mapeia o TOM
+// para cor/ícone do Design System (5 tons fixos). Um novo estado do backend é reconhecido pelo core e renderiza
+// aqui automaticamente, sem tocar esta tela.
+const TONE_STYLE: Record<ExamStateTone, { color: string; bg: string; icon: React.ComponentType<{ size: number; className?: string }> }> = {
+  success:   { color: 'text-petal',    bg: 'bg-blush',          icon: CheckCircle },
+  attention: { color: 'text-gold',     bg: 'bg-warm',           icon: Clock       },
+  info:      { color: 'text-lavender', bg: 'bg-lavender-light', icon: Loader2     },
+  error:     { color: 'text-red-400',  bg: 'bg-red-50',         icon: AlertCircle },
+  neutral:   { color: 'text-mauve',    bg: 'bg-ivory',          icon: Clock       },
+}
+/** Selo do estado: rótulo (core) + estilo (tom do core → DS). */
+function stateSeal(status: string | null | undefined) {
+  const st = examProcessingState(status)
+  const style = TONE_STYLE[EXAM_STATE_TONE[st]]
+  return { label: EXAM_STATE_LABEL[st], ...style }
 }
 
 // Selo BINÁRIO (regra_estruturacao_binaria / E3): só 2 estados ao usuário — "Resultados estruturados" |
@@ -85,12 +91,7 @@ function processedSeal(c: string | null | undefined): { label: string; color: st
   }
 }
 
-const STATUS_FILTER_OPTIONS = [
-  { value: 'all',       label: 'Todos os status' },
-  { value: 'processed', label: 'Dados extraídos'  },
-  { value: 'pending',   label: 'Aguardando'       },
-  { value: 'error',     label: 'Com erro'         },
-]
+// Opções do filtro de status = FONTE ÚNICA no core (EXAM_STATUS_FILTER_OPTIONS).
 
 const ACCEPTED_MIME = ['application/pdf', 'image/jpeg', 'image/png']
 const MAX_BYTES     = MAX_UPLOAD_BYTES   // SSOT em @/lib/capture/limits
@@ -225,7 +226,7 @@ export default function ExamsPage() {
       filtered = filtered.filter(e => getYear(effDate(e)) === yr)
     }
     if (filterStatus !== 'all') {
-      filtered = filtered.filter(e => e.status === filterStatus)
+      filtered = filtered.filter(e => matchesExamStatusFilter(e.status, filterStatus as 'all' | 'processed' | 'pending' | 'error'))
     }
     // Período por data de realização (inclusive nas pontas)
     if (filterFrom) filtered = filtered.filter(e => effDate(e).slice(0, 10) >= filterFrom)
@@ -549,7 +550,7 @@ export default function ExamsPage() {
               className="w-full sm:w-48"
               value={filterStatus}
               onChange={setFilterStatus}
-              options={STATUS_FILTER_OPTIONS}
+              options={EXAM_STATUS_FILTER_OPTIONS}
             />
 
             {/* Período por data de realização — linha inteira no mobile p/ caber no card */}
@@ -726,16 +727,16 @@ export default function ExamsPage() {
                           const isRunning   = !!analyzing[exam.id]
                           const errMsg      = examErrors[exam.id]
                           const displayStatus = isRunning ? 'processing' : exam.status
-                          const cfg  = STATUS_CONFIG[displayStatus] ?? STATUS_CONFIG.pending
+                          const cfg  = stateSeal(displayStatus)
                           const Icon = cfg.icon
                           // Selo honesto: quando processado, reflete a COMPLETUDE (não "extraídos" sempre).
-                          const seal = displayStatus === 'processed'
+                          const seal = isExamReady(displayStatus)
                             ? processedSeal((exam as unknown as { extraction_completeness?: string | null }).extraction_completeness)
-                            : { label: cfg.label, color: cfg.color, bg: cfg.bg, hint: '' }
+                            : { label: cfg.label ?? '', color: cfg.color, bg: cfg.bg, hint: '' }
                           const hasFile     = !!(exam as unknown as { file_url: string | null }).file_url
-                          const isProcessed = exam.status === 'processed'
+                          const isProcessed = isExamReady(exam.status)
                           const canAnalyze  = hasFile && !isRunning && !isProcessed && exam.status !== 'processing'
-                          const analyzeLabel = exam.status === 'error' ? 'Tentar novamente' : 'Extrair dados'
+                          const analyzeLabel = examAnalyzeLabel(exam.status)
                           const isMismatch  = compareNames(profile?.name, (exam as unknown as { patient_name?: string | null }).patient_name) === 'mismatch'
                           // Identificação padronizada do card (fundadora): NOME / LABORATÓRIO / SOLICITANTE
                           // em linhas separadas. O nome vem do type sem a proveniência (" • lab"); o

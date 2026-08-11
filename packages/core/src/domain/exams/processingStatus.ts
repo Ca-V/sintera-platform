@@ -56,3 +56,29 @@ export function examCompletenessLabel(extractionCompleteness: string | null | un
 
 export const isExamProcessing = (s: string | null | undefined) => examProcessingState(s) === 'processing' || examProcessingState(s) === 'pending'
 export const isExamFailed = (s: string | null | undefined) => examProcessingState(s) === 'failed'
+export const isExamReady = (s: string | null | undefined) => examProcessingState(s) === 'ready'
+
+/** Rótulo do botão de extração conforme o estado (falhou → "Tentar novamente"; senão → "Extrair dados"). SSOT. */
+export function examAnalyzeLabel(status: string | null | undefined): string {
+  return isExamFailed(status) ? 'Tentar novamente' : 'Extrair dados'
+}
+
+// ── Filtro de status na LISTA (FONTE ÚNICA das opções + do casamento; consumidores não redefinem rótulos) ──
+export type ExamStatusFilter = 'all' | 'processed' | 'pending' | 'error'
+export const EXAM_STATUS_FILTER_OPTIONS: { value: ExamStatusFilter; label: string }[] = [
+  { value: 'all',       label: 'Todos os status' },
+  { value: 'processed', label: 'Dados extraídos' },
+  { value: 'pending',   label: 'Aguardando' },
+  { value: 'error',     label: 'Com erro' },
+]
+/** Bucket do exame para o filtro (agrupa pending+processing em "pending"; failed em "error"). */
+export function examStatusFilterBucket(status: string | null | undefined): Exclude<ExamStatusFilter, 'all'> {
+  const st = examProcessingState(status)
+  if (st === 'ready') return 'processed'
+  if (st === 'failed') return 'error'
+  return 'pending'
+}
+/** O exame passa pelo filtro selecionado? */
+export function matchesExamStatusFilter(status: string | null | undefined, filter: ExamStatusFilter): boolean {
+  return filter === 'all' || examStatusFilterBucket(status) === filter
+}

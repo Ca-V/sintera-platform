@@ -14,20 +14,13 @@ import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 import type { MinhaSaudeStackParamList } from '../../navigation/types'
 import { useExamsList } from './useExamsList'
-import { examStatusLabel, isExamFailed, examCompletenessLabel } from './examStatus'
+import { examStatusLabel, isExamFailed, isExamReady, examAnalyzeLabel, examCompletenessLabel, EXAM_STATUS_FILTER_OPTIONS, matchesExamStatusFilter } from './examStatus'
 import { formatExamDate } from './examFormat'
 
 type Props = NativeStackScreenProps<MinhaSaudeStackParamList, 'ExamsList'>
 
-const STATUS_FILTERS: { id: string; label: string }[] = [
-  { id: 'all', label: 'Todos os status' }, { id: 'processed', label: 'Dados extraídos' },
-  { id: 'pending', label: 'Aguardando' }, { id: 'error', label: 'Com erro' },
-]
-function statusBucket(s: string | null): string {
-  if (s === 'processed') return 'processed'
-  if (s === 'error' || s === 'failed') return 'error'
-  return 'pending'
-}
+// Opções do filtro de status — FONTE ÚNICA no core (mapeadas ao contrato {id,label} do Select do Mobile).
+const STATUS_FILTERS = EXAM_STATUS_FILTER_OPTIONS.map(o => ({ id: o.value, label: o.label }))
 function groupByYear(exams: readonly ExamDTO[]): { year: string; items: ExamDTO[] }[] {
   const map = new Map<string, ExamDTO[]>()
   for (const e of exams) {
@@ -69,7 +62,7 @@ export function ExamsListScreen({ navigation }: Props) {
   const q = query.trim().toLowerCase()
   const filteredResults = useMemo(() => results.filter(e => {
     if (q && !`${e.display_title ?? ''} ${e.type ?? ''} ${e.issuer ?? ''}`.toLowerCase().includes(q)) return false
-    if (status !== 'all' && statusBucket(e.status) !== status) return false
+    if (!matchesExamStatusFilter(e.status, status as 'all' | 'processed' | 'pending' | 'error')) return false
     if (year !== 'all' && (e.exam_date ?? e.created_at ?? '').slice(0, 4) !== year) return false
     if (from && e.exam_date && e.exam_date < from) return false
     if (to && e.exam_date && e.exam_date > to) return false
@@ -247,9 +240,9 @@ export function ExamsListScreen({ navigation }: Props) {
           {g.items.map((e) => {
             const dup = dupIds.has(e.id)
             const running = analyzingIds.has(e.id) || e.status === 'processing'
-            const isProcessed = e.status === 'processed'
+            const isProcessed = isExamReady(e.status)
             const canAnalyze = !!e.file_url && !running && !isProcessed
-            const analyzeLabel = e.status === 'error' ? 'Tentar novamente' : 'Extrair dados'
+            const analyzeLabel = examAnalyzeLabel(e.status)
             const label = e.display_title ?? e.type ?? 'Exame'
             const editing = editingNameId === e.id
             return (
