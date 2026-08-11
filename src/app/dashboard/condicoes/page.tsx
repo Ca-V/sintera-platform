@@ -10,34 +10,22 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Loader2, Plus, X, Stethoscope, ArrowLeft, Trash2, Users, Pencil } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import ListCard from '@/components/ListCard'
 import Card from '@/components/ui/Card'
 import Disclaimer from '@/components/ui/Disclaimer'
-
-type Scope = 'propria' | 'familiar'
-
-interface Condition {
-  id: string
-  scope: Scope
-  name: string
-  relative: string | null
-  sinceLabel: string | null
-  notes: string | null
-}
+import type { Condition, ConditionScope } from '@/lib/condicoes/service'
 
 export default function CondicoesPage() {
   const { user, loading: authLoading } = useUser()
-  const supabase = createClient()
   const [items, setItems] = useState<Condition[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
 
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [scope, setScope] = useState<Scope>('propria')
+  const [scope, setScope] = useState<ConditionScope>('propria')
   const [name, setName] = useState('')
   const [relative, setRelative] = useState('')
   const [since, setSince] = useState('')
@@ -48,16 +36,11 @@ export default function CondicoesPage() {
   const load = useCallback(async () => {
     if (!user) return
     setLoading(true)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (supabase as any).from('health_conditions')
-      .select('id, scope, name, relative, since_label, notes')
-      .eq('user_id', user.id).order('created_at', { ascending: false })
-    setItems(((data ?? []) as Array<Record<string, unknown>>).map(c => ({
-      id: c.id as string, scope: (c.scope as Scope) ?? 'propria', name: (c.name as string) ?? '',
-      relative: (c.relative as string) ?? null, sinceLabel: (c.since_label as string) ?? null, notes: (c.notes as string) ?? null,
-    })))
+    const res = await fetch('/api/condicoes')
+    const data = res.ok ? await res.json() : { conditions: [] }
+    setItems((data.conditions ?? []) as Condition[])
     setLoading(false)
-  }, [user, supabase])
+  }, [user])
 
   // Carrega na montagem; o setLoading(true) síncrono (spinner) é intencional.
   // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -74,18 +57,16 @@ export default function CondicoesPage() {
   async function save() {
     if (!user || saving || !name.trim()) return
     setSaving(true); setErr(null)
-    const payload = {
-      user_id: user.id, scope, name: name.trim(),
+    const body = {
+      scope, name: name.trim(),
       relative: scope === 'familiar' ? (relative.trim() || null) : null,
-      since_label: since.trim() || null, notes: notes.trim() || null,
+      sinceLabel: since.trim() || null, notes: notes.trim() || null,
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const db = (supabase as any).from('health_conditions')
-    const { error } = editingId
-      ? await db.update(payload).eq('id', editingId)
-      : await db.insert(payload)
+    const res = editingId
+      ? await fetch('/api/condicoes', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: editingId, ...body }) })
+      : await fetch('/api/condicoes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
     setSaving(false)
-    if (error) { setErr(error.message); return }
+    if (!res.ok) { const e = await res.json().catch(() => ({})); setErr((e.error as string) ?? 'Falha ao salvar.'); return }
     reset(); setShowForm(false); await load()
   }
 
@@ -93,8 +74,7 @@ export default function CondicoesPage() {
     if (busyId) return
     if (!window.confirm(`Remover "${c.name}"?`)) return
     setBusyId(c.id)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from('health_conditions').delete().eq('id', c.id)
+    await fetch(`/api/condicoes?id=${encodeURIComponent(c.id)}`, { method: 'DELETE' })
     await load(); setBusyId(null)
   }
 
@@ -148,7 +128,7 @@ export default function CondicoesPage() {
         <Card padding="md" className="space-y-3">
           <div>
             <label htmlFor="cond-tipo" className="font-body text-xs text-mauve block mb-1">Tipo</label>
-            <select id="cond-tipo" value={scope} onChange={e => setScope(e.target.value as Scope)}
+            <select id="cond-tipo" value={scope} onChange={e => setScope(e.target.value as ConditionScope)}
               className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30">
               <option value="propria">Minha condição</option>
               <option value="familiar">Histórico familiar</option>
