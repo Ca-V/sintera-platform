@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Upload, FileText, Clock, CheckCircle, AlertCircle,
+  Upload, FileText, AlertCircle,
   X, Loader2, Zap, Search, ChevronDown, ChevronUp, Trash2, Pencil, Check, Dna, ChevronRight, Info,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -12,6 +12,8 @@ import { parseDateOnly } from '@/lib/agenda'
 import { useUser } from '@/context/UserContext'
 import { compareNames } from '@/lib/exams/nameMatch'
 import ListCard, { CardChip } from '@/components/ListCard'
+import ExamStatusChip from '@/components/ui/ExamStatusChip'
+import { EXAM_STATUS_META } from '@/lib/exams/presentation'
 import CreateRecordMenu from '@/components/ui/CreateRecordMenu'
 import Card from '@/components/ui/Card'
 import MotionCard from '@/components/ui/MotionCard'
@@ -40,21 +42,14 @@ function friendlyError(code?: string, fallback?: string): string {
   return fallback ?? 'Ocorreu um erro durante a extração. Tente novamente.'
 }
 
-const STATUS_CONFIG: Record<string, {
-  label: string; color: string; bg: string
-  icon: React.ComponentType<{ size: number; className?: string }>
-}> = {
-  processed:  { label: 'Dados extraídos', color: 'text-petal',    bg: 'bg-blush',     icon: CheckCircle },
-  pending:    { label: 'Aguardando',  color: 'text-gold',       bg: 'bg-warm',           icon: Clock       },
-  processing: { label: 'Processando', color: 'text-lavender',   bg: 'bg-lavender-light', icon: Loader2     },
-  error:      { label: 'Erro',        color: 'text-red-400',    bg: 'bg-red-50',         icon: AlertCircle },
-}
 
+// Rótulos derivam do dono do vocabulário (evita drift); 'all' e 'Com erro' são
+// fraseados PRÓPRIOS do filtro (não são rótulos de badge de status).
 const STATUS_FILTER_OPTIONS = [
   { value: 'all',       label: 'Todos os status' },
-  { value: 'processed', label: 'Dados extraídos'  },
-  { value: 'pending',   label: 'Aguardando'       },
-  { value: 'error',     label: 'Com erro'         },
+  { value: 'processed', label: EXAM_STATUS_META.processed.label },
+  { value: 'pending',   label: EXAM_STATUS_META.pending.label },
+  { value: 'error',     label: 'Com erro' },
 ]
 
 const ACCEPTED_MIME = ['application/pdf', 'image/jpeg', 'image/png']
@@ -494,8 +489,6 @@ export default function ExamsPage() {
                           const isRunning   = !!analyzing[exam.id]
                           const errMsg      = examErrors[exam.id]
                           const displayStatus = isRunning ? 'processing' : exam.status
-                          const cfg  = STATUS_CONFIG[displayStatus] ?? STATUS_CONFIG.pending
-                          const Icon = cfg.icon
                           const hasFile     = !!(exam as unknown as { file_url: string | null }).file_url
                           const isProcessed = exam.status === 'processed'
                           const canAnalyze  = hasFile && !isRunning && !isProcessed && exam.status !== 'processing'
@@ -538,10 +531,7 @@ export default function ExamsPage() {
                                 title={exam.type ?? 'Exame'}
                                 onTitleClick={() => router.push('/dashboard/exams/' + exam.id)}
                                 trailing={
-                                  <span className={`inline-flex items-center gap-1 text-[11px] font-body font-medium px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.color}`}>
-                                    <Icon size={10} className={isRunning ? 'animate-spin' : ''} />
-                                    {cfg.label}
-                                  </span>
+                                  <ExamStatusChip status={displayStatus} size={10} spinning={isRunning} />
                                 }
                                 meta={
                                   <>

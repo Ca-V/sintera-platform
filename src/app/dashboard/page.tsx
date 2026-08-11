@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
   FileText, Clock, Pill, ScrollText, CalendarDays, Receipt,
-  Upload, CheckCircle, AlertCircle, FlaskConical, Bell, ChevronRight, FilePlus, X,
+  Upload, CheckCircle, FlaskConical, Bell, ChevronRight, FilePlus, X,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { parseDateOnly } from '@/lib/agenda'
@@ -18,6 +18,7 @@ import DashboardEntry from '@/components/entry/DashboardEntry'
 import Card from '@/components/ui/Card'
 import MotionCard from '@/components/ui/MotionCard'
 import ActionCard from '@/components/ui/ActionCard'
+import ExamStatusChip from '@/components/ui/ExamStatusChip'
 
 interface ExamSummary {
   id: string
@@ -38,12 +39,6 @@ function formatDate(iso: string) {
   return parseDateOnly(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
-  processed:  { label: 'Dados extraídos', color: 'text-petal',     bg: 'bg-blush',     icon: CheckCircle },
-  pending:    { label: 'Aguardando',      color: 'text-gold',     bg: 'bg-warm',           icon: Clock       },
-  processing: { label: 'Processando',     color: 'text-lavender', bg: 'bg-lavender-light', icon: Clock       },
-  error:      { label: 'Erro',            color: 'text-red-400',  bg: 'bg-red-50',         icon: AlertCircle },
-}
 
 // Acesso rápido — usa exatamente a nomenclatura do menu lateral esquerdo.
 const QUICK_ACCESS: { href: string; icon: React.ElementType; label: string; desc: string; tile: string; tint: string }[] = [
@@ -296,8 +291,6 @@ function LegacyDashboard() {
           </div>
           <div className="divide-y divide-border/30">
             {recentExams.map((exam) => {
-              const cfg  = STATUS_CONFIG[exam.status] ?? STATUS_CONFIG.pending
-              const Icon = cfg.icon
               return (
                 <button key={exam.id}
                   onClick={() => router.push('/dashboard/exams/' + exam.id)}
@@ -309,10 +302,7 @@ function LegacyDashboard() {
                     <p className="font-body text-sm font-medium text-onyx break-words line-clamp-2">{exam.type ?? 'Exame'}</p>
                     <div className="flex items-center gap-2 flex-wrap mt-0.5">
                       <p className="font-body text-xs text-mauve">Realizado em {formatDate(exam.exam_date ?? exam.created_at)}</p>
-                      <span className={`inline-flex items-center gap-1 text-[11px] font-body font-medium px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.color}`}>
-                        <Icon size={9} />
-                        {cfg.label}
-                      </span>
+                      <ExamStatusChip status={exam.status} size={9} spinning={exam.status === 'processing'} />
                     </div>
                   </div>
                 </button>
