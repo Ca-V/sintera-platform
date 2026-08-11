@@ -31,26 +31,15 @@ import { createClient } from '@/lib/supabase/client'
 import { assembleOrganizedBiomarkers } from '@/lib/ai/insights/assembler'
 import { useUser } from '@/context/UserContext'
 import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
-import { typeLabel, type HealthEvent } from '@/lib/agenda' // fonte ÚNICA de rótulos de tipo de evento
-import { useEventForm } from '@/components/eventForm' // serviço de domínio (query.listFinancial = Despesas)
+import { typeLabel, selectFinancial, type HealthEvent } from '@/lib/agenda' // rótulos de tipo + projeção financeira (SSOT)
 import { contraceptiveLabel } from '@/lib/cycle'       // SSOT dos métodos contraceptivos
+import {
+  loadReportDataset,
+  type ReportMed, type ReportExam, type ReportMeasure, type ReportCondition, type ReportHabit,
+  type ReportEyewear, type ReportOmics, type ReportContraceptive, type ReportMenstruation,
+} from '@/lib/communication/reportDataset' // read-model ÚNICO do dataset de comunicação (11 tabelas)
 
-interface Med { name: string; kind: string; dose: string | null; frequency: string | null; startedOn: string | null; untilOn: string | null; status: string }
-interface Ev { title: string; eventType: string; prof: string | null; date: string; notes: string | null }
-interface Ex { id: string; type: string; date: string; fileUrl: string | null }
-interface Measure { metric: string; label: string | null; valueText: string; unit: string | null; date: string; examId: string | null }
-interface Condition { scope: string; name: string; relative: string | null; since: string | null; notes: string | null }
-interface Habit { category: string; description: string; frequency: string | null; notes: string | null }
-interface Eyewear {
-  kind: string; prescribedOn: string | null; prescriber: string | null
-  odSph: string | null; odCyl: string | null; odAxis: string | null; odAdd: string | null
-  oeSph: string | null; oeCyl: string | null; oeAxis: string | null; oeAdd: string | null
-  dnp: string | null; bc: string | null; dia: string | null; fileUrl: string | null
-}
 const EYEWEAR_LABEL: Record<string, string> = { oculos: 'Óculos', lentes_contato: 'Lentes de contato' }
-interface Omics { domain: string; laboratory: string | null; totalFeatures: number | null; date: string | null }
-interface Contraceptive { kind: string; brand: string | null; startedOn: string | null; replaceOn: string | null; status: string }
-interface Menstruation { startedOn: string; notes: string | null }
 function grauStr(sph: string | null, cyl: string | null, axis: string | null, add: string | null): string {
   return [sph ? `Esf ${sph}` : null, cyl ? `Cil ${cyl}` : null, axis ? `Eixo ${axis}` : null, add ? `Adição ${add}` : null].filter(Boolean).join(', ')
 }
@@ -110,18 +99,17 @@ export default function RelatorioRoute() {
 function LegacyReport() {
   const { user, profile, loading: authLoading } = useUser()
   const supabase = createClient()
-  const { services } = useEventForm() // Despesas = projeção financeira dos eventos (mesmo serviço do módulo Gastos)
   const [loading, setLoading] = useState(true)
-  const [meds, setMeds] = useState<Med[]>([])
-  const [events, setEvents] = useState<Ev[]>([])
-  const [exams, setExams] = useState<Ex[]>([])
-  const [measures, setMeasures] = useState<Measure[]>([])
-  const [conditions, setConditions] = useState<Condition[]>([])
-  const [habits, setHabits] = useState<Habit[]>([])
-  const [eyewear, setEyewear] = useState<Eyewear[]>([])
-  const [omics, setOmics] = useState<Omics[]>([])
-  const [contraceptives, setContraceptives] = useState<Contraceptive[]>([])
-  const [menstruations, setMenstruations] = useState<Menstruation[]>([])
+  const [meds, setMeds] = useState<ReportMed[]>([])
+  const [events, setEvents] = useState<HealthEvent[]>([])
+  const [exams, setExams] = useState<ReportExam[]>([])
+  const [measures, setMeasures] = useState<ReportMeasure[]>([])
+  const [conditions, setConditions] = useState<ReportCondition[]>([])
+  const [habits, setHabits] = useState<ReportHabit[]>([])
+  const [eyewear, setEyewear] = useState<ReportEyewear[]>([])
+  const [omics, setOmics] = useState<ReportOmics[]>([])
+  const [contraceptives, setContraceptives] = useState<ReportContraceptive[]>([])
+  const [menstruations, setMenstruations] = useState<ReportMenstruation[]>([])
   const [expenses, setExpenses] = useState<HealthEvent[]>([])
   const [shares, setShares] = useState<{ id: string; token: string; expiresAt: string }[]>([])
   const [shareBusy, setShareBusy] = useState(false)
@@ -171,7 +159,7 @@ function LegacyReport() {
     if (k === 'eventos') {
       const seen = new Set<string>()
       const out: { key: string; label: string }[] = []
-      for (const e of events) if (!seen.has(e.eventType)) { seen.add(e.eventType); out.push({ key: e.eventType, label: typeLabel(e.eventType) }) }
+      for (const e of events) if (!seen.has(e.type)) { seen.add(e.type); out.push({ key: e.type, label: typeLabel(e.type) }) }
       return out.sort((a, b) => a.label.localeCompare(b.label))
     }
     return []
@@ -212,68 +200,20 @@ function LegacyReport() {
     setLoading(true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db = supabase as any
-    const [medRes, evRes, exRes, mzRes, cdRes, hbRes, ewRes, omRes, ccRes, mpRes, finRes] = await Promise.all([
-      db.from('medications').select('name, kind, dose, frequency, started_on, until_date, status').eq('user_id', user.id).order('status'),
-      db.from('health_events').select('title, event_type, professional_kind, event_date, notes').eq('user_id', user.id).eq('synthetic', false).order('event_date', { ascending: false }),
-      db.from('exams').select('id, type, exam_date, created_at, file_url').eq('user_id', user.id).order('created_at', { ascending: false }),
-      db.from('body_metrics').select('metric, label, value_text, unit, measured_on, exam_id').eq('user_id', user.id).order('measured_on', { ascending: false }),
-      db.from('health_conditions').select('scope, name, relative, since_label, notes').eq('user_id', user.id).order('created_at', { ascending: false }),
-      db.from('life_habits').select('category, description, frequency, notes').eq('user_id', user.id).order('created_at', { ascending: false }),
-      db.from('health_resources').select('name, resource_type, prescriber, started_on, attributes, file_url').eq('user_id', user.id).eq('resource_type', 'correcao_visual').order('created_at', { ascending: false }),
-      db.from('omics_panels').select('domain, laboratory, total_features, collected_on, created_at').eq('user_id', user.id).order('collected_on', { ascending: false, nullsFirst: false }),
-      db.from('contraceptive_methods').select('kind, brand, started_on, replace_on, status').eq('user_id', user.id).order('created_at', { ascending: false }),
-      db.from('menstrual_periods').select('started_on, notes').eq('user_id', user.id).order('started_on', { ascending: false }).limit(24),
-      services.query.listFinancial(user.id), // Despesas = eventos realizados com valor pago (mesma fonte do módulo Gastos)
-    ])
-    setMeds(((medRes.data ?? []) as Array<Record<string, unknown>>).map(m => ({
-      name: m.name as string, kind: (m.kind as string) ?? 'medicamento', dose: (m.dose as string) ?? null, frequency: (m.frequency as string) ?? null,
-      startedOn: (m.started_on as string) ?? null, untilOn: (m.until_date as string) ?? null, status: (m.status as string) ?? 'em_uso',
-    })))
-    setEvents(((evRes.data ?? []) as Array<Record<string, unknown>>).map(e => ({
-      title: e.title as string, eventType: (e.event_type as string) ?? 'outro', prof: (e.professional_kind as string) ?? null,
-      date: e.event_date as string, notes: (e.notes as string) ?? null,
-    })))
-    setExams(((exRes.data ?? []) as Array<Record<string, unknown>>).map(e => ({
-      id: e.id as string, type: (e.type as string) || 'Exame', date: (e.exam_date as string) || (e.created_at as string),
-      fileUrl: (e.file_url as string) ?? null,
-    })))
-    setMeasures(((mzRes.data ?? []) as Array<Record<string, unknown>>).map(m => ({
-      metric: (m.metric as string) ?? 'outro', label: (m.label as string) ?? null,
-      valueText: (m.value_text as string) ?? '', unit: (m.unit as string) ?? null, date: m.measured_on as string,
-      examId: (m.exam_id as string) ?? null,
-    })))
-    setConditions(((cdRes.data ?? []) as Array<Record<string, unknown>>).map(c => ({
-      scope: (c.scope as string) ?? 'propria', name: (c.name as string) ?? '',
-      relative: (c.relative as string) ?? null, since: (c.since_label as string) ?? null, notes: (c.notes as string) ?? null,
-    })))
-    setHabits(((hbRes.data ?? []) as Array<Record<string, unknown>>).map(h => ({
-      category: (h.category as string) ?? 'outro', description: (h.description as string) ?? '',
-      frequency: (h.frequency as string) ?? null, notes: (h.notes as string) ?? null,
-    })))
-    setEyewear(((ewRes.data ?? []) as Array<Record<string, unknown>>).map(e => {
-      const a = (e.attributes as Record<string, unknown>) ?? {}
-      const od = (a.od as Record<string, string>) ?? {}
-      const oe = (a.oe as Record<string, string>) ?? {}
-      return {
-        kind: (a.vision_kind as string) ?? 'oculos', prescribedOn: (e.started_on as string) ?? null, prescriber: (e.prescriber as string) ?? null,
-        odSph: od.sph ?? null, odCyl: od.cyl ?? null, odAxis: od.axis ?? null, odAdd: od.add ?? null,
-        oeSph: oe.sph ?? null, oeCyl: oe.cyl ?? null, oeAxis: oe.axis ?? null, oeAdd: oe.add ?? null,
-        dnp: (a.dnp as string) ?? null, bc: (a.bc as string) ?? null, dia: (a.dia as string) ?? null,
-        fileUrl: (e.file_url as string) ?? null,
-      }
-    }))
-    setOmics(((omRes.data ?? []) as Array<Record<string, unknown>>).map(o => ({
-      domain: (o.domain as string) ?? 'metabolomics', laboratory: (o.laboratory as string) ?? null,
-      totalFeatures: (o.total_features as number) ?? null, date: (o.collected_on as string) ?? (o.created_at as string) ?? null,
-    })))
-    setContraceptives(((ccRes.data ?? []) as Array<Record<string, unknown>>).map(c => ({
-      kind: (c.kind as string) ?? 'outro', brand: (c.brand as string) ?? null,
-      startedOn: (c.started_on as string) ?? null, replaceOn: (c.replace_on as string) ?? null, status: (c.status as string) ?? 'ativo',
-    })))
-    setMenstruations(((mpRes.data ?? []) as Array<Record<string, unknown>>).map(p => ({
-      startedOn: p.started_on as string, notes: (p.notes as string) ?? null,
-    })))
-    setExpenses((finRes ?? []) as HealthEvent[])
+    // Dataset factual completo (11 tabelas) — read-model ÚNICO da Camada de Comunicação,
+    // a MESMA projeção consumida pelo link público /r/[token] (impossível divergirem).
+    const ds = await loadReportDataset(supabase, user.id)
+    setMeds(ds.medications)
+    setEvents(ds.events)
+    setExams(ds.exams)
+    setMeasures(ds.measures)
+    setConditions(ds.conditions)
+    setHabits(ds.habits)
+    setEyewear(ds.eyewear)
+    setOmics(ds.omics)
+    setContraceptives(ds.contraceptives)
+    setMenstruations(ds.menstruations)
+    setExpenses(selectFinancial(ds.events)) // Despesas = projeção financeira do domínio Agenda (SSOT)
     const { data: sh } = await db.from('report_shares')
       .select('id, token, expires_at').eq('user_id', user.id).eq('revoked', false)
       .gt('expires_at', new Date().toISOString()).order('created_at', { ascending: false })
@@ -286,7 +226,7 @@ function LegacyReport() {
       id: t.id as string, name: t.name as string, selection: (t.selection as Record<string, unknown>) ?? {},
     })))
     setLoading(false)
-  }, [user, supabase, services])
+  }, [user, supabase])
 
   async function createShare() {
     if (!user || shareBusy) return
@@ -341,7 +281,7 @@ function LegacyReport() {
   // uso, recursos, hábitos) aparecem independentemente do período.
   const rp = resolvePeriod(period)
   // Agenda: aplica período E a seleção por TIPO de evento (item a item).
-  const perEvents = events.filter(e => inPeriod(e.date, rp) && isItemOn('eventos', e.eventType))
+  const perEvents = events.filter(e => inPeriod(e.date, rp) && isItemOn('eventos', e.type))
   const perOmics = omics.filter(o => inPeriod(o.date, rp))
   const perMeasuresCorpo = measuresCorpo.filter(m => inPeriod(m.date, rp))
   const perMeasuresVitais = measuresVitais.filter(m => inPeriod(m.date, rp))
@@ -351,7 +291,7 @@ function LegacyReport() {
   const perMenstruations = menstruations.filter(m => inPeriod(m.startedOn, rp)) // Ciclo — menstruação (temporal)
   // Métodos contraceptivos = estado atual (independentes do período, como condições/meds em uso).
   // Ordenação de Exames — declara a config; a mecânica é a infra comum (listview).
-  const EXAM_SORTS: SortSpec<Ex>[] = [
+  const EXAM_SORTS: SortSpec<ReportExam>[] = [
     { key: 'data', label: 'Por data', compare: (a, b) => (b.date ?? '').localeCompare(a.date ?? '') },
     { key: 'tipo', label: 'Por tipo', compare: (a, b) => (a.type ?? '').localeCompare(b.type ?? '') },
   ]
@@ -409,7 +349,7 @@ function LegacyReport() {
   // Laudos vinculados às medidas (ex.: bioimpedância): mostramos o DOCUMENTO (nome +
   // data + link), como em Exames, em vez de discriminar cada métrica. Dedup por exame.
   const medLaudos = Array.from(new Set(perMeasuresCorpo.map(m => m.examId).filter(Boolean) as string[]))
-    .map(id => examById.get(id)).filter((e): e is Ex => !!e)
+    .map(id => examById.get(id)).filter((e): e is ReportExam => !!e)
   const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
   const brl = (cents: number | null) => `R$ ${((cents ?? 0) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
@@ -660,7 +600,7 @@ function LegacyReport() {
                   <tr key={i} className="border-b border-border/50">
                     <td className="font-body text-xs text-mauve py-1.5 pr-3 whitespace-nowrap align-top">{fmt(e.date)}</td>
                     <td className="font-body text-xs text-onyx py-1.5">
-                      <span className="text-mauve">{typeLabel(e.eventType)}{e.prof && PROF_LABEL[e.prof] ? ` (${PROF_LABEL[e.prof]})` : ''}:</span> {e.title}
+                      <span className="text-mauve">{typeLabel(e.type)}{e.professionalKind && PROF_LABEL[e.professionalKind] ? ` (${PROF_LABEL[e.professionalKind]})` : ''}:</span> {e.title}
                       {e.notes ? <span className="block text-xs text-mauve">{e.notes}</span> : null}
                     </td>
                   </tr>
