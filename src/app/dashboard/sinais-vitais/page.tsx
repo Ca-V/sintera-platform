@@ -10,15 +10,13 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { Loader2, Plus, X, Trash2 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import Sparkline, { parseNum } from '@/components/Sparkline'
 import ListCard from '@/components/ListCard'
 import Card from '@/components/ui/Card'
 import Disclaimer from '@/components/ui/Disclaimer'
-
-type Vital = 'pressao_arterial' | 'frequencia_cardiaca' | 'glicemia' | 'saturacao' | 'temperatura' | 'outro_sinal'
+import { VITALS, type Vital, type VitalEntry } from '@/lib/sinais-vitais/service'
 
 const VITAL_LABEL: Record<Vital, string> = {
   pressao_arterial: 'Pressão arterial', frequencia_cardiaca: 'Frequência cardíaca',
@@ -33,16 +31,6 @@ const PLACEHOLDER: Record<Vital, string> = {
   saturacao: 'Ex.: 98', temperatura: 'Ex.: 36,5', outro_sinal: 'Valor',
 }
 
-interface Entry {
-  id: string
-  metric: Vital
-  label: string | null
-  valueText: string
-  unit: string | null
-  measuredOn: string
-  notes: string | null
-}
-
 function fmt(date: string): string {
   const d = new Date(`${date}T00:00:00`)
   return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -50,8 +38,7 @@ function fmt(date: string): string {
 
 export default function SinaisVitaisPage() {
   const { user, loading: authLoading } = useUser()
-  const supabase = createClient()
-  const [items, setItems] = useState<Entry[]>([])
+  const [items, setItems] = useState<VitalEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
 
@@ -65,23 +52,14 @@ export default function SinaisVitaisPage() {
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
 
-  const VITALS: Vital[] = ['pressao_arterial', 'frequencia_cardiaca', 'glicemia', 'saturacao', 'temperatura', 'outro_sinal']
-
   const load = useCallback(async () => {
     if (!user) return
     setLoading(true)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (supabase as any).from('body_metrics')
-      .select('id, metric, label, value_text, unit, measured_on, notes')
-      .eq('user_id', user.id).in('metric', VITALS).order('measured_on', { ascending: false })
-    setItems(((data ?? []) as Array<Record<string, unknown>>).map(m => ({
-      id: m.id as string, metric: (m.metric as Vital) ?? 'outro_sinal', label: (m.label as string) ?? null,
-      valueText: (m.value_text as string) ?? '', unit: (m.unit as string) ?? null,
-      measuredOn: m.measured_on as string, notes: (m.notes as string) ?? null,
-    })))
+    const res = await fetch('/api/sinais-vitais')
+    const data = res.ok ? await res.json() : { vitals: [] }
+    setItems((data.vitals ?? []) as VitalEntry[])
     setLoading(false)
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- VITALS é constante do módulo; não precisa nas deps
-  }, [user, supabase])
+  }, [user])
 
   // Carrega na montagem (e após mutações); o setLoading(true) síncrono — o spinner —
   // é intencional.
@@ -94,13 +72,12 @@ export default function SinaisVitaisPage() {
   async function save() {
     if (!user || saving || !value.trim() || !date) return
     setSaving(true); setErr(null)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any).from('body_metrics').insert({
-      user_id: user.id, metric, label: metric === 'outro_sinal' ? (label.trim() || 'Sinal') : null,
-      value_text: value.trim(), unit: unit.trim() || null, measured_on: date, notes: notes.trim() || null,
+    const res = await fetch('/api/sinais-vitais', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ metric, value, unit, label, measuredOn: date, notes }),
     })
     setSaving(false)
-    if (error) { setErr(error.message); return }
+    if (!res.ok) { const e = await res.json().catch(() => ({})); setErr((e.error as string) ?? 'Falha ao salvar.'); return }
     reset(); setShowForm(false); await load()
   }
 
@@ -108,8 +85,7 @@ export default function SinaisVitaisPage() {
     if (busyId) return
     if (!window.confirm('Remover este registro?')) return
     setBusyId(id)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from('body_metrics').delete().eq('id', id)
+    await fetch(`/api/sinais-vitais?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
     await load(); setBusyId(null)
   }
 
