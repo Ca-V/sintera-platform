@@ -71,6 +71,17 @@ export interface EventCommandService {
     userId: string,
     params: { existingId?: string | null; desired: { title: string; date: string } | null },
   ): Promise<string | null>
+  /**
+   * Reconcilia um EVENTO CANÔNICO vinculado a uma origem (ex.: a compra de um
+   * medicamento; amanhã uma sessão de wearable, um resultado de lab): `draft`
+   * presente → cria/atualiza com id estável e devolve o id; null → remove o
+   * existente. Conceito permanente — qualquer produtor de evento canônico usa isto;
+   * o consumidor só guarda o id na sua própria tabela de origem.
+   */
+  syncEvent(
+    userId: string,
+    params: { existingId?: string | null; draft: EventDraft | null },
+  ): Promise<string | null>
 }
 
 function newId(): string {
@@ -154,6 +165,15 @@ export function createEventCommandService(repo: EventRepository, bus: EventBus, 
     markRemindersSent: (ids, sentAt) => repo.markRemindersSent(ids, sentAt),
     async syncReminder(userId, { existingId, desired }) {
       if (desired) return repo.upsertReminder(userId, { id: existingId, title: desired.title, date: desired.date })
+      if (existingId) { await repo.deleteEvent(userId, existingId); return null }
+      return null
+    },
+    async syncEvent(userId, { existingId, draft }) {
+      if (draft) {
+        const id = existingId ?? newId()
+        await repo.save(userId, { ...draft, id })
+        return id
+      }
       if (existingId) { await repo.deleteEvent(userId, existingId); return null }
       return null
     },
