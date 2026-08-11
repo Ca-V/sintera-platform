@@ -26,9 +26,9 @@ import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import { useStickyView } from '@/lib/ui/useStickyView'
 import Card from '@/components/ui/Card'
 import Disclaimer from '@/components/ui/Disclaimer'
+import type { Resource, ResourceType, ResourceStatus } from '@/lib/recursos/service'
 
-type ResourceType = 'correcao_visual' | 'dispositivo_medico' | 'protese_ortese' | 'auxilio' | 'compressao_suporte'
-type Status = 'em_uso' | 'suspenso' | 'encerrado'
+type Status = ResourceStatus
 
 const TYPES: { value: ResourceType; label: string; icon: React.ElementType; hint: string }[] = [
   { value: 'correcao_visual',    label: 'Correção visual',      icon: Glasses,       hint: 'óculos, lentes de contato, lente escleral' },
@@ -45,20 +45,6 @@ const STATUS: { value: Status; label: string; tone: string }[] = [
   { value: 'encerrado', label: 'Encerrado', tone: 'neutral' },
 ]
 const STATUS_META = (v: string) => STATUS.find(s => s.value === v) ?? STATUS[0]
-
-interface Resource {
-  id: string
-  resourceType: ResourceType
-  name: string
-  brand: string | null
-  prescriber: string | null
-  startedOn: string | null
-  untilDate: string | null
-  status: Status
-  notes: string | null
-  fileUrl: string | null
-  attributes: Record<string, unknown>
-}
 
 const EMPTY = {
   resource_type: 'correcao_visual' as ResourceType,
@@ -112,25 +98,11 @@ export default function RecursosPage() {
   const load = useCallback(async () => {
     if (!user) return
     setLoading(true)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (supabase as any).from('health_resources')
-      .select('id, resource_type, name, brand, prescriber, started_on, until_date, status, notes, file_url, attributes')
-      .eq('user_id', user.id).order('created_at', { ascending: false })
-    setItems(((data ?? []) as Array<Record<string, unknown>>).map(r => ({
-      id: r.id as string,
-      resourceType: (r.resource_type as ResourceType) ?? 'dispositivo_medico',
-      name: (r.name as string) ?? '',
-      brand: (r.brand as string) ?? null,
-      prescriber: (r.prescriber as string) ?? null,
-      startedOn: (r.started_on as string) ?? null,
-      untilDate: (r.until_date as string) ?? null,
-      status: (r.status as Status) ?? 'em_uso',
-      notes: (r.notes as string) ?? null,
-      fileUrl: (r.file_url as string) ?? null,
-      attributes: (r.attributes as Record<string, unknown>) ?? {},
-    })))
+    const res = await fetch('/api/recursos')
+    const data = res.ok ? await res.json() : { resources: [] }
+    setItems((data.resources ?? []) as Resource[])
     setLoading(false)
-  }, [user, supabase])
+  }, [user])
 
   // eslint-disable-next-line react-hooks/set-state-in-effect -- carrega dados na montagem (data fetching)
   useEffect(() => { if (!authLoading) load() }, [authLoading, load])
@@ -236,25 +208,23 @@ export default function RecursosPage() {
   async function save() {
     if (!user || saving || !f.name.trim()) return
     setSaving(true); setErr(null)
-    const blank = (v: string) => (v.trim() ? v.trim() : null)
-    const payload = {
-      user_id: user.id,
-      resource_type: f.resource_type,
-      name: f.name.trim(),
-      brand: blank(f.brand),
-      prescriber: blank(f.prescriber),
-      started_on: f.started_on || null,
-      until_date: f.until_date || null,
+    const body = {
+      resourceType: f.resource_type,
+      name: f.name,
+      brand: f.brand,
+      prescriber: f.prescriber,
+      startedOn: f.started_on,
+      untilDate: f.until_date,
       status: f.status,
-      notes: blank(f.notes),
-      file_url: f.file_url || null,
+      notes: f.notes,
+      fileUrl: f.file_url,
       attributes: buildAttributes(),
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const db = (supabase as any).from('health_resources')
-    const { error } = editingId ? await db.update(payload).eq('id', editingId) : await db.insert(payload)
+    const res = editingId
+      ? await fetch('/api/recursos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: editingId, ...body }) })
+      : await fetch('/api/recursos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
     setSaving(false)
-    if (error) { setErr(error.message); return }
+    if (!res.ok) { const e = await res.json().catch(() => ({})); setErr((e.error as string) ?? 'Falha ao salvar.'); return }
     reset(); setShowForm(false); await load()
   }
 
@@ -262,8 +232,7 @@ export default function RecursosPage() {
     if (busyId) return
     if (!window.confirm(`Remover "${r.name}"?`)) return
     setBusyId(r.id)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from('health_resources').delete().eq('id', r.id)
+    await fetch(`/api/recursos?id=${encodeURIComponent(r.id)}`, { method: 'DELETE' })
     await load(); setBusyId(null)
   }
 
