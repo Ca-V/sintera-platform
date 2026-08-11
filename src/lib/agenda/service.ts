@@ -56,6 +56,10 @@ export interface EventCommandService {
   reopen(userId: string, event: HealthEvent): Promise<void>
   /** Exclui o evento de vez (ex.: remover um lançamento de Despesas). Emite EventDeleted. */
   remove(userId: string, event: HealthEvent): Promise<void>
+  /** Cria/atualiza um LEMBRETE (conceito permanente de evento). Devolve o id do lembrete. */
+  upsertReminder(userId: string, r: { id?: string | null; title: string; date: string }): Promise<string>
+  /** Remove um lembrete (coexistência-aware). */
+  clearReminder(userId: string, id: string): Promise<void>
 }
 
 function newId(): string {
@@ -130,11 +134,14 @@ export function createEventCommandService(repo: EventRepository, bus: EventBus, 
       await emit('EventRescheduled', userId, next, ev.status)
     },
     async remove(userId, ev) {
-      // Exclusão definitiva — o domínio dono de health_events. A UI (ex.: Despesas)
-      // nunca toca a tabela direto.
+      // Exclusão definitiva — o domínio dono do ciclo de vida. A UI nunca toca a tabela.
       await repo.deleteEvent(userId, ev.id ?? '')
       await emit('EventDeleted', userId, ev, ev.status)
     },
+    // Lembretes: conceito de evento leve (agenda_events legado). Não emitem no bus por
+    // ora (não há HealthEvent completo); a tabela é escondida do consumidor pelo domínio.
+    upsertReminder: (userId, r) => repo.upsertReminder(userId, r),
+    clearReminder: (userId, id) => repo.deleteEvent(userId, id),
   }
 }
 

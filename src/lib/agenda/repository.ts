@@ -23,6 +23,8 @@ export interface EventRepository {
   listFinancialEntries(userId: string): Promise<HealthEvent[]>
   save(userId: string, event: Partial<HealthEvent> & { type: string; title: string; date: string }): Promise<void>
   deleteEvent(userId: string, id: string): Promise<void>
+  /** Cria/atualiza um evento-LEMBRETE (agenda_events legado) e devolve o id. */
+  upsertReminder(userId: string, r: { id?: string | null; title: string; date: string; eventType?: string }): Promise<string>
 }
 
 // `sortByWhen` (ordem cronológica canônica) vive no DOMÍNIO (event.ts) — o
@@ -65,12 +67,35 @@ export function createSupabaseEventRepository(supabase: SupabaseClient): EventRe
       // (evita "salvei e não apareceu"). Ver AgendarModal: exibe a mensagem.
       if (error) throw new Error(error.message || 'Falha ao salvar o evento')
     },
-    // Exclusão do evento canônico (escopada por user_id). Legados em agenda_events
-    // não são removidos aqui — coexistência (ver topo); a Fase 3 migra e unifica.
+    // Exclusão COEXISTÊNCIA-AWARE: o id pode viver no canônico (health_events) ou no
+    // legado (agenda_events). Deletar dos dois (por id + user_id) é idempotente e cobre
+    // ambos — o domínio esconde a coexistência do consumidor (habilita a Fase 3).
     deleteEvent: async (userId, id) => {
+      const del = async (table: string) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase.from(table) as any).delete().eq('id', id).eq('user_id', userId)
+        if (error) throw new Error(error.message || `Falha ao excluir o evento (${table})`)
+      }
+      await del('health_events')
+      await del('agenda_events')
+    },
+    // Lembrete (conceito permanente) — encapsula a tabela legada agenda_events.
+    upsertReminder: async (userId, r) => {
+      const eventType = r.eventType ?? 'medicacao'
+      if (r.id) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase.from('agenda_events') as any)
+          .update({ title: r.title, event_date: r.date, status: 'pending', reminder_enabled: true, reminder_sent_at: null })
+          .eq('id', r.id).eq('user_id', userId)
+        if (error) throw new Error(error.message || 'Falha ao atualizar o lembrete')
+        return r.id
+      }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase.from('health_events') as any).delete().eq('id', id).eq('user_id', userId)
-      if (error) throw new Error(error.message || 'Falha ao excluir o evento')
+      const { data, error } = await (supabase.from('agenda_events') as any)
+        .insert({ user_id: userId, event_type: eventType, title: r.title, event_date: r.date, status: 'pending', reminder_enabled: true })
+        .select('id').single()
+      if (error || !data) throw new Error(error?.message || 'Falha ao criar o lembrete')
+      return (data as { id: string }).id
     },
   }
 }
