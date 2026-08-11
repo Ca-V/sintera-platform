@@ -93,12 +93,20 @@ export async function listPeriods(supabase: SupabaseClient, userId: string): Pro
 
 // ── Escrita: método + lembrete (lembrete delegado à Agenda) ───────────────────
 
-/** Data desejada do lembrete de troca (regra do Ciclo) ou null quando não se aplica. */
-function reminderDesired(input: MethodInput, replaceOn: string | null): { title: string; date: string } | null {
+/**
+ * PURO — data desejada do lembrete de troca (regra do Ciclo) ou null quando não se
+ * aplica: só com lembrete ligado, `replaceOn` presente e método != pílula. ~30 dias
+ * antes da troca, nunca no passado. `today` injetável para teste determinístico.
+ */
+export function reminderDesired(
+  input: MethodInput,
+  replaceOn: string | null,
+  today: string = todayISO(),
+): { title: string; date: string } | null {
   const wants = input.reminder && !!replaceOn && input.kind !== 'pilula'
   if (!wants || !replaceOn) return null
   const raw = addDays(replaceOn, -30)
-  const date = raw < todayISO() ? todayISO() : raw // nunca no passado
+  const date = raw < today ? today : raw // nunca no passado
   return { title: `Trocar ${contraceptiveLabel(input.kind)}`, date }
 }
 
