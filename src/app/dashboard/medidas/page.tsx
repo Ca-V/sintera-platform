@@ -11,7 +11,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Loader2, Plus, X, Activity, Trash2, Camera, ScanLine } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import Sparkline, { parseNum } from '@/components/Sparkline'
@@ -21,11 +20,7 @@ import Section from '@/components/ui/Section'
 import Disclaimer from '@/components/ui/Disclaimer'
 import ProvenanceLine from '@/components/ui/ProvenanceLine'
 import { examProvenance } from '@/lib/provenance'
-
-type Metric =
-  | 'peso' | 'altura' | 'circunferencia_cintura'
-  | 'imc' | 'gordura_corporal' | 'massa_muscular' | 'agua_corporal' | 'gordura_visceral' | 'massa_ossea' | 'taxa_metabolica'
-  | 'outro'
+import { type Metric, type MeasureEntry, type ExamRef } from '@/lib/medidas/service'
 
 const METRIC_LABEL: Record<Metric, string> = {
   peso: 'Peso', altura: 'Altura', circunferencia_cintura: 'Circunferência (cintura)',
@@ -43,21 +38,6 @@ const PLACEHOLDER: Record<Metric, string> = {
   imc: 'Ex.: 24,2', gordura_corporal: 'Ex.: 28', massa_muscular: 'Ex.: 24', agua_corporal: 'Ex.: 55',
   gordura_visceral: 'Ex.: 7', massa_ossea: 'Ex.: 2,8', taxa_metabolica: 'Ex.: 1450', outro: 'Valor',
 }
-
-interface Entry {
-  id: string
-  metric: Metric
-  label: string | null
-  valueText: string
-  unit: string | null
-  measuredOn: string
-  notes: string | null
-  examId: string | null
-}
-
-// Exame (laudo) que a pessoa já enviou em Exames — usado para vincular a medida ao
-// documento original (ex.: laudo de bioimpedância).
-interface ExamRef { id: string; type: string; examDate: string | null; fileUrl: string | null }
 
 function fmt(date: string): string {
   const d = new Date(`${date}T00:00:00`)
@@ -101,8 +81,7 @@ const BIO_METRICS: Metric[] = ['peso', 'gordura_corporal', 'massa_muscular', 'ag
 
 export default function MedidasPage() {
   const { user, profile, loading: authLoading } = useUser()
-  const supabase = createClient()
-  const [items, setItems] = useState<Entry[]>([])
+  const [items, setItems] = useState<MeasureEntry[]>([])
   const [exams, setExams] = useState<ExamRef[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -130,26 +109,12 @@ export default function MedidasPage() {
   const load = useCallback(async () => {
     if (!user) return
     setLoading(true)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const db = supabase as any
-    const [{ data }, exRes] = await Promise.all([
-      db.from('body_metrics')
-        .select('id, metric, label, value_text, unit, measured_on, notes, exam_id')
-        .eq('user_id', user.id).order('measured_on', { ascending: false }),
-      db.from('exams').select('id, type, exam_date, file_url').eq('user_id', user.id).order('created_at', { ascending: false }),
-    ])
-    setItems(((data ?? []) as Array<Record<string, unknown>>).map(m => ({
-      id: m.id as string, metric: (m.metric as Metric) ?? 'outro', label: (m.label as string) ?? null,
-      valueText: (m.value_text as string) ?? '', unit: (m.unit as string) ?? null,
-      measuredOn: m.measured_on as string, notes: (m.notes as string) ?? null,
-      examId: (m.exam_id as string) ?? null,
-    })))
-    setExams(((exRes.data ?? []) as Array<Record<string, unknown>>).map(e => ({
-      id: e.id as string, type: (e.type as string) || 'Exame',
-      examDate: (e.exam_date as string) ?? null, fileUrl: (e.file_url as string) ?? null,
-    })))
+    const res = await fetch('/api/medidas')
+    const data = res.ok ? await res.json() : { measures: [], exams: [] }
+    setItems((data.measures ?? []) as MeasureEntry[])
+    setExams((data.exams ?? []) as ExamRef[])
     setLoading(false)
-  }, [user, supabase])
+  }, [user])
 
   // Carrega na montagem (e após mutações); o setLoading(true) síncrono — o spinner —
   // é intencional.
@@ -162,14 +127,12 @@ export default function MedidasPage() {
   async function save() {
     if (!user || saving || !value.trim() || !date) return
     setSaving(true); setErr(null)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any).from('body_metrics').insert({
-      user_id: user.id, metric, label: metric === 'outro' ? (label.trim() || 'Medida') : null,
-      value_text: value.trim(), unit: unit.trim() || null, measured_on: date, notes: notes.trim() || null,
-      exam_id: examId || null,
+    const res = await fetch('/api/medidas', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rows: [{ metric, value, unit, label, measuredOn: date, notes, examId }] }),
     })
     setSaving(false)
-    if (error) { setErr(error.message); return }
+    if (!res.ok) { const e = await res.json().catch(() => ({})); setErr((e.error as string) ?? 'Falha ao salvar.'); return }
     reset(); setShowForm(false); await load()
   }
 
@@ -177,8 +140,7 @@ export default function MedidasPage() {
     if (busyId) return
     if (!window.confirm('Remover esta medida?')) return
     setBusyId(id)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from('body_metrics').delete().eq('id', id)
+    await fetch(`/api/medidas?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
     await load(); setBusyId(null)
   }
 
@@ -214,16 +176,17 @@ export default function MedidasPage() {
     const rows = scanRows.filter(r => r.value.trim())
     if (rows.length === 0) { setScanRows(null); return }
     setSavingScan(true); setScanErr(null)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any).from('body_metrics').insert(
-      rows.map(r => ({
-        user_id: user.id, metric: r.metric, label: null,
-        value_text: r.value.trim(), unit: r.unit || null, measured_on: scanDate,
-        notes: 'Importado de laudo de bioimpedância', exam_id: scanExamId || null,
-      })),
-    )
+    const res = await fetch('/api/medidas', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        rows: rows.map(r => ({
+          metric: r.metric, value: r.value, unit: r.unit,
+          measuredOn: scanDate, notes: 'Importado de laudo de bioimpedância', examId: scanExamId,
+        })),
+      }),
+    })
     setSavingScan(false)
-    if (error) { setScanErr(error.message); return }
+    if (!res.ok) { const e = await res.json().catch(() => ({})); setScanErr((e.error as string) ?? 'Falha ao salvar.'); return }
     setScanRows(null); setScanExamId(''); await load()
   }
 
