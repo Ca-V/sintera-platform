@@ -170,3 +170,43 @@ Toda inteligência clínica fica encapsulada na camada de insights (`src/lib/ai/
 contadores (`rulesActive`, `candidates`, `upserted`) para telemetria. Auditoria: não há nome de
 biomarcador, doença, especialidade ou limiar clínico em `src/lib/ingestion/`. No estado-alvo (§8),
 o núcleo deixa até de importar a camada de insights — a separação passa a ser também de dependência.
+
+## 10. Encerramento da linha arquitetural — o centro é conhecimento clínico canônico
+
+Conclusão consolidada (análise, não implementação). O centro da arquitetura **deixa de ser**
+"exam", "wearable" e **até "evento"**, e passa a ser um **modelo canônico de conhecimento clínico**.
+
+- **Observação, não evento.** "Evento" descreve um acontecimento; a plataforma trabalha com
+  **conhecimento persistente** (glicemia, HRV, composição corporal, diagnósticos, medicamentos,
+  hábitos, questionários). O centro é a **Observação Clínica Canônica** (persistente, endereçável,
+  versionável, com `effectiveTime` como *atributo* — não como identidade). O "evento de ingestão"
+  **rebaixa-se a um gatilho** ("as observações da pessoa U mudaram → reprocessar"), não carrega o
+  dado nem é o modelo de domínio. O pipeline de insights deve receber **uma coleção de Observações
+  já normalizadas**, não um evento.
+- **Conjunto mínimo de conceitos.** Não são 7 peers. A espinha é **Observation** (com Measurement e
+  resposta de questionário como *formas* dela: quantitativa, codificada, qualitativa, série);
+  distintos de fato são **Condition** (asserção/diagnóstico) e **Intervention** (medicamento/
+  procedimento/hábito); **Document** é o artefato de proveniência (de onde a observação veio);
+  **Timeline** é uma *projeção* por `effectiveTime`, não uma entidade. → ~3 substantivos + tempo +
+  proveniência.
+- **Não inventar ontologia — alinhar a FHIR.** Observation/Condition/MedicationStatement/Procedure/
+  DiagnosticReport/QuestionnaireResponse já são o modelo regulatório-padrão. A plataforma já sinaliza
+  esse rumo (`loincCode` em `RuleProvenance`, docs Knowledge Graph V2 / Scientific Catalog).
+- **Divergência real a corrigir (mesma filosofia do "único DatePicker/Select").** Hoje há modelos
+  clínicos **paralelos por modalidade**: `biomarkers`/`current_biomarkers`, o `wearable_readings`
+  *planejado* (2º modelo normalizado), `omics_*`, etc. Não há um único modelo canônico de
+  conhecimento clínico. **Alerta:** o plano de wearables (FASE-2), como escrito, **perpetua** a
+  divisão ao criar `wearable_readings` separado de `biomarkers`. O modelo canônico os unifica
+  (ambos viram Observations com conceito/forma diferentes).
+- **Teste de 5 anos — "maybes" a documentar:** (a) **conhecimento derivado** (insight/narrativa de
+  IA) precisa ser cidadão de 1ª classe **distinto** do observado — proveniência de modelo/regra,
+  não confundir inferência com fato medido; (b) **série temporal** (CGM/HRV) vs **discreto** (labs)
+  no mesmo modelo sem bifurcar; (c) **rigor de proveniência/versionamento/coding** (LOINC/SNOMED)
+  desde o dia 1, para pesquisa longitudinal/estudos.
+
+**Veredito:** com a Observação Clínica Canônica no centro (evento rebaixado a gatilho; FHIR-aligned),
+a arquitetura sobrevive a: remover exames+wearables e operar só com hábitos/medicamentos/condições/
+ciclo/questionários; e ao horizonte de 5 anos (hospitais, labs, telemedicina, FHIR, estudos). O
+modelo biomarcador-cêntrico atual **não** sobrevive a esses testes. Esta **fundação de transporte**
+(este módulo) está correta e encerrada; a evolução do **modelo de domínio** para Observação Canônica
+é uma iniciativa futura de domínio — fora do escopo deste hook. **Linha arquitetural encerrada.**
