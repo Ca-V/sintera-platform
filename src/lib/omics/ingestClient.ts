@@ -3,6 +3,8 @@
 // retorna o resultado. Usado tanto na criação do painel (upload-first) quanto
 // na importação dentro do painel.
 
+import { uploadUserDocument } from '@/lib/api/storage'
+
 export interface IngestResult { version?: number; inserted?: number; resolved?: number; total_rows?: number }
 
 function fileToBase64(file: File): Promise<string> {
@@ -30,16 +32,11 @@ export async function uploadAndIngest(
   const maxMb = (isPdf || isImage) ? 6 : 8
   if (file.size > maxMb * 1024 * 1024) throw new Error(`Arquivo muito grande (máx. ${maxMb} MB).`)
 
-  // Preserva o arquivo original (bucket privado).
+  // Preserva o arquivo original (bucket privado). Best-effort: falha não bloqueia a ingestão.
   let sourceUrl: string | null = null
-  const path = `${userId}/omics/${crypto.randomUUID()}-${file.name}`
-  const { error: upErr } = await supabase.storage.from('exams').upload(path, file, {
-    contentType: file.type || 'application/octet-stream', upsert: false,
-  })
-  if (!upErr) {
-    const { data: signed } = await supabase.storage.from('exams').createSignedUrl(path, 60 * 60 * 24 * 365)
-    sourceUrl = signed?.signedUrl ?? null
-  }
+  try {
+    sourceUrl = (await uploadUserDocument(supabase, { userId, file, prefix: 'omics', keepFilename: true })).signedUrl
+  } catch { /* segue sem preservar o original */ }
 
   let res: Response
   if (isPdf || isImage) {

@@ -7,6 +7,7 @@
 import { useMemo } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
+import { uploadUserDocument } from '@/lib/api/storage'
 import { eventServicesFor, formatTimeBR, type HealthEvent } from '@/lib/agenda'
 import { parseRule, serializeRule } from '@/lib/recurrence'
 import type { AgendaEventInput, EventType } from './AgendarModal'
@@ -74,12 +75,8 @@ export function useEventForm() {
   async function uploadAttachment(userId: string, file: File): Promise<string | null> {
     if (!ACCEPTED.includes(file.type)) throw new Error('Anexo deve ser PDF, JPG ou PNG.')
     if (file.size > MAX_BYTES) throw new Error('Anexo muito grande (máx. 10 MB).')
-    const ext = file.name.split('.').pop() ?? 'bin'
-    const path = `${userId}/${crypto.randomUUID()}.${ext}`
-    const { error } = await supabase.storage.from('exams').upload(path, file, { contentType: file.type, upsert: false })
-    if (error) throw new Error(`Falha no anexo: ${error.message}`)
-    const { data } = await supabase.storage.from('exams').createSignedUrl(path, 60 * 60 * 24 * 365)
-    return data?.signedUrl ?? null
+    const { signedUrl } = await uploadUserDocument(supabase, { userId, file })
+    return signedUrl
   }
 
   // Salva (criar OU editar). Ao editar, PRESERVA campos fora do formulário

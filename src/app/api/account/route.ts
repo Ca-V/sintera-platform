@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
+import { DOCUMENTS_BUCKET } from '@/lib/api/storage'
 
 export async function DELETE() {
   try {
@@ -26,10 +27,10 @@ export async function DELETE() {
     )
 
     // 3. Excluir arquivos do Storage
-    const { data: storageFiles } = await admin.storage.from('exams').list(userId)
+    const { data: storageFiles } = await admin.storage.from(DOCUMENTS_BUCKET).list(userId)
     if (storageFiles && storageFiles.length > 0) {
       const paths = storageFiles.map(f => `${userId}/${f.name}`)
-      await admin.storage.from('exams').remove(paths)
+      await admin.storage.from(DOCUMENTS_BUCKET).remove(paths)
     }
 
     // 4. Excluir dados do banco em cascata

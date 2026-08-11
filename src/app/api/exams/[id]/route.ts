@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
+import { DOCUMENTS_BUCKET } from '@/lib/api/storage'
 
 export async function DELETE(
   _request: NextRequest,
@@ -46,7 +47,7 @@ export async function DELETE(
       const path = decodeURIComponent(m[1])
       // Só remove se o caminho pertence à pasta da usuária (defesa extra).
       if (path.startsWith(`${userId}/`)) {
-        await admin.storage.from('exams').remove([path]).catch(() => {})
+        await admin.storage.from(DOCUMENTS_BUCKET).remove([path]).catch(() => {})
       }
     }
   }

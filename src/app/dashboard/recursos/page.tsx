@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { fieldClass } from '@/components/ui/field'
+import { uploadUserDocument } from '@/lib/api/storage'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import PageHeader from '@/components/PageHeader'
@@ -131,13 +132,10 @@ export default function RecursosPage() {
     if (file.size > 10 * 1024 * 1024) { setErr('Imagem muito grande (máx. 10 MB).'); return }
     setScanning(true); setErr(null); setShowForm(true)
     try {
-      const ext = file.name.split('.').pop() ?? 'jpg'
-      const path = `${user.id}/${crypto.randomUUID()}.${ext}`
-      const { error: upErr } = await supabase.storage.from('exams').upload(path, file, { contentType: file.type, upsert: false })
-      if (!upErr) {
-        const { data: signed } = await supabase.storage.from('exams').createSignedUrl(path, 60 * 60 * 24 * 365)
-        if (signed?.signedUrl) setF(s => ({ ...s, file_url: signed.signedUrl }))
-      }
+      try {
+        const { signedUrl } = await uploadUserDocument(supabase, { userId: user.id, file })
+        if (signedUrl) setF(s => ({ ...s, file_url: signedUrl }))
+      } catch { /* anexo é best-effort; segue para a extração de grau */ }
       // Extração de grau só faz sentido em correção visual.
       if (f.resource_type !== 'correcao_visual') { setScanning(false); return }
       const base64 = await new Promise<string>((res, rej) => {

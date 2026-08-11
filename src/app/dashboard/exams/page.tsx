@@ -12,6 +12,7 @@ import { parseDateOnly } from '@/lib/agenda'
 import { useUser } from '@/context/UserContext'
 import { compareNames } from '@/lib/exams/nameMatch'
 import { effectiveExamDate } from '@/lib/exams/model'
+import { uploadUserDocument } from '@/lib/api/storage'
 import ListCard, { CardChip } from '@/components/ListCard'
 import ExamStatusChip from '@/components/ui/ExamStatusChip'
 import { EXAM_STATUS_META } from '@/lib/exams/presentation'
@@ -190,17 +191,13 @@ export default function ExamsPage() {
     setUploadError(null); setUploading(true)
     let examId: string | null = null
     try {
-      const ext         = file.name.split('.').pop() ?? 'bin'
-      const storagePath = `${user.id}/${crypto.randomUUID()}.${ext}`
-      const { error: storageErr } = await supabase.storage.from('exams').upload(storagePath, file, { contentType: file.type, upsert: false })
-      if (storageErr) throw new Error(`[storage] ${storageErr.message}`)
-      const { data: signedData, error: signedErr } = await supabase.storage.from('exams').createSignedUrl(storagePath, 60 * 60 * 24 * 365)
-      if (signedErr) throw new Error(`[signed-url] ${signedErr.message}`)
+      const { signedUrl } = await uploadUserDocument(supabase, { userId: user.id, file })
+      if (!signedUrl) throw new Error('[signed-url] URL indisponível')
       examId = crypto.randomUUID()
       const examName = file.name.replace(/\.[^.]+$/, '')
       // exam_date fica nulo no upload — é preenchido pela extração (data do laudo)
       // e pode ser ajustado manualmente no detalhe. Não assumimos a data de envio.
-      const { error: insertErr } = await supabase.from('exams').insert({ id: examId, user_id: user.id, type: examName, exam_date: null, file_url: signedData.signedUrl, status: 'pending' } as unknown as never)
+      const { error: insertErr } = await supabase.from('exams').insert({ id: examId, user_id: user.id, type: examName, exam_date: null, file_url: signedUrl, status: 'pending' } as unknown as never)
       if (insertErr) throw new Error(`[insert] ${insertErr.code}: ${insertErr.message}`)
       // P3 — vai direto ao exame enviado; a análise inicia sozinha lá (status 'pending')
       router.push(`/dashboard/exams/${examId}`)
