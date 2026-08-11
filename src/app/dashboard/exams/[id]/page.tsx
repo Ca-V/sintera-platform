@@ -22,6 +22,7 @@ import { normalizeName } from '@/lib/biomarkers/grouping'
 import { deriveExamIdentity } from '@/lib/exams/identification'
 import { isOrderDocumentType } from '@/lib/exams/classification'
 import { careStageFor } from '@/lib/exams/careFlow'
+import { examProcessingState, isExamReady, isExamProcessing, isExamFailed } from '@sintera/core'
 import { eventServicesFor, isFinancial, type HealthEvent } from '@/lib/agenda'
 import { expenseDocLabel, EXPENSE_DOC_TYPES } from '@/lib/finance/expense'
 import { parseAmountToCents, centsToAmount } from '@/lib/agenda/money'
@@ -638,7 +639,7 @@ export default function ExamDetailPage() {
   // 409 ALREADY_PROCESSING do servidor é a rede de segurança. O setTimeout(0)
   // tira o setState do corpo síncrono do efeito.
   useEffect(() => {
-    if (exam?.status !== 'pending' || autoStartedRef.current) return
+    if (examProcessingState(exam?.status) !== 'pending' || autoStartedRef.current) return
     autoStartedRef.current = true
     const t = setTimeout(() => { handleAnalyze() }, 0)
     return () => clearTimeout(t)
@@ -649,7 +650,7 @@ export default function ExamDetailPage() {
   // servidor independentemente do cliente, então após refresh / retorno posterior
   // / outra aba, isto reflete a conclusão sozinho. Para ao sair de 'processing'.
   useEffect(() => {
-    if (exam?.status !== 'processing') return
+    if (examProcessingState(exam?.status) !== 'processing') return
     const iv = setInterval(() => { loadData(true) }, 3000)
     return () => clearInterval(iv)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -669,7 +670,7 @@ export default function ExamDetailPage() {
     </div>
   )
 
-  const isProcessed  = exam?.status === 'processed'
+  const isProcessed  = isExamReady(exam?.status)
   const hasResults   = biomarkers.length > 0
   const hasClinical  = (clinicalRep?.items.length ?? 0) > 0   // resultados clínicos não-laboratoriais (CPE)
   const analyzeLabel = isProcessed ? 'Extrair novamente' : 'Extrair dados'
@@ -1091,7 +1092,7 @@ export default function ExamDetailPage() {
             </p>
           </div>
         </MotionCard>
-      ) : hasClinical ? null : (analyzing || exam?.status === 'processing' || exam?.status === 'pending') ? (
+      ) : hasClinical ? null : (analyzing || isExamProcessing(exam?.status)) ? (
         /* P3 — Estado de processamento (auto-análise em andamento; 'pending' evita flash do estado vazio) */
         <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
           padding="none" className="p-10 text-center">
@@ -1104,7 +1105,7 @@ export default function ExamDetailPage() {
         // com segurança → o documento original é a fonte. (extraction_completeness, do CEF.)
         const completeness = (exam as unknown as { extraction_completeness?: string | null })?.extraction_completeness ?? null
         const fileUrl = (exam as unknown as { file_url?: string | null })?.file_url ?? null
-        if (completeness === 'document_only' && exam?.status !== 'error') {
+        if (completeness === 'document_only' && !isExamFailed(exam?.status)) {
           return (
             <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
               padding="none" className="p-10 text-center">
@@ -1128,8 +1129,8 @@ export default function ExamDetailPage() {
             <FileText size={40} className="text-border mx-auto mb-3" />
             <p className="font-body text-sm font-semibold text-onyx mb-1">Nenhum resultado estruturado</p>
             <p className="font-body text-xs text-mauve">
-              {exam?.status === 'error'
-                ? `Última extração falhou (${exam.error_reason ?? 'erro desconhecido'}). Clique em "Extrair dados" para tentar novamente.`
+              {isExamFailed(exam?.status)
+                ? `Última extração falhou (${exam?.error_reason ?? 'erro desconhecido'}). Clique em "Extrair dados" para tentar novamente.`
                 : 'Clique em "Extrair dados" para estruturar os resultados deste exame.'}
             </p>
           </MotionCard>

@@ -7,6 +7,7 @@ import { useFocusEffect } from '@react-navigation/native'
 import type { ExamDTO } from '@sintera/api-client'
 import { apiClient } from '../../../infrastructure/apiClient'
 import { loadReducer, initialLoadState, loadErrorMessage } from './loadMachine'
+import { isExamProcessing } from './examStatus'
 
 const LIST_ERROR = 'Não foi possível carregar seus exames. Tente novamente.'
 const MAX_POLLS = 45 // ~3 min de teto — cobre extrações lentas (observado: até ~53 s + overhead)
@@ -51,7 +52,7 @@ export function useExamsList() {
   // Polling enquanto algum exame está processando.
   const pollsRef = useRef(0)
   useEffect(() => {
-    const active = (state.data ?? []).some((e) => e.status === 'pending' || e.status === 'processing')
+    const active = (state.data ?? []).some((e) => isExamProcessing(e.status))
     if (!active) {
       pollsRef.current = 0
       return

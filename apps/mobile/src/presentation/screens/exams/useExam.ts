@@ -7,7 +7,7 @@ import type { ExamDetailDTO, BiomarkerDTO } from '@sintera/api-client'
 import { clinicalResultsToUcda, type UcdaRepresentation, sortBiomarkers } from '@sintera/core'
 import { apiClient } from '../../../infrastructure/apiClient'
 import { loadReducer, initialLoadState, loadErrorMessage } from './loadMachine'
-import { isExamProcessing } from './examStatus'
+import { isExamProcessing, examProcessingState } from './examStatus'
 
 const DETAIL_ERROR = 'Não foi possível carregar o exame. Tente novamente.'
 const MAX_POLLS = 45 // ~3 min de teto — cobre extrações lentas (server-side; observado até ~53 s + overhead)
@@ -72,7 +72,7 @@ export function useExam(id: string) {
   // Auto-processar exame PENDENTE ao abrir (paridade Web) — recupera órfãos cujo disparo não ocorreu.
   const autoRef = useRef(false)
   useEffect(() => {
-    if (state.data?.status === 'pending' && !autoRef.current) {
+    if (state.data && examProcessingState(state.data.status) === 'pending' && !autoRef.current) {
       autoRef.current = true
       void apiClient.exams.analyzeExam(id)
       dispatch({ type: 'SET', data: { ...state.data, status: 'processing' } })

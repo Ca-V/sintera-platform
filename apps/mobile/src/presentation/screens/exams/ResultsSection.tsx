@@ -9,6 +9,7 @@ import type { BiomarkerDTO, ExamDetailDTO } from '@sintera/api-client'
 import {
   biomarkerStatus, biomarkerStatusLabel, displayValue, formatReference, biomarkerCounts,
   experimentalIndex, groupByMaterialExam, biomarkerSourceLabel, groupUcdaForDisplay,
+  isExamProcessing, isExamFailed,
   type UcdaRepresentation,
 } from '@sintera/core'
 import { Text, Disclaimer } from '../../primitives'
@@ -36,14 +37,14 @@ export function ResultsSection({ exam, biomarkers, clinical, analyzing }: {
     <View style={{ gap: 16 }}>
       {hasResults ? (
         <ResultsCard exam={exam} biomarkers={biomarkers} />
-      ) : hasClinical ? null : analyzing || exam.status === 'processing' || exam.status === 'pending' ? (
+      ) : hasClinical ? null : analyzing || isExamProcessing(exam.status) ? (
         <View style={[styles.stateCard, card]}>
           <Text spec={text(t, { role: 'bodyStrong' })} style={styles.center}>Analisando seu exame…</Text>
           <Text spec={text(t, { role: 'bodySmall', tone: 'muted' })} style={styles.center}>
             A SINTERA está estruturando os resultados do documento. Isso leva alguns segundos.
           </Text>
         </View>
-      ) : exam.extraction_completeness === 'document_only' && exam.status !== 'error' ? (
+      ) : exam.extraction_completeness === 'document_only' && !isExamFailed(exam.status) ? (
         <View style={[styles.stateCard, card]}>
           <Text spec={text(t, { role: 'bodyStrong' })} style={styles.center}>Documento disponível para consulta</Text>
           <Text spec={text(t, { role: 'bodySmall', tone: 'muted' })} style={styles.center}>
@@ -54,7 +55,7 @@ export function ResultsSection({ exam, biomarkers, clinical, analyzing }: {
         <View style={[styles.stateCard, card]}>
           <Text spec={text(t, { role: 'bodyStrong' })} style={styles.center}>Nenhum resultado estruturado</Text>
           <Text spec={text(t, { role: 'bodySmall', tone: 'muted' })} style={styles.center}>
-            {exam.status === 'error'
+            {isExamFailed(exam.status)
               ? `Última extração falhou (${exam.error_reason ?? 'erro desconhecido'}). Use "Extrair novamente".`
               : 'Use "Extrair novamente" para estruturar os resultados deste exame.'}
           </Text>

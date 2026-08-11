@@ -735,7 +735,7 @@ export default function ExamsPage() {
                             : { label: cfg.label ?? '', color: cfg.color, bg: cfg.bg, hint: '' }
                           const hasFile     = !!(exam as unknown as { file_url: string | null }).file_url
                           const isProcessed = isExamReady(exam.status)
-                          const canAnalyze  = hasFile && !isRunning && !isProcessed && exam.status !== 'processing'
+                          const canAnalyze  = hasFile && !isRunning && !isProcessed && examProcessingState(exam.status) !== 'processing'
                           const analyzeLabel = examAnalyzeLabel(exam.status)
                           const isMismatch  = compareNames(profile?.name, (exam as unknown as { patient_name?: string | null }).patient_name) === 'mismatch'
                           // Identificação padronizada do card (fundadora): NOME / LABORATÓRIO / SOLICITANTE

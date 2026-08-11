@@ -13,7 +13,7 @@ import { useTheme } from '../../theme'
 import type { MinhaSaudeStackParamList } from '../../navigation/types'
 import { apiClient } from '../../../infrastructure/apiClient'
 import { useExam } from './useExam'
-import { examStatusLabel, isExamFailed } from './examStatus'
+import { examStatusLabel, isExamFailed, isExamReady } from './examStatus'
 import { formatExamDate } from './examFormat'
 import { ResultsSection } from './ResultsSection'
 import { FinancialSection } from './FinancialSection'
@@ -146,7 +146,7 @@ export function ExamDetailScreen({ route, navigation }: Props) {
   const { name, lab } = deriveExamIdentity(exam.type, exam.issuer)
   const hasResults = p.biomarkers.length > 0 || (p.clinical?.items.length ?? 0) > 0
   const stage = careStageFor({ hasResult: hasResults, isOrder: isOrderDoc, linkedEventStatuses: linkedStatuses })
-  const isProcessed = exam.status === 'processed'
+  const isProcessed = isExamReady(exam.status)
   const linkedOrder = orders.find(o => o.id === exam.fulfills_order_id) ?? null
   const card = { backgroundColor: t.color.surface.base, borderColor: t.color.border.default }
 

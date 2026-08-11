@@ -14,7 +14,7 @@ import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 import type { MinhaSaudeStackParamList } from '../../navigation/types'
 import { useExamsList } from './useExamsList'
-import { examStatusLabel, isExamFailed, isExamReady, examAnalyzeLabel, examCompletenessLabel, EXAM_STATUS_FILTER_OPTIONS, matchesExamStatusFilter } from './examStatus'
+import { examStatusLabel, isExamFailed, isExamReady, examAnalyzeLabel, examCompletenessLabel, examProcessingState, EXAM_STATUS_FILTER_OPTIONS, matchesExamStatusFilter } from './examStatus'
 import { formatExamDate } from './examFormat'
 
 type Props = NativeStackScreenProps<MinhaSaudeStackParamList, 'ExamsList'>
@@ -239,7 +239,7 @@ export function ExamsListScreen({ navigation }: Props) {
           <Text spec={text(t, { role: 'label', tone: 'muted' })}>{g.year}</Text>
           {g.items.map((e) => {
             const dup = dupIds.has(e.id)
-            const running = analyzingIds.has(e.id) || e.status === 'processing'
+            const running = analyzingIds.has(e.id) || examProcessingState(e.status) === 'processing'
             const isProcessed = isExamReady(e.status)
             const canAnalyze = !!e.file_url && !running && !isProcessed
             const analyzeLabel = examAnalyzeLabel(e.status)
