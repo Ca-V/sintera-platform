@@ -9,10 +9,9 @@
 // frequência e desde quando.
 // ============================================================
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Loader2, X, ArrowLeft, Pencil, Trash2, ChevronDown } from 'lucide-react'
-import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import CreateRecordMenu from '@/components/ui/CreateRecordMenu'
 import { runoutDate, nextRepurchaseDate } from '@/lib/medications/repurchase'
@@ -23,6 +22,7 @@ import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import Card from '@/components/ui/Card'
 import Disclaimer from '@/components/ui/Disclaimer'
 import { fieldClass } from '@/components/ui/field'
+import { useListResource } from '@/lib/ui/useListResource'
 
 type Status = 'em_uso' | 'programado' | 'suspenso' | 'encerrado'
 type Kind = 'medicamento' | 'suplemento' | 'produto' | 'dispositivo' | 'outro'
@@ -84,10 +84,9 @@ function fmtFull(date: string): string {
 }
 function fmtShort(date: string): string { return `${date.slice(8, 10)}/${date.slice(5, 7)}` }
 export default function MedicamentosPage() {
-  const { user, loading: authLoading } = useUser()
-  const [meds, setMeds] = useState<Med[]>([])
-  const [loading, setLoading] = useState(true)
-  const [busyId, setBusyId] = useState<string | null>(null)
+  // Ciclo de vida do recurso (lista/salvar/remover/estados) = dono único.
+  const { items: meds, loading, saving, busyId, error: err, setError: setErr, save: saveResource, remove: removeResource } =
+    useListResource<Med>({ endpoint: '/api/medicamentos', listKey: 'meds', editMethod: 'POST' })
   const [listView, setListView] = useStickyView<'tipo' | 'situacao'>('sintera:view:medicamentos', 'situacao')
 
   const [showForm, setShowForm] = useState(false)
@@ -120,8 +119,6 @@ export default function MedicamentosPage() {
   const [packUnit, setPackUnit] = useState('')
   const [prescriber, setPrescriber] = useState('')
   const [repurchase, setRepurchase] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [err, setErr] = useState<string | null>(null)
   const [scanning, setScanning] = useState(false)
   const [scanErr, setScanErr] = useState<string | null>(null)
   type ScanItem = { name: string; dose: string | null; frequency: string | null; startedOn?: string | null; acquiredQty?: number | null; packQty?: number | null; dailyCons?: number | null; purchasedOn?: string | null; form?: string | null; route?: string | null; packUnit?: string | null; prescriber?: string | null }
@@ -200,18 +197,6 @@ export default function MedicamentosPage() {
     setScanEditing(it); setShowForm(true)
   }
 
-  const load = useCallback(async () => {
-    if (!user) return
-    setLoading(true)
-    const res = await fetch('/api/medicamentos')
-    const data = res.ok ? await res.json() : { meds: [] }
-    setMeds((data.meds ?? []) as Med[])
-    setLoading(false)
-  }, [user])
-
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { if (!authLoading) load() }, [authLoading, load])
-
   // Handoff da captura da Home: se chegou uma foto já escaneada, abre a prévia "Detectado".
   useEffect(() => {
     try {
@@ -233,6 +218,7 @@ export default function MedicamentosPage() {
     if (!editId) return
     const m = meds.find(x => x.id === editId)
     if (m) { openEdit(m); openedEditParam.current = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- roda ao chegar a lista; openEdit é estável no escopo
   }, [meds])
 
   function reset() {
@@ -254,35 +240,28 @@ export default function MedicamentosPage() {
   }
 
   async function save() {
-    if (!user || saving || !name.trim()) return
+    if (saving || !name.trim()) return
     if ((kind === 'medicamento' || kind === 'suplemento') && !form) {
       setErr('Selecione a forma farmacêutica.'); return
     }
-    setSaving(true); setErr(null)
     // Toda a lógica (payload + recompra→lembrete + compra→evento canônico) vive no
     // serviço/rota; a Agenda é a dona do ciclo de vida dos eventos. A UI só envia os campos.
-    const res = await fetch('/api/medicamentos', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id: editingId, name, kind, brand, dose, frequency: freq, startedOn, untilOn, notes, status: medStatus,
-        acquiredQty, packQty, dailyCons, purchasedOn, purchaseStatus, amount, repurchase, repurchaseFreq,
-        form, route, packUnit, prescriber,
-      }),
-    })
-    if (!res.ok) { setSaving(false); const e = await res.json().catch(() => ({})); setErr((e.error as string) ?? 'Falha ao salvar.'); return }
+    const ok = await saveResource({
+      name, kind, brand, dose, frequency: freq, startedOn, untilOn, notes, status: medStatus,
+      acquiredQty, packQty, dailyCons, purchasedOn, purchaseStatus, amount, repurchase, repurchaseFreq,
+      form, route, packUnit, prescriber,
+    }, editingId)
+    if (!ok) return
     // Só após salvar com sucesso o item do scan sai da lista de detectados.
     if (scanEditing) setScanResults(prev => prev.filter(x => x !== scanEditing))
-    setSaving(false)
-    reset(); setShowForm(false); await load()
+    reset(); setShowForm(false)
   }
 
 
   async function remove(m: Med) {
     if (busyId) return
     if (!window.confirm(`Remover "${m.name}" da sua lista?`)) return
-    setBusyId(m.id)
-    await fetch(`/api/medicamentos?id=${encodeURIComponent(m.id)}`, { method: 'DELETE' })
-    await load(); setBusyId(null)
+    await removeResource(m.id)
   }
 
   const KIND_LABEL: Record<Kind, string> = { medicamento: 'Medicamentos', suplemento: 'Suplementos', produto: 'Produtos', dispositivo: 'Dispositivos', outro: 'Outros' }

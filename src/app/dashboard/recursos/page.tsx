@@ -10,7 +10,7 @@
 // A SINTERA apenas organiza o que a pessoa informa — não interpreta nem prescreve.
 // ============================================================
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import Link from 'next/link'
 import {
   Loader2, Plus, X, ArrowLeft, Pencil, Trash2, Camera, Paperclip,
@@ -25,6 +25,7 @@ import EmptyState from '@/components/EmptyState'
 import ListCard, { CardChip } from '@/components/ListCard'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import { useStickyView } from '@/lib/ui/useStickyView'
+import { useListResource } from '@/lib/ui/useListResource'
 import Card from '@/components/ui/Card'
 import Disclaimer from '@/components/ui/Disclaimer'
 import type { Resource, ResourceType, ResourceStatus } from '@/lib/recursos/service'
@@ -78,36 +79,22 @@ const inputCls = fieldClass()
 const gradeCls = fieldClass({ className: 'px-2 py-1.5 rounded-lg' })
 
 export default function RecursosPage() {
-  const { user, loading: authLoading } = useUser()
+  const { user } = useUser()
   const supabase = createClient()
-  const [items, setItems] = useState<Resource[]>([])
-  const [loading, setLoading] = useState(true)
-  const [busyId, setBusyId] = useState<string | null>(null)
+  // Ciclo de vida do recurso (lista/salvar/remover/estados) = dono único.
+  const { items, loading, saving, busyId, error: err, setError: setErr, save: saveResource, remove: removeResource } =
+    useListResource<Resource>({ endpoint: '/api/recursos', listKey: 'resources', editMethod: 'PATCH' })
   const [view, setView] = useStickyView<'tipo' | 'situacao'>('sintera:recursos-view', 'tipo')
 
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingAttrs, setEditingAttrs] = useState<Record<string, unknown>>({})
   const [f, setF] = useState({ ...EMPTY })
-  const [saving, setSaving] = useState(false)
   const [scanning, setScanning] = useState(false)
-  const [err, setErr] = useState<string | null>(null)
   const scanRef = useRef<HTMLInputElement>(null)
 
   const set = (k: keyof typeof EMPTY, v: string) => setF(s => ({ ...s, [k]: v }))
   const isVisual = f.resource_type === 'correcao_visual'
-
-  const load = useCallback(async () => {
-    if (!user) return
-    setLoading(true)
-    const res = await fetch('/api/recursos')
-    const data = res.ok ? await res.json() : { resources: [] }
-    setItems((data.resources ?? []) as Resource[])
-    setLoading(false)
-  }, [user])
-
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- carrega dados na montagem (data fetching)
-  useEffect(() => { if (!authLoading) load() }, [authLoading, load])
 
   function reset() { setEditingId(null); setEditingAttrs({}); setF({ ...EMPTY }); setErr(null) }
 
@@ -208,9 +195,8 @@ export default function RecursosPage() {
   }
 
   async function save() {
-    if (!user || saving || !f.name.trim()) return
-    setSaving(true); setErr(null)
-    const body = {
+    if (saving || !f.name.trim()) return
+    const ok = await saveResource({
       resourceType: f.resource_type,
       name: f.name,
       brand: f.brand,
@@ -221,21 +207,14 @@ export default function RecursosPage() {
       notes: f.notes,
       fileUrl: f.file_url,
       attributes: buildAttributes(),
-    }
-    const res = editingId
-      ? await fetch('/api/recursos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: editingId, ...body }) })
-      : await fetch('/api/recursos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-    setSaving(false)
-    if (!res.ok) { const e = await res.json().catch(() => ({})); setErr((e.error as string) ?? 'Falha ao salvar.'); return }
-    reset(); setShowForm(false); await load()
+    }, editingId)
+    if (ok) { reset(); setShowForm(false) }
   }
 
   async function remove(r: Resource) {
     if (busyId) return
     if (!window.confirm(`Remover "${r.name}"?`)) return
-    setBusyId(r.id)
-    await fetch(`/api/recursos?id=${encodeURIComponent(r.id)}`, { method: 'DELETE' })
-    await load(); setBusyId(null)
+    await removeResource(r.id)
   }
 
   function card(r: Resource) {

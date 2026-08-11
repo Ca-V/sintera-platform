@@ -8,18 +8,18 @@
 // sono, tabagismo, álcool, alimentação, hidratação e outros).
 // ============================================================
 
-import { useCallback, useEffect, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import {
   Loader2, Plus, X, ArrowLeft, Trash2, Pencil,
   Dumbbell, Moon, Cigarette, Wine, Apple, Droplets, Sparkles,
 } from 'lucide-react'
-import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import ListCard from '@/components/ListCard'
 import Card from '@/components/ui/Card'
 import Disclaimer from '@/components/ui/Disclaimer'
 import { fieldClass } from '@/components/ui/field'
+import { useListResource } from '@/lib/ui/useListResource'
 import type { Habit, HabitCategory } from '@/lib/habitos/service'
 
 type Category = HabitCategory
@@ -39,10 +39,9 @@ function catMeta(c: Category) {
 }
 
 export default function HabitosPage() {
-  const { user, loading: authLoading } = useUser()
-  const [items, setItems] = useState<Habit[]>([])
-  const [loading, setLoading] = useState(true)
-  const [busyId, setBusyId] = useState<string | null>(null)
+  // Ciclo de vida do recurso (lista/salvar/remover/estados) = dono único.
+  const { items, loading, saving, busyId, error: err, setError: setErr, save: saveResource, remove: removeResource } =
+    useListResource<Habit>({ endpoint: '/api/habitos', listKey: 'habits', editMethod: 'PATCH' })
 
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -50,20 +49,6 @@ export default function HabitosPage() {
   const [description, setDescription] = useState('')
   const [frequency, setFrequency] = useState('')
   const [notes, setNotes] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [err, setErr] = useState<string | null>(null)
-
-  const load = useCallback(async () => {
-    if (!user) return
-    setLoading(true)
-    const res = await fetch('/api/habitos')
-    const data = res.ok ? await res.json() : { habits: [] }
-    setItems((data.habits ?? []) as Habit[])
-    setLoading(false)
-  }, [user])
-
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- carrega dados na montagem (data fetching)
-  useEffect(() => { if (!authLoading) load() }, [authLoading, load])
 
   function reset() { setEditingId(null); setCategory('atividade_fisica'); setDescription(''); setFrequency(''); setNotes(''); setErr(null) }
 
@@ -73,23 +58,15 @@ export default function HabitosPage() {
   }
 
   async function save() {
-    if (!user || saving || !description.trim()) return
-    setSaving(true); setErr(null)
-    const body = { category, description, frequency, notes }
-    const res = editingId
-      ? await fetch('/api/habitos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: editingId, ...body }) })
-      : await fetch('/api/habitos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-    setSaving(false)
-    if (!res.ok) { const e = await res.json().catch(() => ({})); setErr((e.error as string) ?? 'Falha ao salvar.'); return }
-    reset(); setShowForm(false); await load()
+    if (saving || !description.trim()) return
+    const ok = await saveResource({ category, description, frequency, notes }, editingId)
+    if (ok) { reset(); setShowForm(false) }
   }
 
   async function remove(h: Habit) {
     if (busyId) return
     if (!window.confirm(`Remover "${h.description}"?`)) return
-    setBusyId(h.id)
-    await fetch(`/api/habitos?id=${encodeURIComponent(h.id)}`, { method: 'DELETE' })
-    await load(); setBusyId(null)
+    await removeResource(h.id)
   }
 
   function card(h: Habit) {

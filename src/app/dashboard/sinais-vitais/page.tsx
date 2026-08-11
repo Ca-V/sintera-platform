@@ -8,15 +8,15 @@
 // profissional. Sem juízo clínico. Reaproveita a tabela body_metrics.
 // ============================================================
 
-import { useCallback, useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Loader2, Plus, X, Trash2 } from 'lucide-react'
-import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import Sparkline, { parseNum } from '@/components/Sparkline'
 import ListCard from '@/components/ListCard'
 import Card from '@/components/ui/Card'
 import Disclaimer from '@/components/ui/Disclaimer'
 import { fieldClass } from '@/components/ui/field'
+import { useListResource } from '@/lib/ui/useListResource'
 import { VITALS, type Vital, type VitalEntry } from '@/lib/sinais-vitais/service'
 
 const VITAL_LABEL: Record<Vital, string> = {
@@ -38,10 +38,9 @@ function fmt(date: string): string {
 }
 
 export default function SinaisVitaisPage() {
-  const { user, loading: authLoading } = useUser()
-  const [items, setItems] = useState<VitalEntry[]>([])
-  const [loading, setLoading] = useState(true)
-  const [busyId, setBusyId] = useState<string | null>(null)
+  // Ciclo de vida do recurso (lista/salvar/remover/estados) = dono único.
+  const { items, loading, saving, busyId, error: err, setError: setErr, save: saveResource, remove: removeResource } =
+    useListResource<VitalEntry>({ endpoint: '/api/sinais-vitais', listKey: 'vitals', editMethod: 'POST' })
 
   const [showForm, setShowForm] = useState(false)
   const [metric, setMetric] = useState<Vital>('pressao_arterial')
@@ -50,44 +49,20 @@ export default function SinaisVitaisPage() {
   const [unit, setUnit] = useState('mmHg')
   const [date, setDate] = useState('')
   const [notes, setNotes] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [err, setErr] = useState<string | null>(null)
-
-  const load = useCallback(async () => {
-    if (!user) return
-    setLoading(true)
-    const res = await fetch('/api/sinais-vitais')
-    const data = res.ok ? await res.json() : { vitals: [] }
-    setItems((data.vitals ?? []) as VitalEntry[])
-    setLoading(false)
-  }, [user])
-
-  // Carrega na montagem (e após mutações); o setLoading(true) síncrono — o spinner —
-  // é intencional.
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { if (!authLoading) load() }, [authLoading, load])
 
   function chooseMetric(m: Vital) { setMetric(m); setUnit(DEFAULT_UNIT[m]) }
   function reset() { setMetric('pressao_arterial'); setLabel(''); setValue(''); setUnit('mmHg'); setDate(''); setNotes(''); setErr(null) }
 
   async function save() {
-    if (!user || saving || !value.trim() || !date) return
-    setSaving(true); setErr(null)
-    const res = await fetch('/api/sinais-vitais', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ metric, value, unit, label, measuredOn: date, notes }),
-    })
-    setSaving(false)
-    if (!res.ok) { const e = await res.json().catch(() => ({})); setErr((e.error as string) ?? 'Falha ao salvar.'); return }
-    reset(); setShowForm(false); await load()
+    if (saving || !value.trim() || !date) return
+    const ok = await saveResource({ metric, value, unit, label, measuredOn: date, notes })
+    if (ok) { reset(); setShowForm(false) }
   }
 
   async function remove(id: string) {
     if (busyId) return
     if (!window.confirm('Remover este registro?')) return
-    setBusyId(id)
-    await fetch(`/api/sinais-vitais?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
-    await load(); setBusyId(null)
+    await removeResource(id)
   }
 
   return (

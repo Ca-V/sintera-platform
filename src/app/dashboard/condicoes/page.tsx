@@ -7,22 +7,21 @@
 // condições — apenas organiza o que a usuária informa (dela ou da família).
 // ============================================================
 
-import { useCallback, useEffect, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { Loader2, Plus, X, Stethoscope, ArrowLeft, Trash2, Users, Pencil } from 'lucide-react'
-import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import ListCard from '@/components/ListCard'
 import Card from '@/components/ui/Card'
 import Disclaimer from '@/components/ui/Disclaimer'
 import { fieldClass } from '@/components/ui/field'
+import { useListResource } from '@/lib/ui/useListResource'
 import type { Condition, ConditionScope } from '@/lib/condicoes/service'
 
 export default function CondicoesPage() {
-  const { user, loading: authLoading } = useUser()
-  const [items, setItems] = useState<Condition[]>([])
-  const [loading, setLoading] = useState(true)
-  const [busyId, setBusyId] = useState<string | null>(null)
+  // Ciclo de vida do recurso (lista/salvar/remover/estados) = dono único.
+  const { items, loading, saving, busyId, error: err, setError: setErr, save: saveResource, remove: removeResource } =
+    useListResource<Condition>({ endpoint: '/api/condicoes', listKey: 'conditions', editMethod: 'PATCH' })
 
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -31,21 +30,6 @@ export default function CondicoesPage() {
   const [relative, setRelative] = useState('')
   const [since, setSince] = useState('')
   const [notes, setNotes] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [err, setErr] = useState<string | null>(null)
-
-  const load = useCallback(async () => {
-    if (!user) return
-    setLoading(true)
-    const res = await fetch('/api/condicoes')
-    const data = res.ok ? await res.json() : { conditions: [] }
-    setItems((data.conditions ?? []) as Condition[])
-    setLoading(false)
-  }, [user])
-
-  // Carrega na montagem; o setLoading(true) síncrono (spinner) é intencional.
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { if (!authLoading) load() }, [authLoading, load])
 
   function reset() { setEditingId(null); setScope('propria'); setName(''); setRelative(''); setSince(''); setNotes(''); setErr(null) }
 
@@ -56,27 +40,19 @@ export default function CondicoesPage() {
   }
 
   async function save() {
-    if (!user || saving || !name.trim()) return
-    setSaving(true); setErr(null)
-    const body = {
+    if (saving || !name.trim()) return
+    const ok = await saveResource({
       scope, name: name.trim(),
       relative: scope === 'familiar' ? (relative.trim() || null) : null,
       sinceLabel: since.trim() || null, notes: notes.trim() || null,
-    }
-    const res = editingId
-      ? await fetch('/api/condicoes', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: editingId, ...body }) })
-      : await fetch('/api/condicoes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-    setSaving(false)
-    if (!res.ok) { const e = await res.json().catch(() => ({})); setErr((e.error as string) ?? 'Falha ao salvar.'); return }
-    reset(); setShowForm(false); await load()
+    }, editingId)
+    if (ok) { reset(); setShowForm(false) }
   }
 
   async function remove(c: Condition) {
     if (busyId) return
     if (!window.confirm(`Remover "${c.name}"?`)) return
-    setBusyId(c.id)
-    await fetch(`/api/condicoes?id=${encodeURIComponent(c.id)}`, { method: 'DELETE' })
-    await load(); setBusyId(null)
+    await removeResource(c.id)
   }
 
   const proprias = items.filter(i => i.scope === 'propria')

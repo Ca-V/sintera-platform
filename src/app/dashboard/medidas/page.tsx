@@ -21,6 +21,7 @@ import Disclaimer from '@/components/ui/Disclaimer'
 import ProvenanceLine from '@/components/ui/ProvenanceLine'
 import { fieldClass } from '@/components/ui/field'
 import { examProvenance } from '@/lib/provenance'
+import { useListResource } from '@/lib/ui/useListResource'
 import { type Metric, type MeasureEntry, type ExamRef } from '@/lib/medidas/service'
 
 const METRIC_LABEL: Record<Metric, string> = {
@@ -82,10 +83,13 @@ const BIO_METRICS: Metric[] = ['peso', 'gordura_corporal', 'massa_muscular', 'ag
 
 export default function MedidasPage() {
   const { user, profile, loading: authLoading } = useUser()
-  const [items, setItems] = useState<MeasureEntry[]>([])
+  // Ciclo de vida do recurso (lista/salvar/remover/estados) = dono único.
+  const { items, loading, saving, busyId, error: err, setError: setErr, reload, save: saveResource, remove: removeResource } =
+    useListResource<MeasureEntry>({ endpoint: '/api/medidas', listKey: 'measures', editMethod: 'POST' })
+
+  // `exams` vem do mesmo endpoint (dado extra p/ vincular laudo). O hook só possui a
+  // lista de medidas, então os laudos são carregados à parte na montagem.
   const [exams, setExams] = useState<ExamRef[]>([])
-  const [loading, setLoading] = useState(true)
-  const [busyId, setBusyId] = useState<string | null>(null)
 
   const [showForm, setShowForm] = useState(false)
   const [metric, setMetric] = useState<Metric>('peso')
@@ -95,8 +99,6 @@ export default function MedidasPage() {
   const [date, setDate] = useState('')
   const [notes, setNotes] = useState('')
   const [examId, setExamId] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [err, setErr] = useState<string | null>(null)
 
   // Escanear laudo de bioimpedância
   const [scanning, setScanning] = useState(false)
@@ -107,42 +109,29 @@ export default function MedidasPage() {
   const [savingScan, setSavingScan] = useState(false)
   const scanRef = useRef<HTMLInputElement>(null)
 
-  const load = useCallback(async () => {
+  const loadExams = useCallback(async () => {
     if (!user) return
-    setLoading(true)
     const res = await fetch('/api/medidas')
-    const data = res.ok ? await res.json() : { measures: [], exams: [] }
-    setItems((data.measures ?? []) as MeasureEntry[])
+    const data = res.ok ? await res.json() : { exams: [] }
     setExams((data.exams ?? []) as ExamRef[])
-    setLoading(false)
   }, [user])
 
-  // Carrega na montagem (e após mutações); o setLoading(true) síncrono — o spinner —
-  // é intencional.
   // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { if (!authLoading) load() }, [authLoading, load])
+  useEffect(() => { if (!authLoading) loadExams() }, [authLoading, loadExams])
 
   function chooseMetric(m: Metric) { setMetric(m); setUnit(DEFAULT_UNIT[m]) }
   function reset() { setMetric('peso'); setLabel(''); setValue(''); setUnit('kg'); setDate(''); setNotes(''); setExamId(''); setErr(null) }
 
   async function save() {
-    if (!user || saving || !value.trim() || !date) return
-    setSaving(true); setErr(null)
-    const res = await fetch('/api/medidas', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rows: [{ metric, value, unit, label, measuredOn: date, notes, examId }] }),
-    })
-    setSaving(false)
-    if (!res.ok) { const e = await res.json().catch(() => ({})); setErr((e.error as string) ?? 'Falha ao salvar.'); return }
-    reset(); setShowForm(false); await load()
+    if (saving || !value.trim() || !date) return
+    const ok = await saveResource({ rows: [{ metric, value, unit, label, measuredOn: date, notes, examId }] })
+    if (ok) { reset(); setShowForm(false) }
   }
 
   async function remove(id: string) {
     if (busyId) return
     if (!window.confirm('Remover esta medida?')) return
-    setBusyId(id)
-    await fetch(`/api/medidas?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
-    await load(); setBusyId(null)
+    await removeResource(id)
   }
 
   // Escanear laudo de bioimpedância → pré-preenche várias medidas de uma vez.
@@ -188,7 +177,7 @@ export default function MedidasPage() {
     })
     setSavingScan(false)
     if (!res.ok) { const e = await res.json().catch(() => ({})); setScanErr((e.error as string) ?? 'Falha ao salvar.'); return }
-    setScanRows(null); setScanExamId(''); await load()
+    setScanRows(null); setScanExamId(''); await reload()
   }
 
   // IMC calculado a partir do peso mais recente e da altura do perfil (factual).
