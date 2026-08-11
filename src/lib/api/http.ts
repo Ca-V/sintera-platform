@@ -14,22 +14,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getAuthedSupabase } from '@/lib/supabase/authedClient'
+import { ValidationError, BadRequestError } from './errors'
 
-/** Entrada de domínio inválida → HTTP 422. Classe ÚNICA (substitui as por-módulo). */
-export class ValidationError extends Error {
-  constructor(message: string) {
-    super(message)
-    this.name = 'ValidationError'
-  }
-}
-
-/** Requisição malformada (ex.: falta parâmetro obrigatório) → HTTP 400. */
-export class BadRequestError extends Error {
-  constructor(message: string) {
-    super(message)
-    this.name = 'BadRequestError'
-  }
-}
+// Erros de domínio moram em `./errors` (client-safe). Reexportados aqui por
+// conveniência das ROTAS — os SERVIÇOS devem importar de `@/lib/api/errors`.
+export { ValidationError, BadRequestError } from './errors'
 
 export interface AuthedContext {
   supabase: SupabaseClient

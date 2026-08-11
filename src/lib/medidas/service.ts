@@ -14,7 +14,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { selectUserRows, insertRows, deleteUserRow } from '@/lib/api/db'
-import { ValidationError } from '@/lib/api/http'
+import { ValidationError } from '@/lib/api/errors'
 
 export type Metric =
   | 'peso' | 'altura' | 'circunferencia_cintura'

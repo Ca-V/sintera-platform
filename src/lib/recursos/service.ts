@@ -12,7 +12,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { selectUserRows, insertRows, updateUserRow, deleteUserRow } from '@/lib/api/db'
-import { ValidationError } from '@/lib/api/http'
+import { ValidationError } from '@/lib/api/errors'
 
 export type ResourceType =
   | 'correcao_visual' | 'dispositivo_medico' | 'protese_ortese' | 'auxilio' | 'compressao_suporte'

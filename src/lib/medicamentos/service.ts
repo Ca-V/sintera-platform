@@ -14,7 +14,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { fromTable, selectUserRows, updateUserRow, deleteUserRow } from '@/lib/api/db'
-import { ValidationError } from '@/lib/api/http'
+import { ValidationError } from '@/lib/api/errors'
 import { eventServicesFor } from '@/lib/agenda/service'
 import { nextRepurchaseDate } from '@/lib/medications/repurchase'
 
