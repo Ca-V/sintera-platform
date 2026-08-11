@@ -12,20 +12,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Loader2, Plus, X, ArrowLeft, Trash2, Pencil, Droplet, ShieldCheck, Bell } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import ListCard from '@/components/ListCard'
 import Card from '@/components/ui/Card'
 // Taxonomia de métodos contraceptivos = SSOT em @/lib/cycle (compartilhada com o Relatório).
 import { CONTRACEPTIVE_KINDS as KINDS, contraceptiveLabel as kindLabel } from '@/lib/cycle'
 import Disclaimer from '@/components/ui/Disclaimer'
-
-interface Method {
-  id: string; kind: string; brand: string | null; startedOn: string | null
-  durationMonths: number | null; replaceOn: string | null; status: string
-  reminderEnabled: boolean; reminderEventId: string | null; notes: string | null
-}
-interface Period { id: string; startedOn: string; notes: string | null }
+import type { ContraceptiveMethod as Method, Period } from '@/lib/ciclo/service'
 
 function fmt(d: string | null): string {
   if (!d) return '—'
@@ -44,9 +37,6 @@ function daysBetween(a: string, b: string): number {
 
 export default function CicloPage() {
   const { user, loading: authLoading } = useUser()
-  const supabase = createClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = supabase as any
   const [methods, setMethods] = useState<Method[]>([])
   const [periods, setPeriods] = useState<Period[]>([])
   const [loading, setLoading] = useState(true)
@@ -71,21 +61,11 @@ export default function CicloPage() {
   const load = useCallback(async () => {
     if (!user) return
     setLoading(true)
-    const [mRes, pRes] = await Promise.all([
-      db.from('contraceptive_methods').select('id, kind, brand, started_on, duration_months, replace_on, status, reminder_enabled, reminder_event_id, notes').eq('user_id', user.id).order('created_at', { ascending: false }),
-      db.from('menstrual_periods').select('id, started_on, notes').eq('user_id', user.id).order('started_on', { ascending: false }).limit(24),
-    ])
-    setMethods(((mRes.data ?? []) as Array<Record<string, unknown>>).map(m => ({
-      id: m.id as string, kind: (m.kind as string) ?? 'outro', brand: (m.brand as string) ?? null,
-      startedOn: (m.started_on as string) ?? null, durationMonths: (m.duration_months as number) ?? null,
-      replaceOn: (m.replace_on as string) ?? null, status: (m.status as string) ?? 'ativo',
-      reminderEnabled: m.reminder_enabled === true, reminderEventId: (m.reminder_event_id as string) ?? null, notes: (m.notes as string) ?? null,
-    })))
-    setPeriods(((pRes.data ?? []) as Array<Record<string, unknown>>).map(p => ({
-      id: p.id as string, startedOn: p.started_on as string, notes: (p.notes as string) ?? null,
-    })))
+    const res = await fetch('/api/ciclo')
+    const data = res.ok ? await res.json() : { methods: [], periods: [] }
+    setMethods((data.methods ?? []) as Method[])
+    setPeriods(((data.periods ?? []) as Period[]).slice(0, 24))
     setLoading(false)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
   // eslint-disable-next-line react-hooks/set-state-in-effect -- carrega dados na montagem (data fetching)
@@ -110,48 +90,23 @@ export default function CicloPage() {
   async function saveMethod() {
     if (!user || saving) return
     setSaving(true); setErr(null)
-    const months = duration.trim() ? Math.round(Number(duration)) : null
-    const replaceOn = startedOn && months && kind !== 'pilula' ? addMonths(startedOn, months) : null
-    const payload = {
-      user_id: user.id, kind, brand: brand.trim() || null, started_on: startedOn || null,
-      duration_months: months, replace_on: replaceOn, notes: notes.trim() || null,
-      reminder_enabled: reminder && !!replaceOn,
-    }
-    const existing = editingId ? methods.find(m => m.id === editingId) : null
-    const { data, error } = editingId
-      ? await db.from('contraceptive_methods').update(payload).eq('id', editingId).select('id').single()
-      : await db.from('contraceptive_methods').insert({ ...payload, status: 'ativo' }).select('id').single()
-    if (error || !data) { setSaving(false); setErr(error?.message ?? 'Falha ao salvar.'); return }
-    const methodId = data.id as string
-
-    // Lembrete de troca (~30 dias antes; nunca no passado). Reaproveita agenda_events.
-    const wantReminder = reminder && !!replaceOn
-    const reminderDate = replaceOn ? (() => { const d = addDays(replaceOn, -30); return d < todayISO() ? todayISO() : d })() : null
-    const existingEvent = existing?.reminderEventId ?? null
-    if (wantReminder && reminderDate) {
-      const title = `Trocar ${kindLabel(kind)}`
-      if (existingEvent) {
-        await db.from('agenda_events').update({ title, event_date: reminderDate, status: 'pending', reminder_enabled: true, reminder_sent_at: null }).eq('id', existingEvent)
-      } else {
-        const { data: ev } = await db.from('agenda_events').insert({ user_id: user.id, event_type: 'medicacao', title, event_date: reminderDate, status: 'pending', reminder_enabled: true }).select('id').single()
-        if (ev?.id) await db.from('contraceptive_methods').update({ reminder_event_id: ev.id }).eq('id', methodId)
-      }
-    } else if (existingEvent) {
-      await db.from('agenda_events').delete().eq('id', existingEvent)
-      await db.from('contraceptive_methods').update({ reminder_event_id: null }).eq('id', methodId)
-    }
-    setSaving(false); reset(); setShowForm(false); await load()
+    const res = await fetch('/api/ciclo/methods', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: editingId, kind, brand, startedOn,
+        durationMonths: duration.trim() ? Number(duration) : null, reminder, notes,
+      }),
+    })
+    setSaving(false)
+    if (!res.ok) { const e = await res.json().catch(() => ({})); setErr((e.error as string) ?? 'Falha ao salvar.'); return }
+    reset(); setShowForm(false); await load()
   }
 
   async function toggleStatus(m: Method) {
     if (busyId) return
     setBusyId(m.id)
-    const next = m.status === 'ativo' ? 'encerrado' : 'ativo'
-    await db.from('contraceptive_methods').update({ status: next }).eq('id', m.id)
-    if (next === 'encerrado' && m.reminderEventId) {
-      await db.from('agenda_events').delete().eq('id', m.reminderEventId)
-      await db.from('contraceptive_methods').update({ reminder_event_id: null }).eq('id', m.id)
-    }
+    const next: Method['status'] = m.status === 'ativo' ? 'encerrado' : 'ativo'
+    await fetch('/api/ciclo/methods', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: m.id, status: next }) })
     await load(); setBusyId(null)
   }
 
@@ -159,22 +114,20 @@ export default function CicloPage() {
     if (busyId) return
     if (!window.confirm(`Remover "${kindLabel(m.kind)}"?`)) return
     setBusyId(m.id)
-    if (m.reminderEventId) await db.from('agenda_events').delete().eq('id', m.reminderEventId)
-    await db.from('contraceptive_methods').delete().eq('id', m.id)
+    await fetch(`/api/ciclo/methods?id=${encodeURIComponent(m.id)}`, { method: 'DELETE' })
     await load(); setBusyId(null)
   }
 
   async function addPeriod() {
     if (!user || savingPeriod) return
-    const d = periodDate || todayISO()
     setSavingPeriod(true)
-    await db.from('menstrual_periods').upsert({ user_id: user.id, started_on: d }, { onConflict: 'user_id,started_on' })
+    await fetch('/api/ciclo/periods', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ startedOn: periodDate }) })
     setPeriodDate(''); setSavingPeriod(false); await load()
   }
   async function removePeriod(id: string) {
     if (busyId) return
     setBusyId(id)
-    await db.from('menstrual_periods').delete().eq('id', id)
+    await fetch(`/api/ciclo/periods?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
     await load(); setBusyId(null)
   }
 
