@@ -55,6 +55,22 @@ export interface Measurement {
   interpretation: string | null
 }
 
+/**
+ * Série de UMA unidade compatível dentro de um biomarcador. Tendência/estatística SÓ existem aqui — nunca
+ * misturam unidades (regra oficial: não comparar/plotar valores em unidades diferentes). Ver
+ * principio_indicador_unidades_incompativeis: nunca esconder dados; agrupar por unidade; explicar.
+ */
+export interface UnitSeries {
+  unit: string
+  measurements: Measurement[]       // só desta unidade, em ordem cronológica
+  first: Measurement | null
+  latest: Measurement | null
+  count: number
+  trend: Trend                      // dentro do grupo (nunca 'unit_mismatch'); 'single' se 1 medição
+  deltaPercent: number | null       // entre as duas últimas medições DESTA unidade
+  totalDeltaPercent: number | null  // entre a primeira e a última DESTA unidade
+}
+
 export interface BiomarkerSummary {
   canonicalName: string
   displayName: string
@@ -73,7 +89,10 @@ export interface BiomarkerSummary {
   totalDeltaPercent: number | null  // entre a primeira e a última
   hasUnitMismatch: boolean
   units: string[]
-  measurements: Measurement[]
+  measurements: Measurement[]        // TODAS as medições (todas as unidades) — nunca descartadas
+  /** Séries por unidade compatível (gráfico/tendência SÓ dentro de cada grupo). 1 grupo = sem mismatch.
+   *  Opcional só para não quebrar mocks de teste — summarizeBiomarkers SEMPRE preenche. */
+  unitGroups?: UnitSeries[]
 }
 
 export function normalizeName(name: string): string {
@@ -111,18 +130,30 @@ export function summarizeBiomarkers(rows: BiomarkerRow[]): BiomarkerSummary[] {
     const units = [...new Set(sorted.map(r => r.unit ?? ''))]
     const hasUnitMismatch = units.length > 1
     const primaryUnit = units[0] ?? ''
-    const measurements: Measurement[] = (hasUnitMismatch ? [] : sorted).map(r => ({
+    // TODAS as medições são preservadas (nunca descartadas), mesmo com unidades diferentes.
+    const measurements: Measurement[] = sorted.map(r => ({
       examId: r.exam_id, date: examDate(r), value: r.value!, unit: r.unit ?? '',
       referenceMin: r.reference_min, referenceMax: r.reference_max, interpretation: r.interpretation ?? null,
     }))
-    const { trend, deltaPercent } = hasUnitMismatch
-      ? { trend: 'unit_mismatch' as Trend, deltaPercent: null }
-      : calcTrend(measurements)
+    // Agrupa por UNIDADE (preserva a ordem cronológica no grupo). Tendência/estatística SÓ dentro do grupo —
+    // nunca mistura unidades. Ordem dos grupos = ordem de aparição das unidades.
+    const byUnit = new Map<string, Measurement[]>()
+    for (const m of measurements) { const g = byUnit.get(m.unit); if (g) g.push(m); else byUnit.set(m.unit, [m]) }
+    const unitGroups: UnitSeries[] = [...byUnit.entries()].map(([unit, ms]) => {
+      const g = calcTrend(ms)
+      const f = ms[0] ?? null
+      const l = ms[ms.length - 1] ?? null
+      const total = f && l && ms.length >= 2 && f.value !== 0 ? Math.round(((l.value - f.value) / Math.abs(f.value)) * 100) : null
+      return { unit, measurements: ms, first: f, latest: l, count: ms.length, trend: g.trend, deltaPercent: g.deltaPercent, totalDeltaPercent: total }
+    })
+    // Top-level: com 1 unidade espelha o único grupo; com >1, sinaliza mismatch (tendência agregada não existe —
+    // vive em cada unitGroup). `latest`/`first` seguem a medição mais recente/antiga no geral (com sua unidade).
+    const single = unitGroups.length === 1 ? unitGroups[0] : null
+    const trend: Trend = single ? single.trend : 'unit_mismatch'
+    const deltaPercent = single ? single.deltaPercent : null
     const first = measurements[0] ?? null
     const latest = measurements[measurements.length - 1] ?? null
-    const totalDeltaPercent = first && latest && measurements.length >= 2 && first.value !== 0
-      ? Math.round(((latest.value - first.value) / Math.abs(first.value)) * 100)
-      : null
+    const totalDeltaPercent = single ? single.totalDeltaPercent : null
 
     // Contexto do laudo: pega a medição MAIS RECENTE que tenha o campo (dado misto
     // antigo/novo). São consistentes dentro de uma mesma série (mesmo biomarcador).
@@ -139,7 +170,7 @@ export function summarizeBiomarkers(rows: BiomarkerRow[]): BiomarkerSummary[] {
       unit: primaryUnit,
       latest, first, count: sorted.length,
       trend, deltaPercent, totalDeltaPercent,
-      hasUnitMismatch, units, measurements,
+      hasUnitMismatch, units, measurements, unitGroups,
     })
   }
 

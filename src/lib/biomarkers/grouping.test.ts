@@ -45,15 +45,27 @@ describe('summarizeBiomarkers', () => {
     expect(g.totalDeltaPercent).toBe(30)
   })
 
-  it('marca unidades diferentes e não compara', () => {
+  it('unidades diferentes: NÃO descarta dados, agrupa por unidade e não compara entre unidades', () => {
     const rows = [
       row({ name: 'Colesterol', value: 5, unit: 'mmol/L', date: '2025-01-01' }),
-      row({ name: 'Colesterol', value: 200, unit: 'mg/dL', date: '2025-06-01' }),
+      row({ name: 'Colesterol', value: 190, unit: 'mg/dL', date: '2025-06-01' }),
+      row({ name: 'Colesterol', value: 200, unit: 'mg/dL', date: '2025-09-01' }),
     ]
     const g = summarizeBiomarkers(rows)[0]
     expect(g.hasUnitMismatch).toBe(true)
-    expect(g.measurements).toHaveLength(0)
+    // Regra oficial: nunca esconder dados existentes — todas as medições são preservadas.
+    expect(g.measurements).toHaveLength(3)
+    // Tendência agregada não existe entre unidades diferentes.
     expect(g.trend).toBe('unit_mismatch')
+    expect(g.deltaPercent).toBeNull()
+    // Agrupadas por unidade; tendência SÓ dentro de cada grupo (mg/dL tem 2 → 'up'; mmol/L tem 1 → 'single').
+    expect(g.unitGroups).toHaveLength(2)
+    const mgdl = g.unitGroups!.find(u => u.unit === 'mg/dL')!
+    expect(mgdl.measurements).toHaveLength(2)
+    expect(mgdl.trend).toBe('up')
+    const mmol = g.unitGroups!.find(u => u.unit === 'mmol/L')!
+    expect(mmol.count).toBe(1)
+    expect(mmol.trend).toBe('single')
   })
 
   it('ignora não-numéricos e valores nulos', () => {
