@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { ExamDTO } from '@sintera/api-client'
 import { isOrderDocumentType, findDuplicateIds, originalIdFor, categoryOf, compareNames, effectiveOrderStatus, orderStatusLabel, type DuplicateCandidate } from '@sintera/core'
 import { heading, text } from '@sintera/design-system'
-import { Button, Text, Input, Disclaimer, DatePicker, AttachmentLink } from '../../primitives'
+import { Button, Text, Input, Disclaimer, DatePicker, AttachmentLink, Select } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 import type { MinhaSaudeStackParamList } from '../../navigation/types'
@@ -177,21 +177,28 @@ export function ExamsListScreen({ navigation }: Props) {
         <View style={styles.empty}><Text spec={text(t, { role: 'body', tone: 'muted' })}>Nenhum exame ainda.</Text></View>
       ) : null}
 
-      {/* Aviso de nome divergente do perfil (paridade Web) — factual, não bloqueia. */}
+      {/* Aviso de nome divergente do perfil (paridade Web) — mesmo texto/hierarquia. Conta só RESULTADOS. */}
       {mismatchIds.size > 0 ? (
-        <View style={[styles.card, { backgroundColor: t.color.badge.attention.soft, borderColor: t.color.badge.attention.soft }]}>
-          <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.attention.text }}>
-            {mismatchIds.size === 1 ? 'Um exame tem' : `${mismatchIds.size} exames têm`} um nome diferente do seu perfil{profileName ? ` (${profileName})` : ''}. Confira se {mismatchIds.size === 1 ? 'é seu' : 'são seus'}.
+        <View style={[styles.card, { backgroundColor: t.color.badge.error.soft, borderColor: t.color.badge.error.text, gap: 4 }]}>
+          <Text spec={text(t, { role: 'bodyStrong' })} style={{ color: t.color.badge.error.text }}>
+            {mismatchIds.size} exame{mismatchIds.size !== 1 ? 's' : ''} com nome divergente do seu perfil
+          </Text>
+          <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>
+            O nome do paciente no laudo não corresponde ao do seu perfil{profileName ? ` (${profileName})` : ''}. Confira se {mismatchIds.size !== 1 ? 'são seus' : 'é seu'}; se não for, exclua{mismatchIds.size !== 1 ? '-os' : '-o'}.
           </Text>
         </View>
       ) : null}
 
-      {/* Filtros de descoberta */}
+      {/* Filtros de descoberta — seletores compactos (paridade Web: dropdowns de status/ano, não parede de chips). */}
       {results.length > 0 ? (
         <View style={{ gap: 8 }}>
-          <Input value={query} onChangeText={setQuery} placeholder="Buscar por nome, tipo ou laboratório…" autoCapitalize="none" />
-          <Chips options={STATUS_FILTERS} value={status} onChange={setStatus} />
-          {years.length > 1 ? <Chips options={[{ id: 'all', label: 'Todos os anos' }, ...years.map(y => ({ id: y, label: y }))]} value={year} onChange={setYear} /> : null}
+          <Input value={query} onChangeText={setQuery} placeholder="Buscar exame…" autoCapitalize="none" />
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <View style={{ flex: 1 }}><Select options={STATUS_FILTERS} value={status} onChange={setStatus} title="Status" /></View>
+            {years.length > 1 ? (
+              <View style={{ flex: 1 }}><Select options={[{ id: 'all', label: 'Todos os anos' }, ...years.map(y => ({ id: y, label: y }))]} value={year} onChange={setYear} title="Ano" searchable /></View>
+            ) : null}
+          </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Período:</Text>
             <DatePicker value={from} onChange={setFrom} placeholder="De" max={to || undefined} style={{ flex: 1 }} />
@@ -300,18 +307,6 @@ export function ExamsListScreen({ navigation }: Props) {
 
       <Disclaimer variant="laudo" />
     </ScrollView>
-  )
-}
-
-function Chips({ options, value, onChange }: { options: readonly { id: string; label: string }[]; value: string; onChange: (v: string) => void }) {
-  const t = useTheme()
-  return (
-    <View style={styles.chips}>
-      {options.map(o => {
-        const on = value === o.id
-        return <Pressable key={o.id} onPress={() => onChange(o.id)} style={[styles.pill, { borderWidth: 1, borderColor: on ? t.color.identity.primary : t.color.border.default, backgroundColor: on ? t.color.badge.info.soft : 'transparent' }]}><Text spec={text(t, { role: 'caption', tone: on ? 'default' : 'muted' })}>{o.label}</Text></Pressable>
-      })}
-    </View>
   )
 }
 

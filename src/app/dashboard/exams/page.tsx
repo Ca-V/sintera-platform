@@ -487,8 +487,11 @@ export default function ExamsPage() {
 
       {/* Aviso: exame(s) com nome divergente do perfil (acima da lista) */}
       {activeTab === 'results' && (() => {
+        // Conta só RESULTADOS (exclui Pedidos/Solicitações — a faixa é sobre "exames", pedidos são categoria à
+        // parte). Mesma base do Mobile → contagem idêntica.
         const divergentes = exams.filter(
-          e => compareNames(profile?.name, (e as unknown as { patient_name?: string | null }).patient_name) === 'mismatch',
+          e => !isOrderDocumentType((e as unknown as { document_type?: string | null }).document_type)
+            && compareNames(profile?.name, (e as unknown as { patient_name?: string | null }).patient_name) === 'mismatch',
         )
         if (divergentes.length === 0) return null
         return (
