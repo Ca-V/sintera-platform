@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { omicsAuth, pageParams, validDomain } from '@/lib/omics/server'
 
 export async function GET(req: NextRequest) {
-  const { error, supabase, userId } = await omicsAuth()
+  const { error, supabase, userId } = await omicsAuth(req)
   if (error) return error
   const url = new URL(req.url)
   const domain = validDomain(url.searchParams.get('domain'))
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { error, supabase, userId } = await omicsAuth()
+  const { error, supabase, userId } = await omicsAuth(req)
   if (error) return error
   const b = (await req.json().catch(() => ({}))) as Record<string, unknown>
   const domain = validDomain(typeof b.domain === 'string' ? b.domain : null) ?? 'metabolomics'

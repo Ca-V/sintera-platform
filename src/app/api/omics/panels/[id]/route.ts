@@ -4,9 +4,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { omicsAuth } from '@/lib/omics/server'
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const { error, supabase, userId } = await omicsAuth()
+  const { error, supabase, userId } = await omicsAuth(req)
   if (error) return error
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -30,9 +30,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   return NextResponse.json({ panel, categories, total_results: totalResults })
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const { error, supabase, userId } = await omicsAuth()
+  const { error, supabase, userId } = await omicsAuth(req)
   if (error) return error
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error: e } = await (supabase as any).from('omics_panels').delete().eq('id', id).eq('user_id', userId)

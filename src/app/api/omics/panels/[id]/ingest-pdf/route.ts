@@ -35,7 +35,7 @@ function s(v: unknown): string | undefined {
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const { error, supabase, userId } = await omicsAuth()
+  const { error, supabase, userId } = await omicsAuth(req)
   if (error) return error
 
   let body: { fileBase64?: string; mediaType?: string; source_file?: string; measured_on?: string; note?: string }

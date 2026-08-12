@@ -7,7 +7,7 @@ import { omicsAuth, pageParams } from '@/lib/omics/server'
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const { error, supabase, userId } = await omicsAuth()
+  const { error, supabase, userId } = await omicsAuth(req)
   if (error) return error
   const url = new URL(req.url)
   const categoryId = url.searchParams.get('category_id')
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const { error, supabase, userId } = await omicsAuth()
+  const { error, supabase, userId } = await omicsAuth(req)
   if (error) return error
   const b = (await req.json().catch(() => ({}))) as Record<string, unknown>
   const str = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null)

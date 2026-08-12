@@ -8,7 +8,7 @@ import { omicsAuth, validDomain } from '@/lib/omics/server'
 const SELECT = 'id, domain, category_id, canonical_name, unit_default, curation_status, omics_categories(name)'
 
 export async function GET(req: NextRequest) {
-  const { error, supabase } = await omicsAuth()
+  const { error, supabase } = await omicsAuth(req)
   if (error) return error
   const url = new URL(req.url)
   const term = (url.searchParams.get('q') ?? '').trim()
