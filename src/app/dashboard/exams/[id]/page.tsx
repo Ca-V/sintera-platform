@@ -686,7 +686,12 @@ export default function ExamDetailPage() {
           <span style={{ fontSize: '11px', color: '#888' }}>Relatório de Exame</span>
         </div>
         <p style={{ fontSize: '11px', color: '#555', margin: 0 }}>
-          {exam?.type ?? 'Exame'} · {exam ? formatDate((exam as unknown as { exam_date?: string | null }).exam_date ?? exam.created_at) : ''}
+          {exam?.type ?? 'Exame'} · {(() => {
+            // D-15(a): regra de data alinhada ao Mobile (RDC-657) — mostra a data de REALIZAÇÃO
+            // (exam_date); ausente → "Sem data". NUNCA cai para created_at (data de upload).
+            const d = (exam as unknown as { exam_date?: string | null } | null)?.exam_date
+            return d ? formatDate(d) : 'Sem data'
+          })()}
           {exam?.page_count ? ` · ${exam.page_count} páginas` : ''}
         </p>
       </div>

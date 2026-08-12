@@ -793,7 +793,7 @@ export default function ExamsPage() {
                                       <span className="block">Solicitante: {exam.requesting_physician}</span>
                                     )}
                                     <span className="block text-mauve/70">
-                                      Realizado em {formatDate(effDate(exam))}
+                                      Realizado em {exam.exam_date ? formatDate(exam.exam_date) : 'Sem data'}
                                       {exam.exam_date && exam.exam_date.slice(0, 10) !== exam.created_at.slice(0, 10) && (
                                         <span className="text-mauve/40"> · enviado {formatDate(exam.created_at)}</span>
                                       )}
