@@ -67,3 +67,22 @@ vêm de fora da camada de navegação; a Sidebar/menu só apresenta). Aplicar We
 A homologação da v1.0 foca **apenas** paridade + estabilidade (`docs/MOBILE-037`). Estas evoluções entram na
 **fase de evolução do produto** (pós‑RC1), priorizadas a partir deste roadmap e sob a Matriz de Paridade + a
 Diretriz de Comunicação Regulatória.
+
+## Progresso de entrega (log)
+Estado **verificado** na branch canônica `feat/mobile-inc4-perfil` (typecheck Web+Mobile · 1156 testes · deploy Vercel READY):
+- **§4b / D‑13 — Receita médica (Web+Mobile): ENTREGUE.** Anexo aditivo `medications.prescription_url` (documento
+  separado, bucket `exams` + signed URL), UI de anexar/ver a receita em Medicamentos/Suplementos nas duas plataformas,
+  e indicador "📎 Receita" no card da lista (sem abrir o formulário). Não toca modelo clínico nem `prompt_registry`.
+  Pendente do §4b: vínculo formal receita↔compra como objeto (evolução; o anexo direto já cobre o caso de uso atual).
+- **§5b / D‑16 — Select (seletor compacto) nos campos de recorrência: ENTREGUE (paridade Web↔Mobile).** A Web já usava
+  `Select` (AgendarModal, medicamentos, recursos, hábitos); o Mobile passou a usar o primitivo `Select` (bottom‑sheet
+  rolável com busca) nos quatro pontos de recorrência (recompra, troca, lembrete, evento). Chips inline permanecem só
+  em opções curtas (status, binários). Rollout do `Select` a demais campos de opção segue como evolução.
+- **D‑03 / D‑18 — Histórico de Exames Mobile: RESOLVIDO por paridade.** A tela usa `Select` para tipo/período + busca
+  (sem parede de chips) e cartões colapsados = nome + nº de medições → toque abre o detalhe. O valor/tendência inline
+  é **decisão de paridade conceitual com a Web `/dashboard/saude`** (que exibe exatamente o mesmo `ListCard`), critério
+  de aceite do próprio D‑18 — remover quebraria a paridade.
+- **Dependências regulatórias isoladas (sem código):** D‑11 (estratégia de extração por modalidade) e D‑12 (rótulo de
+  olho OD/OS em exames oftalmológicos bilaterais) — alteram artefato clínico governado (`prompt_registry`); aguardam
+  aprovação do Responsável Clínico. A correção **factual** de *classificação de modalidade* do D‑11 (oftalmológico ≠
+  laboratorial) já foi aplicada no classificador de documentos (não é juízo clínico).
