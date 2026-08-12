@@ -73,6 +73,9 @@ export default function LoginScreen() {
           <Pressable onPress={() => router.replace('/(auth)/register')} hitSlop={8} style={{ alignItems: 'center', paddingVertical: spacing.sm }}>
             <Text style={{ color: colors.petal, fontSize: font.size.sm }}>Não tem conta? Criar conta</Text>
           </Pressable>
+          <Pressable onPress={() => router.replace('/(auth)/recuperar-senha')} hitSlop={8} style={{ alignItems: 'center' }}>
+            <Text style={{ color: colors.mauve, fontSize: font.size.sm }}>Esqueci minha senha</Text>
+          </Pressable>
         </View>
       </View>
     </KeyboardAvoidingView>

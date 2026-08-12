@@ -15,6 +15,24 @@ export default function ExamDetailScreen() {
   const [type, setType] = useState(title && title !== 'Exame' ? String(title) : '')
   const [examDate, setExamDate] = useState('')
   const [busy, setBusy] = useState(false)
+  const [analyzing, setAnalyzing] = useState(false)
+  const [reloadKey, setReloadKey] = useState(0)
+
+  // Dispara a extração de dados (mesma rota da Web: POST /api/exams/[id]/analyze).
+  // Síncrona — baixa o arquivo, extrai por IA e marca 'processed'. Ao concluir, remonta
+  // a lista de biomarcadores. Fecha a jornada: upload → extração → visualização.
+  async function analyze() {
+    setAnalyzing(true)
+    try {
+      await api.post(`/api/exams/${id}/analyze`)
+      setReloadKey((k) => k + 1)
+      Alert.alert('Pronto', 'Dados extraídos do exame.')
+    } catch (e) {
+      Alert.alert('Erro', e instanceof ApiError ? e.message : 'Não foi possível extrair os dados.')
+    } finally {
+      setAnalyzing(false)
+    }
+  }
 
   async function saveEdit() {
     setBusy(true)
@@ -67,13 +85,16 @@ export default function ExamDetailScreen() {
             </View>
           </Card>
         ) : (
-          <View style={{ flexDirection: 'row', gap: spacing.md }}>
-            <Pressable onPress={() => setEditing(true)} hitSlop={8}><Text style={{ color: colors.petal, fontSize: font.size.sm }}>Editar</Text></Pressable>
-            <Pressable onPress={confirmDelete} hitSlop={8} disabled={busy}><Text style={{ color: colors.red, fontSize: font.size.sm }}>Excluir</Text></Pressable>
-          </View>
+          <>
+            <Button label={analyzing ? 'Extraindo…' : 'Extrair dados'} onPress={analyze} loading={analyzing} />
+            <View style={{ flexDirection: 'row', gap: spacing.md }}>
+              <Pressable onPress={() => setEditing(true)} hitSlop={8}><Text style={{ color: colors.petal, fontSize: font.size.sm }}>Editar</Text></Pressable>
+              <Pressable onPress={confirmDelete} hitSlop={8} disabled={busy}><Text style={{ color: colors.red, fontSize: font.size.sm }}>Excluir</Text></Pressable>
+            </View>
+          </>
         )}
       </View>
-      <BiomarkerList examId={id} emptyText="Nenhum dado extraído deste exame ainda." />
+      <BiomarkerList key={reloadKey} examId={id} emptyText="Nenhum dado extraído ainda. Toque em “Extrair dados”." />
     </Screen>
   )
 }
