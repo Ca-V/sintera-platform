@@ -10,6 +10,14 @@ type Link = { label: string; desc: string; route: Href }
 
 const SECTIONS: { title: string; items: Link[] }[] = [
   {
+    title: 'Jornada',
+    items: [
+      { label: 'Agenda', desc: 'Próximos eventos', route: '/(app)/agenda' },
+      { label: 'Histórico', desc: 'Eventos passados', route: '/(app)/timeline' },
+      { label: 'Gastos', desc: 'Despesas de saúde', route: '/(app)/gastos' },
+    ],
+  },
+  {
     title: 'Saúde',
     items: [
       { label: 'Exames', desc: 'Laudos e extração de dados', route: '/(app)/exams' },
