@@ -2,7 +2,8 @@
 // (mesmo objeto canônico da Web). `examId` opcional: sem ele agrega a pessoa toda (scope=user);
 // com ele organiza um exame (scope=exam). Sem juízo clínico: categorias + faixa aritmética.
 import { useCallback, useEffect, useState } from 'react'
-import { View, Text, SectionList, RefreshControl } from 'react-native'
+import { View, Text, Pressable, SectionList, RefreshControl } from 'react-native'
+import { useRouter } from 'expo-router'
 import { Card, Loading } from './ui'
 import { api, ApiError } from '@/lib/api'
 import { colors, spacing, radius, font } from '@/lib/theme'
@@ -49,6 +50,7 @@ function valueLabel(b: Biomarker): string {
 }
 
 export function BiomarkerList({ examId, emptyText }: { examId?: string; emptyText?: string }) {
+  const router = useRouter()
   const [sections, setSections] = useState<{ title: string; data: Biomarker[] }[]>([])
   const [counts, setCounts] = useState<Organized['counts'] | null>(null)
   const [loading, setLoading] = useState(true)
@@ -99,13 +101,21 @@ export function BiomarkerList({ examId, emptyText }: { examId?: string; emptyTex
         </Text>
       )}
       renderItem={({ item }) => (
-        <Card style={{ marginBottom: spacing.xs, paddingVertical: spacing.md }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
-            <View style={{ width: 8, height: 8, borderRadius: radius.full, backgroundColor: STATUS_COLOR[item.rangeStatus] }} />
-            <Text style={{ flex: 1, fontSize: font.size.md, color: colors.onyx }}>{item.displayName ?? item.name}</Text>
-            <Text style={{ fontSize: font.size.sm, fontWeight: font.weight.medium, color: colors.onyx }}>{valueLabel(item)}</Text>
-          </View>
-        </Card>
+        <Pressable
+          onPress={() => router.push({
+            pathname: '/(app)/biomarker/[name]',
+            params: { name: item.name, title: item.displayName ?? item.name },
+          })}
+        >
+          <Card style={{ marginBottom: spacing.xs, paddingVertical: spacing.md }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+              <View style={{ width: 8, height: 8, borderRadius: radius.full, backgroundColor: STATUS_COLOR[item.rangeStatus] }} />
+              <Text style={{ flex: 1, fontSize: font.size.md, color: colors.onyx }}>{item.displayName ?? item.name}</Text>
+              <Text style={{ fontSize: font.size.sm, fontWeight: font.weight.medium, color: colors.onyx }}>{valueLabel(item)}</Text>
+              <Text style={{ color: colors.mauve, fontSize: font.size.md }}>›</Text>
+            </View>
+          </Card>
+        </Pressable>
       )}
     />
   )
