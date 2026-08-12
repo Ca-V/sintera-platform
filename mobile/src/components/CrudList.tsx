@@ -37,6 +37,9 @@ export interface CrudConfig<T> {
   /** Recurso só de criação (a rota não expõe edição, ex.: sinais-vitais). Toque na
    *  linha não abre edição — evita criar duplicata. */
   noEdit?: boolean
+  /** Conteúdo extra no topo (ex.: botão de escanear por foto). Recebe `reload` para
+   *  atualizar a lista após uma escrita fora do formulário padrão. */
+  headerExtra?: (reload: () => Promise<void>) => React.ReactNode
 }
 
 type FormState = Record<string, string>
@@ -86,6 +89,7 @@ export function CrudList<T>({ config }: { config: CrudConfig<T> }) {
         refreshControl={<RefreshControl refreshing={loading && items.length > 0} onRefresh={reload} tintColor={colors.petal} />}
         ListHeaderComponent={
           <View style={{ gap: spacing.md, marginBottom: spacing.sm }}>
+            {!showForm && config.headerExtra ? config.headerExtra(reload) : null}
             {showForm ? (
               <Card>
                 <View style={{ gap: spacing.md }}>

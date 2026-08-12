@@ -1,4 +1,8 @@
+import { Alert } from 'react-native'
+import * as ImagePicker from 'expo-image-picker'
 import { CrudList, type CrudConfig } from '@/components/CrudList'
+import { Button } from '@/components/ui'
+import { api, ApiError } from '@/lib/api'
 
 interface Resource {
   id: string
@@ -55,6 +59,47 @@ const config: CrudConfig<Resource> = {
     title: r.name,
     subtitle: [TYPE_LABEL[r.resourceType], STATUS_LABEL[r.status]].filter(Boolean).join(' · '),
   }),
+  headerExtra: (reload) => <ScanReceita reload={reload} />,
+}
+
+// Escaneia uma receita de óculos por foto: a IA transcreve (POST /api/vision/eyeglasses)
+// e criamos um recurso 'correcao_visual' com a prescrição em `attributes` (POST /api/recursos).
+// Paridade com dashboard/recursos da Web. Transcrição factual — a pessoa revê depois.
+function ScanReceita({ reload }: { reload: () => Promise<void> }) {
+  return (
+    <Button
+      label="Escanear receita de óculos"
+      variant="ghost"
+      onPress={async () => {
+        const res = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, base64: true, mediaTypes: ImagePicker.MediaTypeOptions.Images })
+        if (res.canceled || !res.assets?.[0]?.base64) return
+        const a = res.assets[0]
+        try {
+          const { result } = await api.post<{ result: Record<string, unknown> | null }>(
+            '/api/vision/eyeglasses', { imageBase64: a.base64, mediaType: a.mimeType ?? 'image/jpeg' },
+          )
+          if (!result) { Alert.alert('Sem leitura', 'Não consegui ler a receita.'); return }
+          const visionKind = (result.bc || result.dia) ? 'lentes_contato' : 'oculos'
+          await api.post('/api/recursos', {
+            resourceType: 'correcao_visual',
+            name: visionKind === 'lentes_contato' ? 'Lentes de contato' : 'Óculos de grau',
+            prescriber: (result.prescriber as string) ?? null,
+            startedOn: (result.prescribed_on as string) ?? null,
+            status: 'em_uso',
+            attributes: {
+              vision_kind: visionKind,
+              od: result.od ?? null, oe: result.oe ?? null,
+              dnp: result.dnp ?? null, bc: result.bc ?? null, dia: result.dia ?? null,
+            },
+          })
+          await reload()
+          Alert.alert('Pronto', 'Receita registrada a partir da foto.')
+        } catch (e) {
+          Alert.alert('Erro', e instanceof ApiError ? e.message : 'Falha ao escanear a receita.')
+        }
+      }}
+    />
+  )
 }
 
 export default function RecursosScreen() {
