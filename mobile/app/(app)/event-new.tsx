@@ -1,8 +1,11 @@
 import { useState } from 'react'
-import { View, Text, Pressable, Switch } from 'react-native'
+import { View, Text, Pressable, Image, Switch, Alert } from 'react-native'
+import * as ImagePicker from 'expo-image-picker'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Screen, Card, Button, Field } from '@/components/ui'
 import { api, ApiError } from '@/lib/api'
+import { useAuth } from '@/lib/auth'
+import { uploadExamFile } from '@/lib/upload'
 import { colors, spacing, radius, font } from '@/lib/theme'
 
 // Criação de evento na Agenda — POST /api/agenda { type, title, date, ... }. A validação
@@ -19,10 +22,11 @@ const TYPES = [
 
 export default function EventNewScreen() {
   const router = useRouter()
-  // Params de edição (vindos do menu de ações da Agenda). Sem `id` = criação.
+  const { user } = useAuth()
+  // Params de edição (vindos do detalhe do evento). Sem `id` = criação.
   const p = useLocalSearchParams<{
     id?: string; type?: string; title?: string; date?: string; time?: string
-    professionalName?: string; establishment?: string; notes?: string
+    professionalName?: string; establishment?: string; notes?: string; attachmentUrl?: string
   }>()
   const editingId = p.id ?? null
   const [type, setType] = useState(p.type || 'consulta')
@@ -32,9 +36,28 @@ export default function EventNewScreen() {
   const [professionalName, setProfessionalName] = useState(p.professionalName ?? '')
   const [establishment, setEstablishment] = useState(p.establishment ?? '')
   const [notes, setNotes] = useState(p.notes ?? '')
+  const [attachmentUrl, setAttachmentUrl] = useState<string | null>(p.attachmentUrl ?? null)
+  const [attaching, setAttaching] = useState(false)
   const [reminderEnabled, setReminderEnabled] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Anexa uma foto ao evento: upload ao storage (mesmo ritual dos exames) → attachmentUrl.
+  async function attach() {
+    if (!user) return
+    const res = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ImagePicker.MediaTypeOptions.Images })
+    if (res.canceled || !res.assets?.[0]) return
+    const a = res.assets[0]
+    setAttaching(true)
+    try {
+      const { signedUrl } = await uploadExamFile({ userId: user.id, uri: a.uri, mimeType: a.mimeType, fileName: a.fileName })
+      setAttachmentUrl(signedUrl)
+    } catch (e) {
+      Alert.alert('Erro', e instanceof ApiError ? e.message : 'Não foi possível anexar a foto.')
+    } finally {
+      setAttaching(false)
+    }
+  }
 
   async function submit() {
     setSaving(true)
@@ -49,6 +72,7 @@ export default function EventNewScreen() {
         professionalName: professionalName.trim() || null,
         establishment: establishment.trim() || null,
         notes: notes.trim() || null,
+        attachmentUrl,
         reminderEnabled,
       })
       router.back()
@@ -90,6 +114,10 @@ export default function EventNewScreen() {
           <Field label="Profissional" value={professionalName} onChangeText={setProfessionalName} placeholder="Opcional" />
           <Field label="Local" value={establishment} onChangeText={setEstablishment} placeholder="Opcional" />
           <Field label="Observações" value={notes} onChangeText={setNotes} multiline />
+          {attachmentUrl ? (
+            <Image source={{ uri: attachmentUrl }} style={{ width: '100%', height: 160, borderRadius: radius.md, backgroundColor: colors.blush }} resizeMode="cover" />
+          ) : null}
+          <Button label={attaching ? 'Anexando…' : attachmentUrl ? 'Trocar anexo' : 'Anexar foto'} variant="ghost" onPress={attach} loading={attaching} />
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: font.size.md, color: colors.onyx }}>Lembrete</Text>

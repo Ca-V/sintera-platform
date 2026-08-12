@@ -14,8 +14,15 @@ import { eventServicesFor, InvalidTransitionError } from '@/lib/agenda/service'
 import { parseEventDraft } from '@/lib/agenda/draft'
 
 export const GET = authed(async ({ supabase, userId, request }) => {
-  const view = new URL(request.url).searchParams.get('view')
+  const params = new URL(request.url).searchParams
   const { query } = eventServicesFor(supabase)
+  // ?id= → um único evento (detalhe). A projeção completa vem de listAll (dona da leitura).
+  const id = params.get('id')
+  if (id) {
+    const event = (await query.listAll(userId)).find((e) => e.id === id) ?? null
+    return NextResponse.json({ event })
+  }
+  const view = params.get('view')
   const events =
     view === 'upcoming'   ? await query.listUpcoming(userId)   :
     view === 'historical' ? await query.listHistorical(userId) :

@@ -50,6 +50,11 @@ describe('parseEventDraft', () => {
     expect(parseEventDraft({ type: 'x', title: 't', date: '2026-01-01', amountCents: '15000' }).amountCents).toBeNull()
   })
 
+  it('aceita attachmentUrl (anexo do evento) e trima; vazio vira null', () => {
+    expect(parseEventDraft({ type: 'x', title: 't', date: '2026-01-01', attachmentUrl: '  https://u/f.jpg ' }).attachmentUrl).toBe('https://u/f.jpg')
+    expect(parseEventDraft({ type: 'x', title: 't', date: '2026-01-01' }).attachmentUrl).toBeNull()
+  })
+
   it('inclui id só quando presente (edição = upsert)', () => {
     expect('id' in parseEventDraft({ type: 'x', title: 't', date: '2026-01-01' })).toBe(false)
     expect(parseEventDraft({ id: 'ev-1', type: 'x', title: 't', date: '2026-01-01' }).id).toBe('ev-1')

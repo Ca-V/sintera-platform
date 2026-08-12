@@ -46,6 +46,7 @@ export function parseEventDraft(body: unknown): EventDraft {
     location: str(b.location),
     amountCents: typeof b.amountCents === 'number' ? b.amountCents : null,
     directExpense: b.directExpense === true,
+    attachmentUrl: str(b.attachmentUrl),
     // Lembrete liga por padrão (paridade com a Web); só desliga se vier explicitamente false.
     reminderEnabled: b.reminderEnabled !== false,
   }
