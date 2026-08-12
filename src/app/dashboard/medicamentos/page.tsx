@@ -521,7 +521,7 @@ export default function MedicamentosPage() {
     }
     const meta = [formMetaOf(m.form ?? '')?.label, m.dose].filter(Boolean).join(' • ')
     const ro = runoutDate(m.purchasedOn, m.packQty, m.dailyCons, m.acquiredQty)
-    const hasChips = m.purchaseStatus === 'a_comprar' || (m.purchaseStatus === 'comprado' && !!m.purchasedOn) || !!ro
+    const hasChips = m.purchaseStatus === 'a_comprar' || (m.purchaseStatus === 'comprado' && !!m.purchasedOn) || !!ro || !!m.prescriptionUrl
     return (
       <ListCard key={m.id}
         title={m.name}
@@ -534,6 +534,7 @@ export default function MedicamentosPage() {
             {m.purchaseStatus === 'a_comprar' && <CardChip tone="gold">A comprar</CardChip>}
             {m.purchaseStatus === 'comprado' && m.purchasedOn && <CardChip tone="sage">Compra {fmtShort(m.purchasedOn)}</CardChip>}
             {ro && <CardChip tone="petal">Recompra {fmtShort(ro)}{m.repurchaseReminder ? ' ✓' : ''}</CardChip>}
+            {m.prescriptionUrl && <CardChip tone="sage">📎 Receita</CardChip>}
           </>
         ) : undefined}
         actions={

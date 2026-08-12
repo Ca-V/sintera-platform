@@ -281,6 +281,7 @@ export function MedicationsScreen({ route, navigation }: Props) {
                 </Text>
                 {m.purchase_status === 'a_comprar' ? <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.attention.text }}>A comprar</Text> : null}
                 {repurchaseLabel(m.repurchase_frequency) ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>🔔 recompra {repurchaseLabel(m.repurchase_frequency)}</Text> : null}
+                {m.prescription_url ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>📎 Receita anexada</Text> : null}
                 {m.notes ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{m.notes}</Text> : null}
                 <Pressable onPress={() => remove(m)} style={{ alignSelf: 'flex-start', marginTop: 4 }}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>Excluir</Text></Pressable>
               </View>
