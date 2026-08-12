@@ -13,6 +13,7 @@ interface Biomarker {
   id: string
   name: string
   displayName: string | null
+  catalogCode: string | null
   value: number | null
   valueText: string | null
   unit: string | null
@@ -104,7 +105,7 @@ export function BiomarkerList({ examId, emptyText }: { examId?: string; emptyTex
         <Pressable
           onPress={() => router.push({
             pathname: '/(app)/biomarker/[name]',
-            params: { name: item.name, title: item.displayName ?? item.name },
+            params: { name: item.name, title: item.displayName ?? item.name, code: item.catalogCode ?? '' },
           })}
         >
           <Card style={{ marginBottom: spacing.xs, paddingVertical: spacing.md }}>

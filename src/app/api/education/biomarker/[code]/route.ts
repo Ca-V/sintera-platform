@@ -7,7 +7,7 @@
 // saúde individual é enviado ao MedlinePlus. Se o exame ainda não tem LOINC
 // mapeado (curadoria pendente), retorna lista vazia com motivo claro.
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { getAuthedSupabase } from '@/lib/supabase/authedClient'
 import { fetchMedlinePlusByLoinc, type MedlineLanguage } from '@/lib/education/medlineplus'
 
 export async function GET(
@@ -15,11 +15,9 @@ export async function GET(
   { params }: { params: Promise<{ code: string }> },
 ) {
   const { code } = await params
-  const supabase = await createClient()
-
-  // Auth — conteúdo só para usuárias logadas (consistente com o resto do app).
-  const { data: authData, error: authErr } = await supabase.auth.getUser()
-  if (authErr || !authData.user) {
+  // Cookie (Web) OU Bearer (Mobile) — conteúdo educativo também no app.
+  const { supabase, user } = await getAuthedSupabase(request)
+  if (!user) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
   }
 

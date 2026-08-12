@@ -35,9 +35,12 @@ function dateLabel(iso: string): string {
   return new Date(`${iso}T00:00:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: '2-digit' })
 }
 
+interface EduTopic { title: string; url: string; summary: string | null }
+
 export default function BiomarkerHistoryScreen() {
-  const { name, title } = useLocalSearchParams<{ name: string; title?: string }>()
+  const { name, title, code } = useLocalSearchParams<{ name: string; title?: string; code?: string }>()
   const [series, setSeries] = useState<Series | null>(null)
+  const [topics, setTopics] = useState<EduTopic[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -52,7 +55,14 @@ export default function BiomarkerHistoryScreen() {
     } finally {
       setLoading(false)
     }
-  }, [name])
+    // Contexto educativo (MedlinePlus) — melhor-esforço; vazio se o exame não tem LOINC mapeado.
+    if (code) {
+      try {
+        const edu = await api.get<{ topics: EduTopic[] }>(`/api/education/biomarker/${encodeURIComponent(code)}`)
+        setTopics(edu.topics ?? [])
+      } catch { /* silencioso: educação é complementar */ }
+    }
+  }, [name, code])
 
   useEffect(() => { load() }, [load])
 
@@ -128,6 +138,19 @@ export default function BiomarkerHistoryScreen() {
                 })}
               </View>
             </>
+          )}
+
+          {topics.length > 0 && (
+            <View style={{ gap: spacing.xs }}>
+              <Text style={{ fontSize: font.size.xs, color: colors.mauve, textTransform: 'uppercase', letterSpacing: 1 }}>Sobre este exame</Text>
+              {topics.slice(0, 3).map((tp) => (
+                <Card key={tp.url || tp.title}>
+                  <Text style={{ fontSize: font.size.md, fontWeight: font.weight.medium, color: colors.onyx }}>{tp.title}</Text>
+                  {tp.summary ? <Text style={{ fontSize: font.size.sm, color: colors.mauve, marginTop: 4 }} numberOfLines={4}>{tp.summary}</Text> : null}
+                </Card>
+              ))}
+              <Text style={{ fontSize: font.size.xs, color: colors.mauve }}>Fonte: MedlinePlus (NIH). Conteúdo educativo — não interpreta seu resultado.</Text>
+            </View>
           )}
         </ScrollView>
       )}
