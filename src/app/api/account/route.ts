@@ -3,6 +3,21 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { DOCUMENTS_BUCKET } from '@/lib/api/storage'
 
+/** Lista RECURSIVAMENTE todos os arquivos sob um prefixo (inclui subpastas como
+ *  `userId/omics/…`). No Storage do Supabase, "pastas" (prefixos) vêm com `id: null`. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function listAllFiles(admin: any, bucket: string, prefix: string): Promise<string[]> {
+  const { data } = await admin.storage.from(bucket).list(prefix, { limit: 1000 })
+  if (!data) return []
+  const files: string[] = []
+  for (const entry of data) {
+    const path = `${prefix}/${entry.name}`
+    if (entry.id === null) files.push(...await listAllFiles(admin, bucket, path))
+    else files.push(path)
+  }
+  return files
+}
+
 export async function DELETE() {
   try {
     const supabase = await createClient()
@@ -26,11 +41,12 @@ export async function DELETE() {
       serviceKey,
     )
 
-    // 3. Excluir arquivos do Storage
-    const { data: storageFiles } = await admin.storage.from(DOCUMENTS_BUCKET).list(userId)
-    if (storageFiles && storageFiles.length > 0) {
-      const paths = storageFiles.map(f => `${userId}/${f.name}`)
-      await admin.storage.from(DOCUMENTS_BUCKET).remove(paths)
+    // 3. Excluir arquivos do Storage — RECURSIVO (alcança userId/omics/… e demais
+    //    subpastas; a exclusão LGPD não pode deixar arquivos órfãos). Remove em lotes
+    //    de 1000 (limite da API de storage).
+    const allFiles = await listAllFiles(admin, DOCUMENTS_BUCKET, userId)
+    for (let i = 0; i < allFiles.length; i += 1000) {
+      await admin.storage.from(DOCUMENTS_BUCKET).remove(allFiles.slice(i, i + 1000))
     }
 
     // 4. Excluir dados do banco em cascata
