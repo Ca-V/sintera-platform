@@ -85,6 +85,7 @@ interface Med {
   route: string | null
   packUnit: string | null
   prescriber: string | null
+  prescriptionUrl: string | null
   // CTC-001 — projeção (referência) de um método contraceptivo HORMONAL. O FATO pertence ao Ciclo;
   // aqui é só leitura/identificação (não duplica linha em `medications`; editar é no Ciclo).
   isContraceptive?: boolean
@@ -103,7 +104,7 @@ function contraceptiveToMed(c: Record<string, unknown>): Med {
     status: ((c.status as string) === 'suspenso' ? 'suspenso' : 'em_uso') as Status,
     notes: null, acquiredQty: null, packQty: null, dailyCons: null, purchasedOn: null, purchaseStatus: null,
     amountCents: null, repurchaseReminder: false, repurchaseFreq: null, repurchaseEventId: null, purchaseEventId: null,
-    form: null, route: null, packUnit: null, prescriber: null,
+    form: null, route: null, packUnit: null, prescriber: null, prescriptionUrl: null,
     isContraceptive: true, contraceptiveKind: (c.kind as string),
     contraceptiveCadence: (c.usage_cadence as string) ?? null,
   }
@@ -156,6 +157,8 @@ export default function MedicamentosPage() {
   const [route, setRoute] = useState('')
   const [packUnit, setPackUnit] = useState('')
   const [prescriber, setPrescriber] = useState('')
+  const [prescriptionUrl, setPrescriptionUrl] = useState<string | null>(null) // D-13: receita anexada
+  const [uploadingRx, setUploadingRx] = useState(false)
   const [repurchase, setRepurchase] = useState(false)
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
@@ -246,7 +249,7 @@ export default function MedicamentosPage() {
     // referência de leitura). Cada fato aparece UMA vez; sem duplicar linha em `medications`.
     const [{ data }, ctcRes] = await Promise.all([
       db.from('medications')
-        .select('id, name, kind, brand, dose, frequency, started_on, until_date, status, notes, acquired_quantity, pack_quantity, daily_consumption, purchased_on, purchase_status, amount_cents, repurchase_reminder, repurchase_frequency, repurchase_event_id, purchase_event_id, pharmaceutical_form, administration_route, pack_unit, prescriber_name')
+        .select('id, name, kind, brand, dose, frequency, started_on, until_date, status, notes, acquired_quantity, pack_quantity, daily_consumption, purchased_on, purchase_status, amount_cents, repurchase_reminder, repurchase_frequency, repurchase_event_id, purchase_event_id, pharmaceutical_form, administration_route, pack_unit, prescriber_name, prescription_url')
         .eq('user_id', user.id).order('created_at', { ascending: false }),
       db.from('contraceptive_methods').select('id, kind, brand, started_on, status, usage_cadence').eq('user_id', user.id),
     ])
@@ -275,6 +278,7 @@ export default function MedicamentosPage() {
       route: (m.administration_route as string) ?? null,
       packUnit: (m.pack_unit as string) ?? null,
       prescriber: (m.prescriber_name as string) ?? null,
+      prescriptionUrl: (m.prescription_url as string) ?? null,
     }))
     const contraMeds: Med[] = ((ctcRes?.data ?? []) as Array<Record<string, unknown>>)
       .filter(c => isHormonalContraceptive(c.kind as string) && (c.status as string) !== 'encerrado')
@@ -312,7 +316,7 @@ export default function MedicamentosPage() {
   function reset() {
     setEditingId(null); setName(''); setKind(isSupplements ? 'suplemento' : 'medicamento'); setBrand(''); setDose(''); setFreq(''); setStartedOn(''); setUntilOn(''); setNotes('')
     setAcquiredQty(''); setAmount(''); setPackQty(''); setDailyCons(''); setPurchasedOn(''); setPurchaseStatus(''); setRepurchase(false); setRepurchaseFreq(''); setErr(null)
-    setForm(''); setRoute(''); setPackUnit(''); setPrescriber(''); setMedStatus('em_uso')
+    setForm(''); setRoute(''); setPackUnit(''); setPrescriber(''); setPrescriptionUrl(null); setMedStatus('em_uso')
     setShowMoreDetails(false); setScanEditing(null)
   }
   function openEdit(m: Med) {
@@ -322,9 +326,20 @@ export default function MedicamentosPage() {
     setAmount(m.amountCents != null ? (m.amountCents / 100).toFixed(2).replace('.', ',') : '')
     setPackQty(m.packQty != null ? String(m.packQty) : ''); setDailyCons(m.dailyCons != null ? String(m.dailyCons) : '')
     setPurchasedOn(m.purchasedOn ?? ''); setPurchaseStatus(m.purchaseStatus ?? ''); setRepurchase(m.repurchaseReminder); setRepurchaseFreq(m.repurchaseFreq ?? '')
-    setForm(m.form ?? ''); setRoute(m.route ?? ''); setPackUnit(m.packUnit ?? ''); setPrescriber(m.prescriber ?? ''); setMedStatus(m.status)
+    setForm(m.form ?? ''); setRoute(m.route ?? ''); setPackUnit(m.packUnit ?? ''); setPrescriber(m.prescriber ?? ''); setPrescriptionUrl(m.prescriptionUrl); setMedStatus(m.status)
     setShowMoreDetails(!!(m.startedOn || m.untilOn || m.notes || m.acquiredQty != null || m.amountCents != null || m.packQty != null || m.dailyCons != null || m.purchasedOn || m.purchaseStatus || m.repurchaseReminder))
     setErr(null); setShowForm(true)
+  }
+
+  // D-13: sobe a receita ao storage e devolve a URL assinada (1 ano), como em Exames/Condições.
+  async function uploadRx(file: File): Promise<string> {
+    const ext = file.name.split('.').pop() ?? 'bin'
+    const path = `${user!.id}/${crypto.randomUUID()}.${ext}`
+    const { error: upErr } = await supabase.storage.from('exams').upload(path, file, { contentType: file.type, upsert: false })
+    if (upErr) throw new Error(`[storage] ${upErr.message}`)
+    const { data: signed, error: sErr } = await supabase.storage.from('exams').createSignedUrl(path, 60 * 60 * 24 * 365)
+    if (sErr || !signed) throw new Error('[signed-url] falha ao gerar link do documento')
+    return signed.signedUrl
   }
 
   async function save() {
@@ -347,7 +362,7 @@ export default function MedicamentosPage() {
       purchased_on: purchasedOn || null, purchase_status: purchaseStatus || null, amount_cents: toCents(amount),
       repurchase_reminder: repurchase, repurchase_frequency: repurchase ? (repurchaseFreq || null) : null,
       pharmaceutical_form: form || null, administration_route: route || null, pack_unit: packUnit.trim() || null,
-      prescriber_name: prescriber.trim() || null, status: medStatus,
+      prescriber_name: prescriber.trim() || null, prescription_url: prescriptionUrl, status: medStatus,
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db = supabase as any
@@ -673,6 +688,22 @@ export default function MedicamentosPage() {
             <label htmlFor="med-prescriber" className="font-body text-xs text-mauve block mb-1">Médico(a) que indicou <span className="font-normal text-mauve">(opcional)</span></label>
             <input id="med-prescriber" type="text" value={prescriber} onChange={e => setPrescriber(e.target.value)} placeholder="Ex.: Dra. Ana Souza"
               className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+          </div>
+          <div>
+            {/* D-13: receita anexada — documento separado do produto. */}
+            <label className="font-body text-xs text-mauve block mb-1">Receita <span className="font-normal text-mauve">(opcional)</span></label>
+            <div className="flex items-center gap-3">
+              <label className="cursor-pointer inline-flex items-center gap-1.5 border border-border rounded-full px-3 py-2 font-body text-sm text-mauve hover:border-petal/40 hover:text-petal transition-colors">
+                {uploadingRx ? 'Anexando…' : prescriptionUrl ? 'Trocar receita' : 'Anexar receita'}
+                <input type="file" accept="image/*,application/pdf" className="hidden" disabled={uploadingRx}
+                  onChange={async e => {
+                    const f = e.target.files?.[0]; if (!f || !user) return
+                    setUploadingRx(true); setErr(null)
+                    try { setPrescriptionUrl(await uploadRx(f)) } catch (uErr) { setErr(uErr instanceof Error ? uErr.message : 'Falha ao anexar a receita.') } finally { setUploadingRx(false) }
+                  }} />
+              </label>
+              {prescriptionUrl ? <a href={prescriptionUrl} target="_blank" rel="noreferrer" className="font-body text-sm text-petal hover:underline">Ver receita</a> : null}
+            </div>
           </div>
           <div>
             <label htmlFor="med-amount" className="font-body text-xs text-mauve block mb-1">Valor pago — R$ <span className="font-normal text-mauve">(opcional)</span></label>
