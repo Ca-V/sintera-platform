@@ -1,7 +1,34 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+// CORS para as rotas /api — habilita clientes cross-origin (ex.: o app Mobile rodando
+// como PWA web num outro domínio). As rotas de API usam Bearer (não cookie) no acesso
+// cross-origin, então liberar a origem é seguro: o atacante não tem o token da usuária.
+// A Web continua same-origin (CORS não se aplica).
+function corsHeaders(origin: string | null): Record<string, string> {
+  return {
+    'Access-Control-Allow-Origin': origin || '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Max-Age': '86400',
+    Vary: 'Origin',
+  }
+}
+
 export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  // ── /api: só CORS (preflight + cabeçalhos), sem a lógica de sessão/redirect da Web ──
+  if (pathname.startsWith('/api')) {
+    const headers = corsHeaders(request.headers.get('origin'))
+    if (request.method === 'OPTIONS') {
+      return new NextResponse(null, { status: 204, headers })
+    }
+    const res = NextResponse.next({ request })
+    for (const [k, v] of Object.entries(headers)) res.headers.set(k, v)
+    return res
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -31,8 +58,6 @@ export async function proxy(request: NextRequest) {
   const { data: { session } } = await supabase.auth.getSession()
   const isAuthed = !!session?.user
 
-  const { pathname } = request.nextUrl
-
   // Unauthenticated user tries to access dashboard
   if (!isAuthed && pathname.startsWith('/dashboard')) {
     return NextResponse.redirect(new URL('/login', request.url))
@@ -48,5 +73,8 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|api|.*\\.svg|.*\\.png|.*\\.ico).*)'],
+  matcher: [
+    '/api/:path*',
+    '/((?!_next/static|_next/image|favicon.ico|api|.*\\.svg|.*\\.png|.*\\.ico).*)',
+  ],
 }
