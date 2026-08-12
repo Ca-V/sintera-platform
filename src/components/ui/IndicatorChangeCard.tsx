@@ -18,8 +18,8 @@ interface IndicatorChangeCardProps {
 }
 
 /**
- * Q2 — "O que mudou?". Leitura factual (saída de analyzeSeries + referenceReadout):
- * tendência, ritmo, aderência à referência. Sempre descritivo — nunca "bom/ruim".
+ * Q2 — "O que mudou?". Leitura factual da série (tendência, ritmo, aderência à
+ * referência). Sempre descritivo — nunca "bom/ruim".
  */
 export default function IndicatorChangeCard({ readings, className }: IndicatorChangeCardProps) {
   return (
