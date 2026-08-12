@@ -32,6 +32,7 @@ import { listPeriods, addPeriod, deletePeriod } from '../cycle/menstrual'
 import { listNotificationPrefs, saveNotificationPrefs } from '../settings/notifications'
 import { exportAccountData, deleteAccount } from '../settings/account'
 import { readCondition, readBioimpedance, readEyeglasses, scanMedications } from '../vision/vision'
+import { getMinhaSaudeCounts } from '../summary/counts'
 import { listBodyMetrics, saveBodyMetric, deleteBodyMetric, getHeightCm, getWeightGoal, setWeightGoal } from '../body/body'
 import { listShares, createShare, revokeShare, listTemplates, saveTemplate, deleteTemplate, listOmicsPanels } from '../report/report'
 import { listOmicsPanels as omicsList, getOmicsPanel, getOmicsResults, getOmicsFeatureHistory, searchOmicsCatalog, createOmicsPanel, addOmicsResult, deleteOmicsResult, deleteOmicsPanel } from '../omics/omics'
@@ -173,6 +174,9 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       readBioimpedance: (input) => readBioimpedance(supabase, config.webBaseUrl, input),
       readEyeglasses: (input) => readEyeglasses(supabase, config.webBaseUrl, input),
       scanMedications: (input) => scanMedications(supabase, config.webBaseUrl, input),
+    },
+    summary: {
+      getMinhaSaudeCounts: (signal) => getMinhaSaudeCounts(supabase, signal),
     },
   }
 }

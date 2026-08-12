@@ -17,6 +17,9 @@ export type { StorageAdapter } from './storage/adapter'
 export type { ProfileApi, ProfileDTO, ProfileEditable, ProfileStats } from './profile/types'
 // Função standalone das estatísticas — a Web (que consome Supabase direto) reusa a MESMA consulta (SSOT).
 export { getProfileStats } from './profile/get-stats'
+// Síntese de navegação (§5d) — contagens por domínio; a Web (Supabase direto) reusa a MESMA consulta (SSOT).
+export type { SummaryApi } from './auth/types'
+export { getMinhaSaudeCounts, type MinhaSaudeCounts } from './summary/counts'
 // Domínio Exames (leitura) — infra compartilhada; de-risca o Inc 5 (Histórico de Exames).
 export type { ExamsApi, ExamDTO, ExamDetailDTO, ExamsQuery, ExamExtractionLog } from './exams/types'
 export type { BiomarkerDTO } from './exams/biomarkers'

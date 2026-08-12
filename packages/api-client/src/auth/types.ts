@@ -2,6 +2,7 @@
 import type { Session, User } from '@supabase/supabase-js'
 import type { StorageAdapter } from '../storage/adapter'
 import type { ProfileApi } from '../profile/types'
+import type { MinhaSaudeCounts } from '../summary/counts'
 import type { ExamsApi } from '../exams/types'
 import type { ExamsWriteApi } from '../exams/write'
 import type { HealthEvent, EventLink } from '@sintera/core'
@@ -141,6 +142,13 @@ export interface ApiClient {
   report: ReportApi
   omics: OmicsApi
   vision: VisionApi
+  summary: SummaryApi
+}
+
+/** Síntese de navegação (§5d) — contagens por domínio para os indicadores de conteúdo do menu/Sidebar. */
+export interface SummaryApi {
+  /** Contagens por domínio do usuário (exames, medicamentos, suplementos, recursos, condições, hábitos). LANÇA em falha. */
+  getMinhaSaudeCounts(signal?: AbortSignal): Promise<MinhaSaudeCounts>
 }
 
 /** Exames de Ômica — leituras via ponte /api/omics (reusa joins/catálogo do servidor); escritas diretas (RLS dono). */

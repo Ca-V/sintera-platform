@@ -8,26 +8,28 @@ import { heading, text } from '@sintera/design-system'
 import { Text } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { MinhaSaudeStackParamList } from '../../navigation/types'
+import { useMinhaSaudeCounts } from './useMinhaSaudeCounts'
 
 type Props = NativeStackScreenProps<MinhaSaudeStackParamList, 'MinhaSaudeMenu'>
-type Row = { label: string; onPress: () => void }
+type Row = { label: string; onPress: () => void; count?: number }
 
 export function MinhaSaudeMenuScreen({ navigation }: Props) {
   const t = useTheme()
   const insets = useSafeAreaInsets()
+  const counts = useMinhaSaudeCounts() // §5d: contadores por INJEÇÃO (best-effort); o menu só apresenta.
   const sections: { title: string; rows: Row[] }[] = [
     { title: 'Registros', rows: [
-      { label: 'Exames', onPress: () => navigation.navigate('ExamsList') },
-      { label: 'Medicamentos', onPress: () => navigation.navigate('Medications', { supplements: false }) },
-      { label: 'Suplementos', onPress: () => navigation.navigate('Medications', { supplements: true }) },
-      { label: 'Recursos de Saúde', onPress: () => navigation.navigate('Resources') },
+      { label: 'Exames', onPress: () => navigation.navigate('ExamsList'), count: counts?.exams },
+      { label: 'Medicamentos', onPress: () => navigation.navigate('Medications', { supplements: false }), count: counts?.medications },
+      { label: 'Suplementos', onPress: () => navigation.navigate('Medications', { supplements: true }), count: counts?.supplements },
+      { label: 'Recursos de Saúde', onPress: () => navigation.navigate('Resources'), count: counts?.resources },
     ] },
     { title: 'Saúde', rows: [
-      { label: 'Condições de Saúde', onPress: () => navigation.navigate('Conditions') },
+      { label: 'Condições de Saúde', onPress: () => navigation.navigate('Conditions'), count: counts?.conditions },
       { label: 'Composição Corporal', onPress: () => navigation.navigate('Composicao') },
       { label: 'Ciclo e Contracepção', onPress: () => navigation.navigate('Ciclo') },
       { label: 'Monitoramento', onPress: () => navigation.navigate('Monitoramento') },
-      { label: 'Hábitos', onPress: () => navigation.navigate('Habits') },
+      { label: 'Hábitos', onPress: () => navigation.navigate('Habits'), count: counts?.habits },
     ] },
     { title: 'Histórico', rows: [
       { label: 'Histórico de Exames', onPress: () => navigation.navigate('HistoricoExames') },
@@ -44,7 +46,14 @@ export function MinhaSaudeMenuScreen({ navigation }: Props) {
             <Pressable key={r.label} onPress={r.onPress} accessibilityRole="button"
               style={[styles.row, { backgroundColor: t.color.surface.base, borderColor: t.color.border.default }]}>
               <Text spec={text(t, { role: 'body' })}>{r.label}</Text>
-              <Text spec={text(t, { role: 'caption', tone: 'muted' })}>›</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                {typeof r.count === 'number' && r.count > 0 ? (
+                  <View style={[styles.countBadge, { backgroundColor: t.color.badge.info.soft }]}>
+                    <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.info.text }}>{r.count}</Text>
+                  </View>
+                ) : null}
+                <Text spec={text(t, { role: 'caption', tone: 'muted' })}>›</Text>
+              </View>
             </Pressable>
           ))}
         </View>
@@ -56,4 +65,5 @@ export function MinhaSaudeMenuScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   content: { padding: 24, gap: 20 },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderRadius: 12, borderWidth: 1 },
+  countBadge: { minWidth: 22, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999, alignItems: 'center' },
 })
