@@ -17,10 +17,15 @@
 // ============================================================
 
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { fromTable, updateUserRow } from '@/lib/api/db'
+import { fromTable, selectUserRows, updateUserRow } from '@/lib/api/db'
 import { ValidationError } from '@/lib/api/errors'
 
 const TABLE = 'exams'
+
+/** Lista os exames da usuária (linha completa; a página projeta o que precisa). */
+export async function listExams(supabase: SupabaseClient, userId: string): Promise<Record<string, unknown>[]> {
+  return selectUserRows(supabase, TABLE, userId, { columns: '*', orderBy: 'created_at', ascending: false })
+}
 
 export interface ExamDraft { type: string; fileUrl?: string | null; examDate?: string | null }
 export interface ExamPatch { type?: string; examDate?: string | null; status?: string }

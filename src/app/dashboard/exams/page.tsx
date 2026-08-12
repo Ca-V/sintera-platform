@@ -104,13 +104,12 @@ export default function ExamsPage() {
   const loadExams = useCallback(async () => {
     if (!user) return
     setLoadingExams(true)
-    const { data, error } = await supabase
-      .from('exams').select('*').eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-    if (error) console.error('[SINTERA] exams fetch:', error.message)
-    else setExams((data ?? []) as Exam[])
+    // Leitura pelo domínio (rota /api/exams) — não client-direct.
+    const res = await fetch('/api/exams')
+    const data = res.ok ? await res.json() : { exams: [] }
+    setExams((data.exams ?? []) as Exam[])
     setLoadingExams(false)
-  }, [user, supabase])
+  }, [user])
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadExams() }, [loadExams])

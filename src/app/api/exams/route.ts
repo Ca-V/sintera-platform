@@ -1,12 +1,17 @@
 // Rota de CRUD de Exames — Web (cookie) e Mobile (Bearer). Lógica em
 // @/lib/exams/service. O arquivo é enviado ao storage no cliente (uploadUserDocument)
 // e o `fileUrl` (signed URL) chega aqui; o registro do exame nasce 'pending'.
+//   GET   → { exams }  (lista da usuária)
 //   POST  { type, fileUrl?, examDate? } → cria; devolve { id }
 //   PATCH { id, type?, examDate?, status? } → atualiza
 // (Análise/extração = api/exams/[id]/analyze; exclusão = api/exams/[id].)
 import { NextResponse } from 'next/server'
 import { authed, BadRequestError } from '@/lib/api/http'
-import { createExam, updateExam } from '@/lib/exams/service'
+import { createExam, updateExam, listExams } from '@/lib/exams/service'
+
+export const GET = authed(async ({ supabase, userId }) => {
+  return NextResponse.json({ exams: await listExams(supabase, userId) })
+})
 
 export const POST = authed(async ({ supabase, userId, request }) => {
   const b = (await request.json().catch(() => ({}))) as Record<string, unknown>
