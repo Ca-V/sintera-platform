@@ -29,6 +29,9 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   const text = await res.text()
   const json = text ? safeParse(text) : {}
   if (!res.ok) {
+    // 401 = sessão inválida/expirada apesar do auto-refresh. Encerra a sessão para a
+    // guarda de navegação levar ao login, em vez de deixar telas "quebradas" com erro.
+    if (res.status === 401) { void supabase.auth.signOut() }
     const msg = (json as { error?: string })?.error ?? `Falha (${res.status})`
     throw new ApiError(res.status, msg)
   }
