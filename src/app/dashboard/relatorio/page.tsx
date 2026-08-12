@@ -199,8 +199,6 @@ function LegacyReport() {
   const load = useCallback(async () => {
     if (!user) return
     setLoading(true)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const db = supabase as any
     // Dataset factual completo (11 tabelas) — read-model ÚNICO da Camada de Comunicação,
     // a MESMA projeção consumida pelo link público /r/[token] (impossível divergirem).
     const ds = await loadReportDataset(supabase, user.id)
@@ -215,28 +213,23 @@ function LegacyReport() {
     setContraceptives(ds.contraceptives)
     setMenstruations(ds.menstruations)
     setExpenses(selectFinancial(ds.events)) // Despesas = projeção financeira do domínio Agenda (SSOT)
-    const { data: sh } = await db.from('report_shares')
-      .select('id, token, expires_at').eq('user_id', user.id).eq('revoked', false)
-      .gt('expires_at', new Date().toISOString()).order('created_at', { ascending: false })
-    setShares(((sh ?? []) as Array<Record<string, unknown>>).map(s => ({
-      id: s.id as string, token: s.token as string, expiresAt: s.expires_at as string,
-    })))
-    const { data: tpls } = await db.from('report_templates')
-      .select('id, name, selection').eq('user_id', user.id).order('created_at', { ascending: false })
-    setTemplates(((tpls ?? []) as Array<Record<string, unknown>>).map(t => ({
-      id: t.id as string, name: t.name as string, selection: (t.selection as Record<string, unknown>) ?? {},
-    })))
+    // Links e Perfis de Comunicação — pelo domínio (rotas /api/report/*), não client-direct.
+    const [shRes, tplRes] = await Promise.all([fetch('/api/report/shares'), fetch('/api/report/templates')])
+    const shJson = shRes.ok ? await shRes.json() : { shares: [] }
+    const tplJson = tplRes.ok ? await tplRes.json() : { templates: [] }
+    setShares((shJson.shares ?? []) as { id: string; token: string; expiresAt: string }[])
+    setTemplates((tplJson.templates ?? []) as { id: string; name: string; selection: Record<string, unknown> }[])
     setLoading(false)
   }, [user, supabase])
 
   async function createShare() {
-    if (!user || shareBusy) return
+    if (shareBusy) return
     setShareBusy(true)
-    const token = (crypto.randomUUID() + crypto.randomUUID()).replace(/-/g, '')
-    const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
     const sel = (Object.keys(sections) as (keyof typeof sections)[]).filter(k => sections[k])
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from('report_shares').insert({ user_id: user.id, token, expires_at: expires, sections: sel, period })
+    await fetch('/api/report/shares', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sections: sel, period }),
+    })
     await load()
     setShareBusy(false)
   }
@@ -245,8 +238,7 @@ function LegacyReport() {
     if (shareBusy) return
     if (!window.confirm('Revogar este link? Quem o tiver não verá mais o relatório.')) return
     setShareBusy(true)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from('report_shares').update({ revoked: true }).eq('id', id)
+    await fetch(`/api/report/shares?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
     await load()
     setShareBusy(false)
   }
@@ -310,14 +302,15 @@ function LegacyReport() {
     if (cfg.period) setPeriod(cfg.period as Period)
   }
   async function saveTemplate() {
-    if (!user || !tplName.trim()) return
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from('report_templates').insert({ user_id: user.id, name: tplName.trim(), selection: currentConfig() })
+    if (!tplName.trim()) return
+    await fetch('/api/report/templates', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: tplName.trim(), selection: currentConfig() }),
+    })
     setTplName(''); await load()
   }
   async function deleteTemplate(id: string) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from('report_templates').delete().eq('id', id)
+    await fetch(`/api/report/templates?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
     await load()
   }
 
