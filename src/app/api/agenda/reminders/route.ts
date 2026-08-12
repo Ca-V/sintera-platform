@@ -149,9 +149,19 @@ export async function POST(req: NextRequest) {
     emailById.set(uid, u.user?.email ?? null)
   }
 
+  // Expo push tokens por usuária (Canal 3). Tabela nova (migração 103).
+  const tokensById = new Map<string, string[]>()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: pushRows } = await (admin.from('push_tokens') as any)
+    .select('user_id, token').in('user_id', userIds)
+  for (const r of (pushRows ?? []) as { user_id: string; token: string }[]) {
+    tokensById.set(r.user_id, [...(tokensById.get(r.user_id) ?? []), r.token])
+  }
+
   const sentIds: string[] = []
   let failed = 0
   let whatsappSent = 0
+  let pushSent = 0
   const whatsappDiag: string[] = []
 
   for (const { event: ev, userId } of items) {
@@ -182,6 +192,21 @@ export async function POST(req: NextRequest) {
       else if (wa.detail) whatsappDiag.push(`${ev.id.slice(0, 8)}:${wa.status}:${wa.detail}`)
     }
 
+    // Canal 3 — push nativo (Expo), para cada token da usuária.
+    const tokens = tokensById.get(userId) ?? []
+    if (tokens.length) {
+      try {
+        const res = await fetch('https://exp.host/--/api/v2/push/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(tokens.map((to) => ({
+            to, title: 'Lembrete SINTERA', body: `${ev.title} — ${subjectWhen}`, sound: 'default',
+          }))),
+        })
+        if (res.ok) { delivered = true; pushSent++ }
+      } catch { /* push é complementar */ }
+    }
+
     if (delivered) sentIds.push(ev.id)
     else failed++
   }
@@ -189,5 +214,5 @@ export async function POST(req: NextRequest) {
   await command.markRemindersSent(sentIds, new Date().toISOString())
 
   const sent = sentIds.length
-  return NextResponse.json({ due: items.length, sent, whatsappSent, failed, whatsappDiag })
+  return NextResponse.json({ due: items.length, sent, whatsappSent, pushSent, failed, whatsappDiag })
 }
