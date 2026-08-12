@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { getAuthedSupabase } from '@/lib/supabase/authedClient'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { DOCUMENTS_BUCKET } from '@/lib/api/storage'
 
@@ -18,13 +18,14 @@ async function listAllFiles(admin: any, bucket: string, prefix: string): Promise
   return files
 }
 
-export async function DELETE() {
+export async function DELETE(request: Request) {
   try {
-    const supabase = await createClient()
+    // Cookie (Web) OU Bearer (Mobile) — o titular pode exercer o direito de exclusão
+    // (LGPD) tanto na Web quanto no app nativo.
+    const { user } = await getAuthedSupabase(request)
 
     // 1. Auth
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
+    if (!user) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
     }
     const userId = user.id

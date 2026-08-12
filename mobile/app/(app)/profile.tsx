@@ -1,8 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
-import { View, Text, Switch } from 'react-native'
+import { View, Text, Switch, Alert } from 'react-native'
+import * as FileSystem from 'expo-file-system'
+import * as Sharing from 'expo-sharing'
 import { Screen, Card, Button, Field, Loading } from '@/components/ui'
 import { useAuth } from '@/lib/auth'
 import { api, ApiError } from '@/lib/api'
+import { API_URL } from '@/lib/config'
+import { supabase } from '@/lib/supabase'
 import { colors, spacing, font } from '@/lib/theme'
 
 interface Profile {
@@ -61,6 +65,56 @@ export default function ProfileScreen() {
     patch({ [key]: value })
   }
 
+  const [privacyBusy, setPrivacyBusy] = useState(false)
+
+  // Portabilidade (LGPD): baixa o JSON do titular e abre o compartilhamento nativo para
+  // salvar/enviar o arquivo. Usa o token da sessão no header (mesma rota da Web, Bearer).
+  async function exportData() {
+    setPrivacyBusy(true)
+    try {
+      const { data } = await supabase.auth.getSession()
+      const token = data.session?.access_token
+      const res = await fetch(`${API_URL}/api/account/export`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+      if (!res.ok) throw new Error(`Falha (${res.status})`)
+      const json = await res.text()
+      const uri = `${FileSystem.cacheDirectory}sintera-meus-dados.json`
+      await FileSystem.writeAsStringAsync(uri, json)
+      if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: 'application/json' })
+      else Alert.alert('Exportado', 'Seus dados foram exportados.')
+    } catch (e) {
+      Alert.alert('Erro', e instanceof Error ? e.message : 'Não foi possível exportar seus dados.')
+    } finally {
+      setPrivacyBusy(false)
+    }
+  }
+
+  // Direito de exclusão (LGPD): apaga a conta e todos os dados/arquivos (rota faz a
+  // exclusão recursiva no storage) e encerra a sessão.
+  function deleteAccount() {
+    Alert.alert(
+      'Excluir conta',
+      'Esta ação é permanente. Todos os seus dados e arquivos serão apagados. Deseja continuar?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Excluir conta', style: 'destructive',
+          onPress: async () => {
+            setPrivacyBusy(true)
+            try {
+              await api.del('/api/account')
+              await signOut()
+            } catch (e) {
+              Alert.alert('Erro', e instanceof ApiError ? e.message : 'Não foi possível excluir a conta.')
+              setPrivacyBusy(false)
+            }
+          },
+        },
+      ],
+    )
+  }
+
   if (loading) return <Screen title="Perfil" back><Loading /></Screen>
 
   return (
@@ -100,6 +154,20 @@ export default function ProfileScreen() {
 
       {error && <Text style={{ color: colors.red, fontSize: font.size.sm }}>{error}</Text>}
       {savedAt && !error && <Text style={{ color: colors.sage, fontSize: font.size.sm }}>Preferências salvas.</Text>}
+
+      <Text style={{ fontSize: font.size.xs, color: colors.mauve, textTransform: 'uppercase', letterSpacing: 1, marginTop: spacing.sm }}>
+        Privacidade
+      </Text>
+      <Card>
+        <View style={{ gap: spacing.md }}>
+          <Button label="Exportar meus dados" variant="ghost" onPress={exportData} loading={privacyBusy} />
+          <View style={{ height: 1, backgroundColor: colors.border }} />
+          <Text style={{ fontSize: font.size.xs, color: colors.mauve }}>
+            A exclusão da conta é permanente e apaga todos os seus dados e arquivos.
+          </Text>
+          <Button label="Excluir minha conta" variant="ghost" onPress={deleteAccount} disabled={privacyBusy} />
+        </View>
+      </Card>
 
       <View style={{ marginTop: spacing.sm }}>
         <Button label="Sair" variant="ghost" onPress={signOut} />
