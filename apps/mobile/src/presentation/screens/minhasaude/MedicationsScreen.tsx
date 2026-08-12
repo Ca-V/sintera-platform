@@ -13,11 +13,12 @@ import {
   type MedKind, type MedStatus, MED_REPURCHASE_FREQUENCIES, repurchaseFreqToRecurrence,
   isHormonalContraceptive, contraceptiveLabel, contraceptiveCategoryLabel, cadenceUsageLabel,
 } from '@sintera/core'
-import { Text, Button, Input, DatePicker, Disclaimer } from '../../primitives'
+import { Text, Button, Input, DatePicker, Disclaimer, AttachmentLink } from '../../primitives'
 import { useAssistedCapture } from '../capture/useAssistedCapture'
 import { useTheme } from '../../theme'
 import type { MinhaSaudeStackParamList } from '../../navigation/types'
 import { apiClient } from '../../../infrastructure/apiClient'
+import { documentPicker } from '../../../infrastructure/documentPickerAdapter'
 
 type Props = NativeStackScreenProps<MinhaSaudeStackParamList, 'Medications'>
 
@@ -56,6 +57,8 @@ export function MedicationsScreen({ route, navigation }: Props) {
   const [purchaseStatus, setPurchaseStatus] = useState('')
   const [packQtyInput, setPackQtyInput] = useState('')
   const [repurchaseFreq, setRepurchaseFreq] = useState('') // valor PT ('' = não repetir)
+  const [prescriptionUrl, setPrescriptionUrl] = useState<string | null>(null) // D-13: receita anexada
+  const [uploadingRx, setUploadingRx] = useState(false)
   const [saving, setSaving] = useState(false)
   const capture = useAssistedCapture() // T1: lê receita/rótulo e propõe o preenchimento (revisão → salvar)
   const [view, setView] = useState<'situacao' | 'tipo'>('situacao')
@@ -77,7 +80,17 @@ export function MedicationsScreen({ route, navigation }: Props) {
   function startNew() {
     setEditing(null); setName(''); setKind(supplements ? 'suplemento' : 'medicamento'); setBrand(''); setDose(''); setFrequency('')
     setForm(''); setAdminRoute(''); setPrescriber(''); setStatus('em_uso'); setStartedOn(''); setUntilDate(''); setNotes('')
-    setAcquiredQty(''); setPackQtyInput(''); setDailyCons(''); setPurchasedOn(''); setAmount(''); setPurchaseStatus(''); setRepurchaseFreq(''); setOpen(true)
+    setAcquiredQty(''); setPackQtyInput(''); setDailyCons(''); setPurchasedOn(''); setAmount(''); setPurchaseStatus(''); setRepurchaseFreq(''); setPrescriptionUrl(null); setOpen(true)
+  }
+  // D-13: anexa a RECEITA (documento separado do produto) — mesmo fluxo dos outros anexos.
+  async function pickPrescription() {
+    setUploadingRx(true)
+    try {
+      const file = await documentPicker.pickDocument()
+      if (!file) return
+      const { data, error: err } = await apiClient.exams.uploadExam({ uri: file.uri, mimeType: file.mimeType ?? 'application/octet-stream', sizeBytes: file.sizeBytes })
+      if (!err && data) setPrescriptionUrl(data.url)
+    } finally { setUploadingRx(false) }
   }
   function startEdit(m: MedicationDTO) {
     setEditing(m); setName(m.name); setKind(m.kind); setBrand(m.brand ?? ''); setDose(m.dose ?? ''); setFrequency(m.frequency ?? '')
@@ -85,7 +98,7 @@ export function MedicationsScreen({ route, navigation }: Props) {
     setStatus(m.status); setStartedOn(m.started_on ?? ''); setUntilDate(m.until_date ?? ''); setNotes(m.notes ?? '')
     setAcquiredQty(m.acquired_quantity != null ? String(m.acquired_quantity) : ''); setPackQtyInput(m.pack_quantity != null ? String(m.pack_quantity) : '')
     setDailyCons(m.daily_consumption != null ? String(m.daily_consumption) : ''); setPurchasedOn(m.purchased_on ?? '')
-    setAmount(m.amount_cents ? centsToAmount(m.amount_cents) : ''); setPurchaseStatus(m.purchase_status ?? ''); setRepurchaseFreq(m.repurchase_frequency ?? ''); setOpen(true)
+    setAmount(m.amount_cents ? centsToAmount(m.amount_cents) : ''); setPurchaseStatus(m.purchase_status ?? ''); setRepurchaseFreq(m.repurchase_frequency ?? ''); setPrescriptionUrl(m.prescription_url); setOpen(true)
   }
 
   async function save() {
@@ -103,6 +116,7 @@ export function MedicationsScreen({ route, navigation }: Props) {
         pack_unit: medFormUnit(form) || null, purchased_on: purchasedOn, amount_cents: parseAmountToCents(amount),
         purchase_status: purchaseStatus || null,
         repurchase_reminder: wantsReminder, repurchase_frequency: repurchaseFreq || null,
+        prescription_url: prescriptionUrl,
       }
       const { data, error: err } = await apiClient.medications.saveMedication(input)
       if (err) { Alert.alert('Não foi possível salvar', err.message || 'Tente novamente.'); return }
@@ -182,6 +196,10 @@ export function MedicationsScreen({ route, navigation }: Props) {
           <Text spec={text(t, { role: 'label', tone: 'muted' })}>VIA</Text>
           <Chips options={MED_ROUTES.map(r => ({ id: r, label: r }))} value={adminRoute} onChange={setAdminRoute} />
           <Input value={prescriber} onChangeText={setPrescriber} placeholder="Prescritor" />
+          {/* D-13: receita anexada (documento separado do produto). */}
+          <Text spec={text(t, { role: 'label', tone: 'muted' })}>RECEITA</Text>
+          {prescriptionUrl ? <AttachmentLink url={prescriptionUrl} label="Ver receita anexada" /> : null}
+          <Button label={uploadingRx ? 'Anexando…' : prescriptionUrl ? 'Trocar receita' : 'Anexar receita'} variant="secondary" onPress={pickPrescription} loading={uploadingRx} />
           <Chips options={MED_STATUSES.map(s => ({ id: s.value, label: s.label }))} value={status} onChange={(v) => setStatus(v as MedStatus)} />
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <DatePicker value={startedOn} onChange={setStartedOn} placeholder="Início" style={{ flex: 1 }} />

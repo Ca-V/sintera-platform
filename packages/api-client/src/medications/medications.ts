@@ -29,6 +29,7 @@ export interface MedicationDTO {
   amount_cents: number | null
   repurchase_reminder: boolean
   repurchase_frequency: string | null
+  prescription_url: string | null   // D-13: anexo da receita (documento separado do produto)
 }
 
 export interface MedicationInput extends Partial<Omit<MedicationDTO, 'id' | 'name' | 'kind' | 'status'>> {
@@ -39,7 +40,7 @@ export interface MedicationInput extends Partial<Omit<MedicationDTO, 'id' | 'nam
 }
 
 const COLUMNS =
-  'id, name, kind, brand, dose, frequency, pharmaceutical_form, administration_route, prescriber_name, started_on, until_date, status, notes, acquired_quantity, pack_quantity, daily_consumption, pack_unit, purchased_on, purchase_status, amount_cents, repurchase_reminder, repurchase_frequency' as const
+  'id, name, kind, brand, dose, frequency, pharmaceutical_form, administration_route, prescriber_name, started_on, until_date, status, notes, acquired_quantity, pack_quantity, daily_consumption, pack_unit, purchased_on, purchase_status, amount_cents, repurchase_reminder, repurchase_frequency, prescription_url' as const
 
 /** Lista os medicamentos/suplementos do usuário. `[]` se não houver. LANÇA em falha. */
 export async function listMedications(client: SupabaseClient, signal?: AbortSignal): Promise<MedicationDTO[]> {
@@ -71,6 +72,7 @@ export async function saveMedication(client: SupabaseClient, input: MedicationIn
       daily_consumption: input.daily_consumption ?? null, pack_unit: input.pack_unit ?? null,
       purchased_on: input.purchased_on || null, purchase_status: input.purchase_status ?? null, amount_cents: input.amount_cents ?? null,
       repurchase_reminder: input.repurchase_reminder ?? false, repurchase_frequency: input.repurchase_reminder ? (input.repurchase_frequency ?? null) : null,
+      prescription_url: input.prescription_url ?? null,
     }
     const table = client.from('medications')
     const q = input.id
