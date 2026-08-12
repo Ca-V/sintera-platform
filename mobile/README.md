@@ -13,8 +13,11 @@ regra de negócio é reimplementada aqui; o app é um cliente das APIs existente
 - `src/lib/useResource.ts` — espelho-Mobile do `useListResource` da Web (recurso de lista via Bearer).
 - `src/components/ui.tsx` — kit de UI (Screen, Card, Button, Field…).
 - `src/components/CrudList.tsx` — CRUD genérico de recurso de lista (casa com `useResource`).
+- `src/components/EventList.tsx` — lista/ações de eventos da Jornada (Agenda/Histórico/Gastos).
+- `src/lib/upload.ts` — persistência de documento (câmera → storage), espelho de `api/storage.ts`.
 - `app/` — rotas (expo-router, navegação por pilha): `(auth)/login`, `(app)/` (hub +
-  exames, condições, sinais-vitais, medicamentos, recursos, hábitos, perfil).
+  agenda, histórico, gastos, exames, captura de exame, indicadores, condições,
+  sinais-vitais, medidas, ciclo, medicamentos, recursos, hábitos, perfil).
 
 ## Como rodar
 1. `cd mobile && npm install`
@@ -22,9 +25,17 @@ regra de negócio é reimplementada aqui; o app é um cliente das APIs existente
 3. `npm run start` — abrir no Expo Go, simulador iOS ou emulador Android.
 
 ## Status
-Fundação + núcleo de saúde implementados: auth (login/cadastro/logout), navegação por
-pilha com hub, client de API Bearer, e telas de exames + 5 CRUDs completos (condições,
-sinais-vitais, medicamentos, recursos, hábitos) reutilizando as rotas `/api` da Web.
-Em desenvolvimento: agenda, timeline, relatórios, indicadores de saúde, gastos, ômica,
-ciclo, medidas e captura de exame por câmera. Distribuição via TestFlight / Play Internal
-Testing. Requer ambiente com toolchain Expo/RN + dispositivo/simulador para build e validação.
+Núcleo funcional completo (Cenário A — paridade funcional). Implementado, reutilizando
+100% as rotas `/api` da Web via Bearer:
+- **Auth**: login, cadastro, logout.
+- **Jornada**: Agenda (criar · concluir · cancelar · reabrir · excluir), Histórico, Gastos.
+- **Exames**: lista + captura por câmera/galeria (upload → extração no backend).
+- **Saúde**: Indicadores (biomarcadores organizados), Sinais vitais, Medidas, Ciclo,
+  Medicamentos, Recursos, Hábitos, Condições.
+
+Em desenvolvimento (pós-núcleo): Ômica (painéis/resultados), visões de Relatório/Insights,
+preferências de notificação e push nativo.
+
+Distribuição via TestFlight / Play Internal Testing. **Requer ambiente com toolchain
+Expo/RN + dispositivo/simulador para build, execução e validação** — não realizável neste
+container (etapa de homologação).
