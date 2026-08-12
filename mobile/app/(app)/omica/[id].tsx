@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
-import { View, Text, Pressable, SectionList, RefreshControl } from 'react-native'
-import { useLocalSearchParams } from 'expo-router'
-import { Screen, Card, Loading } from '@/components/ui'
+import { View, Text, Pressable, Alert, SectionList, RefreshControl } from 'react-native'
+import * as ImagePicker from 'expo-image-picker'
+import { useLocalSearchParams, useRouter } from 'expo-router'
+import { Screen, Card, Button, Loading } from '@/components/ui'
 import { api, ApiError } from '@/lib/api'
 import { DOMAIN_LABEL, fmtOmicsDate } from '@/lib/omics'
 import { colors, spacing, font } from '@/lib/theme'
@@ -24,11 +25,13 @@ function resultLabel(r: Result): string {
 }
 
 export default function OmicaPanelScreen() {
+  const router = useRouter()
   const { id } = useLocalSearchParams<{ id: string }>()
   const [panel, setPanel] = useState<Panel | null>(null)
   const [categories, setCategories] = useState<Category[]>([])
   const [resultsByCat, setResultsByCat] = useState<Record<string, Result[]>>({})
   const [loading, setLoading] = useState(true)
+  const [ingesting, setIngesting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
@@ -56,6 +59,40 @@ export default function OmicaPanelScreen() {
 
   useEffect(() => { load() }, [load])
 
+  // Adiciona um laudo por foto: a IA extrai os marcadores (POST .../ingest-pdf com o
+  // arquivo em base64). Fecha a jornada ômica: criar painel → popular → visualizar.
+  async function ingestPhoto() {
+    const res = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, base64: true, mediaTypes: ImagePicker.MediaTypeOptions.Images })
+    if (res.canceled || !res.assets?.[0]?.base64) return
+    const a = res.assets[0]
+    setIngesting(true)
+    try {
+      await api.post(`/api/omics/panels/${id}/ingest-pdf`, {
+        fileBase64: a.base64,
+        mediaType: a.mimeType ?? 'image/jpeg',
+      })
+      await load()
+      Alert.alert('Pronto', 'Marcadores extraídos do laudo.')
+    } catch (e) {
+      Alert.alert('Erro', e instanceof ApiError ? e.message : 'Não foi possível processar o laudo.')
+    } finally {
+      setIngesting(false)
+    }
+  }
+
+  function deletePanel() {
+    Alert.alert('Excluir painel', 'Remove o painel e seus resultados. Ação irreversível.', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Excluir', style: 'destructive',
+        onPress: async () => {
+          try { await api.del(`/api/omics/panels/${id}`); router.back() }
+          catch (e) { Alert.alert('Erro', e instanceof ApiError ? e.message : 'Falha ao excluir.') }
+        },
+      },
+    ])
+  }
+
   const sections = categories.map((c) => ({
     title: c.name,
     count: c.count,
@@ -73,13 +110,17 @@ export default function OmicaPanelScreen() {
           contentContainerStyle={{ padding: spacing.xl, paddingTop: spacing.sm, paddingBottom: spacing.xxl }}
           refreshControl={<RefreshControl refreshing={false} onRefresh={load} tintColor={colors.petal} />}
           ListHeaderComponent={
-            panel ? (
-              <Text style={{ color: colors.mauve, fontSize: font.size.sm, marginBottom: spacing.md }}>
-                {[panel.laboratory, panel.technology, fmtOmicsDate(panel.collected_on ?? panel.created_at)].filter(Boolean).join(' · ')}
-              </Text>
-            ) : null
+            <View style={{ gap: spacing.md, marginBottom: spacing.md }}>
+              {panel ? (
+                <Text style={{ color: colors.mauve, fontSize: font.size.sm }}>
+                  {[panel.laboratory, panel.technology, fmtOmicsDate(panel.collected_on ?? panel.created_at)].filter(Boolean).join(' · ')}
+                </Text>
+              ) : null}
+              <Button label={ingesting ? 'Processando laudo…' : 'Adicionar laudo (foto)'} onPress={ingestPhoto} loading={ingesting} />
+              <Pressable onPress={deletePanel} hitSlop={8}><Text style={{ color: colors.red, fontSize: font.size.sm }}>Excluir painel</Text></Pressable>
+            </View>
           }
-          ListEmptyComponent={<Text style={{ color: colors.mauve, fontSize: font.size.sm }}>{error ?? 'Sem resultados neste painel.'}</Text>}
+          ListEmptyComponent={<Text style={{ color: colors.mauve, fontSize: font.size.sm }}>{error ?? 'Sem resultados. Adicione um laudo por foto.'}</Text>}
           renderSectionHeader={({ section }) => (
             <Text style={{ fontSize: font.size.xs, color: colors.mauve, textTransform: 'uppercase', letterSpacing: 1, marginTop: spacing.lg, marginBottom: spacing.xs }}>
               {section.title} · {section.count}

@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
-import { Text, FlatList, Pressable, RefreshControl } from 'react-native'
+import { View, Text, FlatList, Pressable, RefreshControl } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
-import { Screen, Card, Loading } from '@/components/ui'
+import { Screen, Card, Button, Loading } from '@/components/ui'
 import { api, ApiError } from '@/lib/api'
 import { DOMAIN_LABEL, fmtOmicsDate } from '@/lib/omics'
 import { colors, spacing, font } from '@/lib/theme'
@@ -46,6 +46,11 @@ export default function OmicaScreen() {
         keyExtractor={(p) => p.id}
         contentContainerStyle={{ padding: spacing.xl, paddingTop: spacing.sm, gap: spacing.sm, paddingBottom: spacing.xxl }}
         refreshControl={<RefreshControl refreshing={loading && panels.length > 0} onRefresh={load} tintColor={colors.petal} />}
+        ListHeaderComponent={
+          <View style={{ marginBottom: spacing.sm }}>
+            <Button label="Novo painel" onPress={() => router.push('/(app)/omica/new')} />
+          </View>
+        }
         ListEmptyComponent={
           loading ? <Loading /> : (
             <Text style={{ color: colors.mauve, fontSize: font.size.sm }}>
