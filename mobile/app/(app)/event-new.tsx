@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { View, Text, Pressable } from 'react-native'
+import { View, Text, Pressable, Switch } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Screen, Card, Button, Field } from '@/components/ui'
 import { api, ApiError } from '@/lib/api'
@@ -26,6 +26,7 @@ export default function EventNewScreen() {
   const [professionalName, setProfessionalName] = useState('')
   const [establishment, setEstablishment] = useState('')
   const [notes, setNotes] = useState('')
+  const [reminderEnabled, setReminderEnabled] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -41,6 +42,7 @@ export default function EventNewScreen() {
         professionalName: professionalName.trim() || null,
         establishment: establishment.trim() || null,
         notes: notes.trim() || null,
+        reminderEnabled,
       })
       router.back()
     } catch (e) {
@@ -81,6 +83,13 @@ export default function EventNewScreen() {
           <Field label="Profissional" value={professionalName} onChangeText={setProfessionalName} placeholder="Opcional" />
           <Field label="Local" value={establishment} onChangeText={setEstablishment} placeholder="Opcional" />
           <Field label="Observações" value={notes} onChangeText={setNotes} multiline />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: font.size.md, color: colors.onyx }}>Lembrete</Text>
+              <Text style={{ fontSize: font.size.sm, color: colors.mauve, marginTop: 2 }}>Aviso por e-mail no dia anterior</Text>
+            </View>
+            <Switch value={reminderEnabled} onValueChange={setReminderEnabled} trackColor={{ true: colors.petal, false: colors.border }} />
+          </View>
           {error && <Text style={{ color: colors.red, fontSize: font.size.sm }}>{error}</Text>}
           <Button label="Salvar evento" onPress={submit} loading={saving} disabled={!title.trim() || !date.trim()} />
         </View>

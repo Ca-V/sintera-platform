@@ -49,4 +49,10 @@ describe('parseEventDraft', () => {
   it('ignora amountCents não-numérico', () => {
     expect(parseEventDraft({ type: 'x', title: 't', date: '2026-01-01', amountCents: '15000' }).amountCents).toBeNull()
   })
+
+  it('lembrete liga por padrão e só desliga com reminderEnabled:false', () => {
+    expect(parseEventDraft({ type: 'x', title: 't', date: '2026-01-01' }).reminderEnabled).toBe(true)
+    expect(parseEventDraft({ type: 'x', title: 't', date: '2026-01-01', reminderEnabled: true }).reminderEnabled).toBe(true)
+    expect(parseEventDraft({ type: 'x', title: 't', date: '2026-01-01', reminderEnabled: false }).reminderEnabled).toBe(false)
+  })
 })
