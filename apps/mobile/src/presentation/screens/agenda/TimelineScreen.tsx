@@ -8,7 +8,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import { mergeTimeline, selectHistory, groupByPeriod, statusLabel, formatDateLongBR, type TimelineEntry, type TimelineMeta } from '@sintera/core'
-import { Text, Button, Disclaimer } from '../../primitives'
+import { Text, Button, Input, Disclaimer } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { MinhaSaudeStackParamList } from '../../navigation/types'
 import { apiClient } from '../../../infrastructure/apiClient'
@@ -45,6 +45,8 @@ export function TimelineScreen({ navigation }: Props) {
   const [phase, setPhase] = useState<'loading' | 'ready' | 'error'>('loading')
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [query, setQuery] = useState('')
+  const [view, setView] = useState<'date' | 'type'>('date')
   const alive = useRef(true)
 
   const load = useCallback((silent: boolean) => {
@@ -93,7 +95,16 @@ export function TimelineScreen({ navigation }: Props) {
     return <View style={[styles.center, { backgroundColor: t.color.surface.app, paddingTop: insets.top }]}><Text spec={text(t, { role: 'body' })} style={{ color: t.color.badge.error.text, textAlign: 'center' }}>{error}</Text><Button label="Tentar novamente" variant="secondary" onPress={() => load(false)} /></View>
   }
 
-  const groups = groupByPeriod(entries, 'month', 'desc')
+  // D‑04: busca + agrupamento por data/tipo (paridade Web /dashboard/timeline).
+  const DOMAIN_LABEL: Record<TimelineEntry['domain'], string> = { event: 'Consultas e eventos', exam: 'Exames', omics: 'Ômica', contraceptive: 'Contracepção' }
+  const q = query.trim().toLowerCase()
+  const filtered = q ? entries.filter(e => `${e.title} ${e.subtitle ?? ''}`.toLowerCase().includes(q)) : entries
+  const groups: { label: string; items: TimelineEntry[] }[] = view === 'date'
+    ? groupByPeriod(filtered, 'month', 'desc').map(g => ({ label: periodLabel(g.key).toUpperCase(), items: g.items }))
+    : Object.values(filtered.reduce<Record<string, { label: string; items: TimelineEntry[] }>>((acc, e) => {
+        (acc[e.domain] ??= { label: (DOMAIN_LABEL[e.domain] ?? e.domain).toUpperCase(), items: [] }).items.push(e)
+        return acc
+      }, {}))
 
   return (
     <ScrollView style={{ backgroundColor: t.color.surface.app }}
@@ -102,15 +113,28 @@ export function TimelineScreen({ navigation }: Props) {
       <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 22 }}>Histórico de Saúde</Text>
       <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Sua linha do tempo reúne exames e eventos (consultas, vacinas, procedimentos…) em um só lugar.</Text>
 
+      {entries.length > 0 ? (
+        <View style={{ gap: 10 }}>
+          <Input value={query} onChangeText={setQuery} placeholder="Buscar por nome…" clearButtonMode="while-editing" />
+          <View style={{ flexDirection: 'row', gap: 16 }}>
+            {(['date', 'type'] as const).map(v => (
+              <Pressable key={v} onPress={() => setView(v)}>
+                <Text spec={text(t, { role: 'caption', tone: view === v ? 'default' : 'faint' })} style={view === v ? { color: t.color.identity.primary } : undefined}>{v === 'date' ? 'Por data' : 'Por tipo'}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      ) : null}
+
       {groups.length === 0 ? (
         <View style={[styles.card, { backgroundColor: t.color.surface.base, borderColor: t.color.border.default }]}>
-          <Text spec={text(t, { role: 'body', tone: 'muted' })} style={{ textAlign: 'center' }}>Seu histórico aparecerá aqui conforme você registrar exames e eventos.</Text>
+          <Text spec={text(t, { role: 'body', tone: 'muted' })} style={{ textAlign: 'center' }}>{q ? 'Nenhum resultado para a busca.' : 'Seu histórico aparecerá aqui conforme você registrar exames e eventos.'}</Text>
         </View>
       ) : null}
 
       {groups.map(g => (
-        <View key={g.key} style={{ gap: 8 }}>
-          <Text spec={text(t, { role: 'label', tone: 'muted' })}>{periodLabel(g.key).toUpperCase()}</Text>
+        <View key={g.label} style={{ gap: 8 }}>
+          <Text spec={text(t, { role: 'label', tone: 'muted' })}>{g.label}</Text>
           {g.items.map(e => {
             const chips = metaChips(e.meta, e.status)
             const prof = e.meta?.professionalLabel
