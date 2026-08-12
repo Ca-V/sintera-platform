@@ -12,7 +12,7 @@ import {
   serializeRule, parseRule, parseAmountToCents, centsToAmount, googleCalendarUrl,
   CADENCE_PRESETS, cadenceIdFor, cadenceById, type EventStatus,
 } from '@sintera/core'
-import { Text, Button, Input, Switch, DatePicker } from '../../primitives'
+import { Text, Button, Input, Switch, DatePicker, Select } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { AgendaStackParamList } from '../../navigation/types'
 import { apiClient } from '../../../infrastructure/apiClient'
@@ -159,7 +159,7 @@ export function EventFormScreen({ route, navigation }: Props) {
         </>
       ) : null}
 
-      <Field label="Recorrência"><Chips options={CADENCE_PRESETS.map(p => ({ id: p.id, label: p.label }))} value={cadence} onChange={setCadence} /></Field>
+      <Field label="Recorrência"><Select options={CADENCE_PRESETS.map(p => ({ id: p.id, label: p.label }))} value={cadence} onChange={setCadence} title="Recorrência" /></Field>
       {cadence !== 'none' ? <Field label="Repetir até (opcional)"><Input value={until} onChangeText={setUntil} placeholder="2026-12-31" /></Field> : null}
 
       <Field label="Valor pago (R$)"><Input value={amount} onChangeText={setAmount} placeholder="250,00" keyboardType="decimal-pad" /></Field>

@@ -12,7 +12,7 @@ import {
   FREQUENCY_LABELS, type RecurrenceFrequency, selectByLink, parseRule, type HealthEvent,
   EXPENSE_DOC_TYPES, expenseDocLabel, parseAmountToCents, centsToAmount,
 } from '@sintera/core'
-import { Text, Button, Input, AttachmentLink, DatePicker, Disclaimer } from '../../primitives'
+import { Text, Button, Input, AttachmentLink, DatePicker, Disclaimer, Select } from '../../primitives'
 import { useAssistedCapture } from '../capture/useAssistedCapture'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
@@ -241,7 +241,7 @@ export function ResourcesScreen() {
           </View>
 
           <Text spec={text(t, { role: 'label', tone: 'muted' })}>LEMBRETE DE TROCA</Text>
-          <Chips options={freqOptions} value={reminderFreq} onChange={(v) => setReminderFreq(v as RecurrenceFrequency)} />
+          <Select options={freqOptions} value={reminderFreq} onChange={(v) => setReminderFreq(v as RecurrenceFrequency)} title="Lembrete de troca" />
           <View style={styles.actions}>
             <Button label="Cancelar" variant="secondary" onPress={() => setOpen(false)} />
             <Button label="Salvar" onPress={save} loading={saving} loadingLabel="Salvando…" />

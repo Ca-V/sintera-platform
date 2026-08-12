@@ -13,7 +13,7 @@ import {
   type MedKind, type MedStatus, MED_REPURCHASE_FREQUENCIES, repurchaseFreqToRecurrence,
   isHormonalContraceptive, contraceptiveLabel, contraceptiveCategoryLabel, cadenceUsageLabel,
 } from '@sintera/core'
-import { Text, Button, Input, DatePicker, Disclaimer, AttachmentLink } from '../../primitives'
+import { Text, Button, Input, DatePicker, Disclaimer, AttachmentLink, Select } from '../../primitives'
 import { useAssistedCapture } from '../capture/useAssistedCapture'
 import { useTheme } from '../../theme'
 import type { MinhaSaudeStackParamList } from '../../navigation/types'
@@ -232,7 +232,7 @@ export function MedicationsScreen({ route, navigation }: Props) {
 
           <Input value={notes} onChangeText={setNotes} placeholder="Observações…" multiline style={{ minHeight: 60, textAlignVertical: 'top' }} />
           <Text spec={text(t, { role: 'label', tone: 'muted' })}>LEMBRETE DE RECOMPRA</Text>
-          <Chips options={repurchaseOptions} value={repurchaseFreq} onChange={setRepurchaseFreq} />
+          <Select options={repurchaseOptions} value={repurchaseFreq} onChange={setRepurchaseFreq} title="Lembrete de recompra" />
           {repurchaseFreq && status !== 'em_uso' ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>O lembrete só fica ativo com o status “Em uso”.</Text> : null}
           <View style={styles.actions}>
             <Button label="Cancelar" variant="secondary" onPress={() => setOpen(false)} />

@@ -10,7 +10,7 @@ import {
   HABIT_CATEGORIES, habitGoalSummary, type HabitCategory,
   FREQUENCY_LABELS, type RecurrenceFrequency, selectByLink, parseRule, type HealthEvent,
 } from '@sintera/core'
-import { Text, Button, Input, AttachmentLink, Disclaimer } from '../../primitives'
+import { Text, Button, Input, AttachmentLink, Disclaimer, Select } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 import { documentPicker } from '../../../infrastructure/documentPickerAdapter'
@@ -149,7 +149,7 @@ export function HabitsScreen() {
           <Input value={notes} onChangeText={setNotes} placeholder="Observações…" multiline style={{ minHeight: 60, textAlignVertical: 'top' }} />
           <Button label={planUrl ? `Plano anexado${planName ? `: ${planName}` : ''}` : 'Anexar plano (opcional)'} variant="secondary" onPress={pickPlan} loading={uploadingPlan} loadingLabel="Enviando…" />
           <Text spec={text(t, { role: 'label', tone: 'muted' })}>LEMBRETE</Text>
-          <Chips options={freqOptions} value={reminderFreq} onChange={(v) => setReminderFreq(v as RecurrenceFrequency)} />
+          <Select options={freqOptions} value={reminderFreq} onChange={(v) => setReminderFreq(v as RecurrenceFrequency)} title="Lembrete" />
           <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Cria um lembrete recorrente na sua Agenda a partir de hoje. Você é avisada pelo canal definido nas suas preferências de notificação.</Text>
           <View style={styles.actions}>
             <Button label="Cancelar" variant="secondary" onPress={() => setOpen(false)} />
