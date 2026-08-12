@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { View, Text, TextInput, Pressable, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native'
+import { useRouter } from 'expo-router'
 import { useAuth } from '@/lib/auth'
 import { colors, spacing, radius, font } from '@/lib/theme'
 
 export default function LoginScreen() {
   const { signIn } = useAuth()
+  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -67,6 +69,9 @@ export default function LoginScreen() {
             {loading
               ? <ActivityIndicator color="#fff" />
               : <Text style={{ color: '#fff', fontSize: font.size.md, fontWeight: font.weight.semibold }}>Entrar</Text>}
+          </Pressable>
+          <Pressable onPress={() => router.replace('/(auth)/register')} hitSlop={8} style={{ alignItems: 'center', paddingVertical: spacing.sm }}>
+            <Text style={{ color: colors.petal, fontSize: font.size.sm }}>Não tem conta? Criar conta</Text>
           </Pressable>
         </View>
       </View>
