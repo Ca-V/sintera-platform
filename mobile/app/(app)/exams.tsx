@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from 'react'
-import { Text, FlatList, RefreshControl } from 'react-native'
-import { Screen, Card, Loading } from '@/components/ui'
+import { useCallback, useState } from 'react'
+import { View, Text, FlatList, RefreshControl } from 'react-native'
+import { useFocusEffect, useRouter } from 'expo-router'
+import { Screen, Card, Button, Loading } from '@/components/ui'
 import { api, ApiError } from '@/lib/api'
 import { colors, spacing, font } from '@/lib/theme'
 
@@ -28,6 +29,7 @@ function effectiveDate(e: Exam): string {
 
 // Lista de exames — consome GET /api/exams (mesma rota da Web) com Bearer.
 export default function ExamsScreen() {
+  const router = useRouter()
   const [exams, setExams] = useState<Exam[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -44,7 +46,8 @@ export default function ExamsScreen() {
     }
   }, [])
 
-  useEffect(() => { load() }, [load])
+  // Recarrega ao focar (ex.: após enviar um exame na tela de captura).
+  useFocusEffect(useCallback(() => { load() }, [load]))
 
   return (
     <Screen title="Exames" back scroll={false}>
@@ -53,6 +56,11 @@ export default function ExamsScreen() {
         keyExtractor={(e) => e.id}
         contentContainerStyle={{ padding: spacing.xl, paddingTop: spacing.sm, gap: spacing.sm, paddingBottom: spacing.xxl }}
         refreshControl={<RefreshControl refreshing={loading && exams.length > 0} onRefresh={load} tintColor={colors.petal} />}
+        ListHeaderComponent={
+          <View style={{ marginBottom: spacing.sm }}>
+            <Button label="Enviar exame" onPress={() => router.push('/(app)/exam-capture')} />
+          </View>
+        }
         ListEmptyComponent={
           loading ? <Loading /> : (
             <Text style={{ color: colors.mauve, fontSize: font.size.sm }}>
