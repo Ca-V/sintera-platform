@@ -78,6 +78,11 @@ Estado **verificado** na branch canônica `feat/mobile-inc4-perfil` (typecheck W
   `Select` (AgendarModal, medicamentos, recursos, hábitos); o Mobile passou a usar o primitivo `Select` (bottom‑sheet
   rolável com busca) nos quatro pontos de recorrência (recompra, troca, lembrete, evento). Chips inline permanecem só
   em opções curtas (status, binários). Rollout do `Select` a demais campos de opção segue como evolução.
+- **§5d — Indicador de conteúdo (contadores) no menu Minha Saúde (Mobile) + Sidebar (Web): ENTREGUE (paridade).**
+  Contagem por domínio (Exames, Medicamentos, Suplementos, Recursos, Condições, Hábitos) exibida como badge; na
+  Web, quando a subdivisão (Registros/Saúde/Histórico) está recolhida, o total aparece no cabeçalho — o cenário do
+  defeito ("perceber onde há conteúdo sem expandir"). Contrato único `ApiClient.summary.getMinhaSaudeCounts`
+  (head+count, RLS) reusado por Web e Mobile (SSOT). Dado por injeção, best-effort; camada de navegação só apresenta.
 - **D‑03 / D‑18 — Histórico de Exames Mobile: RESOLVIDO por paridade.** A tela usa `Select` para tipo/período + busca
   (sem parede de chips) e cartões colapsados = nome + nº de medições → toque abre o detalhe. O valor/tendência inline
   é **decisão de paridade conceitual com a Web `/dashboard/saude`** (que exibe exatamente o mesmo `ListCard`), critério
