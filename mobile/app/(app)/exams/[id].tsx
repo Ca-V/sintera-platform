@@ -1,21 +1,78 @@
-import { View, Text } from 'react-native'
-import { useLocalSearchParams } from 'expo-router'
-import { Screen } from '@/components/ui'
+import { useState } from 'react'
+import { View, Text, Pressable, Alert } from 'react-native'
+import { useLocalSearchParams, useRouter } from 'expo-router'
+import { Screen, Card, Button, Field } from '@/components/ui'
 import { BiomarkerList } from '@/components/BiomarkerList'
+import { api, ApiError } from '@/lib/api'
 import { colors, spacing, font } from '@/lib/theme'
 
-// Detalhe do exame: os dados extraídos deste laudo (scope=exam), reutilizando o mesmo
-// BiomarkerList da tela de Indicadores via /api/biomarkers/organized?examId=. Título e
-// subtítulo vêm por params da lista (sem GET por-id dedicado).
+// Detalhe do exame: dados extraídos (BiomarkerList, scope=exam) + ciclo de vida —
+// editar tipo/data (PATCH /api/exams) e excluir (DELETE /api/exams/[id]).
 export default function ExamDetailScreen() {
+  const router = useRouter()
   const { id, title, subtitle } = useLocalSearchParams<{ id: string; title?: string; subtitle?: string }>()
+  const [editing, setEditing] = useState(false)
+  const [type, setType] = useState(title && title !== 'Exame' ? String(title) : '')
+  const [examDate, setExamDate] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  async function saveEdit() {
+    setBusy(true)
+    try {
+      await api.patch('/api/exams', {
+        id,
+        type: type.trim() || undefined,
+        examDate: examDate.trim() || undefined,
+      })
+      setEditing(false)
+      router.setParams({ title: type.trim() || 'Exame' })
+    } catch (e) {
+      Alert.alert('Erro', e instanceof ApiError ? e.message : 'Não foi possível salvar.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  function confirmDelete() {
+    Alert.alert(
+      'Excluir exame',
+      'Isto remove o exame, seus biomarcadores e o arquivo. Ação irreversível.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Excluir', style: 'destructive',
+          onPress: async () => {
+            setBusy(true)
+            try { await api.del(`/api/exams/${id}`); router.back() }
+            catch (e) { Alert.alert('Erro', e instanceof ApiError ? e.message : 'Falha ao excluir.'); setBusy(false) }
+          },
+        },
+      ],
+    )
+  }
+
   return (
     <Screen title={title || 'Exame'} back scroll={false}>
-      {subtitle ? (
-        <View style={{ paddingHorizontal: spacing.xl, paddingTop: spacing.xs }}>
-          <Text style={{ color: colors.mauve, fontSize: font.size.sm }}>{subtitle}</Text>
-        </View>
-      ) : null}
+      <View style={{ paddingHorizontal: spacing.xl, paddingTop: spacing.xs, gap: spacing.sm }}>
+        {subtitle ? <Text style={{ color: colors.mauve, fontSize: font.size.sm }}>{subtitle}</Text> : null}
+        {editing ? (
+          <Card>
+            <View style={{ gap: spacing.md }}>
+              <Field label="Tipo" value={type} onChangeText={setType} placeholder="Ex.: Hemograma" />
+              <Field label="Data do exame" value={examDate} onChangeText={setExamDate} placeholder="AAAA-MM-DD" />
+              <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+                <View style={{ flex: 1 }}><Button label="Salvar" onPress={saveEdit} loading={busy} /></View>
+                <View style={{ flex: 1 }}><Button label="Cancelar" variant="ghost" onPress={() => setEditing(false)} /></View>
+              </View>
+            </View>
+          </Card>
+        ) : (
+          <View style={{ flexDirection: 'row', gap: spacing.md }}>
+            <Pressable onPress={() => setEditing(true)} hitSlop={8}><Text style={{ color: colors.petal, fontSize: font.size.sm }}>Editar</Text></Pressable>
+            <Pressable onPress={confirmDelete} hitSlop={8} disabled={busy}><Text style={{ color: colors.red, fontSize: font.size.sm }}>Excluir</Text></Pressable>
+          </View>
+        )}
+      </View>
       <BiomarkerList examId={id} emptyText="Nenhum dado extraído deste exame ainda." />
     </Screen>
   )

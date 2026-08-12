@@ -3,23 +3,23 @@
 // usa service role para cobrir tabelas/arquivos sem brechas de RLS — sempre
 // escopada ao exam_id + user_id da própria usuária. Ação destrutiva e irreversível.
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { getAuthedSupabase } from '@/lib/supabase/authedClient'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { DOCUMENTS_BUCKET } from '@/lib/api/storage'
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id: examId } = await params
-  const supabase = await createClient()
+  // Cookie (Web) OU Bearer (Mobile) — exclusão do exame também pelo app nativo.
+  const { supabase, user } = await getAuthedSupabase(request)
 
   // 1. Auth
-  const { data: authData, error: authErr } = await supabase.auth.getUser()
-  if (authErr || !authData.user) {
+  if (!user) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
   }
-  const userId = authData.user.id
+  const userId = user.id
 
   // 2. Ownership (confirma que o exame é da usuária) + pega o arquivo
   const { data: exam } = await supabase
