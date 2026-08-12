@@ -206,7 +206,7 @@ export default function HabitosPage() {
             title: `Hábito: ${description.trim()}`, date: existing?.date || todayISO(), time: '', durationMin: 30,
             notes: `Lembrete do hábito: ${description.trim()}`, reminderEnabled: true,
             modality: '', professionalKind: '', professionalName: '', establishment: '', location: '', preparation: '',
-            amount: '', expenseDocType: '', recurrenceFrequency: lembreteFreq, recurrenceUntil: '',
+            amount: '', expenseDocType: '', recurrenceFrequency: lembreteFreq, recurrenceInterval: 1, recurrenceUntil: '',
             priority: '', directExpense: false, outcome: '', operadora: '', carteirinha: '',
           }
           await saveEvent(user.id, input, existing, [{ type: 'habit', id: habitId }])

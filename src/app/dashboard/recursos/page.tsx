@@ -328,7 +328,7 @@ export default function RecursosPage() {
             title: `Trocar/renovar: ${f.name.trim()}`, date: f.until_date || todayISO(), time: '', durationMin: 60,
             notes: `Lembrete de troca/manutenção do recurso: ${f.name.trim()}`, reminderEnabled: true,
             modality: '', professionalKind: '', professionalName: '', establishment: '', location: '', preparation: '',
-            amount: '', expenseDocType: '', recurrenceFrequency: trocaFreq, recurrenceUntil: '',
+            amount: '', expenseDocType: '', recurrenceFrequency: trocaFreq, recurrenceInterval: 1, recurrenceUntil: '',
             priority: '', directExpense: false, outcome: '', operadora: '', carteirinha: '',
           }
           await saveEvent(user.id, input, existing, [{ type: 'resource', id: resourceId }])

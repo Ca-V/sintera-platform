@@ -8,6 +8,7 @@ import { EVENT_TYPE_DEFS, EVENT_STATUS_UI, PROFESSIONAL_KIND_DEFS } from '@/lib/
 import { EXPENSE_DOC_TYPES } from '@/lib/finance/expense'
 import { useModalA11y } from '@/lib/ui/useModalA11y'
 import Select from '@/components/ui/Select'
+import { CADENCE_PRESETS, cadenceById, cadenceIdFor } from '@sintera/core'
 
 // Tipos vêm da FONTE ÚNICA (@/lib/agenda) — Agenda e Histórico falam a mesma língua.
 export type EventType = typeof EVENT_TYPE_DEFS[number]['id']
@@ -37,6 +38,7 @@ export interface AgendaEventInput {
   amount: string       // valor em reais, formato livre ("250,00")
   expenseDocType: string   // FIN-001: tipo do documento fiscal (nota_fiscal|recibo|comprovante|outro)
   recurrenceFrequency: RecurrenceFreq
+  recurrenceInterval: number   // D-10: "a cada N" (bimestral/trimestral/semestral = monthly × 2/3/6)
   recurrenceUntil: string   // '' ou 'YYYY-MM-DD'
   priority: PriorityInput
   directExpense: boolean
@@ -57,11 +59,6 @@ interface AgendarModalProps {
   initialEvent?: Partial<AgendaEventInput>
   isEditing?: boolean          // true = editar evento existente; false/omisso = criar (mesmo com prefill)
 }
-
-const RECURRENCE_OPTS: { v: RecurrenceFreq; l: string }[] = [
-  { v: 'none', l: 'Não repetir' }, { v: 'daily', l: 'Diariamente' }, { v: 'weekly', l: 'Semanalmente' },
-  { v: 'biweekly', l: 'Quinzenalmente' }, { v: 'monthly', l: 'Mensalmente' }, { v: 'yearly', l: 'Anualmente' },
-]
 
 function fmtDate(date: Date): string { return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z' }
 function buildGoogleCalendarUrl(title: string, start: Date, end: Date, details: string): string {
@@ -106,7 +103,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
   const [preparation, setPreparation] = useState('')
   const [amount, setAmount] = useState('')
   const [expenseDocType, setExpenseDocType] = useState('')   // FIN-001: tipo do documento fiscal
-  const [recurrence, setRecurrence] = useState<RecurrenceFreq>('none')
+  const [recurrence, setRecurrence] = useState<string>('none')  // D-10: id de cadência (não só frequência)
   const [recurrenceUntil, setRecurrenceUntil] = useState('')
   const [priority, setPriority] = useState<PriorityInput>('')
   const [directExpense, setDirectExpense] = useState(false)
@@ -141,7 +138,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
     setPreparation(initialEvent?.preparation ?? '')
     setAmount(initialEvent?.amount ?? '')
     setExpenseDocType(initialEvent?.expenseDocType ?? '')
-    setRecurrence(initialEvent?.recurrenceFrequency ?? 'none')
+    setRecurrence(cadenceIdFor(initialEvent?.recurrenceFrequency ?? 'none', initialEvent?.recurrenceInterval ?? 1))
     setRecurrenceUntil(initialEvent?.recurrenceUntil ?? '')
     setPriority(initialEvent?.priority ?? '')
     setDirectExpense(initialEvent?.directExpense ?? false)
@@ -211,7 +208,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
         title: fullTitle, date, time, durationMin: parseInt(duration), notes: notes.trim(), reminderEnabled,
         modality, professionalKind, professionalName: professionalName.trim(), establishment: establishment.trim(), location: location.trim(),
         preparation: preparation.trim(), amount: amount.trim(), expenseDocType,
-        recurrenceFrequency: recurrence, recurrenceUntil, priority, directExpense,
+        recurrenceFrequency: cadenceById(recurrence).frequency, recurrenceInterval: cadenceById(recurrence).interval, recurrenceUntil, priority, directExpense,
         outcome: outcome.trim(), operadora: operadora.trim(), carteirinha: carteirinha.trim(),
         attachmentFile, attachmentUrl: initialEvent?.attachmentUrl,
       })
@@ -368,8 +365,8 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                       {/* Repetir (recorrência única para qualquer tipo) */}
                       <div className="space-y-1.5 pt-3">
                         <label htmlFor="agendar-repetir" className={LABEL}>Repetir</label>
-                        <Select aria-label="Repetir" value={recurrence} onChange={(v) => setRecurrence(v as RecurrenceFreq)}
-                          options={RECURRENCE_OPTS.map(o => ({ value: o.v, label: o.l }))} />
+                        <Select aria-label="Repetir" value={recurrence} onChange={(v) => setRecurrence(v)}
+                          options={CADENCE_PRESETS.map(p => ({ value: p.id, label: p.label }))} />
                         {recurrence !== 'none' && (
                           <div className="flex items-center gap-2 pt-1">
                             <span className="font-body text-xs text-mauve">até (opcional):</span>

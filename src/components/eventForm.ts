@@ -47,7 +47,7 @@ export function eventToInput(ev: HealthEvent): Partial<AgendaEventInput> {
     establishment: isPlano ? '' : (ev.establishment ?? ''),
     location: isPlano ? '' : (ev.location ?? ''),
     preparation: ev.preparation ?? '', amount: centsToAmount(ev.amountCents), expenseDocType: ev.expenseDocType ?? '',
-    recurrenceFrequency: rule.frequency, recurrenceUntil: rule.until ?? '',
+    recurrenceFrequency: rule.frequency, recurrenceInterval: rule.interval, recurrenceUntil: rule.until ?? '',
     priority: ev.priority ?? '', directExpense: ev.directExpense,
     outcome: ev.outcome?.summary ?? '',
     operadora: isPlano ? (ev.establishment ?? '') : '',
@@ -83,7 +83,7 @@ export function useEventForm() {
     const isPlano = input.eventType === 'plano'
     const establishment = isPlano ? input.operadora : input.establishment
     const location = isPlano ? input.carteirinha : input.location
-    const recurrenceRule = serializeRule({ frequency: input.recurrenceFrequency, interval: 1, until: input.recurrenceUntil || null, count: null })
+    const recurrenceRule = serializeRule({ frequency: input.recurrenceFrequency, interval: input.recurrenceInterval ?? 1, until: input.recurrenceUntil || null, count: null })
     let attachmentUrl = editing?.attachmentUrl ?? null
     if (input.attachmentFile) attachmentUrl = await uploadAttachment(userId, input.attachmentFile)
     await services.command.create(userId, {
