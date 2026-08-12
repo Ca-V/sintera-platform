@@ -978,10 +978,10 @@ export default function ExamDetailPage() {
 
             {/* Lembrete + valor/NF agora vivem na seção "Financeiro e acompanhamento" (FB-001) — sem duplicar aqui */}
 
-            {/* Baixar/ver PDF original — afordância única (R-ATTACH) */}
+            {/* Documento original — afordância única (R-ATTACH); rótulo alinhado ao Mobile (D-15) */}
             <AttachmentLink
               url={(exam as unknown as { file_url?: string | null })?.file_url}
-              label="Baixar PDF" icon={<Download size={14} />}
+              label="Abrir documento original" icon={<Download size={14} />}
             />
 
             {/* Export */}
