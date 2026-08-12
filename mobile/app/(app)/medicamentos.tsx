@@ -11,6 +11,10 @@ interface Medication {
   untilOn: string | null
   status: string
   notes: string | null
+  repurchaseReminder: boolean
+  repurchaseFreq: string | null
+  purchasedOn: string | null
+  amountCents: number | null
 }
 
 const KIND_LABEL: Record<string, string> = {
@@ -41,6 +45,10 @@ const config: CrudConfig<Medication> = {
     { key: 'startedOn', label: 'Início', placeholder: 'AAAA-MM-DD' },
     { key: 'untilOn', label: 'Até', placeholder: 'AAAA-MM-DD' },
     { key: 'notes', label: 'Observações', multiline: true },
+    { key: 'repurchase', label: 'Lembrete de recompra', bool: true },
+    { key: 'repurchaseFreq', label: 'A cada (recompra)', placeholder: 'Ex.: 30 dias' },
+    { key: 'purchasedOn', label: 'Data da compra', placeholder: 'AAAA-MM-DD (vira gasto)' },
+    { key: 'amount', label: 'Valor pago', placeholder: 'Ex.: 45,90', keyboardType: 'numeric' },
   ],
   idOf: (m) => m.id,
   toForm: (m) => ({
@@ -53,6 +61,10 @@ const config: CrudConfig<Medication> = {
     startedOn: m.startedOn ?? '',
     untilOn: m.untilOn ?? '',
     notes: m.notes ?? '',
+    repurchase: m.repurchaseReminder ? 'true' : 'false',
+    repurchaseFreq: m.repurchaseFreq ?? '',
+    purchasedOn: m.purchasedOn ?? '',
+    amount: m.amountCents != null ? (m.amountCents / 100).toFixed(2) : '',
   }),
   renderItem: (m) => ({
     title: [m.name, m.dose].filter(Boolean).join(' · '),

@@ -4,7 +4,7 @@
 // estados de loading/saving/erro, confirmação de exclusão) mora aqui — espelha a
 // divisão da Web (hook possui o recurso; a tela declara o formulário e a linha).
 import { useState } from 'react'
-import { View, Text, Pressable, Alert, FlatList, RefreshControl } from 'react-native'
+import { View, Text, Pressable, Switch, Alert, FlatList, RefreshControl } from 'react-native'
 import { Screen, Card, Button, Field, Loading } from './ui'
 import { useResource } from '@/lib/useResource'
 import { colors, spacing, radius, font } from '@/lib/theme'
@@ -17,6 +17,8 @@ export interface FieldDef {
   multiline?: boolean
   /** Opções fixas (vira seletor de chips). */
   options?: { value: string; label: string }[]
+  /** Campo booleano (vira Switch). No form guarda 'true'/'false'; no payload vai boolean. */
+  bool?: boolean
 }
 
 export interface CrudConfig<T> {
@@ -46,8 +48,15 @@ type FormState = Record<string, string>
 
 function initialForm(fields: FieldDef[]): FormState {
   const f: FormState = {}
-  for (const field of fields) f[field.key] = field.options?.[0]?.value ?? ''
+  for (const field of fields) f[field.key] = field.bool ? 'false' : (field.options?.[0]?.value ?? '')
   return f
+}
+
+/** Converte o form (strings) no payload, com campos `bool` virando boolean de verdade. */
+function toPayload(fields: FieldDef[], form: FormState): Record<string, unknown> {
+  const body: Record<string, unknown> = { ...form }
+  for (const field of fields) if (field.bool) body[field.key] = form[field.key] === 'true'
+  return body
 }
 
 export function CrudList<T>({ config }: { config: CrudConfig<T> }) {
@@ -68,7 +77,7 @@ export function CrudList<T>({ config }: { config: CrudConfig<T> }) {
     setShowForm(true)
   }
   async function submit() {
-    const ok = await save(form, editingId)
+    const ok = await save(toPayload(config.fields, form), editingId)
     if (ok) { setShowForm(false); setEditingId(null) }
   }
   function confirmRemove(item: T) {
@@ -94,7 +103,16 @@ export function CrudList<T>({ config }: { config: CrudConfig<T> }) {
               <Card>
                 <View style={{ gap: spacing.md }}>
                   {config.fields.map((f) =>
-                    f.options ? (
+                    f.bool ? (
+                      <View key={f.key} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+                        <Text style={{ flex: 1, fontSize: font.size.md, color: colors.onyx }}>{f.label}</Text>
+                        <Switch
+                          value={form[f.key] === 'true'}
+                          onValueChange={(v) => set(f.key, v ? 'true' : 'false')}
+                          trackColor={{ true: colors.petal, false: colors.border }}
+                        />
+                      </View>
+                    ) : f.options ? (
                       <View key={f.key} style={{ gap: spacing.xs }}>
                         <Text style={{ fontSize: font.size.xs, color: colors.mauve, textTransform: 'uppercase' }}>{f.label}</Text>
                         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>

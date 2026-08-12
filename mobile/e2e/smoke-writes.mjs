@@ -75,6 +75,23 @@ try {
   check('payload do evento contém reminderEnabled (bool)', typeof post?.body?.reminderEnabled === 'boolean')
 } catch (e) { check('criar Evento', false, e.message.slice(0, 80)) }
 
+// ── Escrita 3 — criar Medicamento: valida conversão de campo booleano ────────────
+try {
+  await page.goto(BASE, { waitUntil: 'networkidle' }) // volta ao hub de forma determinística
+  await page.waitForTimeout(3000)
+  await page.getByText('Medicamentos', { exact: true }).first().click({ timeout: 5000 })
+  await page.waitForTimeout(1000)
+  await page.getByText('Adicionar medicamento', { exact: false }).first().click({ timeout: 5000 })
+  await page.waitForTimeout(700)
+  await page.getByPlaceholder('Ex.: Losartana').fill('Vitamina D')
+  await page.getByText('Adicionar', { exact: true }).first().click({ timeout: 5000 })
+  await page.waitForTimeout(1200)
+  const post = captured.find((c) => c.path === '/api/medicamentos' && c.method === 'POST')
+  check('POST /api/medicamentos disparado', !!post)
+  check('payload do medicamento contém name', post?.body?.name === 'Vitamina D')
+  check('campo booleano repurchase vai como boolean (não string)', post?.body?.repurchase === false, `typeof=${typeof post?.body?.repurchase}`)
+} catch (e) { check('criar Medicamento', false, e.message.slice(0, 80)) }
+
 await browser.close()
 console.log('\n--- POSTs capturados ---')
 console.log(captured.map((c) => `${c.method} ${c.path}`).join('\n') || '(nenhum)')
