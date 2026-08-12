@@ -297,8 +297,11 @@ export default function ExamDetailPage() {
   async function saveDate() {
     if (!exam || !dateValue) return
     setSavingDate(true)
-    await supabase.from('exams').update({ exam_date: dateValue } as never).eq('id', exam.id)
-    setExam(prev => prev ? { ...prev, exam_date: dateValue } as never : prev)
+    const res = await fetch('/api/exams', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: exam.id, examDate: dateValue }),
+    })
+    if (res.ok) setExam(prev => prev ? { ...prev, exam_date: dateValue } as never : prev)
     setEditingDate(false)
     setSavingDate(false)
   }
@@ -311,8 +314,11 @@ export default function ExamDetailPage() {
   async function saveName() {
     if (!exam || !nameValue.trim()) return
     setSavingName(true)
-    await supabase.from('exams').update({ type: nameValue.trim() } as never).eq('id', exam.id)
-    setExam(prev => prev ? { ...prev, type: nameValue.trim() } : prev)
+    const res = await fetch('/api/exams', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: exam.id, type: nameValue.trim() }),
+    })
+    if (res.ok) setExam(prev => prev ? { ...prev, type: nameValue.trim() } : prev)
     setEditingName(false)
     setSavingName(false)
   }

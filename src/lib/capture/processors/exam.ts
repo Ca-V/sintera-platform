@@ -1,6 +1,7 @@
 import type { DocumentProcessor, CaptureResult } from '../types'
 import { captureError } from '../result'
 import { uploadUserDocument } from '@/lib/api/storage'
+import { createExam } from '@/lib/exams/service'
 
 // Processador de EXAME (e laudos). Encaminha ao pipeline de Exames existente:
 // upload → signed URL → insert (status pending). A extração inicia no detalhe do exame.
@@ -15,11 +16,8 @@ export const examProcessor: DocumentProcessor = {
     try {
       const { signedUrl } = await uploadUserDocument(ctx.supabase, { userId: ctx.userId, file })
       if (!signedUrl) return captureError('exam', 'signed url')
-      const examId = crypto.randomUUID()
       const name = file.name.replace(/\.[^.]+$/, '')
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const ins = await (ctx.supabase.from('exams') as any).insert({ id: examId, user_id: ctx.userId, type: name, exam_date: null, file_url: signedUrl, status: 'pending' })
-      if (ins.error) return captureError('exam', ins.error.message)
+      const examId = await createExam(ctx.supabase, ctx.userId, { type: name, fileUrl: signedUrl })
       return {
         status: 'success', kind: 'exam', entityId: examId,
         title: 'Exame criado',

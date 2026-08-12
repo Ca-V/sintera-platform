@@ -189,24 +189,25 @@ export default function ExamsPage() {
     if (!ACCEPTED_MIME.includes(file.type)) { setUploadError('Formato inválido. São aceitos PDF, JPG e PNG.'); return }
     if (file.size > MAX_BYTES) { setUploadError('Arquivo muito grande. O limite é 50 MB.'); return }
     setUploadError(null); setUploading(true)
-    let examId: string | null = null
     try {
       const { signedUrl } = await uploadUserDocument(supabase, { userId: user.id, file })
       if (!signedUrl) throw new Error('[signed-url] URL indisponível')
-      examId = crypto.randomUUID()
       const examName = file.name.replace(/\.[^.]+$/, '')
       // exam_date fica nulo no upload — é preenchido pela extração (data do laudo)
       // e pode ser ajustado manualmente no detalhe. Não assumimos a data de envio.
-      const { error: insertErr } = await supabase.from('exams').insert({ id: examId, user_id: user.id, type: examName, exam_date: null, file_url: signedUrl, status: 'pending' } as unknown as never)
-      if (insertErr) throw new Error(`[insert] ${insertErr.code}: ${insertErr.message}`)
+      // Escrita canônica pelo domínio (serviço + rota /api/exams), não client-direct.
+      const res = await fetch('/api/exams', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: examName, fileUrl: signedUrl }),
+      })
+      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error((e.error as string) ?? 'Falha ao criar o exame.') }
+      const { id } = await res.json()
       // P3 — vai direto ao exame enviado; a análise inicia sozinha lá (status 'pending')
-      router.push(`/dashboard/exams/${examId}`)
+      router.push(`/dashboard/exams/${id}`)
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err)
-      setUploadError(msg)
-      if (examId) { await supabase.from('exams').update({ status: 'error' } as unknown as never).eq('id', examId); await loadExams() }
+      setUploadError(err instanceof Error ? err.message : String(err))
     } finally { setUploading(false) }
-  }, [user, supabase, loadExams, router])
+  }, [user, supabase, router])
 
   // ── Excluir exame ───────────────────────────────────────────────────────────
   // Remove o exame + biomarcadores + insights + arquivo. Histórico, jornada e
@@ -241,9 +242,11 @@ export default function ExamsPage() {
     if (!v || savingName) { setEditingNameId(null); return }
     setSavingName(true)
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase as any).from('exams').update({ type: v }).eq('id', examId)
-      setExams(prev => prev.map(e => e.id === examId ? ({ ...e, type: v } as Exam) : e))
+      const res = await fetch('/api/exams', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: examId, type: v }),
+      })
+      if (res.ok) setExams(prev => prev.map(e => e.id === examId ? ({ ...e, type: v } as Exam) : e))
     } finally {
       setSavingName(false); setEditingNameId(null)
     }
