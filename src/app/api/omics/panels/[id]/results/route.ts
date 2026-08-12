@@ -1,6 +1,7 @@
-// GET /api/omics/panels/:id/results?category_id=&limit=&offset=
-// Resultados de um painel, opcionalmente por categoria (lazy-loading / paginado).
-// Nível 3 da visualização. Apenas dados objetivos — sem interpretação.
+// GET  /api/omics/panels/:id/results?category_id=&limit=&offset=
+//   Resultados de um painel, opcionalmente por categoria (lazy-loading / paginado).
+// POST /api/omics/panels/:id/results — adiciona um resultado manual (feature já
+//   resolvida no cliente via /api/omics/search). Apenas dados objetivos — sem interpretação.
 import { NextRequest, NextResponse } from 'next/server'
 import { omicsAuth, pageParams } from '@/lib/omics/server'
 
@@ -24,4 +25,28 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   if (e) return NextResponse.json({ error: e.message }, { status: 500 })
   return NextResponse.json({ results: data ?? [], limit, offset })
+}
+
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const { error, supabase, userId } = await omicsAuth()
+  if (error) return error
+  const b = (await req.json().catch(() => ({}))) as Record<string, unknown>
+  const str = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null)
+  const rawValue = typeof b.value === 'string' ? b.value.trim() : ''
+  const parsed = rawValue ? Number(rawValue.replace(',', '.')) : NaN
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: e } = await (supabase as any).from('omics_results').insert({
+    panel_id: id, user_id: userId,
+    domain: str(b.domain),
+    feature_id: str(b.featureId),
+    feature_name: str(b.featureName),
+    category_id: str(b.categoryId),
+    value: Number.isFinite(parsed) ? parsed : null,
+    unit: str(b.unit), raw_value: rawValue || null,
+    method: str(b.method),
+    measured_on: typeof b.measuredOn === 'string' && b.measuredOn ? b.measuredOn : null,
+  })
+  if (e) return NextResponse.json({ error: e.message }, { status: 500 })
+  return NextResponse.json({ success: true })
 }

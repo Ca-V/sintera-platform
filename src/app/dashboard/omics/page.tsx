@@ -67,13 +67,12 @@ export default function OmicsListPage() {
   async function save() {
     if (!user || saving) return
     setSaving(true); setErr(null); setProgress('Criando exame…')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase as any).from('omics_panels').insert({
-      user_id: user.id, domain, laboratory: lab.trim() || null, technology: tech.trim() || null,
-      collected_on: date || null,
-    }).select('id').single()
-    if (error || !data) { setSaving(false); setErr(error?.message ?? 'Falha ao criar.'); setProgress(null); return }
-    const panelId = data.id as string
+    const res = await fetch('/api/omics/panels', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ domain, laboratory: lab.trim() || null, technology: tech.trim() || null, collectedOn: date || null }),
+    })
+    if (!res.ok) { const e = await res.json().catch(() => ({})); setSaving(false); setErr((e.error as string) ?? 'Falha ao criar.'); setProgress(null); return }
+    const panelId = (await res.json()).id as string
 
     if (file) {
       try {

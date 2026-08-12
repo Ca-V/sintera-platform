@@ -29,7 +29,6 @@ export default function OmicsPanelPage() {
   const router = useRouter()
   const { id } = useParams<{ id: string }>()
   const { user } = useUser()
-  const supabase = createClient()
 
   const [panel, setPanel] = useState<Panel | null>(null)
   const [categories, setCategories] = useState<Category[]>([])
@@ -88,8 +87,7 @@ export default function OmicsPanelPage() {
   async function removePanel() {
     if (!panel || !user) return
     if (!window.confirm('Remover este painel e todos os seus resultados?')) return
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from('omics_panels').delete().eq('id', panel.id)
+    await fetch(`/api/omics/panels/${panel.id}`, { method: 'DELETE' })
     router.push('/dashboard/omics')
   }
 
@@ -260,7 +258,6 @@ function AddResult({ panelId, domain, defaultDate, onSaved }: {
   panelId: string; domain: OmicsDomain; defaultDate: string | null; onSaved: () => void
 }) {
   const { user } = useUser()
-  const supabase = createClient()
   const [show, setShow] = useState(false)
   const [name, setName] = useState('')
   const [value, setValue] = useState('')
@@ -288,18 +285,18 @@ function AddResult({ panelId, domain, defaultDate, onSaved }: {
   async function save() {
     if (!user || saving || !name.trim()) return
     setSaving(true); setErr(null)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any).from('omics_results').insert({
-      panel_id: panelId, user_id: user.id, domain,
-      feature_id: resolved?.id ?? null,
-      feature_name: resolved?.canonical_name ?? name.trim(),
-      category_id: resolved?.category_id ?? null,
-      value: value.trim() ? Number(value.replace(',', '.')) : null,
-      unit: unit.trim() || null, raw_value: value.trim() || null,
-      method: method.trim() || null, measured_on: date || null,
+    const res = await fetch(`/api/omics/panels/${panelId}/results`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        domain,
+        featureId: resolved?.id ?? null,
+        featureName: resolved?.canonical_name ?? name.trim(),
+        categoryId: resolved?.category_id ?? null,
+        value, unit, method, measuredOn: date,
+      }),
     })
     setSaving(false)
-    if (error) { setErr(error.message); return }
+    if (!res.ok) { const e = await res.json().catch(() => ({})); setErr((e.error as string) ?? 'Falha ao salvar.'); return }
     setName(''); setValue(''); setUnit(''); setMethod(''); setResolved(null); setShow(false)
     onSaved()
   }
