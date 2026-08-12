@@ -2,14 +2,14 @@
 // rascunho de domínio (EventDraft), persistindo via `apiClient.agenda.saveEvent` (upsert canônico). Regras puras
 // (tipos/status/prioridade/recorrência/valor) vêm do @sintera/core. Excluir via `deleteEvent`.
 import { useState } from 'react'
-import { ScrollView, View, Pressable, Alert, StyleSheet } from 'react-native'
+import { ScrollView, View, Pressable, Alert, Linking, StyleSheet } from 'react-native'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import type { EventDraft } from '@sintera/api-client'
 import {
   EVENT_TYPE_DEFS, EVENT_STATUS_UI, PROFESSIONAL_KIND_DEFS, EXPENSE_DOC_TYPES, FREQUENCY_LABELS,
-  serializeRule, parseRule, parseAmountToCents, centsToAmount, type RecurrenceFrequency, type EventStatus,
+  serializeRule, parseRule, parseAmountToCents, centsToAmount, googleCalendarUrl, type RecurrenceFrequency, type EventStatus,
 } from '@sintera/core'
 import { Text, Button, Input, Switch, DatePicker } from '../../primitives'
 import { useTheme } from '../../theme'
@@ -179,6 +179,11 @@ export function EventFormScreen({ route, navigation }: Props) {
       <Field label="Observações"><Input value={notes} onChangeText={setNotes} placeholder="Notas…" multiline style={{ minHeight: 70, textAlignVertical: 'top' }} /></Field>
 
       <Button label="Salvar" onPress={save} loading={saving} loadingLabel="Salvando…" />
+      {/* D-07: exportar para o calendário do dispositivo (mesmo mecanismo da Web — Google Calendar). */}
+      {title.trim() && date ? (
+        <Button label="Adicionar ao calendário" variant="secondary"
+          onPress={() => { void Linking.openURL(googleCalendarUrl({ title, date, time: time || null, durationMin: null, notes: notes || null, establishment: establishment || null, location: location || null })) }} />
+      ) : null}
       {editing ? <Button label="Excluir evento" variant="secondary" onPress={onDelete} /> : null}
     </ScrollView>
   )
