@@ -1,12 +1,13 @@
-import { createClient } from '@/lib/supabase/server'
+import { getAuthedSupabase } from '@/lib/supabase/authedClient'
 import { NextResponse } from 'next/server'
 import type { Database } from '@/lib/supabase/types'
 
 type ProfileUpdate = Database['public']['Tables']['profiles']['Update']
 
-export async function GET() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+export async function GET(request: Request) {
+  // Cookie (Web) OU Bearer (Mobile) — camada de auth compartilhada (ADR-020), para o
+  // app nativo ler/editar o mesmo perfil sem duplicar lógica.
+  const { supabase, user } = await getAuthedSupabase(request)
 
   if (!user) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
@@ -26,8 +27,7 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user } = await getAuthedSupabase(request)
 
   if (!user) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
