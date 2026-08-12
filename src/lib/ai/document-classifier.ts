@@ -19,6 +19,7 @@ Responda APENAS JSON válido:
 Regras:
 - PEDIDO/SOLICITAÇÃO/REQUISIÇÃO de exame → document_type "medical_order"; GUIA de convênio/SADT → "insurance_guide" (o documento é uma SOLICITAÇÃO, não um resultado).
 - Exame de IMAGEM → "imaging" e display_name = a modalidade (ex.: Ressonância magnética, Ultrassonografia).
+- Exame OFTALMOLÓGICO de EQUIPAMENTO/IMAGEM (topografia de córnea/Pentacam, microscopia especular/contagem endotelial de células, OCT, biometria, campo visual, aparelhos OCULUS/CEM) → "ophthalmology" MESMO quando traz medidas numéricas por olho (NÃO é "laboratory"); display_name = a modalidade/aparelho como impresso (ex.: 'Topografia de córnea (Pentacam)', 'Microscopia especular de córnea').
 - Laudo LABORATORIAL com vários exames → display_name "Exames laboratoriais".
 - NUNCA use um biomarcador isolado como nome do documento.`
 
