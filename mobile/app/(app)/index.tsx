@@ -33,6 +33,12 @@ const SECTIONS: { title: string; items: Link[] }[] = [
     ],
   },
   {
+    title: 'Compartilhar',
+    items: [
+      { label: 'Relatório', desc: 'Link seguro para profissionais', route: '/(app)/relatorio' },
+    ],
+  },
+  {
     title: 'Conta',
     items: [
       { label: 'Perfil', desc: 'Seus dados e sessão', route: '/(app)/profile' },

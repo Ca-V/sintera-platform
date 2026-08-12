@@ -27,14 +27,16 @@ regra de negócio é reimplementada aqui; o app é um cliente das APIs existente
 ## Status
 Núcleo funcional completo (Cenário A — paridade funcional). Implementado, reutilizando
 100% as rotas `/api` da Web via Bearer:
-- **Auth**: login, cadastro, logout.
+- **Auth**: login, cadastro (com fluxo de confirmação de e-mail), logout.
 - **Jornada**: Agenda (criar · concluir · cancelar · reabrir · excluir), Histórico, Gastos.
 - **Exames**: lista + captura por câmera/galeria (upload → extração no backend).
-- **Saúde**: Indicadores (biomarcadores organizados), Sinais vitais, Medidas, Ciclo,
-  Medicamentos, Recursos, Hábitos, Condições.
+- **Saúde**: Indicadores (biomarcadores organizados), Ômica (painéis + resultados),
+  Sinais vitais, Medidas, Ciclo, Medicamentos, Recursos, Hábitos, Condições.
+- **Compartilhar**: Relatório (links `/r/[token]` somente-leitura, com share nativo).
+- **Perfil**: nome + preferências de notificação.
 
-Em desenvolvimento (pós-núcleo): Ômica (painéis/resultados), visões de Relatório/Insights,
-preferências de notificação e push nativo.
+Em desenvolvimento (pós-núcleo): visões de Insights (hoje vazias por decisão de produto)
+e push nativo.
 
 Distribuição via TestFlight / Play Internal Testing. **Requer ambiente com toolchain
 Expo/RN + dispositivo/simulador para build, execução e validação** — não realizável neste
