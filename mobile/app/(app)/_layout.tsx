@@ -1,19 +1,16 @@
-import { Tabs } from 'expo-router'
+import { Stack } from 'expo-router'
 import { colors } from '@/lib/theme'
 
+// Navegação por pilha: a Home é um hub que empurra cada módulo. Evita estourar a
+// barra de abas (são ~15 módulos) e casa com o cabeçalho "‹ voltar" do componente Screen.
 export default function AppLayout() {
   return (
-    <Tabs
+    <Stack
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.petal,
-        tabBarInactiveTintColor: colors.mauve,
-        tabBarStyle: { backgroundColor: colors.cream, borderTopColor: colors.border },
+        contentStyle: { backgroundColor: colors.ivory },
+        animation: 'slide_from_right',
       }}
-    >
-      <Tabs.Screen name="index" options={{ title: 'Início' }} />
-      <Tabs.Screen name="exams" options={{ title: 'Exames' }} />
-      <Tabs.Screen name="profile" options={{ title: 'Perfil' }} />
-    </Tabs>
+    />
   )
 }
