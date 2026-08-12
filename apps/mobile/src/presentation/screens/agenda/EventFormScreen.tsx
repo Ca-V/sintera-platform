@@ -173,7 +173,8 @@ export function EventFormScreen({ route, navigation }: Props) {
       </Field>
 
       <Field label="Prioridade"><Chips options={PRIORITIES} value={priority} onChange={setPriority} clearable /></Field>
-      <Row><Text spec={text(t, { role: 'body' })}>Lembrete</Text><Switch value={reminder} onValueChange={setReminder} /></Row>
+      <Row><Text spec={text(t, { role: 'body' })}>Receber lembrete no dia anterior</Text><Switch value={reminder} onValueChange={setReminder} /></Row>
+      {reminder ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Enviado no dia anterior por e-mail e/ou WhatsApp, conforme suas preferências de notificação.</Text> : null}
       {status === 'realizado' ? <Field label="Desfecho (resumo)"><Input value={outcome} onChangeText={setOutcome} placeholder="Resumo / conduta" multiline style={{ minHeight: 70, textAlignVertical: 'top' }} /></Field> : null}
       <Field label="Observações"><Input value={notes} onChangeText={setNotes} placeholder="Notas…" multiline style={{ minHeight: 70, textAlignVertical: 'top' }} /></Field>
 
