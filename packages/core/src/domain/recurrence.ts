@@ -41,3 +41,32 @@ export const FREQUENCY_LABELS: Record<RecurrenceFrequency, string> = {
   none: 'Não repetir', daily: 'Diariamente', weekly: 'Semanalmente',
   biweekly: 'Quinzenalmente', monthly: 'Mensalmente', yearly: 'Anualmente',
 }
+
+// CADÊNCIAS (D-10) — a UI escolhe uma cadência; bimestral/trimestral/semestral REUSAM o
+// `interval` já existente (monthly × 2/3/6). Sem novo mecanismo de domínio nem nova
+// aritmética: `addToDate` já respeita `interval`. Fonte ÚNICA Web+Mobile.
+export interface CadencePreset { id: string; label: string; frequency: RecurrenceFrequency; interval: number }
+export const CADENCE_PRESETS: CadencePreset[] = [
+  { id: 'none',       label: 'Não repetir',     frequency: 'none',     interval: 1 },
+  { id: 'daily',      label: 'Diariamente',     frequency: 'daily',    interval: 1 },
+  { id: 'weekly',     label: 'Semanalmente',    frequency: 'weekly',   interval: 1 },
+  { id: 'biweekly',   label: 'Quinzenalmente',  frequency: 'biweekly', interval: 1 },
+  { id: 'monthly',    label: 'Mensalmente',     frequency: 'monthly',  interval: 1 },
+  { id: 'bimonthly',  label: 'Bimestralmente',  frequency: 'monthly',  interval: 2 },
+  { id: 'quarterly',  label: 'Trimestralmente', frequency: 'monthly',  interval: 3 },
+  { id: 'semiannual', label: 'Semestralmente',  frequency: 'monthly',  interval: 6 },
+  { id: 'yearly',     label: 'Anualmente',      frequency: 'yearly',   interval: 1 },
+]
+
+/** Mapeia uma regra (frequency+interval) para o id de cadência; intervalos fora dos presets caem na frequência base. */
+export function cadenceIdFor(frequency: RecurrenceFrequency, interval: number): string {
+  const i = Math.max(1, interval || 1)
+  return CADENCE_PRESETS.find(p => p.frequency === frequency && p.interval === i)?.id
+    ?? CADENCE_PRESETS.find(p => p.frequency === frequency)?.id
+    ?? 'none'
+}
+
+/** Preset por id (fallback: "Não repetir"). */
+export function cadenceById(id: string): CadencePreset {
+  return CADENCE_PRESETS.find(p => p.id === id) ?? CADENCE_PRESETS[0]
+}

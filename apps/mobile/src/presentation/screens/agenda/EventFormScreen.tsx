@@ -8,8 +8,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import type { EventDraft } from '@sintera/api-client'
 import {
-  EVENT_TYPE_DEFS, EVENT_STATUS_UI, PROFESSIONAL_KIND_DEFS, EXPENSE_DOC_TYPES, FREQUENCY_LABELS,
-  serializeRule, parseRule, parseAmountToCents, centsToAmount, googleCalendarUrl, type RecurrenceFrequency, type EventStatus,
+  EVENT_TYPE_DEFS, EVENT_STATUS_UI, PROFESSIONAL_KIND_DEFS, EXPENSE_DOC_TYPES,
+  serializeRule, parseRule, parseAmountToCents, centsToAmount, googleCalendarUrl,
+  CADENCE_PRESETS, cadenceIdFor, cadenceById, type EventStatus,
 } from '@sintera/core'
 import { Text, Button, Input, Switch, DatePicker } from '../../primitives'
 import { useTheme } from '../../theme'
@@ -48,7 +49,7 @@ export function EventFormScreen({ route, navigation }: Props) {
   const [amount, setAmount] = useState(ev?.amountCents ? centsToAmount(ev.amountCents) : '')
   const [docType, setDocType] = useState(ev?.expenseDocType ?? '')
   const [directExpense, setDirectExpense] = useState(ev?.directExpense ?? false)
-  const [freq, setFreq] = useState<RecurrenceFrequency>(prefill?.recurrence ? 'monthly' : rec.frequency)
+  const [cadence, setCadence] = useState<string>(prefill?.recurrence ? 'monthly' : cadenceIdFor(rec.frequency, rec.interval))
   const [until, setUntil] = useState(rec.until ?? '')
   const [priority, setPriority] = useState(ev?.priority ?? '')
   const [reminder, setReminder] = useState(ev?.reminderEnabled ?? true)
@@ -91,7 +92,7 @@ export function EventFormScreen({ route, navigation }: Props) {
         preparation: preparation.trim() || null, notes: notes.trim() || null,
         amountCents: parseAmountToCents(amount), expenseDocType: docType || null,
         directExpense, attachmentUrl: docUrl,
-        recurrenceRule: serializeRule({ frequency: freq, interval: 1, until: until || null, count: null }),
+        recurrenceRule: serializeRule({ frequency: cadenceById(cadence).frequency, interval: cadenceById(cadence).interval, until: until || null, count: null }),
         priority: (priority || null) as EventDraft['priority'],
         reminderEnabled: reminder,
         outcome: outcome.trim() ? { summary: outcome.trim() } : null,
@@ -158,8 +159,8 @@ export function EventFormScreen({ route, navigation }: Props) {
         </>
       ) : null}
 
-      <Field label="Recorrência"><Chips options={(Object.keys(FREQUENCY_LABELS) as RecurrenceFrequency[]).map(f => ({ id: f, label: FREQUENCY_LABELS[f] }))} value={freq} onChange={(v) => setFreq(v as RecurrenceFrequency)} /></Field>
-      {freq !== 'none' ? <Field label="Repetir até (opcional)"><Input value={until} onChangeText={setUntil} placeholder="2026-12-31" /></Field> : null}
+      <Field label="Recorrência"><Chips options={CADENCE_PRESETS.map(p => ({ id: p.id, label: p.label }))} value={cadence} onChange={setCadence} /></Field>
+      {cadence !== 'none' ? <Field label="Repetir até (opcional)"><Input value={until} onChangeText={setUntil} placeholder="2026-12-31" /></Field> : null}
 
       <Field label="Valor pago (R$)"><Input value={amount} onChangeText={setAmount} placeholder="250,00" keyboardType="decimal-pad" /></Field>
       {amount.trim() ? (
