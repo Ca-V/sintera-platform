@@ -1,9 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { getMinhaSaudeCounts, type MinhaSaudeCounts } from '@sintera/api-client'
+import { createClient } from '@/lib/supabase/client'
 import {
   LayoutDashboard, FileText, Clock, Pill, Receipt, CalendarDays,
   HeartPulse, Stethoscope, Droplet, Activity, Ruler, Settings,
@@ -74,9 +77,9 @@ function groupActive(node: Extract<NavNode, { type: 'group' }>, pathname: string
 interface SidebarProps { open: boolean; onClose: () => void }
 
 // Descrição contextual da navegação = infraestrutura reutilizável (@/components/ui/ContextualDescription).
-function NavItem({ href, icon: Icon, label, active, soon, onClose, hintProps }: {
+function NavItem({ href, icon: Icon, label, active, soon, onClose, hintProps, count }: {
   href: string; icon: React.ElementType; label: string; active: boolean; soon?: boolean; onClose: () => void
-  hintProps?: React.HTMLAttributes<HTMLElement>
+  hintProps?: React.HTMLAttributes<HTMLElement>; count?: number
 }) {
   return (
     <Link href={href} onClick={onClose} {...hintProps}
@@ -90,6 +93,12 @@ function NavItem({ href, icon: Icon, label, active, soon, onClose, hintProps }: 
       <Icon size={16} className={cn('flex-shrink-0 transition-colors',
         active ? 'text-petal' : 'text-onyx/75 group-hover:text-onyx')} />
       <span className="flex-1">{label}</span>
+      {/* §5d — indicador de conteúdo (contador opcional, injetado): mostra onde há registros sem abrir a tela. */}
+      {typeof count === 'number' && count > 0 && (
+        <span className="font-body text-[10px] font-semibold text-onyx/70 bg-white/45 px-1.5 py-0.5 rounded-full border border-onyx/10 tabular-nums">
+          {count}
+        </span>
+      )}
       {soon && (
         <span className="font-body text-[9px] font-medium text-onyx/70 bg-white/40 px-1.5 py-0.5 rounded-full border border-onyx/10">
           Em breve
@@ -101,9 +110,9 @@ function NavItem({ href, icon: Icon, label, active, soon, onClose, hintProps }: 
 
 // Grupo EXPANSÍVEL (Minha Saúde · Rede de Cuidado · Organização). O rótulo do módulo é o único cabeçalho; as
 // subdivisões (Registros/Saúde/Histórico) são divisões internas discretas — reduz poluição visual (sem caixa-alta grande).
-function NavGroup({ node, pathname, open, onToggle, onClose, bind }: {
+function NavGroup({ node, pathname, open, onToggle, onClose, bind, countOf }: {
   node: Extract<NavNode, { type: 'group' }>; pathname: string; open: boolean; onToggle: () => void
-  onClose: () => void; bind: (text: string) => React.HTMLAttributes<HTMLElement>
+  onClose: () => void; bind: (text: string) => React.HTMLAttributes<HTMLElement>; countOf: (href: string) => number | undefined
 }) {
   const active = groupActive(node, pathname)
   const Icon = node.icon
@@ -125,16 +134,21 @@ function NavGroup({ node, pathname, open, onToggle, onClose, bind }: {
             const items = sec.items.map(item => (
               <NavItem key={item.href} href={item.href} icon={item.icon} label={item.label}
                 active={isActive(pathname, item.href, item.extra)} onClose={onClose}
-                hintProps={bind(navDescription(item.href))} />
+                hintProps={bind(navDescription(item.href))} count={countOf(item.href)} />
             ))
             if (!sec.label) return <div key={i} className="flex flex-col gap-0.5">{items}</div>
             const subOpen = openSub[sec.label] ?? sec.items.some(it => isActive(pathname, it.href, it.extra))
+            // §5d — quando a subdivisão está RECOLHIDA, o total dela vira um indicador (ex.: "Registros 24").
+            const sectionTotal = sec.items.reduce((n, it) => n + (countOf(it.href) ?? 0), 0)
             return (
               <div key={sec.label} className="flex flex-col gap-0.5">
                 <button type="button" onClick={() => toggleSub(sec.label!)} aria-expanded={subOpen} aria-label={`${sec.label} — ${subOpen ? 'recolher' : 'expandir'}`}
                   className="flex items-center gap-1.5 px-3 mt-1 text-[10px] font-body font-semibold uppercase tracking-[0.12em] text-onyx/55 hover:text-onyx transition-colors">
                   <ChevronDown size={11} className={cn('transition-transform duration-200', subOpen ? '' : '-rotate-90')} />
                   <span className="flex-1 text-left">{sec.label}</span>
+                  {!subOpen && sectionTotal > 0 && (
+                    <span className="font-body text-[10px] font-semibold text-onyx/60 tabular-nums normal-case tracking-normal">{sectionTotal}</span>
+                  )}
                 </button>
                 {subOpen ? items : null}
               </div>
@@ -157,6 +171,24 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
     () => Object.fromEntries(NAV.filter((n): n is Extract<NavNode, { type: 'group' }> => n.type === 'group').map(n => [n.label, true]))
   )
   const toggle = (label: string) => setOpenGroups(o => ({ ...o, [label]: !(o[label] ?? true) }))
+  // §5d — contadores de conteúdo por INJEÇÃO (best-effort): a Sidebar só apresenta; o dado vem do @sintera/api-client
+  // (MESMA consulta do Mobile — SSOT). Falha é silenciosa: sem contagem, nenhum indicador aparece.
+  const [supabase] = useState(() => createClient() as unknown as SupabaseClient)
+  const [counts, setCounts] = useState<MinhaSaudeCounts | null>(null)
+  useEffect(() => {
+    let alive = true
+    getMinhaSaudeCounts(supabase).then(c => { if (alive) setCounts(c) }).catch(() => { /* indicador é opcional */ })
+    return () => { alive = false }
+  }, [supabase])
+  const countOf = (href: string): number | undefined => {
+    if (!counts) return undefined
+    const map: Record<string, number> = {
+      '/dashboard/exams': counts.exams, '/dashboard/medicamentos': counts.medications,
+      '/dashboard/suplementos': counts.supplements, '/dashboard/recursos': counts.resources,
+      '/dashboard/condicoes': counts.conditions, '/dashboard/habitos': counts.habits,
+    }
+    return map[href]
+  }
 
   return (
     <div className="relative overflow-hidden flex flex-col h-full select-none border-r border-black/5" style={{ background: 'linear-gradient(160deg, #9BD8E0 0%, #6FC1CF 58%, #57B0BF 100%)' }}>
@@ -207,7 +239,7 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
             hintProps={bind(navDescription(node.leaf.href))} />
         ) : (
           <NavGroup key={node.label} node={node} pathname={pathname} open={openGroups[node.label] ?? true}
-            onToggle={() => toggle(node.label)} onClose={onClose} bind={bind} />
+            onToggle={() => toggle(node.label)} onClose={onClose} bind={bind} countOf={countOf} />
         ))}
       </nav>
 
