@@ -192,9 +192,9 @@ export function MedicationsScreen({ route, navigation }: Props) {
           </View>
           <Input value={frequency} onChangeText={setFrequency} placeholder="Frequência (ex.: 1x ao dia)" />
           <Text spec={text(t, { role: 'label', tone: 'muted' })}>FORMA FARMACÊUTICA</Text>
-          <Chips options={MED_FORMS.map(f => ({ id: f.value, label: f.label }))} value={form} onChange={setForm} />
+          <Select options={MED_FORMS.map(f => ({ id: f.value, label: f.label }))} value={form} onChange={setForm} title="Forma farmacêutica" placeholder="Selecione…" />
           <Text spec={text(t, { role: 'label', tone: 'muted' })}>VIA</Text>
-          <Chips options={MED_ROUTES.map(r => ({ id: r, label: r }))} value={adminRoute} onChange={setAdminRoute} />
+          <Select options={MED_ROUTES.map(r => ({ id: r, label: r }))} value={adminRoute} onChange={setAdminRoute} title="Via de administração" placeholder="Selecione…" />
           <Input value={prescriber} onChangeText={setPrescriber} placeholder="Prescritor" />
           {/* D-13: receita anexada (documento separado do produto). */}
           <Text spec={text(t, { role: 'label', tone: 'muted' })}>RECEITA</Text>

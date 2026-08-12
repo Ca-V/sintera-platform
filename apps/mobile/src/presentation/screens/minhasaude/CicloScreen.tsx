@@ -10,7 +10,7 @@ import {
   CONTRACEPTIVE_KINDS, contraceptiveLabel, contraceptiveNature, CONTRACEPTIVE_CADENCES, defaultCadenceFor,
   cadenceUsageLabel, cycleStats,
 } from '@sintera/core'
-import { Text, Button, Input, Switch, DatePicker, Disclaimer } from '../../primitives'
+import { Text, Button, Input, Switch, DatePicker, Disclaimer, Select } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 
@@ -133,7 +133,7 @@ export function CicloScreen() {
       {open ? (
         <View style={[styles.card, card, { gap: 12 }]}>
           <Text spec={text(t, { role: 'bodyStrong' })}>{editing ? 'Editar método' : 'Novo método contraceptivo'}</Text>
-          <Chips options={CONTRACEPTIVE_KINDS.map(k => ({ id: k.value, label: k.label }))} value={kind} onChange={chooseKind} />
+          <Select options={CONTRACEPTIVE_KINDS.map(k => ({ id: k.value, label: k.label }))} value={kind} onChange={chooseKind} title="Método" placeholder="Selecione o método…" />
           <Input value={brand} onChangeText={setBrand} placeholder="Marca (ex.: Mirena)" />
           <DatePicker value={startedOn} onChange={setStartedOn} placeholder="Início" />
           {nature === 'dispositivo' ? (
@@ -144,7 +144,7 @@ export function CicloScreen() {
           ) : nature === 'hormonal' ? (
             <View style={{ gap: 6 }}>
               <Text spec={text(t, { role: 'label', tone: 'muted' })}>CADÊNCIA DE RECOMPRA/APLICAÇÃO</Text>
-              <Chips options={CONTRACEPTIVE_CADENCES.map(c => ({ id: c.value, label: c.label }))} value={cadence} onChange={setCadence} />
+              <Select options={CONTRACEPTIVE_CADENCES.map(c => ({ id: c.value, label: c.label }))} value={cadence} onChange={setCadence} title="Cadência de recompra/aplicação" />
             </View>
           ) : null}
           <Input value={notes} onChangeText={setNotes} placeholder="Observações…" multiline style={{ minHeight: 60, textAlignVertical: 'top' }} />
@@ -184,29 +184,11 @@ export function CicloScreen() {
   )
 }
 
-function Chips({ options, value, onChange }: { options: readonly { id: string; label: string }[]; value: string; onChange: (v: string) => void }) {
-  const t = useTheme()
-  return (
-    <View style={styles.chips}>
-      {options.map(o => {
-        const on = value === o.id
-        return (
-          <Pressable key={o.id} onPress={() => onChange(o.id)} style={[styles.chip, { borderColor: on ? t.color.identity.primary : t.color.border.default, backgroundColor: on ? t.color.badge.info.soft : 'transparent' }]}>
-            <Text spec={text(t, { role: 'caption', tone: on ? 'default' : 'muted' })}>{o.label}</Text>
-          </Pressable>
-        )
-      })}
-    </View>
-  )
-}
-
 const styles = StyleSheet.create({
   content: { padding: 20, gap: 14 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12 },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   card: { borderWidth: 1, borderRadius: 16, padding: 16 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
   switchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },
 })
