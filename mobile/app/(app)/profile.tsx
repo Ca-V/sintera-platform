@@ -11,9 +11,11 @@ import { colors, spacing, font } from '@/lib/theme'
 
 interface Profile {
   name: string | null
+  phone: string | null
   pref_daily_reminder: boolean
   pref_phase_alerts: boolean
   pref_email_insights: boolean
+  pref_whatsapp_reminder: boolean
 }
 
 const TOGGLES: { key: keyof Profile; label: string; desc: string }[] = [
@@ -26,6 +28,8 @@ export default function ProfileScreen() {
   const { user, signOut } = useAuth()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [name, setName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [waOptIn, setWaOptIn] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -36,6 +40,8 @@ export default function ProfileScreen() {
       const p = await api.get<Profile>('/api/profile')
       setProfile(p)
       setName(p.name ?? '')
+      setPhone(p.phone ?? '')
+      setWaOptIn(p.pref_whatsapp_reminder === true)
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Não foi possível carregar o perfil.')
     } finally {
@@ -149,6 +155,28 @@ export default function ProfileScreen() {
               />
             </View>
           ))}
+        </View>
+      </Card>
+
+      <Text style={{ fontSize: font.size.xs, color: colors.mauve, textTransform: 'uppercase', letterSpacing: 1, marginTop: spacing.sm }}>
+        Lembretes por WhatsApp
+      </Text>
+      <Card>
+        <View style={{ gap: spacing.md }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: font.size.md, color: colors.onyx }}>Receber por WhatsApp</Text>
+              <Text style={{ fontSize: font.size.sm, color: colors.mauve, marginTop: 2 }}>Além do e-mail, no número abaixo</Text>
+            </View>
+            <Switch value={waOptIn} onValueChange={setWaOptIn} trackColor={{ true: colors.petal, false: colors.border }} />
+          </View>
+          <Field label="Telefone (WhatsApp)" value={phone} onChangeText={setPhone} placeholder="+55 11 90000-0000" keyboardType="phone-pad" />
+          <Button
+            label="Salvar WhatsApp"
+            onPress={() => patch({ phone: phone.trim() || null, pref_whatsapp_reminder: waOptIn })}
+            loading={saving}
+            disabled={waOptIn && !phone.trim()}
+          />
         </View>
       </Card>
 

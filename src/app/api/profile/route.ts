@@ -52,6 +52,11 @@ export async function PATCH(request: Request) {
   if ('pref_daily_reminder' in body) payload.pref_daily_reminder = body.pref_daily_reminder as boolean
   if ('pref_phase_alerts' in body)  payload.pref_phase_alerts  = body.pref_phase_alerts as boolean
   if ('pref_email_insights' in body) payload.pref_email_insights = body.pref_email_insights as boolean
+  // Colunas de lembrete por WhatsApp (canal 2 do cron de lembretes) — ainda fora dos
+  // tipos gerados; atribuídas via record solto (o update() já é castado abaixo).
+  const extra = payload as Record<string, unknown>
+  if ('phone' in body)                   extra.phone                   = (body.phone as string | null) || null
+  if ('pref_whatsapp_reminder' in body)  extra.pref_whatsapp_reminder  = body.pref_whatsapp_reminder === true
 
   const { data, error } = await supabase
     .from('profiles')
