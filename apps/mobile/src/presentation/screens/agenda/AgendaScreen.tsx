@@ -188,7 +188,7 @@ function EventRow({ e, onOpen, onComplete, onCancel, accent }: {
     <View style={[styles.row, { backgroundColor: t.color.surface.base, borderColor: t.color.border.default, flexDirection: 'column', alignItems: 'stretch', gap: 8 }]}>
       <Pressable onPress={() => onOpen(e)} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <View style={{ flex: 1, paddingRight: 8 }}>
-          <Text spec={text(t, { role: 'body' })}>{e.title}</Text>
+          <Text spec={text(t, { role: 'body' })}>{e.title?.trim() ? e.title : typeLabel(e.type)}</Text>
           <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{typeLabel(e.type)} · {formatDateLongBR(e.date)}{formatTimeBR(e.time) ? ` · ${formatTimeBR(e.time)}` : ''}</Text>
           {bits.length > 0 ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{bits.join(' · ')}</Text> : null}
           {e.preparation ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Preparo: {e.preparation}</Text> : null}
