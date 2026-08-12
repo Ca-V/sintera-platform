@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { View, Text, FlatList, RefreshControl } from 'react-native'
+import { View, Text, Pressable, FlatList, RefreshControl } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Screen, Card, Button, Loading } from '@/components/ui'
 import { api, ApiError } from '@/lib/api'
@@ -69,14 +69,19 @@ export default function ExamsScreen() {
           )
         }
         renderItem={({ item }) => (
-          <Card>
-            <Text style={{ fontSize: font.size.md, fontWeight: font.weight.medium, color: colors.onyx }}>
-              {item.type ?? 'Exame'}
-            </Text>
-            <Text style={{ fontSize: font.size.sm, color: colors.mauve, marginTop: 2 }}>
-              {effectiveDate(item)} · {STATUS_LABEL[item.status] ?? item.status}
-            </Text>
-          </Card>
+          <Pressable onPress={() => router.push({
+            pathname: '/(app)/exams/[id]',
+            params: { id: item.id, title: item.type ?? 'Exame', subtitle: `${effectiveDate(item)} · ${STATUS_LABEL[item.status] ?? item.status}` },
+          })}>
+            <Card>
+              <Text style={{ fontSize: font.size.md, fontWeight: font.weight.medium, color: colors.onyx }}>
+                {item.type ?? 'Exame'}
+              </Text>
+              <Text style={{ fontSize: font.size.sm, color: colors.mauve, marginTop: 2 }}>
+                {effectiveDate(item)} · {STATUS_LABEL[item.status] ?? item.status}
+              </Text>
+            </Card>
+          </Pressable>
         )}
       />
     </Screen>
