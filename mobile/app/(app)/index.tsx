@@ -22,6 +22,7 @@ const SECTIONS: { title: string; items: Link[] }[] = [
     items: [
       { label: 'Exames', desc: 'Laudos e extração de dados', route: '/(app)/exams' },
       { label: 'Indicadores', desc: 'Biomarcadores dos exames', route: '/(app)/saude' },
+      { label: 'Ômica', desc: 'Metaboloma, proteoma, microbioma…', route: '/(app)/omica' },
       { label: 'Condições', desc: 'Próprias e familiares', route: '/(app)/condicoes' },
       { label: 'Sinais vitais', desc: 'Pressão, glicemia, saturação…', route: '/(app)/sinais-vitais' },
       { label: 'Medidas', desc: 'Peso, composição corporal', route: '/(app)/medidas' },
