@@ -10,8 +10,8 @@
 import { NextResponse } from 'next/server'
 import { authed, requiredId } from '@/lib/api/http'
 import { ValidationError } from '@/lib/api/errors'
-import { eventServicesFor, InvalidTransitionError, type EventDraft } from '@/lib/agenda/service'
-import type { HealthEvent } from '@/lib/agenda/event'
+import { eventServicesFor, InvalidTransitionError } from '@/lib/agenda/service'
+import { parseEventDraft } from '@/lib/agenda/draft'
 
 export const GET = authed(async ({ supabase, userId, request }) => {
   const view = new URL(request.url).searchParams.get('view')
@@ -24,32 +24,9 @@ export const GET = authed(async ({ supabase, userId, request }) => {
   return NextResponse.json({ events })
 })
 
-function parseDraft(body: unknown): EventDraft {
-  const b = (body ?? {}) as Record<string, unknown>
-  const str = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null)
-  const type = str(b.type)
-  const title = str(b.title)
-  const date = str(b.date)
-  if (!type || !title || !date) throw new ValidationError('Campos obrigatórios: type, title, date.')
-  const status = str(b.status)
-  return {
-    type, title, date,
-    time: str(b.time),
-    status: (status ?? 'planejado') as HealthEvent['status'],
-    notes: str(b.notes),
-    modality: str(b.modality) as HealthEvent['modality'],
-    professionalName: str(b.professionalName),
-    professionalKind: str(b.professionalKind),
-    establishment: str(b.establishment),
-    location: str(b.location),
-    amountCents: typeof b.amountCents === 'number' ? b.amountCents : null,
-    directExpense: b.directExpense === true,
-  }
-}
-
 export const POST = authed(async ({ supabase, userId, request }) => {
   const { command } = eventServicesFor(supabase)
-  await command.create(userId, parseDraft(await request.json()))
+  await command.create(userId, parseEventDraft(await request.json()))
   return NextResponse.json({ success: true })
 })
 
