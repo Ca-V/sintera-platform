@@ -21,6 +21,7 @@ const SECTIONS: { title: string; items: Link[] }[] = [
     title: 'Saúde',
     items: [
       { label: 'Exames', desc: 'Laudos e extração de dados', route: '/(app)/exams' },
+      { label: 'Indicadores', desc: 'Biomarcadores dos exames', route: '/(app)/saude' },
       { label: 'Condições', desc: 'Próprias e familiares', route: '/(app)/condicoes' },
       { label: 'Sinais vitais', desc: 'Pressão, glicemia, peso…', route: '/(app)/sinais-vitais' },
       { label: 'Medicamentos', desc: 'Uso e recompra', route: '/(app)/medicamentos' },

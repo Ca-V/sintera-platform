@@ -5,17 +5,17 @@
 //   GET /api/biomarkers/organized             → agrega toda a pessoa (scope=user)
 //   GET /api/biomarkers/organized?examId=<id> → organiza um exame (scope=exam)
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { getAuthedSupabase } from '@/lib/supabase/authedClient'
 import { assembleOrganizedBiomarkers } from '@/lib/ai/insights/assembler'
 
 export async function GET(request: NextRequest) {
-  const supabase = await createClient()
-
-  const { data: authData, error: authErr } = await supabase.auth.getUser()
-  if (authErr || !authData.user) {
+  // Cookie (Web) OU Bearer (Mobile) — camada de auth compartilhada (ADR-020), para o
+  // app nativo consumir a MESMA organização de biomarcadores sem duplicar lógica.
+  const { supabase, user } = await getAuthedSupabase(request)
+  if (!user) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
   }
-  const userId = authData.user.id
+  const userId = user.id
   const examId = request.nextUrl.searchParams.get('examId') ?? undefined
 
   if (examId) {
