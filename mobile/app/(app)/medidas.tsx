@@ -1,9 +1,16 @@
 import { useCallback, useState } from 'react'
 import { View, Text, Pressable, Alert, FlatList, RefreshControl } from 'react-native'
+import * as ImagePicker from 'expo-image-picker'
 import { useFocusEffect } from 'expo-router'
 import { Screen, Card, Button, Field, Loading } from '@/components/ui'
 import { api, ApiError } from '@/lib/api'
 import { colors, spacing, radius, font } from '@/lib/theme'
+
+// Unidades por métrica para o pré-preenchimento pelo scan de bioimpedância.
+const SCAN_UNIT: Record<string, string | null> = {
+  peso: 'kg', gordura_corporal: '%', massa_muscular: 'kg', agua_corporal: '%',
+  gordura_visceral: null, massa_ossea: 'kg', taxa_metabolica: 'kcal',
+}
 
 // Medidas corporais — GET /api/medidas { measures } · POST { rows: [...] } · DELETE ?id=.
 // Sem edição (paridade com a rota): registra e remove. Origem 'exam' vem da bioimpedância.
@@ -65,6 +72,33 @@ export default function MedidasScreen() {
       setBusy(false)
     }
   }
+  // Escaneia um laudo de bioimpedância por foto: a IA transcreve as medidas
+  // (POST /api/vision/bioimpedance) e registramos as não-nulas (POST /api/medidas).
+  // Paridade com a Web (dashboard/medidas). Transcrição factual — a pessoa revê depois.
+  async function scan() {
+    const res = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, base64: true, mediaTypes: ImagePicker.MediaTypeOptions.Images })
+    if (res.canceled || !res.assets?.[0]?.base64) return
+    const a = res.assets[0]
+    setBusy(true)
+    try {
+      const { result } = await api.post<{ result: Record<string, string | null> | null }>(
+        '/api/vision/bioimpedance', { imageBase64: a.base64, mediaType: a.mimeType ?? 'image/jpeg' },
+      )
+      if (!result) { Alert.alert('Sem leitura', 'Não consegui ler as medidas do laudo.'); return }
+      const measuredOn = (result.measured_on as string | null) || new Date().toISOString().slice(0, 10)
+      const rows = Object.keys(SCAN_UNIT)
+        .filter((metric) => result[metric])
+        .map((metric) => ({ metric, value: String(result[metric]), unit: SCAN_UNIT[metric], measuredOn }))
+      if (rows.length === 0) { Alert.alert('Sem leitura', 'Nenhuma medida reconhecida no laudo.'); return }
+      await api.post('/api/medidas', { rows })
+      await load()
+      Alert.alert('Pronto', `${rows.length} medida(s) registrada(s) do laudo.`)
+    } catch (e) {
+      Alert.alert('Erro', e instanceof ApiError ? e.message : 'Falha ao escanear o laudo.')
+    } finally {
+      setBusy(false)
+    }
+  }
   function remove(m: MeasureEntry) {
     Alert.alert('Remover', 'Remover esta medida?', [
       { text: 'Cancelar', style: 'cancel' },
@@ -112,7 +146,10 @@ export default function MedidasScreen() {
                 </View>
               </Card>
             ) : (
-              <Button label="Registrar medida" onPress={() => setShowForm(true)} />
+              <>
+                <Button label="Registrar medida" onPress={() => setShowForm(true)} />
+                <Button label="Escanear laudo (bioimpedância)" variant="ghost" onPress={scan} loading={busy} />
+              </>
             )}
           </View>
         }
