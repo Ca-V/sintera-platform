@@ -24,8 +24,8 @@ export function MetricRow({ label, value, valueColor, meta }: Props) {
   return (
     <View style={{ gap: spacing.inline }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: spacing.inline }}>
-        <Text spec={text(t, { role: 'body' })} style={{ flex: 1 }}>{label}</Text>
-        <Text spec={text(t, { role: 'bodyStrong' })} style={valueStyle}>{value}</Text>
+        <Text spec={text(t, { role: 'body' })} style={{ flexShrink: 1 }}>{label}</Text>
+        <Text spec={text(t, { role: 'bodyStrong' })} style={[{ flexShrink: 1, textAlign: 'right' }, valueStyle]} numberOfLines={1}>{value}</Text>
       </View>
       {meta ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{meta}</Text> : null}
     </View>
