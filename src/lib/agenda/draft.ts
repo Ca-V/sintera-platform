@@ -31,7 +31,10 @@ export function parseEventDraft(body: unknown): EventDraft {
   const modalityRaw = str(b.modality)
   const modality: EventModality | null = modalityRaw && MODALITY_SET.has(modalityRaw) ? (modalityRaw as EventModality) : null
 
+  // `id` presente = edição (create faz upsert por id, como a Web em saveEvent).
+  const id = str(b.id)
   return {
+    ...(id ? { id } : {}),
     type, title, date,
     time: str(b.time),
     status,

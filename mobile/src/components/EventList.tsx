@@ -83,6 +83,10 @@ export function EventList({ title, view, showAmount, canCreate, canAct, emptyTex
     const buttons: { text: string; style?: 'cancel' | 'destructive'; onPress?: () => void }[] = []
     if (ev.status === 'planejado') {
       buttons.push({ text: 'Concluir', onPress: () => act(ev.id, () => api.patch('/api/agenda', { id: ev.id, action: 'complete' })) })
+      buttons.push({ text: 'Editar', onPress: () => router.push({
+        pathname: '/(app)/event-new',
+        params: { id: ev.id, type: ev.type, title: ev.title, date: ev.date, time: ev.time ?? '' },
+      }) })
       buttons.push({ text: 'Cancelar evento', onPress: () => act(ev.id, () => api.patch('/api/agenda', { id: ev.id, action: 'cancel' })) })
     } else {
       buttons.push({ text: 'Reabrir', onPress: () => act(ev.id, () => api.patch('/api/agenda', { id: ev.id, action: 'reopen' })) })

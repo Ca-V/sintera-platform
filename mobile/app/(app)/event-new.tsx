@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { View, Text, Pressable, Switch } from 'react-native'
-import { useRouter } from 'expo-router'
+import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Screen, Card, Button, Field } from '@/components/ui'
 import { api, ApiError } from '@/lib/api'
 import { colors, spacing, radius, font } from '@/lib/theme'
@@ -19,13 +19,19 @@ const TYPES = [
 
 export default function EventNewScreen() {
   const router = useRouter()
-  const [type, setType] = useState('consulta')
-  const [title, setTitle] = useState('')
-  const [date, setDate] = useState('')
-  const [time, setTime] = useState('')
-  const [professionalName, setProfessionalName] = useState('')
-  const [establishment, setEstablishment] = useState('')
-  const [notes, setNotes] = useState('')
+  // Params de edição (vindos do menu de ações da Agenda). Sem `id` = criação.
+  const p = useLocalSearchParams<{
+    id?: string; type?: string; title?: string; date?: string; time?: string
+    professionalName?: string; establishment?: string; notes?: string
+  }>()
+  const editingId = p.id ?? null
+  const [type, setType] = useState(p.type || 'consulta')
+  const [title, setTitle] = useState(p.title ?? '')
+  const [date, setDate] = useState(p.date ?? '')
+  const [time, setTime] = useState(p.time ?? '')
+  const [professionalName, setProfessionalName] = useState(p.professionalName ?? '')
+  const [establishment, setEstablishment] = useState(p.establishment ?? '')
+  const [notes, setNotes] = useState(p.notes ?? '')
   const [reminderEnabled, setReminderEnabled] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -35,6 +41,7 @@ export default function EventNewScreen() {
     setError(null)
     try {
       await api.post('/api/agenda', {
+        ...(editingId ? { id: editingId } : {}),
         type,
         title: title.trim(),
         date: date.trim(),
@@ -53,7 +60,7 @@ export default function EventNewScreen() {
   }
 
   return (
-    <Screen title="Novo evento" back>
+    <Screen title={editingId ? 'Editar evento' : 'Novo evento'} back>
       <Card>
         <View style={{ gap: spacing.md }}>
           <View style={{ gap: spacing.xs }}>
@@ -91,7 +98,7 @@ export default function EventNewScreen() {
             <Switch value={reminderEnabled} onValueChange={setReminderEnabled} trackColor={{ true: colors.petal, false: colors.border }} />
           </View>
           {error && <Text style={{ color: colors.red, fontSize: font.size.sm }}>{error}</Text>}
-          <Button label="Salvar evento" onPress={submit} loading={saving} disabled={!title.trim() || !date.trim()} />
+          <Button label={editingId ? 'Salvar alterações' : 'Salvar evento'} onPress={submit} loading={saving} disabled={!title.trim() || !date.trim()} />
         </View>
       </Card>
     </Screen>
