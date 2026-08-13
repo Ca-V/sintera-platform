@@ -78,7 +78,8 @@ Responda APENAS JSON válido:
 Regras CRÍTICAS:
 - EQUIPAMENTO ≠ EXAME. Aparelho → "device"; NÃO em "exam_name"; NÃO INFIRA o exame a partir do equipamento.
 - "exam_name" só quando o EXAME está ESCRITO; senão value=null com absence_reason.
-- "exam_date": a data de REALIZAÇÃO/AQUISIÇÃO do exame. PROCURE ATIVAMENTE e LEIA COM ATENÇÃO fontes PEQUENAS (cabeçalho, rodapé, metadados dos mapas, ao lado do nome do exame; rótulos "Exam date"/"Acquisition date"/"Date"/"Data"/"Data do exame"/"Realizado em"). Em laudos de equipamento (Pentacam/OCULUS/OCT/campo visual) a data de aquisição costuma vir em fonte pequena. Se houver VÁRIAS datas, escolha a de AQUISIÇÃO/REALIZAÇÃO — NUNCA nascimento, impressão, calibração ou fabricação. Se conseguir ler uma data de aquisição com razoável certeza, PRODUZA-A em YYYY-MM-DD mesmo em fonte pequena; só use value=null quando realmente não conseguir ler (absence_reason "illegible") ou não existir ("not_found"). SEMPRE preencha "note": onde procurou, QUAIS datas viu e qual escolheu (ou por que nenhuma).
+- "exam_date": a data de REALIZAÇÃO/AQUISIÇÃO do exame. PROCURE ATIVAMENTE e LEIA COM ATENÇÃO fontes PEQUENAS (cabeçalho, rodapé, metadados dos mapas, ao lado do nome do exame; rótulos "Exam date"/"Acquisition date"/"Date"/"Data"/"Data do exame"/"Realizado em"). Em laudos de equipamento (Pentacam/OCULUS/OCT/campo visual) a data de aquisição costuma vir em fonte pequena. Se conseguir ler uma data de aquisição com razoável certeza, PRODUZA-A em YYYY-MM-DD mesmo em fonte pequena; só use value=null quando realmente não conseguir ler (absence_reason "illegible") ou não existir ("not_found").
+  A "note" da data DEVE ser EXPLICÁVEL (raciocínio completo, não só o resultado): (a) LISTE todas as datas que você viu no documento; (b) para CADA uma, classifique o TIPO — aquisição/realização · nascimento · impressão · calibração/fabricação · protocolo · desconhecida; (c) diga QUAL você escolheu como data de realização e POR QUÊ; (d) explique por que DESCARTOU as demais; (e) se nenhuma pôde ser usada, o motivo objetivo. NUNCA use nascimento/impressão/calibração como data de realização.
 - "evidence": os SINAIS reais vistos (base auditável).
 - Tipo: PEDIDO/REQUISIÇÃO → "medical_order"; GUIA/SADT → "insurance_guide"; IMAGEM → "imaging"; oftalmológico de EQUIPAMENTO/IMAGEM (Pentacam, microscopia especular, OCT, campo visual, OCULUS/CEM) → "ophthalmology" mesmo com medidas por olho.
 - Transcreva, não infira.`
@@ -118,7 +119,9 @@ function parseField(v: unknown, source: FactSource, max: number): SourcedFact {
   }
   if (v && typeof v === 'object' && !Array.isArray(v)) {
     const o = v as Record<string, unknown>
-    const note = typeof o.note === 'string' && o.note.trim() ? o.note.trim().slice(0, 200) : null
+    // Nota diagnóstica: capacidade ampla (o raciocínio de datas — quais viu, classificação, qual escolheu e por
+    // quê — não pode ser truncado, senão o DUE deixa de ser explicável). Evidência: audit anterior cortava em 200.
+    const note = typeof o.note === 'string' && o.note.trim() ? o.note.trim().slice(0, 600) : null
     const value = clean(o.value)
     if (value) return { value, source, confidence: normConfidence(o.confidence) ?? 'medium', absenceReason: null, note }
     const r = typeof o.absence_reason === 'string' && ABSENCE.has(o.absence_reason) ? o.absence_reason as AbsenceReason : 'not_found'
