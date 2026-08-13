@@ -56,30 +56,45 @@ describe('FUNC · Clinical Pipeline — Clinical Identity + Decision Log + confi
     expect(identity.confidence).toHaveProperty('autoAcceptable')
 
     const steps = audit.pipeline.decisionLog
-    expect(steps.find(s => s.step === 'due' && s.detector === 'date')?.status).toBe('illegible')
+    expect(steps.find(s => s.detector === 'date')?.status).toBe('no_date')   // sem observações de data
     expect(steps.find(s => s.step === 'terminology')?.status).toBe('not_available')
-    expect(steps.find(s => s.step === 'mapping')?.status).toBe('matched')
+    expect(steps.find(s => s.step === 'mapping' && !s.detector)?.status).toBe('matched')  // step de NOME (≠ step de data)
     expect(steps.some(s => s.step === 'knowledge' && s.status === 'pending')).toBe(true)
     expect(audit.pipeline.finalStatus).toBe('provisional')
     expect(audit.mapping.matched).toBe(true)
     expect(audit.pipeline.versions.due).toMatch(/^due-/)
   })
 
-  it('data resolvida por OUTRA leitura (DUE ilegível) → Audit reflete a data REAL, não "illegible"', () => {
-    // Regressão do defeito de homologação (CEM-530): exam_date persistida ≠ audit. O Audit deve refletir a
-    // data efetivamente resolvida (ok + valor), explicando a divergência com a leitura do DUE.
+  it('DATA — sem observações mas com leitura direta (fallback) → Audit reflete a data REAL', () => {
     const du = parseUnderstanding({
       document_type: 'ophthalmology', evidence: ['CEM-530'],
-      fields: { device: { value: 'CEM-530' }, exam_date: { value: null, absence_reason: 'illegible' } },
+      fields: { device: { value: 'CEM-530' } },
     }, 'vision')
     const { identity, audit } = resolveClinicalIdentity(du, { ...ctx, resolved: { examDate: '2026-03-18', patientName: 'Fulana' } })
     expect(identity.examDate).toBe('2026-03-18')
     expect(identity.patientName).toBe('Fulana')
-    const dateStep = audit.pipeline.decisionLog.find(s => s.step === 'due' && s.detector === 'date')
+    const dateStep = audit.pipeline.decisionLog.find(s => s.detector === 'date')
     expect(dateStep?.status).toBe('ok')
     expect(dateStep?.output).toBe('2026-03-18')
-    expect(dateStep?.reason).toMatch(/leitura do DUE/i)   // explica de onde veio (auditoria)
-    expect(identity.confidence.attributes.date).toBeGreaterThan(0)
+    expect(dateStep?.reason).toMatch(/leitura direta/i)
+    expect(audit.dateDecision.outcome).toBe('resolved')
+  })
+
+  it('DATA — DECISÃO sobre OBSERVAÇÕES: classifica por RÓTULO (regra), escolhe realização, descarta impressão/nascimento', () => {
+    const du = parseUnderstanding({
+      document_type: 'ophthalmology', evidence: ['Pentacam'], fields: { device: { value: 'OCULUS Pentacam' } },
+      observations: [
+        { type: 'date', value: '18/03/2026', label: 'Exam Date', region: 'cabeçalho', confidence: 0.98 },
+        { type: 'date', value: '22/07/2026', label: 'Printed on', region: 'rodapé', confidence: 0.9 },
+        { type: 'date', value: '03/1980', label: 'Data de nascimento', region: 'cabeçalho', confidence: 0.95 },
+      ],
+    }, 'vision')
+    const { identity, audit } = resolveClinicalIdentity(du, ctx)
+    expect(identity.examDate).toBe('2026-03-18')                 // rótulo 'Exam Date' → realização
+    expect(audit.dateDecision.outcome).toBe('resolved')
+    expect(audit.dateDecision.chosen?.iso).toBe('2026-03-18')
+    expect(audit.dateDecision.discarded.map(d => d.semantics).sort()).toEqual(['birth', 'print'])
+    expect(audit.dateDecision.considered.length).toBe(3)         // registra o que foi observado (auditoria)
   })
 
   it('ROBUSTEZ — documento sem identificação → Clinical Identity PENDENTE, não aceita automática, status pending', () => {

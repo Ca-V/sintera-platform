@@ -537,10 +537,14 @@ export async function POST(
     // Data de realização: texto (alta/média confiança) → extração multimodal → data LIDA DA IMAGEM pelo
     // classificador. Uploads de imagem não têm texto (sem OCR), então a data impressa só chega pela leitura
     // da imagem — antes ficava "Sem data" mesmo com a data no documento. Fato documental (transcrição).
-    const examDate = (semDate && semDate.iso && semDate.confidence !== 'low' ? semDate.iso : result.examDate) ?? imageDU?.examDate ?? null
+    // IMAGEM: a data é a DECISÃO do pipeline (Clinical Identity, sobre as observações do DUE) — consistente com o
+    // Pipeline Audit. Texto/PDF: mantém a resolução legada (semData/extração).
+    const examDate = imagePipeline
+      ? imagePipeline.identity.examDate
+      : (semDate && semDate.iso && semDate.confidence !== 'low' ? semDate.iso : result.examDate) ?? null
     if (examDate) finalUpdate.exam_date = examDate
-    // Paciente: extração multimodal → compreensão da imagem (DUE). Fato documental (transcrição).
-    const patientName = result.patientName ?? imageDU?.patientName ?? null
+    // Paciente: da Clinical Identity (imagem) ou da extração multimodal/texto. Fato documental (transcrição).
+    const patientName = imagePipeline ? imagePipeline.identity.patientName : (result.patientName ?? null)
     if (patientName) finalUpdate.patient_name = patientName
 
     // Médico SOLICITANTE (backlog A1) — fato documental, best-effort, write-once. Isolado (não toca o prompt

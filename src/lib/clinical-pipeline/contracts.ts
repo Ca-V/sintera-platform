@@ -50,6 +50,16 @@ export interface ClinicalIdentity {
   confidence: ConfidenceProfile
 }
 
+/** DECISÃO da data — INTERPRETAÇÃO determinística (Pipeline), sobre as OBSERVAÇÕES do DUE. Classifica cada data
+ *  pelo rótulo/região OBSERVADOS (não pela IA), escolhe a de realização, descarta as demais com motivo. Auditável. */
+export type DateSemantics = 'realization' | 'print' | 'birth' | 'calibration' | 'protocol' | 'unknown'
+export interface DateDecision {
+  considered: { value: string; iso: string | null; label: string | null; region: string | null; semantics: DateSemantics; confidence: number | null }[]
+  chosen: { value: string; iso: string; reason: string } | null
+  discarded: { value: string; semantics: DateSemantics; reason: string }[]
+  outcome: 'resolved' | 'reading_failure' | 'decision_ambiguous' | 'no_date'
+}
+
 /** PIPELINE AUDIT — orquestração + saídas por camada. Persistido por documento (rastreabilidade). */
 export interface PipelineAudit {
   pipeline: {
@@ -63,6 +73,7 @@ export interface PipelineAudit {
   due: UnderstandingReport | null
   terminology: { official: TerminologyRef | null }
   mapping: { matched: boolean; equipment: string | null }
+  dateDecision: DateDecision           // interpretação determinística da data (sobre as observações do DUE)
   knowledge: { status: 'pending' | 'resolved' }
   evidence: { status: 'pending' | 'resolved' }
 }

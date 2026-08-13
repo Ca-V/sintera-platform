@@ -24,6 +24,19 @@ export interface SourcedFact<T = string> {
   note?: string | null
 }
 
+// ── OBSERVAÇÕES — o DUE apenas OBSERVA (não classifica nem interpreta; decisão fica no Pipeline) ───────────────
+/** Uma observação BRUTA do documento — SEM interpretação de significado. Reutilizável e desacoplada de regras
+ *  clínicas/negócio: o DUE diz "vi a data '18/03/2026' com o rótulo 'Exam Date' no cabeçalho" — NÃO diz que é a
+ *  data de realização. A CLASSIFICAÇÃO (realização/impressão/nascimento…) é feita depois, no Pipeline, por regra. */
+export interface Observation {
+  type: string            // 'date' | 'text' | 'identifier' | 'patient_name' | 'physician' | 'signature' | 'image' | …
+  value: string           // o que foi observado, verbatim
+  label: string | null    // rótulo/texto adjacente OBSERVADO (ex.: "Exam Date"/"Nascimento"/"Firmware") — observação, não interpretação
+  region: string | null   // onde no documento: 'cabeçalho' | 'rodapé' | 'metadados' | …
+  confidence: number | null
+  detector: string        // ex.: 'vision'
+}
+
 /** Diagnóstico ESTRUTURADO da execução do DUE (não é linguagem natural) — permite responder programaticamente
  *  "o modelo truncou?" (`stopReason='max_tokens'`), "quantos tokens?", "precisou reparar o JSON?" SEM reprocessar. */
 export interface DueDiagnostics {
@@ -48,6 +61,7 @@ export interface UnderstandingReport {
   examCategory: SourcedFact
   evidence: string[]
   documentLanguage: string | null
+  observations: Observation[]     // LEITURA bruta (sem interpretação); a decisão/classificação é do Pipeline
 }
 
 /** Saída canônica do DUE (FATOS achatados p/ consumidores) + `report` (auditoria por atributo). */
@@ -86,12 +100,12 @@ Para CADA campo devolva um objeto {"value","confidence","absence_reason","note"}
 - "absence_reason": quando value=null, POR QUE — um de: "not_found" (não existe no documento) | "illegible" (existe mas ilegível) | "low_confidence" (viu algo, mas sem certeza) | "detector_not_applicable" (não se aplica a este tipo). Quando há valor, null.
 - "note": curta, OBRIGATÓRIA para exam_date e patient_name — descreva O QUE você viu ONDE o campo deveria estar e por que produziu/descartou (ex.: "data 18/03/2026 no cabeçalho" · "há uma data no rodapé mas ilegível" · "nenhuma data visível no laudo" · "campo de data em branco").
 Responda APENAS JSON válido:
-{"document_type":"<laboratory|imaging|neurophysiology|ophthalmology|cardiology|endoscopy|anatomopathology|medical_report|prescription|vaccination|medical_order|insurance_guide|unknown>","document_language":"<'pt'|'en'|…|null>","evidence":["<sinais REAIS vistos: aparelho, tecnologia, mapas, títulos de seção; ex.: 'Pentacam','Topografia','Scheimpflug'>"],"fields":{"exam_name":{...},"device":{...},"exam_modality":{...},"exam_category":{...},"exam_date":{...},"patient_name":{...},"issuer":{...},"physician":{...},"original_title":{...}}}
+{"document_type":"<laboratory|imaging|neurophysiology|ophthalmology|cardiology|endoscopy|anatomopathology|medical_report|prescription|vaccination|medical_order|insurance_guide|unknown>","document_language":"<'pt'|'en'|…|null>","evidence":["<sinais REAIS vistos: aparelho, tecnologia, mapas, títulos de seção; ex.: 'Pentacam','Topografia','Scheimpflug'>"],"fields":{"exam_name":{...},"device":{...},"exam_modality":{...},"exam_category":{...},"exam_date":{...},"patient_name":{...},"issuer":{...},"physician":{...},"original_title":{...}},"observations":[{"type":"<date|text|identifier|patient_name|physician>","value":"<verbatim>","label":"<rótulo/texto adjacente OBSERVADO, ex.: 'Exam Date'/'Nascimento'/'Firmware'; null>","region":"<cabeçalho|rodapé|metadados|…; null>","confidence":"<0..1>"}]}
 Regras CRÍTICAS:
 - EQUIPAMENTO ≠ EXAME. Aparelho → "device"; NÃO em "exam_name"; NÃO INFIRA o exame a partir do equipamento.
 - "exam_name" só quando o EXAME está ESCRITO; senão value=null com absence_reason.
-- "exam_date": a data de REALIZAÇÃO/AQUISIÇÃO do exame. PROCURE ATIVAMENTE e LEIA COM ATENÇÃO fontes PEQUENAS (cabeçalho, rodapé, metadados dos mapas, ao lado do nome do exame; rótulos "Exam date"/"Acquisition date"/"Date"/"Data"/"Data do exame"/"Realizado em"). Em laudos de equipamento (Pentacam/OCULUS/OCT/campo visual) a data de aquisição costuma vir em fonte pequena. Se conseguir ler uma data de aquisição com razoável certeza, PRODUZA-A em YYYY-MM-DD mesmo em fonte pequena; só use value=null quando realmente não conseguir ler (absence_reason "illegible") ou não existir ("not_found").
-  A "note" da data DEVE ser EXPLICÁVEL (raciocínio completo, não só o resultado): (a) LISTE todas as datas que você viu no documento; (b) para CADA uma, classifique o TIPO — aquisição/realização · nascimento · impressão · calibração/fabricação · protocolo · desconhecida; (c) diga QUAL você escolheu como data de realização e POR QUÊ; (d) explique por que DESCARTOU as demais; (e) se nenhuma pôde ser usada, o motivo objetivo. NUNCA use nascimento/impressão/calibração como data de realização.
+- "exam_date": OPCIONAL — você NÃO decide qual data é a do exame (a plataforma decide). Só preencha (YYYY-MM-DD) se houver UMA data claramente rotulada como do exame; senão value=null. A DECISÃO usa as "observations".
+- "observations": OBSERVE, NÃO interprete. LEIA fontes pequenas (cabeçalho/rodapé/metadados). LISTE TODAS as datas vistas (type:"date"), cada uma com "value" (verbatim), "label" (o RÓTULO/texto adjacente EXATAMENTE como impresso — "Exam Date"/"Data do exame"/"Nascimento"/"Impressão"/"Firmware"/"Calibration"…), "region" e "confidence". NÃO classifique o SIGNIFICADO (não diga se é realização/impressão/nascimento) — apenas registre o texto e onde está. Inclua também paciente/solicitante/identificadores como observações quando úteis.
 - "evidence": os SINAIS reais vistos (base auditável).
 - Tipo: PEDIDO/REQUISIÇÃO → "medical_order"; GUIA/SADT → "insurance_guide"; IMAGEM → "imaging"; oftalmológico de EQUIPAMENTO/IMAGEM (Pentacam, microscopia especular, OCT, campo visual, OCULUS/CEM) → "ophthalmology" mesmo com medidas por olho.
 - Transcreva, não infira.`
@@ -160,6 +174,26 @@ function parseField(v: unknown, source: FactSource, max: number): SourcedFact {
   return value ? { value, source, confidence: 'medium', absenceReason: null, note: null } : { value: null, source: 'none', confidence: null, absenceReason: 'not_found', note: null }
 }
 
+/** Parseia as OBSERVAÇÕES brutas (sem interpretação). Aceita {value|text, type, label, region, confidence}. */
+function parseObservations(v: unknown, source: FactSource): Observation[] {
+  if (!Array.isArray(v)) return []
+  return v.slice(0, 30).map((item): Observation | null => {
+    if (!item || typeof item !== 'object') return null
+    const o = item as Record<string, unknown>
+    const value = typeof o.value === 'string' && o.value.trim() ? o.value.trim().slice(0, 120)
+      : typeof o.text === 'string' && o.text.trim() ? o.text.trim().slice(0, 120) : null
+    if (!value) return null
+    return {
+      type: typeof o.type === 'string' && o.type.trim() ? o.type.trim().slice(0, 24) : 'text',
+      value,
+      label: typeof o.label === 'string' && o.label.trim() ? o.label.trim().slice(0, 60) : null,
+      region: typeof o.region === 'string' && o.region.trim() ? o.region.trim().slice(0, 40) : null,
+      confidence: typeof o.confidence === 'number' && o.confidence >= 0 && o.confidence <= 1 ? o.confidence : null,
+      detector: source,
+    }
+  }).filter((x): x is Observation => x !== null)
+}
+
 /** Normaliza o JSON cru → DocumentUnderstanding (fatos achatados + relatório auditável). `source` = de onde veio. */
 export function parseUnderstanding(o: Record<string, unknown>, source: FactSource = 'vision'): DocumentUnderstanding {
   const f = (o.fields && typeof o.fields === 'object' ? o.fields : o) as Record<string, unknown>
@@ -188,6 +222,7 @@ export function parseUnderstanding(o: Record<string, unknown>, source: FactSourc
     documentType: { value: documentTypeStr, source, confidence: 'medium', absenceReason: null },
     examNameCandidate: examName, device, examModality, examDate, patientName, issuer, physician,
     originalTitle, examCategory, evidence, documentLanguage,
+    observations: parseObservations(o.observations, source),
   }
 
   return {
