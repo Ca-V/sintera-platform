@@ -115,6 +115,13 @@ Binding evidência→código é **artefato clínico governado** (revisão do Res
 membro via MS) e cobertura parcial de exames de imagem → estado "provisório + confiança" é permanente e de 1ª classe.
 Conecta ao **C6** ("O que é este exame?" — a descrição também cita as fontes). *Fase de evolução; não v1.*
 
+### C8 · Evidence Service ⭐ **(sustenta o C6; ADR-ARCH-002)**
+4ª camada da cadeia (DUE → Terminology → Clinical Knowledge → **Evidence**). Responde "**quais referências
+científicas sustentam este exame/conceito?**" — devolve as FONTES (AAO · SBO · ESCRS · SBC · diretrizes · PubMed
+via curadoria), com versão/data. O **Clinical Knowledge Service (C6) apenas MONTA a explicação** a partir dessas
+fontes — não as gera. Fecha a rastreabilidade científica ("Fontes desta informação" na tela). Governado; PubMed
+alimenta a curadoria, não o runtime. Cache versionado. *Fase de evolução.*
+
 ## Fase D — REDESIGN VISUAL (Design System)
 - **D1 · Identidade "Almond Blossom" (Van Gogh)** — **aqua** institucional (entre Verde Tiffany e Azul
   Turquesa); **trocar a sidebar verde escura**; **creme · branco · preto · marrom** secundários; **dourado

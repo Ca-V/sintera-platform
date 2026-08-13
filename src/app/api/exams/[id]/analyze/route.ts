@@ -13,6 +13,7 @@ import { extractRequestingPhysician } from '@/lib/ai/requestingPhysician'
 import { classifyDocumentAI } from '@/lib/ai/document-classifier'
 import { understandImageDocument, type DocumentUnderstanding } from '@/lib/capture/document-understanding'
 import { resolveTerminology } from '@/lib/terminology/terminology-service'
+import { PIPELINE_VERSIONS } from '@/lib/capture/pipeline-versions'
 import { representationFingerprint, isRepresentationCertified } from '@/lib/capture/reproducibility'
 import { computeCoverage } from '@/lib/capture/coverage'
 import { processBundle } from '@/lib/capture/clinical-information-pipeline'
@@ -527,10 +528,19 @@ export async function POST(
     const solicitante = (examTextForIssuer ? await extractRequestingPhysician(examTextForIssuer) : null) ?? imageDU?.physician ?? null
     if (solicitante) finalUpdate.requesting_physician = solicitante
 
-    // RELATÓRIO AUDITÁVEL do DUE (origem/confiança por atributo + razão de ausência) + resolução da Terminologia
-    // (nome/provisório/proveniência). Persistido na 1ª compreensão — explica POR QUE cada campo (ex.: data) veio
-    // ou faltou, em vez de só `null`. Documentos de imagem por ora.
-    if (imageDU) finalUpdate.understanding_report = { due: imageDU.report, terminology: imageTerminology }
+    // RELATÓRIO AUDITÁVEL por ETAPAS distintas (cada camada tem responsabilidade única — ADR-ARCH-002):
+    //  · versions/resolvedAt → rastreabilidade ("por que este nome?" = versões usadas + data);
+    //  · due → OBSERVAÇÃO pura (o DUE não conhece terminologia nem KB): fatos + evidências + razão de ausência;
+    //  · terminology → resolução da NOMENCLATURA, com proveniência própria (value-set/documento/oficial);
+    //  · decisionLog → a TRILHA DE DECISÕES (o que foi visto → regra → candidato → resolução).
+    // Clinical Knowledge / Evidence (etapas 3–4) ainda não produzem dados. Documentos de imagem por ora.
+    if (imageDU) finalUpdate.understanding_report = {
+      versions: PIPELINE_VERSIONS,
+      resolvedAt: new Date().toISOString(),
+      due: imageDU.report,
+      terminology: imageTerminology,
+      decisionLog: imageTerminology?.decisionLog ?? [],
+    }
 
     // Identidade CLÍNICA (Clinical Identity Registry, CEF §3.0) — "que tipo de exame é", por ensemble de
     // evidências. Aditivo (não altera a classificação documental aqui); alimenta o extrator do CEF (M5).

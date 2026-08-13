@@ -21,11 +21,16 @@ describe('FUNC · Terminology Service — resolução por evidências (equipamen
     expect(r.equipment).toBe('Pentacam')
     expect(r.name).not.toMatch(/pentacam hr/i)
   })
-  it('Pentacam COM evidência de tomografia (Scheimpflug/Belin) → ALTA: nome canônico', () => {
+  it('Pentacam COM evidência de tomografia (Scheimpflug/Belin) → ALTA: nome canônico + decision log', () => {
     const r = resolveTerminology(facts({ device: 'OCULUS Pentacam', evidence: ['Pentacam', 'Scheimpflug', 'Belin ABCD', 'Anterior Elevation'] }))
     expect(r.name).toBe('Tomografia da córnea')
     expect(r.confidence).toBe('high')
-    expect(r.source).toBe('kb')
+    expect(r.source).toBe('terminology-catalog')  // value-set provisório da Terminologia (não "KB clínica")
+    expect(r.provisional).toBe(true)
+    // A trilha de decisões é registrada (auditoria).
+    expect(r.decisionLog.length).toBeGreaterThanOrEqual(3)
+    expect(r.decisionLog.join(' ')).toMatch(/sinal de protocolo/i)
+    expect(r.decisionLog.join(' ')).toMatch(/PROVISÓRIO/i)
   })
   it('equipamento de propósito único → alta pelo defaultName', () => {
     expect(resolveExamName(facts({ device: 'Humphrey Field Analyzer' }))).toBe('Campo visual computadorizado')
@@ -34,7 +39,7 @@ describe('FUNC · Terminology Service — resolução por evidências (equipamen
   })
   it('nome EXPLÍCITO no documento (transcrito) é usado; nunca o equipamento cru', () => {
     const r = resolveTerminology(facts({ examName: 'Hemograma completo', confidence: 'high' }))
-    expect(r.name).toBe('Hemograma completo'); expect(r.source).toBe('ai')
+    expect(r.name).toBe('Hemograma completo'); expect(r.source).toBe('document')
   })
   it('BAIXA confiança → identificação pendente (NÃO inventa exame)', () => {
     expect(resolveExamName(facts({ examCategory: 'Oftalmologia' }))).toBe('Exame oftalmológico (identificação pendente)')

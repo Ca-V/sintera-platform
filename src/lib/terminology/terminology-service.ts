@@ -5,20 +5,24 @@
 // confiança + proveniência + a marca explícita de que não há código oficial (estado legítimo). EQUIPAMENTO ≠ EXAME.
 import type { DocumentUnderstanding, Confidence } from '@/lib/capture/document-understanding'
 
-export type FieldSource = 'rule' | 'kb' | 'ai' | 'ocr'
+/** Origem da DECISÃO do nome (proveniência da Terminologia — nunca "KB clínica", que é outra camada):
+ *  'terminology-official' = ancorado a LOINC/SNOMED/RNDS · 'terminology-catalog' = value-set provisório da
+ *  Terminologia · 'document' = nome transcrito do próprio documento · 'pending' = não identificado. */
+export type NameSource = 'terminology-official' | 'terminology-catalog' | 'document' | 'pending'
 /** Referência a uma terminologia clínica OFICIAL (autoridade da nomenclatura — não a SINTERA). */
 export interface TerminologyRef { system: 'LOINC' | 'SNOMEDCT' | 'RNDS'; code: string; version: string }
 
-/** Resultado da resolução terminológica — AUDITÁVEL (nome + confiança + origem + proveniência + evidências). */
+/** Resultado da resolução terminológica — AUDITÁVEL (nome + confiança + origem + proveniência + DECISÕES). */
 export interface TerminologyResolution {
   name: string | null            // nome canônico (oficial quando `terminology`≠null; senão PROVISÓRIO)
   confidence: Confidence
-  source: FieldSource            // origem da DECISÃO: 'kb' (binding curado) | 'ai' (transcrito) | 'rule'
+  source: NameSource
   terminology: TerminologyRef | null  // LOINC/SNOMED/RNDS quando mapeado — null enquanto não há vínculo oficial
   provisional: boolean           // true = ainda não ancorado em terminologia oficial (estado legítimo)
   basis: string[]                // em que o nome provisório se apoia (ex.: 'AAO','SBO','fabricante')
-  evidence: string[]             // sinais que embasaram a decisão (do DUE)
+  evidence: string[]             // sinais (do DUE) que embasaram a decisão
   equipment: string | null       // EQUIPAMENTO identificado — guardado SEPARADAMENTE, nunca é o nome
+  decisionLog: string[]          // trilha das DECISÕES (auditoria): o que foi visto → regra → candidato → resolução
 }
 
 const SPECIALTY_ADJECTIVE: Record<string, string> = {
@@ -68,26 +72,43 @@ export function resolveTerminology(du: Facts): TerminologyResolution {
   const pick = (s: string | null | undefined) => { const v = (s ?? '').trim(); return v.length ? v : null }
   const evidence = (du.evidence ?? []).filter(Boolean)
   const hay = [du.device, du.originalTitle, du.examModality, du.examName, ...evidence].filter(Boolean).join(' ')
+  const log: string[] = [`DUE: evidências = [${evidence.join(', ') || '—'}]${du.device ? ` · equipamento = "${du.device}"` : ''}`]
   const entry = hay ? EXAM_CATALOG.find(e => e.equipment.test(hay)) : undefined
 
   if (entry) {
+    log.push(`value-set: equipamento reconhecido → "${entry.equipmentLabel}" (${entry.category})`)
     const term = entry.terminology ?? null
     const provisional = term === null
+    log.push(term ? `ancorado a ${term.system} ${term.code} (v${term.version})` : 'sem ancoragem oficial (LOINC/SNOMED) → PROVISÓRIO')
     const sig = entry.specific.find(s => s.re.test(hay))
-    if (sig) return { name: sig.name, confidence: 'high', source: 'kb', terminology: term, provisional, basis: entry.basis, evidence, equipment: entry.equipmentLabel }
-    if (entry.defaultName) return { name: entry.defaultName, confidence: 'high', source: 'kb', terminology: term, provisional, basis: entry.basis, evidence, equipment: entry.equipmentLabel }
+    if (sig) {
+      log.push(`sinal de protocolo casou → candidato "${sig.name}" (confiança alta)`)
+      return { name: sig.name, confidence: 'high', source: term ? 'terminology-official' : 'terminology-catalog', terminology: term, provisional, basis: entry.basis, evidence, equipment: entry.equipmentLabel, decisionLog: log }
+    }
+    if (entry.defaultName) {
+      log.push(`equipamento de propósito único → "${entry.defaultName}" (confiança alta)`)
+      return { name: entry.defaultName, confidence: 'high', source: term ? 'terminology-official' : 'terminology-catalog', terminology: term, provisional, basis: entry.basis, evidence, equipment: entry.equipmentLabel, decisionLog: log }
+    }
     const adj = specialtyAdjective(entry.category)
     const nome = adj ? `Exame ${adj} realizado no equipamento ${entry.equipmentLabel}` : `Exame realizado no equipamento ${entry.equipmentLabel}`
-    return { name: nome, confidence: 'medium', source: 'kb', terminology: term, provisional, basis: entry.basis, evidence, equipment: entry.equipmentLabel }
+    log.push(`sem sinal de protocolo → nomeia pelo equipamento, sem afirmar o exame (confiança média)`)
+    return { name: nome, confidence: 'medium', source: 'terminology-catalog', terminology: term, provisional, basis: entry.basis, evidence, equipment: entry.equipmentLabel, decisionLog: log }
   }
 
   const explicit = pick(du.examName)
-  if (explicit) return { name: explicit, confidence: du.confidence, source: 'ai', terminology: null, provisional: true, basis: [], evidence, equipment: pick(du.device) }
+  if (explicit) {
+    log.push(`equipamento não reconhecido; nome EXPLÍCITO no documento → "${explicit}"`)
+    return { name: explicit, confidence: du.confidence, source: 'document', terminology: null, provisional: true, basis: [], evidence, equipment: pick(du.device), decisionLog: log }
+  }
   const modality = pick(du.examModality)
-  if (modality) return { name: modality, confidence: 'medium', source: 'ai', terminology: null, provisional: true, basis: [], evidence, equipment: pick(du.device) }
+  if (modality) {
+    log.push(`sem nome explícito; usa a modalidade observada → "${modality}"`)
+    return { name: modality, confidence: 'medium', source: 'document', terminology: null, provisional: true, basis: [], evidence, equipment: pick(du.device), decisionLog: log }
+  }
   const adj = specialtyAdjective(du.examCategory)
   const nome = adj ? `Exame ${adj} (identificação pendente)` : 'Documento (identificação pendente)'
-  return { name: nome, confidence: 'low', source: 'rule', terminology: null, provisional: true, basis: [], evidence, equipment: pick(du.device) }
+  log.push('nada identificável com confiança → identificação PENDENTE (não inventa nome)')
+  return { name: nome, confidence: 'low', source: 'pending', terminology: null, provisional: true, basis: [], evidence, equipment: pick(du.device), decisionLog: log }
 }
 
 /** Conveniência: só o nome de exibição resolvido pela Terminologia (o que a lista/detalhe mostram). */
