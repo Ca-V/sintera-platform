@@ -379,6 +379,9 @@ export async function POST(
   }
   const imageModalityOverride = (imageDU?.documentType === 'imaging' || imageDU?.documentType === 'ophthalmology')
     ? imageDU.documentType : null
+  // Resolução de NOMENCLATURA (camada de Terminologia) a partir dos fatos do DUE — computada uma vez, também
+  // persistida no relatório auditável.
+  const imageTerminology = imageDU ? resolveTerminology(imageDU) : null
 
   // Quando a identidade já está travada, o family/tipo segue o document_type estabelecido. Para IMAGEM na 1ª
   // extração, a modalidade lida da imagem (imaging/ophthalmology) prevalece sobre o default 'laboratory'.
@@ -524,6 +527,11 @@ export async function POST(
     const solicitante = (examTextForIssuer ? await extractRequestingPhysician(examTextForIssuer) : null) ?? imageDU?.physician ?? null
     if (solicitante) finalUpdate.requesting_physician = solicitante
 
+    // RELATÓRIO AUDITÁVEL do DUE (origem/confiança por atributo + razão de ausência) + resolução da Terminologia
+    // (nome/provisório/proveniência). Persistido na 1ª compreensão — explica POR QUE cada campo (ex.: data) veio
+    // ou faltou, em vez de só `null`. Documentos de imagem por ora.
+    if (imageDU) finalUpdate.understanding_report = { due: imageDU.report, terminology: imageTerminology }
+
     // Identidade CLÍNICA (Clinical Identity Registry, CEF §3.0) — "que tipo de exame é", por ensemble de
     // evidências. Aditivo (não altera a classificação documental aqui); alimenta o extrator do CEF (M5).
     // Write-once (dentro do bloco de identidade). Só grava quando a confiança não é baixa.
@@ -547,7 +555,7 @@ export async function POST(
     if (imageModalityOverride && imageDU) {
       // NOME resolvido pela camada de TERMINOLOGIA (não pelo DUE): o DUE dá os fatos/evidências, a Terminologia
       // decide o nome canônico/provisório. EQUIPAMENTO ≠ EXAME; nunca uma linha interna do laudo.
-      const title = resolveTerminology(imageDU).name
+      const title = imageTerminology?.name ?? null
       if (title) {
         finalUpdate.display_title = title
         finalUpdate.type = imageDU.issuer ? withProvenance(title, { issuer: imageDU.issuer }) : title

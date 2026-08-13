@@ -1,34 +1,60 @@
 // Document Understanding Engine (DUE) — CEF/ARCH (ADR-DUE-001 · ADR-CK-001). Componente ÚNICO de COMPREENSÃO do
-// documento: recebe QUALQUER documento (PDF pesquisável · escaneado · JPG/PNG · foto · export de equipamento) e
-// devolve SEMPRE a MESMA estrutura de FATOS + EVIDÊNCIAS, ANTES de qualquer extração clínica.
+// documento: recebe QUALQUER documento e devolve SEMPRE a MESMA estrutura de FATOS + EVIDÊNCIAS, ANTES da extração.
 //
-// RESPONSABILIDADE (única): "o que EXISTE neste documento?" — modalidade, equipamento, data, paciente, emissor,
-// solicitante, evidências. O DUE NÃO define o NOME oficial do exame (isso é do Terminology Service) e NÃO possui
-// conhecimento clínico (isso é do Clinical Knowledge Service). Fronteira RDC-657: compreende/transcreve, não
-// interpreta o resultado clínico.
+// AUDITABILIDADE (fundadora 13/08): o DUE não devolve só o valor — devolve um RELATÓRIO por atributo com ORIGEM +
+// CONFIANÇA, e, quando um atributo esperado NÃO é encontrado, a RAZÃO da ausência (não localizado · ilegível ·
+// confiança insuficiente · detector não aplicável) — nunca só `null`. Nenhum atributo é "oficial" só porque a IA
+// sugeriu. Fronteira RDC-657: compreende/transcreve, não interpreta o resultado clínico. NÃO define o nome oficial
+// (Terminology Service) nem possui conhecimento clínico (Clinical Knowledge Service).
 import Anthropic from '@anthropic-ai/sdk'
 
 export type Confidence = 'high' | 'medium' | 'low'
+export type FactSource = 'vision' | 'ocr' | 'kb' | 'terminology' | 'none'
+export type AbsenceReason = 'not_found' | 'illegible' | 'low_confidence' | 'detector_not_applicable'
 
-/** Saída canônica e ÚNICA da compreensão documental (FATOS) — igual para todo tipo de arquivo. */
-export interface DocumentUnderstanding {
-  documentType: string
-  originalTitle: string | null   // TÍTULO impresso no cabeçalho, VERBATIM (auditoria)
-  examName: string | null        // nome do exame SÓ SE explícito no documento; null se só há equipamento
-  device: string | null          // EQUIPAMENTO/aparelho + modelo — guardado à parte; NUNCA é o nome do exame
-  examCategory: string | null
-  examModality: string | null
-  examDate: string | null        // YYYY-MM-DD
-  patientName: string | null
-  issuer: string | null
-  physician: string | null
-  evidence: string[]             // SINAIS lidos do documento (ex.: 'Pentacam','Scheimpflug') — base auditável
-  confidence: Confidence         // confiança da COMPREENSÃO reportada pela leitura
-  structuredPossible: boolean    // admite extração estruturada (laboratorial) OU document_only (imagem/laudo)
+/** Fato auditável: valor + ORIGEM + CONFIANÇA; se ausente, a RAZÃO (não apenas null). */
+export interface SourcedFact<T = string> {
+  value: T | null
+  source: FactSource
+  confidence: Confidence | null
+  absenceReason: AbsenceReason | null
+}
+
+/** Relatório interno de compreensão — por atributo, auditável. */
+export interface UnderstandingReport {
+  documentType: SourcedFact
+  examNameCandidate: SourcedFact   // nome CANDIDATO (a decisão canônica é do Terminology Service)
+  device: SourcedFact
+  examModality: SourcedFact
+  examDate: SourcedFact
+  patientName: SourcedFact
+  issuer: SourcedFact
+  physician: SourcedFact
+  originalTitle: SourcedFact
+  examCategory: SourcedFact
+  evidence: string[]
   documentLanguage: string | null
 }
 
-/** Modalidades de IMAGEM/laudo sem processador estruturado nesta versão → document_only (não force biomarcadores). */
+/** Saída canônica do DUE (FATOS achatados p/ consumidores) + `report` (auditoria por atributo). */
+export interface DocumentUnderstanding {
+  documentType: string
+  originalTitle: string | null
+  examName: string | null
+  device: string | null
+  examCategory: string | null
+  examModality: string | null
+  examDate: string | null
+  patientName: string | null
+  issuer: string | null
+  physician: string | null
+  evidence: string[]
+  confidence: Confidence
+  structuredPossible: boolean
+  documentLanguage: string | null
+  report: UnderstandingReport      // ← auditoria: origem/confiança por atributo + razão de ausência
+}
+
 const NON_STRUCTURED_TYPES = new Set(['imaging', 'ophthalmology'])
 /** REGRA PERMANENTE (pura): imagem/oftalmologia = document_only. */
 export function structuredPossibleFor(documentType: string | null | undefined): boolean {
@@ -37,65 +63,109 @@ export function structuredPossibleFor(documentType: string | null | undefined): 
 
 const MODEL = 'claude-haiku-4-5-20251001'
 
-const SYSTEM = `Você é um mecanismo de COMPREENSÃO de documentos de saúde. LÊ o documento e devolve METADADOS e as
-EVIDÊNCIAS que você observou, transcrevendo o que está ESCRITO. NÃO interpreta o resultado clínico nem diagnostica
-(RDC 657/2022). Você NÃO decide o nome final do exame — você fornece dados e evidências; a plataforma decide.
-Responda APENAS JSON válido, exatamente com estas chaves:
-{"document_type":"<laboratory|imaging|neurophysiology|ophthalmology|cardiology|endoscopy|anatomopathology|medical_report|prescription|vaccination|medical_order|insurance_guide|unknown>","original_title":"<TÍTULO impresso no CABEÇALHO, VERBATIM; null>","exam_name":"<nome do EXAME/protocolo APENAS se ESCRITO no documento; null se só há o EQUIPAMENTO>","device":"<EQUIPAMENTO+modelo impresso (ex.: 'OCULUS Pentacam HR'); null>","exam_category":"<especialidade (ex.: 'Oftalmologia'); null>","exam_modality":"<modalidade, se clara; null>","exam_date":"<data de REALIZAÇÃO, YYYY-MM-DD; NUNCA nascimento/impressão/protocolo; null>","patient_name":"<paciente; null>","issuer":"<emissor; null>","physician":"<solicitante; null>","evidence":["<termos/marcadores que você VIU e embasam a identificação: aparelho, tecnologia, mapas, títulos de seção; ex.: 'Pentacam','Scheimpflug','Belin ABCD','Anterior Elevation'>"],"document_language":"<'pt'|'en'|…; null>","confidence":"<high|medium|low>"}
+const SYSTEM = `Você é um mecanismo de COMPREENSÃO de documentos de saúde. LÊ o documento e devolve METADADOS
+AUDITÁVEIS, transcrevendo o que está ESCRITO. NÃO interpreta o resultado clínico nem diagnostica (RDC 657/2022).
+Você NÃO decide o nome final do exame — fornece dados/evidências; a plataforma decide.
+Para CADA campo devolva um objeto {"value","confidence","absence_reason"}:
+- "value": o texto transcrito, ou null se ausente.
+- "confidence": "high"|"medium"|"low" (quando há valor).
+- "absence_reason": quando value=null, POR QUE — um de: "not_found" (não existe no documento) | "illegible" (existe mas ilegível) | "low_confidence" (viu algo, mas sem certeza) | "detector_not_applicable" (não se aplica a este tipo). Quando há valor, null.
+Responda APENAS JSON válido:
+{"document_type":"<laboratory|imaging|neurophysiology|ophthalmology|cardiology|endoscopy|anatomopathology|medical_report|prescription|vaccination|medical_order|insurance_guide|unknown>","document_language":"<'pt'|'en'|…|null>","evidence":["<sinais REAIS vistos: aparelho, tecnologia, mapas, títulos de seção; ex.: 'Pentacam','Topografia','Scheimpflug'>"],"fields":{"exam_name":{...},"device":{...},"exam_modality":{...},"exam_category":{...},"exam_date":{...},"patient_name":{...},"issuer":{...},"physician":{...},"original_title":{...}}}
 Regras CRÍTICAS:
-- EQUIPAMENTO ≠ EXAME. Aparelho → "device". NÃO coloque o equipamento em "exam_name" e NÃO INFIRA o exame a partir do equipamento.
-- "exam_name" só quando o EXAME está ESCRITO. Caso contrário null (a plataforma decide pela evidência).
-- "evidence": liste os SINAIS reais vistos (aparelho, tecnologia, nomes de mapas/seções) — base auditável.
-- NUNCA use uma LINHA INTERNA/parâmetro/biomarcador como título/nome.
+- EQUIPAMENTO ≠ EXAME. Aparelho → "device"; NÃO em "exam_name"; NÃO INFIRA o exame a partir do equipamento.
+- "exam_name" só quando o EXAME está ESCRITO; senão value=null com absence_reason.
+- "exam_date": a data de REALIZAÇÃO; NUNCA nascimento/impressão/protocolo. Se houver data mas ilegível → value=null, absence_reason="illegible". Procure em cabeçalho, rodapé e ao lado do exame.
+- "evidence": os SINAIS reais vistos (base auditável).
 - Tipo: PEDIDO/REQUISIÇÃO → "medical_order"; GUIA/SADT → "insurance_guide"; IMAGEM → "imaging"; oftalmológico de EQUIPAMENTO/IMAGEM (Pentacam, microscopia especular, OCT, campo visual, OCULUS/CEM) → "ophthalmology" mesmo com medidas por olho.
-- Transcreva, não infira. Campo ausente → null.`
+- Transcreva, não infira.`
 
-/** Compreende um documento de IMAGEM (visão computacional = fonte de evidência). Best-effort: null sem chave de IA. */
+/** Compreende um documento de IMAGEM (visão computacional). Best-effort: null sem chave de IA / erro. */
 export async function understandImageDocument(args: { base64: string; mediaType: string }): Promise<DocumentUnderstanding | null> {
   if (!process.env.ANTHROPIC_API_KEY || !args.base64) return null
   try {
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: 40_000 })
     const msg = await client.messages.create({
-      model: MODEL, max_tokens: 500, temperature: 0, system: SYSTEM,
+      model: MODEL, max_tokens: 700, temperature: 0, system: SYSTEM,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       messages: [{ role: 'user', content: [{ type: 'image', source: { type: 'base64', media_type: args.mediaType, data: args.base64 } }, { type: 'text', text: 'Compreenda este documento no JSON pedido.' }] as any }],
     })
     const raw = msg.content[0]?.type === 'text' ? msg.content[0].text : ''
     const m = raw.match(/\{[\s\S]*\}/)
     if (!m) return null
-    return parseUnderstanding(JSON.parse(m[0]) as Record<string, unknown>)
+    return parseUnderstanding(JSON.parse(m[0]) as Record<string, unknown>, 'vision')
   } catch {
     return null
   }
 }
 
-/** Normaliza o JSON cru do modelo → DocumentUnderstanding (validação/limpeza determinística). */
-export function parseUnderstanding(o: Record<string, unknown>): DocumentUnderstanding {
-  const str = (v: unknown, max: number): string | null => {
-    if (typeof v !== 'string') return null
-    const s = v.trim()
-    return s && !/^null$/i.test(s) ? s.slice(0, max) : null
+const ABSENCE = new Set(['not_found', 'illegible', 'low_confidence', 'detector_not_applicable'])
+function normConfidence(v: unknown): Confidence | null {
+  return v === 'high' || v === 'medium' || v === 'low' ? v : null
+}
+/** Parseia um campo — objeto {value,confidence,absence_reason} OU string simples (compat). */
+function parseField(v: unknown, source: FactSource, max: number): SourcedFact {
+  const clean = (s: unknown): string | null => {
+    if (typeof s !== 'string') return null
+    const t = s.trim()
+    return t && !/^null$/i.test(t) ? t.slice(0, max) : null
   }
-  const documentType = str(o.document_type, 40) ?? 'unknown'
-  const confRaw = str(o.confidence, 10)
-  const confidence: Confidence = confRaw === 'high' || confRaw === 'low' ? confRaw : 'medium'
+  if (v && typeof v === 'object' && !Array.isArray(v)) {
+    const o = v as Record<string, unknown>
+    const value = clean(o.value)
+    if (value) return { value, source, confidence: normConfidence(o.confidence) ?? 'medium', absenceReason: null }
+    const r = typeof o.absence_reason === 'string' && ABSENCE.has(o.absence_reason) ? o.absence_reason as AbsenceReason : 'not_found'
+    return { value: null, source: 'none', confidence: null, absenceReason: r }
+  }
+  const value = clean(v)
+  return value ? { value, source, confidence: 'medium', absenceReason: null } : { value: null, source: 'none', confidence: null, absenceReason: 'not_found' }
+}
+
+/** Normaliza o JSON cru → DocumentUnderstanding (fatos achatados + relatório auditável). `source` = de onde veio. */
+export function parseUnderstanding(o: Record<string, unknown>, source: FactSource = 'vision'): DocumentUnderstanding {
+  const f = (o.fields && typeof o.fields === 'object' ? o.fields : o) as Record<string, unknown>
+  const documentTypeStr = (typeof o.document_type === 'string' && o.document_type.trim() ? o.document_type.trim() : 'unknown').slice(0, 40)
   const evidence = Array.isArray(o.evidence)
     ? o.evidence.map(e => (typeof e === 'string' ? e.trim() : '')).filter(Boolean).slice(0, 12).map(e => e.slice(0, 60))
     : []
+  const documentLanguage = typeof o.document_language === 'string' && o.document_language.trim() && !/^null$/i.test(o.document_language.trim())
+    ? o.document_language.trim().slice(0, 8) : null
+
+  const examName = parseField(f.exam_name, source, 160)
+  const device = parseField(f.device, source, 120)
+  const examModality = parseField(f.exam_modality, source, 120)
+  const examCategory = parseField(f.exam_category, source, 80)
+  const originalTitle = parseField(f.original_title, source, 160)
+  const issuer = parseField(f.issuer, source, 80)
+  const physician = parseField(f.physician, source, 80)
+  const patientName = parseField(f.patient_name, source, 120)
+  const rawDate = parseField(f.exam_date, source, 10)
+  // Data válida só se ISO; se veio com valor mas fora do formato, trata como ilegível (auditável).
+  const examDate: SourcedFact = rawDate.value && /^\d{4}-\d{2}-\d{2}$/.test(rawDate.value)
+    ? rawDate
+    : rawDate.value ? { value: null, source: 'none', confidence: null, absenceReason: 'illegible' } : rawDate
+
+  const report: UnderstandingReport = {
+    documentType: { value: documentTypeStr, source, confidence: 'medium', absenceReason: null },
+    examNameCandidate: examName, device, examModality, examDate, patientName, issuer, physician,
+    originalTitle, examCategory, evidence, documentLanguage,
+  }
+
   return {
-    documentType,
-    originalTitle: str(o.original_title, 160),
-    examName: str(o.exam_name, 160),
-    device: str(o.device, 120),
-    examCategory: str(o.exam_category, 80),
-    examModality: str(o.exam_modality, 120),
-    examDate: (() => { const d = str(o.exam_date, 10); return d && /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : null })(),
-    patientName: str(o.patient_name, 120),
-    issuer: str(o.issuer, 80),
-    physician: str(o.physician, 80),
+    documentType: documentTypeStr,
+    originalTitle: originalTitle.value,
+    examName: examName.value,
+    device: device.value,
+    examCategory: examCategory.value,
+    examModality: examModality.value,
+    examDate: examDate.value,
+    patientName: patientName.value,
+    issuer: issuer.value,
+    physician: physician.value,
     evidence,
-    confidence,
-    structuredPossible: structuredPossibleFor(documentType),
-    documentLanguage: str(o.document_language, 8),
+    confidence: examName.confidence ?? examModality.confidence ?? 'medium',
+    structuredPossible: structuredPossibleFor(documentTypeStr),
+    documentLanguage,
+    report,
   }
 }
