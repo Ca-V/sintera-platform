@@ -897,16 +897,15 @@ export default function ExamDetailPage() {
                   O assinante do laudo NÃO aparece aqui (está no documento original). */}
               {(() => {
                 const { lab } = deriveExamIdentity(exam?.type, (exam as unknown as { issuer?: string | null })?.issuer)
-                // Equipamento (Clinical Identity) ≠ exame ≠ emissor. Quando presente, o subtítulo é ROTULADO como
-                // "Equipamento: …" (com o fabricante entre parênteses) — não um subtítulo cru ambíguo ("OCULUS").
+                // Decisão de produto: equipamento/fabricante NÃO é exibido (só metadado interno — Clinical Identity/
+                // Pipeline Audit). Exame de equipamento não mostra o emissor (ex.: OCULUS); labs/clínicas exibem o lab.
                 const equipment = (exam as unknown as { equipment?: string | null })?.equipment ?? null
+                const showLab = !equipment && !!lab
                 const req = (exam as unknown as { requesting_physician?: string | null })?.requesting_physician
-                if (!lab && !req && !equipment) return null
+                if (!showLab && !req) return null
                 return (
                   <div className="mt-0.5 space-y-0.5">
-                    {equipment
-                      ? <p className="font-body text-sm font-medium text-onyx/70">Equipamento: {equipment}{lab && lab.toLowerCase() !== equipment.toLowerCase() ? ` (${lab})` : ''}</p>
-                      : lab && <p className="font-body text-sm font-medium text-onyx/70">{lab}</p>}
+                    {showLab && <p className="font-body text-sm font-medium text-onyx/70">{lab}</p>}
                     {req && <p className="font-body text-xs text-mauve">Solicitante: {req}</p>}
                   </div>
                 )

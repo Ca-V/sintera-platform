@@ -789,9 +789,11 @@ export default function ExamsPage() {
                                   <>
                                     {/* Laboratório/clínica responsável — linha própria (identificação padronizada) */}
                                     {(() => {
-                                      // Equipamento (Clinical Identity) rotulado ≠ subtítulo cru ambíguo ("OCULUS").
+                                      // Decisão de produto: equipamento/fabricante NÃO é exibido (só metadado interno —
+                                      // Clinical Identity/Pipeline Audit). Exame de equipamento não mostra emissor (ex.: OCULUS);
+                                      // laboratórios/clínicas seguem exibindo o laboratório.
                                       const equipment = (exam as unknown as { equipment?: string | null }).equipment ?? null
-                                      if (equipment) return <span className="block font-medium text-onyx/70">Equipamento: {equipment}{examLab && examLab.toLowerCase() !== equipment.toLowerCase() ? ` (${examLab})` : ''}</span>
+                                      if (equipment) return null
                                       return examLab ? <span className="block font-medium text-onyx/70">{examLab}</span> : null
                                     })()}
                                     {exam.requesting_physician && (
