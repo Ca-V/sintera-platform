@@ -10,7 +10,8 @@ import { classifyExamDocument, deriveDisplayTitle, withProvenance } from '@/lib/
 import { MAX_UPLOAD_MB } from '@/lib/capture/limits'
 import { extractIssuer, extractIssuerFromImage } from '@/lib/ai/issuer'
 import { extractRequestingPhysician } from '@/lib/ai/requestingPhysician'
-import { classifyDocumentAI, type DocClassification } from '@/lib/ai/document-classifier'
+import { classifyDocumentAI } from '@/lib/ai/document-classifier'
+import { understandImageDocument, resolveDocumentIdentity, type DocumentUnderstanding } from '@/lib/capture/document-understanding'
 import { representationFingerprint, isRepresentationCertified } from '@/lib/capture/reproducibility'
 import { computeCoverage } from '@/lib/capture/coverage'
 import { processBundle } from '@/lib/capture/clinical-information-pipeline'
@@ -367,13 +368,16 @@ export async function POST(
   // oftalmológicos/imagem que "extraíram" viravam laboratoriais + estruturados. Aqui o Content Classifier LÊ a
   // imagem ANTES do plano: imaging/ophthalmology → document_only (sem módulo específico nesta v1) + título impresso.
   // Só imagem, só 1ª extração (write-once), best-effort (sem chave de IA → null → mantém o comportamento legado).
-  let imageDoc: DocClassification | null = null
+  // Document Understanding Engine (DUE) — compreensão ÚNICA do documento de IMAGEM ANTES da representação:
+  // uma leitura de visão devolve modalidade + título/equipamento + data + paciente + emissor + solicitante.
+  // Substitui os parsers de TEXTO (que não rodam em imagem) como fonte autoritativa dos metadados da imagem.
+  let imageDU: DocumentUnderstanding | null = null
   if (isImage && !identityEstablished) {
     const mt = filePath.endsWith('.png') ? 'image/png' : filePath.endsWith('.webp') ? 'image/webp' : 'image/jpeg'
-    imageDoc = await classifyDocumentAI({ base64: pdfBuffer.toString('base64'), mediaType: mt })
+    imageDU = await understandImageDocument({ base64: pdfBuffer.toString('base64'), mediaType: mt })
   }
-  const imageModalityOverride = (imageDoc?.documentType === 'imaging' || imageDoc?.documentType === 'ophthalmology')
-    ? imageDoc.documentType : null
+  const imageModalityOverride = (imageDU?.documentType === 'imaging' || imageDU?.documentType === 'ophthalmology')
+    ? imageDU.documentType : null
 
   // Quando a identidade já está travada, o family/tipo segue o document_type estabelecido. Para IMAGEM na 1ª
   // extração, a modalidade lida da imagem (imaging/ophthalmology) prevalece sobre o default 'laboratory'.
@@ -507,13 +511,16 @@ export async function POST(
     // Data de realização: texto (alta/média confiança) → extração multimodal → data LIDA DA IMAGEM pelo
     // classificador. Uploads de imagem não têm texto (sem OCR), então a data impressa só chega pela leitura
     // da imagem — antes ficava "Sem data" mesmo com a data no documento. Fato documental (transcrição).
-    const examDate = (semDate && semDate.iso && semDate.confidence !== 'low' ? semDate.iso : result.examDate) ?? imageDoc?.examDate ?? null
+    const examDate = (semDate && semDate.iso && semDate.confidence !== 'low' ? semDate.iso : result.examDate) ?? imageDU?.examDate ?? null
     if (examDate) finalUpdate.exam_date = examDate
-    if (result.patientName) finalUpdate.patient_name = result.patientName
+    // Paciente: extração multimodal → compreensão da imagem (DUE). Fato documental (transcrição).
+    const patientName = result.patientName ?? imageDU?.patientName ?? null
+    if (patientName) finalUpdate.patient_name = patientName
 
     // Médico SOLICITANTE (backlog A1) — fato documental, best-effort, write-once. Isolado (não toca o prompt
     // governado); transcreve, não interpreta. Distinto do emissor e do assinante do laudo.
-    const solicitante = examTextForIssuer ? await extractRequestingPhysician(examTextForIssuer) : null
+    // Solicitante: parser de texto → compreensão da imagem (DUE) quando não há texto. Fato documental.
+    const solicitante = (examTextForIssuer ? await extractRequestingPhysician(examTextForIssuer) : null) ?? imageDU?.physician ?? null
     if (solicitante) finalUpdate.requesting_physician = solicitante
 
     // Identidade CLÍNICA (Clinical Identity Registry, CEF §3.0) — "que tipo de exame é", por ensemble de
@@ -536,11 +543,15 @@ export async function POST(
 
     // WEB-004 — imagem oftalmológica/imagem (document_only): nome = título IMPRESSO lido da imagem (ex.:
     // "Pentacam Mosaic 2") + emissor, preservando a informação do documento em vez do genérico "Oftalmologia".
-    if (imageModalityOverride && imageDoc?.displayName) {
-      const title = imageDoc.displayName
-      finalUpdate.display_title = title
-      finalUpdate.type = imageDoc.issuer ? withProvenance(title, { issuer: imageDoc.issuer }) : title
-      if (imageDoc.issuer) finalUpdate.issuer = imageDoc.issuer
+    if (imageModalityOverride && imageDU) {
+      // Identidade pela REGRA PERMANENTE do DUE (título oficial → nome do exame → equipamento → categoria);
+      // NUNCA uma linha interna do laudo (o Pentacam não vira "Campo visual" nem "Oftalmologia").
+      const title = resolveDocumentIdentity(imageDU)
+      if (title) {
+        finalUpdate.display_title = title
+        finalUpdate.type = imageDU.issuer ? withProvenance(title, { issuer: imageDU.issuer }) : title
+      }
+      if (imageDU.issuer) finalUpdate.issuer = imageDU.issuer
     } else if (confidentStructure) {
       const displayTitle = deriveDisplayTitle(structure)
       finalUpdate.display_title = displayTitle
@@ -560,8 +571,8 @@ export async function POST(
       const docMediaType = isImage
         ? (filePath.endsWith('.png') ? 'image/png' : filePath.endsWith('.webp') ? 'image/webp' : 'image/jpeg')
         : 'application/pdf'
-      // Reaproveita a classificação de imagem já feita acima (WEB-001) quando houver; senão classifica agora.
-      const doc = imageDoc ?? await classifyDocumentAI({ base64: pdfBuffer.toString('base64'), mediaType: docMediaType })
+      // Fallback de nomeação p/ PDF document_only (imagem já foi compreendida pelo DUE acima).
+      const doc = await classifyDocumentAI({ base64: pdfBuffer.toString('base64'), mediaType: docMediaType })
       if (doc?.displayName) {
         const derived = deriveDisplayTitle({
           documentType: doc.documentType as never,
