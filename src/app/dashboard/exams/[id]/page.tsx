@@ -924,7 +924,11 @@ export default function ExamDetailPage() {
               ) : (
                 <div className="flex items-center gap-1.5 group/date mt-0.5">
                   <p className="font-body text-sm text-mauve">
-                    Realizado em {exam ? formatDate((exam as unknown as { exam_date?: string | null }).exam_date ?? exam.created_at) : ''}
+                    {/* WEB-003 / D-15(a): data de REALIZAÇÃO (exam_date); ausente → "Sem data". NUNCA cai para
+                        created_at (data de upload). Mesma regra da lista (page.tsx) — corrige a divergência lista×detalhe. */}
+                    Realizado em {(exam as unknown as { exam_date?: string | null } | null)?.exam_date
+                      ? formatDate((exam as unknown as { exam_date?: string | null }).exam_date as string)
+                      : 'Sem data'}
                     {exam?.page_count ? ` · ${exam.page_count} páginas` : ''}
                   </p>
                   <button onClick={startEditDate}

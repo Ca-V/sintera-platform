@@ -23,6 +23,15 @@ describe('FUNC · planRepresentation (equivalência ao legado)', () => {
     expect(p.family).toBe('imaging')
   })
 
+  it("ophthalmology → NÃO estruturado (document_only) — modalidade de imagem sem processador nesta v1 (WEB-001/002)", () => {
+    // Mesmo COM 'biomarcadores' vindos da leitura multimodal, oftalmologia (Pentacam, microscopia especular,
+    // OCT…) não deve virar representação estruturada enquanto não há módulo de oftalmologia — preserva o documento.
+    const p = planRepresentation(cdu('OCULUS Pentacam'), { documentType: 'ophthalmology', examCount: 0, biomarkerCount: 7 })
+    expect(p.structured).toBe(false)
+    expect(p.documentOnly).toBe(true)
+    expect(p.family).toBe('ophthalmology')
+  })
+
   it("laboratory com biomarcadores → estruturado + laboratory-v1 + estrutura confiável", () => {
     const p = planRepresentation(cdu('MATERIAL - SANGUE RESULTADO: 85'), { documentType: 'laboratory', examCount: 0, biomarkerCount: 12 })
     expect(p.structured).toBe(true)

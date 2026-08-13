@@ -114,14 +114,17 @@ export function planRepresentation(
   const specialized = !!route.model && route.model.id !== 'laboratory' && IMPLEMENTED_CLINICAL_MODELS.includes(route.model.id)
 
   // Representação estruturada (biomarcadores):
-  //  • imagem/laudo narrativo → document_only (equivalente ao legado `isNarrativeLaudo`);
+  //  • imagem/OFTALMOLOGIA/laudo narrativo → document_only. Oftalmologia (Pentacam, microscopia especular,
+  //    OCT, topografia…) é modalidade de IMAGEM/equipamento SEM processador clínico implementado nesta versão
+  //    → preserva o documento, não força "biomarcadores" (WEB-001/002; CEF §4.0: modalidade sem modelo = document_only);
   //  • tipo CONHECIDO não-imagem (laboratory, medical_order…) → estruturado (legado inalterado);
   //  • tipo NULO/desconhecido → só afirma "estruturado" com EVIDÊNCIA positiva (resultados extraídos ou
   //    processador especializado); sem evidência, PRESERVA o documento em vez de alegar "estruturado" vazio
   //    (D-11/12 — robustez do default). Convergir os dois classificadores de modalidade = item arquitetural à parte.
   const hasResults = ctx.examCount >= 1 || ctx.biomarkerCount > 0
   const unknownType = (ctx.documentType ?? '').trim() === ''
-  const structured = ctx.documentType === 'imaging' ? false : unknownType ? (hasResults || specialized) : true
+  const imagingFamily = ctx.documentType === 'imaging' || ctx.documentType === 'ophthalmology'
+  const structured = imagingFamily ? false : unknownType ? (hasResults || specialized) : true
   const structureConfident = ctx.documentType !== 'laboratory' || ctx.examCount >= 1 || ctx.biomarkerCount > 0
 
   return {

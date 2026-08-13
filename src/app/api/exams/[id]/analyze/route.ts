@@ -10,7 +10,7 @@ import { classifyExamDocument, deriveDisplayTitle, withProvenance } from '@/lib/
 import { MAX_UPLOAD_MB } from '@/lib/capture/limits'
 import { extractIssuer, extractIssuerFromImage } from '@/lib/ai/issuer'
 import { extractRequestingPhysician } from '@/lib/ai/requestingPhysician'
-import { classifyDocumentAI } from '@/lib/ai/document-classifier'
+import { classifyDocumentAI, type DocClassification } from '@/lib/ai/document-classifier'
 import { representationFingerprint, isRepresentationCertified } from '@/lib/capture/reproducibility'
 import { computeCoverage } from '@/lib/capture/coverage'
 import { processBundle } from '@/lib/capture/clinical-information-pipeline'
@@ -362,8 +362,24 @@ export async function POST(
     text: examTextForIssuer,
   })
 
-  // Quando a identidade já está travada, o family/tipo segue o document_type estabelecido.
-  const effectiveDocType = identityEstablished ? (exam.document_type ?? structure.documentType) : structure.documentType
+  // WEB-001/002/004 — MODALIDADE de uploads de IMAGEM. Sem texto, classifyExamDocument cai em 'laboratory' e o
+  // classificador de imagem (classifyDocumentAI) só rodava quando NÃO havia biomarcadores — então exames
+  // oftalmológicos/imagem que "extraíram" viravam laboratoriais + estruturados. Aqui o Content Classifier LÊ a
+  // imagem ANTES do plano: imaging/ophthalmology → document_only (sem módulo específico nesta v1) + título impresso.
+  // Só imagem, só 1ª extração (write-once), best-effort (sem chave de IA → null → mantém o comportamento legado).
+  let imageDoc: DocClassification | null = null
+  if (isImage && !identityEstablished) {
+    const mt = filePath.endsWith('.png') ? 'image/png' : filePath.endsWith('.webp') ? 'image/webp' : 'image/jpeg'
+    imageDoc = await classifyDocumentAI({ base64: pdfBuffer.toString('base64'), mediaType: mt })
+  }
+  const imageModalityOverride = (imageDoc?.documentType === 'imaging' || imageDoc?.documentType === 'ophthalmology')
+    ? imageDoc.documentType : null
+
+  // Quando a identidade já está travada, o family/tipo segue o document_type estabelecido. Para IMAGEM na 1ª
+  // extração, a modalidade lida da imagem (imaging/ophthalmology) prevalece sobre o default 'laboratory'.
+  const effectiveDocType = identityEstablished
+    ? (exam.document_type ?? structure.documentType)
+    : (imageModalityOverride ?? structure.documentType)
 
   // Bundle → CDUs (compreensão) — vem antes do plano de representação. Com o split (M3), ESTE registro
   // representa UMA CDU; a Cobertura soma só as unidades do que a IA leu (não conta as CDUs-irmãs).
@@ -512,11 +528,17 @@ export async function POST(
     // confiável OU identidade clínica não-ambígua de confiança alta); senão 'draft' (sinaliza revisão).
     const clinValidated = !!clin && clin.confidence === 'high' && !clin.ambiguous
     finalUpdate.document_identity_status = (confidentStructure || clinValidated) ? 'validated' : 'draft'
-    finalUpdate.document_type = structure.documentType
+    finalUpdate.document_type = imageModalityOverride ?? structure.documentType
     finalUpdate.document_scope = structure.documentScope
 
-    // Só sobrescreve o nome do arquivo quando aprendemos estrutura de verdade (confidentStructure acima).
-    if (confidentStructure) {
+    // WEB-004 — imagem oftalmológica/imagem (document_only): nome = título IMPRESSO lido da imagem (ex.:
+    // "Pentacam Mosaic 2") + emissor, preservando a informação do documento em vez do genérico "Oftalmologia".
+    if (imageModalityOverride && imageDoc?.displayName) {
+      const title = imageDoc.displayName
+      finalUpdate.display_title = title
+      finalUpdate.type = imageDoc.issuer ? withProvenance(title, { issuer: imageDoc.issuer }) : title
+      if (imageDoc.issuer) finalUpdate.issuer = imageDoc.issuer
+    } else if (confidentStructure) {
       const displayTitle = deriveDisplayTitle(structure)
       finalUpdate.display_title = displayTitle
       // Enriquecimento (fundadora): nome do laboratório emissor. Best-effort. Texto quando há;
@@ -535,7 +557,8 @@ export async function POST(
       const docMediaType = isImage
         ? (filePath.endsWith('.png') ? 'image/png' : filePath.endsWith('.webp') ? 'image/webp' : 'image/jpeg')
         : 'application/pdf'
-      const doc = await classifyDocumentAI({ base64: pdfBuffer.toString('base64'), mediaType: docMediaType })
+      // Reaproveita a classificação de imagem já feita acima (WEB-001) quando houver; senão classifica agora.
+      const doc = imageDoc ?? await classifyDocumentAI({ base64: pdfBuffer.toString('base64'), mediaType: docMediaType })
       if (doc?.displayName) {
         const derived = deriveDisplayTitle({
           documentType: doc.documentType as never,
