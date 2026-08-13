@@ -76,6 +76,26 @@ MESMA infra de agenda/recorrência/notificações — o CARE (recomendação →
 sem retrabalho nem duplicidade. Ordenação: *consolidação dos módulos → backlog (inclui C5) → **C5 é pré-requisito
 do** → CARE-001*.
 
+### C6 · Base de Conhecimento Clínica — "O que é este exame?" ⭐ **(diferencial estratégico; origem: fundadora 13/08)**
+Contextualizar o exame **sem interpretar o resultado da paciente** — a distinção regulatória é o núcleo: a SINTERA
+explica **o exame**, nunca **o achado**. Educação em saúde (RDC 657 / [[principio_nao_producao_conteudo_clinico]]),
+não juízo clínico. Botão discreto no detalhe ("O que é este exame?"). **3 camadas:**
+- **Camada 1 — o exame:** o que é, sinônimos, finalidade, como é realizado, quando costuma ser solicitado
+  (ex.: "Pentacam — topografia/tomografia de córnea por câmera Scheimpflug…").
+- **Camada 2 — os parâmetros/biomarcadores:** o que cada um MEDE, factual (ex.: "Paquimetria: espessura da córnea";
+  "Cell Density: nº de células endoteliais/mm²"), com ícone ⓘ por linha na tabela.
+- **Camada 3 — as fontes:** toda afirmação exibe a fonte técnico-científica que a embasa (SBO, AAO, SBC, ESC,
+  ADA, KDIGO, SBEM, SBN, fabricante…).
+**Arquitetura (decisão de produto):** NÃO buscar em tempo real na internet — construir uma **Base de Conhecimento
+Clínica versionada e curada**. Registro por exame: `nome · sinônimos · especialidade · finalidade · como é
+realizado · quando é solicitado · biomarcadores relacionados · fontes · data da última revisão · responsável
+técnico`. Assim: **versionado · revisão clínica · rastreável · atualizável · sem inconsistência de busca ao vivo**.
+Governança: conteúdo clínico-educativo é **artefato governado** (aprovação do Responsável Clínico, como o
+`prompt_registry`/ruleset). Reaproveita a fundação já existente de educação por biomarcador
+(`GET /api/education/biomarker/[code]`, MedlinePlus/NIH; "Sobre este exame" no Mobile) — evoluindo-a de fonte
+externa para KB própria curada. **Alto valor:** transforma repositório de documentos em plataforma que
+**contextualiza** sem substituir o profissional. *(Depende de curadoria clínica → fase de evolução, não v1.)*
+
 ## Fase D — REDESIGN VISUAL (Design System)
 - **D1 · Identidade "Almond Blossom" (Van Gogh)** — **aqua** institucional (entre Verde Tiffany e Azul
   Turquesa); **trocar a sidebar verde escura**; **creme · branco · preto · marrom** secundários; **dourado

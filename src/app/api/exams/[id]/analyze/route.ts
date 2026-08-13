@@ -504,7 +504,10 @@ export async function POST(
     // evita pegar nascimento/impressão/protocolo (bug do EEG "2002" e do laudo 2009). Baixa confiança
     // ou sem texto → mantém a data da IA (§5.2: baixa confiança não sobrescreve).
     const semDate = examTextForIssuer ? pickExamDate(examTextForIssuer) : null
-    const examDate = semDate && semDate.iso && semDate.confidence !== 'low' ? semDate.iso : result.examDate
+    // Data de realização: texto (alta/média confiança) → extração multimodal → data LIDA DA IMAGEM pelo
+    // classificador. Uploads de imagem não têm texto (sem OCR), então a data impressa só chega pela leitura
+    // da imagem — antes ficava "Sem data" mesmo com a data no documento. Fato documental (transcrição).
+    const examDate = (semDate && semDate.iso && semDate.confidence !== 'low' ? semDate.iso : result.examDate) ?? imageDoc?.examDate ?? null
     if (examDate) finalUpdate.exam_date = examDate
     if (result.patientName) finalUpdate.patient_name = result.patientName
 
