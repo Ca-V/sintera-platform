@@ -7,6 +7,8 @@
 // sugeriu. Fronteira RDC-657: compreende/transcreve, não interpreta o resultado clínico. NÃO define o nome oficial
 // (Terminology Service) nem possui conhecimento clínico (Clinical Knowledge Service).
 import Anthropic from '@anthropic-ai/sdk'
+import { jsonrepair } from 'jsonrepair'
+import { extractJsonCandidate } from '@/lib/ai/gateway'
 
 export type Confidence = 'high' | 'medium' | 'low'
 export type FactSource = 'vision' | 'ocr' | 'kb' | 'terminology' | 'none'
@@ -22,8 +24,18 @@ export interface SourcedFact<T = string> {
   note?: string | null
 }
 
+/** Diagnóstico ESTRUTURADO da execução do DUE (não é linguagem natural) — permite responder programaticamente
+ *  "o modelo truncou?" (`stopReason='max_tokens'`), "quantos tokens?", "precisou reparar o JSON?" SEM reprocessar. */
+export interface DueDiagnostics {
+  stopReason: string | null
+  outputTokens: number | null
+  attempts: number
+  recovered: boolean          // true = o JSON precisou de extração/reparo (truncado/malformado)
+}
+
 /** Relatório interno de compreensão — por atributo, auditável. */
 export interface UnderstandingReport {
+  diagnostics?: DueDiagnostics
   documentType: SourcedFact
   examNameCandidate: SourcedFact   // nome CANDIDATO (a decisão canônica é do Terminology Service)
   device: SourcedFact
@@ -99,9 +111,26 @@ export async function understandImageDocument(args: { base64: string; mediaType:
         messages: [{ role: 'user', content: [{ type: 'image', source: { type: 'base64', media_type: args.mediaType, data: args.base64 } }, { type: 'text', text: 'Compreenda este documento no JSON pedido.' }] as any }],
       })
       const raw = msg.content[0]?.type === 'text' ? msg.content[0].text : ''
-      const m = raw.match(/\{[\s\S]*\}/)
-      if (m) return parseUnderstanding(JSON.parse(m[0]) as Record<string, unknown>, 'vision')
-    } catch { /* tenta de novo */ }
+      // Parse ROBUSTO reusando o gateway (extração por balanceamento de chaves + jsonrepair): recupera JSON
+      // truncado/malformado → elimina a CLASSE de falha de parse (não só este documento). Componente melhor,
+      // não prompt maior (fundadora #4). Regressão anterior: regex ingênuo + JSON.parse quebrava em truncação.
+      const candidate = extractJsonCandidate(raw)
+      let obj: Record<string, unknown> | null = null
+      if (candidate) {
+        try { obj = JSON.parse(candidate) as Record<string, unknown> }
+        catch { try { obj = JSON.parse(jsonrepair(candidate)) as Record<string, unknown> } catch { obj = null } }
+      }
+      if (obj) {
+        const du = parseUnderstanding(obj, 'vision')
+        // DIAGNÓSTICO estruturado persistido (fundadora #1/#2): stop_reason='max_tokens' revela truncação sem reprocessar.
+        du.report.diagnostics = { stopReason: msg.stop_reason ?? null, outputTokens: msg.usage?.output_tokens ?? null, attempts: attempt + 1, recovered: !!candidate && candidate.trim() !== raw.trim() }
+        return du
+      }
+      // Parse falhou nesta tentativa → registra p/ diagnóstico (logs de runtime = fonte técnica), depois tenta de novo.
+      console.error('[DUE] parse falhou', { attempt, stop_reason: msg.stop_reason, output_tokens: msg.usage?.output_tokens, preview: raw.slice(0, 160) })
+    } catch (e) {
+      console.error('[DUE] exceção', { attempt, error: String(e).slice(0, 200) })
+    }
   }
   return null
 }
