@@ -23,6 +23,17 @@
   Imagem · Genético · Metabolômica · Proteômica · Transcriptômica · Microbioma · …), não fluxo próprio;
   aberta/escalável. *(§2.6; [[principio_modelo_aberto]])*
 - **A5 · Relatórios: Histórico próprio** — módulo de Histórico separado da Agenda; acesso independente. *(§1.1)*
+- **A6 · Reprocessamento/reclassificação controlada de exames existentes** *(origem: homologação Web 13/08 — WEB-001..004)* —
+  Hoje a identidade documental (`document_type`, data, nome) é **write-once**: estabelecida na 1ª extração e
+  **imutável** (reprodutibilidade/auditabilidade — princípio correto). Mas quando a **lógica de classificação/
+  extração evolui** (ex.: passar a tratar oftalmologia como document_only), os exames **já existentes** não se
+  atualizam por "Extrair novamente" — exigem **excluir + reenviar**, o que é uma **deficiência funcional** para
+  correção/manutenção. Implementar o **Passo 2 do RI-001** já previsto no código (`analyze/route.ts:72-90`):
+  `document_identity_status` com estados **draft/validated/locked**, `identity_source` por atributo, e um fluxo
+  de **candidato + comparação + repromoção auditável** disparado quando houver `extractor_version` mais novo
+  (ou reclassificação solicitada) — reclassifica/reprocessa **sem** quebrar append-only, rastreabilidade e
+  reprodutibilidade (a versão anterior permanece no histórico). *(Não altera o freeze; adiciona o caminho
+  deliberado de "descongelar/reprocessar" que hoje falta.)*
 
 ## Fase B — Melhorias de EXPERIÊNCIA DO USUÁRIO
 - **B1 · Quantitativos × Qualitativos** — quantitativos: estruturação · comparação · evolução · gráficos ·
