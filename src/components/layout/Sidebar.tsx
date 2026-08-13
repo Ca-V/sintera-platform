@@ -177,9 +177,11 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
   const [counts, setCounts] = useState<MinhaSaudeCounts | null>(null)
   useEffect(() => {
     let alive = true
+    // Re-tenta quando o perfil/sessão hidrata (profile?.id) — senão, numa corrida de montagem, getSession()
+    // ainda vazio lançaria "Não autenticado" e o contador ficaria mudo sem nova tentativa.
     getMinhaSaudeCounts(supabase).then(c => { if (alive) setCounts(c) }).catch(() => { /* indicador é opcional */ })
     return () => { alive = false }
-  }, [supabase])
+  }, [supabase, profile?.id])
   const countOf = (href: string): number | undefined => {
     if (!counts) return undefined
     const map: Record<string, number> = {

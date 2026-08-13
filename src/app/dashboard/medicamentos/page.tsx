@@ -199,6 +199,9 @@ export default function MedicamentosPage() {
   function applyScanned(it: ScanItem) {
     setEditingId(null); setKind('medicamento'); setName(it.name); setDose(it.dose ?? ''); setFreq(it.frequency ?? '')
     setStartedOn(it.startedOn ?? ''); setUntilOn(''); setNotes('')
+    // Campos que o scan NÃO fornece precisam voltar ao padrão — senão vazam de um openEdit anterior
+    // ainda aberto (ex.: receita, valor pago, marca, situação de outro medicamento). Espelha reset().
+    setBrand(''); setAmount(''); setPrescriptionUrl(null); setMedStatus('em_uso'); setRepurchaseFreq('')
     setAcquiredQty(it.acquiredQty != null ? String(it.acquiredQty) : '')
     setPackQty(it.packQty != null ? String(it.packQty) : ''); setDailyCons(it.dailyCons != null ? String(it.dailyCons) : '')
     setPurchasedOn(it.purchasedOn ?? ''); setPurchaseStatus(it.purchasedOn ? 'comprado' : ''); setRepurchase(false); setErr(null)
@@ -383,7 +386,9 @@ export default function MedicamentosPage() {
     // dele, usa a recorrência declarada (mensal…anual) — antes só o consumo agendava,
     // então uma recorrência "trimestral" sem consumo nunca gerava evento (bug corrigido).
     if (medId) {
-      const rec = nextRepurchaseDate(purchasedOn || null, num(packQty), num(dailyCons), num(acquiredQty), repurchaseFreq || null)
+      // Base da recompra: "Comprado em" quando houver; senão o "A partir de" (startedOn) do bloco de
+      // recorrência — assim a recorrência declarada agenda mesmo sem data de compra (o campo tem efeito).
+      const rec = nextRepurchaseDate(purchasedOn || startedOn || null, num(packQty), num(dailyCons), num(acquiredQty), repurchaseFreq || null)
       const wants = repurchase && status === 'em_uso' && !!rec
       const existingEvent = existing?.repurchaseEventId ?? null
       try {
@@ -828,7 +833,7 @@ export default function MedicamentosPage() {
               const ro = runoutDate(purchasedOn || null, num(packQty), num(dailyCons), num(acquiredQty))
               // Recompra: consumo tem prioridade; sem ele, usa a recorrência declarada
               // (quinzenal/mensal…) — assim prevê mesmo sem cálculo por g/mL.
-              const rec = repurchase ? nextRepurchaseDate(purchasedOn || null, num(packQty), num(dailyCons), num(acquiredQty), repurchaseFreq || null) : null
+              const rec = repurchase ? nextRepurchaseDate(purchasedOn || startedOn || null, num(packQty), num(dailyCons), num(acquiredQty), repurchaseFreq || null) : null
               if (!ro && !rec) return <p className="font-body text-[11px] text-mauve">Informe o conteúdo, o consumo por dia (na mesma unidade do conteúdo) e a data de compra para estimar o término — ou marque a recompra e a frequência.</p>
               return (
                 <p className="font-body text-[11px] text-petal">

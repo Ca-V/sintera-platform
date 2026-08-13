@@ -173,10 +173,14 @@ function LegacyReport() {
   // Seções com seleção item a item: Exames, Medicamentos e Agenda (por TIPO de evento
   // — consulta/exame/procedimento/vacina/cirurgia… — granularidade máxima sem inventar
   // módulos que não existem no domínio; "Agenda" é UMA entidade, os tipos são seus itens).
-  const hasItems = (k: SectionKey): boolean => k === 'exames' || k === 'medicamentos' || k === 'eventos'
+  const hasItems = (k: SectionKey): boolean => k === 'exames' || k === 'medicamentos' || k === 'suplementos' || k === 'eventos'
   const sectionItems = (k: SectionKey): { key: string; label: string }[] => {
     if (k === 'exames') return exams.map(e => ({ key: `${e.type}__${e.date}`, label: `${fmt(e.date)} — ${e.type}` }))
-    if (k === 'medicamentos') return meds.map(m => ({ key: m.name, label: m.name + (m.status === 'suspenso' ? ' (suspenso)' : '') }))
+    // Medicamentos e Suplementos são a MESMA tabela separada por kind (isSup) — cada árvore lista só os seus,
+    // com a chave de exclusão da SUA seção, para o controle item-a-item operar (antes suplementos apareciam
+    // sob "Medicamentos" e a exclusão era ignorada pela seção Suplementos).
+    if (k === 'medicamentos') return meds.filter(m => m.kind !== 'suplemento').map(m => ({ key: m.name, label: m.name + (m.status === 'suspenso' ? ' (suspenso)' : '') }))
+    if (k === 'suplementos') return meds.filter(m => m.kind === 'suplemento').map(m => ({ key: m.name, label: m.name + (m.status === 'suspenso' ? ' (suspenso)' : '') }))
     if (k === 'eventos') {
       const seen = new Set<string>()
       const out: { key: string; label: string }[] = []

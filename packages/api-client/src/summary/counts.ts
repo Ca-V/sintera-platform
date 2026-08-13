@@ -25,20 +25,23 @@ export async function getMinhaSaudeCounts(client: SupabaseClient, signal?: Abort
     const uid = session.user.id
     const head = (table: string) => client.from(table).select('id', { count: 'exact', head: true }).eq('user_id', uid)
 
-    const [exams, meds, supps, resources, conditions, habits] = await Promise.all([
+    const [exams, medsTotal, supps, resources, conditions, habits] = await Promise.all([
       head('exams').abortSignal(s),
-      head('medications').eq('kind', 'medicamento').abortSignal(s),
+      head('medications').abortSignal(s),
       head('medications').eq('kind', 'suplemento').abortSignal(s),
       head('health_resources').abortSignal(s),
       head('health_conditions').abortSignal(s),
       head('life_habits').abortSignal(s),
     ])
-    for (const r of [exams, meds, supps, resources, conditions, habits]) if (r.error) throw asError(r.error)
+    for (const r of [exams, medsTotal, supps, resources, conditions, habits]) if (r.error) throw asError(r.error)
 
+    // Medicamentos = tudo que NÃO é suplemento (medicamento/produto/dispositivo/outro/kind nulo) — espelha a
+    // página /dashboard/medicamentos (filtro `kind !== 'suplemento'`). Suplementos = kind='suplemento'.
+    const supplements = supps.count ?? 0
     return {
       exams: exams.count ?? 0,
-      medications: meds.count ?? 0,
-      supplements: supps.count ?? 0,
+      medications: Math.max(0, (medsTotal.count ?? 0) - supplements),
+      supplements,
       resources: resources.count ?? 0,
       conditions: conditions.count ?? 0,
       habits: habits.count ?? 0,
