@@ -12,8 +12,7 @@ import { extractIssuer, extractIssuerFromImage } from '@/lib/ai/issuer'
 import { extractRequestingPhysician } from '@/lib/ai/requestingPhysician'
 import { classifyDocumentAI } from '@/lib/ai/document-classifier'
 import { understandImageDocument, type DocumentUnderstanding } from '@/lib/capture/document-understanding'
-import { resolveTerminology } from '@/lib/terminology/terminology-service'
-import { PIPELINE_VERSIONS } from '@/lib/capture/pipeline-versions'
+import { resolveClinicalIdentity } from '@/lib/clinical-pipeline/clinical-pipeline'
 import { representationFingerprint, isRepresentationCertified } from '@/lib/capture/reproducibility'
 import { computeCoverage } from '@/lib/capture/coverage'
 import { processBundle } from '@/lib/capture/clinical-information-pipeline'
@@ -380,9 +379,18 @@ export async function POST(
   }
   const imageModalityOverride = (imageDU?.documentType === 'imaging' || imageDU?.documentType === 'ophthalmology')
     ? imageDU.documentType : null
-  // Resolução de NOMENCLATURA (camada de Terminologia) a partir dos fatos do DUE — computada uma vez, também
-  // persistida no relatório auditável.
-  const imageTerminology = imageDU ? resolveTerminology(imageDU) : null
+  // PIPELINE CLÍNICO (orquestração): DUE (observa) → Terminology (oficial) → Internal Catalog (lacuna) →
+  // Clinical Identity + Pipeline Audit (Decision Log estruturado, versões, confiança global). id de resolução
+  // ESTÁVEL via sequência (replay/auditoria). Só documentos de imagem, 1ª compreensão.
+  let imagePipeline: ReturnType<typeof resolveClinicalIdentity> | null = null
+  if (imageDU) {
+    const startedAt = new Date().toISOString()
+    // Função RPC (não está nos tipos gerados) — cast pontual; fallback estável se indisponível.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const ridRes = await (supabase as any).rpc('next_resolution_id') as { data?: unknown }
+    const resolutionId = typeof ridRes?.data === 'string' && ridRes.data ? ridRes.data : `RES-${examId}`
+    imagePipeline = resolveClinicalIdentity(imageDU, { resolutionId, startedAt, finishedAt: new Date().toISOString() })
+  }
 
   // Quando a identidade já está travada, o family/tipo segue o document_type estabelecido. Para IMAGEM na 1ª
   // extração, a modalidade lida da imagem (imaging/ophthalmology) prevalece sobre o default 'laboratory'.
@@ -528,18 +536,11 @@ export async function POST(
     const solicitante = (examTextForIssuer ? await extractRequestingPhysician(examTextForIssuer) : null) ?? imageDU?.physician ?? null
     if (solicitante) finalUpdate.requesting_physician = solicitante
 
-    // RELATÓRIO AUDITÁVEL por ETAPAS distintas (cada camada tem responsabilidade única — ADR-ARCH-002):
-    //  · versions/resolvedAt → rastreabilidade ("por que este nome?" = versões usadas + data);
-    //  · due → OBSERVAÇÃO pura (o DUE não conhece terminologia nem KB): fatos + evidências + razão de ausência;
-    //  · terminology → resolução da NOMENCLATURA, com proveniência própria (value-set/documento/oficial);
-    //  · decisionLog → a TRILHA DE DECISÕES (o que foi visto → regra → candidato → resolução).
-    // Clinical Knowledge / Evidence (etapas 3–4) ainda não produzem dados. Documentos de imagem por ora.
-    if (imageDU) finalUpdate.understanding_report = {
-      versions: PIPELINE_VERSIONS,
-      resolvedAt: new Date().toISOString(),
-      due: imageDU.report,
-      terminology: imageTerminology,
-      decisionLog: imageTerminology?.decisionLog ?? [],
+    // PIPELINE AUDIT (ADR-CP-001): orquestração (id de resolução · versões · Decision Log estruturado · status) +
+    // saídas por camada (due · terminology · internalCatalog · knowledge · evidence). Correlacionado por resolution_id.
+    if (imagePipeline) {
+      finalUpdate.understanding_report = imagePipeline.audit
+      finalUpdate.resolution_id = imagePipeline.identity.resolutionId
     }
 
     // Identidade CLÍNICA (Clinical Identity Registry, CEF §3.0) — "que tipo de exame é", por ensemble de
@@ -563,9 +564,9 @@ export async function POST(
     // WEB-004 — imagem oftalmológica/imagem (document_only): nome = título IMPRESSO lido da imagem (ex.:
     // "Pentacam Mosaic 2") + emissor, preservando a informação do documento em vez do genérico "Oftalmologia".
     if (imageModalityOverride && imageDU) {
-      // NOME resolvido pela camada de TERMINOLOGIA (não pelo DUE): o DUE dá os fatos/evidências, a Terminologia
-      // decide o nome canônico/provisório. EQUIPAMENTO ≠ EXAME; nunca uma linha interna do laudo.
-      const title = imageTerminology?.name ?? null
+      // NOME = Clinical Identity resolvida pelo PIPELINE (DUE observa · Terminology/Internal Catalog decidem).
+      // EQUIPAMENTO ≠ EXAME; nunca uma linha interna do laudo.
+      const title = imagePipeline?.identity.name ?? null
       if (title) {
         finalUpdate.display_title = title
         finalUpdate.type = imageDU.issuer ? withProvenance(title, { issuer: imageDU.issuer }) : title
