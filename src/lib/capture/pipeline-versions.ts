@@ -4,6 +4,6 @@
 export const PIPELINE_VERSIONS = {
   due: 'due-0.2.0',                    // Document Understanding Engine (observação + relatório auditável)
   terminology: 'terminology-valueset-0.1.0', // value-set provisório (sem ancoragem LOINC/SNOMED ainda)
-  clinicalKnowledge: null as string | null,  // Clinical Knowledge Service — sem curadoria ativa (C6)
+  clinicalKnowledge: 'clinical-knowledge-0.1.0' as string | null,  // C6 — base curada inicial (oftalmo) + proveniência por atributo
   evidence: null as string | null,           // Evidence Service — não implementado (C8)
 } as const
