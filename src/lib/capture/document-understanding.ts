@@ -65,10 +65,12 @@ function specialtyAdjective(category: string | null): string | null {
   return c ? (SPECIALTY_ADJECTIVE[c] ?? null) : null
 }
 
-// ── CATÁLOGO (Base de Conhecimento) — equipamento → exames POSSÍVEIS + SINAIS de cada exame específico ─────────
-// Artefato CURADO/versionado e GOVERNADO (revisão clínica + expansão — backlog C6). NÃO é a IA inventando: o nome
-// só é afirmado (alta confiança) quando há SINAL no documento. `defaultName` só p/ equipamento de propósito ÚNICO
-// (ex.: perímetro = campo visual). Pentacam é multiprotocolo → sem defaultName (exige sinal).
+// ── CATÁLOGO (binding equipamento → exame) — STAND-IN PROVISÓRIO ──────────────────────────────────────────────
+// NOTA DE ARQUITETURA (ADR-CK-001): este catálogo é um *binding* que pertence à camada de TERMINOLOGIA/CONHECIMENTO
+// (Terminology Service / Clinical Knowledge Service), NÃO ao DUE — o DUE só compreende "o que existe". Mantido aqui
+// como stand-in até esses serviços existirem; MARCADO PARA MIGRAÇÃO. Artefato CURADO/GOVERNADO (revisão clínica +
+// expansão). NÃO é a IA inventando: o nome só é afirmado (alta confiança) quando há SINAL no documento.
+// `defaultName` só p/ equipamento de propósito ÚNICO (ex.: perímetro = campo visual); Pentacam é multiprotocolo.
 export interface ExamCatalogEntry {
   equipment: RegExp
   equipmentLabel: string

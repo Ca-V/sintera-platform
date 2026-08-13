@@ -76,7 +76,13 @@ MESMA infra de agenda/recorrência/notificações — o CARE (recomendação →
 sem retrabalho nem duplicidade. Ordenação: *consolidação dos módulos → backlog (inclui C5) → **C5 é pré-requisito
 do** → CARE-001*.
 
-### C6 · Base de Conhecimento Clínica — "O que é este exame?" ⭐ **(diferencial estratégico; origem: fundadora 13/08)**
+### C6 · Clinical Knowledge Service — "O que é este exame?" ⭐ **(diferencial estratégico; origem: fundadora 13/08)**
+> **Arquitetura em 4 camadas (ADR-CK-001):** DUE (o que existe) → **Terminology Service** (C7 — código oficial) →
+> **Clinical Knowledge Service** (ESTE item — o que significa) → superfícies (Web · Mobile · IA · Insights ·
+> Relatórios) consomem a MESMA resposta. Conhecimento ≠ Terminologia ≠ Compreensão — camadas distintas. Contrato
+> `ClinicalKnowledge` com **proveniência POR ATRIBUTO** (`Sourced<T>`). IA só propõe candidatos; conteúdo educativo
+> exige revisão clínica + fonte + data + responsável técnico (governança > terminologia). PubMed alimenta a
+> curadoria, não o runtime. Cache versionado.
 Contextualizar o exame **sem interpretar o resultado da paciente** — a distinção regulatória é o núcleo: a SINTERA
 explica **o exame**, nunca **o achado**. Educação em saúde (RDC 657 / [[principio_nao_producao_conteudo_clinico]]),
 não juízo clínico. Botão discreto no detalhe ("O que é este exame?"). **3 camadas:**
