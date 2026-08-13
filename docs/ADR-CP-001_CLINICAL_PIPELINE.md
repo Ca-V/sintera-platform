@@ -52,9 +52,12 @@ Refinamento final (fundadora): o Pipeline resolve fatos com UM motor genérico, 
   `INCOMPLETE_DATE`/`AMBIGUOUS`…). Explica não só a decisão, mas por que TODAS as alternativas foram descartadas
   → rastreabilidade completa + métricas (quais detectores/fabricantes/layouts mais confundem). No `PipelineAudit.resolutions[]`.
 
-## Congelamento
+## Congelamento — CONTRATOS PÚBLICOS (não a arquitetura)
 
-A partir daqui, **toda evolução futura** (novos exames, IA, Insights, Mobile, Relatórios, Busca) **consome estes
-contratos sem alterá-los**. Mudança de contrato exige novo ADR. Mudança que faça uma camada assumir responsabilidade
-de outra viola ADR-ARCH-002. Evolução de CONTEÚDO (ancorar catálogo a LOINC/SNOMED, curadoria do Knowledge/Evidence)
-ocorre atrás dos contratos, governada, sem quebrar consumidores.
+Congelam-se os **contratos PÚBLICOS** consumidos por outras camadas (ClinicalIdentity · PipelineAudit · Evidence ·
+ResolvedFact · DecisionStep · ConfidenceProfile · Observation): estáveis, consumidos **sem alteração**. A
+**implementação interna dos componentes permanece EVOLUTIVA** durante a homologação, guiada por exames reais —
+ex.: `ResolutionPolicy` (SingleChoice/RankedChoice/MultiChoice/Merge) × `ResolutionConfig` por atributo, e
+`EvidenceBundle` são internos ao Resolution Engine e evoluem sem tocar o contrato público. Não introduzir novos
+contratos públicos sem necessidade; mudança de contrato público exige novo ADR. Mudança que faça uma camada assumir
+responsabilidade de outra viola ADR-ARCH-002.

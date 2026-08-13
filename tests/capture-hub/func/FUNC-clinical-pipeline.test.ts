@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { resolveClinicalMapping } from '@/lib/clinical-pipeline/clinical-mapping-service'
 import { resolveClinicalIdentity, buildFailedAudit } from '@/lib/clinical-pipeline/clinical-pipeline'
+import { resolveFact, DATE_RESOLUTION, SingleChoice, directEvidence, toIso } from '@/lib/clinical-pipeline/resolution-engine'
 import { parseUnderstanding } from '@/lib/capture/document-understanding'
 
 // FUNC — Clinical Pipeline (ADR-CP-001/CP-002): Clinical Mapping Service (RESOLVE conceito, ≠ terminologia própria)
@@ -121,6 +122,18 @@ describe('FUNC · Clinical Pipeline — Clinical Identity + Decision Log + confi
     const b = resolveClinicalMapping(ctxFacts)
     expect(a.name).toBe('Topografia da córnea')   // 1º sinal específico do catálogo
     expect(a.name).toBe(b.name)                    // determinístico
+  })
+
+  it('Resolution Engine — POLICY separada da CONFIG (SingleChoice reutilizável, sobre Evidence)', () => {
+    const ev = [
+      directEvidence('a', 'ocr', 'date', '10/01/2026', toIso),
+      directEvidence('b', 'due', 'date', '2026-05-05', toIso),
+    ]
+    const r = resolveFact(ev, DATE_RESOLUTION, SingleChoice)  // motor genérico + config data + política single
+    expect(r.value).toBe('2026-01-10')                        // sem rótulo preferido → 1ª elegível
+    expect(r.outcome).toBe('decision_ambiguous')              // 2 elegíveis, nenhuma preferida
+    expect(r.rejected.some(x => x.reasonCode === 'AMBIGUOUS')).toBe(true)  // a outra é rejeitada com código
+    expect(r.considered.length).toBe(2)
   })
 
   it('DUE falho → audit de FALHA (documento SEMPRE explicável; nunca sem registro nem regride)', () => {

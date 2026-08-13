@@ -8,6 +8,17 @@ ADR-CK-001 · ADR-ARCH-002.
 > **A SINTERA nunca cria conhecimento clínico; ela identifica, organiza, contextualiza e referencia conhecimento
 > proveniente de fontes reconhecidas.**
 
+**Princípio PERMANENTE — independência do modelo de IA (fundadora 13/08):**
+
+> **Nenhuma decisão clínica persistida pode depender da REEXECUÇÃO de um modelo de IA para ser compreendida ou
+> reproduzida.** Toda decisão deve ser integralmente EXPLICÁVEL e REPRODUZÍVEL a partir do **Pipeline Audit
+> persistido** — garantindo auditabilidade, reprodutibilidade e independência do modelo de IA utilizado.
+
+Consequências concretas: o audit persiste as OBSERVAÇÕES (com id/rótulo/região), as EVIDÊNCIAS normalizadas, e a
+DECISÃO (aceita + rejeitadas com código) — de modo que a mesma entrada produz a mesma `ResolvedFact` por regra
+determinística, sem chamar a IA de novo. A IA participa só da OBSERVAÇÃO (uma vez, registrada); a interpretação é
+determinística e replayável.
+
 Complementa o princípio já vigente:
 
 > A SINTERA organiza, integra e contextualiza informações para apoiar a continuidade do cuidado, **mas não realiza

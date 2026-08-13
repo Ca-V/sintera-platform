@@ -18,7 +18,7 @@ export function directEvidence(id: string, source: string, type: string, raw: st
   return { id, observationId: null, source, type, raw, normalized: normalize(raw), label: null, region: null, confidence: null }
 }
 
-/** CONFIG de resolução por atributo — o motor é o mesmo; só a config muda (evita DateResolver/PatientResolver…). */
+/** CONFIG do ATRIBUTO — elegibilidade/normalização/preferência (o QUE resolver). Interno ao engine (evolutivo). */
 export interface ResolutionConfig {
   attribute: string
   /** Desqualifica uma evidência (com CÓDIGO) — ex.: rótulo "impressão" → PRINT_DATE; incompleta → INCOMPLETE_DATE. */
@@ -27,8 +27,31 @@ export interface ResolutionConfig {
   prefer: (ev: Evidence) => boolean
 }
 
-/** MOTOR GENÉRICO. Rejeita por config (com código), escolhe a preferida entre as elegíveis, e registra tudo. */
-export function resolveFact(evidence: Evidence[], cfg: ResolutionConfig): ResolvedFact {
+/** EVIDENCE BUNDLE — múltiplas observações compõem UMA evidência lógica ANTES da resolução (ex.: '18/03' + '2026').
+ *  Interno ao engine. Por ora: identidade (cada evidência é seu bundle); a fusão evolui guiada por exames reais. */
+export interface EvidenceBundle { evidenceIds: string[]; combined: Evidence }
+export function bundleEvidence(evidence: Evidence[]): Evidence[] {
+  return evidence // seam de fusão — sem duplicar lógica quando políticas de bundle forem adicionadas
+}
+
+/** POLICY — estratégia REUTILIZÁVEL de escolha, SEPARADA da config (o COMO resolver). Sem duplicar lógica entre
+ *  atributos: SingleChoice (uma), MultiChoice (várias), RankedChoice (ordenada), Merge (combina)… */
+export type ResolutionPolicy = (eligible: Evidence[], cfg: ResolutionConfig) => { chosen: Evidence | null; ambiguous: boolean; extraRejected: RejectedEvidence[] }
+
+/** SingleChoice — escolhe UMA (preferida, senão a 1ª); marca as demais como AMBIGUOUS. */
+export const SingleChoice: ResolutionPolicy = (eligible, cfg) => {
+  const preferred = eligible.filter(cfg.prefer)
+  const pool = preferred.length ? preferred : eligible
+  const chosen = pool[0] ?? null
+  const extraRejected = pool.slice(1).map(ev => ({ evidenceId: ev.id, reasonCode: 'AMBIGUOUS' as RejectionCode, reason: 'outra candidata elegível — SingleChoice escolheu a 1ª' }))
+  return { chosen, ambiguous: pool.length > 1, extraRejected }
+}
+/** RankedChoice — preferidas primeiro; determinística. (MultiChoice/Merge evoluem por extensão, mesma assinatura.) */
+export const RankedChoice: ResolutionPolicy = (eligible, cfg) => SingleChoice([...eligible].sort((a, b) => Number(cfg.prefer(b)) - Number(cfg.prefer(a))), cfg)
+
+/** MOTOR GENÉRICO: Evidence → bundle → config (elegibilidade) → policy (escolha) → ResolvedFact. Registra tudo. */
+export function resolveFact(rawEvidence: Evidence[], cfg: ResolutionConfig, policy: ResolutionPolicy = SingleChoice): ResolvedFact {
+  const evidence = bundleEvidence(rawEvidence)
   const rejected: RejectedEvidence[] = []
   const base = (outcome: ResolvedFact['outcome'], value: string | null, chosenEvidenceId: string | null, reason: string | null): ResolvedFact =>
     ({ attribute: cfg.attribute, value, chosenEvidenceId, considered: evidence, rejected, outcome, reason })
@@ -41,12 +64,11 @@ export function resolveFact(evidence: Evidence[], cfg: ResolutionConfig): Resolv
   })
   if (eligible.length === 0) return base('decision_ambiguous', null, null, 'evidências observadas, nenhuma elegível')
 
-  const preferred = eligible.filter(cfg.prefer)
-  const pool = preferred.length ? preferred : eligible
-  const ambiguous = pool.length > 1
-  const chosen = pool[0]
-  pool.slice(1).forEach(ev => rejected.push({ evidenceId: ev.id, reasonCode: 'AMBIGUOUS', reason: 'outra candidata elegível (ambígua) — não escolhida' }))
-  return base(ambiguous ? 'decision_ambiguous' : 'resolved', chosen.normalized, chosen.id, `escolhida "${chosen.raw}"${chosen.label ? ` (rótulo "${chosen.label}")` : ''}${ambiguous ? ' — ambíguo, escolhida a 1ª' : ''}`)
+  const { chosen, ambiguous, extraRejected } = policy(eligible, cfg)
+  rejected.push(...extraRejected)
+  if (!chosen) return base('decision_ambiguous', null, null, 'nenhuma evidência escolhida pela política')
+  return base(ambiguous ? 'decision_ambiguous' : 'resolved', chosen.normalized, chosen.id,
+    `escolhida "${chosen.raw}"${chosen.label ? ` (rótulo "${chosen.label}")` : ''}${ambiguous ? ' — ambíguo, escolhida a 1ª' : ''}`)
 }
 
 // ── Config de DATA (uma entre muitas — o motor não conhece "data") ────────────────────────────────────────────
