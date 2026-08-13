@@ -47,7 +47,6 @@ export interface DueDiagnostics {
   outputTokens: number | null
   attempts: number
   recovered: boolean          // true = o JSON precisou de extração/reparo (truncado/malformado)
-  model?: string | null       // QUAL modelo produziu a leitura (preferido × piso) — auditoria de homologação
 }
 
 /** Relatório interno de compreensão — por atributo, auditável. */
@@ -93,14 +92,7 @@ export function structuredPossibleFor(documentType: string | null | undefined): 
   return !NON_STRUCTURED_TYPES.has((documentType ?? '').trim())
 }
 
-// PISO de compatibilidade — modelo hoje em produção, sempre disponível na conta. É o FALLBACK: se o preferido
-// falhar/estiver indisponível, o DUE cai aqui e o comportamento é o de hoje (nenhuma regressão possível).
 const MODEL = 'claude-haiku-4-5-20251001'
-// PREFERIDO — leitura de visão superior para blocos densos (Pentacam/microscopia): lê melhor fontes pequenas e
-// o bloco de identidade (paciente/data) que o Haiku deixava passar. Estabilização do COMPONENTE (modelo melhor),
-// não prompt maior nem nova arquitetura. Escalonamento preferido → piso, na MESMA malha de retry já existente.
-const PREFERRED_MODEL = 'claude-sonnet-5'
-const MODEL_CHAIN = [PREFERRED_MODEL, MODEL] as const
 
 const SYSTEM = `Você é um mecanismo de COMPREENSÃO de documentos de saúde. LÊ o documento e devolve METADADOS
 AUDITÁVEIS, transcrevendo o que está ESCRITO. NÃO interpreta o resultado clínico nem diagnostica (RDC 657/2022).
@@ -124,17 +116,14 @@ Regras CRÍTICAS:
 /** Compreende um documento de IMAGEM (visão computacional). Best-effort: null sem chave de IA / erro. */
 export async function understandImageDocument(args: { base64: string; mediaType: string }): Promise<DocumentUnderstanding | null> {
   if (!process.env.ANTHROPIC_API_KEY || !args.base64) return null
-  // Retry + ESCALONAMENTO DE MODELO: tenta o preferido (leitura superior) e, em erro/timeout/JSON irrecuperável,
-  // cai para o PISO (Haiku, comportamento de hoje). Uma passada por modelo — erro transitório NÃO pode derrubar o
-  // pipeline em silêncio, e a indisponibilidade do preferido NUNCA regride (o piso assume). Ordem = MODEL_CHAIN.
-  for (let attempt = 0; attempt < MODEL_CHAIN.length; attempt++) {
-    const model = MODEL_CHAIN[attempt]
+  // Retry (2 tentativas): erro/timeout/JSON truncado é transitório e NÃO pode derrubar o pipeline silenciosamente.
+  for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: 60_000 })
       const msg = await client.messages.create({
         // max_tokens generoso: o relatório auditável (fields×{value,confidence,absence_reason,note} + evidence) é
         // maior que a versão plana; 700 truncava o JSON → parse falhava → null → pipeline pulado (regressão).
-        model, max_tokens: 1500, temperature: 0, system: SYSTEM,
+        model: MODEL, max_tokens: 1500, temperature: 0, system: SYSTEM,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         messages: [{ role: 'user', content: [{ type: 'image', source: { type: 'base64', media_type: args.mediaType, data: args.base64 } }, { type: 'text', text: 'Compreenda este documento no JSON pedido.' }] as any }],
       })
@@ -151,13 +140,13 @@ export async function understandImageDocument(args: { base64: string; mediaType:
       if (obj) {
         const du = parseUnderstanding(obj, 'vision')
         // DIAGNÓSTICO estruturado persistido (fundadora #1/#2): stop_reason='max_tokens' revela truncação sem reprocessar.
-        du.report.diagnostics = { stopReason: msg.stop_reason ?? null, outputTokens: msg.usage?.output_tokens ?? null, attempts: attempt + 1, recovered: !!candidate && candidate.trim() !== raw.trim(), model }
+        du.report.diagnostics = { stopReason: msg.stop_reason ?? null, outputTokens: msg.usage?.output_tokens ?? null, attempts: attempt + 1, recovered: !!candidate && candidate.trim() !== raw.trim() }
         return du
       }
       // Parse falhou nesta tentativa → registra p/ diagnóstico (logs de runtime = fonte técnica), depois tenta de novo.
-      console.error('[DUE] parse falhou', { attempt, model, stop_reason: msg.stop_reason, output_tokens: msg.usage?.output_tokens, preview: raw.slice(0, 160) })
+      console.error('[DUE] parse falhou', { attempt, stop_reason: msg.stop_reason, output_tokens: msg.usage?.output_tokens, preview: raw.slice(0, 160) })
     } catch (e) {
-      console.error('[DUE] exceção', { attempt, model, error: String(e).slice(0, 200) })
+      console.error('[DUE] exceção', { attempt, error: String(e).slice(0, 200) })
     }
   }
   return null
