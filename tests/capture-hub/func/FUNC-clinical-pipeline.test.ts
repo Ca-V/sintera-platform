@@ -82,6 +82,25 @@ describe('FUNC · Clinical Pipeline — Clinical Identity + Decision Log + confi
     expect(identity.confidence.attributes.date).toBeGreaterThan(0)
   })
 
+  it('ROBUSTEZ — documento sem identificação → Clinical Identity PENDENTE, não aceita automática, status pending', () => {
+    const du = parseUnderstanding({ document_type: 'unknown', fields: {} }, 'vision')
+    const { identity, audit } = resolveClinicalIdentity(du, ctx)
+    expect(identity.name).toBe('Documento (identificação pendente)')
+    expect(identity.nameSource).toBe('pending')
+    expect(identity.provisional).toBe(true)
+    expect(identity.confidence.autoAcceptable).toBe(false)
+    expect(identity.confidence.overall).toBeLessThan(0.5)
+    expect(audit.pipeline.finalStatus).toBe('pending')
+  })
+
+  it('ROBUSTEZ — evidência ambígua (topografia + tomografia) resolve DETERMINISTICAMENTE (1º sinal), sem oscilar', () => {
+    const ctxFacts = { device: 'OCULUS Pentacam', originalTitle: null, examModality: null, examName: null, examCategory: 'Oftalmologia', evidence: ['Topografia', 'Tomografia', 'Scheimpflug'], confidence: 'high' as const }
+    const a = resolveClinicalMapping(ctxFacts)
+    const b = resolveClinicalMapping(ctxFacts)
+    expect(a.name).toBe('Topografia da córnea')   // 1º sinal específico do catálogo
+    expect(a.name).toBe(b.name)                    // determinístico
+  })
+
   it('DUE falho → audit de FALHA (documento SEMPRE explicável; nunca sem registro nem regride)', () => {
     const audit = buildFailedAudit(ctx, 'DUE retornou null após retry')
     expect(audit.pipeline.finalStatus).toBe('pending')

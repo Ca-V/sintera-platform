@@ -54,6 +54,22 @@ describe('FUNC · DUE — relatório AUDITÁVEL (origem/confiança + razão de a
     expect(du.report.examDate.note).toBe('nenhuma data visível no laudo')
   })
 
+  it('ROBUSTEZ — nota longa de datas NÃO é truncada em 200 (raciocínio preservado; corta só além de 600)', () => {
+    const longNote = 'Datas vistas: ' + '12/2025 (calibração), 22/07/2026 (aquisição), 03/1980 (nascimento). '.repeat(6)
+    const du = parseUnderstanding({ document_type: 'ophthalmology', fields: { exam_date: { value: null, absence_reason: 'low_confidence', note: longNote } } }, 'vision')
+    expect((du.report.examDate.note ?? '').length).toBeGreaterThan(200)   // não trunca mais em 200
+    expect((du.report.examDate.note ?? '').length).toBeLessThanOrEqual(600)
+  })
+
+  it('ROBUSTEZ — entrada adversa: tipo desconhecido, evidência não-array, campos ausentes → defaults seguros', () => {
+    const du = parseUnderstanding({ document_type: 42 as unknown as string, evidence: { x: 1 } as unknown as unknown[], fields: {} }, 'vision')
+    expect(du.documentType).toBe('unknown')
+    expect(du.evidence).toEqual([])
+    expect(du.examName).toBeNull()
+    expect(du.report.examDate.absenceReason).toBe('not_found')  // ausência sempre tem razão
+    expect(du.structuredPossible).toBe(true)
+  })
+
   it('compat: campos como string simples ainda parseiam; ausente → absenceReason not_found', () => {
     const du = parseUnderstanding({ document_type: 'laboratory', fields: { exam_name: 'Hemograma completo' } }, 'vision')
     expect(du.examName).toBe('Hemograma completo')
