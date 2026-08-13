@@ -64,4 +64,21 @@ describe('FUNC · Clinical Pipeline — Clinical Identity + Decision Log + confi
     expect(audit.mapping.matched).toBe(true)
     expect(audit.pipeline.versions.due).toMatch(/^due-/)
   })
+
+  it('data resolvida por OUTRA leitura (DUE ilegível) → Audit reflete a data REAL, não "illegible"', () => {
+    // Regressão do defeito de homologação (CEM-530): exam_date persistida ≠ audit. O Audit deve refletir a
+    // data efetivamente resolvida (ok + valor), explicando a divergência com a leitura do DUE.
+    const du = parseUnderstanding({
+      document_type: 'ophthalmology', evidence: ['CEM-530'],
+      fields: { device: { value: 'CEM-530' }, exam_date: { value: null, absence_reason: 'illegible' } },
+    }, 'vision')
+    const { identity, audit } = resolveClinicalIdentity(du, { ...ctx, resolved: { examDate: '2026-03-18', patientName: 'Fulana' } })
+    expect(identity.examDate).toBe('2026-03-18')
+    expect(identity.patientName).toBe('Fulana')
+    const dateStep = audit.pipeline.decisionLog.find(s => s.step === 'due' && s.detector === 'date')
+    expect(dateStep?.status).toBe('ok')
+    expect(dateStep?.output).toBe('2026-03-18')
+    expect(dateStep?.reason).toMatch(/leitura do DUE/i)   // explica de onde veio (auditoria)
+    expect(identity.confidence.attributes.date).toBeGreaterThan(0)
+  })
 })

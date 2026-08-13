@@ -389,7 +389,11 @@ export async function POST(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const ridRes = await (supabase as any).rpc('next_resolution_id') as { data?: unknown }
     const resolutionId = typeof ridRes?.data === 'string' && ridRes.data ? ridRes.data : `RES-${examId}`
-    imagePipeline = resolveClinicalIdentity(imageDU, { resolutionId, startedAt, finishedAt: new Date().toISOString() })
+    // Data/paciente EFETIVAMENTE resolvidos (imagem não tem texto): extração multimodal → leitura do DUE. O Audit
+    // reflete essa resolução real (não só a leitura independente do DUE) — corrige a divergência data-banco × audit.
+    const resolvedExamDate = (result.examDate ?? imageDU.examDate) ?? null
+    const resolvedPatient = (result.patientName ?? imageDU.patientName) ?? null
+    imagePipeline = resolveClinicalIdentity(imageDU, { resolutionId, startedAt, finishedAt: new Date().toISOString(), resolved: { examDate: resolvedExamDate, patientName: resolvedPatient } })
   }
 
   // Quando a identidade já está travada, o family/tipo segue o document_type estabelecido. Para IMAGEM na 1ª
