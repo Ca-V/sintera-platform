@@ -86,20 +86,23 @@ Regras CRÍTICAS:
 /** Compreende um documento de IMAGEM (visão computacional). Best-effort: null sem chave de IA / erro. */
 export async function understandImageDocument(args: { base64: string; mediaType: string }): Promise<DocumentUnderstanding | null> {
   if (!process.env.ANTHROPIC_API_KEY || !args.base64) return null
-  try {
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: 40_000 })
-    const msg = await client.messages.create({
-      model: MODEL, max_tokens: 700, temperature: 0, system: SYSTEM,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      messages: [{ role: 'user', content: [{ type: 'image', source: { type: 'base64', media_type: args.mediaType, data: args.base64 } }, { type: 'text', text: 'Compreenda este documento no JSON pedido.' }] as any }],
-    })
-    const raw = msg.content[0]?.type === 'text' ? msg.content[0].text : ''
-    const m = raw.match(/\{[\s\S]*\}/)
-    if (!m) return null
-    return parseUnderstanding(JSON.parse(m[0]) as Record<string, unknown>, 'vision')
-  } catch {
-    return null
+  // Retry (2 tentativas): erro/timeout/JSON truncado é transitório e NÃO pode derrubar o pipeline silenciosamente.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: 60_000 })
+      const msg = await client.messages.create({
+        // max_tokens generoso: o relatório auditável (fields×{value,confidence,absence_reason,note} + evidence) é
+        // maior que a versão plana; 700 truncava o JSON → parse falhava → null → pipeline pulado (regressão).
+        model: MODEL, max_tokens: 1500, temperature: 0, system: SYSTEM,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        messages: [{ role: 'user', content: [{ type: 'image', source: { type: 'base64', media_type: args.mediaType, data: args.base64 } }, { type: 'text', text: 'Compreenda este documento no JSON pedido.' }] as any }],
+      })
+      const raw = msg.content[0]?.type === 'text' ? msg.content[0].text : ''
+      const m = raw.match(/\{[\s\S]*\}/)
+      if (m) return parseUnderstanding(JSON.parse(m[0]) as Record<string, unknown>, 'vision')
+    } catch { /* tenta de novo */ }
   }
+  return null
 }
 
 const ABSENCE = new Set(['not_found', 'illegible', 'low_confidence', 'detector_not_applicable'])

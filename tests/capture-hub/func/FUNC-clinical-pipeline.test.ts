@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { resolveClinicalMapping } from '@/lib/clinical-pipeline/clinical-mapping-service'
-import { resolveClinicalIdentity } from '@/lib/clinical-pipeline/clinical-pipeline'
+import { resolveClinicalIdentity, buildFailedAudit } from '@/lib/clinical-pipeline/clinical-pipeline'
 import { parseUnderstanding } from '@/lib/capture/document-understanding'
 
 // FUNC — Clinical Pipeline (ADR-CP-001/CP-002): Clinical Mapping Service (RESOLVE conceito, ≠ terminologia própria)
@@ -80,5 +80,16 @@ describe('FUNC · Clinical Pipeline — Clinical Identity + Decision Log + confi
     expect(dateStep?.output).toBe('2026-03-18')
     expect(dateStep?.reason).toMatch(/leitura do DUE/i)   // explica de onde veio (auditoria)
     expect(identity.confidence.attributes.date).toBeGreaterThan(0)
+  })
+
+  it('DUE falho → audit de FALHA (documento SEMPRE explicável; nunca sem registro nem regride)', () => {
+    const audit = buildFailedAudit(ctx, 'DUE retornou null após retry')
+    expect(audit.pipeline.finalStatus).toBe('pending')
+    expect(audit.due).toBeNull()
+    expect(audit.pipeline.resolutionId).toBe('RES-TEST-00000001')
+    const dueStep = audit.pipeline.decisionLog.find(s => s.step === 'due')
+    expect(dueStep?.status).toBe('failed')
+    expect(dueStep?.reason).toMatch(/null após retry/i)
+    expect(audit.pipeline.versions.due).toMatch(/^due-/)   // rastreabilidade preservada mesmo na falha
   })
 })

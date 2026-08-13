@@ -30,6 +30,14 @@ autoridade.
    `illegible` · `low_confidence` · `detector_not_applicable`), nunca só `null`.
 7. **Sem conceito oficial → a plataforma informa EXPLICITAMENTE que usa um mapeamento PROVISÓRIO** (`provisional=true`,
    `codes=[]`, `basis` declarada). É um estado legítimo, não um defeito.
+8. **Auditabilidade retroativa (requisito, fundadora 13/08):** todo documento JÁ PROCESSADO deve ser explicável
+   INTEGRALMENTE apenas com { documento original · Clinical Identity · Pipeline Audit · Understanding Report ·
+   Decision Log }. **Nenhum diagnóstico técnico pode depender de novo upload.** O reprocessamento existe para
+   produzir uma NOVA versão da Clinical Identity quando a lógica evolui — mas explicar a decisão ANTERIOR nunca
+   depende dele. **Corolário:** o pipeline SEMPRE emite um Pipeline Audit — inclusive quando o DUE FALHA (registra
+   a falha em `decisionLog` + `finalStatus='pending'`, `due=null`), e uma falha do DUE NUNCA regride ao caminho
+   estruturado (o documento é tratado como document_only). **Lacuna encontrada e fechada:** antes, uma falha do DUE
+   pulava o pipeline silenciosamente (documento sem audit, reclassificado como laboratorial+estruturado) — inexplicável.
 
 ## Crescimento previsto (contrato-primeiro)
 

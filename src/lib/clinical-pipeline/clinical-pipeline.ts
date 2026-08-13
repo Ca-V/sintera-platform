@@ -26,6 +26,23 @@ export function buildConfidenceProfile(du: DocumentUnderstanding, nameScore: num
   return { attributes, overall, autoAcceptable: !!nameScore && overall >= 0.8 }
 }
 
+/** Audit de FALHA — o DUE não produziu compreensão. O documento continua EXPLICÁVEL (registra a falha + versão),
+ *  nunca fica sem audit nem regride ao caminho estruturado. finalStatus 'pending' → aguarda re-processamento. */
+export function buildFailedAudit(ctx: { resolutionId: string; startedAt: string; finishedAt: string }, reason: string): PipelineAudit {
+  return {
+    pipeline: {
+      resolutionId: ctx.resolutionId, startedAt: ctx.startedAt, finishedAt: ctx.finishedAt, versions: PIPELINE_VERSIONS,
+      decisionLog: [{ step: 'due', status: 'failed', reason }],
+      finalStatus: 'pending',
+    },
+    due: null,
+    terminology: { official: null },
+    mapping: { matched: false, equipment: null },
+    knowledge: { status: 'pending' },
+    evidence: { status: 'pending' },
+  }
+}
+
 export interface PipelineContext {
   resolutionId: string
   startedAt: string

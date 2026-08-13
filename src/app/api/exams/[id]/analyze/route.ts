@@ -12,7 +12,7 @@ import { extractIssuer, extractIssuerFromImage } from '@/lib/ai/issuer'
 import { extractRequestingPhysician } from '@/lib/ai/requestingPhysician'
 import { classifyDocumentAI } from '@/lib/ai/document-classifier'
 import { understandImageDocument, type DocumentUnderstanding } from '@/lib/capture/document-understanding'
-import { resolveClinicalIdentity } from '@/lib/clinical-pipeline/clinical-pipeline'
+import { resolveClinicalIdentity, buildFailedAudit } from '@/lib/clinical-pipeline/clinical-pipeline'
 import { representationFingerprint, isRepresentationCertified } from '@/lib/capture/reproducibility'
 import { computeCoverage } from '@/lib/capture/coverage'
 import { processBundle } from '@/lib/capture/clinical-information-pipeline'
@@ -383,24 +383,33 @@ export async function POST(
   // Clinical Identity + Pipeline Audit (Decision Log estruturado, versões, confiança global). id de resolução
   // ESTÁVEL via sequência (replay/auditoria). Só documentos de imagem, 1ª compreensão.
   let imagePipeline: ReturnType<typeof resolveClinicalIdentity> | null = null
-  if (imageDU) {
+  let imageFailureAudit: { resolutionId: string; audit: ReturnType<typeof buildFailedAudit> } | null = null
+  if (isImage && !identityEstablished) {
     const startedAt = new Date().toISOString()
     // Função RPC (não está nos tipos gerados) — cast pontual; fallback estável se indisponível.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const ridRes = await (supabase as any).rpc('next_resolution_id') as { data?: unknown }
     const resolutionId = typeof ridRes?.data === 'string' && ridRes.data ? ridRes.data : `RES-${examId}`
-    // Data/paciente EFETIVAMENTE resolvidos (imagem não tem texto): extração multimodal → leitura do DUE. O Audit
-    // reflete essa resolução real (não só a leitura independente do DUE) — corrige a divergência data-banco × audit.
-    const resolvedExamDate = (result.examDate ?? imageDU.examDate) ?? null
-    const resolvedPatient = (result.patientName ?? imageDU.patientName) ?? null
-    imagePipeline = resolveClinicalIdentity(imageDU, { resolutionId, startedAt, finishedAt: new Date().toISOString(), resolved: { examDate: resolvedExamDate, patientName: resolvedPatient } })
+    if (imageDU) {
+      // Data/paciente EFETIVAMENTE resolvidos (imagem não tem texto): extração multimodal → leitura do DUE. O Audit
+      // reflete essa resolução real (não só a leitura independente do DUE) — corrige a divergência data-banco × audit.
+      const resolvedExamDate = (result.examDate ?? imageDU.examDate) ?? null
+      const resolvedPatient = (result.patientName ?? imageDU.patientName) ?? null
+      imagePipeline = resolveClinicalIdentity(imageDU, { resolutionId, startedAt, finishedAt: new Date().toISOString(), resolved: { examDate: resolvedExamDate, patientName: resolvedPatient } })
+    } else {
+      // DUE falhou (após retry): o documento NUNCA fica sem audit nem regride ao caminho estruturado — emite audit
+      // de FALHA (explicável) e o exame é tratado conservadoramente como document_only (ver effectiveDocType).
+      imageFailureAudit = { resolutionId, audit: buildFailedAudit({ resolutionId, startedAt, finishedAt: new Date().toISOString() }, 'DUE (understandImageDocument) retornou null após retry — leitura de visão falhou; tratado como document_only, aguarda re-processamento') }
+    }
   }
+  // DUE falhou numa imagem → tratar como imagem (document_only), NUNCA como laboratorial estruturado (regressão).
+  const imageDueFailed = isImage && !identityEstablished && !imageDU
 
   // Quando a identidade já está travada, o family/tipo segue o document_type estabelecido. Para IMAGEM na 1ª
   // extração, a modalidade lida da imagem (imaging/ophthalmology) prevalece sobre o default 'laboratory'.
   const effectiveDocType = identityEstablished
     ? (exam.document_type ?? structure.documentType)
-    : (imageModalityOverride ?? structure.documentType)
+    : (imageModalityOverride ?? (imageDueFailed ? 'imaging' : structure.documentType))
 
   // Bundle → CDUs (compreensão) — vem antes do plano de representação. Com o split (M3), ESTE registro
   // representa UMA CDU; a Cobertura soma só as unidades do que a IA leu (não conta as CDUs-irmãs).
@@ -547,6 +556,10 @@ export async function POST(
       finalUpdate.resolution_id = imagePipeline.identity.resolutionId
       // Equipamento (Clinical Identity) — persistido à parte p/ exibição rotulada ("Equipamento: …"), nunca como nome.
       if (imagePipeline.identity.equipment) finalUpdate.equipment = imagePipeline.identity.equipment
+    } else if (imageFailureAudit) {
+      // DUE falhou → o documento CONTINUA explicável pelo audit (requisito de auditabilidade), nunca sem registro.
+      finalUpdate.understanding_report = imageFailureAudit.audit
+      finalUpdate.resolution_id = imageFailureAudit.resolutionId
     }
 
     // Identidade CLÍNICA (Clinical Identity Registry, CEF §3.0) — "que tipo de exame é", por ensemble de
