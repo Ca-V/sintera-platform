@@ -45,6 +45,30 @@ Componente: `src/lib/capture/document-understanding.ts`.
   persistir `device` / `originalTitle` / `confidence` em colunas próprias (migração aditiva).
 - **Base de Conhecimento (C6):** expandir/curar sob revisão clínica; conecta ao "O que é este exame?".
 
+## Princípio de nomenclatura — a SINTERA NÃO é autoridade de terminologia
+
+A SINTERA **não decide** o nome de um exame; ela **usa terminologias oficiais como autoridade**, preserva
+localmente uma cópia **versionada** dos conceitos que efetivamente usa, registra **origem + versão** de cada
+conceito (auditabilidade/reprodutibilidade) e atualiza por **governança controlada**. A **IA só identifica
+candidatos** (com evidências) — **nunca define a nomenclatura**.
+
+**Hierarquia de fontes:** (1) terminologia oficial — LOINC (lab/observações), SNOMED CT (procedimentos/conceitos),
+RNDS/MS-FHIR (interoperabilidade BR); (2) sociedade científica (SBO, AAO, SBC…) — sobretudo para a descrição
+educacional; (3) fabricante — **só** para equipamento/protocolo/tecnologia, **nunca** para o nome canônico.
+
+**Modelo-alvo (4 camadas):** fonte oficial → Serviço de Terminologia (busca/normalização/ranking/desambiguação) →
+**cache versionado** (nome · código · sistema · versão · fonte · data · idioma · sinônimos · confiança;
+nunca muta versão antiga) → atualizador governado (periódico; cria nova versão). Fluxo:
+`Documento → OCR/visão → evidências (IA propõe candidatos) → Serviço de Terminologia decide o código/nome → cache`.
+
+**Estado ATUAL (honesto):** ainda **não** há mapeamento à terminologia oficial → `ExamIdentity.terminology = null`
+e `provisional = true`. Os nomes do catálogo são **provisórios** (Base de Conhecimento SINTERA, com `basis`
+declarada — ex.: AAO/SBO/fabricante) e exibidos por **faixa de confiança** (alta = nome canônico · média =
+"Exame … realizado no equipamento X" · baixa = "… (identificação pendente)"). Ver backlog **C7** (Serviço de
+Terminologia + cache versionado). **Caveat de cobertura:** para exames de IMAGEM/equipamento (oftalmologia), a
+cobertura LOINC/SNOMED é parcial — "sem código oficial → rótulo provisório + confiança" é um estado **de primeira
+classe**, permanente, não um caso de borda.
+
 ## Consequências
 
 Uma classe inteira de documentos de imagem (oftalmologia, ultrassom, tomografia, ressonância, mamografia,

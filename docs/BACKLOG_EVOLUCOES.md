@@ -96,6 +96,19 @@ Governança: conteúdo clínico-educativo é **artefato governado** (aprovação
 externa para KB própria curada. **Alto valor:** transforma repositório de documentos em plataforma que
 **contextualiza** sem substituir o profissional. *(Depende de curadoria clínica → fase de evolução, não v1.)*
 
+### C7 · Serviço de Terminologia + cache versionado ⭐ **(governança clínica; base do DUE e do C6)**
+A SINTERA **não é proprietária** da terminologia clínica — usa fontes oficiais como autoridade e preserva uma
+cópia **versionada** do que usa. Arquitetura em 4 camadas (ver ADR-DUE-001): (1) **fonte oficial** — LOINC
+(lab/observações), SNOMED CT (procedimentos), RNDS/MS-FHIR (BR); (2) **Serviço de Terminologia** (adapter:
+busca · normalização · ranking · desambiguação); (3) **cache versionado** — por conceito: `nome canônico · código
+· sistema · versão · fonte · data da consulta · idioma · sinônimos · categoria · descrição · confiança`; **nunca
+muta versão antiga** (reprodutibilidade + auditoria); (4) **atualizador** governado (periódico/por release; cria
+nova versão). A **IA só propõe candidatos** (com evidências e score); **quem decide o nome é a terminologia**.
+Binding evidência→código é **artefato clínico governado** (revisão do Responsável Clínico), crescido **sob demanda**
+(só os exames encontrados) — a SINTERA não vira mantenedora de terminologias. **Cuidado:** licença SNOMED CT (BR é
+membro via MS) e cobertura parcial de exames de imagem → estado "provisório + confiança" é permanente e de 1ª classe.
+Conecta ao **C6** ("O que é este exame?" — a descrição também cita as fontes). *Fase de evolução; não v1.*
+
 ## Fase D — REDESIGN VISUAL (Design System)
 - **D1 · Identidade "Almond Blossom" (Van Gogh)** — **aqua** institucional (entre Verde Tiffany e Azul
   Turquesa); **trocar a sidebar verde escura**; **creme · branco · preto · marrom** secundários; **dourado
