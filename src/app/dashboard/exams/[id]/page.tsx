@@ -561,7 +561,7 @@ export default function ExamDetailPage() {
   async function loadData(silent = false) {
     if (!silent) setLoading(true)
     const [{ data: examData }, { data: bioData }, { data: logData }, { data: catData }, { data: clinData }, { data: ordersData }] = await Promise.all([
-      supabase.from('exams').select('id,type,document_type,status,page_count,created_at,exam_date,error_reason,text_truncated,file_url,patient_name,extraction_completeness,issuer,requesting_physician,expense_amount_cents,expense_doc_type,expense_doc_url,fulfills_order_id')
+      supabase.from('exams').select('id,type,document_type,status,page_count,created_at,exam_date,error_reason,text_truncated,file_url,patient_name,extraction_completeness,issuer,equipment,requesting_physician,expense_amount_cents,expense_doc_type,expense_doc_url,fulfills_order_id')
         .eq('id', examId).single(),
       supabase.from('current_biomarkers')
         .select('id,name,value,value_text,unit,reference_min,reference_max,interpretation,result_type,range_extracted,reference_source,source,catalog_id,source_material,source_exam_name')
@@ -897,11 +897,16 @@ export default function ExamDetailPage() {
                   O assinante do laudo NÃO aparece aqui (está no documento original). */}
               {(() => {
                 const { lab } = deriveExamIdentity(exam?.type, (exam as unknown as { issuer?: string | null })?.issuer)
+                // Equipamento (Clinical Identity) ≠ exame ≠ emissor. Quando presente, o subtítulo é ROTULADO como
+                // "Equipamento: …" (com o fabricante entre parênteses) — não um subtítulo cru ambíguo ("OCULUS").
+                const equipment = (exam as unknown as { equipment?: string | null })?.equipment ?? null
                 const req = (exam as unknown as { requesting_physician?: string | null })?.requesting_physician
-                if (!lab && !req) return null
+                if (!lab && !req && !equipment) return null
                 return (
                   <div className="mt-0.5 space-y-0.5">
-                    {lab && <p className="font-body text-sm font-medium text-onyx/70">{lab}</p>}
+                    {equipment
+                      ? <p className="font-body text-sm font-medium text-onyx/70">Equipamento: {equipment}{lab && lab.toLowerCase() !== equipment.toLowerCase() ? ` (${lab})` : ''}</p>
+                      : lab && <p className="font-body text-sm font-medium text-onyx/70">{lab}</p>}
                     {req && <p className="font-body text-xs text-mauve">Solicitante: {req}</p>}
                   </div>
                 )

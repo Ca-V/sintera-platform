@@ -545,6 +545,8 @@ export async function POST(
     if (imagePipeline) {
       finalUpdate.understanding_report = imagePipeline.audit
       finalUpdate.resolution_id = imagePipeline.identity.resolutionId
+      // Equipamento (Clinical Identity) — persistido à parte p/ exibição rotulada ("Equipamento: …"), nunca como nome.
+      if (imagePipeline.identity.equipment) finalUpdate.equipment = imagePipeline.identity.equipment
     }
 
     // Identidade CLÍNICA (Clinical Identity Registry, CEF §3.0) — "que tipo de exame é", por ensemble de

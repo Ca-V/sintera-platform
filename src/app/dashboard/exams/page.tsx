@@ -788,7 +788,12 @@ export default function ExamsPage() {
                                 meta={
                                   <>
                                     {/* Laboratório/clínica responsável — linha própria (identificação padronizada) */}
-                                    {examLab && <span className="block font-medium text-onyx/70">{examLab}</span>}
+                                    {(() => {
+                                      // Equipamento (Clinical Identity) rotulado ≠ subtítulo cru ambíguo ("OCULUS").
+                                      const equipment = (exam as unknown as { equipment?: string | null }).equipment ?? null
+                                      if (equipment) return <span className="block font-medium text-onyx/70">Equipamento: {equipment}{examLab && examLab.toLowerCase() !== equipment.toLowerCase() ? ` (${examLab})` : ''}</span>
+                                      return examLab ? <span className="block font-medium text-onyx/70">{examLab}</span> : null
+                                    })()}
                                     {exam.requesting_physician && (
                                       <span className="block">Solicitante: {exam.requesting_physician}</span>
                                     )}
