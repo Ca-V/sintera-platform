@@ -672,6 +672,9 @@ export default function ExamDetailPage() {
 
   const isProcessed  = isExamReady(exam?.status)
   const hasResults   = biomarkers.length > 0
+  // Documento sem estruturação (decisão de PRODUTO — ex.: imagem/oftalmologia): processado, porém sem resultados
+  // estruturados. Não é limitação — o documento é o ativo. Nesse estado, "Extrair novamente" não faz sentido.
+  const isDocumentOnly = isProcessed && !hasResults
   const hasClinical  = (clinicalRep?.items.length ?? 0) > 0   // resultados clínicos não-laboratoriais (CPE)
   const analyzeLabel = isProcessed ? 'Extrair novamente' : 'Extrair dados'
   const AnalyzeIcon  = isProcessed ? RefreshCw : Zap
@@ -924,11 +927,11 @@ export default function ExamDetailPage() {
               ) : (
                 <div className="flex items-center gap-1.5 group/date mt-0.5">
                   <p className="font-body text-sm text-mauve">
-                    {/* WEB-003 / D-15(a): data de REALIZAÇÃO (exam_date); ausente → "Sem data". NUNCA cai para
-                        created_at (data de upload). Mesma regra da lista (page.tsx) — corrige a divergência lista×detalhe. */}
-                    Realizado em {(exam as unknown as { exam_date?: string | null } | null)?.exam_date
-                      ? formatDate((exam as unknown as { exam_date?: string | null }).exam_date as string)
-                      : 'Sem data'}
+                    {/* WEB-003 / D-15(a): data de REALIZAÇÃO (exam_date); NUNCA cai para created_at (upload).
+                        Sem data → frase de estado ("Data de realização não informada"), não "Realizado em Sem data". */}
+                    {(exam as unknown as { exam_date?: string | null } | null)?.exam_date
+                      ? `Realizado em ${formatDate((exam as unknown as { exam_date?: string | null }).exam_date as string)}`
+                      : 'Data de realização não informada'}
                     {exam?.page_count ? ` · ${exam.page_count} páginas` : ''}
                   </p>
                   <button onClick={startEditDate}
@@ -1021,14 +1024,17 @@ export default function ExamDetailPage() {
               </div>
             )}
 
-            {/* Analisar */}
-            <button onClick={handleAnalyze} disabled={analyzing}
-              className="flex items-center gap-2 gradient-sintera text-white font-body text-sm font-medium px-4 py-2.5 rounded-full hover:opacity-90 transition-opacity shadow-sm disabled:opacity-60">
-              {analyzing
-                ? <><Loader2 size={14} className="animate-spin" /> Extraindo…</>
-                : <><AnalyzeIcon size={14} /> {analyzeLabel}</>
-              }
-            </button>
+            {/* Analisar — oculto para documentos sem estruturação (document_only): a própria tela informa que
+                reextrair não altera nada, então o botão convidaria a uma ação inócua. Mantido para pendentes/erro. */}
+            {!isDocumentOnly && (
+              <button onClick={handleAnalyze} disabled={analyzing}
+                className="flex items-center gap-2 gradient-sintera text-white font-body text-sm font-medium px-4 py-2.5 rounded-full hover:opacity-90 transition-opacity shadow-sm disabled:opacity-60">
+                {analyzing
+                  ? <><Loader2 size={14} className="animate-spin" /> Extraindo…</>
+                  : <><AnalyzeIcon size={14} /> {analyzeLabel}</>
+                }
+              </button>
+            )}
           </div>
         </div>
 
@@ -1121,7 +1127,9 @@ export default function ExamDetailPage() {
               <FileText size={40} className="text-petal/70 mx-auto mb-3" />
               <p className="font-body text-sm font-semibold text-onyx mb-1">Documento disponível para consulta</p>
               <p className="font-body text-xs text-mauve max-w-md mx-auto">
-                O conteúdo deste exame está no documento original. A estruturação por tipo de exame está em evolução.
+                {/* Enquadramento de PRODUTO (não limitação técnica): para este tipo de exame a SINTERA preserva
+                    o documento original para consulta — a estruturação é reservada aos tipos com módulo próprio. */}
+                Para este tipo de exame, a SINTERA preserva o documento original para consulta clínica.
               </p>
               {fileUrl && (
                 <button type="button" onClick={() => window.open(fileUrl, '_blank', 'noopener')}

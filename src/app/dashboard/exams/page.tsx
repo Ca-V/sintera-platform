@@ -793,7 +793,8 @@ export default function ExamsPage() {
                                       <span className="block">Solicitante: {exam.requesting_physician}</span>
                                     )}
                                     <span className="block text-mauve/70">
-                                      Realizado em {exam.exam_date ? formatDate(exam.exam_date) : 'Sem data'}
+                                      {/* Sem data → frase de estado, não "Realizado em Sem data" (mesma redação do detalhe). */}
+                                      {exam.exam_date ? `Realizado em ${formatDate(exam.exam_date)}` : 'Data de realização não informada'}
                                       {exam.exam_date && exam.exam_date.slice(0, 10) !== exam.created_at.slice(0, 10) && (
                                         <span className="text-mauve/40"> · enviado {formatDate(exam.created_at)}</span>
                                       )}
@@ -846,13 +847,17 @@ export default function ExamsPage() {
                                       className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-petal transition-colors">
                                       <Pencil size={12} />
                                     </button>
-                                    {isProcessed && !isRunning && (
-                                      <button type="button"
-                                        onClick={() => router.push('/dashboard/exams/' + exam.id)}
-                                        className="flex items-center gap-1 text-[11px] font-body font-medium text-petal-dark bg-blush border border-petal/30 px-2.5 py-1 rounded-full hover:bg-petal/10 transition-colors">
-                                        Ver dados →
-                                      </button>
-                                    )}
+                                    {isProcessed && !isRunning && (() => {
+                                      // Rótulo coerente com o estado: document_only não tem "dados" a ver — leva ao documento.
+                                      const docOnly = binaryStructuringState((exam as unknown as { extraction_completeness?: string | null }).extraction_completeness) === 'document_only'
+                                      return (
+                                        <button type="button"
+                                          onClick={() => router.push('/dashboard/exams/' + exam.id)}
+                                          className="flex items-center gap-1 text-[11px] font-body font-medium text-petal-dark bg-blush border border-petal/30 px-2.5 py-1 rounded-full hover:bg-petal/10 transition-colors">
+                                          {docOnly ? 'Ver documento →' : 'Ver dados →'}
+                                        </button>
+                                      )
+                                    })()}
                                     {canAnalyze && (
                                       <button type="button"
                                         onClick={() => analyzeExam(exam)}
