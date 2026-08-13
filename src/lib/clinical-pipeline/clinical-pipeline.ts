@@ -2,64 +2,14 @@
 // AUDIT (Decision Log estruturado, versões, confiança global). As DECISÕES pertencem AQUI (orquestração), não ao
 // DUE nem à Terminologia. Ordem: DUE (observa) → Terminology Service (oficial) → Internal Clinical Catalog (lacuna)
 // → Clinical Identity. Contratos CONGELADOS (ADR-CP-001) — toda a plataforma consome sem alterar.
-import type { DocumentUnderstanding, Observation } from '@/lib/capture/document-understanding'
+import type { DocumentUnderstanding } from '@/lib/capture/document-understanding'
 import { PIPELINE_VERSIONS } from '@/lib/capture/pipeline-versions'
 import { resolveClinicalMapping, confidenceScore } from './clinical-mapping-service'
 import { lookupOfficialTerminology } from '@/lib/terminology/terminology-service'
-import type { ClinicalIdentity, PipelineAudit, DecisionStep, ConfidenceProfile, NameSource, DateDecision, DateSemantics } from './contracts'
+import { toEvidence, directEvidence, resolveFact, DATE_RESOLUTION, toIso } from './resolution-engine'
+import type { ClinicalIdentity, PipelineAudit, DecisionStep, ConfidenceProfile, NameSource } from './contracts'
 
 const round2 = (n: number) => Math.round(n * 100) / 100
-
-// ── DECISÃO DE DATA — INTERPRETAÇÃO determinística (Pipeline), sobre as OBSERVAÇÕES do DUE. Classifica pelo
-// RÓTULO/REGIÃO observados (regra, não IA); o DUE nunca diz o tipo. Separa falha de leitura de falha de decisão.
-const pad2 = (n: number) => String(n).padStart(2, '0')
-function toIso(text: string): string | null {
-  const t = (text ?? '').trim()
-  let m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/)
-  if (m && +m[2] >= 1 && +m[2] <= 12 && +m[3] >= 1 && +m[3] <= 31) return `${m[1]}-${pad2(+m[2])}-${pad2(+m[3])}`
-  m = t.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/) // DD/MM/YYYY (pt-BR)
-  if (m && +m[2] >= 1 && +m[2] <= 12 && +m[1] >= 1 && +m[1] <= 31) return `${m[3]}-${pad2(+m[2])}-${pad2(+m[1])}`
-  return null // incompleta (só mês/ano ou ano) ou não reconhecida → não serve como realização
-}
-/** Classifica o SIGNIFICADO da data pelo rótulo/região OBSERVADOS — determinístico, por regra (não IA). */
-export function classifyDateByLabel(label: string | null, region: string | null): DateSemantics {
-  const s = `${label ?? ''} ${region ?? ''}`.toLowerCase()
-  if (/nascimento|\bbirth\b|\bdob\b|data de nasc/.test(s)) return 'birth'
-  if (/impress|\bprint\b|emiss[aã]o|printed/.test(s)) return 'print'
-  if (/calibra|firmware|fabrica|manufact/.test(s)) return 'calibration'
-  if (/protocolo|\bprotocol\b/.test(s)) return 'protocol'
-  if (/exam\s*date|data\s*do\s*exame|acquisition|aquisi|realiza|coleta|collection|study\s*date/.test(s)) return 'realization'
-  return 'unknown'
-}
-const NON_REALIZATION = new Set<DateSemantics>(['birth', 'print', 'calibration', 'protocol'])
-
-/** DECISÃO da data: sobre as observações de data do DUE, descarta nascimento/impressão/calibração/protocolo e
- *  incompletas; escolhe a de realização; `fallbackIso` (leitura direta) entra quando não há observação decisível. */
-export function decideExamDate(dateObs: Observation[], fallbackIso: string | null): DateDecision {
-  const considered = dateObs.map(o => ({ value: o.value, iso: toIso(o.value), label: o.label, region: o.region, semantics: classifyDateByLabel(o.label, o.region), confidence: o.confidence }))
-  const fromFallback = (reason: string): DateDecision['chosen'] => fallbackIso ? { value: fallbackIso, iso: fallbackIso, reason } : null
-
-  if (considered.length === 0) {
-    const chosen = fromFallback('sem observações de data; usada a data resolvida por leitura direta')
-    return { considered, chosen, discarded: [], outcome: chosen ? 'resolved' : 'no_date' }
-  }
-  const discarded: DateDecision['discarded'] = []
-  const eligible = considered.filter(c => {
-    if (NON_REALIZATION.has(c.semantics)) { discarded.push({ value: c.value, semantics: c.semantics, reason: `rótulo indica ${c.semantics} — não é data de realização` }); return false }
-    if (!c.iso) { discarded.push({ value: c.value, semantics: c.semantics, reason: 'data incompleta/não parseável (ex.: só mês/ano)' }); return false }
-    return true
-  })
-  if (eligible.length === 0) {
-    const chosen = fromFallback('nenhuma observação classificável como realização; usada a data resolvida por leitura direta')
-    return { considered, chosen, discarded, outcome: chosen ? 'resolved' : 'decision_ambiguous' }
-  }
-  const preferred = eligible.filter(c => c.semantics === 'realization')
-  const pool = preferred.length ? preferred : eligible
-  const ambiguous = pool.length > 1
-  const chosen = pool[0]
-  pool.slice(1).forEach(c => discarded.push({ value: c.value, semantics: c.semantics, reason: 'outra candidata de realização (ambígua) — não escolhida' }))
-  return { considered, discarded, chosen: { value: chosen.value, iso: chosen.iso!, reason: `rótulo/região → ${chosen.semantics}${ambiguous ? ' (múltiplas; escolhida a 1ª)' : ''}` }, outcome: ambiguous ? 'decision_ambiguous' : 'resolved' }
-}
 
 /** Confiança GLOBAL a partir da confiança por atributo (0..1) — decide aceite automático × revisão. */
 export function buildConfidenceProfile(du: DocumentUnderstanding, nameScore: number, resolvedDate: string | null, resolvedPatient: string | null): ConfidenceProfile {
@@ -89,7 +39,7 @@ export function buildFailedAudit(ctx: { resolutionId: string; startedAt: string;
     due: null,
     terminology: { official: null },
     mapping: { matched: false, equipment: null },
-    dateDecision: { considered: [], chosen: null, discarded: [], outcome: 'no_date' },
+    resolutions: [],
     knowledge: { status: 'pending' },
     evidence: { status: 'pending' },
   }
@@ -108,18 +58,21 @@ export interface PipelineContext {
 export function resolveClinicalIdentity(du: DocumentUnderstanding, ctx: PipelineContext): { identity: ClinicalIdentity; audit: PipelineAudit } {
   const decisionLog: DecisionStep[] = []
 
-  // DATA — DECISÃO determinística (Pipeline) sobre as OBSERVAÇÕES do DUE (o DUE não classifica). Separa
-  // falha de leitura (nada observado) de falha de decisão (viu datas, nenhuma classificável como realização).
+  // DATA — motor GENÉRICO de resolução (Resolved Fact Engine) sobre EVIDENCE. O DUE só observa; a decisão vive
+  // aqui e é independente da origem. Evidências: observações de data do DUE + leitura direta (extração) como fallback.
   const dateObs = (du.report.observations ?? []).filter(o => o.type === 'date')
-  const dateDecision = decideExamDate(dateObs, ctx.resolved?.examDate ?? du.report.examDate.value ?? null)
-  const resolvedDate = dateDecision.chosen?.iso ?? null
+  const fallbackDate = ctx.resolved?.examDate ?? du.report.examDate.value ?? null
+  const dateEvidence = [
+    ...toEvidence(dateObs, toIso),
+    ...(fallbackDate ? [directEvidence('ev-direct-date', 'extractor', 'date', fallbackDate, toIso)] : []),
+  ]
+  const dateFact = resolveFact(dateEvidence, DATE_RESOLUTION)
+  const resolvedDate = dateFact.value
   const resolvedPatient = ctx.resolved?.patientName ?? du.report.patientName.value ?? null
   decisionLog.push({ step: 'mapping', detector: 'date',
-    status: resolvedDate ? 'ok' : dateDecision.outcome,
+    status: resolvedDate ? 'ok' : dateFact.outcome,
     output: resolvedDate ?? undefined,
-    reason: dateDecision.chosen
-      ? dateDecision.chosen.reason
-      : `${dateDecision.outcome} — descartadas: ${dateDecision.discarded.map(x => `${x.value}(${x.semantics})`).join(', ') || 'nenhuma data observada'}` })
+    reason: dateFact.reason ?? `${dateFact.outcome} — rejeitadas: ${dateFact.rejected.map(r => `${r.evidenceId}:${r.reasonCode}`).join(', ') || 'nenhuma'}` })
   const p = du.report.patientName
   const pNote = p.note ? ` (${p.note})` : ''
   decisionLog.push({ step: 'due', detector: 'patient',
@@ -170,7 +123,7 @@ export function resolveClinicalIdentity(du: DocumentUnderstanding, ctx: Pipeline
     due: du.report,
     terminology: { official: official.ref },
     mapping: { matched: mapping.matched, equipment: mapping.equipment },
-    dateDecision,
+    resolutions: [dateFact],   // motor genérico: hoje a data; amanhã paciente/médico/lab… (mesmo mecanismo)
     knowledge: { status: 'pending' },
     evidence: { status: 'pending' },
   }

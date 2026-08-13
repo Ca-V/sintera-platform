@@ -29,12 +29,15 @@ export interface SourcedFact<T = string> {
  *  clínicas/negócio: o DUE diz "vi a data '18/03/2026' com o rótulo 'Exam Date' no cabeçalho" — NÃO diz que é a
  *  data de realização. A CLASSIFICAÇÃO (realização/impressão/nascimento…) é feita depois, no Pipeline, por regra. */
 export interface Observation {
+  id: string              // ESTÁVEL — a Decisão referencia exatamente qual observação a originou/descartou
   type: string            // 'date' | 'text' | 'identifier' | 'patient_name' | 'physician' | 'signature' | 'image' | …
   value: string           // o que foi observado, verbatim
   label: string | null    // rótulo/texto adjacente OBSERVADO (ex.: "Exam Date"/"Nascimento"/"Firmware") — observação, não interpretação
   region: string | null   // onde no documento: 'cabeçalho' | 'rodapé' | 'metadados' | …
+  bbox: number[] | null   // [x,y,w,h] quando o detector fornecer localização
+  page: number | null
   confidence: number | null
-  detector: string        // ex.: 'vision'
+  detector: string        // ex.: 'vision' | 'ocr' | 'dicom' | …
 }
 
 /** Diagnóstico ESTRUTURADO da execução do DUE (não é linguagem natural) — permite responder programaticamente
@@ -177,17 +180,21 @@ function parseField(v: unknown, source: FactSource, max: number): SourcedFact {
 /** Parseia as OBSERVAÇÕES brutas (sem interpretação). Aceita {value|text, type, label, region, confidence}. */
 function parseObservations(v: unknown, source: FactSource): Observation[] {
   if (!Array.isArray(v)) return []
-  return v.slice(0, 30).map((item): Observation | null => {
+  return v.slice(0, 30).map((item, i): Observation | null => {
     if (!item || typeof item !== 'object') return null
     const o = item as Record<string, unknown>
     const value = typeof o.value === 'string' && o.value.trim() ? o.value.trim().slice(0, 120)
       : typeof o.text === 'string' && o.text.trim() ? o.text.trim().slice(0, 120) : null
     if (!value) return null
+    const num = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) ? x : null)
     return {
+      id: `obs-${i + 1}`,   // estável dentro da compreensão (ordem do modelo)
       type: typeof o.type === 'string' && o.type.trim() ? o.type.trim().slice(0, 24) : 'text',
       value,
       label: typeof o.label === 'string' && o.label.trim() ? o.label.trim().slice(0, 60) : null,
       region: typeof o.region === 'string' && o.region.trim() ? o.region.trim().slice(0, 40) : null,
+      bbox: Array.isArray(o.bbox) ? o.bbox.map(num).filter((n): n is number => n !== null).slice(0, 4) : null,
+      page: num(o.page),
       confidence: typeof o.confidence === 'number' && o.confidence >= 0 && o.confidence <= 1 ? o.confidence : null,
       detector: source,
     }

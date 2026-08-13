@@ -38,6 +38,20 @@ Documento → OCR/IA → DUE (observa) → Terminology Service (oficial) → Int
 - **`NameSource`** — `terminology-official | internal-catalog | document | pending`. Nunca "kb".
 - **`PIPELINE_VERSIONS`** — versões dos componentes persistidas → "por que este nome? DUE x + Terminologia y em <data>".
 
+## Resolução de fatos — motor GENÉRICO (não por atributo)
+
+Refinamento final (fundadora): o Pipeline resolve fatos com UM motor genérico, não com resolvers específicos
+(`DateResolver`/`PatientResolver`…). Camadas:
+- **`Observation`** (DUE) — só observação, com **`id` estável** + `bbox`/`page`. O DUE não classifica significado.
+- **`Evidence`** (`resolution-engine.ts`) — camada intermediária NORMALIZADA. A decisão consome Evidence, **nunca a
+  observação crua** → independente da ORIGEM (DUE/OCR/DICOM/PDF/HL7/manual). `toEvidence()` / `directEvidence()`.
+- **`resolveFact(evidence, config)`** — motor ÚNICO; a `ResolutionConfig` por atributo é o que muda (hoje `DATE_RESOLUTION`;
+  amanhã paciente/médico/lab/modalidade/lateralidade… por extensão, sem novo fluxo).
+- **`ResolvedFact`** — registra **aceita** (`chosenEvidenceId`, rastreia a observação de origem) **e rejeitadas**
+  (`RejectedEvidence` com **`RejectionCode`** determinístico: `BIRTH_DATE`/`PRINT_DATE`/`CALIBRATION_DATE`/
+  `INCOMPLETE_DATE`/`AMBIGUOUS`…). Explica não só a decisão, mas por que TODAS as alternativas foram descartadas
+  → rastreabilidade completa + métricas (quais detectores/fabricantes/layouts mais confundem). No `PipelineAudit.resolutions[]`.
+
 ## Congelamento
 
 A partir daqui, **toda evolução futura** (novos exames, IA, Insights, Mobile, Relatórios, Busca) **consome estes

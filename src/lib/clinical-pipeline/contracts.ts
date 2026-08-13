@@ -50,14 +50,35 @@ export interface ClinicalIdentity {
   confidence: ConfidenceProfile
 }
 
-/** DECISÃO da data — INTERPRETAÇÃO determinística (Pipeline), sobre as OBSERVAÇÕES do DUE. Classifica cada data
- *  pelo rótulo/região OBSERVADOS (não pela IA), escolhe a de realização, descarta as demais com motivo. Auditável. */
-export type DateSemantics = 'realization' | 'print' | 'birth' | 'calibration' | 'protocol' | 'unknown'
-export interface DateDecision {
-  considered: { value: string; iso: string | null; label: string | null; region: string | null; semantics: DateSemantics; confidence: number | null }[]
-  chosen: { value: string; iso: string; reason: string } | null
-  discarded: { value: string; semantics: DateSemantics; reason: string }[]
-  outcome: 'resolved' | 'reading_failure' | 'decision_ambiguous' | 'no_date'
+/** EVIDENCE — camada intermediária NORMALIZADA. A Decisão consome Evidence, NUNCA a observação crua — desacopla
+ *  o motor de decisão da ORIGEM (DUE/OCR/DICOM/PDF/HL7/manual). Todos os detectores produzem Evidence. */
+export interface Evidence {
+  id: string
+  observationId: string | null   // origem (null = não veio de observação; ex.: extração/entrada manual)
+  source: string                 // 'due' | 'ocr' | 'extractor' | 'dicom' | 'pdf' | 'hl7' | 'manual'
+  type: string                   // 'date' | 'patient_name' | 'physician' | …
+  raw: string
+  normalized: string | null      // valor normalizado (ex.: ISO para data)
+  label: string | null
+  region: string | null
+  confidence: number | null
+}
+
+/** Código DETERMINÍSTICO de rejeição — base para métricas (quais detectores/fabricantes/layouts mais confundem). */
+export type RejectionCode = 'BIRTH_DATE' | 'PRINT_DATE' | 'CALIBRATION_DATE' | 'PROTOCOL_DATE' | 'INCOMPLETE_DATE' | 'AMBIGUOUS' | 'NOT_ELIGIBLE'
+export interface RejectedEvidence { evidenceId: string; reasonCode: RejectionCode; reason: string }
+
+/** RESOLVED FACT — saída do motor GENÉRICO (Resolved Fact Engine): o MESMO mecanismo resolve data, paciente, médico,
+ *  laboratório, modalidade, lateralidade… Registra ACEITA (chosenEvidenceId) E REJEITADAS (com CÓDIGO) — explica não
+ *  só a decisão, mas POR QUE cada alternativa foi descartada (rastreabilidade completa + métricas). */
+export interface ResolvedFact {
+  attribute: string              // 'examDate' | 'patientName' | 'physician' | …
+  value: string | null
+  chosenEvidenceId: string | null
+  considered: Evidence[]
+  rejected: RejectedEvidence[]
+  outcome: 'resolved' | 'reading_failure' | 'decision_ambiguous' | 'no_evidence'
+  reason: string | null
 }
 
 /** PIPELINE AUDIT — orquestração + saídas por camada. Persistido por documento (rastreabilidade). */
@@ -73,7 +94,7 @@ export interface PipelineAudit {
   due: UnderstandingReport | null
   terminology: { official: TerminologyRef | null }
   mapping: { matched: boolean; equipment: string | null }
-  dateDecision: DateDecision           // interpretação determinística da data (sobre as observações do DUE)
+  resolutions: ResolvedFact[]          // fatos resolvidos pelo motor genérico (hoje: data; amanhã: paciente, médico…)
   knowledge: { status: 'pending' | 'resolved' }
   evidence: { status: 'pending' | 'resolved' }
 }
