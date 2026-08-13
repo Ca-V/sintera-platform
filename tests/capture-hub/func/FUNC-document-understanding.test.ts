@@ -31,8 +31,8 @@ describe('FUNC · DUE — relatório AUDITÁVEL (origem/confiança + razão de a
     expect(du.device).toBe('OCULUS Pentacam')
     expect(du.examDate).toBeNull()
     // relatório auditável
-    expect(du.report.examNameCandidate).toEqual({ value: 'Topografia da córnea', source: 'vision', confidence: 'high', absenceReason: null })
-    expect(du.report.examDate).toEqual({ value: null, source: 'none', confidence: null, absenceReason: 'illegible' })
+    expect(du.report.examNameCandidate).toMatchObject({ value: 'Topografia da córnea', source: 'vision', confidence: 'high', absenceReason: null })
+    expect(du.report.examDate).toMatchObject({ value: null, source: 'none', confidence: null, absenceReason: 'illegible' })
     expect(du.report.patientName.absenceReason).toBe('not_found')
     expect(du.report.device.source).toBe('vision')
     expect(du.report.evidence).toEqual(['Pentacam', 'Topografia'])
@@ -43,6 +43,15 @@ describe('FUNC · DUE — relatório AUDITÁVEL (origem/confiança + razão de a
     const du = parseUnderstanding({ document_type: 'laboratory', fields: { exam_date: { value: '18/03/2026', confidence: 'high' } } }, 'vision')
     expect(du.examDate).toBeNull()
     expect(du.report.examDate.absenceReason).toBe('illegible')
+  })
+
+  it('NOTA diagnóstica é capturada (o relatório se explica sozinho)', () => {
+    const du = parseUnderstanding({
+      document_type: 'ophthalmology',
+      fields: { exam_date: { value: null, absence_reason: 'not_found', note: 'nenhuma data visível no laudo' } },
+    }, 'vision')
+    expect(du.report.examDate.absenceReason).toBe('not_found')
+    expect(du.report.examDate.note).toBe('nenhuma data visível no laudo')
   })
 
   it('compat: campos como string simples ainda parseiam; ausente → absenceReason not_found', () => {

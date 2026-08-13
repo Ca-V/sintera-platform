@@ -70,11 +70,13 @@ export function resolveClinicalMapping(du: Facts): MappingResolution {
   if (entry) {
     const sig = entry.specific.find(s => s.re.test(hay))
     if (sig) {
-      const steps: DecisionStep[] = [{ step: 'mapping', rule: entry.ruleId, input: entry.equipmentLabel, output: sig.name, confidence: 0.9, status: 'matched' }]
+      // AUDITABILIDADE: registra o TOKEN de evidência que disparou o sinal → explica POR QUE este conceito.
+      const matched = hay.match(sig.re)?.[0] ?? null
+      const steps: DecisionStep[] = [{ step: 'mapping', rule: entry.ruleId, input: matched ?? entry.equipmentLabel, output: sig.name, confidence: 0.9, status: 'matched', reason: `equipamento "${entry.equipmentLabel}" + sinal de protocolo${matched ? ` "${matched}"` : ''} nas evidências → "${sig.name}"` }]
       return { name: sig.name, confidence: 'high', provisional: true, basis: entry.basis, aliases: entry.aliases, equipment: entry.equipmentLabel, category: entry.category, matched: true, steps }
     }
     if (entry.defaultName) {
-      const steps: DecisionStep[] = [{ step: 'mapping', rule: entry.ruleId, input: entry.equipmentLabel, output: entry.defaultName, confidence: 0.9, status: 'matched' }]
+      const steps: DecisionStep[] = [{ step: 'mapping', rule: entry.ruleId, input: entry.equipmentLabel, output: entry.defaultName, confidence: 0.9, status: 'matched', reason: `equipamento "${entry.equipmentLabel}" de propósito único → "${entry.defaultName}"` }]
       return { name: entry.defaultName, confidence: 'high', provisional: true, basis: entry.basis, aliases: entry.aliases, equipment: entry.equipmentLabel, category: entry.category, matched: true, steps }
     }
     const adj = specialtyAdjective(entry.category)

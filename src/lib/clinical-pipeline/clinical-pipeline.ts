@@ -44,15 +44,21 @@ export function resolveClinicalIdentity(du: DocumentUnderstanding, ctx: Pipeline
   const resolvedDate = ctx.resolved?.examDate ?? du.report.examDate.value ?? null
   const resolvedPatient = ctx.resolved?.patientName ?? du.report.patientName.value ?? null
   const d = du.report.examDate
+  const dNote = d.note ? ` (${d.note})` : ''
   decisionLog.push({ step: 'due', detector: 'date',
     status: resolvedDate ? 'ok' : (d.absenceReason ?? 'not_found'),
     output: resolvedDate ?? undefined,
-    reason: resolvedDate ? (d.value ? undefined : `leitura do DUE: ${d.absenceReason ?? 'não lida'}; resolvida por outra leitura`) : (d.absenceReason ?? undefined) })
+    reason: resolvedDate
+      ? (d.value ? (d.note ?? undefined) : `leitura do DUE: ${d.absenceReason ?? 'não lida'}${dNote}; resolvida por outra leitura`)
+      : `${d.absenceReason ?? 'not_found'}${dNote}` })
   const p = du.report.patientName
+  const pNote = p.note ? ` (${p.note})` : ''
   decisionLog.push({ step: 'due', detector: 'patient',
     status: resolvedPatient ? 'ok' : (p.absenceReason ?? 'not_found'),
     output: resolvedPatient ?? undefined,
-    reason: resolvedPatient && !p.value ? `leitura do DUE: ${p.absenceReason ?? 'não lida'}; resolvida por outra leitura` : undefined })
+    reason: resolvedPatient
+      ? (p.value ? (p.note ?? undefined) : `leitura do DUE: ${p.absenceReason ?? 'não lida'}${pNote}; resolvida por outra leitura`)
+      : `${p.absenceReason ?? 'not_found'}${pNote}` })
 
   // Etapa Terminologia oficial (autoridade). Stub por ora → sem conceito oficial.
   const mapping = resolveClinicalMapping(du)
