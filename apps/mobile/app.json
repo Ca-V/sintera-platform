@@ -3,16 +3,29 @@
     "name": "SINTERA",
     "slug": "sintera",
     "scheme": "sintera",
-    "version": "0.0.0",
+    "version": "1.0.0",
     "orientation": "portrait",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#488593"
+    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "health.sintera.app"
     },
     "android": {
-      "package": "health.sintera.app"
+      "package": "health.sintera.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#3D6C7B"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-dev-client",
