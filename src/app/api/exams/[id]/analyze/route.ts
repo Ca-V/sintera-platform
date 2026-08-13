@@ -11,7 +11,8 @@ import { MAX_UPLOAD_MB } from '@/lib/capture/limits'
 import { extractIssuer, extractIssuerFromImage } from '@/lib/ai/issuer'
 import { extractRequestingPhysician } from '@/lib/ai/requestingPhysician'
 import { classifyDocumentAI } from '@/lib/ai/document-classifier'
-import { understandImageDocument, resolveDocumentIdentity, type DocumentUnderstanding } from '@/lib/capture/document-understanding'
+import { understandImageDocument, type DocumentUnderstanding } from '@/lib/capture/document-understanding'
+import { resolveTerminology } from '@/lib/terminology/terminology-service'
 import { representationFingerprint, isRepresentationCertified } from '@/lib/capture/reproducibility'
 import { computeCoverage } from '@/lib/capture/coverage'
 import { processBundle } from '@/lib/capture/clinical-information-pipeline'
@@ -544,9 +545,9 @@ export async function POST(
     // WEB-004 — imagem oftalmológica/imagem (document_only): nome = título IMPRESSO lido da imagem (ex.:
     // "Pentacam Mosaic 2") + emissor, preservando a informação do documento em vez do genérico "Oftalmologia".
     if (imageModalityOverride && imageDU) {
-      // Identidade pela REGRA PERMANENTE do DUE (título oficial → nome do exame → equipamento → categoria);
-      // NUNCA uma linha interna do laudo (o Pentacam não vira "Campo visual" nem "Oftalmologia").
-      const title = resolveDocumentIdentity(imageDU)
+      // NOME resolvido pela camada de TERMINOLOGIA (não pelo DUE): o DUE dá os fatos/evidências, a Terminologia
+      // decide o nome canônico/provisório. EQUIPAMENTO ≠ EXAME; nunca uma linha interna do laudo.
+      const title = resolveTerminology(imageDU).name
       if (title) {
         finalUpdate.display_title = title
         finalUpdate.type = imageDU.issuer ? withProvenance(title, { issuer: imageDU.issuer }) : title

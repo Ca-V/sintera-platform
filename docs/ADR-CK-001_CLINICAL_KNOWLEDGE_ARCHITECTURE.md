@@ -54,15 +54,19 @@ interface ClinicalKnowledge {
 4. **Cache versionado nos DOIS serviços** (nunca muta versão antiga) → reprodutibilidade do que o usuário viu.
 5. **Consumo único:** Web, Mobile, IA, Insights e Relatórios usam a MESMA resposta → consistência + auditabilidade.
 
-## Consequência para o código atual
+## Estado da implementação (migração estrutural INICIADA)
 
-O `EXAM_CATALOG` hoje dentro do DUE (`src/lib/capture/document-understanding.ts`) é um **binding provisório** que
-pertence à camada de **Terminologia/Conhecimento** — mantido como stand-in até os serviços existirem, e marcado
-para **migração** (o DUE não deve possuir conhecimento). Enquanto isso, a proveniência já é honesta
-(`provisional=true`, `terminology=null`, `basis` declarada).
+As três camadas já existem como componentes de responsabilidade única (contrato-primeiro, sem quebra de compat.):
+- **DUE** — `src/lib/capture/document-understanding.ts`: devolve **só fatos + evidências**. **Não** decide o nome.
+- **Terminology Service** — `src/lib/terminology/terminology-service.ts`: `resolveTerminology(du)` decide o nome
+  canônico/provisório + proveniência. O `EXAM_CATALOG` (binding equipamento→exame) **migrou do DUE para cá**.
+- **Clinical Knowledge Service** — `src/lib/clinical-knowledge/clinical-knowledge-service.ts`: contrato público
+  (`ClinicalKnowledge`, `Sourced<T>`, `getClinicalKnowledge()`), stub retorna null até a curadoria (backlog C6).
+- **Consumo:** a rota de análise (`analyze`) consome o Terminology Service para o nome do exame de imagem.
 
-## Não-agora
+## Evolução (governada, incremental — NÃO bloqueia entrega)
 
-Não construir Terminology/Clinical Knowledge Services nesta fase (governado, licenciado — SNOMED, curadoria
-clínica, multi-trimestre). Registrar contrato + princípios; evoluir sob governança. Prioridade corrente permanece
-a homologação dos defeitos.
+O que falta é evolução de conteúdo/integração, não estrutura: ancorar entradas do catálogo a LOINC/SNOMED
+(`ExamCatalogEntry.terminology`), cache versionado, e curadoria do Clinical Knowledge (C6/C7). É governado
+(licença SNOMED, revisão clínica) e ocorre **em paralelo** à estabilização — sem interromper o fluxo. Todo novo
+desenvolvimento documental já programa contra estes contratos; nada cresce dentro do DUE para depois ser desmontado.
