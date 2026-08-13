@@ -7,15 +7,15 @@
 import type { UnderstandingReport } from '@/lib/capture/document-understanding'
 import type { PIPELINE_VERSIONS } from '@/lib/capture/pipeline-versions'
 
-/** Origem do NOME (proveniência): oficial (terminologia) · catálogo interno (provisório) · documento · pendente. */
-export type NameSource = 'terminology-official' | 'internal-catalog' | 'document' | 'pending'
+/** Origem do NOME (proveniência): oficial (terminologia) · mapeamento interno (provisório) · documento · pendente. */
+export type NameSource = 'terminology-official' | 'internal-mapping' | 'document' | 'pending'
 
 /** Referência a uma terminologia clínica OFICIAL (autoridade — LOINC/SNOMED/TUSS/RNDS). */
 export interface TerminologyRef { system: 'LOINC' | 'SNOMEDCT' | 'TUSS' | 'RNDS'; code: string; version: string }
 
 /** Passo de decisão ESTRUTURADO (não textual) — auditoria/filtros/métricas/analytics sem interpretar texto. */
 export interface DecisionStep {
-  step: 'due' | 'terminology' | 'internal_catalog' | 'knowledge' | 'evidence'
+  step: 'due' | 'terminology' | 'mapping' | 'knowledge' | 'evidence'
   status: string                 // ex.: 'ok'|'matched'|'not_available'|'provisional'|'pending'|'not_found'|'illegible'
   rule?: string                  // ex.: 'CAT-017'
   detector?: string              // ex.: 'date'
@@ -62,7 +62,21 @@ export interface PipelineAudit {
   }
   due: UnderstandingReport | null
   terminology: { official: TerminologyRef | null }
-  internalCatalog: { matched: boolean; equipment: string | null }
+  mapping: { matched: boolean; equipment: string | null }
   knowledge: { status: 'pending' | 'resolved' }
   evidence: { status: 'pending' | 'resolved' }
+}
+
+/** CLINICAL CONTEXT — CRESCIMENTO natural da Clinical Identity (o "O que é este exame?"). Contrato CONGELADO,
+ *  populado no futuro pelo Clinical Knowledge + Evidence Services (C6/C8). Cada campo com PROVENIÊNCIA (fonte). */
+export interface ClinicalContext {
+  suggestedPeriodicity: string | null
+  specialty: string | null
+  organ: string | null
+  bodySystem: string | null
+  group: string | null
+  explanation: string | null       // "o que é / para que serve / como funciona"
+  evidenceLevel: string | null
+  sources: string[]                // fontes reconhecidas (AAO, SBO, ESCRS, diretrizes, LOINC…)
+  lastReviewed: string | null
 }

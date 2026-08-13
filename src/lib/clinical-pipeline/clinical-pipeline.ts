@@ -4,7 +4,7 @@
 // → Clinical Identity. Contratos CONGELADOS (ADR-CP-001) — toda a plataforma consome sem alterar.
 import type { DocumentUnderstanding } from '@/lib/capture/document-understanding'
 import { PIPELINE_VERSIONS } from '@/lib/capture/pipeline-versions'
-import { resolveFromCatalog, confidenceScore } from './internal-clinical-catalog'
+import { resolveClinicalMapping, confidenceScore } from './clinical-mapping-service'
 import { lookupOfficialTerminology } from '@/lib/terminology/terminology-service'
 import type { ClinicalIdentity, PipelineAudit, DecisionStep, ConfidenceProfile, NameSource } from './contracts'
 
@@ -38,38 +38,38 @@ export function resolveClinicalIdentity(du: DocumentUnderstanding, ctx: Pipeline
   decisionLog.push({ step: 'due', detector: 'patient', status: p.value ? 'ok' : (p.absenceReason ?? 'not_found'), output: p.value ?? undefined })
 
   // Etapa Terminologia oficial (autoridade). Stub por ora → sem conceito oficial.
-  const catalog = resolveFromCatalog(du)
-  const official = lookupOfficialTerminology({ name: catalog.name, category: catalog.category })
+  const mapping = resolveClinicalMapping(du)
+  const official = lookupOfficialTerminology({ name: mapping.name, category: mapping.category })
   decisionLog.push(official.step)
 
-  // Etapa Catálogo interno (lacuna) — nome provisório.
-  decisionLog.push(...catalog.steps)
+  // Etapa Clinical Mapping Service (resolve o conceito a partir das evidências) — nome provisório.
+  decisionLog.push(...mapping.steps)
 
   // Etapas futuras (registradas como pendentes).
   decisionLog.push({ step: 'knowledge', status: 'pending' })
   decisionLog.push({ step: 'evidence', status: 'pending' })
 
   const nameSource: NameSource = official.ref ? 'terminology-official'
-    : catalog.matched ? 'internal-catalog'
-    : catalog.confidence === 'low' ? 'pending' : 'document'
+    : mapping.matched ? 'internal-mapping'
+    : mapping.confidence === 'low' ? 'pending' : 'document'
   const provisional = official.ref === null
-  const confidence = buildConfidenceProfile(du, confidenceScore(catalog.confidence))
-  const finalStatus: PipelineAudit['pipeline']['finalStatus'] = official.ref ? 'resolved' : (catalog.confidence === 'low' ? 'pending' : 'provisional')
+  const confidence = buildConfidenceProfile(du, confidenceScore(mapping.confidence))
+  const finalStatus: PipelineAudit['pipeline']['finalStatus'] = official.ref ? 'resolved' : (mapping.confidence === 'low' ? 'pending' : 'provisional')
 
   const identity: ClinicalIdentity = {
     resolutionId: ctx.resolutionId,
-    name: catalog.name,
-    category: catalog.category,
+    name: mapping.name,
+    category: mapping.category,
     modality: du.examModality,
     codes: official.ref ? [official.ref] : [],
-    aliases: catalog.aliases,
-    equipment: catalog.equipment,
+    aliases: mapping.aliases,
+    equipment: mapping.equipment,
     examDate: du.examDate,
     patientName: du.patientName,
     issuer: du.issuer,
     provisional,
     nameSource,
-    basis: catalog.basis,
+    basis: mapping.basis,
     confidence,
   }
 
@@ -77,7 +77,7 @@ export function resolveClinicalIdentity(du: DocumentUnderstanding, ctx: Pipeline
     pipeline: { resolutionId: ctx.resolutionId, startedAt: ctx.startedAt, finishedAt: ctx.finishedAt, versions: PIPELINE_VERSIONS, decisionLog, finalStatus },
     due: du.report,
     terminology: { official: official.ref },
-    internalCatalog: { matched: catalog.matched, equipment: catalog.equipment },
+    mapping: { matched: mapping.matched, equipment: mapping.equipment },
     knowledge: { status: 'pending' },
     evidence: { status: 'pending' },
   }

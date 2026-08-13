@@ -537,7 +537,7 @@ export async function POST(
     if (solicitante) finalUpdate.requesting_physician = solicitante
 
     // PIPELINE AUDIT (ADR-CP-001): orquestração (id de resolução · versões · Decision Log estruturado · status) +
-    // saídas por camada (due · terminology · internalCatalog · knowledge · evidence). Correlacionado por resolution_id.
+    // saídas por camada (due · terminology · mapping · knowledge · evidence). Correlacionado por resolution_id.
     if (imagePipeline) {
       finalUpdate.understanding_report = imagePipeline.audit
       finalUpdate.resolution_id = imagePipeline.identity.resolutionId

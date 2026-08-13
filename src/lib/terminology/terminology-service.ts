@@ -1,5 +1,5 @@
 // Terminology Service — consulta a TERMINOLOGIA OFICIAL (LOINC · SNOMED CT · TUSS · RNDS). É a AUTORIDADE da
-// nomenclatura. NÃO é o catálogo interno (esse preenche lacunas — ver internal-clinical-catalog). Enquanto a
+// nomenclatura. NÃO é o Clinical Mapping Service (esse resolve/preenche lacunas). Enquanto a
 // integração (backlog C7: terminology server FHIR + cache versionado) não existe, devolve "sem conceito oficial".
 import type { TerminologyRef, DecisionStep } from '@/lib/clinical-pipeline/contracts'
 
