@@ -404,15 +404,20 @@ export default function ExamDetailPage() {
   }
 
   function startEditName() {
-    setNameValue(exam?.type ?? '')
+    // Prefill com o NOME apresentado (display_title resolvido), não a string de proveniência do `type`.
+    const dt = (exam as unknown as { display_title?: string | null })?.display_title
+    setNameValue(deriveExamIdentity(exam?.type, (exam as unknown as { issuer?: string | null })?.issuer, dt).name)
     setEditingName(true)
   }
 
   async function saveName() {
     if (!exam || !nameValue.trim()) return
     setSavingName(true)
-    await supabase.from('exams').update({ type: nameValue.trim() } as never).eq('id', exam.id)
-    setExam(prev => prev ? { ...prev, type: nameValue.trim() } : prev)
+    // Correção explícita da identidade: grava display_title (nome apresentado em toda a plataforma) e mantém
+    // `type` em sincronia (proveniência/export/confirmação) — mesma identidade em todas as telas.
+    const v = nameValue.trim()
+    await supabase.from('exams').update({ display_title: v, type: v } as never).eq('id', exam.id)
+    setExam(prev => prev ? { ...prev, display_title: v, type: v } as never : prev)
     setEditingName(false)
     setSavingName(false)
   }
@@ -886,7 +891,7 @@ export default function ExamDetailPage() {
               ) : (
                 <div className="flex items-center gap-2 group/name">
                   <h1 className="font-display text-xl font-semibold text-onyx break-words min-w-0">
-                    {deriveExamIdentity(exam?.type, (exam as unknown as { issuer?: string | null })?.issuer).name}
+                    {deriveExamIdentity(exam?.type, (exam as unknown as { issuer?: string | null })?.issuer, (exam as unknown as { display_title?: string | null })?.display_title).name}
                   </h1>
                   <button onClick={startEditName}
                     className="opacity-0 group-hover/name:opacity-100 transition-opacity text-mauve hover:text-petal flex-shrink-0 print:hidden">
@@ -897,7 +902,7 @@ export default function ExamDetailPage() {
               {/* Identificação padronizada (fundadora): laboratório/clínica + médico solicitante.
                   O assinante do laudo NÃO aparece aqui (está no documento original). */}
               {(() => {
-                const { lab } = deriveExamIdentity(exam?.type, (exam as unknown as { issuer?: string | null })?.issuer)
+                const { lab } = deriveExamIdentity(exam?.type, (exam as unknown as { issuer?: string | null })?.issuer, (exam as unknown as { display_title?: string | null })?.display_title)
                 // Decisão de produto: equipamento/fabricante NÃO é exibido (só metadado interno — Clinical Identity/
                 // Pipeline Audit). Exame de equipamento não mostra o emissor (ex.: OCULUS); labs/clínicas exibem o lab.
                 const equipment = (exam as unknown as { equipment?: string | null })?.equipment ?? null
