@@ -2,7 +2,7 @@
 
 **Status:** análise estratégica (não é backlog). **Não altera código, arquitetura ou a V1.**
 **Objetivo:** determinar o espaço de mercado defensável da SINTERA diante dos players existentes e potenciais, **falsificando** (não confirmando) a hipótese de moat, antes de definir o escopo da V2.
-**Fundamento do processo:** V1 → fechamento → homologação → aprovação → **este assessment** → decisão estratégica → V2 revisada → gap analysis técnico → implementação.
+**Fundamento do processo:** V1 → fechamento → homologação → aprovação → **este assessment** → **Wedge Validation (validação comercial — §10)** → decisão estratégica → V2 → gap analysis técnico → implementação.
 
 ---
 
@@ -81,7 +81,7 @@
 
 ### Brasil — infra/regulação (não são "concorrentes-produto", mas definem o campo)
 - **OpenCare Interop (InovaHC/HCFMUSP + B3/PDtec)** `[FATO]` — **POC anunciada (dez/2025), piloto 2026, NÃO produção**; barramento de troca institucional inspirado no open finance; **sem armazenamento central**; consentimento **opt-in por finalidade** (declarado). *Cliente:* instituições (BP, Sírio, Fleury, Dasa, Sabin, RD). **Não é consumível por startup hoje** (ambiente fechado, sem API pública). **Complementar à RNDS.** → **parceiro/canal futuro, não concorrente nem fonte hoje.**
-- **RNDS (Ministério da Saúde)** `[FATO]` — barramento nacional **em produção**, troca **FHIR**; cidadão acessa via **Meu SUS Digital** (registro longitudinal público **gratuito**). Consentimento **opt-out**. **Acesso B2B barrado a startup:** exige **CNES + certificado ICP-Brasil + finalidade assistencial/pesquisa**; **Decreto 12.560/2025** veda uso secundário e restringe leitura a administração pública/pesquisa. `[CONFLITO registrado]` fontes divergem sobre "acesso do privado" — reconciliação: **enviar** (privado→público, unidirecional) ≠ **consumir** (restrito). → **fonte oficial poderosa, mas hoje inacessível via B2B; vetor viável = o titular (portabilidade/Meu SUS).**
+- **RNDS (Ministério da Saúde)** `[FATO]` — barramento nacional **em produção**, troca **FHIR**; cidadão acessa via **Meu SUS Digital** (registro longitudinal público **gratuito**). Consentimento **opt-out**. **Formulação factual precisa (corrigida):** a RNDS **não constitui hoje um on-ramp B2B genérico** para uma startup acessar livremente o conjunto de dados de saúde do cidadão. O **Decreto 12.560/2025** define finalidades específicas de tratamento e **veda uso para outros fins**; o acesso por estabelecimentos/profissionais (públicos e privados) é **restrito e vinculado ao contexto de atendimento**. Os serviços FHIR são estruturados por estabelecimento/CNES — mas o ponto sólido para nossa análise é o **enquadramento jurídico de finalidade**, não uma regra universal de credenciamento. `[CONFLITO registrado]` fontes divergem sobre "acesso do privado" — reconciliação: **enviar** (privado→público, unidirecional) ≠ **consumir** (restrito). → **fonte oficial poderosa, mas hoje inacessível via B2B; vetor viável = o titular (portabilidade/Meu SUS).**
 - **BR-Core (HL7 FHIR R4 BR, v1.0.0)** `[FATO]` — padrão nacional de perfis. **Adotá-lo é requisito para ser "RNDS/OpenCare-ready" sem dependência** — baixo custo, alto valor de opção.
 
 ### 3-bis. Contraexemplo forte à hipótese de lacuna: InterSystems HealthShare
@@ -139,7 +139,7 @@ Escala: ●●● forte · ●● médio · ○ fraco/ausente · — n/a. **SINT
 | B2B vs B2C | B2C puro = CAC/churn altos. **B2B2C** é o padrão dos sobreviventes (b.well, PicnicHealth). | alta |
 | Comprador (BR) | `[INFERÊNCIA]` operadora (retenção/contenção de custo), hospital privado (diferenciação), pharma (RWD, menor e mais regulado). **Não o cidadão.** | média |
 | Distribuição | deles = via CIO/provider; da SINTERA teria de ser D2C (caro) ou via parceiro que já "possui" o paciente. | média |
-| **Aquisição de dado (BR)** | **Barrada/cara:** RNDS exige CNES+ICP-Brasil (startup pura não credencia); OpenCare fechado; sem TEFCA-equivalente privado. **A "source-agnostic ingestion" não tem on-ramp aberto no Brasil hoje.** | **alta** |
+| **Aquisição de dado (BR)** | `[CORRIGIDO]` **A RNDS não é um on-ramp B2B genérico** (Decreto 12.560/2025 restringe finalidade; acesso vinculado ao contexto de atendimento); OpenCare é POC fechada; sem TEFCA-equivalente privado. **A "source-agnostic ingestion" não tem on-ramp aberto no Brasil hoje.** Pergunta de produto (não de arquitetura): *conseguimos dado SUFICIENTE, AUTOMÁTICO e com FRICÇÃO baixa o bastante para um produto que o usuário realmente use?* — upload/portabilidade resolve acesso mas cria fricção; conectar cada fonte reintroduz o problema de integração. | **alta** |
 | Dependência de terceiros | alta (fontes/EHRs controlam a origem; direitos de acesso do titular são o vetor legal). | alta |
 | Regulação | LGPD (dado sensível) + **Decreto 12.560/2025** (veda uso secundário) + **ANPD Mapa 2026-2027** (saúde+IA+uso secundário na mira). | alta |
 | **RDC-657 (SaMD)** | `[CORREÇÃO]` **Não afirmar que o não-diagnóstico "elimina" a incidência.** O enquadramento SaMD depende da **função pretendida** do software (diagnóstico/terapêutica/apoio à decisão clínica) e **exige análise regulatória específica**. Manter-se não-diagnóstica é **candidata** a evitar o enquadramento, **não garantia**. "IA de apoio à decisão clínica" é a fronteira que reenquadra como SaMD. | alta (do princípio) / a determinar (do enquadramento) |
@@ -263,7 +263,24 @@ Dos três cenários possíveis:
 - **Cenário B — Tese viável, mas precisa mudar** (há mercado, mas a proposta atual não é suficientemente diferenciada → reposicionar produto/cliente/modelo): **parcialmente sustentado.**
 - **Cenário C — Tese não suficientemente defensável hoje** (a maior parte do valor é reproduzível por infra existente + EHR + IA; sem moat convincente demonstrado): **o mais sustentado pela evidência atual.**
 
-`[INFERÊNCIA — confiança média]` **Veredito: entre B e C, hoje mais próximo de C** — não porque o problema seja falso, mas porque **a diferenciação não está comprovada e o valor é largamente reproduzível** (§7B: 70–90% onde há acesso a dado; InterSystems como contraexemplo; substituto gratuito estatal). **Isto não é um fracasso do assessment — é exatamente o resultado que queríamos obter se fosse verdadeiro.** A passagem de C para B depende de **provar** um wedge (pagador + acesso + o "que-o-HealthShare-não-incorpora"); a passagem para A exige, além disso, uma vantagem cumulativa/barreira que ainda não existe.
+`[INFERÊNCIA — confiança média]` **Veredito — leia com precisão (correção importante):** o estado atual **"mais próximo de C"** deve ser lido como **ESTADO DE RISCO ATUAL, não como conclusão de inviabilidade**. A formulação correta é:
+
+> **A SINTERA está hoje em estado de TESE NÃO COMPROVADA, com risco elevado de comoditização e sem moat demonstrado. Isso NÃO equivale a demonstrar inviabilidade.**
+
+A diferença não é semântica — governa a próxima decisão. O Cenário C afirma *"a proposta não é suficientemente defensável"*; a situação real da SINTERA é *"ainda não sabemos se existe uma proposta suficientemente defensável"* — **incerteza estratégica, não prova de inviabilidade** (o próprio documento mostra: Porta A não respondida, B parcial, C fraca, moat não comprovado — tudo isso é *ausência de prova*, não *prova de ausência*). **O assessment provou a ausência de moat demonstrado; NÃO provou que não se pode construir um negócio defensável.** A passagem para B/A depende de **provar um wedge** (§10). **Isto não é fracasso do assessment — é o resultado que queríamos obter se fosse verdadeiro.**
+
+**Estado de viabilidade (destilado):**
+
+| Pergunta | Estado |
+|---|---|
+| O problema existe? É importante? O mercado evolui nessa direção? | **Sim / Sim / Sim** |
+| A tecnologia necessária existe? | **Sim** |
+| A tecnologia é diferenciadora? Longitudinalidade/IA-com-evidência/source-agnostic são moat? | **Não** |
+| Patient-centric / patient-controlled são moat? | **Não comprovado** |
+| Existe comprador claro + disposição a pagar comprovada? | **Ainda não / Não** |
+| Existe acesso escalável ao dado no Brasil? | **Não comprovado** |
+| **Existe moat?** | **Não demonstrado** |
+| **A SINTERA é inviável?** | **Também NÃO demonstrado** ← a linha decisiva |
 
 ### 9.2 Ordem de leitura deste documento (para a decisão)
 
@@ -277,11 +294,55 @@ Ao reavaliar, **não** comece por *"quais funcionalidades entram na V2?"*. A ord
 
 ---
 
+## 10. Próxima fase: WEDGE VALIDATION (validação comercial — NÃO backlog técnico)
+
+`[DECISÃO DE FASE]` O maior achado do assessment **não é tecnológico, é econômico**: *o problema pode ser real, mas isso não significa que alguém pagará para resolvê-lo.* Portanto a próxima etapa **não** é uma V2 de arquitetura, **nem** FHIR/MPI/Event-Graph/Evidence-Engine/conectores — mesmo que façam sentido técnico. É **encontrar UMA situação (não dez) em que alguém pagaria pela SINTERA.**
+
+A pergunta muda de *"como fazer o melhor produto para o paciente?"* para **"quem tem um problema econômico grande o suficiente para pagar para que o paciente tenha essa experiência?"**
+
+### 10.1 O gap que o assessment ainda não fechou: o JOB ECONÔMICO por comprador
+"Provavelmente B2B2C" é **hipótese de modelo, não validação**. Operadora, hospital e pharma são **jobs econômicos diferentes** — precisam ser testados separadamente, cada um com ROI mensurável:
+
+| Comprador-hipótese | Por que pagaria (job econômico a testar) |
+|---|---|
+| **Operadora** | reduzir sinistralidade · reduzir duplicidade de exames · reduzir internações · melhor coordenação · retenção do beneficiário · experiência |
+| **Hospital** | aquisição/fidelização de paciente · continuidade pós-alta · redução de retrabalho · integração da jornada · diferenciação |
+| **Pharma / RWD** | real-world data/evidence · pesquisa · recrutamento · patient journey (compatível com LGPD/consentimento) |
+
+### 10.2 A hipótese central a testar (a mais promissora)
+Não *"o paciente pagará pela SINTERA?"* (a evidência histórica torna isso fraco), e sim:
+
+> **"Uma organização pagará para oferecer ao seu paciente/beneficiário uma camada INDEPENDENTE de continuidade da informação que ela própria não consegue construir ou controlar integralmente?"**
+
+Isso preserva **B2B2C no modelo econômico + patient-centric/patient-controlled na experiência**:
+```
+PAGADOR (operadora/hospital) → SINTERA → PACIENTE (controla seus dados: SUS + privado + pessoal) → HISTÓRIA ÚNICA
+```
+É muito diferente de vender um PHR direto ao consumidor.
+
+### 10.3 "Contexto" precisa ser vendido como RESULTADO, não como tecnologia
+`[INFERÊNCIA]` Sem um resultado mensurável, "contextualização" continua sendo *feature*. Deve ser vendido como: *"reduz X min de reconstrução de histórico"* · *"reduz duplicidade"* · *"melhora continuidade pós-alta"* · *"aumenta retenção do beneficiário"*. A oportunidade escondida: quanto **mais** interoperável o Brasil ficar, **menor** a necessidade de uma empresa cuja função é *"conseguir o dado"* — e **maior** a de uma empresa cuja função é *"transformar volume de dado em uma representação útil da trajetória"*. Mas só se isso virar resultado econômico.
+
+### 10.4 O que testar, por hipótese de comprador
+Quem compra · qual problema · como resolve hoje · quanto custa hoje · qual benefício econômico · quem decide · orçamento existente · disposição a pagar · tempo de implantação · qual dado é necessário · quem controla esse dado · como a SINTERA o obtém (com que fricção) · barreira de implantação.
+
+### 10.5 Critério de decisão (a fase termina em uma destas três)
+- **A — Wedge comprovado:** existe comprador + problema econômico + disposição a pagar → **definir a V2**.
+- **B — Wedge promissor, não comprovado:** há problema e interesse, mas falta prova econômica ou acesso ao dado → **novo teste antes da V2**.
+- **C — Wedge não encontrado:** proposta tecnicamente interessante, mas sem evidência de mercado suficiente → **reavaliar a tese** (não é fracasso — é informação).
+
+**Regra:** esta fase **NÃO produz backlog técnico**. Produz uma **decisão** sobre *qual problema específico alguém pagará para a SINTERA resolver*. Só então a V2 de produto passa a fazer sentido — e a V1 tem o papel restrito de provar que **a experiência funciona e o valor é compreensível**, não de provar o negócio inteiro.
+
+---
+
 ### Registro de hipóteses a testar (para a decisão estratégica)
 - **H1** (moat por composição): **largamente falsificada** como tecnologia; sobrevive só como possível moat de execução — *a testar com um wedge real*.
 - **H2** (pagador): o comprador é B2B2C (operadora/hospital/pharma), não o consumidor — *a validar*.
 - **H3** (acesso a dado BR): o vetor viável é o titular (portabilidade/Meu SUS/upload), não B2B com RNDS/OpenCare — *a validar juridicamente e na prática*.
 - **H4** (absorção): Meu SUS Digital e/ou InterSystems/MV estreitam a lacuna — *monitorar; definir o "além-do-SUS" que só a SINTERA faz*.
+- **H5** (a mais importante — a testar no wedge): *uma organização paga para oferecer ao seu paciente/beneficiário uma camada independente de continuidade que ela mesma não consegue construir/controlar* — B2B2C no pagador, patient-centric/controlled na experiência.
+- **H6** (fricção de dado): existe um caminho de ingestão **automático e de baixa fricção** suficiente para um produto usável — *a validar (produto/distribuição, não arquitetura)*.
+- **H7** (HealthShare): existe algo que a SINTERA faria que o InterSystems teria **desincentivo** (não incapacidade) de replicar — *a responder na decisão estratégica*.
 
 ### Fontes e confiança
 Material de pesquisa com URLs por afirmação (6 frentes: infra US · longitudinal+IA US · EHR giants · Brasil infra/regulação · Brasil EHR/consumer · PHR/viabilidade). **Confiança geral: média** — coleta via resumos de busca (egresso bloqueou fontes primárias); números de escala/funding **auto-reportados, não auditados**. Revalidar em fonte primária antes de decisão irreversível.
