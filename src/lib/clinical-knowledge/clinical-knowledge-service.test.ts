@@ -8,7 +8,7 @@ import {
   type ClinicalKnowledge,
   type Sourced,
 } from './clinical-knowledge-service'
-import { KNOWLEDGE_BASE } from './knowledge-base'
+import { BOOTSTRAP_KNOWLEDGE_BASE } from './knowledge-base'
 import type { ClinicalIdentity } from '@/lib/clinical-pipeline/contracts'
 
 /** Clinical Identity mínima para exercitar o consumo pelo serviço. */
@@ -89,8 +89,8 @@ describe('Clinical Knowledge Service (C6)', () => {
     })
 
     it('todo campo de todo entry tem ≥1 fonte com fonte+versão+data(YYYY-MM-DD) e confiança válida', () => {
-      expect(KNOWLEDGE_BASE.length).toBeGreaterThan(0)
-      for (const entry of KNOWLEDGE_BASE) {
+      expect(BOOTSTRAP_KNOWLEDGE_BASE.length).toBeGreaterThan(0)
+      for (const entry of BOOTSTRAP_KNOWLEDGE_BASE) {
         for (const f of sourcedFields(entry.knowledge)) {
           expect(f.sources.length).toBeGreaterThan(0)
           for (const ref of f.sources) {

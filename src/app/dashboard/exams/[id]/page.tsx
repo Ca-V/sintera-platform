@@ -29,6 +29,7 @@ import { parseAmountToCents, centsToAmount } from '@/lib/agenda/money'
 import { clinicalResultsToUcda, type ClinicalResultRow, type UcdaRepresentation } from '@/lib/capture/ucda'
 import CareFlowStepper from '@/components/CareFlowStepper'
 import ClinicalResultsCard from '@/components/ClinicalResultsCard'
+import ExamClinicalContext from '@/components/ExamClinicalContext'
 import Link from 'next/link'
 import FeedbackModal from '@/components/FeedbackModal'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
@@ -1059,6 +1060,9 @@ export default function ExamDetailPage() {
           <div className="mt-4"><DsBanner tone="neutral" icon={<ShieldCheck size={14} />}>{analyzeNotice}</DsBanner></div>
         )}
       </MotionCard>
+
+      {/* O que é este exame? — contexto clínico do Clinical Knowledge Service (C6). Render-null quando não curado. */}
+      <ExamClinicalContext examId={examId} />
 
       {/* Índice Experimental */}
       {hasResults && (() => {

@@ -1,11 +1,13 @@
-// Base de CONHECIMENTO CLÍNICO curado (C6) — dados versionados com PROVENIÊNCIA OBRIGATÓRIA e RASTREÁVEL por atributo.
-// É a fonte dos entries que o Clinical Knowledge Service resolve a partir da Clinical Identity. Conteúdo EDUCATIVO
-// sobre o que o exame É (nunca interpretação do resultado da usuária — fronteira RDC-657). Cada campo lista TODAS as
-// fontes que o sustentam; consenso parcial fica registrado. Nenhum campo nasce sem fonte (o builder `sourced` exige-a).
+// ⚠️ CONTEÚDO DE BOOTSTRAP — TEMPORÁRIO (C6). NÃO é o modelo definitivo e o Clinical Knowledge Service NÃO deve
+// evoluir para uma base de conhecimento própria da SINTERA. O CKS é um serviço de ORQUESTRAÇÃO/CONTEXTUALIZAÇÃO: no
+// alvo, o conteúdo vem de FONTES GOVERNADAS (terminologias/diretrizes/Evidence Service), e aqui ficam apenas os
+// MAPEAMENTOS e a organização necessários à plataforma. Este arquivo existe só para VIABILIZAR a implementação e o
+// consumo ponta-a-ponta com um conjunto reduzido de exames — deve ser SUBSTITUÍDO por resolução via fontes governadas,
+// não ampliado como acervo interno. (Ver ADR-CK-001 · direção de escalabilidade.)
 //
-// GOVERNANÇA: conteúdo INICIAL de curadoria, ancorado em fontes oficiais reconhecidas (AAO, CBO). O responsável técnico
-// (curatedBy) é atribuído na validação clínica formal — enquanto pendente, null, e a confiança reflete "baseado em
-// fonte, ainda não assinado". Ampliar a base = adicionar entries curados aqui (evolução progressiva por homologação).
+// Enquanto bootstrap: dados versionados com PROVENIÊNCIA OBRIGATÓRIA e RASTREÁVEL por atributo, conteúdo EDUCATIVO
+// sobre o que o exame É (nunca interpreta o resultado — fronteira RDC-657), ancorado em fontes reconhecidas (AAO, CBO).
+// `curatedBy` fica null até a revisão clínica formal. Nenhum campo nasce sem fonte (o builder `sourced` exige-a).
 import type { ClinicalKnowledge, SourceRef } from './clinical-knowledge-service'
 import { sourced } from './clinical-knowledge-service'
 
@@ -156,13 +158,13 @@ const SPECULAR_MICROSCOPY: KnowledgeEntry = {
 }
 
 /** A base curada (append-only por curadoria). Ordem não importa — a resolução é por chave. */
-export const KNOWLEDGE_BASE: KnowledgeEntry[] = [CORNEAL_TOPOGRAPHY, SPECULAR_MICROSCOPY]
+export const BOOTSTRAP_KNOWLEDGE_BASE: KnowledgeEntry[] = [CORNEAL_TOPOGRAPHY, SPECULAR_MICROSCOPY]
 
 /** Resolve um entry por CÓDIGO oficial (preferido) e, na ausência, por NOME normalizado. Retorna null se não curado. */
 export function findEntry(concept: { code?: string | null; system?: string | null; name?: string | null }): KnowledgeEntry | null {
   // 1) Por código oficial (quando a Clinical Identity já traz terminologia ancorada — C7 futuro).
   if (concept.code && concept.system) {
-    const byCode = KNOWLEDGE_BASE.find(e =>
+    const byCode = BOOTSTRAP_KNOWLEDGE_BASE.find(e =>
       e.match.codes.some(c => c.system === concept.system && c.code === concept.code),
     )
     if (byCode) return byCode
@@ -171,7 +173,7 @@ export function findEntry(concept: { code?: string | null; system?: string | nul
   if (concept.name) {
     const target = normalizeName(concept.name)
     if (target) {
-      const byName = KNOWLEDGE_BASE.find(e => e.match.names.some(n => normalizeName(n) === target))
+      const byName = BOOTSTRAP_KNOWLEDGE_BASE.find(e => e.match.names.some(n => normalizeName(n) === target))
       if (byName) return byName
     }
   }
