@@ -12,6 +12,7 @@ import { resolvePeriod, inPeriod, overlapsPeriod, type Period } from '@/lib/comm
 import { selectFinancial } from '@/lib/agenda/event' // Despesas = mesma projeção financeira do domínio (SSOT)
 import { eventServicesFor, professionalKindLabel } from '@/lib/agenda' // EVT-C1: leitura canônica (legado+canônico) também no compartilhamento
 import { contraceptiveLabel } from '@/lib/cycle' // SSOT dos métodos contraceptivos
+import { deriveExamIdentity } from '@/lib/exams/identification' // identidade resolvida (display_title) — mesma das telas
 
 export const metadata = { robots: { index: false, follow: false } }
 
@@ -86,7 +87,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
     db.from('medications').select('name, kind, dose, frequency, started_on, until_date, status').eq('user_id', uid).order('status'),
     // EVT-C1 (NC-0013/0014): leitura ÚNICA pelo contrato canônico — inclui eventos legados + canônicos (dedup).
     eventServicesFor(db).query.listAll(uid),
-    db.from('exams').select('id, type, exam_date, created_at, file_url').eq('user_id', uid).order('created_at', { ascending: false }),
+    db.from('exams').select('id, type, display_title, issuer, exam_date, created_at, file_url').eq('user_id', uid).order('created_at', { ascending: false }),
     db.from('body_metrics').select('metric, label, value_text, unit, measured_on, exam_id').eq('user_id', uid).order('measured_on', { ascending: false }),
     db.from('health_conditions').select('scope, name, relative, since_label, notes').eq('user_id', uid).order('created_at', { ascending: false }),
     db.from('life_habits').select('category, description, frequency, notes').eq('user_id', uid).order('created_at', { ascending: false }),
@@ -126,13 +127,17 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
   const medSusp = medsSusp.filter(m => !isSup(m) && itemOn('medicamentos', m.name as string)), supSusp = medsSusp.filter(m => isSup(m) && itemOn('suplementos', m.name as string))
   const evArr = eventsList.filter(e => inPeriod(e.date ?? null, rp) && itemOn('eventos', e.type))
     .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))   // mais recentes primeiro (como antes)
-  const exArr = ((exams ?? []) as Array<Record<string, unknown>>).filter(e => inPeriod((e.exam_date as string) ?? (e.created_at as string) ?? null, rp)
-    && itemOn('exames', `${(e.type as string) || 'Exame'}__${(e.exam_date as string) || (e.created_at as string)}`))
+  // NOME = identidade resolvida (display_title), como no relatório principal. A chave de seleção usa o MESMO nome
+  // (o link persiste as EXCLUSÕES por essa chave) — sem rederivar "• emissor" e sem divergir da tela que gerou o link.
+  const examsNorm = ((exams ?? []) as Array<Record<string, unknown>>)
+    .map((e): Record<string, unknown> & { __name: string } => ({ ...e, __name: deriveExamIdentity(e.type as string | null, e.issuer as string | null, e.display_title as string | null).name }))
+  const exArr = examsNorm.filter(e => inPeriod((e.exam_date as string) ?? (e.created_at as string) ?? null, rp)
+    && itemOn('exames', `${e.__name}__${(e.exam_date as string) || (e.created_at as string)}`))
   const mzAll = (measures ?? []) as Array<Record<string, unknown>>
   const mzArr = mzAll.filter(m => !isVital(m.metric as string) && inPeriod(m.measured_on as string, rp))
   const vitalArr = mzAll.filter(m => isVital(m.metric as string) && inPeriod(m.measured_on as string, rp))
   // Vínculo medida → laudo (documento original) + resumo antropométrico (estado atual).
-  const examById = new Map(((exams ?? []) as Array<Record<string, unknown>>).map(e => [e.id as string, e]))
+  const examById = new Map(examsNorm.map(e => [e.id as string, e]))
   const latestPeso = mzAll.find(m => (m.metric as string) === 'peso') ?? null
   const pesoNum = latestPeso ? parseFloat(String(latestPeso.value_text).replace(',', '.')) : NaN
   const imcVal = !Number.isNaN(pesoNum) && alturaCm != null ? pesoNum / Math.pow((alturaCm as number) / 100, 2) : null
@@ -282,7 +287,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
         {exArr.length === 0 ? <p style={{ color: '#6B6154', fontSize: 14 }}>Nenhum.</p> : (
           <ul style={{ paddingLeft: 18, fontSize: 14 }}>
             {exArr.map((e, i) => (
-              <li key={i}>{fmt((e.exam_date as string) || (e.created_at as string))} — {(e.type as string) || 'Exame'}
+              <li key={i}>{e.exam_date ? fmt(e.exam_date as string) : 'Sem data'} — {e.__name}
                 {e.file_url ? <>{'  ·  '}<a href={e.file_url as string} target="_blank" rel="noopener noreferrer" style={{ color: '#3D6C7B', textDecoration: 'none', fontSize: 13 }}>Ver documento original</a></> : null}
               </li>
             ))}
@@ -322,7 +327,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
           <ul style={{ paddingLeft: 18, fontSize: 14, margin: 0 }}>
             {medLaudos.map((ex, i) => (
               <li key={i}>
-                {(ex.type as string) || 'Exame'}{ex.exam_date ? ` · ${fmt(ex.exam_date as string)}` : ''}
+                {(ex as { __name?: string }).__name || 'Exame'}{ex.exam_date ? ` · ${fmt(ex.exam_date as string)}` : ''}
                 {ex.file_url ? <>{'  ·  '}<a href={ex.file_url as string} target="_blank" rel="noopener noreferrer" style={{ color: '#3D6C7B', textDecoration: 'none', fontSize: 13 }}>Ver documento original</a></> : null}
               </li>
             ))}

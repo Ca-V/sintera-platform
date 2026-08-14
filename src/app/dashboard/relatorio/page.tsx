@@ -40,7 +40,10 @@ import { contraceptiveLabel } from '@/lib/cycle'       // SSOT dos métodos cont
 
 interface Med { name: string; kind: string; dose: string | null; frequency: string | null; startedOn: string | null; untilOn: string | null; status: string }
 interface Ev { title: string; eventType: string; prof: string | null; date: string; notes: string | null; status: string }
-interface Ex { id: string; type: string; date: string; fileUrl: string | null }
+// `date` = data para CHAVE/ORDENAÇÃO (exam_date, fallback created_at). `examDate` = data de REALIZAÇÃO verdadeira
+// (exam_date; null quando ausente) — a EXIBIÇÃO usa esta e mostra "Sem data", nunca a data de upload (regra da
+// plataforma: nunca apresentar created_at como data do exame — espelha Timeline/Detalhe).
+interface Ex { id: string; type: string; date: string; examDate: string | null; fileUrl: string | null }
 interface Measure { metric: string; label: string | null; valueText: string; unit: string | null; date: string; examId: string | null }
 interface Condition { scope: string; name: string; relative: string | null; since: string | null; notes: string | null }
 interface Habit { category: string; description: string; frequency: string | null; notes: string | null }
@@ -176,7 +179,7 @@ function LegacyReport() {
   // módulos que não existem no domínio; "Agenda" é UMA entidade, os tipos são seus itens).
   const hasItems = (k: SectionKey): boolean => k === 'exames' || k === 'medicamentos' || k === 'suplementos' || k === 'eventos'
   const sectionItems = (k: SectionKey): { key: string; label: string }[] => {
-    if (k === 'exames') return exams.map(e => ({ key: `${e.type}__${e.date}`, label: `${fmt(e.date)} — ${e.type}` }))
+    if (k === 'exames') return exams.map(e => ({ key: `${e.type}__${e.date}`, label: `${e.examDate ? fmt(e.examDate) : 'Sem data'} — ${e.type}` }))
     // Medicamentos e Suplementos são a MESMA tabela separada por kind (isSup) — cada árvore lista só os seus,
     // com a chave de exclusão da SUA seção, para o controle item-a-item operar (antes suplementos apareciam
     // sob "Medicamentos" e a exclusão era ignorada pela seção Suplementos).
@@ -263,7 +266,8 @@ function LegacyReport() {
       // clínica das demais telas — o relatório não mostra "Nome • OCULUS".
       id: e.id as string,
       type: deriveExamIdentity(e.type as string | null, e.issuer as string | null, e.display_title as string | null).name,
-      date: (e.exam_date as string) || (e.created_at as string),
+      date: (e.exam_date as string) || (e.created_at as string),   // chave/ordenação (best-available)
+      examDate: (e.exam_date as string) || null,                   // EXIBIÇÃO: só a realização (nunca upload)
       fileUrl: (e.file_url as string) ?? null,
     })))
     setMeasures(((mzRes.data ?? []) as Array<Record<string, unknown>>).map(m => ({
@@ -821,7 +825,7 @@ function LegacyReport() {
             <ul className="space-y-1">
               {medLaudos.map((ex, i) => (
                 <li key={i} className="font-body text-xs text-onyx flex flex-wrap items-baseline gap-x-2">
-                  <span>• {ex.type}{ex.date ? ` · ${fmt(ex.date)}` : ''}</span>
+                  <span>• {ex.type}{ex.examDate ? ` · ${fmt(ex.examDate)}` : ''}</span>
                   {ex.fileUrl ? <ProvenanceLine provenance={examProvenance({ fileUrl: ex.fileUrl })} showOrigin={false} /> : null}
                 </li>
               ))}
@@ -873,7 +877,7 @@ function LegacyReport() {
             <ul className="space-y-1">
               {sortedExams.map((e, i) => (
                 <li key={i} className="font-body text-xs text-onyx flex flex-wrap items-baseline gap-x-2">
-                  <span>• {fmt(e.date)} — {e.type}</span>
+                  <span>• {e.examDate ? fmt(e.examDate) : 'Sem data'} — {e.type}</span>
                   <ProvenanceLine provenance={examProvenance({ fileUrl: e.fileUrl })} showOrigin={false} />
                 </li>
               ))}
