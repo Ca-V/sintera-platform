@@ -29,14 +29,31 @@ Cada bloco traz: **Hipótese testada · Critério de decisão · Perguntas princ
 - **F1** já resolvemos internamente · **F2** paciente não valoriza · **F3** não temos acesso ao dado · **F4** sem orçamento · **F5** ROI insuficiente · **F6** LGPD/regulação impede · **F7** fácil construir/comprar do incumbente · **F8** não queremos mais uma camada.
 
 ### Classificação obrigatória ao fim de CADA entrevista
-- **FRACO:** interesse · elogio · curiosidade · "seria interessante". **(descartar — não é evidência)**
-- **INTERMEDIÁRIO:** problema reconhecido · solução atual insuficiente · orçamento potencial · interesse em avaliar piloto · indicação de outros decisores.
-- **FORTE:** problema economicamente mensurável · comprador identificado · orçamento existente · solução atual insuficiente · disposição a fornecer dados · disposição a definir piloto · compromisso concreto com próxima etapa · (ideal) disposição a discutir contratação/pagamento.
+> **Evidência DECLARATÓRIA × COMPORTAMENTAL (regra de peso):** "seria interessante / útil / gostaria" é **declaratória** (peso baixo). "quero envolver o decisor · avaliar um piloto · receber proposta · temos orçamento · vamos fornecer os dados" é **comportamental** (peso MUITO maior). Classifique pelo **comportamento**, não pelo entusiasmo. **Registre a evidência NEGATIVA com o mesmo rigor da positiva. NÃO ajuste o roteiro nem a leitura para inflar a taxa de validação.**
+
+- **FRACO (declaratório):** interesse · elogio · curiosidade · "seria interessante". **(descartar — não é evidência)**
+- **INTERMEDIÁRIO:** problema reconhecido (com número) · solução atual insuficiente · orçamento potencial · "estamos procurando alternativas" · indicação de outros decisores.
+- **FORTE (comportamental):** comprador identificado · solução atual reconhecidamente insuficiente · disposição a fornecer dados · **"quero envolver o decisor / avaliar um piloto"** · compromisso concreto com próxima etapa.
+- **MUITO FORTE (comportamental + dinheiro):** **problema economicamente mensurável + orçamento existente + "envie a proposta/piloto" / "quanto custa?"** — o sinal mais próximo de compra real.
 
 ### Critérios de encerramento da entrevista (quando parar)
 - **Encerrar com "avançar"** quando houver ≥1 sinal forte + próximo passo concreto agendado.
 - **Encerrar como "falsificado"** quando ≥2 razões F confirmadas com convicção (ex.: F4 sem orçamento + F7 EHR já faz).
 - **Encerrar como "fora de perfil"** quando o entrevistado não é decisor nem dono de orçamento → pedir indicação de quem é (sinal intermediário) e encerrar.
+
+### Perguntas obrigatórias transversais (aplicam-se aos TRÊS roteiros)
+**(a) Diagnóstico do "não-resolvido" — OBRIGATÓRIA, logo após o problema ser descrito (Bloco 3/4):**
+> *"Por que vocês ainda não resolveram isso?"*
+Registrar a resposta na **taxonomia**: **A** não existe tecnologia adequada · **B** ninguém integra as partes necessárias · **C** o fornecedor atual deveria resolver, mas não resolve · **D** não vale o custo · **E** na realidade não é um problema suficientemente importante · **F** estamos construindo internamente.
+**Não interpretar automaticamente C como validação nem F como rejeição** — registrar como evidência e analisar no contexto. (A/D/E tendem a alerta; B/C tendem a interesse; F é alerta competitivo a investigar.)
+
+**(b) Killer question competitiva — SÓ depois de entender o problema E apresentar a hipótese (Bloco 6):**
+> *"Se vocês pudessem obter exatamente essa mesma capacidade diretamente do fornecedor do prontuário, do integrador ou da plataforma que já utilizam, por que comprariam de uma empresa independente?"*
+Testa a diferenciação da SINTERA **diretamente contra**: HIS/EHR · InterSystems · OpenCare · RNDS · fornecedores de interoperabilidade · desenvolvimento interno · IA sobre sistemas existentes. **Registrar a resposta literalmente.** Sem uma boa resposta → o wedge provavelmente **não é defensável**.
+
+**(c) Critério de compra — substitui "vocês pagariam?":**
+> *"O que precisaria ser verdade para que vocês destinassem orçamento a resolver esse problema?"*
+Aprofundar: **quem aprovaria · de qual orçamento sairia · qual resultado teria de ser demonstrado · qual prazo seria aceitável · quais condições de segurança/regulação/dados · qual evidência autorizaria um piloto.**
 
 ---
 
@@ -44,6 +61,7 @@ Cada bloco traz: **Hipótese testada · Critério de decisão · Perguntas princ
 
 **H-A (a falsificar):** a operadora tem um problema econômico mensurável de **duplicidade de exames / internações evitáveis / coordenação fragmentada / churn**, cuja solução atual é insuficiente, e existe orçamento para uma camada de continuidade da informação do beneficiário.
 **Perfil do entrevistado:** diretor(a) de saúde populacional / gestão de saúde / VBC / medical economics.
+**⚠ Risco específico deste wedge (NÃO é hipótese equiprovável):** a operadora **já possui** população, dados (claims), fornecedores e estruturas internas de gestão de dados. O incentivo econômico e a relação contínua com o beneficiário existem — mas a pergunta que ESTE roteiro precisa responder é **por que ela compraria uma camada EXTERNA** em vez de usar/expandir o que já tem.
 
 ### Bloco 0 — Contexto e mapeamento de papéis
 - **Hipótese:** identificar comprador ≠ usuário ≠ decisor ≠ dono do orçamento ≠ beneficiário.
@@ -109,6 +127,7 @@ Cada bloco traz: **Hipótese testada · Critério de decisão · Perguntas princ
 
 **H-B (a falsificar):** o hospital tem um problema econômico mensurável de **descontinuidade pós-alta (readmissão evitável) / baixa fidelização-aquisição (LTV) / retrabalho de reconstrução de histórico**, cuja solução atual é insuficiente, e existe orçamento para uma camada de continuidade centrada no paciente.
 **Perfil do entrevistado:** diretor(a) de experiência do paciente / relacionamento / estratégia digital / marketing médico. **Gatekeeper crítico:** TI/fornecedor de HIS (MV/Tasy/InterSystems).
+**⚠ Risco específico deste wedge:** o problema (continuidade/pós-alta/jornada/dados fragmentados) é potencialmente muito concreto, **mas o HIS/EHR incumbente (MV/Tasy/InterSystems) é o substituto mais forte** e pode ter poder de veto. Este roteiro testa **principalmente** se o incumbente resolve ou resolveria isso — se sim, o wedge não é defensável.
 
 ### Bloco 0 — Contexto e papéis
 - **Hipótese:** mapear decisor × dono do orçamento × TI/HIS (gatekeeper) × paciente (beneficiário).
@@ -162,6 +181,7 @@ Cada bloco traz: **Hipótese testada · Critério de decisão · Perguntas princ
 
 **H-C (a falsificar):** a farma/CRO tem um problema econômico mensurável de **custo/lentidão para obter RWD/RWE longitudinal consentido / recrutamento para estudos / adesão em PSP**, cuja solução atual é insuficiente, e existe orçamento para dados clínicos longitudinais consentidos do paciente.
 **Perfil do entrevistado:** head de **RWE / Medical Affairs / Market Access / Patient Support**. **Gatekeeper forte:** compliance/jurídico/DPO.
+**⚠ Risco específico deste wedge:** potencial de **valor econômico maior** (RWD/RWE), mas o gargalo não é interesse — é **acesso a dado + finalidade + consentimento + LGPD + governança + anonimização + ciclo de contratação** (compliance/DPO). Este roteiro testa se esse **ciclo comercial é viável**, não apenas se há incentivo.
 
 ### Bloco 0 — Contexto e papéis
 - **Hipótese:** mapear comprador (RWE/Medical/PSP) × decisor médico × compliance/DPO × paciente.
@@ -209,6 +229,14 @@ Cada bloco traz: **Hipótese testada · Critério de decisão · Perguntas princ
 
 ## Consolidação (após as entrevistas de cada wedge)
 
+### Protocolo de pausa — Ciclo 1 (≈5–8 entrevistas, ~2 por wedge)
+O **número de entrevistas NÃO é meta de produtividade** — o critério é **qualidade e convergência da evidência**. Após **~6 entrevistas**, **NÃO** continuar automaticamente: fazer uma **consolidação intermediária** e decidir:
+- **(A) um wedge claramente superior** (problema espontâneo + impacto econômico + solução atual insuficiente + comprador + orçamento + próximo passo) → **aprofundar esse wedge** (parar de distribuir igualmente).
+- **(B) dois wedges promissores, sem evidência suficiente** → **segunda rodada comparativa**.
+- **(C) nenhum wedge com problema econômico forte** → **reconsiderar a tese antes de continuar investindo** (não é fracasso — é a informação que evita construir a V2 no vazio).
+O objetivo do Ciclo 1 não é validar estatisticamente o mercado — é **identificar qual wedge tem a evidência qualitativa mais forte** de problema + orçamento + solução insuficiente + próximo passo concreto.
+
+### Consolidação de evidência
 Ao fim de cada wedge, produzir **evidência agregada** (não backlog):
 - contagem de **sinais fortes** (não de entrevistas);
 - **orçamentos citados** (linha + ordem de grandeza);
