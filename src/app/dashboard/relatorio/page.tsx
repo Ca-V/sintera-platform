@@ -19,6 +19,7 @@ import ProvenanceLine from '@/components/ui/ProvenanceLine'
 import SelectionToolbar from '@/components/ui/SelectionToolbar'
 import PeriodSelector from '@/components/ui/PeriodSelector'
 import { examProvenance, resourceProvenance } from '@/lib/provenance'
+import { deriveExamIdentity } from '@/lib/exams/identification'
 import { type Period, resolvePeriod, inPeriod, overlapsPeriod, periodLabel } from '@/lib/communication/period'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import { Card } from "@/lib/ui/ds"
@@ -237,7 +238,7 @@ function LegacyReport() {
       db.from('medications').select('name, kind, dose, frequency, started_on, until_date, status').eq('user_id', user.id).order('status'),
       // EVT-C1 (NC-0013/0014): leitura ÚNICA pelo contrato canônico — inclui eventos legados + canônicos (dedup).
       services.query.listAll(user.id),
-      db.from('exams').select('id, type, exam_date, created_at, file_url').eq('user_id', user.id).order('created_at', { ascending: false }),
+      db.from('exams').select('id, type, display_title, issuer, exam_date, created_at, file_url').eq('user_id', user.id).order('created_at', { ascending: false }),
       db.from('body_metrics').select('metric, label, value_text, unit, measured_on, exam_id').eq('user_id', user.id).order('measured_on', { ascending: false }),
       db.from('health_conditions').select('scope, name, relative, since_label, notes').eq('user_id', user.id).order('created_at', { ascending: false }),
       db.from('life_habits').select('category, description, frequency, notes').eq('user_id', user.id).order('created_at', { ascending: false }),
@@ -258,7 +259,11 @@ function LegacyReport() {
         date: e.date, notes: e.notes ?? null, status: e.status ?? 'planejado',
       })))
     setExams(((exRes.data ?? []) as Array<Record<string, unknown>>).map(e => ({
-      id: e.id as string, type: (e.type as string) || 'Exame', date: (e.exam_date as string) || (e.created_at as string),
+      // NOME = identidade resolvida (display_title), sem a proveniência " • lab" do `type`. Mesma identidade
+      // clínica das demais telas — o relatório não mostra "Nome • OCULUS".
+      id: e.id as string,
+      type: deriveExamIdentity(e.type as string | null, e.issuer as string | null, e.display_title as string | null).name,
+      date: (e.exam_date as string) || (e.created_at as string),
       fileUrl: (e.file_url as string) ?? null,
     })))
     setMeasures(((mzRes.data ?? []) as Array<Record<string, unknown>>).map(m => ({
