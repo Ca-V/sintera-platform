@@ -1,6 +1,6 @@
 // FUNC · BOD-001 área ① — Resumo atual + Qualidade do Dado. PURO.
 import { describe, it, expect } from 'vitest'
-import { currentSummary, sourceQuality, SOURCE_QUALITY, lastAssessment, type SummaryPoint } from '@/lib/body/summary'
+import { currentSummary, sourceQuality, SOURCE_QUALITY, lastAssessment, reliabilityRank, dedupeByDate, type SummaryPoint } from '@/lib/body/summary'
 
 describe('BOD-001 · currentSummary', () => {
   const pts: SummaryPoint[] = [
@@ -84,5 +84,39 @@ describe('BOD-001 · lastAssessment (última avaliação corporal)', () => {
   it('sem avaliação (só manual) → null', () => {
     const r = lastAssessment([{ metric: 'peso', value: 80, unit: 'kg', date: '2026-07-20', source: 'manual' }])
     expect(r).toBeNull()
+  })
+})
+
+describe('BOD-001 · dedup de métricas duplicadas (mesma métrica/dia, fontes diferentes)', () => {
+  it('reliabilityRank ordena dexa > bioimpedância > manual > desconhecida', () => {
+    expect(reliabilityRank('dexa')).toBeGreaterThan(reliabilityRank('bioimpedancia'))
+    expect(reliabilityRank('bioimpedancia')).toBeGreaterThan(reliabilityRank('manual'))
+    expect(reliabilityRank('manual')).toBeGreaterThan(reliabilityRank(null))
+    expect(reliabilityRank('fonte_desconhecida')).toBe(0)
+  })
+
+  it('dedupeByDate mantém 1 ponto por dia, preferindo a fonte mais confiável', () => {
+    const out = dedupeByDate([
+      { date: '2026-01-01', value: 72.0, source: 'manual' },
+      { date: '2026-01-01', value: 72.4, source: 'bioimpedancia' },
+      { date: '2026-02-01', value: 71.0, source: 'manual' },
+    ])
+    expect(out).toHaveLength(2)
+    const d1 = out.find(p => p.date === '2026-01-01')!
+    expect(d1.value).toBe(72.4)               // bioimpedância venceu o manual do mesmo dia
+    expect(d1.source).toBe('bioimpedancia')
+  })
+
+  it('currentSummary NÃO cria tendência espúria entre duas fontes do mesmo dia', () => {
+    const s = currentSummary([
+      { metric: 'peso', value: 80, unit: 'kg', date: '2026-01-01', source: 'manual' },
+      { metric: 'peso', value: 79.6, unit: 'kg', date: '2026-03-01', source: 'manual' },        // mesmo dia, 2 fontes
+      { metric: 'peso', value: 79.9, unit: 'kg', date: '2026-03-01', source: 'bioimpedancia' }, // ↑ vence (mais confiável)
+    ])
+    expect(s['peso'].value).toBe(79.9)         // ponto do dia = fonte mais confiável
+    expect(s['peso'].source).toBe('bioimpedancia')
+    expect(s['peso'].prevDate).toBe('2026-01-01')  // anterior é OUTRO dia, não a 2ª fonte do mesmo dia
+    expect(s['peso'].delta).toBe(-0.1)             // 79.9 − 80, não 79.9 − 79.6
+    expect(s['peso'].trend).toBe('down')
   })
 })

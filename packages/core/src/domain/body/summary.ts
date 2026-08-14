@@ -26,6 +26,31 @@ export function sourceQuality(source: string | null | undefined): SourceQuality 
   return source ? SOURCE_QUALITY[source] ?? null : null
 }
 
+// Confiabilidade RELATIVA da fonte — só para DESEMPATAR métricas duplicadas no MESMO dia (ex.: peso registrado
+// manualmente e também por bioimpedância). dexa > bioimpedância/balança/dispositivo > manual > desconhecida. Não é
+// juízo clínico: é qualidade de PROVENIÊNCIA. Deriva de SOURCE_QUALITY (alta=3 · media=2 · informado=1 · null=0).
+const RELIABILITY_SCORE: Record<Reliability, number> = { alta: 3, media: 2, informado: 1 }
+export function reliabilityRank(source: string | null | undefined): number {
+  const q = sourceQuality(source)
+  return q ? RELIABILITY_SCORE[q.reliability] : 0
+}
+
+/**
+ * Colapsa pontos da MESMA data para UM só, preferindo a fonte mais confiável (empate → mantém o 1º visto).
+ * Resolve "métricas duplicadas": a mesma métrica registrada por fontes diferentes no mesmo dia não vira tendência
+ * espúria (variação entre fontes ≠ evolução) nem ponto duplicado nas séries/comparações. Puro/determinístico.
+ * O chamador garante que os pontos são de UMA métrica (dedup por métrica é responsabilidade de quem agrupa).
+ */
+export function dedupeByDate<T extends { date: string; source?: string | null }>(points: T[]): T[] {
+  const best = new Map<string, T>()
+  for (const p of points) {
+    if (!p.date) continue
+    const cur = best.get(p.date)
+    if (!cur || reliabilityRank(p.source) > reliabilityRank(cur.source)) best.set(p.date, p)
+  }
+  return [...best.values()]
+}
+
 export interface SummaryPoint {
   metric: string
   value: number
@@ -80,7 +105,9 @@ export function currentSummary(points: SummaryPoint[]): Record<string, Indicator
   }
   const out: Record<string, IndicatorSummary> = {}
   for (const [metric, arr] of byMetric) {
-    const sorted = [...arr].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+    // Um ponto por DIA (fonte mais confiável) — a tendência compara medições de DIAS distintos, nunca duas
+    // fontes do mesmo dia (que produziriam uma variação espúria). Resolve métricas duplicadas.
+    const sorted = dedupeByDate(arr).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
     const latest = sorted[sorted.length - 1]
     const prev = sorted.length >= 2 ? sorted[sorted.length - 2] : null
     const delta = prev ? round(latest.value - prev.value) : null

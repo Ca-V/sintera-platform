@@ -8,7 +8,7 @@
 // Sem juízo clínico. Sinais vitais (pressão, etc.) ficam em aba própria.
 // ============================================================
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Loader2, Activity, Trash2, Camera, ArrowLeft, Ruler, Target, TrendingDown, TrendingUp, Minus, Pencil, ChevronDown } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -16,7 +16,7 @@ import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import Sparkline, { parseNum } from '@/components/Sparkline'
 import { computeWeightJourney, type SeriesPoint } from '@/lib/body/weight-journey'
-import { currentSummary, sourceQuality, RELIABILITY_LABEL, lastAssessment, type SummaryPoint } from '@/lib/body/summary'
+import { currentSummary, sourceQuality, RELIABILITY_LABEL, lastAssessment, reliabilityRank, type SummaryPoint } from '@/lib/body/summary'
 import { EVOLUTION_PERIODS, filterByPeriod, markerFor, type EvoPoint } from '@/lib/body/evolution'
 import { useNovelty } from '@/lib/novelty/useNovelty'
 import EvolutionChart from '@/components/body/EvolutionChart'
@@ -295,6 +295,20 @@ export default function MedidasPage() {
     setScanRows(null); setScanExamId(''); await load()
   }
 
+  // Resolve "métricas duplicadas" (V1/BOD-001): para as visões ANALÍTICAS (resumo · jornada · evolução ·
+  // comparação), UM ponto por (métrica, dia), preferindo a fonte mais confiável — a mesma métrica registrada por
+  // fontes diferentes no mesmo dia (ex.: peso manual + bioimpedância/wearable) não conta em dobro nem gera
+  // tendência espúria. A lista de REGISTROS (editar/excluir) segue usando `items` cru (cada linha é gerenciável).
+  const analyticItems = useMemo(() => {
+    const best = new Map<string, Entry>()
+    for (const it of items) {
+      const key = `${it.metric}__${it.measuredOn}`
+      const cur = best.get(key)
+      if (!cur || reliabilityRank(it.source) > reliabilityRank(cur.source)) best.set(key, it)
+    }
+    return [...best.values()]
+  }, [items])
+
   // IMC calculado a partir do peso mais recente e da altura do perfil (factual).
   const alturaCm = (profile?.height_cm as number | null | undefined) ?? null
   const latestPeso = items.find(i => i.metric === 'peso')
@@ -303,14 +317,14 @@ export default function MedidasPage() {
 
   // FB-007 parte 2 — jornada de peso (acompanhamento GLP-1): perda acumulada, ritmo, meta, preservação de
   // massa magra. ARITMÉTICA factual sobre os registros da própria pessoa (não interpreta; RDC 657).
-  const toSeries = (m: Metric): SeriesPoint[] => items
+  const toSeries = (m: Metric): SeriesPoint[] => analyticItems
     .filter(i => i.metric === m)
     .map(i => ({ value: parseNum(i.valueText), date: i.measuredOn }))
     .filter((p): p is SeriesPoint => p.value != null)
   const journey = computeWeightJourney(toSeries('peso'), toSeries('massa_magra'), goalKg)
 
   // BOD-001 área ① — Resumo atual: último valor de cada indicador + origem + confiabilidade + tendência.
-  const summaryPoints: SummaryPoint[] = items
+  const summaryPoints: SummaryPoint[] = analyticItems
     .map(i => ({ metric: i.metric as string, value: parseNum(i.valueText), date: i.measuredOn, unit: i.unit, source: i.source }))
     .filter(p => p.value != null) as SummaryPoint[]
   const summary = currentSummary(summaryPoints)
@@ -339,12 +353,12 @@ export default function MedidasPage() {
   const evoAll: EvoPoint[] = (() => {
     if (evoMetricActive === 'imc') {
       if (alturaCm == null) return []
-      return items.filter(i => i.metric === 'peso').map(i => {
+      return analyticItems.filter(i => i.metric === 'peso').map(i => {
         const w = parseNum(i.valueText)
         return w == null ? null : { key: i.id, date: i.measuredOn, value: Math.round((w / Math.pow(alturaCm / 100, 2)) * 10) / 10, source: i.source, examId: i.examId, createdAt: i.createdAt }
       }).filter((p): p is EvoPoint => p != null).sort((a, b) => (a.date < b.date ? -1 : 1))
     }
-    return items.filter(i => i.metric === evoMetricActive).map(i => {
+    return analyticItems.filter(i => i.metric === evoMetricActive).map(i => {
       const v = parseNum(i.valueText)
       return v == null ? null : { key: i.id, date: i.measuredOn, value: v, source: i.source, examId: i.examId, createdAt: i.createdAt }
     }).filter((p): p is EvoPoint => p != null).sort((a, b) => (a.date < b.date ? -1 : 1))
@@ -355,7 +369,7 @@ export default function MedidasPage() {
   const evoSourcesPresent = [...new Set(evoPoints.map(p => p.source).filter(Boolean))] as string[]
 
   // BOD-001 área ③ — snapshots (retrato por avaliação) e a comparação A × B.
-  const snapPoints: SnapPoint[] = items
+  const snapPoints: SnapPoint[] = analyticItems
     .map(i => ({ metric: i.metric as string, value: parseNum(i.valueText), unit: i.unit, date: i.measuredOn, source: i.source, examId: i.examId }))
     .filter(p => p.value != null) as SnapPoint[]
   const snapshots = buildSnapshots(snapPoints)
