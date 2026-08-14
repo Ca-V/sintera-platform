@@ -31,4 +31,17 @@ describe('deriveExamIdentity', () => {
   it('laboratório com " • " interno é preservado (join)', () => {
     expect(deriveExamIdentity('US • Clínica • Unidade Centro').lab).toBe('Clínica • Unidade Centro')
   })
+
+  // Clinical Identity: quando o pipeline resolveu o display_title, o NOME vem dele (sem rederivar do type).
+  it('prefere o display_title resolvido pelo pipeline como nome', () => {
+    expect(deriveExamIdentity('Topografia da córnea • OCULUS', 'OCULUS', 'Topografia da córnea'))
+      .toEqual({ name: 'Topografia da córnea', lab: 'OCULUS' })
+  })
+
+  it('sem display_title, cai para o nome legado do type (retrocompatível)', () => {
+    expect(deriveExamIdentity('Hemograma • Fleury', 'Fleury', null))
+      .toEqual({ name: 'Hemograma', lab: 'Fleury' })
+    expect(deriveExamIdentity('Hemograma • Fleury', 'Fleury', '  '))
+      .toEqual({ name: 'Hemograma', lab: 'Fleury' })
+  })
 })

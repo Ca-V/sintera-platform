@@ -345,9 +345,11 @@ export default function ExamsPage() {
     if (!v || savingName) { setEditingNameId(null); return }
     setSavingName(true)
     try {
+      // Renomear é uma CORREÇÃO explícita da identidade: grava o display_title (nome apresentado em toda a
+      // plataforma) e mantém `type` em sincronia (proveniência/export/confirmação) — sem divergência entre telas.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase as any).from('exams').update({ type: v }).eq('id', examId)
-      setExams(prev => prev.map(e => e.id === examId ? ({ ...e, type: v } as Exam) : e))
+      await (supabase as any).from('exams').update({ display_title: v, type: v }).eq('id', examId)
+      setExams(prev => prev.map(e => e.id === examId ? ({ ...e, display_title: v, type: v } as Exam) : e))
     } finally {
       setSavingName(false); setEditingNameId(null)
     }
@@ -738,11 +740,12 @@ export default function ExamsPage() {
                           const canAnalyze  = hasFile && !isRunning && !isProcessed && examProcessingState(exam.status) !== 'processing'
                           const analyzeLabel = examAnalyzeLabel(exam.status)
                           const isMismatch  = compareNames(profile?.name, (exam as unknown as { patient_name?: string | null }).patient_name) === 'mismatch'
-                          // Identificação padronizada do card (fundadora): NOME / LABORATÓRIO / SOLICITANTE
-                          // em linhas separadas. O nome vem do type sem a proveniência (" • lab"); o
-                          // laboratório da coluna `issuer` (fallback: parte após " • " do type).
+                          // Identificação padronizada do card (fundadora): NOME / LABORATÓRIO / SOLICITANTE em
+                          // linhas separadas. NOME = display_title resolvido pela Clinical Identity (sem rederivar);
+                          // LABORATÓRIO = issuer (fallback: parte após " • " do type). Mesma identidade em toda a plataforma.
                           const examIssuer = (exam as unknown as { issuer?: string | null }).issuer ?? null
-                          const { name: examName, lab: examLab } = deriveExamIdentity(exam.type, examIssuer)
+                          const examDisplayTitle = (exam as unknown as { display_title?: string | null }).display_title ?? null
+                          const { name: examName, lab: examLab } = deriveExamIdentity(exam.type, examIssuer, examDisplayTitle)
 
                           // Modo de edição inline do nome — cartão dedicado (o ListCard
                           // recebe o nome como string e não comporta o input embutido).
@@ -850,7 +853,7 @@ export default function ExamsPage() {
                                 actions={
                                   <>
                                     <button type="button" aria-label="Renomear" title="Renomear"
-                                      onClick={() => { setNameDraft(exam.type ?? ''); setEditingNameId(exam.id) }}
+                                      onClick={() => { setNameDraft(examName); setEditingNameId(exam.id) }}
                                       className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-petal transition-colors">
                                       <Pencil size={12} />
                                     </button>

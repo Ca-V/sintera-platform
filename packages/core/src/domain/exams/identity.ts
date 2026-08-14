@@ -15,12 +15,16 @@ export interface ExamIdentity {
 }
 
 /**
- * Deriva { name, lab } a partir do `type` (que pode conter "Nome • Laboratório") e do `issuer`.
- * `issuer` tem precedência para o laboratório; o fallback é a parte após " • " do type.
+ * Deriva { name, lab } a partir da IDENTIDADE já resolvida pelo pipeline.
+ * NOME: prefere `displayTitle` (Clinical Identity — nome resolvido, sem proveniência); sem ele, cai para o
+ *   legado (parte do `type` antes do " • lab"). Onde o pipeline resolveu, NÃO há rederivação do nome.
+ * LAB: `issuer` tem precedência; fallback é a parte após " • " do `type`.
+ * Determinística; fonte ÚNICA (Web + Mobile) — sem duplicação de lógica entre telas.
  */
-export function deriveExamIdentity(type: string | null | undefined, issuer?: string | null): ExamIdentity {
+export function deriveExamIdentity(type: string | null | undefined, issuer?: string | null, displayTitle?: string | null): ExamIdentity {
   const raw = (type ?? '').trim()
-  const name = (raw.split(SEP)[0] ?? '').trim() || 'Exame'
+  const resolved = (displayTitle ?? '').trim()
+  const name = resolved || (raw.split(SEP)[0] ?? '').trim() || 'Exame'
   const fromType = raw.includes(SEP) ? raw.split(SEP).slice(1).join(SEP).trim() : ''
   const lab = (issuer ?? '').trim() || fromType || null
   return { name, lab }
