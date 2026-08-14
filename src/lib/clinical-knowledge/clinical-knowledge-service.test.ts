@@ -1,8 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import {
   getClinicalKnowledge,
+  getKnowledgeForConcept,
   getKnowledgeForIdentity,
   toClinicalContext,
+  sourced,
   type ClinicalKnowledge,
   type Sourced,
 } from './clinical-knowledge-service'
@@ -19,6 +21,12 @@ function identity(over: Partial<ClinicalIdentity>): ClinicalIdentity {
     ...over,
   }
 }
+
+const sourcedFields = (k: ClinicalKnowledge): Sourced<unknown>[] => [
+  k.canonicalName, k.description, k.aliases, k.purpose, k.howItWorks, k.measures,
+  k.bodySystem, k.whenIndicated, k.suggestedPeriodicity, k.limitations, k.specialty,
+  k.evidenceLevel, k.references,
+]
 
 describe('Clinical Knowledge Service (C6)', () => {
   describe('getClinicalKnowledge — resolução por nome/alias', () => {
@@ -38,20 +46,20 @@ describe('Clinical Knowledge Service (C6)', () => {
       expect(k?.canonicalName.value).toBe('Microscopia especular da córnea')
     })
 
-    it('conceito não curado → null (tratado graciosamente pela UI)', async () => {
+    it('conceito não curado → null (tratado graciosamente pela plataforma)', async () => {
       expect(await getClinicalKnowledge({ name: 'Hemograma completo' })).toBeNull()
       expect(await getClinicalKnowledge({})).toBeNull()
     })
   })
 
-  describe('getKnowledgeForIdentity — consome a Clinical Identity', () => {
-    it('resolve pelo nome da identidade', async () => {
+  describe('consumo pela Clinical Identity / conceito', () => {
+    it('getKnowledgeForIdentity resolve pelo nome da identidade', async () => {
       const k = await getKnowledgeForIdentity(identity({ name: 'Topografia corneana' }))
       expect(k?.canonicalName.value).toBe('Topografia de córnea')
     })
 
     it('cai para a modalidade quando o nome não casa', async () => {
-      const k = await getKnowledgeForIdentity(identity({ name: 'Exame OCULUS', modality: 'microscopia especular' }))
+      const k = await getKnowledgeForConcept({ name: 'Exame OCULUS', modality: 'microscopia especular' })
       expect(k?.canonicalName.value).toBe('Microscopia especular da córnea')
     })
 
@@ -68,29 +76,42 @@ describe('Clinical Knowledge Service (C6)', () => {
       expect(ctx.bodySystem).toContain('Córnea')
       expect(ctx.explanation).toBe(k.description.value)
       expect(ctx.evidenceLevel).toContain('AAO')
-      expect(ctx.sources.length).toBeGreaterThan(0)
+      // Fontes agregadas de TODOS os campos (AAO + CBO presentes).
+      expect(ctx.sources.some(s => s.includes('AAO'))).toBe(true)
+      expect(ctx.sources.some(s => s.includes('CBO'))).toBe(true)
       expect(ctx.lastReviewed).toMatch(/^\d{4}-\d{2}-\d{2}$/)
     })
   })
 
-  describe('PROVENIÊNCIA OBRIGATÓRIA — invariante da base curada', () => {
-    const sourcedFields = (k: ClinicalKnowledge): Sourced<unknown>[] => [
-      k.canonicalName, k.description, k.aliases, k.purpose, k.howItWorks, k.measures,
-      k.bodySystem, k.whenIndicated, k.suggestedPeriodicity, k.limitations, k.specialty,
-      k.evidenceLevel, k.references,
-    ]
+  describe('PROVENIÊNCIA OBRIGATÓRIA + rastreabilidade multi-fonte', () => {
+    it('o builder `sourced` lança sem ao menos uma fonte', () => {
+      expect(() => sourced('x', { sources: [], confidence: 'high' })).toThrow(/proveni/i)
+    })
 
-    it('todo campo de todo entry tem fonte, data (YYYY-MM-DD) e confiança', () => {
+    it('todo campo de todo entry tem ≥1 fonte com fonte+versão+data(YYYY-MM-DD) e confiança válida', () => {
       expect(KNOWLEDGE_BASE.length).toBeGreaterThan(0)
       for (const entry of KNOWLEDGE_BASE) {
         for (const f of sourcedFields(entry.knowledge)) {
-          expect(f.source.trim().length).toBeGreaterThan(0)
-          expect(f.lastReviewed).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+          expect(f.sources.length).toBeGreaterThan(0)
+          for (const ref of f.sources) {
+            expect(ref.source.trim().length).toBeGreaterThan(0)
+            expect(ref.lastReviewed).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+            expect('version' in ref).toBe(true)
+          }
           expect(['high', 'medium', 'low']).toContain(f.confidence)
+          expect(['single', 'consensus', 'partial']).toContain(f.consensus)
         }
-        // Referências não podem ser vazias — conteúdo educativo exige fonte (governança).
         expect(entry.knowledge.references.value.length).toBeGreaterThan(0)
       }
+    })
+
+    it('registra MÚLTIPLAS FONTES (consenso) e CONSENSO PARCIAL', async () => {
+      const k = (await getClinicalKnowledge({ name: 'Topografia de córnea' }))!
+      // Campo com duas fontes concordantes → consensus 'consensus'.
+      expect(k.whenIndicated.sources.length).toBeGreaterThan(1)
+      expect(k.whenIndicated.consensus).toBe('consensus')
+      // Periodicidade sem consenso de rastreio → registrado como 'partial'.
+      expect(k.suggestedPeriodicity.consensus).toBe('partial')
     })
   })
 })
