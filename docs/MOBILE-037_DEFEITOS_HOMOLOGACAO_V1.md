@@ -50,3 +50,15 @@ Regra: **registrar tudo → corrigir em UM ciclo → nova build → validação 
 
 > Itens de EVOLUÇÃO (captura por câmera/OCR, voz, ingestão IA de laudos, integrações Fase 2/wearables, backlog
 > P2/P3, IA/navegação) **não** entram aqui — ver `MOBILE-038_ROADMAP_EVOLUCAO.md`.
+
+---
+
+## Atualização de status — verificação contra o código atual (não device)
+
+Ciclo de fechamento V1 retomado. Verificação item a item **no código** (revalidação em device pendente):
+
+- **D‑01 (Compartilhar · documento):** ✅ **já resolvido no código** — `ExamDetailScreen.onShare` inclui `exam.file_url` na mensagem do Share (link do documento). *Revalidar em device.*
+- **D‑06 (Agenda · nome nos cards):** ✅ **já resolvido no código** — `AgendaScreen` renderiza `e.title?.trim() ? e.title : typeLabel(e.type)` (nunca fica sem rótulo). *Revalidar em device.*
+- **D‑15 (data + ação):** 🔧 **data corrigida agora** — o detalhe Mobile deixa de exibir "Realizado em Sem data" e passa a mostrar **"Data de realização não informada"** (paridade com a Web, que nunca usa `created_at`). A **ação de documento já está alinhada** ("Abrir documento original" nas duas plataformas via `AttachmentLink`). *Estratégia de extração/nome/classificação de imagem segue em D‑11/D‑12.* typecheck (root+mobile) limpo; suíte 1194 verde.
+
+> Nota: estas são verificações de **código**; a homologação final exige revalidação **em device** na próxima build.

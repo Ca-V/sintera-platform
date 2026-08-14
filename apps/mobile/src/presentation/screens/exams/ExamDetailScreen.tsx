@@ -103,7 +103,7 @@ export function ExamDetailScreen({ route, navigation }: Props) {
     })
     const parts = [
       `${name}${lab ? ` · ${lab}` : ''}`,
-      `Realizado em ${formatExamDate(exam.exam_date)}`,
+      (() => { const d = formatExamDate(exam.exam_date); return d === 'Sem data' ? 'Data de realização não informada' : `Realizado em ${d}` })(),
       ...(results.length ? ['', 'Resultados:', ...results] : []),
       exam.file_url ?? '',
     ]
@@ -210,7 +210,7 @@ export function ExamDetailScreen({ route, navigation }: Props) {
         ) : (
           <Pressable onLongPress={() => { setDateValue(exam.exam_date ?? ''); setEditingDate(true) }}>
             <Text spec={text(t, { role: 'caption', tone: 'muted' })}>
-              Realizado em {formatExamDate(exam.exam_date)}{exam.page_count ? ` · ${exam.page_count} página${exam.page_count > 1 ? 's' : ''}` : ''}
+              {(() => { const d = formatExamDate(exam.exam_date); return d === 'Sem data' ? 'Data de realização não informada' : `Realizado em ${d}` })()}{exam.page_count ? ` · ${exam.page_count} página${exam.page_count > 1 ? 's' : ''}` : ''}
             </Text>
           </Pressable>
         )}
