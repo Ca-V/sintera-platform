@@ -106,6 +106,13 @@ function effDate(e: Exam): string {
   return e.exam_date ?? e.created_at
 }
 
+// Busca casa contra a IDENTIDADE RESOLVIDA (nome exibido = display_title + laboratório), não a string legada
+// `type` — o usuário pesquisa pelo que vê. Mesma derivação da Timeline/detalhe (fonte única, sem divergência).
+function examMatchesQuery(e: { type?: string | null; issuer?: string | null; display_title?: string | null }, q: string): boolean {
+  const { name, lab } = deriveExamIdentity(e.type, e.issuer, e.display_title)
+  return `${name} ${lab ?? ''}`.toLowerCase().includes(q)
+}
+
 export default function ExamsPage() {
   const { user, profile } = useUser()
   const { saveEvent } = useEventForm()
@@ -171,7 +178,7 @@ export default function ExamsPage() {
     let filtered = exams.filter(isOrderExam)
     if (searchName.trim()) {
       const q = searchName.toLowerCase()
-      filtered = filtered.filter(e => (e.type ?? '').toLowerCase().includes(q))
+      filtered = filtered.filter(e => examMatchesQuery(e, q))
     }
     return filtered
   }, [exams, searchName])
@@ -219,7 +226,7 @@ export default function ExamsPage() {
 
     if (searchName.trim()) {
       const q = searchName.toLowerCase()
-      filtered = filtered.filter(e => (e.type ?? '').toLowerCase().includes(q))
+      filtered = filtered.filter(e => examMatchesQuery(e, q))
     }
     if (filterYear !== 'all') {
       const yr = parseInt(filterYear)
