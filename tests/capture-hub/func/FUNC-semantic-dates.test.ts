@@ -72,3 +72,33 @@ describe('Obs 10 · isExamDateCorroborated', () => {
     expect(isExamDateCorroborated('2016-03-01', null)).toBe(false)
   })
 })
+
+// Granulação de PDF (byte-swap parcial do dígito '2' → U+3200; separador '/' → 'N'). A data CORRETA
+// está na fonte, só ilegível para o casamento mecânico. O reparo pontual (normalizeSwappedDigits +
+// 'N' como separador de data) recupera a leitura SEM tocar o exam_text. Caso real: urina 8ea769f9,
+// "DATA DA COLETA : 01/03/2021" gravado como "01N03N㈀0㈀1". Ver semantic-dates.ts.
+describe('Granulação de PDF · recuperação de data (byte-swap parcial + / → N)', () => {
+  const D2 = String.fromCharCode(0x3200) // '2' byte-swapped (U+0032 → U+3200 '㈀')
+  const garbled2021 = `01N03N${D2}0${D2}1`             // "01/03/2021" granulado
+  const garbledNasc = `06N03N${D2}014`                 // "06/03/2014" (nascimento) granulado
+
+  it('pickExamDate: recupera a DATA DA COLETA (01/03/2021) a partir do texto granulado', () => {
+    const r = pickExamDate(`GABRIELA ${garbledNasc} (6 anos) [DATA DA COLETA : ${garbled2021} 10:08]`)
+    expect(r.iso).toBe('2021-03-01')
+    expect(r.kind).toBe('coleta')
+    expect(r.confidence).toBe('high')
+  })
+
+  it('isExamDateCorroborated: a data da IA (2021-03-01) é corroborada no texto granulado', () => {
+    expect(isExamDateCorroborated('2021-03-01', `[DATA DA COLETA : ${garbled2021} 10:08]`)).toBe(true)
+  })
+
+  it('não fabrica: a data ERRADA (2016-03-01) NÃO é corroborada nem no texto granulado', () => {
+    expect(isExamDateCorroborated('2016-03-01', `[DATA DA COLETA : ${garbled2021} 10:08]`)).toBe(false)
+  })
+
+  it('normalização não cria datas onde não há (texto legítimo com "N" isolado)', () => {
+    // "N" fora de contexto de data (URINA, NORMAL, Nome) não vira separador nem inventa data.
+    expect(pickExamDate('URINA NORMAL Nome do paciente sem qualquer data').iso).toBeNull()
+  })
+})

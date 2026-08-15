@@ -34,7 +34,29 @@ const LABELS: { kind: DateKind; re: RegExp }[] = [
   { kind: 'protocolo',  re: /(protocolo|atend\.?|acc\.?|requisi)/i },
 ]
 
-const RE_DATE = /\b(\d{2})[/.\-](\d{2})[/.\-](\d{2,4})\b/g
+// Separador de data tolerante à granulação (ver normalizeSwappedDigits): além de / . -, aceita
+// 'N' — em alguns PDFs a '/' da data é mismapeada para a letra 'N' (glifo do font). Só é interpretado
+// como separador DENTRO do padrão dd?sep mm?sep aaaa; nunca um replace global de 'N' (letra legítima).
+const RE_DATE = /\b(\d{2})[/.\-N](\d{2})[/.\-N](\d{2,4})\b/g
+
+// Reparo PONTUAL de dígitos byte-swapped na leitura de datas. Alguns PDFs devolvem só ALGUNS glifos
+// trocados (p.ex. o dígito '2' 0x0032 chega como U+3200 '㈀'); o reparo global (repairByteSwappedText,
+// extractor) exige ≥60% dos chars trocados e NÃO dispara nesses casos parciais, deixando a data
+// ilegível ("01N03N㈀0㈀1"). Aqui normalizamos SÓ code points inequivocamente byte-swapped de DÍGITO
+// (low byte 0x00, high byte 0x30–0x39 → dígito ASCII), sem tocar em texto legítimo. Escopo: apenas a
+// leitura/corroboração de datas — NÃO altera o exam_text persistido (âncora de rastreabilidade).
+function normalizeSwappedDigits(text: string): string {
+  let out = ''
+  for (const ch of text) {
+    const cp = ch.codePointAt(0) ?? 0
+    if ((cp & 0xff) === 0 && (cp >> 8) >= 0x30 && (cp >> 8) <= 0x39) {
+      out += String.fromCharCode(cp >> 8) // U+3200 → '2', U+3100 → '1', …
+    } else {
+      out += ch
+    }
+  }
+  return out
+}
 
 function toIso(d: string, m: string, y: string): string | null {
   const day = +d, mon = +m
@@ -65,7 +87,7 @@ const EXCLUDED: DateKind[] = ['nascimento', 'impressao', 'protocolo']
  * Escolhe a data de REALIZAÇÃO do exame a partir do texto. Determinístico.
  */
 export function pickExamDate(text: string | null | undefined): ExamDatePick {
-  const t = (text ?? '').replace(/\s+/g, ' ')
+  const t = normalizeSwappedDigits(text ?? '').replace(/\s+/g, ' ')
   const candidates: DatedMatch[] = []
   for (const m of t.matchAll(RE_DATE)) {
     const start = Math.max(0, (m.index ?? 0) - 40)
@@ -99,11 +121,12 @@ export function isExamDateCorroborated(iso: string | null | undefined, text: str
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec((iso ?? '').trim())
   if (!m || !text) return false
   const [, y, mo, d] = m
-  const t = text.replace(/\s+/g, ' ')
+  const t = normalizeSwappedDigits(text).replace(/\s+/g, ' ')
   const y2 = y.slice(2)
   const dN = String(+d), moN = String(+mo)
   const forms: string[] = []
-  for (const s of ['/', '.', '-']) {
+  // 'N' aceito como separador (granulação de PDF: '/' → 'N'); ver RE_DATE/normalizeSwappedDigits.
+  for (const s of ['/', '.', '-', 'N']) {
     forms.push(`${d}${s}${mo}${s}${y}`, `${dN}${s}${moN}${s}${y}`)   // dd/mm/aaaa · d/m/aaaa
     forms.push(`${d}${s}${mo}${s}${y2}`, `${dN}${s}${moN}${s}${y2}`) // dd/mm/aa · d/m/aa
     forms.push(`${y}${s}${mo}${s}${d}`)                              // aaaa-mm-dd (ISO e variações)
