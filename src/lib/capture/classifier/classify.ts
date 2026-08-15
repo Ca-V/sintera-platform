@@ -43,3 +43,21 @@ export function classifyCheap(mediaType: string, filename: string): Classificati
   void mediaType // reservado p/ regras de MIME/assinatura inequívocos (DICOM, XML, HL7…)
   return classifyByFilename(filename)
 }
+
+/**
+ * Obs 6 — CORROBORAÇÃO. Um kind de saúde vindo de um ÚNICO sinal (o modelo de visão) não pode ser
+ * AFIRMADO como alta confiança sem um segundo sinal INDEPENDENTE apontando o MESMO kind. O único sinal
+ * independente disponível nesta etapa é o classificador por nome (classifyCheap). Regra:
+ *  - corroborado (cheapKind === visionKind) → mantém a confiança da visão (pode ser 'high');
+ *  - não corroborado → rebaixa APENAS 'high' → 'medium' (mantém medium/low como estão).
+ * NÃO trata cheapKind='unknown' como prova de que o documento não é de saúde — apenas RETÉM a afirmação
+ * confiante. Nunca ELEVA a confiança (não fabrica saúde a partir de other/unknown). Pura/determinística.
+ */
+export function corroboratedConfidence(
+  visionKind: DocumentKind,
+  visionConfidence: ClassificationResult['confidence'],
+  cheapKind: DocumentKind,
+): ClassificationResult['confidence'] {
+  const corroborated = cheapKind === visionKind
+  return corroborated ? visionConfidence : visionConfidence === 'high' ? 'medium' : visionConfidence
+}

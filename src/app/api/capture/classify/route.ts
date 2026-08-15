@@ -14,7 +14,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
-import { classifyCheap } from '@/lib/capture/classifier/classify'
+import { classifyCheap, corroboratedConfidence } from '@/lib/capture/classifier/classify'
 import type { ClassificationResult, DocumentKind } from '@/lib/capture/types'
 
 const MODEL = 'claude-haiku-4-5-20251001'
@@ -92,8 +92,12 @@ export async function POST(req: NextRequest) {
       if (cheap.kind !== 'unknown') return NextResponse.json(cheap)
       return NextResponse.json({ kind, confidence: 'low', reason: 'conteúdo do documento', source: 'content_ai' } as ClassificationResult)
     }
-    const confidence: ClassificationResult['confidence'] =
+    const visionConfidence: ClassificationResult['confidence'] =
       obj.confidence === 'high' || obj.confidence === 'medium' || obj.confidence === 'low' ? obj.confidence : 'medium'
+    // Obs 6 — sem corroboração do sinal por nome (mesmo kind), um único resultado de visão não afirma
+    // alta confiança: 'high' não corroborado → 'medium'. A UI então NÃO pré-seleciona a categoria de
+    // saúde (só pré-seleciona em 'high'); o usuário escolhe ou cancela. Não rejeita, não altera medium/low.
+    const confidence = corroboratedConfidence(kind, visionConfidence, cheap.kind)
     const subtype = typeof obj.subtype === 'string' && obj.subtype.trim() ? obj.subtype.trim().slice(0, 40) : undefined
     const result: ClassificationResult = { kind, confidence, reason: 'conteúdo do documento', subtype, source: 'content_ai' }
     return NextResponse.json(result)

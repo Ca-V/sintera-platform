@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { CAPTURE_PROCESSORS, processorFor, processorsAccepting } from './registry'
-import { classifyCheap } from './classifier/classify'
+import { classifyCheap, corroboratedConfidence } from './classifier/classify'
 import { classifyCaptureError, captureForwarded, captureResultTone } from './result'
 import { medicationProcessor } from './processors/medication'
 import { eyeglassProcessor } from './processors/eyeglass'
@@ -60,6 +60,38 @@ describe('classifier — camada barata do ContentClassifier (classifyCheap)', ()
   })
   it('sem sinal → unknown (UI pergunta à usuária)', () => {
     expect(classifyCheap('image/jpeg', 'IMG_2026_0001.jpg').kind).toBe('unknown')
+  })
+})
+
+// Obs 6 — CORROBORAÇÃO: um único sinal de visão, mesmo 'high', não vira afirmação de saúde de alta
+// confiança sem um segundo sinal independente (o classificador por nome) apontando o MESMO kind.
+describe('Obs 6 — corroboração de classificação (impede o passaporte→receita confiante)', () => {
+  it('conflito do defeito: cheap=unknown + vision=medication/high → NÃO pode resultar em high', () => {
+    expect(corroboratedConfidence('medication_label', 'high', 'unknown')).toBe('medium')
+    expect(corroboratedConfidence('medication_label', 'high', 'unknown')).not.toBe('high')
+  })
+
+  it('fluxo real do passaporte: "Passaporte Gabriela 1.pdf" (cheap=unknown) + vision medication/high → não-high', () => {
+    const cheap = classifyCheap('application/pdf', 'Passaporte Gabriela 1.pdf')
+    expect(cheap.kind).toBe('unknown')
+    expect(corroboratedConfidence('medication_label', 'high', cheap.kind)).not.toBe('high')
+  })
+
+  it('documento suportado E corroborado (cheap=exam + vision=exam/high) → high preservado', () => {
+    const cheap = classifyCheap('application/pdf', 'hemograma_completo.pdf')
+    expect(cheap.kind).toBe('exam')
+    expect(corroboratedConfidence('exam', 'high', cheap.kind)).toBe('high')
+  })
+
+  it('corroboração exige o MESMO kind: cheap=exam + vision=medication/high → não corroborado → rebaixa', () => {
+    expect(corroboratedConfidence('medication_label', 'high', 'exam')).toBe('medium')
+  })
+
+  it('não rejeita nem inventa: medium/low sem corroboração ficam inalterados; nunca ELEVA a confiança', () => {
+    expect(corroboratedConfidence('medication_label', 'medium', 'unknown')).toBe('medium')
+    expect(corroboratedConfidence('exam', 'low', 'unknown')).toBe('low')
+    // Corroborado não eleva (não fabrica 'high' a partir de medium).
+    expect(corroboratedConfidence('exam', 'medium', 'exam')).toBe('medium')
   })
 })
 

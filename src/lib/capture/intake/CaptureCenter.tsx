@@ -123,10 +123,15 @@ export default function CaptureCenter({ className = '', onDone, initialKind = nu
         })
         if (!res.ok) return
         const cls = (await res.json()) as ClassificationResult
+        // Obs 6 — só PRÉ-SELECIONA uma categoria de saúde a partir da VISÃO quando a classificação é de
+        // ALTA confiança (corroborada na rota por um segundo sinal). Sem alta confiança, mantém o palpite
+        // por nome (que pode ser nenhum) e trata como INCERTO: o usuário escolhe uma categoria ou cancela.
+        // Impede que um único sinal de visão não corroborado pré-selecione uma categoria de saúde incorreta.
         if (cls.kind && cls.kind !== 'unknown' && cls.kind !== 'other'
+            && cls.confidence === 'high'
             && processorsAccepting(f.type).some(p => p.kind === cls.kind)) {
           setKind(cls.kind)
-          setAutoConfident(cls.confidence === 'high')
+          setAutoConfident(true)
         }
       } catch { /* mantém o palpite por nome */ } finally {
         setClassifying(false)
