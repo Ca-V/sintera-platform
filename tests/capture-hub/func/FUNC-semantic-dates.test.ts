@@ -102,3 +102,38 @@ describe('Granulação de PDF · recuperação de data (byte-swap parcial + / �
     expect(pickExamDate('URINA NORMAL Nome do paciente sem qualquer data').iso).toBeNull()
   })
 })
+
+// FALSO POSITIVO do 'N' como separador — a tolerância só pode valer DENTRO do padrão dd?N mm?N aaaa.
+// Identificadores/códigos com 'N' entre dígitos (CNPJ, protocolo, amostra) NÃO podem virar data.
+describe("Falso positivo do separador 'N'", () => {
+  // ── ACEITA: formas de data legítimas (granuladas e normais) ──
+  it("aceita data granulada com 'N' (01N03N2021, 23N05N1980)", () => {
+    expect(isExamDateCorroborated('2021-03-01', 'Entrada 01N03N2021')).toBe(true)
+    expect(isExamDateCorroborated('1980-05-23', 'Nasc 23N05N1980')).toBe(true)
+  })
+  it('mantém datas normais (/ . -) aceitas', () => {
+    expect(isExamDateCorroborated('1980-05-23', '23/05/1980')).toBe(true)
+    expect(isExamDateCorroborated('1980-05-23', '23.05.1980')).toBe(true)
+    expect(isExamDateCorroborated('1980-05-23', '23-05-1980')).toBe(true)
+  })
+  it('pickExamDate reconhece a data granulada 23N05N1980 como candidata', () => {
+    // Com rótulo de coleta → alta confiança; comprova que o padrão granulado é parseável.
+    expect(pickExamDate('Data da coleta 23N05N1980').iso).toBe('1980-05-23')
+  })
+
+  // ── NÃO vira data: identificadores/códigos com 'N' ──
+  it('CNPJ com N (769N0053) NÃO é interpretado como data', () => {
+    expect(pickExamDate('CNPJ:19.378.769N0053-05 clínica emissora').iso).toBeNull()
+    // e não corrobora uma data qualquer a partir do fragmento do CNPJ
+    expect(isExamDateCorroborated('2021-03-01', 'CNPJ 769N0053')).toBe(false)
+  })
+  it('identificador alfanumérico com N (AB12N34CD) NÃO vira data', () => {
+    expect(pickExamDate('Amostra AB12N34CD sem data').iso).toBeNull()
+  })
+  it('protocolo/código com N isolado NÃO vira data', () => {
+    expect(pickExamDate('Protocolo 014N0438 Atendimento').iso).toBeNull()
+  })
+  it('padrão que casa mas com mês inválido (12N34N5678) → rejeitado por toIso', () => {
+    expect(pickExamDate('Cod 12N34N5678 referência').iso).toBeNull()
+  })
+})
