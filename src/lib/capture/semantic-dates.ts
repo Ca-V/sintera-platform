@@ -34,28 +34,20 @@ const LABELS: { kind: DateKind; re: RegExp }[] = [
   { kind: 'protocolo',  re: /(protocolo|atend\.?|acc\.?|requisi)/i },
 ]
 
-// Separador de data tolerante à granulação (ver normalizeSwappedDigits): além de / . -, aceita
+// Separador de data tolerante à granulação (ver normalizeGarbledDigits): além de / . -, aceita
 // 'N' — em alguns PDFs a '/' da data é mismapeada para a letra 'N' (glifo do font). Só é interpretado
 // como separador DENTRO do padrão dd?sep mm?sep aaaa; nunca um replace global de 'N' (letra legítima).
 const RE_DATE = /\b(\d{2})[/.\-N](\d{2})[/.\-N](\d{2,4})\b/g
 
-// Reparo PONTUAL de dígitos byte-swapped na leitura de datas. Alguns PDFs devolvem só ALGUNS glifos
-// trocados (p.ex. o dígito '2' 0x0032 chega como U+3200 '㈀'); o reparo global (repairByteSwappedText,
-// extractor) exige ≥60% dos chars trocados e NÃO dispara nesses casos parciais, deixando a data
-// ilegível ("01N03N㈀0㈀1"). Aqui normalizamos SÓ code points inequivocamente byte-swapped de DÍGITO
-// (low byte 0x00, high byte 0x30–0x39 → dígito ASCII), sem tocar em texto legítimo. Escopo: apenas a
-// leitura/corroboração de datas — NÃO altera o exam_text persistido (âncora de rastreabilidade).
-function normalizeSwappedDigits(text: string): string {
-  let out = ''
-  for (const ch of text) {
-    const cp = ch.codePointAt(0) ?? 0
-    if ((cp & 0xff) === 0 && (cp >> 8) >= 0x30 && (cp >> 8) <= 0x39) {
-      out += String.fromCharCode(cp >> 8) // U+3200 → '2', U+3100 → '1', …
-    } else {
-      out += ch
-    }
-  }
-  return out
+// Reparo PONTUAL da granulação de dígito na leitura de datas. Assinatura OBSERVADA e comprovada por
+// codepoints no laudo real (lab Precision, pedido *-SAVA): o dígito '2' é extraído como a sequência
+// de 3 chars "(ᄀ)" = '(' (U+0028) + 'ᄀ' (U+1100, Hangul Choseong Kiyeok) + ')' (U+0029). U+1100 não
+// ocorre em laudos em português — mapeamos "(ᄀ)" → '2'. ESPECÍFICO desta assinatura de corrupção
+// (NÃO é um de-garble geral do extrator). Escopo: só a leitura/corroboração de datas — NÃO altera o
+// exam_text persistido (âncora de rastreabilidade) nem o roteamento. O de-garble global do extrator
+// (que reabilitaria Path A e limparia o exam_text) fica como follow-up isolado, fora deste escopo.
+function normalizeGarbledDigits(text: string): string {
+  return text.replace(/\(ᄀ\)/g, '2')
 }
 
 function toIso(d: string, m: string, y: string): string | null {
@@ -87,7 +79,7 @@ const EXCLUDED: DateKind[] = ['nascimento', 'impressao', 'protocolo']
  * Escolhe a data de REALIZAÇÃO do exame a partir do texto. Determinístico.
  */
 export function pickExamDate(text: string | null | undefined): ExamDatePick {
-  const t = normalizeSwappedDigits(text ?? '').replace(/\s+/g, ' ')
+  const t = normalizeGarbledDigits(text ?? '').replace(/\s+/g, ' ')
   const candidates: DatedMatch[] = []
   for (const m of t.matchAll(RE_DATE)) {
     const start = Math.max(0, (m.index ?? 0) - 40)
@@ -121,11 +113,11 @@ export function isExamDateCorroborated(iso: string | null | undefined, text: str
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec((iso ?? '').trim())
   if (!m || !text) return false
   const [, y, mo, d] = m
-  const t = normalizeSwappedDigits(text).replace(/\s+/g, ' ')
+  const t = normalizeGarbledDigits(text).replace(/\s+/g, ' ')
   const y2 = y.slice(2)
   const dN = String(+d), moN = String(+mo)
   const forms: string[] = []
-  // 'N' aceito como separador (granulação de PDF: '/' → 'N'); ver RE_DATE/normalizeSwappedDigits.
+  // 'N' aceito como separador (granulação de PDF: '/' → 'N'); ver RE_DATE/normalizeGarbledDigits.
   for (const s of ['/', '.', '-', 'N']) {
     forms.push(`${d}${s}${mo}${s}${y}`, `${dN}${s}${moN}${s}${y}`)   // dd/mm/aaaa · d/m/aaaa
     forms.push(`${d}${s}${mo}${s}${y2}`, `${dN}${s}${moN}${s}${y2}`) // dd/mm/aa · d/m/aa

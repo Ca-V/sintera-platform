@@ -73,14 +73,15 @@ describe('Obs 10 · isExamDateCorroborated', () => {
   })
 })
 
-// Granulação de PDF (byte-swap parcial do dígito '2' → U+3200; separador '/' → 'N'). A data CORRETA
-// está na fonte, só ilegível para o casamento mecânico. O reparo pontual (normalizeSwappedDigits +
-// 'N' como separador de data) recupera a leitura SEM tocar o exam_text. Caso real: urina 8ea769f9,
-// "DATA DA COLETA : 01/03/2021" gravado como "01N03N㈀0㈀1". Ver semantic-dates.ts.
-describe('Granulação de PDF · recuperação de data (byte-swap parcial + / → N)', () => {
-  const D2 = String.fromCharCode(0x3200) // '2' byte-swapped (U+0032 → U+3200 '㈀')
-  const garbled2021 = `01N03N${D2}0${D2}1`             // "01/03/2021" granulado
-  const garbledNasc = `06N03N${D2}014`                 // "06/03/2014" (nascimento) granulado
+// Granulação de PDF (assinatura REAL do laudo 8ea769f9, comprovada por codepoints): o dígito '2' é
+// extraído como a sequência "(ᄀ)" = '(' U+0028 + 'ᄀ' U+1100 + ')' U+0029; o separador '/' vira 'N'.
+// A data CORRETA está na fonte, só ilegível para o casamento mecânico. O reparo pontual
+// (normalizeGarbledDigits + 'N' como separador) recupera a leitura SEM tocar o exam_text. Caso real:
+// "DATA DA COLETA : 01/03/2021" gravado como "01N03N(ᄀ)0(ᄀ)1". Ver semantic-dates.ts.
+describe('Granulação de PDF · recuperação de data ("(ᄀ)" → 2, / → N)', () => {
+  const G2 = '(ᄀ)'                                // '2' granulado = "(ᄀ)"
+  const garbled2021 = `01N03N${G2}0${G2}1`             // "01/03/2021" granulado
+  const garbledNasc = `06N03N${G2}014`                 // "06/03/2014" (nascimento) granulado
 
   it('pickExamDate: recupera a DATA DA COLETA (01/03/2021) a partir do texto granulado', () => {
     const r = pickExamDate(`GABRIELA ${garbledNasc} (6 anos) [DATA DA COLETA : ${garbled2021} 10:08]`)
