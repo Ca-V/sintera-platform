@@ -21,7 +21,7 @@ import { representationFromProcessor, ucdaItemToRow } from '@/lib/capture/ucda'
 import { bioimpedanceToBodyMetrics } from '@/lib/capture/clinical-processors/bioimpedance-body-metrics'
 import { dexaBodyComposition } from '@/lib/capture/clinical-processors/dexa-body-metrics'
 import { planBundleSplit, restrictPages, type SplitPlan } from '@/lib/capture/bundle-split'
-import { pickExamDate } from '@/lib/capture/semantic-dates'
+import { pickExamDate, isExamDateCorroborated } from '@/lib/capture/semantic-dates'
 import { planNarrativeDiscard } from '@/lib/exams/narrativeDiscard'
 import { examProcessingState } from '@sintera/core'
 import { identifyClinical } from '@/lib/capture/clinical-identity-registry'
@@ -539,9 +539,16 @@ export async function POST(
     // da imagem — antes ficava "Sem data" mesmo com a data no documento. Fato documental (transcrição).
     // IMAGEM: a data é a DECISÃO do pipeline (Clinical Identity, sobre as observações do DUE) — consistente com o
     // Pipeline Audit. Texto/PDF: mantém a resolução legada (semData/extração).
+    // CORROBORAÇÃO (Obs 10): a data SEMÂNTICA (pickExamDate, vinda da fonte) tem prioridade; a data da IA
+    // (result.examDate) SÓ é persistida se CORROBORADA no texto-fonte — formato válido ≠ evidência. Sem
+    // corroboração, exam_date fica ausente ("Sem data"), nunca uma data inventada. Imagem segue pelo
+    // pipeline/DUE (inalterado). Princípio: metadado clínico não comprovado não vira fato persistido.
+    const semanticIso = semDate && semDate.iso && semDate.confidence !== 'low' ? semDate.iso : null
+    const corroboratedAiIso = result.examDate && isExamDateCorroborated(result.examDate, examTextForIssuer)
+      ? result.examDate : null
     const examDate = imagePipeline
       ? imagePipeline.identity.examDate
-      : (semDate && semDate.iso && semDate.confidence !== 'low' ? semDate.iso : result.examDate) ?? null
+      : (semanticIso ?? corroboratedAiIso) ?? null
     if (examDate) finalUpdate.exam_date = examDate
     // Paciente: da Clinical Identity (imagem) ou da extração multimodal/texto. Fato documental (transcrição).
     const patientName = imagePipeline ? imagePipeline.identity.patientName : (result.patientName ?? null)

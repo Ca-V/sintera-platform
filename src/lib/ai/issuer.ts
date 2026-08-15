@@ -16,6 +16,26 @@ export function normalizeIssuer(raw: string | null | undefined): string | null {
   return normalizeExtractedName(raw, ISSUER_LABEL)
 }
 
+/**
+ * Guarda determinística (Obs 11) — rejeita um candidato a emissor cuja ÚNICA ocorrência na FONTE está
+ * COLADA a um identificador alfanumérico (ex.: pedido "5003524-SAVA" → "SAVA"). CONSERVADORA: só rejeita
+ * quando NÃO há nenhuma ocorrência "limpa" (isolada) do candidato no texto. Sem texto, ou candidato ausente
+ * do texto (ex.: nome lido de logo por multimodal), NÃO rejeita — não temos como provar que é artefato.
+ * Princípio: metadado não comprovado fica ausente; nunca inferir um laboratório de um token ambíguo. PURA.
+ */
+export function isOrderCodeArtifact(candidate: string | null | undefined, sourceText: string | null | undefined): boolean {
+  const token = (candidate ?? '').trim()
+  const text = sourceText ?? ''
+  if (token.length < 2 || !text) return false
+  const esc = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  // Ocorrência LIMPA = vizinhos não são dígito, '-' nem '/' (separadores de código) → nome isolado, legítimo.
+  if (new RegExp(`(^|[^0-9A-Za-z/-])${esc}([^0-9A-Za-z/-]|$)`, 'i').test(text)) return false
+  // Não aparece no texto → não é artefato de código (conservador: não rejeita).
+  if (!new RegExp(esc, 'i').test(text)) return false
+  // Aparece SÓ colado a código → artefato de identificador de pedido → rejeitar.
+  return true
+}
+
 const ISSUER_SYSTEM =
   'Você recebe um laudo/exame (texto ou imagem) e responde APENAS com o NOME do laboratório, clínica ou hospital '
   + 'que EMITIU o documento, exatamente como escrito (ex.: "Hermes Pardini", "Fleury", "DASA", "Axial", "Sabin", '
@@ -34,7 +54,9 @@ export async function extractIssuer(examText: string | null | undefined): Promis
       messages: [{ role: 'user', content: `Texto do laudo:\n"""${head}"""\n\nNome do laboratório/clínica emissor:` }],
     })
     const raw = msg.content[0]?.type === 'text' ? msg.content[0].text : ''
-    return normalizeIssuer(raw)
+    const issuer = normalizeIssuer(raw)
+    // Obs 11: descarta candidato que só existe como fragmento de código de pedido (ex.: "5003524-SAVA").
+    return issuer && isOrderCodeArtifact(issuer, text) ? null : issuer
   } catch {
     return null
   }

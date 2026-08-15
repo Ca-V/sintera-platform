@@ -87,3 +87,26 @@ export function pickExamDate(text: string | null | undefined): ExamDatePick {
   }
   return { iso: usable[0].iso, kind: usable[0].kind, confidence: 'low', candidates }
 }
+
+/**
+ * CORROBORAÇÃO (Obs 10) — a data (ISO) só é FATO se aparecer na FONTE. A extração da IA pode devolver uma
+ * data BEM-FORMADA porém INVENTADA (sem evidência no texto: ex.: cabeçalho em imagem). Verifica se a data
+ * ISO aparece no texto-fonte em alguma representação numérica comum (BR dd/mm/aaaa[aa] ou ISO), com
+ * separadores / . -. Determinística. Formato válido ≠ evidência: só quem passa aqui pode ser persistido a
+ * partir da IA; sem corroboração, a data fica ausente ("Sem data"), nunca uma data inventada.
+ */
+export function isExamDateCorroborated(iso: string | null | undefined, text: string | null | undefined): boolean {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec((iso ?? '').trim())
+  if (!m || !text) return false
+  const [, y, mo, d] = m
+  const t = text.replace(/\s+/g, ' ')
+  const y2 = y.slice(2)
+  const dN = String(+d), moN = String(+mo)
+  const forms: string[] = []
+  for (const s of ['/', '.', '-']) {
+    forms.push(`${d}${s}${mo}${s}${y}`, `${dN}${s}${moN}${s}${y}`)   // dd/mm/aaaa · d/m/aaaa
+    forms.push(`${d}${s}${mo}${s}${y2}`, `${dN}${s}${moN}${s}${y2}`) // dd/mm/aa · d/m/aa
+    forms.push(`${y}${s}${mo}${s}${d}`)                              // aaaa-mm-dd (ISO e variações)
+  }
+  return forms.some(f => t.includes(f))
+}

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { pickExamDate } from '@/lib/capture/semantic-dates'
+import { pickExamDate, isExamDateCorroborated } from '@/lib/capture/semantic-dates'
 
 // FUNC — Datas semânticas (CEF §5). Escolhe a data de REALIZAÇÃO, nunca nascimento/impressão/protocolo.
 // Casos reais: laudo 2009 (coleta 11/05/2009, impresso 13/07/26, nascimento 23/05/1980) e EEG "2002".
@@ -40,5 +40,35 @@ describe('FUNC · pickExamDate', () => {
   it('é DETERMINÍSTICA', () => {
     const txt = `Coleta: 11/05/2009  Impresso: 13/07/2026`
     expect(JSON.stringify(pickExamDate(txt))).toBe(JSON.stringify(pickExamDate(txt)))
+  })
+})
+
+// Obs 10 — CORROBORAÇÃO: a data da IA só é FATO se aparecer na fonte. Formato válido ≠ evidência.
+describe('Obs 10 · isExamDateCorroborated', () => {
+  it('(1) RM do joelho: data corroborada no texto (07/02/2026) → aceita', () => {
+    expect(isExamDateCorroborated('2026-02-07', 'Laudo Axial ... realizado em 07/02/2026 ...')).toBe(true)
+  })
+
+  it('(2) Urina Pardini: 2016-03-01 NÃO está na fonte (cabeçalho em imagem) → rejeitada', () => {
+    const textoSemData = 'CLORETOS RESULTADO 48 mEq/24h POTASSIO 42 SODIO Pedido 5003524-SAVA'
+    expect(isExamDateCorroborated('2016-03-01', textoSemData)).toBe(false)
+  })
+
+  it('(3) documento sem data identificável → permanece sem data', () => {
+    expect(isExamDateCorroborated('2021-03-01', 'texto sem qualquer data')).toBe(false)
+  })
+
+  it('(4) data válida presente no texto (BR e ISO, com / . -) continua aceita', () => {
+    expect(isExamDateCorroborated('2021-03-01', 'Data de Entrada: 01/03/2021')).toBe(true)
+    expect(isExamDateCorroborated('2021-03-01', 'coleta 1/3/2021')).toBe(true)
+    expect(isExamDateCorroborated('2021-03-01', 'ref 2021-03-01')).toBe(true)
+    expect(isExamDateCorroborated('2009-05-11', 'Coleta: 11/05/09')).toBe(true) // ano 2 dígitos
+  })
+
+  it('(5) data INVENTADA pela IA, mesmo em formato perfeitamente válido, não passa', () => {
+    // "2016-03-01" é uma data sintaticamente perfeita — mas sem evidência na fonte não é aceita.
+    expect(isExamDateCorroborated('2016-03-01', 'Paciente GABRIELA. Resultado do exame de urina.')).toBe(false)
+    expect(isExamDateCorroborated(null, 'qualquer')).toBe(false)
+    expect(isExamDateCorroborated('2016-03-01', null)).toBe(false)
   })
 })
