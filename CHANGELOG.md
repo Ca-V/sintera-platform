@@ -29,6 +29,29 @@ têm linhas de versão próprias; enquanto pré-lançamento, o Mobile agrupa por
   `gradleCommand: :app:assembleRelease`; instala-se extraindo o `app-release.apk`. "Install de 1 toque"
   segue em aberto (backlog).
 
+## [v1.1.0] — 2026-08-15 · V1 — Organização da saúde consolidada
+
+**Encerramento da Versão 1 (Plataforma consolidada de organização da saúde).** A SINTERA passa a mostrar a
+saúde **ao longo do tempo**, de forma completa e simples — sem precisar abrir dezenas de exames.
+
+### O que mudou para o usuário
+- O **relatório** distingue claramente **passado × futuro** — **Histórico de Saúde** (realizados) × **Agenda**
+  (previstos) — e espelha 100% a navegação.
+- A **evolução dos exames** pode ser compreendida rapidamente (último resultado · tendência · última
+  realização), sem abrir cada exame.
+- A **Composição Corporal** passou a ser organizada pelas **perguntas** que o usuário quer responder (resumo ·
+  jornada · evolução · comparação · marcos), **sem métricas duplicadas** e com origem **rastreável ao laudo**.
+- A **experiência longitudinal** ficou muito mais clara e consistente.
+
+### Integridade de dados (incidente encerrado)
+- Metadado clínico não corroborado pela fonte deixou de virar fato: a **data** do exame só persiste se
+  comprovada no laudo (Obs 10) e um **emissor** colado a código de pedido não vira laboratório (Obs 11).
+  Correção validada com registro real (`8ea769f9`: `2016-03-01`→`2021-03-01`; emissor `SAVA`→ausente).
+
+### Técnico
+- TSC + suíte (1224) + build verdes (o build requer as variáveis de ambiente do Supabase). Débito de lint
+  registrado em [QA-002](docs/QA-002_DEBITO_LINT_WEB.md) (não-bloqueante). Congelamento arquitetural preservado.
+
 ## [v1.0.1] — 2026-07-12 · hotfix de domínio
 
 **1ª entrega da Fase de Consolidação Arquitetural.** Demonstra o princípio: regras de

@@ -30,3 +30,15 @@ trabalho mobile — são débito **pré-existente** da Web (referência congelad
 Tratar como **item de saneamento próprio da Web**, priorizado pela fundadora, com validação funcional
 (não é um ajuste mecânico). Até lá, o CI **expõe** o débito continuamente (lint informativo) sem bloquear o
 desenvolvimento. Ao sanear, tornar o job de lint **bloqueante** no [ci.yml](../.github/workflows/ci.yml).
+
+## Atualização — 2026-08-15 (encerramento formal da V1)
+
+`npx eslint .` reporta agora **73 problemas: 36 erros + 37 avisos** (verificado 2026-08-15). O crescimento
+desde 2026-07-24 (13 erros) vem sobretudo das telas do **app mobile** (`apps/mobile/src/presentation/screens/**`
+— React Native), somadas ao débito Web pré-existente (algumas `src/app/dashboard/*/page.tsx`).
+
+**Classificação no encerramento da V1:** **débito explícito, NÃO-bloqueante.** O *Definition of Done* da V1 é
+**TSC + suíte + build verdes + Gate de Conformidade** — ESLint **não** é critério de aprovação da versão (o CI
+mantém o lint informativo, `continue-on-error`). Registrado aqui para **não reabrir a V1** nem virar frente de
+implementação neste ciclo; o saneamento permanece como item próprio, priorizado pela fundadora, com validação
+funcional (produto congelado, comportamentalmente sensível).
