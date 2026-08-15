@@ -37,3 +37,6 @@ export async function getAuthedSupabase(
   const { data } = await supabase.auth.getUser()
   return { supabase, user: data.user ?? null }
 }
+
+// Deploy de produção: camada de auth compartilhada (ADR-020). Ver RISK_REGISTER R-010.
+// (deploy de produção acionado exclusivamente por main — sem dedupe cross-branch)
