@@ -30,12 +30,23 @@ export function captureError(kind: DocumentKind, raw: string): CaptureResult {
   return { status: 'error', kind, title: 'Não foi possível processar', message: CAPTURE_ERROR_LABEL[reason], errorReason: reason }
 }
 
-/** Encaminhado ao módulo (pipeline com formulário próprio) — resultado UNIFICADO. */
+// 'forwarded' = a plataforma NÃO persistiu o documento; apenas ENCAMINHA a pessoa ao módulo para
+// concluir o cadastro LÁ. NUNCA é confirmação de que algo foi salvo. A cópia deixa explícito que o
+// documento ainda não foi salvo — impede a falsa confirmação de um cadastro concluído (Obs 6b:
+// nunca apresentar sucesso sem persistência efetiva).
 export function captureForwarded(proc: DocumentProcessor): CaptureResult {
   return {
     status: 'forwarded', kind: proc.kind,
-    title: 'Documento encaminhado',
-    message: `Vamos abrir ${proc.label.toLowerCase()} para você concluir o cadastro.`,
+    title: 'Continue o cadastro',
+    message: `Este documento ainda não foi salvo. Abra ${proc.label.toLowerCase()} para concluir o cadastro.`,
     nextActionLabel: 'Continuar', nextHref: proc.target,
   }
+}
+
+/** Tom de EXIBIÇÃO do resultado. 'forwarded' (documento NÃO persistido) NUNCA é 'success' — impede a
+ *  falsa confirmação (Obs 6b: só há confirmação de sucesso quando o objeto foi efetivamente persistido).
+ *  A UI deriva ícone/cor/rótulos daqui; determinístico e testável sem componente. */
+export type CaptureResultTone = 'success' | 'pending' | 'error'
+export function captureResultTone(status: CaptureResult['status']): CaptureResultTone {
+  return status === 'success' ? 'success' : status === 'error' ? 'error' : 'pending'
 }

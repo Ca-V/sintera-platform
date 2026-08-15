@@ -11,12 +11,12 @@
 
 import { useCallback, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { FlaskConical, Pill, Glasses, HeartPulse, Dna, FileText, UploadCloud, Camera, Loader2, X, CheckCircle, AlertCircle } from 'lucide-react'
+import { FlaskConical, Pill, Glasses, HeartPulse, Dna, FileText, UploadCloud, Camera, Loader2, X, CheckCircle, AlertCircle, Info } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import { CAPTURE_PROCESSORS, processorFor, processorsAccepting } from '../registry'
 import { classifyCheap } from '../classifier/classify'
-import { captureError } from '../result'
+import { captureError, captureResultTone } from '../result'
 import { logCapture } from '../telemetry'
 import type { DocumentKind, CaptureResult, ClassificationResult } from '../types'
 import { useDocumentBundle, DocumentBundleStaging } from '@/components/ui/DocumentBundleCapture'
@@ -174,13 +174,19 @@ export default function CaptureCenter({ className = '', onDone, initialKind = nu
   }
 
   // ── Resultado UNIFICADO (sucesso · encaminhado · erro) ──────────────────────
+  // 'forwarded' (documento NÃO persistido) usa tom INFORMATIVO — nunca o "check" verde de sucesso:
+  // impede a falsa confirmação de que o documento foi salvo (Obs 6b). Só 'success' (persistência
+  // efetiva) recebe o selo de sucesso.
   if (result) {
-    const ok = result.status !== 'error'
+    const tone = captureResultTone(result.status)
+    const toneWrap = tone === 'error' ? 'bg-red-50' : tone === 'success' ? 'bg-blush' : 'bg-ivory border border-border'
+    const ToneIcon = tone === 'error' ? AlertCircle : tone === 'success' ? CheckCircle : Info
+    const toneIconClass = tone === 'error' ? 'text-red-500' : tone === 'success' ? 'text-petal' : 'text-mauve'
     return (
       <div className={className}>
         <div className="text-center py-4">
-          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3 ${ok ? 'bg-blush' : 'bg-red-50'}`}>
-            {ok ? <CheckCircle size={24} className="text-petal" /> : <AlertCircle size={24} className="text-red-500" />}
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3 ${toneWrap}`}>
+            <ToneIcon size={24} className={toneIconClass} />
           </div>
           <p className="font-display text-lg font-semibold text-onyx">{result.title}</p>
           <p className="font-body text-sm text-mauve mt-1 max-w-xs mx-auto">{result.message}</p>
@@ -191,10 +197,12 @@ export default function CaptureCenter({ className = '', onDone, initialKind = nu
                 {result.nextActionLabel}
               </button>
             )}
-            {ok ? (
+            {tone === 'error' ? (
+              <button onClick={() => setResult(null)} className="px-4 py-2 rounded-full font-body text-sm text-petal hover:underline">Tentar novamente</button>
+            ) : tone === 'success' ? (
               <button onClick={reset} className="px-4 py-2 rounded-full font-body text-sm text-mauve hover:text-onyx transition-colors">Adicionar outro</button>
             ) : (
-              <button onClick={() => setResult(null)} className="px-4 py-2 rounded-full font-body text-sm text-petal hover:underline">Tentar novamente</button>
+              <button onClick={reset} className="px-4 py-2 rounded-full font-body text-sm text-mauve hover:text-onyx transition-colors">Cancelar</button>
             )}
           </div>
         </div>

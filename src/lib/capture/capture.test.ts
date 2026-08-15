@@ -1,8 +1,19 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { CAPTURE_PROCESSORS, processorFor, processorsAccepting } from './registry'
 import { classifyCheap } from './classifier/classify'
-import { classifyCaptureError, captureForwarded } from './result'
+import { classifyCaptureError, captureForwarded, captureResultTone } from './result'
 import { medicationProcessor } from './processors/medication'
+import { eyeglassProcessor } from './processors/eyeglass'
+import { examProcessor } from './processors/exam'
+
+// Isola o scan de medicamento (rede/IA): a persistência do processador NÃO depende do scan — mesmo
+// sem itens ele apenas encaminha (não salva o arquivo). Determinístico.
+vi.mock('../medications/scanImage', () => ({
+  scanMedicationImage: vi.fn(async () => ({ ok: false, items: [] })),
+  PENDING_MED_SCAN_KEY: 'pending-med-scan',
+}))
+
+const fakeFile = (name: string, type: string) => ({ name, type, size: 8 }) as unknown as File
 
 describe('registry de processadores', () => {
   it('não tem kinds duplicados', () => {
@@ -66,5 +77,56 @@ describe('resultado/erro unificado (contrato único)', () => {
     expect(r.kind).toBe('medication_label')
     expect(r.nextHref).toBe('/dashboard/medicamentos')
     expect(r.nextActionLabel).toBe('Continuar')
+  })
+})
+
+// Obs 6b — INVARIANTE: nunca apresentar confirmação de sucesso se o objeto aceito não foi
+// EFETIVAMENTE persistido. Cobre os 4 cenários exigidos: (1) suportado+persistido; (2) sem
+// item/processamento; (3) erro de processamento; (4) cancelamento (via tom, não-sucesso).
+describe('Obs 6b — falsa confirmação: encaminhado (não persistido) nunca é sucesso', () => {
+  it('captureResultTone: forwarded → "pending" (NUNCA "success"); success → "success"; error → "error"', () => {
+    expect(captureResultTone('forwarded')).toBe('pending')
+    expect(captureResultTone('success')).toBe('success')
+    expect(captureResultTone('error')).toBe('error')
+  })
+
+  it('captureForwarded é honesto: status forwarded, informa que ainda não foi salvo, não afirma sucesso', () => {
+    const r = captureForwarded(medicationProcessor)
+    expect(captureResultTone(r.status)).not.toBe('success')
+    expect(r.message.toLowerCase()).toMatch(/ainda não foi salvo/)
+    // Não pode simular cadastro concluído/salvo com sucesso.
+    expect(`${r.title} ${r.message}`.toLowerCase()).not.toMatch(/salvo com sucesso|documento salvo|cadastro concluído/)
+  })
+
+  it('(2) processadores que NÃO persistem (recurso de saúde, medicamento sem itens) → forwarded, nunca success', async () => {
+    const ctx = { supabase: {} as never, userId: 'u1' }
+    const eye = await eyeglassProcessor.process(fakeFile('a.pdf', 'application/pdf'), ctx)
+    expect(eye.status).toBe('forwarded')
+    expect(captureResultTone(eye.status)).not.toBe('success')
+
+    const med = await medicationProcessor.process(fakeFile('b.jpg', 'image/jpeg'), ctx)
+    expect(med.status).toBe('forwarded')
+    expect(captureResultTone(med.status)).not.toBe('success')
+  })
+
+  it('(1) exame só afirma success APÓS persistir; (3) qualquer falha de persistência → error', async () => {
+    const file = fakeFile('hemograma.pdf', 'application/pdf')
+    const storageOk = {
+      upload: async () => ({ error: null }),
+      createSignedUrl: async () => ({ data: { signedUrl: 'https://x/s?t=1' }, error: null }),
+    }
+    // sucesso: upload + signed URL + insert OK → success com entityId
+    const okClient = { storage: { from: () => storageOk }, from: () => ({ insert: async () => ({ error: null }) }) } as never
+    const ok = await examProcessor.process(file, { supabase: okClient, userId: 'u1' })
+    expect(ok.status).toBe('success')
+    expect(ok.entityId).toBeTruthy()
+
+    // falha no upload → error (não gera signed URL, não afirma sucesso)
+    const failUpload = { storage: { from: () => ({ ...storageOk, upload: async () => ({ error: new Error('storage cheio') }) }) }, from: () => ({ insert: async () => ({ error: null }) }) } as never
+    expect((await examProcessor.process(file, { supabase: failUpload, userId: 'u1' })).status).toBe('error')
+
+    // arquivo subiu mas o REGISTRO não persistiu (insert falhou) → error, jamais success
+    const failInsert = { storage: { from: () => storageOk }, from: () => ({ insert: async () => ({ error: new Error('rls') }) }) } as never
+    expect((await examProcessor.process(file, { supabase: failInsert, userId: 'u1' })).status).toBe('error')
   })
 })
