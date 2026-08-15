@@ -62,3 +62,38 @@ Ciclo de fechamento V1 retomado. Verificação item a item **no código** (reval
 - **D‑15 (data + ação):** 🔧 **data corrigida agora** — o detalhe Mobile deixa de exibir "Realizado em Sem data" e passa a mostrar **"Data de realização não informada"** (paridade com a Web, que nunca usa `created_at`). A **ação de documento já está alinhada** ("Abrir documento original" nas duas plataformas via `AttachmentLink`). *Estratégia de extração/nome/classificação de imagem segue em D‑11/D‑12.* typecheck (root+mobile) limpo; suíte 1194 verde.
 
 > Nota: estas são verificações de **código**; a homologação final exige revalidação **em device** na próxima build.
+
+---
+
+## Reconciliação completa com o código — 2026-08-15 (pós-release V1 `9eebb0e`)
+
+Verificação item a item **no código atual** (não device). A tabela original acima é o **log bruto** da homologação;
+esta seção é o **estado real** para a próxima homologação partir de um baseline correto. Convenção: **✅ resolvido no
+código (revalidar em device)** · **🔓 desbloqueado pelo release** · **⏸️ decisão (clínica/produto)** · **🗺️ roadmap**.
+
+| ID | Estado real (código) | Evidência |
+|---|---|---|
+| D‑00 | ✅ resolvido | fontes auxiliares não‑fatais (Histórico carrega com eventos+exames) |
+| D‑01 | ✅ resolvido | `ExamDetailScreen.onShare` inclui `file_url` no Share |
+| D‑02 | 🔓 **desbloqueado pelo release** | Bearer/ADR‑020 agora em `main` (`9eebb0e`) → **revalidar ômica em produção** |
+| D‑03 | ✅ resolvido | `HistoricoExamesScreen`: `Select` searchable + busca (sem parede de chips) |
+| D‑04 | ✅ resolvido | `TimelineScreen`: busca + "Por data/Por tipo" |
+| D‑05 | ⏸️ decisão de produto | reorg da Home (não é defeito de código) |
+| D‑06 | ✅ resolvido | `AgendaScreen` renderiza título ou `typeLabel` (nunca sem rótulo) |
+| D‑07 | ✅ resolvido | `EventFormScreen`: "Adicionar ao calendário" (`googleCalendarUrl`) |
+| D‑08 | ✅ resolvido | `EventFormScreen`: switch "Despesa direta" |
+| D‑09 | ✅ resolvido | `EventFormScreen`: "Receber lembrete no dia anterior" + canal das preferências |
+| D‑10 | ⏸️ decisão de produto | cadências extras/"a cada N" (enhancement compartilhado) |
+| D‑11 | ✅ classificação resolvida | `imageModalityOverride` (imaging/ophthalmology → document_only); commits `b3d789a`/`a8537d5`/`43354a0` |
+| D‑12 | ⏸️ **revisão clínica (RC)** | rótulo de olho OD/OS **não implementado** na extração; `0e803f5` = candidato p/ revisão do RC |
+| D‑13 | 🗺️ roadmap | Receita médica (feature) → `MOBILE-038` |
+| D‑14 | 🗺️ roadmap | Captura unificada (feature) → `MOBILE-038` |
+| D‑15 | ✅ resolvido | detalhe Mobile "Data de realização não informada" (paridade Web, `f4d5ccb`) |
+| D‑16 | ✅ resolvido | `primitives/Select.tsx` (bottom‑sheet rolável + busca); 1º uso no D‑18 |
+| D‑17 | ✅ resolvido | `ComposicaoScreen` usa `MetricRow` do DS (valor em destaque, metadados subordinados) |
+| D‑18 | ✅ resolvido | `HistoricoExamesScreen` redesenhado (picker + cartões colapsados nome+contagem) |
+
+**Resumo:** os defeitos de **paridade/"ciclo único" estão resolvidos no código** — falta **revalidação em device**
+(homologação). **D‑02** revalida após o release. **D‑12** aguarda **revisão clínica**. **D‑05/D‑10** e a estratégia de
+extração de imagem são **decisões de produto**. **D‑13/D‑14** são **features de roadmap** (não defeitos). Gates técnicos:
+root TSC 0 · mobile TSC 0 · suíte 1224 · build verde (com env). Nenhum defeito de código aberto pendente de correção.
