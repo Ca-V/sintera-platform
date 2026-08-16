@@ -4,9 +4,12 @@ Companheiro do checklist **MOBILE‑033**. Objetivo: instalar o APK, executar a 
 defeitos numa lista única** (sem corrigir durante os testes → correção em um ciclo → nova build → RC1).
 
 ## Build sob teste
-- **Branch:** `feat/mobile-inc4-perfil` · **HEAD:** `13811d2` (funcionalmente = `cafaec8`; o commit do checklist é só doc)
-- **Build/APK (EAS):** `c5104a24-b8b8-472b-be9e-e6e5c8d41635` · perfil `preview`
-- **Link de download:** _(anexar quando o build finalizar)_
+- **Branch:** `feat/mobile-inc4-perfil` · **HEAD:** `c80ec1be` (pós-release V1 + reconciliação de defeitos)
+- **Build/APK (EAS):** `c69186e6-5aa4-4aad-b554-0a45f6cf2a9a` · perfil `preview` · conta `sintera-health-tech`
+- **Link de download/instalação:** https://expo.dev/accounts/sintera-health-tech/projects/sintera/builds/c69186e6-5aa4-4aad-b554-0a45f6cf2a9a
+- **Gerado em:** 16/08/2026 · aponta para a base de **produção**
+
+> Build anterior (referência histórica): HEAD `13811d2` · EAS `c5104a24-b8b8-472b-be9e-e6e5c8d41635`.
 
 ## 1. Instalar o APK no Android (sideload)
 1. Baixar o `.apk` do link do build (página do EAS → "Install"/"Download").
