@@ -50,6 +50,23 @@
 | "O médico recomenda um retorno e a plataforma cria o acompanhamento" | ⬜ registrado | CARE-001 colaboração bidirecional → recorrência do Evento Assistencial |
 | "Importo de FHIR/DICOM/HL7/hospital automaticamente" | ⬜ | conectores de aquisição |
 
+## Conhecimento científico do biomarcador — decisão de produto (registrada; próxima evolução, PÓS-homologação)
+> Decisão da fundadora (16/08/2026). **NÃO implementar agora** — registrar para a próxima evolução, **após** a homologação Web + Mobile.
+
+**Princípio:** organizar e contextualizar informação **longitudinal**, sem transformar o laudo em enciclopédia nem interpretar o valor da usuária. **Conhecimento ≠ dado clínico** (RDC-657 — sem diagnóstico/recomendação automáticos).
+
+**Três objetos distintos:** ① **Exame/laudo** (o documento que chegou) · ② **Biomarcador** (informação clínica estruturada extraída) · ③ **Contexto do biomarcador** (conhecimento **canônico e reutilizável** — o que representa · unidade · fonte científica). Arquitetura: **Fonte → Exame → Biomarcadores → Conhecimento do biomarcador** (um conhecimento por marcador, reusado por todos os exames/telas; o mesmo marcador aparece em vários exames/anos → conhecimento reutilizado, valores formam a série).
+
+| Objeto | O que mostrar |
+|---|---|
+| Exame de **imagem** | **"Sobre este exame"** (ex.: RM do joelho — finalidade/o que avalia/contexto): exame ≈ entidade clínica |
+| Exame **laboratorial** (registro) | Enxuto: data · laboratório · tipo de material (quando houver) · nº de resultados + acesso discreto **"Veja o significado dos biomarcadores"** — **sem** explicações no cabeçalho |
+| **Biomarcador** (no Histórico de Saúde) | **"Sobre este marcador"**: o que representa · unidade · **fonte científica** |
+| **Resultado** do biomarcador | valor · unidade · data · **histórico longitudinal** do marcador |
+| Interpretação clínica | **NÃO** produzir automaticamente |
+
+**Onde vive:** o "Sobre este marcador" abre ao clicar o biomarcador no **Histórico de Saúde** (entidade longitudinal: a explicação pertence ao marcador, a série de valores pertence à trajetória). Reaproveita o **Clinical Knowledge Service** (`ADR-CK-001`) estendido para conhecimento **por biomarcador** (hoje curado só para oftalmologia/imagem). **Status:** ⬜ decisão registrada · próxima evolução (pós-homologação Web + Mobile).
+
 ---
 
 **Ligação com o técnico:** cada capacidade acima é entregue por milestones em `EXECUCAO_MILESTONES.md`.
