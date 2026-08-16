@@ -94,3 +94,16 @@ A **homologação v1.0 é aprovada** quando: (a) todos os itens **Funcionais** e
 
 ---
 **Uso:** a estabilização (~30 dias) percorre esta lista até zerar ⏳ e resolver/registrar os ⚠️. Só então inicia o Catalog v2 (ver `POST_STABILIZATION_BACKLOG.md`).
+
+---
+
+## Achados de homologação — registro corrente (a VALIDAR antes de virar defeito)
+
+Regra: **só corrigir o que for reproduzido como defeito REAL.** Cada achado: descrição · classificação · ação · status.
+Classes: **defeito funcional · inconsistência de UX/paridade · melhoria/perf · problema ambiental.**
+
+| # | Achado | Classificação | Ação | Status |
+|---|---|---|---|---|
+| H‑01 | **INP ~216 ms** ao clicar "Extrair novamente" no detalhe do exame (`/dashboard/exams/[id]`), observado no **preview** da Vercel com **Vercel Toolbar + widget "Feedback rápido"** ativos. Handler `handleAnalyze` é **assíncrono/correto** (o `fetch` é awaited); o custo é o **re-render síncrono** da página no `setAnalyzing(true)`, entre o clique e o paint. | **Perf borderline** (216 ms; limiar "bom" = 200 ms) **+ provável interferência ambiental** (preview/toolbar/widget). **Defeito funcional: NÃO identificado.** | **Reproduzir em PRODUÇÃO, sem Toolbar/widget.** Se ≤ ~200 ms → **ambiental** (fechar sem código). Se **consistente > 200 ms** → abrir defeito de perf + **correção cirúrgica** (memoizar seções pesadas do detalhe / `startTransition`), **sem tocar a arquitetura congelada**. | ⏳ **a validar em produção** |
+
+> **Nota:** o `SAVA` exibido no exame `33670c0b` é o **artefato de código já conhecido** (fragmento de pedido, não emissor) — **não** é achado novo de homologação; correção pontual separada, fora deste ciclo, quando a fundadora decidir.
