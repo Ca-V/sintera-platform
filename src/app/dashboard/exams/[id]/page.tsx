@@ -31,7 +31,6 @@ import CareFlowStepper from '@/components/CareFlowStepper'
 import ClinicalResultsCard from '@/components/ClinicalResultsCard'
 import ExamClinicalContext from '@/components/ExamClinicalContext'
 import Link from 'next/link'
-import FeedbackModal from '@/components/FeedbackModal'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
 import MotionCard from '@/components/ui/MotionCard'
@@ -1228,9 +1227,6 @@ export default function ExamDetailPage() {
           </motion.div>
         </div>
       )}
-
-      {/* FeedbackModal P2 — aparece após 1ª análise no Beta */}
-      <FeedbackModal />
 
       {/* AgendarModal — Evento Assistencial único (health_events). E8 'repeat' = agendar/lembrete
           (recorrência); E7 'expense' = valor pago + NF/recibo do exame realizado (→ Despesas). */}
