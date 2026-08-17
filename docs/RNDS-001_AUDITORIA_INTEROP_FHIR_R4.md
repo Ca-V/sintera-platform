@@ -1,0 +1,154 @@
+# RNDS-001 — Auditoria de Interoperabilidade + Gap Analysis (RNDS / FHIR R4)
+
+**Status:** AUDITORIA READ-ONLY + GAP ANALYSIS (PROPOSTA) — nada implementado. Nenhuma alteração de código, banco ou dados.
+**Objetivo:** entender exatamente onde a SINTERA está em relação à RNDS/FHIR R4 **antes** de abrir qualquer PR de implementação. Não criar endpoints FHIR agora.
+**Método:** 4 frentes de leitura no código/banco + fonte oficial da RNDS.
+
+> **Limitação declarada (importante):** o proxy de egresso **bloqueia** os hosts oficiais (`rnds-fhir.saude.gov.br`, `hl7.org.br`) para leitura completa. O contrato RNDS abaixo foi montado a partir de **trechos oficiais** (busca) + FHIR R4 base. **Os perfis, cardinalidades e o escopo vigente precisam ser confirmados no Guia de Implementação da RNDS ao vivo** — não foram congelados a partir de memória.
+
+---
+
+## 1. Estado da homologação — freeze RECONCILIADO (última conferência)
+
+⚠️ **Os documentos de homologação (`HOMOLOGATION_PLAN_v1`, `MOBILE-037`) estão ATRASADOS em relação ao código.** Eles ainda descrevem H-09/H-10/H-11/H-12 como "investigação/proposto", mas essas correções **foram implementadas e estão na linha de homologação** (branch `feat/mobile-inc4-perfil` / PR #110, deploy de preview). Abaixo o estado **real do código**, não o dos docs. **Housekeeping pendente:** atualizar os docs para refletir os merges (sync de documentação — NÃO é reabrir os itens).
+
+| ID | Título curto | Estado REAL (código) | Classificação de freeze |
+|---|---|---|---|
+| H-09 | Pedido classificado como exame realizado (imaging) | ✅ corrigido (roteamento, `resolveImageDocumentType`) — na linha de homologação/preview | FECHADO (código+preview); validar em produção no merge do #110 |
+| H-10 pedido (`ab5b5816`) | Nome/lateralidade (unilateral→bilateral) | ✅ **corrigido + VALIDADO no dado real** (#111 consolidação + #112 propagação) | **FECHADO E CONGELADO** — não reabrir |
+| H-11 | "Possível duplicado" desformatado (só apresentação) | ✅ corrigido (apresentação isolada) — preview | FECHADO (código); validar em device |
+| H-12 | Rótulo "Adicionar exame realizado" → "pedido" | ✅ corrigido | FECHADO (código) |
+| H-03 | Hierarquia do detalhe do exame (Web) | ✅ corrigido (conteúdo antes de financeiro) | FECHADO (código); parte Mobile pendente |
+| H-04 | "Minha Saúde" abre Exames em vez do menu (Mobile) | ✅ corrigido (1 linha) | FECHADO (código); revalidar em device |
+| H-05 | "Erro desconhecido" (migração 136 não aplicada) | ✅ corrigido server-side (migração aplicada) | FECHADO (server); revalidar em device |
+| H-01 | INP ~216ms ("Extrair novamente") | ⏳ a validar em produção | ABERTO — sem defeito funcional; provável ambiental |
+| H-02 | Sidebar subdivisões abertas por padrão | ⏸️ registrada | **CONGELADO** — baseline de navegação; só com exceção explícita |
+| H-06 | "Acesso rápido" Web×Mobile divergente | ⏸️ decisão de produto | ABERTO |
+| H-07 | Config · DDD/país (WhatsApp) | ⏳ a detalhar | ABERTO |
+| H-08 | "Nova medida" desformatado (Composição) | ⏳ a detalhar | ABERTO |
+
+**Série D (MOBILE-037):** por reconciliação de 15/08, "nenhum defeito de código aberto"; a maioria fechada em código aguardando revalidação em device. Abertos = decisões de produto/clínica (D-05, D-10, D-12) e revalidação de deploy (D-02). Backlog/roadmap = D-13, D-14 (MOBILE-038).
+
+**Bottom line do freeze:** o ciclo funcional está **majoritariamente fechado em código** (na linha de homologação/preview). Congelados de verdade: **H-02** (navegação) e **H-10 pedido** (validado). O passo que falta para "congelar" a homologação é **produto**: última conferência em device/produção + merge do #110. **Não** há necessidade de reabrir itens já corrigidos.
+
+---
+
+## 2. Modelo interno SINTERA (Camada A) — o que existe hoje
+
+O modelo real vive em **~137 migrações**; `schema.sql` é só a semente. Entidades clínicas mapeadas:
+
+| Entidade clínica | Como existe hoje | Identificadores presentes | Ausências críticas p/ RNDS |
+|---|---|---|---|
+| **Paciente** | `profiles` (1:1 auth.users); `exams.patient_name` (texto) | `user_id` (uuid) | **sem CPF, sem CNS/cartão SUS, sem data de nascimento (só `age_range`), sem sexo biológico** |
+| **Profissional** | `exams.requesting_physician` (texto); `health_events.professional_name/kind` | — | **sem tabela, sem CRM, sem CNS** |
+| **Organização** | `exams.issuer` (texto) | — | **sem tabela, sem CNES, sem endereço/telecom** |
+| **Pedido** | `document_type ∈ {medical_order, insurance_guide}`; domínio `orderStatus`/`careFlow` | — | **`order_status`/`fulfills_order_id` NÃO têm DDL** (só no DTO/domínio) — vínculo pedido↔resultado não persistido |
+| **Exame/Resultado** | `exams` + `biomarkers`/`current_biomarkers` (view) + `clinical_results` + `omics_*` + `body_metrics` | ids internos, `catalog_id`, `extraction_version_id` | unidades **texto livre (não UCUM)**; 2 modelos paralelos de resultado |
+| **Procedimento** | `modalities` (7 códigos internos), `exams.modality_code` | `modality_code` interno | **sem TUSS/CBHPM/SIGTAP** |
+| **Documento** | `exams.file_url`, `document_sha256`, `extraction_versions` | sha256 | multi-documento (`exam_documents`) **proposto, não construído** (ADR-EXDOC-001) |
+| **Datas** | `exam_date` (uma coluna); `semantic-dates.ts` computa coleta/realização/liberação… | — | sub-tipos de data **colapsados** em `exam_date` (FHIR distingue) |
+| **Terminologia** | `TerminologyRef` (contrato), `biomarker_catalog.loinc_code/snomed_ct_code` | — | `lookupOfficialTerminology` = **stub**; LOINC/SNOMED **0% populados**; CID-10 ausente |
+
+**Base de proveniência (forte — matéria-prima para FHIR Provenance/DocumentReference):**
+- `src/lib/provenance/index.ts` — modelo `Provenance`/`DocumentMeta` (`url/type/date/issuer/hash/…`) → mapeia quase 1:1 para **DocumentReference**.
+- `PipelineAudit`/`understanding_report` (decisionLog + evidências aceitas/rejeitadas) + `resolution_id` + `representation_fingerprint` + `extraction_versions`/`document_sha256` + `ai_processing_log` → trilha de **Provenance** (activity/agent/entity) pronta.
+- `UcdaItem` (`ucda.ts`) — `code/codeSystem/valueNum/valueText/region/anatomy/specimen/method/referenceText/page` — **julgado FHIR R4/BR-Core mapeável** (V2_ARCHITECTURE_GAP_ANALYSIS §1, gap BAIXO).
+
+**Interoperabilidade hoje: ZERO implementação.** Nenhum builder FHIR, serializer de Bundle, cliente RNDS ou terminology server. Só arquitetura "adapter-ready" + gates explícitos "NÃO IMPLEMENTAR agora" (V2_ARCHITECTURE_GAP_ANALYSIS `:93,:96`). Enum `'rnds'`/`'lab_api'` existem como rótulos de origem de captura, sem adaptador.
+
+**LGPD/consentimento:** `consent_records` (por tipo+versão, com hash/ip/user-agent) e `report_shares` (compartilhamento por token). **Gaps conhecidos p/ envio à RNDS:** consentimento **por destinatário** e **log de acesso** — ambos ausentes (V2 gap `:92`).
+
+---
+
+## 3. Contrato RNDS / FHIR R4 (Camadas B/C) — do guia oficial (A CONFIRMAR no IG vigente)
+
+Da fonte oficial (busca; fetch bloqueado):
+- **FHIR 4.0.1.** Envio de resultado de exame laboratorial (**REL**), perfil **V2** (`BRResultadoExameLaboratorial`), via **Bundle** (contêiner que agrupa os recursos).
+- **Recursos no Bundle (REL):** `Bundle` → `DiagnosticReport` (BRCoreDiagnosticReport) → `Observation` (resultado/medição) → `Specimen` (amostra biológica) + `Patient` + `Organization` + `Practitioner`. (Provavelmente `Composition`/`Provenance` também — **confirmar**.)
+- **Terminologias RNDS:** `BRNomeExameLOINC` (nome do exame via **LOINC**), `BRNomeExameGAL`, `BRResultadoQualitativoExame` (resultado qualitativo). → **LOINC é obrigatório** para nomear exames.
+- **Identificadores:** **CNS** (Cartão Nacional de Saúde, paciente) e **CNES** (estabelecimento) são identificadores centrais da RNDS; CPF/CNPJ conforme perfil. **Confirmar cardinalidades**.
+- **Autenticação/ambiente:** integração exige **certificado** (ICP-Brasil/X.509, provável mTLS) + ambientes de homologação/produção + processo de **homologação RNDS**. **Confirmar no portal.**
+- ⚠️ **Nuance de escopo (a confirmar):** o **exemplo** documentado do REL historicamente estava **restrito a COVID-19 e Monkeypox** (doenças de notificação). É preciso confirmar no IG vigente se o escopo de resultado laboratorial foi **ampliado** para exames gerais — isso muda drasticamente a aplicabilidade para a SINTERA.
+
+**Fontes oficiais (a abrir num ambiente com egresso liberado):**
+- IG RNDS FHIR: `https://rnds-fhir.saude.gov.br/`
+- REL V2: `https://rnds-fhir.saude.gov.br/rel-v2.html`
+- CodeSystems: `BRNomeExameLOINC`, `BRNomeExameGAL`, `BRResultadoQualitativoExame`
+- Guia/Modelo Computacional REL: `https://rnds-guia.saude.gov.br/docs/rel/mc-rel/`
+- Homologar: `https://rnds-guia.saude.gov.br/docs/publico-alvo/ti/homologar/`
+- BR-Core DiagnosticReport: `https://hl7.org.br/fhir/core/StructureDefinition-br-core-diagnosticreport.html`
+
+---
+
+## 4. Mapeamento SINTERA → FHIR R4 (ponto de partida — NÃO definitivo)
+
+| SINTERA (hoje) | FHIR R4 | Perfil BR/RNDS | Situação |
+|---|---|---|---|
+| `profiles` + `patient_name` | **Patient** | BRIndividuo / br-core-patient | **CRIAR** entidade + CNS/CPF/nascimento/sexo |
+| `requesting_physician` | **Practitioner** (+PractitionerRole) | br-core-practitioner | **CRIAR** entidade + CNS/CRM |
+| `issuer` | **Organization** | br-core-organization | **CRIAR** entidade + CNES |
+| pedido (`medical_order`) | **ServiceRequest** | — | **CRIAR/PERSISTIR** (order_status/fulfills_order_id sem DDL) |
+| `exams` (realizado) | **DiagnosticReport** | BRCoreDiagnosticReport | **ADAPTAR** (projetor) + LOINC |
+| `biomarkers`/`clinical_results` | **Observation** | BR Observation | **ADAPTAR** (UcdaItem → Observation) + LOINC + UCUM |
+| amostra (specimen em clinical_results) | **Specimen** | RNDS Specimen | **ADAPTAR/CRIAR** |
+| `file_url` + `provenance/DocumentMeta` | **DocumentReference** + **Binary** | — | **ADAPTAR** (base forte) |
+| `PipelineAudit`/`resolution_id`/fingerprint | **Provenance** | — | **ADAPTAR** (base forte) |
+
+---
+
+## 5. Gap analysis — JÁ ATENDE / ADAPTAR / CRIAR
+
+### ✅ JÁ ATENDE (base sólida, mapeável)
+- Modelo canônico **UCDA** FHIR R4/BR-Core-mapeável (code/valueX/bodySite/specimen/method/referenceRange).
+- **Proveniência** rica (`provenance/index.ts`, `PipelineAudit`, `extraction_versions`, `fingerprint`) → Provenance/DocumentReference.
+- **Contratos de código** já preveem terminologia (`TerminologyRef`, colunas `loinc_code`/`snomed_ct_code`/`code_system`/`value_code`).
+- Arquitetura **adapter-ready** (conectores) — o "encaixe" para um adaptador RNDS.
+
+### 🔧 ADAPTAR
+- Projetor **UCDA/biomarkers/clinical_results → Observation/DiagnosticReport** (camada aditiva, sem tocar o domínio).
+- Unidades **texto → UCUM**.
+- **`exam_date` → sub-tipos** (coleta/realização/liberação) já computados por `semantic-dates.ts`, mas colapsados — FHIR precisa distinguir (`effective[x]`, `issued`, `Specimen.collection`).
+- **Consentimento por destinatário** + **log de acesso** (hoje ausentes) — pré-requisito LGPD/RNDS para envio.
+
+### 🚧 CRIAR (net-new — os bloqueadores)
+1. **Entidades Patient/Practitioner/Organization** (hoje texto livre em `exams`) + **identificadores oficiais**: **CPF, CNS, data de nascimento, sexo** (paciente); **CRM/CNS** (profissional); **CNES** (organização). **Sem CNS/CNES não há como enviar à RNDS — bloqueador nº 1.**
+2. **Persistência do Pedido (ServiceRequest)** — resolver a **lacuna de schema** `order_status`/`fulfills_order_id` (sem DDL). *(Pré-requisito compartilhado com o exam_documents.)*
+3. **Resolução de terminologia ao vivo** (LOINC obrigatório; SNOMED) — hoje **stub** (backlog C7), cobertura **0/83**. **Sem LOINC nos resultados não há conformidade — bloqueador nº 2.**
+4. **Camada de projeção FHIR** (resource builders + serializer de **Bundle** REL).
+5. **Cliente RNDS** — autenticação por **certificado** (ICP-Brasil/mTLS), ambientes, operações, tratamento do identificador retornado pela RNDS.
+6. **Testes de conformidade** (validação FHIR + perfis RNDS) e **homologação RNDS**.
+
+---
+
+## 6. Ordem recomendada (com pré-requisitos)
+
+```
+CONGELAR HOMOLOGAÇÃO ATUAL  (última conferência em device/prod + merge #110)
+        ↓
+PRÉ-REQUISITO: reconciliar schema (order_status/fulfills_order_id sem DDL)  ← compartilhado com exam_documents
+        ↓
+CAMADA A — completar o modelo interno: entidades Patient/Practitioner/Organization + identificadores (CPF/CNS/CNES/CRM/nascimento/sexo)
+        ↓
+Terminologia ao vivo (LOINC) — destravar backlog C7 (bloqueador de conformidade)
+        ↓
+CAMADA B — projetor SINTERA → FHIR R4 (Observation/DiagnosticReport/Patient/…/Provenance/DocumentReference) — ADITIVO
+        ↓
+CAMADA C — perfis/contrato RNDS (REL v2, Bundle) + cliente (certificado, ambientes)
+        ↓
+Consentimento por destinatário + log de acesso (LGPD/RNDS)
+        ↓
+Testes de conformidade → homologação RNDS
+```
+
+**Fora deste ciclo (backlog):** `exam_documents` (ADR-EXDOC-001) e correção do `0f5ec205`.
+
+**Confirmar antes de qualquer implementação (pré-requisito de decisão):** abrir o **IG vigente da RNDS** (num ambiente com egresso liberado) para confirmar (a) o **escopo atual** do REL (COVID/Monkeypox vs. exames gerais), (b) os **perfis e cardinalidades** obrigatórios, (c) **identificadores** exigidos, (d) o **processo de homologação** e certificados. Só então congelar a lista de recursos FHIR.
+
+---
+
+## 7. Riscos e invariantes
+- **Bloqueadores de dados:** sem CNS/CPF/CNES e sem LOINC nos resultados, o envio à RNDS é inviável — priorizar Camada A + terminologia.
+- **Escopo RNDS:** se o REL vigente ainda é restrito a notificáveis, a aplicabilidade para exames gerais da SINTERA precisa ser reavaliada (talvez outro fluxo/documento RNDS seja o alvo).
+- **LGPD:** enviar dados à RNDS exige base de consentimento por destinatário + auditoria de acesso — hoje ausentes.
+- **Preservar invariantes existentes:** UCDA puro; proveniência de todo fato; sem virar "FHIR Server" nem "RNDS por aproximação" (DEV-001 §129).
+- **Não implementar endpoints FHIR direto** sem o mapeamento A→B→C fechado.
