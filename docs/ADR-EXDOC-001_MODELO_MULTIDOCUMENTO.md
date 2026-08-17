@@ -1,8 +1,40 @@
 # ADR-EXDOC-001 — Modelo Multi-Documento por Exame (`exam_documents`)
 
-**Status:** PROPOSTA (especificação para revisão — NÃO implementada)
-**Escopo:** evolução estrutural transversal. Muda a unidade de modelagem de **Exame = documento** para **Exame = agregado clínico → 1:N Documentos → 1:N extrações/evidências/resultados**.
+**Status:** **APROVADO CONCEITUALMENTE (regras congeladas)** — implementação NÃO iniciada. Próximo PR = exclusivamente a **Fase 0** (migração aditiva + backfill).
+**Escopo:** evolução estrutural transversal. Muda a unidade de modelagem de **Exame = documento** para **Exame = agregado clínico (episódio) → 1:N Documentos → 1:N extrações/evidências/resultados**.
 **Fora de escopo nesta etapa:** correção do `0f5ec205` (extração/visão da etiqueta — trilha própria, posterior). Nenhuma alteração em `ab5b5816` (H-10 pedido, fechado e congelado).
+
+---
+
+## 0. Regras fundamentais (aprovadas — CONGELADAS)
+
+Princípio: **Um exame é um agregado clínico (episódio) que pode possuir múltiplos documentos relacionados ao longo do tempo. Cada documento é uma entidade independente, preservada e rastreável. A adição de um novo documento NUNCA sobrescreve ou elimina documentos anteriores.**
+
+1. **1 exame → N documentos.**
+2. **Cada documento tem identidade própria** (arquivo, papel, tipo, data, emissor, solicitante, extração, evidências, proveniência).
+3. **Documentos anteriores nunca são sobrescritos** nem eliminados pela chegada de outro.
+4. **Laudo preliminar e laudo final coexistem** (não são substitutos um do outro).
+5. **Pedido permanece conceitualmente separado** de resultado/laudo no MVP.
+6. **Documento primário é uma REFERÊNCIA de derivação/apresentação, não uma substituição** dos demais — os outros documentos continuam válidos e rastreáveis.
+7. **Dados clínicos derivados mantêm a proveniência do documento de origem** (`exam_document_id`).
+8. **O nome clínico do exame é separado de data, médico e emissor** (nomenclatura ≠ metadados).
+9. `0f5ec205` continua **fora** desta implementação; `ab5b5816` continua **congelado**.
+10. **A arquitetura de navegação homologada permanece estável.** Multi-documento é **evolução de capacidade do módulo de exames/documentos** — **não** motivo para reabrir a arquitetura da sidebar/IA. A mudança ocorre **dentro dos módulos**, como evolução funcional.
+
+### 0.1 Unidade clínica do agregado — o que significa "mesmo exame"
+
+O agregado `exams` é o **episódio/evento clínico** (o procedimento realizado), **não** um arquivo. Um mesmo episódio pode reunir:
+
+```
+EXAME / EVENTO CLÍNICO  (ex.: Doppler colorido venoso de membro inferior)
+        ├── Pedido                     (o que foi solicitado)
+        ├── Documento preliminar       (informação/laudo manual da médica no dia)
+        ├── Laudo definitivo           (PDF oficial do laboratório, depois)
+        ├── Imagens                    (complementares)
+        └── Documentos complementares  (correções/adendos)
+```
+
+Todos pertencem ao **mesmo episódio**, mas **não** são o mesmo documento. Esta é a unidade de modelagem — mais importante do que "transformar `file_url` em lista". A regra de **quando** um documento novo pertence a um episódio existente (vs. cria um novo) está em §13 (evidência; nunca auto-merge silencioso).
 
 ---
 
@@ -66,7 +98,7 @@ exam_documents
   is_primary                      boolean NOT NULL DEFAULT false  -- documento primário do exame (derivado/governado)
   -- ciclo
   status                          text  NOT NULL DEFAULT 'pending'  -- pending|processing|processed|error
-  added_at                        timestamptz DEFAULT now()
+  uploaded_at                     timestamptz DEFAULT now()  -- data de INCLUSÃO do arquivo no exame (≠ exam_date do documento)
   created_at                      timestamptz DEFAULT now()
 
   Índices: (exam_id), (exam_id, is_primary), (document_sha256), (user_id)
@@ -182,14 +214,31 @@ Hoje há **3 cópias** do insert 1:1 (`page.tsx:296-306`, `processors/exam.ts:16
   - ❌ `"Doppler... — 17/08/2026 — Dr. X — Lab Y"`.
 - Reusa `deriveDisplayTitle` / `resolveClinicalMapping` / `resolveOrderNaming` (já existentes) sobre a identidade do documento primário.
 
+**Mapa de campos (nome clínico separado dos metadados):**
+
+| Informação | Campo | Nível |
+|---|---|---|
+| Nome clínico | `display_title` | exame (derivado) |
+| Data do exame | `exam_date` | exame (derivado) / documento |
+| Solicitante | `requesting_physician` | exame (derivado) / documento |
+| Emissor/laboratório | `issuer` | exame (derivado) / documento |
+| Tipo/papel do documento | `document_role` | documento |
+| Data de inclusão do arquivo | `uploaded_at` | documento |
+| Arquivo | `file_url` | documento |
+| Documento | `exam_document` (id) | documento |
+
+Ex.: `display_title = "Doppler colorido venoso de membro inferior — bilateral"` — e **nunca** `"Doppler… — bilateral • Unimed • Dr. X • 17/08/2026"`. Os metadados existem como campos e são exibidos **separadamente**.
+
 ---
 
-## 9. Documento primário (qual define a apresentação)
+## 9. Documento primário (referência de apresentação — NÃO substituição)
+
+**Princípio (congelado):** o documento primário é uma **referência de derivação/apresentação**, **não** uma substituição dos demais. Mesmo quando o laudo final chega: o preliminar permanece, a imagem permanece, e o laudo final passa a ser o **documento de maior autoridade quando aplicável** — a plataforma mantém a **proveniência de cada informação** (rastreabilidade clínica).
 
 - `exams.primary_document_id`. Regra de precedência **governada e explicável**:
   1. maior precedência de papel entre documentos **processados**: `laudo_final` > `laudo_preliminar` > `imagem` > `complementar` > `pedido`;
-  2. desempate por `exam_date` (mais recente de realização) e depois `added_at`.
-- A regra é **explícita e sobreponível por ação do usuário** (nunca troca silenciosa). A chegada de um `laudo_final` torna-o primário; o `laudo_preliminar` permanece como histórico (não apagado).
+  2. desempate por `exam_date` (mais recente de realização) e depois `uploaded_at`.
+- A regra é **explícita e sobreponível por ação do usuário** (nunca troca silenciosa). A chegada de um `laudo_final` torna-o primário **para exibição/derivação**; **todos** os demais documentos permanecem preservados, válidos e rastreáveis.
 
 ---
 
@@ -290,12 +339,23 @@ Cada fase = PR próprio, com gates (testes/typecheck/lint) e homologação, sobr
 
 ---
 
-## 21. Decisões que precisam do seu aval antes de implementar
+## 21. Decisões — RESOLVIDAS (congeladas)
 
-1. **Enum `document_role`** — proposto: `pedido | laudo_preliminar | laudo_final | imagem | complementar | outro`. Confirmar/ajustar.
-2. **Precedência de primário** (§9) — confirmar a ordem.
-3. **Pedido como documento** (§12) — manter separado no MVP (recomendado) vs convergir já.
-4. **Escopo do MVP** — sugiro **Fases 0–2** como primeiro incremento (habilita anexar 2º documento sem sobrescrever), deixando a Fase 3 (migração de leitura) para depois.
-5. **Reconciliação de schema** (order_status/fulfills_order_id) — tratar como pré-requisito da Fase 0.
+1. **Enum `document_role`** — ✅ `pedido | laudo_preliminar | laudo_final | imagem | complementar | outro`.
+2. **Documento primário** — ✅ precedência de §9, com o princípio congelado: primário é **referência de apresentação, não substituição**; todos os documentos permanecem.
+3. **Pedido como documento** — ✅ **separado no MVP** (pedido = solicitação; laudo = resultado; convergência só no futuro, decisão explícita).
+4. **Escopo do MVP** — ✅ **Fases 0–2**, com o **requisito funcional obrigatório** abaixo; Fase 3 depois.
+5. **Reconciliação de schema** (`order_status`/`fulfills_order_id` sem DDL no repo) — ✅ **pré-requisito da Fase 0** (não construir camada nova sobre inconsistência de schema).
 
-**Nada implementado.** Próximo passo após sua revisão: detalhar a **Fase 0** (migração aditiva + backfill) como primeiro PR, ainda sem tocar `ab5b5816`/`0f5ec205`.
+### Requisito funcional OBRIGATÓRIO do MVP (§4/§5/§13/§16)
+> O usuário precisa conseguir **adicionar um segundo arquivo ao mesmo exame** — sem criar um novo exame e **sem substituir** o primeiro.
+
+```
+Exame                         Depois (posterior):        NUNCA:
+ ├── Doc 1 (preliminar)        ├── Doc 1 — preservado     novo arquivo → sobrescreve
+ ├── Doc 2 (final)             ├── Doc 2 — preservado                     o arquivo anterior
+ └── Doc 3 (complementar)      ├── Doc 3 — preservado
+                               └── … — preservados
+```
+
+**Nada implementado.** Próximo passo: detalhar a **Fase 0** (migração aditiva + backfill) como primeiro PR — só schema aditivo, sem runtime, sem tocar `ab5b5816`/`0f5ec205`.
