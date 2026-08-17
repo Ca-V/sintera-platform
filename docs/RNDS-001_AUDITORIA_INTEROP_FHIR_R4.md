@@ -1,6 +1,6 @@
 # RNDS-001 — Auditoria de Interoperabilidade + Gap Analysis (RNDS / FHIR R4)
 
-**Status:** AUDITORIA READ-ONLY + GAP ANALYSIS (PROPOSTA) — nada implementado. Nenhuma alteração de código, banco ou dados.
+**Status:** AUDITORIA READ-ONLY + GAP ANALYSIS (PROPOSTA) — nada implementado. Nenhuma alteração de código, banco ou dados. **2ª rodada de verificação externa incorporada (ver §3-bis):** REL V2, "LOINC obrigatório" e a lista fechada de recursos foram **rebaixados a hipóteses**; pivô imagem × laboratório registrado. O gap analysis **não deve ser congelado** até a matriz de domínios (§3-bis) ser fechada contra o IG vigente.
 **Objetivo:** entender exatamente onde a SINTERA está em relação à RNDS/FHIR R4 **antes** de abrir qualquer PR de implementação. Não criar endpoints FHIR agora.
 **Método:** 4 frentes de leitura no código/banco + fonte oficial da RNDS.
 
@@ -64,7 +64,7 @@ O modelo real vive em **~137 migrações**; `schema.sql` é só a semente. Entid
 
 Da fonte oficial (busca; fetch bloqueado):
 - **FHIR 4.0.1.** Envio de resultado de exame laboratorial (**REL**), perfil **V2** (`BRResultadoExameLaboratorial`), via **Bundle** (contêiner que agrupa os recursos).
-- **Recursos no Bundle (REL):** `Bundle` → `DiagnosticReport` (BRCoreDiagnosticReport) → `Observation` (resultado/medição) → `Specimen` (amostra biológica) + `Patient` + `Organization` + `Practitioner`. (Provavelmente `Composition`/`Provenance` também — **confirmar**.)
+- **Recursos no Bundle (REL) — HIPÓTESE, ver §3-bis:** `Bundle (type=document)` → `Composition` → `Observation` + `Specimen` + `Patient`/`Organization`/`Practitioner` (grafo de referências). A **lista exata e as cardinalidades dependem do perfil/versão vigente** (V2 × 3.2.1) — **não congelar**.
 - **Terminologias RNDS:** `BRNomeExameLOINC` (nome do exame via **LOINC**), `BRNomeExameGAL`, `BRResultadoQualitativoExame` (resultado qualitativo). → **LOINC é obrigatório** para nomear exames.
 - **Identificadores:** **CNS** (Cartão Nacional de Saúde, paciente) e **CNES** (estabelecimento) são identificadores centrais da RNDS; CPF/CNPJ conforme perfil. **Confirmar cardinalidades**.
 - **Autenticação/ambiente:** integração exige **certificado** (ICP-Brasil/X.509, provável mTLS) + ambientes de homologação/produção + processo de **homologação RNDS**. **Confirmar no portal.**
@@ -77,6 +77,44 @@ Da fonte oficial (busca; fetch bloqueado):
 - Guia/Modelo Computacional REL: `https://rnds-guia.saude.gov.br/docs/rel/mc-rel/`
 - Homologar: `https://rnds-guia.saude.gov.br/docs/publico-alvo/ti/homologar/`
 - BR-Core DiagnosticReport: `https://hl7.org.br/fhir/core/StructureDefinition-br-core-diagnosticreport.html`
+
+---
+
+## 3-bis. Verificação externa (2ª rodada) — CONFIRMADO × HIPÓTESE
+
+> Honestidade: os hosts oficiais seguem **bloqueados para fetch** neste ambiente; as confirmações abaixo vêm de **busca em fontes oficiais/estaduais** + verificação direta da fundadora nos artefatos oficiais da RNDS.
+
+**✅ CONFIRMADO (alta confiança):**
+- FHIR **4.0.1** é a base da RNDS.
+- RNDS usa recursos/perfis FHIR; resultado laboratorial tem **representação estruturada**.
+- Envio como **Bundle `type=document`** com **Composition** + Observation + Specimen + recursos relacionados (grafo de referências) — **não** "mandar um JSON de exame".
+- Existe o perfil **`BRResultadoExameLaboratorial-3.2.1`** (derivado de **Composition**) **além** de exemplos "REL V2" — **há versões diferentes** no IG oficial.
+- A **Composition** (3.2.1) exige `status`/`type`/`subject`/`date`/`author`/`title`/`section` + referências a indivíduo / pessoa jurídica-profissional / estabelecimento de saúde / condição de saúde / diagnóstico laboratorial.
+- **Autenticação:** certificado **ICP-Brasil A1** (`.pfx`/`.p12`; A3/token **não** suportado em API), **mTLS (2-way SSL)** + token JWT; **credenciamento vinculado a CNES** via Portal de Serviços DATASUS; produção só após testes no ambiente de **homologação**.
+- **Paciente** identificado por **CPF e/ou CNS**.
+- RNDS tem **terminologias próprias** (ex.: **`BRNomeExameGAL`** — classificação GAL; ValueSets/CodeSystems de resultado qualitativo; NamingSystem `BRCategoriaDiagnostico`).
+- Notificar resultado é análogo a enviar **RAC** (Registro de Atendimento Clínico) / **Sumário de Alta** — a RNDS tem **múltiplos tipos de documento FHIR**, não só REL.
+- Escopo do **MI REL:** historicamente COVID-19; ampliado pela **Portaria nº 3.328/2022** (Monkeypox + características mais gerais de registro laboratorial; novos atributos "Suspeita Diagnóstica" e "Patógeno").
+
+**🟡 NÃO CONGELAR (hipótese / a confirmar no IG vigente):**
+- **Qual versão/perfil REL** é o contrato vigente aplicável (**V2 × 3.2.1 × outro**).
+- **Lista definitiva de recursos obrigatórios** e **cardinalidades**.
+- **"LOINC obrigatório em todo cenário"** — a RNDS usa GAL/terminologias próprias; LOINC pode ser exigido em parte, não necessariamente em tudo → **gap a confirmar**.
+- **Domínio de imagem:** para imagem/laudo, o padrão observado (fonte parcialmente **estadual — SES-GO**, ≠ RNDS federal) usa **DiagnosticReport + ServiceRequest + Media (índice de imagens/PACS) + Patient (CPF/CNS)**. **Confirmar** se a RNDS **federal** tem perfil próprio de resultado de imagem.
+
+**⚠️ Pivô arquitetural (decisão de sequência):** o caso que acabamos de homologar — **Doppler colorido venoso de membro inferior** — é **diagnóstico por IMAGEM**, **não** laboratório. Logo, **REL (laboratorial) pode NÃO ser o primeiro domínio aplicável** à SINTERA. Iniciar a implementação por REL antes de confirmar o perfil de imagem seria erro de sequência.
+
+**Consequência para a arquitetura:** projetar **SINTERA → modelo clínico interno → grafo de recursos FHIR → Bundle (document/Composition) → RNDS** — nunca a partir do `display_title`. A base de **proveniência** da SINTERA (evidência → extração → interpretação → dado estruturado) é exatamente o que sustenta isso.
+
+### Matriz de domínios (a FECHAR na 2ª auditoria oficial, antes da Camada A)
+
+| Domínio | Perfil RNDS vigente | FHIR | Recursos | Terminologias | Identificadores | Obrigatoriedades |
+|---|---|---|---|---|---|---|
+| **Laboratório** | REL **V2 × 3.2.1** — a confirmar | 4.0.1 ✅ | Bundle/Composition/Observation/Specimen (+?) — a confirmar | GAL/LOINC/qualitativo — a confirmar | CPF/CNS (pac.), CNES (estab.) — cardinalidade a confirmar | a confirmar |
+| **Imagem** | a confirmar (federal × estadual) | 4.0.1 ✅ | DiagnosticReport/ServiceRequest/Media/Patient (indício estadual) — a confirmar | a confirmar | CPF/CNS — a confirmar | a confirmar |
+| **Pedido** | ServiceRequest — a confirmar | 4.0.1 ✅ | ServiceRequest (+ basedOn) — a confirmar | a confirmar | a confirmar | a confirmar |
+
+**Bloqueio operacional:** fechar esta matriz contra o IG vigente exige leitura de `rnds-fhir.saude.gov.br` / `rnds-guia.saude.gov.br` / `hl7.org.br` — **hoje bloqueados pelo proxy deste ambiente**. Opções: **(a)** liberar egresso a esses hosts para eu fechar a matriz; **(b)** a fundadora compartilha os artefatos/páginas do perfil vigente e eu os transformo na matriz congelável. **Só depois da matriz fechada** se aprova a Camada A.
 
 ---
 
@@ -113,7 +151,7 @@ Da fonte oficial (busca; fetch bloqueado):
 ### 🚧 CRIAR (net-new — os bloqueadores)
 1. **Entidades Patient/Practitioner/Organization** (hoje texto livre em `exams`) + **identificadores oficiais**: **CPF, CNS, data de nascimento, sexo** (paciente); **CRM/CNS** (profissional); **CNES** (organização). **Sem CNS/CNES não há como enviar à RNDS — bloqueador nº 1.**
 2. **Persistência do Pedido (ServiceRequest)** — resolver a **lacuna de schema** `order_status`/`fulfills_order_id` (sem DDL). *(Pré-requisito compartilhado com o exam_documents.)*
-3. **Resolução de terminologia ao vivo** (LOINC obrigatório; SNOMED) — hoje **stub** (backlog C7), cobertura **0/83**. **Sem LOINC nos resultados não há conformidade — bloqueador nº 2.**
+3. **Resolução de terminologia ao vivo** — hoje **stub** (backlog C7), cobertura LOINC **0/83**. ⚠️ **Correção (§3-bis):** "LOINC obrigatório em todo cenário" **NÃO está confirmado** — a RNDS usa terminologias próprias (GAL/`BRNomeExameGAL`, ValueSets de resultado qualitativo). **LOINC = gap a confirmar conforme o perfil vigente.** Terminologia ao vivo é gap real de qualquer modo (bloqueador de conformidade, sistema a definir).
 4. **Camada de projeção FHIR** (resource builders + serializer de **Bundle** REL).
 5. **Cliente RNDS** — autenticação por **certificado** (ICP-Brasil/mTLS), ambientes, operações, tratamento do identificador retornado pela RNDS.
 6. **Testes de conformidade** (validação FHIR + perfis RNDS) e **homologação RNDS**.
