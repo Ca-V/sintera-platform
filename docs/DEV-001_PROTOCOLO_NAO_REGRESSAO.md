@@ -68,6 +68,8 @@ Falhou item crítico → **não** concluído.
 5. **Interoperabilidade e escala** — integrações; import/export; compartilhamento; notificações + deep-links; ecossistema de profissionais; relatórios; capacidades comerciais.
 
 ## 11. Convergência Web + Mobile (não duplicação)
+**Princípio:** **mesma informação · mesma lógica de negócio · mesma hierarquia de importância** entre Web e Mobile — **apresentação adaptada** ao contexto (não cópia visual, não pixels iguais). O caso do detalhe do Exame (**H-03**) é o exemplo: o defeito não é "as telas estão diferentes", é a **prioridade da informação estar diferente** — o exame e seu conteúdo clínico devem vir **antes** de pedido, financeiro e ações administrativas.
+
 Maximizar compartilhado: domínio · contratos · tipos · api-client · regras · modelos · auth/authz · design system · nomenclaturas · analytics · testes de contrato. Diferenciar só o que precisa (desktop×mobile).
 
 ## 12. Continuidade autônoma
