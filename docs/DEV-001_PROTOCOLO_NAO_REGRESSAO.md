@@ -54,6 +54,18 @@ Invariantes obrigatórios (crescem com o domínio):
 4. **Nome preservado.** O nome do exame/documento reflete a fonte; não é substituído por genérico ("Ultrassom") quando a fonte traz denominação específica.
 5. **Emissor ≠ artefato.** Fragmento de código/pedido (ex.: "SAVA") não vira emissor (Obs 11 / `isOrderCodeArtifact`).
 6. **Origem rastreável.** Todo registro preserva a **proveniência** da cadeia captura→extração→classificação→registro (é possível auditar de onde cada campo veio).
+7. **Preservação da incerteza (H-09).** Quando a evidência **não é suficiente** para determinar o tipo documental, o sistema **preserva a incerteza** e **nunca** a converte numa categoria semântica mais específica por *fallback*. Em particular: uma leitura de imagem (DUE) que **falhou** (`understandImageDocument` → `null`) permanece **não-determinada / `pending`** (`document_type=null`, `extractor_family=null`, `document_identity_status='draft'`) — jamais é promovida a "exame de imagem realizado" (`imaging`/`processed`/`validated`). A identidade *write-once* fica **aberta** para o reprocesso reavaliar, e o `understanding_report` (trilha da falha) é **persistido também no caminho de fallback**. Origem do defeito: pedido de Doppler `ab5b5816` promovido a `imaging` apesar de `finalStatus="pending"` no relatório de compreensão. Protegido por `tests/capture-hub/func/FUNC-undetermined-invariant.test.ts`.
+
+   Tabela de decisão (invariante permanente):
+
+   | Evidência | Comportamento correto |
+   |---|---|
+   | Pedido claramente identificado | `medical_order` |
+   | Laudo/resultado claramente identificado | `imaging` (ou categoria apropriada) |
+   | DUE falhou / natureza indeterminável | **não-determinado / `pending`** (sem promoção) |
+   | Lateralidade comprovadamente bilateral | `bilateral` |
+   | Lateralidade não comprovada | não determinada / **não materializar** |
+   | Data ausente | `null` — **nunca inventar** |
 
 Regra: ao tocar **extração, classificação, DUE/CEF ou modelo de domínio**, os testes de invariante correspondentes **entram automaticamente** no conjunto de regressão (§7). Um invariante só é declarado atendido com **teste automatizado** que o proteja — "parece correto na tela" não conta.
 
