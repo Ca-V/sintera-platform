@@ -6,7 +6,7 @@ import { getAuthedSupabase } from '@/lib/supabase/authedClient'
 import { extractBiomarkers, isGatewayError } from '@/lib/ai/gateway'
 import { extractTextFromPdf, filterRelevantPages } from '@/lib/pdf/extractor'
 import { loadCatalogIndex, resolveBiomarker } from '@/lib/ai/insights/resolver'
-import { classifyExamDocument, deriveDisplayTitle, withProvenance } from '@/lib/capture/document-naming'
+import { classifyExamDocument, deriveDisplayTitle, withProvenance, resolveOrderNaming } from '@/lib/capture/document-naming'
 import { MAX_UPLOAD_MB } from '@/lib/capture/limits'
 import { extractIssuer, extractIssuerFromImage } from '@/lib/ai/issuer'
 import { extractRequestingPhysician } from '@/lib/ai/requestingPhysician'
@@ -598,9 +598,17 @@ export async function POST(
     finalUpdate.document_type = resolveImageDocumentType(imageDU?.documentType, structure.documentType)
     finalUpdate.document_scope = structure.documentScope
 
-    // WEB-004 — imagem oftalmológica/imagem (document_only): nome = título IMPRESSO lido da imagem (ex.:
-    // "Pentacam Mosaic 2") + emissor, preservando a informação do documento em vez do genérico "Oftalmologia".
-    if (imageModalityOverride && imageDU) {
+    // H-10 (complemento do #111) — PEDIDO (medical_order/insurance_guide): não passa pelos ramos de imagem/
+    // laudo abaixo, então o nome do pedido nunca era propagado ao registro (display_title/type ficavam presos
+    // no resíduo do run anterior). O nome é a CLINICAL IDENTITY resolvida pelo pipeline — já com a lateralidade
+    // CONSOLIDADA (#111: Esquerdo + Direito → bilateral). Gate `imageIsOrder` (exclusivo do gênero pedido) →
+    // NÃO altera imaging/laudo/laboratório. `issuer` só é sobrescrito com evidência nova da DUE (preserva o atual).
+    if (imageIsOrder && imagePipeline?.identity.name) {
+      const { displayTitle, type } = resolveOrderNaming(imagePipeline.identity.name, imageDU?.issuer)
+      finalUpdate.display_title = displayTitle
+      finalUpdate.type = type
+      if (imageDU?.issuer) finalUpdate.issuer = imageDU.issuer
+    } else if (imageModalityOverride && imageDU) {
       // NOME = Clinical Identity resolvida pelo PIPELINE (DUE observa · Terminology/Internal Catalog decidem).
       // EQUIPAMENTO ≠ EXAME; nunca uma linha interna do laudo.
       const title = imagePipeline?.identity.name ?? null
