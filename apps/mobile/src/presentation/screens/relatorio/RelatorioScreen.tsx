@@ -46,21 +46,31 @@ export function RelatorioScreen() {
 
   const load = useCallback((silent: boolean) => {
     if (silent) setRefreshing(true); else setPhase('loading')
+    // H-05 (DIAGNÓSTICO): identificar QUAL das fontes falha. O `asError` do api-client mascara o erro real
+    // como "Erro desconhecido"; aqui rotulamos cada chamada pelo NOME (e o erro real quando disponível), SEM
+    // mascarar nem tornar resiliente — o relatório ainda ERRA se uma fonte falhar. Correção definitiva só
+    // após identificar a fonte responsável (não trocar por allSettled às cegas — evita mascarar inconsistência).
+    const errMsg = (e: unknown): string =>
+      e instanceof Error ? e.message
+      : (e && typeof e === 'object' && 'message' in e) ? String((e as { message: unknown }).message)
+      : String(e)
+    const tag = <T,>(name: string, p: Promise<T>): Promise<T> =>
+      p.catch((e) => { throw new Error(`${name} → ${errMsg(e)}`) })
     Promise.all([
-      apiClient.medications.listMedications(),
-      apiClient.agenda.listEvents(),
-      apiClient.exams.listExams(),
-      apiClient.body.listBodyMetrics(),
-      apiClient.conditions.listConditions(),
-      apiClient.habits.listHabits(),
-      apiClient.resources.listResources(),
-      apiClient.report.listOmicsPanels(),
-      apiClient.cycle.listContraceptives(),
-      apiClient.cycle.listPeriods(),
-      apiClient.exams.getAllBiomarkers(),
-      apiClient.report.listShares(),
-      apiClient.report.listTemplates(),
-      apiClient.body.getHeightCm(),
+      tag('medications', apiClient.medications.listMedications()),
+      tag('agenda', apiClient.agenda.listEvents()),
+      tag('exams', apiClient.exams.listExams()),
+      tag('body_metrics', apiClient.body.listBodyMetrics()),
+      tag('conditions', apiClient.conditions.listConditions()),
+      tag('habits', apiClient.habits.listHabits()),
+      tag('resources', apiClient.resources.listResources()),
+      tag('omics', apiClient.report.listOmicsPanels()),
+      tag('contraceptives', apiClient.cycle.listContraceptives()),
+      tag('periods', apiClient.cycle.listPeriods()),
+      tag('biomarkers', apiClient.exams.getAllBiomarkers()),
+      tag('shares', apiClient.report.listShares()),
+      tag('templates', apiClient.report.listTemplates()),
+      tag('heightCm', apiClient.body.getHeightCm()),
     ]).then(([meds, events, exams, measures, conditions, habits, resources, omics, contraceptives, periods, bio, sh, tpls, heightCm]) => {
       if (!alive.current) return
       const eyewear = resources.filter(r => r.resource_type === 'correcao_visual').map(r => {

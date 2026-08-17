@@ -49,6 +49,7 @@
 | "Preparo minha consulta e compartilho num espaço controlado com o médico" | ⬜ registrado | **CARE-001** (Care Space): Preparação da Consulta + dossiê + snapshot imutável + revogação; após o núcleo clínico (`CARE-001_ESPACO_COLABORATIVO.md`) |
 | "O médico recomenda um retorno e a plataforma cria o acompanhamento" | ⬜ registrado | CARE-001 colaboração bidirecional → recorrência do Evento Assistencial |
 | "Importo de FHIR/DICOM/HL7/hospital automaticamente" | ⬜ | conectores de aquisição |
+| "O lembrete (WhatsApp/e-mail) tem um link que abre direto o app / a plataforma" | ⬜ **registrado (fundadora 17/08)** | **deep-link nas notificações de lembrete** (procedimento/medicamento/consulta/exame). A mensagem enviada pelo worker de lembretes deve conter um **link clicável** que, ao tocar, **abre o app** (deep link `sintera://…`, esquema já configurado no `app.json`) **ou** a plataforma web (fallback por URL). Incluir no momento adequado da **Central de Notificações / NOTIF-001** (envio real depende do provedor) — não antecipar antes da homologação. |
 
 ## Conhecimento científico do biomarcador — decisão de produto (registrada; próxima evolução, PÓS-homologação)
 > Decisão da fundadora (16/08/2026). **NÃO implementar agora** — registrar para a próxima evolução, **após** a homologação Web + Mobile.
