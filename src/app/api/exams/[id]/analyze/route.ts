@@ -22,6 +22,7 @@ import { bioimpedanceToBodyMetrics } from '@/lib/capture/clinical-processors/bio
 import { dexaBodyComposition } from '@/lib/capture/clinical-processors/dexa-body-metrics'
 import { planBundleSplit, restrictPages, type SplitPlan } from '@/lib/capture/bundle-split'
 import { pickExamDate, isExamDateCorroborated } from '@/lib/capture/semantic-dates'
+import { undeterminedDocumentPatch } from '@/lib/capture/undetermined'
 import { planNarrativeDiscard } from '@/lib/exams/narrativeDiscard'
 import { examProcessingState } from '@sintera/core'
 import { identifyClinical } from '@/lib/capture/clinical-identity-registry'
@@ -614,10 +615,12 @@ export async function POST(
           : null
       if (issuer) finalUpdate.issuer = issuer
       finalUpdate.type = issuer ? withProvenance(displayTitle, { issuer }) : displayTitle
-    } else if (result.biomarkers.length === 0) {
+    } else if (result.biomarkers.length === 0 && !imageDueFailed) {
       // Sem biomarcadores E sem estrutura confiável (imagem, oftalmológico, pedido…): o
       // Content Classifier LÊ o próprio documento para nomear. Roda APENAS na 1ª extração
       // (é uma chamada de IA — write-once garante que a reextração não a repita nem varie).
+      // H-09 (camada 1): NÃO roda quando a DUE falhou — uma leitura que falhou não pode ser
+      // auto-classificada/promovida a exame realizado por este fallback (ver bloco NÃO-DETERMINADO abaixo).
       const docMediaType = isImage
         ? (filePath.endsWith('.png') ? 'image/png' : filePath.endsWith('.webp') ? 'image/webp' : 'image/jpeg')
         : 'application/pdf'
@@ -637,6 +640,17 @@ export async function POST(
       }
     }
   }
+  // ── H-09 (camada 1) · INVARIANTE DE INCERTEZA ──────────────────────────────────────────────────────
+  // Uma FALHA de compreensão da imagem (DUE retornou null após retry) NUNCA é convertida numa categoria
+  // semântica mais específica por fallback. Sem evidência para determinar a natureza do documento, o exame
+  // permanece NÃO-DETERMINADO / pending (aguarda reprocessamento) — jamais vira "exame de imagem realizado".
+  // A identidade write-once fica ABERTA (document_type = null ⇒ identityEstablished=false) para o reprocesso
+  // reavaliar com uma DUE funcionando. A trilha de decisão da falha (understanding_report) já foi persistida
+  // acima (imageFailureAudit). Preserva o documento original e a rastreabilidade captura→DUE→classificação→registro.
+  if (imageDueFailed) {
+    Object.assign(finalUpdate, undeterminedDocumentPatch())
+  }
+
   // Assinatura da representação estruturada certificada (Princípio da Reprodutibilidade). Mesma versão
   // de extrator + mesmo documento => mesma assinatura. Serve de prova permanente e base do evento de
   // consistência do Passo 2 (comparar candidato × certificado sem substituir automaticamente).
