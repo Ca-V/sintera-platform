@@ -111,4 +111,13 @@ Classes: **defeito funcional · inconsistência de UX/paridade · melhoria/perf 
 > **H-03 — ordem conceitual (decisão de produto):** ① Exame (identificação · data · info principais) → ② Conteúdo/explicação ("O que é este exame?", finalidade, indicação) → ③ Documento original / consulta → ④ Ações complementares → ⑤ Pedido de origem / rastreabilidade → ⑥ Financeiro / valor pago / NF (por último).
 > **Critério de aceite:** ao abrir um exame, o usuário encontra **primeiro o conteúdo do exame**; funções administrativas e financeiras permanecem disponíveis, porém em posição **secundária** (ao final). **Financeiro nunca antes do conteúdo.** Paridade: informação relevante numa plataforma deve existir na outra, salvo justificativa explícita de plataforma. **Web ≠ identidade visual do Mobile** — paridade de conteúdo e hierarquia, não de pixels.
 
+### Lote de achados — homologação Mobile em device (17/08) — coletar → corrigir em UM ciclo
+
+| # | Achado | Classe | Ação / diagnóstico | Status |
+|---|---|---|---|---|
+| H‑04 | **Mobile · "Minha Saúde" não abre as subcategorias** — vai direto para **Exames**. | defeito de **navegação (Mobile)** — NÃO é a Sidebar Web congelada (H-02). | Investigar o roteamento do tab/menu "Minha Saúde" no Mobile; deve abrir as subcategorias (Registros/Saúde/Histórico), não deep-link p/ Exames. | 🔧 a corrigir |
+| H‑05 | **Mobile · Relatório não abre** — "Erro desconhecido / Tentar novamente" (via aba Rede de Cuidado). | **defeito funcional (P1)**. | Diagnóstico: `RelatorioScreen` faz `Promise.all` de **13 chamadas**; **tudo-ou-nada** → 1 falha (mapeada a "Erro desconhecido" por `asError`) derruba o relatório inteiro. **Fix:** tornar resiliente (`allSettled` → fonte que falha vira vazia, o relatório é uma COMPILAÇÃO) + identificar a chamada culpada. | 🔧 a corrigir |
+| H‑06 | **Home · "Acesso rápido" divergente Web×Mobile.** Web: 6 cards (Histórico de Saúde · Agenda · Exames · Medicamentos · Relatórios · Despesas). Mobile: 4 (Agenda · Exames · Minha Saúde · Rede de Cuidado). | UX / **paridade**. | Alinhar o conjunto de atalhos entre plataformas (decisão de qual conjunto canônico). | ⏸️ registrar (decisão) |
+| H‑07 | **Configurações · Contato WhatsApp — código do país / DDD.** | ⏳ a detalhar. | Aguarda "o que está errado × esperado" da fundadora (o print sozinho não indica o defeito). | ⏳ a detalhar |
+
 > **Nota:** o `SAVA` exibido no exame `33670c0b` é o **artefato de código já conhecido** (fragmento de pedido, não emissor) — **não** é achado novo de homologação; correção pontual separada, fora deste ciclo, quando a fundadora decidir.
