@@ -15,7 +15,9 @@ type Entry = { label: string; tab: keyof AppTabParamList; screen?: string }
 const ENTRIES: readonly Entry[] = [
   { label: 'Agenda', tab: 'Agenda' },
   { label: 'Exames', tab: 'MinhaSaude', screen: 'ExamsList' },
-  { label: 'Minha Saúde', tab: 'MinhaSaude' },
+  // H-04: "Minha Saúde" abre o MENU de subcategorias (Registros/Saúde/Histórico), não o estado atual do tab
+  // (que fica em ExamsList após o atalho "Exames"). Navega explicitamente à raiz do stack.
+  { label: 'Minha Saúde', tab: 'MinhaSaude', screen: 'MinhaSaudeMenu' },
   { label: 'Rede de Cuidado', tab: 'RedeCuidado' },
 ]
 
