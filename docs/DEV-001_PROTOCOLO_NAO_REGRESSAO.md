@@ -57,6 +57,16 @@ Falhou item crítico → **não** concluído.
 ## 8. Feature Freeze POR ÁREA (não da plataforma inteira)
 Área homologada → baseline protegido. Outras áreas continuam evoluindo. Mas mexer em **componente compartilhado** que afeta uma área homologada **aciona automaticamente** o Regression Gate daquela área. Isso dá velocidade máxima com risco controlado (evita o ciclo "termina A → quebra B → volta em A").
 
+## 8b. Database / Release Gate (origem: incidente H-05, 17/08)
+**Nenhum código que dependa de alteração de schema é "pronto" enquanto a migração correspondente não estiver CONFIRMADA no ambiente-alvo.**
+O incidente H-05 provou o risco: código atualizado (api-client seleciona `prescription_url`) → migração existente no repo (`136`) → **não aplicada em produção** → o Mobile passou a depender de uma coluna inexistente → **quatro** funcionalidades aparentemente independentes (Medicamentos · Suplementos · Composição · Relatório) quebraram, com o erro real **mascarado** por `asError` ("Erro desconhecido").
+
+Regra permanente:
+1. Toda mudança de código que referencie coluna/tabela/tipo nova declara a **migração dependente** no escopo.
+2. Antes de considerar pronta: **confirmar no ambiente-alvo** que o schema tem o objeto (não só que a migração existe no repo).
+3. **Divergência repo↔produção deve ser detectada por CI/CD** (comparar migrações do repo com o schema aplicado), não descoberta na homologação.
+4. `asError`/mensagens genéricas **não podem esconder** erros de query — preservar a origem (ex.: instrumentação `tag()` no Relatório: `<fonte> → <erro real>`).
+
 ## 9. Regra de deploy
 `Implementação → Preview (branch) → Teste → Regressão → Homologação → Freeze → Merge (main) → próxima evolução.` Não fazer merge para `main`/produção antes da homologação/congelamento. O **preview (branch)** é o ambiente de validação.
 
