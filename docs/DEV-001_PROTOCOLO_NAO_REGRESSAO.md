@@ -44,6 +44,19 @@ Um conjunto `implementado → testado → corrigido → homologado` vira **basel
 2. **Regressão da área** — fluxos diretamente relacionados (ex.: mexeu em Minha Saúde → menu · Exames · Medicamentos · Suplementos · Recursos · Histórico · retorno à Home).
 3. **Smoke test da plataforma** — principais fluxos Web e Mobile.
 
+## 4b. Testes de invariante de domínio (origem: achados H-09/H-10, 17/08)
+Alguns defeitos não são de UI nem de fluxo: são **violações de invariante do domínio** — a informação sai adulterada da cadeia captura→extração→classificação→registro. Regressão de UI não os pega. Por isso, além dos três níveis acima, todo domínio clínico mantém **testes de invariante** que falham se a informação for **inventada, perdida ou distorcida**. São verdades que **nenhuma** implementação pode violar, independentemente de a tela "parecer" correta.
+
+Invariantes obrigatórios (crescem com o domínio):
+1. **Pedido ≠ exame realizado.** Um documento de **pedido/solicitação** nunca é registrado como resultado (`document_type=medical_order`, não `imaging`/`laboratory`). As duas entidades permanecem **distintas** e roteadas para superfícies distintas (Pedidos × Exames).
+2. **Data não inventada.** Nenhuma data de exame é fabricada. Sem data confiável na fonte → `null`/"não determinada", nunca um valor plausível inventado (lição do incidente `8ea769f9` + Obs 10).
+3. **Lateralidade não inferida contra a evidência.** Nunca converter **bilateral → unilateral** (nem inventar OD/OS · direita/esquerda) quando o documento indica bilateralidade ou não permite determinar com segurança. Sem determinação segura → preservar original ou marcar "não determinada".
+4. **Nome preservado.** O nome do exame/documento reflete a fonte; não é substituído por genérico ("Ultrassom") quando a fonte traz denominação específica.
+5. **Emissor ≠ artefato.** Fragmento de código/pedido (ex.: "SAVA") não vira emissor (Obs 11 / `isOrderCodeArtifact`).
+6. **Origem rastreável.** Todo registro preserva a **proveniência** da cadeia captura→extração→classificação→registro (é possível auditar de onde cada campo veio).
+
+Regra: ao tocar **extração, classificação, DUE/CEF ou modelo de domínio**, os testes de invariante correspondentes **entram automaticamente** no conjunto de regressão (§7). Um invariante só é declarado atendido com **teste automatizado** que o proteja — "parece correto na tela" não conta.
+
 ## 5. Definição de "DONE"
 implementação · causa identificada (se correção) · teste específico · regressão da área · TSC/build sem erros · suíte automatizada verde · navegação afetada validada · doc/plano atualizado · commit identificável · branch/preview correspondente · critério de aceite atendido.
 
