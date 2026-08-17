@@ -403,7 +403,7 @@ export default function ExamsPage() {
                E6: ômica é uma CONTINUAÇÃO especializada do mesmo ponto de entrada (não um fork):
                declarar "Exame ômico" segue para o passo de catálogo/versionamento. */
             <CreateRecordMenu
-              label={activeTab === 'orders' ? 'Adicionar pedido ou solicitação' : 'Adicionar exame realizado'}
+              label={activeTab === 'orders' ? 'Adicionar pedido de exames' : 'Adicionar exame realizado'}
               methods={activeTab === 'orders' ? ['file', 'camera'] : ['file', 'camera', 'bundle']}
               extras={activeTab === 'orders' ? [] : [{ key: 'omics', label: 'Exame ômico (catálogo)', icon: Dna }]}
               onSelect={(m, file) => {
@@ -847,12 +847,13 @@ export default function ExamsPage() {
                                   // exame ainda não analisado (sem document_type) não recebe rótulo genérico.
                                   const cat = categoryOf((exam as unknown as { document_type?: string | null }).document_type)
                                   const showCat = cat.key !== FALLBACK_CATEGORY.key
-                                  const isDup = duplicateIds.has(exam.id)
-                                  if (!isMismatch && !showCat && !isDup) return undefined
+                                  // H-11 (apresentação isolada): o duplicado já é comunicado na linha `meta`
+                                  // (com as ações "Ver original" e "excluir"). Não repetir como chip — evita
+                                  // a dupla marcação. Sem tocar em lógica/dados (duplicateIds inalterado).
+                                  if (!isMismatch && !showCat) return undefined
                                   return (
                                     <>
                                       {showCat && <CardChip tone="mauve">{cat.label}</CardChip>}
-                                      {isDup && <CardChip tone="gold">Possível duplicado</CardChip>}
                                       {isMismatch && <CardChip tone="petal">Nome divergente do perfil</CardChip>}
                                     </>
                                   )
