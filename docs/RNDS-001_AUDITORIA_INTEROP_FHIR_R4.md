@@ -190,3 +190,25 @@ Testes de conformidade → homologação RNDS
 - **LGPD:** enviar dados à RNDS exige base de consentimento por destinatário + auditoria de acesso — hoje ausentes.
 - **Preservar invariantes existentes:** UCDA puro; proveniência de todo fato; sem virar "FHIR Server" nem "RNDS por aproximação" (DEV-001 §129).
 - **Não implementar endpoints FHIR direto** sem o mapeamento A→B→C fechado.
+
+---
+
+## 8. Plano faseado (aprovado) + artefatos oficiais necessários (Fase 1)
+
+**Regra:** NÃO começar pela Camada A (entidades) nem por REL antes de fechar o contrato oficial para os **3 domínios** que a SINTERA precisa: **Laboratório, Imagem, Pedido**. O caso homologado (Doppler = imagem) tornou isso obrigatório.
+
+**Ordem (plano congelado — não é autorização de implementação):**
+1. **Fase 1 — Auditoria normativa RNDS/FHIR** (esta): versão vigente do IG; perfis oficiais para imagem/laboratório/pedido; recursos (Composition/DiagnosticReport/Observation/ImagingStudy/ServiceRequest/DocumentReference/Media) **só quando previstos pelo contrato aplicável**; terminologias; identificadores; cardinalidades/regras; autenticação/credenciamento — separando **confirmado / inferido / não confirmado**.
+2. **Fase 2 — Matriz de interoperabilidade** (Domínio × Recurso FHIR × Perfil RNDS × Terminologia × Identificador × Obrigatoriedade) — congelada só com evidência oficial suficiente.
+3. **Fase 3 — Arquitetura interna SINTERA** (Patient/Practitioner/Organization/identificadores/resultados/pedidos/proveniência/terminologias/relacionamento documento↔evento clínico).
+4. **Fase 4 — Projetor FHIR** · 5. **Fase 5 — Integração RNDS** · 6. **Fase 6 — Homologação RNDS**.
+
+**Artefatos oficiais necessários para fechar a Fase 1/2** (hosts hoje **bloqueados** neste ambiente — preciso de egresso liberado OU do conteúdo colado):
+- **IG (versão/publicação):** `rnds-fhir.saude.gov.br/` (home + `qa.html`).
+- **Laboratório:** StructureDefinition `BRResultadoExameLaboratorial` (**V2 e 3.2.1**) + a Composition + Bundle exemplo (document); perfis Observation/Specimen; CodeSystems `BRNomeExameLOINC` / `BRNomeExameGAL` / `BRResultadoQualitativoExame`.
+- **Imagem:** buscar no IG **federal** perfil de resultado/laudo de imagem (ImagingStudy/Media/DiagnosticReport/DocumentReference); confirmar se é federal ou só estadual (SES-GO).
+- **Pedido:** perfil de **ServiceRequest**/solicitação, se houver.
+- **Entidades:** perfis Patient/Practitioner/Organization + identificadores exigidos (CPF/CNS/CNES/CNPJ) e cardinalidades.
+- **Transversal:** lista de tipos de documento RNDS (REL/RAC/SA/…); Manual de Integração (Barramento) — certificado A1, mTLS, credenciamento CNES, ambientes.
+
+**Congelados (sem mudança oportunista):** H-10 pedido `ab5b5816`, PRs #111/#112, `0f5ec205`, `exam_documents` (#113). #114 permanece **auditoria**, não autorização de implementação.
