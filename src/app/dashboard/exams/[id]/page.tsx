@@ -749,117 +749,6 @@ export default function ExamDetailPage() {
         <CareFlowStepper stage={careStage} />
       </div>
 
-      {/* Q1 — Pedido de ORIGEM (só para RESULTADOS). O pedido permanece como registro histórico; aqui só a
-          rastreabilidade origem↔resultado (quem solicitou, quando). Vincular marca o pedido como finalizado. */}
-      {!isOrderDoc && (
-        <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} padding="relaxed" className="print:hidden">
-          <div className="flex items-center gap-2 mb-2">
-            <FileText size={15} className="text-gold" />
-            <h2 className="font-display text-base font-semibold text-onyx">Pedido de origem</h2>
-          </div>
-          {linkedOrder ? (
-            <div className="flex items-start justify-between gap-3">
-              <div className="font-body text-sm text-onyx">
-                <p className="font-medium">{linkedOrder.type ?? 'Pedido médico'}</p>
-                <p className="text-xs text-mauve mt-0.5">
-                  {linkedOrder.requesting_physician ? <>Solicitado por {linkedOrder.requesting_physician} · </> : null}
-                  {formatDate(linkedOrder.exam_date ?? linkedOrder.created_at)}
-                </p>
-              </div>
-              <button type="button" onClick={unlinkOrder} disabled={linkBusy}
-                className="flex-shrink-0 text-[11px] font-body text-mauve border border-border px-2.5 py-1 rounded-full hover:bg-blush transition-colors disabled:opacity-50">
-                Desvincular
-              </button>
-            </div>
-          ) : orders.length === 0 ? (
-            <p className="font-body text-xs text-mauve">Nenhum pedido cadastrado. Adicione o pedido em <Link href="/dashboard/exams" className="text-petal hover:underline">Exames › Pedidos de Exames</Link> para registrar a origem deste resultado.</p>
-          ) : linkPickerOpen ? (
-            <div className="flex flex-wrap items-center gap-2">
-              <Select aria-label="Pedido de origem" placeholder="Selecione o pedido de origem…" className="flex-1 min-w-[220px]"
-                value="" disabled={linkBusy} onChange={(v) => { if (v) linkToOrder(v) }}
-                options={orders.map(o => ({ value: o.id, label: `${o.type ?? 'Pedido médico'}${o.requesting_physician ? ` — ${o.requesting_physician}` : ''} · ${formatDate(o.exam_date ?? o.created_at)}` }))} />
-              <button type="button" onClick={() => setLinkPickerOpen(false)} className="text-[11px] font-body text-mauve px-2 py-1">Cancelar</button>
-            </div>
-          ) : (
-            <div className="flex items-center justify-between gap-3">
-              <p className="font-body text-xs text-mauve">Vincule este resultado ao pedido que o originou — preserva a rastreabilidade (quem solicitou, quando) e marca o pedido como concluído.</p>
-              <button type="button" onClick={() => setLinkPickerOpen(true)}
-                className="flex-shrink-0 flex items-center gap-1 text-[11px] font-body font-medium text-petal-dark bg-blush border border-petal/30 px-2.5 py-1 rounded-full hover:bg-petal/10 transition-colors">
-                Vincular a um pedido
-              </button>
-            </div>
-          )}
-        </MotionCard>
-      )}
-
-      {/* FB-001: Financeiro do exame — seção proeminente (valor pago · documento fiscal · recorrência) */}
-      <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} padding="relaxed" className="print:hidden">
-        <div className="flex items-center gap-2 mb-3">
-          <Receipt size={16} className="text-petal" />
-          <h2 className="font-display text-base font-semibold text-onyx">Financeiro e acompanhamento</h2>
-        </div>
-        {/* FB-008: o financeiro é ATRIBUTO do próprio exame (não cria Evento). Edita as colunas do exame. */}
-        {expEditing ? (
-          <div className="rounded-xl border border-petal/30 bg-blush/20 px-4 py-3 space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1"><label htmlFor="exp-valor" className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Valor pago — R$</label>
-                <input id="exp-valor" type="text" inputMode="decimal" value={expAmount} onChange={e => setExpAmount(e.target.value)} placeholder="250,00"
-                  className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40" /></div>
-              <div className="space-y-1"><label htmlFor="exp-tipo" className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Tipo de documento</label>
-                <Select aria-label="Tipo de documento" placeholder="—" value={expDocType} onChange={setExpDocType}
-                  options={EXPENSE_DOC_TYPES.map(d => ({ value: d.id, label: d.label }))} /></div>
-            </div>
-            <div className="space-y-1"><label htmlFor="exp-anexo" className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Anexo (NF/recibo/comprovante) <span className="font-normal text-mauve normal-case">(PDF, JPG, PNG)</span></label>
-              <input id="exp-anexo" type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e => setExpDocFile(e.target.files?.[0] ?? null)}
-                className="block w-full text-xs font-body text-mauve file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:bg-blush file:text-petal file:font-medium" />
-              {examExpense?.docUrl && !expDocFile && <p className="font-body text-[11px] text-mauve">Documento atual mantido. Escolha um arquivo para substituir.</p>}
-            </div>
-            <div className="flex justify-end gap-2">
-              <button onClick={() => setExpEditing(false)} disabled={expSaving} className="px-3 py-1.5 rounded-full border border-border text-mauve font-body text-xs hover:bg-blush disabled:opacity-40">Cancelar</button>
-              <button onClick={saveExamExpense} disabled={expSaving} className="px-3 py-1.5 rounded-full gradient-sintera text-white font-body text-xs font-medium hover:opacity-90 disabled:opacity-40">{expSaving ? 'Salvando…' : 'Salvar'}</button>
-            </div>
-          </div>
-        ) : (examExpense && (examExpense.amountCents ?? 0) > 0) ? (
-          <div className="flex items-center justify-between gap-3 rounded-xl bg-blush/30 border border-petal/30 px-4 py-3">
-            <div className="min-w-0">
-              <p className="font-body text-[11px] text-mauve uppercase tracking-wide">Valor pago</p>
-              <p className="font-body text-xl font-semibold text-onyx leading-tight">
-                {((examExpense.amountCents ?? 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-              </p>
-              <p className="font-body text-[11px] text-mauve mt-0.5">
-                Aparece em <button onClick={() => router.push('/dashboard/gastos')} className="text-petal hover:underline">Despesas</button>
-              </p>
-            </div>
-            <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-              <AttachmentLink
-                url={examExpense.docUrl} variant="inline"
-                label={expenseDocLabel(examExpense.docType) ?? 'Documento'}
-              />
-              <button onClick={startEditExpense} className="font-body text-[11px] text-mauve hover:text-petal transition-colors">Editar</button>
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-dashed border-border px-4 py-3">
-            <p className="font-body text-sm text-mauve min-w-0">
-              Registre o <strong className="text-onyx/70">valor pago</strong> e anexe a
-              <strong className="text-onyx/70"> nota fiscal, recibo ou comprovante</strong> — fica no próprio exame e aparece em Despesas e Relatórios.
-            </p>
-            <button onClick={startEditExpense}
-              className="flex-shrink-0 inline-flex items-center gap-1.5 gradient-sintera text-white font-body text-sm font-medium px-3 py-2 rounded-full hover:opacity-90 transition-opacity">
-              <Receipt size={14} /> Registrar valor / NF
-            </button>
-          </div>
-        )}
-        {/* Recorrência / repetição do exame */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-3 pt-3 border-t border-border/50">
-          <p className="font-body text-xs text-mauve">Precisa repetir este exame periodicamente?</p>
-          <button onClick={() => { setAgendarMode('repeat'); setAgendarOpen(true) }}
-            className="flex-shrink-0 inline-flex items-center gap-1.5 border border-border text-mauve font-body text-xs font-medium px-3 py-1.5 rounded-full hover:border-petal/40 hover:text-petal transition-colors">
-            <CalendarDays size={13} /> Criar lembrete de repetição
-          </button>
-        </div>
-      </MotionCard>
-
       {/* Cabeçalho do exame */}
       <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
         padding="none" className="p-6">
@@ -1168,6 +1057,119 @@ export default function ExamDetailPage() {
 
       {/* Resultados clínicos não-laboratoriais (CPE) — EXA-C3 / NC-0009. Exibição genérica via UCDA. */}
       {hasClinical && clinicalRep && <ClinicalResultsCard rep={clinicalRep} />}
+
+      {/* H-03 — administrativo (pedido/financeiro) APÓS o conteúdo do exame: conteúdo primeiro; ações secundárias ao fim. */}
+      {/* Q1 — Pedido de ORIGEM (só para RESULTADOS). O pedido permanece como registro histórico; aqui só a
+          rastreabilidade origem↔resultado (quem solicitou, quando). Vincular marca o pedido como finalizado. */}
+      {!isOrderDoc && (
+        <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} padding="relaxed" className="print:hidden">
+          <div className="flex items-center gap-2 mb-2">
+            <FileText size={15} className="text-gold" />
+            <h2 className="font-display text-base font-semibold text-onyx">Pedido de origem</h2>
+          </div>
+          {linkedOrder ? (
+            <div className="flex items-start justify-between gap-3">
+              <div className="font-body text-sm text-onyx">
+                <p className="font-medium">{linkedOrder.type ?? 'Pedido médico'}</p>
+                <p className="text-xs text-mauve mt-0.5">
+                  {linkedOrder.requesting_physician ? <>Solicitado por {linkedOrder.requesting_physician} · </> : null}
+                  {formatDate(linkedOrder.exam_date ?? linkedOrder.created_at)}
+                </p>
+              </div>
+              <button type="button" onClick={unlinkOrder} disabled={linkBusy}
+                className="flex-shrink-0 text-[11px] font-body text-mauve border border-border px-2.5 py-1 rounded-full hover:bg-blush transition-colors disabled:opacity-50">
+                Desvincular
+              </button>
+            </div>
+          ) : orders.length === 0 ? (
+            <p className="font-body text-xs text-mauve">Nenhum pedido cadastrado. Adicione o pedido em <Link href="/dashboard/exams" className="text-petal hover:underline">Exames › Pedidos de Exames</Link> para registrar a origem deste resultado.</p>
+          ) : linkPickerOpen ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <Select aria-label="Pedido de origem" placeholder="Selecione o pedido de origem…" className="flex-1 min-w-[220px]"
+                value="" disabled={linkBusy} onChange={(v) => { if (v) linkToOrder(v) }}
+                options={orders.map(o => ({ value: o.id, label: `${o.type ?? 'Pedido médico'}${o.requesting_physician ? ` — ${o.requesting_physician}` : ''} · ${formatDate(o.exam_date ?? o.created_at)}` }))} />
+              <button type="button" onClick={() => setLinkPickerOpen(false)} className="text-[11px] font-body text-mauve px-2 py-1">Cancelar</button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-3">
+              <p className="font-body text-xs text-mauve">Vincule este resultado ao pedido que o originou — preserva a rastreabilidade (quem solicitou, quando) e marca o pedido como concluído.</p>
+              <button type="button" onClick={() => setLinkPickerOpen(true)}
+                className="flex-shrink-0 flex items-center gap-1 text-[11px] font-body font-medium text-petal-dark bg-blush border border-petal/30 px-2.5 py-1 rounded-full hover:bg-petal/10 transition-colors">
+                Vincular a um pedido
+              </button>
+            </div>
+          )}
+        </MotionCard>
+      )}
+
+      {/* FB-001: Financeiro do exame — seção proeminente (valor pago · documento fiscal · recorrência) */}
+      <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} padding="relaxed" className="print:hidden">
+        <div className="flex items-center gap-2 mb-3">
+          <Receipt size={16} className="text-petal" />
+          <h2 className="font-display text-base font-semibold text-onyx">Financeiro e acompanhamento</h2>
+        </div>
+        {/* FB-008: o financeiro é ATRIBUTO do próprio exame (não cria Evento). Edita as colunas do exame. */}
+        {expEditing ? (
+          <div className="rounded-xl border border-petal/30 bg-blush/20 px-4 py-3 space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1"><label htmlFor="exp-valor" className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Valor pago — R$</label>
+                <input id="exp-valor" type="text" inputMode="decimal" value={expAmount} onChange={e => setExpAmount(e.target.value)} placeholder="250,00"
+                  className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40" /></div>
+              <div className="space-y-1"><label htmlFor="exp-tipo" className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Tipo de documento</label>
+                <Select aria-label="Tipo de documento" placeholder="—" value={expDocType} onChange={setExpDocType}
+                  options={EXPENSE_DOC_TYPES.map(d => ({ value: d.id, label: d.label }))} /></div>
+            </div>
+            <div className="space-y-1"><label htmlFor="exp-anexo" className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Anexo (NF/recibo/comprovante) <span className="font-normal text-mauve normal-case">(PDF, JPG, PNG)</span></label>
+              <input id="exp-anexo" type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e => setExpDocFile(e.target.files?.[0] ?? null)}
+                className="block w-full text-xs font-body text-mauve file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:bg-blush file:text-petal file:font-medium" />
+              {examExpense?.docUrl && !expDocFile && <p className="font-body text-[11px] text-mauve">Documento atual mantido. Escolha um arquivo para substituir.</p>}
+            </div>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setExpEditing(false)} disabled={expSaving} className="px-3 py-1.5 rounded-full border border-border text-mauve font-body text-xs hover:bg-blush disabled:opacity-40">Cancelar</button>
+              <button onClick={saveExamExpense} disabled={expSaving} className="px-3 py-1.5 rounded-full gradient-sintera text-white font-body text-xs font-medium hover:opacity-90 disabled:opacity-40">{expSaving ? 'Salvando…' : 'Salvar'}</button>
+            </div>
+          </div>
+        ) : (examExpense && (examExpense.amountCents ?? 0) > 0) ? (
+          <div className="flex items-center justify-between gap-3 rounded-xl bg-blush/30 border border-petal/30 px-4 py-3">
+            <div className="min-w-0">
+              <p className="font-body text-[11px] text-mauve uppercase tracking-wide">Valor pago</p>
+              <p className="font-body text-xl font-semibold text-onyx leading-tight">
+                {((examExpense.amountCents ?? 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              </p>
+              <p className="font-body text-[11px] text-mauve mt-0.5">
+                Aparece em <button onClick={() => router.push('/dashboard/gastos')} className="text-petal hover:underline">Despesas</button>
+              </p>
+            </div>
+            <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+              <AttachmentLink
+                url={examExpense.docUrl} variant="inline"
+                label={expenseDocLabel(examExpense.docType) ?? 'Documento'}
+              />
+              <button onClick={startEditExpense} className="font-body text-[11px] text-mauve hover:text-petal transition-colors">Editar</button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-dashed border-border px-4 py-3">
+            <p className="font-body text-sm text-mauve min-w-0">
+              Registre o <strong className="text-onyx/70">valor pago</strong> e anexe a
+              <strong className="text-onyx/70"> nota fiscal, recibo ou comprovante</strong> — fica no próprio exame e aparece em Despesas e Relatórios.
+            </p>
+            <button onClick={startEditExpense}
+              className="flex-shrink-0 inline-flex items-center gap-1.5 gradient-sintera text-white font-body text-sm font-medium px-3 py-2 rounded-full hover:opacity-90 transition-opacity">
+              <Receipt size={14} /> Registrar valor / NF
+            </button>
+          </div>
+        )}
+        {/* Recorrência / repetição do exame */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-3 pt-3 border-t border-border/50">
+          <p className="font-body text-xs text-mauve">Precisa repetir este exame periodicamente?</p>
+          <button onClick={() => { setAgendarMode('repeat'); setAgendarOpen(true) }}
+            className="flex-shrink-0 inline-flex items-center gap-1.5 border border-border text-mauve font-body text-xs font-medium px-3 py-1.5 rounded-full hover:border-petal/40 hover:text-petal transition-colors">
+            <CalendarDays size={13} /> Criar lembrete de repetição
+          </button>
+        </div>
+      </MotionCard>
+
 
       {/* Modal — Reportar problema */}
       {reportOpen && (
