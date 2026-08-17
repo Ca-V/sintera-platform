@@ -123,7 +123,9 @@ export async function understandImageDocument(args: { base64: string; mediaType:
       const msg = await client.messages.create({
         // max_tokens generoso: o relatório auditável (fields×{value,confidence,absence_reason,note} + evidence) é
         // maior que a versão plana; 700 truncava o JSON → parse falhava → null → pipeline pulado (regressão).
-        model: MODEL, max_tokens: 1500, temperature: 0, system: SYSTEM,
+        // 1500 ainda truncava guias multi-procedimento (ex. "Resumo de Guias de Procedimentos e Exames" Unimed,
+        // ab5b5816: stop_reason=max_tokens em output_tokens=1500 → parse falhava → null → pending indevido). → 4000.
+        model: MODEL, max_tokens: 4000, temperature: 0, system: SYSTEM,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         messages: [{ role: 'user', content: [{ type: 'image', source: { type: 'base64', media_type: args.mediaType, data: args.base64 } }, { type: 'text', text: 'Compreenda este documento no JSON pedido.' }] as any }],
       })
