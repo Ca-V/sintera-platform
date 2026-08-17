@@ -69,6 +69,32 @@ Invariantes obrigatórios (crescem com o domínio):
 
 Regra: ao tocar **extração, classificação, DUE/CEF ou modelo de domínio**, os testes de invariante correspondentes **entram automaticamente** no conjunto de regressão (§7). Um invariante só é declarado atendido com **teste automatizado** que o proteja — "parece correto na tela" não conta.
 
+## 4c. Regra de correção em camadas (origem: H-09, 17/08)
+Quando uma falha tem **múltiplas causas ou camadas possíveis**, corrigir **primeiro a menor camada comprovadamente causal**; reprocessar com **dado real** e **medir**; só abrir a camada seguinte se o defeito **persistir com evidência nova**. Isso evita o ciclo "corrigir uma hipótese e criar outro erro em cima dela".
+
+Aplicação no H-09:
+```
+H-09
+├── Camada 1 (comprovada): DUE falhou → NÃO-DETERMINADO/pending → reprocessar → medir
+└── Camada 2 (só se persistir com DUE bem-sucedida): gênero × modalidade (medical_order × imaging) → nova investigação
+```
+Corolário: **código alterado + testes técnicos verdes NÃO é "concluído"**. O ciclo completo é `causa → correção → teste → dado real → comportamento real → homologação → baseline`.
+
+## 4d. Gate de verdade de domínio (obrigatório antes de fechar funcionalidade que interpreta documento clínico)
+Mais importante que "a tela abriu": o sistema só pode **afirmar** o que a evidência sustenta. Sem evidência suficiente → **não-determinado** (nunca a categoria mais específica por fallback).
+
+| Evidência | Sistema pode afirmar |
+|---|---|
+| Evidência suficiente | categoria específica |
+| Evidência insuficiente | não-determinado |
+| DUE falhou | não-determinado |
+| Data não encontrada | `data = null` |
+| Lateralidade não comprovada | não-determinada |
+| Pedido identificado | pedido (não exame realizado) |
+| Resultado/laudo identificado | exame realizado |
+| Campo não extraído | não inventar |
+| Origem do campo desconhecida | não apresentar como fato |
+
 ## 5. Definição de "DONE"
 implementação · causa identificada (se correção) · teste específico · regressão da área · TSC/build sem erros · suíte automatizada verde · navegação afetada validada · doc/plano atualizado · commit identificável · branch/preview correspondente · critério de aceite atendido.
 
@@ -81,6 +107,8 @@ Falhou item crítico → **não** concluído.
 
 ## 8. Feature Freeze POR ÁREA (não da plataforma inteira)
 Área homologada → baseline protegido. Outras áreas continuam evoluindo. Mas mexer em **componente compartilhado** que afeta uma área homologada **aciona automaticamente** o Regression Gate daquela área. Isso dá velocidade máxima com risco controlado (evita o ciclo "termina A → quebra B → volta em A").
+
+**Regra não-negociável (invalidação silenciosa):** **nenhuma** nova implementação pode invalidar silenciosamente uma decisão homologada. Se uma mudança transversal **puder** afetar uma área congelada, ela **reabre automaticamente** o Regression Gate daquela área — antes do merge, não na descoberta do defeito. É isso que transforma o DEV-001 de documento de boas práticas em **mecanismo real de controle de regressão do produto**.
 
 ## 8b. Database / Release Gate (origem: incidente H-05, 17/08)
 **Nenhum código que dependa de alteração de schema é "pronto" enquanto a migração correspondente não estiver CONFIRMADA no ambiente-alvo.**
