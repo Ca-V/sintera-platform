@@ -586,7 +586,7 @@ export default function RecursosPage() {
               <AttachmentLink url={f.file_url} variant="inline" label="Foto anexada" icon={<Paperclip size={13} />} />
             ) : (
               <>
-                <input ref={scanRef} type="file" accept="image/*" capture="environment" className="hidden"
+                <input ref={scanRef} type="file" accept="image/*,application/pdf" className="hidden"
                   onChange={e => { const file = e.target.files?.[0]; e.target.value = ''; if (file) onScanFile(file) }} />
                 <button onClick={() => scanRef.current?.click()}
                   className="inline-flex items-center gap-1.5 font-body text-xs text-mauve hover:text-petal transition-colors">
