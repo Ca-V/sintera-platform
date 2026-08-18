@@ -303,7 +303,11 @@ export default function ExamsPage() {
       const examName = file.name.replace(/\.[^.]+$/, '')
       // exam_date fica nulo no upload — é preenchido pela extração (data do laudo)
       // e pode ser ajustado manualmente no detalhe. Não assumimos a data de envio.
-      const { error: insertErr } = await supabase.from('exams').insert({ id: examId, user_id: user.id, type: examName, exam_date: null, file_url: signedData.signedUrl, status: 'pending' } as unknown as never)
+      // PEDIDO-001 (exceção REG-001): na aba "Pedidos de Exames" a usuária DECLARA um pedido → grava
+      // document_type='medical_order' já na criação, para cair DIRETO em Pedidos (não transitar por Exames).
+      // Resultados (aba Exames) seguem sem document_type → derivado pela extração.
+      const orderFields = activeTab === 'orders' ? { document_type: 'medical_order' } : {}
+      const { error: insertErr } = await supabase.from('exams').insert({ id: examId, user_id: user.id, type: examName, exam_date: null, file_url: signedData.signedUrl, status: 'pending', ...orderFields } as unknown as never)
       if (insertErr) throw new Error(`[insert] ${insertErr.code}: ${insertErr.message}`)
       // P3 — vai direto ao exame enviado; a análise inicia sozinha lá (status 'pending')
       router.push(`/dashboard/exams/${examId}`)
@@ -314,7 +318,7 @@ export default function ExamsPage() {
       setUploadError('Não foi possível enviar o arquivo agora. Tente novamente em instantes.')
       if (examId) { await supabase.from('exams').update({ status: 'error' } as unknown as never).eq('id', examId); await loadExams() }
     } finally { setUploading(false) }
-  }, [user, supabase, loadExams, router])
+  }, [user, supabase, loadExams, router, activeTab])
 
   // ── Excluir exame ───────────────────────────────────────────────────────────
   // Remove o exame + biomarcadores + insights + arquivo. Histórico, jornada e
