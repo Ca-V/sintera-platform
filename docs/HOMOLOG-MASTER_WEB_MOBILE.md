@@ -41,7 +41,7 @@ da 1ª rodada (`HOMOLOG-CONSOLIDADO_WEB_MOBILE_V1`).
 
 | ID | Plat. | Item | Status | Dedup / evidência |
 |---|---|---|---|---|
-| **B1** | Web(+Mobile) | **Multi-documento de exames (runtime)** — 1 exame ↔ N documentos (PDF+foto, N fotos, N PDFs, PDF hoje+foto amanhã, preliminar+laudo final, complementar depois); **não criar novo exame** por 2º arquivo; **acabar com "PDF encerra o fluxo"** | 🔧 camada de dados pronta (**PR #121**) · ⛔ runtime/UI/validação dependem da Fase 0 (**#117**) | = W‑01 |
+| **B1** | Web(+Mobile) | **Multi-documento de exames (runtime)** — 1 exame ↔ N documentos (PDF+foto, N fotos, N PDFs, PDF hoje+foto amanhã, preliminar+laudo final, complementar depois); **não criar novo exame** por 2º arquivo; **acabar com "PDF encerra o fluxo"** | 🔧 kernel + cenários testados (**#121**) + **migração/backfill validados LOCALMENTE** (#117, ver FASE0-DIAG §6) · ⛔ **validação funcional integrada em Preview PENDENTE** (ausência de ambiente Preview); runtime/UI dependem dela | = W‑01 |
 | **B2** | Web+Mobile | **Auditoria universal de anexos** | ✅ **auditoria concluída** (`HOMOLOG-AUDIT_B2_ANEXOS.md`) | Achados: "PDF encerra o fluxo" (`DocumentBundleCapture.tsx:35`); N→1 exame só p/ N imagens; **Word não aceito em lugar nenhum**; HEIC contraditório; 2 protocolos de captura; limites divergentes. Correções: runtime B1 (gated) + decisões de produto + 2 micro‑fixes prontos |
 | **B3** | Web+Mobile | **Testes multi-documento** — PDF; imagem; misto; múltiplos; anexação posterior; preliminar+final | 🔧 base em `FUNC-exam-documents-writer` (#121); ampliar | parte de B1 |
 
@@ -59,7 +59,8 @@ da 1ª rodada (`HOMOLOG-CONSOLIDADO_WEB_MOBILE_V1`).
 H‑09/H‑10 · `ab5b5816` · `0f5ec205` · arquitetura de navegação homologada · **#113** (visão completa) · **RNDS** · qualquer decisão já congelada. Não transformar cada observação em alteração estrutural. Produção bloqueada (gate separado).
 
 ## Gates
-- **Infra (Fase 0 / #117):** apply no Preview → habilita validação de B1/B2/B3 e runtime real de `exam_documents`. **Aguarda autorização.**
+- **Fase 0 / #117:** **validação técnica local CONCLUÍDA** (Postgres efêmero, dados sintéticos: migration, `exam_documents`, alterações em `exams`/resultados, RLS, backfill, sem órfãos, congelados preservados, rollback, `fulfills_order_id` preservado — ver `FASE0-DIAG §6`). **Validação funcional em Preview PENDENTE por ausência de ambiente Preview.** NÃO marcar como "Fase 0 homologada".
+- **Ciclo de infra ENCERRADO por ora:** sem contratar Supabase **Pro** e sem 2º projeto agora (só se necessário numa etapa posterior). **Nenhuma ação no Supabase**; produção intocada; #117 não aplicada em produção.
 - **Produção:** bloqueada; gate separado.
 - **Decisão de produto:** C2 (arquitetura/roteamento de Receita), C3 (modelo de Monitoramento) — avançar spec sem implementar regra até definição.
 
@@ -73,6 +74,7 @@ Espinha central **bate** (saudação → Adicionar registro → Agenda próximo 
 4. **"Como usar":** Web dispensável (localStorage); Mobile permanente.
 
 ## Log de execução (mais recente no topo)
+- **Ciclo de infra encerrado por ora:** #117 **validada tecnicamente em local** (concluída; ver FASE0-DIAG §6) — **validação funcional em Preview PENDENTE** por ausência de ambiente Preview (branching exige Pro; sem staging). **Não** contratar Pro/2º projeto agora. #117/#121 marcados como "validação funcional em Preview pendente" (não é "Fase 0 homologada"). Foco da homologação volta ao que é testável: Web (Preview automático) + Mobile (aguarda build EAS).
 - **DOC-001 opção B (PR #124):** domínio "Documentos do paciente" + política transversal de anexos em **código isolado testado** (16 casos; invariante documento≠exame; 7 associações da Receita), **sem banco/produção**; validação aguarda Preview.
 - **Decisões Q1–Q4 aplicadas:** Ciclo 1 (#120) **mergeado** na integração; Ciclo 2 micro-fixes de anexo (**PR #123**); specs travadas (domínio único "Documentos"; REG-001 mantido; política única de anexos). Matriz declarada como fonte de verdade.
 - **Ciclo 1 (PR #120)** entregue e validado: A1, A2, A4, A5, A6, A8 (Web+Mobile+core), A9 (roteamento/rótulo), A11. tsc root/mobile/core 0; capture‑hub 381/381; timeline‑projection 8/8; FUNC‑registration‑hub 9/9.
