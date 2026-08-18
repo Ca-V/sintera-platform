@@ -22,7 +22,7 @@ import { normalizeName } from '@/lib/biomarkers/grouping'
 import { deriveExamIdentity } from '@/lib/exams/identification'
 import { isOrderDocumentType } from '@/lib/exams/classification'
 import { careStageFor } from '@/lib/exams/careFlow'
-import { examProcessingState, isExamReady, isExamProcessing, isExamFailed, deriveOrderTitle } from '@sintera/core'
+import { examProcessingState, isExamReady, isExamProcessing, isExamFailed, deriveOrderDisplayTitle } from '@sintera/core'
 import { eventServicesFor, isFinancial, type HealthEvent } from '@/lib/agenda'
 import { expenseDocLabel, EXPENSE_DOC_TYPES } from '@/lib/finance/expense'
 import { parseAmountToCents, centsToAmount } from '@/lib/agenda/money'
@@ -683,7 +683,12 @@ export default function ExamDetailPage() {
   const hasClinical  = (clinicalRep?.items.length ?? 0) > 0   // resultados clínicos não-laboratoriais (CPE)
   // PEDIDO-002 — título do PEDIDO derivado dos procedimentos solicitados (cliente), quando o servidor ainda não
   // gravou display_title. Nunca o filename.
-  const orderTitle = isOrderDoc ? deriveOrderTitle((biomarkers as unknown as Array<{ name?: string | null; source_exam_name?: string | null }>).map(b => b.source_exam_name ?? b.name)) : null
+  const orderTitle = isOrderDoc ? deriveOrderDisplayTitle((biomarkers as unknown as Array<{ name?: string | null; source_exam_name?: string | null }>).map(b => b.source_exam_name ?? b.name)) : null
+  // Título do cabeçalho: procedimento estruturado → identidade resolvida (display_title) → fallback controlado.
+  // Para um PEDIDO sem procedimentos e sem display_title semântico, NUNCA cai no filename (usa 'Pedido de exame').
+  const examDisplayTitle = (exam as unknown as { display_title?: string | null })?.display_title ?? null
+  const resolvedIdentityName = deriveExamIdentity(exam?.type, (exam as unknown as { issuer?: string | null })?.issuer, examDisplayTitle).name
+  const headerTitle = orderTitle ?? (isOrderDoc && !examDisplayTitle ? 'Pedido de exame' : resolvedIdentityName)
   const analyzeLabel = isProcessed ? 'Extrair novamente' : 'Extrair dados'
   const AnalyzeIcon  = isProcessed ? RefreshCw : Zap
 
@@ -782,7 +787,7 @@ export default function ExamDetailPage() {
               ) : (
                 <div className="flex items-center gap-2 group/name">
                   <h1 className="font-display text-xl font-semibold text-onyx break-words min-w-0">
-                    {orderTitle ?? deriveExamIdentity(exam?.type, (exam as unknown as { issuer?: string | null })?.issuer, (exam as unknown as { display_title?: string | null })?.display_title).name}
+                    {headerTitle}
                   </h1>
                   <button onClick={startEditName}
                     className="opacity-0 group-hover/name:opacity-100 transition-opacity text-mauve hover:text-petal flex-shrink-0 print:hidden">

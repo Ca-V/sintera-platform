@@ -7,7 +7,7 @@ import { extractBiomarkers, isGatewayError } from '@/lib/ai/gateway'
 import { extractTextFromPdf, filterRelevantPages } from '@/lib/pdf/extractor'
 import { loadCatalogIndex, resolveBiomarker } from '@/lib/ai/insights/resolver'
 import { classifyExamDocument, deriveDisplayTitle, withProvenance, resolveOrderNaming } from '@/lib/capture/document-naming'
-import { deriveOrderTitle } from '@sintera/core'
+import { deriveOrderDisplayTitle } from '@sintera/core'
 import { MAX_UPLOAD_MB } from '@/lib/capture/limits'
 import { extractIssuer, extractIssuerFromImage } from '@/lib/ai/issuer'
 import { extractRequestingPhysician } from '@/lib/ai/requestingPhysician'
@@ -682,7 +682,8 @@ export async function POST(
   // (Esquerdo+Direito ⇒ bilateral). NÃO altera o fluxo de resultados nem o roteamento homologado (#128).
   const orderDocTypeForTitle = (finalUpdate.document_type as string | undefined) ?? exam.document_type
   if (isOrderDocumentType(orderDocTypeForTitle) && !finalUpdate.display_title && !exam.display_title) {
-    const orderTitle = deriveOrderTitle(result.biomarkers.map(b => b.sourceExamName ?? b.name))
+    // Função ÚNICA do core (mesma da LISTA e do DETALHE, Web e Mobile): "Pedido de <procedimentos consolidados>".
+    const orderTitle = deriveOrderDisplayTitle(result.biomarkers.map(b => b.sourceExamName ?? b.name))
     if (orderTitle) {
       const { displayTitle, type } = resolveOrderNaming(orderTitle, (finalUpdate.issuer as string | undefined) ?? null)
       finalUpdate.display_title = displayTitle
