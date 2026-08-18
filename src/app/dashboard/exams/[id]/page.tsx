@@ -22,7 +22,7 @@ import { normalizeName } from '@/lib/biomarkers/grouping'
 import { deriveExamIdentity } from '@/lib/exams/identification'
 import { isOrderDocumentType } from '@/lib/exams/classification'
 import { careStageFor } from '@/lib/exams/careFlow'
-import { examProcessingState, isExamReady, isExamProcessing, isExamFailed } from '@sintera/core'
+import { examProcessingState, isExamReady, isExamProcessing, isExamFailed, deriveOrderTitle } from '@sintera/core'
 import { eventServicesFor, isFinancial, type HealthEvent } from '@/lib/agenda'
 import { expenseDocLabel, EXPENSE_DOC_TYPES } from '@/lib/finance/expense'
 import { parseAmountToCents, centsToAmount } from '@/lib/agenda/money'
@@ -681,6 +681,9 @@ export default function ExamDetailPage() {
   // estruturados. Não é limitação — o documento é o ativo. Nesse estado, "Extrair novamente" não faz sentido.
   const isDocumentOnly = isProcessed && !hasResults
   const hasClinical  = (clinicalRep?.items.length ?? 0) > 0   // resultados clínicos não-laboratoriais (CPE)
+  // PEDIDO-002 — título do PEDIDO derivado dos procedimentos solicitados (cliente), quando o servidor ainda não
+  // gravou display_title. Nunca o filename.
+  const orderTitle = isOrderDoc ? deriveOrderTitle((biomarkers as unknown as Array<{ name?: string | null; source_exam_name?: string | null }>).map(b => b.source_exam_name ?? b.name)) : null
   const analyzeLabel = isProcessed ? 'Extrair novamente' : 'Extrair dados'
   const AnalyzeIcon  = isProcessed ? RefreshCw : Zap
 
@@ -779,7 +782,7 @@ export default function ExamDetailPage() {
               ) : (
                 <div className="flex items-center gap-2 group/name">
                   <h1 className="font-display text-xl font-semibold text-onyx break-words min-w-0">
-                    {deriveExamIdentity(exam?.type, (exam as unknown as { issuer?: string | null })?.issuer, (exam as unknown as { display_title?: string | null })?.display_title).name}
+                    {orderTitle ?? deriveExamIdentity(exam?.type, (exam as unknown as { issuer?: string | null })?.issuer, (exam as unknown as { display_title?: string | null })?.display_title).name}
                   </h1>
                   <button onClick={startEditName}
                     className="opacity-0 group-hover/name:opacity-100 transition-opacity text-mauve hover:text-petal flex-shrink-0 print:hidden">
@@ -1277,7 +1280,7 @@ export default function ExamDetailPage() {
           <button onClick={deleteExam} disabled={deleting}
             className="inline-flex items-center gap-2 text-sm font-body text-red-500 hover:text-red-600 hover:bg-red-50 px-4 py-2 rounded-full transition-colors disabled:opacity-50">
             {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-            {deleting ? 'Excluindo…' : 'Excluir exame'}
+            {deleting ? 'Excluindo…' : (isOrderDoc ? 'Excluir pedido' : 'Excluir exame')}
           </button>
           <p className="font-body text-[11px] text-mauve mt-1">
             Remove o exame, seus resultados e insights. O seu Histórico é recalculado.

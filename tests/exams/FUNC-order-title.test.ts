@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { deriveOrderTitle } from '@/lib/clinical-pipeline/laterality'
-import { isOrderDocumentType } from '@sintera/core'
+import { deriveOrderTitle, isOrderDocumentType } from '@sintera/core'
 
 // PEDIDO-002 — TÍTULO do pedido derivado dos PROCEDIMENTOS solicitados (não do filename) + separação semântica
 // medical_order → Pedido / exam → Resultado (o MESMO predicado usado na lista E no detalhe).
@@ -29,6 +28,30 @@ describe('PEDIDO-002 · deriveOrderTitle — título dos procedimentos, nunca fi
     const title = deriveOrderTitle(['Ultrassonografia de parede abdominal'])
     expect(title).toBe('Ultrassonografia de parede abdominal')
     expect(title).not.toBe('pedido')
+  })
+})
+
+describe('PEDIDO-002 · composição no cliente (lista e detalhe) — filename NUNCA vira título', () => {
+  // Regra usada por lista e detalhe (Web+Mobile): título = deriveOrderTitle(procedimentos) ?? fallback.
+  const composeOrderTitle = (procedures: string[], filename: string) => deriveOrderTitle(procedures) ?? filename
+  it('havendo procedimentos, o título vem deles — nunca o filename ("pedido"/"pedido.pdf")', () => {
+    const procs = ['Doppler colorido venoso de membro inferior - unilateral | Esquerdo', 'Doppler colorido venoso de membro inferior - unilateral | Direito']
+    expect(composeOrderTitle(procs, 'pedido')).toBe('Doppler colorido venoso de membro inferior — bilateral')
+    expect(composeOrderTitle(procs, 'pedido.pdf')).not.toMatch(/pedido/i)
+  })
+  it('sem procedimentos, cai no fallback (aí sim o nome disponível)', () => {
+    expect(composeOrderTitle([], 'Pedido de exame')).toBe('Pedido de exame')
+  })
+})
+
+describe('PEDIDO-002 · ação de exclusão semântica (Web+Mobile)', () => {
+  // Regra usada nos dois detalhes: rótulo de exclusão depende do tipo semântico.
+  const deleteLabel = (dt: string | null | undefined) => (isOrderDocumentType(dt) ? 'Excluir pedido' : 'Excluir exame')
+  it('medical_order → "Excluir pedido"; exam/result → "Excluir exame"', () => {
+    expect(deleteLabel('medical_order')).toBe('Excluir pedido')
+    expect(deleteLabel('insurance_guide')).toBe('Excluir pedido')
+    expect(deleteLabel(null)).toBe('Excluir exame')
+    expect(deleteLabel('laboratory')).toBe('Excluir exame')
   })
 })
 
