@@ -7,7 +7,7 @@ import { ScrollView, View, Pressable, ActivityIndicator, RefreshControl, Alert, 
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { ExamDTO } from '@sintera/api-client'
-import { isOrderDocumentType, findDuplicateIds, originalIdFor, categoryOf, compareNames, effectiveOrderStatus, orderStatusLabel, deriveOrderTitle, type DuplicateCandidate } from '@sintera/core'
+import { isOrderDocumentType, findDuplicateIds, originalIdFor, categoryOf, compareNames, effectiveOrderStatus, orderStatusLabel, deriveOrderDisplayTitle, type DuplicateCandidate } from '@sintera/core'
 import { heading, text } from '@sintera/design-system'
 import { Button, Text, Input, Disclaimer, DatePicker, AttachmentLink, Select } from '../../primitives'
 import { useTheme } from '../../theme'
@@ -88,26 +88,32 @@ export function ExamsListScreen({ navigation }: Props) {
     return m
   }, [results])
 
-  // PEDIDO-002 — título do PEDIDO derivado dos PROCEDIMENTOS solicitados (nunca o filename). O servidor pode ainda
-  // não ter gravado display_title (o app chama o /analyze do deploy web); então derivamos no cliente a partir dos
-  // procedimentos extraídos. Best-effort, falha silenciosa.
+  // PEDIDO-002 — título do PEDIDO derivado dos PROCEDIMENTOS solicitados (NUNCA o filename), via a FUNÇÃO ÚNICA do
+  // core deriveOrderDisplayTitle. O rótulo "Pedido de …" é decisão de PRODUTO (compreensível para a usuária); a
+  // semântica de solicitação (ServiceRequest) vive na representação interna, não na string. O servidor pode ainda não
+  // ter gravado display_title (o app chama o /analyze do deploy web); então derivamos no cliente a partir dos
+  // procedimentos EXTRAÍDOS. Lemos por PEDIDO com getExamBiomarkers (todos os tipos) — getAllBiomarkers filtra
+  // result_type='numeric' e perderia procedimentos qualitativos (Doppler, USG…). Best-effort, falha silenciosa.
+  const orderIdsKey = orders.map(o => o.id).join(',')
   const [orderTitleById, setOrderTitleById] = useState<Record<string, string>>({})
   useEffect(() => {
     if (orders.length === 0) return
     let alive = true
-    apiClient.exams.getAllBiomarkers().then(bios => {
+    Promise.all(orders.map(async (o) => {
+      try {
+        const bios = await apiClient.exams.getExamBiomarkers(o.id)
+        const title = deriveOrderDisplayTitle(bios.map(b => b.source_exam_name ?? b.name))
+        return title ? ([o.id, title] as const) : null
+      } catch { return null }
+    })).then(pairs => {
       if (!alive) return
-      const byExam = new Map<string, string[]>()
-      for (const b of bios as Array<{ exam_id?: string | null; name?: string | null; source_exam_name?: string | null }>) {
-        const eid = b.exam_id; if (!eid) continue
-        const arr = byExam.get(eid) ?? []; arr.push(b.source_exam_name ?? b.name ?? ''); byExam.set(eid, arr)
-      }
       const map: Record<string, string> = {}
-      for (const o of orders) { const tt = deriveOrderTitle(byExam.get(o.id) ?? []); if (tt) map[o.id] = tt }
+      for (const pair of pairs) { if (pair) map[pair[0]] = pair[1] }
       setOrderTitleById(map)
     }).catch(() => {})
     return () => { alive = false }
-  }, [orders])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderIdsKey])
 
   // Ações do Pedido (mesmo comportamento da Web; gravação via apiClient + refresh confiável).
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -334,7 +340,8 @@ export function ExamsListScreen({ navigation }: Props) {
               <View key={e.id} style={[styles.card, card]}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                   <Pressable onPress={() => navigation.navigate('ExamDetail', { id: e.id })} style={{ flex: 1 }}>
-                    <Text spec={text(t, { role: 'bodyStrong' })}>{orderTitleById[e.id] ?? e.display_title ?? e.type ?? 'Pedido médico'}</Text>
+                    {/* PEDIDO-002: procedimento estruturado → display_title semântico → fallback controlado. NUNCA o filename (e.type). */}
+                    <Text spec={text(t, { role: 'bodyStrong' })}>{orderTitleById[e.id] ?? e.display_title ?? 'Pedido de exame'}</Text>
                   </Pressable>
                   <View style={[styles.pill, { borderWidth: 1, borderColor: t.color.border.default }]}><Text spec={text(t, { role: 'caption', tone: 'muted' })}>{orderStatusLabel(st)}</Text></View>
                 </View>

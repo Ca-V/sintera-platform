@@ -17,7 +17,7 @@ import { findDuplicateIds, originalIdFor, type DuplicateCandidate } from '@/lib/
 import { deriveExamIdentity } from '@/lib/exams/identification'
 import { binaryStructuringState, STRUCTURING_LABEL } from '@/lib/exams/structuring'
 import { isOrderDocumentType } from '@/lib/exams/classification'
-import { EXAM_STATE_LABEL, EXAM_STATE_TONE, examProcessingState, examAnalyzeLabel, isExamReady, EXAM_STATUS_FILTER_OPTIONS, matchesExamStatusFilter, type ExamStateTone } from '@sintera/core'
+import { EXAM_STATE_LABEL, EXAM_STATE_TONE, examProcessingState, examAnalyzeLabel, isExamReady, EXAM_STATUS_FILTER_OPTIONS, matchesExamStatusFilter, deriveOrderDisplayTitle, type ExamStateTone } from '@sintera/core'
 import { effectiveOrderStatus, orderStatusLabel } from '@/lib/exams/orderStatus'
 import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MB } from '@/lib/capture/limits'
 import { bundlePartInfo, bundlePartLabel, groupBundleParts } from '@/lib/exams/bundleGroup'
@@ -150,6 +150,11 @@ export default function ExamsPage() {
   const [collapsedYears, setCollapsedYears] = useState<Set<number>>(new Set())
   // Subcategoria: Resultados × Pedidos e solicitações (aba dentro de Exames).
   const [activeTab, setActiveTab] = useState<'results' | 'orders'>('results')
+  // PEDIDO-002 — título do PEDIDO na LISTA, derivado dos PROCEDIMENTOS solicitados (nunca o filename), via a FUNÇÃO
+  // ÚNICA do core deriveOrderDisplayTitle. O prefixo "Pedido de …" é decisão de PRODUTO (rótulo compreensível); a
+  // semântica de solicitação (ServiceRequest) fica na representação interna. Best-effort no cliente (o servidor pode
+  // não ter gravado display_title). Lê TODOS os tipos de resultado por pedido (não só numeric).
+  const [orderTitleById, setOrderTitleById] = useState<Record<string, string>>({})
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -182,6 +187,32 @@ export default function ExamsPage() {
     }
     return filtered
   }, [exams, searchName])
+
+  // PEDIDO-002 — deriva o título de cada pedido a partir dos procedimentos extraídos (current_biomarkers, TODOS os
+  // tipos por exam_id — não só numeric, senão perderia Doppler/USG qualitativos). Nunca o filename.
+  const orderIdsKey = orders.map(o => o.id).join(',')
+  useEffect(() => {
+    if (!user || orders.length === 0) return
+    let alive = true
+    const ids = orders.map(o => o.id)
+    supabase
+      .from('current_biomarkers')
+      .select('exam_id, name, source_exam_name')
+      .in('exam_id', ids)
+      .then(({ data }) => {
+        if (!alive || !data) return
+        const byExam = new Map<string, string[]>()
+        for (const b of data as Array<{ exam_id?: string | null; name?: string | null; source_exam_name?: string | null }>) {
+          const eid = b.exam_id; if (!eid) continue
+          const arr = byExam.get(eid) ?? []; arr.push(b.source_exam_name ?? b.name ?? ''); byExam.set(eid, arr)
+        }
+        const map: Record<string, string> = {}
+        for (const id of ids) { const tt = deriveOrderDisplayTitle(byExam.get(id) ?? []); if (tt) map[id] = tt }
+        setOrderTitleById(map)
+      })
+    return () => { alive = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderIdsKey, user])
 
   // Q1 — resultados vinculados por pedido (1→N). Origem↔resultado; o pedido permanece como histórico.
   const resultsByOrder = useMemo(() => {
@@ -627,7 +658,7 @@ export default function ExamsPage() {
                         <FileText size={17} className="text-gold" />
                       </div>
                     }
-                    title={(order as unknown as { display_title?: string | null }).display_title ?? order.type ?? 'Pedido médico'}
+                    title={orderTitleById[order.id] ?? (order as unknown as { display_title?: string | null }).display_title ?? 'Pedido de exame'}
                     onTitleClick={fileUrl ? () => window.open(fileUrl, '_blank', 'noopener') : undefined}
                     chips={<CardChip tone={statusTone}>{orderStatusLabel(status)}</CardChip>}
                     meta={
