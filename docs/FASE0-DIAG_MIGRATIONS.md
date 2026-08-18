@@ -45,3 +45,16 @@ Ao executar a recriação autorizada do Preview:
 2. **Provisionar um projeto Supabase de staging** separado (novo projeto) para servir de Preview.
 3. **Validação técnica local** da #117 (Postgres efêmero: aplica a migração + schema + backfill contra cópia de dado real), como já foi feito antes — valida migration/schema/backfill **sem** Supabase e **sem custo**, mas **não** cobre a validação funcional "no ambiente de Preview" (que exige 1 ou 2).
 4. **Manter congelado** até decidir 1/2/3.
+
+## 6. Validação TÉCNICA LOCAL da #117 — 2026-08-18 (opção 3, autorizada)
+Executada em **Postgres efêmero local** (initdb/pg_ctl, porta 55432), com **dados sintéticos** (sem PHI; inclui os 2 congelados), via `docs/fase0/local_validation_harness.sql`. **Sem Supabase, sem custo, produção intocada.** `PSQL_EXIT=0`.
+
+| Gate | Resultado |
+|---|---|
+| DDL #117 aplica limpo | ✅ |
+| Schema (tabela, colunas, índices, RLS) | ✅ `exam_documents` + `primary_document_id`/`fulfills_order_id` em `exams` + `exam_document_id` nas 3 tabelas + RLS on |
+| Backfill (mutação) | ✅ 1 doc primário/exame; `file_url`==primário (0 diff); resultados propagados; 0 órfãos |
+| Congelados (`ab5b5816`,`0f5ec205`) | ✅ 0 documentos, 0 `primary_document_id` — intocados |
+| Rollback / consistência | ✅ `exam_documents` removida; `fulfills_order_id` preservado (reversível) |
+
+**Limite:** valida **migration/schema/backfill/rollback** com dado sintético — **não** cobre a validação **funcional no ambiente de Preview** (que exige o caminho 1 ou 2). Portanto o **#121 permanece "kernel + migração/backfill validados localmente"**, ainda **não** "funcionalmente validado em Preview".
