@@ -73,7 +73,24 @@ Espinha central **bate** (saudação → Adicionar registro → Agenda próximo 
 3. **Empty‑state da Agenda‑próximo:** Mobile mostra card vazio; Web oculta a seção.
 4. **"Como usar":** Web dispensável (localStorage); Mobile permanente.
 
+## Pós-homologação — sequência macro (definida pela fundadora)
+`PEDIDO-002 → fechar Ciclo 1 → RNDS/FHIR R4: auditoria read-only → matriz de gaps → decisão → implementação`.
+Depois da homologação a **arquitetura de navegação/informação fica congelada** (evolução ocorre sobre essa baseline).
+Ordem: **(1)** congelar homologação; **(2)** auditoria RNDS/FHIR **somente análise** (dados que o SINTERA tem × recursos
+FHIR R4 × perfis RNDS × cardinalidades/identificadores/terminologias/ValueSets/extensões/referências/segurança/
+autenticação/versionamento/lacunas — base FHIR 4.0.1); **(3)** **matriz SINTERA × FHIR/RNDS** (validada antes de
+implementar); **(4)** só então implementar (contrato → validação → implementação → testes → homologação RNDS). Perfis
+RNDS por entidade são **identificados na auditoria contra o IG vigente**, não presumidos do recurso FHIR genérico.
+Multi-documento/DOC-001 seguem preparados, mas **não atropelam** essa sequência.
+
+> **REGRA TRANSVERSAL (a partir de agora):** toda nova alteração funcional, de dados ou de integração do SINTERA
+> deve ser **avaliada quanto à compatibilidade com o modelo de interoperabilidade FHIR R4/RNDS antes de ser
+> consolidada arquiteturalmente** — para o modelo interno não evoluir de forma que exija reconstrução depois. (Não é
+> transformar cada tela em FHIR; é evitar dívida de interoperabilidade.) A distinção **Pedido × Resultado** (PEDIDO-001/002)
+> deve permanecer correta também na camada de interoperabilidade (ServiceRequest × Observation/DiagnosticReport).
+
 ## Log de execução (mais recente no topo)
+- **PEDIDO-002 corrigido (PR #129 mergeado):** (A) título do pedido derivado dos **procedimentos solicitados** (Esquerdo+Direito→**bilateral**), nunca o filename (`deriveOrderTitle` + bloco aditivo no analyze grava `display_title` → lista e detalhe); (B) **detalhe semântico** — `medical_order` abre visão de **Pedido** (procedimentos solicitados, solicitante, "Solicitado em", status, Ver documento) e **nunca** renderiza "Resultados estruturados"/clinical_results (Web+Mobile). Testes de regressão `FUNC-order-title` (título dos procedimentos + separação Pedido×Resultado) + `FUNC-pedido-para-pedidos` (#128 intacto). tsc 0 · suíte 1274 · **requer nova build EAS para revalidar em device**. Se 6/6 → **Ciclo 1 = homologado**.
 - **Reteste Ciclo 1 em device: 5/6 OK** (Histórico por tipo, formatação de exames, Nova medida, Gerar link, Óculos/Lentes). **Pedido de exame CORRIGIDO** (PEDIDO-001, **PR #128 mergeado**): pedido nasce `medical_order` e vai **direto para Pedidos** (Web+Mobile), **nunca** transita por Exames (nem em "Processando") — testes de regressão em `tests/exams/FUNC-pedido-para-pedidos`. Requer **nova build EAS** para revalidar no aparelho. Correlação Pedido↔Resultado registrada como spec própria (**ORD-002**), separada do bug.
 - **Ciclo de infra encerrado por ora:** #117 **validada tecnicamente em local** (concluída; ver FASE0-DIAG §6) — **validação funcional em Preview PENDENTE** por ausência de ambiente Preview (branching exige Pro; sem staging). **Não** contratar Pro/2º projeto agora. #117/#121 marcados como "validação funcional em Preview pendente" (não é "Fase 0 homologada"). Foco da homologação volta ao que é testável: Web (Preview automático) + Mobile (aguarda build EAS).
 - **DOC-001 opção B (PR #124):** domínio "Documentos do paciente" + política transversal de anexos em **código isolado testado** (16 casos; invariante documento≠exame; 7 associações da Receita), **sem banco/produção**; validação aguarda Preview.
