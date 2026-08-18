@@ -3,6 +3,7 @@ import {
   ATTACHMENT_FORMATS, ATTACHMENT_MIME_TYPES, ATTACHMENT_EXTENSIONS, MAX_ATTACHMENT_BYTES,
   ATTACHMENT_CARDINALITY, entryMethodsFor, isAcceptedMime, isAcceptedExtension,
   attachmentAcceptAttr, withinAttachmentLimit, needsConversion,
+  SUPPORTED_NOW_MIME_TYPES, CAPABILITY_FORMATS, isSupportedNow, isDeclaredFormat, supportedNowAcceptAttr,
 } from '@sintera/core'
 
 // ANEXO-001 — política transversal de anexos (SSOT única Web+Mobile).
@@ -31,6 +32,34 @@ describe('ANEXO-001 · formatos (allowlist única inclui Word e HEIC)', () => {
   it('accept string cobre todos os MIME da allowlist', () => {
     const accept = attachmentAcceptAttr()
     for (const m of ATTACHMENT_MIME_TYPES) expect(accept).toContain(m)
+  })
+})
+
+describe('ANEXO-001 · SUPORTADO HOJE × CAPACIDADE arquitetural (diferenciação explícita)', () => {
+  it('suportado hoje = PDF/JPEG/PNG; capacidade (ainda não habilitada) = HEIC/Word', () => {
+    expect(isSupportedNow('application/pdf')).toBe(true)
+    expect(isSupportedNow('image/png')).toBe(true)
+    // capacidade arquitetural: declarada, mas NÃO suportada hoje (depende de enabler de pipeline)
+    expect(isSupportedNow('image/heic')).toBe(false)
+    expect(isSupportedNow('application/msword')).toBe(false)
+    expect(isDeclaredFormat('image/heic')).toBe(true)
+    expect(isDeclaredFormat('application/msword')).toBe(true)
+    expect(isDeclaredFormat('image/gif')).toBe(false)
+  })
+  it('capacidades listam o enabler que falta (HEIC decode; Word conversão)', () => {
+    expect(CAPABILITY_FORMATS.map(c => c.format).sort()).toEqual(['heic', 'word'])
+    expect(CAPABILITY_FORMATS.every(c => !!c.enabler)).toBe(true)
+  })
+  it('accept de HOJE não expõe capacidade não habilitada (só PDF/JPEG/PNG)', () => {
+    const now = supportedNowAcceptAttr()
+    expect(now).toContain('application/pdf')
+    expect(now).not.toContain('image/heic')
+    expect(now).not.toContain('msword')
+    expect(SUPPORTED_NOW_MIME_TYPES).toEqual(['application/pdf', 'image/jpeg', 'image/png'])
+  })
+  it('accept DECLARADO (arquitetura) inclui a capacidade — para o rollout, não para o input de hoje', () => {
+    expect(attachmentAcceptAttr()).toContain('image/heic')
+    expect(isAcceptedMime('application/msword')).toBe(true)  // declarado (capacidade)
   })
 })
 

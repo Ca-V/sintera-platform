@@ -18,10 +18,29 @@ Fonte de verdade: `HOMOLOG-SPECS_C1_C2_C3.md` (DOC-001/ANEXO-001).
 - `createPatientDocument` / `associateDocument` — escrita **isolada** sobre cliente mínimo. **INVARIANTE (testada):** criar/associar um Documento **nunca** toca `exams`/`exam_documents` nem muta o registro-alvo — só `patient_documents`/`patient_document_links`.
 
 ### `packages/core/src/domain/capture/attachmentPolicy.ts` (SSOT — ANEXO-001)
-- Allowlist **única**: PDF, JPEG, PNG, **HEIC**, **Word** (com flags `extractable`/`needsConversion`).
+- **SUPORTADO HOJE × CAPACIDADE arquitetural** (diferenciação explícita, exigida pela fundadora):
+  - **Suportado hoje (ponta a ponta):** PDF, JPEG, PNG → `SUPPORTED_NOW_MIME_TYPES` / `isSupportedNow` / `supportedNowAcceptAttr()` (é o que os inputs oferecem AGORA).
+  - **Capacidade (declarada, ainda não habilitada):** **HEIC**, **Word** → `CAPABILITY_FORMATS` com o `enabler` que falta (HEIC: decode→JPEG; Word: DOCX→PDF/texto). `isDeclaredFormat` reconhece; **não** são expostos ao usuário até o enabler existir.
+  - Incorporar um formato novo = mudar **um registro** em `ATTACHMENT_FORMATS` (status/enabler) — sem espalhar allowlists.
 - `MAX_ATTACHMENT_BYTES` — limite **único** (baseline unificado; valor definitivo = decisão técnica).
 - Métodos de entrada por plataforma (`entryMethodsFor`): arquivo (ambos), câmera (Mobile), drag-and-drop (Web), múltiplos, voz.
 - `ATTACHMENT_CARDINALITY`: múltiplos, mistos, inclusão posterior, **`pdfEndsFlow: false`**, **N documentos → 1 exame**.
+
+### Adoção TRANSVERSAL (a regra vale em TODOS os pontos de upload — rollout gated)
+Cada ponto passa a consumir a SSOT (`supportedNowAcceptAttr()` no `accept`, `withinAttachmentLimit()` no tamanho,
+`ATTACHMENT_CARDINALITY` no fluxo). Estado atual (da auditoria B2) → alvo:
+
+| Ponto de upload | Plataforma | Hoje | Alvo (SSOT) |
+|---|---|---|---|
+| Exames · CaptureCenter / DocumentBundle | Web | image→1PDF, "PDF encerra" | política única; PDF não encerra; N→1 |
+| Exames · ExamUpload | Mobile | 1 arquivo/vez | política única; N mistos |
+| Recursos de Saúde | Web | ✅ PDF+imagem (Ciclo 2) | `supportedNowAcceptAttr` |
+| Hábitos (plano/dieta) | Web | ✅ allowlist (Ciclo 2) | `supportedNowAcceptAttr` |
+| Medicamentos/Suplementos (receita) | Web+Mobile | funil p/ exame | Documentos (DOC-001) + política |
+| Ômica | Web+Mobile | CSV/JSON/PDF, cap próprio | limite único |
+| Anexo fiscal (NF) | Web | PDF/JPG/PNG | política única |
+
+> A adoção efetiva em cada ponto entra no **rollout estrutural** (com B1/Fase 0), consumindo esta SSOT — nenhuma allowlist/limite paralelo.
 
 ### Testes
 - `tests/documents/FUNC-patient-documents.test.ts` (10): subtipos, os **7** casos de associação da Receita, invariante documento≠exame, associação posterior.

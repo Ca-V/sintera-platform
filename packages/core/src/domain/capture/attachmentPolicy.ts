@@ -9,22 +9,43 @@
 
 export type AttachmentFormat = 'pdf' | 'jpeg' | 'png' | 'heic' | 'word'
 
-/** Catálogo ÚNICO de formatos aceitos. `extractable` = a extração lê direto; `needsConversion` = requer
- *  normalização antes (HEIC→JPEG; DOCX→PDF/texto) — o arquivo é aceito, o pipeline trata a conversão. */
+// DIFERENCIAÇÃO EXPLÍCITA (decisão da fundadora):
+//  • 'supported'  = SUPORTADO HOJE (ponta a ponta: aceito no upload + lido pelo pipeline atual).
+//  • 'capability' = CAPACIDADE ARQUITETURAL de incorporar o formato — declarado aqui, mas NÃO habilitado nos
+//    inputs até a dependência de pipeline existir (`enabler`). Não expor ao usuário como "aceito" antes disso.
+// Assim, adicionar um formato novo é mudar UM registro aqui (status/enabler), sem espalhar allowlists.
+export type FormatStatus = 'supported' | 'capability'
+
+/** Catálogo ÚNICO de formatos. `extractable` = extração lê direto; `needsConversion` = requer normalização
+ *  (HEIC→JPEG; DOCX→PDF/texto); `enabler` = o que falta no pipeline para promover 'capability' → 'supported'. */
 export const ATTACHMENT_FORMATS: {
-  format: AttachmentFormat; mimes: string[]; exts: string[]; extractable: boolean; needsConversion: boolean
+  format: AttachmentFormat; status: FormatStatus; mimes: string[]; exts: string[]; extractable: boolean; needsConversion: boolean; enabler?: string
 }[] = [
-  { format: 'pdf',  mimes: ['application/pdf'],                                                     exts: ['pdf'],        extractable: true,  needsConversion: false },
-  { format: 'jpeg', mimes: ['image/jpeg'],                                                          exts: ['jpg', 'jpeg'], extractable: true,  needsConversion: false },
-  { format: 'png',  mimes: ['image/png'],                                                           exts: ['png'],        extractable: true,  needsConversion: false },
-  { format: 'heic', mimes: ['image/heic', 'image/heif'],                                            exts: ['heic', 'heif'], extractable: true, needsConversion: true },
-  { format: 'word', mimes: ['application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'], exts: ['doc', 'docx'], extractable: false, needsConversion: true },
+  { format: 'pdf',  status: 'supported',  mimes: ['application/pdf'], exts: ['pdf'],        extractable: true,  needsConversion: false },
+  { format: 'jpeg', status: 'supported',  mimes: ['image/jpeg'],      exts: ['jpg', 'jpeg'], extractable: true,  needsConversion: false },
+  { format: 'png',  status: 'supported',  mimes: ['image/png'],       exts: ['png'],        extractable: true,  needsConversion: false },
+  // CAPACIDADE arquitetural (declarada; habilitar só após o enabler de pipeline):
+  { format: 'heic', status: 'capability', mimes: ['image/heic', 'image/heif'], exts: ['heic', 'heif'], extractable: true,  needsConversion: true, enabler: 'decode/normalização HEIC→JPEG (cliente/servidor)' },
+  { format: 'word', status: 'capability', mimes: ['application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'], exts: ['doc', 'docx'], extractable: false, needsConversion: true, enabler: 'conversão DOCX→PDF/texto (ou armazenar como documento não-extraído)' },
 ]
 
-/** Todos os MIME types aceitos (allowlist única). */
+const byStatus = (s: FormatStatus) => ATTACHMENT_FORMATS.filter(f => f.status === s)
+
+/** MIME/extensões SUPORTADOS HOJE (ponta a ponta) — é o que os inputs devem oferecer AGORA. */
+export const SUPPORTED_NOW_MIME_TYPES: string[] = byStatus('supported').flatMap(f => f.mimes)
+export const SUPPORTED_NOW_EXTENSIONS: string[] = byStatus('supported').flatMap(f => f.exts)
+/** MIME/extensões DECLARADOS (suportados hoje + capacidade arquitetural). Não usar em input antes do enabler. */
 export const ATTACHMENT_MIME_TYPES: string[] = ATTACHMENT_FORMATS.flatMap(f => f.mimes)
-/** Todas as extensões aceitas (sem ponto, minúsculas). */
 export const ATTACHMENT_EXTENSIONS: string[] = ATTACHMENT_FORMATS.flatMap(f => f.exts)
+/** Formatos que são CAPACIDADE (ainda não habilitados) + o enabler que falta. */
+export const CAPABILITY_FORMATS = byStatus('capability').map(f => ({ format: f.format, enabler: f.enabler }))
+
+/** Está suportado HOJE (ponta a ponta)? — regra que os inputs devem usar. */
+export function isSupportedNow(mime: string): boolean { return SUPPORTED_NOW_MIME_TYPES.includes(mime) }
+/** Está DECLARADO na arquitetura (suportado hoje OU capacidade)? */
+export function isDeclaredFormat(mime: string): boolean { return ATTACHMENT_MIME_TYPES.includes(mime) }
+/** `accept` de <input type=file> para o que é oferecido HOJE (não expõe capacidade não habilitada). */
+export function supportedNowAcceptAttr(): string { return SUPPORTED_NOW_MIME_TYPES.join(',') }
 
 /**
  * Limite de tamanho ÚNICO da plataforma (Web = Mobile). Baseline unificado (alinhado ao menor já em uso);
@@ -62,14 +83,15 @@ export const ATTACHMENT_CARDINALITY = {
   manyDocumentsToOneExam: true,
 } as const
 
-/** Formato suportado por MIME? (allowlist única). */
+/** Formato DECLARADO por MIME? (suportado hoje OU capacidade arquitetural). Para validar hoje, use `isSupportedNow`. */
 export function isAcceptedMime(mime: string): boolean { return ATTACHMENT_MIME_TYPES.includes(mime) }
-/** Formato suportado pela extensão da URL/arquivo? */
+/** Formato DECLARADO pela extensão da URL/arquivo? */
 export function isAcceptedExtension(nameOrUrl: string): boolean {
   const m = /\.([a-z0-9]+)(?:\?|#|$)/i.exec(nameOrUrl.toLowerCase())
   return !!m && ATTACHMENT_EXTENSIONS.includes(m[1])
 }
-/** String para o atributo `accept` de um <input type=file> (Web) — allowlist única. */
+/** `accept` de <input type=file> com a allowlist DECLARADA (arquitetura). Para inputs de HOJE, use
+ *  `supportedNowAcceptAttr()` — não expor capacidade ainda não habilitada (HEIC/Word) ao usuário. */
 export function attachmentAcceptAttr(): string { return ATTACHMENT_MIME_TYPES.join(',') }
 /** Um arquivo cabe no limite único? */
 export function withinAttachmentLimit(sizeBytes: number): boolean { return sizeBytes <= MAX_ATTACHMENT_BYTES }
