@@ -7,7 +7,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import type { ExamDTO, ExamExtractionLog } from '@sintera/api-client'
-import { deriveExamIdentity, isOrderDocumentType, careStageFor, CARE_STAGES, compareNames, selectByLink, biomarkerStatusLabel, effectiveOrderStatus, orderStatusLabel, deriveOrderTitle } from '@sintera/core'
+import { deriveExamIdentity, isOrderDocumentType, careStageFor, CARE_STAGES, compareNames, selectByLink, biomarkerStatusLabel, effectiveOrderStatus, orderStatusLabel, deriveOrderDisplayTitle } from '@sintera/core'
 import { AttachmentLink, Button, Disclaimer, FieldRow, Input, Text, DatePicker } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { MinhaSaudeStackParamList } from '../../navigation/types'
@@ -149,8 +149,9 @@ export function ExamDetailScreen({ route, navigation }: Props) {
   // PEDIDO-002: honrar display_title (título clínico do conteúdo; p/ pedido = procedimentos solicitados).
   const { name, lab } = deriveExamIdentity(exam.type, exam.issuer, exam.display_title)
   // PEDIDO-002 (título no cliente): para um PEDIDO cujo servidor ainda não gravou display_title, deriva o título
-  // dos PROCEDIMENTOS solicitados (nunca o filename). Fallback: o nome resolvido → 'Pedido de exame'.
-  const orderTitle = isOrderDoc ? deriveOrderTitle(p.biomarkers.map(b => b.source_exam_name ?? b.name)) : null
+  // dos PROCEDIMENTOS solicitados (função ÚNICA do core, mesma da LISTA); NUNCA o filename. Fallback controlado:
+  // display_title semântico → 'Pedido de exame'.
+  const orderTitle = isOrderDoc ? deriveOrderDisplayTitle(p.biomarkers.map(b => b.source_exam_name ?? b.name)) : null
   const displayName = isOrderDoc ? (orderTitle ?? (exam.display_title ? name : 'Pedido de exame')) : name
   const hasResults = p.biomarkers.length > 0 || (p.clinical?.items.length ?? 0) > 0
   const stage = careStageFor({ hasResult: hasResults, isOrder: isOrderDoc, linkedEventStatuses: linkedStatuses })

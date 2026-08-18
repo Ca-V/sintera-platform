@@ -66,3 +66,35 @@ export function deriveOrderTitle(procedureNames: (string | null | undefined)[]):
   })
   return titles.join(' · ')
 }
+
+/**
+ * FUNÇÃO ÚNICA de título de exibição do PEDIDO — usada por LISTA e DETALHE, em Web e Mobile (sem divergência).
+ * Prefixa "Pedido de " ao título clínico derivado dos procedimentos solicitados. Ex.: "Pedido de Doppler colorido
+ * venoso de membro inferior — bilateral".
+ *
+ * NOTA DE NOMENCLATURA: o prefixo "Pedido de " é uma decisão de PRODUTO da SINTERA (rótulo compreensível para a
+ * usuária) — NÃO uma exigência do FHIR/RNDS. A semântica interoperável (o documento é uma SOLICITAÇÃO de
+ * procedimento — ServiceRequest, não o resultado) vive na REPRESENTAÇÃO INTERNA (document_type=medical_order,
+ * separação pedido×resultado), não na string da interface.
+ *
+ * Retorna null quando não há procedimento utilizável (o chamador NUNCA deve cair no nome do arquivo — usa um
+ * fallback controlado). A primeira letra do título clínico é minusculizada, exceto quando é sigla (RM/USG/TC) ou
+ * nome próprio (Doppler), para ler "Pedido de Doppler…" e também "Pedido de ultrassonografia…".
+ */
+export function deriveOrderDisplayTitle(procedureNames: (string | null | undefined)[]): string | null {
+  const clinical = deriveOrderTitle(procedureNames)
+  if (!clinical) return null
+  return `Pedido de ${lowerLeadIfCommon(clinical)}`
+}
+
+// Nomes próprios comuns em exames de imagem/procedimentos que devem PRESERVAR a maiúscula após "Pedido de".
+const PROPER_NOUNS = new Set(['doppler', 'holter', 'mapa', 'papanicolau', 'wada', 'schirmer'])
+
+/** Minusculiza a primeira letra, exceto quando a palavra inicial é sigla (RM/USG/TC) ou nome próprio (Doppler). */
+function lowerLeadIfCommon(title: string): string {
+  const firstWord = title.split(/\s+/, 1)[0] ?? ''
+  const isAcronym = /^[A-ZÀ-Ý]{2,}$/.test(firstWord)          // sigla toda em maiúsculas (RM, USG, TC)
+  const isProperNoun = PROPER_NOUNS.has(firstWord.toLowerCase())
+  if (isAcronym || isProperNoun) return title
+  return `${title.charAt(0).toLowerCase()}${title.slice(1)}`
+}
