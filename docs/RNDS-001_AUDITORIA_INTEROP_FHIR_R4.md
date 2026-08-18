@@ -212,3 +212,33 @@ Testes de conformidade → homologação RNDS
 - **Transversal:** lista de tipos de documento RNDS (REL/RAC/SA/…); Manual de Integração (Barramento) — certificado A1, mTLS, credenciamento CNES, ambientes.
 
 **Congelados (sem mudança oportunista):** H-10 pedido `ab5b5816`, PRs #111/#112, `0f5ec205`, `exam_documents` (#113). #114 permanece **auditoria**, não autorização de implementação.
+
+---
+
+## 9. 2ª auditoria (busca oficial) — matriz preliminar + ACHADO ESTRATÉGICO
+
+> Fonte: busca em domínios oficiais (`rnds-fhir.saude.gov.br`, `rnds-guia.saude.gov.br`, `gov.br`, `hl7.org.br`) — **fetch completo ainda bloqueado**; cardinalidades exatas dependem de abrir os StructureDefinitions.
+
+**Documentos/serviços VIVOS na RNDS federal (confirmado):** RIA (imunização), **REL** (exames laboratoriais — portfólio de produção descrito como **COVID‑19**), RAC (Registro de Atendimento Clínico), SA (Sumário de Alta), dispensação de medicamentos. **Não há documento de resultado de exame de IMAGEM.**
+
+### Matriz preliminar (grau de certeza por célula)
+
+| Domínio | Perfil RNDS federal | FHIR | Recursos | Terminologias | Identificadores | Status |
+|---|---|---|---|---|---|---|
+| **Imagem** | ❌ **inexistente/não implementado** (DiagnosticReport "not yet implemented in RNDS"; padrão DiagnosticReport/ImagingStudy/Media só em **BR-Core/estadual SES-GO**) | R4 4.0.1 | — (federal) | — | CPF/CNS | 🔴 **SEM CONTRATO FEDERAL HOJE** |
+| **Laboratório** | ✅ `BRResultadoExameLaboratorial` **V2 e 3.2.1** (baseado em **Composition**) | R4 4.0.1 | Bundle(document) + Composition + Observation + Specimen + Patient/Organization/Practitioner | `BRNomeExameLOINC` (LOINC) / `BRNomeExameGAL` / resultado qualitativo | CNS, CNPJ, CNES + **id de solicitante atribuído pela RNDS** | 🟡 existe, mas **portfólio de produção = COVID‑19** (ampliação a confirmar) |
+| **Pedido** | ⚠️ sem documento clínico de envio próprio | R4 4.0.1 | `ServiceRequest` aparece como **referência** dentro de outros modelos, não como documento enviável | — | id do solicitante (credenciamento) | 🟠 **provavelmente não é domínio de envio autônomo** |
+
+**Confirmado (alta):** FHIR 4.0.1; lista de documentos vivos; REL é Composition/Bundle (V2 + 3.2.1); imagem **não** implementada na RNDS; identificadores CNS/CNPJ/CNES + id de solicitante RNDS; terminologias LOINC/GAL existem.
+**A confirmar (fetch do IG):** cardinalidades exatas por perfil; qual versão REL vigente; se REL ampliou além de COVID/Monkeypox; obrigatoriedade de LOINC × GAL.
+
+### ⚠️ Achado estratégico (impacto na decisão de produto)
+A RNDS **não é um repositório geral de exames do paciente**. Os documentos vivos são fluxos específicos (resultado laboratorial de **notificação/COVID**, imunização, atendimento clínico, alta, dispensação). O **núcleo da SINTERA** — **exames de imagem (ex.: Doppler)** e **exames laboratoriais gerais** — **não mapeia para um documento RNDS federal vivo hoje**:
+- **Imagem:** sem perfil/documento RNDS federal → **não há para onde enviar** o Doppler na RNDS agora.
+- **Laboratório geral:** o REL existe, mas o portfólio de produção é de **notificação (COVID)** — enviar hemograma/rotina depende de confirmar ampliação de escopo.
+
+**Consequência para a sequência:** antes de investir em Camada A/FHIR **para RNDS**, é uma **decisão de produto** definir o alvo real:
+1. **Compatibilidade FHIR/BR-Core** (modelar internamente + projetar para FHIR R4/BR-Core) — útil e aplicável **já**, independente da RNDS; ou
+2. **Transporte RNDS** — só faz sentido quando houver **documento RNDS aplicável** ao tipo de exame da SINTERA (hoje: nenhum para imagem; laboratório só no escopo de notificação).
+
+Recomendação: **desacoplar "compatibilidade FHIR" de "envio à RNDS".** A primeira é evolução técnica aproveitável agora; a segunda depende de um contrato RNDS que, para o caso de uso atual da SINTERA (imagem), **ainda não existe** — e não deve ditar o modelo interno.
