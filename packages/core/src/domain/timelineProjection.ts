@@ -29,6 +29,11 @@ export interface TimelineEntry {
   title: string
   subtitle: string | null
   domain: TimelineDomain
+  // CATEGORIA CLÍNICA do fato (chave estável) — a taxonomia SEMÂNTICA que o usuário vê ("Por tipo"),
+  // independente do `domain` (técnico/estrutural). Ex.: consulta/exame/procedimento/vacina/medicamento/
+  // suplemento/omica/contraceptivo/outro. NUNCA use `domain` como categoria de saúde (Web+Mobile falam a
+  // mesma língua via `timelineCategoryLabel`). É o que impede colírio de virar "Evento".
+  category: string
   refId: string         // id no domínio dono (para navegar)
   status: string | null
   closed: boolean       // fato encerrado (para filtrar "Histórico" x aberto)
@@ -39,7 +44,7 @@ export interface TimelineEntry {
 export function eventToTimelineEntry(ev: HealthEvent): TimelineEntry {
   return {
     id: `event:${ev.id}`, date: ev.date, title: ev.title, subtitle: ev.notes ?? typeLabel(ev.type),
-    domain: 'event', refId: ev.id, status: ev.status, closed: isClosed(ev),
+    domain: 'event', category: ev.type || 'outro', refId: ev.id, status: ev.status, closed: isClosed(ev),
     meta: {
       professionalLabel: professionalKindLabel(ev.professionalKind),
       amountCents: ev.amountCents ?? null,
@@ -70,7 +75,7 @@ export function examToTimelineEntry(ex: ExamTimelineLike): TimelineEntry {
   const date = ex.exam_date || String(ex.created_at ?? '').slice(0, 10)
   return {
     id: `exam:${ex.id}`, date, title: ex.display_title || ex.type || 'Exame',
-    subtitle: ex.issuer ? `Exame · ${ex.issuer}` : 'Exame', domain: 'exam', refId: ex.id, status: ex.status, closed: true,
+    subtitle: ex.issuer ? `Exame · ${ex.issuer}` : 'Exame', domain: 'exam', category: 'exame', refId: ex.id, status: ex.status, closed: true,
   }
 }
 
@@ -81,7 +86,7 @@ export function omicsToTimelineEntry(p: OmicsTimelineLike): TimelineEntry {
   return {
     id: `omics:${p.id}`, date: p.collected_on || String(p.created_at ?? '').slice(0, 10),
     title: DOMAIN_LABEL[p.domain as OmicsDomain] ?? 'Ômica', subtitle: sub || null,
-    domain: 'omics', refId: p.id, status: null, closed: true,
+    domain: 'omics', category: 'omica', refId: p.id, status: null, closed: true,
   }
 }
 
@@ -90,7 +95,7 @@ export interface ContraceptiveTimelineLike { id: string; kind: string; brand: st
 export function contraceptiveToTimelineEntry(c: ContraceptiveTimelineLike): TimelineEntry {
   return {
     id: `contraceptive:${c.id}`, date: c.started_on ?? '', title: contraceptiveStartLabel(c.kind),
-    subtitle: c.brand ?? null, domain: 'contraceptive', refId: c.id, status: null, closed: true,
+    subtitle: c.brand ?? null, domain: 'contraceptive', category: 'contraceptivo', refId: c.id, status: null, closed: true,
   }
 }
 
