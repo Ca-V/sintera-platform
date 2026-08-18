@@ -28,7 +28,7 @@ como snapshot da 1ª rodada).
 | **A4** | Mobile | **Composição** — botão **"Nova medida"** fora do padrão | 🟢 **corrigido — PR #120** | título com `flex`/`numberOfLines` (o botão já era DS‑correto) |
 | **A5** | Mobile | **Relatórios** — botão **"Gerar link"** fora do padrão | 🟢 **corrigido — PR #120** | CTA primário + título não empurra o botão |
 | **A6** | Mobile | **Cards de Exames** — quebra no meio da palavra | 🟢 **corrigido — PR #120** | badges `flexShrink`/`maxWidth` + `numberOfLines` |
-| **A7** | Mobile | **Filtros do Histórico** (Tipo/Período) — opções cortadas por falta de rolagem | 🔎 **verificando** (próximo lote) | relacionado a D‑16/D‑18 (picker rolável). Investigar o componente de filtro do TimelineScreen |
+| **A7** | Mobile | **Filtros do Histórico** (Tipo/Período) — opções cortadas por falta de rolagem | ✏️ **código já rolável** + 🟢 **safe‑area corrigido — PR #120** | `HistoricoExamesScreen` já usa o `Select` rolável (D‑16/D‑18); "corta embaixo" endurecido com safe‑area no bottom‑sheet. Revalidar em build nova |
 | **A8** | Web+Mobile | **Histórico — taxonomia** clínica (Por data/Por tipo); **sem "Evento"**; paridade Web×Mobile | 🟢 **corrigido — PR #120** | `TimelineEntry.category` + `timelineCategoryLabel` no core; Mobile agrupa por categoria clínica; Web `outro`→"Outro" |
 | **A9** | Mobile | **Pedido de exame — roteamento** → não abrir "Adicionar exame" | 🟢 **roteamento/rótulo corrigido — PR #120** · 🧭 **persistência imediata em Pedidos = decisão (REG-001)** | Hub → "Adicionar pedido de exame". `document_type` é derivado (REG-001); declarar na criação p/ aparecer já na aba Pedidos é decisão de arquitetura |
 | **A10** | Mobile | **Receita médica — roteamento** → não virar exame | 🧭 **destino = C2** (Web ganhou o guard A13) | Mobile não tem destino de Receita hoje (capacidade nova) → corrigido junto com **C2**, não antes |
@@ -41,7 +41,7 @@ como snapshot da 1ª rodada).
 | ID | Plat. | Item | Status | Dedup / evidência |
 |---|---|---|---|---|
 | **B1** | Web(+Mobile) | **Multi-documento de exames (runtime)** — 1 exame ↔ N documentos (PDF+foto, N fotos, N PDFs, PDF hoje+foto amanhã, preliminar+laudo final, complementar depois); **não criar novo exame** por 2º arquivo; **acabar com "PDF encerra o fluxo"** | 🔧 camada de dados pronta (**PR #121**) · ⛔ runtime/UI/validação dependem da Fase 0 (**#117**) | = W‑01 |
-| **B2** | Web+Mobile | **Auditoria universal de anexos** — todo ponto de upload: formatos (PDF/JPG/PNG/**Word**/demais suportados), formas (arquivo, câmera, múltiplas imagens, múltiplos arquivos, drag‑and‑drop na Web, voz quando aplicável), cardinalidade (1, N, mistos, posterior, complementar); consistência; **N docs → 1 exame/evento**; sem restringir por 1º formato | 🔎 auditoria a fazer | consolida CAP‑001/HUB‑001 (D‑14) |
+| **B2** | Web+Mobile | **Auditoria universal de anexos** | ✅ **auditoria concluída** (`HOMOLOG-AUDIT_B2_ANEXOS.md`) | Achados: "PDF encerra o fluxo" (`DocumentBundleCapture.tsx:35`); N→1 exame só p/ N imagens; **Word não aceito em lugar nenhum**; HEIC contraditório; 2 protocolos de captura; limites divergentes. Correções: runtime B1 (gated) + decisões de produto + 2 micro‑fixes prontos |
 | **B3** | Web+Mobile | **Testes multi-documento** — PDF; imagem; misto; múltiplos; anexação posterior; preliminar+final | 🔧 base em `FUNC-exam-documents-writer` (#121); ampliar | parte de B1 |
 
 ## GRUPO C — Nova capacidade (spec-first; sem improvisar regra de negócio)
@@ -76,5 +76,21 @@ Espinha central **bate** (saudação → Adicionar registro → Agenda próximo 
 - **A3** era falso‑positivo de código (o seletor já renderiza "🩺 Consulta"/"🩹 Procedimento") → revalidar em build nova.
 - **A13** guard de categoria na captura (Web) entregue; **A10/C1/C2** dependem de destino próprio (spec).
 - **Specs C1/C2/C3** escritas (`HOMOLOG-SPECS_C1_C2_C3.md`).
-- **A12** auditoria de Home concluída (acima). **B2** (anexos universais) e **A7** (filtros roláveis) em andamento.
+- **A12** auditoria de Home concluída (acima).
+- **A7** entregue (safe‑area do `Select`) — os filtros já eram roláveis (revalidar em build nova).
+- **B2** auditoria de anexos **concluída** (`HOMOLOG-AUDIT_B2_ANEXOS.md`): confirma "PDF encerra o fluxo", N→1 exame parcial, Word ausente, 2 protocolos de captura → alimenta o runtime **B1** (gated Fase 0) + decisões de produto.
+- **Ciclo 1 (PR #120)** final: A1, A2, A4, A5, A6, A7, A8, A9(roteamento), A11, A13(guard). **A3** falso‑positivo. **A10/C1/C2/C3** spec‑first.
 - **Gates intocados:** Fase 0 (#117) não aplicada; produção bloqueada; congelados preservados.
+
+## Situação por grupo (fechamento desta rodada)
+- **Grupo A (imediato):** **entregue** no Ciclo 1 (PR #120), exceto A10 (destino de Receita = C2) e A12 (auditoria → alinhamentos de Home são decisão de produto). A3/A7 já estavam no código → **revalidar em build nova**.
+- **Grupo B (estrutural):** B1 código em #121; runtime/UI/N→1‑exame/PDF‑não‑encerra dependem da **Fase 0** (#117, gate). B2 auditado.
+- **Grupo C (spec‑first):** C1/C2/C3 especificados; **aguardam decisões** da fundadora (não implementar até definir).
+
+## Decisões que dependem da fundadora (bloqueiam avanço)
+1. **A9 persistência:** declarar `document_type='medical_order'` na criação do pedido (revisa REG‑001) para aparecer já em Pedidos, **ou** manter derivado pela extração?
+2. **C1** documento clínico não‑exame: domínio próprio? taxonomia no Histórico?
+3. **C2 Receita:** subtipo de C1 ou domínio próprio? modelo de associação (1 receita → N alvos)? tela de captura no Mobile.
+4. **C3 Redbus:** confirmar domínios/auth; provider único ou agregador; unidades canônicas.
+5. **B2:** declarar **Word**? unificar limite de tamanho? HEIC de ponta a ponta? avatar de perfil?
+6. **Infra:** liberar **Fase 0 (#117) no Preview** para habilitar a homologação real do multi‑documento (B1).
