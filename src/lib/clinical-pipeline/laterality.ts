@@ -69,6 +69,40 @@ export function stripToBase(text: string): string {
 
 const normKey = (base: string): string => base.toLowerCase().replace(/\s+/g, ' ').trim()
 
+/**
+ * PEDIDO-002 — título CLÍNICO de um PEDIDO a partir dos PROCEDIMENTOS/EXAMES solicitados (nomes extraídos do
+ * documento), NUNCA do nome do arquivo. Puro/determinístico. Agrupa por procedimento (base sem lado/qualificador);
+ * dois lados complementares (Esquerdo+Direito) ⇒ "— bilateral" (consolidação semanticamente segura, mesma regra do
+ * H-10); um lado ⇒ aquele lado; sem lado ⇒ só a base. Procedimentos DIFERENTES são unidos por " · " (nunca fundidos
+ * em bilateral). Retorna null quando não há procedimento utilizável (o chamador NÃO deve cair no filename então).
+ */
+export function deriveOrderTitle(procedureNames: (string | null | undefined)[]): string | null {
+  const groups = new Map<string, { base: string; sides: Set<Side> }>()
+  const order: string[] = []
+  for (const raw of procedureNames ?? []) {
+    const val = (raw ?? '').trim()
+    if (!val) continue
+    const base = stripToBase(val)
+    if (!base) continue
+    const key = normKey(base)
+    let g = groups.get(key)
+    if (!g) { g = { base, sides: new Set<Side>() }; groups.set(key, g); order.push(key) }
+    const side = detectSide(val)
+    if (side) g.sides.add(side)
+    if (base.length > g.base.length) g.base = base // preferir a base mais informativa
+  }
+  if (groups.size === 0) return null
+  const titles = order.map(key => {
+    const g = groups.get(key)!
+    const hasL = g.sides.has('esquerdo'), hasR = g.sides.has('direito')
+    if (hasL && hasR) return `${g.base} — bilateral`
+    if (hasL) return `${g.base} — esquerdo`
+    if (hasR) return `${g.base} — direito`
+    return g.base
+  })
+  return titles.join(' · ')
+}
+
 interface Group { key: string; base: string; sides: Side[]; observationIds: string[] }
 
 /**
