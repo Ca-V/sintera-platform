@@ -7,7 +7,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import type { ExamDTO, ExamExtractionLog } from '@sintera/api-client'
-import { deriveExamIdentity, isOrderDocumentType, careStageFor, CARE_STAGES, compareNames, selectByLink, biomarkerStatusLabel } from '@sintera/core'
+import { deriveExamIdentity, isOrderDocumentType, careStageFor, CARE_STAGES, compareNames, selectByLink, biomarkerStatusLabel, effectiveOrderStatus, orderStatusLabel } from '@sintera/core'
 import { AttachmentLink, Button, Disclaimer, FieldRow, Input, Text, DatePicker } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { MinhaSaudeStackParamList } from '../../navigation/types'
@@ -95,7 +95,8 @@ export function ExamDetailScreen({ route, navigation }: Props) {
   // além do documento, inclui os resultados estruturados (nome · valor · unidade · situação).
   const onShare = () => {
     if (!exam) return
-    const { name, lab } = deriveExamIdentity(exam.type, exam.issuer)
+    // PEDIDO-002: honrar display_title (título clínico do conteúdo; p/ pedido = procedimentos solicitados).
+  const { name, lab } = deriveExamIdentity(exam.type, exam.issuer, exam.display_title)
     const results = p.biomarkers.map(b => {
       const v = b.value != null ? String(b.value) : (b.value_text ?? '')
       const situ = biomarkerStatusLabel(b)
@@ -143,7 +144,8 @@ export function ExamDetailScreen({ route, navigation }: Props) {
     )
   }
 
-  const { name, lab } = deriveExamIdentity(exam.type, exam.issuer)
+  // PEDIDO-002: honrar display_title (título clínico do conteúdo; p/ pedido = procedimentos solicitados).
+  const { name, lab } = deriveExamIdentity(exam.type, exam.issuer, exam.display_title)
   const hasResults = p.biomarkers.length > 0 || (p.clinical?.items.length ?? 0) > 0
   const stage = careStageFor({ hasResult: hasResults, isOrder: isOrderDoc, linkedEventStatuses: linkedStatuses })
   const isProcessed = isExamReady(exam.status)
@@ -210,16 +212,21 @@ export function ExamDetailScreen({ route, navigation }: Props) {
         ) : (
           <Pressable onLongPress={() => { setDateValue(exam.exam_date ?? ''); setEditingDate(true) }}>
             <Text spec={text(t, { role: 'caption', tone: 'muted' })}>
-              {(() => { const d = formatExamDate(exam.exam_date); return d === 'Sem data' ? 'Data de realização não informada' : `Realizado em ${d}` })()}{exam.page_count ? ` · ${exam.page_count} página${exam.page_count > 1 ? 's' : ''}` : ''}
+              {(() => { const d = formatExamDate(exam.exam_date); const none = isOrderDoc ? 'Data de solicitação não informada' : 'Data de realização não informada'; const feito = isOrderDoc ? 'Solicitado em' : 'Realizado em'; return d === 'Sem data' ? none : `${feito} ${d}` })()}{exam.page_count ? ` · ${exam.page_count} página${exam.page_count > 1 ? 's' : ''}` : ''}
             </Text>
           </Pressable>
         )}
         <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Toque e segure no nome ou na data para editar.</Text>
 
-        {examStatusLabel(exam.status) ? (
+        {/* Status de EXTRAÇÃO (processando/processado) é semântica de RESULTADO — não exibir em pedido. */}
+        {!isOrderDoc && examStatusLabel(exam.status) ? (
           <Text spec={text(t, { role: 'caption', tone: 'muted' })} style={isExamFailed(exam.status) ? { color: t.color.badge.error.text } : undefined}>
             {examStatusLabel(exam.status)}
           </Text>
+        ) : null}
+        {/* Status do PEDIDO (pendente/realizado/finalizado) — semântica própria de solicitação. */}
+        {isOrderDoc ? (
+          <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Status: {orderStatusLabel(effectiveOrderStatus(exam.order_status, 0))}</Text>
         ) : null}
       </View>
 
@@ -242,8 +249,23 @@ export function ExamDetailScreen({ route, navigation }: Props) {
         </View>
       ) : null}
 
-      {/* Resultados */}
-      <ResultsSection exam={exam} biomarkers={p.biomarkers} clinical={p.clinical} analyzing={p.analyze.running} />
+      {/* PEDIDO-002 — SEPARAÇÃO SEMÂNTICA: um PEDIDO (medical_order/insurance_guide) mostra os PROCEDIMENTOS
+          SOLICITADOS e NUNCA "Resultados estruturados"/clinical_results. Só RESULTADO renderiza a ResultsSection. */}
+      {isOrderDoc ? (
+        <View style={[styles.card, card, { gap: 8 }]}>
+          <Text spec={text(t, { role: 'bodyStrong' })}>Procedimentos solicitados</Text>
+          {p.biomarkers.length > 0 ? (
+            p.biomarkers.map((b, i) => (
+              <Text key={b.id ?? i} spec={text(t, { role: 'body', tone: 'muted' })}>• {b.source_exam_name ?? b.name}</Text>
+            ))
+          ) : (
+            <Text spec={text(t, { role: 'body', tone: 'muted' })}>Consulte o documento original para os procedimentos solicitados.</Text>
+          )}
+          <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Isto é um pedido/solicitação — não é um resultado de exame realizado.</Text>
+        </View>
+      ) : (
+        <ResultsSection exam={exam} biomarkers={p.biomarkers} clinical={p.clinical} analyzing={p.analyze.running} />
+      )}
 
       {/* Última extração (informativo — paridade Web) */}
       {lastLog ? (
@@ -255,7 +277,9 @@ export function ExamDetailScreen({ route, navigation }: Props) {
       {/* Financeiro */}
       <FinancialSection exam={exam} onSave={p.updateFields} />
 
-      {/* Recorrência — cria um Evento Assistencial (lembrete) no domínio Agenda, vinculado a este exame. */}
+      {/* Recorrência — cria um Evento Assistencial (lembrete) no domínio Agenda, vinculado a este exame.
+          "Repetir este exame" é semântica de RESULTADO — não faz sentido para um pedido. */}
+      {!isOrderDoc ? (
       <View style={[styles.card, card, { gap: 8 }]}>
         <Text spec={text(t, { role: 'bodyStrong' })}>Repetir este exame</Text>
         <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Crie um lembrete de repetição periódica — aparece na sua Agenda.</Text>
@@ -265,6 +289,7 @@ export function ExamDetailScreen({ route, navigation }: Props) {
             params: { prefill: { type: 'exame', title: `Repetir ${name}`, examId: exam.id, recurrence: true } },
           })} />
       </View>
+      ) : null}
 
       {/* Pedido de origem (Q1) — só para resultados (não-pedido) */}
       {!isOrderDoc ? (
