@@ -32,3 +32,16 @@ num Preview automático** enquanto estiver nesse estado.
 `auth_rls_initplan` (35 · `auth.uid()` reavaliado por linha), `notification_preferences` (28), `unindexed_foreign_keys` (23), `unused_index` (21), `multiple_permissive_policies` (20), 1 `no_primary_key`.
 
 > Os itens de §4 são um **backlog de hardening de banco** (fora da homologação atual). Nada aqui foi alterado.
+
+## 5. BLOQUEIO (tentativa autorizada de recriar o Preview) — 2026-08-18
+Ao executar a recriação autorizada do Preview:
+- `reset_branch` no branch órfão → **recusado**: "Cannot reset a default branch" (o `MIGRATIONS_FAILED` está no **branch default**, que representa o main da integração — não um Preview separado; por isso `project_ref == parent`).
+- `create_branch` (novo Preview) → **recusado**: `PaymentRequiredException` — **"Branching is supported only on the Pro plan or above"**.
+
+**Efeito:** nenhum branch criado, **custo zero**, produção intocada, #117 não aplicada.
+
+**Conclusão:** o **branching nativo do Supabase não está disponível no plano atual**; existe **um único projeto (produção)**, sem staging. Um Preview da Fase 0 via branch **não é possível hoje**. Caminhos possíveis (decisão da fundadora — infra/billing):
+1. **Habilitar o plano Pro** do Supabase → libera branching → seguir a sequência aprovada num Preview real.
+2. **Provisionar um projeto Supabase de staging** separado (novo projeto) para servir de Preview.
+3. **Validação técnica local** da #117 (Postgres efêmero: aplica a migração + schema + backfill contra cópia de dado real), como já foi feito antes — valida migration/schema/backfill **sem** Supabase e **sem custo**, mas **não** cobre a validação funcional "no ambiente de Preview" (que exige 1 ou 2).
+4. **Manter congelado** até decidir 1/2/3.
