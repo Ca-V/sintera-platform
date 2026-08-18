@@ -22,19 +22,19 @@ como snapshot da 1ª rodada).
 
 | ID | Plat. | Item | Status | Dedup / evidência |
 |---|---|---|---|---|
-| **A1** | Web | **Sidebar** — regressão `f8fd527`: restaurar Registros de Saúde / Histórico / demais categorias; tipografia mais aparente; **categorias abertas por padrão**; sem redesenhar navegação homologada | 🟢 corrigido em **PR #120** (não mergeado) | = W‑02. Fix existe; falta merge/deploy → por isso reaparece na build |
-| **A2** | Web | **Relatórios** — filtros/período dentro de card/picker **rolável** (não expor tudo verticalmente); manter padrão de seletores roláveis | 🟢 corrigido em **PR #120** (não mergeado) | = W‑03 |
-| **A3** | Mobile | **Novo evento** — itens **Consulta** e **Procedimento** só com ícone, sem nomenclatura; nomear ambos; verificar se conduzem ao fluxo correto | 🔎 verificando | relacionado a D‑06 (cards da Agenda já nomeados) — superfície do seletor de tipo |
-| **A4** | Mobile | **Composição Corporal** — botão **"Nova medida"** fora do padrão visual | 🔎 verificando | relacionado a D‑17 (formatação da tela) — o botão é elemento distinto |
-| **A5** | Mobile | **Relatórios** — botão **"Gerar link"** fora do padrão visual | 🔎 verificando | novo |
-| **A6** | Mobile | **Cards de Exames** — quebra de texto inadequada ("Exa/mes laborat/oriais", "Ecodopple/r…"); layout responsivo, sem mudar conteúdo/nomenclatura | 🔎 verificando | novo |
-| **A7** | Mobile | **Filtros do Histórico** (Tipo/Período) — opções cortadas por falta de rolagem; usar picker/selector rolável; todas as opções acessíveis; sem modal infinito | 🔎 verificando | relacionado a D‑16/D‑18 (padrão de picker rolável) |
-| **A8** | Web+Mobile | **Histórico de Saúde — taxonomia** — duas dimensões (Por data / Por tipo) com as categorias reais (Exame, Consulta, Procedimento, Vacina, Composição corporal, Medicamento, Suplemento, Recursos de saúde…). **Não usar "Evento" como categoria clínica** (colírio ≠ "Evento"). **Paridade Web×Mobile** (Mobile não pode reduzir a "Exames \| Consultas e eventos") | 🔎 verificando | correção de arquitetura de apresentação já definida (não é ideia nova) |
-| **A9** | Mobile | **Pedido de exame — roteamento** — "Adicionar registro → Pedido de exame" leva a "Adicionar exame" (errado); deve ir ao domínio de **Pedidos de Exames** | 🔎 verificando | novo (parte roteamento) |
-| **A10** | Mobile | **Receita médica — roteamento** — "Receita médica" leva ao fluxo de exame (errado). Impedir esse desvio (destino definitivo depende do spec de Receita — grupo C) | 🔎 verificando | = M‑03; destino final → C |
-| **A11** | Web+Mobile | **Óculos/Lentes** — remover categoria/card exclusivo; tratar como **Recurso de Saúde** (decisão de produto já tomada) | 🔎 verificando | novo |
-| **A12** | Web+Mobile | **Paridade Home Web × Mobile** — auditar informações, categorias, ações, nomenclaturas, atalhos, adicionar‑registro, estados, hierarquia; corrigir divergências não deliberadas | 🔎 auditoria pendente | novo (auditoria) |
-| **A13** | Web | **Documentos não‑exame — persistência da categoria no fluxo** — a categoria escolhida (ex.: Atestado) some ao anexar o arquivo, sendo trocada por Exame/Medicamento/Recurso. Preservar a categoria durante todo o fluxo de captura (o domínio completo é grupo C/#118) | 🔎 verificando | bug concreto do #118 |
+| **A1** | Web | **Sidebar** — regressão `f8fd527`: restaurar Registros de Saúde / Histórico / demais categorias; tipografia mais aparente; **categorias abertas por padrão**; sem redesenhar navegação homologada | 🟢 **corrigido — PR #120 (Ciclo 1)** | = W‑02. Falta merge/deploy → por isso reaparece na build |
+| **A2** | Web | **Relatórios** — filtros/período dentro de card/picker **rolável** | 🟢 **corrigido — PR #120** | = W‑03 |
+| **A3** | Mobile | **Novo evento** — itens **Consulta** e **Procedimento** "só com ícone" | ✏️ **código já correto — revalidar em build nova** | O código renderiza "🩺 Consulta"/"🩹 Procedimento" com texto (`EventFormScreen.tsx:126/216`). NÃO era bug de código → build antiga ou truncamento (coberto por A6). Não re‑corrigido |
+| **A4** | Mobile | **Composição** — botão **"Nova medida"** fora do padrão | 🟢 **corrigido — PR #120** | título com `flex`/`numberOfLines` (o botão já era DS‑correto) |
+| **A5** | Mobile | **Relatórios** — botão **"Gerar link"** fora do padrão | 🟢 **corrigido — PR #120** | CTA primário + título não empurra o botão |
+| **A6** | Mobile | **Cards de Exames** — quebra no meio da palavra | 🟢 **corrigido — PR #120** | badges `flexShrink`/`maxWidth` + `numberOfLines` |
+| **A7** | Mobile | **Filtros do Histórico** (Tipo/Período) — opções cortadas por falta de rolagem | 🔎 **verificando** (próximo lote) | relacionado a D‑16/D‑18 (picker rolável). Investigar o componente de filtro do TimelineScreen |
+| **A8** | Web+Mobile | **Histórico — taxonomia** clínica (Por data/Por tipo); **sem "Evento"**; paridade Web×Mobile | 🟢 **corrigido — PR #120** | `TimelineEntry.category` + `timelineCategoryLabel` no core; Mobile agrupa por categoria clínica; Web `outro`→"Outro" |
+| **A9** | Mobile | **Pedido de exame — roteamento** → não abrir "Adicionar exame" | 🟢 **roteamento/rótulo corrigido — PR #120** · 🧭 **persistência imediata em Pedidos = decisão (REG-001)** | Hub → "Adicionar pedido de exame". `document_type` é derivado (REG-001); declarar na criação p/ aparecer já na aba Pedidos é decisão de arquitetura |
+| **A10** | Mobile | **Receita médica — roteamento** → não virar exame | 🧭 **destino = C2** (Web ganhou o guard A13) | Mobile não tem destino de Receita hoje (capacidade nova) → corrigido junto com **C2**, não antes |
+| **A11** | Web+Mobile | **Óculos/Lentes** → Recurso de Saúde | 🟢 **corrigido — PR #120** | removido o intent dedicado (`intents.ts`) + teste |
+| **A12** | Web+Mobile | **Paridade Home Web × Mobile** — auditoria | 🔎 **auditoria em andamento** | resultado alimenta correções pontuais |
+| **A13** | Web | **Documentos não‑exame — categoria some ao anexar** | 🟢 **guard corrigido — PR #120** · 🗺️ **domínio completo = C1** | `CaptureCenter` não sobrescreve mais a categoria declarada; destino próprio de doc clínico → C1 |
 
 ## GRUPO B — Estrutural já definido (preparar já; validar após Fase 0/Preview)
 
@@ -48,9 +48,9 @@ como snapshot da 1ª rodada).
 
 | ID | Plat. | Item | Status | Dedup / evidência |
 |---|---|---|---|---|
-| **C1** | Web+Mobile | **Documentos clínicos não-exame** — evoluir **#118**: Atestado, Relatório, Encaminhamento e outros; categoria escolhida permanece por todo o fluxo; **separado de `exam_documents`** | 🗺️ spec (#118) → expandir | = W‑04 |
-| **C2** | Web+Mobile | **Receita como objeto/documento próprio** — não é só "receita de medicamento"; uma receita pode originar informação para Medicamento, Suplemento, Ciclo/contracepção, Composição corporal, Recursos de saúde, Hábitos, Monitoramento. Definir Receita como **tipo de documento/registro próprio**, associável à categoria pertinente conforme conteúdo; **spec-first** (modelo + roteamento) antes de implementar | 🧭 decisão + 🗺️ spec | evolui D‑13 (antes "Receita médica"); amplia escopo |
-| **C3** | Web+Mobile | **Monitoramento × integração Redbus** — auditar o modelo de Monitoramento e sua capacidade de receber dados de integração **antes** de fechar a implementação; não acoplar a interface a estrutura improvisada | 🧭 auditoria estrutural | novo |
+| **C1** | Web+Mobile | **Documentos clínicos não-exame** — evoluir **#118**: Atestado/Relatório/Encaminhamento; categoria permanece; **separado de `exam_documents`** | 📝 **spec escrita** (`HOMOLOG-SPECS_C1_C2_C3` §C1) → aguarda decisão | = W‑04; A13 já protege a categoria declarada |
+| **C2** | Web+Mobile | **Receita como objeto/documento próprio** — associável a Medicamento/Suplemento/Ciclo/Composição/Recursos/Hábitos/Monitoramento; modelo + roteamento **spec-first** | 📝 **spec escrita** (§C2) → 🧭 **decisões da fundadora** | evolui D‑13; A10 (Mobile) resolve junto |
+| **C3** | Web+Mobile | **Monitoramento × integração Redbus** — auditar o modelo antes de acoplar; adaptador desacoplado (princípio RNDS) | 📝 **spec/auditoria inicial escrita** (§C3) | modelo de wearables já existe (migr. 025/127‑133); `SyncEngine` port |
 
 ---
 
@@ -64,5 +64,17 @@ H‑09/H‑10 · `ab5b5816` · `0f5ec205` · arquitetura de navegação homologa
 
 ---
 
+## Auditoria A12 — Paridade Home Web × Mobile (resumo)
+Espinha central **bate** (saudação → Adicionar registro → Agenda próximo → acesso rápido → Como usar) e o **hub de registro é genuinamente compartilhado** (SSOT em `@sintera/core`; só o mapa de navegação difere). Divergências **deliberadas** (justificadas por INV‑HOME‑001): sem Resumo/Linha do tempo/Insights no Mobile; alertas sensíveis a tempo (novidade/exames pendentes/empty‑state) só na Web. Divergências **não deliberadas** (para a fundadora decidir alinhamento — envolve escolha de produto de quais atalhos expor):
+1. **Acesso rápido:** Web 6 tiles (Histórico, Agenda, Exames, Medicamentos, Relatórios, Despesas) × Mobile 4 (Agenda, Exames, Minha Saúde, Rede de Cuidado).
+2. **"Criar lembrete"** existe na Home Web, não na Mobile.
+3. **Empty‑state da Agenda‑próximo:** Mobile mostra card vazio; Web oculta a seção.
+4. **"Como usar":** Web dispensável (localStorage); Mobile permanente.
+
 ## Log de execução (mais recente no topo)
-- _(inicial)_ Checklist master criado; 6 investigações de código em andamento (A3–A11, A13). Web A1/A2 já corrigidos em #120 (aguardam merge). B1 código em #121. Nada aplicado ao banco.
+- **Ciclo 1 (PR #120)** entregue e validado: A1, A2, A4, A5, A6, A8 (Web+Mobile+core), A9 (roteamento/rótulo), A11. tsc root/mobile/core 0; capture‑hub 381/381; timeline‑projection 8/8; FUNC‑registration‑hub 9/9.
+- **A3** era falso‑positivo de código (o seletor já renderiza "🩺 Consulta"/"🩹 Procedimento") → revalidar em build nova.
+- **A13** guard de categoria na captura (Web) entregue; **A10/C1/C2** dependem de destino próprio (spec).
+- **Specs C1/C2/C3** escritas (`HOMOLOG-SPECS_C1_C2_C3.md`).
+- **A12** auditoria de Home concluída (acima). **B2** (anexos universais) e **A7** (filtros roláveis) em andamento.
+- **Gates intocados:** Fase 0 (#117) não aplicada; produção bloqueada; congelados preservados.
