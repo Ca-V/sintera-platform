@@ -49,8 +49,8 @@ da 1ª rodada (`HOMOLOG-CONSOLIDADO_WEB_MOBILE_V1`).
 
 | ID | Plat. | Item | Status | Dedup / evidência |
 |---|---|---|---|---|
-| **C1** | Web+Mobile | **Documentos clínicos não-exame** — evoluir **#118**: Atestado/Relatório/Encaminhamento; categoria permanece; **separado de `exam_documents`** | 📝 **spec escrita** (`HOMOLOG-SPECS_C1_C2_C3` §C1) → aguarda decisão | = W‑04; A13 já protege a categoria declarada |
-| **C2** | Web+Mobile | **Receita como objeto/documento próprio** — associável a Medicamento/Suplemento/Ciclo/Composição/Recursos/Hábitos/Monitoramento; modelo + roteamento **spec-first** | 📝 **spec escrita** (§C2) → 🧭 **decisões da fundadora** | evolui D‑13; A10 (Mobile) resolve junto |
+| **C1+C2** | Web+Mobile | **Domínio único "Documentos do paciente"** (DOC-001) — Receita/Atestado/Relatório/Encaminhamento como **subtipos**, **separado de `exam_documents`**; Receita **associável** a 1..N contextos (Medicamento/Suplemento/Ciclo/Composição/Recursos/Hábitos/Monitoramento) | 🔧 **código isolado pronto (opção B, PR #124)** · ⛔ schema/UI/validação **gated** (Preview) | decisão Q3 travada; invariante documento≠exame testado; A10/A13 resolvem junto |
+| **ANEXO** | Web+Mobile | **Política transversal de anexos (SSOT)** — allowlist única (PDF/JPEG/PNG/HEIC/Word), limite único, métodos por plataforma, PDF não encerra, N→1 exame | 🔧 **SSOT `attachmentPolicy` pronta (PR #124)** · ⛔ adoção nos pontos = rollout com B1/Fase 0 | ANEXO-001; consome de uma fonte única |
 | **C3** | Web+Mobile | **Monitoramento × integração Redbus** — auditar o modelo antes de acoplar; adaptador desacoplado (princípio RNDS) | 📝 **spec/auditoria inicial escrita** (§C3) | modelo de wearables já existe (migr. 025/127‑133); `SyncEngine` port |
 
 ---
@@ -73,6 +73,7 @@ Espinha central **bate** (saudação → Adicionar registro → Agenda próximo 
 4. **"Como usar":** Web dispensável (localStorage); Mobile permanente.
 
 ## Log de execução (mais recente no topo)
+- **DOC-001 opção B (PR #124):** domínio "Documentos do paciente" + política transversal de anexos em **código isolado testado** (16 casos; invariante documento≠exame; 7 associações da Receita), **sem banco/produção**; validação aguarda Preview.
 - **Decisões Q1–Q4 aplicadas:** Ciclo 1 (#120) **mergeado** na integração; Ciclo 2 micro-fixes de anexo (**PR #123**); specs travadas (domínio único "Documentos"; REG-001 mantido; política única de anexos). Matriz declarada como fonte de verdade.
 - **Ciclo 1 (PR #120)** entregue e validado: A1, A2, A4, A5, A6, A8 (Web+Mobile+core), A9 (roteamento/rótulo), A11. tsc root/mobile/core 0; capture‑hub 381/381; timeline‑projection 8/8; FUNC‑registration‑hub 9/9.
 - **A3** era falso‑positivo de código (o seletor já renderiza "🩺 Consulta"/"🩹 Procedimento") → revalidar em build nova.
