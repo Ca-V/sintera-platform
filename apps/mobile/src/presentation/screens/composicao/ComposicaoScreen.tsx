@@ -219,7 +219,7 @@ export function ComposicaoScreen() {
       keyboardShouldPersistTaps="handled"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={t.color.identity.primary} />}>
       <View style={styles.headerRow}>
-        <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 22 }}>Composição Corporal</Text>
+        <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 22, flex: 1 }} numberOfLines={1}>Composição Corporal</Text>
         {!open ? <Button label="Nova medida" onPress={startNew} /> : null}
       </View>
       {!open ? <Button label="Escanear laudo de bioimpedância" variant="secondary" loading={capture.busy} loadingLabel="Lendo…" onPress={scanBioimpedance} /> : null}

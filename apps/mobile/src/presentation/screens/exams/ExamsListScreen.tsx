@@ -249,9 +249,9 @@ export function ExamsListScreen({ navigation }: Props) {
               <View key={e.id} style={[styles.card, card]}>
                 <Pressable onPress={() => navigation.navigate('ExamDetail', { id: e.id })} accessibilityRole="button" style={{ gap: 4 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                    <Text spec={text(t, { role: 'bodyStrong' })} style={{ flex: 1 }}>{label}</Text>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'flex-end' }}>
-                      <View style={[styles.pill, { borderWidth: 1, borderColor: t.color.border.default }]}><Text spec={text(t, { role: 'caption', tone: 'muted' })}>{categoryOf(e.document_type).label}</Text></View>
+                    <Text spec={text(t, { role: 'bodyStrong' })} style={{ flex: 1 }} numberOfLines={2}>{label}</Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'flex-end', flexShrink: 1, maxWidth: '55%' }}>
+                      <View style={[styles.pill, { borderWidth: 1, borderColor: t.color.border.default }]}><Text spec={text(t, { role: 'caption', tone: 'muted' })} numberOfLines={1}>{categoryOf(e.document_type).label}</Text></View>
                       {mismatchIds.has(e.id) ? <View style={[styles.pill, { backgroundColor: t.color.badge.attention.soft }]}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.attention.text }}>Nome diferente</Text></View> : null}
                       {dup ? <View style={[styles.pill, { backgroundColor: t.color.badge.attention.soft }]}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.attention.text }}>Possível duplicado</Text></View> : null}
                     </View>
