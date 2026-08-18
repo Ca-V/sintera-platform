@@ -242,3 +242,28 @@ A RNDS **não é um repositório geral de exames do paciente**. Os documentos vi
 2. **Transporte RNDS** — só faz sentido quando houver **documento RNDS aplicável** ao tipo de exame da SINTERA (hoje: nenhum para imagem; laboratório só no escopo de notificação).
 
 Recomendação: **desacoplar "compatibilidade FHIR" de "envio à RNDS".** A primeira é evolução técnica aproveitável agora; a segunda depende de um contrato RNDS que, para o caso de uso atual da SINTERA (imagem), **ainda não existe** — e não deve ditar o modelo interno.
+
+---
+
+## 10. Distinção FORMAL: Representação FHIR × Transporte RNDS (desacoplamento)
+
+**Decisão de enquadramento (aprovada):** FHIR e RNDS **não são a mesma frente**.
+- **FHIR R4 / BR-Core = capacidade de interoperabilidade da SINTERA** — modelar o interno e projetar para FHIR. **Independente** de existir endpoint RNDS aplicável; aproveitável já.
+- **RNDS = transporte** apenas para os **domínios/documentos que a RNDS federal efetivamente suporta**.
+- **Imagem:** o Doppler é o caso de referência e **não** deve ser forçado para REL.
+- **Laboratório:** REL conforme o **escopo efetivamente vigente** — não assumir que todo resultado laboratorial da SINTERA seja enviável.
+- **Pedido:** **≠** resultado do exame.
+
+**Princípio:** uma limitação atual da RNDS **não** deve contaminar o modelo clínico interno. Primeiro a representação FHIR (capacidade); o transporte RNDS entra **quando e onde houver documento aplicável**.
+
+### Matriz de interoperabilidade — DUAS colunas separadas
+
+| Domínio SINTERA | Representação FHIR (R4/BR-Core) — *capacidade* | Interoperabilidade RNDS (transporte) — *disponibilidade real* |
+|---|---|---|
+| **Pedido** | `ServiceRequest` (R4/BR-Core) — perfil a definir | 🟠 sem documento RNDS de **envio próprio** (ServiceRequest é referência interna) |
+| **Imagem/laudo** | `DiagnosticReport` + `ImagingStudy`/`Media` + `DocumentReference` (BR-Core **existe**) — perfil a definir | 🔴 **sem documento RNDS federal** (não implementado) |
+| **Laboratório** | `Composition` + `Observation` + `Specimen` (BR-Core / REL) — perfil a definir | 🟡 **REL** (V2/3.2.1) — escopo de produção **notificação/COVID**; ampliação a confirmar |
+
+Leitura: a coluna **FHIR** é uma **capacidade alcançável já** (os perfis BR-Core existem para os três domínios); a coluna **RNDS** reflete **disponibilidade de transporte hoje** — parcial (lab, escopo restrito) a inexistente (imagem, pedido). As células "a definir" fecham só contra o IG vigente (egresso/artefatos).
+
+**Estado:** hold técnico, sem código. `exam_documents` (#113), `ab5b5816` (#111/#112) e `0f5ec205` permanecem exatamente como estão.
