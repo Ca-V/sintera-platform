@@ -76,6 +76,33 @@ export function buildExamDocumentInserts(
   }))
 }
 
+// ── Planejador de upload multi-documento (puro; núcleo do runtime B1) ──────────────────────────────────
+// Regra de produto (fundadora): N arquivos (formatos MISTOS: PDF + imagem, vários PDFs, várias imagens) →
+// documentos do MESMO exame. **"PDF não encerra o fluxo":** ao contrário do Document Bundle atual (que para no
+// 1º PDF), aqui TODOS os arquivos suportados são mantidos. Nenhum arquivo cria exame novo (isso é `buildExamDocumentInserts`).
+export interface PlannedFile { file_url: string; type?: string; role?: ExamDocumentRole }
+export interface MultiDocumentPlan {
+  docs: NewExamDocument[]                       // documentos planejados (ordem preservada; TODOS os suportados)
+  rejected: { file_url: string; reason: string }[]  // formatos não suportados (não interrompem o restante)
+}
+
+/**
+ * Planeja N arquivos como documentos de UM exame — puro. Valida o formato de cada um (por `type` MIME ou pela
+ * extensão da URL); mantém TODOS os suportados (um PDF no meio NÃO descarta os demais); os não suportados vão para
+ * `rejected` sem interromper o fluxo. Não escreve nada; o `exam_id` é atribuído depois em `buildExamDocumentInserts`.
+ */
+export function planMultiDocumentUpload(files: PlannedFile[]): MultiDocumentPlan {
+  const docs: NewExamDocument[] = []
+  const rejected: { file_url: string; reason: string }[] = []
+  for (const f of files) {
+    const supported = (f.type && (SUPPORTED_DOCUMENT_MIME as readonly string[]).includes(f.type))
+      || contentTypeFromUrl(f.file_url) != null
+    if (!supported) { rejected.push({ file_url: f.file_url, reason: 'formato não suportado (aceitos: PDF, JPG, PNG)' }); continue }
+    docs.push({ file_url: f.file_url, role: f.role ?? ROLE_DEFAULT })
+  }
+  return { docs, rejected }
+}
+
 // ── Escrita isolada (cliente mínimo; SupabaseClient real entra só no wiring gated) ─────────────────────
 export interface ExamDocInsertBuilder { select(cols: string): Promise<{ data: { id: string }[] | null; error: unknown }> }
 export interface ExamDocWriteClient { from(table: string): { insert(rows: unknown): ExamDocInsertBuilder } }

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  buildExamDocumentInserts, createExamDocuments, attachDocumentToExam,
+  buildExamDocumentInserts, createExamDocuments, attachDocumentToExam, planMultiDocumentUpload,
   isSupportedDocument, contentTypeFromUrl, SUPPORTED_DOCUMENT_MIME,
   type ExamDocWriteClient, type ExamDocumentInsert,
 } from '@/lib/exams/examDocuments'
@@ -54,6 +54,40 @@ describe('EXDOC-004 · buildExamDocumentInserts — N documentos, MESMO exame', 
     const rows = buildExamDocumentInserts('exam-1', 'user-1', [{ file_url: 'https://x/a.pdf' }], { primaryIndex: -1 })
     expect(rows[0].is_primary).toBe(false)
     expect(rows[0].document_role).toBe('outro')  // default
+  })
+})
+
+describe('EXDOC-004 · planMultiDocumentUpload — N arquivos mistos, PDF NÃO encerra o fluxo', () => {
+  it('PDF + imagem → mantém AMBOS (um PDF no meio não descarta os demais)', () => {
+    const plan = planMultiDocumentUpload([
+      { file_url: 'https://x/a.pdf', type: 'application/pdf' },
+      { file_url: 'https://x/b.jpg', type: 'image/jpeg' },
+    ])
+    expect(plan.rejected).toEqual([])
+    expect(plan.docs.map(d => d.file_url)).toEqual(['https://x/a.pdf', 'https://x/b.jpg'])
+  })
+  it('vários PDFs → todos mantidos (regra "PDF encerra o fluxo" NÃO se aplica aqui)', () => {
+    const plan = planMultiDocumentUpload([
+      { file_url: 'https://x/1.pdf' }, { file_url: 'https://x/2.pdf' }, { file_url: 'https://x/3.pdf' },
+    ])
+    expect(plan.docs.length).toBe(3)
+  })
+  it('formato não suportado vai para rejected SEM interromper os demais', () => {
+    const plan = planMultiDocumentUpload([
+      { file_url: 'https://x/a.pdf' }, { file_url: 'https://x/b.gif', type: 'image/gif' }, { file_url: 'https://x/c.png' },
+    ])
+    expect(plan.docs.map(d => d.file_url)).toEqual(['https://x/a.pdf', 'https://x/c.png'])
+    expect(plan.rejected.map(r => r.file_url)).toEqual(['https://x/b.gif'])
+  })
+  it('preliminar + final (mistos) → 1 exame, N documentos, 1 primário', () => {
+    const plan = planMultiDocumentUpload([
+      { file_url: 'https://x/prelim.jpg', role: 'laudo_preliminar' },
+      { file_url: 'https://x/final.pdf', role: 'laudo_final' },
+    ])
+    const rows = buildExamDocumentInserts('exam-1', 'user-1', plan.docs)
+    expect(new Set(rows.map(r => r.exam_id))).toEqual(new Set(['exam-1']))  // 1 exame/evento
+    expect(rows.map(r => r.document_role)).toEqual(['laudo_preliminar', 'laudo_final'])
+    expect(rows.filter(r => r.is_primary).length).toBe(1)
   })
 })
 
