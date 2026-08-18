@@ -19,15 +19,16 @@ export function RegistrationHubSheet({ visible, onClose }: { visible: boolean; o
   const [choice, setChoice] = useState<RegistrationIntent | null>(null)
 
   const close = () => { setChoice(null); onClose() }
-  // Captura de documento → tela de upload (aba Minha Saúde, onde vivem os Exames/Registros).
-  const goCapture = () => { close(); navigation.getParent()?.navigate('MinhaSaude', { screen: 'ExamUpload' }) }
+  // Captura de documento → tela de upload (aba Minha Saúde, onde vivem os Exames/Registros). O contexto 'order'
+  // (Pedido de exame) ajusta só o cabeçalho — pedido é sub-tipo do domínio Exames; persistência segue REG-001.
+  const goCapture = (context?: 'exam' | 'order') => { close(); navigation.getParent()?.navigate('MinhaSaude', { screen: 'ExamUpload', params: context ? { context } : undefined }) }
   const goDest = (d: RegistrationDestination) => {
     const nav = REGISTRATION_NAV[d]; close()
     navigation.getParent()?.navigate(nav.tab, nav.screen ? { screen: nav.screen, params: nav.params } : undefined)
   }
   const pick = (i: RegistrationIntent) => {
     const m = i.mechanism
-    if (m.type === 'capture') goCapture()
+    if (m.type === 'capture') goCapture(i.key === 'pedido_exame' ? 'order' : 'exam')
     else if (m.type === 'page') goDest(m.destination)
     else setChoice(i)
   }
@@ -43,7 +44,7 @@ export function RegistrationHubSheet({ visible, onClose }: { visible: boolean; o
           {choice && choiceM ? (
             <View style={{ gap: 10 }}>
               <Text spec={text(t, { role: 'bodyStrong' })}>{choice.label} — como deseja registrar?</Text>
-              <Pressable onPress={goCapture} style={[styles.row, card]}><Text spec={text(t, { role: 'body' })}>{choiceM.captureLabel}</Text></Pressable>
+              <Pressable onPress={() => goCapture('exam')} style={[styles.row, card]}><Text spec={text(t, { role: 'body' })}>{choiceM.captureLabel}</Text></Pressable>
               <Pressable onPress={() => goDest(choiceM.pageDestination)} style={[styles.row, card]}><Text spec={text(t, { role: 'body' })}>{choiceM.pageLabel}</Text></Pressable>
               <Pressable onPress={() => setChoice(null)} style={{ alignSelf: 'flex-start' }}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>← Voltar</Text></Pressable>
             </View>

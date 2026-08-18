@@ -72,7 +72,7 @@ const TYPE_META: Record<string, { label: string; Icon: React.ElementType; cls: s
   plano:        { label: 'Plano de saúde', Icon: Receipt,    cls: 'bg-warm text-gold' },
   exame:        { label: 'Exame',        Icon: FlaskConical, cls: 'bg-warm text-gold' },
   omica:        { label: 'Ômica',        Icon: Dna,          cls: 'bg-lavender-light text-lavender' },
-  outro:        { label: 'Evento',       Icon: CalendarDays, cls: 'bg-ivory text-mauve' },
+  outro:        { label: 'Outro',        Icon: CalendarDays, cls: 'bg-ivory text-mauve' },
 }
 
 function fmt(date: string): string {

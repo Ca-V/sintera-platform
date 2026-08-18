@@ -42,13 +42,13 @@ describe('HUB-001 · taxonomia', () => {
     expect(pedido.mechanism.type).toBe('capture')
     if (pedido.mechanism.type === 'capture') expect(pedido.mechanism.documentKind).toBeUndefined()
   })
-  it('Óculos/Lentes vai para Recursos (correção visual) — sem artefato paralelo', () => {
-    const oculos = REGISTRATION_INTENTS.find(i => i.key === 'oculos')!
-    expect(oculos.mechanism.type).toBe('page')
-    if (oculos.mechanism.type === 'page') expect(oculos.mechanism.destination).toBe('resources-vision')
+  it('Óculos/Lentes NÃO é categoria própria — trata-se como Recurso de Saúde (decisão de produto)', () => {
+    // óculos/lentes vivem em Recursos de Saúde (tipo correcao_visual); não deve existir intent dedicado.
+    expect(REGISTRATION_INTENTS.find(i => i.key === 'oculos')).toBeUndefined()
+    expect(REGISTRATION_INTENTS.some(i => /óculos|oculos|lente/i.test(i.label))).toBe(false)
   })
   it('destinos de registro apontam para o domínio correto (rota/?novo=1 é mapeada na plataforma)', () => {
-    const expected: Record<string, string> = { condicao: 'conditions', medida: 'body', habito: 'habits', recurso: 'resources', oculos: 'resources-vision' }
+    const expected: Record<string, string> = { condicao: 'conditions', medida: 'body', habito: 'habits', recurso: 'resources' }
     for (const [key, dest] of Object.entries(expected)) {
       const i = REGISTRATION_INTENTS.find(x => x.key === key)!
       expect(i.mechanism.type).toBe('page')

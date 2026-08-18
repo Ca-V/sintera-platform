@@ -257,9 +257,9 @@ export function RelatorioScreen() {
 
       {/* Link público */}
       <View style={[styles.card, card, { gap: 10 }]}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text spec={text(t, { role: 'bodyStrong' })}>Compartilhar com um profissional</Text>
-          <Button label="Gerar link" variant="secondary" onPress={createLink} loading={busy} loadingLabel="Gerando…" />
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+          <Text spec={text(t, { role: 'bodyStrong' })} style={{ flex: 1 }} numberOfLines={2}>Compartilhar com um profissional</Text>
+          <Button label="Gerar link" onPress={createLink} loading={busy} loadingLabel="Gerando…" />
         </View>
         <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Link válido por 30 dias, revogável a qualquer momento.</Text>
         {shares.map(s => (
