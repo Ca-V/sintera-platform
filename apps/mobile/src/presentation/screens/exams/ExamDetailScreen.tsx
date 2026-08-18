@@ -7,7 +7,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import type { ExamDTO, ExamExtractionLog } from '@sintera/api-client'
-import { deriveExamIdentity, isOrderDocumentType, careStageFor, CARE_STAGES, compareNames, selectByLink, biomarkerStatusLabel, effectiveOrderStatus, orderStatusLabel } from '@sintera/core'
+import { deriveExamIdentity, isOrderDocumentType, careStageFor, CARE_STAGES, compareNames, selectByLink, biomarkerStatusLabel, effectiveOrderStatus, orderStatusLabel, deriveOrderTitle } from '@sintera/core'
 import { AttachmentLink, Button, Disclaimer, FieldRow, Input, Text, DatePicker } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { MinhaSaudeStackParamList } from '../../navigation/types'
@@ -81,7 +81,9 @@ export function ExamDetailScreen({ route, navigation }: Props) {
   }, [exam, isOrderDoc])
 
   const onDelete = () => {
-    Alert.alert('Excluir exame', 'Esta ação é irreversível. O documento e os dados extraídos serão apagados. O seu Histórico é recalculado.', [
+    // PEDIDO-002: rótulo semântico — pedido exclui "pedido", não "exame".
+    const isOrder = isOrderDocumentType(p.exam?.document_type)
+    Alert.alert(isOrder ? 'Excluir pedido' : 'Excluir exame', 'Esta ação é irreversível. O documento e os dados extraídos serão apagados. O seu Histórico é recalculado.', [
       { text: 'Cancelar', style: 'cancel' },
       { text: 'Excluir', style: 'destructive', onPress: async () => {
         const { error } = await p.remove()
@@ -146,6 +148,10 @@ export function ExamDetailScreen({ route, navigation }: Props) {
 
   // PEDIDO-002: honrar display_title (título clínico do conteúdo; p/ pedido = procedimentos solicitados).
   const { name, lab } = deriveExamIdentity(exam.type, exam.issuer, exam.display_title)
+  // PEDIDO-002 (título no cliente): para um PEDIDO cujo servidor ainda não gravou display_title, deriva o título
+  // dos PROCEDIMENTOS solicitados (nunca o filename). Fallback: o nome resolvido → 'Pedido de exame'.
+  const orderTitle = isOrderDoc ? deriveOrderTitle(p.biomarkers.map(b => b.source_exam_name ?? b.name)) : null
+  const displayName = isOrderDoc ? (orderTitle ?? (exam.display_title ? name : 'Pedido de exame')) : name
   const hasResults = p.biomarkers.length > 0 || (p.clinical?.items.length ?? 0) > 0
   const stage = careStageFor({ hasResult: hasResults, isOrder: isOrderDoc, linkedEventStatuses: linkedStatuses })
   const isProcessed = isExamReady(exam.status)
@@ -197,7 +203,7 @@ export function ExamDetailScreen({ route, navigation }: Props) {
           </View>
         ) : (
           <Pressable onLongPress={() => { setNameValue(exam.type ?? name); setEditingName(true) }}>
-            <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 20 }}>{name}</Text>
+            <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 20 }}>{displayName}</Text>
           </Pressable>
         )}
         {lab ? <Text spec={text(t, { role: 'body', tone: 'muted' })}>{lab}</Text> : null}
@@ -234,7 +240,7 @@ export function ExamDetailScreen({ route, navigation }: Props) {
       {exam.text_truncated ? (
         <View style={[styles.banner, { backgroundColor: t.color.badge.attention.soft, borderColor: t.color.badge.attention.text }]}>
           <Text spec={text(t, { role: 'bodySmall' })} style={{ color: t.color.badge.attention.text }}>
-            Documento extenso, processado parcialmente. Alguns resultados podem não ter sido extraídos — use "Extrair novamente" ou confira o documento original.
+            Documento extenso, processado parcialmente. Alguns resultados podem não ter sido extraídos — use “Extrair novamente” ou confira o documento original.
           </Text>
         </View>
       ) : null}
@@ -357,7 +363,7 @@ export function ExamDetailScreen({ route, navigation }: Props) {
         </View>
       ) : null}
 
-      <Button label="Excluir exame" variant="secondary" onPress={onDelete} />
+      <Button label={isOrderDoc ? 'Excluir pedido' : 'Excluir exame'} variant="secondary" onPress={onDelete} />
 
       <Disclaimer variant="laudo" />
     </ScrollView>

@@ -627,7 +627,7 @@ export default function ExamsPage() {
                         <FileText size={17} className="text-gold" />
                       </div>
                     }
-                    title={order.type ?? 'Pedido médico'}
+                    title={(order as unknown as { display_title?: string | null }).display_title ?? order.type ?? 'Pedido médico'}
                     onTitleClick={fileUrl ? () => window.open(fileUrl, '_blank', 'noopener') : undefined}
                     chips={<CardChip tone={statusTone}>{orderStatusLabel(status)}</CardChip>}
                     meta={

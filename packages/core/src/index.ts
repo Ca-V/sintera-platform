@@ -24,6 +24,7 @@ export * from './domain/biomarkerGrouping'
 // Regras puras do domínio Exames (identidade, classificação, fluxo assistencial) — fonte única Web↔Mobile.
 export * from './domain/exams/identity'
 export * from './domain/exams/classification'
+export * from './domain/exams/orderTitle'
 export * from './domain/exams/categories'
 export * from './domain/exams/orderStatus'
 export * from './domain/exams/processingStatus'
