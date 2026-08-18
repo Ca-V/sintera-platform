@@ -1,9 +1,10 @@
-# HOMOLOGAÇÃO — Checklist MASTER Web + Mobile (tracker vivo)
+# HOMOLOGAÇÃO — MATRIZ ÚNICA Web + Mobile (fonte de verdade)
 
-**Este é o documento único e vivo da homologação.** Consolida **todos** os achados Web + Mobile, deduplicados contra o
-backlog existente, e é **atualizado continuamente** conforme cada item é corrigido — até que tudo esteja executado e a
-homologação possa ser considerada **finalizada**. Supera, como tracker, o `HOMOLOG-CONSOLIDADO_WEB_MOBILE_V1` (que fica
-como snapshot da 1ª rodada).
+**Este é o documento único e vivo da homologação — a fonte de verdade.** Nenhuma observação deve ser re-perguntada ou
+perdida entre PRs: tudo é consolidado aqui, deduplicado contra o backlog, com status por item e por grupo, e
+**atualizado continuamente** até a homologação ser considerada **finalizada**. Documentos de apoio: specs
+(`HOMOLOG-SPECS_C1_C2_C3` = DOC-001/ANEXO-001/PEDIDO-001/C3), auditoria de anexos (`HOMOLOG-AUDIT_B2_ANEXOS`), snapshot
+da 1ª rodada (`HOMOLOG-CONSOLIDADO_WEB_MOBILE_V1`).
 
 > **Modo de execução (autorizado pela fundadora):** execução contínua, sem pedir confirmação a cada item. Parar apenas
 > em **gate real de banco/produção** ou em **decisão de produto ainda não definida**. Não reabrir itens congelados. Não
@@ -72,6 +73,7 @@ Espinha central **bate** (saudação → Adicionar registro → Agenda próximo 
 4. **"Como usar":** Web dispensável (localStorage); Mobile permanente.
 
 ## Log de execução (mais recente no topo)
+- **Decisões Q1–Q4 aplicadas:** Ciclo 1 (#120) **mergeado** na integração; Ciclo 2 micro-fixes de anexo (**PR #123**); specs travadas (domínio único "Documentos"; REG-001 mantido; política única de anexos). Matriz declarada como fonte de verdade.
 - **Ciclo 1 (PR #120)** entregue e validado: A1, A2, A4, A5, A6, A8 (Web+Mobile+core), A9 (roteamento/rótulo), A11. tsc root/mobile/core 0; capture‑hub 381/381; timeline‑projection 8/8; FUNC‑registration‑hub 9/9.
 - **A3** era falso‑positivo de código (o seletor já renderiza "🩺 Consulta"/"🩹 Procedimento") → revalidar em build nova.
 - **A13** guard de categoria na captura (Web) entregue; **A10/C1/C2** dependem de destino próprio (spec).
@@ -87,10 +89,16 @@ Espinha central **bate** (saudação → Adicionar registro → Agenda próximo 
 - **Grupo B (estrutural):** B1 código em #121; runtime/UI/N→1‑exame/PDF‑não‑encerra dependem da **Fase 0** (#117, gate). B2 auditado.
 - **Grupo C (spec‑first):** C1/C2/C3 especificados; **aguardam decisões** da fundadora (não implementar até definir).
 
-## Decisões que dependem da fundadora (bloqueiam avanço)
-1. **A9 persistência:** declarar `document_type='medical_order'` na criação do pedido (revisa REG‑001) para aparecer já em Pedidos, **ou** manter derivado pela extração?
-2. **C1** documento clínico não‑exame: domínio próprio? taxonomia no Histórico?
-3. **C2 Receita:** subtipo de C1 ou domínio próprio? modelo de associação (1 receita → N alvos)? tela de captura no Mobile.
-4. **C3 Redbus:** confirmar domínios/auth; provider único ou agregador; unidades canônicas.
-5. **B2:** declarar **Word**? unificar limite de tamanho? HEIC de ponta a ponta? avatar de perfil?
-6. **Infra:** liberar **Fase 0 (#117) no Preview** para habilitar a homologação real do multi‑documento (B1).
+## Decisões RESOLVIDAS (fundadora — não reabrir)
+- **Ciclo 1 (PR #120):** ✅ **mergeado** em `feat/mobile-inc4-perfil` → chega ao ambiente de homologação (Web via Preview automático; **Mobile exige build EAS nova**).
+- **Pedido/REG-001:** **manter derivado** pela extração. Não alterar REG-001 sem etapa específica; a mudança é **especificada** (`PEDIDO-001`, opção (a) faixa "Em classificação" recomendada).
+- **Documentos (C1+C2):** **domínio único "Documentos do paciente"** — Receita e Atestado/Relatório/Encaminhamento são **subtipos**, **separado de `exams` e `exam_documents`**; Receita **associável** a N alvos. Design em `DOC-001`. Sem provisório.
+- **Anexos:** **política única** (Word + HEIC + limite único, valor definido tecnicamente) em **todos** os pontos. Micro-fixes de bug entregues (Ciclo 2 · **PR #123**); o restante é estrutural (`ANEXO-001`, com B1/Fase 0).
+- **Home:** manter paridade estrutural; corrigir só divergências não intencionais (auditoria A12).
+
+## Decisões/menores ainda em aberto (não bloqueiam o design)
+- **Pedido:** escolher opção (a) faixa "Em classificação" vs (b) declarar na criação — numa etapa própria.
+- **Receita:** extração propõe associações ou manual no MVP (sugestão: manual no MVP).
+- **Anexos:** valor do limite único; Word extraído (docx→pdf) vs armazenado como documento; avatar de perfil.
+- **C3 Redbus:** domínios/auth/unidades do provedor (informação externa).
+- **Infra:** liberar **Fase 0 (#117) no Preview** → habilita homologação real do multi-documento (B1).

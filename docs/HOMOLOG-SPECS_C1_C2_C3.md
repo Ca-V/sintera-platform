@@ -1,86 +1,99 @@
-# Specs C1 / C2 / C3 — capacidades novas (spec-first, sem improvisar regra de negócio)
+# Specs pós-decisão — Documentos (C1+C2), Anexos transversal, Pedido/REG-001, Monitoramento/Redbus (C3)
 
-Estas três frentes **exigem decisão/spec antes de implementar** (grupo C do checklist master). Aqui fica o modelo,
-as opções e **o que depende de decisão da fundadora** — nenhuma regra de negócio é inventada em código.
+Decisões da fundadora já travadas (não reabrir — ver matriz única):
+- **Q3 = domínio único "Documentos"**: Receita **e** documentos clínicos não-exame são **subtipos** de um mesmo domínio de **Documentos do paciente**, **separado de `exams` e de `exam_documents`**.
+- **Q2/#10 = manter REG-001** (document_type derivado pela extração); qualquer mudança para o pedido "aparecer na hora" é **especificada primeiro**, não implementada.
+- **Q4/#7 = política transversal de anexos** (Word + limite único + HEIC + métodos consistentes), com o **valor do limite definido tecnicamente** e válido em **todos** os pontos.
 
----
-
-## C1 — Documentos clínicos NÃO-exame (expande #118)
-
-### Problema concreto (homologação)
-No fluxo de captura, a categoria escolhida (ex.: **Atestado**) **some quando o arquivo é anexado** — tudo é
-funilado para o caminho de Exame. Diagnóstico no código:
-- `packages/core/src/domain/capture/intents.ts` — o intent `doc_clinico` (Atestado/relatório/encaminhamento) usa `mechanism: { type: 'capture' }` **sem `documentKind`**.
-- `packages/core/src/domain/capture/types.ts` — o union `DocumentKind` **não tem** membro para documento clínico.
-- `src/lib/capture/registry.ts` — `CAPTURE_PROCESSORS` só tem `exam`, `medication`, `eyeglass`.
-- **Já corrigido (A13):** a `CaptureCenter` não sobrescreve mais a categoria **declarada** ao anexar o arquivo — mas, sem `DocumentKind` próprio e sem processor, ainda não há destino para "Atestado".
-
-### Modelo proposto (a validar)
-- Novo domínio **`clinical_document`** (paciente-escopo), **separado de `exams`** e **separado de `exam_documents`** (este é escopo-exame; documento clínico não-exame é do paciente, não de um exame).
-- `DocumentKind` ganha `clinical_document`; um **processor** persiste em `clinical_documents` (não em `exams`).
-- Subtipos: `atestado | relatorio | encaminhamento | outro` (catálogo aberto).
-- Cada documento: `file_url`, `subtype`, `issuer`, `date`, `notes`, proveniência própria.
-- **Apresentação:** categoria própria no Histórico (o `TimelineEntry.category` já suporta uma categoria nova sem quebrar o consumidor) e/ou uma área "Documentos".
-
-### Decisões da fundadora
-1. Documento clínico é **domínio próprio** ou subtipo de um domínio "documentos"?
-2. Entra no Histórico como categoria (Atestado/Relatório/Encaminhamento) — confirmar taxonomia.
-3. Continua **separado de `exam_documents`** (confirmado no pedido) — ok.
-
-> Escopo: mantém #118. Não confundir com multi-documento **de exame** (B1/exam_documents).
+Nada aqui é implementado até o design ser aprovado. Spec-first.
 
 ---
 
-## C2 — Receita como objeto/documento próprio (evolui o antigo "Receita médica"/D-13)
+## DOC-001 — Domínio "Documentos do paciente" (C1 + C2 unificados)
 
-### Requisito (fundadora) — mais amplo que "receita de medicamento"
-Uma **Receita** pode originar informação para **múltiplas** categorias:
-Medicamento · Suplemento · Ciclo e contracepção · Composição corporal · Recursos de saúde · Hábitos · Monitoramento.
-**Não** implementar um botão "Receita" dentro de Medicamento. Receita é um **tipo de documento/registro próprio**,
-**associável** à categoria pertinente conforme o conteúdo.
+### Princípio
+Um documento é um **artefato** do paciente (arquivo + proveniência), com um **papel** (subtipo) e **associações**
+opcionais a registros de outros domínios. **Não é um exame** e **não é `exam_documents`** (este é escopo‑exame).
 
-### Diagnóstico no código
-- Hub: `intents.ts` — `receita` declara `documentKind: 'medication_label'`; no **Mobile**, `goCapture` funila para `ExamUpload` (vira exame); no **Web**, com o guard A13, a categoria declarada é preservada e o `medicationProcessor` a leva a Medicamentos — **mas isso já assume "medicamento"**, o que contraria o requisito amplo.
-- Não existe destino de captura de **Receita** próprio (nem no Web nem no Mobile) — é uma **capacidade nova**, não um reroute de 1 linha.
+```
+DOCUMENTO (patient_documents, 1 arquivo + proveniência)
+  ├── subtype: receita | atestado | relatorio | encaminhamento | outro
+  ├── issuer, doc_date, notes, file_url, source, uploaded_at
+  └── N associações → registro-alvo (domínio + id)
+        medicamento · suplemento · ciclo/contracepção · composição · recurso · hábito · monitoramento · exame
+```
 
-### Modelo proposto (a validar)
-- **Receita = documento próprio** (parente de C1, papel `prescricao`), com **N associações** a registros-alvo (1 receita pode prescrever medicamento **e** suplemento; pode embasar ciclo, composição etc.).
-- Vínculo espelha o padrão **pedido↔exame**: a receita é um objeto; o produto/registro é outro; a receita é **vinculada** (à compra do medicamento/suplemento, ao método do ciclo, etc.).
-- **Roteamento:** Hub "Receita médica" abre a **captura de Receita** (não Exame). Após captura/extração, o usuário (ou a extração) associa os itens às categorias pertinentes.
+### C1 — Documentos clínicos não-exame (Atestado/Relatório/Encaminhamento)
+- Subtipos `atestado | relatorio | encaminhamento | outro`.
+- **Não** entram em `exams` nem em `exam_documents`. Categoria escolhida **permanece** por todo o fluxo (o guard A13 já protege a categoria declarada na captura).
+- Apresentação: categoria própria no Histórico (o `TimelineEntry.category` já aceita categoria nova) e/ou área "Documentos".
 
-### Decisões da fundadora (spec-first — nada implementado até definir)
-1. Receita é **subtipo de documento clínico (C1)** ou domínio próprio?
-2. **Modelo de associação:** 1 receita → N alvos (medicamento, suplemento, ciclo…); manual, assistido por extração, ou ambos?
-3. **Destino de captura no Mobile** (hoje inexistente) — criar tela de Receita.
-4. O que a extração deve propor (itens/posologia) vs. o que o usuário confirma.
+### C2 — Receita como subtipo com associação
+- Subtipo `receita`. Uma receita pode **originar/associar** informação para: Medicamento, Suplemento, Ciclo/Contracepção, Composição corporal, Recursos de saúde, Hábitos, Monitoramento.
+- Vínculo espelha **pedido↔exame**: a receita é um objeto; o registro-alvo é outro; a associação é **N alvos** por receita (1 receita pode prescrever medicamento **e** suplemento).
+- **Roteamento:** Hub "Receita médica" abre a **captura de Documento (subtype=receita)** — **não** Exame. Mobile ganha essa tela (hoje inexistente) — por isso não foi feito reroute provisório.
 
-> Até a decisão, **não** wire de destino de Receita (evita improviso que depois se refaz). O bug "Receita → Adicionar exame" no Mobile é **corrigido junto com esta capacidade**, não antes.
+### Modelo de dados (proposto — a validar; entra como Fase própria, aditiva)
+- `patient_documents(id, user_id, subtype, issuer, doc_date, notes, file_url, document_sha256, source, uploaded_at, current_extraction_version_id?)`.
+- `patient_document_links(id, document_id, target_domain, target_id)` — associação N→N com registros-alvo.
+- RLS por `user_id`. **Não** toca `exams`/`exam_documents`.
 
----
-
-## C3 — Monitoramento × integração Redbus (auditoria estrutural ANTES de implementar)
-
-### Contexto no código
-- Já existe um **modelo de wearables**: `supabase/migrations/20260615161900_025_wearables_data_model.sql` + `..._127_..Withings_provider_and_status_view`, `..._128_..connection_status`, `..._133_..external_user_id`. Ou seja: **provider**, **status de conexão** e **id externo** já modelados.
-- Contrato de sincronização (UI-independent, offline-first, idempotente): `packages/core/src/ports/sync.ts` (`SyncEngine`) — implementação futura.
-- Monitoramento é a superfície que consome dados observacionais (arquitetura observacional HIP-009).
-
-### Orientação (fundadora): auditar antes de acoplar
-**Redbus** é um provedor/integração de dados. O princípio é o **mesmo do desacoplamento RNDS/FHIR**: o schema do provedor **não pode dirigir** o modelo interno. Antes de fechar a implementação:
-1. Auditar o **modelo de observação/monitoramento** (tabelas de wearables, enum de provider, `wearable_connections`, unidades/canonicalização, idempotência por chave).
-2. Verificar se Redbus mapeia no **provider/connection já existente** ou se exige uma tabela de integração genérica.
-3. Definir a **fronteira do adaptador** (Redbus → modelo interno de observação), sem acoplar a **interface** a estrutura improvisada.
-
-### Decisões / dados necessários
-1. Domínios de dado do Redbus (passos, FC, sono, glicemia…), modelo de auth e cadência.
-2. Redbus entra como mais um **provider** do modelo de wearables, ou é um **agregador** (vários provedores atrás de um)?
-3. Unidades/tipos canônicos de destino (não adotar os do provedor).
-
-> Entregável desta frente = **auditoria + fronteira de adaptador**; a UI de Monitoramento só evolui depois disso.
+### Decisões que restam (menores; não bloqueiam o design)
+1. A extração deve **propor** itens/associações (ex.: ler a receita e sugerir o medicamento) ou associação é **manual** no MVP? (sugestão: manual no MVP, extração assistida depois.)
+2. Catálogo de subtypes aberto? (sim — `outro` cobre.)
 
 ---
 
-## Resumo de gates
-- **C1/C2:** capacidade nova → **spec-first**; decisões acima antes de código. A13 (guard) já protege a categoria declarada no Web.
-- **C3:** **auditoria estrutural** do modelo de Monitoramento antes de acoplar Redbus; adaptador desacoplado (princípio RNDS).
-- Nada aqui toca banco, itens congelados, RNDS ou produção.
+## ANEXO-001 — Política transversal de anexos (Q4/#7)
+
+**Regra de produto:** onde a plataforma permite adicionar documentos, o comportamento é **consistente** e **não**
+restringe pelo 1º formato. No mesmo exame: **N documentos → 1 exame/evento**.
+
+### Política única (fonte única a criar no core; consumida por Web e Mobile)
+| Eixo | Regra |
+|---|---|
+| **Formatos** | PDF · JPG/JPEG · PNG · **HEIC** · **Word (.doc/.docx)** — allowlist ÚNICA |
+| **Limite de tamanho** | **um único valor** em toda a plataforma (Web = Mobile), **definido tecnicamente** (hoje 200MB×20MB) considerando upload, storage e processamento. Proposta a validar: alinhar por baixo (ex.: 25–50MB) e mover arquivos grandes para pipeline assíncrono |
+| **Métodos de entrada** | seleção de arquivo · câmera/foto · múltiplas imagens · múltiplos arquivos · drag‑and‑drop (Web) · voz (onde aplicável) — consistentes em todos os pontos |
+| **Cardinalidade** | 1 e **N**; formatos mistos; **inclusão posterior**; sem "PDF encerra o fluxo" |
+| **Associação** | N documentos → **1 registro** (exame/evento/documento), nunca criar registro novo por arquivo adicional |
+
+### Implicações de pipeline (não é só allowlist)
+- **Word**: modelos de visão não leem `.docx` direto → precisa de conversão (docx→pdf/texto) **ou** armazenar como documento não‑extraído (fonte da verdade). Definir por subtipo.
+- **HEIC**: precisa de decode/normalização (→ JPEG) no cliente/servidor.
+- **Limite único**: rever caps divergentes (Web 200MB, Mobile 20MB, Ômica 6/8MB) e o pipeline de upload.
+
+### Rollout
+- **Já feito (bugs, Ciclo 2 · PR #123):** Recursos aceita PDF; Hábitos com allowlist.
+- **Estrutural (com B1/Fase 0):** unificar o protocolo de captura (CAP‑001/D‑14), N→1 exame, fim do "PDF encerra o fluxo", limite único, allowlist única (Word/HEIC) nos **todos** os pontos.
+
+---
+
+## PEDIDO-001 — "Pedido aparece e some" (REG-001, especificação da mudança)
+
+### Causa (confirmada)
+`document_type` é **derivado pela extração** (REG-001: `packages/api-client/src/exams/write.ts:24`). Na criação o
+pedido nasce `document_type=null` → cai na aba **Exames**; só quando o classificador assíncrono grava
+`medical_order` ele **migra** para **Pedidos** ("aparece e some"). Se a classificação falha, fica mal rotulado.
+
+### Decisão (fundadora): **manter REG-001**; especificar a alteração antes de mudar.
+Opções (a decidir numa etapa própria — **não** implementar agora):
+- **(a) Estado transitório explícito:** enquanto `document_type=null`, o item aparece numa faixa "Em classificação" (não na aba Exames), migrando quando classificado. Não viola REG-001. **Recomendada.**
+- **(b) Declaração explícita na criação:** quando o usuário escolhe "Pedido de exame", gravar `document_type='medical_order'` no insert. **Revisa REG-001** (deixa de ser 100% derivado) — só com decisão específica.
+
+> Já entregue (Ciclo 1): o roteamento não abre mais "Adicionar exame" e sim "Adicionar pedido de exame".
+
+---
+
+## C3 — Monitoramento × integração Redbus (auditoria antes de acoplar)
+Mantida da versão anterior: auditar o **modelo de wearables** (migrações 025/127‑133; provider Withings, conexão,
+`external_user_id`) e o port `SyncEngine` **antes** de acoplar; adaptador **desacoplado** (princípio RNDS — o schema do
+provedor não dirige o modelo interno). Decisões: domínios/auth do Redbus; provider único vs. agregador; unidades canônicas.
+
+---
+
+## Gates
+- **Documentos (C1+C2):** design acima → aprovar → entra como **Fase aditiva própria** (não é `exam_documents`).
+- **Anexos:** política única + implicações de pipeline (Word/HEIC/limite) → estrutural, junto de B1/Fase 0.
+- **Pedido:** manter REG-001; escolher (a)/(b) numa etapa própria.
+- **C3:** auditoria antes de implementar. Nada toca banco/produção/congelados/RNDS agora.
