@@ -18,7 +18,10 @@ const deps: UploadDeps = {
   telemetry: noopObservability.telemetry,
 }
 
-export function useExamUpload() {
+/** `documentType` só é informado quando a usuária DECLAROU o tipo (ex.: Pedido de exame → 'medical_order'),
+ *  para o registro cair DIRETO no domínio certo (Pedidos) — exceção REG-001/PEDIDO-001. */
+export function useExamUpload(opts?: { documentType?: string | null }) {
+  const documentType = opts?.documentType ?? null
   const [state, dispatch] = useReducer(uploadReducer, initialUploadState)
   const analyzedRef = useRef(false)
 
@@ -33,8 +36,8 @@ export function useExamUpload() {
   }, [state.phase, state.examId])
 
   const pick = useCallback((source: 'document' | 'camera') => {
-    void startUpload(source, {}, deps, dispatch)
-  }, [])
+    void startUpload(source, { document_type: documentType }, deps, dispatch)
+  }, [documentType])
 
   const retry = useCallback(() => {
     // Retoma a etapa pendente (o controller decide reenviar ou recriar); `type` re-derivado do arquivo mantido.
@@ -42,8 +45,8 @@ export function useExamUpload() {
       ? { uri: state.file.uri, mimeType: state.file.mimeType ?? 'application/octet-stream', sizeBytes: state.file.sizeBytes }
       : null
     const type = state.file ? nameWithoutExt(state.file.name) : ''
-    void resumeUpload({ file, upload: state.upload }, { type }, deps, dispatch)
-  }, [state.file, state.upload])
+    void resumeUpload({ file, upload: state.upload }, { type, document_type: documentType }, deps, dispatch)
+  }, [state.file, state.upload, documentType])
 
   const reset = useCallback(() => dispatch({ type: 'RESET' }), [])
 
@@ -77,14 +80,14 @@ export function useExamUpload() {
       setPages([])
       await startUploadWithFile(
         { uri, name: `Documento (${count} página${count !== 1 ? 's' : ''}).pdf`, sizeBytes: 0, mimeType: 'application/pdf' },
-        {}, deps, dispatch,
+        { document_type: documentType }, deps, dispatch,
       )
     } catch (e) {
       dispatch({ type: 'FAILURE', error: e instanceof Error ? e.message : 'Não foi possível montar o documento.' })
     } finally {
       setCombining(false)
     }
-  }, [pages, combining])
+  }, [pages, combining, documentType])
 
   const bundle = { pages, combining, addFromGallery, addFromCamera, removePage, movePage, resetBundle, submitBundle }
 

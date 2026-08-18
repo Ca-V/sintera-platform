@@ -30,10 +30,13 @@ function deps(over: Partial<{ pick: PickedFile | null; pickThrows: boolean; uplo
 const types = (calls: { type: string }[]) => calls.map((c) => c.type)
 
 describe('uploadController — orquestração pura do Inc.6', () => {
-  it('toCreateInput monta o input ALINHADO à Web (file_url + type + exam_date)', () => {
+  it('toCreateInput monta o input ALINHADO à Web (file_url + type + exam_date; document_type null p/ resultado)', () => {
     expect(toCreateInput(uploadResult, { type: 'laudo' })).toEqual({
-      file_url: 'https://x/gen-id', type: 'laudo', exam_date: null,
+      file_url: 'https://x/gen-id', type: 'laudo', exam_date: null, document_type: null,
     })
+  })
+  it('toCreateInput carrega document_type quando DECLARADO (Pedido de exame → medical_order)', () => {
+    expect(toCreateInput(uploadResult, { type: 'pedido', document_type: 'medical_order' }).document_type).toBe('medical_order')
   })
 
   it('nameWithoutExt espelha a regra da Web (nome sem extensão)', () => {
