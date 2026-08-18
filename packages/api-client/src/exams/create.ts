@@ -25,6 +25,9 @@ export async function createExam(
       file_url: input.file_url,
       exam_date: input.exam_date ?? null,
       status: 'pending',
+      // Só presente quando a usuária DECLAROU o tipo (ex.: Pedido de exame → 'medical_order'). Exceção REG-001
+      // (PEDIDO-001): resultados NÃO informam document_type (segue derivado pela extração).
+      ...(input.document_type ? { document_type: input.document_type } : {}),
     }
     const { data, error } = await client
       .from('exams')

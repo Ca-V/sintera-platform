@@ -18,10 +18,10 @@ type Props = NativeStackScreenProps<MinhaSaudeStackParamList, 'ExamUpload'>
 export function ExamUploadScreen({ navigation, route }: Props) {
   const t = useTheme()
   const insets = useSafeAreaInsets()
-  const { state, pick, retry, reset, bundle } = useExamUpload()
-  // A9: contexto do que o usuário escolheu no Hub. 'order' = Pedido de exame (sub-tipo do domínio Exames):
-  // ajusta só o cabeçalho/expectativa — a persistência segue REG-001 (document_type derivado na extração).
+  // A9/PEDIDO-001: 'order' = Pedido de exame declarado pela usuária → grava document_type='medical_order' JÁ na
+  // criação, para o pedido cair DIRETO em "Pedidos de Exames" (não transitar por Exames). Resultados seguem REG-001.
   const isOrder = route.params?.context === 'order'
+  const { state, pick, retry, reset, bundle } = useExamUpload({ documentType: isOrder ? 'medical_order' : null })
   const headTitle = isOrder ? 'Adicionar pedido de exame' : 'Adicionar exame'
   const headSubtitle = isOrder ? 'Envie o pedido/solicitação do exame (o pedido é diferente do resultado).' : 'Envie o documento do seu exame.'
 

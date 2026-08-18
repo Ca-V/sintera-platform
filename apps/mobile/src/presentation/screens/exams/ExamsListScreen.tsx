@@ -159,7 +159,10 @@ export function ExamsListScreen({ navigation }: Props) {
       <Text spec={heading(t, { level: 'page' })}>Exames</Text>
       <Text spec={text(t, { role: 'bodySmall', tone: 'muted' })}>Seus exames ao longo do tempo. Abra um para ver o documento original.</Text>
 
-      <Button label="Adicionar exame realizado" onPress={() => navigation.navigate('ExamUpload')} />
+      {/* O botão acompanha a aba: em "Pedidos de Exames" adiciona um PEDIDO (contexto 'order' → cai direto em Pedidos). */}
+      {activeTab === 'orders'
+        ? <Button label="Adicionar pedido de exame" onPress={() => navigation.navigate('ExamUpload', { context: 'order' })} />
+        : <Button label="Adicionar exame realizado" onPress={() => navigation.navigate('ExamUpload')} />}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
         {/* Histórico: atalho de navegação no Mobile (a Web o alcança pela sidebar — adaptação de dispositivo). */}
         <Pressable onPress={() => navigation.navigate('HistoricoExames')}>
