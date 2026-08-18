@@ -7,6 +7,7 @@ import { extractBiomarkers, isGatewayError } from '@/lib/ai/gateway'
 import { extractTextFromPdf, filterRelevantPages } from '@/lib/pdf/extractor'
 import { loadCatalogIndex, resolveBiomarker } from '@/lib/ai/insights/resolver'
 import { classifyExamDocument, deriveDisplayTitle, withProvenance, resolveOrderNaming } from '@/lib/capture/document-naming'
+import { deriveOrderTitle } from '@/lib/clinical-pipeline/laterality'
 import { MAX_UPLOAD_MB } from '@/lib/capture/limits'
 import { extractIssuer, extractIssuerFromImage } from '@/lib/ai/issuer'
 import { extractRequestingPhysician } from '@/lib/ai/requestingPhysician'
@@ -674,6 +675,20 @@ export async function POST(
     displayTitle:  finalUpdate.display_title as string | undefined,
     results: plan.structured ? result.biomarkers : [],
   })
+
+  // ── PEDIDO-002 — TÍTULO DO PEDIDO derivado dos PROCEDIMENTOS solicitados (não do filename) ──────────────
+  // ADITIVO, escopado a medical_order/insurance_guide; só quando ainda NÃO há display_title (não sobrescreve
+  // nome já resolvido — inclui o caminho de imagem acima). Reusa a consolidação de lateralidade do H-10
+  // (Esquerdo+Direito ⇒ bilateral). NÃO altera o fluxo de resultados nem o roteamento homologado (#128).
+  const orderDocTypeForTitle = (finalUpdate.document_type as string | undefined) ?? exam.document_type
+  if (isOrderDocumentType(orderDocTypeForTitle) && !finalUpdate.display_title && !exam.display_title) {
+    const orderTitle = deriveOrderTitle(result.biomarkers.map(b => b.sourceExamName ?? b.name))
+    if (orderTitle) {
+      const { displayTitle, type } = resolveOrderNaming(orderTitle, (finalUpdate.issuer as string | undefined) ?? null)
+      finalUpdate.display_title = displayTitle
+      finalUpdate.type = type
+    }
+  }
 
   // ── M3 — Bundle Split (materialização) ──
   // Este exame passa a ser a CDU#1 do bundle; grava a sua proveniência (aponta para si) + intervalo.

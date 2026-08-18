@@ -828,8 +828,8 @@ export default function ExamDetailPage() {
                     {/* WEB-003 / D-15(a): data de REALIZAÇÃO (exam_date); NUNCA cai para created_at (upload).
                         Sem data → frase de estado ("Data de realização não informada"), não "Realizado em Sem data". */}
                     {(exam as unknown as { exam_date?: string | null } | null)?.exam_date
-                      ? `Realizado em ${formatDate((exam as unknown as { exam_date?: string | null }).exam_date as string)}`
-                      : 'Data de realização não informada'}
+                      ? `${isOrderDoc ? 'Solicitado em' : 'Realizado em'} ${formatDate((exam as unknown as { exam_date?: string | null }).exam_date as string)}`
+                      : (isOrderDoc ? 'Data de solicitação não informada' : 'Data de realização não informada')}
                     {exam?.page_count ? ` · ${exam.page_count} páginas` : ''}
                   </p>
                   <button onClick={startEditDate}
@@ -839,8 +839,8 @@ export default function ExamDetailPage() {
                 </div>
               )}
 
-              {/* Resumo de contagens */}
-              {hasResults && (
+              {/* Resumo de contagens — semântica de RESULTADO; nunca em pedido (PEDIDO-002). */}
+              {!isOrderDoc && hasResults && (
                 <div className="flex flex-wrap gap-3 mt-3">
                   <span className="font-body text-xs font-medium text-onyx/60">
                     {counts.total} {counts.total === 1 ? 'resultado' : 'resultados'}
@@ -958,7 +958,7 @@ export default function ExamDetailPage() {
       <ExamClinicalContext examId={examId} />
 
       {/* Índice Experimental */}
-      {hasResults && (() => {
+      {!isOrderDoc && hasResults && (() => {
         const idx = calcExperimentalIndex(biomarkers)
         return idx ? (
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
@@ -967,8 +967,28 @@ export default function ExamDetailPage() {
         ) : null
       })()}
 
-      {/* Tabela de biomarcadores */}
-      {hasResults ? (
+      {/* PEDIDO-002 — PEDIDO mostra os PROCEDIMENTOS SOLICITADOS; NUNCA "Resultados estruturados"/clinical_results.
+          Só RESULTADO (não-pedido) renderiza a tabela de resultados abaixo. */}
+      {isOrderDoc && (
+        <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} padding="none" className="overflow-hidden">
+          <div className="p-5 border-b border-border/50">
+            <h2 className="font-display text-base font-semibold text-onyx">Procedimentos solicitados</h2>
+          </div>
+          <div className="px-5 py-4 space-y-1.5">
+            {biomarkers.length > 0 ? (
+              (biomarkers as Array<{ id?: string; name?: string; source_exam_name?: string | null }>).map((b, i) => (
+                <p key={b.id ?? i} className="font-body text-sm text-onyx/80">• {b.source_exam_name ?? b.name}</p>
+              ))
+            ) : (
+              <p className="font-body text-sm text-mauve">Consulte o documento original para os procedimentos solicitados.</p>
+            )}
+            <p className="font-body text-[11px] text-mauve pt-1">Isto é um pedido/solicitação — não é um resultado de exame realizado.</p>
+          </div>
+        </MotionCard>
+      )}
+
+      {/* Tabela de biomarcadores — só RESULTADO (nunca pedido). */}
+      {!isOrderDoc && hasResults ? (
         <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
           padding="none" className="overflow-hidden">
           <div className="p-5 border-b border-border/50">
@@ -1056,7 +1076,8 @@ export default function ExamDetailPage() {
       })()}
 
       {/* Resultados clínicos não-laboratoriais (CPE) — EXA-C3 / NC-0009. Exibição genérica via UCDA. */}
-      {hasClinical && clinicalRep && <ClinicalResultsCard rep={clinicalRep} />}
+      {/* PEDIDO-002: resultados clínicos (CPE/UCDA) são RESULTADO — nunca em pedido. */}
+      {!isOrderDoc && hasClinical && clinicalRep && <ClinicalResultsCard rep={clinicalRep} />}
 
       {/* H-03 — administrativo (pedido/financeiro) APÓS o conteúdo do exame: conteúdo primeiro; ações secundárias ao fim. */}
       {/* Q1 — Pedido de ORIGEM (só para RESULTADOS). O pedido permanece como registro histórico; aqui só a
