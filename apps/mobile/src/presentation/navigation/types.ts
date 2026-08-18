@@ -35,7 +35,9 @@ export type MinhaSaudeStackParamList = {
   // Registros
   ExamsList: undefined
   ExamDetail: { id: string }
-  ExamUpload: undefined
+  // context='order' = usuário escolheu "Pedido de exame" (sub-tipo do mesmo domínio Exames): só ajusta
+  // o cabeçalho/expectativa (pedido ≠ resultado). A persistência segue REG-001 (document_type derivado).
+  ExamUpload: { context?: 'exam' | 'order' } | undefined
   OmicsList: undefined
   OmicsPanel: { id: string; domain?: string }
   Medications: { supplements?: boolean } | undefined

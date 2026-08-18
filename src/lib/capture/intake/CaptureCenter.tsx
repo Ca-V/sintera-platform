@@ -107,6 +107,10 @@ export default function CaptureCenter({ className = '', onDone, initialKind = nu
     setFile(f)
     setPreviewUrl(f.type.startsWith('image/') ? URL.createObjectURL(f) : null)
     setAutoConfident(false)
+    // A13 — categoria DECLARADA pelo usuário no Hub (initialKind) é soberana: NÃO deixar o palpite por
+    // nome nem a classificação por conteúdo sobrescrevê-la ao anexar o arquivo (antes, "Atestado"/"Receita"
+    // viravam "Exame"). Sem categoria declarada, mantém o comportamento de palpite/auto-classificação.
+    if (initialKind) { setClassifying(false); return }
     // Palpite instantâneo pela camada barata do ContentClassifier (síncrono, sem rede).
     const guess = classifyCheap(f.type, f.name).kind
     setKind(processorsAccepting(f.type).some(p => p.kind === guess) ? guess : null)
@@ -137,7 +141,7 @@ export default function CaptureCenter({ className = '', onDone, initialKind = nu
         setClassifying(false)
       }
     })()
-  }, [])
+  }, [initialKind])
 
   // Document Bundle (padrão transversal): imagens → 1 PDF → pickFile único.
   const bundle = useDocumentBundle(pickFile)
