@@ -44,6 +44,14 @@ export const EVENT_STATUS_UI: { id: EventStatus; label: string }[] = [
 ]
 
 export function typeLabel(type: string): string { return EVENT_TYPE_LABELS[type] ?? 'Outro' }
+
+// Rótulo da CATEGORIA CLÍNICA de uma entrada do Histórico (TimelineEntry.category) — FONTE ÚNICA Web+Mobile.
+// Cobre os tipos de evento (via typeLabel) + categorias de outros domínios projetados (exame/ômica/contracepção).
+// Fallback SEMPRE 'Outro' — NUNCA a palavra estrutural "Evento" (colírio, p.ex., aparece na categoria real).
+const TIMELINE_CATEGORY_LABELS: Record<string, string> = { exame: 'Exame', omica: 'Ômica', contraceptivo: 'Contracepção' }
+export function timelineCategoryLabel(category: string): string {
+  return TIMELINE_CATEGORY_LABELS[category] ?? typeLabel(category)
+}
 export function statusLabel(status: EventStatus): string { return EVENT_STATUS_LABELS[status] ?? status }
 
 // Formatação pura (sem Date/locale → determinística e testável).
@@ -131,7 +139,7 @@ export function monthLabel(date: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
-const TYPE_GROUP_ORDER = ['Consulta', 'Exame', 'Procedimento', 'Cirurgia', 'Medicamento', 'Suplemento', 'Vacina']
+const TYPE_GROUP_ORDER = ['Consulta', 'Exame', 'Procedimento', 'Cirurgia', 'Medicamento', 'Suplemento', 'Vacina', 'Ômica', 'Contracepção', 'Plano de saúde', 'Atividade física']
 /** Rank do GRUPO por rótulo de tipo (ordena a visão "Por tipo"); fora da lista = último. Fonte única Web+Mobile. */
 export function typeGroupRank(label: string): number {
   const i = TYPE_GROUP_ORDER.findIndex(o => label.startsWith(o))

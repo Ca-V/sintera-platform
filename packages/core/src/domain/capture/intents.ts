@@ -50,7 +50,8 @@ export const REGISTRATION_INTENTS: RegistrationIntent[] = [
   { key: 'medicamento',  label: 'Medicamento',        icon: 'Pill',          group: 'cuidado', mechanism: { type: 'choice', captureKind: 'medication_label', captureLabel: 'Enviar receita', pageDestination: 'medications', pageLabel: 'Cadastrar manualmente' } },
   { key: 'suplemento',   label: 'Suplemento',         icon: 'Leaf',          group: 'cuidado', mechanism: { type: 'choice', captureKind: 'medication_label', captureLabel: 'Enviar receita', pageDestination: 'supplements', pageLabel: 'Cadastrar manualmente' } },
   { key: 'recurso',      label: 'Recurso de saúde',   icon: 'Package',       group: 'cuidado', mechanism: { type: 'page', destination: 'resources' } },
-  { key: 'oculos',       label: 'Óculos / Lentes',    icon: 'Glasses',       group: 'cuidado', mechanism: { type: 'page', destination: 'resources-vision' } },
+  // Óculos/Lentes NÃO têm categoria própria (decisão de produto): são um Recurso de Saúde (tipo `correcao_visual`),
+  // registrados via "Recurso de saúde". Não recriar um card/intent dedicado aqui.
 
   // ── Registros de saúde ────────────────────────────────────────────────────
   { key: 'consulta',     label: 'Consulta',           icon: 'Stethoscope',   group: 'registro', mechanism: { type: 'page', destination: 'consulta' } },

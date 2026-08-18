@@ -7,7 +7,7 @@ import { useFocusEffect } from '@react-navigation/native'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
-import { mergeTimeline, selectHistory, groupByPeriod, statusLabel, formatDateLongBR, type TimelineEntry, type TimelineMeta } from '@sintera/core'
+import { mergeTimeline, selectHistory, groupByPeriod, formatDateLongBR, timelineCategoryLabel, typeGroupRank, type TimelineEntry, type TimelineMeta } from '@sintera/core'
 import { Text, Button, Input, Disclaimer } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { MinhaSaudeStackParamList } from '../../navigation/types'
@@ -95,16 +95,18 @@ export function TimelineScreen({ navigation }: Props) {
     return <View style={[styles.center, { backgroundColor: t.color.surface.app, paddingTop: insets.top }]}><Text spec={text(t, { role: 'body' })} style={{ color: t.color.badge.error.text, textAlign: 'center' }}>{error}</Text><Button label="Tentar novamente" variant="secondary" onPress={() => load(false)} /></View>
   }
 
-  // D‑04: busca + agrupamento por data/tipo (paridade Web /dashboard/timeline).
-  const DOMAIN_LABEL: Record<TimelineEntry['domain'], string> = { event: 'Consultas e eventos', exam: 'Exames', omics: 'Ômica', contraceptive: 'Contracepção' }
+  // A8: busca + agrupamento por data/tipo — "Por tipo" usa a CATEGORIA CLÍNICA (paridade Web), não o domínio
+  // técnico. Nada mais colapsa em "Consultas e eventos"; a ordem dos grupos vem do core (typeGroupRank).
   const q = query.trim().toLowerCase()
   const filtered = q ? entries.filter(e => `${e.title} ${e.subtitle ?? ''}`.toLowerCase().includes(q)) : entries
+  const typeGroups = Object.values(filtered.reduce<Record<string, { label: string; items: TimelineEntry[]; rank: number }>>((acc, e) => {
+    const label = timelineCategoryLabel(e.category)
+    ;(acc[label] ??= { label: label.toUpperCase(), items: [], rank: typeGroupRank(label) }).items.push(e)
+    return acc
+  }, {})).sort((a, b) => a.rank - b.rank || a.label.localeCompare(b.label))
   const groups: { label: string; items: TimelineEntry[] }[] = view === 'date'
     ? groupByPeriod(filtered, 'month', 'desc').map(g => ({ label: periodLabel(g.key).toUpperCase(), items: g.items }))
-    : Object.values(filtered.reduce<Record<string, { label: string; items: TimelineEntry[] }>>((acc, e) => {
-        (acc[e.domain] ??= { label: (DOMAIN_LABEL[e.domain] ?? e.domain).toUpperCase(), items: [] }).items.push(e)
-        return acc
-      }, {}))
+    : typeGroups
 
   return (
     <ScrollView style={{ backgroundColor: t.color.surface.app }}
@@ -138,7 +140,8 @@ export function TimelineScreen({ navigation }: Props) {
           {g.items.map(e => {
             const chips = metaChips(e.meta, e.status)
             const prof = e.meta?.professionalLabel
-            const rightLabel = e.domain === 'exam' ? 'Exame' : e.domain === 'omics' ? 'Ômica' : e.domain === 'contraceptive' ? 'Ciclo' : (e.status ? statusLabel(e.status as never) : '')
+            // Rótulo à direita = CATEGORIA CLÍNICA real do fato (Consulta/Vacina/Medicamento/Exame…), nunca "Evento".
+            const rightLabel = timelineCategoryLabel(e.category)
             const showPrep = e.meta?.preparation?.trim() && e.status !== 'realizado' && e.status !== 'cancelado'
             const showOutcome = e.meta?.hasOutcome && e.meta?.outcomeText && e.status === 'realizado'
             return (

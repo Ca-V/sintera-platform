@@ -38,7 +38,7 @@ export function MinhaSaudeStack() {
       {/* Registros */}
       <Stack.Screen name="ExamsList" component={ExamsListScreen} options={{ ...detail, title: 'Exames' }} />
       <Stack.Screen name="ExamDetail" component={ExamDetailScreen} options={{ ...detail, title: 'Exame' }} />
-      <Stack.Screen name="ExamUpload" component={ExamUploadScreen} options={{ ...detail, title: 'Adicionar exame' }} />
+      <Stack.Screen name="ExamUpload" component={ExamUploadScreen} options={({ route }) => ({ ...detail, title: route.params?.context === 'order' ? 'Adicionar pedido de exame' : 'Adicionar exame' })} />
       <Stack.Screen name="OmicsList" component={OmicsListScreen} options={{ ...detail, title: 'Exames de ômica' }} />
       <Stack.Screen name="OmicsPanel" component={OmicsPanelScreen} options={{ ...detail, title: 'Painel de ômica' }} />
       <Stack.Screen name="Medications" component={MedicationsScreen} options={{ ...detail, title: 'Medicamentos' }} />
