@@ -89,5 +89,19 @@ Ciclo 1 · **SEC-009** · **SEC-011** · qualquer gate material. Rotas **clínic
 - SEC-023: DPA/DD formal, localização, finalidade (S3, DPO/Jurídico).
 
 ## 9. Estado
-Lote 2 implementado (código/testes/CI-doc/docs), validado e evidenciado. **Sem merge.** Nenhum controle 🟢 VERDE.
-Aguarda sua revisão. Nada será mergeado nem nenhum gate material será aberto sem sua autorização.
+Lote 2 implementado (código/testes/CI-doc/docs), validado e evidenciado. Nenhum controle 🟢 VERDE.
+
+## 10. Registro de merge (Lote 2 — MERGED)
+| Campo | Valor |
+|---|---|
+| PR | #154 — `state=closed`, **`merged=true`**, `merged_by=Ca-V` |
+| `merged_at` | 2026-08-19T21:37:45Z |
+| **Merge SHA** | `d440b64e42788f9a2412dcfe39fc7eda0209cd9c` (`d440b64`) |
+| Base | `feat/fase-c-sql-source` (era `6fcc40b` → agora `d440b64`) |
+| Head integrado | `fd48c85` (ancestral da base ✔) |
+| Diff do merge vs `6fcc40b` | **exclusivamente Lote-2** (10 arquivos, +472/−7) |
+| Confirmações pré-merge | HEAD `fd48c85` · CI Actions verde · não-mergeado · base `6fcc40b` sem mudança |
+
+**Estados após merge (inalterados — evidência ≠ promoção):** SEC-006 🟡, SEC-014 🟡 (gate não enforçado em fronteira),
+SEC-016 (triagem; CI informativo), SEC-003 (inventário read-only), SEC-023 (registro inicial). **Nenhum 🟢 VERDE.**
+Rastreabilidade: `1e77c79` = merge S0-A · `6fcc40b` = registro S0-A · `d440b64` = merge Lote 2.
