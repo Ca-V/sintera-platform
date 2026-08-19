@@ -34,6 +34,22 @@
 > **favorece** a remediação-alvo (mover privilégio para RPC), mas os advisors mostram que essas RPCs estão **expostas ao
 > `authenticated`** — a ser revisado em S1 (não agora).
 
+### 0.1 Verificação final read-only (tentativa direta via MCP) — resultado
+
+Executadas chamadas **read-only** para responder às duas perguntas pendentes. **Nenhuma alteração feita.**
+
+| Pergunta | Tentativa (read-only) | Resultado | Classificação |
+|---|---|---|---|
+| **Preview aponta a PROD `pxiglvrgxooawetboglb` ou outro projeto?** | Vercel `get_project` + `get_project_deployment_protection` | As ferramentas MCP disponíveis **não expõem as variáveis de ambiente** (não há leitor de env; `get_project` retorna só metadados/domínios). Valor de `NEXT_PUBLIC_SUPABASE_URL` por ambiente **não obtido**. | **NÃO COMPROVADO** (permanece **HIPÓTESE**; sem inferência) |
+| **Network Restrictions do DB PROD** | Supabase `get_project` (`pxiglvrgxooawetboglb`) | O MCP **não expõe Network Restrictions**. `get_project` retorna apenas `status=ACTIVE_HEALTHY` e `database.host=db.pxiglvrgxooawetboglb.supabase.co` (hostname público existe, mas isso **não prova** porta aberta a todos os IPs). | **NÃO COMPROVADO** (estado das restrições não obtido) |
+
+**Como comprovar (manual, pelo owner — sem mudança):**
+- **#1:** Vercel → Project `sintera-platform` → *Settings → Environment Variables* → filtrar **Preview**: ler o valor de `NEXT_PUBLIC_SUPABASE_URL` (e a referência de `SUPABASE_SERVICE_ROLE_KEY`/`SUPABASE_SECRET_KEY`) e comparar com `pxiglvrgxooawetboglb`.
+- **#2:** Supabase → Project SINTERA → *Database → Network Restrictions*: registrar se há allowlist de IPs ou se está aberto (`0.0.0.0/0`).
+
+> **Sem inferência:** não afirmo que Preview usa o banco de produção nem que o banco está aberto. Ambos permanecem
+> **não comprovados** pelas ferramentas read-only disponíveis; a confirmação exige leitura manual no painel (itens acima).
+
 ### Legenda de classificação de mudança
 `READ-ONLY` · `CLOUD CHANGE` · `APPLICATION CHANGE` · `DATA CHANGE` · `SECURITY-SENSITIVE`.
 Para cada mudança: **quem executa · quem aprova · pré-requisito · evidência esperada · rollback**.
