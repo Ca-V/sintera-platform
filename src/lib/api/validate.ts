@@ -50,6 +50,19 @@ export function requireEnum(
   return okV(v)
 }
 
+/** Campo obrigatório com semântica *legacy* de presença (truthy): rejeita apenas valores falsy
+ *  (undefined/null/''/0/false), preservando o comportamento de checagens `if (!campo)` já existentes.
+ *  NÃO faz trim (diferente de `requireString`) — use quando o objetivo é padronizar sem endurecer. */
+export function requirePresent(
+  obj: Record<string, unknown>,
+  field: string,
+  message?: string,
+): Validated<unknown> {
+  const v = obj?.[field]
+  if (!v) return errV(message ?? `${field} é obrigatório.`)
+  return okV(v)
+}
+
 /** Inteiro obrigatório dentro de [min, max]. Rejeita não-números, NaN e fora do intervalo. */
 export function requireIntInRange(
   obj: Record<string, unknown>,
