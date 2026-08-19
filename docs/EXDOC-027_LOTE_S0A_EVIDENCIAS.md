@@ -10,8 +10,8 @@
 ## 0. Evidência global (validação técnica)
 | Verificação | Comando | Resultado |
 |---|---|---|
-| Testes de segurança do lote | `vitest run tests/security/` | **23/23 passed** (3 arquivos) |
-| Suíte completa (regressão) | `npm test` | **1332 passed** · 11 skipped · 126 todo · 187 arquivos |
+| Testes de segurança do lote | `vitest run tests/security/` | **24/24 passed** (3 arquivos) |
+| Suíte completa (regressão) | `npm test` | **1333 passed** · 11 skipped · 126 todo · 187 arquivos |
 | Typecheck web | `npm run typecheck` | **0 erros** |
 | SBOM CycloneDX (SEC-024) | `cyclonedx-npm --ignore-npm-errors` | **CycloneDX 1.6**, 855 componentes, ~1.8 MB |
 | SCA (SEC-016) | `npm audit --audit-level=high` | 26 findings (11 mod, 15 high) — **informativo** (o gate detecta) |
@@ -29,11 +29,18 @@ somente teste). *Risco:* mínimo (não altera rotas). *Dependências:* nenhuma. 
   - `tests/security/ARCH-SEC005-object-authorization.test.ts` — guarda estática (modelo NOTIF-001): toda rota em
     `src/app/api/**/route.ts` tem gate de auth; **allowlist pública** com justificativa = `connectors/[source]/webhook`
     (webhook externo), `email/welcome` (ADMIN_SECRET), `waitlist` (signup público). Detecta rota nova sem auth.
-  - `tests/security/FUNC-SEC005-ownership.test.ts` — comportamental (Supabase mockado): 401 sem sessão; **404** quando
-    o objeto não pertence à usuária (escopo por `user_id` não encontra) em `insights/[id]/feedback` e `exams/[id]`.
-- **Resultado:** verde (parte dos 23/23).
-- **Evidência:** 8 casos comportamentais/guarda; a query escopada retorna `data:null` → 404 (objeto de outra usuária
-  não vaza); guarda confirma 0 rotas sem auth fora da allowlist.
+  - `tests/security/FUNC-SEC005-ownership.test.ts` — comportamental (Supabase mockado). Cobre **A→A permitido**,
+    **A→B negado** e **sem sessão negado** para as duas rotas:
+    | Caso | `insights/[id]/feedback` | `exams/[id]` DELETE |
+    |---|---|---|
+    | A → recurso de A (permitido) | ✅ 200 | ✅ 200 |
+    | A → recurso de B (negado) | ✅ 404 | ✅ 404 |
+    | sem sessão (negado) | ✅ 401 | ✅ 401 |
+- **Resultado:** verde (parte dos 24/24).
+- **Evidência:** a query escopada retorna `data:null` → 404 (objeto de outra usuária não vaza); objeto próprio → 200
+  (exclusão autorizada, admin service_role **mockado** — sem rede/credencial real); guarda confirma 0 rotas sem auth
+  fora da allowlist. **Natureza:** estrutural (ARCH) + unitária/comportamental com **mock** (lógica do handler) — **E2,
+  não operacional (E3)**; isolação real em DB/RLS destas rotas legadas continua não comprovada (permanece 🟡).
 - **Arquivos alterados:** +2 arquivos de teste.
 - **Limitações / residual:**
   - A guarda cobre **autenticação presente**, não prova ownership em todas as rotas estaticamente.

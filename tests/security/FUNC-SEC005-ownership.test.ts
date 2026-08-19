@@ -5,8 +5,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Controla o cliente Supabase retornado por createClient (hoisted para o factory do vi.mock).
-const h = vi.hoisted(() => ({ client: null as unknown }))
+// `admin` mocka o client service_role (só usado no caminho de SUCESSO do DELETE de exames) — chains
+// .delete().eq().eq() resolvem { error: null } e storage.remove é no-op. Nenhuma credencial/rede real.
+const h = vi.hoisted(() => {
+  const makeAdmin = () => ({
+    storage: { from: () => ({ remove: async () => ({}) }) },
+    from: () => {
+      const c: Record<string, unknown> = {}
+      c.delete = () => c
+      c.eq = () => c
+      c.then = (resolve: (v: { error: null }) => unknown) => resolve({ error: null })
+      return c
+    },
+  })
+  return { client: null as unknown, admin: makeAdmin() }
+})
 vi.mock('@/lib/supabase/server', () => ({ createClient: async () => h.client }))
+vi.mock('@supabase/supabase-js', () => ({ createClient: () => h.admin }))
 
 import { POST as feedbackPOST } from '@/app/api/insights/[id]/feedback/route'
 import { DELETE as examsDELETE } from '@/app/api/exams/[id]/route'
@@ -83,5 +98,22 @@ describe('SEC-005 · exclusão de exame — object-level authorization', () => {
     const res = await examsDELETE({} as never, params('exame-de-B'))
     expect(res.status).toBe(404)
     expect(await res.json()).toEqual({ error: 'Exame não encontrado.' })
+  })
+
+  it('exame PRÓPRIO → 200 (exclusão autorizada)', async () => {
+    // A→A permitido: objeto encontrado no escopo da própria usuária → exclusão prossegue (admin mockado).
+    const prevKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    const prevUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-key'   // valor fictício; admin é mockado (sem rede)
+    process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.supabase.co'
+    try {
+      h.client = client({ user: { id: 'user-A' }, rows: { exams: { data: { id: 'e1', file_url: null } } } })
+      const res = await examsDELETE({} as never, params('e1'))
+      expect(res.status).toBe(200)
+      expect(await res.json()).toEqual({ ok: true })
+    } finally {
+      process.env.SUPABASE_SERVICE_ROLE_KEY = prevKey
+      process.env.NEXT_PUBLIC_SUPABASE_URL = prevUrl
+    }
   })
 })
