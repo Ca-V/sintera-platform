@@ -50,3 +50,42 @@ roteia/renderiza pela estrutura de resultado. É preciso **rotear o detalhe pelo
 - `medical_order` → **Pedidos + detalhe de Pedido** (nunca detalhe de Resultado).
 - `exam/result` → **Exames + detalhe de Resultado** (inalterado).
 - **Nunca** `medical_order → Pedidos → detalhe de Exame`.
+
+---
+
+## FECHAMENTO — VALIDADO no aparelho (Ciclo 1 homologado, baseline de navegação CONGELADA)
+
+**Data:** 2026-08-19 · **Status:** ✅ HOMOLOGADO (Web + Mobile) · **PR:** #131 (merge em `feat/mobile-inc4-perfil`) · **Build EAS:** preview Android sobre o código mesclado.
+
+### Causa-raiz eliminada (não era apresentação)
+A **lista** Mobile buscava os procedimentos via `getAllBiomarkers()`, que filtra `result_type='numeric'`. Um Doppler é
+procedimento **qualitativo** → era descartado → a lista caía no `type`/filename ("pedido"). Corrigido: a lista lê **por
+pedido** com `getExamBiomarkers(id)` (todos os tipos de resultado).
+
+### Solução (na origem semântica, função ÚNICA)
+`packages/core/src/domain/exams/orderTitle.ts` → **`deriveOrderDisplayTitle(procedimentos)`** é a fonte única de título
+do pedido, usada por **os quatro pontos + servidor**: lista Mobile, detalhe Mobile, lista Web, detalhe Web e a rota
+`/analyze`. Consolida lateralidade (Esquerdo+Direito ⇒ bilateral), compõe procedimentos diferentes por `·`, preserva
+siglas (RM/USG/TC) e nomes próprios (Doppler).
+
+- **Precedência (definitiva):** procedimento estruturado → `display_title` semântico → fallback controlado `"Pedido de exame"`.
+- **O filename (`type`) foi REMOVIDO da cadeia** — nunca vira título.
+- Pedidos **antigos** com dados já estruturados exibem o título correto **sem novo upload** (derivação client-side).
+
+### Nomenclatura (premissa corrigida)
+O prefixo **"Pedido de"** é **decisão de produto** (rótulo compreensível para a usuária) — **não** exigência do
+FHIR/RNDS. A semântica interoperável de *solicitação* (**ServiceRequest**) vive na **representação interna**
+(`document_type=medical_order`; separação pedido×resultado), não na string da interface.
+
+### Critério de aceite — atendido (regressão em `tests/exams/FUNC-order-title.test.ts`)
+- Doppler esquerdo + direito ⇒ **"Pedido de Doppler colorido venoso de membro inferior — bilateral"** (lista = detalhe, Web = Mobile).
+- `filename = pedido.pdf` **não** produz "pedido" havendo procedimentos.
+- Pedido **não** renderiza "Resultados estruturados"; pedido **não** aparece em Exames (#128) — sem regressão.
+- "Excluir pedido" no detalhe (Web + Mobile).
+
+**Validação:** `tsc` (root/mobile/packages) 0 · `eslint` 0 erros · suíte **1281 verdes** · homolog 1.
+
+### Congelamento
+**Ciclo 1 = HOMOLOGADO.** Baseline de **navegação** (H-02) e de **pedido** (H-10) congeladas. Próxima frente:
+**arquitetura de interoperabilidade FHIR/RNDS (R4)** — auditoria read-only + matriz de gaps, **sem implementação de UI**.
+Referências: RNDS · Serviços FHIR (guia oficial); HL7 FHIR R4 · ServiceRequest.
