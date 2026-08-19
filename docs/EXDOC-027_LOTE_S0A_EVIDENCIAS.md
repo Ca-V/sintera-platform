@@ -149,5 +149,20 @@ nenhum (docs). *Dependências:* nenhuma. *Testes:* N/A. *Rollback:* remover os d
 > EXDOC-026 (VERDE = implementação + teste + resultado + evidência + owner).
 
 ## 8. Próximo passo
-Aguardo **sua revisão do PR draft**. Sem merge. Os controles materiais (S0 cloud, S1 IAM, S2 IA/dados, S3 assurance)
-permanecem em gates separados; nada será aberto sem sua autorização.
+Controles materiais (S0 cloud, S1 IAM, S2 IA/dados, S3 assurance) permanecem em gates separados; nada será aberto sem
+nova autorização. **S0-B não iniciado.**
+
+## 9. Registro de merge (S0-A — MERGED)
+| Campo | Valor |
+|---|---|
+| PR | #153 — `state=closed`, **`merged=true`**, `merged_by=Ca-V` |
+| `merged_at` | 2026-08-19T20:39:59Z |
+| **Merge SHA** | `1e77c794bcf7b2a381e7cc6074e7f83193e2886c` (`1e77c79`) |
+| Base | `feat/fase-c-sql-source` (era `4c1716d` → agora `1e77c79`) |
+| Head integrado | `1c4cd70` (ancestral da base ✔) |
+| Diff do merge vs `4c1716d` | **exclusivamente S0-A** (11 arquivos, +1210/−10) |
+| Autorização | merge limitado ao S0-A; nenhum novo lote/gate autorizado |
+
+**Estados após merge (inalterados — evidência ≠ promoção):** SEC-005 🟡 (E2, mock — não operacional/E3),
+SEC-006 🟡, SEC-016 🟡 (CI real não aprova o controle; 26 findings a triar; jobs informativos), SEC-024 🟡
+(SBOM sem proveniência/assinatura), SEC-018/019/025 documental. **Nenhum controle 🟢 VERDE.**
