@@ -78,3 +78,42 @@ export function validateStructural(bundle: FhirBundle): StructuralReport {
   r.ok = unresolved.length === 0 && r.reportIdsUnique && r.rndsDecoupled && r.honestCoding
   return r
 }
+
+// --- SEC-014 · Gate de rejeição por invariantes internas JÁ DEFINIDAS (aditivo; não altera validateStructural nem
+// o projetor). NÃO valida perfis oficiais FHIR R4/BR-Core nem terminologias — isso permanece fora de escopo (gate
+// próprio). Nenhum código/perfil/terminologia é inventado: apenas as invariantes que o projeto já declara. ---
+
+/** Identificadores honestos ([NC]): todo `identifier` presente tem `system` e `value` não vazios (o projetor omite
+ *  identificador oficial sem `system` — aqui a invariante é enforçada explicitamente na validação). */
+export function hasHonestIdentifiers(bundle: FhirBundle): boolean {
+  const ids: Record<string, unknown>[] = []
+  const walk = (n: unknown): void => {
+    if (!n || typeof n !== 'object') return
+    if (Array.isArray(n)) { n.forEach(walk); return }
+    const obj = n as Record<string, unknown>
+    if (Array.isArray(obj.identifier)) for (const i of obj.identifier as Record<string, unknown>[]) ids.push(i)
+    for (const v of Object.values(obj)) walk(v)
+  }
+  walk(bundle)
+  return ids.every(i => typeof i.system === 'string' && !!i.system && typeof i.value === 'string' && !!i.value)
+}
+
+/** Lista de violações de invariantes internas (mensagens acionáveis). Vazio ⇒ bundle íntegro. */
+export function invariantViolations(bundle: FhirBundle): string[] {
+  const v: string[] = []
+  const unresolved = unresolvedReferences(bundle)
+  if (unresolved.length) v.push(`Referências não resolvidas: ${unresolved.join(', ')}`)
+  if (!reportIdsUnique(bundle)) v.push('DiagnosticReport com id duplicado.')
+  if (!isRndsDecoupled(bundle)) v.push('Acoplamento RNDS presente no grafo (deve permanecer desacoplado).')
+  if (!hasHonestCoding(bundle)) v.push('Coding desonesto: há coding sem par system+code.')
+  if (!hasHonestIdentifiers(bundle)) v.push('Identifier desonesto: há identifier sem system+value.')
+  return v
+}
+
+export interface InvariantResult { ok: boolean; violations: string[] }
+
+/** Gate de aceitação/rejeição por invariantes internas. `ok:false` ⇒ payload deve ser REJEITADO (não emitido). */
+export function validateInvariants(bundle: FhirBundle): InvariantResult {
+  const violations = invariantViolations(bundle)
+  return { ok: violations.length === 0, violations }
+}
