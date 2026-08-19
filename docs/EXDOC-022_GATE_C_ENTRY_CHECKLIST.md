@@ -78,3 +78,23 @@ Nenhuma dessas condições foi implementada ou alterada — são **pré-requisit
 
 ## 8. Estado
 Revisão concluída — **nenhum bloqueador técnico novo no código** (runner é read-only e puro). As pendências são **condições de gate** (§6), não defeitos. **Gate C permanece FECHADO.** Permaneço parado; o próximo comando será sua autorização explícita do Gate C, se decidir abrir o preview.
+
+## 9. DECISÃO FIXADA — Cond-C = Opção A (regime de escrita do preview)
+**Decisão da fundadora (2026-08-19):** **preview 100% read-only, logging efêmero, ZERO escrita persistente.** `audit_events` fica para gate posterior (política de auditoria operacional). Regime do Gate C:
+| Aspecto | Decisão |
+|---|---|
+| Leitura do Supabase | Permitida, **somente read-only** |
+| RLS | **Obrigatório** |
+| Read-set | **Estritamente** o inventário §2 |
+| Dados reais | Só no preview autorizado |
+| Escrita em tabelas | **Zero** |
+| `audit_events` | **Não escrever** |
+| Logs técnicos | **Efêmeros, sem PII** |
+| Bundle FHIR (dados reais) | **Não persistir nem exportar** |
+| `file_url` | **Não baixar** |
+| `PreviewReport` | Permitido, **agregado e sem PII** |
+| RNDS/OpenCare · Backfill · Produção | **Zero** |
+
+**Invariante fail-safe (fixado):** ao encontrar inconsistência (ex.: vínculo ServiceRequest↔resultado inconsistente; lateralidade ausente; Identifier sem `system`; terminologia não curada; preliminar/final incompatível; referência FHIR não resolvida) → **registrar no relatório efêmero e REPROVAR o caso; NUNCA corrigir automaticamente**. Fluxo obrigatório: `dados reais → leitura → projeção → validação → evidência → descarte` (nunca `leitura → alteração/auditoria → projeção`).
+
+> Esta decisão **não** requer alteração do código da Fase C (o runner já é 0-escrita). O único item que exige implementação no momento da abertura é o **adaptador `CanonicalSource` real (read-only + RLS + minimização)** — e só após sua **autorização explícita do Gate C**. Até lá: **nenhum acesso a dados reais**.
