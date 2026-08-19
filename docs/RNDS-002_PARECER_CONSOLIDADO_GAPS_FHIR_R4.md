@@ -13,6 +13,7 @@ Classificação de evidência usada abaixo:
 - **[R]** verificado no **repositório** (arquivo:linha) — alta confiança.
 - **[H#114]** afirmação da auditoria #114 — parte **auto-rotulada como hipótese** pendente do IG vivo.
 - **[⛔IG]** depende do **Guia de Implementação da RNDS ao vivo**, hoje **bloqueado pelo proxy** (`rnds-fhir.saude.gov.br`, `rnds-guia.saude.gov.br`, `hl7.org.br`). **Não congelar** sem confirmação.
+- **[NC]** **Não confirmado pelo artefato fornecido** — usado no GATE-0 (§8) para todo requisito que **não** esteja demonstrado nos artefatos oficiais entregues. Vale a **regra de evidência estrita:** não preencher lacunas por conhecimento geral; ausência de artefato ⇒ registrar `[NC]`, nunca inferir.
 
 ## 1. Veredito executivo
 1. **Interoperabilidade implementada hoje = ZERO** em produção. Existe apenas a **camada FHIR pura de #119** (projetor determinístico validado por *fixtures*), **não ligada a banco** e **gated atrás da Fase 0 (#117)**. [R][H#114]
@@ -21,7 +22,8 @@ Classificação de evidência usada abaixo:
 4. **O ponto semântico do PEDIDO (seu destaque) está apenas PARCIALMENTE resolvido.** A separação pedido≠resultado existe como **convenção de aplicação** (`document_type ∈ {medical_order, insurance_guide}`), mas **o procedimento solicitado não tem representação estruturada**: não há entidade "serviço solicitado" nem `ServiceRequest.code` com sistema de códigos — o "o que foi pedido" é **reconstruído de strings livres** dos biomarcadores (`deriveOrderTitle`/`deriveOrderDisplayTitle`). O projetor de #119 emite `ServiceRequest.code = { text: display_title }` — **texto livre, sem coding**. [R]
 5. **Decisão estrutural recomendada (herdada de #114 §10, confirmada pela evidência): DESACOPLAR duas trilhas.**
    - **Trilha 1 — Compatibilidade FHIR R4 (viável agora, aditiva):** deixar o modelo interno projetável para FHIR correto.
-   - **Trilha 2 — Transporte RNDS (gated):** depende de existir um **documento federal aplicável** ao caso da SINTERA — o que **#114 aponta como inexistente para imagem e restrito/notificável para laboratório (REL histórico COVID/Monkeypox)**. **A aplicabilidade tem de ser confirmada no IG vivo antes de qualquer implementação de Camada C.** [H#114][⛔IG]
+   - **Trilha 2 — Transporte RNDS (gated):** depende de existir um **documento federal aplicável** ao caso da SINTERA. ⚠️ **PREMISSA A CONFIRMAR, NÃO PERPETUAR:** a alegação de #114 de que **não haveria fluxo/perfil federal para imagem** e de que o **REL** seria **restrito a notificáveis (COVID/Monkeypox)** é **hipótese auto-rotulada de #114**, ainda **`[NC]` — não confirmada por artefato**. Será **confirmada ou refutada documentalmente no GATE-0** (§8), não tratada como fato. **A aplicabilidade só se decide após o GATE-0.** [H#114][⛔IG][NC]
+   - **Invariante arquitetural (independe da RNDS):** ausência de contrato/endpoint RNDS para um domínio **NÃO** autoriza modelá-lo fora de FHIR. A SINTERA permanece estruturada semanticamente conforme **FHIR R4** onde aplicável, **independentemente** de existir transporte RNDS — em particular, o **pedido de exame é uma SOLICITAÇÃO** e `ServiceRequest` é a **referência semântica principal** (nunca confundir com `DiagnosticReport`/`Observation`).
 
 ## 2. Achado semântico central — a Solicitação (ServiceRequest)
 Em FHIR R4, `ServiceRequest` representa a **solicitação de um serviço/procedimento**, e seu `code` identifica **o que foi solicitado**; o resultado (`DiagnosticReport`/`Observation`) referencia a solicitação via `basedOn`. Auditando a estrutura interna contra essa semântica:
@@ -91,7 +93,7 @@ Prioridade ancorada nas **duas trilhas**: `P0` bloqueia interoperabilidade · `P
 | # | Questão a confirmar | Situação | Prioridade |
 |---|---|---|---|
 | CONF-1 | **Escopo do REL** cobre exames **laboratoriais gerais** ou segue restrito a notificáveis (COVID/Monkeypox)? | 🔵 | **P0-decisão** [⛔IG] |
-| CONF-2 | Existe **documento/perfil federal para resultado de IMAGEM** (caso Doppler)? #114: aparentemente **não**. | 🔵 | **P0-decisão** [H#114][⛔IG] |
+| CONF-2 | Existe **documento/perfil federal para resultado de IMAGEM** (caso Doppler), incluindo **ServiceRequest** para pedido de exame? Alegação de #114 ("não existe") é **`[NC]` — a confirmar/refutar por artefato**, não premissa. | 🔵 | **P0-decisão** [H#114][⛔IG][NC] |
 | CONF-3 | **Perfil/versão** vigente (REL V2 × `BRResultadoExameLaboratorial-3.2.1` × outro), recursos e **cardinalidades** obrigatórios | 🔵 | **P0-decisão** [⛔IG] |
 | CONF-4 | **LOINC obrigatório** em todo cenário? (RNDS usa GAL/terminologias próprias) | 🔵 | **P0-decisão** [⛔IG] |
 | CONF-5 | Identificadores exigidos por perfil (CNS/CNES obrigatórios; CPF/CNPJ conforme) e processo de homologação/certificado | 🔵 | **P0-decisão** [⛔IG] |
@@ -147,3 +149,27 @@ Para resolver CONF-1..5 (§3.6), preciso dos seguintes artefatos oficiais (PDF/H
 6. **Homologação/credenciamento** — ambientes, credenciamento por **CNES**, certificado **ICP-Brasil A1** + mTLS.
 
 Com esses artefatos eu: (a) fecho a matriz de conformidade §3.6, (b) determino se a **Trilha 2 é aplicável** ao caso da SINTERA, (c) proponho o **primeiro passo executável da Trilha 1**.
+
+## 8. GATE-0 — worksheet de verificação documental (AGUARDANDO ARTEFATOS)
+**Estado:** ⏳ nenhum artefato oficial recebido ainda → todas as respostas abaixo estão **`[NC]` (não confirmado pelo artefato fornecido)**.
+**Regra de evidência (estrita):** cada resposta cita o **artefato + trecho/seção**. Requisito não demonstrado no artefato ⇒ **`[NC]`**; **proibido** preencher por conhecimento geral ou perpetuar hipótese de #114 como fato. A verificação é **estritamente documental** contra os artefatos entregues.
+
+### 8.1 Perguntas que o GATE-0 deve responder (com evidência)
+| # | Pergunta | Resposta | Evidência (artefato · seção) |
+|---|---|---|---|
+| Q1 | Quais recursos/perfis FHIR R4 da RNDS são **efetivamente aplicáveis** à SINTERA? | `[NC]` | — |
+| Q2 | Existe **contrato RNDS para PEDIDO de exame** — especialmente semântica de **`ServiceRequest`**? | `[NC]` | — |
+| Q3 | Quais **perfis, StructureDefinitions, extensões e terminologias** são obrigatórios? | `[NC]` | — |
+| Q4 | Quais **identificadores** exigidos para **Patient / Practitioner / Organization**? | `[NC]` | — |
+| Q5 | Quais **terminologias** exigidas p/ exames/procedimentos (**LOINC / SNOMED CT / UCUM / GAL / outras**)? | `[NC]` | — |
+| Q6 | Existe **transporte RNDS** para **imagem/Doppler** e para **laboratório geral**, distinguindo de **notificações/REL**? | `[NC]` | — |
+| Q7 | Quais requisitos são **FHIR estrutural** (Trilha 1) × **integração/transporte RNDS** (Trilha 2)? | `[NC]` | — |
+
+### 8.2 Entrega final do GATE-0 (somente isto, após os artefatos)
+- **A. Evidências do GATE-0** — respostas Q1–Q7 com citação de artefato.
+- **B. Matriz de conformidade/gaps atualizada** — §3 e §3.6 reclassificadas (✅/🟡/❌/🔵/`[NC]`) conforme os artefatos.
+- **C. Gaps P0/P1/P2** — reordenados à luz da evidência.
+- **D. Dependências e bloqueios.**
+- **E. Recomendação do primeiro passo da Trilha 1** (a executar só após nova aprovação).
+
+**Não** implementar nenhum gap no GATE-0. Próximo gate = aprovação da fundadora sobre a matriz e a ordem.
