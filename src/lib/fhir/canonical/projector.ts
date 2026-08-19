@@ -19,11 +19,14 @@ export interface CanonServiceRequestResult { serviceRequestId: string; resultExa
 export interface CanonResultEvent { examId: string; code?: string | null; status?: string | null; effectiveDate?: string | null; performerOrganizationId?: string | null }
 export interface CanonObservation { id: string; examId: string; examDocumentId?: string | null; name: string; valueNum?: number | null; valueText?: string | null; unit?: string | null; codeSystem?: string | null; codeValue?: string | null; codeDisplay?: string | null }
 export interface CanonProcedure { id: string; basedOnServiceRequestId?: string | null; status?: string | null; codeText: string; codeSystem?: string | null; codeValue?: string | null; subjectPatientId?: string | null; performerOrganizationId?: string | null; reportExamId?: string | null; laterality?: string | null; performedStart?: string | null }
-export interface CanonDocument { id: string; examId: string; fileUrl: string; sha256?: string | null; role?: string | null; contentType?: string | null; uploadedAt?: string | null }
+export interface CanonDocument { id: string; examId: string; fileUrl: string; sha256?: string | null; role?: string | null; contentType?: string | null; uploadedAt?: string | null; source?: string | null; extractionRef?: string | null }
+/** Binding de terminologia — só CONFIRMADO com system+code é usado; nada inventado, [NC] omitido. */
+export interface CanonTerminologyBinding { targetType?: string | null; targetId?: string | null; conceptText?: string | null; system: string; code: string; display?: string | null; status: string }
 export interface CanonProjectionInput {
   patients?: CanonPatient[]; practitioners?: CanonPractitioner[]; organizations?: CanonOrganization[]
   serviceRequests?: CanonServiceRequest[]; serviceRequestResults?: CanonServiceRequestResult[]
   resultEvents?: CanonResultEvent[]; observations?: CanonObservation[]; procedures?: CanonProcedure[]; documents?: CanonDocument[]
+  terminologyBindings?: CanonTerminologyBinding[]
 }
 
 // ── Saída FHIR (estrutural; sem dependência externa) ────────────────────────────────────────────────────────────
@@ -31,6 +34,7 @@ export type FhirResource = { resourceType: string; id: string } & Record<string,
 export interface FhirBundle { resourceType: 'Bundle'; type: 'collection'; entry: { resource: FhirResource }[] }
 
 const LOCAL = 'urn:sintera:local'
+const EXTRACTION_SYS = 'urn:sintera:extraction_version'
 const ref = (type: string, id: string) => ({ reference: `${type}/${id}` })
 
 /** Remove chaves null/undefined e arrays/objetos vazios (mantém 0/false/''). */
@@ -62,13 +66,37 @@ function identifiers(id: string, extra?: CanonIdentifier[]): Record<string, unkn
 
 const humanName = (name?: string | null) => (name ? [{ text: name }] : undefined)
 
+/** DiagnosticReport.status a partir dos papéis dos documentos (final > preliminar > registrado). Não sobrescreve status explícito. */
+function deriveReportStatus(docs: CanonDocument[]): string {
+  if (docs.some(d => d.role === 'laudo_final')) return 'final'
+  if (docs.some(d => d.role === 'laudo_preliminar')) return 'preliminary'
+  return 'registered'
+}
+
+interface ResolvedCoding { system?: string; code?: string; display?: string }
+/** Coding de um alvo: usa o coding DIRETO se real; senão um binding CONFIRMADO (system+code); senão nada. Nunca infere. */
+function resolveCoding(
+  bindings: Map<string, CanonTerminologyBinding>, targetType: string, targetId: string,
+  directSystem?: string | null, directCode?: string | null, directDisplay?: string | null,
+): ResolvedCoding {
+  if (directSystem && directCode) return { system: directSystem, code: directCode, display: directDisplay ?? undefined }
+  const b = bindings.get(`${targetType}:${targetId}`)
+  if (b && b.status === 'confirmed' && b.system && b.code) return { system: b.system, code: b.code, display: b.display ?? undefined }
+  return {}
+}
+
 /**
  * Projeta a entrada canônica para um Bundle FHIR R4 (collection). Puro/determinístico.
- * Recursos: Patient, Practitioner, Organization, ServiceRequest, DiagnosticReport, Observation, Procedure, DocumentReference.
+ * Recursos: Patient, Practitioner, Organization, ServiceRequest, DiagnosticReport, Observation, Procedure,
+ * DocumentReference e Provenance (por documento).
  */
 export function projectCanonicalToFhir(input: CanonProjectionInput): FhirBundle {
   const resources: FhirResource[] = []
   const srr = input.serviceRequestResults ?? []
+  const docs = input.documents ?? []
+  // Índice de bindings CONFIRMADOS por alvo (targetType:targetId).
+  const bindings = new Map<string, CanonTerminologyBinding>()
+  for (const b of input.terminologyBindings ?? []) if (b.status === 'confirmed' && b.system && b.code && b.targetType && b.targetId) bindings.set(`${b.targetType}:${b.targetId}`, b)
 
   for (const p of input.patients ?? []) {
     resources.push(compact({
@@ -84,11 +112,12 @@ export function projectCanonicalToFhir(input: CanonProjectionInput): FhirBundle 
   }
 
   for (const s of input.serviceRequests ?? []) {
+    const cc = resolveCoding(bindings, 'service_request_code', s.id, s.codeSystem, s.codeValue, s.codeDisplay)
     resources.push(compact({
       resourceType: 'ServiceRequest', id: s.id,
       status: s.status ?? 'active', intent: s.intent ?? 'order',
       requisition: { value: s.requisitionId },                                   // agrupa o bilateral
-      code: codeable(s.codeText, s.codeSystem, s.codeValue, s.codeDisplay),
+      code: codeable(s.codeText, cc.system, cc.code, cc.display),
       bodySite: (() => { const c = codeable(s.bodySiteText ?? s.laterality, s.bodySiteSystem, s.bodySiteCode); return c ? [c] : undefined })(),
       subject: s.subjectPatientId ? ref('Patient', s.subjectPatientId) : undefined,
       requester: s.requesterPractitionerId ? ref('Practitioner', s.requesterPractitionerId) : undefined,
@@ -97,27 +126,32 @@ export function projectCanonicalToFhir(input: CanonProjectionInput): FhirBundle 
     }) as FhirResource)
   }
 
-  // DiagnosticReport (1 por evento-resultado); basedOn a partir de vínculos CONFIRMADOS; result → Observations.
+  // DiagnosticReport (1 por evento-resultado). status derivado dos papéis dos documentos (não sobrescreve o evento:
+  // preliminar e final coexistem como N presentedForm/DocumentReference). basedOn só de vínculos CONFIRMADOS.
   for (const ev of input.resultEvents ?? []) {
     const basedOn = srr.filter(r => r.confirmed && r.resultExamId === ev.examId).map(r => ref('ServiceRequest', r.serviceRequestId))
     const obs = (input.observations ?? []).filter(b => b.examId === ev.examId)
+    const evDocs = docs.filter(d => d.examId === ev.examId)
+    const presentedForm = evDocs.map(d => compact({ url: d.fileUrl, contentType: d.contentType ?? undefined, hash: d.sha256 ?? undefined, title: d.role ?? undefined }))
     resources.push(compact({
       resourceType: 'DiagnosticReport', id: ev.examId,
-      status: ev.status ?? 'final',
+      status: ev.status ?? deriveReportStatus(evDocs),
       code: codeable(ev.code ?? 'Resultado'),
       basedOn, result: obs.map(b => ref('Observation', b.id)),
+      presentedForm,                                                             // preliminar+final preservados
       performer: ev.performerOrganizationId ? [ref('Organization', ev.performerOrganizationId)] : undefined,
       effectiveDateTime: ev.effectiveDate ?? undefined,
     }) as FhirResource)
   }
 
   for (const b of input.observations ?? []) {
+    const cc = resolveCoding(bindings, 'observation_code', b.id, b.codeSystem, b.codeValue, b.codeDisplay)
     const value = b.valueNum !== null && b.valueNum !== undefined
       ? { valueQuantity: compact({ value: b.valueNum, unit: b.unit ?? undefined }) }
       : (b.valueText ? { valueString: b.valueText } : {})
     resources.push(compact({
       resourceType: 'Observation', id: b.id, status: 'final',
-      code: codeable(b.name, b.codeSystem, b.codeValue, b.codeDisplay),
+      code: codeable(b.name, cc.system, cc.code, cc.display),
       derivedFrom: b.examDocumentId ? [ref('DocumentReference', b.examDocumentId)] : undefined,
       ...value,
     }) as FhirResource)
@@ -136,13 +170,21 @@ export function projectCanonicalToFhir(input: CanonProjectionInput): FhirBundle 
     }) as FhirResource)
   }
 
-  for (const d of input.documents ?? []) {
+  for (const d of docs) {
     resources.push(compact({
       resourceType: 'DocumentReference', id: d.id, status: 'current',
       type: codeable(d.role),
       content: [{ attachment: compact({ url: d.fileUrl, contentType: d.contentType ?? undefined, hash: d.sha256 ?? undefined }) }],
       date: d.uploadedAt ?? undefined,
       context: { related: [ref('DiagnosticReport', d.examId)] },
+    }) as FhirResource)
+    // Provenance por documento (proveniência da origem/extração). recorded omitido se não houver uploadedAt ([NC]).
+    resources.push(compact({
+      resourceType: 'Provenance', id: `prov-${d.id}`,
+      target: [ref('DocumentReference', d.id)],
+      recorded: d.uploadedAt ?? undefined,
+      agent: [{ who: { display: d.source ?? 'sintera' } }],
+      entity: d.extractionRef ? [{ role: 'source', what: { identifier: { system: EXTRACTION_SYS, value: d.extractionRef } } }] : undefined,
     }) as FhirResource)
   }
 
