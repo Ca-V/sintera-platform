@@ -3,6 +3,7 @@
 > **Fase A — Definição de arquitetura semântica. READ-ONLY.** **NÃO** altera código, banco, schema, UI, wiring
 > nem **#117/#114/#119**. Segundo dos dois artefatos exigidos antes de qualquer alteração de banco/kernel (o
 > primeiro é `INTEROPERABILITY-COMPLIANCE-MATRIX.md`). **Data:** 2026-08-19 · **Gate:** FECHADO.
+> **Fonte governante:** `SINTERA-PROTOCOLO-INTEROPERABILIDADE-v1.0.md`. Este modelo **detalha** o mapa FHIR do Protocolo v1.0; em divergência, prevalece o Protocolo.
 
 ## 1. Cadeia canônica (decisão a preservar)
 ```
@@ -38,6 +39,7 @@ Legenda gap: ❌ ausente · 🟡 parcial/local · ✅ presente.
 | **Laudo/relatório de resultado** | **`DiagnosticReport`** | `status`, `code`, `subject`, `basedOn`→ServiceRequest, `result`→Observation, `imagingStudy`, `presentedForm`, `effective[x]`, `issued`, `performer` | modelo interno de resultado | 🟡 sem recurso; `basedOn` não persistido |
 | **Resultado atômico/medição** | **`Observation`** | `status`, `code`, `subject`, `value[x]` (+UCUM), `referenceRange`, `interpretation`, `bodySite`, `specimen`, `derivedFrom` | `biomarkers`/`current_biomarkers` | 🟡 sem `code` padrão; unidade texto |
 | **Estudo de imagem** | **`ImagingStudy`** | `subject`, `started`, `modality`, `series`, `endpoint`, `basedOn` | — | ❌ (modelar em FHIR, independe de RNDS) |
+| **Execução do procedimento** | **`Procedure`** | `status`, `code`, `subject`, `performed[x]`, `basedOn`→ServiceRequest, `performer` | — (implícito no exame realizado) | ❌ (separar do pedido — Protocolo §4) |
 | **Documento original (PDF/imagem)** | **`DocumentReference`** (+ **`Media`** p/ imagem) | `status`, `type`, `subject`, `content.attachment` (url/hash/contentType), `context.related`, `date` | `exams.file_url`; `exam_documents` (#117 proposto) | 🟡 sem recurso; multi-doc não migrado |
 | **Amostra/material** | **`Specimen`** | `type`, `subject`, `collection` | `source_material` (texto) | 🟡 texto |
 | **Paciente** | **`Patient`** | `identifier` (local/CPF/CNS), `name`, `birthDate`, `gender` | `profiles` + `patient_name` | ❌ sem identifiers nacionais |
@@ -85,6 +87,8 @@ ServiceRequest ──basedOn── DiagnosticReport ──result──> Observat
 ```
 Preservar `pedido_id` + `resultado_id` com relação **equivalente ao `basedOn` FHIR**. `fulfills_order_id` deve ser revisado para garantir: **DDL, FK, integridade referencial, cardinalidade** (1 pedido → N resultados; 1 pedido → N procedimentos; resultados **parciais**), e **auditoria do vínculo**. Isto é **modelo estrutural** — distinto da futura *sugestão automática* de vínculo (que é funcionalidade, não modelo).
 
+**Comportamento do vínculo (Protocolo v1.0 §6):** quando um resultado é inserido e há pedido compatível, a SINTERA **sugere o vínculo de forma explícita e confirmável** — **nunca** vínculo silencioso quando houver ambiguidade. Sinais de correspondência: paciente, código/tipo, lateralidade, data, estabelecimento, profissional, identificadores. Havendo múltiplos candidatos, **apresentar a lista**; **registrar a confirmação e a origem** do vínculo; manter pedido e resultado como **entidades distintas**.
+
 ## 6. Camada de terminologia (transversal)
 Para cada conceito clínico relevante:
 ```
@@ -126,7 +130,7 @@ original → extracted → normalized → FHIR   (sem perder o original)
 
 ## 10. Enquadramento regulatório (limites do produto — preservar)
 - **ANVISA/SaMD [Ev-ANVISA]:** manter a definição — *a SINTERA organiza, integra e contextualiza informações para apoiar continuidade do cuidado e decisão por pessoas/profissionais autorizados; **não** realiza diagnóstico, **não** substitui avaliação clínica, **não** produz recomendação terapêutica.* Esse limite permanece na documentação e nas specs funcionais.
-- **Prontuário / Lei 13.787/2018:** diferenciar **arquivo pessoal organizado pelo usuário** de **registro eletrônico de saúde/prontuário assistencial profissional** (consequências jurídicas/técnicas distintas).
+- **Prontuário / Lei 13.787/2018:** diferenciar **arquivo pessoal organizado pelo usuário** de **registro eletrônico de saúde/prontuário assistencial profissional** (consequências jurídicas/técnicas distintas). Se caracterizado prontuário, aplica-se a guarda mínima de **20 anos** a partir do último registro (regra geral, sujeita a normas específicas) → política de **retenção/descarte** formalizada. Classificação é **análise jurídica** dependente do produto/uso.
 - **CFM 2.314/2022 [Ev-CFM]:** se houver uso como SRES por profissionais em contexto assistencial, avaliar requisitos (representação, terminologia, interoperabilidade, sigilo, assinatura). **Não** concluir automaticamente que toda a SINTERA é SRES — depende do modelo de uso/responsabilidade.
 
 ## 11. Fronteira FHIR × RNDS × OpenCare

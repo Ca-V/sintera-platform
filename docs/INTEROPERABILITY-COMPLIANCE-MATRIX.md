@@ -4,6 +4,8 @@
 > **NÃO** altera código, banco, schema, UI, wiring, integração, nem **#117/#114/#119**. É o **primeiro** dos dois
 > artefatos exigidos antes de qualquer alteração de banco/kernel (o segundo é `SINTERA-FHIR-CANONICAL-MODEL.md`).
 > **Data:** 2026-08-19 · **Gate:** FECHADO (implementação só após aprovação desta matriz + do modelo canônico).
+> **Fonte governante:** `SINTERA-PROTOCOLO-INTEROPERABILIDADE-v1.0.md` (padrão interno). Esta matriz **operacionaliza** o Protocolo v1.0; em divergência, prevalece o Protocolo.
+> **Regra de mudança (Protocolo §17) — antes de QUALQUER merge de interoperabilidade, registrar:** requisito normativo/técnico que fundamenta · recurso FHIR afetado · terminologia/ValueSet · impacto no banco · impacto em proveniência/auditoria · teste de validação · evidência de que o **baseline homologado da interface (Ciclo 1) não foi alterado**.
 
 ## Princípio arquitetural (decisão a preservar)
 **SINTERA é FHIR-first, BR-Core-aligned e RNDS-ready — mas NÃO RNDS-dependent.**
@@ -17,6 +19,8 @@ SINTERA Canonical Health Model
 - **Não** criar um "modelo SINTERA-RNDS" proprietário nem campos próprios para conceitos que já têm recurso FHIR.
 - **Pedido de exame = `ServiceRequest`** (semântica de solicitação), independente de existir fluxo RNDS para aquele exame.
 - O rótulo de interface **"Pedido de …"** é **decisão de produto** [BEST PRACTICE], **não** exigência FHIR/RNDS. A semântica interoperável vive nos **recursos e códigos FHIR**, não na string.
+
+> **REQUISITO INEGOCIÁVEL — o nome exibido NUNCA é a representação semântica do dado.** Ex.: *"Pedido de Doppler colorido venoso de membro inferior — bilateral"* é **display** compreensível para a usuária; internamente a SINTERA precisa guardar estrutura projetável para `ServiceRequest.code.coding.{system,code,display}` (+ `bodySite`/lateralidade, `requester`, `subject`, `authoredOn`). Isto é mais importante do que exibir a string correta na tela. A própria RNDS demonstra a lógica no REL: o nome do exame **não é só texto** — é vinculado a **LOINC** [Ev5].
 
 ## Categorias de requisito (para não confundir padrão com obrigação legal)
 | Tag | Significado |
@@ -60,10 +64,10 @@ SINTERA Canonical Health Model
 | 19 | **RIPD** (Relatório de Impacto) | [REGULATORY] | ANPD — RIPD [Ev-ANPD] | Conforme risco/contexto | **Sim (tratar como entregável obrigatório interno)** | ❌ | — | Elaborar RIPD antes de tratamento de alto risco · **P1** |
 | 20 | **Controlador × Operador × Suboperadores** | [LEGAL][REGULATORY] | LGPD; ANPD | Sim | **Sim** | ❌ (não formalizado) | — | Definir papéis jurídico+contratual+arquitetural · **P1** |
 | 21 | **Consentimento ≠ base legal**; finalidade por operação | [LEGAL][FHIR][OPENCARE] | LGPD; FHIR `Consent`; OpenCare [Ev12] | Sim | **Sim** | ❌ (não há `Consent`; sem separação de finalidades) | — | Entidade de consentimento/autorização (titular/finalidade/escopo/destinatário/período/revogação/evidência) · **P1** |
-| 22 | **Documento original preservado** (integridade/autenticidade) | [LEGAL] | Lei 13.787/2018 [Ev-13787] | Sim (se guarda de prontuário) | **A classificar** | 🟡 (`file_url` preserva; hash/fingerprint existem) | `fingerprint`, `document_sha256` [R] | Separar original × derivado × proveniência × auditoria · **P1** |
+| 22 | **Documento original preservado** (integridade/autenticidade) + **retenção** | [LEGAL] | Lei 13.787/2018 [Ev-13787] — guarda mínima **20 anos** do último registro (regra geral, sujeita a normas específicas) | Sim (se caracterizado prontuário) | **A classificar juridicamente** | 🟡 (`file_url` preserva; hash/fingerprint existem) | `fingerprint`, `document_sha256` [R] | Separar original × derivado × proveniência × auditoria; política de retenção/descarte · **P1** |
 | 23 | **RNDS REL** (Resultado de Exame Laboratorial) | [RNDS] | Portaria GM/MS 8.276/2025 — envio nacional [Ev3][Ev4] | **Sim, quando caso aplicável** | **A validar (T2)** — labs aplicável; **conflito documental** (docs antigos) | ❌ | — | Perfil/cardinalidades REL vigente · **P2 (T2)** [NC-artefato] |
 | 24 | **RNDS RAC** (Registro de Atendimento Clínico) e outros (RIA/RIRA…) | [RNDS] | Modelos RNDS (evolutivos) | Conforme caso aplicável | **A validar (T2)** | ❌ | — | Avaliar aplicabilidade por caso de uso · **backlog (T2)** [NC-artefato] |
-| 25 | **RNDS — resultado/imagem diagnóstica (Doppler)** | [RNDS] | roadmap federal histórico [Ev10]; IG **estadual** SES-GO [Ev9] | **NÃO CONFIRMADO** | **A confirmar (T2)** | ❌ | — | **`[NC]`**: confirmar IG/contrato federal vigente ANTES de qualquer transmissão · **T2** |
+| 25 | **RNDS — resultado/imagem diagnóstica (Doppler)** | [RNDS] | Protocolo v1.0 §9/§15; roadmap histórico [Ev10]; IG **estadual** SES-GO [Ev9] | **NÃO CONFIRMADO** (nos dois sentidos) | **A confirmar (T2)** | ❌ | — | **`[NC]`**: a pesquisa **não** comprova fluxo federal universal p/ imagem/Doppler **nem** o contrário; **não** afirmar "RNDS não suporta imagem". Confirmar perfil/serviço federal ANTES de transmitir · **T2** |
 | 26 | **RNDS — credenciamento/segurança de acesso** | [RNDS][REGULATORY] | Guia RNDS: CNES, CNS prof., cert. **ICP-Brasil A1** (e-CPF/e-CNPJ), **mTLS**, homolog→prod [Ev11] | Sim (p/ transmissão) | **Só na T2** | ❌ | — | Gateway de integração; certificados fora do mobile · **P2 (T2)** |
 | 27 | **ANVISA — enquadramento SaMD** | [REGULATORY] | RDC 657/2022 (+ manual 2025/26) [Ev-ANVISA] | Conforme função do software | **A manter fora de SaMD** | ✅ (produto não faz diagnóstico) | definição de produto | Preservar limite: organiza/contextualiza, não diagnostica · **P1 (compliance)** |
 | 28 | **CFM — SRES/telemedicina** | [REGULATORY] | Resolução CFM 2.314/2022 [Ev-CFM] | Se uso assistencial profissional | **A avaliar (condicional)** | — | — | Avaliar se/quando houver registro assistencial profissional · **condicional** |
@@ -71,13 +75,20 @@ SINTERA Canonical Health Model
 
 ---
 
-## 2. Prioridades (síntese)
-**P0 — antes de qualquer integração RNDS (arquitetura/modelo canônico):**
-definir modelo canônico FHIR R4 (#1); `ServiceRequest` para pedidos (#3); `DiagnosticReport`/`Observation` para resultados (#4,#5); `DocumentReference` para documentos (#7); vínculo `basedOn` estrutural (#8); `Patient`/`Practitioner`/`Organization` + identifiers (#13–15, estrutura); terminologia (#9); provenance (#16); consentimento (#21); auditoria (#17); **revisar #117 à luz do modelo (§4)**. Governança LGPD (#18).
+## 2. Prioridades (ordem canônica — conforme `SINTERA-PROTOCOLO-INTEROPERABILIDADE-v1.0.md` §13)
+**P0 — congelar semântica:** Pedido = `ServiceRequest`; resultado = `DiagnosticReport`/`Observation`; documento = `DocumentReference`; **execução = `Procedure`** (separada do pedido) [#3,#4,#5,#7].
+**P0 — reconciliar schema:** tipos, estados, identificadores e vínculos explícitos; enum/FK onde semanticamente necessários [#3,#8].
+**P0 — vínculo pedido/resultado:** persistir relacionamento interoperável equivalente a `DiagnosticReport.basedOn → ServiceRequest` [#8].
+**P0 — identidade:** `Patient`/`Practitioner`/`Organization` + identificadores nacionais/institucionais estruturados [#13–15].
+> **P0 também inclui** a governança estrutural exigida por lei (LGPD dados sensíveis #18) e a **reavaliação do #117** (§4) — segurança/governança são estruturais, não hardening futuro.
 
-**P1 — depois:** LOINC (#9), SNOMED (#10), UCUM (#11); mapeamentos nacionais; relacionamento pedido↔resultado; deduplicação; matching de paciente; validação FHIR; geração de Bundle; FHIR Validator; testes de conformidade; RIPD (#19); papéis controlador/operador (#20); Provenance/AuditEvent formalizados; preservação documental (#22).
+**P1 — terminologia:** serviço de terminologia; **LOINC** p/ laboratório quando aplicável; **UCUM**; **CID-10** e demais ValueSets **só após confirmação** do perfil; terminologia de imagem só depois de confirmada [#9–12].
+**P1 — FHIR R4:** projetores/serializadores canônicos + **validação contra StructureDefinitions** + testes automatizados [#1].
+**P1 — documentos:** `DocumentReference`/proveniência + preservação do original [#7,#16,#22].
+**P1 — segurança/governança:** auditoria, controle de acesso, criptografia, gestão de segredos/certificados, retenção, RIPD, papéis controlador/operador [#17,#19,#20].
 
-**P2 — integrações (só depois):** RNDS por adaptador específico por IG/caso (#23–26); OpenCare quando houver contrato/spec/governança (#29); FHIR API própria da SINTERA.
+**P2 — RNDS:** só após identificar o **recurso/modelo/serviço federal aplicável** + credenciamento + homologação → produção [#23–26].
+**P2 — OpenCare:** adaptador **independente**, só com especificação técnica/contratual aplicável [#29].
 
 ## 3. Gate de fases (nenhuma implementação agora)
 ```
