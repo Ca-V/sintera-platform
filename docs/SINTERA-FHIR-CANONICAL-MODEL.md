@@ -72,13 +72,33 @@ ServiceRequest
 ```
 **`code`:** usar **CodeableConcept** — `coding` (system+code+version) quando houver terminologia aplicável **+** `text` (representação textual original preservada). **Não** transformar texto livre no modelo semântico definitivo quando houver código. **Não** inventar código (ver §8 da matriz).
 
-**Decisão a tomar ANTES do schema — Doppler bilateral (§5 da diretriz):** para "Doppler colorido venoso de membro inferior esquerdo e direito", definir semanticamente entre:
-- (a) **um** `ServiceRequest` com `bodySite` bilateral;
-- (b) **dois** `ServiceRequest` (um por lado);
-- (c) **um** procedimento com lateralidade estruturada (`bodySite` + qualificador);
-- (d) modelagem do perfil brasileiro aplicável, se houver.
+### 4.1 DECISÃO SEMÂNTICA — pedido bilateral (Doppler venoso de MMII esquerdo + direito)
+**Decisão (canônica, default):** modelar como **DOIS `ServiceRequest` relacionados** (esquerdo e direito), **agrupados por uma requisição comum** via `ServiceRequest.requisition` (Identifier compartilhado). Cada um com o **mesmo `code`** (o procedimento) e **`bodySite` distinto** (lado esquerdo / direito, estrutura qualificada por lateralidade).
+**Variante condicional (aceitável só se o perfil exigir):** **um** `ServiceRequest` com `bodySite` bilateral **ou** um `code` bilateral — **apenas** quando o perfil/terminologia BR-Core/RNDS aplicável **definir código/estudo bilateral consolidado** e o resultado for reportado como peça única. Enquanto o perfil não for confirmado (`[NC-artefato]`), **prevalece o default (dois agrupados)**.
 
-FHIR R4 admite **múltiplos `ServiceRequest`** quando há vários procedimentos. **Esta decisão precede o schema** e deve considerar o perfil BR-Core/RNDS aplicável. **Não** assumir que o texto do PDF é a estrutura definitiva. *(Observação: a correção do Ciclo 1 — PEDIDO-002 — resolveu a EXIBIÇÃO consolidando "— bilateral"; a modelagem semântica do `bodySite`/cardinalidade é decisão distinta, aqui.)*
+**Critério da escolha (semântica clínica + interoperabilidade, NÃO facilidade/UI):**
+1. Doppler venoso de membro inferior é **clinicamente per-membro** — cada membro é avaliado de forma independente (patência/refluxo/trombose por veia, por lado).
+2. **Fulfillment e resultados parciais independentes** (um lado realizado, outro pendente) — exigido pelo Protocolo v1.0 §6 e §5.
+3. **`basedOn` limpo por lado** — cada resultado referencia o `ServiceRequest` do lado correto, sem ambiguidade.
+4. **Orientação FHIR R4:** usar `ServiceRequest` separados quando as solicitações podem ser **cumpridas/rastreadas independentemente**; `requisition` é o mecanismo canônico para agrupá-las como **uma única requisição/pedido** (um documento autorizado).
+5. Suporta naturalmente **"pedido com múltiplos procedimentos"** (Protocolo §5/§6) sem caso especial.
+
+**Fonte normativa/técnica:** HL7 FHIR R4 — `ServiceRequest` (`code`; `bodySite` 0..*; `requisition` 0..1 = "requisição composta comum"; `supportingInfo`) [Ev1]; `DiagnosticReport.basedOn`, `Observation` [Ev2]. Lateralidade via **SNOMED CT** *bodySite* qualificado por lado; **ValueSet/coding exato = perfil-dependente `[NC-artefato]`** (BR-Core/RNDS de imagem = `[NC]`, Protocolo §9/§15).
+
+**Impacto por elemento:**
+| Elemento | Efeito da decisão |
+|---|---|
+| `ServiceRequest.code` | **Mesmo** CodeableConcept (coding+text) nos dois; **não** usar código "bilateral" por default (perderia granularidade), salvo perfil exigir. |
+| lateralidade / `bodySite` | `bodySite` = SNOMED CT lado **esquerdo** / **direito** — um por `ServiceRequest`. |
+| vínculo → resultado (`basedOn`) | Cada resultado do lado X → `DiagnosticReport.basedOn = ServiceRequest(X)`; `requisition` reconstrói o pedido único. |
+| `DiagnosticReport` | Default: um por lado; admite **relatório consolidado** referenciando os dois `basedOn` — decisão de reporte, ambos suportados. |
+| `Observation` | Por achado/veia, com `bodySite` reafirmando o lado; `derivedFrom` do documento de origem. |
+| `Procedure` | Execução por lado (`Procedure.basedOn → ServiceRequest(X)`), quando modelada. |
+| `ImagingStudy` (se houver imagem) | Por lado/série, `basedOn` ao `ServiceRequest` correspondente; existência de **fluxo federal = `[NC]`**. |
+
+**Não-regressão do Ciclo 1 (display ≠ semântica):** a UI **continua** consolidando *"Pedido de Doppler colorido venoso de membro inferior — bilateral"* em **um card** — isso é **display** e permanece inalterado. Internamente são **dois `ServiceRequest` agrupados**. A decisão **não** altera o baseline homologado da interface (regra de mudança, Protocolo §17).
+
+**Fechamento final:** a escolha entre *default (dois)* e *variante (um bilateral)* só se fecha contra o **perfil BR-Core/RNDS + terminologia vigente** (`[NC-artefato]`). Até lá, o canônico é **dois agrupados** — degrada com segurança e **não perde granularidade**.
 
 ## 5. Vínculo Pedido → Resultado (estrutural, não heurístico)
 ```
@@ -146,6 +166,20 @@ Nenhum payload destinado à RNDS deve sair sem validação contra o perfil corre
 
 ## 13. Reavaliação do #117 (Fase 0) à luz deste modelo
 **Não** executar #117 só por ter sido validado localmente. Verificar, antes de merge, se `exam_documents` atende: documento original; múltiplos documentos; relação com **resultado**; relação com **pedido**; **proveniência**; tipo semântico; **integridade**; **auditoria**; **projeção futura para `DocumentReference`**. E rever `fulfills_order_id` como parte de **`ServiceRequest`→resultado** (DDL/FK/cardinalidade/resultados parciais/pedido multi-procedimento/auditoria do vínculo). Conclusão do gate de #117 sai **após** aprovação deste modelo.
+
+## 13.1 Fase C — PRIMEIRO PASSO (proposta, NÃO executar — aguarda próximo gate)
+Escopo mínimo, aditivo e reversível; **read/design antes de qualquer DDL**. **Não** inclui RNDS/OpenCare, terminologia populada, nem UI.
+
+**Passo C-1 — Auditoria de reconciliação do #117 contra o modelo canônico (documental, sem executar a migração).**
+Confrontar a migração 137 (`exam_documents`, `primary_document_id`, `exam_document_id`, formalização de `fulfills_order_id`/`order_status`) com:
+1. **`ServiceRequest` (§4/§4.1):** o schema precisa comportar **pedido com N procedimentos** e **dois `ServiceRequest` agrupados por `requisition`** (Identifier de requisição comum) — verificar se `medical_order` como linha única de `exams` **impede** isso ou exige entidade/ტabela de solicitação de 1ª classe com `code` (coding+text) e `bodySite`.
+2. **Vínculo `basedOn` (§5):** `fulfills_order_id` precisa de **DDL+FK+cardinalidade** e suportar **resultados parciais por lado** e **origem/auditoria do vínculo** (Protocolo §6). Avaliar se um único `fulfills_order_id` em `exams` é suficiente ou se o vínculo é **por procedimento/lado**.
+3. **`DocumentReference` (§3):** `exam_documents` deve projetar para `DocumentReference` (documento original preservado + proveniência) — confirmar campos de integridade/hash/tipo/uploaded_at/extraction_version.
+4. **Identidade/terminologia (§6/§7):** confirmar que o schema **não fixa** texto livre onde o modelo exige `code/system/display/version` e identificadores estruturados (não bloquear evolução).
+
+**Entregável do C-1:** parecer `EXDOC-00x_RECONCILIACAO_117_vs_CANONICO.md` com veredito **merge #117 como está × ajustar × substituir**, itens de DDL faltantes (ex.: entidade de solicitação, `requisition`, vínculo por lado) e **plano aditivo/reversível**. **Sem** aplicar schema.
+
+**Gate C-1 → C-2:** só após sua aprovação do parecer C-1 é que se define a **primeira migração** (Passo C-2), sempre sob a **regra de mudança (Protocolo §17)** e sem tocar o baseline homologado do Ciclo 1.
 
 ## 14. Entidades canônicas mínimas (não implementar agora — não impedir depois)
 `Patient` · `Practitioner` · `PractitionerRole` · `Organization` · `HealthcareService` · `Encounter` · `ServiceRequest` · `Procedure` · `DiagnosticReport` · `Observation` · `ImagingStudy` · `Specimen` · `MedicationRequest` · `Medication` · `MedicationStatement` · `Immunization` · `AllergyIntolerance` · `Condition` · `DocumentReference` · `Media` · `Device` · `Coverage` · `Provenance` · `Consent` · `AuditEvent` · `Identifier` · `Terminology`/`CodeSystem`/`ValueSet`.
