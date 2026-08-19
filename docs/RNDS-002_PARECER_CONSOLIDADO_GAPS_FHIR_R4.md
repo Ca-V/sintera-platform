@@ -131,7 +131,19 @@ GATE-0  (P0-decisão, agora) — confirmar o IG vivo da RNDS: escopo REL (labs g
 - **#114 contém hipóteses auto-rebaixadas**; não congelar sua lista de recursos.
 - Esta Fase A **não implementa nem corrige** nenhum gap. A ordem acima é recomendação sujeita à sua aprovação no gate de decisão.
 
-## 7. Decisão pedida (gate)
-1. Aprovar (ou ajustar) a **ordem** da §5 e o **desacoplamento** Trilha 1 × Trilha 2.
-2. Autorizar (ou não) o **GATE-0** — e indicar como obter o IG vivo (ambiente com egresso liberado, ou artefatos oficiais que você já possui).
-3. Decidir sobre **#117 (Fase 0)** como primeiro passo executável da Trilha 1 — e sobre o destino de **#114/#119** (manter draft × mesclar após reconciliação).
+## 7. Decisão do gate — REGISTRADA (2026-08-19)
+- ✅ **Ordem (§5) e desacoplamento Trilha 1 × Trilha 2: APROVADOS.**
+- ✅ **GATE-0:** será fechado contra **artefatos oficiais do IG fornecidos pela fundadora** (o proxy deste ambiente bloqueia os hosts oficiais). A matriz de conformidade (§3.6, CONF-1..5) **permanece 🔵 a validar** até os artefatos chegarem.
+- ⏸️ **Primeiro passo executável da Trilha 1: a DEFINIR após o GATE-0.** Nada da Trilha 1 (inclusive Fase 0 #117) é iniciado antes de fechar o GATE-0. **#114/#119 seguem draft.**
+- ⛔ **Nenhuma implementação autorizada nesta fase.**
+
+### 7.1 Artefatos do IG necessários para fechar o GATE-0
+Para resolver CONF-1..5 (§3.6), preciso dos seguintes artefatos oficiais (PDF/HTML/JSON — como você tiver):
+1. **Escopo do REL** — Manual de Integração / IG do *Resultado de Exame Laboratorial* vigente: quais exames são aceitos (só notificáveis/COVID/Monkeypox × laboratório geral). Base do CONF-1.
+2. **Resultado de Imagem** — confirmação de existir (ou não) documento/perfil federal para resultado de **imagem** (ex.: Doppler). CONF-2.
+3. **StructureDefinitions dos perfis aplicáveis** — página do perfil (ex.: `BRResultadoExameLaboratorial` versão vigente): recursos obrigatórios, **cardinalidades**, *must-support*. CONF-3.
+4. **Terminologia obrigatória** — quais *value sets*/sistemas o perfil vincula (LOINC? GAL? `BRNomeExameLOINC`) e se **LOINC é exigido**. CONF-4.
+5. **Identificadores por perfil** — obrigatoriedade de **CNS/CNES/CPF/CNPJ**. CONF-5.
+6. **Homologação/credenciamento** — ambientes, credenciamento por **CNES**, certificado **ICP-Brasil A1** + mTLS.
+
+Com esses artefatos eu: (a) fecho a matriz de conformidade §3.6, (b) determino se a **Trilha 2 é aplicável** ao caso da SINTERA, (c) proponho o **primeiro passo executável da Trilha 1**.
