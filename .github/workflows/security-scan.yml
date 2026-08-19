@@ -1,0 +1,79 @@
+# SEC-016 (SAST/SCA/secret scanning) + SEC-024 (SBOM) — gates de segurança no CI/CD.
+#
+# Estado inicial: INFORMATIVO (continue-on-error) para não quebrar PRs abertos, seguindo a mesma convenção
+# do lint em ci.yml (débito pré-existente triado à parte). Depois da triagem dos findings, tornar SAST e
+# secret-scan BLOQUEANTES (remover continue-on-error). IaC scanning: N/A hoje (não há IaC/Terraform no repo);
+# adicionar (checkov/tfsec) quando houver — ver EXDOC-027 (residual).
+name: security-scan
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+concurrency:
+  group: security-scan-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write   # CodeQL publica alertas em Security > Code scanning
+
+jobs:
+  sast:
+    name: SAST (CodeQL)
+    runs-on: ubuntu-latest
+    continue-on-error: true          # informativo até triagem — depois tornar bloqueante
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inicializar CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+      - name: Analisar
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:javascript-typescript'
+
+  supply-chain:
+    name: SCA + secret scan + SBOM
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0             # trufflehog compara histórico
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      # SCA — dependências vulneráveis (informativo até triagem do baseline).
+      - name: SCA (npm audit)
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+      # Secret scanning — TruffleHog (OSS, sem licença).
+      - name: Secret scan (TruffleHog)
+        uses: trufflesecurity/trufflehog@main
+        continue-on-error: true
+        with:
+          path: ./
+          extra_args: --results=verified,unknown
+
+      # SBOM (SEC-024) — CycloneDX por execução; publicado como artefato.
+      # Provenance/assinatura (cosign/SLSA) = residual (exige OIDC/registry — gate material).
+      - name: Gerar SBOM (CycloneDX)
+        # --ignore-npm-errors: monorepo com workspaces faz `npm ls` sair !=0; a flag tolera sem abortar o SBOM.
+        run: npx --yes @cyclonedx/cyclonedx-npm@latest --ignore-npm-errors --output-format JSON --output-file sbom.cdx.json
+        continue-on-error: true
+
+      - name: Publicar SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-cyclonedx
+          path: sbom.cdx.json
+          if-no-files-found: warn
