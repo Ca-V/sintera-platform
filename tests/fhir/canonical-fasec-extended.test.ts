@@ -92,6 +92,8 @@ describe('Fase C · read-model source (porta abstrata + fake) e preview runner',
   it('runCanonicalPreview projeta+valida sobre a fonte sintética (approved estrutural)', async () => {
     const report = await runCanonicalPreview(createFakeSource(data), { userId: 'u' })
     expect(report.approved).toBe(true)
+    expect(report.invariants.ok).toBe(true)                  // SEC-014 wired na fronteira
+    expect(report.approved).toBe(report.structural.ok && report.invariants.ok)
     expect(report.structural.unresolved).toEqual([])
     expect(report.requisitionGroups).toBe(1)               // bilateral agrupado
     expect(report.counts.ServiceRequest).toBe(2)

@@ -4,14 +4,15 @@
 import type { CanonicalSource, CanonScope } from './source'
 import { loadCanonicalModel } from './source'
 import { projectCanonicalToFhir } from './projector'
-import { validateStructural, requisitionGroups } from './validate'
+import { validateStructural, validateInvariants, requisitionGroups, type InvariantResult } from './validate'
 
 export interface PreviewReport {
   scope: CanonScope
   counts: Record<string, number>          // recursos por tipo
   requisitionGroups: number               // nº de agrupamentos (bilateral)
   structural: ReturnType<typeof validateStructural>
-  approved: boolean                        // critério objetivo: grafo estrutural OK
+  invariants: InvariantResult             // SEC-014: gate de invariantes internas (rejeição)
+  approved: boolean                        // critério objetivo: estrutural OK E invariantes OK
 }
 
 /** Executa a projeção+validação sobre a fonte dada. Puro além do IO da fonte injetada. */
@@ -21,11 +22,13 @@ export async function runCanonicalPreview(source: CanonicalSource, scope: CanonS
   const counts: Record<string, number> = {}
   for (const e of bundle.entry) counts[e.resource.resourceType] = (counts[e.resource.resourceType] ?? 0) + 1
   const structural = validateStructural(bundle)
+  const invariants = validateInvariants(bundle)   // SEC-014: fronteira interna de rejeição
   return {
     scope,
     counts,
     requisitionGroups: requisitionGroups(bundle).size,
     structural,
-    approved: structural.ok,               // aprovação estrutural (Nível B); NÃO é evidência de dados reais (C) nem RNDS (D)
+    invariants,
+    approved: structural.ok && invariants.ok,      // aprovação estrutural+invariantes (Nível B); NÃO é evidência de dados reais (C) nem RNDS (D)
   }
 }

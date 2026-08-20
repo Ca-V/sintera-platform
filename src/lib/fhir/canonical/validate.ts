@@ -117,3 +117,21 @@ export function validateInvariants(bundle: FhirBundle): InvariantResult {
   const violations = invariantViolations(bundle)
   return { ok: violations.length === 0, violations }
 }
+
+/** Erro de enforcement: bundle canônico viola invariantes internas e NÃO deve ser emitido/consumido. */
+export class CanonicalInvariantError extends Error {
+  readonly violations: string[]
+  constructor(violations: string[]) {
+    super(`Bundle canônico inválido (invariantes internas): ${violations.join(' · ')}`)
+    this.name = 'CanonicalInvariantError'
+    this.violations = violations
+  }
+}
+
+/** Fronteira de emissão: retorna o bundle se íntegro; **lança** `CanonicalInvariantError` se violar invariantes.
+ *  Use antes de qualquer consumo/emissão do bundle (o adaptador RNDS, quando existir, deve passar por aqui). */
+export function assertCanonicalValid(bundle: FhirBundle): FhirBundle {
+  const { ok, violations } = validateInvariants(bundle)
+  if (!ok) throw new CanonicalInvariantError(violations)
+  return bundle
+}

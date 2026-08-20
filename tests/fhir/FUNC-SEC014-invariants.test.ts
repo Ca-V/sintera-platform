@@ -5,6 +5,8 @@ import {
   validateInvariants,
   invariantViolations,
   hasHonestIdentifiers,
+  assertCanonicalValid,
+  CanonicalInvariantError,
 } from '@/lib/fhir/canonical/validate'
 import type { FhirBundle } from '@/lib/fhir/canonical/projector'
 
@@ -58,5 +60,21 @@ describe('SEC-014 · gate de invariantes internas', () => {
     expect(hasHonestIdentifiers(b)).toBe(false)
     expect(validateInvariants(b).ok).toBe(false)
     expect(invariantViolations(b).some(v => v.includes('Identifier'))).toBe(true)
+  })
+})
+
+describe('SEC-014 · assertCanonicalValid (fronteira de emissão)', () => {
+  it('bundle íntegro → retorna o mesmo bundle', () => {
+    expect(assertCanonicalValid(valid)).toBe(valid)
+  })
+  it('bundle inválido → lança CanonicalInvariantError com as violações', () => {
+    const b = bundle([{ resourceType: 'Observation', id: 'o1', subject: { reference: 'Patient/x' } }])
+    expect(() => assertCanonicalValid(b)).toThrow(CanonicalInvariantError)
+    try {
+      assertCanonicalValid(b)
+    } catch (e) {
+      expect(e).toBeInstanceOf(CanonicalInvariantError)
+      expect((e as CanonicalInvariantError).violations.length).toBeGreaterThan(0)
+    }
   })
 })
