@@ -50,6 +50,20 @@ Executadas chamadas **read-only** para responder às duas perguntas pendentes. *
 > **Sem inferência:** não afirmo que Preview usa o banco de produção nem que o banco está aberto. Ambos permanecem
 > **não comprovados** pelas ferramentas read-only disponíveis; a confirmação exige leitura manual no painel (itens acima).
 
+#### Resultado da verificação manual do owner (2026-08-19)
+- **#1 — Vercel Preview env:** o owner confirmou no Dashboard que `NEXT_PUBLIC_SUPABASE_URL` está configurada
+  **simultaneamente para Production e Preview** e marcada **Sensitive** → **o valor não é legível no Dashboard**.
+  Portanto, **não é possível comprovar visualmente** se o Preview aponta a `pxiglvrgxooawetboglb`.
+  - **Fato COMPROVADO (reportado):** existe **uma** configuração de `NEXT_PUBLIC_SUPABASE_URL` abrangendo Production+Preview, **Sensitive/ilegível**.
+  - **Conclusão “Preview → DB de PROD”: NÃO COMPROVADA** (valor ilegível; **sem inferência**). *(A entrada única cobrindo ambos os ambientes é um indicador estrutural de valor compartilhado, mas — por decisão de rigor — não é tratada como comprovação.)*
+  - **Única via de confirmação sem inferência (owner, opcional, sem mudança):** `vercel env pull --environment=preview` revela o valor localmente para o usuário autorizado. Não executável por este agente.
+- **#2 — Network Restrictions:** permanece **NÃO COMPROVADO** (aguardando leitura em Supabase → Database → Network Restrictions).
+
+**Leitura de risco (sem inferência sobre o valor):** a isolação Preview↔PROD **não pôde ser comprovada** e **não há
+evidência de isolamento**. Para fins de decisão, “não comprovado” ≠ “seguro”: a ausência de prova de isolamento é
+tratada como **risco em aberto** — o que **fortalece** a justificativa do C1 (STAGING isolado) como precaução, sem
+depender de provar o valor do secret.
+
 ### Legenda de classificação de mudança
 `READ-ONLY` · `CLOUD CHANGE` · `APPLICATION CHANGE` · `DATA CHANGE` · `SECURITY-SENSITIVE`.
 Para cada mudança: **quem executa · quem aprova · pré-requisito · evidência esperada · rollback**.
