@@ -5,6 +5,6 @@ alter table public.exams add column if not exists clinical_family text;
 alter table public.exams add column if not exists clinical_type text;
 
 comment on column public.exams.clinical_family is
-  'Família clínica da modalidade (ex.: Oftalmologia, Imagem — mama). Saída do Clinical Identity Registry (ensemble de evidências). Identidade CLÍNICA, não documental.';
+  'Família clínica da modalidade (Clinical Identity Registry, CEF §3.0). Identidade CLÍNICA, não documental.';
 comment on column public.exams.clinical_type is
-  'Tipo clínico específico (ex.: Mamografia, Tomografia de córnea (Pentacam)). Escolhe o extrator do CEF (M5).';
+  'Tipo clínico específico; escolhe o extrator do CEF.';

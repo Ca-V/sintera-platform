@@ -76,7 +76,7 @@ begin
    (uid, 'correcao_visual', 'Óculos de grau', 'Dr. Demo Oftalmo', current_date - 300, 'em_uso',
     '{"vision_kind":"oculos","od":{"sph":"-2,00","cyl":"-0,75","axis":"180"},"oe":{"sph":"-1,75","cyl":"-0,50","axis":"170"}}'::jsonb);
 
-  return 'Seed demo aplicado para ' || p_email || ' (' || uid || '): 2 exames, 3 medicamentos/suplementos, 4 eventos, 5 medidas, 2 condicoes, 1 recurso.';
+  return 'Seed demo aplicado para ' || p_email || ' (' || uid || ').';
 end $$;
 
 revoke all on function public.seed_demo(text) from public, anon, authenticated;

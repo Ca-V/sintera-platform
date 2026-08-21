@@ -10,6 +10,6 @@ ALTER TABLE exams ADD COLUMN IF NOT EXISTS display_title text;
 ALTER TABLE exams ADD COLUMN IF NOT EXISTS document_type text;
 
 COMMENT ON COLUMN exams.display_title IS
-  'Nome de exibição do documento, derivado deterministicamente (deriveDisplayTitle). Ex.: "Exames laboratoriais", "TSH", "Ressonância magnética". Nunca um biomarcador isolado.';
+  'Nome de exibicao do documento, derivado deterministicamente (deriveDisplayTitle). Ex.: Exames laboratoriais, TSH, Ressonancia magnetica. Nunca um biomarcador isolado.';
 COMMENT ON COLUMN exams.document_type IS
   'Tipo estrutural: laboratory_single | laboratory_panel | laboratory_urine | imaging | anatomopathology | medical_report | prescription | vaccination | attestation | unknown.';

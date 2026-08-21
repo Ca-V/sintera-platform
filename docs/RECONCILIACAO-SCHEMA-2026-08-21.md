@@ -1,0 +1,117 @@
+# Reconciliação do schema — 2026-08-21
+
+Registro da reconciliação entre o histórico versionado (`supabase/migrations/`) e o estado
+efetivamente aplicado ao projeto de produção `pxiglvrgxooawetboglb`.
+
+Toda a investigação foi **read-only** sobre produção. Nenhuma escrita remota foi realizada.
+
+## 1. O problema
+
+A cadeia versionada não era reconstruível: aplicada do zero, falhava no primeiro statement da
+primeira migration (`001_fix_rls_policies`, linha 11, `SQLSTATE 42P01`, `public.profiles` inexistente).
+O repositório não continha o estado inicial nem 15 alterações posteriores aplicadas em produção.
+
+## 2. Estado inicial reconstruído
+
+O banco foi criado por **execuções manuais no SQL Editor**, não por migrations. Sete eventos entre
+27/05 e 03/06; **três falharam** (rollback total, comprovado pela ausência de `NOTIFY pgrst` —
+o Supabase emite `NOTIFY` em event trigger de DDL, e `NOTIFY` só é entregue no COMMIT).
+
+| Evento | Timestamp (UTC) | Resultado |
+|---|---|---|
+| E1 | 2026-05-28 16:43:06 | ✅ schema inicial (profiles, exams, biomarkers, ai_insights, biological_scores, 2 funções, 2 triggers) |
+| E2 / E3 | 2026-05-28 16:43:45 / 16:43:53 | ❌ rollback (`policy ... already exists`) |
+| E4 | 2026-05-29 14:35:27 | ❌ rollback — os ALTERs que trazia (`timezone`, `average_cycle_length`, `menstrual_regularity`) **nunca existiram** |
+| E5 | 2026-05-29 17:24:03 | ✅ bucket `exams` + policies de storage + policies `exams_*` |
+| E6 | 2026-05-30 14:59:43 | ✅ `exam_id` em ai_insights/biological_scores + 6 índices + `exams_status_check` |
+| E7 | 2026-06-01 19:25:01 | ✅ `daily_logs` |
+
+`supabase/migrations/00000000000000_baseline_estado_inicial.sql` é a concatenação byte a byte de
+E1+E5+E6+E7, SHA-256 `33718FF3C67A75E2A7D7B08C26249F3A96FFBCD4DA2EE79017118568A11A8A9A` (9101 bytes),
+recuperada de `postgres_logs` e validada por hash contra o original.
+
+**`supabase/schema.sql` NÃO é o baseline.** Ele contém uma seção de Storage que nunca foi executada
+(as policies reais chamam-se `storage_exams_*`, não `"Usuária faz upload…"`). Mantenha-o como
+documento histórico impreciso.
+
+## 3. Migrations órfãs incorporadas
+
+13 migrations existiam no ledger de produção e **não** no Git. Foram materializadas a partir de
+`supabase_migrations.schema_migrations`, com o **`version` exato de produção** — de modo que
+produção já as reconhece como aplicadas e nenhuma reaplicação ocorre. Todas validadas por md5.
+
+`20260704154027` · `20260704161102` · `20260704185108` · `20260717165401` · `20260717191309`
+`20260718214559` · `20260718224009` · `20260803223329` · `20260809185107` · `20260813154335`
+`20260813164341` · `20260813181008` · `20260817133133`
+
+Além delas, `20260717191853_126b_drop_profiles_whatsapp_number.sql` reconstitui uma operação
+aplicada via `POST /mcp` **fora do ledger** — sem `version` registrada em produção.
+
+## 4. Correções históricas
+
+- **`121_seed_demo_function`**: o arquivo no Git foi commitado 2m16s **depois** da aplicação em
+  produção, com uma string de `return` expandida que nunca foi aplicada (logs de 17/07 confirmam).
+  Decisão: produção prevalece como histórico canônico. O arquivo foi alinhado.
+- **11 comentários de coluna** (9 em `exams`, 2 em `health_events`): o texto no Git divergia do
+  aplicado. Decisão: alinhar ao texto comprovado em produção. Nenhum SQL funcional foi alterado.
+
+## 5. `ai_insights_archive` — legado não versionado
+
+Objeto observado em produção, **sem procedência demonstrada** (Classe C), associado a dados
+sintéticos da Fase 0. **Deliberadamente excluído do baseline reconstruído.**
+
+- Nenhuma migration registrada a cria; não existe no Git; nenhum consumo no código.
+- Janela de criação delimitada: após 2026-06-12 18:00 e antes de 2026-07-21.
+- Conteúdo (13 registros sintéticos) removido em 21/07 (FB-022).
+- 23 colunas, RLS habilitada, sem PK, sem índice, sem policy, 0 linhas.
+
+**Excluir do baseline NÃO é autorização para remover de produção.** São decisões distintas: a
+primeira é sobre reconstrutibilidade; a segunda é alteração de produção e exige gate próprio.
+
+## 6. Diferenças de ambiente (não são lacuna do histórico)
+
+`DEFAULT PRIVILEGES` divergem entre a plataforma de produção e a imagem local da CLI. Comprovado
+por experimento de controle: um stack local com **zero migrations e zero tabelas** já apresenta o
+default reduzido. Nenhuma migration do projeto configura default privileges.
+
+**PRÉ-CONDIÇÃO DE AMBIENTE:** num stack Supabase local, o banco reconstruído deste repositório
+**não concede DML a `authenticated`** — a aplicação não responde via PostgREST até que os default
+privileges da plataforma sejam aplicados. Isso não é defeito do histórico; é configuração de ambiente.
+
+## 7. Duas migrations do ledger sem arquivo no Git — deliberado
+
+Após a reconciliação do ledger (`migration repair --status applied` de 104 versions, 2026-08-21),
+o ledger passou de 109 para 213 registros e `supabase migration list` reporta **151 casadas e
+0 pendentes**. Restam **2 registros de ledger sem arquivo correspondente no repositório**:
+
+| Version | Nome no ledger | Arquivo equivalente no Git | Situação |
+|---|---|---|---|
+| `20260711221715` | `shield_p0_pin_search_path_omics` | `20260710240000_shield_p0_pin_search_path.sql` | efeito idêntico, nome diferente |
+| `20260721215043` | `life_habits_goal_plan_134` | `20260721180000_134_life_habits_goal_plan.sql` | efeito idêntico, nome diferente |
+
+**Não foram materializadas de propósito.** O diff estrutural do Gate 1 comprovou que o efeito de
+ambas já é produzido pelos arquivos acima: os corpos normalizados das funções `omics_*` são
+idênticos entre replay e produção (`60ff772b…`), e as colunas de `life_habits` batem por hash.
+Materializá-las criaria migrations redundantes, aplicando duas vezes o mesmo efeito num banco
+reconstruído do zero.
+
+**Consequência operacional:** o check `scripts/check-migration-drift.mjs` compara por NOME
+normalizado e, portanto, **acusa essas 2 como drift**. São falsos positivos conhecidos.
+
+Antes de ativar o workflow `migration-drift.yml`, é preciso decidir entre:
+
+1. **Allowlist explícita** no script, listando as duas com a justificativa acima — mantém o
+   histórico literal e o check verde; ou
+2. **Materializar as duas** com o `version` de produção — o check zera sozinho, ao custo de duas
+   migrations redundantes na cadeia.
+
+Enquanto essa decisão não for tomada, **o workflow falhará já na primeira execução**. Isso é
+esperado e está documentado aqui; não é sinal de drift novo.
+
+## 8. Pendências que exigem decisão e autorização
+
+- **Ledger**: 102 `version` do Git não constam do ledger de produção. `db push` hoje falharia na
+  primeira migration que tentaria, sem commitar. 16 dessas 102 contêm DML de backfill — torná-las
+  "pushable" reexecutaria migrações de dados. A decisão de `migration repair` foi **postergada**
+  para gate específico.
+- Remoção de `ai_insights_archive` em produção.

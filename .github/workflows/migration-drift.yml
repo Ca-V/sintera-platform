@@ -1,0 +1,50 @@
+name: Migration drift
+
+# Impede que uma mudança de schema seja aplicada ao banco sem entrar no Git.
+# Bloqueia quando existe migration registrada em supabase_migrations.schema_migrations
+# sem arquivo correspondente em supabase/migrations/.
+#
+# SEGURANÇA — por que NÃO há gatilho `pull_request` aqui:
+# este job recebe uma credencial de produção. Em `pull_request`, o runner faz checkout do
+# código DA PR e executa `scripts/check-migration-drift.mjs` a partir dela. Uma PR de alguém
+# com acesso de escrita ao repositório poderia alterar esse script para exfiltrar a credencial —
+# e o próprio `paths:` que incluísse o script serviria de gatilho. Rodar apenas em `push` para
+# `main`, agendado e manual mantém a execução restrita a código já revisado e mesclado.
+#
+# Credencial: use um papel dedicado com SELECT apenas em
+# `supabase_migrations.schema_migrations`. O check não precisa de mais nada.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+      - 'scripts/check-migration-drift.mjs'
+      - '.github/workflows/migration-drift.yml'
+  schedule:
+    # Diário: o drift também nasce sem PR, quando alguém aplica DDL direto no banco.
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Instalar psql
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends postgresql-client
+
+      - name: Verificar drift entre ledger e repositório
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: node scripts/check-migration-drift.mjs
