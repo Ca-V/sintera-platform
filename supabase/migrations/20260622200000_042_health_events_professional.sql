@@ -8,4 +8,4 @@ ALTER TABLE public.health_events
   ADD COLUMN IF NOT EXISTS professional_kind text;
 
 COMMENT ON COLUMN public.health_events.professional_kind
-  IS 'Tipo de profissional de saúde da consulta (medico, psicologo, nutricionista, fisioterapeuta, dentista, outro). Opcional.';
+  IS 'Tipo de profissional de saúde da consulta. Opcional.';

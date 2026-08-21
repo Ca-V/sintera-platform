@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS health_events (
 );
 
 COMMENT ON COLUMN health_events.source     IS 'Proveniência do evento: autorrelato | upload | integracao.';
-COMMENT ON COLUMN health_events.confidence IS 'Confiança no dado: alta (integração/laudo) | media | baixa (autorrelato).';
+COMMENT ON COLUMN health_events.confidence IS 'Confiança no dado: alta | media | baixa.';
 
 ALTER TABLE health_events ENABLE ROW LEVEL SECURITY;
 

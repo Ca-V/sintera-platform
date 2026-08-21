@@ -1,0 +1,1 @@
+grant execute on function public.seed_demo(text) to service_role;

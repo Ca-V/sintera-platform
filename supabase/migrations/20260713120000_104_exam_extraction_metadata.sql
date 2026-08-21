@@ -13,6 +13,6 @@ ALTER TABLE exams ADD COLUMN IF NOT EXISTS structural_confidence text;   -- high
 ALTER TABLE exams ADD COLUMN IF NOT EXISTS processed_at timestamptz;
 
 COMMENT ON COLUMN exams.extraction_completeness IS
-  'Relativa ao EXTRATOR (não ao documento): structured (tudo que o extrator suporta hoje foi estruturado) | partial (parte estruturada; resto no documento) | document_only (nada estruturado com segurança).';
+  'Relativa ao EXTRATOR (nao ao documento): structured | partial | document_only.';
 COMMENT ON COLUMN exams.extractor_version IS
-  'Versão do extrator que estruturou o exame (ex.: laboratory-v1, heuristic-v0). Permite reprocessar quando um extrator evolui.';
+  'Versao do extrator (ex.: laboratory-v1, heuristic-v0). Permite reprocessar quando um extrator evolui.';
