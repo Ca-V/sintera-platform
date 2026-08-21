@@ -8,22 +8,24 @@
 //
 // O que verifica: todo registro de `supabase_migrations.schema_migrations` no banco alvo precisa
 // ter um arquivo correspondente em supabase/migrations/. A comparação é por NOME NORMALIZADO,
-// não por `version` — os timestamps divergem historicamente entre Git e produção, e comparar por
-// `version` produz ruído (102 falsos positivos) em vez de sinal.
+// não por `version`: a comparação por `version` gerava 102 divergências na medição
+// pré-reconciliação e, como o `version` é carimbado no momento da APLICAÇÃO e não derivado do
+// nome do arquivo, ela não é adequada para este repositório.
 //
 // Uso:  SUPABASE_DB_URL='postgresql://...' node scripts/check-migration-drift.mjs
 // Requer `psql` no PATH.
 //
-// ESTADO CONHECIDO EM 2026-08-21 — LEIA ANTES DE ATIVAR O WORKFLOW:
-// este check acusa 2 drifts que sao FALSOS POSITIVOS conhecidos:
-//   - shield_p0_pin_search_path_omics  (ledger 20260711221715)
-//   - life_habits_goal_plan_134        (ledger 20260721215043)
-// Ambas tem efeito ja produzido por arquivos do Git com NOME diferente
-// (shield_p0_pin_search_path e 134_life_habits_goal_plan), comprovado por diff estrutural.
-// Nao foram materializadas para nao criar migrations redundantes.
-// Ver docs/RECONCILIACAO-SCHEMA-2026-08-21.md secao 7.
-// DECISAO PENDENTE: allowlist explicita aqui, ou materializar as duas.
-// Ate la, este check falha na primeira execucao. Isso e esperado, nao e drift novo.
+// ESTADO EM 2026-08-21 — reconciliação concluída:
+// as duas entradas de ledger que este check acusava (shield_p0_pin_search_path_omics,
+// 20260711221715; life_habits_goal_plan_134, 20260721215043) foram MATERIALIZADAS como
+// arquivos, com o `version` de produção e conteúdo validado byte a byte (md5) contra
+// `supabase_migrations.schema_migrations`. O check retorna zero drift, sem allowlist.
+//
+// Por que existem pares de migrations com efeito redundante: o `version` é carimbado no
+// momento da APLICAÇÃO, não derivado do nome do arquivo — o mesmo DDL entrou na história
+// sob nomes distintos. Ambas são idempotentes e o replay integral (161/161) foi verificado.
+// NÃO remova a metade que consta do ledger: é a que produção reconhece como aplicada.
+// Ver docs/RECONCILIACAO-SCHEMA-2026-08-21.md seção 7.
 
 import { execFileSync } from 'node:child_process'
 import { readdirSync } from 'node:fs'

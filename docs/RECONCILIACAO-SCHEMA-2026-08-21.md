@@ -78,40 +78,51 @@ default reduzido. Nenhuma migration do projeto configura default privileges.
 **não concede DML a `authenticated`** — a aplicação não responde via PostgREST até que os default
 privileges da plataforma sejam aplicados. Isso não é defeito do histórico; é configuração de ambiente.
 
-## 7. Duas migrations do ledger sem arquivo no Git — deliberado
+## 7. Duas migrations do ledger sem arquivo — materializadas
 
 Após a reconciliação do ledger (`migration repair --status applied` de 104 versions, 2026-08-21),
-o ledger passou de 109 para 213 registros e `supabase migration list` reporta **151 casadas e
-0 pendentes**. Restam **2 registros de ledger sem arquivo correspondente no repositório**:
+o ledger passou de 109 para 213 registros. Restavam **2 registros sem arquivo correspondente**:
 
-| Version | Nome no ledger | Arquivo equivalente no Git | Situação |
-|---|---|---|---|
-| `20260711221715` | `shield_p0_pin_search_path_omics` | `20260710240000_shield_p0_pin_search_path.sql` | efeito idêntico, nome diferente |
-| `20260721215043` | `life_habits_goal_plan_134` | `20260721180000_134_life_habits_goal_plan.sql` | efeito idêntico, nome diferente |
+| Version | Nome no ledger | Arquivo de mesmo efeito já no Git |
+|---|---|---|
+| `20260711221715` | `shield_p0_pin_search_path_omics` | `20260710240000_shield_p0_pin_search_path.sql` |
+| `20260721215043` | `life_habits_goal_plan_134` | `20260721180000_134_life_habits_goal_plan.sql` |
 
-**Não foram materializadas de propósito.** O diff estrutural do Gate 1 comprovou que o efeito de
-ambas já é produzido pelos arquivos acima: os corpos normalizados das funções `omics_*` são
-idênticos entre replay e produção (`60ff772b…`), e as colunas de `life_habits` batem por hash.
-Materializá-las criaria migrations redundantes, aplicando duas vezes o mesmo efeito num banco
-reconstruído do zero.
+**Decisão tomada: materialização** (commit `9cd00342`), não allowlist no check. O conteúdo foi
+recuperado literalmente de `supabase_migrations.schema_migrations` e validado por **md5 contra
+produção antes da escrita** — version, nome, nº de caracteres, bytes e hash conferem:
 
-**Consequência operacional:** o check `scripts/check-migration-drift.mjs` compara por NOME
-normalizado e, portanto, **acusa essas 2 como drift**. São falsos positivos conhecidos.
+- `20260711221715_shield_p0_pin_search_path_omics.sql` — 572 chars / 577 bytes / md5 `241d67d8bc03fe3c16878fbda5709d44`
+- `20260721215043_life_habits_goal_plan_134.sql` — 276 chars / 276 bytes / md5 `d1b4d9bb390b3e26d5e358574015eef5`
 
-Antes de ativar o workflow `migration-drift.yml`, é preciso decidir entre:
+Ambos os `version` já constavam do ledger desde a aplicação original (11/07 e 21/07), portanto
+**nenhum `repair` foi necessário e nenhuma escrita em produção foi feita**.
 
-1. **Allowlist explícita** no script, listando as duas com a justificativa acima — mantém o
-   histórico literal e o check verde; ou
-2. **Materializar as duas** com o `version` de produção — o check zera sozinho, ao custo de duas
-   migrations redundantes na cadeia.
+A redundância de efeito é deliberada e idempotente (`ALTER FUNCTION … SET search_path` e
+`ADD COLUMN IF NOT EXISTS`), pelo mesmo critério adotado no par `136`. A causa é estrutural: o
+`version` é carimbado no momento da aplicação, não derivado do nome do arquivo — o mesmo DDL
+entrou na história sob dois nomes.
 
-Enquanto essa decisão não for tomada, **o workflow falhará já na primeira execução**. Isso é
-esperado e está documentado aqui; não é sinal de drift novo.
+**Não há decisão pendente sobre estas duas entradas.** O check `scripts/check-migration-drift.mjs`
+reporta **zero registros bloqueantes** (exit 0), sem allowlist e sem alteração da sua lógica,
+verificado contra produção em container equivalente ao runner do CI.
 
-## 8. Pendências que exigem decisão e autorização
+## 8. Estado da reconciliação e pendências
 
-- **Ledger**: 102 `version` do Git não constam do ledger de produção. `db push` hoje falharia na
-  primeira migration que tentaria, sem commitar. 16 dessas 102 contêm DML de backfill — torná-las
-  "pushable" reexecutaria migrações de dados. A decisão de `migration repair` foi **postergada**
-  para gate específico.
-- Remoção de `ai_insights_archive` em produção.
+**Concluído em 2026-08-21:**
+
+- `migration repair --status applied` para **104 versions** em 5 lotes, exclusivamente pelo comando
+  oficial da CLI. Ledger: **109 → 213**. Nenhum SQL das migrations foi executado — comprovado por
+  impressão digital estrutural idêntica antes e depois (`80091f5b…`, 1541 objetos) e por sentinelas
+  de dados.
+- As 2 migrations residuais do ledger foram materializadas (seção 7).
+- Anti-drift validado contra produção com o script real: **exit 0**, zero drift.
+
+**Pendente, em frente separada:**
+
+- **`ai_insights_archive`** — remoção de produção **não autorizada**. Excluir do baseline (seção 5)
+  não é autorização para remover: são decisões distintas, e a segunda exige gate próprio.
+- **`SUPABASE_DB_URL`** — o workflow `migration-drift.yml` dispara apenas em `push` para `main`,
+  agendado e manual; o gatilho `pull_request` foi removido por segurança (rodaria código da PR com
+  credencial de produção). Requer secret com credencial de **leitura restrita** — o check precisa
+  apenas de `SELECT` em `supabase_migrations.schema_migrations`.
