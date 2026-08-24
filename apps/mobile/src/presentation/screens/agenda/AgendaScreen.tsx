@@ -50,6 +50,12 @@ export function AgendaScreen({ navigation }: Props) {
     [{ text: 'Cancelar', style: 'cancel' }, { text: 'Concluir', onPress: async () => { const { error } = await a.complete(ev); if (error) Alert.alert('Não foi possível concluir', error.message || 'Tente novamente.') } }])
   const onCancel = (ev: HealthEvent) => Alert.alert('Cancelar evento', `Cancelar "${ev.title}"?`,
     [{ text: 'Voltar', style: 'cancel' }, { text: 'Cancelar evento', style: 'destructive', onPress: async () => { const { error } = await a.cancel(ev); if (error) Alert.alert('Não foi possível cancelar', error.message || 'Tente novamente.') } }])
+  // Excluir é DIFERENTE de cancelar: cancelar mantém no Histórico, excluir apaga
+  // de vez. A Web sempre teve as duas; o App só tinha "Cancelar" — e o texto de
+  // ajuda das Pendências, idêntico nas duas telas, já prometia "exclua cada um".
+  const onDelete = (ev: HealthEvent) => Alert.alert('Excluir evento',
+    'Excluir este evento de vez? Ele será removido da Agenda, do Histórico e das Despesas. Esta ação não pode ser desfeita.',
+    [{ text: 'Voltar', style: 'cancel' }, { text: 'Excluir', style: 'destructive', onPress: async () => { const { error } = await a.remove(ev.id); if (error) Alert.alert('Não foi possível excluir', error.message || 'Tente novamente.') } }])
 
   if (a.phase === 'loading') {
     return (
@@ -106,12 +112,12 @@ export function AgendaScreen({ navigation }: Props) {
         </View>
       ) : null}
 
-      <Section title={`Pendências (${a.lists.overdue.length})`} hint="Itens que passaram da data e ainda aguardam uma ação. Conclua, cancele ou exclua cada um." events={a.lists.overdue} onOpen={openEvent} onComplete={onComplete} onCancel={onCancel} tone="attention" />
+      <Section title={`Pendências (${a.lists.overdue.length})`} hint="Itens que passaram da data e ainda aguardam uma ação. Conclua, cancele ou exclua cada um." events={a.lists.overdue} onOpen={openEvent} onComplete={onComplete} onCancel={onCancel} onDelete={onDelete} tone="attention" />
 
       {a.lists.upcoming.length > 0 ? (
         <View style={{ gap: 8 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Text spec={text(t, { role: 'label', tone: 'muted' })}>PRÓXIMOS ({a.lists.upcoming.length})</Text>
+            <Text spec={text(t, { role: 'bodyStrong' })}>Próximos ({a.lists.upcoming.length})</Text>
             <View style={{ flexDirection: 'row', gap: 12 }}>
               {(['date', 'type'] as UpcomingView[]).map(v => (
                 <Pressable key={v} onPress={() => setUpcomingView(v)}><Text spec={text(t, { role: 'caption', tone: upcomingView === v ? 'default' : 'faint' })} style={upcomingView === v ? { color: t.color.identity.primary } : undefined}>{v === 'date' ? 'Por data' : 'Por tipo'}</Text></Pressable>
@@ -121,7 +127,7 @@ export function AgendaScreen({ navigation }: Props) {
           {groupUpcoming(a.lists.upcoming, upcomingView).map(g => (
             <View key={g.label} style={{ gap: 8 }}>
               <Text spec={text(t, { role: 'caption', tone: 'faint' })} style={{ textTransform: 'uppercase' }}>{g.label}</Text>
-              {g.items.map(e => <EventRow key={e.id} e={e} onOpen={openEvent} onComplete={onComplete} onCancel={onCancel} />)}
+              {g.items.map(e => <EventRow key={e.id} e={e} onOpen={openEvent} onComplete={onComplete} onCancel={onCancel} onDelete={onDelete} />)}
             </View>
           ))}
         </View>
@@ -154,9 +160,10 @@ function groupUpcoming(events: HealthEvent[], view: UpcomingView): { label: stri
   }))
 }
 
-function Section({ title, hint, events, onOpen, onComplete, onCancel, tone }: {
+function Section({ title, hint, events, onOpen, onComplete, onCancel, onDelete, tone }: {
   title: string; hint?: string; events: HealthEvent[]; onOpen: (e: HealthEvent) => void
-  onComplete?: (e: HealthEvent) => void; onCancel?: (e: HealthEvent) => void; tone?: 'attention' | 'muted'
+  onComplete?: (e: HealthEvent) => void; onCancel?: (e: HealthEvent) => void
+  onDelete?: (e: HealthEvent) => void; tone?: 'attention' | 'muted'
 }) {
   const t = useTheme()
   if (events.length === 0) return null
@@ -164,16 +171,18 @@ function Section({ title, hint, events, onOpen, onComplete, onCancel, tone }: {
   return (
     <View style={{ gap: 8 }}>
       <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
-        <Text spec={text(t, { role: 'label' })} style={{ color: accent }}>{title.toUpperCase()}</Text>
+        {/* Sem `.toUpperCase()`: a Web mostra "Pendências (2)", não "PENDÊNCIAS (2)". */}
+        <Text spec={text(t, { role: 'bodyStrong' })} style={{ color: accent }}>{title}</Text>
         {hint ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{hint}</Text> : null}
       </View>
-      {events.map(e => <EventRow key={e.id} e={e} onOpen={onOpen} onComplete={onComplete} onCancel={onCancel} accent={accent} />)}
+      {events.map(e => <EventRow key={e.id} e={e} onOpen={onOpen} onComplete={onComplete} onCancel={onCancel} onDelete={onDelete} accent={accent} />)}
     </View>
   )
 }
 
-function EventRow({ e, onOpen, onComplete, onCancel, accent }: {
-  e: HealthEvent; onOpen: (e: HealthEvent) => void; onComplete?: (e: HealthEvent) => void; onCancel?: (e: HealthEvent) => void; accent?: string
+function EventRow({ e, onOpen, onComplete, onCancel, onDelete, accent }: {
+  e: HealthEvent; onOpen: (e: HealthEvent) => void; onComplete?: (e: HealthEvent) => void
+  onCancel?: (e: HealthEvent) => void; onDelete?: (e: HealthEvent) => void; accent?: string
 }) {
   const t = useTheme()
   const acc = accent ?? t.color.text.muted
@@ -201,6 +210,9 @@ function EventRow({ e, onOpen, onComplete, onCancel, accent }: {
           <Pressable onPress={() => onComplete(e)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.success.text }}>Concluir</Text></Pressable>
           <Pressable onPress={() => onCancel(e)}><Text spec={text(t, { role: 'caption', tone: 'muted' })}>Cancelar</Text></Pressable>
           <Pressable onPress={() => onOpen(e)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Editar</Text></Pressable>
+          {onDelete ? (
+            <Pressable onPress={() => onDelete(e)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>Excluir</Text></Pressable>
+          ) : null}
         </View>
       ) : null}
     </View>
