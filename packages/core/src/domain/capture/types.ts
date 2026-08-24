@@ -5,18 +5,16 @@
 /**
  * O que a pessoa deseja adicionar (intenção) + classificações auxiliares.
  *
- * `clinical_document` (DOC-002) cobre atestado · relatório · encaminhamento · outros documentos clínicos.
- * Sem ele, a intenção "Atestado, relatório ou encaminhamento" do Hub chegava à etapa de classificação e só
- * encontrava kinds que não eram o que a pessoa escolheu — a categoria não se perdia por defeito, nunca teve
- * para onde ir. O SUBTIPO (atestado/relatório/encaminhamento/outro) é perguntado depois do anexo e vive em
- * `DOCUMENT_SUBTYPES`, no domínio de Documentos: aqui fica só a natureza do documento.
+ * NÃO há kind para atestado/relatório/encaminhamento — de propósito. Esses documentos entram pela página de
+ * Documentos (DOC-002), onde o SUBTIPO é escolhido de `DOCUMENT_SUBTYPES`, e não pela classificação da captura.
+ * Um kind `clinical_document` só faz sentido no dia em que o classificador souber reconhecer esses documentos
+ * num upload genérico; declará-lo antes disso seria mais um valor sem quem o produza ou consuma.
  */
 export const DOCUMENT_KINDS = [
   'exam',
   'medication_label',
   'eyeglass_prescription',
   'omics',
-  'clinical_document',
   'other',
   'unknown',
 ] as const

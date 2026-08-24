@@ -46,12 +46,18 @@ export const REGISTRATION_INTENTS: RegistrationIntent[] = [
   // ── Documentos → Capture Center ───────────────────────────────────────────
   { key: 'exame',        label: 'Exame / Laudo',      icon: 'FlaskConical',  group: 'documento', mechanism: { type: 'capture', documentKind: 'exam' } },
   { key: 'pedido_exame', label: 'Pedido de exame',    icon: 'ClipboardList', group: 'documento', mechanism: { type: 'capture' } },
-  // DOC-002: receita e documento clínico são SUBTIPOS do domínio Documentos do paciente — por isso ambos
-  // declaram um kind e terminam na página de Documentos, como `omica` termina na de Ômicas. Antes, `doc_clinico`
-  // não declarava kind nenhum ("deixa classificar") e a classificação só oferecia kinds que não eram o que a
-  // pessoa tinha escolhido: a categoria não sobrevivia à jornada.
-  { key: 'receita',      label: 'Receita médica',     icon: 'FileText',      group: 'documento', mechanism: { type: 'capture', documentKind: 'medication_label' } },
-  { key: 'doc_clinico',  label: 'Atestado, relatório ou encaminhamento', icon: 'FileHeart', group: 'documento', mechanism: { type: 'capture', documentKind: 'clinical_document' } },
+  // DOC-002 — receita e documento clínico agora TÊM destino, como `omica` tem.
+  //
+  // `doc_clinico` era `{ type: 'capture' }` sem kind: mandava classificar, e a classificação só oferecia kinds
+  // que não eram o que a pessoa havia escolhido. A categoria não se perdia por defeito — nunca teve para onde
+  // ir. Agora leva à página de Documentos, onde o subtipo (atestado/relatório/encaminhamento) é escolhido.
+  //
+  // `receita` é `choice` e não `page` porque as duas coisas são legítimas e a pessoa é quem sabe qual quer:
+  // ler a receita para CADASTRAR O MEDICAMENTO é uma capacidade que já funciona (processador `medication_label`
+  // → /dashboard/medicamentos) e não pode ser removida em silêncio; guardar a receita como DOCUMENTO é o que
+  // faltava. Mesmo mecanismo já usado por Medicamento e Suplemento.
+  { key: 'receita',      label: 'Receita médica',     icon: 'FileText',      group: 'documento', mechanism: { type: 'choice', captureKind: 'medication_label', captureLabel: 'Ler receita e cadastrar medicamento', pageDestination: 'documents', pageLabel: 'Guardar como documento' } },
+  { key: 'doc_clinico',  label: 'Atestado, relatório ou encaminhamento', icon: 'FileHeart', group: 'documento', mechanism: { type: 'page', destination: 'documents' } },
   { key: 'omica',        label: 'Exame ômico',        icon: 'Dna',           group: 'documento', mechanism: { type: 'page', destination: 'omics' } },
 
   // ── Cuidados e recursos ───────────────────────────────────────────────────
