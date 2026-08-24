@@ -25,6 +25,35 @@ if (!url || !serviceKey) {
   process.exit(1)
 }
 
+// ---------------------------------------------------------------------------
+// BARREIRA DE PRODUÇÃO — fail-closed, avaliada antes de qualquer escrita.
+//
+// Este script usa `service_role`: ignora RLS e escreve dados. Executá-lo contra
+// produção sobrescreveria dados reais de pacientes com fixtures de demonstração.
+//
+// A recusa é INCONDICIONAL: não existe variável que a libere. Uma flag do tipo
+// ALLOW_PRODUCTION=true apenas transformaria a barreira em formalidade — quem
+// aponta a URL também define a flag. Se algum dia houver necessidade legítima de
+// popular produção, isso é operação excepcional, com procedimento próprio e
+// aprovação humana — não um caminho deste script.
+// ---------------------------------------------------------------------------
+const PRODUCTION_REF = 'pxiglvrgxooawetboglb'
+
+let host
+try {
+  host = new URL(url).hostname
+} catch {
+  console.error('❌ ABORT: a URL do Supabase não é analisável. Alvo não comprovado.')
+  process.exit(3)
+}
+
+if (host.includes(PRODUCTION_REF)) {
+  console.error('❌ ABORT: alvo é o projeto de PRODUÇÃO. Nenhuma escrita foi executada.')
+  console.error(`   host: ${host}`)
+  console.error('   Este runner popula dados de demonstração e nunca deve rodar em produção.')
+  process.exit(3)
+}
+
 const admin = createClient(url, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } })
 
 async function ensureUser() {
