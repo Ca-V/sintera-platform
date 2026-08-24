@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import {
   NOTIFICATION_CATEGORIES, DEFAULT_CHANNEL, MANDATORY_NOTIFICATIONS, recommendedChannels,
+  DIAL_SHORTLIST, DEFAULT_DIAL_ISO, splitPhone, joinPhone, flagOf,
   type NotificationChannel,
 } from '@sintera/core'
 import { Text, Button, Input } from '../../primitives'
@@ -18,7 +19,6 @@ const WEB_URL = process.env.EXPO_PUBLIC_WEB_URL
 const CHANNELS: { id: NotificationChannel; label: string }[] = [
   { id: 'email', label: 'E-mail' }, { id: 'whatsapp', label: 'WhatsApp' }, { id: 'both', label: 'Ambos' }, { id: 'none', label: 'Nenhum' },
 ]
-const DDI_OPTS = ['+55', '+351', '+1', '+44', '+34', '+49', '+33', '+39', '+54', '+61']
 
 export function ConfiguracoesScreen() {
   const t = useTheme()
@@ -37,7 +37,7 @@ export function ConfiguracoesScreen() {
   const [emailMsg, setEmailMsg] = useState<string | null>(null)
   const [pwBusy, setPwBusy] = useState(false)
   const [pwMsg, setPwMsg] = useState<string | null>(null)
-  const [ddi, setDdi] = useState('+55')
+  const [phoneIso, setPhoneIso] = useState(DEFAULT_DIAL_ISO)
   const [phone, setPhone] = useState('')
   const [waBusy, setWaBusy] = useState(false)
   const [waMsg, setWaMsg] = useState<string | null>(null)
@@ -49,8 +49,11 @@ export function ConfiguracoesScreen() {
     Promise.all([apiClient.profile.getProfile(), apiClient.settings.listNotificationPrefs()])
       .then(([pr, rows]) => {
         if (!alive.current) return
-        const raw = (pr?.phone ?? '').trim(); const m = raw.match(/^(\+\d{1,3})\s*(.*)$/)
-        if (m) { setDdi(m[1]); setPhone(m[2].trim()) } else setPhone(raw)
+        // Leitura pela regra ÚNICA do core: cobre E.164 (`+5511…`), o formato
+        // antigo com espaço (`+55 11…`) e o legado sem DDI. A regex anterior só
+        // entendia o formato com espaço — e lia `+5511…` como DDI `+551`.
+        const split = splitPhone(pr?.phone)
+        setPhoneIso(split.iso); setPhone(split.national)
         const next: Record<string, NotificationChannel> = {}
         for (const c of NOTIFICATION_CATEGORIES) next[c.key] = DEFAULT_CHANNEL
         for (const r of rows) next[r.category] = r.channel
@@ -76,7 +79,8 @@ export function ConfiguracoesScreen() {
   }
   async function saveWhatsApp() {
     setWaBusy(true); setWaMsg(null)
-    const full = phone.trim() ? `${ddi} ${phone.trim()}` : null
+    // Gravação pela regra ÚNICA do core — mesmo formato E.164 que o Perfil usa.
+    const full = joinPhone(phoneIso, phone)
     const { error } = await apiClient.profile.updateProfile({ phone: full })
     setWaBusy(false)
     setWaMsg(error ? 'Não foi possível salvar.' : 'Contato salvo.')
@@ -142,9 +146,9 @@ export function ConfiguracoesScreen() {
       <View style={[styles.card, card, { gap: 8 }]}>
         <Text spec={text(t, { role: 'bodyStrong' })}>Contato — WhatsApp</Text>
         <View style={styles.chips}>
-          {DDI_OPTS.map(d => {
-            const on = ddi === d
-            return <Pressable key={d} onPress={() => setDdi(d)} style={[styles.chip, { borderColor: on ? t.color.identity.primary : t.color.border.default, backgroundColor: on ? t.color.badge.info.soft : 'transparent' }]}><Text spec={text(t, { role: 'caption', tone: on ? 'default' : 'muted' })}>{d}</Text></Pressable>
+          {DIAL_SHORTLIST.map(c => {
+            const on = phoneIso === c.iso
+            return <Pressable key={c.iso} onPress={() => setPhoneIso(c.iso)} accessibilityLabel={`${c.name} +${c.dial}`} style={[styles.chip, { borderColor: on ? t.color.identity.primary : t.color.border.default, backgroundColor: on ? t.color.badge.info.soft : 'transparent' }]}><Text spec={text(t, { role: 'caption', tone: on ? 'default' : 'muted' })}>{flagOf(c.iso)} +{c.dial}</Text></Pressable>
           })}
         </View>
         <Input value={phone} onChangeText={setPhone} placeholder="número (sem DDI)" keyboardType="phone-pad" />

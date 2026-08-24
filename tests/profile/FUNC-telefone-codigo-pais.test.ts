@@ -45,6 +45,23 @@ describe('PERFIL · separar o telefone gravado', () => {
     expect(splitPhone('(11) 99999-9999')).toEqual({ iso: 'BR', national: '11999999999' })
   })
 
+  it('REGRESSÃO — formato antigo COM ESPAÇO da tela de Configurações', () => {
+    // Configurações gravava `${ddi} ${numero}` — "+55 11999999999". Perfil grava
+    // E.164 sem espaço. Como as duas telas escrevem o MESMO campo, `splitPhone`
+    // tem de entender os dois; do contrário salvar numa corrompe o que a outra lê.
+    expect(splitPhone('+55 11999999999')).toEqual({ iso: 'BR', national: '11999999999' })
+    expect(splitPhone('+351 912345678')).toEqual({ iso: 'PT', national: '912345678' })
+  })
+
+  it('REGRESSÃO — DDI não é truncado por leitura gulosa', () => {
+    // A regex antiga, `^(\+\d{1,3})\s*(.*)$`, lia "+5511999999999" como DDI
+    // "+551" e número "1999999999" — e regravava o número corrompido.
+    const s = splitPhone('+5511999999999')
+    expect(s.iso).toBe('BR')
+    expect(s.national).toBe('11999999999')
+    expect(joinPhone(s.iso, s.national)).toBe('+5511999999999')  // ida e volta estável
+  })
+
   it('vazio abre o formulário no país padrão', () => {
     expect(splitPhone(null)).toEqual({ iso: 'BR', national: '' })
     expect(splitPhone('')).toEqual({ iso: 'BR', national: '' })
