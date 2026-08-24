@@ -8,7 +8,7 @@ import { useUser } from '@/context/UserContext'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import Select from '@/components/ui/Select'
-import { DIAL_SHORTLIST, DEFAULT_DIAL_ISO, splitPhone, joinPhone, flagOf } from '@sintera/core'
+import { DIAL_COUNTRIES, DEFAULT_DIAL_ISO, splitPhone, joinPhone, dialLabel } from '@sintera/core'
 import {
   NOTIFICATION_CATEGORIES, NOTIFICATION_CHANNELS, DEFAULT_CHANNEL, MANDATORY_NOTIFICATIONS,
   recommendedChannels, type NotificationChannel,
@@ -21,7 +21,7 @@ const CHANNEL_LABEL: Record<NotificationChannel, string> = {
 // FB-016-3 (re-validação) — código do país (DDI) do WhatsApp.
 // A lista e as bandeiras vêm do @sintera/core: mesmo catálogo do Perfil e do App.
 // Antes era declarada aqui, no App e no Perfil — quatro donos do mesmo campo.
-const DDI_OPTS = DIAL_SHORTLIST.map(c => ({ v: c.iso, l: `${flagOf(c.iso)} +${c.dial}` }))
+const DDI_OPTS = DIAL_COUNTRIES.map(c => ({ v: c.iso, l: dialLabel(c) }))
 
 export default function ConfiguracoesPage() {
   const { user, signOut } = useUser()
