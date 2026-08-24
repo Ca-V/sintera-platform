@@ -6,6 +6,6 @@
 ALTER TABLE exams ADD COLUMN IF NOT EXISTS document_scope text;
 
 COMMENT ON COLUMN exams.document_type IS
-  'Categoria/mídia do documento: laboratory | imaging | anatomopathology | medical_report | prescription | vaccination | omics | attestation | unknown.';
+  'Categoria/midia: laboratory | imaging | anatomopathology | medical_report | prescription | vaccination | omics | attestation | unknown.';
 COMMENT ON COLUMN exams.document_scope IS
-  'Abrangência do documento: single (um exame) | panel (vários da mesma categoria) | mixed (categorias distintas, ex. sangue+urina).';
+  'Abrangencia: single (um exame) | panel (varios da mesma categoria) | mixed (categorias distintas, ex. sangue+urina).';

@@ -54,3 +54,6 @@ qa001-artifacts/
 
 # QA a11y harness temporário (não versionar)
 scripts/qa/_tmp_*
+
+# Supabase CLI — cache local (nao versionar)
+supabase/.temp/

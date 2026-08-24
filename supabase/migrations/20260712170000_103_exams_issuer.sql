@@ -5,4 +5,4 @@
 ALTER TABLE exams ADD COLUMN IF NOT EXISTS issuer text;
 
 COMMENT ON COLUMN exams.issuer IS
-  'Nome do laboratório/clínica/hospital emissor do documento, transcrito do laudo (não inferido). Enriquece a exibição: display_title • issuer.';
+  'Nome do laboratorio/clinica/hospital emissor do documento, transcrito do laudo (nao inferido). Enriquece a exibicao: display_title + issuer.';
