@@ -13,9 +13,9 @@ Deno.serve(async (req: Request) => {
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
     const { data: stuckExams, error } = await supabase
       .from('exams')
-      .select('id, user_id, created_at, updated_at')
+      .select('id, user_id, created_at')
       .eq('status', 'processing')
-      .lt('updated_at', fiveMinutesAgo)
+      .lt('created_at', fiveMinutesAgo)
 
     if (error) {
       console.error('[pipeline-alert] query error:', error)
@@ -27,7 +27,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const examList = stuckExams.map(e => {
-      const elapsed = Math.round((Date.now() - new Date(e.updated_at).getTime()) / 60000)
+      const elapsed = Math.round((Date.now() - new Date(e.created_at).getTime()) / 60000)
       return `• exam_id: ${e.id} | user_id: ${e.user_id} | há ${elapsed} min`
     }).join('\n')
 
