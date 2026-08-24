@@ -13,7 +13,7 @@ import { Card } from '@/lib/ui/ds'
 import MotionCard from '@/components/ui/MotionCard'
 import ActionCard from '@/components/ui/ActionCard'
 import Select from '@/components/ui/Select'
-import { monthLabel } from '@sintera/core'
+import { monthLabel, DIAL_COUNTRIES, DEFAULT_DIAL_ISO, splitPhone, joinPhone } from '@sintera/core'
 import { getProfileStats, type ProfileStats } from '@sintera/api-client'
 import { validateName, validatePhone, validateAgeRange, validateGoals, parseGoals, goalsToInput, AGE_RANGE_OPTIONS } from '@sintera/validation'
 
@@ -36,7 +36,10 @@ export default function ProfilePage() {
 
   // Form (edição por formulário — mesmo fluxo do Mobile).
   const [name, setName]         = useState('')
+  // Telefone dividido: país (ISO) + número nacional. O gravado é E.164 (`+DDI…`).
+  // O DDI nunca é adivinhado — é o mesmo contrato do Mobile (@sintera/core).
   const [phone, setPhone]       = useState('')
+  const [phoneIso, setPhoneIso] = useState<string>(DEFAULT_DIAL_ISO)
   const [ageRange, setAgeRange] = useState('')
   const [goalsText, setGoals]   = useState('')
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
@@ -51,7 +54,13 @@ export default function ProfilePage() {
   // Semeia o form a partir do perfil carregado.
   useEffect(() => {
     setName(profile?.name ?? '')
-    setPhone(profile?.phone ?? '')
+    // Separa o gravado em país + número. Valor legado (só dígitos, sem "+") é
+    // lido como Brasil — que é o que sempre significou.
+    {
+      const split = splitPhone(profile?.phone)
+      setPhoneIso(split.iso)
+      setPhone(split.national)
+    }
     setAgeRange(profile?.age_range ?? '')
     setGoals(goalsToInput(profile?.goals ?? null))
   }, [profile])
@@ -86,7 +95,8 @@ export default function ProfilePage() {
       const res = await fetch('/api/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: nres.value, phone: pres.value, age_range: ares.value, goals: gres.value }),
+        // Grava em E.164 com o DDI do país escolhido: `+5511999999999`.
+        body: JSON.stringify({ name: nres.value, phone: joinPhone(phoneIso, pres.value), age_range: ares.value, goals: gres.value }),
       })
       if (!res.ok) throw new Error('Erro ao salvar')
       updateProfile(await res.json())
@@ -156,9 +166,20 @@ export default function ProfilePage() {
         </div>
 
         <div>
-          <label className="font-body text-[11px] text-mauve uppercase tracking-wider mb-1 block">Telefone <span className="text-mauve/60 normal-case">· com DDD</span></label>
-          <input value={phone} onChange={e => onEdit(setPhone)(e.target.value)} placeholder="(00) 00000-0000" inputMode="tel" disabled={saving}
-            className={`${inputCls} ${fieldErrors.phone ? 'border-red-400' : 'border-border'}`} />
+          <label className="font-body text-[11px] text-mauve uppercase tracking-wider mb-1 block">Telefone <span className="text-mauve/60 normal-case">· país e número com DDD</span></label>
+          {/* País + número. O DDI NUNCA é adivinhado: vem da escolha explícita, e é
+              o que o envio de WhatsApp usa. Ver @sintera/core/domain/profile/phone. */}
+          <div className="flex gap-2">
+            <select value={phoneIso} onChange={e => onEdit(setPhoneIso)(e.target.value)} disabled={saving}
+              aria-label="Código de país"
+              className={`${inputCls} border-border w-[46%] shrink-0`}>
+              {DIAL_COUNTRIES.map(c => (
+                <option key={c.iso} value={c.iso}>{c.name} +{c.dial}</option>
+              ))}
+            </select>
+            <input value={phone} onChange={e => onEdit(setPhone)(e.target.value)} placeholder="(00) 00000-0000" inputMode="tel" disabled={saving}
+              className={`${inputCls} ${fieldErrors.phone ? 'border-red-400' : 'border-border'}`} />
+          </div>
           {fieldErrors.phone && <p className="font-body text-xs text-red-500 mt-1">{fieldErrors.phone}</p>}
         </div>
 

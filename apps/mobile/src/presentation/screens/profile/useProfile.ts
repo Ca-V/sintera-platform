@@ -4,6 +4,7 @@
 // sem fila offline. Validação/normalização via @sintera/validation (contrato compartilhado com a Web).
 import { useReducer, useEffect, useState, useCallback, useRef } from 'react'
 import { validateName, validatePhone, validateAgeRange, validateGoals, parseGoals, goalsToInput } from '@sintera/validation'
+import { DEFAULT_DIAL_ISO, splitPhone, joinPhone } from '@sintera/core'
 import type { ProfileStats } from '@sintera/api-client'
 import { apiClient } from '../../../infrastructure/apiClient'
 import {
@@ -33,11 +34,15 @@ export interface UseProfile {
   /** Erro corrente de carga/gravação (mensagem acionável) ou null. */
   error: string | null
   name: string
+  /** Número NACIONAL, sem o código de país (que vive em `phoneIso`). */
   phone: string
+  /** País do telefone (ISO 3166-1 alfa-2). O DDI nunca é adivinhado — vem daqui. */
+  phoneIso: string
   ageRange: string
   goalsText: string
   setName: (v: string) => void
   setPhone: (v: string) => void
+  setPhoneIso: (v: string) => void
   setAgeRange: (v: string) => void
   setGoals: (v: string) => void
   fieldErrors: ProfileFieldErrors
@@ -55,7 +60,10 @@ export interface UseProfile {
 export function useProfile(): UseProfile {
   const [state, dispatch] = useReducer(profileReducer, initialProfileState)
   const [name, setNameRaw] = useState('')
+  // Telefone dividido: país (ISO) + número nacional. O gravado é E.164 (`+DDI…`),
+  // montado no Salvar por `joinPhone`. Nunca se adivinha o DDI.
   const [phone, setPhoneRaw] = useState('')
+  const [phoneIso, setPhoneIsoRaw] = useState<string>(DEFAULT_DIAL_ISO)
   const [ageRange, setAgeRangeRaw] = useState('')
   const [goalsText, setGoalsRaw] = useState('')
   const [fieldErrors, setFieldErrors] = useState<ProfileFieldErrors>({})
@@ -89,7 +97,11 @@ export function useProfile(): UseProfile {
       .then((data) => {
         if (!alive) return
         setNameRaw(data?.name ?? '')
-        setPhoneRaw(data?.phone ?? '')
+        // Separa o gravado em país + número nacional. Valor legado (só dígitos,
+        // sem "+") é lido como Brasil — que é o que ele sempre significou.
+        const split = splitPhone(data?.phone)
+        setPhoneIsoRaw(split.iso)
+        setPhoneRaw(split.national)
         setAgeRangeRaw(data?.age_range ?? '')
         setGoalsRaw(goalsToInput(data?.goals))
         setFieldErrors({})
@@ -137,6 +149,10 @@ export function useProfile(): UseProfile {
     setPhoneRaw(v)
     dispatch({ type: 'EDIT' })
   }, [])
+  const setPhoneIso = useCallback((v: string) => {
+    setPhoneIsoRaw(v)
+    dispatch({ type: 'EDIT' })
+  }, [])
   const setAgeRange = useCallback((v: string) => {
     setAgeRangeRaw(v)
     dispatch({ type: 'EDIT' })
@@ -158,9 +174,11 @@ export function useProfile(): UseProfile {
     if (!gres.ok) errs.goals = gres.error
     setFieldErrors(errs)
     if (!nres.ok || !pres.ok || !ares.ok || !gres.ok) return
-    patchRef.current = { name: nres.value, phone: pres.value, age_range: ares.value, goals: gres.value }
+    // Grava em E.164 com o DDI do país escolhido: `+5511999999999`.
+    // `joinPhone` devolve null quando o número nacional está vazio (campo opcional).
+    patchRef.current = { name: nres.value, phone: joinPhone(phoneIso, pres.value), age_range: ares.value, goals: gres.value }
     dispatch({ type: 'SAVE' })
-  }, [name, phone, ageRange, goalsText])
+  }, [name, phone, phoneIso, ageRange, goalsText])
 
   const retry = useCallback(() => dispatch({ type: 'RETRY' }), [])
 
@@ -170,10 +188,12 @@ export function useProfile(): UseProfile {
     error: state.error,
     name,
     phone,
+    phoneIso,
     ageRange,
     goalsText,
     setName,
     setPhone,
+    setPhoneIso,
     setAgeRange,
     setGoals,
     fieldErrors,
