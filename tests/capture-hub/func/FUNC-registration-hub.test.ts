@@ -3,6 +3,9 @@ import { describe, it, expect } from 'vitest'
 import {
   REGISTRATION_INTENTS, INTENT_GROUPS, intentsByGroup, type IntentGroup,
 } from '@/lib/capture/registrationHub'
+// Catálogos em runtime (core) — o teste valida contra a MESMA fonte de que o tipo deriva,
+// em vez de manter uma cópia da lista que silenciosamente envelhece.
+import { DOCUMENT_KINDS, REGISTRATION_DESTINATIONS } from '@sintera/core'
 
 describe('HUB-001 · taxonomia', () => {
   it('todo intent pertence a um grupo declarado', () => {
@@ -14,14 +17,14 @@ describe('HUB-001 · taxonomia', () => {
     expect(new Set(keys).size).toBe(keys.length)
   })
   it('mecanismo capture referencia DocumentKind válido quando presente', () => {
-    const valid = new Set(['exam', 'medication_label', 'eyeglass_prescription', 'omics', 'other', 'unknown'])
+    const valid = new Set<string>(DOCUMENT_KINDS)
     for (const i of REGISTRATION_INTENTS) {
       if (i.mechanism.type === 'capture' && i.mechanism.documentKind) expect(valid.has(i.mechanism.documentKind)).toBe(true)
       if (i.mechanism.type === 'choice') expect(valid.has(i.mechanism.captureKind)).toBe(true)
     }
   })
   it('page/choice referenciam um destino de DOMÍNIO válido (a rota é mapeada na plataforma)', () => {
-    const dests = new Set(['omics', 'medications', 'supplements', 'resources', 'resources-vision', 'consulta', 'conditions', 'body', 'habits', 'expenses'])
+    const dests = new Set<string>(REGISTRATION_DESTINATIONS)
     for (const i of REGISTRATION_INTENTS) {
       if (i.mechanism.type === 'page') expect(dests.has(i.mechanism.destination)).toBe(true)
       if (i.mechanism.type === 'choice') expect(dests.has(i.mechanism.pageDestination)).toBe(true)

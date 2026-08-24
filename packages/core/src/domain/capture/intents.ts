@@ -15,9 +15,13 @@ export const INTENT_GROUPS: { group: IntentGroup; label: string }[] = [
 ]
 
 /** Destino de domínio (agnóstico de plataforma). Web mapeia para href; Mobile para aba/tela. */
-export type RegistrationDestination =
-  | 'omics' | 'medications' | 'supplements' | 'resources' | 'resources-vision'
-  | 'consulta' | 'conditions' | 'body' | 'habits' | 'expenses'
+export const REGISTRATION_DESTINATIONS = [
+  'omics', 'medications', 'supplements', 'resources', 'resources-vision',
+  'consulta', 'conditions', 'body', 'habits', 'expenses', 'documents',
+] as const
+
+/** Derivado do catálogo acima — lista em runtime e tipo com UM dono só (ADR-023). */
+export type RegistrationDestination = typeof REGISTRATION_DESTINATIONS[number]
 
 /** COMO a SINTERA captura a intenção escolhida. A intenção declara; o Hub orquestra. */
 export type IntentMechanism =
@@ -42,8 +46,12 @@ export const REGISTRATION_INTENTS: RegistrationIntent[] = [
   // ── Documentos → Capture Center ───────────────────────────────────────────
   { key: 'exame',        label: 'Exame / Laudo',      icon: 'FlaskConical',  group: 'documento', mechanism: { type: 'capture', documentKind: 'exam' } },
   { key: 'pedido_exame', label: 'Pedido de exame',    icon: 'ClipboardList', group: 'documento', mechanism: { type: 'capture' } },
+  // DOC-002: receita e documento clínico são SUBTIPOS do domínio Documentos do paciente — por isso ambos
+  // declaram um kind e terminam na página de Documentos, como `omica` termina na de Ômicas. Antes, `doc_clinico`
+  // não declarava kind nenhum ("deixa classificar") e a classificação só oferecia kinds que não eram o que a
+  // pessoa tinha escolhido: a categoria não sobrevivia à jornada.
   { key: 'receita',      label: 'Receita médica',     icon: 'FileText',      group: 'documento', mechanism: { type: 'capture', documentKind: 'medication_label' } },
-  { key: 'doc_clinico',  label: 'Atestado, relatório ou encaminhamento', icon: 'FileHeart', group: 'documento', mechanism: { type: 'capture' } },
+  { key: 'doc_clinico',  label: 'Atestado, relatório ou encaminhamento', icon: 'FileHeart', group: 'documento', mechanism: { type: 'capture', documentKind: 'clinical_document' } },
   { key: 'omica',        label: 'Exame ômico',        icon: 'Dna',           group: 'documento', mechanism: { type: 'page', destination: 'omics' } },
 
   // ── Cuidados e recursos ───────────────────────────────────────────────────

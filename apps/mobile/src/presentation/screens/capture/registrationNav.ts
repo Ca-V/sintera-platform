@@ -15,4 +15,5 @@ export const REGISTRATION_NAV: Record<RegistrationDestination, MobileNavTarget> 
   body:               { tab: 'MinhaSaude', screen: 'Composicao' },
   habits:             { tab: 'MinhaSaude', screen: 'Habits' },
   expenses:           { tab: 'Mais', screen: 'Despesas' },
+  documents:          { tab: 'MinhaSaude', screen: 'Documents' },
 }
