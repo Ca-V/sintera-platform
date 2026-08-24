@@ -30,6 +30,9 @@ import {
   ChevronDown, Minus, Droplet, Receipt, Leaf, Clock, TrendingUp, TrendingDown,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+// Taxonomia do relatório — dono único (ADR-023). O Mobile consome as MESMAS
+// constantes; declarar em paralelo fazia as duas telas divergirem em silêncio.
+import { REPORT_GROUPS, defaultSections, type ReportSectionKey } from '@sintera/core'
 import { assembleOrganizedBiomarkers } from '@/lib/ai/insights/assembler'
 import { summarizeBiomarkers, examDate, type BiomarkerRow } from '@/lib/biomarkers/grouping'
 import { useUser } from '@/context/UserContext'
@@ -37,6 +40,26 @@ import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
 import { typeLabel, professionalKindLabel, isClosedStatus, type HealthEvent } from '@/lib/agenda' // fonte ÚNICA de rótulos de tipo/profissional
 import { useEventForm } from '@/components/eventForm' // serviço de domínio (query.listFinancial = Despesas)
 import { contraceptiveLabel } from '@/lib/cycle'       // SSOT dos métodos contraceptivos
+
+// Ícone por seção — APRESENTAÇÃO, exclusiva da Web (o Mobile não usa ícone aqui).
+// A chave é `ReportSectionKey`: se o core ganhar uma seção nova, o TypeScript
+// obriga a declarar o ícone dela aqui. É o gate que impede a Web de ficar para trás.
+const SECTION_ICON: Record<ReportSectionKey, ElementType> = {
+  eventos: CalendarDays,
+  registros: Clock,
+  histexames: TrendingUp,
+  medidas: Ruler,
+  sinais: Activity,
+  exames: FileText,
+  omica: FlaskConical,
+  condicoes: Stethoscope,
+  medicamentos: Pill,
+  suplementos: Leaf,
+  visao: Eye,
+  habitos: HeartPulse,
+  ciclo: Droplet,
+  gastos: Receipt,
+}
 
 interface Med { name: string; kind: string; dose: string | null; frequency: string | null; startedOn: string | null; untilOn: string | null; status: string }
 interface Ev { title: string; eventType: string; prof: string | null; date: string; notes: string | null; status: string }
@@ -129,7 +152,8 @@ function LegacyReport() {
   const [shareBusy, setShareBusy] = useState(false)
   const [confirm, setConfirm] = useState<{ message: string; confirmLabel: string; onYes: () => void } | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
-  const [sections, setSections] = useState({ medicamentos: true, suplementos: true, condicoes: true, habitos: true, visao: true, eventos: true, registros: true, histexames: true, exames: true, omica: true, medidas: true, sinais: true, ciclo: true, gastos: true })
+  // Seções do relatório — o conjunto e o padrão vêm do core (mesma fonte do Mobile).
+  const [sections, setSections] = useState<Record<ReportSectionKey, boolean>>(defaultSections())
   const toggle = (k: keyof typeof sections) => setSections(s => ({ ...s, [k]: !s[k] }))
   // Filtro temporal (capacidade transversal da Camada de Comunicação).
   const [period, setPeriod] = useState<Period>({ preset: 'all' })
@@ -199,32 +223,17 @@ function LegacyReport() {
   // Espelho da Sidebar (FB-010): mesma taxonomia por domínio. Acompanhamento (Agenda, Composição Corporal,
   // Monitoramento) · Documentos (Exames, ômica) · Minha Saúde (Condições, Medicamentos, Recursos, Hábitos,
   // Ciclo) · Organização (Despesas). Qualquer mudança na Sidebar deve refletir aqui.
-  const SELECT_GROUPS: { title: string; items: [SectionKey, string, ElementType][] }[] = [
-    { title: 'Acompanhamento', items: [
-      ['eventos', 'Agenda', CalendarDays],
-      ['registros', 'Histórico de Saúde', Clock],
-      ['histexames', 'Histórico de Exames', TrendingUp],
-      ['medidas', 'Composição Corporal', Ruler],
-      ['sinais', 'Monitoramento', Activity],
-    ] },
-    { title: 'Documentos', items: [
-      ['exames', 'Exames', FileText],
-      ['omica', 'Exames de ômica', FlaskConical],
-    ] },
-    { title: 'Minha Saúde', items: [
-      ['condicoes', 'Condições de Saúde', Stethoscope],
-      ['medicamentos', 'Medicamentos', Pill],
-      ['suplementos', 'Suplementos', Leaf],
-      ['visao', 'Recursos de Saúde', Eye],
-      ['habitos', 'Hábitos', HeartPulse],
-      ['ciclo', 'Ciclo e Contracepção', Droplet],
-    ] },
-    { title: 'Organização', items: [
-      ['gastos', 'Despesas', Receipt],
-    ] },
-  ]
+  // A TAXONOMIA (chaves, rótulos, agrupamento e ordem) tem dono único: @sintera/core.
+  // A Web acrescenta apenas o ícone — que é apresentação, e o Mobile não usa.
+  // Antes, esta lista era declarada aqui e no Mobile em paralelo: acrescentar uma
+  // seção no core dava a seção ao App e não à Web, sem ninguém perceber (ADR-023).
+  const SELECT_GROUPS: { title: string; items: [SectionKey, string, ElementType][] }[] =
+    REPORT_GROUPS.map(g => ({
+      title: g.title,
+      items: g.items.map(i => [i.key as SectionKey, i.label, SECTION_ICON[i.key]] as [SectionKey, string, ElementType]),
+    }))
   // Comandos de seleção (via SelectionToolbar reutilizável).
-  const DEFAULT_SECTIONS = { medicamentos: true, suplementos: true, condicoes: true, habitos: true, visao: true, eventos: true, registros: true, histexames: true, exames: true, omica: true, medidas: true, sinais: true, ciclo: true, gastos: true }
+  const DEFAULT_SECTIONS = defaultSections()
   const allSections = (v: boolean) => Object.fromEntries(Object.keys(sections).map(k => [k, v])) as typeof sections
   const selectAllSections = () => { setSections(allSections(true)); setExcluded({}) }
   const clearSections = () => setSections(allSections(false))
