@@ -17,10 +17,16 @@
         "buildType": "apk",
         "gradleCommand": ":app:assembleRelease",
         "applicationArchivePath": "android/app/build/outputs/apk/release/app-release.apk"
+      },
+      "ios": {
+        "simulator": false
       }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "ios": {
+        "simulator": false
+      }
     }
   },
   "submit": {
