@@ -40,15 +40,18 @@ describe('DOC-001 · Receita associável a 1..N contextos (os 7 da fundadora)', 
   })
   it('cada um dos 7 casos vira um link (uma receita → N alvos)', () => {
     const associations = RECEITA_TARGET_DOMAINS.map((d, i) => ({ target_domain: d, target_id: `alvo-${i}` }))
-    const links = buildDocumentLinkInserts('doc-1', 'receita', associations)
+    const links = buildDocumentLinkInserts('doc-1', 'u-1', 'receita', associations)
     expect(links.length).toBe(7)
     expect(links.map(l => l.target_domain)).toEqual(RECEITA_TARGET_DOMAINS)
     expect(links.every(l => l.document_id === 'doc-1')).toBe(true)
+    // `user_id` em TODO link: a RLS de `patient_document_links` exige `auth.uid() = user_id`. Um link sem
+    // dono seria rejeitado pelo banco na hora de gravar — falha que só apareceria em produção.
+    expect(links.every(l => l.user_id === 'u-1')).toBe(true)
   })
   it('associação fora da especificação é rejeitada (sem regra provisória)', () => {
     // 'exame' não é alvo de Receita → inválido; documentos clínicos associam a consulta/exame.
     expect(canAssociate('receita', 'exame' as DocumentTargetDomain)).toBe(false)
-    expect(() => buildDocumentLinkInserts('doc-1', 'receita', [{ target_domain: 'exame', target_id: 'x' }])).toThrow(/inválida/)
+    expect(() => buildDocumentLinkInserts('doc-1', 'u-1', 'receita', [{ target_domain: 'exame', target_id: 'x' }])).toThrow(/inválida/)
     expect(canAssociate('atestado', 'consulta')).toBe(true)
     expect(canAssociate('atestado', 'medicamento')).toBe(false)
   })
@@ -97,7 +100,7 @@ describe('DOC-001 · createPatientDocument — INVARIANTE: nunca toca exams/exam
 describe('DOC-001 · associateDocument — associação posterior (não recria, não muta alvo)', () => {
   it('liga um documento existente a mais alvos tocando só patient_document_links', async () => {
     const { client, touched } = fakeClient()
-    const r = await associateDocument(client, { document_id: 'doc-1', subtype: 'receita', associations: [
+    const r = await associateDocument(client, { document_id: 'doc-1', user_id: 'u-1', subtype: 'receita', associations: [
       { target_domain: 'ciclo', target_id: 'ctc-1' }, { target_domain: 'monitoramento', target_id: 'mon-1' },
     ] })
     expect(r.error).toBeNull(); expect(r.linkIds.length).toBe(2)

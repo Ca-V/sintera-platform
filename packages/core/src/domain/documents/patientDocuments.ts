@@ -87,8 +87,19 @@ export interface PatientDocumentInsert {
   source: string
   status: string
 }
-/** Linha de associação `public.patient_document_links` (N por documento). */
-export interface DocumentLinkInsert { document_id: string; target_domain: DocumentTargetDomain; target_id: string }
+/**
+ * Linha de associação `public.patient_document_links` (N por documento).
+ *
+ * `user_id` é cópia do dono do documento — denormalização deliberada, igual à de `exam_documents`. Existe para
+ * que a RLS e o índice `(user_id, target_domain, target_id)` respondam "quais documentos estão ligados a este
+ * medicamento?" sem join. Nunca é editado de forma independente: quem cria a linha é sempre o dono do documento.
+ */
+export interface DocumentLinkInsert {
+  document_id: string
+  user_id: string
+  target_domain: DocumentTargetDomain
+  target_id: string
+}
 
 const SOURCE_DEFAULT = 'upload_usuario'
 
@@ -112,12 +123,12 @@ export function buildPatientDocumentInsert(user_id: string, doc: NewPatientDocum
  * associação fora da especificação é REJEITADA (lança), evitando "regra provisória". Uma receita gera N links.
  */
 export function buildDocumentLinkInserts(
-  document_id: string, subtype: PatientDocumentSubtype, associations: DocumentAssociation[],
+  document_id: string, user_id: string, subtype: PatientDocumentSubtype, associations: DocumentAssociation[],
 ): DocumentLinkInsert[] {
   return associations.map(a => {
     if (!canAssociate(subtype, a.target_domain))
       throw new Error(`associação inválida: ${subtype} → ${a.target_domain}`)
-    return { document_id, target_domain: a.target_domain, target_id: a.target_id }
+    return { document_id, user_id, target_domain: a.target_domain, target_id: a.target_id }
   })
 }
 
@@ -144,7 +155,7 @@ export async function createPatientDocument(
   const associations = params.doc.associations ?? []
   if (associations.length === 0) return { id, linkIds: [], error: null }
   let links: DocumentLinkInsert[]
-  try { links = buildDocumentLinkInserts(id, params.doc.subtype, associations) }
+  try { links = buildDocumentLinkInserts(id, params.user_id, params.doc.subtype, associations) }
   catch (e) { return { id, linkIds: [], error: toError(e) } }
   const { data: ld, error: le } = await client.from('patient_document_links').insert(links).select('id')
   if (le) return { id, linkIds: [], error: toError(le) }
@@ -157,11 +168,11 @@ export async function createPatientDocument(
  */
 export async function associateDocument(
   client: PatientDocWriteClient,
-  params: { document_id: string; subtype: PatientDocumentSubtype; associations: DocumentAssociation[] },
+  params: { document_id: string; user_id: string; subtype: PatientDocumentSubtype; associations: DocumentAssociation[] },
 ): Promise<{ linkIds: string[]; error: Error | null }> {
   if (params.associations.length === 0) return { linkIds: [], error: null }
   let links: DocumentLinkInsert[]
-  try { links = buildDocumentLinkInserts(params.document_id, params.subtype, params.associations) }
+  try { links = buildDocumentLinkInserts(params.document_id, params.user_id, params.subtype, params.associations) }
   catch (e) { return { linkIds: [], error: toError(e) } }
   const { data, error } = await client.from('patient_document_links').insert(links).select('id')
   if (error) return { linkIds: [], error: toError(error) }
