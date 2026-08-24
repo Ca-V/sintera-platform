@@ -64,6 +64,30 @@ export const DIAL_COUNTRIES: readonly DialCountry[] = [
   { iso: 'UY', name: 'Uruguai',             dial: '598' },
 ]
 
+/**
+ * Lista curta para telas compactas (ex.: os "chips" de DDI em Configurações,
+ * onde 32 opções não cabem). É um RECORTE do catálogo acima, não outro catálogo:
+ * o país e o DDI continuam vindo de `DIAL_COUNTRIES`.
+ */
+export const DIAL_SHORTLIST_ISO: readonly string[] = [
+  'BR', 'PT', 'US', 'GB', 'ES', 'DE', 'FR', 'IT', 'AR', 'AU',
+]
+
+/** Os países da lista curta, resolvidos do catálogo. */
+export const DIAL_SHORTLIST: readonly DialCountry[] =
+  DIAL_SHORTLIST_ISO.map(iso => DIAL_COUNTRIES.find(c => c.iso === iso)!).filter(Boolean)
+
+/**
+ * Bandeira do país a partir do ISO — calculada, não tabelada. Cada letra vira o
+ * "regional indicator symbol" correspondente (A → 🇦), e o par forma a bandeira.
+ * Evita mais uma lista para manter em sincronia.
+ */
+export function flagOf(iso: string): string {
+  const up = (iso ?? '').toUpperCase()
+  if (!/^[A-Z]{2}$/.test(up)) return ''
+  return String.fromCodePoint(...[...up].map(c => 0x1f1e6 + c.charCodeAt(0) - 65))
+}
+
 /** Só dígitos. */
 function digitsOf(raw: string): string {
   return raw.replace(/\D/g, '')

@@ -8,6 +8,7 @@ import { useUser } from '@/context/UserContext'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import Select from '@/components/ui/Select'
+import { DIAL_SHORTLIST, DEFAULT_DIAL_ISO, splitPhone, joinPhone, flagOf } from '@sintera/core'
 import {
   NOTIFICATION_CATEGORIES, NOTIFICATION_CHANNELS, DEFAULT_CHANNEL, MANDATORY_NOTIFICATIONS,
   recommendedChannels, type NotificationChannel,
@@ -18,11 +19,9 @@ const CHANNEL_LABEL: Record<NotificationChannel, string> = {
 }
 
 // FB-016-3 (re-validação) — código do país (DDI) do WhatsApp.
-const DDI_OPTS: { v: string; l: string }[] = [
-  { v: '+55', l: '🇧🇷 +55' }, { v: '+351', l: '🇵🇹 +351' }, { v: '+1', l: '🇺🇸 +1' },
-  { v: '+44', l: '🇬🇧 +44' }, { v: '+34', l: '🇪🇸 +34' }, { v: '+49', l: '🇩🇪 +49' },
-  { v: '+33', l: '🇫🇷 +33' }, { v: '+39', l: '🇮🇹 +39' }, { v: '+54', l: '🇦🇷 +54' }, { v: '+61', l: '🇦🇺 +61' },
-]
+// A lista e as bandeiras vêm do @sintera/core: mesmo catálogo do Perfil e do App.
+// Antes era declarada aqui, no App e no Perfil — quatro donos do mesmo campo.
+const DDI_OPTS = DIAL_SHORTLIST.map(c => ({ v: c.iso, l: `${flagOf(c.iso)} +${c.dial}` }))
 
 export default function ConfiguracoesPage() {
   const { user, signOut } = useUser()
@@ -49,7 +48,7 @@ export default function ConfiguracoesPage() {
   }
 
   // ── Contatos: WhatsApp (com código do país) ─────────────────────────────────
-  const [ddi, setDdi]             = useState('+55')   // FB-016-3 (re-validação): código do país
+  const [ddi, setDdi]             = useState(DEFAULT_DIAL_ISO)  // FB-016-3: agora é o ISO do país, não o DDI
   const [phone, setPhone]         = useState('')      // só o número (sem DDI)
   const [waLoading, setWaLoading] = useState(false)
   const [waSaved, setWaSaved]     = useState(false)
@@ -77,9 +76,11 @@ export default function ConfiguracoesPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(supabase as any).from('profiles').select('phone').eq('id', user.id).maybeSingle()
       .then(({ data }: { data: { phone: string | null } | null }) => {
-        const raw = (data?.phone ?? '').trim()
-        const m = raw.match(/^(\+\d{1,3})\s*(.*)$/)   // separa DDI do número, se houver
-        if (m) { setDdi(m[1]); setPhone(m[2].trim()) } else setPhone(raw)
+        // Leitura pela regra ÚNICA do core: cobre E.164 (`+5511…`), o formato
+        // antigo com espaço (`+55 11…`) e o legado sem DDI. A regex anterior só
+        // entendia o formato com espaço — e lia `+5511…` como DDI `+551`.
+        const split = splitPhone(data?.phone)
+        setDdi(split.iso); setPhone(split.national)
       })
   }, [user, supabase])
 
@@ -89,7 +90,8 @@ export default function ConfiguracoesPage() {
     try {
       // FB-016-3: o canal (e-mail/WhatsApp/ambos/nenhum) é governado pela Central de Notificações, por categoria.
       // Aqui só cadastramos o CONTATO (número em formato internacional: DDI + número).
-      const full = phone.trim() ? `${ddi} ${phone.trim()}` : null
+      // Gravação pela regra ÚNICA do core — mesmo formato E.164 do Perfil e do App.
+      const full = joinPhone(ddi, phone)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (supabase as any).from('profiles')
         .update({ phone: full, pref_whatsapp_reminder: !!full })
