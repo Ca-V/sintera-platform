@@ -15,7 +15,13 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "health.sintera.app"
+      "bundleIdentifier": "health.sintera.app",
+      "infoPlist": {
+        "CFBundleDevelopmentRegion": "pt-BR",
+        "CFBundleLocalizations": ["pt-BR"],
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSFaceIDUsageDescription": "Protege o acesso aos seus dados de saúde neste aparelho."
+      }
     },
     "android": {
       "package": "health.sintera.app",
