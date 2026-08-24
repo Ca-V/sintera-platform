@@ -42,6 +42,7 @@ export type MinhaSaudeStackParamList = {
   OmicsPanel: { id: string; domain?: string }
   Medications: { supplements?: boolean } | undefined
   Resources: undefined
+  Documents: undefined
   // Saúde
   Conditions: undefined
   Composicao: undefined
