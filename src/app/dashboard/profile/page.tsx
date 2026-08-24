@@ -13,7 +13,7 @@ import { Card } from '@/lib/ui/ds'
 import MotionCard from '@/components/ui/MotionCard'
 import ActionCard from '@/components/ui/ActionCard'
 import Select from '@/components/ui/Select'
-import { monthLabel, DIAL_COUNTRIES, DEFAULT_DIAL_ISO, splitPhone, joinPhone } from '@sintera/core'
+import { monthLabel, DIAL_COUNTRIES, DEFAULT_DIAL_ISO, splitPhone, joinPhone, dialLabel } from '@sintera/core'
 import { getProfileStats, type ProfileStats } from '@sintera/api-client'
 import { validateName, validatePhone, validateAgeRange, validateGoals, parseGoals, goalsToInput, AGE_RANGE_OPTIONS } from '@sintera/validation'
 
@@ -174,7 +174,7 @@ export default function ProfilePage() {
               aria-label="Código de país"
               className={`${inputCls} border-border w-[46%] shrink-0`}>
               {DIAL_COUNTRIES.map(c => (
-                <option key={c.iso} value={c.iso}>{c.name} +{c.dial}</option>
+                <option key={c.iso} value={c.iso}>{dialLabel(c)}</option>
               ))}
             </select>
             <input value={phone} onChange={e => onEdit(setPhone)(e.target.value)} placeholder="(00) 00000-0000" inputMode="tel" disabled={saving}

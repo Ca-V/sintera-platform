@@ -7,7 +7,7 @@ import { ScrollView, View, ActivityIndicator, Pressable, StyleSheet } from 'reac
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { text, heading } from '@sintera/design-system'
-import { monthLabel, DIAL_COUNTRIES } from '@sintera/core'
+import { monthLabel, dialSelectOptions } from '@sintera/core'
 import { AGE_RANGE_OPTIONS } from '@sintera/validation'
 import { Avatar, Button, FieldRow, Input, Select, Text } from '../../primitives'
 import { useTheme } from '../../theme'
@@ -18,7 +18,7 @@ import { useProfile } from './useProfile'
 const AGE_RANGE_SELECT = [{ id: '', label: 'Não informar' }, ...AGE_RANGE_OPTIONS.map(o => ({ id: o, label: o }))]
 
 // Códigos de país (SSOT em @sintera/core). Passa de 8 opções → o Select abre com busca.
-const COUNTRY_SELECT = DIAL_COUNTRIES.map(c => ({ id: c.iso, label: `${c.name} +${c.dial}` }))
+const COUNTRY_SELECT = dialSelectOptions()   // mesma lista e mesmos rótulos da Configurações
 
 /** Dias desde a criação da conta (mín. 1). Cálculo de exibição — mesma fórmula da Web. */
 function daysSince(iso: string | null): number {

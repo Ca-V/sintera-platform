@@ -65,19 +65,6 @@ export const DIAL_COUNTRIES: readonly DialCountry[] = [
 ]
 
 /**
- * Lista curta para telas compactas (ex.: os "chips" de DDI em Configurações,
- * onde 32 opções não cabem). É um RECORTE do catálogo acima, não outro catálogo:
- * o país e o DDI continuam vindo de `DIAL_COUNTRIES`.
- */
-export const DIAL_SHORTLIST_ISO: readonly string[] = [
-  'BR', 'PT', 'US', 'GB', 'ES', 'DE', 'FR', 'IT', 'AR', 'AU',
-]
-
-/** Os países da lista curta, resolvidos do catálogo. */
-export const DIAL_SHORTLIST: readonly DialCountry[] =
-  DIAL_SHORTLIST_ISO.map(iso => DIAL_COUNTRIES.find(c => c.iso === iso)!).filter(Boolean)
-
-/**
  * Bandeira do país a partir do ISO — calculada, não tabelada. Cada letra vira o
  * "regional indicator symbol" correspondente (A → 🇦), e o par forma a bandeira.
  * Evita mais uma lista para manter em sincronia.
@@ -86,6 +73,21 @@ export function flagOf(iso: string): string {
   const up = (iso ?? '').toUpperCase()
   if (!/^[A-Z]{2}$/.test(up)) return ''
   return String.fromCodePoint(...[...up].map(c => 0x1f1e6 + c.charCodeAt(0) - 65))
+}
+
+/**
+ * Rótulo do país no seletor — fonte única do TEXTO, não só da lista.
+ * Todas as telas que oferecem código de país (Perfil e Configurações, Web e
+ * Mobile) usam este mesmo rótulo, para o seletor ser reconhecivelmente o mesmo
+ * controle em qualquer lugar do produto.
+ */
+export function dialLabel(c: DialCountry): string {
+  return `${flagOf(c.iso)} ${c.name} +${c.dial}`
+}
+
+/** Opções prontas para o seletor, na ordem do catálogo. */
+export function dialSelectOptions(): { id: string; label: string }[] {
+  return DIAL_COUNTRIES.map(c => ({ id: c.iso, label: dialLabel(c) }))
 }
 
 /** Só dígitos. */

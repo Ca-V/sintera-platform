@@ -7,15 +7,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import {
   NOTIFICATION_CATEGORIES, DEFAULT_CHANNEL, MANDATORY_NOTIFICATIONS, recommendedChannels,
-  DIAL_SHORTLIST, DEFAULT_DIAL_ISO, splitPhone, joinPhone, flagOf,
+  DEFAULT_DIAL_ISO, splitPhone, joinPhone, dialSelectOptions,
   type NotificationChannel,
 } from '@sintera/core'
-import { Text, Button, Input } from '../../primitives'
+import { Text, Button, Input, Select } from '../../primitives'
 import { useTheme } from '../../theme'
 import { useAuth } from '../../../state/AuthProvider'
 import { apiClient } from '../../../infrastructure/apiClient'
 
 const WEB_URL = process.env.EXPO_PUBLIC_WEB_URL
+const COUNTRY_SELECT = dialSelectOptions()   // mesma lista e mesmos rótulos do Perfil
 const CHANNELS: { id: NotificationChannel; label: string }[] = [
   { id: 'email', label: 'E-mail' }, { id: 'whatsapp', label: 'WhatsApp' }, { id: 'both', label: 'Ambos' }, { id: 'none', label: 'Nenhum' },
 ]
@@ -145,13 +146,24 @@ export function ConfiguracoesScreen() {
       {/* WhatsApp */}
       <View style={[styles.card, card, { gap: 8 }]}>
         <Text spec={text(t, { role: 'bodyStrong' })}>Contato — WhatsApp</Text>
-        <View style={styles.chips}>
-          {DIAL_SHORTLIST.map(c => {
-            const on = phoneIso === c.iso
-            return <Pressable key={c.iso} onPress={() => setPhoneIso(c.iso)} accessibilityLabel={`${c.name} +${c.dial}`} style={[styles.chip, { borderColor: on ? t.color.identity.primary : t.color.border.default, backgroundColor: on ? t.color.badge.info.soft : 'transparent' }]}><Text spec={text(t, { role: 'caption', tone: on ? 'default' : 'muted' })}>{flagOf(c.iso)} +{c.dial}</Text></Pressable>
-          })}
+        {/* MESMO controle do Perfil: card que abre painel deslizante com busca.
+            Antes eram 10 "chips" — controle diferente para a mesma escolha, nas
+            duas telas do produto que pedem código de país. */}
+        <View style={styles.phoneRow}>
+          <View style={{ flex: 1.1 }}>
+            <Select
+              options={COUNTRY_SELECT}
+              value={phoneIso}
+              onChange={setPhoneIso}
+              placeholder="País"
+              title="Código de país"
+              searchable
+            />
+          </View>
+          <View style={{ flex: 1.4 }}>
+            <Input value={phone} onChangeText={setPhone} placeholder="número (sem DDI)" keyboardType="phone-pad" />
+          </View>
         </View>
-        <Input value={phone} onChangeText={setPhone} placeholder="número (sem DDI)" keyboardType="phone-pad" />
         <Text spec={text(t, { role: 'caption', tone: 'faint' })}>O canal de cada aviso é definido abaixo, por categoria.</Text>
         <Button label="Salvar contato" variant="secondary" onPress={saveWhatsApp} loading={waBusy} loadingLabel="Salvando…" />
         {waMsg ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{waMsg}</Text> : null}
@@ -227,6 +239,7 @@ export function ConfiguracoesScreen() {
 
 const styles = StyleSheet.create({
   content: { padding: 20, gap: 14 },
+  phoneRow: { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   card: { borderWidth: 1, borderRadius: 16, padding: 16 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
