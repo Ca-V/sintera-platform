@@ -4,7 +4,7 @@ import {
   createPatientDocument, associateDocument, isDocumentSubtype, documentSubtypeLabel,
   RECEITA_TARGET_DOMAINS, DOCUMENT_SUBTYPES,
   type PatientDocWriteClient, type DocumentTargetDomain,
-} from '@/lib/documents/patientDocuments'
+} from '@sintera/core'
 
 // DOC-001 — domínio "Documentos do paciente" (opção B, isolado, sem banco).
 // Cliente FAKE que REGISTRA quais tabelas foram tocadas — para provar o invariante "documento ≠ exame".

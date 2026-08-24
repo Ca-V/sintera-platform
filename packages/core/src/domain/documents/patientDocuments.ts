@@ -1,6 +1,11 @@
-// DOC-001 — Domínio "Documentos do paciente" (camada de domínio/dados ISOLADA · opção B).
+// @sintera/core — DOC-001 · DOC-002 — Domínio "Documentos do paciente". Fonte ÚNICA Web↔Mobile.
 //
-// Fonte de verdade: docs/HOMOLOG-SPECS_C1_C2_C3.md (DOC-001). Decisões travadas (não reabrir):
+// MORAVA EM `src/lib/documents/` — Web-only, fora do alcance do Mobile. Movido para cá porque a página de
+// Documentos existe nas duas pontas: manter o domínio do lado da Web faria nascer um segundo dono do mesmo
+// conceito, que é o defeito nomeado pelo ADR-023 e que já custou três correções no campo de telefone.
+// Puro/testável: sem React, sem Supabase, sem IO — o binding real entra na camada de plataforma.
+//
+// Fonte de verdade: docs/HOMOLOG-SPECS_C1_C2_C3.md (DOC-001) + docs/DOC-002. Decisões travadas (não reabrir):
 //  • Domínio ÚNICO de documentos do paciente (Receita, Atestado, Relatório, Encaminhamento como SUBTIPOS).
 //  • SEPARADO de `exams` e de `exam_documents` (aquele é escopo-exame; este é documento do paciente).
 //  • Receita pode ser ASSOCIADA a 1..N contextos/categorias conforme o conteúdo: Medicamento, Suplemento,
@@ -8,9 +13,8 @@
 //  • NUNCA usar uma categoria genérica "Evento" para acomodar esses documentos.
 //  • Sem regra provisória fora da especificação.
 //
-// Puro/testável. NÃO conecta banco, NÃO aplica schema, NÃO toca UI. O binding real (SupabaseClient) entra só no
-// wiring gated (após a Fase própria). INVARIANTE CENTRAL: criar/associar um Documento NUNCA cria um exame nem
-// muta o registro-alvo — só escreve em `patient_documents` / `patient_document_links`.
+// INVARIANTE CENTRAL: criar/associar um Documento NUNCA cria um exame nem muta o registro-alvo — só escreve em
+// `patient_documents` / `patient_document_links`. Coberta por teste.
 
 /** Subtipos de documento do paciente (catálogo aberto; `outro` cobre o que não está listado). */
 export type PatientDocumentSubtype = 'receita' | 'atestado' | 'relatorio' | 'encaminhamento' | 'outro'
