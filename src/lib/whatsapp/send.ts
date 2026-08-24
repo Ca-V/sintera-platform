@@ -12,6 +12,8 @@
 // O conteúdo é factual (lembrete de evento da própria usuária), sem juízo clínico.
 // ============================================================
 
+import { toDialDigits } from '@sintera/core'
+
 const GRAPH_VERSION = 'v21.0'
 
 export type WhatsAppStatus = 'sent' | 'skipped' | 'failed'
@@ -26,13 +28,23 @@ export interface WhatsAppResult {
   detail?: string
 }
 
-/** Normaliza telefone para E.164 só-dígitos (assume Brasil +55 se sem país). */
+/**
+ * Normaliza telefone para E.164 só-dígitos — SEM adivinhar o país.
+ *
+ * A regra anterior prefixava "55" quando o número não começava com 55. Isso
+ * quebrava dois casos reais:
+ *   1. usuária fora do Brasil recebia o DDI brasileiro, e a mensagem ia para
+ *      um número que não é dela;
+ *   2. números do DDD 55 (Santa Maria/RS) já começam com "55" — não recebiam
+ *      prefixo e saíam sem o DDD, nunca chegando.
+ *
+ * Agora o país vem do próprio valor gravado (E.164 com "+"). Valores legados,
+ * gravados só com dígitos, seguem lidos como Brasil — que é o que sempre
+ * significaram. A regra vive em @sintera/core (`toDialDigits`), compartilhada
+ * com as telas de Perfil da Web e do Mobile.
+ */
 export function normalizePhoneBR(raw: string | null | undefined): string | null {
-  if (!raw) return null
-  let d = raw.replace(/\D/g, '')
-  if (d.length < 10) return null            // muito curto p/ ser válido
-  if (!d.startsWith('55')) d = `55${d}`     // adiciona DDI Brasil quando ausente
-  return d
+  return toDialDigits(raw)
 }
 
 export interface ReminderParams {

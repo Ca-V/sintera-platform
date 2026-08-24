@@ -7,7 +7,7 @@ import { ScrollView, View, ActivityIndicator, Pressable, StyleSheet } from 'reac
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { text, heading } from '@sintera/design-system'
-import { monthLabel } from '@sintera/core'
+import { monthLabel, DIAL_COUNTRIES } from '@sintera/core'
 import { AGE_RANGE_OPTIONS } from '@sintera/validation'
 import { Avatar, Button, FieldRow, Input, Select, Text } from '../../primitives'
 import { useTheme } from '../../theme'
@@ -16,6 +16,9 @@ import { useProfile } from './useProfile'
 
 // Opções do seletor de faixa etária (SSOT em @sintera/validation) + opção de limpar.
 const AGE_RANGE_SELECT = [{ id: '', label: 'Não informar' }, ...AGE_RANGE_OPTIONS.map(o => ({ id: o, label: o }))]
+
+// Códigos de país (SSOT em @sintera/core). Passa de 8 opções → o Select abre com busca.
+const COUNTRY_SELECT = DIAL_COUNTRIES.map(c => ({ id: c.iso, label: `${c.name} +${c.dial}` }))
 
 /** Dias desde a criação da conta (mín. 1). Cálculo de exibição — mesma fórmula da Web. */
 function daysSince(iso: string | null): number {
@@ -101,12 +104,30 @@ export function ProfileScreen() {
       </View>
 
       {/* 7. Formulário de edição */}
+      <Text spec={text(t, { role: 'label', tone: 'muted' })}>EDITAR PERFIL</Text>
+
       <FieldRow label="Nome" errorText={p.fieldErrors.name}>
         <Input value={p.name} onChangeText={p.setName} placeholder="Seu nome" error={!!p.fieldErrors.name} autoCapitalize="words" editable={!saving} />
       </FieldRow>
 
-      <FieldRow label="Telefone" helperText="Com DDD" errorText={p.fieldErrors.phone}>
-        <Input value={p.phone} onChangeText={p.setPhone} placeholder="(00) 00000-0000" keyboardType="phone-pad" error={!!p.fieldErrors.phone} editable={!saving} />
+      {/* País + número. O DDI NUNCA é adivinhado: vem da escolha explícita, e é o
+          que o envio de WhatsApp usa. Ver @sintera/core/domain/profile/phone. */}
+      <FieldRow label="Telefone" helperText="País e número com DDD" errorText={p.fieldErrors.phone}>
+        <View style={styles.phoneRow}>
+          <View style={{ flex: 1.1 }}>
+            <Select
+              options={COUNTRY_SELECT}
+              value={p.phoneIso}
+              onChange={p.setPhoneIso}
+              placeholder="País"
+              title="Código de país"
+              searchable
+            />
+          </View>
+          <View style={{ flex: 1.4 }}>
+            <Input value={p.phone} onChangeText={p.setPhone} placeholder="(00) 00000-0000" keyboardType="phone-pad" error={!!p.fieldErrors.phone} editable={!saving} />
+          </View>
+        </View>
       </FieldRow>
 
       <FieldRow label="Faixa etária" errorText={p.fieldErrors.age_range}>
@@ -144,8 +165,9 @@ export function ProfileScreen() {
       </View>
 
       {/* 9. Link Configurações da conta */}
-      <Pressable onPress={() => nav.navigate('Configuracoes')} style={{ paddingVertical: 4 }}>
+      <Pressable onPress={() => nav.navigate('Configuracoes')} style={{ paddingVertical: 4, gap: 2 }}>
         <Text spec={text(t, { role: 'bodySmall' })} style={{ color: t.color.identity.primary }}>Configurações da conta →</Text>
+        <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Alterar senha, privacidade, excluir conta</Text>
       </Pressable>
     </ScrollView>
   )
@@ -159,4 +181,5 @@ const styles = StyleSheet.create({
   statsRow: { flexDirection: 'row', gap: 12 },
   statCard: { flex: 1, alignItems: 'center', gap: 4, paddingVertical: 16 },
   infoCard: { flex: 1, gap: 4 },
+  phoneRow: { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
 })
