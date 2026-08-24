@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+// SEC-006 · campos obrigatórios via helper compartilhado (comportamento preservado).
+import { requirePresent, badRequest } from '@/lib/api/validate'
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,11 +11,8 @@ export async function POST(req: NextRequest) {
 
     const { comprehension, trust, action_taken, open_feedback } = await req.json()
 
-    if (!comprehension || !trust) {
-      return NextResponse.json(
-        { error: 'Campos obrigatorios: comprehension, trust' },
-        { status: 400 }
-      )
+    if (!requirePresent({ comprehension }, 'comprehension').ok || !requirePresent({ trust }, 'trust').ok) {
+      return badRequest('Campos obrigatorios: comprehension, trust')
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

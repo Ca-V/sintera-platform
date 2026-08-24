@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+// SEC-006 · checagem de campo obrigatório via helper compartilhado (comportamento preservado).
+import { requirePresent, badRequest } from '@/lib/api/validate'
 
 export async function POST(req: NextRequest) {
   try {
@@ -8,8 +10,8 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Nao autenticado' }, { status: 401 })
 
     const { event_name, metadata } = await req.json()
-    if (!event_name) {
-      return NextResponse.json({ error: 'Campo obrigatorio: event_name' }, { status: 400 })
+    if (!requirePresent({ event_name }, 'event_name').ok) {
+      return badRequest('Campo obrigatorio: event_name')
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

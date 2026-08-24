@@ -3,6 +3,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
+// SEC-006 · validação de schema de entrada (helper puro compartilhado). Comportamento preservado.
+import { readJsonObject, requireEnum, badRequest } from '@/lib/api/validate'
 
 const VALID_RATINGS = new Set(['util', 'nao_util'])
 
@@ -20,16 +22,11 @@ export async function POST(
   }
   const userId = authData.user.id
 
-  let body: { rating?: string }
-  try {
-    body = await request.json()
-  } catch {
-    return NextResponse.json({ error: 'Corpo inválido.' }, { status: 400 })
-  }
-  const rating = body.rating
-  if (!rating || !VALID_RATINGS.has(rating)) {
-    return NextResponse.json({ error: "rating deve ser 'util' ou 'nao_util'." }, { status: 400 })
-  }
+  const parsed = await readJsonObject(request, 'Corpo inválido.')
+  if (!parsed.ok) return badRequest(parsed.error)
+  const ratingV = requireEnum(parsed.value, 'rating', VALID_RATINGS, "rating deve ser 'util' ou 'nao_util'.")
+  if (!ratingV.ok) return badRequest(ratingV.error)
+  const rating = ratingV.value
 
   // O insight pertence à usuária? (RLS já restringe; confirmamos + pegamos template_key)
   const { data: insight } = await supabase
