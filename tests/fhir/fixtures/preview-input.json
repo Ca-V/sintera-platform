@@ -1,0 +1,15 @@
+{
+  "patients": [{ "id": "c0000000-0000-0000-0000-0000000000a1", "name": "Paciente A", "birthDate": "1990-01-01", "gender": "female", "identifiers": [{ "kind": "cpf", "value": "000", "system": null, "use": null }] }],
+  "practitioners": [{ "id": "c0000000-0000-0000-0000-0000000000a2", "name": "Dra A" }],
+  "organizations": [{ "id": "c0000000-0000-0000-0000-0000000000a3", "name": "Lab A" }],
+  "serviceRequests": [
+    { "id": "50000000-0000-0000-0000-0000000000a1", "requisitionId": "d9000000-0000-0000-0000-0000000000a1", "status": "active", "intent": "order", "codeText": "Doppler colorido venoso de membro inferior", "codeSystem": null, "codeValue": null, "laterality": "esquerdo", "subjectPatientId": "c0000000-0000-0000-0000-0000000000a1", "requesterPractitionerId": "c0000000-0000-0000-0000-0000000000a2", "performerOrganizationId": "c0000000-0000-0000-0000-0000000000a3" },
+    { "id": "50000000-0000-0000-0000-0000000000a2", "requisitionId": "d9000000-0000-0000-0000-0000000000a1", "status": "active", "intent": "order", "codeText": "Doppler colorido venoso de membro inferior", "codeSystem": null, "codeValue": null, "laterality": "direito", "subjectPatientId": "c0000000-0000-0000-0000-0000000000a1", "requesterPractitionerId": "c0000000-0000-0000-0000-0000000000a2", "performerOrganizationId": "c0000000-0000-0000-0000-0000000000a3" }
+  ],
+  "serviceRequestResults": [{ "serviceRequestId": "50000000-0000-0000-0000-0000000000a1", "resultExamId": "e0000000-0000-0000-0000-0000000000a1", "confirmed": true }],
+  "resultEvents": [{ "examId": "e0000000-0000-0000-0000-0000000000a1", "code": "Doppler venoso MI", "effectiveDate": "2026-08-01" }],
+  "observations": [{ "id": "a0000000-0000-0000-0000-0000000000b0", "examId": "e0000000-0000-0000-0000-0000000000a1", "examDocumentId": "d0000000-0000-0000-0000-0000000000a1", "name": "Fluxo", "valueNum": null, "unit": null }],
+  "procedures": [{ "id": "5d2df6d6-5bc1-44ce-93ce-bf53adb04331", "basedOnServiceRequestId": "50000000-0000-0000-0000-0000000000a1", "status": "completed", "codeText": "Doppler colorido venoso de membro inferior", "subjectPatientId": "c0000000-0000-0000-0000-0000000000a1", "performerOrganizationId": "c0000000-0000-0000-0000-0000000000a3", "reportExamId": "e0000000-0000-0000-0000-0000000000a1", "laterality": "esquerdo" }],
+  "documents": [{ "id": "d0000000-0000-0000-0000-0000000000a1", "examId": "e0000000-0000-0000-0000-0000000000a1", "fileUrl": "synthetic://laudo.pdf", "sha256": null, "role": "laudo_final", "uploadedAt": "2026-08-19T18:29:00.216484+00:00", "source": "upload_usuario", "extractionRef": null }],
+  "terminologyBindings": [{ "targetType": "observation_code", "targetId": "a0000000-0000-0000-0000-0000000000b0", "conceptText": "Fluxo", "system": "http://loinc.org", "code": "1", "display": null, "status": "confirmed" }]
+}

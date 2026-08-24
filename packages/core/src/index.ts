@@ -81,3 +81,6 @@ export * from './domain/agenda/suggestions'
 export * from './domain/capture/types'
 export * from './domain/capture/intents'
 export * from './domain/copy'
+
+// Política de anexos (Fase C) — allowlist pura de tipos aceitos. Fonte única Web↔Mobile.
+export * from './domain/capture/attachmentPolicy'
