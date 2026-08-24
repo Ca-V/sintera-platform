@@ -368,7 +368,7 @@ export default function HabitosPage() {
             ) : (
               <label className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-ivory cursor-pointer font-body text-sm text-mauve hover:border-petal/40 transition-colors">
                 {uploading ? <Loader2 size={14} className="animate-spin" /> : <Paperclip size={14} />} {uploading ? 'Enviando…' : 'Anexar arquivo'}
-                <input type="file" className="hidden" disabled={uploading} onChange={e => { const f = e.target.files?.[0]; if (f) uploadPlan(f) }} />
+                <input type="file" accept="application/pdf,image/*" className="hidden" disabled={uploading} onChange={e => { const f = e.target.files?.[0]; if (f) uploadPlan(f) }} />
               </label>
             )}
           </div>

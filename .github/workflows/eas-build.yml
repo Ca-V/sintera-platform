@@ -5,7 +5,7 @@ name: EAS Build (Mobile)
 #   Expo -> Account settings -> Access tokens -> criar token
 #   GitHub -> Settings -> Secrets and variables -> Actions -> New secret: EXPO_TOKEN
 # Uso: aba Actions -> "EAS Build (Mobile)" -> Run workflow -> Run (defaults ja buildam o Ciclo 1).
-# O input `ref` decide QUAL branch e buildada (default: feat/mobile-inc4-perfil, que tem o Ciclo 1),
+# O input `ref` decide QUAL branch e buildada (default: main, que tem o Ciclo 1 desde a #158),
 # independentemente de o workflow morar na main. perfil preview = APK interno (apps/mobile/eas.json).
 
 on:
@@ -14,7 +14,7 @@ on:
       ref:
         description: Branch a buildar (codigo)
         type: string
-        default: feat/mobile-inc4-perfil
+        default: main
       platform:
         description: Plataforma
         type: choice
