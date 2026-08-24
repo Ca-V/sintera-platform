@@ -28,11 +28,13 @@ export interface UploadDeps {
   telemetry?: Telemetry
 }
 
-/** Ajustes opcionais do usuário. `type` sobrepõe o rótulo derivado do nome do arquivo; `exam_date` é opcional. */
-export type UploadMeta = { type?: string; exam_date?: string | null }
+/** Ajustes opcionais do usuário. `type` sobrepõe o rótulo derivado do nome do arquivo; `exam_date` é opcional.
+ *  `document_type` só é informado quando a usuária DECLAROU explicitamente (ex.: Pedido de exame → 'medical_order';
+ *  exceção REG-001/PEDIDO-001) — para resultados fica ausente (derivado pela extração). */
+export type UploadMeta = { type?: string; exam_date?: string | null; document_type?: string | null }
 
 /** Campos factuais que a criação precisa (derivados, não interpretados). */
-type CreateFields = { type: string; exam_date?: string | null }
+type CreateFields = { type: string; exam_date?: string | null; document_type?: string | null }
 
 /** Desfecho do fluxo (paridade com a telemetria de captura da Web). */
 type UploadOutcome = 'started' | 'cancelled' | 'rejected' | 'succeeded' | 'failed'
@@ -46,7 +48,7 @@ export function nameWithoutExt(name: string): string {
 
 /** Monta o input de createExam a partir do resultado do upload + campos factuais (puro). */
 export function toCreateInput(result: UploadResult, fields: CreateFields): CreateExamInput {
-  return { file_url: result.url, type: fields.type, exam_date: fields.exam_date ?? null }
+  return { file_url: result.url, type: fields.type, exam_date: fields.exam_date ?? null, document_type: fields.document_type ?? null }
 }
 
 function messageOf(error: unknown): string {
@@ -117,7 +119,7 @@ export async function startUpload(source: 'document' | 'camera', meta: UploadMet
   }
 
   dispatch({ type: 'PICKED', file })
-  const fields: CreateFields = { type: meta.type ?? nameWithoutExt(file.name), exam_date: meta.exam_date ?? null }
+  const fields: CreateFields = { type: meta.type ?? nameWithoutExt(file.name), exam_date: meta.exam_date ?? null, document_type: meta.document_type ?? null }
   await doUploadThenCreate({ uri: file.uri, mimeType: file.mimeType as string, sizeBytes: file.sizeBytes }, fields, deps, dispatch, signal)
 }
 
@@ -132,7 +134,7 @@ export async function startUploadWithFile(file: PickedFile, meta: UploadMeta, de
     return dispatch({ type: 'FAILURE', error: v.message })
   }
   dispatch({ type: 'PICKED', file })
-  const fields: CreateFields = { type: meta.type ?? nameWithoutExt(file.name), exam_date: meta.exam_date ?? null }
+  const fields: CreateFields = { type: meta.type ?? nameWithoutExt(file.name), exam_date: meta.exam_date ?? null, document_type: meta.document_type ?? null }
   await doUploadThenCreate({ uri: file.uri, mimeType: file.mimeType as string, sizeBytes: file.sizeBytes }, fields, deps, dispatch, signal)
 }
 

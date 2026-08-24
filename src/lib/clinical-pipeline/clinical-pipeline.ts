@@ -5,6 +5,7 @@
 import type { DocumentUnderstanding } from '@/lib/capture/document-understanding'
 import { PIPELINE_VERSIONS } from '@/lib/capture/pipeline-versions'
 import { resolveClinicalMapping, confidenceScore } from './clinical-mapping-service'
+import { consolidateLaterality } from './laterality'
 import { lookupOfficialTerminology } from '@/lib/terminology/terminology-service'
 import { toEvidence, directEvidence, resolveFact, DATE_RESOLUTION, toIso } from './resolution-engine'
 import type { ClinicalIdentity, PipelineAudit, DecisionStep, ConfidenceProfile, NameSource } from './contracts'
@@ -90,6 +91,22 @@ export function resolveClinicalIdentity(du: DocumentUnderstanding, ctx: Pipeline
   // Etapa Clinical Mapping Service (resolve o conceito a partir das evidências) — nome provisório.
   decisionLog.push(...mapping.steps)
 
+  // Consolidação de LATERALIDADE (H-10) — REPRESENTAÇÃO estrutural sobre as OBSERVAÇÕES do próprio documento.
+  // O modelo da DUE colapsa procedimentos repetidos ao "texto comum" (mantém "unilateral", descarta os lados);
+  // aqui a orquestração RE-INFERE a lateralidade da evidência: Esquerdo + Direito ⇒ bilateral. As observações
+  // (obs-N) permanecem a fonte rastreável. Nunca é replace textual; inerte quando não há lados complementares.
+  const laterality = consolidateLaterality(mapping.name, du.report.observations)
+  const resolvedName = laterality?.name ?? mapping.name
+  if (laterality) {
+    decisionLog.push({
+      step: 'mapping', detector: 'laterality', status: 'consolidated',
+      input: mapping.name ?? undefined, output: laterality.name, confidence: 0.9,
+      reason: `procedimento com lados complementares (${laterality.sides.join(' + ')})`
+        + ` · chave ${laterality.key} → lateralidade "${laterality.laterality}"`
+        + ` · lados preservados nas observações [${laterality.observationIds.join(', ')}]`,
+    })
+  }
+
   // Etapas futuras (registradas como pendentes).
   decisionLog.push({ step: 'knowledge', status: 'pending' })
   decisionLog.push({ step: 'evidence', status: 'pending' })
@@ -103,7 +120,7 @@ export function resolveClinicalIdentity(du: DocumentUnderstanding, ctx: Pipeline
 
   const identity: ClinicalIdentity = {
     resolutionId: ctx.resolutionId,
-    name: mapping.name,
+    name: resolvedName,
     category: mapping.category,
     modality: du.examModality,
     codes: official.ref ? [official.ref] : [],

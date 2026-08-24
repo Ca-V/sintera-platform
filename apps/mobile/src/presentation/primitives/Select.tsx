@@ -3,6 +3,7 @@
 // Sem regra de negócio (DS-003): reutilizável em filtros, tipo de exame, recorrência de lembrete, etc.
 import { useMemo, useState } from 'react'
 import { Modal, Pressable, ScrollView, View, StyleSheet, type ViewStyle } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import { useTheme } from '../theme'
 import { Text } from './Text'
@@ -23,6 +24,7 @@ type Props = {
 
 export function Select({ options, value, onChange, placeholder = 'Selecionar…', title, searchable, style }: Props) {
   const t = useTheme()
+  const insets = useSafeAreaInsets()
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState('')
   const current = options.find(o => o.id === value)
@@ -42,7 +44,7 @@ export function Select({ options, value, onChange, placeholder = 'Selecionar…'
 
       <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
         <Pressable style={styles.backdrop} onPress={() => setOpen(false)}>
-          <Pressable style={[styles.sheet, { backgroundColor: t.color.surface.base }]} onPress={() => { /* consome o toque (não fecha) */ }}>
+          <Pressable style={[styles.sheet, { backgroundColor: t.color.surface.base, paddingBottom: 20 + insets.bottom }]} onPress={() => { /* consome o toque (não fecha) */ }}>
             <View style={[styles.grabber, { backgroundColor: t.color.border.default }]} />
             {title ? <Text spec={text(t, { role: 'bodyStrong' })} style={{ marginBottom: 8 }}>{title}</Text> : null}
             {canSearch ? <Input value={q} onChangeText={setQ} placeholder="Buscar…" autoCapitalize="none" style={{ marginBottom: 8 }} /> : null}

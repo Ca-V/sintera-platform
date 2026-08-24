@@ -108,17 +108,17 @@ function NavItem({ href, icon: Icon, label, active, soon, onClose, hintProps, co
   )
 }
 
-// Grupo EXPANSÍVEL (Minha Saúde · Rede de Cuidado · Organização). O rótulo do módulo é o único cabeçalho; as
-// subdivisões (Registros/Saúde/Histórico) são divisões internas discretas — reduz poluição visual (sem caixa-alta grande).
+// Grupo EXPANSÍVEL (Minha Saúde · Rede de Cuidado · Organização). O rótulo do módulo é o cabeçalho; as
+// subdivisões (Registros/Saúde/Histórico) são ABERTAS por padrão e aparentes (homologação Web) — recolhíveis no clique.
 function NavGroup({ node, pathname, open, onToggle, onClose, bind, countOf }: {
   node: Extract<NavNode, { type: 'group' }>; pathname: string; open: boolean; onToggle: () => void
   onClose: () => void; bind: (text: string) => React.HTMLAttributes<HTMLElement>; countOf: (href: string) => number | undefined
 }) {
   const active = groupActive(node, pathname)
   const Icon = node.icon
-  // Subdivisões (Registros/Saúde/Histórico) recolhidas por padrão — abrem no clique OU se contiverem a rota ativa.
+  // Subdivisões (Registros/Saúde/Histórico) ABERTAS por padrão (homologação Web) — o usuário pode recolher no clique.
   const [openSub, setOpenSub] = useState<Record<string, boolean>>({})
-  const toggleSub = (k: string) => setOpenSub(s => ({ ...s, [k]: !(s[k] ?? false) }))
+  const toggleSub = (k: string) => setOpenSub(s => ({ ...s, [k]: !(s[k] ?? true) }))
   return (
     <div className="mb-1">
       <button type="button" onClick={onToggle} aria-expanded={open} aria-label={`${node.label} — ${open ? 'recolher' : 'expandir'}`}
@@ -137,14 +137,14 @@ function NavGroup({ node, pathname, open, onToggle, onClose, bind, countOf }: {
                 hintProps={bind(navDescription(item.href))} count={countOf(item.href)} />
             ))
             if (!sec.label) return <div key={i} className="flex flex-col gap-0.5">{items}</div>
-            const subOpen = openSub[sec.label] ?? sec.items.some(it => isActive(pathname, it.href, it.extra))
+            const subOpen = openSub[sec.label] ?? true
             // §5d — quando a subdivisão está RECOLHIDA, o total dela vira um indicador (ex.: "Registros 24").
             const sectionTotal = sec.items.reduce((n, it) => n + (countOf(it.href) ?? 0), 0)
             return (
               <div key={sec.label} className="flex flex-col gap-0.5">
                 <button type="button" onClick={() => toggleSub(sec.label!)} aria-expanded={subOpen} aria-label={`${sec.label} — ${subOpen ? 'recolher' : 'expandir'}`}
-                  className="flex items-center gap-1.5 px-3 mt-1 text-[10px] font-body font-semibold uppercase tracking-[0.12em] text-onyx/55 hover:text-onyx transition-colors">
-                  <ChevronDown size={11} className={cn('transition-transform duration-200', subOpen ? '' : '-rotate-90')} />
+                  className="flex items-center gap-1.5 px-3 mt-1 text-xs font-body font-semibold tracking-wide text-onyx/80 hover:text-onyx transition-colors">
+                  <ChevronDown size={13} className={cn('transition-transform duration-200', subOpen ? '' : '-rotate-90')} />
                   <span className="flex-1 text-left">{sec.label}</span>
                   {!subOpen && sectionTotal > 0 && (
                     <span className="font-body text-[10px] font-semibold text-onyx/60 tabular-nums normal-case tracking-normal">{sectionTotal}</span>

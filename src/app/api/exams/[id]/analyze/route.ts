@@ -6,7 +6,8 @@ import { getAuthedSupabase } from '@/lib/supabase/authedClient'
 import { extractBiomarkers, isGatewayError } from '@/lib/ai/gateway'
 import { extractTextFromPdf, filterRelevantPages } from '@/lib/pdf/extractor'
 import { loadCatalogIndex, resolveBiomarker } from '@/lib/ai/insights/resolver'
-import { classifyExamDocument, deriveDisplayTitle, withProvenance } from '@/lib/capture/document-naming'
+import { classifyExamDocument, deriveDisplayTitle, withProvenance, resolveOrderNaming } from '@/lib/capture/document-naming'
+import { deriveOrderDisplayTitle } from '@sintera/core'
 import { MAX_UPLOAD_MB } from '@/lib/capture/limits'
 import { extractIssuer, extractIssuerFromImage } from '@/lib/ai/issuer'
 import { extractRequestingPhysician } from '@/lib/ai/requestingPhysician'
@@ -22,8 +23,9 @@ import { bioimpedanceToBodyMetrics } from '@/lib/capture/clinical-processors/bio
 import { dexaBodyComposition } from '@/lib/capture/clinical-processors/dexa-body-metrics'
 import { planBundleSplit, restrictPages, type SplitPlan } from '@/lib/capture/bundle-split'
 import { pickExamDate, isExamDateCorroborated } from '@/lib/capture/semantic-dates'
+import { undeterminedDocumentPatch, resolveImageDocumentType } from '@/lib/capture/undetermined'
 import { planNarrativeDiscard } from '@/lib/exams/narrativeDiscard'
-import { examProcessingState } from '@sintera/core'
+import { examProcessingState, isOrderDocumentType } from '@sintera/core'
 import { identifyClinical } from '@/lib/capture/clinical-identity-registry'
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -379,6 +381,9 @@ export async function POST(
   }
   const imageModalityOverride = (imageDU?.documentType === 'imaging' || imageDU?.documentType === 'ophthalmology')
     ? imageDU.documentType : null
+  // H-09 (camada 2): a DUE reconheceu o GÊNERO documental como PEDIDO (medical_order/insurance_guide). O
+  // gênero prevalece sobre a modalidade clínica — um pedido nunca é materializado como exame realizado.
+  const imageIsOrder = isOrderDocumentType(imageDU?.documentType)
   // PIPELINE CLÍNICO (orquestração): DUE (observa) → Terminology (oficial) → Internal Catalog (lacuna) →
   // Clinical Identity + Pipeline Audit (Decision Log estruturado, versões, confiança global). id de resolução
   // ESTÁVEL via sequência (replay/auditoria). Só documentos de imagem, 1ª compreensão.
@@ -409,7 +414,7 @@ export async function POST(
   // extração, a modalidade lida da imagem (imaging/ophthalmology) prevalece sobre o default 'laboratory'.
   const effectiveDocType = identityEstablished
     ? (exam.document_type ?? structure.documentType)
-    : (imageModalityOverride ?? (imageDueFailed ? 'imaging' : structure.documentType))
+    : (imageDueFailed ? 'imaging' : resolveImageDocumentType(imageDU?.documentType, structure.documentType))
 
   // Bundle → CDUs (compreensão) — vem antes do plano de representação. Com o split (M3), ESTE registro
   // representa UMA CDU; a Cobertura soma só as unidades do que a IA leu (não conta as CDUs-irmãs).
@@ -550,6 +555,9 @@ export async function POST(
       ? imagePipeline.identity.examDate
       : (semanticIso ?? corroboratedAiIso) ?? null
     if (examDate) finalUpdate.exam_date = examDate
+    // H-09: PEDIDO não tem data de REALIZAÇÃO. A guia traz data de solicitação/validação, nunca de execução
+    // do exame (a DUE retorna examDate=null). Não materializar data de realização para um pedido.
+    if (imageIsOrder) finalUpdate.exam_date = null
     // Paciente: da Clinical Identity (imagem) ou da extração multimodal/texto. Fato documental (transcrição).
     const patientName = imagePipeline ? imagePipeline.identity.patientName : (result.patientName ?? null)
     if (patientName) finalUpdate.patient_name = patientName
@@ -588,12 +596,20 @@ export async function POST(
     // confiável OU identidade clínica não-ambígua de confiança alta); senão 'draft' (sinaliza revisão).
     const clinValidated = !!clin && clin.confidence === 'high' && !clin.ambiguous
     finalUpdate.document_identity_status = (confidentStructure || clinValidated) ? 'validated' : 'draft'
-    finalUpdate.document_type = imageModalityOverride ?? structure.documentType
+    finalUpdate.document_type = resolveImageDocumentType(imageDU?.documentType, structure.documentType)
     finalUpdate.document_scope = structure.documentScope
 
-    // WEB-004 — imagem oftalmológica/imagem (document_only): nome = título IMPRESSO lido da imagem (ex.:
-    // "Pentacam Mosaic 2") + emissor, preservando a informação do documento em vez do genérico "Oftalmologia".
-    if (imageModalityOverride && imageDU) {
+    // H-10 (complemento do #111) — PEDIDO (medical_order/insurance_guide): não passa pelos ramos de imagem/
+    // laudo abaixo, então o nome do pedido nunca era propagado ao registro (display_title/type ficavam presos
+    // no resíduo do run anterior). O nome é a CLINICAL IDENTITY resolvida pelo pipeline — já com a lateralidade
+    // CONSOLIDADA (#111: Esquerdo + Direito → bilateral). Gate `imageIsOrder` (exclusivo do gênero pedido) →
+    // NÃO altera imaging/laudo/laboratório. `issuer` só é sobrescrito com evidência nova da DUE (preserva o atual).
+    if (imageIsOrder && imagePipeline?.identity.name) {
+      const { displayTitle, type } = resolveOrderNaming(imagePipeline.identity.name, imageDU?.issuer)
+      finalUpdate.display_title = displayTitle
+      finalUpdate.type = type
+      if (imageDU?.issuer) finalUpdate.issuer = imageDU.issuer
+    } else if (imageModalityOverride && imageDU) {
       // NOME = Clinical Identity resolvida pelo PIPELINE (DUE observa · Terminology/Internal Catalog decidem).
       // EQUIPAMENTO ≠ EXAME; nunca uma linha interna do laudo.
       const title = imagePipeline?.identity.name ?? null
@@ -602,7 +618,7 @@ export async function POST(
         finalUpdate.type = imageDU.issuer ? withProvenance(title, { issuer: imageDU.issuer }) : title
       }
       if (imageDU.issuer) finalUpdate.issuer = imageDU.issuer
-    } else if (confidentStructure) {
+    } else if (confidentStructure && !imageIsOrder) {
       const displayTitle = deriveDisplayTitle(structure)
       finalUpdate.display_title = displayTitle
       // Enriquecimento (fundadora): nome do laboratório emissor. Best-effort. Texto quando há;
@@ -614,10 +630,12 @@ export async function POST(
           : null
       if (issuer) finalUpdate.issuer = issuer
       finalUpdate.type = issuer ? withProvenance(displayTitle, { issuer }) : displayTitle
-    } else if (result.biomarkers.length === 0) {
+    } else if (result.biomarkers.length === 0 && !imageDueFailed && !imageIsOrder) {
       // Sem biomarcadores E sem estrutura confiável (imagem, oftalmológico, pedido…): o
       // Content Classifier LÊ o próprio documento para nomear. Roda APENAS na 1ª extração
       // (é uma chamada de IA — write-once garante que a reextração não a repita nem varie).
+      // H-09 (camada 1): NÃO roda quando a DUE falhou — uma leitura que falhou não pode ser
+      // auto-classificada/promovida a exame realizado por este fallback (ver bloco NÃO-DETERMINADO abaixo).
       const docMediaType = isImage
         ? (filePath.endsWith('.png') ? 'image/png' : filePath.endsWith('.webp') ? 'image/webp' : 'image/jpeg')
         : 'application/pdf'
@@ -637,6 +655,17 @@ export async function POST(
       }
     }
   }
+  // ── H-09 (camada 1) · INVARIANTE DE INCERTEZA ──────────────────────────────────────────────────────
+  // Uma FALHA de compreensão da imagem (DUE retornou null após retry) NUNCA é convertida numa categoria
+  // semântica mais específica por fallback. Sem evidência para determinar a natureza do documento, o exame
+  // permanece NÃO-DETERMINADO / pending (aguarda reprocessamento) — jamais vira "exame de imagem realizado".
+  // A identidade write-once fica ABERTA (document_type = null ⇒ identityEstablished=false) para o reprocesso
+  // reavaliar com uma DUE funcionando. A trilha de decisão da falha (understanding_report) já foi persistida
+  // acima (imageFailureAudit). Preserva o documento original e a rastreabilidade captura→DUE→classificação→registro.
+  if (imageDueFailed) {
+    Object.assign(finalUpdate, undeterminedDocumentPatch())
+  }
+
   // Assinatura da representação estruturada certificada (Princípio da Reprodutibilidade). Mesma versão
   // de extrator + mesmo documento => mesma assinatura. Serve de prova permanente e base do evento de
   // consistência do Passo 2 (comparar candidato × certificado sem substituir automaticamente).
@@ -646,6 +675,21 @@ export async function POST(
     displayTitle:  finalUpdate.display_title as string | undefined,
     results: plan.structured ? result.biomarkers : [],
   })
+
+  // ── PEDIDO-002 — TÍTULO DO PEDIDO derivado dos PROCEDIMENTOS solicitados (não do filename) ──────────────
+  // ADITIVO, escopado a medical_order/insurance_guide; só quando ainda NÃO há display_title (não sobrescreve
+  // nome já resolvido — inclui o caminho de imagem acima). Reusa a consolidação de lateralidade do H-10
+  // (Esquerdo+Direito ⇒ bilateral). NÃO altera o fluxo de resultados nem o roteamento homologado (#128).
+  const orderDocTypeForTitle = (finalUpdate.document_type as string | undefined) ?? exam.document_type
+  if (isOrderDocumentType(orderDocTypeForTitle) && !finalUpdate.display_title && !exam.display_title) {
+    // Função ÚNICA do core (mesma da LISTA e do DETALHE, Web e Mobile): "Pedido de <procedimentos consolidados>".
+    const orderTitle = deriveOrderDisplayTitle(result.biomarkers.map(b => b.sourceExamName ?? b.name))
+    if (orderTitle) {
+      const { displayTitle, type } = resolveOrderNaming(orderTitle, (finalUpdate.issuer as string | undefined) ?? null)
+      finalUpdate.display_title = displayTitle
+      finalUpdate.type = type
+    }
+  }
 
   // ── M3 — Bundle Split (materialização) ──
   // Este exame passa a ser a CDU#1 do bundle; grava a sua proveniência (aponta para si) + intervalo.

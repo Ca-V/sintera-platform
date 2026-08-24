@@ -1,6 +1,7 @@
 // @sintera/core — Histórico de Saúde: projeção unificada (eventos + exames), ordem cronológica, aditiva.
 import { describe, it, expect } from 'vitest'
 import { mergeTimeline, selectHistory, examToTimelineEntry, eventToTimelineEntry, omicsToTimelineEntry, contraceptiveToTimelineEntry, type ExamTimelineLike } from '../../packages/core/src/domain/timelineProjection'
+import { timelineCategoryLabel } from '../../packages/core/src/domain/agenda/presentation'
 import type { HealthEvent } from '../../packages/core/src/domain/agenda/event'
 
 function ev(p: Partial<HealthEvent>): HealthEvent {
@@ -42,6 +43,20 @@ describe('mergeTimeline (Histórico unificado)', () => {
       [{ id: 'c1', kind: 'diu_hormonal', brand: 'Mirena', started_on: '2026-03-01' }])
     expect(out.find(e => e.domain === 'omics')).toMatchObject({ refId: 'p1', title: 'Metabolômica', closed: true })
     expect(out.find(e => e.domain === 'contraceptive')).toMatchObject({ refId: 'c1', closed: true })
+  })
+  it('A8 · cada entrada carrega a CATEGORIA CLÍNICA (não o domínio técnico)', () => {
+    expect(examToTimelineEntry(exam).category).toBe('exame')
+    expect(eventToTimelineEntry(ev({ type: 'vacina' })).category).toBe('vacina')
+    expect(eventToTimelineEntry(ev({ type: 'medicamento' })).category).toBe('medicamento')
+    expect(omicsToTimelineEntry({ id: 'p', domain: 'metabolomics', laboratory: null, total_features: null, collected_on: '2026-01-01' }).category).toBe('omica')
+    expect(contraceptiveToTimelineEntry({ id: 'c', kind: 'diu_hormonal', brand: null, started_on: '2026-01-01' }).category).toBe('contraceptivo')
+  })
+  it('A8 · categoria NUNCA vira "Evento"; colírio (medicamento) mostra sua categoria real; desconhecido → "Outro"', () => {
+    // um evento de medicamento (ex.: recompra de colírio) aparece como "Medicamento", não "Evento".
+    expect(timelineCategoryLabel(eventToTimelineEntry(ev({ type: 'medicamento' })).category)).toBe('Medicamento')
+    // tipo desconhecido degrada para "Outro" (a palavra estrutural "Evento" não é categoria clínica).
+    expect(timelineCategoryLabel(eventToTimelineEntry(ev({ type: 'xpto' as never })).category)).toBe('Outro')
+    expect(timelineCategoryLabel('exame')).toBe('Exame')
   })
   it('DEDUP FB-008: evento vinculado a exame COM valor é ocultado (o exame é o fato)', () => {
     const linked = ev({ id: 'dup', status: 'realizado', amountCents: 5000, links: [{ type: 'exam', id: 'x1' }] as never })

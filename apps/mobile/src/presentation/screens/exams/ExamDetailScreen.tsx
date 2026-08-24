@@ -7,7 +7,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import type { ExamDTO, ExamExtractionLog } from '@sintera/api-client'
-import { deriveExamIdentity, isOrderDocumentType, careStageFor, CARE_STAGES, compareNames, selectByLink, biomarkerStatusLabel } from '@sintera/core'
+import { deriveExamIdentity, isOrderDocumentType, careStageFor, CARE_STAGES, compareNames, selectByLink, biomarkerStatusLabel, effectiveOrderStatus, orderStatusLabel, deriveOrderDisplayTitle } from '@sintera/core'
 import { AttachmentLink, Button, Disclaimer, FieldRow, Input, Text, DatePicker } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { MinhaSaudeStackParamList } from '../../navigation/types'
@@ -81,7 +81,9 @@ export function ExamDetailScreen({ route, navigation }: Props) {
   }, [exam, isOrderDoc])
 
   const onDelete = () => {
-    Alert.alert('Excluir exame', 'Esta ação é irreversível. O documento e os dados extraídos serão apagados. O seu Histórico é recalculado.', [
+    // PEDIDO-002: rótulo semântico — pedido exclui "pedido", não "exame".
+    const isOrder = isOrderDocumentType(p.exam?.document_type)
+    Alert.alert(isOrder ? 'Excluir pedido' : 'Excluir exame', 'Esta ação é irreversível. O documento e os dados extraídos serão apagados. O seu Histórico é recalculado.', [
       { text: 'Cancelar', style: 'cancel' },
       { text: 'Excluir', style: 'destructive', onPress: async () => {
         const { error } = await p.remove()
@@ -95,7 +97,8 @@ export function ExamDetailScreen({ route, navigation }: Props) {
   // além do documento, inclui os resultados estruturados (nome · valor · unidade · situação).
   const onShare = () => {
     if (!exam) return
-    const { name, lab } = deriveExamIdentity(exam.type, exam.issuer)
+    // PEDIDO-002: honrar display_title (título clínico do conteúdo; p/ pedido = procedimentos solicitados).
+  const { name, lab } = deriveExamIdentity(exam.type, exam.issuer, exam.display_title)
     const results = p.biomarkers.map(b => {
       const v = b.value != null ? String(b.value) : (b.value_text ?? '')
       const situ = biomarkerStatusLabel(b)
@@ -143,7 +146,13 @@ export function ExamDetailScreen({ route, navigation }: Props) {
     )
   }
 
-  const { name, lab } = deriveExamIdentity(exam.type, exam.issuer)
+  // PEDIDO-002: honrar display_title (título clínico do conteúdo; p/ pedido = procedimentos solicitados).
+  const { name, lab } = deriveExamIdentity(exam.type, exam.issuer, exam.display_title)
+  // PEDIDO-002 (título no cliente): para um PEDIDO cujo servidor ainda não gravou display_title, deriva o título
+  // dos PROCEDIMENTOS solicitados (função ÚNICA do core, mesma da LISTA); NUNCA o filename. Fallback controlado:
+  // display_title semântico → 'Pedido de exame'.
+  const orderTitle = isOrderDoc ? deriveOrderDisplayTitle(p.biomarkers.map(b => b.source_exam_name ?? b.name)) : null
+  const displayName = isOrderDoc ? (orderTitle ?? (exam.display_title ? name : 'Pedido de exame')) : name
   const hasResults = p.biomarkers.length > 0 || (p.clinical?.items.length ?? 0) > 0
   const stage = careStageFor({ hasResult: hasResults, isOrder: isOrderDoc, linkedEventStatuses: linkedStatuses })
   const isProcessed = isExamReady(exam.status)
@@ -195,7 +204,7 @@ export function ExamDetailScreen({ route, navigation }: Props) {
           </View>
         ) : (
           <Pressable onLongPress={() => { setNameValue(exam.type ?? name); setEditingName(true) }}>
-            <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 20 }}>{name}</Text>
+            <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 20 }}>{displayName}</Text>
           </Pressable>
         )}
         {lab ? <Text spec={text(t, { role: 'body', tone: 'muted' })}>{lab}</Text> : null}
@@ -210,16 +219,21 @@ export function ExamDetailScreen({ route, navigation }: Props) {
         ) : (
           <Pressable onLongPress={() => { setDateValue(exam.exam_date ?? ''); setEditingDate(true) }}>
             <Text spec={text(t, { role: 'caption', tone: 'muted' })}>
-              {(() => { const d = formatExamDate(exam.exam_date); return d === 'Sem data' ? 'Data de realização não informada' : `Realizado em ${d}` })()}{exam.page_count ? ` · ${exam.page_count} página${exam.page_count > 1 ? 's' : ''}` : ''}
+              {(() => { const d = formatExamDate(exam.exam_date); const none = isOrderDoc ? 'Data de solicitação não informada' : 'Data de realização não informada'; const feito = isOrderDoc ? 'Solicitado em' : 'Realizado em'; return d === 'Sem data' ? none : `${feito} ${d}` })()}{exam.page_count ? ` · ${exam.page_count} página${exam.page_count > 1 ? 's' : ''}` : ''}
             </Text>
           </Pressable>
         )}
         <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Toque e segure no nome ou na data para editar.</Text>
 
-        {examStatusLabel(exam.status) ? (
+        {/* Status de EXTRAÇÃO (processando/processado) é semântica de RESULTADO — não exibir em pedido. */}
+        {!isOrderDoc && examStatusLabel(exam.status) ? (
           <Text spec={text(t, { role: 'caption', tone: 'muted' })} style={isExamFailed(exam.status) ? { color: t.color.badge.error.text } : undefined}>
             {examStatusLabel(exam.status)}
           </Text>
+        ) : null}
+        {/* Status do PEDIDO (pendente/realizado/finalizado) — semântica própria de solicitação. */}
+        {isOrderDoc ? (
+          <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Status: {orderStatusLabel(effectiveOrderStatus(exam.order_status, 0))}</Text>
         ) : null}
       </View>
 
@@ -227,7 +241,7 @@ export function ExamDetailScreen({ route, navigation }: Props) {
       {exam.text_truncated ? (
         <View style={[styles.banner, { backgroundColor: t.color.badge.attention.soft, borderColor: t.color.badge.attention.text }]}>
           <Text spec={text(t, { role: 'bodySmall' })} style={{ color: t.color.badge.attention.text }}>
-            Documento extenso, processado parcialmente. Alguns resultados podem não ter sido extraídos — use "Extrair novamente" ou confira o documento original.
+            Documento extenso, processado parcialmente. Alguns resultados podem não ter sido extraídos — use “Extrair novamente” ou confira o documento original.
           </Text>
         </View>
       ) : null}
@@ -242,8 +256,23 @@ export function ExamDetailScreen({ route, navigation }: Props) {
         </View>
       ) : null}
 
-      {/* Resultados */}
-      <ResultsSection exam={exam} biomarkers={p.biomarkers} clinical={p.clinical} analyzing={p.analyze.running} />
+      {/* PEDIDO-002 — SEPARAÇÃO SEMÂNTICA: um PEDIDO (medical_order/insurance_guide) mostra os PROCEDIMENTOS
+          SOLICITADOS e NUNCA "Resultados estruturados"/clinical_results. Só RESULTADO renderiza a ResultsSection. */}
+      {isOrderDoc ? (
+        <View style={[styles.card, card, { gap: 8 }]}>
+          <Text spec={text(t, { role: 'bodyStrong' })}>Procedimentos solicitados</Text>
+          {p.biomarkers.length > 0 ? (
+            p.biomarkers.map((b, i) => (
+              <Text key={b.id ?? i} spec={text(t, { role: 'body', tone: 'muted' })}>• {b.source_exam_name ?? b.name}</Text>
+            ))
+          ) : (
+            <Text spec={text(t, { role: 'body', tone: 'muted' })}>Consulte o documento original para os procedimentos solicitados.</Text>
+          )}
+          <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Isto é um pedido/solicitação — não é um resultado de exame realizado.</Text>
+        </View>
+      ) : (
+        <ResultsSection exam={exam} biomarkers={p.biomarkers} clinical={p.clinical} analyzing={p.analyze.running} />
+      )}
 
       {/* Última extração (informativo — paridade Web) */}
       {lastLog ? (
@@ -255,7 +284,9 @@ export function ExamDetailScreen({ route, navigation }: Props) {
       {/* Financeiro */}
       <FinancialSection exam={exam} onSave={p.updateFields} />
 
-      {/* Recorrência — cria um Evento Assistencial (lembrete) no domínio Agenda, vinculado a este exame. */}
+      {/* Recorrência — cria um Evento Assistencial (lembrete) no domínio Agenda, vinculado a este exame.
+          "Repetir este exame" é semântica de RESULTADO — não faz sentido para um pedido. */}
+      {!isOrderDoc ? (
       <View style={[styles.card, card, { gap: 8 }]}>
         <Text spec={text(t, { role: 'bodyStrong' })}>Repetir este exame</Text>
         <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Crie um lembrete de repetição periódica — aparece na sua Agenda.</Text>
@@ -265,6 +296,7 @@ export function ExamDetailScreen({ route, navigation }: Props) {
             params: { prefill: { type: 'exame', title: `Repetir ${name}`, examId: exam.id, recurrence: true } },
           })} />
       </View>
+      ) : null}
 
       {/* Pedido de origem (Q1) — só para resultados (não-pedido) */}
       {!isOrderDoc ? (
@@ -332,7 +364,7 @@ export function ExamDetailScreen({ route, navigation }: Props) {
         </View>
       ) : null}
 
-      <Button label="Excluir exame" variant="secondary" onPress={onDelete} />
+      <Button label={isOrderDoc ? 'Excluir pedido' : 'Excluir exame'} variant="secondary" onPress={onDelete} />
 
       <Disclaimer variant="laudo" />
     </ScrollView>

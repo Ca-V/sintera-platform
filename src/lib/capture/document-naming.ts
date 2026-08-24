@@ -186,6 +186,23 @@ export function withProvenance(
   return parts.join(' • ')
 }
 
+/**
+ * Nomeação de PEDIDO (medical_order/insurance_guide) — H-10 (complemento do #111).
+ * O nome do pedido é a CLINICAL IDENTITY resolvida pelo pipeline (já com a lateralidade CONSOLIDADA em
+ * `identity.name`; ex.: "Doppler colorido venoso de membro inferior — bilateral"). O pedido NÃO passa pelos
+ * ramos de imagem/laudo, então a rota precisa de um ponto próprio para propagar esse nome ao registro.
+ * Puro/determinístico: NÃO infere lateralidade (isso é do Clinical Pipeline) — só compõe display+proveniência.
+ * `issuer` opcional: entra na proveniência do `type` (ex.: "… • Unimed") apenas quando há evidência.
+ */
+export function resolveOrderNaming(
+  identityName: string,
+  issuer?: string | null,
+): { displayTitle: string; type: string } {
+  const title = clean(identityName)
+  const iss = clean(issuer)
+  return { displayTitle: title, type: iss ? withProvenance(title, { issuer: iss }) : title }
+}
+
 // ── Classificação a partir da extração de exames laboratoriais/imagem ──────────────
 // Ponte entre o extractor atual (examType livre + biomarcadores com sourceExamName) e a
 // DocumentStructure. À medida que a IA passar a devolver documentType/scope explícitos,

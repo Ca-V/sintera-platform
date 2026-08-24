@@ -534,12 +534,14 @@ function LegacyReport() {
         <SelectionToolbar className="mb-3"
           onSelectAll={selectAllSections} onClear={clearSections} onReset={resetSections}
           onExpandAll={expandAll} onCollapseAll={collapseAll} />
-        <div className="space-y-2">
+        {/* Homologação Web: opções em ÁREA ROLÁVEL e grupos RECOLHIDOS por padrão — o usuário abre, rola e seleciona
+            (não deixar tudo exposto na tela). Restaura o comportamento homologado; controles (toolbar/chevron) já existem. */}
+        <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
           {SELECT_GROUPS.map(group => {
             const keys = group.items.map(i => i[0])
             const sel = keys.filter(k => sections[k]).length
             const groupState = sel === 0 ? 'none' : sel === keys.length ? 'all' : 'some'
-            const open = openGroups[group.title] ?? true
+            const open = openGroups[group.title] ?? false
             return (
               <div key={group.title} className="rounded-xl border border-border/60 overflow-hidden">
                 {/* Cabeçalho do grupo: expandir/recolher + seleção do grupo (tri-state) */}

@@ -22,7 +22,7 @@ import { normalizeName } from '@/lib/biomarkers/grouping'
 import { deriveExamIdentity } from '@/lib/exams/identification'
 import { isOrderDocumentType } from '@/lib/exams/classification'
 import { careStageFor } from '@/lib/exams/careFlow'
-import { examProcessingState, isExamReady, isExamProcessing, isExamFailed } from '@sintera/core'
+import { examProcessingState, isExamReady, isExamProcessing, isExamFailed, deriveOrderDisplayTitle } from '@sintera/core'
 import { eventServicesFor, isFinancial, type HealthEvent } from '@/lib/agenda'
 import { expenseDocLabel, EXPENSE_DOC_TYPES } from '@/lib/finance/expense'
 import { parseAmountToCents, centsToAmount } from '@/lib/agenda/money'
@@ -31,7 +31,6 @@ import CareFlowStepper from '@/components/CareFlowStepper'
 import ClinicalResultsCard from '@/components/ClinicalResultsCard'
 import ExamClinicalContext from '@/components/ExamClinicalContext'
 import Link from 'next/link'
-import FeedbackModal from '@/components/FeedbackModal'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
 import MotionCard from '@/components/ui/MotionCard'
@@ -682,6 +681,14 @@ export default function ExamDetailPage() {
   // estruturados. Não é limitação — o documento é o ativo. Nesse estado, "Extrair novamente" não faz sentido.
   const isDocumentOnly = isProcessed && !hasResults
   const hasClinical  = (clinicalRep?.items.length ?? 0) > 0   // resultados clínicos não-laboratoriais (CPE)
+  // PEDIDO-002 — título do PEDIDO derivado dos procedimentos solicitados (cliente), quando o servidor ainda não
+  // gravou display_title. Nunca o filename.
+  const orderTitle = isOrderDoc ? deriveOrderDisplayTitle((biomarkers as unknown as Array<{ name?: string | null; source_exam_name?: string | null }>).map(b => b.source_exam_name ?? b.name)) : null
+  // Título do cabeçalho: procedimento estruturado → identidade resolvida (display_title) → fallback controlado.
+  // Para um PEDIDO sem procedimentos e sem display_title semântico, NUNCA cai no filename (usa 'Pedido de exame').
+  const examDisplayTitle = (exam as unknown as { display_title?: string | null })?.display_title ?? null
+  const resolvedIdentityName = deriveExamIdentity(exam?.type, (exam as unknown as { issuer?: string | null })?.issuer, examDisplayTitle).name
+  const headerTitle = orderTitle ?? (isOrderDoc && !examDisplayTitle ? 'Pedido de exame' : resolvedIdentityName)
   const analyzeLabel = isProcessed ? 'Extrair novamente' : 'Extrair dados'
   const AnalyzeIcon  = isProcessed ? RefreshCw : Zap
 
@@ -750,117 +757,6 @@ export default function ExamDetailPage() {
         <CareFlowStepper stage={careStage} />
       </div>
 
-      {/* Q1 — Pedido de ORIGEM (só para RESULTADOS). O pedido permanece como registro histórico; aqui só a
-          rastreabilidade origem↔resultado (quem solicitou, quando). Vincular marca o pedido como finalizado. */}
-      {!isOrderDoc && (
-        <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} padding="relaxed" className="print:hidden">
-          <div className="flex items-center gap-2 mb-2">
-            <FileText size={15} className="text-gold" />
-            <h2 className="font-display text-base font-semibold text-onyx">Pedido de origem</h2>
-          </div>
-          {linkedOrder ? (
-            <div className="flex items-start justify-between gap-3">
-              <div className="font-body text-sm text-onyx">
-                <p className="font-medium">{linkedOrder.type ?? 'Pedido médico'}</p>
-                <p className="text-xs text-mauve mt-0.5">
-                  {linkedOrder.requesting_physician ? <>Solicitado por {linkedOrder.requesting_physician} · </> : null}
-                  {formatDate(linkedOrder.exam_date ?? linkedOrder.created_at)}
-                </p>
-              </div>
-              <button type="button" onClick={unlinkOrder} disabled={linkBusy}
-                className="flex-shrink-0 text-[11px] font-body text-mauve border border-border px-2.5 py-1 rounded-full hover:bg-blush transition-colors disabled:opacity-50">
-                Desvincular
-              </button>
-            </div>
-          ) : orders.length === 0 ? (
-            <p className="font-body text-xs text-mauve">Nenhum pedido cadastrado. Adicione o pedido em <Link href="/dashboard/exams" className="text-petal hover:underline">Exames › Pedidos de Exames</Link> para registrar a origem deste resultado.</p>
-          ) : linkPickerOpen ? (
-            <div className="flex flex-wrap items-center gap-2">
-              <Select aria-label="Pedido de origem" placeholder="Selecione o pedido de origem…" className="flex-1 min-w-[220px]"
-                value="" disabled={linkBusy} onChange={(v) => { if (v) linkToOrder(v) }}
-                options={orders.map(o => ({ value: o.id, label: `${o.type ?? 'Pedido médico'}${o.requesting_physician ? ` — ${o.requesting_physician}` : ''} · ${formatDate(o.exam_date ?? o.created_at)}` }))} />
-              <button type="button" onClick={() => setLinkPickerOpen(false)} className="text-[11px] font-body text-mauve px-2 py-1">Cancelar</button>
-            </div>
-          ) : (
-            <div className="flex items-center justify-between gap-3">
-              <p className="font-body text-xs text-mauve">Vincule este resultado ao pedido que o originou — preserva a rastreabilidade (quem solicitou, quando) e marca o pedido como concluído.</p>
-              <button type="button" onClick={() => setLinkPickerOpen(true)}
-                className="flex-shrink-0 flex items-center gap-1 text-[11px] font-body font-medium text-petal-dark bg-blush border border-petal/30 px-2.5 py-1 rounded-full hover:bg-petal/10 transition-colors">
-                Vincular a um pedido
-              </button>
-            </div>
-          )}
-        </MotionCard>
-      )}
-
-      {/* FB-001: Financeiro do exame — seção proeminente (valor pago · documento fiscal · recorrência) */}
-      <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} padding="relaxed" className="print:hidden">
-        <div className="flex items-center gap-2 mb-3">
-          <Receipt size={16} className="text-petal" />
-          <h2 className="font-display text-base font-semibold text-onyx">Financeiro e acompanhamento</h2>
-        </div>
-        {/* FB-008: o financeiro é ATRIBUTO do próprio exame (não cria Evento). Edita as colunas do exame. */}
-        {expEditing ? (
-          <div className="rounded-xl border border-petal/30 bg-blush/20 px-4 py-3 space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1"><label htmlFor="exp-valor" className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Valor pago — R$</label>
-                <input id="exp-valor" type="text" inputMode="decimal" value={expAmount} onChange={e => setExpAmount(e.target.value)} placeholder="250,00"
-                  className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40" /></div>
-              <div className="space-y-1"><label htmlFor="exp-tipo" className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Tipo de documento</label>
-                <Select aria-label="Tipo de documento" placeholder="—" value={expDocType} onChange={setExpDocType}
-                  options={EXPENSE_DOC_TYPES.map(d => ({ value: d.id, label: d.label }))} /></div>
-            </div>
-            <div className="space-y-1"><label htmlFor="exp-anexo" className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Anexo (NF/recibo/comprovante) <span className="font-normal text-mauve normal-case">(PDF, JPG, PNG)</span></label>
-              <input id="exp-anexo" type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e => setExpDocFile(e.target.files?.[0] ?? null)}
-                className="block w-full text-xs font-body text-mauve file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:bg-blush file:text-petal file:font-medium" />
-              {examExpense?.docUrl && !expDocFile && <p className="font-body text-[11px] text-mauve">Documento atual mantido. Escolha um arquivo para substituir.</p>}
-            </div>
-            <div className="flex justify-end gap-2">
-              <button onClick={() => setExpEditing(false)} disabled={expSaving} className="px-3 py-1.5 rounded-full border border-border text-mauve font-body text-xs hover:bg-blush disabled:opacity-40">Cancelar</button>
-              <button onClick={saveExamExpense} disabled={expSaving} className="px-3 py-1.5 rounded-full gradient-sintera text-white font-body text-xs font-medium hover:opacity-90 disabled:opacity-40">{expSaving ? 'Salvando…' : 'Salvar'}</button>
-            </div>
-          </div>
-        ) : (examExpense && (examExpense.amountCents ?? 0) > 0) ? (
-          <div className="flex items-center justify-between gap-3 rounded-xl bg-blush/30 border border-petal/30 px-4 py-3">
-            <div className="min-w-0">
-              <p className="font-body text-[11px] text-mauve uppercase tracking-wide">Valor pago</p>
-              <p className="font-body text-xl font-semibold text-onyx leading-tight">
-                {((examExpense.amountCents ?? 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-              </p>
-              <p className="font-body text-[11px] text-mauve mt-0.5">
-                Aparece em <button onClick={() => router.push('/dashboard/gastos')} className="text-petal hover:underline">Despesas</button>
-              </p>
-            </div>
-            <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-              <AttachmentLink
-                url={examExpense.docUrl} variant="inline"
-                label={expenseDocLabel(examExpense.docType) ?? 'Documento'}
-              />
-              <button onClick={startEditExpense} className="font-body text-[11px] text-mauve hover:text-petal transition-colors">Editar</button>
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-dashed border-border px-4 py-3">
-            <p className="font-body text-sm text-mauve min-w-0">
-              Registre o <strong className="text-onyx/70">valor pago</strong> e anexe a
-              <strong className="text-onyx/70"> nota fiscal, recibo ou comprovante</strong> — fica no próprio exame e aparece em Despesas e Relatórios.
-            </p>
-            <button onClick={startEditExpense}
-              className="flex-shrink-0 inline-flex items-center gap-1.5 gradient-sintera text-white font-body text-sm font-medium px-3 py-2 rounded-full hover:opacity-90 transition-opacity">
-              <Receipt size={14} /> Registrar valor / NF
-            </button>
-          </div>
-        )}
-        {/* Recorrência / repetição do exame */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-3 pt-3 border-t border-border/50">
-          <p className="font-body text-xs text-mauve">Precisa repetir este exame periodicamente?</p>
-          <button onClick={() => { setAgendarMode('repeat'); setAgendarOpen(true) }}
-            className="flex-shrink-0 inline-flex items-center gap-1.5 border border-border text-mauve font-body text-xs font-medium px-3 py-1.5 rounded-full hover:border-petal/40 hover:text-petal transition-colors">
-            <CalendarDays size={13} /> Criar lembrete de repetição
-          </button>
-        </div>
-      </MotionCard>
-
       {/* Cabeçalho do exame */}
       <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
         padding="none" className="p-6">
@@ -891,7 +787,7 @@ export default function ExamDetailPage() {
               ) : (
                 <div className="flex items-center gap-2 group/name">
                   <h1 className="font-display text-xl font-semibold text-onyx break-words min-w-0">
-                    {deriveExamIdentity(exam?.type, (exam as unknown as { issuer?: string | null })?.issuer, (exam as unknown as { display_title?: string | null })?.display_title).name}
+                    {headerTitle}
                   </h1>
                   <button onClick={startEditName}
                     className="opacity-0 group-hover/name:opacity-100 transition-opacity text-mauve hover:text-petal flex-shrink-0 print:hidden">
@@ -940,8 +836,8 @@ export default function ExamDetailPage() {
                     {/* WEB-003 / D-15(a): data de REALIZAÇÃO (exam_date); NUNCA cai para created_at (upload).
                         Sem data → frase de estado ("Data de realização não informada"), não "Realizado em Sem data". */}
                     {(exam as unknown as { exam_date?: string | null } | null)?.exam_date
-                      ? `Realizado em ${formatDate((exam as unknown as { exam_date?: string | null }).exam_date as string)}`
-                      : 'Data de realização não informada'}
+                      ? `${isOrderDoc ? 'Solicitado em' : 'Realizado em'} ${formatDate((exam as unknown as { exam_date?: string | null }).exam_date as string)}`
+                      : (isOrderDoc ? 'Data de solicitação não informada' : 'Data de realização não informada')}
                     {exam?.page_count ? ` · ${exam.page_count} páginas` : ''}
                   </p>
                   <button onClick={startEditDate}
@@ -951,8 +847,8 @@ export default function ExamDetailPage() {
                 </div>
               )}
 
-              {/* Resumo de contagens */}
-              {hasResults && (
+              {/* Resumo de contagens — semântica de RESULTADO; nunca em pedido (PEDIDO-002). */}
+              {!isOrderDoc && hasResults && (
                 <div className="flex flex-wrap gap-3 mt-3">
                   <span className="font-body text-xs font-medium text-onyx/60">
                     {counts.total} {counts.total === 1 ? 'resultado' : 'resultados'}
@@ -1070,7 +966,7 @@ export default function ExamDetailPage() {
       <ExamClinicalContext examId={examId} />
 
       {/* Índice Experimental */}
-      {hasResults && (() => {
+      {!isOrderDoc && hasResults && (() => {
         const idx = calcExperimentalIndex(biomarkers)
         return idx ? (
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
@@ -1079,8 +975,28 @@ export default function ExamDetailPage() {
         ) : null
       })()}
 
-      {/* Tabela de biomarcadores */}
-      {hasResults ? (
+      {/* PEDIDO-002 — PEDIDO mostra os PROCEDIMENTOS SOLICITADOS; NUNCA "Resultados estruturados"/clinical_results.
+          Só RESULTADO (não-pedido) renderiza a tabela de resultados abaixo. */}
+      {isOrderDoc && (
+        <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} padding="none" className="overflow-hidden">
+          <div className="p-5 border-b border-border/50">
+            <h2 className="font-display text-base font-semibold text-onyx">Procedimentos solicitados</h2>
+          </div>
+          <div className="px-5 py-4 space-y-1.5">
+            {biomarkers.length > 0 ? (
+              (biomarkers as Array<{ id?: string; name?: string; source_exam_name?: string | null }>).map((b, i) => (
+                <p key={b.id ?? i} className="font-body text-sm text-onyx/80">• {b.source_exam_name ?? b.name}</p>
+              ))
+            ) : (
+              <p className="font-body text-sm text-mauve">Consulte o documento original para os procedimentos solicitados.</p>
+            )}
+            <p className="font-body text-[11px] text-mauve pt-1">Isto é um pedido/solicitação — não é um resultado de exame realizado.</p>
+          </div>
+        </MotionCard>
+      )}
+
+      {/* Tabela de biomarcadores — só RESULTADO (nunca pedido). */}
+      {!isOrderDoc && hasResults ? (
         <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
           padding="none" className="overflow-hidden">
           <div className="p-5 border-b border-border/50">
@@ -1168,7 +1084,121 @@ export default function ExamDetailPage() {
       })()}
 
       {/* Resultados clínicos não-laboratoriais (CPE) — EXA-C3 / NC-0009. Exibição genérica via UCDA. */}
-      {hasClinical && clinicalRep && <ClinicalResultsCard rep={clinicalRep} />}
+      {/* PEDIDO-002: resultados clínicos (CPE/UCDA) são RESULTADO — nunca em pedido. */}
+      {!isOrderDoc && hasClinical && clinicalRep && <ClinicalResultsCard rep={clinicalRep} />}
+
+      {/* H-03 — administrativo (pedido/financeiro) APÓS o conteúdo do exame: conteúdo primeiro; ações secundárias ao fim. */}
+      {/* Q1 — Pedido de ORIGEM (só para RESULTADOS). O pedido permanece como registro histórico; aqui só a
+          rastreabilidade origem↔resultado (quem solicitou, quando). Vincular marca o pedido como finalizado. */}
+      {!isOrderDoc && (
+        <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} padding="relaxed" className="print:hidden">
+          <div className="flex items-center gap-2 mb-2">
+            <FileText size={15} className="text-gold" />
+            <h2 className="font-display text-base font-semibold text-onyx">Pedido de origem</h2>
+          </div>
+          {linkedOrder ? (
+            <div className="flex items-start justify-between gap-3">
+              <div className="font-body text-sm text-onyx">
+                <p className="font-medium">{linkedOrder.type ?? 'Pedido médico'}</p>
+                <p className="text-xs text-mauve mt-0.5">
+                  {linkedOrder.requesting_physician ? <>Solicitado por {linkedOrder.requesting_physician} · </> : null}
+                  {formatDate(linkedOrder.exam_date ?? linkedOrder.created_at)}
+                </p>
+              </div>
+              <button type="button" onClick={unlinkOrder} disabled={linkBusy}
+                className="flex-shrink-0 text-[11px] font-body text-mauve border border-border px-2.5 py-1 rounded-full hover:bg-blush transition-colors disabled:opacity-50">
+                Desvincular
+              </button>
+            </div>
+          ) : orders.length === 0 ? (
+            <p className="font-body text-xs text-mauve">Nenhum pedido cadastrado. Adicione o pedido em <Link href="/dashboard/exams" className="text-petal hover:underline">Exames › Pedidos de Exames</Link> para registrar a origem deste resultado.</p>
+          ) : linkPickerOpen ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <Select aria-label="Pedido de origem" placeholder="Selecione o pedido de origem…" className="flex-1 min-w-[220px]"
+                value="" disabled={linkBusy} onChange={(v) => { if (v) linkToOrder(v) }}
+                options={orders.map(o => ({ value: o.id, label: `${o.type ?? 'Pedido médico'}${o.requesting_physician ? ` — ${o.requesting_physician}` : ''} · ${formatDate(o.exam_date ?? o.created_at)}` }))} />
+              <button type="button" onClick={() => setLinkPickerOpen(false)} className="text-[11px] font-body text-mauve px-2 py-1">Cancelar</button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-3">
+              <p className="font-body text-xs text-mauve">Vincule este resultado ao pedido que o originou — preserva a rastreabilidade (quem solicitou, quando) e marca o pedido como concluído.</p>
+              <button type="button" onClick={() => setLinkPickerOpen(true)}
+                className="flex-shrink-0 flex items-center gap-1 text-[11px] font-body font-medium text-petal-dark bg-blush border border-petal/30 px-2.5 py-1 rounded-full hover:bg-petal/10 transition-colors">
+                Vincular a um pedido
+              </button>
+            </div>
+          )}
+        </MotionCard>
+      )}
+
+      {/* FB-001: Financeiro do exame — seção proeminente (valor pago · documento fiscal · recorrência) */}
+      <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} padding="relaxed" className="print:hidden">
+        <div className="flex items-center gap-2 mb-3">
+          <Receipt size={16} className="text-petal" />
+          <h2 className="font-display text-base font-semibold text-onyx">Financeiro e acompanhamento</h2>
+        </div>
+        {/* FB-008: o financeiro é ATRIBUTO do próprio exame (não cria Evento). Edita as colunas do exame. */}
+        {expEditing ? (
+          <div className="rounded-xl border border-petal/30 bg-blush/20 px-4 py-3 space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1"><label htmlFor="exp-valor" className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Valor pago — R$</label>
+                <input id="exp-valor" type="text" inputMode="decimal" value={expAmount} onChange={e => setExpAmount(e.target.value)} placeholder="250,00"
+                  className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx focus:outline-none focus:ring-1 focus:ring-petal/40" /></div>
+              <div className="space-y-1"><label htmlFor="exp-tipo" className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Tipo de documento</label>
+                <Select aria-label="Tipo de documento" placeholder="—" value={expDocType} onChange={setExpDocType}
+                  options={EXPENSE_DOC_TYPES.map(d => ({ value: d.id, label: d.label }))} /></div>
+            </div>
+            <div className="space-y-1"><label htmlFor="exp-anexo" className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Anexo (NF/recibo/comprovante) <span className="font-normal text-mauve normal-case">(PDF, JPG, PNG)</span></label>
+              <input id="exp-anexo" type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e => setExpDocFile(e.target.files?.[0] ?? null)}
+                className="block w-full text-xs font-body text-mauve file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:bg-blush file:text-petal file:font-medium" />
+              {examExpense?.docUrl && !expDocFile && <p className="font-body text-[11px] text-mauve">Documento atual mantido. Escolha um arquivo para substituir.</p>}
+            </div>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setExpEditing(false)} disabled={expSaving} className="px-3 py-1.5 rounded-full border border-border text-mauve font-body text-xs hover:bg-blush disabled:opacity-40">Cancelar</button>
+              <button onClick={saveExamExpense} disabled={expSaving} className="px-3 py-1.5 rounded-full gradient-sintera text-white font-body text-xs font-medium hover:opacity-90 disabled:opacity-40">{expSaving ? 'Salvando…' : 'Salvar'}</button>
+            </div>
+          </div>
+        ) : (examExpense && (examExpense.amountCents ?? 0) > 0) ? (
+          <div className="flex items-center justify-between gap-3 rounded-xl bg-blush/30 border border-petal/30 px-4 py-3">
+            <div className="min-w-0">
+              <p className="font-body text-[11px] text-mauve uppercase tracking-wide">Valor pago</p>
+              <p className="font-body text-xl font-semibold text-onyx leading-tight">
+                {((examExpense.amountCents ?? 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              </p>
+              <p className="font-body text-[11px] text-mauve mt-0.5">
+                Aparece em <button onClick={() => router.push('/dashboard/gastos')} className="text-petal hover:underline">Despesas</button>
+              </p>
+            </div>
+            <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+              <AttachmentLink
+                url={examExpense.docUrl} variant="inline"
+                label={expenseDocLabel(examExpense.docType) ?? 'Documento'}
+              />
+              <button onClick={startEditExpense} className="font-body text-[11px] text-mauve hover:text-petal transition-colors">Editar</button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-dashed border-border px-4 py-3">
+            <p className="font-body text-sm text-mauve min-w-0">
+              Registre o <strong className="text-onyx/70">valor pago</strong> e anexe a
+              <strong className="text-onyx/70"> nota fiscal, recibo ou comprovante</strong> — fica no próprio exame e aparece em Despesas e Relatórios.
+            </p>
+            <button onClick={startEditExpense}
+              className="flex-shrink-0 inline-flex items-center gap-1.5 gradient-sintera text-white font-body text-sm font-medium px-3 py-2 rounded-full hover:opacity-90 transition-opacity">
+              <Receipt size={14} /> Registrar valor / NF
+            </button>
+          </div>
+        )}
+        {/* Recorrência / repetição do exame */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-3 pt-3 border-t border-border/50">
+          <p className="font-body text-xs text-mauve">Precisa repetir este exame periodicamente?</p>
+          <button onClick={() => { setAgendarMode('repeat'); setAgendarOpen(true) }}
+            className="flex-shrink-0 inline-flex items-center gap-1.5 border border-border text-mauve font-body text-xs font-medium px-3 py-1.5 rounded-full hover:border-petal/40 hover:text-petal transition-colors">
+            <CalendarDays size={13} /> Criar lembrete de repetição
+          </button>
+        </div>
+      </MotionCard>
+
 
       {/* Modal — Reportar problema */}
       {reportOpen && (
@@ -1229,9 +1259,6 @@ export default function ExamDetailPage() {
         </div>
       )}
 
-      {/* FeedbackModal P2 — aparece após 1ª análise no Beta */}
-      <FeedbackModal />
-
       {/* AgendarModal — Evento Assistencial único (health_events). E8 'repeat' = agendar/lembrete
           (recorrência); E7 'expense' = valor pago + NF/recibo do exame realizado (→ Despesas). */}
       <AgendarModal
@@ -1258,7 +1285,7 @@ export default function ExamDetailPage() {
           <button onClick={deleteExam} disabled={deleting}
             className="inline-flex items-center gap-2 text-sm font-body text-red-500 hover:text-red-600 hover:bg-red-50 px-4 py-2 rounded-full transition-colors disabled:opacity-50">
             {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-            {deleting ? 'Excluindo…' : 'Excluir exame'}
+            {deleting ? 'Excluindo…' : (isOrderDoc ? 'Excluir pedido' : 'Excluir exame')}
           </button>
           <p className="font-body text-[11px] text-mauve mt-1">
             Remove o exame, seus resultados e insights. O seu Histórico é recalculado.

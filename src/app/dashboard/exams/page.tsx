@@ -17,7 +17,7 @@ import { findDuplicateIds, originalIdFor, type DuplicateCandidate } from '@/lib/
 import { deriveExamIdentity } from '@/lib/exams/identification'
 import { binaryStructuringState, STRUCTURING_LABEL } from '@/lib/exams/structuring'
 import { isOrderDocumentType } from '@/lib/exams/classification'
-import { EXAM_STATE_LABEL, EXAM_STATE_TONE, examProcessingState, examAnalyzeLabel, isExamReady, EXAM_STATUS_FILTER_OPTIONS, matchesExamStatusFilter, type ExamStateTone } from '@sintera/core'
+import { EXAM_STATE_LABEL, EXAM_STATE_TONE, examProcessingState, examAnalyzeLabel, isExamReady, EXAM_STATUS_FILTER_OPTIONS, matchesExamStatusFilter, deriveOrderDisplayTitle, type ExamStateTone } from '@sintera/core'
 import { effectiveOrderStatus, orderStatusLabel } from '@/lib/exams/orderStatus'
 import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MB } from '@/lib/capture/limits'
 import { bundlePartInfo, bundlePartLabel, groupBundleParts } from '@/lib/exams/bundleGroup'
@@ -150,6 +150,11 @@ export default function ExamsPage() {
   const [collapsedYears, setCollapsedYears] = useState<Set<number>>(new Set())
   // Subcategoria: Resultados × Pedidos e solicitações (aba dentro de Exames).
   const [activeTab, setActiveTab] = useState<'results' | 'orders'>('results')
+  // PEDIDO-002 — título do PEDIDO na LISTA, derivado dos PROCEDIMENTOS solicitados (nunca o filename), via a FUNÇÃO
+  // ÚNICA do core deriveOrderDisplayTitle. O prefixo "Pedido de …" é decisão de PRODUTO (rótulo compreensível); a
+  // semântica de solicitação (ServiceRequest) fica na representação interna. Best-effort no cliente (o servidor pode
+  // não ter gravado display_title). Lê TODOS os tipos de resultado por pedido (não só numeric).
+  const [orderTitleById, setOrderTitleById] = useState<Record<string, string>>({})
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -182,6 +187,32 @@ export default function ExamsPage() {
     }
     return filtered
   }, [exams, searchName])
+
+  // PEDIDO-002 — deriva o título de cada pedido a partir dos procedimentos extraídos (current_biomarkers, TODOS os
+  // tipos por exam_id — não só numeric, senão perderia Doppler/USG qualitativos). Nunca o filename.
+  const orderIdsKey = orders.map(o => o.id).join(',')
+  useEffect(() => {
+    if (!user || orders.length === 0) return
+    let alive = true
+    const ids = orders.map(o => o.id)
+    supabase
+      .from('current_biomarkers')
+      .select('exam_id, name, source_exam_name')
+      .in('exam_id', ids)
+      .then(({ data }) => {
+        if (!alive || !data) return
+        const byExam = new Map<string, string[]>()
+        for (const b of data as Array<{ exam_id?: string | null; name?: string | null; source_exam_name?: string | null }>) {
+          const eid = b.exam_id; if (!eid) continue
+          const arr = byExam.get(eid) ?? []; arr.push(b.source_exam_name ?? b.name ?? ''); byExam.set(eid, arr)
+        }
+        const map: Record<string, string> = {}
+        for (const id of ids) { const tt = deriveOrderDisplayTitle(byExam.get(id) ?? []); if (tt) map[id] = tt }
+        setOrderTitleById(map)
+      })
+    return () => { alive = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderIdsKey, user])
 
   // Q1 — resultados vinculados por pedido (1→N). Origem↔resultado; o pedido permanece como histórico.
   const resultsByOrder = useMemo(() => {
@@ -303,7 +334,11 @@ export default function ExamsPage() {
       const examName = file.name.replace(/\.[^.]+$/, '')
       // exam_date fica nulo no upload — é preenchido pela extração (data do laudo)
       // e pode ser ajustado manualmente no detalhe. Não assumimos a data de envio.
-      const { error: insertErr } = await supabase.from('exams').insert({ id: examId, user_id: user.id, type: examName, exam_date: null, file_url: signedData.signedUrl, status: 'pending' } as unknown as never)
+      // PEDIDO-001 (exceção REG-001): na aba "Pedidos de Exames" a usuária DECLARA um pedido → grava
+      // document_type='medical_order' já na criação, para cair DIRETO em Pedidos (não transitar por Exames).
+      // Resultados (aba Exames) seguem sem document_type → derivado pela extração.
+      const orderFields = activeTab === 'orders' ? { document_type: 'medical_order' } : {}
+      const { error: insertErr } = await supabase.from('exams').insert({ id: examId, user_id: user.id, type: examName, exam_date: null, file_url: signedData.signedUrl, status: 'pending', ...orderFields } as unknown as never)
       if (insertErr) throw new Error(`[insert] ${insertErr.code}: ${insertErr.message}`)
       // P3 — vai direto ao exame enviado; a análise inicia sozinha lá (status 'pending')
       router.push(`/dashboard/exams/${examId}`)
@@ -314,7 +349,7 @@ export default function ExamsPage() {
       setUploadError('Não foi possível enviar o arquivo agora. Tente novamente em instantes.')
       if (examId) { await supabase.from('exams').update({ status: 'error' } as unknown as never).eq('id', examId); await loadExams() }
     } finally { setUploading(false) }
-  }, [user, supabase, loadExams, router])
+  }, [user, supabase, loadExams, router, activeTab])
 
   // ── Excluir exame ───────────────────────────────────────────────────────────
   // Remove o exame + biomarcadores + insights + arquivo. Histórico, jornada e
@@ -403,7 +438,7 @@ export default function ExamsPage() {
                E6: ômica é uma CONTINUAÇÃO especializada do mesmo ponto de entrada (não um fork):
                declarar "Exame ômico" segue para o passo de catálogo/versionamento. */
             <CreateRecordMenu
-              label={activeTab === 'orders' ? 'Adicionar pedido ou solicitação' : 'Adicionar exame realizado'}
+              label={activeTab === 'orders' ? 'Adicionar pedido de exames' : 'Adicionar exame realizado'}
               methods={activeTab === 'orders' ? ['file', 'camera'] : ['file', 'camera', 'bundle']}
               extras={activeTab === 'orders' ? [] : [{ key: 'omics', label: 'Exame ômico (catálogo)', icon: Dna }]}
               onSelect={(m, file) => {
@@ -623,7 +658,7 @@ export default function ExamsPage() {
                         <FileText size={17} className="text-gold" />
                       </div>
                     }
-                    title={order.type ?? 'Pedido médico'}
+                    title={orderTitleById[order.id] ?? (order as unknown as { display_title?: string | null }).display_title ?? 'Pedido de exame'}
                     onTitleClick={fileUrl ? () => window.open(fileUrl, '_blank', 'noopener') : undefined}
                     chips={<CardChip tone={statusTone}>{orderStatusLabel(status)}</CardChip>}
                     meta={
@@ -847,12 +882,13 @@ export default function ExamsPage() {
                                   // exame ainda não analisado (sem document_type) não recebe rótulo genérico.
                                   const cat = categoryOf((exam as unknown as { document_type?: string | null }).document_type)
                                   const showCat = cat.key !== FALLBACK_CATEGORY.key
-                                  const isDup = duplicateIds.has(exam.id)
-                                  if (!isMismatch && !showCat && !isDup) return undefined
+                                  // H-11 (apresentação isolada): o duplicado já é comunicado na linha `meta`
+                                  // (com as ações "Ver original" e "excluir"). Não repetir como chip — evita
+                                  // a dupla marcação. Sem tocar em lógica/dados (duplicateIds inalterado).
+                                  if (!isMismatch && !showCat) return undefined
                                   return (
                                     <>
                                       {showCat && <CardChip tone="mauve">{cat.label}</CardChip>}
-                                      {isDup && <CardChip tone="gold">Possível duplicado</CardChip>}
                                       {isMismatch && <CardChip tone="petal">Nome divergente do perfil</CardChip>}
                                     </>
                                   )

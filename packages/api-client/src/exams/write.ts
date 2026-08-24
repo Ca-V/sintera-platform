@@ -27,6 +27,11 @@ export interface CreateExamInput {
   file_url: string          // URL (assinada) do documento — referência à fonte da verdade
   type: string              // rótulo factual (nome do arquivo sem extensão) — NÃO é interpretação clínica
   exam_date?: string | null // opcional; a extração pode preenchê-la depois
+  // EXCEÇÃO REG-001 (decisão específica da fundadora — PEDIDO-001): quando a usuária DECLARA explicitamente
+  // "Pedido de exame", o document_type é gravado JÁ na criação ('medical_order') para o registro cair DIRETO em
+  // Pedidos (não transitar por Exames). NÃO é fabricação clínica — é a declaração explícita da usuária. Para
+  // RESULTADOS (exames), permanece ausente → derivado pela extração (REG-001 intacto).
+  document_type?: string | null
 }
 
 /** Restrições validadas ANTES do upload (requisito não-funcional — fundadora 31/07). */

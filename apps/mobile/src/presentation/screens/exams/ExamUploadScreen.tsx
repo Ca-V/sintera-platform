@@ -15,10 +15,15 @@ import { uploadPhaseLabel, isUploadBusy } from './uploadPresentation'
 
 type Props = NativeStackScreenProps<MinhaSaudeStackParamList, 'ExamUpload'>
 
-export function ExamUploadScreen({ navigation }: Props) {
+export function ExamUploadScreen({ navigation, route }: Props) {
   const t = useTheme()
   const insets = useSafeAreaInsets()
-  const { state, pick, retry, reset, bundle } = useExamUpload()
+  // A9/PEDIDO-001: 'order' = Pedido de exame declarado pela usuária → grava document_type='medical_order' JÁ na
+  // criação, para o pedido cair DIRETO em "Pedidos de Exames" (não transitar por Exames). Resultados seguem REG-001.
+  const isOrder = route.params?.context === 'order'
+  const { state, pick, retry, reset, bundle } = useExamUpload({ documentType: isOrder ? 'medical_order' : null })
+  const headTitle = isOrder ? 'Adicionar pedido de exame' : 'Adicionar exame'
+  const headSubtitle = isOrder ? 'Envie o pedido/solicitação do exame (o pedido é diferente do resultado).' : 'Envie o documento do seu exame.'
 
   // Sucesso: vai direto ao DETALHE do exame (paridade Web) — lá a extração já foi disparada (useExamUpload) e o
   // usuário vê o estado de processamento/polling imediatamente, em vez de voltar à lista sem feedback.
@@ -36,8 +41,8 @@ export function ExamUploadScreen({ navigation }: Props) {
   return (
     <View style={[styles.root, { backgroundColor: t.color.surface.app, paddingTop: insets.top + 8, paddingBottom: insets.bottom + 24 }]}>
       <View style={styles.body}>
-        <Text spec={heading(t, { level: 'page' })}>Adicionar exame</Text>
-        <Text spec={text(t, { role: 'bodySmall', tone: 'muted' })}>Envie o documento do seu exame.</Text>
+        <Text spec={heading(t, { level: 'page' })}>{headTitle}</Text>
+        <Text spec={text(t, { role: 'bodySmall', tone: 'muted' })}>{headSubtitle}</Text>
         <Disclaimer variant="laudo" />
 
         {bundle.combining ? (
