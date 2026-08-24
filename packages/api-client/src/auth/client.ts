@@ -26,6 +26,7 @@ import { syncLinkedExpense } from '../agenda/expense'
 import { listConditions, saveCondition, deleteCondition } from '../conditions/conditions'
 import { listHabits, saveHabit, deleteHabit } from '../habits/habits'
 import { listResources, saveResource, deleteResource } from '../resources/resources'
+import { listDocuments, listDocumentsForTarget, saveDocument, updateDocument, deleteDocument } from '../documents/documents'
 import { listMedications, saveMedication, deleteMedication } from '../medications/medications'
 import { listContraceptives, saveContraceptive, toggleContraceptiveStatus, deleteContraceptive } from '../cycle/contraception'
 import { listPeriods, addPeriod, deletePeriod } from '../cycle/menstrual'
@@ -120,6 +121,13 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       listResources: (signal) => listResources(supabase, signal),
       saveResource: (input) => saveResource(supabase, input),
       deleteResource: (id) => deleteResource(supabase, id),
+    },
+    documents: {
+      listDocuments: (signal) => listDocuments(supabase, signal),
+      listDocumentsForTarget: (d, id, signal) => listDocumentsForTarget(supabase, d, id, signal),
+      saveDocument: (input) => saveDocument(supabase, input),
+      updateDocument: (id, patch) => updateDocument(supabase, id, patch),
+      deleteDocument: (id) => deleteDocument(supabase, id),
     },
     medications: {
       listMedications: (signal) => listMedications(supabase, signal),
