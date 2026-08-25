@@ -91,3 +91,4 @@ export * from './domain/connectors/state'
 // Telefone com código de país (E.164) — fonte única Web↔Mobile.
 export * from './domain/profile/phone'
 export * from './domain/documents/patientDocuments'
+export * from './domain/documents/cardActions'
