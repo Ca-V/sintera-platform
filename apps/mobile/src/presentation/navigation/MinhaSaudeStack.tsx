@@ -6,6 +6,7 @@ import { MinhaSaudeMenuScreen } from '../screens/minhasaude/MinhaSaudeMenuScreen
 import { ConditionsScreen } from '../screens/minhasaude/ConditionsScreen'
 import { HabitsScreen } from '../screens/minhasaude/HabitsScreen'
 import { ResourcesScreen } from '../screens/minhasaude/ResourcesScreen'
+import { DocumentsScreen } from '../screens/minhasaude/DocumentsScreen'
 import { MedicationsScreen } from '../screens/minhasaude/MedicationsScreen'
 import { CicloScreen } from '../screens/minhasaude/CicloScreen'
 import { TimelineScreen } from '../screens/agenda/TimelineScreen'
@@ -43,6 +44,8 @@ export function MinhaSaudeStack() {
       <Stack.Screen name="OmicsPanel" component={OmicsPanelScreen} options={{ ...detail, title: 'Painel de ômica' }} />
       <Stack.Screen name="Medications" component={MedicationsScreen} options={{ ...detail, title: 'Medicamentos' }} />
       <Stack.Screen name="Resources" component={ResourcesScreen} options={{ ...detail, title: 'Recursos de Saúde' }} />
+
+      <Stack.Screen name="Documents" component={DocumentsScreen} options={{ ...detail, title: 'Documentos' }} />
       {/* Saúde */}
       <Stack.Screen name="Conditions" component={ConditionsScreen} options={{ ...detail, title: 'Condições de Saúde' }} />
       <Stack.Screen name="Composicao" component={ComposicaoScreen} options={{ ...detail, title: 'Composição Corporal' }} />

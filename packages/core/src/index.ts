@@ -87,3 +87,4 @@ export * from './domain/capture/attachmentPolicy'
 
 // Telefone com código de país (E.164) — fonte única Web↔Mobile.
 export * from './domain/profile/phone'
+export * from './domain/documents/patientDocuments'

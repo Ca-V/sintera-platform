@@ -20,7 +20,8 @@ import type { NotificationPrefRow } from '../settings/notifications'
 import type { BodyMetricDTO, BodyMetricInput } from '../body/body'
 import type { ShareDTO, TemplateDTO, OmicsPanelDTO } from '../report/report'
 import type { OmicsPanelDTO as OmicsPanel, OmicsPanelDetail, OmicsResultDTO, OmicsHistoryPoint, OmicsCatalogMatch, OmicsResultInput } from '../omics/omics'
-import type { Period } from '@sintera/core'
+import type { Period, DocumentTargetDomain } from '@sintera/core'
+import type { PatientDocumentDTO, PatientDocumentInput } from '../documents/documents'
 
 export type { Session, User }
 
@@ -92,6 +93,18 @@ export interface ResourcesApi {
   deleteResource(id: string): Promise<{ error: Error | null }>
 }
 
+/**
+ * Domínio Documentos do paciente (DOC-001/DOC-002) — receita · atestado · relatório · encaminhamento · outros.
+ * SEPARADO de exames: criar um documento nunca cria exame nem muta o registro-alvo.
+ */
+export interface DocumentsApi {
+  listDocuments(signal?: AbortSignal): Promise<PatientDocumentDTO[]>
+  listDocumentsForTarget(target_domain: DocumentTargetDomain, target_id: string, signal?: AbortSignal): Promise<PatientDocumentDTO[]>
+  saveDocument(input: PatientDocumentInput): Promise<{ data: { id: string } | null; error: Error | null }>
+  updateDocument(id: string, patch: Partial<Pick<PatientDocumentInput, 'subtype' | 'issuer' | 'doc_date' | 'notes'>>): Promise<{ error: Error | null }>
+  deleteDocument(id: string): Promise<{ error: Error | null }>
+}
+
 /** Domínio Medicamentos/Suplementos (medications) — CRUD clínico + estoque + recompra. */
 export interface MedicationsApi {
   listMedications(signal?: AbortSignal): Promise<MedicationDTO[]>
@@ -135,6 +148,7 @@ export interface ApiClient {
   conditions: ConditionsApi
   habits: HabitsApi
   resources: ResourcesApi
+  documents: DocumentsApi
   medications: MedicationsApi
   cycle: CycleApi
   settings: SettingsApi

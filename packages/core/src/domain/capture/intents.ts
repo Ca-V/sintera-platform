@@ -15,9 +15,13 @@ export const INTENT_GROUPS: { group: IntentGroup; label: string }[] = [
 ]
 
 /** Destino de domínio (agnóstico de plataforma). Web mapeia para href; Mobile para aba/tela. */
-export type RegistrationDestination =
-  | 'omics' | 'medications' | 'supplements' | 'resources' | 'resources-vision'
-  | 'consulta' | 'conditions' | 'body' | 'habits' | 'expenses'
+export const REGISTRATION_DESTINATIONS = [
+  'omics', 'medications', 'supplements', 'resources', 'resources-vision',
+  'consulta', 'conditions', 'body', 'habits', 'expenses', 'documents',
+] as const
+
+/** Derivado do catálogo acima — lista em runtime e tipo com UM dono só (ADR-023). */
+export type RegistrationDestination = typeof REGISTRATION_DESTINATIONS[number]
 
 /** COMO a SINTERA captura a intenção escolhida. A intenção declara; o Hub orquestra. */
 export type IntentMechanism =
@@ -42,8 +46,18 @@ export const REGISTRATION_INTENTS: RegistrationIntent[] = [
   // ── Documentos → Capture Center ───────────────────────────────────────────
   { key: 'exame',        label: 'Exame / Laudo',      icon: 'FlaskConical',  group: 'documento', mechanism: { type: 'capture', documentKind: 'exam' } },
   { key: 'pedido_exame', label: 'Pedido de exame',    icon: 'ClipboardList', group: 'documento', mechanism: { type: 'capture' } },
-  { key: 'receita',      label: 'Receita médica',     icon: 'FileText',      group: 'documento', mechanism: { type: 'capture', documentKind: 'medication_label' } },
-  { key: 'doc_clinico',  label: 'Atestado, relatório ou encaminhamento', icon: 'FileHeart', group: 'documento', mechanism: { type: 'capture' } },
+  // DOC-002 — receita e documento clínico agora TÊM destino, como `omica` tem.
+  //
+  // `doc_clinico` era `{ type: 'capture' }` sem kind: mandava classificar, e a classificação só oferecia kinds
+  // que não eram o que a pessoa havia escolhido. A categoria não se perdia por defeito — nunca teve para onde
+  // ir. Agora leva à página de Documentos, onde o subtipo (atestado/relatório/encaminhamento) é escolhido.
+  //
+  // `receita` é `choice` e não `page` porque as duas coisas são legítimas e a pessoa é quem sabe qual quer:
+  // ler a receita para CADASTRAR O MEDICAMENTO é uma capacidade que já funciona (processador `medication_label`
+  // → /dashboard/medicamentos) e não pode ser removida em silêncio; guardar a receita como DOCUMENTO é o que
+  // faltava. Mesmo mecanismo já usado por Medicamento e Suplemento.
+  { key: 'receita',      label: 'Receita médica',     icon: 'FileText',      group: 'documento', mechanism: { type: 'choice', captureKind: 'medication_label', captureLabel: 'Ler receita e cadastrar medicamento', pageDestination: 'documents', pageLabel: 'Guardar como documento' } },
+  { key: 'doc_clinico',  label: 'Atestado, relatório ou encaminhamento', icon: 'FileHeart', group: 'documento', mechanism: { type: 'page', destination: 'documents' } },
   { key: 'omica',        label: 'Exame ômico',        icon: 'Dna',           group: 'documento', mechanism: { type: 'page', destination: 'omics' } },
 
   // ── Cuidados e recursos ───────────────────────────────────────────────────

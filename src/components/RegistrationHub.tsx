@@ -32,6 +32,7 @@ const WEB_HREF: Record<RegistrationDestination, string> = {
   body: '/dashboard/medidas?novo=1',
   habits: '/dashboard/habitos?novo=1',
   expenses: '/dashboard/gastos',
+  documents: '/dashboard/documentos',
 }
 
 type IconType = ComponentType<{ size?: number; className?: string }>
