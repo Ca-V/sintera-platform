@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import type { PatientDocumentDTO, PickedFile } from '@sintera/api-client'
 import {
-  DOCUMENT_SUBTYPES, documentSubtypeLabel, documentSubtitle, isReadyToSave,
+  DOCUMENT_SUBTYPES, documentSubtypeLabel, documentSubtitle, isReadyToSave, DOCUMENT_BASE_ACTIONS,
   type PatientDocumentSubtype, type AttachedFile,
 } from '@sintera/core'
 import { Text, Button, Input, AttachmentLink, DatePicker, Disclaimer, Select, AnexoDocumento } from '../../primitives'
@@ -19,6 +19,9 @@ import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 
 const FILTER_ALL = 'todos'
+
+// Rótulos das ações OBRIGATÓRIAS, do contrato no núcleo — a mesma redação em toda categoria e nas duas pontas.
+const ACOES = Object.fromEntries(DOCUMENT_BASE_ACTIONS.map(a => [a.kind, a.label])) as Record<'view' | 'edit' | 'delete', string>
 
 export function DocumentsScreen() {
   const t = useTheme()
@@ -31,6 +34,9 @@ export function DocumentsScreen() {
 
   const [filter, setFilter] = useState<string>(FILTER_ALL)
   const [open, setOpen] = useState(false)
+  // EDITAR: o cartão passou a ter a ação obrigatória do contrato. Ela não existia em NENHUMA tela do Mobile,
+  // e `updateDocument` estava no api-client sem consumidor nenhum.
+  const [editando, setEditando] = useState<PatientDocumentDTO | null>(null)
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
 
@@ -57,6 +63,19 @@ export function DocumentsScreen() {
 
   function resetForm() {
     setSubtype('receita'); setFiles([]); setIssuer(''); setDocDate(''); setNotes(''); setFormError(null)
+    setEditando(null)
+  }
+
+  /**
+   * Abre o formulário com os fatos do documento.
+   *
+   * O ARQUIVO não se troca ao editar: editar corrige o que se REGISTROU sobre o documento — emissor, data,
+   * tipo, observação. A evidência em si não se substitui; para outro documento, cria-se outro registro.
+   */
+  function startEdit(d: PatientDocumentDTO) {
+    setEditando(d)
+    setSubtype(d.subtype); setIssuer(d.issuer ?? ''); setDocDate(d.doc_date ?? ''); setNotes(d.notes ?? '')
+    setFiles([]); setFormError(null); setOpen(true)
   }
 
   /** Sobe UMA página. O componente cuida da política, da lista e da ordem. */
@@ -70,6 +89,22 @@ export function DocumentsScreen() {
   }, [])
 
   async function save() {
+    // EDITANDO: corrige os fatos do documento; o arquivo permanece. Só a criação exige anexo.
+    if (editando) {
+      setSaving(true)
+      try {
+        const { error: err } = await apiClient.documents.updateDocument(editando.id, {
+          subtype,
+          issuer: issuer.trim() || null,
+          doc_date: docDate || null,
+          notes: notes.trim() || null,
+        })
+        if (err) { setFormError('Não foi possível salvar as alterações.'); return }
+        setOpen(false); resetForm(); load(true)
+      } finally { setSaving(false) }
+      return
+    }
+
     if (!isReadyToSave(files)) { setFormError('Anexe o documento.'); return }
     setSaving(true)
     try {
@@ -149,7 +184,7 @@ export function DocumentsScreen() {
 
       {open && (
         <View style={[s.card, { backgroundColor: t.color.surface.base, borderColor: t.color.border.default }]}>
-          <Text spec={text(t, { role: 'bodyStrong' })}>Adicionar documento</Text>
+          <Text spec={text(t, { role: 'bodyStrong' })}>{editando ? 'Editar documento' : 'Adicionar documento'}</Text>
 
           <View style={{ gap: 6 }}>
             <Text spec={text(t, { role: 'label', tone: 'muted' })} style={{ color: t.color.text.muted }}>Tipo de documento</Text>
@@ -165,7 +200,8 @@ export function DocumentsScreen() {
                 aqui, o texto volta — junto com o campo. */}
           </View>
 
-          <AnexoDocumento files={files} onChange={setFiles} upload={uploadPagina} />
+          {/* Ao EDITAR, o anexo não aparece: corrige-se o que foi registrado sobre o documento, não a evidência. */}
+          {!editando ? <AnexoDocumento files={files} onChange={setFiles} upload={uploadPagina} /> : null}
 
           <View style={{ gap: 6 }}>
             <Text spec={text(t, { role: 'label', tone: 'muted' })} style={{ color: t.color.text.muted }}>Emitido por</Text>
@@ -186,7 +222,7 @@ export function DocumentsScreen() {
             <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>{formError}</Text>
           )}
 
-          <Button label="Salvar documento" onPress={save} loading={saving} disabled={!isReadyToSave(files)} />
+          <Button label={editando ? 'Salvar alterações' : 'Salvar documento'} onPress={save} loading={saving} disabled={!editando && !isReadyToSave(files)} />
           <Button label="Cancelar" onPress={() => { setOpen(false); resetForm() }} variant="ghost" />
         </View>
       )}
@@ -210,10 +246,17 @@ export function DocumentsScreen() {
               <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.text.muted }}>
                 {meta}
               </Text>
-              <AttachmentLink url={d.file_url} label="Ver documento" variant="inline" />
-              <Pressable onPress={() => confirmDelete(d)} hitSlop={8}>
-                <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>Excluir</Text>
-              </Pressable>
+              {/* AÇÕES do contrato (documentCardActions): ver · editar · excluir, com a redação do núcleo —
+                  a mesma em toda categoria e nas duas plataformas. */}
+              <AttachmentLink url={d.file_url} label={ACOES.view} variant="inline" />
+              <View style={{ flexDirection: 'row', gap: 20 }}>
+                <Pressable onPress={() => startEdit(d)} hitSlop={8}>
+                  <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>{ACOES.edit}</Text>
+                </Pressable>
+                <Pressable onPress={() => confirmDelete(d)} hitSlop={8}>
+                  <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>{ACOES.delete}</Text>
+                </Pressable>
+              </View>
             </View>
           )
         })

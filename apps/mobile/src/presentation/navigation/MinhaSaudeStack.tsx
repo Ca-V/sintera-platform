@@ -38,7 +38,7 @@ export function MinhaSaudeStack() {
     <Stack.Navigator>
       <Stack.Screen name="MinhaSaudeMenu" component={MinhaSaudeMenuScreen} options={{ headerShown: false }} />
       {/* Registros */}
-      <Stack.Screen name="ExamsList" component={ExamsListScreen} options={{ ...detail, title: 'Exames' }} />
+      <Stack.Screen name="ExamsList" component={ExamsListScreen} options={({ route }) => ({ ...detail, title: route.params?.tab === 'orders' ? 'Pedidos de exame' : 'Exames' })} />
       <Stack.Screen name="ExamDetail" component={ExamDetailScreen} options={{ ...detail, title: 'Exame' }} />
       <Stack.Screen name="ExamUpload" component={ExamUploadScreen} options={({ route }) => ({ ...detail, title: route.params?.context === 'order' ? 'Adicionar pedido de exame' : 'Adicionar exame' })} />
       <Stack.Screen name="OmicsList" component={OmicsListScreen} options={{ ...detail, title: 'Exames de ômica' }} />

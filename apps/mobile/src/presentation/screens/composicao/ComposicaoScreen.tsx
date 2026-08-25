@@ -149,8 +149,9 @@ export function ComposicaoScreen() {
   const [batchDate, setBatchDate] = useState(today())
   const [batchSaving, setBatchSaving] = useState(false)
   async function scanBioimpedance() {
-    const r = await capture.run((input) => apiClient.vision.readBioimpedance(input))
-    if (!r) return
+    const cap = await capture.run((input) => apiClient.vision.readBioimpedance(input))
+    if (!cap) return
+    const r = cap.data
     const fields: [BodyMetric, string | null][] = [
       ['peso', r.peso], ['gordura_corporal', r.gordura_corporal], ['massa_muscular', r.massa_muscular],
       ['agua_corporal', r.agua_corporal], ['gordura_visceral', r.gordura_visceral], ['massa_ossea', r.massa_ossea],

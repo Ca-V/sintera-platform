@@ -53,6 +53,24 @@ export const SCREEN_COPY = {
     connectAction:  'Conexões',
     removeAction:   'Remover',
   },
+  exames: {
+    title:        'Exames',
+    subtitle:     'Solte o laudo — a SINTERA lê e extrai os dados por você. Os resultados ficam organizados ao longo do tempo.',
+    add:          'Adicionar exame realizado',
+    emptyTitle:   'Nenhum exame ainda',
+  },
+  // Pedido é a ORIGEM do fluxo assistencial (Q1), não um detalhe do exame — e tem o seu próprio texto.
+  // Antes, quem entrava por "Pedidos de exame" lia um subtítulo sobre laudos: o menu levava a um lugar e a
+  // tela se apresentava como outro. No Mobile o subtítulo nem seguia a aba, e era um texto DIFERENTE do da Web
+  // para a mesma tela.
+  pedidos: {
+    title:        'Pedidos de exame',
+    subtitle:     'Guarde o pedido ou a guia — a SINTERA lê o que foi solicitado. O pedido fica registrado até o resultado chegar.',
+    add:          'Adicionar pedido de exame',
+    emptyTitle:   'Nenhum pedido ou solicitação',
+    emptyMessage: 'Pedidos médicos e guias de convênio aparecem aqui quando você os envia.',
+    listNote:     'Pedidos médicos e guias de convênio — documentos de solicitação, guardados à parte dos resultados.',
+  },
   conexoes: {
     title:          'Conexões',
     subtitle:       'Conecte dispositivos e serviços de saúde para que os dados entrem sozinhos, sem digitação.',
