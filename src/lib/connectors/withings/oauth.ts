@@ -2,8 +2,8 @@
 // Authorization Code do Withings (envelope próprio via WithingsClient) para o TokenSet da plataforma. A rotação de
 // refresh token (o Withings devolve um novo a cada refresh) é tratada pelo núcleo (ConnectionStore.resolveAccessToken).
 
-import type { OAuthProvider, TokenSet } from '../oauth'
-import type { Clock } from '../orchestrator'
+import type { OAuthProvider, TokenSet } from '@sintera/core'
+import type { Clock } from '@sintera/core'
 import { createWithingsClient, type WithingsClient, type FetchLike, type Sleep } from './client'
 import { WITHINGS_ACCOUNT_BASE, WITHINGS_SCOPE, WITHINGS_SOURCE, type WithingsConfig } from './config'
 

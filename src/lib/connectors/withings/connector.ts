@@ -2,8 +2,8 @@
 // getmeas e as traduz em CanonicalSample (o núcleo persiste/deduplica/projeta sem conhecer o Withings). Só Composição
 // Corporal (D1). Modelo aberto ([[principio_modelo_aberto]]): meastype fora do escopo é IGNORADO, nunca quebra.
 
-import type { Connector, ConnectorContext } from '../registry'
-import type { CanonicalSample } from '../connector'
+import type { Connector, ConnectorContext } from '@sintera/core'
+import type { CanonicalSample } from '@sintera/core'
 import { createWithingsClient, type WithingsClient, type FetchLike, type Sleep } from './client'
 import { WITHINGS_SOURCE, WITHINGS_LABEL, WITHINGS_VERSION } from './config'
 

@@ -1,7 +1,7 @@
 // FUNC · HIP-002 — WithingsClient (envelope status/erros/backoff) + WithingsOAuthProvider (authorize/exchange/refresh).
 // Puro/determinístico: `fetch` e `sleep` são fakes; nenhuma rede, nenhum segredo real.
 import { describe, it, expect } from 'vitest'
-import type { Clock } from '@/lib/connectors/orchestrator'
+import type { Clock } from '@sintera/core'
 import { createWithingsClient, WithingsApiError, type FetchLike } from '@/lib/connectors/withings/client'
 import { createWithingsOAuthProvider } from '@/lib/connectors/withings/oauth'
 import type { WithingsConfig } from '@/lib/connectors/withings/config'

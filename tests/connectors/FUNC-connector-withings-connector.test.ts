@@ -1,7 +1,7 @@
 // FUNC · HIP-002 — WithingsConnector.fetchSamples: getmeas → CanonicalSample (mapa meastype, value×10^unit,
 // category, paginação, janela incremental via lastupdate, modelo aberto). Puro: WithingsClient é um fake.
 import { describe, it, expect } from 'vitest'
-import type { ConnectorContext } from '@/lib/connectors/registry'
+import type { ConnectorContext } from '@sintera/core'
 import type { WithingsClient } from '@/lib/connectors/withings/client'
 import { createWithingsConnector, WITHINGS_MEASTYPES } from '@/lib/connectors/withings/connector'
 

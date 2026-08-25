@@ -1,12 +1,12 @@
 // FUNC · WEA-001/HIP-001 — SyncService: janela 1ª vs incremental, reconexão, idempotência (com o mock).
 import { describe, it, expect } from 'vitest'
-import { createSyncService, type WatermarkReader } from '@/lib/connectors/syncService'
-import { createConnectorRegistry } from '@/lib/connectors/registry'
-import { createConnectionStore, type ConnectionRepo, type ConnectionRow } from '@/lib/connectors/connections'
-import { createMockWorld, createMockConnector, createMockOAuthProvider, MOCK_SOURCE, type MockMeasurement } from '@/lib/connectors/mock'
-import type { Clock, SyncRunRecorder } from '@/lib/connectors/orchestrator'
-import type { PersistClient, WearableReadingRow, BodyMetricRow } from '@/lib/connectors/persistence'
-import type { SyncRun } from '@/lib/connectors/connector'
+import { createSyncService, type WatermarkReader } from '@sintera/core'
+import { createConnectorRegistry } from '@sintera/core'
+import { createConnectionStore, type ConnectionRepo, type ConnectionRow } from '@sintera/core'
+import { createMockWorld, createMockConnector, createMockOAuthProvider, MOCK_SOURCE, type MockMeasurement } from '@sintera/core'
+import type { Clock, SyncRunRecorder } from '@sintera/core'
+import type { PersistClient, WearableReadingRow, BodyMetricRow } from '@sintera/core'
+import type { SyncRun } from '@sintera/core'
 
 const clock: Clock = { now: () => '2026-07-20T12:00:00Z' }
 const meas = (v: number, at: string, id: string): MockMeasurement => ({ metric: 'peso', value: v, unit: 'kg', recordedAt: at, externalId: id })

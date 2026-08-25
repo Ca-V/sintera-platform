@@ -88,6 +88,19 @@ export * from './domain/capture/attachmentSet'
 export * from './domain/capture/divergence'
 export * from './domain/connectors/state'
 
+// Camada de Conectores (HIP-001) — contratos + lógica PURA, vendor-neutral. Vive no core porque o Mobile
+// precisa alcançá-la: o Health Connect roda NO APARELHO (HIP-010). A IO service-role (supabase-persist,
+// runtime.server) e os adaptadores de fornecedor permanecem no servidor da Web — nunca no pacote.
+export * from './domain/connectors/connector'
+export * from './domain/connectors/oauth'
+export * from './domain/connectors/registry'
+export * from './domain/connectors/persistence'
+export * from './domain/connectors/orchestrator'
+export * from './domain/connectors/connections'
+export * from './domain/connectors/syncService'
+export * from './domain/connectors/webhook'
+export * from './domain/connectors/mock'
+
 // Telefone com código de país (E.164) — fonte única Web↔Mobile.
 export * from './domain/profile/phone'
 export * from './domain/documents/patientDocuments'

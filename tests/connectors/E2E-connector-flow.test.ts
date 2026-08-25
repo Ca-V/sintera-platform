@@ -2,13 +2,13 @@
 // mock comportamental e um "banco" falso coerente (marca d'água lê das leituras). Valida os 7 cenários da V2 e a
 // SUBSTITUIBILIDADE (a jornada não conhece o fabricante — só o contrato Connector/OAuthProvider).
 import { describe, it, expect } from 'vitest'
-import { createConnectorRegistry } from '@/lib/connectors/registry'
-import { createConnectionStore, type ConnectionRepo, type ConnectionRow } from '@/lib/connectors/connections'
-import { createSyncService, type WatermarkReader } from '@/lib/connectors/syncService'
-import { createMockWorld, createMockConnector, createMockOAuthProvider, MOCK_SOURCE, type MockMeasurement } from '@/lib/connectors/mock'
-import type { Clock, SyncRunRecorder } from '@/lib/connectors/orchestrator'
-import type { PersistClient, WearableReadingRow, BodyMetricRow } from '@/lib/connectors/persistence'
-import type { SyncRun } from '@/lib/connectors/connector'
+import { createConnectorRegistry } from '@sintera/core'
+import { createConnectionStore, type ConnectionRepo, type ConnectionRow } from '@sintera/core'
+import { createSyncService, type WatermarkReader } from '@sintera/core'
+import { createMockWorld, createMockConnector, createMockOAuthProvider, MOCK_SOURCE, type MockMeasurement } from '@sintera/core'
+import type { Clock, SyncRunRecorder } from '@sintera/core'
+import type { PersistClient, WearableReadingRow, BodyMetricRow } from '@sintera/core'
+import type { SyncRun } from '@sintera/core'
 
 const meas = (metric: string, v: number, at: string, id: string): MockMeasurement => ({ metric, value: v, unit: 'kg', recordedAt: at, externalId: id })
 

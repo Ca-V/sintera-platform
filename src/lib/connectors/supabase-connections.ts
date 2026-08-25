@@ -2,7 +2,7 @@
 // Única fronteira que lê/escreve as colunas de token de wearable_connections. Sempre com cliente service-role.
 
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { ConnectionRepo, ConnectionRow, ConnectionStatus } from './connections'
+import type { ConnectionRepo, ConnectionRow, ConnectionStatus } from '@sintera/core'
 
 interface DbRow {
   user_id: string

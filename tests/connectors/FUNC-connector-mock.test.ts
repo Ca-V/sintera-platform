@@ -2,11 +2,11 @@
 import { describe, it, expect } from 'vitest'
 import {
   createMockWorld, createMockConnector, createMockOAuthProvider, MOCK_SOURCE, generateDailySeries, type MockMeasurement,
-} from '@/lib/connectors/mock'
-import type { ConnectorContext } from '@/lib/connectors/registry'
-import type { Clock } from '@/lib/connectors/orchestrator'
-import { createConnectionStore, type ConnectionRepo, type ConnectionRow } from '@/lib/connectors/connections'
-import { isTokenExpired } from '@/lib/connectors/oauth'
+} from '@sintera/core'
+import type { ConnectorContext } from '@sintera/core'
+import type { Clock } from '@sintera/core'
+import { createConnectionStore, type ConnectionRepo, type ConnectionRow } from '@sintera/core'
+import { isTokenExpired } from '@sintera/core'
 
 const clock: Clock = { now: () => '2026-07-20T12:00:00Z' }
 const m = (metric: string, value: number, recordedAt: string, id: string): MockMeasurement => ({ metric, value, unit: 'kg', recordedAt, externalId: id })

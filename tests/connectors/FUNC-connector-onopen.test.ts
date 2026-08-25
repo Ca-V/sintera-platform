@@ -1,6 +1,6 @@
 // FUNC · WEA-001/HIP-001 — V2 Épico 3.1: throttle da sincronização ON-OPEN (puro).
 import { describe, it, expect } from 'vitest'
-import { isSyncStale } from '@/lib/connectors/orchestrator'
+import { isSyncStale } from '@sintera/core'
 
 const now = Date.parse('2026-07-20T12:00:00Z')
 const THROTTLE = 15 * 60 * 1000 // 15 min

@@ -3,8 +3,8 @@
 // Deve ser chamado SEMPRE com um cliente service-role (tokens/escrita privilegiada; nunca o cliente do browser).
 
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { PersistClient, WearableReadingRow, BodyMetricRow } from './persistence'
-import type { SyncRunRecorder } from './orchestrator'
+import type { PersistClient, WearableReadingRow, BodyMetricRow } from '@sintera/core'
+import type { SyncRunRecorder } from '@sintera/core'
 
 export function createSupabasePersistClient(supabase: SupabaseClient): PersistClient {
   return {
