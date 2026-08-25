@@ -8,7 +8,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { getMinhaSaudeCounts, type MinhaSaudeCounts } from '@sintera/api-client'
 import { createClient } from '@/lib/supabase/client'
 import {
-  LayoutDashboard, FileText, Clock, Pill, Receipt, CalendarDays,
+  LayoutDashboard, FileText, FileHeart, Clock, Pill, Receipt, CalendarDays,
   HeartPulse, Stethoscope, Droplet, Activity, Ruler, Settings,
   Accessibility, X, ChevronRight, ChevronDown, TrendingUp, Leaf, Heart, Users,
 } from 'lucide-react'
@@ -42,6 +42,9 @@ const NAV: readonly NavNode[] = [
     sections: [
       { label: 'Registros', items: [
         { href: '/dashboard/exams',        icon: FileText,      label: 'Exames' },
+        // DOC-002 — receita · atestado · relatório · encaminhamento. Domínio próprio, ao lado de Exames e
+        // não dentro deles: um atestado não é exame. Sem esta entrada só se chegava por "Adicionar registro".
+        { href: '/dashboard/documentos',   icon: FileHeart,     label: 'Documentos' },
         { href: '/dashboard/medicamentos', icon: Pill,          label: 'Medicamentos' },
         { href: '/dashboard/suplementos',  icon: Leaf,          label: 'Suplementos' },
         { href: '/dashboard/recursos',     icon: Accessibility, label: 'Recursos de Saúde' },

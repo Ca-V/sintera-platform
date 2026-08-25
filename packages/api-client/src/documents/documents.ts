@@ -81,6 +81,44 @@ export async function listDocumentsForTarget(
 }
 
 /**
+ * Documentos de VÁRIOS alvos de uma vez — ex.: as receitas de todos os medicamentos da lista.
+ *
+ * Existe para a tela não fazer uma consulta por item. Devolve um mapa `target_id → documentos`; alvo sem
+ * documento simplesmente não aparece no mapa.
+ */
+export async function listDocumentsForTargets(
+  client: SupabaseClient, target_domain: DocumentTargetDomain, target_ids: string[], signal?: AbortSignal,
+): Promise<Record<string, PatientDocumentDTO[]>> {
+  if (target_ids.length === 0) return {}
+  const { signal: s, cleanup } = withTimeout(signal)
+  try {
+    const userId = await requireUserId(client)
+    const { data: links, error: le } = await client.from('patient_document_links')
+      .select('document_id, target_id')
+      .eq('user_id', userId).eq('target_domain', target_domain).in('target_id', target_ids).abortSignal(s)
+    if (le) throw asError(le)
+    const rows = (links as { document_id: string; target_id: string }[] | null) ?? []
+    if (rows.length === 0) return {}
+
+    const { data, error } = await client.from('patient_documents').select(COLUMNS)
+      .eq('user_id', userId).in('id', rows.map(r => r.document_id))
+      .order('created_at', { ascending: false }).abortSignal(s)
+    if (error) throw asError(error)
+
+    const byId = new Map((((data as PatientDocumentDTO[] | null) ?? [])).map(d => [d.id, d]))
+    const out: Record<string, PatientDocumentDTO[]> = {}
+    for (const r of rows) {
+      const doc = byId.get(r.document_id)
+      if (!doc) continue
+      ;(out[r.target_id] ??= []).push(doc)
+    }
+    return out
+  } finally {
+    cleanup()
+  }
+}
+
+/**
  * Cria um documento e (opcional) suas N associações. As LINHAS são montadas pelo domínio no core — inclusive a
  * validação de quais pares (subtipo × alvo) são legítimos, que LANÇA para associação fora da especificação.
  * NÃO lança: devolve o erro.
