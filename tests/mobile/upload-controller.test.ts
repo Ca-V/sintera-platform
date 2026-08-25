@@ -16,6 +16,8 @@ function deps(over: Partial<{ pick: PickedFile | null; pickThrows: boolean; uplo
         ? vi.fn().mockRejectedValue(new Error('device'))
         : vi.fn().mockResolvedValue('pick' in over ? over.pick : validFile),
       captureImage: vi.fn().mockResolvedValue('pick' in over ? over.pick : validFile),
+      // ANEXO-001 — seleção de VÁRIOS arquivos; o port passou a exigir.
+      pickDocuments: vi.fn().mockResolvedValue(null),
       pickImages: vi.fn().mockResolvedValue(null),
       captureImagePage: vi.fn().mockResolvedValue(null),
     },

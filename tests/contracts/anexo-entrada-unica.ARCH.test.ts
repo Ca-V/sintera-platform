@@ -55,12 +55,19 @@ function arquivosTsx(dir: string, acc: string[] = []): string[] {
   return acc
 }
 
+/**
+ * O COMPONENTE COMPARTILHADO — o único lugar da Web onde um seletor de arquivo pode existir.
+ * Não é exceção à regra: é a regra. Toda outra ocorrência é uma tela reimplementando o padrão.
+ */
+const COMPONENTE_UNICO = 'src/components/ui/AnexoDocumento.tsx'
+
 /** Arquivos que abrem seletor de arquivo por conta própria, em vez de usar o componente compartilhado. */
 function capturamPorContaPropria(): string[] {
   const base = join(ROOT, 'src')
   return arquivosTsx(base)
     .filter(f => /type="file"/.test(readFileSync(f, 'utf8')))
     .map(f => relative(ROOT, f).split('\\').join('/'))
+    .filter(f => f !== COMPONENTE_UNICO)
     .sort()
 }
 

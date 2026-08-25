@@ -23,6 +23,12 @@ export interface PickedImage {
 /** Port de seleção. Retorna `null` quando o usuário CANCELA (não é erro). LANÇA só em falha real do device. */
 export interface DocumentPickerPort {
   pickDocument(): Promise<PickedFile | null>
+  /**
+   * ANEXO-001: seleciona VÁRIOS arquivos de uma vez, PDF e imagem misturados. `null` = cancelou.
+   * A política declara `multiple` e `mixedFormats`; sem isto o Mobile não tinha como cumprir — só existia
+   * seleção de um arquivo por vez.
+   */
+  pickDocuments(): Promise<PickedFile[] | null>
   captureImage(): Promise<PickedFile | null>
   /** Seleciona VÁRIAS imagens da galeria (com base64) para montar um documento multipágina. `null` = cancelou. */
   pickImages(): Promise<PickedImage[] | null>
