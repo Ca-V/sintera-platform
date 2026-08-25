@@ -9,23 +9,16 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { ScrollView, View, ActivityIndicator, RefreshControl, Pressable, Alert, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
-import type { PatientDocumentDTO } from '@sintera/api-client'
+import type { PatientDocumentDTO, PickedFile } from '@sintera/api-client'
 import {
-  DOCUMENT_SUBTYPES, documentSubtypeLabel, allowedTargets, withinAttachmentLimit, MAX_ATTACHMENT_MB,
-  type PatientDocumentSubtype,
+  DOCUMENT_SUBTYPES, documentSubtypeLabel, documentSubtitle, isReadyToSave,
+  type PatientDocumentSubtype, type AttachedFile,
 } from '@sintera/core'
-import { Text, Button, Input, AttachmentLink, DatePicker, Disclaimer, Select } from '../../primitives'
+import { Text, Button, Input, AttachmentLink, DatePicker, Disclaimer, Select, AnexoDocumento } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
-import { documentPicker } from '../../../infrastructure/documentPickerAdapter'
 
 const FILTER_ALL = 'todos'
-
-function formatDate(iso: string | null): string {
-  if (!iso) return ''
-  const [y, m, d] = iso.slice(0, 10).split('-')
-  return d && m && y ? `${d}/${m}/${y}` : ''
-}
 
 export function DocumentsScreen() {
   const t = useTheme()
@@ -39,11 +32,11 @@ export function DocumentsScreen() {
   const [filter, setFilter] = useState<string>(FILTER_ALL)
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [uploading, setUploading] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
 
   const [subtype, setSubtype] = useState<PatientDocumentSubtype>('receita')
-  const [fileUrl, setFileUrl] = useState<string | null>(null)
+  // ANEXO-001: o formulário guarda um CONJUNTO de páginas, não um arquivo.
+  const [files, setFiles] = useState<AttachedFile[]>([])
   const [issuer, setIssuer] = useState('')
   const [docDate, setDocDate] = useState('')
   const [notes, setNotes] = useState('')
@@ -63,40 +56,33 @@ export function DocumentsScreen() {
   useEffect(() => { alive.current = true; load(false); return () => { alive.current = false } }, [load])
 
   function resetForm() {
-    setSubtype('receita'); setFileUrl(null); setIssuer(''); setDocDate(''); setNotes(''); setFormError(null)
+    setSubtype('receita'); setFiles([]); setIssuer(''); setDocDate(''); setNotes(''); setFormError(null)
   }
 
-  async function pickFile() {
-    setFormError(null)
-    setUploading(true)
-    try {
-      const file = await documentPicker.pickDocument()
-      if (!file) return
-      // Limite ÚNICO da plataforma (ANEXO-001) — o mesmo número que a Web aplica.
-      if (file.sizeBytes != null && !withinAttachmentLimit(file.sizeBytes)) {
-        setFormError(`O arquivo passa de ${MAX_ATTACHMENT_MB} MB.`)
-        return
-      }
-      const { data, error: err } = await apiClient.exams.uploadExam({
-        uri: file.uri,
-        mimeType: file.mimeType ?? 'application/octet-stream',
-        sizeBytes: file.sizeBytes,
-      })
-      if (err || !data) { setFormError('Não foi possível enviar o arquivo.'); return }
-      setFileUrl(data.url)
-    } finally { setUploading(false) }
-  }
+  /** Sobe UMA página. O componente cuida da política, da lista e da ordem. */
+  const uploadPagina = useCallback(async (file: PickedFile): Promise<string | null> => {
+    const { data, error: err } = await apiClient.exams.uploadExam({
+      uri: file.uri,
+      mimeType: file.mimeType ?? 'application/octet-stream',
+      sizeBytes: file.sizeBytes,
+    })
+    return err || !data ? null : data.url
+  }, [])
 
   async function save() {
-    if (!fileUrl) { setFormError('Anexe o documento.'); return }
+    if (!isReadyToSave(files)) { setFormError('Anexe o documento.'); return }
     setSaving(true)
     try {
       const { error: err } = await apiClient.documents.saveDocument({
         subtype,
-        file_url: fileUrl,
+        // A primeira página também vai em `file_url` — é o que os documentos anteriores ao ANEXO-001 usam.
+        file_url: files[0].url!,
         issuer: issuer.trim() || null,
         doc_date: docDate || null,
         notes: notes.trim() || null,
+        pages: files.map(f => ({
+          file_url: f.url!, file_name: f.name, mime_type: f.mime, size_bytes: f.sizeBytes,
+        })),
       })
       if (err) { setFormError('Não foi possível salvar o documento.'); return }
       setOpen(false); resetForm(); load(true)
@@ -173,25 +159,13 @@ export function DocumentsScreen() {
               options={DOCUMENT_SUBTYPES.map(x => ({ id: x.value, label: x.label }))}
               title="Tipo de documento"
             />
-            {/* Alvos vindos do domínio: a Receita alimenta 7 contextos; atestado/relatório/encaminhamento
-                ligam-se ao encontro. Mesmo texto da Web, mesma fonte. */}
-            {allowedTargets(subtype).length > 0 && (
-              <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.text.muted }}>
-                Pode ser associado a: {allowedTargets(subtype).join(' · ')}
-              </Text>
-            )}
+            {/* NÃO anunciar aqui a que este documento "pode ser associado": este formulário não associa nada.
+                O vínculo da receita ao medicamento nasce do outro lado, na tela de Medicamentos. Prometer uma
+                capacidade que a tela não tem é pior do que ficar calado. Quando houver seletor de vínculo
+                aqui, o texto volta — junto com o campo. */}
           </View>
 
-          <View style={{ gap: 6 }}>
-            <Text spec={text(t, { role: 'label', tone: 'muted' })} style={{ color: t.color.text.muted }}>Documento</Text>
-            <Button
-              label={fileUrl ? 'Arquivo anexado — trocar' : 'Anexar arquivo (PDF ou imagem)'}
-              onPress={pickFile}
-              variant="secondary"
-              loading={uploading}
-              loadingLabel="Enviando…"
-            />
-          </View>
+          <AnexoDocumento files={files} onChange={setFiles} upload={uploadPagina} />
 
           <View style={{ gap: 6 }}>
             <Text spec={text(t, { role: 'label', tone: 'muted' })} style={{ color: t.color.text.muted }}>Emitido por</Text>
@@ -212,7 +186,7 @@ export function DocumentsScreen() {
             <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>{formError}</Text>
           )}
 
-          <Button label="Salvar documento" onPress={save} loading={saving} disabled={uploading || !fileUrl} />
+          <Button label="Salvar documento" onPress={save} loading={saving} disabled={!isReadyToSave(files)} />
           <Button label="Cancelar" onPress={() => { setOpen(false); resetForm() }} variant="ghost" />
         </View>
       )}
@@ -229,14 +203,14 @@ export function DocumentsScreen() {
         </Text>
       ) : (
         visible.map(d => {
-          const meta = [d.issuer, formatDate(d.doc_date)].filter(Boolean).join(' · ')
+          const meta = documentSubtitle(d)
           return (
             <View key={d.id} style={[s.card, { backgroundColor: t.color.surface.base, borderColor: t.color.border.default, gap: 8 }]}>
               <Text spec={text(t, { role: 'bodyStrong' })}>{documentSubtypeLabel(d.subtype)}</Text>
               <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.text.muted }}>
-                {meta || 'Sem emissor informado'}
+                {meta}
               </Text>
-              <AttachmentLink url={d.file_url} label="Ver documento" />
+              <AttachmentLink url={d.file_url} label="Ver documento" variant="inline" />
               <Pressable onPress={() => confirmDelete(d)} hitSlop={8}>
                 <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>Excluir</Text>
               </Pressable>

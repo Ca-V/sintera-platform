@@ -37,6 +37,28 @@ export type DocumentTargetDomain =
   | 'medicamento' | 'suplemento' | 'ciclo' | 'composicao' | 'recurso' | 'habito' | 'monitoramento'
   | 'exame' | 'consulta'
 
+/**
+ * Rótulo HUMANO do domínio-alvo. As chaves acima são identificadores internos — sem acento, minúsculas,
+ * no singular — e não podem aparecer na tela.
+ *
+ * Achado na homologação (25/08): a tela de Documentos exibia `composicao · habito · recurso` cru para a
+ * usuária, porque juntava as chaves direto. Rótulo é apresentação e tem que ter um dono; este é o dono.
+ */
+const TARGET_LABELS: Record<DocumentTargetDomain, string> = {
+  medicamento:   'Medicamento',
+  suplemento:    'Suplemento',
+  ciclo:         'Ciclo e contracepção',
+  composicao:    'Composição corporal',
+  recurso:       'Recurso de saúde',
+  habito:        'Hábito',
+  monitoramento: 'Monitoramento',
+  exame:         'Exame',
+  consulta:      'Consulta',
+}
+export function documentTargetLabel(t: DocumentTargetDomain): string {
+  return TARGET_LABELS[t] ?? String(t)
+}
+
 /** Categorias às quais uma RECEITA pode alimentar informação (decisão da fundadora — os 7 contextos). */
 export const RECEITA_TARGET_DOMAINS: DocumentTargetDomain[] = [
   'medicamento', 'suplemento', 'ciclo', 'composicao', 'recurso', 'habito', 'monitoramento',
@@ -62,6 +84,33 @@ export function allowedTargets(subtype: PatientDocumentSubtype): DocumentTargetD
 }
 
 export interface DocumentAssociation { target_domain: DocumentTargetDomain; target_id: string }
+
+/** dd/mm/aaaa a partir de uma data ISO. Vazio se não houver data. */
+function formatDate(iso: string | null | undefined): string {
+  const [y, m, d] = (iso ?? '').slice(0, 10).split('-')
+  return d && m && y ? `${d}/${m}/${y}` : ''
+}
+
+/**
+ * Linha de identificação do documento no cartão — o que distingue UM documento dos outros.
+ *
+ * POR QUE EXISTE: sem isto, três receitas sem emissor preenchido viram três cartões idênticos ("Receita" /
+ * "Sem emissor informado") e a pessoa não tem como saber qual é qual. A data de inclusão é a última defesa:
+ * pode não haver emissor nem data no documento, mas sempre houve um momento em que ele entrou.
+ *
+ * Ordem: emissor e data do documento (o que está escrito nele) vencem; na ausência dos dois, a data em que
+ * foi guardado. Web e Mobile chamam esta função — o texto não pode divergir entre as telas.
+ */
+export function documentSubtitle(doc: {
+  issuer?: string | null
+  doc_date?: string | null
+  created_at?: string | null
+}): string {
+  const partes = [doc.issuer?.trim(), formatDate(doc.doc_date)].filter(Boolean) as string[]
+  if (partes.length > 0) return partes.join(' · ')
+  const guardado = formatDate(doc.created_at)
+  return guardado ? `Adicionado em ${guardado}` : 'Sem emissor informado'
+}
 
 /**
  * RECEITA vinculada a um registro — a forma CANÔNICA de arquivar uma receita que pertence a um medicamento,

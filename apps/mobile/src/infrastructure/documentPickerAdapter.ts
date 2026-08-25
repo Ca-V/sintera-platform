@@ -23,6 +23,18 @@ export const documentPicker: DocumentPickerPort = {
     return { uri: a.uri, name: a.name, sizeBytes: a.size ?? 0, mimeType: a.mimeType ?? null }
   },
 
+  async pickDocuments(): Promise<PickedFile[] | null> {
+    const res = await DocumentPicker.getDocumentAsync({
+      type: ['application/pdf', 'image/jpeg', 'image/png'],
+      copyToCacheDirectory: true,
+      multiple: true,
+    })
+    if (res.canceled) return null
+    return res.assets.map(a => ({
+      uri: a.uri, name: a.name, sizeBytes: a.size ?? 0, mimeType: a.mimeType ?? null,
+    }))
+  },
+
   async captureImage(): Promise<PickedFile | null> {
     const perm = await ImagePicker.requestCameraPermissionsAsync()
     if (!perm.granted) return null

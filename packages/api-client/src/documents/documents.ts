@@ -22,9 +22,27 @@ export interface PatientDocumentDTO {
   created_at: string
 }
 
+/** Uma PÁGINA do documento (ANEXO-001). A ordem do array é a ordem de leitura. */
+export interface DocumentPageInput {
+  file_url: string
+  file_name?: string | null
+  mime_type?: string | null
+  size_bytes?: number | null
+}
+
+export interface PatientDocumentPage {
+  id: string
+  file_url: string
+  file_name: string | null
+  mime_type: string | null
+  size_bytes: number | null
+  position: number
+}
+
 export interface PatientDocumentInput {
   id?: string
   subtype: PatientDocumentSubtype
+  /** Primeira página. Mantido para compatibilidade com documentos anteriores ao ANEXO-001. */
   file_url: string
   issuer?: string | null
   doc_date?: string | null
@@ -32,6 +50,12 @@ export interface PatientDocumentInput {
   document_sha256?: string | null
   /** Associações a registros-alvo (a receita pode alimentar Medicamento E Suplemento, por exemplo). */
   associations?: DocumentAssociation[]
+  /**
+   * PÁGINAS do documento. Um atestado fotografado em duas páginas é UM atestado — sem isto, seria preciso
+   * criar um registro por página, e a lista mostraria três receitas onde há uma.
+   * A primeira página deve coincidir com `file_url`.
+   */
+  pages?: DocumentPageInput[]
 }
 
 const COLUMNS = 'id, subtype, file_url, issuer, doc_date, notes, status, created_at' as const
@@ -151,9 +175,54 @@ export async function saveDocument(
       const { error: le } = await client.from('patient_document_links').insert(links)
       if (le) return { data: { id }, error: asError(le) }
     }
+
+    // PÁGINAS (ANEXO-001). A ordem do array é a ordem de leitura — a pessoa fotografou na ordem que quer ler.
+    const pages = input.pages ?? []
+    if (pages.length > 0) {
+      const rows = pages.map((p, i) => ({
+        document_id: id,
+        user_id: userId,
+        file_url: p.file_url,
+        file_name: p.file_name ?? null,
+        mime_type: p.mime_type ?? null,
+        size_bytes: p.size_bytes ?? null,
+        position: i,
+      }))
+      const { error: pe } = await client.from('patient_document_files').insert(rows)
+      // O documento já existe e a primeira página está em `file_url`: uma falha aqui perde as páginas
+      // extras, não o documento. Devolver o erro é o que permite à tela dizer isso à pessoa.
+      if (pe) return { data: { id }, error: asError(pe) }
+    }
     return { data: { id }, error: null }
   } catch (e) {
     return { data: null, error: e instanceof Error ? e : new Error(String(e)) }
+  }
+}
+
+/**
+ * Páginas de VÁRIOS documentos de uma vez — `document_id → páginas`, na ordem de leitura.
+ * Em lote para a lista não fazer uma consulta por documento.
+ */
+export async function listPagesForDocuments(
+  client: SupabaseClient, documentIds: string[], signal?: AbortSignal,
+): Promise<Record<string, PatientDocumentPage[]>> {
+  if (documentIds.length === 0) return {}
+  const { signal: s, cleanup } = withTimeout(signal)
+  try {
+    const userId = await requireUserId(client)
+    const { data, error } = await client.from('patient_document_files')
+      .select('id, document_id, file_url, file_name, mime_type, size_bytes, position')
+      .eq('user_id', userId).in('document_id', documentIds)
+      .order('position', { ascending: true }).abortSignal(s)
+    if (error) throw asError(error)
+    const out: Record<string, PatientDocumentPage[]> = {}
+    for (const r of (data as (PatientDocumentPage & { document_id: string })[] | null) ?? []) {
+      const { document_id, ...page } = r
+      ;(out[document_id] ??= []).push(page)
+    }
+    return out
+  } finally {
+    cleanup()
   }
 }
 

@@ -27,7 +27,7 @@ import { listConditions, saveCondition, deleteCondition } from '../conditions/co
 import { listHabits, saveHabit, deleteHabit } from '../habits/habits'
 import { listResources, saveResource, deleteResource } from '../resources/resources'
 import { archivePrescription } from '../documents/prescription'
-import { listDocuments, listDocumentsForTarget, listDocumentsForTargets, saveDocument, updateDocument, deleteDocument } from '../documents/documents'
+import { listDocuments, listDocumentsForTarget, listDocumentsForTargets, listPagesForDocuments, saveDocument, updateDocument, deleteDocument } from '../documents/documents'
 import { listMedications, saveMedication, deleteMedication } from '../medications/medications'
 import { listContraceptives, saveContraceptive, toggleContraceptiveStatus, deleteContraceptive } from '../cycle/contraception'
 import { listPeriods, addPeriod, deletePeriod } from '../cycle/menstrual'
@@ -127,6 +127,7 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       listDocuments: (signal) => listDocuments(supabase, signal),
       listDocumentsForTarget: (d, id, signal) => listDocumentsForTarget(supabase, d, id, signal),
       listDocumentsForTargets: (d, ids, signal) => listDocumentsForTargets(supabase, d, ids, signal),
+      listPagesForDocuments: (ids, signal) => listPagesForDocuments(supabase, ids, signal),
       saveDocument: (input) => saveDocument(supabase, input),
       updateDocument: (id, patch) => updateDocument(supabase, id, patch),
       deleteDocument: (id) => deleteDocument(supabase, id),

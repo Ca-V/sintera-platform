@@ -27,6 +27,8 @@ function deps(over: Partial<{ pick: PickedFile | null; upload: unknown; create: 
   return {
     picker: {
       pickDocument: vi.fn().mockResolvedValue('pick' in over ? over.pick : PDF),
+      // ANEXO-001 — seleção de VÁRIOS arquivos; o port passou a exigir.
+      pickDocuments: vi.fn().mockResolvedValue(null),
       captureImage: vi.fn().mockResolvedValue('pick' in over ? over.pick : PDF),
       pickImages: vi.fn().mockResolvedValue(null),
       captureImagePage: vi.fn().mockResolvedValue(null),
