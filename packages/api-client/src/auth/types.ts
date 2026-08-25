@@ -21,7 +21,7 @@ import type { BodyMetricDTO, BodyMetricInput } from '../body/body'
 import type { ShareDTO, TemplateDTO, OmicsPanelDTO } from '../report/report'
 import type { OmicsPanelDTO as OmicsPanel, OmicsPanelDetail, OmicsResultDTO, OmicsHistoryPoint, OmicsCatalogMatch, OmicsResultInput } from '../omics/omics'
 import type { Period, DocumentTargetDomain } from '@sintera/core'
-import type { PatientDocumentDTO, PatientDocumentInput } from '../documents/documents'
+import type { PatientDocumentDTO, PatientDocumentInput, PatientDocumentPage } from '../documents/documents'
 import type { DocumentAssociation } from '@sintera/core'
 
 export type { Session, User }
@@ -102,6 +102,8 @@ export interface DocumentsApi {
   listDocuments(signal?: AbortSignal): Promise<PatientDocumentDTO[]>
   listDocumentsForTarget(target_domain: DocumentTargetDomain, target_id: string, signal?: AbortSignal): Promise<PatientDocumentDTO[]>
   listDocumentsForTargets(target_domain: DocumentTargetDomain, target_ids: string[], signal?: AbortSignal): Promise<Record<string, PatientDocumentDTO[]>>
+  /** ANEXO-001 — páginas de vários documentos, em lote. */
+  listPagesForDocuments(documentIds: string[], signal?: AbortSignal): Promise<Record<string, PatientDocumentPage[]>>
   saveDocument(input: PatientDocumentInput): Promise<{ data: { id: string } | null; error: Error | null }>
   updateDocument(id: string, patch: Partial<Pick<PatientDocumentInput, 'subtype' | 'issuer' | 'doc_date' | 'notes'>>): Promise<{ error: Error | null }>
   deleteDocument(id: string): Promise<{ error: Error | null }>

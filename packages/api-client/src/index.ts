@@ -36,12 +36,12 @@ export type { BodyMetricDTO, BodyMetricInput } from './body/body'
 export type { ResourceDTO, ResourceInput } from './resources/resources'
 // Domínio Documentos do paciente (DOC-001/DOC-002) — receita · atestado · relatório · encaminhamento · outros.
 export type { DocumentsApi } from './auth/types'
-export type { PatientDocumentDTO, PatientDocumentInput } from './documents/documents'
+export type { PatientDocumentDTO, PatientDocumentInput, PatientDocumentPage, DocumentPageInput } from './documents/documents'
 // Receita com DONO ÚNICO (DOC-002). `prescriptionUrlOf` é pura. `archivePrescription` é exportada AVULSA além
 // de estar em ApiClient.documents porque o Mobile consome o ApiClient e a Web consome Supabase direto — mesmo
 // arranjo de `getProfileStats`. As duas pontas executam a MESMA função; só o cliente é injetado por cada uma.
 export { prescriptionUrlOf, archivePrescription } from './documents/prescription'
-export { listDocumentsForTargets } from './documents/documents'
+export { listDocumentsForTargets, listPagesForDocuments } from './documents/documents'
 export type { MedicationDTO, MedicationInput } from './medications/medications'
 export type { EventDraft } from './agenda/events'
 export type { LinkedReminderOptions } from './agenda/reminder'

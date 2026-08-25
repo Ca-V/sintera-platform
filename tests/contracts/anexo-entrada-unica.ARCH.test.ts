@@ -28,11 +28,12 @@ const ROOT = process.cwd()
 /**
  * DÍVIDA MEDIDA em 25/08/2026 — pontos que capturam anexo por conta própria. Esta lista só pode ENCOLHER.
  *
- * São ONZE, não seis: a primeira contagem foi feita por grep manual sobre `page.tsx` de primeiro nível e
- * perdeu as rotas aninhadas e os componentes. A guarda varre a árvore inteira — é por isso que ela existe.
+ * Eram ONZE em 25/08. Receitas e atestados JÁ MIGROU para o componente e saiu — restam dez.
+ *
+ * A contagem original que eu fiz à mão dizia SEIS: o grep olhava só `page.tsx` de primeiro nível e perdia as
+ * rotas aninhadas e os componentes. A guarda varre a árvore inteira — é por isso que ela existe.
  */
 const DIVIDA_ENTRADA_PROPRIA: readonly string[] = [
-  'src/app/dashboard/documentos/page.tsx',
   'src/app/dashboard/exams/page.tsx',
   'src/app/dashboard/exams/[id]/page.tsx',
   'src/app/dashboard/habitos/page.tsx',

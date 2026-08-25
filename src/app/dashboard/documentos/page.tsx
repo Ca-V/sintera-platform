@@ -14,7 +14,7 @@
 // (emissor, data, tipo) e NÃO interpreta conteúdo clínico (ADR-000 · RDC 657).
 // ============================================================
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   Loader2, Plus, X, Trash2, Paperclip, FileHeart, FileText, FileCheck2, Share2, File,
 } from 'lucide-react'
@@ -26,15 +26,15 @@ import ListCard from '@/components/ListCard'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import Select from '@/components/ui/Select'
 import AttachmentLink from '@/components/ui/AttachmentLink'
+import AnexoDocumento from '@/components/ui/AnexoDocumento'
 import Disclaimer from '@/components/ui/Disclaimer'
 import { Card } from '@/lib/ui/ds'
 // Helper do repositório: o cliente tipado resolve Insert como `never`, então TODA escrita da Web passa por
 // `row()`. Não é gambiarra minha — é o padrão já usado por Recursos, Hábitos e demais páginas.
 import { row } from '@/lib/supabase/db'
 import {
-  DOCUMENT_SUBTYPES, documentSubtypeLabel, buildPatientDocumentInsert, documentSubtitle,
-  supportedNowAcceptAttr, withinAttachmentLimit, MAX_ATTACHMENT_MB,
-  type PatientDocumentSubtype,
+  DOCUMENT_SUBTYPES, documentSubtypeLabel, buildPatientDocumentInsert, documentSubtitle, isReadyToSave,
+  type PatientDocumentSubtype, type AttachedFile,
 } from '@sintera/core'
 
 // Ícone por subtipo. Mapa EXAUSTIVO por construção: o TypeScript exige uma entrada para cada
@@ -64,7 +64,6 @@ const FILTER_ALL = 'todos'
 export default function DocumentosPage() {
   const { user } = useUser()
   const supabase = createClient()
-  const fileRef = useRef<HTMLInputElement>(null)
 
   const [rows, setRows] = useState<DocRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -72,13 +71,12 @@ export default function DocumentosPage() {
 
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [uploading, setUploading] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [confirmId, setConfirmId] = useState<string | null>(null)
 
   const [subtype, setSubtype] = useState<PatientDocumentSubtype>('receita')
-  const [fileUrl, setFileUrl] = useState<string | null>(null)
-  const [fileName, setFileName] = useState<string | null>(null)
+  // ANEXO-001: o formulário guarda um CONJUNTO de páginas, não um arquivo.
+  const [files, setFiles] = useState<AttachedFile[]>([])
   const [issuer, setIssuer] = useState('')
   const [docDate, setDocDate] = useState('')
   const [notes, setNotes] = useState('')
@@ -95,54 +93,49 @@ export default function DocumentosPage() {
   useEffect(() => { void load() }, [load])
 
   function resetForm() {
-    setSubtype('receita'); setFileUrl(null); setFileName(null)
+    setSubtype('receita'); setFiles([])
     setIssuer(''); setDocDate(''); setNotes(''); setErro(null)
   }
 
-  async function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file || !user) return
-    setErro(null)
-    // Limite ÚNICO da plataforma (ANEXO-001) — nunca um número local.
-    if (!withinAttachmentLimit(file.size)) {
-      setErro(`O arquivo passa de ${MAX_ATTACHMENT_MB} MB.`)
-      e.target.value = ''
-      return
-    }
-    setUploading(true)
-    try {
-      const ext = file.name.split('.').pop() ?? 'pdf'
-      const path = `${user.id}/${crypto.randomUUID()}.${ext}`
-      const { error: upErr } = await supabase.storage.from('exams')
-        .upload(path, file, { contentType: file.type, upsert: false })
-      if (upErr) { setErro('Não foi possível enviar o arquivo.'); return }
-      const { data: signed } = await supabase.storage.from('exams')
-        .createSignedUrl(path, 60 * 60 * 24 * 365)
-      if (!signed?.signedUrl) { setErro('Não foi possível gerar o link do arquivo.'); return }
-      setFileUrl(signed.signedUrl)
-      setFileName(file.name)
-    } finally {
-      setUploading(false)
-      e.target.value = ''
-    }
-  }
+  /** Sobe UMA página. O componente cuida da política, da lista, da ordem e do progresso. */
+  const uploadPagina = useCallback(async (file: File): Promise<string | null> => {
+    if (!user) return null
+    const ext = file.name.split('.').pop() ?? 'pdf'
+    const path = `${user.id}/${crypto.randomUUID()}.${ext}`
+    const { error: upErr } = await supabase.storage.from('exams')
+      .upload(path, file, { contentType: file.type, upsert: false })
+    if (upErr) return null
+    const { data: signed } = await supabase.storage.from('exams')
+      .createSignedUrl(path, 60 * 60 * 24 * 365)
+    return signed?.signedUrl ?? null
+  }, [supabase, user])
 
   async function onSave() {
     if (!user) return
-    if (!fileUrl) { setErro('Anexe o documento.'); return }
+    if (!isReadyToSave(files)) { setErro('Anexe o documento.'); return }
     setSaving(true)
     try {
       // A LINHA é montada pelo domínio (core), não aqui: os defaults de `source`/`status` e a forma da
       // inserção têm um dono só, compartilhado com o Mobile. A página só coleta o que a pessoa digitou.
       const docRow = buildPatientDocumentInsert(user.id, {
-        file_url: fileUrl,
+        file_url: files[0].url!,
         subtype,
         issuer: issuer.trim() || null,
         doc_date: docDate || null,
         notes: notes.trim() || null,
       })
-      const { error } = await supabase.from('patient_documents').insert(row(docRow))
+      const { data: criado, error } = await supabase.from('patient_documents').insert(row(docRow)).select('id')
       if (error) { setErro('Não foi possível salvar o documento.'); return }
+      // PÁGINAS (ANEXO-001) — a ordem do array é a ordem de leitura.
+      const docId = (criado as { id: string }[] | null)?.[0]?.id
+      if (docId && files.length > 0) {
+        const paginas = files.map((f, i) => ({
+          document_id: docId, user_id: user.id, file_url: f.url!,
+          file_name: f.name, mime_type: f.mime, size_bytes: f.sizeBytes, position: i,
+        }))
+        const { error: pe } = await supabase.from('patient_document_files').insert(row(paginas))
+        if (pe) { setErro('O documento foi salvo, mas as páginas extras não. Tente editar e anexar de novo.'); return }
+      }
       setOpen(false); resetForm(); await load()
     } finally {
       setSaving(false)
@@ -260,24 +253,7 @@ export default function DocumentosPage() {
                     seletor de vínculo aqui, o texto volta — junto com o campo. */}
               </div>
 
-              <div>
-                <label className="mb-1.5 block text-sm text-mauve">Documento</label>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept={supportedNowAcceptAttr()}
-                  onChange={onPickFile}
-                  className="hidden"
-                />
-                <button
-                  onClick={() => fileRef.current?.click()}
-                  disabled={uploading}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border px-4 py-3 text-sm text-mauve"
-                >
-                  {uploading ? <Loader2 size={16} className="animate-spin" /> : <Paperclip size={16} />}
-                  {fileName ?? 'Anexar arquivo (PDF ou imagem)'}
-                </button>
-              </div>
+              <AnexoDocumento files={files} onChange={setFiles} upload={uploadPagina} />
 
               <div>
                 <label className="mb-1.5 block text-sm text-mauve">Emitido por</label>
@@ -313,7 +289,7 @@ export default function DocumentosPage() {
 
               <button
                 onClick={onSave}
-                disabled={saving || uploading || !fileUrl}
+                disabled={saving || !isReadyToSave(files)}
                 className="w-full rounded-full bg-petal px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
               >
                 {saving ? 'Salvando…' : 'Salvar documento'}
