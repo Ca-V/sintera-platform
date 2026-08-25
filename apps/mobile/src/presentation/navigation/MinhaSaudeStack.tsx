@@ -45,7 +45,7 @@ export function MinhaSaudeStack() {
       <Stack.Screen name="Medications" component={MedicationsScreen} options={{ ...detail, title: 'Medicamentos' }} />
       <Stack.Screen name="Resources" component={ResourcesScreen} options={{ ...detail, title: 'Recursos de Saúde' }} />
 
-      <Stack.Screen name="Documents" component={DocumentsScreen} options={{ ...detail, title: 'Documentos' }} />
+      <Stack.Screen name="Documents" component={DocumentsScreen} options={{ ...detail, title: 'Receitas e atestados' }} />
       {/* Saúde */}
       <Stack.Screen name="Conditions" component={ConditionsScreen} options={{ ...detail, title: 'Condições de Saúde' }} />
       <Stack.Screen name="Composicao" component={ComposicaoScreen} options={{ ...detail, title: 'Composição Corporal' }} />

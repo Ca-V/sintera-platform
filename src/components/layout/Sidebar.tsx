@@ -24,8 +24,8 @@ import { navDescription } from '@/lib/ui/navDescriptions'
 //   Minha Saúde (expansível) = Registros (o que a pessoa cadastra: Exames, Medicamentos, Suplementos, Recursos) ·
 //                              Saúde (estado atual: Condições, Composição, Ciclo, Monitoramento, Hábitos) ·
 //                              Histórico (linha do tempo: Histórico de Exames, Histórico de Saúde).
-//   Rede de Cuidado / Organização = HOJE link DIRETO (1 item: Relatórios / Despesas — sem clique redundante);
-//   viram grupo expansível ao ganhar mais itens (Profissionais/Compartilhamentos na CARE-002; Documentos/Arquivos).
+//   Rede de Cuidado / Despesas = HOJE link DIRETO (1 item cada — sem clique redundante). "Organização" foi
+//   descartado como rótulo: o menu dizia "Organização" e a página dizia "Despesas". Vira grupo ao ganhar itens.
 //   Configurações (direta). As subdivisões de Minha Saúde (Registros/Saúde/Histórico) recolhem por padrão (altura).
 // Follow-up (reorganização funcional): alinhar a taxonomia do Relatório (SELECT_GROUPS + core REPORT_GROUPS).
 type Leaf = { href: string; icon: React.ElementType; label: string; extra?: string[] }
@@ -42,9 +42,10 @@ const NAV: readonly NavNode[] = [
     sections: [
       { label: 'Registros', items: [
         { href: '/dashboard/exams',        icon: FileText,      label: 'Exames' },
-        // DOC-002 — receita · atestado · relatório · encaminhamento. Domínio próprio, ao lado de Exames e
-        // não dentro deles: um atestado não é exame. Sem esta entrada só se chegava por "Adicionar registro".
-        { href: '/dashboard/documentos',   icon: FileHeart,     label: 'Documentos' },
+        // DOC-002 — receita · atestado · relatório · encaminhamento. Domínio próprio, ao lado de Exames e não
+        // dentro deles: um atestado não é exame. RÓTULO pelo que a pessoa procura ("receitas e atestados"),
+        // não pelo nome do domínio ("Documentos") — que era genérico demais para orientar a busca.
+        { href: '/dashboard/documentos',   icon: FileHeart,     label: 'Receitas e atestados' },
         { href: '/dashboard/medicamentos', icon: Pill,          label: 'Medicamentos' },
         { href: '/dashboard/suplementos',  icon: Leaf,          label: 'Suplementos' },
         { href: '/dashboard/recursos',     icon: Accessibility, label: 'Recursos de Saúde' },
@@ -64,7 +65,7 @@ const NAV: readonly NavNode[] = [
   },
   // 1 item hoje → LINK direto (evita expandir para um único item). Viram grupo expansível quando crescerem.
   { type: 'link', leaf: { href: '/dashboard/rede-de-cuidado', icon: Users, label: 'Rede de Cuidado', extra: ['/dashboard/relatorio', '/dashboard/relatorios'] } },
-  { type: 'link', leaf: { href: '/dashboard/gastos', icon: Receipt, label: 'Organização' } },
+  { type: 'link', leaf: { href: '/dashboard/gastos', icon: Receipt, label: 'Despesas' } },
   { type: 'link', leaf: { href: '/dashboard/configuracoes', icon: Settings, label: 'Configurações' } },
 ]
 
@@ -111,7 +112,7 @@ function NavItem({ href, icon: Icon, label, active, soon, onClose, hintProps, co
   )
 }
 
-// Grupo EXPANSÍVEL (Minha Saúde · Rede de Cuidado · Organização). O rótulo do módulo é o cabeçalho; as
+// Grupo EXPANSÍVEL (hoje só Minha Saúde; Rede de Cuidado e Despesas são links diretos). O rótulo do módulo é o cabeçalho; as
 // subdivisões (Registros/Saúde/Histórico) são ABERTAS por padrão e aparentes (homologação Web) — recolhíveis no clique.
 function NavGroup({ node, pathname, open, onToggle, onClose, bind, countOf }: {
   node: Extract<NavNode, { type: 'group' }>; pathname: string; open: boolean; onToggle: () => void

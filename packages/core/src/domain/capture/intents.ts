@@ -1,6 +1,6 @@
 // @sintera/core — HUB-001 Hub de Registro: TAXONOMIA de intenções = SSOT aberta e PURA (sem React/rotas).
 // Princípio: a pessoa escolhe O QUE registrar; a SINTERA decide COMO capturar. As opções organizam-se por
-// NATUREZA da informação (documento/cuidado/registro/organização), NUNCA pelo mecanismo. Domain-driven: a
+// NATUREZA da informação (documento/cuidado/registro/despesa), NUNCA pelo mecanismo. Domain-driven: a
 // INTENÇÃO é domínio; o ALVO de navegação (href na Web, tela no Mobile) é apresentação — cada plataforma mapeia
 // `RegistrationDestination`. Adicionar um tipo = uma entrada aqui, sem tocar UI de nenhuma das pontas.
 import type { DocumentKind } from './types'
@@ -11,7 +11,7 @@ export const INTENT_GROUPS: { group: IntentGroup; label: string }[] = [
   { group: 'documento',   label: 'Documentos' },
   { group: 'cuidado',     label: 'Cuidados e recursos' },
   { group: 'registro',    label: 'Registros de saúde' },
-  { group: 'organizacao', label: 'Organização' },
+  { group: 'organizacao', label: 'Despesas' },
 ]
 
 /** Destino de domínio (agnóstico de plataforma). Web mapeia para href; Mobile para aba/tela. */
@@ -73,7 +73,7 @@ export const REGISTRATION_INTENTS: RegistrationIntent[] = [
   { key: 'medida',       label: 'Composição corporal', icon: 'Ruler',        group: 'registro', mechanism: { type: 'page', destination: 'body' } },
   { key: 'habito',       label: 'Hábito',             icon: 'Sparkles',      group: 'registro', mechanism: { type: 'page', destination: 'habits' } },
 
-  // ── Organização (financeiro) ──────────────────────────────────────────────
+  // ── Despesas (financeiro) ─────────────────────────────────────────────────
   { key: 'nf_comprovante', label: 'Nota fiscal / comprovante', icon: 'Receipt', group: 'organizacao', mechanism: { type: 'page', destination: 'expenses' } },
 ]
 

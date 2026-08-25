@@ -179,7 +179,7 @@ export default function DocumentosPage() {
     <div className="space-y-5">
       <PageHeader
         icon={<FileHeart size={22} />}
-        title="Documentos"
+        title="Receitas e atestados"
         subtitle="Receitas, atestados, relatórios e encaminhamentos — guardados com emissor e data."
         action={
           <button

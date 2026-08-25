@@ -21,7 +21,7 @@ export function MinhaSaudeMenuScreen({ navigation }: Props) {
     { title: 'Registros', rows: [
       { label: 'Exames', onPress: () => navigation.navigate('ExamsList'), count: counts?.exams },
       // DOC-002 — mesma posição da Web: ao lado de Exames, não dentro deles.
-      { label: 'Documentos', onPress: () => navigation.navigate('Documents') },
+      { label: 'Receitas e atestados', onPress: () => navigation.navigate('Documents') },
       { label: 'Medicamentos', onPress: () => navigation.navigate('Medications', { supplements: false }), count: counts?.medications },
       { label: 'Suplementos', onPress: () => navigation.navigate('Medications', { supplements: true }), count: counts?.supplements },
       { label: 'Recursos de Saúde', onPress: () => navigation.navigate('Resources'), count: counts?.resources },
