@@ -85,6 +85,7 @@ export * from './domain/copy'
 // Política de anexos (Fase C) — allowlist pura de tipos aceitos. Fonte única Web↔Mobile.
 export * from './domain/capture/attachmentPolicy'
 export * from './domain/capture/attachmentSet'
+export * from './domain/capture/divergence'
 export * from './domain/connectors/state'
 
 // Telefone com código de país (E.164) — fonte única Web↔Mobile.
