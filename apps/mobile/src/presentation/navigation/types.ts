@@ -14,7 +14,7 @@ export type AppTabParamList = {
   Mais: undefined
 }
 
-/** Stack interno da aba "Mais": funções secundárias (Perfil, Organização/Despesas, Configurações). Só navegação. */
+/** Stack interno da aba "Mais": funções secundárias (Perfil, Despesas, Configurações). Só navegação. */
 export type MaisStackParamList = {
   MaisMenu: undefined
   Perfil: undefined

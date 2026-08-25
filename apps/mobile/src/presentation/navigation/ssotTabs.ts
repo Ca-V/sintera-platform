@@ -8,7 +8,7 @@
 // - Minha Saúde é o domínio central: Registros (Exames, Medicamentos, Suplementos, Recursos) · Saúde (Condições,
 //   Composição, Ciclo, Monitoramento, Hábitos) · Histórico (Hist. de Exames, Hist. de Saúde). "Exames" não é aba.
 // - Rede de Cuidado (entidade): Relatórios hoje; Profissionais/Compartilhamentos na CARE-002.
-// - Mais: funções secundárias (Organização/Despesas · Configurações · Perfil).
+// - Mais: funções secundárias (Despesas · Configurações · Perfil).
 //
 // CRITÉRIO 10 (MOBILE-009): esta camada NÃO contém conhecimento de domínio — apenas rótulos da taxonomia.
 
