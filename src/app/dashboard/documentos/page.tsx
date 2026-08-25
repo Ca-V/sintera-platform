@@ -32,7 +32,7 @@ import { Card } from '@/lib/ui/ds'
 // `row()`. Não é gambiarra minha — é o padrão já usado por Recursos, Hábitos e demais páginas.
 import { row } from '@/lib/supabase/db'
 import {
-  DOCUMENT_SUBTYPES, documentSubtypeLabel, allowedTargets, buildPatientDocumentInsert,
+  DOCUMENT_SUBTYPES, documentSubtypeLabel, allowedTargets, buildPatientDocumentInsert, documentSubtitle,
   supportedNowAcceptAttr, withinAttachmentLimit, MAX_ATTACHMENT_MB,
   type PatientDocumentSubtype,
 } from '@sintera/core'
@@ -60,12 +60,6 @@ type DocRow = {
 
 const COLUMNS = 'id, subtype, file_url, issuer, doc_date, notes, created_at'
 const FILTER_ALL = 'todos'
-
-function formatDate(iso: string | null): string {
-  if (!iso) return ''
-  const [y, m, d] = iso.slice(0, 10).split('-')
-  return d && m && y ? `${d}/${m}/${y}` : ''
-}
 
 export default function DocumentosPage() {
   const { user } = useUser()
@@ -219,13 +213,12 @@ export default function DocumentosPage() {
         <div className="space-y-2">
           {visible.map(r => {
             const Icon = SUBTYPE_ICON[r.subtype]
-            const when = formatDate(r.doc_date)
             return (
               <ListCard
                 key={r.id}
                 leading={<Icon size={18} />}
                 title={documentSubtypeLabel(r.subtype)}
-                meta={[r.issuer, when].filter(Boolean).join(' · ') || 'Sem emissor informado'}
+                meta={documentSubtitle(r)}
                 chips={<AttachmentLink url={r.file_url} label="Ver documento" icon={<Paperclip size={14} />} />}
                 actions={
                   <button

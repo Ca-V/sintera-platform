@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import type { PatientDocumentDTO } from '@sintera/api-client'
 import {
-  DOCUMENT_SUBTYPES, documentSubtypeLabel, allowedTargets, withinAttachmentLimit, MAX_ATTACHMENT_MB,
+  DOCUMENT_SUBTYPES, documentSubtypeLabel, allowedTargets, documentSubtitle, withinAttachmentLimit, MAX_ATTACHMENT_MB,
   type PatientDocumentSubtype,
 } from '@sintera/core'
 import { Text, Button, Input, AttachmentLink, DatePicker, Disclaimer, Select } from '../../primitives'
@@ -20,12 +20,6 @@ import { apiClient } from '../../../infrastructure/apiClient'
 import { documentPicker } from '../../../infrastructure/documentPickerAdapter'
 
 const FILTER_ALL = 'todos'
-
-function formatDate(iso: string | null): string {
-  if (!iso) return ''
-  const [y, m, d] = iso.slice(0, 10).split('-')
-  return d && m && y ? `${d}/${m}/${y}` : ''
-}
 
 export function DocumentsScreen() {
   const t = useTheme()
@@ -229,14 +223,14 @@ export function DocumentsScreen() {
         </Text>
       ) : (
         visible.map(d => {
-          const meta = [d.issuer, formatDate(d.doc_date)].filter(Boolean).join(' · ')
+          const meta = documentSubtitle(d)
           return (
             <View key={d.id} style={[s.card, { backgroundColor: t.color.surface.base, borderColor: t.color.border.default, gap: 8 }]}>
               <Text spec={text(t, { role: 'bodyStrong' })}>{documentSubtypeLabel(d.subtype)}</Text>
               <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.text.muted }}>
-                {meta || 'Sem emissor informado'}
+                {meta}
               </Text>
-              <AttachmentLink url={d.file_url} label="Ver documento" />
+              <AttachmentLink url={d.file_url} label="Ver documento" variant="inline" />
               <Pressable onPress={() => confirmDelete(d)} hitSlop={8}>
                 <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>Excluir</Text>
               </Pressable>

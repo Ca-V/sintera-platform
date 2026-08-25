@@ -63,6 +63,33 @@ export function allowedTargets(subtype: PatientDocumentSubtype): DocumentTargetD
 
 export interface DocumentAssociation { target_domain: DocumentTargetDomain; target_id: string }
 
+/** dd/mm/aaaa a partir de uma data ISO. Vazio se não houver data. */
+function formatDate(iso: string | null | undefined): string {
+  const [y, m, d] = (iso ?? '').slice(0, 10).split('-')
+  return d && m && y ? `${d}/${m}/${y}` : ''
+}
+
+/**
+ * Linha de identificação do documento no cartão — o que distingue UM documento dos outros.
+ *
+ * POR QUE EXISTE: sem isto, três receitas sem emissor preenchido viram três cartões idênticos ("Receita" /
+ * "Sem emissor informado") e a pessoa não tem como saber qual é qual. A data de inclusão é a última defesa:
+ * pode não haver emissor nem data no documento, mas sempre houve um momento em que ele entrou.
+ *
+ * Ordem: emissor e data do documento (o que está escrito nele) vencem; na ausência dos dois, a data em que
+ * foi guardado. Web e Mobile chamam esta função — o texto não pode divergir entre as telas.
+ */
+export function documentSubtitle(doc: {
+  issuer?: string | null
+  doc_date?: string | null
+  created_at?: string | null
+}): string {
+  const partes = [doc.issuer?.trim(), formatDate(doc.doc_date)].filter(Boolean) as string[]
+  if (partes.length > 0) return partes.join(' · ')
+  const guardado = formatDate(doc.created_at)
+  return guardado ? `Adicionado em ${guardado}` : 'Sem emissor informado'
+}
+
 /**
  * RECEITA vinculada a um registro — a forma CANÔNICA de arquivar uma receita que pertence a um medicamento,
  * suplemento ou outro contexto.
