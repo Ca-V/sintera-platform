@@ -10,7 +10,8 @@
 // Distingue helper INTERNO do pacote de órfão de verdade — sem isso a medição acusa falso positivo.
 
 // Auditoria de paridade — mede as classes de divergência encontradas na homologação de 25/08.
-const fs = require('fs'), path = require('path')
+import fs from 'node:fs'
+import path from 'node:path'
 const R = process.cwd()
 
 function walkAll(dir, out = []) {
