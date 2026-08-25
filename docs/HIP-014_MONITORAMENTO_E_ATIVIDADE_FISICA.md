@@ -197,11 +197,31 @@ medidas, atividade física, sono e o banner de Conexões.
 | # | Etapa | Estado |
 |---|---|---|
 | 1 | Conector migra para `packages/core` | **feito** (§7) |
-| 2 | `measured_at` + granularidade da projeção | migração escrita, **aguarda Gate C** |
-| 3 | `activity_sessions` + RLS | migração escrita, **aguarda Gate C** |
-| 4 | Monitoramento como módulo único nas duas pontas | a fazer |
-| 5 | Conector Health Connect (Android) | a fazer |
-| 6 | Prioridade de fonte por métrica, ajustável | a fazer |
-| 7 | Apple Health (Trilha B) | depois do iOS |
+| 2 | `body_metrics.measured_at` (migração 148) | **aplicado** em produção, 25/08 |
+| 3 | `activity_sessions` + RLS (migração 149) | **aplicado** em produção, 25/08 |
+| 4 | Granularidade da projeção — parar de descartar leituras (§8.2) | a fazer |
+| 5 | Monitoramento como módulo único nas duas pontas (§8.4) | a fazer |
+| 6 | Conector Health Connect (Android) | a fazer |
+| 7 | Prioridade de fonte por métrica, ajustável (§4) | a fazer |
+| 8 | Apple Health (Trilha B) | depois do iOS |
 
-As etapas 2 e 3 tocam o banco de produção e **exigem autorização explícita** ([[protocolo_autonomo_execucao_gates]]).
+### Aplicação em produção — 25/08/2026
+
+Autorizada explicitamente pela fundadora ([[protocolo_autonomo_execucao_gates]], Gate C). Versões atribuídas pelo
+Supabase: **`20260825203944`** (148) e **`20260825204009`** (149). Os arquivos locais foram renomeados para essas
+versões — o histórico registra o que de fato aconteceu, não o que se pretendia.
+
+Verificado após aplicar, não presumido:
+
+| Verificação | Resultado |
+|---|---|
+| `body_metrics.measured_at` existe | sim |
+| linhas sem `measured_at` após backfill | **0** (7 de 7 preenchidas) |
+| `activity_sessions` existe | sim |
+| RLS habilitado | **true** |
+| políticas | **4** — `select`/`insert`/`delete` com `auth.uid() = user_id`; `update` com `using` **e** `with check` (impede transferir registro para outra pessoa) |
+| índices | 5 (chave primária · 2 únicos de idempotência · 2 de leitura) |
+
+**Atenção para a etapa 4:** a coluna existe, mas `projectBodyMetricPoints` continua colapsando por
+`(métrica, dia)` com "último do dia vence". Enquanto essa projeção não acompanhar a nova granularidade, **a
+segunda medição do dia continua sumindo da exibição** — o banco já guarda, a tela ainda não mostra.
