@@ -5,7 +5,7 @@ import {
 } from '@/lib/capture/registrationHub'
 // Catálogos em runtime (core) — o teste valida contra a MESMA fonte de que o tipo deriva,
 // em vez de manter uma cópia da lista que silenciosamente envelhece.
-import { DOCUMENT_KINDS, REGISTRATION_DESTINATIONS } from '@sintera/core'
+import { DOCUMENT_KINDS, REGISTRATION_DESTINATIONS, captureDestinationFor } from '@sintera/core'
 
 describe('HUB-001 · taxonomia', () => {
   it('todo intent pertence a um grupo declarado', () => {
@@ -56,6 +56,42 @@ describe('HUB-001 · taxonomia', () => {
       const i = REGISTRATION_INTENTS.find(x => x.key === key)!
       expect(i.mechanism.type).toBe('page')
       if (i.mechanism.type === 'page') expect(i.mechanism.destination).toBe(dest)
+    }
+  })
+})
+
+// HUB-001 — DESTINO POR TIPO DE DOCUMENTO.
+// Defeito da homologação (25/08): no Mobile, "Receita médica" → "Ler receita e cadastrar medicamento" abria a
+// tela de ADICIONAR EXAME. O Hub ignorava o `documentKind`. A causa era dono duplicado: a Web tinha o destino
+// em cada processador; o Mobile não tinha mapa nenhum.
+describe('HUB-001 · captureDestinationFor', () => {
+  it('rótulo/receita de medicamento vai para Medicamentos — não para Exames', () => {
+    expect(captureDestinationFor('medication_label')).toBe('medications')
+  })
+  it('receita de óculos vai para Recursos', () => {
+    expect(captureDestinationFor('eyeglass_prescription')).toBe('resources-vision')
+  })
+  it('ômica vai para Ômicas', () => {
+    expect(captureDestinationFor('omics')).toBe('omics')
+  })
+  it('exame e desconhecido NÃO têm destino próprio — seguem para a captura, que classifica', () => {
+    expect(captureDestinationFor('exam')).toBeNull()
+    expect(captureDestinationFor('other')).toBeNull()
+    expect(captureDestinationFor('unknown')).toBeNull()
+    expect(captureDestinationFor(undefined)).toBeNull()
+  })
+  it('todo destino declarado existe no catálogo de destinos', () => {
+    for (const k of DOCUMENT_KINDS) {
+      const d = captureDestinationFor(k)
+      if (d) expect(REGISTRATION_DESTINATIONS).toContain(d)
+    }
+  })
+  it('o caminho de CAPTURA de todo `choice` leva a um destino real', () => {
+    // É o que falhou: o Hub do Mobile mandava o choice para ExamUpload sem olhar o captureKind.
+    for (const i of REGISTRATION_INTENTS) {
+      if (i.mechanism.type !== 'choice') continue
+      const d = captureDestinationFor(i.mechanism.captureKind)
+      expect(d, `intent "${i.key}" tem captureKind sem destino`).not.toBeNull()
     }
   })
 })
