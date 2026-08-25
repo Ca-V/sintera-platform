@@ -33,7 +33,7 @@ export type RedeCuidadoStackParamList = {
 export type MinhaSaudeStackParamList = {
   MinhaSaudeMenu: undefined
   // Registros
-  ExamsList: undefined
+  ExamsList: { tab?: 'orders' } | undefined
   ExamDetail: { id: string }
   // context='order' = usuário escolheu "Pedido de exame" (sub-tipo do mesmo domínio Exames): só ajusta
   // o cabeçalho/expectativa (pedido ≠ resultado). A persistência segue REG-001 (document_type derivado).

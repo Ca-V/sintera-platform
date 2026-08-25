@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getMinhaSaudeCounts, type MinhaSaudeCounts } from '@sintera/api-client'
 import { createClient } from '@/lib/supabase/client'
 import {
-  LayoutDashboard, FileText, FileHeart, Clock, Pill, Receipt, CalendarDays,
+  LayoutDashboard, FileText, FileHeart, ClipboardList, Clock, Pill, Receipt, CalendarDays,
   HeartPulse, Stethoscope, Droplet, Activity, Ruler, Settings,
   Accessibility, X, ChevronRight, ChevronDown, TrendingUp, Leaf, Heart, Users,
 } from 'lucide-react'
@@ -45,6 +45,9 @@ const NAV: readonly NavNode[] = [
       // toma, o que se usa — e não havia nome honesto para esse conjunto. Os dois abaixo têm critério dizível.
       { label: 'Documentos', items: [   // o que ALGUÉM EMITIU para você
         { href: '/dashboard/exams',      icon: FileText,  label: 'Exames' },
+        // O pedido é a ORIGEM do fluxo assistencial (Q1), não um detalhe do exame. Era só uma aba dentro de
+        // Exames e não havia como encontrá-lo pela navegação. Compartilha a rota; a query distingue a aba.
+        { href: '/dashboard/exams?aba=pedidos', icon: ClipboardList, label: 'Pedidos de exame' },
         // Rótulo pelo que a pessoa PROCURA, não pelo nome do domínio: "Documentos" era genérico demais
         // (exame também é documento; nota fiscal também). O código continua `documents`/`patient_documents`.
         { href: '/dashboard/documentos', icon: FileHeart, label: 'Receitas e atestados' },
@@ -73,13 +76,26 @@ const NAV: readonly NavNode[] = [
   { type: 'link', leaf: { href: '/dashboard/configuracoes', icon: Settings, label: 'Configurações' } },
 ]
 
-function isActive(pathname: string, href: string, extra?: string[]): boolean {
-  if (href === '/dashboard') return pathname === '/dashboard'
-  if (pathname === href || pathname.startsWith(href + '/')) return true
-  return (extra ?? []).some(e => pathname === e || pathname.startsWith(e + '/'))
+/**
+ * Item ativo. Considera a ABA quando dois itens compartilham a mesma rota — é o caso de Exames e Pedidos de
+ * exame, que vivem em `/dashboard/exams` e se distinguem por `?aba=pedidos`.
+ *
+ * Sem isto, "Pedidos" nunca acenderia (o `pathname` não carrega a query) e "Exames" ficaria aceso mesmo com a
+ * pessoa na aba de pedidos — o menu mentiria sobre onde ela está.
+ */
+function isActive(pathname: string, search: string, href: string, extra?: string[]): boolean {
+  const [hrefPath, hrefQuery] = href.split('?')
+  if (hrefPath === '/dashboard') return pathname === '/dashboard'
+
+  const noCaminho = pathname === hrefPath || pathname.startsWith(hrefPath + '/')
+  if (!noCaminho) return (extra ?? []).some(e => pathname === e || pathname.startsWith(e + '/'))
+
+  const abaAtual = new URLSearchParams(search).get('aba')
+  const abaDoItem = hrefQuery ? new URLSearchParams(hrefQuery).get('aba') : null
+  return abaAtual === abaDoItem
 }
-function groupActive(node: Extract<NavNode, { type: 'group' }>, pathname: string): boolean {
-  return node.sections.some(s => s.items.some(it => isActive(pathname, it.href, it.extra)))
+function groupActive(node: Extract<NavNode, { type: 'group' }>, pathname: string, search: string): boolean {
+  return node.sections.some(s => s.items.some(it => isActive(pathname, search, it.href, it.extra)))
 }
 
 interface SidebarProps { open: boolean; onClose: () => void }
@@ -118,11 +134,11 @@ function NavItem({ href, icon: Icon, label, active, soon, onClose, hintProps, co
 
 // Grupo EXPANSÍVEL (hoje só Minha Saúde; Rede de Cuidado e Despesas são links diretos). O rótulo do módulo é o cabeçalho; as
 // subdivisões (Documentos/Cuidados/Saúde/Histórico) são ABERTAS por padrão e aparentes — recolhíveis no clique.
-function NavGroup({ node, pathname, open, onToggle, onClose, bind, countOf }: {
-  node: Extract<NavNode, { type: 'group' }>; pathname: string; open: boolean; onToggle: () => void
+function NavGroup({ node, pathname, search, open, onToggle, onClose, bind, countOf }: {
+  node: Extract<NavNode, { type: 'group' }>; pathname: string; search: string; open: boolean; onToggle: () => void
   onClose: () => void; bind: (text: string) => React.HTMLAttributes<HTMLElement>; countOf: (href: string) => number | undefined
 }) {
-  const active = groupActive(node, pathname)
+  const active = groupActive(node, pathname, search)
   const Icon = node.icon
   // Subdivisões (Documentos/Cuidados/Saúde/Histórico) ABERTAS por padrão — o usuário pode recolher no clique.
   const [openSub, setOpenSub] = useState<Record<string, boolean>>({})
@@ -141,7 +157,7 @@ function NavGroup({ node, pathname, open, onToggle, onClose, bind, countOf }: {
           {node.sections.map((sec, i) => {
             const items = sec.items.map(item => (
               <NavItem key={item.href} href={item.href} icon={item.icon} label={item.label}
-                active={isActive(pathname, item.href, item.extra)} onClose={onClose}
+                active={isActive(pathname, search, item.href, item.extra)} onClose={onClose}
                 hintProps={bind(navDescription(item.href))} count={countOf(item.href)} />
             ))
             if (!sec.label) return <div key={i} className="flex flex-col gap-0.5">{items}</div>
@@ -170,6 +186,8 @@ function NavGroup({ node, pathname, open, onToggle, onClose, bind, countOf }: {
 
 function SidebarContent({ onClose }: { onClose: () => void }) {
   const pathname = usePathname()
+  // A query importa: Exames e Pedidos compartilham a rota e se distinguem por ?aba=pedidos.
+  const search = useSearchParams().toString()
   const { profile } = useUser()
   const displayName = profile?.name ?? 'Usuária'
   const initials    = displayName.charAt(0).toUpperCase()
@@ -245,10 +263,10 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
       <nav className="relative z-10 flex-1 px-3 overflow-y-auto pb-3 flex flex-col gap-0.5">
         {NAV.map(node => node.type === 'link' ? (
           <NavItem key={node.leaf.href} href={node.leaf.href} icon={node.leaf.icon} label={node.leaf.label}
-            active={isActive(pathname, node.leaf.href, node.leaf.extra)} onClose={onClose}
+            active={isActive(pathname, search, node.leaf.href, node.leaf.extra)} onClose={onClose}
             hintProps={bind(navDescription(node.leaf.href))} />
         ) : (
-          <NavGroup key={node.label} node={node} pathname={pathname} open={openGroups[node.label] ?? true}
+          <NavGroup key={node.label} node={node} pathname={pathname} search={search} open={openGroups[node.label] ?? true}
             onToggle={() => toggle(node.label)} onClose={onClose} bind={bind} countOf={countOf} />
         ))}
       </nav>

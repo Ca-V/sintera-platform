@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -148,8 +148,13 @@ export default function ExamsPage() {
   const [filterFrom, setFilterFrom]   = useState<string>('')
   const [filterTo, setFilterTo]       = useState<string>('')
   const [collapsedYears, setCollapsedYears] = useState<Set<number>>(new Set())
-  // Subcategoria: Resultados × Pedidos e solicitações (aba dentro de Exames).
-  const [activeTab, setActiveTab] = useState<'results' | 'orders'>('results')
+  // Subcategoria: Resultados × Pedidos e solicitações.
+  //
+  // A aba aceita `?aba=pedidos` para que "Pedidos de exame" seja um DESTINO próprio na navegação. Achado da
+  // homologação (25/08): o pedido existia só como aba dentro de Exames, e pela Sidebar não havia como saber
+  // onde ele ficava. O pedido é a ORIGEM do fluxo assistencial (Q1) — precisa ser alcançável por si.
+  const abaParam = useSearchParams().get('aba')
+  const [activeTab, setActiveTab] = useState<'results' | 'orders'>(abaParam === 'pedidos' ? 'orders' : 'results')
   // PEDIDO-002 — título do PEDIDO na LISTA, derivado dos PROCEDIMENTOS solicitados (nunca o filename), via a FUNÇÃO
   // ÚNICA do core deriveOrderDisplayTitle. O prefixo "Pedido de …" é decisão de PRODUTO (rótulo compreensível); a
   // semântica de solicitação (ServiceRequest) fica na representação interna. Best-effort no cliente (o servidor pode

@@ -22,6 +22,8 @@ export function MinhaSaudeMenuScreen({ navigation }: Props) {
     // são registros, e estão em "Saúde". Os dois grupos abaixo têm critério dizível numa frase.
     { title: 'Documentos', rows: [   // o que ALGUÉM EMITIU para você
       { label: 'Exames', onPress: () => navigation.navigate('ExamsList'), count: counts?.exams },
+      // O pedido é a ORIGEM do fluxo assistencial (Q1) — alcançável por si, não só como aba de Exames.
+      { label: 'Pedidos de exame', onPress: () => navigation.navigate('ExamsList', { tab: 'orders' }) },
       { label: 'Receitas e atestados', onPress: () => navigation.navigate('Documents') },
     ] },
     { title: 'Cuidados', rows: [     // o que VOCÊ USA OU TOMA
