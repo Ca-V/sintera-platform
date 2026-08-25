@@ -18,10 +18,13 @@ export function MinhaSaudeMenuScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets()
   const counts = useMinhaSaudeCounts() // §5d: contadores por INJEÇÃO (best-effort); o menu só apresenta.
   const sections: { title: string; rows: Row[] }[] = [
-    { title: 'Registros', rows: [
+    // "Registros" foi dividido: a palavra não separava nada — condição, hábito e composição corporal também
+    // são registros, e estão em "Saúde". Os dois grupos abaixo têm critério dizível numa frase.
+    { title: 'Documentos', rows: [   // o que ALGUÉM EMITIU para você
       { label: 'Exames', onPress: () => navigation.navigate('ExamsList'), count: counts?.exams },
-      // DOC-002 — mesma posição da Web: ao lado de Exames, não dentro deles.
       { label: 'Receitas e atestados', onPress: () => navigation.navigate('Documents') },
+    ] },
+    { title: 'Cuidados', rows: [     // o que VOCÊ USA OU TOMA
       { label: 'Medicamentos', onPress: () => navigation.navigate('Medications', { supplements: false }), count: counts?.medications },
       { label: 'Suplementos', onPress: () => navigation.navigate('Medications', { supplements: true }), count: counts?.supplements },
       { label: 'Recursos de Saúde', onPress: () => navigation.navigate('Resources'), count: counts?.resources },

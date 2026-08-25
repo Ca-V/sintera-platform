@@ -21,12 +21,12 @@ import { navDescription } from '@/lib/ui/navDescriptions'
 // não pela natureza da tela: "Exames" deixa de ser módulo e vira um REGISTRO dentro de Minha Saúde; "Compartilhamento"
 // (ação) dá lugar a "Rede de Cuidado" (entidade permanente). Web e Mobile espelham esta mesma taxonomia.
 //   Painel Inicial · Agenda (diretos, 1 tela — sem clique redundante).
-//   Minha Saúde (expansível) = Registros (o que a pessoa cadastra: Exames, Medicamentos, Suplementos, Recursos) ·
-//                              Saúde (estado atual: Condições, Composição, Ciclo, Monitoramento, Hábitos) ·
-//                              Histórico (linha do tempo: Histórico de Exames, Histórico de Saúde).
+//   Minha Saúde (expansível) = Documentos (o que alguém EMITIU: Exames, Receitas e atestados) · Cuidados (o que
+//                              se USA ou TOMA: Medicamentos, Suplementos, Recursos) · Saúde (estado atual:
+//                              Condições, Composição, Ciclo, Monitoramento, Hábitos) · Histórico (linha do tempo).
 //   Rede de Cuidado / Despesas = HOJE link DIRETO (1 item cada — sem clique redundante). "Organização" foi
 //   descartado como rótulo: o menu dizia "Organização" e a página dizia "Despesas". Vira grupo ao ganhar itens.
-//   Configurações (direta). As subdivisões de Minha Saúde (Registros/Saúde/Histórico) recolhem por padrão (altura).
+//   Configurações (direta). As subdivisões (Documentos/Cuidados/Saúde/Histórico) recolhem por clique.
 // Follow-up (reorganização funcional): alinhar a taxonomia do Relatório (SELECT_GROUPS + core REPORT_GROUPS).
 type Leaf = { href: string; icon: React.ElementType; label: string; extra?: string[] }
 type Section = { label?: string; items: Leaf[] }
@@ -40,12 +40,16 @@ const NAV: readonly NavNode[] = [
   {
     type: 'group', icon: Heart, label: 'Minha Saúde',
     sections: [
-      { label: 'Registros', items: [
-        { href: '/dashboard/exams',        icon: FileText,      label: 'Exames' },
-        // DOC-002 — receita · atestado · relatório · encaminhamento. Domínio próprio, ao lado de Exames e não
-        // dentro deles: um atestado não é exame. RÓTULO pelo que a pessoa procura ("receitas e atestados"),
-        // não pelo nome do domínio ("Documentos") — que era genérico demais para orientar a busca.
-        { href: '/dashboard/documentos',   icon: FileHeart,     label: 'Receitas e atestados' },
+      // "Registros" foi DIVIDIDO. A palavra não separava nada: condição, hábito e composição corporal também
+      // são registros, e estão em "Saúde". O grupo antigo juntava três naturezas — papel emitido, o que se
+      // toma, o que se usa — e não havia nome honesto para esse conjunto. Os dois abaixo têm critério dizível.
+      { label: 'Documentos', items: [   // o que ALGUÉM EMITIU para você
+        { href: '/dashboard/exams',      icon: FileText,  label: 'Exames' },
+        // Rótulo pelo que a pessoa PROCURA, não pelo nome do domínio: "Documentos" era genérico demais
+        // (exame também é documento; nota fiscal também). O código continua `documents`/`patient_documents`.
+        { href: '/dashboard/documentos', icon: FileHeart, label: 'Receitas e atestados' },
+      ] },
+      { label: 'Cuidados', items: [     // o que VOCÊ USA OU TOMA
         { href: '/dashboard/medicamentos', icon: Pill,          label: 'Medicamentos' },
         { href: '/dashboard/suplementos',  icon: Leaf,          label: 'Suplementos' },
         { href: '/dashboard/recursos',     icon: Accessibility, label: 'Recursos de Saúde' },
@@ -113,14 +117,14 @@ function NavItem({ href, icon: Icon, label, active, soon, onClose, hintProps, co
 }
 
 // Grupo EXPANSÍVEL (hoje só Minha Saúde; Rede de Cuidado e Despesas são links diretos). O rótulo do módulo é o cabeçalho; as
-// subdivisões (Registros/Saúde/Histórico) são ABERTAS por padrão e aparentes (homologação Web) — recolhíveis no clique.
+// subdivisões (Documentos/Cuidados/Saúde/Histórico) são ABERTAS por padrão e aparentes — recolhíveis no clique.
 function NavGroup({ node, pathname, open, onToggle, onClose, bind, countOf }: {
   node: Extract<NavNode, { type: 'group' }>; pathname: string; open: boolean; onToggle: () => void
   onClose: () => void; bind: (text: string) => React.HTMLAttributes<HTMLElement>; countOf: (href: string) => number | undefined
 }) {
   const active = groupActive(node, pathname)
   const Icon = node.icon
-  // Subdivisões (Registros/Saúde/Histórico) ABERTAS por padrão (homologação Web) — o usuário pode recolher no clique.
+  // Subdivisões (Documentos/Cuidados/Saúde/Histórico) ABERTAS por padrão — o usuário pode recolher no clique.
   const [openSub, setOpenSub] = useState<Record<string, boolean>>({})
   const toggleSub = (k: string) => setOpenSub(s => ({ ...s, [k]: !(s[k] ?? true) }))
   return (
