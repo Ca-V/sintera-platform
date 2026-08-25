@@ -22,6 +22,7 @@ import type { ShareDTO, TemplateDTO, OmicsPanelDTO } from '../report/report'
 import type { OmicsPanelDTO as OmicsPanel, OmicsPanelDetail, OmicsResultDTO, OmicsHistoryPoint, OmicsCatalogMatch, OmicsResultInput } from '../omics/omics'
 import type { Period, DocumentTargetDomain } from '@sintera/core'
 import type { PatientDocumentDTO, PatientDocumentInput, PatientDocumentPage } from '../documents/documents'
+import type { ConnectorState } from '@sintera/core'
 import type { DocumentAssociation } from '@sintera/core'
 
 export type { Session, User }
@@ -118,6 +119,18 @@ export interface DocumentsApi {
   }): Promise<{ documentId: string | null; error: Error | null }>
 }
 
+/**
+ * HIP-001 · Conexões — dispositivos e serviços de saúde. Ponte para as rotas /api/connectors da Web
+ * (ADR-020): a regra de integração é UMA só, não duplicada por plataforma.
+ */
+export interface ConnectorsApi {
+  listConnectors(): Promise<ConnectorState[]>
+  /** Endereço do fluxo OAuth — abre no NAVEGADOR; o app nunca manipula a credencial da pessoa. */
+  connectUrl(source: string): string | null
+  syncConnector(source: string): Promise<{ error: Error | null }>
+  disconnectConnector(source: string): Promise<{ error: Error | null }>
+}
+
 /** Domínio Medicamentos/Suplementos (medications) — CRUD clínico + estoque + recompra. */
 export interface MedicationsApi {
   listMedications(signal?: AbortSignal): Promise<MedicationDTO[]>
@@ -162,6 +175,7 @@ export interface ApiClient {
   habits: HabitsApi
   resources: ResourcesApi
   documents: DocumentsApi
+  connectors: ConnectorsApi
   medications: MedicationsApi
   cycle: CycleApi
   settings: SettingsApi

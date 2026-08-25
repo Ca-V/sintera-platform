@@ -23,6 +23,50 @@ export const COPY = {
 export type CopyKey = keyof typeof COPY
 
 /**
+ * TEXTO DE TELA — título, subtítulo, rótulos de campo, estado vazio e ações.
+ *
+ * POR QUE ISTO EXISTE (homologação da fundadora, 25/08): a tela de Monitoramento prometia coisas DIFERENTES
+ * em cada plataforma. A Web dizia que acompanha "sinais vitais, atividade, sono e outros indicadores"; o
+ * Mobile dizia "sinais vitais — pressão, frequência cardíaca, glicemia". Mesma tela, mesmo produto, promessas
+ * distintas — porque cada ponta redigiu o seu texto à mão.
+ *
+ * Este arquivo já dizia, desde sempre, que existe para impedir isso. Só não tinha o texto das telas dentro.
+ *
+ * REGRA: nenhum texto visível ao usuário é escrito na tela. Vem daqui, e as duas pontas leem o mesmo.
+ */
+export const SCREEN_COPY = {
+  monitoramento: {
+    title:          'Monitoramento',
+    subtitle:       'Acompanhe sinais vitais, atividade, sono e outros indicadores — manuais e, em breve, de dispositivos — ao longo do tempo.',
+    add:            'Adicionar',
+    close:          'Fechar',
+    save:           'Salvar',
+    emptyTitle:     'Nenhum sinal vital ainda',
+    emptyMessage:   'Registre um sinal vital. Use Adicionar.',
+    fieldVital:     'Sinal vital',
+    fieldDate:      'Data',
+    fieldValue:     'Valor',
+    fieldUnit:      'Unidade',
+    fieldNotes:     'Observações (opcional)',
+    // Conexões é a porta das integrações com dispositivos (HIP-001). Aparece nas DUAS pontas.
+    connectInvite:  'Conecte um dispositivo e deixe os dados entrarem sozinhos',
+    connectAction:  'Conexões',
+    removeAction:   'Remover',
+  },
+  conexoes: {
+    title:          'Conexões',
+    subtitle:       'Conecte dispositivos e serviços de saúde para que os dados entrem sozinhos, sem digitação.',
+    emptyTitle:     'Nenhuma conexão ainda',
+    emptyMessage:   'Conecte um dispositivo para acompanhar seus dados automaticamente.',
+    connectAction:  'Conectar',
+    disconnect:     'Desconectar',
+    lastSync:       'Última sincronização',
+  },
+} as const
+
+export type ScreenCopyKey = keyof typeof SCREEN_COPY
+
+/**
  * Variantes PROIBIDAS por frase canônica — a mesma situação não pode
  * aparecer com nomes diferentes. Validado em copy.test.ts.
  */

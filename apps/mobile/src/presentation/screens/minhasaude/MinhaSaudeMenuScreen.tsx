@@ -34,6 +34,8 @@ export function MinhaSaudeMenuScreen({ navigation }: Props) {
       { label: 'Composição Corporal', onPress: () => navigation.navigate('Composicao') },
       { label: 'Ciclo e Contracepção', onPress: () => navigation.navigate('Ciclo') },
       { label: 'Monitoramento', onPress: () => navigation.navigate('Monitoramento') },
+      // HIP-001 — porta das integrações com dispositivos. Existia só na Web.
+      { label: 'Conexões', onPress: () => navigation.navigate('Conexoes') },
       { label: 'Hábitos', onPress: () => navigation.navigate('Habits'), count: counts?.habits },
     ] },
     { title: 'Histórico', rows: [

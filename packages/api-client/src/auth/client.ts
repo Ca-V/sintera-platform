@@ -27,6 +27,7 @@ import { listConditions, saveCondition, deleteCondition } from '../conditions/co
 import { listHabits, saveHabit, deleteHabit } from '../habits/habits'
 import { listResources, saveResource, deleteResource } from '../resources/resources'
 import { archivePrescription } from '../documents/prescription'
+import { listConnectors, connectorConnectUrl, syncConnector, disconnectConnector } from '../connectors/connectors'
 import { listDocuments, listDocumentsForTarget, listDocumentsForTargets, listPagesForDocuments, saveDocument, updateDocument, deleteDocument } from '../documents/documents'
 import { listMedications, saveMedication, deleteMedication } from '../medications/medications'
 import { listContraceptives, saveContraceptive, toggleContraceptiveStatus, deleteContraceptive } from '../cycle/contraception'
@@ -132,6 +133,12 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       updateDocument: (id, patch) => updateDocument(supabase, id, patch),
       deleteDocument: (id) => deleteDocument(supabase, id),
       archivePrescription: (params) => archivePrescription(supabase, params),
+    },
+    connectors: {
+      listConnectors: () => listConnectors(supabase, config.webBaseUrl),
+      connectUrl: (source) => connectorConnectUrl(config.webBaseUrl, source),
+      syncConnector: (source) => syncConnector(supabase, config.webBaseUrl, source),
+      disconnectConnector: (source) => disconnectConnector(supabase, config.webBaseUrl, source),
     },
     medications: {
       listMedications: (signal) => listMedications(supabase, signal),

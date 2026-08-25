@@ -43,6 +43,7 @@ export type MinhaSaudeStackParamList = {
   Medications: { supplements?: boolean } | undefined
   Resources: undefined
   Documents: undefined
+  Conexoes: undefined
   // Saúde
   Conditions: undefined
   Composicao: undefined
