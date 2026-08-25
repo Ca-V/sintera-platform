@@ -7,7 +7,7 @@ import { ScrollView, View, Pressable, ActivityIndicator, RefreshControl, Alert, 
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { ExamDTO } from '@sintera/api-client'
-import { isOrderDocumentType, findDuplicateIds, originalIdFor, categoryOf, compareNames, effectiveOrderStatus, orderStatusLabel, deriveOrderDisplayTitle, type DuplicateCandidate } from '@sintera/core'
+import { SCREEN_COPY, isOrderDocumentType, findDuplicateIds, originalIdFor, categoryOf, compareNames, effectiveOrderStatus, orderStatusLabel, deriveOrderDisplayTitle, type DuplicateCandidate } from '@sintera/core'
 import { heading, text } from '@sintera/design-system'
 import { Button, Text, Input, Disclaimer, DatePicker, AttachmentLink, Select } from '../../primitives'
 import { useTheme } from '../../theme'
@@ -45,6 +45,9 @@ export function ExamsListScreen({ navigation, route }: Props) {
   // bem no Mobile e dão acesso a Pedidos em 1 toque, vs rolar toda a lista de resultados).
   // Aceita o destino 'orders' para que "Pedidos de exame" seja alcançável por si (paridade com ?aba=pedidos).
   const [activeTab, setActiveTab] = useState<'results' | 'orders'>(route.params?.tab === 'orders' ? 'orders' : 'results')
+  // Texto da tela vem do core e segue a ABA: quem entra por "Pedidos de exame" lia um subtítulo sobre laudos,
+  // e o texto do Mobile era DIFERENTE do da Web para a mesma tela.
+  const TELA = activeTab === 'orders' ? SCREEN_COPY.pedidos : SCREEN_COPY.exames
 
   const all = p.exams ?? []
   const results = useMemo(() => all.filter(e => !isOrderDocumentType(e.document_type)), [all])
@@ -186,13 +189,13 @@ export function ExamsListScreen({ navigation, route }: Props) {
     >
       {/* O título segue a ABA — com "Pedidos de exame" virando destino próprio no menu, chegar aqui e ler
           "Exames" faria o menu levar a um lugar e a tela se apresentar como outro (paridade com a Web). */}
-      <Text spec={heading(t, { level: 'page' })}>{activeTab === 'orders' ? 'Pedidos de exame' : 'Exames'}</Text>
-      <Text spec={text(t, { role: 'bodySmall', tone: 'muted' })}>Seus exames ao longo do tempo. Abra um para ver o documento original.</Text>
+      <Text spec={heading(t, { level: 'page' })}>{TELA.title}</Text>
+      <Text spec={text(t, { role: 'bodySmall', tone: 'muted' })}>{TELA.subtitle}</Text>
 
       {/* O botão acompanha a aba: em "Pedidos de Exames" adiciona um PEDIDO (contexto 'order' → cai direto em Pedidos). */}
       {activeTab === 'orders'
-        ? <Button label="Adicionar pedido de exame" onPress={() => navigation.navigate('ExamUpload', { context: 'order' })} />
-        : <Button label="Adicionar exame realizado" onPress={() => navigation.navigate('ExamUpload')} />}
+        ? <Button label={SCREEN_COPY.pedidos.add} onPress={() => navigation.navigate('ExamUpload', { context: 'order' })} />
+        : <Button label={SCREEN_COPY.exames.add} onPress={() => navigation.navigate('ExamUpload')} />}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
         {/* Histórico: atalho de navegação no Mobile (a Web o alcança pela sidebar — adaptação de dispositivo). */}
         <Pressable onPress={() => navigation.navigate('HistoricoExames')}>
@@ -334,7 +337,7 @@ export function ExamsListScreen({ navigation, route }: Props) {
       {activeTab === 'orders' ? (
         orders.length > 0 ? (
         <View style={{ gap: 8 }}>
-          <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Pedidos médicos e guias de convênio — documentos de solicitação, guardados à parte dos resultados.</Text>
+          <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{SCREEN_COPY.pedidos.listNote}</Text>
           {orders.map((e) => {
             const linked = linkedCountByOrder.get(e.id) ?? 0
             const st = effectiveOrderStatus(e.order_status, linked)
