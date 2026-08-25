@@ -5,12 +5,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ScrollView, View, ActivityIndicator, RefreshControl, Pressable, Alert, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useNavigation } from '@react-navigation/native'
 import { text } from '@sintera/design-system'
 import type { BodyMetricDTO } from '@sintera/api-client'
-import { VITAL_SIGNS, bodyMetricLabel, isVital, type VitalMetric } from '@sintera/core'
-import { Text, Button, Input, Disclaimer, DatePicker } from '../../primitives'
+import { VITAL_SIGNS, bodyMetricLabel, isVital, SCREEN_COPY, type VitalMetric } from '@sintera/core'
+import { Text, Button, Input, Disclaimer, DatePicker, Select } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
+
+// PARIDADE (homologação 25/08): todo texto visível vem do core — a Web e o Mobile prometiam coisas
+// DIFERENTES no subtítulo desta tela porque cada uma redigia o seu. Aqui não se escreve texto.
+const C = SCREEN_COPY.monitoramento
 
 function parseNum(v: string): number { return Number(String(v).replace(',', '.').replace(/[^\d.-]/g, '')) }
 function fmt(d: string): string { const [y, m, dd] = (d || '').slice(0, 10).split('-'); return y ? `${dd}/${m}/${y}` : '—' }
@@ -20,6 +25,8 @@ const unitOf = (m: VitalMetric) => VITAL_SIGNS.find(v => v.value === m)?.unit ??
 export function MonitoramentoScreen() {
   const t = useTheme()
   const insets = useSafeAreaInsets()
+  // Navegação para Conexões — o convite abaixo é a única porta para as integrações no aparelho.
+  const navigation = useNavigation() as unknown as { navigate: (n: string) => void }
   const [items, setItems] = useState<BodyMetricDTO[]>([])
   const [phase, setPhase] = useState<'loading' | 'ready' | 'error'>('loading')
   const [refreshing, setRefreshing] = useState(false)
@@ -82,31 +89,64 @@ export function MonitoramentoScreen() {
       keyboardShouldPersistTaps="handled"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={t.color.identity.primary} />}>
       <View style={styles.headerRow}>
-        <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 22 }}>Monitoramento</Text>
-        {!open ? <Button label="Adicionar" onPress={startNew} /> : null}
+        <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 22 }}>{C.title}</Text>
+        <Button label={open ? C.close : C.add} variant={open ? 'secondary' : 'primary'} onPress={() => (open ? setOpen(false) : startNew())} />
       </View>
-      <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Acompanhe sinais vitais ao longo do tempo — pressão, frequência cardíaca, glicemia, saturação e outros. Registro manual; captura por dispositivo em breve.</Text>
+      <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{C.subtitle}</Text>
+
+      {/* Conexões — porta das integrações com dispositivos (HIP-001). A Web tem este convite aqui; o Mobile
+          não tinha, e sem ele não havia caminho nenhum para Conexões no aparelho. */}
+      <Pressable onPress={() => navigation.navigate('Conexoes')} style={[styles.card, card, styles.connect]}>
+        <Text spec={text(t, { role: 'body' })} style={{ flex: 1 }}>{C.connectInvite}</Text>
+        <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>{C.connectAction} →</Text>
+      </Pressable>
 
       {open ? (
         <View style={[styles.card, card, { gap: 12 }]}>
-          <Text spec={text(t, { role: 'bodyStrong' })}>Novo registro</Text>
-          <Chips options={VITAL_SIGNS.map(v => ({ id: v.value, label: v.label }))} value={metric} onChange={(v) => chooseMetric(v as VitalMetric)} />
-          {metric === 'outro_sinal' ? <Input value={label} onChangeText={setLabel} placeholder="Nome do sinal (ex.: Saturação em exercício)" /> : null}
+          {/* SELETOR, não opções expostas: os seis sinais ocupavam três linhas e empurravam o resto do
+              formulário para fora da tela. Mesmo controle da Web, mesma ordem de campos, campos ROTULADOS. */}
+          <Campo label={C.fieldVital}>
+            <Select
+              value={metric}
+              onChange={(v) => chooseMetric(v as VitalMetric)}
+              options={VITAL_SIGNS.map(v => ({ id: v.value, label: v.label }))}
+              title={C.fieldVital}
+            />
+          </Campo>
+          {metric === 'outro_sinal' ? (
+            <Campo label="Nome do sinal">
+              <Input value={label} onChangeText={setLabel} placeholder="Ex.: Saturação em exercício" />
+            </Campo>
+          ) : null}
+          <Campo label={C.fieldDate}>
+            <DatePicker value={date} onChange={setDate} placeholder={C.fieldDate} />
+          </Campo>
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <Input value={value} onChangeText={setValue} placeholder={VITAL_SIGNS.find(v => v.value === metric)?.placeholder} style={{ flex: 2 }} />
-            <Input value={unit} onChangeText={setUnit} placeholder="unidade" style={{ flex: 1 }} />
+            <View style={{ flex: 2 }}>
+              <Campo label={C.fieldValue}>
+                <Input value={value} onChangeText={setValue} placeholder={VITAL_SIGNS.find(v => v.value === metric)?.placeholder} />
+              </Campo>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Campo label={C.fieldUnit}>
+                <Input value={unit} onChangeText={setUnit} />
+              </Campo>
+            </View>
           </View>
-          <DatePicker value={date} onChange={setDate} placeholder="Data" />
-          <Input value={notes} onChangeText={setNotes} placeholder="Observações…" multiline style={{ minHeight: 50, textAlignVertical: 'top' }} />
+          <Campo label={C.fieldNotes}>
+            <Input value={notes} onChangeText={setNotes} multiline style={{ minHeight: 50, textAlignVertical: 'top' }} />
+          </Campo>
           <View style={styles.actions}>
-            <Button label="Cancelar" variant="secondary" onPress={() => setOpen(false)} />
-            <Button label="Salvar" onPress={save} loading={saving} loadingLabel="Salvando…" />
+            <Button label={C.save} onPress={save} loading={saving} loadingLabel="Salvando…" />
           </View>
         </View>
       ) : null}
 
       {groups.length === 0 && !open ? (
-        <View style={[styles.card, card]}><Text spec={text(t, { role: 'body', tone: 'muted' })} style={{ textAlign: 'center' }}>Nenhum sinal vital ainda. Registre um em “Adicionar”.</Text></View>
+        <View style={[styles.card, card]}><View style={{ gap: 4 }}>
+          <Text spec={text(t, { role: 'bodyStrong' })} style={{ textAlign: 'center' }}>{C.emptyTitle}</Text>
+          <Text spec={text(t, { role: 'body', tone: 'muted' })} style={{ textAlign: 'center' }}>{C.emptyMessage}</Text>
+        </View></View>
       ) : null}
 
       {groups.map(({ v, list }) => {
@@ -128,7 +168,7 @@ export function MonitoramentoScreen() {
               <View key={i.id} style={[styles.card, card, { gap: 2 }]}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <Text spec={text(t, { role: 'body' })}>{i.metric === 'outro_sinal' && i.label ? `${i.label}: ` : ''}{i.value_text}{i.unit ? ` ${i.unit}` : ''}</Text>
-                  <Pressable onPress={() => remove(i)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>Remover</Text></Pressable>
+                  <Pressable onPress={() => remove(i)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>{C.removeAction}</Text></Pressable>
                 </View>
                 <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{fmt(i.measured_on)}{i.notes ? ` · ${i.notes}` : ''}</Text>
               </View>
@@ -142,14 +182,13 @@ export function MonitoramentoScreen() {
   )
 }
 
-function Chips({ options, value, onChange }: { options: readonly { id: string; label: string }[]; value: string; onChange: (v: string) => void }) {
+/** Rótulo acima do controle. A Web rotula todos os campos; o Mobile não rotulava nenhum. */
+function Campo({ label, children }: { label: string; children: React.ReactNode }) {
   const t = useTheme()
   return (
-    <View style={styles.chips}>
-      {options.map(o => {
-        const on = value === o.id
-        return <Pressable key={o.id} onPress={() => onChange(o.id)} style={[styles.chip, { borderColor: on ? t.color.identity.primary : t.color.border.default, backgroundColor: on ? t.color.badge.info.soft : 'transparent' }]}><Text spec={text(t, { role: 'caption', tone: on ? 'default' : 'muted' })}>{o.label}</Text></Pressable>
-      })}
+    <View style={{ gap: 6 }}>
+      <Text spec={text(t, { role: 'label', tone: 'muted' })}>{label}</Text>
+      {children}
     </View>
   )
 }
@@ -159,8 +198,8 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12 },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   card: { borderWidth: 1, borderRadius: 16, padding: 16 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },
+  connect: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   spark: { flexDirection: 'row', alignItems: 'flex-end', gap: 3, height: 36 },
 })

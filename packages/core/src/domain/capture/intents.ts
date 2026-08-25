@@ -81,3 +81,28 @@ export const REGISTRATION_INTENTS: RegistrationIntent[] = [
 export function intentsByGroup(group: IntentGroup): RegistrationIntent[] {
   return REGISTRATION_INTENTS.filter(i => i.group === group)
 }
+
+/**
+ * ONDE cada TIPO de documento é registrado. Fonte única Web↔Mobile.
+ *
+ * DEFEITO QUE ISTO CORRIGE (homologação da fundadora, 25/08): no Mobile, escolher "Receita médica" → "Ler
+ * receita e cadastrar medicamento" levava à tela de **Adicionar exame**. O Hub do Mobile ignorava o
+ * `documentKind` e mandava tudo para o upload de exame.
+ *
+ * A causa era dono duplicado: na Web cada processador declarava o seu destino
+ * (`medication_label` → /dashboard/medicamentos); no Mobile esse mapa simplesmente não existia. Agora o
+ * destino é DOMÍNIO — declarado uma vez aqui — e cada plataforma só o traduz para a sua rota.
+ *
+ * `exam`, `other` e `unknown` não têm destino próprio: seguem para a captura de exame, que é onde a
+ * classificação decide o que fazer com eles.
+ */
+const CAPTURE_DESTINATION: Partial<Record<DocumentKind, RegistrationDestination>> = {
+  medication_label:       'medications',
+  eyeglass_prescription:  'resources-vision',
+  omics:                  'omics',
+}
+
+/** Destino do tipo, ou `null` quando o caminho é a captura de exame. */
+export function captureDestinationFor(kind: DocumentKind | undefined): RegistrationDestination | null {
+  return (kind && CAPTURE_DESTINATION[kind]) ?? null
+}

@@ -22,6 +22,7 @@ export const NAV_DESCRIPTION: Record<string, string> = {
   '/dashboard/condicoes':     'Registre suas condições de saúde, suas e da família, e acompanhe cada uma ao longo do tempo.',
   '/dashboard/medicamentos':  'Registre seus medicamentos, acompanhe o uso e receba lembretes de dose e recompra.',
   '/dashboard/suplementos':   'Registre seus suplementos, acompanhe o uso e receba lembretes na hora certa.',
+  '/dashboard/exams?aba=pedidos': 'Guarde os pedidos e guias solicitados — e acompanhe quais já têm resultado.',
   '/dashboard/documentos':    'Guarde receitas, atestados, relatórios e encaminhamentos — com quem emitiu e quando.',
   '/dashboard/recursos':      'Organize óculos, lentes, dispositivos e outros recursos que fazem parte do seu cuidado.',
   '/dashboard/habitos':       'Acompanhe seus hábitos e mantenha a continuidade do seu cuidado no dia a dia.',

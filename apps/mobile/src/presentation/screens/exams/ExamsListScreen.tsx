@@ -32,7 +32,7 @@ function groupByYear(exams: readonly ExamDTO[]): { year: string; items: ExamDTO[
     .map(([year, items]) => ({ year, items }))
 }
 
-export function ExamsListScreen({ navigation }: Props) {
+export function ExamsListScreen({ navigation, route }: Props) {
   const t = useTheme()
   const insets = useSafeAreaInsets()
   const p = useExamsList()
@@ -43,7 +43,8 @@ export function ExamsListScreen({ navigation }: Props) {
   const [to, setTo] = useState('')
   // Abas Resultados × Pedidos (paridade Web — mesma organização conceitual; decisão consciente: 2 abas funcionam
   // bem no Mobile e dão acesso a Pedidos em 1 toque, vs rolar toda a lista de resultados).
-  const [activeTab, setActiveTab] = useState<'results' | 'orders'>('results')
+  // Aceita o destino 'orders' para que "Pedidos de exame" seja alcançável por si (paridade com ?aba=pedidos).
+  const [activeTab, setActiveTab] = useState<'results' | 'orders'>(route.params?.tab === 'orders' ? 'orders' : 'results')
 
   const all = p.exams ?? []
   const results = useMemo(() => all.filter(e => !isOrderDocumentType(e.document_type)), [all])

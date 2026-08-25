@@ -3,18 +3,23 @@
 // na camada de plataforma; aqui ficam só os tipos de domínio que as duas pontas compartilham.
 
 /**
- * O que a pessoa deseja adicionar (intenção) + classificações auxiliares.
+ * O que a pessoa deseja adicionar (intenção) + o que a CLASSIFICAÇÃO identifica no documento.
  *
- * NÃO há kind para atestado/relatório/encaminhamento — de propósito. Esses documentos entram pela página de
- * Documentos (DOC-002), onde o SUBTIPO é escolhido de `DOCUMENT_SUBTYPES`, e não pela classificação da captura.
- * Um kind `clinical_document` só faz sentido no dia em que o classificador souber reconhecer esses documentos
- * num upload genérico; declará-lo antes disso seria mais um valor sem quem o produza ou consuma.
+ * `clinical_document` e `medical_order` entraram na homologação de 25/08, quando passaram a ter consumidor: a
+ * fundadora marcou "Receita", anexou um pedido de exame e um laudo, e os dois foram gravados como receita. Sem
+ * esses dois valores, a classificação não tinha como dizer que o documento era outra coisa — para ela, pedido
+ * e laudo eram ambos "exam", e receita/atestado eram "other".
+ *
+ * Antes disso `clinical_document` esteve aqui por dois commits e foi REMOVIDO justamente por não ter quem o
+ * produzisse. Voltou junto com quem o produz e quem o consome.
  */
 export const DOCUMENT_KINDS = [
   'exam',
+  'medical_order',
   'medication_label',
   'eyeglass_prescription',
   'omics',
+  'clinical_document',
   'other',
   'unknown',
 ] as const

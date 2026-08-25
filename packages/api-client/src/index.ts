@@ -42,6 +42,7 @@ export type { PatientDocumentDTO, PatientDocumentInput, PatientDocumentPage, Doc
 // arranjo de `getProfileStats`. As duas pontas executam a MESMA função; só o cliente é injetado por cada uma.
 export { prescriptionUrlOf, archivePrescription } from './documents/prescription'
 export { listDocumentsForTargets, listPagesForDocuments } from './documents/documents'
+export type { ConnectorsApi } from './auth/types'
 export type { MedicationDTO, MedicationInput } from './medications/medications'
 export type { EventDraft } from './agenda/events'
 export type { LinkedReminderOptions } from './agenda/reminder'

@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { Modal, Pressable, ScrollView, View, StyleSheet } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import { text } from '@sintera/design-system'
-import { INTENT_GROUPS, intentsByGroup, type RegistrationIntent, type RegistrationDestination } from '@sintera/core'
+import { INTENT_GROUPS, intentsByGroup, captureDestinationFor, type RegistrationIntent, type RegistrationDestination, type DocumentKind } from '@sintera/core'
 import { Text } from '../../primitives'
 import { useTheme } from '../../theme'
 import { REGISTRATION_NAV } from './registrationNav'
@@ -26,9 +26,22 @@ export function RegistrationHubSheet({ visible, onClose }: { visible: boolean; o
     const nav = REGISTRATION_NAV[d]; close()
     navigation.getParent()?.navigate(nav.tab, nav.screen ? { screen: nav.screen, params: nav.params } : undefined)
   }
+  /**
+   * Captura por TIPO de documento. O destino vem do domínio (`captureDestinationFor`), não de um `if` aqui:
+   * uma receita de medicamento vai para Medicamentos, uma receita de óculos vai para Recursos, uma ômica vai
+   * para Ômicas. Só o que não tem destino próprio segue para a captura de exame.
+   *
+   * DEFEITO CORRIGIDO (homologação, 25/08): antes esta função ignorava o kind e mandava TUDO para
+   * `ExamUpload` — "Ler receita e cadastrar medicamento" abria "Adicionar exame".
+   */
+  const goCaptureKind = (kind: DocumentKind | undefined, context?: 'exam' | 'order') => {
+    const destino = captureDestinationFor(kind)
+    if (destino) goDest(destino)
+    else goCapture(context ?? 'exam')
+  }
   const pick = (i: RegistrationIntent) => {
     const m = i.mechanism
-    if (m.type === 'capture') goCapture(i.key === 'pedido_exame' ? 'order' : 'exam')
+    if (m.type === 'capture') goCaptureKind(m.documentKind, i.key === 'pedido_exame' ? 'order' : 'exam')
     else if (m.type === 'page') goDest(m.destination)
     else setChoice(i)
   }
@@ -44,7 +57,7 @@ export function RegistrationHubSheet({ visible, onClose }: { visible: boolean; o
           {choice && choiceM ? (
             <View style={{ gap: 10 }}>
               <Text spec={text(t, { role: 'bodyStrong' })}>{choice.label} — como deseja registrar?</Text>
-              <Pressable onPress={() => goCapture('exam')} style={[styles.row, card]}><Text spec={text(t, { role: 'body' })}>{choiceM.captureLabel}</Text></Pressable>
+              <Pressable onPress={() => goCaptureKind(choiceM.captureKind)} style={[styles.row, card]}><Text spec={text(t, { role: 'body' })}>{choiceM.captureLabel}</Text></Pressable>
               <Pressable onPress={() => goDest(choiceM.pageDestination)} style={[styles.row, card]}><Text spec={text(t, { role: 'body' })}>{choiceM.pageLabel}</Text></Pressable>
               <Pressable onPress={() => setChoice(null)} style={{ alignSelf: 'flex-start' }}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>← Voltar</Text></Pressable>
             </View>
