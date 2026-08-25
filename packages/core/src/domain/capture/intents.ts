@@ -52,11 +52,22 @@ export const REGISTRATION_INTENTS: RegistrationIntent[] = [
   // que não eram o que a pessoa havia escolhido. A categoria não se perdia por defeito — nunca teve para onde
   // ir. Agora leva à página de Documentos, onde o subtipo (atestado/relatório/encaminhamento) é escolhido.
   //
-  // `receita` é `choice` e não `page` porque as duas coisas são legítimas e a pessoa é quem sabe qual quer:
-  // ler a receita para CADASTRAR O MEDICAMENTO é uma capacidade que já funciona (processador `medication_label`
-  // → /dashboard/medicamentos) e não pode ser removida em silêncio; guardar a receita como DOCUMENTO é o que
-  // faltava. Mesmo mecanismo já usado por Medicamento e Suplemento.
-  { key: 'receita',      label: 'Receita médica',     icon: 'FileText',      group: 'documento', mechanism: { type: 'choice', captureKind: 'medication_label', captureLabel: 'Ler receita e cadastrar medicamento', pageDestination: 'documents', pageLabel: 'Guardar como documento' } },
+  // `receita` vai SEMPRE para Documentos (decisão da fundadora, 25/08 — revertendo escolha minha do mesmo dia).
+  //
+  // Eu a tinha feito `choice`, oferecendo "ler e cadastrar medicamento" OU "guardar como documento". Estava
+  // errado por dois motivos:
+  //
+  //  1. Uma receita pode ser de medicamento OU de suplemento. Rotear para Medicamentos é PALPITE.
+  //  2. Prescrever não é adquirir. A receita é um DOCUMENTO — o que alguém emitiu; o medicamento é um CUIDADO
+  //     — o que se toma. É a mesma distinção que separa os grupos da navegação. Uma receita prescrita e não
+  //     comprada existe como documento e NÃO existe como medicamento; forçá-la a criar um mistura as duas.
+  //
+  // A capacidade de ler a receita para preencher o medicamento NÃO se perde: ela vive do lado certo, dentro de
+  // Medicamentos ("Preencher a partir de um documento"), que é onde a pessoa está quando de fato adquiriu.
+  //
+  // O rótulo deixou de ser "Receita médica": nutricionista, dentista e fisioterapeuta também prescrevem. O
+  // profissional emissor é um CAMPO do documento, não parte do nome do tipo.
+  { key: 'receita',      label: 'Receita',            icon: 'FileText',      group: 'documento', mechanism: { type: 'page', destination: 'documents' } },
   { key: 'doc_clinico',  label: 'Atestado, relatório ou encaminhamento', icon: 'FileHeart', group: 'documento', mechanism: { type: 'page', destination: 'documents' } },
   { key: 'omica',        label: 'Exame ômico',        icon: 'Dna',           group: 'documento', mechanism: { type: 'page', destination: 'omics' } },
 
