@@ -63,6 +63,33 @@ export function allowedTargets(subtype: PatientDocumentSubtype): DocumentTargetD
 
 export interface DocumentAssociation { target_domain: DocumentTargetDomain; target_id: string }
 
+/**
+ * RECEITA vinculada a um registro — a forma CANÔNICA de arquivar uma receita que pertence a um medicamento,
+ * suplemento ou outro contexto.
+ *
+ * POR QUE ISTO EXISTE: a receita era gravada em `medications.prescription_url`, ou seja, o arquivo tinha um dono
+ * por tabela. Quem procurasse a receita em Documentos não a encontrava, porque ela nunca esteve lá. Pelo ADR-001,
+ * o domínio de Documentos é o dono do fato "existe este documento"; os outros REFERENCIAM pelo vínculo, nunca
+ * copiam o arquivo.
+ *
+ * Web e Mobile chamam esta função em vez de montar o objeto cada um do seu jeito — assim o subtipo, o vínculo e
+ * a proveniência não podem divergir entre as pontas.
+ */
+export function prescriptionDocumentFor(
+  file_url: string,
+  target: DocumentAssociation,
+  meta?: { issuer?: string | null; doc_date?: string | null; notes?: string | null },
+): NewPatientDocument {
+  return {
+    file_url,
+    subtype: 'receita',
+    issuer: meta?.issuer ?? null,
+    doc_date: meta?.doc_date ?? null,
+    notes: meta?.notes ?? null,
+    associations: [target],
+  }
+}
+
 export interface NewPatientDocument {
   file_url: string
   subtype: PatientDocumentSubtype

@@ -14,6 +14,8 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Loader2, X, ArrowLeft, Pencil, Trash2, ChevronDown, Pill } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+// DOC-002 — receita com DONO UNICO. As MESMAS funcoes que o Mobile chama; aqui o cliente e o da Web.
+import { archivePrescription, prescriptionUrlOf, listDocumentsForTargets, type PatientDocumentDTO } from '@sintera/api-client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import CreateRecordMenu from '@/components/ui/CreateRecordMenu'
@@ -158,6 +160,8 @@ export default function MedicamentosPage() {
   const [packUnit, setPackUnit] = useState('')
   const [prescriber, setPrescriber] = useState('')
   const [prescriptionUrl, setPrescriptionUrl] = useState<string | null>(null) // D-13: receita anexada
+  // DOC-002: a receita passa a viver em Documentos. Carregadas em LOTE — uma consulta, nao uma por medicamento.
+  const [rxByMed, setRxByMed] = useState<Record<string, PatientDocumentDTO[]>>({})
   const [uploadingRx, setUploadingRx] = useState(false)
   const [repurchase, setRepurchase] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -288,6 +292,11 @@ export default function MedicamentosPage() {
       .map(contraceptiveToMed)
     setMeds([...realMeds, ...contraMeds])
     setLoading(false)
+    // DOC-002 — as receitas vêm de Documentos, em lote. Não bloqueiam a lista: se falharem, os medicamentos
+    // aparecem do mesmo jeito, só sem o selo de receita.
+    try {
+      setRxByMed(await listDocumentsForTargets(supabase, 'medicamento', realMeds.map(m => m.id)))
+    } catch { /* segue sem as receitas */ }
   }, [user, supabase])
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -329,7 +338,7 @@ export default function MedicamentosPage() {
     setAmount(m.amountCents != null ? (m.amountCents / 100).toFixed(2).replace('.', ',') : '')
     setPackQty(m.packQty != null ? String(m.packQty) : ''); setDailyCons(m.dailyCons != null ? String(m.dailyCons) : '')
     setPurchasedOn(m.purchasedOn ?? ''); setPurchaseStatus(m.purchaseStatus ?? ''); setRepurchase(m.repurchaseReminder); setRepurchaseFreq(m.repurchaseFreq ?? '')
-    setForm(m.form ?? ''); setRoute(m.route ?? ''); setPackUnit(m.packUnit ?? ''); setPrescriber(m.prescriber ?? ''); setPrescriptionUrl(m.prescriptionUrl); setMedStatus(m.status)
+    setForm(m.form ?? ''); setRoute(m.route ?? ''); setPackUnit(m.packUnit ?? ''); setPrescriber(m.prescriber ?? ''); setPrescriptionUrl(prescriptionUrlOf(rxByMed, m.id, m.prescriptionUrl)); setMedStatus(m.status)
     setShowMoreDetails(!!(m.startedOn || m.untilOn || m.notes || m.acquiredQty != null || m.amountCents != null || m.packQty != null || m.dailyCons != null || m.purchasedOn || m.purchaseStatus || m.repurchaseReminder))
     setErr(null); setShowForm(true)
   }
@@ -379,6 +388,17 @@ export default function MedicamentosPage() {
       const { data, error } = await db.from('medications').insert({ ...payload, user_id: user.id }).select('id').single()
       if (error) { setErr(error.message); setSaving(false); return }
       medId = (data?.id as string) ?? null
+    }
+
+    // DOC-002: a receita passa a existir em Documentos, vinculada a este medicamento. Idempotente —
+    // salvar o mesmo medicamento de novo nao cria uma segunda receita.
+    if (medId) {
+      const rx = await archivePrescription(supabase, {
+        target: { target_domain: 'medicamento', target_id: medId },
+        fileUrl: prescriptionUrl,
+        meta: { issuer: prescriber.trim() || null },
+      })
+      if (rx.error) setErr('Medicamento salvo. A receita nao pode ser arquivada em Documentos — anexe de novo mais tarde.')
     }
 
     // Lembrete de recompra (reaproveita o worker de lembretes via agenda_events).
@@ -526,7 +546,7 @@ export default function MedicamentosPage() {
     }
     const meta = [formMetaOf(m.form ?? '')?.label, m.dose].filter(Boolean).join(' • ')
     const ro = runoutDate(m.purchasedOn, m.packQty, m.dailyCons, m.acquiredQty)
-    const hasChips = m.purchaseStatus === 'a_comprar' || (m.purchaseStatus === 'comprado' && !!m.purchasedOn) || !!ro || !!m.prescriptionUrl
+    const hasChips = m.purchaseStatus === 'a_comprar' || (m.purchaseStatus === 'comprado' && !!m.purchasedOn) || !!ro || !!prescriptionUrlOf(rxByMed, m.id, m.prescriptionUrl)
     return (
       <ListCard key={m.id}
         title={m.name}
@@ -539,7 +559,7 @@ export default function MedicamentosPage() {
             {m.purchaseStatus === 'a_comprar' && <CardChip tone="gold">A comprar</CardChip>}
             {m.purchaseStatus === 'comprado' && m.purchasedOn && <CardChip tone="sage">Compra {fmtShort(m.purchasedOn)}</CardChip>}
             {ro && <CardChip tone="petal">Recompra {fmtShort(ro)}{m.repurchaseReminder ? ' ✓' : ''}</CardChip>}
-            {m.prescriptionUrl && <CardChip tone="sage">📎 Receita</CardChip>}
+            {prescriptionUrlOf(rxByMed, m.id, m.prescriptionUrl) && <CardChip tone="sage">📎 Receita</CardChip>}
           </>
         ) : undefined}
         actions={

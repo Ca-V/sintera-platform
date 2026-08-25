@@ -6,7 +6,9 @@ import { ScrollView, View, ActivityIndicator, RefreshControl, Pressable, Alert, 
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
-import type { MedicationDTO, MedicationInput, ContraceptiveDTO } from '@sintera/api-client'
+import type { MedicationDTO, MedicationInput, ContraceptiveDTO, PatientDocumentDTO } from '@sintera/api-client'
+// DOC-002 — a MESMA função que a Web usa para decidir qual receita mostrar. Não há duas leituras.
+import { prescriptionUrlOf } from '@sintera/api-client'
 import {
   MED_KINDS, MED_STATUSES, MED_FORMS, MED_ROUTES, medKindLabel, medFormLabel, medFormUnit,
   estimatedRunoutDays, parseAmountToCents, centsToAmount,
@@ -60,6 +62,8 @@ export function MedicationsScreen({ route, navigation }: Props) {
   const [prescriptionUrl, setPrescriptionUrl] = useState<string | null>(null) // D-13: receita anexada
   const [uploadingRx, setUploadingRx] = useState(false)
   const [saving, setSaving] = useState(false)
+  // DOC-002: a receita vive em Documentos (dono unico). Carregadas em LOTE — uma consulta, nao uma por item.
+  const [rxByMed, setRxByMed] = useState<Record<string, PatientDocumentDTO[]>>({})
   const capture = useAssistedCapture() // T1: lê receita/rótulo e propõe o preenchimento (revisão → salvar)
   const [view, setView] = useState<'situacao' | 'tipo'>('situacao')
 
@@ -67,7 +71,14 @@ export function MedicationsScreen({ route, navigation }: Props) {
     if (silent) setRefreshing(true); else setPhase('loading')
     // Medicamentos projeta (read-only) os contraceptivos HORMONAIS do Ciclo (CTC-001: o fato pertence ao Ciclo).
     Promise.all([apiClient.medications.listMedications(), supplements ? Promise.resolve([]) : apiClient.cycle.listContraceptives()])
-      .then(([ms, cs]) => { if (!alive.current) return; setItems(ms); setContraceptives(cs); setPhase('ready'); setError(null) })
+      .then(async ([ms, cs]) => {
+        if (!alive.current) return
+        setItems(ms); setContraceptives(cs); setPhase('ready'); setError(null)
+        try {
+          const rx = await apiClient.documents.listDocumentsForTargets('medicamento', ms.map(m => m.id))
+          if (alive.current) setRxByMed(rx)
+        } catch { /* a lista nao depende das receitas — segue sem elas */ }
+      })
       .catch((e) => { if (alive.current && !silent) { setError(e instanceof Error ? e.message : 'Não foi possível carregar.'); setPhase('error') } })
       .finally(() => { if (alive.current) setRefreshing(false) })
   }, [supplements])
@@ -98,7 +109,7 @@ export function MedicationsScreen({ route, navigation }: Props) {
     setStatus(m.status); setStartedOn(m.started_on ?? ''); setUntilDate(m.until_date ?? ''); setNotes(m.notes ?? '')
     setAcquiredQty(m.acquired_quantity != null ? String(m.acquired_quantity) : ''); setPackQtyInput(m.pack_quantity != null ? String(m.pack_quantity) : '')
     setDailyCons(m.daily_consumption != null ? String(m.daily_consumption) : ''); setPurchasedOn(m.purchased_on ?? '')
-    setAmount(m.amount_cents ? centsToAmount(m.amount_cents) : ''); setPurchaseStatus(m.purchase_status ?? ''); setRepurchaseFreq(m.repurchase_frequency ?? ''); setPrescriptionUrl(m.prescription_url); setOpen(true)
+    setAmount(m.amount_cents ? centsToAmount(m.amount_cents) : ''); setPurchaseStatus(m.purchase_status ?? ''); setRepurchaseFreq(m.repurchase_frequency ?? ''); setPrescriptionUrl(prescriptionUrlOf(rxByMed, m.id, m.prescription_url)); setOpen(true)
   }
 
   async function save() {
@@ -127,6 +138,14 @@ export function MedicationsScreen({ route, navigation }: Props) {
           enabled: wantsReminder && status === 'em_uso', frequency: repurchaseFreqToRecurrence(repurchaseFreq),
           title: `Recomprar: ${name.trim()}`, notes: `Recompra de ${name.trim()}`,
         })
+        // DOC-002: a receita passa a existir em Documentos, vinculada a este medicamento. Idempotente:
+        // salvar o mesmo medicamento de novo nao cria uma segunda receita.
+        const rx = await apiClient.documents.archivePrescription({
+          target: { target_domain: 'medicamento', target_id: id },
+          fileUrl: prescriptionUrl,
+          meta: { issuer: prescriber.trim() || null },
+        })
+        if (rx.error) Alert.alert('Medicamento salvo', 'A receita nao pode ser arquivada em Documentos. Anexe de novo mais tarde.')
         // Compra realizada → despesa em Gastos (só quando 'comprado' com valor; 'a comprar' não gera gasto).
         await apiClient.agenda.syncExpense({ type: 'medication', id }, {
           amountCents: purchaseStatus === 'comprado' ? parseAmountToCents(amount) : null,
@@ -281,7 +300,7 @@ export function MedicationsScreen({ route, navigation }: Props) {
                 </Text>
                 {m.purchase_status === 'a_comprar' ? <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.attention.text }}>A comprar</Text> : null}
                 {repurchaseLabel(m.repurchase_frequency) ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>🔔 recompra {repurchaseLabel(m.repurchase_frequency)}</Text> : null}
-                {m.prescription_url ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>📎 Receita anexada</Text> : null}
+                {prescriptionUrlOf(rxByMed, m.id, m.prescription_url) ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>📎 Receita anexada</Text> : null}
                 {m.notes ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{m.notes}</Text> : null}
                 <Pressable onPress={() => remove(m)} style={{ alignSelf: 'flex-start', marginTop: 4 }}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>Excluir</Text></Pressable>
               </View>

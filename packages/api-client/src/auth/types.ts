@@ -22,6 +22,7 @@ import type { ShareDTO, TemplateDTO, OmicsPanelDTO } from '../report/report'
 import type { OmicsPanelDTO as OmicsPanel, OmicsPanelDetail, OmicsResultDTO, OmicsHistoryPoint, OmicsCatalogMatch, OmicsResultInput } from '../omics/omics'
 import type { Period, DocumentTargetDomain } from '@sintera/core'
 import type { PatientDocumentDTO, PatientDocumentInput } from '../documents/documents'
+import type { DocumentAssociation } from '@sintera/core'
 
 export type { Session, User }
 
@@ -100,9 +101,19 @@ export interface ResourcesApi {
 export interface DocumentsApi {
   listDocuments(signal?: AbortSignal): Promise<PatientDocumentDTO[]>
   listDocumentsForTarget(target_domain: DocumentTargetDomain, target_id: string, signal?: AbortSignal): Promise<PatientDocumentDTO[]>
+  listDocumentsForTargets(target_domain: DocumentTargetDomain, target_ids: string[], signal?: AbortSignal): Promise<Record<string, PatientDocumentDTO[]>>
   saveDocument(input: PatientDocumentInput): Promise<{ data: { id: string } | null; error: Error | null }>
   updateDocument(id: string, patch: Partial<Pick<PatientDocumentInput, 'subtype' | 'issuer' | 'doc_date' | 'notes'>>): Promise<{ error: Error | null }>
   deleteDocument(id: string): Promise<{ error: Error | null }>
+  /**
+   * Arquiva uma receita em Documentos e vincula ao registro-alvo (medicamento, suplemento…).
+   * IDEMPOTENTE: salvar o mesmo medicamento de novo não duplica a receita.
+   */
+  archivePrescription(params: {
+    target: DocumentAssociation
+    fileUrl: string | null | undefined
+    meta?: { issuer?: string | null; doc_date?: string | null }
+  }): Promise<{ documentId: string | null; error: Error | null }>
 }
 
 /** Domínio Medicamentos/Suplementos (medications) — CRUD clínico + estoque + recompra. */
