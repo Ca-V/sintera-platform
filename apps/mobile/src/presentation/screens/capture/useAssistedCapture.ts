@@ -6,9 +6,24 @@
 // e o usuário revisa e confirma no Salvar. Nenhum módulo implementa OCR próprio; todos consomem este hook.
 import { useCallback, useState } from 'react'
 import { Alert } from 'react-native'
-import type { CaptureInput } from '@sintera/api-client'
+import type { CaptureInput, PickedFile } from '@sintera/api-client'
 import { documentPicker } from '../../../infrastructure/documentPickerAdapter'
 import { readFileBase64 } from '../../../infrastructure/fileToBase64'
+
+/**
+ * O que a captura assistida DEVOLVE: os campos lidos E o arquivo escolhido.
+ *
+ * DEFEITO CORRIGIDO (homologação da fundadora, 25/08): o hook devolvia só os campos e DESCARTAVA o arquivo. A
+ * pessoa escolhia um documento em "Preencher a partir de um documento", os campos se preenchiam — e o
+ * documento sumia. O relato dela foi exato: "salva alguns dados e não anexa a receita".
+ *
+ * Não é detalhe: a plataforma existe para preservar o documento com origem e autoria. Ler a evidência e
+ * jogá-la fora contradiz a própria tese.
+ *
+ * A regra "a IA nunca grava" continua valendo — o hook segue sem persistir nada. Ele só deixa de PERDER o que
+ * a pessoa entregou; quem anexa é a tela, no Salvar, com ela revisando.
+ */
+export interface AssistedCapture<T> { data: T; picked: PickedFile }
 
 /** Resultado tipado de uma leitura (data) + o convite ao usuário para revisar/confirmar (implícito na tela). */
 type Reader<T> = (input: CaptureInput) => Promise<{ data: T | null; error: Error | null }>
@@ -29,7 +44,7 @@ export function useAssistedCapture() {
 
   /** Executa a captura com o `reader` do módulo (ex.: apiClient.vision.readCondition). Devolve os campos lidos
    *  ou null (cancelou / nada reconhecido / erro — já avisado ao usuário). NÃO persiste nada. */
-  const run = useCallback(async function <T>(reader: Reader<T>): Promise<T | null> {
+  const run = useCallback(async function <T>(reader: Reader<T>): Promise<AssistedCapture<T> | null> {
     const source = await chooseSource()
     if (!source) return null
     const picked = source === 'photo' ? await documentPicker.captureImage() : await documentPicker.pickDocument()
@@ -43,7 +58,9 @@ export function useAssistedCapture() {
         Alert.alert('Nada reconhecido', 'Não consegui ler dados deste documento. Você pode preencher manualmente.')
         return null
       }
-      return data
+      // O ARQUIVO volta junto com os campos. Ver a nota sobre `picked` no tipo de retorno: sem ele, a pessoa
+      // anexa um documento, os campos se preenchem, e o documento SOME.
+      return { data, picked }
     } catch (e) {
       Alert.alert('Não foi possível ler', e instanceof Error ? e.message : 'Tente novamente.')
       return null

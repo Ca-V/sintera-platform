@@ -110,8 +110,9 @@ export function ConditionsScreen() {
           </View>
           <Button label="Preencher a partir de um documento" variant="secondary" loading={capture.busy} loadingLabel="Lendo…"
             onPress={async () => {
-              const r = await capture.run((input) => apiClient.vision.readCondition(input))
-              if (!r) return
+              const cap = await capture.run((input) => apiClient.vision.readCondition(input))
+              if (!cap) return
+              const r = cap.data
               if (r.name) setName(r.name)
               if (r.since) setSince(r.since)
               if (r.notes) setNotes(r.notes)

@@ -204,8 +204,9 @@ export function ResourcesScreen() {
               <Text spec={text(t, { role: 'label', tone: 'muted' })}>PRESCRIÇÃO</Text>
               <Button label="Preencher a partir da receita" variant="secondary" loading={capture.busy} loadingLabel="Lendo…"
                 onPress={async () => {
-                  const r = await capture.run((input) => apiClient.vision.readEyeglasses(input))
-                  if (!r) return
+                  const cap = await capture.run((input) => apiClient.vision.readEyeglasses(input))
+                  if (!cap) return
+                  const r = cap.data
                   setOd({ sph: r.od.sph ?? '', cyl: r.od.cyl ?? '', axis: r.od.axis ?? '', add: r.od.add ?? '' })
                   setOe({ sph: r.oe.sph ?? '', cyl: r.oe.cyl ?? '', axis: r.oe.axis ?? '', add: r.oe.add ?? '' })
                   if (r.dnp) setDnp(r.dnp)

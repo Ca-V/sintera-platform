@@ -192,8 +192,17 @@ export function MedicationsScreen({ route, navigation }: Props) {
           <Text spec={text(t, { role: 'bodyStrong' })}>{editing ? 'Editar' : `Novo ${supplements ? 'suplemento' : 'medicamento'}`}</Text>
           <Button label="Preencher a partir de um documento" variant="secondary" loading={capture.busy} loadingLabel="Lendo…"
             onPress={async () => {
-              const items = await capture.run((input) => apiClient.vision.scanMedications(input))
-              if (!items || items.length === 0) return
+              const cap = await capture.run((input) => apiClient.vision.scanMedications(input))
+              if (!cap || cap.data.length === 0) return
+              // O ARQUIVO lido também é a receita: sobe e fica anexado. Antes ele era descartado — os campos
+              // se preenchiam e o documento sumia. Ler a evidência e jogá-la fora contradiz a plataforma.
+              const { data: items, picked } = cap
+              const { data: up, error: upErr } = await apiClient.exams.uploadExam({
+                uri: picked.uri,
+                mimeType: picked.mimeType ?? 'application/octet-stream',
+                sizeBytes: picked.sizeBytes,
+              })
+              if (!upErr && up) setPrescriptionUrl(up.url)
               const m = items[0]
               setName(m.name)
               if (m.dose) setDose(m.dose)
