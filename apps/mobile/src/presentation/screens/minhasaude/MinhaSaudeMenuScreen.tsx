@@ -35,9 +35,9 @@ export function MinhaSaudeMenuScreen({ navigation }: Props) {
       { label: 'Condições de Saúde', onPress: () => navigation.navigate('Conditions'), count: counts?.conditions },
       { label: 'Composição Corporal', onPress: () => navigation.navigate('Composicao') },
       { label: 'Ciclo e Contracepção', onPress: () => navigation.navigate('Ciclo') },
+      // Conexões NÃO é item de menu: chega-se por Monitoramento, como na Web. Eu a tinha posto nos DOIS
+      // lugares — a tela existia, mas o caminho até ela divergia da Web, que é a referência.
       { label: 'Monitoramento', onPress: () => navigation.navigate('Monitoramento') },
-      // HIP-001 — porta das integrações com dispositivos. Existia só na Web.
-      { label: 'Conexões', onPress: () => navigation.navigate('Conexoes') },
       { label: 'Hábitos', onPress: () => navigation.navigate('Habits'), count: counts?.habits },
     ] },
     { title: 'Histórico', rows: [
