@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import type { PatientDocumentDTO } from '@sintera/api-client'
 import {
-  DOCUMENT_SUBTYPES, documentSubtypeLabel, allowedTargets, documentSubtitle, withinAttachmentLimit, MAX_ATTACHMENT_MB,
+  DOCUMENT_SUBTYPES, documentSubtypeLabel, documentSubtitle, withinAttachmentLimit, MAX_ATTACHMENT_MB,
   type PatientDocumentSubtype,
 } from '@sintera/core'
 import { Text, Button, Input, AttachmentLink, DatePicker, Disclaimer, Select } from '../../primitives'
@@ -167,13 +167,10 @@ export function DocumentsScreen() {
               options={DOCUMENT_SUBTYPES.map(x => ({ id: x.value, label: x.label }))}
               title="Tipo de documento"
             />
-            {/* Alvos vindos do domínio: a Receita alimenta 7 contextos; atestado/relatório/encaminhamento
-                ligam-se ao encontro. Mesmo texto da Web, mesma fonte. */}
-            {allowedTargets(subtype).length > 0 && (
-              <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.text.muted }}>
-                Pode ser associado a: {allowedTargets(subtype).join(' · ')}
-              </Text>
-            )}
+            {/* NÃO anunciar aqui a que este documento "pode ser associado": este formulário não associa nada.
+                O vínculo da receita ao medicamento nasce do outro lado, na tela de Medicamentos. Prometer uma
+                capacidade que a tela não tem é pior do que ficar calado. Quando houver seletor de vínculo
+                aqui, o texto volta — junto com o campo. */}
           </View>
 
           <View style={{ gap: 6 }}>

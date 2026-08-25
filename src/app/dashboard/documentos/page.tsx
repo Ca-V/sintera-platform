@@ -32,7 +32,7 @@ import { Card } from '@/lib/ui/ds'
 // `row()`. Não é gambiarra minha — é o padrão já usado por Recursos, Hábitos e demais páginas.
 import { row } from '@/lib/supabase/db'
 import {
-  DOCUMENT_SUBTYPES, documentSubtypeLabel, allowedTargets, buildPatientDocumentInsert, documentSubtitle,
+  DOCUMENT_SUBTYPES, documentSubtypeLabel, buildPatientDocumentInsert, documentSubtitle,
   supportedNowAcceptAttr, withinAttachmentLimit, MAX_ATTACHMENT_MB,
   type PatientDocumentSubtype,
 } from '@sintera/core'
@@ -254,13 +254,10 @@ export default function DocumentosPage() {
                   options={DOCUMENT_SUBTYPES.map(s => ({ value: s.value, label: s.label }))}
                   title="Tipo de documento"
                 />
-                {/* Os alvos válidos vêm do domínio: a Receita alimenta 7 contextos; atestado/relatório/
-                    encaminhamento se ligam ao encontro. Mostrar aqui evita promessa que a regra não cumpre. */}
-                {allowedTargets(subtype).length > 0 && (
-                  <p className="mt-1.5 text-xs text-mauve">
-                    Pode ser associado a: {allowedTargets(subtype).join(' · ')}
-                  </p>
-                )}
+                {/* NÃO anunciar aqui a que este documento "pode ser associado": este formulário não associa
+                    nada. O vínculo da receita ao medicamento nasce do outro lado, na tela de Medicamentos.
+                    Prometer uma capacidade que a tela não tem é pior do que ficar calado. Quando houver
+                    seletor de vínculo aqui, o texto volta — junto com o campo. */}
               </div>
 
               <div>

@@ -37,6 +37,28 @@ export type DocumentTargetDomain =
   | 'medicamento' | 'suplemento' | 'ciclo' | 'composicao' | 'recurso' | 'habito' | 'monitoramento'
   | 'exame' | 'consulta'
 
+/**
+ * Rótulo HUMANO do domínio-alvo. As chaves acima são identificadores internos — sem acento, minúsculas,
+ * no singular — e não podem aparecer na tela.
+ *
+ * Achado na homologação (25/08): a tela de Documentos exibia `composicao · habito · recurso` cru para a
+ * usuária, porque juntava as chaves direto. Rótulo é apresentação e tem que ter um dono; este é o dono.
+ */
+const TARGET_LABELS: Record<DocumentTargetDomain, string> = {
+  medicamento:   'Medicamento',
+  suplemento:    'Suplemento',
+  ciclo:         'Ciclo e contracepção',
+  composicao:    'Composição corporal',
+  recurso:       'Recurso de saúde',
+  habito:        'Hábito',
+  monitoramento: 'Monitoramento',
+  exame:         'Exame',
+  consulta:      'Consulta',
+}
+export function documentTargetLabel(t: DocumentTargetDomain): string {
+  return TARGET_LABELS[t] ?? String(t)
+}
+
 /** Categorias às quais uma RECEITA pode alimentar informação (decisão da fundadora — os 7 contextos). */
 export const RECEITA_TARGET_DOMAINS: DocumentTargetDomain[] = [
   'medicamento', 'suplemento', 'ciclo', 'composicao', 'recurso', 'habito', 'monitoramento',

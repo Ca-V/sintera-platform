@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   buildPatientDocumentInsert, buildDocumentLinkInserts, canAssociate, allowedTargets,
   createPatientDocument, associateDocument, isDocumentSubtype, documentSubtypeLabel,
-  RECEITA_TARGET_DOMAINS, DOCUMENT_SUBTYPES, documentSubtitle,
+  RECEITA_TARGET_DOMAINS, DOCUMENT_SUBTYPES, documentSubtitle, documentTargetLabel,
   type PatientDocWriteClient, type DocumentTargetDomain,
 } from '@sintera/core'
 
@@ -135,5 +135,28 @@ describe('DOC-002 · documentSubtitle — o cartão nunca fica anônimo', () => 
   it('sem nada, degrada sem quebrar', () => {
     expect(documentSubtitle({ issuer: null, doc_date: null, created_at: null }))
       .toBe('Sem emissor informado')
+  })
+})
+
+// DOC-002 — GUARDA: identificador interno nunca chega à tela.
+// Achado na homologação (25/08): a tela exibia "medicamento · suplemento · ciclo · composicao · recurso ·
+// habito · monitoramento" — as CHAVES do código, sem acento e em minúsculas, porque juntava os valores crus.
+describe('DOC-002 · rótulo de domínio-alvo', () => {
+  const TODOS: DocumentTargetDomain[] = [
+    'medicamento', 'suplemento', 'ciclo', 'composicao', 'recurso',
+    'habito', 'monitoramento', 'exame', 'consulta',
+  ]
+  it('todo alvo tem rótulo humano — nenhum cai no identificador cru', () => {
+    for (const t of TODOS) {
+      const label = documentTargetLabel(t)
+      expect(label, `alvo "${t}" sem rótulo`).not.toBe(t)
+      expect(label[0], `rótulo de "${t}" deveria começar com maiúscula`).toBe(label[0].toUpperCase())
+    }
+  })
+  it('os alvos que a Receita alimenta ficam legíveis', () => {
+    expect(RECEITA_TARGET_DOMAINS.map(documentTargetLabel)).toEqual([
+      'Medicamento', 'Suplemento', 'Ciclo e contracepção', 'Composição corporal',
+      'Recurso de saúde', 'Hábito', 'Monitoramento',
+    ])
   })
 })
