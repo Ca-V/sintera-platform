@@ -2,6 +2,7 @@
 // em profiles.weight_goal_kg). Regras/sumarização vêm do @sintera/core. RLS: dono. Leitura LANÇA; escrita { error }.
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { BodyMetric } from '@sintera/core'
+import { measurementInstant } from '@sintera/core'
 import { withTimeout } from '../net/timeout'
 import { asError } from '../net/errors'
 
@@ -12,6 +13,8 @@ export interface BodyMetricDTO {
   value_text: string
   unit: string | null
   measured_on: string
+  /** Instante da medição (UTC). Distingue duas leituras do MESMO dia — o diário de pressão (HIP-014 §2). */
+  measured_at: string | null
   notes: string | null
   exam_id: string | null
   source: string | null
@@ -25,20 +28,27 @@ export interface BodyMetricInput {
   value_text: string
   unit?: string | null
   measured_on: string
+  /** Hora da medição. Ausente = não informada; grava a âncora do dia (ver `measurementInstant`). */
+  measured_at?: string | null
   notes?: string | null
   exam_id?: string | null
   source?: string | null
 }
 
-const COLUMNS = 'id, metric, label, value_text, unit, measured_on, notes, exam_id, source, created_at' as const
+const COLUMNS = 'id, metric, label, value_text, unit, measured_on, measured_at, notes, exam_id, source, created_at' as const
 
 export async function listBodyMetrics(client: SupabaseClient, signal?: AbortSignal): Promise<BodyMetricDTO[]> {
   const { signal: s, cleanup } = withTimeout(signal)
   try {
     const { data: { session } } = await client.auth.getSession()
     if (!session) throw new Error('Não autenticado')
+    // Ordena pelo INSTANTE — sem isso duas leituras do mesmo dia (manhã e noite) saem em ordem indefinida.
+    // `measured_on` fica como desempate para linhas anteriores à migração 148, que não têm hora.
     const { data, error } = await client.from('body_metrics').select(COLUMNS)
-      .eq('user_id', session.user.id).order('measured_on', { ascending: false }).abortSignal(s)
+      .eq('user_id', session.user.id)
+      .order('measured_at', { ascending: false, nullsFirst: false })
+      .order('measured_on', { ascending: false })
+      .abortSignal(s)
     if (error) throw asError(error)
     return (data as BodyMetricDTO[] | null) ?? []
   } finally {
@@ -54,6 +64,9 @@ export async function saveBodyMetric(client: SupabaseClient, input: BodyMetricIn
     const row: Record<string, unknown> = {
       user_id: session.user.id, metric: input.metric, label: input.label?.trim() || null,
       value_text: input.value_text.trim(), unit: input.unit?.trim() || null, measured_on: input.measured_on,
+      // Hora informada quando existe; senão a âncora do dia (00:00Z), que é como a migração 148 marcou
+      // "hora não registrada". Nunca inventa um horário plausível — meia-noite é declaradamente um marcador.
+      measured_at: measurementInstant(input.measured_at, input.measured_on),
       notes: input.notes?.trim() || null, exam_id: input.exam_id || null, source: input.source || 'manual',
     }
     const table = client.from('body_metrics')

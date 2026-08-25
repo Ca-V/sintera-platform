@@ -45,6 +45,10 @@ export const SCREEN_COPY = {
     emptyMessage:   'Registre um sinal vital. Use Adicionar.',
     fieldVital:     'Sinal vital',
     fieldDate:      'Data',
+    // HIP-014 §2 — a hora distingue duas medições do mesmo dia (o diário de pressão). Opcional de propósito:
+    // quem mede uma vez por dia não deve ser obstruído por um campo que não usa.
+    fieldTime:      'Hora (opcional)',
+    fieldTimeHint:  'Registre a hora quando medir mais de uma vez no dia — é o que mantém as leituras separadas.',
     fieldValue:     'Valor',
     fieldUnit:      'Unidade',
     fieldNotes:     'Observações (opcional)',

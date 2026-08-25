@@ -8,8 +8,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { text } from '@sintera/design-system'
 import type { BodyMetricDTO } from '@sintera/api-client'
-import { VITAL_SIGNS, bodyMetricLabel, isVital, SCREEN_COPY, type VitalMetric } from '@sintera/core'
-import { Text, Button, Input, Disclaimer, DatePicker, Select } from '../../primitives'
+import {
+  VITAL_SIGNS, bodyMetricLabel, isVital, SCREEN_COPY, type VitalMetric,
+  hasTimeOfDay, measurementInstant, requiresTimeOfDay,
+} from '@sintera/core'
+import { Text, Button, Input, Disclaimer, DatePicker, TimePicker, Select } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 
@@ -20,6 +23,27 @@ const C = SCREEN_COPY.monitoramento
 function parseNum(v: string): number { return Number(String(v).replace(',', '.').replace(/[^\d.-]/g, '')) }
 function fmt(d: string): string { const [y, m, dd] = (d || '').slice(0, 10).split('-'); return y ? `${dd}/${m}/${y}` : '—' }
 function today(): string { return new Date().toISOString().slice(0, 10) }
+
+/**
+ * Data e — quando registrada — HORA da medição (HIP-014 §2). Espelha `fmtMeasured` da Web; `hasTimeOfDay` vem do
+ * core justamente para que as duas pontas decidam IGUAL o que é hora de verdade e o que é só a âncora do dia.
+ */
+function fmtMeasured(measuredOn: string, measuredAt: string | null | undefined): string {
+  if (!hasTimeOfDay(measuredAt)) return fmt(measuredOn)
+  const d = new Date(measuredAt as string)
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mm = String(d.getMinutes()).padStart(2, '0')
+  return `${fmt(measuredOn)} · ${hh}:${mm}`
+}
+
+/** Data + hora locais → instante UTC. Sem hora, delega ao core (âncora do dia = "hora não registrada"). */
+function instantOf(date: string, time: string): string | null {
+  if (!time) return measurementInstant(null, date)
+  const [y, m, d] = date.split('-').map(Number)
+  const [h, min] = time.split(':').map(Number)
+  const dt = new Date(y, m - 1, d, h, min, 0, 0)
+  return Number.isNaN(dt.getTime()) ? measurementInstant(null, date) : dt.toISOString()
+}
 const unitOf = (m: VitalMetric) => VITAL_SIGNS.find(v => v.value === m)?.unit ?? ''
 
 export function MonitoramentoScreen() {
@@ -39,6 +63,7 @@ export function MonitoramentoScreen() {
   const [value, setValue] = useState('')
   const [unit, setUnit] = useState('mmHg')
   const [date, setDate] = useState('')
+  const [time, setTime] = useState('')
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -53,7 +78,7 @@ export function MonitoramentoScreen() {
 
   const groups = useMemo(() => VITAL_SIGNS.map(v => ({ v, list: items.filter(i => i.metric === v.value) })).filter(g => g.list.length > 0), [items])
 
-  function startNew() { setMetric('pressao_arterial'); setLabel(''); setValue(''); setUnit('mmHg'); setDate(today()); setNotes(''); setOpen(true) }
+  function startNew() { setMetric('pressao_arterial'); setLabel(''); setValue(''); setUnit('mmHg'); setDate(today()); setTime(''); setNotes(''); setOpen(true) }
   function chooseMetric(m: VitalMetric) { setMetric(m); setUnit(unitOf(m)) }
   async function save() {
     if (!value.trim() || !/^\d{4}-\d{2}-\d{2}$/.test(date)) { Alert.alert('Campos obrigatórios', 'Informe valor e data (AAAA-MM-DD).'); return }
@@ -61,7 +86,7 @@ export function MonitoramentoScreen() {
     try {
       const { error: err } = await apiClient.body.saveBodyMetric({
         metric, label: metric === 'outro_sinal' ? (label.trim() || 'Sinal') : null,
-        value_text: value, unit, measured_on: date, notes,
+        value_text: value, unit, measured_on: date, measured_at: instantOf(date, time), notes,
       })
       if (err) { Alert.alert('Não foi possível salvar', err.message || 'Tente novamente.'); return }
       setOpen(false); load(true)
@@ -121,6 +146,13 @@ export function MonitoramentoScreen() {
           <Campo label={C.fieldDate}>
             <DatePicker value={date} onChange={setDate} placeholder={C.fieldDate} />
           </Campo>
+          {/* HIP-014 §2 — paridade com a Web: a hora distingue duas medições do mesmo dia. */}
+          {requiresTimeOfDay(metric) ? (
+            <Campo label={C.fieldTime}>
+              <TimePicker value={time} onChange={setTime} placeholder={C.fieldTime} />
+              <Text spec={text(t, { role: 'caption', tone: 'muted' })} style={{ marginTop: 4 }}>{C.fieldTimeHint}</Text>
+            </Campo>
+          ) : null}
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <View style={{ flex: 2 }}>
               <Campo label={C.fieldValue}>
@@ -170,7 +202,7 @@ export function MonitoramentoScreen() {
                   <Text spec={text(t, { role: 'body' })}>{i.metric === 'outro_sinal' && i.label ? `${i.label}: ` : ''}{i.value_text}{i.unit ? ` ${i.unit}` : ''}</Text>
                   <Pressable onPress={() => remove(i)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>{C.removeAction}</Text></Pressable>
                 </View>
-                <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{fmt(i.measured_on)}{i.notes ? ` · ${i.notes}` : ''}</Text>
+                <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{fmtMeasured(i.measured_on, i.measured_at)}{i.notes ? ` · ${i.notes}` : ''}</Text>
               </View>
             ))}
           </View>
@@ -198,7 +230,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12 },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   card: { borderWidth: 1, borderRadius: 16, padding: 16 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },
   connect: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   spark: { flexDirection: 'row', alignItems: 'flex-end', gap: 3, height: 36 },

@@ -18,7 +18,7 @@ import Sparkline, { parseNum } from '@/components/Sparkline'
 import ListCard from '@/components/ListCard'
 import PageHeader from '@/components/PageHeader'
 // PARIDADE — o texto desta tela vem do core; a Web e o Mobile prometiam coisas diferentes aqui.
-import { SCREEN_COPY } from '@sintera/core'
+import { SCREEN_COPY, hasTimeOfDay, measurementInstant, requiresTimeOfDay } from '@sintera/core'
 import EmptyState from '@/components/EmptyState'
 import { Card } from "@/lib/ui/ds"
 import Disclaimer from '@/components/ui/Disclaimer'
@@ -41,6 +41,9 @@ const PLACEHOLDER: Record<Vital, string> = {
   saturacao: 'Ex.: 98', temperatura: 'Ex.: 36,5', outro_sinal: 'Valor',
 }
 
+// PARIDADE — todo texto visível vem do core, para que a Web e o Mobile digam a MESMA coisa (o Mobile já faz isso).
+const C = SCREEN_COPY.monitoramento
+
 interface Entry {
   id: string
   metric: Vital
@@ -48,12 +51,31 @@ interface Entry {
   valueText: string
   unit: string | null
   measuredOn: string
+  measuredAt: string | null
   notes: string | null
 }
 
 function fmt(date: string): string {
   const d = new Date(`${date}T00:00:00`)
   return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+/**
+ * Data e — quando registrada — HORA da medição (HIP-014 §2). Duas leituras do mesmo dia só se distinguem pela
+ * hora; é o que torna o diário de pressão legível. `hasTimeOfDay` vem do core para que o Mobile decida igual.
+ */
+function fmtMeasured(measuredOn: string, measuredAt: string | null): string {
+  if (!hasTimeOfDay(measuredAt)) return fmt(measuredOn)
+  const d = new Date(measuredAt as string)
+  const hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  return `${d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })} · ${hora}`
+}
+
+/** Data + hora locais → instante UTC. Sem hora, delega ao core (âncora do dia = "hora não registrada"). */
+function instantOf(date: string, time: string): string | null {
+  if (!time) return measurementInstant(null, date)
+  const d = new Date(`${date}T${time}:00`)   // interpretado no fuso de quem registra
+  return Number.isNaN(d.getTime()) ? measurementInstant(null, date) : d.toISOString()
 }
 
 export default function SinaisVitaisPage() {
@@ -70,6 +92,7 @@ export default function SinaisVitaisPage() {
   const [value, setValue] = useState('')
   const [unit, setUnit] = useState('mmHg')
   const [date, setDate] = useState('')
+  const [time, setTime] = useState('')
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
@@ -81,12 +104,15 @@ export default function SinaisVitaisPage() {
     setLoading(true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = await (supabase as any).from('body_metrics')
-      .select('id, metric, label, value_text, unit, measured_on, notes')
-      .eq('user_id', user.id).in('metric', VITALS).order('measured_on', { ascending: false })
+      .select('id, metric, label, value_text, unit, measured_on, measured_at, notes')
+      .eq('user_id', user.id).in('metric', VITALS)
+      .order('measured_at', { ascending: false, nullsFirst: false })
+      .order('measured_on', { ascending: false })
     setItems(((data ?? []) as Array<Record<string, unknown>>).map(m => ({
       id: m.id as string, metric: (m.metric as Vital) ?? 'outro_sinal', label: (m.label as string) ?? null,
       valueText: (m.value_text as string) ?? '', unit: (m.unit as string) ?? null,
-      measuredOn: m.measured_on as string, notes: (m.notes as string) ?? null,
+      measuredOn: m.measured_on as string, measuredAt: (m.measured_at as string) ?? null,
+      notes: (m.notes as string) ?? null,
     })))
     setLoading(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps -- VITALS é constante do módulo; não precisa nas deps
@@ -102,7 +128,7 @@ export default function SinaisVitaisPage() {
   useNovelty(() => load())
 
   function chooseMetric(m: Vital) { setMetric(m); setUnit(DEFAULT_UNIT[m]) }
-  function reset() { setMetric('pressao_arterial'); setLabel(''); setValue(''); setUnit('mmHg'); setDate(''); setNotes(''); setErr(null) }
+  function reset() { setMetric('pressao_arterial'); setLabel(''); setValue(''); setUnit('mmHg'); setDate(''); setTime(''); setNotes(''); setErr(null) }
 
   async function save() {
     if (!user || saving || !value.trim() || !date) return
@@ -110,7 +136,8 @@ export default function SinaisVitaisPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (supabase as any).from('body_metrics').insert({
       user_id: user.id, metric, label: metric === 'outro_sinal' ? (label.trim() || 'Sinal') : null,
-      value_text: value.trim(), unit: unit.trim() || null, measured_on: date, notes: notes.trim() || null,
+      value_text: value.trim(), unit: unit.trim() || null, measured_on: date,
+      measured_at: instantOf(date, time), notes: notes.trim() || null,
     })
     setSaving(false)
     if (error) { setErr(error.message); return }
@@ -180,6 +207,16 @@ export default function SinaisVitaisPage() {
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
             </div>
           </div>
+          {/* HIP-014 §2 — a hora distingue duas medições do mesmo dia. Sem ela o diário de pressão que o médico
+              pede ("de manhã e à noite") vira duas linhas iguais. Opcional: quem não informa não é obstruído. */}
+          {requiresTimeOfDay(metric) && (
+            <div className="sm:w-1/2">
+              <label htmlFor="vital-time" className="font-body text-xs text-mauve block mb-1">{C.fieldTime}</label>
+              <input id="vital-time" type="time" value={time} onChange={e => setTime(e.target.value)}
+                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+              <p className="font-body text-xs text-mauve/70 mt-1">{C.fieldTimeHint}</p>
+            </div>
+          )}
           {metric === 'outro_sinal' && (
             <div>
               <label htmlFor="vital-label" className="font-body text-xs text-mauve block mb-1">Nome do sinal</label>
@@ -245,7 +282,7 @@ export default function SinaisVitaisPage() {
                   {list.map(it => (
                     <ListCard key={it.id}
                       title={`${it.metric === 'outro_sinal' && it.label ? `${it.label}: ` : ''}${it.valueText}${it.unit ? ` ${it.unit}` : ''}`}
-                      meta={`${fmt(it.measuredOn)}${it.notes ? ` · ${it.notes}` : ''}`}
+                      meta={`${fmtMeasured(it.measuredOn, it.measuredAt)}${it.notes ? ` · ${it.notes}` : ''}`}
                       actions={
                         <button onClick={() => remove(it.id)} disabled={busyId === it.id} title="Remover"
                           className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-red-400 hover:bg-red-50 transition-colors disabled:opacity-40">

@@ -179,10 +179,20 @@ Os dois primeiros bloqueiam o caso de uso aprovado na §2 e não são contornáv
 Um diário de pressão de manhã e à noite gera duas linhas na mesma data, indistinguíveis e sem ordem. Precisa de
 `measured_at timestamptz`, com `measured_on` preservado por compatibilidade.
 
-**8.2 · A projeção descarta leituras: "último do dia vence".**
-`projectBodyMetricPoints` colapsa por `(métrica, dia)` — a pressão da manhã é apagada pela da noite na exibição.
-O bruto sobrevive em `wearable_readings`, mas a série que a pessoa **vê** perde metade das medições justamente no
-caso em que cada medição importa. A granularidade da projeção precisa acompanhar a da métrica.
+**8.2 · A projeção do CONECTOR colapsa por dia — e só ela.**
+
+Correção de um relato anterior meu, que confundia dois caminhos diferentes:
+
+- **Registro manual** (o diário de pressão): grava direto em `body_metrics`, uma linha por medição. As duas
+  leituras do dia **sempre existiram e sempre apareceram** — o que faltava era a hora para distingui-las e
+  ordená-las. É o §8.1, e está resolvido.
+- **Dado de conector**: passa por `projectBodyMetricPoints`, que colapsa por `(métrica, dia)` com "último do dia
+  vence". Aí sim há descarte na exibição — o bruto sobrevive em `wearable_readings`, o ponto projetado não.
+
+O ponto projetado agora **carrega o instante real** da leitura (`measured_at`), em vez de perdê-lo — o que o torna
+ordenável junto com as medições manuais, na mesma série. **Mas o colapso por dia continua**, e é decisão em
+aberto: soltá-lo para todo sinal vital traria uma frequência cardíaca de pulseira como milhares de pontos por dia.
+A granularidade por métrica do lado do conector depende da prioridade de fonte (§4) e é resolvida junto com ela.
 
 **8.3 · Não existe `activity_sessions`.** §3.
 
@@ -199,11 +209,21 @@ medidas, atividade física, sono e o banner de Conexões.
 | 1 | Conector migra para `packages/core` | **feito** (§7) |
 | 2 | `body_metrics.measured_at` (migração 148) | **aplicado** em produção, 25/08 |
 | 3 | `activity_sessions` + RLS (migração 149) | **aplicado** em produção, 25/08 |
-| 4 | Granularidade da projeção — parar de descartar leituras (§8.2) | a fazer |
+| 4 | Hora da medição de ponta a ponta — core · api-client · Web · Mobile | **feito** |
 | 5 | Monitoramento como módulo único nas duas pontas (§8.4) | a fazer |
 | 6 | Conector Health Connect (Android) | a fazer |
-| 7 | Prioridade de fonte por métrica, ajustável (§4) | a fazer |
+| 7 | Prioridade de fonte por métrica, ajustável (§4) — resolve junto a granularidade do conector (§8.2) | a fazer |
 | 8 | Apple Health (Trilha B) | depois do iOS |
+
+**Etapa 4, o que entrou:** `requiresTimeOfDay` · `measurementInstant` · `hasTimeOfDay` ·
+`compareMeasurementsDesc` no core (18 testes) · `measured_at` no `BodyMetricDTO`/`Input` e na ordenação do
+`api-client` · campo de hora nas duas telas, com o texto vindo do `SCREEN_COPY` para que digam o mesmo · primitiva
+`TimePicker` no Mobile (o DS ganhou a capacidade antes da tela consumi-la) · o ponto projetado do conector passou
+a preservar o instante.
+
+A hora é **opcional** de propósito: quem mede uma vez por dia não é obstruído por um campo que não usa. Meia-noite
+UTC exata permanece sendo o marcador de "hora não registrada", e `hasTimeOfDay` é quem lê esse marcador — no core,
+para que Web e Mobile não decidam diferente.
 
 ### Aplicação em produção — 25/08/2026
 
