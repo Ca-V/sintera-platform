@@ -435,9 +435,15 @@ export default function ExamsPage() {
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
         <PageHeader
           icon={<FlaskConical size={16} />}
-          eyebrow="Exames"
-          title="Exames"
-          subtitle={<><strong className="font-medium text-onyx/70">Solte o laudo — a SINTERA lê e extrai os dados por você.</strong> Também guarda receitas e outros documentos.</>}
+          /* O cabeçalho segue a ABA. Achado da homologação (25/08): com "Pedidos de exame" virando destino
+             próprio no menu, a pessoa chegava aqui e a página dizia "EXAMES / Exames", com subtítulo sobre
+             laudos — o menu levava a um lugar e a tela se apresentava como outro.
+             Receitas e outros documentos deixaram de ser mencionados: têm categoria própria desde o DOC-002. */
+          eyebrow={activeTab === 'orders' ? 'Pedidos de exame' : 'Exames'}
+          title={activeTab === 'orders' ? 'Pedidos de exame' : 'Exames'}
+          subtitle={activeTab === 'orders'
+            ? <><strong className="font-medium text-onyx/70">Guarde o pedido ou a guia — a SINTERA lê o que foi solicitado.</strong> O pedido fica registrado até o resultado chegar.</>
+            : <><strong className="font-medium text-onyx/70">Solte o laudo — a SINTERA lê e extrai os dados por você.</strong> Os resultados ficam organizados ao longo do tempo.</>}
           action={
             /* Menu de criação de registros (padrão oficial DS-001) — PONTO DE ENTRADA ÚNICO.
                E6: ômica é uma CONTINUAÇÃO especializada do mesmo ponto de entrada (não um fork):

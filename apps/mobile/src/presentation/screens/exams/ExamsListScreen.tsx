@@ -184,7 +184,9 @@ export function ExamsListScreen({ navigation, route }: Props) {
       keyboardShouldPersistTaps="handled"
       refreshControl={<RefreshControl refreshing={p.refreshing} onRefresh={p.refresh} tintColor={t.color.identity.primary} />}
     >
-      <Text spec={heading(t, { level: 'page' })}>Exames</Text>
+      {/* O título segue a ABA — com "Pedidos de exame" virando destino próprio no menu, chegar aqui e ler
+          "Exames" faria o menu levar a um lugar e a tela se apresentar como outro (paridade com a Web). */}
+      <Text spec={heading(t, { level: 'page' })}>{activeTab === 'orders' ? 'Pedidos de exame' : 'Exames'}</Text>
       <Text spec={text(t, { role: 'bodySmall', tone: 'muted' })}>Seus exames ao longo do tempo. Abra um para ver o documento original.</Text>
 
       {/* O botão acompanha a aba: em "Pedidos de Exames" adiciona um PEDIDO (contexto 'order' → cai direto em Pedidos). */}
