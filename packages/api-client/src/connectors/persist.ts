@@ -1,6 +1,16 @@
-// WEA-001 / HIP-001 — V2 Épico 1.3: implementação REAL (IO) do PersistClient sobre o cliente service-role.
-// Fino de propósito: toda a lógica determinística vive em persistence.ts (puro/testado). Aqui só há IO.
-// Deve ser chamado SEMPRE com um cliente service-role (tokens/escrita privilegiada; nunca o cliente do browser).
+// WEA-001 / HIP-001 / HIP-014 — implementação REAL (IO) do PersistClient. Fina de propósito: toda a lógica
+// determinística vive em `persistence.ts` do core (pura, testada). Aqui só há IO.
+//
+// ESTE MÓDULO NÃO CONTÉM CREDENCIAL. A credencial vem no cliente que se passa, e é isso que permite os DOIS
+// caminhos usarem a MESMA implementação em vez de duas cópias que um dia divergem:
+//
+//   • servidor da Web → cliente SERVICE-ROLE (conector OAuth do lado do servidor). A chave é resolvida em
+//     `src/lib/connectors/runtime.server.ts`, que permanece fora dos pacotes.
+//   • aplicativo       → cliente da SESSÃO da pessoa. O Health Connect lê NO APARELHO, e desde a migração 150
+//     o dono tem política de INSERT em `wearable_readings` e `connector_sync_runs` (HIP-014 §5/§6).
+//
+// Escrever privilegiado NUNCA entra em `packages/` — o que entrou aqui foi o código, que é agnóstico. A guarda
+// `tests/contracts/conector-fronteira.ARCH.test.ts` verifica exatamente essa fronteira.
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { PersistClient, WearableReadingRow, BodyMetricRow } from '@sintera/core'

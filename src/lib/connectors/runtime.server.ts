@@ -6,7 +6,9 @@ import { createClient as createAdmin, type SupabaseClient } from '@supabase/supa
 import { createConnectorRegistry, type ConnectorRegistry } from '@sintera/core'
 import { createConnectionStore, type ConnectionStore } from '@sintera/core'
 import { createSupabaseConnectionRepo } from './supabase-connections'
-import { createSupabasePersistClient, createSupabaseSyncRecorder, createSupabaseWatermarkReader } from './supabase-persist'
+// A implementação de IO é compartilhada com o aplicativo (@sintera/api-client): agnóstica de credencial —
+// aqui ela recebe o cliente SERVICE-ROLE; no aparelho, o cliente da sessão da pessoa.
+import { createSupabasePersistClient, createSupabaseSyncRecorder, createSupabaseWatermarkReader } from '@sintera/api-client'
 import { createSyncService, type SyncService } from '@sintera/core'
 import { systemClock, isSyncStale } from '@sintera/core'
 import type { OAuthProvider } from '@sintera/core'

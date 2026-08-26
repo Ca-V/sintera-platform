@@ -92,8 +92,9 @@ export * from './domain/connectors/state'
 export * from './domain/body/activity'
 
 // Camada de Conectores (HIP-001) — contratos + lógica PURA, vendor-neutral. Vive no core porque o Mobile
-// precisa alcançá-la: o Health Connect roda NO APARELHO (HIP-010). A IO service-role (supabase-persist,
-// runtime.server) e os adaptadores de fornecedor permanecem no servidor da Web — nunca no pacote.
+// precisa alcançá-la: o Health Connect roda NO APARELHO (HIP-014). Quem resolve a CHAVE service-role a partir
+// do ambiente (`runtime.server.ts`) e os adaptadores de fornecedor permanecem no servidor da Web — nunca no
+// pacote. A IO agnóstica de credencial vive em `@sintera/api-client` e serve as duas pontas.
 export * from './domain/connectors/connector'
 export * from './domain/connectors/oauth'
 export * from './domain/connectors/registry'

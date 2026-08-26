@@ -12,9 +12,13 @@
 //      Porque `packages/` é empacotado no aplicativo. Um cliente service-role ali levaria
 //      credencial de escrita irrestrita para dentro de um binário distribuído a usuários.
 //      A regra 1 empurra código para `packages/`; esta existe para que o empurrão não leve junto
-//      o que não pode ir. É por isso que `supabase-persist.ts` e `runtime.server.ts` FICARAM
-//      na Web mesmo quando tudo à volta migrou — a decisão foi deliberada, e esta guarda a
-//      torna permanente em vez de depender de alguém lembrar.
+//      o que não pode ir.
+//
+//      A distinção fina, e que é fácil errar: o que não pode migrar é a CREDENCIAL, não o código
+//      que a usa. `persist.ts` (antes `supabase-persist.ts`) foi para `@sintera/api-client` porque
+//      é agnóstico — recebe um cliente e não sabe qual. O servidor lhe entrega um cliente
+//      service-role; o aparelho, o cliente da sessão da pessoa. Já `runtime.server.ts`, que RESOLVE
+//      a chave a partir do ambiente, permanece na Web e nunca pode sair de lá.
 //
 // Nenhuma das duas admite lista de dívida: são invariantes, não catracas. Ambas valiam no
 // momento em que este arquivo foi escrito e devem continuar valendo.
