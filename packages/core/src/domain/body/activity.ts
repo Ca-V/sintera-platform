@@ -76,6 +76,35 @@ export function activitySummary(s: {
 }
 
 /**
+ * Texto digitado → número, aceitando vírgula decimal (pt-BR). Vazio, inválido ou negativo → `null`.
+ *
+ * O `null` é o ponto: campo em branco precisa chegar ao banco como AUSENTE, nunca como 0. Uma musculação com
+ * "0 km" afirmaria que alguém mediu a distância e ela foi zero — o que é falso, e sobre saúde (HIP-014 §3).
+ */
+function numeroOuNulo(texto: string | null | undefined): number | null {
+  const t = (texto ?? '').trim()
+  if (!t) return null
+  const limpo = t.replace(',', '.').replace(/[^\d.-]/g, '')
+  // Limpar "abc" deixa string vazia, e `Number('')` é 0 — que gravaria "0 km" como se alguém tivesse medido.
+  // Exigir que sobre um número de verdade é o que impede o texto inválido de virar afirmação falsa.
+  if (!/^-?\d+(\.\d+)?$/.test(limpo)) return null
+  const n = Number(limpo)
+  return Number.isFinite(n) && n >= 0 ? n : null
+}
+
+/** Minutos digitados → segundos, para gravar. Fonte ÚNICA: as duas telas convertiam por conta própria. */
+export function durationSecondsFromMinutes(texto: string | null | undefined): number | null {
+  const min = numeroOuNulo(texto)
+  return min == null ? null : Math.round(min * 60)
+}
+
+/** Quilômetros digitados → metros, para gravar. Aceita "5,2" e "5.2". */
+export function distanceMetersFromKm(texto: string | null | undefined): number | null {
+  const km = numeroOuNulo(texto)
+  return km == null ? null : Math.round(km * 1000)
+}
+
+/**
  * Duração em segundos a partir da janela, quando a fonte não informou `duration_s` explicitamente.
  * Determinístico. `null` se faltar ponta, se as datas forem inválidas ou se o fim anteceder o início — nesse
  * caso a janela é incoerente e inventar um número seria pior que não ter.

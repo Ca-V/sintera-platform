@@ -56,6 +56,20 @@ export const SCREEN_COPY = {
     connectInvite:  'Conecte um dispositivo e deixe os dados entrarem sozinhos',
     connectAction:  'Conexões',
     removeAction:   'Remover',
+
+    // Atividade física (HIP-014 §3) — seção IRMÃ de Sinais vitais dentro de Monitoramento. Registra o que
+    // aconteceu, sem avaliar desempenho (RDC 657): a plataforma organiza e preserva, não interpreta.
+    vitalsSection:      'Sinais vitais',
+    activitySection:    'Atividade física',
+    activityAdd:        'Registrar atividade',
+    activityEmptyTitle: 'Nenhuma atividade registrada',
+    activityEmptyMsg:   'Registre um treino ou conecte um aplicativo para que entrem sozinhos.',
+    fieldActivityType:  'Tipo de atividade',
+    fieldActivityName:  'Nome (opcional)',
+    fieldStartDate:     'Data',
+    fieldStartTime:     'Início (opcional)',
+    fieldDurationMin:   'Duração em minutos (opcional)',
+    fieldDistanceKm:    'Distância em km (opcional)',
   },
   exames: {
     title:        'Exames',

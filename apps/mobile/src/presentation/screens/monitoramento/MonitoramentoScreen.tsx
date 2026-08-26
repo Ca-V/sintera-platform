@@ -7,10 +7,12 @@ import { ScrollView, View, ActivityIndicator, RefreshControl, Pressable, Alert, 
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { text } from '@sintera/design-system'
-import type { BodyMetricDTO } from '@sintera/api-client'
+import type { BodyMetricDTO, ActivitySessionDTO } from '@sintera/api-client'
 import {
   VITAL_SIGNS, bodyMetricLabel, isVital, SCREEN_COPY, type VitalMetric,
   hasTimeOfDay, measurementInstant, measurementMeta, requiresTimeOfDay,
+  ACTIVITY_TYPES, activityTypeLabel, activitySummary,
+  durationSecondsFromMinutes, distanceMetersFromKm,
 } from '@sintera/core'
 import { Text, Button, Input, Disclaimer, DatePicker, TimePicker, Select } from '../../primitives'
 import { useTheme } from '../../theme'
@@ -67,6 +69,16 @@ export function MonitoramentoScreen() {
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
 
+  const [acts, setActs] = useState<ActivitySessionDTO[]>([])
+  const [actOpen, setActOpen] = useState(false)
+  const [actType, setActType] = useState('caminhada')
+  const [actName, setActName] = useState('')
+  const [actDate, setActDate] = useState('')
+  const [actTime, setActTime] = useState('')
+  const [actMin, setActMin] = useState('')
+  const [actKm, setActKm] = useState('')
+  const [savingAct, setSavingAct] = useState(false)
+
   const load = useCallback((silent: boolean) => {
     if (silent) setRefreshing(true); else setPhase('loading')
     apiClient.body.listBodyMetrics()
@@ -91,6 +103,48 @@ export function MonitoramentoScreen() {
       if (err) { Alert.alert('Não foi possível salvar', err.message || 'Tente novamente.'); return }
       setOpen(false); load(true)
     } finally { setSaving(false) }
+  }
+
+  // ── Atividade física (HIP-014 §3) — seção IRMÃ. FATO observado, com proveniência sempre visível.
+  const loadActs = useCallback(() => {
+    apiClient.activity.listActivitySessions()
+      .then((a) => { if (alive.current) setActs(a) })
+      .catch(() => { /* seção degrada vazia; não derruba a tela */ })
+  }, [])
+  useEffect(() => { loadActs() }, [loadActs])
+
+  function startNewAct() {
+    setActType('caminhada'); setActName(''); setActDate(today()); setActTime(''); setActMin(''); setActKm('')
+    setActOpen(true)
+  }
+
+  async function saveAct() {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(actDate)) { Alert.alert('Campo obrigatório', 'Informe a data da atividade.'); return }
+    setSavingAct(true)
+    try {
+      // Conversão de unidade vem do core: campo vazio vira AUSENTE, nunca zero, e as duas telas convertem igual.
+      const { error: err } = await apiClient.activity.saveActivitySession({
+        source: 'manual',
+        activity_type: actType,
+        title: actName.trim() || null,
+        started_at: instantOf(actDate, actTime) ?? `${actDate}T00:00:00.000Z`,
+        duration_s: durationSecondsFromMinutes(actMin),
+        distance_m: distanceMetersFromKm(actKm),
+      })
+      if (err) { Alert.alert('Não foi possível salvar', err.message || 'Tente novamente.'); return }
+      setActOpen(false); loadActs()
+    } finally { setSavingAct(false) }
+  }
+
+  function removeAct(a: ActivitySessionDTO) {
+    Alert.alert('Remover atividade', `Remover ${a.title?.trim() || activityTypeLabel(a.activity_type)}?`, [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: C.removeAction, style: 'destructive', onPress: async () => {
+        const { error: err } = await apiClient.activity.deleteActivitySession(a.id)
+        if (err) { Alert.alert('Erro', 'Tente novamente.'); return }
+        loadActs()
+      } },
+    ])
   }
   function remove(m: BodyMetricDTO) {
     Alert.alert('Remover registro', `Remover ${bodyMetricLabel(m.metric)} de ${fmt(m.measured_on)}?`, [
@@ -174,6 +228,8 @@ export function MonitoramentoScreen() {
         </View>
       ) : null}
 
+      <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 17, marginTop: 4 }}>{C.vitalsSection}</Text>
+
       {groups.length === 0 && !open ? (
         <View style={[styles.card, card]}><View style={{ gap: 4 }}>
           <Text spec={text(t, { role: 'bodyStrong' })} style={{ textAlign: 'center' }}>{C.emptyTitle}</Text>
@@ -208,6 +264,70 @@ export function MonitoramentoScreen() {
           </View>
         )
       })}
+
+      {/* ATIVIDADE FÍSICA (HIP-014 §3) — seção irmã, mesma estrutura da Web. Registra o que aconteceu, sem
+          avaliar desempenho (RDC 657). Origem sempre visível, como nos sinais vitais. */}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+        <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 17 }}>{C.activitySection}</Text>
+        <Button label={actOpen ? C.close : C.activityAdd} variant="secondary"
+          onPress={() => (actOpen ? setActOpen(false) : startNewAct())} />
+      </View>
+
+      {actOpen ? (
+        <View style={[styles.card, card, { gap: 10 }]}>
+          <Campo label={C.fieldActivityType}>
+            <Select options={ACTIVITY_TYPES.map(a => ({ id: a.value, label: a.label }))} value={actType}
+              onChange={setActType} title={C.fieldActivityType} />
+          </Campo>
+          <Campo label={C.fieldActivityName}>
+            <Input value={actName} onChangeText={setActName} placeholder="Ex.: Corrida no parque" />
+          </Campo>
+          <Campo label={C.fieldStartDate}>
+            <DatePicker value={actDate} onChange={setActDate} placeholder={C.fieldStartDate} />
+          </Campo>
+          <Campo label={C.fieldStartTime}>
+            <TimePicker value={actTime} onChange={setActTime} placeholder={C.fieldStartTime} />
+          </Campo>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <View style={{ flex: 1 }}>
+              <Campo label={C.fieldDurationMin}>
+                <Input value={actMin} onChangeText={setActMin} placeholder="Ex.: 45" keyboardType="numeric" />
+              </Campo>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Campo label={C.fieldDistanceKm}>
+                <Input value={actKm} onChangeText={setActKm} placeholder="Ex.: 5,2" keyboardType="numeric" />
+              </Campo>
+            </View>
+          </View>
+          <Button label={C.save} onPress={saveAct} loading={savingAct} loadingLabel="Salvando…" />
+        </View>
+      ) : null}
+
+      {acts.length === 0 && !actOpen ? (
+        <View style={[styles.card, card]}><View style={{ gap: 4 }}>
+          <Text spec={text(t, { role: 'bodyStrong' })} style={{ textAlign: 'center' }}>{C.activityEmptyTitle}</Text>
+          <Text spec={text(t, { role: 'body', tone: 'muted' })} style={{ textAlign: 'center' }}>{C.activityEmptyMsg}</Text>
+        </View></View>
+      ) : null}
+
+      {acts.map(a => (
+        <View key={a.id} style={[styles.card, card, { gap: 2 }]}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <Text spec={text(t, { role: 'body' })}>{a.title?.trim() || activityTypeLabel(a.activity_type)}</Text>
+            <Pressable onPress={() => removeAct(a)}>
+              <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>{C.removeAction}</Text>
+            </Pressable>
+          </View>
+          <Text spec={text(t, { role: 'caption', tone: 'muted' })}>
+            {measurementMeta({
+              when: [fmtMeasured(a.started_at.slice(0, 10), a.started_at), activitySummary(a)].filter(Boolean).join(' · '),
+              source: a.source,
+              notes: a.notes,
+            })}
+          </Text>
+        </View>
+      ))}
 
       <Disclaimer variant="geral" />
     </ScrollView>

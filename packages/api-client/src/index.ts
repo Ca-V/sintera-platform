@@ -31,6 +31,9 @@ export type { SettingsApi, BodyApi, ReportApi, OmicsApi } from './auth/types'
 // Atividade física (HIP-014 §3) — FATO observado, com proveniência obrigatória.
 export type { ActivityApi } from './auth/types'
 export type { ActivitySessionDTO, ActivitySessionInput } from './activity/activity'
+// Funções standalone — a Web (que consome Supabase direto) reusa as MESMAS consultas do Mobile (SSOT),
+// como já acontece em getProfileStats. Sem isto as duas pontas escreveriam a query duas vezes.
+export { listActivitySessions, saveActivitySession, deleteActivitySession } from './activity/activity'
 export type { ShareDTO, TemplateDTO, OmicsPanelDTO } from './report/report'
 export type { OmicsPanelDTO as OmicsPanel, OmicsPanelDetail, OmicsCategoryDTO, OmicsResultDTO, OmicsHistoryPoint, OmicsCatalogMatch, OmicsResultInput } from './omics/omics'
 export type { NotificationPrefRow } from './settings/notifications'

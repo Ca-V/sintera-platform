@@ -9,8 +9,38 @@
 import { describe, it, expect } from 'vitest'
 import {
   ACTIVITY_TYPES, activityTypeLabel, activityDurationLabel, activityDistanceLabel,
-  activitySummary, durationFromWindow,
+  activitySummary, durationFromWindow, durationSecondsFromMinutes, distanceMetersFromKm,
 } from '@sintera/core'
+
+describe('HIP-014 · o que a pessoa digita → o que vai ao banco', () => {
+  it('minutos viram segundos; quilômetros viram metros', () => {
+    expect(durationSecondsFromMinutes('45')).toBe(2700)
+    expect(distanceMetersFromKm('5,2')).toBe(5200)
+    expect(distanceMetersFromKm('5.2')).toBe(5200)   // aceita ponto também
+  })
+
+  it('O CASO CENTRAL: campo em branco vira null, NUNCA zero', () => {
+    for (const vazio of ['', '   ', null, undefined]) {
+      expect(durationSecondsFromMinutes(vazio), 'duração em branco não pode virar 0').toBeNull()
+      expect(distanceMetersFromKm(vazio), 'distância em branco não pode virar 0').toBeNull()
+    }
+  })
+
+  it('mas um zero DIGITADO é zero — a pessoa afirmou', () => {
+    expect(durationSecondsFromMinutes('0')).toBe(0)
+    expect(distanceMetersFromKm('0')).toBe(0)
+  })
+
+  it('texto sem número e valor negativo devolvem null', () => {
+    expect(durationSecondsFromMinutes('abc')).toBeNull()
+    expect(distanceMetersFromKm('-3')).toBeNull()
+  })
+
+  it('a ida e a volta se fecham', () => {
+    expect(activityDurationLabel(durationSecondsFromMinutes('83'))).toBe('1 h 23 min')
+    expect(activityDistanceLabel(distanceMetersFromKm('5,2'))).toBe('5,2 km')
+  })
+})
 
 describe('HIP-014 · tipo de atividade (lista aberta)', () => {
   it('rotula os tipos conhecidos', () => {
