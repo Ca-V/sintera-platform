@@ -89,6 +89,14 @@ export const SCREEN_COPY = {
     emptyMessage: 'Pedidos médicos e guias de convênio aparecem aqui quando você os envia.',
     listNote:     'Pedidos médicos e guias de convênio — documentos de solicitação, guardados à parte dos resultados.',
   },
+  // Entrada na plataforma. IDENTIDADE — nada aqui concede acesso a dados de saúde; isso é outra camada,
+  // separada de propósito (ver tests/contracts/identidade-vs-autorizacao.ARCH.test.ts).
+  login: {
+    googleAction:    'Continuar com Google',
+    separator:       'ou',
+    googleCancelled: 'Entrada cancelada.',
+    googleFailed:    'Não foi possível entrar com o Google. Tente de novo ou use e-mail e senha.',
+  },
   conexoes: {
     title:          'Conexões',
     subtitle:       'Conecte dispositivos e serviços de saúde para que os dados entrem sozinhos, sem digitação.',

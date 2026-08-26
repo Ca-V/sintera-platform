@@ -36,8 +36,14 @@ const PROVEDORES_DE_IDENTIDADE = ['email', 'google', 'apple', 'microsoft', 'azur
 const MODULOS_DE_LOGIN = [
   'packages/api-client/src/auth/login.ts',
   'packages/api-client/src/auth/session.ts',
+  // Login por provedor externo (Google; Apple e Microsoft depois). É AQUI que a separação corre mais risco:
+  // os dois caminhos falam OAuth, e é tentador reaproveitar o `OAuthProvider` da camada de conectores —
+  // que serve para outra coisa (autorizar leitura de dados de saúde numa fonte externa).
+  'packages/api-client/src/auth/oauth.ts',
+  'packages/core/src/domain/auth/oauthCallback.ts',
   'src/app/login/page.tsx',
   'apps/mobile/src/presentation/screens/LoginScreen.tsx',
+  'apps/mobile/src/state/AuthProvider.tsx',
 ]
 
 /** A camada de conectores — autorização de DADOS. */

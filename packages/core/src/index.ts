@@ -91,6 +91,11 @@ export * from './domain/connectors/state'
 // Sessão de atividade física (HIP-014 §3) — FATO observado, distinto da INTENÇÃO em life_habits.
 export * from './domain/body/activity'
 
+// IDENTIDADE — leitura do retorno de login por provedor externo (Google; Apple e Microsoft depois).
+// NÃO confundir com a autorização de dados de saúde, que vive na camada de conectores e é separada de
+// propósito (ver tests/contracts/identidade-vs-autorizacao.ARCH.test.ts).
+export * from './domain/auth/oauthCallback'
+
 // Camada de Conectores (HIP-001) — contratos + lógica PURA, vendor-neutral. Vive no core porque o Mobile
 // precisa alcançá-la: o Health Connect roda NO APARELHO (HIP-014). Quem resolve a CHAVE service-role a partir
 // do ambiente (`runtime.server.ts`) e os adaptadores de fornecedor permanecem no servidor da Web — nunca no

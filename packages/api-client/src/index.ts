@@ -13,6 +13,9 @@ export type {
   User,
 } from './auth/types'
 export type { StorageAdapter } from './storage/adapter'
+// Login por provedor externo (IDENTIDADE) — separado da autorização de dados de saúde, de propósito.
+export { IDENTITY_PROVIDERS } from './auth/oauth'
+export type { IdentityProvider } from './auth/oauth'
 // Domínio Perfil (Inc 4) — contrato congelado (MOBILE-019). Web/Mobile consomem via ApiClient.profile.
 export type { ProfileApi, ProfileDTO, ProfileEditable, ProfileStats } from './profile/types'
 // Função standalone das estatísticas — a Web (que consome Supabase direto) reusa a MESMA consulta (SSOT).

@@ -20,6 +20,7 @@ import type { NotificationPrefRow } from '../settings/notifications'
 import type { BodyMetricDTO, BodyMetricInput } from '../body/body'
 import type { ActivitySessionDTO, ActivitySessionInput, IngestResult } from '../activity/activity'
 import type { CanonicalSample, PropagationResult } from '@sintera/core'
+import type { IdentityProvider } from './oauth'
 import type { ShareDTO, TemplateDTO, OmicsPanelDTO } from '../report/report'
 import type { OmicsPanelDTO as OmicsPanel, OmicsPanelDetail, OmicsResultDTO, OmicsHistoryPoint, OmicsCatalogMatch, OmicsResultInput } from '../omics/omics'
 import type { Period, DocumentTargetDomain } from '@sintera/core'
@@ -61,6 +62,13 @@ export interface AuthApi {
   updateEmail(email: string): Promise<{ error: Error | null }>
   /** Envia o e-mail de redefinição de senha para o e-mail da conta atual. */
   sendPasswordReset(): Promise<{ error: Error | null }>
+  /**
+   * Login por provedor externo, em DUAS etapas — no aplicativo não existe "redirecionar a página": a tela
+   * abre o navegador do sistema com a URL e depois devolve o endereço de retorno que chegou por deep link.
+   * Acrescentar Apple ou Microsoft não muda a identidade interna: `auth.uid()` permanece o mesmo.
+   */
+  startOAuth(provider: IdentityProvider, redirectTo: string): Promise<{ url: string | null; error: Error | null }>
+  completeOAuth(callbackUrl: string | null | undefined): Promise<{ error: Error | null }>
 }
 
 /** Telemetria de produto + "reportar problema" (usage_events). */

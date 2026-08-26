@@ -39,6 +39,7 @@ import { getMinhaSaudeCounts } from '../summary/counts'
 import { listBodyMetrics, saveBodyMetric, deleteBodyMetric, getHeightCm, getWeightGoal, setWeightGoal } from '../body/body'
 import { listActivitySessions, saveActivitySession, deleteActivitySession, ingestActivitySessions } from '../activity/activity'
 import { ingestWearableSamples } from '../wearables/wearables'
+import { startOAuthSignIn, completeOAuthSignIn } from './oauth'
 import { listShares, createShare, revokeShare, listTemplates, saveTemplate, deleteTemplate, listOmicsPanels } from '../report/report'
 import { listOmicsPanels as omicsList, getOmicsPanel, getOmicsResults, getOmicsFeatureHistory, searchOmicsCatalog, createOmicsPanel, addOmicsResult, deleteOmicsResult, deleteOmicsPanel } from '../omics/omics'
 import { asError } from '../net/errors'
@@ -66,6 +67,8 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
   return {
     auth: {
       signIn: (email, password) => signIn(supabase, email, password),
+      startOAuth: (provider, redirectTo) => startOAuthSignIn(supabase, provider, redirectTo),
+      completeOAuth: (callbackUrl) => completeOAuthSignIn(supabase, callbackUrl),
       signOut: () => signOut(supabase),
       getSession: () => getSession(supabase),
       onAuthStateChange: (listener) => onAuthStateChange(supabase, listener),
