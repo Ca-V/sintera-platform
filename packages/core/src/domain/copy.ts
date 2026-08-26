@@ -97,6 +97,18 @@ export const SCREEN_COPY = {
     connectAction:  'Conectar',
     disconnect:     'Desconectar',
     lastSync:       'Última sincronização',
+
+    // Health Connect (HIP-014 §5) — natureza DIFERENTE das demais conexões, e o texto precisa dizer isso:
+    // não há login nem senha, a autorização vive na permissão do sistema e a pessoa a revoga por lá.
+    // Nomear as fontes que chegam por dentro dele é o que torna a proposta compreensível.
+    hcTitle:        'Health Connect',
+    hcSubtitle:     'Traz o que já está no seu aparelho — inclusive de Strava, Oura, Garmin e outros apps que gravam nele.',
+    hcAction:       'Autorizar e sincronizar',
+    hcSyncing:      'Sincronizando…',
+    hcUnavailable:  'Não disponível neste aparelho',
+    hcUnavailableHint: 'O Health Connect é do Android e precisa estar instalado. Em iPhone, a integração será com o Apple Saúde.',
+    hcDenied:       'Nenhuma permissão concedida. Você decide o que compartilhar, e pode mudar depois.',
+    hcRevokeHint:   'A autorização fica no Health Connect, não aqui — é lá que você revoga quando quiser.',
   },
 } as const
 

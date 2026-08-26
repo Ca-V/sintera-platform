@@ -38,6 +38,7 @@ import { readCondition, readBioimpedance, readEyeglasses, scanMedications } from
 import { getMinhaSaudeCounts } from '../summary/counts'
 import { listBodyMetrics, saveBodyMetric, deleteBodyMetric, getHeightCm, getWeightGoal, setWeightGoal } from '../body/body'
 import { listActivitySessions, saveActivitySession, deleteActivitySession, ingestActivitySessions } from '../activity/activity'
+import { ingestWearableSamples } from '../wearables/wearables'
 import { listShares, createShare, revokeShare, listTemplates, saveTemplate, deleteTemplate, listOmicsPanels } from '../report/report'
 import { listOmicsPanels as omicsList, getOmicsPanel, getOmicsResults, getOmicsFeatureHistory, searchOmicsCatalog, createOmicsPanel, addOmicsResult, deleteOmicsResult, deleteOmicsPanel } from '../omics/omics'
 import { asError } from '../net/errors'
@@ -174,6 +175,9 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       saveActivitySession: (input) => saveActivitySession(supabase, input),
       deleteActivitySession: (id) => deleteActivitySession(supabase, id),
       ingestActivitySessions: (drafts) => ingestActivitySessions(supabase, drafts),
+    },
+    wearables: {
+      ingestSamples: (samples) => ingestWearableSamples(supabase, samples),
     },
     report: {
       listShares: (signal) => listShares(supabase, signal),

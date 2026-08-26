@@ -19,6 +19,7 @@ import type { PeriodDTO } from '../cycle/menstrual'
 import type { NotificationPrefRow } from '../settings/notifications'
 import type { BodyMetricDTO, BodyMetricInput } from '../body/body'
 import type { ActivitySessionDTO, ActivitySessionInput, IngestResult } from '../activity/activity'
+import type { CanonicalSample, PropagationResult } from '@sintera/core'
 import type { ShareDTO, TemplateDTO, OmicsPanelDTO } from '../report/report'
 import type { OmicsPanelDTO as OmicsPanel, OmicsPanelDetail, OmicsResultDTO, OmicsHistoryPoint, OmicsCatalogMatch, OmicsResultInput } from '../omics/omics'
 import type { Period, DocumentTargetDomain } from '@sintera/core'
@@ -182,6 +183,7 @@ export interface ApiClient {
   settings: SettingsApi
   body: BodyApi
   activity: ActivityApi
+  wearables: WearablesApi
   report: ReportApi
   omics: OmicsApi
   vision: VisionApi
@@ -241,6 +243,14 @@ export interface ActivityApi {
   deleteActivitySession(id: string): Promise<{ error: Error | null }>
   /** Ingestão IDEMPOTENTE de um lote de conector — o re-sync sempre reprocessa janela sobreposta. */
   ingestActivitySessions(drafts: readonly ActivitySessionInput[]): Promise<{ result: IngestResult; error: Error | null }>
+}
+
+/**
+ * Ingestão de leituras vindas de conector (HIP-014 §5/§6). Existe porque o Health Connect roda NO APARELHO e
+ * o aplicativo precisa gravar o que leu — sem receber o cliente Supabase cru, que a regra do pacote proíbe.
+ */
+export interface WearablesApi {
+  ingestSamples(samples: readonly CanonicalSample[]): Promise<{ result: PropagationResult; error: Error | null }>
 }
 
 /** Configurações — Central de Notificações (canal por categoria) + operações de conta. */

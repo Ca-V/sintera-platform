@@ -238,7 +238,7 @@ atividade**. Hoje exibe só sinal vital manual. Isso é acréscimo a uma tela be
 | 4 | Hora da medição de ponta a ponta — core · api-client · Web · Mobile | **feito** |
 | 5 | Paridade de texto em Monitoramento — a Web passou a ler o `SCREEN_COPY` (§8.4) | **feito** |
 | 5b | Procedência visível + seção de Atividade física nas duas pontas | **feito** |
-| 6 | Conector Health Connect (Android) | a fazer |
+| 6 | Conector Health Connect (Android) | **escrito — aguarda build EAS** |
 | 7 | Prioridade de fonte por métrica, ajustável (§4) — resolve junto a granularidade do conector (§8.2) | a fazer |
 | 8 | Apple Health (Trilha B) | depois do iOS |
 
@@ -266,6 +266,33 @@ api-client sobre a linha que vai ao banco.
 
 **Não verificado:** o fluxo rodando no aparelho e no navegador. Não há toolchain RN no ambiente de
 desenvolvimento; depende de homologação.
+
+### Etapa 6 — a ligação nativa (26/08)
+
+`react-native-health-connect@4.1.3` + `expo-build-properties@~1.0.10` (versão confirmada no mapa oficial do
+SDK 54, não escolhida por palpite). Nove permissões de leitura declaradas, `compileSdk`/`targetSdk` 36 e
+`minSdk` 26.
+
+**A divisão que torna isto verificável.** A normalização do formato bruto da biblioteca — a parte que mais erra
+e a que mais muda a cada versão dela — ficou **no core, como função pura, com 8 testes**. No aplicativo sobrou
+só a chamada de IO. Se essa camada crescer, é sinal de que uma regra vazou para onde ninguém consegue conferir.
+
+**Uma falha silenciosa que quase passou.** O Health Connect exige que o app declare no manifesto como explica
+suas permissões. Sem isso o build passa, o APK instala, o app abre — e o Health Connect **simplesmente não
+lista a SINTERA**. Sem erro, sem log. São DUAS declarações, porque o Android mudou o mecanismo na versão 14
+(intent-filter de rationale para ≤13, activity-alias de `VIEW_PERMISSION_USAGE` para ≥14). A documentação da
+biblioteca não garante nenhuma das duas, então há um config plugin próprio, com 6 testes, no padrão do
+`withAndroidCmakeVersion` já existente.
+
+**A regra do pacote foi respeitada.** O aplicativo não recebe o cliente Supabase cru — o cabeçalho do
+`api-client` diz que as pontas consomem só a API pública. Por isso `apiClient.wearables.ingestSamples()` nasceu:
+a montagem do `PersistClient` fica dentro do pacote.
+
+**O que o typecheck do Mobile provou** (e eu não esperava conseguir aqui): com a biblioteca instalada, os tipos
+reais dela validam as chamadas. Não é o mesmo que rodar, mas descarta a classe de erro mais provável.
+
+**O que só o build prova:** que o `prebuild` aplica o plugin, que o Health Connect lista a SINTERA, e que a
+leitura devolve o que se espera de um aparelho real.
 
 ### Aplicação em produção — 25/08/2026
 

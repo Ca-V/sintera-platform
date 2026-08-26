@@ -20,6 +20,7 @@ import {
 import { Text, Button, Disclaimer } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
+import { healthConnectDisponivel, sincronizarHealthConnect } from '../../../infrastructure/healthConnect'
 
 const C = SCREEN_COPY.conexoes
 
@@ -39,6 +40,40 @@ export function ConexoesScreen() {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const alive = useRef(true)
+
+  // Health Connect — estado próprio, porque não vem da API: é do aparelho. `null` = ainda não perguntamos.
+  const [hcDisponivel, setHcDisponivel] = useState<boolean | null>(null)
+  const [hcOcupado, setHcOcupado] = useState(false)
+  const [hcResumo, setHcResumo] = useState<string | null>(null)
+
+  useEffect(() => {
+    healthConnectDisponivel().then(d => { if (alive.current) setHcDisponivel(d) }).catch(() => {
+      if (alive.current) setHcDisponivel(false)
+    })
+  }, [])
+
+  const sincronizarHc = useCallback(async () => {
+    setHcOcupado(true); setHcResumo(null)
+    try {
+      // Primeira sincronização: 30 dias para trás. O bruto é idempotente, então repetir a janela não duplica.
+      const ate = new Date()
+      const desde = new Date(ate.getTime() - 30 * 24 * 60 * 60 * 1000)
+      const r = await sincronizarHealthConnect(desde, ate)
+      if (!alive.current) return
+      setHcDisponivel(r.disponivel)
+      if (!r.disponivel) { setHcResumo(null); return }
+      if (!r.autorizado) { setHcResumo(C.hcDenied); return }
+      if (r.erro) { setHcResumo(r.erro); return }
+      // Diz o que ENTROU, não "sucesso" — número verificável é mais confiável que adjetivo.
+      const partes = [
+        r.leituras > 0 ? `${r.leituras} ${r.leituras === 1 ? 'leitura' : 'leituras'}` : null,
+        r.sessoes > 0 ? `${r.sessoes} ${r.sessoes === 1 ? 'atividade' : 'atividades'}` : null,
+      ].filter(Boolean)
+      setHcResumo(partes.length ? `${partes.join(' · ')} — veja em Monitoramento` : 'Nada novo desde a última vez')
+    } finally {
+      if (alive.current) setHcOcupado(false)
+    }
+  }, [])
 
   const load = useCallback((silent: boolean) => {
     if (silent) setRefreshing(true); else setPhase('loading')
@@ -123,6 +158,38 @@ export function ConexoesScreen() {
     >
       <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 22 }}>{C.title}</Text>
       <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{C.subtitle}</Text>
+
+      {/* HEALTH CONNECT (HIP-014 §5) — vem PRIMEIRO porque é de natureza diferente das demais: lê o que já
+          está no aparelho, sem login nem senha, e traz junto Strava, Oura e Garmin sem contrato separado com
+          cada fabricante. A autorização vive na permissão do sistema operacional — a pessoa revoga por lá. */}
+      <View style={[s.card, card, { gap: 8 }]}>
+        <View style={s.linha}>
+          <Text spec={text(t, { role: 'bodyStrong' })} style={{ flex: 1 }}>{C.hcTitle}</Text>
+          {hcDisponivel === false && (
+            <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.text.muted }}>{C.hcUnavailable}</Text>
+          )}
+        </View>
+        <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{C.hcSubtitle}</Text>
+
+        {hcDisponivel === false ? (
+          <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{C.hcUnavailableHint}</Text>
+        ) : (
+          <>
+            <Button
+              label={hcOcupado ? C.hcSyncing : C.hcAction}
+              onPress={sincronizarHc}
+              loading={hcOcupado}
+              loadingLabel={C.hcSyncing}
+              variant="secondary"
+            />
+            <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{C.hcRevokeHint}</Text>
+          </>
+        )}
+
+        {hcResumo && (
+          <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>{hcResumo}</Text>
+        )}
+      </View>
 
       {items.length === 0 ? (
         <View style={[s.card, card, { gap: 4 }]}>

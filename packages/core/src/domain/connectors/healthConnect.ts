@@ -179,6 +179,122 @@ export function healthConnectActivities(records: readonly HcRecord[], connectorV
   return out
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Normalização do formato BRUTO da biblioteca → `HcRecord`.
+//
+// Fica aqui, e não no aplicativo, por um motivo prático: é a parte que mais erra e a que mais muda quando a
+// biblioteca sobe de versão — e no aplicativo ela seria INVERIFICÁVEL (não há toolchain React Native no
+// ambiente de desenvolvimento). Aqui é função pura, coberta por teste. O que sobra no aparelho é só a chamada
+// de IO, fina o bastante para caber na cabeça.
+//
+// Toda leitura é DEFENSIVA: o formato vem de fora, e um campo ausente ou de outro tipo faz o registro ser
+// ignorado, nunca virar zero. Ver `ok()` no fim do arquivo.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Tipos de registro que a SINTERA lê. Espelha as permissões declaradas no AndroidManifest. */
+export const HC_RECORD_TYPES = [
+  'BloodPressure', 'BloodGlucose', 'HeartRate', 'OxygenSaturation',
+  'BodyTemperature', 'Weight', 'Height', 'Steps', 'ExerciseSession',
+] as const
+export type HcRecordType = (typeof HC_RECORD_TYPES)[number]
+
+type Bruto = Record<string, unknown>
+const obj = (v: unknown): Bruto => (v && typeof v === 'object' ? (v as Bruto) : {})
+const str = (v: unknown): string | null => (typeof v === 'string' && v.trim() ? v : null)
+const numDe = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null)
+
+/** Proveniência que a biblioteca entrega em `metadata`: pacote de origem e id do registro na fonte. */
+function meta(r: Bruto): { app: string | null; id: string | null } {
+  const m = obj(r.metadata)
+  const origem = obj(m.dataOrigin)
+  return {
+    app: str(m.dataOrigin) ?? str(origem.packageName) ?? null,
+    id: str(m.id) ?? str(m.clientRecordId) ?? null,
+  }
+}
+
+/**
+ * Registros brutos por tipo → `HcRecord[]`. Aceita o mapa parcial: tipo ausente simplesmente não contribui.
+ * Determinística; preserva a ordem de entrada dentro de cada tipo.
+ */
+export function normalizeHealthConnect(porTipo: Partial<Record<HcRecordType, readonly unknown[]>>): HcRecord[] {
+  const out: HcRecord[] = []
+  const cada = (tipo: HcRecordType, fn: (r: Bruto, m: ReturnType<typeof meta>) => HcRecord | null) => {
+    for (const bruto of porTipo[tipo] ?? []) {
+      const r = obj(bruto)
+      const registro = fn(r, meta(r))
+      if (registro) out.push(registro)
+    }
+  }
+
+  cada('BloodPressure', (r, m) => {
+    const t = str(r.time); const s = numDe(obj(r.systolic).inMillimetersOfMercury); const d = numDe(obj(r.diastolic).inMillimetersOfMercury)
+    return t && s != null && d != null ? { kind: 'blood_pressure', time: t, systolic: s, diastolic: d, app: m.app, id: m.id } : null
+  })
+
+  cada('BloodGlucose', (r, m) => {
+    const t = str(r.time); const v = numDe(obj(r.level).inMilligramsPerDeciliter)
+    return t && v != null ? { kind: 'blood_glucose', time: t, mgdl: v, app: m.app, id: m.id } : null
+  })
+
+  // Frequência cardíaca vem como SESSÃO com várias amostras dentro — cada amostra é uma leitura própria.
+  cada('HeartRate', (r, m) => {
+    const amostras = Array.isArray(r.samples) ? r.samples : []
+    for (const a of amostras) {
+      const s = obj(a); const t = str(s.time); const bpm = numDe(s.beatsPerMinute)
+      if (t && bpm != null) out.push({ kind: 'heart_rate', time: t, bpm, app: m.app, id: m.id ? `${m.id}:${t}` : null })
+    }
+    return null // já empurrado acima; nada a devolver
+  })
+
+  cada('OxygenSaturation', (r, m) => {
+    const t = str(r.time); const v = numDe(obj(r.percentage).value) ?? numDe(r.percentage)
+    return t && v != null ? { kind: 'oxygen_saturation', time: t, percent: v, app: m.app, id: m.id } : null
+  })
+
+  cada('BodyTemperature', (r, m) => {
+    const t = str(r.time); const v = numDe(obj(r.temperature).inCelsius)
+    return t && v != null ? { kind: 'body_temperature', time: t, celsius: v, app: m.app, id: m.id } : null
+  })
+
+  cada('Weight', (r, m) => {
+    const t = str(r.time); const v = numDe(obj(r.weight).inKilograms)
+    return t && v != null ? { kind: 'weight', time: t, kg: v, app: m.app, id: m.id } : null
+  })
+
+  // A biblioteca entrega altura em METROS; o catálogo da plataforma é em centímetros.
+  cada('Height', (r, m) => {
+    const t = str(r.time); const metros = numDe(obj(r.height).inMeters)
+    return t && metros != null ? { kind: 'height', time: t, cm: metros * 100, app: m.app, id: m.id } : null
+  })
+
+  cada('Steps', (r, m) => {
+    const t = str(r.startTime) ?? str(r.time); const n = numDe(r.count)
+    return t && n != null ? { kind: 'steps', time: t, count: n, app: m.app, id: m.id } : null
+  })
+
+  cada('ExerciseSession', (r, m) => {
+    const ini = str(r.startTime)
+    if (!ini) return null
+    return {
+      kind: 'exercise',
+      startTime: ini,
+      endTime: str(r.endTime),
+      // A biblioteca já resolve o código numérico do Health Connect para nome quando consegue.
+      exercise: str(r.exerciseType) ?? null,
+      title: str(r.title),
+      distanceM: numDe(obj(r.distance).inMeters),
+      energyKcal: numDe(obj(r.totalEnergy).inKilocalories) ?? numDe(obj(r.activeEnergy).inKilocalories),
+      steps: numDe(r.steps),
+      avgHeartRate: numDe(obj(r.heartRate).avg),
+      app: m.app,
+      id: m.id,
+    }
+  })
+
+  return out
+}
+
 /** Número utilizável: finito e não-negativo. Qualquer outra coisa é ausência, nunca zero. */
 function ok(n: unknown): n is number {
   return typeof n === 'number' && Number.isFinite(n) && n >= 0

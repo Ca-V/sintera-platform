@@ -11,7 +11,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   healthConnectSamples, healthConnectActivities, sourceFromApp, activityTypeFromExercise,
-  HEALTH_CONNECT_CHANNEL, toBodyMetricRow, type HcRecord,
+  HEALTH_CONNECT_CHANNEL, toBodyMetricRow, normalizeHealthConnect, type HcRecord,
 } from '@sintera/core'
 
 const V = '1.0.0'
@@ -132,6 +132,75 @@ describe('HIP-014 · sessões de exercício', () => {
 
   it('sessão sem início é ignorada — sem quando, não há série', () => {
     expect(healthConnectActivities([{ kind: 'exercise', startTime: '' }], V)).toEqual([])
+  })
+})
+
+describe('HIP-014 · normalização do formato bruto da biblioteca', () => {
+  // Esta é a parte que mais erra e a que mais muda quando a biblioteca sobe de versão — e no aplicativo ela
+  // seria inverificável (não há toolchain React Native aqui). Por isso é função pura e tem teste.
+  const md = (pkg: string, id: string) => ({ metadata: { dataOrigin: { packageName: pkg }, id } })
+
+  it('pressão arterial: lê os dois valores e a origem', () => {
+    const [r] = normalizeHealthConnect({
+      BloodPressure: [{ time: '2026-08-25T07:00:00.000Z', systolic: { inMillimetersOfMercury: 128 }, diastolic: { inMillimetersOfMercury: 82 }, ...md('com.withings', 'w1') }],
+    })
+    expect(r).toMatchObject({ kind: 'blood_pressure', systolic: 128, diastolic: 82, app: 'com.withings', id: 'w1' })
+  })
+
+  it('altura vem em METROS na biblioteca e é convertida para centímetros', () => {
+    const [r] = normalizeHealthConnect({ Height: [{ time: '2026-08-25T07:00:00.000Z', height: { inMeters: 1.65 } }] })
+    expect(r).toMatchObject({ kind: 'height', cm: 165 })
+  })
+
+  it('frequência cardíaca vem como SESSÃO com várias amostras — cada uma vira uma leitura', () => {
+    const rs = normalizeHealthConnect({
+      HeartRate: [{ samples: [
+        { time: '2026-08-25T07:00:00.000Z', beatsPerMinute: 58 },
+        { time: '2026-08-25T07:01:00.000Z', beatsPerMinute: 61 },
+      ], ...md('com.ouraring', 'o1') }],
+    })
+    expect(rs).toHaveLength(2)
+    expect(rs.map(r => (r as { bpm: number }).bpm)).toEqual([58, 61])
+    // ids distintos por amostra: sem isso o re-sync colapsaria a sessão inteira numa leitura só.
+    expect(new Set(rs.map(r => r.id)).size).toBe(2)
+  })
+
+  it('sessão de exercício traz janela, tipo e grandezas', () => {
+    const [r] = normalizeHealthConnect({
+      ExerciseSession: [{
+        startTime: '2026-08-25T06:30:00.000Z', endTime: '2026-08-25T07:02:00.000Z',
+        exerciseType: 'running', title: 'Corrida', distance: { inMeters: 5200 },
+        totalEnergy: { inKilocalories: 310 }, ...md('com.strava', 's1'),
+      }],
+    })
+    expect(r).toMatchObject({ kind: 'exercise', exercise: 'running', distanceM: 5200, energyKcal: 310, app: 'com.strava' })
+  })
+
+  it('O CASO CENTRAL: campo ausente ou de outro tipo faz o registro ser IGNORADO, nunca virar zero', () => {
+    const rs = normalizeHealthConnect({
+      BloodPressure: [{ time: '2026-08-25T07:00:00.000Z', systolic: { inMillimetersOfMercury: 128 } }], // sem diastólica
+      Weight: [{ time: '2026-08-25T07:00:00.000Z', weight: { inKilograms: 'setenta' } }],               // tipo errado
+      BloodGlucose: [{ level: { inMilligramsPerDeciliter: 96 } }],                                      // sem instante
+    })
+    expect(rs).toEqual([])
+  })
+
+  it('tipo ausente no mapa simplesmente não contribui — nada quebra', () => {
+    expect(normalizeHealthConnect({})).toEqual([])
+    expect(normalizeHealthConnect({ Steps: [] })).toEqual([])
+  })
+
+  it('lixo completo não derruba a normalização', () => {
+    expect(normalizeHealthConnect({ Weight: [null, undefined, 42, 'texto'] as unknown[] })).toEqual([])
+  })
+
+  it('atravessa a cadeia inteira: bruto → amostra canônica com proveniência', () => {
+    const brutos = normalizeHealthConnect({
+      BloodPressure: [{ time: '2026-08-25T07:00:00.000Z', systolic: { inMillimetersOfMercury: 128 }, diastolic: { inMillimetersOfMercury: 82 }, ...md('com.withings', 'w1') }],
+    })
+    const [amostra] = healthConnectSamples(brutos, V)
+    expect(amostra.provenance.source).toBe('withings')
+    expect(toBodyMetricRow(amostra, 'u1')?.value_text).toBe('128/82')
   })
 })
 
