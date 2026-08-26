@@ -86,6 +86,8 @@ export * from './domain/copy'
 export * from './domain/capture/attachmentPolicy'
 export * from './domain/capture/attachmentSet'
 export * from './domain/capture/divergence'
+// O que conta como FATO transcrito de um documento — a fronteira entre transcrever e inferir (RDC 657).
+export * from './domain/capture/transcription'
 export * from './domain/connectors/state'
 
 // Sessão de atividade física (HIP-014 §3) — FATO observado, distinto da INTENÇÃO em life_habits.
