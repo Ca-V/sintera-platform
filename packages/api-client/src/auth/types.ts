@@ -18,6 +18,7 @@ import type { ContraceptiveDTO, ContraceptiveInput } from '../cycle/contraceptio
 import type { PeriodDTO } from '../cycle/menstrual'
 import type { NotificationPrefRow } from '../settings/notifications'
 import type { BodyMetricDTO, BodyMetricInput } from '../body/body'
+import type { ActivitySessionDTO, ActivitySessionInput } from '../activity/activity'
 import type { ShareDTO, TemplateDTO, OmicsPanelDTO } from '../report/report'
 import type { OmicsPanelDTO as OmicsPanel, OmicsPanelDetail, OmicsResultDTO, OmicsHistoryPoint, OmicsCatalogMatch, OmicsResultInput } from '../omics/omics'
 import type { Period, DocumentTargetDomain } from '@sintera/core'
@@ -180,6 +181,7 @@ export interface ApiClient {
   cycle: CycleApi
   settings: SettingsApi
   body: BodyApi
+  activity: ActivityApi
   report: ReportApi
   omics: OmicsApi
   vision: VisionApi
@@ -227,6 +229,16 @@ export interface BodyApi {
   getHeightCm(signal?: AbortSignal): Promise<number | null>
   getWeightGoal(signal?: AbortSignal): Promise<number | null>
   setWeightGoal(kg: number | null): Promise<{ error: Error | null }>
+}
+
+/**
+ * Sessões de Atividade Física (activity_sessions) — FATO observado, distinto da INTENÇÃO em life_habits.
+ * Origem manual ou de conector; a proveniência é obrigatória em toda escrita (HIP-014 §3/§4).
+ */
+export interface ActivityApi {
+  listActivitySessions(signal?: AbortSignal): Promise<ActivitySessionDTO[]>
+  saveActivitySession(input: ActivitySessionInput): Promise<{ error: Error | null }>
+  deleteActivitySession(id: string): Promise<{ error: Error | null }>
 }
 
 /** Configurações — Central de Notificações (canal por categoria) + operações de conta. */

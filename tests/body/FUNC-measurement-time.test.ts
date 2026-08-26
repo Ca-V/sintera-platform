@@ -9,8 +9,32 @@
 import { describe, it, expect } from 'vitest'
 import {
   requiresTimeOfDay, measurementInstant, compareMeasurementsDesc, hasTimeOfDay,
-  toBodyMetricRow, VITAL_SIGNS, BODY_METRICS,
+  toBodyMetricRow, measurementMeta, VITAL_SIGNS, BODY_METRICS,
 } from '@sintera/core'
+
+describe('HIP-014 · measurementMeta — a procedência aparece', () => {
+  it('a ORIGEM aparece sempre que conhecida — é requisito, não enfeite', () => {
+    expect(measurementMeta({ when: '25 ago 2026 · 07:00', source: 'manual' }))
+      .toBe('25 ago 2026 · 07:00 · Registro manual')
+    expect(measurementMeta({ when: '25 ago 2026', source: 'wearable' }))
+      .toBe('25 ago 2026 · Dispositivo')
+  })
+
+  it('origem desconhecida degrada para rótulo genérico, não some', () => {
+    expect(measurementMeta({ when: 'hoje', source: 'fonte_nova_qualquer' })).toBe('hoje · Outra origem')
+  })
+
+  it('ordem fixa: quando · de onde · observação', () => {
+    expect(measurementMeta({ when: 'hoje', source: 'dexa', notes: 'em jejum' }))
+      .toBe('hoje · DEXA · em jejum')
+  })
+
+  it('partes ausentes não deixam separador solto', () => {
+    expect(measurementMeta({ when: 'hoje', source: null, notes: null })).toBe('hoje')
+    expect(measurementMeta({ when: 'hoje', source: '  ', notes: '  ' })).toBe('hoje')
+    expect(measurementMeta({ when: 'hoje', notes: 'nota' })).toBe('hoje · nota')
+  })
+})
 
 describe('HIP-014 · o dado de conector também guarda a hora', () => {
   const amostra = {

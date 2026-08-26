@@ -10,7 +10,7 @@ import { text } from '@sintera/design-system'
 import type { BodyMetricDTO } from '@sintera/api-client'
 import {
   VITAL_SIGNS, bodyMetricLabel, isVital, SCREEN_COPY, type VitalMetric,
-  hasTimeOfDay, measurementInstant, requiresTimeOfDay,
+  hasTimeOfDay, measurementInstant, measurementMeta, requiresTimeOfDay,
 } from '@sintera/core'
 import { Text, Button, Input, Disclaimer, DatePicker, TimePicker, Select } from '../../primitives'
 import { useTheme } from '../../theme'
@@ -202,7 +202,7 @@ export function MonitoramentoScreen() {
                   <Text spec={text(t, { role: 'body' })}>{i.metric === 'outro_sinal' && i.label ? `${i.label}: ` : ''}{i.value_text}{i.unit ? ` ${i.unit}` : ''}</Text>
                   <Pressable onPress={() => remove(i)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>{C.removeAction}</Text></Pressable>
                 </View>
-                <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{fmtMeasured(i.measured_on, i.measured_at)}{i.notes ? ` · ${i.notes}` : ''}</Text>
+                <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{measurementMeta({ when: fmtMeasured(i.measured_on, i.measured_at), source: i.source, notes: i.notes })}</Text>
               </View>
             ))}
           </View>

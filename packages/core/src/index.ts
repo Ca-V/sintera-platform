@@ -88,6 +88,9 @@ export * from './domain/capture/attachmentSet'
 export * from './domain/capture/divergence'
 export * from './domain/connectors/state'
 
+// Sessão de atividade física (HIP-014 §3) — FATO observado, distinto da INTENÇÃO em life_habits.
+export * from './domain/body/activity'
+
 // Camada de Conectores (HIP-001) — contratos + lógica PURA, vendor-neutral. Vive no core porque o Mobile
 // precisa alcançá-la: o Health Connect roda NO APARELHO (HIP-010). A IO service-role (supabase-persist,
 // runtime.server) e os adaptadores de fornecedor permanecem no servidor da Web — nunca no pacote.

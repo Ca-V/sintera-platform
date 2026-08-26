@@ -37,6 +37,7 @@ import { exportAccountData, deleteAccount } from '../settings/account'
 import { readCondition, readBioimpedance, readEyeglasses, scanMedications } from '../vision/vision'
 import { getMinhaSaudeCounts } from '../summary/counts'
 import { listBodyMetrics, saveBodyMetric, deleteBodyMetric, getHeightCm, getWeightGoal, setWeightGoal } from '../body/body'
+import { listActivitySessions, saveActivitySession, deleteActivitySession } from '../activity/activity'
 import { listShares, createShare, revokeShare, listTemplates, saveTemplate, deleteTemplate, listOmicsPanels } from '../report/report'
 import { listOmicsPanels as omicsList, getOmicsPanel, getOmicsResults, getOmicsFeatureHistory, searchOmicsCatalog, createOmicsPanel, addOmicsResult, deleteOmicsResult, deleteOmicsPanel } from '../omics/omics'
 import { asError } from '../net/errors'
@@ -167,6 +168,11 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       getHeightCm: (signal) => getHeightCm(supabase, signal),
       getWeightGoal: (signal) => getWeightGoal(supabase, signal),
       setWeightGoal: (kg) => setWeightGoal(supabase, kg),
+    },
+    activity: {
+      listActivitySessions: (signal) => listActivitySessions(supabase, signal),
+      saveActivitySession: (input) => saveActivitySession(supabase, input),
+      deleteActivitySession: (id) => deleteActivitySession(supabase, id),
     },
     report: {
       listShares: (signal) => listShares(supabase, signal),

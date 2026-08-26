@@ -18,7 +18,7 @@ import Sparkline, { parseNum } from '@/components/Sparkline'
 import ListCard from '@/components/ListCard'
 import PageHeader from '@/components/PageHeader'
 // PARIDADE — o texto desta tela vem do core; a Web e o Mobile prometiam coisas diferentes aqui.
-import { SCREEN_COPY, hasTimeOfDay, measurementInstant, requiresTimeOfDay } from '@sintera/core'
+import { SCREEN_COPY, hasTimeOfDay, measurementInstant, measurementMeta, requiresTimeOfDay } from '@sintera/core'
 import EmptyState from '@/components/EmptyState'
 import { Card } from "@/lib/ui/ds"
 import Disclaimer from '@/components/ui/Disclaimer'
@@ -52,6 +52,8 @@ interface Entry {
   unit: string | null
   measuredOn: string
   measuredAt: string | null
+  /** De onde o ponto nasceu. Sempre exibido: procedência é requisito, não enfeite (HIP-014 §4). */
+  source: string | null
   notes: string | null
 }
 
@@ -69,6 +71,11 @@ function fmtMeasured(measuredOn: string, measuredAt: string | null): string {
   const d = new Date(measuredAt as string)
   const hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
   return `${d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })} · ${hora}`
+}
+
+/** Linha de contexto do ponto — a ordem e o separador vêm do core, para que o Mobile componha igual. */
+function metaOf(it: Entry): string {
+  return measurementMeta({ when: fmtMeasured(it.measuredOn, it.measuredAt), source: it.source, notes: it.notes })
 }
 
 /** Data + hora locais → instante UTC. Sem hora, delega ao core (âncora do dia = "hora não registrada"). */
@@ -104,7 +111,7 @@ export default function SinaisVitaisPage() {
     setLoading(true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = await (supabase as any).from('body_metrics')
-      .select('id, metric, label, value_text, unit, measured_on, measured_at, notes')
+      .select('id, metric, label, value_text, unit, measured_on, measured_at, source, notes')
       .eq('user_id', user.id).in('metric', VITALS)
       .order('measured_at', { ascending: false, nullsFirst: false })
       .order('measured_on', { ascending: false })
@@ -112,7 +119,7 @@ export default function SinaisVitaisPage() {
       id: m.id as string, metric: (m.metric as Vital) ?? 'outro_sinal', label: (m.label as string) ?? null,
       valueText: (m.value_text as string) ?? '', unit: (m.unit as string) ?? null,
       measuredOn: m.measured_on as string, measuredAt: (m.measured_at as string) ?? null,
-      notes: (m.notes as string) ?? null,
+      source: (m.source as string) ?? null, notes: (m.notes as string) ?? null,
     })))
     setLoading(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps -- VITALS é constante do módulo; não precisa nas deps
@@ -282,7 +289,7 @@ export default function SinaisVitaisPage() {
                   {list.map(it => (
                     <ListCard key={it.id}
                       title={`${it.metric === 'outro_sinal' && it.label ? `${it.label}: ` : ''}${it.valueText}${it.unit ? ` ${it.unit}` : ''}`}
-                      meta={`${fmtMeasured(it.measuredOn, it.measuredAt)}${it.notes ? ` · ${it.notes}` : ''}`}
+                      meta={metaOf(it)}
                       actions={
                         <button onClick={() => remove(it.id)} disabled={busyId === it.id} title="Remover"
                           className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-red-400 hover:bg-red-50 transition-colors disabled:opacity-40">

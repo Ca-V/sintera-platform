@@ -28,6 +28,9 @@ export type { EventsApi, AgendaApi, ConditionsApi, HabitsApi, ResourcesApi, Medi
 export type { ContraceptiveDTO, ContraceptiveInput } from './cycle/contraception'
 export type { PeriodDTO } from './cycle/menstrual'
 export type { SettingsApi, BodyApi, ReportApi, OmicsApi } from './auth/types'
+// Atividade física (HIP-014 §3) — FATO observado, com proveniência obrigatória.
+export type { ActivityApi } from './auth/types'
+export type { ActivitySessionDTO, ActivitySessionInput } from './activity/activity'
 export type { ShareDTO, TemplateDTO, OmicsPanelDTO } from './report/report'
 export type { OmicsPanelDTO as OmicsPanel, OmicsPanelDetail, OmicsCategoryDTO, OmicsResultDTO, OmicsHistoryPoint, OmicsCatalogMatch, OmicsResultInput } from './omics/omics'
 export type { NotificationPrefRow } from './settings/notifications'

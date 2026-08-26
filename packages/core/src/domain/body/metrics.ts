@@ -101,6 +101,22 @@ export const BODY_SOURCE_LABEL: Record<string, string> = {
   bioimpedancia: 'Bioimpedância', dexa: 'DEXA', balanca: 'Balança', wearable: 'Dispositivo', manual: 'Registro manual', outro: 'Outra origem',
 }
 
+/**
+ * Linha de contexto de uma medição: quando · de onde · observação (HIP-014 §4).
+ *
+ * A ORDEM e o separador vivem aqui, não em cada tela — senão a Web mostra "data · origem · nota" e o Mobile
+ * mostra outra coisa, que é como a paridade se perde sem ninguém decidir. A formatação de data/hora fica na
+ * plataforma (depende de locale e de API nativa) e entra pronta em `when`.
+ *
+ * A ORIGEM aparece SEMPRE que conhecida. Procedência é requisito da plataforma, não enfeite: quando o dado de
+ * dispositivo começar a conviver com o manual, a ausência do rótulo seria ambígua em vez de silenciosa.
+ */
+export function measurementMeta(o: { when: string; source?: string | null; notes?: string | null }): string {
+  return [o.when, bodySourceLabel(o.source), o.notes?.trim() || null]
+    .filter((p): p is string => !!p && p.length > 0)
+    .join(' · ')
+}
+
 const M = new Map<string, { label: string; unit: string }>([...BODY_METRICS, ...VITAL_SIGNS].map(m => [m.value, m]))
 export function bodyMetricLabel(m: string | null | undefined): string { return M.get(m ?? '')?.label ?? 'Outra medida' }
 export function bodyMetricUnit(m: string | null | undefined): string { return M.get(m ?? '')?.unit ?? '' }
