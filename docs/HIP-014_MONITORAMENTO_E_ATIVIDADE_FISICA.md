@@ -237,7 +237,7 @@ atividade**. Hoje exibe só sinal vital manual. Isso é acréscimo a uma tela be
 | 3 | `activity_sessions` + RLS (migração 149) | **aplicado** em produção, 25/08 |
 | 4 | Hora da medição de ponta a ponta — core · api-client · Web · Mobile | **feito** |
 | 5 | Paridade de texto em Monitoramento — a Web passou a ler o `SCREEN_COPY` (§8.4) | **feito** |
-| 5b | Monitoramento exibir dado de conector e sessão de atividade | a fazer |
+| 5b | Procedência visível + seção de Atividade física nas duas pontas | **feito** |
 | 6 | Conector Health Connect (Android) | a fazer |
 | 7 | Prioridade de fonte por métrica, ajustável (§4) — resolve junto a granularidade do conector (§8.2) | a fazer |
 | 8 | Apple Health (Trilha B) | depois do iOS |
@@ -251,6 +251,21 @@ a preservar o instante.
 A hora é **opcional** de propósito: quem mede uma vez por dia não é obstruído por um campo que não usa. Meia-noite
 UTC exata permanece sendo o marcador de "hora não registrada", e `hasTimeOfDay` é quem lê esse marcador — no core,
 para que Web e Mobile não decidam diferente.
+
+**Etapa 5b, o que entrou:** `bodySourceLabel` ganhou consumidor — a **procedência aparece** em toda medição, e
+existia no core desde o BOD-001 sem ninguém usá-la · `measurementMeta` no core compõe *quando · de onde ·
+observação*, com a ordem e o separador fora das telas · seção **Atividade física** irmã de Sinais vitais nas duas
+pontas, com registro manual · `ACTIVITY_TYPES` em lista aberta · conversão de unidade no core
+(`durationSecondsFromMinutes`, `distanceMetersFromKm`), que estava duplicada nas duas telas · 14 testes de
+api-client sobre a linha que vai ao banco.
+
+> **Um defeito que só o teste achou.** A conversão devolvia **zero** para texto sem número: limpar `"abc"` deixa
+> string vazia, e `Number('')` é `0`. Uma musculação com lixo no campo distância gravaria "0 km" — afirmando que
+> alguém mediu e deu zero. Falso, e sobre saúde. A regra hoje distingue campo **em branco** (`null`) de zero
+> **digitado** (`0`, porque a pessoa afirmou).
+
+**Não verificado:** o fluxo rodando no aparelho e no navegador. Não há toolchain RN no ambiente de
+desenvolvimento; depende de homologação.
 
 ### Aplicação em produção — 25/08/2026
 
