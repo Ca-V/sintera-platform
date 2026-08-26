@@ -33,7 +33,8 @@ export type { ActivityApi } from './auth/types'
 export type { ActivitySessionDTO, ActivitySessionInput } from './activity/activity'
 // Funções standalone — a Web (que consome Supabase direto) reusa as MESMAS consultas do Mobile (SSOT),
 // como já acontece em getProfileStats. Sem isto as duas pontas escreveriam a query duas vezes.
-export { listActivitySessions, saveActivitySession, deleteActivitySession } from './activity/activity'
+export { listActivitySessions, saveActivitySession, deleteActivitySession, ingestActivitySessions } from './activity/activity'
+export type { IngestResult } from './activity/activity'
 // Persistência de conector — AGNÓSTICA de credencial (ver o cabeçalho do módulo). O servidor passa um cliente
 // service-role; o aplicativo passa o cliente da sessão. Mesma implementação, dois caminhos.
 export { createSupabasePersistClient, createSupabaseSyncRecorder, createSupabaseWatermarkReader } from './connectors/persist'

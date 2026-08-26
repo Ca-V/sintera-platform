@@ -18,7 +18,7 @@ import type { ContraceptiveDTO, ContraceptiveInput } from '../cycle/contraceptio
 import type { PeriodDTO } from '../cycle/menstrual'
 import type { NotificationPrefRow } from '../settings/notifications'
 import type { BodyMetricDTO, BodyMetricInput } from '../body/body'
-import type { ActivitySessionDTO, ActivitySessionInput } from '../activity/activity'
+import type { ActivitySessionDTO, ActivitySessionInput, IngestResult } from '../activity/activity'
 import type { ShareDTO, TemplateDTO, OmicsPanelDTO } from '../report/report'
 import type { OmicsPanelDTO as OmicsPanel, OmicsPanelDetail, OmicsResultDTO, OmicsHistoryPoint, OmicsCatalogMatch, OmicsResultInput } from '../omics/omics'
 import type { Period, DocumentTargetDomain } from '@sintera/core'
@@ -239,6 +239,8 @@ export interface ActivityApi {
   listActivitySessions(signal?: AbortSignal): Promise<ActivitySessionDTO[]>
   saveActivitySession(input: ActivitySessionInput): Promise<{ error: Error | null }>
   deleteActivitySession(id: string): Promise<{ error: Error | null }>
+  /** Ingestão IDEMPOTENTE de um lote de conector — o re-sync sempre reprocessa janela sobreposta. */
+  ingestActivitySessions(drafts: readonly ActivitySessionInput[]): Promise<{ result: IngestResult; error: Error | null }>
 }
 
 /** Configurações — Central de Notificações (canal por categoria) + operações de conta. */

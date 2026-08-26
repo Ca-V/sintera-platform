@@ -3,7 +3,7 @@
 // O que estes testes protegem: a linha que VAI AO BANCO. Typecheck não pega conversão errada de unidade nem
 // campo vazio virando zero — e as duas seriam afirmações falsas sobre a saúde de alguém.
 import { describe, it, expect } from 'vitest'
-import { listActivitySessions, saveActivitySession, deleteActivitySession } from '../../packages/api-client/src/activity/activity'
+import { listActivitySessions, saveActivitySession, deleteActivitySession, ingestActivitySessions } from '../../packages/api-client/src/activity/activity'
 import { mockSupabase, mockQueryBuilder, fakeSession } from './supabaseMock'
 
 function comTabela(result: { data?: unknown; error: unknown }) {
@@ -101,6 +101,86 @@ describe('api-client · activity.saveActivitySession — a linha que vai ao banc
   it('sem sessão → devolve error, não lança', async () => {
     const { error } = await saveActivitySession(mockSupabase({ session: null }), base)
     expect(error?.message).toMatch(/autenticado/i)
+  })
+})
+
+describe('api-client · activity.ingestActivitySessions — idempotência do re-sync', () => {
+  // O re-sync SEMPRE reprocessa uma janela sobreposta. Sem idempotência, cada sincronização duplicaria as
+  // sessões que já estavam lá — e o índice único da migração 149 faria a gravação inteira falhar.
+  const strava = (id: string, inicio: string) => ({
+    source: 'strava', external_id: id, activity_type: 'corrida', started_at: inicio,
+  })
+
+  it('lote novo: grava tudo', async () => {
+    const { client, chamadas } = comTabela({ data: [], error: null })
+    const { result, error } = await ingestActivitySessions(client, [
+      strava('a', '2026-08-25T06:00:00.000Z'),
+      strava('b', '2026-08-26T06:00:00.000Z'),
+    ])
+    expect(error).toBeNull()
+    expect(result).toEqual({ recebidas: 2, gravadas: 2, jaExistiam: 0 })
+    expect((chamadas().insert[0] as unknown[]).length).toBe(2)
+  })
+
+  it('O CASO CENTRAL: rodar de novo com o mesmo lote não grava nada', async () => {
+    const { client, chamadas } = comTabela({
+      data: [{ source: 'strava', external_id: 'a', started_at: '2026-08-25T06:00:00.000Z' }],
+      error: null,
+    })
+    const { result } = await ingestActivitySessions(client, [strava('a', '2026-08-25T06:00:00.000Z')])
+    expect(result).toEqual({ recebidas: 1, gravadas: 0, jaExistiam: 1 })
+    expect(chamadas().insert, 'nada deveria ser inserido').toBeUndefined()
+  })
+
+  it('grava só as novas quando a janela se sobrepõe', async () => {
+    const { client } = comTabela({
+      data: [{ source: 'strava', external_id: 'a', started_at: '2026-08-25T06:00:00.000Z' }],
+      error: null,
+    })
+    const { result } = await ingestActivitySessions(client, [
+      strava('a', '2026-08-25T06:00:00.000Z'),   // já existe
+      strava('b', '2026-08-26T06:00:00.000Z'),   // nova
+    ])
+    expect(result).toEqual({ recebidas: 2, gravadas: 1, jaExistiam: 1 })
+  })
+
+  it('sem id externo, a identidade é o INSTANTE de início dentro da fonte', async () => {
+    const { client } = comTabela({
+      data: [{ source: 'manual', external_id: null, started_at: '2026-08-25T06:00:00.000Z' }],
+      error: null,
+    })
+    const { result } = await ingestActivitySessions(client, [
+      { source: 'manual', activity_type: 'corrida', started_at: '2026-08-25T06:00:00.000Z' },
+    ])
+    expect(result.jaExistiam).toBe(1)
+  })
+
+  it('duas fontes com o MESMO id externo não colidem — a origem faz parte da identidade', async () => {
+    const { client } = comTabela({
+      data: [{ source: 'strava', external_id: 'x', started_at: '2026-08-25T06:00:00.000Z' }],
+      error: null,
+    })
+    const { result } = await ingestActivitySessions(client, [
+      { source: 'garmin', external_id: 'x', activity_type: 'corrida', started_at: '2026-08-25T06:00:00.000Z' },
+    ])
+    expect(result.gravadas, 'garmin/x é outra sessão que não strava/x').toBe(1)
+  })
+
+  it('deduplica DENTRO do lote — a mesma janela pode trazer a sessão repetida', async () => {
+    const { client } = comTabela({ data: [], error: null })
+    const { result } = await ingestActivitySessions(client, [
+      strava('a', '2026-08-25T06:00:00.000Z'),
+      strava('a', '2026-08-25T06:00:00.000Z'),
+    ])
+    expect(result).toEqual({ recebidas: 2, gravadas: 1, jaExistiam: 1 })
+  })
+
+  it('lote vazio não toca o banco', async () => {
+    const { client, chamadas } = comTabela({ data: [], error: null })
+    const { result, error } = await ingestActivitySessions(client, [])
+    expect(error).toBeNull()
+    expect(result.gravadas).toBe(0)
+    expect(chamadas().select).toBeUndefined()
   })
 })
 
