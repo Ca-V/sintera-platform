@@ -146,7 +146,7 @@ export default function SinaisVitaisPage() {
 
   function remove(id: string) {
     if (busyId) return
-    setConfirm({ message: 'Remover este registro?', confirmLabel: 'Remover', onYes: async () => {
+    setConfirm({ message: 'Remover este registro?', confirmLabel: C.removeAction, onYes: async () => {
       setBusyId(id)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (supabase as any).from('body_metrics').delete().eq('id', id)
@@ -163,12 +163,12 @@ export default function SinaisVitaisPage() {
       <PageHeader
         icon={<HeartPulse size={16} />}
         eyebrow="Monitoramento"
-        title="Monitoramento"
-        subtitle={SCREEN_COPY.monitoramento.subtitle}
+        title={C.title}
+        subtitle={C.subtitle}
         action={
           <button onClick={() => (showForm ? (reset(), setShowForm(false)) : (reset(), setShowForm(true)))}
             className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity flex-shrink-0">
-            {showForm ? <X size={15} /> : <Plus size={15} />} {showForm ? 'Fechar' : 'Adicionar'}
+            {showForm ? <X size={15} /> : <Plus size={15} />} {showForm ? C.close : C.add}
           </button>
         }
       />
@@ -177,18 +177,18 @@ export default function SinaisVitaisPage() {
         className="flex items-center justify-between gap-3 rounded-2xl border border-petal-light bg-blush/50 px-4 py-3 hover:bg-blush transition-colors group">
         <span className="inline-flex items-center gap-2.5 min-w-0">
           <Link2 size={16} className="text-petal flex-shrink-0" />
-          <span className="font-body text-sm text-onyx">Conecte um dispositivo e deixe os dados entrarem sozinhos</span>
+          <span className="font-body text-sm text-onyx">{C.connectInvite}</span>
         </span>
-        <span className="font-body text-xs text-petal font-medium flex-shrink-0 group-hover:underline">Conexões →</span>
+        <span className="font-body text-xs text-petal font-medium flex-shrink-0 group-hover:underline">{C.connectAction} →</span>
       </Link>
 
       {showForm && (
         <Card padding="relaxed" className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="font-body text-xs text-mauve block mb-1">Sinal vital</label>
+              <label className="font-body text-xs text-mauve block mb-1">{C.fieldVital}</label>
               <Select
-                aria-label="Sinal vital"
+                aria-label={C.fieldVital}
                 value={metric}
                 onChange={(v) => chooseMetric(v as Vital)}
                 options={[
@@ -202,7 +202,7 @@ export default function SinaisVitaisPage() {
               />
             </div>
             <div>
-              <label htmlFor="vital-date" className="font-body text-xs text-mauve block mb-1">Data</label>
+              <label htmlFor="vital-date" className="font-body text-xs text-mauve block mb-1">{C.fieldDate}</label>
               <input id="vital-date" type="date" value={date} onChange={e => setDate(e.target.value)}
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
             </div>
@@ -226,18 +226,18 @@ export default function SinaisVitaisPage() {
           )}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="vital-value" className="font-body text-xs text-mauve block mb-1">Valor</label>
+              <label htmlFor="vital-value" className="font-body text-xs text-mauve block mb-1">{C.fieldValue}</label>
               <input id="vital-value" type="text" value={value} onChange={e => setValue(e.target.value)} placeholder={PLACEHOLDER[metric]}
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
             </div>
             <div>
-              <label htmlFor="vital-unit" className="font-body text-xs text-mauve block mb-1">Unidade</label>
+              <label htmlFor="vital-unit" className="font-body text-xs text-mauve block mb-1">{C.fieldUnit}</label>
               <input id="vital-unit" type="text" value={unit} onChange={e => setUnit(e.target.value)} placeholder="mmHg, bpm, mg/dL…"
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
             </div>
           </div>
           <div>
-            <label htmlFor="vital-notes" className="font-body text-xs text-mauve block mb-1">Observações (opcional)</label>
+            <label htmlFor="vital-notes" className="font-body text-xs text-mauve block mb-1">{C.fieldNotes}</label>
             <div className="flex items-start gap-2">
               <textarea id="vital-notes" value={notes} onChange={e => setNotes(e.target.value)} rows={2}
                 className="flex-1 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
@@ -248,7 +248,7 @@ export default function SinaisVitaisPage() {
           <div className="flex justify-end">
             <button onClick={save} disabled={saving || !value.trim() || !date}
               className="px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium disabled:opacity-40 hover:opacity-90 transition-opacity">
-              {saving ? 'Salvando…' : 'Salvar'}
+              {saving ? 'Salvando…' : C.save}
             </button>
           </div>
         </Card>
@@ -257,8 +257,8 @@ export default function SinaisVitaisPage() {
       {loading ? (
         <Card padding="none" className="p-10 text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
       ) : items.length === 0 ? (
-        <EmptyState icon={<HeartPulse size={28} className="text-petal" />} title="Nenhum sinal vital ainda"
-          message={<>Registre um sinal vital. Use <strong>Adicionar</strong>.</>} />
+        <EmptyState icon={<HeartPulse size={28} className="text-petal" />} title={C.emptyTitle}
+          message={C.emptyMessage} />
       ) : (
         <div className="space-y-6">
           {VITALS.map(g => {

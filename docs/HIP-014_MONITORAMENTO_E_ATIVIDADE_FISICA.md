@@ -196,9 +196,35 @@ A granularidade por métrica do lado do conector depende da prioridade de fonte 
 
 **8.3 · Não existe `activity_sessions`.** §3.
 
-**8.4 · "Monitoramento" só existe no Mobile.** Na Web o mesmo conteúdo está espalhado por `sinais-vitais`,
-`medidas`, `habitos` e `conexoes`. **Decisão da fundadora: módulo único nas duas pontas**, contendo sinais vitais,
-medidas, atividade física, sono e o banner de Conexões.
+**8.4 · ~~"Monitoramento" só existe no Mobile.~~ — RETRATADO em 25/08.**
+
+Eu afirmei que a Web espalhava por `sinais-vitais`, `medidas`, `habitos` e `conexoes` o que o Mobile reunia numa
+tela só, e propus unificar. **A premissa estava errada, e a proposta teria piorado a arquitetura de informação.**
+
+O erro: procurei uma rota chamada `monitoramento` na Web, não achei, e concluí que o módulo não existia. Mas
+`Monitoramento` é o **rótulo** da rota `/dashboard/sinais-vitais` na taxonomia SSOT (`Sidebar.tsx`), e o Mobile
+projeta essa mesma taxonomia em `MinhaSaudeMenuScreen`. Confundi caminho de rota com nome de domínio.
+
+A taxonomia real, **idêntica nas duas pontas**, em Minha Saúde → Saúde:
+
+| | Web | Mobile |
+|---|---|---|
+| Condições de Saúde | `/dashboard/condicoes` | `Conditions` |
+| Composição Corporal | `/dashboard/medidas` | `Composicao` |
+| Ciclo e Contracepção | `/dashboard/ciclo` | `Ciclo` |
+| **Monitoramento** | `/dashboard/sinais-vitais` | `Monitoramento` |
+| Hábitos | `/dashboard/habitos` | `Habits` |
+
+Composição Corporal é item **separado** de Monitoramento — nos dois lados, por decisão de ADR-021/MOBILE-036
+(modelo mental do usuário). Fundi-los seria **mudar uma IA aprovada**, não corrigir divergência.
+
+**A divergência real era outra**, e essa existia: a tela da Web escrevia à mão 12 textos que o core já tinha e o
+Mobile já lia — título, subtítulo, Adicionar/Fechar/Salvar, os rótulos dos campos, o convite de Conexões e o vazio.
+É exatamente a causa do subtítulo divergente que a fundadora pegou na homologação. Corrigido; a Web agora lê tudo
+de `SCREEN_COPY.monitoramento`.
+
+**O que Monitoramento ainda não faz** — e é o trabalho de verdade: mostrar dado de **conector** e **sessão de
+atividade**. Hoje exibe só sinal vital manual. Isso é acréscimo a uma tela bem localizada, não reestruturação.
 
 ---
 
@@ -210,7 +236,8 @@ medidas, atividade física, sono e o banner de Conexões.
 | 2 | `body_metrics.measured_at` (migração 148) | **aplicado** em produção, 25/08 |
 | 3 | `activity_sessions` + RLS (migração 149) | **aplicado** em produção, 25/08 |
 | 4 | Hora da medição de ponta a ponta — core · api-client · Web · Mobile | **feito** |
-| 5 | Monitoramento como módulo único nas duas pontas (§8.4) | a fazer |
+| 5 | Paridade de texto em Monitoramento — a Web passou a ler o `SCREEN_COPY` (§8.4) | **feito** |
+| 5b | Monitoramento exibir dado de conector e sessão de atividade | a fazer |
 | 6 | Conector Health Connect (Android) | a fazer |
 | 7 | Prioridade de fonte por métrica, ajustável (§4) — resolve junto a granularidade do conector (§8.2) | a fazer |
 | 8 | Apple Health (Trilha B) | depois do iOS |
