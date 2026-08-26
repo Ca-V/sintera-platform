@@ -33,6 +33,17 @@ export interface CanonicalSample {
   metric: string
   value: number | null
   unit: string | null
+  /**
+   * Forma textual canônica quando a medida NÃO é um escalar — hoje só pressão arterial ("120/80").
+   *
+   * POR QUE EXISTE: `value` é um número só, e uma pressão tem dois. Sem este campo, uma leitura de 120/80
+   * viraria "120" e a diastólica sumiria em silêncio — num dado clínico, e justamente na métrica de maior
+   * valor no acompanhamento longitudinal. Preferido sobre `value` na projeção quando presente.
+   *
+   * Não é válvula genérica: quem tem valor escalar usa `value`. `value` continua preenchido quando existir um
+   * número representativo (na pressão, a sistólica), para que gráfico e tendência sigam funcionando.
+   */
+  valueText?: string | null
   /** Instante do dado na fonte (ISO). */
   recordedAt: string
   provenance: SampleProvenance

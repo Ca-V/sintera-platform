@@ -84,7 +84,9 @@ export function toBodyMetricRow(sample: CanonicalSample, userId: string): BodyMe
     user_id: userId,
     metric: sample.metric,
     label: null,
-    value_text: String(sample.value),
+    // Compostas (pressão arterial) trazem a forma textual; escalares usam o número. Sem isto, "120/80"
+    // chegaria ao banco como "120".
+    value_text: sample.valueText?.trim() || String(sample.value),
     unit: sample.unit,
     measured_on: utcDateOf(sample.recordedAt),
     measured_at: sample.recordedAt,

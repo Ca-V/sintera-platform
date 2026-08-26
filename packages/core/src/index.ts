@@ -103,6 +103,8 @@ export * from './domain/connectors/connections'
 export * from './domain/connectors/syncService'
 export * from './domain/connectors/webhook'
 export * from './domain/connectors/mock'
+// Health Connect (HIP-014 §5) — adaptador PURO; a leitura nativa vive no aplicativo.
+export * from './domain/connectors/healthConnect'
 
 // Telefone com código de país (E.164) — fonte única Web↔Mobile.
 export * from './domain/profile/phone'
