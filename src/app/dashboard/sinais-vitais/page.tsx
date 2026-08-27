@@ -21,7 +21,7 @@ import PageHeader from '@/components/PageHeader'
 import {
   SCREEN_COPY, hasTimeOfDay, measurementInstant, measurementMeta, requiresTimeOfDay,
   VITAL_SIGNS, ACTIVITY_TYPES, activityTypeLabel, activitySummary,
-  durationSecondsFromMinutes, distanceMetersFromKm, numberFromField, paceKindFor,
+  durationSecondsFromMinutes, distanceMetersFromKm, numberFromField, paceKindFor, bloodPressureHint,
 } from '@sintera/core'
 import type { ActivitySessionDTO } from '@sintera/api-client'
 import { listActivitySessions, saveActivitySession, deleteActivitySession } from '@sintera/api-client'
@@ -286,6 +286,10 @@ export default function SinaisVitaisPage() {
               <label htmlFor="vital-value" className="font-body text-xs text-mauve block mb-1">{C.fieldValue}</label>
               <input id="vital-value" type="text" value={value} onChange={e => setValue(e.target.value)} placeholder={PLACEHOLDER[metric]}
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+              {/* "12/8" é como se fala. A dica NOTA e PERGUNTA — não converte nem impede salvar. */}
+              {metric === 'pressao_arterial' && bloodPressureHint(value) && (
+                <p className="mt-1 font-body text-xs text-amber-700">{bloodPressureHint(value)}</p>
+              )}
             </div>
             <div>
               <label htmlFor="vital-unit" className="font-body text-xs text-mauve block mb-1">{C.fieldUnit}</label>

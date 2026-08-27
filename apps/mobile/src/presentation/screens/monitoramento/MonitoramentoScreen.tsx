@@ -12,7 +12,7 @@ import {
   VITAL_SIGNS, bodyMetricLabel, isVital, SCREEN_COPY, type VitalMetric,
   hasTimeOfDay, measurementInstant, measurementMeta, requiresTimeOfDay,
   ACTIVITY_TYPES, activityTypeLabel, activitySummary,
-  durationSecondsFromMinutes, distanceMetersFromKm, numberFromField, paceKindFor,
+  durationSecondsFromMinutes, distanceMetersFromKm, numberFromField, paceKindFor, bloodPressureHint,
 } from '@sintera/core'
 import { Text, Button, Input, Disclaimer, DatePicker, TimePicker, Select } from '../../primitives'
 import { useTheme } from '../../theme'
@@ -244,6 +244,12 @@ export function MonitoramentoScreen() {
             <View style={{ flex: 2 }}>
               <Campo label={C.fieldValue}>
                 <Input value={value} onChangeText={setValue} placeholder={VITAL_SIGNS.find(v => v.value === metric)?.placeholder} />
+                {/* "12/8" é como se fala. A dica NOTA e PERGUNTA — não converte nem impede salvar. */}
+                {metric === 'pressao_arterial' && bloodPressureHint(value) ? (
+                  <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.attention.text, marginTop: 4 }}>
+                    {bloodPressureHint(value)}
+                  </Text>
+                ) : null}
               </Campo>
             </View>
             <View style={{ flex: 1 }}>
