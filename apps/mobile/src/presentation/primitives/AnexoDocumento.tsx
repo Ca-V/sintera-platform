@@ -13,8 +13,7 @@ import { text } from '@sintera/design-system'
 import {
   acceptFiles, removeFile, rejectionMessage, attachmentCountLabel, entryMethodsFor,
   readingFromClassification, documentDivergence, documentSubtypeLabel,
-  type AttachedFile, type IncomingFile, type DocumentReading, type PatientDocumentSubtype,
-} from '@sintera/core'
+  type AttachedFile, type IncomingFile, type DocumentReading, type PatientDocumentSubtype, SCREEN_COPY } from '@sintera/core'
 import type { PickedFile } from '@sintera/api-client'
 import { Text } from './Text'
 import { Button } from './Button'
@@ -173,24 +172,24 @@ export function AnexoDocumento({
       ))}
 
       <Button
-        label={files.length > 0 ? 'Adicionar mais páginas' : 'Anexar arquivos'}
+        label={files.length > 0 ? SCREEN_COPY.anexo.addMore : SCREEN_COPY.anexo.add}
         onPress={escolherArquivos}
         variant="secondary"
         loading={enviando}
-        loadingLabel="Enviando…"
+        loadingLabel={SCREEN_COPY.anexo.sending}
         disabled={disabled}
       />
 
       {TEM_CAMERA && (
         <Button
-          label="Fotografar documento"
+          label={SCREEN_COPY.anexo.camera}
           onPress={fotografar}
           variant="ghost"
           disabled={disabled || enviando}
         />
       )}
 
-      <Text spec={text(t, { role: 'caption', tone: 'faint' })}>PDF ou imagem · vários arquivos</Text>
+      <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{SCREEN_COPY.anexo.formatHint}</Text>
 
       {aviso && (
         <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>{aviso}</Text>
@@ -199,7 +198,7 @@ export function AnexoDocumento({
       {lendo && (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <ActivityIndicator size="small" color={t.color.text.muted} />
-          <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Lendo o documento…</Text>
+          <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{SCREEN_COPY.anexo.reading}</Text>
         </View>
       )}
 

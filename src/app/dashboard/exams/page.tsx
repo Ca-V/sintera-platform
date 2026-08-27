@@ -449,7 +449,7 @@ export default function ExamsPage() {
                E6: ômica é uma CONTINUAÇÃO especializada do mesmo ponto de entrada (não um fork):
                declarar "Exame ômico" segue para o passo de catálogo/versionamento. */
             <CreateRecordMenu
-              label={activeTab === 'orders' ? 'Adicionar pedido de exames' : 'Adicionar exame realizado'}
+              label={activeTab === 'orders' ? SCREEN_COPY.pedidos.add : 'Adicionar exame realizado'}
               methods={activeTab === 'orders' ? ['file', 'camera'] : ['file', 'camera', 'bundle']}
               extras={activeTab === 'orders' ? [] : [{ key: 'omics', label: 'Exame ômico (catálogo)', icon: Dna }]}
               onSelect={(m, file) => {

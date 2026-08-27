@@ -11,6 +11,7 @@ import type { HealthEventRow } from '@/lib/agenda/event'
 import { eventsToTimeline } from '@/lib/ui/adapters/timeline'
 import Timeline, { type TimelineEvent } from '@/components/timeline/Timeline'
 import StateView from '@/components/ui/StateView'
+import { SCREEN_COPY } from '@sintera/core'
 
 type Phase = 'loading' | 'empty' | 'error' | 'ready'
 
@@ -46,7 +47,7 @@ export default function TimelineNew() {
           message="Seus eventos aparecem aqui conforme forem sendo registrados." />
       )}
       {phase === 'error' && (
-        <StateView kind="error" title="Não foi possível carregar seu histórico"
+        <StateView kind="error" title={SCREEN_COPY.comum.historyFailed}
           message="Tente novamente em instantes." />
       )}
       {phase === 'ready' && <Timeline events={events} />}

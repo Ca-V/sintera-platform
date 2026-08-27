@@ -7,7 +7,7 @@ import { useFocusEffect } from '@react-navigation/native'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
-import { mergeTimeline, selectHistory, groupByPeriod, formatDateLongBR, timelineCategoryLabel, typeGroupRank, type TimelineEntry, type TimelineMeta } from '@sintera/core'
+import { mergeTimeline, selectHistory, groupByPeriod, formatDateLongBR, timelineCategoryLabel, typeGroupRank, type TimelineEntry, type TimelineMeta, SCREEN_COPY } from '@sintera/core'
 import { Text, Button, Input, Disclaimer } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { MinhaSaudeStackParamList } from '../../navigation/types'
@@ -65,7 +65,7 @@ export function TimelineScreen({ navigation }: Props) {
         setEntries(selectHistory(mergeTimeline(events, exams, omics, ctc)))
         setPhase('ready'); setError(null)
       })
-      .catch((e) => { if (alive.current && !silent) { setError(e instanceof Error ? e.message : 'Não foi possível carregar o histórico.'); setPhase('error') } })
+      .catch((e) => { if (alive.current && !silent) { setError(e instanceof Error ? e.message : SCREEN_COPY.comum.historyFailed); setPhase('error') } })
       .finally(() => { if (alive.current) setRefreshing(false) })
   }, [])
   useEffect(() => { alive.current = true; load(false); return () => { alive.current = false } }, [load])

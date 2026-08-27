@@ -126,6 +126,44 @@ export const SCREEN_COPY = {
     hcDenied:       'Nenhuma permissão concedida. Você decide o que compartilhar, e pode mudar depois.',
     hcRevokeHint:   'A autorização fica no Health Connect, não aqui — é lá que você revoga quando quiser.',
   },
+
+  /**
+   * ENTRADA DE DOCUMENTO (ANEXO-001) — o mesmo rótulo em todo ponto que aceita anexo.
+   *
+   * O componente único já garantia o comportamento igual, mas o TEXTO estava escrito em cada arquivo. Medido em
+   * 27/08: a Web dizia "Anexar arquivo" em Hábitos e "Anexar arquivos" no componente compartilhado — singular
+   * de um lado, plural do outro, para a mesma ação que aceita vários arquivos.
+   */
+  anexo: {
+    add:        'Anexar arquivos',
+    // Arrastar é afordância de teclado e mouse: o texto muda porque o GESTO existe só ali. É a exceção legítima
+    // da base única — mecanismo de plataforma —, e por isso mora aqui nomeada, não escrita solta na tela.
+    addDrag:    'Anexar ou arrastar aqui',
+    addMore:    'Adicionar mais páginas',
+    sending:    'Enviando…',
+    camera:     'Fotografar documento',
+    formatHint: 'PDF ou imagem · vários arquivos',
+    reading:    'Lendo o documento…',
+    required:   'Anexe o documento.',
+  },
+
+  /**
+   * FRASES COMUNS a várias telas — o que se diz quando algo falha e se pode tentar de novo.
+   *
+   * A família "Não foi possível…" nasceu solta: cada tela redigiu a sua, e o convite a tentar de novo saiu
+   * "em instantes" na Web e "mais tarde" no aplicativo. A mensagem ESPECÍFICA continua de cada tela (dizer o que
+   * falhou é informação); o que se unifica é a parte que se repete.
+   */
+  comum: {
+    retry:          'Tente novamente.',
+    retryLater:     'Tente novamente em instantes.',
+    loadFailed:     'Não foi possível carregar.',
+    historyFailed:  'Não foi possível carregar o histórico.',
+    // Redefinir, não "recuperar": a senha antiga não volta — cria-se uma nova. A Web dizia "recuperação" e o
+    // aplicativo "redefinição" para o mesmo e-mail.
+    resetPassword:  'Enviar link de redefinição',
+    resetSent:      'Enviamos um link de redefinição ao seu e-mail.',
+  },
 } as const
 
 export type ScreenCopyKey = keyof typeof SCREEN_COPY

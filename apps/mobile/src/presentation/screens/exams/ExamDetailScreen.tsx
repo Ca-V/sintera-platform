@@ -7,7 +7,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import type { ExamDTO, ExamExtractionLog } from '@sintera/api-client'
-import { deriveExamIdentity, isOrderDocumentType, careStageFor, CARE_STAGES, compareNames, selectByLink, biomarkerStatusLabel, effectiveOrderStatus, orderStatusLabel, deriveOrderDisplayTitle } from '@sintera/core'
+import { deriveExamIdentity, isOrderDocumentType, careStageFor, CARE_STAGES, compareNames, selectByLink, biomarkerStatusLabel, effectiveOrderStatus, orderStatusLabel, deriveOrderDisplayTitle, SCREEN_COPY } from '@sintera/core'
 import { AttachmentLink, Button, Disclaimer, FieldRow, Input, Text, DatePicker } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { MinhaSaudeStackParamList } from '../../navigation/types'
@@ -87,7 +87,7 @@ export function ExamDetailScreen({ route, navigation }: Props) {
       { text: 'Cancelar', style: 'cancel' },
       { text: 'Excluir', style: 'destructive', onPress: async () => {
         const { error } = await p.remove()
-        if (error) { Alert.alert('Não foi possível excluir', 'Tente novamente mais tarde.'); return }
+        if (error) { Alert.alert('Não foi possível excluir', SCREEN_COPY.comum.retryLater); return }
         navigation.goBack()
       } },
     ])

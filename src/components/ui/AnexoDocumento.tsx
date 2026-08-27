@@ -23,7 +23,7 @@ import {
   acceptFiles, removeFile, rejectionMessage, attachmentCountLabel,
   supportedNowAcceptAttr, entryMethodsFor,
   readingFromClassification, documentDivergence, documentSubtypeLabel,
-  type AttachedFile, type IncomingFile, type DocumentReading, type PatientDocumentSubtype, uuid,} from '@sintera/core'
+  type AttachedFile, type IncomingFile, type DocumentReading, type PatientDocumentSubtype, uuid, SCREEN_COPY } from '@sintera/core'
 import { fileToBase64 } from '@/lib/capture/fileToBase64'
 
 export interface AnexoDocumentoProps {
@@ -209,18 +209,18 @@ export default function AnexoDocumento({
           ? <Loader2 size={18} className="animate-spin" />
           : arrastando ? <UploadCloud size={18} /> : <Paperclip size={18} />}
         <span>
-          {enviando ? 'Enviando…'
-            : files.length > 0 ? 'Adicionar mais páginas'
-            : PODE_ARRASTAR ? 'Anexar ou arrastar aqui' : 'Anexar documento'}
+          {enviando ? SCREEN_COPY.anexo.sending
+            : files.length > 0 ? SCREEN_COPY.anexo.addMore
+            : PODE_ARRASTAR ? SCREEN_COPY.anexo.addDrag : SCREEN_COPY.anexo.add}
         </span>
-        <span className="text-xs opacity-70">PDF ou imagem · vários arquivos</span>
+        <span className="text-xs opacity-70">{SCREEN_COPY.anexo.formatHint}</span>
       </button>
 
       {aviso && <p className="mt-1.5 text-sm text-red-600">{aviso}</p>}
 
       {lendo && (
         <p className="mt-1.5 flex items-center gap-1.5 text-xs text-mauve">
-          <Loader2 size={12} className="animate-spin" /> Lendo o documento…
+          <Loader2 size={12} className="animate-spin" /> {SCREEN_COPY.anexo.reading}
         </p>
       )}
 
