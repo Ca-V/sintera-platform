@@ -12,7 +12,7 @@ import {
   VITAL_SIGNS, bodyMetricLabel, isVital, SCREEN_COPY, type VitalMetric,
   hasTimeOfDay, measurementInstant, measurementMeta, requiresTimeOfDay,
   ACTIVITY_TYPES, activityTypeLabel, activitySummary,
-  durationSecondsFromMinutes, distanceMetersFromKm,
+  durationSecondsFromMinutes, distanceMetersFromKm, numberFromField, paceKindFor,
 } from '@sintera/core'
 import { Text, Button, Input, Disclaimer, DatePicker, TimePicker, Select } from '../../primitives'
 import { useTheme } from '../../theme'
@@ -79,6 +79,8 @@ export function MonitoramentoScreen() {
   const [actTime, setActTime] = useState('')
   const [actMin, setActMin] = useState('')
   const [actKm, setActKm] = useState('')
+  const [actBpm, setActBpm] = useState('')
+  const [actKcal, setActKcal] = useState('')
   const [savingAct, setSavingAct] = useState(false)
 
   const load = useCallback((silent: boolean) => {
@@ -130,12 +132,15 @@ export function MonitoramentoScreen() {
     setActTime(hasTimeOfDay(a.started_at) ? new Date(a.started_at).toTimeString().slice(0, 5) : '')
     setActMin(a.duration_s != null ? String(Math.round(a.duration_s / 60)) : '')
     setActKm(a.distance_m != null ? String(Math.round(a.distance_m / 100) / 10).replace('.', ',') : '')
+    setActBpm(a.avg_heart_rate != null ? String(Math.round(a.avg_heart_rate)) : '')
+    setActKcal(a.active_energy_kcal != null ? String(Math.round(a.active_energy_kcal)) : '')
     setActOpen(true)
   }
 
   function startNewAct() {
     setActEditando(null)
     setActType('caminhada'); setActName(''); setActDate(today()); setActTime(''); setActMin(''); setActKm('')
+    setActBpm(''); setActKcal('')
     setActOpen(true)
   }
 
@@ -156,6 +161,8 @@ export function MonitoramentoScreen() {
         started_at: instantOf(actDate, actTime) ?? `${actDate}T00:00:00.000Z`,
         duration_s: durationSecondsFromMinutes(actMin),
         distance_m: distanceMetersFromKm(actKm),
+        avg_heart_rate: numberFromField(actBpm),
+        active_energy_kcal: numberFromField(actKcal),
       })
       if (err) { Alert.alert('Não foi possível salvar', err.message || 'Tente novamente.'); return }
       setActOpen(false); setActEditando(null); loadActs()
@@ -326,6 +333,26 @@ export function MonitoramentoScreen() {
               </Campo>
             </View>
           </View>
+
+          {/* O ritmo NÃO é campo: sai da duração e da distância. Pedi-lo seria pedir a mesma informação duas
+              vezes, com risco de as duas se contradizerem. */}
+          {paceKindFor(actType) ? (
+            <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{C.paceHint}</Text>
+          ) : null}
+
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <View style={{ flex: 1 }}>
+              <Campo label={C.fieldHeartRate}>
+                <Input value={actBpm} onChangeText={setActBpm} placeholder="Ex.: 142" keyboardType="numeric" />
+              </Campo>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Campo label={C.fieldEnergy}>
+                <Input value={actKcal} onChangeText={setActKcal} placeholder="Ex.: 310" keyboardType="numeric" />
+              </Campo>
+            </View>
+          </View>
+
           <Button label={C.save} onPress={saveAct} loading={savingAct} loadingLabel="Salvando…" />
         </View>
       ) : null}

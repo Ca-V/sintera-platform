@@ -21,7 +21,7 @@ import PageHeader from '@/components/PageHeader'
 import {
   SCREEN_COPY, hasTimeOfDay, measurementInstant, measurementMeta, requiresTimeOfDay,
   VITAL_SIGNS, ACTIVITY_TYPES, activityTypeLabel, activitySummary,
-  durationSecondsFromMinutes, distanceMetersFromKm,
+  durationSecondsFromMinutes, distanceMetersFromKm, numberFromField, paceKindFor,
 } from '@sintera/core'
 import type { ActivitySessionDTO } from '@sintera/api-client'
 import { listActivitySessions, saveActivitySession, deleteActivitySession } from '@sintera/api-client'
@@ -117,6 +117,8 @@ export default function SinaisVitaisPage() {
   const [actTime, setActTime] = useState('')
   const [actMin, setActMin] = useState('')
   const [actKm, setActKm] = useState('')
+  const [actBpm, setActBpm] = useState('')
+  const [actKcal, setActKcal] = useState('')
   const [savingAct, setSavingAct] = useState(false)
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
@@ -400,6 +402,23 @@ export default function SinaisVitaisPage() {
             <div>
               <label htmlFor="act-km" className="font-body text-xs text-mauve block mb-1">{C.fieldDistanceKm}</label>
               <input id="act-km" type="text" inputMode="decimal" value={actKm} onChange={e => setActKm(e.target.value)} placeholder="Ex.: 5,2"
+                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+            </div>
+          </div>
+
+          {/* O ritmo NÃO é campo: sai da duração e da distância. Pedi-lo seria pedir a mesma informação duas
+              vezes, com risco de as duas se contradizerem. */}
+          {paceKindFor(actType) && <p className="font-body text-xs text-mauve/70">{C.paceHint}</p>}
+
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="act-bpm" className="font-body text-xs text-mauve block mb-1">{C.fieldHeartRate}</label>
+              <input id="act-bpm" type="text" inputMode="numeric" value={actBpm} onChange={e => setActBpm(e.target.value)} placeholder="Ex.: 142"
+                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+            </div>
+            <div>
+              <label htmlFor="act-kcal" className="font-body text-xs text-mauve block mb-1">{C.fieldEnergy}</label>
+              <input id="act-kcal" type="text" inputMode="numeric" value={actKcal} onChange={e => setActKcal(e.target.value)} placeholder="Ex.: 310"
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
             </div>
           </div>

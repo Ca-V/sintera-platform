@@ -72,6 +72,12 @@ export const SCREEN_COPY = {
     fieldStartTime:     'Início (opcional)',
     fieldDurationMin:   'Duração em minutos (opcional)',
     fieldDistanceKm:    'Distância em km (opcional)',
+    // Já existiam no banco desde a migração 149 e nenhum formulário os oferecia — o conector preencheria,
+    // a pessoa não. Ritmo e velocidade NÃO entram aqui: são DERIVADOS da duração e da distância, e pedi-los
+    // seria pedir duas vezes a mesma informação, com risco de as duas se contradizerem.
+    fieldHeartRate:     'Frequência cardíaca média (opcional)',
+    fieldEnergy:        'Energia gasta em kcal (opcional)',
+    paceHint:           'O ritmo é calculado sozinho a partir da duração e da distância.',
   },
   exames: {
     title:        'Exames',

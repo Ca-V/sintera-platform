@@ -10,7 +10,63 @@ import { describe, it, expect } from 'vitest'
 import {
   ACTIVITY_TYPES, activityTypeLabel, activityDurationLabel, activityDistanceLabel,
   activitySummary, durationFromWindow, durationSecondsFromMinutes, distanceMetersFromKm,
+  activityPace, activitySpeed, activityDerivedPace, paceKindFor,
 } from '@sintera/core'
+
+describe('HIP-014 · ritmo e velocidade — derivados, nunca gravados', () => {
+  it('a MODALIDADE decide a unidade: quem corre fala em ritmo, quem pedala em velocidade', () => {
+    // "12 km/h" para uma corrida é tecnicamente correto e ninguém entende.
+    expect(paceKindFor('corrida')).toBe('ritmo')
+    expect(paceKindFor('caminhada')).toBe('ritmo')
+    expect(paceKindFor('natacao')).toBe('ritmo')
+    expect(paceKindFor('ciclismo')).toBe('velocidade')
+  })
+
+  it('modalidade sem deslocamento não tem nem uma nem outra', () => {
+    for (const t of ['musculacao', 'yoga', 'pilates', 'outro']) {
+      expect(paceKindFor(t), t).toBeNull()
+    }
+  })
+
+  it('calcula o ritmo em min:ss por km', () => {
+    // 5 km em 30 min = 6:00 /km
+    expect(activityPace(1800, 5000)).toBe('6:00 /km')
+    // 10 km em 52min30 = 5:15 /km
+    expect(activityPace(3150, 10000)).toBe('5:15 /km')
+  })
+
+  it('5:60 não existe — o arredondamento dos segundos vira um minuto', () => {
+    // 1 km em 359,7 s arredondaria para 5:60 se ninguém tratasse.
+    expect(activityPace(359.7, 1000)).toBe('6:00 /km')
+  })
+
+  it('calcula a velocidade em km/h, sem falsa precisão', () => {
+    expect(activitySpeed(3600, 22400)).toBe('22,4 km/h')
+    expect(activitySpeed(3600, 20000)).toBe('20 km/h')   // não "20,0"
+  })
+
+  it('O CASO QUE QUEBRARIA: distância zero não vira "Infinity /km"', () => {
+    expect(activityPace(1800, 0)).toBeNull()
+    expect(activitySpeed(1800, 0)).toBeNull()
+    expect(activityPace(0, 5000)).toBeNull()
+  })
+
+  it('recusa número absurdo em vez de exibi-lo — é erro de digitação, não desempenho', () => {
+    expect(activitySpeed(1, 1000000)).toBeNull()        // 3.600.000 km/h
+    expect(activityPace(3600 * 200, 1000)).toBeNull()   // 12.000 min/km
+  })
+
+  it('sem os dois dados não há derivado', () => {
+    expect(activityDerivedPace({ activity_type: 'corrida', duration_s: 1800 })).toBeNull()
+    expect(activityDerivedPace({ activity_type: 'corrida', distance_m: 5000 })).toBeNull()
+  })
+
+  it('escolhe sozinho a unidade certa a partir da sessão', () => {
+    expect(activityDerivedPace({ activity_type: 'corrida', duration_s: 1800, distance_m: 5000 })).toBe('6:00 /km')
+    expect(activityDerivedPace({ activity_type: 'ciclismo', duration_s: 3600, distance_m: 22400 })).toBe('22,4 km/h')
+    expect(activityDerivedPace({ activity_type: 'musculacao', duration_s: 1800, distance_m: 5000 })).toBeNull()
+  })
+})
 
 describe('HIP-014 · o que a pessoa digita → o que vai ao banco', () => {
   it('minutos viram segundos; quilômetros viram metros', () => {

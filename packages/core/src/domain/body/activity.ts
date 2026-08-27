@@ -56,21 +56,95 @@ export function activityDistanceLabel(meters: number | null | undefined): string
 }
 
 /**
- * Linha de resumo da sessão: duração · distância · energia. Só o que a fonte mediu entra — ausência de métrica
- * é informação legítima, e preencher com zero o que não foi medido seria afirmar algo falso.
+ * Qual medida de desempenho faz sentido para cada modalidade.
+ *
+ * Quem corre fala em RITMO (minutos por quilômetro); quem pedala fala em VELOCIDADE (km/h). Mostrar "12 km/h"
+ * para uma corrida ou "5:00 /km" para uma pedalada é tecnicamente correto e ninguém entende — a unidade certa
+ * é a que a pessoa usa quando conta o que fez.
+ *
+ * Modalidade sem deslocamento (musculação, yoga) não tem nenhuma das duas: `null`.
+ */
+export type ActivityPaceKind = 'ritmo' | 'velocidade' | null
+
+const RITMO = new Set<ActivityType>(['caminhada', 'corrida', 'natacao'])
+const VELOCIDADE = new Set<ActivityType>(['ciclismo'])
+
+export function paceKindFor(type: string | null | undefined): ActivityPaceKind {
+  const t = (type ?? '').trim() as ActivityType
+  if (RITMO.has(t)) return 'ritmo'
+  if (VELOCIDADE.has(t)) return 'velocidade'
+  return null
+}
+
+/**
+ * Ritmo em minutos por quilômetro: "5:46 /km".
+ *
+ * `null` sem os dois dados, ou com distância zero — dividir por zero produziria "Infinity /km", que é pior
+ * que não mostrar nada. Este número é DERIVADO, nunca gravado: recalculá-lo a partir da fonte garante que ele
+ * nunca contradiga a duração e a distância que estão ali do lado.
+ */
+export function activityPace(durationS: number | null | undefined, distanceM: number | null | undefined): string | null {
+  if (durationS == null || distanceM == null) return null
+  if (!Number.isFinite(durationS) || !Number.isFinite(distanceM)) return null
+  if (durationS <= 0 || distanceM <= 0) return null
+
+  const segPorKm = durationS / (distanceM / 1000)
+  const min = Math.floor(segPorKm / 60)
+  const seg = Math.round(segPorKm % 60)
+  // 5:60 não existe — o arredondamento dos segundos vira um minuto.
+  const [m, s] = seg === 60 ? [min + 1, 0] : [min, seg]
+  if (m > 99) return null   // acima disto não é ritmo, é erro de digitação
+  return `${m}:${String(s).padStart(2, '0')} /km`
+}
+
+/** Velocidade média em km/h: "22,4 km/h". Vírgula decimal (pt-BR). */
+export function activitySpeed(durationS: number | null | undefined, distanceM: number | null | undefined): string | null {
+  if (durationS == null || distanceM == null) return null
+  if (!Number.isFinite(durationS) || !Number.isFinite(distanceM)) return null
+  if (durationS <= 0 || distanceM <= 0) return null
+
+  const kmh = (distanceM / 1000) / (durationS / 3600)
+  if (kmh > 200) return null   // não é velocidade humana; é erro de digitação
+  const txt = (Math.round(kmh * 10) / 10).toFixed(1).replace('.0', '').replace('.', ',')
+  return `${txt} km/h`
+}
+
+/** A medida de desempenho da sessão, na unidade que a modalidade usa. `null` quando não faz sentido. */
+export function activityDerivedPace(s: {
+  activity_type?: string | null
+  duration_s?: number | null
+  distance_m?: number | null
+}): string | null {
+  const tipo = paceKindFor(s.activity_type)
+  if (tipo === 'ritmo') return activityPace(s.duration_s, s.distance_m)
+  if (tipo === 'velocidade') return activitySpeed(s.duration_s, s.distance_m)
+  return null
+}
+
+/**
+ * Linha de resumo da sessão. Só o que a fonte mediu entra — ausência de métrica é informação legítima, e
+ * preencher com zero o que não foi medido seria afirmar algo falso.
  * Devolve `null` quando a fonte não trouxe nenhuma grandeza.
+ *
+ * O RITMO/VELOCIDADE é derivado, e entra logo após a distância porque é dela que sai. Não é dado gravado:
+ * recalcular garante que nunca contradiga a duração e a distância que estão ao lado dele.
  */
 export function activitySummary(s: {
+  activity_type?: string | null
   duration_s?: number | null
   distance_m?: number | null
   active_energy_kcal?: number | null
+  avg_heart_rate?: number | null
+  elevation_gain_m?: number | null
 }): string | null {
+  const positivo = (n: number | null | undefined) => n != null && Number.isFinite(n) && n >= 0
   const partes = [
     activityDurationLabel(s.duration_s),
     activityDistanceLabel(s.distance_m),
-    s.active_energy_kcal != null && Number.isFinite(s.active_energy_kcal) && s.active_energy_kcal >= 0
-      ? `${Math.round(s.active_energy_kcal)} kcal`
-      : null,
+    activityDerivedPace(s),
+    positivo(s.avg_heart_rate) && (s.avg_heart_rate as number) > 0 ? `${Math.round(s.avg_heart_rate as number)} bpm` : null,
+    positivo(s.elevation_gain_m) && (s.elevation_gain_m as number) > 0 ? `${Math.round(s.elevation_gain_m as number)} m de subida` : null,
+    positivo(s.active_energy_kcal) ? `${Math.round(s.active_energy_kcal as number)} kcal` : null,
   ].filter((p): p is string => !!p)
   return partes.length ? partes.join(' · ') : null
 }
@@ -90,6 +164,14 @@ function numeroOuNulo(texto: string | null | undefined): number | null {
   if (!/^-?\d+(\.\d+)?$/.test(limpo)) return null
   const n = Number(limpo)
   return Number.isFinite(n) && n >= 0 ? n : null
+}
+
+/**
+ * Campo numérico digitado → número, para gravar. Mesma regra dos demais: em branco vira AUSENTE, nunca zero.
+ * Serve os campos que já estão na unidade final (frequência cardíaca em bpm, energia em kcal).
+ */
+export function numberFromField(texto: string | null | undefined): number | null {
+  return numeroOuNulo(texto)
 }
 
 /** Minutos digitados → segundos, para gravar. Fonte ÚNICA: as duas telas convertiam por conta própria. */
