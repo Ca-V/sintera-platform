@@ -13,7 +13,7 @@
 // ============================================================
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
-import { createClient } from '@/lib/supabase/server'
+import { authenticateRequest } from '@/lib/supabase/apiAuth'
 import { classifyCheap, corroboratedConfidence } from '@/lib/capture/classifier/classify'
 import type { ClassificationResult, DocumentKind } from '@/lib/capture/types'
 import { transcribedIssuer, transcribedDate } from '@sintera/core'
@@ -52,9 +52,10 @@ const VALID_KINDS: DocumentKind[] = [
 const SUPPORTED_IMAGE = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 
 export async function POST(req: NextRequest) {
-  const supabase = await createClient()
-  const { data: auth } = await supabase.auth.getUser()
-  if (!auth.user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  // Aceita cookie (Web) OU Bearer (aplicativo). Sem isto o Mobile recebia 401 e a leitura assistida
+  // simplesmente não acontecia — sem mensagem, como se o recurso não existisse.
+  const { user } = await authenticateRequest(req)
+  if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
   let body: { fileBase64?: string; mediaType?: string; filename?: string }
   try { body = await req.json() } catch { return NextResponse.json({ error: 'Corpo inválido' }, { status: 400 }) }

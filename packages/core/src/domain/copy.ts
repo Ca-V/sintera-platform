@@ -55,6 +55,8 @@ export const SCREEN_COPY = {
     // Conexões é a porta das integrações com dispositivos (HIP-001). Aparece nas DUAS pontas.
     connectInvite:  'Conecte um dispositivo e deixe os dados entrarem sozinhos',
     connectAction:  'Conexões',
+    // Editar e excluir são OBRIGATÓRIOS em todo card da plataforma (regra da fundadora) — ver `cardActions`.
+    editAction:     'Editar',
     removeAction:   'Remover',
 
     // Atividade física (HIP-014 §3) — seção IRMÃ de Sinais vitais dentro de Monitoramento. Registra o que

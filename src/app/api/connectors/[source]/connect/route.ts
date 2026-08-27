@@ -1,12 +1,12 @@
 // WEA-001 / HIP-001 — V2 Épico 2.3: inicia o OAuth (gera state, redireciona ao provedor).
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+// Aceita cookie (Web) OU Bearer (aplicativo) — ver o cabeçalho de apiAuth.
+import { authenticateRequest } from '@/lib/supabase/apiAuth'
 import { getRegistry, getOAuthProvider } from '@/lib/connectors/runtime.server'
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ source: string }> }) {
   const { source } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user } = await authenticateRequest(req)
   if (!user) return NextResponse.redirect(new URL('/login', req.nextUrl.origin))
 
   const oauth = getOAuthProvider(source)

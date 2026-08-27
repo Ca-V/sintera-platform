@@ -138,16 +138,10 @@ export function ConexoesScreen() {
   if (phase === 'loading') {
     return <View style={s.center}><ActivityIndicator color={t.color.identity.primary} /></View>
   }
-  if (phase === 'error') {
-    return (
-      <View style={s.center}>
-        <Text spec={text(t, { role: 'body' })} style={{ color: t.color.text.muted, textAlign: 'center' }}>{error}</Text>
-        <View style={{ height: 12 }} />
-        <Button label="Tentar de novo" onPress={() => load(false)} variant="secondary" />
-      </View>
-    )
-  }
-
+  // NÃO há retorno antecipado em erro (defeito encontrado na homologação de 27/08): o Health Connect é do
+  // APARELHO e não depende desta API. Quando ela falhava, a tela inteira virava mensagem de erro e o cartão
+  // dele desaparecia junto — a integração ficava refém de uma chamada de rede com que nada tem a ver.
+  // A falha das conexões remotas agora é dita NO LUGAR delas, e o resto da tela continua de pé.
   const card = { backgroundColor: t.color.surface.base, borderColor: t.color.border.default }
 
   return (
@@ -191,7 +185,12 @@ export function ConexoesScreen() {
         )}
       </View>
 
-      {items.length === 0 ? (
+      {phase === 'error' ? (
+        <View style={[s.card, card, { gap: 10, alignItems: 'center' }]}>
+          <Text spec={text(t, { role: 'body', tone: 'muted' })} style={{ textAlign: 'center' }}>{error}</Text>
+          <Button label="Tentar de novo" onPress={() => load(false)} variant="secondary" />
+        </View>
+      ) : items.length === 0 ? (
         <View style={[s.card, card, { gap: 4 }]}>
           <Text spec={text(t, { role: 'bodyStrong' })} style={{ textAlign: 'center' }}>{C.emptyTitle}</Text>
           <Text spec={text(t, { role: 'body', tone: 'muted' })} style={{ textAlign: 'center' }}>{C.emptyMessage}</Text>

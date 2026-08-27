@@ -71,6 +71,8 @@ export function MonitoramentoScreen() {
 
   const [acts, setActs] = useState<ActivitySessionDTO[]>([])
   const [actOpen, setActOpen] = useState(false)
+  /** Sessão sendo corrigida. `null` = registrando uma nova. */
+  const [actEditando, setActEditando] = useState<ActivitySessionDTO | null>(null)
   const [actType, setActType] = useState('caminhada')
   const [actName, setActName] = useState('')
   const [actDate, setActDate] = useState('')
@@ -113,7 +115,26 @@ export function MonitoramentoScreen() {
   }, [])
   useEffect(() => { loadActs() }, [loadActs])
 
+  /**
+   * Abre o formulário com a sessão já registrada, para CORRIGIR (pedido da fundadora, homologação de 27/08).
+   * Só remover não basta: quem errou a duração precisaria apagar e digitar tudo de novo, e perderia a
+   * proveniência e o vínculo com a fonte no caminho.
+   *
+   * Reconverte para as unidades do formulário — o banco guarda segundos e metros; a pessoa digita minutos e km.
+   */
+  function startEditAct(a: ActivitySessionDTO) {
+    setActEditando(a)
+    setActType(a.activity_type || 'outro')
+    setActName(a.title ?? '')
+    setActDate(a.started_at.slice(0, 10))
+    setActTime(hasTimeOfDay(a.started_at) ? new Date(a.started_at).toTimeString().slice(0, 5) : '')
+    setActMin(a.duration_s != null ? String(Math.round(a.duration_s / 60)) : '')
+    setActKm(a.distance_m != null ? String(Math.round(a.distance_m / 100) / 10).replace('.', ',') : '')
+    setActOpen(true)
+  }
+
   function startNewAct() {
+    setActEditando(null)
     setActType('caminhada'); setActName(''); setActDate(today()); setActTime(''); setActMin(''); setActKm('')
     setActOpen(true)
   }
@@ -124,7 +145,12 @@ export function MonitoramentoScreen() {
     try {
       // Conversão de unidade vem do core: campo vazio vira AUSENTE, nunca zero, e as duas telas convertem igual.
       const { error: err } = await apiClient.activity.saveActivitySession({
-        source: 'manual',
+        id: actEditando?.id,
+        // Ao corrigir, PRESERVA a origem e o id na fonte. Trocar por 'manual' faria uma corrida do Strava
+        // virar registro manual só porque alguém ajustou a distância — e a proveniência é requisito.
+        source: actEditando?.source ?? 'manual',
+        external_id: actEditando?.external_id ?? null,
+        connector_version: actEditando?.connector_version ?? null,
         activity_type: actType,
         title: actName.trim() || null,
         started_at: instantOf(actDate, actTime) ?? `${actDate}T00:00:00.000Z`,
@@ -132,7 +158,7 @@ export function MonitoramentoScreen() {
         distance_m: distanceMetersFromKm(actKm),
       })
       if (err) { Alert.alert('Não foi possível salvar', err.message || 'Tente novamente.'); return }
-      setActOpen(false); loadActs()
+      setActOpen(false); setActEditando(null); loadActs()
     } finally { setSavingAct(false) }
   }
 
@@ -270,7 +296,7 @@ export function MonitoramentoScreen() {
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
         <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 17 }}>{C.activitySection}</Text>
         <Button label={actOpen ? C.close : C.activityAdd} variant="secondary"
-          onPress={() => (actOpen ? setActOpen(false) : startNewAct())} />
+          onPress={() => (actOpen ? (setActOpen(false), setActEditando(null)) : startNewAct())} />
       </View>
 
       {actOpen ? (
@@ -314,10 +340,17 @@ export function MonitoramentoScreen() {
       {acts.map(a => (
         <View key={a.id} style={[styles.card, card, { gap: 2 }]}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <Text spec={text(t, { role: 'body' })}>{a.title?.trim() || activityTypeLabel(a.activity_type)}</Text>
-            <Pressable onPress={() => removeAct(a)}>
-              <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>{C.removeAction}</Text>
-            </Pressable>
+            <Text spec={text(t, { role: 'body' })} style={{ flex: 1 }}>{a.title?.trim() || activityTypeLabel(a.activity_type)}</Text>
+            {/* EDITAR e EXCLUIR juntos, na mesma ordem de todo card da plataforma. Só remover obrigaria quem
+                errou a duração a apagar e digitar tudo de novo — perdendo proveniência e vínculo no caminho. */}
+            <View style={{ flexDirection: 'row', gap: 14 }}>
+              <Pressable onPress={() => startEditAct(a)}>
+                <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>{C.editAction}</Text>
+              </Pressable>
+              <Pressable onPress={() => removeAct(a)}>
+                <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>{C.removeAction}</Text>
+              </Pressable>
+            </View>
           </View>
           <Text spec={text(t, { role: 'caption', tone: 'muted' })}>
             {measurementMeta({
