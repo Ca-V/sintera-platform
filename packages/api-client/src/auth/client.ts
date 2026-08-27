@@ -40,6 +40,7 @@ import { listBodyMetrics, saveBodyMetric, deleteBodyMetric, getHeightCm, getWeig
 import { listActivitySessions, saveActivitySession, deleteActivitySession, ingestActivitySessions } from '../activity/activity'
 import { ingestWearableSamples } from '../wearables/wearables'
 import { startOAuthSignIn, completeOAuthSignIn } from './oauth'
+import { classifyDocument } from '../capture/classify'
 import { listShares, createShare, revokeShare, listTemplates, saveTemplate, deleteTemplate, listOmicsPanels } from '../report/report'
 import { listOmicsPanels as omicsList, getOmicsPanel, getOmicsResults, getOmicsFeatureHistory, searchOmicsCatalog, createOmicsPanel, addOmicsResult, deleteOmicsResult, deleteOmicsPanel } from '../omics/omics'
 import { asError } from '../net/errors'
@@ -181,6 +182,9 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
     },
     wearables: {
       ingestSamples: (samples) => ingestWearableSamples(supabase, samples),
+    },
+    capture: {
+      classify: (input) => classifyDocument(supabase, config.webBaseUrl, input),
     },
     report: {
       listShares: (signal) => listShares(supabase, signal),

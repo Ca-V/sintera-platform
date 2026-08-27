@@ -12,6 +12,7 @@ import { text } from '@sintera/design-system'
 import type { PatientDocumentDTO, PickedFile } from '@sintera/api-client'
 import {
   DOCUMENT_SUBTYPES, documentSubtypeLabel, documentSubtitle, isReadyToSave, DOCUMENT_BASE_ACTIONS,
+  autofillFrom,
   type PatientDocumentSubtype, type AttachedFile,
 } from '@sintera/core'
 import { Text, Button, Input, AttachmentLink, DatePicker, Disclaimer, Select, AnexoDocumento } from '../../primitives'
@@ -201,7 +202,22 @@ export function DocumentsScreen() {
           </View>
 
           {/* Ao EDITAR, o anexo não aparece: corrige-se o que foi registrado sobre o documento, não a evidência. */}
-          {!editando ? <AnexoDocumento files={files} onChange={setFiles} upload={uploadPagina} /> : null}
+          {/* LEITURA ASSISTIDA (ANEXO-001 · item D) — mesma capacidade da Web, mesma regra: declara o subtipo
+              escolhido para que o componente avise se o documento parece outra coisa, e devolva emissor e data
+              para REVISÃO. `autofillFrom` não sobrescreve o que já foi digitado. */}
+          {!editando ? (
+            <AnexoDocumento
+              files={files} onChange={setFiles} upload={uploadPagina}
+              leituraAssistida={{
+                declarado: subtype,
+                onLeitura: (leitura) => {
+                  const preenchido = autofillFrom(leitura, { issuer, docDate })
+                  setIssuer(preenchido.issuer)
+                  setDocDate(preenchido.docDate)
+                },
+              }}
+            />
+          ) : null}
 
           <View style={{ gap: 6 }}>
             <Text spec={text(t, { role: 'label', tone: 'muted' })} style={{ color: t.color.text.muted }}>Emitido por</Text>

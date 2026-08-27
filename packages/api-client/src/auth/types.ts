@@ -19,7 +19,8 @@ import type { PeriodDTO } from '../cycle/menstrual'
 import type { NotificationPrefRow } from '../settings/notifications'
 import type { BodyMetricDTO, BodyMetricInput } from '../body/body'
 import type { ActivitySessionDTO, ActivitySessionInput, IngestResult } from '../activity/activity'
-import type { CanonicalSample, PropagationResult } from '@sintera/core'
+import type { CanonicalSample, PropagationResult, ClassificationResult } from '@sintera/core'
+import type { ClassifyInput } from '../capture/classify'
 import type { IdentityProvider } from './oauth'
 import type { ShareDTO, TemplateDTO, OmicsPanelDTO } from '../report/report'
 import type { OmicsPanelDTO as OmicsPanel, OmicsPanelDetail, OmicsResultDTO, OmicsHistoryPoint, OmicsCatalogMatch, OmicsResultInput } from '../omics/omics'
@@ -192,6 +193,7 @@ export interface ApiClient {
   body: BodyApi
   activity: ActivityApi
   wearables: WearablesApi
+  capture: CaptureApi
   report: ReportApi
   omics: OmicsApi
   vision: VisionApi
@@ -257,6 +259,14 @@ export interface ActivityApi {
  * Ingestão de leituras vindas de conector (HIP-014 §5/§6). Existe porque o Health Connect roda NO APARELHO e
  * o aplicativo precisa gravar o que leu — sem receber o cliente Supabase cru, que a regra do pacote proíbe.
  */
+/**
+ * Leitura assistida de documento (ANEXO-001 · item D) — o que o documento PARECE ser, mais emissor e data
+ * transcritos. Nunca lança: `null` quando não deu para ler, e a pessoa preenche à mão.
+ */
+export interface CaptureApi {
+  classify(input: ClassifyInput): Promise<ClassificationResult | null>
+}
+
 export interface WearablesApi {
   ingestSamples(samples: readonly CanonicalSample[]): Promise<{ result: PropagationResult; error: Error | null }>
 }
