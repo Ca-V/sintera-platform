@@ -18,12 +18,14 @@
 // A REGRA de aceitar/recusar não mora aqui — mora em `attachmentSet` no core, e o Mobile usa a mesma.
 // Este arquivo é só a aparência dela.
 import { useCallback, useRef, useState } from 'react'
-import { Paperclip, X, FileText, Image as ImageIcon, Loader2, UploadCloud } from 'lucide-react'
+import { Paperclip, X, FileText, Image as ImageIcon, Loader2, UploadCloud, AlertTriangle } from 'lucide-react'
 import {
   acceptFiles, removeFile, rejectionMessage, attachmentCountLabel,
   supportedNowAcceptAttr, entryMethodsFor,
-  type AttachedFile, type IncomingFile,
+  readingFromClassification, documentDivergence, documentSubtypeLabel,
+  type AttachedFile, type IncomingFile, type DocumentReading, type PatientDocumentSubtype,
 } from '@sintera/core'
+import { fileToBase64 } from '@/lib/capture/fileToBase64'
 
 export interface AnexoDocumentoProps {
   /** Conjunto atual — o dono do estado é a tela, para poder salvá-lo junto do registro. */
@@ -33,6 +35,22 @@ export interface AnexoDocumentoProps {
   upload: (file: File) => Promise<string | null>
   label?: string
   disabled?: boolean
+  /**
+   * LEITURA ASSISTIDA (ANEXO-001) — opcional. Quando a tela declara o que ESPERA receber, o componente lê o
+   * primeiro documento anexado, AVISA se o que leu diverge do declarado, e devolve os fatos para a tela
+   * preencher o formulário (autopreenchimento para REVISÃO humana).
+   *
+   * Mora aqui, e não em cada tela, pelo mesmo motivo que o resto do componente: se cada uma implementasse a
+   * sua, teríamos avisos com redações diferentes e telas que simplesmente não avisam. É a fonte única.
+   *
+   * NUNCA move o documento sozinho e NUNCA bloqueia o salvamento — a pessoa escolheu o tipo, e ela decide.
+   */
+  leituraAssistida?: {
+    /** O subtipo que esta tela declara receber (ex.: 'receita' na tela de Receitas e atestados). */
+    declarado: PatientDocumentSubtype
+    /** Recebe os fatos lidos para a tela aplicar `autofillFrom` nos próprios campos. */
+    onLeitura: (leitura: DocumentReading) => void
+  }
 }
 
 const PODE_ARRASTAR = entryMethodsFor('web').includes('drag_drop')
@@ -48,12 +66,44 @@ function tamanhoLegivel(bytes: number): string {
 }
 
 export default function AnexoDocumento({
-  files, onChange, upload, label = 'Documento', disabled = false,
+  files, onChange, upload, label = 'Documento', disabled = false, leituraAssistida,
 }: AnexoDocumentoProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [arrastando, setArrastando] = useState(false)
   const [enviando, setEnviando] = useState(false)
   const [aviso, setAviso] = useState<string | null>(null)
+  const [lendo, setLendo] = useState(false)
+  const [divergencia, setDivergencia] = useState<string | null>(null)
+
+  /**
+   * Lê o documento e compara com o que a tela declarou. Silencioso quando falha: leitura assistida que quebra
+   * a tela seria pior que leitura que não acontece — a pessoa preenche à mão, como sempre pôde.
+   */
+  const lerDocumento = useCallback(async (original: File) => {
+    if (!leituraAssistida) return
+    setLendo(true)
+    setDivergencia(null)
+    try {
+      const payload = await fileToBase64(original)
+      if (!payload.fileBase64) return
+      const res = await fetch('/api/capture/classify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...payload, filename: original.name }),
+      })
+      if (!res.ok) return
+      const leitura = readingFromClassification(await res.json())
+      if (!leitura) return
+
+      // AVISA, e só. Nunca move o documento nem impede salvar — a pessoa escolheu o tipo.
+      setDivergencia(documentDivergence(leituraAssistida.declarado, leitura, documentSubtypeLabel).message)
+      leituraAssistida.onLeitura(leitura)
+    } catch {
+      /* preenche à mão, como sempre pôde */
+    } finally {
+      setLendo(false)
+    }
+  }, [leituraAssistida])
 
   const receber = useCallback(async (escolhidos: FileList | File[]) => {
     setAviso(null)
@@ -75,9 +125,13 @@ export default function AnexoDocumento({
     setEnviando(true)
     try {
       let atual = aceitos
+      let primeiro = true
       for (const novo of novos) {
         const original = lista.find(f => f.name === novo.name && f.size === novo.sizeBytes)
         if (!original) continue
+        // Lê só o PRIMEIRO documento do lote. Um registro tem um tipo; ler todos produziria avisos
+        // conflitantes sobre a mesma coisa, e a pessoa não saberia a qual responder.
+        if (primeiro) { primeiro = false; void lerDocumento(original) }
         const url = await upload(original)
         if (url) {
           atual = atual.map(f => (f.id === novo.id ? { ...f, url } : f))
@@ -92,7 +146,7 @@ export default function AnexoDocumento({
     } finally {
       setEnviando(false)
     }
-  }, [files, onChange, upload])
+  }, [files, onChange, upload, lerDocumento])
 
   return (
     <div>
@@ -164,6 +218,24 @@ export default function AnexoDocumento({
       </button>
 
       {aviso && <p className="mt-1.5 text-sm text-red-600">{aviso}</p>}
+
+      {lendo && (
+        <p className="mt-1.5 flex items-center gap-1.5 text-xs text-mauve">
+          <Loader2 size={12} className="animate-spin" /> Lendo o documento…
+        </p>
+      )}
+
+      {/* DIVERGÊNCIA — informa, não obstrui. Sem botão de "corrigir": a pessoa escolheu o tipo, e mover o
+          documento por conta própria seria decidir por ela. O tom é âmbar, não vermelho: isto não é erro. */}
+      {divergencia && (
+        <div className="mt-2 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2">
+          <AlertTriangle size={14} className="mt-0.5 flex-shrink-0 text-amber-600" />
+          <p className="text-xs leading-relaxed text-amber-900">
+            {divergencia}{' '}
+            <span className="text-amber-700">Se estiver certo, é só continuar — nada será movido.</span>
+          </p>
+        </div>
+      )}
     </div>
   )
 }

@@ -34,6 +34,7 @@ import { Card } from '@/lib/ui/ds'
 import { row } from '@/lib/supabase/db'
 import {
   DOCUMENT_SUBTYPES, documentSubtypeLabel, buildPatientDocumentInsert, documentSubtitle, isReadyToSave,
+  autofillFrom,
   type PatientDocumentSubtype, type AttachedFile,
 } from '@sintera/core'
 
@@ -253,7 +254,21 @@ export default function DocumentosPage() {
                     seletor de vínculo aqui, o texto volta — junto com o campo. */}
               </div>
 
-              <AnexoDocumento files={files} onChange={setFiles} upload={uploadPagina} />
+              {/* LEITURA ASSISTIDA (ANEXO-001 · item D). Declara o subtipo escolhido para que o componente
+                  avise se o documento anexado parece outra coisa, e devolva emissor e data para REVISÃO.
+                  `autofillFrom` não sobrescreve o que já foi digitado: a pessoa é a autoridade sobre o
+                  próprio registro. */}
+              <AnexoDocumento
+                files={files} onChange={setFiles} upload={uploadPagina}
+                leituraAssistida={{
+                  declarado: subtype,
+                  onLeitura: (leitura) => {
+                    const preenchido = autofillFrom(leitura, { issuer, docDate })
+                    setIssuer(preenchido.issuer)
+                    setDocDate(preenchido.docDate)
+                  },
+                }}
+              />
 
               <div>
                 <label className="mb-1.5 block text-sm text-mauve">Emitido por</label>
