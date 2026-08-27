@@ -23,6 +23,18 @@ export const BODY_METRICS: { value: BodyMetric; label: string; unit: string; pla
   { value: 'outro', label: 'Outra medida', unit: '', placeholder: 'Valor' },
 ]
 
+/**
+ * Ordem em que as medidas de composição corporal são COMPARADAS entre duas datas.
+ *
+ * Não é ordem alfabética nem a do catálogo: começa pelo peso, que é o que a pessoa acompanha, e segue para a
+ * composição. Estava declarada nas DUAS pontas — duplicação achada pela catraca de base única (27/08).
+ * Acrescentar uma métrica num lado e esquecer o outro faria ela sumir da comparação numa das telas.
+ */
+export const BODY_COMPARE_ORDER: readonly BodyMetric[] = [
+  'peso', 'gordura_corporal', 'massa_muscular', 'massa_magra', 'agua_corporal',
+  'gordura_visceral', 'taxa_metabolica', 'massa_ossea', 'circunferencia_cintura',
+]
+
 /** Métricas extraídas de um laudo de bioimpedância (IMC é calculado à parte). */
 export const BIO_METRICS: BodyMetric[] = ['peso', 'gordura_corporal', 'massa_muscular', 'massa_magra', 'agua_corporal', 'gordura_visceral', 'massa_ossea', 'taxa_metabolica']
 

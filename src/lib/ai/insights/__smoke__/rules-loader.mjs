@@ -6,7 +6,7 @@
 
 // ── Lógica portada de rules-loader.ts ───────────────────────────────────
 const CLINICAL_FLAGS = new Set(['atencao_imediata', 'acompanhar', 'normal'])
-const PRIORITIES = new Set(['low', 'medium', 'high'])
+const INSIGHT_PRIORITIES = new Set(['low', 'medium', 'high'])
 const INSIGHT_TYPES = new Set(['biomarker', 'cluster', 'longitudinal', 'priority'])
 const RANGE_STATUSES = new Set(['below', 'above', 'within', 'no_reference', 'non_numeric'])
 
@@ -76,7 +76,7 @@ function parseRulesetCsv(csvText) {
     const insightType = get(r, idx.insightType) || 'biomarker'
     if (!INSIGHT_TYPES.has(insightType)) { result.errors.push({ line, catalogCode, message: 'insight_type inválido' }); continue }
     const priority = get(r, idx.priority) || 'medium'
-    if (!PRIORITIES.has(priority)) { result.errors.push({ line, catalogCode, message: 'priority inválido' }); continue }
+    if (!INSIGHT_PRIORITIES.has(priority)) { result.errors.push({ line, catalogCode, message: 'priority inválido' }); continue }
     const cond = parseCondition(get(r, idx.conditionKind), get(r, idx.conditionParams))
     if (cond.error) { result.errors.push({ line, catalogCode, message: cond.error }); continue }
     result.ruleset.push({ catalogCode, when: cond, clinicalFlag, templateKey, insightType, priority })

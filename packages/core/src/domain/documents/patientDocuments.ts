@@ -24,6 +24,13 @@ import { lowerLeadIfCommon } from '../exams/orderTitle'
 
 export type PatientDocumentSubtype = 'receita' | 'atestado' | 'relatorio' | 'encaminhamento' | 'outro'
 
+/**
+ * Chave do filtro "todos" na lista de documentos. Estava declarada nas DUAS pontas, com o mesmo valor —
+ * duplicação achada pela catraca de base única (27/08). Trocá-la num lado e esquecer o outro faria o filtro
+ * parar de casar em silêncio.
+ */
+export const DOCUMENT_FILTER_ALL = 'todos'
+
 export const DOCUMENT_SUBTYPES: { value: PatientDocumentSubtype; label: string }[] = [
   { value: 'receita',        label: 'Receita' },
   { value: 'atestado',       label: 'Atestado' },

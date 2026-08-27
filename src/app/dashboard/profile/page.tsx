@@ -15,9 +15,9 @@ import ActionCard from '@/components/ui/ActionCard'
 import Select from '@/components/ui/Select'
 import { monthLabel, DIAL_COUNTRIES, DEFAULT_DIAL_ISO, splitPhone, joinPhone, dialLabel } from '@sintera/core'
 import { getProfileStats, type ProfileStats } from '@sintera/api-client'
-import { validateName, validatePhone, validateAgeRange, validateGoals, parseGoals, goalsToInput, AGE_RANGE_OPTIONS } from '@sintera/validation'
+import { validateName, validatePhone, validateAgeRange, validateGoals, parseGoals, goalsToInput, AGE_RANGE_OPTIONS, AGE_RANGE_EMPTY_LABEL } from '@sintera/validation'
 
-const AGE_RANGE_SELECT = [{ value: '', label: 'Não informar' }, ...AGE_RANGE_OPTIONS.map(o => ({ value: o, label: o }))]
+const AGE_RANGE_SELECT = [{ value: '', label: AGE_RANGE_EMPTY_LABEL }, ...AGE_RANGE_OPTIONS.map(o => ({ value: o, label: o }))]
 
 /** Dias desde a criação da conta (mín. 1). Cálculo de exibição — MESMA fórmula do Mobile. */
 function daysSince(iso: string | null): number {

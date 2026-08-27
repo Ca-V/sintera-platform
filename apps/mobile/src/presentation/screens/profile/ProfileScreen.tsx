@@ -8,14 +8,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { text, heading } from '@sintera/design-system'
 import { monthLabel, dialSelectOptions } from '@sintera/core'
-import { AGE_RANGE_OPTIONS } from '@sintera/validation'
+import { AGE_RANGE_OPTIONS, AGE_RANGE_EMPTY_LABEL } from '@sintera/validation'
 import { Avatar, Button, FieldRow, Input, Select, Text } from '../../primitives'
 import { useTheme } from '../../theme'
 import { useAuth } from '../../../state/AuthProvider'
 import { useProfile } from './useProfile'
 
 // Opções do seletor de faixa etária (SSOT em @sintera/validation) + opção de limpar.
-const AGE_RANGE_SELECT = [{ id: '', label: 'Não informar' }, ...AGE_RANGE_OPTIONS.map(o => ({ id: o, label: o }))]
+const AGE_RANGE_SELECT = [{ id: '', label: AGE_RANGE_EMPTY_LABEL }, ...AGE_RANGE_OPTIONS.map(o => ({ id: o, label: o }))]
 
 // Códigos de país (SSOT em @sintera/core). Passa de 8 opções → o Select abre com busca.
 const COUNTRY_SELECT = dialSelectOptions()   // mesma lista e mesmos rótulos da Configurações

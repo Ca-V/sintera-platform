@@ -19,7 +19,7 @@ import type { ClinicalFlag, InsightType, RangeStatus } from './types'
 import type { InsightRule, RuleCondition, RuleSet } from './engine'
 
 const CLINICAL_FLAGS = new Set<string>(['atencao_imediata', 'acompanhar', 'normal'])
-const PRIORITIES = new Set<string>(['low', 'medium', 'high'])
+const INSIGHT_PRIORITIES = new Set<string>(['low', 'medium', 'high'])
 const INSIGHT_TYPES = new Set<string>(['biomarker', 'cluster', 'longitudinal', 'priority'])
 const RANGE_STATUSES = new Set<string>(['below', 'above', 'within', 'no_reference', 'non_numeric'])
 
@@ -168,7 +168,7 @@ export function parseRulesetCsv(csvText: string): RulesetParseResult {
       continue
     }
     const priorityRaw = get(r, idx.priority) || 'medium'
-    if (!PRIORITIES.has(priorityRaw)) {
+    if (!INSIGHT_PRIORITIES.has(priorityRaw)) {
       result.errors.push({ line, catalogCode, message: `priority inválido: "${priorityRaw}"` })
       continue
     }

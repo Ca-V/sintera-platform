@@ -37,7 +37,7 @@ import { targetNamesByDocument } from '@sintera/api-client'
 import {
   DOCUMENT_SUBTYPES, documentSubtypeLabel, buildPatientDocumentInsert, documentSubtitle, isReadyToSave,
   autofillFrom, deriveDocumentTitle,
-  type PatientDocumentSubtype, type AttachedFile, uuid,} from '@sintera/core'
+  type PatientDocumentSubtype, type AttachedFile, uuid, DOCUMENT_FILTER_ALL,} from '@sintera/core'
 
 // Ícone por subtipo. Mapa EXAUSTIVO por construção: o TypeScript exige uma entrada para cada
 // subtipo declarado no core, então acrescentar um subtipo lá quebra a compilação aqui em vez
@@ -61,7 +61,6 @@ type DocRow = {
 }
 
 const COLUMNS = 'id, subtype, file_url, issuer, doc_date, notes, created_at'
-const FILTER_ALL = 'todos'
 
 export default function DocumentosPage() {
   const { user } = useUser()
@@ -69,7 +68,7 @@ export default function DocumentosPage() {
 
   const [rows, setRows] = useState<DocRow[]>([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<string>(FILTER_ALL)
+  const [filter, setFilter] = useState<string>(DOCUMENT_FILTER_ALL)
 
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -157,7 +156,7 @@ export default function DocumentosPage() {
     await load()
   }
 
-  const visible = filter === FILTER_ALL ? rows : rows.filter(r => r.subtype === filter)
+  const visible = filter === DOCUMENT_FILTER_ALL ? rows : rows.filter(r => r.subtype === filter)
 
   // Contagem por subtipo, para o seletor dizer quantos há de cada — sem uma segunda consulta.
   const counts = rows.reduce<Record<string, number>>((acc, r) => {
@@ -166,7 +165,7 @@ export default function DocumentosPage() {
   }, {})
 
   const filterOptions = [
-    { value: FILTER_ALL, label: `Todos (${rows.length})` },
+    { value: DOCUMENT_FILTER_ALL, label: `Todos (${rows.length})` },
     ...DOCUMENT_SUBTYPES.map(s => ({ value: s.value, label: `${s.label} (${counts[s.value] ?? 0})` })),
   ]
 

@@ -10,7 +10,7 @@ import type { EventDraft } from '@sintera/api-client'
 import {
   EVENT_TYPE_DEFS, EVENT_STATUS_UI, PROFESSIONAL_KIND_DEFS, EXPENSE_DOC_TYPES,
   serializeRule, parseRule, parseAmountToCents, centsToAmount, googleCalendarUrl,
-  CADENCE_PRESETS, cadenceIdFor, cadenceById, type EventStatus,
+  CADENCE_PRESETS, cadenceIdFor, cadenceById, eventPriorityOptions, eventModalityOptions, type EventStatus,
 } from '@sintera/core'
 import { Text, Button, Input, Switch, DatePicker, Select } from '../../primitives'
 import { useTheme } from '../../theme'
@@ -20,8 +20,10 @@ import { documentPicker } from '../../../infrastructure/documentPickerAdapter'
 
 type Props = NativeStackScreenProps<AgendaStackParamList, 'EventForm'>
 
-const MODALITIES = [{ id: 'presencial', label: 'Presencial' }, { id: 'telemedicina', label: 'Telemedicina' }] as const
-const PRIORITIES = [{ id: 'alta', label: 'Alta' }, { id: 'media', label: 'Média' }, { id: 'baixa', label: 'Baixa' }] as const
+// Catálogos do core — rótulos e ordem são os MESMOS da Web (base única). O Chips pede {id,label}; o mapeamento
+// abaixo é adaptação de MECANISMO, não uma segunda decisão sobre quais opções existem.
+const MODALITIES = eventModalityOptions().map(o => ({ id: o.value, label: o.label }))
+const PRIORITIES = eventPriorityOptions().map(o => ({ id: o.value, label: o.label }))
 
 export function EventFormScreen({ route, navigation }: Props) {
   const t = useTheme()

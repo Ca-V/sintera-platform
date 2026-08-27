@@ -11,6 +11,15 @@ export const PHONE_MIN_DIGITS = 8
 export const AGE_RANGE_OPTIONS = ['18-25', '26-35', '36-45', '46+'] as const
 export type AgeRange = (typeof AGE_RANGE_OPTIONS)[number]
 
+/**
+ * Rótulo da opção vazia do seletor — não informar a faixa é ESCOLHA legítima, não ausência de resposta.
+ *
+ * A lista de faixas já era compartilhada, mas este texto estava escrito à mão nas duas telas. É copy que a
+ * pessoa lê: reescrevê-lo num lado (para "Prefiro não dizer", por exemplo) e não no outro faria as duas telas
+ * falarem diferente sobre a mesma escolha, sem ninguém perceber (base única, 27/08).
+ */
+export const AGE_RANGE_EMPTY_LABEL = 'Não informar'
+
 // Objetivos — texto livre (sem taxonomia fechada): a usuária escreve, separando por vírgula. Limites de sanidade.
 export const GOALS_MAX = 10
 export const GOAL_MAX_LEN = 60

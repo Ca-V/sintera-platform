@@ -1,6 +1,7 @@
 // @sintera/core — APRESENTAÇÃO dos eventos (rótulos, formatação). Fonte ÚNICA (Web + Mobile). Mantém o
 // domínio (event.ts) livre de texto/formato visual. A projeção para notificação (eventToNotificationInput)
 // permanece na Web (depende do módulo notification); tudo o mais é puro e vive aqui.
+import { EVENT_PRIORITIES, EVENT_MODALITIES } from './event'
 import type { EventStatus, EventModality, EventPriority, Outcome } from './event'
 
 // ── FONTE ÚNICA dos tipos de evento (Agenda E Histórico falam a mesma língua) ──
@@ -118,6 +119,22 @@ const PRIORITY_META: Record<EventPriority, { label: string; icon: string; rank: 
 export function priorityBadge(p: EventPriority | null): { label: string; icon: string } | null {
   const m = p ? PRIORITY_META[p] : null
   return m ? { label: m.label, icon: m.icon } : null
+}
+
+/**
+ * Opções de prioridade para o seletor, na ordem em que a pessoa as vê — alta primeiro.
+ *
+ * O Mobile mantinha esta lista escrita à mão, com os mesmos três rótulos que já viviam em `PRIORITY_META`.
+ * Duplicação achada pela catraca de base única (27/08): renomear "Média" ou acrescentar um nível mexeria num
+ * lado só, e o seletor de uma das telas ficaria falando um vocabulário que o outro não conhece.
+ */
+export function eventPriorityOptions(): { value: EventPriority; label: string }[] {
+  return EVENT_PRIORITIES.map(p => ({ value: p, label: PRIORITY_META[p].label }))
+}
+
+/** Opções de modalidade para o seletor — mesmo motivo de `eventPriorityOptions`. */
+export function eventModalityOptions(): { value: EventModality; label: string }[] {
+  return EVENT_MODALITIES.map(m => ({ value: m, label: modalityLabel(m)! }))
 }
 
 /** Peso ordinal p/ ORDENAR (alta=0 antes; ausência = último). Determinístico. */

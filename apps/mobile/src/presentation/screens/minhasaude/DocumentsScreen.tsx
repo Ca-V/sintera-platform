@@ -12,14 +12,13 @@ import { text } from '@sintera/design-system'
 import type { PatientDocumentDTO, PickedFile } from '@sintera/api-client'
 import {
   DOCUMENT_SUBTYPES, documentSubtypeLabel, documentSubtitle, isReadyToSave, DOCUMENT_BASE_ACTIONS,
-  autofillFrom, deriveDocumentTitle,
+  autofillFrom, deriveDocumentTitle, DOCUMENT_FILTER_ALL,
   type PatientDocumentSubtype, type AttachedFile,
 } from '@sintera/core'
 import { Text, Button, Input, AttachmentLink, DatePicker, Disclaimer, Select, AnexoDocumento } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 
-const FILTER_ALL = 'todos'
 
 // Rótulos das ações OBRIGATÓRIAS, do contrato no núcleo — a mesma redação em toda categoria e nas duas pontas.
 const ACOES = Object.fromEntries(DOCUMENT_BASE_ACTIONS.map(a => [a.kind, a.label])) as Record<'view' | 'edit' | 'delete', string>
@@ -35,7 +34,7 @@ export function DocumentsScreen() {
   const [error, setError] = useState<string | null>(null)
   const alive = useRef(true)
 
-  const [filter, setFilter] = useState<string>(FILTER_ALL)
+  const [filter, setFilter] = useState<string>(DOCUMENT_FILTER_ALL)
   const [open, setOpen] = useState(false)
   // EDITAR: o cartão passou a ter a ação obrigatória do contrato. Ela não existia em NENHUMA tela do Mobile,
   // e `updateDocument` estava no api-client sem consumidor nenhum.
@@ -152,7 +151,7 @@ export function DocumentsScreen() {
     )
   }
 
-  const visible = filter === FILTER_ALL ? items : items.filter(d => d.subtype === filter)
+  const visible = filter === DOCUMENT_FILTER_ALL ? items : items.filter(d => d.subtype === filter)
 
   const counts = items.reduce<Record<string, number>>((acc, d) => {
     acc[d.subtype] = (acc[d.subtype] ?? 0) + 1
@@ -160,7 +159,7 @@ export function DocumentsScreen() {
   }, {})
 
   const filterOptions = [
-    { id: FILTER_ALL, label: `Todos (${items.length})` },
+    { id: DOCUMENT_FILTER_ALL, label: `Todos (${items.length})` },
     ...DOCUMENT_SUBTYPES.map(s => ({ id: s.value, label: `${s.label} (${counts[s.value] ?? 0})` })),
   ]
 

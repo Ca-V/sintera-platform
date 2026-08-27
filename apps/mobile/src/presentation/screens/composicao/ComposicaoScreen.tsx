@@ -10,6 +10,7 @@ import { useNavigation } from '@react-navigation/native'
 import { text } from '@sintera/design-system'
 import type { BodyMetricDTO, ExamDTO } from '@sintera/api-client'
 import type { HealthEvent } from '@sintera/core'
+import { BODY_COMPARE_ORDER } from '@sintera/core'
 import {
   BODY_METRICS, bodyMetricLabel, bodyMetricUnit, isVital, type BodyMetric,
   currentSummary, computeWeightJourney, lastAssessment, sourceQuality, RELIABILITY_LABEL,
@@ -28,7 +29,6 @@ function parseNum(v: string): number { return Number(String(v).replace(',', '.')
 function fmt(d: string): string { const [y, m, dd] = (d || '').slice(0, 10).split('-'); return y ? `${dd}/${m}/${y}` : '—' }
 function today(): string { return new Date().toISOString().slice(0, 10) }
 const SUMMARY_ORDER: BodyMetric[] = ['peso', 'gordura_corporal', 'massa_muscular', 'massa_magra', 'agua_corporal', 'gordura_visceral', 'taxa_metabolica', 'massa_ossea', 'circunferencia_cintura', 'altura']
-const COMPARE_ORDER = ['peso', 'gordura_corporal', 'massa_muscular', 'massa_magra', 'agua_corporal', 'gordura_visceral', 'taxa_metabolica', 'massa_ossea', 'circunferencia_cintura']
 
 export function ComposicaoScreen() {
   const t = useTheme()
@@ -129,7 +129,7 @@ export function ComposicaoScreen() {
   const snapB = snapshots.find(s => s.key === snapBKey) ?? snapshots[1] ?? null
   // Mostra TODAS as métricas (as ausentes marcadas "Não disponível") — evidencia indisponibilidades sem
   // normalizar entre tecnologias (BOD-001 ③). Não filtra por r.available.
-  const compareRows = useMemo(() => compareSnapshots(snapA, snapB, COMPARE_ORDER), [snapA, snapB])
+  const compareRows = useMemo(() => compareSnapshots(snapA, snapB, BODY_COMPARE_ORDER), [snapA, snapB])
   const compareRelevant = compareRows.filter(r => r.available && r.delta != null && r.delta !== 0)
   const sameSnap = !!snapA && !!snapB && snapA.key === snapB.key
   const snapLabel = (s: Snapshot | null) => s ? `${sourceQuality(s.source)?.label ?? s.source ?? 'Registro'} · ${fmt(s.date)}` : '—'
