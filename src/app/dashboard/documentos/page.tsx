@@ -37,8 +37,7 @@ import { targetNamesByDocument } from '@sintera/api-client'
 import {
   DOCUMENT_SUBTYPES, documentSubtypeLabel, buildPatientDocumentInsert, documentSubtitle, isReadyToSave,
   autofillFrom, deriveDocumentTitle,
-  type PatientDocumentSubtype, type AttachedFile,
-} from '@sintera/core'
+  type PatientDocumentSubtype, type AttachedFile, uuid,} from '@sintera/core'
 
 // Ícone por subtipo. Mapa EXAUSTIVO por construção: o TypeScript exige uma entrada para cada
 // subtipo declarado no core, então acrescentar um subtipo lá quebra a compilação aqui em vez
@@ -110,7 +109,7 @@ export default function DocumentosPage() {
   const uploadPagina = useCallback(async (file: File): Promise<string | null> => {
     if (!user) return null
     const ext = file.name.split('.').pop() ?? 'pdf'
-    const path = `${user.id}/${crypto.randomUUID()}.${ext}`
+    const path = `${user.id}/${uuid()}.${ext}`
     const { error: upErr } = await supabase.storage.from('exams')
       .upload(path, file, { contentType: file.type, upsert: false })
     if (upErr) return null

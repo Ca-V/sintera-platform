@@ -32,7 +32,7 @@ export async function uploadAndIngest(
 
   // Preserva o arquivo original (bucket privado).
   let sourceUrl: string | null = null
-  const path = `${userId}/omics/${crypto.randomUUID()}-${file.name}`
+  const path = `${userId}/omics/${uuid()}-${file.name}`
   const { error: upErr } = await supabase.storage.from('exams').upload(path, file, {
     contentType: file.type || 'application/octet-stream', upsert: false,
   })
@@ -59,3 +59,5 @@ export async function uploadAndIngest(
   if (!res.ok) throw new Error(json.error ?? 'Falha na importação.')
   return json as IngestResult
 }
+
+import { uuid } from '@sintera/core'

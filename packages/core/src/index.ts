@@ -9,6 +9,9 @@ export * from './ports/sync'
 // Contrato de módulo de domínio (capacidade da plataforma; ADR-009).
 export * from './domain/module'
 
+// Identificadores — funcionam em QUALQUER navegador e aparelho (princípio de disponibilidade universal).
+export * from './domain/ids'
+
 // Projeção cronológica (Timeline) — lógica pura reutilizável por qualquer domínio datado.
 export * from './domain/timeline'
 

@@ -37,6 +37,7 @@ import { eventServicesFor, isFinancial, selectByLink, type HealthEvent } from '@
 import { parseRule } from '@/lib/recurrence'
 import { todayISO } from '@/lib/date'
 import { expenseDocLabel } from '@/lib/finance/expense'
+import { uuid } from '@sintera/core'
 
 // FB-016-2 — frequências de troca (mesmo padrão inline do Medicamento), no conjunto canônico de recorrência.
 const TROCA_FREQ_OPTS: { v: RecurrenceFreq; l: string }[] = [
@@ -226,7 +227,7 @@ export default function RecursosPage() {
     setScanning(true); setErr(null); setShowForm(true)
     try {
       const ext = file.name.split('.').pop() ?? 'jpg'
-      const path = `${user.id}/${crypto.randomUUID()}.${ext}`
+      const path = `${user.id}/${uuid()}.${ext}`
       const { error: upErr } = await supabase.storage.from('exams').upload(path, file, { contentType: file.type, upsert: false })
       if (!upErr) {
         const { data: signed } = await supabase.storage.from('exams').createSignedUrl(path, 60 * 60 * 24 * 365)

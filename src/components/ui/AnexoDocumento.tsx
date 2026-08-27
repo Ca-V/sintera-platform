@@ -23,8 +23,7 @@ import {
   acceptFiles, removeFile, rejectionMessage, attachmentCountLabel,
   supportedNowAcceptAttr, entryMethodsFor,
   readingFromClassification, documentDivergence, documentSubtypeLabel,
-  type AttachedFile, type IncomingFile, type DocumentReading, type PatientDocumentSubtype,
-} from '@sintera/core'
+  type AttachedFile, type IncomingFile, type DocumentReading, type PatientDocumentSubtype, uuid,} from '@sintera/core'
 import { fileToBase64 } from '@/lib/capture/fileToBase64'
 
 export interface AnexoDocumentoProps {
@@ -112,7 +111,7 @@ export default function AnexoDocumento({
 
     // A POLÍTICA decide o que entra. A tela não repete essa decisão.
     const entrando: IncomingFile[] = lista.map(f => ({
-      id: crypto.randomUUID(), name: f.name, mime: f.type, sizeBytes: f.size,
+      id: uuid(), name: f.name, mime: f.type, sizeBytes: f.size,
     }))
     const { files: aceitos, rejected } = acceptFiles(files, entrando)
     setAviso(rejectionMessage(rejected))

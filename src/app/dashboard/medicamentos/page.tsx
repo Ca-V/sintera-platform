@@ -33,6 +33,7 @@ import Disclaimer from '@/components/ui/Disclaimer'
 import { healthEventToRow } from '@/lib/agenda/event'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import Select from '@/components/ui/Select'
+import { uuid } from '@sintera/core'
 
 type Status = 'em_uso' | 'programado' | 'suspenso' | 'encerrado'
 type Kind = 'medicamento' | 'suplemento' | 'produto' | 'dispositivo' | 'outro'
@@ -346,7 +347,7 @@ export default function MedicamentosPage() {
   // D-13: sobe a receita ao storage e devolve a URL assinada (1 ano), como em Exames/Condições.
   async function uploadRx(file: File): Promise<string> {
     const ext = file.name.split('.').pop() ?? 'bin'
-    const path = `${user!.id}/${crypto.randomUUID()}.${ext}`
+    const path = `${user!.id}/${uuid()}.${ext}`
     const { error: upErr } = await supabase.storage.from('exams').upload(path, file, { contentType: file.type, upsert: false })
     if (upErr) throw new Error(`[storage] ${upErr.message}`)
     const { data: signed, error: sErr } = await supabase.storage.from('exams').createSignedUrl(path, 60 * 60 * 24 * 365)
