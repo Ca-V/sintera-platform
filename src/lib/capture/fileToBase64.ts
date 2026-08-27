@@ -9,11 +9,10 @@
 // A imagem é REDUZIDA antes de enviar. Não é economia apenas — foto de celular hoje passa de 4000px, e mandá-la
 // inteira aumenta latência e custo sem melhorar a leitura do TIPO do documento, que é o que se quer aqui.
 
-/** Maior lado da imagem enviada à classificação. Acima disto não melhora a leitura do tipo. */
-const MAX_LADO = 1600
-
-/** Qualidade do JPEG de saída — suficiente para ler cabeçalho, carimbo e data. */
-const QUALIDADE = 0.8
+// A POLÍTICA (tamanho, qualidade, quando reduzir) vem do core — o aplicativo lê as MESMAS constantes. Só o
+// mecanismo é daqui: a Web usa canvas, o aplicativo usa a biblioteca nativa. Antes, os números viviam neste
+// arquivo e o aplicativo não os tinha — o mesmo documento chegava ao leitor em resoluções diferentes.
+import { targetImageSize, IMAGE_QUALITY } from '@sintera/core'
 
 export interface Base64Payload {
   fileBase64: string
@@ -33,15 +32,16 @@ export async function fileToBase64(file: File): Promise<Base64Payload> {
         const img = new Image()
         const url = URL.createObjectURL(file)
         img.onload = () => {
-          const escala = Math.min(1, MAX_LADO / Math.max(img.width, img.height))
+          // `targetImageSize` já decide: devolve a entrada intacta quando ela cabe, e nunca amplia.
+          const alvo = targetImageSize({ width: img.width, height: img.height })
           const canvas = document.createElement('canvas')
-          canvas.width = Math.max(1, Math.round(img.width * escala))
-          canvas.height = Math.max(1, Math.round(img.height * escala))
+          canvas.width = alvo.width
+          canvas.height = alvo.height
           const ctx = canvas.getContext('2d')
           if (!ctx) { URL.revokeObjectURL(url); reject(new Error('canvas')); return }
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
           URL.revokeObjectURL(url)
-          resolve(canvas.toDataURL('image/jpeg', QUALIDADE))
+          resolve(canvas.toDataURL('image/jpeg', IMAGE_QUALITY))
         }
         img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('img')) }
         img.src = url

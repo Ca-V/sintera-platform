@@ -21,7 +21,7 @@ import { Button } from './Button'
 import { useTheme } from '../theme'
 import { documentPicker } from '../../infrastructure/documentPickerAdapter'
 import { apiClient } from '../../infrastructure/apiClient'
-import { readFileBase64 } from '../../infrastructure/fileToBase64'
+import { fileToBase64 } from '../../infrastructure/fileToBase64'
 
 const TEM_CAMERA = entryMethodsFor('mobile').includes('camera')
 
@@ -71,13 +71,11 @@ export function AnexoDocumento({
     setLendo(true)
     setDivergencia(null)
     try {
-      const fileBase64 = await readFileBase64(original.uri)
-      if (!fileBase64) return
-      const cls = await apiClient.capture.classify({
-        fileBase64,
-        mediaType: original.mimeType ?? 'application/octet-stream',
-        filename: original.name,
-      })
+      // Aplica a MESMA política de preparo que a Web (tamanho e qualidade vêm do core). Sem isto, a foto
+      // ia inteira e estourava o limite de requisição da hospedagem — a leitura falhava por TAMANHO.
+      const preparado = await fileToBase64(original.uri, original.mimeType)
+      if (!preparado.fileBase64) return
+      const cls = await apiClient.capture.classify({ ...preparado, filename: original.name })
       const leitura = readingFromClassification(cls)
       if (!leitura) return
 
