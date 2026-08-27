@@ -63,13 +63,14 @@
       "@react-native-community/datetimepicker",
       "react-native-health-connect",
       "./plugins/withHealthConnectRationale",
+      "./plugins/withMinSdkOverride",
       [
         "expo-build-properties",
         {
           "android": {
             "compileSdkVersion": 36,
             "targetSdkVersion": 36,
-            "minSdkVersion": 26
+            "minSdkVersion": 24
           }
         }
       ]

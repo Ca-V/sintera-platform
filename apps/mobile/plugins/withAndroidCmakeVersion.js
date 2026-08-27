@@ -17,6 +17,7 @@
 // a correção e o defeito voltaria. Este plugin é versionado e reaplica a configuração a cada prebuild.
 //
 // NÃO reduzir a versão sem revalidar o build no Windows. Ver docs/MOBILE-010.
+// eslint-disable-next-line @typescript-eslint/no-require-imports -- config plugin do Expo é CommonJS: o prebuild o carrega com require() do Node, e um import ESM aqui não seria resolvido.
 const { withAppBuildGradle } = require('@expo/config-plugins')
 
 /** Versão do CMake do Android SDK validada como baseline do projeto (ver docs/MOBILE-010). */

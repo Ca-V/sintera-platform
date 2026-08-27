@@ -16,6 +16,7 @@
 // ela faz. O que a documentação dela NÃO garante é a declaração de rationale/uso; por isso está aqui, explícita.
 //
 // Ver docs/HIP-014 §5.
+// eslint-disable-next-line @typescript-eslint/no-require-imports -- config plugin do Expo é CommonJS: o prebuild o carrega com require() do Node, e um import ESM aqui não seria resolvido.
 const { withAndroidManifest } = require('@expo/config-plugins')
 
 const ACTION_RATIONALE = 'androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE'

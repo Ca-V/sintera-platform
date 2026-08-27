@@ -10,6 +10,7 @@
 //
 // A escrita usa a SESSÃO da pessoa, não chave privilegiada: desde a migração 150 o dono tem política de INSERT
 // em `wearable_readings` e `connector_sync_runs`.
+import { Platform } from 'react-native'
 import {
   HC_RECORD_TYPES, normalizeHealthConnect, healthConnectSamples, healthConnectActivities,
   type HcRecordType,
@@ -28,16 +29,42 @@ export interface ResultadoSync {
   erro?: string
 }
 
-/** Carrega a biblioteca sob demanda: ela é Android-only e não deve quebrar a importação no iOS. */
-async function lib() {
-  return await import('react-native-health-connect')
+/**
+ * API mínima do Android em que a biblioteca do Health Connect roda. Abaixo disto NEM TENTAMOS importá-la.
+ *
+ * O app instala em Android 7 de propósito (princípio de disponibilidade universal — ver
+ * `plugins/withMinSdkOverride`). Quem está lá nunca teria o Health Connect de qualquer forma: ele exige
+ * Android 9. Esta checagem é o que garante que o aparelho antigo veja "não disponível" em vez de um erro.
+ */
+const API_MINIMA_ANDROID = 26
+
+/** O aparelho tem sistema onde a biblioteca roda? Verificado ANTES de qualquer importação. */
+function plataformaSuportada(): boolean {
+  if (Platform.OS !== 'android') return false
+  const api = typeof Platform.Version === 'number' ? Platform.Version : Number(Platform.Version)
+  return Number.isFinite(api) && api >= API_MINIMA_ANDROID
+}
+
+/**
+ * Carrega a biblioteca sob demanda, e SÓ onde ela roda.
+ *
+ * A importação é dinâmica de propósito: em iOS e em Android antigo o módulo nunca é tocado pelo nosso código.
+ * Devolve `null` em vez de lançar — indisponibilidade é resposta legítima, não erro.
+ */
+async function lib(): Promise<typeof import('react-native-health-connect') | null> {
+  if (!plataformaSuportada()) return null
+  try {
+    return await import('react-native-health-connect')
+  } catch {
+    return null
+  }
 }
 
 /** O aparelho tem Health Connect instalado e disponível? */
 export async function healthConnectDisponivel(): Promise<boolean> {
   try {
     const hc = await lib()
-    return await hc.initialize()
+    return hc ? await hc.initialize() : false
   } catch {
     return false
   }
@@ -47,7 +74,7 @@ export async function healthConnectDisponivel(): Promise<boolean> {
 export async function pedirPermissoes(): Promise<HcRecordType[]> {
   try {
     const hc = await lib()
-    if (!(await hc.initialize())) return []
+    if (!hc || !(await hc.initialize())) return []
     const concedidas = await hc.requestPermission(
       HC_RECORD_TYPES.map((recordType) => ({ accessType: 'read' as const, recordType })),
     )
@@ -70,7 +97,7 @@ export async function sincronizarHealthConnect(desde: Date, ate: Date): Promise<
   const vazio: ResultadoSync = { disponivel: false, autorizado: false, leituras: 0, sessoes: 0 }
   try {
     const hc = await lib()
-    if (!(await hc.initialize())) return vazio
+    if (!hc || !(await hc.initialize())) return vazio
 
     const concedidas = await pedirPermissoes()
     if (concedidas.length === 0) return { ...vazio, disponivel: true }
