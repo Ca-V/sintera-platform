@@ -90,8 +90,14 @@ export function deriveOrderDisplayTitle(procedureNames: (string | null | undefin
 // Nomes próprios comuns em exames de imagem/procedimentos que devem PRESERVAR a maiúscula após "Pedido de".
 const PROPER_NOUNS = new Set(['doppler', 'holter', 'mapa', 'papanicolau', 'wada', 'schirmer'])
 
-/** Minusculiza a primeira letra, exceto quando a palavra inicial é sigla (RM/USG/TC) ou nome próprio (Doppler). */
-function lowerLeadIfCommon(title: string): string {
+/**
+ * Minusculiza a primeira letra, exceto quando a palavra inicial é sigla (RM/USG/TC) ou nome próprio (Doppler).
+ *
+ * EXPORTADA porque o título de Documentos precisa da MESMA regra ("Receita de paracetamol", mas "Receita de
+ * Doppler"). Duas implementações da mesma capitalização produziriam "Pedido de doppler" numa tela e
+ * "Pedido de Doppler" na outra — o tipo de diferença que ninguém nota até notar.
+ */
+export function lowerLeadIfCommon(title: string): string {
   const firstWord = title.split(/\s+/, 1)[0] ?? ''
   const isAcronym = /^[A-ZÀ-Ý]{2,}$/.test(firstWord)          // sigla toda em maiúsculas (RM, USG, TC)
   const isProperNoun = PROPER_NOUNS.has(firstWord.toLowerCase())

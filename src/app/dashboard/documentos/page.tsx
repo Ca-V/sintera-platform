@@ -32,9 +32,11 @@ import { Card } from '@/lib/ui/ds'
 // Helper do repositório: o cliente tipado resolve Insert como `never`, então TODA escrita da Web passa por
 // `row()`. Não é gambiarra minha — é o padrão já usado por Recursos, Hábitos e demais páginas.
 import { row } from '@/lib/supabase/db'
+// A Web reusa a MESMA consulta do Mobile (SSOT), como já faz em getProfileStats.
+import { targetNamesByDocument } from '@sintera/api-client'
 import {
   DOCUMENT_SUBTYPES, documentSubtypeLabel, buildPatientDocumentInsert, documentSubtitle, isReadyToSave,
-  autofillFrom,
+  autofillFrom, deriveDocumentTitle,
   type PatientDocumentSubtype, type AttachedFile,
 } from '@sintera/core'
 
@@ -81,13 +83,19 @@ export default function DocumentosPage() {
   const [issuer, setIssuer] = useState('')
   const [docDate, setDocDate] = useState('')
   const [notes, setNotes] = useState('')
+  /** document_id → nomes dos registros vinculados. Vazio é normal: nem todo documento tem vínculo. */
+  const [alvos, setAlvos] = useState<Record<string, string[]>>({})
 
   const load = useCallback(async () => {
     if (!user) return
     setLoading(true)
     const { data } = await supabase.from('patient_documents').select(COLUMNS)
       .eq('user_id', user.id).order('created_at', { ascending: false })
-    setRows((data as DocRow[] | null) ?? [])
+    const lista = (data as DocRow[] | null) ?? []
+    setRows(lista)
+    // Nomes dos alvos vinculados, para o card dizer "Receita de paracetamol" em vez de só "Receita".
+    // Mesma consulta que o Mobile usa (SSOT). Degrada para vazio; o título cai para o rótulo puro.
+    setAlvos(await targetNamesByDocument(supabase, lista.map(r => r.id)))
     setLoading(false)
   }, [supabase, user])
 
@@ -211,7 +219,7 @@ export default function DocumentosPage() {
               <ListCard
                 key={r.id}
                 leading={<Icon size={18} />}
-                title={documentSubtypeLabel(r.subtype)}
+                title={deriveDocumentTitle(r.subtype, alvos[r.id])}
                 meta={documentSubtitle(r)}
                 chips={<AttachmentLink url={r.file_url} label="Ver documento" icon={<Paperclip size={14} />} />}
                 actions={

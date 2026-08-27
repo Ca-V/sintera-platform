@@ -12,7 +12,7 @@ import { text } from '@sintera/design-system'
 import type { PatientDocumentDTO, PickedFile } from '@sintera/api-client'
 import {
   DOCUMENT_SUBTYPES, documentSubtypeLabel, documentSubtitle, isReadyToSave, DOCUMENT_BASE_ACTIONS,
-  autofillFrom,
+  autofillFrom, deriveDocumentTitle,
   type PatientDocumentSubtype, type AttachedFile,
 } from '@sintera/core'
 import { Text, Button, Input, AttachmentLink, DatePicker, Disclaimer, Select, AnexoDocumento } from '../../primitives'
@@ -28,6 +28,8 @@ export function DocumentsScreen() {
   const t = useTheme()
   const insets = useSafeAreaInsets()
   const [items, setItems] = useState<PatientDocumentDTO[]>([])
+  /** document_id → nomes dos registros vinculados. Vazio é normal: nem todo documento tem vínculo. */
+  const [alvos, setAlvos] = useState<Record<string, string[]>>({})
   const [phase, setPhase] = useState<'loading' | 'ready' | 'error'>('loading')
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -51,7 +53,14 @@ export function DocumentsScreen() {
   const load = useCallback((silent: boolean) => {
     if (silent) setRefreshing(true); else setPhase('loading')
     apiClient.documents.listDocuments()
-      .then((ds) => { if (!alive.current) return; setItems(ds); setPhase('ready'); setError(null) })
+      .then(async (ds) => {
+        if (!alive.current) return
+        setItems(ds); setPhase('ready'); setError(null)
+        // Nomes dos alvos vinculados, para o card dizer "Receita de paracetamol". Mesma consulta da Web.
+        // Depois de mostrar a lista, não antes: o título enriquece, e esperar por ele atrasaria a tela toda.
+        const nomes = await apiClient.documents.targetNamesByDocument(ds.map(d => d.id))
+        if (alive.current) setAlvos(nomes)
+      })
       .catch((e) => {
         if (alive.current && !silent) {
           setError(e instanceof Error ? e.message : 'Não foi possível carregar.')
@@ -258,7 +267,7 @@ export function DocumentsScreen() {
           const meta = documentSubtitle(d)
           return (
             <View key={d.id} style={[s.card, { backgroundColor: t.color.surface.base, borderColor: t.color.border.default, gap: 8 }]}>
-              <Text spec={text(t, { role: 'bodyStrong' })}>{documentSubtypeLabel(d.subtype)}</Text>
+              <Text spec={text(t, { role: 'bodyStrong' })}>{deriveDocumentTitle(d.subtype, alvos[d.id])}</Text>
               <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.text.muted }}>
                 {meta}
               </Text>

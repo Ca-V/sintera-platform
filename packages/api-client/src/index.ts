@@ -61,6 +61,8 @@ export type { PatientDocumentDTO, PatientDocumentInput, PatientDocumentPage, Doc
 // arranjo de `getProfileStats`. As duas pontas executam a MESMA função; só o cliente é injetado por cada uma.
 export { prescriptionUrlOf, archivePrescription } from './documents/prescription'
 export { listDocumentsForTargets, listPagesForDocuments } from './documents/documents'
+// Nome dos alvos vinculados — a Web consome direto (mesma consulta do Mobile, SSOT).
+export { targetNamesByDocument } from './documents/targetNames'
 export type { ConnectorsApi } from './auth/types'
 export type { MedicationDTO, MedicationInput } from './medications/medications'
 export type { EventDraft } from './agenda/events'

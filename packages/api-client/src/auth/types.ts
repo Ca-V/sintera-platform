@@ -116,6 +116,11 @@ export interface DocumentsApi {
   listDocumentsForTargets(target_domain: DocumentTargetDomain, target_ids: string[], signal?: AbortSignal): Promise<Record<string, PatientDocumentDTO[]>>
   /** ANEXO-001 — páginas de vários documentos, em lote. */
   listPagesForDocuments(documentIds: string[], signal?: AbortSignal): Promise<Record<string, PatientDocumentPage[]>>
+  /**
+   * Nome dos registros a que cada documento está vinculado — alimenta `deriveDocumentTitle`, para o card dizer
+   * "Receita de paracetamol" em vez de só "Receita". Degrada para vazio; nunca lança.
+   */
+  targetNamesByDocument(documentIds: string[]): Promise<Record<string, string[]>>
   saveDocument(input: PatientDocumentInput): Promise<{ data: { id: string } | null; error: Error | null }>
   updateDocument(id: string, patch: Partial<Pick<PatientDocumentInput, 'subtype' | 'issuer' | 'doc_date' | 'notes'>>): Promise<{ error: Error | null }>
   deleteDocument(id: string): Promise<{ error: Error | null }>
