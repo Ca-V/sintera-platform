@@ -10,7 +10,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Loader2, Plus, X, Trash2, ArrowLeft, HeartPulse, Link2, Activity } from 'lucide-react'
+import { Loader2, Plus, X, Trash2, Pencil, ArrowLeft, HeartPulse, Link2, Activity } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
@@ -24,7 +24,7 @@ import {
   durationSecondsFromMinutes, distanceMetersFromKm, numberFromField, paceKindFor, bloodPressureHint,
 } from '@sintera/core'
 import type { ActivitySessionDTO } from '@sintera/api-client'
-import { listActivitySessions, saveActivitySession, deleteActivitySession } from '@sintera/api-client'
+import { listActivitySessions, saveActivitySession, deleteActivitySession, saveBodyMetric } from '@sintera/api-client'
 import EmptyState from '@/components/EmptyState'
 import { Card } from "@/lib/ui/ds"
 import Disclaimer from '@/components/ui/Disclaimer'
@@ -100,6 +100,8 @@ export default function SinaisVitaisPage() {
   const [confirm, setConfirm] = useState<{ message: string; confirmLabel: string; onYes: () => void } | null>(null)
 
   const [showForm, setShowForm] = useState(false)
+  /** Registro sendo corrigido. `null` = novo. */
+  const [editando, setEditando] = useState<Entry | null>(null)
   const [metric, setMetric] = useState<Vital>('pressao_arterial')
   const [label, setLabel] = useState('')
   const [value, setValue] = useState('')
@@ -154,7 +156,27 @@ export default function SinaisVitaisPage() {
   useNovelty(() => load())
 
   function chooseMetric(m: Vital) { setMetric(m); setUnit(DEFAULT_UNIT[m]) }
-  function reset() { setMetric('pressao_arterial'); setLabel(''); setValue(''); setUnit('mmHg'); setDate(''); setTime(''); setNotes(''); setErr(null) }
+  function reset() { setEditando(null); setMetric('pressao_arterial'); setLabel(''); setValue(''); setUnit('mmHg'); setDate(''); setTime(''); setNotes(''); setErr(null) }
+
+  /**
+   * Abre o formulário com a medição já registrada, para CORRIGIR (defeito da homologação de 27/08: o cartão
+   * só oferecia remover). Quem digitou um dígito errado precisaria apagar e refazer, perdendo hora, origem e
+   * observação junto. MESMA capacidade e MESMO caminho do aplicativo.
+   */
+  function startEdit(it: Entry) {
+    setEditando(it)
+    setMetric(it.metric as Vital)
+    setLabel(it.label ?? '')
+    setValue(it.valueText ?? '')
+    setUnit(it.unit ?? DEFAULT_UNIT[it.metric as Vital] ?? '')
+    setDate(it.measuredOn ?? '')
+    // Hora só quando REGISTRADA — a âncora de meia-noite marca "não informada", e reexibi-la como 00:00
+    // faria a correção inventar um horário que ninguém digitou.
+    setTime(hasTimeOfDay(it.measuredAt) ? new Date(it.measuredAt as string).toTimeString().slice(0, 5) : '')
+    setNotes(it.notes ?? '')
+    setErr(null)
+    setShowForm(true)
+  }
 
   async function save() {
     if (!user || saving || !value.trim() || !date) return

@@ -60,6 +60,7 @@ export function MonitoramentoScreen() {
   const alive = useRef(true)
 
   const [open, setOpen] = useState(false)
+  const [editando, setEditando] = useState<BodyMetricDTO | null>(null)
   const [metric, setMetric] = useState<VitalMetric>('pressao_arterial')
   const [label, setLabel] = useState('')
   const [value, setValue] = useState('')
@@ -94,13 +95,37 @@ export function MonitoramentoScreen() {
 
   const groups = useMemo(() => VITAL_SIGNS.map(v => ({ v, list: items.filter(i => i.metric === v.value) })).filter(g => g.list.length > 0), [items])
 
-  function startNew() { setMetric('pressao_arterial'); setLabel(''); setValue(''); setUnit('mmHg'); setDate(today()); setTime(''); setNotes(''); setOpen(true) }
+  function startNew() { setEditando(null); setMetric('pressao_arterial'); setLabel(''); setValue(''); setUnit('mmHg'); setDate(today()); setTime(''); setNotes(''); setOpen(true) }
+
+  /**
+   * Abre o formulário com a medição já registrada, para CORRIGIR (defeito da homologação de 27/08: o cartão
+   * de sinal vital só oferecia Remover).
+   *
+   * Vale o mesmo que para atividade física: quem digitou 128/82 no lugar de 118/82 precisaria apagar e refazer,
+   * perdendo a hora, a origem e a observação junto. `saveBodyMetric` já aceitava `id` e fazia update — a
+   * capacidade existia no cliente e não tinha nenhum consumidor.
+   */
+  function startEdit(m: BodyMetricDTO) {
+    setEditando(m)
+    setMetric(m.metric as VitalMetric)
+    setLabel(m.label ?? '')
+    setValue(m.value_text ?? '')
+    setUnit(m.unit ?? unitOf(m.metric as VitalMetric))
+    setDate(m.measured_on ?? today())
+    // Hora só quando REGISTRADA: a âncora de meia-noite marca "não informada", e reexibi-la como 00:00 faria
+    // a correção inventar um horário que ninguém digitou.
+    setTime(hasTimeOfDay(m.measured_at) ? new Date(m.measured_at as string).toTimeString().slice(0, 5) : '')
+    setNotes(m.notes ?? '')
+    setOpen(true)
+  }
+
   function chooseMetric(m: VitalMetric) { setMetric(m); setUnit(unitOf(m)) }
   async function save() {
     if (!value.trim() || !/^\d{4}-\d{2}-\d{2}$/.test(date)) { Alert.alert('Campos obrigatórios', 'Informe valor e data (AAAA-MM-DD).'); return }
     setSaving(true)
     try {
       const { error: err } = await apiClient.body.saveBodyMetric({
+        id: editando?.id,
         metric, label: metric === 'outro_sinal' ? (label.trim() || 'Sinal') : null,
         value_text: value, unit, measured_on: date, measured_at: instantOf(date, time), notes,
       })
@@ -295,7 +320,12 @@ export function MonitoramentoScreen() {
               <View key={i.id} style={[styles.card, card, { gap: 2 }]}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <Text spec={text(t, { role: 'body' })}>{i.metric === 'outro_sinal' && i.label ? `${i.label}: ` : ''}{i.value_text}{i.unit ? ` ${i.unit}` : ''}</Text>
-                  <Pressable onPress={() => remove(i)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>{C.removeAction}</Text></Pressable>
+                  {/* EDITAR e REMOVER juntos, na ordem de todo cartão da plataforma. Só remover obrigaria
+                      quem errou um dígito a apagar e refazer, perdendo hora, origem e observação. */}
+                  <View style={{ flexDirection: 'row', gap: 14 }}>
+                    <Pressable onPress={() => startEdit(i)} hitSlop={8}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>{C.editAction}</Text></Pressable>
+                    <Pressable onPress={() => remove(i)} hitSlop={8}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>{C.removeAction}</Text></Pressable>
+                  </View>
                 </View>
                 <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{measurementMeta({ when: fmtMeasured(i.measured_on, i.measured_at), source: i.source, notes: i.notes })}</Text>
               </View>

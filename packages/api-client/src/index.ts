@@ -52,6 +52,9 @@ export type { OmicsPanelDTO as OmicsPanel, OmicsPanelDetail, OmicsCategoryDTO, O
 export type { NotificationPrefRow } from './settings/notifications'
 export type { CaptureInput, ConditionScan, BioimpedanceScan, EyeglassesScan, EyeglassesEye, MedicationScanItem } from './vision/vision'
 export type { BodyMetricDTO, BodyMetricInput } from './body/body'
+// `saveBodyMetric` cria E corrige (o `id` distingue) — a Web passa a usá-la em vez de escrever seu próprio
+// insert, para as duas pontas gravarem a medição pelo MESMO caminho (base única, 27/08).
+export { saveBodyMetric } from './body/body'
 export type { ResourceDTO, ResourceInput } from './resources/resources'
 // Domínio Documentos do paciente (DOC-001/DOC-002) — receita · atestado · relatório · encaminhamento · outros.
 export type { DocumentsApi } from './auth/types'
