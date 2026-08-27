@@ -124,4 +124,7 @@ export * from './domain/connectors/healthConnect'
 // Telefone com código de país (E.164) — fonte única Web↔Mobile.
 export * from './domain/profile/phone'
 export * from './domain/documents/patientDocuments'
+// Catálogo único das seções da plataforma (nome · ordem · grupo · resumo). Sidebar da Web e menus do
+// aplicativo leem daqui — a taxonomia estava escrita em três lugares.
+export * from './domain/navigation/sections'
 export * from './domain/documents/cardActions'

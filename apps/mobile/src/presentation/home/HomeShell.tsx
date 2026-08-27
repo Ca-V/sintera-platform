@@ -10,6 +10,7 @@ import { WelcomeSlot } from './slots/WelcomeSlot'
 import { AdicionarRegistroSlot } from './slots/AdicionarRegistroSlot'
 import { ProximosCompromissosSlot, type UpcomingItem } from './slots/ProximosCompromissosSlot'
 import { QuickActionsSlot } from './slots/QuickActionsSlot'
+import { TudoNaSinteraSlot } from './slots/TudoNaSinteraSlot'
 import { ComoUsarSlot } from './slots/ComoUsarSlot'
 import { FooterSlot } from './slots/FooterSlot'
 import { RegistrationHubSheet } from '../screens/capture/RegistrationHubSheet'
@@ -30,6 +31,7 @@ export function HomeShell({ upcoming = [], name }: { upcoming?: UpcomingItem[]; 
         <AdicionarRegistroSlot onPress={openAdd} />
         <ProximosCompromissosSlot items={upcoming} />
         <QuickActionsSlot />
+        <TudoNaSinteraSlot />
         <ComoUsarSlot />
         <FooterSlot />
       </ScrollView>

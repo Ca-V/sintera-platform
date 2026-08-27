@@ -6,6 +6,7 @@ import { usePathname, useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getMinhaSaudeCounts, type MinhaSaudeCounts } from '@sintera/api-client'
+import { PLATFORM_NAV, type SectionId } from '@sintera/core'
 import { createClient } from '@/lib/supabase/client'
 import {
   LayoutDashboard, FileText, FileHeart, ClipboardList, Clock, Pill, Receipt, CalendarDays,
@@ -34,47 +35,49 @@ type NavNode =
   | { type: 'link'; leaf: Leaf }
   | { type: 'group'; icon: React.ElementType; label: string; sections: Section[] }
 
-const NAV: readonly NavNode[] = [
-  { type: 'link', leaf: { href: '/dashboard', icon: LayoutDashboard, label: 'Painel Inicial' } },
-  { type: 'link', leaf: { href: '/dashboard/agenda', icon: CalendarDays, label: 'Agenda' } },
-  {
-    type: 'group', icon: Heart, label: 'Minha Saúde',
-    sections: [
-      // "Registros" foi DIVIDIDO. A palavra não separava nada: condição, hábito e composição corporal também
-      // são registros, e estão em "Saúde". O grupo antigo juntava três naturezas — papel emitido, o que se
-      // toma, o que se usa — e não havia nome honesto para esse conjunto. Os dois abaixo têm critério dizível.
-      { label: 'Documentos', items: [   // o que ALGUÉM EMITIU para você
-        { href: '/dashboard/exams',      icon: FileText,  label: 'Exames' },
-        // O pedido é a ORIGEM do fluxo assistencial (Q1), não um detalhe do exame. Era só uma aba dentro de
-        // Exames e não havia como encontrá-lo pela navegação. Compartilha a rota; a query distingue a aba.
-        { href: '/dashboard/exams?aba=pedidos', icon: ClipboardList, label: 'Pedidos de exame' },
-        // Rótulo pelo que a pessoa PROCURA, não pelo nome do domínio: "Documentos" era genérico demais
-        // (exame também é documento; nota fiscal também). O código continua `documents`/`patient_documents`.
-        { href: '/dashboard/documentos', icon: FileHeart, label: 'Receitas e atestados' },
-      ] },
-      { label: 'Cuidados', items: [     // o que VOCÊ USA OU TOMA
-        { href: '/dashboard/medicamentos', icon: Pill,          label: 'Medicamentos' },
-        { href: '/dashboard/suplementos',  icon: Leaf,          label: 'Suplementos' },
-        { href: '/dashboard/recursos',     icon: Accessibility, label: 'Recursos de Saúde' },
-      ] },
-      { label: 'Saúde', items: [
-        { href: '/dashboard/condicoes',     icon: Stethoscope, label: 'Condições de Saúde' },
-        { href: '/dashboard/medidas',       icon: Ruler,       label: 'Composição Corporal' },
-        { href: '/dashboard/ciclo',         icon: Droplet,     label: 'Ciclo e Contracepção' },
-        { href: '/dashboard/sinais-vitais', icon: Activity,    label: 'Monitoramento' },
-        { href: '/dashboard/habitos',       icon: HeartPulse,  label: 'Hábitos' },
-      ] },
-      { label: 'Histórico', items: [
-        { href: '/dashboard/saude',    icon: TrendingUp, label: 'Histórico de Exames' },
-        { href: '/dashboard/timeline', icon: Clock,      label: 'Histórico de Saúde', extra: ['/dashboard/historico'] },
-      ] },
-    ],
-  },
-  // 1 item hoje → LINK direto (evita expandir para um único item). Viram grupo expansível quando crescerem.
-  { type: 'link', leaf: { href: '/dashboard/rede-de-cuidado', icon: Users, label: 'Rede de Cuidado', extra: ['/dashboard/relatorio', '/dashboard/relatorios'] } },
-  { type: 'link', leaf: { href: '/dashboard/gastos', icon: Receipt, label: 'Despesas' } },
-  { type: 'link', leaf: { href: '/dashboard/configuracoes', icon: Settings, label: 'Configurações' } },
-]
+// O DESTINO e o ÍCONE de cada seção — a parte que só existe na Web. O NOME, a ORDEM e o AGRUPAMENTO vêm de
+// PLATFORM_NAV (@sintera/core), o mesmo catálogo que os menus do aplicativo leem. Antes disto a taxonomia estava
+// escrita em três lugares e só concordava por disciplina: renomear "Receitas e atestados" aqui e esquecer o
+// aplicativo fazia as duas pontas chamarem a mesma tela por nomes diferentes (base única, 27/08).
+//
+// `extra` = caminhos que também acendem o item (páginas que pertencem à seção mas têm rota própria).
+const DESTINO: Record<SectionId, { href: string; icon: React.ElementType; extra?: string[] }> = {
+  inicio:       { href: '/dashboard',                icon: LayoutDashboard },
+  agenda:       { href: '/dashboard/agenda',         icon: CalendarDays },
+  exames:       { href: '/dashboard/exams',          icon: FileText },
+  // O pedido é a ORIGEM do fluxo assistencial (Q1), não um detalhe do exame. Compartilha a rota; a query distingue a aba.
+  pedidos:      { href: '/dashboard/exams?aba=pedidos', icon: ClipboardList },
+  // O código continua `documents`/`patient_documents`; o rótulo é pelo que a pessoa PROCURA.
+  documentos:   { href: '/dashboard/documentos',     icon: FileHeart },
+  medicamentos: { href: '/dashboard/medicamentos',   icon: Pill },
+  suplementos:  { href: '/dashboard/suplementos',    icon: Leaf },
+  recursos:     { href: '/dashboard/recursos',       icon: Accessibility },
+  condicoes:    { href: '/dashboard/condicoes',      icon: Stethoscope },
+  medidas:      { href: '/dashboard/medidas',        icon: Ruler },
+  ciclo:        { href: '/dashboard/ciclo',          icon: Droplet },
+  monitoramento:{ href: '/dashboard/sinais-vitais',  icon: Activity },
+  habitos:      { href: '/dashboard/habitos',        icon: HeartPulse },
+  'historico-exames': { href: '/dashboard/saude',    icon: TrendingUp },
+  'historico-saude':  { href: '/dashboard/timeline', icon: Clock, extra: ['/dashboard/historico'] },
+  rede:         { href: '/dashboard/rede-de-cuidado', icon: Users, extra: ['/dashboard/relatorio', '/dashboard/relatorios'] },
+  despesas:     { href: '/dashboard/gastos',         icon: Receipt },
+  configuracoes:{ href: '/dashboard/configuracoes',  icon: Settings },
+}
+
+const folha = (s: { id: SectionId; label: string }): Leaf => ({ ...DESTINO[s.id], label: s.label })
+
+// Grupo do catálogo SEM título vira links de primeiro nível; COM título vira grupo recolhível. É a mesma regra
+// que já valia à mão — "1 item hoje → link direto, vira grupo expansível quando crescer".
+const NAV: readonly NavNode[] = PLATFORM_NAV.flatMap((g): NavNode[] =>
+  g.label === null
+    ? g.subgroups.flatMap(sg => sg.sections.map(s => ({ type: 'link' as const, leaf: folha(s) })))
+    : [{
+        type: 'group' as const,
+        icon: Heart,
+        label: g.label,
+        sections: g.subgroups.map(sg => ({ label: sg.label ?? undefined, items: sg.sections.map(folha) })),
+      }],
+)
 
 /**
  * Item ativo. Considera a ABA quando dois itens compartilham a mesma rota — é o caso de Exames e Pedidos de
