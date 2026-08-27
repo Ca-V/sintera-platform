@@ -64,6 +64,9 @@ export type { PatientDocumentDTO, PatientDocumentInput, PatientDocumentPage, Doc
 // arranjo de `getProfileStats`. As duas pontas executam a MESMA função; só o cliente é injetado por cada uma.
 export { prescriptionUrlOf, archivePrescription } from './documents/prescription'
 export { listDocumentsForTargets, listPagesForDocuments } from './documents/documents'
+// Corrigir os fatos de um documento (tipo · emissor · data · observação). O contrato do core exige
+// ver/editar/excluir em todo cartão; a Web só tinha ver e excluir, e esta função nunca teve consumidor lá.
+export { updateDocument } from './documents/documents'
 // Nome dos alvos vinculados — a Web consome direto (mesma consulta do Mobile, SSOT).
 export { targetNamesByDocument } from './documents/targetNames'
 export type { ConnectorsApi } from './auth/types'

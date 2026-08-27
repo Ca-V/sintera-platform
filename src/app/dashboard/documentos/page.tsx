@@ -16,7 +16,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import {
-  Loader2, Plus, X, Trash2, Paperclip, FileHeart, FileText, FileCheck2, Share2, File,
+  Loader2, Plus, X, Trash2, Pencil, Paperclip, FileHeart, FileText, FileCheck2, Share2, File,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
@@ -33,7 +33,7 @@ import { Card } from '@/lib/ui/ds'
 // `row()`. Não é gambiarra minha — é o padrão já usado por Recursos, Hábitos e demais páginas.
 import { row } from '@/lib/supabase/db'
 // A Web reusa a MESMA consulta do Mobile (SSOT), como já faz em getProfileStats.
-import { targetNamesByDocument } from '@sintera/api-client'
+import { targetNamesByDocument, updateDocument } from '@sintera/api-client'
 import {
   DOCUMENT_SUBTYPES, documentSubtypeLabel, buildPatientDocumentInsert, documentSubtitle, isReadyToSave,
   autofillFrom, deriveDocumentTitle,
@@ -74,6 +74,8 @@ export default function DocumentosPage() {
   const [saving, setSaving] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [confirmId, setConfirmId] = useState<string | null>(null)
+  /** Documento sendo corrigido. `null` = novo. */
+  const [editando, setEditando] = useState<DocRow | null>(null)
 
   const [subtype, setSubtype] = useState<PatientDocumentSubtype>('receita')
   // ANEXO-001: o formulário guarda um CONJUNTO de páginas, não um arquivo.
@@ -310,10 +312,10 @@ export default function DocumentosPage() {
 
               <button
                 onClick={onSave}
-                disabled={saving || !isReadyToSave(files)}
+                disabled={saving || (!editando && !isReadyToSave(files))}
                 className="w-full rounded-full bg-petal px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
               >
-                {saving ? 'Salvando…' : 'Salvar documento'}
+                {saving ? 'Salvando…' : editando ? 'Salvar alterações' : 'Salvar documento'}
               </button>
             </div>
           </Card>
