@@ -101,6 +101,8 @@ export * from './domain/body/activity'
 export * from './domain/body/bloodPressure'
 // Passos por dia — observação de atividade, lida do bruto. Nem sinal vital nem sessão: natureza própria.
 export * from './domain/body/steps'
+// "Isto já está na plataforma?" — o MESMO fato por caminhos diferentes. Suspeita e explica; nunca decide sozinho.
+export * from './domain/ingest/sameFact'
 
 // IDENTIDADE — leitura do retorno de login por provedor externo (Google; Apple e Microsoft depois).
 // NÃO confundir com a autorização de dados de saúde, que vive na camada de conectores e é separada de
