@@ -14,6 +14,7 @@ import {
   estimatedRunoutDays, parseAmountToCents, centsToAmount,
   type MedKind, type MedStatus, MED_REPURCHASE_FREQUENCIES, repurchaseFreqToRecurrence,
   isHormonalContraceptive, contraceptiveLabel, contraceptiveCategoryLabel, cadenceUsageLabel,
+  documentSubtitle,
 } from '@sintera/core'
 import { Text, Button, Input, DatePicker, Disclaimer, AttachmentLink, Select } from '../../primitives'
 import { useAssistedCapture } from '../capture/useAssistedCapture'
@@ -94,12 +95,6 @@ export function MedicationsScreen({ route, navigation }: Props) {
       .then(rs => { if (alive.current) setReceitas(rs) })
       .catch(() => { /* o seletor some; anexar segue disponível */ })
   }, [])
-
-  /** Como a receita se apresenta no seletor: quem a emitiu e quando. É o que distingue duas receitas. */
-  const rotuloReceita = (r: PatientDocumentDTO): string => {
-    const quando = (r.doc_date ?? '').slice(0, 10).split('-').reverse().join('/')
-    return [r.issuer?.trim() || 'Receita', quando].filter(Boolean).join(' · ')
-  }
 
   const shown = items.filter(m => supplements ? m.kind === 'suplemento' : m.kind !== 'suplemento')
   const repurchaseLabel = (v: string | null): string | null => MED_REPURCHASE_FREQUENCIES.find(m => m.value === (v ?? ''))?.label ?? null
@@ -268,7 +263,7 @@ export function MedicationsScreen({ route, navigation }: Props) {
             <Select
               // "Nenhuma" é opção EXPLÍCITA, e não um botão de limpar: desvincular é uma escolha, e precisa
               // estar na mesma lista das outras. É o mesmo padrão do seletor de faixa etária no Perfil.
-              options={[{ id: '', label: 'Nenhuma receita' }, ...receitas.map(r => ({ id: r.id, label: rotuloReceita(r) }))]}
+              options={[{ id: '', label: 'Nenhuma receita' }, ...receitas.map(r => ({ id: r.id, label: documentSubtitle(r) }))]}
               value={receitaVinculada}
               onChange={setReceitaVinculada}
               title="Vincular a uma receita já guardada"

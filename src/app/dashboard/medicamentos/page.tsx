@@ -33,7 +33,7 @@ import Disclaimer from '@/components/ui/Disclaimer'
 import { healthEventToRow } from '@/lib/agenda/event'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import Select from '@/components/ui/Select'
-import { uuid } from '@sintera/core'
+import { uuid, documentSubtitle } from '@sintera/core'
 
 type Status = 'em_uso' | 'programado' | 'suspenso' | 'encerrado'
 type Kind = 'medicamento' | 'suplemento' | 'produto' | 'dispositivo' | 'outro'
@@ -140,11 +140,6 @@ export default function MedicamentosPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- o cliente é estável nesta página
   }, [])
 
-  /** Como a receita se apresenta no seletor: quem a emitiu e quando. É o que distingue duas receitas. */
-  const rotuloReceita = (r: PatientDocumentDTO): string => {
-    const quando = (r.doc_date ?? '').slice(0, 10).split('-').reverse().join('/')
-    return [r.issuer?.trim() || 'Receita', quando].filter(Boolean).join(' · ')
-  }
   const [showMoreDetails, setShowMoreDetails] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   // O formulário abre acima das listas; ao editar um item lá embaixo (ex.: suplemento)
@@ -776,7 +771,7 @@ export default function MedicamentosPage() {
                   options={[
                     // "Nenhuma" é opção EXPLÍCITA: desvincular é uma escolha, e fica na mesma lista das outras.
                     { value: '', label: 'Nenhuma receita' },
-                    ...receitas.map(r => ({ value: r.id, label: rotuloReceita(r) })),
+                    ...receitas.map(r => ({ value: r.id, label: documentSubtitle(r) })),
                   ]}
                 />
               </div>

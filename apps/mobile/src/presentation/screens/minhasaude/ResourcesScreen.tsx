@@ -5,12 +5,12 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { ScrollView, View, ActivityIndicator, RefreshControl, Pressable, Alert, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
-import type { ResourceDTO, ResourceInput } from '@sintera/api-client'
+import type { ResourceDTO, ResourceInput, PatientDocumentDTO } from '@sintera/api-client'
 import {
   RESOURCE_TYPES, RESOURCE_STATUSES, resourceStatusLabel, visionSummary,
   type ResourceType, type ResourceStatus, type VisionKind,
   FREQUENCY_LABELS, type RecurrenceFrequency, selectByLink, parseRule, type HealthEvent,
-  EXPENSE_DOC_TYPES, expenseDocLabel, parseAmountToCents, centsToAmount,
+  EXPENSE_DOC_TYPES, expenseDocLabel, parseAmountToCents, centsToAmount, documentSubtitle,
 } from '@sintera/core'
 import { Text, Button, Input, AttachmentLink, DatePicker, Disclaimer, Select } from '../../primitives'
 import { useAssistedCapture } from '../capture/useAssistedCapture'
@@ -37,6 +37,10 @@ export function ResourcesScreen() {
   const [name, setName] = useState('')
   const [brand, setBrand] = useState('')
   const [prescriber, setPrescriber] = useState('')
+  /** Receitas JÁ guardadas em Documentos, para vincular sem anexar de novo — mesmo caminho de Medicamentos. */
+  const [receitas, setReceitas] = useState<PatientDocumentDTO[]>([])
+  const [receitaVinculada, setReceitaVinculada] = useState('')
+  const [rxByRes, setRxByRes] = useState<Record<string, PatientDocumentDTO[]>>({})
   const [startedOn, setStartedOn] = useState('')
   const [untilDate, setUntilDate] = useState('')
   const [status, setStatus] = useState<ResourceStatus>('em_uso')
@@ -67,6 +71,19 @@ export function ResourcesScreen() {
   }, [])
   useEffect(() => { alive.current = true; load(false); return () => { alive.current = false } }, [load])
 
+  // Receitas guardadas e vínculos existentes. Falha silenciosa: sem elas o seletor não aparece e o resto segue.
+  useEffect(() => {
+    apiClient.documents.listLinkableDocuments('receita')
+      .then(rs => { if (alive.current) setReceitas(rs) })
+      .catch(() => { /* seletor some */ })
+  }, [])
+  useEffect(() => {
+    if (items.length === 0) return
+    apiClient.documents.listDocumentsForTargets('recurso', items.map(r => r.id))
+      .then(m => { if (alive.current) setRxByRes(m) })
+      .catch(() => { /* a lista não depende disso */ })
+  }, [items])
+
   const reminderFreqFor = (id: string): RecurrenceFrequency => {
     const ev = selectByLink(events, 'resource', id).find(e => (e.amountCents ?? 0) === 0)
     return ev ? parseRule(ev.recurrenceRule).frequency : 'none'
@@ -79,7 +96,7 @@ export function ResourcesScreen() {
   }
 
   function startNew() {
-    setEditing(null); setType('correcao_visual'); setName(''); setBrand(''); setPrescriber(''); setStartedOn(''); setUntilDate('')
+    setEditing(null); setType('correcao_visual'); setName(''); setBrand(''); setPrescriber(''); setStartedOn(''); setUntilDate(''); setReceitaVinculada('')
     setStatus('em_uso'); setNotes(''); setFileUrl(null); setVisionKind('oculos'); setOd(emptyEye()); setOe(emptyEye())
     setDnp(''); setBc(''); setDia(''); setReminderFreq('none')
     setExpAmount(''); setExpDocType(''); setExpDocUrl(null); setOpen(true)
@@ -88,6 +105,7 @@ export function ResourcesScreen() {
     const exp = expenseFor(r.id)
     setExpAmount(exp?.amountCents ? centsToAmount(exp.amountCents) : ''); setExpDocType(exp?.expenseDocType ?? ''); setExpDocUrl(exp?.attachmentUrl ?? null)
     setEditing(r); setType(r.resource_type); setName(r.name); setBrand(r.brand ?? ''); setPrescriber(r.prescriber ?? '')
+    setReceitaVinculada(rxByRes[r.id]?.[0]?.id ?? '')
     setStartedOn(r.started_on ?? ''); setUntilDate(r.until_date ?? ''); setStatus(r.status); setNotes(r.notes ?? ''); setFileUrl(r.file_url)
     const a = r.attributes ?? {}
     setVisionKind(((a.vision_kind as VisionKind) ?? 'oculos'))
@@ -138,6 +156,15 @@ export function ResourcesScreen() {
         await apiClient.agenda.syncReminder({ type: 'resource', id }, { enabled: reminderFreq !== 'none', frequency: reminderFreq, title: `Trocar: ${name.trim()}`, notes: `Troca do recurso: ${name.trim()}`, date: untilDate || undefined })
         // Despesa vinculada (FB-004) → Gastos. Valor vazio remove.
         await apiClient.agenda.syncExpense({ type: 'resource', id }, { amountCents: parseAmountToCents(expAmount), docType: expDocType || null, docUrl: expDocUrl, title: `Compra: ${name.trim()}`, eventType: 'outro' })
+        // VÍNCULO à receita — só escreve em `patient_document_links`; associar não é mutar (ADR-001/DOC-001).
+        const anterior = rxByRes[id]?.[0]?.id ?? ''
+        if (receitaVinculada !== anterior) {
+          if (anterior) await apiClient.documents.unlinkDocumentFromTarget(anterior, 'recurso', id)
+          if (receitaVinculada) {
+            const lk = await apiClient.documents.linkDocumentToTarget(receitaVinculada, 'receita', 'recurso', id)
+            if (lk.error) Alert.alert('Salvo', 'Não foi possível vincular a receita. Tente de novo pela edição.')
+          }
+        }
       }
       setOpen(false); load(true)
     } finally { setSaving(false) }
@@ -193,6 +220,19 @@ export function ResourcesScreen() {
           <Input value={name} onChangeText={setName} placeholder="Nome (ex.: Óculos de grau)" />
           <Input value={brand} onChangeText={setBrand} placeholder="Marca / fabricante" />
           <Input value={prescriber} onChangeText={setPrescriber} placeholder="Prescritor" />
+
+          {/* VÍNCULO à receita já guardada — o mesmo caminho de Medicamentos. Um recurso prescrito (óculos,
+              órtese, aparelho auditivo) nasce de uma receita, e ela quase sempre já foi fotografada antes de
+              o recurso ser cadastrado. "Nenhuma" é opção explícita: desvincular é uma escolha. */}
+          {receitas.length > 0 && (
+            <Select
+              options={[{ id: '', label: 'Nenhuma receita' }, ...receitas.map(r => ({ id: r.id, label: documentSubtitle(r) }))]}
+              value={receitaVinculada}
+              onChange={setReceitaVinculada}
+              title="Vincular a uma receita já guardada"
+              placeholder="Nenhuma receita"
+            />
+          )}
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <DatePicker value={startedOn} onChange={setStartedOn} placeholder="Início" style={{ flex: 1 }} />
             <DatePicker value={untilDate} onChange={setUntilDate} placeholder="Validade" style={{ flex: 1 }} />

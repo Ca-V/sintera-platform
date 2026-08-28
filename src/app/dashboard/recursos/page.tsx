@@ -37,7 +37,9 @@ import { eventServicesFor, isFinancial, selectByLink, type HealthEvent } from '@
 import { parseRule } from '@/lib/recurrence'
 import { todayISO } from '@/lib/date'
 import { expenseDocLabel } from '@/lib/finance/expense'
-import { uuid } from '@sintera/core'
+// VÍNCULO receita → recurso: as MESMAS funções que o aplicativo chama; aqui o cliente é o da Web.
+import { listLinkableDocuments, listDocumentsForTargets, linkDocumentToTarget, unlinkDocumentFromTarget, type PatientDocumentDTO } from '@sintera/api-client'
+import { uuid, documentSubtitle } from '@sintera/core'
 
 // FB-016-2 — frequências de troca (mesmo padrão inline do Medicamento), no conjunto canônico de recorrência.
 const TROCA_FREQ_OPTS: { v: RecurrenceFreq; l: string }[] = [
@@ -122,7 +124,16 @@ export default function RecursosPage() {
   const [view, setView] = useStickyView<'tipo' | 'situacao'>('sintera:recursos-view', 'tipo')
 
   const [showForm, setShowForm] = useState(false)
+  // Receitas guardadas e vínculos existentes. Falha silenciosa: sem elas o seletor não aparece.
+  useEffect(() => {
+    listLinkableDocuments(supabase, 'receita').then(setReceitas).catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- o cliente é estável nesta página
+  }, [])
   const [editingId, setEditingId] = useState<string | null>(null)
+  /** Receitas JÁ guardadas em Documentos, para vincular sem anexar de novo — mesmo caminho de Medicamentos. */
+  const [receitas, setReceitas] = useState<PatientDocumentDTO[]>([])
+  const [receitaVinculada, setReceitaVinculada] = useState('')
+  const [rxByRes, setRxByRes] = useState<Record<string, PatientDocumentDTO[]>>({})
   const [editingAttrs, setEditingAttrs] = useState<Record<string, unknown>>({})
   const [f, setF] = useState({ ...EMPTY })
   const [saving, setSaving] = useState(false)
@@ -161,6 +172,12 @@ export default function RecursosPage() {
       fileUrl: (r.file_url as string) ?? null,
       attributes: (r.attributes as Record<string, unknown>) ?? {},
     })))
+    // Receitas já vinculadas a estes recursos — para o seletor abrir no vínculo atual, e não vazio.
+    try {
+      const ids = ((data ?? []) as Array<Record<string, unknown>>).map(r => r.id as string)
+      if (ids.length > 0) setRxByRes(await listDocumentsForTargets(supabase, 'recurso', ids))
+    } catch { /* a lista não depende disso */ }
+
     // FB-004 (FIN-001): despesas vinculadas a recursos (valor pago) — pelo contrato canônico da Jornada.
     try {
       const evs = await eventServicesFor(supabase as never).query.listAll(user.id)
@@ -183,7 +200,7 @@ export default function RecursosPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  function reset() { setEditingId(null); setEditingAttrs({}); setF({ ...EMPTY }); setTrocaRecorrente(false); setTrocaFreq('monthly'); setErr(null) }
+  function reset() { setEditingId(null); setEditingAttrs({}); setF({ ...EMPTY }); setTrocaRecorrente(false); setTrocaFreq('monthly'); setReceitaVinculada(''); setErr(null) }
 
   function startAdd(type?: ResourceType) {
     reset()
@@ -193,6 +210,7 @@ export default function RecursosPage() {
 
   function startEdit(r: Resource) {
     setEditingId(r.id)
+    setReceitaVinculada(rxByRes[r.id]?.[0]?.id ?? '')
     setEditingAttrs(r.attributes ?? {})
     const a = r.attributes ?? {}
     const od = (a.od ?? {}) as Record<string, string>
@@ -316,6 +334,18 @@ export default function RecursosPage() {
       const { data, error } = await db.insert(payload).select('id').single()
       if (error) { setSaving(false); setErr(error.message); return }
       resourceId = (data?.id as string) ?? null
+    }
+
+    // VÍNCULO à receita — só escreve em patient_document_links; associar não é mutar (ADR-001/DOC-001).
+    if (resourceId) {
+      const anterior = rxByRes[resourceId]?.[0]?.id ?? ''
+      if (receitaVinculada !== anterior) {
+        if (anterior) await unlinkDocumentFromTarget(supabase, anterior, 'recurso', resourceId)
+        if (receitaVinculada) {
+          const lk = await linkDocumentToTarget(supabase, receitaVinculada, 'receita', 'recurso', resourceId)
+          if (lk.error) setErr('Recurso salvo, mas não foi possível vincular a receita. Tente pela edição.')
+        }
+      }
     }
 
     // FB-016-2: lembrete de troca recorrente no canônico health_events, vinculado ao recurso (EventLink 'resource').
@@ -490,6 +520,25 @@ export default function RecursosPage() {
               <input id="recurso-prescriber" type="text" value={f.prescriber} onChange={e => set('prescriber', e.target.value)} className={inputCls} />
             </div>
           </div>
+
+          {/* VÍNCULO à receita já guardada — o mesmo caminho de Medicamentos. Um recurso prescrito (óculos,
+              órtese, aparelho auditivo) nasce de uma receita, e ela quase sempre já foi fotografada antes de o
+              recurso ser cadastrado. "Nenhuma" é opção explícita: desvincular é uma escolha. */}
+          {receitas.length > 0 && (
+            <div>
+              <label className="font-body text-xs text-mauve block mb-1">Vincular a uma receita já guardada</label>
+              <Select
+                aria-label="Receita já guardada"
+                placeholder="Nenhuma receita"
+                value={receitaVinculada}
+                onChange={setReceitaVinculada}
+                options={[
+                  { value: '', label: 'Nenhuma receita' },
+                  ...receitas.map(r => ({ value: r.id, label: documentSubtitle(r) })),
+                ]}
+              />
+            </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
