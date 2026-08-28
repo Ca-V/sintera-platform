@@ -1,0 +1,52 @@
+// @sintera/api-client — leitura dos PASSOS a partir do bruto (`wearable_readings`).
+//
+// Passos não têm projeção em `body_metrics`: a restrição da coluna não os aceita, e acrescentá-los ali colocaria
+// uma contagem ACUMULADA do dia ao lado de medições instantâneas (pressão, glicemia), fazendo a tela mentir
+// sobre o que cada número é. Então a tela lê do bruto, onde eles já estão desde a primeira sincronização, com
+// procedência.
+//
+// Ler direto do bruto é exceção, não padrão — vale porque não há nada a projetar, e não porque projetar dá
+// trabalho. Se um dia passos ganharem tratamento próprio (metas, comparação semanal), a projeção passa a fazer
+// sentido e esta função vira a leitura dessa projeção.
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { dailySteps, type DailySteps, type StepReading } from '@sintera/core'
+import { withTimeout } from '../net/timeout'
+
+/** Quantos dias para trás. Um mês é o que a tela mostra sem virar rolagem infinita. */
+const JANELA_DIAS = 30
+
+/**
+ * Passos por dia, do mais recente para o mais antigo.
+ *
+ * NÃO LANÇA: passos são uma seção a mais em Monitoramento; falhar aqui não pode derrubar os sinais vitais.
+ * Erro devolve lista vazia, e a seção simplesmente não aparece.
+ */
+export async function listDailySteps(
+  client: SupabaseClient, dias: number = JANELA_DIAS, signal?: AbortSignal,
+): Promise<DailySteps[]> {
+  const { signal: s, cleanup } = withTimeout(signal)
+  try {
+    const { data: { session } } = await client.auth.getSession()
+    if (!session) return []
+
+    const desde = new Date(Date.now() - dias * 24 * 60 * 60 * 1000).toISOString()
+    const { data, error } = await client.from('wearable_readings')
+      .select('recorded_at, value, provider')
+      .eq('user_id', session.user.id)
+      .eq('metric', 'passos')
+      .gte('recorded_at', desde)
+      .order('recorded_at', { ascending: false })
+      .abortSignal(s)
+    if (error || !data) return []
+
+    const leituras: StepReading[] = (data as Array<Record<string, unknown>>).map(r => ({
+      recordedAt: typeof r.recorded_at === 'string' ? r.recorded_at : '',
+      value: typeof r.value === 'number' ? r.value : null,
+      provider: typeof r.provider === 'string' ? r.provider : '',
+    }))
+    // A agregação por dia (e a decisão de NÃO somar fontes diferentes) vive no core, testada lá.
+    return dailySteps(leituras)
+  } catch {
+    return []
+  } finally { cleanup() }
+}

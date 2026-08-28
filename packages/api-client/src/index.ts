@@ -44,6 +44,8 @@ export { createSupabasePersistClient, createSupabaseSyncRecorder, createSupabase
 // Ingestão de leituras de conector — o aplicativo grava por aqui, sem tocar no SDK do Supabase.
 export type { WearablesApi } from './auth/types'
 export { ingestWearableSamples } from './wearables/wearables'
+// PASSOS por dia, lidos do bruto — não têm projeção em body_metrics (a restrição da coluna não os aceita).
+export { listDailySteps } from './wearables/steps'
 // Leitura assistida de documento — ponte para a rota da Web (ADR-020), para que a regra seja UMA só.
 export type { CaptureApi } from './auth/types'
 export type { ClassifyInput } from './capture/classify'

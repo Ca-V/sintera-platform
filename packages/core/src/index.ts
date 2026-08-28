@@ -99,6 +99,8 @@ export * from './domain/connectors/state'
 export * from './domain/body/activity'
 // Pressão arterial escrita à mão — nota a forma falada ("12/8") e sugere, sem converter.
 export * from './domain/body/bloodPressure'
+// Passos por dia — observação de atividade, lida do bruto. Nem sinal vital nem sessão: natureza própria.
+export * from './domain/body/steps'
 
 // IDENTIDADE — leitura do retorno de login por provedor externo (Google; Apple e Microsoft depois).
 // NÃO confundir com a autorização de dados de saúde, que vive na camada de conectores e é separada de

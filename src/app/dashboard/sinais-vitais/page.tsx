@@ -22,9 +22,10 @@ import {
   SCREEN_COPY, hasTimeOfDay, measurementInstant, measurementMeta, requiresTimeOfDay,
   VITAL_SIGNS, ACTIVITY_TYPES, activityTypeLabel, activitySummary,
   durationSecondsFromMinutes, distanceMetersFromKm, numberFromField, paceKindFor, bloodPressureHint, bloodPressureSuggestion, bloodPressureApplyLabel,
+  stepsLabel, stepsProvenance, type DailySteps,
 } from '@sintera/core'
 import type { ActivitySessionDTO } from '@sintera/api-client'
-import { listActivitySessions, saveActivitySession, deleteActivitySession, saveBodyMetric } from '@sintera/api-client'
+import { listActivitySessions, saveActivitySession, deleteActivitySession, saveBodyMetric, listDailySteps } from '@sintera/api-client'
 import EmptyState from '@/components/EmptyState'
 import { Card } from "@/lib/ui/ds"
 import Disclaimer from '@/components/ui/Disclaimer'
@@ -112,6 +113,8 @@ export default function SinaisVitaisPage() {
 
   // Atividade física (HIP-014 §3) — seção IRMÃ dos sinais vitais. FATO observado, com proveniência.
   const [acts, setActs] = useState<ActivitySessionDTO[]>([])
+  /** Passos por dia — do bruto dos conectores. Vazio é normal: só existe com conector sincronizado. */
+  const [passos, setPassos] = useState<DailySteps[]>([])
   const [showActForm, setShowActForm] = useState(false)
   const [actType, setActType] = useState<string>('caminhada')
   const [actName, setActName] = useState('')
@@ -199,6 +202,12 @@ export default function SinaisVitaisPage() {
   }, [user, supabase])
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { if (!authLoading) loadActs() }, [authLoading, loadActs])
+
+  // Passos: seção a MAIS. A função não lança — falha aqui vira seção ausente, nunca tela quebrada.
+  useEffect(() => {
+    if (authLoading) return
+    listDailySteps(supabase).then(setPassos).catch(() => { /* a seção some */ })
+  }, [authLoading, supabase])
 
   function resetAct() {
     setActType('caminhada'); setActName(''); setActDate(''); setActTime(''); setActMin(''); setActKm('')
@@ -391,6 +400,22 @@ export default function SinaisVitaisPage() {
               </div>
             )
           })}
+        </div>
+      )}
+
+      {/* PASSOS — natureza própria, nem sinal vital nem sessão. Vêm do bruto dos conectores, onde já estavam e
+          eram invisíveis: a coluna de body_metrics não aceita 'passos', e uma sessão exigiria início, fim e
+          duração que uma contagem contínua do dia não tem. Só aparece quando há dado — sem conector
+          sincronizado a seção nem existe, em vez de uma lista vazia que ninguém sabe como preencher. */}
+      {passos.length > 0 && (
+        <div className="pt-4 space-y-2">
+          <p className="font-display text-lg font-semibold text-onyx">Passos</p>
+          {passos.map(d => (
+            <ListCard key={d.day}
+              title={stepsLabel(d.total)}
+              meta={[fmt(d.day), stepsProvenance(d)].filter(Boolean).join(' · ')}
+            />
+          ))}
         </div>
       )}
 

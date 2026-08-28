@@ -13,6 +13,7 @@ import {
   hasTimeOfDay, measurementInstant, measurementMeta, requiresTimeOfDay,
   ACTIVITY_TYPES, activityTypeLabel, activitySummary,
   durationSecondsFromMinutes, distanceMetersFromKm, numberFromField, paceKindFor, bloodPressureHint, bloodPressureSuggestion, bloodPressureApplyLabel,
+  stepsLabel, stepsProvenance, type DailySteps,
 } from '@sintera/core'
 import { Text, Button, Input, Disclaimer, DatePicker, TimePicker, Select } from '../../primitives'
 import { useTheme } from '../../theme'
@@ -71,6 +72,8 @@ export function MonitoramentoScreen() {
   const [saving, setSaving] = useState(false)
 
   const [acts, setActs] = useState<ActivitySessionDTO[]>([])
+  /** Passos por dia — do bruto dos conectores. Vazio é normal: só existe com conector sincronizado. */
+  const [passos, setPassos] = useState<DailySteps[]>([])
   const [actOpen, setActOpen] = useState(false)
   /** Sessão sendo corrigida. `null` = registrando uma nova. */
   const [actEditando, setActEditando] = useState<ActivitySessionDTO | null>(null)
@@ -141,6 +144,14 @@ export function MonitoramentoScreen() {
       .catch(() => { /* seção degrada vazia; não derruba a tela */ })
   }, [])
   useEffect(() => { loadActs() }, [loadActs])
+
+  // Passos: seção a MAIS. Falhar aqui não pode derrubar os sinais vitais — a função já não lança, e a
+  // seção simplesmente não aparece.
+  useEffect(() => {
+    apiClient.wearables.listDailySteps()
+      .then(p => { if (alive.current) setPassos(p) })
+      .catch(() => { /* a seção some */ })
+  }, [])
 
   /**
    * Abre o formulário com a sessão já registrada, para CORRIGIR (pedido da fundadora, homologação de 27/08).
@@ -347,6 +358,24 @@ export function MonitoramentoScreen() {
           </View>
         )
       })}
+
+      {/* PASSOS — natureza própria, nem sinal vital nem sessão. Vêm do bruto dos conectores, onde já estavam e
+          eram invisíveis: a coluna de body_metrics não aceita 'passos', e uma sessão exigiria início, fim e
+          duração que uma contagem contínua do dia não tem. Só aparece quando há dado — sem conector sincronizado
+          a seção nem existe, em vez de mostrar uma lista vazia que a pessoa não sabe como preencher. */}
+      {passos.length > 0 && (
+        <View style={{ gap: 8, marginTop: 8 }}>
+          <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 17 }}>Passos</Text>
+          {passos.map(d => (
+            <View key={d.day} style={[styles.card, card, { gap: 2 }]}>
+              <Text spec={text(t, { role: 'body' })}>{stepsLabel(d.total)}</Text>
+              <Text spec={text(t, { role: 'caption', tone: 'muted' })}>
+                {[fmt(d.day), stepsProvenance(d)].filter(Boolean).join(' · ')}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
 
       {/* ATIVIDADE FÍSICA (HIP-014 §3) — seção irmã, mesma estrutura da Web. Registra o que aconteceu, sem
           avaliar desempenho (RDC 657). Origem sempre visível, como nos sinais vitais. */}

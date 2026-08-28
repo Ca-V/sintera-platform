@@ -24,7 +24,7 @@ import type { ClassifyInput } from '../capture/classify'
 import type { IdentityProvider } from './oauth'
 import type { ShareDTO, TemplateDTO, OmicsPanelDTO } from '../report/report'
 import type { OmicsPanelDTO as OmicsPanel, OmicsPanelDetail, OmicsResultDTO, OmicsHistoryPoint, OmicsCatalogMatch, OmicsResultInput } from '../omics/omics'
-import type { Period, DocumentTargetDomain, SearchHit, PatientDocumentSubtype } from '@sintera/core'
+import type { Period, DocumentTargetDomain, SearchHit, PatientDocumentSubtype, DailySteps } from '@sintera/core'
 import type { PatientDocumentDTO, PatientDocumentInput, PatientDocumentPage } from '../documents/documents'
 import type { ConnectorState } from '@sintera/core'
 import type { DocumentAssociation } from '@sintera/core'
@@ -288,6 +288,8 @@ export interface CaptureApi {
 }
 
 export interface WearablesApi {
+  /** Passos por dia (do bruto). Nunca lança: a seção some em vez de derrubar a tela. */
+  listDailySteps(dias?: number, signal?: AbortSignal): Promise<DailySteps[]>
   ingestSamples(samples: readonly CanonicalSample[]): Promise<{ result: PropagationResult; error: Error | null }>
 }
 
