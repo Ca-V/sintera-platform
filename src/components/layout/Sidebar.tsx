@@ -6,12 +6,13 @@ import { usePathname, useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getMinhaSaudeCounts, type MinhaSaudeCounts } from '@sintera/api-client'
-import { PLATFORM_NAV, type SectionId } from '@sintera/core'
+import { PLATFORM_NAV, searchSections, type SectionId } from '@sintera/core'
 import { createClient } from '@/lib/supabase/client'
 import {
   LayoutDashboard, FileText, FileHeart, ClipboardList, Clock, Pill, Receipt, CalendarDays,
   HeartPulse, Stethoscope, Droplet, Activity, Ruler, Settings,
   Accessibility, X, ChevronRight, ChevronDown, TrendingUp, Leaf, Heart, Users,
+  Search as SearchIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUser } from '@/context/UserContext'
@@ -211,6 +212,11 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
     getMinhaSaudeCounts(supabase).then(c => { if (alive) setCounts(c) }).catch(() => { /* indicador é opcional */ })
     return () => { alive = false }
   }, [supabase, profile?.id])
+  // BUSCA — estado local de interface. O motor () mora no core e serve as duas pontas.
+  const [busca, setBusca] = useState('')
+  const resultados = searchSections(busca)
+  const buscando = busca.trim().length >= 2
+
   const countOf = (href: string): number | undefined => {
     if (!counts) return undefined
     const map: Record<string, number> = {
@@ -262,9 +268,41 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
         </div>
       </Link>
 
+      {/* BUSCA — a mesma do aplicativo, pelo MESMO motor (`searchSections`, no core). Encontra pela palavra que
+          a pessoa usa: "pressão" leva a Monitoramento, "remédio" a Medicamentos. Enquanto há busca, a árvore dá
+          lugar aos resultados: mostrar as duas coisas obrigaria a procurar o acerto dentro do menu inteiro. */}
+      <div className="relative z-10 mx-4 mb-2">
+        <label htmlFor="nav-busca" className="sr-only">Buscar na plataforma</label>
+        <SearchIcon size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-onyx/45" />
+        <input
+          id="nav-busca"
+          type="search"
+          value={busca}
+          onChange={e => setBusca(e.target.value)}
+          placeholder="Buscar em toda a plataforma"
+          className="w-full rounded-xl border border-onyx/10 bg-white/35 py-2 pl-8 pr-3 font-body text-sm text-onyx placeholder:text-onyx/45 focus:bg-white/60 focus:outline-none focus:ring-1 focus:ring-white/70"
+        />
+      </div>
+
       {/* Navegação principal — modelo mental do usuário: itens diretos + módulos expansíveis. */}
       <nav className="relative z-10 flex-1 px-3 overflow-y-auto pb-3 flex flex-col gap-0.5">
-        {NAV.map(node => node.type === 'link' ? (
+        {buscando ? (
+          resultados.length > 0 ? (
+            resultados.map(m => {
+              const d = DESTINO[m.section.id]
+              return (
+                <NavItem key={m.section.id} href={d.href} icon={d.icon} label={m.section.label}
+                  active={isActive(pathname, search, d.href, d.extra)}
+                  onClose={() => { setBusca(''); onClose() }}
+                  hintProps={bind(m.section.summary)} />
+              )
+            })
+          ) : (
+            <p className="px-3 py-2 font-body text-xs text-onyx/60">
+              Nada encontrado para “{busca.trim()}”.
+            </p>
+          )
+        ) : NAV.map(node => node.type === 'link' ? (
           <NavItem key={node.leaf.href} href={node.leaf.href} icon={node.leaf.icon} label={node.leaf.label}
             active={isActive(pathname, search, node.leaf.href, node.leaf.extra)} onClose={onClose}
             hintProps={bind(navDescription(node.leaf.href))} />
