@@ -16,6 +16,7 @@ import { text } from '@sintera/design-system'
 import type { ConnectorState } from '@sintera/core'
 import {
   connectorStatusLabel, connectorStatusTone, connectorPrimaryAction, isConnectorActive, SCREEN_COPY,
+  HEALTH_CONNECT_DOIS_PASSOS, fontesDisponiveis, fontesIndisponiveis,
 } from '@sintera/core'
 import { useNavigation } from '@react-navigation/native'
 import { Text, Button, Disclaimer } from '../../primitives'
@@ -48,6 +49,15 @@ export function ConexoesScreen() {
   const [hcDisponivel, setHcDisponivel] = useState<boolean | null>(null)
   const [hcOcupado, setHcOcupado] = useState(false)
   const [hcResumo, setHcResumo] = useState<string | null>(null)
+  /**
+   * O passo a passo já foi mostrado nesta visita?
+   *
+   * Aparece assim que a pessoa AUTORIZA — é o momento em que ela está configurando e disposta a ir aos outros
+   * apps. Deixá-lo apenas parado na tela faria com que fosse lido só por quem já desconfia que falta algo.
+   */
+  const [guiaAberto, setGuiaAberto] = useState(false)
+  /** A sincronização terminou sem trazer nada? É quando a orientação deixa de ser útil e passa a ser essencial. */
+  const [hcVazio, setHcVazio] = useState(false)
 
   useEffect(() => {
     healthConnectDisponivel().then(d => { if (alive.current) setHcDisponivel(d) }).catch(() => {
@@ -57,6 +67,8 @@ export function ConexoesScreen() {
 
   const sincronizarHc = useCallback(async () => {
     setHcOcupado(true); setHcResumo(null)
+    // O guia abre AGORA, junto com a autorização — é quando a pessoa está configurando.
+    setGuiaAberto(true); setHcVazio(false)
     try {
       // Primeira sincronização: 30 dias para trás. O bruto é idempotente, então repetir a janela não duplica.
       const ate = new Date()
@@ -82,6 +94,11 @@ export function ConexoesScreen() {
       const sobra = guardadas > 0
         ? ` (+${guardadas} ${guardadas === 1 ? 'guardada, ainda sem tela própria' : 'guardadas, ainda sem tela própria'})`
         : ''
+
+      // AUTORIZOU E NÃO VEIO NADA — quase sempre porque nenhum app está escrevendo no Health Connect. É este o
+      // instante em que a pessoa conclui "não funciona", e em que a orientação deixa de ser útil e passa a ser
+      // essencial. Marcar aqui é o que faz o passo a passo mudar de tom lá embaixo.
+      setHcVazio(partes.length === 0 && guardadas === 0)
 
       setHcResumo(
         partes.length
@@ -197,6 +214,54 @@ export function ConexoesScreen() {
               variant="secondary"
             />
             <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{C.hcRevokeHint}</Text>
+
+            {/* O SEGUNDO PASSO — o que faltava dizer. Autorizar a SINTERA é metade; a outra metade acontece
+                dentro do app do aparelho. Sem esta orientação a pessoa autoriza, não vem nada, e conclui que a
+                plataforma não funciona — quando o que falta é uma chave do lado dela.
+
+                Aparece ao AUTORIZAR (é quando ela está configurando) e fica disponível por um toque no resto do
+                tempo. Quando a sincronização volta VAZIA, ganha destaque e muda de tom: deixa de ser referência
+                e vira a explicação do que acabou de acontecer. */}
+            {!guiaAberto && (
+              <Pressable onPress={() => setGuiaAberto(true)} accessibilityRole="button" hitSlop={8}>
+                <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>
+                  Como liberar os dados do Strava, Whoop e outros
+                </Text>
+              </Pressable>
+            )}
+
+            {guiaAberto && (
+            <View
+              style={[
+                { gap: 8, marginTop: 6 },
+                hcVazio && [s.guiaDestaque, { borderColor: t.color.badge.attention.text, backgroundColor: t.color.badge.attention.soft }],
+              ]}
+            >
+              {hcVazio && (
+                <Text spec={text(t, { role: 'bodyStrong' })} style={{ color: t.color.badge.attention.text }}>
+                  Falta um passo — e ele é dentro do app do seu aparelho
+                </Text>
+              )}
+              <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{HEALTH_CONNECT_DOIS_PASSOS}</Text>
+
+              {fontesDisponiveis().map(f => (
+                <View key={f.source} style={[s.guia, { borderColor: t.color.border.default }]}>
+                  <Text spec={text(t, { role: 'body' })}>{f.nome}</Text>
+                  <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{f.caminho}</Text>
+                  <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Traz: {f.traz}</Text>
+                </View>
+              ))}
+
+              {/* O QUE AINDA NÃO DÁ aparece com o motivo, nunca escondido: mandar procurar um menu que não
+                  existe faz a pessoa se sentir errada por não achar o que não está lá. */}
+              {fontesIndisponiveis().map(f => (
+                <View key={f.source} style={[s.guia, { borderColor: t.color.border.default, opacity: 0.75 }]}>
+                  <Text spec={text(t, { role: 'body' })}>{f.nome}</Text>
+                  <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{f.indisponivel}</Text>
+                </View>
+              ))}
+            </View>
+            )}
           </>
         )}
 
@@ -273,6 +338,8 @@ export function ConexoesScreen() {
 }
 
 const s = StyleSheet.create({
+  guia: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, gap: 2 },
+  guiaDestaque: { borderWidth: 1, borderRadius: 14, padding: 14 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   card: { borderWidth: 1, borderRadius: 16, padding: 16 },
   linha: { flexDirection: 'row', alignItems: 'center', gap: 12 },
