@@ -50,6 +50,10 @@ const SEM_EDICAO: Record<string, string> = {
     'contraparte no aplicativo',
   'src/app/dashboard/omics/[id]/page.tsx':
     'resultados ômicos são IMPORTADOS do painel; corrigi-los à mão quebraria a rastreabilidade até o laudo',
+  'apps/mobile/src/presentation/screens/minhasaude/DadosRecebidosScreen.tsx':
+    'dado RECEBIDO de uma fonte externa. Editar aqui destruiria a fidelidade que a plataforma promete: um valor ' +
+    'corrigido à mão deixa de ser o que o Garmin mediu, mas continuaria marcado como se fosse. REJEITAR é ' +
+    'legítimo (a pessoa decide o que fica); ALTERAR não, porque a procedência passaria a mentir.',
   'apps/mobile/src/presentation/screens/omics/OmicsPanelScreen.tsx':
     'contraparte no aplicativo',
 }

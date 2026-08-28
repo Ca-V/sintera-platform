@@ -128,6 +128,28 @@ export const SCREEN_COPY = {
   },
 
   /**
+   * DADOS RECEBIDOS — onde a pessoa vê o que entrou sozinho, de onde veio, e decide sobre o que parece repetido.
+   *
+   * Existe por causa da decisão da fundadora (28/08): ela autoriza a fonte UMA VEZ e o dado entra sem perguntar,
+   * mas continua podendo revisar depois. Sem esta tela, "entra sozinho" viraria "entra sem que eu saiba".
+   *
+   * O TOM é de INFORMAÇÃO, não de tarefa. Nada aqui exige resposta: quem não abrir a tela não perde nada, e
+   * nada foi duplicado nem descartado em silêncio. Uma fila de pendências transformaria o registro de saúde numa
+   * caixa de entrada, que é o oposto do que a plataforma faz pela pessoa.
+   */
+  dadosRecebidos: {
+    title:        'Dados recebidos',
+    subtitle:     'O que entrou pelas suas conexões, com a origem de cada informação. Nada aqui exige resposta — é para você conferir quando quiser.',
+    emptyTitle:   'Nada recebido ainda',
+    emptyMessage: 'Quando um aparelho ou aplicativo estiver conectado, o que ele registrar aparece aqui, com a origem.',
+    duplicateTitle: 'Parece já estar registrado',
+    // FACTUAL: descreve a semelhança, não afirma que é a mesma coisa. Quem sabe é a pessoa.
+    duplicateHint:  'Encontramos algo muito parecido, vindo de outra fonte. Você decide o que fazer — e pode não fazer nada.',
+    removeAction:   'Remover',
+    sourceLabel:    'Origem',
+  },
+
+  /**
    * ENTRADA DE DOCUMENTO (ANEXO-001) — o mesmo rótulo em todo ponto que aceita anexo.
    *
    * O componente único já garantia o comportamento igual, mas o TEXTO estava escrito em cada arquivo. Medido em

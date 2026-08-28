@@ -17,6 +17,7 @@ import type { ConnectorState } from '@sintera/core'
 import {
   connectorStatusLabel, connectorStatusTone, connectorPrimaryAction, isConnectorActive, SCREEN_COPY,
 } from '@sintera/core'
+import { useNavigation } from '@react-navigation/native'
 import { Text, Button, Disclaimer } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
@@ -33,6 +34,8 @@ function fmtDataHora(iso: string | null): string {
 
 export function ConexoesScreen() {
   const t = useTheme()
+  // Navegação por nome — o padrão do projeto para stack interno; sem regra de negócio.
+  const navigation = useNavigation() as unknown as { navigate: (n: string) => void }
   const insets = useSafeAreaInsets()
   const [items, setItems] = useState<ConnectorState[]>([])
   const [phase, setPhase] = useState<'loading' | 'ready' | 'error'>('loading')
@@ -254,6 +257,15 @@ export function ConexoesScreen() {
           </View>
         ))
       )}
+
+      {/* A PORTA para o que entrou. Com a sincronização automática, o dado passa a chegar sem ninguém pedir —
+          e sem este caminho, "entra sozinho" viraria "entra sem que eu saiba". Fica em Conexões porque é aqui
+          que a pessoa pensa em origem de dado. */}
+      <Button
+        label={SCREEN_COPY.dadosRecebidos.title}
+        variant="secondary"
+        onPress={() => navigation.navigate('DadosRecebidos')}
+      />
 
       <Disclaimer variant="geral" />
     </ScrollView>
