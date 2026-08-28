@@ -6,6 +6,7 @@
 // ex.: `Fraunces_600SemiBold`, `HankenGrotesk_400Regular`.
 import { useFonts, Fraunces_600SemiBold } from '@expo-google-fonts/fraunces'
 import { HankenGrotesk_400Regular, HankenGrotesk_600SemiBold } from '@expo-google-fonts/hanken-grotesk'
+import { useEffect } from 'react'
 import { StatusBar } from 'expo-status-bar'
 import { ActivityIndicator, View } from 'react-native'
 import { NavigationContainer } from '@react-navigation/native'
@@ -14,11 +15,24 @@ import { AuthProvider, useAuth } from '../state/AuthProvider'
 import { AuthStack } from '../presentation/navigation/AuthStack'
 import { AppNavigator } from '../presentation/navigation/AppNavigator'
 import { useTheme } from '../presentation/theme'
+// Registra a tarefa de sincronização em segundo plano. O import também DEFINE a tarefa no sistema — por isso
+// precisa acontecer na raiz, e não sob demanda numa tela.
+import { registrarSincronizacaoAutomatica } from '../infrastructure/sincronizacaoAutomatica'
 
 /** Escolhe a tela conforme o estado de sessão. Mostra Loading enquanto a sessão é restaurada. */
 function Gate() {
   const { session, loading } = useAuth()
   const t = useTheme()
+
+  // SINCRONIZAÇÃO AUTOMÁTICA — registrada assim que HÁ SESSÃO, e não antes.
+  //
+  // Antes da sessão não há a quem atribuir o dado, e a tarefa acordaria para não fazer nada. Fica aqui, no gate,
+  // e não numa tela: a sincronização é da plataforma, não de Conexões. Presa a uma tela, dependeria de a pessoa
+  // visitá-la — que é exatamente o que se está eliminando.
+  useEffect(() => {
+    if (session) void registrarSincronizacaoAutomatica()
+  }, [session])
+
   if (loading) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: t.color.surface.app }}>

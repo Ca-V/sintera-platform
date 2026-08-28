@@ -18,7 +18,9 @@
       "bundleIdentifier": "health.sintera.app",
       "infoPlist": {
         "CFBundleDevelopmentRegion": "pt-BR",
-        "CFBundleLocalizations": ["pt-BR"],
+        "CFBundleLocalizations": [
+          "pt-BR"
+        ],
         "ITSAppUsesNonExemptEncryption": false,
         "NSFaceIDUsageDescription": "Protege o acesso aos seus dados de saúde neste aparelho."
       }
@@ -38,7 +40,8 @@
         "android.permission.health.READ_WEIGHT",
         "android.permission.health.READ_HEIGHT",
         "android.permission.health.READ_STEPS",
-        "android.permission.health.READ_EXERCISE"
+        "android.permission.health.READ_EXERCISE",
+        "android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND"
       ]
     },
     "web": {
@@ -73,7 +76,8 @@
             "minSdkVersion": 24
           }
         }
-      ]
+      ],
+      "expo-background-task"
     ],
     "extra": {
       "eas": {
