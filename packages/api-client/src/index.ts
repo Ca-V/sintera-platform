@@ -67,6 +67,8 @@ export { listDocumentsForTargets, listPagesForDocuments } from './documents/docu
 // Corrigir os fatos de um documento (tipo · emissor · data · observação). O contrato do core exige
 // ver/editar/excluir em todo cartão; a Web só tinha ver e excluir, e esta função nunca teve consumidor lá.
 export { updateDocument } from './documents/documents'
+// Busca global nos registros da pessoa — uma implementação, duas pontas. Atravessa o RLS: enxerga o que ela enxerga.
+export { searchRecords } from './search/search'
 // Nome dos alvos vinculados — a Web consome direto (mesma consulta do Mobile, SSOT).
 export { targetNamesByDocument } from './documents/targetNames'
 export type { ConnectorsApi } from './auth/types'

@@ -40,6 +40,7 @@ import { getMinhaSaudeCounts } from '../summary/counts'
 import { listBodyMetrics, saveBodyMetric, deleteBodyMetric, getHeightCm, getWeightGoal, setWeightGoal } from '../body/body'
 import { listActivitySessions, saveActivitySession, deleteActivitySession, ingestActivitySessions } from '../activity/activity'
 import { ingestWearableSamples } from '../wearables/wearables'
+import { searchRecords } from '../search/search'
 import { startOAuthSignIn, completeOAuthSignIn } from './oauth'
 import { classifyDocument } from '../capture/classify'
 import { listShares, createShare, revokeShare, listTemplates, saveTemplate, deleteTemplate, listOmicsPanels } from '../report/report'
@@ -181,6 +182,9 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       saveActivitySession: (input) => saveActivitySession(supabase, input),
       deleteActivitySession: (id) => deleteActivitySession(supabase, id),
       ingestActivitySessions: (drafts) => ingestActivitySessions(supabase, drafts),
+    },
+    search: {
+      searchRecords: (query) => searchRecords(supabase, query),
     },
     wearables: {
       ingestSamples: (samples) => ingestWearableSamples(supabase, samples),

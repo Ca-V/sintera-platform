@@ -16,6 +16,7 @@
 import { useState } from 'react'
 import { ScrollView, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import type { SearchHit } from '@sintera/core'
 import { useTheme } from '../theme'
 import { WelcomeSlot } from './slots/WelcomeSlot'
 import { AdicionarRegistroSlot } from './slots/AdicionarRegistroSlot'
@@ -24,7 +25,22 @@ import { ComoUsarSlot } from './slots/ComoUsarSlot'
 import { FooterSlot } from './slots/FooterSlot'
 import { RegistrationHubSheet } from '../screens/capture/RegistrationHubSheet'
 
-export function HomeShell({ name }: { name?: string | null }) {
+export interface HomeShellProps {
+  name?: string | null
+  /**
+   * A busca chega por INJEÇÃO — texto, achados e "procurando" vêm do container.
+   *
+   * A Home não fala com dados (INV-HOME-001, com teste que guarda): consultar onze tabelas aqui dentro quebraria
+   * a invariante. O slot recebe pronto e devolve só a intenção de digitar.
+   */
+  busca: string
+  onBusca: (v: string) => void
+  hits: readonly SearchHit[]
+  procurando: boolean
+  onLimparBusca: () => void
+}
+
+export function HomeShell({ name, busca, onBusca, hits, procurando, onLimparBusca }: HomeShellProps) {
   const t = useTheme()
   const insets = useSafeAreaInsets()
   const [addOpen, setAddOpen] = useState(false)
@@ -39,7 +55,7 @@ export function HomeShell({ name }: { name?: string | null }) {
       >
         <WelcomeSlot name={name} />
         <AdicionarRegistroSlot onPress={openAdd} />
-        <MenuCompletoSlot />
+        <MenuCompletoSlot busca={busca} onBusca={onBusca} hits={hits} procurando={procurando} onLimpar={onLimparBusca} />
         <ComoUsarSlot />
         <FooterSlot />
       </ScrollView>

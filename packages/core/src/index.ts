@@ -127,4 +127,6 @@ export * from './domain/documents/patientDocuments'
 // Catálogo único das seções da plataforma (nome · ordem · grupo · resumo). Sidebar da Web e menus do
 // aplicativo leem daqui — a taxonomia estava escrita em três lugares.
 export * from './domain/navigation/sections'
+// Busca global — encontra o que a pessoa REGISTROU, não só as seções. Puro; as consultas ficam no api-client.
+export * from './domain/search/globalSearch'
 export * from './domain/documents/cardActions'

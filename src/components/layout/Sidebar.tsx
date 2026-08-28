@@ -5,8 +5,8 @@ import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { getMinhaSaudeCounts, type MinhaSaudeCounts } from '@sintera/api-client'
-import { PLATFORM_NAV, searchSections, type SectionId } from '@sintera/core'
+import { getMinhaSaudeCounts, searchRecords, type MinhaSaudeCounts } from '@sintera/api-client'
+import { PLATFORM_NAV, searchSections, rankHits, groupHits, shouldQuery, type SectionId, type SearchHit } from '@sintera/core'
 import { createClient } from '@/lib/supabase/client'
 import {
   LayoutDashboard, FileText, FileHeart, ClipboardList, Clock, Pill, Receipt, CalendarDays,
@@ -212,10 +212,32 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
     getMinhaSaudeCounts(supabase).then(c => { if (alive) setCounts(c) }).catch(() => { /* indicador é opcional */ })
     return () => { alive = false }
   }, [supabase, profile?.id])
-  // BUSCA — estado local de interface. O motor () mora no core e serve as duas pontas.
+  // BUSCA — duas naturezas, as mesmas do aplicativo, pelos MESMOS motores do core:
+  //   • REGISTROS (`searchRecords` + `rankHits`) — "vitamina D" acha o suplemento que ela toma E o indicador do
+  //     laudo. Vêm primeiro: quem digita o nome de uma coisa sua quer a coisa, não o mapa.
+  //   • SEÇÕES (`searchSections`) — onde as coisas ficam. Vale quando o nome não é de nada já registrado.
   const [busca, setBusca] = useState('')
-  const resultados = searchSections(busca)
-  const buscando = busca.trim().length >= 2
+  const [hits, setHits] = useState<SearchHit[]>([])
+  const [procurando, setProcurando] = useState(false)
+  const buscando = shouldQuery(busca)
+  const resultados = buscando ? searchSections(busca) : []
+  const registros = buscando ? groupHits(rankHits(hits, busca)) : []
+
+  useEffect(() => {
+    if (!shouldQuery(busca)) { setHits([]); setProcurando(false); return }
+    setProcurando(true)
+    // Espera antes de consultar: são onze consultas em paralelo, e disparar a cada tecla multiplicaria isso por
+    // letra. `cancelado` descarta a resposta que chegar tarde — sem ele, o resultado de "vit" sobrescreveria o
+    // de "vitamina" por ter demorado mais.
+    let cancelado = false
+    const timer = setTimeout(() => {
+      searchRecords(supabase, busca)
+        .then(r => { if (!cancelado) setHits(r) })
+        .catch(() => { if (!cancelado) setHits([]) })
+        .finally(() => { if (!cancelado) setProcurando(false) })
+    }, 300)
+    return () => { cancelado = true; clearTimeout(timer) }
+  }, [busca, supabase])
 
   const countOf = (href: string): number | undefined => {
     if (!counts) return undefined
@@ -287,21 +309,52 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
       {/* Navegação principal — modelo mental do usuário: itens diretos + módulos expansíveis. */}
       <nav className="relative z-10 flex-1 px-3 overflow-y-auto pb-3 flex flex-col gap-0.5">
         {buscando ? (
-          resultados.length > 0 ? (
-            resultados.map(m => {
-              const d = DESTINO[m.section.id]
-              return (
-                <NavItem key={m.section.id} href={d.href} icon={d.icon} label={m.section.label}
-                  active={isActive(pathname, search, d.href, d.extra)}
-                  onClose={() => { setBusca(''); onClose() }}
-                  hintProps={bind(m.section.summary)} />
-              )
-            })
-          ) : (
-            <p className="px-3 py-2 font-body text-xs text-onyx/60">
-              Nada encontrado para “{busca.trim()}”.
-            </p>
-          )
+          <>
+            {/* OS SEUS REGISTROS primeiro, agrupados por natureza. O grupo é o que distingue o suplemento
+                "Vitamina D" do indicador "Vitamina D" — sem ele, dois achados de mesmo nome ficariam
+                indistinguíveis e a escolha não existiria. */}
+            {registros.map(g => (
+              <div key={g.kind} className="mb-1">
+                <p className="px-3 pb-1 pt-2 font-body text-[10px] uppercase tracking-wider text-onyx/45">{g.label}</p>
+                {g.hits.map(h => {
+                  const d = DESTINO[h.section]
+                  return (
+                    <NavItem key={`${g.kind}-${h.id}`} href={d.href} icon={d.icon} label={h.title}
+                      active={false}
+                      onClose={() => { setBusca(''); onClose() }}
+                      hintProps={bind(h.subtitle ?? g.label)} />
+                  )
+                })}
+              </div>
+            ))}
+
+            {/* AS SEÇÕES depois, sob um título que diz o que são: quem procurava um registro não deve confundir
+                "Monitoramento" com um dado seu. */}
+            {resultados.length > 0 && (
+              <div className="mb-1">
+                <p className="px-3 pb-1 pt-2 font-body text-[10px] uppercase tracking-wider text-onyx/45">Onde registrar</p>
+                {resultados.map(m => {
+                  const d = DESTINO[m.section.id]
+                  return (
+                    <NavItem key={m.section.id} href={d.href} icon={d.icon} label={m.section.label}
+                      active={isActive(pathname, search, d.href, d.extra)}
+                      onClose={() => { setBusca(''); onClose() }}
+                      hintProps={bind(m.section.summary)} />
+                  )
+                })}
+              </div>
+            )}
+
+            {procurando && registros.length === 0 && (
+              <p className="px-3 py-2 font-body text-xs text-onyx/60">Procurando…</p>
+            )}
+
+            {!procurando && registros.length === 0 && resultados.length === 0 && (
+              <p className="px-3 py-2 font-body text-xs text-onyx/60">
+                Nada encontrado para “{busca.trim()}” — nem nos seus registros, nem nas seções.
+              </p>
+            )}
+          </>
         ) : NAV.map(node => node.type === 'link' ? (
           <NavItem key={node.leaf.href} href={node.leaf.href} icon={node.leaf.icon} label={node.leaf.label}
             active={isActive(pathname, search, node.leaf.href, node.leaf.extra)} onClose={onClose}

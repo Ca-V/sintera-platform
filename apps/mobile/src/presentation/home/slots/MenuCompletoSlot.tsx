@@ -2,41 +2,55 @@
 //
 // PEDIDOS DA FUNDADORA (27 e 28/08):
 //   • ao abrir o aplicativo, ver um menu com TODAS as opções e um resumo do que cada uma guarda;
-//   • uma BUSCA em que se digita qualquer palavra e a plataforma leva ao lugar certo;
-//   • hierarquia visível: Agenda, depois Minha Saúde COM suas subcategorias, e depois Rede de Cuidado,
-//     Despesas e Configurações — que são categorias irmãs, não filhas de Minha Saúde.
+//   • hierarquia visível: Agenda, depois Minha Saúde COM suas subcategorias, e depois Rede de Cuidado, Despesas
+//     e Configurações — categorias irmãs, não filhas de Minha Saúde;
+//   • uma busca em que "qualquer palavra que estiver dentro da plataforma precisa ser encontrada".
 //
-// A terceira era um defeito de leitura da tela: como os itens finais vinham logo depois dos subgrupos de Minha
-// Saúde, sem separação, pareciam pertencer a ela. Aqui o primeiro nível não tem recuo e os filhos de Minha Saúde
-// têm — a indentação passa a DIZER a hierarquia, em vez de depender de o leitor adivinhá-la.
+// A BUSCA TEM DUAS NATUREZAS, e mostrar as duas é o que a torna honesta:
+//   • REGISTROS — o que a pessoa cadastrou. "Vitamina D" acha o suplemento que ela toma E o indicador dentro do
+//     laudo, para ela escolher em qual entrar. Vêm PRIMEIRO: quem digita o nome de uma coisa sua quer a coisa.
+//   • SEÇÕES — onde as coisas ficam. "Pressão" leva a Monitoramento. É o mapa, e vale quando o nome digitado
+//     não é de nada que ela tenha registrado ainda.
 //
-// SÓ NAVEGAÇÃO E APRESENTAÇÃO (INV-HOME-001): nada de dado de domínio, nada de regra. Nomes, ordem, resumos e
-// termos de busca vêm do catálogo do core — os mesmos que a Sidebar da Web usa. As ROTAS vêm de `sectionRoutes`,
-// que é a parte que por natureza só existe aqui.
-import { useMemo, useState } from 'react'
-import { View, Pressable, StyleSheet } from 'react-native'
+// A primeira versão só tinha seções, e "vitamina D" devolvia NADA ENCONTRADO — sobre um dado que existe. Isso é
+// pior do que não ter busca: ensina a não confiar nela.
+//
+// SÓ NAVEGAÇÃO E APRESENTAÇÃO (INV-HOME-001): os achados chegam por PROP, do HomeContainer. Nomes, ordem,
+// resumos e a ordenação dos achados vêm do core; as ROTAS, de `sectionRoutes` — a parte que só existe aqui.
+import { useMemo } from 'react'
+import { View, Pressable, ActivityIndicator, StyleSheet } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs'
 import { text } from '@sintera/design-system'
-import { PLATFORM_NAV, searchSections, type PlatformSection } from '@sintera/core'
+import {
+  PLATFORM_NAV, searchSections, rankHits, groupHits, shouldQuery,
+  type PlatformSection, type SearchHit, type SectionId,
+} from '@sintera/core'
 import { Text, Input } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { AppTabParamList } from '../../navigation/types'
 import { SECTION_ROUTES } from '../../navigation/sectionRoutes'
 
-export function MenuCompletoSlot() {
+export interface MenuCompletoSlotProps {
+  busca: string
+  onBusca: (v: string) => void
+  hits: readonly SearchHit[]
+  procurando: boolean
+  onLimpar: () => void
+}
+
+export function MenuCompletoSlot({ busca, onBusca, hits, procurando, onLimpar }: MenuCompletoSlotProps) {
   const t = useTheme()
   const navigation = useNavigation<BottomTabNavigationProp<AppTabParamList>>()
-  const [busca, setBusca] = useState('')
 
-  const ir = (s: PlatformSection) => {
-    const r = SECTION_ROUTES[s.id]
+  const irPara = (id: SectionId) => {
+    const r = SECTION_ROUTES[id]
     // Navegação aninhada por string (aba → tela) — o padrão do projeto; sem regra de negócio.
     ;(navigation as unknown as { navigate: (n: string, p?: unknown) => void })
       .navigate(r.tab, r.screen ? { screen: r.screen, params: r.params } : undefined)
     // A aba Início continua montada ao navegar. Sem limpar, quem voltasse encontraria a busca antiga preenchida
     // e o menu ainda filtrado — parecendo que a plataforma encolheu.
-    setBusca('')
+    onLimpar()
   }
 
   // "Painel Inicial" fica de fora: este menu VIVE nele. A Sidebar da Web mostra o item porque acompanha a pessoa
@@ -50,23 +64,31 @@ export function MenuCompletoSlot() {
     }))
     .filter(g => g.subgroups.length > 0), [])
 
-  const resultados = useMemo(() => searchSections(busca), [busca])
-  const buscando = busca.trim().length >= 2
+  const buscando = shouldQuery(busca)
+  const registros = useMemo(() => groupHits(rankHits(hits, busca)), [hits, busca])
+  const secoes = useMemo(() => (buscando ? searchSections(busca) : []), [busca, buscando])
+  const semNada = buscando && !procurando && registros.length === 0 && secoes.length === 0
 
-  const linha = (s: PlatformSection, recuada: boolean) => (
+  const cartao = (
+    titulo: string,
+    detalhe: string | null | undefined,
+    onPress: () => void,
+    chave: string,
+    recuada = false,
+  ) => (
     <Pressable
-      key={s.id}
-      onPress={() => ir(s)}
+      key={chave}
+      onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${s.label}. ${s.summary}`}
+      accessibilityLabel={detalhe ? `${titulo}. ${detalhe}` : titulo}
       style={[
         styles.item,
         recuada && styles.recuada,
         { backgroundColor: t.color.surface.base, borderColor: t.color.border.default },
       ]}
     >
-      <Text spec={text(t, { role: 'body' })}>{s.label}</Text>
-      <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{s.summary}</Text>
+      <Text spec={text(t, { role: 'body' })}>{titulo}</Text>
+      {detalhe ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{detalhe}</Text> : null}
     </Pressable>
   )
 
@@ -79,37 +101,53 @@ export function MenuCompletoSlot() {
       <View>
         <Input
           value={busca}
-          onChangeText={setBusca}
+          onChangeText={onBusca}
           placeholder="Buscar em toda a plataforma"
           autoCorrect={false}
           accessibilityLabel="Buscar na plataforma"
           style={busca.length > 0 ? { paddingRight: 72 } : undefined}
         />
         {busca.length > 0 && (
-          <Pressable
-            onPress={() => setBusca('')}
-            accessibilityRole="button"
-            accessibilityLabel="Limpar busca"
-            hitSlop={10}
-            style={styles.limpar}
-          >
+          <Pressable onPress={onLimpar} accessibilityRole="button" accessibilityLabel="Limpar busca" hitSlop={10} style={styles.limpar}>
             <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Limpar</Text>
           </Pressable>
         )}
       </View>
 
       {buscando ? (
-        // RESULTADO: lista única, sem grupos. Quem buscou já sabe o que quer — reagrupar aqui só afastaria
-        // o acerto do topo da tela.
-        resultados.length > 0 ? (
-          <View style={{ gap: 8 }}>
-            {resultados.map(m => linha(m.section, false))}
-          </View>
-        ) : (
-          <Text spec={text(t, { role: 'caption', tone: 'muted' })}>
-            Nada encontrado para “{busca.trim()}”. Tente outra palavra — ou role para ver tudo.
-          </Text>
-        )
+        <View style={{ gap: 14 }}>
+          {/* OS SEUS REGISTROS, agrupados por natureza. O grupo é o que distingue o suplemento "Vitamina D" do
+              indicador "Vitamina D" — sem ele, dois achados de mesmo nome ficariam indistinguíveis. */}
+          {registros.map(g => (
+            <View key={g.kind} style={{ gap: 8 }}>
+              <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{g.label.toUpperCase()}</Text>
+              {g.hits.map(h => cartao(h.title, h.subtitle, () => irPara(h.section), `${g.kind}-${h.id}`))}
+            </View>
+          ))}
+
+          {/* AS SEÇÕES vêm depois, sob um título que diz o que são: quem procurava um registro não deve confundir
+              "Monitoramento" com um dado seu. */}
+          {secoes.length > 0 && (
+            <View style={{ gap: 8 }}>
+              <Text spec={text(t, { role: 'caption', tone: 'faint' })}>ONDE REGISTRAR</Text>
+              {secoes.map(m => cartao(m.section.label, m.section.summary, () => irPara(m.section.id), `sec-${m.section.id}`))}
+            </View>
+          )}
+
+          {procurando && registros.length === 0 && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <ActivityIndicator size="small" color={t.color.text.muted} />
+              <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Procurando…</Text>
+            </View>
+          )}
+
+          {semNada && (
+            <Text spec={text(t, { role: 'caption', tone: 'muted' })}>
+              Nada encontrado para “{busca.trim()}” — nem nos seus registros, nem nas seções. Tente outra palavra,
+              ou limpe a busca para ver a plataforma inteira.
+            </Text>
+          )}
+        </View>
       ) : (
         // A lista vem INTEIRA e aberta. Recolher atrás de um "ver mais" devolveria o problema que este slot
         // existe para resolver: quem abre o aplicativo precisa VER o que a plataforma faz.
@@ -117,23 +155,19 @@ export function MenuCompletoSlot() {
           <View key={g.id} style={{ gap: 10 }}>
             {gi > 0 && <View style={[styles.divisor, { backgroundColor: t.color.border.default }]} />}
 
-            {g.label && (
-              <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 17 }}>{g.label}</Text>
-            )}
+            {g.label && <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 17 }}>{g.label}</Text>}
 
             {g.subgroups.map((sg, i) => (
               <View key={sg.label ?? `sg-${i}`} style={{ gap: 8 }}>
                 {sg.label && (
-                  <Text
-                    spec={text(t, { role: 'caption', tone: 'faint' })}
-                    style={styles.recuada}
-                  >
+                  <Text spec={text(t, { role: 'caption', tone: 'faint' })} style={styles.recuada}>
                     {sg.label.toUpperCase()}
                   </Text>
                 )}
-                {/* Recuo SÓ dentro de um grupo com título: é ele que mostra que estes itens pertencem
-                    àquele grupo, e que os de fora não pertencem. */}
-                {sg.sections.map(s => linha(s, g.label !== null))}
+                {/* Recuo SÓ dentro de um grupo com título: é ele que mostra que estes itens pertencem àquele
+                    grupo, e que os de fora não pertencem. */}
+                {sg.sections.map((s: PlatformSection) =>
+                  cartao(s.label, s.summary, () => irPara(s.id), s.id, g.label !== null))}
               </View>
             ))}
           </View>

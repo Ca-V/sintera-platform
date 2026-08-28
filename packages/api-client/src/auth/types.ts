@@ -24,7 +24,7 @@ import type { ClassifyInput } from '../capture/classify'
 import type { IdentityProvider } from './oauth'
 import type { ShareDTO, TemplateDTO, OmicsPanelDTO } from '../report/report'
 import type { OmicsPanelDTO as OmicsPanel, OmicsPanelDetail, OmicsResultDTO, OmicsHistoryPoint, OmicsCatalogMatch, OmicsResultInput } from '../omics/omics'
-import type { Period, DocumentTargetDomain } from '@sintera/core'
+import type { Period, DocumentTargetDomain, SearchHit } from '@sintera/core'
 import type { PatientDocumentDTO, PatientDocumentInput, PatientDocumentPage } from '../documents/documents'
 import type { ConnectorState } from '@sintera/core'
 import type { DocumentAssociation } from '@sintera/core'
@@ -203,9 +203,17 @@ export interface ApiClient {
   omics: OmicsApi
   vision: VisionApi
   summary: SummaryApi
+  /** Busca global nos registros da pessoa — encontra o que ela cadastrou, não só as seções. */
+  search: SearchApi
 }
 
 /** Síntese de navegação (§5d) — contagens por domínio para os indicadores de conteúdo do menu/Sidebar. */
+/** Busca global (28/08). Devolve os achados CRUS; ordenar e agrupar é do core, para as duas pontas
+ *  apresentarem a mesma lista na mesma ordem. */
+export interface SearchApi {
+  searchRecords(query: string): Promise<SearchHit[]>
+}
+
 export interface SummaryApi {
   /** Contagens por domínio do usuário (exames, medicamentos, suplementos, recursos, condições, hábitos). LANÇA em falha. */
   getMinhaSaudeCounts(signal?: AbortSignal): Promise<MinhaSaudeCounts>
