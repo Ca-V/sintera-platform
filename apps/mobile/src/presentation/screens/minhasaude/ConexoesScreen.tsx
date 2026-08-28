@@ -65,11 +65,28 @@ export function ConexoesScreen() {
       if (!r.autorizado) { setHcResumo(C.hcDenied); return }
       if (r.erro) { setHcResumo(r.erro); return }
       // Diz o que ENTROU, não "sucesso" — número verificável é mais confiável que adjetivo.
+      //
+      // E diz separadamente o que APARECE e o que só foi GUARDADO. Nem tudo que o Health Connect entrega tem
+      // tela hoje: passos chegam e ficam no bruto, porque não são métrica corporal nem sessão de atividade.
+      // Somar os dois num número só e mandar "veja em Monitoramento" faria a plataforma prometer o que não
+      // mostra — a mesma armadilha que custou dois ciclos de homologação.
       const partes = [
-        r.leituras > 0 ? `${r.leituras} ${r.leituras === 1 ? 'leitura' : 'leituras'}` : null,
+        r.visiveis > 0 ? `${r.visiveis} ${r.visiveis === 1 ? 'leitura' : 'leituras'}` : null,
         r.sessoes > 0 ? `${r.sessoes} ${r.sessoes === 1 ? 'atividade' : 'atividades'}` : null,
       ].filter(Boolean)
-      setHcResumo(partes.length ? `${partes.join(' · ')} — veja em Monitoramento` : 'Nada novo desde a última vez')
+
+      const guardadas = Math.max(0, r.leituras - r.visiveis)
+      const sobra = guardadas > 0
+        ? ` (+${guardadas} ${guardadas === 1 ? 'guardada, ainda sem tela própria' : 'guardadas, ainda sem tela própria'})`
+        : ''
+
+      setHcResumo(
+        partes.length
+          ? `${partes.join(' · ')} — veja em Monitoramento${sobra}`
+          : guardadas > 0
+            ? `${guardadas} ${guardadas === 1 ? 'leitura guardada' : 'leituras guardadas'}, ainda sem tela própria`
+            : 'Nada novo desde a última vez',
+      )
     } finally {
       if (alive.current) setHcOcupado(false)
     }

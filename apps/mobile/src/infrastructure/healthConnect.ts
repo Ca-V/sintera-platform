@@ -24,7 +24,17 @@ export const HEALTH_CONNECT_VERSION = '1.0.0'
 export interface ResultadoSync {
   disponivel: boolean
   autorizado: boolean
+  /** Tudo que foi RECEBIDO e guardado no bruto — inclusive o que ainda não tem tela. */
   leituras: number
+  /**
+   * O que efetivamente APARECE em Monitoramento.
+   *
+   * Nem tudo que o Health Connect entrega tem lugar na tela hoje: passos, por exemplo, chegam e ficam só no
+   * bruto, porque não são métrica corporal nem sessão de atividade. Reportar só `leituras` faria a plataforma
+   * dizer "12 leituras — veja em Monitoramento" e a pessoa não encontrar as 12 lá. É a mesma armadilha que
+   * custou dois ciclos de homologação em 27 e 28/08: um número que não corresponde ao que se vê.
+   */
+  visiveis: number
   sessoes: number
   erro?: string
 }
@@ -94,7 +104,7 @@ export async function pedirPermissoes(): Promise<HcRecordType[]> {
  * foi concedido e ignora-se o resto, em silêncio.
  */
 export async function sincronizarHealthConnect(desde: Date, ate: Date): Promise<ResultadoSync> {
-  const vazio: ResultadoSync = { disponivel: false, autorizado: false, leituras: 0, sessoes: 0 }
+  const vazio: ResultadoSync = { disponivel: false, autorizado: false, leituras: 0, visiveis: 0, sessoes: 0 }
   try {
     const hc = await lib()
     if (!hc || !(await hc.initialize())) return vazio
@@ -134,6 +144,7 @@ export async function sincronizarHealthConnect(desde: Date, ate: Date): Promise<
       disponivel: true,
       autorizado: true,
       leituras: leituras.result.rawCount,
+      visiveis: leituras.result.projectedCount,
       sessoes: atividades.result.gravadas,
       erro: leituras.error?.message ?? atividades.error?.message,
     }
