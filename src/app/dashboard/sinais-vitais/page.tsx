@@ -21,7 +21,7 @@ import PageHeader from '@/components/PageHeader'
 import {
   SCREEN_COPY, hasTimeOfDay, measurementInstant, measurementMeta, requiresTimeOfDay,
   VITAL_SIGNS, ACTIVITY_TYPES, activityTypeLabel, activitySummary,
-  durationSecondsFromMinutes, distanceMetersFromKm, numberFromField, paceKindFor, bloodPressureHint,
+  durationSecondsFromMinutes, distanceMetersFromKm, numberFromField, paceKindFor, bloodPressureHint, bloodPressureSuggestion, bloodPressureApplyLabel,
 } from '@sintera/core'
 import type { ActivitySessionDTO } from '@sintera/api-client'
 import { listActivitySessions, saveActivitySession, deleteActivitySession, saveBodyMetric } from '@sintera/api-client'
@@ -308,9 +308,20 @@ export default function SinaisVitaisPage() {
               <label htmlFor="vital-value" className="font-body text-xs text-mauve block mb-1">{C.fieldValue}</label>
               <input id="vital-value" type="text" value={value} onChange={e => setValue(e.target.value)} placeholder={PLACEHOLDER[metric]}
                 className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
-              {/* "12/8" é como se fala. A dica NOTA e PERGUNTA — não converte nem impede salvar. */}
-              {metric === 'pressao_arterial' && bloodPressureHint(value) && (
-                <p className="mt-1 font-body text-xs text-amber-700">{bloodPressureHint(value)}</p>
+              {/* "12/8" é como se fala no Brasil — a forma informal é a REGRA, não a exceção. A dica NOTA e
+                  OFERECE, num clique. Não converte sozinha: o que fica gravado é 120/80 porque a pessoa
+                  escolheu, e a plataforma continua guardando o que ELA informou. */}
+              {metric === 'pressao_arterial' && bloodPressureSuggestion(value) && (
+                <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                  <p className="font-body text-xs text-amber-700">{bloodPressureHint(value)}</p>
+                  <button
+                    type="button"
+                    onClick={() => setValue(bloodPressureSuggestion(value)!)}
+                    className="rounded-full border border-amber-700 px-3 py-1 font-body text-xs text-amber-700 transition-colors hover:bg-amber-50"
+                  >
+                    {bloodPressureApplyLabel(bloodPressureSuggestion(value)!)}
+                  </button>
+                </div>
               )}
             </div>
             <div>

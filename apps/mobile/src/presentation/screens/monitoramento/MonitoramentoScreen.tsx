@@ -12,7 +12,7 @@ import {
   VITAL_SIGNS, bodyMetricLabel, isVital, SCREEN_COPY, type VitalMetric,
   hasTimeOfDay, measurementInstant, measurementMeta, requiresTimeOfDay,
   ACTIVITY_TYPES, activityTypeLabel, activitySummary,
-  durationSecondsFromMinutes, distanceMetersFromKm, numberFromField, paceKindFor, bloodPressureHint,
+  durationSecondsFromMinutes, distanceMetersFromKm, numberFromField, paceKindFor, bloodPressureHint, bloodPressureSuggestion, bloodPressureApplyLabel,
 } from '@sintera/core'
 import { Text, Button, Input, Disclaimer, DatePicker, TimePicker, Select } from '../../primitives'
 import { useTheme } from '../../theme'
@@ -269,11 +269,25 @@ export function MonitoramentoScreen() {
             <View style={{ flex: 2 }}>
               <Campo label={C.fieldValue}>
                 <Input value={value} onChangeText={setValue} placeholder={VITAL_SIGNS.find(v => v.value === metric)?.placeholder} />
-                {/* "12/8" é como se fala. A dica NOTA e PERGUNTA — não converte nem impede salvar. */}
-                {metric === 'pressao_arterial' && bloodPressureHint(value) ? (
-                  <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.attention.text, marginTop: 4 }}>
-                    {bloodPressureHint(value)}
-                  </Text>
+                {/* "12/8" é como se fala no Brasil — a forma informal é a REGRA, não a exceção. A dica NOTA e
+                    OFERECE, num toque. Não converte sozinha: o que fica gravado é 120/80 porque a pessoa
+                    escolheu, e a plataforma continua guardando o que ELA informou. */}
+                {metric === 'pressao_arterial' && bloodPressureSuggestion(value) ? (
+                  <View style={{ marginTop: 6, gap: 6 }}>
+                    <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.attention.text }}>
+                      {bloodPressureHint(value)}
+                    </Text>
+                    <Pressable
+                      onPress={() => setValue(bloodPressureSuggestion(value)!)}
+                      accessibilityRole="button"
+                      hitSlop={8}
+                      style={[styles.aplicarSugestao, { borderColor: t.color.badge.attention.text }]}
+                    >
+                      <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.attention.text }}>
+                        {bloodPressureApplyLabel(bloodPressureSuggestion(value)!)}
+                      </Text>
+                    </Pressable>
+                  </View>
                 ) : null}
               </Campo>
             </View>
@@ -450,4 +464,6 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },
   connect: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   spark: { flexDirection: 'row', alignItems: 'flex-end', gap: 3, height: 36 },
+  // Contorno, não preenchimento: é uma OFERTA, não a ação principal do formulário.
+  aplicarSugestao: { alignSelf: 'flex-start', borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
 })

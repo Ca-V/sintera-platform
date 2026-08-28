@@ -77,3 +77,25 @@ export function bloodPressureHint(texto: string | null | undefined): string | nu
   }
   return null
 }
+
+/**
+ * O VALOR sugerido, para a tela oferecê-lo em um toque. `null` quando não há sugestão.
+ *
+ * POR QUE existe além de `bloodPressureHint` (decisão da fundadora, 28/08). "Doze por oito" é como se fala
+ * pressão no Brasil — a forma informal é a REGRA, não a exceção. Só avisar deixava a pessoa reler o próprio
+ * campo e redigitar, toda vez. Só corrigir sozinho gravaria um número que ninguém escreveu, e a plataforma
+ * guarda o que a pessoa informou (rastreabilidade): "9/6" é plausível como 90/60 E como nove por seis.
+ *
+ * O meio-termo é este: a tela mostra a sugestão com um toque que troca o campo. O que fica gravado é 120/80
+ * porque ELA escolheu — a decisão continua sendo dela, e deixa de custar uma redigitação.
+ *
+ * Devolve a string no formato do campo ('120/80'), e não números, porque é isso que a tela escreve de volta.
+ */
+export function bloodPressureSuggestion(texto: string | null | undefined): string | null {
+  return readBloodPressure(texto).sugestao ?? null
+}
+
+/** Rótulo do botão que aplica a sugestão — a MESMA redação nas duas pontas. */
+export function bloodPressureApplyLabel(sugestao: string): string {
+  return `Usar ${sugestao}`
+}

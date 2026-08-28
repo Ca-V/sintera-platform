@@ -9,7 +9,7 @@
 // A plataforma NÃO CONVERTE sozinha: trocar 12/8 por 120/80 seria interpretar o que ela quis dizer. Ela nota e
 // pergunta — mesma disciplina do aviso de divergência de documento.
 import { describe, it, expect } from 'vitest'
-import { readBloodPressure, bloodPressureHint } from '@sintera/core'
+import { readBloodPressure, bloodPressureHint, bloodPressureSuggestion, bloodPressureApplyLabel } from '@sintera/core'
 
 describe('leitura da pressão', () => {
   it('reconhece a forma em mmHg e não diz nada', () => {
@@ -60,5 +60,37 @@ describe('leitura da pressão', () => {
     expect(dica).toContain('comparação ao longo do tempo')
     // Não manda, não corrige, não fala em erro.
     expect(dica).not.toMatch(/errad|inválid|corrija|obrigat/i)
+  })
+})
+
+// ── A SUGESTÃO EM UM TOQUE (decisão da fundadora, 28/08) ─────────────────────────────────────────────────
+// "Doze por oito" é como se fala pressão no Brasil: a forma informal é a REGRA, não a exceção. Só avisar
+// obrigava a pessoa a reler o próprio campo e redigitar, toda vez. Corrigir sozinho gravaria um número que
+// ninguém escreveu. O acordo é oferecer em um toque — a escolha continua sendo dela.
+describe('sugestão aplicável em um toque', () => {
+  it('devolve o VALOR pronto para escrever de volta no campo', () => {
+    expect(bloodPressureSuggestion('12/8')).toBe('120/80')
+    expect(bloodPressureSuggestion('13/9')).toBe('130/90')
+  })
+
+  it('não sugere nada quando já está em mmHg — não há o que oferecer', () => {
+    expect(bloodPressureSuggestion('120/80')).toBeNull()
+    expect(bloodPressureSuggestion('90/60')).toBeNull()
+  })
+
+  it('não sugere para entrada vazia ou sem sentido', () => {
+    expect(bloodPressureSuggestion('')).toBeNull()
+    expect(bloodPressureSuggestion(null)).toBeNull()
+    expect(bloodPressureSuggestion('abc')).toBeNull()
+  })
+
+  it('aplicar a sugestão é IDEMPOTENTE — o resultado não sugere de novo', () => {
+    // Sem isto, o botão continuaria aparecendo depois do toque e a pessoa não saberia se funcionou.
+    const aplicado = bloodPressureSuggestion('12/8')!
+    expect(bloodPressureSuggestion(aplicado)).toBeNull()
+  })
+
+  it('o rótulo do botão diz o que vai acontecer, com o valor', () => {
+    expect(bloodPressureApplyLabel('120/80')).toBe('Usar 120/80')
   })
 })
