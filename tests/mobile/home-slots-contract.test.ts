@@ -10,10 +10,10 @@ const HOME = resolve(process.cwd(), 'apps/mobile/src/presentation/home')
 const read = (rel: string) => readFileSync(resolve(HOME, rel), 'utf-8')
 
 describe('Contrato dos slots da Home (MOBILE-014 §3.4 · Home-hub UX-002)', () => {
-  it('HomeShell compõe os slots da Home-hub (saudação · acesso rápido · como usar · rodapé)', () => {
+  it('HomeShell compõe os slots da Home-hub (saudação · adicionar · próximos · menu · como usar · rodapé)', () => {
     const shell = read('HomeShell.tsx')
     // Home = HUB de navegação (UX-002). Resumo/Linha do tempo/Insights saíram (pertencem aos módulos).
-    for (const slot of ['WelcomeSlot', 'AdicionarRegistroSlot', 'QuickActionsSlot', 'ProximosCompromissosSlot', 'ComoUsarSlot', 'FooterSlot']) {
+    for (const slot of ['WelcomeSlot', 'AdicionarRegistroSlot', 'ProximosCompromissosSlot', 'MenuCompletoSlot', 'ComoUsarSlot', 'FooterSlot']) {
       expect(shell, `HomeShell deve compor <${slot} />`).toMatch(new RegExp(`<${slot}[^>]*/>`))
     }
   })
@@ -24,12 +24,17 @@ describe('Contrato dos slots da Home (MOBILE-014 §3.4 · Home-hub UX-002)', () 
     expect(src, 'Welcome não deve carregar dados (useEffect/useState)').not.toMatch(/useEffect|useState/)
   })
 
-  it('QuickActionsSlot apenas navega (useNavigation + navigate), sem regra de negócio', () => {
-    const src = read('slots/QuickActionsSlot.tsx')
+  // "Acesso rápido" SAIU (28/08). Seus quatro atalhos passaram a aparecer no menu completo, na mesma tela, com
+  // nome e resumo. Dois caminhos para o mesmo lugar obrigavam a pessoa a comparar as duas listas para descobrir
+  // se eram a mesma coisa.
+  it('MenuCompletoSlot navega e busca, sem carregar dado de domínio', () => {
+    const src = read('slots/MenuCompletoSlot.tsx')
     expect(src).toContain('useNavigation')
     expect(src).toMatch(/\.navigate\(/)
-    // Não deve conter estado de domínio nem efeitos de dados (só navegação).
-    expect(src, 'Quick Actions não deve carregar dados (useEffect/useState de dados)').not.toMatch(/useEffect|useState/)
+    // A busca É estado local de interface, e isso é legítimo. O que não pode é buscar DADO: sem efeito de
+    // carregamento e sem cliente de API — o menu navega, não consulta.
+    expect(src, 'o menu não carrega dados').not.toMatch(/useEffect/)
+    expect(src, 'o menu não fala com o cliente de API').not.toMatch(/apiClient/)
   })
 
   it('ComoUsarSlot é onboarding por navegação (useNavigation), sem dados de domínio', () => {
