@@ -102,6 +102,53 @@ function artigo(label: string): string {
 }
 
 /**
+ * Palavras que o classificador devolve em `subtype` → subtipo do domínio Documentos.
+ *
+ * O classificador responde com UMA palavra curta e livre ("receita", "atestado", "hemograma"). Só algumas
+ * dessas palavras significam um subtipo documental; as demais (um exame, uma bula) não são deste domínio e
+ * NÃO viram subtipo — viram ausência, e a divergência então se resolve pelo `kind`, que é o sinal certo.
+ *
+ * Sem acento e em minúsculas, porque é isso que chega. Lista ABERTA: palavra desconhecida devolve `null`,
+ * nunca um palpite — atribuir subtipo errado é pior que não atribuir nenhum.
+ */
+const SUBTYPE_POR_PALAVRA: Record<string, PatientDocumentSubtype> = {
+  receita: 'receita', prescricao: 'receita',
+  atestado: 'atestado', declaracao: 'atestado',
+  relatorio: 'relatorio', laudo_medico: 'relatorio',
+  encaminhamento: 'encaminhamento', referencia: 'encaminhamento',
+}
+
+/** Normaliza para comparação: minúsculas, sem acento, sem espaços nas pontas. */
+function chave(s: string): string {
+  return s.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+}
+
+/**
+ * O que o classificador devolveu → o que a regra de divergência consome.
+ *
+ * É a ponte que faltava: sem ela, `documentDivergence` recebia `subtype` como texto livre e nunca casava com
+ * os subtipos do domínio. Vive aqui, e não na tela, porque Web e Mobile precisam traduzir IGUAL — traduções
+ * separadas divergiriam na primeira palavra nova.
+ */
+export function readingFromClassification(cls: {
+  kind: DocumentKind
+  subtype?: string | null
+  issuer?: string | null
+  docDate?: string | null
+  confidence: 'high' | 'medium' | 'low'
+} | null | undefined): DocumentReading | null {
+  if (!cls) return null
+  const palavra = cls.subtype ? chave(cls.subtype) : ''
+  return {
+    kind: cls.kind,
+    subtype: SUBTYPE_POR_PALAVRA[palavra] ?? null,
+    issuer: cls.issuer ?? null,
+    docDate: cls.docDate ?? null,
+    confidence: cls.confidence,
+  }
+}
+
+/**
  * O que a leitura preenche no formulário, para REVISÃO. Só fatos documentais.
  * Não sobrescreve o que a pessoa já digitou — ela é a autoridade sobre o próprio registro.
  */

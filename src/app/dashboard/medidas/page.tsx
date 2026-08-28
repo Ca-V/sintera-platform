@@ -21,6 +21,7 @@ import { EVOLUTION_PERIODS, filterByPeriod, markerFor, type EvoPoint } from '@/l
 import { useNovelty } from '@/lib/novelty/useNovelty'
 import EvolutionChart from '@/components/body/EvolutionChart'
 import { buildSnapshots, compareSnapshots, type SnapPoint } from '@/lib/body/snapshots'
+import { BODY_COMPARE_ORDER } from '@sintera/core'
 import { buildMilestones, MILESTONE_CATEGORIES, MILESTONE_COLOR, type MilestoneCategory, type MedInput, type ConsultaInput, type AssessmentInput } from '@/lib/body/milestones'
 import { professionalKindLabel } from '@/lib/agenda'
 import { todayISO } from '@/lib/date'   // SSOT de datas (DATE-001) — "hoje" consistente entre as telas
@@ -375,8 +376,7 @@ export default function MedidasPage() {
   const snapshots = buildSnapshots(snapPoints)
   const snapA = snapshots.find(s => s.key === snapAKey) ?? snapshots[0] ?? null
   const snapB = snapshots.find(s => s.key === snapBKey) ?? snapshots[1] ?? null
-  const COMPARE_ORDER = ['peso', 'gordura_corporal', 'massa_muscular', 'massa_magra', 'agua_corporal', 'gordura_visceral', 'taxa_metabolica', 'massa_ossea', 'circunferencia_cintura']
-  const compareRows = compareSnapshots(snapA, snapB, COMPARE_ORDER)
+  const compareRows = compareSnapshots(snapA, snapB, BODY_COMPARE_ORDER)
   const compareSummary = compareRows.filter(r => r.available && r.delta != null && r.delta !== 0)
   const snapLabel = (s: typeof snapA) => s ? `${sourceQuality(s.source)?.label ?? s.source ?? 'Registro'} · ${fmt(s.date)}` : ''
   const deltaUnit = (unit: string | null) => unit === '%' ? 'p.p.' : (unit ?? '')

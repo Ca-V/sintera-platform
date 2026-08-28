@@ -18,6 +18,35 @@
 // COMO ESTA GUARDA FUNCIONA — catraca: a lista abaixo é a dívida MEDIDA hoje. O teste passa com ela, falha se
 // ela CRESCER. Cada tela migrada para o componente único sai da lista e não pode voltar. Quando a lista
 // esvaziar, a regra passa a ser simplesmente "nenhum input de arquivo fora do componente".
+//
+// ─────────────────────────────────────────────────────────────────────────────
+// ACHADO DE 27/08 — A LISTA NÃO É "TELAS PARA MIGRAR". LEIA ANTES DE MIGRAR QUALQUER UMA.
+//
+// Ao tentar zerar esta dívida, descobri que a plataforma tem DOIS componentes de captura, cada um se
+// declarando o único, e que eles NÃO são equivalentes:
+//
+//   • `AnexoDocumento` (25/08)       → N ARQUIVOS separados. "Este componente É o padrão."
+//   • `DocumentBundleCapture` (antes) → 1 DOCUMENTO de N PÁGINAS: junta imagens num PDF, com reordenação
+//                                        antes do OCR. "Uma implementação, reutilizada em todo ponto."
+//
+// São capacidades DIFERENTES, e o princípio da fundadora pedia as duas ("adicionar mais páginas" E "vários
+// arquivos"). Migrar Exames, CreateRecordMenu ou CaptureCenter para o `AnexoDocumento` DESTRUIRIA a junção de
+// páginas — seria regressão, não convergência.
+//
+// Além disso, dois itens da lista (AgendarModal, habitos) têm modelo de dados de UMA url
+// (`health_events.attachment_url`, `life_habits.plan_url`). Honrar "vários arquivos" ali exige movê-los para o
+// domínio Documentos com vínculo — mudança arquitetural, não troca de componente. No caso do AgendarModal
+// isso toca o caminho fiscal (Despesas, IR), com 25 referências a `attachment_url`.
+//
+// PORTANTO esta lista mistura três coisas distintas, e tratá-la como fila de migração produziria regressão:
+//   (a) pontos que já entregam múltiplos, por OUTRO componente — Exames, CreateRecordMenu, CaptureCenter
+//   (b) pontos cujo modelo guarda UMA url — AgendarModal, habitos
+//   (c) pontos que fazem LEITURA para extrair dados, não anexo — medicamentos, recursos
+//
+// A decisão que falta é de arquitetura e é da fundadora: convergir os dois componentes em um que faça as duas
+// coisas. Enquanto isso não se decide, esta catraca segue fazendo o que sabe fazer — impedir que a dívida
+// cresça. Ela NÃO deve ser zerada tela a tela.
+// ─────────────────────────────────────────────────────────────────────────────
 import { describe, it, expect } from 'vitest'
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'

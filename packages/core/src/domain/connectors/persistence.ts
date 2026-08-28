@@ -42,6 +42,12 @@ export interface BodyMetricRow {
   value_text: string
   unit: string | null
   measured_on: string // YYYY-MM-DD (UTC, determinístico)
+  /**
+   * Instante REAL da leitura na fonte (HIP-014 §8.1). O ponto continua sendo um por dia (ver
+   * `projectBodyMetricPoints`), mas guarda a hora em que foi medido em vez de perdê-la — o que a torna
+   * ordenável junto com as medições manuais, que também passam a ter hora.
+   */
+  measured_at: string
   source: string
 }
 
@@ -78,9 +84,12 @@ export function toBodyMetricRow(sample: CanonicalSample, userId: string): BodyMe
     user_id: userId,
     metric: sample.metric,
     label: null,
-    value_text: String(sample.value),
+    // Compostas (pressão arterial) trazem a forma textual; escalares usam o número. Sem isto, "120/80"
+    // chegaria ao banco como "120".
+    value_text: sample.valueText?.trim() || String(sample.value),
     unit: sample.unit,
     measured_on: utcDateOf(sample.recordedAt),
+    measured_at: sample.recordedAt,
     source: WEARABLE_SOURCE,
   }
 }

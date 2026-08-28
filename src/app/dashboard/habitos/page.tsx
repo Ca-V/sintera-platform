@@ -29,6 +29,7 @@ import { parseRule } from '@/lib/recurrence'
 import { todayISO } from '@/lib/date'
 import Select from '@/components/ui/Select'
 import AttachmentLink from '@/components/ui/AttachmentLink'
+import { SCREEN_COPY } from '@sintera/core'
 
 // Lembrete de hábito = evento planejado no canônico health_events, vinculado ao hábito (EventLink 'habit').
 // Mesma infra recorrente de Medicamentos/Recursos — sem tabela nem worker próprios.
@@ -367,7 +368,7 @@ export default function HabitosPage() {
               </div>
             ) : (
               <label className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-ivory cursor-pointer font-body text-sm text-mauve hover:border-petal/40 transition-colors">
-                {uploading ? <Loader2 size={14} className="animate-spin" /> : <Paperclip size={14} />} {uploading ? 'Enviando…' : 'Anexar arquivo'}
+                {uploading ? <Loader2 size={14} className="animate-spin" /> : <Paperclip size={14} />} {uploading ? SCREEN_COPY.anexo.sending : SCREEN_COPY.anexo.add}
                 <input type="file" accept="application/pdf,image/*" className="hidden" disabled={uploading} onChange={e => { const f = e.target.files?.[0]; if (f) uploadPlan(f) }} />
               </label>
             )}

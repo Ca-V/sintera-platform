@@ -7,13 +7,13 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Loader2, Paperclip, Receipt, ArrowLeft, Info, Plus, X, RotateCcw, Trash2 } from 'lucide-react'
+import { Loader2, Paperclip, Receipt, ArrowLeft, Info, Plus, X, RotateCcw, Trash2, Pencil } from 'lucide-react'
 import { useUser } from '@/context/UserContext'
 import { typeLabel, formatDateBR, type HealthEvent } from '@/lib/agenda'
 import { projectExpenses, type ExamExpenseRow } from '@sintera/core'
 import { expenseDocLabel } from '@/lib/finance/expense'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
-import { useEventForm } from '@/components/eventForm'
+import { useEventForm, eventToInput } from '@/components/eventForm'
 import { useStickyView } from '@/lib/ui/useStickyView'
 import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import ListCard, { CardChip } from '@/components/ListCard'
@@ -37,6 +37,8 @@ export default function GastosPage() {
   const [reloadKey, setReloadKey] = useState(0)
   const [showAddInfo, setShowAddInfo] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
+  /** Lançamento sendo CORRIGIDO. `null` = criando uma despesa nova. */
+  const [editing, setEditing] = useState<HealthEvent | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [confirm, setConfirm] = useState<{ message: string; confirmLabel: string; onYes: () => void } | null>(null)
@@ -66,8 +68,23 @@ export default function GastosPage() {
 
   async function handleSave(input: AgendaEventInput) {
     if (!user) return
-    await saveEvent(user.id, input, null)
-    setModalOpen(false); setShowAddInfo(false); setReloadKey(k => k + 1)
+    // Caminho ÚNICO de gravação, o mesmo da Agenda: `editing` distingue correção de criação.
+    await saveEvent(user.id, input, editing)
+    setEditing(null); setModalOpen(false); setShowAddInfo(false); setReloadKey(k => k + 1)
+  }
+
+  /**
+   * Corrige o lançamento — o valor, a data, o tipo. A despesa é ATRIBUTO de um fato da jornada, então editá-la
+   * é editar o evento, no MESMO formulário da Agenda.
+   *
+   * O aplicativo já oferecia isto (leva ao formulário de evento); a Web tinha só reabrir e excluir. Quem digitou
+   * o valor errado precisaria excluir o lançamento — e com ele o evento inteiro.
+   *
+   * Despesa vinda de EXAME (id `exam:…`) não abre aqui: o valor pertence ao exame e se corrige nele.
+   */
+  function startEdit(r: HealthEvent) {
+    if (r.id.startsWith('exam:')) return
+    setEditing(r); setModalOpen(true)
   }
 
   // Reabrir: desfaz a conclusão (correção) — sai de Gastos, volta para a Agenda.
@@ -140,6 +157,12 @@ export default function GastosPage() {
               <button aria-label="Reabrir" title="Reabrir (desfazer conclusão — volta para a Agenda)"
                 disabled={busyId === r.id} onClick={() => reopenGasto(r)}
                 className="w-6 h-6 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/40 hover:text-petal transition-colors disabled:opacity-40"><RotateCcw size={12} /></button>
+            )}
+            {/* EDITAR — obrigatória em todo cartão (contrato do core). Despesa de exame se corrige no exame. */}
+            {!r.id.startsWith('exam:') && (
+              <button aria-label="Editar" title="Editar lançamento"
+                disabled={busyId === r.id} onClick={() => startEdit(r)}
+                className="w-6 h-6 rounded-lg hover:bg-blush flex items-center justify-center text-mauve/40 hover:text-petal transition-colors disabled:opacity-40"><Pencil size={12} /></button>
             )}
             <button aria-label="Excluir" title="Excluir lançamento"
               disabled={busyId === r.id} onClick={() => deleteGasto(r)}
@@ -268,8 +291,10 @@ export default function GastosPage() {
       {/* Formulário ÚNICO de evento — mesma origem da Agenda e do Histórico */}
       <AgendarModal
         open={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={() => { setModalOpen(false); setEditing(null) }}
         onSave={handleSave}
+        initialEvent={editing ? eventToInput(editing) : undefined}
+        isEditing={!!editing}
       />
 
       <ConfirmDialog

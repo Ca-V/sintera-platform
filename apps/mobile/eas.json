@@ -7,12 +7,18 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_WEB_URL": "https://sinteramais.com.br"
+      },
       "android": {
         "buildType": "apk"
       }
     },
     "preview": {
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_WEB_URL": "https://sinteramais.com.br"
+      },
       "android": {
         "buildType": "apk",
         "gradleCommand": ":app:assembleRelease",
@@ -24,6 +30,9 @@
     },
     "production": {
       "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_WEB_URL": "https://sinteramais.com.br"
+      },
       "ios": {
         "simulator": false
       }

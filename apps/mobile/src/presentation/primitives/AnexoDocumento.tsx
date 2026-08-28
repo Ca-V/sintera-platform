@@ -12,13 +12,15 @@ import { View, Pressable, ActivityIndicator, StyleSheet } from 'react-native'
 import { text } from '@sintera/design-system'
 import {
   acceptFiles, removeFile, rejectionMessage, attachmentCountLabel, entryMethodsFor,
-  type AttachedFile, type IncomingFile,
-} from '@sintera/core'
+  readingFromClassification, documentDivergence, documentSubtypeLabel,
+  type AttachedFile, type IncomingFile, type DocumentReading, type PatientDocumentSubtype, SCREEN_COPY } from '@sintera/core'
 import type { PickedFile } from '@sintera/api-client'
 import { Text } from './Text'
 import { Button } from './Button'
 import { useTheme } from '../theme'
 import { documentPicker } from '../../infrastructure/documentPickerAdapter'
+import { apiClient } from '../../infrastructure/apiClient'
+import { fileToBase64 } from '../../infrastructure/fileToBase64'
 
 const TEM_CAMERA = entryMethodsFor('mobile').includes('camera')
 
@@ -29,6 +31,21 @@ export interface AnexoDocumentoProps {
   upload: (file: PickedFile) => Promise<string | null>
   label?: string
   disabled?: boolean
+  /**
+   * LEITURA ASSISTIDA (ANEXO-001) — espelha a Web. Quando a tela declara o que ESPERA receber, o componente lê
+   * o primeiro documento anexado, AVISA se o que leu diverge do declarado, e devolve os fatos para
+   * autopreenchimento com REVISÃO humana.
+   *
+   * A classificação atravessa a ponte para a rota da Web (ADR-020) — a MESMA regra, com o mesmo prompt e os
+   * mesmos critérios de transcrição. Duplicá-la aqui daria duas leituras do mesmo documento conforme o
+   * aparelho da pessoa.
+   *
+   * NUNCA move o documento sozinha e NUNCA bloqueia o salvamento.
+   */
+  leituraAssistida?: {
+    declarado: PatientDocumentSubtype
+    onLeitura: (leitura: DocumentReading) => void
+  }
 }
 
 function tamanhoLegivel(bytes: number): string {
@@ -39,11 +56,37 @@ function tamanhoLegivel(bytes: number): string {
 }
 
 export function AnexoDocumento({
-  files, onChange, upload, label = 'Documento', disabled = false,
+  files, onChange, upload, label = 'Documento', disabled = false, leituraAssistida,
 }: AnexoDocumentoProps) {
   const t = useTheme()
   const [enviando, setEnviando] = useState(false)
   const [aviso, setAviso] = useState<string | null>(null)
+  const [lendo, setLendo] = useState(false)
+  const [divergencia, setDivergencia] = useState<string | null>(null)
+
+  /** Lê e compara com o declarado. Silencioso quando falha — a pessoa preenche à mão, como sempre pôde. */
+  const lerDocumento = useCallback(async (original: PickedFile) => {
+    if (!leituraAssistida) return
+    setLendo(true)
+    setDivergencia(null)
+    try {
+      // Aplica a MESMA política de preparo que a Web (tamanho e qualidade vêm do core). Sem isto, a foto
+      // ia inteira e estourava o limite de requisição da hospedagem — a leitura falhava por TAMANHO.
+      const preparado = await fileToBase64(original.uri, original.mimeType)
+      if (!preparado.fileBase64) return
+      const cls = await apiClient.capture.classify({ ...preparado, filename: original.name })
+      const leitura = readingFromClassification(cls)
+      if (!leitura) return
+
+      // AVISA, e só. Nunca move o documento nem impede salvar — a pessoa escolheu o tipo.
+      setDivergencia(documentDivergence(leituraAssistida.declarado, leitura, documentSubtypeLabel).message)
+      leituraAssistida.onLeitura(leitura)
+    } catch {
+      /* preenche à mão */
+    } finally {
+      setLendo(false)
+    }
+  }, [leituraAssistida])
 
   const receber = useCallback(async (escolhidos: PickedFile[]) => {
     setAviso(null)
@@ -66,10 +109,13 @@ export function AnexoDocumento({
     setEnviando(true)
     try {
       let atual = aceitos
+      let primeiro = true
       for (let i = 0; i < novos.length; i++) {
         const novo = novos[i]
         const original = escolhidos.find(f => f.name === novo.name && f.sizeBytes === novo.sizeBytes)
         if (!original) continue
+        // Só o PRIMEIRO do lote: um registro tem um tipo, e ler todos daria avisos conflitantes.
+        if (primeiro) { primeiro = false; void lerDocumento(original) }
         const url = await upload(original)
         if (url) {
           atual = atual.map(f => (f.id === novo.id ? { ...f, url } : f))
@@ -84,7 +130,7 @@ export function AnexoDocumento({
     } finally {
       setEnviando(false)
     }
-  }, [files, onChange, upload])
+  }, [files, onChange, upload, lerDocumento])
 
   const escolherArquivos = useCallback(async () => {
     const escolhidos = await documentPicker.pickDocuments()
@@ -126,27 +172,45 @@ export function AnexoDocumento({
       ))}
 
       <Button
-        label={files.length > 0 ? 'Adicionar mais páginas' : 'Anexar arquivos'}
+        label={files.length > 0 ? SCREEN_COPY.anexo.addMore : SCREEN_COPY.anexo.add}
         onPress={escolherArquivos}
         variant="secondary"
         loading={enviando}
-        loadingLabel="Enviando…"
+        loadingLabel={SCREEN_COPY.anexo.sending}
         disabled={disabled}
       />
 
       {TEM_CAMERA && (
         <Button
-          label="Fotografar documento"
+          label={SCREEN_COPY.anexo.camera}
           onPress={fotografar}
           variant="ghost"
           disabled={disabled || enviando}
         />
       )}
 
-      <Text spec={text(t, { role: 'caption', tone: 'faint' })}>PDF ou imagem · vários arquivos</Text>
+      <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{SCREEN_COPY.anexo.formatHint}</Text>
 
       {aviso && (
         <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>{aviso}</Text>
+      )}
+
+      {lendo && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <ActivityIndicator size="small" color={t.color.text.muted} />
+          <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{SCREEN_COPY.anexo.reading}</Text>
+        </View>
+      )}
+
+      {/* DIVERGÊNCIA — informa, não obstrui. Sem ação de "corrigir": a pessoa escolheu o tipo, e mover o
+          documento por conta própria seria decidir por ela. Tom de atenção, não de erro. */}
+      {divergencia && (
+        // `soft` é o fundo de badge do DS, com contraste AA garantido para o `text` por cima.
+        <View style={[s.divergencia, { backgroundColor: t.color.badge.attention.soft, borderColor: t.color.badge.attention.text }]}>
+          <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.attention.text }}>
+            {divergencia} Se estiver certo, é só continuar — nada será movido.
+          </Text>
+        </View>
       )}
     </View>
   )
@@ -155,4 +219,5 @@ export function AnexoDocumento({
 const s = StyleSheet.create({
   cabecalho: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
   item: { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10 },
+  divergencia: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10 },
 })

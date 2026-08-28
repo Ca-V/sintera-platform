@@ -29,6 +29,7 @@ import { listResources, saveResource, deleteResource } from '../resources/resour
 import { archivePrescription } from '../documents/prescription'
 import { listConnectors, connectorConnectUrl, syncConnector, disconnectConnector } from '../connectors/connectors'
 import { listDocuments, listDocumentsForTarget, listDocumentsForTargets, listPagesForDocuments, saveDocument, updateDocument, deleteDocument } from '../documents/documents'
+import { targetNamesByDocument } from '../documents/targetNames'
 import { listMedications, saveMedication, deleteMedication } from '../medications/medications'
 import { listContraceptives, saveContraceptive, toggleContraceptiveStatus, deleteContraceptive } from '../cycle/contraception'
 import { listPeriods, addPeriod, deletePeriod } from '../cycle/menstrual'
@@ -37,6 +38,10 @@ import { exportAccountData, deleteAccount } from '../settings/account'
 import { readCondition, readBioimpedance, readEyeglasses, scanMedications } from '../vision/vision'
 import { getMinhaSaudeCounts } from '../summary/counts'
 import { listBodyMetrics, saveBodyMetric, deleteBodyMetric, getHeightCm, getWeightGoal, setWeightGoal } from '../body/body'
+import { listActivitySessions, saveActivitySession, deleteActivitySession, ingestActivitySessions } from '../activity/activity'
+import { ingestWearableSamples } from '../wearables/wearables'
+import { startOAuthSignIn, completeOAuthSignIn } from './oauth'
+import { classifyDocument } from '../capture/classify'
 import { listShares, createShare, revokeShare, listTemplates, saveTemplate, deleteTemplate, listOmicsPanels } from '../report/report'
 import { listOmicsPanels as omicsList, getOmicsPanel, getOmicsResults, getOmicsFeatureHistory, searchOmicsCatalog, createOmicsPanel, addOmicsResult, deleteOmicsResult, deleteOmicsPanel } from '../omics/omics'
 import { asError } from '../net/errors'
@@ -64,6 +69,8 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
   return {
     auth: {
       signIn: (email, password) => signIn(supabase, email, password),
+      startOAuth: (provider, redirectTo) => startOAuthSignIn(supabase, provider, redirectTo),
+      completeOAuth: (callbackUrl) => completeOAuthSignIn(supabase, callbackUrl),
       signOut: () => signOut(supabase),
       getSession: () => getSession(supabase),
       onAuthStateChange: (listener) => onAuthStateChange(supabase, listener),
@@ -129,6 +136,7 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       listDocumentsForTarget: (d, id, signal) => listDocumentsForTarget(supabase, d, id, signal),
       listDocumentsForTargets: (d, ids, signal) => listDocumentsForTargets(supabase, d, ids, signal),
       listPagesForDocuments: (ids, signal) => listPagesForDocuments(supabase, ids, signal),
+      targetNamesByDocument: (ids) => targetNamesByDocument(supabase, ids),
       saveDocument: (input) => saveDocument(supabase, input),
       updateDocument: (id, patch) => updateDocument(supabase, id, patch),
       deleteDocument: (id) => deleteDocument(supabase, id),
@@ -167,6 +175,18 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       getHeightCm: (signal) => getHeightCm(supabase, signal),
       getWeightGoal: (signal) => getWeightGoal(supabase, signal),
       setWeightGoal: (kg) => setWeightGoal(supabase, kg),
+    },
+    activity: {
+      listActivitySessions: (signal) => listActivitySessions(supabase, signal),
+      saveActivitySession: (input) => saveActivitySession(supabase, input),
+      deleteActivitySession: (id) => deleteActivitySession(supabase, id),
+      ingestActivitySessions: (drafts) => ingestActivitySessions(supabase, drafts),
+    },
+    wearables: {
+      ingestSamples: (samples) => ingestWearableSamples(supabase, samples),
+    },
+    capture: {
+      classify: (input) => classifyDocument(supabase, config.webBaseUrl, input),
     },
     report: {
       listShares: (signal) => listShares(supabase, signal),

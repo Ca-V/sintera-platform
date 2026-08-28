@@ -9,6 +9,9 @@ export * from './ports/sync'
 // Contrato de módulo de domínio (capacidade da plataforma; ADR-009).
 export * from './domain/module'
 
+// Identificadores — funcionam em QUALQUER navegador e aparelho (princípio de disponibilidade universal).
+export * from './domain/ids'
+
 // Projeção cronológica (Timeline) — lógica pura reutilizável por qualquer domínio datado.
 export * from './domain/timeline'
 
@@ -86,9 +89,42 @@ export * from './domain/copy'
 export * from './domain/capture/attachmentPolicy'
 export * from './domain/capture/attachmentSet'
 export * from './domain/capture/divergence'
+// O que conta como FATO transcrito de um documento — a fronteira entre transcrever e inferir (RDC 657).
+export * from './domain/capture/transcription'
+// Política de preparo de imagem — a DECISÃO é uma só; o mecanismo é de cada plataforma.
+export * from './domain/capture/imagePrep'
 export * from './domain/connectors/state'
+
+// Sessão de atividade física (HIP-014 §3) — FATO observado, distinto da INTENÇÃO em life_habits.
+export * from './domain/body/activity'
+// Pressão arterial escrita à mão — nota a forma falada ("12/8") e sugere, sem converter.
+export * from './domain/body/bloodPressure'
+
+// IDENTIDADE — leitura do retorno de login por provedor externo (Google; Apple e Microsoft depois).
+// NÃO confundir com a autorização de dados de saúde, que vive na camada de conectores e é separada de
+// propósito (ver tests/contracts/identidade-vs-autorizacao.ARCH.test.ts).
+export * from './domain/auth/oauthCallback'
+
+// Camada de Conectores (HIP-001) — contratos + lógica PURA, vendor-neutral. Vive no core porque o Mobile
+// precisa alcançá-la: o Health Connect roda NO APARELHO (HIP-014). Quem resolve a CHAVE service-role a partir
+// do ambiente (`runtime.server.ts`) e os adaptadores de fornecedor permanecem no servidor da Web — nunca no
+// pacote. A IO agnóstica de credencial vive em `@sintera/api-client` e serve as duas pontas.
+export * from './domain/connectors/connector'
+export * from './domain/connectors/oauth'
+export * from './domain/connectors/registry'
+export * from './domain/connectors/persistence'
+export * from './domain/connectors/orchestrator'
+export * from './domain/connectors/connections'
+export * from './domain/connectors/syncService'
+export * from './domain/connectors/webhook'
+export * from './domain/connectors/mock'
+// Health Connect (HIP-014 §5) — adaptador PURO; a leitura nativa vive no aplicativo.
+export * from './domain/connectors/healthConnect'
 
 // Telefone com código de país (E.164) — fonte única Web↔Mobile.
 export * from './domain/profile/phone'
 export * from './domain/documents/patientDocuments'
+// Catálogo único das seções da plataforma (nome · ordem · grupo · resumo). Sidebar da Web e menus do
+// aplicativo leem daqui — a taxonomia estava escrita em três lugares.
+export * from './domain/navigation/sections'
 export * from './domain/documents/cardActions'

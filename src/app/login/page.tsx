@@ -5,6 +5,8 @@ import { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { Eye, EyeOff, Lock, Mail, ArrowLeft, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+// PARIDADE — o texto de entrada vem do core; o Mobile lê os MESMOS.
+import { SCREEN_COPY } from '@sintera/core'
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -147,7 +149,7 @@ export default function LoginPage() {
 
             <div className="relative flex items-center gap-4">
               <div className="flex-1 h-px bg-border"/>
-              <span className="text-xs font-body text-mauve">ou</span>
+              <span className="text-xs font-body text-mauve">{SCREEN_COPY.login.separator}</span>
               <div className="flex-1 h-px bg-border"/>
             </div>
 
@@ -159,7 +161,7 @@ export default function LoginPage() {
                 <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
                 <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
               </svg>
-              Continuar com Google
+              {SCREEN_COPY.login.googleAction}
             </button>
           </form>
         </motion.div>

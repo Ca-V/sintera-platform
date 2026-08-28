@@ -1,5 +1,8 @@
 // @sintera/core — DOC-001 · DOC-002 — Domínio "Documentos do paciente". Fonte ÚNICA Web↔Mobile.
 //
+// A capitalização do complemento no título vem de `lowerLeadIfCommon`, do domínio Exames: é a MESMA regra
+// ("Receita de paracetamol", mas "Receita de Doppler"), e duas implementações divergiriam em silêncio.
+//
 // MORAVA EM `src/lib/documents/` — Web-only, fora do alcance do Mobile. Movido para cá porque a página de
 // Documentos existe nas duas pontas: manter o domínio do lado da Web faria nascer um segundo dono do mesmo
 // conceito, que é o defeito nomeado pelo ADR-023 e que já custou três correções no campo de telefone.
@@ -17,7 +20,16 @@
 // `patient_documents` / `patient_document_links`. Coberta por teste.
 
 /** Subtipos de documento do paciente (catálogo aberto; `outro` cobre o que não está listado). */
+import { lowerLeadIfCommon } from '../exams/orderTitle'
+
 export type PatientDocumentSubtype = 'receita' | 'atestado' | 'relatorio' | 'encaminhamento' | 'outro'
+
+/**
+ * Chave do filtro "todos" na lista de documentos. Estava declarada nas DUAS pontas, com o mesmo valor —
+ * duplicação achada pela catraca de base única (27/08). Trocá-la num lado e esquecer o outro faria o filtro
+ * parar de casar em silêncio.
+ */
+export const DOCUMENT_FILTER_ALL = 'todos'
 
 export const DOCUMENT_SUBTYPES: { value: PatientDocumentSubtype; label: string }[] = [
   { value: 'receita',        label: 'Receita' },
@@ -101,6 +113,51 @@ function formatDate(iso: string | null | undefined): string {
  * Ordem: emissor e data do documento (o que está escrito nele) vencem; na ausência dos dois, a data em que
  * foi guardado. Web e Mobile chamam esta função — o texto não pode divergir entre as telas.
  */
+/**
+ * Preposição de cada subtipo. "Receita DE paracetamol", mas "Encaminhamento PARA cardiologia" — a mesma
+ * preposição nos dois sairia errada em um deles, e nomenclatura torta em prontuário é o tipo de coisa que a
+ * pessoa lê e desconfia da plataforma inteira.
+ *
+ * `null` = o subtipo não ganha complemento; o título fica só o rótulo.
+ */
+const PREPOSICAO: Record<PatientDocumentSubtype, string | null> = {
+  receita:        'de',
+  atestado:       null,   // "Atestado de gripe" seria conteúdo clínico — a plataforma não diz do que é (RDC 657)
+  relatorio:      'de',
+  encaminhamento: 'para',
+  outro:          null,
+}
+
+/**
+ * Nome do documento como a pessoa o reconhece: "Receita de paracetamol", "Encaminhamento para cardiologia".
+ *
+ * Pedido da fundadora (25/08): o card não pode dizer só "Receita" quando a plataforma SABE do que ela é — o
+ * vínculo com o medicamento já existe no banco, e escondê-lo obriga a abrir o documento para descobrir.
+ *
+ * Sem alvo conhecido, devolve o rótulo puro. NUNCA inventa complemento: um título que afirma mais do que se
+ * sabe é pior que um título curto.
+ *
+ * ATESTADO nunca ganha complemento, mesmo com alvo: dizer do que é o atestado seria afirmar conteúdo clínico,
+ * que a plataforma não produz (RDC 657).
+ */
+export function deriveDocumentTitle(
+  subtype: PatientDocumentSubtype,
+  alvos: readonly (string | null | undefined)[] = [],
+): string {
+  const rotulo = documentSubtypeLabel(subtype)
+  const prep = PREPOSICAO[subtype]
+  if (!prep) return rotulo
+
+  const nomes = alvos.map(a => a?.trim()).filter((a): a is string => !!a)
+  if (nomes.length === 0) return rotulo
+
+  const primeiro = lowerLeadIfCommon(nomes[0])
+  // Mais de um alvo: nomear todos alongaria o card sem ajudar a distinguir. Diz quantos faltam, e a pessoa
+  // abre se precisar — a informação continua acessível, só não ocupa a lista.
+  if (nomes.length === 1) return `${rotulo} ${prep} ${primeiro}`
+  return `${rotulo} ${prep} ${primeiro} +${nomes.length - 1}`
+}
+
 export function documentSubtitle(doc: {
   issuer?: string | null
   doc_date?: string | null

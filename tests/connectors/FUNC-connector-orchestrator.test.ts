@@ -1,9 +1,9 @@
 // FUNC · WEA-001/HIP-001 — orquestrador de sync vendor-neutral: sucesso, falha isolada, histórico.
 import { describe, it, expect } from 'vitest'
-import { runConnectorSync, type SyncDeps, type Clock, type SyncRunRecorder } from '@/lib/connectors/orchestrator'
-import type { Connector, ConnectorContext } from '@/lib/connectors/registry'
-import type { CanonicalSample, SyncRun } from '@/lib/connectors/connector'
-import type { PersistClient, WearableReadingRow, BodyMetricRow } from '@/lib/connectors/persistence'
+import { runConnectorSync, type SyncDeps, type Clock, type SyncRunRecorder } from '@sintera/core'
+import type { Connector, ConnectorContext } from '@sintera/core'
+import type { CanonicalSample, SyncRun } from '@sintera/core'
+import type { PersistClient, WearableReadingRow, BodyMetricRow } from '@sintera/core'
 
 const sample = (metric: string, value: number): CanonicalSample => ({
   metric, value, unit: 'kg', recordedAt: '2026-07-20T08:00:00Z',

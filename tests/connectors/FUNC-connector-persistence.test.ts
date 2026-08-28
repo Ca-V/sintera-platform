@@ -1,10 +1,10 @@
 // FUNC · WEA-001/HIP-001 — propagação CanonicalSample → persistência (bruto + projeção) e IDEMPOTÊNCIA.
 import { describe, it, expect } from 'vitest'
-import type { CanonicalSample } from '@/lib/connectors/connector'
+import type { CanonicalSample } from '@sintera/core'
 import {
   toWearableReadingRow, toBodyMetricRow, projectBodyMetricPoints, utcDateOf, propagateSamples,
   type PersistClient, type WearableReadingRow, type BodyMetricRow,
-} from '@/lib/connectors/persistence'
+} from '@sintera/core'
 
 const s = (metric: string, recordedAt: string, value: number | null, unit: string | null = null, externalId = 'x'): CanonicalSample => ({
   metric, value, unit, recordedAt, provenance: { source: 'withings', connectorVersion: 'v1', externalId },

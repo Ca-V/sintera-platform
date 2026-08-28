@@ -5,9 +5,11 @@ import { ScrollView, View, Pressable, StyleSheet } from 'react-native'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { heading, text } from '@sintera/design-system'
+import { PLATFORM_NAV, type SectionId } from '@sintera/core'
 import { Text } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { MinhaSaudeStackParamList } from '../../navigation/types'
+import { SECTION_ROUTES } from '../../navigation/sectionRoutes'
 import { useMinhaSaudeCounts } from './useMinhaSaudeCounts'
 
 type Props = NativeStackScreenProps<MinhaSaudeStackParamList, 'MinhaSaudeMenu'>
@@ -17,34 +19,30 @@ export function MinhaSaudeMenuScreen({ navigation }: Props) {
   const t = useTheme()
   const insets = useSafeAreaInsets()
   const counts = useMinhaSaudeCounts() // §5d: contadores por INJEÇÃO (best-effort); o menu só apresenta.
-  const sections: { title: string; rows: Row[] }[] = [
-    // "Registros" foi dividido: a palavra não separava nada — condição, hábito e composição corporal também
-    // são registros, e estão em "Saúde". Os dois grupos abaixo têm critério dizível numa frase.
-    { title: 'Documentos', rows: [   // o que ALGUÉM EMITIU para você
-      { label: 'Exames', onPress: () => navigation.navigate('ExamsList'), count: counts?.exams },
-      // O pedido é a ORIGEM do fluxo assistencial (Q1) — alcançável por si, não só como aba de Exames.
-      { label: 'Pedidos de exame', onPress: () => navigation.navigate('ExamsList', { tab: 'orders' }) },
-      { label: 'Receitas e atestados', onPress: () => navigation.navigate('Documents') },
-    ] },
-    { title: 'Cuidados', rows: [     // o que VOCÊ USA OU TOMA
-      { label: 'Medicamentos', onPress: () => navigation.navigate('Medications', { supplements: false }), count: counts?.medications },
-      { label: 'Suplementos', onPress: () => navigation.navigate('Medications', { supplements: true }), count: counts?.supplements },
-      { label: 'Recursos de Saúde', onPress: () => navigation.navigate('Resources'), count: counts?.resources },
-    ] },
-    { title: 'Saúde', rows: [
-      { label: 'Condições de Saúde', onPress: () => navigation.navigate('Conditions'), count: counts?.conditions },
-      { label: 'Composição Corporal', onPress: () => navigation.navigate('Composicao') },
-      { label: 'Ciclo e Contracepção', onPress: () => navigation.navigate('Ciclo') },
-      // Conexões NÃO é item de menu: chega-se por Monitoramento, como na Web. Eu a tinha posto nos DOIS
-      // lugares — a tela existia, mas o caminho até ela divergia da Web, que é a referência.
-      { label: 'Monitoramento', onPress: () => navigation.navigate('Monitoramento') },
-      { label: 'Hábitos', onPress: () => navigation.navigate('Habits'), count: counts?.habits },
-    ] },
-    { title: 'Histórico', rows: [
-      { label: 'Histórico de Exames', onPress: () => navigation.navigate('HistoricoExames') },
-      { label: 'Histórico de Saúde', onPress: () => navigation.navigate('Timeline') },
-    ] },
-  ]
+
+  // Contadores por seção — o único dado que este menu acrescenta ao catálogo. Conexões NÃO é item: chega-se por
+  // Monitoramento, como na Web (já a tive nos dois lugares, e o caminho divergia da referência).
+  const contagem: Partial<Record<SectionId, number | undefined>> = {
+    exames: counts?.exams, medicamentos: counts?.medications, suplementos: counts?.supplements,
+    recursos: counts?.resources, condicoes: counts?.conditions, habitos: counts?.habits,
+  }
+
+  // Os NOMES, a ORDEM e os GRUPOS vêm do catálogo do core — os mesmos que a Sidebar da Web usa e que a Home
+  // mostra em "Tudo na SINTERA". Esta tela contribui com o caminho e o contador, não com uma segunda taxonomia.
+  const grupoMinhaSaude = PLATFORM_NAV.find(g => g.id === 'minha-saude')
+  const sections: { title: string; rows: Row[] }[] = (grupoMinhaSaude?.subgroups ?? []).map(sg => ({
+    title: sg.label ?? '',
+    rows: sg.sections.map(s => {
+      const r = SECTION_ROUTES[s.id]
+      // Navegação por nome de rota vindo do mapa — cast fino, o padrão do projeto para nav por string.
+      const ir = navigation as unknown as { navigate: (n: string, p?: unknown) => void }
+      return {
+        label: s.label,
+        onPress: () => ir.navigate(r.screen ?? 'MinhaSaudeMenu', r.params),
+        count: contagem[s.id],
+      }
+    }),
+  }))
   return (
     <ScrollView style={{ backgroundColor: t.color.surface.app }} contentContainerStyle={[styles.content, { paddingTop: styles.content.padding + insets.top }]}>
       <Text spec={heading(t, { level: 'page' })}>Minha Saúde</Text>

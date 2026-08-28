@@ -40,6 +40,14 @@ export interface ClassificationResult {
   reason?: string
   subtype?: string
   source?: ClassificationSource
+  /**
+   * Fatos DOCUMENTAIS transcritos do papel, para preencher o formulário e a pessoa REVISAR (ANEXO-001).
+   * Transcrição, jamais inferência: quem assinou e a data que está escrita ali — não quem "deve ter" assinado
+   * nem quando "provavelmente" foi emitido. Nada aqui é conteúdo clínico (RDC 657).
+   */
+  issuer?: string
+  /** Data do documento em ISO (AAAA-MM-DD), quando escrita de forma inequívoca. */
+  docDate?: string
 }
 
 /** Motivo de erro NORMALIZADO (o Hub traduz qualquer falha de pipeline para isto). */

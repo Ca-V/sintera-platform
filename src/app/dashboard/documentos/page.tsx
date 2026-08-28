@@ -16,7 +16,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import {
-  Loader2, Plus, X, Trash2, Paperclip, FileHeart, FileText, FileCheck2, Share2, File,
+  Loader2, Plus, X, Trash2, Pencil, Paperclip, FileHeart, FileText, FileCheck2, Share2, File,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
@@ -32,10 +32,12 @@ import { Card } from '@/lib/ui/ds'
 // Helper do repositório: o cliente tipado resolve Insert como `never`, então TODA escrita da Web passa por
 // `row()`. Não é gambiarra minha — é o padrão já usado por Recursos, Hábitos e demais páginas.
 import { row } from '@/lib/supabase/db'
+// A Web reusa a MESMA consulta do Mobile (SSOT), como já faz em getProfileStats.
+import { targetNamesByDocument, updateDocument } from '@sintera/api-client'
 import {
   DOCUMENT_SUBTYPES, documentSubtypeLabel, buildPatientDocumentInsert, documentSubtitle, isReadyToSave,
-  type PatientDocumentSubtype, type AttachedFile,
-} from '@sintera/core'
+  autofillFrom, deriveDocumentTitle,
+  type PatientDocumentSubtype, type AttachedFile, uuid, DOCUMENT_FILTER_ALL,} from '@sintera/core'
 
 // Ícone por subtipo. Mapa EXAUSTIVO por construção: o TypeScript exige uma entrada para cada
 // subtipo declarado no core, então acrescentar um subtipo lá quebra a compilação aqui em vez
@@ -59,7 +61,6 @@ type DocRow = {
 }
 
 const COLUMNS = 'id, subtype, file_url, issuer, doc_date, notes, created_at'
-const FILTER_ALL = 'todos'
 
 export default function DocumentosPage() {
   const { user } = useUser()
@@ -67,12 +68,14 @@ export default function DocumentosPage() {
 
   const [rows, setRows] = useState<DocRow[]>([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<string>(FILTER_ALL)
+  const [filter, setFilter] = useState<string>(DOCUMENT_FILTER_ALL)
 
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [confirmId, setConfirmId] = useState<string | null>(null)
+  /** Documento sendo corrigido. `null` = novo. */
+  const [editando, setEditando] = useState<DocRow | null>(null)
 
   const [subtype, setSubtype] = useState<PatientDocumentSubtype>('receita')
   // ANEXO-001: o formulário guarda um CONJUNTO de páginas, não um arquivo.
@@ -80,13 +83,19 @@ export default function DocumentosPage() {
   const [issuer, setIssuer] = useState('')
   const [docDate, setDocDate] = useState('')
   const [notes, setNotes] = useState('')
+  /** document_id → nomes dos registros vinculados. Vazio é normal: nem todo documento tem vínculo. */
+  const [alvos, setAlvos] = useState<Record<string, string[]>>({})
 
   const load = useCallback(async () => {
     if (!user) return
     setLoading(true)
     const { data } = await supabase.from('patient_documents').select(COLUMNS)
       .eq('user_id', user.id).order('created_at', { ascending: false })
-    setRows((data as DocRow[] | null) ?? [])
+    const lista = (data as DocRow[] | null) ?? []
+    setRows(lista)
+    // Nomes dos alvos vinculados, para o card dizer "Receita de paracetamol" em vez de só "Receita".
+    // Mesma consulta que o Mobile usa (SSOT). Degrada para vazio; o título cai para o rótulo puro.
+    setAlvos(await targetNamesByDocument(supabase, lista.map(r => r.id)))
     setLoading(false)
   }, [supabase, user])
 
@@ -101,7 +110,7 @@ export default function DocumentosPage() {
   const uploadPagina = useCallback(async (file: File): Promise<string | null> => {
     if (!user) return null
     const ext = file.name.split('.').pop() ?? 'pdf'
-    const path = `${user.id}/${crypto.randomUUID()}.${ext}`
+    const path = `${user.id}/${uuid()}.${ext}`
     const { error: upErr } = await supabase.storage.from('exams')
       .upload(path, file, { contentType: file.type, upsert: false })
     if (upErr) return null
@@ -149,7 +158,7 @@ export default function DocumentosPage() {
     await load()
   }
 
-  const visible = filter === FILTER_ALL ? rows : rows.filter(r => r.subtype === filter)
+  const visible = filter === DOCUMENT_FILTER_ALL ? rows : rows.filter(r => r.subtype === filter)
 
   // Contagem por subtipo, para o seletor dizer quantos há de cada — sem uma segunda consulta.
   const counts = rows.reduce<Record<string, number>>((acc, r) => {
@@ -158,7 +167,7 @@ export default function DocumentosPage() {
   }, {})
 
   const filterOptions = [
-    { value: FILTER_ALL, label: `Todos (${rows.length})` },
+    { value: DOCUMENT_FILTER_ALL, label: `Todos (${rows.length})` },
     ...DOCUMENT_SUBTYPES.map(s => ({ value: s.value, label: `${s.label} (${counts[s.value] ?? 0})` })),
   ]
 
@@ -210,7 +219,7 @@ export default function DocumentosPage() {
               <ListCard
                 key={r.id}
                 leading={<Icon size={18} />}
-                title={documentSubtypeLabel(r.subtype)}
+                title={deriveDocumentTitle(r.subtype, alvos[r.id])}
                 meta={documentSubtitle(r)}
                 chips={<AttachmentLink url={r.file_url} label="Ver documento" icon={<Paperclip size={14} />} />}
                 actions={
@@ -253,7 +262,21 @@ export default function DocumentosPage() {
                     seletor de vínculo aqui, o texto volta — junto com o campo. */}
               </div>
 
-              <AnexoDocumento files={files} onChange={setFiles} upload={uploadPagina} />
+              {/* LEITURA ASSISTIDA (ANEXO-001 · item D). Declara o subtipo escolhido para que o componente
+                  avise se o documento anexado parece outra coisa, e devolva emissor e data para REVISÃO.
+                  `autofillFrom` não sobrescreve o que já foi digitado: a pessoa é a autoridade sobre o
+                  próprio registro. */}
+              <AnexoDocumento
+                files={files} onChange={setFiles} upload={uploadPagina}
+                leituraAssistida={{
+                  declarado: subtype,
+                  onLeitura: (leitura) => {
+                    const preenchido = autofillFrom(leitura, { issuer, docDate })
+                    setIssuer(preenchido.issuer)
+                    setDocDate(preenchido.docDate)
+                  },
+                }}
+              />
 
               <div>
                 <label className="mb-1.5 block text-sm text-mauve">Emitido por</label>
@@ -289,10 +312,10 @@ export default function DocumentosPage() {
 
               <button
                 onClick={onSave}
-                disabled={saving || !isReadyToSave(files)}
+                disabled={saving || (!editando && !isReadyToSave(files))}
                 className="w-full rounded-full bg-petal px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
               >
-                {saving ? 'Salvando…' : 'Salvar documento'}
+                {saving ? 'Salvando…' : editando ? 'Salvar alterações' : 'Salvar documento'}
               </button>
             </div>
           </Card>

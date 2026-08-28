@@ -21,6 +21,9 @@ import { logCapture } from '../telemetry'
 import type { DocumentKind, CaptureResult, ClassificationResult } from '../types'
 import { useDocumentBundle, DocumentBundleStaging } from '@/components/ui/DocumentBundleCapture'
 import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MB } from '../limits'
+// Estava definida aqui dentro; virou fonte única porque `medications/scanImage` tinha outra, sem redução —
+// duas qualidades de leitura para a mesma pessoa, conforme a tela que ela usasse.
+import { fileToBase64 } from '../fileToBase64'
 
 const ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   FlaskConical, Pill, Glasses, HeartPulse, Dna, FileText,
@@ -31,43 +34,6 @@ function fmtSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
-
-/** Converte o arquivo para base64 p/ a classificação por conteúdo. Imagem: reduz
- *  (acelera/barateia); PDF: base64 direto. Client-only (canvas/FileReader). */
-async function fileToBase64(file: File): Promise<{ fileBase64: string; mediaType: string }> {
-  if (file.type.startsWith('image/')) {
-    try {
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-        const img = new Image()
-        const url = URL.createObjectURL(file)
-        img.onload = () => {
-          const max = 1600
-          const scale = Math.min(1, max / Math.max(img.width, img.height))
-          const canvas = document.createElement('canvas')
-          canvas.width = Math.max(1, Math.round(img.width * scale))
-          canvas.height = Math.max(1, Math.round(img.height * scale))
-          const ctx = canvas.getContext('2d')
-          if (!ctx) { URL.revokeObjectURL(url); reject(new Error('canvas')); return }
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-          URL.revokeObjectURL(url)
-          resolve(canvas.toDataURL('image/jpeg', 0.8))
-        }
-        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('img')) }
-        img.src = url
-      })
-      return { fileBase64: dataUrl.split(',')[1] ?? '', mediaType: 'image/jpeg' }
-    } catch {
-      return { fileBase64: '', mediaType: file.type }
-    }
-  }
-  const b64 = await new Promise<string>((resolve) => {
-    const r = new FileReader()
-    r.onload = () => resolve(String(r.result).split(',')[1] ?? '')
-    r.onerror = () => resolve('')
-    r.readAsDataURL(file)
-  })
-  return { fileBase64: b64, mediaType: file.type }
 }
 
 export interface CaptureCenterProps {

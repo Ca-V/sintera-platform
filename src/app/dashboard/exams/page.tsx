@@ -17,7 +17,7 @@ import { findDuplicateIds, originalIdFor, type DuplicateCandidate } from '@/lib/
 import { deriveExamIdentity } from '@/lib/exams/identification'
 import { binaryStructuringState, STRUCTURING_LABEL } from '@/lib/exams/structuring'
 import { isOrderDocumentType } from '@/lib/exams/classification'
-import { EXAM_STATE_LABEL, EXAM_STATE_TONE, examProcessingState, examAnalyzeLabel, isExamReady, EXAM_STATUS_FILTER_OPTIONS, matchesExamStatusFilter, deriveOrderDisplayTitle, SCREEN_COPY, type ExamStateTone } from '@sintera/core'
+import { EXAM_STATE_LABEL, EXAM_STATE_TONE, examProcessingState, examAnalyzeLabel, isExamReady, EXAM_STATUS_FILTER_OPTIONS, matchesExamStatusFilter, deriveOrderDisplayTitle, SCREEN_COPY, type ExamStateTone, uuid} from '@sintera/core'
 import { effectiveOrderStatus, orderStatusLabel } from '@/lib/exams/orderStatus'
 import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MB } from '@/lib/capture/limits'
 import { bundlePartInfo, bundlePartLabel, groupBundleParts } from '@/lib/exams/bundleGroup'
@@ -332,12 +332,12 @@ export default function ExamsPage() {
     let examId: string | null = null
     try {
       const ext         = file.name.split('.').pop() ?? 'bin'
-      const storagePath = `${user.id}/${crypto.randomUUID()}.${ext}`
+      const storagePath = `${user.id}/${uuid()}.${ext}`
       const { error: storageErr } = await supabase.storage.from('exams').upload(storagePath, file, { contentType: file.type, upsert: false })
       if (storageErr) throw new Error(`[storage] ${storageErr.message}`)
       const { data: signedData, error: signedErr } = await supabase.storage.from('exams').createSignedUrl(storagePath, 60 * 60 * 24 * 365)
       if (signedErr) throw new Error(`[signed-url] ${signedErr.message}`)
-      examId = crypto.randomUUID()
+      examId = uuid()
       const examName = file.name.replace(/\.[^.]+$/, '')
       // exam_date fica nulo no upload — é preenchido pela extração (data do laudo)
       // e pode ser ajustado manualmente no detalhe. Não assumimos a data de envio.
@@ -449,7 +449,7 @@ export default function ExamsPage() {
                E6: ômica é uma CONTINUAÇÃO especializada do mesmo ponto de entrada (não um fork):
                declarar "Exame ômico" segue para o passo de catálogo/versionamento. */
             <CreateRecordMenu
-              label={activeTab === 'orders' ? 'Adicionar pedido de exames' : 'Adicionar exame realizado'}
+              label={activeTab === 'orders' ? SCREEN_COPY.pedidos.add : 'Adicionar exame realizado'}
               methods={activeTab === 'orders' ? ['file', 'camera'] : ['file', 'camera', 'bundle']}
               extras={activeTab === 'orders' ? [] : [{ key: 'omics', label: 'Exame ômico (catálogo)', icon: Dna }]}
               onSelect={(m, file) => {

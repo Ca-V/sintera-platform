@@ -7,9 +7,14 @@ import { ScrollView, View, ActivityIndicator, RefreshControl, Pressable, Alert, 
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { text } from '@sintera/design-system'
-import type { BodyMetricDTO } from '@sintera/api-client'
-import { VITAL_SIGNS, bodyMetricLabel, isVital, SCREEN_COPY, type VitalMetric } from '@sintera/core'
-import { Text, Button, Input, Disclaimer, DatePicker, Select } from '../../primitives'
+import type { BodyMetricDTO, ActivitySessionDTO } from '@sintera/api-client'
+import {
+  VITAL_SIGNS, bodyMetricLabel, isVital, SCREEN_COPY, type VitalMetric,
+  hasTimeOfDay, measurementInstant, measurementMeta, requiresTimeOfDay,
+  ACTIVITY_TYPES, activityTypeLabel, activitySummary,
+  durationSecondsFromMinutes, distanceMetersFromKm, numberFromField, paceKindFor, bloodPressureHint, bloodPressureSuggestion, bloodPressureApplyLabel,
+} from '@sintera/core'
+import { Text, Button, Input, Disclaimer, DatePicker, TimePicker, Select } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 
@@ -20,6 +25,27 @@ const C = SCREEN_COPY.monitoramento
 function parseNum(v: string): number { return Number(String(v).replace(',', '.').replace(/[^\d.-]/g, '')) }
 function fmt(d: string): string { const [y, m, dd] = (d || '').slice(0, 10).split('-'); return y ? `${dd}/${m}/${y}` : '—' }
 function today(): string { return new Date().toISOString().slice(0, 10) }
+
+/**
+ * Data e — quando registrada — HORA da medição (HIP-014 §2). Espelha `fmtMeasured` da Web; `hasTimeOfDay` vem do
+ * core justamente para que as duas pontas decidam IGUAL o que é hora de verdade e o que é só a âncora do dia.
+ */
+function fmtMeasured(measuredOn: string, measuredAt: string | null | undefined): string {
+  if (!hasTimeOfDay(measuredAt)) return fmt(measuredOn)
+  const d = new Date(measuredAt as string)
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mm = String(d.getMinutes()).padStart(2, '0')
+  return `${fmt(measuredOn)} · ${hh}:${mm}`
+}
+
+/** Data + hora locais → instante UTC. Sem hora, delega ao core (âncora do dia = "hora não registrada"). */
+function instantOf(date: string, time: string): string | null {
+  if (!time) return measurementInstant(null, date)
+  const [y, m, d] = date.split('-').map(Number)
+  const [h, min] = time.split(':').map(Number)
+  const dt = new Date(y, m - 1, d, h, min, 0, 0)
+  return Number.isNaN(dt.getTime()) ? measurementInstant(null, date) : dt.toISOString()
+}
 const unitOf = (m: VitalMetric) => VITAL_SIGNS.find(v => v.value === m)?.unit ?? ''
 
 export function MonitoramentoScreen() {
@@ -34,13 +60,29 @@ export function MonitoramentoScreen() {
   const alive = useRef(true)
 
   const [open, setOpen] = useState(false)
+  const [editando, setEditando] = useState<BodyMetricDTO | null>(null)
   const [metric, setMetric] = useState<VitalMetric>('pressao_arterial')
   const [label, setLabel] = useState('')
   const [value, setValue] = useState('')
   const [unit, setUnit] = useState('mmHg')
   const [date, setDate] = useState('')
+  const [time, setTime] = useState('')
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
+
+  const [acts, setActs] = useState<ActivitySessionDTO[]>([])
+  const [actOpen, setActOpen] = useState(false)
+  /** Sessão sendo corrigida. `null` = registrando uma nova. */
+  const [actEditando, setActEditando] = useState<ActivitySessionDTO | null>(null)
+  const [actType, setActType] = useState('caminhada')
+  const [actName, setActName] = useState('')
+  const [actDate, setActDate] = useState('')
+  const [actTime, setActTime] = useState('')
+  const [actMin, setActMin] = useState('')
+  const [actKm, setActKm] = useState('')
+  const [actBpm, setActBpm] = useState('')
+  const [actKcal, setActKcal] = useState('')
+  const [savingAct, setSavingAct] = useState(false)
 
   const load = useCallback((silent: boolean) => {
     if (silent) setRefreshing(true); else setPhase('loading')
@@ -53,19 +95,114 @@ export function MonitoramentoScreen() {
 
   const groups = useMemo(() => VITAL_SIGNS.map(v => ({ v, list: items.filter(i => i.metric === v.value) })).filter(g => g.list.length > 0), [items])
 
-  function startNew() { setMetric('pressao_arterial'); setLabel(''); setValue(''); setUnit('mmHg'); setDate(today()); setNotes(''); setOpen(true) }
+  function startNew() { setEditando(null); setMetric('pressao_arterial'); setLabel(''); setValue(''); setUnit('mmHg'); setDate(today()); setTime(''); setNotes(''); setOpen(true) }
+
+  /**
+   * Abre o formulário com a medição já registrada, para CORRIGIR (defeito da homologação de 27/08: o cartão
+   * de sinal vital só oferecia Remover).
+   *
+   * Vale o mesmo que para atividade física: quem digitou 128/82 no lugar de 118/82 precisaria apagar e refazer,
+   * perdendo a hora, a origem e a observação junto. `saveBodyMetric` já aceitava `id` e fazia update — a
+   * capacidade existia no cliente e não tinha nenhum consumidor.
+   */
+  function startEdit(m: BodyMetricDTO) {
+    setEditando(m)
+    setMetric(m.metric as VitalMetric)
+    setLabel(m.label ?? '')
+    setValue(m.value_text ?? '')
+    setUnit(m.unit ?? unitOf(m.metric as VitalMetric))
+    setDate(m.measured_on ?? today())
+    // Hora só quando REGISTRADA: a âncora de meia-noite marca "não informada", e reexibi-la como 00:00 faria
+    // a correção inventar um horário que ninguém digitou.
+    setTime(hasTimeOfDay(m.measured_at) ? new Date(m.measured_at as string).toTimeString().slice(0, 5) : '')
+    setNotes(m.notes ?? '')
+    setOpen(true)
+  }
+
   function chooseMetric(m: VitalMetric) { setMetric(m); setUnit(unitOf(m)) }
   async function save() {
     if (!value.trim() || !/^\d{4}-\d{2}-\d{2}$/.test(date)) { Alert.alert('Campos obrigatórios', 'Informe valor e data (AAAA-MM-DD).'); return }
     setSaving(true)
     try {
       const { error: err } = await apiClient.body.saveBodyMetric({
+        id: editando?.id,
         metric, label: metric === 'outro_sinal' ? (label.trim() || 'Sinal') : null,
-        value_text: value, unit, measured_on: date, notes,
+        value_text: value, unit, measured_on: date, measured_at: instantOf(date, time), notes,
       })
       if (err) { Alert.alert('Não foi possível salvar', err.message || 'Tente novamente.'); return }
       setOpen(false); load(true)
     } finally { setSaving(false) }
+  }
+
+  // ── Atividade física (HIP-014 §3) — seção IRMÃ. FATO observado, com proveniência sempre visível.
+  const loadActs = useCallback(() => {
+    apiClient.activity.listActivitySessions()
+      .then((a) => { if (alive.current) setActs(a) })
+      .catch(() => { /* seção degrada vazia; não derruba a tela */ })
+  }, [])
+  useEffect(() => { loadActs() }, [loadActs])
+
+  /**
+   * Abre o formulário com a sessão já registrada, para CORRIGIR (pedido da fundadora, homologação de 27/08).
+   * Só remover não basta: quem errou a duração precisaria apagar e digitar tudo de novo, e perderia a
+   * proveniência e o vínculo com a fonte no caminho.
+   *
+   * Reconverte para as unidades do formulário — o banco guarda segundos e metros; a pessoa digita minutos e km.
+   */
+  function startEditAct(a: ActivitySessionDTO) {
+    setActEditando(a)
+    setActType(a.activity_type || 'outro')
+    setActName(a.title ?? '')
+    setActDate(a.started_at.slice(0, 10))
+    setActTime(hasTimeOfDay(a.started_at) ? new Date(a.started_at).toTimeString().slice(0, 5) : '')
+    setActMin(a.duration_s != null ? String(Math.round(a.duration_s / 60)) : '')
+    setActKm(a.distance_m != null ? String(Math.round(a.distance_m / 100) / 10).replace('.', ',') : '')
+    setActBpm(a.avg_heart_rate != null ? String(Math.round(a.avg_heart_rate)) : '')
+    setActKcal(a.active_energy_kcal != null ? String(Math.round(a.active_energy_kcal)) : '')
+    setActOpen(true)
+  }
+
+  function startNewAct() {
+    setActEditando(null)
+    setActType('caminhada'); setActName(''); setActDate(today()); setActTime(''); setActMin(''); setActKm('')
+    setActBpm(''); setActKcal('')
+    setActOpen(true)
+  }
+
+  async function saveAct() {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(actDate)) { Alert.alert('Campo obrigatório', 'Informe a data da atividade.'); return }
+    setSavingAct(true)
+    try {
+      // Conversão de unidade vem do core: campo vazio vira AUSENTE, nunca zero, e as duas telas convertem igual.
+      const { error: err } = await apiClient.activity.saveActivitySession({
+        id: actEditando?.id,
+        // Ao corrigir, PRESERVA a origem e o id na fonte. Trocar por 'manual' faria uma corrida do Strava
+        // virar registro manual só porque alguém ajustou a distância — e a proveniência é requisito.
+        source: actEditando?.source ?? 'manual',
+        external_id: actEditando?.external_id ?? null,
+        connector_version: actEditando?.connector_version ?? null,
+        activity_type: actType,
+        title: actName.trim() || null,
+        started_at: instantOf(actDate, actTime) ?? `${actDate}T00:00:00.000Z`,
+        duration_s: durationSecondsFromMinutes(actMin),
+        distance_m: distanceMetersFromKm(actKm),
+        avg_heart_rate: numberFromField(actBpm),
+        active_energy_kcal: numberFromField(actKcal),
+      })
+      if (err) { Alert.alert('Não foi possível salvar', err.message || 'Tente novamente.'); return }
+      setActOpen(false); setActEditando(null); loadActs()
+    } finally { setSavingAct(false) }
+  }
+
+  function removeAct(a: ActivitySessionDTO) {
+    Alert.alert('Remover atividade', `Remover ${a.title?.trim() || activityTypeLabel(a.activity_type)}?`, [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: C.removeAction, style: 'destructive', onPress: async () => {
+        const { error: err } = await apiClient.activity.deleteActivitySession(a.id)
+        if (err) { Alert.alert('Erro', 'Tente novamente.'); return }
+        loadActs()
+      } },
+    ])
   }
   function remove(m: BodyMetricDTO) {
     Alert.alert('Remover registro', `Remover ${bodyMetricLabel(m.metric)} de ${fmt(m.measured_on)}?`, [
@@ -121,10 +258,37 @@ export function MonitoramentoScreen() {
           <Campo label={C.fieldDate}>
             <DatePicker value={date} onChange={setDate} placeholder={C.fieldDate} />
           </Campo>
+          {/* HIP-014 §2 — paridade com a Web: a hora distingue duas medições do mesmo dia. */}
+          {requiresTimeOfDay(metric) ? (
+            <Campo label={C.fieldTime}>
+              <TimePicker value={time} onChange={setTime} placeholder={C.fieldTime} />
+              <Text spec={text(t, { role: 'caption', tone: 'muted' })} style={{ marginTop: 4 }}>{C.fieldTimeHint}</Text>
+            </Campo>
+          ) : null}
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <View style={{ flex: 2 }}>
               <Campo label={C.fieldValue}>
                 <Input value={value} onChangeText={setValue} placeholder={VITAL_SIGNS.find(v => v.value === metric)?.placeholder} />
+                {/* "12/8" é como se fala no Brasil — a forma informal é a REGRA, não a exceção. A dica NOTA e
+                    OFERECE, num toque. Não converte sozinha: o que fica gravado é 120/80 porque a pessoa
+                    escolheu, e a plataforma continua guardando o que ELA informou. */}
+                {metric === 'pressao_arterial' && bloodPressureSuggestion(value) ? (
+                  <View style={{ marginTop: 6, gap: 6 }}>
+                    <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.attention.text }}>
+                      {bloodPressureHint(value)}
+                    </Text>
+                    <Pressable
+                      onPress={() => setValue(bloodPressureSuggestion(value)!)}
+                      accessibilityRole="button"
+                      hitSlop={8}
+                      style={[styles.aplicarSugestao, { borderColor: t.color.badge.attention.text }]}
+                    >
+                      <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.attention.text }}>
+                        {bloodPressureApplyLabel(bloodPressureSuggestion(value)!)}
+                      </Text>
+                    </Pressable>
+                  </View>
+                ) : null}
               </Campo>
             </View>
             <View style={{ flex: 1 }}>
@@ -141,6 +305,8 @@ export function MonitoramentoScreen() {
           </View>
         </View>
       ) : null}
+
+      <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 17, marginTop: 4 }}>{C.vitalsSection}</Text>
 
       {groups.length === 0 && !open ? (
         <View style={[styles.card, card]}><View style={{ gap: 4 }}>
@@ -168,14 +334,110 @@ export function MonitoramentoScreen() {
               <View key={i.id} style={[styles.card, card, { gap: 2 }]}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <Text spec={text(t, { role: 'body' })}>{i.metric === 'outro_sinal' && i.label ? `${i.label}: ` : ''}{i.value_text}{i.unit ? ` ${i.unit}` : ''}</Text>
-                  <Pressable onPress={() => remove(i)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>{C.removeAction}</Text></Pressable>
+                  {/* EDITAR e REMOVER juntos, na ordem de todo cartão da plataforma. Só remover obrigaria
+                      quem errou um dígito a apagar e refazer, perdendo hora, origem e observação. */}
+                  <View style={{ flexDirection: 'row', gap: 14 }}>
+                    <Pressable onPress={() => startEdit(i)} hitSlop={8}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>{C.editAction}</Text></Pressable>
+                    <Pressable onPress={() => remove(i)} hitSlop={8}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>{C.removeAction}</Text></Pressable>
+                  </View>
                 </View>
-                <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{fmt(i.measured_on)}{i.notes ? ` · ${i.notes}` : ''}</Text>
+                <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{measurementMeta({ when: fmtMeasured(i.measured_on, i.measured_at), source: i.source, notes: i.notes })}</Text>
               </View>
             ))}
           </View>
         )
       })}
+
+      {/* ATIVIDADE FÍSICA (HIP-014 §3) — seção irmã, mesma estrutura da Web. Registra o que aconteceu, sem
+          avaliar desempenho (RDC 657). Origem sempre visível, como nos sinais vitais. */}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+        <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 17 }}>{C.activitySection}</Text>
+        <Button label={actOpen ? C.close : C.activityAdd} variant="secondary"
+          onPress={() => (actOpen ? (setActOpen(false), setActEditando(null)) : startNewAct())} />
+      </View>
+
+      {actOpen ? (
+        <View style={[styles.card, card, { gap: 10 }]}>
+          <Campo label={C.fieldActivityType}>
+            <Select options={ACTIVITY_TYPES.map(a => ({ id: a.value, label: a.label }))} value={actType}
+              onChange={setActType} title={C.fieldActivityType} />
+          </Campo>
+          <Campo label={C.fieldActivityName}>
+            <Input value={actName} onChangeText={setActName} placeholder="Ex.: Corrida no parque" />
+          </Campo>
+          <Campo label={C.fieldStartDate}>
+            <DatePicker value={actDate} onChange={setActDate} placeholder={C.fieldStartDate} />
+          </Campo>
+          <Campo label={C.fieldStartTime}>
+            <TimePicker value={actTime} onChange={setActTime} placeholder={C.fieldStartTime} />
+          </Campo>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <View style={{ flex: 1 }}>
+              <Campo label={C.fieldDurationMin}>
+                <Input value={actMin} onChangeText={setActMin} placeholder="Ex.: 45" keyboardType="numeric" />
+              </Campo>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Campo label={C.fieldDistanceKm}>
+                <Input value={actKm} onChangeText={setActKm} placeholder="Ex.: 5,2" keyboardType="numeric" />
+              </Campo>
+            </View>
+          </View>
+
+          {/* O ritmo NÃO é campo: sai da duração e da distância. Pedi-lo seria pedir a mesma informação duas
+              vezes, com risco de as duas se contradizerem. */}
+          {paceKindFor(actType) ? (
+            <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{C.paceHint}</Text>
+          ) : null}
+
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <View style={{ flex: 1 }}>
+              <Campo label={C.fieldHeartRate}>
+                <Input value={actBpm} onChangeText={setActBpm} placeholder="Ex.: 142" keyboardType="numeric" />
+              </Campo>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Campo label={C.fieldEnergy}>
+                <Input value={actKcal} onChangeText={setActKcal} placeholder="Ex.: 310" keyboardType="numeric" />
+              </Campo>
+            </View>
+          </View>
+
+          <Button label={C.save} onPress={saveAct} loading={savingAct} loadingLabel="Salvando…" />
+        </View>
+      ) : null}
+
+      {acts.length === 0 && !actOpen ? (
+        <View style={[styles.card, card]}><View style={{ gap: 4 }}>
+          <Text spec={text(t, { role: 'bodyStrong' })} style={{ textAlign: 'center' }}>{C.activityEmptyTitle}</Text>
+          <Text spec={text(t, { role: 'body', tone: 'muted' })} style={{ textAlign: 'center' }}>{C.activityEmptyMsg}</Text>
+        </View></View>
+      ) : null}
+
+      {acts.map(a => (
+        <View key={a.id} style={[styles.card, card, { gap: 2 }]}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <Text spec={text(t, { role: 'body' })} style={{ flex: 1 }}>{a.title?.trim() || activityTypeLabel(a.activity_type)}</Text>
+            {/* EDITAR e EXCLUIR juntos, na mesma ordem de todo card da plataforma. Só remover obrigaria quem
+                errou a duração a apagar e digitar tudo de novo — perdendo proveniência e vínculo no caminho. */}
+            <View style={{ flexDirection: 'row', gap: 14 }}>
+              <Pressable onPress={() => startEditAct(a)}>
+                <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>{C.editAction}</Text>
+              </Pressable>
+              <Pressable onPress={() => removeAct(a)}>
+                <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>{C.removeAction}</Text>
+              </Pressable>
+            </View>
+          </View>
+          <Text spec={text(t, { role: 'caption', tone: 'muted' })}>
+            {measurementMeta({
+              when: [fmtMeasured(a.started_at.slice(0, 10), a.started_at), activitySummary(a)].filter(Boolean).join(' · '),
+              source: a.source,
+              notes: a.notes,
+            })}
+          </Text>
+        </View>
+      ))}
 
       <Disclaimer variant="geral" />
     </ScrollView>
@@ -198,8 +460,10 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12 },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   card: { borderWidth: 1, borderRadius: 16, padding: 16 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },
   connect: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   spark: { flexDirection: 'row', alignItems: 'flex-end', gap: 3, height: 36 },
+  // Contorno, não preenchimento: é uma OFERTA, não a ação principal do formulário.
+  aplicarSugestao: { alignSelf: 'flex-start', borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
 })

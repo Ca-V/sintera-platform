@@ -17,6 +17,7 @@ import StateView from '@/components/ui/StateView'
 import type { SituationTone } from '@/lib/ui/situation'
 import type { EventNature } from '@/lib/ui/event'
 import { CloudUpload, ShoppingCart, FlaskConical, Pill, Watch, Stethoscope } from 'lucide-react'
+import { SCREEN_COPY } from '@sintera/core'
 
 /** Estado por bloco (não global): cada seção resolve seu próprio ciclo. */
 export type BlockState = 'loading' | 'error' | 'ok'
@@ -57,7 +58,7 @@ function Block({ state, title, loadingLabel, errorLabel, children }: {
   state: BlockState | undefined; title: string; loadingLabel: string; errorLabel: string; children: React.ReactNode
 }) {
   if (state === 'loading') return <Section title={title}><StateView kind="loading" title={loadingLabel} /></Section>
-  if (state === 'error') return <Section title={title}><StateView kind="error" title={errorLabel} message="Tente novamente em instantes." /></Section>
+  if (state === 'error') return <Section title={title}><StateView kind="error" title={errorLabel} message={SCREEN_COPY.comum.retryLater} /></Section>
   return <>{children}</>
 }
 

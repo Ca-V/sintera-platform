@@ -29,6 +29,10 @@ const AUTH_SIGNALS = [
   /omicsAuth\s*\(/,
   /authedClient/,
   /\bgetUser\s*\(/,
+  // Aceita cookie (Web) OU Bearer (aplicativo). Acrescentado em 27/08, quando a homologação mostrou que as
+  // rotas só liam cookie e TODA chamada do Mobile recebia 401. Continua sendo gate de verdade: valida o token
+  // no servidor do Supabase e devolve um cliente no contexto da pessoa, com RLS — nunca service-role.
+  /authenticateRequest\s*\(/,
   /ADMIN_SECRET/,
   /x-admin-secret/,
   /CONNECTOR_WEBHOOK_SECRET/,

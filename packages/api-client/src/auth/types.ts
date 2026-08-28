@@ -18,6 +18,10 @@ import type { ContraceptiveDTO, ContraceptiveInput } from '../cycle/contraceptio
 import type { PeriodDTO } from '../cycle/menstrual'
 import type { NotificationPrefRow } from '../settings/notifications'
 import type { BodyMetricDTO, BodyMetricInput } from '../body/body'
+import type { ActivitySessionDTO, ActivitySessionInput, IngestResult } from '../activity/activity'
+import type { CanonicalSample, PropagationResult, ClassificationResult } from '@sintera/core'
+import type { ClassifyInput } from '../capture/classify'
+import type { IdentityProvider } from './oauth'
 import type { ShareDTO, TemplateDTO, OmicsPanelDTO } from '../report/report'
 import type { OmicsPanelDTO as OmicsPanel, OmicsPanelDetail, OmicsResultDTO, OmicsHistoryPoint, OmicsCatalogMatch, OmicsResultInput } from '../omics/omics'
 import type { Period, DocumentTargetDomain } from '@sintera/core'
@@ -59,6 +63,13 @@ export interface AuthApi {
   updateEmail(email: string): Promise<{ error: Error | null }>
   /** Envia o e-mail de redefinição de senha para o e-mail da conta atual. */
   sendPasswordReset(): Promise<{ error: Error | null }>
+  /**
+   * Login por provedor externo, em DUAS etapas — no aplicativo não existe "redirecionar a página": a tela
+   * abre o navegador do sistema com a URL e depois devolve o endereço de retorno que chegou por deep link.
+   * Acrescentar Apple ou Microsoft não muda a identidade interna: `auth.uid()` permanece o mesmo.
+   */
+  startOAuth(provider: IdentityProvider, redirectTo: string): Promise<{ url: string | null; error: Error | null }>
+  completeOAuth(callbackUrl: string | null | undefined): Promise<{ error: Error | null }>
 }
 
 /** Telemetria de produto + "reportar problema" (usage_events). */
@@ -105,6 +116,11 @@ export interface DocumentsApi {
   listDocumentsForTargets(target_domain: DocumentTargetDomain, target_ids: string[], signal?: AbortSignal): Promise<Record<string, PatientDocumentDTO[]>>
   /** ANEXO-001 — páginas de vários documentos, em lote. */
   listPagesForDocuments(documentIds: string[], signal?: AbortSignal): Promise<Record<string, PatientDocumentPage[]>>
+  /**
+   * Nome dos registros a que cada documento está vinculado — alimenta `deriveDocumentTitle`, para o card dizer
+   * "Receita de paracetamol" em vez de só "Receita". Degrada para vazio; nunca lança.
+   */
+  targetNamesByDocument(documentIds: string[]): Promise<Record<string, string[]>>
   saveDocument(input: PatientDocumentInput): Promise<{ data: { id: string } | null; error: Error | null }>
   updateDocument(id: string, patch: Partial<Pick<PatientDocumentInput, 'subtype' | 'issuer' | 'doc_date' | 'notes'>>): Promise<{ error: Error | null }>
   deleteDocument(id: string): Promise<{ error: Error | null }>
@@ -180,6 +196,9 @@ export interface ApiClient {
   cycle: CycleApi
   settings: SettingsApi
   body: BodyApi
+  activity: ActivityApi
+  wearables: WearablesApi
+  capture: CaptureApi
   report: ReportApi
   omics: OmicsApi
   vision: VisionApi
@@ -227,6 +246,34 @@ export interface BodyApi {
   getHeightCm(signal?: AbortSignal): Promise<number | null>
   getWeightGoal(signal?: AbortSignal): Promise<number | null>
   setWeightGoal(kg: number | null): Promise<{ error: Error | null }>
+}
+
+/**
+ * Sessões de Atividade Física (activity_sessions) — FATO observado, distinto da INTENÇÃO em life_habits.
+ * Origem manual ou de conector; a proveniência é obrigatória em toda escrita (HIP-014 §3/§4).
+ */
+export interface ActivityApi {
+  listActivitySessions(signal?: AbortSignal): Promise<ActivitySessionDTO[]>
+  saveActivitySession(input: ActivitySessionInput): Promise<{ error: Error | null }>
+  deleteActivitySession(id: string): Promise<{ error: Error | null }>
+  /** Ingestão IDEMPOTENTE de um lote de conector — o re-sync sempre reprocessa janela sobreposta. */
+  ingestActivitySessions(drafts: readonly ActivitySessionInput[]): Promise<{ result: IngestResult; error: Error | null }>
+}
+
+/**
+ * Ingestão de leituras vindas de conector (HIP-014 §5/§6). Existe porque o Health Connect roda NO APARELHO e
+ * o aplicativo precisa gravar o que leu — sem receber o cliente Supabase cru, que a regra do pacote proíbe.
+ */
+/**
+ * Leitura assistida de documento (ANEXO-001 · item D) — o que o documento PARECE ser, mais emissor e data
+ * transcritos. Nunca lança: `null` quando não deu para ler, e a pessoa preenche à mão.
+ */
+export interface CaptureApi {
+  classify(input: ClassifyInput): Promise<ClassificationResult | null>
+}
+
+export interface WearablesApi {
+  ingestSamples(samples: readonly CanonicalSample[]): Promise<{ result: PropagationResult; error: Error | null }>
 }
 
 /** Configurações — Central de Notificações (canal por categoria) + operações de conta. */

@@ -29,6 +29,7 @@ const toModalStatus = (s: string): AgendaEventInput['status'] =>
 // "150,00" | "R$ 1.500,00" | "150.5" → centavos. Vazio/inválido → null.
 // Parsing financeiro movido para o domínio puro (testável): src/lib/agenda/money.ts.
 import { parseAmountToCents, centsToAmount } from '@/lib/agenda/money'
+import { uuid } from '@sintera/core'
 export { parseAmountToCents }
 
 /** Evento de domínio → valores iniciais do formulário (edição). */
@@ -68,7 +69,7 @@ export function useEventForm() {
     if (!ACCEPTED.includes(file.type)) throw new Error('Anexo deve ser PDF, JPG ou PNG.')
     if (file.size > MAX_BYTES) throw new Error('Anexo muito grande (máx. 10 MB).')
     const ext = file.name.split('.').pop() ?? 'bin'
-    const path = `${userId}/${crypto.randomUUID()}.${ext}`
+    const path = `${userId}/${uuid()}.${ext}`
     const { error } = await supabase.storage.from('exams').upload(path, file, { contentType: file.type, upsert: false })
     if (error) throw new Error(`Falha no anexo: ${error.message}`)
     const { data } = await supabase.storage.from('exams').createSignedUrl(path, 60 * 60 * 24 * 365)

@@ -1,20 +1,30 @@
-// Home Shell — HUB DE NAVEGAÇÃO (UX-002), estrutura unificada Web↔Mobile: Identidade+Saudação → Adicionar registro →
-// Próximos compromissos → Acesso rápido → Como usar → Rodapé. COMPOSIÇÃO pura (INV-HOME-001): dados de outros
-// módulos (nome do perfil, próximos eventos) chegam por INJEÇÃO (HomeContainer). "Adicionar registro" abre o hub
-// único de captura (taxonomia do core). Resumo/Linha do tempo/Insights saíram da Home (pertencem aos módulos).
+// Home Shell — HUB DE NAVEGAÇÃO (UX-002). COMPOSIÇÃO pura (INV-HOME-001).
+//
+// ESTRUTURA (definida com a fundadora em 28/08): Saudação → Adicionar registro → Menu completo (com busca) →
+// Como usar → Rodapé.
+//
+// O QUE SAIU, e por quê — a regra que emergiu da revisão: a primeira tela não repete um caminho que o menu logo
+// abaixo já oferece.
+//   • "Acesso rápido" — quatro atalhos (Agenda, Exames, Minha Saúde, Rede de Cuidado) que o menu já lista, com
+//     nome e resumo. Duas listas para os mesmos destinos, na mesma tela, obrigavam a comparação.
+//   • "Próximos compromissos" — eu tinha argumentado que ficasse, por mostrar um DADO e não um caminho. A
+//     fundadora decidiu o contrário e o critério dela é mais simples de sustentar: o cartão levava à Agenda, e a
+//     Agenda é o primeiro item do menu. Um atalho a mais no topo, ocupando a área mais valiosa da tela.
+//
+// O QUE FICOU: "Adicionar registro" não é navegação — é a AÇÃO principal da plataforma, e abre o hub de captura.
+// Sai da lógica de "onde encontrar" e entra na de "fazer".
 import { useState } from 'react'
 import { ScrollView, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '../theme'
 import { WelcomeSlot } from './slots/WelcomeSlot'
 import { AdicionarRegistroSlot } from './slots/AdicionarRegistroSlot'
-import { ProximosCompromissosSlot, type UpcomingItem } from './slots/ProximosCompromissosSlot'
-import { QuickActionsSlot } from './slots/QuickActionsSlot'
+import { MenuCompletoSlot } from './slots/MenuCompletoSlot'
 import { ComoUsarSlot } from './slots/ComoUsarSlot'
 import { FooterSlot } from './slots/FooterSlot'
 import { RegistrationHubSheet } from '../screens/capture/RegistrationHubSheet'
 
-export function HomeShell({ upcoming = [], name }: { upcoming?: UpcomingItem[]; name?: string | null }) {
+export function HomeShell({ name }: { name?: string | null }) {
   const t = useTheme()
   const insets = useSafeAreaInsets()
   const [addOpen, setAddOpen] = useState(false)
@@ -25,11 +35,11 @@ export function HomeShell({ upcoming = [], name }: { upcoming?: UpcomingItem[]; 
       <ScrollView
         style={{ backgroundColor: t.color.surface.app }}
         contentContainerStyle={[styles.content, { paddingTop: styles.content.padding + insets.top }]}
+        keyboardShouldPersistTaps="handled"
       >
         <WelcomeSlot name={name} />
         <AdicionarRegistroSlot onPress={openAdd} />
-        <ProximosCompromissosSlot items={upcoming} />
-        <QuickActionsSlot />
+        <MenuCompletoSlot />
         <ComoUsarSlot />
         <FooterSlot />
       </ScrollView>

@@ -28,6 +28,7 @@ import ProvenanceLine from '@/components/ui/ProvenanceLine'
 import { examProvenance } from '@/lib/provenance'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import Select from '@/components/ui/Select'
+import { uuid } from '@sintera/core'
 
 type Scope = 'propria' | 'familiar'
 
@@ -151,7 +152,7 @@ export default function CondicoesPage() {
   // Sobe o documento anexado ao storage e devolve a URL assinada (1 ano), como em Exames.
   async function uploadDoc(file: File): Promise<string> {
     const ext = file.name.split('.').pop() ?? 'bin'
-    const path = `${user!.id}/${crypto.randomUUID()}.${ext}`
+    const path = `${user!.id}/${uuid()}.${ext}`
     const { error: upErr } = await supabase.storage.from('exams').upload(path, file, { contentType: file.type, upsert: false })
     if (upErr) throw new Error(`[storage] ${upErr.message}`)
     const { data: signed, error: sErr } = await supabase.storage.from('exams').createSignedUrl(path, 60 * 60 * 24 * 365)
@@ -175,7 +176,7 @@ export default function CondicoesPage() {
       // vincular a condição (o vínculo pode existir ou não).
       let examId: string | null = null
       if (routing.createExam && fileUrl) {
-        examId = crypto.randomUUID()
+        examId = uuid()
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (supabase as any).from('exams').insert({
           id: examId, user_id: user.id,

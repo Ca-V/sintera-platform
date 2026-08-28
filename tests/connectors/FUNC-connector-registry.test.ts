@@ -1,7 +1,7 @@
 // FUNC · WEA-001/HIP-001 — registro de conectores VENDOR-NEUTRAL. O núcleo só itera; adaptadores se registram.
 import { describe, it, expect } from 'vitest'
-import { createConnectorRegistry, type Connector, type ConnectorContext } from '@/lib/connectors/registry'
-import type { ConnectorDescriptor, CanonicalSample } from '@/lib/connectors/connector'
+import { createConnectorRegistry, type Connector, type ConnectorContext } from '@sintera/core'
+import type { ConnectorDescriptor, CanonicalSample } from '@sintera/core'
 
 const descriptor = (source: string, capabilities: string[] = ['peso']): ConnectorDescriptor => ({
   source, label: source, domain: 'wearable', acquisition: 'oauth', version: 'v1', capabilities,

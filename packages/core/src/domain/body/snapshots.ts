@@ -53,7 +53,7 @@ export interface CompareRow {
  * Confronta dois snapshots por uma ordem de indicadores. Indicador ausente em um dos lados → `available=false`
  * (Status "Não disponível"), delta null. Não infere nem normaliza. Métrica ausente em AMBOS é omitida.
  */
-export function compareSnapshots(a: Snapshot | null, b: Snapshot | null, order: string[]): CompareRow[] {
+export function compareSnapshots(a: Snapshot | null, b: Snapshot | null, order: readonly string[]): CompareRow[] {
   const rows: CompareRow[] = []
   for (const m of order) {
     const av = a?.metrics[m], bv = b?.metrics[m]

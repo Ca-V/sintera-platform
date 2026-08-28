@@ -10,25 +10,23 @@
 // - Rede de Cuidado (entidade): Relatórios hoje; Profissionais/Compartilhamentos na CARE-002.
 // - Mais: funções secundárias (Despesas · Configurações · Perfil).
 //
-// CRITÉRIO 10 (MOBILE-009): esta camada NÃO contém conhecimento de domínio — apenas rótulos da taxonomia.
+// CRITÉRIO 10 (MOBILE-009): esta camada NÃO contém conhecimento de domínio — apenas os rótulos das ABAS.
+//
+// A lista de itens de cada aba MORAVA aqui, escrita à mão. Era a terceira cópia da taxonomia (com a Sidebar
+// e o menu de Minha Saúde) e ninguém a lia de verdade — só uma tela placeholder já inalcançável. Cópia que
+// ninguém lê é a que diverge primeiro. O catálogo é PLATFORM_NAV, em @sintera/core (base única, 27/08).
 
 export type SsotTab = {
   /** Nome da rota (estável, sem espaços/acentos). */
   readonly name: string
   /** Rótulo exibido (derivado do SSOT). */
   readonly label: string
-  /** Itens do(s) grupo(s) SSOT que este destino projetará (apenas rótulos — sem lógica). */
-  readonly items: readonly string[]
 }
 
 export const SSOT_TABS: readonly SsotTab[] = [
-  { name: 'Inicio', label: 'Início', items: ['Painel Inicial'] },
-  { name: 'Agenda', label: 'Agenda', items: ['Agenda'] },
-  {
-    name: 'MinhaSaude',
-    label: 'Minha Saúde',
-    items: ['Exames', 'Medicamentos', 'Suplementos', 'Recursos de Saúde', 'Condições de Saúde', 'Composição Corporal', 'Ciclo e Contracepção', 'Monitoramento', 'Hábitos', 'Histórico de Exames', 'Histórico de Saúde'],
-  },
-  { name: 'RedeCuidado', label: 'Rede de Cuidado', items: ['Relatórios'] },
-  { name: 'Mais', label: 'Mais', items: ['Despesas', 'Configurações', 'Perfil'] },
+  { name: 'Inicio', label: 'Início' },
+  { name: 'Agenda', label: 'Agenda' },
+  { name: 'MinhaSaude', label: 'Minha Saúde' },
+  { name: 'RedeCuidado', label: 'Rede de Cuidado' },
+  { name: 'Mais', label: 'Mais' },
 ]

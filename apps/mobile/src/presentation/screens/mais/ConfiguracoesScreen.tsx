@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import {
   NOTIFICATION_CATEGORIES, DEFAULT_CHANNEL, MANDATORY_NOTIFICATIONS, recommendedChannels,
-  DEFAULT_DIAL_ISO, splitPhone, joinPhone, dialSelectOptions,
+  DEFAULT_DIAL_ISO, splitPhone, joinPhone, dialSelectOptions, SCREEN_COPY,
   type NotificationChannel,
 } from '@sintera/core'
 import { Text, Button, Input, Select } from '../../primitives'
@@ -76,7 +76,7 @@ export function ConfiguracoesScreen() {
     setPwBusy(true); setPwMsg(null)
     const { error } = await apiClient.auth.sendPasswordReset()
     setPwBusy(false)
-    setPwMsg(error ? 'Não foi possível enviar o e-mail.' : 'Enviamos um link de redefinição ao seu e-mail.')
+    setPwMsg(error ? 'Não foi possível enviar o e-mail.' : SCREEN_COPY.comum.resetSent)
   }
   async function saveWhatsApp() {
     setWaBusy(true); setWaMsg(null)
@@ -139,7 +139,7 @@ export function ConfiguracoesScreen() {
       <View style={[styles.card, card, { gap: 8 }]}>
         <Text spec={text(t, { role: 'bodyStrong' })}>Senha</Text>
         <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Enviamos um link seguro para você redefinir a senha.</Text>
-        <Button label="Enviar link de redefinição" variant="secondary" onPress={resetPassword} loading={pwBusy} loadingLabel="Enviando…" />
+        <Button label={SCREEN_COPY.comum.resetPassword} variant="secondary" onPress={resetPassword} loading={pwBusy} loadingLabel="Enviando…" />
         {pwMsg ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{pwMsg}</Text> : null}
       </View>
 

@@ -28,7 +28,18 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#3D6C7B"
-      }
+      },
+      "permissions": [
+        "android.permission.health.READ_BLOOD_PRESSURE",
+        "android.permission.health.READ_BLOOD_GLUCOSE",
+        "android.permission.health.READ_HEART_RATE",
+        "android.permission.health.READ_OXYGEN_SATURATION",
+        "android.permission.health.READ_BODY_TEMPERATURE",
+        "android.permission.health.READ_WEIGHT",
+        "android.permission.health.READ_HEIGHT",
+        "android.permission.health.READ_STEPS",
+        "android.permission.health.READ_EXERCISE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -49,7 +60,20 @@
         }
       ],
       "./plugins/withAndroidCmakeVersion",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "react-native-health-connect",
+      "./plugins/withHealthConnectRationale",
+      "./plugins/withMinSdkOverride",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 36,
+            "minSdkVersion": 24
+          }
+        }
+      ]
     ],
     "extra": {
       "eas": {

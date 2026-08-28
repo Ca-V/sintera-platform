@@ -1,11 +1,11 @@
 // FUNC · WEA-001/HIP-001 — OAuth (expiração) + ConnectionStore (refresh/auth_error/revogação).
 import { describe, it, expect } from 'vitest'
-import { isTokenExpired, type OAuthProvider, type TokenSet } from '@/lib/connectors/oauth'
+import { isTokenExpired, type OAuthProvider, type TokenSet } from '@sintera/core'
 import {
   createConnectionStore, ReconnectRequiredError,
   type ConnectionRepo, type ConnectionRow,
-} from '@/lib/connectors/connections'
-import type { Clock } from '@/lib/connectors/orchestrator'
+} from '@sintera/core'
+import type { Clock } from '@sintera/core'
 
 describe('oauth · isTokenExpired (puro)', () => {
   const now = '2026-07-20T12:00:00Z'

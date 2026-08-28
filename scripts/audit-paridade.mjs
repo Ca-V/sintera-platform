@@ -59,14 +59,27 @@ const usos = (nome, body) => {
 const corpoPacoteSem = new Map()
 for (const f of pacotes) corpoPacoteSem.set(rel(f), pacotes.filter(x => x !== f).map(corpo).join('\n'))
 
+// Corpo SEM comentários — menção em JSDoc não é uso. Contá-la classificaria como "interno" algo que ninguém
+// chama, escondendo justamente o que esta auditoria existe para encontrar.
+const semComentarios = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
+
+// Índice do corpo de cada arquivo, para medir uso DENTRO do próprio arquivo (ver abaixo).
+const corpoDoArquivo = new Map()
+for (const f of pacotes) corpoDoArquivo.set(rel(f), semComentarios(corpo(f)))
+
 const orfaos = [], internos = [], soWeb = [], soMobile = []
 let nosDois = 0
 for (const [nome, arq] of simbolos) {
   const w = usos(nome, bodyWeb), mo = usos(nome, bodyMob)
   if (w === 0 && mo === 0) {
     // usado por OUTRO arquivo do pacote (fora o index, que só reexporta) = helper interno, não órfão
-    const dentro = usos(nome, (corpoPacoteSem.get(arq) || '').replace(/^export \* from .*$/gm, ''))
-    if (dentro > 0) internos.push({ nome, arq })
+    const dentro = usos(nome, semComentarios(corpoPacoteSem.get(arq) || '').replace(/^export \* from .*$/gm, ''))
+    // ...ou usado NO PRÓPRIO arquivo. A primeira ocorrência é a declaração; acima disso, é uso real.
+    // Sem esta segunda checagem a auditoria acusava falso positivo (ex.: activityDurationLabel, chamada por
+    // activitySummary logo abaixo dela) — e uma auditoria com falso positivo perde a credibilidade que a faz
+    // valer alguma coisa.
+    const noProprio = usos(nome, corpoDoArquivo.get(arq) || '')
+    if (dentro > 0 || noProprio > 1) internos.push({ nome, arq })
     else orfaos.push({ nome, arq, emTeste: usos(nome, bodyTest) > 0 })
   }
   else if (w > 0 && mo === 0) soWeb.push({ nome, arq })

@@ -13,30 +13,49 @@
 // ============================================================
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
-import { createClient } from '@/lib/supabase/server'
+import { authenticateRequest } from '@/lib/supabase/apiAuth'
 import { classifyCheap, corroboratedConfidence } from '@/lib/capture/classifier/classify'
 import type { ClassificationResult, DocumentKind } from '@/lib/capture/types'
+import { transcribedIssuer, transcribedDate } from '@sintera/core'
 
 const MODEL = 'claude-haiku-4-5-20251001'
 
+// A distinção entre PEDIDO, LAUDO e RECEITA é a que motivou esta lista crescer (homologação de 25/08): sem
+// `medical_order` e `clinical_document`, um pedido de exame e um laudo eram ambos "exam", e receita e atestado
+// eram ambos "other" — então marcar "Receita" e anexar um laudo gravava o laudo como receita, em silêncio.
 const SYSTEM = `Você classifica o TIPO de um documento de saúde a partir de uma IMAGEM ou PDF.
-NÃO interprete o conteúdo clínico, NÃO diagnostique, NÃO extraia valores — apenas identifique QUE TIPO de documento é.
+NÃO interprete o conteúdo clínico, NÃO diagnostique, NÃO extraia valores nem resultados — apenas identifique QUE TIPO de documento é e transcreva dois fatos que estejam ESCRITOS nele.
 Escolha UM kind:
-- "exam": laudo laboratorial, resultado de exame, exame de imagem (raio-x, ultrassom, tomografia) ou laudo ômico/genético.
-- "medication_label": bula, rótulo/embalagem de medicamento ou suplemento, ou receita de medicamento.
+- "exam": laudo/resultado de exame JÁ REALIZADO (laboratorial, de imagem, ômico) — traz valores, medidas ou conclusão do exame.
+- "medical_order": PEDIDO/solicitação/requisição de exame — pede que o exame SEJA FEITO, não traz resultado.
+- "clinical_document": receita, atestado, relatório médico, encaminhamento ou declaração de comparecimento.
+- "medication_label": bula, rótulo ou embalagem de medicamento ou suplemento.
 - "eyeglass_prescription": receita de óculos ou lentes de contato (com grau/dioptria).
 - "other": qualquer outro documento.
-subtype: UMA palavra curta do subtipo quando evidente (ex.: "hemograma", "bula", "receita", "omica", "ultrassom"); null se incerto.
-confidence: "high" (o documento deixa claro), "medium" (provável), "low" (incerto).
-Responda APENAS com JSON: {"kind":"","subtype":null,"confidence":""}.`
 
-const VALID_KINDS: DocumentKind[] = ['exam', 'medication_label', 'eyeglass_prescription', 'other']
+A diferença entre "exam" e "medical_order" é o que o papel FAZ: pedir o exame ou relatar o resultado dele. Na dúvida entre os dois, use confidence "low".
+Receita de MEDICAMENTO é "clinical_document" (é uma prescrição, um documento emitido por alguém). Bula e caixa de remédio são "medication_label".
+
+subtype: UMA palavra curta quando evidente ("hemograma", "receita", "atestado", "relatorio", "encaminhamento", "pedido", "bula", "omica", "ultrassom"); null se incerto.
+confidence: "high" (o documento deixa claro), "medium" (provável), "low" (incerto).
+issuer: nome do profissional, clínica ou laboratório que EMITIU, exatamente como está escrito; null se não estiver legível. NÃO deduza a partir de logotipo ou papel timbrado ambíguo.
+docDate: data do documento no formato AAAA-MM-DD, apenas se estiver escrita de forma inequívoca; null caso contrário. NÃO estime, NÃO use a data de hoje, NÃO converta datas parciais.
+
+Responda APENAS com JSON: {"kind":"","subtype":null,"confidence":"","issuer":null,"docDate":null}.`
+
+const VALID_KINDS: DocumentKind[] = [
+  'exam', 'medical_order', 'clinical_document', 'medication_label', 'eyeglass_prescription', 'other',
+]
+
+// A validação do que conta como fato transcrito é REGRA DE DOMÍNIO, não detalhe de HTTP — mora no core,
+// onde é testada (tests/capture-hub/FUNC-transcription).
 const SUPPORTED_IMAGE = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 
 export async function POST(req: NextRequest) {
-  const supabase = await createClient()
-  const { data: auth } = await supabase.auth.getUser()
-  if (!auth.user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  // Aceita cookie (Web) OU Bearer (aplicativo). Sem isto o Mobile recebia 401 e a leitura assistida
+  // simplesmente não acontecia — sem mensagem, como se o recurso não existisse.
+  const { user } = await authenticateRequest(req)
+  if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
   let body: { fileBase64?: string; mediaType?: string; filename?: string }
   try { body = await req.json() } catch { return NextResponse.json({ error: 'Corpo inválido' }, { status: 400 }) }
@@ -83,14 +102,20 @@ export async function POST(req: NextRequest) {
   const m = raw.match(/\{[\s\S]*\}/)
   if (!m) return NextResponse.json(cheap)
   try {
-    const obj = JSON.parse(m[0]) as { kind?: unknown; subtype?: unknown; confidence?: unknown }
+    const obj = JSON.parse(m[0]) as {
+      kind?: unknown; subtype?: unknown; confidence?: unknown; issuer?: unknown; docDate?: unknown
+    }
+    // Fatos documentais transcritos — valem mesmo quando o kind degrada para o sinal barato.
+    const issuer = transcribedIssuer(obj.issuer)
+    const docDate = transcribedDate(obj.docDate)
     const kind = (typeof obj.kind === 'string' && (VALID_KINDS as string[]).includes(obj.kind))
       ? (obj.kind as DocumentKind)
       : 'unknown'
     // 'other'/'unknown' por conteúdo é fraco; prefere o sinal barato se ele apontou algo.
     if (kind === 'unknown' || kind === 'other') {
-      if (cheap.kind !== 'unknown') return NextResponse.json(cheap)
-      return NextResponse.json({ kind, confidence: 'low', reason: 'conteúdo do documento', source: 'content_ai' } as ClassificationResult)
+      // Mesmo sem acertar o TIPO, emissor e data lidos continuam sendo fatos úteis para o formulário.
+      if (cheap.kind !== 'unknown') return NextResponse.json({ ...cheap, issuer, docDate })
+      return NextResponse.json({ kind, confidence: 'low', reason: 'conteúdo do documento', source: 'content_ai', issuer, docDate } as ClassificationResult)
     }
     const visionConfidence: ClassificationResult['confidence'] =
       obj.confidence === 'high' || obj.confidence === 'medium' || obj.confidence === 'low' ? obj.confidence : 'medium'
@@ -99,7 +124,7 @@ export async function POST(req: NextRequest) {
     // saúde (só pré-seleciona em 'high'); o usuário escolhe ou cancela. Não rejeita, não altera medium/low.
     const confidence = corroboratedConfidence(kind, visionConfidence, cheap.kind)
     const subtype = typeof obj.subtype === 'string' && obj.subtype.trim() ? obj.subtype.trim().slice(0, 40) : undefined
-    const result: ClassificationResult = { kind, confidence, reason: 'conteúdo do documento', subtype, source: 'content_ai' }
+    const result: ClassificationResult = { kind, confidence, reason: 'conteúdo do documento', subtype, source: 'content_ai', issuer, docDate }
     return NextResponse.json(result)
   } catch {
     return NextResponse.json(cheap)

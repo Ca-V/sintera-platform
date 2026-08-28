@@ -32,7 +32,7 @@ import {
 import { createClient } from '@/lib/supabase/client'
 // Taxonomia do relatório — dono único (ADR-023). O Mobile consome as MESMAS
 // constantes; declarar em paralelo fazia as duas telas divergirem em silêncio.
-import { REPORT_GROUPS, defaultSections, type ReportSectionKey } from '@sintera/core'
+import { REPORT_GROUPS, defaultSections, secureToken, type ReportSectionKey } from '@sintera/core'
 import { assembleOrganizedBiomarkers } from '@/lib/ai/insights/assembler'
 import { summarizeBiomarkers, examDate, type BiomarkerRow } from '@/lib/biomarkers/grouping'
 import { useUser } from '@/context/UserContext'
@@ -152,6 +152,8 @@ function LegacyReport() {
   const [shareBusy, setShareBusy] = useState(false)
   const [confirm, setConfirm] = useState<{ message: string; confirmLabel: string; onYes: () => void } | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
+  /** Falha ao gerar o link. Precisa ser DITA: sem isso o botão apenas não faz nada, e a pessoa não sabe por quê. */
+  const [shareErr, setShareErr] = useState<string | null>(null)
   // Seções do relatório — o conjunto e o padrão vêm do core (mesma fonte do Mobile).
   const [sections, setSections] = useState<Record<ReportSectionKey, boolean>>(defaultSections())
   const toggle = (k: keyof typeof sections) => setSections(s => ({ ...s, [k]: !s[k] }))
@@ -333,7 +335,17 @@ function LegacyReport() {
   async function createShare() {
     if (!user || shareBusy) return
     setShareBusy(true)
-    const token = (crypto.randomUUID() + crypto.randomUUID()).replace(/-/g, '')
+    setShareErr(null)
+    // `secureToken`, não `uuid`: este token abre o prontuário para quem tiver o link. Ele EXIGE aleatoriedade
+    // forte e falha alto se o navegador não oferecer — degradar aqui geraria um link adivinhável em silêncio.
+    let token: string
+    try {
+      token = secureToken(32)
+    } catch (e) {
+      setShareBusy(false)
+      setShareErr(e instanceof Error ? e.message : 'Não foi possível gerar o link com segurança.')
+      return
+    }
     const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
     const sel = (Object.keys(sections) as (keyof typeof sections)[]).filter(k => sections[k])
     // Filtro item a item (por seção) também vai ao link — o /r/[token] aplica as mesmas exclusões.
@@ -511,6 +523,7 @@ function LegacyReport() {
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium disabled:opacity-40 hover:opacity-90 transition-opacity">
           <Share2 size={14} /> Gerar link
         </button>
+        {shareErr && <p className="mt-2 font-body text-xs text-red-600">{shareErr}</p>}
         {shares.length > 0 && (
           <div className="space-y-2 mt-4">
             {shares.map(s => (

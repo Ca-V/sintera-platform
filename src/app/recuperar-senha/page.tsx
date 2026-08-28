@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { Mail, ArrowLeft, Check } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { SCREEN_COPY } from '@sintera/core'
 
 export default function RecuperarSenhaPage() {
   const [email, setEmail]     = useState('')
@@ -101,7 +102,7 @@ export default function RecuperarSenhaPage() {
                 className="w-full gradient-sintera text-white font-body font-medium py-3.5 rounded-full hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity shadow-md flex items-center justify-center gap-2">
                 {loading
                   ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Enviando…</>
-                  : 'Enviar link de recuperação'
+                  : SCREEN_COPY.comum.resetPassword
                 }
               </button>
             </form>

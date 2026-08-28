@@ -45,13 +45,39 @@ export const SCREEN_COPY = {
     emptyMessage:   'Registre um sinal vital. Use Adicionar.',
     fieldVital:     'Sinal vital',
     fieldDate:      'Data',
+    // HIP-014 §2 — a hora distingue duas medições do mesmo dia (o diário de pressão). Opcional de propósito:
+    // quem mede uma vez por dia não deve ser obstruído por um campo que não usa.
+    fieldTime:      'Hora (opcional)',
+    fieldTimeHint:  'Registre a hora quando medir mais de uma vez no dia — é o que mantém as leituras separadas.',
     fieldValue:     'Valor',
     fieldUnit:      'Unidade',
     fieldNotes:     'Observações (opcional)',
     // Conexões é a porta das integrações com dispositivos (HIP-001). Aparece nas DUAS pontas.
     connectInvite:  'Conecte um dispositivo e deixe os dados entrarem sozinhos',
     connectAction:  'Conexões',
+    // Editar e excluir são OBRIGATÓRIOS em todo card da plataforma (regra da fundadora) — ver `cardActions`.
+    editAction:     'Editar',
     removeAction:   'Remover',
+
+    // Atividade física (HIP-014 §3) — seção IRMÃ de Sinais vitais dentro de Monitoramento. Registra o que
+    // aconteceu, sem avaliar desempenho (RDC 657): a plataforma organiza e preserva, não interpreta.
+    vitalsSection:      'Sinais vitais',
+    activitySection:    'Atividade física',
+    activityAdd:        'Registrar atividade',
+    activityEmptyTitle: 'Nenhuma atividade registrada',
+    activityEmptyMsg:   'Registre um treino ou conecte um aplicativo para que entrem sozinhos.',
+    fieldActivityType:  'Tipo de atividade',
+    fieldActivityName:  'Nome (opcional)',
+    fieldStartDate:     'Data',
+    fieldStartTime:     'Início (opcional)',
+    fieldDurationMin:   'Duração em minutos (opcional)',
+    fieldDistanceKm:    'Distância em km (opcional)',
+    // Já existiam no banco desde a migração 149 e nenhum formulário os oferecia — o conector preencheria,
+    // a pessoa não. Ritmo e velocidade NÃO entram aqui: são DERIVADOS da duração e da distância, e pedi-los
+    // seria pedir duas vezes a mesma informação, com risco de as duas se contradizerem.
+    fieldHeartRate:     'Frequência cardíaca média (opcional)',
+    fieldEnergy:        'Energia gasta em kcal (opcional)',
+    paceHint:           'O ritmo é calculado sozinho a partir da duração e da distância.',
   },
   exames: {
     title:        'Exames',
@@ -71,6 +97,14 @@ export const SCREEN_COPY = {
     emptyMessage: 'Pedidos médicos e guias de convênio aparecem aqui quando você os envia.',
     listNote:     'Pedidos médicos e guias de convênio — documentos de solicitação, guardados à parte dos resultados.',
   },
+  // Entrada na plataforma. IDENTIDADE — nada aqui concede acesso a dados de saúde; isso é outra camada,
+  // separada de propósito (ver tests/contracts/identidade-vs-autorizacao.ARCH.test.ts).
+  login: {
+    googleAction:    'Continuar com Google',
+    separator:       'ou',
+    googleCancelled: 'Entrada cancelada.',
+    googleFailed:    'Não foi possível entrar com o Google. Tente de novo ou use e-mail e senha.',
+  },
   conexoes: {
     title:          'Conexões',
     subtitle:       'Conecte dispositivos e serviços de saúde para que os dados entrem sozinhos, sem digitação.',
@@ -79,6 +113,56 @@ export const SCREEN_COPY = {
     connectAction:  'Conectar',
     disconnect:     'Desconectar',
     lastSync:       'Última sincronização',
+
+    // Health Connect (HIP-014 §5) — natureza DIFERENTE das demais conexões, e o texto precisa dizer isso:
+    // não há login nem senha, a autorização vive na permissão do sistema e a pessoa a revoga por lá.
+    // Nomear as fontes que chegam por dentro dele é o que torna a proposta compreensível.
+    hcTitle:        'Health Connect',
+    hcSubtitle:     'Traz o que já está no seu aparelho — inclusive de Strava, Oura, Garmin e outros apps que gravam nele.',
+    hcAction:       'Autorizar e sincronizar',
+    hcSyncing:      'Sincronizando…',
+    hcUnavailable:  'Não disponível neste aparelho',
+    hcUnavailableHint: 'O Health Connect é do Android e precisa estar instalado. Em iPhone, a integração será com o Apple Saúde.',
+    hcDenied:       'Nenhuma permissão concedida. Você decide o que compartilhar, e pode mudar depois.',
+    hcRevokeHint:   'A autorização fica no Health Connect, não aqui — é lá que você revoga quando quiser.',
+  },
+
+  /**
+   * ENTRADA DE DOCUMENTO (ANEXO-001) — o mesmo rótulo em todo ponto que aceita anexo.
+   *
+   * O componente único já garantia o comportamento igual, mas o TEXTO estava escrito em cada arquivo. Medido em
+   * 27/08: a Web dizia "Anexar arquivo" em Hábitos e "Anexar arquivos" no componente compartilhado — singular
+   * de um lado, plural do outro, para a mesma ação que aceita vários arquivos.
+   */
+  anexo: {
+    add:        'Anexar arquivos',
+    // Arrastar é afordância de teclado e mouse: o texto muda porque o GESTO existe só ali. É a exceção legítima
+    // da base única — mecanismo de plataforma —, e por isso mora aqui nomeada, não escrita solta na tela.
+    addDrag:    'Anexar ou arrastar aqui',
+    addMore:    'Adicionar mais páginas',
+    sending:    'Enviando…',
+    camera:     'Fotografar documento',
+    formatHint: 'PDF ou imagem · vários arquivos',
+    reading:    'Lendo o documento…',
+    required:   'Anexe o documento.',
+  },
+
+  /**
+   * FRASES COMUNS a várias telas — o que se diz quando algo falha e se pode tentar de novo.
+   *
+   * A família "Não foi possível…" nasceu solta: cada tela redigiu a sua, e o convite a tentar de novo saiu
+   * "em instantes" na Web e "mais tarde" no aplicativo. A mensagem ESPECÍFICA continua de cada tela (dizer o que
+   * falhou é informação); o que se unifica é a parte que se repete.
+   */
+  comum: {
+    retry:          'Tente novamente.',
+    retryLater:     'Tente novamente em instantes.',
+    loadFailed:     'Não foi possível carregar.',
+    historyFailed:  'Não foi possível carregar o histórico.',
+    // Redefinir, não "recuperar": a senha antiga não volta — cria-se uma nova. A Web dizia "recuperação" e o
+    // aplicativo "redefinição" para o mesmo e-mail.
+    resetPassword:  'Enviar link de redefinição',
+    resetSent:      'Enviamos um link de redefinição ao seu e-mail.',
   },
 } as const
 

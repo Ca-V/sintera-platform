@@ -12,13 +12,13 @@ import { text } from '@sintera/design-system'
 import type { PatientDocumentDTO, PickedFile } from '@sintera/api-client'
 import {
   DOCUMENT_SUBTYPES, documentSubtypeLabel, documentSubtitle, isReadyToSave, DOCUMENT_BASE_ACTIONS,
+  autofillFrom, deriveDocumentTitle, DOCUMENT_FILTER_ALL,
   type PatientDocumentSubtype, type AttachedFile,
 } from '@sintera/core'
 import { Text, Button, Input, AttachmentLink, DatePicker, Disclaimer, Select, AnexoDocumento } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 
-const FILTER_ALL = 'todos'
 
 // Rótulos das ações OBRIGATÓRIAS, do contrato no núcleo — a mesma redação em toda categoria e nas duas pontas.
 const ACOES = Object.fromEntries(DOCUMENT_BASE_ACTIONS.map(a => [a.kind, a.label])) as Record<'view' | 'edit' | 'delete', string>
@@ -27,12 +27,14 @@ export function DocumentsScreen() {
   const t = useTheme()
   const insets = useSafeAreaInsets()
   const [items, setItems] = useState<PatientDocumentDTO[]>([])
+  /** document_id → nomes dos registros vinculados. Vazio é normal: nem todo documento tem vínculo. */
+  const [alvos, setAlvos] = useState<Record<string, string[]>>({})
   const [phase, setPhase] = useState<'loading' | 'ready' | 'error'>('loading')
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const alive = useRef(true)
 
-  const [filter, setFilter] = useState<string>(FILTER_ALL)
+  const [filter, setFilter] = useState<string>(DOCUMENT_FILTER_ALL)
   const [open, setOpen] = useState(false)
   // EDITAR: o cartão passou a ter a ação obrigatória do contrato. Ela não existia em NENHUMA tela do Mobile,
   // e `updateDocument` estava no api-client sem consumidor nenhum.
@@ -50,7 +52,14 @@ export function DocumentsScreen() {
   const load = useCallback((silent: boolean) => {
     if (silent) setRefreshing(true); else setPhase('loading')
     apiClient.documents.listDocuments()
-      .then((ds) => { if (!alive.current) return; setItems(ds); setPhase('ready'); setError(null) })
+      .then(async (ds) => {
+        if (!alive.current) return
+        setItems(ds); setPhase('ready'); setError(null)
+        // Nomes dos alvos vinculados, para o card dizer "Receita de paracetamol". Mesma consulta da Web.
+        // Depois de mostrar a lista, não antes: o título enriquece, e esperar por ele atrasaria a tela toda.
+        const nomes = await apiClient.documents.targetNamesByDocument(ds.map(d => d.id))
+        if (alive.current) setAlvos(nomes)
+      })
       .catch((e) => {
         if (alive.current && !silent) {
           setError(e instanceof Error ? e.message : 'Não foi possível carregar.')
@@ -142,7 +151,7 @@ export function DocumentsScreen() {
     )
   }
 
-  const visible = filter === FILTER_ALL ? items : items.filter(d => d.subtype === filter)
+  const visible = filter === DOCUMENT_FILTER_ALL ? items : items.filter(d => d.subtype === filter)
 
   const counts = items.reduce<Record<string, number>>((acc, d) => {
     acc[d.subtype] = (acc[d.subtype] ?? 0) + 1
@@ -150,7 +159,7 @@ export function DocumentsScreen() {
   }, {})
 
   const filterOptions = [
-    { id: FILTER_ALL, label: `Todos (${items.length})` },
+    { id: DOCUMENT_FILTER_ALL, label: `Todos (${items.length})` },
     ...DOCUMENT_SUBTYPES.map(s => ({ id: s.value, label: `${s.label} (${counts[s.value] ?? 0})` })),
   ]
 
@@ -201,7 +210,22 @@ export function DocumentsScreen() {
           </View>
 
           {/* Ao EDITAR, o anexo não aparece: corrige-se o que foi registrado sobre o documento, não a evidência. */}
-          {!editando ? <AnexoDocumento files={files} onChange={setFiles} upload={uploadPagina} /> : null}
+          {/* LEITURA ASSISTIDA (ANEXO-001 · item D) — mesma capacidade da Web, mesma regra: declara o subtipo
+              escolhido para que o componente avise se o documento parece outra coisa, e devolva emissor e data
+              para REVISÃO. `autofillFrom` não sobrescreve o que já foi digitado. */}
+          {!editando ? (
+            <AnexoDocumento
+              files={files} onChange={setFiles} upload={uploadPagina}
+              leituraAssistida={{
+                declarado: subtype,
+                onLeitura: (leitura) => {
+                  const preenchido = autofillFrom(leitura, { issuer, docDate })
+                  setIssuer(preenchido.issuer)
+                  setDocDate(preenchido.docDate)
+                },
+              }}
+            />
+          ) : null}
 
           <View style={{ gap: 6 }}>
             <Text spec={text(t, { role: 'label', tone: 'muted' })} style={{ color: t.color.text.muted }}>Emitido por</Text>
@@ -242,7 +266,7 @@ export function DocumentsScreen() {
           const meta = documentSubtitle(d)
           return (
             <View key={d.id} style={[s.card, { backgroundColor: t.color.surface.base, borderColor: t.color.border.default, gap: 8 }]}>
-              <Text spec={text(t, { role: 'bodyStrong' })}>{documentSubtypeLabel(d.subtype)}</Text>
+              <Text spec={text(t, { role: 'bodyStrong' })}>{deriveDocumentTitle(d.subtype, alvos[d.id])}</Text>
               <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.text.muted }}>
                 {meta}
               </Text>

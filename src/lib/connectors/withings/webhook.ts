@@ -4,7 +4,7 @@
 // - REGISTRO: assinatura/revogação via /notify (subscribe/revoke) com callbackurl + appli.
 // Toda particularidade do Withings vive aqui; a rota e o núcleo permanecem vendor-neutral.
 
-import type { WebhookHandler, WebhookSubscriber } from '../webhook'
+import type { WebhookHandler, WebhookSubscriber } from '@sintera/core'
 import { createWithingsClient, type WithingsClient, type FetchLike, type Sleep } from './client'
 import { WITHINGS_SOURCE, WITHINGS_APPLI_MEASURES } from './config'
 

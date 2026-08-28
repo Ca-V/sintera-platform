@@ -1,6 +1,6 @@
 // FUNC · WEA-001/HIP-001 — reconciliação/dedup de amostras preservando proveniência. PURO.
 import { describe, it, expect } from 'vitest'
-import { sampleKey, dedupWithinSource, reconcileSamples, type CanonicalSample } from '@/lib/connectors/connector'
+import { sampleKey, dedupWithinSource, reconcileSamples, type CanonicalSample } from '@sintera/core'
 
 const s = (metric: string, recordedAt: string, source: string, value: number, externalId?: string): CanonicalSample => ({
   metric, value, unit: null, recordedAt, provenance: { source, connectorVersion: 'v1', externalId },
