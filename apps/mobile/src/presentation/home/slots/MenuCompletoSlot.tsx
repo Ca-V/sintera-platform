@@ -34,6 +34,9 @@ export function MenuCompletoSlot() {
     // Navegação aninhada por string (aba → tela) — o padrão do projeto; sem regra de negócio.
     ;(navigation as unknown as { navigate: (n: string, p?: unknown) => void })
       .navigate(r.tab, r.screen ? { screen: r.screen, params: r.params } : undefined)
+    // A aba Início continua montada ao navegar. Sem limpar, quem voltasse encontraria a busca antiga preenchida
+    // e o menu ainda filtrado — parecendo que a plataforma encolheu.
+    setBusca('')
   }
 
   // "Painel Inicial" fica de fora: este menu VIVE nele. A Sidebar da Web mostra o item porque acompanha a pessoa
@@ -71,14 +74,29 @@ export function MenuCompletoSlot() {
     <View style={styles.wrap}>
       <Text spec={text(t, { role: 'label', tone: 'muted' })}>Menu completo</Text>
 
-      <Input
-        value={busca}
-        onChangeText={setBusca}
-        placeholder="Buscar em toda a plataforma"
-        autoCorrect={false}
-        clearButtonMode="while-editing"
-        accessibilityLabel="Buscar na plataforma"
-      />
+      {/* LIMPAR precisa existir aqui, e não via `clearButtonMode`: aquela propriedade é só do iOS, e no Android
+          — que é onde a plataforma é homologada — a pessoa teria que apagar a busca letra por letra. */}
+      <View>
+        <Input
+          value={busca}
+          onChangeText={setBusca}
+          placeholder="Buscar em toda a plataforma"
+          autoCorrect={false}
+          accessibilityLabel="Buscar na plataforma"
+          style={busca.length > 0 ? { paddingRight: 72 } : undefined}
+        />
+        {busca.length > 0 && (
+          <Pressable
+            onPress={() => setBusca('')}
+            accessibilityRole="button"
+            accessibilityLabel="Limpar busca"
+            hitSlop={10}
+            style={styles.limpar}
+          >
+            <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Limpar</Text>
+          </Pressable>
+        )}
+      </View>
 
       {buscando ? (
         // RESULTADO: lista única, sem grupos. Quem buscou já sabe o que quer — reagrupar aqui só afastaria
@@ -130,4 +148,5 @@ const styles = StyleSheet.create({
   item: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, gap: 4 },
   recuada: { marginLeft: 12 },
   divisor: { height: 1, marginVertical: 4 },
+  limpar: { position: 'absolute', right: 14, top: 0, bottom: 0, justifyContent: 'center' },
 })
