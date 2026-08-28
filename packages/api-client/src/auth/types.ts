@@ -24,7 +24,7 @@ import type { ClassifyInput } from '../capture/classify'
 import type { IdentityProvider } from './oauth'
 import type { ShareDTO, TemplateDTO, OmicsPanelDTO } from '../report/report'
 import type { OmicsPanelDTO as OmicsPanel, OmicsPanelDetail, OmicsResultDTO, OmicsHistoryPoint, OmicsCatalogMatch, OmicsResultInput } from '../omics/omics'
-import type { Period, DocumentTargetDomain, SearchHit } from '@sintera/core'
+import type { Period, DocumentTargetDomain, SearchHit, PatientDocumentSubtype } from '@sintera/core'
 import type { PatientDocumentDTO, PatientDocumentInput, PatientDocumentPage } from '../documents/documents'
 import type { ConnectorState } from '@sintera/core'
 import type { DocumentAssociation } from '@sintera/core'
@@ -124,6 +124,13 @@ export interface DocumentsApi {
   saveDocument(input: PatientDocumentInput): Promise<{ data: { id: string } | null; error: Error | null }>
   updateDocument(id: string, patch: Partial<Pick<PatientDocumentInput, 'subtype' | 'issuer' | 'doc_date' | 'notes'>>): Promise<{ error: Error | null }>
   deleteDocument(id: string): Promise<{ error: Error | null }>
+  /**
+   * VÍNCULO documento → registro (DOC-001). A pergunta é feita pelo lado do REGISTRO — ao cadastrar um
+   * medicamento, oferece-se a receita — porque é aí que a receita já existe guardada. Espelha exame → pedido.
+   */
+  listLinkableDocuments(subtype: PatientDocumentSubtype, signal?: AbortSignal): Promise<PatientDocumentDTO[]>
+  linkDocumentToTarget(documentId: string, subtype: PatientDocumentSubtype, target_domain: DocumentTargetDomain, target_id: string): Promise<{ error: Error | null }>
+  unlinkDocumentFromTarget(documentId: string, target_domain: DocumentTargetDomain, target_id: string): Promise<{ error: Error | null }>
   /**
    * Arquiva uma receita em Documentos e vincula ao registro-alvo (medicamento, suplemento…).
    * IDEMPOTENTE: salvar o mesmo medicamento de novo não duplica a receita.

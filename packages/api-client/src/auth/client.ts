@@ -41,6 +41,7 @@ import { listBodyMetrics, saveBodyMetric, deleteBodyMetric, getHeightCm, getWeig
 import { listActivitySessions, saveActivitySession, deleteActivitySession, ingestActivitySessions } from '../activity/activity'
 import { ingestWearableSamples } from '../wearables/wearables'
 import { searchRecords } from '../search/search'
+import { listLinkableDocuments, linkDocumentToTarget, unlinkDocumentFromTarget } from '../documents/links'
 import { startOAuthSignIn, completeOAuthSignIn } from './oauth'
 import { classifyDocument } from '../capture/classify'
 import { listShares, createShare, revokeShare, listTemplates, saveTemplate, deleteTemplate, listOmicsPanels } from '../report/report'
@@ -142,6 +143,9 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       updateDocument: (id, patch) => updateDocument(supabase, id, patch),
       deleteDocument: (id) => deleteDocument(supabase, id),
       archivePrescription: (params) => archivePrescription(supabase, params),
+      listLinkableDocuments: (subtype, signal) => listLinkableDocuments(supabase, subtype, signal),
+      linkDocumentToTarget: (docId, subtype, domain, targetId) => linkDocumentToTarget(supabase, docId, subtype, domain, targetId),
+      unlinkDocumentFromTarget: (docId, domain, targetId) => unlinkDocumentFromTarget(supabase, docId, domain, targetId),
     },
     connectors: {
       listConnectors: () => listConnectors(supabase, config.webBaseUrl),

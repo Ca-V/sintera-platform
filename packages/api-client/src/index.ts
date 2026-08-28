@@ -69,6 +69,9 @@ export { listDocumentsForTargets, listPagesForDocuments } from './documents/docu
 export { updateDocument } from './documents/documents'
 // Busca global nos registros da pessoa — uma implementação, duas pontas. Atravessa o RLS: enxerga o que ela enxerga.
 export { searchRecords } from './search/search'
+// VÍNCULO documento → registro (receita → medicamento/suplemento/recurso). Espelha exame → pedido: a pergunta
+// é feita pelo lado do REGISTRO, ao cadastrá-lo, porque é aí que a receita já existe guardada.
+export { listLinkableDocuments, linkDocumentToTarget, unlinkDocumentFromTarget } from './documents/links'
 // Nome dos alvos vinculados — a Web consome direto (mesma consulta do Mobile, SSOT).
 export { targetNamesByDocument } from './documents/targetNames'
 export type { ConnectorsApi } from './auth/types'

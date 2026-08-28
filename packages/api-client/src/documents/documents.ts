@@ -58,7 +58,9 @@ export interface PatientDocumentInput {
   pages?: DocumentPageInput[]
 }
 
-const COLUMNS = 'id, subtype, file_url, issuer, doc_date, notes, status, created_at' as const
+// Exportada porque o módulo de VÍNCULO projeta o MESMO documento: duas listas de colunas dariam dois formatos
+// para a mesma coisa, e o seletor de vínculo mostraria menos (ou mais) do que a tela de Documentos.
+export const COLUMNS = 'id, subtype, file_url, issuer, doc_date, notes, status, created_at' as const
 
 async function requireUserId(client: SupabaseClient): Promise<string> {
   const { data: { session } } = await client.auth.getSession()
