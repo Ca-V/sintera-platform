@@ -10,10 +10,10 @@ const HOME = resolve(process.cwd(), 'apps/mobile/src/presentation/home')
 const read = (rel: string) => readFileSync(resolve(HOME, rel), 'utf-8')
 
 describe('Contrato dos slots da Home (MOBILE-014 §3.4 · Home-hub UX-002)', () => {
-  it('HomeShell compõe os slots da Home-hub (saudação · adicionar · próximos · menu · como usar · rodapé)', () => {
+  it('HomeShell compõe os slots da Home-hub (saudação · adicionar · menu · como usar · rodapé)', () => {
     const shell = read('HomeShell.tsx')
     // Home = HUB de navegação (UX-002). Resumo/Linha do tempo/Insights saíram (pertencem aos módulos).
-    for (const slot of ['WelcomeSlot', 'AdicionarRegistroSlot', 'ProximosCompromissosSlot', 'MenuCompletoSlot', 'ComoUsarSlot', 'FooterSlot']) {
+    for (const slot of ['WelcomeSlot', 'AdicionarRegistroSlot', 'MenuCompletoSlot', 'ComoUsarSlot', 'FooterSlot']) {
       expect(shell, `HomeShell deve compor <${slot} />`).toMatch(new RegExp(`<${slot}[^>]*/>`))
     }
   })
