@@ -18,7 +18,8 @@ import type { ActivitySessionDTO, BodyMetricDTO } from '@sintera/api-client'
 import {
   SCREEN_COPY, activityTypeLabel, activitySummary, bodyMetricLabel, bodySourceLabel, formatInstantBR, formatDateBR,
   suspectedDuplicateActivities, DUPLICATE_CHOICES,
-  type ActivityForMatch, type DuplicateSuspicion, type DuplicateChoice,
+  suspectedDuplicateObservations, observationForMatch,
+  type ActivityForMatch, type ObservationForMatch, type DuplicateSuspicion, type DuplicateChoice,
 } from '@sintera/core'
 import { Text, Button, Disclaimer } from '../../primitives'
 import { useTheme } from '../../theme'
@@ -78,6 +79,32 @@ export function DadosRecebidosScreen() {
     const outros = acts.filter(o => o.id !== a.id && !jaVistos.has(o.id)).map(paraComparacao)
     const [s] = suspectedDuplicateActivities([paraComparacao(a)], outros)
     if (s) { suspeitas.push(s); jaVistos.add(s.incoming.id); jaVistos.add(s.existing.id) }
+  }
+
+  // MEDIÇÕES TAMBÉM SE REPETEM, e por um caminho ainda mais comum que o das atividades: um relógio e um
+  // aplicativo escrevendo o mesmo peso no Health Connect. O detector existia desde 28/08 e não tinha um único
+  // consumidor — mesmo padrão de "especificado e nunca ligado".
+  const suspeitasMedicao: DuplicateSuspicion<ObservationForMatch>[] = []
+  const vistosMedicao = new Set<string>()
+  for (const m of metrics) {
+    if (vistosMedicao.has(m.id)) continue
+    const outros = metrics.filter(o => o.id !== m.id && !vistosMedicao.has(o.id)).map(observationForMatch)
+    const [s] = suspectedDuplicateObservations([observationForMatch(m)], outros)
+    if (s) { suspeitasMedicao.push(s); vistosMedicao.add(s.incoming.id); vistosMedicao.add(s.existing.id) }
+  }
+
+  async function resolverMedicao(sus: DuplicateSuspicion<ObservationForMatch>, escolha: DuplicateChoice) {
+    if (escolha === 'manter-ambos') {
+      Alert.alert('Mantidas', 'As duas continuam registradas.')
+      return
+    }
+    const alvo = escolha === 'descartar-novo' ? sus.incoming.id : sus.existing.id
+    setBusy(alvo)
+    try {
+      const { error } = await apiClient.body.deleteBodyMetric(alvo)
+      if (error) { Alert.alert('Não foi possível remover', error.message || 'Tente de novo.'); return }
+      load(true)
+    } finally { setBusy(null) }
   }
 
   async function resolver(s: DuplicateSuspicion<ActivityForMatch>, escolha: DuplicateChoice) {
@@ -153,6 +180,38 @@ export function DadosRecebidosScreen() {
                   <Pressable
                     key={op.id}
                     onPress={() => resolver(sus, op.id)}
+                    disabled={busy === sus.incoming.id || busy === sus.existing.id}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${op.label}. ${op.hint}`}
+                    style={[s.escolha, { borderColor: t.color.border.default }]}
+                  >
+                    <Text spec={text(t, { role: 'body' })}>{op.label}</Text>
+                    <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{op.hint}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {suspeitasMedicao.length > 0 && (
+        <View style={{ gap: 10, marginTop: 8 }}>
+          <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 17 }}>{C.duplicateTitle}</Text>
+          <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{C.duplicateHint}</Text>
+
+          {suspeitasMedicao.map(sus => (
+            <View key={sus.incoming.id} style={[s.card, card, { gap: 10, borderColor: t.color.badge.attention.text }]}>
+              <Text spec={text(t, { role: 'body' })}>
+                {bodyMetricLabel(sus.incoming.metric)} — {sus.incoming.source}
+              </Text>
+              <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{sus.reason}</Text>
+
+              <View style={{ gap: 8 }}>
+                {DUPLICATE_CHOICES.map(op => (
+                  <Pressable
+                    key={op.id}
+                    onPress={() => resolverMedicao(sus, op.id)}
                     disabled={busy === sus.incoming.id || busy === sus.existing.id}
                     accessibilityRole="button"
                     accessibilityLabel={`${op.label}. ${op.hint}`}

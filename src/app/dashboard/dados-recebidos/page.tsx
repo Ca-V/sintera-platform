@@ -38,7 +38,8 @@ import {
 import {
   SCREEN_COPY, activityTypeLabel, activitySummary, bodyMetricLabel, bodySourceLabel,
   formatInstantBR, formatDateBR, suspectedDuplicateActivities, DUPLICATE_CHOICES,
-  type ActivityForMatch, type DuplicateSuspicion, type DuplicateChoice,
+  suspectedDuplicateObservations, observationForMatch,
+  type ActivityForMatch, type ObservationForMatch, type DuplicateSuspicion, type DuplicateChoice,
 } from '@sintera/core'
 
 const C = SCREEN_COPY.dadosRecebidos
@@ -82,7 +83,7 @@ export default function DadosRecebidosPage() {
   useEffect(() => { void load() }, [load])
 
   // A regra de "é o mesmo fato?" vive no core, testada. Aqui só se compara a lista consigo mesma: cada
-  // atividade contra as demais, para achar o par que veio por dois caminhos. Idêntico ao aplicativo.
+  // registro contra os demais, para achar o par que veio por dois caminhos. Idêntico ao aplicativo.
   const suspeitas: DuplicateSuspicion<ActivityForMatch>[] = []
   const jaVistos = new Set<string>()
   for (const a of acts) {
@@ -90,6 +91,17 @@ export default function DadosRecebidosPage() {
     const outros = acts.filter(o => o.id !== a.id && !jaVistos.has(o.id)).map(paraComparacao)
     const [s] = suspectedDuplicateActivities([paraComparacao(a)], outros)
     if (s) { suspeitas.push(s); jaVistos.add(s.incoming.id); jaVistos.add(s.existing.id) }
+  }
+
+  // MEDIÇÕES TAMBÉM SE REPETEM, e por um caminho ainda mais comum: um relógio e um aplicativo escrevendo o
+  // mesmo peso no Health Connect. O detector existia e não tinha um único consumidor.
+  const suspeitasMedicao: DuplicateSuspicion<ObservationForMatch>[] = []
+  const vistosMedicao = new Set<string>()
+  for (const m of metrics) {
+    if (vistosMedicao.has(m.id)) continue
+    const outros = metrics.filter(o => o.id !== m.id && !vistosMedicao.has(o.id)).map(observationForMatch)
+    const [s] = suspectedDuplicateObservations([observationForMatch(m)], outros)
+    if (s) { suspeitasMedicao.push(s); vistosMedicao.add(s.incoming.id); vistosMedicao.add(s.existing.id) }
   }
 
   async function resolver(sus: DuplicateSuspicion<ActivityForMatch>, escolha: DuplicateChoice) {
@@ -101,6 +113,16 @@ export default function DadosRecebidosPage() {
     setBusy(alvo)
     try {
       const { error } = await deleteActivitySession(supabase, alvo)
+      if (!error) await load()
+    } finally { setBusy(null) }
+  }
+
+  async function resolverMedicao(sus: DuplicateSuspicion<ObservationForMatch>, escolha: DuplicateChoice) {
+    if (escolha === 'manter-ambos') return
+    const alvo = escolha === 'descartar-novo' ? sus.incoming.id : sus.existing.id
+    setBusy(alvo)
+    try {
+      const { error } = await deleteBodyMetric(supabase, alvo)
       if (!error) await load()
     } finally { setBusy(null) }
   }
@@ -147,6 +169,32 @@ export default function DadosRecebidosPage() {
                   <button
                     key={op.id}
                     onClick={() => resolver(sus, op.id)}
+                    disabled={busy === sus.incoming.id || busy === sus.existing.id}
+                    className="w-full rounded-xl border border-border px-4 py-3 text-left hover:bg-black/[0.02] disabled:opacity-50"
+                  >
+                    <span className="block text-sm">{op.label}</span>
+                    <span className="block text-xs text-mauve">{op.hint}</span>
+                  </button>
+                ))}
+              </div>
+            </Card>
+          ))}
+        </section>
+      )}
+
+      {suspeitasMedicao.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="font-display text-lg font-semibold text-onyx">{C.duplicateTitle}</h2>
+          <p className="text-sm text-mauve">{C.duplicateHint}</p>
+          {suspeitasMedicao.map(sus => (
+            <Card key={sus.incoming.id} className="space-y-3 border-amber-300 p-4">
+              <p className="text-sm">{bodyMetricLabel(sus.incoming.metric)} — {sus.incoming.source}</p>
+              <p className="text-xs text-mauve">{sus.reason}</p>
+              <div className="space-y-2">
+                {DUPLICATE_CHOICES.map(op => (
+                  <button
+                    key={op.id}
+                    onClick={() => resolverMedicao(sus, op.id)}
                     disabled={busy === sus.incoming.id || busy === sus.existing.id}
                     className="w-full rounded-xl border border-border px-4 py-3 text-left hover:bg-black/[0.02] disabled:opacity-50"
                   >

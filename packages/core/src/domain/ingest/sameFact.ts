@@ -192,6 +192,41 @@ export function sameObservationFact(
   }
 }
 
+/**
+ * Uma medição guardada → o formato que o detector compara.
+ *
+ * A ponte que faltava: `suspectedDuplicateObservations` existia desde 28/08 e não tinha UM consumidor, porque
+ * cada tela teria de montar este objeto sozinha — e montá-lo de dois jeitos faria a mesma medição ser duplicata
+ * numa ponta e não na outra.
+ *
+ * O VALOR sai do texto porque é assim que ele é guardado ("72", "120/80", "36,5"). Vírgula decimal é aceita; o
+ * que não for número vira `null`, e `null` faz o detector NÃO acusar. Uma pressão "120/80" compara pela
+ * sistólica — o segundo número acompanha o primeiro, e uma leitura que bate na sistólica e diverge na
+ * diastólica não é a mesma medição vinda duas vezes, é medição diferente.
+ *
+ * O INSTANTE vem de `measured_at` quando existe; senão, do dia. Sem hora, duas medições do mesmo dia ficam
+ * ambas à meia-noite e a tolerância de 2 minutos as aproximaria indevidamente — por isso, sem hora, o valor
+ * precisa bater também, e é ele que separa uma da outra.
+ */
+export function observationForMatch(m: {
+  id: string
+  source?: string | null
+  metric: string
+  measured_at?: string | null
+  measured_on: string
+  value_text?: string | null
+}): ObservationForMatch {
+  const bruto = (m.value_text ?? '').trim().replace(',', '.')
+  const n = Number.parseFloat(bruto)
+  return {
+    id: m.id,
+    source: (m.source ?? '').trim() || 'desconhecida',
+    metric: m.metric,
+    recordedAt: m.measured_at ?? `${m.measured_on}T00:00:00.000Z`,
+    value: Number.isFinite(n) ? n : null,
+  }
+}
+
 export function suspectedDuplicateObservations(
   incoming: readonly ObservationForMatch[],
   existing: readonly ObservationForMatch[],
