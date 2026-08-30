@@ -33,6 +33,12 @@ export function DocumentsScreen() {
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const alive = useRef(true)
+  /**
+   * O formulário abre ACIMA da lista. Sem rolar até ele, quem toca em "Editar" num cartão lá embaixo vê a
+   * tela não mudar — o formulário abriu fora da vista. Achado na homologação de 30/08: "a opção para editar
+   * uma receita que já estava adicionada não funcionou". Funcionava; era invisível.
+   */
+  const scroller = useRef<ScrollView>(null)
 
   const [filter, setFilter] = useState<string>(DOCUMENT_FILTER_ALL)
   const [open, setOpen] = useState(false)

@@ -48,6 +48,16 @@ export interface ClassificationResult {
   issuer?: string
   /** Data do documento em ISO (AAAA-MM-DD), quando escrita de forma inequívoca. */
   docDate?: string
+  /**
+   * O que a RECEITA prescreve, transcrito do papel — "Losartana 50mg", como está escrito.
+   *
+   * Pedido da fundadora (30/08): uma receita identificada só por médico e data obriga a abrir o arquivo para
+   * saber do que se trata, que é justamente o trabalho que a plataforma existe para poupar.
+   *
+   * Continua sendo TRANSCRIÇÃO: copia o nome e a concentração escritos. Não diz para que serve, não avalia a
+   * dose, não inclui posologia — a fronteira da RDC 657 permanece onde estava.
+   */
+  items?: string[]
 }
 
 /** Motivo de erro NORMALIZADO (o Hub traduz qualquer falha de pipeline para isto). */

@@ -23,6 +23,8 @@ export interface DocumentReading {
   subtype?: PatientDocumentSubtype | null
   /** Quem emitiu — transcrito do documento, não inferido. */
   issuer?: string | null
+  /** O que a receita prescreve, transcrito do papel. Vazio quando não é receita ou nada estava legível. */
+  items?: string[]
   /** Data de emissão, AAAA-MM-DD. */
   docDate?: string | null
   confidence: 'high' | 'medium' | 'low'
@@ -135,6 +137,7 @@ export function readingFromClassification(cls: {
   subtype?: string | null
   issuer?: string | null
   docDate?: string | null
+  items?: string[]
   confidence: 'high' | 'medium' | 'low'
 } | null | undefined): DocumentReading | null {
   if (!cls) return null
@@ -144,6 +147,7 @@ export function readingFromClassification(cls: {
     subtype: SUBTYPE_POR_PALAVRA[palavra] ?? null,
     issuer: cls.issuer ?? null,
     docDate: cls.docDate ?? null,
+    items: cls.items ?? [],
     confidence: cls.confidence,
   }
 }
