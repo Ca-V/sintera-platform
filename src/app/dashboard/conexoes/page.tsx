@@ -18,7 +18,9 @@ import { Card } from "@/lib/ui/ds"
 import { Badge } from "@/lib/ui/ds"
 import Disclaimer from '@/components/ui/Disclaimer'
 // O rótulo vem do núcleo: as duas pontas chamam a tela pelo MESMO nome, e um rótulo escrito duas vezes divergiria.
-import { SCREEN_COPY } from '@sintera/core'
+import {
+  SCREEN_COPY, CONEXOES_ONDE_FUNCIONA, HEALTH_CONNECT_DOIS_PASSOS, fontesDisponiveis, fontesIndisponiveis,
+} from '@sintera/core'
 import { useNovelty } from '@/lib/novelty/useNovelty'
 
 type Status = 'disconnected' | 'connected' | 'expired' | 'revoked' | 'error'
@@ -159,6 +161,18 @@ function ConexoesInner() {
         <Card padding="none" className="p-10 text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
       ) : error ? (
         <Card padding="none" className="p-6 text-center"><p className="font-body text-sm text-mauve">{error}</p></Card>
+      ) : connectors.length === 0 ? (
+        // ESTAVA VAZIO E CALADO: sem fonte configurada, a página renderizava uma lista vazia e mais nada.
+        // Quem abrisse Conexões no navegador via um espaço em branco e concluía que a plataforma não faz isso.
+        <Card padding="relaxed">
+          <p className="font-body text-sm text-onyx">
+            Nenhum serviço com conexão própria está disponível por aqui no momento.
+          </p>
+          <p className="font-body text-sm text-mauve mt-2">
+            Isso não impede a entrada automática de dados: ela acontece pelo aplicativo, no Android — como está
+            explicado abaixo.
+          </p>
+        </Card>
       ) : (
         <div className="space-y-4">
           {connectors.map((c) => (
@@ -215,6 +229,40 @@ function ConexoesInner() {
           ))}
         </div>
       )}
+
+      {/* O CAMINHO AUTOMÁTICO, dito também aqui. A plataforma tem essa capacidade e o navegador não a
+          mencionava em lugar nenhum — e capacidade que não se conta é capacidade que ninguém usa.
+          Não é acionável a partir do computador, e o texto diz isso: os passos são no celular. Prometer um
+          botão que não existe aqui seria pior que não falar. */}
+      <Card padding="relaxed" className="space-y-3">
+        <h2 className="font-display text-lg font-semibold text-onyx">{CONEXOES_ONDE_FUNCIONA.titulo}</h2>
+        <p className="font-body text-sm text-onyx">{CONEXOES_ONDE_FUNCIONA.comoFunciona}</p>
+        <p className="font-body text-sm text-mauve">{HEALTH_CONNECT_DOIS_PASSOS}</p>
+        <p className="font-body text-xs text-mauve">{CONEXOES_ONDE_FUNCIONA.ondeFazer}</p>
+
+        <div className="space-y-2 pt-1">
+          {fontesDisponiveis().map(f => (
+            <div key={f.source} className="rounded-xl border border-border px-4 py-3">
+              <p className="font-body text-sm text-onyx">{f.nome}</p>
+              <p className="font-body text-xs text-mauve">{f.caminho}</p>
+              <p className="font-body text-xs text-mauve/70">Traz: {f.traz}</p>
+            </div>
+          ))}
+          {/* O que ainda não dá aparece COM o motivo, nunca escondido — igual ao aplicativo. */}
+          {fontesIndisponiveis().map(({ fonte, motivo }) => (
+            <div key={fonte.source} className="rounded-xl border border-border px-4 py-3 opacity-75">
+              <p className="font-body text-sm text-onyx">{fonte.nome}</p>
+              <p className="font-body text-xs text-mauve">{motivo}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* O QUE NÃO DÁ NO IPHONE, dito de frente. Silenciar faria quem tem iPhone procurar por semanas um
+            botão que não está lá. */}
+        <p className="font-body text-xs text-mauve border-t border-border pt-3">
+          {CONEXOES_ONDE_FUNCIONA.iphone}
+        </p>
+      </Card>
 
       {/* A PORTA para o que entrou. Com a sincronização automática, o dado passa a chegar sem ninguém pedir —
           e sem este caminho, "entra sozinho" viraria "entra sem que eu saiba". Fica em Conexões porque é aqui

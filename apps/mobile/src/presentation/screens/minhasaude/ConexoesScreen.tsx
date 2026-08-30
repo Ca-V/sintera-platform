@@ -33,6 +33,9 @@ const apiAndroid: number | undefined = Platform.OS === 'android'
   ? (typeof Platform.Version === 'number' ? Platform.Version : Number(Platform.Version)) || undefined
   : undefined
 
+/** No iPhone o caminho do Health Connect não existe, e o roteiro do Android não se aplica a nada ali. */
+const ehIphone = Platform.OS === 'ios'
+
 // A hora da última sincronização é um INSTANTE, e recortar a string mostrava-o em UTC — três horas erradas, e
 // um dia errado para tudo que acontece à noite. A conversão mora no core (`formatInstantBR`), porque a Web lê
 // o mesmo campo e não pode divergir.
@@ -211,7 +214,15 @@ export function ConexoesScreen() {
         </View>
         <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{C.hcSubtitle}</Text>
 
-        {hcDisponivel === false ? (
+        {ehIphone ? (
+          // IPHONE: o roteiro do Android não se aplica, e mandar a pessoa à Play Store num aparelho que não a
+          // tem é pior do que não dizer nada. Sem esta bifurcação, era exatamente isso que acontecia — o
+          // caminho inteiro do Android, com botão de instalar e tudo.
+          <View style={{ gap: 8 }}>
+            <Text spec={text(t, { role: 'bodyStrong' })}>{C.hcIosTitle}</Text>
+            <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{C.hcIosHint}</Text>
+          </View>
+        ) : hcDisponivel === false ? (
           // NÃO DISPONÍVEL — mas com saída. A versão anterior constatava e parava; a pessoa ficava sabendo que
           // não dá, sem saber o que fazer. Aqui vai o motivo E o caminho, com o botão que abre a Play Store no
           // app certo, para ninguém precisar procurar entre resultados parecidos.
@@ -227,7 +238,6 @@ export function ConexoesScreen() {
                   .catch(() => Linking.openURL('https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata'))
               }}
             />
-            <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{C.hcAppleHint}</Text>
           </View>
         ) : (
           <>

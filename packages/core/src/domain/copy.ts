@@ -131,7 +131,19 @@ export const SCREEN_COPY = {
     // resolver é a forma educada de deixar a pessoa sozinha.
     hcUnavailableHint: 'No Android 14 ou mais novo ele já vem instalado. Em versões anteriores, é um aplicativo gratuito da Google que precisa ser instalado pela Play Store. Na Play Store em português ele aparece como "Saúde Connect", da Google LLC — é o mesmo aplicativo. Depois de instalar, volte aqui.',
     hcInstallAction: 'Instalar (aparece como "Saúde Connect")',
-    hcAppleHint:    'Em iPhone a integração será com o Apple Saúde, e não depende de instalar nada.',
+    /**
+     * O QUE O IPHONE VÊ. Sem esta bifurcação, quem abre a tela num iPhone recebe o roteiro inteiro do Android
+     * — incluindo um botão "Instalar Saúde Connect" que leva à Play Store, que não existe no aparelho dela.
+     *
+     * E o texto diz o estado REAL, no presente. O aviso anterior dizia que "a integração SERÁ com o Apple
+     * Saúde": futuro do verbo para uma coisa não implementada é promessa, e promessa é o que a plataforma não
+     * faz. Enquanto não existir, o honesto é dizer que não existe e apontar o que existe.
+     */
+    hcIosTitle:     'A entrada automática ainda não funciona no iPhone',
+    hcIosHint:      'O Health Connect é do Android. A integração equivalente com o Apple Saúde ainda não foi ' +
+                    'implementada — quando estiver pronta, passa a funcionar sem você fazer nada aqui. Por ' +
+                    'enquanto, no iPhone os dados entram pelos serviços que oferecem conexão própria, e por ' +
+                    'aquilo que você registrar.',
     hcDenied:       'Nenhuma permissão concedida. Você decide o que compartilhar, e pode mudar depois.',
     hcRevokeHint:   'A autorização fica no Health Connect, não aqui — é lá que você revoga quando quiser.',
   },

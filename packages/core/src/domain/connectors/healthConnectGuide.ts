@@ -152,6 +152,32 @@ export const HEALTH_CONNECT_COMO_TESTAR =
  * Fica no core porque é a frase que evita a conclusão errada — "não funciona" — quando na verdade falta um passo
  * do outro lado. As duas pontas dizem exatamente isto.
  */
+/**
+ * O QUE A PLATAFORMA CONSEGUE HOJE, dito sem promessa.
+ *
+ * Escrito porque a tela de Conexões no navegador não mencionava o Health Connect em lugar nenhum: quem usa a
+ * SINTERA no computador não tinha como descobrir que a sincronização automática existe. Uma capacidade que a
+ * plataforma tem e não diz é, na prática, uma capacidade que ninguém usa.
+ *
+ * E diz também o que NÃO consegue. O caminho automático depende do Health Connect, que é do Android — no
+ * iPhone ele não existe, e o equivalente da Apple ainda não foi implementado. Silenciar sobre isso faria quem
+ * tem iPhone procurar por semanas um botão que não está lá.
+ */
+export const CONEXOES_ONDE_FUNCIONA = {
+  titulo: 'A sincronização automática acontece no seu celular Android',
+  comoFunciona:
+    'No aplicativo da SINTERA, em Android, a leitura chega sozinha pelo Health Connect — o cofre de saúde do ' +
+    'próprio aparelho. Você autoriza uma vez, e os aplicativos que você já usa passam a alimentar a plataforma ' +
+    'sem que você precise pedir nada.',
+  ondeFazer:
+    'Os passos abaixo são feitos no celular, nos aplicativos das fontes. Estão aqui para você ler com calma; ' +
+    'a execução é no aparelho.',
+  iphone:
+    'No iPhone esse caminho ainda não existe: o Health Connect é do Android, e a integração equivalente da ' +
+    'Apple não foi implementada. Enquanto isso, no iPhone os dados entram pelos serviços conectados abaixo, ' +
+    'quando a fonte oferecer conexão própria.',
+} as const
+
 export const HEALTH_CONNECT_DOIS_PASSOS =
   'São dois passos, e o segundo é dentro do app do seu aparelho. Aqui você autoriza a SINTERA a ler; ' +
   'lá você autoriza o aparelho a escrever. Sem os dois, o Health Connect fica aberto e vazio.'
