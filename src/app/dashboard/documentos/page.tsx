@@ -117,6 +117,7 @@ export default function DocumentosPage() {
     setSubtype('receita'); setFiles([])
     setIssuer(''); setProfessional(''); setInstitution(''); setItensTexto('')
     setDocDate(''); setNotes(''); setErro(null)
+    setEditando(null)
   }
 
   /** Sobe UMA página. O componente cuida da política, da lista, da ordem e do progresso. */
@@ -132,8 +133,47 @@ export default function DocumentosPage() {
     return signed?.signedUrl ?? null
   }, [supabase, user])
 
+  /**
+   * Abre o formulário com os fatos do documento. O ARQUIVO não se troca ao editar: corrige-se o que se
+   * REGISTROU sobre o documento, não a evidência. Idêntico ao aplicativo.
+   */
+  function startEdit(d: DocRow) {
+    setEditando(d)
+    setSubtype(d.subtype)
+    setIssuer(d.issuer ?? '')
+    setProfessional(d.professional_name ?? '')
+    setInstitution(d.institution_name ?? '')
+    setItensTexto(prescribedItemsToText(d.prescribed_items))
+    setDocDate(d.doc_date ?? '')
+    setNotes(d.notes ?? '')
+    setFiles([]); setErro(null); setOpen(true)
+    // Sobe até o formulário, que abre ACIMA da lista: sem isto, editar um cartão lá embaixo parece não fazer
+    // nada. Foi o defeito que a fundadora reportou no aplicativo — não repeti-lo aqui.
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   async function onSave() {
     if (!user) return
+
+    // EDITANDO: corrige os fatos do documento; o arquivo permanece. Só a criação exige anexo.
+    if (editando) {
+      setSaving(true)
+      try {
+        const { error } = await updateDocument(supabase, editando.id, {
+          subtype,
+          issuer: documentPrimaryName({ professional_name: professional, institution_name: institution, issuer }) || null,
+          professional_name: professional.trim() || null,
+          institution_name: institution.trim() || null,
+          prescribed_items: parsePrescribedItems(itensTexto),
+          doc_date: docDate || null,
+          notes: notes.trim() || null,
+        })
+        if (error) { setErro('Não foi possível salvar as alterações.'); return }
+        setOpen(false); resetForm(); await load()
+      } finally { setSaving(false) }
+      return
+    }
+
     if (!isReadyToSave(files)) { setErro('Anexe o documento.'); return }
 
     // JÁ ESTÁ GUARDADO? Regra permanente da fundadora: toda informação que entra é conferida contra o que já
@@ -285,13 +325,25 @@ export default function DocumentosPage() {
                 meta={documentSubtitle(r)}
                 chips={<AttachmentLink url={r.file_url} label="Ver documento" icon={<Paperclip size={14} />} />}
                 actions={
-                  <button
-                    onClick={() => setConfirmId(r.id)}
-                    aria-label="Excluir documento"
-                    className="rounded-full p-2 text-mauve hover:bg-black/[0.04]"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                  <>
+                    {/* EDITAR faltava AQUI, e só aqui: o aplicativo já tinha a ação, a Web não. `Pencil`,
+                        `updateDocument` e `editando` estavam todos importados e nenhum era usado — mais um
+                        caso de especificado e nunca ligado. Paridade não é opcional (BASE ÚNICA). */}
+                    <button
+                      onClick={() => startEdit(r)}
+                      aria-label="Editar documento"
+                      className="rounded-full p-2 text-mauve hover:bg-black/[0.04]"
+                    >
+                      <Pencil size={16} />
+                    </button>
+                    <button
+                      onClick={() => setConfirmId(r.id)}
+                      aria-label="Excluir documento"
+                      className="rounded-full p-2 text-mauve hover:bg-black/[0.04]"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </>
                 }
               />
             )
@@ -303,7 +355,7 @@ export default function DocumentosPage() {
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 p-0 sm:items-center sm:p-4">
           <Card className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-2xl sm:rounded-2xl">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-medium">Adicionar documento</h2>
+              <h2 className="text-lg font-medium">{editando ? 'Editar documento' : 'Adicionar documento'}</h2>
               <button onClick={() => setOpen(false)} aria-label="Fechar" className="rounded-full p-2 hover:bg-black/[0.04]">
                 <X size={18} />
               </button>
@@ -328,6 +380,9 @@ export default function DocumentosPage() {
                   avise se o documento anexado parece outra coisa, e devolva emissor e data para REVISÃO.
                   `autofillFrom` não sobrescreve o que já foi digitado: a pessoa é a autoridade sobre o
                   próprio registro. */}
+              {/* Ao EDITAR o anexo nao aparece: corrige-se o que foi registrado sobre o documento, nao a
+                  evidencia. Mesma regra do aplicativo. */}
+              {!editando && (
               <AnexoDocumento
                 files={files} onChange={setFiles} upload={uploadPagina}
                 leituraAssistida={{
@@ -345,6 +400,7 @@ export default function DocumentosPage() {
                   },
                 }}
               />
+              )}
 
               {/* O QUE FOI PRESCRITO — só na receita. Transcrição, não interpretação: nome e concentração
                   como estão escritos, sem posologia (RDC 657). Idêntico ao Mobile, por BASE ÚNICA. */}

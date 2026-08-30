@@ -15,6 +15,8 @@ import {
   autofillFrom, deriveDocumentTitle, DOCUMENT_FILTER_ALL,
   documentPrimaryName, parsePrescribedItems, prescribedItemsToText,
   findExistingDocument, existingDocumentMessage, DOCUMENT_DUPLICATE_CHOICES,
+  itensParaRegistrar, destinoDaPlataforma, DESTINOS_PRESCRITOS, convitePrescricao, AVISO_PRESCRICAO,
+  type ItemPrescrito, type DestinoPrescrito,
   type PatientDocumentSubtype, type AttachedFile,
 } from '@sintera/core'
 import { Text, Button, Input, AttachmentLink, DatePicker, Disclaimer, Select, AnexoDocumento } from '../../primitives'
@@ -74,6 +76,18 @@ export function DocumentsScreen() {
    * uma letra — não navegar por uma lista de campos.
    */
   const [itensTexto, setItensTexto] = useState('')
+  /**
+   * A proposta de registrar o que a receita prescreve. Presente = a folha de confirmação está na tela.
+   *
+   * `marcados` é paralelo a `itens`: tudo começa marcado, porque o caminho comum é aceitar tudo — e desmarcar
+   * um é mais rápido do que marcar três.
+   */
+  const [proposta, setProposta] = useState<{
+    documentoId: string; itens: ItemPrescrito[]; marcados: boolean[]
+  } | null>(null)
+  /** Prescritor e arquivo da receita recém-salva, guardados antes de o formulário ser limpo. */
+  const professionalDaReceita = useRef('')
+  const fileDaReceita = useRef('')
   const [docDate, setDocDate] = useState('')
   const [notes, setNotes] = useState('')
 
@@ -116,6 +130,11 @@ export function DocumentsScreen() {
     setProfessional(d.professional_name ?? ''); setInstitution(d.institution_name ?? '')
     setItensTexto(prescribedItemsToText(d.prescribed_items))
     setFiles([]); setFormError(null); setOpen(true)
+    // SOBE ATÉ O FORMULÁRIO. Sem esta linha, tocar em "Editar" num cartão lá embaixo abre o formulário acima
+    // da lista, fora da tela, e a pessoa vê a tela não mudar. Foi assim que a fundadora concluiu que "editar
+    // não funcionou" — e a correção anterior declarou a ref sem nunca a usar. Um conserto que não foi ligado
+    // é indistinguível de conserto nenhum.
+    scroller.current?.scrollTo({ y: 0, animated: true })
   }
 
   /** Sobe UMA página. O componente cuida da política, da lista e da ordem. */
@@ -215,11 +234,71 @@ export function DocumentsScreen() {
       }
       // SUBSTITUIR atualiza o registro guardado em vez de apagar e recriar: ele pode já estar vinculado a um
       // medicamento ou a uma consulta, e apagá-lo levaria os vínculos junto.
-      const { error: err } = substituirId
-        ? await apiClient.documents.replaceDocument(substituirId, entrada)
-        : (await apiClient.documents.saveDocument(entrada))
+      // Guardados ANTES de limpar o formulário: a proposta de registrar os itens vem logo a seguir e precisa
+      // do prescritor e do arquivo desta receita, que já não estarão nos campos.
+      professionalDaReceita.current = professional.trim()
+      fileDaReceita.current = files[0].url!
+
+      const resultado = substituirId
+        ? { data: null, error: (await apiClient.documents.replaceDocument(substituirId, entrada)).error }
+        : await apiClient.documents.saveDocument(entrada)
+      const { error: err } = resultado
+      const criado = resultado.data
       if (err) { setFormError('Não foi possível salvar o documento.'); return }
+
+      // A RECEITA DIRECIONA PARA O QUE ELA PRESCREVE (regra da fundadora, 30/08). Os itens já foram
+      // transcritos e já estão classificados; falta um toque. Não se cria nada sozinho: criar registro clínico
+      // a partir de leitura automática seria a plataforma PRODUZINDO conteúdo, não organizando.
+      const propostos = subtype === 'receita' ? itensParaRegistrar(parsePrescribedItems(itensTexto)) : []
+      const docId = substituirId ?? criado?.id ?? null
+      if (propostos.length > 0 && docId) {
+        setProposta({ documentoId: docId, itens: propostos, marcados: propostos.map(() => true) })
+      }
       setOpen(false); resetForm(); load(true)
+    } finally { setSaving(false) }
+  }
+
+  /**
+   * Registra os itens marcados, cada um no domínio a que pertence, já ligado à receita.
+   *
+   * Medicamento e suplemento vão para Medicamentos (distinguidos por `kind`); dispositivo e produto vão para
+   * RECURSOS DE SAÚDE, que é o domínio deles — é lá que a pessoa vai procurá-los.
+   *
+   * Um item que falhe não derruba os outros: cada um é um registro independente, e perder três porque o
+   * segundo falhou seria transformar um problema pequeno num grande.
+   */
+  async function registrarPrescritos() {
+    if (!proposta) return
+    setSaving(true)
+    let feitos = 0
+    try {
+      for (let i = 0; i < proposta.itens.length; i++) {
+        if (!proposta.marcados[i]) continue
+        const item = proposta.itens[i]
+        const destino = destinoDaPlataforma(item.destino)
+        const prescritor = professionalDaReceita.current || null
+
+        const alvoId = destino.medKind
+          ? (await apiClient.medications.saveMedication({
+              name: item.texto, kind: destino.medKind, status: 'em_uso',
+              prescriber_name: prescritor, prescription_url: fileDaReceita.current,
+            })).data?.id
+          : (await apiClient.resources.saveResource({
+              name: item.texto, resource_type: destino.resourceType as never, status: 'em_uso',
+              prescriber: prescritor, file_url: fileDaReceita.current,
+            })).data?.id
+
+        if (!alvoId) continue
+        // O VÍNCULO é o que fecha o ciclo: abrir o medicamento mostra a receita, abrir a receita mostra o que
+        // ela gerou. Falhar aqui deixa o registro criado e sem o vínculo — incompleto, nunca errado.
+        await apiClient.documents.linkDocumentToTarget(proposta.documentoId, 'receita', destino.dominio, alvoId)
+        feitos++
+      }
+      setProposta(null)
+      if (feitos > 0) {
+        Alert.alert('Registrado', feitos === 1 ? '1 item foi registrado a partir da receita.' : `${feitos} itens foram registrados a partir da receita.`)
+      }
+      load(true)
     } finally { setSaving(false) }
   }
 
@@ -268,6 +347,7 @@ export function DocumentsScreen() {
 
   return (
     <ScrollView
+      ref={scroller}
       contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 32, gap: 12 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={t.color.identity.primary} />}
     >
@@ -404,6 +484,81 @@ export function DocumentsScreen() {
           )
         })
       )}
+
+      {/* A RECEITA DIRECIONA PARA O QUE ELA PRESCREVE.
+          Tudo já vem marcado e com destino escolhido: o caminho comum é aceitar, e um toque conclui. O destino
+          é um botão — classificação que se mostra e se corrige é diferente de classificação que decide calada.
+          Nada é criado sem esta confirmação: o toque é o que separa transcrever de prescrever. */}
+      {proposta && (
+        <View style={[s.card, { backgroundColor: t.color.surface.base, borderColor: t.color.identity.primary, gap: 12 }]}>
+          <Text spec={text(t, { role: 'bodyStrong' })}>{convitePrescricao(proposta.itens.length)}</Text>
+          <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{AVISO_PRESCRICAO}</Text>
+
+          {proposta.itens.map((item, i) => (
+            <View key={`${item.texto}-${i}`} style={[s.itemPrescrito, { borderColor: t.color.border.default }]}>
+              <Pressable
+                onPress={() => setProposta(p => p && {
+                  ...p, marcados: p.marcados.map((m, j) => (j === i ? !m : m)),
+                })}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: proposta.marcados[i] }}
+                accessibilityLabel={item.texto}
+                hitSlop={8}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
+              >
+                <Text spec={text(t, { role: 'body' })} style={{ color: t.color.identity.primary }}>
+                  {proposta.marcados[i] ? '☑' : '☐'}
+                </Text>
+                <Text spec={text(t, { role: 'body' })} style={{ flex: 1 }}>{item.texto}</Text>
+              </Pressable>
+
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {DESTINOS_PRESCRITOS.map(d => {
+                  const ativo = item.destino === d.id
+                  return (
+                    <Pressable
+                      key={d.id}
+                      onPress={() => setProposta(p => p && {
+                        ...p,
+                        itens: p.itens.map((it, j) => (j === i ? { ...it, destino: d.id as DestinoPrescrito } : it)),
+                      })}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: ativo }}
+                      style={[
+                        s.destino,
+                        { borderColor: ativo ? t.color.identity.primary : t.color.border.default },
+                        ativo && { backgroundColor: t.color.identity.soft },
+                      ]}
+                    >
+                      <Text
+                        spec={text(t, { role: 'caption' })}
+                        style={{ color: ativo ? t.color.identity.primary : t.color.text.muted }}
+                      >
+                        {d.label}
+                      </Text>
+                    </Pressable>
+                  )
+                })}
+              </View>
+
+              {/* O PALPITE SE ANUNCIA. Um destino que a plataforma não reconheceu vem avisado — palpite
+                  silencioso é o que corrói a confiança. */}
+              {!item.reconhecido && (
+                <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Confira o destino deste item.</Text>
+              )}
+            </View>
+          ))}
+
+          <Button
+            label={`Registrar ${proposta.marcados.filter(Boolean).length === 1 ? 'o item' : `os ${proposta.marcados.filter(Boolean).length}`}`}
+            onPress={registrarPrescritos}
+            loading={saving}
+            disabled={proposta.marcados.every(m => !m)}
+          />
+          {/* "Agora não" não perde nada: os itens continuam guardados na receita, e o cartão dela os mostra. */}
+          <Button label="Agora não" onPress={() => setProposta(null)} variant="ghost" />
+        </View>
+      )}
     </ScrollView>
   )
 }
@@ -411,4 +566,6 @@ export function DocumentsScreen() {
 const s = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   card: { borderWidth: 1, borderRadius: 16, padding: 16, gap: 12 },
+  itemPrescrito: { borderWidth: 1, borderRadius: 12, padding: 12, gap: 10 },
+  destino: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
 })
