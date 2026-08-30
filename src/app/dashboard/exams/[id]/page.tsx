@@ -11,7 +11,7 @@ import {
   ShieldCheck, Receipt,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { parseDateOnly, formatDateLongBR as formatDate } from '@/lib/agenda'
+import { formatDateLongBR as formatDate } from '@/lib/agenda'
 import { fmtNum, formatRef } from '@/lib/ui/number'
 import { useModalA11y } from '@/lib/ui/useModalA11y'
 import { useUser } from '@/context/UserContext'
@@ -23,7 +23,7 @@ import { deriveExamIdentity } from '@/lib/exams/identification'
 import { isOrderDocumentType } from '@/lib/exams/classification'
 import { careStageFor } from '@/lib/exams/careFlow'
 import { examProcessingState, isExamReady, isExamProcessing, isExamFailed, deriveOrderDisplayTitle, supportedNowAcceptAttr } from '@sintera/core'
-import { eventServicesFor, isFinancial, type HealthEvent } from '@/lib/agenda'
+import { eventServicesFor, type HealthEvent } from '@/lib/agenda'
 import { expenseDocLabel, EXPENSE_DOC_TYPES } from '@/lib/finance/expense'
 import { parseAmountToCents, centsToAmount } from '@/lib/agenda/money'
 import { clinicalResultsToUcda, type ClinicalResultRow, type UcdaRepresentation } from '@/lib/capture/ucda'
@@ -338,8 +338,10 @@ export default function ExamDetailPage() {
   const fulfillsOrderId = (exam as unknown as { fulfills_order_id?: string | null })?.fulfills_order_id ?? null
   const linkedOrder = useMemo(() => orders.find(o => o.id === fulfillsOrderId) ?? null, [orders, fulfillsOrderId])
 
-  // BETA-3: despesa vinculada ao exame (valor pago + documento fiscal) — fecha o loop no próprio exame.
-  const linkedExpense = useMemo(() => linkedEvents.find(isFinancial) ?? null, [linkedEvents])
+  // A busca pela despesa como EVENTO vinculado saiu daqui: era do modelo anterior, e o comentário logo abaixo
+  // registra a mudança — o financeiro passou a ser ATRIBUTO do próprio exame. Ela continuava sendo calculada a
+  // cada render e ninguém a lia. Código morto ao lado do código vivo é o que faz a próxima pessoa hesitar
+  // sobre qual dos dois é a regra.
 
   // FB-008 (refina FIN-001): o financeiro é ATRIBUTO do próprio exame, não um Evento separado.
   const examExpense = useMemo(() => {

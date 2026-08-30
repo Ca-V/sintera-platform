@@ -1,6 +1,6 @@
 // Tela placeholder do Incremento 2 (Navegação). Confirma que o destino de navegação é alcançável e
 // projeta os rótulos da taxonomia SSOT que este destino conterá. SEM conteúdo de domínio (critério 10).
-import { View, StyleSheet, ScrollView } from 'react-native'
+import { StyleSheet, ScrollView } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { heading, text } from '@sintera/design-system'
 import { Text } from '../primitives'

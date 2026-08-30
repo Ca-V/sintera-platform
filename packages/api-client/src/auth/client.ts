@@ -103,7 +103,7 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       listExamExpenses: (signal) => listExamExpenses(supabase, signal),
       getAllBiomarkers: (signal) => getAllBiomarkers(supabase, signal),
       getLastExtractionLog: (examId, signal) => getLastExtractionLog(supabase, examId, signal),
-      uploadExam: (file, signal) => uploadExam(supabase, file), // storage não usa abortSignal; signal ignorado
+      uploadExam: (file, _signal) => uploadExam(supabase, file), // o storage não aceita abortSignal; o sublinhado marca o descarte como INTENCIONAL, para o aviso de símbolo não usado continuar significando defeito
       createExam: (input, signal) => createExam(supabase, input, signal),
       analyzeExam: (id) => analyzeExam(supabase, config.webBaseUrl, id), // ponte transitória (ADR-020)
       deleteExam: (id, signal) => deleteExam(supabase, id, signal), // requer RLS DELETE (isolado — MOBILE-030)

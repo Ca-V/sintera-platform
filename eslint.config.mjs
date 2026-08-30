@@ -19,6 +19,25 @@ const eslintConfig = defineConfig([
     files: ["**/metro.config.js", "**/babel.config.js"],
     rules: { "@typescript-eslint/no-require-imports": "off" },
   },
+  // O SUBLINHADO MARCA O DESCARTE INTENCIONAL — e sem esta configuração ele era só decoração.
+  //
+  // Por que isto importa mais do que parece: em 30/08, "símbolo declarado e nunca referenciado" revelou
+  // quatro defeitos reais numa tarde — um "Editar" escrito e nunca ligado, dois campos que a pessoa
+  // preenchia e a plataforma descartava, e uma capacidade que existia só numa das pontas. O aviso é um bom
+  // detector de defeito.
+  //
+  // Um detector só serve enquanto todo alerta significa alguma coisa. Misturado com descartes legítimos —
+  // um parâmetro que a assinatura exige e o corpo não usa — ele vira ruído, e ruído a gente aprende a
+  // ignorar. Aqui o sublinhado passa a dizer "é de propósito", e o que sobra volta a merecer investigação.
+  {
+    rules: {
+      "@typescript-eslint/no-unused-vars": ["warn", {
+        argsIgnorePattern: "^_",
+        varsIgnorePattern: "^_",
+        caughtErrorsIgnorePattern: "^_",
+      }],
+    },
+  },
 ]);
 
 export default eslintConfig;

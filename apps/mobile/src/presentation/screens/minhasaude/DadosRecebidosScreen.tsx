@@ -21,7 +21,7 @@ import {
   suspectedDuplicateObservations, observationForMatch,
   type ActivityForMatch, type ObservationForMatch, type DuplicateSuspicion, type DuplicateChoice,
 } from '@sintera/core'
-import { Text, Button, Disclaimer } from '../../primitives'
+import { Text, Disclaimer } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 
