@@ -21,6 +21,7 @@
 // tomado. O destino aparece visível e trocável — classificação que se mostra e se corrige é diferente de
 // classificação que decide calada.
 import type { MedKind } from '../medications'
+import type { ResourceType } from '../resources'
 import type { DocumentTargetDomain } from './patientDocuments'
 
 /**
@@ -39,8 +40,14 @@ export interface DestinoDaPlataforma {
   readonly dominio: DocumentTargetDomain
   /** `kind` quando o registro vai para Medicamentos; `null` quando vai para Recursos. */
   readonly medKind: MedKind | null
-  /** `resource_type` quando o registro vai para Recursos; `null` quando vai para Medicamentos. */
-  readonly resourceType: string | null
+  /**
+   * `resource_type` quando o registro vai para Recursos; `null` quando vai para Medicamentos.
+   *
+   * TIPADO de propósito. Estava como `string` e a tela precisava de um `as never` para passar — que é
+   * exatamente o buraco por onde um valor inválido entraria e o banco recusaria, com a falha engolida pelo
+   * caminho de erro. Tipado, o compilador recusa antes.
+   */
+  readonly resourceType: ResourceType | null
   /** Como a pessoa lê o destino na tela. */
   readonly label: string
 }

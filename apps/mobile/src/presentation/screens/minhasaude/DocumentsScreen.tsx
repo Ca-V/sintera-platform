@@ -271,6 +271,7 @@ export function DocumentsScreen() {
     if (!proposta) return
     setSaving(true)
     let feitos = 0
+    const falharam: string[] = []
     try {
       for (let i = 0; i < proposta.itens.length; i++) {
         if (!proposta.marcados[i]) continue
@@ -278,25 +279,39 @@ export function DocumentsScreen() {
         const destino = destinoDaPlataforma(item.destino)
         const prescritor = professionalDaReceita.current || null
 
-        const alvoId = destino.medKind
-          ? (await apiClient.medications.saveMedication({
+        const r = destino.medKind
+          ? await apiClient.medications.saveMedication({
               name: item.texto, kind: destino.medKind, status: 'em_uso',
               prescriber_name: prescritor, prescription_url: fileDaReceita.current,
-            })).data?.id
-          : (await apiClient.resources.saveResource({
-              name: item.texto, resource_type: destino.resourceType as never, status: 'em_uso',
+            })
+          : await apiClient.resources.saveResource({
+              name: item.texto, resource_type: destino.resourceType!, status: 'em_uso',
               prescriber: prescritor, file_url: fileDaReceita.current,
-            })).data?.id
+            })
 
-        if (!alvoId) continue
+        // NÃO ENGOLIR A FALHA. Este `continue` já esteve mudo, e um item que some sem explicação é
+        // indistinguível de item que a pessoa desmarcou — ela contaria três na tela e acharia dois na lista,
+        // sem saber onde perguntar. É o mesmo defeito que matou três domínios da busca em silêncio.
+        if (r.error || !r.data?.id) { falharam.push(item.texto); continue }
+
         // O VÍNCULO é o que fecha o ciclo: abrir o medicamento mostra a receita, abrir a receita mostra o que
-        // ela gerou. Falhar aqui deixa o registro criado e sem o vínculo — incompleto, nunca errado.
-        await apiClient.documents.linkDocumentToTarget(proposta.documentoId, 'receita', destino.dominio, alvoId)
+        // ela gerou. Falhar aqui deixa o registro criado e sem o vínculo — incompleto, nunca errado, e por
+        // isso não conta como falha do item.
+        await apiClient.documents.linkDocumentToTarget(proposta.documentoId, 'receita', destino.dominio, r.data.id)
         feitos++
       }
       setProposta(null)
-      if (feitos > 0) {
-        Alert.alert('Registrado', feitos === 1 ? '1 item foi registrado a partir da receita.' : `${feitos} itens foram registrados a partir da receita.`)
+
+      const parte = feitos === 1 ? '1 item foi registrado' : `${feitos} itens foram registrados`
+      if (falharam.length > 0) {
+        Alert.alert(
+          'Nem tudo foi registrado',
+          `${feitos > 0 ? `${parte} a partir da receita.\n\n` : ''}` +
+          `Não foi possível registrar: ${falharam.join(', ')}. ` +
+          'Você pode adicioná-los à mão, e a receita continua guardada com os itens transcritos.',
+        )
+      } else if (feitos > 0) {
+        Alert.alert('Registrado', `${parte} a partir da receita.`)
       }
       load(true)
     } finally { setSaving(false) }
