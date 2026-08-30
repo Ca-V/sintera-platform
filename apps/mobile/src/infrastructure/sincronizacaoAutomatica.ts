@@ -21,6 +21,7 @@ import * as TaskManager from 'expo-task-manager'
 // acrescentar uma segunda biblioteca de armazenamento para guardar uma data seria criar onde já dá para
 // acomodar (princípio de Estabilidade Arquitetural).
 import { secureStoreAdapter } from './secureStoreAdapter'
+import { janelaImportacaoSegundoPlano } from '@sintera/core'
 import { sincronizarHealthConnect } from './healthConnect'
 
 /** Nome da tarefa no sistema. Estável: mudá-lo faria o Android tratar como tarefa nova e perder o agendamento. */
@@ -39,14 +40,9 @@ const CHAVE_ULTIMA_SYNC = 'sintera.ultima-sync-automatica'
  */
 const INTERVALO_MINUTOS = 60
 
-/**
- * Janela da primeira sincronização automática, em dias.
- *
- * Sem marca d'água anterior, busca-se o último mês. Puxar o histórico inteiro na primeira vez poderia significar
- * anos de dado numa tarefa de segundo plano com tempo limitado — o sistema mataria a tarefa no meio, e o
- * resultado seria pior que nada. O histórico completo é assunto da sincronização manual, com a tela aberta.
- */
-const JANELA_INICIAL_DIAS = 30
+// A janela da primeira sincronização em segundo plano mudou de casa: vive em `janelaImportacaoSegundoPlano`,
+// no núcleo, ao lado da regra geral que ela excepciona. Ficava aqui, numa constante isolada, e a exceção era
+// invisível para quem lesse só a regra.
 
 async function ultimaSync(): Promise<Date | null> {
   try {
@@ -74,11 +70,10 @@ TaskManager.defineTask(TAREFA_SYNC, async () => {
   try {
     const agora = new Date()
     const anterior = await ultimaSync()
-    // Uma hora de folga sobre a última marca: se um dado chegou ao aparelho com atraso, ele ainda entra. A
-    // gravação é idempotente (chave pessoa+fonte+métrica+instante), então repetir não duplica.
-    const desde = anterior
-      ? new Date(anterior.getTime() - 60 * 60 * 1000)
-      : new Date(agora.getTime() - JANELA_INICIAL_DIAS * 24 * 60 * 60 * 1000)
+    // O ALCANCE vem do núcleo, inclusive a exceção do segundo plano: a folga de uma hora sobre a última marca
+    // (dado que chega ao aparelho com atraso ainda entra) e a janela curta da primeira vez moram lá, ao lado da
+    // regra que excepcionam. A gravação é idempotente, então a sobreposição não duplica.
+    const { desde } = janelaImportacaoSegundoPlano(agora, anterior)
 
     const r = await sincronizarHealthConnect(desde, agora)
 

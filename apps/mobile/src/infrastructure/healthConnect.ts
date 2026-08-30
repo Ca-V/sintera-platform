@@ -14,6 +14,7 @@ import { Platform } from 'react-native'
 import {
   HC_RECORD_TYPES, normalizeHealthConnect, healthConnectSamples, healthConnectActivities,
   type HcRecordType, type DiagnosticoSync, type LeituraPorTipo,
+  DIAS_PRIMEIRA_SINCRONIZACAO, DIAS_SEM_HISTORICO,
 } from '@sintera/core'
 import { apiClient } from './apiClient'
 
@@ -46,18 +47,8 @@ export interface ResultadoSync {
   diagnostico: DiagnosticoSync | null
 }
 
-/**
- * Quantos dias para trás pedir.
- *
- * SEM a permissão de histórico, o Health Connect só entrega os 30 dias anteriores à PRIMEIRA autorização — e
- * um pedido que ultrapasse esse limite **não devolve menos: devolve erro**. Pedir exatamente 30 dias é pedir na
- * borda, onde qualquer diferença de relógio derruba a leitura INTEIRA. Foi o que aconteceu na homologação de
- * 30/08: todos os tipos falharam, o `catch` transformou cada falha em lista vazia, e a tela disse "nada novo".
- *
- * 28 dias fica confortavelmente dentro do permitido. Com a permissão de histórico, o limite deixa de existir.
- */
-const DIAS_SEM_HISTORICO = 28
-const DIAS_COM_HISTORICO = 365
+// O ALCANCE DA BUSCA é regra de domínio e vive no núcleo (`janelaImportacao`), porque vale igual para toda
+// fonte — Health Connect, Apple Saúde e o que vier. Aqui só se APLICA o teto que a permissão concedida impõe.
 
 /**
  * API mínima do Android em que a biblioteca do Health Connect roda. Abaixo disto NEM TENTAMOS importá-la.
@@ -188,7 +179,7 @@ export async function sincronizarHealthConnect(desde: Date, ate: Date): Promise<
 
     // A JANELA É APARADA AQUI, num lugar só. Quem chama pede o que quiser; o teto do Health Connect é imposto
     // neste ponto, porque ultrapassá-lo não devolve menos dado — faz a leitura inteira ser recusada.
-    const dias = historico ? DIAS_COM_HISTORICO : DIAS_SEM_HISTORICO
+    const dias = historico ? DIAS_PRIMEIRA_SINCRONIZACAO : DIAS_SEM_HISTORICO
     const piso = new Date(ate.getTime() - dias * 24 * 60 * 60 * 1000)
     const inicio = desde.getTime() < piso.getTime() ? piso : desde
     const diasJanela = Math.max(1, Math.round((ate.getTime() - inicio.getTime()) / 86_400_000))

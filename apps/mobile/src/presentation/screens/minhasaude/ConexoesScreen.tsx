@@ -17,7 +17,7 @@ import type { ConnectorState } from '@sintera/core'
 import {
   connectorStatusLabel, connectorStatusTone, connectorPrimaryAction, isConnectorActive, SCREEN_COPY,
   HEALTH_CONNECT_DOIS_PASSOS, HEALTH_CONNECT_COMO_TESTAR, fontesDisponiveis, fontesIndisponiveis,
-  resumoSincronizacao, formatInstantBR,
+  resumoSincronizacao, formatInstantBR, janelaImportacao,
 } from '@sintera/core'
 import { useNavigation } from '@react-navigation/native'
 import { Text, Button, Disclaimer } from '../../primitives'
@@ -82,10 +82,11 @@ export function ConexoesScreen() {
     // O guia abre AGORA, junto com a autorização — é quando a pessoa está configurando.
     setGuiaAberto(true); setHcVazio(false)
     try {
-      // Pede uma janela larga: o teto real (30 dias sem a permissão de histórico) é aparado dentro do conector,
-      // que é quem sabe o que foi autorizado. O bruto é idempotente — repetir a janela não duplica.
-      const ate = new Date()
-      const desde = new Date(ate.getTime() - 365 * 24 * 60 * 60 * 1000)
+      // O ALCANCE vem do núcleo. Ao tocar aqui a pessoa está CONFIGURANDO, e é o momento de varrer o histórico
+      // inteiro que a fonte permitir — começar do zero no dia da instalação jogaria fora o passado que a fonte
+      // já guarda, que é exatamente o que a plataforma existe para preservar. O teto real é aparado dentro do
+      // conector, que é quem sabe o que foi autorizado, e a ingestão é idempotente: repetir não duplica.
+      const { desde, ate } = janelaImportacao(new Date())
       const r = await sincronizarHealthConnect(desde, ate)
       if (!alive.current) return
       setHcDisponivel(r.disponivel)

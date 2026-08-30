@@ -128,6 +128,7 @@ export * from './domain/connectors/healthConnect'
 export * from './domain/connectors/healthConnectGuide'
 export * from './domain/connectors/healthConnectDiagnostico'
 export * from './domain/connectors/reingestao'
+export * from './domain/connectors/janelaImportacao'
 
 // Telefone com código de país (E.164) — fonte única Web↔Mobile.
 export * from './domain/profile/phone'
