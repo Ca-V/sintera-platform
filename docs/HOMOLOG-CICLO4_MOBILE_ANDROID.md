@@ -27,21 +27,19 @@ O critério não é a ordem em que os achados chegaram, e sim **o que a pessoa p
 | # | Achado | Causa | Estado |
 |---|---|---|---|
 | 1 | Busca não achava "dermatologista", que está em 3 eventos | Nomes de coluna errados (`type`/`date` em vez de `event_type`/`event_date`), e mais 2 iguais. O Supabase não lança nesse caso — devolve vazio, e eu ignorava o campo de erro. **3 de 12 domínios estavam mortos em silêncio** | ✅ Corrigido |
-| 2 | "Editar" numa receita já salva não fazia nada | Funcionava; era **invisível**. O formulário abre acima da lista e abria fora da tela | ✅ Corrigido |
-| 3 | No atestado apareceu a **clínica** em vez do médico | O prompt tratava profissional e instituição como equivalentes | ✅ Corrigido — receita/atestado/relatório → profissional; laudo/pedido → laboratório |
+| 2 | "Editar" numa receita já salva não fazia nada | Funcionava; era **invisível**. O formulário abre acima da lista e abria fora da tela | ✅ Corrigido **na segunda tentativa** — a primeira declarou a `ref` e nunca a usou (ver o fim deste documento) |
+| 3 | No atestado apareceu a **clínica** em vez do médico | O classificador tinha de **escolher** entre profissional e instituição, e escolheu a instituição | ✅ Corrigido — passou a transcrever os **dois**, e quem decide qual vem na frente é a plataforma |
 | 4 | Health Connect dizia "não disponível" e parava aí | Mensagem certa e inútil: não dizia como resolver | ✅ Corrigido — motivo + botão que abre a Play Store no app certo |
 | 5 | Não achou o app: procurou "Health Connect", encontrou "Saúde Connect" | O Google traduz o nome; nós só dizíamos o nome em inglês | ✅ Corrigido — os dois nomes na tela |
 | 6 | Autorizar não trazia nada, sem explicação | Autorizar a SINTERA é metade; a outra é dentro do Strava/Whoop/Oura | ✅ Corrigido — passo a passo por app, com destaque quando volta vazio |
 | 7 | Tocar na aba abria a última tela, não o menu da categoria | Comportamento padrão do navegador preserva o histórico da aba | ✅ Corrigido |
 | 8 | **Nome do medicamento não aparece na receita** — "o item mais importante" | A leitura transcrevia só emissor e data, e não havia onde guardar | ✅ Corrigido — o item vem PRIMEIRO no cartão |
-| 9 | Adicionou a mesma receita da semana passada e nada avisou | `document_sha256` existe e **nunca é preenchida**; não havia detector para documentos | 🟡 Detector pronto; **falta coluna e fiação** |
-| 10 | Médico e clínica deveriam ser campos separados; em exame vale o **solicitante**, não quem laudou | O modelo tem um campo só (`issuer`) | 🟡 Analisado; **falta coluna** |
+| 9 | Adicionou a mesma receita da semana passada e nada avisou | O detector existia no núcleo desde 28/08 e **não tinha um único consumidor** | ✅ Corrigido — avisa antes de gravar, com três saídas |
+| 10 | Médico e clínica deveriam ser campos separados | Um campo só (`issuer`) obrigava a **escolher**, e quem escolhia era o classificador | ✅ Corrigido — dois campos; a leitura transcreve os dois e a plataforma decide qual vem na frente |
 | 11 | Receitas não geram entrada em Medicamentos | Não existia o fluxo | ✅ Corrigido — proposta de um toque, com destino trocável |
 | 12 | Recuo de "Minha Saúde" é sutil demais | — | 🔵 Cosmético, adiado por escolha dela |
 | 13 | "Apertei autorizar e sincronizar, nada aconteceu" — **relatado duas vezes**, a segunda já com a permissão do Samsung Health concedida | A resposta era desenhada **no fim do cartão**, depois dos seis cartões de fonte que o passo a passo acrescentou — fora da tela. E um dos caminhos (aparelho não responde) limpava a mensagem e voltava, sem dizer nada | ✅ Corrigido — resultado colado no botão, e nenhum caminho termina em silêncio |
-
 | 14 | "Nada novo" continuou depois de tudo autorizado | O cofre está **genuinamente vazio** — a fundadora abriu o Health Connect e TODAS as categorias diziam "Não há dados". Causa: o **Samsung Health exige Android 10** e o aparelho tem 9, então nunca escreveria; e o Strava só envia atividades gravadas DEPOIS de ligado | ✅ Explicado — Samsung Health sai do guia abaixo do Android 10, e a tela passa a dizer como testar sem esperar |
-
 | 15 | **A ingestão funcionou** — 12 atividades do Strava entraram pelo Health Connect até a nuvem. Todas como "Outra atividade", sem distância, sem calorias e sem data na tela | `exerciseType` chega como **número** (79 = caminhada) e a leitura só aceitava texto → degradava para 'outro'. Distância e energia são **registros separados**, e nós líamos um campo dentro da sessão que nunca existiu | ✅ Corrigido |
 | 16 | O que já entrou errado continuaria errado | A ingestão pula o que já existe. Correção de leitura não alcançava o passado | ✅ Corrigido — completa o vazio e corrige o palpite, nunca sobrescreve |
 
