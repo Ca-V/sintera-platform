@@ -33,10 +33,10 @@ O critério não é a ordem em que os achados chegaram, e sim **o que a pessoa p
 | 5 | Não achou o app: procurou "Health Connect", encontrou "Saúde Connect" | O Google traduz o nome; nós só dizíamos o nome em inglês | ✅ Corrigido — os dois nomes na tela |
 | 6 | Autorizar não trazia nada, sem explicação | Autorizar a SINTERA é metade; a outra é dentro do Strava/Whoop/Oura | ✅ Corrigido — passo a passo por app, com destaque quando volta vazio |
 | 7 | Tocar na aba abria a última tela, não o menu da categoria | Comportamento padrão do navegador preserva o histórico da aba | ✅ Corrigido |
-| 8 | **Nome do medicamento não aparece na receita** — "o item mais importante" | A leitura transcrevia só emissor e data | 🟡 Transcrição pronta; **falta coluna no banco** |
+| 8 | **Nome do medicamento não aparece na receita** — "o item mais importante" | A leitura transcrevia só emissor e data, e não havia onde guardar | ✅ Corrigido — o item vem PRIMEIRO no cartão |
 | 9 | Adicionou a mesma receita da semana passada e nada avisou | `document_sha256` existe e **nunca é preenchida**; não havia detector para documentos | 🟡 Detector pronto; **falta coluna e fiação** |
 | 10 | Médico e clínica deveriam ser campos separados; em exame vale o **solicitante**, não quem laudou | O modelo tem um campo só (`issuer`) | 🟡 Analisado; **falta coluna** |
-| 11 | Receitas não geram entrada em Medicamentos | Não existe o fluxo | 🔴 Decisão de produto pendente |
+| 11 | Receitas não geram entrada em Medicamentos | Não existia o fluxo | ✅ Corrigido — proposta de um toque, com destino trocável |
 | 12 | Recuo de "Minha Saúde" é sutil demais | — | 🔵 Cosmético, adiado por escolha dela |
 | 13 | "Apertei autorizar e sincronizar, nada aconteceu" — **relatado duas vezes**, a segunda já com a permissão do Samsung Health concedida | A resposta era desenhada **no fim do cartão**, depois dos seis cartões de fonte que o passo a passo acrescentou — fora da tela. E um dos caminhos (aparelho não responde) limpava a mensagem e voltava, sem dizer nada | ✅ Corrigido — resultado colado no botão, e nenhum caminho termina em silêncio |
 
@@ -98,33 +98,55 @@ não existir.
 
 ---
 
-## Bloqueado por autorização
+## Migração 151 — aplicada em 30/08, autorizada explicitamente
 
-Os itens **8, 9 e 10** dependem de **uma migração aditiva** em `patient_documents`:
+Os itens **8, 9, 10 e 11** dependiam de três colunas em `patient_documents`. A fundadora autorizou com a
+condição de ser **só aditiva**: "não desestruture ou altere outras coisas da plataforma".
 
 | Coluna | Para quê |
 |---|---|
 | `prescribed_items` | Os medicamentos transcritos da receita |
 | `professional_name` | O médico, separado da instituição |
-| `document_sha256` | **Já existe** — falta passar a preenchê-la |
+| `institution_name` | A clínica, separada do médico |
+| `document_sha256` | **Já existia** — o detector agora também compara por emissor e data |
 
-Aditiva: acrescenta colunas vazias, não altera nem apaga nada. Os documentos existentes seguem intactos.
+Conferido antes e depois: os 4 documentos existentes ficaram idênticos. `issuer` permanece com o conteúdo que
+tinha — dividi-lo automaticamente entre profissional e instituição exigiria adivinhar qual dos dois está
+escrito ali, e adivinhar sobre um registro de saúde já existente é o que a plataforma não faz.
 
 ---
 
-## Decisão de produto pendente (item 11)
+## Decisão de produto (item 11) — resolvida em 30/08
 
-Ao ler uma receita e encontrar "Losartana 50mg", a plataforma deveria **oferecer** criar o medicamento em
-Medicamentos, já vinculado à receita?
+**Autorizada pela fundadora**, com o refinamento dela: a receita direciona para o que ela prescreve —
+medicamento, suplemento ou dispositivo.
 
-A favor: fecha o ciclo que a fundadora desenhou, e a informação já foi transcrita — não registrar obriga a
-digitar de novo o que está na tela.
+**Como ficou:** ao salvar uma receita com itens transcritos, aparece a lista **já marcada** e com o destino
+**já escolhido**. Confirmar é um toque; o destino é um botão que se troca. "Agora não" não perde nada.
 
-Contra: cria registro clínico a partir de leitura automática. Mesmo perguntando antes, é mais intrusivo do que
-tudo o que a plataforma faz hoje.
+**Por que não salva sozinha:** criar registro clínico a partir de leitura automática é a plataforma
+*produzindo* conteúdo, não organizando (ADR-000 · RDC 657). E um erro de transcrição ("50mg" lido como "5mg")
+viraria um registro que ninguém conferiu e que vai num relatório ao médico. O toque custa um segundo e é o que
+separa transcrever de prescrever.
 
-**Recomendação:** oferecer, nunca criar sozinho — e mostrar o texto transcrito ao lado, para a pessoa conferir
-contra o papel antes de aceitar.
+**Onde cada coisa vai:** medicamento e suplemento para `medications` (por `kind`); dispositivo e produto para
+**Recursos de Saúde**, que é o domínio deles. Forçá-los para Medicamentos criaria um dispositivo que não
+aparece onde a pessoa vai procurá-lo.
+
+---
+
+## Dois consertos que nunca foram ligados
+
+Achados em 30/08, ao passar o linter nos arquivos alterados:
+
+- **O scroll do "Editar" no Mobile.** A `ref` e o comentário explicando a correção existiam; as duas linhas que
+  fazem o trabalho, não. **Eu declarei o achado 2 corrigido e ele não estava.**
+- **"Editar" não existia na Web.** `Pencil`, `updateDocument` e `editando` estavam todos importados e nenhum
+  era usado.
+
+São o mesmo padrão do `padrao_especificado_nunca_ligado`, cometido aqui dentro. A pergunta que os pegaria é a
+mesma de sempre: **quem CHAMA isto?** Um símbolo declarado e nunca referenciado é a assinatura do defeito — e o
+linter a reconhece de graça.
 
 ---
 
