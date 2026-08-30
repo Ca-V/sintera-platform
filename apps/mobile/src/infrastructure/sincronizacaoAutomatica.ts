@@ -12,17 +12,25 @@
 // Quem decide o momento exato é o Android, não nós: ele agrupa tarefas de vários apps para poupar bateria. O
 // intervalo abaixo é um PEDIDO, não uma promessa — pode rodar mais espaçado se o aparelho estiver economizando.
 //
-// LIMITE HONESTO: isto é Android. No iPhone o equivalente será o Apple Saúde, com mecanismo próprio (HIP-014).
-// E exige a permissão `READ_HEALTH_DATA_IN_BACKGROUND`, declarada no app.json — sem ela o sistema entrega
-// vazio com o app fechado, em silêncio.
+// VALE NOS DOIS: Health Connect no Android, Apple Saúde no iPhone. A única diferença é o cofre; janela, marca
+// d'água e tratamento de falha são os mesmos, porque a regra é a mesma.
+//
+// No Android exige `READ_HEALTH_DATA_IN_BACKGROUND`, declarada no app.json — sem ela o sistema entrega vazio
+// com o app fechado, em silêncio.
+//
+// LIMITE HONESTO DO IPHONE: o iOS não garante execução periódica. Ele decide quando acordar a tarefa, com base
+// em uso e bateria, e pode não acordá-la por dias num aparelho pouco usado. Por isso a sincronização manual em
+// Conexões continua sendo o caminho confiável ali — e a automática é ganho, não promessa.
 import * as BackgroundTask from 'expo-background-task'
 import * as TaskManager from 'expo-task-manager'
 // A marca d'água usa o MESMO armazenamento da sessão, já no projeto. Não é segredo — é um horário —, mas
 // acrescentar uma segunda biblioteca de armazenamento para guardar uma data seria criar onde já dá para
 // acomodar (princípio de Estabilidade Arquitetural).
 import { secureStoreAdapter } from './secureStoreAdapter'
+import { Platform } from 'react-native'
 import { janelaImportacaoSegundoPlano } from '@sintera/core'
 import { sincronizarHealthConnect } from './healthConnect'
+import { sincronizarAppleHealth } from './appleHealth'
 
 /** Nome da tarefa no sistema. Estável: mudá-lo faria o Android tratar como tarefa nova e perder o agendamento. */
 export const TAREFA_SYNC = 'sintera-sync-health-connect'
@@ -75,7 +83,16 @@ TaskManager.defineTask(TAREFA_SYNC, async () => {
     // regra que excepcionam. A gravação é idempotente, então a sobreposição não duplica.
     const { desde } = janelaImportacaoSegundoPlano(agora, anterior)
 
-    const r = await sincronizarHealthConnect(desde, agora)
+    // O COFRE DEPENDE DA PLATAFORMA, e é a única diferença: Health Connect no Android, Apple Saúde no iPhone.
+    // Tudo o mais — janela, marca d'água, tratamento de falha — é idêntico, porque a regra é a mesma.
+    //
+    // Chamar o do Android no iPhone devolveria "indisponível" para sempre, e a marca d'água nunca avançaria:
+    // a sincronização automática existiria no código e não existiria no aparelho. É o defeito de "especificado
+    // e nunca ligado", que aqui seria invisível justamente por ser em segundo plano — ninguém veria nada
+    // acontecer, porque nada aparece quando funciona.
+    const r = Platform.OS === 'ios'
+      ? await sincronizarAppleHealth(desde, agora)
+      : await sincronizarHealthConnect(desde, agora)
 
     // Só avança a marca quando houve autorização e leitura de fato. Sem isso, um período sem permissão faria a
     // janela avançar sobre dias que nunca foram lidos — e eles nunca mais seriam buscados.

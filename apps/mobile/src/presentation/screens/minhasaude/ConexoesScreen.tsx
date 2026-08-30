@@ -17,7 +17,7 @@ import type { ConnectorState } from '@sintera/core'
 import {
   connectorStatusLabel, connectorStatusTone, connectorPrimaryAction, isConnectorActive, SCREEN_COPY,
   HEALTH_CONNECT_DOIS_PASSOS, HEALTH_CONNECT_COMO_TESTAR, fontesDisponiveis, fontesIndisponiveis,
-  resumoSincronizacao, formatInstantBR, janelaImportacao,
+  resumoSincronizacao, formatInstantBR, janelaImportacao, caminhoDaFonte,
 } from '@sintera/core'
 import { useNavigation } from '@react-navigation/native'
 import { Text, Button, Disclaimer } from '../../primitives'
@@ -343,7 +343,7 @@ export function ConexoesScreen() {
               {fontesDisponiveis(apiAndroid).map(f => (
                 <View key={f.source} style={[s.guia, { borderColor: t.color.border.default }]}>
                   <Text spec={text(t, { role: 'body' })}>{f.nome}</Text>
-                  <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{f.caminho}</Text>
+                  <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{caminhoDaFonte(f, ehIphone ? 'ios' : 'android')}</Text>
                   <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Traz: {f.traz}</Text>
                 </View>
               ))}

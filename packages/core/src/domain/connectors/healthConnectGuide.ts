@@ -41,6 +41,33 @@ export interface FonteGuia {
    * Health Connect existir.
    */
   readonly apiMinima?: number
+  /**
+   * O caminho no iPhone, quando ele foi CONFERIDO num aparelho real.
+   *
+   * Ausente na maioria de propósito. Os caminhos do Android acima foram verificados um a um — o do Strava
+   * custou uma rodada de homologação, porque ele chama o Health Connect de "Conexão Saúde" e o esconde em
+   * "Outros serviços". Escrever de cabeça os equivalentes no iOS repetiria o erro que esta lista existe para
+   * evitar: mandar a pessoa procurar um menu que talvez não esteja onde eu disse.
+   *
+   * Sem este campo, a orientação cai na frase genérica de `CAMINHO_IOS_GENERICO`, que é verdadeira para todos.
+   * Cada caminho conferido no iPhone entra aqui, com data, como os do Android entraram.
+   */
+  readonly caminhoIos?: string
+}
+
+/**
+ * A instrução para quem está no iPhone e não tem caminho conferido para aquela fonte.
+ *
+ * Vaga de propósito, e honesta por isso: descreve o que a pessoa procura, sem afirmar onde está. Melhor um
+ * "procure por" verdadeiro do que um caminho exato inventado.
+ */
+export const CAMINHO_IOS_GENERICO =
+  'No aplicativo da fonte, procure Configurações → integrações (ou "aplicativos e serviços") e ligue o Apple Saúde.'
+
+/** O caminho a mostrar, conforme o aparelho de quem lê. */
+export function caminhoDaFonte(f: FonteGuia, plataforma: 'android' | 'ios'): string {
+  if (plataforma === 'android') return f.caminho
+  return f.caminhoIos ?? CAMINHO_IOS_GENERICO
 }
 
 /** Nome amigável da versão do Android, para a frase soar como a pessoa fala. */
@@ -72,6 +99,9 @@ export const HEALTH_CONNECT_FONTES: readonly FonteGuia[] = [
     // "Conexão Saúde", e esconde em "Outros serviços". São TRÊS nomes para a mesma coisa — Health Connect
     // (Google), Saúde Connect (Play Store) e Conexão Saúde (Strava). Quem procura pelo nome que a gente diz
     // não acha, e conclui que o aparelho não tem.
+    //
+    // O equivalente no iPhone NÃO está aqui porque não foi conferido num aparelho — e foi justamente este
+    // caminho que provou o custo de escrever de cabeça. Entra quando for verificado.
     caminho: 'Strava → Você → Configurações → Outros serviços → Conexão Saúde → marcar',
     traz: 'corridas, pedaladas e caminhadas com tempo, distância e calorias',
   },
@@ -164,18 +194,27 @@ export const HEALTH_CONNECT_COMO_TESTAR =
  * tem iPhone procurar por semanas um botão que não está lá.
  */
 export const CONEXOES_ONDE_FUNCIONA = {
-  titulo: 'A sincronização automática acontece no seu celular Android',
+  titulo: 'A sincronização automática acontece no seu celular',
   comoFunciona:
-    'No aplicativo da SINTERA, em Android, a leitura chega sozinha pelo Health Connect — o cofre de saúde do ' +
-    'próprio aparelho. Você autoriza uma vez, e os aplicativos que você já usa passam a alimentar a plataforma ' +
-    'sem que você precise pedir nada.',
+    'No aplicativo da SINTERA, a leitura chega sozinha pelo cofre de saúde do próprio aparelho — o Health ' +
+    'Connect no Android, o Apple Saúde no iPhone. Você autoriza uma vez, e os aplicativos que você já usa ' +
+    'passam a alimentar a plataforma sem que você precise pedir nada.',
   ondeFazer:
     'Os passos abaixo são feitos no celular, nos aplicativos das fontes. Estão aqui para você ler com calma; ' +
     'a execução é no aparelho.',
+  /**
+   * A diferença REAL entre os dois cofres, dita sem promessa e sem esconder.
+   *
+   * Os caminhos existem nos dois. O que muda é onde a pessoa liga cada fonte — e, no iPhone, o fato de a Apple
+   * não informar ao aplicativo o que foi recusado. Calar sobre isso faria a pessoa culpar a plataforma por um
+   * dado que ela mesma não autorizou.
+   */
   iphone:
-    'No iPhone esse caminho ainda não existe: o Health Connect é do Android, e a integração equivalente da ' +
-    'Apple não foi implementada. Enquanto isso, no iPhone os dados entram pelos serviços conectados abaixo, ' +
-    'quando a fonte oferecer conexão própria.',
+    'No iPhone o cofre é o Apple Saúde, e o caminho é o mesmo: você autoriza uma vez no aplicativo da SINTERA. ' +
+    'Os passos por fonte abaixo valem para os dois — no iPhone, cada aplicativo é ligado ao Apple Saúde em vez ' +
+    'do Health Connect. Uma diferença importante: por privacidade, o iPhone não informa aos aplicativos o que ' +
+    'foi recusado, então a SINTERA não consegue dizer o que ficou de fora. Se algo não aparecer, confira em ' +
+    'Ajustes → Saúde → Acesso a dados e dispositivos → SINTERA.',
 } as const
 
 export const HEALTH_CONNECT_DOIS_PASSOS =

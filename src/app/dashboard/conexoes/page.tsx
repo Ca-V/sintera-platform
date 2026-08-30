@@ -20,6 +20,7 @@ import Disclaimer from '@/components/ui/Disclaimer'
 // O rótulo vem do núcleo: as duas pontas chamam a tela pelo MESMO nome, e um rótulo escrito duas vezes divergiria.
 import {
   SCREEN_COPY, CONEXOES_ONDE_FUNCIONA, HEALTH_CONNECT_DOIS_PASSOS, fontesDisponiveis, fontesIndisponiveis,
+  caminhoDaFonte,
 } from '@sintera/core'
 import { useNovelty } from '@/lib/novelty/useNovelty'
 
@@ -169,7 +170,7 @@ function ConexoesInner() {
             Nenhum serviço com conexão própria está disponível por aqui no momento.
           </p>
           <p className="font-body text-sm text-mauve mt-2">
-            Isso não impede a entrada automática de dados: ela acontece pelo aplicativo, no Android — como está
+            Isso não impede a entrada automática de dados: ela acontece pelo aplicativo, no celular — como está
             explicado abaixo.
           </p>
         </Card>
@@ -241,10 +242,18 @@ function ConexoesInner() {
         <p className="font-body text-xs text-mauve">{CONEXOES_ONDE_FUNCIONA.ondeFazer}</p>
 
         <div className="space-y-2 pt-1">
+          {/* No navegador não se sabe qual celular a pessoa tem, então mostram-se OS DOIS caminhos, rotulados.
+              Escolher um seria adivinhar, e adivinhar aqui manda metade das pessoas procurar um menu que não
+              existe no aparelho delas — que é exatamente o que esta lista existe para evitar. */}
           {fontesDisponiveis().map(f => (
             <div key={f.source} className="rounded-xl border border-border px-4 py-3">
               <p className="font-body text-sm text-onyx">{f.nome}</p>
-              <p className="font-body text-xs text-mauve">{f.caminho}</p>
+              <p className="font-body text-xs text-mauve">
+                <span className="text-mauve/70">Android: </span>{caminhoDaFonte(f, 'android')}
+              </p>
+              <p className="font-body text-xs text-mauve">
+                <span className="text-mauve/70">iPhone: </span>{caminhoDaFonte(f, 'ios')}
+              </p>
               <p className="font-body text-xs text-mauve/70">Traz: {f.traz}</p>
             </div>
           ))}
