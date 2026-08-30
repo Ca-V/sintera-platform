@@ -243,6 +243,16 @@ export function ConexoesScreen() {
               loadingLabel={C.hcSyncing}
               variant="secondary"
             />
+            {/* O RESULTADO FICA COLADO NO BOTÃO. Ele já esteve no fim do cartão, depois de seis cartões de
+                fonte — e a fundadora tocou duas vezes relatando "nada aconteceu". Acontecia: a resposta era
+                desenhada fora da tela. O resultado de uma ação pertence ao lado dela; longe, equivale a não
+                existir. Mesmo erro que tornou o "Editar" da receita invisível. */}
+            {hcResumo && (
+              <View style={[s.resultado, { borderColor: t.color.identity.primary }]}>
+                <Text spec={text(t, { role: 'body' })} style={{ color: t.color.identity.primary }}>{hcResumo}</Text>
+              </View>
+            )}
+
             <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{C.hcRevokeHint}</Text>
 
             {/* O SEGUNDO PASSO — o que faltava dizer. Autorizar a SINTERA é metade; a outra metade acontece
@@ -295,9 +305,6 @@ export function ConexoesScreen() {
           </>
         )}
 
-        {hcResumo && (
-          <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>{hcResumo}</Text>
-        )}
       </View>
 
       {phase === 'error' ? (
@@ -369,6 +376,7 @@ export function ConexoesScreen() {
 
 const s = StyleSheet.create({
   guia: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, gap: 2 },
+  resultado: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12 },
   guiaDestaque: { borderWidth: 1, borderRadius: 14, padding: 14 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   card: { borderWidth: 1, borderRadius: 16, padding: 16 },
