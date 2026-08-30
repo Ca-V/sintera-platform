@@ -117,7 +117,11 @@ export const SCREEN_COPY = {
     // Health Connect (HIP-014 §5) — natureza DIFERENTE das demais conexões, e o texto precisa dizer isso:
     // não há login nem senha, a autorização vive na permissão do sistema e a pessoa a revoga por lá.
     // Nomear as fontes que chegam por dentro dele é o que torna a proposta compreensível.
-    hcTitle:        'Health Connect',
+    // O NOME DUPLO é obrigatório, e custou uma hora da fundadora na homologação de 30/08. O Google traduz o
+    // nome do app conforme o idioma do aparelho: em português ele se chama "Saúde Connect". Ela procurou
+    // "Health Connect" na Play Store, encontrou "Saúde Connect" e concluiu que era outro aplicativo — o
+    // que é a conclusão razoável. Dizer os dois nomes é o que evita a próxima pessoa parar no mesmo lugar.
+    hcTitle:        'Health Connect (Saúde Connect)',
     hcSubtitle:     'Traz o que já está no seu aparelho — inclusive de Strava, Oura, Garmin e outros apps que gravam nele.',
     hcAction:       'Autorizar e sincronizar',
     hcSyncing:      'Sincronizando…',
@@ -125,8 +129,8 @@ export const SCREEN_COPY = {
     // A versão anterior CONSTATAVA e parava aí. Na homologação de 30/08 a tela disse "não disponível" e a
     // fundadora ficou sem saber o que fazer — a mensagem estava certa e inútil. Dizer o que falta sem dizer como
     // resolver é a forma educada de deixar a pessoa sozinha.
-    hcUnavailableHint: 'No Android 14 ou mais novo ele já vem instalado. Em versões anteriores, é um aplicativo gratuito da Google que precisa ser instalado pela Play Store — depois disso, volte aqui.',
-    hcInstallAction: 'Instalar o Health Connect',
+    hcUnavailableHint: 'No Android 14 ou mais novo ele já vem instalado. Em versões anteriores, é um aplicativo gratuito da Google que precisa ser instalado pela Play Store. Na Play Store em português ele aparece como "Saúde Connect", da Google LLC — é o mesmo aplicativo. Depois de instalar, volte aqui.',
+    hcInstallAction: 'Instalar (aparece como "Saúde Connect")',
     hcAppleHint:    'Em iPhone a integração será com o Apple Saúde, e não depende de instalar nada.',
     hcDenied:       'Nenhuma permissão concedida. Você decide o que compartilhar, e pode mudar depois.',
     hcRevokeHint:   'A autorização fica no Health Connect, não aqui — é lá que você revoga quando quiser.',
