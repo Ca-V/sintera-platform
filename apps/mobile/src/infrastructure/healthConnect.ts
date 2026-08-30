@@ -13,7 +13,7 @@
 import { Platform } from 'react-native'
 import {
   HC_RECORD_TYPES, normalizeHealthConnect, healthConnectSamples, healthConnectActivities,
-  type HcRecordType,
+  type HcRecordType, type DiagnosticoSync, type LeituraPorTipo,
 } from '@sintera/core'
 import { apiClient } from './apiClient'
 
@@ -37,7 +37,27 @@ export interface ResultadoSync {
   visiveis: number
   sessoes: number
   erro?: string
+  /**
+   * TUDO o que a sincronização viu, para a tela poder explicar um resultado zero.
+   *
+   * Sem isto, "nada novo" era a resposta para cinco situações diferentes — ver `healthConnectDiagnostico`.
+   * `null` só quando nem chegou a haver leitura (aparelho sem Health Connect).
+   */
+  diagnostico: DiagnosticoSync | null
 }
+
+/**
+ * Quantos dias para trás pedir.
+ *
+ * SEM a permissão de histórico, o Health Connect só entrega os 30 dias anteriores à PRIMEIRA autorização — e
+ * um pedido que ultrapasse esse limite **não devolve menos: devolve erro**. Pedir exatamente 30 dias é pedir na
+ * borda, onde qualquer diferença de relógio derruba a leitura INTEIRA. Foi o que aconteceu na homologação de
+ * 30/08: todos os tipos falharam, o `catch` transformou cada falha em lista vazia, e a tela disse "nada novo".
+ *
+ * 28 dias fica confortavelmente dentro do permitido. Com a permissão de histórico, o limite deixa de existir.
+ */
+const DIAS_SEM_HISTORICO = 28
+const DIAS_COM_HISTORICO = 365
 
 /**
  * API mínima do Android em que a biblioteca do Health Connect roda. Abaixo disto NEM TENTAMOS importá-la.
@@ -70,29 +90,71 @@ async function lib(): Promise<typeof import('react-native-health-connect') | nul
   }
 }
 
-/** O aparelho tem Health Connect instalado e disponível? */
-export async function healthConnectDisponivel(): Promise<boolean> {
+/**
+ * Em que estado o Health Connect está NESTE aparelho.
+ *
+ * `initialize()` devolvia só `true`/`false`, e falso significava duas coisas muito diferentes: não existe, ou
+ * existe e está velho demais. São problemas com soluções opostas — instalar × atualizar — e a pessoa recebia a
+ * mesma frase para os dois. `getSdkStatus` distingue, e sempre distinguiu; nós é que não perguntávamos.
+ */
+export type StatusHc = 'indisponivel' | 'atualizar' | 'ok'
+
+export async function statusHealthConnect(): Promise<StatusHc> {
   try {
     const hc = await lib()
-    return hc ? await hc.initialize() : false
+    if (!hc) return 'indisponivel'
+    const s = await hc.getSdkStatus()
+    if (s === hc.SdkAvailabilityStatus.SDK_AVAILABLE) {
+      return (await hc.initialize()) ? 'ok' : 'indisponivel'
+    }
+    if (s === hc.SdkAvailabilityStatus.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED) return 'atualizar'
+    return 'indisponivel'
   } catch {
-    return false
+    return 'indisponivel'
   }
 }
 
-/** Pede as permissões de leitura. Devolve quais foram concedidas — a pessoa pode conceder só algumas. */
-export async function pedirPermissoes(): Promise<HcRecordType[]> {
+/** O aparelho tem Health Connect instalado e disponível? Mantido para quem só precisa do sim/não. */
+export async function healthConnectDisponivel(): Promise<boolean> {
+  return (await statusHealthConnect()) === 'ok'
+}
+
+/**
+ * A permissão que libera dados anteriores aos 30 dias. Não é um tipo de registro — é um privilégio à parte, e a
+ * biblioteca a pede pelo mesmo canal, com este nome reservado.
+ */
+const PERMISSAO_HISTORICO = 'ReadHealthDataHistory'
+
+export interface Permissoes {
+  /** Tipos de registro autorizados. */
+  tipos: HcRecordType[]
+  /** O histórico completo foi liberado? Sem ele, a janela tem teto de 30 dias. */
+  historico: boolean
+}
+
+/**
+ * Pede as permissões de leitura. Devolve quais foram concedidas — a pessoa pode conceder só algumas.
+ *
+ * Pede TAMBÉM o histórico, e no mesmo diálogo: uma plataforma de continuidade que só enxerga 30 dias não é uma
+ * plataforma de continuidade. Recusar o histórico é escolha legítima e não impede nada — apenas limita a janela,
+ * e a tela passa a dizer isso em vez de deixar a pessoa achar que faltou dado.
+ */
+export async function pedirPermissoes(): Promise<Permissoes> {
+  const nada: Permissoes = { tipos: [], historico: false }
   try {
     const hc = await lib()
-    if (!hc || !(await hc.initialize())) return []
-    const concedidas = await hc.requestPermission(
-      HC_RECORD_TYPES.map((recordType) => ({ accessType: 'read' as const, recordType })),
-    )
-    return (concedidas ?? [])
-      .map((p: { recordType?: string }) => p.recordType)
-      .filter((t): t is HcRecordType => !!t && (HC_RECORD_TYPES as readonly string[]).includes(t))
+    if (!hc || !(await hc.initialize())) return nada
+    const concedidas = await hc.requestPermission([
+      ...HC_RECORD_TYPES.map((recordType) => ({ accessType: 'read' as const, recordType })),
+      { accessType: 'read' as const, recordType: PERMISSAO_HISTORICO as 'ReadHealthDataHistory' },
+    ])
+    const nomes = (concedidas ?? []).map((p: { recordType?: string }) => p.recordType)
+    return {
+      tipos: nomes.filter((t): t is HcRecordType => !!t && (HC_RECORD_TYPES as readonly string[]).includes(t)),
+      historico: nomes.includes(PERMISSAO_HISTORICO),
+    }
   } catch {
-    return []
+    return nada
   }
 }
 
@@ -104,31 +166,58 @@ export async function pedirPermissoes(): Promise<HcRecordType[]> {
  * foi concedido e ignora-se o resto, em silêncio.
  */
 export async function sincronizarHealthConnect(desde: Date, ate: Date): Promise<ResultadoSync> {
-  const vazio: ResultadoSync = { disponivel: false, autorizado: false, leituras: 0, visiveis: 0, sessoes: 0 }
+  const vazio: ResultadoSync = {
+    disponivel: false, autorizado: false, leituras: 0, visiveis: 0, sessoes: 0, diagnostico: null,
+  }
   try {
     const hc = await lib()
     if (!hc || !(await hc.initialize())) return vazio
 
-    const concedidas = await pedirPermissoes()
-    if (concedidas.length === 0) return { ...vazio, disponivel: true }
+    const { tipos: concedidas, historico } = await pedirPermissoes()
+    const negadas = HC_RECORD_TYPES.filter((t) => !concedidas.includes(t))
+    if (concedidas.length === 0) {
+      return {
+        ...vazio,
+        disponivel: true,
+        diagnostico: {
+          concedidas: [], negadas, historico, diasJanela: 0, porTipo: [],
+          amostras: 0, sessoes: 0, gravadas: 0, visiveis: 0, gravadasSessoes: 0,
+        },
+      }
+    }
+
+    // A JANELA É APARADA AQUI, num lugar só. Quem chama pede o que quiser; o teto do Health Connect é imposto
+    // neste ponto, porque ultrapassá-lo não devolve menos dado — faz a leitura inteira ser recusada.
+    const dias = historico ? DIAS_COM_HISTORICO : DIAS_SEM_HISTORICO
+    const piso = new Date(ate.getTime() - dias * 24 * 60 * 60 * 1000)
+    const inicio = desde.getTime() < piso.getTime() ? piso : desde
+    const diasJanela = Math.max(1, Math.round((ate.getTime() - inicio.getTime()) / 86_400_000))
 
     const janela = {
       timeRangeFilter: {
         operator: 'between' as const,
-        startTime: desde.toISOString(),
+        startTime: inicio.toISOString(),
         endTime: ate.toISOString(),
       },
     }
 
     const porTipo: Partial<Record<HcRecordType, unknown[]>> = {}
+    const leiturasPorTipo: LeituraPorTipo[] = []
     for (const tipo of concedidas) {
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const r = (await hc.readRecords(tipo as any, janela)) as { records?: unknown[] }
-        porTipo[tipo] = r?.records ?? []
-      } catch {
+        const registros = r?.records ?? []
+        porTipo[tipo] = registros
+        leiturasPorTipo.push({ tipo, registros: registros.length })
+      } catch (e) {
         // Um tipo que falha não derruba os outros — o Modelo Aberto vale também para a ingestão.
+        //
+        // MAS A FALHA É REGISTRADA. Antes ela virava lista vazia, e um erro convertido em zero deixa de ser
+        // erro: some do relatório e reaparece como "nada novo". Foi assim que a recusa por janela ficou
+        // invisível durante toda a homologação de 30/08.
         porTipo[tipo] = []
+        leiturasPorTipo.push({ tipo, registros: 0, erro: e instanceof Error ? e.message : 'falha na leitura' })
       }
     }
 
@@ -147,6 +236,15 @@ export async function sincronizarHealthConnect(desde: Date, ate: Date): Promise<
       visiveis: leituras.result.projectedCount,
       sessoes: atividades.result.gravadas,
       erro: leituras.error?.message ?? atividades.error?.message,
+      diagnostico: {
+        concedidas, negadas, historico, diasJanela,
+        porTipo: leiturasPorTipo,
+        amostras: amostras.length,
+        sessoes: sessoes.length,
+        gravadas: leituras.result.rawCount,
+        visiveis: leituras.result.projectedCount,
+        gravadasSessoes: atividades.result.gravadas,
+      },
     }
   } catch (e) {
     return { ...vazio, erro: e instanceof Error ? e.message : 'Falha ao sincronizar' }

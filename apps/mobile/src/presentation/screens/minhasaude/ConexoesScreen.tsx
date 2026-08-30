@@ -16,13 +16,13 @@ import { text } from '@sintera/design-system'
 import type { ConnectorState } from '@sintera/core'
 import {
   connectorStatusLabel, connectorStatusTone, connectorPrimaryAction, isConnectorActive, SCREEN_COPY,
-  HEALTH_CONNECT_DOIS_PASSOS, fontesDisponiveis, fontesIndisponiveis,
+  HEALTH_CONNECT_DOIS_PASSOS, fontesDisponiveis, fontesIndisponiveis, resumoSincronizacao,
 } from '@sintera/core'
 import { useNavigation } from '@react-navigation/native'
 import { Text, Button, Disclaimer } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
-import { healthConnectDisponivel, sincronizarHealthConnect } from '../../../infrastructure/healthConnect'
+import { healthConnectDisponivel, statusHealthConnect, sincronizarHealthConnect } from '../../../infrastructure/healthConnect'
 
 const C = SCREEN_COPY.conexoes
 
@@ -49,6 +49,8 @@ export function ConexoesScreen() {
   const [hcDisponivel, setHcDisponivel] = useState<boolean | null>(null)
   const [hcOcupado, setHcOcupado] = useState(false)
   const [hcResumo, setHcResumo] = useState<string | null>(null)
+  /** As linhas de fato que sustentam a frase: permissões, janela e o que veio de cada tipo. */
+  const [hcFatos, setHcFatos] = useState<string[]>([])
   /**
    * O passo a passo já foi mostrado nesta visita?
    *
@@ -66,13 +68,14 @@ export function ConexoesScreen() {
   }, [])
 
   const sincronizarHc = useCallback(async () => {
-    setHcOcupado(true); setHcResumo(null)
+    setHcOcupado(true); setHcResumo(null); setHcFatos([])
     // O guia abre AGORA, junto com a autorização — é quando a pessoa está configurando.
     setGuiaAberto(true); setHcVazio(false)
     try {
-      // Primeira sincronização: 30 dias para trás. O bruto é idempotente, então repetir a janela não duplica.
+      // Pede uma janela larga: o teto real (30 dias sem a permissão de histórico) é aparado dentro do conector,
+      // que é quem sabe o que foi autorizado. O bruto é idempotente — repetir a janela não duplica.
       const ate = new Date()
-      const desde = new Date(ate.getTime() - 30 * 24 * 60 * 60 * 1000)
+      const desde = new Date(ate.getTime() - 365 * 24 * 60 * 60 * 1000)
       const r = await sincronizarHealthConnect(desde, ate)
       if (!alive.current) return
       setHcDisponivel(r.disponivel)
@@ -81,40 +84,25 @@ export function ConexoesScreen() {
       // nada ocorreu"). Este ramo LIMPAVA a mensagem e voltava — a pessoa tocava no botão e a tela não mudava.
       // "Nada aconteceu" é o pior resultado possível: não dá para distinguir de app quebrado, e não sugere ação.
       if (!r.disponivel) {
-        setHcResumo('O Health Connect não respondeu. Abra o aplicativo "Saúde Connect" uma vez e volte aqui.')
+        // "Não disponível" tinha duas causas com soluções OPOSTAS — não existe × existe e está velho — e a
+        // mesma frase para as duas. Perguntar qual é custa uma chamada.
+        const st = await statusHealthConnect()
+        setHcResumo(st === 'atualizar'
+          ? 'O Health Connect deste aparelho está desatualizado. Atualize o aplicativo "Saúde Connect" na Play Store e volte aqui.'
+          : 'O Health Connect não respondeu. Abra o aplicativo "Saúde Connect" uma vez e volte aqui.')
         setHcVazio(true)
         return
       }
-      if (!r.autorizado) { setHcResumo(C.hcDenied); setHcVazio(true); return }
-      if (r.erro) { setHcResumo(r.erro); return }
-      // Diz o que ENTROU, não "sucesso" — número verificável é mais confiável que adjetivo.
-      //
-      // E diz separadamente o que APARECE e o que só foi GUARDADO. Nem tudo que o Health Connect entrega tem
-      // tela hoje: passos chegam e ficam no bruto, porque não são métrica corporal nem sessão de atividade.
-      // Somar os dois num número só e mandar "veja em Monitoramento" faria a plataforma prometer o que não
-      // mostra — a mesma armadilha que custou dois ciclos de homologação.
-      const partes = [
-        r.visiveis > 0 ? `${r.visiveis} ${r.visiveis === 1 ? 'leitura' : 'leituras'}` : null,
-        r.sessoes > 0 ? `${r.sessoes} ${r.sessoes === 1 ? 'atividade' : 'atividades'}` : null,
-      ].filter(Boolean)
+      if (r.erro) { setHcResumo(r.erro); setHcFatos(r.diagnostico ? [...resumoSincronizacao(r.diagnostico).fatos] : []); return }
 
-      const guardadas = Math.max(0, r.leituras - r.visiveis)
-      const sobra = guardadas > 0
-        ? ` (+${guardadas} ${guardadas === 1 ? 'guardada, ainda sem tela própria' : 'guardadas, ainda sem tela própria'})`
-        : ''
-
-      // AUTORIZOU E NÃO VEIO NADA — quase sempre porque nenhum app está escrevendo no Health Connect. É este o
-      // instante em que a pessoa conclui "não funciona", e em que a orientação deixa de ser útil e passa a ser
-      // essencial. Marcar aqui é o que faz o passo a passo mudar de tom lá embaixo.
-      setHcVazio(partes.length === 0 && guardadas === 0)
-
-      setHcResumo(
-        partes.length
-          ? `${partes.join(' · ')} — veja em Monitoramento${sobra}`
-          : guardadas > 0
-            ? `${guardadas} ${guardadas === 1 ? 'leitura guardada' : 'leituras guardadas'}, ainda sem tela própria`
-            : 'Nada novo desde a última vez',
-      )
+      // A FRASE E OS FATOS VÊM DO CORE. Antes eram montados aqui, e "Nada novo desde a última vez" respondia
+      // por cinco situações diferentes — inclusive por leituras que o Health Connect tinha RECUSADO. O núcleo
+      // distingue, é testável sem Android, e a Web dirá exatamente o mesmo (BASE ÚNICA).
+      if (!r.diagnostico) { setHcResumo(C.hcDenied); setHcVazio(true); return }
+      const resumo = resumoSincronizacao(r.diagnostico)
+      setHcResumo(resumo.frase)
+      setHcFatos([...resumo.fatos])
+      setHcVazio(resumo.vazio)
     } catch (e) {
       // Última rede: exceção não pode virar silêncio. Depois de tocar no botão, ALGO tem de mudar na tela.
       if (alive.current) {
@@ -250,6 +238,19 @@ export function ConexoesScreen() {
             {hcResumo && (
               <View style={[s.resultado, { borderColor: t.color.identity.primary }]}>
                 <Text spec={text(t, { role: 'body' })} style={{ color: t.color.identity.primary }}>{hcResumo}</Text>
+                {/* OS FATOS FICAM À VISTA, não escondidos atrás de "detalhes". Um resultado zero sem os números
+                    que o produziram é indistinguível de defeito — foi o que fez a fundadora concluir três vezes
+                    que a sincronização não funcionava. Aqui ela vê quantas permissões saíram, que janela foi
+                    pedida, e o que cada tipo devolveu ou recusou. */}
+                {hcFatos.length > 0 && (
+                  <View style={s.fatos}>
+                    {hcFatos.map((f) => (
+                      <Text key={f} spec={text(t, { role: 'caption' })} style={{ color: t.color.text.muted }}>
+                        {`• ${f}`}
+                      </Text>
+                    ))}
+                  </View>
+                )}
               </View>
             )}
 
@@ -376,7 +377,8 @@ export function ConexoesScreen() {
 
 const s = StyleSheet.create({
   guia: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, gap: 2 },
-  resultado: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12 },
+  resultado: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, gap: 8 },
+  fatos: { gap: 2 },
   guiaDestaque: { borderWidth: 1, borderRadius: 14, padding: 14 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   card: { borderWidth: 1, borderRadius: 16, padding: 16 },

@@ -126,6 +126,7 @@ export * from './domain/connectors/mock'
 export * from './domain/connectors/healthConnect'
 // O que a pessoa precisa fazer EM CADA APP para o dado chegar. Autorizar a SINTERA é só metade.
 export * from './domain/connectors/healthConnectGuide'
+export * from './domain/connectors/healthConnectDiagnostico'
 
 // Telefone com código de país (E.164) — fonte única Web↔Mobile.
 export * from './domain/profile/phone'
