@@ -66,14 +66,14 @@ describe('quando NÃO avisar — duvidar sem base é pior que ficar calado', () 
 describe('autopreenchimento — propõe, não decide', () => {
   it('preenche emissor e data quando os campos estão vazios', () => {
     const r = autofillFrom(leitura({ issuer: 'Dra. Ana', docDate: '2026-07-08' }), { issuer: '', docDate: '' })
-    expect(r).toEqual({ issuer: 'Dra. Ana', docDate: '2026-07-08' })
+    expect(r).toEqual({ issuer: 'Dra. Ana', docDate: '2026-07-08', professional: '', institution: '', items: [] })
   })
   it('NÃO sobrescreve o que a pessoa digitou — ela é a autoridade sobre o próprio registro', () => {
     const r = autofillFrom(
       leitura({ issuer: 'Dra. Ana', docDate: '2026-07-08' }),
       { issuer: 'Dr. Carlos', docDate: '2026-01-02' },
     )
-    expect(r).toEqual({ issuer: 'Dr. Carlos', docDate: '2026-01-02' })
+    expect(r).toEqual({ issuer: 'Dr. Carlos', docDate: '2026-01-02', professional: '', institution: '', items: [] })
   })
   it('campo com só espaços conta como vazio', () => {
     const r = autofillFrom(leitura({ issuer: 'Dra. Ana' }), { issuer: '   ', docDate: '' })
@@ -81,9 +81,9 @@ describe('autopreenchimento — propõe, não decide', () => {
   })
   it('leitura sem emissor nem data deixa os campos como estavam', () => {
     const r = autofillFrom(leitura({}), { issuer: '', docDate: '' })
-    expect(r).toEqual({ issuer: '', docDate: '' })
+    expect(r).toEqual({ issuer: '', docDate: '', professional: '', institution: '', items: [] })
   })
   it('sem leitura, nada muda', () => {
-    expect(autofillFrom(null, { issuer: 'X', docDate: '2026-01-01' })).toEqual({ issuer: 'X', docDate: '2026-01-01' })
+    expect(autofillFrom(null, { issuer: 'X', docDate: '2026-01-01' })).toEqual({ issuer: 'X', docDate: '2026-01-01', professional: '', institution: '', items: [] })
   })
 })

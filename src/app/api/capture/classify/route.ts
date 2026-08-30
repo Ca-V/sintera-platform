@@ -16,7 +16,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { authenticateRequest } from '@/lib/supabase/apiAuth'
 import { classifyCheap, corroboratedConfidence } from '@/lib/capture/classifier/classify'
 import type { ClassificationResult, DocumentKind } from '@/lib/capture/types'
-import { transcribedIssuer, transcribedDate, transcribedItems } from '@sintera/core'
+import { transcribedIssuer, transcribedDate, transcribedItems, documentPrimaryName } from '@sintera/core'
 
 const MODEL = 'claude-haiku-4-5-20251001'
 
@@ -38,16 +38,14 @@ Receita de MEDICAMENTO é "clinical_document" (é uma prescrição, um documento
 
 subtype: UMA palavra curta quando evidente ("hemograma", "receita", "atestado", "relatorio", "encaminhamento", "pedido", "bula", "omica", "ultrassom"); null se incerto.
 confidence: "high" (o documento deixa claro), "medium" (provável), "low" (incerto).
-issuer: quem EMITIU, exatamente como está escrito; null se não estiver legível. NÃO deduza a partir de logotipo ou papel timbrado ambíguo.
-  Quando o documento traz PROFISSIONAL e INSTITUIÇÃO, escolha conforme a natureza do papel:
-  - receita, atestado, relatório, encaminhamento e receita de óculos → o nome do PROFISSIONAL que assinou. É ele quem responde pelo que está prescrito, e é por ele que a pessoa procura o documento depois.
-  - laudo de exame e pedido de exame → o LABORATÓRIO ou clínica. Ali a instituição é quem emite, e o profissional solicitante é outro campo.
-  Havendo só um dos dois, use o que houver.
+professional: o nome do PROFISSIONAL que assinou, exatamente como está escrito, sem o "Dr."/"Dra."; null se não houver ou não estiver legível.
+institution: o nome da INSTITUIÇÃO emissora — clínica, laboratório, hospital —, exatamente como está escrito; null se não houver ou não estiver legível.
+  TRANSCREVA OS DOIS quando os dois estiverem no papel. NÃO escolha entre eles, NÃO repita o mesmo nome nos dois campos, e NÃO deduza a partir de logotipo ou papel timbrado ambíguo. Qual dos dois é o principal quem decide é a plataforma, não você.
 docDate: data do documento no formato AAAA-MM-DD, apenas se estiver escrita de forma inequívoca; null caso contrário. NÃO estime, NÃO use a data de hoje, NÃO converta datas parciais.
 items: para RECEITA, a lista do que foi prescrito — cada item exatamente como escrito, com a concentração quando ela estiver no papel (ex.: "Losartana 50mg", "Vitamina D 2000UI"). Array vazio quando não for receita ou quando nada estiver legível.
   TRANSCREVA, não interprete: copie o que está escrito. NÃO corrija nome de medicamento, NÃO complete dose ausente, NÃO acrescente o que não está no papel, NÃO inclua posologia nem orientação de uso.
 
-Responda APENAS com JSON: {"kind":"","subtype":null,"confidence":"","issuer":null,"docDate":null,"items":[]}.`
+Responda APENAS com JSON: {"kind":"","subtype":null,"confidence":"","professional":null,"institution":null,"docDate":null,"items":[]}.`
 
 const VALID_KINDS: DocumentKind[] = [
   'exam', 'medical_order', 'clinical_document', 'medication_label', 'eyeglass_prescription', 'other',
@@ -111,10 +109,20 @@ export async function POST(req: NextRequest) {
   if (!m) return NextResponse.json(cheap)
   try {
     const obj = JSON.parse(m[0]) as {
-      kind?: unknown; subtype?: unknown; confidence?: unknown; issuer?: unknown; docDate?: unknown; items?: unknown
+      kind?: unknown; subtype?: unknown; confidence?: unknown
+      professional?: unknown; institution?: unknown; docDate?: unknown; items?: unknown
     }
     // Fatos documentais transcritos — valem mesmo quando o kind degrada para o sinal barato.
-    const issuer = transcribedIssuer(obj.issuer)
+    //
+    // PROFISSIONAL E INSTITUIÇÃO SÃO PEDIDOS SEPARADAMENTE, e a leitura transcreve os dois. Antes o modelo é
+    // que escolhia qual deles era "o emissor" — e num atestado escolheu a clínica, deixando o médico de fora
+    // para sempre. Transcrever é dele; DECIDIR qual aparece na frente é da plataforma, onde a regra é uma só,
+    // determinística e testável (`documentPrimaryName`).
+    const professional = transcribedIssuer(obj.professional)
+    const institution = transcribedIssuer(obj.institution)
+    // `issuer` continua sendo devolvido para não quebrar quem já o consome, e recebe o mesmo primeiro nome que
+    // a regra do núcleo escolheria.
+    const issuer = documentPrimaryName({ professional_name: professional, institution_name: institution }) ?? undefined
     const docDate = transcribedDate(obj.docDate)
     // O que a receita prescreve — transcrito, nunca interpretado. Vale mesmo quando o tipo degrada.
     const items = transcribedItems(obj.items)
@@ -124,8 +132,8 @@ export async function POST(req: NextRequest) {
     // 'other'/'unknown' por conteúdo é fraco; prefere o sinal barato se ele apontou algo.
     if (kind === 'unknown' || kind === 'other') {
       // Mesmo sem acertar o TIPO, emissor e data lidos continuam sendo fatos úteis para o formulário.
-      if (cheap.kind !== 'unknown') return NextResponse.json({ ...cheap, issuer, docDate, items })
-      return NextResponse.json({ kind, confidence: 'low', reason: 'conteúdo do documento', source: 'content_ai', issuer, docDate, items } as ClassificationResult)
+      if (cheap.kind !== 'unknown') return NextResponse.json({ ...cheap, issuer, professional, institution, docDate, items })
+      return NextResponse.json({ kind, confidence: 'low', reason: 'conteúdo do documento', source: 'content_ai', issuer, professional, institution, docDate, items } as ClassificationResult)
     }
     const visionConfidence: ClassificationResult['confidence'] =
       obj.confidence === 'high' || obj.confidence === 'medium' || obj.confidence === 'low' ? obj.confidence : 'medium'
@@ -134,7 +142,7 @@ export async function POST(req: NextRequest) {
     // saúde (só pré-seleciona em 'high'); o usuário escolhe ou cancela. Não rejeita, não altera medium/low.
     const confidence = corroboratedConfidence(kind, visionConfidence, cheap.kind)
     const subtype = typeof obj.subtype === 'string' && obj.subtype.trim() ? obj.subtype.trim().slice(0, 40) : undefined
-    const result: ClassificationResult = { kind, confidence, reason: 'conteúdo do documento', subtype, source: 'content_ai', issuer, docDate, items }
+    const result: ClassificationResult = { kind, confidence, reason: 'conteúdo do documento', subtype, source: 'content_ai', issuer, professional, institution, docDate, items }
     return NextResponse.json(result)
   } catch {
     return NextResponse.json(cheap)

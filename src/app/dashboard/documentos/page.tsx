@@ -36,7 +36,7 @@ import { row } from '@/lib/supabase/db'
 import { targetNamesByDocument, updateDocument } from '@sintera/api-client'
 import {
   DOCUMENT_SUBTYPES, documentSubtypeLabel, buildPatientDocumentInsert, documentSubtitle, isReadyToSave,
-  autofillFrom, deriveDocumentTitle,
+  autofillFrom, deriveDocumentTitle, documentPrimaryName, parsePrescribedItems, prescribedItemsToText,
   type PatientDocumentSubtype, type AttachedFile, uuid, DOCUMENT_FILTER_ALL,} from '@sintera/core'
 
 // Ícone por subtipo. Mapa EXAUSTIVO por construção: o TypeScript exige uma entrada para cada
@@ -55,12 +55,15 @@ type DocRow = {
   subtype: PatientDocumentSubtype
   file_url: string
   issuer: string | null
+  professional_name: string | null
+  institution_name: string | null
+  prescribed_items: string[] | null
   doc_date: string | null
   notes: string | null
   created_at: string
 }
 
-const COLUMNS = 'id, subtype, file_url, issuer, doc_date, notes, created_at'
+const COLUMNS = 'id, subtype, file_url, issuer, professional_name, institution_name, prescribed_items, doc_date, notes, created_at'
 
 export default function DocumentosPage() {
   const { user } = useUser()
@@ -81,6 +84,12 @@ export default function DocumentosPage() {
   // ANEXO-001: o formulário guarda um CONJUNTO de páginas, não um arquivo.
   const [files, setFiles] = useState<AttachedFile[]>([])
   const [issuer, setIssuer] = useState('')
+  // Profissional e instituição SEPARADOS (migração 151) — ver DocumentsScreen no Mobile: mesma decisão,
+  // mesma redação, mesmas regras. A Web não pode divergir daqui.
+  const [professional, setProfessional] = useState('')
+  const [institution, setInstitution] = useState('')
+  /** O que a receita prescreve — um item por linha. "O item mais importante" (fundadora, 30/08). */
+  const [itensTexto, setItensTexto] = useState('')
   const [docDate, setDocDate] = useState('')
   const [notes, setNotes] = useState('')
   /** document_id → nomes dos registros vinculados. Vazio é normal: nem todo documento tem vínculo. */
@@ -103,7 +112,8 @@ export default function DocumentosPage() {
 
   function resetForm() {
     setSubtype('receita'); setFiles([])
-    setIssuer(''); setDocDate(''); setNotes(''); setErro(null)
+    setIssuer(''); setProfessional(''); setInstitution(''); setItensTexto('')
+    setDocDate(''); setNotes(''); setErro(null)
   }
 
   /** Sobe UMA página. O componente cuida da política, da lista, da ordem e do progresso. */
@@ -129,7 +139,10 @@ export default function DocumentosPage() {
       const docRow = buildPatientDocumentInsert(user.id, {
         file_url: files[0].url!,
         subtype,
-        issuer: issuer.trim() || null,
+        issuer: documentPrimaryName({ professional_name: professional, institution_name: institution, issuer }) || null,
+        professional_name: professional.trim() || null,
+        institution_name: institution.trim() || null,
+        prescribed_items: parsePrescribedItems(itensTexto),
         doc_date: docDate || null,
         notes: notes.trim() || null,
       })
@@ -271,19 +284,52 @@ export default function DocumentosPage() {
                 leituraAssistida={{
                   declarado: subtype,
                   onLeitura: (leitura) => {
-                    const preenchido = autofillFrom(leitura, { issuer, docDate })
+                    const preenchido = autofillFrom(leitura, {
+                      issuer, docDate, professional, institution,
+                      items: parsePrescribedItems(itensTexto) ?? [],
+                    })
                     setIssuer(preenchido.issuer)
                     setDocDate(preenchido.docDate)
+                    setProfessional(preenchido.professional)
+                    setInstitution(preenchido.institution)
+                    setItensTexto(prescribedItemsToText(preenchido.items))
                   },
                 }}
               />
 
+              {/* O QUE FOI PRESCRITO — só na receita. Transcrição, não interpretação: nome e concentração
+                  como estão escritos, sem posologia (RDC 657). Idêntico ao Mobile, por BASE ÚNICA. */}
+              {subtype === 'receita' && (
+                <div>
+                  <label className="mb-1.5 block text-sm text-mauve">O que foi prescrito</label>
+                  <textarea
+                    value={itensTexto}
+                    onChange={e => setItensTexto(e.target.value)}
+                    rows={3}
+                    placeholder={'Um por linha\nEx.: Losartana 50mg'}
+                    className="w-full rounded-xl border border-border px-3 py-2 text-sm"
+                  />
+                  <p className="mt-1 text-xs text-mauve">Um item por linha, como está escrito na receita.</p>
+                </div>
+              )}
+
+              {/* MÉDICO E CLÍNICA SEPARADOS: um campo só obrigava a escolher, e a escolha se perdia. */}
               <div>
-                <label className="mb-1.5 block text-sm text-mauve">Emitido por</label>
+                <label className="mb-1.5 block text-sm text-mauve">Profissional</label>
                 <input
-                  value={issuer}
-                  onChange={e => setIssuer(e.target.value)}
-                  placeholder="Profissional ou instituição"
+                  value={professional}
+                  onChange={e => setProfessional(e.target.value)}
+                  placeholder="Quem assinou o documento"
+                  className="w-full rounded-xl border border-border px-3 py-2 text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm text-mauve">Clínica, laboratório ou hospital</label>
+                <input
+                  value={institution}
+                  onChange={e => setInstitution(e.target.value)}
+                  placeholder="Onde foi emitido"
                   className="w-full rounded-xl border border-border px-3 py-2 text-sm"
                 />
               </div>

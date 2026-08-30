@@ -13,6 +13,7 @@ import type { PatientDocumentDTO, PickedFile } from '@sintera/api-client'
 import {
   DOCUMENT_SUBTYPES, documentSubtypeLabel, documentSubtitle, isReadyToSave, DOCUMENT_BASE_ACTIONS,
   autofillFrom, deriveDocumentTitle, DOCUMENT_FILTER_ALL,
+  documentPrimaryName, parsePrescribedItems, prescribedItemsToText,
   type PatientDocumentSubtype, type AttachedFile,
 } from '@sintera/core'
 import { Text, Button, Input, AttachmentLink, DatePicker, Disclaimer, Select, AnexoDocumento } from '../../primitives'
@@ -52,6 +53,19 @@ export function DocumentsScreen() {
   // ANEXO-001: o formulário guarda um CONJUNTO de páginas, não um arquivo.
   const [files, setFiles] = useState<AttachedFile[]>([])
   const [issuer, setIssuer] = useState('')
+  // PROFISSIONAL e INSTITUIÇÃO são campos separados desde a migração 151. Antes havia um só ("Emitido por"), e
+  // ele obrigava a escolher: num atestado da homologação de 30/08 a leitura gravou a clínica e o médico se
+  // perdeu. São dois fatos, e a pessoa procura o documento tanto por um quanto pelo outro.
+  const [professional, setProfessional] = useState('')
+  const [institution, setInstitution] = useState('')
+  /**
+   * O que a receita prescreve — um item por linha.
+   *
+   * "Não aparece o nome do medicamento, que é o item mais importante" (fundadora, 30/08). Um campo de texto
+   * com uma linha por item é o editor mais simples que serve: a leitura preenche sozinha, e corrigir é apagar
+   * uma letra — não navegar por uma lista de campos.
+   */
+  const [itensTexto, setItensTexto] = useState('')
   const [docDate, setDocDate] = useState('')
   const [notes, setNotes] = useState('')
 
@@ -77,7 +91,8 @@ export function DocumentsScreen() {
   useEffect(() => { alive.current = true; load(false); return () => { alive.current = false } }, [load])
 
   function resetForm() {
-    setSubtype('receita'); setFiles([]); setIssuer(''); setDocDate(''); setNotes(''); setFormError(null)
+    setSubtype('receita'); setFiles([]); setIssuer(''); setProfessional(''); setInstitution('')
+    setItensTexto(''); setDocDate(''); setNotes(''); setFormError(null)
     setEditando(null)
   }
 
@@ -90,6 +105,8 @@ export function DocumentsScreen() {
   function startEdit(d: PatientDocumentDTO) {
     setEditando(d)
     setSubtype(d.subtype); setIssuer(d.issuer ?? ''); setDocDate(d.doc_date ?? ''); setNotes(d.notes ?? '')
+    setProfessional(d.professional_name ?? ''); setInstitution(d.institution_name ?? '')
+    setItensTexto(prescribedItemsToText(d.prescribed_items))
     setFiles([]); setFormError(null); setOpen(true)
   }
 
@@ -103,6 +120,19 @@ export function DocumentsScreen() {
     return err || !data ? null : data.url
   }, [])
 
+  /**
+   * `issuer` continua sendo gravado, com o mesmo nome que a regra do núcleo escolheria.
+   *
+   * Não é duplicação por descuido: é o campo que TODO documento anterior à migração 151 usa, e que outras
+   * telas ainda leem. Mantê-lo em dia custa uma linha; deixá-lo apodrecer faria a mesma receita aparecer com
+   * nome numa tela e sem nome noutra.
+   */
+  function nomePrincipal(): string {
+    return documentPrimaryName({
+      professional_name: professional, institution_name: institution, issuer,
+    }) ?? ''
+  }
+
   async function save() {
     // EDITANDO: corrige os fatos do documento; o arquivo permanece. Só a criação exige anexo.
     if (editando) {
@@ -110,7 +140,10 @@ export function DocumentsScreen() {
       try {
         const { error: err } = await apiClient.documents.updateDocument(editando.id, {
           subtype,
-          issuer: issuer.trim() || null,
+          issuer: nomePrincipal() || null,
+          professional_name: professional.trim() || null,
+          institution_name: institution.trim() || null,
+          prescribed_items: parsePrescribedItems(itensTexto),
           doc_date: docDate || null,
           notes: notes.trim() || null,
         })
@@ -127,7 +160,10 @@ export function DocumentsScreen() {
         subtype,
         // A primeira página também vai em `file_url` — é o que os documentos anteriores ao ANEXO-001 usam.
         file_url: files[0].url!,
-        issuer: issuer.trim() || null,
+        issuer: nomePrincipal() || null,
+        professional_name: professional.trim() || null,
+        institution_name: institution.trim() || null,
+        prescribed_items: parsePrescribedItems(itensTexto),
         doc_date: docDate || null,
         notes: notes.trim() || null,
         pages: files.map(f => ({
@@ -225,17 +261,46 @@ export function DocumentsScreen() {
               leituraAssistida={{
                 declarado: subtype,
                 onLeitura: (leitura) => {
-                  const preenchido = autofillFrom(leitura, { issuer, docDate })
+                  const preenchido = autofillFrom(leitura, {
+                    issuer, docDate, professional, institution,
+                    items: parsePrescribedItems(itensTexto) ?? [],
+                  })
                   setIssuer(preenchido.issuer)
                   setDocDate(preenchido.docDate)
+                  setProfessional(preenchido.professional)
+                  setInstitution(preenchido.institution)
+                  setItensTexto(prescribedItemsToText(preenchido.items))
                 },
               }}
             />
           ) : null}
 
+          {/* O QUE FOI PRESCRITO — só na receita, porque só ela prescreve. A leitura preenche; a pessoa
+              confere contra o papel. É transcrição, não interpretação: o nome e a concentração como estão
+              escritos, sem posologia (RDC 657). */}
+          {subtype === 'receita' && (
+            <View style={{ gap: 6 }}>
+              <Text spec={text(t, { role: 'label', tone: 'muted' })} style={{ color: t.color.text.muted }}>O que foi prescrito</Text>
+              <Input
+                value={itensTexto} onChangeText={setItensTexto} multiline
+                placeholder={'Um por linha\nEx.: Losartana 50mg'}
+              />
+              <Text spec={text(t, { role: 'caption', tone: 'faint' })}>
+                Um item por linha, como está escrito na receita.
+              </Text>
+            </View>
+          )}
+
+          {/* MÉDICO E CLÍNICA SEPARADOS. Um campo só obrigava a escolher, e a escolha se perdia: num atestado
+              a leitura gravou a clínica e o médico ficou de fora. São dois fatos, e busca-se por ambos. */}
           <View style={{ gap: 6 }}>
-            <Text spec={text(t, { role: 'label', tone: 'muted' })} style={{ color: t.color.text.muted }}>Emitido por</Text>
-            <Input value={issuer} onChangeText={setIssuer} placeholder="Profissional ou instituição" />
+            <Text spec={text(t, { role: 'label', tone: 'muted' })} style={{ color: t.color.text.muted }}>Profissional</Text>
+            <Input value={professional} onChangeText={setProfessional} placeholder="Quem assinou o documento" />
+          </View>
+
+          <View style={{ gap: 6 }}>
+            <Text spec={text(t, { role: 'label', tone: 'muted' })} style={{ color: t.color.text.muted }}>Clínica, laboratório ou hospital</Text>
+            <Input value={institution} onChangeText={setInstitution} placeholder="Onde foi emitido" />
           </View>
 
           <View style={{ gap: 6 }}>

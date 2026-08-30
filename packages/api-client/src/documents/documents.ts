@@ -18,6 +18,11 @@ export interface PatientDocumentDTO {
   issuer: string | null
   doc_date: string | null
   notes: string | null
+  /** O que a receita prescreve, transcrito (migração 151). Ausente nos documentos anteriores a ela. */
+  prescribed_items: string[] | null
+  /** Profissional e instituição SEPARADOS. `issuer` segue existindo, com o conteúdo que já tinha. */
+  professional_name: string | null
+  institution_name: string | null
   status: string
   created_at: string
 }
@@ -48,6 +53,9 @@ export interface PatientDocumentInput {
   doc_date?: string | null
   notes?: string | null
   document_sha256?: string | null
+  prescribed_items?: string[] | null
+  professional_name?: string | null
+  institution_name?: string | null
   /** Associações a registros-alvo (a receita pode alimentar Medicamento E Suplemento, por exemplo). */
   associations?: DocumentAssociation[]
   /**
@@ -60,7 +68,7 @@ export interface PatientDocumentInput {
 
 // Exportada porque o módulo de VÍNCULO projeta o MESMO documento: duas listas de colunas dariam dois formatos
 // para a mesma coisa, e o seletor de vínculo mostraria menos (ou mais) do que a tela de Documentos.
-export const COLUMNS = 'id, subtype, file_url, issuer, doc_date, notes, status, created_at' as const
+export const COLUMNS = 'id, subtype, file_url, issuer, doc_date, notes, prescribed_items, professional_name, institution_name, status, created_at' as const
 
 async function requireUserId(client: SupabaseClient): Promise<string> {
   const { data: { session } } = await client.auth.getSession()
@@ -163,6 +171,9 @@ export async function saveDocument(
       doc_date: input.doc_date ?? null,
       notes: input.notes ?? null,
       document_sha256: input.document_sha256 ?? null,
+      prescribed_items: input.prescribed_items ?? null,
+      professional_name: input.professional_name ?? null,
+      institution_name: input.institution_name ?? null,
     })
     const { data, error } = await client.from('patient_documents').insert([row]).select('id')
     if (error) return { data: null, error: asError(error) }
@@ -230,7 +241,9 @@ export async function listPagesForDocuments(
 
 /** Atualiza os fatos documentais (emissor, data, observação, subtipo). NÃO lança. */
 export async function updateDocument(
-  client: SupabaseClient, id: string, patch: Partial<Pick<PatientDocumentInput, 'subtype' | 'issuer' | 'doc_date' | 'notes'>>,
+  client: SupabaseClient, id: string,
+  patch: Partial<Pick<PatientDocumentInput,
+    'subtype' | 'issuer' | 'doc_date' | 'notes' | 'prescribed_items' | 'professional_name' | 'institution_name'>>,
 ): Promise<{ error: Error | null }> {
   try {
     const userId = await requireUserId(client)

@@ -158,15 +158,89 @@ export function deriveDocumentTitle(
   return `${rotulo} ${prep} ${primeiro} +${nomes.length - 1}`
 }
 
+/**
+ * QUEM aparece na frente, num documento que tem médico E instituição.
+ *
+ * A regra é da fundadora (28/08) e é por NATUREZA do documento. Neste domínio a resposta é sempre a mesma —
+ * receita, atestado, relatório e encaminhamento são todos ASSINADOS por um profissional, e é ele quem responde
+ * pelo que está escrito. A instituição é onde aconteceu, não quem afirmou.
+ *
+ * A OUTRA METADE DA REGRA DELA NÃO MORA AQUI. "No caso de um exame, geralmente tem duas informações de médico:
+ * o solicitante e o que laudou — não tem tanta relevância o que laudou, e sim o que solicitou." Laudo e pedido
+ * de exame pertencem ao domínio Exames (`exams`), não a `patient_documents`; a preferência pelo solicitante é
+ * aplicada lá. Espelhá-la aqui criaria uma segunda regra sobre documentos que este domínio nunca recebe.
+ *
+ * Cai em `issuer` quando os campos novos estão vazios — todo documento anterior à migração 151. Assim eles
+ * continuam legíveis pelo campo antigo, em vez de passarem a aparecer sem nome nenhum.
+ */
+export function documentPrimaryName(doc: {
+  professional_name?: string | null
+  institution_name?: string | null
+  issuer?: string | null
+}): string | null {
+  return doc.professional_name?.trim() || doc.institution_name?.trim() || doc.issuer?.trim() || null
+}
+
+/** A instituição, quando ela existe E não é o que já foi mostrado. Vem depois, nunca no lugar do profissional. */
+export function documentSecondaryName(doc: {
+  professional_name?: string | null
+  institution_name?: string | null
+  issuer?: string | null
+}): string | null {
+  const inst = doc.institution_name?.trim() || null
+  return inst && inst !== documentPrimaryName(doc) ? inst : null
+}
+
 export function documentSubtitle(doc: {
+  professional_name?: string | null
+  institution_name?: string | null
   issuer?: string | null
   doc_date?: string | null
   created_at?: string | null
+  prescribed_items?: string[] | null
 }): string {
-  const partes = [doc.issuer?.trim(), formatDate(doc.doc_date)].filter(Boolean) as string[]
+  // O QUE FOI PRESCRITO VEM PRIMEIRO — "o item mais importante", nas palavras dela. Uma receita identificada
+  // só por médico e data obriga a abrir o arquivo para saber do que se trata.
+  const itens = prescribedSummary(doc.prescribed_items)
+  const partes = [
+    itens,
+    documentPrimaryName(doc),
+    documentSecondaryName(doc),
+    formatDate(doc.doc_date),
+  ].filter(Boolean) as string[]
   if (partes.length > 0) return partes.join(' · ')
   const guardado = formatDate(doc.created_at)
   return guardado ? `Adicionado em ${guardado}` : 'Sem emissor informado'
+}
+
+/**
+ * O campo de texto do formulário → a lista que vai ao banco.
+ *
+ * Uma linha por item. Linhas vazias somem, espaços nas pontas somem, e uma lista sem nada vira `null` — porque
+ * `[]` afirmaria que a receita foi lida e não prescreve nada, e ausência de leitura não é ausência de conteúdo.
+ *
+ * Mora no core porque Web e aplicativo editam o MESMO campo: dois analisadores divergiriam na primeira linha
+ * em branco, e a mesma receita ficaria com itens diferentes conforme a ponta em que fosse salva.
+ */
+export function parsePrescribedItems(texto: string | null | undefined): string[] | null {
+  const itens = (texto ?? '').split('\n').map(l => l.trim()).filter(Boolean)
+  return itens.length ? itens : null
+}
+
+/** A lista → o campo de texto, para editar. O inverso exato de `parsePrescribedItems`. */
+export function prescribedItemsToText(itens?: readonly string[] | null): string {
+  return (itens ?? []).join('\n')
+}
+
+/**
+ * Os itens prescritos, resumidos para caber num cartão. Dois nomes e a contagem do resto — mais que isso vira
+ * parágrafo, e um cartão que vira parágrafo deixa de ser lido.
+ */
+export function prescribedSummary(itens?: readonly string[] | null): string | null {
+  const limpos = (itens ?? []).map(i => i.trim()).filter(Boolean)
+  if (limpos.length === 0) return null
+  if (limpos.length <= 2) return limpos.join(' · ')
+  return `${limpos.slice(0, 2).join(' · ')} +${limpos.length - 2}`
 }
 
 /**
@@ -203,6 +277,21 @@ export interface NewPatientDocument {
   doc_date?: string | null
   notes?: string | null
   document_sha256?: string | null
+  /**
+   * O que a receita prescreve, TRANSCRITO do papel ("Losartana 50mg").
+   *
+   * Pedido da fundadora (30/08): uma receita identificada só por médico e data obriga a abrir o arquivo para
+   * saber do que se trata — que é exatamente o trabalho que a plataforma existe para poupar. A leitura já
+   * transcrevia isto e o descartava, por não haver onde guardar (migração 151).
+   */
+  prescribed_items?: string[] | null
+  /**
+   * QUEM ASSINOU e QUAL INSTITUIÇÃO são fatos diferentes, e a diferença importa por tipo de documento: numa
+   * receita interessa quem assinou; num laudo, quem realizou. `issuer` guardava um dos dois e perdia o outro —
+   * foi o que fez a clínica aparecer no lugar do médico num atestado.
+   */
+  professional_name?: string | null
+  institution_name?: string | null
   source?: string
   /** Associações a registros-alvo (1..N). Uma receita pode alimentar Medicamento E Suplemento, por exemplo. */
   associations?: DocumentAssociation[]
@@ -217,6 +306,9 @@ export interface PatientDocumentInsert {
   doc_date: string | null
   notes: string | null
   document_sha256: string | null
+  prescribed_items: string[] | null
+  professional_name: string | null
+  institution_name: string | null
   source: string
   status: string
 }
@@ -246,6 +338,11 @@ export function buildPatientDocumentInsert(user_id: string, doc: NewPatientDocum
     doc_date: doc.doc_date ?? null,
     notes: doc.notes ?? null,
     document_sha256: doc.document_sha256 ?? null,
+    // Vazio permanece VAZIO: lista sem itens não é o mesmo que "nada prescrito". Gravar `[]` afirmaria que a
+    // receita foi lida e não prescreve nada — falso quando a leitura simplesmente não rodou.
+    prescribed_items: doc.prescribed_items?.length ? doc.prescribed_items : null,
+    professional_name: doc.professional_name?.trim() || null,
+    institution_name: doc.institution_name?.trim() || null,
     source: doc.source ?? SOURCE_DEFAULT,
     status: 'pending',
   }

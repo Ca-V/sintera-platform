@@ -46,6 +46,17 @@ export interface ClassificationResult {
    * nem quando "provavelmente" foi emitido. Nada aqui é conteúdo clínico (RDC 657).
    */
   issuer?: string
+  /**
+   * O PROFISSIONAL e a INSTITUIÇÃO, transcritos SEPARADAMENTE.
+   *
+   * Antes o modelo é que escolhia qual dos dois era "o emissor" — e num atestado da homologação de 30/08 ele
+   * escolheu a clínica, deixando o médico de fora para sempre. Transcrever os dois é dele; DECIDIR qual
+   * aparece na frente é da plataforma, onde a regra é uma só e testável (`documentPrimaryName`).
+   *
+   * `issuer` continua existindo e recebe o nome principal — nada que já o consome quebra.
+   */
+  professional?: string
+  institution?: string
   /** Data do documento em ISO (AAAA-MM-DD), quando escrita de forma inequívoca. */
   docDate?: string
   /**
