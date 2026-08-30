@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { heading, text } from '@sintera/design-system'
 import type { ActivitySessionDTO, BodyMetricDTO } from '@sintera/api-client'
 import {
-  SCREEN_COPY, activityTypeLabel, activitySummary, bodyMetricLabel, bodySourceLabel,
+  SCREEN_COPY, activityTypeLabel, activitySummary, bodyMetricLabel, bodySourceLabel, formatInstantBR, formatDateBR,
   suspectedDuplicateActivities, DUPLICATE_CHOICES,
   type ActivityForMatch, type DuplicateSuspicion, type DuplicateChoice,
 } from '@sintera/core'
@@ -174,8 +174,14 @@ export function DadosRecebidosScreen() {
           {acts.map(a => (
             <View key={a.id} style={[s.card, card, { gap: 2 }]}>
               <Text spec={text(t, { role: 'body' })}>{a.title?.trim() || activityTypeLabel(a.activity_type)}</Text>
+              {/* QUANDO ACONTECEU VEM PRIMEIRO. Sem a data, uma atividade de três semanas atrás e uma de hoje
+                  são o mesmo cartão — e a fundadora viu doze delas, todas idênticas, sem saber de que dias
+                  eram. Num registro de saúde, o quando não é detalhe: é metade do fato. */}
               <Text spec={text(t, { role: 'caption', tone: 'muted' })}>
-                {[activitySummary(a), `${C.sourceLabel}: ${a.source}`].filter(Boolean).join(' · ')}
+                {[formatInstantBR(a.started_at), activitySummary(a)].filter(Boolean).join(' · ')}
+              </Text>
+              <Text spec={text(t, { role: 'caption', tone: 'faint' })}>
+                {`${C.sourceLabel}: ${a.source}`}
               </Text>
             </View>
           ))}
@@ -196,7 +202,12 @@ export function DadosRecebidosScreen() {
                 </Pressable>
               </View>
               <Text spec={text(t, { role: 'caption', tone: 'muted' })}>
-                {`${C.sourceLabel}: ${bodySourceLabel(m.source) ?? m.source}`}
+                {/* `measured_at` é o instante; `measured_on` é o dia. Duas leituras de pressão do mesmo dia só
+                    se distinguem pelo primeiro — mas nem toda medição tem hora, e aí o dia é o que há. */}
+                {[
+                  m.measured_at ? formatInstantBR(m.measured_at) : formatDateBR(m.measured_on),
+                  `${C.sourceLabel}: ${bodySourceLabel(m.source) ?? m.source}`,
+                ].filter(Boolean).join(' · ')}
               </Text>
             </View>
           ))}

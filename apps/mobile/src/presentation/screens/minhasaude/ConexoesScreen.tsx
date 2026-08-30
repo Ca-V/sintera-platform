@@ -17,7 +17,7 @@ import type { ConnectorState } from '@sintera/core'
 import {
   connectorStatusLabel, connectorStatusTone, connectorPrimaryAction, isConnectorActive, SCREEN_COPY,
   HEALTH_CONNECT_DOIS_PASSOS, HEALTH_CONNECT_COMO_TESTAR, fontesDisponiveis, fontesIndisponiveis,
-  resumoSincronizacao,
+  resumoSincronizacao, formatInstantBR,
 } from '@sintera/core'
 import { useNavigation } from '@react-navigation/native'
 import { Text, Button, Disclaimer } from '../../primitives'
@@ -33,11 +33,11 @@ const apiAndroid: number | undefined = Platform.OS === 'android'
   ? (typeof Platform.Version === 'number' ? Platform.Version : Number(Platform.Version)) || undefined
   : undefined
 
+// A hora da última sincronização é um INSTANTE, e recortar a string mostrava-o em UTC — três horas erradas, e
+// um dia errado para tudo que acontece à noite. A conversão mora no core (`formatInstantBR`), porque a Web lê
+// o mesmo campo e não pode divergir.
 function fmtDataHora(iso: string | null): string {
-  if (!iso) return '—'
-  const d = iso.slice(0, 10).split('-')
-  const h = iso.slice(11, 16)
-  return d.length === 3 ? `${d[2]}/${d[1]}/${d[0]}${h ? ` às ${h}` : ''}` : '—'
+  return formatInstantBR(iso) || '—'
 }
 
 export function ConexoesScreen() {

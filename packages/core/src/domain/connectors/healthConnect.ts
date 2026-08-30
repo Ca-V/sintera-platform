@@ -30,12 +30,22 @@ export type HcRecord =
   | { kind: 'weight';            time: string; kg: number;      app?: string | null; id?: string | null }
   | { kind: 'height';            time: string; cm: number;      app?: string | null; id?: string | null }
   | { kind: 'steps';             time: string; count: number;   app?: string | null; id?: string | null }
+  /**
+   * Grandezas de INTERVALO, que o Health Connect guarda fora da sessão de exercício. Ficam aqui para serem
+   * atribuídas à sessão a que pertencem — ver `healthConnectActivities`. Sozinhas não viram amostra: distância
+   * percorrida não é medida pontual de nada.
+   */
+  | { kind: 'distance'; startTime: string; endTime?: string | null; meters: number; app?: string | null; id?: string | null }
+  | { kind: 'energy';   startTime: string; endTime?: string | null; kcal: number;   ativa: boolean; app?: string | null; id?: string | null }
   | {
       kind: 'exercise'
       startTime: string
       endTime?: string | null
-      /** Nome do tipo já resolvido pela camada nativa (o Health Connect usa códigos numéricos). */
-      exercise?: string | null
+      /**
+       * O tipo do exercício. NÚMERO quando vem do Health Connect (a enumeração `ExerciseType` do Android),
+       * texto quando vem de uma fonte que já resolveu o nome. Os dois são aceitos, e a tradução é uma só.
+       */
+      exercise?: string | number | null
       title?: string | null
       distanceM?: number | null
       energyKcal?: number | null
@@ -99,8 +109,51 @@ const EXERCISES: Record<string, ActivityType> = {
   handball: 'esporte_coletivo', football_american: 'esporte_coletivo',
 }
 
-export function activityTypeFromExercise(exercise: string | null | undefined): ActivityType {
-  return EXERCISES[(exercise ?? '').trim().toLowerCase()] ?? 'outro'
+/**
+ * Os mesmos tipos, pelo CÓDIGO NUMÉRICO que o Health Connect realmente entrega.
+ *
+ * O DEFEITO QUE ISTO CORRIGE (homologação de 30/08, primeira ingestão real). Doze atividades do Strava
+ * entraram pelo Health Connect e TODAS viraram "Outra atividade". O motivo: `exerciseType` chega como número
+ * (79 = caminhada, 56 = corrida), e a leitura só aceitava texto. O número era descartado, o tipo virava `null`,
+ * e `null` degradava para 'outro' — a degradação funcionando exatamente como projetada, sobre um dado que
+ * estava lá o tempo todo.
+ *
+ * É o custo de uma suposição não verificada: o comentário dizia que a biblioteca resolvia o código para nome.
+ * Não resolve. E como o caminho do desconhecido é silencioso por princípio, nada nunca reclamou.
+ *
+ * Os códigos são a enumeração `ExerciseType` do Health Connect, estável entre versões (é API pública do
+ * Android). Código fora desta tabela continua virando 'outro' — o Modelo Aberto vale, mas agora sobre o dado
+ * certo.
+ */
+const EXERCICIOS_POR_CODIGO: Record<number, ActivityType> = {
+  79: 'caminhada', 37: 'caminhada',                    // WALKING, HIKING
+  56: 'corrida', 57: 'corrida',                        // RUNNING, RUNNING_TREADMILL
+  8: 'ciclismo', 9: 'ciclismo',                        // BIKING, BIKING_STATIONARY
+  74: 'natacao', 73: 'natacao',                        // SWIMMING_POOL, SWIMMING_OPEN_WATER
+  70: 'musculacao', 81: 'musculacao',                  // STRENGTH_TRAINING, WEIGHTLIFTING
+  36: 'funcional', 13: 'funcional', 10: 'funcional',   // HIIT, CALISTHENICS, BOOT_CAMP
+  25: 'funcional', 53: 'funcional', 54: 'funcional',   // ELLIPTICAL, ROWING, ROWING_MACHINE
+  68: 'funcional', 69: 'funcional',                    // STAIR_CLIMBING, STAIR_CLIMBING_MACHINE
+  48: 'pilates',                                       // PILATES
+  83: 'yoga',                                          // YOGA
+  16: 'danca',                                         // DANCING
+  64: 'esporte_coletivo', 5: 'esporte_coletivo',       // SOCCER, BASKETBALL
+  78: 'esporte_coletivo', 35: 'esporte_coletivo',      // VOLLEYBALL, HANDBALL
+  28: 'esporte_coletivo', 29: 'esporte_coletivo',      // FOOTBALL_AMERICAN, FOOTBALL_AUSTRALIAN
+  38: 'esporte_coletivo', 55: 'esporte_coletivo',      // ICE_HOCKEY, RUGBY
+}
+
+/**
+ * Tipo de exercício → taxonomia da plataforma. Aceita o NÚMERO (o que o Health Connect manda) e o NOME (o que
+ * outras fontes mandam). Uma porta só, porque a decisão é a mesma e duplicá-la faria as duas divergirem.
+ */
+export function activityTypeFromExercise(exercise: string | number | null | undefined): ActivityType {
+  if (typeof exercise === 'number') return EXERCICIOS_POR_CODIGO[exercise] ?? 'outro'
+  const texto = (exercise ?? '').trim().toLowerCase()
+  if (!texto) return 'outro'
+  // Número que chegou como texto ("79") — acontece quando a camada de ponte serializa tudo em string.
+  if (/^\d+$/.test(texto)) return EXERCICIOS_POR_CODIGO[Number(texto)] ?? 'outro'
+  return EXERCISES[texto] ?? 'outro'
 }
 
 /**
@@ -111,7 +164,9 @@ export function activityTypeFromExercise(exercise: string | null | undefined): A
 export function healthConnectSamples(records: readonly HcRecord[], connectorVersion: string): CanonicalSample[] {
   const out: CanonicalSample[] = []
   for (const r of records) {
-    if (r.kind === 'exercise') continue
+    // Sessão, distância e energia são registros de INTERVALO: pertencem à atividade, não à linha do tempo de
+    // medidas. Saem por `healthConnectActivities`, que os atribui à sessão pelo horário.
+    if (r.kind === 'exercise' || r.kind === 'distance' || r.kind === 'energy') continue
     const prov = { source: sourceFromApp(r.app), connectorVersion, externalId: r.id ?? null }
     const base = { recordedAt: r.time, provenance: prov }
 
@@ -170,13 +225,54 @@ export function healthConnectActivities(records: readonly HcRecord[], connectorV
       title: r.title?.trim() || null,
       started_at: r.startTime,
       ended_at: r.endTime || null,
-      distance_m: num(r.distanceM),
-      active_energy_kcal: num(r.energyKcal),
+      // A distância e a energia vêm de registros SEPARADOS e são atribuídas abaixo, pelo horário. Os campos da
+      // própria sessão continuam sendo lidos primeiro porque outras fontes (não o Health Connect) os preenchem.
+      distance_m: num(r.distanceM) ?? grandezaNoIntervalo(records, 'distance', r.startTime, r.endTime),
+      active_energy_kcal: num(r.energyKcal) ?? grandezaNoIntervalo(records, 'energy', r.startTime, r.endTime),
       avg_heart_rate: num(r.avgHeartRate),
       steps: num(r.steps),
     })
   }
   return out
+}
+
+/** Instante em milissegundos, ou `null` quando a data não é utilizável. Data inválida nunca vira zero. */
+function ms(iso: string | null | undefined): number | null {
+  if (!iso) return null
+  const t = Date.parse(iso)
+  return Number.isFinite(t) ? t : null
+}
+
+/**
+ * Soma a grandeza dos registros cujo MEIO cai dentro da sessão.
+ *
+ * Por que o meio, e não a sobreposição: duas atividades seguidas quase se encostam, e um critério de
+ * sobreposição atribuiria o mesmo registro às duas — inflando as duas. O ponto médio pertence a uma sessão só.
+ *
+ * Devolve `null` quando não há nada a somar. Ausência permanece ausência: uma corrida sem distância registrada
+ * mostra "—", nunca "0 km" — zero é uma afirmação, e afirmar que a pessoa não andou nada seria falso.
+ */
+function grandezaNoIntervalo(
+  records: readonly HcRecord[], tipo: 'distance' | 'energy', inicio: string, fim: string | null | undefined,
+): number | null {
+  const ini = ms(inicio); const ate = ms(fim)
+  if (ini === null || ate === null || ate < ini) return null
+
+  let total = 0; let achou = false
+  // A energia ATIVA tem precedência sobre a total: o total inclui o basal, que não foi gasto no exercício.
+  const soAtiva = tipo === 'energy' && records.some(r => r.kind === 'energy' && r.ativa)
+
+  for (const r of records) {
+    if (r.kind !== tipo) continue
+    if (tipo === 'energy' && soAtiva && !(r as Extract<HcRecord, { kind: 'energy' }>).ativa) continue
+    const a = ms(r.startTime); const b = ms(r.endTime) ?? a
+    if (a === null || b === null) continue
+    const meio = a + (b - a) / 2
+    if (meio < ini || meio > ate) continue
+    total += r.kind === 'distance' ? r.meters : r.kcal
+    achou = true
+  }
+  return achou ? Math.round(total) : null
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -195,6 +291,11 @@ export function healthConnectActivities(records: readonly HcRecord[], connectorV
 export const HC_RECORD_TYPES = [
   'BloodPressure', 'BloodGlucose', 'HeartRate', 'OxygenSaturation',
   'BodyTemperature', 'Weight', 'Height', 'Steps', 'ExerciseSession',
+  // DISTÂNCIA E ENERGIA SÃO REGISTROS SEPARADOS no Health Connect — a sessão de exercício carrega só o tipo e
+  // o horário. Nós líamos apenas a sessão e procurávamos distância dentro dela, num campo que nunca existiu:
+  // as doze atividades do Strava da primeira ingestão chegaram sem quilômetros e sem calorias. Uma corrida sem
+  // distância não é um registro de corrida.
+  'Distance', 'ActiveCaloriesBurned', 'TotalCaloriesBurned',
 ] as const
 export type HcRecordType = (typeof HC_RECORD_TYPES)[number]
 
@@ -273,6 +374,26 @@ export function normalizeHealthConnect(porTipo: Partial<Record<HcRecordType, rea
     return t && n != null ? { kind: 'steps', time: t, count: n, app: m.app, id: m.id } : null
   })
 
+  cada('Distance', (r, m) => {
+    const ini = str(r.startTime); const metros = numDe(obj(r.distance).inMeters)
+    if (!ini || metros === null) return null
+    return { kind: 'distance', startTime: ini, endTime: str(r.endTime), meters: metros, app: m.app, id: m.id }
+  })
+
+  cada('ActiveCaloriesBurned', (r, m) => {
+    const ini = str(r.startTime); const kcal = numDe(obj(r.energy).inKilocalories)
+    if (!ini || kcal === null) return null
+    return { kind: 'energy', startTime: ini, endTime: str(r.endTime), kcal, ativa: true, app: m.app, id: m.id }
+  })
+
+  cada('TotalCaloriesBurned', (r, m) => {
+    const ini = str(r.startTime); const kcal = numDe(obj(r.energy).inKilocalories)
+    if (!ini || kcal === null) return null
+    // Marcada como NÃO ativa: o total inclui o metabolismo basal, e somá-lo ao gasto do exercício inflaria o
+    // número. Serve só quando a fonte não manda a energia ativa.
+    return { kind: 'energy', startTime: ini, endTime: str(r.endTime), kcal, ativa: false, app: m.app, id: m.id }
+  })
+
   cada('ExerciseSession', (r, m) => {
     const ini = str(r.startTime)
     if (!ini) return null
@@ -280,8 +401,9 @@ export function normalizeHealthConnect(porTipo: Partial<Record<HcRecordType, rea
       kind: 'exercise',
       startTime: ini,
       endTime: str(r.endTime),
-      // A biblioteca já resolve o código numérico do Health Connect para nome quando consegue.
-      exercise: str(r.exerciseType) ?? null,
+      // O `exerciseType` chega como NÚMERO (a enumeração do Health Connect). Aceitar só texto aqui foi o que
+      // transformou doze atividades reais do Strava em doze "Outra atividade" na primeira ingestão de verdade.
+      exercise: numDe(r.exerciseType) ?? str(r.exerciseType) ?? null,
       title: str(r.title),
       distanceM: numDe(obj(r.distance).inMeters),
       energyKcal: numDe(obj(r.totalEnergy).inKilocalories) ?? numDe(obj(r.activeEnergy).inKilocalories),
