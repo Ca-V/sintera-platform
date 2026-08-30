@@ -56,7 +56,9 @@ export type { CaptureInput, ConditionScan, BioimpedanceScan, EyeglassesScan, Eye
 export type { BodyMetricDTO, BodyMetricInput } from './body/body'
 // `saveBodyMetric` cria E corrige (o `id` distingue) — a Web passa a usá-la em vez de escrever seu próprio
 // insert, para as duas pontas gravarem a medição pelo MESMO caminho (base única, 27/08).
-export { saveBodyMetric } from './body/body'
+// `listBodyMetrics` e `deleteBodyMetric` faltavam aqui: existiam, o aplicativo as usava pela fachada, e a Web
+// não tinha como chamá-las — foi o que impediu a tela "Dados recebidos" de existir no navegador.
+export { saveBodyMetric, listBodyMetrics, deleteBodyMetric } from './body/body'
 export type { ResourceDTO, ResourceInput } from './resources/resources'
 // Domínio Documentos do paciente (DOC-001/DOC-002) — receita · atestado · relatório · encaminhamento · outros.
 export type { DocumentsApi } from './auth/types'

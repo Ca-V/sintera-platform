@@ -54,6 +54,9 @@ const SEM_EDICAO: Record<string, string> = {
     'dado RECEBIDO de uma fonte externa. Editar aqui destruiria a fidelidade que a plataforma promete: um valor ' +
     'corrigido à mão deixa de ser o que o Garmin mediu, mas continuaria marcado como se fosse. REJEITAR é ' +
     'legítimo (a pessoa decide o que fica); ALTERAR não, porque a procedência passaria a mentir.',
+  'src/app/dashboard/dados-recebidos/page.tsx':
+    'contraparte na Web da mesma tela — e a exceção tem de valer nas DUAS pontas: se a Web deixasse editar o ' +
+    'que o aplicativo não deixa, a mesma leitura teria duas verdades conforme onde fosse aberta.',
   'apps/mobile/src/presentation/screens/omics/OmicsPanelScreen.tsx':
     'contraparte no aplicativo',
 }

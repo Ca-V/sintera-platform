@@ -17,6 +17,8 @@ import PageHeader from '@/components/PageHeader'
 import { Card } from "@/lib/ui/ds"
 import { Badge } from "@/lib/ui/ds"
 import Disclaimer from '@/components/ui/Disclaimer'
+// O rótulo vem do núcleo: as duas pontas chamam a tela pelo MESMO nome, e um rótulo escrito duas vezes divergiria.
+import { SCREEN_COPY } from '@sintera/core'
 import { useNovelty } from '@/lib/novelty/useNovelty'
 
 type Status = 'disconnected' | 'connected' | 'expired' | 'revoked' | 'error'
@@ -213,6 +215,16 @@ function ConexoesInner() {
           ))}
         </div>
       )}
+
+      {/* A PORTA para o que entrou. Com a sincronização automática, o dado passa a chegar sem ninguém pedir —
+          e sem este caminho, "entra sozinho" viraria "entra sem que eu saiba". Fica em Conexões porque é aqui
+          que a pessoa pensa em origem de dado. Mesmo lugar, mesmo rótulo que no aplicativo. */}
+      <Link
+        href="/dashboard/dados-recebidos"
+        className="block rounded-xl border border-border px-4 py-3 text-center text-sm hover:bg-black/[0.02]"
+      >
+        {SCREEN_COPY.dadosRecebidos.title}
+      </Link>
 
       <p className="font-body text-xs text-mauve leading-relaxed">
         A SINTERA organiza e apresenta os dados das fontes que você conectar, com a origem preservada. Você concede e
