@@ -203,7 +203,23 @@ export function ConexoesScreen() {
         <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{C.hcSubtitle}</Text>
 
         {hcDisponivel === false ? (
-          <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{C.hcUnavailableHint}</Text>
+          // NÃO DISPONÍVEL — mas com saída. A versão anterior constatava e parava; a pessoa ficava sabendo que
+          // não dá, sem saber o que fazer. Aqui vai o motivo E o caminho, com o botão que abre a Play Store no
+          // app certo, para ninguém precisar procurar entre resultados parecidos.
+          <View style={{ gap: 8 }}>
+            <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{C.hcUnavailableHint}</Text>
+            <Button
+              label={C.hcInstallAction}
+              variant="secondary"
+              onPress={() => {
+                // `market://` abre direto na Play Store; se não houver Play Store (aparelho sem serviços
+                // Google), cai para o endereço web, que funciona em qualquer navegador.
+                Linking.openURL('market://details?id=com.google.android.apps.healthdata')
+                  .catch(() => Linking.openURL('https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata'))
+              }}
+            />
+            <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{C.hcAppleHint}</Text>
+          </View>
         ) : (
           <>
             <Button

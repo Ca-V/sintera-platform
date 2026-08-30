@@ -122,7 +122,12 @@ export const SCREEN_COPY = {
     hcAction:       'Autorizar e sincronizar',
     hcSyncing:      'Sincronizando…',
     hcUnavailable:  'Não disponível neste aparelho',
-    hcUnavailableHint: 'O Health Connect é do Android e precisa estar instalado. Em iPhone, a integração será com o Apple Saúde.',
+    // A versão anterior CONSTATAVA e parava aí. Na homologação de 30/08 a tela disse "não disponível" e a
+    // fundadora ficou sem saber o que fazer — a mensagem estava certa e inútil. Dizer o que falta sem dizer como
+    // resolver é a forma educada de deixar a pessoa sozinha.
+    hcUnavailableHint: 'No Android 14 ou mais novo ele já vem instalado. Em versões anteriores, é um aplicativo gratuito da Google que precisa ser instalado pela Play Store — depois disso, volte aqui.',
+    hcInstallAction: 'Instalar o Health Connect',
+    hcAppleHint:    'Em iPhone a integração será com o Apple Saúde, e não depende de instalar nada.',
     hcDenied:       'Nenhuma permissão concedida. Você decide o que compartilhar, e pode mudar depois.',
     hcRevokeHint:   'A autorização fica no Health Connect, não aqui — é lá que você revoga quando quiser.',
   },
