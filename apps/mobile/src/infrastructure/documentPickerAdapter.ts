@@ -4,6 +4,7 @@
 import * as DocumentPicker from 'expo-document-picker'
 import * as ImagePicker from 'expo-image-picker'
 import type { DocumentPickerPort, PickedFile, PickedImage } from '@sintera/api-client'
+import { SUPPORTED_NOW_MIME_TYPES } from '@sintera/core'
 
 /** Normaliza o mime de uma imagem escolhida (default JPEG). */
 function imageMime(m: string | null | undefined): string {
@@ -13,7 +14,9 @@ function imageMime(m: string | null | undefined): string {
 export const documentPicker: DocumentPickerPort = {
   async pickDocument(): Promise<PickedFile | null> {
     const res = await DocumentPicker.getDocumentAsync({
-      type: ['application/pdf', 'image/jpeg', 'image/png'],
+      // A lista vem da POLITICA, nao daqui. Escrita a mao nos dois metodos, ela divergiria do dia em que a
+      // plataforma passasse a ler HEIC — e o seletor continuaria recusando o que o resto ja aceita.
+      type: [...SUPPORTED_NOW_MIME_TYPES],
       copyToCacheDirectory: true,
       multiple: false,
     })
@@ -25,7 +28,9 @@ export const documentPicker: DocumentPickerPort = {
 
   async pickDocuments(): Promise<PickedFile[] | null> {
     const res = await DocumentPicker.getDocumentAsync({
-      type: ['application/pdf', 'image/jpeg', 'image/png'],
+      // A lista vem da POLITICA, nao daqui. Escrita a mao nos dois metodos, ela divergiria do dia em que a
+      // plataforma passasse a ler HEIC — e o seletor continuaria recusando o que o resto ja aceita.
+      type: [...SUPPORTED_NOW_MIME_TYPES],
       copyToCacheDirectory: true,
       multiple: true,
     })

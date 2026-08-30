@@ -22,7 +22,7 @@ import { normalizeName } from '@/lib/biomarkers/grouping'
 import { deriveExamIdentity } from '@/lib/exams/identification'
 import { isOrderDocumentType } from '@/lib/exams/classification'
 import { careStageFor } from '@/lib/exams/careFlow'
-import { examProcessingState, isExamReady, isExamProcessing, isExamFailed, deriveOrderDisplayTitle } from '@sintera/core'
+import { examProcessingState, isExamReady, isExamProcessing, isExamFailed, deriveOrderDisplayTitle, supportedNowAcceptAttr } from '@sintera/core'
 import { eventServicesFor, isFinancial, type HealthEvent } from '@/lib/agenda'
 import { expenseDocLabel, EXPENSE_DOC_TYPES } from '@/lib/finance/expense'
 import { parseAmountToCents, centsToAmount } from '@/lib/agenda/money'
@@ -1149,7 +1149,7 @@ export default function ExamDetailPage() {
                   options={EXPENSE_DOC_TYPES.map(d => ({ value: d.id, label: d.label }))} /></div>
             </div>
             <div className="space-y-1"><label htmlFor="exp-anexo" className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Anexo (NF/recibo/comprovante) <span className="font-normal text-mauve normal-case">(PDF, JPG, PNG)</span></label>
-              <input id="exp-anexo" type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e => setExpDocFile(e.target.files?.[0] ?? null)}
+              <input id="exp-anexo" type="file" accept={supportedNowAcceptAttr()} onChange={e => setExpDocFile(e.target.files?.[0] ?? null)}
                 className="block w-full text-xs font-body text-mauve file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:bg-blush file:text-petal file:font-medium" />
               {examExpense?.docUrl && !expDocFile && <p className="font-body text-[11px] text-mauve">Documento atual mantido. Escolha um arquivo para substituir.</p>}
             </div>

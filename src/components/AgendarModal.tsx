@@ -8,7 +8,7 @@ import { EVENT_TYPE_DEFS, EVENT_STATUS_UI, PROFESSIONAL_KIND_DEFS } from '@/lib/
 import { EXPENSE_DOC_TYPES } from '@/lib/finance/expense'
 import { useModalA11y } from '@/lib/ui/useModalA11y'
 import Select from '@/components/ui/Select'
-import { CADENCE_PRESETS, cadenceById, cadenceIdFor } from '@sintera/core'
+import { CADENCE_PRESETS, cadenceById, cadenceIdFor, supportedNowAcceptAttr } from '@sintera/core'
 
 // Tipos vêm da FONTE ÚNICA (@/lib/agenda) — Agenda e Histórico falam a mesma língua.
 export type EventType = typeof EVENT_TYPE_DEFS[number]['id']
@@ -448,7 +448,7 @@ export default function AgendarModal({ open, onClose, defaultTitle = '', default
                         <textarea id="agendar-observacoes" value={notes} onChange={e => setNotes(e.target.value)} rows={2} placeholder="Ex.: levar laudos anteriores…" className={`${FIELD} resize-none`} /></div>
 
                       <div className="space-y-1.5"><label htmlFor="agendar-anexo" className={LABEL}>Nota fiscal / comprovante / anexo <span className="font-normal text-mauve normal-case">(PDF, JPG, PNG)</span></label>
-                        <input id="agendar-anexo" type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e => setAttachmentFile(e.target.files?.[0] ?? null)}
+                        <input id="agendar-anexo" type="file" accept={supportedNowAcceptAttr()} onChange={e => setAttachmentFile(e.target.files?.[0] ?? null)}
                           className="block w-full text-xs font-body text-mauve file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:bg-blush file:text-petal file:font-medium" />
                         {initialEvent?.attachmentUrl && !attachmentFile && (
                           <p className="font-body text-[11px] text-mauve">Anexo atual mantido. Escolha um arquivo para substituir.</p>

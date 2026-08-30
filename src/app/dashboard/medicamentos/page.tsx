@@ -33,7 +33,7 @@ import Disclaimer from '@/components/ui/Disclaimer'
 import { healthEventToRow } from '@/lib/agenda/event'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import Select from '@/components/ui/Select'
-import { uuid, documentSubtitle } from '@sintera/core'
+import { uuid, documentSubtitle, supportedNowAcceptAttr } from '@sintera/core'
 
 type Status = 'em_uso' | 'programado' | 'suspenso' | 'encerrado'
 type Kind = 'medicamento' | 'suplemento' | 'produto' | 'dispositivo' | 'outro'
@@ -746,7 +746,7 @@ export default function MedicamentosPage() {
             <div className="flex items-center gap-3">
               <label className="cursor-pointer inline-flex items-center gap-1.5 border border-border rounded-full px-3 py-2 font-body text-sm text-mauve hover:border-petal/40 hover:text-petal transition-colors">
                 {uploadingRx ? 'Anexando…' : prescriptionUrl ? 'Trocar receita' : 'Anexar receita'}
-                <input type="file" accept="image/*,application/pdf" className="hidden" disabled={uploadingRx}
+                <input type="file" accept={supportedNowAcceptAttr()} className="hidden" disabled={uploadingRx}
                   onChange={async e => {
                     const f = e.target.files?.[0]; if (!f || !user) return
                     setUploadingRx(true); setErr(null)

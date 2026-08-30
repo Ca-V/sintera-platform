@@ -21,6 +21,10 @@ import { Card } from "@/lib/ui/ds"
 import PageHeader from '@/components/PageHeader'
 import Disclaimer from '@/components/ui/Disclaimer'
 import Select from '@/components/ui/Select'
+// A politica de formatos tem UM dono (ANEXO-001). Cada input declarava a sua, e as listas divergiam:
+// `image/*` deixava passar HEIC — o padrao do iPhone — que a plataforma declara como capacidade AINDA NAO
+// habilitada. O arquivo entrava e a leitura falhava depois, sem ninguem entender por que.
+import { acceptAttrWith, OMICS_EXTRA_MIME_TYPES, supportedNowAcceptAttr } from '@sintera/core'
 
 interface Panel {
   id: string
@@ -135,9 +139,9 @@ export default function OmicsListPage() {
           {/* Upload do laudo (opcional) — selecionar arquivo ou tirar foto */}
           <div>
             <label className="font-body text-xs text-mauve block mb-1.5">Laudo do exame</label>
-            <input ref={fileRef} type="file" aria-label="Selecionar arquivo do laudo" accept=".csv,.json,.pdf,image/*,text/csv,application/json,application/pdf" className="hidden"
+            <input ref={fileRef} type="file" aria-label="Selecionar arquivo do laudo" accept={acceptAttrWith(OMICS_EXTRA_MIME_TYPES)} className="hidden"
               onChange={e => { const f = e.target.files?.[0]; if (f) setFile(f); e.target.value = '' }} />
-            <input ref={cameraRef} type="file" aria-label="Fotografar o laudo" accept="image/*" capture="environment" className="hidden"
+            <input ref={cameraRef} type="file" aria-label="Fotografar o laudo" accept={supportedNowAcceptAttr()} capture="environment" className="hidden"
               onChange={e => { const f = e.target.files?.[0]; if (f) setFile(f); e.target.value = '' }} />
             {file ? (
               <div className="flex items-center justify-between gap-3 rounded-xl border border-petal/30 bg-blush/30 px-3 py-2">

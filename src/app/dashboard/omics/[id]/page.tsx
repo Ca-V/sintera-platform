@@ -19,6 +19,10 @@ import { Card } from "@/lib/ui/ds"
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { DOMAIN_LABEL, fmtOmicsDate, type OmicsDomain } from '@/lib/omics/domains'
 import { uploadAndIngest } from '@/lib/omics/ingestClient'
+// A politica de formatos tem UM dono (ANEXO-001). Cada input declarava a sua, e as listas divergiam:
+// `image/*` deixava passar HEIC — o padrao do iPhone — que a plataforma declara como capacidade AINDA NAO
+// habilitada. O arquivo entrava e a leitura falhava depois, sem ninguem entender por que.
+import { acceptAttrWith, OMICS_EXTRA_MIME_TYPES, supportedNowAcceptAttr } from '@sintera/core'
 
 interface Panel { id: string; domain: OmicsDomain; technology: string | null; platform: string | null; total_features: number | null; laboratory: string | null; collected_on: string | null; created_at: string }
 interface Category { category_id: string | null; name: string; display_order: number | null; count: number }
@@ -414,9 +418,9 @@ function ImportResults({ panelId, onDone }: { panelId: string; onDone: () => voi
   return (
     <div className="w-full">
       <div className="flex flex-wrap items-center gap-2">
-        <input ref={fileRef} type="file" aria-label="Selecionar arquivo do laudo" accept=".csv,.json,.pdf,image/*,text/csv,application/json,application/pdf" className="hidden"
+        <input ref={fileRef} type="file" aria-label="Selecionar arquivo do laudo" accept={acceptAttrWith(OMICS_EXTRA_MIME_TYPES)} className="hidden"
           onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = '' }} />
-        <input ref={cameraRef} type="file" aria-label="Fotografar o laudo" accept="image/*" capture="environment" className="hidden"
+        <input ref={cameraRef} type="file" aria-label="Fotografar o laudo" accept={supportedNowAcceptAttr()} capture="environment" className="hidden"
           onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = '' }} />
         <button onClick={() => fileRef.current?.click()} disabled={busy}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-petal/40 text-petal font-body text-sm font-medium hover:bg-blush transition-colors disabled:opacity-50">

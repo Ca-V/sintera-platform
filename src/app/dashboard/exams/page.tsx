@@ -17,7 +17,7 @@ import { findDuplicateIds, originalIdFor, type DuplicateCandidate } from '@/lib/
 import { deriveExamIdentity } from '@/lib/exams/identification'
 import { binaryStructuringState, STRUCTURING_LABEL } from '@/lib/exams/structuring'
 import { isOrderDocumentType } from '@/lib/exams/classification'
-import { EXAM_STATE_LABEL, EXAM_STATE_TONE, examProcessingState, examAnalyzeLabel, isExamReady, EXAM_STATUS_FILTER_OPTIONS, matchesExamStatusFilter, deriveOrderDisplayTitle, SCREEN_COPY, type ExamStateTone, uuid} from '@sintera/core'
+import { EXAM_STATE_LABEL, EXAM_STATE_TONE, examProcessingState, examAnalyzeLabel, isExamReady, EXAM_STATUS_FILTER_OPTIONS, matchesExamStatusFilter, deriveOrderDisplayTitle, SCREEN_COPY, type ExamStateTone, uuid, supportedNowAcceptAttr } from '@sintera/core'
 import { effectiveOrderStatus, orderStatusLabel } from '@/lib/exams/orderStatus'
 import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MB } from '@/lib/capture/limits'
 import { bundlePartInfo, bundlePartLabel, groupBundleParts } from '@/lib/exams/bundleGroup'
@@ -466,7 +466,7 @@ export default function ExamsPage() {
       {/* A caixa vem primeiro e concentra TODAS as formas de envio (selecionar
           arquivo, arrastar PDF, foto do laudo). Ômica fica logo abaixo. */}
       {/* Input compartilhado (caixa + "Adicionar página"/"Galeria"). `multiple` p/ galeria. */}
-      <input ref={fileInputRef} type="file" aria-label="Selecionar arquivo de exame" accept=".pdf,.jpg,.jpeg,.png" multiple className="sr-only" disabled={uploading || bundle.combining} onChange={onInputChange} />
+      <input ref={fileInputRef} type="file" aria-label="Selecionar arquivo de exame" accept={supportedNowAcceptAttr()} multiple className="sr-only" disabled={uploading || bundle.combining} onChange={onInputChange} />
 
       {bundle.pages.length > 0 ? (
         /* Staging multipágina (primitivo transversal) — reordenar/remover páginas do MESMO documento */

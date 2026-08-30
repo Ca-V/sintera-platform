@@ -39,7 +39,7 @@ import { todayISO } from '@/lib/date'
 import { expenseDocLabel } from '@/lib/finance/expense'
 // VÍNCULO receita → recurso: as MESMAS funções que o aplicativo chama; aqui o cliente é o da Web.
 import { listLinkableDocuments, listDocumentsForTargets, linkDocumentToTarget, unlinkDocumentFromTarget, type PatientDocumentDTO } from '@sintera/api-client'
-import { uuid, documentSubtitle } from '@sintera/core'
+import { uuid, documentSubtitle, supportedNowAcceptAttr } from '@sintera/core'
 
 // FB-016-2 — frequências de troca (mesmo padrão inline do Medicamento), no conjunto canônico de recorrência.
 const TROCA_FREQ_OPTS: { v: RecurrenceFreq; l: string }[] = [
@@ -636,7 +636,7 @@ export default function RecursosPage() {
               <AttachmentLink url={f.file_url} variant="inline" label="Foto anexada" icon={<Paperclip size={13} />} />
             ) : (
               <>
-                <input ref={scanRef} type="file" accept="image/*,application/pdf" className="hidden"
+                <input ref={scanRef} type="file" accept={supportedNowAcceptAttr()} className="hidden"
                   onChange={e => { const file = e.target.files?.[0]; e.target.value = ''; if (file) onScanFile(file) }} />
                 <button onClick={() => scanRef.current?.click()}
                   className="inline-flex items-center gap-1.5 font-body text-xs text-mauve hover:text-petal transition-colors">
