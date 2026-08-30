@@ -43,6 +43,15 @@ export const HEALTH_CONNECT_FONTES: readonly FonteGuia[] = [
     traz: 'corridas, pedaladas e caminhadas com tempo, distância e calorias',
   },
   {
+    // Faltava, e é a fonte mais provável de todas em aparelho Samsung: já vem instalado e já conta passos há
+    // meses. Na homologação de 30/08 ele estava ali, em "acesso não permitido", enquanto se procurava dado
+    // para testar. A fonte mais fácil era a que ninguém tinha lembrado de listar.
+    source: 'samsung_health',
+    nome: 'Samsung Health',
+    caminho: 'Saúde Connect → Permissões do app → Samsung Health → permitir',
+    traz: 'passos, frequência cardíaca e sono — já registrados no aparelho',
+  },
+  {
     source: 'whoop',
     nome: 'Whoop',
     caminho: 'Whoop → Mais → Configurações do app → Integrações → Health Connect',
