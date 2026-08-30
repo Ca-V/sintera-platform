@@ -42,6 +42,29 @@ O critério não é a ordem em que os achados chegaram, e sim **o que a pessoa p
 
 | 14 | "Nada novo" continuou depois de tudo autorizado | O cofre está **genuinamente vazio** — a fundadora abriu o Health Connect e TODAS as categorias diziam "Não há dados". Causa: o **Samsung Health exige Android 10** e o aparelho tem 9, então nunca escreveria; e o Strava só envia atividades gravadas DEPOIS de ligado | ✅ Explicado — Samsung Health sai do guia abaixo do Android 10, e a tela passa a dizer como testar sem esperar |
 
+| 15 | **A ingestão funcionou** — 12 atividades do Strava entraram pelo Health Connect até a nuvem. Todas como "Outra atividade", sem distância, sem calorias e sem data na tela | `exerciseType` chega como **número** (79 = caminhada) e a leitura só aceitava texto → degradava para 'outro'. Distância e energia são **registros separados**, e nós líamos um campo dentro da sessão que nunca existiu | ✅ Corrigido |
+| 16 | O que já entrou errado continuaria errado | A ingestão pula o que já existe. Correção de leitura não alcançava o passado | ✅ Corrigido — completa o vazio e corrige o palpite, nunca sobrescreve |
+
+---
+
+## O marco: a primeira ingestão real
+
+Em 30/08 o caminho **Strava → Health Connect → aparelho → nuvem** funcionou de ponta a ponta pela primeira
+vez. Doze atividades reais, com proveniência, sem duplicar. Isso vale registrar tanto quanto os defeitos: era
+a capacidade central da fase, e nunca tinha sido verificada fora de teste.
+
+O que ela revelou, e é a lição que fica para quem continuar:
+
+> **Um caminho de degradação silencioso esconde ERRO DE LEITURA tão bem quanto esconde dado desconhecido.**
+
+Os dois defeitos do achado 15 estavam protegidos pelo mesmo mecanismo que existe para ser gentil com o
+desconhecido. `exerciseType` numérico virava `null`, `null` virava `'outro'`, e `'outro'` é um valor legítimo —
+nada nunca reclamou. Um comentário no código *afirmava* que a biblioteca resolvia o código para nome. Não
+resolve, e a afirmação nunca foi verificada contra um dado real.
+
+Onde há degradação silenciosa, é preciso um teste com o formato REAL da fonte — não com o formato que se
+supõe que ela use.
+
 ---
 
 ## O limite do aparelho de homologação
