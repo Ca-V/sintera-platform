@@ -29,6 +29,39 @@ export interface FonteGuia {
    * um menu inexistente e concluiria que errou. Prometer o que não existe é o que corrói a confiança.
    */
   readonly indisponivel?: string
+  /**
+   * Versão mínima do Android (nível de API) em que ESTA fonte funciona.
+   *
+   * O Health Connect roda a partir do Android 9, mas os aplicativos que escrevem nele têm exigências próprias e
+   * MAIORES. Num aparelho abaixo do mínimo, o caminho descrito simplesmente não existe — e mandar a pessoa
+   * procurá-lo é fazê-la se sentir incompetente por não achar o que não está lá.
+   *
+   * Descoberto na homologação de 30/08: no Android 9 da fundadora, o Samsung Health estava listado no guia e
+   * autorizado no Health Connect, e nunca escreveria nada — a versão dele que roda nesse aparelho é anterior ao
+   * Health Connect existir.
+   */
+  readonly apiMinima?: number
+}
+
+/** Nome amigável da versão do Android, para a frase soar como a pessoa fala. */
+function versaoAndroid(api: number): string {
+  return `Android ${api - 19}` // API 29 = Android 10, 30 = 11, e assim por diante.
+}
+
+/**
+ * Por que esta fonte não serve NESTE aparelho. `null` quando serve.
+ *
+ * Duas razões possíveis, e são diferentes: a fonte ainda não escreve no Health Connect (vale para todo mundo),
+ * ou escreve mas exige um Android mais novo que o deste aparelho (vale só aqui). A segunda é a que estava
+ * faltando, e é a que engana — a fonte aparece na lista, aceita a permissão, e não entrega nada.
+ */
+export function motivoIndisponivel(f: FonteGuia, apiAndroid?: number): string | null {
+  if (f.indisponivel) return f.indisponivel
+  if (f.apiMinima && typeof apiAndroid === 'number' && apiAndroid < f.apiMinima) {
+    return `O ${f.nome} exige ${versaoAndroid(f.apiMinima)} ou mais recente para conversar com o Health Connect. ` +
+      `Este aparelho tem ${versaoAndroid(apiAndroid)}, então esta fonte não vai enviar dados por aqui.`
+  }
+  return null
 }
 
 export const HEALTH_CONNECT_FONTES: readonly FonteGuia[] = [
@@ -50,6 +83,10 @@ export const HEALTH_CONNECT_FONTES: readonly FonteGuia[] = [
     nome: 'Samsung Health',
     caminho: 'Saúde Connect → Permissões do app → Samsung Health → permitir',
     traz: 'passos, frequência cardíaca e sono — já registrados no aparelho',
+    // O Samsung Health exige Android 10. Verificado em 30/08/2026, no aparelho da fundadora: Android 9, o
+    // Samsung Health autorizado no Health Connect, e TODAS as categorias vazias. A versão do Samsung Health que
+    // roda em Android 9 é anterior ao Health Connect existir — ela nunca escreveria nada, e nada dizia isso.
+    apiMinima: 29,
   },
   {
     source: 'whoop',
@@ -81,15 +118,33 @@ export const HEALTH_CONNECT_FONTES: readonly FonteGuia[] = [
   },
 ]
 
-/** Só as fontes que dá para ligar hoje. */
-export function fontesDisponiveis(): FonteGuia[] {
-  return HEALTH_CONNECT_FONTES.filter(f => !f.indisponivel)
+/** Só as fontes que dá para ligar NESTE aparelho. Sem a versão do Android, considera só o que vale para todos. */
+export function fontesDisponiveis(apiAndroid?: number): FonteGuia[] {
+  return HEALTH_CONNECT_FONTES.filter(f => !motivoIndisponivel(f, apiAndroid))
 }
 
-/** As que ainda não escrevem — mostradas com o motivo, nunca escondidas. */
-export function fontesIndisponiveis(): FonteGuia[] {
-  return HEALTH_CONNECT_FONTES.filter(f => !!f.indisponivel)
+/** As que não servem aqui — mostradas COM o motivo, nunca escondidas. */
+export function fontesIndisponiveis(apiAndroid?: number): { fonte: FonteGuia; motivo: string }[] {
+  return HEALTH_CONNECT_FONTES
+    .map(f => ({ fonte: f, motivo: motivoIndisponivel(f, apiAndroid) }))
+    .filter((x): x is { fonte: FonteGuia; motivo: string } => !!x.motivo)
 }
+
+/**
+ * A forma mais rápida de PROVAR que a ligação funciona, em vez de esperar.
+ *
+ * Nasceu do impasse de 30/08: o Health Connect estava vazio, e sem nada escrito não havia como distinguir
+ * "configurado errado" de "configurado certo e ainda sem dado". Esperar horas por um sinal que talvez não venha
+ * é a pior instrução possível — a pessoa desiste antes.
+ *
+ * Gravar uma atividade curta produz um dado NOVO, que é exatamente o que estas fontes escrevem: elas passam a
+ * enviar a partir do momento em que são ligadas, e quase nunca reenviam o que já era antigo.
+ */
+export const HEALTH_CONNECT_COMO_TESTAR =
+  'Para conferir agora, sem esperar: abra o aplicativo da fonte (o Strava, por exemplo), grave uma atividade ' +
+  'de dois minutos e salve. Ela aparece no Health Connect em seguida, e a próxima sincronização a traz. ' +
+  'É a prova de que a ligação está de pé — as fontes enviam o que acontece DEPOIS de ligadas, e raramente o que ' +
+  'já era antigo.'
 
 /**
  * A explicação de por que autorizar a SINTERA não basta.

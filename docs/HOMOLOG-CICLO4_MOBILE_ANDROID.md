@@ -40,6 +40,24 @@ O critério não é a ordem em que os achados chegaram, e sim **o que a pessoa p
 | 12 | Recuo de "Minha Saúde" é sutil demais | — | 🔵 Cosmético, adiado por escolha dela |
 | 13 | "Apertei autorizar e sincronizar, nada aconteceu" — **relatado duas vezes**, a segunda já com a permissão do Samsung Health concedida | A resposta era desenhada **no fim do cartão**, depois dos seis cartões de fonte que o passo a passo acrescentou — fora da tela. E um dos caminhos (aparelho não responde) limpava a mensagem e voltava, sem dizer nada | ✅ Corrigido — resultado colado no botão, e nenhum caminho termina em silêncio |
 
+| 14 | "Nada novo" continuou depois de tudo autorizado | O cofre está **genuinamente vazio** — a fundadora abriu o Health Connect e TODAS as categorias diziam "Não há dados". Causa: o **Samsung Health exige Android 10** e o aparelho tem 9, então nunca escreveria; e o Strava só envia atividades gravadas DEPOIS de ligado | ✅ Explicado — Samsung Health sai do guia abaixo do Android 10, e a tela passa a dizer como testar sem esperar |
+
+---
+
+## O limite do aparelho de homologação
+
+O Samsung Galaxy com **Android 9** consegue instalar o Health Connect (que exige Android 9), mas **não consegue
+alimentá-lo com o Samsung Health** (que exige Android 10). Nesse aparelho, a única fonte que escreve é o
+**Strava**, e só a partir da próxima atividade gravada.
+
+Isso não é defeito da plataforma, e é preciso não confundir os dois: um aparelho no piso do suportado prova
+que a SINTERA **degrada corretamente**, mas não prova que a ingestão funciona. Para provar a ingestão é preciso
+uma fonte que efetivamente escreva.
+
+**Como testar sem esperar:** gravar uma atividade de dois minutos no Strava e salvar. É a única forma de gerar
+dado novo por vontade própria — estas fontes enviam o que acontece depois de ligadas, quase nunca o que já era
+antigo. A tela passa a dizer isso quando a sincronização volta vazia.
+
 ---
 
 ## O padrão que se repetiu — resposta longe da ação

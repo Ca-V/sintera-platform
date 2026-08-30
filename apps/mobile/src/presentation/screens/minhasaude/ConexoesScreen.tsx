@@ -10,13 +10,14 @@
 // O fluxo de autorização abre no NAVEGADOR, de propósito: é OAuth do fabricante, e o app nunca manipula a
 // credencial da pessoa.
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ScrollView, View, ActivityIndicator, RefreshControl, Pressable, Alert, Linking, StyleSheet } from 'react-native'
+import { ScrollView, View, ActivityIndicator, RefreshControl, Pressable, Alert, Linking, StyleSheet, Platform } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import type { ConnectorState } from '@sintera/core'
 import {
   connectorStatusLabel, connectorStatusTone, connectorPrimaryAction, isConnectorActive, SCREEN_COPY,
-  HEALTH_CONNECT_DOIS_PASSOS, fontesDisponiveis, fontesIndisponiveis, resumoSincronizacao,
+  HEALTH_CONNECT_DOIS_PASSOS, HEALTH_CONNECT_COMO_TESTAR, fontesDisponiveis, fontesIndisponiveis,
+  resumoSincronizacao,
 } from '@sintera/core'
 import { useNavigation } from '@react-navigation/native'
 import { Text, Button, Disclaimer } from '../../primitives'
@@ -25,6 +26,12 @@ import { apiClient } from '../../../infrastructure/apiClient'
 import { healthConnectDisponivel, statusHealthConnect, sincronizarHealthConnect } from '../../../infrastructure/healthConnect'
 
 const C = SCREEN_COPY.conexoes
+
+// Versao do Android deste aparelho. O guia de fontes depende dela: o Samsung Health, por exemplo, so conversa
+// com o Health Connect a partir do Android 10, e num aparelho abaixo disso listar o caminho dele e mentir.
+const apiAndroid: number | undefined = Platform.OS === 'android'
+  ? (typeof Platform.Version === 'number' ? Platform.Version : Number(Platform.Version)) || undefined
+  : undefined
 
 function fmtDataHora(iso: string | null): string {
   if (!iso) return '—'
@@ -285,7 +292,15 @@ export function ConexoesScreen() {
               )}
               <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{HEALTH_CONNECT_DOIS_PASSOS}</Text>
 
-              {fontesDisponiveis().map(f => (
+              {/* COMO PROVAR AGORA, em vez de esperar. Sem isto, o cofre vazio é indistinguível de configuração
+                  errada — e foi exatamente aí que a homologação de 30/08 travou. */}
+              {hcVazio && (
+                <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{HEALTH_CONNECT_COMO_TESTAR}</Text>
+              )}
+
+              {/* A LISTA É FILTRADA PELO APARELHO. Uma fonte que exige um Android mais novo que este não
+                  aparece como opção: ela aceitaria a permissão e nunca escreveria nada. */}
+              {fontesDisponiveis(apiAndroid).map(f => (
                 <View key={f.source} style={[s.guia, { borderColor: t.color.border.default }]}>
                   <Text spec={text(t, { role: 'body' })}>{f.nome}</Text>
                   <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{f.caminho}</Text>
@@ -295,10 +310,10 @@ export function ConexoesScreen() {
 
               {/* O QUE AINDA NÃO DÁ aparece com o motivo, nunca escondido: mandar procurar um menu que não
                   existe faz a pessoa se sentir errada por não achar o que não está lá. */}
-              {fontesIndisponiveis().map(f => (
-                <View key={f.source} style={[s.guia, { borderColor: t.color.border.default, opacity: 0.75 }]}>
-                  <Text spec={text(t, { role: 'body' })}>{f.nome}</Text>
-                  <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{f.indisponivel}</Text>
+              {fontesIndisponiveis(apiAndroid).map(({ fonte, motivo }) => (
+                <View key={fonte.source} style={[s.guia, { borderColor: t.color.border.default, opacity: 0.75 }]}>
+                  <Text spec={text(t, { role: 'body' })}>{fonte.nome}</Text>
+                  <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{motivo}</Text>
                 </View>
               ))}
             </View>
