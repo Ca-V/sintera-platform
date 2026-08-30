@@ -38,6 +38,22 @@ O critério não é a ordem em que os achados chegaram, e sim **o que a pessoa p
 | 10 | Médico e clínica deveriam ser campos separados; em exame vale o **solicitante**, não quem laudou | O modelo tem um campo só (`issuer`) | 🟡 Analisado; **falta coluna** |
 | 11 | Receitas não geram entrada em Medicamentos | Não existe o fluxo | 🔴 Decisão de produto pendente |
 | 12 | Recuo de "Minha Saúde" é sutil demais | — | 🔵 Cosmético, adiado por escolha dela |
+| 13 | "Apertei autorizar e sincronizar, nada aconteceu" — **relatado duas vezes**, a segunda já com a permissão do Samsung Health concedida | A resposta era desenhada **no fim do cartão**, depois dos seis cartões de fonte que o passo a passo acrescentou — fora da tela. E um dos caminhos (aparelho não responde) limpava a mensagem e voltava, sem dizer nada | ✅ Corrigido — resultado colado no botão, e nenhum caminho termina em silêncio |
+
+---
+
+## O padrão que se repetiu — resposta longe da ação
+
+Os achados **2** e **13** são o mesmo defeito com roupas diferentes: a pessoa toca num lugar e a plataforma
+responde noutro, fora da tela. Nos dois casos ela relatou "não funciona", e nos dois casos funcionava.
+
+É um defeito que os testes não pegam — o estado muda, a asserção passa, e ninguém vê nada. E é traiçoeiro
+porque **nasce depois**: os dois lugares estavam próximos quando foram escritos, e afastaram-se quando algo foi
+inserido no meio (a lista de documentos no primeiro caso, os seis cartões do passo a passo no segundo).
+
+**Regra para quem continuar:** o resultado de uma ação pertence ao lado dela. Ao inserir qualquer bloco entre um
+controle e a sua resposta, mover a resposta faz parte da alteração — não é acabamento. Longe demais equivale a
+não existir.
 
 ---
 
