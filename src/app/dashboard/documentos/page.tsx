@@ -33,10 +33,11 @@ import { Card } from '@/lib/ui/ds'
 // `row()`. Não é gambiarra minha — é o padrão já usado por Recursos, Hábitos e demais páginas.
 import { row } from '@/lib/supabase/db'
 // A Web reusa a MESMA consulta do Mobile (SSOT), como já faz em getProfileStats.
-import { targetNamesByDocument, updateDocument } from '@sintera/api-client'
+import { targetNamesByDocument, updateDocument, replaceDocument } from '@sintera/api-client'
 import {
   DOCUMENT_SUBTYPES, documentSubtypeLabel, buildPatientDocumentInsert, documentSubtitle, isReadyToSave,
   autofillFrom, deriveDocumentTitle, documentPrimaryName, parsePrescribedItems, prescribedItemsToText,
+  findExistingDocument, existingDocumentMessage, DOCUMENT_DUPLICATE_CHOICES, type DocumentDuplicateCandidate,
   type PatientDocumentSubtype, type AttachedFile, uuid, DOCUMENT_FILTER_ALL,} from '@sintera/core'
 
 // Ícone por subtipo. Mapa EXAUSTIVO por construção: o TypeScript exige uma entrada para cada
@@ -77,6 +78,8 @@ export default function DocumentosPage() {
   const [saving, setSaving] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [confirmId, setConfirmId] = useState<string | null>(null)
+  /** O documento igual que já estava guardado. Presente = o aviso de repetição está na tela. */
+  const [repetido, setRepetido] = useState<DocumentDuplicateCandidate | null>(null)
   /** Documento sendo corrigido. `null` = novo. */
   const [editando, setEditando] = useState<DocRow | null>(null)
 
@@ -132,6 +135,29 @@ export default function DocumentosPage() {
   async function onSave() {
     if (!user) return
     if (!isReadyToSave(files)) { setErro('Anexe o documento.'); return }
+
+    // JÁ ESTÁ GUARDADO? Regra permanente da fundadora: toda informação que entra é conferida contra o que já
+    // existe, e havendo correspondência a plataforma INFORMA e PERGUNTA. Idêntico ao Mobile — mesma regra,
+    // mesma redação, mesmas três saídas (BASE ÚNICA).
+    const existente = findExistingDocument(
+      {
+        id: '', createdAt: '', subtype,
+        issuer: documentPrimaryName({ professional_name: professional, institution_name: institution, issuer }),
+        docDate: docDate || null,
+      },
+      rows.map(d => ({
+        id: d.id, createdAt: d.created_at, subtype: d.subtype,
+        issuer: documentPrimaryName(d), docDate: d.doc_date,
+      })),
+    )
+    if (existente) { setRepetido(existente); return }
+    await gravar(null)
+  }
+
+  /** `substituirId` presente = a pessoa escolheu substituir o que já estava guardado. */
+  async function gravar(substituirId: string | null) {
+    if (!user) return
+    setRepetido(null)
     setSaving(true)
     try {
       // A LINHA é montada pelo domínio (core), não aqui: os defaults de `source`/`status` e a forma da
@@ -146,6 +172,29 @@ export default function DocumentosPage() {
         doc_date: docDate || null,
         notes: notes.trim() || null,
       })
+      // SUBSTITUIR atualiza o registro guardado em vez de apagar e recriar: ele pode já estar vinculado a um
+      // medicamento ou a uma consulta, e apagá-lo levaria os vínculos junto (`on delete cascade`).
+      if (substituirId) {
+        // A SUBSTITUIÇÃO INTEIRA — campos e páginas — vive no api-client, a MESMA função que o Mobile chama.
+        // Reescrevê-la aqui faria as duas pontas substituírem de formas sutilmente diferentes.
+        const { error } = await replaceDocument(supabase, substituirId, {
+          subtype,
+          file_url: files[0].url!,
+          issuer: docRow.issuer,
+          professional_name: docRow.professional_name,
+          institution_name: docRow.institution_name,
+          prescribed_items: docRow.prescribed_items,
+          doc_date: docRow.doc_date,
+          notes: docRow.notes,
+          pages: files.map(f => ({
+            file_url: f.url!, file_name: f.name, mime_type: f.mime, size_bytes: f.sizeBytes,
+          })),
+        })
+        if (error) { setErro('Não foi possível substituir o documento.'); return }
+        setOpen(false); resetForm(); await load()
+        return
+      }
+
       const { data: criado, error } = await supabase.from('patient_documents').insert(row(docRow)).select('id')
       if (error) { setErro('Não foi possível salvar o documento.'); return }
       // PÁGINAS (ANEXO-001) — a ordem do array é a ordem de leitura.
@@ -363,6 +412,35 @@ export default function DocumentosPage() {
               >
                 {saving ? 'Salvando…' : editando ? 'Salvar alterações' : 'Salvar documento'}
               </button>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* JÁ ESTÁ GUARDADO — a plataforma informa e PERGUNTA, com as três saídas do núcleo.
+          Nenhuma é automática: apagar sozinha exigiria uma certeza que não existe, e o custo de errar é
+          perder um documento real. As mesmas três, com a mesma redação, aparecem no aplicativo. */}
+      {repetido && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <Card className="w-full max-w-md space-y-4 p-6">
+            <h2 className="text-lg font-medium">Este documento já está guardado</h2>
+            <p className="text-sm text-mauve">
+              {existingDocumentMessage(repetido, documentSubtypeLabel(subtype))}
+            </p>
+            <div className="space-y-2">
+              {DOCUMENT_DUPLICATE_CHOICES.map(op => (
+                <button
+                  key={op.id}
+                  onClick={() => {
+                    if (op.id === 'cancelar') { setRepetido(null); return }
+                    void gravar(op.id === 'substituir' ? repetido.id : null)
+                  }}
+                  className="w-full rounded-xl border border-border px-4 py-3 text-left hover:bg-surface"
+                >
+                  <span className="block text-sm font-medium">{op.label}</span>
+                  <span className="block text-xs text-mauve">{op.hint}</span>
+                </button>
+              ))}
             </div>
           </Card>
         </div>

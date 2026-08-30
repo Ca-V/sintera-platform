@@ -133,6 +133,40 @@ export function findExistingDocument(
   return ordenados.find(g => g.id !== entrando.id && documentDuplicateKey(g) === chave) ?? null
 }
 
+/**
+ * As saídas que a pessoa tem quando o documento já existe.
+ *
+ * A REGRA É DELA, e é permanente (28/08): "qualquer informação que entre na plataforma — seja pelo próprio
+ * usuário, seja por um upload, seja por transferência de dados de alguma empresa — a plataforma precisa fazer
+ * a leitura, identificar se já existe, e se já existe deve aparecer uma mensagem perguntando se quer
+ * substituir, se quer salvar novamente."
+ *
+ * As três estão aqui, com esta redação, porque Web e aplicativo têm de oferecer exatamente as mesmas saídas.
+ * Uma ponta com uma opção a menos seria uma plataforma diferente.
+ *
+ * NENHUMA É AUTOMÁTICA. A plataforma informa e pergunta; apagar sozinha exigiria uma certeza que não existe, e
+ * o custo de errar é perder um documento real.
+ */
+export const DOCUMENT_DUPLICATE_CHOICES = [
+  {
+    id: 'substituir',
+    label: 'Substituir o guardado',
+    hint: 'O registro continua o mesmo, com os vínculos que já tem, e passa a apontar para este arquivo.',
+  },
+  {
+    id: 'guardar-as-duas',
+    label: 'Guardar as duas',
+    hint: 'Às vezes a segunda via é um documento por direito próprio.',
+  },
+  {
+    id: 'cancelar',
+    label: 'Cancelar',
+    hint: 'Nada é salvo, e o que já estava guardado não muda.',
+  },
+] as const
+
+export type DocumentDuplicateChoice = (typeof DOCUMENT_DUPLICATE_CHOICES)[number]['id']
+
 /** Como a plataforma anuncia o achado. Texto único: as duas pontas dizem o mesmo. */
 export function existingDocumentMessage(existente: DocumentDuplicateCandidate, rotuloTipo: string): string {
   const quem = existente.issuer?.trim()

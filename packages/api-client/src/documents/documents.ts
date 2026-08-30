@@ -256,6 +256,60 @@ export async function updateDocument(
   }
 }
 
+/**
+ * SUBSTITUI um documento guardado pelo que está entrando — a saída "Substituir o guardado" do aviso de
+ * repetição.
+ *
+ * POR QUE ATUALIZA EM VEZ DE APAGAR E RECRIAR: o registro guardado pode já estar VINCULADO a um medicamento,
+ * a uma consulta ou a um exame. Apagá-lo levaria os vínculos junto (`on delete cascade`), e a pessoa perderia
+ * relações que construiu — para "substituir" um arquivo. O registro continua o mesmo; muda o que ele aponta.
+ *
+ * As páginas antigas são removidas, porque são a versão antiga do mesmo documento e ficariam misturadas com a
+ * nova. É a única remoção aqui, e é o que a palavra "substituir" significa.
+ */
+export async function replaceDocument(
+  client: SupabaseClient, id: string, input: PatientDocumentInput,
+): Promise<{ error: Error | null }> {
+  try {
+    const userId = await requireUserId(client)
+    if (!input.file_url?.trim()) return { error: new Error('Anexe o documento') }
+
+    const { error } = await client.from('patient_documents').update({
+      subtype: input.subtype,
+      file_url: input.file_url,
+      issuer: input.issuer ?? null,
+      professional_name: input.professional_name ?? null,
+      institution_name: input.institution_name ?? null,
+      prescribed_items: input.prescribed_items ?? null,
+      doc_date: input.doc_date ?? null,
+      notes: input.notes ?? null,
+      document_sha256: input.document_sha256 ?? null,
+      updated_at: new Date().toISOString(),
+    }).eq('id', id).eq('user_id', userId)
+    if (error) return { error: asError(error) }
+
+    // Páginas: fora as antigas, dentro as novas. Uma falha aqui deixa o documento com os dados novos e sem as
+    // páginas extras — nunca com as duas versões misturadas, que seria pior de entender.
+    const { error: de } = await client.from('patient_document_files')
+      .delete().eq('document_id', id).eq('user_id', userId)
+    if (de) return { error: asError(de) }
+
+    const pages = input.pages ?? []
+    if (pages.length > 0) {
+      const rows = pages.map((p, i) => ({
+        document_id: id, user_id: userId, file_url: p.file_url,
+        file_name: p.file_name ?? null, mime_type: p.mime_type ?? null,
+        size_bytes: p.size_bytes ?? null, position: i,
+      }))
+      const { error: pe } = await client.from('patient_document_files').insert(rows)
+      if (pe) return { error: asError(pe) }
+    }
+    return { error: null }
+  } catch (e) {
+    return { error: e instanceof Error ? e : new Error(String(e)) }
+  }
+}
+
 /** Remove o documento. Os links caem por `on delete cascade`. NÃO lança. */
 export async function deleteDocument(client: SupabaseClient, id: string): Promise<{ error: Error | null }> {
   try {

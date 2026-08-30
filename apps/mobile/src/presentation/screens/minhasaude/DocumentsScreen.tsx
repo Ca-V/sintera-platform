@@ -14,6 +14,7 @@ import {
   DOCUMENT_SUBTYPES, documentSubtypeLabel, documentSubtitle, isReadyToSave, DOCUMENT_BASE_ACTIONS,
   autofillFrom, deriveDocumentTitle, DOCUMENT_FILTER_ALL,
   documentPrimaryName, parsePrescribedItems, prescribedItemsToText,
+  findExistingDocument, existingDocumentMessage, DOCUMENT_DUPLICATE_CHOICES,
   type PatientDocumentSubtype, type AttachedFile,
 } from '@sintera/core'
 import { Text, Button, Input, AttachmentLink, DatePicker, Disclaimer, Select, AnexoDocumento } from '../../primitives'
@@ -23,6 +24,13 @@ import { apiClient } from '../../../infrastructure/apiClient'
 
 // Rótulos das ações OBRIGATÓRIAS, do contrato no núcleo — a mesma redação em toda categoria e nas duas pontas.
 const ACOES = Object.fromEntries(DOCUMENT_BASE_ACTIONS.map(a => [a.kind, a.label])) as Record<'view' | 'edit' | 'delete', string>
+
+// As três saídas do aviso de repetição, com a redação do núcleo — a Web oferece exatamente as mesmas.
+const OPC = {
+  substituir: DOCUMENT_DUPLICATE_CHOICES.find(o => o.id === 'substituir')!,
+  guardar: DOCUMENT_DUPLICATE_CHOICES.find(o => o.id === 'guardar-as-duas')!,
+  cancelar: DOCUMENT_DUPLICATE_CHOICES.find(o => o.id === 'cancelar')!,
+}
 
 export function DocumentsScreen() {
   const t = useTheme()
@@ -154,9 +162,44 @@ export function DocumentsScreen() {
     }
 
     if (!isReadyToSave(files)) { setFormError('Anexe o documento.'); return }
+
+    // JÁ ESTÁ GUARDADO? A regra permanente da fundadora (28/08): toda informação que entra é conferida contra
+    // o que já existe, e havendo correspondência a plataforma INFORMA e PERGUNTA. Ela adicionou a mesma receita
+    // duas vezes, na semana passada e hoje, e a plataforma não disse nada — as duas ficaram na lista.
+    //
+    // A conferência acontece ANTES de gravar, porque depois já não é aviso: é limpeza.
+    const existente = findExistingDocument(
+      { id: '', createdAt: '', subtype, issuer: nomePrincipal(), docDate: docDate || null },
+      items.map(d => ({
+        id: d.id, createdAt: d.created_at, subtype: d.subtype,
+        issuer: documentPrimaryName(d), docDate: d.doc_date,
+      })),
+    )
+    if (existente) {
+      Alert.alert(
+        'Este documento já está guardado',
+        `${existingDocumentMessage(existente, documentSubtypeLabel(subtype))}\n\nO que você quer fazer?`,
+        [
+          { text: OPC.cancelar.label, style: 'cancel' },
+          { text: OPC.guardar.label, onPress: () => { void gravar(null) } },
+          { text: OPC.substituir.label, onPress: () => { void gravar(existente.id) } },
+        ],
+      )
+      return
+    }
+    await gravar(null)
+  }
+
+  /**
+   * Grava o documento. `substituirId` presente = a pessoa escolheu substituir o que já estava guardado.
+   *
+   * Separada de `save()` porque o aviso de repetição é assíncrono e por escolha da pessoa — sem esta divisão, a
+   * gravação teria de acontecer dentro do callback de um alerta, longe da validação que a precede.
+   */
+  async function gravar(substituirId: string | null) {
     setSaving(true)
     try {
-      const { error: err } = await apiClient.documents.saveDocument({
+      const entrada = {
         subtype,
         // A primeira página também vai em `file_url` — é o que os documentos anteriores ao ANEXO-001 usam.
         file_url: files[0].url!,
@@ -169,7 +212,12 @@ export function DocumentsScreen() {
         pages: files.map(f => ({
           file_url: f.url!, file_name: f.name, mime_type: f.mime, size_bytes: f.sizeBytes,
         })),
-      })
+      }
+      // SUBSTITUIR atualiza o registro guardado em vez de apagar e recriar: ele pode já estar vinculado a um
+      // medicamento ou a uma consulta, e apagá-lo levaria os vínculos junto.
+      const { error: err } = substituirId
+        ? await apiClient.documents.replaceDocument(substituirId, entrada)
+        : (await apiClient.documents.saveDocument(entrada))
       if (err) { setFormError('Não foi possível salvar o documento.'); return }
       setOpen(false); resetForm(); load(true)
     } finally { setSaving(false) }

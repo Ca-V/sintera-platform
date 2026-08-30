@@ -68,7 +68,7 @@ export { prescriptionUrlOf, archivePrescription } from './documents/prescription
 export { listDocumentsForTargets, listPagesForDocuments } from './documents/documents'
 // Corrigir os fatos de um documento (tipo · emissor · data · observação). O contrato do core exige
 // ver/editar/excluir em todo cartão; a Web só tinha ver e excluir, e esta função nunca teve consumidor lá.
-export { updateDocument } from './documents/documents'
+export { updateDocument, replaceDocument } from './documents/documents'
 // Busca global nos registros da pessoa — uma implementação, duas pontas. Atravessa o RLS: enxerga o que ela enxerga.
 export { searchRecords } from './search/search'
 // VÍNCULO documento → registro (receita → medicamento/suplemento/recurso). Espelha exame → pedido: a pergunta

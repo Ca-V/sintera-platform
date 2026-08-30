@@ -122,6 +122,8 @@ export interface DocumentsApi {
    */
   targetNamesByDocument(documentIds: string[]): Promise<Record<string, string[]>>
   saveDocument(input: PatientDocumentInput): Promise<{ data: { id: string } | null; error: Error | null }>
+  /** Substitui o documento guardado pelo que está entrando, preservando o registro e os vínculos. */
+  replaceDocument(id: string, input: PatientDocumentInput): Promise<{ error: Error | null }>
   updateDocument(id: string, patch: Partial<Pick<PatientDocumentInput,
     'subtype' | 'issuer' | 'doc_date' | 'notes' | 'prescribed_items' | 'professional_name' | 'institution_name'>>): Promise<{ error: Error | null }>
   deleteDocument(id: string): Promise<{ error: Error | null }>
