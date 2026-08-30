@@ -81,7 +81,14 @@
           }
         }
       ],
-      "expo-background-task"
+      "expo-background-task",
+      [
+        "@kingstinct/react-native-healthkit",
+        {
+          "NSHealthShareUsageDescription": "A SINTERA lê do Apple Saúde as suas medições e atividades para guardá-las no seu registro, com a origem de cada informação preservada. Você escolhe o que autorizar, e pode revogar quando quiser no aplicativo Saúde.",
+          "NSHealthUpdateUsageDescription": "A SINTERA não escreve nada no Apple Saúde. Esta permissão não é usada."
+        }
+      ]
     ],
     "extra": {
       "eas": {

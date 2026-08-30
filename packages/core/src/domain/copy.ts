@@ -139,11 +139,24 @@ export const SCREEN_COPY = {
      * Saúde": futuro do verbo para uma coisa não implementada é promessa, e promessa é o que a plataforma não
      * faz. Enquanto não existir, o honesto é dizer que não existe e apontar o que existe.
      */
-    hcIosTitle:     'A entrada automática ainda não funciona no iPhone',
-    hcIosHint:      'O Health Connect é do Android. A integração equivalente com o Apple Saúde ainda não foi ' +
-                    'implementada — quando estiver pronta, passa a funcionar sem você fazer nada aqui. Por ' +
-                    'enquanto, no iPhone os dados entram pelos serviços que oferecem conexão própria, e por ' +
-                    'aquilo que você registrar.',
+    hcIosTitle:     'Apple Saúde',
+    hcIosHint:      'No iPhone, a SINTERA lê do Apple Saúde — o cofre do próprio aparelho, onde os aplicativos ' +
+                    'que você já usa escrevem. Você autoriza uma vez, e o dado passa a entrar sem que você ' +
+                    'precise pedir. A SINTERA não escreve nada lá: só lê.',
+    hcIosAction:    'Autorizar e sincronizar',
+    /**
+     * O QUE A APPLE NÃO NOS DEIXA SABER, dito à pessoa em vez de escondido.
+     *
+     * Por privacidade, o iOS não informa ao aplicativo quais tipos foram RECUSADOS — um tipo negado se comporta
+     * exatamente como um tipo vazio. Então a plataforma não pode dizer "você autorizou 8 de 12"; dizer isso
+     * seria inventar. O que ela pode é apontar onde a pessoa confere e corrige.
+     */
+    hcIosRevisar:   'O iPhone não informa aos aplicativos o que foi recusado — por isso a SINTERA não consegue ' +
+                    'dizer o que ficou de fora. Se algo não aparecer, confira em Ajustes → Saúde → Acesso a ' +
+                    'dados e dispositivos → SINTERA.',
+    hcIosVazio:     'Nada veio do Apple Saúde nesta busca. Duas causas comuns: a permissão daquele tipo não foi ' +
+                    'concedida, ou nenhum aplicativo escreveu ainda. Os aplicativos passam a escrever a partir ' +
+                    'do momento em que você os liga ao Apple Saúde.',
     hcDenied:       'Nenhuma permissão concedida. Você decide o que compartilhar, e pode mudar depois.',
     hcRevokeHint:   'A autorização fica no Health Connect, não aqui — é lá que você revoga quando quiser.',
   },

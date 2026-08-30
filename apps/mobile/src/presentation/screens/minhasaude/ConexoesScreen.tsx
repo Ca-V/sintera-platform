@@ -24,6 +24,7 @@ import { Text, Button, Disclaimer } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 import { healthConnectDisponivel, statusHealthConnect, sincronizarHealthConnect } from '../../../infrastructure/healthConnect'
+import { sincronizarAppleHealth } from '../../../infrastructure/appleHealth'
 
 const C = SCREEN_COPY.conexoes
 
@@ -125,6 +126,50 @@ export function ConexoesScreen() {
     }
   }, [])
 
+  /**
+   * A mesma sincronização, do outro cofre.
+   *
+   * Repete a estrutura da do Android de propósito: nenhum caminho termina em silêncio, o resultado fica colado
+   * no botão, e os fatos aparecem ao lado da frase. Foram esses três que custaram a homologação de 30/08.
+   */
+  const sincronizarApple = useCallback(async () => {
+    setHcOcupado(true); setHcResumo(null); setHcFatos([]); setHcVazio(false)
+    try {
+      const { desde, ate } = janelaImportacao(new Date())
+      const r = await sincronizarAppleHealth(desde, ate)
+      if (!alive.current) return
+
+      if (!r.disponivel) {
+        setHcResumo('Este aparelho não tem o Apple Saúde disponível.')
+        setHcVazio(true)
+        return
+      }
+      if (!r.autorizado) { setHcResumo(C.hcDenied); setHcVazio(true); return }
+      if (r.erro) { setHcResumo(r.erro); return }
+      if (!r.diagnostico) { setHcResumo(C.hcDenied); setHcVazio(true); return }
+
+      const resumo = resumoSincronizacao(r.diagnostico)
+      // A frase de "cofre vazio" do núcleo fala de permissões, que no iPhone não conseguimos conhecer. Aqui a
+      // explicação é outra e é a honesta: pode ser recusa, pode ser ausência, e não dá para distinguir.
+      setHcResumo(resumo.vazio ? C.hcIosVazio : resumo.frase)
+      setHcFatos([
+        ...resumo.fatos.filter(f => !f.startsWith('Permissões') && !f.startsWith('Não autorizados')),
+        // O que não foi entendido vira linha visível: é o que transforma a primeira sincronização num relatório.
+        ...(r.exerciciosDesconhecidos.length
+          ? [`Tipos de atividade ainda não reconhecidos: ${r.exerciciosDesconhecidos.join(', ')}`]
+          : []),
+      ])
+      setHcVazio(resumo.vazio)
+    } catch (e) {
+      if (alive.current) {
+        setHcResumo(e instanceof Error ? e.message : 'Não foi possível sincronizar agora. Tente de novo.')
+        setHcVazio(true)
+      }
+    } finally {
+      if (alive.current) setHcOcupado(false)
+    }
+  }, [])
+
   const load = useCallback((silent: boolean) => {
     if (silent) setRefreshing(true); else setPhase('loading')
     apiClient.connectors.listConnectors()
@@ -216,12 +261,19 @@ export function ConexoesScreen() {
         <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{C.hcSubtitle}</Text>
 
         {ehIphone ? (
-          // IPHONE: o roteiro do Android não se aplica, e mandar a pessoa à Play Store num aparelho que não a
-          // tem é pior do que não dizer nada. Sem esta bifurcação, era exatamente isso que acontecia — o
-          // caminho inteiro do Android, com botão de instalar e tudo.
+          // IPHONE: o mesmo caminho, outro cofre. A SINTERA lê do Apple Saúde, e o roteiro do Android não se
+          // aplica — mandar a pessoa à Play Store num aparelho que não a tem seria pior que não dizer nada.
           <View style={{ gap: 8 }}>
             <Text spec={text(t, { role: 'bodyStrong' })}>{C.hcIosTitle}</Text>
             <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{C.hcIosHint}</Text>
+            <Button
+              label={hcOcupado ? C.hcSyncing : C.hcIosAction}
+              onPress={sincronizarApple}
+              loading={hcOcupado}
+              disabled={hcOcupado}
+            />
+            {/* O que a Apple NÃO nos deixa saber, dito de frente — ver a redação no núcleo. */}
+            <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{C.hcIosRevisar}</Text>
           </View>
         ) : hcDisponivel === false ? (
           // NÃO DISPONÍVEL — mas com saída. A versão anterior constatava e parava; a pessoa ficava sabendo que
@@ -249,29 +301,6 @@ export function ConexoesScreen() {
               loadingLabel={C.hcSyncing}
               variant="secondary"
             />
-            {/* O RESULTADO FICA COLADO NO BOTÃO. Ele já esteve no fim do cartão, depois de seis cartões de
-                fonte — e a fundadora tocou duas vezes relatando "nada aconteceu". Acontecia: a resposta era
-                desenhada fora da tela. O resultado de uma ação pertence ao lado dela; longe, equivale a não
-                existir. Mesmo erro que tornou o "Editar" da receita invisível. */}
-            {hcResumo && (
-              <View style={[s.resultado, { borderColor: t.color.identity.primary }]}>
-                <Text spec={text(t, { role: 'body' })} style={{ color: t.color.identity.primary }}>{hcResumo}</Text>
-                {/* OS FATOS FICAM À VISTA, não escondidos atrás de "detalhes". Um resultado zero sem os números
-                    que o produziram é indistinguível de defeito — foi o que fez a fundadora concluir três vezes
-                    que a sincronização não funcionava. Aqui ela vê quantas permissões saíram, que janela foi
-                    pedida, e o que cada tipo devolveu ou recusou. */}
-                {hcFatos.length > 0 && (
-                  <View style={s.fatos}>
-                    {hcFatos.map((f) => (
-                      <Text key={f} spec={text(t, { role: 'caption' })} style={{ color: t.color.text.muted }}>
-                        {`• ${f}`}
-                      </Text>
-                    ))}
-                  </View>
-                )}
-              </View>
-            )}
-
             <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{C.hcRevokeHint}</Text>
 
             {/* O SEGUNDO PASSO — o que faltava dizer. Autorizar a SINTERA é metade; a outra metade acontece
@@ -332,6 +361,29 @@ export function ConexoesScreen() {
           </>
         )}
 
+        {/* O RESULTADO FICA COLADO NO BOTÃO, e FORA do ramo por plataforma.
+            Ele já esteve no fim do cartão, depois de seis cartões de fonte — e a fundadora tocou duas vezes
+            relatando "nada aconteceu". Acontecia: a resposta era desenhada fora da tela.
+            E esteve DENTRO do ramo do Android, o que teria feito o iPhone repetir o mesmo defeito no primeiro
+            teste: botão que responde em lugar nenhum. O resultado de uma ação pertence ao lado dela, e aqui
+            serve aos dois cofres — porque a ação também é a mesma para os dois. */}
+        {hcResumo && (
+          <View style={[s.resultado, { borderColor: t.color.identity.primary }]}>
+            <Text spec={text(t, { role: 'body' })} style={{ color: t.color.identity.primary }}>{hcResumo}</Text>
+            {/* OS FATOS FICAM À VISTA, não escondidos atrás de "detalhes". Um resultado zero sem os números que
+                o produziram é indistinguível de defeito — foi o que fez a fundadora concluir três vezes que a
+                sincronização não funcionava. */}
+            {hcFatos.length > 0 && (
+              <View style={s.fatos}>
+                {hcFatos.map((f) => (
+                  <Text key={f} spec={text(t, { role: 'caption' })} style={{ color: t.color.text.muted }}>
+                    {`• ${f}`}
+                  </Text>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
       </View>
 
       {phase === 'error' ? (
