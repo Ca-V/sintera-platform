@@ -124,6 +124,8 @@ export default function SinaisVitaisPage() {
   const [actKm, setActKm] = useState('')
   const [actBpm, setActBpm] = useState('')
   const [actKcal, setActKcal] = useState('')
+  /** Atividade sendo corrigida. `null` = nova. O aplicativo já editava; a Web só removia. */
+  const [actEditando, setActEditando] = useState<ActivitySessionDTO | null>(null)
   const [savingAct, setSavingAct] = useState(false)
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
@@ -184,11 +186,22 @@ export default function SinaisVitaisPage() {
   async function save() {
     if (!user || saving || !value.trim() || !date) return
     setSaving(true); setErr(null)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any).from('body_metrics').insert({
-      user_id: user.id, metric, label: metric === 'outro_sinal' ? (label.trim() || 'Sinal') : null,
-      value_text: value.trim(), unit: unit.trim() || null, measured_on: date,
-      measured_at: instantOf(date, time), notes: notes.trim() || null,
+    // DUAS CORREÇÕES NUMA LINHA SÓ, e as duas eram invisíveis.
+    //
+    // 1. `id` quando está EDITANDO. Sem ele, corrigir um dígito criava uma SEGUNDA medição — a pessoa
+    //    consertava a pressão e passava a ter duas. Pior que não deixar corrigir.
+    // 2. Passa a usar `saveBodyMetric`, do api-client, que já era importado aqui e nunca chamado. A página
+    //    montava a linha à mão, com a âncora de horário reimplementada — e uma segunda implementação da regra
+    //    de "hora não informada" divergiria da primeira no dia em que uma das duas mudasse.
+    const { error } = await saveBodyMetric(supabase, {
+      id: editando?.id,
+      metric,
+      label: metric === 'outro_sinal' ? (label.trim() || 'Sinal') : null,
+      value_text: value.trim(),
+      unit: unit.trim() || null,
+      measured_on: date,
+      measured_at: instantOf(date, time),
+      notes: notes.trim() || null,
     })
     setSaving(false)
     if (error) { setErr(error.message); return }
@@ -210,7 +223,31 @@ export default function SinaisVitaisPage() {
   }, [authLoading, supabase])
 
   function resetAct() {
+    setActEditando(null)
     setActType('caminhada'); setActName(''); setActDate(''); setActTime(''); setActMin(''); setActKm('')
+    // Faltavam aqui: quem registrasse uma atividade com 142 bpm e depois abrisse o formulário para outra
+    // encontrava os 142 já preenchidos, e salvaria um dado da atividade anterior como se fosse desta.
+    setActBpm(''); setActKcal('')
+  }
+
+  /**
+   * Abre o formulário com a atividade já registrada, para CORRIGIR.
+   *
+   * Reconverte para as unidades do formulário — o banco guarda segundos e metros; a pessoa digita minutos e
+   * quilômetros. Mesma capacidade e mesmo caminho do aplicativo, que já editava enquanto a Web só removia.
+   */
+  function startEditAct(a: ActivitySessionDTO) {
+    setActEditando(a)
+    setActType(a.activity_type || 'outro')
+    setActName(a.title ?? '')
+    setActDate(a.started_at.slice(0, 10))
+    setActTime(hasTimeOfDay(a.started_at) ? new Date(a.started_at).toTimeString().slice(0, 5) : '')
+    setActMin(a.duration_s != null ? String(Math.round(a.duration_s / 60)) : '')
+    setActKm(a.distance_m != null ? String(Math.round(a.distance_m / 100) / 10).replace('.', ',') : '')
+    setActBpm(a.avg_heart_rate != null ? String(Math.round(a.avg_heart_rate)) : '')
+    setActKcal(a.active_energy_kcal != null ? String(Math.round(a.active_energy_kcal)) : '')
+    setErr(null)
+    setShowActForm(true)
   }
 
   async function saveAct() {
@@ -218,12 +255,25 @@ export default function SinaisVitaisPage() {
     setSavingAct(true); setErr(null)
     // Conversão de unidade vem do core: campo vazio vira AUSENTE, nunca zero, e as duas telas convertem igual.
     const { error } = await saveActivitySession(supabase, {
-      source: 'manual',
+      id: actEditando?.id,
+      // Ao CORRIGIR, preserva a origem e o id na fonte. Trocar por 'manual' faria uma corrida do Strava virar
+      // registro manual só porque alguém ajustou a distância — e a procedência é requisito, não detalhe.
+      source: actEditando?.source ?? 'manual',
+      external_id: actEditando?.external_id ?? null,
+      connector_version: actEditando?.connector_version ?? null,
       activity_type: actType,
       title: actName.trim() || null,
       started_at: instantOf(actDate, actTime) ?? `${actDate}T00:00:00.000Z`,
       duration_s: durationSecondsFromMinutes(actMin),
       distance_m: distanceMetersFromKm(actKm),
+      // A PESSOA DIGITAVA E A PLATAFORMA DESCARTAVA. Os campos de frequência cardíaca e calorias existem no
+      // formulário desde sempre; estas duas linhas não. O aplicativo as tinha, a Web não — e era `numberFromField`
+      // importado e nunca usado que denunciava, sem que ninguém olhasse.
+      //
+      // É pior que funcionalidade faltando: a pessoa vê o campo, preenche, salva, e acredita que ficou
+      // guardado. Perder o que foi digitado em silêncio é a forma mais cara de perder um dado.
+      avg_heart_rate: numberFromField(actBpm),
+      active_energy_kcal: numberFromField(actKcal),
     })
     setSavingAct(false)
     if (error) { setErr(error.message); return }
@@ -277,6 +327,13 @@ export default function SinaisVitaisPage() {
 
       {showForm && (
         <Card padding="relaxed" className="space-y-3">
+          {/* DIZ QUE ESTÁ CORRIGINDO. Sem isto, o formulário aberto sobre uma medição já registrada é
+              indistinguível de um formulário novo — e a pessoa acha que vai criar outra, não corrigir aquela. */}
+          {editando && (
+            <p className="font-body text-sm text-onyx">
+              Corrigindo a medição de <span className="text-mauve">{fmtMeasured(editando.measuredOn, editando.measuredAt)}</span>
+            </p>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="font-body text-xs text-mauve block mb-1">{C.fieldVital}</label>
@@ -389,10 +446,20 @@ export default function SinaisVitaisPage() {
                       title={`${it.metric === 'outro_sinal' && it.label ? `${it.label}: ` : ''}${it.valueText}${it.unit ? ` ${it.unit}` : ''}`}
                       meta={metaOf(it)}
                       actions={
-                        <button onClick={() => remove(it.id)} disabled={busyId === it.id} title="Remover"
-                          className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-red-400 hover:bg-red-50 transition-colors disabled:opacity-40">
-                          <Trash2 size={12} />
-                        </button>
+                        <>
+                          {/* EDITAR — a função `startEdit` existia neste arquivo, com um comentário explicando
+                              que corrigia um defeito da homologação de 27/08, e NUNCA foi chamada. O cartão
+                              continuava só oferecendo remover. Quem digitasse um dígito errado teria de apagar
+                              e refazer, perdendo hora, origem e observação junto. */}
+                          <button onClick={() => startEdit(it)} disabled={busyId === it.id} title="Editar"
+                            className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-petal hover:bg-blush transition-colors disabled:opacity-40">
+                            <Pencil size={12} />
+                          </button>
+                          <button onClick={() => remove(it.id)} disabled={busyId === it.id} title="Remover"
+                            className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-red-400 hover:bg-red-50 transition-colors disabled:opacity-40">
+                            <Trash2 size={12} />
+                          </button>
+                        </>
                       }
                     />
                   ))}
@@ -431,6 +498,17 @@ export default function SinaisVitaisPage() {
 
       {showActForm && (
         <Card padding="relaxed" className="space-y-3">
+          {actEditando && (
+            <p className="font-body text-sm text-onyx">
+              Corrigindo a atividade de{' '}
+              <span className="text-mauve">{fmtMeasured(actEditando.started_at.slice(0, 10), actEditando.started_at)}</span>
+              {/* A ORIGEM CONTINUA VISÍVEL enquanto se corrige. Uma corrida do Strava permanece do Strava
+                  depois do ajuste — e mostrar isso é o que impede a pessoa de achar que virou registro dela. */}
+              {actEditando.source && actEditando.source !== 'manual' && (
+                <span className="text-mauve/70"> · origem: {actEditando.source}</span>
+              )}
+            </p>
+          )}
           <div className="grid sm:grid-cols-2 gap-3">
             <div>
               <label className="font-body text-xs text-mauve block mb-1">{C.fieldActivityType}</label>
@@ -507,10 +585,16 @@ export default function SinaisVitaisPage() {
                 notes: a.notes,
               })}
               actions={
-                <button onClick={() => removeAct(a.id)} title={C.removeAction}
-                  className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-red-400 hover:bg-red-50 transition-colors">
-                  <Trash2 size={12} />
-                </button>
+                <>
+                  <button onClick={() => startEditAct(a)} title="Editar"
+                    className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-petal hover:bg-blush transition-colors">
+                    <Pencil size={12} />
+                  </button>
+                  <button onClick={() => removeAct(a.id)} title={C.removeAction}
+                    className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-red-400 hover:bg-red-50 transition-colors">
+                    <Trash2 size={12} />
+                  </button>
+                </>
               }
             />
           ))}
