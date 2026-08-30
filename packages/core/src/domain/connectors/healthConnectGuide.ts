@@ -35,7 +35,11 @@ export const HEALTH_CONNECT_FONTES: readonly FonteGuia[] = [
   {
     source: 'strava',
     nome: 'Strava',
-    caminho: 'Strava → Você → Configurações → Health Connect → ativar',
+    // Caminho CONFERIDO no aparelho da fundadora (30/08). O Strava não chama de "Health Connect": chama de
+    // "Conexão Saúde", e esconde em "Outros serviços". São TRÊS nomes para a mesma coisa — Health Connect
+    // (Google), Saúde Connect (Play Store) e Conexão Saúde (Strava). Quem procura pelo nome que a gente diz
+    // não acha, e conclui que o aparelho não tem.
+    caminho: 'Strava → Você → Configurações → Outros serviços → Conexão Saúde → marcar',
     traz: 'corridas, pedaladas e caminhadas com tempo, distância e calorias',
   },
   {

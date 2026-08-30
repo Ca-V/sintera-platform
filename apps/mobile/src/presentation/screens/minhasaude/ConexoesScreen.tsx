@@ -76,8 +76,16 @@ export function ConexoesScreen() {
       const r = await sincronizarHealthConnect(desde, ate)
       if (!alive.current) return
       setHcDisponivel(r.disponivel)
-      if (!r.disponivel) { setHcResumo(null); return }
-      if (!r.autorizado) { setHcResumo(C.hcDenied); return }
+
+      // NENHUM CAMINHO PODE TERMINAR EM SILÊNCIO (homologação de 30/08: "apertei autorizar e sincronizar, mas
+      // nada ocorreu"). Este ramo LIMPAVA a mensagem e voltava — a pessoa tocava no botão e a tela não mudava.
+      // "Nada aconteceu" é o pior resultado possível: não dá para distinguir de app quebrado, e não sugere ação.
+      if (!r.disponivel) {
+        setHcResumo('O Health Connect não respondeu. Abra o aplicativo "Saúde Connect" uma vez e volte aqui.')
+        setHcVazio(true)
+        return
+      }
+      if (!r.autorizado) { setHcResumo(C.hcDenied); setHcVazio(true); return }
       if (r.erro) { setHcResumo(r.erro); return }
       // Diz o que ENTROU, não "sucesso" — número verificável é mais confiável que adjetivo.
       //
@@ -107,6 +115,12 @@ export function ConexoesScreen() {
             ? `${guardadas} ${guardadas === 1 ? 'leitura guardada' : 'leituras guardadas'}, ainda sem tela própria`
             : 'Nada novo desde a última vez',
       )
+    } catch (e) {
+      // Última rede: exceção não pode virar silêncio. Depois de tocar no botão, ALGO tem de mudar na tela.
+      if (alive.current) {
+        setHcResumo(e instanceof Error ? e.message : 'Não foi possível sincronizar agora. Tente de novo.')
+        setHcVazio(true)
+      }
     } finally {
       if (alive.current) setHcOcupado(false)
     }
