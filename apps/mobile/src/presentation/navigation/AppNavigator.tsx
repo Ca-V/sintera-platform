@@ -53,6 +53,20 @@ const TAB_SCREENS = SSOT_TABS.map((tab) => {
   return { name: tab.name as keyof AppTabParamList, label: tab.label, Component }
 })
 
+/**
+ * A tela RAIZ de cada aba — para onde tocar na aba sempre leva.
+ *
+ * "Início" fica de fora porque não tem stack interno: já é a raiz. Declarado aqui, e não deduzido da primeira
+ * tela do navegador, porque deduzir amarraria o comportamento à ordem de declaração das telas — que muda quando
+ * alguém acrescenta uma, sem que ninguém perceba a consequência.
+ */
+const RAIZ_DA_ABA: Record<string, string | undefined> = {
+  Agenda: 'Agenda',
+  MinhaSaude: 'MinhaSaudeMenu',
+  RedeCuidado: 'RedeMenu',
+  Mais: 'MaisMenu',
+}
+
 export function AppNavigator() {
   const t = useTheme()
   return (
@@ -68,7 +82,28 @@ export function AppNavigator() {
       }}
     >
       {TAB_SCREENS.map((s) => (
-        <Tab.Screen key={s.name} name={s.name} component={s.Component} options={{ title: s.label }} />
+        <Tab.Screen
+          key={s.name}
+          name={s.name}
+          component={s.Component}
+          options={{ title: s.label }}
+          // TOCAR NA ABA VOLTA AO COMEÇO DA CATEGORIA (achado da fundadora, 30/08).
+          //
+          // O comportamento padrão preserva onde a pessoa parou dentro de cada aba. Faz sentido para uma aba que
+          // é um CONTEÚDO — voltar para o que se estava lendo. Não faz para uma que é um MENU: quem entrou em
+          // Pedidos de exame, foi ao Início e tocou em "Minha Saúde" espera o menu de Minha Saúde, não a tela
+          // onde parou. A aba passa a se comportar como o rótulo promete.
+          listeners={({ navigation }) => ({
+            tabPress: () => {
+              // Navega explicitamente para a RAIZ daquela aba. Cada uma declara a sua em `RAIZ_DA_ABA` — depender
+              // de "a primeira tela do stack" seria depender de ordem de declaração, que muda sem aviso.
+              const raiz = RAIZ_DA_ABA[s.name]
+              if (!raiz) return
+              ;(navigation as unknown as { navigate: (n: string, p?: unknown) => void })
+                .navigate(s.name, { screen: raiz })
+            },
+          })}
+        />
       ))}
     </Tab.Navigator>
   )

@@ -48,29 +48,45 @@ export async function searchRecords(client: SupabaseClient, query: string): Prom
 
   // `PromiseLike`, e não `Promise`: o construtor de consulta do Supabase é *thenable* — dá para esperar, mas não
   // tem `.catch`. Exigir `Promise` aqui obrigaria cada chamada a um `await` extra só para satisfazer o tipo.
-  /** Uma consulta que nunca lança: erro vira lista vazia. */
-  async function busca(fn: () => PromiseLike<{ data: unknown }>): Promise<Linha[]> {
+  /**
+   * Uma consulta que nunca derruba a busca: erro vira lista vazia — MAS ELE É DITO.
+   *
+   * A primeira versão desta função só olhava `data` e engolia `error`. Na homologação de 30/08 isso escondeu um
+   * defeito caro: eu tinha escrito `type` e `date` onde as colunas se chamam `event_type` e `event_date`. O
+   * Supabase NÃO LANÇA nesse caso — devolve `data: null` e o erro no campo `error`. Como eu só olhava `data`,
+   * TRÊS dos doze domínios (agenda, recursos e condições) devolviam vazio sem um sinal sequer, e a fundadora
+   * buscou "dermatologista", que estava lá em três eventos, e não achou nada.
+   *
+   * Degradar é certo; degradar CALADO não. A busca continua útil com 9 de 12 domínios, mas quem mantém o código
+   * precisa saber que 3 morreram — senão o defeito só aparece quando alguém procura a palavra exata.
+   */
+  async function busca(nome: string, fn: () => PromiseLike<{ data: unknown; error?: unknown }>): Promise<Linha[]> {
     try {
-      const { data } = await fn()
+      const { data, error } = await fn()
+      if (error) {
+        console.warn(`[SINTERA] busca: domínio "${nome}" falhou e devolveu vazio.`, error)
+        return []
+      }
       return Array.isArray(data) ? (data as Linha[]) : []
-    } catch {
+    } catch (e) {
+      console.warn(`[SINTERA] busca: domínio "${nome}" lançou e devolveu vazio.`, e)
       return []
     }
   }
 
   const [meds, recursos, indicadores, resultados, exames, documentos, condicoes, habitos, eventos, atividades, sinais] =
     await Promise.all([
-      busca(() => client.from('medications').select('id, name, brand, kind, dose').or(`name.ilike.${q},brand.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
-      busca(() => client.from('health_resources').select('id, name, brand, type').or(`name.ilike.${q},brand.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
-      busca(() => client.from('biomarkers').select('id, name, value, unit, exam_id, exams(exam_date)').ilike('name', q).limit(LIMITE_POR_DOMINIO)),
-      busca(() => client.from('clinical_results').select('id, name, exam_id').ilike('name', q).limit(LIMITE_POR_DOMINIO)),
-      busca(() => client.from('exams').select('id, type, issuer, exam_date').or(`type.ilike.${q},issuer.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
-      busca(() => client.from('patient_documents').select('id, subtype, issuer, doc_date').or(`subtype.ilike.${q},issuer.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
-      busca(() => client.from('health_conditions').select('id, name, status').ilike('name', q).limit(LIMITE_POR_DOMINIO)),
-      busca(() => client.from('life_habits').select('id, category, notes').ilike('category', q).limit(LIMITE_POR_DOMINIO)),
-      busca(() => client.from('health_events').select('id, title, type, date').ilike('title', q).limit(LIMITE_POR_DOMINIO)),
-      busca(() => client.from('activity_sessions').select('id, title, activity_type, started_at').or(`title.ilike.${q},activity_type.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
-      busca(() => client.from('body_metrics').select('id, label, metric, value_text, unit, measured_on').or(`label.ilike.${q},metric.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
+      busca('medicamentos', () => client.from('medications').select('id, name, brand, kind, dose').or(`name.ilike.${q},brand.ilike.${q},prescriber_name.ilike.${q},notes.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
+      busca('recursos', () => client.from('health_resources').select('id, name, brand, resource_type').or(`name.ilike.${q},brand.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
+      busca('indicadores', () => client.from('biomarkers').select('id, name, value, unit, exam_id, exams(exam_date)').ilike('name', q).limit(LIMITE_POR_DOMINIO)),
+      busca('resultados', () => client.from('clinical_results').select('id, name, exam_id').or(`name.ilike.${q},raw_text.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
+      busca('exames', () => client.from('exams').select('id, type, issuer, exam_date').or(`type.ilike.${q},issuer.ilike.${q},notes.ilike.${q},exam_text.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
+      busca('documentos', () => client.from('patient_documents').select('id, subtype, issuer, doc_date').or(`subtype.ilike.${q},issuer.ilike.${q},notes.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
+      busca('condições', () => client.from('health_conditions').select('id, name, scope').ilike('name', q).limit(LIMITE_POR_DOMINIO)),
+      busca('hábitos', () => client.from('life_habits').select('id, category, notes').ilike('category', q).limit(LIMITE_POR_DOMINIO)),
+      busca('agenda', () => client.from('health_events').select('id, title, event_type, event_date, professional_name, establishment, notes').or(`title.ilike.${q},professional_name.ilike.${q},establishment.ilike.${q},notes.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
+      busca('atividades', () => client.from('activity_sessions').select('id, title, activity_type, started_at').or(`title.ilike.${q},activity_type.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
+      busca('sinais vitais', () => client.from('body_metrics').select('id, label, metric, value_text, unit, measured_on').or(`label.ilike.${q},metric.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
     ])
 
   const hits: SearchHit[] = []
@@ -126,7 +142,7 @@ export async function searchRecords(client: SupabaseClient, query: string): Prom
   }
 
   for (const r of condicoes) {
-    hits.push({ kind: 'condicao', id: texto(r.id), title: texto(r.name), subtitle: texto(r.status) || null, section: 'condicoes' })
+    hits.push({ kind: 'condicao', id: texto(r.id), title: texto(r.name), subtitle: texto(r.scope) || null, section: 'condicoes' })
   }
 
   for (const r of habitos) {
@@ -134,7 +150,11 @@ export async function searchRecords(client: SupabaseClient, query: string): Prom
   }
 
   for (const r of eventos) {
-    hits.push({ kind: 'evento', id: texto(r.id), title: texto(r.title), subtitle: quando(r.date) || null, section: 'agenda' })
+    hits.push({
+      kind: 'evento', id: texto(r.id), title: texto(r.title),
+      subtitle: [texto(r.professional_name), quando(r.event_date)].filter(Boolean).join(' · ') || null,
+      section: 'agenda',
+    })
   }
 
   for (const r of atividades) {
