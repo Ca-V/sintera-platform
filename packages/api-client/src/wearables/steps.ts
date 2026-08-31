@@ -37,7 +37,19 @@ export async function listDailySteps(
       .gte('recorded_at', desde)
       .order('recorded_at', { ascending: false })
       .abortSignal(s)
-    if (error || !data) return []
+    // ERRO E AUSÊNCIA SÃO COISAS DIFERENTES, e esta linha tratava as duas igual.
+    //
+    // "Nenhum passo registrado" é resposta legítima e comum — quem não ligou nenhuma fonte não tem passos. Mas
+    // um erro de consulta (coluna renomeada, política de acesso mudada) produzia exatamente a mesma lista
+    // vazia, e a seção de Passos sumia da tela sem que ninguém soubesse por quê.
+    //
+    // É a assinatura EXATA do defeito que matou três domínios da busca: o Supabase não lança nesse caso —
+    // devolve `data: null` com o erro no campo `error`. Quem olha só o `data` nunca fica sabendo.
+    if (error) {
+      console.warn('[SINTERA] passos: a consulta falhou e a seção ficou vazia.', error)
+      return []
+    }
+    if (!data) return []
 
     const leituras: StepReading[] = (data as Array<Record<string, unknown>>).map(r => ({
       recordedAt: typeof r.recorded_at === 'string' ? r.recorded_at : '',
@@ -46,7 +58,8 @@ export async function listDailySteps(
     }))
     // A agregação por dia (e a decisão de NÃO somar fontes diferentes) vive no core, testada lá.
     return dailySteps(leituras)
-  } catch {
+  } catch (e) {
+    console.warn('[SINTERA] passos: a leitura lançou e a seção ficou vazia.', e)
     return []
   } finally { cleanup() }
 }
