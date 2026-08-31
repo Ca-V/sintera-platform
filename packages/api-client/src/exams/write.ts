@@ -41,11 +41,24 @@ export interface UploadConstraints {
   allowedExtensions: readonly string[] // sem ponto, minúsculas (ex.: 'pdf')
 }
 
-/** Padrão conservador para documentos de saúde (PDF + imagens comuns de laudo). Ajustável no Inc.6. */
+/**
+ * As restrições de upload, DERIVADAS da política do núcleo.
+ *
+ * ESTAVAM ESCRITAS À MÃO AQUI, e contradiziam a política — esta lista incluía `heic`, que `attachmentPolicy`
+ * declara como capacidade AINDA NÃO HABILITADA por faltar a conversão no pipeline.
+ *
+ * A consequência apareceu na tela da fundadora em 31/08: "Aceitos: PDF, JPG, JPEG, PNG, HEIC · até 20 MB".
+ * A plataforma anunciava o formato padrão da câmera do iPhone, aceitava o arquivo, e a leitura falhava depois.
+ * Prometer o que não se sabe ler é pior do que recusar na porta.
+ *
+ * É a mesma regra escrita duas vezes que já produziu a divergência do sinal de peso: uma ponta certa, outra
+ * errada, e ninguém percebendo. Agora há um dono só — quando o HEIC for habilitado na política, esta lista
+ * acompanha sozinha.
+ */
 export const DEFAULT_UPLOAD_CONSTRAINTS: UploadConstraints = {
-  maxBytes: 20 * 1024 * 1024, // 20 MB
-  allowedMimeTypes: ['application/pdf', 'image/jpeg', 'image/png', 'image/heic'],
-  allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png', 'heic'],
+  maxBytes: MAX_ATTACHMENT_BYTES,
+  allowedMimeTypes: SUPPORTED_NOW_MIME_TYPES,
+  allowedExtensions: SUPPORTED_NOW_EXTENSIONS,
 }
 
 /** API pública do domínio Exames — ESCRITA. Web/Mobile consumirão via ApiClient.exams (nunca Supabase direto).
@@ -67,4 +80,5 @@ export interface ExamsWriteApi {
 }
 
 import type { ExamFieldsPatch } from './update'
+import { MAX_ATTACHMENT_BYTES, SUPPORTED_NOW_MIME_TYPES, SUPPORTED_NOW_EXTENSIONS } from '@sintera/core'
 export type { ExamFieldsPatch } from './update'

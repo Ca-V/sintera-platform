@@ -414,7 +414,7 @@ export default function DocumentosPage() {
                     placeholder={'Um por linha\nEx.: Losartana 50mg'}
                     className="w-full rounded-xl border border-border px-3 py-2 text-sm"
                   />
-                  <p className="mt-1 text-xs text-mauve">Um item por linha, como está escrito na receita.</p>
+                  <p className="mt-1 text-xs text-mauve">Um item por linha, como está escrito na receita — medicamento, suplemento, dispositivo ou produto.</p>
                 </div>
               )}
 

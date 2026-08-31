@@ -66,6 +66,10 @@ describe('a mesma receita, adicionada de novo', () => {
 describe('o que a pessoa lê e pode escolher', () => {
   it('a mensagem diz QUAL documento já existe — sem isso o aviso não é conferível', () => {
     const msg = existingDocumentMessage(guardada, 'Receita')
+    // CONCORDANCIA: "receita" e feminino. Saia "Ja existe receita igual guardadO" na homologacao de 31/08 —
+    // erro de portugues numa frase que a pessoa le antes de decidir se apaga um documento de saude.
+    expect(msg).toContain('uma receita igual guardada')
+    expect(msg).not.toContain('guardado')
     expect(msg).toContain('Victor Cunha Diniz')
     expect(msg).toContain('25/09/2025')
   })
@@ -75,5 +79,25 @@ describe('o que a pessoa lê e pode escolher', () => {
     expect(ids).toEqual(['substituir', 'guardar-as-duas', 'cancelar'])
     // Toda opção explica o que faz: uma escolha sem consequência declarada não é uma escolha informada.
     for (const o of DOCUMENT_DUPLICATE_CHOICES) expect(o.hint.length).toBeGreaterThan(20)
+  })
+})
+
+describe('a frase concorda em gênero', () => {
+  // Uma mensagem com erro de português, lida antes de decidir se apaga um documento de saúde, sugere descuido
+  // no que a pessoa está prestes a fazer. A regra vem da terminação do rótulo, não de uma lista de exceções.
+  const base = { id: 'd', createdAt: '', subtype: 'x', issuer: null, docDate: null }
+
+  it('feminino: receita', () => {
+    expect(existingDocumentMessage(base, 'Receita')).toContain('uma receita igual guardada')
+  })
+
+  it('masculino: atestado, relatório, encaminhamento', () => {
+    for (const t of ['Atestado', 'Relatório', 'Encaminhamento']) {
+      expect(existingDocumentMessage(base, t), t).toContain(`um ${t.toLowerCase()} igual guardado`)
+    }
+  })
+
+  it('rótulo com mais de uma palavra concorda pela PRIMEIRA', () => {
+    expect(existingDocumentMessage(base, 'Outro documento')).toContain('um outro documento igual guardado')
   })
 })

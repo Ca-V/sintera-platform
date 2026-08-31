@@ -173,7 +173,19 @@ export function existingDocumentMessage(existente: DocumentDuplicateCandidate, r
   const [y, m, d] = (existente.docDate ?? '').split('-')
   const quando = d && m && y ? `${d}/${m}/${y}` : null
   const detalhe = [quem, quando].filter(Boolean).join(' · ')
+
+  // CONCORDÂNCIA. A frase era montada com "guardado" fixo e saía "Já existe receita igual guardadO" na
+  // homologação de 31/08. Erro de português numa mensagem que a pessoa lê antes de decidir se apaga um
+  // documento de saúde: o descuido na frase sugere descuido no que ela está prestes a fazer.
+  //
+  // O gênero vem do rótulo, não de uma lista de exceções: em português os substantivos terminados em -a que
+  // designam documentos são femininos (receita, guia, declaração), e é essa a regra — não um caso especial.
+  const t = rotuloTipo.toLowerCase()
+  const feminino = /a$|ão$/.test(t.split(' ')[0])
+  const artigo = feminino ? 'uma' : 'um'
+  const guardado = feminino ? 'guardada' : 'guardado'
+
   return detalhe
-    ? `Já existe ${rotuloTipo.toLowerCase()} igual guardado: ${detalhe}.`
-    : `Já existe ${rotuloTipo.toLowerCase()} igual guardado.`
+    ? `Já existe ${artigo} ${t} igual ${guardado}: ${detalhe}.`
+    : `Já existe ${artigo} ${t} igual ${guardado}.`
 }

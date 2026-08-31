@@ -13,7 +13,7 @@ import type { HealthEvent } from '@sintera/core'
 import { BODY_COMPARE_ORDER } from '@sintera/core'
 import {
   BODY_METRICS, bodyMetricLabel, bodyMetricUnit, isVital, type BodyMetric,
-  currentSummary, computeWeightJourney, lastAssessment, sourceQuality, RELIABILITY_LABEL,
+  currentSummary, computeWeightJourney, variacaoDePeso, ritmoDePeso, pesoLabel, lastAssessment, sourceQuality, RELIABILITY_LABEL,
   EVOLUTION_PERIODS, filterByPeriod, type SummaryPoint, type SeriesPoint,
   buildSnapshots, compareSnapshots, type SnapPoint, type Snapshot,
   buildMilestones, MILESTONE_CATEGORIES, MILESTONE_COLOR, type MilestoneCategory,
@@ -245,8 +245,11 @@ export function ComposicaoScreen() {
         ) : null}
         {journey.currentWeight != null ? (
           <>
-            <Text spec={text(t, { role: 'body' })}>Atual: {journey.currentWeight} kg{journey.startWeight != null ? ` · início ${journey.startWeight} kg` : ''}{journey.startDate ? ` (${fmt(journey.startDate)})` : ''}</Text>
-            {journey.lostKg != null ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{journey.lostKg > 0 ? `−${journey.lostKg}` : `${journey.lostKg}`} kg{journey.rateKgPerWeek != null ? ` · ${journey.rateKgPerWeek} kg/semana` : ''}{followupLabel ? ` · ${followupLabel} de acompanhamento` : ''}</Text> : null}
+            <Text spec={text(t, { role: 'body' })}>Atual: {pesoLabel(journey.currentWeight)}{journey.startWeight != null ? ` · início ${pesoLabel(journey.startWeight)}` : ''}{journey.startDate ? ` (${fmt(journey.startDate)})` : ''}</Text>
+            {/* O SINAL VEM DO NUCLEO. Escrito aqui a mao, os dois ramos imprimiam menos: um ganho de 2,8 kg saia
+                 "−2,8", identico a uma perda de 2,8 — num registro que vai ao medico. A Web acertava, e a regra
+                 divergiu por estar escrita duas vezes. */}
+            {variacaoDePeso(journey.lostKg) ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{variacaoDePeso(journey.lostKg)!.texto}{ritmoDePeso(journey.rateKgPerWeek) ? ` · ${ritmoDePeso(journey.rateKgPerWeek)!.texto}` : ''}{followupLabel ? ` · ${followupLabel} de acompanhamento` : ''}</Text> : null}
             {journey.remainingKg != null ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Faltam {journey.remainingKg} kg{journey.progressPct != null ? ` · ${journey.progressPct}% do caminho` : ''}</Text> : goal == null ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Defina uma meta para acompanhar o progresso.</Text> : null}
             {journey.leanDeltaKg != null ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Massa magra: {journey.leanStartKg != null ? `${journey.leanStartKg} → ${journey.leanCurrentKg} kg (` : ''}{journey.leanDeltaKg > 0 ? '+' : ''}{journey.leanDeltaKg} kg{journey.leanStartKg != null ? ')' : ''} — acompanhe se a perda preserva a massa magra</Text> : null}
           </>

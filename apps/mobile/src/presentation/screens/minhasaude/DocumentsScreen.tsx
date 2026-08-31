@@ -429,7 +429,7 @@ export function DocumentsScreen() {
                 placeholder={'Um por linha\nEx.: Losartana 50mg'}
               />
               <Text spec={text(t, { role: 'caption', tone: 'faint' })}>
-                Um item por linha, como está escrito na receita.
+                Um item por linha, como está escrito na receita — medicamento, suplemento, dispositivo ou produto.
               </Text>
             </View>
           )}
