@@ -50,6 +50,21 @@ export interface DiagnosticoSync {
   readonly gravadas: number
   readonly visiveis: number
   readonly gravadasSessoes: number
+  /**
+   * Registros que JÁ EXISTIAM e foram COMPLETADOS por esta sincronização.
+   *
+   * FALTAVA AQUI, e a falta produziu uma mentira. Na homologação de 31/08 a sincronização corrigiu 31
+   * atividades — pôs o tipo certo em 26 "Outra atividade" e a distância em 4 corridas — e a tela disse:
+   * "Li 65 registros no aparelho, mas NENHUM chegou à nuvem. O problema é nosso."
+   *
+   * A plataforma tinha acabado de fazer exatamente o que devia, e se acusou de ter falhado. Isso é pior que
+   * um erro silencioso: é a plataforma desmentindo o próprio acerto. Quem lê isso deixa de acreditar em TODAS
+   * as outras mensagens — inclusive nas verdadeiras.
+   *
+   * A causa: `atualizadas` existia em `IngestResult` desde 30/08 e nunca foi levada até aqui. Especificado e
+   * nunca ligado, outra vez, e desta vez o resultado foi a plataforma falar mal de si mesma.
+   */
+  readonly atualizadas: number
 }
 
 export interface ResumoSync {
@@ -133,7 +148,25 @@ export function resumoSincronizacao(d: DiagnosticoSync): ResumoSync {
     }
   }
 
-  // ── 3. Lido e não gravado — defeito NOSSO, e é preciso dizer que é nosso ─────
+  // ── 3. COMPLETADO o que já estava lá ────────────────────────────────────────
+  // Vem ANTES do caso de falha, e é por não vir que a plataforma se acusou de falhar em 31/08: corrigir 31
+  // atividades produz `gravadas = 0`, que era lido como "nada chegou". Corrigir é sucesso, e sucesso do tipo
+  // mais valioso — alcança o que já estava errado no registro, sem a pessoa precisar apagar nada.
+  if (d.atualizadas > 0) {
+    const novas = [
+      d.visiveis > 0 ? plural(d.visiveis, 'leitura nova', 'leituras novas') : null,
+      d.gravadasSessoes > 0 ? plural(d.gravadasSessoes, 'atividade nova', 'atividades novas') : null,
+    ].filter(Boolean) as string[]
+    return {
+      frase: `${plural(d.atualizadas, 'registro que já estava guardado foi completado', 'registros que já estavam guardados foram completados')}` +
+        ` — tipo, distância e calorias que faltavam.` +
+        (novas.length ? ` E ${novas.join(' e ')}.` : ''),
+      fatos,
+      vazio: false,
+    }
+  }
+
+  // ── 4. Lido e não gravado — defeito NOSSO, e é preciso dizer que é nosso ─────
   if (totalLido > 0 && d.amostras + d.sessoes > 0 && d.gravadas + d.gravadasSessoes === 0) {
     return {
       frase: `Li ${plural(totalLido, 'registro', 'registros')} no aparelho, mas nenhum chegou à nuvem. O problema é nosso, não do seu aparelho.`,

@@ -172,7 +172,7 @@ export async function sincronizarHealthConnect(desde: Date, ate: Date): Promise<
         disponivel: true,
         diagnostico: {
           concedidas: [], negadas, historico, diasJanela: 0, porTipo: [],
-          amostras: 0, sessoes: 0, gravadas: 0, visiveis: 0, gravadasSessoes: 0,
+          amostras: 0, sessoes: 0, gravadas: 0, visiveis: 0, gravadasSessoes: 0, atualizadas: 0,
         },
       }
     }
@@ -235,6 +235,7 @@ export async function sincronizarHealthConnect(desde: Date, ate: Date): Promise<
         gravadas: leituras.result.rawCount,
         visiveis: leituras.result.projectedCount,
         gravadasSessoes: atividades.result.gravadas,
+        atualizadas: atividades.result.atualizadas,
       },
     }
   } catch (e) {

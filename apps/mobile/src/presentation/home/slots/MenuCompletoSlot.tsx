@@ -23,7 +23,7 @@ import { useNavigation } from '@react-navigation/native'
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs'
 import { text } from '@sintera/design-system'
 import {
-  PLATFORM_NAV, searchSections, rankHits, groupHits, shouldQuery,
+  PLATFORM_NAV, searchSections, rankHits, groupHits, shouldQuery, destinoDoAchado,
   type PlatformSection, type SearchHit, type SectionId,
 } from '@sintera/core'
 import { Text, Input } from '../../primitives'
@@ -43,14 +43,43 @@ export function MenuCompletoSlot({ busca, onBusca, hits, procurando, onLimpar }:
   const t = useTheme()
   const navigation = useNavigation<BottomTabNavigationProp<AppTabParamList>>()
 
-  const irPara = (id: SectionId) => {
-    const r = SECTION_ROUTES[id]
+  const navegar = (tab: string, screen?: string, params?: unknown) => {
     // Navegação aninhada por string (aba → tela) — o padrão do projeto; sem regra de negócio.
     ;(navigation as unknown as { navigate: (n: string, p?: unknown) => void })
-      .navigate(r.tab, r.screen ? { screen: r.screen, params: r.params } : undefined)
+      .navigate(tab, screen ? { screen, params } : undefined)
     // A aba Início continua montada ao navegar. Sem limpar, quem voltasse encontraria a busca antiga preenchida
     // e o menu ainda filtrado — parecendo que a plataforma encolheu.
     onLimpar()
+  }
+
+  const irPara = (id: SectionId) => {
+    const r = SECTION_ROUTES[id]
+    navegar(r.tab, r.screen, r.params)
+  }
+
+  /**
+   * ABRE O REGISTRO, e não a seção onde ele mora.
+   *
+   * O DEFEITO (homologação de 31/08): a fundadora buscou "hemograma", a plataforma ACHOU o exame do Hermes
+   * Pardini — a palavra está no laudo —, ela tocou no resultado, e a tela de Exames abriu dizendo "Nenhum
+   * resultado para os filtros atuais".
+   *
+   * A causa era esta função usar só `hit.section` e DESCARTAR `hit.id`. A lista de Exames filtra por NOME, e
+   * "hemograma" está no conteúdo — então a tela de destino negava justamente o que a busca acabara de achar.
+   *
+   * É a pior forma do defeito: não é não achar, é achar, mostrar e depois desdizer. Isso não frustra — ensina
+   * a não confiar na busca.
+   *
+   * O `id` sempre esteve no achado. O comentário em `SearchHit` dizia "para a tela abrir exatamente ele QUANDO
+   * SOUBER COMO". Agora sabe.
+   */
+  const abrirAchado = (h: SearchHit) => {
+    const { section, registro } = destinoDoAchado(h)
+    if (registro?.tipo === 'exame') return navegar('MinhaSaude', 'ExamDetail', { id: registro.chave })
+    if (registro?.tipo === 'indicador') return navegar('MinhaSaude', 'IndicadorDetail', { name: registro.chave })
+    // Sem tela de detalhe, leva à seção — o comportamento que já existia, e que continua correto para
+    // medicamento, documento e os demais que vivem em lista.
+    irPara(section)
   }
 
   // "Painel Inicial" fica de fora: este menu VIVE nele. A Sidebar da Web mostra o item porque acompanha a pessoa
@@ -121,7 +150,7 @@ export function MenuCompletoSlot({ busca, onBusca, hits, procurando, onLimpar }:
           {registros.map(g => (
             <View key={g.kind} style={{ gap: 8 }}>
               <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{g.label.toUpperCase()}</Text>
-              {g.hits.map(h => cartao(h.title, h.subtitle, () => irPara(h.section), `${g.kind}-${h.id}`))}
+              {g.hits.map(h => cartao(h.title, h.subtitle, () => abrirAchado(h), `${g.kind}-${h.id}`))}
             </View>
           ))}
 

@@ -144,4 +144,6 @@ export * from './domain/documents/prescricaoParaRegistro'
 export * from './domain/navigation/sections'
 // Busca global — encontra o que a pessoa REGISTROU, não só as seções. Puro; as consultas ficam no api-client.
 export * from './domain/search/globalSearch'
+// Para onde a busca LEVA: abrir o registro, e nao so a secao. A tela de destino negava o que a busca achou.
+export * from './domain/search/destinoDoAchado'
 export * from './domain/documents/cardActions'

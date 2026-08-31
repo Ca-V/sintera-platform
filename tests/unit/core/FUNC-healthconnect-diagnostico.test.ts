@@ -12,7 +12,7 @@ const BASE: DiagnosticoSync = {
   historico: false,
   diasJanela: 28,
   porTipo: [{ tipo: 'Steps', registros: 0 }, { tipo: 'HeartRate', registros: 0 }],
-  amostras: 0, sessoes: 0, gravadas: 0, visiveis: 0, gravadasSessoes: 0,
+  amostras: 0, sessoes: 0, gravadas: 0, visiveis: 0, gravadasSessoes: 0, atualizadas: 0,
 }
 
 describe('resumo da sincronização do Health Connect', () => {
@@ -96,5 +96,44 @@ describe('resumo da sincronização do Health Connect', () => {
     })
     expect(r.fatos.some(f => f.startsWith('saturação de oxigênio'))).toBe(true)
     expect(r.fatos.some(f => f.startsWith('TipoNovoQualquer'))).toBe(true)
+  })
+})
+
+describe('CORRIGIR o que já estava guardado é SUCESSO', () => {
+  // Na homologação de 31/08 a sincronização corrigiu 31 atividades — pôs o tipo certo em 26 "Outra atividade" e
+  // a distância em 4 corridas — e a tela disse: "Li 65 registros no aparelho, mas NENHUM chegou à nuvem. O
+  // problema é nosso." A plataforma tinha acabado de acertar, e se acusou de ter falhado.
+  //
+  // É pior que um erro silencioso: é a plataforma desmentindo o próprio acerto. Quem lê isso deixa de acreditar
+  // em TODAS as outras mensagens — inclusive nas verdadeiras.
+  const corrigiu: DiagnosticoSync = {
+    ...BASE,
+    porTipo: [{ tipo: 'ExerciseSession', registros: 31 }, { tipo: 'Distance', registros: 4 }],
+    amostras: 0, sessoes: 31, gravadas: 0, visiveis: 0, gravadasSessoes: 0,
+    atualizadas: 31,
+  }
+
+  it('NÃO diz que nada chegou quando 31 registros foram completados', () => {
+    const r = resumoSincronizacao(corrigiu)
+    expect(r.frase).not.toContain('nenhum chegou')
+    expect(r.frase).not.toContain('problema é nosso')
+  })
+
+  it('diz o que foi completado, e quantos', () => {
+    const r = resumoSincronizacao(corrigiu)
+    expect(r.frase).toContain('31')
+    expect(r.frase).toContain('completados')
+    expect(r.vazio).toBe(false)
+  })
+
+  it('soma correções E novidades quando houve as duas', () => {
+    const r = resumoSincronizacao({ ...corrigiu, gravadasSessoes: 2 })
+    expect(r.frase).toContain('31')
+    expect(r.frase).toContain('2 atividades novas')
+  })
+
+  it('a falha REAL continua sendo dita — a correção não vira desculpa para esconder erro', () => {
+    const falhou = { ...corrigiu, atualizadas: 0, amostras: 31 }
+    expect(resumoSincronizacao(falhou).frase).toContain('problema é nosso')
   })
 })

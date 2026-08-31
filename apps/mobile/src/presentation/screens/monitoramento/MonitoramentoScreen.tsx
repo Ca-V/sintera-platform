@@ -3,6 +3,7 @@
 // outro sinal. FACTUAL (RDC 657/2022): registra e acompanha no tempo; sem juízo clínico. Captura por dispositivo
 // (Conexões/HIP-001) é Fase 2 — ainda não disponível no Mobile; entrada manual aqui. Reusa api-client.body.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useFocusEffect } from '@react-navigation/native'
 import { ScrollView, View, ActivityIndicator, RefreshControl, Pressable, Alert, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
@@ -143,7 +144,17 @@ export function MonitoramentoScreen() {
       .then((a) => { if (alive.current) setActs(a) })
       .catch(() => { /* seção degrada vazia; não derruba a tela */ })
   }, [])
-  useEffect(() => { loadActs() }, [loadActs])
+  // RECARREGA AO VOLTAR PARA A TELA, e nao so ao montar.
+  //
+  // Esta tela vive numa aba e permanece MONTADA. Na homologacao de 31/08 a fundadora sincronizou em Conexoes,
+  // voltou aqui, e viu "Outra atividade" nas mesmas atividades que a tela de Dados recebidos ja mostrava como
+  // "Musculacao" — a lista em memoria era anterior a correcao. O dado estava certo no banco e errado na tela.
+  //
+  // E o mesmo defeito da aba que abria a ultima tela em vez do menu: comportamento padrao de navegacao que
+  // parece inofensivo e produz uma tela que MENTE sobre o proprio estado.
+  //
+  // Recarrega as duas secoes: os sinais vitais tambem mudam quando uma sincronizacao traz medicoes.
+  useFocusEffect(useCallback(() => { load(true); loadActs() }, [load, loadActs]))
 
   // Passos: seção a MAIS. Falhar aqui não pode derrubar os sinais vitais — a função já não lança, e a
   // seção simplesmente não aparece.

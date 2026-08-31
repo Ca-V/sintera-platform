@@ -194,6 +194,7 @@ export async function sincronizarAppleHealth(desde: Date, ate: Date): Promise<Re
         gravadas: leituras.result.rawCount,
         visiveis: leituras.result.projectedCount,
         gravadasSessoes: atividades.result.gravadas,
+        atualizadas: atividades.result.atualizadas,
       },
     }
   } catch (e) {
