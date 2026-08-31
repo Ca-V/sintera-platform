@@ -21,6 +21,25 @@ import { shouldQuery, type SearchHit } from '@sintera/core'
 /** Achados por domínio. Pequeno de propósito: a tela é um celular, e quem não achou refina a palavra. */
 const LIMITE_POR_DOMINIO = 6
 
+/**
+ * Quantos documentos com itens prescritos são varridos em busca do nome do medicamento.
+ *
+ * A comparação acontece em memória porque `ilike` não se aplica a coluna de lista. Na escala real são dezenas
+ * de documentos por pessoa, então o teto nunca é alcançado — e, se for, a busca AVISA no console em vez de
+ * parar calada.
+ */
+const TETO_ITENS_PRESCRITOS = 300
+
+/**
+ * Minúsculas e sem acento, para "Losartana" casar com "losartana" e "vitamina" com "Vitamína".
+ *
+ * O banco já faz isso no `ilike`; aqui a comparação é nossa e precisa fazer igual — senão a busca por item
+ * seria mais exigente que a busca por texto, e a mesma palavra acharia numa coluna e não na outra.
+ */
+function normalizar(s: string): string {
+  return s.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+}
+
 /** Escapa os curingas do `ilike` para que "100%" não vire "qualquer coisa". */
 function termo(query: string): string {
   return `%${query.trim().replace(/[\\%_]/g, m => '\\' + m)}%`
@@ -74,14 +93,36 @@ export async function searchRecords(client: SupabaseClient, query: string): Prom
     }
   }
 
-  const [meds, recursos, indicadores, resultados, exames, documentos, condicoes, habitos, eventos, atividades, sinais] =
+  const [meds, recursos, indicadores, resultados, exames, documentos, comItens, condicoes, habitos, eventos, atividades, sinais] =
     await Promise.all([
       busca('medicamentos', () => client.from('medications').select('id, name, brand, kind, dose').or(`name.ilike.${q},brand.ilike.${q},prescriber_name.ilike.${q},notes.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
       busca('recursos', () => client.from('health_resources').select('id, name, brand, resource_type').or(`name.ilike.${q},brand.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
       busca('indicadores', () => client.from('biomarkers').select('id, name, value, unit, exam_id, exams(exam_date)').ilike('name', q).limit(LIMITE_POR_DOMINIO)),
       busca('resultados', () => client.from('clinical_results').select('id, name, exam_id').or(`name.ilike.${q},raw_text.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
       busca('exames', () => client.from('exams').select('id, type, issuer, exam_date').or(`type.ilike.${q},issuer.ilike.${q},notes.ilike.${q},exam_text.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
-      busca('documentos', () => client.from('patient_documents').select('id, subtype, issuer, doc_date').or(`subtype.ilike.${q},issuer.ilike.${q},notes.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
+      // OS CAMPOS DA MIGRAÇÃO 151 ENTRAM NA BUSCA. Criar coluna e não incluí-la aqui reproduziria o achado 1
+      // desta homologação: a fundadora buscou "dermatologista", o dado ESTAVA na plataforma, e a busca não
+      // achou porque a coluna não estava na consulta.
+      busca('documentos', () => client.from('patient_documents')
+        .select('id, subtype, issuer, professional_name, institution_name, prescribed_items, doc_date')
+        .or(`subtype.ilike.${q},issuer.ilike.${q},notes.ilike.${q},professional_name.ilike.${q},institution_name.ilike.${q}`)
+        .limit(LIMITE_POR_DOMINIO)),
+
+      // O NOME DO MEDICAMENTO PRECISA DE CONSULTA PRÓPRIA, e é o campo que mais importa: "losartana" é
+      // exatamente o que a pessoa digita ao procurar uma receita.
+      //
+      // `prescribed_items` é uma LISTA (text[]), e `ilike` não se aplica a array. O operador de array casa
+      // elemento INTEIRO, o que não serve para busca parcial — e, pior, seria aceito pelo banco sem casar
+      // nada: mais uma cláusula morta em silêncio, que é a família de defeito que esta busca já teve.
+      //
+      // Então traz as receitas com itens e compara em memória. É correto e é barato na escala real (dezenas
+      // de documentos por pessoa, não milhares). O teto está declarado abaixo, e o que passar dele é DITO.
+      // A solução durável é uma coluna gerada no banco com os itens concatenados — depende de migração, e
+      // migração depende de autorização.
+      busca('receitas por item', () => client.from('patient_documents')
+        .select('id, subtype, issuer, professional_name, institution_name, prescribed_items, doc_date')
+        .not('prescribed_items', 'is', null)
+        .limit(TETO_ITENS_PRESCRITOS)),
       busca('condições', () => client.from('health_conditions').select('id, name, scope').ilike('name', q).limit(LIMITE_POR_DOMINIO)),
       busca('hábitos', () => client.from('life_habits').select('id, category, notes').ilike('category', q).limit(LIMITE_POR_DOMINIO)),
       busca('agenda', () => client.from('health_events').select('id, title, event_type, event_date, professional_name, establishment, notes').or(`title.ilike.${q},professional_name.ilike.${q},establishment.ilike.${q},notes.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
@@ -132,11 +173,36 @@ export async function searchRecords(client: SupabaseClient, query: string): Prom
     })
   }
 
-  for (const r of documentos) {
+  // Os documentos que casaram por texto, MAIS os que casaram por item prescrito. O mesmo documento pode vir
+  // pelos dois caminhos — o `id` já visto impede que apareça duas vezes na lista.
+  const alvo = normalizar(query)
+  const porItem = comItens.filter(r => {
+    const itens = Array.isArray(r.prescribed_items) ? r.prescribed_items : []
+    return itens.some(i => normalizar(texto(i)).includes(alvo))
+  })
+  // O TETO É DITO, não escondido. Uma busca que silenciosamente para de olhar depois do documento 300 seria
+  // "a plataforma sabia e não disse" — a família de defeito mais frequente desta homologação.
+  if (comItens.length >= TETO_ITENS_PRESCRITOS) {
+    console.warn(`[SINTERA] busca: mais de ${TETO_ITENS_PRESCRITOS} documentos com itens prescritos; a busca por nome de medicamento olhou só os mais recentes.`)
+  }
+
+  const jaVisto = new Set<string>()
+  for (const r of [...documentos, ...porItem]) {
+    const id = texto(r.id)
+    if (jaVisto.has(id)) continue
+    jaVisto.add(id)
     const data = quando(r.doc_date)
+    // O QUE FOI PRESCRITO VEM PRIMEIRO no subtítulo, como no cartão de Documentos: é o que responde "de qual
+    // medicamento é essa receita?" sem abrir o arquivo. Encontrar a receita e não dizer o que ela prescreve
+    // devolveria a pessoa ao trabalho que a busca acabou de poupar.
+    const itens = Array.isArray(r.prescribed_items) ? r.prescribed_items.map(texto).filter(Boolean) : []
     hits.push({
-      kind: 'documento', id: texto(r.id), title: texto(r.subtype) || 'Documento',
-      subtitle: [texto(r.issuer), data].filter(Boolean).join(' · ') || null,
+      kind: 'documento', id, title: texto(r.subtype) || 'Documento',
+      subtitle: [
+        itens.length ? itens.slice(0, 2).join(' · ') + (itens.length > 2 ? ` +${itens.length - 2}` : '') : null,
+        texto(r.professional_name) || texto(r.issuer),
+        data,
+      ].filter(Boolean).join(' · ') || null,
       section: 'documentos',
     })
   }

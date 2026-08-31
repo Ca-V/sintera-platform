@@ -14,8 +14,12 @@ export type PgResult = { data?: unknown; error: unknown }
 export function mockQueryBuilder(result: PgResult) {
   const calls: Record<string, unknown[]> = {}
   const builder: Record<string, unknown> = {}
+  // `or` e `not` FALTAVAM, e a falta era pior que parecer: o módulo de busca usa os dois, e um método ausente
+  // vira `TypeError` que o próprio `busca()` engole devolvendo lista vazia. Um teste da busca teria passado com
+  // zero resultados, provando nada — o mock estaria reproduzindo, dentro da suíte, exatamente a família de
+  // defeito que a busca já teve em produção.
   const methods = ['select', 'insert', 'update', 'upsert', 'delete', 'eq', 'neq', 'gt', 'gte', 'lt', 'lte',
-    'in', 'ilike', 'like', 'order', 'limit', 'range', 'single', 'maybeSingle', 'abortSignal']
+    'in', 'ilike', 'like', 'or', 'not', 'order', 'limit', 'range', 'single', 'maybeSingle', 'abortSignal']
   for (const m of methods) {
     builder[m] = vi.fn((...args: unknown[]) => { calls[m] = args; return builder })
   }
