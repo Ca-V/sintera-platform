@@ -89,6 +89,8 @@ export * from './domain/copy'
 export * from './domain/capture/attachmentPolicy'
 export * from './domain/capture/attachmentSet'
 export * from './domain/capture/divergence'
+// POR QUE a leitura não rodou. `null` respondia por cinco situações diferentes, todas caladas.
+export * from './domain/capture/motivoLeitura'
 // O que conta como FATO transcrito de um documento — a fronteira entre transcrever e inferir (RDC 657).
 export * from './domain/capture/transcription'
 // Política de preparo de imagem — a DECISÃO é uma só; o mecanismo é de cada plataforma.

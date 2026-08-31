@@ -19,7 +19,7 @@ import type { PeriodDTO } from '../cycle/menstrual'
 import type { NotificationPrefRow } from '../settings/notifications'
 import type { BodyMetricDTO, BodyMetricInput } from '../body/body'
 import type { ActivitySessionDTO, ActivitySessionInput, IngestResult } from '../activity/activity'
-import type { CanonicalSample, PropagationResult, ClassificationResult } from '@sintera/core'
+import type { CanonicalSample, PropagationResult, ClassificationResult, LeituraTentativa } from '@sintera/core'
 import type { ClassifyInput } from '../capture/classify'
 import type { IdentityProvider } from './oauth'
 import type { ShareDTO, TemplateDTO, OmicsPanelDTO } from '../report/report'
@@ -287,7 +287,8 @@ export interface ActivityApi {
  * transcritos. Nunca lança: `null` quando não deu para ler, e a pessoa preenche à mão.
  */
 export interface CaptureApi {
-  classify(input: ClassifyInput): Promise<ClassificationResult | null>
+  /** Devolve o resultado E o motivo quando a leitura nao rodou — ver `motivoLeitura` no nucleo. */
+  classify(input: ClassifyInput): Promise<LeituraTentativa<ClassificationResult>>
 }
 
 export interface WearablesApi {

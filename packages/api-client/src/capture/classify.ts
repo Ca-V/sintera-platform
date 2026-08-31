@@ -5,10 +5,14 @@
 // Duplicá-la significaria duas leituras diferentes do mesmo documento conforme o aparelho da pessoa.
 // Mesmo arranjo de `listConnectors` e `analyzeExam`. Autentica por Bearer.
 //
-// NÃO LANÇA: leitura assistida é auxílio, não requisito. Falha devolve `null` e a pessoa preenche à mão, como
+// NÃO LANÇA: leitura assistida é auxílio, não requisito. Falha devolve o MOTIVO e a pessoa preenche à mão, como
 // sempre pôde. Quebrar a tela porque a leitura falhou seria trocar uma conveniência por um impedimento.
+//
+// MAS DEVOLVE O MOTIVO. Devolvia `null` para cinco situações diferentes — inclusive a ponte não configurada,
+// que custou dois ciclos de homologação e continuaria invisível na próxima vez. Degradar é certo; degradar
+// calado não.
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { ClassificationResult } from '@sintera/core'
+import type { ClassificationResult, LeituraTentativa } from '@sintera/core'
 
 function base(webBaseUrl: string | undefined): string | null {
   return webBaseUrl ? webBaseUrl.replace(/\/+$/, '') : null
@@ -28,13 +32,20 @@ export async function classifyDocument(
   client: SupabaseClient,
   webBaseUrl: string | undefined,
   input: ClassifyInput,
-): Promise<ClassificationResult | null> {
-  try {
-    const url = base(webBaseUrl)
-    if (!url || !input.fileBase64) return null
+): Promise<LeituraTentativa<ClassificationResult>> {
+  // CADA SAÍDA DIZ POR QUÊ. Antes eram cinco `return null` indistinguíveis, e a tela não tinha como
+  // diferenciar "não consegui ler" de "li e não reconheci" — do lado de fora, os campos simplesmente não se
+  // preenchiam. A primeira dessas cinco, a ponte ausente, custou dois ciclos de homologação.
+  const url = base(webBaseUrl)
+  if (!url) {
+    console.warn('[SINTERA] leitura de documento: a ponte com a Web não está configurada (EXPO_PUBLIC_WEB_URL).')
+    return { resultado: null, motivo: 'sem-ponte' }
+  }
+  if (!input.fileBase64) return { resultado: null, motivo: 'sem-arquivo' }
 
+  try {
     const { data: { session } } = await client.auth.getSession()
-    if (!session?.access_token) return null
+    if (!session?.access_token) return { resultado: null, motivo: 'sem-sessao' }
 
     const res = await fetch(`${url}/api/capture/classify`, {
       method: 'POST',
@@ -44,9 +55,15 @@ export async function classifyDocument(
       },
       body: JSON.stringify(input),
     })
-    if (!res.ok) return null
-    return (await res.json()) as ClassificationResult
-  } catch {
-    return null
+    if (!res.ok) {
+      console.warn(`[SINTERA] leitura de documento: o servidor respondeu ${res.status}.`)
+      return { resultado: null, motivo: 'servidor' }
+    }
+    // LEU. `motivo` nulo mesmo que o conteúdo venha pobre — não reconhecer é resposta legítima, e avisar sobre
+    // ela transformaria uma leitura bem-sucedida num alarme.
+    return { resultado: (await res.json()) as ClassificationResult, motivo: null }
+  } catch (e) {
+    console.warn('[SINTERA] leitura de documento: não houve resposta.', e)
+    return { resultado: null, motivo: 'rede' }
   }
 }
