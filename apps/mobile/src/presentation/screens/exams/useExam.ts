@@ -22,7 +22,12 @@ export interface AnalyzeState {
 export function useExam(id: string) {
   const [state, dispatch] = useReducer(loadReducer<ExamDetailDTO | null>, initialLoadState<ExamDetailDTO | null>())
   const hasData = useRef(false)
-  hasData.current = state.data != null
+  // A ATRIBUIÇÃO ACONTECE APÓS O COMMIT, não durante a renderização.
+  // Escrever num ref no corpo do componente é gravação em memória compartilhada durante uma renderização que
+  // o React pode descartar — o efeito da escrita fica, o resultado da renderização não. Aqui o valor só é lido
+  // dentro de callbacks e efeitos, todos posteriores ao commit, então mover a atribuição não muda comportamento
+  // nenhum e tira a fragilidade.
+  useEffect(() => { hasData.current = state.data != null })
 
   // Resultados do exame (carregados junto; recarregados a cada refresh silencioso do polling).
   const [biomarkers, setBiomarkers] = useState<BiomarkerDTO[]>([])
