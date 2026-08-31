@@ -135,6 +135,8 @@ export * from './domain/connectors/appleHealth'
 
 // Telefone com código de país (E.164) — fonte única Web↔Mobile.
 export * from './domain/profile/phone'
+// Fase da vida a partir da data de nascimento — aritmetica de calendario, ZERO conteudo clinico.
+export * from './domain/profile/fasesDaVida'
 export * from './domain/documents/patientDocuments'
 export * from './domain/documents/prescricaoParaRegistro'
 // Catálogo único das seções da plataforma (nome · ordem · grupo · resumo). Sidebar da Web e menus do

@@ -15,7 +15,7 @@ function rejectingBuilder(err: unknown) {
 describe('api-client · profile.getProfile — leitura (null=vazio, exceção=falha)', () => {
   it('linha existente → ProfileDTO só com os campos centrais', async () => {
     const row = {
-      id: 'u1', name: 'Ana', phone: '+5511', age_range: '36-45', goals: ['sono'],
+      id: 'u1', name: 'Ana', phone: '+5511', age_range: '36-45', birth_date: null, goals: ['sono'],
       avatar_url: null, updated_at: '2026-07-27T00:00:00Z',
       // campos de outros domínios que NÃO devem aparecer no DTO:
       cycle_length: 28, height_cm: 165, pref_daily_reminder: true,
@@ -23,7 +23,7 @@ describe('api-client · profile.getProfile — leitura (null=vazio, exceção=fa
     const builder = mockQueryBuilder({ data: row, error: null })
     const client = mockSupabase({ session: fakeSession('u1'), from: () => builder })
     const dto = await getProfile(client)
-    expect(dto).toEqual({ id: 'u1', name: 'Ana', phone: '+5511', age_range: '36-45', goals: ['sono'], avatar_url: null, updated_at: '2026-07-27T00:00:00Z' })
+    expect(dto).toEqual({ id: 'u1', name: 'Ana', phone: '+5511', age_range: '36-45', birth_date: null, goals: ['sono'], avatar_url: null, updated_at: '2026-07-27T00:00:00Z' })
     expect(dto).not.toHaveProperty('cycle_length')
     expect(dto).not.toHaveProperty('pref_daily_reminder')
     // filtra pela própria linha e passa o abortSignal (timeout D2)
@@ -53,9 +53,9 @@ describe('api-client · profile.updateProfile — escrita (whitelist + { error }
     const builder = mockQueryBuilder({ data: null, error: null })
     const client = mockSupabase({ session: fakeSession('u9'), from: () => builder })
     // passa chaves extras (fora do contrato) de propósito — devem ser IGNORADAS
-    await updateProfile(client, { name: 'Bea', phone: '+5521', age_range: '36-45', goals: ['sono'], pref_daily_reminder: false, cycle_length: 30 } as never)
+    await updateProfile(client, { name: 'Bea', phone: '+5521', age_range: '36-45', birth_date: null, goals: ['sono'], pref_daily_reminder: false, cycle_length: 30 } as never)
     const payload = (builder as unknown as { __calls: Record<string, unknown[]> }).__calls.upsert[0] as Record<string, unknown>
-    expect(payload).toMatchObject({ id: 'u9', name: 'Bea', phone: '+5521', age_range: '36-45', goals: ['sono'] })
+    expect(payload).toMatchObject({ id: 'u9', name: 'Bea', phone: '+5521', age_range: '36-45', birth_date: null, goals: ['sono'] })
     expect(payload).toHaveProperty('updated_at')
     expect(payload).not.toHaveProperty('cycle_length')
     expect(payload).not.toHaveProperty('pref_daily_reminder')
@@ -89,15 +89,15 @@ describe('api-client · profile — contratos e casos extremos', () => {
   const calls = (b: unknown) => (b as { __calls: Record<string, unknown[]> }).__calls
 
   it('getProfile: mapeia TODOS os campos centrais, preservando nulls', async () => {
-    const row = { id: 'u1', name: null, phone: null, age_range: null, goals: null, avatar_url: null, updated_at: null }
+    const row = { id: 'u1', name: null, phone: null, age_range: null, birth_date: null, goals: null, avatar_url: null, updated_at: null }
     const client = mockSupabase({ session: fakeSession('u1'), from: () => mockQueryBuilder({ data: row, error: null }) })
-    expect(await getProfile(client)).toEqual({ id: 'u1', name: null, phone: null, age_range: null, goals: null, avatar_url: null, updated_at: null })
+    expect(await getProfile(client)).toEqual({ id: 'u1', name: null, phone: null, age_range: null, birth_date: null, goals: null, avatar_url: null, updated_at: null })
   })
 
   it('getProfile: linha com CHAVES AUSENTES → DTO com nulls (não undefined)', async () => {
     const client = mockSupabase({ session: fakeSession('u1'), from: () => mockQueryBuilder({ data: { id: 'u1' }, error: null }) })
     const dto = await getProfile(client)
-    expect(dto).toEqual({ id: 'u1', name: null, phone: null, age_range: null, goals: null, avatar_url: null, updated_at: null })
+    expect(dto).toEqual({ id: 'u1', name: null, phone: null, age_range: null, birth_date: null, goals: null, avatar_url: null, updated_at: null })
   })
 
   it('getProfile: compõe o signal externo (abortSignal é passado mesmo com signal do chamador)', async () => {
