@@ -43,6 +43,31 @@ O critério não é a ordem em que os achados chegaram, e sim **o que a pessoa p
 | 15 | **A ingestão funcionou** — 12 atividades do Strava entraram pelo Health Connect até a nuvem. Todas como "Outra atividade", sem distância, sem calorias e sem data na tela | `exerciseType` chega como **número** (79 = caminhada) e a leitura só aceitava texto → degradava para 'outro'. Distância e energia são **registros separados**, e nós líamos um campo dentro da sessão que nunca existiu | ✅ Corrigido |
 | 16 | O que já entrou errado continuaria errado | A ingestão pula o que já existe. Correção de leitura não alcançava o passado | ✅ Corrigido — completa o vazio e corrige o palpite, nunca sobrescreve |
 
+| 17 | A Web **descartava em silêncio** frequência cardíaca e calorias digitadas numa atividade | Os campos existiam no formulário e as duas linhas de gravação não. O aplicativo as tinha | ✅ Corrigido |
+| 18 | "Editar" não existia em **Monitoramento** (Web) — e `startEdit` estava escrita, com comentário, nunca chamada | Terceira ocorrência do mesmo padrão | ✅ Corrigido |
+| 19 | Mesmo se abrisse, `save()` sempre **inseria**: corrigir um dígito criaria uma segunda medição | A página montava a linha à mão em vez de usar `saveBodyMetric`, que já estava importado e nunca era chamado | ✅ Corrigido |
+| 20 | "Editar atividade" existia só no aplicativo | Paridade | ✅ Corrigido — e ao corrigir, **preserva a origem**: uma corrida do Strava não vira registro manual porque alguém ajustou a distância |
+
+---
+
+## O detector que funcionou: símbolo declarado e nunca referenciado
+
+Em 30/08, passar o linter no repositório inteiro atrás de **variáveis e importações não usadas** revelou
+**quatro defeitos reais numa tarde** — os achados 17 a 20 acima, mais o "Editar" da Web em Documentos.
+
+A lógica é simples e vale registrar, porque é reutilizável: **um símbolo que ninguém referencia é a assinatura
+de uma capacidade escrita e não ligada.** Alguém importou o ícone, escreveu a função, declarou o estado — e
+esqueceu a linha que os conecta. O compilador não reclama, porque nada está errado; simplesmente não acontece.
+
+Foi por isso que a configuração do linter passou a reconhecer o sublinhado (`_signal`) como descarte
+intencional: **um detector só serve enquanto todo alerta significa alguma coisa.** Misturado com descartes
+legítimos, ele vira ruído, e ruído a gente aprende a ignorar. O repositório está em **zero** avisos desse tipo
+— então o próximo a aparecer merece investigação.
+
+**O que ficou registrado e NÃO corrigido:** 31 erros de `set-state-in-effect`. É o padrão de carregamento de
+toda página do projeto; corrigi-los é refatoração ampla, com risco real, e não corresponde a defeito visível.
+Fica anotado, não mascarado.
+
 ---
 
 ## O marco: a primeira ingestão real
@@ -62,6 +87,33 @@ resolve, e a afirmação nunca foi verificada contra um dado real.
 
 Onde há degradação silenciosa, é preciso um teste com o formato REAL da fonte — não com o formato que se
 supõe que ela use.
+
+---
+
+## O segundo pilar: Apple Saúde
+
+Autorizado pela fundadora em 30/08, depois de constatarmos que **no iPhone não existia caminho nenhum** para
+trazer dado de wearable — nem pelo cofre (o Health Connect é do Android) nem por conector (nenhum implementado).
+
+Escrito **sem um iPhone para conferir**, e por isso com duas decisões que existem só para não repetir o achado 15:
+
+- **Mapeia por NOME, nunca por número.** A Apple não documenta os valores do enum de exercício e desaconselha
+  fixá-los — podem mudar entre versões do iOS. O adaptador converte número → nome usando o enum **da própria
+  biblioteca**, em tempo de execução: se os números mudarem, ela acompanha e nós junto.
+- **O que não for entendido é reportado.** A primeira sincronização devolve os nomes de exercício que o núcleo
+  não reconheceu. O mapa cresce com evidência do aparelho real, não com palpite.
+
+**O que a Apple não deixa saber, a tela diz.** Por privacidade, o iOS **não informa** ao aplicativo quais tipos
+foram recusados — um tipo negado se comporta exatamente como um tipo vazio. Então a tela não afirma "você
+autorizou 8 de 12"; diz quantos registros vieram de cada tipo e aponta Ajustes → Saúde.
+
+**Os caminhos por app no iPhone NÃO foram escritos.** Os do Android foram conferidos um a um — o do Strava
+custou uma rodada de homologação, porque ele chama o Health Connect de "Conexão Saúde" e o esconde em "Outros
+serviços". Enquanto não houver caminho verificado num iPhone, a orientação é uma frase genérica: vaga e
+verdadeira, dizendo o que procurar sem afirmar onde está.
+
+**Bloqueado por:** conta paga do Apple Developer Program. O HealthKit é permissão restrita — testar localmente
+funciona com conta gratuita, mas instalar no aparelho pela nuvem exige a assinatura.
 
 ---
 
