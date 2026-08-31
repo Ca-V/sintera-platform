@@ -94,6 +94,15 @@ const NOME_TIPO: Record<string, string> = {
   Height: 'altura',
   Steps: 'passos',
   ExerciseSession: 'atividades',
+  // FALTAVAM, e a falta apareceu na tela da fundadora em 31/08: o relatório de sincronização mostrava
+  // "Distance: 4 registros" e "TotalCaloriesBurned: 30 registros" — nome de campo de banco, em inglês, para
+  // uma pessoa que não programa. Os três tipos foram acrescentados em 30/08 e o rótulo ficou para trás.
+  //
+  // É exatamente o padrão que esta semana repetiu: campo novo criado, um consumidor esquecido. A catraca
+  // `campo-novo-propagado` existe por causa deste caso, e o pegou na primeira execução.
+  Distance: 'distância',
+  ActiveCaloriesBurned: 'calorias da atividade',
+  TotalCaloriesBurned: 'calorias totais',
 }
 export function nomeTipoHc(t: string): string {
   return NOME_TIPO[t] ?? t

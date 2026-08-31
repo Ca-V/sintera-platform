@@ -75,7 +75,14 @@ export interface ActivitySessionDraft {
  * ("com.strava"), não um nome legível. Lista ABERTA: pacote desconhecido vira o próprio pacote, preservado como
  * está — a origem continua rastreável mesmo sem estar mapeada, que é o que importa.
  */
-const APPS: { prefixo: string; source: string }[] = [
+/**
+ * Os identificadores de fonte que ESTE arquivo pode produzir.
+ *
+ * Exportado para virar CATRACA: toda fonte listada aqui precisa ter rotulo em `BODY_SOURCE_LABEL`. Sem isso,
+ * uma atividade do Strava aparecia em Monitoramento como "Outra origem" — a procedencia apagada na tela onde
+ * ela mais importa, contra o requisito de importacao fiel a fonte.
+ */
+export const APPS: { prefixo: string; source: string }[] = [
   { prefixo: 'com.strava',                source: 'strava' },
   { prefixo: 'com.ouraring',              source: 'oura' },
   { prefixo: 'com.garmin',                source: 'garmin' },
