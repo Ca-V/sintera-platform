@@ -102,8 +102,13 @@ function getYear(iso: string) {
 
 // Data de REALIZAÇÃO do exame (o que importa para histórico/dashboard);
 // cai para a data de entrada (created_at) só se a realização não existir.
+//
+// `created_at` É ANULÁVEL no esquema, e o código tratava como se nunca fosse. Na prática a coluna tem valor
+// padrão e todos os 27 registros têm data — mas "na prática sempre tem" é a premissa que produz tela em
+// branco quando um dia não tiver. Descoberto quando os tipos do banco deixaram de ser um stub e passaram a
+// refletir o esquema real (01/09/2026).
 function effDate(e: Exam): string {
-  return e.exam_date ?? e.created_at
+  return e.exam_date ?? e.created_at ?? ''
 }
 
 // Busca casa contra a IDENTIDADE RESOLVIDA (nome exibido = display_title + laboratório), não a string legada
@@ -677,7 +682,7 @@ export default function ExamsPage() {
                     chips={<CardChip tone={statusTone}>{orderStatusLabel(status)}</CardChip>}
                     meta={
                       <>
-                        Adicionado em {formatDate(order.created_at)}
+                        Adicionado em {order.created_at ? formatDate(order.created_at) : 'data não registrada'}
                         {linkedResults.length > 0 && (
                           <span className="block text-petal-dark mt-0.5">
                             {linkedResults.length} resultado{linkedResults.length !== 1 ? 's' : ''} vinculado{linkedResults.length !== 1 ? 's' : ''} — origem preservada.
@@ -885,7 +890,7 @@ export default function ExamsPage() {
                                     <span className="block text-mauve/70">
                                       {/* Sem data → frase de estado, não "Realizado em Sem data" (mesma redação do detalhe). */}
                                       {exam.exam_date ? `Realizado em ${formatDate(exam.exam_date)}` : 'Data de realização não informada'}
-                                      {exam.exam_date && exam.exam_date.slice(0, 10) !== exam.created_at.slice(0, 10) && (
+                                      {exam.created_at && exam.exam_date && exam.exam_date.slice(0, 10) !== exam.created_at.slice(0, 10) && (
                                         <span className="text-mauve/40"> · enviado {formatDate(exam.created_at)}</span>
                                       )}
                                     </span>

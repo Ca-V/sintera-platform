@@ -52,6 +52,19 @@ Faltava catraca de costura.
 | 2 | Suíte completa | `npx vitest run` |
 | 3 | **Símbolo declarado e não usado** | `npx eslint src apps/mobile/src packages` |
 | 4 | **Capacidade do núcleo sem consumidor** | `node scripts/audit-paridade.mjs` |
+| 5 | **Depois de QUALQUER migração: regerar os tipos do banco** | Supabase → `src/lib/supabase/types.ts` |
+
+O item **5 foi acrescentado em 01/09/2026**, e a razão é grave o bastante para ficar escrita. Até essa data,
+`src/lib/supabase/types.ts` era um arquivo escrito à mão com **233 linhas cobrindo 6 das 67 tabelas** — e
+mesmo essas pela metade (`exams` declarava 9 das 48 colunas).
+
+Consequência: **o compilador não conseguia checar praticamente nenhuma escrita no banco.** É por isso que
+toda gravação da Web passa por `row()` e `as never` — não era estilo, era contorno de um tipo inútil. E é a
+causa estrutural da família de defeito mais cara deste projeto: coluna criada e ausente da consulta, do DTO
+ou da tela, sem que nada reclamasse.
+
+Com os tipos reais (3.646 linhas), o compilador recusa uma coluna que não existe. A primeira execução já
+encontrou um defeito real: a tela de Exames tratava `created_at` como sempre presente, e ele é anulável.
 
 Os itens **3 e 4 são os que pegam a causa 1**, e eram os que eu não rodava sempre. O 3 revelou quatro defeitos
 reais numa única tarde. **A lista de avisos precisa ficar em zero** — com descarte intencional marcado por
