@@ -217,6 +217,14 @@ function SidebarContent({ onClose }: { onClose: () => void }) {
   //     laudo. Vêm primeiro: quem digita o nome de uma coisa sua quer a coisa, não o mapa.
   //   • SEÇÕES (`searchSections`) — onde as coisas ficam. Vale quando o nome não é de nada já registrado.
   const [busca, setBusca] = useState('')
+  // OUTRA TELA PODE PEDIR ESTA BUSCA, por `?q=`. A busca de toda a plataforma vive aqui, na barra lateral, e
+  // não tem rota própria — sem esta ponte, a tela de Exames não teria como oferecer "procure dentro dos
+  // documentos" quando o filtro dela não acha nada, que é exatamente onde a fundadora ficou presa em 31/08.
+  // Roda a cada mudança de query para funcionar também quando já se está na página.
+  useEffect(() => {
+    const q = new URLSearchParams(search).get('q')
+    if (q && q.trim()) setBusca(q)
+  }, [search])
   const [hits, setHits] = useState<SearchHit[]>([])
   const [procurando, setProcurando] = useState(false)
   const buscando = shouldQuery(busca)

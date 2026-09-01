@@ -7,9 +7,14 @@ import { ScrollView, View, ActivityIndicator, Pressable, StyleSheet } from 'reac
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { text, heading } from '@sintera/design-system'
-import { monthLabel, dialSelectOptions } from '@sintera/core'
+// Data de nascimento (31/08/2026): idade, fase e faixa DERIVADAS; os textos de LGPD vem do nucleo, para a
+// Web e o aplicativo prometerem exatamente a mesma coisa sobre o uso do dado.
+import {
+  monthLabel, dialSelectOptions,
+  idadeLabel, faseDaVida, faseLabel, faixaDerivada, MOTIVO_DATA_NASCIMENTO, LIMITE_DATA_NASCIMENTO,
+} from '@sintera/core'
 import { AGE_RANGE_OPTIONS, AGE_RANGE_EMPTY_LABEL } from '@sintera/validation'
-import { Avatar, Button, FieldRow, Input, Select, Text } from '../../primitives'
+import { Avatar, Button, DatePicker, FieldRow, Input, Select, Text } from '../../primitives'
 import { useTheme } from '../../theme'
 import { useAuth } from '../../../state/AuthProvider'
 import { useProfile } from './useProfile'
@@ -58,6 +63,15 @@ export function ProfileScreen() {
   }
 
   const saving = p.phase === 'saving'
+
+  // IDADE, FASE E FAIXA são DERIVADAS da data — nunca guardadas em paralelo, senão a faixa envelheceria
+  // sozinha. Regra no núcleo (`fasesDaVida`), idêntica à da Web; `new Date()` fica aqui, na borda.
+  const agora = new Date()
+  const hojeISO = agora.toISOString().slice(0, 10)
+  const idade = idadeLabel(p.birthDate || null, agora)
+  const faseId = faseDaVida(p.birthDate || null, agora)
+  const fase = faseId ? faseLabel(faseId) : null
+  const faixa = faixaDerivada(p.birthDate || null, agora)
   const data = p.state.data
   const displayName = p.name || data?.name || 'Usuária'
   const memberSince = p.stats?.memberSince ?? null
@@ -130,8 +144,30 @@ export function ProfileScreen() {
         </View>
       </FieldRow>
 
+      {/* ─────────────────────────────────────────────────────────────────────────────────────────────
+          DATA DE NASCIMENTO — decisão da fundadora, 31/08/2026, com o tratamento de LGPD que ela pediu.
+          A faixa etária não serve para o começo da vida: "0 a 5 anos" trata um recém-nascido e uma criança de
+          cinco anos como a mesma coisa, e entre os 2 e os 8 meses um bebê muda de tudo.
+          Os textos vêm do núcleo — a Web e o aplicativo prometem EXATAMENTE a mesma coisa sobre o uso do dado,
+          e uma promessa de privacidade escrita duas vezes é uma promessa que vai divergir.
+          Finalidade dita ANTES de pedir; campo opcional; e o limite declarado, porque o silêncio aqui seria
+          lido como a promessa oposta.
+          ───────────────────────────────────────────────────────────────────────────────────────────── */}
+      <FieldRow label="Data de nascimento" helperText="Opcional">
+        <DatePicker value={p.birthDate} onChange={p.setBirthDate} placeholder="AAAA-MM-DD" max={hojeISO} />
+        <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{MOTIVO_DATA_NASCIMENTO}</Text>
+        <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{LIMITE_DATA_NASCIMENTO}</Text>
+        {idade ? <Text spec={text(t, { role: 'caption' })}>{idade} · {fase}</Text> : null}
+      </FieldRow>
+
+      {/* A FAIXA passa a ser DERIVADA quando há data. Guardar as duas seria manter dois registros do mesmo
+          fato, e o segundo envelheceria: a pessoa faria aniversário e a faixa continuaria a antiga. */}
       <FieldRow label="Faixa etária" errorText={p.fieldErrors.age_range}>
-        <Select options={AGE_RANGE_SELECT} value={p.ageRange} onChange={p.setAgeRange} placeholder="Selecione a faixa" title="Faixa etária" />
+        {faixa ? (
+          <Text spec={text(t, { role: 'body' })}>{faixa} — calculada a partir da data de nascimento</Text>
+        ) : (
+          <Select options={AGE_RANGE_SELECT} value={p.ageRange} onChange={p.setAgeRange} placeholder="Selecione a faixa" title="Faixa etária" />
+        )}
       </FieldRow>
 
       <FieldRow label="Objetivos" helperText="Separe por vírgula" errorText={p.fieldErrors.goals}>

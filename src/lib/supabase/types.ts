@@ -177,6 +177,9 @@ export interface Database {
           last_period: string | null
           cycle_regularity: string | null
           goals: string[] | null
+          // birth_date — migração 152, aplicada em 31/08/2026. Enquanto a coluna faltou AQUI, a rota de perfil
+          // descartava o campo em silêncio: é a família "campo novo não propagado", que já apareceu três vezes.
+          birth_date: string | null
           height_cm: number | null
           pref_daily_reminder: boolean
           pref_phase_alerts: boolean
@@ -194,6 +197,7 @@ export interface Database {
           last_period?: string | null
           cycle_regularity?: string | null
           goals?: string[] | null
+          birth_date?: string | null
           height_cm?: number | null
           pref_daily_reminder?: boolean
           pref_phase_alerts?: boolean
@@ -208,6 +212,7 @@ export interface Database {
           last_period?: string | null
           cycle_regularity?: string | null
           goals?: string[] | null
+          birth_date?: string | null
           height_cm?: number | null
           pref_daily_reminder?: boolean
           pref_phase_alerts?: boolean

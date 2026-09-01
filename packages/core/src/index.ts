@@ -73,6 +73,8 @@ export * from './domain/notificationPrefs'
 export * from './domain/body/metrics'
 export * from './domain/body/weight-journey'
 export * from './domain/body/summary'
+// Quao atual e o "estado atual" — o cabecalho para de afirmar hoje sobre dado de 2023 (31/08/2026).
+export * from './domain/body/atualidadeDoResumo'
 export * from './domain/body/evolution'
 export * from './domain/body/snapshots'
 export * from './domain/body/milestones'
@@ -133,6 +135,8 @@ export * from './domain/connectors/healthConnect'
 // O que a pessoa precisa fazer EM CADA APP para o dado chegar. Autorizar a SINTERA é só metade.
 export * from './domain/connectors/healthConnectGuide'
 export * from './domain/connectors/healthConnectDiagnostico'
+// Por que um dado nao aparece nesta pagina — ausencia com motivo, pedido da fundadora em 01/09/2026.
+export * from './domain/connectors/ausenciaNaWeb'
 export * from './domain/connectors/reingestao'
 export * from './domain/connectors/janelaImportacao'
 export * from './domain/connectors/appleHealth'

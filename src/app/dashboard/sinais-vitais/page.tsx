@@ -26,6 +26,8 @@ import {
   // A ROTINA DECLARADA passou a morar aqui (decisão da fundadora, 31/08/2026): atividade física tem um
   // endereço só, e é neste, onde também estão as sessões que aconteceram.
   confrontarRotinas, rotinaLinha, rotinasDeAtividade, CATEGORIA_ROTINA_ATIVIDADE,
+  // Ausencia com motivo — pedido da fundadora em 01/09/2026. Texto no nucleo; as duas pontas dizem igual.
+  ausenciaExplicada, type SecaoDeDados,
   type RotinaConfrontada,
 } from '@sintera/core'
 import type { ActivitySessionDTO, HabitDTO } from '@sintera/api-client'
@@ -71,6 +73,27 @@ interface Entry {
 function fmt(date: string): string {
   const d = new Date(`${date}T00:00:00`)
   return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+/**
+ * A EXPLICAÇÃO DE UMA SEÇÃO VAZIA, renderizada — pedido da fundadora em 01/09/2026: "caso algum dado não
+ * apareça na web que na página respectiva apareça uma mensagem informando, informando também o porquê."
+ *
+ * O texto vem do núcleo, para a Web e o aplicativo dizerem a MESMA coisa. Aqui só a apresentação.
+ */
+function PorQueVazio({ secao, houveSincronizacao }: { secao: SecaoDeDados; houveSincronizacao: boolean }) {
+  const a = ausenciaExplicada(secao, { houveSincronizacao })
+  return (
+    <span className="block text-left">
+      <span className="block mb-2">{a.titulo}</span>
+      <span className="block space-y-1">
+        {a.motivos.map((m, i) => (
+          <span key={i} className="block text-xs text-mauve">• {m}</span>
+        ))}
+      </span>
+      <span className="block mt-2 text-xs text-onyx">{a.oQueFazer}</span>
+    </span>
+  )
 }
 
 /**
@@ -251,6 +274,20 @@ export default function SinaisVitaisPage() {
    * que recebe o instante. Regra que lê o relógio não é conferível em teste.
    */
   const confronto: RotinaConfrontada[] = confrontarRotinas(rotinasDeAtividade(rotinas), acts, new Date())
+
+  /**
+   * ALGUM DADO JÁ CHEGOU DE APARELHO NESTA CONTA?
+   *
+   * Separa os dois casos que a explicação de seção vazia precisa distinguir: nunca ligaram o caminho
+   * automático, ou ele funciona e ESTA seção específica segue vazia. Sem a distinção, quem já sincronizou
+   * leria "conecte um aparelho" e concluiria, errado, que perdeu o que tinha.
+   *
+   * 'manual' é o que a pessoa digitou; qualquer outra origem veio de fora.
+   */
+  const houveSincronizacao =
+    passos.length > 0 ||
+    acts.some(a => (a.source ?? 'manual') !== 'manual') ||
+    items.some(i => (i.source ?? 'manual') !== 'manual')
 
   function resetRotina() {
     setRotinaEditando(null); setRotinaDesc(''); setRotinaFreq(''); setRotinaMeta(''); setRotinaMetaUnidade('')
@@ -497,7 +534,7 @@ export default function SinaisVitaisPage() {
         <Card padding="none" className="p-10 text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
       ) : items.length === 0 ? (
         <EmptyState icon={<HeartPulse size={28} className="text-petal" />} title={C.emptyTitle}
-          message={C.emptyMessage} />
+          message={<PorQueVazio secao="sinais" houveSincronizacao={houveSincronizacao} />} />
       ) : (
         <div className="space-y-6">
           {VITALS.map(g => {
@@ -551,7 +588,18 @@ export default function SinaisVitaisPage() {
           eram invisíveis: a coluna de body_metrics não aceita 'passos', e uma sessão exigiria início, fim e
           duração que uma contagem contínua do dia não tem. Só aparece quando há dado — sem conector
           sincronizado a seção nem existe, em vez de uma lista vazia que ninguém sabe como preencher. */}
-      {passos.length > 0 && (
+      {/* PASSOS — a seção DEIXA DE SUMIR quando está vazia.
+          Ela desaparecia por completo sem conector sincronizado, e desaparecer é a forma mais cara de
+          silêncio: quem não vê a seção não sabe se ela não existe, se o dado não chegou, ou se sumiu.
+          Pedido da fundadora em 01/09/2026 — a página tem de dizer que está vazia E por quê. */}
+      {passos.length === 0 ? (
+        <div className="pt-4 space-y-2">
+          <p className="font-display text-lg font-semibold text-onyx">Passos</p>
+          <Card padding="relaxed">
+            <PorQueVazio secao="passos" houveSincronizacao={houveSincronizacao} />
+          </Card>
+        </div>
+      ) : (
         <div className="pt-4 space-y-2">
           <p className="font-display text-lg font-semibold text-onyx">Passos</p>
           {passos.map(d => (
@@ -730,7 +778,7 @@ export default function SinaisVitaisPage() {
 
       {acts.length === 0 ? (
         <EmptyState icon={<Activity size={28} className="text-petal" />} title={C.activityEmptyTitle}
-          message={C.activityEmptyMsg} />
+          message={<PorQueVazio secao="atividade" houveSincronizacao={houveSincronizacao} />} />
       ) : (
         <div className="space-y-2">
           {acts.map(a => (
