@@ -7,7 +7,8 @@ import { extractBiomarkers, isGatewayError } from '@/lib/ai/gateway'
 import { extractTextFromPdf, filterRelevantPages } from '@/lib/pdf/extractor'
 import { loadCatalogIndex, resolveBiomarker } from '@/lib/ai/insights/resolver'
 import { classifyExamDocument, deriveDisplayTitle, withProvenance, resolveOrderNaming } from '@/lib/capture/document-naming'
-import { deriveOrderDisplayTitle } from '@sintera/core'
+// `textoRecuperado` — o texto pesquisavel do laudo lido por IMAGEM. Regra pura, no nucleo, testada.
+import { deriveOrderDisplayTitle, textoRecuperado } from '@sintera/core'
 import { MAX_UPLOAD_MB } from '@/lib/capture/limits'
 import { extractIssuer, extractIssuerFromImage } from '@/lib/ai/issuer'
 import { extractRequestingPhysician } from '@/lib/ai/requestingPhysician'
@@ -357,6 +358,31 @@ export async function POST(
   //     degradar um nome bom quando a extração não classificou nada.
   //     A data do laudo é FATO impresso — preenche exam_date só quando extraída.
   const finalUpdate: Record<string, unknown> = { status: 'processed' }
+
+  // ─────────────────────────────────────────────────────────────────────────────────────────────────────
+  // O TEXTO DO LAUDO LIDO POR IMAGEM PASSA A SER GRAVADO. Esta era a linha que faltava.
+  //
+  // O caminho de PDF grava `exam_text` lá em cima (passo 6). O caminho de IMAGEM não gravava NADA — o modelo
+  // lia a foto, preenchia título, emissor e data, e o que ele leu morria ali. Resultado na homologação de
+  // 01/09: dez dos dezenove exames da fundadora marcados 'processed' com `exam_text` vazio, invisíveis para a
+  // busca. Ela procurou "hemograma", não achou, e concluiu que não estava lá — estava, num laudo com 63
+  // marcadores extraídos.
+  //
+  // Bate na regra permanente dela: a busca tem de encontrar qualquer palavra de qualquer documento adicionado.
+  //
+  // A composição é do núcleo (`textoRecuperado`), onde é pura e testada, e usa SÓ o texto literal do laudo —
+  // nunca o nosso rótulo normalizado, que apontaria o documento por uma palavra que ele não contém.
+  //
+  // `examTextForIssuer` é null exatamente quando nenhum texto foi extraído do arquivo — o caminho de imagem,
+  // e qualquer caminho futuro que também não produza texto. Só grava quando há o que gravar: texto vazio faria
+  // o registro parecer lido, que é o defeito original com outra roupa.
+  // ─────────────────────────────────────────────────────────────────────────────────────────────────────
+  if (!examTextForIssuer) {
+    const recuperado = textoRecuperado(result.biomarkers.map(b => ({
+      rawText: b.rawText, sourceMaterial: b.sourceMaterial, sourceExamName: b.sourceExamName,
+    })))
+    if (recuperado) finalUpdate.exam_text = recuperado
+  }
 
   // classifyExamDocument é DETERMINÍSTICO (regra sobre biomarcadores/texto). Usado para os
   // metadados de extração sempre, e — só na 1ª vez — para estabelecer a identidade documental.

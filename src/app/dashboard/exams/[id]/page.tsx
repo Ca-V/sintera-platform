@@ -22,7 +22,9 @@ import { normalizeName } from '@/lib/biomarkers/grouping'
 import { deriveExamIdentity } from '@/lib/exams/identification'
 import { isOrderDocumentType } from '@/lib/exams/classification'
 import { careStageFor } from '@/lib/exams/careFlow'
-import { examProcessingState, isExamReady, isExamProcessing, isExamFailed, deriveOrderDisplayTitle, supportedNowAcceptAttr } from '@sintera/core'
+// `estadoDaLeitura` — o que a busca alcança neste documento. Regra do núcleo: a Web e o aplicativo dizem a
+// MESMA coisa, e "processado" para de significar cinco situações diferentes.
+import { examProcessingState, isExamReady, isExamProcessing, isExamFailed, deriveOrderDisplayTitle, supportedNowAcceptAttr, estadoDaLeitura } from '@sintera/core'
 import { eventServicesFor, type HealthEvent } from '@/lib/agenda'
 import { expenseDocLabel, EXPENSE_DOC_TYPES } from '@/lib/finance/expense'
 import { parseAmountToCents, centsToAmount } from '@/lib/agenda/money'
@@ -50,6 +52,11 @@ interface Exam {
   created_at: string
   error_reason: string | null
   text_truncated: boolean | null
+  // O ESTADO DA LEITURA (01/09/2026): sem estes dois, a tela não distingue um laudo LIDO de um documento
+  // apenas guardado — e chamava os dois de "processado". Dez dos dezenove exames da fundadora eram do
+  // segundo tipo, e nada na interface dizia isso.
+  pdf_quality: string | null
+  exam_text: string | null
 }
 
 interface Biomarker {
@@ -568,7 +575,7 @@ export default function ExamDetailPage() {
   async function loadData(silent = false) {
     if (!silent) setLoading(true)
     const [{ data: examData }, { data: bioData }, { data: logData }, { data: catData }, { data: clinData }, { data: ordersData }] = await Promise.all([
-      supabase.from('exams').select('id,type,document_type,status,page_count,created_at,exam_date,error_reason,text_truncated,file_url,patient_name,extraction_completeness,issuer,equipment,requesting_physician,expense_amount_cents,expense_doc_type,expense_doc_url,fulfills_order_id')
+      supabase.from('exams').select('id,type,document_type,status,page_count,created_at,exam_date,error_reason,text_truncated,pdf_quality,exam_text,file_url,patient_name,extraction_completeness,issuer,equipment,requesting_physician,expense_amount_cents,expense_doc_type,expense_doc_url,fulfills_order_id')
         .eq('id', examId).single(),
       supabase.from('current_biomarkers')
         .select('id,name,value,value_text,unit,reference_min,reference_max,interpretation,result_type,range_extracted,reference_source,source,catalog_id,source_material,source_exam_name')
@@ -693,6 +700,16 @@ export default function ExamDetailPage() {
   const headerTitle = orderTitle ?? (isOrderDoc && !examDisplayTitle ? 'Pedido de exame' : resolvedIdentityName)
   const analyzeLabel = isProcessed ? 'Extrair novamente' : 'Extrair dados'
   const AnalyzeIcon  = isProcessed ? RefreshCw : Zap
+
+  // O ESTADO DA LEITURA — a regra é do núcleo, para a Web e o aplicativo dizerem a MESMA coisa.
+  // Só faz sentido depois de processado: antes disso, "não transcrito" seria verdade e seria inútil.
+  const leitura = isProcessed
+    ? estadoDaLeitura({
+        temTexto: !!exam?.exam_text?.trim(),
+        pdfQuality: exam?.pdf_quality,
+        fragmentos: biomarkers.length,
+      })
+    : null
 
   return (
     <div className="max-w-4xl mx-auto space-y-5">
@@ -945,6 +962,26 @@ export default function ExamDetailPage() {
             )}
           </div>
         </div>
+
+        {/* ─────────────────────────────────────────────────────────────────────────────────────────────
+            O QUE A PLATAFORMA CONSEGUE, OU NÃO, ALCANÇAR NESTE DOCUMENTO.
+            Dez dos dezenove exames da fundadora estavam marcados "processado" com o texto vazio: a busca não
+            entrava neles e NADA dizia isso. Ela procurou "hemograma", não achou, e concluiu que não estava lá.
+            Silêncio sobre o que não foi lido é pior que a falha em si — faz a pessoa confiar num vazio.
+            Só aparece quando há o que avisar; documento lido por inteiro não ganha selo nenhum.
+            ───────────────────────────────────────────────────────────────────────────────────────────── */}
+        {leitura && leitura.nivel !== 'completo' && (
+          <div className="mt-4">
+            <DsBanner
+              tone={leitura.buscavel ? 'neutral' : 'attention'}
+              icon={<AlertCircle size={14} />}
+              title={leitura.buscavel ? 'Lido como imagem' : 'Conteúdo não transcrito'}
+            >
+              {leitura.frase}
+              {!leitura.buscavel && ' O documento continua guardado e pode ser aberto a qualquer momento. Para que a busca alcance o conteúdo, envie o arquivo em PDF com texto, quando houver.'}
+            </DsBanner>
+          </div>
+        )}
 
         {/* Avisos — Banner (DS-002). Copy preservada; tom semântico. */}
         {exam?.text_truncated && (

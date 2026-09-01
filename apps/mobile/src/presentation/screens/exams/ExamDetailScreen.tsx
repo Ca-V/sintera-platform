@@ -7,7 +7,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import type { ExamDTO, ExamExtractionLog } from '@sintera/api-client'
-import { deriveExamIdentity, isOrderDocumentType, careStageFor, CARE_STAGES, compareNames, selectByLink, biomarkerStatusLabel, effectiveOrderStatus, orderStatusLabel, deriveOrderDisplayTitle, SCREEN_COPY } from '@sintera/core'
+import { deriveExamIdentity, isOrderDocumentType, careStageFor, CARE_STAGES, compareNames, selectByLink, biomarkerStatusLabel, effectiveOrderStatus, orderStatusLabel, deriveOrderDisplayTitle, SCREEN_COPY, estadoDaLeitura } from '@sintera/core'
 import { AttachmentLink, Button, Disclaimer, Input, Text, DatePicker } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { MinhaSaudeStackParamList } from '../../navigation/types'
@@ -159,6 +159,16 @@ export function ExamDetailScreen({ route, navigation }: Props) {
   const linkedOrder = orders.find(o => o.id === exam.fulfills_order_id) ?? null
   const card = { backgroundColor: t.color.surface.base, borderColor: t.color.border.default }
 
+  // O ESTADO DA LEITURA — regra do núcleo, idêntica à da Web. Só faz sentido depois de processado: antes
+  // disso "não transcrito" seria verdade e seria inútil.
+  const leitura = isProcessed
+    ? estadoDaLeitura({
+        temTexto: exam.has_exam_text,
+        pdfQuality: exam.pdf_quality,
+        fragmentos: p.biomarkers.length,
+      })
+    : null
+
   return (
     <ScrollView style={{ backgroundColor: t.color.surface.app }}
       contentContainerStyle={[styles.content, { paddingTop: styles.content.padding + insets.top, paddingBottom: styles.content.padding + insets.bottom }]}
@@ -236,6 +246,24 @@ export function ExamDetailScreen({ route, navigation }: Props) {
           <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Status: {orderStatusLabel(effectiveOrderStatus(exam.order_status, 0))}</Text>
         ) : null}
       </View>
+
+      {/* ─────────────────────────────────────────────────────────────────────────────────────────────
+          O QUE A BUSCA ALCANÇA NESTE DOCUMENTO — mesma regra e mesma frase da Web, vindas do núcleo.
+          Dez dos dezenove exames da fundadora estavam marcados "processado" com o texto vazio: a busca não
+          entrava neles e nada dizia isso. Ela procurou "hemograma", não achou, e concluiu que não estava lá.
+          Só aparece quando há o que avisar.
+          ───────────────────────────────────────────────────────────────────────────────────────────── */}
+      {leitura && leitura.nivel !== 'completo' ? (
+        <View style={[styles.banner, leitura.buscavel
+          ? card
+          : { backgroundColor: t.color.badge.attention.soft, borderColor: t.color.badge.attention.text }]}>
+          <Text spec={text(t, { role: 'bodySmall' })}
+            style={leitura.buscavel ? undefined : { color: t.color.badge.attention.text }}>
+            {leitura.frase}
+            {!leitura.buscavel ? ' O documento continua guardado e pode ser aberto a qualquer momento. Para que a busca alcance o conteúdo, envie o arquivo em PDF com texto, quando houver.' : ''}
+          </Text>
+        </View>
+      ) : null}
 
       {/* Avisos */}
       {exam.text_truncated ? (

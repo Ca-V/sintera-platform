@@ -16,7 +16,7 @@
 // contribui com zero resultados e as outras seguem. Uma busca que devolve 8 de 10 domínios é útil; uma que
 // devolve erro porque um domínio tropeçou não é.
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { shouldQuery, type SearchHit } from '@sintera/core'
+import { shouldQuery, habitCategoryLabel, CATEGORIA_ROTINA_ATIVIDADE, type SearchHit } from '@sintera/core'
 
 /** Achados por domínio. Pequeno de propósito: a tela é um celular, e quem não achou refina a palavra. */
 const LIMITE_POR_DOMINIO = 6
@@ -124,7 +124,13 @@ export async function searchRecords(client: SupabaseClient, query: string): Prom
         .not('prescribed_items', 'is', null)
         .limit(TETO_ITENS_PRESCRITOS)),
       busca('condições', () => client.from('health_conditions').select('id, name, scope').ilike('name', q).limit(LIMITE_POR_DOMINIO)),
-      busca('hábitos', () => client.from('life_habits').select('id, category, notes').ilike('category', q).limit(LIMITE_POR_DOMINIO)),
+      // A DESCRIÇÃO E A FREQUÊNCIA ENTRAM NA BUSCA. Procurava-se só por `category` — o valor TÉCNICO
+      // ('atividade_fisica', 'hidratacao'), que ninguém digita. Quem escreveu "Água, 3L por dia" não
+      // encontrava "água"; quem declarou "Musculação, diário" não encontrava "musculação". A coluna existia,
+      // o dado estava lá, e a consulta não a incluía — o mesmo achado que já apareceu em "dermatologista".
+      busca('hábitos', () => client.from('life_habits').select('id, category, description, frequency, notes')
+        .or(`category.ilike.${q},description.ilike.${q},frequency.ilike.${q},notes.ilike.${q}`)
+        .limit(LIMITE_POR_DOMINIO)),
       busca('agenda', () => client.from('health_events').select('id, title, event_type, event_date, professional_name, establishment, notes').or(`title.ilike.${q},professional_name.ilike.${q},establishment.ilike.${q},notes.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
       busca('atividades', () => client.from('activity_sessions').select('id, title, activity_type, started_at').or(`title.ilike.${q},activity_type.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
       busca('sinais vitais', () => client.from('body_metrics').select('id, label, metric, value_text, unit, measured_on').or(`label.ilike.${q},metric.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
@@ -212,7 +218,20 @@ export async function searchRecords(client: SupabaseClient, query: string): Prom
   }
 
   for (const r of habitos) {
-    hits.push({ kind: 'habito', id: texto(r.id), title: texto(r.category), subtitle: texto(r.notes) || null, section: 'habitos' })
+    // O TÍTULO É O QUE ELA ESCREVEU, não o valor técnico da coluna. Mostrava-se "atividade_fisica" e
+    // "hidratacao" — nomes de banco, num resultado de busca lido por uma pessoa.
+    const categoria = texto(r.category)
+    const titulo = texto(r.description) || habitCategoryLabel(categoria)
+    hits.push({
+      kind: 'habito',
+      id: texto(r.id),
+      title: titulo,
+      subtitle: [texto(r.frequency), texto(r.notes)].filter(Boolean).join(' · ') || habitCategoryLabel(categoria),
+      // ATIVIDADE FÍSICA MUDOU DE ENDEREÇO (31/08/2026): a rotina continua em `life_habits`, mas mora em
+      // Monitoramento. Levar a Hábitos abriria uma tela onde o registro não aparece mais — busca que
+      // conduz à tela errada é pior que busca que não encontra.
+      section: categoria === CATEGORIA_ROTINA_ATIVIDADE ? 'monitoramento' : 'habitos',
+    })
   }
 
   for (const r of eventos) {

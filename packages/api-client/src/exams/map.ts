@@ -30,6 +30,10 @@ export function toExamDetailDTO(row: Record<string, unknown>): ExamDetailDTO {
     document_scope: (row.document_scope as string | null) ?? null,
     error_reason: (row.error_reason as string | null) ?? null,
     text_truncated: (row.text_truncated as boolean | null) ?? null,
+    pdf_quality: (row.pdf_quality as string | null) ?? null,
+    // O TEXTO NÃO ATRAVESSA: vira booleano aqui. Um laudo pode ter dezenas de KB e nenhuma tela precisa do
+    // conteúdo — precisa saber se a busca o alcança. Levar o texto ao aparelho seria tráfego sem destino.
+    has_exam_text: typeof row.exam_text === 'string' && row.exam_text.trim() !== '',
     expense_amount_cents: (row.expense_amount_cents as number | null) ?? null,
     expense_doc_type: (row.expense_doc_type as string | null) ?? null,
     expense_doc_url: (row.expense_doc_url as string | null) ?? null,

@@ -29,6 +29,8 @@ export * from './domain/exams/identity'
 export * from './domain/exams/classification'
 export * from './domain/exams/orderTitle'
 export * from './domain/exams/categories'
+// O que a plataforma LEU de um documento — e o que ela nao leu, dito em vez de silenciado (01/09/2026).
+export * from './domain/exams/textoDoLaudo'
 export * from './domain/exams/orderStatus'
 export * from './domain/exams/processingStatus'
 export * from './domain/exams/careFlow'
