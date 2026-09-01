@@ -4,10 +4,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ScrollView, View, ActivityIndicator, RefreshControl, Pressable, Alert, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useNavigation } from '@react-navigation/native'
 import { text } from '@sintera/design-system'
 import type { HabitDTO, HabitInput } from '@sintera/api-client'
 import {
-  HABIT_CATEGORIES, habitGoalSummary, type HabitCategory,
+  // Atividade fisica saiu do seletor em 31/08/2026 e passou a morar em Monitoramento — ver core/habits.ts.
+  HABIT_CATEGORIES, HABIT_CATEGORY_MOVED_TO_MONITORING, habitGoalSummary, type HabitCategory,
   FREQUENCY_LABELS, type RecurrenceFrequency, selectByLink, parseRule, type HealthEvent,
 } from '@sintera/core'
 import { Text, Button, Input, AttachmentLink, Disclaimer, Select } from '../../primitives'
@@ -18,6 +20,7 @@ import { documentPicker } from '../../../infrastructure/documentPickerAdapter'
 export function HabitsScreen() {
   const t = useTheme()
   const insets = useSafeAreaInsets()
+  const navigation = useNavigation() as unknown as { navigate: (n: string) => void }
   const [items, setItems] = useState<HabitDTO[]>([])
   const [events, setEvents] = useState<HealthEvent[]>([])
   const [phase, setPhase] = useState<'loading' | 'ready' | 'error'>('loading')
@@ -27,7 +30,7 @@ export function HabitsScreen() {
 
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<HabitDTO | null>(null)
-  const [category, setCategory] = useState<HabitCategory>('atividade_fisica')
+  const [category, setCategory] = useState<HabitCategory>('sono')
   const [description, setDescription] = useState('')
   const [frequency, setFrequency] = useState('')
   const [goalAmount, setGoalAmount] = useState('')
@@ -55,7 +58,7 @@ export function HabitsScreen() {
   }
 
   function startNew() {
-    setEditing(null); setCategory('atividade_fisica'); setDescription(''); setFrequency('')
+    setEditing(null); setCategory('sono'); setDescription(''); setFrequency('')
     setGoalAmount(''); setGoalUnit(''); setGoalDivisions(''); setNotes(''); setReminderFreq('none')
     setPlanUrl(null); setPlanName(null); setOpen(true)
   }
@@ -161,7 +164,24 @@ export function HabitsScreen() {
       {items.length === 0 && !open ? (
         <View style={[styles.card, card, { gap: 4 }]}>
           <Text spec={text(t, { role: 'body', tone: 'muted' })} style={{ textAlign: 'center' }}>Nenhum hábito registrado.</Text>
-          <Text spec={text(t, { role: 'caption', tone: 'faint' })} style={{ textAlign: 'center' }}>Registre hábitos como atividade física, sono, hidratação ou alimentação — com meta e lembrete.</Text>
+          {/* "Atividade física" saiu desta frase junto com a categoria: prometer aqui o que agora mora em
+              Monitoramento mandaria a pessoa procurar um campo que não existe mais nesta tela. */}
+          <Text spec={text(t, { role: 'caption', tone: 'faint' })} style={{ textAlign: 'center' }}>Registre hábitos como sono, hidratação, alimentação, álcool ou tabagismo — com meta e lembrete.</Text>
+        </View>
+      ) : null}
+
+      {/* ATIVIDADE FÍSICA MUDOU DE ENDEREÇO (31/08/2026) — dito, não sumido em silêncio. Mesma mensagem e
+          mesmo destino da Web; a decisão de que categoria mudou vem do núcleo, não desta tela. */}
+      {items.some(h => h.category === HABIT_CATEGORY_MOVED_TO_MONITORING) ? (
+        <View style={[styles.card, card, { gap: 4 }]}>
+          <Text spec={text(t, { role: 'body' })}>Atividade física agora fica em Monitoramento.</Text>
+          <Text spec={text(t, { role: 'caption', tone: 'muted' })}>
+            A sua rotina continua guardada — lá ela aparece ao lado das sessões que aconteceram, e é lá que se
+            define rotina e meta.
+          </Text>
+          <Pressable onPress={() => navigation.navigate('Monitoramento')} style={{ alignSelf: 'flex-start', marginTop: 4 }}>
+            <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Ir para Monitoramento</Text>
+          </Pressable>
         </View>
       ) : null}
 

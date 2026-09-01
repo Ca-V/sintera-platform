@@ -85,6 +85,9 @@ export type { LinkedReminderOptions } from './agenda/reminder'
 export type { LinkedExpenseOptions } from './agenda/expense'
 export type { ConditionDTO, ConditionInput, ConditionScope } from './conditions/conditions'
 export type { HabitDTO, HabitInput } from './habits/habits'
+// As FUNÇÕES faltavam aqui: só os tipos eram exportados, e cada tela alcançava o módulo por caminho profundo.
+// Monitoramento passou a ler e escrever a rotina de atividade física (31/08/2026) e precisa da MESMA porta.
+export { listHabits, saveHabit, deleteHabit } from './habits/habits'
 // Domínio Exames (ESCRITA) — contrato DEFINIDO p/ Inc.6 (Upload); implementação após aceite do Inc.5.
 export type { ExamsWriteApi, UploadResult, CreateExamInput, UploadConstraints, ExamFieldsPatch } from './exams/write'
 export { DEFAULT_UPLOAD_CONSTRAINTS } from './exams/write'

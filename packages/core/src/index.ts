@@ -99,6 +99,8 @@ export * from './domain/connectors/state'
 
 // Sessão de atividade física (HIP-014 §3) — FATO observado, distinto da INTENÇÃO em life_habits.
 export * from './domain/body/activity'
+// A rotina declarada (Habitos) reencontra as sessoes observadas (Monitoramento) — decisao de 31/08/2026.
+export * from './domain/body/rotinaDeAtividade'
 // Pressão arterial escrita à mão — nota a forma falada ("12/8") e sugere, sem converter.
 export * from './domain/body/bloodPressure'
 // Passos por dia — observação de atividade, lida do bruto. Nem sinal vital nem sessão: natureza própria.

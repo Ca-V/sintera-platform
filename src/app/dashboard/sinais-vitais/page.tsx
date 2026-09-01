@@ -23,9 +23,13 @@ import {
   VITAL_SIGNS, ACTIVITY_TYPES, activityTypeLabel, activitySummary,
   durationSecondsFromMinutes, distanceMetersFromKm, numberFromField, paceKindFor, bloodPressureHint, bloodPressureSuggestion, bloodPressureApplyLabel,
   stepsLabel, stepsProvenance, type DailySteps,
+  // A ROTINA DECLARADA passou a morar aqui (decisão da fundadora, 31/08/2026): atividade física tem um
+  // endereço só, e é neste, onde também estão as sessões que aconteceram.
+  confrontarRotinas, rotinaLinha, rotinasDeAtividade, CATEGORIA_ROTINA_ATIVIDADE,
+  type RotinaConfrontada,
 } from '@sintera/core'
-import type { ActivitySessionDTO } from '@sintera/api-client'
-import { listActivitySessions, saveActivitySession, deleteActivitySession, saveBodyMetric, listDailySteps } from '@sintera/api-client'
+import type { ActivitySessionDTO, HabitDTO } from '@sintera/api-client'
+import { listActivitySessions, saveActivitySession, deleteActivitySession, saveBodyMetric, listDailySteps, listHabits, saveHabit, deleteHabit } from '@sintera/api-client'
 import EmptyState from '@/components/EmptyState'
 import { Card } from "@/lib/ui/ds"
 import Disclaimer from '@/components/ui/Disclaimer'
@@ -126,6 +130,16 @@ export default function SinaisVitaisPage() {
   const [actKcal, setActKcal] = useState('')
   /** Atividade sendo corrigida. `null` = nova. O aplicativo já editava; a Web só removia. */
   const [actEditando, setActEditando] = useState<ActivitySessionDTO | null>(null)
+  // ROTINA DECLARADA — a intenção ("Musculação, diário"), guardada em `life_habits` como sempre esteve.
+  // Nenhum dado foi migrado: o que mudou é ONDE ela é lida e escrita.
+  const [rotinas, setRotinas] = useState<HabitDTO[]>([])
+  const [showRotinaForm, setShowRotinaForm] = useState(false)
+  const [rotinaEditando, setRotinaEditando] = useState<HabitDTO | null>(null)
+  const [rotinaDesc, setRotinaDesc] = useState('')
+  const [rotinaFreq, setRotinaFreq] = useState('')
+  const [rotinaMeta, setRotinaMeta] = useState('')
+  const [rotinaMetaUnidade, setRotinaMetaUnidade] = useState('')
+  const [savingRotina, setSavingRotina] = useState(false)
   const [savingAct, setSavingAct] = useState(false)
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
@@ -221,6 +235,69 @@ export default function SinaisVitaisPage() {
     if (authLoading) return
     listDailySteps(supabase).then(setPassos).catch(() => { /* a seção some */ })
   }, [authLoading, supabase])
+
+  const loadRotinas = useCallback(async () => {
+    if (!user) return
+    // Mesma consulta que Hábitos usa — a rotina continua em `life_habits`, só passou a ser lida daqui.
+    try { setRotinas(await listHabits(supabase)) } catch { /* a seção degrada vazia, não derruba a tela */ }
+  }, [user, supabase])
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { if (!authLoading) loadRotinas() }, [authLoading, loadRotinas])
+
+  /**
+   * O confronto: cada rotina declarada ao lado das sessões que aconteceram.
+   *
+   * `new Date()` fica AQUI, na borda, e nunca dentro da regra — a contagem é função pura em `@sintera/core`,
+   * que recebe o instante. Regra que lê o relógio não é conferível em teste.
+   */
+  const confronto: RotinaConfrontada[] = confrontarRotinas(rotinasDeAtividade(rotinas), acts, new Date())
+
+  function resetRotina() {
+    setRotinaEditando(null); setRotinaDesc(''); setRotinaFreq(''); setRotinaMeta(''); setRotinaMetaUnidade('')
+  }
+
+  function startEditRotina(id: string) {
+    const h = rotinas.find(r => r.id === id)
+    if (!h) return
+    setRotinaEditando(h)
+    setRotinaDesc(h.description ?? '')
+    setRotinaFreq(h.frequency ?? '')
+    setRotinaMeta(h.goal_amount == null ? '' : String(h.goal_amount))
+    setRotinaMetaUnidade(h.goal_unit ?? '')
+    setShowRotinaForm(true)
+  }
+
+  async function saveRotina() {
+    if (!rotinaDesc.trim()) return
+    setSavingRotina(true)
+    const { error } = await saveHabit(supabase, {
+      id: rotinaEditando?.id,
+      category: CATEGORIA_ROTINA_ATIVIDADE as HabitDTO['category'],
+      description: rotinaDesc.trim(),
+      frequency: rotinaFreq.trim() || null,
+      goal_amount: rotinaMeta.trim() ? numberFromField(rotinaMeta) : null,
+      goal_unit: rotinaMetaUnidade.trim() || null,
+    })
+    setSavingRotina(false)
+    // O ERRO É DITO. Uma rotina que some sem explicação é a falha silenciosa que já custou caro aqui.
+    if (error) { setErr(error.message); return }
+    resetRotina(); setShowRotinaForm(false); await loadRotinas()
+  }
+
+  function removeRotina(id: string) {
+    const alvo = rotinas.find(r => r.id === id)
+    setConfirm({
+      message: `Remover a rotina "${alvo?.description ?? ''}"? As sessões já registradas permanecem — só a rotina declarada sai.`,
+      confirmLabel: 'Remover',
+      onYes: async () => {
+        setConfirm(null); setBusyId(id)
+        const { error } = await deleteHabit(supabase, id)
+        setBusyId(null)
+        if (error) { setErr(error.message); return }
+        await loadRotinas()
+      },
+    })
+  }
 
   function resetAct() {
     setActEditando(null)
@@ -481,6 +558,86 @@ export default function SinaisVitaisPage() {
             <ListCard key={d.day}
               title={stepsLabel(d.total)}
               meta={[fmt(d.day), stepsProvenance(d)].filter(Boolean).join(' · ')}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────────────────────────────────────
+          ROTINA DECLARADA — a declaração encostada no fato.
+          Atividade física ficava dividida entre Hábitos (a intenção, sem data) e Monitoramento (a sessão,
+          com data e calorias). A fundadora pediu um endereço só, e é este. A rotina continua guardada em
+          `life_habits` — nada foi migrado nem apagado; mudou onde ela é lida e escrita.
+          A plataforma CONTA e mostra; nunca diz se a meta foi cumprida (ADR-000 / RDC 657).
+          ───────────────────────────────────────────────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between gap-3 pt-4">
+        <p className="font-display text-lg font-semibold text-onyx">Rotina e metas</p>
+        <button onClick={() => (showRotinaForm ? (resetRotina(), setShowRotinaForm(false)) : (resetRotina(), setShowRotinaForm(true)))}
+          className="flex items-center gap-2 px-4 py-2 rounded-full border border-petal text-petal font-body text-sm font-medium hover:bg-blush transition-colors flex-shrink-0">
+          {showRotinaForm ? <X size={15} /> : <Plus size={15} />} {showRotinaForm ? C.close : 'Definir rotina'}
+        </button>
+      </div>
+
+      {showRotinaForm && (
+        <Card padding="relaxed" className="space-y-3">
+          {rotinaEditando && (
+            <p className="font-body text-sm text-onyx">Corrigindo <strong>{rotinaEditando.description}</strong>.</p>
+          )}
+          <div>
+            <label htmlFor="rot-desc" className="font-body text-xs text-mauve block mb-1">Atividade</label>
+            <input id="rot-desc" type="text" value={rotinaDesc} onChange={e => setRotinaDesc(e.target.value)}
+              placeholder="Ex.: Musculação, Corrida, Tênis"
+              className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+          </div>
+          <div>
+            <label htmlFor="rot-freq" className="font-body text-xs text-mauve block mb-1">Frequência pretendida</label>
+            <input id="rot-freq" type="text" value={rotinaFreq} onChange={e => setRotinaFreq(e.target.value)}
+              placeholder="Ex.: diário, 2 vezes por semana"
+              className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="rot-meta" className="font-body text-xs text-mauve block mb-1">Meta (opcional)</label>
+              <input id="rot-meta" type="text" inputMode="decimal" value={rotinaMeta} onChange={e => setRotinaMeta(e.target.value)} placeholder="Ex.: 150"
+                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+            </div>
+            <div>
+              <label htmlFor="rot-unid" className="font-body text-xs text-mauve block mb-1">Unidade</label>
+              <input id="rot-unid" type="text" value={rotinaMetaUnidade} onChange={e => setRotinaMetaUnidade(e.target.value)} placeholder="Ex.: min/semana"
+                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <button onClick={saveRotina} disabled={savingRotina || !rotinaDesc.trim()}
+              className="px-5 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium disabled:opacity-40">
+              {savingRotina ? 'Salvando…' : C.save}
+            </button>
+          </div>
+        </Card>
+      )}
+
+      {confronto.length === 0 ? (
+        <p className="font-body text-sm text-mauve">
+          Defina uma rotina e ela aparece aqui ao lado das sessões que forem registradas.
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {confronto.map(r => (
+            <ListCard key={r.id}
+              title={rotinaLinha(r)}
+              meta={r.frase}
+              actions={
+                <>
+                  <button onClick={() => startEditRotina(r.id)} disabled={busyId === r.id} title="Editar"
+                    className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-petal hover:bg-blush transition-colors">
+                    <Pencil size={12} />
+                  </button>
+                  <button onClick={() => removeRotina(r.id)} disabled={busyId === r.id} title={C.removeAction}
+                    className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-red-400 hover:bg-red-50 transition-colors">
+                    <Trash2 size={12} />
+                  </button>
+                </>
+              }
             />
           ))}
         </div>

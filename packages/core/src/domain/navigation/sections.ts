@@ -133,13 +133,19 @@ export const PLATFORM_NAV: readonly SectionGroup[] = [
           },
           {
             id: 'monitoramento', label: 'Monitoramento',
-            summary: 'Sinais vitais e atividade física — do seu registro, de um aparelho ou de um aplicativo.',
-            keywords: ['pressão', 'pressão arterial', 'glicemia', 'glicose', 'frequência cardíaca', 'batimento', 'saturação', 'temperatura', 'febre', 'sinal vital', 'atividade física', 'corrida', 'caminhada', 'ciclismo', 'passos', 'strava', 'garmin', 'oura', 'relógio', 'wearable', 'conexões', 'health connect'],
+            summary: 'Sinais vitais, atividade física e rotina — do seu registro, de um aparelho ou de um app.',
+            // 'rotina', 'meta', 'musculação', 'treino' e 'academia' entraram aqui em 31/08/2026, quando
+            // atividade física passou a ter um endereço só. Sem isso, quem busca "rotina" continuaria caindo
+            // em Hábitos, onde o campo já não existe.
+            keywords: ['pressão', 'pressão arterial', 'glicemia', 'glicose', 'frequência cardíaca', 'batimento', 'saturação', 'temperatura', 'febre', 'sinal vital', 'atividade física', 'exercício', 'treino', 'academia', 'musculação', 'rotina', 'meta', 'corrida', 'caminhada', 'ciclismo', 'passos', 'strava', 'garmin', 'oura', 'relógio', 'wearable', 'conexões', 'health connect'],
           },
           {
             id: 'habitos', label: 'Hábitos',
-            summary: 'Sono, alimentação, atividade e o mais que você quiser acompanhar.',
-            keywords: ['hábito', 'sono', 'dormir', 'alimentação', 'água', 'rotina', 'meta'],
+            // "atividade" SAIU deste resumo e destas palavras: desde 31/08/2026 ela mora em Monitoramento, e
+            // quem busca "atividade física" ou "rotina" precisa chegar LÁ. Uma busca que leva à tela errada é
+            // pior do que uma busca que não encontra — manda a pessoa procurar um campo que não existe mais.
+            summary: 'Sono, alimentação, hidratação, álcool e tabagismo — o que você quiser acompanhar.',
+            keywords: ['hábito', 'sono', 'dormir', 'alimentação', 'água', 'hidratação', 'álcool', 'tabagismo', 'cigarro'],
           },
         ],
       },
