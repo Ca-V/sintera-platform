@@ -111,6 +111,22 @@ export function buscavel(status: StatusDaTranscricao): boolean {
   return status === 'ok' || status === 'parcial'
 }
 
+// ── Teto de custo ────────────────────────────────────────────────────────────────────────────────────────
+//
+// TODA LEITURA CUSTA DINHEIRO, e desde 01/09/2026 cada documento custa DUAS chamadas de modelo — extração
+// mais transcrição. Sem teto, o comportamento que o próprio produto CONVIDA é o que quebra a conta: a pessoa
+// nova sobe duzentos documentos antigos no primeiro dia, o custo integral é pago na hora, e ela pode não
+// voltar no segundo dia.
+//
+// O teto não é castigo. É o que permite abrir a plataforma para fora sem uma conta aberta, e o que passar
+// dele não é descartado — é adiado, e a pessoa é INFORMADA disso.
+
+/** Quantos documentos por conta, por dia, a plataforma lê automaticamente. */
+export const TETO_TRANSCRICOES_POR_DIA = 40
+
+/** Por que uma leitura não aconteceu. `null` = falha do provedor; 'teto_diario' = limite da conta. */
+export type MotivoDaFalha = 'teto_diario' | null
+
 /**
  * Junta as transcrições das PÁGINAS de um documento numa só.
  *
@@ -167,7 +183,16 @@ export function origemLabel(o: string | null | undefined): string | null {
  * Factual e específica. "Não foi possível processar" — que responde por tudo e não ajuda em nada — é
  * exatamente o que estas quatro frases existem para substituir.
  */
-export function statusFrase(status: StatusDaTranscricao, trechosIlegiveis = 0): string {
+export function statusFrase(
+  status: StatusDaTranscricao,
+  trechosIlegiveis = 0,
+  motivo: MotivoDaFalha = null,
+): string {
+  // O TETO É DIFERENTE DE UMA FALHA DO PROVEDOR: aqui nada está quebrado, e tentar de novo agora não adianta.
+  // Dizer "tente novamente" mandaria a pessoa repetir em vão — o mesmo defeito de sempre, com outra roupa.
+  if (status === 'falhou' && motivo === 'teto_diario') {
+    return `Este documento entrou e está guardado, mas ainda não foi lido: o limite de ${TETO_TRANSCRICOES_POR_DIA} leituras por dia desta conta foi atingido. A leitura continua automaticamente amanhã.`
+  }
   switch (status) {
     case 'ok':
       return 'Documento lido por inteiro — a busca alcança o conteúdo.'

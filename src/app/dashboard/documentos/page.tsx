@@ -38,7 +38,10 @@ import {
   DOCUMENT_SUBTYPES, documentSubtypeLabel, buildPatientDocumentInsert, documentSubtitle, isReadyToSave,
   autofillFrom, deriveDocumentTitle, documentPrimaryName, parsePrescribedItems, prescribedItemsToText,
   findExistingDocument, existingDocumentMessage, DOCUMENT_DUPLICATE_CHOICES, type DocumentDuplicateCandidate,
-  type PatientDocumentSubtype, type AttachedFile, uuid, DOCUMENT_FILTER_ALL,} from '@sintera/core'
+  type PatientDocumentSubtype, type AttachedFile, uuid, DOCUMENT_FILTER_ALL,
+  // O que a busca alcanca neste documento (migracao 154) — mesma regra e mesma frase do aplicativo.
+  buscavel, statusFrase, type StatusDaTranscricao,
+} from '@sintera/core'
 
 // Ícone por subtipo. Mapa EXAUSTIVO por construção: o TypeScript exige uma entrada para cada
 // subtipo declarado no core, então acrescentar um subtipo lá quebra a compilação aqui em vez
@@ -61,10 +64,16 @@ type DocRow = {
   prescribed_items: string[] | null
   doc_date: string | null
   notes: string | null
+  /**
+   * Estado da leitura do documento (migração 154): ok · parcial · ilegivel · falhou.
+   * O TEXTO não vem na lista, de propósito — numa lista de trinta documentos seriam centenas de KB
+   * atravessando a rede para nada. O status responde o que a lista precisa saber.
+   */
+  transcricao_status: string | null
   created_at: string
 }
 
-const COLUMNS = 'id, subtype, file_url, issuer, professional_name, institution_name, prescribed_items, doc_date, notes, created_at'
+const COLUMNS = 'id, subtype, file_url, issuer, professional_name, institution_name, prescribed_items, doc_date, notes, transcricao_status, created_at'
 
 export default function DocumentosPage() {
   const { user } = useUser()
@@ -341,7 +350,28 @@ export default function DocumentosPage() {
                 leading={<Icon size={18} />}
                 title={deriveDocumentTitle(r.subtype, alvos[r.id])}
                 meta={documentSubtitle(r)}
-                chips={<AttachmentLink url={r.file_url} label="Ver documento" icon={<Paperclip size={14} />} />}
+                chips={
+                  <>
+                    <AttachmentLink url={r.file_url} label="Ver documento" icon={<Paperclip size={14} />} />
+                    {/* O QUE A BUSCA ALCANÇA NESTE DOCUMENTO. Só aparece quando há o que avisar: documento
+                        lido por inteiro não ganha selo. Sem isto, a pessoa procura uma palavra da receita,
+                        não acha, e conclui que não está lá — foi exatamente o que aconteceu com os exames. */}
+                    {r.transcricao_status && r.transcricao_status !== 'ok' && (
+                      <span
+                        title={statusFrase(r.transcricao_status as StatusDaTranscricao)}
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 font-body text-[11px] ${
+                          buscavel(r.transcricao_status as StatusDaTranscricao)
+                            ? 'bg-ivory text-mauve border border-border'
+                            : 'bg-warm/60 text-gold border border-gold/40'
+                        }`}
+                      >
+                        {buscavel(r.transcricao_status as StatusDaTranscricao)
+                          ? 'Lido em parte'
+                          : 'Conteúdo não lido'}
+                      </span>
+                    )}
+                  </>
+                }
                 actions={
                   <>
                     {/* EDITAR faltava AQUI, e só aqui: o aplicativo já tinha a ação, a Web não. `Pencil`,

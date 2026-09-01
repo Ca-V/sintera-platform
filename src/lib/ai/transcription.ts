@@ -18,8 +18,12 @@
 // guardado, e é ele a fonte da verdade. A falha vira estado 'falhou' — DECLARADO, nunca confundido com
 // "o documento não tinha nada". Essa distinção é o motivo de este serviço existir com um tipo de retorno
 // próprio em vez de devolver `string | null`.
+import { createHash } from 'crypto'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { avaliarTranscricao, type StatusDaTranscricao } from '@sintera/core'
+import {
+  avaliarTranscricao, TETO_TRANSCRICOES_POR_DIA,
+  type StatusDaTranscricao, type MotivoDaFalha,
+} from '@sintera/core'
 import { AnthropicProvider } from './providers/anthropic'
 import { loadActivePrompt, verifyPromptIntegrity } from './prompt-loader'
 
@@ -51,11 +55,102 @@ export interface TranscriptionOutcome {
   readonly truncado: boolean
   /** Motivo legível quando `status === 'falhou'` — para o log do servidor, não para a tela. */
   readonly motivoDaFalha: string | null
+  /**
+   * POR QUE falhou, em termos que a TELA entende. 'teto_diario' produz uma frase diferente, porque a
+   * situação é diferente: nada está quebrado, e tentar de novo agora não adianta.
+   */
+  readonly motivo?: MotivoDaFalha
+  /** SHA-256 do arquivo lido — a chave da deduplicação, e o preenchimento de uma coluna que nunca foi usada. */
+  readonly sha256?: string
+  /** Quando o texto veio de outro documento com bytes idênticos, o id dele. Auditoria de reaproveitamento. */
+  readonly reaproveitadoDe?: string
 }
 
 const FALHOU = (motivo: string, logId: string | null = null, promptVersion: string | null = null): TranscriptionOutcome => ({
   texto: null, status: 'falhou', trechosIlegiveis: 0, promptVersion, logId, truncado: false, motivoDaFalha: motivo,
 })
+
+/**
+ * Quantas leituras esta conta já consumiu nas últimas 24 horas.
+ *
+ * Conta em `ai_processing_log`, que é onde toda tentativa fica registrada — inclusive as que falharam. Contar
+ * só os sucessos deixaria uma conta em falha permanente chamando o provedor sem limite, que é justamente o
+ * cenário caro.
+ *
+ * Em caso de erro na contagem, devolve 0 — ou seja, DEIXA PASSAR. É a escolha certa: bloquear a leitura de
+ * todo mundo porque uma consulta de contagem falhou trocaria um risco de custo por um defeito de produto.
+ */
+async function contarLeiturasDoDia(supabase: SupabaseClient, userId: string): Promise<number> {
+  try {
+    const desde = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+    const { count, error } = await supabase
+      .from('ai_processing_log')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId).eq('operation', 'transcription').gte('started_at', desde)
+    if (error) return 0
+    return count ?? 0
+  } catch {
+    return 0
+  }
+}
+
+/** O que se reaproveita de um arquivo idêntico já lido. */
+interface TextoJaLido {
+  readonly texto: string | null
+  readonly status: StatusDaTranscricao
+  readonly promptVersion: string | null
+  readonly de: string
+}
+
+/**
+ * Este arquivo — estes bytes exatos — já foi lido para esta pessoa?
+ *
+ * Só reaproveita leitura BEM-SUCEDIDA: reaproveitar uma falha seria propagar o problema em vez de tentar
+ * de novo. E só dentro da MESMA conta — o hash é global, o dado de saúde não é.
+ */
+async function textoJaLido(
+  supabase: SupabaseClient, userId: string, sha256: string,
+): Promise<TextoJaLido | null> {
+  try {
+    const { data: ex } = await supabase.from('exams')
+      .select('id, exam_text, text_transcription_status, text_transcription_prompt_version')
+      .eq('user_id', userId).eq('document_sha256', sha256)
+      .in('text_transcription_status', ['ok', 'parcial'])
+      .limit(1).maybeSingle() as { data: {
+        id: string; exam_text: string | null
+        text_transcription_status: string | null; text_transcription_prompt_version: string | null
+      } | null }
+    if (ex?.exam_text) {
+      return {
+        texto: ex.exam_text,
+        status: ex.text_transcription_status as StatusDaTranscricao,
+        promptVersion: ex.text_transcription_prompt_version,
+        de: ex.id,
+      }
+    }
+
+    const { data: doc } = await supabase.from('patient_documents')
+      .select('id, transcricao, transcricao_status, transcricao_prompt_version')
+      .eq('user_id', userId).eq('document_sha256', sha256)
+      .in('transcricao_status', ['ok', 'parcial'])
+      .limit(1).maybeSingle() as { data: {
+        id: string; transcricao: string | null
+        transcricao_status: string | null; transcricao_prompt_version: string | null
+      } | null }
+    if (doc?.transcricao) {
+      return {
+        texto: doc.transcricao,
+        status: doc.transcricao_status as StatusDaTranscricao,
+        promptVersion: doc.transcricao_prompt_version,
+        de: doc.id,
+      }
+    }
+    return null
+  } catch {
+    // Falha na busca por duplicata NUNCA impede a leitura — no pior caso, paga-se uma leitura a mais.
+    return null
+  }
+}
 
 /**
  * Extrai o objeto JSON da resposta do modelo.
@@ -89,6 +184,42 @@ export async function transcribeDocument(
   input: TranscriptionInput,
 ): Promise<TranscriptionOutcome> {
   const { alvo, userId, buffer, mediaType, pdfQualityDetected } = input
+
+  // ── 0a. O MESMO ARQUIVO NÃO SE LÊ DUAS VEZES ─────────────────────────────────────────────────────────
+  //
+  // A pessoa fotografa o mesmo laudo de novo, ou sobe o PDF que já tinha subido. Pagar outra leitura por
+  // bytes idênticos é dinheiro jogado fora, e o texto seria o mesmo.
+  //
+  // O hash é calculado AQUI, do buffer que já está em memória. A coluna `document_sha256` existe no banco
+  // desde sempre e nunca foi preenchida por ninguém — mais um caso de campo criado e nunca ligado; agora
+  // passa a ser gravado como efeito da leitura.
+  const sha256 = createHash('sha256').update(buffer).digest('hex')
+  const reaproveitado = await textoJaLido(supabase, userId, sha256)
+  if (reaproveitado) {
+    return {
+      texto: reaproveitado.texto,
+      status: reaproveitado.status,
+      trechosIlegiveis: 0,
+      promptVersion: reaproveitado.promptVersion,
+      // SEM linha de auditoria nova, e é correto: nenhuma chamada de modelo aconteceu. A rastreabilidade
+      // continua existindo — pelo documento de origem, que tem a sua.
+      logId: null,
+      truncado: false,
+      motivoDaFalha: null,
+      sha256,
+      reaproveitadoDe: reaproveitado.de,
+    }
+  }
+
+  // ── 0b. O TETO DIÁRIO DA CONTA ───────────────────────────────────────────────────────────────────────
+  //
+  // Protege contra o cenário que o próprio produto convida: duzentos documentos antigos no primeiro dia.
+  // O documento NÃO é recusado — ele entra, fica guardado, e a leitura é adiada com a razão declarada.
+  const lidosHoje = await contarLeiturasDoDia(supabase, userId)
+  if (lidosHoje >= TETO_TRANSCRICOES_POR_DIA) {
+    console.warn('[transcricao] teto diário atingido', { userId, lidosHoje })
+    return { ...FALHOU('teto diário de leituras atingido'), motivo: 'teto_diario' as const, sha256 }
+  }
 
   // 1. O PROMPT VEM DO REGISTRO, E É VERIFICADO. Rodar um prompt fora do registro seria abrir mão da
   //    verificação de integridade — exatamente a garantia que torna esta leitura auditável.
@@ -172,5 +303,8 @@ export async function transcribeDocument(
     logId,
     truncado,
     motivoDaFalha: t.status === 'falhou' ? 'resposta do modelo fora do formato esperado' : null,
+    // Vai de volta ao chamador para ser GRAVADO no registro. É o que faz a deduplicação valer da próxima
+    // vez — e o que finalmente preenche uma coluna que existia no banco sem nunca ter sido escrita.
+    sha256,
   }
 }

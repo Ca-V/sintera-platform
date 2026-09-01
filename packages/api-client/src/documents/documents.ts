@@ -24,6 +24,17 @@ export interface PatientDocumentDTO {
   professional_name: string | null
   institution_name: string | null
   status: string
+  /**
+   * O ESTADO DA LEITURA do documento (migração 154): ok · parcial · ilegivel · falhou.
+   *
+   * Sem ele a tela não distingue um documento LIDO de um apenas guardado — o defeito que os exames tiveram
+   * por meses. `buscavel()` no núcleo responde, a partir daqui, se a busca alcança o conteúdo.
+   *
+   * O TEXTO NÃO VEM JUNTO, de propósito: numa lista de trinta documentos seriam centenas de KB atravessando
+   * a rede para nada. O status responde tudo o que a lista precisa saber.
+   */
+  transcricao_status: string | null
+  transcricao_origin: string | null
   created_at: string
 }
 
@@ -68,7 +79,7 @@ export interface PatientDocumentInput {
 
 // Exportada porque o módulo de VÍNCULO projeta o MESMO documento: duas listas de colunas dariam dois formatos
 // para a mesma coisa, e o seletor de vínculo mostraria menos (ou mais) do que a tela de Documentos.
-export const COLUMNS = 'id, subtype, file_url, issuer, doc_date, notes, prescribed_items, professional_name, institution_name, status, created_at' as const
+export const COLUMNS = 'id, subtype, file_url, issuer, doc_date, notes, prescribed_items, professional_name, institution_name, status, transcricao_status, transcricao_origin, created_at' as const
 
 async function requireUserId(client: SupabaseClient): Promise<string> {
   const { data: { session } } = await client.auth.getSession()

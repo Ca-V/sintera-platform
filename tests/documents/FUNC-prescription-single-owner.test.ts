@@ -59,7 +59,8 @@ function fakeClient(existing: PatientDocumentDTO[]) {
 const doc = (id: string, file_url: string): PatientDocumentDTO => ({
   id, subtype: 'receita', file_url, issuer: null, doc_date: null, notes: null,
   prescribed_items: null, professional_name: null, institution_name: null,
-  status: 'pending', created_at: '2026-08-25T00:00:00Z',
+  status: 'pending', transcricao_status: null, transcricao_origin: null,
+  created_at: '2026-08-25T00:00:00Z',
 })
 
 describe('DOC-002 · a receita é montada pelo domínio', () => {

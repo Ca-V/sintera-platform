@@ -431,6 +431,8 @@ export async function POST(
     finalUpdate.text_transcription_prompt_version = trans.promptVersion
     finalUpdate.text_transcription_log_id = trans.logId
     finalUpdate.text_transcribed_at = new Date().toISOString()
+    // O hash do arquivo, para que a MESMA foto enviada de novo nao pague outra leitura.
+    if (trans.sha256) finalUpdate.document_sha256 = trans.sha256
 
     if (trans.texto) {
       finalUpdate.exam_text = trans.texto
@@ -907,6 +909,7 @@ async function transcreverExameCertificado(
     text_transcription_log_id: trans.logId,
     text_transcribed_at: new Date().toISOString(),
   }
+  if (trans.sha256) patch.document_sha256 = trans.sha256
   if (trans.texto) {
     patch.exam_text = trans.texto
     patch.exam_text_origin = 'transcricao_visao'

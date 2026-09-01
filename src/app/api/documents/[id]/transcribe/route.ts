@@ -19,7 +19,7 @@ import { NextRequest, NextResponse } from 'next/server'
 // Auth COMPARTILHADA (Cookie=Web · Bearer=aplicativo) — ponte ADR-020.
 import { getAuthedSupabase } from '@/lib/supabase/authedClient'
 import { transcribeDocument } from '@/lib/ai/transcription'
-import { combinarTranscricoes, statusFrase, type Transcricao } from '@sintera/core'
+import { combinarTranscricoes, statusFrase, type Transcricao, type MotivoDaFalha } from '@sintera/core'
 
 /** Tipo do arquivo pela extensão. O que não for imagem conhecida é tratado como PDF. */
 function mediaTypeDe(url: string): string {
@@ -71,6 +71,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   // regra este texto foi produzido. Sem isso, "transcrito" seria uma afirmação sem prova.
   let promptVersion: string | null = null
   let ultimoLogId: string | null = null
+  // Hash da PRIMEIRA pagina — a chave de deduplicacao do documento.
+  let sha256: string | undefined
+  let motivo: MotivoDaFalha = null
 
   for (const arq of arquivos) {
     let buffer: Buffer
@@ -93,6 +96,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     })
     transcricoes.push({ texto: t.texto, status: t.status, trechosIlegiveis: t.trechosIlegiveis })
     promptVersion = t.promptVersion ?? promptVersion
+    sha256 = t.sha256 ?? sha256
+    motivo = t.motivo ?? motivo
     ultimoLogId = t.logId ?? ultimoLogId
   }
 
@@ -110,6 +115,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // `ai_processing_log`, todas apontando para este documento por `document_id` — de onde se recupera o
     // histórico completo, página a página.
     transcricao_log_id: ultimoLogId,
+    // O hash do arquivo, para que o MESMO documento enviado de novo nao pague outra leitura.
+    document_sha256: sha256 ?? null,
   } as never).eq('id', documentId).eq('user_id', user.id)
 
   if (error) {
@@ -121,6 +128,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     status: combinada.status,
     trechosIlegiveis: combinada.trechosIlegiveis,
     paginas: arquivos.length,
-    mensagem: statusFrase(combinada.status, combinada.trechosIlegiveis),
+    // O MOTIVO chega a frase: teto diario nao e falha do provedor, e dizer "tente novamente" mandaria a
+    // pessoa repetir em vao.
+    mensagem: statusFrase(combinada.status, combinada.trechosIlegiveis, motivo),
+    motivo,
   })
 }

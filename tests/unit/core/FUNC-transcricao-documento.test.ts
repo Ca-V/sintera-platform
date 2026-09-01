@@ -9,6 +9,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   avaliarTranscricao, buscavel, combinarTranscricoes, origemLabel, statusFrase, MARCADOR_ILEGIVEL,
+  TETO_TRANSCRICOES_POR_DIA,
   type StatusDaTranscricao,
 } from '@sintera/core'
 
@@ -160,6 +161,42 @@ describe('o documento de várias páginas', () => {
 
   it('sem páginas, não há transcrição', () => {
     expect(combinarTranscricoes([]).status).toBe('falhou')
+  })
+})
+
+describe('o teto de custo por conta', () => {
+  // TODA LEITURA CUSTA DINHEIRO, e desde 01/09/2026 cada documento custa DUAS chamadas — extração mais
+  // transcrição. O cenário que quebra a conta é o que o próprio produto convida: duzentos documentos antigos
+  // no primeiro dia, custo integral pago na hora, e a pessoa pode não voltar no segundo.
+
+  it('o teto vive no núcleo — as duas pontas e o servidor leem o MESMO número', () => {
+    expect(TETO_TRANSCRICOES_POR_DIA).toBe(40)
+  })
+
+  it('TETO NÃO É FALHA DO PROVEDOR, e a frase é outra', () => {
+    const teto = statusFrase('falhou', 0, 'teto_diario')
+    const provedor = statusFrase('falhou', 0, null)
+    expect(teto).not.toBe(provedor)
+  })
+
+  it('a frase do teto NÃO manda tentar de novo — aqui nada está quebrado', () => {
+    // Mandar repetir agora seria mandar a pessoa repetir em vão: o mesmo defeito de sempre, com outra roupa.
+    const f = statusFrase('falhou', 0, 'teto_diario')
+    expect(f).not.toContain('tentar novamente')
+    expect(f).toContain('continua automaticamente amanhã')
+  })
+
+  it('a frase do teto GARANTE que o documento não se perdeu', () => {
+    // É o primeiro medo de quem envia um documento de saúde e não vê confirmação.
+    const f = statusFrase('falhou', 0, 'teto_diario')
+    expect(f).toContain('entrou e está guardado')
+    expect(f).toContain(String(TETO_TRANSCRICOES_POR_DIA))
+  })
+
+  it('o motivo só muda a frase de FALHOU — não contamina os demais estados', () => {
+    for (const s of ['ok', 'parcial', 'ilegivel'] as StatusDaTranscricao[]) {
+      expect(statusFrase(s, 1, 'teto_diario'), s).toBe(statusFrase(s, 1, null))
+    }
   })
 })
 

@@ -13,6 +13,8 @@ import type { PatientDocumentDTO, PickedFile } from '@sintera/api-client'
 import {
   DOCUMENT_SUBTYPES, documentSubtypeLabel, documentSubtitle, isReadyToSave, DOCUMENT_BASE_ACTIONS,
   autofillFrom, deriveDocumentTitle, DOCUMENT_FILTER_ALL,
+  // O que a busca alcanca neste documento (migracao 154) — mesma regra e mesma frase da Web.
+  buscavel, statusFrase, type StatusDaTranscricao,
   documentPrimaryName, parsePrescribedItems, prescribedItemsToText,
   findExistingDocument, existingDocumentMessage, DOCUMENT_DUPLICATE_CHOICES,
   itensParaRegistrar, destinoDaPlataforma, DESTINOS_PRESCRITOS, convitePrescricao, AVISO_PRESCRICAO,
@@ -498,6 +500,20 @@ export function DocumentsScreen() {
               <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.text.muted }}>
                 {meta}
               </Text>
+              {/* O QUE A BUSCA ALCANÇA NESTE DOCUMENTO — mesma regra e mesma frase da Web, vindas do núcleo.
+                  Só aparece quando há o que avisar: documento lido por inteiro não ganha aviso.
+                  Sem isto, a pessoa procura uma palavra da receita, não acha, e conclui que não está lá —
+                  foi exatamente o que aconteceu com os exames. */}
+              {d.transcricao_status && d.transcricao_status !== 'ok' ? (
+                <Text
+                  spec={text(t, { role: 'caption' })}
+                  style={{ color: buscavel(d.transcricao_status as StatusDaTranscricao)
+                    ? t.color.text.muted
+                    : t.color.badge.attention.text }}
+                >
+                  {statusFrase(d.transcricao_status as StatusDaTranscricao)}
+                </Text>
+              ) : null}
               {/* AÇÕES do contrato (documentCardActions): ver · editar · excluir, com a redação do núcleo —
                   a mesma em toda categoria e nas duas plataformas. */}
               <AttachmentLink url={d.file_url} label={ACOES.view} variant="inline" />
