@@ -96,10 +96,22 @@ export async function searchRecords(client: SupabaseClient, query: string): Prom
   const [meds, recursos, indicadores, resultados, exames, documentos, comItens, condicoes, habitos, eventos, atividades, sinais] =
     await Promise.all([
       busca('medicamentos', () => client.from('medications').select('id, name, brand, kind, dose').or(`name.ilike.${q},brand.ilike.${q},prescriber_name.ilike.${q},notes.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
-      busca('recursos', () => client.from('health_resources').select('id, name, brand, resource_type').or(`name.ilike.${q},brand.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
-      busca('indicadores', () => client.from('biomarkers').select('id, name, value, unit, exam_id, exams(exam_date)').ilike('name', q).limit(LIMITE_POR_DOMINIO)),
-      busca('resultados', () => client.from('clinical_results').select('id, name, exam_id').or(`name.ilike.${q},raw_text.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
-      busca('exames', () => client.from('exams').select('id, type, issuer, exam_date').or(`type.ilike.${q},issuer.ilike.${q},notes.ilike.${q},exam_text.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
+      // `notes` é texto que ELA escreve, e não estava em nenhuma destas três consultas.
+      busca('recursos', () => client.from('health_resources').select('id, name, brand, resource_type')
+        .or(`name.ilike.${q},brand.ilike.${q},notes.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
+      // O VALOR QUALITATIVO entra na busca: "NEGATIVO", "REAGENTE", "NÃO DETECTADO" são o resultado inteiro de
+      // muitos exames, e procurá-los não encontrava nada. `source_exam_name` é o nome do exame COMO O LAUDO o
+      // escreve — "Hemograma" —, que é por onde a pessoa procura.
+      busca('indicadores', () => client.from('biomarkers').select('id, name, value, unit, exam_id, exams(exam_date)')
+        .or(`name.ilike.${q},value_text.ilike.${q},source_exam_name.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
+      busca('resultados', () => client.from('clinical_results').select('id, name, exam_id')
+        .or(`name.ilike.${q},raw_text.ilike.${q},value_text.ilike.${q},group_label.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
+      // `display_title` FALTAVA, e é o nome que a pessoa VÊ. `type` é o rótulo legado — muitas vezes o nome do
+      // arquivo ("Resultado-Laudo-17-2009-2090051-1"). Procurar por "Exames laboratoriais", que é o que está
+      // escrito na tela, não encontrava o exame. `patient_name` entra pelo mesmo motivo: é texto do laudo.
+      busca('exames', () => client.from('exams').select('id, type, display_title, issuer, exam_date')
+        .or(`type.ilike.${q},display_title.ilike.${q},issuer.ilike.${q},patient_name.ilike.${q},notes.ilike.${q},exam_text.ilike.${q}`)
+        .limit(LIMITE_POR_DOMINIO)),
       // OS CAMPOS DA MIGRAÇÃO 151 ENTRAM NA BUSCA. Criar coluna e não incluí-la aqui reproduziria o achado 1
       // desta homologação: a fundadora buscou "dermatologista", o dado ESTAVA na plataforma, e a busca não
       // achou porque a coluna não estava na consulta.
@@ -127,16 +139,19 @@ export async function searchRecords(client: SupabaseClient, query: string): Prom
         .select('id, subtype, issuer, professional_name, institution_name, prescribed_items, doc_date')
         .not('prescribed_items', 'is', null)
         .limit(TETO_ITENS_PRESCRITOS)),
-      busca('condições', () => client.from('health_conditions').select('id, name, scope').ilike('name', q).limit(LIMITE_POR_DOMINIO)),
+      // `notes` e `since_label` ("desde 2019", "desde a gravidez") são texto dela, e ficavam fora.
+      busca('condições', () => client.from('health_conditions').select('id, name, scope')
+        .or(`name.ilike.${q},notes.ilike.${q},since_label.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
       // A DESCRIÇÃO E A FREQUÊNCIA ENTRAM NA BUSCA. Procurava-se só por `category` — o valor TÉCNICO
       // ('atividade_fisica', 'hidratacao'), que ninguém digita. Quem escreveu "Água, 3L por dia" não
       // encontrava "água"; quem declarou "Musculação, diário" não encontrava "musculação". A coluna existia,
       // o dado estava lá, e a consulta não a incluía — o mesmo achado que já apareceu em "dermatologista".
       busca('hábitos', () => client.from('life_habits').select('id, category, description, frequency, notes')
-        .or(`category.ilike.${q},description.ilike.${q},frequency.ilike.${q},notes.ilike.${q}`)
+        .or(`category.ilike.${q},description.ilike.${q},frequency.ilike.${q},notes.ilike.${q},plan_name.ilike.${q}`)
         .limit(LIMITE_POR_DOMINIO)),
       busca('agenda', () => client.from('health_events').select('id, title, event_type, event_date, professional_name, establishment, notes').or(`title.ilike.${q},professional_name.ilike.${q},establishment.ilike.${q},notes.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
-      busca('atividades', () => client.from('activity_sessions').select('id, title, activity_type, started_at').or(`title.ilike.${q},activity_type.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
+      busca('atividades', () => client.from('activity_sessions').select('id, title, activity_type, started_at')
+        .or(`title.ilike.${q},activity_type.ilike.${q},notes.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
       busca('sinais vitais', () => client.from('body_metrics').select('id, label, metric, value_text, unit, measured_on').or(`label.ilike.${q},metric.ilike.${q}`).limit(LIMITE_POR_DOMINIO)),
     ])
 
