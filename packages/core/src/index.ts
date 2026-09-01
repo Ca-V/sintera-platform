@@ -97,6 +97,8 @@ export * from './domain/capture/divergence'
 export * from './domain/capture/motivoLeitura'
 // O que conta como FATO transcrito de um documento — a fronteira entre transcrever e inferir (RDC 657).
 export * from './domain/capture/transcription'
+// TODO documento que entra e lido e transcrito — decisao da fundadora em 01/09/2026. O que nao se leu e DITO.
+export * from './domain/capture/transcricaoDeDocumento'
 // Política de preparo de imagem — a DECISÃO é uma só; o mecanismo é de cada plataforma.
 export * from './domain/capture/imagePrep'
 export * from './domain/connectors/state'

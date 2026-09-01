@@ -105,7 +105,11 @@ export async function searchRecords(client: SupabaseClient, query: string): Prom
       // achou porque a coluna não estava na consulta.
       busca('documentos', () => client.from('patient_documents')
         .select('id, subtype, issuer, professional_name, institution_name, prescribed_items, doc_date')
-        .or(`subtype.ilike.${q},issuer.ilike.${q},notes.ilike.${q},professional_name.ilike.${q},institution_name.ilike.${q}`)
+        // `transcricao` (migração 154) É O CAMPO QUE FALTAVA para a regra dela valer de fato: "busque
+        // qualquer palavra que esteja em algum documento adicionado". Sem ele, procurar uma palavra DENTRO de
+        // uma receita nunca funcionaria — e criar a coluna sem incluí-la aqui repetiria, pela terceira vez, o
+        // achado de "dermatologista": o dado na plataforma e a consulta sem a coluna.
+        .or(`subtype.ilike.${q},issuer.ilike.${q},notes.ilike.${q},professional_name.ilike.${q},institution_name.ilike.${q},transcricao.ilike.${q}`)
         .limit(LIMITE_POR_DOMINIO)),
 
       // O NOME DO MEDICAMENTO PRECISA DE CONSULTA PRÓPRIA, e é o campo que mais importa: "losartana" é

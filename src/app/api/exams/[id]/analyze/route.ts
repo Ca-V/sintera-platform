@@ -4,6 +4,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthedSupabase } from '@/lib/supabase/authedClient'
 import { extractBiomarkers, isGatewayError } from '@/lib/ai/gateway'
+// TRANSCRICAO (01/09/2026) — todo documento que entra e lido. Prompt governado + linha de auditoria.
+import { transcribeDocument } from '@/lib/ai/transcription'
 import { extractTextFromPdf, filterRelevantPages } from '@/lib/pdf/extractor'
 import { loadCatalogIndex, resolveBiomarker } from '@/lib/ai/insights/resolver'
 import { classifyExamDocument, deriveDisplayTitle, withProvenance, resolveOrderNaming } from '@/lib/capture/document-naming'
@@ -56,7 +58,7 @@ export async function POST(
   // 2. Ownership + busca file_url e status anterior (para preservar 'processed' em caso de falha)
   const { data: exam } = await supabase
     .from('exams')
-    .select('id, type, file_url, status, display_title, document_type, source_bundle_exam_id, bundle_cdu_index, bundle_cdu_count, bundle_page_start, bundle_page_end')
+    .select('id, type, file_url, status, display_title, document_type, source_bundle_exam_id, bundle_cdu_index, bundle_cdu_count, bundle_page_start, bundle_page_end, exam_text, text_transcription_status, pdf_quality')
     .eq('id', examId)
     .eq('user_id', userId)
     .single() as { data: {
@@ -64,6 +66,7 @@ export async function POST(
       display_title: string | null; document_type: string | null
       source_bundle_exam_id: string | null; bundle_cdu_index: number | null; bundle_cdu_count: number | null
       bundle_page_start: number | null; bundle_page_end: number | null
+      exam_text: string | null; text_transcription_status: string | null; pdf_quality: string | null
     } | null }
   const previousStatus = (exam as { status: string } | null)?.status ?? 'pending'
 
@@ -95,6 +98,37 @@ export async function POST(
   // (pós-RI-001) fará candidato+comparação quando houver `extractor_version` mais novo.
   const representationCertified = isRepresentationCertified({ previousStatus, identityEstablished })
   if (representationCertified) {
+    // ─────────────────────────────────────────────────────────────────────────────────────────────────────
+    // A CERTIFICAÇÃO PROTEGE A REPRESENTAÇÃO — NÃO PODE BLOQUEAR A LEITURA DO TEXTO.
+    //
+    // O curto-circuito acima existe para que "Extrair novamente" nunca re-derive resultados já extraídos: a
+    // representação é ativo permanente e reproduzível. Isso continua valendo, inteiro.
+    //
+    // Mas TRANSCRIÇÃO NÃO É REPRESENTAÇÃO. É o texto do que está escrito no papel, e ele nunca chegou a ser
+    // produzido para estes documentos. Sem esta porta, os exames que entraram como imagem ficariam presos:
+    // certificados, sem texto, e sem caminho para ganhar um — e "de dezenove precisa ler dezenove"
+    // (fundadora, 01/09/2026) seria impossível de cumprir.
+    //
+    // Transcrever aqui NÃO toca em biomarcador, identidade, título, data nem em qualquer resultado extraído.
+    // Só acrescenta o texto que faltava, com a proveniência.
+    // ─────────────────────────────────────────────────────────────────────────────────────────────────────
+    const semTexto = !exam.exam_text?.trim()
+    const podeTentarDeNovo = exam.text_transcription_status == null || exam.text_transcription_status === 'falhou'
+
+    if (semTexto && podeTentarDeNovo && exam.file_url) {
+      const trans = await transcreverExameCertificado(supabase, {
+        examId, userId, fileUrl: exam.file_url, pdfQuality: exam.pdf_quality,
+      })
+      return NextResponse.json({
+        certified: true,
+        code: 'ALREADY_CERTIFIED',
+        transcribed: trans.status,
+        notice: trans.status === 'ok' || trans.status === 'parcial'
+          ? 'Os resultados extraídos permanecem como estavam — eles são um ativo permanente do documento. O que faltava era o TEXTO do laudo, e ele acaba de ser lido: a busca passa a alcançar o conteúdo.'
+          : 'Os resultados extraídos permanecem como estavam. A leitura do texto do documento não foi concluída desta vez; você pode tentar novamente.',
+      }, { status: 200 })
+    }
+
     return NextResponse.json({
       certified: true,
       code: 'ALREADY_CERTIFIED',
@@ -378,10 +412,50 @@ export async function POST(
   // o registro parecer lido, que é o defeito original com outra roupa.
   // ─────────────────────────────────────────────────────────────────────────────────────────────────────
   if (!examTextForIssuer) {
-    const recuperado = textoRecuperado(result.biomarkers.map(b => ({
-      rawText: b.rawText, sourceMaterial: b.sourceMaterial, sourceExamName: b.sourceExamName,
-    })))
-    if (recuperado) finalUpdate.exam_text = recuperado
+    // ① TRANSCRIÇÃO — a leitura de verdade. "De dezenove precisa ler dezenove" (fundadora, 01/09/2026).
+    //    O documento vai ao modelo com o prompt de TRANSCRIÇÃO, governado em `prompt_registry` e verificado
+    //    por hash. O resultado carrega a linha de auditoria que o produziu.
+    const trans = await transcribeDocument(supabase, {
+      alvo: { kind: 'exam', examId },
+      userId,
+      buffer: pdfBuffer,
+      mediaType: isImage
+        ? (filePath.endsWith('.png') ? 'image/png' : filePath.endsWith('.webp') ? 'image/webp' : 'image/jpeg')
+        : 'application/pdf',
+      pdfQualityDetected: pdfQuality,
+    })
+
+    // A PROVENIÊNCIA É GRAVADA MESMO QUANDO NÃO SE LEU. Um documento que falhou na leitura precisa DIZER que
+    // falhou — senão volta a ser indistinguível de um documento vazio, que é o defeito de origem.
+    finalUpdate.text_transcription_status = trans.status
+    finalUpdate.text_transcription_prompt_version = trans.promptVersion
+    finalUpdate.text_transcription_log_id = trans.logId
+    finalUpdate.text_transcribed_at = new Date().toISOString()
+
+    if (trans.texto) {
+      finalUpdate.exam_text = trans.texto
+      finalUpdate.exam_text_origin = 'transcricao_visao'
+      // Documento longo cortado pelo limite de tokens: já existe o aviso de processamento parcial na tela, e
+      // ele passa a valer também para a transcrição.
+      if (trans.truncado) finalUpdate.text_truncated = true
+    } else {
+      // ② ÚLTIMO RECURSO — recompõe das linhas literais já extraídas pelos marcadores. Não substitui a
+      //    transcrição: é o que sobra quando ela não foi possível, e fica marcado como tal, nunca como leitura.
+      const recuperado = textoRecuperado(result.biomarkers.map(b => ({
+        rawText: b.rawText, sourceMaterial: b.sourceMaterial, sourceExamName: b.sourceExamName,
+      })))
+      if (recuperado) {
+        finalUpdate.exam_text = recuperado
+        finalUpdate.exam_text_origin = 'recuperado_de_marcadores'
+      }
+      if (trans.status === 'falhou') {
+        console.error('[analyze] transcrição falhou', { examId, motivo: trans.motivoDaFalha, logId: trans.logId })
+      }
+    }
+  } else {
+    // O texto veio da camada do próprio arquivo — cópia dos bytes, não leitura de pixels. A distinção fica
+    // gravada porque as duas NÃO têm o mesmo grau de confiança, e depois ninguém saberia qual foi qual.
+    finalUpdate.exam_text_origin = 'pdf_nativo'
   }
 
   // classifyExamDocument é DETERMINÍSTICO (regra sobre biomarcadores/texto). Usado para os
@@ -786,4 +860,58 @@ export async function POST(
     // PR1 1.3 — output truncado por max_tokens: biomarcadores podem estar incompletos
     truncated:      result.truncated,
   })
+}
+
+/**
+ * TRANSCREVE UM EXAME JÁ CERTIFICADO, sem tocar em nada do que foi extraído.
+ *
+ * Só escreve texto e proveniência. Nenhum biomarcador, nenhuma identidade, nenhum título, nenhuma data —
+ * a representação certificada continua intocada, que é o ponto inteiro de ela ser certificada.
+ *
+ * Não lança: a falha vira estado gravado ('falhou'), que é justamente o que permite tentar de novo depois
+ * sem confundir "não consegui ler" com "não havia nada".
+ */
+async function transcreverExameCertificado(
+  supabase: Awaited<ReturnType<typeof getAuthedSupabase>>['supabase'],
+  args: { examId: string; userId: string; fileUrl: string; pdfQuality: string | null },
+): Promise<{ status: string }> {
+  const { examId, userId, fileUrl, pdfQuality } = args
+
+  const caminho = (() => { try { return new URL(fileUrl).pathname.toLowerCase() } catch { return fileUrl.toLowerCase() } })()
+  const ehImagem = /\.(jpe?g|png|webp)$/.test(caminho)
+  const mediaType = ehImagem
+    ? (caminho.endsWith('.png') ? 'image/png' : caminho.endsWith('.webp') ? 'image/webp' : 'image/jpeg')
+    : 'application/pdf'
+
+  let buffer: Buffer
+  try {
+    const res = await fetch(fileUrl)
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    buffer = Buffer.from(await res.arrayBuffer())
+  } catch {
+    // Arquivo que não desceu é 'falhou', não 'ilegível' — só o primeiro se resolve tentando de novo.
+    await supabase.from('exams').update({
+      text_transcription_status: 'falhou', text_transcribed_at: new Date().toISOString(),
+    } as never).eq('id', examId)
+    return { status: 'falhou' }
+  }
+
+  const trans = await transcribeDocument(supabase, {
+    alvo: { kind: 'exam', examId }, userId, buffer, mediaType,
+    pdfQualityDetected: pdfQuality ?? undefined,
+  })
+
+  const patch: Record<string, unknown> = {
+    text_transcription_status: trans.status,
+    text_transcription_prompt_version: trans.promptVersion,
+    text_transcription_log_id: trans.logId,
+    text_transcribed_at: new Date().toISOString(),
+  }
+  if (trans.texto) {
+    patch.exam_text = trans.texto
+    patch.exam_text_origin = 'transcricao_visao'
+    if (trans.truncado) patch.text_truncated = true
+  }
+  await supabase.from('exams').update(patch as never).eq('id', examId)
+  return { status: trans.status }
 }
