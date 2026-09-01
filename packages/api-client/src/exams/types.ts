@@ -36,6 +36,9 @@ export interface ExamDetailDTO extends ExamDTO {
   /** O documento tem texto pesquisável? BOOLEANO de propósito: o texto pode ter dezenas de KB e nenhuma tela
    *  precisa dele — precisa saber se a busca alcança o conteúdo. Ver `estadoDaLeitura` em @sintera/core. */
   has_exam_text: boolean
+  /** Proveniencia explicita do texto (migracao 154). Vence a deducao pela qualidade do PDF. */
+  exam_text_origin: string | null
+  text_transcription_status: string | null
   // Financeiro do exame (FB-008: atributo do próprio exame, não Evento separado)
   expense_amount_cents: number | null
   expense_doc_type: string | null
@@ -84,4 +87,4 @@ export const EXAM_COLUMNS =
 
 /** Colunas do DETALHE — as centrais + os campos extras (páginas, escopo, erro, financeiro). Só `getExam`. */
 export const EXAM_DETAIL_COLUMNS =
-  `${EXAM_COLUMNS}, page_count, document_scope, error_reason, text_truncated, pdf_quality, exam_text, expense_amount_cents, expense_doc_type, expense_doc_url` as const
+  `${EXAM_COLUMNS}, page_count, document_scope, error_reason, text_truncated, pdf_quality, exam_text, exam_text_origin, text_transcription_status, expense_amount_cents, expense_doc_type, expense_doc_url` as const

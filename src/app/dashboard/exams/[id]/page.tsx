@@ -57,6 +57,10 @@ interface Exam {
   // segundo tipo, e nada na interface dizia isso.
   pdf_quality: string | null
   exam_text: string | null
+  // Proveniência explícita (migração 154). Antes dela a origem era DEDUZIDA da qualidade do PDF; havendo
+  // fato registrado, usar a dedução seria preferir o palpite ao registro.
+  exam_text_origin: string | null
+  text_transcription_status: string | null
 }
 
 interface Biomarker {
@@ -575,7 +579,7 @@ export default function ExamDetailPage() {
   async function loadData(silent = false) {
     if (!silent) setLoading(true)
     const [{ data: examData }, { data: bioData }, { data: logData }, { data: catData }, { data: clinData }, { data: ordersData }] = await Promise.all([
-      supabase.from('exams').select('id,type,document_type,status,page_count,created_at,exam_date,error_reason,text_truncated,pdf_quality,exam_text,file_url,patient_name,extraction_completeness,issuer,equipment,requesting_physician,expense_amount_cents,expense_doc_type,expense_doc_url,fulfills_order_id')
+      supabase.from('exams').select('id,type,document_type,status,page_count,created_at,exam_date,error_reason,text_truncated,pdf_quality,exam_text,exam_text_origin,text_transcription_status,file_url,patient_name,extraction_completeness,issuer,equipment,requesting_physician,expense_amount_cents,expense_doc_type,expense_doc_url,fulfills_order_id')
         .eq('id', examId).single(),
       supabase.from('current_biomarkers')
         .select('id,name,value,value_text,unit,reference_min,reference_max,interpretation,result_type,range_extracted,reference_source,source,catalog_id,source_material,source_exam_name')
@@ -708,6 +712,9 @@ export default function ExamDetailPage() {
         temTexto: !!exam?.exam_text?.trim(),
         pdfQuality: exam?.pdf_quality,
         fragmentos: biomarkers.length,
+        // A proveniência explícita (migração 154) vence a dedução pela qualidade do PDF.
+        origem: exam?.exam_text_origin,
+        statusTranscricao: exam?.text_transcription_status,
       })
     : null
 

@@ -251,6 +251,20 @@ export function DocumentsScreen() {
       // a partir de leitura automática seria a plataforma PRODUZINDO conteúdo, não organizando.
       const propostos = subtype === 'receita' ? itensParaRegistrar(parsePrescribedItems(itensTexto)) : []
       const docId = substituirId ?? criado?.id ?? null
+
+      // ─────────────────────────────────────────────────────────────────────────────────────────────────
+      // MANDA LER O DOCUMENTO (decisão da fundadora, 01/09/2026): "todos os documentos que são adicionados
+      // precisam ser lidos e transcritos". Até aqui, a leitura assistida abria a foto, tirava profissional,
+      // data e itens — e DESCARTAVA o texto. Procurar uma palavra dentro de uma receita nunca funcionou.
+      //
+      // NÃO BLOQUEIA E NÃO DESFAZ NADA: o documento já está salvo e o arquivo é a fonte da verdade. Falhar a
+      // leitura adia a busca alcançar o conteúdo, e o estado 'falhou' fica gravado para tentar de novo.
+      // ─────────────────────────────────────────────────────────────────────────────────────────────────
+      if (docId) {
+        apiClient.documents.transcribeDocument(docId)
+          .then(({ error }) => { if (error) console.warn('[documento] leitura adiada:', error.message) })
+          .catch(() => { /* já registrado como "falhou" no servidor; a tela não trava por isso */ })
+      }
       if (propostos.length > 0 && docId) {
         setProposta({ documentoId: docId, itens: propostos, marcados: propostos.map(() => true) })
       }

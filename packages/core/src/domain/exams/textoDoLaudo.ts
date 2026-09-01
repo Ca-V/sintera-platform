@@ -29,6 +29,10 @@
 //
 // E NÃO chama de completo o que é parcial — ver `estadoDaLeitura`.
 
+// A frase de cada estado vive em `transcricaoDeDocumento`, com a transcricao. Reescreve-la aqui seria a
+// mesma regra em dois lugares — a familia de defeito que mais custou nesta plataforma.
+import { statusFrase } from '../capture/transcricaoDeDocumento'
+
 /** Um pedaço do laudo que a plataforma já leu e guardou (hoje, uma linha de `biomarkers`). */
 export interface FragmentoDoLaudo {
   /** A linha LITERAL do laudo. É esta a fonte da verdade deste módulo. */
@@ -104,8 +108,51 @@ export function estadoDaLeitura(params: {
   readonly temTexto: boolean
   readonly pdfQuality?: string | null
   readonly fragmentos?: number
+  /** De onde veio o texto (migração 154). Quando presente, MANDA — é o dado explícito. */
+  readonly origem?: string | null
+  /** Como terminou a transcrição (migração 154). Quando presente, MANDA. */
+  readonly statusTranscricao?: string | null
+  readonly trechosIlegiveis?: number
 }): EstadoDaLeitura {
-  const { temTexto, pdfQuality, fragmentos = 0 } = params
+  const { temTexto, pdfQuality, fragmentos = 0, origem, statusTranscricao, trechosIlegiveis = 0 } = params
+
+  // ─────────────────────────────────────────────────────────────────────────────────────────────────────
+  // A PROVENIÊNCIA EXPLÍCITA VENCE A INFERÊNCIA.
+  //
+  // Antes da migração 154 não havia como saber de onde o texto veio, e este módulo DEDUZIA da qualidade do
+  // PDF. Dedução serve enquanto não há fato; havendo, usá-la seria preferir o palpite ao registro.
+  // Os registros anteriores continuam sem esses campos, e para eles a dedução segue valendo — por isso os
+  // dois caminhos coexistem, e não porque um esteja em vias de substituir o outro.
+  // ─────────────────────────────────────────────────────────────────────────────────────────────────────
+  if (statusTranscricao === 'falhou') {
+    return {
+      nivel: 'nao_transcrito',
+      frase: statusFrase('falhou'),
+      buscavel: false,
+    }
+  }
+  if (statusTranscricao === 'ilegivel') {
+    return { nivel: 'nao_transcrito', frase: statusFrase('ilegivel'), buscavel: false }
+  }
+  if (temTexto && (statusTranscricao === 'ok' || statusTranscricao === 'parcial')) {
+    return {
+      nivel: statusTranscricao === 'ok' && origem !== 'transcricao_visao' ? 'completo' : 'recuperado',
+      frase: statusFrase(statusTranscricao, trechosIlegiveis)
+        + (origem === 'transcricao_visao' ? ' O texto foi lido da imagem pela leitura assistida.' : ''),
+      buscavel: true,
+    }
+  }
+  if (temTexto && origem === 'recuperado_de_marcadores') {
+    return {
+      nivel: 'recuperado',
+      frase: 'O texto pesquisável deste documento foi recomposto do que já havia sido extraído — não é o laudo inteiro.',
+      buscavel: true,
+    }
+  }
+  if (temTexto && origem === 'pdf_nativo') {
+    return { nivel: 'completo', frase: 'Texto do documento lido — a busca alcança o conteúdo.', buscavel: true }
+  }
+
   const imagem = SEM_CAMADA_DE_TEXTO.has((pdfQuality ?? '').trim())
 
   if (temTexto && !imagem) {

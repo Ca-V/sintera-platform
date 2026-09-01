@@ -30,6 +30,8 @@ import { archivePrescription } from '../documents/prescription'
 import { listConnectors, connectorConnectUrl, syncConnector, disconnectConnector } from '../connectors/connectors'
 import { listDocuments, listDocumentsForTarget, listDocumentsForTargets, listPagesForDocuments, saveDocument, updateDocument, replaceDocument, deleteDocument } from '../documents/documents'
 import { targetNamesByDocument } from '../documents/targetNames'
+// Leitura do documento (01/09/2026) — ponte ADR-020, igual a analyzeExam: a regra de leitura e UMA so.
+import { transcribeDocument } from '../documents/transcribe'
 import { listMedications, saveMedication, deleteMedication } from '../medications/medications'
 import { listContraceptives, saveContraceptive, toggleContraceptiveStatus, deleteContraceptive } from '../cycle/contraception'
 import { listPeriods, addPeriod, deletePeriod } from '../cycle/menstrual'
@@ -141,6 +143,7 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       listPagesForDocuments: (ids, signal) => listPagesForDocuments(supabase, ids, signal),
       targetNamesByDocument: (ids) => targetNamesByDocument(supabase, ids),
       saveDocument: (input) => saveDocument(supabase, input),
+      transcribeDocument: (id) => transcribeDocument(supabase, config.webBaseUrl, id),
       updateDocument: (id, patch) => updateDocument(supabase, id, patch),
       replaceDocument: (id, input) => replaceDocument(supabase, id, input),
       deleteDocument: (id) => deleteDocument(supabase, id),

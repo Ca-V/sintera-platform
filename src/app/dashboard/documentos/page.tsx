@@ -247,6 +247,24 @@ export default function DocumentosPage() {
         const { error: pe } = await supabase.from('patient_document_files').insert(row(paginas))
         if (pe) { setErro('O documento foi salvo, mas as páginas extras não. Tente editar e anexar de novo.'); return }
       }
+
+      // ─────────────────────────────────────────────────────────────────────────────────────────────────
+      // MANDA LER O DOCUMENTO (decisão da fundadora, 01/09/2026): "todos os documentos que são adicionados
+      // precisam ser lidos e transcritos". A leitura assistida abria a foto para tirar profissional, data e
+      // itens — e DESCARTAVA o texto. Procurar uma palavra dentro de uma receita nunca funcionou.
+      //
+      // MESMA ROTA que o aplicativo chama: a regra de leitura é UMA só, no servidor, onde vivem o prompt
+      // governado e a auditoria. Duas implementações divergiriam, como já divergiram o sinal do peso e a
+      // lista de formatos aceitos.
+      //
+      // NÃO BLOQUEIA: o documento já está salvo e o arquivo é a fonte da verdade. A falha vira estado
+      // 'falhou' gravado, que é o que permite tentar de novo sem confundir com "documento vazio".
+      // ─────────────────────────────────────────────────────────────────────────────────────────────────
+      if (docId) {
+        fetch(`/api/documents/${docId}/transcribe`, { method: 'POST' })
+          .catch(() => { /* já registrado no servidor; a tela não trava por isso */ })
+      }
+
       setOpen(false); resetForm(); await load()
     } finally {
       setSaving(false)

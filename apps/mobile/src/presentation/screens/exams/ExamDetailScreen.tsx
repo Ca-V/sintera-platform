@@ -166,6 +166,9 @@ export function ExamDetailScreen({ route, navigation }: Props) {
         temTexto: exam.has_exam_text,
         pdfQuality: exam.pdf_quality,
         fragmentos: p.biomarkers.length,
+        // A proveniencia explicita (migracao 154) vence a deducao — mesma regra da Web.
+        origem: exam.exam_text_origin,
+        statusTranscricao: exam.text_transcription_status,
       })
     : null
 

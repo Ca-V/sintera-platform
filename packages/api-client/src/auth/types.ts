@@ -1,5 +1,6 @@
 // @sintera/api-client — Contratos do DOMÍNIO de autenticação (independentes de plataforma).
 import type { Session, User } from '@supabase/supabase-js'
+import type { ResultadoTranscricao } from '../documents/transcribe'
 import type { StorageAdapter } from '../storage/adapter'
 import type { ProfileApi } from '../profile/types'
 import type { MinhaSaudeCounts } from '../summary/counts'
@@ -122,6 +123,11 @@ export interface DocumentsApi {
    */
   targetNamesByDocument(documentIds: string[]): Promise<Record<string, string[]>>
   saveDocument(input: PatientDocumentInput): Promise<{ data: { id: string } | null; error: Error | null }>
+  /**
+   * MANDA LER O DOCUMENTO (01/09/2026). Sem isto, uma receita fica guardada e invisivel para a busca — foi
+   * assim ate agora. NAO lanca: falhar aqui nao desfaz o salvamento, so adia a leitura.
+   */
+  transcribeDocument(id: string): Promise<{ data: ResultadoTranscricao | null; error: Error | null }>
   /** Substitui o documento guardado pelo que está entrando, preservando o registro e os vínculos. */
   replaceDocument(id: string, input: PatientDocumentInput): Promise<{ error: Error | null }>
   updateDocument(id: string, patch: Partial<Pick<PatientDocumentInput,
