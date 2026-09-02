@@ -65,13 +65,16 @@ export function RelatorioScreen() {
       tag('habits', apiClient.habits.listHabits()),
       tag('resources', apiClient.resources.listResources()),
       tag('omics', apiClient.report.listOmicsPanels()),
+      // RECEITAS E ATESTADOS no dossie (01/09/2026). Faltavam: o medicamento aparecia porque ela o cadastrou,
+      // e a receita que o prescreveu, nao.
+      tag('documents', apiClient.documents.listDocuments()),
       tag('contraceptives', apiClient.cycle.listContraceptives()),
       tag('periods', apiClient.cycle.listPeriods()),
       tag('biomarkers', apiClient.exams.getAllBiomarkers()),
       tag('shares', apiClient.report.listShares()),
       tag('templates', apiClient.report.listTemplates()),
       tag('heightCm', apiClient.body.getHeightCm()),
-    ]).then(([meds, events, exams, measures, conditions, habits, resources, omics, contraceptives, periods, bio, sh, tpls, heightCm]) => {
+    ]).then(([meds, events, exams, measures, conditions, habits, resources, omics, documents, contraceptives, periods, bio, sh, tpls, heightCm]) => {
       if (!alive.current) return
       const eyewear = resources.filter(r => r.resource_type === 'correcao_visual').map(r => {
         const a = (r.attributes ?? {}) as Record<string, unknown>
@@ -90,6 +93,7 @@ export function RelatorioScreen() {
         habits: habits.map(h => ({ category: h.category, description: h.description, frequency: h.frequency, notes: h.notes })),
         eyewear,
         omics: omics.map(o => ({ domain: o.domain, laboratory: o.laboratory, totalFeatures: o.total_features, date: o.collected_on ?? o.created_at })),
+        documents: documents.map(d => ({ subtype: d.subtype, docDate: d.doc_date, professional: d.professional_name, institution: d.institution_name, items: d.prescribed_items })),
         contraceptives: contraceptives.map(c => ({ kind: c.kind, brand: c.brand, startedOn: c.started_on, replaceOn: c.replace_on, status: c.status })),
         menstruations: periods.map(p => ({ startedOn: p.started_on, notes: p.notes })),
         expenses: selectFinancial(events),

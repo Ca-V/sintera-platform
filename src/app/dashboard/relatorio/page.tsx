@@ -25,14 +25,18 @@ import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import { Card } from "@/lib/ui/ds"
 import { applySort, type SortSpec } from '@/lib/listview'
 import {
-  Loader2, Printer, ArrowLeft, FileText, Share2, Copy, Trash2, Check,
+  Loader2, Printer, ArrowLeft, FileText, FileCheck2, Share2, Copy, Trash2, Check,
   CalendarDays, FlaskConical, Pill, Stethoscope, HeartPulse, Ruler, Activity, Eye,
   ChevronDown, Minus, Droplet, Receipt, Leaf, Clock, TrendingUp, TrendingDown,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 // Taxonomia do relatório — dono único (ADR-023). O Mobile consome as MESMAS
 // constantes; declarar em paralelo fazia as duas telas divergirem em silêncio.
-import { REPORT_GROUPS, defaultSections, secureToken, type ReportSectionKey } from '@sintera/core'
+// O rótulo do subtipo vem do núcleo — o mesmo das telas de Documentos, para o dossiê não inventar nome.
+import {
+  REPORT_GROUPS, defaultSections, secureToken, documentSubtypeLabel,
+  type ReportSectionKey, type PatientDocumentSubtype,
+} from '@sintera/core'
 import { assembleOrganizedBiomarkers } from '@/lib/ai/insights/assembler'
 import { summarizeBiomarkers, examDate, type BiomarkerRow } from '@/lib/biomarkers/grouping'
 import { useUser } from '@/context/UserContext'
@@ -52,6 +56,7 @@ const SECTION_ICON: Record<ReportSectionKey, ElementType> = {
   sinais: Activity,
   exames: FileText,
   omica: FlaskConical,
+  documentos: FileCheck2,
   condicoes: Stethoscope,
   medicamentos: Pill,
   suplementos: Leaf,
@@ -78,6 +83,12 @@ interface Eyewear {
 }
 const EYEWEAR_LABEL: Record<string, string> = { oculos: 'Óculos', lentes_contato: 'Lentes de contato' }
 interface Omics { domain: string; laboratory: string | null; totalFeatures: number | null; date: string | null }
+/**
+ * RECEITA · ATESTADO · RELATÓRIO · ENCAMINHAMENTO (DOC-001) — FALTAVAM no dossiê, nas DUAS pontas.
+ * O medicamento aparecia porque ela o cadastrou; a receita que o prescreveu, não. O atestado não aparecia
+ * em lugar nenhum do documento que ela leva ao médico.
+ */
+interface Documento { subtype: string; docDate: string | null; professional: string | null; institution: string | null; items: string[] | null }
 interface Contraceptive { kind: string; brand: string | null; startedOn: string | null; replaceOn: string | null; status: string }
 interface Menstruation { startedOn: string; notes: string | null }
 function grauStr(sph: string | null, cyl: string | null, axis: string | null, add: string | null): string {
@@ -145,6 +156,7 @@ function LegacyReport() {
   const [habits, setHabits] = useState<Habit[]>([])
   const [eyewear, setEyewear] = useState<Eyewear[]>([])
   const [omics, setOmics] = useState<Omics[]>([])
+  const [documentos, setDocumentos] = useState<Documento[]>([])
   const [contraceptives, setContraceptives] = useState<Contraceptive[]>([])
   const [menstruations, setMenstruations] = useState<Menstruation[]>([])
   const [expenses, setExpenses] = useState<HealthEvent[]>([])
@@ -248,7 +260,7 @@ function LegacyReport() {
     setLoading(true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db = supabase as any
-    const [medRes, evAll, exRes, mzRes, cdRes, hbRes, ewRes, omRes, ccRes, mpRes, finRes] = await Promise.all([
+    const [medRes, evAll, exRes, mzRes, cdRes, hbRes, ewRes, omRes, docRes, ccRes, mpRes, finRes] = await Promise.all([
       db.from('medications').select('name, kind, dose, frequency, started_on, until_date, status').eq('user_id', user.id).order('status'),
       // EVT-C1 (NC-0013/0014): leitura ÚNICA pelo contrato canônico — inclui eventos legados + canônicos (dedup).
       services.query.listAll(user.id),
@@ -258,6 +270,8 @@ function LegacyReport() {
       db.from('life_habits').select('category, description, frequency, notes').eq('user_id', user.id).order('created_at', { ascending: false }),
       db.from('health_resources').select('name, resource_type, prescriber, started_on, attributes, file_url').eq('user_id', user.id).eq('resource_type', 'correcao_visual').order('created_at', { ascending: false }),
       db.from('omics_panels').select('domain, laboratory, total_features, collected_on, created_at').eq('user_id', user.id).order('collected_on', { ascending: false, nullsFirst: false }),
+      // Receitas e atestados no dossie (01/09/2026) — o dominio existia e nunca chegou ao relatorio.
+      db.from('patient_documents').select('subtype, doc_date, professional_name, institution_name, prescribed_items').eq('user_id', user.id).order('doc_date', { ascending: false, nullsFirst: false }),
       db.from('contraceptive_methods').select('kind, brand, started_on, replace_on, status').eq('user_id', user.id).order('created_at', { ascending: false }),
       db.from('menstrual_periods').select('started_on, notes').eq('user_id', user.id).order('started_on', { ascending: false }).limit(24),
       services.query.listFinancial(user.id), // Despesas = eventos realizados com valor pago (mesma fonte do módulo Gastos)
@@ -309,6 +323,11 @@ function LegacyReport() {
     setOmics(((omRes.data ?? []) as Array<Record<string, unknown>>).map(o => ({
       domain: (o.domain as string) ?? 'metabolomics', laboratory: (o.laboratory as string) ?? null,
       totalFeatures: (o.total_features as number) ?? null, date: (o.collected_on as string) ?? (o.created_at as string) ?? null,
+    })))
+    setDocumentos(((docRes.data ?? []) as Array<Record<string, unknown>>).map(d => ({
+      subtype: (d.subtype as string) ?? 'outro', docDate: (d.doc_date as string) ?? null,
+      professional: (d.professional_name as string) ?? null, institution: (d.institution_name as string) ?? null,
+      items: (d.prescribed_items as string[]) ?? null,
     })))
     setContraceptives(((ccRes.data ?? []) as Array<Record<string, unknown>>).map(c => ({
       kind: (c.kind as string) ?? 'outro', brand: (c.brand as string) ?? null,
@@ -392,7 +411,7 @@ function LegacyReport() {
   const visExams = exams.filter(e => isItemOn('exames', `${e.type}__${e.date}`))
   // Faixas de grupo (espelham a Sidebar, FB-010): exibidas se houver ao menos uma seção do grupo.
   const showAcompanhamento = sections.eventos || sections.registros || sections.histexames || sections.medidas || sections.sinais
-  const showDocumentos = sections.exames || sections.omica
+  const showDocumentos = sections.exames || sections.omica || sections.documentos
   const showMinhaSaude = sections.condicoes || sections.medicamentos || sections.suplementos || sections.visao || sections.habitos || sections.ciclo
   const showOrganizacao = sections.gastos
   const condProprias = conditions.filter(c => c.scope === 'propria')
@@ -416,6 +435,9 @@ function LegacyReport() {
   const perAgenda = perEvents.filter(isAgendaEvent)
   const perHistorico = perEvents.filter(e => !isAgendaEvent(e))
   const perOmics = omics.filter(o => inPeriod(o.date, rp))
+  // Documento SEM data NAO entra no periodo: o dossie e um recorte temporal, e afirmar que um documento sem
+  // data pertence aquela janela seria supor. Ele continua guardado e visivel em Documentos.
+  const perDocumentos = documentos.filter(d => inPeriod(d.docDate, rp))
   const perMeasuresCorpo = measuresCorpo.filter(m => inPeriod(m.date, rp))
   const perMeasuresVitais = measuresVitais.filter(m => inPeriod(m.date, rp))
   const perVisExams = visExams.filter(e => inPeriod(e.date, rp))
@@ -925,6 +947,33 @@ function LegacyReport() {
                     ? ` (${[o.laboratory, o.totalFeatures != null ? `${o.totalFeatures.toLocaleString('pt-BR')} marcadores` : null].filter(Boolean).join(', ')})` : ''}
                 </li>
               ))}
+            </ul>
+          )}
+        </section>
+        )}
+
+        {/* Receitas e atestados — DOC-001. Faltava no dossiê, e é o carro-chefe da plataforma: um profissional
+            que recebe "Receita — Dr. Fulano" sem saber o que foi prescrito não recebeu informação nenhuma.
+            Por isso o ITEM PRESCRITO entra na linha. */}
+        {sections.documentos && (
+        <section id="sec-documentos" style={{ scrollMarginTop: 16 }}>
+          <h2 className="font-display text-sm font-semibold text-onyx mb-2.5">Receitas e atestados</h2>
+          {perDocumentos.length === 0 ? (
+            <p className="font-body text-xs text-mauve">Nenhuma receita ou atestado no período.</p>
+          ) : (
+            <ul className="space-y-1">
+              {perDocumentos.map((d, i) => {
+                const quem = [d.professional, d.institution].filter(Boolean).join(' · ')
+                const itens = (d.items ?? []).filter(x => x && x.trim()).join(', ')
+                return (
+                  <li key={i} className="font-body text-xs text-onyx">
+                    • {d.docDate ? `${fmt(d.docDate)} — ` : ''}
+                    <strong>{documentSubtypeLabel(d.subtype as PatientDocumentSubtype)}</strong>
+                    {quem ? ` · ${quem}` : ''}
+                    {itens ? <span className="text-mauve"> — {itens}</span> : null}
+                  </li>
+                )
+              })}
             </ul>
           )}
         </section>

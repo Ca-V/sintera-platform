@@ -102,7 +102,38 @@ derruba.
 que muda por causa dele. Sem rodeio e sem autoflagelo — o que interessa é o
 mecanismo, para não repetir.
 
-## 4. Entrega
+## 4. Levantamento obrigatório antes de dar por pronto
+
+**Regra da fundadora, 02/09/2026:** *"É fundamental e obrigatório que sempre que entrar
+uma nova categoria ou função na plataforma, ou então em alteração em alguma, que você
+faça um levantamento de tudo o que essa nova alteração ou adição está vinculado na
+plataforma — e faça as devidas alterações em toda a plataforma."*
+
+Nada é considerado pronto antes desse levantamento. Ele não é revisão final: é parte
+da tarefa.
+
+**Como fazer, e não é opinativo:**
+
+1. **Buscar TODOS os consumidores** do que mudou — tipo, coluna, tabela, função,
+   rótulo. `grep` no repositório inteiro, não a memória.
+2. **Percorrer a lista fixa de destinos.** Todo campo novo tem os mesmos: banco →
+   tipos gerados → DTO do api-client → consulta da busca → núcleo → tela da Web →
+   tela do aplicativo → relatório → link compartilhado → catraca.
+3. **Contar as superfícies.** Uma capacidade quase nunca tem uma implementação só.
+   O dossiê tinha TRÊS — núcleo, tela da Web, e a página que o profissional abre.
+4. **Fechar com catraca**, quando der. Regra que depende de alguém lembrar volta a
+   quebrar; regra que quebra o teste, não.
+
+**O caso que originou isto.** Documentos (receitas e atestados) existia como domínio
+havia semanas e não entrava no dossiê — em nenhuma das três implementações. O
+medicamento aparecia porque ela o cadastrou; a receita que o prescreveu, não. O
+levantamento seguinte encontrou mais duas seções que ela podia SELECIONAR e que o
+profissional nunca recebia pelo link: Histórico de Exames e Histórico de Saúde. Nas
+três, a tela oferecia a escolha e o destino ignorava.
+
+**O sinal de alerta:** "isto é só um campo a mais". Nunca é.
+
+## 5. Entrega
 
 **Responder o que foi perguntado antes de mostrar o que eu fiz.** Pergunta
 pendente não espera trabalho que ela vá gostar mais.
