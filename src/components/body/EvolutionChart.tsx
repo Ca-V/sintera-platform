@@ -53,7 +53,15 @@ export default function EvolutionChart({
 
   return (
     <div className="w-full overflow-x-auto">
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" style={{ minWidth: 320 }} role="img" aria-label="Gráfico de evolução do indicador">
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" style={{ minWidth: 320 }} role="img"
+        aria-label={`Gráfico de evolução do indicador${unit ? `, em ${unit}` : ''}`}>
+        {/* A UNIDADE, uma vez, no topo do eixo. Ela chegava como propriedade e era ignorada: o eixo mostrava
+            "72" e "23,4" sem dizer se era quilo, porcentagem ou kg/m². O mesmo gráfico serve peso, gordura e
+            IMC — sem a unidade, comparar dois períodos exige clicar num ponto para descobrir do que se trata.
+            Uma vez no topo, e não em cada marca, porque repetir polui e não acrescenta. */}
+        {unit && (
+          <text x={PAD_L - 5} y={10} textAnchor="end" className="fill-mauve" style={{ fontSize: 9 }}>{unit}</text>
+        )}
         {/* grade horizontal (min/meio/max) */}
         {[vmax, (vmin + vmax) / 2, vmin].map((v, i) => {
           const y = yOf(v)

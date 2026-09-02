@@ -36,7 +36,7 @@ export function ResultsSection({ exam, biomarkers, clinical, analyzing }: {
   return (
     <View style={{ gap: 16 }}>
       {hasResults ? (
-        <ResultsCard exam={exam} biomarkers={biomarkers} />
+        <ResultsCard biomarkers={biomarkers} />
       ) : hasClinical ? null : analyzing || isExamProcessing(exam.status) ? (
         <View style={[styles.stateCard, card]}>
           <Text spec={text(t, { role: 'bodyStrong' })} style={styles.center}>Analisando seu exame…</Text>
@@ -67,7 +67,9 @@ export function ResultsSection({ exam, biomarkers, clinical, analyzing }: {
   )
 }
 
-function ResultsCard({ exam, biomarkers }: { exam: ExamDetailDTO; biomarkers: BiomarkerDTO[] }) {
+// Recebia `exam` e nao usava nada dele. Prop passada e ignorada e promessa de que algo depende do
+// exame quando nada depende — some daqui e do lugar que a passava.
+function ResultsCard({ biomarkers }: { biomarkers: BiomarkerDTO[] }) {
   const t = useTheme()
   const [tip, setTip] = useState(false)
   const idx = experimentalIndex(biomarkers)

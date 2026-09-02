@@ -45,6 +45,10 @@ export async function PATCH(request: Request) {
   if ('name' in body)               payload.name               = body.name as string | null
   if ('phone' in body)              payload.phone              = body.phone as string | null
   if ('age_range' in body)          payload.age_range          = body.age_range as string | null
+  // DATA DE NASCIMENTO (migração 152). Sem esta linha, a tela enviaria o campo e o servidor o descartaria em
+  // silêncio — a família de defeito "campo novo não propagado", que já apareceu três vezes nesta plataforma.
+  // '' vira null: apagar a data é um direito da pessoa (LGPD), e string vazia não é data.
+  if ('birth_date' in body)         payload.birth_date         = (body.birth_date as string | null) || null
   if ('cycle_length' in body)       payload.cycle_length       = body.cycle_length as number | null
   if ('last_period' in body)        payload.last_period        = body.last_period as string | null
   if ('cycle_regularity' in body)   payload.cycle_regularity   = body.cycle_regularity as string | null

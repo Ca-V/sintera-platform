@@ -24,6 +24,10 @@ import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MB } from '../limits'
 // Estava definida aqui dentro; virou fonte única porque `medications/scanImage` tinha outra, sem redução —
 // duas qualidades de leitura para a mesma pessoa, conforme a tela que ela usasse.
 import { fileToBase64 } from '../fileToBase64'
+// A politica de formatos tem UM dono (ANEXO-001). Cada input declarava a sua, e as listas divergiam:
+// `image/*` deixava passar HEIC — o padrao do iPhone — que a plataforma declara como capacidade AINDA NAO
+// habilitada. O arquivo entrava e a leitura falhava depois, sem ninguem entender por que.
+import { supportedNowAcceptAttr } from '@sintera/core'
 
 const ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   FlaskConical, Pill, Glasses, HeartPulse, Dna, FileText,
@@ -190,7 +194,7 @@ export default function CaptureCenter({ className = '', onDone, initialKind = nu
       {/* Inputs compartilhados (galeria multi + câmera) — a intake decide direto × staging. */}
       <input ref={inputRef} type="file" accept={ACCEPTED.join(',')} multiple className="hidden"
         onChange={e => { const fs = Array.from(e.target.files ?? []); e.target.value = ''; bundle.intake(fs) }} />
-      <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden"
+      <input ref={cameraRef} type="file" accept={supportedNowAcceptAttr()} capture="environment" className="hidden"
         onChange={e => { const fs = Array.from(e.target.files ?? []); e.target.value = ''; bundle.intake(fs) }} />
 
       {bundle.pages.length > 0 ? (

@@ -29,6 +29,8 @@ export * from './domain/exams/identity'
 export * from './domain/exams/classification'
 export * from './domain/exams/orderTitle'
 export * from './domain/exams/categories'
+// O que a plataforma LEU de um documento — e o que ela nao leu, dito em vez de silenciado (01/09/2026).
+export * from './domain/exams/textoDoLaudo'
 export * from './domain/exams/orderStatus'
 export * from './domain/exams/processingStatus'
 export * from './domain/exams/careFlow'
@@ -71,6 +73,8 @@ export * from './domain/notificationPrefs'
 export * from './domain/body/metrics'
 export * from './domain/body/weight-journey'
 export * from './domain/body/summary'
+// Quao atual e o "estado atual" — o cabecalho para de afirmar hoje sobre dado de 2023 (31/08/2026).
+export * from './domain/body/atualidadeDoResumo'
 export * from './domain/body/evolution'
 export * from './domain/body/snapshots'
 export * from './domain/body/milestones'
@@ -89,16 +93,26 @@ export * from './domain/copy'
 export * from './domain/capture/attachmentPolicy'
 export * from './domain/capture/attachmentSet'
 export * from './domain/capture/divergence'
+// POR QUE a leitura não rodou. `null` respondia por cinco situações diferentes, todas caladas.
+export * from './domain/capture/motivoLeitura'
 // O que conta como FATO transcrito de um documento — a fronteira entre transcrever e inferir (RDC 657).
 export * from './domain/capture/transcription'
+// TODO documento que entra e lido e transcrito — decisao da fundadora em 01/09/2026. O que nao se leu e DITO.
+export * from './domain/capture/transcricaoDeDocumento'
 // Política de preparo de imagem — a DECISÃO é uma só; o mecanismo é de cada plataforma.
 export * from './domain/capture/imagePrep'
 export * from './domain/connectors/state'
 
 // Sessão de atividade física (HIP-014 §3) — FATO observado, distinto da INTENÇÃO em life_habits.
 export * from './domain/body/activity'
+// A rotina declarada (Habitos) reencontra as sessoes observadas (Monitoramento) — decisao de 31/08/2026.
+export * from './domain/body/rotinaDeAtividade'
 // Pressão arterial escrita à mão — nota a forma falada ("12/8") e sugere, sem converter.
 export * from './domain/body/bloodPressure'
+// Passos por dia — observação de atividade, lida do bruto. Nem sinal vital nem sessão: natureza própria.
+export * from './domain/body/steps'
+// "Isto já está na plataforma?" — o MESMO fato por caminhos diferentes. Suspeita e explica; nunca decide sozinho.
+export * from './domain/ingest/sameFact'
 
 // IDENTIDADE — leitura do retorno de login por provedor externo (Google; Apple e Microsoft depois).
 // NÃO confundir com a autorização de dados de saúde, que vive na camada de conectores e é separada de
@@ -120,11 +134,26 @@ export * from './domain/connectors/webhook'
 export * from './domain/connectors/mock'
 // Health Connect (HIP-014 §5) — adaptador PURO; a leitura nativa vive no aplicativo.
 export * from './domain/connectors/healthConnect'
+// O que a pessoa precisa fazer EM CADA APP para o dado chegar. Autorizar a SINTERA é só metade.
+export * from './domain/connectors/healthConnectGuide'
+export * from './domain/connectors/healthConnectDiagnostico'
+// Por que um dado nao aparece nesta pagina — ausencia com motivo, pedido da fundadora em 01/09/2026.
+export * from './domain/connectors/ausenciaNaWeb'
+export * from './domain/connectors/reingestao'
+export * from './domain/connectors/janelaImportacao'
+export * from './domain/connectors/appleHealth'
 
 // Telefone com código de país (E.164) — fonte única Web↔Mobile.
 export * from './domain/profile/phone'
+// Fase da vida a partir da data de nascimento — aritmetica de calendario, ZERO conteudo clinico.
+export * from './domain/profile/fasesDaVida'
 export * from './domain/documents/patientDocuments'
+export * from './domain/documents/prescricaoParaRegistro'
 // Catálogo único das seções da plataforma (nome · ordem · grupo · resumo). Sidebar da Web e menus do
 // aplicativo leem daqui — a taxonomia estava escrita em três lugares.
 export * from './domain/navigation/sections'
+// Busca global — encontra o que a pessoa REGISTROU, não só as seções. Puro; as consultas ficam no api-client.
+export * from './domain/search/globalSearch'
+// Para onde a busca LEVA: abrir o registro, e nao so a secao. A tela de destino negava o que a busca achou.
+export * from './domain/search/destinoDoAchado'
 export * from './domain/documents/cardActions'

@@ -13,6 +13,7 @@ function toProfileDTO(row: Record<string, unknown>): ProfileDTO {
     name: (row.name as string | null) ?? null,
     phone: (row.phone as string | null) ?? null,
     age_range: (row.age_range as string | null) ?? null,
+    birth_date: (row.birth_date as string | null) ?? null,
     goals: (row.goals as string[] | null) ?? null,
     avatar_url: (row.avatar_url as string | null) ?? null,
     updated_at: (row.updated_at as string | null) ?? null,

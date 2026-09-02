@@ -1,5 +1,6 @@
 // @sintera/api-client — Contratos do DOMÍNIO de autenticação (independentes de plataforma).
 import type { Session, User } from '@supabase/supabase-js'
+import type { ResultadoTranscricao } from '../documents/transcribe'
 import type { StorageAdapter } from '../storage/adapter'
 import type { ProfileApi } from '../profile/types'
 import type { MinhaSaudeCounts } from '../summary/counts'
@@ -19,12 +20,12 @@ import type { PeriodDTO } from '../cycle/menstrual'
 import type { NotificationPrefRow } from '../settings/notifications'
 import type { BodyMetricDTO, BodyMetricInput } from '../body/body'
 import type { ActivitySessionDTO, ActivitySessionInput, IngestResult } from '../activity/activity'
-import type { CanonicalSample, PropagationResult, ClassificationResult } from '@sintera/core'
+import type { CanonicalSample, PropagationResult, ClassificationResult, LeituraTentativa } from '@sintera/core'
 import type { ClassifyInput } from '../capture/classify'
 import type { IdentityProvider } from './oauth'
 import type { ShareDTO, TemplateDTO, OmicsPanelDTO } from '../report/report'
 import type { OmicsPanelDTO as OmicsPanel, OmicsPanelDetail, OmicsResultDTO, OmicsHistoryPoint, OmicsCatalogMatch, OmicsResultInput } from '../omics/omics'
-import type { Period, DocumentTargetDomain } from '@sintera/core'
+import type { Period, DocumentTargetDomain, SearchHit, PatientDocumentSubtype, DailySteps } from '@sintera/core'
 import type { PatientDocumentDTO, PatientDocumentInput, PatientDocumentPage } from '../documents/documents'
 import type { ConnectorState } from '@sintera/core'
 import type { DocumentAssociation } from '@sintera/core'
@@ -122,8 +123,23 @@ export interface DocumentsApi {
    */
   targetNamesByDocument(documentIds: string[]): Promise<Record<string, string[]>>
   saveDocument(input: PatientDocumentInput): Promise<{ data: { id: string } | null; error: Error | null }>
-  updateDocument(id: string, patch: Partial<Pick<PatientDocumentInput, 'subtype' | 'issuer' | 'doc_date' | 'notes'>>): Promise<{ error: Error | null }>
+  /**
+   * MANDA LER O DOCUMENTO (01/09/2026). Sem isto, uma receita fica guardada e invisivel para a busca — foi
+   * assim ate agora. NAO lanca: falhar aqui nao desfaz o salvamento, so adia a leitura.
+   */
+  transcribeDocument(id: string): Promise<{ data: ResultadoTranscricao | null; error: Error | null }>
+  /** Substitui o documento guardado pelo que está entrando, preservando o registro e os vínculos. */
+  replaceDocument(id: string, input: PatientDocumentInput): Promise<{ error: Error | null }>
+  updateDocument(id: string, patch: Partial<Pick<PatientDocumentInput,
+    'subtype' | 'issuer' | 'doc_date' | 'notes' | 'prescribed_items' | 'professional_name' | 'institution_name'>>): Promise<{ error: Error | null }>
   deleteDocument(id: string): Promise<{ error: Error | null }>
+  /**
+   * VÍNCULO documento → registro (DOC-001). A pergunta é feita pelo lado do REGISTRO — ao cadastrar um
+   * medicamento, oferece-se a receita — porque é aí que a receita já existe guardada. Espelha exame → pedido.
+   */
+  listLinkableDocuments(subtype: PatientDocumentSubtype, signal?: AbortSignal): Promise<PatientDocumentDTO[]>
+  linkDocumentToTarget(documentId: string, subtype: PatientDocumentSubtype, target_domain: DocumentTargetDomain, target_id: string): Promise<{ error: Error | null }>
+  unlinkDocumentFromTarget(documentId: string, target_domain: DocumentTargetDomain, target_id: string): Promise<{ error: Error | null }>
   /**
    * Arquiva uma receita em Documentos e vincula ao registro-alvo (medicamento, suplemento…).
    * IDEMPOTENTE: salvar o mesmo medicamento de novo não duplica a receita.
@@ -203,9 +219,17 @@ export interface ApiClient {
   omics: OmicsApi
   vision: VisionApi
   summary: SummaryApi
+  /** Busca global nos registros da pessoa — encontra o que ela cadastrou, não só as seções. */
+  search: SearchApi
 }
 
 /** Síntese de navegação (§5d) — contagens por domínio para os indicadores de conteúdo do menu/Sidebar. */
+/** Busca global (28/08). Devolve os achados CRUS; ordenar e agrupar é do core, para as duas pontas
+ *  apresentarem a mesma lista na mesma ordem. */
+export interface SearchApi {
+  searchRecords(query: string): Promise<SearchHit[]>
+}
+
 export interface SummaryApi {
   /** Contagens por domínio do usuário (exames, medicamentos, suplementos, recursos, condições, hábitos). LANÇA em falha. */
   getMinhaSaudeCounts(signal?: AbortSignal): Promise<MinhaSaudeCounts>
@@ -269,10 +293,13 @@ export interface ActivityApi {
  * transcritos. Nunca lança: `null` quando não deu para ler, e a pessoa preenche à mão.
  */
 export interface CaptureApi {
-  classify(input: ClassifyInput): Promise<ClassificationResult | null>
+  /** Devolve o resultado E o motivo quando a leitura nao rodou — ver `motivoLeitura` no nucleo. */
+  classify(input: ClassifyInput): Promise<LeituraTentativa<ClassificationResult>>
 }
 
 export interface WearablesApi {
+  /** Passos por dia (do bruto). Nunca lança: a seção some em vez de derrubar a tela. */
+  listDailySteps(dias?: number, signal?: AbortSignal): Promise<DailySteps[]>
   ingestSamples(samples: readonly CanonicalSample[]): Promise<{ result: PropagationResult; error: Error | null }>
 }
 

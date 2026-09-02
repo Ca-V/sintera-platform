@@ -48,6 +48,25 @@ export function isDeclaredFormat(mime: string): boolean { return ATTACHMENT_MIME
 export function supportedNowAcceptAttr(): string { return SUPPORTED_NOW_MIME_TYPES.join(',') }
 
 /**
+ * O `accept` da plataforma MAIS os formatos próprios de um domínio.
+ *
+ * Existe para que a exceção seja DECLARADA, e não escrita à mão. Ômicas aceita CSV e JSON porque o laudo vem
+ * assim do painel — é uma capacidade dela, não uma divergência. O que ela NÃO pode fazer é reescrever a parte
+ * comum: era assim que `image/*` reaparecia num input e deixava passar HEIC, que a plataforma declara como
+ * capacidade ainda não habilitada.
+ *
+ * O arquivo entrava, e a leitura falhava depois — sem ninguém entender por quê. Recusar na porta, com a lista
+ * certa, é o oposto: a pessoa vê na hora que aquele arquivo não serve, e no seletor do sistema o iPhone
+ * converte a foto HEIC para JPEG sozinho quando o `accept` não a inclui.
+ */
+export function acceptAttrWith(extras: readonly string[]): string {
+  return [...SUPPORTED_NOW_MIME_TYPES, ...extras].join(',')
+}
+
+/** Formatos próprios do domínio ÔMICAS: o laudo vem do painel como tabela ou JSON, além do PDF e da foto. */
+export const OMICS_EXTRA_MIME_TYPES: readonly string[] = ['text/csv', 'application/json', '.csv', '.json']
+
+/**
  * Limite de tamanho ÚNICO da plataforma (Web = Mobile). Baseline unificado (alinhado ao menor já em uso);
  * o valor definitivo é decisão técnica (ANEXO-001) considerando upload/storage/processamento. É a FONTE ÚNICA:
  * os pontos que hoje divergem (Web 200MB, Mobile 20MB, Ômica 6/8MB) passam a consumir este valor no rollout.

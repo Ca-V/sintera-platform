@@ -111,6 +111,21 @@ export function compareMeasurementsDesc(
 // FB-003/BOD-001: cada ponto mostra a ORIGEM de onde nasceu.
 export const BODY_SOURCE_LABEL: Record<string, string> = {
   bioimpedancia: 'Bioimpedância', dexa: 'DEXA', balanca: 'Balança', wearable: 'Dispositivo', manual: 'Registro manual', outro: 'Outra origem',
+  // AS FONTES REAIS FALTAVAM AQUI, e a falta apagava a procedência na tela onde ela mais importa.
+  //
+  // Na homologação de 31/08, uma atividade vinda do Strava aparecia em Monitoramento como "Outra origem" —
+  // enquanto a tela de Dados recebidos, que mostra o id cru, dizia "strava". O mesmo dado, duas telas, duas
+  // verdades diferentes.
+  //
+  // Isso não é cosmético: contradiz o requisito que a fundadora colocou como condição da integração — "os
+  // dados precisam ser uma importação cem por cento fiel à fonte para serem dados cem por cento confiáveis".
+  // Um dado cuja origem a tela apaga deixa de ser confiável, mesmo estando correto.
+  //
+  // Os identificadores são os que `sourceFromApp` produz, e a lista é ABERTA: fonte nova continua caindo em
+  // "Outra origem" — degrada, não some.
+  strava: 'Strava', garmin: 'Garmin', oura: 'Oura', fitbit: 'Fitbit', whoop: 'Whoop',
+  polar: 'Polar', withings: 'Withings', samsung_health: 'Samsung Health', google_fit: 'Google Fit',
+  health_connect: 'Health Connect', apple_health: 'Apple Saúde',
 }
 
 /**

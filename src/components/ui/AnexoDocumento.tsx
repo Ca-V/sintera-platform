@@ -22,7 +22,8 @@ import { Paperclip, X, FileText, Image as ImageIcon, Loader2, UploadCloud, Alert
 import {
   acceptFiles, removeFile, rejectionMessage, attachmentCountLabel,
   supportedNowAcceptAttr, entryMethodsFor,
-  readingFromClassification, documentDivergence, documentSubtypeLabel,
+  readingFromClassification, documentDivergence, documentSubtypeLabel, motivoLeituraLabel,
+  type MotivoLeituraFalha,
   type AttachedFile, type IncomingFile, type DocumentReading, type PatientDocumentSubtype, uuid, SCREEN_COPY } from '@sintera/core'
 import { fileToBase64 } from '@/lib/capture/fileToBase64'
 
@@ -73,6 +74,8 @@ export default function AnexoDocumento({
   const [aviso, setAviso] = useState<string | null>(null)
   const [lendo, setLendo] = useState(false)
   const [divergencia, setDivergencia] = useState<string | null>(null)
+  /** Por que a leitura NAO rodou. Distinto de "rodou e nao reconheceu", que e legitimo e silencioso. */
+  const [motivo, setMotivo] = useState<MotivoLeituraFalha | null>(null)
 
   /**
    * Lê o documento e compara com o que a tela declarou. Silencioso quando falha: leitura assistida que quebra
@@ -81,24 +84,35 @@ export default function AnexoDocumento({
   const lerDocumento = useCallback(async (original: File) => {
     if (!leituraAssistida) return
     setLendo(true)
-    setDivergencia(null)
+    setDivergencia(null); setMotivo(null)
     try {
       const payload = await fileToBase64(original)
-      if (!payload.fileBase64) return
+      // CADA SAÍDA DIZ POR QUÊ, como no aplicativo. Antes eram três `return` mudos, e do lado de fora "não
+      // consegui ler" era indistinguível de "li e não reconheci" — a pessoa preenchia à mão achando que a
+      // plataforma não sabe ler, e deixava de confiar num recurso que funciona.
+      if (!payload.fileBase64) { setMotivo('sem-arquivo'); return }
       const res = await fetch('/api/capture/classify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...payload, filename: original.name }),
       })
-      if (!res.ok) return
+      if (!res.ok) {
+        console.warn(`[SINTERA] leitura de documento: o servidor respondeu ${res.status}.`)
+        // 401 tem conserto diferente de 500: uma pede entrar de novo, a outra pede tentar mais tarde.
+        setMotivo(res.status === 401 ? 'sem-sessao' : 'servidor')
+        return
+      }
       const leitura = readingFromClassification(await res.json())
+      // Leu e não reconheceu nada: resposta legítima, e silenciosa de propósito. Avisar aqui transformaria uma
+      // leitura bem-sucedida num alarme.
       if (!leitura) return
 
       // AVISA, e só. Nunca move o documento nem impede salvar — a pessoa escolheu o tipo.
       setDivergencia(documentDivergence(leituraAssistida.declarado, leitura, documentSubtypeLabel).message)
       leituraAssistida.onLeitura(leitura)
-    } catch {
-      /* preenche à mão, como sempre pôde */
+    } catch (e) {
+      console.warn('[SINTERA] leitura de documento: não houve resposta.', e)
+      setMotivo('rede')
     } finally {
       setLendo(false)
     }
@@ -221,6 +235,14 @@ export default function AnexoDocumento({
       {lendo && (
         <p className="mt-1.5 flex items-center gap-1.5 text-xs text-mauve">
           <Loader2 size={12} className="animate-spin" /> {SCREEN_COPY.anexo.reading}
+        </p>
+      )}
+
+      {/* A LEITURA NAO RODOU. Tom NEUTRO, nao de erro: o documento foi anexado e nada se perdeu — o que
+          faltou foi o auxilio, nao o registro. */}
+      {motivo && (
+        <p className="mt-2 rounded-xl border border-border px-3 py-2 text-xs leading-relaxed text-mauve">
+          {motivoLeituraLabel(motivo)}
         </p>
       )}
 

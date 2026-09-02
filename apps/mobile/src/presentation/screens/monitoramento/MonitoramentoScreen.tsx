@@ -3,6 +3,7 @@
 // outro sinal. FACTUAL (RDC 657/2022): registra e acompanha no tempo; sem juízo clínico. Captura por dispositivo
 // (Conexões/HIP-001) é Fase 2 — ainda não disponível no Mobile; entrada manual aqui. Reusa api-client.body.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useFocusEffect } from '@react-navigation/native'
 import { ScrollView, View, ActivityIndicator, RefreshControl, Pressable, Alert, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
@@ -13,7 +14,13 @@ import {
   hasTimeOfDay, measurementInstant, measurementMeta, requiresTimeOfDay,
   ACTIVITY_TYPES, activityTypeLabel, activitySummary,
   durationSecondsFromMinutes, distanceMetersFromKm, numberFromField, paceKindFor, bloodPressureHint, bloodPressureSuggestion, bloodPressureApplyLabel,
+  stepsLabel, stepsProvenance, type DailySteps,
+  // A ROTINA DECLARADA passou a morar aqui (decisão da fundadora, 31/08/2026): atividade física tem um
+  // endereço só, e é neste, onde também estão as sessões que aconteceram.
+  confrontarRotinas, rotinaLinha, rotinasDeAtividade, CATEGORIA_ROTINA_ATIVIDADE,
+  type RotinaConfrontada,
 } from '@sintera/core'
+import type { HabitDTO } from '@sintera/api-client'
 import { Text, Button, Input, Disclaimer, DatePicker, TimePicker, Select } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
@@ -71,6 +78,17 @@ export function MonitoramentoScreen() {
   const [saving, setSaving] = useState(false)
 
   const [acts, setActs] = useState<ActivitySessionDTO[]>([])
+  /** Passos por dia — do bruto dos conectores. Vazio é normal: só existe com conector sincronizado. */
+  const [passos, setPassos] = useState<DailySteps[]>([])
+  // ROTINA DECLARADA — ver `loadRotinas` e o bloco "Rotina e metas" no corpo da tela.
+  const [rotinas, setRotinas] = useState<HabitDTO[]>([])
+  const [rotOpen, setRotOpen] = useState(false)
+  const [rotEditando, setRotEditando] = useState<HabitDTO | null>(null)
+  const [rotDesc, setRotDesc] = useState('')
+  const [rotFreq, setRotFreq] = useState('')
+  const [rotMeta, setRotMeta] = useState('')
+  const [rotMetaUnidade, setRotMetaUnidade] = useState('')
+  const [rotSaving, setRotSaving] = useState(false)
   const [actOpen, setActOpen] = useState(false)
   /** Sessão sendo corrigida. `null` = registrando uma nova. */
   const [actEditando, setActEditando] = useState<ActivitySessionDTO | null>(null)
@@ -140,7 +158,73 @@ export function MonitoramentoScreen() {
       .then((a) => { if (alive.current) setActs(a) })
       .catch(() => { /* seção degrada vazia; não derruba a tela */ })
   }, [])
-  useEffect(() => { loadActs() }, [loadActs])
+  // ── ROTINA DECLARADA ──────────────────────────────────────────────────────────────────────────────────
+  // A intenção ("Musculação, diário") continua guardada em `life_habits`; nada foi migrado nem apagado.
+  // O que mudou em 31/08/2026 é ONDE ela é lida e escrita: aqui, encostada nas sessões que aconteceram.
+  const loadRotinas = useCallback(() => {
+    apiClient.habits.listHabits()
+      .then((h) => { if (alive.current) setRotinas(h) })
+      .catch(() => { /* seção degrada vazia; não derruba a tela */ })
+  }, [])
+
+  // RECARREGA AO VOLTAR PARA A TELA, e nao so ao montar.
+  //
+  // Esta tela vive numa aba e permanece MONTADA. Na homologacao de 31/08 a fundadora sincronizou em Conexoes,
+  // voltou aqui, e viu "Outra atividade" nas mesmas atividades que a tela de Dados recebidos ja mostrava como
+  // "Musculacao" — a lista em memoria era anterior a correcao. O dado estava certo no banco e errado na tela.
+  //
+  // E o mesmo defeito da aba que abria a ultima tela em vez do menu: comportamento padrao de navegacao que
+  // parece inofensivo e produz uma tela que MENTE sobre o proprio estado.
+  //
+  // Recarrega as duas secoes: os sinais vitais tambem mudam quando uma sincronizacao traz medicoes.
+  useFocusEffect(useCallback(() => { load(true); loadActs(); loadRotinas() }, [load, loadActs, loadRotinas]))
+
+  function startNewRot() {
+    setRotEditando(null); setRotDesc(''); setRotFreq(''); setRotMeta(''); setRotMetaUnidade(''); setRotOpen(true)
+  }
+  function startEditRot(id: string) {
+    const h = rotinas.find(r => r.id === id)
+    if (!h) return
+    setRotEditando(h); setRotDesc(h.description ?? ''); setRotFreq(h.frequency ?? '')
+    setRotMeta(h.goal_amount != null ? String(h.goal_amount) : ''); setRotMetaUnidade(h.goal_unit ?? '')
+    setRotOpen(true)
+  }
+  async function saveRot() {
+    if (!rotDesc.trim()) { Alert.alert('Atividade obrigatória', 'Diga qual atividade.'); return }
+    setRotSaving(true)
+    try {
+      const { error: err } = await apiClient.habits.saveHabit({
+        id: rotEditando?.id,
+        category: CATEGORIA_ROTINA_ATIVIDADE as HabitDTO['category'],
+        description: rotDesc.trim(),
+        frequency: rotFreq.trim() || null,
+        goal_amount: rotMeta.trim() ? numberFromField(rotMeta) : null,
+        goal_unit: rotMetaUnidade.trim() || null,
+      })
+      // O ERRO É DITO. Rotina que some sem explicação é a falha silenciosa que já custou caro nesta plataforma.
+      if (err) { Alert.alert('Não foi possível salvar', err.message || 'Tente novamente.'); return }
+      setRotOpen(false); setRotEditando(null); loadRotinas()
+    } finally { setRotSaving(false) }
+  }
+  function removeRot(id: string) {
+    const alvo = rotinas.find(r => r.id === id)
+    Alert.alert('Remover rotina', `Remover "${alvo?.description ?? ''}"? As sessões já registradas permanecem — só a rotina declarada sai.`, [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Remover', style: 'destructive', onPress: async () => {
+        const { error: err } = await apiClient.habits.deleteHabit(id)
+        if (err) { Alert.alert('Não foi possível remover', 'Tente novamente.'); return }
+        loadRotinas()
+      } },
+    ])
+  }
+
+  // Passos: seção a MAIS. Falhar aqui não pode derrubar os sinais vitais — a função já não lança, e a
+  // seção simplesmente não aparece.
+  useEffect(() => {
+    apiClient.wearables.listDailySteps()
+      .then(p => { if (alive.current) setPassos(p) })
+      .catch(() => { /* a seção some */ })
+  }, [])
 
   /**
    * Abre o formulário com a sessão já registrada, para CORRIGIR (pedido da fundadora, homologação de 27/08).
@@ -219,6 +303,14 @@ export function MonitoramentoScreen() {
   }
 
   const card = { backgroundColor: t.color.surface.base, borderColor: t.color.border.default }
+
+  /**
+   * O confronto: cada rotina declarada ao lado das sessões que aconteceram.
+   *
+   * `new Date()` fica AQUI, na borda, e nunca dentro da regra — a contagem é função pura em `@sintera/core`,
+   * que recebe o instante. Regra que lê o relógio não é conferível em teste. Mesma linha na Web.
+   */
+  const confronto: RotinaConfrontada[] = confrontarRotinas(rotinasDeAtividade(rotinas), acts, new Date())
 
   return (
     <ScrollView style={{ backgroundColor: t.color.surface.app }}
@@ -347,6 +439,81 @@ export function MonitoramentoScreen() {
           </View>
         )
       })}
+
+      {/* PASSOS — natureza própria, nem sinal vital nem sessão. Vêm do bruto dos conectores, onde já estavam e
+          eram invisíveis: a coluna de body_metrics não aceita 'passos', e uma sessão exigiria início, fim e
+          duração que uma contagem contínua do dia não tem. Só aparece quando há dado — sem conector sincronizado
+          a seção nem existe, em vez de mostrar uma lista vazia que a pessoa não sabe como preencher. */}
+      {passos.length > 0 && (
+        <View style={{ gap: 8, marginTop: 8 }}>
+          <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 17 }}>Passos</Text>
+          {passos.map(d => (
+            <View key={d.day} style={[styles.card, card, { gap: 2 }]}>
+              <Text spec={text(t, { role: 'body' })}>{stepsLabel(d.total)}</Text>
+              <Text spec={text(t, { role: 'caption', tone: 'muted' })}>
+                {[fmt(d.day), stepsProvenance(d)].filter(Boolean).join(' · ')}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────────────────────────────────────
+          ROTINA DECLARADA — a declaração encostada no fato. Mesmo bloco, mesmos textos e mesma ordem da Web.
+          Atividade física ficava dividida entre Hábitos (a intenção) e Monitoramento (a sessão); a fundadora
+          pediu um endereço só, e é este. A plataforma CONTA e mostra — nunca diz se a meta foi cumprida
+          (ADR-000 / RDC 657).
+          ───────────────────────────────────────────────────────────────────────────────────────────── */}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+        <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 17 }}>Rotina e metas</Text>
+        <Button label={rotOpen ? C.close : 'Definir rotina'} variant="secondary"
+          onPress={() => (rotOpen ? (setRotOpen(false), setRotEditando(null)) : startNewRot())} />
+      </View>
+
+      {rotOpen ? (
+        <View style={[styles.card, card, { gap: 10 }]}>
+          {rotEditando ? (
+            <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Corrigindo {rotEditando.description}.</Text>
+          ) : null}
+          <Campo label="Atividade">
+            <Input value={rotDesc} onChangeText={setRotDesc} placeholder="Ex.: Musculação, Corrida, Tênis" />
+          </Campo>
+          <Campo label="Frequência pretendida">
+            <Input value={rotFreq} onChangeText={setRotFreq} placeholder="Ex.: diário, 2 vezes por semana" />
+          </Campo>
+          <Campo label="Meta (opcional)">
+            <Input value={rotMeta} onChangeText={setRotMeta} keyboardType="numeric" placeholder="Ex.: 150" />
+          </Campo>
+          <Campo label="Unidade">
+            <Input value={rotMetaUnidade} onChangeText={setRotMetaUnidade} placeholder="Ex.: min/semana" />
+          </Campo>
+          <View style={styles.actions}>
+            <Button label="Cancelar" variant="secondary" onPress={() => (setRotOpen(false), setRotEditando(null))} />
+            <Button label={C.save} onPress={saveRot} loading={rotSaving} loadingLabel="Salvando…" />
+          </View>
+        </View>
+      ) : null}
+
+      {confronto.length === 0 && !rotOpen ? (
+        <Text spec={text(t, { role: 'caption', tone: 'faint' })}>
+          Defina uma rotina e ela aparece aqui ao lado das sessões que forem registradas.
+        </Text>
+      ) : null}
+
+      {confronto.map(r => (
+        <View key={r.id} style={[styles.card, card, { gap: 4 }]}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <Text spec={text(t, { role: 'body' })} style={{ flex: 1, paddingRight: 8 }}>{rotinaLinha(r)}</Text>
+            <Pressable onPress={() => startEditRot(r.id)}>
+              <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Editar</Text>
+            </Pressable>
+          </View>
+          <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{r.frase}</Text>
+          <Pressable onPress={() => removeRot(r.id)} style={{ alignSelf: 'flex-start', marginTop: 4 }}>
+            <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>Remover</Text>
+          </Pressable>
+        </View>
+      ))}
 
       {/* ATIVIDADE FÍSICA (HIP-014 §3) — seção irmã, mesma estrutura da Web. Registra o que aconteceu, sem
           avaliar desempenho (RDC 657). Origem sempre visível, como nos sinais vitais. */}

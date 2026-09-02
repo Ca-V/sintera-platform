@@ -46,8 +46,29 @@ export interface ClassificationResult {
    * nem quando "provavelmente" foi emitido. Nada aqui é conteúdo clínico (RDC 657).
    */
   issuer?: string
+  /**
+   * O PROFISSIONAL e a INSTITUIÇÃO, transcritos SEPARADAMENTE.
+   *
+   * Antes o modelo é que escolhia qual dos dois era "o emissor" — e num atestado da homologação de 30/08 ele
+   * escolheu a clínica, deixando o médico de fora para sempre. Transcrever os dois é dele; DECIDIR qual
+   * aparece na frente é da plataforma, onde a regra é uma só e testável (`documentPrimaryName`).
+   *
+   * `issuer` continua existindo e recebe o nome principal — nada que já o consome quebra.
+   */
+  professional?: string
+  institution?: string
   /** Data do documento em ISO (AAAA-MM-DD), quando escrita de forma inequívoca. */
   docDate?: string
+  /**
+   * O que a RECEITA prescreve, transcrito do papel — "Losartana 50mg", como está escrito.
+   *
+   * Pedido da fundadora (30/08): uma receita identificada só por médico e data obriga a abrir o arquivo para
+   * saber do que se trata, que é justamente o trabalho que a plataforma existe para poupar.
+   *
+   * Continua sendo TRANSCRIÇÃO: copia o nome e a concentração escritos. Não diz para que serve, não avalia a
+   * dose, não inclui posologia — a fronteira da RDC 657 permanece onde estava.
+   */
+  items?: string[]
 }
 
 /** Motivo de erro NORMALIZADO (o Hub traduz qualquer falha de pipeline para isto). */

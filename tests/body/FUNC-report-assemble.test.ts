@@ -16,7 +16,7 @@ const ev = (p: Partial<HealthEvent>): HealthEvent => ({
 
 const emptyData = (): ReportData => ({
   meds: [], events: [], exams: [], measures: [], conditions: [], habits: [], eyewear: [],
-  omics: [], contraceptives: [], menstruations: [], expenses: [], biomarkers: [],
+  omics: [], documents: [], contraceptives: [], menstruations: [], expenses: [], biomarkers: [],
 })
 
 const bio = (over: Partial<BiomarkerRow>): BiomarkerRow => ({

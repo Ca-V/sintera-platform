@@ -8,6 +8,7 @@ import { HabitsScreen } from '../screens/minhasaude/HabitsScreen'
 import { ResourcesScreen } from '../screens/minhasaude/ResourcesScreen'
 import { DocumentsScreen } from '../screens/minhasaude/DocumentsScreen'
 import { ConexoesScreen } from '../screens/minhasaude/ConexoesScreen'
+import { DadosRecebidosScreen } from '../screens/minhasaude/DadosRecebidosScreen'
 import { MedicationsScreen } from '../screens/minhasaude/MedicationsScreen'
 import { CicloScreen } from '../screens/minhasaude/CicloScreen'
 import { TimelineScreen } from '../screens/agenda/TimelineScreen'
@@ -52,6 +53,7 @@ export function MinhaSaudeStack() {
       <Stack.Screen name="Composicao" component={ComposicaoScreen} options={{ ...detail, title: 'Composição Corporal' }} />
       <Stack.Screen name="Ciclo" component={CicloScreen} options={{ ...detail, title: 'Ciclo e Contracepção' }} />
       <Stack.Screen name="Conexoes" component={ConexoesScreen} options={{ ...detail, title: 'Conexões' }} />
+      <Stack.Screen name="DadosRecebidos" component={DadosRecebidosScreen} options={{ ...detail, title: 'Dados recebidos' }} />
       <Stack.Screen name="Monitoramento" component={MonitoramentoScreen} options={{ ...detail, title: 'Monitoramento' }} />
       <Stack.Screen name="Habits" component={HabitsScreen} options={{ ...detail, title: 'Hábitos' }} />
       {/* Histórico */}

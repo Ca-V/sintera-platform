@@ -5,7 +5,7 @@ import {
 } from '../../apps/mobile/src/presentation/screens/profile/profileMachine'
 import type { ProfileDTO } from '../../packages/api-client/src/profile/types'
 
-const DTO: ProfileDTO = { id: 'u1', name: 'Ana', phone: null, age_range: null, goals: null, avatar_url: null, updated_at: null }
+const DTO: ProfileDTO = { id: 'u1', name: 'Ana', phone: null, age_range: null, birth_date: null, goals: null, avatar_url: null, updated_at: null }
 const at = (phase: ProfileState['phase'], data: ProfileState['data'] = null, error: string | null = null): ProfileState => ({ phase, data, error })
 
 describe('profileReducer — carga', () => {

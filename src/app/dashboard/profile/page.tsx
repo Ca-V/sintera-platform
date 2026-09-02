@@ -13,7 +13,12 @@ import { Card } from '@/lib/ui/ds'
 import MotionCard from '@/components/ui/MotionCard'
 import ActionCard from '@/components/ui/ActionCard'
 import Select from '@/components/ui/Select'
-import { monthLabel, DIAL_COUNTRIES, DEFAULT_DIAL_ISO, splitPhone, joinPhone, dialLabel } from '@sintera/core'
+import {
+  monthLabel, DIAL_COUNTRIES, DEFAULT_DIAL_ISO, splitPhone, joinPhone, dialLabel,
+  // Data de nascimento (31/08/2026): idade, fase e faixa são DERIVADAS; os textos de LGPD vêm do núcleo,
+  // para a Web e o aplicativo prometerem exatamente a mesma coisa sobre o uso do dado.
+  idadeLabel, faseDaVida, faseLabel, faixaDerivada, MOTIVO_DATA_NASCIMENTO, LIMITE_DATA_NASCIMENTO,
+} from '@sintera/core'
 import { getProfileStats, type ProfileStats } from '@sintera/api-client'
 import { validateName, validatePhone, validateAgeRange, validateGoals, parseGoals, goalsToInput, AGE_RANGE_OPTIONS, AGE_RANGE_EMPTY_LABEL } from '@sintera/validation'
 
@@ -41,6 +46,8 @@ export default function ProfilePage() {
   const [phone, setPhone]       = useState('')
   const [phoneIso, setPhoneIso] = useState<string>(DEFAULT_DIAL_ISO)
   const [ageRange, setAgeRange] = useState('')
+  // Data de nascimento (migração 152). OPCIONAL — ver o bloco do formulário para o tratamento de LGPD.
+  const [birthDate, setBirthDate] = useState('')
   const [goalsText, setGoals]   = useState('')
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const [saving, setSaving]     = useState(false)
@@ -62,6 +69,7 @@ export default function ProfilePage() {
       setPhone(split.national)
     }
     setAgeRange(profile?.age_range ?? '')
+    setBirthDate(profile?.birth_date ?? '')
     setGoals(goalsToInput(profile?.goals ?? null))
   }, [profile])
 
@@ -96,7 +104,7 @@ export default function ProfilePage() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         // Grava em E.164 com o DDI do país escolhido: `+5511999999999`.
-        body: JSON.stringify({ name: nres.value, phone: joinPhone(phoneIso, pres.value), age_range: ares.value, goals: gres.value }),
+        body: JSON.stringify({ name: nres.value, phone: joinPhone(phoneIso, pres.value), age_range: ares.value, goals: gres.value, birth_date: birthDate || null }),
       })
       if (!res.ok) throw new Error('Erro ao salvar')
       updateProfile(await res.json())
@@ -115,6 +123,15 @@ export default function ProfilePage() {
   ]
 
   const inputCls = 'w-full px-3 py-2.5 rounded-xl border bg-ivory text-sm font-body text-onyx placeholder:text-mauve/40 focus:outline-none focus:ring-2 focus:ring-petal/25 focus:border-petal transition-all'
+
+  // IDADE, FASE E FAIXA são DERIVADAS da data — nunca guardadas em paralelo. Guardar as duas seria manter dois
+  // registros do mesmo fato, e o segundo envelheceria: a pessoa faria aniversário e a faixa continuaria a
+  // antiga. Regra no núcleo (`fasesDaVida`), idêntica no aplicativo.
+  // eslint-disable-next-line react-hooks/purity -- exibição derivada da data atual
+  const agora = new Date()
+  const idade = idadeLabel(birthDate || null, agora)
+  const fase = (() => { const f = faseDaVida(birthDate || null, agora); return f ? faseLabel(f) : null })()
+  const faixa = faixaDerivada(birthDate || null, agora)
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -183,10 +200,48 @@ export default function ProfilePage() {
           {fieldErrors.phone && <p className="font-body text-xs text-red-500 mt-1">{fieldErrors.phone}</p>}
         </div>
 
+        {/* ─────────────────────────────────────────────────────────────────────────────────────────────
+            DATA DE NASCIMENTO — decisão da fundadora, 31/08/2026, com o tratamento de LGPD que ela pediu.
+            A faixa etária não serve para o começo da vida: "0 a 5 anos" trata um recém-nascido e uma criança
+            de cinco anos como a mesma coisa, e entre os 2 e os 8 meses um bebê muda de tudo.
+            LGPD, e é por isso que o texto está NA TELA e não numa política que ninguém abre: finalidade dita
+            ANTES de pedir, campo OPCIONAL, e o limite ("não usamos a idade para avaliar nada") declarado —
+            porque o silêncio aqui seria lido como a promessa oposta.
+            ───────────────────────────────────────────────────────────────────────────────────────────── */}
         <div>
+          <label htmlFor="perfil-nascimento" className="font-body text-[11px] text-mauve uppercase tracking-wider mb-1 block">
+            Data de nascimento <span className="text-mauve/60 normal-case">· opcional</span>
+          </label>
+          <input
+            id="perfil-nascimento"
+            type="date"
+            value={birthDate}
+            max={new Date().toISOString().slice(0, 10)}
+            onChange={e => onEdit(setBirthDate)(e.target.value)}
+            disabled={saving}
+            className={`${inputCls} border-border`}
+          />
+          <p className="font-body text-xs text-mauve mt-1 leading-relaxed">{MOTIVO_DATA_NASCIMENTO}</p>
+          <p className="font-body text-xs text-mauve/80 mt-1 leading-relaxed">{LIMITE_DATA_NASCIMENTO}</p>
+          {idade && (
+            <p className="font-body text-xs text-onyx mt-1">
+              {idade} · {fase}
+            </p>
+          )}
+        </div>
+
+        <div>
+          {/* A FAIXA passa a ser DERIVADA quando há data — guardar as duas seria manter dois registros do mesmo
+              fato, e o segundo envelheceria: a pessoa faria aniversário e a faixa continuaria a antiga. */}
           <label className="font-body text-[11px] text-mauve uppercase tracking-wider mb-1 block">Faixa etária</label>
-          <Select options={AGE_RANGE_SELECT} value={ageRange} onChange={onEdit(setAgeRange)} placeholder="Selecione a faixa" aria-label="Faixa etária" />
-          {fieldErrors.age_range && <p className="font-body text-xs text-red-500 mt-1">{fieldErrors.age_range}</p>}
+          {faixa ? (
+            <p className="font-body text-sm text-onyx">{faixa} <span className="text-xs text-mauve">· calculada a partir da data de nascimento</span></p>
+          ) : (
+            <>
+              <Select options={AGE_RANGE_SELECT} value={ageRange} onChange={onEdit(setAgeRange)} placeholder="Selecione a faixa" aria-label="Faixa etária" />
+              {fieldErrors.age_range && <p className="font-body text-xs text-red-500 mt-1">{fieldErrors.age_range}</p>}
+            </>
+          )}
         </div>
 
         <div>

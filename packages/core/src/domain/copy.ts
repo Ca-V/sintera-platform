@@ -117,14 +117,70 @@ export const SCREEN_COPY = {
     // Health Connect (HIP-014 §5) — natureza DIFERENTE das demais conexões, e o texto precisa dizer isso:
     // não há login nem senha, a autorização vive na permissão do sistema e a pessoa a revoga por lá.
     // Nomear as fontes que chegam por dentro dele é o que torna a proposta compreensível.
-    hcTitle:        'Health Connect',
+    // O NOME DUPLO é obrigatório, e custou uma hora da fundadora na homologação de 30/08. O Google traduz o
+    // nome do app conforme o idioma do aparelho: em português ele se chama "Saúde Connect". Ela procurou
+    // "Health Connect" na Play Store, encontrou "Saúde Connect" e concluiu que era outro aplicativo — o
+    // que é a conclusão razoável. Dizer os dois nomes é o que evita a próxima pessoa parar no mesmo lugar.
+    hcTitle:        'Health Connect (Saúde Connect)',
     hcSubtitle:     'Traz o que já está no seu aparelho — inclusive de Strava, Oura, Garmin e outros apps que gravam nele.',
     hcAction:       'Autorizar e sincronizar',
     hcSyncing:      'Sincronizando…',
     hcUnavailable:  'Não disponível neste aparelho',
-    hcUnavailableHint: 'O Health Connect é do Android e precisa estar instalado. Em iPhone, a integração será com o Apple Saúde.',
+    // A versão anterior CONSTATAVA e parava aí. Na homologação de 30/08 a tela disse "não disponível" e a
+    // fundadora ficou sem saber o que fazer — a mensagem estava certa e inútil. Dizer o que falta sem dizer como
+    // resolver é a forma educada de deixar a pessoa sozinha.
+    hcUnavailableHint: 'No Android 14 ou mais novo ele já vem instalado. Em versões anteriores, é um aplicativo gratuito da Google que precisa ser instalado pela Play Store. Na Play Store em português ele aparece como "Saúde Connect", da Google LLC — é o mesmo aplicativo. Depois de instalar, volte aqui.',
+    hcInstallAction: 'Instalar (aparece como "Saúde Connect")',
+    /**
+     * O QUE O IPHONE VÊ. Sem esta bifurcação, quem abre a tela num iPhone recebe o roteiro inteiro do Android
+     * — incluindo um botão "Instalar Saúde Connect" que leva à Play Store, que não existe no aparelho dela.
+     *
+     * E o texto diz o estado REAL, no presente. O aviso anterior dizia que "a integração SERÁ com o Apple
+     * Saúde": futuro do verbo para uma coisa não implementada é promessa, e promessa é o que a plataforma não
+     * faz. Enquanto não existir, o honesto é dizer que não existe e apontar o que existe.
+     */
+    hcIosTitle:     'Apple Saúde',
+    hcIosHint:      'No iPhone, a SINTERA lê do Apple Saúde — o cofre do próprio aparelho, onde os aplicativos ' +
+                    'que você já usa escrevem. Você autoriza uma vez, e o dado passa a entrar sem que você ' +
+                    'precise pedir. A SINTERA não escreve nada lá: só lê.',
+    hcIosAction:    'Autorizar e sincronizar',
+    /**
+     * O QUE A APPLE NÃO NOS DEIXA SABER, dito à pessoa em vez de escondido.
+     *
+     * Por privacidade, o iOS não informa ao aplicativo quais tipos foram RECUSADOS — um tipo negado se comporta
+     * exatamente como um tipo vazio. Então a plataforma não pode dizer "você autorizou 8 de 12"; dizer isso
+     * seria inventar. O que ela pode é apontar onde a pessoa confere e corrige.
+     */
+    hcIosRevisar:   'O iPhone não informa aos aplicativos o que foi recusado — por isso a SINTERA não consegue ' +
+                    'dizer o que ficou de fora. Se algo não aparecer, confira em Ajustes → Saúde → Acesso a ' +
+                    'dados e dispositivos → SINTERA.',
+    hcIosVazio:     'Nada veio do Apple Saúde nesta busca. Duas causas comuns: a permissão daquele tipo não foi ' +
+                    'concedida, ou nenhum aplicativo escreveu ainda. Os aplicativos passam a escrever a partir ' +
+                    'do momento em que você os liga ao Apple Saúde.',
     hcDenied:       'Nenhuma permissão concedida. Você decide o que compartilhar, e pode mudar depois.',
     hcRevokeHint:   'A autorização fica no Health Connect, não aqui — é lá que você revoga quando quiser.',
+  },
+
+  /**
+   * DADOS RECEBIDOS — onde a pessoa vê o que entrou sozinho, de onde veio, e decide sobre o que parece repetido.
+   *
+   * Existe por causa da decisão da fundadora (28/08): ela autoriza a fonte UMA VEZ e o dado entra sem perguntar,
+   * mas continua podendo revisar depois. Sem esta tela, "entra sozinho" viraria "entra sem que eu saiba".
+   *
+   * O TOM é de INFORMAÇÃO, não de tarefa. Nada aqui exige resposta: quem não abrir a tela não perde nada, e
+   * nada foi duplicado nem descartado em silêncio. Uma fila de pendências transformaria o registro de saúde numa
+   * caixa de entrada, que é o oposto do que a plataforma faz pela pessoa.
+   */
+  dadosRecebidos: {
+    title:        'Dados recebidos',
+    subtitle:     'O que entrou pelas suas conexões, com a origem de cada informação. Nada aqui exige resposta — é para você conferir quando quiser.',
+    emptyTitle:   'Nada recebido ainda',
+    emptyMessage: 'Quando um aparelho ou aplicativo estiver conectado, o que ele registrar aparece aqui, com a origem.',
+    duplicateTitle: 'Parece já estar registrado',
+    // FACTUAL: descreve a semelhança, não afirma que é a mesma coisa. Quem sabe é a pessoa.
+    duplicateHint:  'Encontramos algo muito parecido, vindo de outra fonte. Você decide o que fazer — e pode não fazer nada.',
+    removeAction:   'Remover',
+    sourceLabel:    'Origem',
   },
 
   /**

@@ -44,6 +44,8 @@ export type MinhaSaudeStackParamList = {
   Resources: undefined
   Documents: undefined
   Conexoes: undefined
+  /** O que entrou pelas conexões, com origem e possíveis repetições. Alcançada por Conexões. */
+  DadosRecebidos: undefined
   // Saúde
   Conditions: undefined
   Composicao: undefined

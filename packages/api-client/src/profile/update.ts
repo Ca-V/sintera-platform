@@ -21,6 +21,9 @@ export async function updateProfile(
     if ('name' in patch) payload.name = patch.name ?? null
     if ('phone' in patch) payload.phone = patch.phone ?? null
     if ('age_range' in patch) payload.age_range = patch.age_range ?? null
+    // APAGAR E PERMITIDO E E O CAMINHO DE ELIMINACAO da LGPD: mandar null limpa a coluna, e a plataforma volta
+    // ao estado anterior. Por isso a checagem e por PRESENCA DA CHAVE, nao por valor.
+    if ('birth_date' in patch) payload.birth_date = patch.birth_date || null
     if ('goals' in patch) payload.goals = patch.goals ?? null
 
     // @supabase/postgrest resolve o param de upsert para 'never' com TS estrito — cast controlado (como a rota Web).

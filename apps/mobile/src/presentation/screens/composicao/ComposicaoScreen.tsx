@@ -13,7 +13,8 @@ import type { HealthEvent } from '@sintera/core'
 import { BODY_COMPARE_ORDER } from '@sintera/core'
 import {
   BODY_METRICS, bodyMetricLabel, bodyMetricUnit, isVital, type BodyMetric,
-  currentSummary, computeWeightJourney, lastAssessment, sourceQuality, RELIABILITY_LABEL,
+  // `atualidadeDoResumo` — o cabecalho honesto: ver o bloco onde e usado.
+  currentSummary, atualidadeDoResumo, computeWeightJourney, variacaoDePeso, ritmoDePeso, pesoLabel, lastAssessment, sourceQuality, RELIABILITY_LABEL,
   EVOLUTION_PERIODS, filterByPeriod, type SummaryPoint, type SeriesPoint,
   buildSnapshots, compareSnapshots, type SnapPoint, type Snapshot,
   buildMilestones, MILESTONE_CATEGORIES, MILESTONE_COLOR, type MilestoneCategory,
@@ -93,6 +94,12 @@ export function ComposicaoScreen() {
   const bodyItems = useMemo(() => items.filter(m => !isVital(m.metric)), [items])
   const summaryPoints: SummaryPoint[] = useMemo(() => bodyItems.map(m => ({ metric: m.metric, value: parseNum(m.value_text), unit: m.unit, date: m.measured_on, source: m.source })).filter(p => Number.isFinite(p.value)), [bodyItems])
   const summary = useMemo(() => currentSummary(summaryPoints), [summaryPoints])
+  // Quão atual é este resumo — mesma regra e mesmas frases da Web, vindas do núcleo. `new Date()` fica na
+  // borda: a regra recebe o instante, para ser conferível em teste.
+  const atualidade = useMemo(
+    () => atualidadeDoResumo(SUMMARY_ORDER.filter(m => summary[m]).map(m => ({ metric: m, date: summary[m].date })), new Date()),
+    [summary],
+  )
   const series = useCallback((met: string): SeriesPoint[] => summaryPoints.filter(p => p.metric === met).map(p => ({ value: p.value, date: p.date })), [summaryPoints])
   const journey = useMemo(() => computeWeightJourney(series('peso'), series('massa_magra'), goal), [series, goal])
   const followupLabel = journey.spanWeeks == null ? null
@@ -245,8 +252,11 @@ export function ComposicaoScreen() {
         ) : null}
         {journey.currentWeight != null ? (
           <>
-            <Text spec={text(t, { role: 'body' })}>Atual: {journey.currentWeight} kg{journey.startWeight != null ? ` · início ${journey.startWeight} kg` : ''}{journey.startDate ? ` (${fmt(journey.startDate)})` : ''}</Text>
-            {journey.lostKg != null ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{journey.lostKg > 0 ? `−${journey.lostKg}` : `${journey.lostKg}`} kg{journey.rateKgPerWeek != null ? ` · ${journey.rateKgPerWeek} kg/semana` : ''}{followupLabel ? ` · ${followupLabel} de acompanhamento` : ''}</Text> : null}
+            <Text spec={text(t, { role: 'body' })}>Atual: {pesoLabel(journey.currentWeight)}{journey.startWeight != null ? ` · início ${pesoLabel(journey.startWeight)}` : ''}{journey.startDate ? ` (${fmt(journey.startDate)})` : ''}</Text>
+            {/* O SINAL VEM DO NUCLEO. Escrito aqui a mao, os dois ramos imprimiam menos: um ganho de 2,8 kg saia
+                 "−2,8", identico a uma perda de 2,8 — num registro que vai ao medico. A Web acertava, e a regra
+                 divergiu por estar escrita duas vezes. */}
+            {variacaoDePeso(journey.lostKg) ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{variacaoDePeso(journey.lostKg)!.texto}{ritmoDePeso(journey.rateKgPerWeek) ? ` · ${ritmoDePeso(journey.rateKgPerWeek)!.texto}` : ''}{followupLabel ? ` · ${followupLabel} de acompanhamento` : ''}</Text> : null}
             {journey.remainingKg != null ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Faltam {journey.remainingKg} kg{journey.progressPct != null ? ` · ${journey.progressPct}% do caminho` : ''}</Text> : goal == null ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Defina uma meta para acompanhar o progresso.</Text> : null}
             {journey.leanDeltaKg != null ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Massa magra: {journey.leanStartKg != null ? `${journey.leanStartKg} → ${journey.leanCurrentKg} kg (` : ''}{journey.leanDeltaKg > 0 ? '+' : ''}{journey.leanDeltaKg} kg{journey.leanStartKg != null ? ')' : ''} — acompanhe se a perda preserva a massa magra</Text> : null}
           </>
@@ -283,7 +293,19 @@ export function ComposicaoScreen() {
       {/* ① Estado atual por indicador — valor + origem + confiabilidade; IMC entra como CALCULADO (peso÷altura²). */}
       {Object.keys(summary).length > 0 || imcVal != null ? (
         <View style={[styles.card, card, { gap: 10 }]}>
-          <Text spec={text(t, { role: 'bodyStrong' })}>Estado atual</Text>
+          {/* ─────────────────────────────────────────────────────────────────────────────────────────
+              O CABEÇALHO PAROU DE DIZER "ESTADO ATUAL".
+              A fundadora apontou na homologação de 31/08: os números são de uma bioimpedância de 2023, e a
+              tela os chamava de atuais. (A Web era pior — dizia "Como você está hoje?".)
+              O dado antigo CONTINUA aparecendo: a plataforma organiza e preserva, não decide que um exame de
+              2023 deixou de valer (ADR-000). O que mudou é que ela diz de quando cada número é.
+              Regra no núcleo, para as duas pontas dizerem igual.
+              ───────────────────────────────────────────────────────────────────────────────────────── */}
+          <Text spec={text(t, { role: 'bodyStrong' })}>{atualidade.titulo}</Text>
+          <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{atualidade.explicacao}</Text>
+          {atualidade.intervalo ? (
+            <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{atualidade.intervalo}</Text>
+          ) : null}
           {/* Hierarquia A6 via MetricRow (DS): valor em destaque, metadados subordinados — mesma leitura em toda a plataforma. */}
           {imcVal != null ? <MetricRow label="IMC" value={`${imcVal} kg/m²`} meta="Calculado (peso ÷ altura²)" /> : null}
           {SUMMARY_ORDER.filter(m => summary[m]).map(m => {

@@ -10,29 +10,44 @@
 // O fluxo de autorização abre no NAVEGADOR, de propósito: é OAuth do fabricante, e o app nunca manipula a
 // credencial da pessoa.
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ScrollView, View, ActivityIndicator, RefreshControl, Pressable, Alert, Linking, StyleSheet } from 'react-native'
+import { ScrollView, View, ActivityIndicator, RefreshControl, Pressable, Alert, Linking, StyleSheet, Platform } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
 import type { ConnectorState } from '@sintera/core'
 import {
   connectorStatusLabel, connectorStatusTone, connectorPrimaryAction, isConnectorActive, SCREEN_COPY,
+  HEALTH_CONNECT_DOIS_PASSOS, HEALTH_CONNECT_COMO_TESTAR, fontesDisponiveis, fontesIndisponiveis,
+  resumoSincronizacao, formatInstantBR, janelaImportacao, caminhoDaFonte,
 } from '@sintera/core'
+import { useNavigation } from '@react-navigation/native'
 import { Text, Button, Disclaimer } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
-import { healthConnectDisponivel, sincronizarHealthConnect } from '../../../infrastructure/healthConnect'
+import { healthConnectDisponivel, statusHealthConnect, sincronizarHealthConnect } from '../../../infrastructure/healthConnect'
+import { sincronizarAppleHealth } from '../../../infrastructure/appleHealth'
 
 const C = SCREEN_COPY.conexoes
 
+// Versao do Android deste aparelho. O guia de fontes depende dela: o Samsung Health, por exemplo, so conversa
+// com o Health Connect a partir do Android 10, e num aparelho abaixo disso listar o caminho dele e mentir.
+const apiAndroid: number | undefined = Platform.OS === 'android'
+  ? (typeof Platform.Version === 'number' ? Platform.Version : Number(Platform.Version)) || undefined
+  : undefined
+
+/** No iPhone o caminho do Health Connect não existe, e o roteiro do Android não se aplica a nada ali. */
+const ehIphone = Platform.OS === 'ios'
+
+// A hora da última sincronização é um INSTANTE, e recortar a string mostrava-o em UTC — três horas erradas, e
+// um dia errado para tudo que acontece à noite. A conversão mora no core (`formatInstantBR`), porque a Web lê
+// o mesmo campo e não pode divergir.
 function fmtDataHora(iso: string | null): string {
-  if (!iso) return '—'
-  const d = iso.slice(0, 10).split('-')
-  const h = iso.slice(11, 16)
-  return d.length === 3 ? `${d[2]}/${d[1]}/${d[0]}${h ? ` às ${h}` : ''}` : '—'
+  return formatInstantBR(iso) || '—'
 }
 
 export function ConexoesScreen() {
   const t = useTheme()
+  // Navegação por nome — o padrão do projeto para stack interno; sem regra de negócio.
+  const navigation = useNavigation() as unknown as { navigate: (n: string) => void }
   const insets = useSafeAreaInsets()
   const [items, setItems] = useState<ConnectorState[]>([])
   const [phase, setPhase] = useState<'loading' | 'ready' | 'error'>('loading')
@@ -45,6 +60,17 @@ export function ConexoesScreen() {
   const [hcDisponivel, setHcDisponivel] = useState<boolean | null>(null)
   const [hcOcupado, setHcOcupado] = useState(false)
   const [hcResumo, setHcResumo] = useState<string | null>(null)
+  /** As linhas de fato que sustentam a frase: permissões, janela e o que veio de cada tipo. */
+  const [hcFatos, setHcFatos] = useState<string[]>([])
+  /**
+   * O passo a passo já foi mostrado nesta visita?
+   *
+   * Aparece assim que a pessoa AUTORIZA — é o momento em que ela está configurando e disposta a ir aos outros
+   * apps. Deixá-lo apenas parado na tela faria com que fosse lido só por quem já desconfia que falta algo.
+   */
+  const [guiaAberto, setGuiaAberto] = useState(false)
+  /** A sincronização terminou sem trazer nada? É quando a orientação deixa de ser útil e passa a ser essencial. */
+  const [hcVazio, setHcVazio] = useState(false)
 
   useEffect(() => {
     healthConnectDisponivel().then(d => { if (alive.current) setHcDisponivel(d) }).catch(() => {
@@ -53,23 +79,92 @@ export function ConexoesScreen() {
   }, [])
 
   const sincronizarHc = useCallback(async () => {
-    setHcOcupado(true); setHcResumo(null)
+    setHcOcupado(true); setHcResumo(null); setHcFatos([])
+    // O guia abre AGORA, junto com a autorização — é quando a pessoa está configurando.
+    setGuiaAberto(true); setHcVazio(false)
     try {
-      // Primeira sincronização: 30 dias para trás. O bruto é idempotente, então repetir a janela não duplica.
-      const ate = new Date()
-      const desde = new Date(ate.getTime() - 30 * 24 * 60 * 60 * 1000)
+      // O ALCANCE vem do núcleo. Ao tocar aqui a pessoa está CONFIGURANDO, e é o momento de varrer o histórico
+      // inteiro que a fonte permitir — começar do zero no dia da instalação jogaria fora o passado que a fonte
+      // já guarda, que é exatamente o que a plataforma existe para preservar. O teto real é aparado dentro do
+      // conector, que é quem sabe o que foi autorizado, e a ingestão é idempotente: repetir não duplica.
+      const { desde, ate } = janelaImportacao(new Date())
       const r = await sincronizarHealthConnect(desde, ate)
       if (!alive.current) return
       setHcDisponivel(r.disponivel)
-      if (!r.disponivel) { setHcResumo(null); return }
-      if (!r.autorizado) { setHcResumo(C.hcDenied); return }
+
+      // NENHUM CAMINHO PODE TERMINAR EM SILÊNCIO (homologação de 30/08: "apertei autorizar e sincronizar, mas
+      // nada ocorreu"). Este ramo LIMPAVA a mensagem e voltava — a pessoa tocava no botão e a tela não mudava.
+      // "Nada aconteceu" é o pior resultado possível: não dá para distinguir de app quebrado, e não sugere ação.
+      if (!r.disponivel) {
+        // "Não disponível" tinha duas causas com soluções OPOSTAS — não existe × existe e está velho — e a
+        // mesma frase para as duas. Perguntar qual é custa uma chamada.
+        const st = await statusHealthConnect()
+        setHcResumo(st === 'atualizar'
+          ? 'O Health Connect deste aparelho está desatualizado. Atualize o aplicativo "Saúde Connect" na Play Store e volte aqui.'
+          : 'O Health Connect não respondeu. Abra o aplicativo "Saúde Connect" uma vez e volte aqui.')
+        setHcVazio(true)
+        return
+      }
+      if (r.erro) { setHcResumo(r.erro); setHcFatos(r.diagnostico ? [...resumoSincronizacao(r.diagnostico).fatos] : []); return }
+
+      // A FRASE E OS FATOS VÊM DO CORE. Antes eram montados aqui, e "Nada novo desde a última vez" respondia
+      // por cinco situações diferentes — inclusive por leituras que o Health Connect tinha RECUSADO. O núcleo
+      // distingue, é testável sem Android, e a Web dirá exatamente o mesmo (BASE ÚNICA).
+      if (!r.diagnostico) { setHcResumo(C.hcDenied); setHcVazio(true); return }
+      const resumo = resumoSincronizacao(r.diagnostico)
+      setHcResumo(resumo.frase)
+      setHcFatos([...resumo.fatos])
+      setHcVazio(resumo.vazio)
+    } catch (e) {
+      // Última rede: exceção não pode virar silêncio. Depois de tocar no botão, ALGO tem de mudar na tela.
+      if (alive.current) {
+        setHcResumo(e instanceof Error ? e.message : 'Não foi possível sincronizar agora. Tente de novo.')
+        setHcVazio(true)
+      }
+    } finally {
+      if (alive.current) setHcOcupado(false)
+    }
+  }, [])
+
+  /**
+   * A mesma sincronização, do outro cofre.
+   *
+   * Repete a estrutura da do Android de propósito: nenhum caminho termina em silêncio, o resultado fica colado
+   * no botão, e os fatos aparecem ao lado da frase. Foram esses três que custaram a homologação de 30/08.
+   */
+  const sincronizarApple = useCallback(async () => {
+    setHcOcupado(true); setHcResumo(null); setHcFatos([]); setHcVazio(false)
+    try {
+      const { desde, ate } = janelaImportacao(new Date())
+      const r = await sincronizarAppleHealth(desde, ate)
+      if (!alive.current) return
+
+      if (!r.disponivel) {
+        setHcResumo('Este aparelho não tem o Apple Saúde disponível.')
+        setHcVazio(true)
+        return
+      }
+      if (!r.autorizado) { setHcResumo(C.hcDenied); setHcVazio(true); return }
       if (r.erro) { setHcResumo(r.erro); return }
-      // Diz o que ENTROU, não "sucesso" — número verificável é mais confiável que adjetivo.
-      const partes = [
-        r.leituras > 0 ? `${r.leituras} ${r.leituras === 1 ? 'leitura' : 'leituras'}` : null,
-        r.sessoes > 0 ? `${r.sessoes} ${r.sessoes === 1 ? 'atividade' : 'atividades'}` : null,
-      ].filter(Boolean)
-      setHcResumo(partes.length ? `${partes.join(' · ')} — veja em Monitoramento` : 'Nada novo desde a última vez')
+      if (!r.diagnostico) { setHcResumo(C.hcDenied); setHcVazio(true); return }
+
+      const resumo = resumoSincronizacao(r.diagnostico)
+      // A frase de "cofre vazio" do núcleo fala de permissões, que no iPhone não conseguimos conhecer. Aqui a
+      // explicação é outra e é a honesta: pode ser recusa, pode ser ausência, e não dá para distinguir.
+      setHcResumo(resumo.vazio ? C.hcIosVazio : resumo.frase)
+      setHcFatos([
+        ...resumo.fatos.filter(f => !f.startsWith('Permissões') && !f.startsWith('Não autorizados')),
+        // O que não foi entendido vira linha visível: é o que transforma a primeira sincronização num relatório.
+        ...(r.exerciciosDesconhecidos.length
+          ? [`Tipos de atividade ainda não reconhecidos: ${r.exerciciosDesconhecidos.join(', ')}`]
+          : []),
+      ])
+      setHcVazio(resumo.vazio)
+    } catch (e) {
+      if (alive.current) {
+        setHcResumo(e instanceof Error ? e.message : 'Não foi possível sincronizar agora. Tente de novo.')
+        setHcVazio(true)
+      }
     } finally {
       if (alive.current) setHcOcupado(false)
     }
@@ -165,8 +260,38 @@ export function ConexoesScreen() {
         </View>
         <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{C.hcSubtitle}</Text>
 
-        {hcDisponivel === false ? (
-          <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{C.hcUnavailableHint}</Text>
+        {ehIphone ? (
+          // IPHONE: o mesmo caminho, outro cofre. A SINTERA lê do Apple Saúde, e o roteiro do Android não se
+          // aplica — mandar a pessoa à Play Store num aparelho que não a tem seria pior que não dizer nada.
+          <View style={{ gap: 8 }}>
+            <Text spec={text(t, { role: 'bodyStrong' })}>{C.hcIosTitle}</Text>
+            <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{C.hcIosHint}</Text>
+            <Button
+              label={hcOcupado ? C.hcSyncing : C.hcIosAction}
+              onPress={sincronizarApple}
+              loading={hcOcupado}
+              disabled={hcOcupado}
+            />
+            {/* O que a Apple NÃO nos deixa saber, dito de frente — ver a redação no núcleo. */}
+            <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{C.hcIosRevisar}</Text>
+          </View>
+        ) : hcDisponivel === false ? (
+          // NÃO DISPONÍVEL — mas com saída. A versão anterior constatava e parava; a pessoa ficava sabendo que
+          // não dá, sem saber o que fazer. Aqui vai o motivo E o caminho, com o botão que abre a Play Store no
+          // app certo, para ninguém precisar procurar entre resultados parecidos.
+          <View style={{ gap: 8 }}>
+            <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{C.hcUnavailableHint}</Text>
+            <Button
+              label={C.hcInstallAction}
+              variant="secondary"
+              onPress={() => {
+                // `market://` abre direto na Play Store; se não houver Play Store (aparelho sem serviços
+                // Google), cai para o endereço web, que funciona em qualquer navegador.
+                Linking.openURL('market://details?id=com.google.android.apps.healthdata')
+                  .catch(() => Linking.openURL('https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata'))
+              }}
+            />
+          </View>
         ) : (
           <>
             <Button
@@ -177,11 +302,87 @@ export function ConexoesScreen() {
               variant="secondary"
             />
             <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{C.hcRevokeHint}</Text>
+
+            {/* O SEGUNDO PASSO — o que faltava dizer. Autorizar a SINTERA é metade; a outra metade acontece
+                dentro do app do aparelho. Sem esta orientação a pessoa autoriza, não vem nada, e conclui que a
+                plataforma não funciona — quando o que falta é uma chave do lado dela.
+
+                Aparece ao AUTORIZAR (é quando ela está configurando) e fica disponível por um toque no resto do
+                tempo. Quando a sincronização volta VAZIA, ganha destaque e muda de tom: deixa de ser referência
+                e vira a explicação do que acabou de acontecer. */}
+            {!guiaAberto && (
+              <Pressable onPress={() => setGuiaAberto(true)} accessibilityRole="button" hitSlop={8}>
+                <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>
+                  Como liberar os dados do Strava, Whoop e outros
+                </Text>
+              </Pressable>
+            )}
+
+            {guiaAberto && (
+            <View
+              style={[
+                { gap: 8, marginTop: 6 },
+                hcVazio && [s.guiaDestaque, { borderColor: t.color.badge.attention.text, backgroundColor: t.color.badge.attention.soft }],
+              ]}
+            >
+              {hcVazio && (
+                <Text spec={text(t, { role: 'bodyStrong' })} style={{ color: t.color.badge.attention.text }}>
+                  Falta um passo — e ele é dentro do app do seu aparelho
+                </Text>
+              )}
+              <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{HEALTH_CONNECT_DOIS_PASSOS}</Text>
+
+              {/* COMO PROVAR AGORA, em vez de esperar. Sem isto, o cofre vazio é indistinguível de configuração
+                  errada — e foi exatamente aí que a homologação de 30/08 travou. */}
+              {hcVazio && (
+                <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{HEALTH_CONNECT_COMO_TESTAR}</Text>
+              )}
+
+              {/* A LISTA É FILTRADA PELO APARELHO. Uma fonte que exige um Android mais novo que este não
+                  aparece como opção: ela aceitaria a permissão e nunca escreveria nada. */}
+              {fontesDisponiveis(apiAndroid).map(f => (
+                <View key={f.source} style={[s.guia, { borderColor: t.color.border.default }]}>
+                  <Text spec={text(t, { role: 'body' })}>{f.nome}</Text>
+                  <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{caminhoDaFonte(f, ehIphone ? 'ios' : 'android')}</Text>
+                  <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Traz: {f.traz}</Text>
+                </View>
+              ))}
+
+              {/* O QUE AINDA NÃO DÁ aparece com o motivo, nunca escondido: mandar procurar um menu que não
+                  existe faz a pessoa se sentir errada por não achar o que não está lá. */}
+              {fontesIndisponiveis(apiAndroid).map(({ fonte, motivo }) => (
+                <View key={fonte.source} style={[s.guia, { borderColor: t.color.border.default, opacity: 0.75 }]}>
+                  <Text spec={text(t, { role: 'body' })}>{fonte.nome}</Text>
+                  <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{motivo}</Text>
+                </View>
+              ))}
+            </View>
+            )}
           </>
         )}
 
+        {/* O RESULTADO FICA COLADO NO BOTÃO, e FORA do ramo por plataforma.
+            Ele já esteve no fim do cartão, depois de seis cartões de fonte — e a fundadora tocou duas vezes
+            relatando "nada aconteceu". Acontecia: a resposta era desenhada fora da tela.
+            E esteve DENTRO do ramo do Android, o que teria feito o iPhone repetir o mesmo defeito no primeiro
+            teste: botão que responde em lugar nenhum. O resultado de uma ação pertence ao lado dela, e aqui
+            serve aos dois cofres — porque a ação também é a mesma para os dois. */}
         {hcResumo && (
-          <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>{hcResumo}</Text>
+          <View style={[s.resultado, { borderColor: t.color.identity.primary }]}>
+            <Text spec={text(t, { role: 'body' })} style={{ color: t.color.identity.primary }}>{hcResumo}</Text>
+            {/* OS FATOS FICAM À VISTA, não escondidos atrás de "detalhes". Um resultado zero sem os números que
+                o produziram é indistinguível de defeito — foi o que fez a fundadora concluir três vezes que a
+                sincronização não funcionava. */}
+            {hcFatos.length > 0 && (
+              <View style={s.fatos}>
+                {hcFatos.map((f) => (
+                  <Text key={f} spec={text(t, { role: 'caption' })} style={{ color: t.color.text.muted }}>
+                    {`• ${f}`}
+                  </Text>
+                ))}
+              </View>
+            )}
+          </View>
         )}
       </View>
 
@@ -238,12 +439,25 @@ export function ConexoesScreen() {
         ))
       )}
 
+      {/* A PORTA para o que entrou. Com a sincronização automática, o dado passa a chegar sem ninguém pedir —
+          e sem este caminho, "entra sozinho" viraria "entra sem que eu saiba". Fica em Conexões porque é aqui
+          que a pessoa pensa em origem de dado. */}
+      <Button
+        label={SCREEN_COPY.dadosRecebidos.title}
+        variant="secondary"
+        onPress={() => navigation.navigate('DadosRecebidos')}
+      />
+
       <Disclaimer variant="geral" />
     </ScrollView>
   )
 }
 
 const s = StyleSheet.create({
+  guia: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, gap: 2 },
+  resultado: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, gap: 8 },
+  fatos: { gap: 2 },
+  guiaDestaque: { borderWidth: 1, borderRadius: 14, padding: 14 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   card: { borderWidth: 1, borderRadius: 16, padding: 16 },
   linha: { flexDirection: 'row', alignItems: 'center', gap: 12 },

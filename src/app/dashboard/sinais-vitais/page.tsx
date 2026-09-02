@@ -22,9 +22,16 @@ import {
   SCREEN_COPY, hasTimeOfDay, measurementInstant, measurementMeta, requiresTimeOfDay,
   VITAL_SIGNS, ACTIVITY_TYPES, activityTypeLabel, activitySummary,
   durationSecondsFromMinutes, distanceMetersFromKm, numberFromField, paceKindFor, bloodPressureHint, bloodPressureSuggestion, bloodPressureApplyLabel,
+  stepsLabel, stepsProvenance, type DailySteps,
+  // A ROTINA DECLARADA passou a morar aqui (decisão da fundadora, 31/08/2026): atividade física tem um
+  // endereço só, e é neste, onde também estão as sessões que aconteceram.
+  confrontarRotinas, rotinaLinha, rotinasDeAtividade, CATEGORIA_ROTINA_ATIVIDADE,
+  // Ausencia com motivo — pedido da fundadora em 01/09/2026. Texto no nucleo; as duas pontas dizem igual.
+  ausenciaExplicada, type SecaoDeDados,
+  type RotinaConfrontada,
 } from '@sintera/core'
-import type { ActivitySessionDTO } from '@sintera/api-client'
-import { listActivitySessions, saveActivitySession, deleteActivitySession, saveBodyMetric } from '@sintera/api-client'
+import type { ActivitySessionDTO, HabitDTO } from '@sintera/api-client'
+import { listActivitySessions, saveActivitySession, deleteActivitySession, saveBodyMetric, listDailySteps, listHabits, saveHabit, deleteHabit } from '@sintera/api-client'
 import EmptyState from '@/components/EmptyState'
 import { Card } from "@/lib/ui/ds"
 import Disclaimer from '@/components/ui/Disclaimer'
@@ -66,6 +73,27 @@ interface Entry {
 function fmt(date: string): string {
   const d = new Date(`${date}T00:00:00`)
   return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+/**
+ * A EXPLICAÇÃO DE UMA SEÇÃO VAZIA, renderizada — pedido da fundadora em 01/09/2026: "caso algum dado não
+ * apareça na web que na página respectiva apareça uma mensagem informando, informando também o porquê."
+ *
+ * O texto vem do núcleo, para a Web e o aplicativo dizerem a MESMA coisa. Aqui só a apresentação.
+ */
+function PorQueVazio({ secao, houveSincronizacao }: { secao: SecaoDeDados; houveSincronizacao: boolean }) {
+  const a = ausenciaExplicada(secao, { houveSincronizacao })
+  return (
+    <span className="block text-left">
+      <span className="block mb-2">{a.titulo}</span>
+      <span className="block space-y-1">
+        {a.motivos.map((m, i) => (
+          <span key={i} className="block text-xs text-mauve">• {m}</span>
+        ))}
+      </span>
+      <span className="block mt-2 text-xs text-onyx">{a.oQueFazer}</span>
+    </span>
+  )
 }
 
 /**
@@ -112,6 +140,8 @@ export default function SinaisVitaisPage() {
 
   // Atividade física (HIP-014 §3) — seção IRMÃ dos sinais vitais. FATO observado, com proveniência.
   const [acts, setActs] = useState<ActivitySessionDTO[]>([])
+  /** Passos por dia — do bruto dos conectores. Vazio é normal: só existe com conector sincronizado. */
+  const [passos, setPassos] = useState<DailySteps[]>([])
   const [showActForm, setShowActForm] = useState(false)
   const [actType, setActType] = useState<string>('caminhada')
   const [actName, setActName] = useState('')
@@ -121,6 +151,18 @@ export default function SinaisVitaisPage() {
   const [actKm, setActKm] = useState('')
   const [actBpm, setActBpm] = useState('')
   const [actKcal, setActKcal] = useState('')
+  /** Atividade sendo corrigida. `null` = nova. O aplicativo já editava; a Web só removia. */
+  const [actEditando, setActEditando] = useState<ActivitySessionDTO | null>(null)
+  // ROTINA DECLARADA — a intenção ("Musculação, diário"), guardada em `life_habits` como sempre esteve.
+  // Nenhum dado foi migrado: o que mudou é ONDE ela é lida e escrita.
+  const [rotinas, setRotinas] = useState<HabitDTO[]>([])
+  const [showRotinaForm, setShowRotinaForm] = useState(false)
+  const [rotinaEditando, setRotinaEditando] = useState<HabitDTO | null>(null)
+  const [rotinaDesc, setRotinaDesc] = useState('')
+  const [rotinaFreq, setRotinaFreq] = useState('')
+  const [rotinaMeta, setRotinaMeta] = useState('')
+  const [rotinaMetaUnidade, setRotinaMetaUnidade] = useState('')
+  const [savingRotina, setSavingRotina] = useState(false)
   const [savingAct, setSavingAct] = useState(false)
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
@@ -181,11 +223,22 @@ export default function SinaisVitaisPage() {
   async function save() {
     if (!user || saving || !value.trim() || !date) return
     setSaving(true); setErr(null)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any).from('body_metrics').insert({
-      user_id: user.id, metric, label: metric === 'outro_sinal' ? (label.trim() || 'Sinal') : null,
-      value_text: value.trim(), unit: unit.trim() || null, measured_on: date,
-      measured_at: instantOf(date, time), notes: notes.trim() || null,
+    // DUAS CORREÇÕES NUMA LINHA SÓ, e as duas eram invisíveis.
+    //
+    // 1. `id` quando está EDITANDO. Sem ele, corrigir um dígito criava uma SEGUNDA medição — a pessoa
+    //    consertava a pressão e passava a ter duas. Pior que não deixar corrigir.
+    // 2. Passa a usar `saveBodyMetric`, do api-client, que já era importado aqui e nunca chamado. A página
+    //    montava a linha à mão, com a âncora de horário reimplementada — e uma segunda implementação da regra
+    //    de "hora não informada" divergiria da primeira no dia em que uma das duas mudasse.
+    const { error } = await saveBodyMetric(supabase, {
+      id: editando?.id,
+      metric,
+      label: metric === 'outro_sinal' ? (label.trim() || 'Sinal') : null,
+      value_text: value.trim(),
+      unit: unit.trim() || null,
+      measured_on: date,
+      measured_at: instantOf(date, time),
+      notes: notes.trim() || null,
     })
     setSaving(false)
     if (error) { setErr(error.message); return }
@@ -200,8 +253,115 @@ export default function SinaisVitaisPage() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { if (!authLoading) loadActs() }, [authLoading, loadActs])
 
+  // Passos: seção a MAIS. A função não lança — falha aqui vira seção ausente, nunca tela quebrada.
+  useEffect(() => {
+    if (authLoading) return
+    listDailySteps(supabase).then(setPassos).catch(() => { /* a seção some */ })
+  }, [authLoading, supabase])
+
+  const loadRotinas = useCallback(async () => {
+    if (!user) return
+    // Mesma consulta que Hábitos usa — a rotina continua em `life_habits`, só passou a ser lida daqui.
+    try { setRotinas(await listHabits(supabase)) } catch { /* a seção degrada vazia, não derruba a tela */ }
+  }, [user, supabase])
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { if (!authLoading) loadRotinas() }, [authLoading, loadRotinas])
+
+  /**
+   * O confronto: cada rotina declarada ao lado das sessões que aconteceram.
+   *
+   * `new Date()` fica AQUI, na borda, e nunca dentro da regra — a contagem é função pura em `@sintera/core`,
+   * que recebe o instante. Regra que lê o relógio não é conferível em teste.
+   */
+  const confronto: RotinaConfrontada[] = confrontarRotinas(rotinasDeAtividade(rotinas), acts, new Date())
+
+  /**
+   * ALGUM DADO JÁ CHEGOU DE APARELHO NESTA CONTA?
+   *
+   * Separa os dois casos que a explicação de seção vazia precisa distinguir: nunca ligaram o caminho
+   * automático, ou ele funciona e ESTA seção específica segue vazia. Sem a distinção, quem já sincronizou
+   * leria "conecte um aparelho" e concluiria, errado, que perdeu o que tinha.
+   *
+   * 'manual' é o que a pessoa digitou; qualquer outra origem veio de fora.
+   */
+  const houveSincronizacao =
+    passos.length > 0 ||
+    acts.some(a => (a.source ?? 'manual') !== 'manual') ||
+    items.some(i => (i.source ?? 'manual') !== 'manual')
+
+  function resetRotina() {
+    setRotinaEditando(null); setRotinaDesc(''); setRotinaFreq(''); setRotinaMeta(''); setRotinaMetaUnidade('')
+  }
+
+  function startEditRotina(id: string) {
+    const h = rotinas.find(r => r.id === id)
+    if (!h) return
+    setRotinaEditando(h)
+    setRotinaDesc(h.description ?? '')
+    setRotinaFreq(h.frequency ?? '')
+    setRotinaMeta(h.goal_amount == null ? '' : String(h.goal_amount))
+    setRotinaMetaUnidade(h.goal_unit ?? '')
+    setShowRotinaForm(true)
+  }
+
+  async function saveRotina() {
+    if (!rotinaDesc.trim()) return
+    setSavingRotina(true)
+    const { error } = await saveHabit(supabase, {
+      id: rotinaEditando?.id,
+      category: CATEGORIA_ROTINA_ATIVIDADE as HabitDTO['category'],
+      description: rotinaDesc.trim(),
+      frequency: rotinaFreq.trim() || null,
+      goal_amount: rotinaMeta.trim() ? numberFromField(rotinaMeta) : null,
+      goal_unit: rotinaMetaUnidade.trim() || null,
+    })
+    setSavingRotina(false)
+    // O ERRO É DITO. Uma rotina que some sem explicação é a falha silenciosa que já custou caro aqui.
+    if (error) { setErr(error.message); return }
+    resetRotina(); setShowRotinaForm(false); await loadRotinas()
+  }
+
+  function removeRotina(id: string) {
+    const alvo = rotinas.find(r => r.id === id)
+    setConfirm({
+      message: `Remover a rotina "${alvo?.description ?? ''}"? As sessões já registradas permanecem — só a rotina declarada sai.`,
+      confirmLabel: 'Remover',
+      onYes: async () => {
+        setConfirm(null); setBusyId(id)
+        const { error } = await deleteHabit(supabase, id)
+        setBusyId(null)
+        if (error) { setErr(error.message); return }
+        await loadRotinas()
+      },
+    })
+  }
+
   function resetAct() {
+    setActEditando(null)
     setActType('caminhada'); setActName(''); setActDate(''); setActTime(''); setActMin(''); setActKm('')
+    // Faltavam aqui: quem registrasse uma atividade com 142 bpm e depois abrisse o formulário para outra
+    // encontrava os 142 já preenchidos, e salvaria um dado da atividade anterior como se fosse desta.
+    setActBpm(''); setActKcal('')
+  }
+
+  /**
+   * Abre o formulário com a atividade já registrada, para CORRIGIR.
+   *
+   * Reconverte para as unidades do formulário — o banco guarda segundos e metros; a pessoa digita minutos e
+   * quilômetros. Mesma capacidade e mesmo caminho do aplicativo, que já editava enquanto a Web só removia.
+   */
+  function startEditAct(a: ActivitySessionDTO) {
+    setActEditando(a)
+    setActType(a.activity_type || 'outro')
+    setActName(a.title ?? '')
+    setActDate(a.started_at.slice(0, 10))
+    setActTime(hasTimeOfDay(a.started_at) ? new Date(a.started_at).toTimeString().slice(0, 5) : '')
+    setActMin(a.duration_s != null ? String(Math.round(a.duration_s / 60)) : '')
+    setActKm(a.distance_m != null ? String(Math.round(a.distance_m / 100) / 10).replace('.', ',') : '')
+    setActBpm(a.avg_heart_rate != null ? String(Math.round(a.avg_heart_rate)) : '')
+    setActKcal(a.active_energy_kcal != null ? String(Math.round(a.active_energy_kcal)) : '')
+    setErr(null)
+    setShowActForm(true)
   }
 
   async function saveAct() {
@@ -209,12 +369,25 @@ export default function SinaisVitaisPage() {
     setSavingAct(true); setErr(null)
     // Conversão de unidade vem do core: campo vazio vira AUSENTE, nunca zero, e as duas telas convertem igual.
     const { error } = await saveActivitySession(supabase, {
-      source: 'manual',
+      id: actEditando?.id,
+      // Ao CORRIGIR, preserva a origem e o id na fonte. Trocar por 'manual' faria uma corrida do Strava virar
+      // registro manual só porque alguém ajustou a distância — e a procedência é requisito, não detalhe.
+      source: actEditando?.source ?? 'manual',
+      external_id: actEditando?.external_id ?? null,
+      connector_version: actEditando?.connector_version ?? null,
       activity_type: actType,
       title: actName.trim() || null,
       started_at: instantOf(actDate, actTime) ?? `${actDate}T00:00:00.000Z`,
       duration_s: durationSecondsFromMinutes(actMin),
       distance_m: distanceMetersFromKm(actKm),
+      // A PESSOA DIGITAVA E A PLATAFORMA DESCARTAVA. Os campos de frequência cardíaca e calorias existem no
+      // formulário desde sempre; estas duas linhas não. O aplicativo as tinha, a Web não — e era `numberFromField`
+      // importado e nunca usado que denunciava, sem que ninguém olhasse.
+      //
+      // É pior que funcionalidade faltando: a pessoa vê o campo, preenche, salva, e acredita que ficou
+      // guardado. Perder o que foi digitado em silêncio é a forma mais cara de perder um dado.
+      avg_heart_rate: numberFromField(actBpm),
+      active_energy_kcal: numberFromField(actKcal),
     })
     setSavingAct(false)
     if (error) { setErr(error.message); return }
@@ -268,6 +441,13 @@ export default function SinaisVitaisPage() {
 
       {showForm && (
         <Card padding="relaxed" className="space-y-3">
+          {/* DIZ QUE ESTÁ CORRIGINDO. Sem isto, o formulário aberto sobre uma medição já registrada é
+              indistinguível de um formulário novo — e a pessoa acha que vai criar outra, não corrigir aquela. */}
+          {editando && (
+            <p className="font-body text-sm text-onyx">
+              Corrigindo a medição de <span className="text-mauve">{fmtMeasured(editando.measuredOn, editando.measuredAt)}</span>
+            </p>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="font-body text-xs text-mauve block mb-1">{C.fieldVital}</label>
@@ -354,7 +534,7 @@ export default function SinaisVitaisPage() {
         <Card padding="none" className="p-10 text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
       ) : items.length === 0 ? (
         <EmptyState icon={<HeartPulse size={28} className="text-petal" />} title={C.emptyTitle}
-          message={C.emptyMessage} />
+          message={<PorQueVazio secao="sinais" houveSincronizacao={houveSincronizacao} />} />
       ) : (
         <div className="space-y-6">
           {VITALS.map(g => {
@@ -380,10 +560,20 @@ export default function SinaisVitaisPage() {
                       title={`${it.metric === 'outro_sinal' && it.label ? `${it.label}: ` : ''}${it.valueText}${it.unit ? ` ${it.unit}` : ''}`}
                       meta={metaOf(it)}
                       actions={
-                        <button onClick={() => remove(it.id)} disabled={busyId === it.id} title="Remover"
-                          className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-red-400 hover:bg-red-50 transition-colors disabled:opacity-40">
-                          <Trash2 size={12} />
-                        </button>
+                        <>
+                          {/* EDITAR — a função `startEdit` existia neste arquivo, com um comentário explicando
+                              que corrigia um defeito da homologação de 27/08, e NUNCA foi chamada. O cartão
+                              continuava só oferecendo remover. Quem digitasse um dígito errado teria de apagar
+                              e refazer, perdendo hora, origem e observação junto. */}
+                          <button onClick={() => startEdit(it)} disabled={busyId === it.id} title="Editar"
+                            className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-petal hover:bg-blush transition-colors disabled:opacity-40">
+                            <Pencil size={12} />
+                          </button>
+                          <button onClick={() => remove(it.id)} disabled={busyId === it.id} title="Remover"
+                            className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-red-400 hover:bg-red-50 transition-colors disabled:opacity-40">
+                            <Trash2 size={12} />
+                          </button>
+                        </>
                       }
                     />
                   ))}
@@ -391,6 +581,113 @@ export default function SinaisVitaisPage() {
               </div>
             )
           })}
+        </div>
+      )}
+
+      {/* PASSOS — natureza própria, nem sinal vital nem sessão. Vêm do bruto dos conectores, onde já estavam e
+          eram invisíveis: a coluna de body_metrics não aceita 'passos', e uma sessão exigiria início, fim e
+          duração que uma contagem contínua do dia não tem. Só aparece quando há dado — sem conector
+          sincronizado a seção nem existe, em vez de uma lista vazia que ninguém sabe como preencher. */}
+      {/* PASSOS — a seção DEIXA DE SUMIR quando está vazia.
+          Ela desaparecia por completo sem conector sincronizado, e desaparecer é a forma mais cara de
+          silêncio: quem não vê a seção não sabe se ela não existe, se o dado não chegou, ou se sumiu.
+          Pedido da fundadora em 01/09/2026 — a página tem de dizer que está vazia E por quê. */}
+      {passos.length === 0 ? (
+        <div className="pt-4 space-y-2">
+          <p className="font-display text-lg font-semibold text-onyx">Passos</p>
+          <Card padding="relaxed">
+            <PorQueVazio secao="passos" houveSincronizacao={houveSincronizacao} />
+          </Card>
+        </div>
+      ) : (
+        <div className="pt-4 space-y-2">
+          <p className="font-display text-lg font-semibold text-onyx">Passos</p>
+          {passos.map(d => (
+            <ListCard key={d.day}
+              title={stepsLabel(d.total)}
+              meta={[fmt(d.day), stepsProvenance(d)].filter(Boolean).join(' · ')}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────────────────────────────────────
+          ROTINA DECLARADA — a declaração encostada no fato.
+          Atividade física ficava dividida entre Hábitos (a intenção, sem data) e Monitoramento (a sessão,
+          com data e calorias). A fundadora pediu um endereço só, e é este. A rotina continua guardada em
+          `life_habits` — nada foi migrado nem apagado; mudou onde ela é lida e escrita.
+          A plataforma CONTA e mostra; nunca diz se a meta foi cumprida (ADR-000 / RDC 657).
+          ───────────────────────────────────────────────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between gap-3 pt-4">
+        <p className="font-display text-lg font-semibold text-onyx">Rotina e metas</p>
+        <button onClick={() => (showRotinaForm ? (resetRotina(), setShowRotinaForm(false)) : (resetRotina(), setShowRotinaForm(true)))}
+          className="flex items-center gap-2 px-4 py-2 rounded-full border border-petal text-petal font-body text-sm font-medium hover:bg-blush transition-colors flex-shrink-0">
+          {showRotinaForm ? <X size={15} /> : <Plus size={15} />} {showRotinaForm ? C.close : 'Definir rotina'}
+        </button>
+      </div>
+
+      {showRotinaForm && (
+        <Card padding="relaxed" className="space-y-3">
+          {rotinaEditando && (
+            <p className="font-body text-sm text-onyx">Corrigindo <strong>{rotinaEditando.description}</strong>.</p>
+          )}
+          <div>
+            <label htmlFor="rot-desc" className="font-body text-xs text-mauve block mb-1">Atividade</label>
+            <input id="rot-desc" type="text" value={rotinaDesc} onChange={e => setRotinaDesc(e.target.value)}
+              placeholder="Ex.: Musculação, Corrida, Tênis"
+              className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+          </div>
+          <div>
+            <label htmlFor="rot-freq" className="font-body text-xs text-mauve block mb-1">Frequência pretendida</label>
+            <input id="rot-freq" type="text" value={rotinaFreq} onChange={e => setRotinaFreq(e.target.value)}
+              placeholder="Ex.: diário, 2 vezes por semana"
+              className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="rot-meta" className="font-body text-xs text-mauve block mb-1">Meta (opcional)</label>
+              <input id="rot-meta" type="text" inputMode="decimal" value={rotinaMeta} onChange={e => setRotinaMeta(e.target.value)} placeholder="Ex.: 150"
+                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+            </div>
+            <div>
+              <label htmlFor="rot-unid" className="font-body text-xs text-mauve block mb-1">Unidade</label>
+              <input id="rot-unid" type="text" value={rotinaMetaUnidade} onChange={e => setRotinaMetaUnidade(e.target.value)} placeholder="Ex.: min/semana"
+                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <button onClick={saveRotina} disabled={savingRotina || !rotinaDesc.trim()}
+              className="px-5 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium disabled:opacity-40">
+              {savingRotina ? 'Salvando…' : C.save}
+            </button>
+          </div>
+        </Card>
+      )}
+
+      {confronto.length === 0 ? (
+        <p className="font-body text-sm text-mauve">
+          Defina uma rotina e ela aparece aqui ao lado das sessões que forem registradas.
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {confronto.map(r => (
+            <ListCard key={r.id}
+              title={rotinaLinha(r)}
+              meta={r.frase}
+              actions={
+                <>
+                  <button onClick={() => startEditRotina(r.id)} disabled={busyId === r.id} title="Editar"
+                    className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-petal hover:bg-blush transition-colors">
+                    <Pencil size={12} />
+                  </button>
+                  <button onClick={() => removeRotina(r.id)} disabled={busyId === r.id} title={C.removeAction}
+                    className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-red-400 hover:bg-red-50 transition-colors">
+                    <Trash2 size={12} />
+                  </button>
+                </>
+              }
+            />
+          ))}
         </div>
       )}
 
@@ -406,6 +703,17 @@ export default function SinaisVitaisPage() {
 
       {showActForm && (
         <Card padding="relaxed" className="space-y-3">
+          {actEditando && (
+            <p className="font-body text-sm text-onyx">
+              Corrigindo a atividade de{' '}
+              <span className="text-mauve">{fmtMeasured(actEditando.started_at.slice(0, 10), actEditando.started_at)}</span>
+              {/* A ORIGEM CONTINUA VISÍVEL enquanto se corrige. Uma corrida do Strava permanece do Strava
+                  depois do ajuste — e mostrar isso é o que impede a pessoa de achar que virou registro dela. */}
+              {actEditando.source && actEditando.source !== 'manual' && (
+                <span className="text-mauve/70"> · origem: {actEditando.source}</span>
+              )}
+            </p>
+          )}
           <div className="grid sm:grid-cols-2 gap-3">
             <div>
               <label className="font-body text-xs text-mauve block mb-1">{C.fieldActivityType}</label>
@@ -470,7 +778,7 @@ export default function SinaisVitaisPage() {
 
       {acts.length === 0 ? (
         <EmptyState icon={<Activity size={28} className="text-petal" />} title={C.activityEmptyTitle}
-          message={C.activityEmptyMsg} />
+          message={<PorQueVazio secao="atividade" houveSincronizacao={houveSincronizacao} />} />
       ) : (
         <div className="space-y-2">
           {acts.map(a => (
@@ -482,10 +790,16 @@ export default function SinaisVitaisPage() {
                 notes: a.notes,
               })}
               actions={
-                <button onClick={() => removeAct(a.id)} title={C.removeAction}
-                  className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-red-400 hover:bg-red-50 transition-colors">
-                  <Trash2 size={12} />
-                </button>
+                <>
+                  <button onClick={() => startEditAct(a)} title="Editar"
+                    className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-petal hover:bg-blush transition-colors">
+                    <Pencil size={12} />
+                  </button>
+                  <button onClick={() => removeAct(a.id)} title={C.removeAction}
+                    className="w-6 h-6 rounded-lg flex items-center justify-center text-mauve/40 hover:text-red-400 hover:bg-red-50 transition-colors">
+                    <Trash2 size={12} />
+                  </button>
+                </>
               }
             />
           ))}

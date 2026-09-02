@@ -39,11 +39,14 @@ export interface UseProfile {
   /** País do telefone (ISO 3166-1 alfa-2). O DDI nunca é adivinhado — vem daqui. */
   phoneIso: string
   ageRange: string
+  /** Data de nascimento AAAA-MM-DD, ou vazio. OPCIONAL (LGPD) — ver o bloco no ProfileScreen. */
+  birthDate: string
   goalsText: string
   setName: (v: string) => void
   setPhone: (v: string) => void
   setPhoneIso: (v: string) => void
   setAgeRange: (v: string) => void
+  setBirthDate: (v: string) => void
   setGoals: (v: string) => void
   fieldErrors: ProfileFieldErrors
   /** Estatísticas (exames·biomarcadores·membro desde) — exibição; null enquanto carrega ou se falhar. */
@@ -65,11 +68,12 @@ export function useProfile(): UseProfile {
   const [phone, setPhoneRaw] = useState('')
   const [phoneIso, setPhoneIsoRaw] = useState<string>(DEFAULT_DIAL_ISO)
   const [ageRange, setAgeRangeRaw] = useState('')
+  const [birthDate, setBirthDateRaw] = useState('')
   const [goalsText, setGoalsRaw] = useState('')
   const [fieldErrors, setFieldErrors] = useState<ProfileFieldErrors>({})
   const [stats, setStats] = useState<ProfileStats | null>(null)
   // Patch validado/normalizado capturado no Salvar (o efeito de 'saving' o consome — evita closure obsoleto).
-  const patchRef = useRef<{ name: string | null; phone: string | null; age_range: string | null; goals: string[] | null }>({ name: null, phone: null, age_range: null, goals: null })
+  const patchRef = useRef<{ name: string | null; phone: string | null; age_range: string | null; birth_date: string | null; goals: string[] | null }>({ name: null, phone: null, age_range: null, birth_date: null, goals: null })
 
   // Dispara a carga inicial uma única vez.
   useEffect(() => {
@@ -103,6 +107,7 @@ export function useProfile(): UseProfile {
         setPhoneIsoRaw(split.iso)
         setPhoneRaw(split.national)
         setAgeRangeRaw(data?.age_range ?? '')
+        setBirthDateRaw(data?.birth_date ?? '')
         setGoalsRaw(goalsToInput(data?.goals))
         setFieldErrors({})
         dispatch({ type: 'LOAD_SUCCESS', data })
@@ -157,6 +162,10 @@ export function useProfile(): UseProfile {
     setAgeRangeRaw(v)
     dispatch({ type: 'EDIT' })
   }, [])
+  const setBirthDate = useCallback((v: string) => {
+    setBirthDateRaw(v)
+    dispatch({ type: 'EDIT' })
+  }, [])
   const setGoals = useCallback((v: string) => {
     setGoalsRaw(v)
     dispatch({ type: 'EDIT' })
@@ -176,9 +185,9 @@ export function useProfile(): UseProfile {
     if (!nres.ok || !pres.ok || !ares.ok || !gres.ok) return
     // Grava em E.164 com o DDI do país escolhido: `+5511999999999`.
     // `joinPhone` devolve null quando o número nacional está vazio (campo opcional).
-    patchRef.current = { name: nres.value, phone: joinPhone(phoneIso, pres.value), age_range: ares.value, goals: gres.value }
+    patchRef.current = { name: nres.value, phone: joinPhone(phoneIso, pres.value), age_range: ares.value, birth_date: birthDate || null, goals: gres.value }
     dispatch({ type: 'SAVE' })
-  }, [name, phone, phoneIso, ageRange, goalsText])
+  }, [name, phone, phoneIso, ageRange, birthDate, goalsText])
 
   const retry = useCallback(() => dispatch({ type: 'RETRY' }), [])
 
@@ -190,11 +199,13 @@ export function useProfile(): UseProfile {
     phone,
     phoneIso,
     ageRange,
+    birthDate,
     goalsText,
     setName,
     setPhone,
     setPhoneIso,
     setAgeRange,
+    setBirthDate,
     setGoals,
     fieldErrors,
     stats,

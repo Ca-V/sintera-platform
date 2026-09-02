@@ -40,6 +40,64 @@ function round(n: number | null, digits = 1): number | null {
  * Calcula a jornada de peso a partir das séries de peso e de massa magra e de uma meta opcional.
  * Puro/determinístico. Retorna nulos quando não há dados suficientes (nunca inventa).
  */
+/**
+ * COMO A VARIAÇÃO DE PESO É DITA. Uma regra só, para as duas pontas.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────────────────────────────────
+ * O DEFEITO (homologação de 31/08, e é do pior tipo: dado errado com aparência de certo).
+ *
+ * A fundadora foi de 61,2 kg para 64 kg — GANHOU 2,8. A Jornada de peso mostrava **"−2,8 kg"**, e logo abaixo,
+ * no mesmo cartão, "+2,8". O mesmo número com dois sinais opostos, na mesma tela.
+ *
+ * A causa: `lostKg` é "inicial − atual", então PERDA é positiva e GANHO é negativo. O aplicativo escrevia:
+ *
+ *     lostKg > 0 ? `−${lostKg}` : `${lostKg}`
+ *
+ * Os dois ramos imprimem menos. Perdeu 2,8 → "−2,8". Ganhou 2,8 → `lostKg` vale −2,8 e sai "−2,8" também.
+ * Ganho e perda ficaram indistinguíveis num registro que vai para o relatório levado ao médico.
+ *
+ * E a Web ACERTAVA — usava `Math.abs` e escrevia "ganho no período". A regra estava escrita duas vezes, uma
+ * por ponta, e divergiu. É exatamente o que a base única existe para impedir, na forma mais cara: não é uma
+ * tela feia, é um número errado sobre a saúde de alguém.
+ * ─────────────────────────────────────────────────────────────────────────────────────────────────────────
+ */
+export interface VariacaoPeso {
+  /** Já com o sinal certo e vírgula decimal: "+2,8 kg" ou "−2,8 kg". */
+  readonly texto: string
+  /** Ganhou peso no período? Deixa a tela escolher cor e ícone sem reinterpretar o sinal. */
+  readonly ganho: boolean
+}
+
+/** Número no formato de quem lê em português: vírgula decimal, sem zeros à toa. */
+function pt(n: number): string {
+  return String(Math.round(n * 10) / 10).replace('.', ',')
+}
+
+/**
+ * A variação total. `null` quando não há dois pontos para comparar — ausência permanece ausência.
+ *
+ * Usa o sinal MENOS tipográfico (−), e não o hífen: num número de saúde a diferença entre "-2,8" e "−2,8" é
+ * legibilidade, e a legibilidade aqui é o que evita a leitura errada.
+ */
+export function variacaoDePeso(lostKg: number | null | undefined): VariacaoPeso | null {
+  if (lostKg == null || !Number.isFinite(lostKg)) return null
+  const ganho = lostKg < 0
+  return { texto: `${ganho ? '+' : '−'}${pt(Math.abs(lostKg))} kg`, ganho }
+}
+
+/** O ritmo, com a mesma regra de sinal. Sem ela, "−0,02 kg/semana" descrevia um ganho semanal. */
+export function ritmoDePeso(rateKgPerWeek: number | null | undefined): VariacaoPeso | null {
+  if (rateKgPerWeek == null || !Number.isFinite(rateKgPerWeek)) return null
+  const ganho = rateKgPerWeek < 0
+  const v = Math.round(Math.abs(rateKgPerWeek) * 100) / 100
+  return { texto: `${ganho ? '+' : '−'}${String(v).replace('.', ',')} kg/semana`, ganho }
+}
+
+/** Peso com vírgula decimal, para a linha de início e atual não misturarem "61.2" com "64". */
+export function pesoLabel(kg: number | null | undefined): string | null {
+  return kg == null || !Number.isFinite(kg) ? null : `${pt(kg)} kg`
+}
+
 export function computeWeightJourney(
   weight: SeriesPoint[],
   lean: SeriesPoint[],

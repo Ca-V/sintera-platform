@@ -73,6 +73,28 @@ export function parseDateOnly(iso: string): Date {
   return new Date((iso ?? '').length <= 10 ? `${iso}T00:00:00` : iso)
 }
 
+/**
+ * INSTANTE (timestamp com fuso) → data e hora LOCAIS: '01/08/2026 às 07:51'.
+ *
+ * Diferente de `formatDateBR`, que recorta os dez primeiros caracteres e por isso mostra a data em UTC. Para
+ * uma data civil isso é certo; para um instante, é errado — uma atividade gravada às 22h de terça em Brasília
+ * é gravada como quarta em UTC, e apareceria no dia seguinte.
+ *
+ * Existe aqui, e não em cada tela, porque o horário de um dado recebido é lido igual na Web e no aplicativo, e
+ * duas implementações divergiriam exatamente neste ponto — que é invisível até o dia em que alguém treina à
+ * noite. Entrada inutilizável devolve string vazia: data inventada é pior que data ausente.
+ */
+export function formatInstantBR(iso: string | null | undefined): string {
+  if (!iso) return ''
+  // Timestamp do Postgres vem com espaço no lugar do 'T' e fuso sem dois-pontos; os dois quebram o Date do
+  // JavaScriptCore (o motor do aplicativo), que é mais estrito que o do navegador.
+  const normalizado = iso.replace(' ', 'T').replace(/([+-]\d{2})$/, '$1:00')
+  const d = new Date(normalizado)
+  if (Number.isNaN(d.getTime())) return ''
+  const p2 = (n: number) => String(n).padStart(2, '0')
+  return `${p2(d.getDate())}/${p2(d.getMonth() + 1)}/${d.getFullYear()} às ${p2(d.getHours())}:${p2(d.getMinutes())}`
+}
+
 /** Data por extenso pt-BR ('03 de jul. de 2026'), segura para date-only (UTC). */
 export function formatDateLongBR(iso: string): string {
   return parseDateOnly(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })

@@ -11,7 +11,7 @@ import {
   ShieldCheck, Receipt,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { parseDateOnly, formatDateLongBR as formatDate } from '@/lib/agenda'
+import { formatDateLongBR as formatDate } from '@/lib/agenda'
 import { fmtNum, formatRef } from '@/lib/ui/number'
 import { useModalA11y } from '@/lib/ui/useModalA11y'
 import { useUser } from '@/context/UserContext'
@@ -22,8 +22,10 @@ import { normalizeName } from '@/lib/biomarkers/grouping'
 import { deriveExamIdentity } from '@/lib/exams/identification'
 import { isOrderDocumentType } from '@/lib/exams/classification'
 import { careStageFor } from '@/lib/exams/careFlow'
-import { examProcessingState, isExamReady, isExamProcessing, isExamFailed, deriveOrderDisplayTitle } from '@sintera/core'
-import { eventServicesFor, isFinancial, type HealthEvent } from '@/lib/agenda'
+// `estadoDaLeitura` — o que a busca alcança neste documento. Regra do núcleo: a Web e o aplicativo dizem a
+// MESMA coisa, e "processado" para de significar cinco situações diferentes.
+import { examProcessingState, isExamReady, isExamProcessing, isExamFailed, deriveOrderDisplayTitle, supportedNowAcceptAttr, estadoDaLeitura } from '@sintera/core'
+import { eventServicesFor, type HealthEvent } from '@/lib/agenda'
 import { expenseDocLabel, EXPENSE_DOC_TYPES } from '@/lib/finance/expense'
 import { parseAmountToCents, centsToAmount } from '@/lib/agenda/money'
 import { clinicalResultsToUcda, type ClinicalResultRow, type UcdaRepresentation } from '@/lib/capture/ucda'
@@ -50,6 +52,15 @@ interface Exam {
   created_at: string
   error_reason: string | null
   text_truncated: boolean | null
+  // O ESTADO DA LEITURA (01/09/2026): sem estes dois, a tela não distingue um laudo LIDO de um documento
+  // apenas guardado — e chamava os dois de "processado". Dez dos dezenove exames da fundadora eram do
+  // segundo tipo, e nada na interface dizia isso.
+  pdf_quality: string | null
+  exam_text: string | null
+  // Proveniência explícita (migração 154). Antes dela a origem era DEDUZIDA da qualidade do PDF; havendo
+  // fato registrado, usar a dedução seria preferir o palpite ao registro.
+  exam_text_origin: string | null
+  text_transcription_status: string | null
 }
 
 interface Biomarker {
@@ -338,8 +349,10 @@ export default function ExamDetailPage() {
   const fulfillsOrderId = (exam as unknown as { fulfills_order_id?: string | null })?.fulfills_order_id ?? null
   const linkedOrder = useMemo(() => orders.find(o => o.id === fulfillsOrderId) ?? null, [orders, fulfillsOrderId])
 
-  // BETA-3: despesa vinculada ao exame (valor pago + documento fiscal) — fecha o loop no próprio exame.
-  const linkedExpense = useMemo(() => linkedEvents.find(isFinancial) ?? null, [linkedEvents])
+  // A busca pela despesa como EVENTO vinculado saiu daqui: era do modelo anterior, e o comentário logo abaixo
+  // registra a mudança — o financeiro passou a ser ATRIBUTO do próprio exame. Ela continuava sendo calculada a
+  // cada render e ninguém a lia. Código morto ao lado do código vivo é o que faz a próxima pessoa hesitar
+  // sobre qual dos dois é a regra.
 
   // FB-008 (refina FIN-001): o financeiro é ATRIBUTO do próprio exame, não um Evento separado.
   const examExpense = useMemo(() => {
@@ -566,7 +579,7 @@ export default function ExamDetailPage() {
   async function loadData(silent = false) {
     if (!silent) setLoading(true)
     const [{ data: examData }, { data: bioData }, { data: logData }, { data: catData }, { data: clinData }, { data: ordersData }] = await Promise.all([
-      supabase.from('exams').select('id,type,document_type,status,page_count,created_at,exam_date,error_reason,text_truncated,file_url,patient_name,extraction_completeness,issuer,equipment,requesting_physician,expense_amount_cents,expense_doc_type,expense_doc_url,fulfills_order_id')
+      supabase.from('exams').select('id,type,document_type,status,page_count,created_at,exam_date,error_reason,text_truncated,pdf_quality,exam_text,exam_text_origin,text_transcription_status,file_url,patient_name,extraction_completeness,issuer,equipment,requesting_physician,expense_amount_cents,expense_doc_type,expense_doc_url,fulfills_order_id')
         .eq('id', examId).single(),
       supabase.from('current_biomarkers')
         .select('id,name,value,value_text,unit,reference_min,reference_max,interpretation,result_type,range_extracted,reference_source,source,catalog_id,source_material,source_exam_name')
@@ -691,6 +704,19 @@ export default function ExamDetailPage() {
   const headerTitle = orderTitle ?? (isOrderDoc && !examDisplayTitle ? 'Pedido de exame' : resolvedIdentityName)
   const analyzeLabel = isProcessed ? 'Extrair novamente' : 'Extrair dados'
   const AnalyzeIcon  = isProcessed ? RefreshCw : Zap
+
+  // O ESTADO DA LEITURA — a regra é do núcleo, para a Web e o aplicativo dizerem a MESMA coisa.
+  // Só faz sentido depois de processado: antes disso, "não transcrito" seria verdade e seria inútil.
+  const leitura = isProcessed
+    ? estadoDaLeitura({
+        temTexto: !!exam?.exam_text?.trim(),
+        pdfQuality: exam?.pdf_quality,
+        fragmentos: biomarkers.length,
+        // A proveniência explícita (migração 154) vence a dedução pela qualidade do PDF.
+        origem: exam?.exam_text_origin,
+        statusTranscricao: exam?.text_transcription_status,
+      })
+    : null
 
   return (
     <div className="max-w-4xl mx-auto space-y-5">
@@ -944,6 +970,26 @@ export default function ExamDetailPage() {
           </div>
         </div>
 
+        {/* ─────────────────────────────────────────────────────────────────────────────────────────────
+            O QUE A PLATAFORMA CONSEGUE, OU NÃO, ALCANÇAR NESTE DOCUMENTO.
+            Dez dos dezenove exames da fundadora estavam marcados "processado" com o texto vazio: a busca não
+            entrava neles e NADA dizia isso. Ela procurou "hemograma", não achou, e concluiu que não estava lá.
+            Silêncio sobre o que não foi lido é pior que a falha em si — faz a pessoa confiar num vazio.
+            Só aparece quando há o que avisar; documento lido por inteiro não ganha selo nenhum.
+            ───────────────────────────────────────────────────────────────────────────────────────────── */}
+        {leitura && leitura.nivel !== 'completo' && (
+          <div className="mt-4">
+            <DsBanner
+              tone={leitura.buscavel ? 'neutral' : 'attention'}
+              icon={<AlertCircle size={14} />}
+              title={leitura.buscavel ? 'Lido como imagem' : 'Conteúdo não transcrito'}
+            >
+              {leitura.frase}
+              {!leitura.buscavel && ' O documento continua guardado e pode ser aberto a qualquer momento. Para que a busca alcance o conteúdo, envie o arquivo em PDF com texto, quando houver.'}
+            </DsBanner>
+          </div>
+        )}
+
         {/* Avisos — Banner (DS-002). Copy preservada; tom semântico. */}
         {exam?.text_truncated && (
           <div className="mt-4">
@@ -1149,7 +1195,7 @@ export default function ExamDetailPage() {
                   options={EXPENSE_DOC_TYPES.map(d => ({ value: d.id, label: d.label }))} /></div>
             </div>
             <div className="space-y-1"><label htmlFor="exp-anexo" className="font-body text-xs font-semibold text-onyx/60 uppercase tracking-wider">Anexo (NF/recibo/comprovante) <span className="font-normal text-mauve normal-case">(PDF, JPG, PNG)</span></label>
-              <input id="exp-anexo" type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e => setExpDocFile(e.target.files?.[0] ?? null)}
+              <input id="exp-anexo" type="file" accept={supportedNowAcceptAttr()} onChange={e => setExpDocFile(e.target.files?.[0] ?? null)}
                 className="block w-full text-xs font-body text-mauve file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:bg-blush file:text-petal file:font-medium" />
               {examExpense?.docUrl && !expDocFile && <p className="font-body text-[11px] text-mauve">Documento atual mantido. Escolha um arquivo para substituir.</p>}
             </div>

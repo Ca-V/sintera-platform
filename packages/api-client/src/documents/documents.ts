@@ -18,7 +18,23 @@ export interface PatientDocumentDTO {
   issuer: string | null
   doc_date: string | null
   notes: string | null
+  /** O que a receita prescreve, transcrito (migração 151). Ausente nos documentos anteriores a ela. */
+  prescribed_items: string[] | null
+  /** Profissional e instituição SEPARADOS. `issuer` segue existindo, com o conteúdo que já tinha. */
+  professional_name: string | null
+  institution_name: string | null
   status: string
+  /**
+   * O ESTADO DA LEITURA do documento (migração 154): ok · parcial · ilegivel · falhou.
+   *
+   * Sem ele a tela não distingue um documento LIDO de um apenas guardado — o defeito que os exames tiveram
+   * por meses. `buscavel()` no núcleo responde, a partir daqui, se a busca alcança o conteúdo.
+   *
+   * O TEXTO NÃO VEM JUNTO, de propósito: numa lista de trinta documentos seriam centenas de KB atravessando
+   * a rede para nada. O status responde tudo o que a lista precisa saber.
+   */
+  transcricao_status: string | null
+  transcricao_origin: string | null
   created_at: string
 }
 
@@ -48,6 +64,9 @@ export interface PatientDocumentInput {
   doc_date?: string | null
   notes?: string | null
   document_sha256?: string | null
+  prescribed_items?: string[] | null
+  professional_name?: string | null
+  institution_name?: string | null
   /** Associações a registros-alvo (a receita pode alimentar Medicamento E Suplemento, por exemplo). */
   associations?: DocumentAssociation[]
   /**
@@ -58,7 +77,9 @@ export interface PatientDocumentInput {
   pages?: DocumentPageInput[]
 }
 
-const COLUMNS = 'id, subtype, file_url, issuer, doc_date, notes, status, created_at' as const
+// Exportada porque o módulo de VÍNCULO projeta o MESMO documento: duas listas de colunas dariam dois formatos
+// para a mesma coisa, e o seletor de vínculo mostraria menos (ou mais) do que a tela de Documentos.
+export const COLUMNS = 'id, subtype, file_url, issuer, doc_date, notes, prescribed_items, professional_name, institution_name, status, transcricao_status, transcricao_origin, created_at' as const
 
 async function requireUserId(client: SupabaseClient): Promise<string> {
   const { data: { session } } = await client.auth.getSession()
@@ -161,6 +182,9 @@ export async function saveDocument(
       doc_date: input.doc_date ?? null,
       notes: input.notes ?? null,
       document_sha256: input.document_sha256 ?? null,
+      prescribed_items: input.prescribed_items ?? null,
+      professional_name: input.professional_name ?? null,
+      institution_name: input.institution_name ?? null,
     })
     const { data, error } = await client.from('patient_documents').insert([row]).select('id')
     if (error) return { data: null, error: asError(error) }
@@ -228,7 +252,9 @@ export async function listPagesForDocuments(
 
 /** Atualiza os fatos documentais (emissor, data, observação, subtipo). NÃO lança. */
 export async function updateDocument(
-  client: SupabaseClient, id: string, patch: Partial<Pick<PatientDocumentInput, 'subtype' | 'issuer' | 'doc_date' | 'notes'>>,
+  client: SupabaseClient, id: string,
+  patch: Partial<Pick<PatientDocumentInput,
+    'subtype' | 'issuer' | 'doc_date' | 'notes' | 'prescribed_items' | 'professional_name' | 'institution_name'>>,
 ): Promise<{ error: Error | null }> {
   try {
     const userId = await requireUserId(client)
@@ -236,6 +262,60 @@ export async function updateDocument(
       .update({ ...patch, updated_at: new Date().toISOString() })
       .eq('id', id).eq('user_id', userId)
     return { error: error ? asError(error) : null }
+  } catch (e) {
+    return { error: e instanceof Error ? e : new Error(String(e)) }
+  }
+}
+
+/**
+ * SUBSTITUI um documento guardado pelo que está entrando — a saída "Substituir o guardado" do aviso de
+ * repetição.
+ *
+ * POR QUE ATUALIZA EM VEZ DE APAGAR E RECRIAR: o registro guardado pode já estar VINCULADO a um medicamento,
+ * a uma consulta ou a um exame. Apagá-lo levaria os vínculos junto (`on delete cascade`), e a pessoa perderia
+ * relações que construiu — para "substituir" um arquivo. O registro continua o mesmo; muda o que ele aponta.
+ *
+ * As páginas antigas são removidas, porque são a versão antiga do mesmo documento e ficariam misturadas com a
+ * nova. É a única remoção aqui, e é o que a palavra "substituir" significa.
+ */
+export async function replaceDocument(
+  client: SupabaseClient, id: string, input: PatientDocumentInput,
+): Promise<{ error: Error | null }> {
+  try {
+    const userId = await requireUserId(client)
+    if (!input.file_url?.trim()) return { error: new Error('Anexe o documento') }
+
+    const { error } = await client.from('patient_documents').update({
+      subtype: input.subtype,
+      file_url: input.file_url,
+      issuer: input.issuer ?? null,
+      professional_name: input.professional_name ?? null,
+      institution_name: input.institution_name ?? null,
+      prescribed_items: input.prescribed_items ?? null,
+      doc_date: input.doc_date ?? null,
+      notes: input.notes ?? null,
+      document_sha256: input.document_sha256 ?? null,
+      updated_at: new Date().toISOString(),
+    }).eq('id', id).eq('user_id', userId)
+    if (error) return { error: asError(error) }
+
+    // Páginas: fora as antigas, dentro as novas. Uma falha aqui deixa o documento com os dados novos e sem as
+    // páginas extras — nunca com as duas versões misturadas, que seria pior de entender.
+    const { error: de } = await client.from('patient_document_files')
+      .delete().eq('document_id', id).eq('user_id', userId)
+    if (de) return { error: asError(de) }
+
+    const pages = input.pages ?? []
+    if (pages.length > 0) {
+      const rows = pages.map((p, i) => ({
+        document_id: id, user_id: userId, file_url: p.file_url,
+        file_name: p.file_name ?? null, mime_type: p.mime_type ?? null,
+        size_bytes: p.size_bytes ?? null, position: i,
+      }))
+      const { error: pe } = await client.from('patient_document_files').insert(rows)
+      if (pe) return { error: asError(pe) }
+    }
+    return { error: null }
   } catch (e) {
     return { error: e instanceof Error ? e : new Error(String(e)) }
   }

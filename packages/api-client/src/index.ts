@@ -44,6 +44,8 @@ export { createSupabasePersistClient, createSupabaseSyncRecorder, createSupabase
 // Ingestão de leituras de conector — o aplicativo grava por aqui, sem tocar no SDK do Supabase.
 export type { WearablesApi } from './auth/types'
 export { ingestWearableSamples } from './wearables/wearables'
+// PASSOS por dia, lidos do bruto — não têm projeção em body_metrics (a restrição da coluna não os aceita).
+export { listDailySteps } from './wearables/steps'
 // Leitura assistida de documento — ponte para a rota da Web (ADR-020), para que a regra seja UMA só.
 export type { CaptureApi } from './auth/types'
 export type { ClassifyInput } from './capture/classify'
@@ -54,7 +56,9 @@ export type { CaptureInput, ConditionScan, BioimpedanceScan, EyeglassesScan, Eye
 export type { BodyMetricDTO, BodyMetricInput } from './body/body'
 // `saveBodyMetric` cria E corrige (o `id` distingue) — a Web passa a usá-la em vez de escrever seu próprio
 // insert, para as duas pontas gravarem a medição pelo MESMO caminho (base única, 27/08).
-export { saveBodyMetric } from './body/body'
+// `listBodyMetrics` e `deleteBodyMetric` faltavam aqui: existiam, o aplicativo as usava pela fachada, e a Web
+// não tinha como chamá-las — foi o que impediu a tela "Dados recebidos" de existir no navegador.
+export { saveBodyMetric, listBodyMetrics, deleteBodyMetric } from './body/body'
 export type { ResourceDTO, ResourceInput } from './resources/resources'
 // Domínio Documentos do paciente (DOC-001/DOC-002) — receita · atestado · relatório · encaminhamento · outros.
 export type { DocumentsApi } from './auth/types'
@@ -66,7 +70,12 @@ export { prescriptionUrlOf, archivePrescription } from './documents/prescription
 export { listDocumentsForTargets, listPagesForDocuments } from './documents/documents'
 // Corrigir os fatos de um documento (tipo · emissor · data · observação). O contrato do core exige
 // ver/editar/excluir em todo cartão; a Web só tinha ver e excluir, e esta função nunca teve consumidor lá.
-export { updateDocument } from './documents/documents'
+export { updateDocument, replaceDocument } from './documents/documents'
+// Busca global nos registros da pessoa — uma implementação, duas pontas. Atravessa o RLS: enxerga o que ela enxerga.
+export { searchRecords } from './search/search'
+// VÍNCULO documento → registro (receita → medicamento/suplemento/recurso). Espelha exame → pedido: a pergunta
+// é feita pelo lado do REGISTRO, ao cadastrá-lo, porque é aí que a receita já existe guardada.
+export { listLinkableDocuments, linkDocumentToTarget, unlinkDocumentFromTarget } from './documents/links'
 // Nome dos alvos vinculados — a Web consome direto (mesma consulta do Mobile, SSOT).
 export { targetNamesByDocument } from './documents/targetNames'
 export type { ConnectorsApi } from './auth/types'
@@ -75,7 +84,12 @@ export type { EventDraft } from './agenda/events'
 export type { LinkedReminderOptions } from './agenda/reminder'
 export type { LinkedExpenseOptions } from './agenda/expense'
 export type { ConditionDTO, ConditionInput, ConditionScope } from './conditions/conditions'
+export type { ResultadoTranscricao } from './documents/transcribe'
+export { transcribeDocument } from './documents/transcribe'
 export type { HabitDTO, HabitInput } from './habits/habits'
+// As FUNÇÕES faltavam aqui: só os tipos eram exportados, e cada tela alcançava o módulo por caminho profundo.
+// Monitoramento passou a ler e escrever a rotina de atividade física (31/08/2026) e precisa da MESMA porta.
+export { listHabits, saveHabit, deleteHabit } from './habits/habits'
 // Domínio Exames (ESCRITA) — contrato DEFINIDO p/ Inc.6 (Upload); implementação após aceite do Inc.5.
 export type { ExamsWriteApi, UploadResult, CreateExamInput, UploadConstraints, ExamFieldsPatch } from './exams/write'
 export { DEFAULT_UPLOAD_CONSTRAINTS } from './exams/write'

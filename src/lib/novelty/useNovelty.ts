@@ -26,7 +26,12 @@ export function useNovelty(onRefreshed?: () => void): UseNovelty {
   const [state, setState] = useState<NoveltyState>({})
   const [ready, setReady] = useState(false)
   const onRefreshedRef = useRef(onRefreshed)
-  onRefreshedRef.current = onRefreshed
+  // A ATRIBUIÇÃO ACONTECE APÓS O COMMIT, não durante a renderização.
+  // Escrever num ref no corpo do componente é gravação em memória compartilhada durante uma renderização que
+  // o React pode descartar — o efeito da escrita fica, o resultado da renderização não. Aqui o valor só é lido
+  // dentro de callbacks e efeitos, todos posteriores ao commit, então mover a atribuição não muda comportamento
+  // nenhum e tira a fragilidade.
+  useEffect(() => { onRefreshedRef.current = onRefreshed })
 
   useEffect(() => {
     let active = true

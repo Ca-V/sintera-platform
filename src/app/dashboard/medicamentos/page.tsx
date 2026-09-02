@@ -15,7 +15,7 @@ import { usePathname } from 'next/navigation'
 import { Loader2, X, ArrowLeft, Pencil, Trash2, ChevronDown, Pill } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 // DOC-002 — receita com DONO UNICO. As MESMAS funcoes que o Mobile chama; aqui o cliente e o da Web.
-import { archivePrescription, prescriptionUrlOf, listDocumentsForTargets, type PatientDocumentDTO } from '@sintera/api-client'
+import { archivePrescription, prescriptionUrlOf, listDocumentsForTargets, listLinkableDocuments, linkDocumentToTarget, unlinkDocumentFromTarget, type PatientDocumentDTO } from '@sintera/api-client'
 import { useUser } from '@/context/UserContext'
 import VoiceInput from '@/components/VoiceInput'
 import CreateRecordMenu from '@/components/ui/CreateRecordMenu'
@@ -33,7 +33,7 @@ import Disclaimer from '@/components/ui/Disclaimer'
 import { healthEventToRow } from '@/lib/agenda/event'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import Select from '@/components/ui/Select'
-import { uuid } from '@sintera/core'
+import { uuid, documentSubtitle, supportedNowAcceptAttr } from '@sintera/core'
 
 type Status = 'em_uso' | 'programado' | 'suspenso' | 'encerrado'
 type Kind = 'medicamento' | 'suplemento' | 'produto' | 'dispositivo' | 'outro'
@@ -132,6 +132,14 @@ export default function MedicamentosPage() {
   const [listView, setListView] = useStickyView<'tipo' | 'situacao'>('sintera:view:medicamentos', 'situacao')
 
   const [showForm, setShowForm] = useState(false)
+
+  // Receitas guardadas — uma consulta, para o seletor de vínculo. Falha silenciosa: sem elas o seletor não
+  // aparece, e anexar continua funcionando.
+  useEffect(() => {
+    listLinkableDocuments(supabase, 'receita').then(setReceitas).catch(() => { /* o seletor some */ })
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- o cliente é estável nesta página
+  }, [])
+
   const [showMoreDetails, setShowMoreDetails] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   // O formulário abre acima das listas; ao editar um item lá embaixo (ex.: suplemento)
@@ -161,6 +169,9 @@ export default function MedicamentosPage() {
   const [packUnit, setPackUnit] = useState('')
   const [prescriber, setPrescriber] = useState('')
   const [prescriptionUrl, setPrescriptionUrl] = useState<string | null>(null) // D-13: receita anexada
+  /** Receitas JÁ guardadas em Documentos, para vincular sem anexar de novo. */
+  const [receitas, setReceitas] = useState<PatientDocumentDTO[]>([])
+  const [receitaVinculada, setReceitaVinculada] = useState('')
   // DOC-002: a receita passa a viver em Documentos. Carregadas em LOTE — uma consulta, nao uma por medicamento.
   const [rxByMed, setRxByMed] = useState<Record<string, PatientDocumentDTO[]>>({})
   const [uploadingRx, setUploadingRx] = useState(false)
@@ -340,6 +351,8 @@ export default function MedicamentosPage() {
     setPackQty(m.packQty != null ? String(m.packQty) : ''); setDailyCons(m.dailyCons != null ? String(m.dailyCons) : '')
     setPurchasedOn(m.purchasedOn ?? ''); setPurchaseStatus(m.purchaseStatus ?? ''); setRepurchase(m.repurchaseReminder); setRepurchaseFreq(m.repurchaseFreq ?? '')
     setForm(m.form ?? ''); setRoute(m.route ?? ''); setPackUnit(m.packUnit ?? ''); setPrescriber(m.prescriber ?? ''); setPrescriptionUrl(prescriptionUrlOf(rxByMed, m.id, m.prescriptionUrl)); setMedStatus(m.status)
+    // Qual receita já aponta para este medicamento — o seletor abre no vínculo atual, não vazio.
+    setReceitaVinculada(rxByMed[m.id]?.[0]?.id ?? '')
     setShowMoreDetails(!!(m.startedOn || m.untilOn || m.notes || m.acquiredQty != null || m.amountCents != null || m.packQty != null || m.dailyCons != null || m.purchasedOn || m.purchaseStatus || m.repurchaseReminder))
     setErr(null); setShowForm(true)
   }
@@ -400,6 +413,17 @@ export default function MedicamentosPage() {
         meta: { issuer: prescriber.trim() || null },
       })
       if (rx.error) setErr('Medicamento salvo. A receita nao pode ser arquivada em Documentos — anexe de novo mais tarde.')
+
+      // VÍNCULO a uma receita JÁ guardada. Só escreve em `patient_document_links`: nada é copiado da receita
+      // para o medicamento nem o contrário — associar não é mutar (ADR-001/DOC-001).
+      const anterior = rxByMed[medId]?.[0]?.id ?? ''
+      if (receitaVinculada !== anterior) {
+        if (anterior) await unlinkDocumentFromTarget(supabase, anterior, 'medicamento', medId)
+        if (receitaVinculada) {
+          const lk = await linkDocumentToTarget(supabase, receitaVinculada, 'receita', 'medicamento', medId)
+          if (lk.error) setErr('Medicamento salvo, mas não foi possível vincular a receita. Tente pela edição.')
+        }
+      }
     }
 
     // Lembrete de recompra (reaproveita o worker de lembretes via agenda_events).
@@ -722,7 +746,7 @@ export default function MedicamentosPage() {
             <div className="flex items-center gap-3">
               <label className="cursor-pointer inline-flex items-center gap-1.5 border border-border rounded-full px-3 py-2 font-body text-sm text-mauve hover:border-petal/40 hover:text-petal transition-colors">
                 {uploadingRx ? 'Anexando…' : prescriptionUrl ? 'Trocar receita' : 'Anexar receita'}
-                <input type="file" accept="image/*,application/pdf" className="hidden" disabled={uploadingRx}
+                <input type="file" accept={supportedNowAcceptAttr()} className="hidden" disabled={uploadingRx}
                   onChange={async e => {
                     const f = e.target.files?.[0]; if (!f || !user) return
                     setUploadingRx(true); setErr(null)
@@ -731,6 +755,27 @@ export default function MedicamentosPage() {
               </label>
               {prescriptionUrl ? <a href={prescriptionUrl} target="_blank" rel="noreferrer" className="font-body text-sm text-petal hover:underline">Ver receita</a> : null}
             </div>
+
+            {/* VINCULAR a uma receita JÁ GUARDADA (28/08), espelhando exame → pedido. Anexar cria um documento
+                novo; vincular aponta para um que já existe. Quem fotografou a receita ANTES de cadastrar os
+                medicamentos dela — que é a ordem natural — precisa deste caminho: sem ele, anexaria a mesma
+                receita de novo e a plataforma passaria a ter duas. */}
+            {receitas.length > 0 && (
+              <div className="mt-3">
+                <label className="font-body text-xs text-mauve block mb-1">Ou vincule uma receita já guardada</label>
+                <Select
+                  aria-label="Receita já guardada"
+                  placeholder="Nenhuma receita"
+                  value={receitaVinculada}
+                  onChange={setReceitaVinculada}
+                  options={[
+                    // "Nenhuma" é opção EXPLÍCITA: desvincular é uma escolha, e fica na mesma lista das outras.
+                    { value: '', label: 'Nenhuma receita' },
+                    ...receitas.map(r => ({ value: r.id, label: documentSubtitle(r) })),
+                  ]}
+                />
+              </div>
+            )}
           </div>
           <div>
             <label htmlFor="med-amount" className="font-body text-xs text-mauve block mb-1">Valor pago — R$ <span className="font-normal text-mauve">(opcional)</span></label>

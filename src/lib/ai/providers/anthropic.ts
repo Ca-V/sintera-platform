@@ -21,7 +21,26 @@ export class AnthropicProvider implements AIProvider {
     })
   }
 
+  /**
+   * Extração de biomarcadores. Delega a `send`: o que muda entre extrair e transcrever é o PROMPT,
+   * não a forma de mandar o documento ao modelo.
+   */
   async extractBiomarkers(input: ExtractionInput): Promise<ProviderResult> {
+    return this.send(input, 'Extraia todos os biomarcadores deste laudo laboratorial conforme as instruções do sistema.')
+  }
+
+  /**
+   * TRANSCRIÇÃO do documento (01/09/2026). Mesmo caminho de envio, prompt diferente — governado em
+   * `prompt_registry`, operação 'transcription'. Duplicar a montagem da mensagem aqui seria repetir a
+   * família de defeito que esta plataforma mais teve: a mesma regra escrita duas vezes, e uma delas
+   * envelhecendo sozinha (o caminho de PDF nativo, por exemplo, exige um header beta que ninguém lembraria
+   * de replicar).
+   */
+  async transcribe(input: ExtractionInput): Promise<ProviderResult> {
+    return this.send(input, 'Transcreva este documento conforme as regras do sistema.')
+  }
+
+  private async send(input: ExtractionInput, fallbackInstruction: string): Promise<ProviderResult> {
     const startTime = Date.now()
     let msg: Message
 
@@ -43,7 +62,7 @@ export class AnthropicProvider implements AIProvider {
               {
                 type: 'text',
                 text: input.userTemplate.replace('{{examText}}', '').trim() ||
-                  'Extraia todos os biomarcadores deste laudo laboratorial conforme as instruções do sistema.',
+                  fallbackInstruction,
               },
             ],
           },
@@ -70,7 +89,7 @@ export class AnthropicProvider implements AIProvider {
               {
                 type: 'text',
                 text: input.userTemplate.replace('{{examText}}', '').trim() ||
-                  'Extraia todos os biomarcadores deste laudo laboratorial conforme as instruções do sistema.',
+                  fallbackInstruction,
               },
             ],
           },

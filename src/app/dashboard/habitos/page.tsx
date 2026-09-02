@@ -4,8 +4,13 @@
 // Hábitos de Vida — fatores do dia a dia autorrelatados
 // ============================================================
 // Registro factual e autorrelatado. A SINTERA NUNCA avalia, pontua nem
-// recomenda — apenas organiza o que a usuária informa (atividade física,
-// sono, tabagismo, álcool, alimentação, hidratação e outros).
+// recomenda — apenas organiza o que a usuária informa (sono, tabagismo,
+// álcool, alimentação, hidratação e outros).
+//
+// ATIVIDADE FÍSICA SAIU DAQUI em 31/08/2026 e passou a morar em Monitoramento,
+// ao lado das sessões que aconteceram. O critério que decidiu isso — o que a
+// plataforma MEDE fica em Monitoramento; o que ela só PERGUNTA fica em Hábitos
+// — está escrito em @sintera/core/domain/habits.ts.
 // ============================================================
 
 import { useCallback, useEffect, useState } from 'react'
@@ -29,7 +34,11 @@ import { parseRule } from '@/lib/recurrence'
 import { todayISO } from '@/lib/date'
 import Select from '@/components/ui/Select'
 import AttachmentLink from '@/components/ui/AttachmentLink'
-import { SCREEN_COPY } from '@sintera/core'
+import {
+  SCREEN_COPY, supportedNowAcceptAttr,
+  // Atividade física saiu do seletor em 31/08/2026 e passou a morar em Monitoramento — ver `habits.ts`.
+  HABIT_CATEGORIES, habitCategoryLabel, HABIT_CATEGORY_MOVED_TO_MONITORING, type HabitCategory,
+} from '@sintera/core'
 
 // Lembrete de hábito = evento planejado no canônico health_events, vinculado ao hábito (EventLink 'habit').
 // Mesma infra recorrente de Medicamentos/Recursos — sem tabela nem worker próprios.
@@ -42,22 +51,18 @@ const LEMBRETE_FREQ_OPTS: { v: RecurrenceFreq; l: string }[] = [
   { v: 'daily', l: 'Diário' }, { v: 'weekly', l: 'Semanal' }, { v: 'biweekly', l: 'Quinzenal' }, { v: 'monthly', l: 'Mensal' },
 ]
 
-type Category =
-  | 'atividade_fisica' | 'sono' | 'tabagismo' | 'alcool'
-  | 'alimentacao' | 'hidratacao' | 'outro'
+type Category = HabitCategory
 
-const CATEGORIES: { value: Category; label: string; icon: React.ElementType }[] = [
-  { value: 'atividade_fisica', label: 'Atividade física', icon: Dumbbell },
-  { value: 'sono',             label: 'Sono',             icon: Moon },
-  { value: 'tabagismo',        label: 'Tabagismo',        icon: Cigarette },
-  { value: 'alcool',           label: 'Álcool',           icon: Wine },
-  { value: 'alimentacao',      label: 'Alimentação',      icon: Apple },
-  { value: 'hidratacao',       label: 'Hidratação',       icon: Droplets },
-  { value: 'outro',            label: 'Outro',            icon: Sparkles },
-]
+// A LISTA VEM DO NÚCLEO. Esta tela mantinha uma cópia escrita à mão, e uma regra escrita duas vezes é como o
+// sinal do peso e a lista de formatos divergiram. Aqui ficam só os ÍCONES, que são decisão de interface.
+const CATEGORY_ICON: Record<string, React.ElementType> = {
+  atividade_fisica: Dumbbell, sono: Moon, tabagismo: Cigarette,
+  alcool: Wine, alimentacao: Apple, hidratacao: Droplets, outro: Sparkles,
+}
 
-function catMeta(c: Category) {
-  return CATEGORIES.find(x => x.value === c) ?? CATEGORIES[CATEGORIES.length - 1]
+/** Rótulo + ícone de qualquer categoria — INCLUSIVE as que saíram do seletor, para não sumir com o passado. */
+function catMeta(c: string) {
+  return { label: habitCategoryLabel(c), icon: CATEGORY_ICON[c] ?? Sparkles }
 }
 
 interface Habit {
@@ -95,7 +100,7 @@ export default function HabitosPage() {
 
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [category, setCategory] = useState<Category>('atividade_fisica')
+  const [category, setCategory] = useState<Category>('sono')
   const [description, setDescription] = useState('')
   const [frequency, setFrequency] = useState('')
   const [notes, setNotes] = useState('')
@@ -146,7 +151,7 @@ export default function HabitosPage() {
   }, [])
 
   function reset() {
-    setEditingId(null); setCategory('atividade_fisica'); setDescription(''); setFrequency(''); setNotes(''); setErr(null)
+    setEditingId(null); setCategory('sono'); setDescription(''); setFrequency(''); setNotes(''); setErr(null)
     setLembrete(false); setLembreteFreq('daily')
     setGoalAmount(''); setGoalUnit(''); setGoalDivisions(''); setPlanUrl(''); setPlanName('')
   }
@@ -281,13 +286,32 @@ export default function HabitosPage() {
           </button>
         } />
 
+      {/* ATIVIDADE FÍSICA MUDOU DE ENDEREÇO (31/08/2026) — e a tela DIZ isso, em vez de a categoria sumir.
+          Quem tinha "Musculação, diário" aqui precisa saber para onde foi, senão a mudança se parece com
+          perda de dado. O cartão só aparece para quem de fato tem rotina guardada. */}
+      {items.some(h => h.category === HABIT_CATEGORY_MOVED_TO_MONITORING) && (
+        <Card padding="relaxed">
+          <p className="font-body text-sm text-onyx">
+            <strong>Atividade física agora fica em Monitoramento.</strong>
+          </p>
+          <p className="font-body text-sm text-mauve mt-1">
+            A sua rotina continua guardada — lá ela aparece ao lado das sessões que aconteceram, e é lá que se
+            define rotina e meta.
+          </p>
+          <Link href="/dashboard/sinais-vitais"
+            className="inline-block mt-2 font-body text-sm text-petal underline">
+            Ir para Monitoramento
+          </Link>
+        </Card>
+      )}
+
       {showForm && (
         <Card padding="relaxed" className="space-y-3">
           <div>
             <label className="font-body text-xs text-mauve block mb-1.5">Categoria</label>
             <div className="flex flex-wrap gap-1.5">
-              {CATEGORIES.map(c => {
-                const Icon = c.icon
+              {HABIT_CATEGORIES.map(c => {
+                const Icon = catMeta(c.value).icon
                 const active = category === c.value
                 return (
                   <button key={c.value} type="button" onClick={() => setCategory(c.value)}
@@ -369,7 +393,7 @@ export default function HabitosPage() {
             ) : (
               <label className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-ivory cursor-pointer font-body text-sm text-mauve hover:border-petal/40 transition-colors">
                 {uploading ? <Loader2 size={14} className="animate-spin" /> : <Paperclip size={14} />} {uploading ? SCREEN_COPY.anexo.sending : SCREEN_COPY.anexo.add}
-                <input type="file" accept="application/pdf,image/*" className="hidden" disabled={uploading} onChange={e => { const f = e.target.files?.[0]; if (f) uploadPlan(f) }} />
+                <input type="file" accept={supportedNowAcceptAttr()} className="hidden" disabled={uploading} onChange={e => { const f = e.target.files?.[0]; if (f) uploadPlan(f) }} />
               </label>
             )}
           </div>
@@ -389,8 +413,8 @@ export default function HabitosPage() {
       ) : items.length > 0 ? (
         // Gestor: agrupado por categoria (na ordem de CATEGORIES), com cabeçalho + contagem.
         <div className="space-y-5">
-          {CATEGORIES.filter(c => items.some(h => h.category === c.value)).map(c => {
-            const CatIcon = c.icon
+          {HABIT_CATEGORIES.filter(c => items.some(h => h.category === c.value)).map(c => {
+            const CatIcon = catMeta(c.value).icon
             const list = items.filter(h => h.category === c.value)
             return (
               <div key={c.value} className="space-y-2">
@@ -407,7 +431,7 @@ export default function HabitosPage() {
       ) : (
         <Card padding="none" className="p-10 text-center space-y-1">
           <p className="font-body text-sm text-mauve">Nenhum hábito registrado ainda.</p>
-          <p className="font-body text-xs text-mauve">Use “Adicionar” para registrar atividade física, sono, alimentação e outros.</p>
+          <p className="font-body text-xs text-mauve">Use “Adicionar” para registrar sono, alimentação, hidratação, álcool ou tabagismo.</p>
         </Card>
       )}
 

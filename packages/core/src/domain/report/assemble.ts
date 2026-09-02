@@ -6,6 +6,8 @@ import { resolvePeriod, inPeriod, overlapsPeriod, periodLabel, type Period } fro
 import { typeLabel, professionalKindLabel } from '../agenda/presentation'
 import { isClosedStatus, type HealthEvent } from '../agenda/event'
 import { contraceptiveLabel } from '../cycle'
+// Rotulo do subtipo de documento — o MESMO usado nas telas de Documentos, para o dossie nao inventar nome.
+import { documentSubtypeLabel, type PatientDocumentSubtype } from '../documents/patientDocuments'
 import { DOMAIN_LABEL, type OmicsDomain } from '../omics/domains'
 import { bodyMetricLabel, isVital } from '../body/metrics'
 import { currentSummary, type SummaryPoint } from '../body/summary'
@@ -19,6 +21,24 @@ export interface ReportCondition { scope: string; name: string; relative: string
 export interface ReportHabit { category: string; description: string; frequency: string | null; notes: string | null }
 export interface ReportEyewear { kind: string; prescribedOn: string | null; prescriber: string | null; grauOD: string; grauOE: string; dnp: string | null; bc: string | null; dia: string | null }
 export interface ReportOmics { domain: string; laboratory: string | null; totalFeatures: number | null; date: string | null }
+/**
+ * RECEITA · ATESTADO · RELATÓRIO · ENCAMINHAMENTO (DOC-001).
+ *
+ * FALTAVA NO DOSSIÊ, e é o carro-chefe da plataforma. O relatório compilava exames, medicamentos, condições,
+ * hábitos, sinais, composição, ciclo, ômicas, agenda e despesas — e `patient_documents` não entrava em NENHUMA
+ * das duas pontas. O medicamento aparecia porque ela o cadastrou; a RECEITA que o prescreveu, não. O atestado
+ * não aparecia em lugar nenhum do documento que ela leva ao médico.
+ *
+ * É a família "domínio novo não propagado": Documentos nasceu depois do relatório, e ninguém ligou um ao outro.
+ */
+export interface ReportDocument {
+  subtype: string
+  docDate: string | null
+  professional: string | null
+  institution: string | null
+  /** O que a receita prescreve. "O item mais importante" (fundadora, 30/08). */
+  items: string[] | null
+}
 export interface ReportContraceptive { kind: string; brand: string | null; startedOn: string | null; replaceOn: string | null; status: string }
 export interface ReportMenstruation { startedOn: string; notes: string | null }
 
@@ -31,6 +51,8 @@ export interface ReportData {
   habits: ReportHabit[]
   eyewear: ReportEyewear[]
   omics: ReportOmics[]
+  /** Receitas, atestados, relatórios e encaminhamentos (DOC-001). Ver `ReportDocument`. */
+  documents: ReportDocument[]
   contraceptives: ReportContraceptive[]
   menstruations: ReportMenstruation[]
   expenses: HealthEvent[]
@@ -44,12 +66,12 @@ export interface ReportData {
 // ── Seleção (espelha a Sidebar / menu lateral — FB-010) ──────────────────────────────────────────────────────
 export type ReportSectionKey =
   | 'eventos' | 'registros' | 'histexames' | 'medidas' | 'sinais'
-  | 'exames' | 'omica'
+  | 'exames' | 'omica' | 'documentos'
   | 'condicoes' | 'medicamentos' | 'suplementos' | 'visao' | 'habitos' | 'ciclo'
   | 'gastos'
 
 export const REPORT_SECTIONS: readonly ReportSectionKey[] = [
-  'eventos', 'registros', 'histexames', 'medidas', 'sinais', 'exames', 'omica',
+  'eventos', 'registros', 'histexames', 'medidas', 'sinais', 'exames', 'omica', 'documentos',
   'condicoes', 'medicamentos', 'suplementos', 'visao', 'habitos', 'ciclo', 'gastos',
 ] as const
 
@@ -60,7 +82,13 @@ export const REPORT_GROUPS: { title: string; items: { key: ReportSectionKey; lab
     { key: 'histexames', label: 'Histórico de Exames' }, { key: 'medidas', label: 'Composição Corporal' },
     { key: 'sinais', label: 'Monitoramento' },
   ] },
-  { title: 'Documentos', items: [{ key: 'exames', label: 'Exames' }, { key: 'omica', label: 'Exames de ômica' }] },
+  { title: 'Documentos', items: [
+    { key: 'exames', label: 'Exames' },
+    { key: 'omica', label: 'Exames de ômica' },
+    // FALTAVA (01/09/2026). O medicamento aparecia porque ela o cadastrou; a RECEITA que o prescreveu, não —
+    // e o atestado não aparecia em lugar nenhum do documento que ela leva ao médico.
+    { key: 'documentos', label: 'Receitas e atestados' },
+  ] },
   { title: 'Minha Saúde', items: [
     { key: 'condicoes', label: 'Condições de Saúde' }, { key: 'medicamentos', label: 'Medicamentos' },
     { key: 'suplementos', label: 'Suplementos' }, { key: 'visao', label: 'Recursos de Saúde' },
@@ -163,6 +191,11 @@ export function assembleReport(data: ReportData, sel: ReportSelection, now?: Dat
   const measuresCorpo = data.measures.filter(m => !isVital(m.metric) && inPeriod(m.date, rp))
   const measuresVitais = data.measures.filter(m => isVital(m.metric) && inPeriod(m.date, rp))
   const omics = data.omics.filter(o => inPeriod(o.date, rp))
+  // Documento SEM data entra no período? NÃO. O dossiê é um recorte temporal, e um documento sem data não
+  // pode ser afirmado como pertencente à janela — incluí-lo seria supor. Ele continua guardado e visível em
+  // Documentos; o que não se faz é alegar que ele é daquele período.
+  const docs = data.documents.filter(d => inPeriod(d.docDate, rp))
+    .slice().sort((a, b) => (b.docDate ?? '').localeCompare(a.docDate ?? ''))
   const menstr = data.menstruations.filter(m => inPeriod(m.startedOn, rp))
   const expenses = data.expenses.filter(x => inPeriod(x.date, rp))
   const condProprias = data.conditions.filter(c => c.scope === 'propria')
@@ -193,6 +226,20 @@ export function assembleReport(data: ReportData, sel: ReportSelection, now?: Dat
     sinais: measuresVitais.map(m => `${fmt(m.date)} — ${m.metric === 'outro_sinal' ? (m.label ?? 'Outro sinal') : bodyMetricLabel(m.metric)}: ${m.valueText}${m.unit ? ` ${m.unit}` : ''}`),
     exames: exams.map(e => `${fmt(e.date)} — ${e.type}`),
     omica: omics.map(o => `${DOMAIN_LABEL[o.domain as OmicsDomain] ?? o.domain}${o.laboratory ? ` · ${o.laboratory}` : ''}${o.totalFeatures ? ` · ${o.totalFeatures} marcadores` : ''}${o.date ? ` (${fmt(o.date)})` : ''}`),
+    // RECEITAS E ATESTADOS. O ITEM PRESCRITO entra na linha, e é o campo que mais importa: um profissional que
+    // lê "Receita — Dr. Fulano" sem saber o que foi prescrito não recebeu informação nenhuma.
+    // Profissional e instituição vêm SEPARADOS (migração 151) porque são dois fatos, e a pessoa procura o
+    // documento tanto por um quanto pelo outro.
+    documentos: docs.map(d => {
+      const quem = [d.professional, d.institution].filter(Boolean).join(' · ')
+      const itens = (d.items ?? []).filter(i => i && i.trim()).join(', ')
+      return [
+        d.docDate ? fmt(d.docDate) : 'Sem data',
+        '— ' + documentSubtypeLabel(d.subtype as PatientDocumentSubtype),
+        quem ? `· ${quem}` : '',
+        itens ? `— ${itens}` : '',
+      ].filter(Boolean).join(' ')
+    }),
     condicoes: [
       ...condProprias.map(c => `${c.name}${c.since ? ` (desde ${c.since})` : ''}${c.notes ? ` — ${c.notes}` : ''}`),
       ...condFamiliar.map(c => `Familiar${c.relative ? ` (${c.relative})` : ''}: ${c.name}${c.since ? ` (desde ${c.since})` : ''}${c.notes ? ` — ${c.notes}` : ''}`),

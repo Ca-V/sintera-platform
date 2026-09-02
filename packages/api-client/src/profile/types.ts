@@ -8,6 +8,8 @@ export interface ProfileDTO {
   name: string | null
   phone: string | null
   age_range: string | null   // exibição-apenas no Inc 4 (D1)
+  /** Data de nascimento (LGPD: opcional, finalidade declarada na tela, apagável pela titular). */
+  birth_date: string | null
   goals: string[] | null      // exibição-apenas no Inc 4 (D1)
   avatar_url: string | null   // exibição-apenas (edição = incremento próprio)
   updated_at: string | null   // informativo
@@ -19,6 +21,7 @@ export type ProfileEditable = {
   name?: string | null
   phone?: string | null
   age_range?: string | null
+  birth_date?: string | null
   goals?: string[] | null
 }
 
@@ -41,4 +44,4 @@ export interface ProfileApi {
 }
 
 /** Colunas centrais lidas do banco (explícitas — não `*` — para NÃO trazer campos de outros domínios). */
-export const PROFILE_COLUMNS = 'id, name, phone, age_range, goals, avatar_url, updated_at' as const
+export const PROFILE_COLUMNS = 'id, name, phone, age_range, birth_date, goals, avatar_url, updated_at' as const

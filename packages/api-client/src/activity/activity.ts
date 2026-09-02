@@ -5,7 +5,7 @@
 // origem não é registrável — a plataforma nunca funde séries de fontes diferentes nem escolhe entre elas em
 // silêncio, e para isso precisa saber de onde cada uma veio.
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { durationFromWindow } from '@sintera/core'
+import { durationFromWindow, camposACorrigir, type CamposDeFonte } from '@sintera/core'
 import { withTimeout } from '../net/timeout'
 import { asError } from '../net/errors'
 
@@ -113,6 +113,13 @@ export interface IngestResult {
   recebidas: number
   gravadas: number
   jaExistiam: number
+  /**
+   * Registros que já existiam e foram COMPLETADOS por esta sincronização.
+   *
+   * Existe porque uma correção de leitura nossa não pode exigir que a pessoa apague e reimporte tudo à mão —
+   * ver `camposACorrigir` no core, que define o que uma re-sincronização tem permissão de tocar.
+   */
+  atualizadas: number
 }
 
 /**
@@ -132,7 +139,7 @@ export async function ingestActivitySessions(
   client: SupabaseClient,
   drafts: readonly ActivitySessionInput[],
 ): Promise<{ result: IngestResult; error: Error | null }> {
-  const vazio: IngestResult = { recebidas: drafts.length, gravadas: 0, jaExistiam: 0 }
+  const vazio: IngestResult = { recebidas: drafts.length, gravadas: 0, jaExistiam: 0, atualizadas: 0 }
   try {
     if (drafts.length === 0) return { result: vazio, error: null }
     const { data: { session } } = await client.auth.getSession()
@@ -145,28 +152,46 @@ export async function ingestActivitySessions(
       d.external_id ? `e|${d.source}|${d.external_id}` : `t|${d.source}|${d.started_at}`
 
     const fontes = [...new Set(drafts.map(d => d.source))]
-    const { data, error } = await client.from('activity_sessions')
-      .select('source, external_id, started_at')
+    // Traz os VALORES, não só as chaves: sem eles não dá para saber o que falta completar num registro antigo.
+    const { data, error } = await client.from('activity_sessions').select(COLUMNS)
       .eq('user_id', userId)
       .in('source', fontes)
     if (error) return { result: vazio, error: asError(error) }
 
-    const existentes = new Set(
-      ((data ?? []) as { source: string; external_id: string | null; started_at: string }[]).map(chave),
-    )
+    const porChave = new Map<string, ActivitySessionDTO>()
+    for (const r of (data ?? []) as ActivitySessionDTO[]) porChave.set(chave(r), r)
 
     // Deduplica também DENTRO do lote: a mesma janela pode trazer a sessão repetida.
     const novas: ActivitySessionInput[] = []
+    const correcoes: { id: string; campos: Partial<CamposDeFonte> }[] = []
     const vistas = new Set<string>()
     for (const d of drafts) {
       const k = chave(d)
-      if (existentes.has(k) || vistas.has(k)) continue
+      if (vistas.has(k)) continue
       vistas.add(k)
-      novas.push(d)
+      const ja = porChave.get(k)
+      if (!ja) { novas.push(d); continue }
+      // JÁ EXISTE — mas pode estar incompleto por defeito nosso de leitura, não por escolha dela.
+      const campos = camposACorrigir(ja, {
+        ...d,
+        duration_s: d.duration_s ?? durationFromWindow(d.started_at, d.ended_at),
+      })
+      if (campos) correcoes.push({ id: ja.id, campos })
+    }
+
+    // As correções são poucas e independentes: cada uma toca um registro só, e uma que falhe não derruba as
+    // outras nem impede a gravação das novas. Falha aqui volta como registro incompleto, nunca como dado errado.
+    let atualizadas = 0
+    for (const c of correcoes) {
+      const up = await client.from('activity_sessions').update(c.campos as never)
+        .eq('id', c.id).eq('user_id', userId)
+      if (!up.error) atualizadas += 1
     }
 
     const jaExistiam = drafts.length - novas.length
-    if (novas.length === 0) return { result: { recebidas: drafts.length, gravadas: 0, jaExistiam }, error: null }
+    if (novas.length === 0) {
+      return { result: { recebidas: drafts.length, gravadas: 0, jaExistiam, atualizadas }, error: null }
+    }
 
     const linhas = novas.map(d => ({
       user_id: userId,
@@ -188,8 +213,8 @@ export async function ingestActivitySessions(
     }))
 
     const ins = await client.from('activity_sessions').insert(linhas as never)
-    if (ins.error) return { result: { recebidas: drafts.length, gravadas: 0, jaExistiam }, error: asError(ins.error) }
-    return { result: { recebidas: drafts.length, gravadas: linhas.length, jaExistiam }, error: null }
+    if (ins.error) return { result: { recebidas: drafts.length, gravadas: 0, jaExistiam, atualizadas }, error: asError(ins.error) }
+    return { result: { recebidas: drafts.length, gravadas: linhas.length, jaExistiam, atualizadas }, error: null }
   } catch (e) {
     return { result: vazio, error: asError(e) }
   }

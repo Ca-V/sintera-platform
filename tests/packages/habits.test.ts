@@ -8,7 +8,9 @@ describe('core · habits', () => {
   it('rótulo de categoria com fallback', () => {
     expect(habitCategoryLabel('sono')).toBe('Sono')
     expect(habitCategoryLabel('inexistente')).toBe('Outro')
-    expect(HABIT_CATEGORIES.length).toBe(7)
+    // SEIS, não sete: atividade física saiu do seletor em 31/08/2026 e passou a morar em Monitoramento.
+    // O rótulo dela continua vivo — ver FUNC-rotina-de-atividade.
+    expect(HABIT_CATEGORIES.length).toBe(6)
   })
   it('resumo de meta divisível', () => {
     expect(habitGoalSummary(2000, 'ml', 8)).toBe('2000 ml · 8 partes de 250 ml')

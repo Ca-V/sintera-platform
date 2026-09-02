@@ -14,6 +14,7 @@ import {
   estimatedRunoutDays, parseAmountToCents, centsToAmount,
   type MedKind, type MedStatus, MED_REPURCHASE_FREQUENCIES, repurchaseFreqToRecurrence,
   isHormonalContraceptive, contraceptiveLabel, contraceptiveCategoryLabel, cadenceUsageLabel,
+  documentSubtitle,
 } from '@sintera/core'
 import { Text, Button, Input, DatePicker, Disclaimer, AttachmentLink, Select } from '../../primitives'
 import { useAssistedCapture } from '../capture/useAssistedCapture'
@@ -60,6 +61,9 @@ export function MedicationsScreen({ route, navigation }: Props) {
   const [packQtyInput, setPackQtyInput] = useState('')
   const [repurchaseFreq, setRepurchaseFreq] = useState('') // valor PT ('' = não repetir)
   const [prescriptionUrl, setPrescriptionUrl] = useState<string | null>(null) // D-13: receita anexada
+  /** Receitas JÁ guardadas em Documentos, para vincular sem anexar de novo. */
+  const [receitas, setReceitas] = useState<PatientDocumentDTO[]>([])
+  const [receitaVinculada, setReceitaVinculada] = useState('')
   const [uploadingRx, setUploadingRx] = useState(false)
   const [saving, setSaving] = useState(false)
   // DOC-002: a receita vive em Documentos (dono unico). Carregadas em LOTE — uma consulta, nao uma por item.
@@ -84,6 +88,14 @@ export function MedicationsScreen({ route, navigation }: Props) {
   }, [supplements])
   useEffect(() => { alive.current = true; load(false); return () => { alive.current = false } }, [load])
 
+  // Receitas guardadas — carregadas UMA vez, para o seletor de vínculo. Falha silenciosa: sem elas o seletor
+  // não aparece, e anexar continua funcionando.
+  useEffect(() => {
+    apiClient.documents.listLinkableDocuments('receita')
+      .then(rs => { if (alive.current) setReceitas(rs) })
+      .catch(() => { /* o seletor some; anexar segue disponível */ })
+  }, [])
+
   const shown = items.filter(m => supplements ? m.kind === 'suplemento' : m.kind !== 'suplemento')
   const repurchaseLabel = (v: string | null): string | null => MED_REPURCHASE_FREQUENCIES.find(m => m.value === (v ?? ''))?.label ?? null
   const num = (s: string): number | null => { const n = Number(s.replace(',', '.')); return s.trim() && Number.isFinite(n) ? n : null }
@@ -91,7 +103,7 @@ export function MedicationsScreen({ route, navigation }: Props) {
   function startNew() {
     setEditing(null); setName(''); setKind(supplements ? 'suplemento' : 'medicamento'); setBrand(''); setDose(''); setFrequency('')
     setForm(''); setAdminRoute(''); setPrescriber(''); setStatus('em_uso'); setStartedOn(''); setUntilDate(''); setNotes('')
-    setAcquiredQty(''); setPackQtyInput(''); setDailyCons(''); setPurchasedOn(''); setAmount(''); setPurchaseStatus(''); setRepurchaseFreq(''); setPrescriptionUrl(null); setOpen(true)
+    setAcquiredQty(''); setPackQtyInput(''); setDailyCons(''); setPurchasedOn(''); setAmount(''); setPurchaseStatus(''); setRepurchaseFreq(''); setPrescriptionUrl(null); setReceitaVinculada(''); setOpen(true)
   }
   // D-13: anexa a RECEITA (documento separado do produto) — mesmo fluxo dos outros anexos.
   async function pickPrescription() {
@@ -109,7 +121,10 @@ export function MedicationsScreen({ route, navigation }: Props) {
     setStatus(m.status); setStartedOn(m.started_on ?? ''); setUntilDate(m.until_date ?? ''); setNotes(m.notes ?? '')
     setAcquiredQty(m.acquired_quantity != null ? String(m.acquired_quantity) : ''); setPackQtyInput(m.pack_quantity != null ? String(m.pack_quantity) : '')
     setDailyCons(m.daily_consumption != null ? String(m.daily_consumption) : ''); setPurchasedOn(m.purchased_on ?? '')
-    setAmount(m.amount_cents ? centsToAmount(m.amount_cents) : ''); setPurchaseStatus(m.purchase_status ?? ''); setRepurchaseFreq(m.repurchase_frequency ?? ''); setPrescriptionUrl(prescriptionUrlOf(rxByMed, m.id, m.prescription_url)); setOpen(true)
+    setAmount(m.amount_cents ? centsToAmount(m.amount_cents) : ''); setPurchaseStatus(m.purchase_status ?? ''); setRepurchaseFreq(m.repurchase_frequency ?? ''); setPrescriptionUrl(prescriptionUrlOf(rxByMed, m.id, m.prescription_url))
+    // Qual receita já aponta para este medicamento — para o seletor abrir mostrando o vínculo atual, e não vazio.
+    setReceitaVinculada(rxByMed[m.id]?.[0]?.id ?? '')
+    setOpen(true)
   }
 
   async function save() {
@@ -146,6 +161,17 @@ export function MedicationsScreen({ route, navigation }: Props) {
           meta: { issuer: prescriber.trim() || null },
         })
         if (rx.error) Alert.alert('Medicamento salvo', 'A receita nao pode ser arquivada em Documentos. Anexe de novo mais tarde.')
+
+        // VÍNCULO a uma receita JÁ guardada. Só escreve em `patient_document_links`: nada é copiado da receita
+        // para o medicamento nem o contrário — associar não é mutar (ADR-001/DOC-001).
+        const anterior = rxByMed[id]?.[0]?.id ?? ''
+        if (receitaVinculada !== anterior) {
+          if (anterior) await apiClient.documents.unlinkDocumentFromTarget(anterior, 'medicamento', id)
+          if (receitaVinculada) {
+            const lk = await apiClient.documents.linkDocumentToTarget(receitaVinculada, 'receita', 'medicamento', id)
+            if (lk.error) Alert.alert('Salvo', 'Não foi possível vincular a receita. Tente de novo pela edição.')
+          }
+        }
         // Compra realizada → despesa em Gastos (só quando 'comprado' com valor; 'a comprar' não gera gasto).
         await apiClient.agenda.syncExpense({ type: 'medication', id }, {
           amountCents: purchaseStatus === 'comprado' ? parseAmountToCents(amount) : null,
@@ -228,6 +254,22 @@ export function MedicationsScreen({ route, navigation }: Props) {
           <Text spec={text(t, { role: 'label', tone: 'muted' })}>RECEITA</Text>
           {prescriptionUrl ? <AttachmentLink url={prescriptionUrl} label="Ver receita anexada" /> : null}
           <Button label={uploadingRx ? 'Anexando…' : prescriptionUrl ? 'Trocar receita' : 'Anexar receita'} variant="secondary" onPress={pickPrescription} loading={uploadingRx} />
+
+          {/* VINCULAR a uma receita JÁ GUARDADA (pedido da fundadora, 28/08), espelhando exame → pedido.
+              Anexar cria um documento novo; vincular aponta para um que já existe. Quem fotografou a receita
+              antes de cadastrar os medicamentos dela — que é a ordem natural — precisa deste caminho, não
+              daquele: sem ele, anexaria a MESMA receita de novo, e a plataforma passaria a ter duas. */}
+          {receitas.length > 0 && (
+            <Select
+              // "Nenhuma" é opção EXPLÍCITA, e não um botão de limpar: desvincular é uma escolha, e precisa
+              // estar na mesma lista das outras. É o mesmo padrão do seletor de faixa etária no Perfil.
+              options={[{ id: '', label: 'Nenhuma receita' }, ...receitas.map(r => ({ id: r.id, label: documentSubtitle(r) }))]}
+              value={receitaVinculada}
+              onChange={setReceitaVinculada}
+              title="Vincular a uma receita já guardada"
+              placeholder="Nenhuma receita"
+            />
+          )}
           <Chips options={MED_STATUSES.map(s => ({ id: s.value, label: s.label }))} value={status} onChange={(v) => setStatus(v as MedStatus)} />
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <DatePicker value={startedOn} onChange={setStartedOn} placeholder="Início" style={{ flex: 1 }} />

@@ -21,8 +21,13 @@ export interface DocumentReading {
   kind: DocumentKind
   /** Subtipo documental quando o documento é do domínio Documentos (receita, atestado…). */
   subtype?: PatientDocumentSubtype | null
-  /** Quem emitiu — transcrito do documento, não inferido. */
+  /** Quem emitiu — transcrito do documento, não inferido. Recebe o nome PRINCIPAL dos dois abaixo. */
   issuer?: string | null
+  /** Profissional e instituição, transcritos separadamente. Ver `ClassificationResult`. */
+  professional?: string | null
+  institution?: string | null
+  /** O que a receita prescreve, transcrito do papel. Vazio quando não é receita ou nada estava legível. */
+  items?: string[]
   /** Data de emissão, AAAA-MM-DD. */
   docDate?: string | null
   confidence: 'high' | 'medium' | 'low'
@@ -134,16 +139,26 @@ export function readingFromClassification(cls: {
   kind: DocumentKind
   subtype?: string | null
   issuer?: string | null
+  professional?: string | null
+  institution?: string | null
   docDate?: string | null
+  items?: string[]
   confidence: 'high' | 'medium' | 'low'
 } | null | undefined): DocumentReading | null {
   if (!cls) return null
   const palavra = cls.subtype ? chave(cls.subtype) : ''
+  const professional = cls.professional?.trim() || null
+  const institution = cls.institution?.trim() || null
   return {
     kind: cls.kind,
     subtype: SUBTYPE_POR_PALAVRA[palavra] ?? null,
-    issuer: cls.issuer ?? null,
+    // Uma leitura antiga (ou um servidor ainda não atualizado) manda só `issuer`. Nesse caso ele vira o
+    // profissional, que é o caso majoritário neste domínio — e ficar sem nome nenhum seria pior.
+    issuer: cls.issuer?.trim() || professional || institution || null,
+    professional: professional ?? (institution ? null : cls.issuer?.trim() || null),
+    institution,
     docDate: cls.docDate ?? null,
+    items: cls.items ?? [],
     confidence: cls.confidence,
   }
 }
@@ -154,11 +169,24 @@ export function readingFromClassification(cls: {
  */
 export function autofillFrom(
   reading: DocumentReading | null | undefined,
-  atual: { issuer: string; docDate: string },
-): { issuer: string; docDate: string } {
-  if (!reading) return atual
+  atual: { issuer: string; docDate: string; professional?: string; institution?: string; items?: string[] },
+): { issuer: string; docDate: string; professional: string; institution: string; items: string[] } {
+  const base = {
+    issuer: atual.issuer,
+    docDate: atual.docDate,
+    professional: atual.professional ?? '',
+    institution: atual.institution ?? '',
+    items: atual.items ?? [],
+  }
+  if (!reading) return base
+  const manter = (digitado: string, lido: string | null | undefined) =>
+    digitado.trim() !== '' ? digitado : (lido ?? '')
   return {
-    issuer:  atual.issuer.trim()  !== '' ? atual.issuer  : (reading.issuer ?? ''),
-    docDate: atual.docDate.trim() !== '' ? atual.docDate : (reading.docDate ?? ''),
+    issuer: manter(base.issuer, reading.issuer),
+    docDate: manter(base.docDate, reading.docDate),
+    professional: manter(base.professional, reading.professional),
+    institution: manter(base.institution, reading.institution),
+    // A lista já digitada vence a lida, pela mesma razão dos demais campos: se a pessoa mexeu, ela decidiu.
+    items: base.items.length > 0 ? base.items : (reading.items ?? []),
   }
 }

@@ -18,7 +18,9 @@
       "bundleIdentifier": "health.sintera.app",
       "infoPlist": {
         "CFBundleDevelopmentRegion": "pt-BR",
-        "CFBundleLocalizations": ["pt-BR"],
+        "CFBundleLocalizations": [
+          "pt-BR"
+        ],
         "ITSAppUsesNonExemptEncryption": false,
         "NSFaceIDUsageDescription": "Protege o acesso aos seus dados de saúde neste aparelho."
       }
@@ -38,7 +40,12 @@
         "android.permission.health.READ_WEIGHT",
         "android.permission.health.READ_HEIGHT",
         "android.permission.health.READ_STEPS",
-        "android.permission.health.READ_EXERCISE"
+        "android.permission.health.READ_EXERCISE",
+        "android.permission.health.READ_DISTANCE",
+        "android.permission.health.READ_ACTIVE_CALORIES_BURNED",
+        "android.permission.health.READ_TOTAL_CALORIES_BURNED",
+        "android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND",
+        "android.permission.health.READ_HEALTH_DATA_HISTORY"
       ]
     },
     "web": {
@@ -72,6 +79,14 @@
             "targetSdkVersion": 36,
             "minSdkVersion": 24
           }
+        }
+      ],
+      "expo-background-task",
+      [
+        "@kingstinct/react-native-healthkit",
+        {
+          "NSHealthShareUsageDescription": "A SINTERA lê do Apple Saúde as suas medições e atividades para guardá-las no seu registro, com a origem de cada informação preservada. Você escolhe o que autorizar, e pode revogar quando quiser no aplicativo Saúde.",
+          "NSHealthUpdateUsageDescription": "A SINTERA não escreve nada no Apple Saúde. Esta permissão não é usada."
         }
       ]
     ],

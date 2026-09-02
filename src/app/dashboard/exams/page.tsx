@@ -17,7 +17,7 @@ import { findDuplicateIds, originalIdFor, type DuplicateCandidate } from '@/lib/
 import { deriveExamIdentity } from '@/lib/exams/identification'
 import { binaryStructuringState, STRUCTURING_LABEL } from '@/lib/exams/structuring'
 import { isOrderDocumentType } from '@/lib/exams/classification'
-import { EXAM_STATE_LABEL, EXAM_STATE_TONE, examProcessingState, examAnalyzeLabel, isExamReady, EXAM_STATUS_FILTER_OPTIONS, matchesExamStatusFilter, deriveOrderDisplayTitle, SCREEN_COPY, type ExamStateTone, uuid} from '@sintera/core'
+import { EXAM_STATE_LABEL, EXAM_STATE_TONE, examProcessingState, examAnalyzeLabel, isExamReady, EXAM_STATUS_FILTER_OPTIONS, matchesExamStatusFilter, deriveOrderDisplayTitle, SCREEN_COPY, type ExamStateTone, uuid, supportedNowAcceptAttr } from '@sintera/core'
 import { effectiveOrderStatus, orderStatusLabel } from '@/lib/exams/orderStatus'
 import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MB } from '@/lib/capture/limits'
 import { bundlePartInfo, bundlePartLabel, groupBundleParts } from '@/lib/exams/bundleGroup'
@@ -102,8 +102,13 @@ function getYear(iso: string) {
 
 // Data de REALIZAÇÃO do exame (o que importa para histórico/dashboard);
 // cai para a data de entrada (created_at) só se a realização não existir.
+//
+// `created_at` É ANULÁVEL no esquema, e o código tratava como se nunca fosse. Na prática a coluna tem valor
+// padrão e todos os 27 registros têm data — mas "na prática sempre tem" é a premissa que produz tela em
+// branco quando um dia não tiver. Descoberto quando os tipos do banco deixaram de ser um stub e passaram a
+// refletir o esquema real (01/09/2026).
 function effDate(e: Exam): string {
-  return e.exam_date ?? e.created_at
+  return e.exam_date ?? e.created_at ?? ''
 }
 
 // Busca casa contra a IDENTIDADE RESOLVIDA (nome exibido = display_title + laboratório), não a string legada
@@ -466,7 +471,7 @@ export default function ExamsPage() {
       {/* A caixa vem primeiro e concentra TODAS as formas de envio (selecionar
           arquivo, arrastar PDF, foto do laudo). Ômica fica logo abaixo. */}
       {/* Input compartilhado (caixa + "Adicionar página"/"Galeria"). `multiple` p/ galeria. */}
-      <input ref={fileInputRef} type="file" aria-label="Selecionar arquivo de exame" accept=".pdf,.jpg,.jpeg,.png" multiple className="sr-only" disabled={uploading || bundle.combining} onChange={onInputChange} />
+      <input ref={fileInputRef} type="file" aria-label="Selecionar arquivo de exame" accept={supportedNowAcceptAttr()} multiple className="sr-only" disabled={uploading || bundle.combining} onChange={onInputChange} />
 
       {bundle.pages.length > 0 ? (
         /* Staging multipágina (primitivo transversal) — reordenar/remover páginas do MESMO documento */
@@ -580,8 +585,11 @@ export default function ExamsPage() {
               <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-mauve" />
               <input
                 type="text"
-                aria-label="Buscar exame"
-                placeholder="Buscar exame…"
+                // FILTRA A LISTA, e o rótulo passa a dizer isso. "Buscar exame…" prometia a busca que lê
+                // dentro dos laudos — que existe, mas é a da barra lateral. A promessa errada fez a fundadora
+                // digitar "hemograma", ver a lista esvaziar, e concluir que o campo não funcionava.
+                aria-label="Filtrar por nome ou laboratório"
+                placeholder="Filtrar por nome ou laboratório…"
                 value={searchName}
                 onChange={e => setSearchName(e.target.value)}
                 className="w-full pl-8 pr-3 py-2 bg-ivory border border-border rounded-xl font-body text-sm text-onyx placeholder-mauve/40 focus:outline-none focus:ring-1 focus:ring-petal/40"
@@ -674,7 +682,7 @@ export default function ExamsPage() {
                     chips={<CardChip tone={statusTone}>{orderStatusLabel(status)}</CardChip>}
                     meta={
                       <>
-                        Adicionado em {formatDate(order.created_at)}
+                        Adicionado em {order.created_at ? formatDate(order.created_at) : 'data não registrada'}
                         {linkedResults.length > 0 && (
                           <span className="block text-petal-dark mt-0.5">
                             {linkedResults.length} resultado{linkedResults.length !== 1 ? 's' : ''} vinculado{linkedResults.length !== 1 ? 's' : ''} — origem preservada.
@@ -743,8 +751,32 @@ export default function ExamsPage() {
       ) : examsByYear.length === 0 && orders.length === 0 ? (
         <Card padding="none" className="p-10 text-center">
           <Search size={32} className="text-border mx-auto mb-3" />
-          <p className="font-body text-sm font-semibold text-onyx mb-1">Nenhum exame encontrado</p>
-          <p className="font-body text-xs text-mauve">Tente ajustar os filtros de busca.</p>
+          <p className="font-body text-sm font-semibold text-onyx mb-1">Nenhum exame com esse nome</p>
+          {/* ─────────────────────────────────────────────────────────────────────────────────────────
+              ESTE CAMPO FILTRA A LISTA; ELE NÃO LÊ DENTRO DOS LAUDOS — e é isso que precisa ficar claro.
+              A fundadora digitou "hemograma", a lista esvaziou, e a tela respondeu "ajuste os filtros".
+              Os hemogramas dela estão guardados sob o título "Exames laboratoriais": o filtro casa contra o
+              NOME, e a palavra que ela procurava está no CONTEÚDO. Ela concluiu que o campo não funcionava.
+              Mandar "ajustar os filtros" era mandá-la tentar de novo o que não podia dar certo. Agora a tela
+              diz o que este campo faz e oferece a busca que de fato entra nos documentos.
+              ───────────────────────────────────────────────────────────────────────────────────────── */}
+          {searchName.trim() ? (
+            <>
+              <p className="font-body text-xs text-mauve">
+                Este campo filtra pelo <strong>nome</strong> do exame e pelo laboratório — não lê o conteúdo dos laudos.
+              </p>
+              {/* A busca de toda a plataforma vive na barra lateral e não tem rota própria; `?q=` a abre já
+                  preenchida (ver Sidebar). */}
+              <Link
+                href={`/dashboard/exams?q=${encodeURIComponent(searchName.trim())}`}
+                className="inline-block mt-3 font-body text-sm text-petal underline"
+              >
+                Procurar “{searchName.trim()}” dentro dos documentos
+              </Link>
+            </>
+          ) : (
+            <p className="font-body text-xs text-mauve">Tente ajustar os filtros.</p>
+          )}
         </Card>
       ) : (
         <div className="space-y-5">
@@ -858,7 +890,7 @@ export default function ExamsPage() {
                                     <span className="block text-mauve/70">
                                       {/* Sem data → frase de estado, não "Realizado em Sem data" (mesma redação do detalhe). */}
                                       {exam.exam_date ? `Realizado em ${formatDate(exam.exam_date)}` : 'Data de realização não informada'}
-                                      {exam.exam_date && exam.exam_date.slice(0, 10) !== exam.created_at.slice(0, 10) && (
+                                      {exam.created_at && exam.exam_date && exam.exam_date.slice(0, 10) !== exam.created_at.slice(0, 10) && (
                                         <span className="text-mauve/40"> · enviado {formatDate(exam.created_at)}</span>
                                       )}
                                     </span>

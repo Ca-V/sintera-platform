@@ -12,7 +12,8 @@ import { View, Pressable, ActivityIndicator, StyleSheet } from 'react-native'
 import { text } from '@sintera/design-system'
 import {
   acceptFiles, removeFile, rejectionMessage, attachmentCountLabel, entryMethodsFor,
-  readingFromClassification, documentDivergence, documentSubtypeLabel,
+  readingFromClassification, documentDivergence, documentSubtypeLabel, motivoLeituraLabel,
+  type MotivoLeituraFalha,
   type AttachedFile, type IncomingFile, type DocumentReading, type PatientDocumentSubtype, SCREEN_COPY } from '@sintera/core'
 import type { PickedFile } from '@sintera/api-client'
 import { Text } from './Text'
@@ -63,26 +64,33 @@ export function AnexoDocumento({
   const [aviso, setAviso] = useState<string | null>(null)
   const [lendo, setLendo] = useState(false)
   const [divergencia, setDivergencia] = useState<string | null>(null)
+  /** Por que a leitura NAO rodou. Distinto de 'rodou e nao reconheceu', que e resposta legitima e silenciosa. */
+  const [motivo, setMotivo] = useState<MotivoLeituraFalha | null>(null)
 
-  /** Lê e compara com o declarado. Silencioso quando falha — a pessoa preenche à mão, como sempre pôde. */
+  /** Le e compara com o declarado. Quando NAO roda, diz por que — a pessoa preenche a mao sabendo o motivo. */
   const lerDocumento = useCallback(async (original: PickedFile) => {
     if (!leituraAssistida) return
     setLendo(true)
-    setDivergencia(null)
+    setDivergencia(null); setMotivo(null)
     try {
       // Aplica a MESMA política de preparo que a Web (tamanho e qualidade vêm do core). Sem isto, a foto
       // ia inteira e estourava o limite de requisição da hospedagem — a leitura falhava por TAMANHO.
       const preparado = await fileToBase64(original.uri, original.mimeType)
-      if (!preparado.fileBase64) return
-      const cls = await apiClient.capture.classify({ ...preparado, filename: original.name })
-      const leitura = readingFromClassification(cls)
+      if (!preparado.fileBase64) { setMotivo('sem-arquivo'); return }
+      const { resultado, motivo } = await apiClient.capture.classify({ ...preparado, filename: original.name })
+      // A LEITURA QUE NÃO RODA PASSA A DIZER POR QUÊ. Antes, os campos simplesmente não se preenchiam — e do
+      // lado de fora "não consegui ler" era indistinguível de "li e não reconheci". A pessoa preenchia à mão
+      // achando que a plataforma não sabe ler, e deixava de confiar num recurso que funciona.
+      if (motivo) { setMotivo(motivo); return }
+      const leitura = readingFromClassification(resultado)
       if (!leitura) return
 
       // AVISA, e só. Nunca move o documento nem impede salvar — a pessoa escolheu o tipo.
       setDivergencia(documentDivergence(leituraAssistida.declarado, leitura, documentSubtypeLabel).message)
       leituraAssistida.onLeitura(leitura)
     } catch {
-      /* preenche à mão */
+      // Ate a excecao passa a ter voz: depois de anexar, a pessoa precisa saber se a leitura tentou.
+      setMotivo('rede')
     } finally {
       setLendo(false)
     }
@@ -204,6 +212,15 @@ export function AnexoDocumento({
 
       {/* DIVERGÊNCIA — informa, não obstrui. Sem ação de "corrigir": a pessoa escolheu o tipo, e mover o
           documento por conta própria seria decidir por ela. Tom de atenção, não de erro. */}
+      {/* A LEITURA NAO RODOU, e a tela diz por que. Antes os campos so nao se preenchiam: "nao consegui ler"
+          era indistinguivel de "li e nao reconheci", e a pessoa concluia que a plataforma nao sabe ler.
+          Tom NEUTRO, nao de erro: o documento foi anexado e nada se perdeu. */}
+      {motivo && (
+        <View style={[s.divergencia, { backgroundColor: t.color.surface.raised, borderColor: t.color.border.default }]}>
+          <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{motivoLeituraLabel(motivo)}</Text>
+        </View>
+      )}
+
       {divergencia && (
         // `soft` é o fundo de badge do DS, com contraste AA garantido para o `text` por cima.
         <View style={[s.divergencia, { backgroundColor: t.color.badge.attention.soft, borderColor: t.color.badge.attention.text }]}>

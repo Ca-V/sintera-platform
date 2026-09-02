@@ -12,7 +12,12 @@ import { resolvePeriod, inPeriod, overlapsPeriod, type Period } from '@/lib/comm
 import { selectFinancial } from '@/lib/agenda/event' // Despesas = mesma projeção financeira do domínio (SSOT)
 import { eventServicesFor, professionalKindLabel } from '@/lib/agenda' // EVT-C1: leitura canônica (legado+canônico) também no compartilhamento
 import { contraceptiveLabel } from '@/lib/cycle' // SSOT dos métodos contraceptivos
-import { deriveExamIdentity } from '@/lib/exams/identification' // identidade resolvida (display_title) — mesma das telas
+import { deriveExamIdentity } from '@/lib/exams/identification'
+// LEVANTAMENTO de 02/09/2026: tres secoes que a dona podia SELECIONAR e o profissional NUNCA via.
+import { documentSubtypeLabel, type PatientDocumentSubtype } from '@sintera/core'
+import { isClosedStatus } from '@/lib/agenda/event'
+// Historico de Exames: resumo longitudinal por indicador — MESMA funcao do relatorio principal (SSOT).
+import { summarizeBiomarkers, examDate as bioExamDate, type BiomarkerRow } from '@/lib/biomarkers/grouping' // identidade resolvida (display_title) — mesma das telas
 
 export const metadata = { robots: { index: false, follow: false } }
 
@@ -82,7 +87,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
   const itemOn = (k: string, key: string) => !(excl[k]?.includes(key))
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = admin as any
-  const [{ data: prof }, { data: meds }, eventsList, { data: exams }, { data: measures }, { data: conditions }, { data: habits }, { data: eyewear }, { data: omics }, { data: contraceptives }, { data: menstruations }, { data: authUser }] = await Promise.all([
+  const [{ data: prof }, { data: meds }, eventsList, { data: exams }, { data: measures }, { data: conditions }, { data: habits }, { data: eyewear }, { data: omics }, { data: contraceptives }, { data: menstruations }, { data: documentos }, { data: bioRows }, { data: authUser }] = await Promise.all([
     db.from('profiles').select('name, height_cm').eq('id', uid).maybeSingle(),
     db.from('medications').select('name, kind, dose, frequency, started_on, until_date, status').eq('user_id', uid).order('status'),
     // EVT-C1 (NC-0013/0014): leitura ÚNICA pelo contrato canônico — inclui eventos legados + canônicos (dedup).
@@ -95,6 +100,8 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
     db.from('omics_panels').select('domain, laboratory, total_features, collected_on, created_at').eq('user_id', uid).order('collected_on', { ascending: false, nullsFirst: false }),
     db.from('contraceptive_methods').select('kind, brand, started_on, replace_on, status').eq('user_id', uid).order('created_at', { ascending: false }),
     db.from('menstrual_periods').select('started_on, notes').eq('user_id', uid).order('started_on', { ascending: false }).limit(24),
+    db.from('patient_documents').select('subtype, doc_date, professional_name, institution_name, prescribed_items').eq('user_id', uid).order('doc_date', { ascending: false, nullsFirst: false }),
+    db.from('current_biomarkers').select('id,name,value,unit,result_type,reference_min,reference_max,interpretation,reference_source,catalog_id,source_material,source_exam_name,exam_id,exams(exam_date,created_at)').eq('user_id', uid).eq('synthetic', false).eq('result_type', 'numeric'),
     admin.auth.admin.getUserById(uid),
   ])
 
@@ -125,7 +132,17 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
   const isSup = (m: Record<string, unknown>) => m.kind === 'suplemento'
   const medEmUso = medsEmUso.filter(m => !isSup(m) && itemOn('medicamentos', m.name as string)), supEmUso = medsEmUso.filter(m => isSup(m) && itemOn('suplementos', m.name as string))
   const medSusp = medsSusp.filter(m => !isSup(m) && itemOn('medicamentos', m.name as string)), supSusp = medsSusp.filter(m => isSup(m) && itemOn('suplementos', m.name as string))
-  const evArr = eventsList.filter(e => inPeriod(e.date ?? null, rp) && itemOn('eventos', e.type))
+  // Resumo LONGITUDINAL por indicador, dentro do periodo — a mesma regra do relatorio principal.
+  const bioSummaries = summarizeBiomarkers(((bioRows ?? []) as BiomarkerRow[]).filter(r => inPeriod(bioExamDate(r), rp)))
+  const docArr = ((documentos ?? []) as Array<Record<string, unknown>>).filter(d => inPeriod((d.doc_date as string) ?? null, rp))
+  // AGENDA × HISTÓRICO — o MESMO corte do relatório principal (FB-016-1): evento aberto é Agenda, evento
+  // fechado é Histórico de Saúde. Aqui tudo caía em "Agenda", então uma consulta JÁ REALIZADA chegava ao
+  // profissional rotulada como compromisso futuro. E a seção "Histórico de Saúde", que ela podia selecionar,
+  // simplesmente não existia nesta página.
+  const evTodos = eventsList.filter(e => inPeriod(e.date ?? null, rp) && itemOn('eventos', e.type))
+    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
+  const regArr = evTodos.filter(e => isClosedStatus(e.status))
+  const evArr = eventsList.filter(e => inPeriod(e.date ?? null, rp) && itemOn('eventos', e.type) && !isClosedStatus(e.status))
     .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))   // mais recentes primeiro (como antes)
   // NOME = identidade resolvida (display_title), como no relatório principal. A chave de seleção usa o MESMO nome
   // (o link persiste as EXCLUSÕES por essa chave) — sem rederivar "• emissor" e sem divergir da tela que gerou o link.
@@ -291,6 +308,88 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
                 {e.file_url ? <>{'  ·  '}<a href={e.file_url as string} target="_blank" rel="noopener noreferrer" style={{ color: '#3D6C7B', textDecoration: 'none', fontSize: 13 }}>Ver documento original</a></> : null}
               </li>
             ))}
+          </ul>
+        )}
+      </section>
+      )}
+
+      {/* HISTÓRICO DE EXAMES — a EVOLUÇÃO dos indicadores. Faltava por inteiro: ela podia selecionar a seção,
+          e o profissional recebia o link sem ela. É provavelmente a seção mais útil de todas para quem lê. */}
+      {show('histexames') && (
+      <section style={{ marginBottom: 22 }}>
+        <h2 style={{ fontSize: 15 }}>Histórico de Exames <span style={{ fontWeight: 400, fontSize: 13, color: '#6B6154' }}>(evolução dos resultados)</span></h2>
+        {bioSummaries.length === 0 ? <p style={{ color: '#6B6154', fontSize: 14 }}>Nenhum indicador no período.</p> : (
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+            <tbody>
+              {[...bioSummaries].sort((a, b) => a.displayName.localeCompare(b.displayName)).map((s, i) => {
+                const L = s.latest
+                // FAIXA: fato impresso no laudo, não juízo clínico nosso (RDC 657) — a mesma redação do
+                // relatório principal, para as duas telas não divergirem no que dizem ao profissional.
+                const faixa = L == null ? null
+                  : (L.referenceMin != null && L.value < L.referenceMin) ? 'abaixo da faixa'
+                  : (L.referenceMax != null && L.value > L.referenceMax) ? 'acima da faixa'
+                  : (L.referenceMin != null || L.referenceMax != null) ? 'dentro da faixa' : null
+                return (
+                  <tr key={i} style={{ borderBottom: '1px solid #E4DBCB' }}>
+                    <td style={{ padding: '6px 12px 6px 0', verticalAlign: 'top' }}>{s.displayName}</td>
+                    <td style={{ padding: '6px 12px 6px 0', whiteSpace: 'nowrap', verticalAlign: 'top' }}>
+                      {L ? `${L.value}${L.unit ? ` ${L.unit}` : ''}` : '—'}
+                      {faixa ? <span style={{ color: '#6B6154', fontSize: 12 }}> ({faixa})</span> : null}
+                    </td>
+                    <td style={{ padding: '6px 12px 6px 0', color: '#6B6154', whiteSpace: 'nowrap', verticalAlign: 'top' }}>{L ? fmt(L.date) : '—'}</td>
+                    <td style={{ padding: '6px 0', color: '#6B6154', verticalAlign: 'top' }}>{s.count} {s.count === 1 ? 'medição' : 'medições'}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        )}
+      </section>
+      )}
+
+      {/* HISTÓRICO DE SAÚDE — o que JÁ ACONTECEU. Faltava: eventos fechados apareciam sob "Agenda", e o
+          profissional lia como compromisso futuro o que já tinha sido feito. */}
+      {show('registros') && (
+      <section style={{ marginBottom: 22 }}>
+        <h2 style={{ fontSize: 15 }}>Histórico de Saúde</h2>
+        {regArr.length === 0 ? <p style={{ color: '#6B6154', fontSize: 14 }}>Nenhum registrado.</p> : (
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+            <tbody>
+              {regArr.map((e, i) => (
+                <tr key={i} style={{ borderBottom: '1px solid #E4DBCB' }}>
+                  <td style={{ padding: '6px 12px 6px 0', color: '#6B6154', whiteSpace: 'nowrap', verticalAlign: 'top' }}>{fmt(e.date)}</td>
+                  <td style={{ padding: '6px 0' }}>
+                    <span style={{ color: '#6B6154' }}>{TYPE_LABEL[e.type] ?? 'Evento'}{professionalKindLabel(e.professionalKind) ? ` (${professionalKindLabel(e.professionalKind)})` : ''}:</span> {e.title}
+                    {e.notes ? <span style={{ display: 'block', fontSize: 12, color: '#6B6154' }}>{e.notes}</span> : null}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+      )}
+
+      {/* RECEITAS E ATESTADOS — a seção existia para ela SELECIONAR e não existia aqui, que é onde o
+          profissional lê. O item prescrito entra na linha: "Receita — Dr. Fulano", sem dizer o que foi
+          prescrito, não informa nada a quem recebe. */}
+      {show('documentos') && (
+      <section style={{ marginBottom: 22 }}>
+        <h2 style={{ fontSize: 15 }}>Receitas e atestados</h2>
+        {docArr.length === 0 ? <p style={{ color: '#6B6154', fontSize: 14 }}>Nenhum no período.</p> : (
+          <ul style={{ paddingLeft: 18, fontSize: 14 }}>
+            {docArr.map((d, i) => {
+              const quem = [d.professional_name, d.institution_name].filter(Boolean).join(' · ')
+              const itens = ((d.prescribed_items as string[] | null) ?? []).filter(x => x && x.trim()).join(', ')
+              return (
+                <li key={i}>
+                  {d.doc_date ? `${fmt(d.doc_date as string)} — ` : ''}
+                  <strong>{documentSubtypeLabel(d.subtype as PatientDocumentSubtype)}</strong>
+                  {quem ? ` · ${quem}` : ''}
+                  {itens ? <span style={{ color: '#6B6154' }}> — {itens}</span> : null}
+                </li>
+              )
+            })}
           </ul>
         )}
       </section>

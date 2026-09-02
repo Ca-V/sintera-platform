@@ -8,7 +8,7 @@ import HistoryGrewNotice from '@/components/connectors/HistoryGrewNotice'
 import { motion } from 'framer-motion'
 import {
   FileText, Clock, Pill, ScrollText, CalendarDays, Receipt,
-  Upload, FlaskConical, Bell, ChevronRight, FilePlus, X,
+  Upload, Bell, ChevronRight, FilePlus, X,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { parseDateOnly } from '@/lib/agenda'

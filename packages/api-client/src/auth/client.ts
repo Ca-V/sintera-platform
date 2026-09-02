@@ -28,8 +28,10 @@ import { listHabits, saveHabit, deleteHabit } from '../habits/habits'
 import { listResources, saveResource, deleteResource } from '../resources/resources'
 import { archivePrescription } from '../documents/prescription'
 import { listConnectors, connectorConnectUrl, syncConnector, disconnectConnector } from '../connectors/connectors'
-import { listDocuments, listDocumentsForTarget, listDocumentsForTargets, listPagesForDocuments, saveDocument, updateDocument, deleteDocument } from '../documents/documents'
+import { listDocuments, listDocumentsForTarget, listDocumentsForTargets, listPagesForDocuments, saveDocument, updateDocument, replaceDocument, deleteDocument } from '../documents/documents'
 import { targetNamesByDocument } from '../documents/targetNames'
+// Leitura do documento (01/09/2026) — ponte ADR-020, igual a analyzeExam: a regra de leitura e UMA so.
+import { transcribeDocument } from '../documents/transcribe'
 import { listMedications, saveMedication, deleteMedication } from '../medications/medications'
 import { listContraceptives, saveContraceptive, toggleContraceptiveStatus, deleteContraceptive } from '../cycle/contraception'
 import { listPeriods, addPeriod, deletePeriod } from '../cycle/menstrual'
@@ -40,6 +42,9 @@ import { getMinhaSaudeCounts } from '../summary/counts'
 import { listBodyMetrics, saveBodyMetric, deleteBodyMetric, getHeightCm, getWeightGoal, setWeightGoal } from '../body/body'
 import { listActivitySessions, saveActivitySession, deleteActivitySession, ingestActivitySessions } from '../activity/activity'
 import { ingestWearableSamples } from '../wearables/wearables'
+import { listDailySteps } from '../wearables/steps'
+import { searchRecords } from '../search/search'
+import { listLinkableDocuments, linkDocumentToTarget, unlinkDocumentFromTarget } from '../documents/links'
 import { startOAuthSignIn, completeOAuthSignIn } from './oauth'
 import { classifyDocument } from '../capture/classify'
 import { listShares, createShare, revokeShare, listTemplates, saveTemplate, deleteTemplate, listOmicsPanels } from '../report/report'
@@ -100,7 +105,7 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       listExamExpenses: (signal) => listExamExpenses(supabase, signal),
       getAllBiomarkers: (signal) => getAllBiomarkers(supabase, signal),
       getLastExtractionLog: (examId, signal) => getLastExtractionLog(supabase, examId, signal),
-      uploadExam: (file, signal) => uploadExam(supabase, file), // storage não usa abortSignal; signal ignorado
+      uploadExam: (file, _signal) => uploadExam(supabase, file), // o storage não aceita abortSignal; o sublinhado marca o descarte como INTENCIONAL, para o aviso de símbolo não usado continuar significando defeito
       createExam: (input, signal) => createExam(supabase, input, signal),
       analyzeExam: (id) => analyzeExam(supabase, config.webBaseUrl, id), // ponte transitória (ADR-020)
       deleteExam: (id, signal) => deleteExam(supabase, id, signal), // requer RLS DELETE (isolado — MOBILE-030)
@@ -138,9 +143,14 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       listPagesForDocuments: (ids, signal) => listPagesForDocuments(supabase, ids, signal),
       targetNamesByDocument: (ids) => targetNamesByDocument(supabase, ids),
       saveDocument: (input) => saveDocument(supabase, input),
+      transcribeDocument: (id) => transcribeDocument(supabase, config.webBaseUrl, id),
       updateDocument: (id, patch) => updateDocument(supabase, id, patch),
+      replaceDocument: (id, input) => replaceDocument(supabase, id, input),
       deleteDocument: (id) => deleteDocument(supabase, id),
       archivePrescription: (params) => archivePrescription(supabase, params),
+      listLinkableDocuments: (subtype, signal) => listLinkableDocuments(supabase, subtype, signal),
+      linkDocumentToTarget: (docId, subtype, domain, targetId) => linkDocumentToTarget(supabase, docId, subtype, domain, targetId),
+      unlinkDocumentFromTarget: (docId, domain, targetId) => unlinkDocumentFromTarget(supabase, docId, domain, targetId),
     },
     connectors: {
       listConnectors: () => listConnectors(supabase, config.webBaseUrl),
@@ -182,8 +192,12 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       deleteActivitySession: (id) => deleteActivitySession(supabase, id),
       ingestActivitySessions: (drafts) => ingestActivitySessions(supabase, drafts),
     },
+    search: {
+      searchRecords: (query) => searchRecords(supabase, query),
+    },
     wearables: {
       ingestSamples: (samples) => ingestWearableSamples(supabase, samples),
+      listDailySteps: (dias, signal) => listDailySteps(supabase, dias, signal),
     },
     capture: {
       classify: (input) => classifyDocument(supabase, config.webBaseUrl, input),

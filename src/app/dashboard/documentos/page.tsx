@@ -33,11 +33,15 @@ import { Card } from '@/lib/ui/ds'
 // `row()`. Não é gambiarra minha — é o padrão já usado por Recursos, Hábitos e demais páginas.
 import { row } from '@/lib/supabase/db'
 // A Web reusa a MESMA consulta do Mobile (SSOT), como já faz em getProfileStats.
-import { targetNamesByDocument, updateDocument } from '@sintera/api-client'
+import { targetNamesByDocument, updateDocument, replaceDocument } from '@sintera/api-client'
 import {
   DOCUMENT_SUBTYPES, documentSubtypeLabel, buildPatientDocumentInsert, documentSubtitle, isReadyToSave,
-  autofillFrom, deriveDocumentTitle,
-  type PatientDocumentSubtype, type AttachedFile, uuid, DOCUMENT_FILTER_ALL,} from '@sintera/core'
+  autofillFrom, deriveDocumentTitle, documentPrimaryName, parsePrescribedItems, prescribedItemsToText,
+  findExistingDocument, existingDocumentMessage, DOCUMENT_DUPLICATE_CHOICES, type DocumentDuplicateCandidate,
+  type PatientDocumentSubtype, type AttachedFile, uuid, DOCUMENT_FILTER_ALL,
+  // O que a busca alcanca neste documento (migracao 154) — mesma regra e mesma frase do aplicativo.
+  buscavel, statusFrase, type StatusDaTranscricao,
+} from '@sintera/core'
 
 // Ícone por subtipo. Mapa EXAUSTIVO por construção: o TypeScript exige uma entrada para cada
 // subtipo declarado no core, então acrescentar um subtipo lá quebra a compilação aqui em vez
@@ -55,12 +59,21 @@ type DocRow = {
   subtype: PatientDocumentSubtype
   file_url: string
   issuer: string | null
+  professional_name: string | null
+  institution_name: string | null
+  prescribed_items: string[] | null
   doc_date: string | null
   notes: string | null
+  /**
+   * Estado da leitura do documento (migração 154): ok · parcial · ilegivel · falhou.
+   * O TEXTO não vem na lista, de propósito — numa lista de trinta documentos seriam centenas de KB
+   * atravessando a rede para nada. O status responde o que a lista precisa saber.
+   */
+  transcricao_status: string | null
   created_at: string
 }
 
-const COLUMNS = 'id, subtype, file_url, issuer, doc_date, notes, created_at'
+const COLUMNS = 'id, subtype, file_url, issuer, professional_name, institution_name, prescribed_items, doc_date, notes, transcricao_status, created_at'
 
 export default function DocumentosPage() {
   const { user } = useUser()
@@ -74,6 +87,8 @@ export default function DocumentosPage() {
   const [saving, setSaving] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [confirmId, setConfirmId] = useState<string | null>(null)
+  /** O documento igual que já estava guardado. Presente = o aviso de repetição está na tela. */
+  const [repetido, setRepetido] = useState<DocumentDuplicateCandidate | null>(null)
   /** Documento sendo corrigido. `null` = novo. */
   const [editando, setEditando] = useState<DocRow | null>(null)
 
@@ -81,6 +96,12 @@ export default function DocumentosPage() {
   // ANEXO-001: o formulário guarda um CONJUNTO de páginas, não um arquivo.
   const [files, setFiles] = useState<AttachedFile[]>([])
   const [issuer, setIssuer] = useState('')
+  // Profissional e instituição SEPARADOS (migração 151) — ver DocumentsScreen no Mobile: mesma decisão,
+  // mesma redação, mesmas regras. A Web não pode divergir daqui.
+  const [professional, setProfessional] = useState('')
+  const [institution, setInstitution] = useState('')
+  /** O que a receita prescreve — um item por linha. "O item mais importante" (fundadora, 30/08). */
+  const [itensTexto, setItensTexto] = useState('')
   const [docDate, setDocDate] = useState('')
   const [notes, setNotes] = useState('')
   /** document_id → nomes dos registros vinculados. Vazio é normal: nem todo documento tem vínculo. */
@@ -103,7 +124,9 @@ export default function DocumentosPage() {
 
   function resetForm() {
     setSubtype('receita'); setFiles([])
-    setIssuer(''); setDocDate(''); setNotes(''); setErro(null)
+    setIssuer(''); setProfessional(''); setInstitution(''); setItensTexto('')
+    setDocDate(''); setNotes(''); setErro(null)
+    setEditando(null)
   }
 
   /** Sobe UMA página. O componente cuida da política, da lista, da ordem e do progresso. */
@@ -119,9 +142,71 @@ export default function DocumentosPage() {
     return signed?.signedUrl ?? null
   }, [supabase, user])
 
+  /**
+   * Abre o formulário com os fatos do documento. O ARQUIVO não se troca ao editar: corrige-se o que se
+   * REGISTROU sobre o documento, não a evidência. Idêntico ao aplicativo.
+   */
+  function startEdit(d: DocRow) {
+    setEditando(d)
+    setSubtype(d.subtype)
+    setIssuer(d.issuer ?? '')
+    setProfessional(d.professional_name ?? '')
+    setInstitution(d.institution_name ?? '')
+    setItensTexto(prescribedItemsToText(d.prescribed_items))
+    setDocDate(d.doc_date ?? '')
+    setNotes(d.notes ?? '')
+    setFiles([]); setErro(null); setOpen(true)
+    // Sobe até o formulário, que abre ACIMA da lista: sem isto, editar um cartão lá embaixo parece não fazer
+    // nada. Foi o defeito que a fundadora reportou no aplicativo — não repeti-lo aqui.
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   async function onSave() {
     if (!user) return
+
+    // EDITANDO: corrige os fatos do documento; o arquivo permanece. Só a criação exige anexo.
+    if (editando) {
+      setSaving(true)
+      try {
+        const { error } = await updateDocument(supabase, editando.id, {
+          subtype,
+          issuer: documentPrimaryName({ professional_name: professional, institution_name: institution, issuer }) || null,
+          professional_name: professional.trim() || null,
+          institution_name: institution.trim() || null,
+          prescribed_items: parsePrescribedItems(itensTexto),
+          doc_date: docDate || null,
+          notes: notes.trim() || null,
+        })
+        if (error) { setErro('Não foi possível salvar as alterações.'); return }
+        setOpen(false); resetForm(); await load()
+      } finally { setSaving(false) }
+      return
+    }
+
     if (!isReadyToSave(files)) { setErro('Anexe o documento.'); return }
+
+    // JÁ ESTÁ GUARDADO? Regra permanente da fundadora: toda informação que entra é conferida contra o que já
+    // existe, e havendo correspondência a plataforma INFORMA e PERGUNTA. Idêntico ao Mobile — mesma regra,
+    // mesma redação, mesmas três saídas (BASE ÚNICA).
+    const existente = findExistingDocument(
+      {
+        id: '', createdAt: '', subtype,
+        issuer: documentPrimaryName({ professional_name: professional, institution_name: institution, issuer }),
+        docDate: docDate || null,
+      },
+      rows.map(d => ({
+        id: d.id, createdAt: d.created_at, subtype: d.subtype,
+        issuer: documentPrimaryName(d), docDate: d.doc_date,
+      })),
+    )
+    if (existente) { setRepetido(existente); return }
+    await gravar(null)
+  }
+
+  /** `substituirId` presente = a pessoa escolheu substituir o que já estava guardado. */
+  async function gravar(substituirId: string | null) {
+    if (!user) return
+    setRepetido(null)
     setSaving(true)
     try {
       // A LINHA é montada pelo domínio (core), não aqui: os defaults de `source`/`status` e a forma da
@@ -129,10 +214,36 @@ export default function DocumentosPage() {
       const docRow = buildPatientDocumentInsert(user.id, {
         file_url: files[0].url!,
         subtype,
-        issuer: issuer.trim() || null,
+        issuer: documentPrimaryName({ professional_name: professional, institution_name: institution, issuer }) || null,
+        professional_name: professional.trim() || null,
+        institution_name: institution.trim() || null,
+        prescribed_items: parsePrescribedItems(itensTexto),
         doc_date: docDate || null,
         notes: notes.trim() || null,
       })
+      // SUBSTITUIR atualiza o registro guardado em vez de apagar e recriar: ele pode já estar vinculado a um
+      // medicamento ou a uma consulta, e apagá-lo levaria os vínculos junto (`on delete cascade`).
+      if (substituirId) {
+        // A SUBSTITUIÇÃO INTEIRA — campos e páginas — vive no api-client, a MESMA função que o Mobile chama.
+        // Reescrevê-la aqui faria as duas pontas substituírem de formas sutilmente diferentes.
+        const { error } = await replaceDocument(supabase, substituirId, {
+          subtype,
+          file_url: files[0].url!,
+          issuer: docRow.issuer,
+          professional_name: docRow.professional_name,
+          institution_name: docRow.institution_name,
+          prescribed_items: docRow.prescribed_items,
+          doc_date: docRow.doc_date,
+          notes: docRow.notes,
+          pages: files.map(f => ({
+            file_url: f.url!, file_name: f.name, mime_type: f.mime, size_bytes: f.sizeBytes,
+          })),
+        })
+        if (error) { setErro('Não foi possível substituir o documento.'); return }
+        setOpen(false); resetForm(); await load()
+        return
+      }
+
       const { data: criado, error } = await supabase.from('patient_documents').insert(row(docRow)).select('id')
       if (error) { setErro('Não foi possível salvar o documento.'); return }
       // PÁGINAS (ANEXO-001) — a ordem do array é a ordem de leitura.
@@ -145,6 +256,24 @@ export default function DocumentosPage() {
         const { error: pe } = await supabase.from('patient_document_files').insert(row(paginas))
         if (pe) { setErro('O documento foi salvo, mas as páginas extras não. Tente editar e anexar de novo.'); return }
       }
+
+      // ─────────────────────────────────────────────────────────────────────────────────────────────────
+      // MANDA LER O DOCUMENTO (decisão da fundadora, 01/09/2026): "todos os documentos que são adicionados
+      // precisam ser lidos e transcritos". A leitura assistida abria a foto para tirar profissional, data e
+      // itens — e DESCARTAVA o texto. Procurar uma palavra dentro de uma receita nunca funcionou.
+      //
+      // MESMA ROTA que o aplicativo chama: a regra de leitura é UMA só, no servidor, onde vivem o prompt
+      // governado e a auditoria. Duas implementações divergiriam, como já divergiram o sinal do peso e a
+      // lista de formatos aceitos.
+      //
+      // NÃO BLOQUEIA: o documento já está salvo e o arquivo é a fonte da verdade. A falha vira estado
+      // 'falhou' gravado, que é o que permite tentar de novo sem confundir com "documento vazio".
+      // ─────────────────────────────────────────────────────────────────────────────────────────────────
+      if (docId) {
+        fetch(`/api/documents/${docId}/transcribe`, { method: 'POST' })
+          .catch(() => { /* já registrado no servidor; a tela não trava por isso */ })
+      }
+
       setOpen(false); resetForm(); await load()
     } finally {
       setSaving(false)
@@ -221,15 +350,48 @@ export default function DocumentosPage() {
                 leading={<Icon size={18} />}
                 title={deriveDocumentTitle(r.subtype, alvos[r.id])}
                 meta={documentSubtitle(r)}
-                chips={<AttachmentLink url={r.file_url} label="Ver documento" icon={<Paperclip size={14} />} />}
+                chips={
+                  <>
+                    <AttachmentLink url={r.file_url} label="Ver documento" icon={<Paperclip size={14} />} />
+                    {/* O QUE A BUSCA ALCANÇA NESTE DOCUMENTO. Só aparece quando há o que avisar: documento
+                        lido por inteiro não ganha selo. Sem isto, a pessoa procura uma palavra da receita,
+                        não acha, e conclui que não está lá — foi exatamente o que aconteceu com os exames. */}
+                    {r.transcricao_status && r.transcricao_status !== 'ok' && (
+                      <span
+                        title={statusFrase(r.transcricao_status as StatusDaTranscricao)}
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 font-body text-[11px] ${
+                          buscavel(r.transcricao_status as StatusDaTranscricao)
+                            ? 'bg-ivory text-mauve border border-border'
+                            : 'bg-warm/60 text-gold border border-gold/40'
+                        }`}
+                      >
+                        {buscavel(r.transcricao_status as StatusDaTranscricao)
+                          ? 'Lido em parte'
+                          : 'Conteúdo não lido'}
+                      </span>
+                    )}
+                  </>
+                }
                 actions={
-                  <button
-                    onClick={() => setConfirmId(r.id)}
-                    aria-label="Excluir documento"
-                    className="rounded-full p-2 text-mauve hover:bg-black/[0.04]"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                  <>
+                    {/* EDITAR faltava AQUI, e só aqui: o aplicativo já tinha a ação, a Web não. `Pencil`,
+                        `updateDocument` e `editando` estavam todos importados e nenhum era usado — mais um
+                        caso de especificado e nunca ligado. Paridade não é opcional (BASE ÚNICA). */}
+                    <button
+                      onClick={() => startEdit(r)}
+                      aria-label="Editar documento"
+                      className="rounded-full p-2 text-mauve hover:bg-black/[0.04]"
+                    >
+                      <Pencil size={16} />
+                    </button>
+                    <button
+                      onClick={() => setConfirmId(r.id)}
+                      aria-label="Excluir documento"
+                      className="rounded-full p-2 text-mauve hover:bg-black/[0.04]"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </>
                 }
               />
             )
@@ -241,7 +403,7 @@ export default function DocumentosPage() {
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 p-0 sm:items-center sm:p-4">
           <Card className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-2xl sm:rounded-2xl">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-medium">Adicionar documento</h2>
+              <h2 className="text-lg font-medium">{editando ? 'Editar documento' : 'Adicionar documento'}</h2>
               <button onClick={() => setOpen(false)} aria-label="Fechar" className="rounded-full p-2 hover:bg-black/[0.04]">
                 <X size={18} />
               </button>
@@ -266,24 +428,61 @@ export default function DocumentosPage() {
                   avise se o documento anexado parece outra coisa, e devolva emissor e data para REVISÃO.
                   `autofillFrom` não sobrescreve o que já foi digitado: a pessoa é a autoridade sobre o
                   próprio registro. */}
+              {/* Ao EDITAR o anexo nao aparece: corrige-se o que foi registrado sobre o documento, nao a
+                  evidencia. Mesma regra do aplicativo. */}
+              {!editando && (
               <AnexoDocumento
                 files={files} onChange={setFiles} upload={uploadPagina}
                 leituraAssistida={{
                   declarado: subtype,
                   onLeitura: (leitura) => {
-                    const preenchido = autofillFrom(leitura, { issuer, docDate })
+                    const preenchido = autofillFrom(leitura, {
+                      issuer, docDate, professional, institution,
+                      items: parsePrescribedItems(itensTexto) ?? [],
+                    })
                     setIssuer(preenchido.issuer)
                     setDocDate(preenchido.docDate)
+                    setProfessional(preenchido.professional)
+                    setInstitution(preenchido.institution)
+                    setItensTexto(prescribedItemsToText(preenchido.items))
                   },
                 }}
               />
+              )}
+
+              {/* O QUE FOI PRESCRITO — só na receita. Transcrição, não interpretação: nome e concentração
+                  como estão escritos, sem posologia (RDC 657). Idêntico ao Mobile, por BASE ÚNICA. */}
+              {subtype === 'receita' && (
+                <div>
+                  <label className="mb-1.5 block text-sm text-mauve">O que foi prescrito</label>
+                  <textarea
+                    value={itensTexto}
+                    onChange={e => setItensTexto(e.target.value)}
+                    rows={3}
+                    placeholder={'Um por linha\nEx.: Losartana 50mg'}
+                    className="w-full rounded-xl border border-border px-3 py-2 text-sm"
+                  />
+                  <p className="mt-1 text-xs text-mauve">Um item por linha, como está escrito na receita — medicamento, suplemento, dispositivo ou produto.</p>
+                </div>
+              )}
+
+              {/* MÉDICO E CLÍNICA SEPARADOS: um campo só obrigava a escolher, e a escolha se perdia. */}
+              <div>
+                <label className="mb-1.5 block text-sm text-mauve">Profissional</label>
+                <input
+                  value={professional}
+                  onChange={e => setProfessional(e.target.value)}
+                  placeholder="Quem assinou o documento"
+                  className="w-full rounded-xl border border-border px-3 py-2 text-sm"
+                />
+              </div>
 
               <div>
-                <label className="mb-1.5 block text-sm text-mauve">Emitido por</label>
+                <label className="mb-1.5 block text-sm text-mauve">Clínica, laboratório ou hospital</label>
                 <input
-                  value={issuer}
-                  onChange={e => setIssuer(e.target.value)}
-                  placeholder="Profissional ou instituição"
+                  value={institution}
+                  onChange={e => setInstitution(e.target.value)}
+                  placeholder="Onde foi emitido"
                   className="w-full rounded-xl border border-border px-3 py-2 text-sm"
                 />
               </div>
@@ -317,6 +516,35 @@ export default function DocumentosPage() {
               >
                 {saving ? 'Salvando…' : editando ? 'Salvar alterações' : 'Salvar documento'}
               </button>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* JÁ ESTÁ GUARDADO — a plataforma informa e PERGUNTA, com as três saídas do núcleo.
+          Nenhuma é automática: apagar sozinha exigiria uma certeza que não existe, e o custo de errar é
+          perder um documento real. As mesmas três, com a mesma redação, aparecem no aplicativo. */}
+      {repetido && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <Card className="w-full max-w-md space-y-4 p-6">
+            <h2 className="text-lg font-medium">Este documento já está guardado</h2>
+            <p className="text-sm text-mauve">
+              {existingDocumentMessage(repetido, documentSubtypeLabel(subtype))}
+            </p>
+            <div className="space-y-2">
+              {DOCUMENT_DUPLICATE_CHOICES.map(op => (
+                <button
+                  key={op.id}
+                  onClick={() => {
+                    if (op.id === 'cancelar') { setRepetido(null); return }
+                    void gravar(op.id === 'substituir' ? repetido.id : null)
+                  }}
+                  className="w-full rounded-xl border border-border px-4 py-3 text-left hover:bg-surface"
+                >
+                  <span className="block text-sm font-medium">{op.label}</span>
+                  <span className="block text-xs text-mauve">{op.hint}</span>
+                </button>
+              ))}
             </div>
           </Card>
         </div>

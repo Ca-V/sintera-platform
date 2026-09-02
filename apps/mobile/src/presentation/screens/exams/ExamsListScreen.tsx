@@ -254,7 +254,7 @@ export function ExamsListScreen({ navigation, route }: Props) {
       {/* Filtros de descoberta — seletores compactos (paridade Web: dropdowns de status/ano, não parede de chips). */}
       {results.length > 0 ? (
         <View style={{ gap: 8 }}>
-          <Input value={query} onChangeText={setQuery} placeholder="Buscar exame…" autoCapitalize="none" />
+          <Input value={query} onChangeText={setQuery} placeholder="Filtrar por nome ou laboratório…" autoCapitalize="none" />
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <View style={{ flex: 1 }}><Select options={STATUS_FILTERS} value={status} onChange={setStatus} title="Status" /></View>
             {years.length > 1 ? (
@@ -327,8 +327,22 @@ export function ExamsListScreen({ navigation, route }: Props) {
           })}
         </View>
       ))}
+      {/* ESTE CAMPO FILTRA A LISTA; ele não lê dentro dos laudos — e a tela passa a dizer isso.
+          A fundadora digitou "hemograma", a lista esvaziou, e a mensagem mandou ajustar os filtros. Os
+          hemogramas dela estão guardados como "Exames laboratoriais": o filtro casa contra o NOME, e a
+          palavra que ela procurava está no CONTEÚDO. A busca que entra nos documentos é a da tela inicial. */}
       {results.length > 0 && filteredResults.length === 0 ? (
-        <Text spec={text(t, { role: 'caption', tone: 'muted' })} style={{ textAlign: 'center' }}>Nenhum resultado para os filtros atuais.</Text>
+        <View style={{ gap: 4 }}>
+          <Text spec={text(t, { role: 'caption', tone: 'muted' })} style={{ textAlign: 'center' }}>
+            {query.trim() ? 'Nenhum exame com esse nome.' : 'Nenhum resultado para os filtros atuais.'}
+          </Text>
+          {query.trim() ? (
+            <Text spec={text(t, { role: 'caption', tone: 'faint' })} style={{ textAlign: 'center' }}>
+              Este campo filtra pelo nome do exame e pelo laboratório. Para procurar dentro dos documentos,
+              use a busca da tela inicial.
+            </Text>
+          ) : null}
+        </View>
       ) : null}
       </>
       ) : null}

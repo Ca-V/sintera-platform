@@ -7,6 +7,12 @@ export interface AIProvider {
   readonly name: string
   readonly model: string
   extractBiomarkers(input: ExtractionInput): Promise<ProviderResult>
+  /**
+   * TRANSCRIÇÃO do documento (01/09/2026) — o texto do que está escrito, para que a busca alcance qualquer
+   * palavra de qualquer documento adicionado. Mesmo envio da extração; o que muda é o prompt, governado em
+   * `prompt_registry` sob a operação 'transcription'.
+   */
+  transcribe(input: ExtractionInput): Promise<ProviderResult>
 }
 
 export interface ExtractionInput {

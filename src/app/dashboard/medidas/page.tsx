@@ -21,7 +21,8 @@ import { EVOLUTION_PERIODS, filterByPeriod, markerFor, type EvoPoint } from '@/l
 import { useNovelty } from '@/lib/novelty/useNovelty'
 import EvolutionChart from '@/components/body/EvolutionChart'
 import { buildSnapshots, compareSnapshots, type SnapPoint } from '@/lib/body/snapshots'
-import { BODY_COMPARE_ORDER } from '@sintera/core'
+// `atualidadeDoResumo` — o cabeçalho honesto da lista de indicadores; ver o comentário no bloco onde é usado.
+import { BODY_COMPARE_ORDER, atualidadeDoResumo, ausenciaExplicada } from '@sintera/core'
 import { buildMilestones, MILESTONE_CATEGORIES, MILESTONE_COLOR, type MilestoneCategory, type MedInput, type ConsultaInput, type AssessmentInput } from '@/lib/body/milestones'
 import { professionalKindLabel } from '@/lib/agenda'
 import { todayISO } from '@/lib/date'   // SSOT de datas (DATE-001) — "hoje" consistente entre as telas
@@ -332,6 +333,9 @@ export default function MedidasPage() {
   // Ordem de exibição dos indicadores no Resumo atual (só os que têm dado). IMC entra como calculado.
   const SUMMARY_ORDER: Metric[] = ['peso', 'gordura_corporal', 'massa_muscular', 'massa_magra', 'agua_corporal', 'gordura_visceral', 'taxa_metabolica', 'massa_ossea', 'circunferencia_cintura', 'altura']
   const summaryCards = SUMMARY_ORDER.filter(m => summary[m]).map(m => ({ metric: m, s: summary[m] }))
+  // Quão atual é este resumo. Regra no núcleo, para a Web e o aplicativo dizerem a MESMA coisa — as duas
+  // prometiam atualidade que a lista não tem, e a Web prometia mais ("hoje").
+  const atualidade = atualidadeDoResumo(summaryCards.map(c => ({ metric: c.metric, date: c.s.date })), new Date())
 
   // BOD-001 área ④ — Acompanhamento de peso e composição corporal (genérico; peso é o objetivo desta 1ª versão).
   const lastAssess = lastAssessment(summaryPoints)   // última avaliação corporal (bioimpedância/DEXA)
@@ -446,8 +450,19 @@ export default function MedidasPage() {
               <Activity size={16} className="text-lavender" />
             </div>
             <div>
-              <p className="font-display text-base font-semibold text-onyx leading-none">Como você está hoje?</p>
-              <p className="font-body text-[11px] text-mauve mt-0.5">Último valor de cada indicador — origem, confiabilidade e tendência vs. a medição anterior.</p>
+              {/* ─────────────────────────────────────────────────────────────────────────────────────
+                  O CABEÇALHO PAROU DE AFIRMAR "HOJE".
+                  Dizia "Como você está hoje?" sobre uma bioimpedância de 2023 — a fundadora apontou isso na
+                  homologação de 31/08. Não é detalhe de redação: é a plataforma afirmando algo falso sobre a
+                  saúde de alguém, num painel que vai ao médico.
+                  O dado antigo CONTINUA aparecendo. A plataforma organiza e preserva; não decide que um exame
+                  de 2023 deixou de valer (ADR-000). O que mudou é que ela diz de quando ele é.
+                  ───────────────────────────────────────────────────────────────────────────────────── */}
+              <p className="font-display text-base font-semibold text-onyx leading-none">{atualidade.titulo}</p>
+              <p className="font-body text-[11px] text-mauve mt-0.5">{atualidade.explicacao}</p>
+              {atualidade.intervalo && (
+                <p className="font-body text-[11px] text-mauve mt-0.5">{atualidade.intervalo}</p>
+              )}
             </div>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
@@ -966,8 +981,20 @@ export default function MedidasPage() {
       {loading ? (
         <Card padding="none" className="p-10 text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
       ) : items.length === 0 ? (
+        // A SEÇÃO VAZIA SE EXPLICA — pedido da fundadora em 01/09/2026: "caso algum dado não apareça na web
+        // que na página respectiva apareça uma mensagem informando, informando também o porquê". Dizer só
+        // "registre uma avaliação" esconde que existe um caminho automático, e que ele é ligado no celular.
         <EmptyState icon={<Ruler size={28} className="text-petal" />} title="Nenhuma medida ainda"
-          message={<>Registre uma avaliação. Use <strong>Adicionar</strong>.</>} />
+          message={(() => {
+            const a = ausenciaExplicada('composicao', { houveSincronizacao: false })
+            return (
+              <span className="block text-left">
+                <span className="block mb-2">{a.titulo}</span>
+                {a.motivos.map((m, i) => <span key={i} className="block text-xs text-mauve">• {m}</span>)}
+                <span className="block mt-2 text-xs text-onyx">{a.oQueFazer}</span>
+              </span>
+            )
+          })()} />
       ) : (
         <div className="space-y-6">
           {groups.map(g => {
