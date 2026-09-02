@@ -106,6 +106,9 @@ export default function DocumentosPage() {
   const [notes, setNotes] = useState('')
   /** document_id → nomes dos registros vinculados. Vazio é normal: nem todo documento tem vínculo. */
   const [alvos, setAlvos] = useState<Record<string, string[]>>({})
+  /** Documento sendo lido agora. `null` = nenhum. */
+  const [lendo, setLendo] = useState<string | null>(null)
+
 
   const load = useCallback(async () => {
     if (!user) return
@@ -121,6 +124,29 @@ export default function DocumentosPage() {
   }, [supabase, user])
 
   useEffect(() => { void load() }, [load])
+
+  /**
+   * Manda ler o documento — a mesma rota que o salvamento usa, e a mesma que o aplicativo chama.
+   *
+   * Existe porque a leitura só acontecia ao SALVAR: documento que falhou ficava preso, e documento anterior
+   * à funcionalidade nunca teria como ser lido. O resultado é RECARREGADO da lista, não presumido: dizer
+   * "lido" sem conferir seria a mesma família de defeito que este ciclo está corrigindo.
+   */
+  const lerDocumento = useCallback(async (id: string) => {
+    setLendo(id); setErro(null)
+    try {
+      const res = await fetch(`/api/documents/${id}/transcribe`, { method: 'POST' })
+      if (!res.ok) { setErro('Não foi possível ler o documento agora. Tente novamente.'); return }
+      const json = await res.json() as { mensagem?: string }
+      // A frase vem do servidor, que a monta com a regra do núcleo — a mesma que o aplicativo exibe.
+      if (json.mensagem) setErro(json.mensagem)
+      await load()
+    } catch {
+      setErro('Não foi possível ler o documento agora. Tente novamente.')
+    } finally {
+      setLendo(null)
+    }
+  }, [load])
 
   function resetForm() {
     setSubtype('receita'); setFiles([])
@@ -356,6 +382,19 @@ export default function DocumentosPage() {
                     {/* O QUE A BUSCA ALCANÇA NESTE DOCUMENTO. Só aparece quando há o que avisar: documento
                         lido por inteiro não ganha selo. Sem isto, a pessoa procura uma palavra da receita,
                         não acha, e conclui que não está lá — foi exatamente o que aconteceu com os exames. */}
+                    {/* LER O DOCUMENTO — a ação que faltava. A leitura só era disparada ao SALVAR, então
+                        um documento que falhasse ficava preso, e os que existiam antes desta funcionalidade
+                        nunca teriam como ser lidos. Endpoint construído e sem quem o chamasse: exatamente a
+                        família "escrito e nunca ligado" que este ciclo inteiro está corrigindo. */}
+                    {(!r.transcricao_status || r.transcricao_status === 'falhou') && (
+                      <button
+                        onClick={() => lerDocumento(r.id)}
+                        disabled={lendo === r.id}
+                        className="inline-flex items-center gap-1 rounded-full border border-petal px-2 py-0.5 font-body text-[11px] text-petal hover:bg-blush disabled:opacity-50"
+                      >
+                        {lendo === r.id ? 'Lendo…' : r.transcricao_status === 'falhou' ? 'Tentar ler de novo' : 'Ler documento'}
+                      </button>
+                    )}
                     {r.transcricao_status && r.transcricao_status !== 'ok' && (
                       <span
                         title={statusFrase(r.transcricao_status as StatusDaTranscricao)}

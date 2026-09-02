@@ -60,6 +60,8 @@ export function DocumentsScreen() {
   const [editando, setEditando] = useState<PatientDocumentDTO | null>(null)
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
+  /** Documento sendo lido agora. `null` = nenhum. */
+  const [lendo, setLendo] = useState<string | null>(null)
 
   const [subtype, setSubtype] = useState<PatientDocumentSubtype>('receita')
   // ANEXO-001: o formulário guarda um CONJUNTO de páginas, não um arquivo.
@@ -113,6 +115,25 @@ export function DocumentsScreen() {
       .finally(() => { if (alive.current) setRefreshing(false) })
   }, [])
   useEffect(() => { alive.current = true; load(false); return () => { alive.current = false } }, [load])
+
+  /**
+   * Manda ler o documento — a MESMA rota que a Web chama e que o salvamento usa.
+   *
+   * Existe porque a leitura só acontecia ao SALVAR: documento que falhou ficava preso, e documento anterior
+   * à funcionalidade nunca teria como ser lido. Recarrega a lista em vez de presumir o resultado.
+   */
+  const lerDocumento = useCallback(async (id: string) => {
+    setLendo(id)
+    try {
+      const { data, error: err } = await apiClient.documents.transcribeDocument(id)
+      // A frase vem do núcleo, pelo servidor — a mesma que a Web mostra. Nunca redigida aqui.
+      if (err) Alert.alert('Não foi possível ler', err.message)
+      else if (data?.mensagem) Alert.alert('Leitura do documento', data.mensagem)
+      load(true)
+    } finally {
+      setLendo(null)
+    }
+  }, [load])
 
   function resetForm() {
     setSubtype('receita'); setFiles([]); setIssuer(''); setProfessional(''); setInstitution('')
@@ -504,6 +525,16 @@ export function DocumentsScreen() {
                   Só aparece quando há o que avisar: documento lido por inteiro não ganha aviso.
                   Sem isto, a pessoa procura uma palavra da receita, não acha, e conclui que não está lá —
                   foi exatamente o que aconteceu com os exames. */}
+              {/* LER O DOCUMENTO — a ação que faltava nas duas pontas. A leitura só era disparada ao
+                  SALVAR, então documento que falhasse ficava preso, e os que existiam antes desta
+                  funcionalidade nunca teriam como ser lidos. */}
+              {!d.transcricao_status || d.transcricao_status === 'falhou' ? (
+                <Pressable onPress={() => lerDocumento(d.id)} disabled={lendo === d.id} hitSlop={8} style={{ alignSelf: 'flex-start' }}>
+                  <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>
+                    {lendo === d.id ? 'Lendo…' : d.transcricao_status === 'falhou' ? 'Tentar ler de novo' : 'Ler documento'}
+                  </Text>
+                </Pressable>
+              ) : null}
               {d.transcricao_status && d.transcricao_status !== 'ok' ? (
                 <Text
                   spec={text(t, { role: 'caption' })}
