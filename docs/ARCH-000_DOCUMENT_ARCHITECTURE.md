@@ -72,7 +72,8 @@ Metadados por documento: **Objetivo · Escopo · Responsável · Dependências �
 | **CARE-001** | Care Space (continuidade do cuidado) | Episódio de cuidado | EVENTS-001 | CARE-003 | ativo |
 | **CARE-003** | Vínculo Profissional (conta profissional + relação contínua; substrato do Care Space) | Relação paciente↔profissional | ADR-000, ADR-001, CARE-001, BILLING-001 | CARE-001, `dados-recebidos` | ativo (22/09) |
 | **NOTIF-001** | Central de Notificações (infra única) | Notificações | ADR-000 | — | ativo |
-| **BILLING-001** | Assinaturas/Billing (SaaS) | Comercial | ADR-000 | TENANT-001 | ativo |
+| **BILLING-001** | Assinaturas/Billing (SaaS) | Comercial | ADR-000 | TENANT-001, BILLING-003 | ativo |
+| **BILLING-003** | Matriz de planos e entitlements (configuração comercial concreta) | Comercial | BILLING-001, BILLING-002, CARE-003 | telas de plano, CARE-003 | ativo (22/09) |
 | **DOC-001** | Repositório de Documentos | Documentos-fonte | CAP-001 | — | ativo |
 | **REL-001** | Central de Relatórios (Reporting = RPT-001) | Relatórios | DATA-001 | FIN-001 | ativo |
 | **HOM-001** | Home Experience (institucional) | 1ª tela | ADR-000 | DS-001 | a criar (BETA-9) |
