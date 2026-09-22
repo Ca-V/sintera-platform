@@ -97,10 +97,39 @@ O que a Fase 1 entrega é menor e não depende de consolidação nenhuma:
 
 ## 2. Entidades
 
+### 2.0 Identidade — um login, uma pessoa, dois perfis, duas assinaturas
+
+**Decisão da fundadora, 22/09/2026.**
+
+```
+Login (um por ser humano, chaveado por e-mail)
+├── Perfil pessoal        → assinatura escopo='pessoal'      (Evolução · Plus)
+└── Perfil profissional   → assinatura escopo='profissional' (Inteligência · Clínica)
+```
+
+A pessoa alterna entre os perfis dentro do aplicativo. **Nunca sai da conta.** É o desenho de um banco: um
+login, e dentro dele conta pessoa física e conta empresa.
+
+**Alternativa avaliada e descartada:** dois cadastros separados, o pessoal identificado por CPF e o
+profissional por registro de conselho ou CNPJ. Descartada por quatro razões, em ordem de peso:
+
+1. **O CNPJ amarraria a carteira do profissional a quem o emprega.** CNPJ identifica empresa, não pessoa. Com a
+   conta profissional chaveada por CNPJ, quem sai de uma clínica **perde os vínculos** — e leva os pacientes
+   para fora da plataforma. No desenho adotado o vínculo é com a pessoa e o registro dela no conselho: ela
+   troca de clínica e os pacientes continuam com ela.
+2. **Contraria a migração 139**, que já decidiu e aplicou em produção: *"Identidade LOCAL (`user_id`) nunca é
+   substituída por CPF/CNS."* CPF é identificador registrado em `party_identifiers`, não chave de identidade.
+3. **Exigiria segundo e-mail**, porque a autenticação chaveia por e-mail — e logout a cada troca de contexto,
+   na ação mais frequente do dia.
+4. **Ambiguidade de LGPD:** dois consentimentos, duas trilhas de auditoria e dois pedidos de exclusão para o
+   mesmo ser humano.
+
+**Onde o CNPJ entra:** no plano *Clínica e equipe*, que é uma **terceira entidade** — a clínica paga, e os
+vínculos continuam sendo de cada profissional. Território do TENANT-001; pendência registrada em §9.
+
 ### 2.1 Conta profissional
 
-Um perfil **distinto** do perfil pessoal, sobre o mesmo login. A mesma pessoa pode ter os dois: uma
-nutricionista que também acompanha a própria saúde.
+Um perfil **distinto** do perfil pessoal, sobre o mesmo login, conforme §2.0.
 
 ```
 Conta profissional

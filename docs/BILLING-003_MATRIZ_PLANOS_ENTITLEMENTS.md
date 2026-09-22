@@ -40,11 +40,16 @@ create table public.subscriptions (
 contrário — a nutricionista que assina o **Evolução** para a própria saúde e o **Inteligência da Prática** para
 a carteira dela. São dois produtos, dois preços, dois ciclos de cobrança.
 
-**Correção proposta, e é a menor possível:** acrescentar `escopo` (`pessoal` | `profissional`) e mover a chave
+**Decidido pela fundadora em 22/09/2026 — um login, uma pessoa, dois perfis, duas assinaturas** (CARE-003
+§2.0). A correção é a menor possível: acrescentar `escopo` (`pessoal` | `profissional`) e mover a chave
 primária para `(user_id, escopo)`. Nada mais muda de forma — mas `loadEntitlements` usa `.maybeSingle()` sobre
 `user_id` e passa a precisar do filtro por escopo, senão quebra no dia em que a segunda linha aparecer.
 
-> Decidir **antes** de cadastrar qualquer plano pago. Depois de haver assinatura real, virar a chave primária
+A alternativa de dois cadastros separados, chaveados por CPF e por CNPJ, foi avaliada e descartada; as quatro
+razões estão em CARE-003 §2.0, e a decisiva é comercial: o CNPJ amarraria a carteira do profissional a quem o
+emprega.
+
+> Feito **antes** de cadastrar qualquer plano pago. Depois de haver assinatura real, virar a chave primária
 > deixa de ser migração aditiva.
 
 ### 2.2 O dia em que `free` deixa de ser `'*'` é uma quebra, não uma configuração
