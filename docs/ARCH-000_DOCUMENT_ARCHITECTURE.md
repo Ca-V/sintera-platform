@@ -74,6 +74,7 @@ Metadados por documento: **Objetivo · Escopo · Responsável · Dependências �
 | **NOTIF-001** | Central de Notificações (infra única) | Notificações | ADR-000 | — | ativo |
 | **BILLING-001** | Assinaturas/Billing (SaaS) | Comercial | ADR-000 | TENANT-001, BILLING-003 | ativo |
 | **BILLING-003** | Matriz de planos e entitlements (configuração comercial concreta) | Comercial | BILLING-001, BILLING-002, CARE-003 | telas de plano, CARE-003 | ativo (22/09) |
+| **VAL-001** | Plano de Validação (coortes, eventos, portão de decisão) | Validação/medição | CARE-003, BILLING-003 | `usage_events`, onboarding | ativo (22/09) |
 | **DOC-001** | Repositório de Documentos | Documentos-fonte | CAP-001 | — | ativo |
 | **REL-001** | Central de Relatórios (Reporting = RPT-001) | Relatórios | DATA-001 | FIN-001 | ativo |
 | **HOM-001** | Home Experience (institucional) | 1ª tela | ADR-000 | DS-001 | a criar (BETA-9) |
