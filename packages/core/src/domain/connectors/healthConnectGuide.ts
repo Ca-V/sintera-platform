@@ -70,9 +70,24 @@ export function caminhoDaFonte(f: FonteGuia, plataforma: 'android' | 'ios'): str
   return f.caminhoIos ?? CAMINHO_IOS_GENERICO
 }
 
-/** Nome amigável da versão do Android, para a frase soar como a pessoa fala. */
+/**
+ * Nome amigável da versão do Android, para a frase soar como a pessoa fala.
+ *
+ * Era `api - 19`, que acerta da API 28 à 31 e erra de lá em diante: a API 32 é o Android 12L, não o 13, e o
+ * deslocamento de um nível acompanha todas as seguintes — a fórmula chamava a API 34 de "Android 15". O erro
+ * ficou latente enquanto a única fonte com versão mínima exigia API 29; apareceu quando o Garmin passou a
+ * exigir 34. Dizer à pessoa que ela precisa de um Android que não é o certo é pior do que não dizer nada:
+ * ela procura uma atualização que não existe, ou desiste achando que o aparelho dela nunca vai servir.
+ *
+ * Tabela explícita, porque a numeração do Android não segue fórmula. Fora da tabela, devolve o número da API
+ * em vez de inventar um nome errado.
+ */
+const NOME_ANDROID: Readonly<Record<number, string>> = {
+  28: 'Android 9', 29: 'Android 10', 30: 'Android 11', 31: 'Android 12', 32: 'Android 12L',
+  33: 'Android 13', 34: 'Android 14', 35: 'Android 15', 36: 'Android 16',
+}
 function versaoAndroid(api: number): string {
-  return `Android ${api - 19}` // API 29 = Android 10, 30 = 11, e assim por diante.
+  return NOME_ANDROID[api] ?? `Android (API ${api})`
 }
 
 /**
@@ -141,10 +156,16 @@ export const HEALTH_CONNECT_FONTES: readonly FonteGuia[] = [
     nome: 'Garmin',
     caminho: 'Garmin Connect → Configurações → Health Connect',
     traz: 'passos, frequência cardíaca, sono e atividades',
-    // Verificado em 28/08/2026: anunciado pelo Google em maio de 2025, ainda não disponível. Enquanto não
-    // estiver, o caminho acima não existe no app — e mandar a pessoa procurá-lo seria fazê-la se sentir burra
-    // por não achar o que não está lá.
-    indisponivel: 'O Garmin ainda não envia dados para o Health Connect. O suporte foi anunciado pelo Google, mas não foi liberado. Assim que sair, funciona sem você fazer nada aqui.',
+    // LIBERADO. Em 28/08/2026 esta fonte estava marcada como indisponível, e estava certo: o suporte tinha sido
+    // anunciado pelo Google e ainda não saíra. Saiu. O Garmin Connect passou a escrever no Health Connect, e
+    // continuar dizendo que não escreve é o mesmo erro ao contrário — esconder da pessoa uma fonte que ela pode
+    // ligar hoje.
+    //
+    // Fonte: documentação de suporte da própria Garmin, conferida em 22/09/2026. O caminho acima é o que ela
+    // descreve. DIFERENTE dos caminhos do Strava e do Samsung Health, este NÃO foi conferido num aparelho real
+    // com Garmin — o padrão desta lista é conferir, e aqui ele não foi cumprido. Fica para a homologação; se o
+    // menu estiver em outro lugar, corrigir aqui.
+    apiMinima: 34,
   },
 ]
 

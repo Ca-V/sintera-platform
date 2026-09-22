@@ -26,11 +26,36 @@ describe('guia de fontes do Health Connect', () => {
     expect(fontesDisponiveis(ANDROID_14).some(f => f.source === 'samsung_health')).toBe(true)
   })
 
-  it('a fonte que ainda não escreve continua bloqueada em QUALQUER Android', () => {
-    for (const api of [ANDROID_9, ANDROID_14]) {
-      const garmin = fontesIndisponiveis(api).find(x => x.fonte.source === 'garmin')
-      expect(garmin, `garmin deveria estar bloqueado no Android ${api}`).toBeDefined()
+  // O Garmin ficou marcado como indisponível até 22/09/2026, quando o suporte foi liberado e ele passou a
+  // depender só da versão do Android (14+). O MECANISMO continua valendo para a próxima fonte que ainda não
+  // escrever — e por isso é testado aqui sem depender de nenhuma fonte real estar nesse estado.
+  it('a fonte que ainda não escreve fica bloqueada em QUALQUER Android', () => {
+    const naoEscreve = { source: 'x', nome: 'Fonte X', caminho: 'X → Ajustes', traz: 'nada ainda',
+      indisponivel: 'A Fonte X ainda não envia dados para o Health Connect. Quando enviar, funciona sozinho.' }
+    for (const api of [undefined, ANDROID_9, ANDROID_14]) {
+      expect(motivoIndisponivel(naoEscreve, api), `deveria estar bloqueada no Android ${api}`).toBe(naoEscreve.indisponivel)
     }
+  })
+
+  // A numeração do Android não segue fórmula: a API 32 é o 12L, e daí em diante um cálculo por subtração
+  // desloca todas as versões. O motivo precisa nomear a versão CERTA — a pessoa vai procurar essa atualização.
+  it('o motivo nomeia a versão certa do Android, inclusive depois da API 31', () => {
+    const exige = (api: number) => {
+      const f = { source: 'y', nome: 'Fonte Y', caminho: 'Y → Ajustes', traz: 'algo', apiMinima: api }
+      return motivoIndisponivel(f, ANDROID_9) ?? ''
+    }
+    expect(exige(29)).toContain('Android 10')
+    expect(exige(33)).toContain('Android 13')
+    expect(exige(34)).toContain('Android 14')
+    expect(exige(35)).toContain('Android 15')
+    expect(exige(34), 'não pode chamar a API 34 de Android 15').not.toContain('Android 15')
+  })
+
+  it('o Garmin exige Android 14 — abaixo disso sai das disponíveis, com motivo', () => {
+    expect(fontesDisponiveis(ANDROID_14).some(f => f.source === 'garmin')).toBe(true)
+    const bloqueado = fontesIndisponiveis(ANDROID_9).find(x => x.fonte.source === 'garmin')
+    expect(bloqueado, 'garmin deveria estar bloqueado no Android 9').toBeDefined()
+    expect(bloqueado!.motivo).toContain('Android 14')
   })
 
   it('toda fonte indisponível traz o motivo — a lista nunca esconde sem explicar', () => {
@@ -42,7 +67,7 @@ describe('guia de fontes do Health Connect', () => {
   it('sem saber a versão do Android, só bloqueia o que vale para todo mundo', () => {
     // Não dá para afirmar que uma fonte é impossível quando não se sabe onde ela vai rodar.
     expect(fontesDisponiveis().some(f => f.source === 'samsung_health')).toBe(true)
-    expect(fontesDisponiveis().some(f => f.source === 'garmin')).toBe(false)
+    expect(fontesDisponiveis().some(f => f.source === 'garmin')).toBe(true)
   })
 
   it('disponíveis e indisponíveis somam o catálogo inteiro — nenhuma fonte some no caminho', () => {
