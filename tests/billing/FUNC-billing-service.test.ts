@@ -1,7 +1,7 @@
 // FUNC · BILLING-001 — serviço de assinatura (transição→histórico→fatura), lógica pura.
 
 import { describe, it, expect } from 'vitest'
-import { planTransition, buildInvoice, prorationCreditCents } from '@/lib/billing/service'
+import { planTransition, buildInvoice, prorationCreditCents } from '@sintera/core'
 
 describe('BILLING-001 · planTransition', () => {
   it('contratar sem assinatura → subscription ativa + evento com from=null', () => {

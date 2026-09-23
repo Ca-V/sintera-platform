@@ -10,7 +10,7 @@
 // quê. É a família "degradação silenciosa" outra vez.
 
 import { describe, it, expect } from 'vitest'
-import { loadEntitlements } from '@/lib/billing/load'
+import { loadEntitlements } from '@sintera/api-client'
 
 const PLANO_PESSOAL = { entitlements: { features: ['extracao.exames'], limits: { profissionais: 3 }, modules: ['exames'] } }
 const PLANO_PROF = { entitlements: { features: ['prof.painel_carteira'], limits: {}, modules: ['profissional'] } }

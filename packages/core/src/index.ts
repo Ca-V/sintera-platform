@@ -157,3 +157,10 @@ export * from './domain/search/globalSearch'
 // Para onde a busca LEVA: abrir o registro, e nao so a secao. A tela de destino negava o que a busca achou.
 export * from './domain/search/destinoDoAchado'
 export * from './domain/documents/cardActions'
+// Comercial (BILLING-001/003) — fronteira ÚNICA entre planos e módulos: can() · limit() · hasModule().
+// Estava em src/lib/billing, que é Web-only: o aplicativo não alcançava, e não conseguia nem EXIBIR o plano
+// da pessoa. A regra é pura e vale igual nos dois; o IO ficou no api-client.
+export * from './domain/billing/entitlements'
+export * from './domain/billing/lifecycle'
+export * from './domain/billing/service'
+export * from './domain/billing/resolve'

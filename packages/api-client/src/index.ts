@@ -97,3 +97,5 @@ export { validateUpload, acceptedFormatsHint, type UploadValidation } from './ex
 // PORT de seleção de documento (device) — abstração injetada por plataforma (app não conhece a lib).
 export type { DocumentPickerPort, PickedFile, PickedImage } from './device/documentPicker'
 export { withTimeout, TimeoutError, DEFAULT_TIMEOUT_MS } from './net/timeout'
+// Comercial (BILLING-001) — leitura da assinatura vigente. A REGRA mora no core; aqui só o IO.
+export { loadEntitlements } from './billing/load'
