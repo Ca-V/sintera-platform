@@ -17,7 +17,10 @@ export interface PlanRow { entitlements: PlanEntitlements }
  */
 export type EscopoAssinatura = 'pessoal' | 'profissional'
 
-export const ESCOPO_PADRAO: EscopoAssinatura = 'pessoal'
+// Nome qualificado de propósito: `ESCOPO_PADRAO` sozinho colide com o escopo de VÍNCULO do CARE-003, que é
+// outra coisa inteiramente (lista de módulos, não perfil de assinatura). A colisão passou silenciosa pelo
+// `export *` do índice e só apareceu num teste — duas constantes diferentes com o mesmo nome público.
+export const ESCOPO_ASSINATURA_PADRAO: EscopoAssinatura = 'pessoal'
 
 /** Puro: mapeia linhas (assinatura + plano) para o contrato de entitlements. */
 export function entitlementsFrom(sub: SubRow | null, plan: PlanRow | null): Entitlements {

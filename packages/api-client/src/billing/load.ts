@@ -12,7 +12,7 @@
 // para a UI e precisa ser visível no log de quem investiga.
 
 import {
-  resolveEntitlements, entitlementsFrom, ESCOPO_PADRAO,
+  resolveEntitlements, entitlementsFrom, ESCOPO_ASSINATURA_PADRAO,
   type Entitlements, type EscopoAssinatura, type SubRow, type PlanRow,
 } from '@sintera/core'
 
@@ -24,7 +24,7 @@ import {
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function loadEntitlements(
-  supabase: any, userId: string, escopo: EscopoAssinatura = ESCOPO_PADRAO,
+  supabase: any, userId: string, escopo: EscopoAssinatura = ESCOPO_ASSINATURA_PADRAO,
 ): Promise<Entitlements> {
   try {
     const { data: sub } = await supabase
