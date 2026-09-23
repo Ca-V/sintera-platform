@@ -4,8 +4,8 @@
 // reativar, inadimplência. Determinística; ação inválida lança (nunca aplica estado inconsistente).
 
 import { describe, it, expect } from 'vitest'
-import { applyAction, canApply, grantsPaidPlan, type SubscriptionAction } from '@/lib/billing/lifecycle'
-import type { SubscriptionStatus } from '@/lib/billing/entitlements'
+import { applyAction, canApply, grantsPaidPlan, type SubscriptionAction } from '@sintera/core'
+import type { SubscriptionStatus } from '@sintera/core'
 
 describe('BILLING-001 · transições válidas', () => {
   const cases: Array<[SubscriptionStatus | null, SubscriptionAction, SubscriptionStatus]> = [

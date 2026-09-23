@@ -4,7 +4,7 @@
 // módulos; status inativo degrada para FREE (não quebra); curinga '*'; limite ausente = ilimitado.
 
 import { describe, it, expect } from 'vitest'
-import { resolveEntitlements, freeEntitlements, FREE_PLAN, type PlanEntitlements } from '@/lib/billing/entitlements'
+import { resolveEntitlements, freeEntitlements, FREE_PLAN, type PlanEntitlements } from '@sintera/core'
 
 const PRO: PlanEntitlements = {
   features: ['reports.share', 'omics'],
