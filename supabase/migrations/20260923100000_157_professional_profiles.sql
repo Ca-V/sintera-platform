@@ -14,16 +14,26 @@
 -- convite vêm depois, e cada um exige `status_verificacao = 'verificado'` (CARE-003 §5).
 
 -- Conselhos que faltavam no enum da 139, que só tinha 'crm'.
+--
+-- O `if exists` em volta NÃO é zelo excessivo: ao aplicar isto em produção em 23/09/2026, a migração falhou
+-- com `type "public.identifier_kind" does not exist`. O bloco 137–143 do repositório — exam_documents,
+-- service_requests, a identidade FHIR inteira, terminology_bindings, consents e procedures — **nunca foi
+-- aplicado ao banco de produção**, embora as migrações 146 em diante tenham sido. Há um buraco no meio.
+--
+-- Esta tabela não depende do enum: `conselho` é uma coluna `text` com CHECK próprio. Então o enum é melhoria
+-- oportunista onde ele existir, e a ausência dele não pode derrubar a criação da conta profissional.
 do $$
 begin
-  if not exists (select 1 from pg_enum where enumtypid = 'public.identifier_kind'::regtype and enumlabel = 'crn') then
-    alter type public.identifier_kind add value 'crn';
-  end if;
-  if not exists (select 1 from pg_enum where enumtypid = 'public.identifier_kind'::regtype and enumlabel = 'crefito') then
-    alter type public.identifier_kind add value 'crefito';
-  end if;
-  if not exists (select 1 from pg_enum where enumtypid = 'public.identifier_kind'::regtype and enumlabel = 'cref') then
-    alter type public.identifier_kind add value 'cref';
+  if exists (select 1 from pg_type where typname = 'identifier_kind') then
+    if not exists (select 1 from pg_enum where enumtypid = 'public.identifier_kind'::regtype and enumlabel = 'crn') then
+      alter type public.identifier_kind add value 'crn';
+    end if;
+    if not exists (select 1 from pg_enum where enumtypid = 'public.identifier_kind'::regtype and enumlabel = 'crefito') then
+      alter type public.identifier_kind add value 'crefito';
+    end if;
+    if not exists (select 1 from pg_enum where enumtypid = 'public.identifier_kind'::regtype and enumlabel = 'cref') then
+      alter type public.identifier_kind add value 'cref';
+    end if;
   end if;
 end $$;
 
