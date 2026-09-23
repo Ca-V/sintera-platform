@@ -164,3 +164,5 @@ export * from './domain/billing/entitlements'
 export * from './domain/billing/lifecycle'
 export * from './domain/billing/service'
 export * from './domain/billing/resolve'
+// Conta profissional (CARE-003) — quem pode agir na Rede de Cuidado, e por que não pode quando não pode.
+export * from './domain/professional/perfil'
