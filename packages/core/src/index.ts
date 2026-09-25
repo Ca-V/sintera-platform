@@ -172,3 +172,7 @@ export * from './domain/care/convite'
 export * from './domain/care/redeDeCuidado'
 export * from './domain/care/propostaDocumento'
 export * from './domain/billing/limites'
+// Telemetria de produto (VAL-001) — os nomes dos eventos do portão e o sorteio do convite. O nome do evento
+// é DECISÃO: emitido diferente em cada ponta, a série histórica nasce partida e não se conserta.
+export * from './domain/telemetria/eventos'
+export * from './domain/telemetria/coorte'
