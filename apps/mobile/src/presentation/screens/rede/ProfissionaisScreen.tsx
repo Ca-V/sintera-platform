@@ -16,8 +16,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { heading, text } from '@sintera/design-system'
 import {
   SCREEN_COPY, secoesDaRedeDeCuidado, redeEstaVazia, descricaoDoProfissional, resumoDoEscopo,
-  rotuloParaRemetente, formatDateBR,
-  type VinculoNaLista, type ConviteNaLista,
+  rotuloParaRemetente, formatDateBR, freeEntitlements, avaliarLimite, motivoDoLimite, LIMITE_PROFISSIONAIS,
+  type VinculoNaLista, type ConviteNaLista, type Entitlements,
 } from '@sintera/core'
 import { Text, Input, Button, FieldRow } from '../../primitives'
 import { useTheme } from '../../theme'
@@ -34,16 +34,23 @@ export function ProfissionaisScreen() {
   const [refreshing, setRefreshing] = useState(false)
   const [contato, setContato] = useState('')
   const [enviando, setEnviando] = useState(false)
+  // BILLING-003: a permissão vem do plano. Enquanto o `free` tiver o curinga, isto concede tudo — e é assim
+  // que tem de ser: ligar o consumidor e trocar a fronteira são passos separados de propósito.
+  const [entitlements, setEntitlements] = useState<Entitlements>(() => freeEntitlements())
   const alive = useRef(true)
 
   useEffect(() => () => { alive.current = false }, [])
 
   const carregar = useCallback(async () => {
     try {
-      const rede = await apiClient.care.getRedeDeCuidado()
+      const [rede, ent] = await Promise.all([
+        apiClient.care.getRedeDeCuidado(),
+        apiClient.billing.getEntitlements(),
+      ])
       if (!alive.current) return
       setVinculos(rede.vinculos)
       setConvites(rede.convites)
+      setEntitlements(ent)
       setPhase('ready')
     } catch {
       if (alive.current) setPhase('error')
@@ -85,6 +92,13 @@ export function ProfissionaisScreen() {
   const secoes = secoesDaRedeDeCuidado(vinculos, convites, agora)
   const vazia = redeEstaVazia(vinculos, convites, agora)
 
+  // O teto conta vinculos ATIVOS e convites PENDENTES: um convite enviado ja compromete uma vaga. BILLING-003
+  // §3 — o limite trava o PROXIMO; quem esta acima do teto continua vendo todos os seus vinculos.
+  const ocupadas = vinculos.filter(v => v.status === 'ativo').length
+    + convites.filter(c => c.status === 'enviado' && c.expiraEm > agora).length
+  const limite = avaliarLimite(entitlements, LIMITE_PROFISSIONAIS, ocupadas)
+  const motivoTeto = motivoDoLimite(limite, 'profissionais')
+
   return (
     <ScrollView
       style={{ backgroundColor: t.color.surface.app }}
@@ -106,9 +120,13 @@ export function ProfissionaisScreen() {
           <Input value={contato} onChangeText={setContato}
             placeholder="nome@exemplo.com" autoCapitalize="none" keyboardType="email-address" />
         </FieldRow>
-        <Button label={C.invite} onPress={() => { void convidar() }} disabled={!contato.trim() || enviando} />
+        <Button label={C.invite} onPress={() => { void convidar() }}
+          disabled={!contato.trim() || enviando || !limite.podeAcrescentar} />
         {/* A frase que desarma a dúvida antes de ela existir. */}
         <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{C.contactHint}</Text>
+        {/* Botão desabilitado sem explicação é a armadilha da configuração ausente: nada acontece e nada diz
+            por quê. O motivo vem do core, com o número do plano. */}
+        {motivoTeto && <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{motivoTeto}</Text>}
       </View>
 
       {phase === 'loading' && <ActivityIndicator color={t.color.text.muted} />}
