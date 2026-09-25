@@ -39,6 +39,9 @@
     },
     "ios-sim": {
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_WEB_URL": "https://sinteramais.com.br"
+      },
       "ios": {
         "simulator": true
       }
