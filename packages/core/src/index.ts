@@ -168,3 +168,4 @@ export * from './domain/billing/resolve'
 export * from './domain/professional/perfil'
 // Vínculo da Rede de Cuidado (CARE-003) — quem inicia, quem ativa, e o que o profissional enxerga.
 export * from './domain/care/vinculo'
+export * from './domain/care/convite'

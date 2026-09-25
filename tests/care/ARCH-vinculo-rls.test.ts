@@ -84,6 +84,59 @@ describe('CARE-003 · a função que as tabelas de dado vão consultar', () => {
   })
 })
 
+describe('CARE-003 §2.3 · o convite', () => {
+  const sql159 = arquivo('159_care_invites')
+
+  it('tem RLS ligada', () => {
+    expect(sql159).toMatch(/alter table public\.care_invites enable row level security/i)
+  })
+
+  it('NÃO tem policy de DELETE — apagar recusa permitiria reenviar sem rastro', () => {
+    expect(sql159).not.toMatch(/create policy[\s\S]*?on public\.care_invites\s+for delete/i)
+  })
+
+  it('o REMETENTE não pode marcar aceito nem recusado', () => {
+    const bloco = sql159.match(/create policy care_invites_remetente_update[\s\S]*?;/i)?.[0] ?? ''
+    expect(bloco, 'policy de update do remetente não encontrada').not.toBe('')
+    expect(semEspacos(bloco)).toMatch(/status in \('enviado','cancelado','expirado'\)/i)
+    expect(bloco).not.toMatch(/'aceito'/)
+    expect(bloco).not.toMatch(/'recusado'/)
+  })
+
+  it('o DESTINATÁRIO só marca aceito ou recusado — não cancela pelo outro', () => {
+    const bloco = sql159.match(/create policy care_invites_destinatario_update[\s\S]*?;/i)?.[0] ?? ''
+    expect(semEspacos(bloco)).toMatch(/status in \('aceito','recusado'\)/i)
+    expect(bloco).not.toMatch(/'cancelado'/)
+  })
+
+  it('o token é gerado no banco, não pelo cliente', () => {
+    expect(semEspacos(sql159)).toMatch(/default encode\(gen_random_bytes\(32\), 'hex'\)/i)
+  })
+
+  it('aceite exige vínculo, e resposta exige instante', () => {
+    expect(semEspacos(sql159)).toMatch(/status <> 'aceito' or care_link_id is not null/i)
+    expect(semEspacos(sql159)).toMatch(/status not in \('aceito','recusado'\) or respondido_em is not null/i)
+  })
+
+  it('a visão do remetente omite `para_user_id` e `token` — saber se a pessoa tem conta é pressão', () => {
+    const view = sql159.match(/create or replace view public\.care_invites_do_remetente[\s\S]*?;/i)?.[0] ?? ''
+    expect(view, 'visão do remetente não encontrada').not.toBe('')
+    expect(view).not.toMatch(/\bpara_user_id\b/)
+    expect(view).not.toMatch(/\btoken\b/)
+    expect(view, 'sem security_invoker o RLS deixaria de valer').toMatch(/security_invoker\s*=\s*true/i)
+  })
+
+  it('nenhuma coluna do convite é de dado clínico', () => {
+    const tabela = sql159.match(/create table if not exists public\.care_invites[\s\S]*?\n\);/i)?.[0] ?? ''
+    expect(tabela).not.toBe('')
+    for (const proibido of ['exame', 'biomarcador', 'diagnostico', 'medicamento', 'laudo', 'resultado', 'condicao']) {
+      expect(semEspacos(tabela).toLowerCase(), `coluna clínica no convite: ${proibido}`).not.toMatch(
+        new RegExp(`\\b${proibido}\\w*\\s+(text|uuid|jsonb|numeric|boolean|date|timestamptz)`),
+      )
+    }
+  })
+})
+
 describe('CARE-003 · nenhuma porta lateral nas demais migrações', () => {
   it('nenhuma policy libera leitura por perfil profissional sem passar pelo vínculo', () => {
     const suspeitas: string[] = []
