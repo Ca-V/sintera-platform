@@ -40,6 +40,7 @@ import { exportAccountData, deleteAccount } from '../settings/account'
 import { readCondition, readBioimpedance, readEyeglasses, scanMedications } from '../vision/vision'
 import { getMinhaSaudeCounts } from '../summary/counts'
 import { getRedeDeCuidado, convidarProfissional, revogarVinculo, cancelarConvite } from '../care/rede'
+import { getEntitlementsDaSessao } from '../billing/load'
 import { listBodyMetrics, saveBodyMetric, deleteBodyMetric, getHeightCm, getWeightGoal, setWeightGoal } from '../body/body'
 import { listActivitySessions, saveActivitySession, deleteActivitySession, ingestActivitySessions } from '../activity/activity'
 import { ingestWearableSamples } from '../wearables/wearables'
@@ -239,6 +240,11 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       convidarProfissional: (contato, signal) => convidarProfissional(supabase, contato, signal),
       revogarVinculo: (id, signal) => revogarVinculo(supabase, id, signal),
       cancelarConvite: (id, signal) => cancelarConvite(supabase, id, signal),
+    },
+    // Comercial (BILLING-003). Este é o consumidor que faltava: o BILLING-002 §3 mediu schema em produção,
+    // contrato pronto e ZERO telas consultando permissão. Sem isto, nada é cobrado nem limitado.
+    billing: {
+      getEntitlements: (escopo, signal) => getEntitlementsDaSessao(supabase, escopo, signal),
     },
   }
 }

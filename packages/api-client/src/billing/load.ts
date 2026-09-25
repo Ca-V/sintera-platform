@@ -38,3 +38,25 @@ export async function loadEntitlements(
     return resolveEntitlements({}) // erro comercial nunca quebra o módulo
   }
 }
+
+/**
+ * Entitlements de quem está autenticado. É o que a TELA consome — ela não conhece `user_id`, e não deveria.
+ *
+ * Sem sessão, devolve FREE em vez de lançar: o comercial nunca quebra o módulo (convenção do BILLING-001).
+ * Mas note a consequência, que está no BILLING-003 §2.2: enquanto o plano `free` tiver o curinga, "cair em
+ * FREE" concede tudo. Quando a fronteira for ligada, esta linha passa a NEGAR — e é por isso que a troca do
+ * curinga tem migração própria e aviso prévio.
+ */
+export async function getEntitlementsDaSessao(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any, escopo: EscopoAssinatura = ESCOPO_ASSINATURA_PADRAO, signal?: AbortSignal,
+): Promise<Entitlements> {
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return resolveEntitlements({})
+    void signal // a consulta e curta e o contrato de leitura nao propaga cancelamento aqui
+    return await loadEntitlements(supabase, session.user.id, escopo)
+  } catch {
+    return resolveEntitlements({})
+  }
+}

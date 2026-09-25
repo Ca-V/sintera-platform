@@ -23,12 +23,12 @@ import EmptyState from '@/components/EmptyState'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { Card } from '@/lib/ui/ds'
 import {
-  getRedeDeCuidado, convidarProfissional, revogarVinculo, cancelarConvite,
+  getRedeDeCuidado, convidarProfissional, revogarVinculo, cancelarConvite, getEntitlementsDaSessao,
 } from '@sintera/api-client'
 import {
   SCREEN_COPY, secoesDaRedeDeCuidado, redeEstaVazia, descricaoDoProfissional, resumoDoEscopo,
-  rotuloParaRemetente, formatDateBR,
-  type VinculoNaLista, type ConviteNaLista,
+  rotuloParaRemetente, formatDateBR, freeEntitlements, avaliarLimite, motivoDoLimite, LIMITE_PROFISSIONAIS,
+  type VinculoNaLista, type ConviteNaLista, type Entitlements,
 } from '@sintera/core'
 
 const C = SCREEN_COPY.profissionais
@@ -43,14 +43,21 @@ export default function ProfissionaisPage() {
   const [contato, setContato] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [aRevogar, setARevogar] = useState<VinculoNaLista | null>(null)
+  // BILLING-003: a permissão vem do plano. Enquanto o `free` tiver o curinga, isto concede tudo — e é assim
+  // que tem de ser, porque ligar o consumidor e trocar a fronteira são passos separados de propósito.
+  const [entitlements, setEntitlements] = useState<Entitlements>(() => freeEntitlements())
 
   const carregar = useCallback(async () => {
     setCarregando(true)
     setErro(null)
     try {
-      const rede = await getRedeDeCuidado(supabase)
+      const [rede, ent] = await Promise.all([
+        getRedeDeCuidado(supabase),
+        getEntitlementsDaSessao(supabase),
+      ])
       setVinculos(rede.vinculos)
       setConvites(rede.convites)
+      setEntitlements(ent)
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Não consegui carregar sua rede de cuidado.')
     } finally {
@@ -79,6 +86,16 @@ export default function ProfissionaisPage() {
   const secoes = secoesDaRedeDeCuidado(vinculos, convites, agora)
   const vazia = redeEstaVazia(vinculos, convites, agora)
 
+  // O teto conta vínculos ATIVOS e convites PENDENTES: um convite enviado já compromete uma vaga, e deixar a
+  // pessoa mandar cinco convites com teto de três só adiaria a recusa para o pior momento — o do aceite.
+  //
+  // BILLING-003 §3: o limite trava o PRÓXIMO. Quem está acima do teto continua vendo todos os seus vínculos —
+  // a lista é montada por `secoesDaRedeDeCuidado`, que não conhece plano nenhum, e é assim de propósito.
+  const ocupadas = vinculos.filter(v => v.status === 'ativo').length
+    + convites.filter(c => c.status === 'enviado' && c.expiraEm > agora).length
+  const limite = avaliarLimite(entitlements, LIMITE_PROFISSIONAIS, ocupadas)
+  const motivoTeto = motivoDoLimite(limite, 'profissionais')
+
   return (
     <div className="max-w-3xl mx-auto flex flex-col gap-4">
       <PageHeader title={C.title} subtitle={C.subtitle} />
@@ -95,7 +112,8 @@ export default function ProfissionaisPage() {
             placeholder="nome@exemplo.com"
           />
           <button
-            type="button" onClick={() => void convidar()} disabled={!contato.trim() || enviando}
+            type="button" onClick={() => void convidar()}
+            disabled={!contato.trim() || enviando || !limite.podeAcrescentar}
             className="rounded-lg bg-petal px-4 py-2 font-body text-sm text-white disabled:opacity-50"
           >
             {enviando ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : C.invite}
@@ -103,6 +121,9 @@ export default function ProfissionaisPage() {
         </div>
         {/* A frase que desarma a dúvida antes de ela existir. */}
         <p className="font-body text-xs text-mauve">{C.contactHint}</p>
+        {/* Botão desabilitado sem explicação é a armadilha da configuração ausente: nada acontece e nada diz
+            por quê. O motivo vem do core, com o número do plano. */}
+        {motivoTeto && <p className="font-body text-xs text-mauve">{motivoTeto}</p>}
       </Card>
 
       {erro && <p className="font-body text-sm text-red-700" role="alert">{erro}</p>}

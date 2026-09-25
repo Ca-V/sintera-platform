@@ -98,7 +98,7 @@ export { validateUpload, acceptedFormatsHint, type UploadValidation } from './ex
 export type { DocumentPickerPort, PickedFile, PickedImage } from './device/documentPicker'
 export { withTimeout, TimeoutError, DEFAULT_TIMEOUT_MS } from './net/timeout'
 // Comercial (BILLING-001) — leitura da assinatura vigente. A REGRA mora no core; aqui só o IO.
-export { loadEntitlements } from './billing/load'
+export { loadEntitlements, getEntitlementsDaSessao } from './billing/load'
 // Rede de Cuidado (CARE-003) — vínculos e convites. A REGRA mora no core; aqui só o IO.
 export { getRedeDeCuidado, convidarProfissional, revogarVinculo, cancelarConvite } from './care/rede'
 export type { RedeDeCuidado } from './care/rede'

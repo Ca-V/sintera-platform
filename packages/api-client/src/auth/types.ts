@@ -223,6 +223,8 @@ export interface ApiClient {
   search: SearchApi
   /** Rede de Cuidado (CARE-003) — vínculos e convites. A regra mora no core; o RLS do banco é quem impõe. */
   care: CareApi
+  /** Comercial (BILLING-001/003) — entitlements do perfil. A regra mora no core; aqui só a leitura. */
+  billing: BillingApi
 }
 
 /** Síntese de navegação (§5d) — contagens por domínio para os indicadores de conteúdo do menu/Sidebar. */
@@ -324,4 +326,23 @@ export interface CareApi {
   convidarProfissional(paraContato: string, signal?: AbortSignal): Promise<{ id: string }>
   revogarVinculo(vinculoId: string, signal?: AbortSignal): Promise<void>
   cancelarConvite(conviteId: string, signal?: AbortSignal): Promise<void>
+}
+
+/**
+ * Comercial (BILLING-001/003). Existe para que a TELA consulte permissão — que é o passo que o BILLING-002 §3
+ * apontou como o unico ausente: schema em produção, contrato pronto, e zero consumidores.
+ */
+export interface BillingApi {
+  getEntitlements(escopo?: import('@sintera/core').EscopoAssinatura, signal?: AbortSignal): Promise<import('@sintera/core').Entitlements>
+}
+
+/**
+ * Comercial (BILLING-001/003). Existe para que a TELA consulte permissão — que é o passo que o BILLING-002 §3
+ * apontou como o único ausente: schema em produção, contrato pronto, e ZERO consumidores.
+ */
+export interface BillingApi {
+  getEntitlements(
+    escopo?: import('@sintera/core').EscopoAssinatura,
+    signal?: AbortSignal,
+  ): Promise<import('@sintera/core').Entitlements>
 }
