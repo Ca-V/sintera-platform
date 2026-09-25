@@ -146,7 +146,12 @@ describe('CARE-003 · nenhuma porta lateral nas demais migrações', () => {
         if (!/professional_profiles/i.test(p)) continue
         // A própria tabela de perfil e a de vínculo são as donas da regra — não são porta lateral.
         if (/on public\.(professional_profiles|care_links)/i.test(p)) continue
-        if (!/profissional_tem_vinculo_ativo/i.test(p)) suspeitas.push(`${f}: ${semEspacos(p).slice(0, 90)}`)
+        // Duas formas exprimem a MESMA exigência, e as duas valem: chamar a função, ou juntar `care_links`
+        // e exigir `status = 'ativo'` na própria policy. A segunda é a que a migração 160 usa, porque ali a
+        // condição precisa vir junto com a verificação de conselho, no mesmo `exists`.
+        const exigeVinculoAtivo = /profissional_tem_vinculo_ativo/i.test(p)
+          || (/care_links/i.test(p) && /status\s*=\s*'ativo'/i.test(p))
+        if (!exigeVinculoAtivo) suspeitas.push(`${f}: ${semEspacos(p).slice(0, 90)}`)
       }
     }
     expect(suspeitas, `policy citando perfil profissional sem exigir vínculo ativo: ${suspeitas.join(' · ')}`).toEqual([])
