@@ -1,22 +1,14 @@
 import type { Metadata } from 'next'
-import { Fraunces, Hanken_Grotesk } from 'next/font/google'
 import { UserProvider } from '@/context/UserContext'
 import './globals.css'
 
 // Identidade oficial da SINTERA (BRAND-002): título Fraunces + corpo/interface Hanken Grotesk.
-const fraunces = Fraunces({
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
-  variable: '--font-fraunces',
-  display: 'swap',
-})
-
-const hanken = Hanken_Grotesk({
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700'],
-  variable: '--font-hanken',
-  display: 'swap',
-})
+//
+// AS FONTES SÃO DEFINIDAS UMA VEZ SÓ, em `@/lib/ui/ds/fonts` — o adaptador do DS. Estavam declaradas aqui E
+// lá: duas chamadas independentes para as mesmas famílias. O Next deduplica os arquivos por conteúdo, então
+// não custava banda; mas eram duas fontes de verdade para a mesma decisão, e bastaria alguém mudar um peso
+// num dos lados para as duas divergirem sem nada acusar.
+import { frauncesFont as fraunces, hankenFont as hanken } from '@/lib/ui/ds/fonts'
 
 export const metadata: Metadata = {
   title: { default: 'SINTERA', template: '%s — SINTERA' },

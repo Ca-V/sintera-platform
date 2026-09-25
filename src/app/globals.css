@@ -11,6 +11,41 @@
   --font-body: var(--font-hanken);
 }
 
+/* ─── Fontes de substituição, com as métricas EXATAS que produção renderia (25/09/2026) ───
+   Existem para que o texto não salte quando a fonte real termina de carregar: a substituta é redimensionada
+   para ocupar o mesmo espaço.
+
+   OS NÚMEROS SÃO COPIADOS, NÃO CALCULADOS — e de propósito. Vinham prontos do `next/font/google`, derivados
+   das métricas da FAMÍLIA INTEIRA. Ao passar para fontes locais, o Next passaria a derivá-los do arquivo que
+   recebe — o subconjunto latino —, e o resultado divergia: a Fraunces ficaria com size-adjust 126,68% em vez
+   de 115,45%, uns 10% maior antes da troca. O salto seria visível numa tela de títulos.
+
+   Ao trocar qualquer arquivo de fonte, estes valores precisam ser reconferidos. Ver `src/lib/ui/ds/fonts.ts`. */
+@font-face {
+  font-family: 'Fraunces Fallback';
+  src: local('Times New Roman');
+  ascent-override: 84.71%;
+  descent-override: 22.09%;
+  line-gap-override: 0.0%;
+  size-adjust: 115.45%;
+}
+@font-face {
+  font-family: 'Hanken Grotesk Fallback';
+  src: local('Arial');
+  ascent-override: 99.07%;
+  descent-override: 30.02%;
+  line-gap-override: 0.0%;
+  size-adjust: 100.94%;
+}
+@font-face {
+  font-family: 'IBM Plex Mono Fallback';
+  src: local('Arial');
+  ascent-override: 76.16%;
+  descent-override: 20.43%;
+  line-gap-override: 0.0%;
+  size-adjust: 134.59%;
+}
+
 /* ─── Keyframes (animações — comportamento de plataforma) ─── */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(20px); }
