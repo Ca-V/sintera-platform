@@ -79,6 +79,31 @@ export const SCREEN_COPY = {
     fieldEnergy:        'Energia gasta em kcal (opcional)',
     paceHint:           'O ritmo é calculado sozinho a partir da duração e da distância.',
   },
+  // Rede de Cuidado (CARE-003). O texto estava digitado nas duas pontas com as mesmas frases — igual até o dia
+  // em que uma delas mudasse. Aqui a promessa é uma só, e ela é deliberadamente sóbria: a plataforma organiza
+  // e dá acesso, não interpreta nem substitui o profissional.
+  rede: {
+    title:        'Rede de Cuidado',
+    subtitle:     'Reúna aqui quem acompanha você. Você convida, autoriza o que cada um enxerga e pode encerrar quando quiser.',
+    soonLabel:    'em breve',
+    soonReason:   'Compartilhamentos entram junto com o espaço de consulta.',
+  },
+  profissionais: {
+    title:        'Profissionais',
+    subtitle:     'Quem acompanha você, o que cada um enxerga e os convites que você enviou.',
+    invite:       'Convidar profissional',
+    emptyTitle:   'Ninguém acompanha você por aqui ainda',
+    emptyMessage: 'Convide o profissional que já cuida de você. Ele recebe um convite, e só passa a ver alguma coisa depois que você autorizar.',
+    // A frase que a pessoa lê antes de autorizar. Factual, sem tranquilizar além do que é verdade.
+    scopeTitle:   'O que ele vai enxergar',
+    scopeHint:    'Você escolhe as áreas agora e muda quando quiser. Nada fica visível antes do seu aceite.',
+    revoke:       'Encerrar acesso',
+    // Encerrar é ato dela e é definitivo — dizer isso antes evita a descoberta depois.
+    revokeHint:   'O acesso termina na hora. O histórico de que existiu fica registrado.',
+    cancelInvite: 'Cancelar convite',
+    fieldContact: 'E-mail ou telefone do profissional',
+    contactHint:  'O convite não leva nenhum dado de saúde seu — só o pedido de conexão.',
+  },
   exames: {
     title:        'Exames',
     subtitle:     'Solte o laudo — a SINTERA lê e extrai os dados por você. Os resultados ficam organizados ao longo do tempo.',

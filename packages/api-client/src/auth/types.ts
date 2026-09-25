@@ -221,6 +221,8 @@ export interface ApiClient {
   summary: SummaryApi
   /** Busca global nos registros da pessoa — encontra o que ela cadastrou, não só as seções. */
   search: SearchApi
+  /** Rede de Cuidado (CARE-003) — vínculos e convites. A regra mora no core; o RLS do banco é quem impõe. */
+  care: CareApi
 }
 
 /** Síntese de navegação (§5d) — contagens por domínio para os indicadores de conteúdo do menu/Sidebar. */
@@ -311,4 +313,15 @@ export interface SettingsApi {
   exportAccountData(): Promise<{ data: unknown; error: Error | null }>
   /** Exclui a conta e TODOS os dados (irreversível). PONTE ADR-020. */
   deleteAccount(): Promise<{ error: Error | null }>
+}
+
+/**
+ * Rede de Cuidado (CARE-003). O aplicativo alcança o vínculo pelo MESMO contrato que a Web — sem isso a tela
+ * do Mobile teria de falar com o Supabase direto, que é o segundo dono do mesmo conceito (ADR-023).
+ */
+export interface CareApi {
+  getRedeDeCuidado(signal?: AbortSignal): Promise<import('../care/rede').RedeDeCuidado>
+  convidarProfissional(paraContato: string, signal?: AbortSignal): Promise<{ id: string }>
+  revogarVinculo(vinculoId: string, signal?: AbortSignal): Promise<void>
+  cancelarConvite(conviteId: string, signal?: AbortSignal): Promise<void>
 }

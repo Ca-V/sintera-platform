@@ -39,6 +39,7 @@ import { listNotificationPrefs, saveNotificationPrefs } from '../settings/notifi
 import { exportAccountData, deleteAccount } from '../settings/account'
 import { readCondition, readBioimpedance, readEyeglasses, scanMedications } from '../vision/vision'
 import { getMinhaSaudeCounts } from '../summary/counts'
+import { getRedeDeCuidado, convidarProfissional, revogarVinculo, cancelarConvite } from '../care/rede'
 import { listBodyMetrics, saveBodyMetric, deleteBodyMetric, getHeightCm, getWeightGoal, setWeightGoal } from '../body/body'
 import { listActivitySessions, saveActivitySession, deleteActivitySession, ingestActivitySessions } from '../activity/activity'
 import { ingestWearableSamples } from '../wearables/wearables'
@@ -230,6 +231,14 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
     },
     summary: {
       getMinhaSaudeCounts: (signal) => getMinhaSaudeCounts(supabase, signal),
+    },
+    // Rede de Cuidado (CARE-003). O aplicativo alcança o vínculo pelo MESMO contrato que a Web — sem isto a
+    // tela do Mobile teria de falar com o Supabase direto, que é o segundo dono do mesmo conceito (ADR-023).
+    care: {
+      getRedeDeCuidado: (signal) => getRedeDeCuidado(supabase, signal),
+      convidarProfissional: (contato, signal) => convidarProfissional(supabase, contato, signal),
+      revogarVinculo: (id, signal) => revogarVinculo(supabase, id, signal),
+      cancelarConvite: (id, signal) => cancelarConvite(supabase, id, signal),
     },
   }
 }
