@@ -24,7 +24,7 @@ on:
         description: Perfil EAS
         type: choice
         default: preview
-        options: [preview, development, production]
+        options: [preview, development, production, ios-sim]
 
 jobs:
   build:
