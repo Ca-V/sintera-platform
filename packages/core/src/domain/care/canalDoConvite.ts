@@ -75,14 +75,38 @@ export type EntregaDoConvite = 'pendente' | 'entregue' | 'falhou' | 'nao_configu
  * `nao_configurado` e `falhou` dizem para quem olha que o convite NÃO chegou — porque deixar a pessoa
  * esperando uma resposta impossível é exatamente o defeito que este módulo existe para corrigir.
  */
-export function rotuloDaEntrega(e: EntregaDoConvite, canal: CanalDoConvite): string {
+export function rotuloDaEntrega(e: EntregaDoConvite, canal: CanalDoConvite, motivo?: string | null): string {
   const onde = canal === 'whatsapp' ? 'por WhatsApp' : 'por e-mail'
   switch (e) {
     case 'pendente': return 'Enviando…'
     case 'entregue': return `Convite enviado ${onde}`
     case 'falhou': return `Não consegui enviar ${onde}. Tente de novo.`
-    case 'nao_configurado': return `O envio ${onde} ainda não está configurado — o convite não saiu.`
+    case 'nao_configurado': return MOTIVO[motivo ?? ''] ?? `O envio ${onde} ainda não está configurado — o convite não saiu.`
   }
+}
+
+/**
+ * A frase de cada motivo de configuração pendente.
+ *
+ * ELAS DIZEM O QUE FAZER, e não só o que houve. Achado na homologação de 27/09: o WhatsApp recusou porque a
+ * conta na Meta está em modo de teste, e a tela disse "tente de novo" — mandando a pessoa repetir o que não
+ * podia dar certo. Um motivo sem saída é quase tão ruim quanto um rótulo que mente.
+ *
+ * O texto mora no core porque as duas pontas leem o mesmo (BASE ÚNICA).
+ */
+const MOTIVO: Readonly<Record<string, string>> = {
+  numero_nao_autorizado:
+    'O WhatsApp da SINTERA ainda está em modo de teste e só envia para números autorizados na Meta. ' +
+    'O convite não saiu — por enquanto, convide por e-mail.',
+  template_nao_aprovado:
+    'O modelo de mensagem do convite ainda não foi aprovado pela Meta. O convite não saiu — por enquanto, ' +
+    'convide por e-mail.',
+  remetente_nao_registrado:
+    'O número remetente do WhatsApp ainda não está registrado na Meta. O convite não saiu.',
+  token_invalido:
+    'A credencial do WhatsApp expirou ou é inválida. O convite não saiu.',
+  sem_resend_api_key:
+    'O envio por e-mail ainda não está configurado — o convite não saiu.',
 }
 
 /** O convite chegou ao destinatário? Só `entregue` conta. */

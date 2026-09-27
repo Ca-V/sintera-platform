@@ -54,6 +54,8 @@ export interface ConviteNaLista {
   /** Por onde saiu, e se saiu. Sem isto a tela afirma entrega em vez de relatá-la — o defeito de 27/09. */
   readonly canal: CanalDoConvite
   readonly entrega: EntregaDoConvite
+  /** Motivo estável quando a entrega não aconteceu. É o que transforma "não saiu" em "e faça isto". */
+  readonly motivo?: string | null
 }
 
 export type ChaveSecao = 'acompanhando' | 'convites' | 'encerrados'
@@ -129,7 +131,7 @@ export function resumoDoEscopo(escopo: readonly string[]): string {
  * pessoa precisa saber para agir. Dizer "Convite enviado" sobre algo que não saiu é o defeito que a
  * homologação de 27/09 encontrou, e ele começa exatamente aqui, num rótulo que adivinha.
  */
-export function rotuloDoConviteNaLista(c: Pick<ConviteNaLista, 'status' | 'canal' | 'entrega'>): string {
-  if (c.status === 'enviado' && !foiEntregue(c.entrega)) return rotuloDaEntrega(c.entrega, c.canal)
+export function rotuloDoConviteNaLista(c: Pick<ConviteNaLista, 'status' | 'canal' | 'entrega' | 'motivo'>): string {
+  if (c.status === 'enviado' && !foiEntregue(c.entrega)) return rotuloDaEntrega(c.entrega, c.canal, c.motivo)
   return rotuloParaRemetente(c.status)
 }
