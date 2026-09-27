@@ -8,7 +8,8 @@
 // `token` de propósito: saber se a pessoa criou conta transforma o silêncio dela em cobrança (CARE-003 §3.1).
 // Consultar a tabela direto aqui derrubaria essa decisão sem que nada acusasse.
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { VinculoNaLista, ConviteNaLista, Profissao, StatusVinculo, StatusConvite, DirecaoConvite } from '@sintera/core'
+import type { VinculoNaLista, ConviteNaLista, Profissao, StatusVinculo, StatusConvite,
+  EntregaDoConvite, CanalDoConvite } from '@sintera/core'
 import { withTimeout } from '../net/timeout'
 import { asError } from '../net/errors'
 
@@ -31,6 +32,8 @@ interface LinhaConvite {
   status: StatusConvite
   criado_em: string
   expira_em: string
+  canal: CanalDoConvite | null
+  entrega: EntregaDoConvite | null
 }
 
 /** Vínculos e convites da pessoa autenticada. LANÇA em falha operacional (convenção de leitura). */
@@ -52,7 +55,7 @@ export async function getRedeDeCuidado(client: SupabaseClient, signal?: AbortSig
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (client as any)
         .from('care_invites_do_remetente')
-        .select('id, para_contato, status, criado_em, expira_em')
+        .select('id, para_contato, status, criado_em, expira_em, canal, entrega')
         .eq('de_user_id', uid)
         .order('criado_em', { ascending: false })
         .abortSignal(s),
@@ -78,6 +81,10 @@ export async function getRedeDeCuidado(client: SupabaseClient, signal?: AbortSig
         status: c.status,
         criadoEm: new Date(c.criado_em),
         expiraEm: new Date(c.expira_em),
+        // Linhas anteriores à migração 163 não têm estes campos. `pendente` as descreve com exatidão: foram
+        // gravadas e nunca enviadas — que é o defeito que esta correção existe para acabar.
+        canal: c.canal ?? 'desconhecido',
+        entrega: c.entrega ?? 'pendente',
       })),
     }
   } finally {
@@ -94,8 +101,8 @@ export async function getRedeDeCuidado(client: SupabaseClient, signal?: AbortSig
  * ninguém a chame por engano passando um parâmetro.
  */
 export async function convidarProfissional(
-  client: SupabaseClient, paraContato: string, signal?: AbortSignal,
-): Promise<{ id: string }> {
+  client: SupabaseClient, paraContato: string, webBaseUrl?: string, signal?: AbortSignal,
+): Promise<{ id: string; entrega: EntregaDoConvite; canal: CanalDoConvite }> {
   const { signal: s, cleanup } = withTimeout(signal)
   try {
     const { data: { session } } = await client.auth.getSession()
@@ -103,16 +110,26 @@ export async function convidarProfissional(
     const contato = paraContato.trim()
     if (!contato) throw new Error('Informe o e-mail ou telefone do profissional')
 
-    const direcao: DirecaoConvite = 'paciente_convida_profissional'
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (client as any)
-      .from('care_invites')
-      .insert({ de_user_id: session.user.id, para_contato: contato, direcao })
-      .select('id')
-      .single()
-      .abortSignal(s)
-    if (error) throw asError(error)
-    return { id: (data as { id: string }).id }
+    // PASSA PELA ROTA, e não por insert direto. Era o insert direto que produzia o defeito achado na
+    // homologação de 27/09: a linha nascia e nada saía. Criar e enviar são um ato só — separá-los apenas
+    // mudaria o lugar onde o envio seria esquecido. Ponte ADR-020, igual a analyzeExam e transcribeDocument.
+    const url = new URL('/api/care/invites', webBaseUrl || '').toString()
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ paraContato: contato }),
+      signal: s,
+    })
+    const corpo = await res.json().catch(() => ({})) as { id?: string; entrega?: EntregaDoConvite; canal?: CanalDoConvite; error?: string }
+    if (!res.ok) throw new Error(corpo.error || 'Não consegui enviar o convite.')
+    return {
+      id: corpo.id ?? '',
+      entrega: corpo.entrega ?? 'pendente',
+      canal: corpo.canal ?? 'desconhecido',
+    }
   } finally {
     cleanup()
   }
