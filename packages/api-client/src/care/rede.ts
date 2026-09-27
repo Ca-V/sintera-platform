@@ -34,6 +34,7 @@ interface LinhaConvite {
   expira_em: string
   canal: CanalDoConvite | null
   entrega: EntregaDoConvite | null
+  entrega_detalhe: string | null
 }
 
 /** Vínculos e convites da pessoa autenticada. LANÇA em falha operacional (convenção de leitura). */
@@ -55,7 +56,7 @@ export async function getRedeDeCuidado(client: SupabaseClient, signal?: AbortSig
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (client as any)
         .from('care_invites_do_remetente')
-        .select('id, para_contato, status, criado_em, expira_em, canal, entrega')
+        .select('id, para_contato, status, criado_em, expira_em, canal, entrega, entrega_detalhe')
         .eq('de_user_id', uid)
         .order('criado_em', { ascending: false })
         .abortSignal(s),
@@ -85,6 +86,7 @@ export async function getRedeDeCuidado(client: SupabaseClient, signal?: AbortSig
         // gravadas e nunca enviadas — que é o defeito que esta correção existe para acabar.
         canal: c.canal ?? 'desconhecido',
         entrega: c.entrega ?? 'pendente',
+        motivo: c.entrega_detalhe,
       })),
     }
   } finally {

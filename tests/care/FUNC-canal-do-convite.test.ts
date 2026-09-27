@@ -107,3 +107,37 @@ describe('CARE-003 · o rótulo na lista de quem enviou', () => {
     }
   })
 })
+
+describe('CARE-003 · motivo de configuração diz O QUE FAZER', () => {
+  // Achado na homologação de 27/09: o WhatsApp recusou com #131030 (conta em modo de teste, número fora da
+  // lista autorizada) e a tela disse "tente de novo" — mandando a pessoa repetir o que não podia dar certo.
+  it('número fora da lista autorizada não manda tentar de novo — manda usar e-mail', () => {
+    const r = rotuloDaEntrega('nao_configurado', 'whatsapp', 'numero_nao_autorizado')
+    expect(r).toMatch(/modo de teste/i)
+    expect(r, 'precisa oferecer a saída que existe').toMatch(/e-mail/i)
+    expect(r, 'repetir não resolve configuração').not.toMatch(/tente de novo/i)
+  })
+
+  it.each([
+    ['template_nao_aprovado', /modelo de mensagem/i],
+    ['remetente_nao_registrado', /remetente/i],
+    ['token_invalido', /credencial/i],
+    ['sem_resend_api_key', /e-mail ainda não está configurado/i],
+  ])('o motivo "%s" tem frase própria', (motivo, esperado) => {
+    expect(rotuloDaEntrega('nao_configurado', 'whatsapp', motivo)).toMatch(esperado)
+  })
+
+  it('todo motivo de configuração diz que o convite NÃO saiu', () => {
+    for (const m of ['numero_nao_autorizado', 'template_nao_aprovado', 'remetente_nao_registrado',
+                     'token_invalido', 'sem_resend_api_key']) {
+      expect(rotuloDaEntrega('nao_configurado', 'whatsapp', m), `${m} não diz que não saiu`)
+        .toMatch(/não saiu/i)
+    }
+  })
+
+  it('motivo desconhecido cai na frase genérica, e ela continua honesta', () => {
+    const r = rotuloDaEntrega('nao_configurado', 'email', 'algo_que_nao_mapeamos')
+    expect(r).toMatch(/não saiu/i)
+    expect(r).not.toMatch(/convite enviado/i)
+  })
+})

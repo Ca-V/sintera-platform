@@ -86,10 +86,29 @@ export async function sendWhatsAppConvite(
       // #132001 = template inexistente naquele idioma. Qualquer outro erro não melhora trocando o idioma.
       if (!r.text.includes('132001')) break
     }
-    // Template ausente é CONFIGURAÇÃO, não falha de envio — a distinção muda o que a tela diz e quem age.
-    if (ultimo.includes('132001')) return { status: 'skipped', detail: 'template_nao_aprovado' }
+
+    // O que é CONFIGURAÇÃO e o que é FALHA.
+    //
+    // Achado na homologação de 27/09: o envio recusou com #131030 e a tela disse "tente de novo" — e tentar
+    // de novo falharia igual, porque a conta está em modo de teste e só envia para números de uma lista.
+    // Mandar a pessoa repetir o que não pode dar certo é a mesma classe de rótulo enganoso que esta frente
+    // existe para eliminar, só que noutro lugar.
+    //
+    // Os códigos abaixo descrevem o AMBIENTE, não a tentativa: repetir não muda nenhum deles. Cada um vira um
+    // motivo estável, e a frase que a pessoa lê mora no core.
+    const motivo = motivoDeConfiguracao(ultimo)
+    if (motivo) return { status: 'skipped', detail: motivo }
     return { status: 'failed', detail: ultimo }
   } catch (e) {
     return { status: 'failed', detail: e instanceof Error ? e.message.slice(0, 200) : 'erro_desconhecido' }
   }
+}
+
+/** Códigos da Meta que significam configuração pendente. `null` quando é falha de verdade. */
+function motivoDeConfiguracao(resposta: string): string | null {
+  if (resposta.includes('131030')) return 'numero_nao_autorizado'   // conta em modo de teste
+  if (resposta.includes('132001')) return 'template_nao_aprovado'
+  if (resposta.includes('133010')) return 'remetente_nao_registrado'
+  if (resposta.includes('190') && /access token/i.test(resposta)) return 'token_invalido'
+  return null
 }
