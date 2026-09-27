@@ -20,6 +20,14 @@ export type MaisStackParamList = {
   Perfil: undefined
   Despesas: undefined
   Configuracoes: undefined
+  // CARE-003 — o lado de QUEM RECEBE o convite. "Um login, uma pessoa, dois perfis, duas assinaturas": o
+  // profissional não entra na conta de ninguém, tem a dele, e estas telas são o segundo perfil dentro dela.
+  // Ficam em "Mais" porque não pertencem à Rede de Cuidado da própria pessoa — são o outro lado dela.
+  PainelProfissional: undefined
+  /** `token` presente = veio de um convite e é para lá que se volta depois de criar o perfil. */
+  PerfilProfissional: { token?: string } | undefined
+  ConviteRecebido: { token: string }
+  PacienteDoProfissional: { careLinkId: string }
 }
 
 /** Stack interno da aba "Rede de Cuidado" (entidade — CARE-002 futura): hoje Relatórios. Só navegação. */

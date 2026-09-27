@@ -127,6 +127,52 @@ export const SCREEN_COPY = {
     fieldContact: 'E-mail ou telefone do profissional',
     contactHint:  'O convite não leva nenhum dado de saúde seu — só o pedido de conexão.',
   },
+  // O LADO DE QUEM RECEBE (CARE-003). "Um login, uma pessoa, dois perfis, duas assinaturas" — decisão da
+  // fundadora. O profissional não entra na conta de ninguém: tem a dele, e dentro dela a lista de quem o
+  // autorizou. O vocabulário aqui é deliberadamente sóbrio — a plataforma dá ACESSO, não emite parecer.
+  perfilProfissional: {
+    title:        'Perfil profissional',
+    subtitle:     'Para acompanhar alguém pela SINTERA, identifique-se. É o mesmo login da sua conta.',
+    fieldNome:    'Nome como você atende',
+    fieldProfissao: 'Profissão',
+    fieldEspecialidade: 'Especialidade (opcional)',
+    fieldConselho: 'Conselho',
+    fieldRegistro: 'Número do registro',
+    fieldUf:      'UF do registro',
+    save:         'Criar perfil profissional',
+    saved:        'Perfil criado',
+    // A verificação do registro é etapa separada e ainda não automática. Dizer isso agora evita a descoberta
+    // depois — e evita que alguém suponha que a SINTERA atestou o que não atestou.
+    verifyNote:   'O registro fica registrado como você informou. A conferência no conselho é feita à parte e não é automática.',
+    existingNote: 'Você já tem um perfil profissional nesta conta.',
+  },
+  painelProfissional: {
+    title:        'Pessoas que acompanho',
+    subtitle:     'Quem autorizou você, e o que cada uma abriu para você ver.',
+    emptyTitle:   'Ninguém autorizou você ainda',
+    emptyMessage: 'Quando alguém enviar um convite e você aceitar, a pessoa aparece aqui. Só o que ela autorizar fica visível.',
+    scopeTitle:   'O que esta pessoa autorizou',
+    // Dito no painel, porque é a informação que impede o profissional de procurar o que não está lá.
+    scopeHint:    'A pessoa escolhe as áreas e pode encerrar o acesso a qualquer momento.',
+    noAccess:     'Esta pessoa não deixou nenhuma área aberta.',
+  },
+  conviteRecebido: {
+    title:        'Convite',
+    accept:       'Aceitar e acompanhar',
+    decline:      'Recusar',
+    accepted:     'Pronto — a pessoa já aparece na sua lista.',
+    declined:     'Convite recusado. Nada foi compartilhado com você.',
+    // O que muda para quem aceita, antes de aceitar.
+    whatHappens:  'Aceitando, você passa a ver o que a pessoa autorizou — e só isso. Ela pode encerrar quando quiser.',
+    createProfile: 'Criar perfil profissional',
+    // No aplicativo não há deep link, e exigir um elevaria o piso do app para quem tem aparelho antigo —
+    // o que a disponibilidade universal proíbe. Colar o link funciona em qualquer celular.
+    pasteTitle:   'Tenho um convite',
+    pasteField:   'Cole aqui o link do convite',
+    pasteHint:    'É o endereço que chegou no seu e-mail ou WhatsApp.',
+    pasteOpen:    'Abrir convite',
+    pasteInvalid: 'Não reconheci um convite neste texto. Confira se copiou o endereço inteiro.',
+  },
   exames: {
     title:        'Exames',
     subtitle:     'Solte o laudo — a SINTERA lê e extrai os dados por você. Os resultados ficam organizados ao longo do tempo.',

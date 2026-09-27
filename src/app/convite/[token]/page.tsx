@@ -10,7 +10,7 @@
 // O ACEITE NÃO ACONTECE AQUI. Ele exige sessão, porque criar vínculo é ato do titular dos dados e precisa de
 // identidade. Esta página explica e leva ao cadastro; o convite é reconhecido depois, pelo contato.
 import Link from 'next/link'
-import { SCREEN_COPY } from '@sintera/core'
+import { SCREEN_COPY, rotaDoConvite, paramDestino } from '@sintera/core'
 
 export const metadata = {
   title: 'Convite',
@@ -43,9 +43,11 @@ export default async function ConvitePage({ params }: { params: Promise<{ token:
           </ul>
         </div>
 
-        {/* O token segue para o cadastro para que o convite seja reconhecido depois de a conta existir. */}
+        {/* O DESTINO SEGUE JUNTO. Isto era `/login?convite=<token>` — e NADA lia esse parâmetro: a pessoa
+            entrava, caía no painel dela, e o convite ficava para trás sem aviso e sem rastro. Agora o token
+            vai como destino validado, e o login leva direto à tela de resposta depois de autenticar. */}
         <Link
-          href={`/login?convite=${encodeURIComponent(token)}`}
+          href={`/login${paramDestino(rotaDoConvite(token))}`}
           className="rounded-lg bg-petal px-4 py-3 font-body text-sm text-white text-center"
         >
           Entrar ou criar conta para aceitar

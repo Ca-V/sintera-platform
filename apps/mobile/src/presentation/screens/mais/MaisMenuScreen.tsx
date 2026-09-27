@@ -6,6 +6,7 @@ import { ScrollView, View, Pressable, StyleSheet } from 'react-native'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { heading, text } from '@sintera/design-system'
+import { SCREEN_COPY } from '@sintera/core'
 import { Text } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { MaisStackParamList } from '../../navigation/types'
@@ -21,6 +22,10 @@ export function MaisMenuScreen({ navigation }: Props) {
     { label: 'Perfil', onPress: () => navigation.navigate('Perfil') },
     { label: 'Despesas', onPress: () => navigation.navigate('Despesas') },
     { label: 'Configurações', onPress: () => navigation.navigate('Configuracoes') },
+    // CARE-003 — o outro lado da Rede de Cuidado. Fica aqui, e não em "Rede de Cuidado", porque aquela aba é
+    // de quem a pessoa autoriza a ver os dados DELA; esta é a conta dela como profissional de outra pessoa.
+    // Misturar as duas na mesma aba faria "encerrar acesso" ficar ambíguo em qual direção.
+    { label: SCREEN_COPY.painelProfissional.title, onPress: () => navigation.navigate('PainelProfissional') },
   ]
 
   return (

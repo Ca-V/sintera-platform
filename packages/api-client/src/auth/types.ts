@@ -328,6 +328,24 @@ export interface CareApi {
   convidarProfissional(paraContato: string, signal?: AbortSignal): Promise<{ id: string }>
   revogarVinculo(vinculoId: string, signal?: AbortSignal): Promise<void>
   cancelarConvite(conviteId: string, signal?: AbortSignal): Promise<void>
+
+  // O lado de QUEM RECEBE (CARE-003, migração 165).
+  getPerfilProfissional(signal?: AbortSignal): Promise<import('@sintera/core').PerfilProfissional | null>
+  criarPerfilProfissional(
+    p: import('../care/profissional').NovoPerfilProfissional, signal?: AbortSignal,
+  ): Promise<import('@sintera/core').PerfilProfissional>
+  getConviteRecebido(token: string, signal?: AbortSignal): Promise<import('@sintera/core').ConviteRecebido | null>
+  /** LANÇA com a mensagem crua do banco. Quem traduz é `motivoDoAceite`, no core. */
+  aceitarConviteProfissional(token: string, signal?: AbortSignal): Promise<string>
+  recusarConviteProfissional(token: string, signal?: AbortSignal): Promise<void>
+  getPacientesDoProfissional(signal?: AbortSignal): Promise<import('@sintera/core').PacienteNaLista[]>
+  /**
+   * O conteúdo dos módulos autorizados de uma pessoa. Quem IMPÕE o limite é o RLS (migração 161) — esta
+   * função não filtra por segurança, e pedir dado de quem não autorizou devolve lista vazia, não erro.
+   */
+  getConteudoDosModulos(
+    pacienteUserId: string, escopo: readonly string[], signal?: AbortSignal,
+  ): Promise<import('../care/pacienteDoProfissional').ConteudoDoModulo[]>
 }
 
 /**

@@ -103,4 +103,12 @@ export { loadEntitlements, getEntitlementsDaSessao } from './billing/load'
 export { getRedeDeCuidado, convidarProfissional, revogarVinculo, cancelarConvite } from './care/rede'
 // Compartilhamentos: o link é do domínio Relatório (ADR-001) — a Rede de Cuidado projeta, não duplica.
 export { listAllShares, revokeShare } from './report/report'
+// O lado de QUEM RECEBE o convite (CARE-003, migração 165).
+export {
+  getPerfilProfissional, criarPerfilProfissional, getConviteRecebido,
+  aceitarConviteProfissional, recusarConviteProfissional, getPacientesDoProfissional,
+} from './care/profissional'
+export type { NovoPerfilProfissional } from './care/profissional'
+export { getConteudoDosModulos } from './care/pacienteDoProfissional'
+export type { ItemDoModulo, ConteudoDoModulo } from './care/pacienteDoProfissional'
 export type { RedeDeCuidado } from './care/rede'

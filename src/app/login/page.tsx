@@ -6,9 +6,18 @@ import { motion } from 'framer-motion'
 import { Eye, EyeOff, Lock, Mail, ArrowLeft, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 // PARIDADE — o texto de entrada vem do core; o Mobile lê os MESMOS.
-import { SCREEN_COPY } from '@sintera/core'
+// `destinoAposLogin` é a ÚNICA porta do `?next=`: ela recusa destino de fora da plataforma. Sem essa
+// validação, `?next=https://sitefalso.com/entrar` transformaria o login da SINTERA em trampolim para uma
+// página que a imita — e a pessoa acabou de digitar a senha, então acredita no que vê a seguir.
+import { SCREEN_COPY, destinoAposLogin } from '@sintera/core'
 
 export default function LoginPage() {
+  // Lido do navegador, e não de `useSearchParams`, para não exigir Suspense nesta página.
+  const destino = useRef<string>(
+    typeof window === 'undefined'
+      ? '/dashboard'
+      : destinoAposLogin(new URLSearchParams(window.location.search).get('next')),
+  ).current
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [email, setEmail] = useState('')
@@ -32,14 +41,19 @@ export default function LoginPage() {
     } else {
       // Hard redirect — ensures cookies are included in the next server request
       // so the proxy sees the session and doesn't redirect back to /login
-      window.location.href = '/dashboard'
+      window.location.href = destino
     }
   }
 
   const handleGoogle = async () => {
+    // O destino atravessa o OAuth pelo próprio `redirectTo`, já validado acima. Sem isto, quem entra com
+    // Google perderia o convite no caminho — exatamente o defeito que esta mudança corrige, só que por outra
+    // porta.
+    const callback = new URL('/auth/callback', window.location.origin)
+    if (destino !== '/dashboard') callback.searchParams.set('next', destino)
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: { redirectTo: callback.toString() },
     })
   }
 
