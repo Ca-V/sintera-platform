@@ -27,7 +27,7 @@ import {
 } from '@sintera/api-client'
 import {
   SCREEN_COPY, secoesDaRedeDeCuidado, redeEstaVazia, descricaoDoProfissional, resumoDoEscopo,
-  rotuloParaRemetente, formatDateBR, freeEntitlements, avaliarLimite, motivoDoLimite, LIMITE_PROFISSIONAIS,
+  rotuloDoConviteNaLista, formatDateBR, freeEntitlements, avaliarLimite, motivoDoLimite, LIMITE_PROFISSIONAIS,
   type VinculoNaLista, type ConviteNaLista, type Entitlements,
 } from '@sintera/core'
 
@@ -72,7 +72,7 @@ export default function ProfissionaisPage() {
     setEnviando(true)
     setErro(null)
     try {
-      await convidarProfissional(supabase, contato)
+      await convidarProfissional(supabase, contato, window.location.origin)
       setContato('')
       await carregar()
     } catch (e) {
@@ -158,8 +158,9 @@ export default function ProfissionaisPage() {
               <Card key={c.id} className="p-4 flex items-start justify-between gap-3">
                 <div>
                   <p className="font-body text-sm text-onyx">{c.paraContato}</p>
-                  {/* "Convite encerrado" e não "recusado": quem convidou não precisa saber que foi negativa. */}
-                  <p className="font-body text-xs text-mauve">{rotuloParaRemetente(c.status)}</p>
+                  {/* Relata a ENTREGA quando ela não aconteceu, e o estado do convite quando aconteceu. Nunca afirma
+                      envio que não houve — foi esse o defeito da homologação de 27/09. */}
+                  <p className="font-body text-xs text-mauve">{rotuloDoConviteNaLista(c)}</p>
                 </div>
                 {c.status === 'enviado' && (
                   <button type="button"

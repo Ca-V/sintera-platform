@@ -30,7 +30,9 @@ export const MENU_REDE: readonly LinhaDoMenu[] = [
 
 import type { StatusVinculo } from './vinculo'
 import type { StatusConvite } from './convite'
+import { rotuloParaRemetente } from './convite'
 import { estaVencido } from './convite'
+import { rotuloDaEntrega, foiEntregue, type CanalDoConvite, type EntregaDoConvite } from './canalDoConvite'
 import { type Profissao, nomeDaProfissao } from '../professional/perfil'
 
 export interface VinculoNaLista {
@@ -49,6 +51,9 @@ export interface ConviteNaLista {
   readonly status: StatusConvite
   readonly criadoEm: Date
   readonly expiraEm: Date
+  /** Por onde saiu, e se saiu. Sem isto a tela afirma entrega em vez de relatá-la — o defeito de 27/09. */
+  readonly canal: CanalDoConvite
+  readonly entrega: EntregaDoConvite
 }
 
 export type ChaveSecao = 'acompanhando' | 'convites' | 'encerrados'
@@ -115,4 +120,16 @@ export function resumoDoEscopo(escopo: readonly string[]): string {
   const n = escopo.length
   if (n === 0) return 'Sem acesso a nenhuma área'
   return n === 1 ? 'Acesso a 1 área' : `Acesso a ${n} áreas`
+}
+
+/**
+ * O rótulo de um convite na lista de quem enviou.
+ *
+ * Quando a entrega NÃO aconteceu, o estado da entrega manda sobre o estado do convite — porque é o que a
+ * pessoa precisa saber para agir. Dizer "Convite enviado" sobre algo que não saiu é o defeito que a
+ * homologação de 27/09 encontrou, e ele começa exatamente aqui, num rótulo que adivinha.
+ */
+export function rotuloDoConviteNaLista(c: Pick<ConviteNaLista, 'status' | 'canal' | 'entrega'>): string {
+  if (c.status === 'enviado' && !foiEntregue(c.entrega)) return rotuloDaEntrega(c.entrega, c.canal)
+  return rotuloParaRemetente(c.status)
 }

@@ -237,7 +237,7 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
     // tela do Mobile teria de falar com o Supabase direto, que é o segundo dono do mesmo conceito (ADR-023).
     care: {
       getRedeDeCuidado: (signal) => getRedeDeCuidado(supabase, signal),
-      convidarProfissional: (contato, signal) => convidarProfissional(supabase, contato, signal),
+      convidarProfissional: (contato, signal) => convidarProfissional(supabase, contato, config.webBaseUrl, signal),
       revogarVinculo: (id, signal) => revogarVinculo(supabase, id, signal),
       cancelarConvite: (id, signal) => cancelarConvite(supabase, id, signal),
     },

@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { heading, text } from '@sintera/design-system'
 import {
   SCREEN_COPY, secoesDaRedeDeCuidado, redeEstaVazia, descricaoDoProfissional, resumoDoEscopo,
-  rotuloParaRemetente, formatDateBR, freeEntitlements, avaliarLimite, motivoDoLimite, LIMITE_PROFISSIONAIS,
+  rotuloDoConviteNaLista, formatDateBR, freeEntitlements, avaliarLimite, motivoDoLimite, LIMITE_PROFISSIONAIS,
   type VinculoNaLista, type ConviteNaLista, type Entitlements,
 } from '@sintera/core'
 import { Text, Input, Button, FieldRow } from '../../primitives'
@@ -166,8 +166,9 @@ export function ProfissionaisScreen() {
             <View key={c.id} style={[styles.card, styles.linha, { backgroundColor: t.color.surface.base, borderColor: t.color.border.default }]}>
               <View style={{ flex: 1, gap: 2 }}>
                 <Text spec={text(t, { role: 'body' })}>{c.paraContato}</Text>
-                {/* "Convite encerrado" e não "recusado": quem convidou não precisa saber que foi negativa. */}
-                <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{rotuloParaRemetente(c.status)}</Text>
+                {/* Relata a ENTREGA quando ela não aconteceu, e o estado do convite quando aconteceu. Nunca afirma
+                      envio que não houve — foi esse o defeito da homologação de 27/09. */}
+                <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{rotuloDoConviteNaLista(c)}</Text>
               </View>
               {c.status === 'enviado' && (
                 <Pressable onPress={() => { void apiClient.care.cancelarConvite(c.id).then(carregar) }} accessibilityRole="button">

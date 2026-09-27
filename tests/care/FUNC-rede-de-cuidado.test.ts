@@ -25,6 +25,7 @@ const vinculo = (status: StatusVinculo, id = status): VinculoNaLista => ({
 })
 const convite = (status: ConviteNaLista['status'], dias: number, id = `${status}${dias}`): ConviteNaLista => ({
   id, paraContato: 'ana@exemplo.com', status, criadoEm: emDias(-5), expiraEm: emDias(dias),
+  canal: 'email', entrega: 'entregue',
 })
 
 describe('CARE-003 · o menu é decidido uma vez só', () => {

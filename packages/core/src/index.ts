@@ -176,3 +176,4 @@ export * from './domain/billing/limites'
 // é DECISÃO: emitido diferente em cada ponta, a série histórica nasce partida e não se conserta.
 export * from './domain/telemetria/eventos'
 export * from './domain/telemetria/coorte'
+export * from './domain/care/canalDoConvite'
