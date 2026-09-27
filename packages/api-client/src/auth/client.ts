@@ -49,7 +49,7 @@ import { searchRecords } from '../search/search'
 import { listLinkableDocuments, linkDocumentToTarget, unlinkDocumentFromTarget } from '../documents/links'
 import { startOAuthSignIn, completeOAuthSignIn } from './oauth'
 import { classifyDocument } from '../capture/classify'
-import { listShares, createShare, revokeShare, listTemplates, saveTemplate, deleteTemplate, listOmicsPanels } from '../report/report'
+import { listShares, listAllShares, createShare, revokeShare, listTemplates, saveTemplate, deleteTemplate, listOmicsPanels } from '../report/report'
 import { listOmicsPanels as omicsList, getOmicsPanel, getOmicsResults, getOmicsFeatureHistory, searchOmicsCatalog, createOmicsPanel, addOmicsResult, deleteOmicsResult, deleteOmicsPanel } from '../omics/omics'
 import { asError } from '../net/errors'
 
@@ -206,6 +206,7 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
     },
     report: {
       listShares: (signal) => listShares(supabase, signal),
+      listAllShares: (signal) => listAllShares(supabase, signal),
       createShare: (input) => createShare(supabase, input),
       revokeShare: (id) => revokeShare(supabase, id),
       listTemplates: (signal) => listTemplates(supabase, signal),

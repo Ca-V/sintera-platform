@@ -49,7 +49,7 @@ export { listDailySteps } from './wearables/steps'
 // Leitura assistida de documento — ponte para a rota da Web (ADR-020), para que a regra seja UMA só.
 export type { CaptureApi } from './auth/types'
 export type { ClassifyInput } from './capture/classify'
-export type { ShareDTO, TemplateDTO, OmicsPanelDTO } from './report/report'
+export type { ShareDTO, ShareComHistoricoDTO, TemplateDTO, OmicsPanelDTO } from './report/report'
 export type { OmicsPanelDTO as OmicsPanel, OmicsPanelDetail, OmicsCategoryDTO, OmicsResultDTO, OmicsHistoryPoint, OmicsCatalogMatch, OmicsResultInput } from './omics/omics'
 export type { NotificationPrefRow } from './settings/notifications'
 export type { CaptureInput, ConditionScan, BioimpedanceScan, EyeglassesScan, EyeglassesEye, MedicationScanItem } from './vision/vision'
@@ -101,4 +101,6 @@ export { withTimeout, TimeoutError, DEFAULT_TIMEOUT_MS } from './net/timeout'
 export { loadEntitlements, getEntitlementsDaSessao } from './billing/load'
 // Rede de Cuidado (CARE-003) — vínculos e convites. A REGRA mora no core; aqui só o IO.
 export { getRedeDeCuidado, convidarProfissional, revogarVinculo, cancelarConvite } from './care/rede'
+// Compartilhamentos: o link é do domínio Relatório (ADR-001) — a Rede de Cuidado projeta, não duplica.
+export { listAllShares, revokeShare } from './report/report'
 export type { RedeDeCuidado } from './care/rede'

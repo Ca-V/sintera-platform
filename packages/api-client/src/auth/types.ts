@@ -23,7 +23,7 @@ import type { ActivitySessionDTO, ActivitySessionInput, IngestResult } from '../
 import type { CanonicalSample, PropagationResult, ClassificationResult, LeituraTentativa } from '@sintera/core'
 import type { ClassifyInput } from '../capture/classify'
 import type { IdentityProvider } from './oauth'
-import type { ShareDTO, TemplateDTO, OmicsPanelDTO } from '../report/report'
+import type { ShareDTO, ShareComHistoricoDTO, TemplateDTO, OmicsPanelDTO } from '../report/report'
 import type { OmicsPanelDTO as OmicsPanel, OmicsPanelDetail, OmicsResultDTO, OmicsHistoryPoint, OmicsCatalogMatch, OmicsResultInput } from '../omics/omics'
 import type { Period, DocumentTargetDomain, SearchHit, PatientDocumentSubtype, DailySteps } from '@sintera/core'
 import type { PatientDocumentDTO, PatientDocumentInput, PatientDocumentPage } from '../documents/documents'
@@ -256,6 +256,8 @@ export interface OmicsApi {
  *  A MONTAGEM/formatação vive no @sintera/core (assembleReport); esta API só persiste/lê. */
 export interface ReportApi {
   listShares(signal?: AbortSignal): Promise<ShareDTO[]>
+  /** Inclui vencidos e revogados — a tela Compartilhamentos projeta o histórico (CARE-003). */
+  listAllShares(signal?: AbortSignal): Promise<ShareComHistoricoDTO[]>
   /** Cria um link público (30 dias por padrão) das seções + período; retorna o token gerado. */
   createShare(input: { sections: string[]; excluded?: Partial<Record<string, string[]>>; period: Period; days?: number }): Promise<{ data: { token: string } | null; error: Error | null }>
   revokeShare(id: string): Promise<{ error: Error | null }>

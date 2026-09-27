@@ -28,6 +28,7 @@ export type RedeCuidadoStackParamList = {
   Relatorio: undefined
   /** CARE-003: quem acompanha a pessoa, o que cada um enxerga e os convites enviados. */
   Profissionais: undefined
+  Compartilhamentos: undefined
 }
 
 /** Stack interno da aba "Minha Saúde" (domínio central): menu (Registros/Saúde/Histórico) + telas de domínio +

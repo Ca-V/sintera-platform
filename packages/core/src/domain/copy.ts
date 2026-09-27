@@ -86,7 +86,30 @@ export const SCREEN_COPY = {
     title:        'Rede de Cuidado',
     subtitle:     'Reúna aqui quem acompanha você. Você convida, autoriza o que cada um enxerga e pode encerrar quando quiser.',
     soonLabel:    'em breve',
-    soonReason:   'Compartilhamentos entram junto com o espaço de consulta.',
+    // Nenhuma linha do menu está indisponível hoje. O texto fica porque a próxima que entrar — Familiares
+    // (CARE-002) — vai precisar dele, e um rótulo genérico é melhor do que um que nomeia o motivo errado.
+    soonReason:   'Ainda não disponível nesta versão.',
+  },
+  // Compartilhamentos (CARE-003). O link público é do domínio Relatório; esta tela PROJETA (ADR-001).
+  compartilhamentos: {
+    title:        'Compartilhamentos',
+    subtitle:     'Os links de relatório que você criou, o que cada um mostra e até quando abre.',
+    emptyTitle:   'Você ainda não compartilhou nenhum relatório',
+    emptyMessage: 'Monte um relatório e gere um link para levar à consulta. Ele aparece aqui, e você encerra quando quiser.',
+    goToReport:   'Ir para Relatórios',
+    // O fato que muda o comportamento de quem compartilha, dito ANTES e não descoberto depois.
+    publicWarning: 'Qualquer pessoa com o link abre o relatório, sem precisar de conta. Só compartilhe com quem você quer que veja.',
+    // BASE ÚNICA: o MECANISMO diverge de propósito — a Web copia para a área de transferência, o aplicativo
+    // abre a folha de compartilhamento do sistema (sem dependência nova). A DECISÃO — que palavras a pessoa
+    // lê em cada caso — continua aqui, decidida uma vez.
+    copyLink:     'Copiar link',
+    copied:       'Link copiado',
+    shareLink:    'Compartilhar link',
+    // Sem o endereço da plataforma não dá para montar a URL. Falhar em silêncio aqui entregaria um link
+    // quebrado como se fosse bom — o padrão "configuração ausente + falha silenciosa" que já custou caro.
+    noWebUrl:     'Não consigo montar o link nesta versão do aplicativo. Abra os compartilhamentos pela Web.',
+    revoke:       'Encerrar link',
+    revokeHint:   'O link para de abrir na hora. Quem já viu, já viu — encerrar não desfaz o que foi lido.',
   },
   profissionais: {
     title:        'Profissionais',

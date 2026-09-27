@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { RedeCuidadoMenuScreen } from '../screens/rede/RedeCuidadoMenuScreen'
 import { RelatorioScreen } from '../screens/relatorio/RelatorioScreen'
 import { ProfissionaisScreen } from '../screens/rede/ProfissionaisScreen'
+import { CompartilhamentosScreen } from '../screens/rede/CompartilhamentosScreen'
 import { useTheme } from '../theme'
 import type { RedeCuidadoStackParamList } from './types'
 
@@ -18,6 +19,8 @@ export function RedeCuidadoStack() {
         options={{ headerShown: true, title: 'Relatório', headerStyle: { backgroundColor: t.color.surface.app }, headerTintColor: t.color.text.default, headerTitleStyle: { fontFamily: 'HankenGrotesk_600SemiBold' }, headerShadowVisible: false }} />
       <Stack.Screen name="Profissionais" component={ProfissionaisScreen}
         options={{ headerShown: true, title: "Profissionais", headerStyle: { backgroundColor: t.color.surface.app }, headerTintColor: t.color.text.default, headerTitleStyle: { fontFamily: "HankenGrotesk_600SemiBold" }, headerShadowVisible: false }} />
+      <Stack.Screen name="Compartilhamentos" component={CompartilhamentosScreen}
+        options={{ headerShown: true, title: "Compartilhamentos", headerStyle: { backgroundColor: t.color.surface.app }, headerTintColor: t.color.text.default, headerTitleStyle: { fontFamily: "HankenGrotesk_600SemiBold" }, headerShadowVisible: false }} />
     </Stack.Navigator>
   )
 }
