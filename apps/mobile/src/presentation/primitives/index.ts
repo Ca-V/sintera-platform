@@ -13,3 +13,6 @@ export { Disclaimer } from './Disclaimer'
 export { DatePicker } from './DatePicker'
 export { TimePicker } from './TimePicker'
 export { AnexoDocumento } from './AnexoDocumento'
+// BOD-001 ② — desenho. A geometria vem do core; estes só traduzem o plano em `react-native-svg`.
+export { EvolutionChart } from './EvolutionChart'
+export { Sparkline } from './Sparkline'

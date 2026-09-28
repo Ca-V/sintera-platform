@@ -31,9 +31,17 @@ export interface ApiAuth {
 
 const SEM_AUTH: ApiAuth = { user: null, client: null }
 
-/** Token do cabeçalho `Authorization: Bearer <token>`, se houver. */
+/**
+ * Token do cabeçalho `Authorization: Bearer <token>`, se houver.
+ *
+ * ACESSO DEFENSIVO a `headers`. Esta função declara que NUNCA lança, e uma requisição sem `headers` a fazia
+ * estourar — trocando um 401 legítimo por um 500. A diferença importa: 401 diz "entre"; 500 diz "a plataforma
+ * quebrou", e ainda expõe um rastro de pilha onde deveria haver uma recusa limpa.
+ */
 function bearer(req: NextRequest): string | null {
-  const h = req.headers.get('authorization') ?? req.headers.get('Authorization')
+  const headers = (req as { headers?: { get?: (k: string) => string | null } } | undefined)?.headers
+  if (typeof headers?.get !== 'function') return null
+  const h = headers.get('authorization') ?? headers.get('Authorization')
   if (!h) return null
   const m = /^Bearer\s+(.+)$/i.exec(h.trim())
   return m ? m[1].trim() : null

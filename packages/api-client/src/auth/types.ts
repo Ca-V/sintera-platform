@@ -225,6 +225,7 @@ export interface ApiClient {
   care: CareApi
   /** Comercial (BILLING-001/003) — entitlements do perfil. A regra mora no core; aqui só a leitura. */
   billing: BillingApi
+  novelty: NoveltyApi
 }
 
 /** Síntese de navegação (§5d) — contagens por domínio para os indicadores de conteúdo do menu/Sidebar. */
@@ -354,6 +355,15 @@ export interface CareApi {
  */
 export interface BillingApi {
   getEntitlements(escopo?: import('@sintera/core').EscopoAssinatura, signal?: AbortSignal): Promise<import('@sintera/core').Entitlements>
+}
+
+/**
+ * NOV-001 — o que a pessoa ainda não viu. Nenhum dos dois LANÇA: novidade é informação acessória, e derrubar
+ * a tela que a consome porque a contagem falhou seria trocar o essencial pelo enfeite.
+ */
+export interface NoveltyApi {
+  get(signal?: AbortSignal): Promise<import('../novelty/novelty').NoveltyStreams>
+  markSeen(stream: string, signal?: AbortSignal): Promise<void>
 }
 
 /**

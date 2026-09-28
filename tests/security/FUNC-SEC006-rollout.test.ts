@@ -106,7 +106,14 @@ describe('SEC-006 · waitlist (não migrado — validação idiossincrática pin
   })
 })
 
-describe('SEC-006 · novelty/seen (não migrado — parse idiossincrático pinado)', () => {
+// MIGRADA AO HELPER EM 28/09/2026. Era a última rota da novidade a autenticar só por cookie, e o NOV-001
+// declara infraestrutura ÚNICA e canal-agnóstico — a porta só abria para a Web, e os selos "novo" nunca
+// poderiam existir no aplicativo. O contrato abaixo continua valendo palavra por palavra: é o que este
+// arquivo existe para garantir quando uma rota troca de porta.
+//
+// De passagem, este teste achou uma fragilidade real: `bearer()` lia `req.headers` sem defesa e estourava com
+// requisição sem cabeçalho — trocando um 401 legítimo por um 500. Corrigido no helper.
+describe('SEC-006 · novelty/seen (migrada ao helper — contrato preservado)', () => {
   it('sem sessão → 401', async () => {
     expect((await noveltySeenPOST(req({ stream: 'x' }))).status).toBe(401)
   })
