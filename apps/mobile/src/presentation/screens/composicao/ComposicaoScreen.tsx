@@ -10,7 +10,12 @@ import { useNavigation } from '@react-navigation/native'
 import { text } from '@sintera/design-system'
 import type { BodyMetricDTO, ExamDTO } from '@sintera/api-client'
 import type { HealthEvent } from '@sintera/core'
-import { BODY_COMPARE_ORDER, GLIFO_DA_ORIGEM, markerFor, type EvoPoint } from '@sintera/core'
+import {
+  BODY_COMPARE_ORDER, GLIFO_DA_ORIGEM, markerFor, type EvoPoint,
+  // BASE UNICA (28/09/2026): rotulos, textos, formato de data e ordem dos marcos vem do core. A homologacao
+  // lado a lado achou dez divergencias de palavra entre esta tela e a da Web.
+  SCREEN_COPY, formatDateBR, bodyMetricShortLabel, RELIABILITY_SHORT, marcosMaisRecentesPrimeiro,
+} from '@sintera/core'
 import {
   BODY_METRICS, bodyMetricLabel, bodyMetricUnit, isVital, type BodyMetric,
   // `atualidadeDoResumo` — o cabecalho honesto: ver o bloco onde e usado.
@@ -27,7 +32,9 @@ import { useAssistedCapture } from '../capture/useAssistedCapture'
 import { AssistedBatchReview, type ReviewItem } from '../capture/AssistedBatchReview'
 
 function parseNum(v: string): number { return Number(String(v).replace(',', '.').replace(/[^\d.-]/g, '')) }
-function fmt(d: string): string { const [y, m, dd] = (d || '').slice(0, 10).split('-'); return y ? `${dd}/${m}/${y}` : '—' }
+// DATE-001 — o formatador do core, o MESMO da Web. O fmt local fazia a mesma coisa, mas ser um segundo
+// dono do formato e o que permitiu as duas pontas divergirem em tudo o mais.
+const fmt = formatDateBR
 function today(): string { return new Date().toISOString().slice(0, 10) }
 const SUMMARY_ORDER: BodyMetric[] = ['peso', 'gordura_corporal', 'massa_muscular', 'massa_magra', 'agua_corporal', 'gordura_visceral', 'taxa_metabolica', 'massa_ossea', 'circunferencia_cintura', 'altura']
 
@@ -261,10 +268,10 @@ export function ComposicaoScreen() {
       keyboardShouldPersistTaps="handled"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={t.color.identity.primary} />}>
       <View style={styles.headerRow}>
-        <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 22, flex: 1 }} numberOfLines={1}>Composição Corporal</Text>
-        {!open ? <Button label="Nova medida" onPress={startNew} /> : null}
+        <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 22, flex: 1 }} numberOfLines={1}>{SCREEN_COPY.composicao.title}</Text>
+        {!open ? <Button label={SCREEN_COPY.composicao.addMeasure} onPress={startNew} /> : null}
       </View>
-      {!open ? <Button label="Escanear laudo de bioimpedância" variant="secondary" loading={capture.busy} loadingLabel="Lendo…" onPress={scanBioimpedance} /> : null}
+      {!open ? <Button label={SCREEN_COPY.composicao.scanReport} variant="secondary" loading={capture.busy} loadingLabel="Lendo…" onPress={scanBioimpedance} /> : null}
       <AssistedBatchReview
         visible={batch.length > 0} title="Medidas lidas do laudo" items={batch} date={batchDate}
         onDateChange={setBatchDate} onConfirm={saveBatch} onCancel={() => setBatch([])} busy={batchSaving}
@@ -274,7 +281,7 @@ export function ComposicaoScreen() {
       {/* ② Jornada de peso (GLP-1) */}
       <View style={[styles.card, card, { gap: 6 }]}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text spec={text(t, { role: 'bodyStrong' })}>Jornada de peso</Text>
+          <Text spec={text(t, { role: 'bodyStrong' })}>{SCREEN_COPY.composicao.journeyTitle}</Text>
           <Pressable onPress={() => { setGoalInput(goal != null ? String(goal) : ''); setGoalEditing(v => !v) }}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Meta{goal != null ? `: ${goal} kg` : ''}</Text></Pressable>
         </View>
         {goalEditing ? (
@@ -291,7 +298,7 @@ export function ComposicaoScreen() {
                  "−2,8", identico a uma perda de 2,8 — num registro que vai ao medico. A Web acertava, e a regra
                  divergiu por estar escrita duas vezes. */}
             {variacaoDePeso(journey.lostKg) ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{variacaoDePeso(journey.lostKg)!.texto}{ritmoDePeso(journey.rateKgPerWeek) ? ` · ${ritmoDePeso(journey.rateKgPerWeek)!.texto}` : ''}{followupLabel ? ` · ${followupLabel} de acompanhamento` : ''}</Text> : null}
-            {journey.remainingKg != null ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Faltam {journey.remainingKg} kg{journey.progressPct != null ? ` · ${journey.progressPct}% do caminho` : ''}</Text> : goal == null ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Defina uma meta para acompanhar o progresso.</Text> : null}
+            {journey.remainingKg != null ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Faltam {journey.remainingKg} kg{journey.progressPct != null ? ` · ${journey.progressPct}% do caminho` : ''}</Text> : goal == null ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{SCREEN_COPY.composicao.journeyNoGoal}</Text> : null}
             {journey.leanDeltaKg != null ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Massa magra: {journey.leanStartKg != null ? `${journey.leanStartKg} → ${journey.leanCurrentKg} kg (` : ''}{journey.leanDeltaKg > 0 ? '+' : ''}{journey.leanDeltaKg} kg{journey.leanStartKg != null ? ')' : ''} — acompanhe se a perda preserva a massa magra</Text> : null}
           </>
         ) : <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Registre seu peso para acompanhar a jornada.</Text>}
@@ -301,7 +308,7 @@ export function ComposicaoScreen() {
       {/* ① Formulário de medida */}
       {open ? (
         <View style={[styles.card, card, { gap: 12 }]}>
-          <Text spec={text(t, { role: 'bodyStrong' })}>{editing ? 'Editar medida' : 'Nova medida'}</Text>
+          <Text spec={text(t, { role: 'bodyStrong' })}>{editing ? SCREEN_COPY.composicao.editMeasure : SCREEN_COPY.composicao.addMeasure}</Text>
           <Chips options={BODY_METRICS.map(m => ({ id: m.value, label: m.label }))} value={metric} onChange={(v) => chooseMetric(v as BodyMetric)} />
           {metric === 'outro' ? <Input value={label} onChangeText={setLabel} placeholder="Nome da medida" /> : null}
           <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -346,7 +353,7 @@ export function ComposicaoScreen() {
             const s = summary[m]
             const q = sourceQuality(s.source)
             const value = `${s.value}${s.unit ? ` ${s.unit}` : ''}${s.delta != null && s.delta !== 0 ? ` (${s.delta > 0 ? '+' : ''}${s.delta})` : ''}`
-            const meta = `${q?.label ?? s.source ?? '—'} · ${fmt(s.date)}${q ? ` · ${RELIABILITY_LABEL[q.reliability]}` : ''}`
+            const meta = `${q?.label ?? s.source ?? '—'} · ${fmt(s.date)}${q ? ` · ${RELIABILITY_SHORT[q.reliability]}` : ''}`
             // A MINIATURA ao lado do indicador — mesma geometria da Web (`planoDaSparkline`, no core).
             //
             // O LUGAR diverge de propósito, e é mecanismo: na Web ela fica no cabeçalho do grupo do
@@ -371,8 +378,10 @@ export function ComposicaoScreen() {
       {/* ② Evolução longitudinal */}
       {evoIndicators.length > 0 ? (
         <View style={[styles.card, card, { gap: 10 }]}>
-          <Text spec={text(t, { role: 'bodyStrong' })}>Evolução</Text>
-          <Chips options={evoIndicators.map(m => ({ id: m.value, label: m.label }))} value={evoActive} onChange={(v) => setEvoMetric(v as BodyMetric)} />
+          <Text spec={text(t, { role: 'bodyStrong' })}>{SCREEN_COPY.composicao.evoTitle}</Text>
+          {/* Rótulo CURTO, o mesmo da Web. Sete nomes completos não cabem lado a lado — e qual palavra
+              encurta é decisão, que agora mora no core. */}
+          <Chips options={evoIndicators.map(m => ({ id: m.value, label: bodyMetricShortLabel(m.value) }))} value={evoActive} onChange={(v) => setEvoMetric(v as BodyMetric)} />
           <Chips options={EVOLUTION_PERIODS.map(p => ({ id: p.key, label: p.label }))} value={EVOLUTION_PERIODS.find(p => p.days === evoDays)?.key ?? 'all'} onChange={(k) => setEvoDays(EVOLUTION_PERIODS.find(p => p.key === k)?.days ?? null)} />
           {/* Filtros de marco, iguais aos da Web: a pessoa liga e desliga categorias e o gráfico responde.
               Sem isto, o aplicativo desenharia as linhas verticais sem dar como tirá-las. */}
@@ -421,7 +430,7 @@ export function ComposicaoScreen() {
       {/* ③ Comparação entre avaliações (A × B) */}
       {snapshots.length >= 2 ? (
         <View style={[styles.card, card, { gap: 10 }]}>
-          <Text spec={text(t, { role: 'bodyStrong' })}>Comparar avaliações</Text>
+          <Text spec={text(t, { role: 'bodyStrong' })}>{SCREEN_COPY.composicao.compareTitle}</Text>
           <View style={{ gap: 6 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
               <Text spec={text(t, { role: 'caption', tone: 'muted' })}>A: {snapLabel(snapA)}</Text>
@@ -459,14 +468,14 @@ export function ComposicaoScreen() {
       {/* ⑤ Marcos (projeção de outros domínios) */}
       {catsPresent.length > 0 ? (
         <View style={[styles.card, card, { gap: 10 }]}>
-          <Text spec={text(t, { role: 'bodyStrong' })}>Marcos</Text>
+          <Text spec={text(t, { role: 'bodyStrong' })}>{SCREEN_COPY.composicao.evoMilestones}</Text>
           <View style={styles.chips}>
             {catsPresent.map(c => {
               const on = msCats.has(c.key)
               return <Pressable key={c.key} onPress={() => toggleCat(c.key)} style={[styles.chip, { borderColor: on ? MILESTONE_COLOR[c.key] : t.color.border.default, backgroundColor: on ? t.color.badge.info.soft : 'transparent' }]}><Text spec={text(t, { role: 'caption', tone: on ? 'default' : 'muted' })}>{c.label}</Text></Pressable>
             })}
           </View>
-          {milestones.length > 0 ? milestones.map(m => {
+          {milestones.length > 0 ? marcosMaisRecentesPrimeiro(milestones).map(m => {
             const linkable = /\/exams?\//.test(m.href ?? '')
             return (
               <Pressable key={m.key} onPress={() => openMilestone(m.href)} disabled={!linkable} style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
@@ -480,7 +489,7 @@ export function ComposicaoScreen() {
       ) : null}
 
       {/* ① Histórico de medidas */}
-      {bodyItems.length > 0 ? <Text spec={text(t, { role: 'label', tone: 'muted' })}>REGISTROS</Text> : null}
+      {bodyItems.length > 0 ? <Text spec={text(t, { role: 'label', tone: 'muted' })}>{SCREEN_COPY.composicao.historyTitle.toUpperCase()}</Text> : null}
       {bodyItems.length === 0 ? (
         <View style={[styles.card, card]}><Text spec={text(t, { role: 'body', tone: 'muted' })} style={{ textAlign: 'center' }}>Nenhuma medida ainda. Registre uma avaliação em “Nova medida”.</Text></View>
       ) : null}

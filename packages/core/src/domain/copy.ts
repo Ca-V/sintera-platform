@@ -173,6 +173,45 @@ export const SCREEN_COPY = {
     pasteOpen:    'Abrir convite',
     pasteInvalid: 'Não reconheci um convite neste texto. Confira se copiou o endereço inteiro.',
   },
+  // Composição Corporal (BOD-001). TODO O TEXTO desta tela mora aqui desde 28/09/2026.
+  //
+  // A homologação da fundadora comparou as duas pontas lado a lado e achou dez divergências de PALAVRA —
+  // "Evolução" × "Como cada indicador evoluiu ao longo do tempo?", "Nova medida" × "Adicionar medida",
+  // "Jornada de peso" × "Como está o seu progresso?", "Média" × "Confiabilidade média". Nenhuma era bug de
+  // lógica: eram duas telas escritas separadamente, cada uma coerente consigo mesma.
+  //
+  // É exatamente o que a BASE ÚNICA proíbe. Copy é DECISÃO, e decisão não se digita duas vezes.
+  composicao: {
+    title:        'Composição Corporal',
+    subtitle:     'Panorama longitudinal do seu corpo — peso, IMC, gordura, massa magra/muscular e mais — a partir de bioimpedância, exames e registros. Cada indicador mostra sua origem.',
+    addMeasure:   'Adicionar medida',
+    editMeasure:  'Editar medida',
+    scanReport:   'Escanear laudo de bioimpedância',
+
+    // ① última medição
+    currentTitle: 'Última medição de cada indicador',
+    currentHint:  'Cada número é o registro mais recente daquele indicador — e as datas podem ser diferentes entre si.',
+
+    // ② jornada de peso
+    journeyTitle: 'Como está o seu progresso?',
+    journeyHint:  'Sua jornada de peso a partir dos seus registros — do ponto de partida à meta.',
+    journeyGoal:  'Definir meta',
+    journeyNoGoal: 'Defina uma meta para acompanhar o progresso.',
+
+    // ② evolução
+    evoTitle:     'Como cada indicador evoluiu ao longo do tempo?',
+    evoHint:      'Toque num ponto para ver a origem. Abaixo, os marcos do período que podem se relacionar com a mudança.',
+    evoMilestones: 'Marcos no período',
+    evoMilestonesFilter: 'Marcos:',
+
+    // ③ comparação
+    compareTitle: 'O que mudou entre duas avaliações?',
+    compareHint:  'Confronte dois retratos — cada valor mantém sua origem; sem ajuste entre tecnologias (ex.: DEXA × Bioimpedância).',
+
+    // ④ histórico
+    historyTitle: 'Registros',
+    historyEmpty: 'Nenhuma medida ainda. Registre uma avaliação em “Adicionar medida”.',
+  },
   exames: {
     title:        'Exames',
     subtitle:     'Solte o laudo — a SINTERA lê e extrai os dados por você. Os resultados ficam organizados ao longo do tempo.',
