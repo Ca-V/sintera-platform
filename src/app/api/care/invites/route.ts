@@ -11,13 +11,21 @@
 // Mobile use este caminho sem um segundo dono da regra (ADR-023).
 import { NextResponse, type NextRequest } from 'next/server'
 import { authenticateRequest } from '@/lib/supabase/apiAuth'
-import { createClient } from '@/lib/supabase/server'
 import { canalDoContato } from '@sintera/core'
 import { enviarConvite } from '@/lib/care/enviarConvite'
 
 export async function POST(req: NextRequest) {
-  const { user } = await authenticateRequest(req)
-  if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+  // O `client` VEM DAQUI, e não de `createClient()`.
+  //
+  // DEFEITO ACHADO NA HOMOLOGAÇÃO ANDROID (28/09/2026): esta rota pegava só o `user` e criava um segundo
+  // cliente por COOKIE. Na Web funcionava; no aplicativo, que manda `Authorization: Bearer`, não há cookie —
+  // o cliente nascia ANÔNIMO, `auth.uid()` ficava nulo, e a RLS recusava o insert. A pessoa lia "Não consegui
+  // criar o convite" sem nada dizer que o problema era a porta, não o convite.
+  //
+  // É exatamente o defeito que `apiAuth.ts` foi escrito para corrigir em 27/08, reintroduzido um arquivo ao
+  // lado. O helper já devolve o cliente no contexto da pessoa — descartá-lo é o erro.
+  const { user, client: supabase } = await authenticateRequest(req)
+  if (!user || !supabase) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
 
   let contato = ''
   try {
@@ -32,8 +40,6 @@ export async function POST(req: NextRequest) {
   if (canal === 'desconhecido') {
     return NextResponse.json({ error: 'Não reconheci este contato como e-mail nem como telefone.' }, { status: 400 })
   }
-
-  const supabase = await createClient()
 
   // A inserção passa pela RLS da pessoa: ela só cria convite em nome dela mesma. O `token` e o prazo vêm do
   // DEFAULT do banco — o cliente não gera token, e o servidor também não precisa.
