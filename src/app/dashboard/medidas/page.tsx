@@ -22,7 +22,13 @@ import { useNovelty } from '@/lib/novelty/useNovelty'
 import EvolutionChart from '@/components/body/EvolutionChart'
 import { buildSnapshots, compareSnapshots, type SnapPoint } from '@/lib/body/snapshots'
 // `atualidadeDoResumo` — o cabeçalho honesto da lista de indicadores; ver o comentário no bloco onde é usado.
-import { BODY_COMPARE_ORDER, atualidadeDoResumo, ausenciaExplicada } from '@sintera/core'
+// BASE ÚNICA (28/09/2026). Rótulos, textos, formato de data e ordem dos marcos passam a vir do core: a
+// homologação lado a lado achou dez divergências de palavra entre esta tela e a do aplicativo, todas nascidas
+// de a mesma decisão ter sido digitada duas vezes.
+import {
+  BODY_COMPARE_ORDER, atualidadeDoResumo, ausenciaExplicada,
+  SCREEN_COPY, formatDateBR, bodyMetricShortLabel, RELIABILITY_SHORT, marcosMaisRecentesPrimeiro,
+} from '@sintera/core'
 import { buildMilestones, MILESTONE_CATEGORIES, MILESTONE_COLOR, type MilestoneCategory, type MedInput, type ConsultaInput, type AssessmentInput } from '@/lib/body/milestones'
 import { professionalKindLabel } from '@/lib/agenda'
 import { todayISO } from '@/lib/date'   // SSOT de datas (DATE-001) — "hoje" consistente entre as telas
@@ -84,10 +90,11 @@ const SOURCE_LABEL: Record<string, string> = {
 // documento original (ex.: laudo de bioimpedância).
 interface ExamRef { id: string; type: string; examDate: string | null; fileUrl: string | null }
 
-function fmt(date: string): string {
-  const d = new Date(`${date}T00:00:00`)
-  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
-}
+// DATE-001. Era `toLocaleDateString('pt-BR', { month: 'short' })`, que varia com o locale do aparelho e
+// escrevia "25 de set. de 2026" enquanto o aplicativo escrevia "25/09/2026" — a mesma data com duas caras, na
+// mesma homologação. `formatDateBR` é determinístico e não constrói `Date`, então também não erra o dia por
+// fuso. Fica como função para não reescrever as ~40 chamadas de `fmt` desta página.
+const fmt = formatDateBR
 
 // Métricas extraídas de um laudo de bioimpedância (IMC é calculado à parte).
 const BIO_METRICS: Metric[] = ['peso', 'gordura_corporal', 'massa_muscular', 'massa_magra', 'agua_corporal', 'gordura_visceral', 'massa_ossea', 'taxa_metabolica']
@@ -407,14 +414,14 @@ export default function MedidasPage() {
 
       <PageHeader
         icon={<Ruler size={16} />}
-        eyebrow="Composição Corporal"
-        title="Composição Corporal"
-        subtitle={<>Panorama longitudinal do seu corpo — peso, IMC, gordura, massa magra/muscular e mais — a partir de bioimpedância, exames e registros. Cada indicador mostra sua origem.</>}
+        eyebrow={SCREEN_COPY.composicao.title}
+        title={SCREEN_COPY.composicao.title}
+        subtitle={SCREEN_COPY.composicao.subtitle}
         action={
           // BETA-2/BETA-5 (captura institucional): um ÚNICO "Adicionar medida" (foto/arquivo/manual).
           // A bioimpedância é DETECTADA no processamento (onScanFile) — sem botão dedicado.
           <CreateRecordMenu
-            label="Adicionar medida"
+            label={SCREEN_COPY.composicao.addMeasure}
             methods={['file', 'camera', 'manual']}
             fileAccept="image/*"
             cameraAccept="image/*"
@@ -433,7 +440,7 @@ export default function MedidasPage() {
       <div className="rounded-2xl border border-petal/30 bg-blush/30 px-4 py-3 flex items-start gap-3">
         <Activity size={16} className="text-petal flex-shrink-0 mt-0.5" />
         <p className="font-body text-xs text-onyx leading-relaxed">
-          Fez <strong>bioimpedância</strong> (por exemplo, com seu nutricionista)? Em <strong>Adicionar medida</strong>,
+          Fez <strong>bioimpedância</strong> (por exemplo, com seu nutricionista)? Em <strong>{SCREEN_COPY.composicao.addMeasure}</strong>,
           envie uma <strong>foto do laudo</strong> — o sistema reconhece a bioimpedância e pré-preenche as medidas
           (gordura corporal, massa muscular, água, IMC e outros); ou registre manualmente.
           Para guardar o laudo completo, envie o arquivo em{' '}
@@ -491,7 +498,7 @@ export default function MedidasPage() {
                   {q && (
                     <span className="inline-flex items-center gap-1 mt-1 font-body text-[10px] text-mauve" title={RELIABILITY_LABEL[q.reliability]}>
                       <span className={`w-1.5 h-1.5 rounded-full ${q.reliability === 'alta' ? 'bg-petal' : q.reliability === 'media' ? 'bg-gold' : 'bg-mauve/40'}`} />
-                      {q.reliability === 'alta' ? 'Alta' : q.reliability === 'media' ? 'Média' : 'Informado'}
+                      {RELIABILITY_SHORT[q.reliability]}
                     </span>
                   )}
                 </div>
@@ -519,14 +526,14 @@ export default function MedidasPage() {
                 <Target size={16} className="text-petal" />
               </div>
               <div>
-                <p className="font-display text-base font-semibold text-onyx leading-none">Como está o seu progresso?</p>
-                <p className="font-body text-[11px] text-mauve mt-0.5">Sua jornada de peso a partir dos seus registros — do ponto de partida à meta.</p>
+                <p className="font-display text-base font-semibold text-onyx leading-none">{SCREEN_COPY.composicao.journeyTitle}</p>
+                <p className="font-body text-[11px] text-mauve mt-0.5">{SCREEN_COPY.composicao.journeyHint}</p>
               </div>
             </div>
             {!goalEditing && (
               <button onClick={() => { setGoalInput(goalKg != null ? String(goalKg) : ''); setGoalEditing(true) }}
                 className="inline-flex items-center gap-1 font-body text-xs text-petal hover:underline flex-shrink-0">
-                <Pencil size={12} /> {goalKg != null ? 'Editar meta' : 'Definir meta'}
+                <Pencil size={12} /> {goalKg != null ? 'Editar meta' : SCREEN_COPY.composicao.journeyGoal}
               </button>
             )}
           </div>
@@ -592,7 +599,7 @@ export default function MedidasPage() {
                   )}
                 </>
               ) : (
-                <p className="font-body text-xs text-mauve leading-snug mt-1">Defina uma meta para acompanhar o progresso.</p>
+                <p className="font-body text-xs text-mauve leading-snug mt-1">{SCREEN_COPY.composicao.journeyNoGoal}</p>
               )}
             </div>
           </div>
@@ -627,7 +634,7 @@ export default function MedidasPage() {
       {!loading && evoIndicators.length > 0 && (
         <Card padding="relaxed" className="space-y-4">
           <div>
-            <p className="font-display text-base font-semibold text-onyx leading-none">Como cada indicador evoluiu ao longo do tempo?</p>
+            <p className="font-display text-base font-semibold text-onyx leading-none">{SCREEN_COPY.composicao.evoTitle}</p>
             <p className="font-body text-[11px] text-mauve mt-0.5">Clique num ponto para ver a origem. Abaixo, os marcos do período que podem se relacionar com a mudança.</p>
           </div>
 
@@ -638,7 +645,7 @@ export default function MedidasPage() {
               return (
                 <button key={m} type="button" onClick={() => { setEvoMetric(m); setEvoPoint(null) }}
                   className={`px-2.5 py-1 rounded-full font-body text-xs font-medium transition-colors ${active ? 'gradient-sintera text-white' : 'bg-ivory border border-border text-mauve hover:border-petal/40'}`}>
-                  {EVO_SHORT[m] ?? METRIC_LABEL[m]}
+                  {bodyMetricShortLabel(m)}
                 </button>
               )
             })}
@@ -689,9 +696,9 @@ export default function MedidasPage() {
           {/* Lista de marcos no período — narrativa da jornada, rastreável ao registro de origem */}
           {evoMilestones.length > 0 && (
             <div className="space-y-1">
-              <p className="font-body text-[11px] font-semibold text-onyx/70">Marcos no período</p>
+              <p className="font-body text-[11px] font-semibold text-onyx/70">{SCREEN_COPY.composicao.evoMilestones}</p>
               <ul className="space-y-0.5">
-                {[...evoMilestones].reverse().map(m => (
+                {marcosMaisRecentesPrimeiro(evoMilestones).map(m => (
                   <li key={m.key} className="flex items-center gap-2 font-body text-[11px] text-onyx">
                     <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: MILESTONE_COLOR[m.category] }} />
                     <span className="text-mauve whitespace-nowrap">{fmt(m.date)}</span>
@@ -770,8 +777,8 @@ export default function MedidasPage() {
           <button type="button" onClick={() => setCompareOpen(o => !o)} aria-expanded={compareOpen}
             className="w-full flex items-start justify-between gap-3 text-left">
             <span>
-              <span className="block font-display text-base font-semibold text-onyx leading-none">O que mudou entre duas avaliações?</span>
-              <span className="block font-body text-[11px] text-mauve mt-0.5">Confronte dois retratos — cada valor mantém sua origem; sem ajuste entre tecnologias (ex.: DEXA × Bioimpedância).</span>
+              <span className="block font-display text-base font-semibold text-onyx leading-none">{SCREEN_COPY.composicao.compareTitle}</span>
+              <span className="block font-body text-[11px] text-mauve mt-0.5">{SCREEN_COPY.composicao.compareHint}</span>
             </span>
             <ChevronDown size={18} className={`text-mauve flex-shrink-0 mt-0.5 transition-transform ${compareOpen ? 'rotate-180' : ''}`} />
           </button>

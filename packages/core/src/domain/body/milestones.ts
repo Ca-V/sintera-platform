@@ -68,6 +68,20 @@ export function consultaMilestones(consultas: ConsultaInput[]): Milestone[] {
 }
 
 /** Junta e ordena (asc) todos os marcos. Puro. */
+/**
+ * A ordem da LISTA de marcos: mais recente primeiro.
+ *
+ * Na homologação de 28/09/2026 a Web listava 04/07, 04/07, 01/07 e o aplicativo listava 01/07, 04/07, 04/07 —
+ * a mesma informação em ordens opostas, porque cada ponta decidiu a sua (a Web fazia `.reverse()` na render).
+ *
+ * Mais recente primeiro é a ordem certa aqui, e por um motivo: a pergunta que a lista responde é "o que mudou
+ * por último que pode explicar essa curva?". O gráfico acima é que anda para a frente no tempo — a lista
+ * responde do presente para trás. São ordens diferentes de propósito, e agora as duas pontas concordam.
+ */
+export function marcosMaisRecentesPrimeiro(ms: readonly Milestone[]): Milestone[] {
+  return [...ms].sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''))
+}
+
 export function buildMilestones(inputs: { meds: MedInput[]; assessments: AssessmentInput[]; consultas: ConsultaInput[] }): Milestone[] {
   return [
     ...medicationMilestones(inputs.meds),

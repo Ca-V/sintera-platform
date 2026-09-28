@@ -18,6 +18,18 @@ export const SOURCE_QUALITY: Record<string, SourceQuality> = {
   manual:        { label: 'Registro manual',     reliability: 'informado' },
 }
 
+/**
+ * A forma CURTA, para o selo ao lado do número. A Web a tinha digitada dentro da página ("Alta" · "Média" ·
+ * "Informado") e o aplicativo mostrava a forma longa — o mesmo dado com dois nomes, lado a lado, na
+ * homologação de 28/09/2026.
+ *
+ * As duas formas existem de propósito: a curta cabe no selo, a longa explica no `title`/acessibilidade. O que
+ * não pode é cada ponta escolher a sua.
+ */
+export const RELIABILITY_SHORT: Record<Reliability, string> = {
+  alta: 'Alta', media: 'Média', informado: 'Informado',
+}
+
 export const RELIABILITY_LABEL: Record<Reliability, string> = {
   alta: 'Confiabilidade alta', media: 'Confiabilidade média', informado: 'Informado pela usuária',
 }

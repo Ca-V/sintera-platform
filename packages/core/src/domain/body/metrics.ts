@@ -147,4 +147,28 @@ export function measurementMeta(o: { when: string; source?: string | null; notes
 const M = new Map<string, { label: string; unit: string }>([...BODY_METRICS, ...VITAL_SIGNS].map(m => [m.value, m]))
 export function bodyMetricLabel(m: string | null | undefined): string { return M.get(m ?? '')?.label ?? 'Outra medida' }
 export function bodyMetricUnit(m: string | null | undefined): string { return M.get(m ?? '')?.unit ?? '' }
+
+/**
+ * O rótulo CURTO, para os botões de indicador do gráfico de evolução.
+ *
+ * A Web o tinha digitado dentro da página (`EVO_SHORT`) e o aplicativo usava o nome completo: na homologação
+ * de 28/09/2026 a mesma fileira de botões dizia "Gordura · Massa Muscular · Água · Visceral · TMB" numa
+ * ponta e "Gordura corporal · Massa muscular · Água corporal · Gordura visceral · Taxa metabólica basal" na
+ * outra. O botão curto existe porque sete nomes completos não cabem lado a lado — mas QUAL palavra encurta
+ * é decisão, e decisão não se digita duas vezes.
+ *
+ * Indicador sem forma curta cai no nome completo: é o que acontece com os que já são curtos (Peso, IMC).
+ */
+const CURTO: Readonly<Record<string, string>> = {
+  gordura_corporal: 'Gordura',
+  massa_muscular: 'Massa Muscular',
+  massa_magra: 'Massa Magra',
+  agua_corporal: 'Água',
+  gordura_visceral: 'Visceral',
+  taxa_metabolica: 'TMB',
+  circunferencia_cintura: 'Cintura',
+}
+export function bodyMetricShortLabel(m: string | null | undefined): string {
+  return CURTO[m ?? ''] ?? bodyMetricLabel(m)
+}
 export function bodySourceLabel(s: string | null | undefined): string | null { const k = (s ?? '').trim(); return k ? (BODY_SOURCE_LABEL[k] ?? 'Outra origem') : null }
