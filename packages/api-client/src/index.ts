@@ -112,3 +112,7 @@ export type { NovoPerfilProfissional } from './care/profissional'
 export { getConteudoDosModulos } from './care/pacienteDoProfissional'
 export type { ItemDoModulo, ConteudoDoModulo } from './care/pacienteDoProfissional'
 export type { RedeDeCuidado } from './care/rede'
+
+// NOV-001 — novidade pela ponte ADR-020. As rotas passaram a aceitar Bearer em 28/09/2026.
+export { getNovelty, markNoveltySeen } from './novelty/novelty'
+export type { NoveltyEntry, NoveltyStreams } from './novelty/novelty'

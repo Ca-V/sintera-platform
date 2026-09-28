@@ -45,6 +45,7 @@ import {
   aceitarConviteProfissional, recusarConviteProfissional, getPacientesDoProfissional,
 } from '../care/profissional'
 import { getConteudoDosModulos } from '../care/pacienteDoProfissional'
+import { getNovelty, markNoveltySeen } from '../novelty/novelty'
 import { getEntitlementsDaSessao } from '../billing/load'
 import { listBodyMetrics, saveBodyMetric, deleteBodyMetric, getHeightCm, getWeightGoal, setWeightGoal } from '../body/body'
 import { listActivitySessions, saveActivitySession, deleteActivitySession, ingestActivitySessions } from '../activity/activity'
@@ -256,6 +257,11 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       getPacientesDoProfissional: (signal) => getPacientesDoProfissional(supabase, signal),
       getConteudoDosModulos: (pacienteUserId, escopo, signal) =>
         getConteudoDosModulos(supabase, pacienteUserId, escopo, signal),
+    },
+    // NOV-001 — novidade. Best-effort de propósito: a contagem nunca derruba a tela que a consome.
+    novelty: {
+      get: (signal) => getNovelty(supabase, config.webBaseUrl, signal),
+      markSeen: (stream, signal) => markNoveltySeen(supabase, stream, config.webBaseUrl, signal),
     },
     // Comercial (BILLING-003). Este é o consumidor que faltava: o BILLING-002 §3 mediu schema em produção,
     // contrato pronto e ZERO telas consultando permissão. Sem isto, nada é cobrado nem limitado.

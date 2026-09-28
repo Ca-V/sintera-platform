@@ -10,7 +10,7 @@ import { useNavigation } from '@react-navigation/native'
 import { text } from '@sintera/design-system'
 import type { BodyMetricDTO, ExamDTO } from '@sintera/api-client'
 import type { HealthEvent } from '@sintera/core'
-import { BODY_COMPARE_ORDER } from '@sintera/core'
+import { BODY_COMPARE_ORDER, GLIFO_DA_ORIGEM, markerFor, type EvoPoint } from '@sintera/core'
 import {
   BODY_METRICS, bodyMetricLabel, bodyMetricUnit, isVital, type BodyMetric,
   // `atualidadeDoResumo` — o cabecalho honesto: ver o bloco onde e usado.
@@ -20,7 +20,7 @@ import {
   buildMilestones, MILESTONE_CATEGORIES, MILESTONE_COLOR, type MilestoneCategory,
   type MedInput, type AssessmentInput, type ConsultaInput, professionalKindLabel,
 } from '@sintera/core'
-import { Text, Button, Input, MetricRow, Disclaimer, DatePicker } from '../../primitives'
+import { Text, Button, Input, MetricRow, Disclaimer, DatePicker, EvolutionChart, Sparkline } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 import { useAssistedCapture } from '../capture/useAssistedCapture'
@@ -66,6 +66,14 @@ export function ComposicaoScreen() {
   const [snapAKey, setSnapAKey] = useState<string | null>(null)
   const [snapBKey, setSnapBKey] = useState<string | null>(null)
   const [msCats, setMsCats] = useState<Set<MilestoneCategory>>(new Set(MILESTONE_CATEGORIES.map(c => c.key)))
+  // O ponto tocado no gráfico. Serve para destacá-lo E para abrir o exame de origem — rastreabilidade
+  // BOD-001: o gráfico responde "como evoluiu?", o toque responde "de onde veio este ponto?".
+  const [evoSelKey, setEvoSelKey] = useState<string | null>(null)
+  // NOV-001 — Composição é superfície de CONSUMO do fluxo `wearable_body`: ao abrir, marca como visto
+  // (reconhecimento natural, sem botão de "dispensar"). `seenSince` guarda o instante DESTA visita, então o
+  // selo aparece agora e some na próxima — e é por isso que ele é lido antes do `markSeen`.
+  const [seenSince, setSeenSince] = useState<string | null>(null)
+  const [noveltyReady, setNoveltyReady] = useState(false)
 
   const load = useCallback((silent: boolean) => {
     if (silent) setRefreshing(true); else setPhase('loading')
@@ -89,6 +97,21 @@ export function ComposicaoScreen() {
       .finally(() => { if (alive.current) setRefreshing(false) })
   }, [])
   useEffect(() => { alive.current = true; load(false); return () => { alive.current = false } }, [load])
+
+  // NOV-001. Lê PRIMEIRO e marca depois: `markSeen` avança o estado no servidor, então ler antes preserva o
+  // instante desta visita e os selos aparecem agora. Nada aqui bloqueia a tela — a leitura nunca lança, e
+  // falhar significa apenas não destacar nada.
+  useEffect(() => {
+    let vivo = true
+    void (async () => {
+      const streams = await apiClient.novelty.get()
+      if (!vivo) return
+      setSeenSince(streams['body_composition']?.since ?? null)
+      setNoveltyReady(true)
+      void apiClient.novelty.markSeen('body_composition')
+    })()
+    return () => { vivo = false }
+  }, [])
 
   // Composição Corporal = só medidas corporais; sinais vitais (mesma tabela) vivem no Monitoramento (isVital).
   const bodyItems = useMemo(() => items.filter(m => !isVital(m.metric)), [items])
@@ -125,11 +148,19 @@ export function ComposicaoScreen() {
   // Série DETALHADA (data · valor · origem · exame) p/ a tabela cronológica clicável — rastreabilidade BOD-001.
   const evoDetail = filterByPeriod(
     bodyItems.filter(m => evoActive === 'imc' ? m.metric === 'peso' : m.metric === evoActive)
-      .map(m => { const v = parseNum(m.value_text); return { date: m.measured_on, value: evoActive === 'imc' ? (imc(v) ?? 0) : v, unit: evoActive === 'imc' ? 'kg/m²' : (m.unit ?? ''), source: m.source, examId: m.exam_id } })
+      // `key` e `createdAt` entram aqui para que estes pontos SEJAM `EvoPoint` — é o que o gráfico do core
+      // recebe, o mesmo tipo que a Web passa. Sem o `key` não há como selecionar um ponto no toque.
+      .map(m => { const v = parseNum(m.value_text); return { key: m.id, createdAt: m.created_at ?? null, date: m.measured_on, value: evoActive === 'imc' ? (imc(v) ?? 0) : v, unit: evoActive === 'imc' ? 'kg/m²' : (m.unit ?? ''), source: m.source, examId: m.exam_id } })
       .filter(p => Number.isFinite(p.value) && p.value > 0),
     evoDays, today(),
   ).slice().sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''))
   const evoSources = [...new Set(evoDetail.map(p => p.source).filter(Boolean))] as string[]
+  // O gráfico recebe a série em ordem CRESCENTE; a tabela abaixo dele fica decrescente (mais recente
+  // primeiro). São ordens diferentes de propósito: no tempo o gráfico anda para a frente, e a lista responde
+  // "o que aconteceu por último".
+  const evoChartPoints: EvoPoint[] = evoDetail.slice().reverse()
+  // A unidade vem do INDICADOR, não do primeiro ponto: série com registros sem unidade deixaria o eixo mudo.
+  const evoUnit = evoActive === 'imc' ? 'kg/m²' : (bodyMetricUnit(evoActive) || null)
 
   const snapshots: Snapshot[] = useMemo(() => buildSnapshots(bodyItems.map((m): SnapPoint => ({ metric: m.metric, value: parseNum(m.value_text), unit: m.unit, date: m.measured_on, source: m.source, examId: m.exam_id })).filter(p => Number.isFinite(p.value))), [bodyItems])
   const snapA = snapshots.find(s => s.key === snapAKey) ?? snapshots[0] ?? null
@@ -148,6 +179,9 @@ export function ComposicaoScreen() {
   const catsPresent = MILESTONE_CATEGORIES.filter(c => allMilestones.some(m => m.category === c.key))
   // Marcos respeitam o período selecionado (como a evolução) e as categorias marcadas.
   const milestones = filterByPeriod(allMilestones.filter(m => msCats.has(m.category)), evoDays, today())
+  // Os marcos entram no gráfico como linhas verticais coloridas por categoria — igual à Web. Quem decide se
+  // cabem na janela é o core: marco fora do período sugeriria um evento que não aconteceu ali.
+  const evoChartMs = milestones.map(m => ({ date: m.date, color: MILESTONE_COLOR[m.category] }))
   const openMilestone = (href: string | null) => { const m = href?.match(/\/exams?\/([\w-]+)/); if (m) openExam(m[1]) }
 
   // T1 — captura assistida da BIOIMPEDÂNCIA: um laudo gera MÚLTIPLAS medidas → revisão em lote (proposta → salvar).
@@ -313,7 +347,22 @@ export function ComposicaoScreen() {
             const q = sourceQuality(s.source)
             const value = `${s.value}${s.unit ? ` ${s.unit}` : ''}${s.delta != null && s.delta !== 0 ? ` (${s.delta > 0 ? '+' : ''}${s.delta})` : ''}`
             const meta = `${q?.label ?? s.source ?? '—'} · ${fmt(s.date)}${q ? ` · ${RELIABILITY_LABEL[q.reliability]}` : ''}`
-            return <MetricRow key={m} label={bodyMetricLabel(m)} value={value} valueColor={trendColor(s.trend)} meta={meta} />
+            // A MINIATURA ao lado do indicador — mesma geometria da Web (`planoDaSparkline`, no core).
+            //
+            // O LUGAR diverge de propósito, e é mecanismo: na Web ela fica no cabeçalho do grupo do
+            // histórico, que é agrupado por indicador; aqui o histórico é uma lista corrida de registros, e
+            // o lugar onde "este indicador" existe como linha única é este. O que se desenha é o mesmo.
+            const serie = series(m).map(p => p.value).filter(v => Number.isFinite(v))
+            return (
+              <View key={m} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View style={{ flex: 1 }}>
+                  <MetricRow label={bodyMetricLabel(m)} value={value} valueColor={trendColor(s.trend)} meta={meta} />
+                </View>
+                {/* Com menos de dois pontos o core devolve `null` e nada é desenhado: um ponto só não tem
+                    evolução, e uma bolinha sozinha sugeriria série onde há um registro. */}
+                <Sparkline values={serie} width={64} height={22} color={t.color.identity.primary} />
+              </View>
+            )
           })}
           {imcVal == null && summary['peso'] ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Informe sua altura no perfil (na Web) para calcular o IMC.</Text> : null}
         </View>
@@ -325,13 +374,40 @@ export function ComposicaoScreen() {
           <Text spec={text(t, { role: 'bodyStrong' })}>Evolução</Text>
           <Chips options={evoIndicators.map(m => ({ id: m.value, label: m.label }))} value={evoActive} onChange={(v) => setEvoMetric(v as BodyMetric)} />
           <Chips options={EVOLUTION_PERIODS.map(p => ({ id: p.key, label: p.label }))} value={EVOLUTION_PERIODS.find(p => p.days === evoDays)?.key ?? 'all'} onChange={(k) => setEvoDays(EVOLUTION_PERIODS.find(p => p.key === k)?.days ?? null)} />
-          {evoPoints.length > 1 && evoMax > evoMin ? (
-            <View style={styles.spark}>
-              {evoPoints.map((p, i) => <View key={i} style={{ flex: 1, height: 44, justifyContent: 'flex-end' }}><View style={{ height: Math.max(3, ((p.value - evoMin) / (evoMax - evoMin)) * 44), backgroundColor: t.color.identity.primary, borderRadius: 2 }} /></View>)}
-            </View>
-          ) : <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Poucos pontos no período para desenhar a evolução.</Text>}
-          {evoPoints.length > 0 ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{evoActive === 'imc' ? 'IMC' : bodyMetricLabel(evoActive)} · {evoPoints[0].value} → {evoPoints[evoPoints.length - 1].value} · {evoPoints.length} {evoPoints.length === 1 ? 'ponto' : 'pontos'} no período.</Text> : <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Sem pontos no período selecionado.</Text>}
-          {evoSources.length > 0 ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Origem: {evoSources.map(s => sourceQuality(s)?.label ?? s).join(' · ')}</Text> : null}
+          {/* Filtros de marco, iguais aos da Web: a pessoa liga e desliga categorias e o gráfico responde.
+              Sem isto, o aplicativo desenharia as linhas verticais sem dar como tirá-las. */}
+          {catsPresent.length > 0 ? (
+            <Chips
+              multiple
+              options={catsPresent.map(c => ({ id: c.key, label: c.label }))}
+              values={[...msCats]}
+              onToggle={(k) => setMsCats(prev => {
+                const s = new Set(prev)
+                if (s.has(k as MilestoneCategory)) s.delete(k as MilestoneCategory); else s.add(k as MilestoneCategory)
+                return s
+              })}
+            />
+          ) : null}
+
+          {/* O GRÁFICO. Substituiu barrinhas improvisadas que não tinham eixo, unidade, data, origem nem
+              marcos — e que não eram o mesmo desenho da Web. A geometria vem do core; aqui só há o desenho. */}
+          <EvolutionChart
+            points={evoChartPoints}
+            unit={evoUnit}
+            selectedKey={evoSelKey}
+            onSelect={(p) => { setEvoSelKey(p.key); openExam(p.examId) }}
+            milestones={evoChartMs}
+          />
+
+          {/* Legenda de origem, com os MESMOS glifos da Web — vindos do core. Quatro marcadores diferentes
+              sem legenda viram enfeite em vez de informação. */}
+          {evoSources.length > 0 ? (
+            <Text spec={text(t, { role: 'caption', tone: 'faint' })}>
+              {evoSources.map(s => `${GLIFO_DA_ORIGEM[markerFor(s)]} ${sourceQuality(s)?.label ?? s}`).join('   ')}
+            </Text>
+          ) : null}
+
+          {evoPoints.length > 0 ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{evoActive === 'imc' ? 'IMC' : bodyMetricLabel(evoActive)} · {evoPoints[0].value} → {evoPoints[evoPoints.length - 1].value} · {evoPoints.length} {evoPoints.length === 1 ? 'ponto' : 'pontos'} no período.</Text> : null}
           {/* Tabela cronológica (mais recente primeiro): data · valor · origem — toque abre o exame de origem. */}
           {evoDetail.map((p, i) => (
             <Pressable key={i} onPress={() => openExam(p.examId)} disabled={!p.examId} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2 }}>
@@ -413,7 +489,14 @@ export function ComposicaoScreen() {
         return (
           <View key={m.id} style={[styles.card, card, { gap: 2 }]}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <Text spec={text(t, { role: 'body' })}>{m.metric === 'outro' ? (m.label ?? 'Medida') : bodyMetricLabel(m.metric)}: {m.value_text}{m.unit ? ` ${m.unit}` : ''}</Text>
+              <Text spec={text(t, { role: 'body' })}>
+                {m.metric === 'outro' ? (m.label ?? 'Medida') : bodyMetricLabel(m.metric)}: {m.value_text}{m.unit ? ` ${m.unit}` : ''}
+                {/* NOV-001 — só o que CHEGOU SOZINHO ganha selo. Medida que a pessoa digitou não é novidade
+                    para ela, e marcar tudo como novo faria o selo parar de significar alguma coisa. */}
+                {noveltyReady && m.source === 'wearable' && m.created_at && (seenSince == null || m.created_at > seenSince)
+                  ? <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>  • novo</Text>
+                  : null}
+              </Text>
               <Pressable onPress={() => startEdit(m)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Editar</Text></Pressable>
             </View>
             <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{fmt(m.measured_on)}{sourceQuality(m.source) ? ` · ${sourceQuality(m.source)!.label}` : ''}</Text>
@@ -431,13 +514,40 @@ export function ComposicaoScreen() {
   )
 }
 
-function Chips({ options, value, onChange }: { options: readonly { id: string; label: string }[]; value: string; onChange: (v: string) => void }) {
+/**
+ * Chips de seleção. Dois modos, e a diferença não é enfeite:
+ *  · ÚNICO (`value`/`onChange`) — indicador e período: escolher um substitui o outro.
+ *  · MÚLTIPLO (`values`/`onToggle`) — categorias de marco: ligar uma não desliga as demais.
+ *
+ * O modo múltiplo entrou em 28/09/2026 para o aplicativo ter os mesmos filtros de marco da Web. Sem eles, o
+ * gráfico desenharia linhas verticais sem dar como tirá-las — mostrar sem permitir esconder é pior do que
+ * não mostrar.
+ */
+function Chips({ options, value, onChange, multiple, values, onToggle }: {
+  options: readonly { id: string; label: string }[]
+  value?: string
+  onChange?: (v: string) => void
+  multiple?: boolean
+  values?: readonly string[]
+  onToggle?: (v: string) => void
+}) {
   const t = useTheme()
+  const ligado = (id: string) => (multiple ? (values ?? []).includes(id) : value === id)
   return (
     <View style={styles.chips}>
       {options.map(o => {
-        const on = value === o.id
-        return <Pressable key={o.id} onPress={() => onChange(o.id)} style={[styles.chip, { borderColor: on ? t.color.identity.primary : t.color.border.default, backgroundColor: on ? t.color.badge.info.soft : 'transparent' }]}><Text spec={text(t, { role: 'caption', tone: on ? 'default' : 'muted' })}>{o.label}</Text></Pressable>
+        const on = ligado(o.id)
+        return (
+          <Pressable
+            key={o.id}
+            accessibilityRole={multiple ? 'checkbox' : 'button'}
+            accessibilityState={{ checked: on, selected: on }}
+            onPress={() => (multiple ? onToggle?.(o.id) : onChange?.(o.id))}
+            style={[styles.chip, { borderColor: on ? t.color.identity.primary : t.color.border.default, backgroundColor: on ? t.color.badge.info.soft : 'transparent' }]}
+          >
+            <Text spec={text(t, { role: 'caption', tone: on ? 'default' : 'muted' })}>{o.label}</Text>
+          </Pressable>
+        )
       })}
     </View>
   )

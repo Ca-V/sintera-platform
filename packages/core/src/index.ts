@@ -76,6 +76,8 @@ export * from './domain/body/summary'
 // Quao atual e o "estado atual" — o cabecalho para de afirmar hoje sobre dado de 2023 (31/08/2026).
 export * from './domain/body/atualidadeDoResumo'
 export * from './domain/body/evolution'
+// BOD-001 ②: a geometria do gráfico vive aqui para que as duas pontas desenhem o MESMO gráfico.
+export * from './domain/body/graficoDeEvolucao'
 export * from './domain/body/snapshots'
 export * from './domain/body/milestones'
 export * from './domain/communication/period'
