@@ -40,6 +40,11 @@ import { exportAccountData, deleteAccount } from '../settings/account'
 import { readCondition, readBioimpedance, readEyeglasses, scanMedications } from '../vision/vision'
 import { getMinhaSaudeCounts } from '../summary/counts'
 import { getRedeDeCuidado, convidarProfissional, revogarVinculo, cancelarConvite } from '../care/rede'
+import {
+  getPerfilProfissional, criarPerfilProfissional, getConviteRecebido,
+  aceitarConviteProfissional, recusarConviteProfissional, getPacientesDoProfissional,
+} from '../care/profissional'
+import { getConteudoDosModulos } from '../care/pacienteDoProfissional'
 import { getEntitlementsDaSessao } from '../billing/load'
 import { listBodyMetrics, saveBodyMetric, deleteBodyMetric, getHeightCm, getWeightGoal, setWeightGoal } from '../body/body'
 import { listActivitySessions, saveActivitySession, deleteActivitySession, ingestActivitySessions } from '../activity/activity'
@@ -49,7 +54,7 @@ import { searchRecords } from '../search/search'
 import { listLinkableDocuments, linkDocumentToTarget, unlinkDocumentFromTarget } from '../documents/links'
 import { startOAuthSignIn, completeOAuthSignIn } from './oauth'
 import { classifyDocument } from '../capture/classify'
-import { listShares, createShare, revokeShare, listTemplates, saveTemplate, deleteTemplate, listOmicsPanels } from '../report/report'
+import { listShares, listAllShares, createShare, revokeShare, listTemplates, saveTemplate, deleteTemplate, listOmicsPanels } from '../report/report'
 import { listOmicsPanels as omicsList, getOmicsPanel, getOmicsResults, getOmicsFeatureHistory, searchOmicsCatalog, createOmicsPanel, addOmicsResult, deleteOmicsResult, deleteOmicsPanel } from '../omics/omics'
 import { asError } from '../net/errors'
 
@@ -206,6 +211,7 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
     },
     report: {
       listShares: (signal) => listShares(supabase, signal),
+      listAllShares: (signal) => listAllShares(supabase, signal),
       createShare: (input) => createShare(supabase, input),
       revokeShare: (id) => revokeShare(supabase, id),
       listTemplates: (signal) => listTemplates(supabase, signal),
@@ -240,6 +246,16 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       convidarProfissional: (contato, signal) => convidarProfissional(supabase, contato, config.webBaseUrl, signal),
       revogarVinculo: (id, signal) => revogarVinculo(supabase, id, signal),
       cancelarConvite: (id, signal) => cancelarConvite(supabase, id, signal),
+      // O lado de QUEM RECEBE (CARE-003, migração 165). Mesmo contrato para as duas pontas: sem isto, a tela
+      // de aceite do aplicativo falaria com o Supabase direto e viraria o segundo dono do fluxo (ADR-023).
+      getPerfilProfissional: (signal) => getPerfilProfissional(supabase, signal),
+      criarPerfilProfissional: (p, signal) => criarPerfilProfissional(supabase, p, signal),
+      getConviteRecebido: (token, signal) => getConviteRecebido(supabase, token, signal),
+      aceitarConviteProfissional: (token, signal) => aceitarConviteProfissional(supabase, token, signal),
+      recusarConviteProfissional: (token, signal) => recusarConviteProfissional(supabase, token, signal),
+      getPacientesDoProfissional: (signal) => getPacientesDoProfissional(supabase, signal),
+      getConteudoDosModulos: (pacienteUserId, escopo, signal) =>
+        getConteudoDosModulos(supabase, pacienteUserId, escopo, signal),
     },
     // Comercial (BILLING-003). Este é o consumidor que faltava: o BILLING-002 §3 mediu schema em produção,
     // contrato pronto e ZERO telas consultando permissão. Sem isto, nada é cobrado nem limitado.

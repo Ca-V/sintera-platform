@@ -21,6 +21,7 @@ export function RedeCuidadoMenuScreen({ navigation }: Props) {
   const irPara = (destino: DestinoRede) => {
     if (destino === 'relatorio') navigation.navigate('Relatorio')
     else if (destino === 'profissionais') navigation.navigate('Profissionais')
+    else if (destino === 'compartilhamentos') navigation.navigate('Compartilhamentos')
   }
 
   return (

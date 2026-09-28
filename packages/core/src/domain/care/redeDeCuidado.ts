@@ -15,13 +15,17 @@ export interface LinhaDoMenu {
 }
 
 /**
- * As linhas do menu, na ordem. `Compartilhamentos` segue indisponível — depende do Care Space (CARE-001),
- * que é Fase 4. Prometer o que não existe é o que corrói a confiança, então ele aparece com o motivo.
+ * As linhas do menu, na ordem.
+ *
+ * `Compartilhamentos` esteve indisponível com o motivo "depende do Care Space (CARE-001), Fase 4". **Estava
+ * errado**, e o erro foi de método: deduzi a dependência a partir do NOME do conceito em vez de olhar o que
+ * existia. `report_shares` está em produção desde a migração 043, com criar/listar/revogar prontos. Care
+ * Space é outra coisa — espaço de conversa com Snapshot imutável — e essa sim continua Fase 4.
  */
 export const MENU_REDE: readonly LinhaDoMenu[] = [
   { destino: 'relatorio', label: 'Relatórios', disponivel: true },
   { destino: 'profissionais', label: 'Profissionais', disponivel: true },
-  { destino: 'compartilhamentos', label: 'Compartilhamentos', disponivel: false },
+  { destino: 'compartilhamentos', label: 'Compartilhamentos', disponivel: true },
 ]
 
 // ------------------------------------------------------------------------------------------------------

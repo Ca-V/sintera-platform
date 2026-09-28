@@ -33,15 +33,29 @@ describe('CARE-003 · o menu é decidido uma vez só', () => {
     expect(MENU_REDE.map(l => l.destino)).toEqual(['relatorio', 'profissionais', 'compartilhamentos'])
   })
 
-  it('Profissionais está disponível; Compartilhamentos ainda não', () => {
+  // ESTA ASSERÇÃO MUDOU EM 27/09/2026, e o motivo fica registrado para não parecer teste afrouxado.
+  //
+  // Ela afirmava que `compartilhamentos` era indisponível "porque depende do Care Space, que é fase
+  // posterior". A premissa estava errada: `report_shares` está em produção desde a migração 043, com
+  // criar/listar/revogar prontos, e a pessoa já gera links pela tela de Relatório. O que faltava era o lugar
+  // onde ela VÊ e DESFAZ — que agora existe nas duas pontas.
+  //
+  // O erro foi de método: deduzi a dependência a partir do NOME do conceito em vez de olhar o que existia.
+  // Care Space (CARE-001) é outra coisa — espaço de conversa com Snapshot imutável — e segue Fase 4.
+  it('as três linhas estão disponíveis', () => {
     const por = Object.fromEntries(MENU_REDE.map(l => [l.destino, l.disponivel]))
     expect(por.relatorio).toBe(true)
     expect(por.profissionais).toBe(true)
-    expect(por.compartilhamentos, 'depende do Care Space, que é fase posterior').toBe(false)
+    expect(por.compartilhamentos).toBe(true)
   })
 
   it('o indisponível vem com motivo — prometer o que não existe é o que corrói a confiança', () => {
+    // Nenhuma linha está indisponível hoje, mas o texto continua obrigatório: a próxima que entrar
+    // (Familiares, CARE-002) vai precisar dele, e uma linha cinza sem explicação faz a pessoa achar que errou.
     expect(SCREEN_COPY.rede.soonReason.length).toBeGreaterThan(20)
+    for (const linha of MENU_REDE.filter(l => !l.disponivel)) {
+      expect(SCREEN_COPY.rede.soonReason, `"${linha.label}" está cinza sem motivo`).toBeTruthy()
+    }
   })
 })
 

@@ -27,6 +27,37 @@ export async function listShares(client: SupabaseClient, signal?: AbortSignal): 
   }
 }
 
+export interface ShareComHistoricoDTO extends ShareDTO {
+  created_at: string
+  revoked: boolean
+  sections: string[] | null
+}
+
+/**
+ * Todos os links, INCLUSIVE vencidos e revogados — é o que a tela Compartilhamentos projeta (CARE-003).
+ *
+ * POR QUE NÃO REUSA `listShares`. Aquela existe para a tela de Relatório saber quais links ainda abrem, e por
+ * isso filtra `revoked=false` e prazo futuro. Aqui o encerrado é justamente o que precisa aparecer: é o
+ * histórico do que já saiu da plataforma, e esconder isso esconderia o que uma auditoria procuraria.
+ *
+ * O ESTADO NÃO É DECIDIDO AQUI. Esta função devolve os fatos crus (`revoked`, `expires_at`); quem diz o que é
+ * ativo, expirado ou revogado é `estadoDoCompartilhamento` no @sintera/core, uma vez só para as duas pontas.
+ */
+export async function listAllShares(client: SupabaseClient, signal?: AbortSignal): Promise<ShareComHistoricoDTO[]> {
+  const { signal: s, cleanup } = withTimeout(signal)
+  try {
+    const { data: { session } } = await client.auth.getSession()
+    if (!session) throw new Error('Não autenticado')
+    const { data, error } = await client.from('report_shares')
+      .select('id, token, expires_at, created_at, revoked, sections').eq('user_id', session.user.id)
+      .order('created_at', { ascending: false }).limit(100).abortSignal(s)
+    if (error) throw asError(error)
+    return (data as ShareComHistoricoDTO[] | null) ?? []
+  } finally {
+    cleanup()
+  }
+}
+
 /** Cria um link público (30 dias por padrão) com as seções, o filtro por item (excluded) e o período. Retorna o token. */
 export async function createShare(
   client: SupabaseClient,

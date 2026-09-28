@@ -11,7 +11,7 @@ import { MENU_REDE, SCREEN_COPY, type DestinoRede } from '@sintera/core'
 const HREF: Readonly<Record<DestinoRede, string>> = {
   relatorio: '/dashboard/relatorio',
   profissionais: '/dashboard/rede-de-cuidado/profissionais',
-  compartilhamentos: '',
+  compartilhamentos: '/dashboard/rede-de-cuidado/compartilhamentos',
 }
 
 export default function RedeDeCuidadoPage() {

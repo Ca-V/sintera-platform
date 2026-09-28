@@ -23,7 +23,7 @@ import type { ActivitySessionDTO, ActivitySessionInput, IngestResult } from '../
 import type { CanonicalSample, PropagationResult, ClassificationResult, LeituraTentativa } from '@sintera/core'
 import type { ClassifyInput } from '../capture/classify'
 import type { IdentityProvider } from './oauth'
-import type { ShareDTO, TemplateDTO, OmicsPanelDTO } from '../report/report'
+import type { ShareDTO, ShareComHistoricoDTO, TemplateDTO, OmicsPanelDTO } from '../report/report'
 import type { OmicsPanelDTO as OmicsPanel, OmicsPanelDetail, OmicsResultDTO, OmicsHistoryPoint, OmicsCatalogMatch, OmicsResultInput } from '../omics/omics'
 import type { Period, DocumentTargetDomain, SearchHit, PatientDocumentSubtype, DailySteps } from '@sintera/core'
 import type { PatientDocumentDTO, PatientDocumentInput, PatientDocumentPage } from '../documents/documents'
@@ -256,6 +256,8 @@ export interface OmicsApi {
  *  A MONTAGEM/formatação vive no @sintera/core (assembleReport); esta API só persiste/lê. */
 export interface ReportApi {
   listShares(signal?: AbortSignal): Promise<ShareDTO[]>
+  /** Inclui vencidos e revogados — a tela Compartilhamentos projeta o histórico (CARE-003). */
+  listAllShares(signal?: AbortSignal): Promise<ShareComHistoricoDTO[]>
   /** Cria um link público (30 dias por padrão) das seções + período; retorna o token gerado. */
   createShare(input: { sections: string[]; excluded?: Partial<Record<string, string[]>>; period: Period; days?: number }): Promise<{ data: { token: string } | null; error: Error | null }>
   revokeShare(id: string): Promise<{ error: Error | null }>
@@ -326,6 +328,24 @@ export interface CareApi {
   convidarProfissional(paraContato: string, signal?: AbortSignal): Promise<{ id: string }>
   revogarVinculo(vinculoId: string, signal?: AbortSignal): Promise<void>
   cancelarConvite(conviteId: string, signal?: AbortSignal): Promise<void>
+
+  // O lado de QUEM RECEBE (CARE-003, migração 165).
+  getPerfilProfissional(signal?: AbortSignal): Promise<import('@sintera/core').PerfilProfissional | null>
+  criarPerfilProfissional(
+    p: import('../care/profissional').NovoPerfilProfissional, signal?: AbortSignal,
+  ): Promise<import('@sintera/core').PerfilProfissional>
+  getConviteRecebido(token: string, signal?: AbortSignal): Promise<import('@sintera/core').ConviteRecebido | null>
+  /** LANÇA com a mensagem crua do banco. Quem traduz é `motivoDoAceite`, no core. */
+  aceitarConviteProfissional(token: string, signal?: AbortSignal): Promise<string>
+  recusarConviteProfissional(token: string, signal?: AbortSignal): Promise<void>
+  getPacientesDoProfissional(signal?: AbortSignal): Promise<import('@sintera/core').PacienteNaLista[]>
+  /**
+   * O conteúdo dos módulos autorizados de uma pessoa. Quem IMPÕE o limite é o RLS (migração 161) — esta
+   * função não filtra por segurança, e pedir dado de quem não autorizou devolve lista vazia, não erro.
+   */
+  getConteudoDosModulos(
+    pacienteUserId: string, escopo: readonly string[], signal?: AbortSignal,
+  ): Promise<import('../care/pacienteDoProfissional').ConteudoDoModulo[]>
 }
 
 /**

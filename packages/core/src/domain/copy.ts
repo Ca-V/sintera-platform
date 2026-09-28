@@ -86,7 +86,30 @@ export const SCREEN_COPY = {
     title:        'Rede de Cuidado',
     subtitle:     'Reúna aqui quem acompanha você. Você convida, autoriza o que cada um enxerga e pode encerrar quando quiser.',
     soonLabel:    'em breve',
-    soonReason:   'Compartilhamentos entram junto com o espaço de consulta.',
+    // Nenhuma linha do menu está indisponível hoje. O texto fica porque a próxima que entrar — Familiares
+    // (CARE-002) — vai precisar dele, e um rótulo genérico é melhor do que um que nomeia o motivo errado.
+    soonReason:   'Ainda não disponível nesta versão.',
+  },
+  // Compartilhamentos (CARE-003). O link público é do domínio Relatório; esta tela PROJETA (ADR-001).
+  compartilhamentos: {
+    title:        'Compartilhamentos',
+    subtitle:     'Os links de relatório que você criou, o que cada um mostra e até quando abre.',
+    emptyTitle:   'Você ainda não compartilhou nenhum relatório',
+    emptyMessage: 'Monte um relatório e gere um link para levar à consulta. Ele aparece aqui, e você encerra quando quiser.',
+    goToReport:   'Ir para Relatórios',
+    // O fato que muda o comportamento de quem compartilha, dito ANTES e não descoberto depois.
+    publicWarning: 'Qualquer pessoa com o link abre o relatório, sem precisar de conta. Só compartilhe com quem você quer que veja.',
+    // BASE ÚNICA: o MECANISMO diverge de propósito — a Web copia para a área de transferência, o aplicativo
+    // abre a folha de compartilhamento do sistema (sem dependência nova). A DECISÃO — que palavras a pessoa
+    // lê em cada caso — continua aqui, decidida uma vez.
+    copyLink:     'Copiar link',
+    copied:       'Link copiado',
+    shareLink:    'Compartilhar link',
+    // Sem o endereço da plataforma não dá para montar a URL. Falhar em silêncio aqui entregaria um link
+    // quebrado como se fosse bom — o padrão "configuração ausente + falha silenciosa" que já custou caro.
+    noWebUrl:     'Não consigo montar o link nesta versão do aplicativo. Abra os compartilhamentos pela Web.',
+    revoke:       'Encerrar link',
+    revokeHint:   'O link para de abrir na hora. Quem já viu, já viu — encerrar não desfaz o que foi lido.',
   },
   profissionais: {
     title:        'Profissionais',
@@ -103,6 +126,52 @@ export const SCREEN_COPY = {
     cancelInvite: 'Cancelar convite',
     fieldContact: 'E-mail ou telefone do profissional',
     contactHint:  'O convite não leva nenhum dado de saúde seu — só o pedido de conexão.',
+  },
+  // O LADO DE QUEM RECEBE (CARE-003). "Um login, uma pessoa, dois perfis, duas assinaturas" — decisão da
+  // fundadora. O profissional não entra na conta de ninguém: tem a dele, e dentro dela a lista de quem o
+  // autorizou. O vocabulário aqui é deliberadamente sóbrio — a plataforma dá ACESSO, não emite parecer.
+  perfilProfissional: {
+    title:        'Perfil profissional',
+    subtitle:     'Para acompanhar alguém pela SINTERA, identifique-se. É o mesmo login da sua conta.',
+    fieldNome:    'Nome como você atende',
+    fieldProfissao: 'Profissão',
+    fieldEspecialidade: 'Especialidade (opcional)',
+    fieldConselho: 'Conselho',
+    fieldRegistro: 'Número do registro',
+    fieldUf:      'UF do registro',
+    save:         'Criar perfil profissional',
+    saved:        'Perfil criado',
+    // A verificação do registro é etapa separada e ainda não automática. Dizer isso agora evita a descoberta
+    // depois — e evita que alguém suponha que a SINTERA atestou o que não atestou.
+    verifyNote:   'O registro fica registrado como você informou. A conferência no conselho é feita à parte e não é automática.',
+    existingNote: 'Você já tem um perfil profissional nesta conta.',
+  },
+  painelProfissional: {
+    title:        'Pessoas que acompanho',
+    subtitle:     'Quem autorizou você, e o que cada uma abriu para você ver.',
+    emptyTitle:   'Ninguém autorizou você ainda',
+    emptyMessage: 'Quando alguém enviar um convite e você aceitar, a pessoa aparece aqui. Só o que ela autorizar fica visível.',
+    scopeTitle:   'O que esta pessoa autorizou',
+    // Dito no painel, porque é a informação que impede o profissional de procurar o que não está lá.
+    scopeHint:    'A pessoa escolhe as áreas e pode encerrar o acesso a qualquer momento.',
+    noAccess:     'Esta pessoa não deixou nenhuma área aberta.',
+  },
+  conviteRecebido: {
+    title:        'Convite',
+    accept:       'Aceitar e acompanhar',
+    decline:      'Recusar',
+    accepted:     'Pronto — a pessoa já aparece na sua lista.',
+    declined:     'Convite recusado. Nada foi compartilhado com você.',
+    // O que muda para quem aceita, antes de aceitar.
+    whatHappens:  'Aceitando, você passa a ver o que a pessoa autorizou — e só isso. Ela pode encerrar quando quiser.',
+    createProfile: 'Criar perfil profissional',
+    // No aplicativo não há deep link, e exigir um elevaria o piso do app para quem tem aparelho antigo —
+    // o que a disponibilidade universal proíbe. Colar o link funciona em qualquer celular.
+    pasteTitle:   'Tenho um convite',
+    pasteField:   'Cole aqui o link do convite',
+    pasteHint:    'É o endereço que chegou no seu e-mail ou WhatsApp.',
+    pasteOpen:    'Abrir convite',
+    pasteInvalid: 'Não reconheci um convite neste texto. Confira se copiou o endereço inteiro.',
   },
   exames: {
     title:        'Exames',

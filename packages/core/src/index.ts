@@ -118,6 +118,7 @@ export * from './domain/ingest/sameFact'
 // NÃO confundir com a autorização de dados de saúde, que vive na camada de conectores e é separada de
 // propósito (ver tests/contracts/identidade-vs-autorizacao.ARCH.test.ts).
 export * from './domain/auth/oauthCallback'
+export * from './domain/auth/destinoAposLogin'
 
 // Camada de Conectores (HIP-001) — contratos + lógica PURA, vendor-neutral. Vive no core porque o Mobile
 // precisa alcançá-la: o Health Connect roda NO APARELHO (HIP-014). Quem resolve a CHAVE service-role a partir
@@ -177,3 +178,5 @@ export * from './domain/billing/limites'
 export * from './domain/telemetria/eventos'
 export * from './domain/telemetria/coorte'
 export * from './domain/care/canalDoConvite'
+export * from './domain/care/compartilhamento'
+export * from './domain/care/painelDoProfissional'
