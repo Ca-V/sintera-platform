@@ -28,6 +28,7 @@ import { buildSnapshots, compareSnapshots, type SnapPoint } from '@/lib/body/sna
 import {
   BODY_COMPARE_ORDER, atualidadeDoResumo, ausenciaExplicada,
   SCREEN_COPY, formatDateBR, bodyMetricShortLabel, RELIABILITY_SHORT, marcosMaisRecentesPrimeiro,
+  FORMAS_DE_ADICIONAR,
 } from '@sintera/core'
 import { buildMilestones, MILESTONE_CATEGORIES, MILESTONE_COLOR, type MilestoneCategory, type MedInput, type ConsultaInput, type AssessmentInput } from '@/lib/body/milestones'
 import { professionalKindLabel } from '@/lib/agenda'
@@ -420,12 +421,15 @@ export default function MedidasPage() {
         action={
           // BETA-2/BETA-5 (captura institucional): um ÚNICO "Adicionar medida" (foto/arquivo/manual).
           // A bioimpedância é DETECTADA no processamento (onScanFile) — sem botão dedicado.
+          // AS FORMAS VÊM DO CORE (`FORMAS_DE_ADICIONAR`), e o rótulo do arquivo é o da forma `documento`.
+          // O mecanismo diverge — aqui um menu, no aplicativo a folha nativa do sistema — mas quais formas
+          // existem e o que cada uma promete é decisão.
           <CreateRecordMenu
             label={SCREEN_COPY.composicao.addMeasure}
             methods={['file', 'camera', 'manual']}
             fileAccept="image/*"
             cameraAccept="image/*"
-            fileLabel="Selecionar foto do laudo"
+            fileLabel={FORMAS_DE_ADICIONAR.find(f => f.forma === 'documento')!.label}
             busy={scanning}
             busyLabel="Lendo laudo…"
             onSelect={(method, file) => {
@@ -436,17 +440,99 @@ export default function MedidasPage() {
         }
       />
 
-      {/* Onde registrar bioimpedância (ex.: do nutricionista) */}
-      <div className="rounded-2xl border border-petal/30 bg-blush/30 px-4 py-3 flex items-start gap-3">
-        <Activity size={16} className="text-petal flex-shrink-0 mt-0.5" />
-        <p className="font-body text-xs text-onyx leading-relaxed">
-          Fez <strong>bioimpedância</strong> (por exemplo, com seu nutricionista)? Em <strong>{SCREEN_COPY.composicao.addMeasure}</strong>,
-          envie uma <strong>foto do laudo</strong> — o sistema reconhece a bioimpedância e pré-preenche as medidas
-          (gordura corporal, massa muscular, água, IMC e outros); ou registre manualmente.
-          Para guardar o laudo completo, envie o arquivo em{' '}
-          <Link href="/dashboard/exams" className="text-petal hover:underline font-medium">Exames</Link>.
-        </p>
-      </div>
+      {/* O FORMULARIO FICA AQUI, logo abaixo do cabecalho — e nao no rodape.
+          DEFEITO ACHADO NA HOMOLOGACAO (fundadora, 28/09/2026): "quando eu aperto o botao adicionar medida,
+          digitar manualmente, nao direciona para nenhum formulario". Ele ABRIA — 900 linhas abaixo, fora da
+          tela, e nada rolava ate la. Do ponto de vista de quem usa, o botao nao fazia nada.
+
+          Mover resolve melhor do que rolar: a acao nasce no cabecalho e o formulario aparece onde o olho ja
+          esta. E de quebra alinha com o aplicativo, que sempre o teve nesta posicao. */}
+      {showForm && (
+        <Card padding="relaxed" className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="medida-metric" className="font-body text-xs text-mauve block mb-1">Medida</label>
+              <Select aria-label="Tipo de medida" value={metric} onChange={(v) => chooseMetric(v as Metric)}
+                groups={[
+                  { label: 'Corpo', options: [
+                    { value: 'peso', label: 'Peso' },
+                    { value: 'altura', label: 'Altura' },
+                    { value: 'circunferencia_cintura', label: 'Circunferência (cintura)' },
+                  ] },
+                  { label: 'Bioimpedância', options: [
+                    { value: 'gordura_corporal', label: 'Gordura corporal' },
+                    { value: 'massa_muscular', label: 'Massa muscular' },
+                    { value: 'massa_magra', label: 'Massa magra' },
+                    { value: 'agua_corporal', label: 'Água corporal' },
+                    { value: 'gordura_visceral', label: 'Gordura visceral' },
+                    { value: 'massa_ossea', label: 'Massa óssea' },
+                    { value: 'taxa_metabolica', label: 'Taxa metabólica basal' },
+                  ] },
+                  { label: '', options: [{ value: 'outro', label: 'Outra medida' }] },
+                ]} />
+            </div>
+            <div>
+              <label htmlFor="medida-date" className="font-body text-xs text-mauve block mb-1">Data</label>
+              <input id="medida-date" type="date" value={date} onChange={e => setDate(e.target.value)}
+                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+            </div>
+          </div>
+          {metric === 'outro' && (
+            <div>
+              <label htmlFor="medida-label" className="font-body text-xs text-mauve block mb-1">Nome da medida</label>
+              <input id="medida-label" type="text" value={label} onChange={e => setLabel(e.target.value)} placeholder="Ex.: Glicemia capilar"
+                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="medida-value" className="font-body text-xs text-mauve block mb-1">Valor</label>
+              <input id="medida-value" type="text" value={value} onChange={e => setValue(e.target.value)} placeholder={PLACEHOLDER[metric]}
+                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+            </div>
+            <div>
+              <label htmlFor="medida-unit" className="font-body text-xs text-mauve block mb-1">Unidade</label>
+              <input id="medida-unit" type="text" value={unit} onChange={e => setUnit(e.target.value)} placeholder="kg, mmHg, cm…"
+                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+            </div>
+          </div>
+          <div>
+            <label htmlFor="medida-notes" className="font-body text-xs text-mauve block mb-1">Observações (opcional)</label>
+            <div className="flex items-start gap-2">
+              <textarea id="medida-notes" value={notes} onChange={e => setNotes(e.target.value)} rows={2}
+                className="flex-1 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
+              <VoiceInput onResult={t => setNotes(v => (v ? v + ' ' : '') + t)} />
+            </div>
+          </div>
+          {exams.length > 0 && (
+            <div>
+              <label className="font-body text-xs text-mauve block mb-1">Vincular a um laudo (opcional)</label>
+              <Select aria-label="Vincular a um laudo" value={examId} onChange={setExamId}
+                options={[{ value: '', label: 'Nenhum' }, ...exams.map(ex => ({ value: ex.id, label: `${ex.type}${ex.examDate ? ` · ${fmt(ex.examDate)}` : ''}` }))]} />
+              <p className="font-body text-[11px] text-mauve mt-1">
+                Veio de um exame/laudo já enviado em <Link href="/dashboard/exams" className="text-petal hover:underline">Exames</Link>? Vincule para abrir o documento original aqui e no relatório.
+              </p>
+            </div>
+          )}
+          {err && <p className="font-body text-xs text-red-500">{err}</p>}
+          <div className="flex justify-end gap-2">
+            <button onClick={() => { reset(); setShowForm(false) }} disabled={saving}
+              className="px-4 py-2 rounded-full border border-border text-mauve font-body text-sm font-medium hover:bg-blush transition-colors disabled:opacity-40">
+              Cancelar
+            </button>
+            <button onClick={save} disabled={saving || !value.trim() || !date}
+              className="px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium disabled:opacity-40 hover:opacity-90 transition-opacity">
+              {saving ? 'Salvando…' : editMeasureId ? 'Atualizar' : 'Salvar'}
+            </button>
+          </div>
+        </Card>
+      )}
+
+      {/* O RETÂNGULO SOBRE BIOIMPEDÂNCIA SAIU (fundadora, 28/09/2026: "esse retângulo pode retirar, não tem
+          necessidade"). Ele existia para ensinar que dava para fotografar o laudo — e ensinar por aviso é o
+          sintoma de a ação não estar onde deveria. Agora está: o botão único de adicionar oferece as três
+          formas, com a explicação em cada uma. O aviso virou redundante, e aviso redundante treina a pessoa a
+          não ler os que importam. */}
 
       {/* BOD-001 área ① — Resumo atual: último valor por indicador + origem + confiabilidade + tendência.
           IMC entra como indicador CALCULADO (peso ÷ altura²) — sem card duplicado. */}
@@ -904,86 +990,6 @@ export default function MedidasPage() {
 
       {scanErr && !scanRows && <p className="font-body text-xs text-red-500">{scanErr}</p>}
 
-      {showForm && (
-        <Card padding="relaxed" className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label htmlFor="medida-metric" className="font-body text-xs text-mauve block mb-1">Medida</label>
-              <Select aria-label="Tipo de medida" value={metric} onChange={(v) => chooseMetric(v as Metric)}
-                groups={[
-                  { label: 'Corpo', options: [
-                    { value: 'peso', label: 'Peso' },
-                    { value: 'altura', label: 'Altura' },
-                    { value: 'circunferencia_cintura', label: 'Circunferência (cintura)' },
-                  ] },
-                  { label: 'Bioimpedância', options: [
-                    { value: 'gordura_corporal', label: 'Gordura corporal' },
-                    { value: 'massa_muscular', label: 'Massa muscular' },
-                    { value: 'massa_magra', label: 'Massa magra' },
-                    { value: 'agua_corporal', label: 'Água corporal' },
-                    { value: 'gordura_visceral', label: 'Gordura visceral' },
-                    { value: 'massa_ossea', label: 'Massa óssea' },
-                    { value: 'taxa_metabolica', label: 'Taxa metabólica basal' },
-                  ] },
-                  { label: '', options: [{ value: 'outro', label: 'Outra medida' }] },
-                ]} />
-            </div>
-            <div>
-              <label htmlFor="medida-date" className="font-body text-xs text-mauve block mb-1">Data</label>
-              <input id="medida-date" type="date" value={date} onChange={e => setDate(e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
-            </div>
-          </div>
-          {metric === 'outro' && (
-            <div>
-              <label htmlFor="medida-label" className="font-body text-xs text-mauve block mb-1">Nome da medida</label>
-              <input id="medida-label" type="text" value={label} onChange={e => setLabel(e.target.value)} placeholder="Ex.: Glicemia capilar"
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
-            </div>
-          )}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label htmlFor="medida-value" className="font-body text-xs text-mauve block mb-1">Valor</label>
-              <input id="medida-value" type="text" value={value} onChange={e => setValue(e.target.value)} placeholder={PLACEHOLDER[metric]}
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
-            </div>
-            <div>
-              <label htmlFor="medida-unit" className="font-body text-xs text-mauve block mb-1">Unidade</label>
-              <input id="medida-unit" type="text" value={unit} onChange={e => setUnit(e.target.value)} placeholder="kg, mmHg, cm…"
-                className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
-            </div>
-          </div>
-          <div>
-            <label htmlFor="medida-notes" className="font-body text-xs text-mauve block mb-1">Observações (opcional)</label>
-            <div className="flex items-start gap-2">
-              <textarea id="medida-notes" value={notes} onChange={e => setNotes(e.target.value)} rows={2}
-                className="flex-1 px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
-              <VoiceInput onResult={t => setNotes(v => (v ? v + ' ' : '') + t)} />
-            </div>
-          </div>
-          {exams.length > 0 && (
-            <div>
-              <label className="font-body text-xs text-mauve block mb-1">Vincular a um laudo (opcional)</label>
-              <Select aria-label="Vincular a um laudo" value={examId} onChange={setExamId}
-                options={[{ value: '', label: 'Nenhum' }, ...exams.map(ex => ({ value: ex.id, label: `${ex.type}${ex.examDate ? ` · ${fmt(ex.examDate)}` : ''}` }))]} />
-              <p className="font-body text-[11px] text-mauve mt-1">
-                Veio de um exame/laudo já enviado em <Link href="/dashboard/exams" className="text-petal hover:underline">Exames</Link>? Vincule para abrir o documento original aqui e no relatório.
-              </p>
-            </div>
-          )}
-          {err && <p className="font-body text-xs text-red-500">{err}</p>}
-          <div className="flex justify-end gap-2">
-            <button onClick={() => { reset(); setShowForm(false) }} disabled={saving}
-              className="px-4 py-2 rounded-full border border-border text-mauve font-body text-sm font-medium hover:bg-blush transition-colors disabled:opacity-40">
-              Cancelar
-            </button>
-            <button onClick={save} disabled={saving || !value.trim() || !date}
-              className="px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium disabled:opacity-40 hover:opacity-90 transition-opacity">
-              {saving ? 'Salvando…' : editMeasureId ? 'Atualizar' : 'Salvar'}
-            </button>
-          </div>
-        </Card>
-      )}
 
       {loading ? (
         <Card padding="none" className="p-10 text-center"><Loader2 size={24} className="animate-spin text-petal mx-auto" /></Card>
@@ -1004,6 +1010,10 @@ export default function MedidasPage() {
           })()} />
       ) : (
         <div className="space-y-6">
+          {/* O CABEÇALHO "REGISTROS" FALTAVA AQUI. O aplicativo o tinha e a Web não: a lista de indicadores
+              começava sem nada dizendo que dali para baixo são os registros crus, e não mais um painel. É a
+              última das seções em `SECOES_COMPOSICAO`, e sem o título ela não existia como seção na Web. */}
+          <p className="font-body text-xs uppercase tracking-wide text-mauve">{SCREEN_COPY.composicao.historyTitle}</p>
           {groups.map(g => {
             const list = items.filter(i => i.metric === g)
             if (list.length === 0) return null

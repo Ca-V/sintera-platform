@@ -78,6 +78,8 @@ export * from './domain/body/atualidadeDoResumo'
 export * from './domain/body/evolution'
 // BOD-001 ②: a geometria do gráfico vive aqui para que as duas pontas desenhem o MESMO gráfico.
 export * from './domain/body/graficoDeEvolucao'
+// BOD-001: a ORDEM das secoes e o botao unico de entrada. Ordem tambem e decisao.
+export * from './domain/body/telaDaComposicao'
 export * from './domain/body/snapshots'
 export * from './domain/body/milestones'
 export * from './domain/communication/period'
