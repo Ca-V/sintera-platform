@@ -15,6 +15,7 @@ import {
   // BASE UNICA (28/09/2026): rotulos, textos, formato de data e ordem dos marcos vem do core. A homologacao
   // lado a lado achou dez divergencias de palavra entre esta tela e a da Web.
   SCREEN_COPY, formatDateBR, bodyMetricShortLabel, RELIABILITY_SHORT, marcosMaisRecentesPrimeiro,
+  formasDisponiveis, type FormaDeAdicionar,
 } from '@sintera/core'
 import {
   BODY_METRICS, bodyMetricLabel, bodyMetricUnit, isVital, type BodyMetric,
@@ -191,6 +192,37 @@ export function ComposicaoScreen() {
   const evoChartMs = milestones.map(m => ({ date: m.date, color: MILESTONE_COLOR[m.category] }))
   const openMilestone = (href: string | null) => { const m = href?.match(/\/exams?\/([\w-]+)/); if (m) openExam(m[1]) }
 
+  /**
+   * O BOTÃO ÚNICO. Toda forma de acrescentar dado de composição corporal entra por aqui.
+   *
+   * DECISÃO DA FUNDADORA (28/09/2026): "ao invés de adicionar medida, seria importante que tivesse uma opção
+   * que engloba todas as opções de adicionar dados referentes à composição corporal — seja laudo de
+   * bioimpedância, seja medida, seja dados da balança, ou dados de qualquer outro equipamento".
+   *
+   * Antes havia dois botões: "Adicionar medida" (que só abria o formulário) e "Escanear laudo de
+   * bioimpedância" — uma forma privilegiada ao lado de outra que não a mencionava, e que a Web nem tinha.
+   *
+   * AS FORMAS E OS TEXTOS VÊM DO CORE. O mecanismo diverge: aqui é a folha nativa do sistema, na Web é um
+   * menu — mas quais formas existem e o que cada uma promete é decisão, e decisão não se digita duas vezes.
+   */
+  const abrirFormasDeAdicionar = () => {
+    const acao: Record<FormaDeAdicionar, () => void> = {
+      documento: () => { void scanBioimpedance() },
+      manual: startNew,
+      dispositivo: () => (navigation as { navigate: (n: string) => void }).navigate('Conexoes'),
+    }
+    Alert.alert(
+      SCREEN_COPY.composicao.addMeasure,
+      SCREEN_COPY.composicao.addMeasureHint,
+      [
+        // A descrição de cada forma entra no rótulo: numa folha de ação não há espaço para subtítulo, e
+        // escolher às cegas entre três nomes parecidos é o que faz a pessoa desistir do caminho certo.
+        ...formasDisponiveis().map(f => ({ text: f.label, onPress: acao[f.forma] })),
+        { text: 'Cancelar', style: 'cancel' as const },
+      ],
+    )
+  }
+
   // T1 — captura assistida da BIOIMPEDÂNCIA: um laudo gera MÚLTIPLAS medidas → revisão em lote (proposta → salvar).
   const capture = useAssistedCapture()
   const [batch, setBatch] = useState<ReviewItem[]>([])
@@ -269,41 +301,18 @@ export function ComposicaoScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={t.color.identity.primary} />}>
       <View style={styles.headerRow}>
         <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 22, flex: 1 }} numberOfLines={1}>{SCREEN_COPY.composicao.title}</Text>
-        {!open ? <Button label={SCREEN_COPY.composicao.addMeasure} onPress={startNew} /> : null}
+        {!open ? <Button label={SCREEN_COPY.composicao.addMeasure} onPress={abrirFormasDeAdicionar} /> : null}
       </View>
-      {!open ? <Button label={SCREEN_COPY.composicao.scanReport} variant="secondary" loading={capture.busy} loadingLabel="Lendo…" onPress={scanBioimpedance} /> : null}
+      {/* O BOTÃO SEPARADO DE ESCANEAR SAIU (fundadora, 28/09/2026: "tem o escanear laudo de bioimpedância no
+          Android, que não está na web... que não é necessário").
+          Ele era uma forma de entrada privilegiada, visível ao lado de outra que não a mencionava — e a Web
+          não o tinha. Ler o laudo continua existindo: virou uma das formas do botão único (`documento`), que
+          é o que o princípio de ENTRADA DOCUMENTAL ÚNICA pede. */}
       <AssistedBatchReview
         visible={batch.length > 0} title="Medidas lidas do laudo" items={batch} date={batchDate}
         onDateChange={setBatchDate} onConfirm={saveBatch} onCancel={() => setBatch([])} busy={batchSaving}
         confirmLabel={`Salvar ${batch.length} ${batch.length === 1 ? 'medida' : 'medidas'}`}
       />
-
-      {/* ② Jornada de peso (GLP-1) */}
-      <View style={[styles.card, card, { gap: 6 }]}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text spec={text(t, { role: 'bodyStrong' })}>{SCREEN_COPY.composicao.journeyTitle}</Text>
-          <Pressable onPress={() => { setGoalInput(goal != null ? String(goal) : ''); setGoalEditing(v => !v) }}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Meta{goal != null ? `: ${goal} kg` : ''}</Text></Pressable>
-        </View>
-        {goalEditing ? (
-          <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-            <Input value={goalInput} onChangeText={setGoalInput} placeholder="Meta (kg) — vazio remove" keyboardType="decimal-pad" style={{ flex: 1 }} />
-            <Button label="Salvar" onPress={saveGoal} />
-            <Button label="Cancelar" variant="secondary" onPress={() => setGoalEditing(false)} />
-          </View>
-        ) : null}
-        {journey.currentWeight != null ? (
-          <>
-            <Text spec={text(t, { role: 'body' })}>Atual: {pesoLabel(journey.currentWeight)}{journey.startWeight != null ? ` · início ${pesoLabel(journey.startWeight)}` : ''}{journey.startDate ? ` (${fmt(journey.startDate)})` : ''}</Text>
-            {/* O SINAL VEM DO NUCLEO. Escrito aqui a mao, os dois ramos imprimiam menos: um ganho de 2,8 kg saia
-                 "−2,8", identico a uma perda de 2,8 — num registro que vai ao medico. A Web acertava, e a regra
-                 divergiu por estar escrita duas vezes. */}
-            {variacaoDePeso(journey.lostKg) ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{variacaoDePeso(journey.lostKg)!.texto}{ritmoDePeso(journey.rateKgPerWeek) ? ` · ${ritmoDePeso(journey.rateKgPerWeek)!.texto}` : ''}{followupLabel ? ` · ${followupLabel} de acompanhamento` : ''}</Text> : null}
-            {journey.remainingKg != null ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Faltam {journey.remainingKg} kg{journey.progressPct != null ? ` · ${journey.progressPct}% do caminho` : ''}</Text> : goal == null ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{SCREEN_COPY.composicao.journeyNoGoal}</Text> : null}
-            {journey.leanDeltaKg != null ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Massa magra: {journey.leanStartKg != null ? `${journey.leanStartKg} → ${journey.leanCurrentKg} kg (` : ''}{journey.leanDeltaKg > 0 ? '+' : ''}{journey.leanDeltaKg} kg{journey.leanStartKg != null ? ')' : ''} — acompanhe se a perda preserva a massa magra</Text> : null}
-          </>
-        ) : <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Registre seu peso para acompanhar a jornada.</Text>}
-        {lastAval ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Última avaliação: {lastAval.label} · {fmt(lastAval.date)}</Text> : null}
-      </View>
 
       {/* ① Formulário de medida */}
       {open ? (
@@ -375,6 +384,33 @@ export function ComposicaoScreen() {
         </View>
       ) : null}
 
+      {/* ② Jornada de peso (GLP-1) */}
+      <View style={[styles.card, card, { gap: 6 }]}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text spec={text(t, { role: 'bodyStrong' })}>{SCREEN_COPY.composicao.journeyTitle}</Text>
+          <Pressable onPress={() => { setGoalInput(goal != null ? String(goal) : ''); setGoalEditing(v => !v) }}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Meta{goal != null ? `: ${goal} kg` : ''}</Text></Pressable>
+        </View>
+        {goalEditing ? (
+          <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+            <Input value={goalInput} onChangeText={setGoalInput} placeholder="Meta (kg) — vazio remove" keyboardType="decimal-pad" style={{ flex: 1 }} />
+            <Button label="Salvar" onPress={saveGoal} />
+            <Button label="Cancelar" variant="secondary" onPress={() => setGoalEditing(false)} />
+          </View>
+        ) : null}
+        {journey.currentWeight != null ? (
+          <>
+            <Text spec={text(t, { role: 'body' })}>Atual: {pesoLabel(journey.currentWeight)}{journey.startWeight != null ? ` · início ${pesoLabel(journey.startWeight)}` : ''}{journey.startDate ? ` (${fmt(journey.startDate)})` : ''}</Text>
+            {/* O SINAL VEM DO NUCLEO. Escrito aqui a mao, os dois ramos imprimiam menos: um ganho de 2,8 kg saia
+                 "−2,8", identico a uma perda de 2,8 — num registro que vai ao medico. A Web acertava, e a regra
+                 divergiu por estar escrita duas vezes. */}
+            {variacaoDePeso(journey.lostKg) ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{variacaoDePeso(journey.lostKg)!.texto}{ritmoDePeso(journey.rateKgPerWeek) ? ` · ${ritmoDePeso(journey.rateKgPerWeek)!.texto}` : ''}{followupLabel ? ` · ${followupLabel} de acompanhamento` : ''}</Text> : null}
+            {journey.remainingKg != null ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Faltam {journey.remainingKg} kg{journey.progressPct != null ? ` · ${journey.progressPct}% do caminho` : ''}</Text> : goal == null ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{SCREEN_COPY.composicao.journeyNoGoal}</Text> : null}
+            {journey.leanDeltaKg != null ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Massa magra: {journey.leanStartKg != null ? `${journey.leanStartKg} → ${journey.leanCurrentKg} kg (` : ''}{journey.leanDeltaKg > 0 ? '+' : ''}{journey.leanDeltaKg} kg{journey.leanStartKg != null ? ')' : ''} — acompanhe se a perda preserva a massa magra</Text> : null}
+          </>
+        ) : <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Registre seu peso para acompanhar a jornada.</Text>}
+        {lastAval ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Última avaliação: {lastAval.label} · {fmt(lastAval.date)}</Text> : null}
+      </View>
+
       {/* ② Evolução longitudinal */}
       {evoIndicators.length > 0 ? (
         <View style={[styles.card, card, { gap: 10 }]}>
@@ -384,18 +420,21 @@ export function ComposicaoScreen() {
           <Chips options={evoIndicators.map(m => ({ id: m.value, label: bodyMetricShortLabel(m.value) }))} value={evoActive} onChange={(v) => setEvoMetric(v as BodyMetric)} />
           <Chips options={EVOLUTION_PERIODS.map(p => ({ id: p.key, label: p.label }))} value={EVOLUTION_PERIODS.find(p => p.days === evoDays)?.key ?? 'all'} onChange={(k) => setEvoDays(EVOLUTION_PERIODS.find(p => p.key === k)?.days ?? null)} />
           {/* Filtros de marco, iguais aos da Web: a pessoa liga e desliga categorias e o gráfico responde.
-              Sem isto, o aplicativo desenharia as linhas verticais sem dar como tirá-las. */}
+              Cada chip usa a COR da sua categoria, que é a mesma das linhas verticais — sem isso a pessoa
+              teria de adivinhar qual filtro apaga qual linha. */}
           {catsPresent.length > 0 ? (
-            <Chips
-              multiple
-              options={catsPresent.map(c => ({ id: c.key, label: c.label }))}
-              values={[...msCats]}
-              onToggle={(k) => setMsCats(prev => {
-                const s = new Set(prev)
-                if (s.has(k as MilestoneCategory)) s.delete(k as MilestoneCategory); else s.add(k as MilestoneCategory)
-                return s
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{SCREEN_COPY.composicao.evoMilestonesFilter}</Text>
+              {catsPresent.map(c => {
+                const on = msCats.has(c.key)
+                return (
+                  <Pressable key={c.key} onPress={() => toggleCat(c.key)}
+                    style={[styles.chip, { borderColor: on ? MILESTONE_COLOR[c.key] : t.color.border.default, backgroundColor: on ? t.color.badge.info.soft : 'transparent' }]}>
+                    <Text spec={text(t, { role: 'caption', tone: on ? 'default' : 'muted' })}>{c.label}</Text>
+                  </Pressable>
+                )
               })}
-            />
+            </View>
           ) : null}
 
           {/* O GRÁFICO. Substituiu barrinhas improvisadas que não tinham eixo, unidade, data, origem nem
@@ -424,6 +463,27 @@ export function ComposicaoScreen() {
               <Text spec={text(t, { role: 'caption' })} style={{ color: p.examId ? t.color.identity.primary : t.color.text.default }}>{p.value}{p.unit ? ` ${p.unit}` : ''}{p.source ? ` · ${sourceQuality(p.source)?.label ?? p.source}` : ''}{p.examId ? ' ›' : ''}</Text>
             </Pressable>
           ))}
+
+          {/* OS MARCOS VIVEM AQUI, e não num card próprio.
+              A fundadora apontou em 28/09/2026 que no aplicativo eles estavam "numa barra separada", enquanto
+              na Web ficam dentro da evolução. Ela está certa, e a razão é a pergunta que eles respondem: um
+              marco só significa alguma coisa ao lado da curva que ele ajuda a explicar. Solto, vira uma lista
+              de datas sem pergunta. */}
+          {catsPresent.length > 0 ? (
+            <View style={{ gap: 6, marginTop: 4 }}>
+              <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{SCREEN_COPY.composicao.evoMilestones}</Text>
+              {milestones.length > 0 ? marcosMaisRecentesPrimeiro(milestones).map(m => {
+                const linkable = /\/exams?\//.test(m.href ?? '')
+                return (
+                  <Pressable key={m.key} onPress={() => openMilestone(m.href)} disabled={!linkable} style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: MILESTONE_COLOR[m.category] }} />
+                    <Text spec={text(t, { role: 'caption', tone: 'muted' })} style={{ width: 72 }}>{fmt(m.date)}</Text>
+                    <Text spec={text(t, { role: 'body' })} style={{ flex: 1, color: linkable ? t.color.identity.primary : t.color.text.default }}>{m.title}{linkable ? ' ›' : ''}</Text>
+                  </Pressable>
+                )
+              }) : <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Nenhum marco nas categorias selecionadas no período.</Text>}
+            </View>
+          ) : null}
         </View>
       ) : null}
 
@@ -462,29 +522,6 @@ export function ComposicaoScreen() {
               <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Valores como medidos por cada método — sem ajuste entre tecnologias. Δ = A − B.</Text>
             </>
           )}
-        </View>
-      ) : null}
-
-      {/* ⑤ Marcos (projeção de outros domínios) */}
-      {catsPresent.length > 0 ? (
-        <View style={[styles.card, card, { gap: 10 }]}>
-          <Text spec={text(t, { role: 'bodyStrong' })}>{SCREEN_COPY.composicao.evoMilestones}</Text>
-          <View style={styles.chips}>
-            {catsPresent.map(c => {
-              const on = msCats.has(c.key)
-              return <Pressable key={c.key} onPress={() => toggleCat(c.key)} style={[styles.chip, { borderColor: on ? MILESTONE_COLOR[c.key] : t.color.border.default, backgroundColor: on ? t.color.badge.info.soft : 'transparent' }]}><Text spec={text(t, { role: 'caption', tone: on ? 'default' : 'muted' })}>{c.label}</Text></Pressable>
-            })}
-          </View>
-          {milestones.length > 0 ? marcosMaisRecentesPrimeiro(milestones).map(m => {
-            const linkable = /\/exams?\//.test(m.href ?? '')
-            return (
-              <Pressable key={m.key} onPress={() => openMilestone(m.href)} disabled={!linkable} style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: MILESTONE_COLOR[m.category] }} />
-                <Text spec={text(t, { role: 'caption', tone: 'muted' })} style={{ width: 72 }}>{fmt(m.date)}</Text>
-                <Text spec={text(t, { role: 'body' })} style={{ flex: 1, color: linkable ? t.color.identity.primary : t.color.text.default }}>{m.title}{linkable ? ' ›' : ''}</Text>
-              </Pressable>
-            )
-          }) : <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Nenhum marco nas categorias selecionadas no período.</Text>}
         </View>
       ) : null}
 

@@ -8,6 +8,10 @@
 // ser consumido pelos dois apps — a Web re-exporta via @/lib/ui/copy (paths estáveis).
 // ============================================================
 
+// O rótulo do botão único de Composição Corporal mora junto da decisão que o define (as três formas de
+// adicionar), e não aqui — importá-lo evita que ele e a lista de formas possam discordar.
+import { ROTULO_ADICIONAR } from './body/telaDaComposicao'
+
 /** Frases canônicas. Use SEMPRE estas — nunca redigite uma variante. */
 export const COPY = {
   // sucesso
@@ -184,7 +188,9 @@ export const SCREEN_COPY = {
   composicao: {
     title:        'Composição Corporal',
     subtitle:     'Panorama longitudinal do seu corpo — peso, IMC, gordura, massa magra/muscular e mais — a partir de bioimpedância, exames e registros. Cada indicador mostra sua origem.',
-    addMeasure:   'Adicionar medida',
+    // ROTULO UNICO. Era 'Adicionar medida', que nomeia uma das tres formas e esconde as outras duas.
+    addMeasure:   ROTULO_ADICIONAR,
+    addMeasureHint: 'Laudo de bioimpedancia, medida digitada ou balanca conectada — tudo por aqui.',
     editMeasure:  'Editar medida',
     scanReport:   'Escanear laudo de bioimpedância',
 
