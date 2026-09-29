@@ -303,6 +303,12 @@ export function ComposicaoScreen() {
         <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 22, flex: 1 }} numberOfLines={1}>{SCREEN_COPY.composicao.title}</Text>
         {!open ? <Button label={SCREEN_COPY.composicao.addMeasure} onPress={abrirFormasDeAdicionar} /> : null}
       </View>
+      {/* O SUBTÍTULO FALTAVA AQUI (fundadora, 29/09/2026: "na web tem uma frase entre composição corporal e
+          última medição, e na versão mobile não tem").
+          Ele não é enfeite: é a frase que diz que a tela reúne peso, IMC, gordura e massa a partir de
+          bioimpedância, exames e registros — e que cada indicador mostra de onde veio. Sem ela, quem abre no
+          celular não sabe o que esperar da tela, e a Web e o aplicativo abrem com promessas diferentes. */}
+      <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{SCREEN_COPY.composicao.subtitle}</Text>
       {/* O BOTÃO SEPARADO DE ESCANEAR SAIU (fundadora, 28/09/2026: "tem o escanear laudo de bioimpedância no
           Android, que não está na web... que não é necessário").
           Ele era uma forma de entrada privilegiada, visível ao lado de outra que não a mencionava — e a Web
@@ -415,10 +421,26 @@ export function ComposicaoScreen() {
       {evoIndicators.length > 0 ? (
         <View style={[styles.card, card, { gap: 10 }]}>
           <Text spec={text(t, { role: 'bodyStrong' })}>{SCREEN_COPY.composicao.evoTitle}</Text>
-          {/* Rótulo CURTO, o mesmo da Web. Sete nomes completos não cabem lado a lado — e qual palavra
-              encurta é decisão, que agora mora no core. */}
-          <Chips options={evoIndicators.map(m => ({ id: m.value, label: bodyMetricShortLabel(m.value) }))} value={evoActive} onChange={(v) => setEvoMetric(v as BodyMetric)} />
-          <Chips options={EVOLUTION_PERIODS.map(p => ({ id: p.key, label: p.label }))} value={EVOLUTION_PERIODS.find(p => p.days === evoDays)?.key ?? 'all'} onChange={(k) => setEvoDays(EVOLUTION_PERIODS.find(p => p.key === k)?.days ?? null)} />
+          {/* DOIS SELETORES, DUAS LINHAS, CADA UMA COM NOME.
+              Fundadora, 29/09/2026: "está tudo misturado, os indicadores como água, peso, e o tempo, trinta
+              dias, noventa dias — o ideal é que tivesse uma barra de rolagem para eles, ou uma divisão mais
+              visível".
+              Ela está certa e o defeito era meu: sete indicadores e cinco períodos quebravam linha no celular
+              e se encostavam, virando uma parede de pílulas onde nada dizia o que era o quê. Agora cada
+              seletor tem rótulo e ROLA NA HORIZONTAL — não quebra linha, então "Peso" nunca fica ao lado de
+              "90 dias". Na Web cabem lado a lado e não precisa; o mecanismo diverge, a escolha não. */}
+          <SeletorEmLinha
+            titulo="Indicador"
+            options={evoIndicators.map(m => ({ id: m.value, label: bodyMetricShortLabel(m.value) }))}
+            value={evoActive}
+            onChange={(v) => setEvoMetric(v as BodyMetric)}
+          />
+          <SeletorEmLinha
+            titulo="Período"
+            options={EVOLUTION_PERIODS.map(p => ({ id: p.key, label: p.label }))}
+            value={EVOLUTION_PERIODS.find(p => p.days === evoDays)?.key ?? 'all'}
+            onChange={(k) => setEvoDays(EVOLUTION_PERIODS.find(p => p.key === k)?.days ?? null)}
+          />
           {/* Filtros de marco, iguais aos da Web: a pessoa liga e desliga categorias e o gráfico responde.
               Cada chip usa a COR da sua categoria, que é a mesma das linhas verticais — sem isso a pessoa
               teria de adivinhar qual filtro apaga qual linha. */}
@@ -439,12 +461,19 @@ export function ComposicaoScreen() {
 
           {/* O GRÁFICO. Substituiu barrinhas improvisadas que não tinham eixo, unidade, data, origem nem
               marcos — e que não eram o mesmo desenho da Web. A geometria vem do core; aqui só há o desenho. */}
+          {/* ALTURA MENOR (fundadora, 29/09/2026: "o gráfico está ocupando um espaço grande aqui... poderia
+              reduzir a área dele").
+              Ela também disse o porquê provável: "talvez porque ainda tenha poucos dados". É isso — a moldura
+              é fixa, então dois pontos ocupam o mesmo espaço que duzentos. 140 é o suficiente para ler a
+              curva sem empurrar o resto da tela para fora do alcance do polegar. A geometria não muda: o core
+              entrega a mesma moldura e o SVG a escala. */}
           <EvolutionChart
             points={evoChartPoints}
             unit={evoUnit}
             selectedKey={evoSelKey}
             onSelect={(p) => { setEvoSelKey(p.key); openExam(p.examId) }}
             milestones={evoChartMs}
+            height={140}
           />
 
           {/* Legenda de origem, com os MESMOS glifos da Web — vindos do core. Quatro marcadores diferentes
@@ -561,6 +590,47 @@ export function ComposicaoScreen() {
 }
 
 /**
+ * Um seletor por linha, com nome e rolagem horizontal.
+ *
+ * POR QUE NÃO SÃO SÓ CHIPS QUE QUEBRAM LINHA. No celular, sete indicadores e cinco períodos empilhavam em
+ * três fileiras coladas, e "Água" acabava ao lado de "30 dias" — duas perguntas diferentes na mesma parede
+ * de pílulas. A fundadora descreveu como "está tudo misturado", e é exatamente isso.
+ *
+ * Rolar na horizontal resolve porque impede a quebra: cada seletor ocupa UMA linha, sempre, e o que
+ * transborda continua alcançável pelo dedo. O rótulo à esquerda diz qual pergunta aquela linha responde.
+ */
+function SeletorEmLinha({ titulo, options, value, onChange }: {
+  titulo: string
+  options: readonly { id: string; label: string }[]
+  value: string
+  onChange: (v: string) => void
+}) {
+  const t = useTheme()
+  return (
+    <View style={{ gap: 4 }}>
+      <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{titulo}</Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ flexDirection: 'row', gap: 8, paddingRight: 8 }}
+      >
+        {options.map(o => {
+          const on = value === o.id
+          return (
+            <Pressable key={o.id} onPress={() => onChange(o.id)} accessibilityRole="button"
+              accessibilityState={{ selected: on }}
+              style={[styles.chip, { borderColor: on ? t.color.identity.primary : t.color.border.default, backgroundColor: on ? t.color.badge.info.soft : 'transparent' }]}>
+              <Text spec={text(t, { role: 'caption', tone: on ? 'default' : 'muted' })}>{o.label}</Text>
+            </Pressable>
+          )
+        })}
+      </ScrollView>
+    </View>
+  )
+}
+
+/**
  * Chips de seleção. Dois modos, e a diferença não é enfeite:
  *  · ÚNICO (`value`/`onChange`) — indicador e período: escolher um substitui o outro.
  *  · MÚLTIPLO (`values`/`onToggle`) — categorias de marco: ligar uma não desliga as demais.
@@ -600,10 +670,15 @@ function Chips({ options, value, onChange, multiple, values, onToggle }: {
 }
 
 const styles = StyleSheet.create({
-  content: { padding: 20, gap: 14 },
+  // MAIS RESPIRO (fundadora, 29/09/2026: "não tem muita separação ou distanciamento entre as informações
+  // que estão dentro do mesmo retângulo").
+  // Densidade não é economia: num cartão apertado, o título da seção, o seletor e o gráfico parecem a mesma
+  // coisa, e a pessoa tem de separar com os olhos o que o desenho deveria ter separado. Na Web o espaço
+  // sobra e o problema não aparecia — é divergência de tela, não de decisão.
+  content: { padding: 20, gap: 18 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12 },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  card: { borderWidth: 1, borderRadius: 16, padding: 16 },
+  card: { borderWidth: 1, borderRadius: 16, padding: 16, gap: 10 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
   actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },

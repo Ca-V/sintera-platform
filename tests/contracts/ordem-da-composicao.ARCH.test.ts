@@ -95,6 +95,22 @@ describe('ARCH · CATRACA — a ordem das seções não diverge entre as pontas'
     expect(ordemNoArquivo(APP)).toEqual(ordemNoArquivo(WEB))
   })
 
+  it('CATRACA · as duas pontas mostram o subtítulo da tela', () => {
+    // Fundadora, 29/09/2026: "na web tem uma frase entre composição corporal e última medição, e na versão
+    // mobile não tem". A catraca de copy só impedia REDIGITAR uma frase do core — não exigia que ela
+    // APARECESSE. Uma tela podia ter o texto disponível e simplesmente não usá-lo, e foi o que aconteceu.
+    //
+    // O subtítulo não é enfeite: é onde a tela diz o que reúne e que cada indicador mostra a origem. Sem ele,
+    // as duas pontas abrem com promessas diferentes.
+    for (const arquivo of [WEB, APP]) {
+      const src = readFileSync(join(ROOT, arquivo), 'utf8')
+      expect(
+        src.includes('SCREEN_COPY.composicao.subtitle'),
+        `${arquivo}: não mostra o subtítulo — a tela abre sem dizer o que reúne`,
+      ).toBe(true)
+    }
+  })
+
   it('os marcos NÃO são seção — eles vivem dentro da evolução', () => {
     // Num card próprio viram lista de datas sem pergunta. É o que estava errado no aplicativo.
     expect(posicaoDaSecao('marcos')).toBe(-1)
