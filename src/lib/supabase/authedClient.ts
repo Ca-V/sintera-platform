@@ -1,42 +1,45 @@
-import { createClient as createTokenClient, type SupabaseClient, type User } from '@supabase/supabase-js'
+import type { SupabaseClient, User } from '@supabase/supabase-js'
 import type { Database } from './types'
-import { createClient as createCookieClient } from './server'
+import { authenticateRequest } from './apiAuth'
+import type { NextRequest } from 'next/server'
 
 /**
- * Resolve o cliente Supabase autenticado + o usuário a partir de **Cookie (Web)** OU **Bearer (Mobile/API)** —
- * camada de auth COMPARTILHADA, **não acoplada ao contexto da Web**. Mantém UMA regra de negócio nas rotas de
- * API: o handler não sabe de onde veio o usuário, só recebe `{ supabase, user }` prontos.
+ * Resolve o cliente Supabase autenticado + o usuário a partir de **Cookie (Web)** OU **Bearer (aplicativo)**.
  *
- * PONTE ARQUITETURAL TRANSITÓRIA (ADR-020, fundadora 2026-07-31): habilita o Mobile a reusar as rotas da Web na
- * Onda 1 sem duplicar lógica. O modelo-ALVO (pós-Onda-1, backlog R-010) move o processamento para uma camada
- * compartilhada (Edge Function/serviço comum) consumida por Web e Mobile — eliminando o acoplamento à Web.
+ * ============================================================================================
+ * ESTA FUNÇÃO DEIXOU DE TER LÓGICA PRÓPRIA (29/09/2026)
+ * ============================================================================================
+ * Existiam DUAS camadas de auth compartilhada fazendo o mesmo trabalho: esta e `authenticateRequest`, em
+ * `apiAuth.ts`. Nasceram em momentos diferentes, para o mesmo problema, e ninguém percebeu porque as duas
+ * funcionavam.
  *
- * Nota técnica: no modo Bearer o cliente é STATELESS (sem sessão), então `getUser()` sem argumento não validaria
- * o token — por isso validamos com `getUser(token)` explicitamente aqui; as queries `.from()` usam o header
- * global (RLS aplica o usuário do token). No modo Cookie, `getUser()` lê a sessão dos cookies (comportamento atual).
+ * O PREJUÍZO NÃO FOI TEÓRICO. Ao medir quantas rotas aceitavam Bearer, procurei por `authenticateRequest` e
+ * rotulei de "só cookie" um punhado de rotas que usavam esta aqui — inclusive a leitura de laudo de
+ * bioimpedância, que o aplicativo chama. Reportei à fundadora um número errado e uma conclusão errada.
+ *
+ * Duas implementações do mesmo conceito também divergiam no que importa: esta tentava Bearer primeiro,
+ * aquela tentava cookie primeiro. Nenhuma das duas estava documentada como a certa.
+ *
+ * Agora há UMA (ADR-023), e ela tenta Bearer primeiro — a ordem segura, porque o cabeçalho é credencial
+ * deliberada e o cookie é ambiente. Esta função continua existindo só pela FORMA do retorno, que dezenas de
+ * rotas consomem: trocá-la em todas de uma vez seria um rewrite grande para nenhum ganho.
+ *
+ * PONTE ARQUITETURAL TRANSITÓRIA (ADR-020, fundadora 2026-07-31): habilita o aplicativo a reusar as rotas da
+ * Web sem duplicar lógica. O modelo-ALVO (backlog R-010) move o processamento para uma camada compartilhada
+ * consumida pelas duas pontas — eliminando o acoplamento à Web.
  */
 export async function getAuthedSupabase(
   request: Request,
 ): Promise<{ supabase: SupabaseClient<Database>; user: User | null }> {
-  const authHeader = request.headers.get('authorization')
-  if (authHeader && /^bearer /i.test(authHeader)) {
-    const token = authHeader.slice(authHeader.indexOf(' ') + 1).trim()
-    const supabase = createTokenClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        global: { headers: { Authorization: authHeader } },
-        auth: { persistSession: false, autoRefreshToken: false },
-      },
-    )
-    const { data } = await supabase.auth.getUser(token)
-    return { supabase, user: data.user ?? null }
-  }
-  // Cookie (Web): comportamento atual inalterado (backward-compatible).
-  const supabase = await createCookieClient()
-  const { data } = await supabase.auth.getUser()
-  return { supabase, user: data.user ?? null }
+  const { user, client } = await authenticateRequest(request as NextRequest)
+  // `client` é `null` só quando não há autenticação — e aí `user` também é. O elenco preserva o contrato
+  // desta função, que sempre devolveu um cliente utilizável; sem sessão, as consultas dele são recusadas
+  // pela RLS, que é o comportamento que as rotas já esperavam.
+  return { supabase: (client ?? (await fallbackAnonimo())) as SupabaseClient<Database>, user }
 }
 
-// Deploy de produção: camada de auth compartilhada (ADR-020). Ver RISK_REGISTER R-010.
-// (deploy de produção acionado exclusivamente por main — sem dedupe cross-branch)
+/** Cliente sem sessão. Existe só para manter o tipo de retorno; a RLS recusa tudo o que ele pedir. */
+async function fallbackAnonimo(): Promise<SupabaseClient<Database>> {
+  const { createClient } = await import('./server')
+  return (await createClient()) as unknown as SupabaseClient<Database>
+}
