@@ -191,6 +191,20 @@ export const SCREEN_COPY = {
     // ROTULO UNICO. Era 'Adicionar medida', que nomeia uma das tres formas e esconde as outras duas.
     addMeasure:   ROTULO_ADICIONAR,
     addMeasureHint: 'Laudo de bioimpedancia, medida digitada ou balanca conectada — tudo por aqui.',
+    // DITADO — decisão da fundadora, 29/09/2026: opção B.
+    //
+    // A pergunta era como a pessoa dita um valor no aplicativo, já que a Web tem um botão de voz (API do
+    // navegador) e o Expo não tem equivalente. Três caminhos: (A) gravar e transcrever pela plataforma,
+    // (B) usar o ditado do teclado do próprio sistema, (C) tirar a voz da Web também.
+    //
+    // ELA ESCOLHEU B, e a razão sustenta: ditar uma medida é digitar quatro caracteres. Mandar áudio de
+    // saúde para fora do aparelho — o que A exige — é decisão de privacidade que precisa entrar no briefing
+    // jurídico e ser explicada à pessoa. Peso demais para economizar três toques.
+    //
+    // A CAPACIDADE é a mesma nas duas pontas (dá para ditar); o MECANISMO diverge, e é legítimo: na Web o
+    // botão do navegador, no aplicativo o microfone do teclado. O que faltava era DIZER isso — sem a frase,
+    // o recurso existe e ninguém descobre.
+    dictationHint: 'Prefere falar? Toque no campo e use o microfone do teclado do seu celular.',
     editMeasure:  'Editar medida',
     scanReport:   'Escanear laudo de bioimpedância',
 

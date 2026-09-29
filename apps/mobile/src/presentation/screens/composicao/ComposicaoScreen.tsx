@@ -330,6 +330,12 @@ export function ComposicaoScreen() {
             <Input value={value} onChangeText={setValue} placeholder={BODY_METRICS.find(m => m.value === metric)?.placeholder} keyboardType="decimal-pad" style={{ flex: 2 }} />
             <Input value={unit} onChangeText={setUnit} placeholder="unidade" style={{ flex: 1 }} />
           </View>
+          {/* DITADO (decisão da fundadora, 29/09/2026 — opção B). A Web tem um botão de voz; o Expo não tem
+              equivalente, e gravar áudio de saúde para transcrever fora do aparelho é decisão de privacidade
+              grande demais para economizar três toques numa medida.
+              O ditado JÁ EXISTE no teclado de todo celular — o que faltava era dizer isso. Recurso que existe
+              e ninguém descobre é o mesmo que recurso ausente. */}
+          <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{SCREEN_COPY.composicao.dictationHint}</Text>
           <DatePicker value={date} onChange={setDate} placeholder="Data" />
           <Input value={notes} onChangeText={setNotes} placeholder="Observações…" multiline style={{ minHeight: 50, textAlignVertical: 'top' }} />
           {exams.length > 0 ? (
