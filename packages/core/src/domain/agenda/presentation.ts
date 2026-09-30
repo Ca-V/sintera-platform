@@ -95,9 +95,28 @@ export function formatInstantBR(iso: string | null | undefined): string {
   return `${p2(d.getDate())}/${p2(d.getMonth() + 1)}/${d.getFullYear()} às ${p2(d.getHours())}:${p2(d.getMinutes())}`
 }
 
-/** Data por extenso pt-BR ('03 de jul. de 2026'), segura para date-only (UTC). */
+/** Abreviação do mês, pt-BR. Construída à mão — ver `formatDateLongBR`. */
+const MES_ABREV = ['jan.', 'fev.', 'mar.', 'abr.', 'mai.', 'jun.', 'jul.', 'ago.', 'set.', 'out.', 'nov.', 'dez.']
+const dois = (n: number) => String(n).padStart(2, '0')
+
+/**
+ * Data por extenso pt-BR ('03 de jul. de 2026'), segura para date-only.
+ *
+ * SEM `Intl`, desde 30/09/2026. Ela chamava `toLocaleDateString('pt-BR', { month: 'short' })`, e o locale
+ * explícito resolvia só metade do problema:
+ *
+ *  · no Hermes (o motor do aplicativo em Android), o `Intl` é reduzido e nem sempre traz os dados de pt-BR.
+ *    Quando não traz, ele NÃO falha — degrada para outro formato. A mesma função devolvia "03 de jul. de
+ *    2026" na Web e podia devolver "Jul 3, 2026" num celular, sem erro nenhum para acusar.
+ *  · o resultado dependia da build do aparelho, então nem entre dois celulares havia garantia.
+ *
+ * Montada à mão, é idêntica em toda parte e não depende de dado de sistema. `parseDateOnly` continua
+ * cuidando do fuso: sem ele, '2026-07-03' viraria 02/07 no Brasil.
+ */
 export function formatDateLongBR(iso: string): string {
-  return parseDateOnly(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+  const d = parseDateOnly(iso)
+  if (Number.isNaN(d.getTime())) return iso ?? ''
+  return `${dois(d.getDate())} de ${MES_ABREV[d.getMonth()]} de ${d.getFullYear()}`
 }
 
 /** 'HH:MM[:SS]' → 'HH:MM'. Vazio → null. */
