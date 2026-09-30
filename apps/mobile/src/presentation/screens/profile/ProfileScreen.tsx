@@ -11,8 +11,7 @@ import { text, heading } from '@sintera/design-system'
 // Web e o aplicativo prometerem exatamente a mesma coisa sobre o uso do dado.
 import {
   monthLabel, dialSelectOptions,
-  idadeLabel, faseDaVida, faseLabel, faixaDerivada, MOTIVO_DATA_NASCIMENTO, LIMITE_DATA_NASCIMENTO,
-} from '@sintera/core'
+  idadeLabel, faseDaVida, faseLabel, faixaDerivada, MOTIVO_DATA_NASCIMENTO, LIMITE_DATA_NASCIMENTO, SCREEN_COPY } from '@sintera/core'
 import { AGE_RANGE_OPTIONS, AGE_RANGE_EMPTY_LABEL } from '@sintera/validation'
 import { Avatar, Button, DatePicker, FieldRow, Input, Select, Text } from '../../primitives'
 import { useTheme } from '../../theme'
@@ -93,7 +92,7 @@ export function ProfileScreen() {
     >
       {/* 1. Cabeçalho */}
       <Text spec={heading(t, { level: 'page' })}>Meu Perfil</Text>
-      <Text spec={text(t, { role: 'bodySmall', tone: 'muted' })}>Seus dados na SINTERA</Text>
+      <Text spec={text(t, { role: 'bodySmall', tone: 'muted' })}>{SCREEN_COPY.perfil.myData}</Text>
 
       {/* 2–5. Avatar · Nome · E-mail · Membro desde */}
       <View style={[styles.card, styles.identity, { backgroundColor: t.color.surface.base, borderColor: t.color.border.default }]}>
@@ -153,7 +152,7 @@ export function ProfileScreen() {
           Finalidade dita ANTES de pedir; campo opcional; e o limite declarado, porque o silêncio aqui seria
           lido como a promessa oposta.
           ───────────────────────────────────────────────────────────────────────────────────────────── */}
-      <FieldRow label="Data de nascimento" helperText="Opcional">
+      <FieldRow label={SCREEN_COPY.perfil.birthDate} helperText="Opcional">
         <DatePicker value={p.birthDate} onChange={p.setBirthDate} placeholder="AAAA-MM-DD" max={hojeISO} />
         <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{MOTIVO_DATA_NASCIMENTO}</Text>
         <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{LIMITE_DATA_NASCIMENTO}</Text>
@@ -166,12 +165,12 @@ export function ProfileScreen() {
         {faixa ? (
           <Text spec={text(t, { role: 'body' })}>{faixa} — calculada a partir da data de nascimento</Text>
         ) : (
-          <Select options={AGE_RANGE_SELECT} value={p.ageRange} onChange={p.setAgeRange} placeholder="Selecione a faixa" title="Faixa etária" />
+          <Select options={AGE_RANGE_SELECT} value={p.ageRange} onChange={p.setAgeRange} placeholder={SCREEN_COPY.perfil.pickRange} title="Faixa etária" />
         )}
       </FieldRow>
 
       <FieldRow label="Objetivos" helperText="Separe por vírgula" errorText={p.fieldErrors.goals}>
-        <Input value={p.goalsText} onChangeText={p.setGoals} placeholder="Ex.: Sono, Energia, Longevidade" error={!!p.fieldErrors.goals} editable={!saving} />
+        <Input value={p.goalsText} onChangeText={p.setGoals} placeholder={SCREEN_COPY.perfil.goalsExample} error={!!p.fieldErrors.goals} editable={!saving} />
       </FieldRow>
 
       <Button label="Salvar" onPress={p.save} loading={saving} loadingLabel="Salvando…" />
@@ -181,7 +180,7 @@ export function ProfileScreen() {
       ) : null}
       {p.phase === 'saveError' ? (
         <Text spec={text(t, { role: 'bodySmall' })} style={{ color: t.color.badge.error.text, textAlign: 'center' }}>
-          {p.error ?? 'Não foi possível salvar. Tente novamente.'}
+          {p.error ?? SCREEN_COPY.perfil.errSave}
         </Text>
       ) : null}
 
@@ -203,7 +202,7 @@ export function ProfileScreen() {
       {/* 9. Link Configurações da conta */}
       <Pressable onPress={() => nav.navigate('Configuracoes')} style={{ paddingVertical: 4, gap: 2 }}>
         <Text spec={text(t, { role: 'bodySmall' })} style={{ color: t.color.identity.primary }}>Configurações da conta →</Text>
-        <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Alterar senha, privacidade, excluir conta</Text>
+        <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{SCREEN_COPY.perfil.accountLink}</Text>
       </Pressable>
     </ScrollView>
   )

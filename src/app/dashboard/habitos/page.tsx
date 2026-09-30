@@ -292,7 +292,7 @@ export default function HabitosPage() {
       {items.some(h => h.category === HABIT_CATEGORY_MOVED_TO_MONITORING) && (
         <Card padding="relaxed">
           <p className="font-body text-sm text-onyx">
-            <strong>Atividade física agora fica em Monitoramento.</strong>
+            <strong>{SCREEN_COPY.habitos.activityMoved}</strong>
           </p>
           <p className="font-body text-sm text-mauve mt-1">
             A sua rotina continua guardada — lá ela aparece ao lado das sessões que aconteceram, e é lá que se
@@ -300,7 +300,7 @@ export default function HabitosPage() {
           </p>
           <Link href="/dashboard/sinais-vitais"
             className="inline-block mt-2 font-body text-sm text-petal underline">
-            Ir para Monitoramento
+            {SCREEN_COPY.habitos.goToMonitoring}
           </Link>
         </Card>
       )}
@@ -359,7 +359,7 @@ export default function HabitosPage() {
                   options={LEMBRETE_FREQ_OPTS.map(o => ({ value: o.v, label: o.l }))} />
               </div>
               <p className="font-body text-[11px] text-mauve leading-relaxed">
-                Cria um lembrete recorrente na sua Agenda a partir de hoje. Você é avisada pelo canal definido nas suas preferências de notificação.
+                {SCREEN_COPY.habitos.reminderHint}
               </p>
             </div>
           )}

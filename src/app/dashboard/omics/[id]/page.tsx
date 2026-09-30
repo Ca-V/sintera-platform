@@ -22,7 +22,7 @@ import { uploadAndIngest } from '@/lib/omics/ingestClient'
 // A politica de formatos tem UM dono (ANEXO-001). Cada input declarava a sua, e as listas divergiam:
 // `image/*` deixava passar HEIC — o padrao do iPhone — que a plataforma declara como capacidade AINDA NAO
 // habilitada. O arquivo entrava e a leitura falhava depois, sem ninguem entender por que.
-import { acceptAttrWith, OMICS_EXTRA_MIME_TYPES, supportedNowAcceptAttr } from '@sintera/core'
+import { acceptAttrWith, OMICS_EXTRA_MIME_TYPES, supportedNowAcceptAttr, SCREEN_COPY } from '@sintera/core'
 
 interface Panel { id: string; domain: OmicsDomain; technology: string | null; platform: string | null; total_features: number | null; laboratory: string | null; collected_on: string | null; created_at: string }
 interface Category { category_id: string | null; name: string; display_order: number | null; count: number }
@@ -161,7 +161,7 @@ export default function OmicsPanelPage() {
       {categories.length === 0 ? (
         <Card padding="none" className="p-8 text-center">
           <p className="font-body text-sm text-mauve">Nenhum resultado neste painel ainda.</p>
-          <p className="font-body text-xs text-mauve mt-1">Use <strong>Adicionar resultado</strong> acima.</p>
+          <p className="font-body text-xs text-mauve mt-1">Use <strong>{SCREEN_COPY.omica.addResult}</strong> acima.</p>
         </Card>
       ) : (
         <div className="space-y-2">
@@ -321,21 +321,21 @@ function AddResult({ panelId, domain, defaultDate, onSaved }: {
   if (!show) return (
     <button onClick={() => setShow(true)}
       className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-petal/40 text-petal font-body text-sm font-medium hover:bg-blush transition-colors">
-      <Plus size={15} /> Adicionar resultado
+      <Plus size={15} /> {SCREEN_COPY.omica.addResult}
     </button>
   )
 
   return (
     <Card padding="relaxed" className="space-y-3 w-full">
       <div className="flex items-center justify-between">
-        <p className="font-body text-sm font-semibold text-onyx">Adicionar resultado</p>
+        <p className="font-body text-sm font-semibold text-onyx">{SCREEN_COPY.omica.addResult}</p>
         <button onClick={() => setShow(false)} className="text-mauve hover:text-onyx"><X size={16} /></button>
       </div>
       <div>
         <label htmlFor="omics-result-feature" className="font-body text-xs text-mauve block mb-1">Feature (nome, sinônimo ou ID externo)</label>
         <input id="omics-result-feature" value={name} onChange={e => setName(e.target.value)} onBlur={resolve} placeholder="Ex.: Leucine, L-Leucine ou HMDB0000687"
           className="w-full px-3 py-2 border border-border rounded-xl font-body text-sm text-onyx bg-ivory focus:outline-none focus:ring-1 focus:ring-petal/30" />
-        {resolving && <p className="font-body text-[11px] text-mauve mt-1">Resolvendo no catálogo…</p>}
+        {resolving && <p className="font-body text-[11px] text-mauve mt-1">{SCREEN_COPY.omica.resolving}</p>}
         {resolved && (
           <p className="font-body text-[11px] text-petal mt-1">
             ✓ Identificado: <strong>{resolved.canonical_name}</strong>{resolved.omics_categories?.name ? ` · ${resolved.omics_categories.name}` : ''}

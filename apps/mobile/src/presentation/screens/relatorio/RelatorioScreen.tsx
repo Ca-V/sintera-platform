@@ -10,8 +10,7 @@ import { text } from '@sintera/design-system'
 import {
   assembleReport, serializeReportText, defaultSections, REPORT_GROUPS, REPORT_SECTIONS,
   type ReportData, type ReportSectionKey, PERIOD_PRESETS, type Period, periodLabel,
-  selectFinancial, typeLabel, type HealthEvent,
-} from '@sintera/core'
+  selectFinancial, typeLabel, type HealthEvent, SCREEN_COPY } from '@sintera/core'
 import type { ShareDTO, TemplateDTO } from '@sintera/api-client'
 import { Text, Button, Input, Disclaimer, DatePicker, Select } from '../../primitives'
 import { useTheme } from '../../theme'
@@ -207,9 +206,9 @@ export function RelatorioScreen() {
         ) : null}
       </View>
 
-      {/* Mostrar no relatório — seleção de seções + item a item, PROMINENTE (paridade Web: "Mostrar no relatório"). */}
+      {/* Mostrar no relatório — seleção de seções + item a item, PROMINENTE (paridade Web: SCREEN_COPY.relatorio.showInReport). */}
       <View style={[styles.card, card, { gap: 12 }]}>
-        <Text spec={text(t, { role: 'bodyStrong' })}>Mostrar no relatório</Text>
+        <Text spec={text(t, { role: 'bodyStrong' })}>{SCREEN_COPY.relatorio.showInReport}</Text>
         <View style={{ flexDirection: 'row', gap: 12 }}>
           <Pressable onPress={() => allSections(true)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Selecionar tudo</Text></Pressable>
           <Pressable onPress={() => allSections(false)}><Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Limpar</Text></Pressable>
@@ -240,7 +239,7 @@ export function RelatorioScreen() {
 
       {/* Configurações de relatório — perfis salvos (discreto, recolhido por padrão; paridade Web). */}
       <Pressable onPress={() => setConfigOpen(o => !o)} style={[styles.card, card, { flexDirection: 'row', justifyContent: 'space-between' }]}>
-        <Text spec={text(t, { role: 'bodyStrong' })}>Configurações de relatório</Text>
+        <Text spec={text(t, { role: 'bodyStrong' })}>{SCREEN_COPY.relatorio.settings}</Text>
         <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>{configOpen ? 'Ocultar' : 'Ajustar'}</Text>
       </Pressable>
       {configOpen ? (
@@ -262,7 +261,7 @@ export function RelatorioScreen() {
       {/* Link público */}
       <View style={[styles.card, card, { gap: 10 }]}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-          <Text spec={text(t, { role: 'bodyStrong' })} style={{ flex: 1 }} numberOfLines={2}>Compartilhar com um profissional</Text>
+          <Text spec={text(t, { role: 'bodyStrong' })} style={{ flex: 1 }} numberOfLines={2}>{SCREEN_COPY.relatorio.shareWithPro}</Text>
           <Button label="Gerar link" onPress={createLink} loading={busy} loadingLabel="Gerando…" />
         </View>
         <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Link válido por 30 dias, revogável a qualquer momento.</Text>
@@ -285,7 +284,7 @@ export function RelatorioScreen() {
       {model && model.groups.length > 0 ? (
         <>
           <View style={[styles.card, card, { gap: 6 }]}>
-            <Text spec={text(t, { role: 'bodyStrong' })}>Resumo do relatório</Text>
+            <Text spec={text(t, { role: 'bodyStrong' })}>{SCREEN_COPY.relatorio.summary}</Text>
             <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Período considerado: {periodLabel(period)}</Text>
             <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Registros incluídos: {model.groups.reduce((n, g) => n + g.sections.reduce((m, s) => m + s.lines.length, 0), 0)}</Text>
             {model.groups.flatMap(g => g.sections).map(s => (

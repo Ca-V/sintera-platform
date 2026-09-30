@@ -33,7 +33,7 @@ import Disclaimer from '@/components/ui/Disclaimer'
 import { healthEventToRow } from '@/lib/agenda/event'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import Select from '@/components/ui/Select'
-import { uuid, documentSubtitle, supportedNowAcceptAttr } from '@sintera/core'
+import { uuid, documentSubtitle, supportedNowAcceptAttr, SCREEN_COPY } from '@sintera/core'
 
 type Status = 'em_uso' | 'programado' | 'suspenso' | 'encerrado'
 type Kind = 'medicamento' | 'suplemento' | 'produto' | 'dispositivo' | 'outro'
@@ -371,7 +371,7 @@ export default function MedicamentosPage() {
   async function save() {
     if (!user || saving || !name.trim()) return
     if ((kind === 'medicamento' || kind === 'suplemento') && !form) {
-      setErr('Selecione a forma farmacêutica.'); return
+      setErr(SCREEN_COPY.medicamentosCopy.pickForm); return
     }
     setSaving(true); setErr(null)
     const num = (s: string) => { const v = parseFloat(s.replace(',', '.')); return isFinite(v) && v > 0 ? v : null }
@@ -709,14 +709,14 @@ export default function MedicamentosPage() {
           {(kind === 'medicamento' || kind === 'suplemento') && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="font-body text-xs text-mauve block mb-1">Forma farmacêutica</label>
-              <Select aria-label="Forma farmacêutica" placeholder="Selecione…" value={form}
+              <label className="font-body text-xs text-mauve block mb-1">{SCREEN_COPY.medicamentosCopy.fieldForm}</label>
+              <Select aria-label={SCREEN_COPY.medicamentosCopy.fieldForm} placeholder="Selecione…" value={form}
                 onChange={(v) => { setForm(v); setPackUnit(formMetaOf(v)?.unit ?? '') }}
                 options={FORMS.map(f => ({ value: f.value, label: f.label }))} />
             </div>
             <div>
-              <label className="font-body text-xs text-mauve block mb-1">Via de administração <span className="font-normal text-mauve">(opcional)</span></label>
-              <Select aria-label="Via de administração" placeholder="Selecione…" value={route} onChange={setRoute}
+              <label className="font-body text-xs text-mauve block mb-1">{SCREEN_COPY.medicamentosCopy.fieldRoute} <span className="font-normal text-mauve">(opcional)</span></label>
+              <Select aria-label={SCREEN_COPY.medicamentosCopy.fieldRoute} placeholder="Selecione…" value={route} onChange={setRoute}
                 options={ROUTES.map(r => ({ value: r, label: r }))} />
             </div>
           </div>

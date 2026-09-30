@@ -10,8 +10,7 @@ import {
   RESOURCE_TYPES, RESOURCE_STATUSES, resourceStatusLabel, visionSummary,
   type ResourceType, type ResourceStatus, type VisionKind,
   FREQUENCY_LABELS, type RecurrenceFrequency, selectByLink, parseRule, type HealthEvent,
-  EXPENSE_DOC_TYPES, expenseDocLabel, parseAmountToCents, centsToAmount, documentSubtitle,
-} from '@sintera/core'
+  EXPENSE_DOC_TYPES, expenseDocLabel, parseAmountToCents, centsToAmount, documentSubtitle, SCREEN_COPY } from '@sintera/core'
 import { Text, Button, Input, AttachmentLink, DatePicker, Disclaimer, Select } from '../../primitives'
 import { useAssistedCapture } from '../capture/useAssistedCapture'
 import { useTheme } from '../../theme'
@@ -208,7 +207,7 @@ export function ResourcesScreen() {
       keyboardShouldPersistTaps="handled"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={t.color.identity.primary} />}>
       <View style={styles.headerRow}>
-        <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 22 }}>Recursos de Saúde</Text>
+        <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 22 }}>{SCREEN_COPY.recursos.title}</Text>
         {!open ? <Button label="Adicionar" onPress={startNew} /> : null}
       </View>
 
@@ -229,7 +228,7 @@ export function ResourcesScreen() {
               options={[{ id: '', label: 'Nenhuma receita' }, ...receitas.map(r => ({ id: r.id, label: documentSubtitle(r) }))]}
               value={receitaVinculada}
               onChange={setReceitaVinculada}
-              title="Vincular a uma receita já guardada"
+              title={SCREEN_COPY.recursos.linkToRecipe}
               placeholder="Nenhuma receita"
             />
           )}
@@ -255,7 +254,7 @@ export function ResourcesScreen() {
                   if (r.prescriber) setPrescriber(r.prescriber)
                   if (r.prescribed_on) setStartedOn(r.prescribed_on)
                 }} />
-              <Chips options={[{ id: 'oculos', label: 'Óculos' }, { id: 'lentes_contato', label: 'Lentes de contato' }]} value={visionKind} onChange={(v) => setVisionKind(v as VisionKind)} />
+              <Chips options={[{ id: 'oculos', label: 'Óculos' }, { id: 'lentes_contato', label: SCREEN_COPY.recursos.contactLens }]} value={visionKind} onChange={(v) => setVisionKind(v as VisionKind)} />
               {eyeRow('Olho direito (OD)', od, setOd)}
               {eyeRow('Olho esquerdo (OE)', oe, setOe)}
               {visionKind === 'oculos' ? <Input value={dnp} onChangeText={setDnp} placeholder="DNP" /> : (

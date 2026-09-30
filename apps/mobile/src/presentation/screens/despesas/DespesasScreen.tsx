@@ -6,7 +6,7 @@ import { ScrollView, View, ActivityIndicator, RefreshControl, Pressable, Linking
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
-import { type HealthEvent, typeLabel, formatDateLongBR, expensesTotalCents, expenseDocLabel } from '@sintera/core'
+import { type HealthEvent, typeLabel, formatDateLongBR, expensesTotalCents, expenseDocLabel, SCREEN_COPY, avisoRemoverDespesa } from '@sintera/core'
 import { Text, Button } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { MaisStackParamList } from '../../navigation/types'
@@ -39,7 +39,7 @@ export function DespesasScreen({ navigation }: Props) {
   }
   // Adicionar despesa (guia, paridade Web): a despesa é ATRIBUTO de um fato — cria-se pelo fato (evento com valor
   // ou medicamento). Despesa avulsa = novo evento com valor.
-  const addExpense = () => Alert.alert('Adicionar despesa', 'A despesa é registrada no fato a que pertence.', [
+  const addExpense = () => Alert.alert(SCREEN_COPY.despesas.add, 'A despesa é registrada no fato a que pertence.', [
     { text: 'Novo evento com valor', onPress: () => parentNav()?.navigate('Agenda', { screen: 'EventForm', params: {} }) },
     { text: 'Novo medicamento', onPress: () => parentNav()?.navigate('MinhaSaude', { screen: 'Medications' }) },
     { text: 'Cancelar', style: 'cancel' },
@@ -65,8 +65,7 @@ export function DespesasScreen({ navigation }: Props) {
   const confirmRemove = (item: HealthEvent) => {
     const isExam = item.id.startsWith('exam:')
     Alert.alert(isExam ? 'Remover valor' : 'Excluir despesa',
-      isExam ? `Remover o valor pago de "${item.title}"? O exame é mantido; só o registro financeiro sai das Despesas.`
-             : `Excluir "${item.title}" das suas despesas?`,
+      avisoRemoverDespesa(item.title, isExam),
       [{ text: 'Cancelar', style: 'cancel' }, { text: isExam ? 'Remover valor' : 'Excluir', style: 'destructive', onPress: () => d.remove(item) }])
   }
 
@@ -76,7 +75,7 @@ export function DespesasScreen({ navigation }: Props) {
       refreshControl={<RefreshControl refreshing={d.refreshing} onRefresh={d.refresh} tintColor={t.color.identity.primary} />}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
         <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 22 }}>Despesas</Text>
-        <Button label="Adicionar despesa" onPress={addExpense} />
+        <Button label={SCREEN_COPY.despesas.add} onPress={addExpense} />
       </View>
       <View style={[styles.totalCard, { backgroundColor: t.color.badge.info.soft, borderColor: t.color.border.default }]}>
         <Text spec={text(t, { role: 'label', tone: 'muted' })}>TOTAL</Text>

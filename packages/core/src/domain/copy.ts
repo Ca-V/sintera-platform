@@ -237,6 +237,10 @@ export const SCREEN_COPY = {
     subtitle:     'Solte o laudo — a SINTERA lê e extrai os dados por você. Os resultados ficam organizados ao longo do tempo.',
     add:          'Adicionar exame realizado',
     emptyTitle:   'Nenhum exame ainda',
+    retry:        'Tentar novamente',
+    filterPlaceholder: 'Filtrar por nome ou laboratório…',
+    // Distingue o exame comum do de omica — as duas telas precisam chamar a mesma coisa pelo mesmo nome.
+    conventional: 'Exame convencional',
   },
   // Exame — DETALHE. 13 frases estavam digitadas nas duas telas (medido em 30/09/2026).
   //
@@ -322,6 +326,7 @@ export const SCREEN_COPY = {
     emptyTitle:     'Nenhuma conexão ainda',
     emptyMessage:   'Conecte um dispositivo para acompanhar seus dados automaticamente.',
     connectAction:  'Conectar',
+    syncNow:        'Sincronizar agora',
     disconnect:     'Desconectar',
     lastSync:       'Última sincronização',
 
@@ -388,6 +393,8 @@ export const SCREEN_COPY = {
     emptyTitle:   'Nada recebido ainda',
     emptyMessage: 'Quando um aparelho ou aplicativo estiver conectado, o que ele registrar aparece aqui, com a origem.',
     duplicateTitle: 'Parece já estar registrado',
+    activities:     'Atividades recebidas',
+    measurements:   'Medições recebidas',
     // FACTUAL: descreve a semelhança, não afirma que é a mesma coisa. Quem sabe é a pessoa.
     duplicateHint:  'Encontramos algo muito parecido, vindo de outra fonte. Você decide o que fazer — e pode não fazer nada.',
     removeAction:   'Remover',
@@ -421,6 +428,69 @@ export const SCREEN_COPY = {
    * "em instantes" na Web e "mais tarde" no aplicativo. A mensagem ESPECÍFICA continua de cada tela (dizer o que
    * falhou é informação); o que se unifica é a parte que se repete.
    */
+  // ============================================================================================
+  // As 13 telas restantes da varredura de 30/09/2026 — 38 frases que estavam escritas duas vezes.
+  // ============================================================================================
+  // Nenhuma divergia. É o estado em que Composição Corporal esteve até alguém comparar, e em que Documentos,
+  // Exame e Agenda estiveram até ontem. Enquanto as cópias são iguais ninguém nota; a divergência nasce na
+  // primeira vez que alguém edita uma delas.
+  condicoes: {
+    title:          'Condições de Saúde',
+    emptyFeminine:  'Nenhuma registrada.',
+    emptyMasculine: 'Nenhum registrado.',
+  },
+  medicamentosCopy: {
+    pickForm:     'Selecione a forma farmacêutica.',
+    fieldForm:    'Forma farmacêutica',
+    fieldRoute:   'Via de administração',
+  },
+  habitos: {
+    // A atividade física SAIU daqui e foi para Monitoramento. A frase existe para que quem procura no lugar
+    // antigo encontre o novo — e ela precisa ser a mesma nas duas pontas, senão o caminho muda conforme o
+    // aparelho.
+    activityMoved:  'Atividade física agora fica em Monitoramento.',
+    goToMonitoring: 'Ir para Monitoramento',
+    // Diz o que o lembrete faz E por onde chega. Uma ponta que omitisse o canal prometeria menos do que a
+    // outra sobre a mesma ação.
+    reminderHint:   'Cria um lembrete recorrente na sua Agenda a partir de hoje. Você é avisada pelo canal definido nas suas preferências de notificação.',
+  },
+  ciclo: {
+    title:        'Ciclo e Contracepção',
+    emptyMethod:  'Nenhum método registrado.',
+  },
+  recursos: {
+    title:        'Recursos de Saúde',
+    contactLens:  'Lentes de contato',
+    linkToRecipe: 'Vincular a uma receita já guardada',
+  },
+  despesas: {
+    add:          'Adicionar despesa',
+    removePaid:   'Remover o valor pago de',
+  },
+  omica: {
+    addResult:    'Adicionar resultado',
+    resolving:    'Resolvendo no catálogo…',
+  },
+  perfil: {
+    errSave:      'Não foi possível salvar. Tente novamente.',
+    pickRange:    'Selecione a faixa',
+    goalsExample: 'Ex.: Sono, Energia, Longevidade',
+    myData:       'Seus dados na SINTERA',
+    birthDate:    'Data de nascimento',
+    accountLink:  'Alterar senha, privacidade, excluir conta',
+  },
+  configuracoes: {
+    savePrefs:    'Salvar preferências',
+    notifications: 'Central de Notificações',
+    exportData:   'Exportar meus dados',
+    privacy:      'Política de Privacidade',
+  },
+  relatorio: {
+    shareWithPro: 'Compartilhar com um profissional',
+    showInReport: 'Mostrar no relatório',
+    settings:     'Configurações de relatório',
+    summary:      'Resumo do relatório',
+  },
   comum: {
     retry:          'Tente novamente.',
     retryLater:     'Tente novamente em instantes.',

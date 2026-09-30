@@ -14,8 +14,7 @@ import {
   estimatedRunoutDays, parseAmountToCents, centsToAmount,
   type MedKind, type MedStatus, MED_REPURCHASE_FREQUENCIES, repurchaseFreqToRecurrence,
   isHormonalContraceptive, contraceptiveLabel, contraceptiveCategoryLabel, cadenceUsageLabel,
-  documentSubtitle,
-} from '@sintera/core'
+  documentSubtitle, SCREEN_COPY } from '@sintera/core'
 import { Text, Button, Input, DatePicker, Disclaimer, AttachmentLink, Select } from '../../primitives'
 import { useAssistedCapture } from '../capture/useAssistedCapture'
 import { useTheme } from '../../theme'
@@ -130,7 +129,7 @@ export function MedicationsScreen({ route, navigation }: Props) {
   async function save() {
     if (!name.trim()) { Alert.alert('Nome obrigatório', 'Informe o nome.'); return }
     // Regra de negócio (paridade Web): medicamento/suplemento exige forma farmacêutica.
-    if ((kind === 'medicamento' || kind === 'suplemento') && !form) { Alert.alert('Forma obrigatória', 'Selecione a forma farmacêutica.'); return }
+    if ((kind === 'medicamento' || kind === 'suplemento') && !form) { Alert.alert('Forma obrigatória', SCREEN_COPY.medicamentosCopy.pickForm); return }
     setSaving(true)
     try {
       const wantsReminder = !!repurchaseFreq
@@ -246,9 +245,9 @@ export function MedicationsScreen({ route, navigation }: Props) {
           </View>
           <Input value={frequency} onChangeText={setFrequency} placeholder="Frequência (ex.: 1x ao dia)" />
           <Text spec={text(t, { role: 'label', tone: 'muted' })}>FORMA FARMACÊUTICA</Text>
-          <Select options={MED_FORMS.map(f => ({ id: f.value, label: f.label }))} value={form} onChange={setForm} title="Forma farmacêutica" placeholder="Selecione…" />
+          <Select options={MED_FORMS.map(f => ({ id: f.value, label: f.label }))} value={form} onChange={setForm} title={SCREEN_COPY.medicamentosCopy.fieldForm} placeholder="Selecione…" />
           <Text spec={text(t, { role: 'label', tone: 'muted' })}>VIA</Text>
-          <Select options={MED_ROUTES.map(r => ({ id: r, label: r }))} value={adminRoute} onChange={setAdminRoute} title="Via de administração" placeholder="Selecione…" />
+          <Select options={MED_ROUTES.map(r => ({ id: r, label: r }))} value={adminRoute} onChange={setAdminRoute} title={SCREEN_COPY.medicamentosCopy.fieldRoute} placeholder="Selecione…" />
           <Input value={prescriber} onChangeText={setPrescriber} placeholder="Prescritor" />
           {/* D-13: receita anexada (documento separado do produto). */}
           <Text spec={text(t, { role: 'label', tone: 'muted' })}>RECEITA</Text>

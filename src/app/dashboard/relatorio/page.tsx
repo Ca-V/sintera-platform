@@ -35,8 +35,7 @@ import { createClient } from '@/lib/supabase/client'
 // O rótulo do subtipo vem do núcleo — o mesmo das telas de Documentos, para o dossiê não inventar nome.
 import {
   REPORT_GROUPS, defaultSections, secureToken, documentSubtypeLabel,
-  type ReportSectionKey, type PatientDocumentSubtype,
-} from '@sintera/core'
+  type ReportSectionKey, type PatientDocumentSubtype, SCREEN_COPY } from '@sintera/core'
 import { assembleOrganizedBiomarkers } from '@/lib/ai/insights/assembler'
 import { summarizeBiomarkers, examDate, type BiomarkerRow } from '@/lib/biomarkers/grouping'
 import { useUser } from '@/context/UserContext'
@@ -175,7 +174,7 @@ function LegacyReport() {
   // Perfis de Comunicação personalizados (report_templates).
   const [templates, setTemplates] = useState<{ id: string; name: string; selection: Record<string, unknown> }[]>([])
   const [tplName, setTplName] = useState('')
-  const [configOpen, setConfigOpen] = useState(false)   // "Configurações de relatório" (discreto)
+  const [configOpen, setConfigOpen] = useState(false)   // SCREEN_COPY.relatorio.settings (discreto)
   // Síntese factual dos biomarcadores ORGANIZADOS (TEMA C) — consome o SSOT único.
   // Consumidor INTERNO chama o serviço de DOMÍNIO direto (sem hop HTTP): o
   // Assembler é isomórfico e a RLS do client autenticado protege os dados. A rota
@@ -535,7 +534,7 @@ function LegacyReport() {
       <Card padding="relaxed" className="mb-6 print:hidden">
         <div className="flex items-center gap-2 mb-2">
           <Share2 size={16} className="text-petal" />
-          <h2 className="font-display text-base font-semibold text-onyx">Compartilhar com um profissional</h2>
+          <h2 className="font-display text-base font-semibold text-onyx">{SCREEN_COPY.relatorio.shareWithPro}</h2>
         </div>
         <p className="font-body text-xs text-mauve leading-relaxed mb-3">
           Gere um link <strong>somente-leitura</strong> e <strong>temporário</strong> (30 dias) deste relatório, para enviar a um profissional de saúde —
@@ -574,7 +573,7 @@ function LegacyReport() {
       {/* Seleção = árvore do menu lateral (UX-001): grupos expansíveis, seleção por
           grupo (tri-state) e por item, com a mesma ordem, nomenclatura e ícones. */}
       <Card padding="relaxed" className="mb-6 print:hidden">
-        <p className="font-body text-sm font-semibold text-onyx mb-2">Mostrar no relatório</p>
+        <p className="font-body text-sm font-semibold text-onyx mb-2">{SCREEN_COPY.relatorio.showInReport}</p>
         <SelectionToolbar className="mb-3"
           onSelectAll={selectAllSections} onClear={clearSections} onReset={resetSections}
           onExpandAll={expandAll} onCollapseAll={collapseAll} />
@@ -660,7 +659,7 @@ function LegacyReport() {
       <Card padding="default" className="mb-6 print:hidden">
         <button type="button" onClick={() => setConfigOpen(o => !o)} aria-expanded={configOpen} className="w-full flex items-center justify-between gap-2 text-left">
           <div className="min-w-0">
-            <p className="font-body text-sm font-semibold text-onyx">Configurações de relatório</p>
+            <p className="font-body text-sm font-semibold text-onyx">{SCREEN_COPY.relatorio.settings}</p>
             <p className="font-body text-[11px] text-mauve">Salve esta configuração (seções, itens e período) para reutilizar depois{templates.length > 0 ? ` · ${templates.length} salva${templates.length > 1 ? 's' : ''}` : ''}.</p>
           </div>
           <ChevronDown size={16} className="text-mauve flex-shrink-0 transition-transform" style={{ transform: configOpen ? 'none' : 'rotate(-90deg)' }} />
@@ -705,7 +704,7 @@ function LegacyReport() {
 
         {/* Resumo do relatório — cabeçalho executivo, totalmente factual (RDC 657) */}
         <div className="rounded-2xl border border-border bg-ivory/40 p-4 sm:p-5">
-          <p className="font-display text-sm font-semibold text-onyx mb-1">Resumo do relatório</p>
+          <p className="font-display text-sm font-semibold text-onyx mb-1">{SCREEN_COPY.relatorio.summary}</p>
           <p className="font-body text-xs font-semibold text-petal mb-2.5">Período considerado neste relatório: {periodLabel(period)}</p>
           <div className="grid grid-cols-2 gap-x-6 gap-y-1 font-body text-xs text-onyx">
             <p><span className="text-mauve">Registros incluídos:</span> <strong>{totalRegistros}</strong></p>

@@ -10,8 +10,7 @@ import type { HabitDTO, HabitInput } from '@sintera/api-client'
 import {
   // Atividade fisica saiu do seletor em 31/08/2026 e passou a morar em Monitoramento — ver core/habits.ts.
   HABIT_CATEGORIES, HABIT_CATEGORY_MOVED_TO_MONITORING, habitGoalSummary, type HabitCategory,
-  FREQUENCY_LABELS, type RecurrenceFrequency, selectByLink, parseRule, type HealthEvent,
-} from '@sintera/core'
+  FREQUENCY_LABELS, type RecurrenceFrequency, selectByLink, parseRule, type HealthEvent, SCREEN_COPY } from '@sintera/core'
 import { Text, Button, Input, AttachmentLink, Disclaimer, Select } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
@@ -153,7 +152,7 @@ export function HabitsScreen() {
           <Button label={planUrl ? `Plano anexado${planName ? `: ${planName}` : ''}` : 'Anexar plano (opcional)'} variant="secondary" onPress={pickPlan} loading={uploadingPlan} loadingLabel="Enviando…" />
           <Text spec={text(t, { role: 'label', tone: 'muted' })}>LEMBRETE</Text>
           <Select options={freqOptions} value={reminderFreq} onChange={(v) => setReminderFreq(v as RecurrenceFrequency)} title="Lembrete" />
-          <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Cria um lembrete recorrente na sua Agenda a partir de hoje. Você é avisada pelo canal definido nas suas preferências de notificação.</Text>
+          <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{SCREEN_COPY.habitos.reminderHint}</Text>
           <View style={styles.actions}>
             <Button label="Cancelar" variant="secondary" onPress={() => setOpen(false)} />
             <Button label="Salvar" onPress={save} loading={saving} loadingLabel="Salvando…" />
@@ -174,13 +173,13 @@ export function HabitsScreen() {
           mesmo destino da Web; a decisão de que categoria mudou vem do núcleo, não desta tela. */}
       {items.some(h => h.category === HABIT_CATEGORY_MOVED_TO_MONITORING) ? (
         <View style={[styles.card, card, { gap: 4 }]}>
-          <Text spec={text(t, { role: 'body' })}>Atividade física agora fica em Monitoramento.</Text>
+          <Text spec={text(t, { role: 'body' })}>{SCREEN_COPY.habitos.activityMoved}</Text>
           <Text spec={text(t, { role: 'caption', tone: 'muted' })}>
             A sua rotina continua guardada — lá ela aparece ao lado das sessões que aconteceram, e é lá que se
             define rotina e meta.
           </Text>
           <Pressable onPress={() => navigation.navigate('Monitoramento')} style={{ alignSelf: 'flex-start', marginTop: 4 }}>
-            <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Ir para Monitoramento</Text>
+            <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>{SCREEN_COPY.habitos.goToMonitoring}</Text>
           </Pressable>
         </View>
       ) : null}

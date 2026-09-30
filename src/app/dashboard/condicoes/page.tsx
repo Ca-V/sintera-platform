@@ -28,7 +28,7 @@ import ProvenanceLine from '@/components/ui/ProvenanceLine'
 import { examProvenance } from '@/lib/provenance'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import Select from '@/components/ui/Select'
-import { uuid } from '@sintera/core'
+import { uuid, SCREEN_COPY } from '@sintera/core'
 
 type Scope = 'propria' | 'familiar'
 
@@ -269,7 +269,7 @@ export default function CondicoesPage() {
       <PageHeader
         icon={<Stethoscope size={16} />}
         eyebrow="Condições"
-        title="Condições de Saúde"
+        title={SCREEN_COPY.condicoes.title}
         subtitle={<>Carregue um laudo/exame (foto, arquivo ou scan) ou digite — a SINTERA lê e organiza. Se o documento for um exame, ele também é salvo em Exames.</>}
         action={
           <CreateRecordMenu
@@ -357,7 +357,7 @@ export default function CondicoesPage() {
               <p className="font-display text-base font-semibold text-onyx">Minhas condições</p>
             </div>
             {proprias.length > 0 ? <div className="space-y-2">{proprias.map(card)}</div>
-              : <p className="font-body text-sm text-mauve">Nenhuma registrada.</p>}
+              : <p className="font-body text-sm text-mauve">{SCREEN_COPY.condicoes.emptyFeminine}</p>}
           </div>
           <div>
             <div className="flex items-center gap-2 mb-2">
@@ -365,7 +365,7 @@ export default function CondicoesPage() {
               <p className="font-display text-base font-semibold text-onyx">Histórico familiar</p>
             </div>
             {familiares.length > 0 ? <div className="space-y-2">{familiares.map(card)}</div>
-              : <p className="font-body text-sm text-mauve">Nenhum registrado.</p>}
+              : <p className="font-body text-sm text-mauve">{SCREEN_COPY.condicoes.emptyMasculine}</p>}
           </div>
         </div>
       )}

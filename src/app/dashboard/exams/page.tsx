@@ -454,7 +454,7 @@ export default function ExamsPage() {
                E6: ômica é uma CONTINUAÇÃO especializada do mesmo ponto de entrada (não um fork):
                declarar "Exame ômico" segue para o passo de catálogo/versionamento. */
             <CreateRecordMenu
-              label={activeTab === 'orders' ? SCREEN_COPY.pedidos.add : 'Adicionar exame realizado'}
+              label={activeTab === 'orders' ? SCREEN_COPY.pedidos.add : SCREEN_COPY.exames.add}
               methods={activeTab === 'orders' ? ['file', 'camera'] : ['file', 'camera', 'bundle']}
               extras={activeTab === 'orders' ? [] : [{ key: 'omics', label: 'Exame ômico (catálogo)', icon: Dna }]}
               onSelect={(m, file) => {
@@ -519,7 +519,7 @@ export default function ExamsPage() {
         <Info size={16} className="text-mauve flex-shrink-0 mt-0.5" />
         <div className="space-y-2 min-w-0">
           <p className="font-body text-xs text-onyx leading-relaxed">
-            <strong>Exame convencional</strong> — laudos comuns (sangue, urina, hormônios…) que você envia na caixa acima; a IA extrai os dados automaticamente.
+            <strong>{SCREEN_COPY.exames.conventional}</strong> — laudos comuns (sangue, urina, hormônios…) que você envia na caixa acima; a IA extrai os dados automaticamente.
           </p>
           <p className="font-body text-xs text-onyx leading-relaxed">
             <strong>Exame ômico</strong> — é uma <strong>categoria</strong> (metabolômica, proteômica, microbioma, genética) com muitos marcadores. Cadastre por <strong>Novo exame → Exame ômico</strong>; o passo de catálogo, versionamento e comparação abre em seguida.
@@ -589,7 +589,7 @@ export default function ExamsPage() {
                 // dentro dos laudos — que existe, mas é a da barra lateral. A promessa errada fez a fundadora
                 // digitar "hemograma", ver a lista esvaziar, e concluir que o campo não funcionava.
                 aria-label="Filtrar por nome ou laboratório"
-                placeholder="Filtrar por nome ou laboratório…"
+                placeholder={SCREEN_COPY.exames.filterPlaceholder}
                 value={searchName}
                 onChange={e => setSearchName(e.target.value)}
                 className="w-full pl-8 pr-3 py-2 bg-ivory border border-border rounded-xl font-body text-sm text-onyx placeholder-mauve/40 focus:outline-none focus:ring-1 focus:ring-petal/40"
@@ -740,12 +740,12 @@ export default function ExamsPage() {
         <Card padding="none" className="p-10 text-center">
           <p className="font-body text-sm text-red-500 mb-3">{examsError}</p>
           <button type="button" onClick={() => loadExams()}
-            className="font-body text-sm font-medium text-petal border border-petal/30 px-4 py-2 rounded-full hover:bg-blush transition-colors">Tentar novamente</button>
+            className="font-body text-sm font-medium text-petal border border-petal/30 px-4 py-2 rounded-full hover:bg-blush transition-colors">{SCREEN_COPY.exames.retry}</button>
         </Card>
       ) : exams.length === 0 ? (
         <Card padding="none" className="p-10 text-center">
           <FileText size={36} className="text-border mx-auto mb-3" />
-          <p className="font-body text-sm text-mauve">Nenhum exame ainda</p>
+          <p className="font-body text-sm text-mauve">{SCREEN_COPY.exames.emptyTitle}</p>
           <p className="font-body text-xs text-mauve mt-1">Adicione o primeiro exame acima</p>
         </Card>
       ) : examsByYear.length === 0 && orders.length === 0 ? (

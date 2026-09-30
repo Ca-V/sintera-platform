@@ -172,7 +172,7 @@ export function ExamsListScreen({ navigation, route }: Props) {
     return (
       <View style={[styles.center, { backgroundColor: t.color.surface.app, paddingTop: insets.top }]}>
         <Text spec={text(t, { role: 'body' })} style={{ color: t.color.badge.error.text, textAlign: 'center' }}>{p.error ?? 'Não foi possível carregar seus exames.'}</Text>
-        <Button label="Tentar novamente" variant="secondary" onPress={p.retry} />
+        <Button label={SCREEN_COPY.exames.retry} variant="secondary" onPress={p.retry} />
       </View>
     )
   }
@@ -204,7 +204,7 @@ export function ExamsListScreen({ navigation, route }: Props) {
       </View>
 
       {all.length === 0 ? (
-        <View style={styles.empty}><Text spec={text(t, { role: 'body', tone: 'muted' })}>Nenhum exame ainda.</Text></View>
+        <View style={styles.empty}><Text spec={text(t, { role: 'body', tone: 'muted' })}>{SCREEN_COPY.exames.emptyTitle}</Text></View>
       ) : null}
 
       {/* Abas principais: Exames (realizados) × Pedidos de Exames — MESMA organização conceitual da Web. */}
@@ -229,7 +229,7 @@ export function ExamsListScreen({ navigation, route }: Props) {
       {/* Explicação convencional × ômica (paridade Web — mesmo conteúdo; texto adaptado ao ponto de entrada Mobile). */}
       <View style={[styles.card, card, { gap: 8 }]}>
         <Text spec={text(t, { role: 'caption' })}>
-          <Text spec={text(t, { role: 'caption' })} style={{ fontWeight: '700' }}>Exame convencional</Text> — laudos comuns (sangue, urina, hormônios…) que você envia em “Adicionar exame realizado”; a IA extrai os dados automaticamente.
+          <Text spec={text(t, { role: 'caption' })} style={{ fontWeight: '700' }}>{SCREEN_COPY.exames.conventional}</Text> — laudos comuns (sangue, urina, hormônios…) que você envia em “Adicionar exame realizado”; a IA extrai os dados automaticamente.
         </Text>
         <Text spec={text(t, { role: 'caption' })}>
           <Text spec={text(t, { role: 'caption' })} style={{ fontWeight: '700' }}>Exame ômico</Text> — é uma categoria (metabolômica, proteômica, microbioma, genética) com muitos marcadores. Cadastre por “Adicionar exame realizado → Exame ômico (catálogo)”; o passo de catálogo, versionamento e comparação abre em seguida.
@@ -254,7 +254,7 @@ export function ExamsListScreen({ navigation, route }: Props) {
       {/* Filtros de descoberta — seletores compactos (paridade Web: dropdowns de status/ano, não parede de chips). */}
       {results.length > 0 ? (
         <View style={{ gap: 8 }}>
-          <Input value={query} onChangeText={setQuery} placeholder="Filtrar por nome ou laboratório…" autoCapitalize="none" />
+          <Input value={query} onChangeText={setQuery} placeholder={SCREEN_COPY.exames.filterPlaceholder} autoCapitalize="none" />
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <View style={{ flex: 1 }}><Select options={STATUS_FILTERS} value={status} onChange={setStatus} title="Status" /></View>
             {years.length > 1 ? (

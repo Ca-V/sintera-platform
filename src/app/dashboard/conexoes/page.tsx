@@ -189,8 +189,8 @@ function ConexoesInner() {
               {isConnected(c) && (
                 <dl className="grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <dt className="font-body text-xs text-mauve">Última sincronização</dt>
-                    <dd className="font-body text-onyx">{syncing === c.source ? 'Sincronizando…' : fmtDateTime(c.lastSyncAt)}</dd>
+                    <dt className="font-body text-xs text-mauve">{SCREEN_COPY.conexoes.lastSync}</dt>
+                    <dd className="font-body text-onyx">{syncing === c.source ? SCREEN_COPY.conexoes.hcSyncing : fmtDateTime(c.lastSyncAt)}</dd>
                   </div>
                   <div>
                     <dt className="font-body text-xs text-mauve">Situação</dt>
@@ -217,7 +217,7 @@ function ConexoesInner() {
                   <>
                     <button onClick={() => syncNow(c.source)} disabled={syncing === c.source}
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blush text-petal-dark border border-petal-light font-body text-sm font-medium hover:bg-petal-light transition-colors disabled:opacity-50">
-                      <RefreshCw size={15} className={syncing === c.source ? 'animate-spin' : ''} /> Sincronizar agora
+                      <RefreshCw size={15} className={syncing === c.source ? 'animate-spin' : ''} /> {SCREEN_COPY.conexoes.syncNow}
                     </button>
                     <button onClick={() => disconnect(c.source)} disabled={syncing === c.source}
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-mauve hover:text-petal hover:bg-blush font-body text-sm font-medium transition-colors disabled:opacity-50">
