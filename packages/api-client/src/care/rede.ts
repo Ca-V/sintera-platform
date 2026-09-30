@@ -12,6 +12,14 @@ import type { VinculoNaLista, ConviteNaLista, Profissao, StatusVinculo, StatusCo
   EntregaDoConvite, CanalDoConvite } from '@sintera/core'
 import { withTimeout } from '../net/timeout'
 import { asError } from '../net/errors'
+// VAL-001 — os eventos do vínculo são emitidos AQUI, e não nas telas.
+//
+// Nas telas eles seriam quatro lugares (Web e aplicativo, cada um com aceite e revogação), e o quinto
+// consumidor futuro esqueceria. Aqui há um caminho só: quem chama a função emite o evento, sem saber disso.
+//
+// `void` de propósito em todas as chamadas: telemetria é best-effort e NUNCA pode atrasar nem derrubar a ação
+// que a pessoa pediu. Um erro de rede na contagem não pode impedir um vínculo de nascer.
+import { logUsageEvent } from '../events/log'
 
 export interface RedeDeCuidado {
   readonly vinculos: VinculoNaLista[]
@@ -127,6 +135,16 @@ export async function convidarProfissional(
     })
     const corpo = await res.json().catch(() => ({})) as { id?: string; entrega?: EntregaDoConvite; canal?: CanalDoConvite; error?: string }
     if (!res.ok) throw new Error(corpo.error || 'Não consegui enviar o convite.')
+
+    // VAL-001: `canal` distingue e-mail de WhatsApp — é o que responde se um dos dois converte melhor, e a
+    // Meta acabou de classificar o WhatsApp como abordagem não solicitada. `entrega` separa o convite que
+    // SAIU do que foi só gravado: contar os dois juntos inflaria a base e esconderia a falha de entrega.
+    void logUsageEvent(client, 'convite_enviado', {
+      canal: corpo.canal ?? 'desconhecido',
+      motivo: corpo.entrega ?? 'pendente',
+      direcao: 'paciente_convida_profissional',
+    })
+
     return {
       id: corpo.id ?? '',
       entrega: corpo.entrega ?? 'pendente',
@@ -151,6 +169,10 @@ export async function revogarVinculo(client: SupabaseClient, vinculoId: string, 
       .eq('id', vinculoId)
       .abortSignal(s)
     if (error) throw asError(error)
+
+    // VAL-001: revogação é o sinal mais honesto de que a Rede de Cuidado não serviu. Medir só os vínculos
+    // criados contaria uma história melhor do que a real.
+    void logUsageEvent(client, 'vinculo_revogado', { origem: 'paciente' })
   } finally {
     cleanup()
   }
