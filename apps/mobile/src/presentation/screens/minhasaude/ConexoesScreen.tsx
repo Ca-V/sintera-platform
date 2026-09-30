@@ -419,11 +419,11 @@ export function ConexoesScreen() {
               {isConnectorActive(c.status) ? (
                 <>
                   <Button
-                    label="Sincronizar agora"
+                    label={SCREEN_COPY.conexoes.syncNow}
                     variant="secondary"
                     onPress={() => sincronizar(c)}
                     loading={busy === c.source}
-                    loadingLabel="Sincronizando…"
+                    loadingLabel={SCREEN_COPY.conexoes.hcSyncing}
                   />
                   <Pressable onPress={() => desconectar(c)} disabled={busy === c.source} hitSlop={8}>
                     <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>

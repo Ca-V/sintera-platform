@@ -210,7 +210,7 @@ export default function DadosRecebidosPage() {
 
       {acts.length > 0 && (
         <section className="space-y-2">
-          <h2 className="font-display text-lg font-semibold text-onyx">Atividades recebidas</h2>
+          <h2 className="font-display text-lg font-semibold text-onyx">{SCREEN_COPY.dadosRecebidos.activities}</h2>
           {acts.map(a => (
             <Card key={a.id} className="space-y-0.5 p-4">
               <p className="text-sm">{a.title?.trim() || activityTypeLabel(a.activity_type)}</p>
@@ -228,7 +228,7 @@ export default function DadosRecebidosPage() {
 
       {metrics.length > 0 && (
         <section className="space-y-2">
-          <h2 className="font-display text-lg font-semibold text-onyx">Medições recebidas</h2>
+          <h2 className="font-display text-lg font-semibold text-onyx">{SCREEN_COPY.dadosRecebidos.measurements}</h2>
           {metrics.map(m => (
             <Card key={m.id} className="space-y-0.5 p-4">
               <div className="flex items-start justify-between gap-3">

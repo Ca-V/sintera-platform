@@ -229,7 +229,7 @@ export function DadosRecebidosScreen() {
 
       {acts.length > 0 && (
         <View style={{ gap: 8, marginTop: 8 }}>
-          <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 17 }}>Atividades recebidas</Text>
+          <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 17 }}>{SCREEN_COPY.dadosRecebidos.activities}</Text>
           {acts.map(a => (
             <View key={a.id} style={[s.card, card, { gap: 2 }]}>
               <Text spec={text(t, { role: 'body' })}>{a.title?.trim() || activityTypeLabel(a.activity_type)}</Text>
@@ -249,7 +249,7 @@ export function DadosRecebidosScreen() {
 
       {metrics.length > 0 && (
         <View style={{ gap: 8, marginTop: 8 }}>
-          <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 17 }}>Medições recebidas</Text>
+          <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 17 }}>{SCREEN_COPY.dadosRecebidos.measurements}</Text>
           {metrics.map(m => (
             <View key={m.id} style={[s.card, card, { gap: 2 }]}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>

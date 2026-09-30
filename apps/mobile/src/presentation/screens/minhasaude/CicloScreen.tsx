@@ -8,8 +8,7 @@ import { text } from '@sintera/design-system'
 import type { ContraceptiveDTO, PeriodDTO } from '@sintera/api-client'
 import {
   CONTRACEPTIVE_KINDS, contraceptiveLabel, contraceptiveNature, CONTRACEPTIVE_CADENCES, defaultCadenceFor,
-  cadenceUsageLabel, cycleStats,
-} from '@sintera/core'
+  cadenceUsageLabel, cycleStats, SCREEN_COPY } from '@sintera/core'
 import { Text, Button, Input, Switch, DatePicker, Disclaimer, Select } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
@@ -125,7 +124,7 @@ export function CicloScreen() {
       keyboardShouldPersistTaps="handled"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={t.color.identity.primary} />}>
       <View style={styles.headerRow}>
-        <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 22 }}>Ciclo e Contracepção</Text>
+        <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 22 }}>{SCREEN_COPY.ciclo.title}</Text>
         {!open ? <Button label="Novo método" onPress={startNew} /> : null}
       </View>
       <Text spec={text(t, { role: 'caption', tone: 'faint' })}>A SINTERA organiza e lembra — não prescreve nem interpreta.</Text>
@@ -158,7 +157,7 @@ export function CicloScreen() {
 
       {active.length > 0 ? <><Text spec={text(t, { role: 'label', tone: 'muted' })}>MÉTODOS ATIVOS</Text>{active.map(methodCard)}</> : null}
       {past.length > 0 ? <><Text spec={text(t, { role: 'label', tone: 'muted' })}>ENCERRADOS</Text>{past.map(methodCard)}</> : null}
-      {methods.length === 0 && !open ? <View style={[styles.card, card]}><Text spec={text(t, { role: 'body', tone: 'muted' })} style={{ textAlign: 'center' }}>Nenhum método registrado.</Text></View> : null}
+      {methods.length === 0 && !open ? <View style={[styles.card, card]}><Text spec={text(t, { role: 'body', tone: 'muted' })} style={{ textAlign: 'center' }}>{SCREEN_COPY.ciclo.emptyMethod}</Text></View> : null}
 
       {/* ── Ciclo menstrual ── */}
       <View style={[styles.card, card, { gap: 10, marginTop: 6 }]}>

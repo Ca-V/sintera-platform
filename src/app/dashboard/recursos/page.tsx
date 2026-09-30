@@ -39,7 +39,7 @@ import { todayISO } from '@/lib/date'
 import { expenseDocLabel } from '@/lib/finance/expense'
 // VÍNCULO receita → recurso: as MESMAS funções que o aplicativo chama; aqui o cliente é o da Web.
 import { listLinkableDocuments, listDocumentsForTargets, linkDocumentToTarget, unlinkDocumentFromTarget, type PatientDocumentDTO } from '@sintera/api-client'
-import { uuid, documentSubtitle, supportedNowAcceptAttr } from '@sintera/core'
+import { uuid, documentSubtitle, supportedNowAcceptAttr, SCREEN_COPY } from '@sintera/core'
 
 // FB-016-2 — frequências de troca (mesmo padrão inline do Medicamento), no conjunto canônico de recorrência.
 const TROCA_FREQ_OPTS: { v: RecurrenceFreq; l: string }[] = [
@@ -455,7 +455,7 @@ export default function RecursosPage() {
       </Link>
 
       <PageHeader
-        title="Recursos de Saúde"
+        title={SCREEN_COPY.recursos.title}
         subtitle={<>Óculos, lentes, dispositivos e mais. <strong className="font-medium text-onyx/70">Escaneie a receita — a SINTERA preenche o grau por você.</strong></>}
         action={
           // FB-004: um único fluxo institucional de inclusão (arquivo/foto/manual). Foto de receita → grau auto (visual).
@@ -526,7 +526,7 @@ export default function RecursosPage() {
               recurso ser cadastrado. "Nenhuma" é opção explícita: desvincular é uma escolha. */}
           {receitas.length > 0 && (
             <div>
-              <label className="font-body text-xs text-mauve block mb-1">Vincular a uma receita já guardada</label>
+              <label className="font-body text-xs text-mauve block mb-1">{SCREEN_COPY.recursos.linkToRecipe}</label>
               <Select
                 aria-label="Receita já guardada"
                 placeholder="Nenhuma receita"
@@ -577,7 +577,7 @@ export default function RecursosPage() {
               <div>
                 <label className="font-body text-xs text-mauve block mb-1">Formato</label>
                 <Select aria-label="Formato" value={f.vision_kind} onChange={(v) => set('vision_kind', v)}
-                  options={[{ value: 'oculos', label: 'Óculos' }, { value: 'lentes_contato', label: 'Lentes de contato' }]} />
+                  options={[{ value: 'oculos', label: 'Óculos' }, { value: 'lentes_contato', label: SCREEN_COPY.recursos.contactLens }]} />
               </div>
               <div className="space-y-2">
                 <div className="grid grid-cols-[2.2rem_1fr_1fr_1fr_1fr] items-center gap-1.5">

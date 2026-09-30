@@ -8,7 +8,7 @@ import { useUser } from '@/context/UserContext'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import Select from '@/components/ui/Select'
-import { DIAL_COUNTRIES, DEFAULT_DIAL_ISO, splitPhone, joinPhone, dialLabel } from '@sintera/core'
+import { DIAL_COUNTRIES, DEFAULT_DIAL_ISO, splitPhone, joinPhone, dialLabel, SCREEN_COPY } from '@sintera/core'
 import {
   NOTIFICATION_CATEGORIES, NOTIFICATION_CHANNELS, DEFAULT_CHANNEL, MANDATORY_NOTIFICATIONS,
   recommendedChannels, type NotificationChannel,
@@ -231,7 +231,7 @@ export default function ConfiguracoesPage() {
         </div>
         <p className="font-body text-xs text-mauve">
           Onde você pode receber notificações. <strong>O que</strong> você recebe e <strong>por qual canal</strong>
-          {' '}(e-mail, WhatsApp, ambos ou nenhum) é definido na <strong>Central de Notificações</strong>, abaixo.
+          {' '}(e-mail, WhatsApp, ambos ou nenhum) é definido na <strong>{SCREEN_COPY.configuracoes.notifications}</strong>, abaixo.
         </p>
 
         {/* E-mail (da conta) — editável, com confirmação */}
@@ -282,7 +282,7 @@ export default function ConfiguracoesPage() {
           <div className="w-8 h-8 rounded-lg bg-blush flex items-center justify-center">
             <Bell size={15} className="text-petal" />
           </div>
-          <h2 className="font-body text-sm font-semibold text-onyx">Central de Notificações</h2>
+          <h2 className="font-body text-sm font-semibold text-onyx">{SCREEN_COPY.configuracoes.notifications}</h2>
         </div>
         <p className="font-body text-xs text-mauve">
           Esta é a <strong>fonte única</strong> das suas preferências: escolha, para cada categoria, se e como quer
@@ -345,7 +345,7 @@ export default function ConfiguracoesPage() {
           {notifSaved && <span className="font-body text-xs text-petal flex items-center gap-1"><Check size={13} /> Salvo</span>}
           <button onClick={saveNotifPrefs} disabled={notifLoading}
             className="px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium disabled:opacity-40 hover:opacity-90 transition-opacity">
-            {notifLoading ? 'Salvando…' : 'Salvar preferências'}
+            {notifLoading ? 'Salvando…' : SCREEN_COPY.configuracoes.savePrefs}
           </button>
         </div>
       </MotionCard>
@@ -362,7 +362,7 @@ export default function ConfiguracoesPage() {
 
         <button onClick={handleExport} disabled={exportLoading}
           className="w-full flex items-center justify-between py-3 border-b border-border/50 text-sm font-body text-onyx/70 hover:text-petal transition-colors disabled:opacity-50">
-          <span>Exportar meus dados</span>
+          <span>{SCREEN_COPY.configuracoes.exportData}</span>
           {exportDone ? (
             <Check size={13} className="text-petal" />
           ) : exportLoading ? (
@@ -380,7 +380,7 @@ export default function ConfiguracoesPage() {
 
         <Link href="/privacidade" target="_blank"
           className="w-full flex items-center justify-between py-3 border-b border-border/50 text-sm font-body text-onyx/70 hover:text-petal transition-colors">
-          Política de Privacidade
+          {SCREEN_COPY.configuracoes.privacy}
           <ExternalLink size={13} className="text-border" />
         </Link>
 

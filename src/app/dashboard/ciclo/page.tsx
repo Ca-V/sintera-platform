@@ -28,6 +28,7 @@ import { addDays, addMonths, todayISO, daysBetween, nextOccurrenceByDays } from 
 import Disclaimer from '@/components/ui/Disclaimer'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import Select from '@/components/ui/Select'
+import { SCREEN_COPY } from '@sintera/core'
 
 interface Method {
   id: string; kind: string; brand: string | null; startedOn: string | null
@@ -228,7 +229,7 @@ export default function CicloPage() {
         <ArrowLeft size={15} /> Painel Inicial
       </Link>
 
-      <PageHeader icon={<Droplet size={16} />} eyebrow="Ciclo e Contracepção" title="Ciclo e Contracepção"
+      <PageHeader icon={<Droplet size={16} />} eyebrow={SCREEN_COPY.ciclo.title} title={SCREEN_COPY.ciclo.title}
         subtitle={<>Acompanhe seu ciclo menstrual e seus métodos contraceptivos. A SINTERA organiza e lembra — não prescreve nem interpreta.</>} />
 
       {loading ? (
@@ -328,7 +329,7 @@ export default function CicloPage() {
             )}
 
             {activeMethods.length === 0 && pastMethods.length === 0 ? (
-              <p className="font-body text-sm text-mauve">Nenhum método registrado.</p>
+              <p className="font-body text-sm text-mauve">{SCREEN_COPY.ciclo.emptyMethod}</p>
             ) : (
               <div className="space-y-2">
                 {[...activeMethods, ...pastMethods].map(m => {

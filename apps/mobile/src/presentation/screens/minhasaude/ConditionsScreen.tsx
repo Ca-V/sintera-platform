@@ -11,6 +11,7 @@ import { useAssistedCapture } from '../capture/useAssistedCapture'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 import { documentPicker } from '../../../infrastructure/documentPickerAdapter'
+import { SCREEN_COPY } from '@sintera/core'
 
 export function ConditionsScreen() {
   const t = useTheme()
@@ -91,7 +92,7 @@ export function ConditionsScreen() {
       keyboardShouldPersistTaps="handled"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={t.color.identity.primary} />}>
       <View style={styles.headerRow}>
-        <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 22 }}>Condições de Saúde</Text>
+        <Text spec={text(t, { role: 'bodyStrong' })} style={{ fontSize: 22 }}>{SCREEN_COPY.condicoes.title}</Text>
         {!open ? <Button label="Adicionar" onPress={startNew} /> : null}
       </View>
 
@@ -137,7 +138,7 @@ export function ConditionsScreen() {
           <View key={sc} style={{ gap: 8 }}>
             <Text spec={text(t, { role: 'label', tone: 'muted' })}>{sc === 'propria' ? 'MINHAS CONDIÇÕES' : 'HISTÓRICO FAMILIAR'}</Text>
             {group.length === 0 ? (
-              <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{sc === 'propria' ? 'Nenhuma registrada.' : 'Nenhum registrado.'}</Text>
+              <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{sc === 'propria' ? SCREEN_COPY.condicoes.emptyFeminine : SCREEN_COPY.condicoes.emptyMasculine}</Text>
             ) : group.map(c => (
               <View key={c.id} style={[styles.card, card, { gap: 4 }]}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>

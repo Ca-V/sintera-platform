@@ -17,8 +17,7 @@ import {
   monthLabel, DIAL_COUNTRIES, DEFAULT_DIAL_ISO, splitPhone, joinPhone, dialLabel,
   // Data de nascimento (31/08/2026): idade, fase e faixa são DERIVADAS; os textos de LGPD vêm do núcleo,
   // para a Web e o aplicativo prometerem exatamente a mesma coisa sobre o uso do dado.
-  idadeLabel, faseDaVida, faseLabel, faixaDerivada, MOTIVO_DATA_NASCIMENTO, LIMITE_DATA_NASCIMENTO,
-} from '@sintera/core'
+  idadeLabel, faseDaVida, faseLabel, faixaDerivada, MOTIVO_DATA_NASCIMENTO, LIMITE_DATA_NASCIMENTO, SCREEN_COPY } from '@sintera/core'
 import { getProfileStats, type ProfileStats } from '@sintera/api-client'
 import { validateName, validatePhone, validateAgeRange, validateGoals, parseGoals, goalsToInput, AGE_RANGE_OPTIONS, AGE_RANGE_EMPTY_LABEL } from '@sintera/validation'
 
@@ -110,7 +109,7 @@ export default function ProfilePage() {
       updateProfile(await res.json())
       setSaved(true)
     } catch {
-      setSaveError('Não foi possível salvar. Tente novamente.')
+      setSaveError(SCREEN_COPY.perfil.errSave)
     } finally {
       setSaving(false)
     }
@@ -139,7 +138,7 @@ export default function ProfilePage() {
       {/* 1. Cabeçalho */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="font-display text-2xl font-semibold text-onyx mb-1">Meu Perfil</h1>
-        <p className="font-body text-sm text-mauve">Seus dados na SINTERA</p>
+        <p className="font-body text-sm text-mauve">{SCREEN_COPY.perfil.myData}</p>
       </motion.div>
 
       {/* 2–5. Avatar · Nome · E-mail · Membro desde */}
@@ -210,7 +209,7 @@ export default function ProfilePage() {
             ───────────────────────────────────────────────────────────────────────────────────────────── */}
         <div>
           <label htmlFor="perfil-nascimento" className="font-body text-[11px] text-mauve uppercase tracking-wider mb-1 block">
-            Data de nascimento <span className="text-mauve/60 normal-case">· opcional</span>
+            {SCREEN_COPY.perfil.birthDate} <span className="text-mauve/60 normal-case">· opcional</span>
           </label>
           <input
             id="perfil-nascimento"
@@ -238,7 +237,7 @@ export default function ProfilePage() {
             <p className="font-body text-sm text-onyx">{faixa} <span className="text-xs text-mauve">· calculada a partir da data de nascimento</span></p>
           ) : (
             <>
-              <Select options={AGE_RANGE_SELECT} value={ageRange} onChange={onEdit(setAgeRange)} placeholder="Selecione a faixa" aria-label="Faixa etária" />
+              <Select options={AGE_RANGE_SELECT} value={ageRange} onChange={onEdit(setAgeRange)} placeholder={SCREEN_COPY.perfil.pickRange} aria-label="Faixa etária" />
               {fieldErrors.age_range && <p className="font-body text-xs text-red-500 mt-1">{fieldErrors.age_range}</p>}
             </>
           )}
@@ -246,7 +245,7 @@ export default function ProfilePage() {
 
         <div>
           <label className="font-body text-[11px] text-mauve uppercase tracking-wider mb-1 block">Objetivos <span className="text-mauve/60 normal-case">· separe por vírgula</span></label>
-          <input value={goalsText} onChange={e => onEdit(setGoals)(e.target.value)} placeholder="Ex.: Sono, Energia, Longevidade" disabled={saving}
+          <input value={goalsText} onChange={e => onEdit(setGoals)(e.target.value)} placeholder={SCREEN_COPY.perfil.goalsExample} disabled={saving}
             className={`${inputCls} ${fieldErrors.goals ? 'border-red-400' : 'border-border'}`} />
           {fieldErrors.goals && <p className="font-body text-xs text-red-500 mt-1">{fieldErrors.goals}</p>}
         </div>
@@ -281,7 +280,7 @@ export default function ProfilePage() {
         <ActionCard href="/dashboard/configuracoes" padding="default" className="flex items-center justify-between">
           <div>
             <p className="font-body text-sm font-semibold text-onyx">Configurações da conta</p>
-            <p className="font-body text-xs text-mauve mt-0.5">Alterar senha, privacidade, excluir conta</p>
+            <p className="font-body text-xs text-mauve mt-0.5">{SCREEN_COPY.perfil.accountLink}</p>
           </div>
           <span className="font-body text-sm text-petal">→</span>
         </ActionCard>

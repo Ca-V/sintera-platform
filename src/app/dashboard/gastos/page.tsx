@@ -10,7 +10,7 @@ import Link from 'next/link'
 import { Loader2, Paperclip, Receipt, ArrowLeft, Info, Plus, X, RotateCcw, Trash2, Pencil } from 'lucide-react'
 import { useUser } from '@/context/UserContext'
 import { typeLabel, formatDateBR, type HealthEvent } from '@/lib/agenda'
-import { projectExpenses, type ExamExpenseRow } from '@sintera/core'
+import { projectExpenses, type ExamExpenseRow, SCREEN_COPY, avisoRemoverDespesa } from '@sintera/core'
 import { expenseDocLabel } from '@/lib/finance/expense'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm, eventToInput } from '@/components/eventForm'
@@ -102,8 +102,8 @@ export default function GastosPage() {
     const examId = isExam ? r.id.slice('exam:'.length) : null
     setConfirm({
       message: isExam
-        ? `Remover o valor pago de "${r.title}"? O exame é mantido; apenas o registro financeiro sai das Despesas.`
-        : `Excluir "${r.title}" das suas despesas? O evento é removido.`,
+        ? avisoRemoverDespesa(r.title, true)
+        : avisoRemoverDespesa(r.title, false),
       confirmLabel: isExam ? 'Remover valor' : 'Excluir', onYes: async () => {
         setBusyId(r.id); setActionError(null)
         try {
@@ -187,7 +187,7 @@ export default function GastosPage() {
         action={
           <button onClick={() => setShowAddInfo(v => !v)}
             className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white font-body text-sm font-medium hover:opacity-90 transition-opacity">
-            <Plus size={15} /> Adicionar despesa
+            <Plus size={15} /> {SCREEN_COPY.despesas.add}
           </button>
         }
       />

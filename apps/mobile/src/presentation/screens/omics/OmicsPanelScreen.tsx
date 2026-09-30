@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { text } from '@sintera/design-system'
 import type { OmicsPanelDetail, OmicsCategoryDTO, OmicsResultDTO, OmicsHistoryPoint, OmicsCatalogMatch } from '@sintera/api-client'
-import { DOMAIN_LABEL, fmtOmicsDate, type OmicsDomain } from '@sintera/core'
+import { DOMAIN_LABEL, fmtOmicsDate, type OmicsDomain, SCREEN_COPY } from '@sintera/core'
 import { Text, Button, Input, DatePicker } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
@@ -143,15 +143,15 @@ export function OmicsPanelScreen({ route, navigation }: Props) {
       </View>
 
       <View style={{ flexDirection: 'row', gap: 8 }}>
-        {!addOpen ? <Button label="Adicionar resultado" onPress={() => setAddOpen(true)} /> : null}
+        {!addOpen ? <Button label={SCREEN_COPY.omica.addResult} onPress={() => setAddOpen(true)} /> : null}
       </View>
 
       {/* Entrada manual com resolução de identidade do catálogo */}
       {addOpen ? (
         <View style={[styles.card, card, { gap: 10 }]}>
-          <Text spec={text(t, { role: 'bodyStrong' })}>Adicionar resultado</Text>
+          <Text spec={text(t, { role: 'bodyStrong' })}>{SCREEN_COPY.omica.addResult}</Text>
           <Input value={name} onChangeText={setName} onBlur={resolve} placeholder="Feature (nome, sinônimo ou ID externo)" autoCapitalize="none" />
-          {resolving ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Resolvendo no catálogo…</Text>
+          {resolving ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{SCREEN_COPY.omica.resolving}</Text>
             : resolved ? <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Identificado: {resolved.canonical_name}</Text>
             : name.trim() ? <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Sem correspondência no catálogo — será salvo pelo nome digitado.</Text> : null}
           <View style={{ flexDirection: 'row', gap: 8 }}>

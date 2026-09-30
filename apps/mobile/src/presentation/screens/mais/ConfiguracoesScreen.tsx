@@ -171,7 +171,7 @@ export function ConfiguracoesScreen() {
 
       {/* Central de Notificações */}
       <View style={[styles.card, card, { gap: 12 }]}>
-        <Text spec={text(t, { role: 'bodyStrong' })}>Central de Notificações</Text>
+        <Text spec={text(t, { role: 'bodyStrong' })}>{SCREEN_COPY.configuracoes.notifications}</Text>
         <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Escolha o canal de cada categoria de aviso.</Text>
         {/* Agrupado pelas SEÇÕES da Sidebar (FB-017): a Central espelha a navegação. */}
         {[...new Set(NOTIFICATION_CATEGORIES.map(c => c.section))].map(section => (
@@ -192,7 +192,7 @@ export function ConfiguracoesScreen() {
         ))}
         <View style={styles.actions}>
           <Button label="Restaurar recomendadas" variant="secondary" onPress={restoreRecommended} />
-          <Button label="Salvar preferências" onPress={savePrefs} loading={prefsBusy} loadingLabel="Salvando…" />
+          <Button label={SCREEN_COPY.configuracoes.savePrefs} onPress={savePrefs} loading={prefsBusy} loadingLabel="Salvando…" />
         </View>
         {prefsMsg ? <Text spec={text(t, { role: 'caption', tone: 'muted' })}>{prefsMsg}</Text> : null}
       </View>
@@ -208,13 +208,13 @@ export function ConfiguracoesScreen() {
       <View style={[styles.card, card, { gap: 8 }]}>
         <Text spec={text(t, { role: 'bodyStrong' })}>Seus dados</Text>
         <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Baixe uma cópia de todos os seus dados (LGPD).</Text>
-        <Button label="Exportar meus dados" variant="secondary" onPress={doExport} loading={exportBusy} loadingLabel="Preparando…" />
+        <Button label={SCREEN_COPY.configuracoes.exportData} variant="secondary" onPress={doExport} loading={exportBusy} loadingLabel="Preparando…" />
       </View>
 
       {/* Legal e privacidade (LGPD/COMPLIANCE-001) */}
       <View style={[styles.card, card, { gap: 4 }]}>
         <Text spec={text(t, { role: 'bodyStrong' })}>Legal e privacidade</Text>
-        {[{ label: 'Seus direitos (LGPD)', path: '/lgpd' }, { label: 'Política de Privacidade', path: '/privacidade' }, { label: 'Termos de Uso', path: '/termos' }].map(l => (
+        {[{ label: 'Seus direitos (LGPD)', path: '/lgpd' }, { label: SCREEN_COPY.configuracoes.privacy, path: '/privacidade' }, { label: 'Termos de Uso', path: '/termos' }].map(l => (
           <Pressable key={l.path} onPress={() => WEB_URL ? Linking.openURL(`${WEB_URL}${l.path}`) : Alert.alert('Indisponível', 'Abra em sintera.app.')} style={styles.linkRow}>
             <Text spec={text(t, { role: 'body' })}>{l.label}</Text>
             <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>Abrir ›</Text>
