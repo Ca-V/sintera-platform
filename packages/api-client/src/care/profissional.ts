@@ -11,6 +11,9 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { PacienteNaLista, ConviteRecebido, PerfilProfissional, Profissao } from '@sintera/core'
 import { withTimeout } from '../net/timeout'
 import { asError } from '../net/errors'
+// VAL-001 — emitido aqui, e não nas telas: um caminho só para as duas pontas. `void` porque telemetria é
+// best-effort e não pode atrasar nem derrubar a ação que a pessoa pediu.
+import { logUsageEvent } from '../events/log'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Rpc = { rpc: (fn: string, args?: Record<string, unknown>) => any }
@@ -122,6 +125,13 @@ export async function aceitarConviteProfissional(client: SupabaseClient, token: 
     const { data, error } = await (client as unknown as Rpc)
       .rpc('aceitar_convite_profissional', { p_token: token }).abortSignal(s)
     if (error) throw asError(error)
+
+    // DOIS EVENTOS, e não um. `convite_aceito` fecha o funil do convite; `vinculo_criado` abre o do
+    // acompanhamento. Colapsá-los num só tornaria impossível distinguir "ninguém aceita" de "aceitam e não
+    // usam" — que são problemas opostos, com soluções opostas.
+    void logUsageEvent(client, 'convite_aceito', { direcao: 'paciente_convida_profissional' })
+    void logUsageEvent(client, 'vinculo_criado', { origem: 'convite' })
+
     return String(data ?? '')
   } finally {
     cleanup()
@@ -135,6 +145,10 @@ export async function recusarConviteProfissional(client: SupabaseClient, token: 
     const { error } = await (client as unknown as Rpc)
       .rpc('recusar_convite_profissional', { p_token: token }).abortSignal(s)
     if (error) throw asError(error)
+
+    // A recusa é informação, não ausência de dado. Sem ela, "não aceitou" e "recusou" viram a mesma linha —
+    // e a primeira é um problema de entrega, a segunda é uma resposta.
+    void logUsageEvent(client, 'convite_recusado', { direcao: 'paciente_convida_profissional' })
   } finally {
     cleanup()
   }

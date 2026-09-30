@@ -130,3 +130,17 @@ export function problemasNoMetadata(metadata: Record<string, unknown> | null | u
   }
   return problemas
 }
+
+/**
+ * O evento é dos LEGADOS?
+ *
+ * Os legados não são métrica de produto: `problema_reportado` é canal de suporte, `feedback_submitted` é
+ * recado da pessoa. Eles carregam o que o suporte precisa para agir — o identificador do registro que falhou
+ * e o texto que ela escreveu — e a régua de metadados do VAL-001, feita para eventos de funil, os quebraria.
+ *
+ * A distinção foi explicitada em 29/09/2026, quando a validação entrou no caminho de escrita e um teste
+ * existente acusou que "reportar problema" pararia de funcionar no aplicativo.
+ */
+export function ehEventoLegado(nome: string): boolean {
+  return (EVENTOS_LEGADOS as readonly string[]).includes(nome)
+}
