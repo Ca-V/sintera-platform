@@ -59,6 +59,28 @@ const COBERTAS: readonly { bloco: keyof typeof SCREEN_COPY; arquivos: string[] }
       'apps/mobile/src/presentation/screens/rede/CompartilhamentosScreen.tsx',
     ],
   },
+  // As três de 30/09/2026 — as de maior volume de frase duplicada na varredura dos 19 pares.
+  {
+    bloco: 'documentos',
+    arquivos: [
+      'src/app/dashboard/documentos/page.tsx',
+      'apps/mobile/src/presentation/screens/minhasaude/DocumentsScreen.tsx',
+    ],
+  },
+  {
+    bloco: 'exameDetalhe',
+    arquivos: [
+      'src/app/dashboard/exams/[id]/page.tsx',
+      'apps/mobile/src/presentation/screens/exams/ExamDetailScreen.tsx',
+    ],
+  },
+  {
+    bloco: 'agenda',
+    arquivos: [
+      'src/app/dashboard/agenda/page.tsx',
+      'apps/mobile/src/presentation/screens/agenda/AgendaScreen.tsx',
+    ],
+  },
 ]
 
 const semComentarios = (s: string) =>
@@ -116,21 +138,12 @@ describe('ARCH · CATRACA — a copy do core não é redigitada na tela', () => 
     ).toEqual([])
   })
 
-  it('CATRACA · DATE-001 — nenhuma tela coberta formata data pelo locale do aparelho', () => {
-    // `toLocaleDateString` escrevia "25 de set. de 2026" na Web e o aplicativo escrevia "25/09/2026" — a
-    // mesma data com duas caras. Pior: o resultado muda com o idioma do aparelho, então nem dentro de uma
-    // ponta ele é estável.
-    const infratores: string[] = []
-    for (const c of COBERTAS) {
-      for (const arquivo of c.arquivos) {
-        const src = semComentarios(readFileSync(join(ROOT, arquivo), 'utf8'))
-        if (/toLocaleDateString|toLocaleString/.test(src)) infratores.push(arquivo)
-      }
-    }
-    expect(
-      infratores,
-      'Use `formatDateBR` do core: determinístico, sem `Date`, e o mesmo nas duas pontas.\n\n' +
-        infratores.join('\n'),
-    ).toEqual([])
-  })
+  // A ASSERCAO DE DATA SAIU DAQUI em 30/09/2026.
+  //
+  // Ela passou a ter catraca propria (), com a divida dos 18 arquivos que ja violavam a
+  // regra listada um a um. Manter a mesma regra nos dois lugares criaria dois donos dela — e o segundo
+  // discordaria no dia em que a divida mudasse, que foi exatamente o que aconteceu ao cobrir estas telas.
+  //
+  // Uma regra, uma catraca.
+
 })

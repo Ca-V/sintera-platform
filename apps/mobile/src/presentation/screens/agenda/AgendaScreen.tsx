@@ -11,8 +11,7 @@ import {
   type HealthEvent, typeLabel, statusLabel, formatDateLongBR, formatTimeBR,
   priorityBadge, modalityLabel, isReturnVisit, outcomeSummary, isClosedStatus,
   buildExamRecencySuggestion, type ExamLite,
-  monthLabel, byPriority, typeGroupRank,
-} from '@sintera/core'
+  monthLabel, byPriority, typeGroupRank, SCREEN_COPY } from '@sintera/core'
 import { Text, Button, Disclaimer } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { AgendaStackParamList } from '../../navigation/types'
@@ -54,7 +53,7 @@ export function AgendaScreen({ navigation }: Props) {
   // de vez. A Web sempre teve as duas; o App só tinha "Cancelar" — e o texto de
   // ajuda das Pendências, idêntico nas duas telas, já prometia "exclua cada um".
   const onDelete = (ev: HealthEvent) => Alert.alert('Excluir evento',
-    'Excluir este evento de vez? Ele será removido da Agenda, do Histórico e das Despesas. Esta ação não pode ser desfeita.',
+    SCREEN_COPY.agenda.removeHint,
     [{ text: 'Voltar', style: 'cancel' }, { text: 'Excluir', style: 'destructive', onPress: async () => { const { error } = await a.remove(ev.id); if (error) Alert.alert('Não foi possível excluir', error.message || 'Tente novamente.') } }])
 
   if (a.phase === 'loading') {
@@ -87,7 +86,7 @@ export function AgendaScreen({ navigation }: Props) {
         <Button label="Adicionar" onPress={newEvent} />
       </View>
       <Text spec={text(t, { role: 'caption', tone: 'muted' })} style={{ marginTop: -10 }}>
-        Seus próximos exames, consultas e retornos. O que já aconteceu fica no seu Histórico de Saúde.
+        {SCREEN_COPY.agenda.subtitle}
       </Text>
       {/* Histórico de Saúde/Exames, Composição e Monitoramento migraram para as abas Minha Saúde e Exames
           (arquitetura de 5 abas — MOBILE-036). A Agenda foca em calendário + próximos/pendências. */}
@@ -104,15 +103,15 @@ export function AgendaScreen({ navigation }: Props) {
 
       {empty ? (
         <View style={[styles.card, { backgroundColor: t.color.surface.base, borderColor: t.color.border.default, gap: 10 }]}>
-          <Text spec={text(t, { role: 'bodyStrong' })} style={{ textAlign: 'center' }}>Nenhum evento futuro</Text>
+          <Text spec={text(t, { role: 'bodyStrong' })} style={{ textAlign: 'center' }}>{SCREEN_COPY.agenda.emptyTitle}</Text>
           <Text spec={text(t, { role: 'body', tone: 'muted' })} style={{ textAlign: 'center' }}>
-            Adicione um exame, consulta ou retorno para acompanhar seus próximos passos.
+            {SCREEN_COPY.agenda.emptyMessage}
           </Text>
-          <Button label="Adicionar primeiro evento" onPress={newEvent} />
+          <Button label={SCREEN_COPY.agenda.addFirst} onPress={newEvent} />
         </View>
       ) : null}
 
-      <Section title={`Pendências (${a.lists.overdue.length})`} hint="Itens que passaram da data e ainda aguardam uma ação. Conclua, cancele ou exclua cada um." events={a.lists.overdue} onOpen={openEvent} onComplete={onComplete} onCancel={onCancel} onDelete={onDelete} tone="attention" />
+      <Section title={`Pendências (${a.lists.overdue.length})`} hint={SCREEN_COPY.agenda.pendingHint} events={a.lists.overdue} onOpen={openEvent} onComplete={onComplete} onCancel={onCancel} onDelete={onDelete} tone="attention" />
 
       {a.lists.upcoming.length > 0 ? (
         <View style={{ gap: 8 }}>

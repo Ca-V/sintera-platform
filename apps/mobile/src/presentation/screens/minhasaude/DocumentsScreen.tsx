@@ -19,8 +19,7 @@ import {
   findExistingDocument, existingDocumentMessage, DOCUMENT_DUPLICATE_CHOICES,
   itensParaRegistrar, destinoDaPlataforma, DESTINOS_PRESCRITOS, convitePrescricao, AVISO_PRESCRICAO,
   type ItemPrescrito, type DestinoPrescrito,
-  type PatientDocumentSubtype, type AttachedFile,
-} from '@sintera/core'
+  type PatientDocumentSubtype, type AttachedFile, SCREEN_COPY } from '@sintera/core'
 import { Text, Button, Input, AttachmentLink, DatePicker, Disclaimer, Select, AnexoDocumento } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
@@ -197,13 +196,13 @@ export function DocumentsScreen() {
           doc_date: docDate || null,
           notes: notes.trim() || null,
         })
-        if (err) { setFormError('Não foi possível salvar as alterações.'); return }
+        if (err) { setFormError(SCREEN_COPY.documentos.errUpdate); return }
         setOpen(false); resetForm(); load(true)
       } finally { setSaving(false) }
       return
     }
 
-    if (!isReadyToSave(files)) { setFormError('Anexe o documento.'); return }
+    if (!isReadyToSave(files)) { setFormError(SCREEN_COPY.documentos.attachFirst); return }
 
     // JÁ ESTÁ GUARDADO? A regra permanente da fundadora (28/08): toda informação que entra é conferida contra
     // o que já existe, e havendo correspondência a plataforma INFORMA e PERGUNTA. Ela adicionou a mesma receita
@@ -219,7 +218,7 @@ export function DocumentsScreen() {
     )
     if (existente) {
       Alert.alert(
-        'Este documento já está guardado',
+        SCREEN_COPY.documentos.duplicate,
         `${existingDocumentMessage(existente, documentSubtypeLabel(subtype))}\n\nO que você quer fazer?`,
         [
           { text: OPC.cancelar.label, style: 'cancel' },
@@ -267,7 +266,7 @@ export function DocumentsScreen() {
         : await apiClient.documents.saveDocument(entrada)
       const { error: err } = resultado
       const criado = resultado.data
-      if (err) { setFormError('Não foi possível salvar o documento.'); return }
+      if (err) { setFormError(SCREEN_COPY.documentos.errSave); return }
 
       // A RECEITA DIRECIONA PARA O QUE ELA PRESCREVE (regra da fundadora, 30/08). Os itens já foram
       // transcritos e já estão classificados; falta um toque. Não se cria nada sozinho: criar registro clínico
@@ -356,8 +355,8 @@ export function DocumentsScreen() {
 
   function confirmDelete(doc: PatientDocumentDTO) {
     Alert.alert(
-      'Excluir documento',
-      'O documento será removido da sua conta. Esta ação não pode ser desfeita.',
+      SCREEN_COPY.documentos.remove,
+      SCREEN_COPY.documentos.removeHint,
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -404,26 +403,26 @@ export function DocumentsScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={t.color.identity.primary} />}
     >
       <Text spec={text(t, { role: 'body' })} style={{ color: t.color.text.muted }}>
-        Receitas, atestados, relatórios e encaminhamentos — guardados com emissor e data.
+        {SCREEN_COPY.documentos.subtitle}
       </Text>
 
       <Disclaimer />
 
       {!open && (
-        <Button label="Adicionar documento" onPress={() => { resetForm(); setOpen(true) }} />
+        <Button label={SCREEN_COPY.documentos.add} onPress={() => { resetForm(); setOpen(true) }} />
       )}
 
       {open && (
         <View style={[s.card, { backgroundColor: t.color.surface.base, borderColor: t.color.border.default }]}>
-          <Text spec={text(t, { role: 'bodyStrong' })}>{editando ? 'Editar documento' : 'Adicionar documento'}</Text>
+          <Text spec={text(t, { role: 'bodyStrong' })}>{editando ? 'Editar documento' : SCREEN_COPY.documentos.add}</Text>
 
           <View style={{ gap: 6 }}>
-            <Text spec={text(t, { role: 'label', tone: 'muted' })} style={{ color: t.color.text.muted }}>Tipo de documento</Text>
+            <Text spec={text(t, { role: 'label', tone: 'muted' })} style={{ color: t.color.text.muted }}>{SCREEN_COPY.documentos.fieldType}</Text>
             <Select
               value={subtype}
               onChange={v => setSubtype(v as PatientDocumentSubtype)}
               options={DOCUMENT_SUBTYPES.map(x => ({ id: x.value, label: x.label }))}
-              title="Tipo de documento"
+              title={SCREEN_COPY.documentos.fieldType}
             />
             {/* NÃO anunciar aqui a que este documento "pode ser associado": este formulário não associa nada.
                 O vínculo da receita ao medicamento nasce do outro lado, na tela de Medicamentos. Prometer uma
@@ -460,13 +459,13 @@ export function DocumentsScreen() {
               escritos, sem posologia (RDC 657). */}
           {subtype === 'receita' && (
             <View style={{ gap: 6 }}>
-              <Text spec={text(t, { role: 'label', tone: 'muted' })} style={{ color: t.color.text.muted }}>O que foi prescrito</Text>
+              <Text spec={text(t, { role: 'label', tone: 'muted' })} style={{ color: t.color.text.muted }}>{SCREEN_COPY.documentos.fieldItems}</Text>
               <Input
                 value={itensTexto} onChangeText={setItensTexto} multiline
                 placeholder={'Um por linha\nEx.: Losartana 50mg'}
               />
               <Text spec={text(t, { role: 'caption', tone: 'faint' })}>
-                Um item por linha, como está escrito na receita — medicamento, suplemento, dispositivo ou produto.
+                {SCREEN_COPY.documentos.itemsHint}
               </Text>
             </View>
           )}
@@ -475,16 +474,16 @@ export function DocumentsScreen() {
               a leitura gravou a clínica e o médico ficou de fora. São dois fatos, e busca-se por ambos. */}
           <View style={{ gap: 6 }}>
             <Text spec={text(t, { role: 'label', tone: 'muted' })} style={{ color: t.color.text.muted }}>Profissional</Text>
-            <Input value={professional} onChangeText={setProfessional} placeholder="Quem assinou o documento" />
+            <Input value={professional} onChangeText={setProfessional} placeholder={SCREEN_COPY.documentos.fieldIssuer} />
           </View>
 
           <View style={{ gap: 6 }}>
-            <Text spec={text(t, { role: 'label', tone: 'muted' })} style={{ color: t.color.text.muted }}>Clínica, laboratório ou hospital</Text>
-            <Input value={institution} onChangeText={setInstitution} placeholder="Onde foi emitido" />
+            <Text spec={text(t, { role: 'label', tone: 'muted' })} style={{ color: t.color.text.muted }}>{SCREEN_COPY.documentos.placePlaceholder}</Text>
+            <Input value={institution} onChangeText={setInstitution} placeholder={SCREEN_COPY.documentos.fieldPlace} />
           </View>
 
           <View style={{ gap: 6 }}>
-            <Text spec={text(t, { role: 'label', tone: 'muted' })} style={{ color: t.color.text.muted }}>Data do documento</Text>
+            <Text spec={text(t, { role: 'label', tone: 'muted' })} style={{ color: t.color.text.muted }}>{SCREEN_COPY.documentos.fieldDate}</Text>
             <DatePicker value={docDate} onChange={setDocDate} placeholder="Selecionar data" />
           </View>
 
@@ -497,13 +496,13 @@ export function DocumentsScreen() {
             <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.badge.error.text }}>{formError}</Text>
           )}
 
-          <Button label={editando ? 'Salvar alterações' : 'Salvar documento'} onPress={save} loading={saving} disabled={!editando && !isReadyToSave(files)} />
+          <Button label={editando ? SCREEN_COPY.documentos.saveChanges : SCREEN_COPY.documentos.save} onPress={save} loading={saving} disabled={!editando && !isReadyToSave(files)} />
           <Button label="Cancelar" onPress={() => { setOpen(false); resetForm() }} variant="ghost" />
         </View>
       )}
 
       {items.length > 0 && (
-        <Select value={filter} onChange={setFilter} options={filterOptions} title="Filtrar por tipo" />
+        <Select value={filter} onChange={setFilter} options={filterOptions} title={SCREEN_COPY.documentos.filterByType} />
       )}
 
       {visible.length === 0 ? (
@@ -531,7 +530,7 @@ export function DocumentsScreen() {
               {!d.transcricao_status || d.transcricao_status === 'falhou' ? (
                 <Pressable onPress={() => lerDocumento(d.id)} disabled={lendo === d.id} hitSlop={8} style={{ alignSelf: 'flex-start' }}>
                   <Text spec={text(t, { role: 'caption' })} style={{ color: t.color.identity.primary }}>
-                    {lendo === d.id ? 'Lendo…' : d.transcricao_status === 'falhou' ? 'Tentar ler de novo' : 'Ler documento'}
+                    {lendo === d.id ? 'Lendo…' : d.transcricao_status === 'falhou' ? SCREEN_COPY.documentos.retryRead : 'Ler documento'}
                   </Text>
                 </Pressable>
               ) : null}

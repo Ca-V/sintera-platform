@@ -238,6 +238,64 @@ export const SCREEN_COPY = {
     add:          'Adicionar exame realizado',
     emptyTitle:   'Nenhum exame ainda',
   },
+  // Exame — DETALHE. 13 frases estavam digitadas nas duas telas (medido em 30/09/2026).
+  //
+  // Duas delas são as que mais pesam se divergirem: a que avisa que aquilo é um PEDIDO e não um resultado,
+  // e a que explica por que a busca não alcança um PDF de imagem. As duas existem para impedir que a pessoa
+  // conclua algo errado sobre o próprio documento — e uma versão mais curta numa das pontas seria uma
+  // explicação pela metade.
+  exameDetalhe: {
+    extractAgain:    'Extrair novamente',
+    noRequestDate:   'Data de solicitação não informada',
+    noExamDate:      'Data de realização não informada',
+    repairedNote:    '· reparado automaticamente',
+    nativePdfNote:   '· leitura nativa PDF',
+    searchLimitNote: 'O documento continua guardado e pode ser aberto a qualquer momento. Para que a busca alcance o conteúdo, envie o arquivo em PDF com texto, quando houver.',
+    originOrder:     'Pedido de origem',
+    reportProblem:   'Reportar problema',
+    requestedItems:  'Procedimentos solicitados',
+    seeOriginal:     'Consulte o documento original para os procedimentos solicitados.',
+    // RDC 657: a distinção entre pedido e resultado é o que impede alguém de ler uma solicitação como achado.
+    isOrderNotResult: 'Isto é um pedido/solicitação — não é um resultado de exame realizado.',
+    linkToOrder:     'Vincular a um pedido',
+    createReminder:  'Criar lembrete de repetição',
+  },
+  // Receitas e atestados. 19 frases estavam digitadas nas duas telas — o maior volume da plataforma.
+  documentos: {
+    title:        'Receitas e atestados',
+    subtitle:     'Receitas, atestados, relatórios e encaminhamentos — guardados com emissor e data.',
+    add:          'Adicionar documento',
+    save:         'Salvar documento',
+    saveChanges:  'Salvar alterações',
+    remove:       'Excluir documento',
+    removeHint:   'O documento será removido da sua conta. Esta ação não pode ser desfeita.',
+    retryRead:    'Tentar ler de novo',
+    filterByType: 'Filtrar por tipo',
+    fieldType:    'Tipo de documento',
+    fieldDate:    'Data do documento',
+    fieldIssuer:  'Quem assinou o documento',
+    fieldPlace:   'Onde foi emitido',
+    placePlaceholder: 'Clínica, laboratório ou hospital',
+    fieldItems:   'O que foi prescrito',
+    // O formato pedido em UMA linha, porque a pessoa lê isso enquanto digita. Encurtar numa das pontas
+    // faria a mesma tela ensinar duas coisas.
+    itemsHint:    'Um item por linha, como está escrito na receita — medicamento, suplemento, dispositivo ou produto.',
+    itemsPlaceholder: 'Um por linha\nEx.: Losartana 50mg',
+    attachFirst:  'Anexe o documento.',
+    duplicate:    'Este documento já está guardado',
+    errSave:      'Não foi possível salvar o documento.',
+    errUpdate:    'Não foi possível salvar as alterações.',
+  },
+  // Agenda. 6 frases duplicadas — e a de exclusão é a mais sensível: ela nomeia os três lugares de onde o
+  // evento some. Uma ponta que liste dois e a outra três dá garantias diferentes sobre o mesmo botão.
+  agenda: {
+    subtitle:     'Seus próximos exames, consultas e retornos. O que já aconteceu fica no seu Histórico de Saúde.',
+    emptyTitle:   'Nenhum evento futuro',
+    emptyMessage: 'Adicione um exame, consulta ou retorno para acompanhar seus próximos passos.',
+    addFirst:     'Adicionar primeiro evento',
+    pendingHint:  'Itens que passaram da data e ainda aguardam uma ação. Conclua, cancele ou exclua cada um.',
+    removeHint:   'Excluir este evento de vez? Ele será removido da Agenda, do Histórico e das Despesas. Esta ação não pode ser desfeita.',
+  },
   // Pedido é a ORIGEM do fluxo assistencial (Q1), não um detalhe do exame — e tem o seu próprio texto.
   // Antes, quem entrava por "Pedidos de exame" lia um subtítulo sobre laudos: o menu levava a um lugar e a
   // tela se apresentava como outro. No Mobile o subtítulo nem seguia a aba, e era um texto DIFERENTE do da Web
