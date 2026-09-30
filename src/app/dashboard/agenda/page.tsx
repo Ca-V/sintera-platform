@@ -23,6 +23,7 @@ import ErrorBanner from '@/components/ErrorBanner'
 import EmptyState from '@/components/EmptyState'
 import MotionCard from '@/components/ui/MotionCard'
 import Disclaimer from '@/components/ui/Disclaimer'
+import { SCREEN_COPY } from '@sintera/core'
 
 const TYPE_EMOJI: Record<string, string> = {
   consulta: '🩺', retorno: '📋', exame: '🧪', procedimento: '🩹', cirurgia: '⚕️',
@@ -122,7 +123,7 @@ export default function AgendaPage() {
   function onDelete(ev: HealthEvent) {
     if (!userId) return
     setConfirm({
-      message: 'Excluir este evento de vez? Ele será removido da Agenda, do Histórico e das Despesas. Esta ação não pode ser desfeita.',
+      message: SCREEN_COPY.agenda.removeHint,
       confirmLabel: 'Excluir',
       onYes: () => doDelete(ev),
     })
@@ -239,7 +240,7 @@ export default function AgendaPage() {
           icon={<CalendarDays size={16} />}
           eyebrow="Agenda"
           title="Agenda"
-          subtitle={<>Seus próximos exames, consultas e retornos. O que já aconteceu fica no seu Histórico de Saúde.</>}
+          subtitle={<>{SCREEN_COPY.agenda.subtitle}</>}
           action={
             <button onClick={openAdd}
               className="flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white text-sm font-body font-medium hover:opacity-90 transition-opacity flex-shrink-0">
@@ -281,17 +282,17 @@ export default function AgendaPage() {
               <CalendarClock size={15} className="text-petal" />
               <h2 className="font-body text-sm font-semibold text-onyx">Pendências ({overdueEvents.length})</h2>
             </div>
-            <p className="font-body text-xs text-mauve">Itens que passaram da data e ainda aguardam uma ação. Conclua, cancele ou exclua cada um.</p>
+            <p className="font-body text-xs text-mauve">{SCREEN_COPY.agenda.pendingHint}</p>
             {overdueEvents.map(agendaRow)}
           </section>
         )}
         {events.length === 0 && overdueEvents.length === 0 ? (
-        <EmptyState icon={<CalendarDays size={28} className="text-petal" />} title="Nenhum evento futuro"
-          message="Adicione um exame, consulta ou retorno para acompanhar seus próximos passos."
+        <EmptyState icon={<CalendarDays size={28} className="text-petal" />} title={SCREEN_COPY.agenda.emptyTitle}
+          message={SCREEN_COPY.agenda.emptyMessage}
           action={
             <button onClick={openAdd}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full gradient-sintera text-white text-sm font-body font-medium hover:opacity-90 transition-opacity">
-              <Plus size={16} /> Adicionar primeiro evento
+              <Plus size={16} /> {SCREEN_COPY.agenda.addFirst}
             </button>
           } />
       ) : events.length > 0 ? (

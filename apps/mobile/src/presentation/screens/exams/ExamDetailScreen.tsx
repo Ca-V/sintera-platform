@@ -106,7 +106,7 @@ export function ExamDetailScreen({ route, navigation }: Props) {
     })
     const parts = [
       `${name}${lab ? ` · ${lab}` : ''}`,
-      (() => { const d = formatExamDate(exam.exam_date); return d === 'Sem data' ? 'Data de realização não informada' : `Realizado em ${d}` })(),
+      (() => { const d = formatExamDate(exam.exam_date); return d === 'Sem data' ? SCREEN_COPY.exameDetalhe.noExamDate : `Realizado em ${d}` })(),
       ...(results.length ? ['', 'Resultados:', ...results] : []),
       exam.file_url ?? '',
     ]
@@ -232,7 +232,7 @@ export function ExamDetailScreen({ route, navigation }: Props) {
         ) : (
           <Pressable onLongPress={() => { setDateValue(exam.exam_date ?? ''); setEditingDate(true) }}>
             <Text spec={text(t, { role: 'caption', tone: 'muted' })}>
-              {(() => { const d = formatExamDate(exam.exam_date); const none = isOrderDoc ? 'Data de solicitação não informada' : 'Data de realização não informada'; const feito = isOrderDoc ? 'Solicitado em' : 'Realizado em'; return d === 'Sem data' ? none : `${feito} ${d}` })()}{exam.page_count ? ` · ${exam.page_count} página${exam.page_count > 1 ? 's' : ''}` : ''}
+              {(() => { const d = formatExamDate(exam.exam_date); const none = isOrderDoc ? SCREEN_COPY.exameDetalhe.noRequestDate : SCREEN_COPY.exameDetalhe.noExamDate; const feito = isOrderDoc ? 'Solicitado em' : 'Realizado em'; return d === 'Sem data' ? none : `${feito} ${d}` })()}{exam.page_count ? ` · ${exam.page_count} página${exam.page_count > 1 ? 's' : ''}` : ''}
             </Text>
           </Pressable>
         )}
@@ -263,7 +263,7 @@ export function ExamDetailScreen({ route, navigation }: Props) {
           <Text spec={text(t, { role: 'bodySmall' })}
             style={leitura.buscavel ? undefined : { color: t.color.badge.attention.text }}>
             {leitura.frase}
-            {!leitura.buscavel ? ' O documento continua guardado e pode ser aberto a qualquer momento. Para que a busca alcance o conteúdo, envie o arquivo em PDF com texto, quando houver.' : ''}
+            {!leitura.buscavel ? ` ${SCREEN_COPY.exameDetalhe.searchLimitNote}` : ''}
           </Text>
         </View>
       ) : null}
@@ -291,15 +291,15 @@ export function ExamDetailScreen({ route, navigation }: Props) {
           SOLICITADOS e NUNCA "Resultados estruturados"/clinical_results. Só RESULTADO renderiza a ResultsSection. */}
       {isOrderDoc ? (
         <View style={[styles.card, card, { gap: 8 }]}>
-          <Text spec={text(t, { role: 'bodyStrong' })}>Procedimentos solicitados</Text>
+          <Text spec={text(t, { role: 'bodyStrong' })}>{SCREEN_COPY.exameDetalhe.requestedItems}</Text>
           {p.biomarkers.length > 0 ? (
             p.biomarkers.map((b, i) => (
               <Text key={b.id ?? i} spec={text(t, { role: 'body', tone: 'muted' })}>• {b.source_exam_name ?? b.name}</Text>
             ))
           ) : (
-            <Text spec={text(t, { role: 'body', tone: 'muted' })}>Consulte o documento original para os procedimentos solicitados.</Text>
+            <Text spec={text(t, { role: 'body', tone: 'muted' })}>{SCREEN_COPY.exameDetalhe.seeOriginal}</Text>
           )}
-          <Text spec={text(t, { role: 'caption', tone: 'faint' })}>Isto é um pedido/solicitação — não é um resultado de exame realizado.</Text>
+          <Text spec={text(t, { role: 'caption', tone: 'faint' })}>{SCREEN_COPY.exameDetalhe.isOrderNotResult}</Text>
         </View>
       ) : (
         <ResultsSection exam={exam} biomarkers={p.biomarkers} clinical={p.clinical} analyzing={p.analyze.running} />
@@ -308,7 +308,7 @@ export function ExamDetailScreen({ route, navigation }: Props) {
       {/* Última extração (informativo — paridade Web) */}
       {lastLog ? (
         <Text spec={text(t, { role: 'caption', tone: 'faint' })}>
-          Última extração: {formatExamDate(lastLog.started_at)}{lastLog.parse_repaired ? ' · reparado automaticamente' : ''}{lastLog.extraction_path === 'pdf_native' ? ' · leitura nativa PDF' : ''}
+          Última extração: {formatExamDate(lastLog.started_at)}{lastLog.parse_repaired ? ` ${SCREEN_COPY.exameDetalhe.repairedNote}` : ''}{lastLog.extraction_path === 'pdf_native' ? ` ${SCREEN_COPY.exameDetalhe.nativePdfNote}` : ''}
         </Text>
       ) : null}
 
@@ -321,7 +321,7 @@ export function ExamDetailScreen({ route, navigation }: Props) {
       <View style={[styles.card, card, { gap: 8 }]}>
         <Text spec={text(t, { role: 'bodyStrong' })}>Repetir este exame</Text>
         <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Crie um lembrete de repetição periódica — aparece na sua Agenda.</Text>
-        <Button label="Criar lembrete de repetição" variant="secondary"
+        <Button label={SCREEN_COPY.exameDetalhe.createReminder} variant="secondary"
           onPress={() => (navigation.getParent() as { navigate: (n: string, p: unknown) => void } | undefined)?.navigate('Agenda', {
             screen: 'EventForm',
             params: { prefill: { type: 'exame', title: `Repetir ${name}`, examId: exam.id, recurrence: true } },
@@ -332,7 +332,7 @@ export function ExamDetailScreen({ route, navigation }: Props) {
       {/* Pedido de origem (Q1) — só para resultados (não-pedido) */}
       {!isOrderDoc ? (
         <View style={[styles.card, card, { gap: 8 }]}>
-          <Text spec={text(t, { role: 'bodyStrong' })}>Pedido de origem</Text>
+          <Text spec={text(t, { role: 'bodyStrong' })}>{SCREEN_COPY.exameDetalhe.originOrder}</Text>
           {linkedOrder ? (
             <View style={styles.editRow}>
               <Text spec={text(t, { role: 'bodySmall' })} style={{ flex: 1 }}>
@@ -357,7 +357,7 @@ export function ExamDetailScreen({ route, navigation }: Props) {
           ) : (
             <>
               <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Vincule este resultado ao pedido que o originou (rastreabilidade).</Text>
-              <Button label="Vincular a um pedido" variant="secondary" onPress={() => setPickOrder(true)} />
+              <Button label={SCREEN_COPY.exameDetalhe.linkToOrder} variant="secondary" onPress={() => setPickOrder(true)} />
             </>
           )}
         </View>
@@ -366,12 +366,12 @@ export function ExamDetailScreen({ route, navigation }: Props) {
       {/* Ações */}
       <View style={{ gap: 8 }}>
         {exam.file_url ? (
-          <Button label={isProcessed ? 'Extrair novamente' : 'Extrair dados'} variant="secondary"
+          <Button label={isProcessed ? SCREEN_COPY.exameDetalhe.extractAgain : 'Extrair dados'} variant="secondary"
             onPress={p.reanalyze} loading={p.analyze.running} loadingLabel="Extraindo…" />
         ) : null}
         <AttachmentLink url={exam.file_url} />
         <Button label="Compartilhar" variant="secondary" onPress={onShare} />
-        <Button label="Reportar problema" variant="secondary" onPress={() => setReportOpen(v => !v)} />
+        <Button label={SCREEN_COPY.exameDetalhe.reportProblem} variant="secondary" onPress={() => setReportOpen(v => !v)} />
       </View>
 
       {/* Reportar problema (inline) */}

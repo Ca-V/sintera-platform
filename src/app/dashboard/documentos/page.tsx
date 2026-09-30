@@ -40,8 +40,7 @@ import {
   findExistingDocument, existingDocumentMessage, DOCUMENT_DUPLICATE_CHOICES, type DocumentDuplicateCandidate,
   type PatientDocumentSubtype, type AttachedFile, uuid, DOCUMENT_FILTER_ALL,
   // O que a busca alcanca neste documento (migracao 154) — mesma regra e mesma frase do aplicativo.
-  buscavel, statusFrase, type StatusDaTranscricao,
-} from '@sintera/core'
+  buscavel, statusFrase, type StatusDaTranscricao, SCREEN_COPY } from '@sintera/core'
 
 // Ícone por subtipo. Mapa EXAUSTIVO por construção: o TypeScript exige uma entrada para cada
 // subtipo declarado no core, então acrescentar um subtipo lá quebra a compilação aqui em vez
@@ -203,13 +202,13 @@ export default function DocumentosPage() {
           doc_date: docDate || null,
           notes: notes.trim() || null,
         })
-        if (error) { setErro('Não foi possível salvar as alterações.'); return }
+        if (error) { setErro(SCREEN_COPY.documentos.errUpdate); return }
         setOpen(false); resetForm(); await load()
       } finally { setSaving(false) }
       return
     }
 
-    if (!isReadyToSave(files)) { setErro('Anexe o documento.'); return }
+    if (!isReadyToSave(files)) { setErro(SCREEN_COPY.documentos.attachFirst); return }
 
     // JÁ ESTÁ GUARDADO? Regra permanente da fundadora: toda informação que entra é conferida contra o que já
     // existe, e havendo correspondência a plataforma INFORMA e PERGUNTA. Idêntico ao Mobile — mesma regra,
@@ -271,7 +270,7 @@ export default function DocumentosPage() {
       }
 
       const { data: criado, error } = await supabase.from('patient_documents').insert(row(docRow)).select('id')
-      if (error) { setErro('Não foi possível salvar o documento.'); return }
+      if (error) { setErro(SCREEN_COPY.documentos.errSave); return }
       // PÁGINAS (ANEXO-001) — a ordem do array é a ordem de leitura.
       const docId = (criado as { id: string }[] | null)?.[0]?.id
       if (docId && files.length > 0) {
@@ -330,8 +329,8 @@ export default function DocumentosPage() {
     <div className="space-y-5">
       <PageHeader
         icon={<FileHeart size={22} />}
-        title="Receitas e atestados"
-        subtitle="Receitas, atestados, relatórios e encaminhamentos — guardados com emissor e data."
+        title={SCREEN_COPY.documentos.title}
+        subtitle={SCREEN_COPY.documentos.subtitle}
         action={
           <button
             onClick={() => { resetForm(); setOpen(true) }}
@@ -349,7 +348,7 @@ export default function DocumentosPage() {
           value={filter}
           onChange={setFilter}
           options={filterOptions}
-          title="Filtrar por tipo"
+          title={SCREEN_COPY.documentos.filterByType}
           className="max-w-xs"
         />
       )}
@@ -392,7 +391,7 @@ export default function DocumentosPage() {
                         disabled={lendo === r.id}
                         className="inline-flex items-center gap-1 rounded-full border border-petal px-2 py-0.5 font-body text-[11px] text-petal hover:bg-blush disabled:opacity-50"
                       >
-                        {lendo === r.id ? 'Lendo…' : r.transcricao_status === 'falhou' ? 'Tentar ler de novo' : 'Ler documento'}
+                        {lendo === r.id ? 'Lendo…' : r.transcricao_status === 'falhou' ? SCREEN_COPY.documentos.retryRead : 'Ler documento'}
                       </button>
                     )}
                     {r.transcricao_status && r.transcricao_status !== 'ok' && (
@@ -425,7 +424,7 @@ export default function DocumentosPage() {
                     </button>
                     <button
                       onClick={() => setConfirmId(r.id)}
-                      aria-label="Excluir documento"
+                      aria-label={SCREEN_COPY.documentos.remove}
                       className="rounded-full p-2 text-mauve hover:bg-black/[0.04]"
                     >
                       <Trash2 size={16} />
@@ -442,7 +441,7 @@ export default function DocumentosPage() {
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 p-0 sm:items-center sm:p-4">
           <Card className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-2xl sm:rounded-2xl">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-medium">{editando ? 'Editar documento' : 'Adicionar documento'}</h2>
+              <h2 className="text-lg font-medium">{editando ? 'Editar documento' : SCREEN_COPY.documentos.add}</h2>
               <button onClick={() => setOpen(false)} aria-label="Fechar" className="rounded-full p-2 hover:bg-black/[0.04]">
                 <X size={18} />
               </button>
@@ -450,12 +449,12 @@ export default function DocumentosPage() {
 
             <div className="space-y-4">
               <div>
-                <label className="mb-1.5 block text-sm text-mauve">Tipo de documento</label>
+                <label className="mb-1.5 block text-sm text-mauve">{SCREEN_COPY.documentos.fieldType}</label>
                 <Select
                   value={subtype}
                   onChange={v => setSubtype(v as PatientDocumentSubtype)}
                   options={DOCUMENT_SUBTYPES.map(s => ({ value: s.value, label: s.label }))}
-                  title="Tipo de documento"
+                  title={SCREEN_COPY.documentos.fieldType}
                 />
                 {/* NÃO anunciar aqui a que este documento "pode ser associado": este formulário não associa
                     nada. O vínculo da receita ao medicamento nasce do outro lado, na tela de Medicamentos.
@@ -493,7 +492,7 @@ export default function DocumentosPage() {
                   como estão escritos, sem posologia (RDC 657). Idêntico ao Mobile, por BASE ÚNICA. */}
               {subtype === 'receita' && (
                 <div>
-                  <label className="mb-1.5 block text-sm text-mauve">O que foi prescrito</label>
+                  <label className="mb-1.5 block text-sm text-mauve">{SCREEN_COPY.documentos.fieldItems}</label>
                   <textarea
                     value={itensTexto}
                     onChange={e => setItensTexto(e.target.value)}
@@ -501,7 +500,7 @@ export default function DocumentosPage() {
                     placeholder={'Um por linha\nEx.: Losartana 50mg'}
                     className="w-full rounded-xl border border-border px-3 py-2 text-sm"
                   />
-                  <p className="mt-1 text-xs text-mauve">Um item por linha, como está escrito na receita — medicamento, suplemento, dispositivo ou produto.</p>
+                  <p className="mt-1 text-xs text-mauve">{SCREEN_COPY.documentos.itemsHint}</p>
                 </div>
               )}
 
@@ -511,23 +510,23 @@ export default function DocumentosPage() {
                 <input
                   value={professional}
                   onChange={e => setProfessional(e.target.value)}
-                  placeholder="Quem assinou o documento"
+                  placeholder={SCREEN_COPY.documentos.fieldIssuer}
                   className="w-full rounded-xl border border-border px-3 py-2 text-sm"
                 />
               </div>
 
               <div>
-                <label className="mb-1.5 block text-sm text-mauve">Clínica, laboratório ou hospital</label>
+                <label className="mb-1.5 block text-sm text-mauve">{SCREEN_COPY.documentos.placePlaceholder}</label>
                 <input
                   value={institution}
                   onChange={e => setInstitution(e.target.value)}
-                  placeholder="Onde foi emitido"
+                  placeholder={SCREEN_COPY.documentos.fieldPlace}
                   className="w-full rounded-xl border border-border px-3 py-2 text-sm"
                 />
               </div>
 
               <div>
-                <label className="mb-1.5 block text-sm text-mauve">Data do documento</label>
+                <label className="mb-1.5 block text-sm text-mauve">{SCREEN_COPY.documentos.fieldDate}</label>
                 <input
                   type="date"
                   value={docDate}
@@ -553,7 +552,7 @@ export default function DocumentosPage() {
                 disabled={saving || (!editando && !isReadyToSave(files))}
                 className="w-full rounded-full bg-petal px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
               >
-                {saving ? 'Salvando…' : editando ? 'Salvar alterações' : 'Salvar documento'}
+                {saving ? 'Salvando…' : editando ? SCREEN_COPY.documentos.saveChanges : SCREEN_COPY.documentos.save}
               </button>
             </div>
           </Card>
@@ -566,7 +565,7 @@ export default function DocumentosPage() {
       {repetido && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <Card className="w-full max-w-md space-y-4 p-6">
-            <h2 className="text-lg font-medium">Este documento já está guardado</h2>
+            <h2 className="text-lg font-medium">{SCREEN_COPY.documentos.duplicate}</h2>
             <p className="text-sm text-mauve">
               {existingDocumentMessage(repetido, documentSubtypeLabel(subtype))}
             </p>
@@ -591,8 +590,8 @@ export default function DocumentosPage() {
 
       <ConfirmDialog
         open={confirmId !== null}
-        title="Excluir documento"
-        message="O documento será removido da sua conta. Esta ação não pode ser desfeita."
+        title={SCREEN_COPY.documentos.remove}
+        message={SCREEN_COPY.documentos.removeHint}
         confirmLabel="Excluir"
         onConfirm={() => confirmId && onDelete(confirmId)}
         onCancel={() => setConfirmId(null)}

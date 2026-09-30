@@ -24,7 +24,7 @@ import { isOrderDocumentType } from '@/lib/exams/classification'
 import { careStageFor } from '@/lib/exams/careFlow'
 // `estadoDaLeitura` — o que a busca alcança neste documento. Regra do núcleo: a Web e o aplicativo dizem a
 // MESMA coisa, e "processado" para de significar cinco situações diferentes.
-import { examProcessingState, isExamReady, isExamProcessing, isExamFailed, deriveOrderDisplayTitle, supportedNowAcceptAttr, estadoDaLeitura } from '@sintera/core'
+import { examProcessingState, isExamReady, isExamProcessing, isExamFailed, deriveOrderDisplayTitle, supportedNowAcceptAttr, estadoDaLeitura, SCREEN_COPY } from '@sintera/core'
 import { eventServicesFor, type HealthEvent } from '@/lib/agenda'
 import { expenseDocLabel, EXPENSE_DOC_TYPES } from '@/lib/finance/expense'
 import { parseAmountToCents, centsToAmount } from '@/lib/agenda/money'
@@ -691,7 +691,7 @@ export default function ExamDetailPage() {
   const isProcessed  = isExamReady(exam?.status)
   const hasResults   = biomarkers.length > 0
   // Documento sem estruturação (decisão de PRODUTO — ex.: imagem/oftalmologia): processado, porém sem resultados
-  // estruturados. Não é limitação — o documento é o ativo. Nesse estado, "Extrair novamente" não faz sentido.
+  // estruturados. Não é limitação — o documento é o ativo. Nesse estado, SCREEN_COPY.exameDetalhe.extractAgain não faz sentido.
   const isDocumentOnly = isProcessed && !hasResults
   const hasClinical  = (clinicalRep?.items.length ?? 0) > 0   // resultados clínicos não-laboratoriais (CPE)
   // PEDIDO-002 — título do PEDIDO derivado dos procedimentos solicitados (cliente), quando o servidor ainda não
@@ -702,7 +702,7 @@ export default function ExamDetailPage() {
   const examDisplayTitle = (exam as unknown as { display_title?: string | null })?.display_title ?? null
   const resolvedIdentityName = deriveExamIdentity(exam?.type, (exam as unknown as { issuer?: string | null })?.issuer, examDisplayTitle).name
   const headerTitle = orderTitle ?? (isOrderDoc && !examDisplayTitle ? 'Pedido de exame' : resolvedIdentityName)
-  const analyzeLabel = isProcessed ? 'Extrair novamente' : 'Extrair dados'
+  const analyzeLabel = isProcessed ? SCREEN_COPY.exameDetalhe.extractAgain : 'Extrair dados'
   const AnalyzeIcon  = isProcessed ? RefreshCw : Zap
 
   // O ESTADO DA LEITURA — a regra é do núcleo, para a Web e o aplicativo dizerem a MESMA coisa.
@@ -860,10 +860,10 @@ export default function ExamDetailPage() {
                 <div className="flex items-center gap-1.5 group/date mt-0.5">
                   <p className="font-body text-sm text-mauve">
                     {/* WEB-003 / D-15(a): data de REALIZAÇÃO (exam_date); NUNCA cai para created_at (upload).
-                        Sem data → frase de estado ("Data de realização não informada"), não "Realizado em Sem data". */}
+                        Sem data → frase de estado (SCREEN_COPY.exameDetalhe.noExamDate), não "Realizado em Sem data". */}
                     {(exam as unknown as { exam_date?: string | null } | null)?.exam_date
                       ? `${isOrderDoc ? 'Solicitado em' : 'Realizado em'} ${formatDate((exam as unknown as { exam_date?: string | null }).exam_date as string)}`
-                      : (isOrderDoc ? 'Data de solicitação não informada' : 'Data de realização não informada')}
+                      : (isOrderDoc ? SCREEN_COPY.exameDetalhe.noRequestDate : SCREEN_COPY.exameDetalhe.noExamDate)}
                     {exam?.page_count ? ` · ${exam.page_count} páginas` : ''}
                   </p>
                   <button onClick={startEditDate}
@@ -901,8 +901,8 @@ export default function ExamDetailPage() {
               {lastLog && (
                 <p className="font-body text-xs text-mauve mt-2">
                   Última extração: {formatDate(lastLog.started_at)}
-                  {lastLog.parse_repaired && ' · reparado automaticamente'}
-                  {lastLog.extraction_path === 'pdf_native' && ' · leitura nativa PDF'}
+                  {lastLog.parse_repaired && ` ${SCREEN_COPY.exameDetalhe.repairedNote}`}
+                  {lastLog.extraction_path === 'pdf_native' && ` ${SCREEN_COPY.exameDetalhe.nativePdfNote}`}
                 </p>
               )}
             </div>
@@ -985,7 +985,7 @@ export default function ExamDetailPage() {
               title={leitura.buscavel ? 'Lido como imagem' : 'Conteúdo não transcrito'}
             >
               {leitura.frase}
-              {!leitura.buscavel && ' O documento continua guardado e pode ser aberto a qualquer momento. Para que a busca alcance o conteúdo, envie o arquivo em PDF com texto, quando houver.'}
+              {!leitura.buscavel && ` ${SCREEN_COPY.exameDetalhe.searchLimitNote}`}
             </DsBanner>
           </div>
         )}
@@ -1026,7 +1026,7 @@ export default function ExamDetailPage() {
       {isOrderDoc && (
         <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} padding="none" className="overflow-hidden">
           <div className="p-5 border-b border-border/50">
-            <h2 className="font-display text-base font-semibold text-onyx">Procedimentos solicitados</h2>
+            <h2 className="font-display text-base font-semibold text-onyx">{SCREEN_COPY.exameDetalhe.requestedItems}</h2>
           </div>
           <div className="px-5 py-4 space-y-1.5">
             {biomarkers.length > 0 ? (
@@ -1034,9 +1034,9 @@ export default function ExamDetailPage() {
                 <p key={b.id ?? i} className="font-body text-sm text-onyx/80">• {b.source_exam_name ?? b.name}</p>
               ))
             ) : (
-              <p className="font-body text-sm text-mauve">Consulte o documento original para os procedimentos solicitados.</p>
+              <p className="font-body text-sm text-mauve">{SCREEN_COPY.exameDetalhe.seeOriginal}</p>
             )}
-            <p className="font-body text-[11px] text-mauve pt-1">Isto é um pedido/solicitação — não é um resultado de exame realizado.</p>
+            <p className="font-body text-[11px] text-mauve pt-1">{SCREEN_COPY.exameDetalhe.isOrderNotResult}</p>
           </div>
         </MotionCard>
       )}
@@ -1140,7 +1140,7 @@ export default function ExamDetailPage() {
         <MotionCard initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} padding="relaxed" className="print:hidden">
           <div className="flex items-center gap-2 mb-2">
             <FileText size={15} className="text-gold" />
-            <h2 className="font-display text-base font-semibold text-onyx">Pedido de origem</h2>
+            <h2 className="font-display text-base font-semibold text-onyx">{SCREEN_COPY.exameDetalhe.originOrder}</h2>
           </div>
           {linkedOrder ? (
             <div className="flex items-start justify-between gap-3">
@@ -1160,7 +1160,7 @@ export default function ExamDetailPage() {
             <p className="font-body text-xs text-mauve">Nenhum pedido cadastrado. Adicione o pedido em <Link href="/dashboard/exams" className="text-petal hover:underline">Exames › Pedidos de Exames</Link> para registrar a origem deste resultado.</p>
           ) : linkPickerOpen ? (
             <div className="flex flex-wrap items-center gap-2">
-              <Select aria-label="Pedido de origem" placeholder="Selecione o pedido de origem…" className="flex-1 min-w-[220px]"
+              <Select aria-label={SCREEN_COPY.exameDetalhe.originOrder} placeholder="Selecione o pedido de origem…" className="flex-1 min-w-[220px]"
                 value="" disabled={linkBusy} onChange={(v) => { if (v) linkToOrder(v) }}
                 options={orders.map(o => ({ value: o.id, label: `${o.type ?? 'Pedido médico'}${o.requesting_physician ? ` — ${o.requesting_physician}` : ''} · ${formatDate(o.exam_date ?? o.created_at)}` }))} />
               <button type="button" onClick={() => setLinkPickerOpen(false)} className="text-[11px] font-body text-mauve px-2 py-1">Cancelar</button>
@@ -1170,7 +1170,7 @@ export default function ExamDetailPage() {
               <p className="font-body text-xs text-mauve">Vincule este resultado ao pedido que o originou — preserva a rastreabilidade (quem solicitou, quando) e marca o pedido como concluído.</p>
               <button type="button" onClick={() => setLinkPickerOpen(true)}
                 className="flex-shrink-0 flex items-center gap-1 text-[11px] font-body font-medium text-petal-dark bg-blush border border-petal/30 px-2.5 py-1 rounded-full hover:bg-petal/10 transition-colors">
-                Vincular a um pedido
+                {SCREEN_COPY.exameDetalhe.linkToOrder}
               </button>
             </div>
           )}
@@ -1240,7 +1240,7 @@ export default function ExamDetailPage() {
           <p className="font-body text-xs text-mauve">Precisa repetir este exame periodicamente?</p>
           <button onClick={() => { setAgendarMode('repeat'); setAgendarOpen(true) }}
             className="flex-shrink-0 inline-flex items-center gap-1.5 border border-border text-mauve font-body text-xs font-medium px-3 py-1.5 rounded-full hover:border-petal/40 hover:text-petal transition-colors">
-            <CalendarDays size={13} /> Criar lembrete de repetição
+            <CalendarDays size={13} /> {SCREEN_COPY.exameDetalhe.createReminder}
           </button>
         </div>
       </MotionCard>
@@ -1248,7 +1248,7 @@ export default function ExamDetailPage() {
 
       {/* Modal — Reportar problema */}
       {reportOpen && (
-        <div ref={reportRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Reportar problema"
+        <div ref={reportRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label={SCREEN_COPY.exameDetalhe.reportProblem}
           className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 outline-none">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => { setReportOpen(false); setReportSent(false) }} />
           <motion.div
@@ -1260,7 +1260,7 @@ export default function ExamDetailPage() {
                 <div className="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center">
                   <Flag size={15} className="text-red-400" />
                 </div>
-                <p className="font-body text-sm font-semibold text-onyx">Reportar problema</p>
+                <p className="font-body text-sm font-semibold text-onyx">{SCREEN_COPY.exameDetalhe.reportProblem}</p>
               </div>
               <button onClick={() => { setReportOpen(false); setReportSent(false) }} className="text-mauve hover:text-onyx transition-colors">
                 <X size={16} />
