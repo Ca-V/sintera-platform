@@ -14,7 +14,7 @@ import { eventServicesFor, professionalKindLabel } from '@/lib/agenda' // EVT-C1
 import { contraceptiveLabel } from '@/lib/cycle' // SSOT dos métodos contraceptivos
 import { deriveExamIdentity } from '@/lib/exams/identification'
 // LEVANTAMENTO de 02/09/2026: tres secoes que a dona podia SELECIONAR e o profissional NUNCA via.
-import { documentSubtypeLabel, type PatientDocumentSubtype } from '@sintera/core'
+import { documentSubtypeLabel, type PatientDocumentSubtype, formatDateFullBR, formatDateBR } from '@sintera/core'
 import { isClosedStatus } from '@/lib/agenda/event'
 // Historico de Exames: resumo longitudinal por indicador — MESMA funcao do relatorio principal (SSOT).
 import { summarizeBiomarkers, examDate as bioExamDate, type BiomarkerRow } from '@/lib/biomarkers/grouping' // identidade resolvida (display_title) — mesma das telas
@@ -51,7 +51,7 @@ function periodo(start: string | null, until: string | null): string {
 function fmt(date: string | null): string {
   if (!date) return '—'
   const d = new Date(date.length <= 10 ? `${date}T00:00:00` : date)
-  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  return formatDateBR(d)
 }
 
 function Aviso({ children }: { children: React.ReactNode }) {
@@ -173,7 +173,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
   const brl = (cents: number | null | undefined) => `R$ ${((cents ?? 0) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   const allowed = Array.isArray(share.sections) ? (share.sections as string[]) : null
   const show = (k: string) => !allowed || allowed.includes(k)
-  const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
+  const hoje = formatDateFullBR(new Date())
 
   return (
     <div style={{ maxWidth: 680, margin: '0 auto', padding: '32px 20px', fontFamily: 'system-ui, sans-serif', color: '#241F1A', lineHeight: 1.5 }}>

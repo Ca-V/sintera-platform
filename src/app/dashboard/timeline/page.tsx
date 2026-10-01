@@ -28,6 +28,7 @@ import ViewModeSwitcher from '@/components/ViewModeSwitcher'
 import ListCard, { CardChip } from '@/components/ListCard'
 import { Card } from "@/lib/ui/ds"
 import { DOMAIN_LABEL, type OmicsDomain } from '@/lib/omics/domains'
+import { formatDateLongBR, formatMonthLongBR } from '@sintera/core'
 
 type EventType = 'consulta' | 'vacina' | 'procedimento' | 'estetico' | 'medicamento' | 'atividade' | 'exame' | 'omica' | 'contracepcao' | 'outro'
 
@@ -77,11 +78,11 @@ const TYPE_META: Record<string, { label: string; Icon: React.ElementType; cls: s
 
 function fmt(date: string): string {
   const d = new Date(date.length <= 10 ? `${date}T00:00:00` : date)
-  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+  return formatDateLongBR(d)
 }
 function monthYear(date: string): string {
   const d = new Date(date.length <= 10 ? `${date}T00:00:00` : date)
-  const s = d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+  const s = formatMonthLongBR(d)
   return s.charAt(0).toUpperCase() + s.slice(1)
 }
 

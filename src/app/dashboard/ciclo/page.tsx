@@ -28,7 +28,7 @@ import { addDays, addMonths, todayISO, daysBetween, nextOccurrenceByDays } from 
 import Disclaimer from '@/components/ui/Disclaimer'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import Select from '@/components/ui/Select'
-import { SCREEN_COPY } from '@sintera/core'
+import { SCREEN_COPY, formatDateLongBR } from '@sintera/core'
 
 interface Method {
   id: string; kind: string; brand: string | null; startedOn: string | null
@@ -41,7 +41,7 @@ interface Period { id: string; startedOn: string; notes: string | null }
 // Cálculo de datas = SSOT `@/lib/date` (addDays/addMonths/todayISO/nextOccurrenceByDays). `fmt` é só EXIBIÇÃO.
 function fmt(d: string | null): string {
   if (!d) return '—'
-  return new Date(`${d}T00:00:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+  return formatDateLongBR(new Date(`${d}T00:00:00`))
 }
 
 export default function CicloPage() {

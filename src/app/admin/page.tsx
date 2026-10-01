@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/context/UserContext'
+import { formatDayTimeBR } from '@sintera/core'
 
 // E-mail autorizado a acessar o dashboard operacional
 const ADMIN_EMAIL = 'carinaleite.br@gmail.com'
@@ -42,7 +43,7 @@ interface FeedbackRow {
 }
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+  return formatDayTimeBR(new Date(iso))
 }
 
 function StatCard({ icon: Icon, label, value, sub, color, bg }: {

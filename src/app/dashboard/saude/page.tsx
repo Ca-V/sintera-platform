@@ -21,6 +21,7 @@ import { isOrderDocumentType } from '@/lib/exams/classification'
 import MotionCard from '@/components/ui/MotionCard'
 import Disclaimer from '@/components/ui/Disclaimer'
 import Select from '@/components/ui/Select'
+import { formatDateBR, formatMonthShortBR } from '@sintera/core'
 
 interface CatalogEntry { id: string; specimen: string | null; category: string | null; display_name: string }
 
@@ -35,11 +36,11 @@ const INTERP_CLS: Record<string, string> = {
 
 function formatDate(iso: string): string {
   if (!iso) return '—'
-  return parseDateOnly(iso).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' })
+  return formatMonthShortBR(parseDateOnly(iso))
 }
 function fmtFull(iso: string): string {
   if (!iso) return '—'
-  return parseDateOnly(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  return formatDateBR(parseDateOnly(iso))
 }
 
 function TrendBadge({ trend, delta }: { trend: Trend; delta: number | null }) {

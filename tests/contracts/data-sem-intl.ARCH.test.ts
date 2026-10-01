@@ -29,7 +29,10 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs'
 import { join } from 'node:path'
-import { formatDateLongBR, formatDateBR } from '@sintera/core'
+import {
+  formatDateLongBR, formatDateBR,
+  formatMonthLongBR, formatMonthShortBR, formatDateFullBR, formatHourBR, formatDateTimeLongBR, formatDayTimeBR,
+} from '@sintera/core'
 
 const ROOT = process.cwd()
 const TELAS = ['src/app', 'apps/mobile/src/presentation']
@@ -41,24 +44,15 @@ const TELAS = ['src/app', 'apps/mobile/src/presentation']
  * correção sensata é por quem a pessoa vê mais — Agenda, Histórico e Relatório antes de admin e preview.
  */
 const DIVIDA: readonly string[] = [
-  'src/app/admin/page.tsx',
-  'src/app/api/agenda/reminders/route.ts',
-  'src/app/dashboard/ciclo/page.tsx',
-  'src/app/dashboard/page.tsx',
-  'src/app/dashboard/conexoes/page.tsx',
-  'src/app/dashboard/exams/[id]/page.tsx',
-  'src/app/dashboard/insights/page.tsx',
-  'src/app/dashboard/medicamentos/page.tsx',
-  'src/app/dashboard/recursos/page.tsx',
-  'src/app/dashboard/relatorio/page.tsx',
-  'src/app/dashboard/saude/[slug]/page.tsx',
-  'src/app/dashboard/saude/page.tsx',
-  'src/app/dashboard/sinais-vitais/page.tsx',
-  'src/app/dashboard/timeline/page.tsx',
-  'src/app/r/[token]/page.tsx',
-  'apps/mobile/src/presentation/screens/agenda/TimelineScreen.tsx',
-  'apps/mobile/src/presentation/screens/minhasaude/CicloScreen.tsx',
-  'apps/mobile/src/presentation/screens/minhasaude/MedicationsScreen.tsx',
+  // VAZIA desde 01/10/2026 — a dívida foi paga.
+  //
+  // Eram 18 arquivos formatando data com `Intl`. Todos passaram a usar os formatadores do core, que são
+  // determinísticos e não dependem do `Intl` do aparelho. Foram precisos seis formatadores novos para
+  // cobrir todas as formas em uso: mês por extenso, mês abreviado com ano curto, data completa, hora,
+  // instante com e sem ano, e dia da semana.
+  //
+  // A LISTA FICA, vazia. Ela é o lugar onde um arquivo novo seria declarado se alguém precisasse de uma
+  // exceção — e tê-la vazia diz, a quem chegar depois, que nenhuma exceção é aceita hoje.
 ]
 
 function varrer(dir: string, out: string[] = []): string[] {
@@ -141,5 +135,50 @@ describe('ARCH · CATRACA — tela nova não formata data com Intl', () => {
   it('todo arquivo da dívida ainda existe', () => {
     const sumiram = DIVIDA.filter(d => !arquivos.some(a => a.caminho === d))
     expect(sumiram, 'arquivos removidos — limpe a lista:\n' + sumiram.join('\n')).toEqual([])
+  })
+})
+
+describe('ARCH · DATE-001 — o conjunto completo de formatadores', () => {
+  it('cada forma produz exatamente o que o nome promete', () => {
+    expect(formatMonthLongBR('2026-07-03')).toBe('julho de 2026')
+    expect(formatMonthShortBR('2026-09-28')).toBe('set./26')
+    expect(formatDateFullBR('2026-07-03')).toBe('03 de julho de 2026')
+    expect(formatDateFullBR('2026-03-01')).toBe('01 de março de 2026')
+  })
+
+  it('NENHUM deles erra o dia por fuso', () => {
+    // No Brasil (UTC-3), `new Date('2026-07-03')` vira 02/07 às 21h. É o bug que `parseDateOnly` impede, e
+    // que reaparece toda vez que alguém constrói o Date por conta própria.
+    for (const f of [formatMonthLongBR, formatMonthShortBR, formatDateFullBR]) {
+      expect(f('2026-01-01'), `${f.name} escorregou para o ano anterior`).toMatch(/2026|jan/)
+    }
+    expect(formatDateFullBR('2026-01-01')).toBe('01 de janeiro de 2026')
+    expect(formatDateFullBR('2026-12-31')).toBe('31 de dezembro de 2026')
+  })
+
+  it('instante usa o fuso LOCAL — quem registrou às 14h vê 14h', () => {
+    const d = new Date(2026, 6, 3, 14, 5)
+    expect(formatHourBR(d)).toBe('14:05')
+    expect(formatDateTimeLongBR(d)).toBe('03 de jul. de 2026, 14:05')
+    expect(formatDayTimeBR(d)).toBe('03 de jul., 14:05')
+  })
+
+  it('entrada inválida devolve algo, e nunca "Invalid Date"', () => {
+    for (const f of [formatMonthLongBR, formatMonthShortBR, formatDateFullBR]) {
+      expect(f('nao-e-data')).toBe('nao-e-data')
+      expect(f('')).toBe('')
+    }
+    for (const f of [formatHourBR, formatDateTimeLongBR, formatDayTimeBR]) {
+      expect(f(null), `${f.name} com nulo`).toBe('')
+      expect(f('lixo'), `${f.name} com lixo`).toBe('')
+    }
+  })
+
+  it('nenhum formatador novo usa Intl', () => {
+    const src = readFileSync(join(ROOT, 'packages/core/src/domain/agenda/presentation.ts'), 'utf8')
+    for (const nome of ['formatMonthLongBR', 'formatMonthShortBR', 'formatDateFullBR', 'formatHourBR', 'formatDateTimeLongBR', 'formatDayTimeBR']) {
+      const corpo = new RegExp(`export function ${nome}[\s\S]*?\n\}`).exec(src)?.[0] ?? ''
+      expect(corpo, `${nome} depende do Intl`).not.toMatch(/toLocale/)
+    }
   })
 })

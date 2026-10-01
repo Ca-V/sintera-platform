@@ -39,7 +39,7 @@ import { todayISO } from '@/lib/date'
 import { expenseDocLabel } from '@/lib/finance/expense'
 // VÍNCULO receita → recurso: as MESMAS funções que o aplicativo chama; aqui o cliente é o da Web.
 import { listLinkableDocuments, listDocumentsForTargets, linkDocumentToTarget, unlinkDocumentFromTarget, type PatientDocumentDTO } from '@sintera/api-client'
-import { uuid, documentSubtitle, supportedNowAcceptAttr, SCREEN_COPY } from '@sintera/core'
+import { uuid, documentSubtitle, supportedNowAcceptAttr, SCREEN_COPY, formatDateLongBR } from '@sintera/core'
 
 // FB-016-2 — frequências de troca (mesmo padrão inline do Medicamento), no conjunto canônico de recorrência.
 const TROCA_FREQ_OPTS: { v: RecurrenceFreq; l: string }[] = [
@@ -98,7 +98,7 @@ const EMPTY = {
 
 function fmt(date: string | null): string {
   if (!date) return ''
-  return new Date(`${date}T00:00:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+  return formatDateLongBR(new Date(`${date}T00:00:00`))
 }
 
 // Resumo compacto do grau (correção visual) para a meta do card.

@@ -14,7 +14,7 @@ import { createClient } from '@/lib/supabase/client'
 import { parseDateOnly } from '@/lib/agenda'
 import { useModalA11y } from '@/lib/ui/useModalA11y'
 import { navDescription } from '@/lib/ui/navDescriptions'
-import { isExamReady, isExamProcessing } from '@sintera/core'
+import { isExamReady, isExamProcessing, formatDateLongBR } from '@sintera/core'
 import { useUser } from '@/context/UserContext'
 import AgendarModal, { type AgendaEventInput } from '@/components/AgendarModal'
 import { useEventForm } from '@/components/eventForm'
@@ -40,7 +40,7 @@ interface Stats {
 }
 
 function formatDate(iso: string) {
-  return parseDateOnly(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+  return formatDateLongBR(parseDateOnly(iso))
 }
 
 // Acesso rápido — usa exatamente a nomenclatura do menu lateral esquerdo (FB-010).

@@ -14,6 +14,7 @@ import { buildEventNotification } from '@/lib/agenda/notification'
 import { eventToNotificationInput, formatDateBR } from '@/lib/agenda/presentation'
 import { resolveChannelsForEvent, type NotificationChannel } from '@/lib/notifications/preferences'
 import { rowToHealthEvent, agendaRowToHealthEvent, isClosed, type HealthEvent, type HealthEventRow, type AgendaEventRow } from '@/lib/agenda/event'
+import { formatWeekdayShortBR } from '@sintera/core'
 
 const FROM_ADDRESS = 'SINTERA <ola@sinteramais.com.br>'
 
@@ -23,9 +24,7 @@ function ymd(d: Date): string {
 
 function dateLabel(eventDate: string, today: string, tomorrow: string): string {
   const [y, m, day] = eventDate.split('-').map(Number)
-  const full = new Date(y, m - 1, day).toLocaleDateString('pt-BR', {
-    weekday: 'short', day: '2-digit', month: 'short',
-  })
+  const full = formatWeekdayShortBR(new Date(y, m - 1, day))
   if (eventDate === today) return `hoje, ${full}`
   if (eventDate === tomorrow) return `amanhã, ${full}`
   return full

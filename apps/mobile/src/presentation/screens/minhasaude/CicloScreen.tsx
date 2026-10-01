@@ -8,14 +8,14 @@ import { text } from '@sintera/design-system'
 import type { ContraceptiveDTO, PeriodDTO } from '@sintera/api-client'
 import {
   CONTRACEPTIVE_KINDS, contraceptiveLabel, contraceptiveNature, CONTRACEPTIVE_CADENCES, defaultCadenceFor,
-  cadenceUsageLabel, cycleStats, SCREEN_COPY } from '@sintera/core'
+  cadenceUsageLabel, cycleStats, SCREEN_COPY, formatDateLongBR } from '@sintera/core'
 import { Text, Button, Input, Switch, DatePicker, Disclaimer, Select } from '../../primitives'
 import { useTheme } from '../../theme'
 import { apiClient } from '../../../infrastructure/apiClient'
 
 function fmt(d: string | null): string {
   if (!d) return '—'
-  return new Date(`${d}T00:00:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+  return formatDateLongBR(new Date(`${d}T00:00:00`))
 }
 
 export function CicloScreen() {

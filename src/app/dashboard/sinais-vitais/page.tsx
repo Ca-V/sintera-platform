@@ -28,8 +28,7 @@ import {
   confrontarRotinas, rotinaLinha, rotinasDeAtividade, CATEGORIA_ROTINA_ATIVIDADE,
   // Ausencia com motivo — pedido da fundadora em 01/09/2026. Texto no nucleo; as duas pontas dizem igual.
   ausenciaExplicada, type SecaoDeDados,
-  type RotinaConfrontada,
-} from '@sintera/core'
+  type RotinaConfrontada, formatHourBR, formatDateLongBR } from '@sintera/core'
 import type { ActivitySessionDTO, HabitDTO } from '@sintera/api-client'
 import { listActivitySessions, saveActivitySession, deleteActivitySession, saveBodyMetric, listDailySteps, listHabits, saveHabit, deleteHabit } from '@sintera/api-client'
 import EmptyState from '@/components/EmptyState'
@@ -72,7 +71,7 @@ interface Entry {
 
 function fmt(date: string): string {
   const d = new Date(`${date}T00:00:00`)
-  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+  return formatDateLongBR(d)
 }
 
 /**
@@ -103,8 +102,8 @@ function PorQueVazio({ secao, houveSincronizacao }: { secao: SecaoDeDados; houve
 function fmtMeasured(measuredOn: string, measuredAt: string | null): string {
   if (!hasTimeOfDay(measuredAt)) return fmt(measuredOn)
   const d = new Date(measuredAt as string)
-  const hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-  return `${d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })} · ${hora}`
+  const hora = formatHourBR(d)
+  return `${formatDateLongBR(d)} · ${hora}`
 }
 
 /** Linha de contexto do ponto — a ordem e o separador vêm do core, para que o Mobile componha igual. */

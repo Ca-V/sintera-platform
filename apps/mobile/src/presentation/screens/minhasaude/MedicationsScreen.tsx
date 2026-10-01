@@ -14,7 +14,7 @@ import {
   estimatedRunoutDays, parseAmountToCents, centsToAmount,
   type MedKind, type MedStatus, MED_REPURCHASE_FREQUENCIES, repurchaseFreqToRecurrence,
   isHormonalContraceptive, contraceptiveLabel, contraceptiveCategoryLabel, cadenceUsageLabel,
-  documentSubtitle, SCREEN_COPY } from '@sintera/core'
+  documentSubtitle, SCREEN_COPY, formatDateLongBR } from '@sintera/core'
 import { Text, Button, Input, DatePicker, Disclaimer, AttachmentLink, Select } from '../../primitives'
 import { useAssistedCapture } from '../capture/useAssistedCapture'
 import { useTheme } from '../../theme'
@@ -288,7 +288,7 @@ export function MedicationsScreen({ route, navigation }: Props) {
               if (days == null) return null
               const base = purchasedOn || startedOn || new Date().toISOString().slice(0, 10)
               const d = new Date(`${base}T00:00:00`); d.setDate(d.getDate() + days)
-              const dateStr = /^\d{4}-\d{2}-\d{2}$/.test(base) ? d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : null
+              const dateStr = /^\d{4}-\d{2}-\d{2}$/.test(base) ? formatDateLongBR(d) : null
               return <Text spec={text(t, { role: 'caption', tone: 'muted' })}>Estimativa: ~{days} dias de estoque{dateStr ? ` · acaba por volta de ${dateStr}` : ''}</Text>
             })()}
             <View style={{ flexDirection: 'row', gap: 8 }}>

@@ -7,7 +7,7 @@ import { useFocusEffect } from '@react-navigation/native'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { text } from '@sintera/design-system'
-import { mergeTimeline, selectHistory, groupByPeriod, formatDateLongBR, timelineCategoryLabel, typeGroupRank, type TimelineEntry, type TimelineMeta, SCREEN_COPY } from '@sintera/core'
+import { mergeTimeline, selectHistory, groupByPeriod, formatDateLongBR, timelineCategoryLabel, typeGroupRank, type TimelineEntry, type TimelineMeta, SCREEN_COPY, formatMonthLongBR } from '@sintera/core'
 import { Text, Button, Input, Disclaimer } from '../../primitives'
 import { useTheme } from '../../theme'
 import type { MinhaSaudeStackParamList } from '../../navigation/types'
@@ -35,7 +35,7 @@ function periodLabel(key: string): string {
   if (key === 'sem-data') return 'Sem data'
   const [y, m] = key.split('-')
   if (!m) return y
-  return new Date(Number(y), Number(m) - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+  return formatMonthLongBR(new Date(Number(y), Number(m) - 1, 1))
 }
 
 export function TimelineScreen({ navigation }: Props) {

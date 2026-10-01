@@ -20,8 +20,7 @@ import Disclaimer from '@/components/ui/Disclaimer'
 // O rótulo vem do núcleo: as duas pontas chamam a tela pelo MESMO nome, e um rótulo escrito duas vezes divergiria.
 import {
   SCREEN_COPY, CONEXOES_ONDE_FUNCIONA, HEALTH_CONNECT_DOIS_PASSOS, fontesDisponiveis, fontesIndisponiveis,
-  caminhoDaFonte,
-} from '@sintera/core'
+  caminhoDaFonte, formatDateTimeLongBR } from '@sintera/core'
 import { useNovelty } from '@/lib/novelty/useNovelty'
 
 type Status = 'disconnected' | 'connected' | 'expired' | 'revoked' | 'error'
@@ -40,7 +39,7 @@ function fmtDateTime(iso: string | null): string {
   if (!iso) return '—'
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return '—'
-  return d.toLocaleString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+  return formatDateTimeLongBR(d)
 }
 
 // Rótulo amigável do domínio do conector (o que ele fornece). Modelo ABERTO: domínio desconhecido

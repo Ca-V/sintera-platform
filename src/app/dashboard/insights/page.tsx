@@ -12,6 +12,7 @@ import MotionCard from '@/components/ui/MotionCard'
 import ActionCard from '@/components/ui/ActionCard'
 import Disclaimer from '@/components/ui/Disclaimer'
 import { demoFeaturesEnabled } from '@/lib/demo'
+import { formatDateLongBR } from '@sintera/core'
 
 // ai_insights tem colunas de governança que não estão nos tipos manuais
 // (ver supabase/types.generated.ts). Definimos a forma que consumimos aqui.
@@ -41,7 +42,7 @@ const SOURCE_LABEL: Record<string, string> = {
 
 function formatDate(iso: string | null): string {
   if (!iso) return ''
-  return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+  return formatDateLongBR(new Date(iso))
 }
 
 export default function InsightsPage() {
