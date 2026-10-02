@@ -15,14 +15,15 @@ import { parseDateOnly } from '@/lib/agenda'
 import { useUser } from '@/context/UserContext'
 import { seriesForName, interpretationSymbol, type BiomarkerRow, type Measurement, type UnitSeries } from '@/lib/biomarkers/grouping'
 import MotionCard from '@/components/ui/MotionCard'
+import { formatDateLongBR, formatMonthShortBR } from '@sintera/core'
 
 function formatDateFull(iso: string): string {
   if (!iso) return '—'
-  return parseDateOnly(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+  return formatDateLongBR(parseDateOnly(iso))
 }
 function formatDateShort(iso: string): string {
   if (!iso) return '—'
-  return parseDateOnly(iso).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' })
+  return formatMonthShortBR(parseDateOnly(iso))
 }
 
 const INTERP_COLORS: Record<string, string> = {

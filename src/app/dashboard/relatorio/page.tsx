@@ -35,7 +35,7 @@ import { createClient } from '@/lib/supabase/client'
 // O rótulo do subtipo vem do núcleo — o mesmo das telas de Documentos, para o dossiê não inventar nome.
 import {
   REPORT_GROUPS, defaultSections, secureToken, documentSubtypeLabel,
-  type ReportSectionKey, type PatientDocumentSubtype, SCREEN_COPY } from '@sintera/core'
+  type ReportSectionKey, type PatientDocumentSubtype, SCREEN_COPY, formatDateFullBR, formatDateBR } from '@sintera/core'
 import { assembleOrganizedBiomarkers } from '@/lib/ai/insights/assembler'
 import { summarizeBiomarkers, examDate, type BiomarkerRow } from '@/lib/biomarkers/grouping'
 import { useUser } from '@/context/UserContext'
@@ -121,7 +121,7 @@ function periodo(start: string | null, until: string | null): string {
 function fmt(date: string | null): string {
   if (!date) return '—'
   const d = new Date(date.length <= 10 ? `${date}T00:00:00` : date)
-  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  return formatDateBR(d)
 }
 
 // Faixa divisória de GRUPO no corpo do relatório (espelha os grupos do menu:
@@ -510,7 +510,7 @@ function LegacyReport() {
   // data + link), como em Exames, em vez de discriminar cada métrica. Dedup por exame.
   const medLaudos = Array.from(new Set(perMeasuresCorpo.map(m => m.examId).filter(Boolean) as string[]))
     .map(id => examById.get(id)).filter((e): e is Ex => !!e)
-  const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
+  const hoje = formatDateFullBR(new Date())
   const brl = (cents: number | null) => `R$ ${((cents ?? 0) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
   if (loading) {

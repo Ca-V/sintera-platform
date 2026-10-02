@@ -24,7 +24,7 @@ import { isOrderDocumentType } from '@/lib/exams/classification'
 import { careStageFor } from '@/lib/exams/careFlow'
 // `estadoDaLeitura` — o que a busca alcança neste documento. Regra do núcleo: a Web e o aplicativo dizem a
 // MESMA coisa, e "processado" para de significar cinco situações diferentes.
-import { examProcessingState, isExamReady, isExamProcessing, isExamFailed, deriveOrderDisplayTitle, supportedNowAcceptAttr, estadoDaLeitura, SCREEN_COPY } from '@sintera/core'
+import { examProcessingState, isExamReady, isExamProcessing, isExamFailed, deriveOrderDisplayTitle, supportedNowAcceptAttr, estadoDaLeitura, SCREEN_COPY, formatDateBR } from '@sintera/core'
 import { eventServicesFor, type HealthEvent } from '@/lib/agenda'
 import { expenseDocLabel, EXPENSE_DOC_TYPES } from '@/lib/finance/expense'
 import { parseAmountToCents, centsToAmount } from '@/lib/agenda/money'
@@ -742,7 +742,7 @@ export default function ExamDetailPage() {
       <div className="print-footer hidden">
         A SINTERA organiza e exibe dados de documentos de saúde. Não oferece diagnóstico, interpretação clínica ou recomendações médicas.
         Os dados exibidos são reprodução estruturada do documento original. Sempre consulte seu médico.
-        Impresso em {new Date().toLocaleDateString('pt-BR')}.
+        Impresso em {formatDateBR(new Date())}.
       </div>
 
       {/* Voltar para Exames */}

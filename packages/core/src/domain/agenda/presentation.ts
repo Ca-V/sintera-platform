@@ -57,9 +57,25 @@ export function statusLabel(status: EventStatus): string { return EVENT_STATUS_L
 
 // Formatação pura (sem Date/locale → determinística e testável).
 /** 'YYYY-MM-DD' → 'DD/MM/YYYY'. Entrada inesperada retorna a própria string. */
-export function formatDateBR(iso: string): string {
+export function formatDateBR(iso: Date | string): string {
+  // `Date` usa a data LOCAL, e não os dez primeiros caracteres do ISO: para um INSTANTE, recortar o ISO
+  // mostraria a data em UTC — 22h de terça em Brasília viraria quarta.
+  if (iso instanceof Date) {
+    return Number.isNaN(iso.getTime()) ? '' : `${dois(iso.getDate())}/${dois(iso.getMonth() + 1)}/${iso.getFullYear()}`
+  }
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso ?? '')
   return m ? `${m[3]}/${m[2]}/${m[1]}` : (iso ?? '')
+}
+
+/**
+ * Normaliza a entrada dos formatadores de DATA CIVIL.
+ *
+ * Aceitar `Date` além de string entrou em 01/10/2026, ao fechar a dívida dos 18 arquivos: muitas telas já
+ * tinham um `Date` em mãos, e obrigá-las a passar por `toISOString()` reintroduziria o deslocamento de fuso
+ * que `parseDateOnly` existe para impedir — a correção criaria o bug que ela veio corrigir.
+ */
+function comoData(v: Date | string | null | undefined): Date {
+  return v instanceof Date ? v : parseDateOnly(String(v ?? ''))
 }
 /**
  * Interpreta uma DATA CIVIL ('YYYY-MM-DD', sem horário) como meia-noite LOCAL —
@@ -113,9 +129,9 @@ const dois = (n: number) => String(n).padStart(2, '0')
  * Montada à mão, é idêntica em toda parte e não depende de dado de sistema. `parseDateOnly` continua
  * cuidando do fuso: sem ele, '2026-07-03' viraria 02/07 no Brasil.
  */
-export function formatDateLongBR(iso: string): string {
-  const d = parseDateOnly(iso)
-  if (Number.isNaN(d.getTime())) return iso ?? ''
+export function formatDateLongBR(iso: Date | string): string {
+  const d = comoData(iso)
+  if (Number.isNaN(d.getTime())) return typeof iso === 'string' ? iso : ''
   return `${dois(d.getDate())} de ${MES_ABREV[d.getMonth()]} de ${d.getFullYear()}`
 }
 
@@ -221,4 +237,92 @@ export function hasOutcome(o: Outcome | null): boolean {
   if (!o) return false
   return [o.summary, o.diagnosis, o.conduct, o.requestedExams, o.referrals, o.notes]
     .some(v => (v ?? '').trim().length > 0)
+}
+
+// ========================================================================================================
+// DATE-001 — o conjunto completo de formatadores, SEM `Intl`.
+// ========================================================================================================
+// Acrescentados em 01/10/2026 para fechar a dívida dos 18 arquivos que ainda chamavam `toLocaleDateString`
+// direto. O motivo é o mesmo que tirou o `Intl` de `formatDateLongBR`: no Hermes — o motor do aplicativo em
+// Android — o `Intl` é reduzido e nem sempre traz pt-BR. Quando não traz, ele NÃO falha: degrada. A mesma
+// data sai diferente no celular, e o resultado varia com a build do aparelho.
+//
+// MOEDA E NÚMERO FICAM DE FORA, de propósito: `toLocaleString(valor, { style: 'currency' })` formata número,
+// não data. Não há risco de fuso, e a variação de separador entre motores é cosmética.
+
+/** Nome do mês por extenso, pt-BR. Construído à mão — ver a nota acima. */
+const MES_EXTENSO = [
+  'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+  'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
+]
+
+/** 'julho de 2026' — cabeçalho de mês em listas agrupadas. Seguro para date-only. */
+export function formatMonthLongBR(iso: Date | string): string {
+  const d = comoData(iso)
+  if (Number.isNaN(d.getTime())) return typeof iso === 'string' ? iso : ''
+  return `${MES_EXTENSO[d.getMonth()]} de ${d.getFullYear()}`
+}
+
+/** 'set./26' — eixo de gráfico e rótulo curto, onde o ano inteiro não cabe. */
+export function formatMonthShortBR(iso: Date | string): string {
+  const d = comoData(iso)
+  if (Number.isNaN(d.getTime())) return typeof iso === 'string' ? iso : ''
+  return `${MES_ABREV[d.getMonth()]}/${String(d.getFullYear()).slice(-2)}`
+}
+
+/** '03 de julho de 2026' — a forma mais formal, para documento impresso e relatório. */
+export function formatDateFullBR(iso: Date | string): string {
+  const d = comoData(iso)
+  if (Number.isNaN(d.getTime())) return typeof iso === 'string' ? iso : ''
+  return `${dois(d.getDate())} de ${MES_EXTENSO[d.getMonth()]} de ${d.getFullYear()}`
+}
+
+/**
+ * 'HH:MM' a partir de um INSTANTE (timestamp completo), no fuso de quem olha.
+ *
+ * Diferente de `formatTimeBR`, que recebe 'HH:MM:SS' já pronto. Aqui o horário é lido do `Date`, então o
+ * fuso local é o certo: um registro feito às 14h deve aparecer como 14h para quem o fez.
+ */
+export function formatHourBR(instante: Date | string | null | undefined): string {
+  if (!instante) return ''
+  const d = instante instanceof Date ? instante : new Date(instante)
+  if (Number.isNaN(d.getTime())) return ''
+  return `${dois(d.getHours())}:${dois(d.getMinutes())}`
+}
+
+/**
+ * '03 de jul. de 2026, 14:05' — instante completo.
+ *
+ * Recebe TIMESTAMP, não data civil: a parte do horário só existe se houver horário. Por isso usa `new Date`
+ * direto, e não `parseDateOnly` — aqui o deslocamento de fuso é desejado.
+ */
+export function formatDateTimeLongBR(instante: Date | string | null | undefined): string {
+  if (!instante) return ''
+  const d = instante instanceof Date ? instante : new Date(instante)
+  if (Number.isNaN(d.getTime())) return ''
+  return `${dois(d.getDate())} de ${MES_ABREV[d.getMonth()]} de ${d.getFullYear()}, ${dois(d.getHours())}:${dois(d.getMinutes())}`
+}
+
+/** '03 de jul., 14:05' — instante sem o ano, quando ele é óbvio pelo contexto. */
+export function formatDayTimeBR(instante: Date | string | null | undefined): string {
+  if (!instante) return ''
+  const d = instante instanceof Date ? instante : new Date(instante)
+  if (Number.isNaN(d.getTime())) return ''
+  return `${dois(d.getDate())} de ${MES_ABREV[d.getMonth()]}, ${dois(d.getHours())}:${dois(d.getMinutes())}`
+}
+
+/** Dia da semana abreviado, pt-BR. Construído à mão, como os demais. */
+const DIA_ABREV = ['dom.', 'seg.', 'ter.', 'qua.', 'qui.', 'sex.', 'sáb.']
+
+/**
+ * 'qui., 03 de out.' — usado no texto do LEMBRETE, onde o dia da semana orienta mais do que o número.
+ *
+ * Roda no servidor, onde o `Intl` do Node é completo e o risco do Hermes não existe. Veio para cá mesmo
+ * assim por dois motivos: o locale do servidor pode mudar com a hospedagem, e um lembrete que escreve "Thu"
+ * para quem o lê em português é um defeito que ninguém testa até acontecer.
+ */
+export function formatWeekdayShortBR(data: Date | string): string {
+  const d = comoData(data)
+  if (Number.isNaN(d.getTime())) return typeof data === 'string' ? data : ''
+  return `${DIA_ABREV[d.getDay()]}, ${dois(d.getDate())} de ${MES_ABREV[d.getMonth()]}`
 }

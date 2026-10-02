@@ -33,7 +33,7 @@ import Disclaimer from '@/components/ui/Disclaimer'
 import { healthEventToRow } from '@/lib/agenda/event'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import Select from '@/components/ui/Select'
-import { uuid, documentSubtitle, supportedNowAcceptAttr, SCREEN_COPY } from '@sintera/core'
+import { uuid, documentSubtitle, supportedNowAcceptAttr, SCREEN_COPY, formatDateLongBR } from '@sintera/core'
 
 type Status = 'em_uso' | 'programado' | 'suspenso' | 'encerrado'
 type Kind = 'medicamento' | 'suplemento' | 'produto' | 'dispositivo' | 'outro'
@@ -114,7 +114,7 @@ function contraceptiveToMed(c: Record<string, unknown>): Med {
 }
 
 function fmtFull(date: string): string {
-  return new Date(`${date}T00:00:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+  return formatDateLongBR(new Date(`${date}T00:00:00`))
 }
 function fmtShort(date: string): string { return `${date.slice(8, 10)}/${date.slice(5, 7)}` }
 export default function MedicamentosPage() {
